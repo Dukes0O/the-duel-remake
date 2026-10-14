@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T15:14:17.326Z
+Observed at: 2026-10-14T15:15:40.830Z
 
-Observation commit: 2b1731727b0fc6da9eb9802c98818c2b78251a20
+Observation commit: 447b176ba48229bb2b65795174bba62b58cf3b9b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2b1731727b0fc6da9eb9802c98818c2b78251a20
+Integration HEAD: 447b176ba48229bb2b65795174bba62b58cf3b9b
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -90,7 +90,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-summit | P4-SUMMIT | 2026-10-14T08:11:30-07:00 | 0 | last commit 2026-10-14T08:11:30-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/board/looks/p4-summit/round-3-review.md, docs/board/looks/p4-summit/round-3.jpg |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/p4-yeti-native | P4-YETI | 2026-10-14T08:01:05-07:00 | 0 | last commit 2026-10-14T08:01:05-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/qa-browser-sweep | QA-BROWSER-SWEEP | 2026-10-14T08:08:53-07:00 | 0 | last commit 2026-10-14T08:08:53-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/convoy-raid.mjs, tools/scenarios/tollkeeper.mjs, tools/scenarios/track-kits.mjs, tools/scenarios/warlord-cards.mjs |
+| codex/qa-browser-sweep | QA-BROWSER-SWEEP | 2026-10-14T08:14:56-07:00 | 0 | last commit 2026-10-14T08:14:56-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/convoy-raid.mjs, tools/scenarios/tollkeeper.mjs, tools/scenarios/track-kits.mjs, tools/scenarios/warlord-cards.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -107,7 +107,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,273,843 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 24,433 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 397,450,240 B | +28,672 B | unavailable |
+| Git objects | 397,492,224 B | +41,984 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -116,7 +116,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 2b1731727b0fc6da9eb9802c98818c2b78251a20
+- Local integration/wasteland: 447b176ba48229bb2b65795174bba62b58cf3b9b
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
