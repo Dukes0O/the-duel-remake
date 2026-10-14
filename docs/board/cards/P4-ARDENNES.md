@@ -157,3 +157,8 @@ driver limit: record it on QA-STOCK-SNOW, and for this card the native field
 check counts CPU crashes and player crashes separately, with the player crash
 noted against that card. If the reference lap also leaves the road there, stop
 and write the numbers here: then the corner itself needs a change.
+
+
+## Director bounded driver witness preparation — 14 October
+
+Claude3e034b28 answers the stopped course. Keep all currentcourse/armco/catchfence/road/controls/sourceexact; no thirdbarrier fix. One existing Medium/index0 replay diagnosis may extend the existing evidence-only observer with real player speed/steering/throttle/brake/slip/grade at0.1s from200mbefore LongLeft untiltheverifiedimpact, and reference lap samples atthose sameactualpoints. Readactual referenceformat/admission first; do not guess reference speed/unit/lateral or fabricate a reference run. Restore everyoriginalwrap/method/global/listener and never set race clock, pose, inputs or native motion. Existing stock959/.95/1989/fieldSeed1000 unchanged. Prepareexactobserverdelta/evidenceonly, Rootreview/GO before ONE replay atfreeheavy slot,30min total diagnosis. No originalscenario guard adjustment or field/native/sheet/signature/gate/build until actualfactssupportClaude's conditional driver-limit decision. If referencealsoleavesroad,stopnumbershere; no inferred cause. QA-STOCK-SNOW mayreceiveproven driverfacts withoutstartingthatseparatecard. Shared AVkitplacement remainsfrozen, no concurrenthookedit.

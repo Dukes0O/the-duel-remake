@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T19:43:23.991Z
+Observed at: 2026-10-14T19:45:46.468Z
 
-Observation commit: 3e034b284eed018b1406548c4a39f184619d99b2
+Observation commit: 8c2cb8a95ba9e71642437fccc6d254746dd0acc2
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 3e034b284eed018b1406548c4a39f184619d99b2
+Integration HEAD: 8c2cb8a95ba9e71642437fccc6d254746dd0acc2
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -65,7 +65,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/heli-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-avalanche-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
-| codex/p4-career-access | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-career-access |
 | codex/p4-finish | 2 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -89,7 +88,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/heli-art-src | HELI-ART-SRC | 2026-10-14T12:23:29-07:00 | 0 | last commit 2026-10-14T12:23:29-07:00 | docs/changes/HELI-ART-SRC.md, tools/art/heli-source-candidates.json |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-14T11:39:39-07:00 | 0 | last commit 2026-10-14T11:39:39-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb, public/assets/models/circuits/kits/forest-footbridge.glb, public/assets/models/circuits/kits/forest-timing-tower-lod.glb |
 | codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T12:29:47-07:00 | 0 | last commit 2026-10-14T12:29:47-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, src/track-kits.js, src/track-script-course.js |
-| codex/p4-career-access | unknown | 2026-10-14T12:23:39-07:00 | 0 | last commit 2026-10-14T12:23:39-07:00 | docs/changes/P4-CAREER.md, src/circuit-manifests.js, src/course-access-ui.js, src/course-access.js, src/screen-router.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -109,9 +107,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 641,131 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 310,131 B | -331,000 B | 5,000,000 B |
 | All `public/` | 291,982,013 B | +0 B | unavailable |
-| Git objects | 407,471,104 B | +147,456 B | unavailable |
+| Git objects | 407,544,832 B | +73,728 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -120,7 +118,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 3e034b284eed018b1406548c4a39f184619d99b2
+- Local integration/wasteland: 8c2cb8a95ba9e71642437fccc6d254746dd0acc2
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -128,4 +126,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: matches local; cached commit 3e034b284eed018b1406548c4a39f184619d99b2.
+- Remote origin/integration/wasteland: behind local; cached commit 3e034b284eed018b1406548c4a39f184619d99b2.

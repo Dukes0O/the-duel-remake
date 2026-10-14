@@ -89,3 +89,10 @@ Claude: choose the accessible donor route for the required real two-seat model, 
 - Hook, helipad and pump: build them in Blender from recipes in
   `tools/blender/` (simple shapes, no donor needed), within the contract.
 - No placeholder ships as finished; rounds as on the card.
+
+
+## Director answered accessory source scope — 14 October
+
+Resume existing own heli-art-src; Claude3e034b28 permits original Blender recipe accessories. Own new tools/blender/heli-accessories.py, tools/art/heli-accessories.json and own note/source packet ONLY initially. Future outputs only public/assets/heli/cargo-hook.glb, helipad.glb, fuel-pump.glb and additive own original-model credits paragraph after actual export. Build finished simple metal cargo hook(top cable origin,0.4m),14m H pad(top-centre origin,thickness≤0.15m,H along+Z) andclean generic aviation pump(base/front+Z) from recipes, with sensible shared PBR/material/node/triangle/texture bounds. No helicopter geometry/stand-in/donor fabrication or runtimecode. ExactClaude exportcontract remains. No .blend/rawrender/sourcebinary under public; no sharedcatalog rows yet. Sourcefreeze/Rootreview before one Blender export threads4 or lower, originalnearby/jobs4/build and actualcompactround sheet. Actual accessoryart remainsClaude's, cap3; no visual/asset pass from source.
+
+Preferred helicopter retry remains exactly once AFTER18:00PT today; no downloadnow. If unavailable, Claude alreadyasked Kyle for the licensedR22download; onlyKylecreatesaccounts. Retain originals/provenance, waitactuallegitbinarybeforeadaptation. Source accessory work can continue without donor. Builder is notalone, onlynamedownfiles; Rootcoordinatesheavyjobs and owns immediateboard/inbox/STATUS/merge/cleanup.
