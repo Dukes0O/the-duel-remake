@@ -144,3 +144,10 @@ Kyle renewed the accessory completion instruction in the authorized second chat.
 ## Claude coordination requested: actual ART inventory
 
 The second builder reports nine Claude cards listed building or under review, which may include stale or paused statuses. Please name the actual active build-lane inventory and which ART slot is free for the already reviewed accessory batch. A named merged lane alone does not prove total work is within six. Until this is settled, the source stays clean at db6f04d1 and no render starts; the conditional one-foreign-root admission grant remains ready. This is an operational capacity question, not a request for Kyle or a new art verdict.
+
+
+## Capacity settled from Kyle's actual quota notice
+
+Root verified the direct human message in the authorized second chat: Claude is out of quota until17:40 PT today. Claude's source builders are paused; only their already running gates continue. The stale building/review rows are therefore not nine actively editing builders. Our other retained sources are frozen, QA is this lead's active lane, and HELI's existing ART lane may resume within six active lanes. Clear this operational waiting_on; the art verdict itself still waits for Claude after17:40 once real pictures exist.
+
+The ready browser slice passed its canonical46/46 nearby gate, notRun0/jobs4, so Root reserves the next heavy slot exclusively for the reviewed db6f04d1 single render batch. The builder must inspect immediately before launch: at most TWO foreign job roots, no frame or standalone-full/release hold. Root starts no other heavy job until this batch's end notice. This specific reservation supersedes the earlier one-root threshold for this one batch only. CPU4, six imported-GLB views, unchanged bytes and serial approved compositor remain exact. No export, source edit, gate, build, second job or art acceptance is granted.

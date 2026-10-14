@@ -481,7 +481,6 @@ tasks:
     needs: [HELI-PACKET]
     locks: []
     flag: "helicopter"
-    waiting_on: claude
     details: "docs/board/cards/HELI-ART-SRC.md"
 
   - id: HELI-FINISH
