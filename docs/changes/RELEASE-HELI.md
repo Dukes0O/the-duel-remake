@@ -58,7 +58,18 @@ its own development switch (unchanged for players).
   START ENGINE while an air-only car is away from the chosen course.
   `tools/test-heli-mode.mjs` approves that one import;
   `tools/test-heli-hooks.mjs` checks the note matches the game's own refusal;
-  the `heli-first-flight` scenario checks it on the real menu.
+  the `heli-first-flight` scenario checks it on the real menu. The reviewer
+  confirmed the fix, and found the line under START could come back with the
+  old course's words after a course change; the line is now put back only
+  if the menu has not written a newer one (checked in test-heli-hooks).
+
+## Known, for a later card
+
+The WASTELAND button and arena starts from the yard still do nothing
+without a word when the Jesko is chosen on the course where it sits (the
+reviewer's second note). Rare: it needs the Wasteland open and the Jesko
+chosen. It needs `src/app.js` (busy-game-files), so it waits for its own
+card.
 
 ## Changed assertions (reviewed)
 
