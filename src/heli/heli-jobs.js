@@ -39,6 +39,16 @@ export function bearing(from, to) {
   return length > 0 ? {x: dx / length, z: dz / length} : null;
 }
 
+// Special cars travel only by air (Kyle, 14 October 2026): with the
+// helicopter switch on, one races only on the course where it was last set
+// down, starting at the home pad. Earned cars from the medal sheets join
+// this list later.
+export const AIR_ONLY_CARS = Object.freeze(['koenigsegg_jesko']);
+
+export function isAirOnlyCar(carId) {
+  return AIR_ONLY_CARS.includes(carId);
+}
+
 export function isDestination(courseId) {
   return Object.hasOwn(HELI_DESTINATIONS, courseId);
 }

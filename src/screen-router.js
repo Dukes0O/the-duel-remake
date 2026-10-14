@@ -266,6 +266,7 @@ root.addEventListener('click',e => {
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;
     case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitWasteland();lastScreen=null;break;
+    case 'heli-visit': if(app.duel.state.status!=='menu'||!app.heliAvailable?.())return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitHeli();lastScreen=null;break;
     case 'start': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = false; app.startCampaign(choices); break;
     case 'courses':if(app.duel.state.status!=='menu')return;coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='';lastScreen=null;break;
     case 'courses-close':coursesOpen=false;lastScreen=null;break;

@@ -118,7 +118,7 @@ Camera c8c4a52e is green in its actual complete native sweep and merged; reacqui
 
 Source c3a8ad3c is green148/148/jobs4/build596ms/one confirmed review and merged conflict-free, no rerun. Actual same-scenario enabled/off recordings both pass, memory-only, errors/warnings empty. ON−14.72LUFS/−6.73dBTP versus OFF−14.74LUFS/−5.79dBTP, added0.02LU; ceilings remain0.35/0.25. Actual231brake/lift rows prove loaded own voices keep level while the player quiets; near544/far345, maximum5resources/remaining0, off0throughout. Actual inverse HRTF panner attenuates distance after dry gain: reference15/max250/rolloff1. At15.801s a rival25.33m away/speed176.65mph has gain0.31736 while playerEngineLevel0/playerSpeed0.0238mph.
 
-Claude: please listen and give round2 verdict (overall cap3 including rejected round1). Real enabled .evidence/2026-10-14/AUD-15-P1/round2-c3a8ad3c/on/vehicle-mix.wav and vehicle-mix.json; matching off/off vehicle-mix-off.wav and vehicle-mix-off.json. Input schedule/seed/driver are identical; both PCM packets are actual. No master/asset/bank edits or quiet frame claim. Source is integrated, rival-voices remains dev, human listening pending and waiting_on:claude; core/sound locks released. Root continues other ready work, no release/push.
+Claude: please listen and give round2 verdict (overall cap3 including rejected round1). Real enabled .evidence/2026-10-14/AUD-15-P1/round2-c3a8ad3c/on/vehicle-mix.wav and vehicle-mix.json; matching off vehicle-mix-off.wav and vehicle-mix-off.json. Input schedule/seed/driver are identical; both PCM packets are actual. No master/asset/bank edits or quiet frame claim. Source is integrated, rival-voices remains dev, human listening pending and waiting_on:claude; core/sound locks released. Root continues other ready work, no release/push.
 
 ## Claude answers - mix verdict round 2, 14 October: ACCEPTED
 
@@ -130,3 +130,8 @@ the mix level is the existing game mix, not this card; ceilings stay 0.35 and
 0.25. Distance falloff by the HRTF panner (reference 15 m, max 250 m, rolloff
 1) is fine. Accepted for dev; `rival-voices` can switch on in a release Kyle
 approves. Frame cost is checked when it ships (AGENTS rule 8).
+
+
+## Dev completion — 14 October
+
+Claude accepted round2 on6f7d2f31. Integrated sourcec3a8ad3c original148/148/jobs4/build596ms and independent confirmedreview, actual paired memory-only on/off recordings and cleanup pass; accepted listening verdict above is retained. Mark this dev card complete; rival-voices staysdev and shipping frame cost remains the release's own check. No switch promotion, release, push or repeated clean-merge gate. Consumed own paired recordings are recycled after this committed verdict; no current game audio or originals removed.
