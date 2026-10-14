@@ -153,3 +153,12 @@ Removed: the help panel's overlapping left placement, full lightPath as a struct
 
 
 The final source also includes exactly the already approved two-file recorder setup from9ff34067. Its captureNative/nativeRecorderEntry bodies and all23 assertions are unchanged; the directly called recorder/contact/storage APIs were verified byte-identical. Root reviewed the ES/tools-page entry, early genuine capture.json persistence and removal of the replaced private page/harness bypass. A stage file is diagnostic only. The nearby tier deliberately excludes this NIGHT_ONLY suite, so run its existing test exactly once separately, before the canonical gate; do not duplicate it with another scenario invocation. If it fails, stop at the measured stage and preserve it on the existing reliability follow-up. No actual recorder, browser-sweep or sound pass is claimed before execution.
+
+
+## Daytime water fixture correction
+
+The first original focused render-reuse run on b61842ba failed after 3561.3832 ms at the new first-night water assertion. The fixture copied HarborHighlands, which already has timeOfDay: 'night'. Actual circuit-water keeps that water night regardless of the first path look, so the runtime guard was correct and the fixture did not represent daytime water.
+
+Only the new fixture now explicitly sets timeOfDay: 'day'. Every assertion, including the separate existing-night case, and all runtime code, suffixes and limits stay unchanged. The correction is unrun pending Root review and one corrected focused run. No passing result is claimed.
+
+Removed: the new daytime fixture's accidental inherited night setting. No source asset or other worker's edit was removed.

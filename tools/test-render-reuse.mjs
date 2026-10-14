@@ -61,7 +61,7 @@ for(const def of COURSE){
     'changing the full presentation path, including later night, retains the same non-water world');
   check(JSON.stringify(plain) === before && !Object.hasOwn(plain, 'lightPath'), 'omission never edits the absent-path donor');
 
-  const water = Object.freeze({...plain, water: Object.freeze({glitter: true}),
+  const water = Object.freeze({...plain, timeOfDay: 'day', water: Object.freeze({glitter: true}),
     basins: Object.freeze([Object.freeze({id: 'test-basin', s: 100, lateral: 20})])});
   const waterBefore = JSON.stringify(water);
   const waterKey = (def, path) => environmentKey({seed: 1989, def: path ? Object.freeze({...def, lightPath: path}) : def});
