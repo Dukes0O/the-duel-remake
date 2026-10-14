@@ -716,7 +716,9 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-design-2026-10-14"
+    branch: "claude/rescue-props"
     needs: []
     locks: []
     flag: "rescue"
