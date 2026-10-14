@@ -113,7 +113,6 @@ tasks:
     status: "review"
     needs: [AUD-14, AUD-17]
     locks: []
-    waiting_on: "claude"
     details: "docs/board/cards/AUD-15-P1.md"
 
 
@@ -169,7 +168,6 @@ tasks:
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
     flag: "summit-run"
-    waiting_on: "claude"
     details: "docs/board/cards/P4-AVALANCHE.md"
 
   - id: P4-YETI
@@ -385,7 +383,6 @@ tasks:
     claimed_by: "codex-browser-sweep-2026-10-14"
     branch: "codex/qa-browser-sweep"
     needs: []
-    waiting_on: "claude"
     details: "docs/board/cards/QA-BROWSER-SWEEP.md"
 
   - id: PERF-HIGH-NIGHT
