@@ -172,35 +172,6 @@
       "authored": false
     },
     {
-      "id": "otter",
-      "path": "assets/models/deep/otter.glb",
-      "sha256": "79a6ce481e208776ef78b6ff5f4f999411bf8ffcf316bebc1531eb48effd5666",
-      "bytes": 171332,
-      "triangles": 1324,
-      "boundsBlender": {
-        "min": [
-          -0.13836854696273804,
-          -0.6000000238418579,
-          -0.2565649151802063
-        ],
-        "max": [
-          0.13836854696273804,
-          0.6000000238418579,
-          0.14380687475204468
-        ]
-      },
-      "dimensionsMetres": [
-        0.2767370939254761,
-        1.2000000476837158,
-        0.400371789932251
-      ],
-      "clips": [
-        "surface-breath"
-      ],
-      "primitives": 3,
-      "authored": false
-    },
-    {
       "id": "crab",
       "path": "assets/models/deep/crab.glb",
       "sha256": "1dca48704d2366023c6b435d3b845c62906da70cb707c18b48f0c6c433d8e770",
@@ -350,7 +321,7 @@
       "boundsBlender": {
         "min": [
           -2.8010706901550293,
-          -7.0,
+          -7,
           -2.2426533699035645
         ],
         "max": [
@@ -361,7 +332,7 @@
       },
       "dimensionsMetres": [
         5.602141380310059,
-        14.0,
+        14,
         4.48344612121582
       ],
       "clips": [
@@ -406,18 +377,18 @@
       "boundsBlender": {
         "min": [
           -5.941502094268799,
-          -16.0,
+          -16,
           -5.127164363861084
         ],
         "max": [
           5.941502094268799,
-          16.0,
+          16,
           5.127164363861084
         ]
       },
       "dimensionsMetres": [
         11.883004188537598,
-        32.0,
+        32,
         10.254328727722168
       ],
       "clips": [],
@@ -487,18 +458,18 @@
       "boundsBlender": {
         "min": [
           -1.383720874786377,
-          -3.0,
+          -3,
           -2.0155038833618164
         ],
         "max": [
           1.383720874786377,
-          3.0,
+          3,
           2.0155038833618164
         ]
       },
       "dimensionsMetres": [
         2.767441749572754,
-        6.0,
+        6,
         4.031007766723633
       ],
       "clips": [],
@@ -506,5 +477,11 @@
       "authored": false
     }
   ],
-  "failures": []
+  "failures": [],
+  "artStatus": "working-art",
+  "featureFlag": "the-deep",
+  "releaseAccepted": false,
+  "heldRoles": [
+    "otter"
+  ]
 }

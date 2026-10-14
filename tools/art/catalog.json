@@ -2537,7 +2537,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "1e56926aa21c7cdab721937d35caf77fa13356a27e1a814f4b82212e1d0bc6b8",
       "downloadedFrom": "https://static.poly.pizza/66fbd4f3-2901-4fc0-8ee1-9e21a96efc7c.glb",
@@ -2562,7 +2562,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Silver-blue vertex paint; one metric mesh ready for renderer instancing.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Silver-blue vertex paint; one metric mesh ready for renderer instancing.",
       "runtime": [
         "public/assets/models/deep/silver-school.glb"
@@ -2571,7 +2571,7 @@
       "sourceBytes": 45428,
       "sourceClips": [],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/silver-school.glb",
@@ -2599,7 +2599,7 @@
       "license": "CC-BY-3.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "1f91914d26c1680ebb73a9be87b7936528adb5f2ddb32cc787ef4e73c32f8bdf",
       "downloadedFrom": "https://static.poly.pizza/55537d5f-d9f2-45f0-8740-6357ca7784df.glb",
@@ -2624,7 +2624,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Muted blue body, yellow tail, preserved donor eyes; metric mesh.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Muted blue body, yellow tail, preserved donor eyes; metric mesh.",
       "runtime": [
         "public/assets/models/deep/reef-fish.glb"
@@ -2633,7 +2633,7 @@
       "sourceBytes": 35940,
       "sourceClips": [],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/reef-fish.glb",
@@ -2661,7 +2661,7 @@
       "license": "CC-BY-3.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "96f9cb7c678810f77c69fa697fd17f76905d09276566856beea6e54d4d10b590",
       "downloadedFrom": "https://static.poly.pizza/7c64cc2c-b9aa-4edd-bc32-9e95d66ca5e0.glb",
@@ -2686,7 +2686,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Olive-brown/green vertex paint and slow-flipper-stroke morph animation.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Olive-brown/green vertex paint and slow-flipper-stroke morph animation.",
       "runtime": [
         "public/assets/models/deep/turtle.glb"
@@ -2695,7 +2695,7 @@
       "sourceBytes": 101888,
       "sourceClips": [],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/turtle.glb",
@@ -2725,7 +2725,7 @@
       "license": "CC-BY-3.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "571ad53d47ca16a9ff61e75721d47706be15d6ad66628a127fca097f7febf059",
       "downloadedFrom": "https://static.poly.pizza/c48e30c6-7b5b-4553-a478-bd7de50d10b6.glb",
@@ -2750,7 +2750,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Donor flattened into a sand-rest pose, muted dorsal paint and pale underside.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Donor flattened into a sand-rest pose, muted dorsal paint and pale underside.",
       "runtime": [
         "public/assets/models/deep/ray.glb"
@@ -2759,7 +2759,7 @@
       "sourceBytes": 33388,
       "sourceClips": [],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/ray.glb",
@@ -2787,7 +2787,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "32597a7752bac30dfceec15d2702e1fe4065f1f5cccc7ddd8e8196cb6fc2d51b",
       "downloadedFrom": "https://static.poly.pizza/32b4e08e-4605-4356-8bd3-e0cf32335a0f.glb",
@@ -2812,7 +2812,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Metric root fit and natural dorsal/ventral materials; original Swim clip retained.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Metric root fit and natural dorsal/ventral materials; original Swim clip retained.",
       "runtime": [
         "public/assets/models/deep/manta.glb"
@@ -2823,7 +2823,7 @@
         "Armature|Swim"
       ],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/manta.glb",
@@ -2853,7 +2853,7 @@
       "license": "CC-BY-3.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "acc5c8a6b14c643827a7cda2931ea09a7a467a5245a8f2f6fe86e607ed53b6e4",
       "downloadedFrom": "https://static.poly.pizza/570f5f67-006c-4483-a05e-14d0400587dd.glb",
@@ -2878,7 +2878,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Donor reclined into a glide; muted brown paint and glide-body-wave morph.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Donor reclined into a glide; muted brown paint and glide-body-wave morph.",
       "runtime": [
         "public/assets/models/deep/sea-lion.glb"
@@ -2887,7 +2887,7 @@
       "sourceBytes": 431424,
       "sourceClips": [],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/sea-lion.glb",
@@ -2907,70 +2907,6 @@
       "recipe": "tools/blender/deep-art-fit.py"
     },
     {
-      "id": "deep-otter",
-      "card": "DEEP-ART-SRC",
-      "family": "deep-creature",
-      "deepId": "otter",
-      "sourcePage": "https://poly.pizza/m/dJW3JeUWXQ-",
-      "previewImage": "https://static.poly.pizza/0e2b9d01-1c86-401c-9eb6-9a7907b0dfda.jpg",
-      "author": "Poly by Google",
-      "license": "CC-BY-3.0",
-      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
-      "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
-      "status": "fitted-review",
-      "downloaded": true,
-      "sha256": "198369b506a6068585d0962236a50cb8eaeaeaff3a47a8e05edab0659e710efa",
-      "downloadedFrom": "https://static.poly.pizza/0e2b9d01-1c86-401c-9eb6-9a7907b0dfda.glb",
-      "checked": "2026-10-12",
-      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\otter",
-      "files": [
-        {
-          "path": "source.glb",
-          "sha256": "198369b506a6068585d0962236a50cb8eaeaeaff3a47a8e05edab0659e710efa"
-        },
-        {
-          "path": "source-page.html",
-          "sha256": "df2e3b434062971586e7f8f5e3c49086ce42e88c8a52dfee8be3964db098198d"
-        },
-        {
-          "path": "metadata.json",
-          "sha256": "7e7cda7a1c88c265d79cccd8683c91b02a0966df32d54358788afc3dc878347a"
-        },
-        {
-          "path": "preview.jpg",
-          "sha256": "0867bd78b9867d03c6b7822501783ac2b03e7f2ce791e7da622dff9a2e8752af"
-        }
-      ],
-      "fit": "Final round-three belly-up sea otter; dark body, pale round head, paired forepaws on chest and flat tail.",
-      "risk": "Final round-three Claude art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
-      "changes": "Final round-three belly-up sea otter; dark body, pale round head, paired forepaws on chest and flat tail.",
-      "runtime": [
-        "public/assets/models/deep/otter.glb"
-      ],
-      "sourceTriangles": 1084,
-      "sourceBytes": 1559136,
-      "sourceClips": [],
-      "embeddedOnly": true,
-      "decision": "Claude final corrections settled 13 October 2026 at 08:40; only this rejected role changed.",
-      "runtimeFiles": [
-        {
-          "path": "public/assets/models/deep/otter.glb",
-          "sha256": "79a6ce481e208776ef78b6ff5f4f999411bf8ffcf316bebc1531eb48effd5666",
-          "bytes": 171332,
-          "triangles": 1324,
-          "dimensionsMetres": [
-            0.2767370939254761,
-            1.2000000476837158,
-            0.400371789932251
-          ],
-          "clips": [
-            "surface-breath"
-          ]
-        }
-      ],
-      "recipe": "tools/blender/deep-art-fit.py"
-    },
-    {
       "id": "deep-crab",
       "card": "DEEP-ART-SRC",
       "family": "deep-creature",
@@ -2981,7 +2917,7 @@
       "license": "CC-BY-3.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "db4f63d5337c468da09eb2236d45ec77e950af9919eec7cc7ba144cc59bfeb06",
       "downloadedFrom": "https://static.poly.pizza/1acf95b5-2e6b-4c9d-bd37-8384b88bdbea.glb",
@@ -3006,7 +2942,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Muted red-brown paint, side-scuttle root motion and alternating leg morph.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Muted red-brown paint, side-scuttle root motion and alternating leg morph.",
       "runtime": [
         "public/assets/models/deep/crab.glb"
@@ -3015,7 +2951,7 @@
       "sourceBytes": 45092,
       "sourceClips": [],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/crab.glb",
@@ -3045,18 +2981,18 @@
       "license": "CC0-1.0",
       "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
       "licenseEvidence": "Original procedural geometry; no scan mesh copied. The linked colour-reference preview is CC0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": false,
       "sha256": null,
       "checked": "2026-10-12",
       "fit": "Claude-approved round-two fit; Original scripted tapered body, continuous dorsal fin and open jaw/eyes; CC0 scan preview is colour reference only.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "sourceTriangles": null,
       "changes": "Original scripted tapered body, continuous dorsal fin and open jaw/eyes; CC0 scan preview is colour reference only.",
       "runtime": [
         "public/assets/models/deep/moray.glb"
       ],
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\moray",
       "evidenceFiles": [
         {
@@ -3117,18 +3053,18 @@
       "license": "CC-BY-3.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "1f91914d26c1680ebb73a9be87b7936528adb5f2ddb32cc787ef4e73c32f8bdf",
       "checked": "2026-10-12",
       "fit": "Final round-three broad down-turned recessed mouth without torus loop; mottled brown donor adaptation.",
-      "risk": "Final round-three Claude art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "sourceTriangles": 506,
       "changes": "Final round-three broad down-turned recessed mouth without torus loop; mottled brown donor adaptation.",
       "runtime": [
         "public/assets/models/deep/grouper.glb"
       ],
-      "decision": "Claude final corrections settled 13 October 2026 at 08:40; only this rejected role changed.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\reef-fish",
       "evidenceFiles": [
         {
@@ -3208,7 +3144,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "6d5cf3cd7ea749583b622a306cfcae4de85432efcc74a1ec6f52e5430cf13aff",
       "downloadedFrom": "https://static.poly.pizza/d2d374ea-eb1d-4659-8cc7-816a83b82470.glb",
@@ -3233,7 +3169,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Metric blacktip reef-shark fit: grey skin, black dorsal/pectoral/tail tips, original Swim clip.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Metric blacktip reef-shark fit: grey skin, black dorsal/pectoral/tail tips, original Swim clip.",
       "runtime": [
         "public/assets/models/deep/reef-shark.glb"
@@ -3244,7 +3180,7 @@
         "Armature|Swim"
       ],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/reef-shark.glb",
@@ -3274,7 +3210,7 @@
       "license": "CC-BY-3.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "c8c8bb4c67aa0b1cdd6a2cca44608a28ea2cf62ad329d619069579ea2c66a5ea",
       "downloadedFrom": "https://static.poly.pizza/5025e994-da02-45bc-9b98-fde96366b0ca.glb",
@@ -3299,7 +3235,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Restrained translucent pink, faint emission and gentle-bell-pulse morph.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Restrained translucent pink, faint emission and gentle-bell-pulse morph.",
       "runtime": [
         "public/assets/models/deep/jellyfish.glb"
@@ -3308,7 +3244,7 @@
       "sourceBytes": 219312,
       "sourceClips": [],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/jellyfish.glb",
@@ -3338,7 +3274,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "153d6814c67039378fce22d4c347ed35d7febf2bedac866de91cf9b5dd7945f2",
       "downloadedFrom": "https://static.poly.pizza/7300e697-2543-4a9a-a77d-dedf29251fd7.glb",
@@ -3363,7 +3299,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Metric root fit; natural material colours and original Swim clip retained.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Metric root fit; natural material colours and original Swim clip retained.",
       "runtime": [
         "public/assets/models/deep/whale.glb"
@@ -3374,7 +3310,7 @@
         "Armature|Swim"
       ],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/whale.glb",
@@ -3383,7 +3319,7 @@
           "triangles": 444,
           "dimensionsMetres": [
             5.602141380310059,
-            14.0,
+            14,
             4.48344612121582
           ],
           "clips": [
@@ -3404,7 +3340,7 @@
       "license": "CC-BY-3.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "f8f2efc419b77b078c83537256343db34db9c78e6629175347c992ce46087161",
       "downloadedFrom": "https://static.poly.pizza/d87e72b2-5b68-416a-99ce-1206acec3fd7.glb",
@@ -3429,7 +3365,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Donor arms curled and mottled red-brown vertex paint.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Donor arms curled and mottled red-brown vertex paint.",
       "runtime": [
         "public/assets/models/deep/octopus.glb"
@@ -3438,7 +3374,7 @@
       "sourceBytes": 1337252,
       "sourceClips": [],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/octopus.glb",
@@ -3466,7 +3402,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "licenseEvidence": "Watercraft Kit 2.1 bundled License.txt states CC0, matching source page.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "db3bbb076894cee821ec9b24951e5537ebbdc5ab5413d6c17ffb7d4e649c14fb",
       "checked": "2026-10-12",
@@ -3486,13 +3422,13 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Cargo containers removed; mesh-trimmed open hold and side hull breach; shadowed hold floor, frames, broken/bent rails and rust/algae paint.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Cargo containers removed; mesh-trimmed open hold and side hull breach; shadowed hold floor, frames, broken/bent rails and rust/algae paint.",
       "runtime": [
         "public/assets/models/deep/wreck-hull.glb"
       ],
       "sourceBytes": 98052,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "sourceTriangles": 1060,
       "runtimeFiles": [
         {
@@ -3502,7 +3438,7 @@
           "triangles": 1873,
           "dimensionsMetres": [
             11.883004188537598,
-            32.0,
+            32,
             10.254328727722168
           ],
           "clips": []
@@ -3521,18 +3457,18 @@
       "license": "CC0-1.0",
       "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
       "licenseEvidence": "Original procedural geometry; no scan mesh copied. The linked colour-reference preview is CC0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": false,
       "sha256": null,
       "checked": "2026-10-12",
       "fit": "Final round-three 3000-triangle scalloped sandy-grey shell and blue-green mottled mantle; 92800-byte GLB.",
-      "risk": "Final round-three Claude art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "sourceTriangles": null,
       "changes": "Final round-three 3000-triangle scalloped sandy-grey shell and blue-green mottled mantle; 92800-byte GLB.",
       "runtime": [
         "public/assets/models/deep/giant-clam.glb"
       ],
-      "decision": "Claude final corrections settled 13 October 2026 at 08:40; only this rejected role changed.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\giant-clam",
       "evidenceFiles": [
         {
@@ -3593,7 +3529,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "313b9a8e77950b447053d0711f807661ce4682ff1a13b2120243bef768072283",
       "downloadedFrom": "https://static.poly.pizza/c98455e8-6458-44c3-93c5-53f4244497fd.glb",
@@ -3618,7 +3554,7 @@
         }
       ],
       "fit": "Claude-approved round-two fit; 1.8-m anchor, aged metal and deterministic rust paint.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "1.8-m anchor, aged metal and deterministic rust paint.",
       "runtime": [
         "public/assets/models/deep/anchor.glb"
@@ -3627,7 +3563,7 @@
       "sourceBytes": 42536,
       "sourceClips": [],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/anchor.glb",
@@ -3655,7 +3591,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "licenseEvidence": "Watercraft Kit 2.1 bundled License.txt states CC0, matching source page.",
-      "status": "fitted-review",
+      "status": "working-art",
       "downloaded": true,
       "sha256": "f6a03c86e7147764de6aac135433a428ee503d42852ecd101c1795a278480742",
       "checked": "2026-10-12",
@@ -3675,13 +3611,13 @@
         }
       ],
       "fit": "Claude-approved round-two fit; Muted weathered fishing donor; trimmed cockpit/hull openings, broken guards and rust/algae paint.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
       "changes": "Muted weathered fishing donor; trimmed cockpit/hull openings, broken guards and rust/algae paint.",
       "runtime": [
         "public/assets/models/deep/sunken-boat.glb"
       ],
       "sourceBytes": 22948,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
       "sourceTriangles": 237,
       "runtimeFiles": [
         {
@@ -3691,7 +3627,7 @@
           "triangles": 1563,
           "dimensionsMetres": [
             2.767441749572754,
-            6.0,
+            6,
             4.031007766723633
           ],
           "clips": []

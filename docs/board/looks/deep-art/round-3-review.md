@@ -1,6 +1,15 @@
 # The Deep final art round 3 of 3
 
-Claude's final art verdict is pending. The card remains open and The Deep stays dev.
+Kyle's evening decision supersedes the art verdicts below: the seventeen
+retained models are working art only behind `the-deep` dev. None is accepted
+as finished art, and The Deep cannot go live with them. The otter is held;
+its runtime GLB, manifest entry and catalogue row are removed.
+
+This source pass stops at round three. DEEP-ART-FINAL starts after Kyle's
+storyboard with Gratian and will source better models for Kyle to choose.
+The existing sheet is unchanged historical evidence of the capped review,
+not a new round or a finished-art acceptance. The observations below record
+the actual final capture before this decision.
 
 Claude accepted fifteen fitted roles in round 2 on 13 October at 08:40: silver-school, reef-fish, turtle, ray, manta, sea-lion, crab, moray, reef-shark, jellyfish, whale, octopus, wreck-hull, anchor and sunken-boat. All fifteen GLBs and their fifteen provenance rows remain exactly equal to frozen e5dca26f. The original thirty-seven catalogue rows and their order also remain exact.
 
@@ -22,4 +31,4 @@ giant-clam GLB SHA256: 4442eb25db7a17af7f6d5bd09286386e414d6f02cd38f1e45787ef5ea
 
 Actual final photography: private port 54607, three photographs, zero issues/errors, one warning: "Multiple instances of Three.js being imported." Original exposure, lights, water material application and storage receipt passed. The first bounded draft capture exposed an arched otter and underwater-only positioning; source cross-sections and Director-granted photo placement were corrected before this single formal final sheet. No fourth round is proposed.
 
-Existing recipes rebuild the exact source shapes and compose the sheet. Default sheet path planning remains round-2.jpg; optional --round 3 requires these exact three photos. Canonical nearby/build and ordinary source review are pending on a frozen final source; the prior round-two gate is not reused. No native gameplay, frame, balance or full-check acceptance is claimed.
+Existing recipes rebuild the exact source shapes and compose the sheet. Default sheet path planning remains round-2.jpg; optional --round 3 requires these exact three photos. Source checks remain separate and wait until the release hold clears; the prior round-two gate is not reused. No native gameplay, frame, balance or full-check acceptance is claimed.

@@ -11,7 +11,7 @@ import math
 import sys
 from pathlib import Path
 
-ROLES = ['silver-school','reef-fish','turtle','ray','manta','sea-lion','otter',
+ROLES = ['silver-school','reef-fish','turtle','ray','manta','sea-lion',
          'crab','moray','grouper','reef-shark','jellyfish','whale','octopus',
          'wreck-hull','giant-clam','anchor','sunken-boat']
 
@@ -171,7 +171,7 @@ def authored_clam():
 # Shape adaptation uses imported source topology and UVs; it never replaces a
 # donor animal with a procedural whole body. Only moray and clam are authored.
 DIMENSIONS={'silver-school':.32,'reef-fish':.28,'turtle':1.05,'ray':1.45,'manta':4.2,
-            'sea-lion':2.25,'otter':1.20,'crab':.30,'grouper':1.20,'reef-shark':1.8,
+            'sea-lion':2.25,'crab':.30,'grouper':1.20,'reef-shark':1.8,
             'jellyfish':.65,'whale':14.0,'octopus':1.5,'wreck-hull':32.0,'anchor':1.8,'sunken-boat':6.0}
 
 def visible_meshes():
@@ -208,13 +208,12 @@ def colour_static(o,role):
     lo,hi=bounds([o]);size=hi-lo
     for loop in o.data.loops:
         p=o.data.vertices[loop.vertex_index].co;t=(p.y-lo.y)/max(.001,size.y);z=(p.z-lo.z)/max(.001,size.z);rgb=old[loop.index]
-        palettes={'silver-school':(.39,.50,.54),'reef-fish':(.075,.24,.31),'turtle':(.16,.22,.095),'ray':(.12,.18,.19),'sea-lion':(.105,.085,.057),'otter':(.065,.041,.025),'crab':(.19,.075,.035),'grouper':(.26,.185,.10),'jellyfish':(.45,.245,.32),'octopus':(.25,.087,.039),'anchor':(.22,.16,.09),'wreck-hull':(.155,.17,.15),'sunken-boat':(.14,.16,.13)}
+        palettes={'silver-school':(.39,.50,.54),'reef-fish':(.075,.24,.31),'turtle':(.16,.22,.095),'ray':(.12,.18,.19),'sea-lion':(.105,.085,.057),'crab':(.19,.075,.035),'grouper':(.26,.185,.10),'jellyfish':(.45,.245,.32),'octopus':(.25,.087,.039),'anchor':(.22,.16,.09),'wreck-hull':(.155,.17,.15),'sunken-boat':(.14,.16,.13)}
         base=palettes[role]
         if role=='reef-fish' and t>.79:base=(.58,.45,.09)
         if role=='silver-school' and z>.70:base=(.12,.24,.29)
         if role=='turtle':base=(.115,.15,.057) if z>.58 else (.18,.27,.115)
         if role=='ray' and z<.35:base=(.38,.38,.30)
-        if role=='otter' and t<.3:base=(.31,.26,.17)
         if role=='grouper':base=(.28,.215,.12)
         if role=='anchor':base=(.085,.09,.075) if math.sin(p.x*27+p.y*17)>0 else (.25,.135,.064)
         if role in ['wreck-hull','sunken-boat']:
@@ -257,23 +256,6 @@ def fit_static(role,objects):
         # Recline the raised torso/head into a streamlined glide; retain source flippers.
         for v in o.data.vertices:
             p=v.co.copy();lift=max(0,p.z+.10);v.co.y-=lift*.68;v.co.z=.20*p.z+.10*math.sin(p.y*2)
-    if role=='otter':
-        # Flatten the donor's standing arch into a horizontal floating spine.
-        # Preserve each cross-section, nose, face and original donor topology.
-        sections={}
-        for v in o.data.vertices:
-            key=round(v.co.y/.075);sections.setdefault(key,[]).append(v.co.z)
-        centres={key:(min(z)+max(z))*.5 for key,z in sections.items()}
-        for v in o.data.vertices:
-            p=v.co.copy();v.co.z=-.85*(p.z-centres[round(p.y/.075)])
-            # The source back rolls down; its belly and folded forepaws face up.
-            if p.y>.28:v.co.z*=.18;v.co.x*=1.40
-            if p.y<-.05 and p.z<-.10 and abs(p.x)>.04:
-                w=min(1,(-p.z-.1)/.10);v.co.x=p.x*(1-.76*w);v.co.y=p.y*(1-.30*w);v.co.z=.105*w+v.co.z*(1-w)
-            if p.y<-.32:
-                v.co.x*=1.18;v.co.z-=.025  # round pale face remains readable below
-        paws=material('otter / chest forepaws',(.19,.15,.105),.8)
-        for sign in [-1,1]:sphere('otter / folded chest paw',(.038*sign,-.19,.105),(.039,.055,.026),paws,12,6)
     if role=='octopus':
         for v in o.data.vertices:
             p=v.co;r=math.hypot(p.x,p.y)
@@ -291,7 +273,6 @@ def fit_static(role,objects):
         for frame,x in [(1,0),(20,.045),(40,0)]:o.location.x=x;o.keyframe_insert('location',frame=frame)
         o.animation_data.action.name='side-scuttle'
     if role=='jellyfish':morph(o,'gentle-bell-pulse',lambda p:Vector((p.x*(.91 if p.z>.08 else 1),p.y*(.91 if p.z>.08 else 1),p.z+(.025 if p.z>.08 else .01))),4)
-    if role=='otter':morph(o,'surface-breath',lambda p:p+Vector((0,0,.013*max(0,1-abs(p.y)*2))),4)
     return o
 
 def fit_rig(role,row):
@@ -474,7 +455,8 @@ def main():
             result=export_role(root,evidence,role,rows);results.append(result);print('FITTED',role,result['triangles'],result['bytes'])
         except Exception as e:
             import traceback;traceback.print_exc();failures.append({'id':role,'error':str(e)})
-    report={'formatVersion':1,'round':2,'coordinates':'metres; glTF Y up; Blender -Y forward maps to glTF +Z','models':results,'failures':failures}
+    report={'formatVersion':1,'round':2,'coordinates':'metres; glTF Y up; Blender -Y forward maps to glTF +Z','models':results,'failures':failures,
+        'artStatus':'working-art','featureFlag':'the-deep','releaseAccepted':False,'heldRoles':['otter']}
     (evidence/('fit-report-'+(a.only or 'all')+'.json')).write_text(json.dumps(report,indent=2)+'\n')
     if not a.only and not failures:(root/'public/assets/models/deep/manifest.json').write_text(json.dumps(report,indent=2)+'\n')
     if failures:raise RuntimeError(str(failures))

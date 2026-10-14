@@ -55,13 +55,17 @@ adds the boarding plate and paired roof lamps, and supplies the approved wear
 and hazard markings. The kept donor choices and checksums are in
 `tools/art/tanker-fit.json` and `tools/art/catalog.json`.
 
-## The Deep — fitted round-two assets
+## The Deep — working art only
 
-`deep/` contains fourteen creature models and four set pieces. The exact
+`deep/` contains thirteen creature models and four set pieces, for building
+and testing behind `the-deep` dev only. Kyle has accepted none as finished
+art; The Deep cannot go live with these models. The three-round cap ended
+this source pass. DEEP-ART-FINAL follows the storyboard with Gratian. The exact
 source URLs, authors, licenses, original checksums, fitting changes and
 runtime hashes are in the `deep-*` rows of `tools/art/catalog.json` and the
-runtime manifest. The card stays in art review; these exports are not yet
-installed by a sea-life renderer and are not a release or placement pass.
+runtime manifest. These exports are working sources, not a release,
+placement, gameplay or frame pass. The held otter has no runtime export or
+catalogue row; its original licensed donor remains in the external library.
 Rebuild with `tools/blender/deep-art-fit.py` from the retained external
 licensed originals. No raw donor, scan, Blend, render or source texture is
 shipped in `public/`.
@@ -78,12 +82,11 @@ shipped in `public/`.
   [Fish](https://poly.pizza/m/aEyLrUMMoUK) for reef-fish and its grouper refit,
   [Turtle](https://poly.pizza/m/fklSEvGm1Q8),
   [Sea lion](https://poly.pizza/m/45HRvXYpvUG),
-  [River otter](https://poly.pizza/m/dJW3JeUWXQ-),
   [Crab](https://poly.pizza/m/2DgM36qZW2u),
   [Jellyfish](https://poly.pizza/m/dA5osnS0Rzj) and
   [Octopus](https://poly.pizza/m/9-b6-yqrwEe).
   Donor metric fitting, recolouring and vertex pose/morph changes; grouper
-  head/mouth fitted, otter back-floats with paws on chest and a flatter tail,
+  head/mouth fitted,
   crab scuttles, jellyfish pulses with restrained translucent pink, octopus
   arms curl. Original donor meshes are credited, not described as original.
 - **Steren Giannini**, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/):
@@ -102,5 +105,5 @@ shipped in `public/`.
   [Tridacna crocea preview](https://sketchfab.com/3d-models/af688a0ed6044ab99d0ec20c57fd3b18).
   [Hong Kong Grouper preview](https://sketchfab.com/3d-models/4ddbc1a350904a8e9ea2f4985e55edee)
   is also a colour reference, not the grouper mesh donor. Those optional
-  scan downloads remain unavailable (401); they do not block these approved
-  authored/refitted assets.
+  scan downloads remain unavailable (401). Kyle may supply better sources
+  for DEEP-ART-FINAL; these authored/refitted assets remain working art.

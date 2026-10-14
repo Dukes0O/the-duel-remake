@@ -171,3 +171,42 @@ Removed: grouper mouth torus, excessive clam tessellation and prior standing ott
 
 
 Director independently recomputed and granted the exact final catalogue pins: P48455623df877f5485d97197bfa780f4ccd2f105513fed9f8c0e40bf4944134dc becomes91fcc5b3740744c6a6e9e543fba9ce62a3dd21322a8e4e0ca5e5692de4d2aec6; Tanker7cb026655ca6168d71d8bfd89c19ec954a464456b079fd0040cba1fa89bd1c20 becomes530d258c3980ff47d7dd6746a44218e85974cc0e182f37331563fa2b247d81f2. Only those literal expectations change; the filters and every assertion remain exact. No exclusions or tolerance changes. Photography selects three roles only with DUEL_DEEP_ART_ROUND=3; default still photographs all eighteen.
+
+## Kyle working-art correction, 13 October evening
+
+Director grant 25f445e6 precedes this correction. Kyle supersedes every
+finished-art verdict: the seventeen retained models are working art only
+behind `the-deep` dev. The Deep cannot go live with them. The card stops at
+the three-round cap; DEEP-ART-FINAL follows the storyboard with Gratian.
+
+The held otter is removed from the runtime manifest, catalogue, active fit
+roles and photography selection. The exact Deep path-plan expectation
+changes from eighteen exports to seventeen; all other outputs and assertions
+remain unchanged. Remaining model bytes, source licenses, hashes, dimensions
+and clips are preserved, as are the thirty-seven original catalogue rows.
+No new model, art round, render, runtime-life hook or switch activation is
+added. The historical final sheet is unchanged and its note records the hold.
+
+Root independently verified the actual projections and equality proof,
+then granted only the two expected literals in 9cad7ac5. The P4 projection
+changes from 91fcc5b3740744c6a6e9e543fba9ce62a3dd21322a8e4e0ca5e5692de4d2aec6
+to c781ab75e8f6734b7d943190329fa7aba823525f4a4b900960e439db6cc83c29.
+The Tanker projection changes from
+530d258c3980ff47d7dd6746a44218e85974cc0e182f37331563fa2b247d81f2
+to 262e8fe0468cd62ab295420ab10f153455c61957c5bc786dc936f09e8311ba75.
+Every filter, assertion and other pin is unchanged. Original ordered
+non-Deep row JSON SHA256 remains
+10eb2917f2589d8ffbb8a450eb976f529a5f9de394df6e8f91242598998cf12f.
+All seventeen model bytes and model descriptors equal b6c1fdac; the original
+fifteen model bytes also equal e5dca26f. The retained models total
+1,764,772 bytes and 24,469 triangles. These are source facts, not art
+acceptance. Gates, builds and source union wait for the release hold to clear.
+
+### Removed
+
+Only `public/assets/models/deep/otter.glb` is sent to the Recycle Bin, with
+its manifest and catalogue rows removed in the same change. Its licensed
+external donor is untouched. The old otter export is no longer regenerated
+by the active recipe. Its isolated target size, palette, pose and morph
+branches are removed; every other creature fitting path is unchanged.
+No retained model or historical sheet is deleted.

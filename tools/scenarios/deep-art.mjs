@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {build} from 'vite';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
-const ids=['silver-school','reef-fish','turtle','ray','manta','sea-lion','otter','crab',
+const ids=['silver-school','reef-fish','turtle','ray','manta','sea-lion','crab',
   'moray','grouper','reef-shark','jellyfish','whale','octopus','wreck-hull','giant-clam','anchor','sunken-boat'];
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 
@@ -30,7 +30,7 @@ async function helpers(){
 
 export async function run(context){
   const manifest=JSON.parse(await readFile(join(root,'public/assets/models/deep/manifest.json'),'utf8'));
-  if(JSON.stringify(manifest.models.map(m=>m.id))!==JSON.stringify(ids))throw Error('Exact eighteen-role manifest required');
+  if(JSON.stringify(manifest.models.map(m=>m.id))!==JSON.stringify(ids))throw Error('Exact seventeen-role working-art manifest required');
   const report={photographyOnly:true,actualLookTest:true,quality:'high',frameMeasurement:false,
     runtimeSceneInstall:false,storage:'existing isolated in-memory helper',views:[],sourceFiles:{}};
   for(const path of ['tools/scenarios/deep-art.mjs','tools/blender/deep-art-fit.py','tools/blender/deep-art-sheet.py','public/assets/models/deep/manifest.json'])
@@ -49,7 +49,7 @@ export async function run(context){
     window.__deepArtBaseLights=d.scene.children.filter(o=>o.isLight).map(o=>({uuid:o.uuid,type:o.type,intensity:o.intensity,colour:o.color.toArray()}));
     return {...q,exposure:d.renderer.toneMappingExposure,lights:window.__deepArtBaseLights};})()`);
   try{
-    const selected=process.env.DUEL_DEEP_ART_ROUND==='3'?manifest.models.filter(row=>['otter','grouper','giant-clam'].includes(row.id)):manifest.models;
+    const selected=process.env.DUEL_DEEP_ART_ROUND==='3'?manifest.models.filter(row=>['grouper','giant-clam'].includes(row.id)):manifest.models;
     for(const model of selected){
       const path=join(root,'public/assets/models/deep',model.id+'.glb');
       if(digest(await readFile(path))!==model.sha256)throw Error('Changed GLB before photography: '+model.id);
