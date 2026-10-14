@@ -21,9 +21,8 @@ board cards. Design only: no game code.
   the same files. The animals in races can release on their own switch.
 - `docs/board/cards/WILD-ART-SRC.md`, `docs/HELICOPTER.md` section 12 and
   `docs/README.md`: one pointer each.
-- Two questions for Kyle in the packet's section 15 (gear only with its
-  skin worn; the TV skin bought until camera flights exist), each with a
-  recommendation.
+- Kyle's answers, same day: gear works only with its skin worn (yes);
+  TV camera flights deferred and parked, the TV skin bought until then.
 
 ## Checks
 

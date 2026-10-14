@@ -162,7 +162,7 @@ New file `src/heli/heli-skins.js`, pure.
 | Search and rescue | Rescue yellow, red, black | Searchlight and heat camera | 5 hiker or avalanche searches |
 | Wildlife | Olive, brown and dark green camouflage | Quieter rotor tips and a zoom camera | 5 wildlife counts |
 | Supply | Orange, white, black | Cargo net and stronger hook | 5 supply runs |
-| TV camera | Black, black, gold, with the Barely News logo on both doors | A steady nose camera | Bought only, until camera flights exist (question 2) |
+| TV camera | Black, black, gold, with the Barely News logo on both doors | A steady nose camera | Bought only, until camera flights exist (deferred by Kyle, section 15) |
 
 - **Earned** at the fifth mission of a kind, counted from the H2 and H4
   tallies (fires out, hoist rescues, searches, supply runs) and H3's
@@ -181,7 +181,7 @@ New file `src/heli/heli-skins.js`, pure.
   coat of paint plus one piece of matching gear). The fit buttons help: with
   the fire service skin owned, "Fit the bucket" offers "and wear fire
   service" in the same click; the rescue line does the same for medevac or
-  search and rescue. Question 1 in section 15.
+  search and rescue. Kyle agreed (section 15).
 - The first time a newly earned or bought skin is worn, it is a fresh coat:
   the dirt goes back to zero.
 
@@ -393,13 +393,11 @@ their own; SKIN-FINISH releases the helicopter half after H4.
   paints, a grimy helicopter before and after a wash), and each release
   waits for Kyle's word.
 
-## 15. Questions for Kyle
+## 15. Kyle's answers (14 October 2026)
 
-1. **Gear with its skin.** A skin's gear works while that skin is worn, and
-   fitting the bucket or rescue line offers the matching skin in the same
-   click. The other choice is that gear works forever once earned, whatever
-   paint you wear. Recommendation: gear with its skin, so each skin matters.
-2. **The TV camera skin.** It needs camera flights (fly beside a computer
-   race and keep the leader in the picture), which need a race running
-   under the helicopter: a bigger job than H3. Recommendation: a later card;
-   until then the Barely News skin can be bought.
+1. **Gear with its skin: yes.** A skin's gear works while that skin is
+   worn, and fitting the bucket or rescue line offers the matching skin in
+   the same click.
+2. **The TV camera skin: deferred.** Camera flights (fly beside a computer
+   race and keep the leader in the picture) wait for a later card, parked in
+   `docs/board/parked.md`. Until then the Barely News skin can be bought.
