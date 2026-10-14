@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T18:17:06.817Z
+Observed at: 2026-10-14T18:19:40.195Z
 
-Observation commit: b6a5872ab09da6ebebaccf88ad198d367b4e3809
+Observation commit: 5c324501c3eb517b257953acf827ba536cd02ab3
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: b6a5872ab09da6ebebaccf88ad198d367b4e3809
+Integration HEAD: 5c324501c3eb517b257953acf827ba536cd02ab3
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -63,7 +63,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/deep-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-avalanche-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
-| codex/p4-career-access | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-career-access |
+| codex/p4-career-access | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-career-access |
 | codex/p4-finish | 2 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -87,11 +87,12 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-14T11:11:00-07:00 | 0 | last commit 2026-10-14T11:11:00-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb, public/assets/models/circuits/kits/forest-footbridge.glb, public/assets/models/circuits/kits/forest-timing-tower-lod.glb |
 | codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T11:01:48-07:00 | 0 | last commit 2026-10-14T11:01:48-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, tools/test-summit-avalanche.mjs |
+| codex/p4-career-access | P4-CAREER | 2026-10-14T11:17:43-07:00 | 0 | last commit 2026-10-14T11:17:43-07:00 | docs/changes/P4-CAREER.md, src/circuit-manifests.js, src/course-access-ui.js, src/course-access.js, src/screen-router.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/p4-yeti-grounding | P4-YETI | 2026-10-14T11:15:30-07:00 | 0 | last commit 2026-10-14T11:15:30-07:00 | docs/changes/P4-YETI.md, src/yeti-view.js, tools/test-yeti.mjs |
-| codex/qa-browser-pins | QA-BROWSER-SWEEP | 2026-10-14T11:00:55-07:00 | 0 | last commit 2026-10-14T11:00:55-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/first-person-gear.mjs, tools/scenarios/rustwall.mjs |
+| codex/qa-browser-pins | QA-BROWSER-SWEEP | 2026-10-14T11:17:41-07:00 | 0 | last commit 2026-10-14T11:17:41-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/first-person-gear.mjs, tools/scenarios/rustwall.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
@@ -109,7 +110,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 250,773 B | +0 B | 5,000,000 B |
 | All `public/` | 290,229,319 B | +0 B | unavailable |
-| Git objects | 405,180,416 B | +106,496 B | unavailable |
+| Git objects | 405,308,416 B | +128,000 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -118,7 +119,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: b6a5872ab09da6ebebaccf88ad198d367b4e3809
+- Local integration/wasteland: 5c324501c3eb517b257953acf827ba536cd02ab3
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
