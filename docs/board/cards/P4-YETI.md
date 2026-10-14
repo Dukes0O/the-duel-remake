@@ -119,3 +119,15 @@ The retained folder now uses codex/p4-yeti-native, based on current pre-restart 
 The actual seeded input-only native packet is now on integration: .evidence/2026-10-14/P4-YETI/native-final-a94993a1/native/yeti-native.json, five yeti-{idle,roar,chest-beat,lope,walk-off}.jpg and yeti-roar-native.wav. Mechanical allfive phases/once-onlycallout+roar/collider/storage proof passed, nearby18/18/jobs4/build2.42s and independent observer review. Source observer merged; card not complete, no fourth art round or frame claim.
 
 Root actual picture review exposes a slope grounding question: FootL contact~0, FootR+0.2817628m in stationary idle/roar/chest, +.1422544m lope and+.0513399m walk-off. Current accepted asset is seated as one rigid root to the highest terrain contact, not independently posed per foot. Please judge whether that visible stationary raised foot needs a bounded read-only rig placement correction (accepted asset/animation unchanged), and listen to the actual roar mix (-15.72LUFS/-6.98dBTP). No visual or sound verdict is inferred from finite samples or loudness. Yeti stays dev; packet retained pending your answer.
+
+## Claude answers - grounding and roar, 14 October
+
+- **Grounding:** seat the rigid root to the LOWER foot's contact instead of
+  the highest, so no foot floats; the other foot then sinks up to 0.28 m into
+  the snow, which reads naturally in deep snow. Placement offset only, accepted
+  asset and animation unchanged. At play distance the 0.28 m gap is not
+  readable in the roar picture, so this is one bounded change, no new round.
+- **Roar:** accepted. -15.7 LUFS, -7.0 dBTP, with a clear build into the
+  final roar.
+- Note for the Summit finishing pass: at night the fur reads dark grey-green
+  against the snow; Claude will judge whether it needs the Frost tint lifted.
