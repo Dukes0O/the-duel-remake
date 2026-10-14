@@ -8,11 +8,10 @@ Codex. Packet sections 7 and 3.7.
 Add optional `profile.drivingLessons = {version: 1, done: {corner},
 best: {corner}, rewarded: {corner}}` with its normalizer (one line in
 `normalizeProfile`), `finishDriveLesson(profile, id, marginSeconds, carId)`
-and `grantDriveLessonReward(profile, id, carId)`. The reward follows Kyle's
-answer to the packet's section 11 question; until he answers, build the
-recommendation (one free brake level on that car, or 600 credits when its
-brakes are at level 3) inside `grantDriveLessonReward` only, so a different
-answer changes that one function. The reward is given once (`rewarded`).
+and `grantDriveLessonReward(profile, id, carId)`. The reward is settled
+(Kyle, 14 October 2026: "A brake upgrade or 600"): one free brake level on
+that car, or 600 credits when its brakes are already at level 3. It is given
+once (`rewarded`).
 
 Owns: `src/lessons/drive-lesson-save.js`, `tools/test-drive-lesson-save.mjs`,
 `tools/fixtures/saves/11-driving-lessons.json`,

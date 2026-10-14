@@ -6,7 +6,7 @@ driving lesson: the sharp corner" and "Lessons stay open"). It settles
 lesson 1, the sharp corner, enough to build, and the shared lesson pieces
 it takes from the helicopter's lessons (H1). Lessons 2 to 4 are outlined in
 section 9 and get their own short packet after lesson 1 is played. The
-cards are in section 10; the one question for Kyle is in section 11.
+cards are in section 10; Kyle's answer on the reward is in section 11.
 Sections 4 and 5 are written for the builder.
 
 ## 0. What the game does today (checked on integration 5047d6ff)
@@ -201,9 +201,8 @@ checked. Three in a row passes the lesson.
 
 - Lesson 2 (the racing line) opens.
 - **A brake upgrade:** one free brake level on the car you passed in, or
-  600 credits if that car's brakes are already at level 3. This is the
-  recommendation in the question in section 11; the save keeps only
-  "reward given", so Kyle's answer changes one function, not the save.
+  600 credits if that car's brakes are already at level 3 (Kyle, 14
+  October 2026; section 11).
 - The board shows the lesson as done, with your best margin over the
   instructor ("Best: 0.42 s faster"). Retaking it never pays again.
 
@@ -390,7 +389,11 @@ for TYRE-SLIP.
 - DRIVE-LESSON-FINISH: Claude plays it on the keyboard on Casual and Pro;
   the release waits for Kyle's word, after or with TYRE-SLIP's.
 
-## 11. The question for Kyle
+## 11. Kyle's answer (14 October 2026)
+
+"Sure, that's fine. A brake upgrade or 600." Passing lesson 1 gives one
+free brake level on the car you passed it in, or 600 credits if that car's
+brakes are already at level 3. The question as it was asked:
 
 **What should "a brake upgrade" be?** Recommended: passing lesson 1 gives
 one free brake level on the car you passed it in (worth 350 to 950
