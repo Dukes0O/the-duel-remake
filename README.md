@@ -2,6 +2,21 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Helicopter release – 14 October 2026
+
+Fly Kestrel One. HELIPAD on the main menu takes you to the pad at Tremblant
+Woods, where the instructor talks you through four lessons over the radio
+(lift-off, hover, landing and carrying a crate), or you can skip the
+opening. The first tank of fuel is free; after that fuel costs 1.5 credits
+a kg. Hook your car with H, fly it out of the area (P switches the
+autopilot on, Enter takes the cruise leg) to Tremblant Snow or Panorama
+Ridge, set it down in the yellow ring and press Race here to race there
+with it. The dispatch board has three paying jobs each day. Hard landings,
+crashes and dropped cargo cost repairs, but never more credits than you
+have. Assisted flying levels itself and holds height; Real leaves the
+controls where you put them. The Koenigsegg Jesko now travels only by
+air: it races where it was last set down, starting at Tremblant Woods.
+
 ## Steering and race screen release – 13 October 2026
 
 Gentler keyboard steering and throttle on road races: a tap turns the wheel

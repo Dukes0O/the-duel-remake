@@ -70,7 +70,7 @@ function run(session, seconds, controls = () => ({}), until = null) {
 }
 
 // The switch, the input context and the destinations.
-assert.equal(FEATURE_STATES.helicopter, 'dev', 'the helicopter switch is dev'); checks++;
+assert.equal(FEATURE_STATES.helicopter, 'on', 'the helicopter is released (Kyle, 14 October 2026)'); checks++;
 assert.throws(() => createHeliSession({profile: freshProfile(), loadCourse}), /switch is off/); checks++;
 ok(INPUT_CONTEXTS.heli && keyboardAction('heli', 'KeyH') === 'heli-hook' && keyboardAction('heli', 'KeyP') === 'heli-autopilot',
   'the heli context has H for the hook and P for the autopilot');
