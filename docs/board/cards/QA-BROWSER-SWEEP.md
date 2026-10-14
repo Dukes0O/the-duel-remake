@@ -2,7 +2,7 @@
 
 ## Open Claude sound decision
 
-The released mastering versus historical audio-baseline question below is still unanswered. Please settle its comparator contract; Codex cannot make a sound verdict under rule 16. waiting_on is now explicit on the board. The already approved Arena engineering slice continues independently, so this does not hold its preparation or partial merge. The parent remains incomplete until the named remaining failures are resolved.
+Claude has answered the audio comparator: retain the strict pre-limiter and repeat-control checks, with the intentionally changed final output informational. The repair follows the merged Arena slice; the parent remains incomplete until its named runtime, recorder and quiet-frame failures are resolved.
 
 
 The short board entry controls current state, ownership, dependencies and locks.
@@ -219,3 +219,20 @@ difference as information, not a failure. No threshold changes.
 ### Preserve the real water dependency in that next slice
 
 A bounded read found one structural reader: circuit-water builds a different shader and lake colours when water and nonempty basins exist and the first light keyframe makes it night. The environment-key change must retain that effective water-night distinction. Omit the full top-level path from the definition copy, then add a structural suffix only when water/basins exist, timeOfDay is not already night, and the first path look is night. Definitions without a path keep exact original keys. Do not mutate the donor or rewrite water or warmup. Extend the existing render-reuse cases for day/night water, absent/empty basins, later keyframe changes and night timeOfDay, alongside every old structural inequality. The original HarborHighlands browser fixture has no circuit water, so its mood changes can retain the prepared world without concealing this actual dependency.
+
+
+## Arena slice merged
+
+Reviewed96bb1d47: original20/20/jobs4/build823ms; original native passes all scoped guards, private14136/memory-only/202pictures, no issues or warnings. Automatic baseline private46212 passes eight cases/24pictures; all1545 archived files verified. All eight matched input traces and geometries are exact; inherited crossings stay explicitly classified. The temporary snapshot was recycled safely. No frame or historical regression claim. Clean merge has no repeat gate. Clear this own lane before the next runtime/audio slice. Seventeen original failures are now fixed or consumed, rustwall-frame remains manual/accounted, and five remain: audio comparator, recorder reliability, quiet frames, on-foot layout and day/night preparation. No aggregate129 pass.
+
+
+## Runtime and answered-audio slice claimed
+
+Arena3ffe4a2c is merged and its own folder, branch and334945917 bytes of consumed evidence were recycled. Integration pulled before new qa-browser-runtime / codex/qa-browser-runtime. Implement only the already named CSS/help and environment-key/render-reuse scopes above. Also grant tools/audio/baseline-comparison.mjs and/or tools/scenarios/audio-baseline.mjs only after reading their actual existing comparator: retain every strict pre-limiter/repeat-control limit and case, report the intentionally changed final-output difference as information exactly as Claude answered. Name the actual file hook before code; no mastering, waveform, baseline reference, runtime audio, Chrome policy or threshold change. Use existing meaningful tests only if needed. Root owns the combined change note, shared metadata, review and heavy-job scheduling. Builders own separate files in this one card's folder and preserve each other's work. No source execution until Root has reviewed the combined freeze.
+
+
+## Remaining recorder: use the already approved stage observation
+
+Kyle explicitly renewed completion of this card. The earlier two c5 Runtime.evaluate failures produced no PCM packet and no passed audio assertions. The prepared 9ff34067 repair remains unrun and unmerged. Read-only comparison confirms the directly called recorder helper, contact fixture and isolated-storage APIs are byte-identical to that prepared source. Use only its previously granted audio-crash-peak.mjs and existing test-audio-crash-peak.mjs delta in this same runtime lane; no other old-branch files. The ordinary tools-page ES recorder entry replaces the forbidden generated evidence page and patched private harness. The existing capture.json is persisted after the first actual capture, before the recorder probe, then overwritten with the original complete packet. All23 PCM/peak/continuity/graph/cleanup assertions, clocks, inputs, thresholds, timeout and runtime audio stay exact.
+
+This adds one useful stage observation, not another blind repeat. A packet without actualRecorder means the initial capture returned and the later probe did not; no packet means the initial evaluate did not return, with its internal cause still unknown. Root reviews the exact source before the first combined nearby gate and one actual existing recorder execution. Do not run it separately if that gate already supplies the same original native checks and complete packet. If it still fails, preserve the new stage facts and stop under the existing30-minute bound; no guessed autoplay, Chrome flag, PCM fill or tolerance fix. Record the unresolved defect on its existing reliability card and continue the priority Harbour/Avalanche/Attack queue. No audio or aggregate browser pass is inferred from a stage file.

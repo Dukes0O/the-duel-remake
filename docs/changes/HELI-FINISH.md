@@ -135,3 +135,24 @@ passed again with 0 errors.
 Removed: the stand-in helicopter (boxes and cylinders) from
 `src/heli/heli-scene.js`.
 
+## Pilot's eye raised (14 October, third turn)
+
+At the design session's call: a seated pilot's eye in a light helicopter
+is about 1.7 m above the skid bottom (seat 0.95 m, eye about 0.75 m above
+it). `tools/blender/kestrel-one.py` now places `pilot_eye` at 1.70 m
+(was 1.45), the model was rebuilt with Blender 4.5 (`blender -b
+--factory-startup --python tools/blender/kestrel-one.py -- --root .`),
+`PILOT_EYE` in `src/heli/heli-camera.js` matches, and the contract line
+on the HELI-ART-SRC card says 1.70 m. Only the `pilot_eye` node moved
+(same file size, same meshes and nodes). The cockpit view now looks over
+the glare shield; only the canopy frame shows at the top. No glare shield
+trim is needed. `tools/test-heli-view.mjs` (98 checks) checks the constant
+against the model's node; the browser view was checked by eye (0 errors)
+and the picture deleted.
+
+Removed: the previous `kestrel-one.glb` (one version of every binary).
+Review (rule 17): CONFIRMED (same 9 nodes, 6 meshes and 12,580
+triangles; the eye 0.31 m above the panel top and below the canopy). Lane
+tier (PowerShell): 32 passed, 0 failed, 0 not run in 344.67 s; build
+passed in 2.06 s.
+

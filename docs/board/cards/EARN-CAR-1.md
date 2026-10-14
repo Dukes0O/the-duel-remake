@@ -82,3 +82,11 @@ Write the stats in this file and get Claude's yes before building:
 
 The settled numbers, the model, the checks above, the lane tier and the build
 pass; one ordinary code review; Claude's look verdict recorded.
+
+## Claude answers (14 October): Claude builds the Enzo
+
+Kyle asked Claude to keep every line busy and liked Claude's original models,
+so Claude takes this card. The model and its look rounds come first, in
+`src/enzo-vehicle.js` on branch `claude/enzo-model`, unregistered (nothing in
+the game loads it) until EARN-SCREEN merges; then the registration, config,
+voice, kit, tests and save fixture follow on this card as written.
