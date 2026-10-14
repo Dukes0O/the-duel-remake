@@ -168,18 +168,20 @@ function valleyTown(road) {
         const width = 6 + 3 * hash(k + 1300), depth = 7 + 3 * hash(k + 1700);
         const s = conrod.s0 + along + (hash(k + 2500) - .5) * 3, lateral = centre + side * (6.5 + depth / 2 + hash(k + 2900));
         // The footprint includes the veranda on the street side and half a metre of eaves all round.
-        const halfAlong = width / 2 + .6, halfAcross = (depth + 2.3) / 2 + .5;
-        if (!free(s, lateral, halfAlong, halfAcross)) continue;
-        taken.push({s, lateral, along: halfAlong, across: halfAcross});
+        // The veranda reaches 2.3 m toward the street, so the rectangle sits 1.15 m off the house centre.
+        const halfAlong = width / 2 + .6, halfAcross = (depth + 2.3) / 2 + .5, middle = lateral - side * 1.15;
+        if (!free(s, middle, halfAlong, halfAcross)) continue;
+        taken.push({s, lateral: middle, along: halfAlong, across: halfAcross});
         houses.push(Object.freeze({s, lateral,
           heading: side * -Math.PI / 2 + turn + (hash(k + 3300) - .5) * .14,  // front door to the street
           width, depth, storeys: hash(k + 2100) < .3 ? 2 : 1}));
       }
     }
     for (let along = street.from + 20; along < street.to; along += 44) {
-      const s = conrod.s0 + along, lateral = lateralAt(along) + 5;
-      if (!free(s, lateral, .6, .6)) continue;
-      taken.push({s, lateral, along: .6, across: .6});
+      // Just inside the upper edge of the street, a metre clear of the verandas (which stop 4.2 m out).
+      const s = conrod.s0 + along, lateral = lateralAt(along) + 3;
+      if (!free(s, lateral, .5, .5)) continue;
+      taken.push({s, lateral, along: .5, across: .5});
       lamps.push(Object.freeze({s, lateral}));
     }
   }

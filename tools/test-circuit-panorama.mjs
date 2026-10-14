@@ -200,7 +200,8 @@ test('real lattice mast and timing tower stand on terrain outside the road', () 
   assert.equal(PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id.startsWith('shopfront')).length, 0);
   // No two houses share ground (footprint with veranda and eaves), and no lamp stands in a house or the church.
   const spec = PANORAMA_RIDGE.circuitLandmarks.find(l => l.type === 'town'), churchSpec = PANORAMA_RIDGE.circuitLandmarks.find(l => l.type === 'church');
-  const boxes = spec.houses.map(h => ({s: h.s, lateral: h.lateral, along: h.width / 2 + .5, across: (h.depth + 2.3) / 2 + .4}));
+  // Each footprint covers the house and its street-side veranda (front faces -lateral when heading is about -pi/2).
+  const boxes = spec.houses.map(h => ({s: h.s, lateral: h.lateral - (h.heading < 0 ? 1 : -1) * 1.15, along: h.width / 2 + .5, across: (h.depth + 2.3) / 2 + .4}));
   boxes.push({s: churchSpec.s, lateral: churchSpec.lateral, along: 10, across: 5.5});
   for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
     const a = boxes[i], b = boxes[j];
