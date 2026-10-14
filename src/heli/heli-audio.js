@@ -32,6 +32,14 @@ export const HELI_LIBRARY_CUES = Object.freeze({
   'heli.cable.creak': cue('vehicle', {file: 'heli/cable-creak.ogg', volume: .7, priority: 50, limit: 2}),
   'heli.hook.release': cue('vehicle', {file: 'heli/hook-release.ogg', volume: .8, priority: 60, limit: 2}),
   'heli.setdown.thud': cue('vehicle', {file: 'heli/setdown-thud.ogg', volume: .9, priority: 65, limit: 2}),
+  // H2 Fire (docs/HELI_FIRE.md section 11). The crackle sits under the rotor
+  // and the game scales it with the burning cells and the distance (400 m).
+  'heli.fire.crackle': cue('ambience', {file: 'heli/fire-crackle.ogg', volume: .5, loop: true, priority: 45, limit: 1}),
+  'heli.bucket.scoop': cue('vehicle', {file: 'heli/bucket-scoop.ogg', volume: .7, loop: true, priority: 55, limit: 1}),
+  'heli.bucket.pour': cue('vehicle', {file: 'heli/bucket-pour.ogg', volume: .8, loop: true, priority: 60, limit: 1}),
+  'heli.bucket.dent': cue('vehicle', {file: 'heli/bucket-dent.ogg', volume: .85, priority: 65, limit: 2}),
+  // Steam where water lands on fire; the game scales it by the litres.
+  'heli.fire.hiss': cue('ambience', {file: 'heli/fire-hiss.ogg', volume: .7, priority: 50, limit: 3}),
 });
 
 // Chime, horn, click and hiss are made from tones and noise, with no file.
@@ -48,6 +56,18 @@ export const HELI_TONE_CUES = Object.freeze({
     layers: [noise(1800, RADIO_FILTER.clickMs / 1000, .16)]}),
   'heli.radio.hiss': cue('ambience', {priority: 20, limit: 1, volume: 1, loop: true,
     layers: [noise(3200, 1, RADIO_FILTER.hiss)]}),
+  // H2 Fire: the dispatch alert before a call, two alternating tones at the
+  // radio click's level; a short tick when the aim ring locks; a rising chime
+  // with the badge; and steam hissing where water lands on fire (the game
+  // scales it by the litres).
+  'heli.fire.alert': cue('interface', {priority: 88, limit: 1, volume: .8, layers: [
+    tone(880, .28, .16, 'square', 0), tone(660, .28, .16, 'square', .32),
+    tone(880, .28, .16, 'square', .64), tone(660, .28, .16, 'square', .96)]}),
+  'heli.aim.lock': cue('interface', {priority: 70, limit: 1, volume: .6,
+    layers: [tone(1760, .05, .12, 'sine', 0), tone(2349, .06, .1, 'sine', .05)]}),
+  'heli.badge': cue('interface', {priority: 85, limit: 1, volume: .7, layers: [
+    tone(784, .3, .12, 'sine', 0), tone(988, .3, .12, 'sine', .14), tone(1175, .3, .12, 'sine', .28),
+    tone(1568, .7, .12, 'sine', .42)]}),
 });
 
 export const HELI_RADIO_CUES = Object.freeze(Object.fromEntries(Object.entries(HELI_RADIO_LINES).map(

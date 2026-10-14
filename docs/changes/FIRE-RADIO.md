@@ -1,0 +1,92 @@
+# FIRE-RADIO: Sarah's and Roger's radio lines and the fire sound cues
+
+Card: FIRE-RADIO (Claude, AUD lane, no lock). Design: `docs/HELI_FIRE.md`
+sections 10 and 11.
+
+Needs: HELI-FINISH code merged at 64198f94 (the main design session ruled
+the pending H1 release, which waits on Kyle, is not a build dependency).
+
+## What changed
+
+- **Voices.** `src/heli/heli-radio-lines.js` gains `HELI_VOICES` (Brian
+  `nPczCjzI2devNBz1zQrb`, Sarah `EXAVITQu4vr4xnSDxMaL`, Roger
+  `CwhRBWXzGAHq8TQ4Fs17`) and a `voice` on every line; the 27 H1 lines stay
+  Brian's and `HELI_RADIO_VOICE` still names him.
+- **19 new lines**, word for word from section 10: ten for Roger (fire
+  dispatch), four for Sarah (the rangers), five for Brian (the bucket).
+  All recorded once through `tools/audio/elevenlabs.mjs` with Brian's H1
+  settings (`eleven_multilingual_v2`, stability 0.4, similarity 0.8,
+  style 0.35, speaker boost), kept in `audio-src/voices/`, catalogued, and
+  copied to `public/assets/audio/voices/` by `tools/audio/build-heli.mjs
+  --voices`. No line was left out: the three regrowth lines are in.
+- **Credits:** about 1,250 of the month's ElevenLabs credits used; the
+  account read 7,875 left before and about 6,600 after (its counter lags,
+  so the per-line figures in the catalog are estimates). Two requests hit
+  the service's rate limit (HTTP 429) and were retried after a pause; no
+  take was made twice.
+- **Even levels.** Sarah's takes came out about 7 dB louder than the H1
+  lines, so her four lines play with `gain: .5`; Roger's "fire is out" was
+  about 2 dB quiet and plays with `gain: 1.25`. A new test keeps every H2
+  line within the H1 lines' loudness, after gain, with 1.5 LU to spare.
+- **Cues** in `src/heli/heli-audio.js` (section 11):
+
+  | Cue | Bus | Made from |
+  | --- | --- | --- |
+  | `heli.fire.crackle` | ambience, loop, volume 0.5 | Freesound 868895 "Fireplace_Outside_Fire_3", SMKoski02, CC0 |
+  | `heli.bucket.scoop` | vehicle, loop | Freesound 523022 "Rushing River Loop", ThanksForTheInspiration, CC0 |
+  | `heli.bucket.pour` | vehicle, loop | Freesound 690224 "Ambiance_Waterfall_Big_Skogafoss_Loop_Stereo", Nox_Sound, CC0 |
+  | `heli.bucket.dent` | vehicle | Freesound 513797 "metallic tube is hitting metallic bucket", lartti, CC0 (the second, harder hit, darkened) |
+  | `heli.fire.hiss` | ambience | Freesound 479296 "R19-39-Steam Hiss", craigsmith, CC0 |
+  | `heli.fire.alert` | interface | two alternating tones, at the radio click's level |
+  | `heli.aim.lock` | interface | a short two-tone tick |
+  | `heli.badge` | interface | a short rising four-note chime |
+
+  The steam hiss is a recording, not noise: the tone player only plays
+  tones. The cues keep the `helicopter` switch like every H1 cue (the fire
+  code that plays them runs only with `forest-fire` on). They reach
+  `src/sound-bank.js` through HELI-HOOKS' existing line; that file and
+  mastering are untouched. No event is wired yet: FIRE-HOOKS does that.
+
+## Round one listening (measured; I cannot listen)
+
+The sounds were chosen from their descriptions and loudness over time.
+Kyle's ear is round one: if one sounds wrong, say which and I pick again
+(three rounds at most).
+
+| File | Length | LUFS | True peak |
+| --- | --- | --- | --- |
+| `heli/fire-crackle.ogg` | 6.1 s loop | -27.4 | -3.5 |
+| `heli/bucket-scoop.ogg` | 4.7 s loop | -22.3 | -8.9 |
+| `heli/bucket-pour.ogg` | 3.7 s loop | -20.3 | -8.3 |
+| `heli/bucket-dent.ogg` | 0.7 s | -26.7 | -3.8 |
+| `heli/fire-hiss.ogg` | 1.2 s | -24.3 | -13.6 |
+
+All loop seams pass. Voices: H1 lines -25.7 to -22.1 LUFS; Roger -27.6 to
+-24.1 (fire is out lifted to about -25.6); Sarah -18.8 to -16.7 before gain,
+about -24.8 to -22.7 after; Brian's new lines -25.1 to -23.4; all peaks at
+-1.6 dBTP or below. The crackle is a peaky sound, so it sits at -27 LUFS
+(target -26) where the limiter lets it; it plays under the rotor anyway.
+
+The helicopter's library sounds stay under the 400 KB the H1 test allows
+(403,719 bytes of 409,600): the loops are short cuts at Vorbis quality 3.
+
+## Tests
+
+- `node tools/test-heli-audio.mjs`: passed (the 19 lines, voices and texts
+  as written; each take in its own voice and the H1 settings; levels within
+  the H1 range after gain; the new cues, buses, loops, files, licences and
+  loudness; the size cap).
+- `node tools/test-heli-hooks.mjs` (178), `test-heli-lessons.mjs` (63),
+  `test-heli-jobs.mjs` (554): passed.
+- Lane tier and build: below.
+
+## Changed assertions
+
+- `tools/test-heli-audio.mjs`: the line count rises from 27 to 46 (the 19
+  H2 lines); the catalog voice check reads each line's own voice instead of
+  Brian's for all, and now also checks the settings; the library and tone
+  cue lists, buses and loops gain the eight H2 cues. No limit was loosened.
+
+## Removed
+
+Nothing. No earlier sound, line or test is replaced.
