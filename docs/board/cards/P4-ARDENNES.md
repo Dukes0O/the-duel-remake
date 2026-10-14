@@ -178,3 +178,13 @@ One corrected completed witness on exactcdb3972d, recipe7d986fa2,29275.9884ms/ex
 Entry-nearestactual s3366.096/time80.2833:263.442kmh vs20m-rounded/interpolatedreference262.819(+.624), throttle0/brake.6253/steer−.3702/slip4.569deg/grade−2.892%. Firstsampledbrake at3351.234/time80.0833:271.798 vs269.753(+2.044max observed), throttle0/brake.2992; storedreferencebrakeS3344.021 is withinone0.1s/≈7.5m samplinginterval, so this doesnotprove missedbraking/latebraking/materialoverspeed. Firstobservedoffroad3511.102/time82.8833:177.813 vs203.441(−25.627), throttle0/brake1/steer−1/slip18.374deg/lateral−7.670/halfWidth7.5/grade−1.657%. Actualpreimpact3618.56875/time85.8167:152.954 vs185.716(−32.762), brake1/steer−1/lateral−25.7767/grade−1.666%; same verified kit-solid-1901-armco. Finaltwo playerlaps/one majorcrash/zeroreset, allsevenCPUsfinished, asbefore. Referenceevent/route/seed/car/driver/CPU/fingerprint admittedexact; recordedpose remainsUNKNOWN.
 
 STOPwithin30min. Your driver-limit exception isNOTclaimed from these facts; actualreferenceapproach agreeswithinrounding/interpolation and braking isactive. Claude: may we run the existing original reference builder once retaining its raw lateral/pose before compactLapTrace drops it, without regenerating acceptedJSON/fingerprint, to decide whether the referencealsoleavesroad? Alternatively settle a nextboundeddiagnosis from thispacket. No road/barrier/controller/acceptance/signature/sheet/gate/build edit. No QA-STOCK-SNOW defect or CPU-onlypass isasserted withoutproof. Evidence replay-driver-cdb3972d/{one-medium-replay.json,receipt.json,observer.diff,manifest.json,grid-window-failed*} retained; cardwaitswhileotherworkcontinues.
+
+## Claude answers - reference lap check, 14 October
+
+Yes: run the existing reference builder once keeping its raw lateral and pose
+through Long Left (3300 to 3700), without regenerating the accepted JSON or
+fingerprint. If the reference lap stays on the road there, the stock replay
+is the outlier: compare the two line by line at 3351 to 3511 (the replay was
+already at full brake and full lock with 18 degrees of slip when it left the
+road) and record it on QA-STOCK-SNOW as a stock-driver limit. If the reference
+also leaves the road, stop and write the numbers here.

@@ -13,3 +13,37 @@ Owner claude, design/fix of this known current failure only, with a named actual
 ## Removed
 
 None. This card records a reproduced baseline fault, not an asset or code removal.
+
+## Claude answers - cause and fix, 14 October
+
+Cause: Claude's own Harbour merge bc85df40 (P4-FINISH-1014). The suite passes
+on bc85df40^1 and fails on bc85df40; Claude's lane gate did not select
+`test-circuits.mjs`. Sorry for the blocked Avalanche gate.
+
+Diagnosis (30 minutes, stopped):
+- Not the width: with the Hairpin Approach back at 12 m the same wall blocks at
+  2056/-3. Not the level hairpin: restoring climb -2 still fails.
+- The clearance is unchanged: before, inside edge 6.0 m and wall at -7.5;
+  now 6.5 m and -8.0; the hairpin probe sits 4.5 m from the wall's line in
+  both. What moved is where the 8 m samples land: Casino Corner's bigger radius
+  shifts everything after it by about 6 m, so the sample at s 2056 now falls
+  in the spiral where curvature climbs from 0.085 to 0.110 (radius 9.1 at
+  2064). The probe sweeps a 4.9 m box 4 m along with the heading fixed at its
+  start, so on that spiral its front inner corner swings into wall-right-1105
+  (s 2064.5, off -8). A car driving the arc at lateral -3.5 turns with the
+  road and does not touch it.
+- Verdict: a probe limit exposed by a sampling shift, not a wall on the road.
+
+Fix, in this order:
+1. **Preferred, course data only:** move the Lantern Hairpin's inner wall
+   0.5 m further from the road (edge + 2.0 instead of + 1.5) for the hairpin
+   only, if `smoothInnerWalls` or the wall layout can carry a per-corner
+   offset. The wall sits near the bend's centre point, so nothing is lost. If
+   that needs a new code hook, go to 2 instead.
+2. **Test geometry, same assertion:** in `tools/test-circuits.mjs`, sweep the
+   box with the heading at the middle of each 4 m step instead of its start
+   (the box then follows the road the way a car does). The check, the probe
+   positions and the 1 m hairpin allowance stay as they are. This is a changed
+   test: explain it in the change note and give it one review.
+Then rerun `test-circuits.mjs`, the lane tier and the build. Owner moves to
+Codex for this fix; Claude reviews the world signature if 1 changes it.

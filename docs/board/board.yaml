@@ -3,11 +3,10 @@ completed: [HELI-VIEW, HELI-DISPATCH, P4-CAREER, HELI-HOOKS, AUD-15-P1, HELI-RAD
 tasks:
   - id: QA-HARBOUR-ROAD-CLEARANCE
     title: "Current Harbour road-clearance guard hits wall-right-1105"
-    owner: "claude"
+    owner: "codex"
     lane: "DESIGN"
     size: "S"
     status: "ready"
-    waiting_on: "claude"
     needs: []
     details: "docs/board/cards/QA-HARBOUR-ROAD-CLEARANCE.md"
 
@@ -132,7 +131,6 @@ tasks:
     status: "building"
     claimed_by: "codex-ardennes-2026-10-13"
     branch: "codex/p4-ardennes"
-    waiting_on: "claude"
     needs: [P4-ARDENNES-ROAD]
     flag: "ardennes-forest"
     details: "docs/board/cards/P4-ARDENNES.md"
