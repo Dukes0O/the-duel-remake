@@ -96,8 +96,12 @@ function fall(parcel, wind, dt) {
 // parcel model run forward from the bucket's bottom, position and speed.
 // Returns {x, z, y, fall, seconds} or null if it never lands. dt 1/60 is
 // plenty for a drawn ring; pass HELI_STEP to match a pour exactly.
+// The ring marks the middle of the water (section 6.1): the bucket keeps
+// moving while it empties, so the middle parcel leaves from half a pour on.
 export function aimPoint(bucket, {ground = null, wind = null, dt = 1 / 60} = {}) {
-  const parcel = {x: bucket.x, y: bucket.y - BUCKET.hang, z: bucket.z, vx: bucket.vx, vy: bucket.vy, vz: bucket.vz};
+  const lead = Math.max(0, bucket.water ?? 0) / BUCKET.pourRate / 2;
+  const parcel = {x: bucket.x + bucket.vx * lead, y: bucket.y - BUCKET.hang, z: bucket.z + bucket.vz * lead,
+    vx: bucket.vx, vy: bucket.vy, vz: bucket.vz};
   const start = parcel.y;
   for (let t = dt; t < 40; t += dt) {
     fall(parcel, wind, dt);

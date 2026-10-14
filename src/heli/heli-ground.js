@@ -126,7 +126,9 @@ export function groundFromCourse(course) {
 // and surface height installBasins digs and circuit-effects fills, with the
 // lap wrapped so a lake over the start line is found from both sides.
 export function courseWater(course) {
-  const basins = course.def?.basins ?? [];
+  // A frozen lake (Tremblant Snow) is ice: nothing to scoop.
+  const frozen = course.def?.effects?.lake?.frozen === true ? course.def.effects.lake : null;
+  const basins = (course.def?.basins ?? []).filter(basin => !(frozen && frozen.s === basin.s && frozen.lateral === basin.lateral));
   if (!basins.length) return () => null;
   return (x, z) => {
     const near = course.nearest(x, z), phase = course.phase(near.s);
