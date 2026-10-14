@@ -428,3 +428,15 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-TITAN-REPLAY-TIMEOUT.md"
 
+
+  - id: RELEASE-CONTROLS
+    title: "Kyle-approved release and push of throttle and race-screen fixes"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "building"
+    claimed_by: "claude-controls-release-cli"
+    needs: []
+    priority: "high"
+    locks: [release]
+    details: "docs/board/cards/RELEASE-CONTROLS.md"

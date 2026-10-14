@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T02:33:06.605Z
+Observed at: 2026-10-14T03:07:40.105Z
 
-Observation commit: a120cd7847961acfb543cb61865438d23bf21cb8
+Observation commit: 3c3c41a4a491a14ecc3aec619afa831d34e40d0c
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a120cd7847961acfb543cb61865438d23bf21cb8
+Integration HEAD: 3c3c41a4a491a14ecc3aec619afa831d34e40d0c
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -66,7 +66,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-qualifying | 2 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/p4-yeti | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-yeti |
-| codex/release-controls-native | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/release-controls-native |
 | codex/tools/callback-diagnostics | 8 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 18 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 18 | unknown | true | false | unknown |
@@ -82,7 +81,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 2 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-summit | P4-SUMMIT | 2026-10-13T09:23:33-07:00 | 0 | last commit 2026-10-13T09:23:33-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/board/looks/p4-summit/round-3-review.md, docs/board/looks/p4-summit/round-3.jpg |
-| codex/release-controls-native | unknown | 2026-10-13T19:20:25-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/changes/RELEASE-CONTROLS-NATIVE.md, src/screen-hud.css, tools/scenarios/release-controls.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 8 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -97,9 +95,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 17,252 B | -568,369 B | 5,000,000 B |
+| Added bytes in last merge | 393,648 B | +376,396 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 416,252,928 B | +409,600 B | unavailable |
+| Git objects | 416,405,504 B | +152,576 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -108,7 +106,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: bb8d3a99c01140cfc60f9a492250be6049848675
 - Local main: missing
-- Local integration/wasteland: a120cd7847961acfb543cb61865438d23bf21cb8
+- Local integration/wasteland: 3c3c41a4a491a14ecc3aec619afa831d34e40d0c
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
