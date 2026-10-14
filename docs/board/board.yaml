@@ -500,6 +500,7 @@ tasks:
     needs: [HELI-LESSONS, HELI-DISPATCH, HELI-ART-SRC]
     locks: []
     flag: "helicopter"
+    claimed_by: claude-heli-2026-10-14
     waiting_on: kyle
     details: "docs/board/cards/HELI-FINISH.md"
 
