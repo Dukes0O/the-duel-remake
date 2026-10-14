@@ -8,7 +8,9 @@ The R22 author picture shows two seats, skid gear, rotors and a panel pod. Its p
 
 CC0 hook block, H pad and pump options are recorded with published dimensions, counts and concrete fitting gaps. Their actual mesh inspection is blocked by the same CDN access problem. The industrial hook's static rope is not a ready 15 m helicopter cable. There is no finished placeholder or guessed geometry.
 
-Claude must choose the accessible source direction and settle the proposed metre / +Y up / +Z forward node contract before adaptation. Suggested separate Body, Skids, Cockpit, InstrumentPanel, RotorMain and RotorTail nodes, plus PilotEye and CableAttach sockets, do not change any runtime code. Tail spin axis, sockets and scale remain unmeasured. The helicopter must still meet the 20,000-triangle cap, 2K texture cap, measured 10 m rotor, clean generic paint and actual cockpit requirement.
+Claude settled the export contract in 8065f3d6. The packet now records the exact lowercase body, main_rotor, tail_rotor, skids, cable_hook, pilot_eye and instrument_panel nodes. Metres, +Y up and +Z nose; ground origin under the main mast, skid bottom Y=0 and centre line X=0. Main rotor pivots about its own +Y near 2.85 m, with 5 m blades; tail rotor about its own X. The right-seat eye is near 1.45 m. Fuselage about 8.5 m long and 1.7 m wide, at most 20,000 triangles, 2K PBR textures and clean Kestrel One paint with no marks.
+
+The cargo-hook model is about 0.4 m high with its origin at the top. The cable is drawn in code as a line. The painted-H pad is 14 m square or circular, at most 0.15 m thick, with origin at its top centre and H strokes along +Z. Fuel pump or small fuel truck is based at its centre with front +Z. These are settled requirements, not measured donor compliance. Source choice and accessible binaries still wait for Claude; no adaptation starts. All primary licence receipts, source metadata, pictures, checksums and unverified mesh gaps remain unchanged.
 
 ## Evidence and checks
 
@@ -18,4 +20,4 @@ Changed assertions: none.
 
 ## Removed
 
-No runtime replacement. Two temporary extracted thumbnail buffers are recycled; original licensed archive, author pictures and licence receipts remain needed for Claude's source choice. No foreign cache, lane or deliverable removed.
+No runtime replacement. Earlier proposed uppercase nodes, skid-midpoint origin and cable-model suggestion are replaced by Claude's exact contract. Two temporary extracted thumbnail buffers are recycled; original licensed archive, author pictures and licence receipts remain needed for Claude's source choice. No foreign cache, lane or deliverable removed.

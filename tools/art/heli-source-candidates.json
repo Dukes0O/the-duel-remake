@@ -196,40 +196,9 @@
       "gap": "Weathered survival pump; clean aviation refuelling treatment and actual hose/nozzle suitability need Claude choice and donor inspection."
     }
   ],
-  "proposedExportContract": {
-    "status": "Claude to settle before adaptation",
-    "units": "metres",
-    "axes": "+Y up, +Z forward, +X right",
-    "root": "KestrelOne at skid contact midpoint; skids grounded at local Y=0",
-    "mainRotor": "RotorMain independent pivot at spindle, rotates about +Y, measured diameter 10 m",
-    "tailRotor": "RotorTail independent pivot at spindle; axis recorded after donor inspection, no guessed spin sign",
-    "separateNodes": [
-      "Body",
-      "Skids",
-      "Cockpit",
-      "InstrumentPanel",
-      "RotorMain",
-      "RotorTail"
-    ],
-    "sockets": [
-      "PilotEye",
-      "CableAttach"
-    ],
-    "accessoryNodes": [
-      "CargoHook",
-      "CableVisual",
-      "HelipadH",
-      "FuelPump"
-    ],
-    "texturesMax": 2048,
-    "helicopterTriangleCap": 20000,
-    "paint": "new and clean Kestrel One; no source logos/registration marks",
-    "note": "No runtime consumer or renderer contract changed. Socket positions and tail axis stay unset until donor measurements."
-  },
   "questions": [
-    "Choose the CC0 piston lead or CC-BY R22, subject to accessible original binary and measured compliance; neither is approved runtime art yet.",
-    "Confirm proposed node/axis/root contract with HELI-VIEW, especially skid-plane root and CableAttach/PilotEye sockets.",
-    "Approve hook/pad/pump donor direction; current CDN access prevents actual accessory mesh verification."
+    "Choose an accessible real two-seat donor route under the settled contract; neither preferred donor is approved runtime art yet.",
+    "Approve hook/pad/pump donor direction under the settled sizes/origins; current CDN access prevents actual accessory mesh verification."
   ],
   "cacheFiles": [
     {
@@ -272,5 +241,51 @@
       "bytes": 4634,
       "sha256": "6b99b6d9e5601c529d7d249a09fc6e3a949b0381f32dae4163e2654a3fcbc90e"
     }
-  ]
+  ],
+  "exportContract": {
+    "status": "Claude settled; source choice and binary access still pending",
+    "sourceCommit": "8065f3d6",
+    "sourceCard": "docs/board/cards/HELI-ART-SRC.md",
+    "units": "metres",
+    "axes": "+Y up, nose toward +Z",
+    "helicopter": {
+      "path": "public/assets/heli/kestrel-one.glb",
+      "origin": "On the ground under the main rotor mast; Y=0 at bottom of skids, X=0 on centre line",
+      "nodes": {
+        "body": "Fuselage, cockpit glass and doors",
+        "main_rotor": "Pivot at top of mast, about 2.85 m up; spins about its own +Y; blades reach 5 m from pivot",
+        "tail_rotor": "Pivot at tail rotor hub; spins about its own X",
+        "skids": "Separate skid geometry",
+        "cable_hook": "Empty on belly under mast where cable hangs",
+        "pilot_eye": "Empty at right-hand seat, about 1.45 m up",
+        "instrument_panel": "Mesh inside cockpit; readings are drawn separately in the page"
+      },
+      "fuselageLengthMApprox": 8.5,
+      "fuselageWidthMApprox": 1.7,
+      "trianglesMax": 20000,
+      "texturesMax": 2048,
+      "materials": "PBR: base colour, normal, metal and roughness",
+      "paint": "Kestrel One, clean, no brand marks"
+    },
+    "cargoHook": {
+      "path": "public/assets/heli/cargo-hook.glb",
+      "origin": "Top where cable meets hook",
+      "heightMApprox": 0.4
+    },
+    "cable": "Drawn in code as a line; no cable model export",
+    "helipad": {
+      "path": "public/assets/heli/helipad.glb",
+      "shape": "14 m square or circle with painted H",
+      "origin": "Centre of top surface",
+      "thicknessMMax": 0.15,
+      "hLongStrokes": "+Z"
+    },
+    "fuelPump": {
+      "path": "public/assets/heli/fuel-pump.glb",
+      "allowedAlternative": "Small fuel truck",
+      "origin": "Base centre",
+      "front": "+Z"
+    },
+    "note": "Requirements only, not measured donor compliance. No runtime consumer or renderer change. Ask on the card if the selected source cannot meet a line."
+  }
 }
