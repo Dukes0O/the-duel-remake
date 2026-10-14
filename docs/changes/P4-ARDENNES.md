@@ -111,3 +111,10 @@ Changed assertion: only the native player's unconditional zero-major-crashes ope
 The sheet independently checks the structured incident receipt and exact exception, retains every original photo/quality/field/light guard, and labels actual player and CPU incident counts. No clean-player, zero-CPU, native pass, art verdict, field batch, signature or frame claim follows from this source preparation. Focused and native execution await Root review and GO.
 
 Removed: only the superseded unconditional zero-player-crash operand in the native recipe and sheet. Unknown, different or additional crashes still fail; no production code, placement, asset, tolerance, reference or driver is removed or changed.
+
+
+## Receipt-count review correction
+
+Root found a real validation gap before execution: the pure predicate did not inspect field incident rows, and the sheet did not tie its player partition to the actual event count or stage count. Additive cases were written first for unknown indices, altered partitions, missing/extra player rows and mismatched/missing stage counts; consistent known-one and zero-player receipts retain CPU incidents without a zero-CPU target. No checks have run.
+
+The native final now records actual stageCrashes. Both the predicate and independent sheet require integer indices -1 through 6, exact copied player/CPU partitions and player-row count equal to observed player events and actual stageCrashes before the unchanged zero/known-one major-crash rules. All actor pile-up calculation, endpoint verification, setup, placement, runtime, driver, body and tolerance bytes remain unchanged. Removed: acceptance of incomplete or inconsistent incident receipts. Source awaits Root's correction confirmation before execution.

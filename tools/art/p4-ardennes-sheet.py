@@ -7,13 +7,17 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 def player_crash_accepted(detail):
     final, observer = detail['final'], detail['observer']
-    events = observer['playerEvents']
-    if observer.get('restored') is not True:
+    events, incidents = observer.get('playerEvents'), observer.get('incidents')
+    if (observer.get('restored') is not True or not all(isinstance(observer.get(key), list) for key in
+            ['playerEvents', 'incidents', 'playerIncidents', 'cpuIncidents']) or
+            type(final.get('stageCrashes')) is not int or final['stageCrashes'] < 0):
         return False
-    incidents = observer['incidents']
-    if any(type(row.get('index')) is not int or not -1 <= row['index'] <= 6 for row in incidents):
+    if any(not isinstance(row, dict) or type(row.get('index')) is not int or not -1 <= row['index'] <= 6 for row in incidents):
         return False
-    if observer['playerIncidents'] != [row for row in incidents if row['index'] == -1] or observer['cpuIncidents'] != [row for row in incidents if row['index'] >= 0]:
+    player = [row for row in incidents if row['index'] == -1]
+    cpu = [row for row in incidents if row['index'] >= 0]
+    if (observer['playerIncidents'] != player or observer['cpuIncidents'] != cpu or
+            len(player) != len(events) or len(events) != final['stageCrashes']):
         return False
     if final['crashes'] == 0:
         return len(events) == 0 and detail.get('knownPlayerException') is False

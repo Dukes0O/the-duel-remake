@@ -9,8 +9,15 @@ const names = ['La Fontaine', 'Red Water', 'The Wall', 'Kestrel Straight', 'Les 
 
 // Only the independently proved stock-driver outlier is admitted; unknowns fail.
 export function ardennesPlayerCrashAccepted(setup, final, observer) {
-  if (!observer?.restored || !Array.isArray(observer.playerEvents)) return false;
-  const events = observer.playerEvents;
+  if (!observer?.restored || !Array.isArray(observer.playerEvents) || !Array.isArray(observer.incidents) ||
+      !Array.isArray(observer.playerIncidents) || !Array.isArray(observer.cpuIncidents) ||
+      !Number.isInteger(final.stageCrashes) || final.stageCrashes < 0) return false;
+  const events = observer.playerEvents, incidents = observer.incidents;
+  if (incidents.some(row => !row || !Number.isInteger(row.index) || row.index < -1 || row.index > 6)) return false;
+  const player = incidents.filter(row => row.index === -1), cpu = incidents.filter(row => row.index >= 0);
+  if (JSON.stringify(observer.playerIncidents) !== JSON.stringify(player) ||
+      JSON.stringify(observer.cpuIncidents) !== JSON.stringify(cpu) ||
+      player.length !== events.length || events.length !== final.stageCrashes) return false;
   if (final.crashes === 0) return events.length === 0;
   if (final.crashes !== 1 || events.length !== 1 || setup.id !== 'ardennes-forest' ||
       setup.seed !== 1989 || setup.fieldSeed !== 1000 || setup.car !== 'stuttgart_959s' ||
@@ -217,7 +224,7 @@ export async function run(context) {
           const before=JSON.stringify(s);window.__render.renderFrame();if(JSON.stringify(s)!==before)throw Error('Render wrote race');
           if(![s,...s.opponents].every(r=>[r.s,r.lateral,r.speedMph].every(Number.isFinite)))throw Error('Nonfinite native racer');
           return {status:s.status,time:s.stageTimeSec,s:s.s,laps:s.completedLaps,finished:s.opponents.filter(r=>r.finished).length,
-            lapTimes:[...s.lapTimes],crashes:s.majorCrashes,resets:s.boundaryResets,
+            lapTimes:[...s.lapTimes],crashes:s.majorCrashes,stageCrashes:s.stageCrashes,resets:s.boundaryResets,
             firstLapPileUp:new Set(s.field.stats.crashes.filter(crash=>crash.t<=30).map(crash=>crash.index)).size>=3,
             allDone:s.completedLaps>=2&&s.opponents.every(r=>r.finished)};
         })()`);

@@ -619,8 +619,9 @@ function knownPlayerIncident() {
   return {
     setup: {id: 'ardennes-forest', seed: 1989, fieldSeed: 1000, car: 'stuttgart_959s',
       cpuDifficulty: 'medium', lineSkill: .95, stock: true, placement},
-    final: {crashes: 1},
-    observer: {restored: true, playerEvents: [{completedLaps: 0, s: 3618.56873672659,
+    final: {crashes: 1, stageCrashes: 1},
+    observer: {restored: true, incidents: [{index: 2, t: 9}, {index: -1, t: 85.82}],
+      playerIncidents: [{index: -1, t: 85.82}], cpuIncidents: [{index: 2, t: 9}], playerEvents: [{completedLaps: 0, s: 3618.56873672659,
       piece: {name: 'Long Left', s0: piece('Long Left').s0, s1: piece('Long Left').s1},
       event: {crash: 'prop'}, propIdentityVerified: true,
       contact: {verified: true, actualResolutionEnd: {x: -896.7851311862836, z: -944.4206584681774},
@@ -632,7 +633,8 @@ function knownPlayerIncident() {
 test('native player exception admits zero or only the verified first-lap Long Left stock-driver incident', () => {
   const known = knownPlayerIncident();
   assert.equal(ardennesPlayerCrashAccepted(known.setup, known.final, known.observer), true);
-  assert.equal(ardennesPlayerCrashAccepted(known.setup, {crashes: 0}, {restored: true, playerEvents: []}), true);
+  assert.equal(ardennesPlayerCrashAccepted(known.setup, {crashes: 0, stageCrashes: 0},
+    {restored: true, incidents: [{index: 2, t: 9}], playerIncidents: [], cpuIncidents: [{index: 2, t: 9}], playerEvents: []}), true);
   for (const mutate of [
     row => {row.observer.playerEvents[0].propIdentityVerified = false;},
     row => {row.observer.playerEvents[0].contact.verified = false;},
@@ -654,4 +656,24 @@ test('native player exception admits zero or only the verified first-lap Long Le
   }
   assert.equal(ardennesPlayerCrashAccepted(known.setup, {crashes: 0}, known.observer), false);
   assert.equal(ardennesPlayerCrashAccepted(known.setup, known.final, {restored: true, playerEvents: []}), false);
+});
+
+
+test('native player exception rejects incomplete or inconsistent field incident receipts', () => {
+  for (const mutate of [
+    row => {delete row.observer.incidents;},
+    row => {row.observer.incidents.push({index: 7, t: 12});},
+    row => {row.observer.incidents.push({index: -2, t: 12});},
+    row => {row.observer.incidents.push({index: .5, t: 12});},
+    row => {row.observer.playerIncidents[0].t = 85;},
+    row => {row.observer.cpuIncidents = [];},
+    row => {row.observer.incidents = row.observer.incidents.filter(item => item.index !== -1); row.observer.playerIncidents = [];},
+    row => {row.observer.incidents.push({index: -1, t: 86}); row.observer.playerIncidents.push({index: -1, t: 86});},
+    row => {row.final.stageCrashes = 0;},
+    row => {row.final.stageCrashes = 2;},
+    row => {delete row.final.stageCrashes;},
+  ]) {
+    const row = knownPlayerIncident(); mutate(row);
+    assert.equal(ardennesPlayerCrashAccepted(row.setup, row.final, row.observer), false);
+  }
 });
