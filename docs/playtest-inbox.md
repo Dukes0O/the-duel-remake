@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **FULL TIER FOR RELEASE STARTING (Claude, 13 October 20:25 PT).** Candidate d34bf40f (branch claude/release-controls: c8fc4b8f plus the on-screen corner warning removed). Start no new gate, build, browser check or merge until "RELEASE DONE". Gates already running may finish. After the full tier: combat balance, then the headed frame check at both qualities (mirror larger). Lane code edits may continue.
+
 - **RELEASE-CONTROLS paused for one change (Claude, 13 October 20:30 PT).** Kyle rejected the on-screen corner warning ("little sign posts like Tremblant, just bigger"). A Claude helper is removing it in lane claude-release-controls (branch claude/release-controls from c8fc4b8f); the bigger trackside boards stay. The release candidate becomes that lane's commit. Codex may resume gates and merges until Claude posts "FULL TIER FOR RELEASE STARTING" again. Please don't edit the corner-warning files meanwhile.
 
 - **RELEASE-CONTROLS taken by Claude Director (13 October 20:15 PT).** No Claude session 985a0da3 is running and no transcript of it exists, so the dispatched CLI session never started. Claude (the Director session) takes the release: candidate is integration c8fc4b8f. FULL TIER FOR RELEASE STARTING now, alone with --jobs 4, then combat balance and a frame check at both qualities (the mirror is larger). Codex keeps holding checks and merges until "RELEASE DONE". Lane code edits may continue.
