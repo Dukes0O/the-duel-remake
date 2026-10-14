@@ -6,6 +6,15 @@ import {HELI_DESTINATIONS, HOME_COURSE, legFuelKg} from './heli-jobs.js';
 import {HELI_CAMERA_VIEWS} from './heli-camera.js';
 import {HELI_RADIO_LINES} from './heli-radio-lines.js';
 import {HELI_MONEY} from './heli-save.js';
+import {LESSON_RULES} from './heli-lessons.js';
+import {createDispatchBoard, atHomePad} from './heli-board.js';
+
+export const LESSON_TEXT = Object.freeze({
+  liftoff: Object.freeze({name: '1 Lift-off', goal: 'Rise to 3 m and hold her there for 5 seconds.'}),
+  hover: Object.freeze({name: '2 Hover', goal: 'Stay inside the circle, 2 to 5 m up, for 10 seconds.'}),
+  landing: Object.freeze({name: '3 Landing', goal: 'Land on the H, slow and gentle.'}),
+  carry: Object.freeze({name: '4 Carry and set down', goal: 'Hook the crate (H), carry it to the yellow circle, set it down gently and let go (H).'}),
+});
 
 const fmt = (value, digits = 0) => Number.isFinite(value) ? value.toFixed(digits) : '-';
 const escape = text => String(text ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -51,6 +60,11 @@ export function noticeText(event) {
     case 'entered': return event.arrived ? `${course(event.courseId)}: the landing zone is ahead` : course(event.courseId);
     case 'autopilotOff': return event.reason === 'pilot' ? 'Autopilot off: you have control' : null;
     case 'autopilotOn': return 'Autopilot on';
+    case 'lessonPassed': return `Lesson passed: ${LESSON_TEXT[event.lesson]?.name ?? event.lesson}`;
+    case 'lessonRetry': return 'Not quite: have another go';
+    case 'openingSkipped': return 'Lessons 1 and 2 marked done';
+    case 'jobTaken': return 'Job taken';
+    case 'jobDone': return `Job done: ${event.pay} credits`;
     default: return null;
   }
 }
@@ -120,17 +134,59 @@ export function pumpLabel(fuelKg, {credits = 0, refuels = 0} = {}) {
 
 const PUMP_LABEL = /<span class="heli-pump-label">[^<]*<\/span>/;
 
+// The instructor's board on the home pad, or the lesson running now.
+export function lessonsMarkup(view, board, {opening = false} = {}) {
+  if (!view?.heli) return '';
+  if (view.lesson) {
+    const rules = LESSON_RULES[view.lesson.id], text = LESSON_TEXT[view.lesson.id];
+    // The bar's width is set in place each frame (holdShare), so the panel
+    // and its Stop button are not rebuilt while the bar moves.
+    const hold = rules?.holdSeconds ? '<div class="heli-lesson-hold"><span></span></div>' : '';
+    return `<div class="heli-lessons heli-lesson-on" role="group" aria-label="Lesson"><span>LESSON ${escape(text.name.toUpperCase())}</span>
+      <p>${escape(text.goal)}</p>${hold}<button type="button" data-heli-lesson="stop">Stop the lesson</button></div>`;
+  }
+  if (!atHomePad(view) || !board?.length) return '';
+  const rows = board.map(item => {
+    const text = LESSON_TEXT[item.id];
+    const state = item.done ? 'done' : item.open ? 'open' : 'locked';
+    const button = item.open || item.done ? `<button type="button" data-heli-lesson="start:${item.id}">${item.done ? 'Retake' : 'Start'}</button>` : '<small>Opens later</small>';
+    return `<li class="heli-lesson-${state}"><span>${item.done ? '✓ ' : ''}${escape(text.name)}</span>${button}</li>`;
+  }).join('');
+  return `<div class="heli-lessons" role="group" aria-label="Instructor"><span>INSTRUCTOR</span><ul>${rows}</ul>${
+    opening ? '<button type="button" class="heli-skip" data-heli-lesson="skip">Skip the opening (marks lessons 1 and 2 done)</button>' : ''}</div>`;
+}
+
+// How far through a lesson's hold the pilot is, 0 to 1.
+export function holdShare(view) {
+  const seconds = LESSON_RULES[view?.lesson?.id]?.holdSeconds;
+  return seconds ? Math.min(1, Math.max(0, view.lesson.held / seconds)) : 0;
+}
+
 export function createHeliUi({host, app}) {
   const doc = host.ownerDocument, section = doc.createElement('section');
   section.className = 'heli-panel';
   section.hidden = true;
   section.setAttribute('aria-label', 'Kestrel One');
-  section.innerHTML = '<div class="heli-top"></div><div class="heli-controls"></div><div class="heli-notices" aria-live="polite"></div><div class="heli-radio" aria-live="polite" hidden></div>';
+  section.innerHTML = '<div class="heli-top"></div><div class="heli-side"><div class="heli-controls"></div><div class="heli-lessons-host"></div><div class="heli-board-host" hidden></div></div><div class="heli-notices" aria-live="polite"></div><div class="heli-radio" aria-live="polite" hidden></div>';
   host.append(section);
   const top = section.querySelector('.heli-top'), controls = section.querySelector('.heli-controls');
   const notices = section.querySelector('.heli-notices'), radio = section.querySelector('.heli-radio');
   let seenLog = null, shown = [], radioLine = null, lastTop = '', lastControls = '', lastNotices = '', disposed = false;
+  const lessonsHost = section.querySelector('.heli-lessons-host');
+  const boardHost = section.querySelector('.heli-board-host');
+  const board = createDispatchBoard({root: boardHost, app});
+  let lastLessons = '';
+  const lessonAction = action => {
+    const session = app.heliSession;
+    if (!session) return;
+    const result = action === 'stop' ? session.stopLesson() : action === 'skip' ? session.skipOpening()
+      : action.startsWith('start:') ? session.startLesson(action.slice(6)) : null;
+    if (result && result.ok === false && result.reason) shown.push({text: result.reason, until: performance.now() / 1000 + NOTICE_SECONDS});
+    app._heliEvents?.(session.takeEvents());
+  };
   const click = event => {
+    const lessonButton = event.target.closest('[data-heli-lesson]');
+    if (lessonButton) { lessonAction(lessonButton.dataset.heliLesson); lessonButton.blur(); return; }
     const place = event.target.closest('[data-heli-destination]');
     if (place) { app.heliSetDestination?.(place.dataset.heliDestination); place.blur(); return; }
     const pump = event.target.closest('[data-heli-fuel]');
@@ -173,6 +229,12 @@ export function createHeliUi({host, app}) {
         lastControls = controlsHtml;
       } else lastControls = set(controls, controlsHtml, lastControls);
       lastNotices = set(notices, shown.map(item => `<p>${escape(item.text)}</p>`).join(''), lastNotices);
+      const lessonBoard = app.heliSession?.lessonBoard?.() ?? [];
+      lastLessons = set(lessonsHost, lessonsMarkup(view, lessonBoard, {opening: lessonBoard.length > 0 && lessonBoard.every(item => !item.done)}), lastLessons);
+      const bar = lessonsHost.querySelector('.heli-lesson-hold span');
+      if (bar) { const width = `${(holdShare(view) * 100).toFixed(0)}%`; if (bar.style.width !== width) bar.style.width = width; }
+      // The dispatch board opens with lesson 3 and hides while a lesson runs.
+      if (!view.lesson && app.profile?.heli?.lessons?.landing) board.render(); else boardHost.hidden = true;
       const speaking = radioLine && radioLine.until > now;
       radio.hidden = !speaking;
       if (speaking && radio.dataset.text !== radioLine.text) { radio.dataset.text = radioLine.text; radio.innerHTML = `<b>RADIO</b> ${escape(radioLine.text)}`; }
@@ -182,6 +244,7 @@ export function createHeliUi({host, app}) {
       if (disposed) return;
       disposed = true;
       section.removeEventListener('click', click);
+      board.dispose();
       section.remove();
     },
   };

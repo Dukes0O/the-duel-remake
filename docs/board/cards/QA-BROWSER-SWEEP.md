@@ -1,5 +1,10 @@
 # QA-BROWSER-SWEEP
 
+## Open Claude sound decision
+
+Claude has answered the audio comparator: retain the strict pre-limiter and repeat-control checks, with the intentionally changed final output informational. The repair follows the merged Arena slice; the parent remains incomplete until its named runtime, recorder and quiet-frame failures are resolved.
+
+
 The short board entry controls current state, ownership, dependencies and locks.
 
 Claude, 14 October 08:00 PT. The full check's browser stage has failed two
@@ -181,3 +186,46 @@ Preservealloriginal35piece/pin/actualHighLOD/animation/grounding/framing/readOnl
 ## Duplicate kit-module slice merged — 14 October
 
 Actualf61881b2 tools-onlysource original19/19/jobs4/build589ms/reviewCLEAR; originalnative40pictures/all35modelsbothqualities/twoYeti-nightlegs pass, errorswarningsZERO, no suppression. Rootactualpixels reviewed, no newart/framepass. Cleanmerge/no rerun; ownlane+consumedpacketclearbefore nextslice.16originalfailuresnowfixed/consumedwithnarrowreceipts,1explicitmanual/accounted,6remain: arena baseline,2audio,frameenvironment,onfoot overlap,nightshaderprep. No aggregate129pass. Earlier7remainingdescription is supersededonlybythisactualkitresult; runtime/sound/releasedcourseownership boundariescontinue.
+
+
+## Current Arena baseline slice — 14 October
+
+Integration pulled before opening qa-browser-arena, branch codex/qa-browser-arena. Own only tools/scenarios/arena-shove.mjs, additive provenance cases in existing tools/test-arena-shove.mjs, and this card's change note. Claude already directed a current-integration baseline using the existing recipe. Reuse its existing snapshot preparation and native public eight-case matrix; make the ordinary full-check path prepare and consume its real verified report automatically. Keep the explicit historical 0f934845 path strict and labelled separately. A current comparison proves repeatability on its captured integrated source, never historical pre-card regression.
+
+The detached full check must anchor its captured integration commit, rather than a later advancing HEAD. Verify that the chosen base is in integration's first-parent history and that candidate source and runtime asset trees and bytes match; archive and verify every original file as before, with only the owned recipe overlay. Use only non-live integration dependencies and ignored output. Run baseline and candidate serially; propagate failures, restore environment, and clean only this slice's own checked snapshot and junction. No new general harness, production, physics, assets, input matrix, containment rule, timeout or threshold.
+
+Preserve all eight native input/seed/spawn/actor comparisons, contact observer/restoration checks, inherited-crossing classifications, shove minima, protection, wreck deadline and normal/oblique wall predicates. Separate only the unchanged historical 150 RAF diagnostic behind DUEL_BROWSER_LEGACY_TIMING=1, as accepted on the other recipes; default reports timing not run. Add meaningful strict historical/current provenance rejection cases without running a browser inside a pure test. Root reviews the exact source before any heavy job. Then original nearby/jobs4/build and one original Arena native run; no aggregate browser sweep or frame claim. Root owns shared metadata and cleanup; other teams' work stays intact.
+
+
+## Next runtime slice, after Arena's own lane is merged and cleared
+
+Read-only diagnosis identifies two separate current runtime faults. The on-foot hint's help panel occupies the same horizontal column as the enlarged route HUD at 1280 by 720. Keep both visible; place the help beside the map with a viewport-bounded width. Own only the controls-help/onfoot-hint layout in src/style.css. Preserve content, controls, fonts, other HUD layout and every original onfoot-hints scenario predicate. Its real browser rectangles are the geometry check; no new layout harness or hidden overlay workaround.
+
+The original day/night packet reacquires 40 shader program IDs at each mood change. environmentKey includes the entire lightPath, including its purely presentation changes, so each path change rebuilds and disposes the world instead of retaining its already prepared materials. Own src/environment-key.js only to omit lightPath from structural identity, using a local copy with no donor mutation. Keep exact old keys when lightPath is absent, and every seed, layout, timeOfDay, hidden-road, muddy-hollow and Deep-ramp distinction. Add meaningful equality and frozen-donor cases in existing tools/test-render-reuse.mjs, retaining every original structural inequality. Existing scene-lighting reads the current path each frame; do not change App, Game, renderer warmup, materials, preparation counters or shader assertions pre-emptively.
+
+These files are outside Claude's current helicopter hooks. No new lane starts before the Arena lane is consumed. Root will assign the separate slice then; source review precedes the original nearby/jobs4/build and unchanged onfoot-hints and p4-daynight browser runs. No timing, threshold, retries, whole sweep or new general machinery. A new measured fault gets its own bounded diagnosis, not an assumed warmup fix.
+
+## Claude answers - audio baseline comparator, 14 October
+
+The first option. The historical pre-bank comparison certifies that the voices
+are unchanged before mastering, using its recorded strict pre-limiter and
+repeat-control limits (both pass: repeat 0.00000177 under 0.000002, pre-limiter
+under 0.00000024). The final output is judged only by the existing approved
+mastering and crash recipes, since the +6.4 dB and 4x ceiling curve were
+accepted on purpose (c0bb9b18, 719bde78, 9e9bcebd). Report the final-output
+difference as information, not a failure. No threshold changes.
+
+
+### Preserve the real water dependency in that next slice
+
+A bounded read found one structural reader: circuit-water builds a different shader and lake colours when water and nonempty basins exist and the first light keyframe makes it night. The environment-key change must retain that effective water-night distinction. Omit the full top-level path from the definition copy, then add a structural suffix only when water/basins exist, timeOfDay is not already night, and the first path look is night. Definitions without a path keep exact original keys. Do not mutate the donor or rewrite water or warmup. Extend the existing render-reuse cases for day/night water, absent/empty basins, later keyframe changes and night timeOfDay, alongside every old structural inequality. The original HarborHighlands browser fixture has no circuit water, so its mood changes can retain the prepared world without concealing this actual dependency.
+
+
+## Arena slice merged
+
+Reviewed96bb1d47: original20/20/jobs4/build823ms; original native passes all scoped guards, private14136/memory-only/202pictures, no issues or warnings. Automatic baseline private46212 passes eight cases/24pictures; all1545 archived files verified. All eight matched input traces and geometries are exact; inherited crossings stay explicitly classified. The temporary snapshot was recycled safely. No frame or historical regression claim. Clean merge has no repeat gate. Clear this own lane before the next runtime/audio slice. Seventeen original failures are now fixed or consumed, rustwall-frame remains manual/accounted, and five remain: audio comparator, recorder reliability, quiet frames, on-foot layout and day/night preparation. No aggregate129 pass.
+
+
+## Runtime and answered-audio slice claimed
+
+Arena3ffe4a2c is merged and its own folder, branch and334945917 bytes of consumed evidence were recycled. Integration pulled before new qa-browser-runtime / codex/qa-browser-runtime. Implement only the already named CSS/help and environment-key/render-reuse scopes above. Also grant tools/audio/baseline-comparison.mjs and/or tools/scenarios/audio-baseline.mjs only after reading their actual existing comparator: retain every strict pre-limiter/repeat-control limit and case, report the intentionally changed final-output difference as information exactly as Claude answered. Name the actual file hook before code; no mastering, waveform, baseline reference, runtime audio, Chrome policy or threshold change. Use existing meaningful tests only if needed. Root owns the combined change note, shared metadata, review and heavy-job scheduling. Builders own separate files in this one card's folder and preserve each other's work. No source execution until Root has reviewed the combined freeze.

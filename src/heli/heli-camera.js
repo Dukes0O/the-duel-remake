@@ -2,6 +2,21 @@
 // helicopter, the cockpit, straight down the cable, and side. Drawing
 // only: it reads the session's view and returns a pose.
 export const HELI_CAMERA_VIEWS = Object.freeze(['behind', 'cockpit', 'cable', 'side']);
+// The pilot's eye in Kestrel One's model (its pilot_eye node): the right-hand
+// seat, metres from the origin under the mast (+X is the left side, +Z the nose).
+// A seated pilot's eye: seat 0.95 m up, eye about 0.75 m above it.
+export const PILOT_EYE = Object.freeze({x: -0.33, y: 1.70, z: 1.10});
+
+// A point in the helicopter's own frame (model axes) turned into the world
+// with the same attitude the scene draws: roll, then pitch, then heading
+// (three.js Euler order 'YXZ').
+export function heliToWorld(h, {x, y, z}) {
+  const cr = Math.cos(h.roll), sr = Math.sin(h.roll), cp = Math.cos(h.pitch), sp = Math.sin(h.pitch);
+  const ch = Math.cos(h.heading), sh = Math.sin(h.heading);
+  const x1 = x * cr - y * sr, y1 = x * sr + y * cr, z1 = z;
+  const y2 = y1 * cp - z1 * sp, z2 = y1 * sp + z1 * cp;
+  return {x: x1 * ch + z2 * sh, y: y2, z: -x1 * sh + z2 * ch};
+}
 
 export function heliCameraPose(view, index = 0) {
   const h = view?.heli;
@@ -10,9 +25,13 @@ export function heliCameraPose(view, index = 0) {
   const load = view.load?.hooked ? view.load : null;
   const name = HELI_CAMERA_VIEWS[((index % 4) + 4) % 4];
   if (name === 'cockpit') {
-    return {name, fov: 70,
-      position: {x: h.x + fwdX * 1.1, y: h.y + 1.45, z: h.z + fwdZ * 1.1},
-      target: {x: h.x + fwdX * 40, y: h.y + 1.45 - 40 * Math.tan(h.pitch) - 6, z: h.z + fwdZ * 40}};
+    // The eye and its gaze turn with the whole helicopter, so the seat
+    // stays inside the cabin in any bank or flare.
+    const offset = heliToWorld(h, PILOT_EYE), ahead = heliToWorld(h, {x: 0, y: 0, z: 40});
+    const eye = {x: h.x + offset.x, y: h.y + offset.y, z: h.z + offset.z};
+    return {name, fov: 70, position: eye,
+      // Nearly level (about 4 degrees down) so the panel stays along the bottom.
+      target: {x: eye.x + ahead.x, y: eye.y + ahead.y - 2.8, z: eye.z + ahead.z}};
   }
   if (name === 'cable') {
     const below = load ?? {x: h.x, y: h.y - 15, z: h.z};

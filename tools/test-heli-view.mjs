@@ -4,10 +4,14 @@
 import assert from 'node:assert/strict';
 import {createHeliState, heliReadout, stepHeli} from '../src/heli/heli-flight.js';
 import {flatGround} from '../src/heli/heli-ground.js';
-import {instrumentReadings, instrumentsMarkup, controlsMarkup, noticeText, pumpLabel} from '../src/heli/heli-ui.js';
+import {instrumentReadings, instrumentsMarkup, controlsMarkup, noticeText, pumpLabel, lessonsMarkup, holdShare} from '../src/heli/heli-ui.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 import {buyFuel} from '../src/heli/heli-save.js';
-import {heliCameraPose, HELI_CAMERA_VIEWS} from '../src/heli/heli-camera.js';
+import {heliCameraPose, HELI_CAMERA_VIEWS, PILOT_EYE, heliToWorld} from '../src/heli/heli-camera.js';
+import {createHeliView, KESTREL_MODEL_URL} from '../src/heli/heli-scene.js';
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {readFileSync} from 'node:fs';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -82,6 +86,28 @@ for (const [fuelKg, credits, refuels] of [[300, 1000, 2], [300.64, 1000, 2], [12
   }
 }
 
+// The instructor's panel: on the pad, the lessons with their state and the
+// opening's skip; during a lesson, its goal and the hold bar.
+{
+  const zone = {x: 0, z: 0, y: 10, radius: 12};
+  const pad = {phase: 'flying', courseId: 'tremblant-woods', zone, heli: {x: 0, z: 0, y: 10, onGround: true}};
+  const fresh = [{id: 'liftoff', open: true, done: false}, {id: 'hover', open: false, done: false},
+    {id: 'landing', open: false, done: false}, {id: 'carry', open: false, done: false}];
+  const html = lessonsMarkup(pad, fresh, {opening: true});
+  ok(html.includes('INSTRUCTOR') && html.includes('data-heli-lesson="start:liftoff"'), 'lesson 1 can start');
+  ok(!html.includes('start:hover') && html.includes('Opens later'), 'lesson 2 waits');
+  ok(html.includes('data-heli-lesson="skip"'), 'the opening can be skipped');
+  const later = lessonsMarkup(pad, fresh.map(item => ({...item, open: true, done: item.id !== 'carry'})));
+  ok(later.includes('Retake') && !later.includes('skip'), 'finished lessons can be retaken; no skip once begun');
+  eq(lessonsMarkup({...pad, heli: {...pad.heli, onGround: false}}, fresh), '', 'no board in the air');
+  const running = lessonsMarkup({...pad, lesson: {id: 'hover', held: 5}}, fresh);
+  ok(running.includes('LESSON 2 HOVER') && running.includes('heli-lesson-hold') && running.includes('data-heli-lesson="stop"'), 'a running lesson shows its goal, its bar and Stop');
+  eq(running, lessonsMarkup({...pad, lesson: {id: 'hover', held: 7}}, fresh), 'the panel does not change as the bar moves (no rebuild under the mouse)');
+  eq(holdShare({lesson: {id: 'hover', held: 5}}), 0.5, 'the bar is half full at 5 of 10 seconds');
+  eq(holdShare({lesson: {id: 'landing', held: 3}}), 0, 'no bar for the landing');
+  eq(noticeText({type: 'lessonPassed', lesson: 'carry'}), 'Lesson passed: 4 Carry and set down', 'passed notice');
+}
+
 // The four camera views.
 {
   const view = {heli: {x: 0, y: 40, z: 0, heading: 0, pitch: 0, roll: 0}, load: {x: 0, y: 24, z: 0, hooked: true}};
@@ -92,6 +118,53 @@ for (const [fuelKg, credits, refuels] of [[300, 1000, 2], [300.64, 1000, 2], [12
   ok(cable.target.y < view.load.y && Math.abs(cable.position.y - view.heli.y) < 1, 'down the cable from the hook');
   ok(Math.abs(side.position.x) === 30 && side.target.y === (view.heli.y + view.load.y) / 2, 'side view frames helicopter and car');
   eq(heliCameraPose(view, 4).name, 'behind', 'C wraps round');
+}
+
+// Kestrel One's model (the HELI-ART-SRC contract) and the scene that draws it.
+{
+  const bytes = readFileSync(new URL('../public' + KESTREL_MODEL_URL, import.meta.url));
+  const gltf = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString());
+  const node = name => gltf.nodes.find(item => item.name === name);
+  for (const name of ['body', 'main_rotor', 'tail_rotor', 'skids', 'instrument_panel', 'cable_hook', 'pilot_eye'])
+    ok(node(name), `the model has its ${name} node`);
+  assert.deepEqual(node('pilot_eye').translation.map(v => Math.round(v * 100) / 100), [PILOT_EYE.x, PILOT_EYE.y, PILOT_EYE.z], 'the cockpit view sits at pilot_eye'); checks++;
+  ok(Math.abs(node('main_rotor').translation[1] - 2.85) < 0.01, 'the rotor turns about the mast top, 2.85 m up');
+  const triangles = gltf.meshes.reduce((sum, mesh) => sum + mesh.primitives.reduce((n, p) => n + gltf.accessors[p.indices].count / 3, 0), 0);
+  ok(triangles <= 20000, `at most 20,000 triangles (${triangles})`);
+  ok(!(gltf.images?.length) || gltf.images.length <= 4, 'few or no textures');
+  const parse = () => new Promise((resolve, reject) =>
+    new GLTFLoader().parse(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '', gltf => resolve(gltf.scene), reject));
+  const scene = new THREE.Scene();
+  const view = createHeliView({THREE, scene, vehicleAssets: {status: () => 'error', load: () => Promise.resolve(false), create: () => null}, load: parse});
+  eq(view.modelStatus, 'idle', 'nothing is downloaded before the first helicopter frame');
+  view.update({heli: {x: 0, y: 0, z: 0, heading: 0, pitch: 0, roll: 0, rotor: 0, groundY: 0}, loads: []});
+  eq(view.modelStatus, 'loading', 'the first helicopter frame starts the download');
+  await new Promise(resolve => setTimeout(resolve, 50));
+  for (let i = 0; i < 20 && view.modelStatus === 'loading'; i++) await new Promise(resolve => setTimeout(resolve, 50));
+  eq(view.modelStatus, 'ready', `the model loads with its named nodes ${view.modelError}`);
+  const heli = {x: 10, y: 30, z: 5, heading: 0.5, pitch: 0.2, roll: -0.3, rotor: 1, groundY: 0};
+  const pose = view.update({heli, loads: [], zone: null}, {dt: 1 / 60});
+  const rotor = scene.getObjectByName('main_rotor'), tail = scene.getObjectByName('tail_rotor');
+  ok(rotor.rotation.y !== 0 && tail.rotation.x !== 0, 'main and tail rotors spin');
+  const top = scene.getObjectByName('Helicopter').children.find(child => child.isLine).geometry.attributes.position;
+  const hookAt = scene.getObjectByName('cable_hook').getWorldPosition(new THREE.Vector3());
+  ok(Math.hypot(top.getX(0) - hookAt.x, top.getY(0) - hookAt.y, top.getZ(0) - hookAt.z) < 1e-4, 'the cable starts at cable_hook, banked and pitched');
+  // The cockpit eye turns with the helicopter exactly as the model does.
+  const eyeAt = scene.getObjectByName('pilot_eye').getWorldPosition(new THREE.Vector3());
+  const eye = heliCameraPose({heli, load: null}, 1).position;
+  ok(Math.hypot(eye.x - eyeAt.x, eye.y - eyeAt.y, eye.z - eyeAt.z) < 1e-4, 'the cockpit camera sits at pilot_eye in a bank and a flare');
+  const spin = rotor.rotation.y;
+  view.update({heli, loads: [], zone: null}, {dt: 1 / 60});
+  ok(rotor.rotation.y > spin, 'the rotor keeps turning');
+  ok(pose.camera && !scene.getObjectByName('Kestrel One (stand-in)'), 'no stand-in in the scene');
+  const failing = createHeliView({THREE, scene: new THREE.Scene(), vehicleAssets: {status: () => 'error'}, load: () => Promise.reject(new Error('missing file'))});
+  const warn = console.warn; console.warn = () => {};
+  failing.update({heli, loads: []});
+  await new Promise(resolve => setTimeout(resolve, 10));
+  console.warn = warn;
+  ok(failing.update({heli, loads: []}) !== undefined && !failing.group.visible, 'after a failed load nothing hangs in the air');
+  ok(failing.modelStatus === 'error' && /missing file/.test(failing.modelError), 'a failed load is reported, never replaced with a stand-in');
+  view.dispose();
 }
 
 console.log(`test-heli-view: ${checks} checks passed`);

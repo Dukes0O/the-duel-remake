@@ -194,6 +194,10 @@ these before any lane starts, so builders never stop to ask:
 8. Sound cues and loudness; art sources and the look target.
 9. How it is checked: the targeted tests, the full check, the drive-through
    check, and Kyle's "go live".
+10. Water and trees (Kyle, 14 October 2026): where the course's lake or
+    other body of water is (every new course has one, for the helicopter's
+    fire bucket), and whether its forest can burn (`docs/HELI_FIRE.md`
+    section 4.1); a burnable course orders its burnt look with its art.
 
 The first packets written this way: `docs/FACTORY.md` itself (FAC cards)
 and `docs/THE_DEEP.md` section 10.

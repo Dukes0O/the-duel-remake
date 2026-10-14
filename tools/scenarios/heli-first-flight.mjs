@@ -17,9 +17,17 @@ export async function run(context) {
   const fuel = await context.evaluate(`window.__qaApp.heliBuyFuel().cost`);
   if (fuel !== 0) throw Error(`The first tank should be free, it cost ${fuel}`);
   await context.screenshot('heli-pad');
+  // A new pilot: the instructor's board, then lesson 1 from its button.
+  const instructor = await context.evaluate(`(() => { const panel = document.querySelector('.heli-lessons');
+    return !!panel && panel.textContent.includes('INSTRUCTOR') && !!document.querySelector('[data-heli-lesson="skip"]'); })()`);
+  if (!instructor) throw Error('The instructor board with the skip button should show for a new pilot on the pad.');
+  await context.evaluate(`document.querySelector('[data-heli-lesson="start:liftoff"]').click()`);
+  await context.waitFor(`window.__qaApp.heliView().lesson?.id === 'liftoff'`, 'lesson 1 running', 10_000);
   await context.evaluate(`(() => { window.__qaApp.keys = {KeyW: true}; })()`);
   await context.waitFor(`(() => { const v = window.__qaApp.heliView(); return v.heli.y - v.heli.groundY > 12; })()`, 'lift-off to 12 m', 30_000);
   await context.evaluate(`(() => { window.__qaApp.keys = {}; })()`);
+  await new Promise(resolve => setTimeout(resolve, 600));
+  await context.screenshot('heli-lesson');
   const views = ['behind', 'cockpit', 'cable', 'side'];
   for (let index = 0; index < 4; index++) {
     await context.evaluate(`(() => { window.__qaApp.heliCamera = ${index}; })()`);

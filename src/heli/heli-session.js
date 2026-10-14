@@ -7,9 +7,11 @@ import {HELI_STEP, KESTREL, createHeliState, stepHeli, heliReadout, refuelHeli, 
 import {createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, wantsControl} from './heli-autopilot.js';
 import {CABLE, createLoad, liftCheck, carMassKg, canHook, hook, release, stepCable} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
-  placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob} from './heli-save.js';
+  placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave} from './heli-save.js';
 import {HOME_COURSE, HELI_DESTINATIONS, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle} from './heli-jobs.js';
 import {isCourseUnlocked} from '../course-access.js';
+import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson} from './heli-lessons.js';
+import {CRATE} from './heli-cable.js';
 
 export const HELI_SESSION = Object.freeze({
   zoneRadius: CABLE.landingRadius,
@@ -77,6 +79,22 @@ export function courseSite(course, ground, courseId) {
     }
   }
   if (!spare) throw new Error(`No spare parking spot beside the pad at ${courseId}`);
+  // Lesson 4: the crate waits 18 m from the pad, clear of both parking
+  // spots, and its circle is a clear, level 10 m circle about 200 m out.
+  let crate = null;
+  for (let k = 0; k < 16 && !crate; k++) {
+    const a = (k + 0.25) * Math.PI / 8, x = zone.x + Math.cos(a) * 18, z = zone.z + Math.sin(a) * 18;
+    if (Math.hypot(x - parking.x, z - parking.z) < 9 || Math.hypot(x - spare.x, z - spare.z) < 9) continue;
+    if (clearCircle(course, ground, x, z, 3, 1)) crate = {x, z, y: ground.height(x, z)};
+  }
+  let target = null;
+  search: for (const distance of [200, 220, 180, 240, 160]) {
+    for (let k = 0; k < 24; k++) {
+      const a = k * Math.PI / 12, x = zone.x + Math.cos(a) * distance, z = zone.z + Math.sin(a) * distance;
+      if (clearCircle(course, ground, x, z, LESSON_RULES.carry.radius, 2)) { target = {x, z, y: ground.height(x, z), radius: LESSON_RULES.carry.radius}; break search; }
+    }
+  }
+  if (courseId === HOME_COURSE && (!crate || !target)) throw new Error('No room for the carrying lesson at the home pad');
   // The area covers the course, the pad and every arrival point, with a margin.
   const xs = course.samples.map(p => p.x), zs = course.samples.map(p => p.z);
   for (const other of Object.keys(HELI_DESTINATIONS)) {
@@ -88,7 +106,8 @@ export function courseSite(course, ground, courseId) {
   const startY = course.at(0).y;
   const area = {minX: Math.min(...xs) - m, maxX: Math.max(...xs) + m, minZ: Math.min(...zs) - m, maxZ: Math.max(...zs) + m,
     ceiling: startY + HELI_SESSION.ceilingAbove};
-  return Object.freeze({courseId, zone: Object.freeze(zone), parking: Object.freeze(parking), spare: Object.freeze(spare), area: Object.freeze(area), startY});
+  return Object.freeze({courseId, zone: Object.freeze(zone), parking: Object.freeze(parking), spare: Object.freeze(spare), area: Object.freeze(area), startY,
+    crate: crate && Object.freeze(crate), carryTarget: target && Object.freeze(target)});
 }
 
 // 1.5 km out from the zone along the way toward another course.
@@ -120,6 +139,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // After the player's own car is set down on an owned course: Race here.
   let offer = null;
   let jobCache = {key: '', job: null};
+  // The lesson running now, and the events it has not read yet.
+  let lesson = null, lessonEvents = [], retryAfterCrash = null;
   const autopilot = createAutopilot();
   const fallen = new Set();
   const pending = [];
@@ -128,7 +149,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     if (result?.ok && result.profile !== save) { save = result.profile; persist(save); }
     return result;
   };
-  const emit = event => { pending.push(event); return event; };
+  const emit = event => { pending.push(event); if (lesson) lessonEvents.push(event); return event; };
+  const lessonsDone = () => heliOf(save).lessons;
   const charge = (kind, amount) => {
     const result = commit(chargeRepair(save, amount, flag));
     emit({type: 'charged', kind, amount, charged: result.charged ?? 0, forgiven: result.forgiven ?? 0});
@@ -176,6 +198,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     cruiseOffered = false;
     cruiseTo = null;
     offer = null;
+    if (lesson) endLesson();
     if (autopilot.engaged) setAutopilotTarget(autopilot, destination === courseId ? zoneTarget() : null);
     // A job car on the cable that has come back to its pick-up heads for its drop-off.
     if (kept?.job && job?.id === kept.job && courseId === job.from) aim(job.to);
@@ -274,6 +297,12 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
 
   function crashed(cause) {
     storeFuel();
+    // A crash in a lesson means try again: it starts over on the pad.
+    if (lesson) {
+      retryAfterCrash = lesson.id;
+      emit({type: 'lessonRetry', lesson: lesson.id});
+      emit({type: 'radio', line: 'heli.radio.retry'});
+    }
     charge('crash', HELI_MONEY.crash);
     emit({type: 'crashed', cause});
     phase = 'crashed';
@@ -321,11 +350,54 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     emit({type: 'radio', line: 'heli.radio.job.done'});
   }
 
+  // ---- lessons (docs/HELICOPTER.md section 7) ----
+  const crateLoad = () => {
+    const spot = site.crate;
+    const crate = createLoad({id: CRATE.id, massKg: CRATE.massKg, x: spot.x, z: spot.z, heading: 0, ground: world.ground});
+    crate.own = false; crate.job = null; crate.crate = true;
+    return crate;
+  };
+  // The crate goes with the lesson, even off the cable.
+  function endLesson() {
+    loads = loads.filter(car => !car.crate);
+    lesson = null;
+    lessonEvents = [];
+  }
+  function stepLessonNow(dt) {
+    const crate = loads.find(car => car.crate) ?? null;
+    const picture = {heli, load: crate};
+    const events = lessonEvents.splice(0);
+    const result = stepLesson(lesson, picture, events, dt);
+    if (result.radio) emit({type: 'radio', line: result.radio});
+    if (result.result === 'passed') {
+      const id = lesson.id;
+      if (!lessonsDone()[id]) commit(finishLessonSave(save, id, flag));
+      endLesson();
+      emit({type: 'lessonPassed', lesson: id});
+    } else if (result.result === 'retry') {
+      emit({type: 'lessonRetry', lesson: lesson.id});
+      if (lesson.id === 'carry') {
+        loads = loads.filter(car => !car.crate);
+        loads.push(crateLoad());
+      }
+    }
+  }
+  // The pump opens with lesson 3 (the first tank is always free, and a
+  // nearly empty tank can always be filled); the dispatch board too; cars
+  // can be carried after lesson 4.
+  const pumpOpen = () => lessonsDone().landing || heliOf(save).refuels === 0 || (heli?.fuelKg ?? 0) <= KESTREL.tankKg * KESTREL.lowFuelShare;
+
   const api = {
     start(courseId = HOME_COURSE) {
       if (today) commit(notePlayDay(save, today, flag));
       destination = null;
       enter(courseId);
+      // A new pilot hears the opening: welcome and the controls.
+      if (courseId === HOME_COURSE && LESSON_ORDER.every(id => !lessonsDone()[id])) {
+        emit({type: 'radio', line: 'heli.radio.welcome'});
+        emit({type: 'radio', line: 'heli.radio.controls'});
+        emit({type: 'openingOffered'});
+      }
       const job = jobInHand();
       if (job) aimAtJob(job);
       return api.takeEvents();
@@ -355,6 +427,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           storeFuel();
           const job = jobInHand();
           if (job) aimAtJob(job);
+          if (retryAfterCrash) { const id = retryAfterCrash; retryAfterCrash = null; api.startLesson(id); }
         }
         return api.takeEvents();
       }
@@ -372,6 +445,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       }
       handle(stepHeli(heli, ap.commands ? {} : controls, {ground: world.ground, external: pull, commands: ap.commands}, dt));
       if (phase !== 'flying') return api.takeEvents();
+      if (lesson) stepLessonNow(dt);
       if (strandedOnGround()) {
         storeFuel();
         const truck = commit(fuelTruck(save, flag));
@@ -421,10 +495,16 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const hookAt = {x: heli.x, y: heli.y - CABLE.length, z: heli.z};
       const reach = car => Math.hypot(hookAt.x - car.x, hookAt.z - car.z);
       const load = loads.reduce((best, car) => reach(car) < reach(best) ? car : best);
-      if (!liftCheck(load.id).ok) {
+      // The lesson crate is not a car; the hook limit still applies to it.
+      if (!load.crate && !liftCheck(load.id).ok) {
         // Only when the hook is over the car.
         if (reach(load) <= CABLE.hookReach && Math.abs(hookAt.y - load.y) <= CABLE.hookHeightSlack + 1)
           emit({type: 'cannotLift', carId: load.id, reason: liftCheck(load.id).reason});
+        return null;
+      }
+      if (!load.crate && !lessonsDone().carry) {
+        if (reach(load) <= CABLE.hookReach && Math.abs(hookAt.y - load.y) <= CABLE.hookHeightSlack + 1)
+          emit({type: 'cannotLift', carId: load.id, reason: 'Finish lesson 4, carry and set down, before carrying cars.'});
         return null;
       }
       if (!canHook(heli, load)) return null;
@@ -472,6 +552,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // the ground. Infinity fills the tank (the free first tank).
     buyFuel(kg = Infinity) {
       if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The pump is at the home pad.'};
+      if (!pumpOpen()) return {ok: false, reason: 'Finish lesson 3, landing, to use the pump.'};
       storeFuel();
       const result = commit(buyFuel(save, kg, flag));
       if (result.ok) {
@@ -497,6 +578,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     takeJob(id) {
       if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The dispatch board is at the home pad.'};
       if (id === 'own') { aim(null); return {ok: true, own: true}; }
+      if (!lessonsDone().landing) return {ok: false, reason: 'Finish lesson 3, landing, to open the dispatch board.'};
       const day = playDay(), job = dayJobs(day).find(item => item.id === id);
       if (!job) return {ok: false, reason: "That job is not on today's board."};
       const result = commit(takeJobSave(save, id, day, flag));
@@ -530,6 +612,42 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     raceHereOffer() {
       return phase === 'flying' && offer && site?.courseId === offer.courseId ? {...offer} : null;
     },
+    // The instructor's board: every lesson, open, done or running.
+    lessonBoard() {
+      const done = lessonsDone();
+      return Object.freeze(LESSON_ORDER.map(id => Object.freeze({id, open: lessonOpen(done, id) || done[id], done: done[id],
+        active: lesson?.id === id})));
+    },
+    // Start (or retake) a lesson: on the ground at the home pad.
+    startLesson(id) {
+      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'Lessons start on the home pad.'};
+      const done = lessonsDone();
+      if (!LESSON_ORDER.includes(id) || !(lessonOpen(done, id) || done[id])) return {ok: false, reason: 'That lesson is not open yet.'};
+      if (lesson) endLesson();
+      if (id === 'carry' && loads.some(car => car.hooked)) return {ok: false, reason: 'Set the load down first.'};
+      lesson = createLesson(id, {spot: {x: site.zone.x, z: site.zone.z}, target: site.carryTarget});
+      lessonEvents = [];
+      if (id === 'carry') loads.push(crateLoad());
+      aim(null);
+      emit({type: 'lessonStarted', lesson: id});
+      return {ok: true};
+    },
+    stopLesson() {
+      // Stopping during the wait after a crash also cancels the retry.
+      retryAfterCrash = null;
+      if (!lesson) return false;
+      endLesson();
+      emit({type: 'lessonStopped'});
+      return true;
+    },
+    // Skipping the opening marks lessons 1 and 2 done.
+    skipOpening() {
+      for (const id of SKIP_MARKS) if (!lessonsDone()[id]) commit(finishLessonSave(save, id, flag));
+      if (lesson && SKIP_MARKS.includes(lesson.id)) endLesson();
+      emit({type: 'openingSkipped'});
+      return true;
+    },
+    get lesson() { return lesson ? {id: lesson.id, held: lesson.held, target: lesson.target, spot: lesson.spot} : null; },
     // Leave the mode: the fuel left in the tank is kept.
     leave() {
       if (heli && phase !== 'idle') storeFuel();
@@ -555,6 +673,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         load: primaryLoad() ? loadView(primaryLoad()) : null,
         loads: Object.freeze(loads.map(loadView)),
         job: jobInHand(),
+        lesson: lesson ? Object.freeze({id: lesson.id, held: lesson.held, spot: lesson.spot, target: lesson.target}) : null,
+        crate: site?.crate ?? null,
         readout: heli ? heliReadout(heli, {loadKg: loads.find(car => car.hooked)?.massKg ?? 0}) : null,
         zone: site?.zone ?? null, parking: site?.parking ?? null, area: site?.area ?? null,
         fade: phase === 'cruise' ? 1 - timer / HELI_SESSION.fadeSeconds : 0,
