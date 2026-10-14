@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import * as THREE from 'three';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {constrainTunnelCamera} from '../src/camera-clearance.js';
@@ -59,3 +60,35 @@ for(const def of [HARBOUR_LIGHTS,TREMBLANT_SNOW]){
  assert.equal(JSON.stringify(course.features),snapshot,'camera sweep never changes physical features');checks++;
 }
 console.log('Target-aware camera: '+checks+' total tunnel/visibility/input checks passed.');
+
+// Real native Lantern pose: a clear ray can still point the car out of frame.
+{
+ const camera=new THREE.PerspectiveCamera(55,1280/800,.15,2400);
+ camera.position.set(-975.5890524510698,38.68503138833465,964.8968751048432);
+ const body=new THREE.Vector3(-984.1301261934653,36.095000005960486,966.5034248215527);
+ const forward=new THREE.Vector3(-998.0272022253633,36.085,951.3105459699659);
+ camera.lookAt(forward);camera.updateMatrixWorld();
+ const projection=body.clone().project(camera);
+ assert.ok(projection.x < -1,'actual Lantern forward aim leaves the player outside the frame');
+ const before=JSON.stringify({projection,forward,body});
+ const aim=clearance.selectCameraAim(projection,forward,body);
+ assert.equal(aim,body,'out-of-frame actual player becomes the viewing aim');
+ camera.lookAt(aim);camera.updateMatrixWorld();
+ const corrected=body.clone().project(camera);
+ assert.ok(Math.abs(corrected.x)<=1&&Math.abs(corrected.y)<=1&&corrected.z>=-1&&corrected.z<=1,
+   'actual body is inside the native perspective frustum after the aim correction');
+ assert.equal(JSON.stringify({projection,forward,body}),before,'projection and both aim inputs are read only');
+ camera.position.set(0,3.65,-8.7);forward.set(0,1.05,26);body.set(0,1.05,0);
+ camera.lookAt(forward);camera.updateMatrixWorld();
+ const straight=body.clone().project(camera);
+ assert.ok(Math.abs(straight.x)<=1&&Math.abs(straight.y)<=1&&straight.z>=-1&&straight.z<=1,
+   'existing straight-road forward aim already keeps the body inside the frame');
+ assert.equal(clearance.selectCameraAim(straight,forward,body),forward,'inside-frustum forward aim is preserved by identity');
+ for(const outside of [{x:1.01,y:0,z:0},{x:0,y:-1.01,z:0},{x:0,y:0,z:1.01},
+   {x:0,y:0,z:-1.01},{x:NaN,y:0,z:0},{x:0,y:Infinity,z:0}]){
+  assert.equal(clearance.selectCameraAim(outside,forward,body),body,'outside, behind and nonfinite projections use the actual body');
+ }
+ assert.equal(clearance.selectCameraAim({x:1,y:-1,z:1},forward,body),forward,'exact native frustum boundaries stay unchanged');
+ checks+=13;
+}
+console.log('Camera framing: '+checks+' total unchanged-clearance and real perspective checks passed.');

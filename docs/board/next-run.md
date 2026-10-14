@@ -34,7 +34,10 @@ Start from `node tools/board.mjs`. Read each card's "Claude answers" first.
    1 to 5 are merged.
    - The Deep beyond its art and sound waits for Kyle's storyboard with
      Gratian: no DEEP-TRAIL, DEEP-LIFE or DEEP-LOG work.
-   - The helicopter and the Lab wait for it too.
+   - The Lab waits for it too. The helicopter is released (Kyle, 14
+     October): Claude owns the Flying line in its own lanes
+     (`docs/HELICOPTER.md`); Codex takes only HELI-ART-SRC, whenever an
+     ART lane is free.
 
 Cards waiting on Claude are skipped while other work exists. After an hour
 without an answer, AGENTS rule 16's backup applies.
