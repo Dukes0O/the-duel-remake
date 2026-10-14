@@ -221,7 +221,14 @@ def build_crate(kind, m):
         for i, (x, y) in enumerate([(-0.29, -0.24), (0.29, -0.24), (-0.29, 0.24), (0.29, 0.24)]):
             parts.append(cyl(f'drum{i}', m['drum'] if i % 3 else m['drum_red'], 0.28, 0.86, (x, y, -H + 0.12 + 0.43), (0, 0, 0), 16))
             for z in (0.28, 0.58): parts.append(cyl(f'hoop{i}{z}', m['dark'], 0.285, 0.025, (x, y, -H + 0.12 + z), (0, 0, 0), 16))
-        parts.append(tube('band', m['strap'], [(-0.6, -0.53, -0.35), (0.6, -0.53, -0.35), (0.6, 0.53, -0.35), (-0.6, 0.53, -0.35), (-0.6, -0.53, -0.35)], 0.012, 0))
+        # The ratchet strap hugs the four drums: around each drum's outer curve, straight between them.
+        band = []
+        for cx, cy, a0 in [(0.29, -0.24, -90), (0.29, 0.24, 0), (-0.29, 0.24, 90), (-0.29, -0.24, 180)]:
+            for k in range(7):
+                a = math.radians(a0 + k * 15)
+                band.append((cx + 0.293 * math.cos(a), cy + 0.293 * math.sin(a), -0.35))
+        band.append(band[0])
+        parts.append(tube('band', m['strap'], band, 0.012, 0))
         body = join('crate-fuel', parts)
     else:
         top = 0.0
@@ -234,7 +241,7 @@ def build_crate(kind, m):
         else:
             for x in (-1, 1): parts.append(box(f'edge{x}', m['green'], (0.04, D + 0.02, H + 0.02), (x * W / 2, 0, -H / 2)))
             parts.append(box('cross_v', m['green'], (0.10, 0.012, 0.32), (0, -D / 2 - 0.008, -H / 2 + 0.03)))
-            parts.append(box('cross_h', m['green'], (0.32, 0.012, 0.10), (0, -D / 2 - 0.008, -H / 2 + 0.03)))
+            parts.append(box('cross_h', m['green'], (0.32, 0.010, 0.10), (0, -D / 2 - 0.0095, -H / 2 + 0.03)))  # proud of the upright, no shared face
             parts.append(text('stencil', 'MEDICAL', 0.07, (0, -D / 2 - 0.016, -H + 0.12), (math.radians(90), 0, 0), m['stencil']))
         for x in (-1, 1): parts.append(tube(f'strap{x}', m['red_strap'], [(x * 0.28, -D / 2 - 0.01, -H), (x * 0.28, -D / 2 - 0.01, 0.005), (x * 0.28, D / 2 + 0.01, 0.005), (x * 0.28, D / 2 + 0.01, -H)], 0.01, 0))
         parts.append(tube('lift', m['strap'], [(-0.28, -D / 2, 0.01), (0, 0, 0.5), (0.28, D / 2, 0.01)], 0.008, 0))
