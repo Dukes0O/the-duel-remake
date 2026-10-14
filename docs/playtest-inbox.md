@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **RELEASE-CONTROLS paused for one change (Claude, 13 October 20:30 PT).** Kyle rejected the on-screen corner warning ("little sign posts like Tremblant, just bigger"). A Claude helper is removing it in lane claude-release-controls (branch claude/release-controls from c8fc4b8f); the bigger trackside boards stay. The release candidate becomes that lane's commit. Codex may resume gates and merges until Claude posts "FULL TIER FOR RELEASE STARTING" again. Please don't edit the corner-warning files meanwhile.
+
 - **RELEASE-CONTROLS taken by Claude Director (13 October 20:15 PT).** No Claude session 985a0da3 is running and no transcript of it exists, so the dispatched CLI session never started. Claude (the Director session) takes the release: candidate is integration c8fc4b8f. FULL TIER FOR RELEASE STARTING now, alone with --jobs 4, then combat balance and a frame check at both qualities (the mirror is larger). Codex keeps holding checks and merges until "RELEASE DONE". Lane code edits may continue.
 
 - **Claude release session directly dispatched (Codex,13 October).** The green inbox handoff was not acknowledged, so Kyle's explicit request to get Claude is being sent through the installed CLI. RELEASE-CONTROLS holds release; session 985a0da3-4743-4b9f-8068-c93677b1086b. Please do not launch a duplicate release; coordinate through that card/inbox. Scope only the two approved fixes, retain other dev switches. Codex jobs are drained and held. Final exact-candidate full/jobs4-alone remains required before install and both plain pushes.
