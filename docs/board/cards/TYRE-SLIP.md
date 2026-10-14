@@ -507,3 +507,70 @@ with this card named as the reviewed reason.
   balance tools show little change; how human races feel is judged in play.
 - Keyboard players can reach more of the grip between 50 and 100 mph than
   today. That is part of the change; the keyboard lap acceptance watches it.
+
+## Independent review: CHANGES, settled by Claude (14 October 2026)
+
+An independent reviewer recomputed every worked number in sections 2 to 6
+from the card's formulas: all match except the items below. The slip update
+is an exact exponential, so it is stable at 120 Hz, at the 8 m/s floor and at
+top speed; a held full-lock slide from 80 mph settles at 49.7 mph (ask back to
+1.0). "Nothing faster than today" holds, braking included. Section 0 is
+accurate. Codex builds to the card as amended here; these amendments win over
+the text above.
+
+1. **Snow wording.** Grip and traction cancel out of `ask`, so full lock
+   slides at the same speed on every surface; what changes on snow is that a
+   given corner at a given speed needs a higher `ask`. Reword sections 2 and 5
+   to say that. Test 2's snow case becomes: desired yaw 0.8 rad/s at 60 mph
+   gives ask 0.715 on grip 1 and 1.02 on grip 0.7.
+2. **Audio.** The tyre loop reads a new variable (`tyreSlipSmoothed`). The
+   road-scrub (audio.js about 1493 to 1495) and gravel (about 1513) layers keep
+   reading today's `smoothedSlip` unchanged. Loop gain is 0 below slip 0.928
+   (the (x - 0.08) / 0.92 step), not 0.9.
+3. **Drift autopilot.** Give the drift-event autopilot a target, not only a
+   ceiling: corner speed factor 1.058 (ask 1.12), so it actually slides and
+   scores.
+4. **Drift records.** Add an optional `tyreSlipRules: true` on new results and
+   leaderboard rows (absent means old rules). `src/leaderboard.js` about line
+   128 must keep old drift rows instead of dropping them for a different
+   `driftTarget`, showing them under old rules. Readers to include in the
+   hooks: `src/progression.js` about 456 to 457 and 658, `src/screen-menu.js`
+   about 60. This takes the `save-shape` lock and gets the save review.
+5. **Keyboard.** "Above 100 mph a held key alone does not slide" becomes
+   "above 88 mph" (ceiling 2.1 - 0.0125 x mph). And Kyle approved today's
+   gentler keyboard on 13 October: **a held key must never give more yaw than
+   today at any speed.** Keep each speed's keyboard ceiling at or below
+   today's cap (today 0.80 to 0.90 of peak from 60 to 88 mph, not 0.93), and
+   keep 40 to 50 mph at today's value too. Taps unchanged within 1e-9. The
+   gamepad at full stick above 62 mph sliding is intended: full stick is
+   asking for too much.
+6. **Tests.** Slip settles "within 1% of 1.25" (1.2447 at 0.5 s; crosses 1.0 at
+   0.175 s); give the yaw-settles and speed-loss checks a stated tolerance. The
+   1.0 to 0.75 drop test limit is 0.3 s at a pinned speed (measures 0.242 s).
+   "Full brake plus steer at 100 mph" checks slip at least 1.25 within the
+   first 0.3 s.
+7. **Hooks to add:** `tools/scenarios/grand-prix-pay.mjs` and
+   `grand-prix-existing.mjs` (inject `steerForYaw` and `TYRE_SLIP` with the
+   pasted helpers); a switch option for `tools/build-reference-laps.mjs`,
+   `tools/track-script-drive.mjs` and `tools/race-field-balance.mjs`;
+   `tools/combat-balance.mjs` `--flags` must accept `tyre-slip`.
+8. **`steeringGrip`** is computed inside `steeringYawAuthority` (`max(grip,1)`
+   for assisted cars under 45 mph). Export it; `peakYaw` uses that same value.
+9. **Keyboard rules per race:** the adapter is built once in the App
+   constructor, so pass the rules into `update()`.
+10. **Off-road:** `tyreSlip` runs everywhere in a road race (the drawn angle
+    needs it) and `g(slip)` applies off-road too; no new speed cost off-road
+    beyond today's.
+11. **Which events:** Titan Monster Arena and Titan Stunt Trial keep today's
+    steering, like the venue arenas (Kyle wants sharp steering in arenas).
+    Ridge Rally gets the new rules.
+12. **Smaller points:** in `steerForYaw` compute brake before steer; keep each
+    caller's argument list. Keyboard identity checks use 1e-9 tolerance. In
+    section 5, apply the speed ceiling after averaging the ramp. Simulate
+    Lantern Hairpin entry before freezing its "late entry shows slip for 0.5 s"
+    check. The drawn slip angle must be 0 at slip 0 and must not flip sign
+    while counter-steering through zero.
+
+Review: CLEAR to build with these amendments. Police are unaffected (they
+use a speed target only).
+
