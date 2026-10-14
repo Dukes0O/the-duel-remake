@@ -433,3 +433,15 @@ tasks:
     details: "docs/board/cards/QA-TITAN-REPLAY-TIMEOUT.md"
 
 
+  - id: TYRE-SLIP
+    title: "Sliding costs grip, like real tyres (grip peaks at a small slide; a long screech loses time)"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    waiting_on: "claude"
+    needs: []
+    locks: [busy-game-files]
+    flag: "tyre-slip"
+    details: "docs/board/cards/TYRE-SLIP.md"
+
