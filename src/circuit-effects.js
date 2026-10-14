@@ -1,7 +1,7 @@
 // Scenery a circuit draws for itself, from the `effects`, `hills` and `basins`
 // blocks of its definition (docs/CIRCUITS.md section 5.3): a lake with mist
 // drifting over it, wooded hills with ski runs cut into them and a ring of
-// rounded hills far behind. Presentation only. Nothing here reads or writes race
+// rounded hills far behind. Presentation only. Native progress can fade the mist; nothing writes race
 // state, and nothing is placed on the road: the circuit's own test checks the
 // footprints against the road.
 //
@@ -44,6 +44,8 @@
 //     (`sink` metres into it, so a building has no gap under its walls).
 import * as THREE from 'three';
 import { registerSceneSystem } from './scene-systems.js';
+import { renderedGroundHeight } from './rendered-ground.js';
+import { ROAD_SHOULDER_WIDTH } from './config.js';
 import { trackKitsOf } from './track-kits.js';
 import { hillHeight, hillLocal, hillReach, runWeight, shoreFactor } from './circuit-hills.js';
 import { addStandCrowds } from './stand-crowd.js';
@@ -130,6 +132,85 @@ function addMist(group, course, lake, level, options) {
   };
   place(0);
   registerSceneSystem(group, { animate: place, dispose() { texture.dispose(); material.dispose(); } });
+}
+
+// Ardennes's authored dry-land banks use the same soft texture as lake mist.
+// Ground anchors are measured once. Native lap progress only changes opacity;
+// the scene graph owns and disposes every material and the shared texture.
+function addValleyMist(group, course, entries) {
+  if (!Array.isArray(entries) || !entries.length || entries.length > 8)
+    throw Error('Valley mist needs one to eight authored banks.');
+  const banks = [];
+  for (const bank of entries) {
+    if (![bank.s, bank.lateral, bank.along, bank.across, bank.count, bank.height, bank.opacity, bank.fadeEnd].every(Number.isFinite) ||
+        bank.s < 0 || bank.s > course.length || Math.abs(bank.lateral) > 256 || bank.along <= 0 || bank.along > 160 || bank.across <= 0 || bank.across > 100 ||
+        !Number.isSafeInteger(bank.count) || bank.count < 1 || bank.count > 32 || bank.height < 0 || bank.height > 40 ||
+        bank.opacity < 0 || bank.opacity > .5 || bank.fadeEnd <= 0 || bank.fadeEnd > 1 ||
+        !Number.isSafeInteger(bank.colour) || bank.colour < 0 || bank.colour > 0xffffff)
+      throw Error('Valley mist has invalid authored bounds.');
+  }
+  const texture = mistTexture();
+  for (const bank of entries) {
+    const material = new THREE.SpriteMaterial({map: texture, color: bank.colour,
+      transparent: true, opacity: bank.opacity, depthWrite: false});
+    for (let i = 0; i < bank.count; i++) {
+      const angle = i * 2.399 + .6, reach = .2 + .7 * ((i * .618) % 1);
+      const s = course.phase(bank.s + Math.cos(angle) * reach * bank.along);
+      const lateral = bank.lateral + Math.sin(angle) * reach * bank.across;
+      const point = course.groundAt(s, lateral);
+      const height = renderedGroundHeight(course, {...point, s, off: lateral}, {requireSurface: true});
+      if (!Number.isFinite(height)) throw Error('Valley mist has no actual rendered ground.');
+      const sprite = new THREE.Sprite(material);
+      sprite.name = 'Ardennes valley mist';
+      sprite.position.set(point.x, height + bank.height, point.z);
+      sprite.scale.set(34 + i % 4 * 7, 7 + i % 3 * 2, 1);
+      sprite.userData.valleyAnchor = Object.freeze({s, lateral, height: bank.height});
+      group.add(sprite);
+    }
+    banks.push({material, opacity: bank.opacity, fadeEnd: bank.fadeEnd});
+  }
+  let previous = -1;
+  registerSceneSystem(group, {sync(state) {
+    const laps = state?.lapsTotal ?? course.def.laps;
+    const progress = state?.status === 'menu' ? 0 : Math.max(0, Math.min(1,
+      ((state?.completedLaps ?? 0) + course.phase(state?.s ?? 0) / course.length) / Math.max(1, laps)));
+    if (progress === previous) return;
+    previous = progress;
+    for (const bank of banks) bank.material.opacity = bank.opacity * (1 - smooth(progress / bank.fadeEnd));
+  }});
+}
+
+// A visible stream on both sides of Red Water. The unchanged road and its
+// shoulders cover the crossing. No water surface, basin, grip or reset rule.
+function addStream(group, course, spec) {
+  if (![spec.s, spec.width, spec.reach].every(Number.isFinite) || spec.s < 0 || spec.s > course.length ||
+      spec.width <= 0 || spec.width > 12 || spec.reach <= 20 || spec.reach > 128 ||
+      !Number.isSafeInteger(spec.colour) || spec.colour < 0 || spec.colour > 0xffffff)
+    throw Error('Stream needs bounded authored dimensions.');
+  const positions = [], indices = [];
+  const start = course.roadHalfWidthAt(spec.s) + ROAD_SHOULDER_WIDTH + 1;
+  for (const side of [-1, 1]) for (let depth = start; depth < spec.reach; depth += 2) {
+    const quad = [];
+    for (const [ds, off] of [[-spec.width / 2, depth], [spec.width / 2, depth],
+      [-spec.width / 2, Math.min(spec.reach, depth + 2)], [spec.width / 2, Math.min(spec.reach, depth + 2)]]) {
+      const point = course.worldAt(spec.s + ds, side * off), nearest = course.nearest(point.x, point.z, spec.s);
+      if (nearest.distance <= course.roadHalfWidthAt(nearest.s) + ROAD_SHOULDER_WIDTH + .5) break;
+      const height = renderedGroundHeight(course, {...point, s: nearest.s, off: nearest.lateral}, {requireSurface: true});
+      if (!Number.isFinite(height)) throw Error('Stream has no actual rendered ground.');
+      quad.push([point.x, height + .04, point.z]);
+    }
+    if (quad.length !== 4) continue;
+    const first = positions.length / 3;
+    for (const point of quad) positions.push(...point);
+    indices.push(first, first + 2, first + 1, first + 1, first + 2, first + 3);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices); geometry.computeVertexNormals();
+  const material = new THREE.MeshStandardMaterial({name: 'Red-brown stream', color: spec.colour,
+    roughness: .36, metalness: .08, side: THREE.DoubleSide});
+  const mesh = new THREE.Mesh(geometry, material); mesh.name = 'Ardennes red-brown stream';
+  mesh.receiveShadow = true; group.add(mesh);
 }
 
 // A tile of tree crowns seen from far off, in grey, made in code (no image to load):
@@ -423,6 +504,8 @@ export function birchSpots(course, config) {
 
 export function addCircuitEffects(group, course) {
   const effects = course.def.effects ?? {};
+  if (effects.valleyMist) addValleyMist(group, course, effects.valleyMist);
+  if (effects.stream) addStream(group, course, effects.stream);
   if (effects.lake) {
     const mesh = lakeMesh(course, effects.lake);
     group.add(mesh);

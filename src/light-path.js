@@ -42,6 +42,16 @@ export function lightPathLook(look, theme = 'desert', palette) {
   if(palette==='mountain-sunset'&&look==='dusk') value={...value,
     fog:0x8c808e,top:'#675278',horizon:'#df9170',ground:0x736981,
     hemi:1.35,env:.48,exposure:1.12,cloudTint:[.59,.44,.52]};
+  if (palette === 'forest-morning' && look === 'golden') value = {...value,
+    sunOffset: {x: -105, y: 38, z: 62}, sunColor: 0xf8ddbb,
+    fog: 0xc3cecd, fogNear: 90, fogFar: 1050, top: '#7195ad', horizon: '#d9e1da',
+    ground: 0x4c5945, sun: 1.45, hemi: 1.35, env: .42, exposure: 1.12, bloom: .08,
+    cloudCover: .72, cloudTint: [.82, .87, .87], lightLevel: .8};
+  if (palette === 'forest-morning' && look === 'day') value = {...value,
+    sunOffset: {x: -76, y: 94, z: 42}, sunColor: 0xfff2dc,
+    fog: 0xc3d8df, fogNear: 360, fogFar: 2400, top: '#427fa9', horizon: '#d7e4dd',
+    ground: 0x4b6843, sun: 2.25, hemi: 1.45, env: .5, exposure: 1.1, bloom: .06,
+    cloudCover: .28, cloudTint: [.93, .96, 1], lightLevel: 1};
   for (const field of COLOURS) value[field] = Object.freeze(field === 'cloudTint' ? [...value[field]] : rgb(value[field]));
   value.sunOffset = Object.freeze({...value.sunOffset});
   Object.freeze(value);
@@ -50,7 +60,7 @@ export function lightPathLook(look, theme = 'desert', palette) {
 }
 
 function validPath(path) {
-  if (!path || typeof path !== 'object' || path.palette!==undefined&&path.palette!=='mountain-sunset') return false;
+  if (!path || typeof path !== 'object' || path.palette!==undefined&&path.palette!=='mountain-sunset'&&path.palette!=='forest-morning') return false;
   if (pathCache.has(path)) return pathCache.get(path);
   const frames = path.keyframes;
   let valid = (path.axis === 'distance' || path.axis === 'race-progress') && Array.isArray(frames) && frames.length > 0;

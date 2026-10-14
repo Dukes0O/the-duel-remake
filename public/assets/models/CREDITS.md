@@ -54,3 +54,8 @@ for the three handwheel valves.
 adds the boarding plate and paired roof lamps, and supplies the approved wear
 and hazard markings. The kept donor choices and checksums are in
 `tools/art/tanker-fit.json` and `tools/art/catalog.json`.
+
+
+## Ardennes original circuit landmarks
+
+The stone stream bridge, forest footbridge and forest timing tower are original project geometry made for Ardennes Forest. They use no external models, textures or downloads. The editable recipe is `tools/blender/ardennes-landmarks.py`. The measured High/LOD provenance is recorded by that recipe in `tools/art/ardennes-landmarks.json`. Prior kit credits remain unchanged.

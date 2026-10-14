@@ -12,6 +12,7 @@ export const TRACK_KIT_IDS = Object.freeze([
   'harbour-boat','ski-lodge','chairlift-tower','chairlift-cable','chairlift-chair',
   'wooden-dock','autumn-tree','autumn-tree-golden','autumn-tree-copper','snow-pine',
   'snow-ground','snow-rock','plough-bank','gallery','summit-hut','observatory','snowman','yeti',
+  'stone-stream-bridge','forest-footbridge','forest-timing-tower',
 ]);
 const approved = new Set(TRACK_KIT_IDS);
 const owners = new WeakMap();
@@ -266,10 +267,26 @@ function mergeModelByMaterial(model) {
 function applyKitLook(look,model,own) {
   if (!look || !model?.scene?.isObject3D) return;
   const glow = finite(look.glow) && look.glow >= 0;
-  if (!glow && !look.wash && !look.smoothNormals && !look.slit) return;
-  const washed = new Set();
+  if (!glow && !look.wash && !look.smoothNormals && !look.slit && look.leafColour === undefined) return;
+  if (look.leafColour !== undefined && (!Number.isSafeInteger(look.leafColour) || look.leafColour < 0 || look.leafColour > 0xffffff))
+    fail('leaf colour must be an authored RGB colour.');
+  const washed = new Set(), leaves = new Map();
   model.scene.traverse(node => {
     if (!node.isMesh) return;
+    if (look.leafColour !== undefined) {
+      const materials = [].concat(node.material || []).map(source => {
+        if (!/-leaves-|-leaf-cluster-/.test(source.name)) return source;
+        if (!leaves.has(source)) {
+          const material = source.clone();
+          material.color.setHex(look.leafColour);
+          material.onBeforeCompile = source.onBeforeCompile;
+          material.customProgramCacheKey = source.customProgramCacheKey.bind(source);
+          leaves.set(source, material); own(material);
+        }
+        return leaves.get(source);
+      });
+      node.material = Array.isArray(node.material) ? materials : materials[0];
+    }
     if(look.smoothNormals){
       const geometry=node.geometry.clone();
       geometry.computeVertexNormals();

@@ -8,9 +8,20 @@ import {COURSE_PRICES} from '../src/course-access.js';
 import {COURSE} from '../src/config.js';
 import {buildTrackScript} from '../src/track-script.js';
 import {Course} from '../src/course.js';
+import {Duel} from '../src/game.js';
+import * as THREE from 'three';
+import {sampleCourseLightPath, lightPathLook} from '../src/light-path.js';
+import {addCircuitEffects} from '../src/circuit-effects.js';
+import {syncScene} from '../src/scene-systems.js';
+import {disposeTree} from '../src/world.js';
+import {renderedGroundHeight} from '../src/rendered-ground.js';
+import {createTrackKits} from '../src/track-kits.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 
 // Ardennes Forest road layout (docs/CIRCUITS.md section 5.5, P4-ARDENNES-ROAD).
-// Art, light, landmarks, the safety kit and the full field are later cards.
+// The original road acceptance remains intact beside the P4-ARDENNES source acceptance.
 const near = (a, b, tolerance, message = '') => assert.ok(Math.abs(a - b) <= tolerance, `${message} ${a} differs from ${b}`);
 const road = buildTrackScript(ARDENNES_FOREST), report = road.report;
 const piece = name => road.pieces.find(item => item.name === name);
@@ -116,4 +127,212 @@ test('Ardennes Forest is a dev circuit: registered last, priced, off by default,
   const qa = createFeatureFlags({storage: null, qa: true, search: '?flags=ardennes-forest'});
   assert.equal(qa.enabled('ardennes-forest'), true);
   assert.deepEqual(circuitsEnabled(qa).map(circuit => circuit.id), [...released, 'ardennes-forest']);
+});
+
+
+test('Ardennes admits the genuine eight-car field for two laps without traffic or combat', () => {
+  const added = !COURSE.some(def => def.id === ARDENNES_FOREST.id);
+  if (added) COURSE.push(ARDENNES_FOREST);
+  try {
+    const duel = new Duel({seed: 1989, featureFlags: {'grand-prix': true}});
+    duel.startCampaign({mode: 'grandprix', startStage: COURSE.findIndex(def => def.id === ARDENNES_FOREST.id),
+      car: 'stuttgart_959s', seed: 1989, fieldSeed: 1000, cpuDifficulty: 'medium'});
+    assert.equal(duel.course.def.id, 'ardennes-forest');
+    assert.equal(duel.state.mode, 'grandprix');
+    assert.equal(duel.state.field.size, 8);
+    assert.equal(duel.state.opponents.length, 7);
+    assert.equal(duel.state.lapsTotal, 2);
+    assert.equal(duel.state.traffic.length, 0);
+    assert.equal(duel.course.features.radarTraps.length, 0);
+    assert.equal(duel.course.def.noCombat, true);
+    assert.equal(duel.state.police.pursuit, null);
+  } finally {
+    if (added) COURSE.splice(COURSE.findIndex(def => def.id === ARDENNES_FOREST.id), 1);
+  }
+});
+
+test('the forest and safety kit leave the original run-off and native pit road open', () => {
+  const course = new Course(ARDENNES_FOREST, 1989);
+  const rows = ARDENNES_FOREST.kitPlacements;
+  assert.ok(Object.isFrozen(rows) && rows.every(Object.isFrozen));
+  assert.ok(rows.some(row => row.id === 'start-gantry' && row.s === 0));
+  assert.ok(rows.filter(row => row.id === 'pit-garage').length >= 12);
+  assert.ok(rows.filter(row => row.id === 'grandstand').length >= 6);
+  assert.ok(rows.some(row => row.id === 'armco' && row.solid === true));
+  assert.ok(rows.filter(row => row.id === 'catch-fence').length > 1000);
+  for (const row of rows.filter(row => ['armco', 'catch-fence'].includes(row.id))) {
+    assert.ok(Math.abs(row.lateral) >= course.roadHalfWidthAt(row.s) + 12.5, 'safety sits outside the unchanged 12 m run-off');
+    if (row.lateral < 0 && row.s <= piece('Pit Straight').s1 + 15)
+      assert.fail('no safety piece may close the pit entrance or exit');
+  }
+  assert.deepEqual(ARDENNES_FOREST.pitLane, {straight: 'Pit Straight', side: 'right'});
+  assert.ok(rows.filter(row => row.id === 'pit-wall').every(row => row.solid !== true), 'visual divider retains the original native pit collision');
+  assert.ok(course.features.walls.some(wall => wall.pitWall));
+  assert.ok(course.features.kitSolids.length > 0);
+  assert.ok(course.features.kitSolids.every(box => course.features.obstacles.includes(box)));
+  assert.ok(course.features.trees.length > 1000, 'dense existing seeded forest');
+  for (const tree of course.features.trees) {
+    const nearest = course.nearest(tree.x, tree.z);
+    assert.ok(nearest.distance >= course.roadHalfWidthAt(nearest.s) + 12, 'trees stay outside every road run-off');
+  }
+  assert.deepEqual(new Course(ARDENNES_FOREST, 1989).features.trees, course.features.trees, 'same seed gives the same forest');
+});
+
+
+test('the damp forest road keeps the original asphalt grip and alpine sound biome', () => {
+  const course = new Course(ARDENNES_FOREST, 1989);
+  assert.deepEqual(ARDENNES_FOREST.wetRoad, {performanceShare: .5});
+  const dry = new Course({...ARDENNES_FOREST, wetRoad: undefined}, 1989);
+  for (let s = 0; s < course.length; s += 53) {
+    assert.equal(course.themeAt(s), 'alpine');
+    for (const off of [0, -3, 3, -23, 23])
+      assert.equal(course.gripKindAt(s, off), dry.gripKindAt(s, off), 'wet look cannot change the road or run-off grip');
+  }
+});
+
+
+test('morning light clears by lap two and reuses the renderer buffer', () => {
+  const course = new Course(ARDENNES_FOREST, 1989), output = {};
+  const original = structuredClone(lightPathLook('golden', 'alpine'));
+  const start = sampleCourseLightPath(course, {distance: 0}, output);
+  assert.equal(start, output);
+  assert.equal(start.settings.fogNear, 90);
+  const settings = start.settings, fog = start.settings.fog;
+  const middle = sampleCourseLightPath(course, {distance: course.length / 2}, output);
+  assert.equal(middle.settings, settings); assert.equal(middle.settings.fog, fog);
+  assert.ok(middle.settings.fogNear > 90 && middle.settings.fogNear < 360);
+  const clear = sampleCourseLightPath(course, {distance: course.length}, output);
+  assert.equal(clear.settings.fogNear, 360);
+  assert.deepEqual(clear.settings, sampleCourseLightPath(course, {distance: course.raceLength}, {}).settings);
+  assert.deepEqual(lightPathLook('golden', 'alpine'), original, 'default alpine palette remains exact');
+});
+
+test('real grounded valley mist clears from native lap progress without race writes', () => {
+  const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
+  addCircuitEffects(world, course);
+  const banks = []; world.traverse(node => {if (node.name === 'Ardennes valley mist') banks.push(node);});
+  assert.ok(banks.length >= 12);
+  const originalPositions = banks.map(bank => bank.position.toArray());
+  for (const bank of banks) {
+    const anchor = bank.userData.valleyAnchor, at = course.groundAt(anchor.s, anchor.lateral);
+    const ground = renderedGroundHeight(course, {...at, s: anchor.s, off: anchor.lateral}, {requireSurface: true});
+    near(bank.position.y, ground + anchor.height, 1e-6);
+  }
+  const state = Object.freeze({status: 'racing', s: 0, completedLaps: 0, lapsTotal: 2});
+  const before = JSON.stringify(state); syncScene(world, state, 1 / 60);
+  assert.equal(JSON.stringify(state), before);
+  assert.ok(banks.every(bank => bank.material.opacity > 0));
+  syncScene(world, Object.freeze({...state, completedLaps: 1}), 1 / 144);
+  assert.ok(banks.every(bank => bank.material.opacity === 0));
+  assert.deepEqual(banks.map(bank => bank.position.toArray()), originalPositions);
+  const resources = new Set(), disposed = new Map();
+  world.traverse(node => {for (const material of [].concat(node.material || [])) {
+    resources.add(material); if (material.map) resources.add(material.map);
+  }});
+  for (const resource of resources) {disposed.set(resource, 0); resource.addEventListener('dispose', () => disposed.set(resource, disposed.get(resource) + 1));}
+  disposeTree(world);
+  assert.ok([...disposed.values()].every(count => count === 1), 'owned mist resources dispose exactly once');
+});
+
+test('the stream uses actual ground and leaves the whole road and shoulder uncovered', () => {
+  const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
+  addCircuitEffects(world, course);
+  const stream = world.getObjectByName('Ardennes red-brown stream');
+  assert.ok(stream?.isMesh);
+  const position = stream.geometry.attributes.position;
+  const sides = new Set();
+  for (let i = 0; i < position.count; i++) {
+    const x = position.getX(i), z = position.getZ(i), at = course.nearest(x, z);
+    sides.add(Math.sign(at.lateral));
+    assert.ok(at.distance > course.roadHalfWidthAt(at.s) + 2, 'no ribbon covers either road shoulder');
+    const ground = renderedGroundHeight(course, {x, z, s: at.s, off: at.lateral}, {requireSurface: true});
+    near(position.getY(i), ground + .04, .002);
+  }
+  assert.deepEqual([...sides].sort(), [-1, 1]);
+  disposeTree(world);
+});
+
+test('leaf colour owns its material and leaves an ordinary kit owner unchanged', async () => {
+  const source = colour => {
+    const group = new THREE.Group(), material = new THREE.MeshStandardMaterial({name: 'autumn-tree-leaves-0', color: colour});
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(1, 4, 1).translate(0, 2, 0), material));
+    return {scene: group, material};
+  };
+  const course = new Course(ARDENNES_FOREST, 1989), donor = source(0xb05a14);
+  const owner = createTrackKits(course, {placements: [{id: 'autumn-tree', s: 1400, lateral: 60}], loadAsset: async () => donor});
+  try {
+    assert.equal(await owner.ready, true, owner.error?.message);
+    const colours = []; owner.group.traverse(node => {if (node.isMesh) colours.push(node.material.color.getHex());});
+    assert.ok(colours.length > 0 && colours.every(colour => colour === ARDENNES_FOREST.kitLook['autumn-tree'].leafColour));
+    assert.equal(donor.material.color.getHex(), 0xb05a14, 'source material not recoloured');
+    const ordinary = source(0xb05a14), plain = createTrackKits(new Course({...ARDENNES_FOREST, kitLook: undefined}, 1989),
+      {placements: [{id: 'autumn-tree', s: 1400, lateral: 60}], loadAsset: async () => ordinary});
+    try {assert.equal(await plain.ready, true); assert.equal(ordinary.material.color.getHex(), 0xb05a14);} finally {plain.dispose();}
+  } finally {owner.dispose();}
+});
+
+// Model exports are required before this source can claim a green lane. Hold
+// preparation does not substitute a fake model or relax these real budgets.
+test('three original landmarks have actual grounded High and LOD meshes within budget', async () => {
+  const provenance = JSON.parse(readFileSync(new URL('../tools/art/ardennes-landmarks.json', import.meta.url), 'utf8'));
+  const budgets = {'stone-stream-bridge': [2500, 800], 'forest-footbridge': [3500, 1000], 'forest-timing-tower': [4000, 1200]};
+  assert.deepEqual(provenance.models.map(row => row.id).sort(), Object.keys(budgets).sort());
+  const loader = new GLTFLoader();
+  for (const row of provenance.models) {
+    assert.equal(row.original, true); assert.equal(row.recipe, 'tools/blender/ardennes-landmarks.py');
+    let bytesTotal = 0;
+    for (const [index, suffix] of ['', '-lod'].entries()) {
+      const bytes = readFileSync(new URL('../public/assets/models/circuits/kits/' + row.id + suffix + '.glb', import.meta.url));
+      bytesTotal += bytes.length;
+      assert.equal(bytes.length, row.files[index].bytes);
+      assert.equal(createHash('sha256').update(bytes).digest('hex'), row.files[index].sha256, 'actual exported content matches provenance');
+      const asset = await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+      let triangles = 0; asset.scene.updateMatrixWorld(true);
+      asset.scene.traverse(node => {if (node.isMesh) {
+        const positions = node.geometry.attributes.position;
+        for (let i = 0; i < positions.count; i++) for (const value of [positions.getX(i), positions.getY(i), positions.getZ(i)]) assert.ok(Number.isFinite(value));
+        triangles += (node.geometry.index?.count ?? positions.count) / 3;
+      }});
+      assert.ok(triangles > 0 && triangles <= budgets[row.id][index]);
+      const bounds = new THREE.Box3().setFromObject(asset.scene);
+      near(bounds.min.y, 0, .025);
+      assert.ok(bounds.max.y > 3 && bounds.max.x > 2 && bounds.max.z > 1, 'actual landmark dimensions');
+      assert.equal(triangles, row[index === 0 ? 'highTriangles' : 'lowTriangles']);
+      disposeTree(asset.scene);
+    }
+    assert.ok(bytesTotal <= 250000); assert.equal(bytesTotal, row.bytes);
+  }
+});
+
+
+test('the three real landmarks retain all original triangle clearance rules', async () => {
+  const course = new Course(ARDENNES_FOREST, 1989), loader = new GLTFLoader();
+  const ids = new Set(['stone-stream-bridge', 'forest-footbridge', 'forest-timing-tower']);
+  const owner = createTrackKits(course, {placements: ARDENNES_FOREST.kitPlacements.filter(row => ids.has(row.id)),
+    loadAsset: async path => {
+      const bytes = readFileSync(new URL('../public' + path, import.meta.url));
+      return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+    }});
+  try {
+    assert.equal(await owner.ready, true, owner.error?.message);
+    assert.equal(owner.placements.length, 3);
+    assert.equal(owner.stats.clearance.runtimeSkipped, 0, 'no triangle or headroom exemption');
+    for (let index = 0; index < owner.placements.length; index++) {
+      const row = owner.placements[index], matrix = owner.getPlacementPose(index), point = course.groundAt(row.s, row.lateral);
+      const ground = renderedGroundHeight(course, {...point, s: row.s, off: row.lateral}, {requireSurface: true});
+      near(matrix.elements[13], ground, 1e-6, 'actual ground pivot');
+    }
+  } finally {owner.dispose();}
+});
+
+
+test('courses without Ardennes effects retain their existing scene and owned inputs', () => {
+  const course = new Course({...ARDENNES_FOREST, effects: undefined, kitPlacements: [], kitLook: undefined}, 1989);
+  const before = JSON.stringify(course.def), world = new THREE.Group();
+  addCircuitEffects(world, course);
+  assert.equal(world.getObjectByName('Ardennes valley mist'), undefined);
+  assert.equal(world.getObjectByName('Ardennes red-brown stream'), undefined);
+  syncScene(world, Object.freeze({status: 'racing', s: 900, completedLaps: 1, lapsTotal: 2}), 1 / 30);
+  assert.equal(JSON.stringify(course.def), before);
+  disposeTree(world);
 });
