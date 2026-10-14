@@ -169,8 +169,12 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
 - Run `node tools/build-status.mjs` at every session end and include
   `docs/board/STATUS.md` in that commit. A later commit needs its own full-tier pass;
   a status snapshot never grants a pass to another commit.
-- D8 approved by Kyle on 24 September 2026: after a passing full tier and
-  compaction (SPEC 0.8), push `integration/wasteland`. D4 still covers `master`.
+- Pushing (Kyle, 13 October 2026, replacing D8 of 24 September): the Release
+  Manager pushes `integration/wasteland` to GitHub after every release, as a
+  plain fast-forward with no history rewrite, so the work is never only on the
+  laptop. Compaction (SPEC 0.8) becomes an occasional tidy-up that needs
+  Kyle's approval each time; it no longer holds back a push. D4 still covers
+  `master`. The branch was pushed on 13 October after eleven days unpushed.
 
 See playbook section 7 for the gate and evidence workflow.
 
