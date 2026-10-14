@@ -1075,3 +1075,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13: FIX-DRIVING-FEEL e7c1ed51 source merged; corrected original nearby137/137/jobs4, build810ms, independent review CLEAR. Road keyboard curves in; arenas unchanged. Native Harbour/feel still open, core lock released. No repeated gate, release or push.
 
 - 2026-10-13: FIX-RACE-SCREEN514ca4b9 source merged; corrected original nearby211/211/jobs4, build699ms, independent review CLEAR. Actual face/post/clearance, map/camera/warning checks pass; native1080/1440UNRUN, core released. Own driving lane/consumed packets recycled; own screen lane/packets recycle after verdict, older art/native retained. No repeated gate, release or push.
+
+- 2026-10-13: Controls native eab3b136 merged; nearby30/30/jobs4/build1.34s/reviewCLEAR. Harbour keyboard90.258s/zero crashes or stops;4nativeviews/480warnings clear, actual clock fix in. Kyle approvedClaude release/push afterexactfull; sourcechecks drained, releaseevidence retained, ownQA lane recycling. No postmerge gate.

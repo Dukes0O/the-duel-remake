@@ -389,6 +389,7 @@ tasks:
     lane: "UI"
     size: "S"
     status: "review"
+    waiting_on: "claude"
     needs: []
     priority: "high"
     locks: []
@@ -400,6 +401,7 @@ tasks:
     lane: "UI"
     size: "M"
     status: "review"
+    waiting_on: "claude"
     needs: []
     priority: "high"
     locks: []
