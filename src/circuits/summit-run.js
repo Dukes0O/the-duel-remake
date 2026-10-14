@@ -114,7 +114,7 @@ export const SUMMIT_RUN=defineScriptedCourse({
     Object.freeze({s:at(index)+35,lateral:geometry.pieces[index].kind==='turn'
       ? -geometry.pieces[index].dir*17 : i%2?-17:17}))),
   lightPath:{axis:'distance',keyframes:[{at:0,look:'day'},{at:at(26),look:'golden'},{at:at(29),look:'dusk'},{at:10100,look:'night'}]},
-  snowWorld:{mixed:true,softBanks:true,drifts:true,nightExposure:1.02,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],pineClusters:[]},
+  snowWorld:{mixed:true,softBanks:true,bankHeaps:true,snowPoles:true,variation:true,rockTint:0x343936,branchTone:0x293135,drifts:true,nightExposure:1.02,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],pineClusters:[]},
   surfacePatches:[
     {id:'snowfield-ice-1',kind:'ice',shaded:true,s0:at(30)+60,s1:at(30)+80},
     {id:'snowfield-ice-2',kind:'ice',shaded:true,s0:at(32)+60,s1:at(32)+80},
@@ -127,11 +127,14 @@ export const SUMMIT_RUN=defineScriptedCourse({
       ranges:[{from:at(13),to:at(27),fadeOut:at(27)-at(26)+200}]}},
   effects:{birches:{seed:0xb1c4,groves:26,depth:[14,36],ranges:[{from:at(13),to:at(27)}]}},
   kitLook:{
-    gallery:{wash:{colour:0xcbd5e4,strength:.45,height:8,floor:.12}},
+    gallery:{wash:{colour:0xe1ded4,strength:3.1,height:8,floor:.78}},
     'snow-rock':{smoothNormals:true},
-    'summit-hut':{glow:1.4},
-    observatory:{slit:{nodes:['observatory-cover','observatory-cover.001'],halfWidth:1.4,minY:3.38,minZ:.65,normalX:.9,colour:0xffdfaa,strength:1.4}},
+    'summit-hut':{glow:3.2},
+    observatory:{slit:{nodes:['observatory-cover','observatory-cover.001'],halfWidth:1.4,minY:3.38,minZ:.65,normalX:.9,colour:0xffdfaa,strength:3.8}},
   },
+  groundLights:Array.from({length:48},(_,i)=>({s:5600+(i%8)*38,lateral:-350-Math.floor(i/8)*26,colour:i%3?0xffdba3:0xffa258,size:4.0,strength:.9})),
+  glows:[{piece:'gallery',points:[[-4.9,3.8,-2.2],[-4.9,3.8,2.2]],colour:0xffc87b,size:.8,strength:1.1},
+    {piece:'summit-hut',points:[[0,1.5,1.1]],colour:0xffd392,size:1.2,strength:.8}],
   mergeKitMeshes:['gallery'],
   kitPlacements:[
     ...Array.from({length:35},(_,index)=>({id:'gallery',s:10176+index*18,lateral:0,heading:0,scale:[1.2,1.1,3]})),

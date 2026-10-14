@@ -112,7 +112,7 @@ async function denseDriverBundle() {
     resolveId(id){if(id.replaceAll('\\','/')===entry)return '\0track-kits-driver';},
     load(id){if(id==='\0track-kits-driver')return "export {useRacingLine} from "+
       JSON.stringify(join(root,'tools/track-script-drive.mjs').replaceAll('\\','/'))+';';},
-  }],build:{write:false,minify:false,lib:{entry,name:'TrackKitsDriverQa',formats:['iife']}}});
+  }],build:{write:false,minify:false,lib:{entry,name:'TrackKitsDriverQa',formats:['es']}}});
   return (Array.isArray(result)?result[0]:result).output.find(row=>row.type==='chunk').code;
 }
 
@@ -275,7 +275,11 @@ async function denseFrameSample(context,quality,place,present,pair) {
 async function setupDenseFixture(context,quality,bundle,present,place) {
   await context.navigate('/tools/menu-check.html?flags=grand-prix,harbour-lights&harness=kit-dense');
   await context.waitFor('window.__qaApp?.visualReady&&!!window.__render','dense empty menu ready',60000);
-  await context.evaluate(bundle);
+  await context.evaluate(`(async () => {
+      const url = URL.createObjectURL(new Blob([${JSON.stringify(bundle)}], {type: 'text/javascript'}));
+      try { window.TrackKitsDriverQa = await import(url); }
+      finally { URL.revokeObjectURL(url); }
+    })()`);
   await context.evaluate('('+densePrepare.toString()+')('+JSON.stringify(quality)+','+present+')');
   await context.waitFor(`(()=>{const a=window.__qaApp;window.__render.renderFrame();a.onFrame?.(a.duel.state,0);
     return a.visualReady&&document.querySelector('#view3d').dataset.trackKitAsset===${JSON.stringify(present?'ready':'off')};})()`,

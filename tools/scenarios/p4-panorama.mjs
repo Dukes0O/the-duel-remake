@@ -62,7 +62,15 @@ export async function run(context) {
       async function capture(name,phase){
         await context.evaluate('(()=>{const a=window.__qaApp,d=a.duel,s=d.state,c=d.course;'+
           'if('+JSON.stringify(phase)+'==="golden-grid")window.__panoramaView("Pit Straight");else if('+JSON.stringify(name)+'==="Skyline"||('+JSON.stringify(phase)+'==="dusk"&&'+JSON.stringify(name)+'==="Conrod Straight")){'+
-          'const skyline=c.script.pieces.find(p=>p.name==="Skyline"),conrod=c.script.pieces.find(p=>p.name==="Conrod Straight"),s='+JSON.stringify(name)+'==="Skyline"?skyline.s0-28:conrod.s0-35,off='+JSON.stringify(name)+'==="Skyline"?30:-30,e=c.groundAt(s,off),t=c.groundAt(conrod.s0+276,112),height=window.__panQa.renderedGroundHeight(c,{...e,s,off},{requireSurface:true}),townHeight=window.__panQa.renderedGroundHeight(c,{...t,s:conrod.s0+276,off:112},{requireSurface:true});if(!Number.isFinite(height)||!Number.isFinite(townHeight))throw Error("Missing actual valley camera/town terrain");a.inspectionCamera={position:[e.x,height+24,e.z],target:[t.x,townHeight+6,t.z]};}else {'+
+          // Skyline: valley side, 96 m before the crest, 45 m out and 50 m up (about 100 m from the radio mast),
+          // looking down the ridge so the road, the drop and the lower town share the frame.
+          // Conrod: 129 m down the straight, 30 m above the road, looking at the town on its hillside.
+          'const skyline=c.script.pieces.find(p=>p.name==="Skyline"),conrod=c.script.pieces.find(p=>p.name==="Conrod Straight"),isSkyline='+JSON.stringify(name)+'==="Skyline",'+
+          's=isSkyline?skyline.s0-96:conrod.s0+129,off=isSkyline?45:-10,rise=isSkyline?50:30,ts=isSkyline?skyline.s0+254:conrod.s0+276,toff=isSkyline?40:112,tlift=isSkyline?0:10,'+
+          'e=c.groundAt(s,off),t=c.groundAt(ts,toff),height=window.__panQa.renderedGroundHeight(c,{...e,s,off},{requireSurface:true}),targetHeight=window.__panQa.renderedGroundHeight(c,{...t,s:ts,off:toff},{requireSurface:true});'+
+          'if(!Number.isFinite(height)||!Number.isFinite(targetHeight))throw Error("Missing actual valley camera/target terrain");'+
+          'if(isSkyline){const mast=window.__render.scene.getObjectByName("Authored circuit landmarks")?.getObjectByName("ridge-radio");if(!mast||Math.hypot(e.x-mast.position.x,e.z-mast.position.z)<15)throw Error("Skyline camera must stay 15 m clear of the radio mast");}'+
+          'a.inspectionCamera={position:[e.x,height+rise,e.z],target:[t.x,targetHeight+tlift,t.z]};}else {'+
           'const e=c.groundAt(s.s-40,-16),t=c.groundAt(s.s+20,0),height=window.__panQa.renderedGroundHeight(c,{...e,s:s.s-40,off:-16},{requireSurface:true});if(!Number.isFinite(height))throw Error("Inspection camera has no drawn ground");a.inspectionCamera={position:[e.x,height+18,e.z],target:[t.x,t.y+1.5,t.z]};}'+
           'window.__render.renderFrame();})()');
         await context.waitFor('(()=>{const a=window.__qaApp,c=window.__render.camera,p=a.inspectionCamera.position;return Math.hypot(c.position.x-p[0],c.position.y-p[1],c.position.z-p[2])<.001;})()','native inspection camera reaches drawn-ground view',10000);
@@ -77,13 +85,15 @@ export async function run(context) {
       await capture('Pit Straight','golden-grid');
       // Named straight and crest distances come from the actual authored script.
       const targets=await context.evaluate('(()=>{const c=window.__qaApp.duel.course;return '+JSON.stringify(['Ridge Top','Skyline','The Esses 1','Conrod Straight','Murray Corner'])+'.map(name=>({name,s:c.script.pieces.find(p=>p.name===name).s0}));})()');
-      const progress=[];let captureIndex=0,dusk=false;
+      const progress=[];let captureIndex=0,duskIndex=0,dusk=false;
       for(let batch=0;batch<60;batch++) {
-        const target=targets[captureIndex]?.s??null;
-        const result=await context.evaluate('(()=>{const a=window.__qaApp,d=a.duel,s=d.state,target='+JSON.stringify(target)+';for(let i=0;i<600;i++){if(!["racing","countdown"].includes(s.status))break;if(s.completedLaps>=3&&s.opponents.every(r=>r.finished))break;if(target!==null&&s.completedLaps===0&&s.s>=target)break;a.advance(1/60,1/60);}const before=JSON.stringify(s);window.__render.renderFrame();if(JSON.stringify(s)!==before)throw Error("Render changed native race");if(![s,...s.opponents].every(r=>[r.s,r.lateral,r.speedMph].every(Number.isFinite)))throw Error("Nonfinite native racer");return {status:s.status,time:s.stageTimeSec,laps:s.completedLaps,s:s.s,finished:s.opponents.filter(r=>r.finished).length,passes:s.field.stats.passes,pileUp:new Set(s.field.stats.crashes.filter(c=>c.t<=30).map(c=>c.index)).size>=3,lapTimes:[...s.lapTimes],allDone:s.completedLaps>=3&&s.opponents.every(r=>r.finished)};})()');
+        const lap=dusk?2:0,index=dusk?duskIndex:captureIndex,target=targets[index]?.s??null;
+        const result=await context.evaluate('(()=>{const a=window.__qaApp,d=a.duel,s=d.state,target='+JSON.stringify(target)+',lap='+lap+',dusk='+dusk+';for(let i=0;i<600;i++){if(!["racing","countdown"].includes(s.status))break;if(s.completedLaps>=3&&s.opponents.every(r=>r.finished))break;if(!dusk&&s.completedLaps>=2)break;if(target!==null&&s.completedLaps===lap&&d.course.phase(s.s)>=target)break;a.advance(1/60,1/60);}const before=JSON.stringify(s);window.__render.renderFrame();if(JSON.stringify(s)!==before)throw Error("Render changed native race");if(![s,...s.opponents].every(r=>[r.s,r.lateral,r.speedMph].every(Number.isFinite)))throw Error("Nonfinite native racer");return {status:s.status,time:s.stageTimeSec,laps:s.completedLaps,s:s.s,phase:d.course.phase(s.s),finished:s.opponents.filter(r=>r.finished).length,passes:s.field.stats.passes,pileUp:new Set(s.field.stats.crashes.filter(c=>c.t<=30).map(c=>c.index)).size>=3,lapTimes:[...s.lapTimes],allDone:s.completedLaps>=3&&s.opponents.every(r=>r.finished)};})()');
         progress.push(result);
-        if(target!==null&&result.laps===0&&result.s>=target){await capture(targets[captureIndex].name,'golden-racing');if(targets[captureIndex].name==='Ridge Top'){await context.evaluate('(()=>{const a=window.__qaApp;a.inspectionCamera=null;window.__render.renderFrame();})()');await context.screenshot('panorama-ridge-native-chase-'+quality);}captureIndex++;}
-        if(result.laps>=2&&!dusk){await capture('Final Lap','dusk');await capture('Skyline','dusk');await capture('Conrod Straight','dusk');dusk=true;}
+        if(!dusk&&target!==null&&result.laps===0&&result.phase>=target){await capture(targets[captureIndex].name,'golden-racing');if(targets[captureIndex].name==='Ridge Top'){await context.evaluate('(()=>{const a=window.__qaApp;a.inspectionCamera=null;window.__render.renderFrame();})()');await context.screenshot('panorama-ridge-native-chase-'+quality);}captureIndex++;}
+        // Final lap: the same named views again at dusk, with the field in them.
+        if(result.laps>=2&&!dusk){await capture('Final Lap','dusk');dusk=true;}
+        else if(dusk&&target!==null&&result.laps===2&&result.phase>=target){await capture(targets[duskIndex].name,'dusk');duskIndex++;}
         if(result.allDone||!['racing','countdown'].includes(result.status))break;
       }
       const final=progress.at(-1);

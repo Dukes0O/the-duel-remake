@@ -63,7 +63,7 @@ const pointOf = (frame, [px, py, pz]) => {
 
 export function addNightGlows(group, course) {
   const def = course.def, rules = def.glows ?? [], street = def.streetLight;
-  if (!rules.length && !street && !def.waterside) return null;
+  if (!rules.length && !street && !def.waterside && !def.groundLights?.length) return null;
   const positions = [], tints = [], sizes = [];
   const colour = new THREE.Color();
   const add = (point, hex, size, strength) => {
@@ -72,6 +72,19 @@ export function addNightGlows(group, course) {
     tints.push(colour.r * strength, colour.g * strength, colour.b * strength);
     sizes.push(size);
   };
+
+  const groundLights=[];
+  if(def.groundLights!==undefined){
+    if(!Array.isArray(def.groundLights)||def.groundLights.length>128)throw Error('Ground lights require a bounded authored row list.');
+    for(const row of def.groundLights){
+      if(![row.s,row.lateral,row.size,row.strength].every(Number.isFinite)||row.s<0||row.s>course.length||row.size<=0||row.strength<0)
+        throw Error('Ground light rows require finite authored positions and sizes.');
+      const point=course.groundAt(row.s,row.lateral),y=renderedGroundHeight(course,{...point,s:row.s,off:row.lateral},{requireSurface:true});
+      if(!Number.isFinite(y))throw Error('Ground light lacks actual rendered terrain.');
+      const world=[point.x,y+.15,point.z];add(world,row.colour,row.size,row.strength);
+      groundLights.push({s:row.s,lateral:row.lateral,position:world,groundY:y});
+    }
+  }
 
   // Lights fixed on kit pieces.
   const placements = def.kitPlacements ?? [];
@@ -127,6 +140,7 @@ export function addNightGlows(group, course) {
     pixelScale.value = size.y * .5 * camera.projectionMatrix.elements[5];
     material.uniformsNeedUpdate = true;
   };
+  if(groundLights.length)mesh.userData.groundLightRows=groundLights;
   group.add(mesh);
-  return { lights: sizes.length };
+  return groundLights.length?{lights:sizes.length,groundLightRows:groundLights}:{lights:sizes.length};
 }

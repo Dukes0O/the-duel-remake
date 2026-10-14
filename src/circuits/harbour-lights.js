@@ -23,6 +23,13 @@
 // old town climbs away from the start; Precinct Bend turns further away and the
 // Lantern Hairpin turns the road for home; the Reservoir Run and Harbour Road
 // bring it back. Closest separate stretches: the hairpin approach and exit.
+// Easier pass, Claude, 14 October 2026 (layoutVersion 2, P4-FINISH-1014): Kyle found the street too hard.
+// Casino Corner opens from radius 22 to 27; the old town is 12 m wide (was 10) and the hairpin approach,
+// hairpin and the road after it 13 m (was 12); the radius of the Lantern Hairpin stays 9, it is the slowest
+// corner on purpose. The descent no longer starts as a drop at Precinct Bend (that crest launched a car at
+// the hairpin's braking point) but is spread over the Hillside and the Reservoir Run, and the hairpin itself
+// lies level so the two arms of the road beside it meet the same ground. The loop closes by stretching its
+// straights by under 1% as before; every distance after Casino Corner moved by 9 to 20 m.
 import { defineScriptedCourse } from '../track-script.js';
 import { buildKitPlacements } from '../circuit-kit-layout.js';
 
@@ -31,7 +38,7 @@ const GRAVEL = 0x3d4046;
 
 const BASE = defineScriptedCourse({
   id: 'harbour-lights', name: 'Harbour Lights', flag: 'harbour-lights',
-  theme: 'city', timeOfDay: 'night', stage: 17, kind: 'circuit', layoutVersion: 1,
+  theme: 'city', timeOfDay: 'night', stage: 17, kind: 'circuit', layoutVersion: 2,
   closed: true, laps: 4, grandPrixLaps: 4, hasRival: true, hasRadar: false, noTraffic: true, noCombat: true, speedLimitMph: 100,
   airborne: true, terrainHalfWidth: 64, scenery: { trees: 100, rocks: 40, mountains: false },
   sections: [
@@ -63,9 +70,9 @@ const BASE = defineScriptedCourse({
   water: { glitter: true },
   basins: [
     { id: 'seafront', s: 272, lateral: -66, along: 125, across: 54, surface: -2.2, depth: .8, bank: .1, blend: 20, keep: 4 },
-    { id: 'harbour-road', s: 3498, lateral: -61, along: 230, across: 49, surface: -2.2, depth: .8, bank: .1, blend: 20, keep: 4 },
-    { id: 'reservoir-upper', s: 2460, lateral: -57, along: 160, across: 43, surface: -2, depth: .8, bank: .1, blend: 20, keep: 4 },
-    { id: 'reservoir-lower', s: 2880, lateral: -57, along: 180, across: 43, surface: -2.2, depth: .8, bank: .1, blend: 20, keep: 4 },
+    { id: 'harbour-road', s: 3514, lateral: -61, along: 230, across: 49, surface: -2.2, depth: .8, bank: .1, blend: 20, keep: 4 },
+    { id: 'reservoir-upper', s: 2474, lateral: -57, along: 160, across: 43, surface: -2, depth: .8, bank: .1, blend: 20, keep: 4 },
+    { id: 'reservoir-lower', s: 2894, lateral: -57, along: 180, across: 43, surface: -2.2, depth: .8, bank: .1, blend: 20, keep: 4 },
   ],
   // The wall inside the Lantern Hairpin (radius 9 m) is drawn as one smooth ribbon, not as short boxes that splay into a jagged edge.
   smoothInnerWalls: { maxRadius: 15 },
@@ -99,13 +106,13 @@ const BASE = defineScriptedCourse({
     { piece: 'lantern-string', points: [-3.13, -1.88, -.63, .63, 1.88, 3.13].map(x => [x, 1.85, 0]), colour: [0xff9a3c, 0xffc060], size: 1.2, strength: .9 },
     { piece: 'harbour-boat', points: [[-.65, 3.1, -.45], [.65, 3.1, -.45]], colour: [0xff3028, 0x28ff60], size: .55, strength: 1.1, reflect: .35 },
     { piece: 'harbour-boat', points: [[0, 1.25, -2.4], [0, 1.45, 1.0]], colour: [0xfff0d0, 0xffb860], size: .5, strength: .9, reflect: .35 },
-    { piece: 'neon-sign', points: [[0, .6, .3]], colour: [0xff3a7a, 0x2fd6ff, 0xffb02e, 0x7dff6a], size: 2.6, strength: .5 },
+    { piece: 'neon-sign', points: [[0, .6, .3]], colour: [0xff3a7a, 0x2fd6ff, 0xffb02e, 0x7dff6a], size: 2.9, strength: .7 },
     { piece: 'lantern-tower', points: [[0, 31.5, 0], [0, 33.4, 0]], colour: 0xffb060, size: 9, strength: 1.2 },
   ],
   // Pools are small and soft; through the old town most lamps burn warm white and every third burns sodium.
-  streetLight: { every: 40, haloSize: 1.2, haloStrength: .45, poolWidth: 6, poolLength: 13,
-    sodium: { from: 880, to: 2260, colour: 0xffa23c, pool: .1, mix: 3, warm: { colour: 0xffe2bc, pool: .12 } },
-    white: { colour: 0xcfe2ff, pool: .1 } },
+  streetLight: { every: 40, haloSize: 1.2, haloStrength: .45, poolWidth: 6, poolLength: 20,
+    sodium: { from: 889, to: 2268, colour: 0xffa23c, pool: .16, mix: 3, warm: { colour: 0xffe2bc, pool: .17 } },
+    white: { colour: 0xcfe2ff, pool: .15 } },
   // The waterside (src/waterside-scenery.js): a low railing instead of the catch fence where the road runs
   // beside water, tall harbour lamps between the ordinary ones (their lights show in the water), yachts
   // and a marina, a lighthouse at the harbour mouth, palms along the Seafront.
@@ -113,8 +120,8 @@ const BASE = defineScriptedCourse({
     rail: { height: 1.7 },
     lamps: [
       { from: 140, to: 430, every: 40, side: -1 },
-      { from: 2300, to: 3060, every: 40, side: -1 },
-      { from: 3160, to: 3640, every: 40, side: -1 },
+      { from: 2314, to: 3076, every: 40, side: -1 },
+      { from: 3176, to: 3660, every: 40, side: -1 },
     ],
     palms: [
       { from: 130, to: 430, side: -1, every: 20 },
@@ -131,53 +138,53 @@ const BASE = defineScriptedCourse({
     ['straight', 500, { name: 'Seafront Straight', width: 14 }],
     ['turn', 'L', 20, 300, { name: 'Lantern Kink' }],
     ['straight', 294, { name: 'Casino Approach' }],
-    ['turn', 'R', 104, 22, { name: 'Casino Corner' }],
+    ['turn', 'R', 104, 27, { name: 'Casino Corner' }],
     ['straight', 150, { climb: 6 }],
     ['turn', 'L', 40, 60, { climb: 6, name: 'Temple Hill' }],
     ['straight', 78, { climb: 6 }],
     ['turn', 'R', 60, 35, { climb: 5, name: 'Bell Tower Bend' }],
-    ['straight', 192, { climb: 4, width: 10 }],
+    ['straight', 192, { climb: 4, width: 12 }],
     ['turn', 'L', 46.5, 32, { climb: 3, name: 'Old Town Esses 1' }],
     ['turn', 'R', 51.5, 30, { name: 'Old Town Esses 2' }],
     ['turn', 'L', 43, 36, { name: 'Old Town Esses 3' }],
     ['turn', 'R', 40, 41, { name: 'Old Town Esses 4' }],
-    ['straight', 103, { name: 'Hillside' }],
-    ['turn', 'L', 29.5, 60, { climb: -6, name: 'Precinct Bend' }],
-    ['straight', 220, { climb: -6, name: 'Hairpin Approach', width: 12 }],
-    ['turn', 'R', 175, 9, { climb: -2, name: 'Lantern Hairpin' }],
-    ['straight', 99, { climb: -8 }],
+    ['straight', 103, { climb: -4, name: 'Hillside' }],
+    ['turn', 'L', 29.5, 60, { climb: -3, name: 'Precinct Bend' }],
+    ['straight', 220, { climb: -2, name: 'Hairpin Approach', width: 13 }],
+    ['turn', 'R', 175, 9, { name: 'Lantern Hairpin' }],
+    ['straight', 99],
     ['turn', 'L', 60, 45, { climb: -4, name: 'Fishmarket Bend', width: 14 }],
-    ['straight', 827, { climb: -4, name: 'Reservoir Run' }],
+    ['straight', 827, { climb: -17, name: 'Reservoir Run' }],
     ['turn', 'R', 59, 120, { name: 'Reservoir Sweep' }],
     ['straight', 500, { name: 'Harbour Road' }],
     ['turn', 'R', 109, 60, { name: 'Harbour Turn' }],
-    ['straight', 61, { name: 'Harbour Return' }],
+    ['straight', 63, { name: 'Harbour Return' }],
   ],
   // Views for Claude's review sheet (tools/track-review.mjs): where the road runs beside the water, and the tower.
   reviewFrames: [
     { key: 'seafront-harbour', label: 'Seafront Straight, harbour on the left', s: 285 },
     { key: 'lantern-tower', label: 'Lantern Tower from the Seafront', s: 700 },
-    { key: 'reservoir-upper', label: 'Reservoir Run, upper pool', s: 2470 },
-    { key: 'reservoir-lower', label: 'Reservoir Run, lower pool', s: 2900 },
-    { key: 'harbour-road', label: 'Harbour Road, harbour on the left', s: 3560 },
+    { key: 'reservoir-upper', label: 'Reservoir Run, upper pool', s: 2484 },
+    { key: 'reservoir-lower', label: 'Reservoir Run, lower pool', s: 2914 },
+    { key: 'harbour-road', label: 'Harbour Road, harbour on the left', s: 3576 },
   ],
   // Team Room intel (docs/CIRCUITS.md section 7b.1), written by Claude. Target
   // speeds and gears come from the reference lap; these notes give the line.
   intel: {
-    sectors: [1000, 2260],
+    sectors: [1008, 2268],
     flags: [
-      { id: 'lantern-hairpin', kind: 'signature', s: 1990, title: 'Lantern Hairpin' },
+      { id: 'lantern-hairpin', kind: 'signature', s: 2000, title: 'Lantern Hairpin' },
       { id: 'casino', kind: 'overtaking', s: 790, title: 'Seafront into Casino Corner' },
-      { id: 'harbour-turn', kind: 'overtaking', s: 3700, title: 'Harbour Road into Harbour Turn' },
-      { id: 'old-town', kind: 'corner', s: 1420, title: 'Old Town Esses' },
-      { id: 'reservoir-sweep', kind: 'corner', s: 3060, title: 'Reservoir Sweep' },
+      { id: 'harbour-turn', kind: 'overtaking', s: 3716, title: 'Harbour Road into Harbour Turn' },
+      { id: 'old-town', kind: 'corner', s: 1430, title: 'Old Town Esses' },
+      { id: 'reservoir-sweep', kind: 'corner', s: 3074, title: 'Reservoir Sweep' },
     ],
     notes: {
       'lantern-kink': { line: 'Flat out. A touch left, stay off the wall.', note: 'Only scary the first time. Keep your foot down.' },
       'casino-corner': { brakeBoard: 100, line: 'Brake straight, turn late, aim for the inside barrier.', note: 'The best place to pass. If you miss your braking point, take the escape road; do not try to make the turn.' },
       'temple-hill': { line: 'Middle of the road up the hill.', note: 'Walls on both sides from here. Neat beats brave.' },
       'bell-tower-bend': { line: 'Wide in, clip the inside, straight up.', note: 'The road narrows after this. Settle the car before the old town.' },
-      'old-town-esses-1': { line: 'Left, right, left, right: one smooth line through all four.', note: 'Ten metres wide. Pick a line and commit; correcting here means a wall.' },
+      'old-town-esses-1': { line: 'Left, right, left, right: one smooth line through all four.', note: 'Twelve metres wide. Pick a line and commit; correcting here means a wall.' },
       'old-town-esses-2': { line: 'Kerb to kerb.', note: 'Keep the rhythm.' },
       'old-town-esses-3': { line: 'Kerb to kerb.', note: 'Keep the rhythm.' },
       'old-town-esses-4': { line: 'Run wide on the exit up the Hillside.', note: 'Get the exit right; the Hillside is short.' },
@@ -200,20 +207,21 @@ const STREET = {
     stands: { side: -1, from: -58, to: 62, setback: 5 },
   },
   rows: [
-    { id: 'casino-street', pieces: ['shopfront-a', 'shopfront-b'], from: 895, to: 1045, side: 'both' },
-    { id: 'temple-hill', pieces: ['shopfront-a', 'shopfront-b'], from: 1112, to: 1250, side: 'both' },
-    { id: 'old-town', pieces: ['shopfront-a', 'shopfront-b'], from: 1252, to: 1760, side: 'both', setback: 1.8, gap: .3 },
-    { id: 'hairpin-street', pieces: ['shopfront-a', 'shopfront-b'], from: 1760, to: 2030, side: 'both', setback: 2.2 },
-    { id: 'fishmarket', pieces: ['shopfront-b', 'shopfront-a'], from: 2083, to: 2255, side: 'both', setback: 3, density: .6 },
+    { id: 'casino-street', pieces: ['shopfront-a', 'shopfront-b'], from: 904, to: 1054, side: 'both' },
+    { id: 'temple-hill', pieces: ['shopfront-a', 'shopfront-b'], from: 1121, to: 1260, side: 'both' },
+    { id: 'old-town', pieces: ['shopfront-a', 'shopfront-b'], from: 1260, to: 1763, side: 'both', setback: 1.8, gap: .3 },
+    { id: 'hairpin-street', pieces: ['shopfront-a', 'shopfront-b'], from: 1763, to: 2038, side: 'both', setback: 2.2 },
+    { id: 'fishmarket', pieces: ['shopfront-b', 'shopfront-a'], from: 2097, to: 2268, side: 'both', setback: 3, density: .6 },
     { id: 'quay-front', pieces: ['shopfront-b'], from: 140, to: 394, side: 1, setback: 5, scale: [.9, 1.1], density: .6 },
   ],
   singles: [{ id: 'lantern-tower', at: { piece: 'Casino Corner', at: 'middle' }, lateral: -62, scale: 1.5 }],
-  signs: { from: 905, to: 2250, every: 30, side: 'both', lift: 4.6 },
+  signs: { from: 600, to: 2262, every: 24, side: 'both', lift: 4.6 },
   // Strings of lanterns across the street, tied at the shopfronts beyond the walls.
   strings: [
-    { from: 920, to: 1040, every: 30, beyond: 2.4, lift: 4.9, bulb: .85 },
-    { from: 1255, to: 1665, every: 27, beyond: 2.4, lift: 4.9, bulb: .85 },
-    { from: 1985, to: 2125, every: 14, beyond: 2.4, lift: 4.9, bulb: .85 },
+    { from: 929, to: 1049, every: 30, beyond: 2.4, lift: 4.9, bulb: .85 },
+    { from: 1264, to: 1672, every: 27, beyond: 2.4, lift: 4.9, bulb: .85 },
+    { from: 1995, to: 2140, every: 14, beyond: 2.4, lift: 4.9, bulb: .85 },
+    { from: 2150, to: 2260, every: 28, beyond: 2.4, lift: 4.9, bulb: .85 },
   ],
   boats: [{ basin: 'seafront', count: 11 }, { basin: 'harbour-road', count: 12 }],
 };

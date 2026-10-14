@@ -51,7 +51,10 @@ export async function run(context) {
     const panel=document.querySelector('.grand-prix-results'),text=panel?.textContent||'';
     for(const label of ['POSITION PAY','CREDITS EARNED','BALANCE'])if(!text.includes(label))
       throw Error('Result metric missing: '+label);
-    if(!text.includes(String(r.creditReward)))throw Error('Earned credit amount is not visible');
+    const earned=[...panel.querySelectorAll('.result-metric')].find(metric=>
+      metric.querySelector('.field-label')?.textContent==='CREDITS EARNED');
+    if(earned?.querySelector('b')?.textContent!=='+'+Math.floor(r.creditReward||0).toLocaleString())
+      throw Error('Earned credit amount is not visible');
     return {laps:s.completedLaps,position:r.position,creditReward:r.creditReward,
       positionPay:r.creditPositionReward,wallet:app.profile.credits,
       resultHeight:panel.getBoundingClientRect().height,viewportHeight:innerHeight};
