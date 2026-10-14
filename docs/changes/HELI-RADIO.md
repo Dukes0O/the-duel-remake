@@ -171,3 +171,10 @@ Nothing.
 6. Cable creak, hook release and set-down thud: right size and weight?
 7. Low-fuel chime and low-rotor horn: clear, urgent without being unpleasant?
 8. Levels together against the engine and music buses once HELI-HOOKS wires them.
+
+## Import guard
+
+After HELI-MODE merged, its import guard (tools/test-heli-mode.mjs) named
+`tools/audio/build-heli.mjs`, which reads `src/heli/heli-radio-lines.js`
+to copy the takes. That one pair is added to the guard's approved list;
+nothing else is approved.
