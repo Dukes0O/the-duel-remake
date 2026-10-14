@@ -81,12 +81,25 @@ face/placement, missing real LOD names, donor immutability and exact disposal.
 The existing first-tile physical expectation adds only the named translation;
 all original GLB pins and other bounds expectations remain.
 
-These final source assertions, affected suites, native entrance pictures,
-nearby gate, build and Summit-only signature are UNRUN. The lightweight
-geometry calculation is not a suite, native acceptance or picture verdict.
-Root must review actual entrance pixels before a Summit-only scene pin update.
-No fourth art round or new asset. Native views/listening and Summit Time Attack
-T remain separate pending work; no source-only completion claim.
+Independent code/design review cleared07c03272. Existing test-track-kits passed
+all actual High/LOD placement, Float32 clearance, donor and lifetime checks.
+Actual --drive on clean7c444780 passed201 controlled checks and all four native
+races in24332.3582ms: Gallery15.1978814293s, clearOpen14.9797515934s,
+driftOpen21.2814800549s; clear difference−.2181298359s/drift+6.0835986256s.
+Equal actual entry, four finishes and zero crashes/resets/hits all pass.
+
+Existing Summit native on7c444780 passed in75323.6941ms/private46387/memory,
+19actual High/Performance views/no issues or warnings. Root inspected both
+entrance/Open and approach pictures: corridor and translated first-tile posts
+are visible, original roof and remaining gallery retained. No new formal art
+round. Initial sibling output path was rejected before Chrome launch after
+2232.9235ms; corrected existing lane .evidence junction invocation succeeds.
+After visual review, existing --capture compared20scene rows; ALL remain exact,
+including Summit4e30db18. No signature is regenerated: the scene guard does not
+need a new pin for these owned asynchronous loaded mesh variants. Actual drawn
+mesh changes are checked by dedicated existing kit tests and native pictures.
+Original nearby gate and build remain pending; Attack T and finishing pass
+remain separate. No quiet frame or release claim.
 
 ## Removed
 
