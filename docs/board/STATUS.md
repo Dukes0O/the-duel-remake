@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T19:28:57.858Z
+Observed at: 2026-10-14T19:34:36.208Z
 
-Observation commit: f5d507d91f0ab5ed675dcb356915e9719a917984
+Observation commit: 77531df06c3acd8fd3cec2bb5e413d0f9486ab3c
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: f5d507d91f0ab5ed675dcb356915e9719a917984
+Integration HEAD: 77531df06c3acd8fd3cec2bb5e413d0f9486ab3c
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -88,12 +88,12 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/heli-art-src | HELI-ART-SRC | 2026-10-14T12:23:29-07:00 | 0 | last commit 2026-10-14T12:23:29-07:00 | docs/changes/HELI-ART-SRC.md, tools/art/heli-source-candidates.json |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-14T11:39:39-07:00 | 0 | last commit 2026-10-14T11:39:39-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb, public/assets/models/circuits/kits/forest-footbridge.glb, public/assets/models/circuits/kits/forest-timing-tower-lod.glb |
-| codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T12:21:27-07:00 | 0 | last commit 2026-10-14T12:21:27-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, src/track-kits.js, src/track-script-course.js |
+| codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T12:29:47-07:00 | 0 | last commit 2026-10-14T12:29:47-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, src/track-kits.js, src/track-script-course.js |
 | codex/p4-career-access | P4-CAREER | 2026-10-14T12:23:39-07:00 | 0 | last commit 2026-10-14T12:23:39-07:00 | docs/changes/P4-CAREER.md, src/circuit-manifests.js, src/course-access-ui.js, src/course-access.js, src/screen-router.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/qa-browser-admission | QA-BROWSER-SWEEP | 2026-10-14T12:21:32-07:00 | 0 | last commit 2026-10-14T12:21:32-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/harbour-night.mjs, tools/scenarios/lap-telemetry.mjs |
+| codex/qa-browser-admission | QA-BROWSER-SWEEP | 2026-10-14T12:30:54-07:00 | 0 | last commit 2026-10-14T12:30:54-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/harbour-night.mjs, tools/scenarios/lap-telemetry.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
@@ -109,9 +109,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 502,819 B | +486,064 B | 5,000,000 B |
+| Added bytes in last merge | 641,131 B | +138,312 B | 5,000,000 B |
 | All `public/` | 291,982,013 B | +0 B | unavailable |
-| Git objects | 407,030,784 B | +72,704 B | unavailable |
+| Git objects | 407,161,856 B | +131,072 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -120,7 +120,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: f5d507d91f0ab5ed675dcb356915e9719a917984
+- Local integration/wasteland: 77531df06c3acd8fd3cec2bb5e413d0f9486ab3c
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
