@@ -7,7 +7,7 @@ import { loadGhosts, saveGhosts, GHOST_KEY } from '../src/ghost.js';
 
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
 const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWith('.json')).sort();
-assert.equal(files.length, 9, 'review the historical save-shape fixture roster');
+assert.equal(files.length, 10, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
   const values = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));
@@ -46,6 +46,14 @@ function preserveProfile(raw, loaded, label) {
   }
   for (const field of ['settledResults', 'settledPoliceFines', 'pbBonusRuns', 'milestones', 'circuitWins']) {
     if (raw[field]) for (const value of raw[field]) includes(loaded[field], value, `${label}: ${field} ${value}`);
+  }
+  // The helicopter field is optional: kept exactly when saved, never added to an older save.
+  if (raw.heli) {
+    for (const field of ['fuelKg', 'lessons', 'carsAt', 'refuels', 'flights']) {
+      equal(loaded.heli?.[field], raw.heli[field], `${label}: heli ${field}`);
+    }
+  } else {
+    equal(Object.hasOwn(loaded, 'heli'), false, `${label}: no heli field appears`);
   }
   if (raw.awardedWins) equal(loaded.settledResults, raw.awardedWins, `${label}: awardedWins migration`);
   if (raw.history) equal(loaded.history, raw.history, `${label}: complete race history`);

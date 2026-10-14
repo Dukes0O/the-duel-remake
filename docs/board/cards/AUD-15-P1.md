@@ -96,3 +96,37 @@ Not accepted yet: one real fault. Judged from the 04:00 recording
 - Pass for round 2: one new recording of the same scenario, with a stop or
   lift in it, showing the voices holding their level while the player is
   quiet. Then Claude's verdict. rival-voices stays dev.
+
+## Director answered mix repair claim — 14 October
+
+Claude's real round-one verdict requires each rival/traffic voice to follow its own actor, never playerEngineLevel. Resume in own aud-15-p1-mix / codex/aud-15-p1-mix, taking busy-game-files and sound-bank. Own ONLY src/audio.js existing vehicle voice level/update/bind regions, tools/test-audio-vehicles.mjs relevant gain/resource regressions, tools/scenarios/audio-vehicles.mjs current capture/witness/paired-off acceptance and docs/changes/AUD-15-P1.md. No App/snapshot/schema/simulation/asset/donor/mastering/mixer/default-caller change. Existing snapshot already supplies each actor's speed; use finite absolute actor speed normalized to200mph, with a bounded idle floor0.2 and load0.8, clamped0.2–1.0, under the existing rival0.35/traffic0.25 ceilings. This is read-only own-car speed level, including late donor binding, never player throttle or engine gain. Existing inverse HRTF panner, reference15m/max250m/rolloff1 provides distance attenuation after the dry gain; record those actual values so equal dry gains never imply equal audible distance.
+
+Keep all original descriptor/cap7/pending/fading/identity/pitch/cleanup/off-state protections; replace only the obsolete player-level gain assertion with the exact own-speed formula and add actual player-muted/changed-player-gain independence, differing actor speeds and real late-bind-current-actor witnesses in that existing test. No new test machinery. Source freezes for one independent review before the original nearby/jobs4/build.
+
+Round2 uses the same existing memory-only/private audio-vehicles scenario, with an input-only deliberate brake/lift segment so passing voices can be witnessed while player input/engine are quiet. Do not set actor speed/pose/state or fake PCM. Extend the existing rows with actual own-car speed, selected own gain level and actual panner properties. Preserve near/far/loaded-both/resource/cleanup checks. Capture its matching voices-off recording with the same scenario/seed/driver/input schedule and current approved mastering; report both measured loudness values and added LU. At most one initial paired packet, no frame timing. If voices add more than1LU, lower both ceilings by the same factor only within Claude's answer, report the value and request precise sound-bank descriptor-test hooks before that edit. Actual listening remains Claude's, cap3 overall including failed round1; no final mix or release claim without it. Root owns shared metadata/merge/cleanup. Other teams' source stays exact.
+
+## Core lock parked for Kyle's camera priority
+
+Useful source preparation72ca2f33 is clean, four owned files only, UNTESTED/unreviewed. No gate/build/native ran. Stop all audio edits/jobs now and release busy-game-files to the actual Camera correction; sound-bank remains held. Resume audio review/checks after Camera releases core. No mix/acceptance claim.
+
+
+## Core returns after the green camera correction
+
+Camera c8c4a52e is green in its actual complete native sweep and merged; reacquire busy-game-files with sound-bank. Parked72ca2f33 production own-speed source fits its grant, but Root source review found one real tools off-leg fault: disabled voices never allocate vehicleVoices, so cleanup must read optional size ??0. Correct only that receipt read, preserve enabled guards/defaults, then Root confirms review before focused tests/native on-off/original nearby/build. No listening pass or release is inferred.
+
+## Claude answers requested — round 2 actual own-car mix
+
+Source c3a8ad3c is green148/148/jobs4/build596ms/one confirmed review and merged conflict-free, no rerun. Actual same-scenario enabled/off recordings both pass, memory-only, errors/warnings empty. ON−14.72LUFS/−6.73dBTP versus OFF−14.74LUFS/−5.79dBTP, added0.02LU; ceilings remain0.35/0.25. Actual231brake/lift rows prove loaded own voices keep level while the player quiets; near544/far345, maximum5resources/remaining0, off0throughout. Actual inverse HRTF panner attenuates distance after dry gain: reference15/max250/rolloff1. At15.801s a rival25.33m away/speed176.65mph has gain0.31736 while playerEngineLevel0/playerSpeed0.0238mph.
+
+Claude: please listen and give round2 verdict (overall cap3 including rejected round1). Real enabled .evidence/2026-10-14/AUD-15-P1/round2-c3a8ad3c/on/vehicle-mix.wav and vehicle-mix.json; matching off/off vehicle-mix-off.wav and vehicle-mix-off.json. Input schedule/seed/driver are identical; both PCM packets are actual. No master/asset/bank edits or quiet frame claim. Source is integrated, rival-voices remains dev, human listening pending and waiting_on:claude; core/sound locks released. Root continues other ready work, no release/push.
+
+## Claude answers - mix verdict round 2, 14 October: ACCEPTED
+
+The own-car fix works. Measured in 0.5 s windows, the round 2 recording holds
+-22 to -28 dB through the player's brake and lift (14 to 18 s) where round 1
+fell to -41 to -44 dB; the rival at 25 m doing 177 mph carries gain 0.32 while
+the player sits still. The voices add 0.02 LU (on -14.72, off -14.74 LUFS), so
+the mix level is the existing game mix, not this card; ceilings stay 0.35 and
+0.25. Distance falloff by the HRTF panner (reference 15 m, max 250 m, rolloff
+1) is fine. Accepted for dev; `rival-voices` can switch on in a release Kyle
+approves. Frame cost is checked when it ships (AGENTS rule 8).

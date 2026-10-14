@@ -1086,3 +1086,19 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-14: QA-BROWSER-SWEEP helpers a0e9d76a merged; nearby22/22/jobs4, build661ms, reviewCLEAR;5nativecase receipts green, actualpay/saveguards preserved. No clean-merge rerun. Parentfailures/audio9ff remain open; ownhelperfolder recycling, no release/push.
 
 - 2026-10-14: DEEP-ART-SRCac5a6dc6 working17 source merged; nearby31/31/jobs4, build669ms, reviewCLEAR; heldotter removed, legacy catalogue/modelbytes retained. Cap3closed/finishedart notaccepted; olderlane retained, no postmerge rerun/release/push.
+
+14 October: QA-BROWSER-SWEEP isolated career3bed13bb merged;21/21/jobs4/build828ms, ordinary+Guardian clear, three real memory-only natives green; parent runtime/sound/art work open.
+14 October: HELI-PACKET merged (docs/HELICOPTER.md, ten H1 cards, next-run release of the helicopter); lane 14/14 jobs4, build passed; lane deleted.
+
+14 October: FIX-HAIRPIN-CAMERA c8c4a52e merged;41/41/jobs4/build1.27s/review clear; actual270poses/16200frames zero misses/blockers/errors, corrected apex picture accepted. Core returns to audio; no release.
+14 October: HELI-FLIGHT merged (src/heli flight, autopilot, ground; test-heli-flight 103 checks); lane 20/20 jobs4 267.85 s, build passed; review found 3 faults, fixed and confirmed; lane deleted.
+14 October: HELI-SAVE merged (profile.heli field, fuel purchase, repairs that forgive; fixture 10-heli; fixture roster 9 to 10 in three suites); lane 249/249 jobs4 1249.89 s, build passed; save review CLEAR; lane deleted.
+14 October: HELI-CABLE merged (src/heli/heli-cable.js, autopilot speed ramp and anti-sway; test-heli-cable 87 checks); lane 21/21 jobs4 250.04 s, build passed; review found 2 faults, fixed and confirmed; lane deleted.
+
+14 October: QA consumed recipes03146282 merged;19/19/jobs4/build838ms/review clear, current Salt four actual gameplay entries/eight images green; three old art recipes removed, manual frame excluded from all.
+
+14 October: AUD own-car mix c3a8ad3c merged;148/148/jobs4/build596ms/review clear, real on/off recordings green/add0.02LU/max5of7; round2 listening with Claude, dev/locks released.
+14Oct P4-YETI native observer a94993a1 merged:18/18/jobs4/build2.42s/review, realfivephases/once-roar/memory6860; grounding raisedfoot+.282m and listening waitClaude, dev, olderfolder retained.
+
+14Oct QA acceptedpins+realRustwallentry aa7c0f80 merged18/18/jobs4/build947ms/review; actualfirst-person56/Rustwall20pics and6routeplacements pass/memory, timingnot-run; ownlane consumed, remainingruntime/audioopen.
+14 October: HELI-MODE merged (heli session, zones, cruise legs, pump, truck; switch helicopter dev; switch count 25 to 26, switch list and context list gain the new entries; test-heli-mode 138 checks with a headless flight to Panorama Ridge); lane 246/246 jobs4 1235.02 s, build passed; review found 3 faults, fixed and confirmed; lane deleted.

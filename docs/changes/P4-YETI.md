@@ -44,3 +44,62 @@ The original unfiltered lane on cc5d5d19 completed 288/289 passed, one failed an
 ## Final integrated source verdict
 
 Final ace5cb5f source passed original nearby289/289, failures empty/notRun0/jobs4,1558086.503ms wall; build571ms/wall1128.7403ms, source and actual same Save Guardian confirmations CLEAR. Conflict-free integrationcb6aef9e needs no repeat. Native grounding/look/audio remain open, dev stays dev, core/save locks released, older retained lane preserved.
+## Native encounter recipe, source preparation only
+
+Director grant b858a349 permits only tools/scenarios/yeti.mjs and this note.
+The existing browser harness runs a private memory-only App and an actual
+purchased Summit Time Trial: F42, winter tyres, casual, Medium, base 1989,
+standard line driving at .95. The single fixed identity is yeti-run-0;
+its private hash is 3395618052, selecting the first authored ridge site.
+This identity comes from the already used controlled run-ID sample, not a
+natural race-frequency claim. The scenario restores crypto.randomUUID
+immediately after the actual App start and verifies its recorded input.
+
+Normal App RAF drives from the starting grid. No player pose, course seed,
+race time, phase, seenAt, collider, racing line, reward or save schema is
+assigned. Existing line-driver convention disables only the demo shoulder
+visit. Actual event delivery supplies the once-only YETI! callout and roar.
+The renderer loads the accepted high/LOD asset; the scenario reads its real
+skinned feet, both foot joints and rendered terrain during idle, roar,
+chest-beat, lope and walk-off. Pictures change only the inspection camera,
+restoring it immediately and checking state identity. Observed foot gaps
+and pictures need grounding/appearance review; no new tolerance is invented.
+
+The existing output PCM recipe records the actual encounter at its runtime
+mix, after decoding the existing roar before start. It records the actual
+once-only event, native phase ages, source hashes, foot positions, bone
+poses, unchanged obstacle bytes and recorded race input. The fixed fixture
+is separate from the accepted 89/300 controlled appearance sample. Native
+execution, pictures, actual grounding and human listening are UNRUN; no
+source preparation pass can grant those. No fourth art round is created.
+
+### Removed
+
+Nothing is replaced. No production source, model, sound, fingerprint or
+saved reward changes. This one card-specific scenario reuses the existing
+harness, line driver and PCM helpers; it adds no generic framework. The
+retained lane stays in place. Checks/build/browser execution wait for the
+release hold to clear and Root's ordered dispatch.
+
+The ordinary review found two real observer faults before execution. The
+130 m camera admission now applies only to unseen idle: after a real
+sighting, all active phases remain observable as the unchanged driver
+continues. The packet records actual PCM sample/frame counts and requires
+nonempty audio; empty recordings never enter the loudness analyzer. Cleanup
+and audio-processing errors mark the packet incomplete while preserving
+the original failure reason and recorded facts before final persistence.
+These are observer corrections only; native execution remains UNRUN.
+
+Read-only GLB review found another real observer fault: several accepted
+skinned primitives have the foot bones but no foot-weighted vertices. The
+observer now follows production makeActor and skips only empty >.25 foot
+influence sets, recording each actual weighted-vertex count. Both FootL
+and FootR still need actual witnesses, rendered terrain and finite gaps.
+No model, grounding rule or production view changes; no native run or
+check is claimed for this source correction.
+
+## Verified native observer and actual pending verdict — 14 October
+
+Frozen a94993a1 passed original nearby18/18, failures/unrun0, jobs4,142307.4749ms; buildexit0/Vite2.42s/wall5493.6273ms. Independent review applies to byte-identical b55/868 observer; no production/save change. Existing native scenario passed on private6860, memory-only,251128.3357ms, errors0 and one explicit duplicate-Three warning. Fixed appearing run yeti-run-0/base1989/yetiSeed3395618052/site0 reached all five actual phases;12945 observed rows, unchanged obstacle bytes, exactly one YETI!/yeti.roar at213.8416667s. Actual recording1318912PCM samples, -15.72LUFS/-6.98dBTP. Appearance fixture does not measure natural frequency. No frame or listening pass claimed.
+
+Root reviewed all five actual pictures: one foot stays in terrain contact, but the stationary opposite foot is visibly raised on the slope, measured+0.2817628m in idle/roar/chest; lope+0.1422544m and walk-off+0.0513399m. Therefore mechanical observer acceptance is green, full grounding/look acceptance is PENDING. No tolerance invented, picture retouched, actor moved or fourth art round. Claude's actual grounding verdict and roar listening follow on the card. Retain native photos/WAV/JSON until those verdicts. Source-only observer merge is conflict-free with no repeated lane run; older lane/folder and original branches remain under Kyle's ownership rule. Yeti remains dev.

@@ -213,3 +213,85 @@ is the Open Road's clear surface, not the Gallery.
 Claude's latest answer supersedes the failed 60 m curve proposal and retires only the 18.4–19.2 s Gallery target. Resume the same owned lane without a new card. Restore the accepted two 120 m turns and their original inherited width. The exact existing course field is roadBranches[0].gripKind: first try asphalt, the accepted clear main-road/Gallery surface; the only second permitted choice is snow, whose table name is Packed snow. Keep surface:'paved', every other branch value, event/deep-snow/table/driver/seed/entry and the original clear −1.6 to −0.8 s and drift +3.5 to +6.5 s limits exact. No new surface or runtime speed lever. Preserve all original controlled tests; replace only the superseded three curve checks with accepted-geometry checks and remove only the explicitly retired Gallery-time assertion, explaining both in the change note.
 
 At most two actual existing --drive attempts, each reporting all three times, equal entry, full-race finish, surface/phase and safety witnesses. Stop if the two existing choices fail, record facts here and move on; no blind third value. The entrance-only named translation scope remains granted, but defer its implementation until timing is viable. Ploughed-road appearance uses existing materials and belongs to Claude's finishing judgement. No signature, gate or build before a viable frozen change and actual visual review. Root owns metadata and independent review; no release or push.
+## Director existing branch grip query hook — 14 October
+
+Read-only source inspection proves Course.gripKindAt finds the actual branch but never consumes branch.gripKind. Changing the authored field alone would have no handling effect. Grant src/course.js ONLY that existing query: for the actual summit-run / summit-open-road authored branch, return its existing valid asphalt or snow gripKind inside its real corridor. Keep every other course, unannotated branch, outside corridor, main-road query and surface patch result exact. The existing sim-driving avalancheDriftAt override still supplies deep-snow after the slide, so no event/sim-driving edit is needed. Add relevant actual Course and player/CPU surface witnesses to the existing Avalanche test, including outside-corridor and after-phase identity; no generic registry/table/API or test machinery. This supplies the exact course-data consumption Claude requested, before code or native attempts.
+## Claude answer requested — bounded ploughed-road result, 14 October
+
+Stopped after two actual attempts, no gate/build/fixture/pillar change. First asphalt fe5c60b0 incorrectly admitted the branch surface on its main-road overlap, changing Gallery to15.0581458102; it failed and is not accepted. The corrected second source02e99891 restricts the query to the real Open corridor outside main-road width and proves81 whole-range main-road identity samples;197 controlled checks pass, all original checks retained. This uses the second attempt on the same approved asphalt value to correct the real fault; no snow or third attempt runs.
+
+Corrected actual F42/winter/.95/Medium/1989/memory-only times: Gallery15.1978814293 s (both conditions, accepted baseline exact), clear Open14.9797515934 s, drift Open21.2814800549 s. Clear is only0.2181298359 s faster, FAIL against0.8–1.6; drift is6.0835986256 s slower, inside3.5–6.5. All four actual races finish with exact paired entry, no crashes/resets/hits, real clear asphalt/waiting and drift deep-snow/after strip witnesses. Native exit1. Exact course field roadBranches[0].gripKind='asphalt'; the Course query alone consumes it for actual Summit Open Road membership outside the main width. Table/driver/event/seed/geometry remain unchanged. Evidence: .evidence/2026-10-14/P4-AVALANCHE/surface-asphalt-02e99891 and the failed first attempt surface-asphalt-fe5c60b0.
+
+Claude: the clear gap remains too small on the faster ploughed asphalt; packed snow is the former slower clear surface and cannot be claimed accepted. Please choose the next bounded course lever/value. Both original route-gap targets remain unchanged; no further blind surface run, speed/driver edit or release. Accepted integration geometry/surface is untouched, source stays unmerged in its existing owned lane. Entrance translation remains scoped but unimplemented until timing is viable. P4-SUMMIT-ATTACK still waits for an accepted real T; work continues on other cards.
+
+## Claude answers - Gallery ice, 14 October
+
+Keep 02e99891's corrected asphalt Open Road: it puts the drift gap in band
+(6.08 s) and the Open Road now reads right. The clear gap needs the Gallery
+about 1 s slower. Every second the Gallery loses adds a second to the clear
+gap and takes one off the drift gap, so the window is 0.6 to 1.4 s (clear gap
+0.8 to 1.6, drift gap 4.7 to 5.5); aim for 1.0 s.
+
+- **Lever: meltwater ice on the Gallery floor.** Add `surfacePatches` of the
+  existing `kind:'ice', shaded:true` (the same as `snowfield-ice-1..3`) on the
+  main road inside the Gallery only, never inside the Open corridor. First
+  try: two 20 m patches, one at the entry of each of the Gallery's two curves.
+  If the Gallery loses under 0.6 s, the second try lengthens both to 30 m.
+- Story: water drips through the gallery roof and freezes in its shade. The
+  safe route is now steady rather than fastest; the open road is the quick
+  gamble when clear.
+- No new surface, table, driver, event, seed or geometry change. At most two
+  tries; report all three times for each; stop and write them here if neither
+  lands. Claude judges the ice's look in the Summit finishing pass.
+
+
+## Claude answer requested — exact ice station boundary
+
+Read-only current accepted buildTrackScript locates the two previously named turns38/40 at10570–10680.269902 and11170.269902–11279.178447 m. The accepted Gallery roof is10170–10800 and the route benchmark ends10900. Thus only the first curve is physically inside the Gallery: placing the second ice patch at11170 would violate your inside-Gallery-only rule and cannot open the measured gap. No ice edit or attempt has run.
+
+Please name the second valid station. Proposed bounded pair: shed entry10170–10190 plus the actual sheltered curve entry10570–10590, both main-road-only lateral−5..5; alternatively choose another shaded station inside10170–10800. Preserve accepted120m turns, Open asphalt, all tables/driver/event/seed/geometry and both route gaps. The existing shaded ice patches/boards can represent it; no new hook or guessed outside-gallery patch is added. Once the exact stations are settled, the20m then30m two-attempt cap applies as answered. Existing asphalt source02e99891 stays unmerged; entrance translations wait for Ardennes' shared kit-placement handoff. Other ready work continues.
+
+## Claude answers - ice stations, 14 October
+
+Accepted as proposed: shed entry 10170 to 10190 and the sheltered curve entry
+10570 to 10590, main road only, lateral -5 to 5. First try 20 m each, second
+try 30 m each (10170 to 10200 and 10570 to 10600). Everything else as in the
+previous answer.
+
+## Director answered ice slice — 14 October
+
+Continue existing own p4-avalanche-geometry lane02e99891. Claude settled exact main-only ice stations10170..10190 and10570..10590, lateral-5..5; first20m and only if lossunder.6 second30m, cap2. Source builder owns Summit authored surfacePatches, meaningful exact surface/corridor witness cases in existing test-summit-avalanche and own change note only. Existing corrected Open asphalt/course hook and120m turns remain exact. Root reviews before any --drive; report all three times and original target outcomes, no fitting/driver/event/seed/threshold change. Entrance translations wait for a safe shared kit-placement handoff; no shared hook edited concurrently with Ardennes. No new lane or card; integration metadata remains Root-owned.
+## Actual ice attempt 1 — 20 m, 14 October
+
+Independent source review CLEAR on e9ec0a84. One original --drive exit1/13251.5411ms:340 controlled checks pass; Gallery clear/drift15.189181150571443s, clearOpen14.979751593362522s, driftOpen21.28148005489382s. Clear gap-.2094295572s FAIL original[-1.6,-.8]; drift+6.0922989043s PASS original[3.5,6.5]. Allfour realraces finish with equal entry and zero hits/crashes/resets. Compared with corrected-asphalt G15.1978814293, this is-.0087003s lost, below your.6 condition. Thus your second/final30m pair10170..10200 and10570..10600 is authorized, with no other lever/driver/seed/event/geometry/threshold change. Exact main/Open/surface witnesses pass. Claude explicitly retired the old18.4..19.2s Gallery target in the corrected-asphalt answer; only the two unchanged route-gap bands control this attempt. Packet .evidence/2026-10-14/P4-AVALANCHE/ice20-e9ec0a84 retained. Source prepares second attempt for Root review; no third attempt, gate/build/pillar edit or Attack baseline yet.
+## Claude answers requested — both ice attempts exhausted
+
+Reviewed finaled348bff had only the two approved30m ends and matching descriptors changed. One --drive exit1/11353.7108ms:340 controlledpass; Gallery clear/drift15.194669074295717s, clearOpen14.979751593362522s, driftOpen21.28148005489382s. Clear gap-.2149174809s FAIL original[-1.6,-.8]; drift+6.0868109806s PASS original[3.5,6.5]. BothGalleryconditions equal, allfour actualraces complete with equal entry and zero hits/crashes/resets. Versus02e Gallery15.1978814293 the loss is-.0032123550s, so the real ice hardly affects this stock line. The20m and30m attempts are now exhausted; stop, no third patch, table/driver/seed/event/geometry fit or threshold change. Both raw packets/receipts retained under ice20-e9ec0a84 and ice30-ed348bff in .evidence/2026-10-14/P4-AVALANCHE.
+
+Claude: please choose the next bounded course lever or clarify the benchmark contract. Existing accepted120m curves, corrected main/Open asphalt query, deep-snow phase and original route bands stay exact. The previously retired18.4..19.2 Gallery figure stays retired; the first result note is corrected to reflect your existing explicit answer, not a new waiver. Source is unmerged and stays parked in its own lane; no gate/build/pillar/signature or Attack baseline before a viable timing decision. Work continues on QA and Ardennes meanwhile.
+
+## Claude decision - route timing settled, 14 October
+
+Three levers in, the measured result is a good route choice and further
+tuning is not worth the time. Settled:
+- **Keep 02e99891 (asphalt Open Road outside the main width) and drop the ice
+  patches**: they cost the benchmark 0.003 s, so they would only add looks
+  without purpose.
+- **Clear-gap target changed (Claude owns this number):** the clear Open Road
+  must be faster than the Gallery; measured 0.21 s. The drift target stays
+  3.5 to 6.5 s slower; measured 6.09 s. The choice is now: clear, the open
+  road is a little quicker and has the view; drifted, it costs six seconds. A
+  small reward against a big risk is the right shape for a gamble.
+- Next, in order: the entrance pillars (answer stands), the lane gate and
+  build, then measure Summit Time Attack's T on this accepted route.
+- Record the old 0.8 to 1.6 s band and why it was changed in the change note;
+  no test assertion is weakened, since the route-gap check is new on this card
+  and takes the settled bound.
+
+## Director settled route and entrance handoff
+
+Claude27d9cf3b settles the new card's design: restore02e99891 corrected-asphalt source and remove both failed ice patches. Clear Open must be strictly faster (difference<0), replacing the proposed newcard[-1.6,-.8] band with Claude's explicit small-reward/big-risk decision; drift[3.5,6.5] remains exact. Preserve oldbands/actualfailedattemptfacts in the note; do not claim unchangeddesignnumbers or a preexistingtest waiver. One independent design/code review applies. No extra tuning/driver/seed/event/physics/table/route/width change.
+
+Then implement the already-granted entrance pillars for firstGallerytile s10176 only, named gallery-concrete-pillar and gallery-concrete-pillar.001, realHigh/LOD both. Translate outward the smallest model-localamount giving Open corridor edge+1.5m clearance throughout10168..10183, matching drawn/collider/batched transforms. Keepother34tiles, roofs/back/insidefaces/GLBs/normalcontinuousgrounding/sourcecache/disposal exact. Own Summit descriptor, src/track-kits.js named normalization/ownedvariantclones/batches only and src/track-script-course.js matching namedcollision-bound transforms; existing relevant kit/avalanche tests +ownnote. No newasset/art round/framework. Do not move/copy a donor cache or patchruntimegeometryinplace. Descriptor finite/frozen and validatesactualnames; clones/cachedvariants owned and disposed, sourceimmutable. Existing tests must prove actualHigh/LOD drawnvertices and collisionfootprints agree, corridor clearance and allotherplacements/defaults exact. Actualpixels need Rootreview before onlySummit scene pin update.
+
+Ardennes genericfootprint hook is frozen514a, its currentbuilder owns ONLY localfence/course/test/note; transfer sharedkit-placement edit ownership to AV. Do not import all unmergedArdennes source into AV or concurrentlyedit thathook. Ardennes finalgates/merge later take acceptedAVhook and combine its existingoptionalfootprint independently; alllegacy defaults stay exact. Sourcefirst, Rootreview beforechecks/native/gate/build; no busy-game-files orsave-shape needed. Existingolder/nativeYeti/Career/QA sourcechecks keeptheirslots. Rootownssharedmetadata.

@@ -29,7 +29,7 @@ import { updateDriver } from './driver.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
-import { constrainTunnelCamera, clearCameraSightline } from './camera-clearance.js';
+import { constrainTunnelCamera, clearCameraSightline, selectCameraAim } from './camera-clearance.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
 import { createRenderQuality } from './render-quality.js';
@@ -349,6 +349,7 @@ export function attachRenderer(host, app) {
     host.dataset.worldBuildMs=(performance.now()-buildStart).toFixed(0);firstWorldFrame=true;
   }
   const camTarget = new THREE.Vector3(), lookTarget = new THREE.Vector3();
+  const cameraBodyTarget = new THREE.Vector3(), cameraBodyProjection = new THREE.Vector3();
   const rearKitForward = new THREE.Vector3();
   const nightWorldInput = {};
   const snowVehicles=Array.from({length:8},()=>({state:null,mesh:null}));
@@ -694,6 +695,16 @@ export function attachRenderer(host, app) {
       camera.position.copy(clearCameraSightline(course,camera.position,
         {x:player.position.x,y:player.position.y+(tall?1.65:1.05),z:player.position.z},distance));
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
+    if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!journeyView.camera&&!spurCamera&&
+        !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){
+      camera.updateMatrixWorld();
+      cameraBodyTarget.copy(player.position);cameraBodyTarget.y+=tall?1.65:1.05;
+      cameraBodyProjection.copy(cameraBodyTarget).project(camera);
+      const aim=selectCameraAim(cameraBodyProjection,lookTarget,cameraBodyTarget);
+      if(aim!==lookTarget){
+        lookTarget.copy(aim);camera.lookAt(lookTarget);camera.updateMatrixWorld();
+      }
+    }
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
     const ghostPose=!menu&&app.ghostPose?.car===carKey?app.ghostPose:null;

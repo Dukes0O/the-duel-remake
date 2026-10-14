@@ -1,7 +1,7 @@
 // The menu QA entry installs memory-only localStorage before production UI loads.
 // Chrome itself uses a disposable profile, so IndexedDB never sees a live career.
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=career-backup');
+  await context.navigate('/tools/menu-check.html?flags=career-backup&memory-backups=1');
   await context.waitFor("document.querySelector('#stage.in-menu') && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value", 'isolated career menu');
   await context.waitFor("[...document.querySelectorAll('details summary')].some(node=>node.textContent.includes('TEMPORARY SAVES'))", 'temporary QA controls');
   await context.evaluate("for(const panel of document.querySelectorAll('details'))if(panel.querySelector('summary')?.textContent.includes('TEMPORARY SAVES')||panel.querySelector('summary')?.textContent.startsWith('Performance samples'))panel.style.display='none'");
@@ -17,7 +17,9 @@ export async function run(context) {
   })()`);
   await context.waitFor("document.querySelector('.player-panel')?.textContent.includes('Import failed: This is not a valid JSON career file')", 'invalid import rejection');
   await context.screenshot('career-import-rejected');
-  await context.evaluate(`(() => {
+  await context.reloadAfterAction(`(() => {
+    sessionStorage.setItem('career-before-import',localStorage.getItem('the-duel-players-v2'));
+    sessionStorage.setItem('career-memory-id',JSON.parse(window.name.slice('__duel_qa_tab_v2:'.length)).id);
     const entries={};
     for(let index=0;index<localStorage.length;index++){
       const key=localStorage.key(index);
@@ -34,17 +36,22 @@ export async function run(context) {
     input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
   })()`);
   await context.waitFor("sessionStorage.getItem('career-imported-before-reload')", 'successful import before reload');
-  const result=await context.evaluate(`new Promise((resolve,reject)=>{
-    const request=indexedDB.open('the-duel-career-backups',1);
-    request.onerror=()=>reject(request.error);
-    request.onsuccess=()=>{
-      const rows=request.result.transaction('snapshots','readonly').objectStore('snapshots').getAll();
-      rows.onerror=()=>reject(rows.error);
-      rows.onsuccess=()=>resolve({
-        imported:JSON.parse(sessionStorage.getItem('career-imported-before-reload')).players[0].name,
-        backups:rows.result.filter(row=>row.reason==='before-import'&&row.entries['the-duel-players-v2']).length
-      });
-    };
-  })`);
-  if(result.imported!=='Imported QA'||result.backups<1)throw Error('Valid import or IndexedDB recovery copy was missing.');
+  await context.waitFor("window.__qaApp && document.querySelector('#stage.in-menu') && window.__duelQaBackupStore", 'imported memory career after real reload');
+  const result=await context.evaluate(`(async()=>{
+    const saved=JSON.parse(window.name.slice('__duel_qa_tab_v2:'.length)),store=window.__duelQaBackupStore;
+    const candidates=saved.backups.filter(([id,row])=>row.reason==='before-import'&&row.entries?.['the-duel-players-v2']);
+    let backups=0;
+    for(const [id,row] of candidates){
+      const actual=await store.load(id);
+      if(actual?.id!==id||JSON.stringify(actual)!==JSON.stringify(row)||actual.reason!=='before-import'||
+        actual.entries['the-duel-players-v2']!==sessionStorage.getItem('career-before-import'))
+        throw Error('The actual pre-import memory recovery contents are missing');
+      backups++;
+    }
+    return{imported:JSON.parse(localStorage.getItem('the-duel-players-v2')).players[0].name,
+      observed:JSON.parse(sessionStorage.getItem('career-imported-before-reload')).players[0].name,
+      backups,sameTab:saved.id===sessionStorage.getItem('career-memory-id'),databases:await indexedDB.databases()};
+  })()`);
+  if(result.imported!=='Imported QA'||result.observed!=='Imported QA'||result.backups<1||!result.sameTab||result.databases.length)
+    throw Error('Valid import, actual memory recovery or isolated reload was missing.');
 }

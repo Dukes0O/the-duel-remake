@@ -62,7 +62,7 @@ function reviewFixture() {
 }
 
 test('P2 proof selector is explicit and keeps P1 defaults and contact mode separate', async () => {
-  const scenario = await import('./scenarios/first-person-polish.mjs');
+  const scenario = await import('./first-person-review.mjs');
   assert.equal(typeof scenario.selectFirstPersonProof,'function');
   const base=scenario.selectFirstPersonProof({});
   assert.deepEqual(base,{family:'first-person-p1',round:1,
@@ -79,7 +79,7 @@ test('P2 proof selector is explicit and keeps P1 defaults and contact mode separ
 });
 
 test('P2 candidate realpath cannot alias P1, public, or an outside GLB', async () => {
-  const scenario=await import('./scenarios/first-person-polish.mjs');
+  const scenario=await import('./first-person-review.mjs');
   const production=join(root,'public/assets/models/wasteland/first-person/hands/rook.glb');
   const dir=join(root,'art-build/first-person-p2/test-path');
   const good=join(dir,'rook.glb');
@@ -168,7 +168,7 @@ test('P2 sheet rejects P1 reuse, changed asset, missing pose, and false swap evi
 });
 
 test('frame assessor rejects invented proof families with otherwise valid A1/B/A2 evidence', async () => {
-  const {assessFirstPersonP1FrameCost:assess}=await import('./scenarios/first-person-polish.mjs');
+  const {assessFirstPersonP1FrameCost:assess}=await import('./first-person-review.mjs');
   const values=n=>Array(600).fill(n);
   const branch=(name,quality)=>({
     branch:name,asset:name==='B'?{kind:'candidate',path:p1,sha256:stamp(7)}:
