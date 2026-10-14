@@ -27,7 +27,7 @@ async function prepare(context,bundle){
   await context.evaluate(`(async()=>{
     if(!window.name.startsWith('__duel_qa_tab_v2:')||!Object.getOwnPropertyDescriptor(window,'localStorage')?.value)throw Error('Memory-only storage absent');
     const a=window.__qaApp;a.stop();a.audio.setMuted(true);a.setGraphicsQuality('high');
-    document.querySelectorAll('details').forEach(node=>node.hidden=true);
+    document.querySelectorAll('details').forEach(node=>{const label=node.querySelector(':scope > summary')?.textContent||'';if(label==='MENU QA · TEMPORARY SAVES'||label.startsWith('Performance samples ('))node.style.display='none';});
     const url=URL.createObjectURL(new Blob([${JSON.stringify(bundle)}],{type:'text/javascript'}));
     try{window.ControlsQa=await import(url);}finally{URL.revokeObjectURL(url);}
     a.profile={...a.profile,courses:{version:1,unlocked:ControlsQa.COURSE.map(row=>row.id)}};
@@ -113,10 +113,10 @@ async function screenCase(context,id,width,height){
     const a=window.__qaApp,d=a.duel,s=d.state;
     for(let i=0;i<900&&s.status!=='racing';i++)a.advance(1/60,1/60);
     if(s.status!=='racing')throw Error('Native countdown did not end');
-    const notes=ControlsQa.resolveTrackIntel(d.course).notes||{};
+    const notes=ControlsQa.resolveTrackIntel(d.course).notes||{};const coordinate=value=>((value%d.course.length)+d.course.length)%d.course.length;
     return{length:d.course.length,corners:d.course.script.pieces.filter(row=>row.kind==='turn').map((row,index)=>{
       const board=notes[ControlsQa.cornerId({...row,number:index+1})]?.brakeBoard??100;
-      return{name:row.name,direction:row.dir>0?'L':'R',hairpin:row.radius<40,entry:row.s0,brake:row.s0-board,apex:row.s0+(row.s1-row.s0)*.55,toApex:board+(row.s1-row.s0)*.55,board};})};
+      return{name:row.name,direction:row.dir>0?'L':'R',hairpin:row.radius<40,entry:row.s0,brake:coordinate(row.s0-board),apex:coordinate(row.s0+(row.s1-row.s0)*.55),toApex:board+(row.s1-row.s0)*.55,board};})};
   })()`);
   const warnings=[];const failures=[];
   for(const corner of course.corners){
@@ -139,11 +139,11 @@ async function screenCase(context,id,width,height){
   const layout=await context.evaluate(`(()=>{
     const visible=e=>e&&!e.hidden&&getComputedStyle(e).display!=='none'&&getComputedStyle(e).visibility!=='hidden'&&e.getClientRects().length>0;
     const rect=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
-    const selectors=['.route-hud','#route-map','.rear-view-frame','#corner-warning','.speedometer','.race-clock','.race-position','.race-heading','.race-health','#field-board','#race-callout','#style-score-panel','#tow-marker'];
+    const selectors=['.route-hud','#route-map','.rear-view-frame','#corner-warning','.speedometer','.race-clock','.race-position','.race-heading','.race-health','#field-board','#race-callout','#style-score-panel','#tow-marker','.utility-controls'];
     const rows=Object.fromEntries(selectors.map(selector=>[selector,document.querySelector(selector)]).filter(([,e])=>visible(e)).map(([selector,e])=>[selector,{...rect(e),text:e.textContent.trim()}]));
     const overlaps=[];for(const a of ['.route-hud','.rear-view-frame','#corner-warning'])for(const b of Object.keys(rows)){
       if(a===b||b==='#route-map')continue;const p=rows[a],q=rows[b];if(p&&q&&Math.min(p.right,q.right)>Math.max(p.x,q.x)&&Math.min(p.bottom,q.bottom)>Math.max(p.y,q.y))overlaps.push([a,b]);}
-    return{viewport:{width:innerWidth,height:innerHeight},rows,overlaps,canvas:{width:document.querySelector('#route-map').width,height:document.querySelector('#route-map').height}};
+    for(const b of ['.utility-controls','.race-position']){const p=rows['.race-clock'],q=rows[b];if(p&&q&&Math.min(p.right,q.right)>Math.max(p.x,q.x)&&Math.min(p.bottom,q.bottom)>Math.max(p.y,q.y))overlaps.push(['.race-clock',b]);} return{viewport:{width:innerWidth,height:innerHeight},rows,overlaps,canvas:{width:document.querySelector('#route-map').width,height:document.querySelector('#route-map').height}};
   })()`);
   const panel=layout.rows['.route-hud'],map=layout.rows['#route-map'],mirror=layout.rows['.rear-view-frame'],warning=layout.rows['#corner-warning'];
   const near=(actual,expected)=>Math.abs(actual-expected)<=1;
@@ -167,12 +167,12 @@ async function screenCase(context,id,width,height){
 }
 export async function run(context){
   const bundle=await bindings();await prepare(context,bundle);
-  const packet={schema:1,storage:'memory-only',quality:'high',keyboard:await keyboardLap(context),screens:[]};
+  const uiOnly=process.env.DUEL_CONTROLS_UI_ONLY==='1';const packet={schema:1,storage:'memory-only',quality:'high',keyboard:uiOnly?null:await keyboardLap(context),notRepeated:uiOnly,keyboardReceipt:uiOnly?'native-b4a00a85/keyboard-lap.json':null,screens:[]};
   await save(context,'controls-native.json',packet);
   for(const [width,height]of [[1920,1080],[2560,1440]])for(const id of ['harbour-lights','tremblant-woods']){
     const result=await screenCase(context,id,width,height);packet.screens.push(result);await save(context,'controls-native.json',packet);
     console.log('Native screen '+id+' '+width+'x'+height+': '+(result.passed?'PASS':result.failures.join('; ')));
   }
-  const failures=[...(!packet.keyboard.passed?['Harbour keyboard lap failed']:[]),...packet.screens.flatMap(row=>row.failures.map(failure=>row.id+' '+row.width+': '+failure))];
+  const failures=[...(!uiOnly&&!packet.keyboard.passed?['Harbour keyboard lap failed']:[]),...packet.screens.flatMap(row=>row.failures.map(failure=>row.id+' '+row.width+': '+failure))];
   if(failures.length)throw Error(failures.join('; '));
 }

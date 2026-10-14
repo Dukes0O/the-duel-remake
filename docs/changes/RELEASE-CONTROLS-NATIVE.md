@@ -11,3 +11,11 @@ Stock comparison already ran once on integration c22f32a8: complete trace SHA256
 ## Removed
 
 No production path, asset, save, assertion or native acceptance requirement is replaced. The recipe owns its specific acceptance packet only. Scratch QA bundles are recycled by the existing harness.
+
+## Actual native fault and exact repair before code
+
+Original b4a00a85 native packet drained exit1, zero browser warnings/errors. Its Harbour keyboard lap passed at90.258333s: one observed lap against unchanged native four-lap target,11192 physics/input steps, zero crashes/boundary/checkpoint resets and maximum stuck0s. Never repeat this accepted lap. Four native layouts and C cycles passed their requested sizes:1080 map432/384.031, mirror576x180, warning110;1440 map576/512.031, mirror768x240, warning146.656. Actual pictures exposed the relocated race clock overlapping sound/camera/pause utility controls; these pictures are not green readability evidence.
+
+Director8798e492 authorizes only .in-race .race-clock top30px to70px, leaving its actual80.7969px height between utility bottom62px and position top160px. Recipe strengthens clock/utility/position overlap observations. QA-only MENU QA and Performance samples details must use display:none because existing details CSS overrides hidden; actual game details stay intact.
+
+The56 warning-comparison failures came from using raw authored decimal brake/apex coordinates, while the closed course publishes normalized coordinates. Normalize those authored coordinates before samples and oracle; keep every250/150/100/50/brake/apex requirement exact, with no tolerance or input fitting. Corrected DUEL_CONTROLS_UI_ONLY=1 packet records keyboard:null and notRepeated:true with an explicit reference to the original accepted b4 packet. It makes no new lap claim. Recapture only the four required native screen cases, then one original unfiltered nearby/build. No physics, source driver, save, rear-view budget or harness changes.
