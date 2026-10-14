@@ -15,3 +15,8 @@ Current integration merged normally without conflict before this correction. Sou
 ## Removed
 
 Removed only this lane's failed midpoint-heading sweep override, restoring the integration test exactly. Replaced the authored 9 m Lantern Hairpin radius and its one explicit design expectation with Claude's 10 m decision. No wall policy, tolerance, body dimension, driver or other course is removed or changed.
+
+
+## Radius 10 geometry and approved scene capture
+
+Root's independent source review is clear. The original focused test-circuits.mjs passed on 4a2c1c9e: 116894 checks across 20 events and four seeds, exit 0, wall 64227.7844 ms under concurrent foreign gates. Every original assertion and probe remains intact. The existing world-composition --capture completed with immutable features, exit 0, wall 37578.8062 ms. All 19 other captured scene rows match their existing fixtures exactly. Only Claude's pre-approved Harbour fixture changes, to hash 0ec4194da979120d71138537d38a0f34ab87abf9dbe0a02c41f2b6b2adab4d9c (1134 nodes, 1117 meshes, 223085 instances; geometry/material/texture counts unchanged). This is a measured radius change, not blind signature regeneration or new visual acceptance. Outputs are in this lane's ignored .qa-dist/harbour-radius10-* logs and receipts. The reference rebuild, canonical nearby tier and build remain UNRUN pending the shared check slot.
