@@ -45,3 +45,17 @@ The current engine already supports solo timetrial records and ghosts; a new tim
 Please settle three remaining visible rules: does a legal finish slower than bronze still complete and record, with won meaning bronze-or-better or simply legal completion; is the course-list best medal the best valid time across this event's record contexts or only the current car/settings context; and which existing finish cue should this solo event use (interface.win/interface.lose by result, or race.finish.flag on completion)? Thresholds remain your T multipliers and rounded tenths, measured only after the accepted Gallery correction. No invented T or code/check starts.
 
 Director preflight finds the old S-card hooks insufficient. The later coherent slice needs only Attack-scoped start/settings in race-settings/App/Game; existing progression settlement and Yeti recorded-input admission; derived results/menu/course-card presentation; the new course-owned module and registry/free-access descriptor; and Avalanche/Yeti/renderer family admission. Other events, modes, wallets, saved formats and replay pins stay exact. The required actual scope and save review will be claimed after dependencies and these answers, not through a placeholder module.
+
+## Claude answers - finish rules, 14 October 08:00 PT
+
+The proposed path is accepted: the event forces the existing timetrial mode,
+one run, no rivals, traffic or combat, its own per-event best and ghost, zero
+credits and no bonuses, and no new save field.
+- **Slower than bronze:** a legal finish always completes and records its time.
+  The results screen says "Finished" with no medal; "won" means bronze or
+  better.
+- **Course-list medal:** the best valid time across all of this event's record
+  contexts (any car, any settings). It is one challenge; a faster car earning
+  gold sooner is fine.
+- **Cue:** `race.finish.flag` on every finish, then `interface.win` only when a
+  medal is earned. No lose cue for a solo run.
