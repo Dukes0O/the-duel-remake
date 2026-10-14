@@ -447,22 +447,22 @@ def compose_review(root, manifest_path, config):
 def main():
     args = arguments()
     config_path = args.root / "tools/art/heli-accessories.json"
-    config = json.loads(config_path.read_text(encoding="utf-8"))
     paths = {"cargo-hook": "public/assets/heli/cargo-hook.glb",
              "helipad": "public/assets/heli/helipad.glb",
              "fuel-pump": "public/assets/heli/fuel-pump.glb"}
-    if set(config["assets"]) != set(paths) or any(
-            config["assets"][key]["path"] != path for key, path in paths.items()):
-        raise ValueError("This recipe exports only the three settled accessory paths")
     outputs = [args.root / path for path in paths.values()]
     if args.paths_only and (args.review_dir or args.sheet):
         raise ValueError("--paths-only cannot be combined with review modes")
-    if args.sheet:
-        compose_review(args.root, args.sheet, config)
-        return
     if args.paths_only:
         print(json.dumps({"blend": [], "glb": [str(path) for path in outputs],
                           "inputs": [str(config_path)], "textures": []}))
+        return
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    if set(config["assets"]) != set(paths) or any(
+            config["assets"][key]["path"] != path for key, path in paths.items()):
+        raise ValueError("This recipe exports only the three settled accessory paths")
+    if args.sheet:
+        compose_review(args.root, args.sheet, config)
         return
     global bpy, Vector
     import bpy

@@ -109,6 +109,16 @@ Before/after SHA256 values match for all three GLBs; the existing measured origi
 
 The separate round review requests Claude's verdict when quota returns. No second round, gate, build, source-code or runtime-loader change has run. The source packet cancels its obsolete donor retry plan, preserves original licences/provenance, and records the actual sheet/hashes. All first-round raw frames and receipts remain available for review; cleanup follows the recorded verdict.
 
+## Original lane failure and bounded planner correction
+
+The first canonical gate on 77cf4446 completed 26/28 suites, notRun 0, jobs 4, exit 1 in 251723.4866 ms (256681.7416 ms wall). Only test-blender-output and test-repo-hygiene failed. Replay, world signature, helicopter and kit guards passed. Build was not started. Original evidence remains in final-77cf4446.
+
+The placement fault was an inherited root run-log.md. Its creator already folded that line into docs/board/run-log.md and removed the stray file on integration at c2c28be1; the lane merged current integration normally at f7c683ad without conflicts. No allow-list or placement assertion changes.
+
+The new accessory recipe was missing from the existing strict generator roster. Root granted a single additive recipeOnly row, exact three GLB paths and exact empty Blend output for this recipe, whose accepted contract writes no .blend. All earlier generators retain their original positive Blend counts and path checks. Existing all-generator coverage, two-root reproducibility, no-output creation and runtime-existence checks remain. This explicitly extends the new recipe's contract; it does not disable an older case or change a tolerance.
+
+The actual existing roster invokes --paths-only against an empty temporary root. The accessory planner therefore returns its existing constant path list before reading its config. Actual export, review and sheet modes still read and strictly validate the same config. No Blender/Pillow/config read or file output occurs during planning. No asset or render function changes, and no repeated export or art round is needed. Root reviews the new source freeze before the focused original suite and fresh canonical gate/build.
+
 ## Removed
 
 Replace the pending accessory donor question with Claude's original-recipe
