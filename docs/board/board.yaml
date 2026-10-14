@@ -163,12 +163,13 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "building"
+    status: "blocked"
     claimed_by: "codex-avalanche-geometry-2026-10-14"
     branch: "codex/p4-avalanche-geometry"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
     flag: "summit-run"
+    waiting_on: "claude"
     details: "docs/board/cards/P4-AVALANCHE.md"
 
   - id: P4-YETI

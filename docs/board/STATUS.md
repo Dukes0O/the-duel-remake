@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T15:53:30.153Z
+Observed at: 2026-10-14T16:01:13.968Z
 
-Observation commit: 07add7315c07b7118572275a43b8a0b2065cfdd6
+Observation commit: e41061dcaf7dd82c66ec2bfc58a1d83f53bbf40b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 07add7315c07b7118572275a43b8a0b2065cfdd6
+Integration HEAD: e41061dcaf7dd82c66ec2bfc58a1d83f53bbf40b
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -63,7 +63,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/deep-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/fix-hairpin-native | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fix-hairpin-native |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
-| codex/p4-avalanche-geometry | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
+| codex/p4-avalanche-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
 | codex/p4-finish | 2 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -86,6 +86,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/deep-art-src | DEEP-ART-SRC | 2026-10-13T20:56:46-07:00 | 0 | last commit 2026-10-13T20:56:46-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/board/looks/deep-art/round-3-review.md, docs/board/looks/deep-art/round-3.jpg, docs/changes/DEEP-ART-SRC.md |
 | codex/fix-hairpin-native | FIX-HAIRPIN-CAMERA | 2026-10-13T21:20:33-07:00 | 0 | last commit 2026-10-13T21:20:33-07:00 | docs/changes/FIX-HAIRPIN-CAMERA.md, tools/scenarios/track-review.mjs |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-13T21:34:14-07:00 | 0 | last commit 2026-10-13T21:34:14-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, src/circuit-effects.js, src/circuits/ardennes-forest.js, src/light-path.js |
+| codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T08:56:32-07:00 | 0 | last commit 2026-10-14T08:56:32-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, tools/test-summit-avalanche.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -107,7 +108,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,631,597 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 259,280 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 398,418,944 B | +13,312 B | unavailable |
+| Git objects | 399,457,280 B | +1,038,336 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -116,7 +117,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 07add7315c07b7118572275a43b8a0b2065cfdd6
+- Local integration/wasteland: e41061dcaf7dd82c66ec2bfc58a1d83f53bbf40b
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -124,4 +125,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit 7d50320f5803f676e61f04665673fc7b13f609d9.
+- Remote origin/integration/wasteland: matches local; cached commit e41061dcaf7dd82c66ec2bfc58a1d83f53bbf40b.
