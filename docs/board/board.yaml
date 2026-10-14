@@ -362,10 +362,12 @@ tasks:
 
   - id: PANORAMA-TOWN
     title: "Panorama: the valley town looks like a toy grid; make it a real hillside town that glows at dusk"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-design-2026-10-14"
+    branch: "claude/panorama-town"
     needs: []
     flag: "panorama-ridge"
     details: "docs/board/cards/PANORAMA-TOWN.md"
