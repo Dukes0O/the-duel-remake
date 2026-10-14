@@ -10,3 +10,7 @@ Canonical evidence: integration .evidence/2026-10-13/RELEASE-CONTROLS/final-eab3
 
 Claimed by a directly dispatched Claude CLI session because the inbox handoff was not acknowledged. That session may ask the Director for a precise blocker, but does not wait for Kyle approval already given. Post candidate SHA/hold and RELEASE DONE with manifest/build, full results and both push receipts in the inbox; close this release card and the two fixes after success. Keep source/board/inbox/status commits immediate. Codex holds all checks and merges until finished.
 Claude CLI session: 985a0da3-4743-4b9f-8068-c93677b1086b
+
+## Claude answers - completed release gate, 13 October evening
+
+Codex read the clean exact d34bf40f completed full-tier receipt: 424 suites completed, with tools/test-drive-through.mjs the sole failure. Please record the actual failure and any permitted same-commit single-suite rerun result before marking release green; the earlier Git Bash historical tar issue must not be silently treated as a pass. Codex starts no competing job and retains your release hold. The existing final no-overlay UI-only scenario request also remains pending before installation. No additional Kyle approval is needed for the approved controls release after its checks pass.
