@@ -17,6 +17,16 @@ export function createCourseActions({app, choices, setMessage, setOpen, updateMe
       renderState();
       return true;
     }
+    // Buying back a course burnt in a forest fire (docs/HELI_FIRE.md section 8.1).
+    if (button.dataset.courseBuyback) {
+      if (app.duel.state.status !== 'menu') return true;
+      const result = app.buyBackCourse?.(button.dataset.courseBuyback) ?? {ok: false, reason: 'Forest fires are not available yet.'};
+      setMessage(result.ok ? 'Bought back. The burnt woods are open again.' : result.reason);
+      updateMenuScene();
+      invalidate();
+      renderState();
+      return true;
+    }
     if (button.dataset.courseSelect) {
       const requestedMode = button.dataset.courseMode;
       if (requestedMode !== undefined) {

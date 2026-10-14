@@ -7,6 +7,9 @@
 .course-access-card h3{font-size:15px;margin:7px 0;color:#edf8ed}
 .course-access-card p{font-size:11px;line-height:1.5;color:#b9c9c1;margin:5px 0}
 .course-access-card .course-recommendation{color:#dfc49b}
+.course-access-card.course-burnt{background:linear-gradient(160deg,#1b1714f2,#0d0b0af2),#14241e;border-color:#6b5a4a66}
+.course-access-card.course-burnt h3{color:#c9bfb4}
+.course-access-card .course-burnt-note{color:#e0a27a}
 .course-access-card>button{border:1px solid #9bbda455;border-radius:3px;background:#2d4b39;color:#e0f3e4;padding:10px;font-size:10px;font-weight:700;cursor:pointer;min-height:38px}
 .course-access-card>button:disabled{opacity:.5;cursor:default}
 .course-store-button:focus-visible,.course-access-card>button:focus-visible{outline:2px solid #edc689;outline-offset:3px}
