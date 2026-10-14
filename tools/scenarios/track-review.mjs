@@ -62,6 +62,143 @@ function takeIssues(context, before) {
   return context.issues.splice(before).map(issue => `${issue.kind}: ${issue.text}`);
 }
 
+async function buildHairpinBindings() {
+  const [{build},{join,resolve},{fileURLToPath}]=await Promise.all([
+    import('vite'),import('node:path'),import('node:url'),
+  ]);
+  const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
+  const entry=join(root,'.qa-dist/hairpin-camera.virtual.js').replaceAll('\\','/');
+  const source=path=>JSON.stringify(join(root,path).replaceAll('\\','/'));
+  const result=await build({root,configFile:false,logLevel:'silent',plugins:[{
+    name:'hairpin-camera-observer',
+    resolveId(id){if(id.replaceAll('\\','/')===entry)return '\0hairpin-camera';},
+    load(id){if(id==='\0hairpin-camera')return 'export {sweepObstacle} from '+source('src/collision.js')+';'+
+      'export {vehicleGroundPoint} from '+source('src/vehicle-surface.js')+';';},
+  }],build:{write:false,minify:false,lib:{entry,formats:['es']}}});
+  const chunk=(Array.isArray(result)?result[0]:result).output.find(row=>row.type==='chunk');
+  if(!chunk)throw Error('Hairpin native observer bindings did not compile.');
+  return chunk.code;
+}
+
+async function observeHairpinPose(pose) {
+  const a=window.__qaApp,d=a.duel,s=d.state,c=d.course,R=window.__review;
+  if(a.running||a.autopilot||a.cameraMode!=='chase'||a.inspectionCamera||
+      s.status!=='racing'||s.paused||s.onFoot||c.def.id!=='harbour-lights'||s.car!=='falcone_f42')
+    throw Error('Native camera observer is outside its ordinary Harbour/F42 fixture.');
+  const wanted=c.length+pose.phase;
+  Object.assign(s,{s:wanted,prevS:wanted,lateral:0,prevLateral:0,headingError:0,speedMph:0,
+    airborne:false,airHeight:0,impactTimer:0});
+  R.clearField(wanted);
+  const blockers=c.features.obstacles.filter(row=>row.barrier||row.tunnelWall||row.kitSolid||row.trackWall);
+  const observations=[];
+  for(let frame=0;frame<60;frame++){
+    await new Promise(done=>requestAnimationFrame(done));
+    const row={frame,errors:[],hits:[]};
+    try{
+      R.render(1);
+      const native=window.__render,ground=window.__hairpinBindings.vehicleGroundPoint(c,s.s,s.lateral);
+      const roots=native.scene.children.filter(root=>root.userData?.vehicleKey===s.car&&
+        root.position.x===ground.x&&root.position.z===ground.z);
+      if(roots.length!==1)throw Error('Actual placed player root is ambiguous or missing: '+roots.length);
+      const player=roots[0],target=player.position.clone();target.y+=1.05;
+      const camera=native.camera.position.clone(),projected=target.clone().project(native.camera);
+      const point=v=>({x:v.x,y:v.y,z:v.z});
+      row.camera=point(camera);row.target=point(target);row.projected=point(projected);
+      row.playerVisible=player.visible;
+      if(![camera.x,camera.y,camera.z,target.x,target.y,target.z,projected.x,projected.y,projected.z].every(Number.isFinite))
+        throw Error('Nonfinite native camera/target/projection.');
+      for(let index=0;index<blockers.length;index++){
+        const obstacle=blockers[index];
+        const hit=window.__hairpinBindings.sweepObstacle(target,camera,obstacle,0,
+          {halfWidth:0,halfLength:0,height:0});
+        if(hit)row.hits.push({index,id:obstacle.id??null,kind:obstacle.kind??null,t:hit.t});
+      }
+      row.inFrame=player.visible&&Math.abs(projected.x)<=1&&Math.abs(projected.y)<=1&&projected.z>=-1&&projected.z<=1;
+    }catch(error){row.errors.push(String(error?.message??error));}
+    observations.push(row);
+  }
+  const settled=observations.at(-1);
+  return{...pose,s:wanted,fixture:'controlled geometric pose; not driving',
+    blockerCount:blockers.length,observations,
+    passed:observations.every(row=>!row.errors.length&&!row.hits.length)&&settled.inFrame===true};
+}
+
+async function checkHairpinCamera(context,data) {
+  const packet={schema:1,kind:'native-controlled-camera-sweep',course:data.courseId,
+    car:data.options.car,seed:data.options.seed,quality:data.options.quality,
+    independentOfDriving:true,posePhysicsSteps:0,setup:'existing native start/countdown, separate from geometric sweep',settling:'60 actual RAF turns per controlled pose',
+    samples:[],failures:[],complete:false,apexPicture:null,pictureVerdict:'UNREVIEWED'};
+  const flush=()=>writeFileSync(join(data.outputDir,'camera-sweep.json'),JSON.stringify(packet,null,2)+'\n');
+  const issuesBefore=context.issues.length;
+  try{
+    if(data.courseId!=='harbour-lights'||data.options.car!=='falcone_f42'||data.options.seed!==1989)
+      throw Error('Hairpin observer requires stock Harbour/F42/1989.');
+    const bundle=await buildHairpinBindings();
+    await context.evaluate(`(async()=>{
+      const url=URL.createObjectURL(new Blob([${JSON.stringify(bundle)}],{type:'text/javascript'}));
+      try{window.__hairpinBindings=await import(url);}finally{URL.revokeObjectURL(url);}
+      window.__review.begin();
+    })()`);
+    await context.waitFor('window.__review.ready()','actual camera sweep scene',90000);
+    await context.evaluate('window.__review.go()');
+    const course=await context.evaluate(`(()=>{
+      const c=window.__qaApp.duel.course;
+      const pieces=c.script.pieces.filter(p=>p.kind==='turn'&&p.name==='Lantern Hairpin');
+      if(pieces.length!==1)throw Error('Actual Lantern Hairpin piece missing/ambiguous.');
+      return{length:c.length,start:pieces[0].s0,end:pieces[0].s1,features:JSON.stringify(c.features)};
+    })()`);
+    const corners=data.corners.filter(row=>row.name==='Lantern Hairpin');
+    if(corners.length!==1||!Number.isFinite(corners[0].apexS)||corners[0].apexS<course.start||corners[0].apexS>course.end)
+      throw Error('Existing named review apex is missing or outside actual Lantern piece.');
+    const apex=corners[0].apexS,rows=new Map();
+    const add=(value,tag)=>{
+      const phase=((value%course.length)+course.length)%course.length;
+      if(!rows.has(phase))rows.set(phase,{phase,tags:[]});
+      rows.get(phase).tags.push(tag);
+    };
+    for(let s=0;s<course.length;s+=25)add(s,'full-course-25m');
+    add(course.length,'course-end');
+    for(let s=course.start-26;s<=course.end+26;s+=1)add(s,'lantern-window-1m');
+    add(course.end+26,'lantern-window-end');
+    add(apex,'named-review-apex');
+    const poses=[...rows.values()].sort((a,b)=>a.phase-b.phase);
+    Object.assign(packet,{length:course.length,hairpin:{start:course.start,end:course.end,apex},
+      expectedPoses:poses.length,blockerFeaturesReadOnly:true});
+    flush();
+    for(let index=0;index<poses.length;index++){
+      const pose=poses[index];
+      try{
+        const sample=await context.evaluate(`(${observeHairpinPose.toString()})(${JSON.stringify(pose)})`);
+        packet.samples.push(sample);
+        if(!sample.passed)packet.failures.push({index,phase:pose.phase,
+          frameMisses:sample.observations.filter(row=>row.errors.length||row.hits.length).map(row=>row.frame),
+          finalProjection:sample.observations.at(-1)});
+        if(pose.tags.includes('named-review-apex')){
+          packet.apexPicture=await context.screenshot('lantern-hairpin-apex');
+          packet.apexProjection=sample.observations.at(-1);
+        }
+      }catch(error){
+        packet.samples.push({...pose,passed:false,error:String(error?.message??error)});
+        packet.failures.push({index,phase:pose.phase,error:String(error?.message??error)});
+      }
+      if(index%10===0||!packet.samples.at(-1).passed)flush();
+    }
+    const unchanged=await context.evaluate(`JSON.stringify(window.__qaApp.duel.course.features)===${JSON.stringify(course.features)}`);
+    if(!unchanged){packet.blockerFeaturesReadOnly=false;packet.failures.push({error:'Native observer changed course features.'});}
+    packet.complete=packet.samples.length===packet.expectedPoses;
+    if(!packet.apexPicture)packet.failures.push({error:'No actual apex image was captured.'});
+  }catch(error){packet.failures.push({error:String(error?.message??error)});}
+  finally{
+    packet.browserIssues=context.issues.slice(issuesBefore);
+    if(packet.browserIssues.length)packet.failures.push({error:'Native browser issues',count:packet.browserIssues.length});
+    packet.geometryPassed=packet.complete&&packet.failures.length===0;
+    flush();
+  }
+  return{file:'camera-sweep.json',geometryPassed:packet.geometryPassed,
+    complete:packet.complete,poses:packet.samples.length,expectedPoses:packet.expectedPoses??null,
+    failures:packet.failures,apexPicture:packet.apexPicture,pictureVerdict:packet.pictureVerdict};
+}
+
 export async function run(context) {
   const data = JSON.parse(readFileSync(process.env[INPUT_ENV], 'utf8'));
   const dir = data.outputDir;
@@ -196,5 +333,7 @@ export async function run(context) {
   } else {
     result.warnings.push(data.hasField ? 'No corner found, so no pack picture.' : 'This course has no computer racers, so no pack picture.');
   }
+  if (process.env.DUEL_HAIRPIN_CAMERA === '1') result.hairpinCamera = await checkHairpinCamera(context, data);
   writeFileSync(join(dir, 'browser-result.json'), JSON.stringify(result, null, 2));
+  if (result.hairpinCamera && !result.hairpinCamera.geometryPassed) throw Error('Harbour native camera sweep failed; all misses retained in camera-sweep.json.');
 }
