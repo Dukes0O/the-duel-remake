@@ -7,37 +7,49 @@ lesson 1, the sharp corner, enough to build, and the shared lesson pieces
 it takes from the helicopter's lessons (H1). Lessons 2 to 4 are outlined in
 section 9 and get their own short packet after lesson 1 is played. The
 cards are in section 10; the one question for Kyle is in section 11.
+Sections 4 and 5 are written for the builder.
 
 ## 0. What the game does today (checked on integration 5047d6ff)
 
 - **Helicopter lessons exist** (`docs/HELICOPTER.md` section 7). The
   instructor is the stock voice Brian, recorded clean and played through a
   radio filter (`createRadioChain` in `src/heli/heli-audio.js`; voice and
-  lines in `src/heli/heli-radio-lines.js`). `src/heli/heli-lessons.js` is a
-  pure module: `createLesson` and `stepLesson`, which returns `running`,
-  `passed` or `retry` plus a radio line id; `lessonOpen` opens a lesson when
+  lines in `src/heli/heli-radio-lines.js`). `src/heli/heli-lessons.js`
+  checks each lesson's goal every step and answers "running", "passed" or
+  "try again" with a radio line; `lessonOpen(done, id)` opens a lesson when
   the one before it is done; a coach timer stops the instructor nagging.
-  The instructor's board (`lessonsMarkup` in `src/heli/heli-ui.js`) lists
-  each lesson as open, done ("Retake") or later. Lessons are saved as
-  `profile.heli.lessons`. Everything in `src/heli/` may be imported only
-  through the helicopter's hooks (an import guard test).
-- **Sharp corners exist only on the circuits.** The classic courses have no
-  corner tighter than about 200 m radius. Harbour Lights' Lantern Hairpin is
-  175 degrees at a 9 m radius, after a 220 m straight ("Hairpin Approach")
-  that follows the fast Precinct Bend; its course note already says
-  "Rushing it loses more than braking early". Tremblant Woods' Beaver
-  Hairpin is 170 degrees at 22 m, after Beaver Kink and an 80 m spur.
-  Both courses are bought (1,800 and 1,600 credits); Pacific Canyon, the
-  free course, has no hairpin.
-- **Time Trial** already runs a race with no rival (`startTimeTrial`,
-  `src/game.js` about 258).
+  The instructor's board (`lessonsMarkup` in `src/heli/heli-ui.js`) shows
+  on the home pad and lists each lesson as open, done ("Retake") or later.
+  Lessons are saved as `profile.heli.lessons`. `tools/test-heli-mode.mjs`
+  checks that helicopter files import only each other and a short list of
+  outside files.
+- **Which sharp corners can teach sliding.** A car can turn at most
+  1.35 radians a second (`src/config.js`), so its tightest circle is about
+  10 m whatever its speed. Harbour Lights' Lantern Hairpin (9 m radius) is
+  tighter than that: the steering, not the tyres, sets its speed, and
+  coming in too fast only runs wide without a slide. A lesson about tyre
+  grip needs a corner where the tyres are the limit and the approach is a
+  long straight. Two owned-course hairpins fit:
+  - **Panorama Ridge, The Cutting:** 110 degrees at a 20 m radius, about
+    55 mph, at the end of the 912 m Mountain Straight, the Griffin Bend
+    (a 110 m radius) and a 142 m straight. A big stop from high speed.
+  - **Tremblant Woods, Beaver Hairpin:** 170 degrees at 22 m, about 57 mph,
+    after Beaver Kink and an 80 m spur. A smaller stop.
+  Tremblant Snow's Beaver Hairpin is on snow (lesson 4's place). Panorama's
+  Forrest Elbow (22 m) can join later as one more row. The classic courses
+  have no corner tighter than about 200 m radius. Panorama Ridge and
+  Tremblant Woods cost 1,600 credits each; Pacific Canyon, the free course,
+  has no hairpin.
+- **Time Trial** is `startCampaign` with `mode: 'timetrial'` and no rival;
+  `startHeliVisit` (`src/game.js` about 253) already starts one that way.
 - **Upgrades**: seven per car, three levels each, 350, 600 and 950 credits.
-  Brakes add 12% braking per level (`src/game.js:159`).
-- **Ghosts** replay recorded poses, not inputs (`src/ghost.js`).
+  Brakes add 12% braking per level (`src/game.js:158`).
+- **Ghosts** replay recorded positions, not key presses (`src/ghost.js`).
 - **TYRE-SLIP** (card ready, dev switch `tyre-slip`) makes sliding cost
-  grip and speed, adds `s.tyreSlip` (1.0 is the tyre's best grip), and
-  makes the tyre squeal follow the real slide. Until it is built, a screech
-  in this game costs nothing, so lesson 1 cannot teach the truth without it.
+  grip and speed, adds `s.tyreSlip` (1.0 is the tyre's best grip), makes
+  braking while turning leave 80% of the cornering grip, and makes the tyre
+  squeal follow the real slide. Without it a screech costs nothing, so
+  lesson 1 cannot teach the truth until it is built.
 
 ## 1. Kyle's decisions
 
@@ -60,44 +72,47 @@ cards are in section 10; the one question for Kyle is in section 11.
 ## 2. One instructor, one board, one voice (what is reused from H1)
 
 Driving lessons do not build a second lesson system. Three pieces move out
-of `src/heli/` into a small shared folder `src/lessons/`, so both kinds of
-lesson use them and the helicopter's import guard stays intact. The
-helicopter's behaviour does not change: its tests pass unchanged.
+of `src/heli/` into a small shared folder `src/lessons/`. The helicopter
+keeps every name and behaviour it has today, so its tests pass; the one
+test that changes is the helicopter import check, which gains
+`../lessons/` (a reviewed changed assertion).
 
 | Shared piece | Moves from | What both use it for |
 | --- | --- | --- |
-| `src/lessons/lesson-core.js` | the generic parts of `heli-lessons.js` | The lesson contract: `stepLesson` returns `{result: 'running' or 'passed' or 'retry', radio}`; `lessonOpen(order, done, id)`; the coach timer (no coaching line more often than every 6 s); `passed` and `retry` helpers. Each kind of lesson keeps its own goal checks. |
-| `src/lessons/radio-voice.js` | `createRadioChain`, the filter numbers and `HELI_RADIO_VOICE` | Brian over the same radio filter, click and hiss. Driving lines are recorded with the same voice and played through the same chain. |
-| `src/lessons/lesson-board.js` | `lessonsMarkup` in `heli-ui.js` | The instructor's board: one list with a Flying group and a Driving group, each lesson open, done ("Retake") or "Opens later". |
+| `src/lessons/lesson-core.js` | the general parts of `heli-lessons.js` | The answer each step gives ("running", "passed" or "try again" plus a radio line id); `lessonOpen(order, done, id)`; the coach timer (at most one coaching line every 6 s); `passed(lesson, line)` and `retry(lesson, line)`, which take the radio line as an argument. `heli-lessons.js` keeps its own two-argument `lessonOpen(done, id)`, which calls the shared one with its order, and its own pass and retry lines. |
+| `src/lessons/radio-voice.js` | `createRadioChain`, `RADIO_FILTER`, `softClipCurve`, `HELI_RADIO_VOICE` | Brian over the same radio filter, click and hiss. `heli-audio.js` and `heli-radio-lines.js` re-export these names, so nothing that imports them changes. |
+| `src/lessons/lesson-board.js` | the list part of `lessonsMarkup` | The instructor's list: plain rows (group, id, name, open, done) in, the list out. The helipad keeps its own check that you are on the home pad, the running-lesson panel and the skip button in `heli-ui.js`. Styles move with it to `src/lessons/lesson-board.css`. |
 
-What stays separate: the helicopter's goal checks, its session and its
-save field; driving's goal checks (section 4), its lesson run (section 5)
-and its save field (section 7).
+What stays separate: the helicopter's goal checks, session and save field;
+driving's goal checks (section 4), lesson run (section 5) and save field
+(section 7).
 
-**Where you meet the instructor.** On a new **Instructor** button on the
-main menu (shown when the `driving-lessons` switch is on), which opens the
-board. With the `helicopter` switch also on, the same board on the helipad
-shows both groups, and starting a driving lesson from the pad takes you to
-the lesson's course like "Race here" does. Driving lessons never need the
-helicopter.
+**Where you meet the instructor.** In D1, on a new **Instructor** button on
+the main menu, shown when both the `driving-lessons` and `tyre-slip`
+switches are on. It opens the board with the Driving group. Driving lessons
+never need the helicopter. Showing the Driving group on the helipad too
+(and starting a driving lesson from the pad like "Race here") touches the
+helicopter's session and screen, which are Claude's; it comes after lesson
+1 is played, in the cards that DRIVE-LESSONS-NEXT writes.
 
 ## 3. Lesson 1, the sharp corner
 
 ### 3.1 Where
 
-The lesson runs on a course you own that has a lesson corner. Two corners
-qualify today; the board lists them and you pick:
+The lesson runs on a course you own that has a lesson corner; the board
+lists them and you pick:
 
 | Course | Corner | Start gate | Rolling start |
 | --- | --- | --- | --- |
-| Harbour Lights | Lantern Hairpin | 200 m before turn-in, on Hairpin Approach | 90 mph |
+| Panorama Ridge | The Cutting | 180 m before turn-in, leaving Griffin Bend | 100 mph |
 | Tremblant Woods | Beaver Hairpin | 150 m before Beaver Kink, on Beaver Run | 75 mph |
 
-Harbour Lights is first in the list (a long straight into a very tight
-corner is the clearest lesson). If you own neither, lesson 1 shows
-"Opens later: buy Harbour Lights or Tremblant Woods". A later course with a
-hairpin joins by adding one row to the lesson corner table
-(`src/lessons/drive-lessons.js`), not by changing the lesson.
+Panorama Ridge is first in the list (the longer, faster approach makes the
+lesson clearest). If you own neither, lesson 1 shows "Opens later: buy
+Panorama Ridge or Tremblant Woods". A later corner joins by adding one row
+to the lesson corner table, not by changing the lesson. The course's own
+braking boards stay where they are; the instructor's first line tells you
+to watch the cones today.
 
 ### 3.2 The run
 
@@ -111,41 +126,45 @@ Each attempt is short: the car appears at the start gate already rolling
 at the table's speed, you drive through the corner, and the attempt ends at
 the finish gate, 60 m past the exit cone. The time is from gate to gate, to
 a hundredth of a second. Between attempts the result card shows; Enter
-starts the next one at the start gate again. Pause (Esc) has a Leave lesson button. A wall
-hit, going off the road for more than 1 s, or stopping ends the attempt as
-"try again".
+starts the next one at the start gate again. Pause (Esc) has a Leave lesson
+button. Except in try 1 (3.4), a wall hit, going off the road for more than
+1 s, or stopping ends the attempt as "try again".
 
-### 3.3 The instructor's run, the cones and the late board
+### 3.3 The instructor's run, the cones and the red board
 
-Everything is computed when the lesson starts, from one silent run of the
-instructor through the same corner, in **your** car with your upgrades and
-setting, so the target is always fair and always repeatable:
+Everything is computed when the lesson starts, from one run of the
+instructor through the same corner that the player does not see, in **your**
+car with your upgrades and setting, so the target is always fair and always
+repeatable:
 
-- The instructor drives the racing line at **92%** of the corner's grip
-  limit on Casual and **97%** on Pro, braking in a straight line and never
-  sliding (TYRE-SLIP's `steerForYaw`, which never asks for more than the
-  tyre's best grip). Its gate-to-gate time is the **instructor's time**.
+- The instructor follows the course's planned racing line at **92%** of
+  the speed that line allows on Casual and **97%** on Pro (whichever limit
+  sets it, steering or tyres), braking in a straight line and never sliding
+  (TYRE-SLIP's `steerForYaw`, which never asks for more than the tyre's best
+  grip). Its gate-to-gate time is the **instructor's time**.
 - **Cone 1, brake here:** where the instructor starts braking, on the
   outside edge of the road.
-- **Cone 2, the inside:** at the instructor's apex, on the inside edge.
+- **Cone 2, the inside:** at the instructor's closest point to the inside
+  edge, on that line.
 - **Cone 3, finish wide:** where the instructor's line reaches the outside
   edge after the apex.
-- **The red board** (try 1 only): placed so that full braking from it
-  reaches turn-in at 1.25 times the instructor's turn-in speed. Braking
-  there makes the tyres slide through the corner.
+- **The red board** (try 1 only): **25 m after cone 1**, the same late
+  braking point TYRE-SLIP's own test uses.
 
 Cones are drawn only; they never touch race physics. A cone "counts" when
 the car's centre passes within 2.5 m of it; driving right over it (within
-0.8 m) tips it over in the drawing and plays the cone sound.
+0.8 m) tips it over in the drawing and plays the cone sound. The
+instructor's own run must count all three cones.
 
 ### 3.4 Try 1: brake late
 
 Instructor: "Let us see what happens when you leave it late. Keep your foot
-down and brake at the red board." The red board shows; the cones show.
-Whatever you do, the try counts once you reach the finish gate. The result
-card shows your time against the instructor's, the time lost, and how long
-the tyres screeched (seconds with `s.tyreSlip` above 1.0), for example:
-"You 8.42 s. Instructor 7.31 s. Lost 1.11 s. Tyres screeched 1.6 s."
+down and brake at the red board." The red board and the cones show. The
+try counts however it ends: at the finish gate, against a wall, or off the
+road. The result card shows your time against the instructor's (or how far
+you got), the time lost, and how long the tyres screeched (seconds with
+`s.tyreSlip` above 1.0), for example: "You 8.42 s. Instructor 7.31 s. Lost
+1.11 s. Tyres screeched 1.6 s." Then the car goes back to the start gate.
 If you braked early anyway, the instructor says so and the try still counts.
 
 ### 3.5 Try 2: do it right
@@ -155,7 +174,7 @@ is straight, turn in, touch the inside cone, and accelerate out wide past
 the third." It passes when all four hold:
 
 1. **Braked at cone 1:** the first brake press of 50% or more comes no more
-   than 15 m before and 10 m after cone 1.
+   than 15 m before and 5 m after cone 1 (the red board is 25 m after).
 2. **Touched cone 2.**
 3. **Finished wide:** throttle at 80% or more before cone 3, and the car
    passes cone 3 on the outside half of the road.
@@ -168,10 +187,10 @@ another go. There is no limit on goes.
 
 Instructor: "Good. Now beat my time through the corner. Three in a row."
 The instructor's car runs beside you as a ghost (drawn with the existing
-ghost drawing from its recorded poses). An attempt that is faster than the
-instructor's time, with no wall hit, adds one to the streak; anything else
-resets it to 0. The cones stay as a guide but are not checked. Three in a
-row passes the lesson.
+ghost drawing from its recorded positions). An attempt faster than the
+instructor's time adds one to the streak; a slower attempt or one that ends
+as "try again" resets it to 0. The cones stay as a guide but are not
+checked. Three in a row passes the lesson.
 
 ### 3.7 What passing gives
 
@@ -185,56 +204,67 @@ row passes the lesson.
 
 ### 3.8 Why this teaches the truth
 
-With TYRE-SLIP, braking late makes you either brake while turning (which
-leaves 80% of the cornering grip) or arrive too fast; both push the tyres
-past their best grip, they slide, the car runs wide and the slide rubs off
-speed. The screech is that slide. In tests the late try must lose at least
-0.25 s against the right way (TYRE-SLIP test 8 checks the same on the
-Lantern Hairpin); without TYRE-SLIP the lesson would show a screech that
-costs nothing, which is why lesson 1 waits for it.
+On both lesson corners the tyres, not the steering, set the corner speed.
+With TYRE-SLIP, braking at the red board leaves you two bad choices: keep
+braking into the turn, which leaves only 80% of the cornering grip, or turn
+in too fast. Either way the tyres go past their best grip, they slide, the
+car runs wide and the slide rubs off speed. The screech is that slide. The
+lesson's own test (section 10) requires the late try to lose at least
+0.25 s and to screech at least 0.5 s on both corners; TYRE-SLIP's test 8
+checks a similar late entry. Without TYRE-SLIP the lesson would show a
+screech that costs nothing, which is why lesson 1 waits for it.
 
-## 4. Lesson rules in code (pure, `src/lessons/drive-lessons.js`)
+## 4. Lesson rules (for the builder: `src/lessons/drive-lessons.js`)
 
-The driving goal checks follow the shared contract. `createDriveLesson(id,
-{corner, instructor})` and `stepDriveLesson(lesson, view, events, dt)`
-read a plain view of the car each 120 Hz step (distance along the course,
-lateral position, speed, brake, throttle, `tyreSlip`, contact events) and
-return `running`, `passed` or `retry` with a radio line id. The module also
-holds the lesson corner table (3.1), `placeCones(corner, instructorTrace)`
-and the attempt timer. It reads race state and never changes it, like
-drift scoring.
+The driving goal checks follow the shared answer from `lesson-core.js`.
+`createDriveLesson(id, {corner, instructor})` and `stepDriveLesson(lesson,
+view, events, dt)` read a plain picture of the car each 120 Hz step
+(distance along the course, lateral position, speed, brake, throttle,
+`tyreSlip`, contact events) and answer "running", "passed" or "try again"
+with a radio line id. The module also holds the lesson corner table (3.1),
+the instructor's run, `placeCones(corner, instructorRun)` and the attempt
+timer. It reads race state and never changes it, like drift scoring.
 
-## 5. The lesson run in the race (Codex, hooks card)
+**The instructor's run** belongs to this module (DRIVE-LESSON-1): a run of
+the race rules from the start gate, in the player's car, steering along the
+course's planned racing line (`src/track-script.js` and the line the course
+builds from `src/course.js`) through `steerForYaw`, with a speed plan at
+92% or 97% of the speed the line allows and braking in a straight line. It
+records positions (for the ghost) and the path (for the cones). It does not
+use the App autopilot.
+
+## 5. The lesson run in the game (for the builder: the hooks card)
 
 - `startLesson({courseId, lessonId, car, difficulty})` starts a Time Trial
-  with lesson options. The options turn off rival, traffic, police, combat,
-  pay, records, ghost saving, medals and damage cost, and latch
-  `tyreSlipRules` on.
-- The instructor's silent run is a headless run of the same course and car
-  from the same rolling start, recorded as poses for the ghost and as a
-  trace for the cones. Same seed and car give the same instructor every
-  time; it takes well under a second.
+  through `startCampaign` with lesson options. The options turn off rival,
+  traffic, police, combat, pay, records, ghost saving, medals and damage
+  cost, and fix `tyreSlipRules` on for the race.
+- It asks `drive-lessons.js` for the instructor's run and the cones once,
+  at the start.
 - Placing the car at the start gate for each attempt uses the existing safe
   reset, with the rolling speed set; the attempt timer starts at the gate.
-- Cones and the red board are drawn by the renderer from the lesson's cone
-  list; the result card and the lesson panel (try, rules met, streak 0/3)
-  are DOM, like the race HUD. None of it changes race state.
+- Cones, the red board and the instructor's ghost are drawn by the renderer
+  from the lesson's lists; the result card and the lesson panel (try, rules
+  met, streak 0/3) are screen elements like the race HUD. None of it
+  changes race state.
 
 ## 6. Sounds and radio lines
 
-- **Radio** (Brian, through `src/lessons/radio-voice.js`): about 16 lines,
-  written below and recorded in DRIVE-LESSON-LINES with the same tool and
-  voice as the helicopter's lines, within the month's voice credits. Ids are
-  `drive.radio.<lesson>.<step>`. Lines never name times or prices; the card
-  shows numbers.
+- **Radio** (Brian, through `src/lessons/radio-voice.js`): 16 lines, below.
+  Each kept take is recorded with the same voice and settings as the
+  helicopter's lines, kept in `audio-src/voices/`, recorded as one entry in
+  `tools/audio/catalog.json` (text, file and hash), and copied to
+  `public/assets/audio/voices/` by a small build step, within the month's
+  voice credits. Ids are `drive.radio.<lesson>.<step>`. Lines never name
+  times or prices; the card shows numbers.
 - **Cone tipped:** new cue `lesson.cone`, a soft plastic knock, a CC0
-  library sound through `tools/audio/catalog.json`.
+  library sound recorded in `tools/audio/catalog.json`.
 - **Streak and pass:** the existing interface confirm sound; no new cue.
 - **Tyres:** TYRE-SLIP's squeal, unchanged. The lesson adds nothing to it.
 
 | Id | Line |
 | --- | --- |
-| `drive.radio.corner.intro` | Welcome to the track. Today is the most important corner skill there is: braking. |
+| `drive.radio.corner.intro` | Welcome to the track. Today is the most important corner skill there is: braking. Forget the course boards today and watch my cones. |
 | `drive.radio.corner.late.start` | Let us see what happens when you leave it late. Keep your foot down and brake at the red board. |
 | `drive.radio.corner.late.result` | Hear that screech? That was your tyres sliding, and sliding is slow. Look at the time you lost. |
 | `drive.radio.corner.late.early` | You braked early. Good instinct, but this time I wanted you to feel it. That one still counts. |
@@ -268,10 +298,14 @@ credits) when lesson 1 first passes.
 - **Switch:** `driving-lessons: 'dev'` in `src/feature-flags.js`; the count
   in `tools/test-feature-flags.mjs` rises by one. It never turns on before
   `tyre-slip` is on.
-- **New files:** `src/lessons/lesson-core.js`, `radio-voice.js`,
-  `lesson-board.js`, `drive-lessons.js`, `drive-radio-lines.js`;
-  `tools/test-lesson-core.mjs`, `tools/test-drive-lessons.mjs`;
-  runtime voice files in `public/assets/audio/voices/` (mp3, like the helicopter's).
+- **New files:** in `src/lessons/`: `lesson-core.js`, `radio-voice.js`,
+  `lesson-board.js`, `lesson-board.css`, `drive-lessons.js`,
+  `drive-lesson-save.js`, `drive-radio-lines.js`, `drive-lesson-ui.js`,
+  `drive-lesson-ui.css`. Tests: `tools/test-lesson-core.mjs`,
+  `test-drive-lessons.mjs`, `test-drive-lesson-save.mjs`,
+  `test-drive-lesson-run.mjs`, and a browser scenario. Audio: takes in
+  `audio-src/voices/`, the build step `tools/audio/build-drive-lessons.mjs`,
+  runtime files in `public/assets/audio/voices/`.
 - **Locks:** `busy-game-files` once, in the hooks card (`app.js`,
   `game.js`, `render3d.js`); `save-shape` in the save card; `sound-bank` in
   the lines card (one line maps the driving cue list, as the helicopter's
@@ -289,7 +323,9 @@ credits) when lesson 1 first passes.
 | 3 The manual gearbox | Any owned course; a straight and a corner | Shift up near the red line, shift down before the corner; on Pro this is what manual drivers do | No limiter longer than 0.5 s, the right gear at the corner, beat the instructor |
 | 4 Driving on snow | Tremblant Snow, Beaver Hairpin | Snow has less grip: brake earlier and turn in slower; winter tyres help | Pass on summer tyres, then see the gain on winter tyres |
 
-Each opens the next. Their rewards are settled in their packets.
+Each opens the next. Their rewards are settled in their packets. The
+Lantern Hairpin, too tight for tyre grip to matter, suits a later lesson on
+slow corners and patience.
 
 ## 10. Cards and order
 
@@ -306,30 +342,32 @@ flowchart LR
 
 | Card | Who | Holds | What |
 | --- | --- | --- | --- |
-| DRIVE-LESSON-CORE | Claude | none | Sections 2 and 0: move the three shared pieces out of `src/heli/`, helicopter unchanged |
+| DRIVE-LESSON-CORE | Claude | none | Section 2: move the three shared pieces out of `src/heli/`, helicopter unchanged |
 | DRIVE-LESSON-SAVE | Codex | `save-shape` | Section 7 and the reward function in 3.7 |
-| DRIVE-LESSON-1 | Codex | none | Sections 3 and 4: the pure lesson module, corner table, cones, instructor run, tests |
+| DRIVE-LESSON-1 | Codex | none | Sections 3 and 4: the lesson rules, corner table, instructor's run, cones, tests |
 | DRIVE-LESSON-LINES | Claude | `sound-bank` | Section 6: record the lines, the cone sound |
-| DRIVE-LESSON-HOOKS | Codex | `busy-game-files` | Section 5 and the board: menu button, lesson run, drawing, panel |
+| DRIVE-LESSON-HOOKS | Codex | `busy-game-files` | Section 5 and the menu board: Instructor button, lesson run, drawing, panel |
 | DRIVE-LESSON-FINISH | Claude | none | Drive the lesson as a player, check it teaches, pictures to Kyle |
-| DRIVE-LESSONS-NEXT | Claude | none | Packet for lessons 2 to 4 (section 9) |
+| DRIVE-LESSONS-NEXT | Claude | none | Packet for lessons 2 to 4 and the helipad entry (sections 2 and 9) |
 
 DRIVE-LESSON-CORE and DRIVE-LESSON-SAVE start at once. DRIVE-LESSON-1 waits
 for TYRE-SLIP.
 
 **Acceptance for D1:**
-- With `driving-lessons` and `tyre-slip` on and Harbour Lights owned, a
+- With `driving-lessons` and `tyre-slip` on and Panorama Ridge owned, a
   player can open the Instructor board from the main menu, take lesson 1,
   do the late try, pass the right way and beat the instructor three times;
   the reward lands once; lesson 2 shows as open; retaking works.
-- `tools/test-drive-lessons.mjs`, headless, on both corners, Casual and
-  Pro: the instructor run is the same every time; a scripted late try is at
-  least 0.25 s slower than the instructor and screeches at least 0.5 s; a
-  scripted right try passes all four rules; a scripted driver at 100% of
-  the limit beats the instructor on Casual and on Pro; the streak resets on
-  a slow attempt; nothing in a lesson run pays, records or damages.
-- The helicopter's lesson, session and audio tests pass unchanged after
-  DRIVE-LESSON-CORE.
+- `tools/test-drive-lessons.mjs`, on both corners, Casual and Pro, without
+  drawing: the instructor's run is the same every time and at 30, 60 and
+  144 FPS, and it counts all three cones; a scripted late try (brakes at the
+  red board and keeps braking into the turn) is at least 0.25 s slower than
+  the instructor and screeches at least 0.5 s; a scripted right try passes
+  all four rules; a scripted driver at 100% of the line's speed beats the
+  instructor; the streak resets on a slow attempt; nothing in a lesson run
+  pays, records or damages.
+- The helicopter's lesson, session, audio and screen tests pass; the only
+  changed assertion is the import check's allowed list.
 - Race replays, world signatures and combat balance unchanged (lane guards).
 - The save checker passes with the new fixture; old saves read as no
   lessons done.

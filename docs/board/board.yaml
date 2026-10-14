@@ -694,7 +694,7 @@ tasks:
     details: "docs/board/cards/DRIVE-LESSON-FINISH.md"
 
   - id: DRIVE-LESSONS-NEXT
-    title: "Packet for driving lessons 2 to 4: racing line, gearbox, snow"
+    title: "Packet for driving lessons 2 to 4 and the helipad entry"
     owner: "claude"
     lane: "DESIGN"
     size: "S"

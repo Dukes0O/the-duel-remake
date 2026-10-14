@@ -6,24 +6,31 @@ The design is `docs/DRIVING_LESSONS.md`; this card names the slice, files and ac
 Claude, 14 October 2026 (the Flying line is Claude's). Packet section 2.
 
 Move three pieces out of `src/heli/` into `src/lessons/` so driving lessons
-reuse them, with the helicopter's behaviour unchanged:
+reuse them. The helicopter keeps every name and behaviour it has today:
 
-- `src/lessons/lesson-core.js`: the lesson contract (`running`, `passed`,
-  `retry` plus a radio id), `lessonOpen(order, done, id)`, the coach timer,
-  the `passed` and `retry` helpers. `heli-lessons.js` imports them.
+- `src/lessons/lesson-core.js`: the step answer ("running", "passed",
+  "try again" plus a radio id), `lessonOpen(order, done, id)`, the coach
+  timer, and `passed(lesson, line)` and `retry(lesson, line)` taking the
+  radio line as an argument. `heli-lessons.js` keeps a two-argument
+  `lessonOpen(done, id)` that calls the shared one with `LESSON_ORDER`, and
+  keeps its own `heli.radio.*` lines and `sawLift` reset.
 - `src/lessons/radio-voice.js`: `createRadioChain`, `RADIO_FILTER`,
-  `softClipCurve` and the voice (Brian). `heli-audio.js` and
-  `heli-radio-lines.js` import or re-export them.
-- `src/lessons/lesson-board.js`: the instructor's board markup, with a
-  Flying group and an empty Driving group; `heli-ui.js` calls it.
+  `softClipCurve`, `HELI_RADIO_VOICE`; `heli-audio.js` and
+  `heli-radio-lines.js` re-export them.
+- `src/lessons/lesson-board.js` and `lesson-board.css`: the list part of
+  the instructor's board, plain rows (group, id, name, open, done) in, the
+  list out. `heli-ui.js` keeps the home-pad check, the running-lesson panel
+  and the skip button, and calls it for the list.
 
 Owns: `src/lessons/lesson-core.js`, `radio-voice.js`, `lesson-board.js`,
-`tools/test-lesson-core.mjs`, `docs/changes/DRIVE-LESSON-CORE.md`.
+`lesson-board.css`, `tools/test-lesson-core.mjs`,
+`docs/changes/DRIVE-LESSON-CORE.md`.
 Hooks: `src/heli/heli-lessons.js`, `heli-audio.js`, `heli-radio-lines.js`,
-`heli-ui.js` (imports only), the helicopter import guard test (allow
-`src/lessons/`).
+`heli-ui.js`, `heli-ui.css` (the moved styles), and the allowed-imports list
+in `tools/test-heli-mode.mjs` (about line 358: add the `../lessons/` files).
 
-Acceptance: `test-heli-lessons`, `test-heli-mode`, the helicopter audio and
-UI tests pass with no changed assertion; the board markup for the Flying
-group is byte-identical; lane tier, build, one review.
+Acceptance: `test-heli-lessons`, `test-heli-audio`, `test-heli-view` and the
+rest of `test-heli-mode` pass unchanged; the import check's allowed list is
+the one changed assertion, explained in the change note; the helipad board
+looks the same; lane tier, build, one review.
 Removed: the moved code from `src/heli/` in the same change.
