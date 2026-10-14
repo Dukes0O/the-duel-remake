@@ -76,6 +76,12 @@ card.
 - `tools/test-heli-mode.mjs`: the switch is expected `on` instead of `dev`.
 - `tools/test-wasteland-beta.mjs`: the pinned switch table expects
   `helicopter: 'on'`.
+- `tools/test-course-eligibility.mjs`: "every owned car starts on every
+  course" now expects the Jesko to start only where it sits and be refused
+  with the reason everywhere else (exactly one course). Other cars unchanged.
+- `tools/test-koenigsegg-driver.mjs`, `-driving.mjs`, `-progression.mjs`:
+  the Jesko's save records it as flown to the course each race uses, so the
+  same races and handling checks run unchanged.
 - `tools/test-heli-mode.mjs`: the import guard approves
   `src/screen-readiness.js` reading `heli/heli-jobs.js` (one new entry; the
   guard is otherwise unchanged).
