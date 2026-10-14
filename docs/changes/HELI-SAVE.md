@@ -50,3 +50,16 @@ Nothing. This card replaces nothing.
 ## Sound cue
 
 None. This card adds no game event sound.
+
+## Review
+
+One independent save review (rule 17): CLEAR, no faults. It tried 15 kinds
+of bad saves, swept wallets 0 to 700 against 12 fuel amounts, checked the
+switch-off path and the three count changes. Notes carried to later cards:
+the fuel screen should offer a full fill for the free first tank
+(HELI-MODE), and before H2 adds any key to `heli`, `normalizeHeli` should
+keep unknown keys so a one-release rollback loses nothing (written into
+the packet by HELI-MODE). Heli fixtures must be written in `createHeli()`
+order, or test-deep-save's byte check fails loudly. After the gate, the
+note-only commit was checked with test-course-kit and both repository
+hygiene suites (the only suites that read change notes): all pass.
