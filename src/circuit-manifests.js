@@ -20,9 +20,24 @@ export function registerCircuits(modules) {
     const generationStage = definition?.stage;
     if (!definition || definition.flag !== m.flag || !Number.isSafeInteger(generationStage) || generationStage < 0)
       throw Error('Circuit manifest needs its matching authored definition and generation identity.');
-    const manifest = Object.freeze({...m, driver: Object.freeze({...m.driver})});
+    let unlock;
+    if(Object.hasOwn(m,'unlock')){
+      const value=m.unlock;
+      if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==2||
+          !Object.keys(value).every(key=>key==='kind'||key==='defaultEventId')||
+          value.kind!=='default-gp-podium'||typeof value.defaultEventId!=='string'||!NAME.test(value.defaultEventId))
+        throw Error('Invalid circuit unlock descriptor.');
+      if(m.price!==0)throw Error('A default GP podium unlock requires zero price, not a purchase.');
+      unlock=Object.freeze({...value});
+    }
+    const manifest = Object.freeze({...m, driver: Object.freeze({...m.driver}),...(unlock?{unlock}:{})});
     return Object.freeze({manifest, definition, generationStage});
   });
+  for(const {manifest} of entries)if(manifest.unlock){
+    const parent=entries.find(row=>row.manifest.id===manifest.unlock.defaultEventId)?.manifest;
+    if(!parent||parent.id===manifest.id||parent.unlock||parent.grandPrix!==true)
+      throw Error('A circuit unlock needs a known default Grand Prix event, never itself or a chained variant.');
+  }
   return Object.freeze(entries.sort((a, b) => a.manifest.releaseOrder - b.manifest.releaseOrder));
 }
 
