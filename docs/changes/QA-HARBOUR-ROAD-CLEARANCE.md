@@ -8,7 +8,7 @@ The contact assertion stays exact. Only its sweep orientation changes from the s
 
 ## Checks
 
-Source preparation only. No focused check, lane gate or build has run on this change. Independent review and the required checks remain pending.
+Root's independent source review confirms the approved operand-only change. The original focused suite on 0c6542e7 still fails the same Harbour wall at 2056/-3.5: exit 1 in 3676.1392 ms. A single read-only calculation also retains the hit with smaller midpoint sweeps, so the proposal does not resolve the guard. No lane gate or build followed the failure. The card has returned to Claude for a narrow released-course decision; no additional assertion, wall or runtime edit is assumed. Evidence: .evidence/2026-10-14/QA-HARBOUR-ROAD-CLEARANCE/final-0c6542e7. This lane is parked and unmerged.
 
 ## Removed
 
