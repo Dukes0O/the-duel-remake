@@ -129,8 +129,10 @@ export function stepCable(load, heli, {ground = null, zone = null, fallen = null
     const stretchRate = -(relX * ux + relY * uy + relZ * uz);
     // Capped at four times the hook limit's weight, so a stretched cable
     // can never fling the load.
+    // The damping is capped by the load's mass, so a light load (an empty
+    // bucket, 50 kg) does not shake at the step rate; every H1 load is heavier.
     const tension = distance > CABLE.length ? Math.min(CABLE.maxTension,
-      Math.max(0, CABLE.stiffness * (distance - CABLE.length) - CABLE.damping * stretchRate)) : 0;
+      Math.max(0, CABLE.stiffness * (distance - CABLE.length) - Math.min(CABLE.damping, m / dt) * stretchRate)) : 0;
     fx += tension * ux; fy += tension * uy; fz += tension * uz;
     force.x -= tension * ux; force.y -= tension * uy; force.z -= tension * uz;
     // Swing damping: slows motion across the cable relative to the hook.

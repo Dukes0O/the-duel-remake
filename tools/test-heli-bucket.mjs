@@ -12,6 +12,7 @@ import {
 } from '../src/heli/heli-bucket.js';
 import {Course} from '../src/course.js';
 import {TREMBLANT_WOODS} from '../src/circuits/tremblant-woods.js';
+import {TREMBLANT_SNOW} from '../src/circuits/tremblant-snow.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -340,20 +341,28 @@ const tailwind = {speed: 7, toward: {x: 1, z: 0}};
   const probe = (height, options) => {
     const b = createBucket({ground: flat});
     Object.assign(b, {onGround: false, y: height + BUCKET.hang, x: 0, z: 0, vz: options.speed ?? 0, vy: options.climb ?? 0});
+    setBucketWater(b, 600);
     return b;
   };
   for (const [height, options] of [[30, {}], [30, {wind: tailwind}], [60, {wind: {speed: 3.5, toward: {x: -0.6, z: 0.8}}}], [15, {speed: 12}]]) {
-    const run = pourFrom(height, options);
+    // A bucket with speed flies on while it pours.
+    const run = pourFrom(height, {...options, move: !!options.speed});
     const aim = aimPoint(probe(height, options), {ground: flat, wind: options.wind ?? null});
     ok(aim && Math.hypot(aim.x - run.x, aim.z - run.z) <= 2, `the ring is over the water at ${height} m (${Object.keys(options).join(', ') || 'still'})`);
-    const exact = aimPoint(probe(height, options), {ground: flat, wind: options.wind ?? null, dt: HELI_STEP});
-    const first = run.patches[0];
-    ok(Math.hypot(exact.x - first.x, exact.z - first.z) <= 0.2, `and agrees with the first parcel to 20 cm (${height} m)`);
+    if (!options.speed) {
+      const exact = aimPoint(probe(height, options), {ground: flat, wind: options.wind ?? null, dt: HELI_STEP});
+      const first = run.patches[0];
+      ok(Math.hypot(exact.x - first.x, exact.z - first.z) <= 0.2, `and agrees with the first parcel to 20 cm (${height} m)`);
+    }
     near(aim.fall, height, 1e-9, 'its fall is the bucket height above the ground');
   }
-  const spread = pourFrom(30, {speed: 15});
-  const aim = aimPoint(probe(30, {speed: 15}), {ground: flat});
-  ok(Math.hypot(aim.x - spread.patches[0].x, aim.z - spread.patches[0].z) <= 2, 'moving: the ring is on the first parcel');
+  // Flying on while the whole bucket goes: the ring is on the middle of the water.
+  for (const [height, speed] of [[15, 12], [30, 15], [30, 8]]) {
+    const flown = pourFrom(height, {speed, move: true});
+    const aim = aimPoint(probe(height, {speed}), {ground: flat});
+    const gap = Math.hypot(aim.x - flown.x, aim.z - flown.z);
+    ok(gap <= 2, `moving at ${speed} m/s from ${height} m: the ring is ${gap.toFixed(1)} m from the middle of the water`);
+  }
   const trees = flatGround(0, [{x: 0, z: 0, radius: 6, base: 0, top: 20, shape: 'column', id: 't1', kind: 'tree'}]);
   const high = probe(60, {});
   near(aimPoint(high, {ground: trees}).fall, 40, 1e-6, 'over a tree the ring lands on the tree top');
@@ -575,6 +584,32 @@ function flightWith(water, seconds = 60, ground = flat) {
   ok(!heli.onGround && heli.y > 15, `lifting off takes the bucket with it (helicopter at ${heli.y.toFixed(1)} m)`);
   ok(types(events).includes('loadLifted'), 'the bucket lifts off the ground');
   ok(bucket.y > 3.9, 'and hangs below the helicopter');
+}
+
+// An empty bucket hovering on the cable pulls steadily: the light load does
+// not shake the cable at the step rate.
+{
+  const heli = {x: 0, y: 40, z: 0, vx: 0, vy: 0, vz: 0};
+  const bucket = createBucket({ground: flat});
+  Object.assign(bucket, {onGround: false, y: 40 - 15.002, x: 0, z: 0});
+  let last = null, jump = 0, peak = 0;
+  for (let n = 0; n < 120 * 5; n++) {
+    stepBucket(bucket, {ground: flat});
+    const pull = -stepCable(bucket, heli, {ground: flat}).force.y;
+    if (n > 120 && last !== null) jump = Math.max(jump, Math.abs(pull - last));
+    if (n > 120) peak = Math.max(peak, pull);
+    last = pull;
+  }
+  ok(jump < 5 && Math.abs(last - BUCKET.emptyKg * 9.81) < 5, `an empty bucket hangs at its weight (${last.toFixed(0)} N, step change at most ${jump.toFixed(1)} N)`);
+}
+
+// Tremblant Snow's lake is frozen: nothing to scoop there.
+{
+  const snow = new Course(TREMBLANT_SNOW, 1989), water = courseWater(snow);
+  const lake = snow.def.basins[0], middle = snow.worldAt(snow.phase(lake.s), lake.lateral);
+  eq(water(middle.x, middle.z), null, 'the frozen lake at Tremblant Snow gives no water');
+  ok(courseWater(course)(course.worldAt(course.phase(lake.s), lake.lateral).x, course.worldAt(course.phase(lake.s), lake.lateral).z) !== null,
+    'while the same lake at Tremblant Woods does');
 }
 
 console.log(`test-heli-bucket: ${checks} checks passed`);

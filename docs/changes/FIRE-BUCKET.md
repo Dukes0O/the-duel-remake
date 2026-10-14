@@ -101,6 +101,28 @@ every other outside import.
 - Fitting, the H key, repairs, saved damage, sound cues and instruments are
   FIRE-HOOKS, FIRE-SAVE and FIRE-RADIO.
 
+## Review (rule 17)
+
+One independent reviewer read the diff and measured the bucket. Fixed:
+
+- An empty bucket made the cable shake at the step rate (the cable's
+  damping is too strong for a 50 kg load at 1/120 s; tension jumped between
+  0 and about 1,100 N every step). `stepCable` now caps the damping at the
+  load's mass over the step, which only changes loads under 100 kg; the
+  lightest H1 load is the 500 kg crate, so every H1 number and test is the
+  same. New test: an empty bucket hangs at its weight with a step change
+  under 5 N.
+- Tremblant Snow lists the same lake but draws it frozen; the water query
+  now skips a frozen lake, so nothing fills there. New test.
+- The aim ring marked where the first parcel lands, but the bucket keeps
+  moving for the 1.5 s pour, so most of the water landed 6 to 12 m past the
+  ring. The packet says the ring shows the centre of the water, so the ring
+  now starts its parcel half a pour on. The moving checks now really move
+  the bucket while it pours (they did not before) and agree within 2 m.
+
+Still open, for FIRE-HOOKS: the cable checks tree strikes at the ring, 3.8 m
+above the bucket's bottom, so low branches do not hit the bucket.
+
 ## Removed
 
 Nothing.
