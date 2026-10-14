@@ -26,7 +26,9 @@ Owns: `src/lessons/lesson-core.js`, `radio-voice.js`, `lesson-board.js`,
 `lesson-board.css`, `tools/test-lesson-core.mjs`,
 `docs/changes/DRIVE-LESSON-CORE.md`.
 Hooks: `src/heli/heli-lessons.js`, `heli-audio.js`, `heli-radio-lines.js`,
-`heli-ui.js`, `heli-ui.css` (the moved styles), and the allowed-imports list
+`heli-ui.js`, `heli-ui.css` (the moved styles), `src/screen-router.js` (one
+style import for `lesson-board.css`, so the helipad board keeps its look),
+and the allowed-imports list
 in `tools/test-heli-mode.mjs` (about line 358: add the `../lessons/` files).
 
 Acceptance: `test-heli-lessons`, `test-heli-audio`, `test-heli-view` and the

@@ -149,7 +149,12 @@ repeatable:
 - **Cone 3, finish wide:** where the instructor's line reaches the outside
   edge after the apex.
 - **The red board** (try 1 only): **25 m after cone 1**, the same late
-  braking point TYRE-SLIP's own test uses.
+  braking point TYRE-SLIP's own test uses, but never past the turn-in
+  point. On The Cutting it stands 25 m late, before turn-in. On Beaver
+  Hairpin the instructor brakes only about 10 m before turn-in (it leaves
+  Beaver Kink already slow), so the board stands at turn-in itself: braking
+  there means braking as you turn, which is exactly what makes the tyres
+  slide.
 
 Cones are drawn only; they never touch race physics. A cone "counts" when
 the car's centre passes within 2.5 m of it; driving right over it (within
@@ -209,8 +214,8 @@ With TYRE-SLIP, braking at the red board leaves you two bad choices: keep
 braking into the turn, which leaves only 80% of the cornering grip, or turn
 in too fast. Either way the tyres go past their best grip, they slide, the
 car runs wide and the slide rubs off speed. The screech is that slide. The
-lesson's own test (section 10) requires the late try to lose at least
-0.25 s and to screech at least 0.5 s on both corners; TYRE-SLIP's test 8
+lesson's own test (section 10) requires the late try to screech at least
+0.5 s and either lose at least 0.25 s or leave the road, on both corners; TYRE-SLIP's test 8
 checks a similar late entry. Without TYRE-SLIP the lesson would show a
 screech that costs nothing, which is why lesson 1 waits for it.
 
@@ -306,6 +311,10 @@ credits) when lesson 1 first passes.
   `test-drive-lesson-run.mjs`, and a browser scenario. Audio: takes in
   `audio-src/voices/`, the build step `tools/audio/build-drive-lessons.mjs`,
   runtime files in `public/assets/audio/voices/`.
+- **Styles:** the shared board's styles are imported from
+  `src/screen-router.js` by DRIVE-LESSON-CORE, so the helipad board keeps
+  its look from the first card; the hooks card adds only the lesson
+  screen's own styles.
 - **Locks:** `busy-game-files` once, in the hooks card (`app.js`,
   `game.js`, `render3d.js`); `save-shape` in the save card; `sound-bank` in
   the lines card (one line maps the driving cue list, as the helicopter's
@@ -361,8 +370,11 @@ for TYRE-SLIP.
 - `tools/test-drive-lessons.mjs`, on both corners, Casual and Pro, without
   drawing: the instructor's run is the same every time and at 30, 60 and
   144 FPS, and it counts all three cones; a scripted late try (brakes at the
-  red board and keeps braking into the turn) is at least 0.25 s slower than
-  the instructor and screeches at least 0.5 s; a scripted right try passes
+  red board and keeps braking until it is down to the instructor's corner
+  speed, steering for the line with up to full steering, not held to the
+  tyre's best grip) screeches at least 0.5 s and either finishes at least
+  0.25 s slower than the instructor or ends against the wall or off the
+  road (a late try that does not finish counts as losing time); a scripted right try passes
   all four rules; a scripted driver at 100% of the line's speed beats the
   instructor; the streak resets on a slow attempt; nothing in a lesson run
   pays, records or damages.

@@ -29,7 +29,7 @@ Owns: `src/lessons/drive-lesson-ui.js`, `drive-lesson-ui.css`,
 `tools/test-drive-lesson-run.mjs`, a browser scenario under
 `tools/scenarios/`, `docs/changes/DRIVE-LESSON-HOOKS.md`.
 Hooks: the files above, `src/screen-menu.js` (one button),
-`src/screen-router.js` (the lesson styles), `src/lessons/lesson-board.js`
+`src/screen-router.js` (one import for `drive-lesson-ui.css`), `src/lessons/lesson-board.js`
 (the Driving group rows).
 Locks: `busy-game-files`.
 

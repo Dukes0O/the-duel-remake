@@ -18,7 +18,8 @@ Build `src/lessons/drive-lessons.js`:
   for the ghost and the path for the cones. Not the App autopilot.
 - `placeCones`: cone 1 where the instructor starts braking (outside edge),
   cone 2 at its closest point to the inside, cone 3 where its line reaches
-  the outside edge; the red board 25 m after cone 1.
+  the outside edge; the red board 25 m after cone 1 but never past the
+  turn-in point (on Beaver Hairpin it lands at turn-in).
 - `createDriveLesson` and `stepDriveLesson` for the three stages (a late
   try that counts however it ends; the right try with its four rules and a
   brake window from 15 m before to 5 m after cone 1; three in a row), the
@@ -31,9 +32,12 @@ and never changes it.
 
 Acceptance (tests written first, both corners, Casual and Pro): the
 instructor's run is identical every time and at 30, 60 and 144 FPS and
-counts all three cones; a scripted late try (brakes at the red board and
-keeps braking into the turn) loses at least 0.25 s and screeches at least
-0.5 s; a scripted right try passes all four rules; a scripted driver at
+counts all three cones; a scripted late try (brakes at the red board,
+keeps braking until down to the instructor's corner speed, and steers for
+the line with up to full steering, not held to the tyre's best grip)
+screeches at least 0.5 s and either finishes at least 0.25 s slower or ends
+against the wall or off the road (an unfinished late try counts as losing
+time); a scripted right try passes all four rules; a scripted driver at
 100% of the line's speed beats the instructor; a slow attempt resets the
 streak. Report cone and board positions and the measured late-try loss and
 screech in the change note. If either corner misses the 0.25 s loss or the
