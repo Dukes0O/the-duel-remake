@@ -461,10 +461,12 @@ export async function main(args = process.argv.slice(2)) {
   data.topMph = topCopy;
   writeFileSync(join(outputDir, OUTPUT_FILES.trace), JSON.stringify({ lapTimes: lap.lapTimes, gridS: lap.gridS, trace: lap.trace }));
 
+  // Both the standalone wrapper and the all-scenario sweep consume the same
+  // actual headless preparation, including when this run uses --no-browser.
+  const inputPath = join(outputDir, 'review-input.json');
+  writeFileSync(inputPath, JSON.stringify(data));
   let exitCode = 0;
   if (options.browser) {
-    const inputPath = join(outputDir, 'review-input.json');
-    writeFileSync(inputPath, JSON.stringify(data));
     process.env[INPUT_ENV] = inputPath;
     const { main: runHarness } = await import('./browser-harness.mjs');
     const relative = outputDir.slice(PROJECT_ROOT.length).replace(/^[\\/]+/, '');
