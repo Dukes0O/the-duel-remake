@@ -90,11 +90,15 @@ function paddock() {
 
 function safety() {
   const out = [];
-  // The whole approved 12 m run-off stays open. Fences are outside it, with
-  // the right-hand paddock and the native pit openings left clear.
+  // Standard run-off stays at 12 m; the answered Long Left outside band
+  // widens to 20 m. The right-hand paddock and native pit openings stay clear.
   for (let s = 4; s < road.length - 4; s += 8) for (const side of [-1, 1]) {
     if (side < 0 && (s <= PIT_END + 15 || s >= road.length - 75)) continue;
-    out.push(row('catch-fence', s, side * (road.halfWidthAt(s) + 14.3),
+    const band = LONG_LEFT_RUNOFF[0];
+    const lateral = side === band.side && s >= band.s0 && s <= band.s1
+      ? side * (road.halfWidthAt(s) + road.runoffWidthAt(s, side, 12) + 2.3)
+      : side * (road.halfWidthAt(s) + 14.3);
+    out.push(row('catch-fence', s, lateral,
       {heading: Math.PI / 2, scale: Object.freeze([2, 1, 1]), solid: true}));
   }
   for (const name of ['La Fontaine', 'Red Water', 'The Wall', 'Les Combes', 'Malmedy',

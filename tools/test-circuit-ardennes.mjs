@@ -557,7 +557,7 @@ test('run-off bands reject malformed data and normalize without mutating authore
   assert.equal(normalized.runoffAt(3500, -1), 20, 'the normalized query does not retain a mutable descriptor');
 });
 
-test('only approved Long Left outside armco follows the wider run-off', () => {
+test('only approved Long Left outside armco and catch fence follow the wider run-off', () => {
   const road = buildTrackScript(ARDENNES_FOREST), turn = road.pieces.find(piece => piece.name === 'Long Left');
   const rows = ARDENNES_FOREST.kitPlacements;
   for (const row of rows.filter(row => row.id === 'armco')) {
@@ -566,8 +566,23 @@ test('only approved Long Left outside armco follows the wider run-off', () => {
     near(Math.abs(row.lateral), road.halfWidthAt(row.s) + room + .8, 1e-9);
     if (!approved) assert.equal(Math.abs(row.lateral), road.halfWidthAt(row.s) + 12.8, 'all other armco stays byte-exact in its original arithmetic');
   }
-  for (const row of rows.filter(row => row.id === 'catch-fence'))
-    assert.equal(Math.abs(row.lateral), road.halfWidthAt(row.s) + 14.3, 'the unanswered catch-fence stays exact');
+  for (const row of rows.filter(row => row.id === 'catch-fence')) {
+    if (row.lateral < 0 && row.s >= 3330 && row.s <= 3730)
+      assert.equal(Math.abs(row.lateral), road.halfWidthAt(row.s) + road.runoffWidthAt(row.s, -1, 12) + 2.3,
+        'the approved outside fence keeps its original 1.5 m beyond armco');
+    else assert.equal(Math.abs(row.lateral), road.halfWidthAt(row.s) + 14.3,
+      'every opposite or further catch fence keeps its exact original arithmetic');
+  }
+  for (const station of [3324, 3332, 3364, 3380, 3612, 3692, 3724, 3732]) for (const side of [-1, 1]) {
+    const fence = rows.find(row => row.id === 'catch-fence' && Math.sign(row.lateral) === side && Math.abs(row.s - station) < 1e-6);
+    assert.ok(fence, 'actual eight-metre fence station exists at both boundaries and sides');
+    const approved = side === -1 && station >= 3330 && station <= 3730;
+    const expected = approved ? side * (road.halfWidthAt(station) + road.runoffWidthAt(station, side, 12) + 2.3)
+      : side * (road.halfWidthAt(station) + 14.3);
+    assert.equal(fence.lateral, expected);
+  }
+  const struck = rows.find(row => row.id === 'catch-fence' && row.lateral < 0 && Math.abs(row.s - 3612) < 1e-6);
+  assert.equal(struck.lateral, -29.8, 'the exact previously struck fence now has the approved 22.3 m setback');
 });
 
 test('actual terrain gravel expands only on the approved outside band without geometry changes', () => {

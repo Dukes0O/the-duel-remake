@@ -87,3 +87,14 @@ Root ran all 26 existing Ardennes cases on 02b2caff: 22 passed and four failed. 
 Case 15 compared a placement pivot with the ground instead of the loaded model's base. Static inspection of the actual GLBs measured footbridge High and LOD minimum Y at -0.011846780776977539 m, exactly the failed pivot difference. The production placement already compensates for that source minimum. The corrected assertion transforms the actual loaded High and LOD bounds through the existing native placement matrix and compares the model base with actual rendered ground at the same original 0.000001 m tolerance. It changes no model, placement, collider or clearance guard and hardcodes no offset. Root will run the same complete 26 cases after confirmation; no corrected pass is claimed yet.
 
 Removed: three unscoped browser-image loads in headless effect fixtures, and the incorrect pivot-as-base expectation. The true base, source bounds, scale and both runtime qualities are now checked. No original tolerance or run-off, field, road, mist or input predicate changed.
+
+
+## Answered Long Left catch-fence correction
+
+The one requested Medium/index0 replay on 514a4315 still had one player prop crash. The read-only observer verified the native sweep and exact resolved endpoint for kit-solid-905-catch-fence at station 3612, authored lateral -21.8. This identified the fence rather than guessing another barrier. All seven CPUs finished; the player completed two laps with zero resets. The failed replay and its exact witness remain in integration evidence.
+
+Claude accepted moving only the outside catch fence on the same 3330 to 3730 band and smooth 40 m transitions. Its setback now uses the existing normalized run-off width plus 2.3 m, preserving its 1.5 m separation beyond the armco. Opposite-side and further fences retain their literal original road-half-width plus 14.3 arithmetic. No new shared hook, road, geometry, driver, collider dimension or threshold change.
+
+The existing corresponding barrier test retains the old exact expectations outside the approved band and adds exact actual fence witnesses at both transitions and on both sides. The previously struck station now has the approved -29.8 m lateral position. These changes are source-only and unrun at this freeze. Root reviews before the same single replay; if another hit occurs, its actual prop is recorded and work stops. No field batch, native packet, gate, build, frame, signature or sheet pass is claimed.
+
+Removed: the narrow outside catch-fence setback in the specifically answered Long Left band. All other barrier data, shared run-off and terrain hooks, footprint seating, native field predicates and accepted assets remain unchanged.
