@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T22:43:07.481Z
+Observed at: 2026-10-14T23:00:58.489Z
 
-Observation commit: c8df06e6920c29607394d8b42f3ad4ceab3f9de1
+Observation commit: 9f7c8f50cc3bd43b12cfdf47d96305fc4e9d29f7
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: c8df06e6920c29607394d8b42f3ad4ceab3f9de1
+Integration HEAD: 9f7c8f50cc3bd43b12cfdf47d96305fc4e9d29f7
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -92,9 +92,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/qa-browser-runtime | QA-BROWSER-SWEEP | 2026-10-14T15:24:35-07:00 | 0 | last commit 2026-10-14T15:24:35-07:00 | docs/changes/QA-BROWSER-SWEEP.md, src/environment-key.js, src/style.css, tools/scenarios/audio-baseline.mjs, tools/scenarios/audio-crash-peak.mjs |
+| codex/qa-browser-runtime | QA-BROWSER-SWEEP | 2026-10-14T15:49:37-07:00 | 0 | last commit 2026-10-14T15:49:37-07:00 | docs/changes/QA-BROWSER-SWEEP.md, src/environment-key.js, src/style.css, tools/scenarios/audio-baseline.mjs, tools/scenarios/audio-crash-peak.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/qa-harbour-clearance | QA-HARBOUR-ROAD-CLEARANCE | 2026-10-14T15:35:44-07:00 | 0 | last commit 2026-10-14T15:35:44-07:00 | docs/changes/QA-HARBOUR-ROAD-CLEARANCE.md, src/circuits/harbour-lights.js, tools/fixtures/world-signatures/harbour-lights.json, tools/test-circuit-layouts.mjs |
+| codex/qa-harbour-clearance | QA-HARBOUR-ROAD-CLEARANCE | 2026-10-14T15:47:09-07:00 | 0 | last commit 2026-10-14T15:47:09-07:00 | docs/changes/QA-HARBOUR-ROAD-CLEARANCE.md, src/circuits/harbour-lights.js, src/generated/reference-laps/harbour-lights.json, tools/fixtures/world-signatures/harbour-lights.json, tools/test-circuit-layouts.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -109,9 +109,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,531,057 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 193,304 B | -9,207 B | 5,000,000 B |
+| Added bytes in last merge | 91,440 B | -101,864 B | 5,000,000 B |
 | All `public/` | 293,610,515 B | +0 B | unavailable |
-| Git objects | 417,304,576 B | +2,672,640 B | unavailable |
+| Git objects | 418,407,424 B | +1,102,848 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -120,7 +120,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: c8df06e6920c29607394d8b42f3ad4ceab3f9de1
+- Local integration/wasteland: 9f7c8f50cc3bd43b12cfdf47d96305fc4e9d29f7
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
