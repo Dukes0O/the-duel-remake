@@ -8,7 +8,7 @@ async function helpers() {
   const result=await build({root,configFile:false,logLevel:'silent',plugins:[{
     name:'native-card-fixture',resolveId:id=>id===entry?'\0card-fixture':null,
     load:id=>id==='\0card-fixture'?`export {applyArmorDamage} from ${JSON.stringify(resolve(root,'src/combat-armor.js'))};`:null,
-  }],build:{write:false,minify:false,lib:{entry,name:'CardsNative',formats:['iife']}}});
+  }],build:{write:false,minify:false,lib:{entry,name:'CardsNative',formats:['es']}}});
   return (Array.isArray(result)?result[0]:result).output.find(row=>row.type==='chunk').code;
 }
 async function click(context,selector) {
@@ -24,7 +24,11 @@ export async function run(context) {
     await context.evaluate('window.name=""');
     await context.navigate('/tools/menu-check.html?flags=warlord-cards,blackiron,gunn,tollkeeper,convoy-raid&harness=cards-'+quality);
     await context.waitFor('!!window.__qaApp && !!window.__render','memory-only card app',60000);
-    await context.evaluate(bundle);
+    await context.evaluate(`(async () => {
+      const url = URL.createObjectURL(new Blob([${JSON.stringify(bundle)}], {type: 'text/javascript'}));
+      try { window.CardsNative = await import(url); }
+      finally { URL.revokeObjectURL(url); }
+    })()`);
     await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.audio.setMuted(true);a.setGraphicsQuality(${JSON.stringify(quality)});
       if(!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only card storage missing');
       document.head.insertAdjacentHTML('beforeend','<style>body>details{display:none!important}</style>');

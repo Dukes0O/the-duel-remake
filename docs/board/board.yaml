@@ -393,9 +393,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "building"
+    status: "review"
     claimed_by: "codex-browser-sweep-2026-10-14"
-    branch: "codex/qa-browser-helpers"
+    branch: "codex/qa-browser-sweep"
     needs: []
     waiting_on: "claude"
     details: "docs/board/cards/QA-BROWSER-SWEEP.md"

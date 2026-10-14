@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T16:07:23.660Z
+Observed at: 2026-10-14T16:19:08.590Z
 
-Observation commit: 6aadbd3c60cdae9e66d53b38f33f256227a9eaa1
+Observation commit: 4bdf5fde632797add29a7657d45f3ad136ec9f73
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6aadbd3c60cdae9e66d53b38f33f256227a9eaa1
+Integration HEAD: 4bdf5fde632797add29a7657d45f3ad136ec9f73
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -84,7 +84,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/deep-art-src | DEEP-ART-SRC | 2026-10-13T20:56:46-07:00 | 0 | last commit 2026-10-13T20:56:46-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/board/looks/deep-art/round-3-review.md, docs/board/looks/deep-art/round-3.jpg, docs/changes/DEEP-ART-SRC.md |
+| codex/deep-art-src | DEEP-ART-SRC | 2026-10-14T09:10:21-07:00 | 0 | last commit 2026-10-14T09:10:21-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/board/looks/deep-art/round-3-review.md, docs/board/looks/deep-art/round-3.jpg, docs/changes/DEEP-ART-SRC.md |
 | codex/fix-hairpin-native | FIX-HAIRPIN-CAMERA | 2026-10-13T21:20:33-07:00 | 0 | last commit 2026-10-13T21:20:33-07:00 | docs/changes/FIX-HAIRPIN-CAMERA.md, tools/scenarios/track-review.mjs |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-13T21:34:14-07:00 | 0 | last commit 2026-10-13T21:34:14-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, src/circuit-effects.js, src/circuits/ardennes-forest.js, src/light-path.js |
 | codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T08:56:32-07:00 | 0 | last commit 2026-10-14T08:56:32-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, tools/test-summit-avalanche.mjs |
@@ -92,8 +92,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/p4-yeti-native | P4-YETI | 2026-10-14T08:01:05-07:00 | 0 | last commit 2026-10-14T08:01:05-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/qa-browser-helpers | QA-BROWSER-SWEEP | 2026-10-14T09:06:25-07:00 | 0 | last commit 2026-10-14T09:06:25-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs, tools/scenarios/track-kits.mjs |
-| codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
+| codex/qa-browser-helpers | unknown | 2026-10-14T09:06:25-07:00 | 0 | last commit 2026-10-14T09:06:25-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs, tools/scenarios/track-kits.mjs |
+| codex/qa-browser-sweep | QA-BROWSER-SWEEP | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -107,10 +107,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 17,631,597 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 259,280 B | +0 B | 5,000,000 B |
+| Review `looks/` | 18,512,241 B | +880,644 B | 20,000,000 B |
+| Added bytes in last merge | 999,255 B | +739,975 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 399,590,400 B | +133,120 B | unavailable |
+| Git objects | 399,742,976 B | +152,576 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -119,7 +119,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 6aadbd3c60cdae9e66d53b38f33f256227a9eaa1
+- Local integration/wasteland: 4bdf5fde632797add29a7657d45f3ad136ec9f73
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -127,4 +127,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit e41061dcaf7dd82c66ec2bfc58a1d83f53bbf40b.
+- Remote origin/integration/wasteland: matches local; cached commit 4bdf5fde632797add29a7657d45f3ad136ec9f73.
