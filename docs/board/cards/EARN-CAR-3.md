@@ -19,10 +19,8 @@ This file holds the settled design, the tests and the acceptance. Design:
 
 ## The car
 
-Bugatti Bolide, earned at **24 medals, 6 of them gold**, unless Kyle picks another car (packet section 10;
-Claude's pick stands if there is no answer when EARN-SCREEN merges). A
-different pick keeps every rule below: the medal number, 1,500 kg or less,
-and the speed band.
+Bugatti Bolide, earned at **24 medals, 6 of them gold**. Kyle confirmed the pick on 14 October
+2026 (packet section 10).
 
 ## Before code: settle the numbers in writing here
 

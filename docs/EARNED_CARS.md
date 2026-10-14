@@ -3,7 +3,7 @@
 Design packet for Cockpit task T-013, written 14 October 2026 by Claude.
 Some cars are earned by winning races, never bought. Each car keeps a medal
 sheet of its wins, and medals from all your cars earn the next car. The
-cards are in section 9; the one question for Kyle is in section 10.
+cards are in section 9; Kyle's answers are in section 10.
 
 ## 0. What the game does today (checked on integration 1599a001)
 
@@ -44,6 +44,9 @@ cards are in section 9; the one question for Kyle is in section 10.
   earned cars from the medal sheets join that list.
 - Keep it small and fun for a parent and a child taking turns on one
   keyboard. Existing saves never lose a car or credits.
+- 14 October, on this packet: the three cars are confirmed (Ferrari Enzo,
+  McLaren F1, Bugatti Bolide), and medals earn credits too, "because it's
+  still time that's being spent" (section 2.1).
 
 ## 2. The medal sheet
 
@@ -61,8 +64,33 @@ three columns.
 - The box also counts your wins there ("3 WINS"), so a child sees each win
   land even after the medal is in.
 - A full sheet is six medals. With today's nine cars a player can hold 54.
-- Medals pay no credits and change no race. They only count toward earned
-  cars and show on the sheet.
+- Medals change no race. They count toward earned cars, show on the sheet
+  and pay a one-time credit bonus (2.1).
+
+### 2.1 Credits for medals (Kyle, 14 October 2026)
+
+Every win already pays its normal credits, in every car, earned cars
+included; medals take nothing away from that. On top, **each new medal pays
+once**, a quarter of that difficulty's win pay:
+
+| Medal | Difficulty | Win pay today | Medal bonus |
+| --- | --- | --- | --- |
+| Bronze | Easy | 600 | 150 |
+| Silver | Medium | 1,000 | 250 |
+| Gold | Hard | 1,500 | 375 |
+
+- Paid in the race that fills the box, as its own line in the race's pay
+  (`breakdown.medal`), the same way a milestone award is paid: not doubled by
+  Pro, not scaled by laps, and like every race earning it can cover a police
+  fine from that race.
+- Later wins in the same box pay their ordinary race credits only.
+- A full sheet pays 1,550 credits in bonuses; today's nine cars 13,950; all
+  twelve cars 18,600. A Titan costs 12,000, so medals help a player buy cars
+  without flooding the garage.
+- Earning a car pays nothing extra: the car is the prize.
+- In the separate Wasteland career (Mad Max Duel after the gate is found)
+  race pay is scrap and credits are held at zero, so a medal there counts on
+  the sheet but pays no credits, as that career's races already do.
 
 ## 3. What counts as a win
 
@@ -87,7 +115,7 @@ when the `earned-cars` switch is on:
 Three new cars, each earned by medals from all your cars together (an earned
 car's own sheet counts too):
 
-| Car | Earned at | Kyle's pick, or Claude's standing pick |
+| Car | Earned at | The car (Kyle confirmed, 14 October) |
 | --- | --- | --- |
 | Earned car 1 | 6 medals | Ferrari Enzo |
 | Earned car 2 | 15 medals | McLaren F1 |
@@ -171,7 +199,8 @@ keyboard work as today: pick your player, then race.
 ### 5.2 The results screen
 
 - **New medal** (a box filled for the first time): one line under the
-  bonuses, "NEW MEDAL · SILVER · AURORA GTR · DUEL · MEDIUM".
+  bonuses, "NEW MEDAL · SILVER · AURORA GTR · DUEL · MEDIUM · +250 CR".
+  The general bonus list leaves the medal out so it shows once.
 - **New car earned:** "NEW CAR EARNED · FERRARI ENZO · IN YOUR GARAGE".
   With the helicopter on: "KESTREL ONE WILL BRING IT TO TREMBLANT WOODS".
 - **Sound:** the existing `interface.bonus` cue, once per results screen,
@@ -204,8 +233,9 @@ profile.medals = {
 - A medal is a count of one or more. Medals are the filled boxes of the cars
   the game knows; gold is the filled Hard boxes.
 - Earned cars are stored where every owned car is: `unlockedCars`.
-- No other field changes. Credits, upgrades, records and history are
-  untouched.
+- The medal bonus reaches `credits` through the existing settlement, and the
+  history row's `breakdown` gains its `medal` amount. Upgrades, records and
+  every other field are untouched.
 
 ### 6.2 Loading
 
@@ -314,10 +344,9 @@ car goes into the game.
 The `save-shape` lock is shared with the Lab's tuning work (T-011), so they
 take turns, as the Cockpit already notes.
 
-## 10. Question for Kyle
+## 10. Kyle's answers (14 October 2026)
 
-**Which three cars?** Claude's pick: Ferrari Enzo (6 medals), McLaren F1
-(15), Bugatti Bolide (24 with 6 gold): famous, very different from each
-other, and all light enough for Kestrel One to carry. Or your son picks any
-three cars under 1,500 kg. If there is no answer by the time EARN-SCREEN
-merges, Claude's pick stands, so nothing waits.
+- **The three cars:** confirmed as picked: Ferrari Enzo (6 medals), McLaren
+  F1 (15), Bugatti Bolide (24 with 6 gold).
+- **Credits:** medals pay credits too, since the races are time spent
+  (section 2.1).
