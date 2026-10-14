@@ -1,7 +1,10 @@
 // Keys supply the exact average of their ramp during each simulation step.
-// Arenas keep their sharp controls; road input is gentler.
-export const KEYBOARD_STEERING_START = .30;
-export const KEYBOARD_STEERING_RISE_SEC = .45;
+// Arenas keep their sharp controls; road input is gentler. Kyle, 14 October 2026:
+// the 13 October road curve (30% start, 450 ms rise, 40% less at speed) steered
+// too slowly for the car, so it starts at 55%, rises in 300 ms and gives up 30%.
+export const KEYBOARD_STEERING_START = .55;
+export const KEYBOARD_STEERING_RISE_SEC = .30;
+export const KEYBOARD_STEERING_SPEED_DROP = .30;
 
 export function keyboardSteeringDirection(keys) {
   return (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
@@ -9,7 +12,7 @@ export function keyboardSteeringDirection(keys) {
 
 export function keyboardSteeringLimit(speed) {
   const mph = Math.abs(Number.isFinite(speed) ? speed : 0);
-  return 1 - .4 * Math.min(1, Math.max(0, (mph - 40) / 80));
+  return 1 - KEYBOARD_STEERING_SPEED_DROP * Math.min(1, Math.max(0, (mph - 40) / 80));
 }
 
 export function createKeyboardSteering({arena = false} = {}) {

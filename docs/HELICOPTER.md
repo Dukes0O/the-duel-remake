@@ -480,4 +480,4 @@ Cockpit project "The Duel" holds the later sprints: H2 Fire (T-035),
 H3 Wildlife and skins (T-036), H4 Rescue (T-037), H5 Heli-skiing (T-038),
 the Lab (T-009 to T-012), and the driving lessons (T-039, T-040). Each gets
 a packet here when its turn comes; Kyle's storyboard holds the decisions.
-H2 Fire's packet is `docs/HELI_FIRE.md`.
+H2 Fire's packet is `docs/HELI_FIRE.md`; H4 Rescue's is `docs/HELI_RESCUE.md`.
