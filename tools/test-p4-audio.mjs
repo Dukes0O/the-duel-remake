@@ -25,7 +25,7 @@ const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.m
 assert.equal(hashObject(Object.fromEntries(Object.entries(SOUND_BANK).filter(([id]) => !added.has(id) && !DEEP_CUES.includes(id) &&
   id !== 'vehicle.rival-engine' && id !== 'vehicle.traffic-engine'))),
   'df5cf72de6db8a8f50273c78ae0e6dd349b6ed0ae32ff1ad37627ddbc8a725ba', 'pre-P4 sound bank changed');
-assert.equal(hashObject({...catalog, sounds: catalog.sounds.filter(row => !added.has(row.cue) && !DEEP_CUES.includes(row.cue))}),
+assert.equal(hashObject({...catalog, sounds: catalog.sounds.filter(row => !added.has(row.cue) && !DEEP_CUES.includes(row.cue) && !String(row.cue).startsWith('heli.'))}),
   '772989c2d66e55d6c7c6f795b85cbf3395c30abe4edc8a6cc3a526421a06e8f0', 'pre-P4 catalog changed');
 
 // Real FIELD emits feed the production event handler. Only the audio sink is

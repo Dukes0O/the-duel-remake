@@ -1,0 +1,568 @@
+// The helicopter's sound (docs/HELICOPTER.md sections 7 and 8): the instructor's
+// radio lines through a radio filter, the rotor and wind loops that follow the
+// flight readout, and one-shot cues for flight and cable events. Nothing here
+// changes the flight or the cable; it only listens. HELI_CUES holds the same
+// fields as the sound bank, so one line in sound-bank.js can map it
+// (HELI-HOOKS), the way fight-voices.js keeps its lines.
+import {HELI_RADIO_LINES} from './heli-radio-lines.js';
+
+const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+const smooth = value => { const t = clamp(value, 0, 1); return t * t * (3 - 2 * t); };
+
+// ---- Cue table -------------------------------------------------------------
+
+const cue = (bus, data = {}) => ({
+  bus, volume: 1, pitchRange: [1, 1], volumeRange: [1, 1], priority: 50, limit: 12,
+  spatial: null, duck: null, flag: 'helicopter', ...data,
+});
+const tone = (frequency, duration, volume, type = 'sine', delay = 0, endFrequency = null) =>
+  ({kind: 'tone', frequency, duration, volume, type, delay, endFrequency});
+const noise = (frequency, duration, volume, type = 'bandpass') =>
+  ({kind: 'noise', frequency, duration, volume, type});
+
+// The radio filter (section 7): band-pass 300 to 3,000 Hz, a soft clip for
+// crackle, a faint hiss under the voice and a click when the radio keys on and off.
+export const RADIO_FILTER = Object.freeze({highpass: 300, lowpass: 3000, drive: 2.5, hiss: .03, clickMs: 14});
+
+export const HELI_LIBRARY_CUES = Object.freeze({
+  'heli.rotor': cue('engine', {file: 'heli/rotor.ogg', volume: .55, loop: true, priority: 70, limit: 1}),
+  'heli.engine.start': cue('engine', {file: 'heli/engine-start.ogg', volume: .7, priority: 70, limit: 1}),
+  'heli.engine.stop': cue('engine', {file: 'heli/engine-stop.ogg', volume: .7, priority: 70, limit: 1}),
+  'heli.wind': cue('ambience', {file: 'heli/wind.ogg', volume: .6, loop: true, priority: 40, limit: 1}),
+  'heli.cable.creak': cue('vehicle', {file: 'heli/cable-creak.ogg', volume: .7, priority: 50, limit: 2}),
+  'heli.hook.release': cue('vehicle', {file: 'heli/hook-release.ogg', volume: .8, priority: 60, limit: 2}),
+  'heli.setdown.thud': cue('vehicle', {file: 'heli/setdown-thud.ogg', volume: .9, priority: 65, limit: 2}),
+});
+
+// Chime, horn, click and hiss are made from tones and noise, with no file.
+// The click and the hiss are played by the radio chain itself.
+export const HELI_TONE_CUES = Object.freeze({
+  'heli.fuel.low': cue('interface', {priority: 85, limit: 1, volume: .6, layers: [
+    tone(1319, .5, .14, 'sine', 0), tone(988, .7, .14, 'sine', .24),
+    tone(1319, .5, .14, 'sine', 1.1), tone(988, .7, .14, 'sine', 1.34)]}),
+  'heli.rotor.low': cue('interface', {priority: 90, limit: 1, volume: .55, layers: [
+    tone(330, .3, .1, 'sawtooth', 0), tone(335, .3, .1, 'sawtooth', 0),
+    tone(330, .3, .1, 'sawtooth', .45), tone(335, .3, .1, 'sawtooth', .45),
+    tone(330, .3, .1, 'sawtooth', .9), tone(335, .3, .1, 'sawtooth', .9)]}),
+  'heli.radio.click': cue('interface', {priority: 80, limit: 2, volume: .8,
+    layers: [noise(1800, RADIO_FILTER.clickMs / 1000, .16)]}),
+  'heli.radio.hiss': cue('ambience', {priority: 20, limit: 1, volume: 1, loop: true,
+    layers: [noise(3200, 1, RADIO_FILTER.hiss)]}),
+});
+
+export const HELI_RADIO_CUES = Object.freeze(Object.fromEntries(Object.entries(HELI_RADIO_LINES).map(
+  ([id, line]) => [id, cue('voice', {file: `voices/${line.file}`, volume: line.gain || 1,
+    priority: 90, limit: 1, duck: 'voice'})])));
+
+export const HELI_CUES = Object.freeze({...HELI_RADIO_CUES, ...HELI_LIBRARY_CUES, ...HELI_TONE_CUES});
+
+// Flight and cable events (heli-flight.js, heli-cable.js) and what they sound like.
+// scale and rate change the cue's volume and pitch for that one play.
+const sinkScale = event => clamp(.2 + (Number(event.sink) || 0) / 4, .2, 1);
+export const HELI_EVENT_CUES = Object.freeze({
+  // A crash on touchdown sounds once, from the crash event that follows.
+  touchdown: event => event.result === 'crash' ? [] : [['heli.setdown.thud', {scale: sinkScale(event)}]],
+  liftoff: () => [],
+  lowFuel: () => [['heli.fuel.low']],
+  engineOut: () => [['heli.rotor.low']],
+  lowRotor: () => [['heli.rotor.low']],
+  crash: () => [['heli.setdown.thud', {scale: 1}]],
+  hooked: () => [['heli.hook.release', {scale: .8, rate: .85}]],
+  releasedHigh: () => [['heli.hook.release']],
+  released: () => [['heli.hook.release']],
+  setDown: () => [['heli.setdown.thud', {scale: .6}]],
+  drop: () => [['heli.setdown.thud', {scale: 1}]],
+  cargoHit: () => [['heli.cable.creak', {scale: .8}], ['heli.setdown.thud', {scale: .55}]],
+});
+// The instructor reacts to the same events (the session may also ask for them;
+// a line already queued, playing or just played is not repeated).
+export const HELI_EVENT_LINES = Object.freeze({
+  lowFuel: () => 'heli.radio.fuel.low',
+  engineOut: () => 'heli.radio.fuel.out',
+  crash: () => 'heli.radio.crash',
+  drop: () => 'heli.radio.drop',
+  cargoHit: () => 'heli.radio.cargo.hit',
+  touchdown: event => event.result === 'hard' ? 'heli.radio.landing.hard' : null,
+});
+
+// ---- Rotor and wind --------------------------------------------------------
+
+// The heaviest takeoff the Kestrel is built for (heli-flight.js: 1,150 empty,
+// 80 pilot, 400 fuel and 1,500 load).
+const HEAVIEST_KG = 3130;
+const TOP_SPEED_MS = 60;
+const KNOTS_TO_MS = 1 / 1.943844;
+
+// The rotor loop gets lower and slower as the helicopter gets heavier and as
+// the rotor loses speed, and goes silent when the rotor has stopped. readout
+// comes from heliReadout(state) without the load; loadKg is the load on the cable.
+export function rotorVoice(readout, {loadKg = 0} = {}) {
+  const speed = clamp((Number(readout?.rotorPct) || 0) / 100, 0, 1.1);
+  const weight = clamp(((Number(readout?.weightKg) || 0) + Math.max(0, Number(loadKg) || 0)) / HEAVIEST_KG, .35, 1.15);
+  if (speed < .02) return {rate: .3, gain: 0, lowpass: 700};
+  return {
+    rate: clamp((1.1 - .28 * weight) * (.35 + .65 * speed), .25, 1.2),
+    gain: Math.min(1, speed / .35) * (.7 + .3 * Math.min(1, weight)),
+    lowpass: 700 + 1900 * Math.min(1, speed),
+  };
+}
+
+// Wind rises with airspeed and stops rising at the helicopter's top speed.
+export function windVoice(readout) {
+  const share = clamp((Number(readout?.airspeedKts) || 0) * KNOTS_TO_MS / TOP_SPEED_MS, 0, 1);
+  return {gain: share ** 1.2, rate: .85 + .3 * share, lowpass: 600 + 2000 * share};
+}
+
+// ---- The radio chain -------------------------------------------------------
+
+// A soft clip: smooth, odd (the same for both swings), bounded by 1 and rising
+// all the way, so loud peaks round off instead of cutting flat.
+export function softClipCurve(count = 1024, drive = RADIO_FILTER.drive) {
+  const curve = new Float32Array(Math.max(3, Math.floor(count)));
+  const top = Math.tanh(drive);
+  for (let index = 0; index < curve.length; index++) {
+    const input = 2 * index / (curve.length - 1) - 1;
+    curve[index] = Math.tanh(drive * input) / top;
+  }
+  return curve;
+}
+
+// Plain repeatable noise, so nothing about the radio depends on chance.
+function noiseBuffer(context, seconds) {
+  const rate = context.sampleRate || 48000, buffer = context.createBuffer(1, Math.max(8, Math.round(rate * seconds)), rate);
+  const data = buffer.getChannelData(0);
+  let seed = 22695477;
+  for (let index = 0; index < data.length; index++) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    data[index] = seed / 2147483648 - 1;
+  }
+  return buffer;
+}
+
+// input -> high-pass 300 -> low-pass 3,000 -> soft clip -> output. The hiss and
+// the clicks join after the clip. keyOn and keyOff are the press and release.
+export function createRadioChain(context, destination, filter = RADIO_FILTER) {
+  const input = context.createGain(), output = context.createGain();
+  const high = context.createBiquadFilter(), low = context.createBiquadFilter(), clip = context.createWaveShaper();
+  high.type = 'highpass'; high.frequency.value = filter.highpass; high.Q.value = .7;
+  low.type = 'lowpass'; low.frequency.value = filter.lowpass; low.Q.value = .7;
+  clip.curve = softClipCurve(1024, filter.drive);
+  output.gain.value = 1.3;
+  input.connect(high); high.connect(low); low.connect(clip); clip.connect(output); output.connect(destination);
+  const hissGain = context.createGain(), hissFilter = context.createBiquadFilter();
+  hissGain.gain.value = 0;
+  hissFilter.type = 'bandpass'; hissFilter.frequency.value = 3200; hissFilter.Q.value = .6;
+  hissFilter.connect(hissGain); hissGain.connect(output);
+  const hissBuffer = noiseBuffer(context, 2), clickBuffer = noiseBuffer(context, .05);
+  const live = new Set();
+  let hiss = null, keyed = false, disposed = false;
+
+  function stopSource(source, when = 0) {
+    try { source.stop(when); } catch { /* already ended */ }
+  }
+  function click() {
+    const source = context.createBufferSource(), shape = context.createBiquadFilter(), level = context.createGain();
+    const now = context.currentTime, length = filter.clickMs / 1000;
+    source.buffer = clickBuffer;
+    shape.type = 'bandpass'; shape.frequency.value = 1800; shape.Q.value = .8;
+    level.gain.setValueAtTime(.4, now);
+    level.gain.linearRampToValueAtTime(0, now + length);
+    source.connect(shape); shape.connect(level); level.connect(output);
+    live.add(source);
+    source.onended = () => { live.delete(source); source.disconnect(); shape.disconnect(); level.disconnect(); };
+    source.start(now);
+    stopSource(source, now + length + .01);
+  }
+  function keyOn() {
+    if (disposed || keyed) return false;
+    keyed = true;
+    click();
+    const source = context.createBufferSource(), now = context.currentTime;
+    source.buffer = hissBuffer;
+    source.loop = true;
+    source.connect(hissFilter);
+    hiss = source;
+    live.add(source);
+    source.start(now);
+    hissGain.gain.cancelScheduledValues(now);
+    hissGain.gain.setValueAtTime(0, now);
+    hissGain.gain.linearRampToValueAtTime(filter.hiss, now + .04);
+    return true;
+  }
+  function keyOff() {
+    if (disposed || !keyed) return false;
+    keyed = false;
+    click();
+    const now = context.currentTime, source = hiss;
+    hiss = null;
+    hissGain.gain.cancelScheduledValues(now);
+    hissGain.gain.setValueAtTime(filter.hiss, now);
+    hissGain.gain.linearRampToValueAtTime(0, now + .08);
+    if (source) {
+      source.onended = () => { live.delete(source); source.disconnect(); };
+      stopSource(source, now + .1);
+    }
+    return true;
+  }
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    keyed = false;
+    for (const source of live) stopSource(source);
+    live.clear();
+    for (const node of [input, high, low, clip, output, hissGain, hissFilter]) node.disconnect();
+  }
+  return {input, output, keyOn, keyOff, dispose, get keyed() { return keyed; }};
+}
+
+// ---- The player ------------------------------------------------------------
+
+const LEAD_SEC = .12;  // the click comes first, then the voice
+const GAP_SEC = .3;    // a breath between two lines
+const REPEAT_SEC = 6;  // the same line is not repeated this soon
+const MAX_QUEUE = 8;
+
+// A short text of the readout, to tell a frozen crashed helicopter from a new one.
+const readoutSignature = readout => ['altitudeM', 'fuelKg', 'headingDeg', 'weightKg', 'rotorPct',
+  'airspeedKts', 'climbMs', 'pitchDeg', 'rollDeg', 'engine'].map(key => readout[key]).join('|');
+
+export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, autoRadio = true}) {
+  const isEnabled = enabled || (() => { try { return !!audio.flags?.enabled('helicopter'); } catch { return false; } });
+  const buffers = new Map(), pending = new Map(), failed = new Set(), active = new Map(), loops = new Map();
+  const lastLine = new Map(), seen = new WeakSet();
+  let context = null, chain = null, disposed = false, preloaded = null;
+  let queue = [], current = null, nextAt = 0;
+  let engineWas = null, crashHold = null, lastHorn = -Infinity, lastCreak = -Infinity;
+
+  const audible = () => !disposed && isEnabled() && !audio.muted && !audio.paused &&
+    audio.context?.state === 'running';
+  const now = () => audio.context?.currentTime ?? 0;
+
+  // A cue the sound bank already holds goes through the mixer (limits, ducking,
+  // loudness groups); until HELI-HOOKS maps them, they join their bus directly.
+  function banked(id) {
+    try { return !!audio.mixer?.output(id); } catch { return false; }
+  }
+  function destination(id) {
+    const def = cues[id];
+    if (banked(id)) return {node: audio.mixer.output(id), mixer: true};
+    return {node: audio.buses?.[def.bus] ?? audio.master ?? audio.context.destination, mixer: false};
+  }
+  function connect(node, target) {
+    if (target.mixer && audio._connect) audio._connect(node, target.node);
+    else node.connect(target.node);
+  }
+
+  function follow() {
+    if (context === audio.context) return;
+    stopAll();
+    chain?.dispose();
+    chain = null;
+    context = audio.context;
+    buffers.clear();
+    pending.clear();
+    failed.clear();
+  }
+  function ensureChain() {
+    if (!chain) chain = createRadioChain(context, destination('heli.radio.welcome').node);
+    return chain;
+  }
+
+  async function fetchBuffer(id) {
+    const captured = context, request = fetchImpl || globalThis.fetch;
+    let buffer;
+    try {
+      const response = await request('/assets/audio/' + cues[id].file);
+      if (!response.ok) throw Error(`Helicopter cue unavailable: ${id}`);
+      buffer = await captured.decodeAudioData(await response.arrayBuffer());
+    } catch (error) {
+      // A file that will not load is not asked for again every frame.
+      if (context === captured) failed.add(id);
+      throw error;
+    }
+    if (!disposed && context === captured) buffers.set(id, buffer);
+    return buffer;
+  }
+  function load(ids) {
+    if (disposed || !audio.context) return Promise.resolve([]);
+    follow();
+    const wanted = ids || Object.keys(cues).filter(id => cues[id].file && !id.startsWith('heli.radio.'));
+    return Promise.allSettled(wanted.filter(id => cues[id]?.file && !failed.has(id)).map(id => {
+      if (buffers.has(id)) return Promise.resolve(buffers.get(id));
+      if (!pending.has(id)) pending.set(id, fetchBuffer(id).finally(() => pending.delete(id)));
+      return pending.get(id);
+    }));
+  }
+
+  function remember(id, voice) {
+    const set = active.get(id) || new Set();
+    active.set(id, set);
+    while (set.size >= (cues[id].limit || 12)) {
+      const oldest = set.values().next().value;
+      set.delete(oldest);
+      oldest.stop();
+    }
+    set.add(voice);
+    return () => set.delete(voice);
+  }
+
+  // One buffer through its own gain to its bus. A loop keeps going until stopped.
+  function start(id, {loop = false, scale = 1, rate = 1, node = null, filterHz = null} = {}) {
+    const buffer = buffers.get(id), ctx = audio.context;
+    if (!buffer || ctx !== context || !audible()) return null;
+    const def = cues[id], target = destination(id);
+    const source = ctx.createBufferSource(), gain = ctx.createGain();
+    let shape = null;
+    source.buffer = buffer;
+    source.loop = loop;
+    source.playbackRate.value = rate;
+    gain.gain.value = def.volume * scale;
+    if (filterHz) {
+      shape = ctx.createBiquadFilter();
+      shape.type = 'lowpass';
+      shape.frequency.value = filterHz;
+      source.connect(shape); shape.connect(gain);
+    } else source.connect(gain);
+    if (node) gain.connect(node); else connect(gain, target);
+    let live = true, release = null, trackRelease = null;
+    const voice = {
+      source, gain, shape, until: loop ? Infinity : ctx.currentTime + buffer.duration / Math.max(.1, rate),
+      get active() { return live; },
+      stop() {
+        if (!live) return;
+        live = false;
+        gain.gain.cancelScheduledValues(ctx.currentTime);
+        gain.gain.setTargetAtTime(0, ctx.currentTime, .008);
+        try { source.stop(ctx.currentTime + .04); } catch { /* already ended */ }
+      },
+    };
+    source.onended = () => {
+      live = false;
+      source.disconnect(); gain.disconnect(); shape?.disconnect();
+      if (target.mixer) audio.mixer.disconnect?.(gain);
+      release?.(); trackRelease?.();
+      voice.ended?.();
+    };
+    release = remember(id, voice);
+    if (target.mixer) trackRelease = audio.mixer.track?.(id, voice);
+    source.start(ctx.currentTime);
+    return voice;
+  }
+
+  // Tones and noise made on the spot (the chime and the horn).
+  function startLayers(id, scale = 1) {
+    const ctx = audio.context, def = cues[id];
+    if (!audible() || ctx !== context) return null;
+    const tones = def.layers.filter(layer => layer.kind === 'tone');
+    if (!tones.length) return null;
+    const target = destination(id), bus = ctx.createGain();
+    bus.gain.value = def.volume * scale;
+    connect(bus, target);
+    const stops = [];
+    let end = ctx.currentTime;
+    for (const layer of tones) {
+      const at = ctx.currentTime + (layer.delay || 0), finish = at + layer.duration;
+      const level = ctx.createGain(), osc = ctx.createOscillator();
+      osc.type = layer.type;
+      osc.frequency.setValueAtTime(layer.frequency, at);
+      if (layer.endFrequency) osc.frequency.linearRampToValueAtTime(layer.endFrequency, finish);
+      level.gain.setValueAtTime(0, at);
+      level.gain.linearRampToValueAtTime(layer.volume, at + .01);
+      level.gain.linearRampToValueAtTime(0, finish);
+      osc.connect(level); level.connect(bus);
+      osc.start(at); osc.stop(finish + .02);
+      stops.push(osc);
+      end = Math.max(end, finish + .02);
+    }
+    let live = true;
+    const voice = {
+      until: end,
+      get active() { return live; },
+      stop() {
+        if (!live) return;
+        live = false;
+        bus.gain.cancelScheduledValues(ctx.currentTime);
+        bus.gain.setTargetAtTime(0, ctx.currentTime, .008);
+        for (const osc of stops) try { osc.stop(ctx.currentTime + .04); } catch { /* ended */ }
+      },
+    };
+    const release = remember(id, voice);
+    stops.at(-1).onended = () => { live = false; release(); bus.disconnect(); };
+    return voice;
+  }
+
+  // Any one-shot cue by id. Returns the voice, or null when it cannot play now.
+  function play(id, options = {}) {
+    const def = cues[id];
+    if (disposed || !def || id.startsWith('heli.radio.') || !audible()) return null;
+    follow();
+    if (def.loop || def.bus === 'voice') return null;
+    if (def.layers) return startLayers(id, options.scale ?? 1);
+    if (!buffers.has(id)) { void load([id]); return null; }
+    return start(id, options);
+  }
+
+  // ---- Radio lines: one at a time, in order, and a line can be skipped.
+
+  function finishLine(line) {
+    if (current !== line) return;
+    current = null;
+    line.voice?.stop();
+    chain?.keyOff();
+    nextAt = now() + GAP_SEC;
+  }
+  function startLine(line) {
+    follow();
+    const ready = buffers.get(line.id);
+    if (!ready) {
+      void load([line.id]).then(() => {
+        if (current !== line || line.voice) return;
+        if (buffers.has(line.id)) startLine(line);
+        else { current = null; nextAt = now() + GAP_SEC; }
+      });
+      return;
+    }
+    if (!audible()) { current = null; return; }
+    const radio = ensureChain();
+    radio.keyOn();
+    const ctx = audio.context, voice = start(line.id, {node: radio.input});
+    if (!voice) { radio.keyOff(); current = null; return; }
+    line.voice = voice;
+    line.until = ctx.currentTime + ready.duration + .05;
+    voice.ended = () => finishLine(line);
+    audio.mixer?.duck?.('voice', ready.duration + .6);
+  }
+  function advance() {
+    if (current || disposed) return;
+    if (!queue.length || now() < nextAt) return;
+    if (!audible()) { queue = []; return; }
+    const id = queue.shift();
+    current = {id, voice: null, until: Infinity};
+    lastLine.set(id, now());
+    startLine(current);
+  }
+  // Ask for a line. Unknown lines, repeats and a muted game are ignored.
+  function say(id) {
+    if (disposed || !HELI_RADIO_LINES[id] || !cues[id]) return false;
+    if (current?.id === id || queue.includes(id)) return false;
+    if (now() - (lastLine.get(id) ?? -Infinity) < REPEAT_SEC) return false;
+    if (!audible()) return false;
+    queue.push(id);
+    while (queue.length > MAX_QUEUE) queue.shift();
+    advance();
+    return true;
+  }
+  // Skip the line being said; the next one in the queue follows after a breath.
+  function skip() {
+    if (!current) return false;
+    finishLine(current);
+    return true;
+  }
+  function clearRadio() {
+    queue = [];
+    if (current) finishLine(current);
+  }
+  const subtitle = () => current ? {id: current.id, text: HELI_RADIO_LINES[current.id].text} : null;
+
+  // ---- Loops that follow the flight, and the events.
+
+  function bed(id, wanted, voice) {
+    const held = loops.get(id);
+    if (!wanted) { held?.stop(); loops.delete(id); return null; }
+    if (held?.active) return held;
+    if (!buffers.has(id)) { void load([id]); return null; }
+    const started = start(id, {loop: true, scale: 0, rate: voice.rate, filterHz: voice.lowpass});
+    if (started) loops.set(id, started);
+    return started;
+  }
+  function steer(loop, voice, def) {
+    if (!loop) return;
+    const t = audio.context.currentTime;
+    loop.gain.gain.setTargetAtTime(def.volume * voice.gain, t, .12);
+    loop.source.playbackRate.setTargetAtTime(voice.rate, t, .15);
+    loop.shape?.frequency.setTargetAtTime(voice.lowpass, t, .15);
+  }
+
+  // Call every frame with heliReadout(state) and the load on the cable.
+  function update(readout, {loadKg = 0} = {}) {
+    if (disposed) return;
+    if (!isEnabled() || !audio.context) { stopAll(); return; }
+    follow();
+    if (preloaded !== context) { preloaded = context; void load(); }
+    advance();
+    if (current && current.until <= now()) finishLine(current);
+    if (!audible()) { stopLoops(); return; }
+    if (!readout) return;
+    const engine = readout.engine === true;
+    if (engineWas === false && engine) {
+      crashHold = null;
+      const sound = play('heli.engine.start');
+      if (!sound) void load(['heli.engine.start']);
+    } else if (engineWas === true && !engine && !crashHold) play('heli.engine.stop');
+    engineWas = engine;
+    // After a crash the loops stay off until the flight is made new: the session's
+    // entered event, an engine start, or a readout that is no longer the frozen one.
+    if (crashHold) {
+      const signature = readoutSignature(readout);
+      if (crashHold.signature === null) crashHold.signature = signature;
+      else if (crashHold.signature !== signature) crashHold = null;
+    }
+    if (crashHold) { stopLoops(); return; }
+    const rotor = rotorVoice(readout, {loadKg}), wind = windVoice(readout);
+    steer(bed('heli.rotor', rotor.gain > 0, rotor), rotor, cues['heli.rotor']);
+    steer(bed('heli.wind', rotor.gain > 0 && wind.gain > .001, wind), wind, cues['heli.wind']);
+  }
+
+  function event(ev, state = {}) {
+    if (Array.isArray(ev)) { for (const item of ev) event(item, state); return; }
+    if (!ev || typeof ev !== 'object' || disposed || seen.has(ev)) return;
+    seen.add(ev);
+    if (ev.type === 'entered') { crashHold = null; return; }
+    const sounds = HELI_EVENT_CUES[ev.type];
+    if (!sounds || !isEnabled()) return;
+    const time = now();
+    for (const [id, options] of sounds(ev, state)) {
+      // The horn and the creak repeat while the cause lasts; keep them apart.
+      if (id === 'heli.rotor.low' && time - lastHorn < 3) continue;
+      if (id === 'heli.cable.creak' && time - lastCreak < .8) continue;
+      if (play(id, options)) {
+        if (id === 'heli.rotor.low') lastHorn = time;
+        if (id === 'heli.cable.creak') lastCreak = time;
+      } else if (cues[id]?.file) void load([id]);
+    }
+    if (ev.type === 'crash') crashHold = {signature: null};
+    if (autoRadio) {
+      const line = HELI_EVENT_LINES[ev.type]?.(ev, state);
+      if (line) say(line);
+    }
+  }
+
+  function stopLoops() {
+    for (const voice of loops.values()) voice.stop();
+    loops.clear();
+  }
+  function stopAll() {
+    stopLoops();
+    queue = [];
+    if (current) finishLine(current);
+    for (const set of active.values()) for (const voice of [...set]) voice.stop();
+    active.clear();
+    chain?.keyOff();
+  }
+  function stop() {
+    stopAll();
+    engineWas = null;
+    crashHold = null;
+  }
+  function dispose() {
+    if (disposed) return;
+    stop();
+    disposed = true;
+    chain?.dispose();
+    chain = null;
+    buffers.clear();
+    pending.clear();
+  }
+  return {load, say, skip, clearRadio, subtitle, update, event, play, stop, dispose,
+    get busy() { return !!current || queue.length > 0; }, get queued() { return [...queue]; }};
+}

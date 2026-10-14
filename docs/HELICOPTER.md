@@ -251,6 +251,40 @@ damped pendulum (no new library; it borrows the tether ideas in
   offers "Race here", which starts the normal race at that course with that
   car. Flying never changes how a race runs.
 
+**Settled while building HELI-MODE (14 October 2026).** Checked in
+`tools/test-heli-mode.mjs`:
+
+- Each landing zone is the first clear, level 12 m circle (no more than
+  1.5 m of rise, nothing taller than 0.5 m in it or 4 m around it, off
+  every road) searched outward from the start line, 30 to 80 m to either
+  side. At home the pad is that zone and the car parks 25 m from it.
+- The flying area is the course, the zone and every arrival point, plus
+  250 m. Without a destination its sides and ceiling hold the helicopter
+  in; with one, crossing a side or climbing through the ceiling offers
+  Cruise (Enter, or the gamepad's A).
+- The cruise leg fades for 1.5 s and arrives 1.5 km out at 150 m, facing
+  the zone, flying toward it at 20 m/s, the car still on the cable and the
+  autopilot still on if it was. Departures and arrivals face the way of a
+  small map (Tremblant Snow is just north of the Woods, Panorama Ridge to
+  the north-west).
+- The pump is at the home pad only, on the ground. Buying with no amount
+  fills the tank, so the free first tank is always a full one.
+- A crash charges its repair and returns you to the home pad 3 s later,
+  with the fuel you had; a car on the cable goes back to where it was last
+  set down. An empty tank on the ground calls the fuel truck (300 plus the
+  fuel, taking what you have and forgiving the rest), anywhere except the
+  home pad while the pump can still sell a 60 kg reserve (90 credits).
+  Nobody is ever stranded.
+- A car is delivered when it is let go (H) inside a landing zone; the save
+  then remembers it there.
+- Every circle in this packet is measured from its centre: the landing
+  circle reaches 12 m out, lesson 2's hover circle 4 m and lesson 4's
+  crate circle 10 m. Generous on purpose for a keyboard pilot.
+- Save rule for later sprints: before H2 adds any key to `heli`,
+  `normalizeHeli` must keep unknown keys, so a one-release rollback loses
+  nothing; heli save fixtures are written in `createHeli()` order (the
+  save review, 14 October).
+
 ## 7. Lessons and the radio
 
 The instructor (stock voice **Brian**, deep and calm) speaks over the radio.

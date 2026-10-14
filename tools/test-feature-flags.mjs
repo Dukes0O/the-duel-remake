@@ -20,7 +20,7 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 25 + CIRCUIT_MANIFESTS.length
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 26 + CIRCUIT_MANIFESTS.length
     && ['snow-world', 'the-deep', 'grand-prix-career', 'yeti', 'rival-voices'].every(name => FEATURE_STATES[name] === 'dev')
     && ['lap-choice', 'snowmen'].every(name => FEATURE_STATES[name] === 'on')
     && FEATURE_STATES['grand-prix'] === 'on'

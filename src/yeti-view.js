@@ -83,14 +83,15 @@ export function createYetiView(assets){
         actor.group.position.set(point.x,point.y,point.z);actor.group.rotation.y=point.heading;
         if(actor.clip!==phase[0]){actor.mixer.stopAllAction();actor.mixer.clipAction(actor.clips.find(clip=>clip.name===phase[0])).play();actor.clip=phase[0];}
         actor.mixer.setTime(age-phase[1]);actor.group.updateMatrixWorld(true);
-        let lift=-Infinity;
+        // Seat to the lower contact: the other foot can sink into deep snow.
+        let lift=Infinity;
         for(const data of actor.feet){
           data.mesh.skeleton.bones[data.joint].getWorldPosition(foot);
           const near=course.nearest(foot.x,foot.z,yeti.site.s),ground=course.groundAt(near.s,near.lateral);
           const height=renderedGroundHeight(course,{x:foot.x,z:foot.z,y:ground.y},{requireSurface:true});
           if(!Number.isFinite(height))throw Error('Yeti foot has no actual rendered ground.');
           let low=Infinity;for(const index of data.indices){data.mesh.getVertexPosition(index,vertex).applyMatrix4(data.mesh.matrixWorld);low=Math.min(low,vertex.y);}
-          lift=Math.max(lift,height-low);
+          lift=Math.min(lift,height-low);
         }
         actor.group.position.y+=lift;actor.group.updateMatrixWorld(true);
       }
