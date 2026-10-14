@@ -108,3 +108,8 @@ Round2 uses the same existing memory-only/private audio-vehicles scenario, with 
 ## Core lock parked for Kyle's camera priority
 
 Useful source preparation72ca2f33 is clean, four owned files only, UNTESTED/unreviewed. No gate/build/native ran. Stop all audio edits/jobs now and release busy-game-files to the actual Camera correction; sound-bank remains held. Resume audio review/checks after Camera releases core. No mix/acceptance claim.
+
+
+## Core returns after the green camera correction
+
+Camera c8c4a52e is green in its actual complete native sweep and merged; reacquire busy-game-files with sound-bank. Parked72ca2f33 production own-speed source fits its grant, but Root source review found one real tools off-leg fault: disabled voices never allocate vehicleVoices, so cleanup must read optional size ??0. Correct only that receipt read, preserve enabled guards/defaults, then Root confirms review before focused tests/native on-off/original nearby/build. No listening pass or release is inferred.
