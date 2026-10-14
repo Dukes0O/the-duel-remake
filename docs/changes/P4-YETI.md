@@ -89,3 +89,11 @@ nonempty audio; empty recordings never enter the loudness analyzer. Cleanup
 and audio-processing errors mark the packet incomplete while preserving
 the original failure reason and recorded facts before final persistence.
 These are observer corrections only; native execution remains UNRUN.
+
+Read-only GLB review found another real observer fault: several accepted
+skinned primitives have the foot bones but no foot-weighted vertices. The
+observer now follows production makeActor and skips only empty >.25 foot
+influence sets, recording each actual weighted-vertex count. Both FootL
+and FootR still need actual witnesses, rendered terrain and finite gaps.
+No model, grounding rule or production view changes; no native run or
+check is claimed for this source correction.

@@ -126,11 +126,12 @@ export async function run(context) {
             const ground=app.duel.course.groundAt(nearest.s,nearest.lateral);
             const height=qa.renderedGroundHeight(app.duel.course,{x:bonePoint.x,z:bonePoint.z,y:ground.y},{requireSurface:true});
             const weights=mesh.geometry.attributes.skinWeight,indices=mesh.geometry.attributes.skinIndex;
-            let low=Infinity;
+            let low=Infinity,weightedVertices=0;
             for(let i=0;i<weights.count;i++)for(let part=0;part<4;part++)if(indices.getComponent(i,part)===joint&&weights.getComponent(i,part)>.25){
-              mesh.getVertexPosition(i,vertex).applyMatrix4(mesh.matrixWorld);low=Math.min(low,vertex.y);break;
+              weightedVertices++;mesh.getVertexPosition(i,vertex).applyMatrix4(mesh.matrixWorld);low=Math.min(low,vertex.y);break;
             }
-            feet.push({name,bone:bonePoint.toArray(),lowestSkinnedVertex:low,renderedGround:height,gap:low-height});
+            if(!weightedVertices)continue;
+            feet.push({name,weightedVertices,bone:bonePoint.toArray(),lowestSkinnedVertex:low,renderedGround:height,gap:low-height});
           }
         });
         const bounds=new qa.THREE.Box3().setFromObject(actor,true),centre=bounds.getCenter(new qa.THREE.Vector3());
