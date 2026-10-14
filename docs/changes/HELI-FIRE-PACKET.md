@@ -14,10 +14,11 @@ sprint, H2 Fire, and its board cards. Design only: no game code.
   firefighter badge; 400 for a smoke check), the burnt course (closed 10 play
   days, buyback 10,000 dropping 1,000 a play day, menu, races and career,
   regrowth stages, scars), voices (Sarah, Roger), sound cues, save fields,
-  files, locks, hooks, tests and three Codex art cards.
+  files, locks, hooks, tests and three art cards.
 - Twelve cards in `docs/board/cards/FIRE-*.md` and their board entries.
-  Claude's build cards wait for HELI-FINISH; FIRE-ART-BUCKET, FIRE-ART-FX
-  and FIRE-ART-BURNT can start now.
+  Claude's build cards wait for HELI-FINISH. The art starts now:
+  HELI-FIRE-BUCKET and FIRE-BURNT-LOOK (Claude Blender recipes, at the main
+  design session's request) and FIRE-ART-FX (Codex).
 - `docs/HELICOPTER.md` section 12: one line pointing at the new packet.
 - Two short questions for Kyle in the packet's section 17 (the smoke check,
   and Tremblant Woods as the only burnable course in H2), each with a

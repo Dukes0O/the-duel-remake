@@ -521,7 +521,7 @@ tasks:
     lane: "UI"
     size: "M"
     status: "backlog"
-    needs: [FIRE-HOOKS, FIRE-ART-BUCKET, FIRE-ART-FX, FIRE-ART-BURNT]
+    needs: [FIRE-HOOKS, HELI-FIRE-BUCKET, FIRE-ART-FX, FIRE-BURNT-LOOK]
     locks: []
     flag: "forestFire"
     details: "docs/board/cards/FIRE-VIEW.md"
@@ -537,16 +537,17 @@ tasks:
     flag: "forestFire"
     details: "docs/board/cards/FIRE-FINISH.md"
 
-  - id: FIRE-ART-BUCKET
-    title: "Make the firefighting water bucket"
-    owner: "codex"
+  - id: HELI-FIRE-BUCKET
+    title: "Make the firefighting water bucket (Blender recipe)"
+    owner: "claude"
     lane: "ART"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-heli-design-2026-10-14"
     needs: []
     locks: []
     flag: "forestFire"
-    details: "docs/board/cards/FIRE-ART-BUCKET.md"
+    details: "docs/board/cards/HELI-FIRE-BUCKET.md"
 
   - id: FIRE-ART-FX
     title: "Fire, smoke, steam and spray atlas from the Kenney particle pack"
@@ -559,16 +560,17 @@ tasks:
     flag: "forestFire"
     details: "docs/board/cards/FIRE-ART-FX.md"
 
-  - id: FIRE-ART-BURNT
+  - id: FIRE-BURNT-LOOK
     title: "Tremblant Woods after the fire: charred trees, ash, shoots, fireweed"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-heli-design-2026-10-14"
     needs: []
     locks: []
     flag: "forestFire"
-    details: "docs/board/cards/FIRE-ART-BURNT.md"
+    details: "docs/board/cards/FIRE-BURNT-LOOK.md"
 
   - id: WILD-ART-SRC
     title: "Source local animals for every course (North woods first)"

@@ -7,7 +7,8 @@ same flying, cable, fuel, crashes, radio filter, save field and hooks. Read
 that packet first; this one only adds to it. Design only: no game code.
 
 Who builds: Claude owns the Flying line, design and build (Kyle, 14 October
-2026). Codex makes the three art cards in section 14, which can start now.
+2026). The art in section 14 can start now: the bucket and the burnt look
+are Claude's Blender recipes, the fire and smoke atlas is Codex's.
 Every Claude build card waits for HELI-FINISH, so H2 never edits a file the
 H1 finishing pass is still changing.
 
@@ -370,7 +371,7 @@ scar.
 
 ### 8.6 Art cost
 
-Tremblant Woods' burnt look is one set (FIRE-ART-BURNT): charred versions of
+Tremblant Woods' burnt look is one set (FIRE-BURNT-LOOK): charred versions of
 the tree models it uses, three ground looks (ash, shoots, green) and one
 fireweed clump. The same set draws scars. A second burnable course costs one
 more set; question 2.
@@ -522,25 +523,30 @@ bucket: {damage: 0 | 1 | 2 | 3}
 - **What stays exact:** race replays, world signatures (measured with no
   burn), combat balance, other courses, and every H1 test.
 
-## 14. Art cards for Codex (can start now)
+## 14. Art cards (can start now)
 
-All three follow SPEC 0.11: CC0 first, then CC-BY with credit, at most three
-rounds, one comparison sheet per round (JPG, 500 KB at most) under
-`docs/board/looks/heli-fire/`, judged by Claude. Gritty and real, never
-toy-like. Blender files are rebuilt from scripts in `tools/blender/`.
+Two are Claude's, built as Blender recipes by the main design session (14
+October 2026); the fire and smoke atlas is Codex's. All three follow SPEC
+0.11: CC0 first, then CC-BY with credit, at most three rounds, one comparison
+sheet per round (JPG, 500 KB at most) under `docs/board/looks/heli-fire/`,
+judged by Claude. Gritty and real, never toy-like. Blender files are rebuilt
+from scripts in `tools/blender/` and never committed.
 
-**FIRE-ART-BUCKET: the water bucket.** `public/assets/heli/fire-bucket.glb`.
-A collapsible firefighting bucket like a real helicopter bucket: orange-red
-fabric body with a steel rim, a valve at the bottom, four rigging lines up to
-a top ring. Metres, +Y up, origin at the top ring where the cable hook meets
-it (like `cargo-hook.glb`). About 1.1 m across, body 1.3 m tall, rigging 2.5
-m. Nodes, named exactly: `bucket`, `rigging`, `valve`, `water` (a disc at the
-water surface that the game moves by fill), and `bucket_dented` (the same
-body, crumpled, hidden by default). At most 3,000 triangles, 1K textures,
-PBR. Original from a Blender recipe of simple shapes, like the H1
-accessories; no donor needed.
+**HELI-FIRE-BUCKET (Claude): the water bucket.** Recipe
+`tools/blender/fire-bucket.py`, output `public/assets/heli/fire-bucket.glb`.
+A collapsible firefighting bucket like a real helicopter bucket: orange and
+black fabric body with a steel rim, a release valve at the bottom, four
+rigging lines up to a top ring. Metres, +Y up, origin at the top ring where
+the cable hook meets it (like `cargo-hook.glb`). About 1.1 m across, body
+1.3 m tall, rigging 2.5 m; the H1 cable stays 15 m and is drawn in code.
+Nodes, named exactly: `bucket`, `rigging`, `valve`, `water` (a disc at the
+water surface; the full state shows it at the rim, the empty state hides it,
+and the game moves it by fill in between), and `bucket_dented` (the same body
+crumpled, hidden by default, shown for the dented, torn and ruined states).
+At most 3,000 triangles, 1K textures, PBR. Original from simple shapes, like
+the H1 accessories; no donor needed.
 
-**FIRE-ART-FX: fire, smoke and water.** One atlas
+**FIRE-ART-FX (Codex): fire, smoke and water.** One atlas
 `public/assets/heli/fire-fx.png` (1024 square, alpha) and its frame table
 `fire-fx.json`, built by a recipe from the Kenney particle pack (CC0,
 already in `C:/Users/kyleb/dev/art-library/kenney-particle-pack`: `fire_*`,
@@ -550,31 +556,31 @@ ember 1, ground scorch 3. The comparison sheet shows the atlas over a still
 of Tremblant Woods from 150 m, with a smoke column, a burning edge and a
 water drop.
 
-**FIRE-ART-BURNT: Tremblant Woods after the fire.** Under
-`public/assets/burnt/tremblant-woods/`:
+**FIRE-BURNT-LOOK (Claude): Tremblant Woods after the fire.** Recipes in
+`tools/blender/`, output under `public/assets/burnt/tremblant-woods/`:
 
 - A charred version of each tree model Tremblant Woods places (its scenery
-  and track kits): black trunks and limbs, no leaves, a few brown needles on
-  the conifers. Same origin, scale and node names as the original, so the
-  game swaps one for the other.
-- Three ground looks for the forest floor: grey ash, ash with green shoots,
-  green with ash patches. Textures at most 1K, tiling.
+  and track kits): black trunks and limbs, no needles or leaves. Same origin,
+  scale and node names as the original, so the game swaps one for the other.
+- A ground look for the forest floor per stage in section 8.4: black with
+  grey ash (closed and black), ash with green shoots (shoots), green with ash
+  patches (fireweed). Textures at most 1K, tiling; a tint on the course's own
+  ground is fine if it reads right from the road and from the air.
 - One fireweed clump (pink flower spikes on green stems), at most 300
   triangles, for instancing.
 - Look target: real Laurentian forest after a fire: black poles over grey
-  ash, then green, then fireweed pink. Sources: the Quaternius Ultimate
-  Nature pack (CC0) in the art library first (it has dead trees in its full
-  release), then recipe charring of the course's own trees.
+  ash, then green, then fireweed pink. The Quaternius Ultimate Nature pack
+  (CC0) has dead trees if charring the course's own trees falls short.
 - The sheet shows the four stages (closed, black, shoots, fireweed) from the
-  Lakeshore straight and from 150 m.
+  Lakeshore straight and from 150 m. Scars (section 8.5) reuse the same set.
 
 ## 15. Cards and order
 
 ```mermaid
 flowchart LR
-  P[C: HELI-FIRE-PACKET] --> AB[X: FIRE-ART-BUCKET]
+  P[C: HELI-FIRE-PACKET] --> AB[C: HELI-FIRE-BUCKET]
   P --> AF[X: FIRE-ART-FX]
-  P --> AR[X: FIRE-ART-BURNT]
+  P --> AR[C: FIRE-BURNT-LOOK]
   HF[C: HELI-FINISH] --> SV[C: FIRE-SAVE]
   HF --> BK[C: FIRE-BUCKET]
   HF --> RD[C: FIRE-RADIO]
@@ -586,7 +592,7 @@ flowchart LR
   VW --> FN[C: FIRE-FINISH]
 ```
 
-The three art cards start now. When HELI-FINISH merges, FIRE-SAVE,
+The three art cards start now (two Claude, one Codex). When HELI-FINISH merges, FIRE-SAVE,
 FIRE-BUCKET and FIRE-RADIO start at once; FIRE-MISSIONS, FIRE-SPREAD and
 FIRE-CLOSE follow FIRE-SAVE together (different files). Until the art
 passes, FIRE-VIEW may draw plain stand-ins in dev builds only.
