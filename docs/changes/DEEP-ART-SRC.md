@@ -1,0 +1,218 @@
+# DEEP-ART-SRC
+
+## Design and source
+
+Claude's 12 October 21:40 card verdict is adopted. Sixteen models fit fifteen
+existing licensed donor GLBs; only the expressly approved moray and scalloped
+giant clam are scripted original geometry. The grouper refits the CC BY 3.0
+reef-fish donor. Optional authenticated scan downloads are no longer blockers.
+Metric poses, muted paints, requested clips, cargo removal, actual open hold,
+breaches, broken rails, rust and algae follow the card. All non-Deep catalog
+rows/credits and runtime scene files stay unchanged. No account work,
+runtime dependencies, renderer installation or new test machinery.
+
+Round-one source `20abd6f7` and its review remain in Git. Origin was pulled,
+then newer local integration merged cleanly (`19b082d8`), preserving that
+source. Director grants own both Blender recipes and the bounded native
+`tools/scenarios/deep-art.mjs` photography hook. The card remains open for
+Claude; no release, push, live port or real-save access.
+
+## Delivered round two
+
+Eighteen actual fitted GLBs: **2,471,924 bytes**,
+**47,080 triangles**; maximum file 596,768 bytes. Runtime
+manifest records all exact IDs, metric bounds, triangle/clip counts and hashes.
+Manta/whale source Swim clips survive; turtle/sea-lion/otter/crab/jellyfish
+motion is exported. Source checks passed for all18: glTF 2 header/length,
+hashes, internal resources, finite floats, buffer/index ranges and metric
+bounds. Non-Deep catalog normalized hash remains
+`bb28af43422d33bfc606c072a8f7112829b7bd4b1972da517641ca298183ebce`.
+
+Formal sheet: `docs/board/looks/deep-art/round-2.jpg`, **474,333 bytes**,
+SHA-256 `80ff9e27367352f551308d527e7b25886504e4916c4fcd1f00e23f6946ce1cbe`. Details and the consumed round-one verdict are in
+`round-2-review.md` beside it. This is the actual existing High look-test
+water, original shaders/lights/exposure, **true model scale**; the discarded
+Blender water approximation is not submitted. Nineteen raw JPGs include
+one near wreck-breach/hold inset. Native existing harness: private22163,
+headless, memory-only, passed, zero errors, one recorded duplicate-Three
+import warning. Exact browser GLB hashes match delivered files; camera,
+pose, clip, pipeline and unchanged-light receipts are retained.
+This is photography only, not gameplay browser or frame acceptance.
+
+## Faults kept and fixed
+
+Stopped the per-face texture-copy loop; cache now copies each texture once.
+Replaced stale source bounds with actual evaluated geometry. Painted newly
+cut faces and isolated shared paint materials. The first vessel solid cut
+made an outward block; normal repair still failed the unchanged no-growth
+check. Final donor-surface trimming makes real open apertures and passes;
+the native close-up proves the hold/breach. Each problem stayed inside the
+30-minute cap. No original assertion/tolerance/signature/fingerprint changed.
+
+## Frozen verification and review
+
+One original nearby lane `--changed --jobs 4`, build and ordinary source
+review follow frozen source. Exact hash/results are supplied to Root and
+folded into this note after they exist; none is claimed early. Claude's
+formal round-two verdict remains pending. Do not close the card yet.
+
+Evidence: `.evidence/2026-10-12/DEEP-ART-SRC/round-2-native/` contains
+`report.json`, `deep-art-native.json`, source inspection, actual JPGs and
+pinned gate/build evidence. Every source/author/license/hash/change is in
+the existing catalog and credits. Both recipes rebuild the assets/sheet.
+
+## Removed
+
+Recycle the consumed round-one sheet/review note after folding its decision
+here, discarded Blender water trial views/Blend backups, source scratch and
+generated build copies. Preserve selected original licensed caches, existing
+Kenney, the current eighteen runtime GLBs, final round-two sheet and needed
+native review receipts. Root consumes final raw evidence after Claude's
+verdict; Root owns integration metadata, merge and lane cleanup.
+
+## Deferred
+
+No frame timing, balance, gameplay browser, full tier, release, push or
+real-save pass. Runtime sea-life scene/behaviour/placement and performance
+belong to DEEP-LIFE and FINISH-DEEP. Maximum three art rounds stays exact;
+formal verdict pending, no fourth round or placeholder.
+
+
+## Actual frozen-source gate/build result
+
+Frozen `1fb800b11bb703631a301c3f684527a315a152ea`: original unfiltered lane
+`--tier lane --changed --jobs 4 --json` **failed**, exit1: 8 passed, 1 failed,
+20 not run, total29, 63,993.9002 ms (shell68.337 s). Failure is
+`tools/test-blender-output.mjs`: its unchanged all-generators-covered
+assertion correctly finds the two new Deep recipes missing from registration.
+The suite itself ran44 checks with1 failure. This is a real missing pipeline
+integration, not an unreliable rerun, visual verdict or passing lane.
+No old assertion or test was weakened, skipped, filtered or changed.
+
+Build on the same unchanged clean source passed, exit0, Vite793 ms,
+361 modules; the existing large-chunk warning remains. Exact full lane JSON,
+invocation and build logs are pinned in the native evidence folder.
+
+Root granted the exact registration hook before correction. The guard now
+registers all18 Deep GLBs and their manifest, checks the18 exact Blend paths
+in the explicitly requested ignored evidence leaf across both existing fixture
+roots, and adds the pure sheet planner. Every old generator, output and
+negative assertion retains its behavior; the complete coverage guard remains.
+Both recipe early exits use only standard-library Python, before Blender/PIL
+imports and donor, manifest or capture reads/writes. The normal fitting and
+composition bodies remain exact; no model or photograph changed.
+
+The actual water capture remains on1fb800b1. This CLI-only correction does
+not rerun assets or native capture. One fresh original lane/build will run
+on the corrected frozen source; receipts stay ignored. Ordinary code review
+and Claude's formal round-two art verdict are still required.
+
+
+## Exact photography source-access correction
+
+The original unfiltered lane on `da1de4b40b799e163ef5af34ba0e0ca211fd0445`
+failed, exit 1: 12 passed, 1 failed, 16 not run, total 29, 84,940.5947 ms.
+The Blender placement fix passed all 48 checks. The remaining failure was
+`tools/test-deep-look.mjs`: the photography helper's literal floor-shape
+source access lacked an entry in the isolation contract. The build on that
+same clean source passed, Vite 839 ms, 361 modules. Both complete failed
+gate receipts and build invocations remain in the native evidence folder.
+
+The Director granted this exact test hook before correction. The guard
+recognizes only `tools/scenarios/deep-art.mjs` and only its literal
+`source('src/deep/sea-floor-shape.js')` expression. Every other importer,
+Deep path, approved import pair and final isolation assertion is unchanged.
+This is the required photography access to the existing floor-height
+function. No recipe, runtime model or image changed. The actual water
+capture and sheet remain byte-identical on 1fb800b1.
+
+Freeze this correction before one original nearby lane with `--jobs 4`
+and `--keep-going`, then a build. Keep final results in ignored receipts
+for the Director to fold into integration. Ordinary source review and
+Claude's formal round-two art verdict remain pending; no merge clearance.
+
+## Reviewed additive catalogue checksum correction
+
+The original complete lane on db88ccf6fcde077f5b0f6aaa4e3bed73def99371
+failed, exit 1: 27 passed, 2 failed, 0 not run, total 29, 230,051.8802 ms.
+The two failures were test-p4-kits and test-tanker-valve-source catalogue
+projections. Both Deep guard corrections passed. Build passed on the same
+clean source, Vite 689 ms, 361 modules. Full receipts remain ignored.
+
+Read-only proof against initial lane base 874bc0e3 and Root's integration
+comparison: every original 37 catalogue rows is exactly equal, in original
+order; only the 18 approved DEEP-ART-SRC rows were appended (55 total).
+Without those additions, both old projection hashes match exactly. Root
+reviewed that proof and granted only these two expected literal updates:
+
+- P4-KITS: 638e0675be0d488bfb8ae24b6ac5b8bc7ebeacd45580b574c0d7af7c63b6c1c2
+  becomes 8455623df877f5485d97197bfa780f4ccd2f105513fed9f8c0e40bf4944134dc.
+- Tanker non-Factory: 6407c90d9574b7ab95974ec16229f87ad0696e9cb3d0058a9c70f2edb44bd5f7
+  becomes 7cb026655ca6168d71d8bfd89c19ec954a464456b079fd0040cba1fa89bd1c20.
+
+Every projection filter, assertion, asset/provenance pin and negative check
+remains unchanged. The approved new Deep rows are included in the pinned
+projections; no exclusion or tolerance change was applied. The original
+source review is CLEAR on db88ccf6; the same reviewer must confirm this
+exact two-literal delta. Freeze before one fresh original nearby lane/build.
+Models, recipes and the actual-water sheet are unchanged; no capture repeat.
+Claude's formal round-two verdict remains required before integration.
+
+
+## Final round-three correction
+
+Claude accepted fifteen roles on 13 October at 08:40 and requested only otter, grouper and giant clam corrections. Their final counts are 1,324 / 823 / 3,000 triangles and 171,332 / 39,096 / 92,800 bytes. The clam is below the 4,000-triangle / 150,000-byte limits. Eighteen GLBs now total 1,936,104 bytes and 25,793 triangles. All fifteen accepted GLBs and provenance rows remain byte/content exact; the original thirty-seven catalogue rows remain exact in order. Only three runtimeFiles/fitting/verdict rows change. Donor source hashes and credits remain exact.
+
+The existing fit recipe flattens the otter donor's arch into horizontal cross-sections, rolls its belly up, preserves its pale head and adds paired chest paws. The grouper loses its rejected torus and gains a wide down-turned inset. Clam tessellation decreases while the scallops and mantle remain, with sandy-grey shell and blue-green lip. Existing photography selects only these three; the Director granted surface placement/below-face otter and front grouper camera corrections. Original water/light/shader/pipeline settings remain exact. The optional existing composer --round 3 writes only the final three-role sheet; default/paths-only round-two behavior remains exact.
+
+Final actual-water capture: private54607, memory-only, three photos, zero errors/issues, one duplicate-Three.js warning retained honestly. Sheet round-3.jpg:123189B,1800x540,SHA25686be5cacd87b0df605ebc333011822345da96c0c14f5bdc1bf1af1dd9c3806df. Claude alone judges this final round3 of3; the angular otter source is presented honestly. Formal final art, canonical nearby/build and ordinary source review remain pending; no frame/gameplay acceptance claimed.
+
+Removed: grouper mouth torus, excessive clam tessellation and prior standing otter arch. Earlier verdicts are folded into round-3-review.md; prior sheets/evidence made by other owners remain for Root's authorized cleanup. Own draft photo output and duplicate Blender backups will be recycled; current final photos remain for the art verdict.
+
+
+Director independently recomputed and granted the exact final catalogue pins: P48455623df877f5485d97197bfa780f4ccd2f105513fed9f8c0e40bf4944134dc becomes91fcc5b3740744c6a6e9e543fba9ce62a3dd21322a8e4e0ca5e5692de4d2aec6; Tanker7cb026655ca6168d71d8bfd89c19ec954a464456b079fd0040cba1fa89bd1c20 becomes530d258c3980ff47d7dd6746a44218e85974cc0e182f37331563fa2b247d81f2. Only those literal expectations change; the filters and every assertion remain exact. No exclusions or tolerance changes. Photography selects three roles only with DUEL_DEEP_ART_ROUND=3; default still photographs all eighteen.
+
+## Kyle working-art correction, 13 October evening
+
+Director grant 25f445e6 precedes this correction. Kyle supersedes every
+finished-art verdict: the seventeen retained models are working art only
+behind `the-deep` dev. The Deep cannot go live with them. The card stops at
+the three-round cap; DEEP-ART-FINAL follows the storyboard with Gratian.
+
+The held otter is removed from the runtime manifest, catalogue, active fit
+roles and photography selection. The exact Deep path-plan expectation
+changes from eighteen exports to seventeen; all other outputs and assertions
+remain unchanged. Remaining model bytes, source licenses, hashes, dimensions
+and clips are preserved, as are the thirty-seven original catalogue rows.
+No new model, art round, render, runtime-life hook or switch activation is
+added. The historical final sheet is unchanged and its note records the hold.
+
+Root independently verified the actual projections and equality proof,
+then granted only the two expected literals in 9cad7ac5. The P4 projection
+changes from 91fcc5b3740744c6a6e9e543fba9ce62a3dd21322a8e4e0ca5e5692de4d2aec6
+to c781ab75e8f6734b7d943190329fa7aba823525f4a4b900960e439db6cc83c29.
+The Tanker projection changes from
+530d258c3980ff47d7dd6746a44218e85974cc0e182f37331563fa2b247d81f2
+to 262e8fe0468cd62ab295420ab10f153455c61957c5bc786dc936f09e8311ba75.
+Every filter, assertion and other pin is unchanged. Original ordered
+non-Deep row JSON SHA256 remains
+10eb2917f2589d8ffbb8a450eb976f529a5f9de394df6e8f91242598998cf12f.
+All seventeen model bytes and model descriptors equal b6c1fdac; the original
+fifteen model bytes also equal e5dca26f. The retained models total
+1,764,772 bytes and 24,469 triangles. These are source facts, not art
+acceptance. Gates, builds and source union wait for the release hold to clear.
+
+### Removed
+
+Only `public/assets/models/deep/otter.glb` is sent to the Recycle Bin, with
+its manifest and catalogue rows removed in the same change. Its licensed
+external donor is untouched. The old otter export is no longer regenerated
+by the active recipe. Its isolated target size, palette, pose and morph
+branches are removed; every other creature fitting path is unchanged.
+No retained model or historical sheet is deleted.
+
+## Working-art source integration — 14 October
+
+The retained current unionac5a6dc6 passed one original unfiltered nearby31/31, failures/unrun0, jobs4,185201.6916ms aggregate; one build passed,Vite669ms. Same independently verified working-art source review CLEAR applies: all17 retained GLB bytes/manifest source descriptors remain exactb6c1fdac,37 ordered legacy catalogue rows/projection filters are preserved, and only the three explicitly granted identity pins change. The whole source adds17 working runtime models/recipes/credits, not merely the11-file correction. Otter runtime file/catalogue/export role is absent; external licensed donor cache and held provenance remain.
+
+Kyle's working-art decision governs: NONE of these models is accepted finished art, the-deep stays dev, and this card closes at the three-round cap. The final sheet is unchanged; no new art round, pose render, frame run, creature-life/story work or release occurs. DEEP-ART-FINAL waits for Kyle's storyboard and better sources. Conflict-free integration merge gets no repeated gate. The older retained lane/branch and needed final review source remain, because Root did not create that folder in this run.

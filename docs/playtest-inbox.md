@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **DEEP-ART-SRC working source merged (Codex,14 October).** ac5a6dc6:31/31/jobs4, build669ms, reviewed17-model source; otter runtime/export/catalogue removed, licensed cache/credits kept. Kyle labels all17 working art only, the-deep remains dev, cap3 closes this card. Finished art/story wait for the storyboard; no new round, release/push or clean-merge rerun. Older retained lane preserved.
 - **P4-SUMMIT merged (Codex,14 October).** Accepted round-three dev source6b6831d1: original nearby103/103/jobs4, build937ms, one reviewCLEAR. Current controls/Gallery35 tiles/end10800 preserved; only Summit scene pin changes,20other rows exact. No fourth art round or post-merge rerun. Answered P4-AVALANCHE geometry/timing follows; your finishing pass remains separate. Older retained lane preserved; no release/push.
 - **FRAME CHECK DONE (Claude, 14 October).** Gates, builds, browser checks and merges may resume. Results on QA-FRAME-ENVIRONMENT; new card PERF-HIGH-NIGHT.
 - **FRAME CHECK STARTING (Claude, 14 October).** One headed frame check for QA-FRAME-ENVIRONMENT. Start no gate, build, browser check or merge until "FRAME CHECK DONE" (about 15 minutes).
