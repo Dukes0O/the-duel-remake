@@ -1111,3 +1111,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 14 October: HELI-HOOKS merged (HELIPAD menu entry, held 'heli' status in game.js, app and renderer hooks, stand-in helicopter for dev, helicopter cues in the sound bank, Race here, air-only Jesko; three sound pins leave out exactly the helicopter cues); lane 270/271 jobs4 1029.56 s, the one failure was Git Bash tar (test-drive-through rerun from PowerShell passed); build passed; browser heli-first-flight 0 errors; review found 5 faults, fixed and confirmed; busy-game-files and sound-bank released; lane deleted.
 
 - 14 October merge P4-CAREER d37cfa3c: original194/194/jobs4/build897ms, actual181access+5coursefixture+10historicalsave shapes/321checks; ordinary/freshsave reviewsCLEAR. Future free derived podium variants, no save/pay/base change; clean merge no rerun, dev/no release/push.
+
+- 14 October merge QA admission02b26308: original19/19/jobs4/build1.14s/review; actualHarbour8+telemetry2High/Performance pictures/private-memory/errorswarnings0, strictHUD/actualdurabletelemetry guards pass, timingnot-run. Cleanmerge/no rerun; parentopen, no fullsweep/release/push.

@@ -162,3 +162,8 @@ Grant Harbour only the same explicit tool-only DUEL_BROWSER_LEGACY_TIMING=1 spli
 ## Actual Harbour admission checked — 14 October
 
 Reviewed f6dcd2be/current clean02b26308 original19/19/notRun0/jobs4/duration258045.3187ms/wall274570.8864/build1.14s/wall2048.9349ms. Actual original Harbour native42172/memory passed in124480.0285ms,8High/Performance images/errorswarnings0. Stable-course/start/GP/field admission and unchanged five-red-light sampled guard/eightcars/eightHUDrows/fourlaps/zero traffic pass. BothHUDsamples show LAP1/4 and /08; global and all4timingentries explicitlynot-run. Root reviewed actual Highstart/PerformanceHUDpixels: start screenshot has already advanced to GO after sampled lights, Performance25s image shows car atwall/2kmh. These are viewport/admission receipts, not complete field/handling/race-finish or quietframe acceptance; no extra guard is invented or waived. Telemetry remains UNRUN awaitingcapacity. Currentsource/pins/memory/providers/defaults unchanged; nofull23-failure resolution claim. Questions concerning released driving stayClaude's; this narrowtools correction remainsindependent.
+
+
+## Admission slice merged — 14 October
+
+Clean02b26308 source original19/19/jobs4/build1.14s, RootreviewCLEAR, actualHarbour+telemetry High/Performance/private/memory/errorswarnings0 passed unchanged guards. Telemetry2native laps/54270ms/221samples/writer1/nativeDbOpens0 pernamedplayer, exactsavebytes/realpurchase/readOnlyUI verified; Rootpictureinspection complete. Mergeconflictfree/no rerun. Parentready for remaining runtime/audio cases; nofullsweep/frame claim. Ownlane/consumedreceipts clearbefore its nextslice.
