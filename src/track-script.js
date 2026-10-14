@@ -450,6 +450,26 @@ function construct(def) {
       ease: piece.ease, width: piece.width, boards: piece.boards, walls: piece.walls, surface: piece.surface, climb: piece.climb, crest: piece.crest, bank: piece.bank, kerbs: piece.kerbs });
   });
 
+  // Optional local clear-ground bands leave the fitted road unchanged. Copy
+  // and validate authored input once so later queries cannot read mutable data.
+  const authoredRunoff = def.runoffBands;
+  if (authoredRunoff !== undefined && !Array.isArray(authoredRunoff))
+    throw new TrackScriptError(`Track script "${id}" runoff bands must be an array.`);
+  const runoffBands = Object.freeze(Array.from(authoredRunoff ?? [], (band, index) => {
+    const keys = ['s0', 's1', 'side', 'width', 'taper'];
+    if (!band || typeof band !== 'object' || Array.isArray(band) ||
+        Object.keys(band).some(key => !keys.includes(key)) ||
+        ![band.s0, band.s1, band.width, band.taper].every(Number.isFinite) ||
+        ![-1, 1].includes(band.side) || band.s0 < 0 || band.s1 > length || band.s1 <= band.s0 ||
+        band.width <= 0 || band.taper < 0 || band.taper > (band.s1 - band.s0) / 2)
+      throw new TrackScriptError(`Track script "${id}" runoff band ${index + 1} has invalid bounds or side.`);
+    return Object.freeze({s0: band.s0, s1: band.s1, side: band.side, width: band.width, taper: band.taper});
+  }));
+  for (let i = 0; i < runoffBands.length; i++) for (let j = 0; j < i; j++) {
+    const a = runoffBands[i], b = runoffBands[j];
+    if (a.side === b.side && a.s0 < b.s1 && a.s1 > b.s0)
+      throw new TrackScriptError(`Track script "${id}" runoff bands on the same side must not overlap.`);
+  }
   const phase = s => (closed ? ((s % length) + length) % length : clamp(s, 0, length));
   const tableIndex = p => Math.min(count - 1, Math.floor(p / step));
   const pieceAt = s => {
@@ -459,6 +479,7 @@ function construct(def) {
   const geometry = {
     id, closed, reverse: def.reverse === true, length, step, count, startAt, samples, pieces: coursePieces,
     report: finishReport(report, samples, slope, coursePieces),
+    ...(runoffBands.length ? {runoffBands} : {}),
     halfWidthAt(s) { const p = phase(s), i = tableIndex(p); return lerp(halfWidth[i], halfWidth[i + 1], (p - i * step) / step); },
     heightAt(s) {
       const p = phase(s), i = tableIndex(p), u = (p - i * step) / step, u2 = u * u, u3 = u2 * u;
@@ -478,7 +499,16 @@ function construct(def) {
     surfaceAt(s) { return pieceAt(s).surface; },
     // Side: +1 left, -1 right. Metres of clear ground beyond the road edge.
     wallSide(s, side) { const walls = pieceAt(s).walls; return walls === 'both' || walls === (side > 0 ? 'left' : 'right'); },
-    runoffAt(s, side) { return this.wallSide(s, side) ? 0 : (def.scriptDefaults?.runoff ?? TRACK_SCRIPT.runoff); },
+    runoffWidthAt(s, side, legacyWidth = def.scriptDefaults?.runoff ?? TRACK_SCRIPT.runoff) {
+      const p = phase(s);
+      for (const band of runoffBands) {
+        if (side !== band.side || p < band.s0 || p > band.s1) continue;
+        const weight = band.taper === 0 ? 1 : smooth(Math.min((p - band.s0) / band.taper, (band.s1 - p) / band.taper));
+        return lerp(legacyWidth, band.width, weight);
+      }
+      return legacyWidth;
+    },
+    runoffAt(s, side) { return this.wallSide(s, side) ? 0 : this.runoffWidthAt(s, side); },
     phase,
   };
   geometry.walls = wallSpans(geometry);

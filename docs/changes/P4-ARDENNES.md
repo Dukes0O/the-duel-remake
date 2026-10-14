@@ -65,3 +65,16 @@ Root confirmed the footprint source at 06e55c68. The lane then merged current in
 Under grant 727a55e8, the existing native recipe records the exact original field predicate and failure message for each quality and continues its normal second-quality run. It throws every retained field failure before report.passed can become true. Setup, geometry, missing-view and state/photo errors still stop immediately. The driver, genuine field, all twenty views and every finish, crash, reset and pile-up guard are unchanged. A twenty-picture packet still fails native acceptance if either quality has the known player crash. This collects honest pictures for the independent village-grounding review while Claude settles that crash; it grants no native or art pass.
 
 Removed: the early field-failure throw that prevented the existing second-quality pictures from being collected. The same failure is retained and thrown before success. No assertion, tolerance, field rule, source pin or runtime value changed. The corrected two-quality packet remains unrun at this freeze.
+
+
+## Answered Long Left run-off correction
+
+Claude answered the real Long Left prop crash: the outside needs a wider gravel trap. Under the named 958ff53c grant, this course now authors one frozen outside band from station 3330 to 3730, width 20 m, with smooth 40 m transitions inside each end. The standard 12 m width remains everywhere else and on the opposite side. Only the existing Long Left outside armco rows follow that actual width plus their original 0.8 m margin. Every other armco row keeps its exact original arithmetic and the catch fence stays unchanged while its placement question waits on Claude.
+
+The shared script hook validates and copies station, side, width and taper before use, freezes each normalized band, and rejects malformed or overlapping bands. Its one width query serves both clear-ground scenery admission and actual gravel colouring. Wall precedence, the original default run-off, scalar gravel widths and all road-height, width, closure and terrain geometry remain unchanged. No driver, physics rule or threshold changes.
+
+Meaningful existing course cases were authored before implementation. They cover transition endpoints and midpoints, later laps, the opposite side, default and wall precedence, malformed data, frozen copies, exact fitted road buffers, every unaffected barrier and actual gravel vertices changing only inside the approved outside band. These new cases have not run; no replay or native pass is claimed. The same Medium/index0 replay follows Root review. If it still crashes, the actual prop is recorded and work stops instead of moving another barrier blindly.
+
+The last complete native packet on 4101ce01 produced all twenty actual pictures but failed both retained field guards with the same one-player-crash result. Village appearance remains for Claude's art judgment. All earlier failure and measurement receipts are preserved. No ninety-race batch, frame check, signature, final sheet, lane tier or build has run.
+
+Removed: the close Long Left outside armco position and the global-only limitation for this explicitly authored run-off band. All unannotated course defaults, other barrier positions, source models, footprint seating and field/photo assertions remain exact.

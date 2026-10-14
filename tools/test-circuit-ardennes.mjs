@@ -498,3 +498,86 @@ test('actual village High and LOD footprints contact the drawn hillside without 
     material.dispose();
   }
 });
+
+
+test('Long Left outside run-off has the approved local width and forty-metre transitions', () => {
+  const script = buildTrackScript(ARDENNES_FOREST);
+  const before = JSON.stringify(ARDENNES_FOREST.runoffBands);
+  assert.deepEqual(ARDENNES_FOREST.runoffBands, [{s0: 3330, s1: 3730, side: -1, width: 20, taper: 40}]);
+  assert.ok(Object.isFrozen(ARDENNES_FOREST.runoffBands) && ARDENNES_FOREST.runoffBands.every(Object.isFrozen));
+  assert.ok(Object.isFrozen(script.runoffBands) && script.runoffBands.every(Object.isFrozen));
+  for (const [station, expected] of [[3310, 12], [3330, 12], [3350, 16], [3370, 20],
+    [3610.814, 20], [3690, 20], [3710, 16], [3730, 12], [3750, 12]]) {
+    near(script.runoffAt(station, -1), expected, 1e-12);
+    near(script.runoffWidthAt(station, -1, 12), expected, 1e-12, 'gravel and clear-ground share the same normalized width');
+    near(script.runoffAt(station, 1), 12, 0, 'the inside is unchanged');
+    near(script.runoffAt(station + script.length, -1), expected, 1e-12, 'later laps use the same course station');
+  }
+  assert.equal(script.runoffAt.call({wallSide: () => true}, 3500, -1), 0, 'an authored wall still takes precedence');
+  const ordinary = buildTrackScript({...ARDENNES_FOREST, runoffBands: undefined});
+  for (const station of [0, 100, 3330, 3500, 3610, 3730, 6000]) for (const side of [-1, 1]) {
+    assert.equal(ordinary.runoffAt(station, side), 12, 'absence of the band keeps the native default exact');
+    assert.equal(ordinary.runoffWidthAt(station, side, 16), 16, 'absence of the band keeps the original visual scalar exact');
+  }
+  assert.deepEqual(script.samples, ordinary.samples);
+  assert.deepEqual(script.pieces, ordinary.pieces);
+  assert.deepEqual(script.report, ordinary.report, 'no road fit, grade, width or closure changes');
+  assert.equal(JSON.stringify(ARDENNES_FOREST.runoffBands), before);
+});
+
+test('run-off bands reject malformed data and normalize without mutating authored inputs', () => {
+  const valid = {s0: 3330, s1: 3730, side: -1, width: 20, taper: 40};
+  for (const invalid of [null, {}, [null], [{...valid, s0: NaN}], [{...valid, s0: -1}],
+    [{...valid, s1: 7000}], [{...valid, s1: valid.s0}], [{...valid, side: 0}],
+    [{...valid, side: 'right'}], [{...valid, width: Infinity}], [{...valid, width: 0}],
+    [{...valid, taper: -1}], [{...valid, taper: 201}], [{...valid, ignored: true}],
+    [valid, {...valid, s0: 3500}]])
+    assert.throws(() => buildTrackScript({...ARDENNES_FOREST, runoffBands: invalid}), /runoff band/i);
+  const authored = [{...valid}], before = JSON.stringify(authored);
+  const normalized = buildTrackScript({...ARDENNES_FOREST, runoffBands: authored});
+  assert.equal(JSON.stringify(authored), before);
+  assert.notEqual(normalized.runoffBands, authored);
+  assert.notEqual(normalized.runoffBands[0], authored[0]);
+  authored[0].width = 99;
+  assert.equal(normalized.runoffAt(3500, -1), 20, 'the normalized query does not retain a mutable descriptor');
+});
+
+test('only approved Long Left outside armco follows the wider run-off', () => {
+  const road = buildTrackScript(ARDENNES_FOREST), turn = road.pieces.find(piece => piece.name === 'Long Left');
+  const rows = ARDENNES_FOREST.kitPlacements;
+  for (const row of rows.filter(row => row.id === 'armco')) {
+    const approved = row.lateral < 0 && row.s >= turn.s0 - 8 && row.s < turn.s1 + 8;
+    const room = approved ? road.runoffWidthAt(row.s, -1, 12) : 12;
+    near(Math.abs(row.lateral), road.halfWidthAt(row.s) + room + .8, 1e-9);
+    if (!approved) assert.equal(Math.abs(row.lateral), road.halfWidthAt(row.s) + 12.8, 'all other armco stays byte-exact in its original arithmetic');
+  }
+  for (const row of rows.filter(row => row.id === 'catch-fence'))
+    assert.equal(Math.abs(row.lateral), road.halfWidthAt(row.s) + 14.3, 'the unanswered catch-fence stays exact');
+});
+
+test('actual terrain gravel expands only on the approved outside band without geometry changes', () => {
+  const wide = new Course(ARDENNES_FOREST, 1989);
+  const ordinary = new Course({...ARDENNES_FOREST, runoffBands: undefined}, 1989);
+  const authoredBefore = JSON.stringify(ARDENNES_FOREST);
+  const expanded = terrainGeometry(wide), original = terrainGeometry(ordinary);
+  const offsets = [-64, -56, -48, -40, -32, -24, -18, -14, -10, -7, 0, 7, 10, 14, 18, 24, 32, 40, 48, 56, 64];
+  try {
+    for (const name of ['position', 'uv', 'biomeWeights', 'normal'])
+      assert.deepEqual(expanded.getAttribute(name).array, original.getAttribute(name).array, 'ground geometry remains exact');
+    assert.deepEqual(expanded.index.array, original.index.array);
+    assert.deepEqual(expanded.groups, original.groups);
+    const colours = expanded.getAttribute('color'), previous = original.getAttribute('color');
+    let changes = 0, witness = false;
+    for (let vertex = 0; vertex < colours.count; vertex++) {
+      const s = Math.floor(vertex / offsets.length) * 4, off = offsets[vertex % offsets.length];
+      const changed = [0, 1, 2].some(component => colours.array[vertex * 3 + component] !== previous.array[vertex * 3 + component]);
+      if (changed) {
+        changes++;
+        assert.ok(s > 3330 && s < 3730 && off < 0, 'no colour outside the approved station/side band changes');
+        if (s === 3600 && off === -24) witness = true;
+      }
+    }
+    assert.ok(changes > 0 && witness, 'actual outside gravel vertices at the crash corner now receive the wider trap');
+    assert.equal(JSON.stringify(ARDENNES_FOREST), authoredBefore, 'terrain colouring cannot mutate course data');
+  } finally {expanded.dispose(); original.dispose();}
+});

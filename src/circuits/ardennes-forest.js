@@ -70,7 +70,8 @@ const ARDENNES_ROAD = defineScriptedCourse({
 });
 
 
-const road = buildTrackScript(ARDENNES_ROAD);
+const LONG_LEFT_RUNOFF = Object.freeze([Object.freeze({s0: 3330, s1: 3730, side: -1, width: 20, taper: 40})]);
+const road = buildTrackScript({...ARDENNES_ROAD, runoffBands: LONG_LEFT_RUNOFF});
 const named = name => road.pieces.find(piece => piece.name === name);
 const wrap = s => ((s % road.length) + road.length) % road.length;
 const row = (id, s, lateral, extra = {}) => Object.freeze({id, s: wrap(s), lateral, ...extra});
@@ -102,7 +103,10 @@ function safety() {
     const piece = named(name), side = -piece.dir;
     for (let s = piece.s0 - 8; s < piece.s1 + 8; s += 4) {
       if (side < 0 && wrap(s) <= PIT_END + 15) continue;
-      out.push(row('armco', s, side * (road.halfWidthAt(s) + 12.8),
+      const lateral = name === 'Long Left' && side === -1
+        ? side * (road.halfWidthAt(s) + road.runoffWidthAt(s, side, 12) + .8)
+        : side * (road.halfWidthAt(s) + 12.8);
+      out.push(row('armco', s, lateral,
         {heading: Math.PI / 2, solid: true}));
     }
   }
@@ -143,6 +147,7 @@ function landmarks() {
 export const ARDENNES_FOREST = Object.freeze({
   ...ARDENNES_ROAD,
   fieldSize: 8, grandPrixLaps: 2,
+  runoffBands: LONG_LEFT_RUNOFF,
   lightPath: Object.freeze({axis: 'distance', wrap: false, palette: 'forest-morning', keyframes: Object.freeze([
     Object.freeze({at: 0, look: 'golden'}), Object.freeze({at: road.length, look: 'day'}),
   ])}),

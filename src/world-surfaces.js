@@ -96,7 +96,9 @@ function gravelWeights(course, s, off) {
   if (!gravel) return null;
   const inside = besideTurn(course, s, off);
   if (inside <= 0) return null;
-  const edge = Math.abs(off) - course.roadHalfWidthAt(s), width = gravel.width ?? 16, fade = gravel.fade ?? 10;
+  const edge = Math.abs(off) - course.roadHalfWidthAt(s);
+  const width = course.script.runoffWidthAt?.(s, Math.sign(off), gravel.width ?? 16) ?? gravel.width ?? 16;
+  const fade = gravel.fade ?? 10;
   const trap = leafSmooth(edge / 2) * (1 - leafSmooth((edge - width) / fade)) * inside;
   const meadow = leafSmooth((edge - width) / fade) * (1 - leafSmooth((edge - (gravel.to ?? 60)) / 20)) * inside;
   return { trap, meadow };
