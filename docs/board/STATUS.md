@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T19:49:11.963Z
+Observed at: 2026-10-14T19:58:21.106Z
 
-Observation commit: 186db6d6e08ace0edce0bdb7a26f829912d6f8e4
+Observation commit: e6278114b37b81ea9c475451a48e7f35c31d0f3c
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 186db6d6e08ace0edce0bdb7a26f829912d6f8e4
+Integration HEAD: e6278114b37b81ea9c475451a48e7f35c31d0f3c
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -72,7 +72,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-summit | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/p4-yeti | 0 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 0 | unknown | true | false | unknown |
-| codex/qa-browser-admission | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-browser-admission |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
 | codex/tools/callback-diagnostics | 9 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 19 | unknown | true | false | unknown |
@@ -85,7 +84,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/heli-art-src | HELI-ART-SRC | 2026-10-14T12:47:30-07:00 | 0 | last commit 2026-10-14T12:47:30-07:00 | docs/changes/HELI-ART-SRC.md, tools/art/heli-source-candidates.json |
+| codex/heli-art-src | HELI-ART-SRC | 2026-10-14T12:54:08-07:00 | 0 | last commit 2026-10-14T12:54:08-07:00 | docs/changes/HELI-ART-SRC.md, tools/art/heli-accessories.json, tools/art/heli-source-candidates.json, tools/blender/heli-accessories.py |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-14T11:39:39-07:00 | 0 | last commit 2026-10-14T11:39:39-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb, public/assets/models/circuits/kits/forest-footbridge.glb, public/assets/models/circuits/kits/forest-timing-tower-lod.glb |
 | codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T12:29:47-07:00 | 0 | last commit 2026-10-14T12:29:47-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, src/track-kits.js, src/track-script-course.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
@@ -106,9 +105,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 227,963 B | -82,168 B | 5,000,000 B |
+| Added bytes in last merge | 227,963 B | +0 B | 5,000,000 B |
 | All `public/` | 291,982,013 B | +0 B | unavailable |
-| Git objects | 407,706,624 B | +89,088 B | unavailable |
+| Git objects | 407,855,104 B | +148,480 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -117,7 +116,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 186db6d6e08ace0edce0bdb7a26f829912d6f8e4
+- Local integration/wasteland: e6278114b37b81ea9c475451a48e7f35c31d0f3c
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

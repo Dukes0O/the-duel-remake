@@ -122,6 +122,7 @@ tasks:
     status: "building"
     claimed_by: "codex-ardennes-2026-10-13"
     branch: "codex/p4-ardennes"
+    waiting_on: "claude"
     needs: [P4-ARDENNES-ROAD]
     flag: "ardennes-forest"
     details: "docs/board/cards/P4-ARDENNES.md"
