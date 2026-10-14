@@ -574,3 +574,10 @@ the text above.
 Review: CLEAR to build with these amendments. Police are unaffected (they
 use a speed target only).
 
+## Claude note - new keyboard curve, 14 October
+
+Kyle found the 13 October keyboard curve too slow, and STEER-055 (merged) sets
+the road curve to 55% start, 300 ms to full, 30% less at 120 mph and above.
+Amendment 5 above now reads against this new curve: a held key must never give
+more yaw than STEER-055 gives at any speed. Recompute section 5's keyboard
+table from it before building.
