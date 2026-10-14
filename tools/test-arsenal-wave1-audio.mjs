@@ -58,7 +58,8 @@ const DEEP_CUES = ['deep.splash', 'deep.engine-muffle', 'deep.bubbles', 'deep.sa
   'deep.logged', 'deep.pearl', 'deep.whale', 'deep.cave'];
 const BANK_ADDITIONS = new Set([...DEEP_CUES, ...P4_CUES, ...CUES, ...WAVE_TWO_CUES, 'weapon.rockets.lock', 'arena.bounty-mark',
   ...CREW_CUES, ...FIGHT_VOICE_CUES, ...WAVE_THREE_CUES, 'arena.gunn-barrage', 'arena.toll-gate',
-  'arena.blackiron-barrage', 'warlord.nitroTell', 'warlord.nitroSpent']);
+  'arena.blackiron-barrage', 'warlord.nitroTell', 'warlord.nitroSpent',
+  'vehicle.rival-engine', 'vehicle.traffic-engine']);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 // Rebuild only retired flag fields in test memory so the original exact pin
 // still checks every cue recipe without accepting any other bank change.

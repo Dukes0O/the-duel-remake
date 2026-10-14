@@ -26,7 +26,7 @@ equal(SUMMIT_RUN.snowmen?.length,12,'Summit authors twelve actual off-line snowm
 equal(TREMBLANT_SNOW.snowmen?.length,8,'Tremblant exposes its eight existing authored spots');
 equal(TREMBLANT_SNOW.snowmen.map(({s,lateral})=>({s,lateral})),SNOWMAN_SPOTS);
 equal(SNOWMAN_SPOTS,[[100,18],[130,25],[165,18],[200,20],[230,18],[260,28],[285,18],[310,25]].map(([s,lateral])=>({s,lateral})),'only the three reviewed snowman-only positions differ');
-equal(FEATURE_STATES.snowmen,'dev');
+equal(FEATURE_STATES.snowmen,'on');
 const flags=on=>createFeatureFlags({storage:null,overrides:{snowmen:on,'grand-prix':true,'grand-prix-career':true}});
 const originalLength=COURSE.length;
 if(!COURSE.some(def=>def.id==='summit-run'))COURSE.push(SUMMIT_RUN);

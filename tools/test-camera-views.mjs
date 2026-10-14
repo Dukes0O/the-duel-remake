@@ -13,11 +13,16 @@ globalThis.window=new EventTarget();window.location={search:''};globalThis.Eleme
 globalThis.cancelAnimationFrame=()=>{};
 const app=new App();app.audio.unlock=()=>{};
 const press=(code,repeat=false)=>{const e=new Event('keydown',{cancelable:true});Object.assign(e,{code,repeat});window.dispatchEvent(e);};
-// C steps through all seven views in order and wraps back to chase.
+// C steps through the four useful views in order and wraps back to chase.
 check(app.cameraMode==='chase','races start in the chase view');
 for(const mode of [...CAMERA_MODES.slice(1),'chase']){press('KeyC');check(app.cameraMode===mode,`C steps to ${mode}`);}
 for(const code of ['KeyD','KeyB','KeyV','KeyX']){press(code);check(app.cameraMode==='chase',`${code} no longer changes the camera`);}
-app.setCamera('front');press('KeyC',true);check(app.cameraMode==='front','held C repeats ignored');
-check(app.setCamera('invalid')==='front','invalid camera rejected');
+for(const mode of ['front','right','left'])check(app.setCamera(mode)==='chase',`${mode} falls back to chase`);
+app.cameraMode='right';check(app.cycleCamera()==='chase','obsolete current choice normalizes before cycling');
+app.cameraMode='left';check(app.setCamera('invalid')==='chase','obsolete current choice normalizes even when request is invalid');
+app.setCamera('back');press('KeyC',true);check(app.cameraMode==='back','held C repeats ignored');
+check(app.setCamera('invalid')==='back','invalid camera rejected');
 app.setCamera('chase');check(app.cycleCamera()==='hood'&&app.cycleCamera()==='wide','button retains hood and wide views');
 app.dispose();console.log(`Camera views: ${checks} position, heading, height and actual keyboard checks passed.`);
+
+assert.deepEqual(CAMERA_MODES,['chase','hood','wide','back']);assert.deepEqual(DIRECTIONAL_CAMERA_MODES,['back']);

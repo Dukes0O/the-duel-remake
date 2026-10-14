@@ -33,7 +33,7 @@ export function addTurnSigns(group,signs,direction){
   if(!signs.length)return;
   const instances=new Map(),active=new Map(),seen=new Set(),changed=new Set(),tilt=new THREE.Quaternion();
   let assets=turnSignResources.get(group);
-  if(!assets){assets={board:new THREE.BoxGeometry(1.2,1.35,.08),post:new THREE.BoxGeometry(.1,1.8,.1),metal:new THREE.MeshStandardMaterial({color:0x8e9393,metalness:.5,roughness:.6}),directions:new Map()};turnSignResources.set(group,assets);}
+  if(!assets){assets={board:new THREE.BoxGeometry(1.8,2.025,.08),post:new THREE.BoxGeometry(.1,1.8,.1),metal:new THREE.MeshStandardMaterial({color:0x8e9393,metalness:.5,roughness:.6}),directions:new Map()};turnSignResources.set(group,assets);}
   let mat=assets.directions.get(direction);
   if(!mat){
   const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.fillStyle='#f1bf35';x.fillRect(0,0,128,128);x.fillStyle='#1d252a';

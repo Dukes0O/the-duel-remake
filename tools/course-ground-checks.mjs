@@ -64,7 +64,7 @@ export function checkGround(course,runtime){
     const kit=footprints[piece.id],foot=kit?[kit.width,kit.depth]:EXTRA_FOOT[piece.id];
     if(!foot||piece.ride)continue;objects++;
     const scale=Array.isArray(piece.scale)?piece.scale:Array(3).fill(piece.scale??1),at=course.groundAt(piece.s,piece.lateral);
-    let base=rendered.renderedGroundHeight(course,{...at,s:piece.s,off:piece.lateral},{requireSurface:true})+(piece.lift??0);
+    let base=runtime.kits?.kitBaseHeight ? runtime.kits.kitBaseHeight(course,piece,{min:{x:-foot[0]/2,z:-foot[1]/2},max:{x:foot[0]/2,z:foot[1]/2}}) : rendered.renderedGroundHeight(course,{...at,s:piece.s,off:piece.lateral},{requireSurface:true})+(piece.lift??0);
     if(piece.hill!==undefined){const hill=def.hills[piece.hill];base+=hills.hillHeight(hill,...hills.hillLocal(hill,piece.s,piece.lateral))-(piece.sink??0);}
     const heading=at.heading+(piece.heading??0),hx=foot[0]*scale[0]/2,hz=foot[1]*scale[2]/2,under=[];
     for(const[a,b]of[[0,0],[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]])
@@ -103,12 +103,30 @@ export function barrierCases(course){
   return drawn.filter((row,index)=>index%Math.max(1,Math.ceil(drawn.length/8))===0)
     .slice(0,8).map(row=>[row.id,row.s,Math.sign(row.lateral)]);
 }
-export function barrierFace(course,s,side,footprints){
+export function barrierFace(course,s,side,footprints,contact=null){
   const placements=(course.def.kitPlacements??[]).filter(row=>BARRIERS.has(row.id)&&Math.sign(row.lateral)===side);
   if(!placements.length)throw Error('No drawn barrier on probe side');
-  const piece=placements.reduce((best,row)=>Math.abs(row.s-s)<Math.abs(best.s-s)?row:best);
-  const depth=footprints[piece.id].depth*(Array.isArray(piece.scale)?piece.scale[2]:piece.scale??1);
-  return{id:piece.id,gap:Math.abs(piece.lateral)-course.roadHalfWidthAt(piece.s)-depth/2};
+  const contactIndex=/^kit-solid-(\d+)-/.exec(contact?.obstacleId??'');
+  const indexed=contactIndex&&course.def.kitPlacements[Number(contactIndex[1])];
+  const piece=indexed&&BARRIERS.has(indexed.id)?indexed:
+    placements.reduce((best,row)=>Math.abs(row.s-s)<Math.abs(best.s-s)?row:best);
+  const scale=Array.isArray(piece.scale)?piece.scale:Array(3).fill(piece.scale??1),foot=footprints[piece.id];
+  const depth=foot.depth*scale[2],result={id:piece.id,gap:Math.abs(piece.lateral)-course.roadHalfWidthAt(piece.s)-depth/2};
+  if(!contact)return result;
+  const ground=course.groundAt(piece.s,piece.lateral),heading=ground.heading+(piece.heading??0);
+  const axes=[{x:Math.cos(heading),z:-Math.sin(heading),half:foot.width*scale[0]/2},
+    {x:Math.sin(heading),z:Math.cos(heading),half:depth/2}];
+  const axis=axes.reduce((best,row)=>Math.abs(row.x*contact.normal.x+row.z*contact.normal.z)>
+    Math.abs(best.x*contact.normal.x+best.z*contact.normal.z)?row:best);
+  const sign=Math.sign(axis.x*contact.normal.x+axis.z*contact.normal.z)||1;
+  const normal={x:axis.x*sign,z:axis.z*sign},face={x:ground.x+normal.x*axis.half,z:ground.z+normal.z*axis.half};
+  const cs=Math.cos(contact.heading),sn=Math.sin(contact.heading),gaps=[];
+  for(const width of [-1,1])for(const length of [-1,1]){
+    const x=contact.centre.x+width*contact.halfWidth*cs+length*contact.halfLength*sn;
+    const z=contact.centre.z-width*contact.halfWidth*sn+length*contact.halfLength*cs;
+    gaps.push((x-face.x)*normal.x+(z-face.z)*normal.z);
+  }
+  return {...result,contactId:contact.obstacleId,bodyFaceGap:Math.min(...gaps),face,normal};
 }
 
 

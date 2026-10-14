@@ -1,5 +1,45 @@
 # Remake verification
 
+## Steering and race screen release, 13 October 2026
+
+Kyle approved going live once green (13 October); Claude was Release Manager.
+Before release Kyle rejected the on-screen corner warning panel, so it was
+removed (d34bf40f, one independent review CLEAR); the larger trackside boards
+stay. Installed at about 04:00 UTC on 14 October from exact commit
+`d34bf40f`; live build `20261014035636-e7c3f590285b` verified over HTTP.
+Full tier 423/424 alone with four jobs (1705.49 s); `test-drive-through`
+failed once under full load and passed on its single rerun on the same commit
+(rule 3). Combat balance `--check` passed. Codex's native evidence on eab3b136:
+real Harbour keyboard lap 90.26 s with no crash, reset or stop; stock autopilot
+trace unchanged; 1080p and 1440p screen views with no overlaps.
+
+Frame check (headed, eight cars, Harbour Lights at night) did not pass on the
+laptop tonight for either version: candidate first run High p95 50 ms and
+Performance 33.4 ms, second run 33.4 and 33.3 ms; the live build bb8d3a99
+measured the same way gave 33.4 and 33.3 ms, with construction about 5 to 6 s
+on both. The release does not change frame cost; the shared slowdown is a
+laptop or tool condition to investigate (frame-check card). Staged build on
+port 5188: a Pacific Canyon Rival Duel showed the larger map and mirror and no
+corner panel, with no browser errors. Previous build (laps and snowmen) kept
+in `dist-previous`. `master` pushed to GitHub.
+
+## Laps, snowmen and fixes release, 13 October 2026
+
+Kyle approved (13 October: release with full tests; "install it"); Claude was
+Release Manager. Installed at about 19:55 UTC from exact commit `bb8d3a99`
+(integration `eb12ed1f` plus lap choice 2 to 6, the lap-choice and snowmen
+switches on, and the leaderboard default-length fix). Live build
+`20261013195337-21614651644c` verified over HTTP. Full tier 423/423 alone with
+four jobs (1481.68 s); `test-drive-through` failed once on a tool problem (its
+historical `tar` step under Git Bash) and passed on its single rerun from
+PowerShell on the same commit. Combat balance `--check` passed. One independent
+pay review: no code faults; one design gap (fixed per-race bonuses are not
+scaled for shorter races) accepted by Claude and recorded on LAP-CHOICE.
+Staged build on port 5188: lap buttons 2 to 6, a 3-lap Pacific Canyon Rival
+Duel started as LAP 1 / 3 over 12.0 km, no browser errors. No frame check: no
+rendering change in this release. Previous build (Panorama) kept in
+`dist-previous`. `master` pushed to GitHub.
+
 ## Panorama Ridge release, 12 October 2026
 
 Kyle approved ("go live"); Claude was Release Manager. Installed at about 02:57

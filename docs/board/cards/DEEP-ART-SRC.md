@@ -93,3 +93,48 @@ Re-shoot only those three in the same water. waiting_on is cleared.
 ## Director final art resumption, 13 October
 
 Resume retained clean deep-art-src after an automatic current-integration union; never reset others' work. Only the three Claude-rejected roles may change: otter belly-up/pale head/paws on chest, grouper mouth/no loop/mottled brown, giant clam at most4000triangles/150KB/sandy grey/blue-green mottled lip. Keep all15 accepted GLBs byte-identical. Own existing tools/blender/deep-art-fit.py recipe and the existing deep-art photo recipe only its three-role selection, corresponding three runtime models/manifest/provenance rows, final round3 sheet/review and change note. Preserve original37 catalogue rows; only actual source-content pins of changed Deep rows may update with reviewed proof. No water/light/shader/runtime-life change or new helper/framework. Fold consumed earlier verdicts into final notes; do not delete old evidence or sheets you did not create without Root/user authorization. Same actual water views for only these3; compressed sheet<=500KB, final round3 of3, no frames. One original nearby/jobs4/build and one ordinary source review; Claude alone judges final art. Root owns shared metadata/merge; retain the existing lane while it waits.
+
+## Director existing final-sheet hook, 13 October
+
+Grant tools/blender/deep-art-sheet.py only an optional round3 composer for the three changed roles; preserve its original default and paths-only round2 output/guards. No new helper/framework. The two whole-catalogue expected digest literals remain ungranted until actual old/new projection values, original37-row equality and15 accepted-model byte equality are supplied for independent review. No filter, assertion or old-source pin changes.
+
+## Director final-role camera correction, 13 October
+
+Grant only the existing final-round photography role values: otter centre from0.5m below water to0.02m above it, with a below-surface eye to show the real face; grouper front eye to show its real mouth. These are three-role photography controls in the existing recipe, with water/lights/materials/scale/render pipeline exact. Flatten only otter donor cross-section centres with original topology to meet the approved belly-up pose. Record the actual draft's submerged/arched defect honestly; no formal round3 acceptance or fourth round. Final content hashes and the two complete-catalogue digests are supplied after the last actual export before a pin grant/gate.
+
+## Director independently verified final source pins, 13 October
+
+Root independently read both existing projection filters and recomputed the final hashes. Exactly3 rows change (deep-otter/deep-grouper/deep-giant-clam); original37 ordered catalogue rows and all15 acceptedGLB bytes match e5dca26f. Grant only test-p4-kits expected8455623df877f5485d97197bfa780f4ccd2f105513fed9f8c0e40bf4944134dc to91fcc5b3740744c6a6e9e543fba9ce62a3dd21322a8e4e0ca5e5692de4d2aec6, and test-tanker-valve-source7cb026655ca6168d71d8bfd89c19ec954a464456b079fd0040cba1fa89bd1c20 to530d258c3980ff47d7dd6746a44218e85974cc0e182f37331563fa2b247d81f2. Preserve filters and every assertion. These reviewed content-pin changes reflect actual three-role exports, not excluded source rows. Source review still inspects final recipes/default photography behavior before integration.
+
+## Claude answers — final Deep art round3 request, 13 October
+
+Please judge final round3 of3: C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src/docs/board/looks/deep-art/round-3.jpg,123189B/1800x540, SHA25686be5cacd87b0df605ebc333011822345da96c0c14f5bdc1bf1af1dd9c3806df. Actual High water/light/shader pipeline unchanged; only the3 rejected roles re-shot, private54607/memory-only,0errors/issues and1 duplicate-Three warning, no frames. Fifteen acceptedGLBs and original37 catalogue rows independently byte-verified exact. Otter1324triangles/171332B now at the surface belly-up with pale head/paws; grouper823/39096B has the loop removed and a downturned mouth; clam3000/92800B is under both4000/150KB caps with dark shell/blue-green lip. Root inspected the actual sheet: clam and fish changes are visible, while the otter remains angular and its round face is weak at this angle. No art acceptance is claimed or fourth round proposed. Final review note records recipes/content hashes, prior verdicts and actual limitations. Source gate/build/review continue independently, and integration waits your final verdict. Answer here and clear waiting_on in the same board commit.
+
+## Claude answers (13 October, evening)
+
+**Claude verdict, Deep art round 3 of 3 (13 October 2026, evening): grouper and giant clam accepted; the otter is not.**
+
+The otter still reads as an angular lump, not an otter. The cap is reached and we never ship weak art, so the otter role is held:
+- the Kelp Coast's sea-life log runs with the other 17 roles;
+- the otter returns only if a better source turns up, judged in FINISH-DEEP.
+
+Merge the 17 accepted models with their credits. Remove the otter GLB and its catalogue row in the same change, or mark the row held with no runtime file, whichever the catalogue rules allow. waiting_on is cleared.
+
+**Kyle, 13 October evening: "some of those underwater images are pretty crappy. The otter definitely doesn't look like an otter."** This replaces Claude's verdict above.
+
+- The 17 models merge as **working art only**, under the-deep dev switch. They are there so the zone and its creatures can be built and tested. None of them is accepted as finished art, and The Deep cannot go live with them.
+- This card closes at the three-round cap (stop rule): the low-poly donors cannot reach the natural look, and fitting cannot fix that.
+- A new art pass, DEEP-ART-FINAL, starts after Kyle's storyboard with Gratian settles which creatures the story needs. It sources better models: the CC0 photogrammetry scans (Kyle downloads them with his own account) and fuller CC0 or credited packs. Kyle picks from the sheets.
+- The otter is held in any case.
+
+## Director working-art correction, 13 October evening
+
+Kyle's final answer supersedes finished-art acceptance. Resume only retained deep-art-src, with no merge/rebase, gate, build, browser or render during Claude's release hold. Grant tools/blender/deep-art-fit.py removal of otter from active/default export roles; tools/scenarios/deep-art.mjs exact 17-role manifest admission with held otter excluded; public/assets/models/deep/manifest.json, tools/art/catalog.json and public/assets/models/CREDITS.md only removal of the held runtime otter and explicit working-art provenance for the remaining 17. Preserve every retained GLB byte, source/license/hash/dimension/clip field, and all 37 original catalogue rows/order. Remove only public/assets/models/deep/otter.glb to the Recycle Bin; never remove the external licensed donor cache. Update the existing change note and final round-3 review with Kyle's working-art limitation, cap and held role; keep the existing sheet unchanged, with no new round.
+
+Grant tools/test-blender-output.mjs only its exact Deep output identity 18 to 17, keeping every original assertion and all other outputs. Do not change the two whole-catalogue digest literals yet: supply actual final projection hashes and independent original-row/retained-model equality for Root's precise grant first. No new helper, test framework, asset, runtime-life/story or switch activation. Root owns shared metadata and independent review; builder owns the named lane correction only. Source acceptance checks follow RELEASE DONE and the overnight order.
+
+## Director independently verified working-art source pins
+
+Root recomputed both unchanged projection filters from the actual prepared catalogue: P4 c781ab75e8f6734b7d943190329fa7aba823525f4a4b900960e439db6cc83c29 and Tanker 262e8fe0468cd62ab295420ab10f153455c61957c5bc786dc936f09e8311ba75. All 37 original ordered non-Deep catalogue rows equal e5dca26f exactly (JSON SHA256 10eb2917f2589d8ffbb8a450eb976f529a5f9de394df6e8f91242598998cf12f); all 17 retained model bytes and manifest descriptors equal b6c1fdac. The held otter is absent from runtime file, model list and catalogue.
+
+Grant only tools/test-p4-kits.mjs expected 91fcc5b3740744c6a6e9e543fba9ce62a3dd21322a8e4e0ca5e5692de4d2aec6 to c781ab75e8f6734b7d943190329fa7aba823525f4a4b900960e439db6cc83c29, and tools/test-tanker-valve-source.mjs expected 530d258c3980ff47d7dd6746a44218e85974cc0e182f37331563fa2b247d81f2 to 262e8fe0468cd62ab295420ab10f153455c61957c5bc786dc936f09e8311ba75. Preserve every filter, assertion and other pin. These changes record the explicit held-role removal and working-art provenance, not art acceptance. The release hold still forbids executing the gate/build/browser or any merge.

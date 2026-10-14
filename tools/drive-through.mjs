@@ -41,7 +41,8 @@ async function loadRuntime(sourceRoot){
     const manifest=JSON.parse(readFileSync(join(sourceRoot,'public/assets/models/circuits/kits/manifest.json'),'utf8'));
     footprints=Object.fromEntries(manifest.pieces.filter(row=>SOLID_IDS.includes(row.id)).map(row=>[row.id,{width:row.size[0],height:row.size[1],depth:row.size[2]}]));
   }
-  return{App,Course,config,registry,surfaces,effects,hills,rendered,collision,driver,footprints};
+  const kits=existsSync(join(sourceRoot,'src/track-kits.js')) ? await module('src/track-kits.js') : null;
+  return{App,Course,config,registry,surfaces,effects,hills,rendered,collision,driver,footprints,kits};
 }
 function startNative(runtime,def,seed,cpuDifficulty){
   const {App,config}=runtime,app=new App();
@@ -91,13 +92,54 @@ function contactProbe(runtime,def,seed,name,s,side,mph,footprints){
   Object.assign(state,{s,lateral:side*(half(s)-3),headingError:side*.3,speedMph:mph,airborne:false,airHeight:0,_jumpY:null,_verticalSpeed:0});
   state.prevS=state.s;state.prevLateral=state.lateral;duel._terrainPose();
   duel.setInput({throttle:1,brake:0,steer:0,boost:false});
-  let farthest=-Infinity;
-  for(let frame=0;frame<240;frame++){
-    duel.step(1/60);farthest=Math.max(farthest,side*state.lateral-half(state.s));
-    if(state.impactTimer>0)break;
+  let farthest=-Infinity,firstContact=null;
+  const originalContact=duel._staticContacts;
+  duel._staticContacts=function(car,player,...args){
+    if(player&&!firstContact){
+      const oldS=car.prevS??car.s,oldLateral=car.prevLateral??car.lateral;
+      const before=this.course.worldAt(oldS,oldLateral),after=this.course.worldAt(car.s,car.lateral);
+      if(car.airborne||car.airHeight>0||car.prevAirHeight>0||car.groundHeight!=null){
+        before.y=(car.prevGroundHeight??this.course.groundAt(oldS,oldLateral).y)+(car.prevAirHeight??car.airHeight??0);
+        after.y=(car.groundHeight??this.course.groundAt(car.s,car.lateral).y)+(car.airHeight||0);
+      }else before.y=after.y=undefined;
+      const heading=this.course.at(car.s).heading+(car.headingError||0)+(car.dir<0?Math.PI:0)+(car.slipAngle||0);
+      const dimensions={...this._vehicleSpec(car),useModelBounds:!!(car.airborne||car.airHeight>0||car.prevAirHeight>0)};
+      let hit=null;
+      for(const obstacle of this._obstacles(oldS,car.s)){
+        if(this._brokenSnowmanIds?.has(obstacle.snowmanId)||this._brokenSceneryIds?.has(obstacle.id))continue;
+        const start=obstacle.verticalClearance&&!Number.isFinite(before.y)?{...before,
+          y:(car.prevGroundHeight??this.course.groundAt(oldS,oldLateral).y)+(car.prevAirHeight??car.airHeight??0)}:before;
+        const end=obstacle.verticalClearance&&!Number.isFinite(after.y)?{...after,
+          y:(car.groundHeight??this.course.groundAt(car.s,car.lateral).y)+(car.airHeight||0)}:after;
+        const candidate=runtime.collision.sweepObstacle(start,end,obstacle,heading,dimensions);
+        if(candidate&&(!hit||candidate.t<hit.t))hit=candidate;
+      }
+      if(hit){
+        const centre={x:before.x+(after.x-before.x)*hit.t,z:before.z+(after.z-before.z)*hit.t};
+        const at=this.course.nearest(centre.x,centre.z,car.s);
+        const face=barrierFace(this.course,at.s,side,footprints,{centre,heading,
+          halfWidth:dimensions.halfWidth,halfLength:dimensions.halfLength,
+          normal:{x:hit.nx,z:hit.nz},obstacleId:hit.obstacle.id});
+        firstContact={...face,contactKind:hit.obstacle.kind,contactBarrier:!!(hit.obstacle.barrier||hit.obstacle.tunnelWall),
+          seconds:state.stageTimeSec,contactS:at.s,contactLateral:at.lateral};
+      }
+    }
+    return originalContact.call(this,car,player,...args);
+  };
+  try{
+    for(let frame=0;frame<240;frame++){
+      duel.step(1/60);farthest=Math.max(farthest,side*state.lateral-half(state.s));
+      if(firstContact||state.impactTimer>0)break;
+    }
+    const reachedEdge=farthest>0,limit=gap-.5;
+    return{name,s,side,mph,id,gap,farthest,limit,reachedEdge,firstContact,
+      bodyFaceGap:firstContact?.bodyFaceGap??null,
+      passed:!!firstContact?.contactBarrier&&Number.isFinite(firstContact.bodyFaceGap)&&
+        firstContact.bodyFaceGap<=.15&&firstContact.bodyFaceGap>=-.30};
+  }finally{
+    duel._staticContacts=originalContact;
+    app.dispose?.();
   }
-  const reachedEdge=farthest>0,limit=gap-.5;
-  return{name,s,side,mph,id,gap,farthest,limit,reachedEdge,passed:reachedEdge&&farthest<=limit};
 }
 export async function runDriveThrough({courseId,seed=1989,maxSeconds=1200,sourceRoot,sourceCommit}={}){
   if(typeof courseId!=='string'||!/^[a-z][a-z0-9-]*$/.test(courseId))throw Error('A named course id is required.');

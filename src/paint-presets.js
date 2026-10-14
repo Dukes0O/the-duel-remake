@@ -1,9 +1,11 @@
 import {CARS} from './config.js';
+import {yetiRewards} from './yeti.js';
 import {MUDDY_HOLLOW_HUBCAP_IDS, normalizeMuddyHollow} from './wasteland-progress.js';
 
 // Appearance values only. Factory restores the renderer's exact original
 // material instead of guessing a shared finish for seven different vehicles.
 export const PAINT_PRESETS=Object.freeze({
+  frost:Object.freeze({id:'frost',name:'Frost',finish:'Frosted reward',price:0,reward:'yeti',appearance:Object.freeze({id:'frost',name:'Frost',color:0xdce8f0,metalness:.1,roughness:.55})}),
   factory:Object.freeze({id:'factory',name:'Factory',finish:'Original finish',price:0,appearance:null}),
   copper_metallic:Object.freeze({id:'copper_metallic',name:'Copper Metallic',finish:'Warm metallic gloss',price:250,appearance:Object.freeze({id:'copper_metallic',name:'Copper Metallic',color:0xb97046,metalness:.65,roughness:.24,clearcoat:1,clearcoatRoughness:.10})}),
   glacier_satin:Object.freeze({id:'glacier_satin',name:'Glacier Satin',finish:'Pale blue-grey satin',price:400,appearance:Object.freeze({id:'glacier_satin',name:'Glacier Satin',color:0xb9d0d2,metalness:.22,roughness:.48,clearcoat:.35,clearcoatRoughness:.28})}),
@@ -21,9 +23,9 @@ function rewardEarned(profile,car){
   const progress=normalizeMuddyHollow(profile?.wasteland?.muddyHollow);
   return MUDDY_HOLLOW_HUBCAP_IDS.every(id=>progress.hubcaps.includes(id));
 }
-function rewardIds(profile,car,{muddyHollowEnabled=false,includeInactiveRewards=false}={}){
-  return rewardEarned(profile,car)&&(muddyHollowEnabled===true||includeInactiveRewards)
-    ?['titan_gold']:[];
+function rewardIds(profile,car,{muddyHollowEnabled=false,yetiEnabled=false,includeInactiveRewards=false}={}){
+  const muddy=rewardEarned(profile,car)&&(muddyHollowEnabled===true||includeInactiveRewards)?['titan_gold']:[];
+  return [...muddy,...(ownsCar(profile,car)&&yetiRewards(profile).frost&&(yetiEnabled===true||includeInactiveRewards)?['frost']:[])];
 }
 function allowedIds(profile,car,options){return [...ordinaryIds,...rewardIds(profile,car,options)];}
 export function normalizePaintState(value,allowed=ordinaryIds){

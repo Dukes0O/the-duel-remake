@@ -1,4 +1,5 @@
 import {CARS} from './config.js';
+import {yetiRewards} from './yeti.js';
 import {isCarUnlocked} from './progression.js';
 import {rankForXp} from './notoriety.js';
 import {hasDefeatedWarlord, hasEarnedSideSaws, hasEarnedTurretLook, normalizeWasteland} from './wasteland-progress.js';
@@ -62,6 +63,7 @@ export function getEquippedArmorKit(profile, car) {
 }
 
 export function getEquippedRoofLook(profile, car) {
+  if(profile?.yeti?.roof?.[car]==='yeti' && yetiRewards(profile).roof && isCarUnlocked(profile,car))return null;
   return profile?.wasteland?.kits?.[car]?.roofLook === 'chrome-crown' &&
     !['side-saws', 'turret-look'].includes(profile.wasteland.kits[car].equipped) &&
     ownsArmorKit(profile, car, 'chrome-crown') ? 'chrome-crown' : null;
@@ -115,6 +117,7 @@ export function equipArmorKit(profile, car, id = null) {
   if (id === 'chrome-crown') {
     if (getEquippedRoofLook(profile, car)) return result(profile, 'This look is already equipped.');
     const equipped = Object.hasOwn(ARMOR_KITS, installed.equipped) ? installed.equipped : null;
+    profile=clearYetiRoof(profile,car);
     return {profile: {...profile, wasteland: {...wasteland, kits: {...wasteland.kits,
       [car]: {...installed, owned: [...new Set([...installed.owned, id])],
         equipped, roofLook: id}}}}, ok: true, reason: '', cost: 0, equipped: id};
@@ -122,6 +125,7 @@ export function equipArmorKit(profile, car, id = null) {
   if (installed.equipped === id && (id !== null || !getEquippedRoofLook(profile, car)))
     return result(profile, id ? 'This kit is already equipped.' : 'This car is already stock.');
   const clearsRoof = id === null || id === 'side-saws' || id === 'turret-look';
+  if(id==='turret-look')profile=clearYetiRoof(profile,car);
   return {
     profile: {...profile, wasteland: {...wasteland, kits: {...wasteland.kits,
       [car]: {...installed, owned: Object.hasOwn(EARNED_ARMOR_KITS, id) || earnedOnAnyCar(profile, id)
@@ -129,4 +133,30 @@ export function equipArmorKit(profile, car, id = null) {
         ...(clearsRoof && Object.hasOwn(installed, 'roofLook') ? {roofLook: null} : {})}}}},
     ok: true, reason: '', cost: 0, equipped: id,
   };
+}
+
+function clearYetiRoof(profile,car){
+  if(!Object.hasOwn(profile?.yeti?.roof??{},car))return profile;
+  const roof={...profile.yeti.roof};delete roof[car];return {...profile,yeti:{...profile.yeti,roof}};
+}
+export function getRoadRoofLook(profile,car,{yetiEnabled=false}={}){
+  if(!yetiEnabled || !isCarUnlocked(profile,car))return null;
+  return profile?.yeti?.roof?.[car]==='yeti' && yetiRewards(profile).roof &&
+    profile.wasteland?.kits?.[car]?.equipped!=='turret-look' ? 'yeti' : getEquippedRoofLook(profile,car);
+}
+export function equipRoadRoof(profile,car,id,{yetiEnabled=false}={}){
+  if(!yetiEnabled || !Object.hasOwn(CARS,car) || !isCarUnlocked(profile,car))return result(profile,'Unlock this car before choosing its roof look.');
+  if(![null,'yeti','chrome-crown'].includes(id))return result(profile,'Choose an available roof look.');
+  if(id==='chrome-crown')return equipArmorKit(profile,car,id);
+  if(id==='yeti' && !yetiRewards(profile).roof)return result(profile,'See the yeti in three completed Summit races first.');
+  const selected=getRoadRoofLook(profile,car,{yetiEnabled:true});
+  if(selected===id)return {profile,ok:true,cost:0,changed:false};
+  let updated=id==='yeti'?{...profile,yeti:{...profile.yeti,roof:{...profile.yeti?.roof,[car]:'yeti'}}}:clearYetiRoof(profile,car);
+  const installed=updated.wasteland?.kits?.[car];
+  const clearsChrome=installed?.roofLook==='chrome-crown';
+  const clearsTurret=id==='yeti' && installed?.equipped==='turret-look';
+  if(clearsChrome || clearsTurret)updated={...updated,wasteland:{...updated.wasteland,
+    kits:{...updated.wasteland.kits,[car]:{...installed,...(clearsChrome?{roofLook:null}:{}),
+      ...(clearsTurret?{equipped:null}:{})}}}};
+  return {profile:updated,ok:true,cost:0,changed:updated!==profile};
 }

@@ -48,7 +48,9 @@ export { addTurnSigns, addHarbor } from './world-props.js';
 export function roadBranchMaterial(course,cut,base,winter=false){
   const kind=cut.gripKind;
   if(!winter||!['snow','ice','deep-snow'].includes(kind))return base;
-  return winterSurfaceMaterial(base.clone(),kind);
+  const material=winterSurfaceMaterial(base.clone(),kind);
+  if(course.def.snowWorld?.branchTone!==undefined)material.color.set(course.def.snowWorld.branchTone);
+  return material;
 }
 
 export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) {
@@ -67,7 +69,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   const winterTrees=winter?snowPineIds(course):null,winterRocks=winter?snowRockFeatures(course):null;
   const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night,wet:!!course.def.wetRoad});
   const groundMat=course.def.practice?new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),bumpMap:surfaceTexture('gravel'),bumpScale:.06,color:0xd0b28a,roughness:1,vertexColors:true}):createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
-  if(winter)winterTerrainMaterial(groundMat,course.def.snowWorld.drifts===true);
+  if(winter)winterTerrainMaterial(groundMat,course.def.snowWorld.drifts===true,course.def.snowWorld.variation===true);
   const terrainFor=geometry=>winter?applySnowTerrain(geometry,course):geometry;
   const cream = new THREE.MeshStandardMaterial({ color: 0xe8d2a5, roughness: .8 });
   const yellow = new THREE.MeshStandardMaterial({ color: 0xd8a943, roughness: .85 });

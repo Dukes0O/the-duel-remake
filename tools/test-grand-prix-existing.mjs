@@ -19,6 +19,7 @@ import { grandPrixCourse, gridPose, courseForGrandPrix } from '../src/race-field
 import { createLeaderboard, recordFinish, saveLeaderboard, loadLeaderboard, getLeaderboard } from '../src/leaderboard.js';
 import { GrandPrixLapRecorder, createGhostStore, storeGhost, findGhost, normalizeGhostStore, loadGhosts, GHOST_KEY, GhostRecorder, ghostKey, MAX_GHOST_BYTES, MAX_GHOSTS } from '../src/ghost.js';
 import { testCourseAccess } from './career-fixture.mjs';
+import { raceDistance } from '../src/lap-choice.js';
 
 let checks = 0;
 const check = (value, message) => { assert.ok(value, message); checks++; };
@@ -119,11 +120,12 @@ try {
     car: 'falcone_f42', driverId: 'club', difficulty: 'casual', cpuDifficulty: 'medium'};
   equal(finishContext.laps, 4, 'actual authored Harbour GP asks for four laps');
   check(isValidFinish(finishContext), 'authored Harbour four-lap completion is valid');
-  check(!isValidFinish({...finishContext, laps: 3}), 'three laps cannot complete Harbour GP');
-  check(!isValidFinish({...finishContext, stageIndex: 0}), 'malformed Pacific four-lap GP cannot finish');
-  check(!recordFinish(createLeaderboard(), {...finishContext, stageIndex: 0},
-    {id: 'malformed-four', name: 'Malformed Driver'}).recorded,
-    'malformed Pacific four-lap GP cannot enter records');
+  check(!isValidFinish({...finishContext, laps: 7}), 'seven laps (not offered, 2 to 6 only) cannot complete Harbour GP');
+  check(isValidFinish({...finishContext, stageIndex: 0}), 'a four-lap Pacific GP is now an offered length');
+  check(!isValidFinish({...finishContext, stageIndex: 0, laps: 7}), 'malformed Pacific seven-lap GP cannot finish');
+  check(!recordFinish(createLeaderboard(), {...finishContext, stageIndex: 0, laps: 7},
+    {id: 'malformed-seven', name: 'Malformed Driver'}).recorded,
+    'malformed Pacific seven-lap GP cannot enter records');
   check(eventKey({stageIndex: harbourIndex, mode: 'grandprix'}).includes('|laps:4|mode:grandprix'),
     'default Harbour GP key derives its authored count');
   harbourApp = new App(); ownTestCourses(harbourApp);
@@ -406,7 +408,8 @@ const base = { stageIndex: 0, completed: true, won: true, seed: 1989,
   timeSec: 120, laps: 2, car: 'falcone_f42', difficulty: 'casual', cpuDifficulty: 'medium' };
 const grand = { ...base, mode: 'grandprix', laps: 3, timeSec: 180 };
 check(isValidFinish(grand), 'three-lap Grand Prix finish is valid');
-check(!isValidFinish({ ...grand, laps: 2 }), 'two laps cannot complete Grand Prix');
+check(isValidFinish({ ...grand, laps: 2 }), 'two laps is now an offered Grand Prix length');
+check(!isValidFinish({ ...grand, laps: 7 }), 'seven laps cannot complete Grand Prix');
 const duelKey = eventKey({ ...base, mode: 'duel' });
 equal(duelKey, 'pacific-canyon|layout:4|seed:1989|laps:2', 'existing event key stays exact');
 check(eventKey(grand) !== eventKey({ ...grand, mode: 'duel' }), 'Grand Prix key is separate even at the same lap count');
@@ -484,7 +487,10 @@ try {
     app.advance(1 / 60, 1 / 60);
   check(app.duel.state.results?.completed, 'native App finishes three-lap GP');
   const finish = app.duel.state.results;
-  const positionPay = [1000, 750, 550, 400, 300, 200, 150, 100][finish.position - 1];
+  // Lap choice is on: a default race over 8 km pays by its real length (factor km / 8, floor one).
+  const oldPositionPay = [1000, 750, 550, 400, 300, 200, 150, 100][finish.position - 1];
+  const lengthFactor = raceDistance(COURSE[0], 3, 'grandprix').multiplier;
+  const positionPay = Math.max(oldPositionPay, Math.round(oldPositionPay * lengthFactor / 5) * 5);
   equal(finish.creditBreakdown.base, positionPay, 'native Medium GP pays the approved finishing-position share');
   equal(finish.creditPositionReward, positionPay, 'native result exposes actual position credits');
   equal(finish.creditCharge, 0, 'completed GP has no Duel loss charge');

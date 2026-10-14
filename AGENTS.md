@@ -81,7 +81,11 @@ team's merges back for hours):
    one while it runs. The full tier on a release commit still runs alone (rule 1).
 8. A frame check is simple: one run per quality (Performance and High) at the
    track's busiest view with eight cars, passing at delivered p95 at most
-   18.5 ms and construction under 1 s. Paired on/off packets, repeated legs
+   18.5 ms and the world build under 1 s (the full first-race load in a fresh
+   browser is reported and should stay under 5 s; slower is a warning, not a
+   failure: Kyle, 14 October 2026). Run it with the laptop's own screen off
+   (Win+P "Second screen only"), since a window spanning both graphics chips
+   misses frames. Paired on/off packets, repeated legs
    and extra controls are used only to find the cause after a simple check
    fails, inside rule 4's 30 minutes. Before timing, check that no other
    program (a browser window, a game tab) is using the graphics card heavily;
@@ -135,6 +139,15 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     `waiting_on` in `docs/board/board.yaml` in the same commit. The inbox
     carries only questions and notes that have no card, so two answers never
     collide in one place (Kyle, 12 October 2026).
+    If a card has waited on Claude for more than an hour while Kyle is
+    away, Codex's lead may settle a small question itself, within the rules
+    already written on the card and its design document: under the heading
+    "Codex decided (Claude to review)" on the card, it says what it chose
+    and why, then clears `waiting_on`. Claude reviews each one at the next
+    check-in and may reverse it. Art and sound verdicts, money and pay,
+    saves, anything Kyle decided, and anything that would change a released
+    course stay waiting; Codex moves to other cards instead (Kyle, 13
+    October 2026).
 17. Reviews by kind (Kyle, 12 October 2026). Code, saves, money and pay, and
     design numbers get one independent review. Documents and rule wording that
     Kyle or Claude already decided get none; the lane gate and build are
@@ -160,8 +173,12 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
 - Run `node tools/build-status.mjs` at every session end and include
   `docs/board/STATUS.md` in that commit. A later commit needs its own full-tier pass;
   a status snapshot never grants a pass to another commit.
-- D8 approved by Kyle on 24 September 2026: after a passing full tier and
-  compaction (SPEC 0.8), push `integration/wasteland`. D4 still covers `master`.
+- Pushing (Kyle, 13 October 2026, replacing D8 of 24 September): the Release
+  Manager pushes `integration/wasteland` to GitHub after every release, as a
+  plain fast-forward with no history rewrite, so the work is never only on the
+  laptop. Compaction (SPEC 0.8) becomes an occasional tidy-up that Claude runs
+  without asking (see the janitor section); it never holds back a push. D4 still covers
+  `master`. The branch was pushed on 13 October after eleven days unpushed.
 
 See playbook section 7 for the gate and evidence workflow.
 
@@ -248,7 +265,11 @@ small context matter. These rules win over habit:
      happened, and propose new targets when the game has grown.
   5. Write one janitor line in `run-log.md`: what went, what was flagged,
      sizes before and after.
-- Never force-remove a worktree or rewrite history without Kyle.
+- Never force-remove a worktree. Never rewrite history without Kyle, with one
+  standing exception (Kyle, 13 October 2026): Claude may run the SPEC 0.8
+  binary compaction of `integration/wasteland` and force-push it without
+  asking, in a window when Codex has paused merges, and must announce it in
+  the inbox. `master` is never rewritten.
 - History was rewritten on 24 September 2026 (SPEC 0.7, CLEAN-09). Never merge
   a branch that still contains pre-rewrite commits; rebase it first using
   `docs/history/history-rewrite-2026-09-24-map.txt`.

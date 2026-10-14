@@ -1,4 +1,4 @@
-import {offeredRaceLaps, supportsLapChoice} from './lap-choice.js';
+import {offeredRaceLaps, defaultRaceLaps, supportsLapChoice} from './lap-choice.js';
 import {COURSE, CARS} from './config.js';
 import {eventKey, UPGRADE_TYPES} from './progression.js';
 import {getLeaderboard} from './leaderboard.js';
@@ -13,7 +13,7 @@ function leaderboardScreen(){
   const grandPrix = boardFilter.mode === 'grandprix';
   const mode=grandPrix?'grandprix':'duel';
   const lapChoices=offeredRaceLaps(stage,mode);
-  const laps=lapChoices.includes(Number(boardFilter.laps))?Number(boardFilter.laps):lapChoices[0];
+  const laps=lapChoices.includes(Number(boardFilter.laps))?Number(boardFilter.laps):defaultRaceLaps(stage,mode);
   const lapFilter=app._switches?.().enabled('lap-choice')===true&&supportsLapChoice(stage,mode)?`<label>LAPS<select data-board-filter="laps" aria-label="Leaderboard laps">${lapChoices.map(count=>`<option value="${count}" ${count===laps?'selected':''}>${count} laps</option>`).join('')}</select></label>`:'';
   const oneRun = grandPrix && stage.closed === false;
   const lapLabel = oneRun ? 'one run' : `${laps} laps`;

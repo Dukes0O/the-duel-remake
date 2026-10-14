@@ -13,7 +13,7 @@ export const practiceMapLegendText=()=>PRACTICE_MAP_LEGEND.map(item=>item.descri
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 export function routePhase(distance,length,closed=true){return closed?((distance%length)+length)%length:clamp(distance,0,length);}
 export function projectRoutePoint(geometry,point,out={}){
-  out.x=geometry.offsetX+(point.x-geometry.minX)*geometry.scale;
+  out.x=geometry.width-geometry.offsetX-(point.x-geometry.minX)*geometry.scale;
   out.y=geometry.height-geometry.offsetY-(point.z-geometry.minZ)*geometry.scale;
   return out;
 }
@@ -55,7 +55,7 @@ export function buildRouteMapGeometry(course,width=400,height=280,padding=28,{di
     return {...branch,points:project(world),marker:projectRoutePoint(geometry,world[markerIndex])};
   });
   geometry.finish=projectRoutePoint(geometry,course.worldAt(course.closed?0:course.length));
-  geometry.finishHeading=course.at(course.closed?0:course.length).heading;
+  geometry.finishHeading=-course.at(course.closed?0:course.length).heading;
   geometry.gates=(course.features.rushGates||[]).map((gate,index)=>({id:gate.id,index,s:gate.s,marker:projectRoutePoint(geometry,course.worldAt(gate.s,gate.off||0))}));
   if(course.def.practice){geometry.finish=null;geometry.finishHeading=null;geometry.practiceMarkers=practice.map(({world,...feature})=>({...feature,marker:projectRoutePoint(geometry,world)}));}
   return geometry;
@@ -78,7 +78,7 @@ export function drawPracticeMarkers(ctx,map){
   ctx.restore();
 }
 export function routeActorPose(course,geometry,actor,out={}){
-  const point=course.worldAt(actor.s,actor.lateral||0);projectRoutePoint(geometry,point,out);out.heading=point.heading+(actor.headingError||0);return out;
+  const point=course.worldAt(actor.s,actor.lateral||0);projectRoutePoint(geometry,point,out);out.heading=-(point.heading+(actor.headingError||0));return out;
 }
 function makePath(points){const path=new Path2D();for(let i=0;i<points.length;i+=2)i?path.lineTo(points[i],points[i+1]):path.moveTo(points[i],points[i+1]);return path;}
 function stroke(ctx,path,color,width,dash=[]){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.stroke(path);ctx.setLineDash([]);}

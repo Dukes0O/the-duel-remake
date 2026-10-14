@@ -1,3 +1,5 @@
+import {velocity as audioActorVelocity} from './combat-weapons.js';
+import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
@@ -5,8 +7,8 @@ import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hin
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
 import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
-import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit, getEquippedRoofLook} from './armor-kits.js';
-import {CAMERA_MODES} from './camera-views.js';
+import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit, getEquippedRoofLook, getRoadRoofLook, equipRoadRoof} from './armor-kits.js';
+import {CAMERA_MODES,normalizeCameraMode} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
 // DOM HUD (main.js) are views that read state and call these verbs.
@@ -37,7 +39,7 @@ import {normalizeLightingMood} from './lighting-moods.js';
 import {DEFAULT_RACE_SETTINGS,normalizeRaceSettings,raceSettingsChoices,raceSettingsStage} from './race-settings.js';
 import {grandPrixCourse} from './race-field.js';
 import {pitTransitTarget} from './pit-lane.js';
-import {createKeyboardSteering,keyboardSteeringDirection} from './keyboard-steering.js';
+import {createKeyboardSteering,createKeyboardThrottle,keyboardSteeringDirection} from './keyboard-steering.js';
 import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDrive,
   footGamepadInput,footControlInput,preventCarKeyDefault} from './input-contexts.js';
 import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as buyDriver,selectDriver as equipDriver} from './drivers.js';
@@ -109,6 +111,9 @@ export class App {
     this._footPointer={lookX:0,lookY:0,fire:false,aim:false};
     this._footPointerReleasedAt=-Infinity;
     this._keyboardSteering=createKeyboardSteering();
+    this._arenaKeyboardSteering=createKeyboardSteering({arena:true});
+    this._keyboardThrottle=createKeyboardThrottle();
+    this._keyboardArena=null;
     this.players=loadPlayers();this.player=activePlayer(this.players);this.profile=this.player.profile;
     this._legacyRaceDefaults={...DEFAULT_RACE_SETTINGS,routeVariant:readRoutePreference(),lightingMood:readLightingMood(),ghostEnabled:readGhostEnabled()};
     // Capture old browser preferences once for every existing legacy player.
@@ -159,7 +164,7 @@ export class App {
         this._settleResult(event.stageResult,state);
       }
       else if(event.gameover)this._settleResult(state.results||{},state);
-      if(event.stageLoaded!=null){this._keyboardSteering.reset();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);this._startLapTelemetry(state);}
+      if(event.stageLoaded!=null){this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);this._startLapTelemetry(state);}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.grandPrixLapRecorder?.observe(state);this.lapTelemetryRecorder?.observe(state);}
       if(event.qualifyingFlyingStart)this.lapTelemetryRecorder?.armQualifying(state);
       // The native final qualifying finish must be captured before stage reload.
@@ -194,7 +199,7 @@ export class App {
         if(event.fighterExited && typeof document!=='undefined' && !document.pointerLockElement){
           try{document.querySelector('#view3d canvas')?.requestPointerLock?.()?.catch?.(()=>{});}catch{}
         }
-        this._keyboardSteering.reset();
+        this._resetKeyboardInput();
         this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,interact:false});
       }
     });
@@ -241,11 +246,11 @@ export class App {
   // loading never changes the user's pause or replays elapsed loading time.
   claimVisualReadiness(owner){
     if(owner==null)return false;
-    this._visualReadiness={owner,ready:false,state:null,course:null};this._stepAccumulator=0;this._keyboardSteering.reset();return true;
+    this._visualReadiness={owner,ready:false,state:null,course:null};this._stepAccumulator=0;this._resetKeyboardInput();return true;
   }
   holdVisualReadiness(owner){
     if(this._visualReadiness?.owner!==owner)return false;
-    this._visualReadiness.ready=false;this._stepAccumulator=0;this._keyboardSteering.reset();return true;
+    this._visualReadiness.ready=false;this._stepAccumulator=0;this._resetKeyboardInput();return true;
   }
   presentVisualFrame(owner,state,course){
     const gate=this._visualReadiness;
@@ -265,13 +270,42 @@ export class App {
     this.deepAudio.dispose();
     this.duel.clearDeep();
     this.duel.state.hiddenRoadJourney = null;
-    this.stop();this._inputEvents?.abort();this.keys={};this._keyboardSteering.reset();this.onFrame=null;
+    this.stop();this._inputEvents?.abort();this.keys={};this._resetKeyboardInput();this.onFrame=null;
     this.frameDiagnostics?.stop();this.frameDiagnostics=null;
     this._visualReadiness=null;
     this._menuCourses.clear();this.ghostRecorder=this.ghostRecord=this.ghostPose=null;this.lapTelemetryRecorder=null;
     this.audio.setPaused(true);this.audio.context?.close?.()?.catch?.(()=>{});
     if(typeof window!=='undefined'&&window.__game?.duel===this.duel)delete window.__game;
   }
+  _vehicleAudioSnapshot(state, course, listener) {
+    if (!this._switches().enabled('rival-voices') || !course || !listener) return null;
+    this._vehicleAudioIdentities ??= new WeakMap();
+    const nearest = (actors, limit) => {
+      if (!Array.isArray(actors)) return [];
+      let indices = this._vehicleAudioIdentities.get(actors);
+      if (!indices) {
+        indices = new WeakMap();
+        actors.forEach((actor, index) => indices.set(actor, index));
+        this._vehicleAudioIdentities.set(actors, indices);
+      }
+      const rows = [];
+      actors.forEach((actor, index) => {
+        if (!indices.has(actor)) indices.set(actor, index);
+        if (actor.alive === false || actor.wrecked || actor.crushed || actor.finished) return;
+        const at = course.groundAt(actor.s, actor.lateral);
+        const movement = audioActorVelocity(actor, at);
+        const position = {x: at.x, y: at.y + 1.3 + (actor.airHeight || 0), z: at.z,
+          vx: movement.x, vy: actor._verticalSpeed || 0, vz: movement.z};
+        const distance = Math.hypot(position.x - listener.x, position.y - listener.y, position.z - listener.z);
+        if (!Number.isFinite(distance) || distance > 250) return;
+        rows.push({id: String(actor.id ?? indices.get(actor)), actor, group: actors,
+          car: actor.car, revs: actor.revs, speedMph: actor.speedMph, position, distance});
+      });
+      return rows.sort((a, b) => a.distance - b.distance || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)).slice(0, limit);
+    };
+    return {stage: course, rivals: nearest(state.opponents, 3), traffic: nearest(state.traffic, 4)};
+  }
+
   _updateAudio() {
     const state = this.duel.state;
     const course = this.duel.course;
@@ -302,6 +336,7 @@ export class App {
       ...deepEnvironment,
       course,
       listener,
+      ...(this._switches().enabled('rival-voices') ? {vehicles: this._vehicleAudioSnapshot(state, course, listener)} : {}),
       tunnel: tunnelMix,
       looseSurface: !!course?.def.offroad || !!course?.def.arena,
       biome: course?.themeAt(state.s),
@@ -312,10 +347,10 @@ export class App {
 
   _simulate(seconds) {
     this._syncHiddenRoadDiscovery();
-    if(!this.visualReady){this._stepAccumulator=0;this._keyboardSteering.reset();return;}
+    if(!this.visualReady){this._stepAccumulator=0;this._resetKeyboardInput();return;}
     this._stepAccumulator += seconds;
     while (this._stepAccumulator + 1e-10 >= SIMULATION_STEP) {
-      if(!this.visualReady){this._stepAccumulator=0;this._keyboardSteering.reset();break;}
+      if(!this.visualReady){this._stepAccumulator=0;this._resetKeyboardInput();break;}
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
       this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
@@ -339,13 +374,15 @@ export class App {
     const legacySeed=this.duel.state.status==='menu'&&this.duel.seed!==this.seed?this.duel.seed>>>0:null;
     const selectedSeed=isRouteVariant(options.routeVariant)?getRouteVariant(options.routeVariant).seed:explicitSeed??legacySeed??this.getMenuSeed(stageIndex);
     this.seed=supportsRouteVariants(stage)?selectedSeed:1989;
-    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true});this._racePaintCar=car;
+    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});this._racePaintCar=car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.runId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._settledMuddyHollowDeparture = null;
     this._stageStartCrashes=0;
     this._campaignStart=stageIndex;this._runPlayerId=this.player.id;
     this.cpuDifficulty=['easy','medium','hard'].includes(options.cpuDifficulty)?options.cpuDifficulty:this.cpuDifficulty;
     const mode=stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
+    const yetiSeed=stage.id==='summit-run'&&this._switches().enabled('summit-run')&&this._switches().enabled('yeti')
+      ?hash32(this.seed,this.runId):undefined;
     const difficulty=options.difficulty??this.duel.state.difficulty;
     const laps=this.getLapChoice(stageIndex,mode,options.laps);
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(stage,mode))
@@ -360,10 +397,10 @@ export class App {
     this.audio.unlock();
     this.audio.setPaused(false);
     this.keys = {};
-    this._keyboardSteering.reset();
+    this._resetKeyboardInput();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,laps,tyre,weaponLevels:getProfileWeapons(this.profile).levels,
+    this.duel.startCampaign({...options,laps,tyre,yetiSeed,weaponLevels:getProfileWeapons(this.profile).levels,
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
@@ -472,15 +509,26 @@ export class App {
   }
   getPaintPreset(car,{menu=false}={}){
     if(menu||this.duel.state.status==='menu')return getPaintAppearance(this.profile,car,
-      {muddyHollowEnabled:true});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});
     return car===this._racePaintCar?this._racePaint:null;
+  }
+  getRoofLook(car,{menu=false}={}){
+    if(!this._switches().enabled('yeti'))return null;
+    return menu||this.duel.state.status==='menu'?getRoadRoofLook(this.profile,car,{yetiEnabled:true}):
+      car===this._racePaintCar?this._raceRoof:null;
+  }
+  selectRoofLook(car,id){
+    if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before changing roof looks.'};
+    this._refreshPlayer();const selected=equipRoadRoof(this.profile,car,id,{yetiEnabled:this._switches().enabled('yeti')});
+    if(selected.ok&&selected.profile!==this.profile){this.profile=selected.profile;this._saveProfile();this.duel.emit({garage:true});}
+    return selected;
   }
   purchasePaint(car,id){return this._paintOperation(car,id,true);}
   applyPaint(car,id){return this._paintOperation(car,id,false);}
   _paintOperation(car,id,buy){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before changing paint.',cost:0};
     this._refreshPlayer();const result=(buy?buyPaint:equipPaint)(this.profile,car,id,
-      {muddyHollowEnabled:true});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});
     if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});}return result;
   }
   setGhostEnabled(enabled){
@@ -627,7 +675,19 @@ export class App {
   _settleResult(result,state){
     // Scrapdome events settle through their own result, never as races.
     if(state.arena)return;
-    if(state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving')){
+    const yetiFinish=state===this.duel.state && result===state.results && !state.qualifying &&
+      result.yetiEnabled===true && result.yetiSeen===true && state.yeti?.seen===true &&
+      this.duel.course?.def.id==='summit-run' && this._switches().enabled('yeti') && this._switches().enabled('summit-run');
+    const gpWithoutPay=state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving');
+    if(gpWithoutPay&&!yetiFinish){
+      if(isYetiGrandPrixInput(this.profile.activeRace)&&state===this.duel.state&&(result===state.results||result.abandoned===true)&&
+        this._runPlayerId===this.player.id&&state.playerId===this._runPlayerId){
+        this._refreshPlayer();const pending=this.profile.activeRace;
+        if(isYetiGrandPrixInput(pending)&&pending.key===`${this.runId}:${state.stageIndex}`&&
+          this.duel.course?.def.id==='summit-run'&&pending.yetiSeed===state.yetiSeed){
+          this.profile={...this.profile,activeRace:null};this._saveProfile();
+        }
+      }
       result.creditReward=0;result.creditBalance=this.profile.credits;return;
     }
     if(state.hiddenRoadVisit)return;
@@ -647,7 +707,17 @@ export class App {
       if(result.completed===true)Object.assign(result,{lapChoiceEnabled:true,
         raceDistance:raceDistance(COURSE[state.stageIndex],payload.laps,state.mode)});
     }
+    if(yetiFinish)Object.assign(payload,{ownerPlayerId:this._runPlayerId,playerId:state.playerId,
+      yetiEnabled:true,yetiSeen:true});
     const awarded=settleRace(this.profile,payload);
+    if(awarded.yetiAwarded){
+      if(!awarded.awarded){this.profile=awarded.profile;this._saveProfile();}
+      result.yetiSightings=awarded.yetiSightings;
+    }
+    if(gpWithoutPay){
+      if(awarded.profile!==this.profile&&this.profile.activeRace&&awarded.profile.activeRace===null){this.profile=awarded.profile;this._saveProfile();}
+      result.creditReward=0;result.creditBalance=this.profile.credits;return;
+    }
     if(awarded.awarded){
       this.profile=awarded.profile;this._saveProfile();
       if(state.mode==='grandprix')result.creditPositionReward=Math.min(Math.max(0,awarded.reward),Math.max(0,awarded.breakdown.base));
@@ -1061,7 +1131,7 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
-      {muddyHollowEnabled:true}); this._racePaintCar = car;
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock(); this.audio.setPaused(false);
     const options = {mode, venueId, car, driverId: getEquippedDriverId(this.profile),
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
@@ -1092,7 +1162,7 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
-      {muddyHollowEnabled:true}); this._racePaintCar = car;
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock(); this.audio.setPaused(false);
     return this.duel.startHiddenRoadVisit({playerId: this.player.id, car, driverId,
       upgrades: getUpgradeLevels(this.profile, car), seed: this.getMenuSeed(0),
@@ -1100,7 +1170,7 @@ export class App {
   }
   _clearHiddenRoadInput() {
     this.keys = {};
-    this._keyboardSteering.reset();
+    this._resetKeyboardInput();
     this._footPointer.lookX = this._footPointer.lookY = 0;
     this._footPointer.fire = this._footPointer.aim = false;
     this.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false,
@@ -1114,12 +1184,15 @@ export class App {
     return true;
   }
   _markActiveRace(state){
-    if(state.arena||state.mode==='grandprix')return;
+    const yetiInput=COURSE[state.stageIndex]?.id==='summit-run'&&validYetiSeed(state.yetiSeed)&&
+      this._switches().enabled('summit-run')&&this._switches().enabled('yeti');
+    if(state.arena||state.mode==='grandprix'&&!yetiInput)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     const key=`${this.runId}:${state.stageIndex}`;
     if(!this.runId||this._markedRaceKey===key||this.profile.settledResults.includes(key))return;
     const pending=this.profile.activeRace?.key===key?this.profile.activeRace:{pendingPoliceFineCount:0,pendingPoliceFines:0};
-    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,stageId:COURSE[state.stageIndex]?.id,car:state.car,driverId:state.driverId,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty}};this._saveProfile();
+    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,stageId:COURSE[state.stageIndex]?.id,car:state.car,driverId:state.driverId,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
+      ...(yetiInput?{yetiSeed:state.yetiSeed,...(state.mode==='grandprix'?{mode:'grandprix'}:{})}:{})}};this._saveProfile();
   }
   requestNavigation(action){
     if(!['restart','menu'].includes(action))return false;
@@ -1252,7 +1325,7 @@ export class App {
     if(st.paused && st.onFoot && typeof document!=='undefined' &&
         document.pointerLockElement) document.exitPointerLock();
     this.keys = {};
-    this._keyboardSteering.reset();
+    this._resetKeyboardInput();
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
     st.boosting = false;
     this.audio.setPaused(st.paused);
@@ -1279,7 +1352,7 @@ export class App {
     if (this.duel.state.onFoot && typeof document !== 'undefined' &&
         document.pointerLockElement) document.exitPointerLock();
     this.keys = {};
-    this._keyboardSteering.reset();
+    this._resetKeyboardInput();
     const st = this.duel.state;
     this.duel.clearDeep();this.deepAudio.stop();
     st.paused = false; st.status = 'menu'; st.boosting = false;
@@ -1315,12 +1388,15 @@ export class App {
     return this.setFootCamera(this.footCameraMode === 'first-person' ? 'overhead' : 'first-person');
   }
   setCamera(mode) {
+    this.cameraMode=normalizeCameraMode(this.cameraMode);
+    if(['front','right','left'].includes(mode))mode='chase';
     if(!CAMERA_MODES.includes(mode))return this.cameraMode;
     this.cameraMode=mode;
     this.duel.emit({ camera: this.cameraMode });
     return this.cameraMode;
   }
   cycleCamera() {
+    if(!CAMERA_MODES.includes(this.cameraMode))return this.setCamera('chase');
     return this.setCamera(CAMERA_MODES[(CAMERA_MODES.indexOf(this.cameraMode)+1)%CAMERA_MODES.length]);
   }
 
@@ -1344,7 +1420,7 @@ export class App {
     if (context !== null && !INPUT_CONTEXTS[context]) throw new Error(`Unknown input context: ${context}`);
     this.inputContext = context;
     this.keys = {};
-    this._keyboardSteering.reset();
+    this._resetKeyboardInput();
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false,
       shiftUp: false, shiftDown: false, interact: false });
   }
@@ -1366,19 +1442,25 @@ export class App {
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
   }
+  _resetKeyboardInput() {
+    this._keyboardSteering.reset();
+    this._arenaKeyboardSteering.reset();
+    this._keyboardThrottle.reset();
+    this._keyboardArena=null;
+  }
   _applyInput(dt) {
     const st = this.duel.state;
     const pad = this._readGamepad(dt);
     const context = this.activeInputContext();
-    if (st.paused) {this._keyboardSteering.reset();return;}
+    if (st.paused) {this._resetKeyboardInput();return;}
     if (st.status === 'exploring' && (st.hiddenRoadJourney?.controlsLocked||st.deepJourney?.controlsLocked)) {
       this.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false,
         shiftUp: false, shiftDown: false, interact: false});
-      this._keyboardSteering.reset();
+      this._resetKeyboardInput();
       return;
     }
     if (context === 'foot') {
-      this._keyboardSteering.reset();
+      this._resetKeyboardInput();
       const foot=footControlInput(this.keys,pad,this._footPointer);
       this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,
         interact:foot.interact});
@@ -1386,12 +1468,17 @@ export class App {
       this._footPointer.lookX=this._footPointer.lookY=0;
       return;
     }
-    if (context !== 'car') {this._keyboardSteering.reset();return;}
-    if (this.autopilot) {this._keyboardSteering.reset();this._driveAutopilot(dt);return;}
+    if (context !== 'car') {this._resetKeyboardInput();return;}
+    if (this.autopilot) {this._resetKeyboardInput();this._driveAutopilot(dt);return;}
     const k = this.keys;
-    const keyboardSteer = this._keyboardSteering.update(keyboardSteeringDirection(k),dt);
+    const arena=this.duel.course?.def.venue===true&&this.duel.course?.def.arena===true;
+    if(this._keyboardArena!==arena){this._resetKeyboardInput();this._keyboardArena=arena;}
+    const steering=arena?this._arenaKeyboardSteering:this._keyboardSteering;
+    const keyboardSteer = steering.update(keyboardSteeringDirection(k),dt,st.speedMph);
+    const pressedThrottle=heldInput(context,'throttle',k);
+    const keyboardThrottle=arena?(pressedThrottle?1:0):this._keyboardThrottle.update(pressedThrottle,dt);
     this.duel.setInput({
-      throttle: heldInput(context, 'throttle', k) ? 1 : pad.throttle,
+      throttle: pressedThrottle ? keyboardThrottle : pad.throttle,
       brake: heldInput(context, 'brake', k) ? 1 : pad.brake,
       steer: keyboardSteer || pad.steer,
       boost: heldInput(context, 'boost', k) || pad.boost,
@@ -1488,10 +1575,12 @@ export class App {
       this.audio.unlock();
       if (!e.repeat) this._inputAction(keyboardAction(this.activeInputContext(), e.code));
       this.keys[e.code] = true;
-      if(!keyboardSteeringDirection(this.keys))this._keyboardSteering.reset();
+      if(!keyboardSteeringDirection(this.keys)){this._keyboardSteering.reset();this._arenaKeyboardSteering.reset();}
+      if(!heldInput('car','throttle',this.keys))this._keyboardThrottle.reset();
       if (preventCarKeyDefault(e.code, e.target instanceof Element && !!e.target.closest('button'))) e.preventDefault();
     },{signal});
-    window.addEventListener('keyup', (e) => { this.keys[e.code] = false;if(!keyboardSteeringDirection(this.keys))this._keyboardSteering.reset(); },{signal});
+    window.addEventListener('keyup', (e) => { this.keys[e.code] = false;if(!keyboardSteeringDirection(this.keys)){this._keyboardSteering.reset();this._arenaKeyboardSteering.reset();}
+      if(!heldInput('car','throttle',this.keys))this._keyboardThrottle.reset(); },{signal});
     window.addEventListener('pointerdown', () => this.audio.unlock(), { passive: true,signal });
     // Mouse events report each button in a chord; pointerdown only reports
     // the first button, losing left-click while right-click is already held.
@@ -1536,7 +1625,7 @@ export class App {
     window.addEventListener('blur', () => {
       this.keys = {};
       this._footPointer.fire=this._footPointer.aim=false;
-      this._keyboardSteering.reset();
+      this._resetKeyboardInput();
       if (!this.duel.state.paused && ['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) this.togglePause();
     },{signal});
   }

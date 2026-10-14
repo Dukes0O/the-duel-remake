@@ -12,6 +12,7 @@ import {disposeTree} from '../src/world.js';
 import {registerSceneSystem} from '../src/scene-systems.js';
 import {Course} from '../src/course.js';
 import {PANORAMA_RIDGE} from '../src/circuits/panorama-ridge.js';
+import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
 import {COURSE} from '../src/config.js';
 import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
@@ -229,6 +230,35 @@ assert.equal(real.placements.length,35);real.update({high:false,position:{x:nati
 assert.equal(real.stats.low,35);assert.ok(real.group.children.some(node=>node.isInstancedMesh));
 assert.ok(real.group.children.some(node=>node.name==='yeti low'));real.dispose();
 console.log('Track kits: 70 real assets, metadata, transforms, quality, countdown, clearance, readiness and exact lifetime passed.');
+
+// Actual model matrices must meet the same nine footprint samples as the ground report.
+{
+  const harbour=new Course(HARBOUR_LIGHTS,1989),before=JSON.stringify(harbour.features);
+  const rows=[1160,1780,2140].map(s=>HARBOUR_LIGHTS.kitPlacements.filter(row=>
+    row.id==='concrete-wall'||row.id==='catch-fence').reduce((best,row)=>Math.abs(row.s-s)<Math.abs(best.s-s)?row:best));
+  const assets=new Map(),seated=createTrackKits(harbour,{placements:rows,loadAsset:async path=>{
+    const bytes=await readFile(new URL('../public'+path,import.meta.url));
+    const asset=await parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+    assets.set(path,new THREE.Box3().setFromObject(asset.scene));return asset;
+  }});
+  try{
+    assert.equal(await seated.ready,true,seated.error?.message);
+    for(let i=0;i<rows.length;i++){
+      const row=rows[i],matrix=seated.getPlacementPose(i),bounds=assets.get('/assets/models/circuits/kits/'+row.id+'.glb');
+      assert.ok(bounds,'actual High model bounds exist');
+      for(const x of [bounds.min.x,(bounds.min.x+bounds.max.x)/2,bounds.max.x])
+        for(const z of [bounds.min.z,(bounds.min.z+bounds.max.z)/2,bounds.max.z]){
+          const base=new THREE.Vector3(x,bounds.min.y,z).applyMatrix4(matrix),at=harbour.nearest(base.x,base.z,row.s);
+          const ground=renderedGroundHeight(harbour,{...harbour.groundAt(at.s,at.lateral),s:at.s,off:at.lateral},{requireSurface:true});
+          assert.ok(Number.isFinite(ground),'actual drawn ground exists');
+          assert.ok(base.y-ground<=.45,'actual model base float retains .45 m bound');
+          assert.ok(ground-base.y<=1.5,'actual model base sink retains 1.5 m bound');
+        }
+    }
+    assert.equal(JSON.stringify(harbour.features),before,'seating cannot alter physical geometry');
+  }finally{seated.dispose();}
+}
+
 
 // Compare against the actual Float32 indexed triangles, independently of the
 // grounding helper. The far witness lies beyond the authored 64 m ribbon.
@@ -490,3 +520,27 @@ async function validateCircuitKits(definition) {
 
 for (const definition of ALL_CIRCUITS)
   if (definition.kitPlacements?.length) await validateCircuitKits(definition);
+
+// The actual approved High/LOD signs enlarge only their face and lettering.
+{
+ const c=new Course(COURSE[0],1989),assets=new Map(),ids=['braking-board-150','braking-board-100','braking-board-50'];
+ const owner=createTrackKits(c,{placements:ids.map((id,index)=>({id,s:120+index*30,lateral:80})),validateClearance:false,loadAsset:async path=>{
+  const bytes=await readFile(new URL('../public'+path,import.meta.url)),model=await parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');assets.set(path,model);return model;
+ }});
+ try {
+  assert.equal(await owner.ready,true,owner.error?.message);
+  for(const [index,id]of ids.entries())for(const version of ['high','low']){
+   const model=assets.get(`/assets/models/circuits/kits/${id}${version==='low'?'-lod':''}.glb`),panel=model.scene.getObjectByName(id+'-distance-board_1');
+   const center=new THREE.Box3().setFromObject(panel).getCenter(new THREE.Vector3());
+   const enlargement=new THREE.Matrix4().makeScale(2,2,1).setPosition(-center.x,-center.y,0);
+   const placement=owner.getPlacementPose(index);
+   for(const node of model.scene.children){
+    const mesh=owner.group.children.find(m=>m.isInstancedMesh&&m.geometry===node.geometry),actual=new THREE.Matrix4();assert.ok(mesh,'actual source mesh is submitted');mesh.getMatrixAt(0,actual);
+    const isFace=node.name!==id+'-distance-board_0';
+    const expected=placement.clone().multiply(isFace?enlargement.clone().multiply(node.matrixWorld):node.matrixWorld);
+    for(let k=0;k<16;k++)assert.ok(Math.abs(actual.elements[k]-expected.elements[k])<.0001,`${id}/${version}/${node.name}: face-only matrix`);
+    assert.equal(node.scale.x,1);assert.equal(node.scale.y,1,'loaded asset transforms remain read-only');
+   }
+  }
+ }finally{owner.dispose();}
+}

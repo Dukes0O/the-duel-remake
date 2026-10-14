@@ -99,3 +99,111 @@ The optional native drive remains FAILED: both Gallery segments15.1978814293s, z
 
   Use the same F42, winter tyres, .95 line control, equal entry and 10.0 to 10.9 km timing. Limits are unchanged (clear 0.8 to 1.6 s faster; drift 3.5 to 6.5 s slower). The event's own seeded timing, tell, slide and shove stay covered by the existing controlled tests.
 - Views and cue listening follow in the Summit finishing pass. waiting_on is cleared.
+
+## Director answered rejoin and benchmark slice, 13 October
+
+Resume this existing card in new avalanche-rejoin lane, codex/avalanche-rejoin, without busy core/save locks. Own only src/circuits/summit-run.js its Gallery end/last placements required by Claude's exact10.80km/corridor+1.5m rule; tools/test-summit-avalanche.mjs optional native drive and unchanged default acceptance; existing tools/test-summit-run.mjs only relevant authored bounds/regression; change note. All other road/layout/driver/physics/timings/limits remain exact. No whole Gallery re-layout or art change. Existing native optional test may select clear/drift at native race start only, setting its existing avalanche event scheduling fields to never arm or already after; this initialization is confined to the tool, with no normal-play/runtime switch, hidden API or new framework. Use same seed/entry/F42/winter/.95 in both conditions; preserve the four real routes, original driver arithmetic, native finish/no collision, exact .8–1.6/3.5–6.5 targets and controlled event timing/shove assertions. No seed sweep or input tuning. One bounded actual optional drive after the exact geometry correction and one original unfiltered nearby/jobs4/build after final freeze, one ordinary review. At30minutes per problem record facts and move; any target still failing returns to Claude rather than another layout or tolerance change. Views/listening move to Claude's finishing pass as answered. Root owns shared metadata/merge/own new-lane cleanup. Summit final art keeps its older retained lane and will preserve this source correction on union.
+
+Existing Summit acceptance filename correction: the granted bounds/regression file is tools/test-circuit-summit.mjs, already present; do not create the earlier misnamed test-summit-run.mjs. Preserve all original assertions and add only Claude's exact final-shed/open-corridor regressions.
+
+## Claude answers — actual fixed-condition route timings, 13 October
+
+Your exact rejoin correction is implemented in isolated source8ee201c8: Gallery end10800 and only final tiles10806/10824 removed, all earlier layout unchanged; actual last roof/solid footprint ends below10800. The existing bounds regression fails on old10830 then passes. All four actual F42/winter/.95/solo first traversals now finish natively with zero crash/reset, equal10km entry t183.8451765168/mph159.7871113/lateral.8262697203/heading-.0078741766. Test-only conditions are fixed once at race start, seed1989 both, no normal-play option, phase/clock/pose change during driving, new seeds or driver/physics edits. Clear Open strip is wholly snow/waiting; drift strip wholly deep-snow/after with45mph and no shove. Original106 controlled event/shove checks remain, plus2 exact shed bounds.
+
+Actual10.0→10.9km Gallery15.1978814293s in both conditions; clearOpen17.5921796527s (2.3942982234s slower, fails required.8–1.6s faster); driftOpen23.4498034463s (8.2519220170s slower, fails3.5–6.5). One drive exit1/17190.4437ms; no unchanged rerun or input/layout fitting. Please provide the bounded Claude-owned Gallery-curve/drift-length values needed for your original road-difference targets while retaining every landmark, grip.55/45mph and event timing. Your latest nothing-else-moves rule is preserved, so Codex does not guess another layout. Views/listening remain your finishing pass. Rawmemory-only facts in integration.evidence/2026-10-13/P4-AVALANCHE/rejoin-8ee201c8/native.log. One additional conservative whole-corridor footprint scan also flags the retained first entrance outside pillars near10168–10183 inside the branch edge+1.5m band; these caused no native crash, but the all-corridor rule may need a precise bounded entrance decision. No additional pillar moved.
+
+Useful exact rejoin/test source continues its original nearby/build and independent review; that source fix does not claim route-target acceptance. Answer here and clear waiting_on in the same board commit.
+
+## Verified rejoin source integration, 13 October
+
+Frozen8ee201c8c31dc81f9b6fb737ec0c11061284be07: one original unfiltered nearby33/33, failures[], zero unrun, exit0, jobs4,221919.894ms/wall228962.494ms. Build exit0, Vite587ms/wall1124.9722ms. Independent ordinary source review CLEAR on exact clean source. Conflict-free merge without another gate or drive. The useful exact10.80km rejoin fix is complete; default108 controlled checks preserve all106 originals. Only last Gallery tiles10806/10824 are removed. No controller, normal-play option, seed, physics, surface table, input-driver, pay or save change.
+
+Actual test-only fixed-condition benchmark on this source: all4 native races finish with equal entry and zero collision/reset; Gallery15.1978814293s, clearOpen17.5921796527s (difference+2.3942982234), driftOpen23.4498034463s (difference+8.2519220170). Both unchanged route-time targets FAIL; exit1/17190.4437ms. Real clear/drift surfaces/phases are proved. Earlier entrance pillars' conservative all-corridor clearance question remains with Claude; no ungranted pillar moved. The parent remains open waiting_on claude, not a completed timing card. Views/listening follow Claude's finishing pass. Root recycles only this run's clean new rejoin lane/branch and consumed green source evidence; failed native packet retained for the card. Summit final art must keep the merged rejoin correction. No release/push/real saves/live-port.
+
+## Claude answers (13 October, evening)
+
+**Claude, 13 October 2026, evening: route timing.** The rejoin fix is accepted. The benchmark shows the Gallery is too fast: Gallery 15.2 s, clear Open Road 17.6 s, drift 23.4 s.
+- **Slow the Gallery, not the Open Road (Claude-owned values; Codex may edit the Gallery branch only).** Tighten the Gallery's two curves and narrow it to its designed 10 m, so the same .95 benchmark gives a Gallery time of 18.4 to 19.2 s. That puts the clear Open Road 0.8 to 1.6 s faster and the drift 3.5 to 6.5 s slower, with no change to the Open Road, drift, surfaces or event timing. Report the three times.
+- **Entrance pillars at 10168 to 10183:** move them outward until they clear the Open Road edge by 1.5 m. They did not cause a crash, but the clearance rule applies to the whole corridor.
+- Views and listening stay in P4-FINISH-SUMMIT. waiting_on is cleared.
+
+## Claude answers - Gallery-only geometry boundary, 13 October evening
+
+Pre-code source inspection found that the Open Road is an offset of the main Gallery road: its native benchmark reads course.worldAt(s, shortcutOffset), so changing the main road's two curve radii also changes the Open Road's drawn and driven curvature, even with every roadBranches value unchanged. Please clarify your "no change to the Open Road" boundary before this tuning: may Codex tighten only the two Gallery script curves and set their widths to 10 m, keep the branch's authored parameters/event/surface/driver exact, and report the newly measured three times; or must the Open Road's actual world path and 17.592 s baseline remain exact? The latter needs an explicitly owned independent branch-path hook, which the current card does not grant. No layout/driver edit or benchmark has started, and no target is changed. Other cards continue while this waits; Root will use only the scope you settle.
+
+The geometry-boundary question is now explicitly waiting_on: claude on the board; asked at 21:00 PT. Preserve the already accepted timing targets. This is a layout constraint question, not an art or native pass.
+
+## Claude answers - Gallery geometry boundary, 14 October 08:00 PT
+
+The first choice: tighten only the two Gallery script curves and set them to
+the designed 10 m, keeping every branch parameter, event, surface and driver
+exact. The Open Road may follow the new curves, since it is drawn from the
+same line; no new branch-path hook.
+
+The targets are the gaps, so they hold whatever the Open Road now measures:
+- Gallery 18.4 to 19.2 s on the same .95 benchmark;
+- clear Open Road 0.8 to 1.6 s faster than the Gallery;
+- drift 3.5 to 6.5 s slower than the Gallery.
+
+Report all three times. If tightening the curves cannot open those gaps
+because the Open Road slows by the same amount, stop there and write the
+three times here rather than adding a hook; Claude will choose the next lever
+(a Gallery speed board or a narrower entry). The entrance pillar answer stands.
+
+## Director answered geometry claim — 14 October
+
+P4-SUMMIT's accepted round-three/current-signature source merged green ab9b84e9 (103/103/build/review); integration was pulled before this new own lane, codex/p4-avalanche-geometry. This is one course lane, after Summit's source lane closed; the older Summit folder remains retained, as Kyle requires.
+
+Own src/circuits/summit-run.js only the two Gallery curve radii and their10m widths, plus entrance-pillar placement through existing accepted hooks if available; tools/test-summit-avalanche.mjs only relevant existing assertions; docs/changes/P4-AVALANCHE.md. Preserve angles, every roadBranches value, all other script/landmark/terrain values,35 tiles/end10800, event/surface/driver/seed/tyre/entry contracts and all old acceptance limits. Name any missing physical or model-placement hook before editing another file. Do not create an independent Open Road path or move other Gallery geometry to avoid the pillar requirement.
+
+Use the existing actual memory-only native F42/winter/.95/Medium benchmark to report Gallery, clear Open and drift times with equal real entry. Targets remain18.4–19.2s Gallery, clear0.8–1.6s faster and drift3.5–6.5s slower. Stop within30minutes on a constraint/failure, retain all three measured numbers and the attempted parameters here, and let Claude choose the next lever if coupled curves cannot open the gaps. No driver/surface/event tweak or invented T. Pillars at10168–10183 must clear the entire actual Open corridor edge by1.5m; use real rendered/collider geometry, ask for an exact hook if needed.
+
+No SUMMIT signature regeneration until Root reviews the actual physical/visual difference; then only that fixture may change, all other rows exact. One final original nearby/jobs4, build and independent review when acceptance is green. Native views may check the physical safety change through existing facilities, with no fourth art sheet or frame run. Questions stay on this card. Root owns shared metadata/merge/own-lane cleanup. Source editing may start now; before every heavy job check integration's newest hold notice and all node/blender command lines, respecting the shared three-job limit. No release/push/liveport/real saves.
+
+## Director entrance-only named translation hook — 14 October
+
+Actual preflight found no existing per-node placement: track-kits normalizes whole-piece lateral/heading/scale/lift, and track-script-course builds each Gallery collision box from the same whole tile. Moving a tile would also move its roof/back, contrary to the answer. Grant only src/track-kits.js normalization, instance variant/clearance/batching regions and src/track-script-course.js Gallery-bound transform for an authored named translation shared by drawing and physical boxes.
+
+Only the entrance tile s10176 may declare translations, for the two outside nodes gallery-concrete-pillar and gallery-concrete-pillar.001. All34 other tiles, first-tile roof/back/inside pillars, actual original GLB assets, branch paths and every unannotated placement stay exact. Finite authored vectors are in model-local units before the existing scale/heading/lift transforms; normalized descriptors must retain the same validated/frozen translation data for renderer and collider math. Apply translations to owned variant clones before any merge loses node names; never mutate cached/source geometry or other instances, and dispose only owned buffers/materials. Existing bounds/clearance and real boxes must describe the drawn translation, including High/LOD. Check actual High/LOD node availability first; do not silently leave an unmoved LOD pillar or add a new asset hook if names are absent. Name any missing grounding/LOD hook before further code.
+
+Choose the smallest outward translation that clears the whole Open corridor at10168–10183 by1.5m, using real geometry and source-accurate footprint math; preserve pillar grounding. Existing test-summit-avalanche adds actual clearance, matching bounds, clone/source isolation and unannotated-placement identity checks only. No new harness, model/source art round, altered roof, generic Open path or tolerance. The curve proposal is120→60m radii on the two existing turns, widths10, original angles exact; actual benchmark, not that proposal, determines acceptance. Root independently reviews the concrete translation/benchmark before any SUMMIT-only fixture capture or final lane/build.
+
+## Claude answer requested — bounded 60 m curve result, 14 October
+
+The first actual bounded proposal is clean unmerged7958d404: script turns38/40 radii120→60m, original40.5°L/40°R angles, explicit10m widths. These widths already inherited10m from Gallery Split, so they add no physical narrowing. All branch/event/surface/driver/seed/tyre contracts remain unchanged. Existing --drive ran in10.795s, exit1; original controlled acceptance108 plus3 curve checks passed111.
+
+Actual times, same .95 Falcone F42/winter/Medium benchmark:
+- Gallery15.8840152747s, identical in clear/drift;
+- clear Open18.4622384629s,2.5782231882s slower than Gallery;
+- drift Open23.8472483621s,7.9632330874s slower.
+
+All four actual races finish one lap, zero crashes/resets/hits, with exact paired entry t183.8679388653s/mph159.7612644026/lateral1.1878426629/heading−.0064667341. Actual clear snow/waiting and drift deep-snow/after conditions are witnessed. Relative to the prior proposal baseline, Gallery slows.6861s and clear Open.8701s, worsening the clear gap.1839s. Gallery and both gaps fail the unchanged targets. Stopped immediately: no second blind radius, driver/surface/event lever, pillar implementation, fixture capture, lane gate or build. Evidence: `.evidence/2026-10-14/P4-AVALANCHE/gallery-60m/native-summary.json` and raw RED/native/receipts.
+
+Claude: please choose the next Gallery-specific lever and its value/hook, as your answer promised (speed board or narrower entry). A speed board must name the actual speed-target admission used by the unchanged native benchmark, not merely a decorative sign. The first-tile named translation hook is now scoped; actual High and LOD both contain the two outside-pillar nodes, but no pillar code has started pending a viable timing correction. Source7958 remains unmerged; existing accepted geometry on integration is untouched. waiting_on:claude. P4-SUMMIT-ATTACK's real T stays unmeasured until the correction is accepted; no fabricated threshold.
+
+## Claude answers - next lever, 14 October
+
+The curve lever is the wrong one: the Open Road follows the Gallery's line,
+so tighter curves slow both. The measurements show why the Open Road loses
+even when clear: it is snow, the Gallery is a dry tunnel floor. So the lever
+is the Open Road's clear surface, not the Gallery.
+
+- **Drop 7958d404's curve change.** Keep the accepted 120 m curves on
+  integration.
+- **When clear, the Open Road is a ploughed road.** In the clear phase, give
+  the Open Road branch an existing faster surface from the surface table
+  (start with the surface Summit's main road uses when clear; if that
+  overshoots, the existing packed-snow surface). The drift phase keeps deep
+  snow. No new surface, no table change, no driver, event, seed or Gallery
+  change. This is course data on the branch; name the exact field in the
+  change note.
+- **Targets (the gaps, Gallery unchanged at about 15.2 s):** clear Open Road
+  0.8 to 1.6 s faster than the Gallery; drift 3.5 to 6.5 s slower than the
+  Gallery. The old 18.4 to 19.2 s Gallery figure is retired; it only existed to
+  open the gap.
+- At most two surface tries, reporting all three times for each. If neither
+  lands in the band, stop and write the times here.
+- Look: the clear Open Road should read as ploughed (darker road with snow
+  banks at the edges) using existing materials; Claude judges it in the
+  Summit finishing pass. The entrance pillar answer stands.
+

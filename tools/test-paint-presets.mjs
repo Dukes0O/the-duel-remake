@@ -3,10 +3,13 @@ import {CARS} from '../src/config.js';
 import {createProfile,normalizeProfile,getUpgradeLevels,upgradedCar,bestKey} from '../src/progression.js';
 import {PAINT_PRESETS,normalizePaintState,normalizeCosmetics,getPaintState,getEquippedPaintId,getPaintAppearance,purchasePaint,applyPaint} from '../src/paint-presets.js';
 let checks=0;const check=(ok,message)=>{assert(ok,message);checks++;};
-check(Object.keys(PAINT_PRESETS).length===4,'catalog has three ordinary finishes and one reward finish');check(PAINT_PRESETS.factory.price===0&&PAINT_PRESETS.factory.appearance===null,'factory uses exact renderer restoration');check(PAINT_PRESETS.copper_metallic.price===250&&PAINT_PRESETS.glacier_satin.price===400,'paid presets have modest fixed prices');check(PAINT_PRESETS.titan_gold?.price===0&&PAINT_PRESETS.titan_gold?.reward==='muddy-hollow'&&PAINT_PRESETS.titan_gold?.car==='titan_monster','gold Titan paint is reward-only');check(Object.isFrozen(PAINT_PRESETS)&&Object.values(PAINT_PRESETS).every(Object.isFrozen),'catalog is immutable');
+check(Object.keys(PAINT_PRESETS).length===5,'catalog has three ordinary finishes and two reward finishes');
+assert.deepEqual(PAINT_PRESETS.frost.appearance,{id:'frost',name:'Frost',color:0xdce8f0,metalness:.1,roughness:.55});checks++;
+check(PAINT_PRESETS.factory.price===0&&PAINT_PRESETS.factory.appearance===null,'factory uses exact renderer restoration');check(PAINT_PRESETS.copper_metallic.price===250&&PAINT_PRESETS.glacier_satin.price===400,'paid presets have modest fixed prices');check(PAINT_PRESETS.titan_gold?.price===0&&PAINT_PRESETS.titan_gold?.reward==='muddy-hollow'&&PAINT_PRESETS.titan_gold?.car==='titan_monster','gold Titan paint is reward-only');check(Object.isFrozen(PAINT_PRESETS)&&Object.values(PAINT_PRESETS).every(Object.isFrozen),'catalog is immutable');
 for(const preset of Object.values(PAINT_PRESETS).filter(item=>item.appearance)){
   const appearance=preset.appearance;check(Object.isFrozen(appearance),'appearance descriptor is immutable');check(appearance.id===preset.id&&Number.isSafeInteger(appearance.color)&&appearance.color>=0&&appearance.color<=0xffffff,'valid stable appearance identity and RGB');
-  for(const key of ['metalness','roughness','clearcoat','clearcoatRoughness'])check(Number.isFinite(appearance[key])&&appearance[key]>=0&&appearance[key]<=1,`${key} stays within physical material bounds`);
+  const finishFields=preset.id==='frost'?['metalness','roughness']:['metalness','roughness','clearcoat','clearcoatRoughness'];
+  for(const key of finishFields)check(Number.isFinite(appearance[key])&&appearance[key]>=0&&appearance[key]<=1,`${key} stays within physical material bounds`);
   check(!Object.keys(appearance).some(key=>['speed','topSpeed','accel','grip','braking','nitro'].includes(key)),'appearance exposes no performance parameter');
 }
 let profile={...createProfile(),credits:1000};const before=JSON.stringify(profile);check(getEquippedPaintId(profile,'falcone_f42')==='factory'&&getPaintAppearance(profile,'falcone_f42')===null,'old profile defaults to factory');check(normalizePaintState(undefined).owned.join(',')==='factory','missing save defaults to factory');
