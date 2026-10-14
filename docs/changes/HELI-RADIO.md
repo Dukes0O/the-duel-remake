@@ -178,3 +178,11 @@ After HELI-MODE merged, its import guard (tools/test-heli-mode.mjs) named
 `tools/audio/build-heli.mjs`, which reads `src/heli/heli-radio-lines.js`
 to copy the takes. That one pair is added to the guard's approved list;
 nothing else is approved.
+
+## Review fixes (third turn)
+
+The reviewer found that the ground spin-down made the low rotor horn sound
+on every first take-off after a refuel, while the rotor was still spinning
+up. The horn now sounds only with the engine out, which is the only time a
+falling rotor is a danger. A new flight check covers a first take-off at
+full and half lift (test-heli-flight: 119 checks).

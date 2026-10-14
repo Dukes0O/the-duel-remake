@@ -231,6 +231,16 @@ assert.equal(touchdownClass({sink: 1, slide: 9}), 'crash'); checks++;
   ok(wall.crashed, 'rotor touching a cliff is a crash');
 }
 
+// A first take-off after refuelling an empty tank sounds no low rotor horn.
+{
+  for (const lift of [1, 0.5]) {
+    const state = createHeliState({ground, fuelKg: 0});
+    refuelHeli(state, 400);
+    const events = fly(state, 8, {lift});
+    ok(types(events).includes('liftoff') && !types(events).includes('lowRotor'), `no horn on a first take-off at lift ${lift}`);
+  }
+}
+
 // Mountains are cones: the rotor strikes one well above 60 m, the body
 // strikes a column between the skids and the rotor, and clear air is clear.
 {

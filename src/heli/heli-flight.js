@@ -244,7 +244,9 @@ export function stepHeli(state, controls = {}, env = {}, dt = HELI_STEP) {
   }
 
   // No horn for a rotor winding down or spinning up on the ground.
-  if (state.rotor < 0.9 && !state.lowRotorWarned && !state.onGround) {
+  // The low rotor horn warns of a rotor running down with the engine out;
+  // a rotor still spinning up after a refuel is not a warning.
+  if (state.rotor < 0.9 && !state.lowRotorWarned && !state.onGround && !state.engine) {
     state.lowRotorWarned = true;
     events.push({type: 'lowRotor', rotor: state.rotor});
   } else if (state.rotor >= 0.95) state.lowRotorWarned = false;
