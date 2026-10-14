@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import {writeFile, mkdir, copyFile} from 'node:fs/promises';
-import {execFileSync} from 'node:child_process';
-import {mkdtempSync, realpathSync, readFileSync, existsSync} from 'node:fs';
+import {writeFile, mkdir, copyFile, cp, rmdir} from 'node:fs/promises';
+import {execFileSync, spawn} from 'node:child_process';
+import {mkdtempSync, realpathSync, readFileSync, existsSync, openSync, closeSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {join, resolve, sep} from 'node:path';
+import {recycleQaBundle} from '../browser-harness.mjs';
 import {DRIVE} from '../../src/config.js';
 import {arenaParticipant, outOfPlay, arenaTargetOutOfPlay} from '../../src/combat-teams.js';
 
@@ -111,7 +112,9 @@ function installFixtures(mphToWorld, arenaTargetOutOfPlay) {
 const REFERENCE='0f934845',PUBLIC_SEED=1989;
 // This is a QA-output snapshot, never a worktree or a source overlay. The
 // independent browser worker runs the same owned recipe against the real App.
-export async function preparePublicBaseline() {
+export async function preparePublicBaseline(options = {}) {
+  if (options.mode === 'current-integration') return prepareCurrentBaseline();
+  assert.ok(options.mode === undefined || options.mode === 'historical', 'known baseline mode');
   const lane=resolve(fileURLToPath(new URL('../../',import.meta.url))),integration=resolve(lane,'../..');
   assert.ok(lane.toLowerCase().startsWith((integration+sep+'.lanes'+sep).toLowerCase()));
   const commit=execFileSync('git',['rev-parse',REFERENCE],{cwd:lane,encoding:'utf8'}).trim();
@@ -142,6 +145,185 @@ export async function preparePublicBaseline() {
   await writeFile(join(home,'provenance.json'),JSON.stringify(provenance,null,2)+'\n');
   return provenance;
 }
+// Current controls are separately labelled. The no-options API above remains
+// the strict pre-card recipe; neither a current packet nor an external file can
+// silently acquire the old reference identity.
+const SCENARIO_ROOT = resolve(fileURLToPath(new URL('../../', import.meta.url)));
+const ARCHIVE_PATHS = ['src', 'public', 'tools', 'index.html', 'package.json', 'package-lock.json', 'vite.config.js'];
+const RECIPE_PATH = 'tools/scenarios/arena-shove.mjs';
+const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+const blobHash = bytes => createHash('sha1').update('blob ' + bytes.length + '\0').update(bytes).digest('hex');
+const gitAt = (root, args) => execFileSync('git', args, {cwd: root, encoding: 'utf8', windowsHide: true});
+const treeAt = (root, commit, path) => gitAt(root, ['ls-tree', '-r', commit, '--', path]);
+function archiveRows(root, commit) {
+  return gitAt(root, ['ls-tree', '-rz', commit, '--', ...ARCHIVE_PATHS]).split('\0').filter(Boolean).map(entry => {
+    const [header, path] = entry.split('\t'), [mode, kind, hash] = header.split(' ');
+    assert.equal(kind, 'blob', 'snapshot contains real archived blobs');
+    return {mode, hash, path};
+  });
+}
+function verifySnapshot(provenance) {
+  const rows = archiveRows(SCENARIO_ROOT, provenance.commit);
+  assert.equal(sha256(JSON.stringify(rows)), provenance.archiveManifestSha256, 'exact archived file manifest');
+  assert.equal(rows.length, provenance.verifiedArchivedFiles);
+  for (const row of rows) {
+    if (row.path === RECIPE_PATH) continue; // The sole explicitly recorded recipe overlay.
+    assert.equal(blobHash(readFileSync(join(provenance.snapshot, row.path))), row.hash, 'snapshot bytes: ' + row.path);
+  }
+  assert.equal(sha256(readFileSync(join(provenance.snapshot, RECIPE_PATH))), provenance.recipeOverlaySha256,
+    'only the owned current recipe overlays the verified archive');
+}
+function verifyCandidate(provenance) {
+  assert.equal(gitAt(SCENARIO_ROOT, ['rev-parse', 'HEAD']).trim(), provenance.candidateCommit,
+    'candidate commit stays fixed while its public baseline runs');
+  for (const path of ['src', 'public']) {
+    assert.equal(treeAt(SCENARIO_ROOT, provenance.candidateCommit, path), provenance[path === 'src' ? 'sourceTree' : 'runtimeAssetTree']);
+    assert.equal(gitAt(SCENARIO_ROOT, ['ls-files', '--others', '--exclude-standard', '--', path]).trim(), '',
+      'no untracked candidate runtime input: ' + path);
+  }
+  for (const row of archiveRows(SCENARIO_ROOT, provenance.commit).filter(row => /^(src|public)\//.test(row.path)))
+    assert.equal(blobHash(readFileSync(join(SCENARIO_ROOT, row.path))), row.hash, 'actual candidate runtime bytes: ' + row.path);
+}
+async function recycleCurrentBaseline(provenance) {
+  if (!provenance) return;
+  assert.equal(resolve(realpathSync(provenance.home)), resolve(provenance.home), 'snapshot home is not redirected');
+  if (existsSync(provenance.junction)) {
+    assert.equal(realpathSync(provenance.junction).toLowerCase(), provenance.dependencies.toLowerCase(),
+      'remove only this snapshot integration dependency junction');
+    await rmdir(provenance.junction); // Nonrecursive unlink of the owned junction.
+  }
+  await recycleQaBundle(provenance.home);
+}
+async function prepareCurrentBaseline() {
+  assert.ok(!process.env.P4_KIT_HARBOUR_SOURCE, 'current integration control refuses the explicit hybrid source fixture');
+  const candidateCommit = gitAt(SCENARIO_ROOT, ['rev-parse', 'HEAD']).trim();
+  const integrationTip = gitAt(SCENARIO_ROOT, ['rev-parse', 'integration/wasteland']).trim();
+  const commit = gitAt(SCENARIO_ROOT, ['merge-base', candidateCommit, integrationTip]).trim();
+  assert.ok(gitAt(SCENARIO_ROOT, ['rev-list', '--first-parent', integrationTip]).trim().split(/\r?\n/).includes(commit),
+    'captured base is an integrated first-parent commit, including a detached full-check source');
+  for (const path of ['src', 'public']) {
+    assert.equal(treeAt(SCENARIO_ROOT, candidateCommit, path), treeAt(SCENARIO_ROOT, commit, path),
+      'current baseline and candidate have identical committed ' + path + ' bytes');
+    assert.equal(gitAt(SCENARIO_ROOT, ['ls-files', '--others', '--exclude-standard', '--', path]).trim(), '',
+      'no untracked candidate runtime input: ' + path);
+  }
+  const rows = archiveRows(SCENARIO_ROOT, commit);
+  for (const row of rows.filter(row => /^(src|public)\//.test(row.path)))
+    assert.equal(blobHash(readFileSync(join(SCENARIO_ROOT, row.path))), row.hash, 'actual candidate runtime bytes: ' + row.path);
+  const worktrees = gitAt(SCENARIO_ROOT, ['worktree', 'list', '--porcelain']).split(/\r?\n\r?\n/);
+  const integrated = worktrees.find(block => block.split(/\r?\n/).includes('branch refs/heads/integration/wasteland'));
+  assert.ok(integrated, 'actual integration worktree is registered');
+  const integration = integrated.split(/\r?\n/).find(line => line.startsWith('worktree ')).slice(9);
+  const dependencies = realpathSync(join(integration, 'node_modules'));
+  assert.equal(resolve(dependencies).toLowerCase(), resolve(integration, 'node_modules').toLowerCase(),
+    'only actual integration dependencies, never live or another linked source');
+  const qa = join(SCENARIO_ROOT, '.qa-dist');await mkdir(qa, {recursive: true});
+  const home = mkdtempSync(join(qa, 'browser-suite-arena-baseline-'));
+  const snapshot = join(home, 'snapshot'), junction = join(snapshot, 'node_modules');
+  const provenance = {mode: 'current-integration', commit, candidateCommit, integrationTip, home, snapshot, junction, dependencies,
+    sourceTree: treeAt(SCENARIO_ROOT, commit, 'src'), runtimeAssetTree: treeAt(SCENARIO_ROOT, commit, 'public'),
+    verifiedArchivedFiles: rows.length, archiveManifestSha256: sha256(JSON.stringify(rows)),
+    recipeOverlaySha256: sha256(readFileSync(fileURLToPath(import.meta.url)))};
+  try {
+    await mkdir(snapshot);
+    const archive = join(home, 'reference.tar');
+    execFileSync('git', ['archive', '--format=tar', '--output', archive, commit, ...ARCHIVE_PATHS], {cwd: SCENARIO_ROOT, windowsHide: true});
+    execFileSync('tar', ['-xf', archive, '-C', snapshot], {windowsHide: true});
+    for (const row of rows)
+      assert.equal(blobHash(readFileSync(join(snapshot, row.path))), row.hash, 'every original archive byte: ' + row.path);
+    await copyFile(fileURLToPath(import.meta.url), join(snapshot, RECIPE_PATH));
+    verifySnapshot(provenance);
+    const quote = value => "'" + value.replaceAll("'", "''") + "'";
+    execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
+      'New-Item -ItemType Junction -Path ' + quote(junction) + ' -Target ' + quote(dependencies) + ' | Out-Null'], {windowsHide: true});
+    await writeFile(join(home, 'provenance.json'), JSON.stringify(provenance, null, 2) + '\n');
+    return provenance;
+  } catch (error) {
+    try {await recycleCurrentBaseline(provenance);} catch (cleanup) {error.message += '; snapshot cleanup: ' + cleanup.message;}
+    throw error;
+  }
+}
+
+export function verifyPublicBaseline(reference, {mode = 'historical', provenance = null, runtimeAssetTree} = {}) {
+  if (mode === 'historical') {
+    assert.ok(reference.sourceCommit.startsWith('0f934845') && reference.baselineVerifiedArchivedFiles > 0,
+      'reference is the verified real pre-card snapshot');
+  } else {
+    assert.equal(mode, 'current-integration');
+    assert.ok(provenance && provenance.mode === mode, 'current controls require their locally captured provenance');
+    assert.equal(reference.baselineMode, mode);
+    assert.equal(reference.sourceCommit, provenance.commit);
+    assert.ok(provenance.verifiedArchivedFiles > 0);
+    assert.equal(reference.baselineVerifiedArchivedFiles, provenance.verifiedArchivedFiles);
+    for (const key of ['sourceTree', 'runtimeAssetTree', 'archiveManifestSha256', 'recipeOverlaySha256'])
+      assert.equal(reference[key], provenance[key], 'current control preserves captured ' + key);
+    assert.equal(reference.publicWalls.length, 8, 'all eight real baseline controls completed');
+    const keys = new Set();
+    for (const row of reference.publicWalls) {
+      assert.ok(['high', 'performance'].includes(row.quality) && [-1, 1].includes(row.result.side) &&
+        [0, 360].includes(row.result.alongTicks), 'exact public native matrix');
+      assert.ok(Array.isArray(row.result.inputs) && row.result.inputs.length > 0, 'actual nonempty native input stream');
+      keys.add(row.quality + '/' + row.result.side + '/' + row.result.alongTicks);
+    }
+    assert.equal(keys.size, 8, 'each baseline case appears exactly once');
+  }
+  if (runtimeAssetTree !== undefined) assert.equal(reference.runtimeAssetTree, runtimeAssetTree, 'matched real runtime asset bytes');
+  return reference;
+}
+
+async function automaticPublicBaseline(c) {
+  const provenance = await preparePublicBaseline({mode: 'current-integration'});
+  const output = join(provenance.snapshot, '.evidence', 'arena-public-baseline');
+  const retained = join(c.outputDir, 'public-baseline');
+  let failure, reference, retainedComplete = false;
+  try {
+    await mkdir(output, {recursive: true});
+    const env = {...process.env, ARENA_SHOVE_PUBLIC_ONLY: '1'};
+    delete env.ARENA_SHOVE_PUBLIC_INPUTS_FILE;
+    delete env.DUEL_BROWSER_LEGACY_TIMING;
+    let stdout, stderr;
+    try {
+      stdout = openSync(join(output, 'stdout.log'), 'w');
+      stderr = openSync(join(output, 'stderr.log'), 'w');
+      await new Promise((done, reject) => {
+        const child = spawn(process.execPath, ['tools/browser-harness.mjs', 'scenario', 'arena-shove', '--output-dir', output],
+          {cwd: provenance.snapshot, env, windowsHide: true, stdio: ['ignore', stdout, stderr]});
+        let spawnError;
+        child.on('error', error => {spawnError = error;});
+        child.on('close', (code, signal) => {
+          if (spawnError) reject(spawnError);
+          else if (code !== 0) reject(Error('Current public baseline failed: exit ' + code + ', signal ' + signal));
+          else done();
+        });
+      });
+    } finally {if (stdout !== undefined) closeSync(stdout);if (stderr !== undefined) closeSync(stderr);}
+    verifySnapshot(provenance);
+    verifyCandidate(provenance);
+    const browser = JSON.parse(readFileSync(join(output, 'report.json'), 'utf8'));
+    assert.equal(browser.passed, true, 'actual baseline browser succeeded');
+    assert.equal(browser.memoryOnlySaves, true);
+    assert.deepEqual(browser.issues, []);assert.deepEqual(browser.warnings, []);
+    reference = JSON.parse(readFileSync(join(output, 'arena-shove-browser.json'), 'utf8'));
+    assert.equal(reference.publicOnly, true);
+    verifyPublicBaseline(reference, {mode: 'current-integration', provenance});
+  } catch (error) {failure = error;}
+  // Retain the genuine child output even on failure, before unlinking its own
+  // junction and recycling its own snapshot. No parent environment is changed.
+  try {
+    await cp(output, retained, {recursive: true, errorOnExist: true, force: false});
+    await writeFile(join(retained, 'captured-provenance.json'), JSON.stringify(provenance, null, 2) + '\n');
+    retainedComplete = true;
+  } catch (error) {if (failure) failure.message += '; retain baseline: ' + error.message;else failure = error;}
+  try {
+    if (retainedComplete) await recycleCurrentBaseline(provenance);
+    else throw Error('Baseline output retained in owned snapshot for recovery: ' + provenance.home);
+  } catch (error) {
+    if (failure) failure.message += '; snapshot cleanup: ' + error.message;else failure = error;
+  }
+  if (failure) throw failure;
+  return {reference, provenance, path: join(retained, 'arena-shove-browser.json')};
+}
+
 async function collapseQA(c) {
   const points=await c.evaluate(`(() => [...document.querySelectorAll('details[open]')].flatMap(panel=>{
     const summary=panel.querySelector('summary'),title=summary?.textContent||'';
@@ -352,7 +534,7 @@ async function reviewedCapture(c,label,mode='medium',scope='both') {
   const view=await c.evaluate(`window.__shoveReview.view(${JSON.stringify(mode)},${JSON.stringify(scope)})`);
   await c.screenshot(label);return view;
 }
-async function extendedQuality(c,quality,report,save) {
+async function extendedQuality(c,quality,report,save,reference,baselineOptions) {
   const wire=`(() => {${arenaParticipant.toString()}\n${outOfPlay.toString()}\nreturn ${arenaTargetOutOfPlay.toString()};})()`;
   const collisionSource=readFileSync(new URL('../../src/collision.js',import.meta.url),'utf8');
   assert.equal(/^import\s/m.test(collisionSource),false,'actual collision observer module has no unbound imported dependencies');
@@ -367,9 +549,8 @@ async function extendedQuality(c,quality,report,save) {
     const before=await reviewedCapture(c,label+'-spawn-world','world','player');
     const startGeometry=await c.evaluate('window.__shoveReview.geometry()'),player=startGeometry.cars.find(car=>car.id==='player');
     assert.ok(player.lateralMin>-player.floorLimit&&player.lateralMax<player.floorLimit,'actual loaded public spawn body and attachments start fully inside floor');
-    const reference=process.env.ARENA_SHOVE_PUBLIC_INPUTS_FILE?JSON.parse(readFileSync(resolve(process.env.ARENA_SHOVE_PUBLIC_INPUTS_FILE),'utf8')):null;
     const referenceCase=reference?.publicWalls.find(row=>row.quality===quality&&row.result.side===side&&row.result.alongTicks===alongTicks);
-    if(reference){assert.ok(reference.sourceCommit.startsWith('0f934845')&&reference.baselineVerifiedArchivedFiles>0,'actual baseline source bytes were verified');
+    if(reference){verifyPublicBaseline(reference,baselineOptions);
       assert.equal(reference.runtimeAssetTree,report.runtimeAssetTree,'actual public runtime assets match');assert.ok(referenceCase,'exact public baseline input recipe is present');}
 
     let result;
@@ -436,9 +617,9 @@ async function extendedQuality(c,quality,report,save) {
   await c.evaluate('window.__qaApp.inspectionCamera=null');
 }
 
-export async function comparePublicWalls(referencePath,candidatePath,outputPath) {
+export async function comparePublicWalls(referencePath,candidatePath,outputPath,baselineOptions) {
   const reference=JSON.parse(readFileSync(resolve(referencePath),'utf8')),candidate=JSON.parse(readFileSync(resolve(candidatePath),'utf8'));
-  assert.ok(reference.sourceCommit.startsWith('0f934845')&&reference.baselineVerifiedArchivedFiles>0,'reference is the verified real pre-card snapshot');
+  verifyPublicBaseline(reference,baselineOptions);
   assert.equal(candidate.runtimeAssetTree,reference.runtimeAssetTree,'matched real runtime asset bytes');
   assert.equal(reference.publicWalls.length,8,'all High/Performance legal wall controls are present');
   assert.equal(candidate.publicWalls.length,8,'candidate has the same full public control matrix');
@@ -454,9 +635,10 @@ export async function comparePublicWalls(referencePath,candidatePath,outputPath)
       candidate:{source:candidate.sourceCommit,player:b,wallPolicy:after.result.wallPolicy,walls:after.result.walls},
       geometryExactlyEqual:geometryEqual,tracesExactlyEqual:JSON.stringify(before.result.trace)===JSON.stringify(after.result.trace),
       scope:'Actual loaded triangles and actual rail instances. Body extent beyond the existing center-limit floor is recorded separately; no new whole-body containment rule is invented.'};});
-  const report={reference:reference.sourceCommit,candidate:candidate.sourceCommit,cases,
+  const report={baselineMode:baselineOptions?.mode||'historical',reference:reference.sourceCommit,candidate:candidate.sourceCommit,cases,
     verdict:cases.some(row=>/crossing|review required/.test(row.classification)&&!row.classification.startsWith('no public'))?
       'Actual public mismatch needs Claude review; do not repair global source or alter containment in this QA card.':'No public rail crossing in these matched inputs. Constructed fixtures remain separately labelled; this is not all-model/all-wall clearance.',
+    comparisonScope:baselineOptions?.mode==='current-integration'?'Captured integrated-source repeatability control; not historical pre-card regression.':'Historical pre-card regression comparison.',
     limits:'Natural public close views show player/wall; world covers the roster. Matched samples do not grant art, frame, handling or listening clearance.'};
   const scenarioRoot=resolve(fileURLToPath(new URL('../../',import.meta.url))),integration=resolve(scenarioRoot,'../..'),destination=resolve(outputPath);
   assert.ok([join(scenarioRoot,'.evidence'),join(integration,'.evidence')].some(home=>destination.toLowerCase().startsWith((resolve(home)+sep).toLowerCase())),
@@ -469,8 +651,13 @@ export async function run(c) {
   const baseline=process.env.ARENA_SHOVE_PUBLIC_ONLY==='1'&&existsSync(snapshotProvenance)?JSON.parse(readFileSync(snapshotProvenance,'utf8')):null;
   const sourceCommit=baseline?.commit||execFileSync('git',['rev-parse','HEAD'],{cwd:scenarioRoot,encoding:'utf8'}).trim();
   const runtimeAssetTree=baseline?.runtimeAssetTree||execFileSync('git',['ls-tree','-r','HEAD','--','public'],{cwd:scenarioRoot,encoding:'utf8'});
-  if(process.env.ARENA_SHOVE_PUBLIC_ONLY!=='1')assert.ok(process.env.ARENA_SHOVE_PUBLIC_INPUTS_FILE,'run verified public baseline first and provide its exact native input report');
-  const report={publicWalls:[],roleCases:[],extraWalls:[],obliques:[],publicOnly:process.env.ARENA_SHOVE_PUBLIC_ONLY==='1',sourceCommit,runtimeAssetTree,baselineVerifiedArchivedFiles:baseline?.verifiedArchivedFiles||null,referenceCommit:REFERENCE,publicSeed:PUBLIC_SEED,cases:[],walls:[],frames:[],fixtures:'Memory-only discovered profile, stopped/approach poses, one-armor native wreck setup, real recovery timers, existing held CPU goals and isolated weapon/crate timers. Contacts and subsequent 120 Hz physics remain genuine.',
+  const publicOnly=process.env.ARENA_SHOVE_PUBLIC_ONLY==='1';
+  const supplied=process.env.ARENA_SHOVE_PUBLIC_INPUTS_FILE;
+  const automatic=!publicOnly&&!supplied?await automaticPublicBaseline(c):null;
+  const reference=automatic?.reference||(supplied?JSON.parse(readFileSync(resolve(supplied),'utf8')):null);
+  const baselineOptions=automatic?{mode:'current-integration',provenance:automatic.provenance}:undefined;
+  if(reference)verifyPublicBaseline(reference,{...baselineOptions,runtimeAssetTree});
+  const report={publicWalls:[],roleCases:[],extraWalls:[],obliques:[],publicOnly:process.env.ARENA_SHOVE_PUBLIC_ONLY==='1',sourceCommit,runtimeAssetTree,baselineVerifiedArchivedFiles:baseline?.verifiedArchivedFiles||null,baselineMode:baseline?.mode||baselineOptions?.mode||'historical',sourceTree:baseline?.sourceTree,archiveManifestSha256:baseline?.archiveManifestSha256,recipeOverlaySha256:baseline?.recipeOverlaySha256,referenceCommit:automatic?.provenance.commit||baseline?.commit||REFERENCE,publicSeed:PUBLIC_SEED,cases:[],walls:[],frames:[],fixtures:'Memory-only discovered profile, stopped/approach poses, one-armor native wreck setup, real recovery timers, existing held CPU goals and isolated weapon/crate timers. Contacts and subsequent 120 Hz physics remain genuine.',
     limits:'Scripted contact/state captures do not prove natural CPU behavior, human Preview feel, listening or resolved historical HUD overlaps. Native all-mass/FPS/traffic controls remain independent.'};
   const save=()=>writeFile(join(c.outputDir,'arena-shove-browser.json'),JSON.stringify(report,null,2)+'\n');
   for(const quality of ['high','performance']){
@@ -491,7 +678,7 @@ export async function run(c) {
       ${outOfPlay.toString()}
       return ${arenaTargetOutOfPlay.toString()};
     })())`);
-    await extendedQuality(c,quality,report,save);
+    await extendedQuality(c,quality,report,save,reference,baselineOptions);
     if(report.publicOnly)continue;
     await collapseQA(c);
     for(const kind of ['wreck','pinned','protected','idle'])for(const mph of [20,40]){
@@ -520,6 +707,7 @@ export async function run(c) {
       assert.ok(result.armorAfter<result.armorBefore,'eligible normal ram retains armor damage');
       assert.ok(result.reverse>1e-6&&result.rebound>.01,'attacker actually rebounds away from solid wall: '+JSON.stringify(result));
     }
+    if(process.env.DUEL_BROWSER_LEGACY_TIMING==='1'){
     const frames=await c.evaluate(`(async()=>{const a=window.__qaApp;if(!a.restart())throw Error('Native pacing rematch failed');a.advance(3.1);
       a.duel.setInput({throttle:.45,brake:0,steer:.08,boost:false});a.start();const times=[];let last=0;
       try{for(let i=0;i<150;i++){const t=await new Promise(requestAnimationFrame);if(last&&i>30)times.push(t-last);last=t;}}
@@ -527,7 +715,9 @@ export async function run(c) {
       return{mean:times.reduce((x,y)=>x+y,0)/times.length,p95:sorted[Math.floor(sorted.length*.95)],samples:times.length,
         draws:window.__render.renderer.info.render.calls,triangles:window.__render.renderer.info.render.triangles};})()`);
     report.frames.push({quality,...frames});await save();
+    }else{report.frames.push({quality,status:'not-run',reason:'Separate quiet manual measurement; no frame pass.'});await save();}
   }
   await c.evaluate('window.__qaApp.stop()');
+  if(automatic)await comparePublicWalls(automatic.path,join(c.outputDir,'arena-shove-browser.json'),join(c.outputDir,'public-wall-comparison.json'),baselineOptions);
   console.log('Arena shove recipe completed its scoped native assertions. Public mesh/solid clearance requires the matched baseline comparison; browser/frame/art/human/listening clearance remains independent.');
 }

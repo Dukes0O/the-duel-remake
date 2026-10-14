@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {test, after} from 'node:test';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {verifyPublicBaseline} from './scenarios/arena-shove.mjs';
 import {Duel} from '../src/game.js';
 import {CARS, COURSE, DRIVE} from '../src/config.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
@@ -768,4 +769,35 @@ for (const side of [-1, 1]) test(`NORMAL INCIDENT: continued CPU throttle side${
   ok(r.moved > 1e-4, 'later oblique continuation legitimately moves the target along the wall');
   eq(r.escaped, false, 'genuine oblique motion does not cross the solid boundary');
   ok(r.reverse > 1e-6 && r.rebound > .01, 'initial physical rebound is retained before the later approach');
+});
+
+
+// Pure provenance controls: no browser, snapshot generation or native scenario.
+test('Public baseline keeps historical identity separate from a captured integration control', () => {
+  const provenance = {mode: 'current-integration', commit: 'a'.repeat(40), candidateCommit: 'b'.repeat(40),
+    sourceTree: 'src-tree', runtimeAssetTree: 'public-tree', verifiedArchivedFiles: 12,
+    archiveManifestSha256: 'archive-sha', recipeOverlaySha256: 'recipe-sha'};
+  const reference = {baselineMode: provenance.mode, sourceCommit: provenance.commit,
+    runtimeAssetTree: provenance.runtimeAssetTree, sourceTree: provenance.sourceTree,
+    baselineVerifiedArchivedFiles: 12, archiveManifestSha256: 'archive-sha', recipeOverlaySha256: 'recipe-sha',
+    publicWalls: ['high', 'performance'].flatMap(quality => [-1, 1].flatMap(side => [0, 360].map(alongTicks =>
+      ({quality, result: {side, alongTicks, inputs: [{throttle: 1, brake: 0, steer: side, boost: false}]}}))))};
+  eq(verifyPublicBaseline(reference, {mode: 'current-integration', provenance, runtimeAssetTree: 'public-tree'}), reference,
+    'only explicitly supplied captured provenance admits the current-source control');
+  const check = value => verifyPublicBaseline(value, {mode: 'current-integration', provenance, runtimeAssetTree: 'public-tree'});
+  for (const patch of [{sourceCommit: 'c'.repeat(40)}, {baselineVerifiedArchivedFiles: 0},
+    {baselineVerifiedArchivedFiles: 11}, {archiveManifestSha256: 'forged'}, {recipeOverlaySha256: 'other'},
+    {sourceTree: 'changed-source'}, {runtimeAssetTree: 'changed-asset'}, {baselineMode: 'historical'}]) {
+    checks++; assert.throws(() => check({...reference, ...patch}), 'reject mismatched captured source, bytes or provenance');
+  }
+  checks++; assert.throws(() => verifyPublicBaseline(reference), 'current control cannot masquerade as old regression');
+  checks++; assert.throws(() => verifyPublicBaseline(reference, {mode: 'current-integration'}), 'missing captured provenance fails');
+  for (const publicWalls of [reference.publicWalls.slice(1), [...reference.publicWalls.slice(1), reference.publicWalls[1]],
+    reference.publicWalls.map((row, index) => index ? row : {...row, result: {...row.result, inputs: []}})]) {
+    checks++; assert.throws(() => check({...reference, publicWalls}), 'missing, duplicated or empty native input case fails');
+  }
+  const historical = {...reference, baselineMode: 'historical', sourceCommit: '0f934845' + '0'.repeat(32)};
+  eq(verifyPublicBaseline(historical), historical, 'explicit historical report keeps the original identity check');
+  checks++; assert.throws(() => verifyPublicBaseline({...historical, baselineVerifiedArchivedFiles: 0}));
+  checks++; assert.throws(() => check(historical), 'historical identity cannot be relabelled current');
 });

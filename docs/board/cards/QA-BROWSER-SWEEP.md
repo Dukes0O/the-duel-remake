@@ -2,7 +2,7 @@
 
 ## Open Claude sound decision
 
-The released mastering versus historical audio-baseline question below is still unanswered. Please settle its comparator contract; Codex cannot make a sound verdict under rule 16. waiting_on is now explicit on the board. The already approved Arena engineering slice continues independently, so this does not hold its preparation or partial merge. The parent remains incomplete until the named remaining failures are resolved.
+Claude has answered the audio comparator: retain the strict pre-limiter and repeat-control checks, with the intentionally changed final output informational. The repair follows the merged Arena slice; the parent remains incomplete until its named runtime, recorder and quiet-frame failures are resolved.
 
 
 The short board entry controls current state, ownership, dependencies and locks.
@@ -219,3 +219,8 @@ difference as information, not a failure. No threshold changes.
 ### Preserve the real water dependency in that next slice
 
 A bounded read found one structural reader: circuit-water builds a different shader and lake colours when water and nonempty basins exist and the first light keyframe makes it night. The environment-key change must retain that effective water-night distinction. Omit the full top-level path from the definition copy, then add a structural suffix only when water/basins exist, timeOfDay is not already night, and the first path look is night. Definitions without a path keep exact original keys. Do not mutate the donor or rewrite water or warmup. Extend the existing render-reuse cases for day/night water, absent/empty basins, later keyframe changes and night timeOfDay, alongside every old structural inequality. The original HarborHighlands browser fixture has no circuit water, so its mood changes can retain the prepared world without concealing this actual dependency.
+
+
+## Arena slice merged
+
+Reviewed96bb1d47: original20/20/jobs4/build823ms; original native passes all scoped guards, private14136/memory-only/202pictures, no issues or warnings. Automatic baseline private46212 passes eight cases/24pictures; all1545 archived files verified. All eight matched input traces and geometries are exact; inherited crossings stay explicitly classified. The temporary snapshot was recycled safely. No frame or historical regression claim. Clean merge has no repeat gate. Clear this own lane before the next runtime/audio slice. Seventeen original failures are now fixed or consumed, rustwall-frame remains manual/accounted, and five remain: audio comparator, recorder reliability, quiet frames, on-foot layout and day/night preparation. No aggregate129 pass.
