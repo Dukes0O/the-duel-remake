@@ -45,7 +45,7 @@ panel were hard to read over white snow and now sit on a dark backing.
 
 ## Checks
 
-- `node tools/test-heli-view.mjs`: 47 checks pass. Every gauge equals the
+- `node tools/test-heli-view.mjs`: 67 checks pass. Every gauge equals the
   simulation's own reading (`heliReadout`) after a real flight with a car;
   the warnings; the horizon's direction; repair, fuel, cruise and delivery
   notices; route buttons with leg fuel, the chosen one, the pump's price,
@@ -60,7 +60,19 @@ panel were hard to read over white snow and now sit on a dark backing.
   not run in this lane. Other teams' gates and builds were running the
   whole time, and a frame measurement needs the laptop to itself (rule 7).
   It moves to HELI-FINISH, which runs it when the laptop is quiet.
-- Lane tier and build: results below.
+- The pump label promises exactly what the purchase does: a test compares
+  it with the real `buyFuel` in nine cases (short credits, none, fractional
+  fuel, the free first tank).
+- Review (rule 17): one independent reviewer found two small faults over
+  two turns: the pump could promise fuel the player could not pay for (or
+  one credit too little for fractional fuel), and the route panel was
+  rebuilt every few seconds on the pad, which could swallow a click. Both
+  fixed (the pump label mirrors `buyFuel`, and only the label's words
+  change) with its notes on the horizon's pivot and the low rotor warning
+  on the ground; the reviewer confirmed.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`
+  (PowerShell, after merging HELI-DISPATCH in): 48 passed, 0 failed, 0 not
+  run in 152.41 s. `npm run build`: passed in 676 ms.
 
 ## Changed assertions
 
