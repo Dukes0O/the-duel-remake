@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T04:10:26.225Z
+Observed at: 2026-10-14T04:11:24.008Z
 
-Observation commit: f4b50a5480d18d151ec21808defd397798536a37
+Observation commit: 09fde126d73ab86d0365b59e1d0b7a6439bf5428
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: f4b50a5480d18d151ec21808defd397798536a37
+Integration HEAD: 09fde126d73ab86d0365b59e1d0b7a6439bf5428
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -61,6 +61,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
+| codex/fix-hairpin-native | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fix-hairpin-native |
 | codex/p4-ardennes | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-finish | 2 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
@@ -97,9 +98,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 17,273,482 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 24,433 B | -240,007 B | 5,000,000 B |
+| Added bytes in last merge | 24,433 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 417,389,568 B | +126,976 B | unavailable |
+| Git objects | 417,403,904 B | +14,336 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -108,7 +109,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: f4b50a5480d18d151ec21808defd397798536a37
+- Local integration/wasteland: 09fde126d73ab86d0365b59e1d0b7a6439bf5428
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -116,4 +117,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: matches local; cached commit f4b50a5480d18d151ec21808defd397798536a37.
+- Remote origin/integration/wasteland: behind local; cached commit f4b50a5480d18d151ec21808defd397798536a37.
