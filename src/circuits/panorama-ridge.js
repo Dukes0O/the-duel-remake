@@ -90,6 +90,11 @@ const PANORAMA_ROAD = defineScriptedCourse({
 
 // Static authored scenery is independent of route RNG and race state. Kit
 // dimensions are metres, Y-up; heading is an offset from the sampled road.
+// The valley town's streets, metres along Conrod Straight from its start and beside the road.
+const TOWN_STREETS = Object.freeze([
+  Object.freeze({from: 170, to: 470, lateral: 80, bend: 6, wave: 95, phase: 0}),
+  Object.freeze({from: 215, to: 505, lateral: 118, bend: 5, wave: 120, phase: 1.4, square: 330}),
+]);
 function panoramaPlacements(road) {
   const placements = [{id: 'start-gantry', s: 0, lateral: 0, scale: [1.06, 1, 1]}];
   for (let s = 120; s <= 400; s += 35) {
@@ -134,15 +139,53 @@ function panoramaPlacements(road) {
     for (const side of [-1, 1]) placements.push({id: 'catch-fence', s,
       lateral: side * (road.halfWidthAt(s) + 1.8), heading: Math.PI / 2, scale: [2, 1, 1], lift: 1.05});
   }
-  // A real lower town on the descent: two staggered streets, with an open
-  // foreground below Skyline rather than houses on its crest or racing line.
-  const conrod = road.pieces.find(piece => piece.name === 'Conrod Straight');
-  for (let i = 0; i < 16; i++) for (const row of [0, 1]) {
-    placements.push({id: (i + row) % 2 ? 'shopfront-a' : 'shopfront-b',
-      s: conrod.s0 + 180 + i * 12, lateral: 100 + row * 24,
-      heading: row ? Math.PI : 0, scale: .9 + (i % 3) * .05});
-  }
   return Object.freeze(placements.map(Object.freeze));
+}
+// The town below Conrod Straight (PANORAMA-TOWN, Claude, 14 October 2026), drawn by circuitLandmarks 'town'
+// (src/circuit-landmarks.js): two streets that bend with the slope instead of a grid, weatherboard houses of
+// one or two storeys and mixed widths facing their street, gaps for yards and lanes, street lamps, and an open
+// square on the upper street where the church stands. The open foreground below Skyline stays clear. A fixed
+// hash keeps the layout the same every load; nothing here touches the road, the field or a race.
+function valleyTown(road) {
+  const conrod = road.pieces.find(piece => piece.name === 'Conrod Straight');
+  const hash = n => {const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x);};
+  const houses = [], lamps = [], taken = [];
+  // Nothing stands on another thing: houses, lamps and the church each keep their own ground.
+  // Footprints are rectangles along the road (houses face across it): half length along, half depth across.
+  const free = (s, lateral, along, across) => taken.every(t =>
+    Math.abs(t.s - s) >= t.along + along || Math.abs(t.lateral - lateral) >= t.across + across);
+  taken.push({s: conrod.s0 + TOWN_STREETS[1].square, lateral: TOWN_STREETS[1].lateral, along: 11, across: 6});
+  let n = 0;
+  for (const street of TOWN_STREETS) {
+    const lateralAt = along => street.lateral + street.bend * Math.sin(along / street.wave + street.phase);
+    for (let along = street.from; along < street.to; along += 12 + 6 * hash(n++)) {
+      const centre = lateralAt(along), turn = Math.atan2(lateralAt(along + 1) - lateralAt(along - 1), 2);
+      for (const side of [-1, 1]) {
+        const k = n++;
+        // The square: the upper street's houses and the lower street's upper row step back from the church.
+        if (Math.abs(along - TOWN_STREETS[1].square) < 22 && (street.square || side > 0)) continue;
+        if (hash(k + 900) < .15) continue;                        // a yard or a lane between houses
+        const width = 6 + 3 * hash(k + 1300), depth = 7 + 3 * hash(k + 1700);
+        const s = conrod.s0 + along + (hash(k + 2500) - .5) * 3, lateral = centre + side * (6.5 + depth / 2 + hash(k + 2900));
+        // The footprint includes the veranda on the street side and half a metre of eaves all round.
+        // The veranda reaches 2.3 m toward the street, so the rectangle sits 1.15 m off the house centre.
+        const halfAlong = width / 2 + .6, halfAcross = (depth + 2.3) / 2 + .5, middle = lateral - side * 1.15;
+        if (!free(s, middle, halfAlong, halfAcross)) continue;
+        taken.push({s, lateral: middle, along: halfAlong, across: halfAcross});
+        houses.push(Object.freeze({s, lateral,
+          heading: side * -Math.PI / 2 + turn + (hash(k + 3300) - .5) * .14,  // front door to the street
+          width, depth, storeys: hash(k + 2100) < .3 ? 2 : 1}));
+      }
+    }
+    for (let along = street.from + 20; along < street.to; along += 44) {
+      // Just inside the upper edge of the street, a metre clear of the verandas (which stop 4.2 m out).
+      const s = conrod.s0 + along, lateral = lateralAt(along) + 3;
+      if (!free(s, lateral, .5, .5)) continue;
+      taken.push({s, lateral, along: .5, across: .5});
+      lamps.push(Object.freeze({s, lateral}));
+    }
+  }
+  return {houses: Object.freeze(houses), lamps: Object.freeze(lamps)};
 }
 const road = buildTrackScript(PANORAMA_ROAD);
 const ridge = road.pieces.find(piece => piece.name === 'Ridge Top');
@@ -175,6 +218,11 @@ export const PANORAMA_RIDGE = Object.freeze({...PANORAMA_ROAD,
       lateral: -24, height: 28}),
     Object.freeze({id: 'pit-timing', type: 'scoreboard', s: 45,
       lateral: 21, height: 16, title: 'PANORAMA'}),
+    // The valley town under Conrod Straight, and its anchor: a weatherboard church on the upper street's square.
+    Object.freeze({id: 'valley-town', type: 'town', s: named('Conrod Straight').s0 + 330,
+      lateral: TOWN_STREETS[0].lateral, height: 12, ...valleyTown(road)}),
+    Object.freeze({id: 'town-church', type: 'church', s: named('Conrod Straight').s0 + TOWN_STREETS[1].square,
+      lateral: TOWN_STREETS[1].lateral, height: 22}),
   ]),
 });
 

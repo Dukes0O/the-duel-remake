@@ -25,3 +25,6 @@ Root's independent source review is clear. The original focused test-circuits.mj
 ## Complete native reference rebuilt
 
 The existing single-event build-reference-laps tool completed unchanged on 634573f5, exit 0, wall 6888.8496 ms. It validated its required three native laps and published only Harbour's complete fixed record: 77613 ms, 204 samples, track-v1-f64d259d. Car, Club driver, Medium, seed 1989 and fixture version 1 retain the tool's ordinary policy. The previous record was 77700 ms, track-v1-0873f8fe. No partial/probe record, fitted time, other course output or driver setting changes. Source, own measured reference and approved scene fixture are now ready for the canonical nearby gate and build; neither has run yet. No merge, frame or release pass is claimed.
+
+
+The original existing Lantern Hairpin test also passed on792ca6b9, one selected test with no skips/failures, wall6495.316ms (native test duration5340.3815ms). Its12..35mph flying-lap limit, zero crashes and every clean-lap assertion remain exact. Source review is clear; current integration, including the accepted Panorama town helper, is merged normally before the canonical Harbour gate. Own radius, test expectation, measured reference and approved Harbour fixture remain unchanged. No gate or build has yet run on this final union.
