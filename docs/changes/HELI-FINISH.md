@@ -51,9 +51,9 @@ for this run, so it is reported, not a release figure.
 
 ## Before the release (not done; waits for Kyle)
 
-- HELI-ART-SRC's model, cargo hook, helipad and fuel pump replace the
-  stand-in in `src/heli/heli-scene.js` (contract on the HELI-ART-SRC
-  card); then the frame check again.
+- Done in the second turn: Kestrel One replaces the stand-in. Still from
+  HELI-ART-SRC: the cargo hook, helipad and fuel pump models (the pad's H
+  and the hook are drawn simply until then).
 - Kyle hears the radio voice and the library sounds (Claude's round-one
   verdict was by measurement only).
 - The switch `helicopter` goes from `dev` to `on` only at Kyle's "go
@@ -81,3 +81,57 @@ None.
 
 Nothing was replaced. Picture evidence deleted after review; the verdict
 is above.
+
+## Kestrel One wired in (14 October, second turn)
+
+The main design session built an original Kestrel One
+(`tools/blender/kestrel-one.py`, `public/assets/heli/kestrel-one.glb`,
+12,580 triangles, 539 KB) to the HELI-ART-SRC contract. This turn puts it
+in the game:
+
+- `src/heli/heli-scene.js` loads the model on the first helicopter frame
+  (nothing is downloaded by a player who never flies or has the switch
+  off),
+  spins `main_rotor` about +Y and `tail_rotor` about its X as before, and
+  hangs the cable from `cable_hook`. The stand-in code is removed in this
+  same change. While the model loads (a moment) the helicopter is not
+  drawn; a failed load is reported (`modelStatus`, `modelError`) and never
+  replaced with a stand-in.
+- `src/heli/heli-camera.js`: the cockpit view sits at `pilot_eye`
+  (`PILOT_EYE`, the right-hand seat), turned with the helicopter's full
+  attitude (`heliToWorld`: roll, pitch, heading), and looks ahead nearly
+  level (about 4 degrees down instead of 9), so the panel stays along the
+  bottom. The whole helicopter (cable and rings too) shows only once the
+  model is in.
+- `tools/test-heli-view.mjs` (98 checks): every named node in the model,
+  the eye at `pilot_eye`, the rotor pivot at 2.85 m, at most 20,000
+  triangles; the real file loaded through the scene, rotors spinning, the
+  cable starting at `cable_hook` and the cockpit camera at `pilot_eye` with
+  the helicopter banked and pitched, no download before the first
+  helicopter frame, no stand-in, and a failed load reported.
+- Browser: the whole playthrough again with the model, 0 errors; the four
+  views checked by eye.
+- Frame check with the model, 150 m over Panorama Ridge: High p95 16.8 ms,
+  Performance p95 16.8 ms, no frame over 33 ms. One other team's lane
+  gate was running during it, so this is reported as indicative; the full
+  check repeats it.
+
+What is off in the model (sent to the design session): `pilot_eye` sits
+about level with the top of the instrument panel's glare shield, so in the
+cockpit view the dark shield still fills the lower left of the screen.
+Raising `pilot_eye` about 0.2 m, or lowering the shield, would clear the
+view. Everything else matches the contract: node names, the mast pivot at
+2.85 m, the tail rotor hub, the hook under the mast, metres, +Y up and the
+nose toward +Z. The simulation's rotor height for strikes stays 2.6 m (the
+model's 2.85 m pivot is 0.25 m higher; no change needed for H1).
+
+Review (rule 17): one independent reviewer found one real fault, the
+cockpit eye ignored pitch and roll (in a 20 degree bank it sat outside the
+hull), and recommended loading the model only when flying. Both fixed with
+tests; the reviewer confirmed. Lane tier (PowerShell): 33 passed, 0 failed,
+0 not run in 125.54 s; build passed in 844 ms; the browser playthrough
+passed again with 0 errors.
+
+Removed: the stand-in helicopter (boxes and cylinders) from
+`src/heli/heli-scene.js`.
+

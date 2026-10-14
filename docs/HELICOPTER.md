@@ -470,8 +470,9 @@ player's own car to Tremblant Snow or Panorama Ridge, set down and raced;
 repairs and the fuel truck; the autopilot; four views; instruments tested
 against the simulation; replays, signatures and balance untouched (lane
 guards); the frame check passed at 16.8 ms p95 on both qualities with the
-stand-in model. The release waits for HELI-ART-SRC's model and Kyle's
-word.
+stand-in model, and again at 16.8 ms with Kestrel One's real model wired
+in. The release waits for Kyle's word (and HELI-ART-SRC's hook, helipad and
+pump models).
 
 ## 12. After H1
 

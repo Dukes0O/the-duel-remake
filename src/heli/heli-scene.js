@@ -1,61 +1,20 @@
 // Drawing Kestrel One (docs/HELICOPTER.md section 8). Drawing only: it
 // reads the session's view each frame and never changes it.
 //
-// Development stand-in: a plain helicopter built from boxes and cylinders,
-// allowed in dev builds until Codex's HELI-ART-SRC model passes (HELI-VIEW
-// swaps it for the picked model). Never at release.
+// The model loads when the renderer starts; until it arrives (a moment,
+// it is small and local) the helicopter is simply not drawn.
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {heliCameraPose} from './heli-camera.js';
 import {createVehicleAssets} from '../vehicle-assets.js';
 
 const CABLE_LENGTH = 15;
 
-function buildStandIn(THREE) {
-  const root = new THREE.Group();
-  root.name = 'Kestrel One (stand-in)';
-  const paint = new THREE.MeshStandardMaterial({color: 0x3f4a3b, roughness: .72, metalness: .25});
-  const dark = new THREE.MeshStandardMaterial({color: 0x1d2124, roughness: .8, metalness: .3});
-  const glass = new THREE.MeshStandardMaterial({color: 0x24323a, roughness: .15, metalness: .6, transparent: true, opacity: .75});
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.8, 3.4), paint);
-  body.position.set(0, 1.45, 0.2);
-  const nose = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.2, 1.1), glass);
-  nose.position.set(0, 1.55, 2.25);
-  const boom = new THREE.Mesh(new THREE.CylinderGeometry(.22, .32, 4.8, 10), paint);
-  boom.rotation.x = Math.PI / 2;
-  boom.position.set(0, 1.7, -3.9);
-  const fin = new THREE.Mesh(new THREE.BoxGeometry(.12, 1.3, .8), paint);
-  fin.position.set(0, 2.3, -6.1);
-  const mast = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .5, 8), dark);
-  mast.position.set(0, 2.6, 0.2);
-  const rotor = new THREE.Group();
-  rotor.position.set(0, 2.85, 0.2);
-  for (let k = 0; k < 2; k++) {
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(10, .05, .32), dark);
-    blade.rotation.y = k * Math.PI / 2;
-    rotor.add(blade);
-  }
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(5, 40), new THREE.MeshBasicMaterial({color: 0x15191b, transparent: true, opacity: .16, side: THREE.DoubleSide, depthWrite: false}));
-  disc.rotation.x = -Math.PI / 2;
-  rotor.add(disc);
-  const tail = new THREE.Group();
-  tail.position.set(.18, 2.3, -6.2);
-  const tailBlade = new THREE.Mesh(new THREE.BoxGeometry(.04, 1.6, .16), dark);
-  tail.add(tailBlade);
-  root.add(body, nose, boom, fin, mast, rotor, tail);
-  for (const side of [-1, 1]) {
-    const skid = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 3.6, 8), dark);
-    skid.rotation.x = Math.PI / 2;
-    skid.position.set(side * .95, .05, .3);
-    root.add(skid);
-    for (const z of [-.6, 1.2]) {
-      const strut = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .7, 6), dark);
-      strut.position.set(side * .85, .4, z);
-      strut.rotation.z = side * .25;
-      root.add(strut);
-    }
-  }
-  root.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = false; } });
-  return {root, rotor, tail};
-}
+// Kestrel One: Claude's original model (tools/blender/kestrel-one.py, review
+// in docs/board/looks/kestrel-one/). Metres, +Y up, nose toward +Z, origin
+// on the ground under the mast; main_rotor spins about +Y, tail_rotor about
+// its X; cable_hook is where the cable hangs from.
+export const KESTREL_MODEL_URL = '/assets/heli/kestrel-one.glb';
+const loadModel = url => new GLTFLoader().loadAsync(url).then(gltf => gltf.scene);
 
 function ring(THREE, radius, color) {
   const mesh = new THREE.Mesh(new THREE.RingGeometry(radius - .35, radius, 64),
@@ -80,12 +39,37 @@ function buildCrate(THREE) {
   return crate;
 }
 
-export function createHeliView({THREE, scene, vehicleAssets = createVehicleAssets()}) {
+export function createHeliView({THREE, scene, vehicleAssets = createVehicleAssets(), load = loadModel}) {
   const group = new THREE.Group();
   group.name = 'Helicopter';
   group.visible = false;
-  const standIn = buildStandIn(THREE);
-  group.add(standIn.root);
+  // The helicopter's place in the world; the model joins it when loaded.
+  const body = new THREE.Group();
+  body.name = 'Kestrel One';
+  group.add(body);
+  const parts = {model: null, rotor: null, tail: null, hook: null, status: 'idle', error: ''};
+  let disposed = false;
+  // The model loads on the first helicopter frame, so a player who never
+  // flies (or has the switch off) never downloads it.
+  const ensureModel = () => {
+    if (parts.status !== 'idle') return;
+    parts.status = 'loading';
+    load(KESTREL_MODEL_URL).then(model => {
+    if (disposed) return;
+    model.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; } });
+    parts.model = model;
+    parts.rotor = model.getObjectByName('main_rotor');
+    parts.tail = model.getObjectByName('tail_rotor');
+    parts.hook = model.getObjectByName('cable_hook');
+    parts.status = parts.rotor && parts.tail && parts.hook ? 'ready' : 'error';
+    if (parts.status === 'error') parts.error = 'Kestrel One is missing a named node';
+    body.add(model);
+    }).catch(error => {
+      parts.status = 'error'; parts.error = String(error?.message || error);
+      console.warn(`Kestrel One did not load: ${parts.error}`);
+    });
+  };
+  const hookWorld = new THREE.Vector3();
   const cableGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, -CABLE_LENGTH, 0)]);
   const cable = new THREE.Line(cableGeometry, new THREE.LineBasicMaterial({color: 0x111111}));
   const hookMesh = new THREE.Mesh(new THREE.SphereGeometry(.18, 8, 6), new THREE.MeshStandardMaterial({color: 0x8a6d1f, metalness: .6, roughness: .4}));
@@ -128,13 +112,19 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     // Returns the camera pose and the hanging load's pose for this frame.
     update(view, {cameraIndex = 0, dt = 1 / 60} = {}) {
       if (!view?.heli) { group.visible = false; return null; }
-      group.visible = true;
+      ensureModel();
+      // Nothing of the helicopter (cable and rings included) shows until
+      // the model is in.
+      group.visible = parts.status === 'ready';
       const h = view.heli;
-      standIn.root.position.set(h.x, h.y, h.z);
-      standIn.root.rotation.set(h.pitch, h.heading, h.roll, 'YXZ');
+      body.position.set(h.x, h.y, h.z);
+      body.rotation.set(h.pitch, h.heading, h.roll, 'YXZ');
       spin += (h.rotor || 0) * 42 * dt;
-      standIn.rotor.rotation.y = spin;
-      standIn.tail.rotation.x = spin * 5.5;
+      if (parts.rotor) parts.rotor.rotation.y = spin;
+      if (parts.tail) parts.tail.rotation.x = spin * 5.5;
+      // The cable hangs from the model's hook point.
+      let top = {x: h.x, y: h.y - .2, z: h.z};
+      if (parts.hook) { body.updateMatrixWorld(true); parts.hook.getWorldPosition(hookWorld); top = hookWorld; }
       const loads = view.loads ?? (view.load ? [view.load] : []);
       const load = loads.find(item => item.hooked) ?? null;
       const end = load ? {x: load.x, y: load.y + .7, z: load.z} : {x: h.x, y: h.y - CABLE_LENGTH, z: h.z};
@@ -153,7 +143,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       targetRing.visible = view.lesson?.id === 'carry' && !!view.lesson.target;
       if (view.zone) hoverRing.position.set(view.zone.x, view.zone.y + .12, view.zone.z);
       if (targetRing.visible) targetRing.position.set(view.lesson.target.x, view.lesson.target.y + .1, view.lesson.target.z);
-      points.setXYZ(0, h.x, h.y - .2, h.z);
+      points.setXYZ(0, top.x, top.y, top.z);
       points.setXYZ(1, end.x, end.y, end.z);
       points.needsUpdate = true;
       cableGeometry.computeBoundingSphere();
@@ -167,7 +157,10 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       return {camera: heliCameraPose(view, cameraIndex), load: loads.find(item => item.own) ?? null};
     },
     hide() { group.visible = false; },
+    get modelStatus() { return parts.status; },
+    get modelError() { return parts.error; },
     dispose() {
+      disposed = true;
       // Car models share their geometry and materials with the race's own
       // cars, so only the helicopter's own parts are freed.
       for (const mesh of others.values()) if (mesh.userData?.vehicleKey) group.remove(mesh);
