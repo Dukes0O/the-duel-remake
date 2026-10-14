@@ -26,6 +26,68 @@ for(const def of COURSE){
     check(environmentKey(original)!==environmentKey({seed:1989,def:{...def,[field]:value}}),`${def.id}: the full definition key detects ${field}`);
   }
 }
+// A light path changes presentation, except the first look can choose the
+// built circuit-water shader and vertex colours. Neither path owns geometry.
+{
+  const fixedPath = look => Object.freeze({axis: 'race-progress', keyframes: Object.freeze([
+    Object.freeze({at: 0, look}),
+  ])});
+  for (const def of COURSE) {
+    const legacy = {...def}; delete legacy.lightPath;
+    for (const extra of [{}, {hiddenRoad: true}, {muddyHollow: true},
+      {hiddenRoad: true, muddyHollow: true}, {deepRamp: {atDistance: 125}},
+      {hiddenRoad: true, deepRamp: {atDistance: 125}}]) {
+      const marker = extra.hiddenRoad ? 'hidden-road-v1' : extra.muddyHollow ? 'muddy-hollow-v1' : null;
+      const exact = JSON.stringify(marker ? [1989, legacy, marker] : [1989, legacy]) +
+        (extra.deepRamp ? ':deep-ramp-v1:125' : '');
+      check(environmentKey({seed: 1989, def: legacy, ...extra}) === exact,
+        `${def.id}: absent lightPath keeps the exact legacy key and markers`);
+    }
+  }
+  const harbor = COURSE.find(def => def.id === 'harbor-highlands');
+  const plain = Object.freeze({...harbor});
+  const before = JSON.stringify(plain), key = environmentKey({seed: 1989, def: plain});
+  for (const look of ['day', 'golden', 'dusk', 'night']) {
+    const donor = Object.freeze({...plain, lightPath: fixedPath(look)});
+    const snapshot = JSON.stringify(donor);
+    check(environmentKey({seed: 1989, def: donor}) === key,
+      `${look}: Harbor without circuit water retains the already prepared world`);
+    check(JSON.stringify(donor) === snapshot && Object.isFrozen(donor.lightPath.keyframes[0]),
+      `${look}: the frozen donor and path are untouched`);
+  }
+  const blend = Object.freeze({...plain, lightPath: Object.freeze({axis: 'race-progress',
+    keyframes: Object.freeze([Object.freeze({at: 0, look: 'day'}), Object.freeze({at: 1, look: 'night'})])})});
+  check(environmentKey({seed: 1989, def: blend}) === key,
+    'changing the full presentation path, including later night, retains the same non-water world');
+  check(JSON.stringify(plain) === before && !Object.hasOwn(plain, 'lightPath'), 'omission never edits the absent-path donor');
+
+  const water = Object.freeze({...plain, water: Object.freeze({glitter: true}),
+    basins: Object.freeze([Object.freeze({id: 'test-basin', s: 100, lateral: 20})])});
+  const waterBefore = JSON.stringify(water);
+  const waterKey = (def, path) => environmentKey({seed: 1989, def: path ? Object.freeze({...def, lightPath: path}) : def});
+  const dayKey = waterKey(water), nightKey = waterKey(water, fixedPath('night'));
+  check(dayKey !== nightKey, 'a first night look changes the actual circuit-water structure');
+  check(nightKey === dayKey + ':circuit-water-night-v1', 'only effective path-selected night adds the structural water marker');
+  for (const look of ['day', 'golden', 'dusk'])
+    check(waterKey(water, fixedPath(look)) === dayKey, `${look}: non-night first water looks share the original water structure`);
+  for (const first of ['day', 'night']) {
+    const path = Object.freeze({axis: 'race-progress', palette: 'mountain-sunset', keyframes: Object.freeze([
+      Object.freeze({at: 0, look: first}), Object.freeze({at: 1, look: first === 'night' ? 'day' : 'night'}),
+    ])});
+    check(waterKey(water, path) === (first === 'night' ? nightKey : dayKey),
+      `${first}: later looks, path axis and palette cannot change the already chosen water structure`);
+  }
+  for (const def of [Object.freeze({...water, water: false}), Object.freeze({...water, basins: Object.freeze([])}),
+    Object.freeze({...water, basins: undefined}), Object.freeze({...water, timeOfDay: 'night'})]) {
+    for (const look of ['day', 'golden', 'dusk', 'night'])
+      check(waterKey(def, fixedPath(look)) === waterKey(def), `${look}: inactive water or existing night timeOfDay ignores the path`);
+  }
+  for (const extra of [{hiddenRoad: true}, {muddyHollow: true}, {deepRamp: {atDistance: 125}}])
+    check(environmentKey({seed: 1989, def: Object.freeze({...water, lightPath: fixedPath('night')}), ...extra}) !== nightKey,
+      'water-night omission retains each independent hidden, muddy and ramp identity');
+  check(JSON.stringify(water) === waterBefore && Object.isFrozen(water.basins[0]), 'water identity reads preserve the frozen donor');
+}
+
 const naturalDef=COURSE.find(def=>!def.kind),arenaDef=COURSE.find(def=>def.kind==='arena');
 const natural=new Course(naturalDef,1989),rerun=new Course(structuredClone(naturalDef),1989);
 check(natural!==rerun&&environmentKey(natural)===environmentKey(rerun),'new simulation Course instances can retain a compatible rendered world');
