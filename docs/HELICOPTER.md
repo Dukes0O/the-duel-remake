@@ -201,6 +201,30 @@ damped pendulum (no new library; it borrows the tether ideas in
   on the course where it was last set down, and it starts at the home pad.
   Existing saves keep the car; it simply starts at Tremblant Woods.
 
+**Settled while building HELI-CABLE (14 October 2026).** Checked in
+`tools/test-heli-cable.mjs`:
+
+- Hooking: hover with the hook (15 m below the skids) within 3 m of the
+  load sideways and 2 m up or down, moving under 1.5 m/s, and press H. H
+  again lets go.
+- The helicopter is free to move, so it swings back against the car: a
+  1,300 kg car swings about once every 5.8 seconds, not the 7.8 of a fixed
+  hook. Air drag and a little swing damping settle it.
+- The car turns nose first into the way it flies once it moves faster than
+  5 m/s. At 30 m/s the air trails it about 7 degrees back.
+- The autopilot builds speed gently (0.7 m/s2) and leans the hook toward a
+  swinging car; carrying the Jesko at 30 m/s the cable stays within about
+  10 degrees of straight down.
+- Cargo hits by speed: light from 4 to 8 m/s, heavy from 8 to 14 m/s,
+  wreck above 14 m/s. One strike is charged once: a tree is hit once, then
+  lies down; a building or rock pushes the car back out, and the same one
+  can be charged again only after the car has come away from it.
+- Released at 1 m or lower the car simply settles with no charge. A
+  hooked car on the ground can be dragged (grip 0.7 of its weight); it
+  never anchors the helicopter. A set-down is counted once per hook-up.
+- The cable's pull is capped at four times the hook limit's weight, so a
+  stretched cable never flings the load.
+
 ## 6. The dispatch board and flights between courses
 
 - **Board.** At the helipad. Three jobs each play day, chosen with the

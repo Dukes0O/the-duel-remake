@@ -1093,3 +1093,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 14 October: FIX-HAIRPIN-CAMERA c8c4a52e merged;41/41/jobs4/build1.27s/review clear; actual270poses/16200frames zero misses/blockers/errors, corrected apex picture accepted. Core returns to audio; no release.
 14 October: HELI-FLIGHT merged (src/heli flight, autopilot, ground; test-heli-flight 103 checks); lane 20/20 jobs4 267.85 s, build passed; review found 3 faults, fixed and confirmed; lane deleted.
 14 October: HELI-SAVE merged (profile.heli field, fuel purchase, repairs that forgive; fixture 10-heli; fixture roster 9 to 10 in three suites); lane 249/249 jobs4 1249.89 s, build passed; save review CLEAR; lane deleted.
+14 October: HELI-CABLE merged (src/heli/heli-cable.js, autopilot speed ramp and anti-sway; test-heli-cable 87 checks); lane 21/21 jobs4 250.04 s, build passed; review found 2 faults, fixed and confirmed; lane deleted.
