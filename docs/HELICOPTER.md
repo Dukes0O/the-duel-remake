@@ -285,6 +285,48 @@ damped pendulum (no new library; it borrows the tether ideas in
   nothing; heli save fixtures are written in `createHeli()` order (the
   save review, 14 October).
 
+**Settled while building HELI-DISPATCH (14 October 2026).** Checked in
+`tools/test-heli-jobs.mjs` and `tools/test-heli-save.mjs`:
+
+- **The day's jobs.** The board offers one job on each of the three routes
+  every play day, in a mixed order, each for a different customer car. The
+  customer cars are the cars Kestrel One can lift, leaving out the special
+  cars that travel only by air. The same play day always gives the same jobs
+  (the seeded generator, seeded from the day number); the ids look like
+  `d3-2`. Pay is 300, 450 and 600 credits; Real pays a quarter more
+  (375, 563 and 750, rounded to a whole credit).
+- **Taking a job.** At the home pad, on the ground, like the pump. One job at
+  a time; "Drop job" hands it back and it can be taken again. A job finished
+  today is not offered again that day. A job left in hand from an earlier
+  play day is out of date and does not block a new one. "Fly my car" takes
+  nothing and sets no destination.
+- **The customer's car.** It waits at its pick-up: the parking spot at home,
+  the landing zone elsewhere, or a spare spot beside the pad when the
+  player's own car already stands there (two cars never sit on top of each
+  other, even two of the same model). Nothing about where it is gets saved:
+  a new visit finds it at its pick-up again, and a crash sends it back there.
+  It is never the player's car, so setting it down never moves the player's
+  car in the save.
+- **Where to fly.** Taking a job points the destination at the pick-up, or at
+  the drop-off when the car is already here. Hooking the customer's car points
+  the destination at the drop-off, so the autopilot (P) knows where to go.
+- **Delivery and pay.** A clean release of the customer's car inside the
+  drop-off course's landing zone finishes the job and pays at once; the radio
+  says so. The car stays there for the rest of the visit. A car let go from
+  more than 1 m up is charged as a drop and pays nothing; the job stays in
+  hand, and hooking the car again and setting it down gently finishes it.
+- **Race here.** After the player's own car is set down on a course the
+  player owns, the session offers that course and car. Hooking the car again
+  or leaving the course withdraws the offer. A customer's car never makes an
+  offer.
+- **The panel.** `src/heli/heli-board.js` writes the board as plain markup
+  and handles its buttons through the session. The jobs part shows only on
+  the home pad's ground; the "Race here" button shows wherever the offer is.
+  HELI-VIEW mounts and styles it.
+- **Save.** `takeJob`, `dropJob` and `finishJob` in `heli-save.js` change only
+  the `jobs` field and the credits, and credits stop at the same
+  1,000,000,000 as the rest of the save. They need the save review.
+
 ## 7. Lessons and the radio
 
 The instructor (stock voice **Brian**, deep and calm) speaks over the radio.

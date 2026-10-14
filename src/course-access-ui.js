@@ -1,5 +1,5 @@
 import {COURSE, CARS} from './config.js';
-import {COURSE_PRICES, isCourseUnlocked} from './course-access.js';
+import {COURSE_PRICES, isCourseUnlocked, courseUnlockRequirement} from './course-access.js';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -24,12 +24,22 @@ function classicDescription(course,laps) {
 
 function courseCard(profile, course, selected, {teamRoomEnabled, grandPrix, lapChoiceFor}) {
   const owned = isCourseUnlocked(profile, course);
+  const requirement = courseUnlockRequirement(course);
   const price = COURSE_PRICES[course.id];
   const description = grandPrix ? grandPrixCourseDescription(course,lapChoiceFor?.(course,'grandprix')) : classicDescription(course,lapChoiceFor?.(course,'duel'));
-  const teamRoom = teamRoomEnabled && course.closed !== false
+  const teamRoom = teamRoomEnabled && course.closed !== false && !requirement
     ? `<button type="button" data-team-room="${escape(course.id)}" aria-label="${owned ? 'Study' : 'Unlock to study'} ${escape(course.name)} in the Team Room" ${owned ? '' : 'disabled'}>TEAM ROOM ↗</button>` : '';
   const mode = grandPrix ? ' data-course-mode="grandprix"' : '';
-  return `<article class="course-access-card${selected ? ' selected' : ''}"><div><span class="field-label">${course.practice ? 'PRACTICE' : owned ? 'UNLOCKED' : `${credits(price)} CR`}</span><h3>${escape(course.name)}</h3><p>${description}</p>${course.requiredCar ? `<p class="course-recommendation">${escape(CARS[course.requiredCar]?.name || 'Titan')} recommended.${course.arena ? ' Lighter cars cannot crush wrecks.' : ''}</p>` : ''}</div>${owned ? `<button type="button" data-course-select="${course.id}"${mode} aria-label="Select ${escape(course.name)} for free" aria-pressed="${selected}" ${selected ? 'disabled' : ''}>${selected ? 'SELECTED' : 'SELECT COURSE'}</button>` : `<button type="button" data-course-unlock="${course.id}" aria-label="Unlock ${escape(course.name)} for ${price} credits" ${profile.credits < price ? 'disabled' : ''}>UNLOCK · ${credits(price)} CR</button>`}${teamRoom}</article>`;
+  const label=course.practice?'PRACTICE':owned?'UNLOCKED':requirement?'LOCKED':`${credits(price)} CR`;
+  const condition=!owned&&requirement?`<p>${escape(requirement.condition)}</p>`:'';
+  const recommendation=course.requiredCar
+    ? `<p class="course-recommendation">${escape(CARS[course.requiredCar]?.name || 'Titan')} recommended.${course.arena ? ' Lighter cars cannot crush wrecks.' : ''}</p>` : '';
+  const action=owned
+    ? `<button type="button" data-course-select="${course.id}"${mode} aria-label="Select ${escape(course.name)} for free" aria-pressed="${selected}" ${selected ? 'disabled' : ''}>${selected ? 'SELECTED' : 'SELECT COURSE'}</button>`
+    : requirement
+      ? `<button type="button" disabled aria-label="${escape(requirement.condition)}">LOCKED</button>`
+      : `<button type="button" data-course-unlock="${course.id}" aria-label="Unlock ${escape(course.name)} for ${price} credits" ${profile.credits < price ? 'disabled' : ''}>UNLOCK · ${credits(price)} CR</button>`;
+  return `<article class="course-access-card${selected ? ' selected' : ''}"><div><span class="field-label">${label}</span><h3>${escape(course.name)}</h3><p>${description}</p>${condition}${recommendation}</div>${action}${teamRoom}</article>`;
 }
 
 export function courseAccessPanel(profile, selectedStage = 0, message = '', {

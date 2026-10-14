@@ -66,6 +66,8 @@ async function measure(context, quality, against) {
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
   const reports = [];
+  const legacyTiming = process.env.DUEL_BROWSER_LEGACY_TIMING === '1';
+  const timingNotRun = {status: 'not-run', reason: 'Separate quiet manual measurement; no frame acceptance'};
   for (const quality of ['high', 'performance']) {
     await prepare(context, quality);
     // The real race setup offers Grand Prix because the switch is on.
@@ -75,12 +77,17 @@ export async function run(context) {
     })()`);
     if (!offered) throw Error('The race setup does not offer Grand Prix with the switch on');
     await context.evaluate(`document.querySelectorAll('details').forEach(node => { node.open = false; })`);
-    const two = await baseline(context, quality);
+    const two = legacyTiming ? await baseline(context, quality) : timingNotRun;
     await context.evaluate(`(() => {
       const app = window.__qaApp;
       app.audio.setMuted?.(true);
-      app.startCampaign({startStage: 16, seed: 1989, fieldSeed: 12, fieldSize: 7, mode: 'grandprix', car: 'falcone_f42',
-        difficulty: 'casual', cpuDifficulty: 'medium'});
+      const stageIndex = [...document.querySelector('#scene-select').options].map(option => Number(option.value))
+        .find(index => app.getMenuCourse(index)?.def.id === 'harbour-lights');
+      if (!Number.isInteger(stageIndex)) throw Error('Harbour Lights is not offered in the real course menu');
+      if (!app.startCampaign({startStage: stageIndex, laps: 4, seed: 1989, fieldSeed: 12, fieldSize: 7, mode: 'grandprix', car: 'falcone_f42',
+        difficulty: 'casual', cpuDifficulty: 'medium'})) throw Error('The actual Harbour Grand Prix did not start');
+      if (app.duel.course.def.id !== 'harbour-lights' || app.duel.state.mode !== 'grandprix' || !app.duel.state.field)
+        throw Error('The started Harbour course, Grand Prix mode or field was not admitted');
       app.autopilot = true; app._scriptedCrashDone = true;
     })()`);
     // Five red lights, one a second.
@@ -106,7 +113,7 @@ export async function run(context) {
       you: !!document.querySelector('#field-rows li.you'), policeHidden: document.querySelector('#radar-label').hidden}))()`);
     if (hud.rows !== 8 || !hud.you || !hud.total.includes('08') || !hud.policeHidden) throw Error(`${quality}: the race HUD is wrong ${JSON.stringify(hud)}`);
     await context.screenshot(`harbour-night-mid-race-${quality}`);
-    reports.push({ quality, hud, twoCars: two, ...(await measure(context, quality, two)) });
+    reports.push({ quality, hud, twoCars: two, ...(legacyTiming ? await measure(context, quality, two) : {timing: timingNotRun}) });
     // The busiest view: the whole pack in the old town under the lantern strings (a QA move of the
     // race in memory only), then the same measurement.
     await context.evaluate(`(() => {
@@ -116,7 +123,7 @@ export async function run(context) {
     })()`);
     await context.waitFor(`window.__qaApp.duel.state.s > 1380`, `${quality} old town`, 30_000);
     await context.screenshot(`harbour-night-old-town-${quality}`);
-    reports.push({ quality: quality + '-old-town', ...(await measure(context, quality + ' old town', two)) });
+    reports.push({ quality: quality + '-old-town', ...(legacyTiming ? await measure(context, quality + ' old town', two) : {timing: timingNotRun}) });
   }
-  await writeFile(join(context.outputDir, 'harbour-night-frame-pacing.json'), JSON.stringify({ reports }, null, 2) + '\n');
+  await writeFile(join(context.outputDir, 'harbour-night-frame-pacing.json'), JSON.stringify({timing: legacyTiming ? {status: 'legacy-manual', reason: 'Separate quiet manual measurement; no frame acceptance'} : timingNotRun, reports}, null, 2) + '\n');
 }

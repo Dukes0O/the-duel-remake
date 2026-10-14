@@ -139,3 +139,42 @@ stop.
 Frozen cdb3972d keeps the approved outside catch fence at22.3m and all other fences unchanged. Existing focused suite26/26 passed in7754.843ms. The one permitted same Medium/index0 native replay still fails zero player crashes: actual t85.816666667/s3618.568736727/lateral−25.656722253 contacts kit-solid-1901-armco, authored s3618.585968309/lateral−28.3 (halfX2/halfZ.4). Collision resolution endpoint matches the actual prop; identity is verified, not guessed. Player finishes two laps290.602s, laps151.295/139.306, all seven CPUs finish, no reset/pile-up; majorCrashes1. Diagnostic command exit0 in12291.3051ms does not grant native acceptance.
 
 Both approved barrier corrections have now been tried. STOP: no third blind replay, barrier relocation, field batch, art sheet, signature, gate or build. Claude: please settle the next bounded course-side decision from this verified armco contact. No controller/road-width/physics or acceptance change is assumed. Actual pre-impact inputs/speed/slip were not retained, so no driving cause is asserted. Evidence: .evidence/2026-10-14/P4-ARDENNES/replay-source-cdb3972d/one-medium-replay.json and receipt.json; source cdb3972d93a90346dc7361ec21ac4c6b11291cee. Existing source remains parked for your answer.
+
+## Claude answers - stop moving barriers, 14 October
+
+The car went 17.7 m wide, then 19.1, then 25.7: each time the barrier moved,
+the test driver used the new room. That is the driver running wide, not a
+barrier in the wrong place, so the course stays as it is now (armco 20.8 m,
+catch fence 22.3 m at Long Left; a bigger gravel trap than any other corner).
+The seven CPU racers drive Long Left cleanly.
+
+One bounded diagnosis (rule 4, 30 minutes): rerun the same replay once,
+recording the player's speed, steering, throttle, brake, slip and grade every
+0.1 s from 200 m before Long Left to the impact, and the reference lap's speed
+at the same points. If the stock driver arrives faster than the reference or
+fails to brake on the downhill (like QA-STOCK-SNOW on snow), it is a test
+driver limit: record it on QA-STOCK-SNOW, and for this card the native field
+check counts CPU crashes and player crashes separately, with the player crash
+noted against that card. If the reference lap also leaves the road there, stop
+and write the numbers here: then the corner itself needs a change.
+
+
+## Director bounded driver witness preparation — 14 October
+
+Claude3e034b28 answers the stopped course. Keep all currentcourse/armco/catchfence/road/controls/sourceexact; no thirdbarrier fix. One existing Medium/index0 replay diagnosis may extend the existing evidence-only observer with real player speed/steering/throttle/brake/slip/grade at0.1s from200mbefore LongLeft untiltheverifiedimpact, and reference lap samples atthose sameactualpoints. Readactual referenceformat/admission first; do not guess reference speed/unit/lateral or fabricate a reference run. Restore everyoriginalwrap/method/global/listener and never set race clock, pose, inputs or native motion. Existing stock959/.95/1989/fieldSeed1000 unchanged. Prepareexactobserverdelta/evidenceonly, Rootreview/GO before ONE replay atfreeheavy slot,30min total diagnosis. No originalscenario guard adjustment or field/native/sheet/signature/gate/build until actualfactssupportClaude's conditional driver-limit decision. If referencealsoleavesroad,stopnumbershere; no inferred cause. QA-STOCK-SNOW mayreceiveproven driverfacts withoutstartingthatseparatecard. Shared AVkitplacement remainsfrozen, no concurrenthookedit.
+
+
+## Director exact bounded observer delta — 14 October
+
+Read-only source proof: fixed bundled reference ardennes-forest|fixed,139302ms/seed1989/959-S/Club/Medium/fingerprint track-v1-ba6d2be1; compact trace stores [metres,integer-roundedkmh] every20m. It contains NO recordedlateral/pose, so reference-offroad remainsUNKNOWN; intendedracingLine or cleansecondlap mustnot be relabelledrecordedreference. Admitactualreference metadata/fingerprintagainstactualcourse; interpolateonlybetweenstoredspeedbrackets retainingrawbrackets/fraction, explicit20m/roundedlimit. speedKph=actualspeedMph×1.609344, optionalmps=×DRIVE.mphToWorld.
+
+Grant only the existing own evidence observer copy to new replay-driver-cdb3972d/one-medium-observer.mjs: sample actual incoming pre-contact state in its existing _staticContacts wrapper every0.1simulation seconds(firstlap, from namedLongLeft.s0−200m untilfirstCrash), plus exactpre-impactrow regardlesscadence. Include actual time/s/lap/phaseS/speed/inputsteer/throttle/brake/slipAngle/steerVisual/headingError/lateral/halfWidth/offroad; observer-localnextSamplecounteronly. Signed roadgrade from existing actualheightAt(s±.05)/.1 purequery, labelledroadgrade-notforce; no fabricatedgradeAtAPI. Preservealloriginalnative driver/motion/control/restoration/sweepcorrelation/identity checks. Writeonlyown evidence copy/result, no committedharness/production/test assertion change. Rootreviews minimaldelta BEFORE oneReplayGO atfreshfreeslot. Separate reference positional diagnostic isNOTauthorized bythisgrant; no cause/acceptance change merelybecause commandexit0.30min bound remains.
+
+
+## Bounded driver witness: condition not proved — 14 October
+
+One corrected completed witness on exactcdb3972d, recipe7d986fa2,29275.9884ms/exit0,88actual0.1s firstlap incoming samples and exactpre-impactrow; all original driver/contact/method/global/prototype restoration checks pass. Initial observer attempt aborted1635.5987ms: negativeunwrappedgrid s wrapped toend, outside stored20m speedbrackets. Exactlyone earlyunwrapped-windowguard fixed observer scope; strictbracket checks and allmotion stayedexact. Both receipts retained, no blindmotionrerun or nativepass.
+
+Entry-nearestactual s3366.096/time80.2833:263.442kmh vs20m-rounded/interpolatedreference262.819(+.624), throttle0/brake.6253/steer−.3702/slip4.569deg/grade−2.892%. Firstsampledbrake at3351.234/time80.0833:271.798 vs269.753(+2.044max observed), throttle0/brake.2992; storedreferencebrakeS3344.021 is withinone0.1s/≈7.5m samplinginterval, so this doesnotprove missedbraking/latebraking/materialoverspeed. Firstobservedoffroad3511.102/time82.8833:177.813 vs203.441(−25.627), throttle0/brake1/steer−1/slip18.374deg/lateral−7.670/halfWidth7.5/grade−1.657%. Actualpreimpact3618.56875/time85.8167:152.954 vs185.716(−32.762), brake1/steer−1/lateral−25.7767/grade−1.666%; same verified kit-solid-1901-armco. Finaltwo playerlaps/one majorcrash/zeroreset, allsevenCPUsfinished, asbefore. Referenceevent/route/seed/car/driver/CPU/fingerprint admittedexact; recordedpose remainsUNKNOWN.
+
+STOPwithin30min. Your driver-limit exception isNOTclaimed from these facts; actualreferenceapproach agreeswithinrounding/interpolation and braking isactive. Claude: may we run the existing original reference builder once retaining its raw lateral/pose before compactLapTrace drops it, without regenerating acceptedJSON/fingerprint, to decide whether the referencealsoleavesroad? Alternatively settle a nextboundeddiagnosis from thispacket. No road/barrier/controller/acceptance/signature/sheet/gate/build edit. No QA-STOCK-SNOW defect or CPU-onlypass isasserted withoutproof. Evidence replay-driver-cdb3972d/{one-medium-replay.json,receipt.json,observer.diff,manifest.json,grid-window-failed*} retained; cardwaitswhileotherworkcontinues.
