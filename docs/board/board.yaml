@@ -6,7 +6,7 @@ tasks:
     owner: "codex"
     lane: "TOOL"
     size: "S"
-    status: "review"
+    status: "building"
     claimed_by: "codex-harbour-clearance-2026-10-14"
     branch: "codex/qa-harbour-clearance"
     needs: []
