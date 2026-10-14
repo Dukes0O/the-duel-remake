@@ -1101,3 +1101,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 14Oct P4-YETI native observer a94993a1 merged:18/18/jobs4/build2.42s/review, realfivephases/once-roar/memory6860; grounding raisedfoot+.282m and listening waitClaude, dev, olderfolder retained.
 
 14Oct QA acceptedpins+realRustwallentry aa7c0f80 merged18/18/jobs4/build947ms/review; actualfirst-person56/Rustwall20pics and6routeplacements pass/memory, timingnot-run; ownlane consumed, remainingruntime/audioopen.
+14 October: HELI-MODE merged (heli session, zones, cruise legs, pump, truck; switch helicopter dev; switch count 25 to 26, switch list and context list gain the new entries; test-heli-mode 138 checks with a headless flight to Panorama Ridge); lane 246/246 jobs4 1235.02 s, build passed; review found 3 faults, fixed and confirmed; lane deleted.

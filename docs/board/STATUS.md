@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T18:28:52.842Z
+Observed at: 2026-10-14T18:34:41.819Z
 
-Observation commit: 72517a90c1abd6fdae166380ee3719a162d485e7
+Observation commit: 541976e12606689f106365b785beba544f8e753c
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 72517a90c1abd6fdae166380ee3719a162d485e7
+Integration HEAD: 541976e12606689f106365b785beba544f8e753c
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -53,6 +53,7 @@ Last recorded full run: 2026-10-13T19:34:19.618Z; tested commit: bb8d3a99c01140c
 | summit-run | dev |
 | ardennes-forest | dev |
 | the-deep | dev |
+| helicopter | dev |
 
 ## Lane branches
 
@@ -61,6 +62,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
+| codex/heli-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-avalanche-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
 | codex/p4-career-access | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-career-access |
@@ -106,9 +108,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 252,895 B | +2,122 B | 5,000,000 B |
+| Added bytes in last merge | 103,121 B | -149,774 B | 5,000,000 B |
 | All `public/` | 290,229,319 B | +0 B | unavailable |
-| Git objects | 405,460,992 B | +123,904 B | unavailable |
+| Git objects | 405,636,096 B | +175,104 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -117,7 +119,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 72517a90c1abd6fdae166380ee3719a162d485e7
+- Local integration/wasteland: 541976e12606689f106365b785beba544f8e753c
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -125,4 +127,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit 6f7d2f318c531fc7011bd3655b4e4f050866ccc4.
+- Remote origin/integration/wasteland: behind local; cached commit 27d9cf3b2c3b4b9748e56b37ed61bc1c26acca95.
