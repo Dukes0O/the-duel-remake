@@ -466,10 +466,12 @@ tasks:
     owner: "claude"
     lane: "AUD"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: [HELI-PACKET]
-    locks: [sound-bank]
+    locks: []
     flag: "helicopter"
+    claimed_by: claude-heli-2026-10-14
+    branch: claude/heli-radio
     details: "docs/board/cards/HELI-RADIO.md"
 
   - id: HELI-CABLE
@@ -492,9 +494,20 @@ tasks:
     size: "L"
     status: "ready"
     needs: [HELI-FLIGHT, HELI-SAVE]
-    locks: [busy-game-files]
+    locks: []
     flag: "helicopter"
     details: "docs/board/cards/HELI-MODE.md"
+
+  - id: HELI-HOOKS
+    title: "Plug the helicopter into the game: menu entry, app and renderer hooks, cue list line"
+    owner: "claude"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: [HELI-MODE, HELI-RADIO]
+    locks: [busy-game-files, sound-bank]
+    flag: "helicopter"
+    details: "docs/board/cards/HELI-HOOKS.md"
 
   - id: HELI-VIEW
     title: "Draw the helicopter, camera views and instruments"
@@ -502,7 +515,7 @@ tasks:
     lane: "VIS"
     size: "M"
     status: "ready"
-    needs: [HELI-MODE, HELI-ART-SRC]
+    needs: [HELI-HOOKS, HELI-ART-SRC]
     locks: []
     flag: "helicopter"
     details: "docs/board/cards/HELI-VIEW.md"
@@ -524,8 +537,8 @@ tasks:
     lane: "UI"
     size: "M"
     status: "ready"
-    needs: [HELI-CABLE, HELI-MODE]
-    locks: [busy-game-files]
+    needs: [HELI-CABLE, HELI-HOOKS]
+    locks: []
     flag: "helicopter"
     details: "docs/board/cards/HELI-DISPATCH.md"
 

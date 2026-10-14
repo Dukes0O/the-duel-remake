@@ -290,11 +290,15 @@ guard test like The Deep's enforces it):
   playDay: {last, count}, jobs: {day, taken, done}, carsAt: {carId: courseId},
   refuels, flights}`. One line in `normalizeProfile`, a fixture
   `tools/fixtures/saves/10-heli.json`, and the save checker.
-- **`busy-game-files`:** `app.js` (a `visitHeli()` verb, the session in
-  `_simulate` and `_applyInput`, `returnToMenu`, dispose, "Race here") and
-  `render3d.js` (a private scene hook like the Deep's). Held by HELI-MODE
-  and HELI-DISPATCH, one at a time.
-- **`sound-bank`:** the cues above, held by HELI-RADIO.
+- **`busy-game-files` and `sound-bank`:** held once, together, by one
+  short wiring card, HELI-HOOKS: `app.js` (a `visitHeli()` verb, the
+  session in `_simulate` and `_applyInput`, `returnToMenu`, dispose, "Race
+  here"), `render3d.js` (a private scene hook like the Deep's) and one line
+  in `sound-bank.js` that maps the helicopter's cue list (kept in
+  `heli-audio.js`, the way `fight-voices.js` keeps its lines). Every other
+  helicopter card builds against those hooks without a lock. (Re-sliced
+  14 October 2026 while AUD-15-P1 held both locks: one short turn instead
+  of three, which also leaves TYRE-SLIP a single wait.)
 - **Unlocked shared files:** `input-contexts.js` (a `heli` context),
   `screen-router.js` and `screen-menu.js` (a menu entry shown only with the
   switch on).
@@ -311,9 +315,10 @@ flowchart LR
   P --> RD[C: HELI-RADIO]
   FL --> CB[C: HELI-CABLE]
   FL & SV --> MD[C: HELI-MODE]
-  MD & ART --> VW[C: HELI-VIEW]
+  MD & RD --> HK[C: HELI-HOOKS]
+  HK & ART --> VW[C: HELI-VIEW]
   MD & RD & VW --> LS[C: HELI-LESSONS]
-  CB & MD --> DP[C: HELI-DISPATCH]
+  CB & HK --> DP[C: HELI-DISPATCH]
   LS & DP --> FN[C: HELI-FINISH]
 ```
 
