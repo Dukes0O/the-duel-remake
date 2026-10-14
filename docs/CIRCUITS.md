@@ -630,7 +630,7 @@ Claude's fitted layout (13 October 2026). It closes with the fit tool, is
 6.68 km, runs clockwise, and its closest separate stretches of road are 103 m
 apart (Malmedy and the run back from Riverside). The steepest grade is 23.2% on
 The Wall; the tightest radius is 16 m (La Fontaine). Map:
-`docs/board/looks/ardennes/layout.jpg`.
+`docs/board/looks/ardennes/round-1.jpg`.
 
 | # | Piece | Name | Notes |
 | --- | --- | --- | --- |
