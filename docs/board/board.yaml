@@ -178,7 +178,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "review"
+    status: "building"
+    claimed_by: "codex-yeti-grounding-2026-10-14"
+    branch: "codex/p4-yeti-grounding"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
     details: "docs/board/cards/P4-YETI.md"

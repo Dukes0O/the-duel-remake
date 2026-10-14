@@ -131,3 +131,9 @@ Root actual picture review exposes a slope grounding question: FootL contact~0, 
   final roar.
 - Note for the Summit finishing pass: at night the fur reads dark grey-green
   against the snow; Claude will judge whether it needs the Frost tint lifted.
+
+## Director answered lower-contact correction
+
+Claude accepted actualroar and specified rigidroot seating to lowercontact, acceptedasset/clips unchanged and no newround. Reuse older retained p4-yeti folder on new codex/p4-yeti-grounding from currentintegration; preserve all older branches/folder. Own ONLY src/yeti-view.js rootlift selection, existing tools/test-yeti.mjs actualHigh/LOD grounding acceptance and own change note. Change maximum requiredrootlift to minimum, with appropriate initialInfinity, so each stationary foot is at or below the real rendered snow and one actualfoot contacts. No bone/clip/texture/tint/site/mode/renderer/simulation/save/reward/audio/asset change. All legacy model/rig/disposal/readonly/sighting/pay/save proofs remain exact.
+
+Add meaningful actualloadedHigh/LOD foot/terrain witnesses to existing model test using the same authoredsite/nativepose; original1e-6 contact comparison, no new tolerance or bound on acceptable buried snow inferred. Testsfirst, recordactualRED ifrun; Root builder needs one independent review aftersource freeze, then original nearby/jobs4/build and ONE corrected existingnativephasepacket/picturecheck. Roar accepted previousactualpacket; no newlisteninground or frameclaim. Current nativeobserver stays exact; no newtest machinery/harness. Source/metadata frozenbeforechecks, no overlapping heavyjobs beyond3; Rootownssharedmetadata.
