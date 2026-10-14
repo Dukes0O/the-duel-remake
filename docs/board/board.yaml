@@ -345,7 +345,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-qa-runtime-2026-10-14"
+    branch: "codex/qa-browser-runtime"
     needs: []
     details: "docs/board/cards/QA-BROWSER-SWEEP.md"
 
