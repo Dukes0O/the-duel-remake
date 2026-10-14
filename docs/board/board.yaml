@@ -7,7 +7,6 @@ tasks:
     lane: "TOOL"
     size: "S"
     status: "review"
-    waiting_on: "claude"
     claimed_by: "codex-harbour-clearance-2026-10-14"
     branch: "codex/qa-harbour-clearance"
     needs: []
@@ -166,7 +165,6 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "ready"
-    waiting_on: "claude"
     needs: [P4-PANORAMA, P4-HARBOUR, P4-TREMBLANT, P4-CAREER]
     locks: [circuit-registry]
     details: "docs/board/cards/P4-VARIANTS.md"
@@ -348,7 +346,6 @@ tasks:
     lane: "TOOLS"
     size: "S"
     status: "building"
-    waiting_on: "claude"
     claimed_by: "codex-qa-arena-2026-10-14"
     branch: "codex/qa-browser-arena"
     needs: []

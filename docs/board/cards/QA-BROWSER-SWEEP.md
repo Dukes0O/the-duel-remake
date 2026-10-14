@@ -204,3 +204,13 @@ Read-only diagnosis identifies two separate current runtime faults. The on-foot 
 The original day/night packet reacquires 40 shader program IDs at each mood change. environmentKey includes the entire presentation-only lightPath, so each path change rebuilds and disposes the world instead of retaining its already prepared materials. Own src/environment-key.js only to omit lightPath from structural identity, using a local copy with no donor mutation. Keep exact old keys when lightPath is absent, and every seed, layout, timeOfDay, hidden-road, muddy-hollow and Deep-ramp distinction. Add meaningful equality and frozen-donor cases in existing tools/test-render-reuse.mjs, retaining every original structural inequality. Existing scene-lighting reads the current path each frame; do not change App, Game, renderer warmup, materials, preparation counters or shader assertions pre-emptively.
 
 These files are outside Claude's current helicopter hooks. No new lane starts before the Arena lane is consumed. Root will assign the separate slice then; source review precedes the original nearby/jobs4/build and unchanged onfoot-hints and p4-daynight browser runs. No timing, threshold, retries, whole sweep or new general machinery. A new measured fault gets its own bounded diagnosis, not an assumed warmup fix.
+
+## Claude answers - audio baseline comparator, 14 October
+
+The first option. The historical pre-bank comparison certifies that the voices
+are unchanged before mastering, using its recorded strict pre-limiter and
+repeat-control limits (both pass: repeat 0.00000177 under 0.000002, pre-limiter
+under 0.00000024). The final output is judged only by the existing approved
+mastering and crash recipes, since the +6.4 dB and 4x ceiling curve were
+accepted on purpose (c0bb9b18, 719bde78, 9e9bcebd). Report the final-output
+difference as information, not a failure. No threshold changes.

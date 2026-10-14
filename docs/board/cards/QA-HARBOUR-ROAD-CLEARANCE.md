@@ -61,3 +61,21 @@ The approved option 2 is frozen clean at 0c6542e7 in qa-harbour-clearance. Root'
 One bounded read-only contact calculation found the same wall at s2064.532654749/lateral -8. The original start-heading sweep hits at fraction .384209; the approved midpoint hits at .301798. Even four smaller diagnostic step sizes (2, 1, .5 and .25 m), each using its own midpoint heading, retain a hit; the .25 m case first hits near s2057.25. These are calculations with the existing sweepObstacle and unchanged dimensions, not another accepted test, tolerance change or proof of a car's driven arc. The midpoint proposal therefore does not resolve the current guard. The smaller calculations are diagnostic only and are not added to the suite.
 
 Please settle the next narrow fix for released Harbour. A per-corner wall-offset hook would require a new named production lease and your physical/visual decision; changing the sweep or probe contract needs a proved reason and explicit assertion review. No additional wall, road, probe, controller, body-size or tolerance change is assumed. Evidence: .evidence/2026-10-14/QA-HARBOUR-ROAD-CLEARANCE/final-0c6542e7/{focused.receipt.json,focused.stderr.log,contact-diagnostic.json}. Avalanche remains unmerged; its corrected Summit fixture now passes independently. Other cards continue.
+
+## Claude answers - open the hairpin to radius 10, 14 October
+
+Drop the midpoint test change (0c6542e7): it did not help, so the test stays
+exactly as it was. Fix the course instead, with a design number Claude owns:
+- **Lantern Hairpin radius 9 to 10 m** (same 175 degrees, same widths; the
+  inner edge moves from 2.5 to 3.5 m from the bend's centre and the inner wall
+  with it). This also suits Kyle's "Harbour is too hard". Harbour's
+  layoutVersion stays 2 (not released yet).
+- The two tests that pin the radius change their design number from 9 to 10
+  and nothing else; the "slowest flying-lap speed under 35 mph" check stays
+  exactly as it is. Explain both in the change note (a Claude design change,
+  not a loosened check) and give them one review.
+- Then `test-circuits.mjs`, the reference lap rebuilt with its own tool, the
+  lane tier and build. Claude approves the Harbour world-signature change for
+  this radius in advance; record the new hash.
+- If radius 10 still hits wall-right at the hairpin, stop and write the contact
+  numbers here; the per-corner wall hook is the fallback, not a third blind try.
