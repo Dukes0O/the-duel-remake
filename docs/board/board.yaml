@@ -500,7 +500,7 @@ tasks:
     owner: "claude"
     lane: "SAVE"
     size: "M"
-    status: "building"
+    status: "review"
     claimed_by: claude-fire-2026-10-14
     branch: claude/fire-save
     needs: [HELI-FINISH]
@@ -513,7 +513,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-fire-2026-10-14
+    branch: claude/fire-missions
     needs: [FIRE-SAVE]
     locks: []
     flag: "forestFire"
@@ -524,7 +526,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-fire-2026-10-14
+    branch: claude/fire-spread
     needs: [FIRE-SAVE]
     locks: []
     flag: "forestFire"
@@ -535,7 +539,7 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "review"
     claimed_by: claude-fire-2026-10-14
     branch: claude/fire-bucket
     needs: [HELI-FINISH]
@@ -548,7 +552,7 @@ tasks:
     owner: "claude"
     lane: "AUD"
     size: "S"
-    status: "building"
+    status: "review"
     claimed_by: claude-fire-2026-10-14
     branch: claude/fire-radio
     needs: [HELI-FINISH]
@@ -561,7 +565,9 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-fire-2026-10-14
+    branch: claude/fire-close
     needs: [FIRE-SAVE]
     locks: []
     flag: "forestFire"
