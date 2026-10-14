@@ -191,7 +191,30 @@ test('approved kit ids, physical start line and garages clear the real pit lane'
 });
 test('real lattice mast and timing tower stand on terrain outside the road', () => {
   const world = new THREE.Group(), landmarks = addCircuitLandmarks(world, course);
-  assert.equal(landmarks.children.length, 2);
+  assert.equal(landmarks.children.length, 4);
+  // PANORAMA-TOWN: the valley town is a few instanced meshes of real houses, not kit shopfronts.
+  const town = landmarks.getObjectByName('valley-town');
+  assert.equal(town.getObjectByName('town houses').count, PANORAMA_RIDGE.circuitLandmarks.find(l => l.type === 'town').houses.length);
+  assert.ok(town.getObjectByName('town houses').count >= 50 && town.children.length <= 12);
+  assert.ok(town.getObjectByName('town lit windows').count > town.getObjectByName('town dark windows').count);
+  assert.equal(PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id.startsWith('shopfront')).length, 0);
+  // No two houses share ground (footprint with veranda and eaves), and no lamp stands in a house or the church.
+  const spec = PANORAMA_RIDGE.circuitLandmarks.find(l => l.type === 'town'), churchSpec = PANORAMA_RIDGE.circuitLandmarks.find(l => l.type === 'church');
+  // Each footprint covers the house and its street-side veranda (front faces -lateral when heading is about -pi/2).
+  const boxes = spec.houses.map(h => ({s: h.s, lateral: h.lateral - (h.heading < 0 ? 1 : -1) * 1.15, along: h.width / 2 + .5, across: (h.depth + 2.3) / 2 + .4}));
+  boxes.push({s: churchSpec.s, lateral: churchSpec.lateral, along: 10, across: 5.5});
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const a = boxes[i], b = boxes[j];
+    assert.ok(Math.abs(a.s - b.s) >= a.along + b.along || Math.abs(a.lateral - b.lateral) >= a.across + b.across, `town footprints ${i} and ${j} overlap`);
+  }
+  for (const lamp of spec.lamps) for (const box of boxes)
+    assert.ok(Math.abs(lamp.s - box.s) >= box.along || Math.abs(lamp.lateral - box.lateral) >= box.across, 'a street lamp stands inside a building');
+  // PANORAMA-TOWN: the valley town's church stands on terrain with windows the dusk lighting can find.
+  const church = landmarks.getObjectByName('town-church'); church.updateWorldMatrix(true, true);
+  const steeple = new THREE.Box3().setFromObject(church);
+  assert.ok(steeple.max.y - steeple.min.y > 20);
+  let windows = 0; church.traverse(mesh => {if (mesh.material?.name === 'church window') windows++;});
+  assert.ok(windows >= 8);
   const mast = landmarks.getObjectByName('ridge-radio');
   assert.ok(mast.getObjectByName('radio lattice and aerials').count > 70);
   assert.equal(mast.getObjectByName('radio mast guy wires').count, 4);
@@ -212,6 +235,9 @@ test('real lattice mast and timing tower stand on terrain outside the road', () 
   disposeTree(world); assert.equal(releases, resources.size);
 });
 test('landmark metadata cannot put structures on the road or silently substitute unknown types', () => {
+  const town = PANORAMA_RIDGE.circuitLandmarks.find(l => l.type === 'town');
+  const onRoad = new Course({...PANORAMA_RIDGE, circuitLandmarks: [{...town, houses: [...town.houses, {...town.houses[0], lateral: 2}]}]}, 1989);
+  assert.throws(() => addCircuitLandmarks(new THREE.Group(), onRoad), /town hides the road/);
   for (const patch of [{lateral: 0}, {type: 'hut'}, {height: NaN}, {s: -1}]) {
     const bad = new Course({...PANORAMA_RIDGE, circuitLandmarks: [{...PANORAMA_RIDGE.circuitLandmarks[0], ...patch}]}, 1989);
     assert.throws(() => addCircuitLandmarks(new THREE.Group(), bad), /landmark|road/);
@@ -364,16 +390,20 @@ test('Panorama rounds existing ridge geometry, removes snow and keeps defaults e
 });
 test('Panorama finish uses actual owner materials and leaves non-fence/default resources exact',async()=>{
   const {finishRidgeKitMaterials}=await import('../src/circuit-landmarks.js');assert.equal(typeof finishRidgeKitMaterials,'function');
-  const group=new THREE.Group(),fence=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({map:new THREE.Texture()})),pane=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({name:'round-two-harbour-warm-amber-pane'})),other=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({name:'untouched'}));
-  fence.userData.trackKitId='catch-fence';pane.userData.trackKitId='shopfront-a';group.add(fence,pane,other);const key=other.material.customProgramCacheKey();
-  await finishRidgeKitMaterials({ready:Promise.resolve(true),group});const shader={uniforms:{},vertexShader:'#include <common>\n#include <begin_vertex>',fragmentShader:'#include <common>\n#include <map_fragment>'};fence.material.onBeforeCompile(shader);assert.match(shader.fragmentShader,/vRidgeFenceHeight/);assert.doesNotMatch(shader.fragmentShader,/#include <map_fragment>/);assert.match(pane.material.name,/window/);assert.equal(other.material.name,'untouched');assert.equal(other.material.customProgramCacheKey(),key);disposeTree(group);
+  const group=new THREE.Group(),fence=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({map:new THREE.Texture()})),other=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({name:'untouched'}));
+  fence.userData.trackKitId='catch-fence';group.add(fence,other);const key=other.material.customProgramCacheKey();
+  await finishRidgeKitMaterials({ready:Promise.resolve(true),group});const shader={uniforms:{},vertexShader:'#include <common>\n#include <begin_vertex>',fragmentShader:'#include <common>\n#include <map_fragment>'};fence.material.onBeforeCompile(shader);assert.match(shader.fragmentShader,/vRidgeFenceHeight/);assert.doesNotMatch(shader.fragmentShader,/#include <map_fragment>/);assert.equal(other.material.name,'untouched');assert.equal(other.material.customProgramCacheKey(),key);disposeTree(group);
 });
 
-test('ready Panorama owner finishes windows before synchronous native night discovery',async()=>{
-  const {finishRidgeKitMaterials}=await import('../src/circuit-landmarks.js');
+test('the valley town windows and lamps light at dusk through the native night lighting',async()=>{
   const {createPathNightDetails}=await import('../src/scene-lighting.js');
-  const group=new THREE.Group(),source=new THREE.MeshStandardMaterial({name:'round-two-harbour-warm-amber-pane',emissive:0xffffff,emissiveIntensity:1.65}),pane=new THREE.Mesh(new THREE.BoxGeometry(),source);pane.userData.trackKitId='shopfront-a';group.add(pane);
-  const finished=finishRidgeKitMaterials({status:'ready',ready:Promise.resolve(true),group});
-  const details=createPathNightDetails({world:group,course});
-  try{details.update({position:new THREE.Vector3(),heading:0,distance:0,high:true,amount:.55,headlights:1});assert.notEqual(pane.material,source,'native synchronous discovery must bind an already-ready window');assert.ok(pane.material.emissiveIntensity>0&&pane.material.emissiveIntensity<1.65);await finished;}finally{details.dispose();disposeTree(group);}
+  const world=new THREE.Group();addCircuitLandmarks(world,course);
+  const town=world.getObjectByName('valley-town'),source=town.getObjectByName('town lit windows').material;
+  const details=createPathNightDetails({world,course});
+  try{details.update({position:new THREE.Vector3(),heading:0,distance:0,high:true,amount:.8,headlights:1});
+    const bound=town.getObjectByName('town lit windows').material;
+    assert.notEqual(bound,source,'night lighting binds the town windows');assert.ok(bound.emissiveIntensity>0);
+    assert.ok(town.getObjectByName('town lamp heads').material.emissiveIntensity>0);
+    assert.equal(town.getObjectByName('town dark windows').material.name,'town unlit pane');
+  }finally{details.dispose();disposeTree(world);}
 });
