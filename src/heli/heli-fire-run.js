@@ -199,7 +199,15 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
         courseId: burning?.courseId ?? call?.courseId ?? null,
         courseName: HELI_DESTINATIONS[burning?.courseId ?? call?.courseId]?.name ?? null,
         shareOut: burning ? shareOut(burning) : 0, cells: burning ? burning.burning.length : 0,
-        wind: Object.freeze({name: wind.name, speed: wind.speed, kind: wind.kind}), target: null};
+        wind: Object.freeze({name: wind.name, speed: wind.speed, kind: wind.kind, toward: wind.toward}), target: null};
+      if (burning) {
+        // For drawing (FIRE-VIEW): each burning and burnt cell's middle and
+        // ground height, from the fire's own grid.
+        const grid = world(burning.courseId).grid, at = cell => grid.cells.get(cell);
+        info.burning = Object.freeze(burning.burning.filter(([cell]) => at(cell))
+          .map(([cell, percent]) => Object.freeze({cell, x: at(cell).x, z: at(cell).z, y: at(cell).y, percent})));
+        info.burnt = Object.freeze(burning.burnt.filter(cell => at(cell)).map(cell => Object.freeze({cell, x: at(cell).x, z: at(cell).z, y: at(cell).y})));
+      }
       if (burning && heli) {
         const grid = world(burning.courseId).grid;
         const cell = hottestEdge(burning, grid, wind);

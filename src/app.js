@@ -6,7 +6,7 @@ import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
 import {fireOnNewDay, fireWorld} from './heli/heli-fire-run.js';
 import {notePlayDay, buyBack as buyBackSave, fireOf} from './heli/heli-save.js';
-import {courseClosed, closureCard} from './course-closures.js';
+import {courseClosed, closureCard, burnStage, burnSmoke, scarLooks} from './course-closures.js';
 import {groundFromCourse} from './heli/heli-ground.js';
 import {createHeliAudio} from './heli/heli-audio.js';
 import {carAt} from './heli/heli-save.js';
@@ -1252,6 +1252,20 @@ export class App {
     return result;
   }
   forestFireEnabled() { return this._fireOn(); }
+  // What the renderer draws burnt on a course (FIRE-VIEW): its stage, smoke,
+  // scars, and the cells the fire being fought has burnt. Null when normal.
+  fireLookFor(courseId) {
+    if (!this._fireOn() || !this.profile?.heli) return null;
+    const heli = this.heliSession?.profile?.heli ?? this.profile.heli, profile = {...this.profile, heli}, on = {enabled: true};
+    const fire = fireOf(profile), live = fire?.courseId === courseId ? fire.burnt : [];
+    const stage = burnStage(profile, courseId, undefined, on), scars = scarLooks(profile, courseId, undefined, on);
+    if (!stage && !scars.length && !live.length) return null;
+    const key = `${courseId}|${stage}|${burnSmoke(profile, courseId, undefined, on)}|${scars.map(s => s.stage + s.cells.length).join()}|${live.length}`;
+    if (this._fireLook?.key === key) return this._fireLook.look;
+    const look = Object.freeze({stage, smoke: burnSmoke(profile, courseId, undefined, on), scars, live: Object.freeze([...live])});
+    this._fireLook = {key, look};
+    return look;
+  }
   heliAvailable() {
     return !!this.player && this._switches().enabled('helicopter') === true;
   }
