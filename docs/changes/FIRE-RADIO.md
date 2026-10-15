@@ -54,6 +54,14 @@ the pending H1 release, which waits on Kyle, is not a build dependency).
   `src/sound-bank.js` through HELI-HOOKS' existing line; that file and
   mastering are untouched. No event is wired yet: FIRE-HOOKS does that.
 
+- **Catalog order.** `addCatalogEntry` sorts the whole catalog by source
+  and key on every write, but the catalog on integration was not in that
+  order, so recording reshuffled 122 untouched rows and broke the pinned
+  hashes in `test-p4-audio.mjs` and `test-arsenal-wave1-audio.mjs`. The
+  old rows are back in integration's order with the 24 new rows after the
+  existing helicopter rows; the diff is additions only. (A later card that
+  uses the tool will hit the same sort; worth fixing in the tool.)
+
 ## Round one listening (measured; I cannot listen)
 
 The sounds were chosen from their descriptions and loudness over time.
@@ -85,7 +93,8 @@ The helicopter's library sounds stay under the 400 KB the H1 test allows
   loudness; the size cap).
 - `node tools/test-heli-hooks.mjs` (178), `test-heli-lessons.mjs` (63),
   `test-heli-jobs.mjs` (554): passed.
-- Lane tier and build: below.
+- First lane tier: 159 passed, 2 failed (the two pinned catalog hashes,
+  fixed above); build passed. Rerun: below.
 
 ## Changed assertions
 
