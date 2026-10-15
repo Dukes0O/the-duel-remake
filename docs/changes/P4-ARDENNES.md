@@ -245,7 +245,7 @@ Existing tests gain stable selection/variant/default/feature identity, actual bo
 
 The existing scenario now prepares Beech Grove from an actual bound Kestrel tree and real drawn High/LOD bounds during the clear second lap. It retains all original 22 views, both prepared street/stream close views, original stock inputs, actual light/mist and field/incident/read-only guards. Final R3 requires the three original High close PNGs separately as well as the immutable full-viewport JPEG. No native, compositor or review ran for this source.
 
-Prior exact street source 10ef2beb was independently reviewed CLEAR. Root's original two focused suites (test-course-landmarks and test-circuit-ardennes) passed 2/2, zero failures/notRun, jobs 4, 13,078.4472 ms; 06:59:27.5350022–06:59:40.6542343 UTC with no other actual roots. Receipts: `.evidence/2026-10-15/P4-ARDENNES/streets-10ef2beb/{result.json,receipt.json,stderr.log}`. They were not repeated. This new source still needs independent review, actual export/ground/geometry checks, final native R3/Claude verdict, the first approved course signature and final nearby gate/build. No fourth round or performance acceptance is implied.
+Prior exact street source 10ef2beb was independently reviewed CLEAR. Root's original two focused suites (test-course-landmarks and test-circuit-ardennes) passed 2/2, zero failures/notRun, jobs 4, 13,078.4472 ms; 06:59:27.5350022â€“06:59:40.6542343 UTC with no other actual roots. Receipts: `.evidence/2026-10-15/P4-ARDENNES/streets-10ef2beb/{result.json,receipt.json,stderr.log}`. They were not repeated. This new source still needs independent review, actual export/ground/geometry checks, final native R3/Claude verdict, the first approved course signature and final nearby gate/build. No fourth round or performance acceptance is implied.
 
 Removed: only the pine drawings for the explicitly selected existing tree IDs are replaced; their physical trees remain. No original landmark/model, default material, old tree path, street source, native guard or submitted art sheet is removed. The six current original landmark GLBs and measured provenance remain untouched.
 
@@ -296,3 +296,10 @@ The ONE corrected selected export completed 07:52:00.983959 UTC on unchanged a6f
 No further test, source edit, export, native run, compositor, art submission, signature, gate or build ran for this asset commit. The affected circuit acceptance and one corrected native packet await Root admission. Formal R3 is still unused; mechanical success in the earlier 28-view packet did not accept its pictures. The 08:12 UTC investigation cutoff remains.
 
 Removed: the two superseded beech binaries with the constant material-selected leaf UV channel are replaced by the corrected pair. No duplicate runtime version is retained.
+
+
+## Final round3 actual image source
+
+On clean74c1ffed, the corrected selected-UV circuit suite passed1/1/all36cases at07:54:38.4078923UTC,12893.5208ms,jobs4,zero failures/notRun. Original passing kit/default checks were not repeated.
+
+Corrected native15425 completed07:57:34.4392421UTC,exit0,80187.8527ms,28views,private/memory-only,issues[]/warnings[],source unchanged. Root inspected all three full High close images: real streets, broadside stone arch/stream and real textured beech/trunk among firs are visible. This is evidence, not art acceptance. Existing compositor produced the final numbered sheet once: 412330B/SHA256 e768c45b8ee8f2eebf0eb2174fc6ddfcd41cd22796c07830c7049483dacf6333. No crop, retouch, relighting or overwrite. The real image-only final verdict still waits.
