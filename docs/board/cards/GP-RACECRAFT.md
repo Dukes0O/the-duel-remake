@@ -48,8 +48,13 @@ lane." He wants it fixed **behind a switch and previewed first**, not live.
    - Exit passes: a car with a better exit uses the tow and goes past on the
      next straight.
    - Gap window up to 1.5 s for aggressive drivers.
-4. **CPU nitro.** Each CPU car gets the same nitro tank, strength and refill
-   as its car and upgrades would give the player, used only on straights, to
+4. **CPU nitro (Kyle, 15 October: half as strong, twice as slow to refill).**
+   Each CPU car gets its car's nitro tank, but the boost is **50%** of the
+   player's (half the extra acceleration and half the extra top speed) and the
+   tank takes **twice as long** to refill (half the refill rate, and half the
+   near-miss refill). Keep these as named numbers in one table
+   (`CPU_NITRO = {strength: 0.5, refill: 0.5}`) so they can later differ by
+   difficulty. Used only on straights, to
    attack (passing or closing a gap under 1 s) or to defend (a car alongside
    or within 0.5 s behind), more often for aggressive drivers, never in the
    pit lane. Nitro stops being an automatic win; it becomes a duel.
