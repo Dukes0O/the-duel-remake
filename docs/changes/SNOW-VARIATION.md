@@ -71,3 +71,7 @@ Removed: no files in this step; consumed earlier verdicts now live in the final 
 Final immutable comparison published: 122278 bytes / SHA256 cc6e09f3c94916937b12a5debc98c54927143b2b64bb832dd0875fc780264d90. Root reviewed the already-frozen compositor and verified actual source pins. Claude's acceptance refers to the two original raw PNGs; the JPEG only places/compresses those full images with outside labels. No extra art round or normal-lighting/performance pass.
 
 Removed: own consumed R1/R2 sheets574008B, hash-verified and recycled after all verdicts folded into the final review note. Only current round3 picture remains; runtime5bfd source/scenario/test/compositor bytes remain exact. No signature regenerated/changed, canonical lane/build still pending.
+
+## Final verification and integration
+
+Clean final source2d42f7ad passed original canonical nearby112/112/jobs4, zero failures/not-run, 396264.591ms wall, ended05:46:30UTC; clean build838ms/1542.1796ms command ended05:54:33UTC. Root independent source CLEAR; Claude actual final art ACCEPT visibility4/5,natural3/5. Merged7b447e50 without conflict; no clean-merge rerun. Own lane/branch and consumed raw review output recycled after committed verdict. Final current JPEG122278B/SHA256cc6e09f3c94916937b12a5debc98c54927143b2b64bb832dd0875fc780264d90 retained. No signature regeneration, current-scene frame or release pass claimed.

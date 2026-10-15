@@ -342,9 +342,7 @@ tasks:
     lane: "WORLD"
     size: "S"
     locks: [world-signatures]
-    status: "building"
-    claimed_by: "codex-snow-variation-2026-10-14"
-    branch: "codex/snow-variation"
+    status: "done"
     needs: [QA-REVIEW-BLACK-FRAMES]
     details: "docs/board/cards/SNOW-VARIATION.md"
 

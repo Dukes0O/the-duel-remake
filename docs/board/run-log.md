@@ -1166,3 +1166,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-15 QA-REVIEW-BLACK-FRAMES merged29568807/source4a3a9b44:21/21/jobs4, build1.11s, independent CLEAR, native16 visible views; one existing hairpin controller shortfall retained; conflict-free/no rerun, own lane recycled.
 
 - 2026-10-15 QA-TITAN-REPLAY-TIMEOUT mergede80e6ca4/source1e55b12f:429/429/jobs4, build703ms, independent source CLEAR; one actual replay per final plan, standalone guards exact; conflict-free/no rerun, own lane recycled.
+
+- 2026-10-15 SNOW-VARIATION merged7b447e50/source2d42f7ad:112/112/jobs4, build838ms, independent CLEAR, actual final art ACCEPT4/3; defaults exact, no clean-merge rerun, own lane recycled.
