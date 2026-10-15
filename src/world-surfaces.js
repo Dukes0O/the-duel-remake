@@ -120,7 +120,7 @@ export function terrainGeometry(course) {
   const base = new THREE.Color(groundTint(course)), col = new THREE.Color(); let row = 0;
   const terrainStep=course.def.offroad||course.def.arena?2:4;
   const terrainRows=Math.floor(course.length/terrainStep)+1+
-    (course.def.ridgeLandform && course.length%terrainStep!==0 ? 1 : 0);
+    ((course.def.ridgeLandform || course.def.completeTerrainRibbon === true) && course.length%terrainStep!==0 ? 1 : 0);
   for (; row < terrainRows; row++) {
     const s=Math.min(row*terrainStep,course.length);
     // Match the branch's flattened bed exactly. A fixed coarse cross-section

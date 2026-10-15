@@ -286,7 +286,7 @@ EARN-MEDALS holds the `save-shape` lock, adds one fixture to
 `tools/fixtures/saves/` (a player with medals and a malformed entry; EARN-CAR-1
 adds its earned car to that fixture once the car exists) and gets a fresh save review (the save checker) as well as the
 ordinary code review. The fixture roster count in
-`tools/test-save-fixtures.mjs` goes from 10 to 11; the change note explains
+`tools/test-save-fixtures.mjs` goes from 11 to 12; the change note explains
 that changed assertion.
 
 ## 7. The switch
@@ -310,7 +310,7 @@ that changed assertion.
 | --- | --- | --- |
 | `src/medals.js` | EARN-MEDALS | Sheet rules, counting, totals, earned-car progress and grant |
 | `tools/test-medals.mjs` | EARN-MEDALS | Rules, save, old saves, rollback, player isolation |
-| `tools/fixtures/saves/11-medals.json` | EARN-MEDALS | The new save fixture |
+| `tools/fixtures/saves/12-medals.json` | EARN-MEDALS | The new save fixture |
 | `src/earned-cars-ui.js` | EARN-SCREEN | Which cars show, the medal panel, the lines |
 | `tools/test-earned-cars-ui.mjs` | EARN-SCREEN | Real App and screens, memory-only |
 | `src/<car>-vehicle.js` | EARN-CAR-1 to 3 | Each car's original model |

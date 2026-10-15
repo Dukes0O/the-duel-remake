@@ -13,7 +13,7 @@ This file holds the settled design, the tests and the acceptance. Design:
     needs: [EARN-PACKET]
     locks: [save-shape]
     flag: earned-cars
-    owns: [src/medals.js, tools/test-medals.mjs, tools/fixtures/saves/11-medals.json, docs/changes/EARN-MEDALS.md]
+    owns: [src/medals.js, tools/test-medals.mjs, tools/fixtures/saves/12-medals.json, docs/changes/EARN-MEDALS.md]
     hooks: [src/progression.js, src/feature-flags.js, tools/test-save-fixtures.mjs, tools/test-feature-flags.mjs]
 ```
 
@@ -90,9 +90,9 @@ This file holds the settled design, the tests and the acceptance. Design:
    a police fine can take from it as from a milestone; zero in the separate
    Wasteland career; nothing with the switch off. Every existing pay test
    passes unchanged.
-9. The new fixture `11-medals.json` (medals for real cars, one malformed
+9. The new fixture `12-medals.json` (medals for real cars, one malformed
    entry, no earned car: none exists yet, and the fixture test would drop its
-   id; EARN-CAR-1 adds it); `tools/test-save-fixtures.mjs` roster 10 to 11, explained in the
+   id; EARN-CAR-1 adds it); `tools/test-save-fixtures.mjs` roster 11 to 12, explained in the
    change note.
 
 ## Acceptance

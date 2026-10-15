@@ -40,7 +40,7 @@
   longer loads that commit, because compaction can rewrite commit ids; it
   checks the same promises directly (switch off adds nothing, the switch
   changes only medal fields, the Jesko list, sheets only where saved).
-- `tools/test-save-fixtures.mjs`: 11 shapes, 342 checks pass.
+- `tools/test-save-fixtures.mjs`: 12 shapes pass.
 - `tools/test-progression.mjs`, `tools/test-feature-flags.mjs` pass.
 - Save review (the save checker, independent): CLEAR. Old saves, the new
   fixture, round trips with malformed and `__proto__` sheets, the rollback,
@@ -54,10 +54,10 @@
 
 ## Changed assertions
 
-- `tools/test-save-fixtures.mjs`: the fixture roster goes from 10 to 11 for
-  the new `11-medals.json` (sheets for real cars, a malformed entry, an
+- `tools/test-save-fixtures.mjs`: the fixture roster goes from 11 to 12 for
+  the new `12-medals.json` (sheets for real cars, a malformed entry, an
   unknown car, and a second player with no sheet).
-- `tools/test-feature-flags.mjs`: the switch count goes from 26 to 27 and
+- `tools/test-feature-flags.mjs`: the switch count goes from 27 to 28 (after FIRE-SAVE's `forest-fire`) and
   `earned-cars` joins the list that must stay dev.
 
 ## Removed

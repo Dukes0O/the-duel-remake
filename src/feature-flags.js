@@ -21,6 +21,8 @@ export const FEATURE_STATES = Object.freeze({
   'the-deep': 'dev',
   // The helicopter (docs/HELICOPTER.md): Kestrel One, H1 First flight. Off in the game.
   helicopter: 'dev',
+  // H2 Fire (docs/HELI_FIRE.md): forest fires, the bucket and burnt courses. Works only with the helicopter on.
+  'forest-fire': 'dev',
   // Earned cars and medal sheets (docs/EARNED_CARS.md). Off in the game.
   'earned-cars': 'dev',
 });
