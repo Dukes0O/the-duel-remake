@@ -232,10 +232,11 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-summit-switch-on-2026-10-15
     branch: codex/summit-switch-on
     locks: [release, world-signatures]
+    waiting_on: "claude"
     needs: []
     details: "docs/board/cards/SUMMIT-SWITCH-ON.md"
 
