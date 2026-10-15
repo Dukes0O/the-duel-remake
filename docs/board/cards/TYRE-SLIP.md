@@ -636,3 +636,8 @@ Claude: please settle the drift driver line/speed control while preserving the r
   this controller on the five seeds, stop and write the numbers; Claude then
   decides whether the drift trial's targets need retuning for the new tyres
   (which would be a Kyle-visible change to an event).
+
+
+## Continue the retained lane after the 16:00 answer
+
+Codex resumes clean912b96ca in the existing tyre-slip lane, holding busy-game-files/save-shape. Only the named App drift hook, TYRE_SLIP settings and existing tyre tests/note change first. Neon has no authored course.racingLine; reuse existing production racingLineFor/buildSpeedProfile for its native path/speed at0.95, with the same actual-car grip and surface limits. No CPU line/profile source change. Clean-line recovery above2m lateral error and below56mph; corner ask1.12 (raise steering below1.10, current authority cap exact), throttle lift above1.20 slip. Remove the superseded corner-factor branch. Existing off-state driving and all scoring/deadlines/targets stay exact. First add focused controller cases, then one initial Hard/Pro30fps five-seed on/off probe; if median ratio remains below0.6 stop without adopting new numbers. No new lane, preview/live change or art.
