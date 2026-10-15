@@ -36,10 +36,14 @@ def arguments():
     parser.add_argument("--paths-only", action="store_true")
     parser.add_argument("--view-only", action="store_true",
                         help="Inspect the pinned private candidate unchanged; do not generate or fit")
+    parser.add_argument("--fit-only", action="store_true",
+                        help="Fit the pinned existing candidate by root scale/translation only")
     parser.add_argument("--source-view", action="append", choices=tuple(name for name, _ in SOURCE_VIEWS),
                         help="Select an existing source view; repeat only with --view-only")
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
     args = parser.parse_args(argv)
+    if args.fit_only and (args.view_only or args.source_view):
+        parser.error("--fit-only is exclusive with --view-only and --source-view")
     if args.source_view and not args.view_only:
         parser.error("--source-view requires --view-only")
     if args.source_view and len(set(args.source_view)) != len(args.source_view):
@@ -63,6 +67,119 @@ def view_plan(output, views=SOURCE_VIEWS):
     return {"blend": [], "glb": [], "json": [str(output / "inspection-manifest.json")],
             "atlas": [], "evidence": [str(output / (name + ".png")) for name, _ in views],
             "summary": []}
+
+
+def fit_plan(output):
+    return {"blend": [], "glb": [str(output / "beaver-source-fitted.glb")],
+            "json": [str(output / "fit-manifest.json")], "atlas": [], "evidence": [], "summary": []}
+
+
+def fit_existing_candidate(root, output):
+    # This branch never paints, imports into Blender, deforms or re-exports a mesh.
+    candidate_path = root / CANDIDATE_RELATIVE
+    original = ORIGINAL_PATH.read_bytes()
+    candidate = candidate_path.read_bytes()
+    if (len(original), hashlib.sha256(original).hexdigest()) != (ORIGINAL_BYTES, ORIGINAL_SHA256):
+        raise ValueError("Approved licensed original changed before fitting")
+    if (len(candidate), hashlib.sha256(candidate).hexdigest()) != (CANDIDATE_BYTES, CANDIDATE_SHA256):
+        raise ValueError("The one verified private candidate changed before fitting")
+    magic, version, total = struct.unpack_from("<4sII", candidate)
+    json_size, json_type = struct.unpack_from("<II", candidate, 12)
+    binary_size, binary_type = struct.unpack_from("<II", candidate, 20 + json_size)
+    binary = candidate[28 + json_size:]
+    if ((magic, version, total, json_type, binary_type) !=
+            (b"glTF", 2, len(candidate), 0x4E4F534A, 0x004E4942) or len(binary) != binary_size):
+        raise ValueError("Pinned candidate is not the expected complete two-chunk GLB")
+    document = json.loads(candidate[20:20 + json_size])
+    if (document["nodes"] != [{"name": "Geo_Beaver", "mesh": 0}] or
+            document["scenes"][document.get("scene", 0)]["nodes"] != [0]):
+        raise ValueError("Fit requires the actual single identity root node")
+    primitive = document["meshes"][0]["primitives"][0]
+    def accessor(index):
+        item = document["accessors"][index]
+        view = document["bufferViews"][item["bufferView"]]
+        shape = {"SCALAR": 1, "VEC2": 2, "VEC3": 3}[item["type"]]
+        fmt = "<" + {5123: "H", 5126: "f"}[item["componentType"]] * shape
+        offset = view.get("byteOffset", 0) + item.get("byteOffset", 0)
+        stride = view.get("byteStride", struct.calcsize(fmt))
+        return [struct.unpack_from(fmt, binary, offset + index * stride) for index in range(item["count"])]
+    positions = accessor(primitive["attributes"]["POSITION"])
+    uv = accessor(primitive["attributes"]["TEXCOORD_0"])
+    used = set(row[0] for row in accessor(primitive["indices"]))
+    # Viewed underside confirms the dark lower-left UV region contains the four paws.
+    paws = [index for index in used if uv[index][0] < .5 and uv[index][1] >= .5]
+    if not paws:
+        raise ValueError("Pinned source has no indexed paw region")
+    paw_y = min(positions[index][1] for index in paws)
+    paw_groups = []
+    for side in (-1, 1):
+        for front in (False, True):
+            # z=20 lies in the measured empty gap between rear and front paw regions.
+            group = [index for index in paws if positions[index][0] * side > 0 and
+                     (positions[index][2] > 20) == front]
+            if not group:
+                raise ValueError("Pinned indexed source is missing a viewed paw group")
+            paw_groups.append({"side": "left" if side < 0 else "right",
+                               "end": "front" if front else "rear", "indexedVertices": len(group),
+                               "sourceMinY": min(positions[index][1] for index in group)})
+    if (paw_y != -18.33993911743164 or
+            [group["sourceMinY"] for group in paw_groups] !=
+            [-18.33993911743164, -18.159942626953125, -18.33993911743164, -18.159942626953125]):
+        raise ValueError("Actual viewed paw datum changed")
+    z_min, z_max = min(positions[index][2] for index in used), max(positions[index][2] for index in used)
+    scale = 1.10 / (z_max - z_min)
+    translation_y = -paw_y * scale
+    min_paw_m = paw_y * scale + translation_y
+    tail = [index for index in used if uv[index][0] >= .5 and uv[index][1] < .5]
+    tail_min_m = min(positions[index][1] for index in tail) * scale + translation_y
+    if (not math.isfinite(scale) or scale <= 0 or min_paw_m != 0 or not -.02 <= tail_min_m <= 0):
+        raise ValueError("Approved paw pivot or 2 cm tail allowance cannot be met without deformation")
+    for group in paw_groups:
+        group["fittedMinYMetres"] = group["sourceMinY"] * scale + translation_y
+    changed = copy.deepcopy(document)
+    changed["nodes"][0]["scale"] = [scale, scale, scale]
+    changed["nodes"][0]["translation"] = [0, translation_y, 0]
+    # Same GLB JSON/chunk serialization as generation; copy the COMPLETE BIN, including padding.
+    encoded = json.dumps(changed, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    encoded += b" " * (-len(encoded) % 4)
+    size = 12 + 8 + len(encoded) + 8 + len(binary)
+    fitted = (struct.pack("<4sII", b"glTF", 2, size) +
+              struct.pack("<II", len(encoded), 0x4E4F534A) + encoded +
+              struct.pack("<II", len(binary), 0x004E4942) + binary)
+    restored = copy.deepcopy(changed)
+    del restored["nodes"][0]["scale"]
+    del restored["nodes"][0]["translation"]
+    if restored != document or fitted[28 + len(encoded):] != binary:
+        raise ValueError("Fit changed data outside the approved root transform")
+    after_original = hashlib.sha256(ORIGINAL_PATH.read_bytes()).hexdigest()
+    after_candidate = hashlib.sha256(candidate_path.read_bytes()).hexdigest()
+    if after_original != ORIGINAL_SHA256 or after_candidate != CANDIDATE_SHA256:
+        raise ValueError("An input source changed during private fitting")
+    output.mkdir(parents=True, exist_ok=False)
+    with (output / "beaver-source-fitted.glb").open("xb") as handle:
+        handle.write(fitted)
+    manifest = {"card": "WILD-ART-SRC", "kind": "PRIVATE ROOT-TRANSFORM FIT / NOT GAME",
+                "author": "Poly by Google", "licence": "CC-BY-3.0",
+                "source": "https://poly.pizza/m/fwtA7VLrXPr",
+                "licenceUrl": "https://creativecommons.org/licenses/by/3.0/",
+                "original": {"bytes": len(original), "sha256Before": ORIGINAL_SHA256, "sha256After": after_original},
+                "candidate": {"path": str(candidate_path), "bytes": len(candidate),
+                              "sha256Before": CANDIDATE_SHA256, "sha256After": after_candidate},
+                "fitted": {"bytes": len(fitted), "sha256": hashlib.sha256(fitted).hexdigest()},
+                "completeBinaryUnchanged": True, "binaryBytes": len(binary),
+                "binarySha256": hashlib.sha256(binary).hexdigest(), "onlyRootScaleTranslationChanged": True,
+                "rootNode": changed["nodes"][0], "targetLengthMetres": 1.10,
+                "actualLengthMetres": (z_max - z_min) * scale, "sourceZBounds": [z_min, z_max],
+                "axes": "+Y up / +Z head, unchanged donor pose", "sourcePawDatumY": paw_y,
+                "minimumPawMetres": min_paw_m, "pawGroups": paw_groups,
+                "allFourPawsCoplanar": False, "tailMinimumMetres": tail_min_m,
+                "tailAllowanceMetres": .02, "triangles": 568, "vertices": 1122,
+                "skins": 0, "clips": [], "runtimeInstalled": False, "artAccepted": False,
+                "gamePlacementVerified": False, "otherDonors": "blocked; group round 1 waits"}
+    with (output / "fit-manifest.json").open("x", encoding="utf-8", newline="\n") as handle:
+        json.dump(manifest, handle, indent=2)
+        handle.write("\n")
+    print(json.dumps(fit_plan(output)))
 
 
 def inspect_source_views(root, output, views):
@@ -287,12 +404,16 @@ def main():
     args, root, output = arguments()
     views = tuple((name, dict(SOURCE_VIEWS)[name]) for name in args.source_view) if args.source_view else SOURCE_VIEWS
     if args.paths_only:
-        print(json.dumps(view_plan(output, views) if args.view_only else output_plan(output)))
+        print(json.dumps(fit_plan(output) if args.fit_only else
+                         view_plan(output, views) if args.view_only else output_plan(output)))
         return
     if root != Path(__file__).resolve().parents[2]:
         raise ValueError("Actual adaptation must use this recipe's own checkout")
     if output.exists():
         raise ValueError("Use a new absent private output leaf; never overwrite a prior packet")
+    if args.fit_only:
+        fit_existing_candidate(root, output)
+        return
     if args.view_only:
         inspect_source_views(root, output, views)
         return

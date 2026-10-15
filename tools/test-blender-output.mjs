@@ -254,12 +254,12 @@ function kitPathPlan(generator, fixtureRoot) {
 
 // Beaver has an explicit private PNG contract; it never uses the tanker's
 // fit-config or changes that recipe's embedded-only atlas assertions.
-function beaverPlanCall(fixtureRoot, output, model = 'beaver', viewOnly = false, sourceViews = []) {
+function beaverPlanCall(fixtureRoot, output, model = 'beaver', viewOnly = false, sourceViews = [], fitOnly = false) {
   const before = fixtureTree(fixtureRoot);
   const call = spawnSync('python', ['-I', '-B', '-S', '-c', kitPlanAudit,
     join(root, 'tools/blender/wildlife-north-woods.py'), '--', '--root', fixtureRoot,
     '--model', model, '--output-dir', output, '--paths-only', ...(viewOnly ? ['--view-only'] : []),
-    ...sourceViews.flatMap(name => ['--source-view', name])],
+    ...sourceViews.flatMap(name => ['--source-view', name]), ...(fitOnly ? ['--fit-only'] : [])],
     {cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000});
   assert.equal(call.error, undefined, call.error?.message);
   assert.deepEqual(fixtureTree(fixtureRoot), before, 'beaver planning changed its temporary root');
@@ -422,6 +422,57 @@ try {
     assert.notEqual(call.status, 0);
     assert.equal(call.stdout.trim(), '');
     assert.match(call.stderr, message);
+  });
+  check('beaver fit-only plans one private fitted GLB and measured manifest without reading either donor', () => {
+    const plans = fixtureRoots.map(fixtureRoot => {
+      const output = join(fixtureRoot, '.qa-dist', 'beaver-fit');
+      const call = beaverPlanCall(fixtureRoot, output, 'beaver', false, [], true);
+      assert.equal(call.status, 0, call.stderr || call.stdout);
+      const plan = JSON.parse(call.stdout);
+      assert.deepEqual(plan, {blend: [], glb: [join(output, 'beaver-source-fitted.glb')],
+        json: [join(output, 'fit-manifest.json')], atlas: [], evidence: [], summary: []});
+      assert.deepEqual(readdirSync(fixtureRoot), [], 'fit planning created no files or directories');
+      return [...plan.glb, ...plan.json].map(path => relative(fixtureRoot, path).split(sep).join('/'));
+    });
+    assert.deepEqual(plans[0], plans[1], 'private fit plan is independent of fixture root');
+  });
+  for (const [label, viewOnly, views, model, message] of [
+    ['combined with view-only', true, [], 'beaver', /fit-only.*exclusive/i],
+    ['combined with source-view', false, ['plus-y'], 'beaver', /fit-only.*exclusive/i],
+    ['unknown animal', false, [], 'moose', /invalid choice.*moose/i],
+  ]) check('beaver fit-only rejects ' + label + ' before reads, imports or writes', () => {
+    const call = beaverPlanCall(fixtureRoots[0], join(fixtureRoots[0], '.qa-dist', 'beaver-fit'),
+      model, viewOnly, views, true);
+    assert.notEqual(call.status, 0);
+    assert.equal(call.stdout.trim(), '');
+    assert.match(call.stderr, message);
+  });
+  for (const [label, output] of [
+    ['public output', join(fixtureRoots[0], 'public', 'beaver-fit')],
+    ['another root', join(fixtureRoots[1], '.qa-dist', 'beaver-fit')],
+    ['traversal', join(fixtureRoots[0], '.qa-dist') + sep + '..' + sep + 'public' + sep + 'beaver-fit'],
+    ['private-looking sibling', join(fixtureRoots[0], '.qa-dist-other', 'beaver-fit')],
+  ]) check('beaver fit-only rejects ' + label + ' before donor reads or writes', () => {
+    const call = beaverPlanCall(fixtureRoots[0], output, 'beaver', false, [], true);
+    assert.notEqual(call.status, 0);
+    assert.equal(call.stdout.trim(), '');
+    assert.match(call.stderr, /private child|supplied root/i);
+  });
+  check('beaver fit-only refuses a linked private-directory escape', () => {
+    const privateRoot = join(fixtureRoots[0], '.qa-dist'), link = join(privateRoot, 'linked-beaver-fit');
+    mkdirSync(privateRoot);
+    symlinkSync(fixtureRoots[1], link, process.platform === 'win32' ? 'junction' : 'dir');
+    try {
+      const call = beaverPlanCall(fixtureRoots[0], join(link, 'fit'), 'beaver', false, [], true);
+      assert.notEqual(call.status, 0);
+      assert.equal(call.stdout.trim(), '');
+      assert.match(call.stderr, /private child|supplied root/i);
+      assert.deepEqual(readdirSync(fixtureRoots[1]), [], 'linked fit planning changed its target');
+    } finally {
+      assert.ok(lstatSync(link).isSymbolicLink(), 'fit fixture link unexpectedly changed');
+      unlinkSync(link);
+      rmdirSync(privateRoot);
+    }
   });
   check('beaver view-only refuses another animal before donor reads or Blender imports', () => {
     const call = beaverPlanCall(fixtureRoots[0], join(fixtureRoots[0], '.qa-dist', 'beaver-views'), 'moose', true);

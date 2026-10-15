@@ -310,7 +310,7 @@
         "runtimeInstalled": false
       },
       "sourceViewPlan": {
-        "status": "aspect-correction-source-only-unrun",
+        "status": "complete-source-inspection-not-art-or-fit",
         "option": "--view-only",
         "input": ".qa-dist/wild-beaver-3defc568/beaver-source-unfitted.glb",
         "candidateBytes": 151888,
@@ -400,9 +400,68 @@
             "minus-y"
           ],
           "output": "fresh absent private leaf only",
-          "status": "source-only-unrun",
-          "repeatCompleteViews": false
+          "status": "completed-two-views-without-clipping",
+          "repeatCompleteViews": false,
+          "actual": {
+            "sourceCommit": "c55288dc1a51f627300371869ce138d30434778f",
+            "plannerPassed": 1,
+            "plannerDurationMs": 6022.5055,
+            "renderExitCode": 0,
+            "renderDurationMs": 16451.3943,
+            "endedAtUtc": "2026-10-15T07:23:46.3986756Z",
+            "views": [
+              "plus-y",
+              "minus-y"
+            ],
+            "sha256": [
+              "cbff9d01b161b48516dc4b95251b8dadb64306efed05cda0f0ac647a3b7ace0f",
+              "3314847e40dbf90499ae2595fcde5cef6fae7ec2b36f58aac6de812a18ee344d"
+            ],
+            "sourceAndImportUnchanged": true,
+            "rootViewedUncropped": true
+          }
         }
+      },
+      "privateFitPlan": {
+        "status": "source-only-unrun",
+        "option": "--fit-only",
+        "exclusiveWith": [
+          "--view-only",
+          "--source-view"
+        ],
+        "input": ".qa-dist/wild-beaver-3defc568/beaver-source-unfitted.glb",
+        "inputBytes": 151888,
+        "inputSha256": "834d024ab14cc4ec14e7402f28b3ec06df311748c8dd380bf26e306ad0e1705b",
+        "completeBinBytes": 149844,
+        "completeBinSha256": "784a0306ee1adde4e38906adceceb522f3ed00f01334f34ba94a0d464ca096cc",
+        "outputNames": [
+          "beaver-source-fitted.glb",
+          "fit-manifest.json"
+        ],
+        "output": "new absent private leaf only",
+        "targetLengthMetres": 1.1,
+        "axes": "+Y up, +Z head",
+        "transformation": "root uniform scale and Y translation only; complete candidate BIN unchanged",
+        "sourceLength": 111.62809753417969,
+        "uniformScale": 0.009854149844873853,
+        "pawEvidence": {
+          "source": "actual indexed lower-left dark atlas region, u<0.5/v>=0.5; actual imported underside view",
+          "partition": "left/right by X sign; front/rear split at Z20 in measured empty paw gap",
+          "rearMinY": -18.33993911743164,
+          "frontMinY": -18.159942626953125,
+          "minimumPawPivotY": -18.33993911743164,
+          "frontOffsetMetres": 0.0017737123887267027,
+          "allFourPawsCoplanar": false,
+          "frontGapAcceptedAsGroundingTolerance": false
+        },
+        "tailSourceMinY": -19.852182388305664,
+        "predictedTailMinimumMetres": -0.014901871793094785,
+        "tailAllowanceMetres": 0.02,
+        "noPoseTailTiltOrDeformation": true,
+        "runtimeInstalled": false,
+        "artAccepted": false,
+        "gamePlacementVerified": false,
+        "groupRound1": "waits for the other four approved donors"
       }
     }
   ],
