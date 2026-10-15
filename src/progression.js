@@ -564,7 +564,8 @@ export function settleRace(profile, result = {}) {
     typeof result.won === 'boolean';
   const key = `${result.runId}:${result.stageIndex}`;
   const grandPrix = result.mode === 'grandprix';
-  const yeti=countYetiFinish(profile,result,valid && COURSE[result.stageIndex]?.id==='summit-run' &&
+  const yeti=countYetiFinish(profile,result,valid && (COURSE[result.stageIndex]?.id==='summit-run' ||
+    isSummitAttack(COURSE[result.stageIndex]) && result.mode==='timetrial') &&
     !COURSE[result.stageIndex].practice && isValidFinish(result) &&
     !profile.settledResults.includes(key) && !profile.wasteland?.settledResults?.includes(key) &&
     (!grandPrix || validGrandPrixPosition(result)));
@@ -616,7 +617,7 @@ export function settleRace(profile, result = {}) {
           reward: 0, charge: 0, policeFineCharge: 0, breakdown, milestones: [], at: Date.now()
         }].slice(-60)
       };
-    return {profile: updated, reward: 0, charge: 0, policeFineCharge: 0,
+    return {profile: updated, reward: 0, charge: 0, policeFineCharge: 0, ...yetiAward,
       awarded: true, personalBest, personalBestStatus, previousBest: previous ?? null,
       best: finished ? updated.personalBests[comparison] ?? null : null,
       breakdown, winStreak: updated.winStreak, milestones: []};

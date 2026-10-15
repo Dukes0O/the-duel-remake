@@ -702,7 +702,7 @@ export class App {
     if(state.arena)return;
     const yetiFinish=state===this.duel.state && result===state.results && !state.qualifying &&
       result.yetiEnabled===true && result.yetiSeen===true && state.yeti?.seen===true &&
-      this.duel.course?.def.id==='summit-run' && this._switches().enabled('yeti') && this._switches().enabled('summit-run');
+      (this.duel.course?.def.id==='summit-run'||isSummitAttack(this.duel.course?.def)) && this._switches().enabled('yeti') && this._switches().enabled('summit-run');
     const gpWithoutPay=state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving');
     if(gpWithoutPay&&!yetiFinish){
       if(isYetiGrandPrixInput(this.profile.activeRace)&&state===this.duel.state&&(result===state.results||result.abandoned===true)&&

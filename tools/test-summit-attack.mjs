@@ -7,7 +7,7 @@ import {resolve,relative,isAbsolute,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {App} from '../src/app.js';
 import {Duel} from '../src/game.js';
-import {COURSE} from '../src/config.js';
+import {CARS,COURSE} from '../src/config.js';
 import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
 import {SUMMIT_TIME_ATTACK,manifest} from '../src/circuits/summit-time-attack.js';
 import {SUMMIT_ATTACK_ID,isSummitAttack,summitAttackTargets,summitAttackMedal} from '../src/summit-attack.js';
@@ -175,6 +175,57 @@ if(!process.argv.includes('--drive')) {
     const restored=newApp();assert.equal(restored.profile.activeRace,null);assert.equal(restored.interruptedRaceCharge,0);
     assert.deepEqual(protectedProfile(restored.profile),protectedProfile(pending));
     const once=JSON.stringify(restored.profile);restored._recoverInterruptedRace();assert.equal(JSON.stringify(restored.profile),once);
+  })));
+  test('completed Attack sightings reuse the parent key once across normalized reload without finance',()=>withCatalog(()=>{
+    const result=payload({runId:'attack-sighting',ownerPlayerId:'attack-player',playerId:'attack-player',yetiEnabled:true,yetiSeen:true}),
+      before=normalizeProfile({...pendingProfile(result),yeti:{sightings:2,settled:['prior:summit-run']}}),
+      settled=settleRace(before,result);
+    assert.equal(settled.awarded,true);assert.equal(settled.yetiAwarded,true);assert.equal(settled.yetiSightings,3);
+    assert.equal(settled.profile.yeti.sightings,3);
+    assert.deepEqual(settled.profile.yeti.settled,['prior:summit-run','attack-sighting:summit-run']);
+    assert.equal(settled.profile.yeti.roof,undefined,'earning a cosmetic does not equip it');
+    assert.deepEqual({...protectedProfile(settled.profile),yeti:before.yeti},protectedProfile(before));
+    assert.equal(settled.reward,0);assert.equal(settled.charge,0);assert.equal(settled.policeFineCharge,0);
+    assert.ok(Object.values(settled.breakdown).every(value=>value===0));
+    assert.equal(settleRace(settled.profile,result).profile,settled.profile);
+    const loaded=normalizeProfile(JSON.parse(JSON.stringify(settled.profile))),again=settleRace(loaded,result);
+    assert.equal(again.profile,loaded);assert.equal(again.yetiAwarded,undefined);
+    assert.equal(again.profile.yeti.sightings,3);assert.deepEqual(again.profile.yeti.settled,settled.profile.yeti.settled);
+  }));
+  test('Attack sighting admission retains completed, practice, owner and owned-car validation',()=>withCatalog(()=>{
+    const result=payload({runId:'attack-guard',ownerPlayerId:'attack-player',playerId:'attack-player',yetiEnabled:true,yetiSeen:true}),
+      before=normalizeProfile({...pendingProfile(result),yeti:{sightings:2,settled:['prior:summit-run']}}),
+      unowned=Object.keys(CARS).find(car=>CARS[car].price>0&&!before.unlockedCars.includes(car));
+    assert.ok(unowned,'fixture must select an actual paid, unowned car');
+    for(const extra of [{completed:false},{completed:false,abandoned:true},{practice:true},{qualifying:true},{timeout:true},
+      {timeSec:NaN},{laps:2},{mode:'duel'},{mode:'grandprix'},{yetiEnabled:false},{yetiSeen:false},
+      {ownerPlayerId:'someone-else'},{playerId:'someone-else'},{ownerPlayerId:''},{car:unowned},{car:'missing'}]) {
+      const settled=settleRace(before,{...result,...extra});
+      assert.equal(settled.yetiAwarded,undefined,JSON.stringify(extra));
+      assert.deepEqual(settled.profile.yeti,before.yeti,JSON.stringify(extra));
+      assert.equal(settled.reward,0);assert.equal(settled.profile.credits,before.credits);
+      assert.deepEqual(protectedProfile(settled.profile),protectedProfile(before));
+    }
+  }));
+  test('actual App Attack finish forwards the owned sighting once; abandonment and recovery never count',()=>withCatalog(()=>memoryScope(({app:newApp})=>{
+    const app=newApp();purchaseParent(app);assert.ok(startRecorded(app,attackIndex(),{},'attack-app-sighting'));reachGo(app);
+    const state=app.duel.state;state.yeti.seen=true; // Controlled finish fixture, not native encounter evidence.
+    state.stageTimeSec=SUMMIT_TIME_ATTACK.attackTimes.bronze+1;state.racePenaltySec=0;
+    state.s=app.duel.raceLength;state.completedLaps=1;
+    const before=normalizeProfile(app.profile);assert.equal(app.duel._finishStage(),true);
+    assert.equal(state.results.yetiSeen,true);assert.equal(state.results.yetiSightings,1);
+    assert.equal(app.profile.yeti.sightings,1);assert.deepEqual(app.profile.yeti.settled,['attack-app-sighting:summit-run']);
+    assert.equal(state.results.creditReward,0);
+    const {yeti,...unchanged}=protectedProfile(app.profile);assert.deepEqual(unchanged,protectedProfile(before));
+    const saved=JSON.stringify(app.profile);app._settleResult(state.results,state);assert.equal(JSON.stringify(app.profile),saved);
+    const restored=newApp();assert.equal(restored.profile.yeti.sightings,1);assert.deepEqual(restored.profile.yeti.settled,app.profile.yeti.settled);
+    app.returnToMenu();assert.ok(startRecorded(app,attackIndex(),{},'attack-seen-abandon'));reachGo(app);
+    app.duel.state.yeti.seen=true;app.returnToMenu();assert.equal(app.profile.yeti.sightings,1);
+    assert.deepEqual(app.profile.yeti.settled,['attack-app-sighting:summit-run']);
+    assert.ok(startRecorded(app,attackIndex(),{},'attack-seen-recovery'));reachGo(app);app.duel.state.yeti.seen=true;
+    const recovered=newApp();assert.equal(recovered.profile.activeRace,null);assert.equal(recovered.interruptedRaceCharge,0);
+    assert.equal(recovered.profile.yeti.sightings,1);assert.deepEqual(recovered.profile.yeti.settled,['attack-app-sighting:summit-run']);
+    const once=JSON.stringify(recovered.profile);recovered._recoverInterruptedRace();assert.equal(JSON.stringify(recovered.profile),once);
   })));
   test('best medal context uses validated named-player TT rows and existing per-event ghost contract',()=>withCatalog(()=>{
     let board=createLeaderboard();const player={id:'attack-player',name:'Attack Player'};
