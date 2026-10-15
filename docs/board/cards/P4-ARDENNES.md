@@ -355,3 +355,8 @@ not repeat the lollipop fault:
   course's tree budget; collisions as the existing trees.
 Mix them with the firs in groups, mostly on the Kestrel and Forest Run
 slopes. Claude judges them in the one final round 3 sheet with a close view.
+
+
+## Actual street geometry check passed
+
+The ONE admitted focused run on exact clean10ef2beb completed15October06:59:40.6542343UTC,exit0/13078.4472ms:2/2 existing suites(test-course-landmarks,test-circuit-ardennes),zero failures/notRun,jobs4. Source unchanged/clean,actual competing heavy roots empty. Original receipt/result under retained lane .evidence/2026-10-15/P4-ARDENNES/streets-10ef2beb. No repeat needed. Finalbeech source,complete nativeR3/actual art verdict,first course signature,nearby gate/build remain pending; no art/merge acceptance inferred. Keep existing lane frozen while the art-source question waits.
