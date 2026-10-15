@@ -180,7 +180,8 @@ export class Duel {
 
   // ---- lifecycle -------------------------------------------------------
   startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], _hiddenRoadVisit = false } = {}) {
-    if (isSummitAttack(COURSE[startStage])) {mode='timetrial';laps=1;opponentCount=0;qualifying=false;rival=null;}
+    const resolvedStage=Number.isFinite(startStage)?clamp(Math.floor(startStage),0,COURSE.length-1):0;
+    if (isSummitAttack(COURSE[resolvedStage])) {mode='timetrial';laps=1;opponentCount=0;qualifying=false;rival=null;}
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     this._deepKit = deepKit === true;
