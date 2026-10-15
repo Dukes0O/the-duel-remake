@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 import {makeRng} from './rng.js';
 import {CARS} from './config.js';
 import {sweepObstacle} from './collision.js';
@@ -11,7 +12,7 @@ export function hash32(baseSeed,runId){
   return hash>>>0;
 }
 export const YETI=Object.freeze({eye:1.2,chest:1.8,distance:60,angle:75*Math.PI/180,rayStep:2});
-export const yetiEnabled=duel=>duel.course?.def.id==='summit-run' &&
+export const yetiEnabled=duel=>(duel.course?.def.id==='summit-run'||isSummitAttack(duel.course?.def)) &&
   duel.featureFlags?.enabled('summit-run')===true && duel.featureFlags?.enabled('yeti')===true;
 const ownsCar=(profile,car)=>Object.hasOwn(CARS,car) &&
   (!CARS[car].price&&!CARS[car].unlockRequirement || profile?.unlockedCars?.includes(car));

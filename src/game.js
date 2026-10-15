@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 import {copyDeepProviders,clearDeepJourney,initializeDeepJourney,deepProtected,checkDeepDeparture,stepDeepJourney,queueDeepChoice,deepEnvironment} from './deep/deep-journey.js';
 import * as simDriving from './sim-driving.js';
 import * as simContacts from './sim-contacts.js';
@@ -179,6 +180,7 @@ export class Duel {
 
   // ---- lifecycle -------------------------------------------------------
   startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], _hiddenRoadVisit = false } = {}) {
+    if (isSummitAttack(COURSE[startStage])) {mode='timetrial';laps=1;opponentCount=0;qualifying=false;rival=null;}
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     this._deepKit = deepKit === true;
@@ -215,7 +217,7 @@ export class Duel {
       normalizeCarLoadout(weaponLoadout,arsenalEnabled(this) ? [...WEAPON_IDS,
         ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this)})] : WEAPON_IDS):null;
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
-    if(COURSE[this.state.stageIndex]?.id==='summit-run'&&this.featureFlags.enabled('summit-run')&&this.featureFlags.enabled('yeti')&&validYetiSeed(yetiSeed))this.state.yetiSeed=yetiSeed;
+    if((COURSE[this.state.stageIndex]?.id==='summit-run'||isSummitAttack(COURSE[this.state.stageIndex]))&&this.featureFlags.enabled('summit-run')&&this.featureFlags.enabled('yeti')&&validYetiSeed(yetiSeed))this.state.yetiSeed=yetiSeed;
     else delete this.state.yetiSeed;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.combatArmorKit = this.state.mode === 'wasteland' &&

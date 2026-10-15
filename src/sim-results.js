@@ -1,3 +1,4 @@
+import {isSummitAttack,summitAttackMedal} from './summit-attack.js';
 import {snowmanResult} from './snowmen.js';
 import {yetiResult} from './yeti.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
@@ -56,13 +57,15 @@ export function _finishStage() {
   if (this._deadline()) return false;
   if (s.drift) this._commitDrift(finishDrift(s.drift, { completed: true }));
   const timeSec = s.stageTimeSec + s.racePenaltySec;
+  const attack=isSummitAttack(this.course.def);
+  const medal=attack?summitAttackMedal(+timeSec.toFixed(2),this.course.def.attackTimes):null;
   const par = this._parTime();
   const timeBonus = Math.max(0, Math.round((par - timeSec) * SCORING.perSecondUnder));
   const beatRival = s.rival ? (s.rival.finishTime == null || s.stageTimeSec <= s.rival.finishTime) : null;
   const beatAllOpponents = opponents.every(opponent => opponent.finishTime == null || s.stageTimeSec <= opponent.finishTime);
   const position = 1 + opponents.filter(opponent => opponent.finishTime != null && opponent.finishTime < s.stageTimeSec).length;
   const objective = this._objectiveResult();
-  const won = s.objective ? objective.targetsMet && timeSec < s.timeLimitSec : this.stageDef.kind === 'chase' ? timeSec < s.timeLimitSec : s.mode !== 'timetrial' && s.rival ? beatAllOpponents : timeSec < par;
+  const won = attack ? medal!==null : s.objective ? objective.targetsMet && timeSec < s.timeLimitSec : this.stageDef.kind === 'chase' ? timeSec < s.timeLimitSec : s.mode !== 'timetrial' && s.rival ? beatAllOpponents : timeSec < par;
   const recordEligible = !s.objective || objective.targetsMet;
   if (recordEligible) this._awardPoliceEscape('finish');
   // Capture the completed circuit before repairs so repairs cannot create a clean bonus.
@@ -90,6 +93,7 @@ export function _finishStage() {
     lives: s.lives, timeBonus: timeBonus * this.scoreMultiplier, beatRival, score, styleScore: s.stageStyleScore, won,
     ...(opponents.length > 1 ? { opponentCount: opponents.length, position, beatAllOpponents } : {}),
     ...objective, ...(s.objective ? { objectiveMissed: !objective.targetsMet } : {}),
+    ...(attack?{medal}:{}),
     ...combatResultSnapshot(this),
     ...snowmanResult(this),
     ...yetiResult(this),
