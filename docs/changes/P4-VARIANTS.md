@@ -21,3 +21,7 @@ Kyle explicitly approved this correction in chat15October after automatic approv
 ## Reverse source slice
 
 All three reverse descriptors now build with native reversePieces. Parent road/ground/obstacle pins across1989/42/17 stay exact. Reverse terrain follows an independent parent Course; optional hill/basin orientation keeps the lake bowl and ski runs physically aligned. Panorama gets the approved moved start and full451.982m left-side bay with rebuilt garages; Harbour rebuilds street walls/openings/shops from its existing layout; Woods mirrors its visual paddock, lodge/lift/clearances. Native boards and kerbs rebuild for the incoming direction. Focused suite5/5 passes. Final native pictures, actual references/signatures, lane/build/review remain pending; no release or merge.
+
+## Native QA eligibility fixtures
+
+The first actual Night reference correctly refused an unearned variant. Existing reference and track-review fixtures now supply the required parent ownership/top-three result in disposable memory profiles; production admission, registry, save rules and deadlines are unchanged. No failed attempt is relabelled as passing. Existing reference tests now cover actual native admission and preservation of prior profile results for each variant.

@@ -236,7 +236,8 @@ export async function run(context) {
   await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.audio?.setMuted?.(true);a.setGraphicsQuality(${JSON.stringify(data.options.quality)});
     if(!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only storage missing');
     document.head.insertAdjacentHTML('beforeend','<style>details{display:none!important}</style>');
-    a.profile={...a.profile,courses:{version:1,unlocked:[...new Set([...(a.profile.courses?.unlocked||[]),${JSON.stringify(data.courseId)}])]}};
+    a.profile={...a.profile,courses:{version:1,unlocked:[...new Set([...(a.profile.courses?.unlocked||[]),${JSON.stringify(data.courseId)},...${JSON.stringify(data.defaultEventId ? [data.defaultEventId] : [])}])]},
+      grandPrixPodiums:[...new Set([...(a.profile.grandPrixPodiums||[]),...${JSON.stringify(data.defaultEventId ? [data.defaultEventId] : [])}])]};
     if(!a._saveProfile())throw Error('Review fixture could not be saved in temporary storage');})()`);
   // Helpers that live in the page. Targets sit on the second lap so a run-up
   // across the start line never finishes the race.
