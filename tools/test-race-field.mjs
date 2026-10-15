@@ -13,7 +13,7 @@ import { testCourseAccess } from './career-fixture.mjs';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { FIELD, FIELD_TUNING, CATCH_UP_GAP_SEC, gridPose, chooseRacers, performanceIndex, racerSpec, catchUpFactor,
   classify } from '../src/race-field.js';
-import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro, playerPaceMph, closePassRefill } from '../src/race-field-driver.js';
+import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro, playerPaceMph, closePassRefill, cpuNitroExtraMph, cpuNitroAcceleration } from '../src/race-field-driver.js';
 import { shortRacerName, runningOrderRows, fieldResultsTable, fieldResultsText } from '../src/screen-field.js';
 import { installTestDriver } from './race-field-balance.mjs';
 import { App } from '../src/app.js';
@@ -57,6 +57,9 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
 {
   equal(CPU_NITRO.strength, .5, 'CPU nitro is half strength');
   equal(CPU_NITRO.refill, .5, 'CPU nitro refills at half rate');
+  const upgraded={upgrades:{nitro:2}},spec={topSpeed:200,nitroSpeedBonus:.02,nitroAcceleration:1.4};
+  close(cpuNitroExtraMph(upgraded,spec),19,1e-12,'boost ceiling halves the complete upgraded car bonus');
+  close(cpuNitroAcceleration(upgraded,spec),38.22,1e-12,'acceleration halves the complete upgraded car bonus');
   const r = {boost: .8, boosting:false, speedMph:100, upgrades:{nitro:0}, field:{traits:{aggression:.7}}};
   const run = {spec:{boostCapacity:2}};
   stepCpuNitro(r,run,1,{straight:true,attack:true});

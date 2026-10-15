@@ -80,7 +80,7 @@ export function measureRace({course,index=0,enabled=false,mode='normal',maxSec=n
       if(s.stageTimeSec>maxSec)break;
     }
     const times=s.opponents.map(r=>r.finished?r.lapStartedAt:null),stats=s.field.stats;
-    return {course,index,seed,fieldSeed,enabled,mode,wide,entry,apex,entryInstantWide,entryCars,passedPlayer,firstLapPosition,
+    return {course,index,seed,fieldSeed,enabled,mode,wide,entry,apex,entryInstantWide,entryCars,startZoneComplete:apex!==null&&[s,...s.opponents].every(r=>r.s>apex),passedPlayer,firstLapPosition,
       passes:stats.passes,crashes:stats.crashes.length,playerCrashes:s.stageCrashes,
       pileUp:new Set(stats.crashes.filter(c=>c.t<=30).map(c=>c.index)).size>=3,
       finished:times.filter(v=>v!==null).length,playerFinished:s.completedLaps>=s.lapsTotal,

@@ -14,6 +14,8 @@ import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex } from './race-field.js';
 
 export const CPU_NITRO = Object.freeze({strength:.5, refill:.5});
+export const cpuNitroExtraMph=(r,spec)=>spec.topSpeed*(BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(spec.nitroSpeedBonus??0))*CPU_NITRO.strength;
+export const cpuNitroAcceleration=(r,spec)=>BOOST.accelMphPerSec*(1+(r.upgrades.nitro||0)*.15)*(spec.nitroAcceleration??1)*CPU_NITRO.strength;
 
 // The same tank and upgrade drain as the player, with Kyle's weaker CPU boost.
 export function stepCpuNitro(r, run, dt, {straight=false, attack=false, defend=false, pit=false}={}) {
@@ -184,7 +186,7 @@ function move(duel, r, run, dt, target, intent, surface, look, route = null) {
     r.speedMph = Math.max(target, speed - braking * dt);
     r.braking = speed - target > 1.5;
   } else {
-    const nitro=f.racecraft && r.boosting ? BOOST.accelMphPerSec*(1+(r.upgrades.nitro||0)*.15)*(spec.nitroAcceleration??1)*CPU_NITRO.strength*f.nitroAvailable : 0;
+    const nitro=f.racecraft && r.boosting ? cpuNitroAcceleration(r,spec)*f.nitroAvailable : 0;
     const push = accelAt(spec, speed) * (1 + FIELD.towAccel * f.tow) * (r.contactCooldown > 0 ? .8 : 1) + nitro;
     r.speedMph = Math.min(target, speed + push * dt);
   }
@@ -398,7 +400,9 @@ export function stepFieldRacer(duel, r, dt) {
   if (!f.pass && blocker && blocker.gap > -1 && now >= (f.passCool || 0) && now > (f.racecraft ? 0 : 10)) {
     // Quicker than the car ahead in its own right, not just for a moment (the player's pace is its speed).
     const theirs = blocker.index >= 0 ? runtimeOf(duel, blocker.o).profile.at(blocker.o.s) * (1 + paceForm(blocker.o.field, now)) : (f.racecraft ? playerPaceMph(duel) : blocker.speed);
-    const closing = profile.at(r.s + blocker.ds) * (1 + formNow) - theirs;
+    const boostReady=f.racecraft && onStraight && r.speedMph>=BOOST.minSpeedMph && surface.boostAllowed!==false &&
+      r.boost>(r.boosting ? 0 : .25+.25*(1-t.aggression)) && !(r.contactCooldown>0);
+    const closing = profile.at(r.s + blocker.ds) * (1 + formNow) + (boostReady ? cpuNitroExtraMph(r,run.spec) : 0) - theirs;
     const gapTime = Math.max(0, blocker.gap) / Math.max(12, mps);
     const straight = Math.abs(line.curvatureAt(look)) < 1 / 300 && Math.abs(line.curvatureAt(look + 70)) < 1 / 260 &&
       !(zone && zone.toEntry > -10 && zone.toEntry < 40);
@@ -493,12 +497,11 @@ export function stepFieldRacer(duel, r, dt) {
   }
   if(f.racecraft){
     const straight=onStraight && Math.abs(line.curvatureAt(look))<1/300 && !(zone && zone.toEntry>-10 && zone.toEntry<80);
-    const attack=near.some(c=>c.ds>0 && c.gap<Math.max(12,mps) && !c.o.finished);
+    const attack=!!f.pass || near.some(c=>c.ds>0 && c.gap<Math.max(12,mps) && !c.o.finished);
     const defend=near.some(c=>c.ds<=0 && -c.ds<Math.max(run.halfLength+c.hl, mps*.5));
     stepCpuNitro(r,run,dt,{straight,attack,defend,pit:!!r.pit || surface.boostAllowed===false});
     if(r.boosting){
-      const extra=BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(run.spec.nitroSpeedBonus??0);
-      target+=run.spec.topSpeed*extra*CPU_NITRO.strength;
+      target+=cpuNitroExtraMph(r,run.spec);
     }
   }
   // The paved shoulder is forgiving; beyond it the car slows hard.
