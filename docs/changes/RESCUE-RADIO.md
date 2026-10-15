@@ -54,8 +54,8 @@ FIRE-RADIO added (1.5 LU either side after gain).
   `test-heli-hooks.mjs` (236): passed.
 - Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`)
   after merging integration: 162 passed, 0 failed, 0 not run in 539 s.
-  `npm run build`: passed. The review fixes after it touch only the audio
-  test and the two credits pages; `test-heli-audio.mjs` passes again.
+  `npm run build`: passed. Again after the review fixes and an integration
+  merge: 162 passed, 0 failed, 0 not run in 751 s; build passed.
 
 ## Changed assertions
 
