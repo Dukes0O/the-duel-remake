@@ -17,3 +17,5 @@ Nothing. This is the card's saved-progress foundation, with no new test framewor
 ## Save review correction
 
 The independent save review found the existing career-backup suite also pinned12fixtures; its first assertion failed13!==12. Director named that narrow hook and changed only the roster to13. All backup/migration/restore assertions remain. The original0ce86e2b canonical run was cancelled before editing, not passed or a completed gate; final source requires a fresh complete nearby gate/build and same-reviewer confirmation.
+
+The corrected c9a70ed7 gate then found the third save-directory roster pin in test-arena-settlement (13versus12):53passed/1failed/209unrun. Source search identified all three pins; only the remaining roster count changes here, with every settlement assertion retained. Original failed gate is retained as lane-c9a70ed7-failed.json; no runtime reward change.
