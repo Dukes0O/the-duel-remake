@@ -55,8 +55,12 @@ function biggestFire(limit = null) {
     if (next.burning.length + next.burnt.length >= grid.lostAt) break;
     fire = next;
   }
+  const cells = fire.burning.map(([id]) => grid.cells.get(id)).filter(Boolean);
+  fireMiddle = {x: cells.reduce((sum, c) => sum + c.x, 0) / cells.length, z: cells.reduce((sum, c) => sum + c.z, 0) / cells.length};
   return {...fire, burnt: [], damp: []};
 }
+// The middle of the last fire biggestFire made, for the views over the burnt forest.
+let fireMiddle = null;
 
 async function menu(context, quality, heli) {
   await context.navigate(entry);
@@ -183,8 +187,8 @@ async function burntRace(context, quality, {stage, days}) {
   return frames;
 }
 
-// The burnt course from 150 m above the pad, at one stage.
-async function burntFromAir(context, {stage, days}) {
+// The burnt course from 150 m over the forest where the check's fire burns, at one stage.
+async function burntFromAir(context, {stage, days, over}) {
   const heli = {version: 1, fuelKg: 400, refuels: 3, lessons: trained, playDay: {last: '2026-10-20', count: 70},
     burnt: {'tremblant-woods': {day: 70 - days, boughtBack: false}}};
   await menu(context, 'high', heli);
@@ -193,7 +197,10 @@ async function burntFromAir(context, {stage, days}) {
   await context.waitFor(`document.querySelector('#view3d')?.dataset.burntLook === 'ready'`, `burnt art from the air, ${stage}`, 60_000);
   await installPilot(context);
   await context.evaluate(`(() => { const v = window.__qaApp.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.zone.y + 150, speed: 4, sink: 6}; window.__qaApp.heliCamera = 2; })()`);
-  await context.waitFor(`(() => { const v = window.__qaApp.heliView(); return v.heli.y - v.zone.y > 147 && Math.abs(v.heli.vy) < 1; })()`, `150 m up, ${stage}`, 120_000);
+  await context.waitFor(`(() => { const v = window.__qaApp.heliView(); return v.heli.y - v.zone.y > 120; })()`, `climbing, ${stage}`, 120_000);
+  await context.evaluate(`(() => { const v = window.__qaApp.heliView(); window.__pilot = {x: ${over.x}, z: ${over.z}, y: v.zone.y + 150, speed: 18}; })()`);
+  await context.waitFor(`(() => { const v = window.__qaApp.heliView(), t = window.__pilot;
+    return Math.hypot(v.heli.x - t.x, v.heli.z - t.z) < 6 && Math.abs(v.heli.y - t.y) < 3 && Math.hypot(v.heli.vx, v.heli.vz) < 1; })()`, `over the forest, ${stage}`, 240_000);
   await pause(1500);
   await shoot(context, `air-${stage}`, `The ${stage} course from 150 m (day ${days})`);
 }
@@ -214,7 +221,9 @@ export async function run(context) {
   await installPilot(context);
   await context.evaluate(`window.__qaApp.heliCamera = 2`);
   await drop(context);
-  for (const [stage, days] of [['closed', 3], ['black', 12], ['shoots', 25], ['fireweed', 40]]) await burntFromAir(context, {stage, days});
+  biggestFire();
+  const over = fireMiddle;
+  for (const [stage, days] of [['closed', 3], ['black', 12], ['shoots', 25], ['fireweed', 40]]) await burntFromAir(context, {stage, days, over});
   for (const [stage, days] of [['black', 12], ['shoots', 25], ['fireweed', 40]]) {
     const result = await burntRace(context, 'high', {stage, days});
     if (result) frames.push(result);
