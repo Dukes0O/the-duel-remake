@@ -117,7 +117,7 @@ test('opt-in keyboard keeps every fixed-speed tap and held yaw within STEER-055'
 
 
 test('actual released fixed-step driving retains its pre-edit named-state fingerprint',()=>{
-  const d=new Duel({seed:1989,featureFlags:{}});d.startCampaign({seed:1989,startStage:0,opponentCount:0,difficulty:'pro'});const h=createHash('sha256');
+  const d=new Duel({seed:1989,featureFlags:{}});d.startCampaign({seed:1989,startStage:0,opponentCount:0});const h=createHash('sha256');
   for(let i=0;i<2400;i++){
     d.setInput({throttle:1,brake:i>1800?.4:0,steer:i<500?0:i<1200?.06:-.04,boost:false});d.step(1/120);
     const s=d.state;h.update(JSON.stringify(['status','s','lateral','speedMph','headingError','yawVelocity','slipAngle','drifting','airborne','airHeight','lives','crashes'].map(k=>s[k])));
