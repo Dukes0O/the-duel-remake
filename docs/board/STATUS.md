@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T21:40:42.827Z
+Observed at: 2026-10-15T22:13:33.206Z
 
-Observation commit: 66269a4af215b3620ac6d67bdf748c0196262a02
+Observation commit: b8b6a1e23a2b77717c217a7b44169f9ab6f69235
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 66269a4af215b3620ac6d67bdf748c0196262a02
+Integration HEAD: b8b6a1e23a2b77717c217a7b44169f9ab6f69235
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -30,22 +30,22 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
-| codex/drive-lesson-save | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/drive-lesson-save |
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
 | codex/heli-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-finish | 3 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
-| codex/p4-panorama | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
+| codex/p4-panorama | 3 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-qualifying | 4 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
-| codex/p4-variants | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-variants |
+| codex/p4-variants | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-variants |
 | codex/p4-yeti | 1 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 1 | unknown | true | false | unknown |
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/qa-browser-sweep | 1 | unknown | false | false | unknown |
 | codex/summit-switch-on | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
+| codex/tyre-slip | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tyre-slip |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 20 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 20 | unknown | true | false | unknown |
@@ -61,6 +61,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-15T11:22:23-07:00 | 0 | last commit 2026-10-15T11:22:23-07:00 | docs/changes/P4-ARDENNES.md, tools/scenarios/ardennes-views.mjs, tools/scenarios/frame-pacing.mjs, tools/test-circuit-ardennes.mjs, tools/test-track-script.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
+| codex/p4-variants | P4-VARIANTS | 2026-10-15T15:10:49-07:00 | 0 | last commit 2026-10-15T15:10:49-07:00 | docs/changes/P4-VARIANTS.md, src/circuit-effects.js, src/circuit-hills.js, src/circuit-variants.js, src/circuits/harbour-lights-dusk.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
@@ -80,9 +81,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 97,416 B | -38,980 B | 5,000,000 B |
+| Added bytes in last merge | 97,416 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 436,713,472 B | +55,296 B | unavailable |
+| Git objects | 437,304,320 B | +590,848 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -91,7 +92,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 66269a4af215b3620ac6d67bdf748c0196262a02
+- Local integration/wasteland: b8b6a1e23a2b77717c217a7b44169f9ab6f69235
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
