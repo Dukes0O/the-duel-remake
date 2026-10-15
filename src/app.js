@@ -1256,14 +1256,17 @@ export class App {
   // scars, and the cells the fire being fought has burnt. Null when normal.
   fireLookFor(courseId) {
     if (!this._fireOn() || !this.profile?.heli) return null;
-    const heli = this.heliSession?.profile?.heli ?? this.profile.heli, profile = {...this.profile, heli}, on = {enabled: true};
-    const fire = fireOf(profile), live = fire?.courseId === courseId ? fire.burnt : [];
+    const heli = this.heliSession?.profile?.heli ?? this.profile.heli;
+    // Worked out again only when the helicopter save or the course changes.
+    if (this._fireLook?.heli === heli && this._fireLook.courseId === courseId) return this._fireLook.look;
+    const profile = {...this.profile, heli}, on = {enabled: true};
+    const fire = fireOf(profile), burning = fire?.courseId === courseId, live = burning ? fire.burnt : [];
     const stage = burnStage(profile, courseId, undefined, on), scars = scarLooks(profile, courseId, undefined, on);
-    if (!stage && !scars.length && !live.length) return null;
-    const key = `${courseId}|${stage}|${burnSmoke(profile, courseId, undefined, on)}|${scars.map(s => s.stage + s.cells.length).join()}|${live.length}`;
-    if (this._fireLook?.key === key) return this._fireLook.look;
-    const look = Object.freeze({stage, smoke: burnSmoke(profile, courseId, undefined, on), scars, live: Object.freeze([...live])});
-    this._fireLook = {key, look};
+    // A fire burning here has a look from the start, so the burnt trunks'
+    // colour is ready before the first cell goes out.
+    const look = !stage && !scars.length && !burning ? null
+      : Object.freeze({stage, smoke: burnSmoke(profile, courseId, undefined, on), scars, live: Object.freeze([...live])});
+    this._fireLook = {heli, courseId, look};
     return look;
   }
   heliAvailable() {

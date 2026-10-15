@@ -46,8 +46,9 @@ function spriteLayer(THREE, capacity, blending) {
     fragmentShader: FRAGMENT, transparent: true, depthWrite: false, blending});
   const points = new THREE.Points(geometry, material);
   points.frustumCulled = false;
+  const size = new THREE.Vector2();
   points.onBeforeRender = (renderer, _scene, camera) => {
-    const height = renderer.getDrawingBufferSize?.(new THREE.Vector2()).y ?? 900;
+    const height = renderer.getDrawingBufferSize?.(size).y ?? 900;
     material.uniforms.scale.value = camera.isPerspectiveCamera ? height / (2 * Math.tan(camera.fov * Math.PI / 360)) : height;
   };
   let count = 0;
@@ -63,8 +64,14 @@ function spriteLayer(THREE, capacity, blending) {
     },
     get count() { return count; },
     finish() {
+      // Upload only what is drawn, and nothing when nothing was nor is.
+      if (count === 0 && geometry.drawRange.count === 0) return;
       geometry.setDrawRange(0, count);
-      for (const name of ['position', 'size', 'rect', 'alpha', 'tint']) geometry.attributes[name].needsUpdate = true;
+      for (const name of ['position', 'size', 'rect', 'alpha', 'tint']) {
+        const attribute = geometry.attributes[name];
+        attribute.clearUpdateRanges?.(); attribute.addUpdateRange?.(0, count * attribute.itemSize);
+        attribute.needsUpdate = true;
+      }
     }};
 }
 
@@ -113,6 +120,8 @@ export function createFireView({THREE, scene, load = defaultLoad, quality = 'hig
   };
   const ring = new THREE.Mesh(new THREE.RingGeometry(11.5, 12, 72), new THREE.MeshBasicMaterial({color: 0xf4f1e8, transparent: true,
     opacity: .7, side: THREE.DoubleSide, depthWrite: false}));
+  // Drawn over the ground, so a slope never buries half of it.
+  ring.material.depthTest = false;
   ring.rotation.x = -Math.PI / 2; ring.renderOrder = 4; ring.visible = false;
   const dot = new THREE.Mesh(new THREE.CircleGeometry(.6, 16), ring.material);
   dot.rotation.x = -Math.PI / 2; dot.visible = false;
@@ -200,7 +209,7 @@ export function createFireView({THREE, scene, load = defaultLoad, quality = 'hig
     group,
     update(view, {dt = 1 / 60, wind = null} = {}) {
       time += dt;
-      if (!view?.heli) { group.visible = false; return; }
+      if (!view?.heli || (!view.fire && !view.bucket)) { group.visible = false; return; }
       group.visible = true;
       if (view.fire || view.bucket) ensureArt();
       drawFire(view, wind ?? view.fire?.wind ?? null);

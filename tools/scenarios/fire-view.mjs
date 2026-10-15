@@ -99,7 +99,39 @@ async function overTheFire(context, quality, fire, {pictures}) {
     return Math.hypot(v.heli.x - t.x, v.heli.z - t.z) < 6 && Math.abs(v.heli.y - t.y) < 3 && Math.hypot(v.heli.vx, v.heli.vz) < 1; })()`, 'over the fire', 240_000);
   await pause(1500);
   if (pictures) await context.screenshot(`fire-150m-${quality}`);
-  return FRAMES ? measure(context, `${quality}, 150 m over a ${fire.burning.length}-cell fire`) : null;
+  const frames = FRAMES ? await measure(context, `${quality}, 150 m over a ${fire.burning.length}-cell fire`) : null;
+  if (pictures && quality === 'high') await drop(context);
+  return frames;
+}
+
+// A drop: back to the pad, the bucket on, the autopilot to the lake, a dip
+// by hand, the autopilot to the hot edge, then H held over the ring.
+async function drop(context) {
+  const app = 'window.__qaApp';
+  await context.evaluate(`(() => { const v = ${app}.heliView(); window.__pilot = {x: v.zone.x, z: v.zone.z, y: v.zone.y + 60, speed: 18}; })()`);
+  await context.waitFor(`(() => { const v = ${app}.heliView(); return Math.hypot(v.heli.x - v.zone.x, v.heli.z - v.zone.z) < 4 && Math.hypot(v.heli.vx, v.heli.vz) < 1; })()`, 'over the pad', 240_000);
+  await context.evaluate(`(() => { const v = ${app}.heliView(); window.__pilot = {x: v.zone.x, z: v.zone.z, y: v.zone.y - 2, speed: 1, sink: 1.5}; })()`);
+  await context.waitFor(`${app}.heliView().heli.onGround`, 'on the pad', 120_000);
+  await context.evaluate(`(() => { window.__pilot = null; const r = ${app}.heliSession.fitBucket(); ${app}._heliEvents(${app}.heliSession.takeEvents()); if (!r.ok) throw Error(r.reason); })()`);
+  await context.evaluate(`(() => { const v = ${app}.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.zone.y + 45, speed: 1, sink: 3}; })()`);
+  await context.waitFor(`${app}.heliView().heli.y - ${app}.heliView().zone.y > 40`, 'lift the bucket', 60_000);
+  await context.evaluate(`(() => { window.__pilot = null; if (!${app}.heliSession.autopilotOn) ${app}._inputAction('heli-autopilot'); })()`);
+  await context.waitFor(`${app}.heliLog.some(e => e.type === 'autopilotArrived')`, 'the autopilot at the lake', 300_000);
+  await context.evaluate(`(() => { ${app}._inputAction('heli-autopilot'); const v = ${app}.heliView();
+    window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.heli.y - 7.6, speed: 1, sink: 1.5}; })()`);
+  await context.waitFor(`${app}.heliView().bucket?.words === 'full'`, 'a full bucket', 120_000);
+  await context.screenshot('fire-scoop');
+  await context.evaluate(`(() => { const v = ${app}.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.heli.y + 40, speed: 1, sink: 4}; })()`);
+  await context.waitFor(`(() => { const v = ${app}.heliView(); return v.heli.y - v.zone.y > 50; })()`, 'climb out', 60_000);
+  await context.evaluate(`(() => { window.__pilot = null; ${app}.heliLog = []; ${app}._inputAction('heli-autopilot'); })()`);
+  await context.waitFor(`${app}.heliLog.some(e => e.type === 'autopilotArrived')`, 'the autopilot at the fire', 300_000);
+  await context.evaluate(`(() => { ${app}._inputAction('heli-autopilot'); window.__pilot = null; window.__pour = true; })()`);
+  await pause(700);
+  await context.screenshot('fire-drop');
+  await context.waitFor(`(${app}.heliView().bucket?.water ?? 0) <= 1`, 'the bucket empties', 30_000);
+  await context.evaluate(`window.__pour = false`);
+  await pause(3000);
+  await context.screenshot('fire-after-drop');
 }
 
 async function burntRace(context, quality, {stage, days}) {
@@ -110,9 +142,11 @@ async function burntRace(context, quality, {stage, days}) {
     for (let i = 0; i < 40; i++) { const course = app.getMenuCourse(i); if (course?.def?.id === 'tremblant-woods') { app.returnToMenu?.(); return app.startCampaign({startStage: i, car: 'falcone_f42'}); } }
     throw Error('Tremblant Woods is not on the menu'); })()`);
   await context.waitFor(`['countdown','racing'].includes(window.__qaApp.duel.state.status) && window.__qaApp.duel.course.def.id==='tremblant-woods' && window.__qaApp.visualReady`, `race ${stage}`, 120_000);
+  // The burnt art arrives a moment after the race is ready; wait for it.
+  await context.waitFor(`document.querySelector('#view3d')?.dataset.burntLook === 'ready'`, `burnt art ${stage}`, 60_000);
   await pause(2500);
   await context.screenshot(`burnt-${stage}-${quality}`);
-  const frames = FRAMES && stage === 'black' ? await measure(context, `${quality}, a race on the burnt course`) : null;
+  const frames = FRAMES && (stage === 'black' || stage === 'fireweed') ? await measure(context, `${quality}, a race on the ${stage} course`) : null;
   await context.evaluate(`window.__qaApp.returnToMenu()`);
   return frames;
 }
@@ -131,9 +165,12 @@ export async function run(context) {
     if (result) frames.push(result);
   }
   if (FRAMES) {
-    const result = await burntRace(context, 'performance', {stage: 'black', days: 12});
-    if (result) frames.push(result);
+    for (const stage of [['black', 12], ['fireweed', 40]]) {
+      const result = await burntRace(context, 'performance', {stage: stage[0], days: stage[1]});
+      if (result) frames.push(result);
+    }
     const failed = frames.filter(item => item.p95 > P95_LIMIT_MS);
     console.log(`Frame check: ${frames.map(item => `${item.label} p95 ${item.p95} ms`).join('; ')} (limit ${P95_LIMIT_MS} ms)${failed.length ? ' FAILED' : ''}`);
+    if (failed.length) throw Error(`Frame check over ${P95_LIMIT_MS} ms: ${failed.map(item => item.label).join('; ')}`);
   }
 }

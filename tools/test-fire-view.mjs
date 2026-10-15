@@ -133,23 +133,53 @@ const scale = (mesh, i) => { const m = new THREE.Matrix4(); mesh.getMatrixAt(i, 
   const scene = new THREE.Scene(), course = {def: {id: 'tremblant-woods'}, samples: []};
   const trees = Array.from({length: 24}, (_, k) => [5 + (k % 6) * 40, 5 + Math.floor(k / 6) * 40]);
   const {trunks, crowns} = pines(scene, trees);
-  const look = createBurntLook({THREE, scene, load: {model: () => new Promise(() => {}), texture: () => new Promise(() => {})}});
-  ok(!look.apply({course, look: null}) || true, 'a normal course draws nothing');
-  eq(look.group.children.length, 0, 'and adds nothing');
-  look.apply({course, look: {stage: 'closed', smoke: true, scars: [], live: []}});
+  // The art never arrives here: the trees still char, no snag takes a tree.
+  const slow = createBurntLook({THREE, scene, load: {model: () => new Promise(() => {}), texture: () => new Promise(() => {})}});
+  slow.apply({course, look: null});
+  eq(slow.group.children.length, 0, 'a normal course adds nothing');
+  ok(trees.every((_, i) => scale(crowns, i) === 1) && !trunks.instanceColor, 'and leaves the pines alone');
+  slow.apply({course, look: {stage: 'closed', smoke: true, scars: [], live: []}});
   ok(trees.every((_, i) => scale(crowns, i) === 0), 'a burnt course: every crown gone');
-  const charred = [...trunks.instanceColor.array.slice(0, 3)].map(v => +v.toFixed(3));
-  eq(charred, BURNT_LOOK.charcoal.map(v => +v.toFixed(3)), 'trunks charcoal');
-  ok(trees.some((_, i) => scale(trunks, i) === 0), 'about one tree in six is a snag or a fallen log instead');
+  eq([...trunks.instanceColor.array.slice(0, 3)].map(v => +v.toFixed(3)), BURNT_LOOK.charcoal.map(v => +v.toFixed(3)), 'trunks charcoal');
+  ok(trees.every((_, i) => scale(trunks, i) === 1), 'no trunk is taken for a snag before the snag art is in');
+  slow.apply({course, look: null});
+  ok(trees.every((_, i) => scale(crowns, i) === 1 && scale(trunks, i) === 1), 'healed: every tree back');
+  eq([...trunks.instanceColor.array.slice(0, 3)], [1, 1, 1], 'with no tint on its bark');
+  slow.dispose();
+}
+{
+  // With the real props: snags and logs, ash, shoots and fireweed drawn whole.
+  const scene = new THREE.Scene(), course = {def: {id: 'tremblant-woods'}, samples: []};
+  const trees = Array.from({length: 60}, (_, k) => [5 + (k % 10) * 25, 5 + Math.floor(k / 10) * 25]);
+  const {trunks, crowns} = pines(scene, trees);
+  const look = createBurntLook({THREE, scene, load: {model: url => parseFile(url), texture: () => Promise.resolve(new THREE.Texture())}});
+  look.apply({course, look: {stage: 'fireweed', smoke: false, scars: [], live: []}});
+  await wait(() => look.statusFor('tremblant-woods') === 'ready');
+  eq(look.statusFor('tremblant-woods'), 'ready', 'the burnt props and grounds load');
+  ok(look.apply({course, look: {stage: 'fireweed', smoke: false, scars: [], live: []}}), 'and the look is drawn again with them');
+  const names = look.group.children.map(child => child.name);
+  ok(names.some(name => /^Burnt snag_/.test(name)) && names.includes('Burnt log_fallen'), 'snags and a fallen log stand among the trees');
+  ok(names.filter(name => name === 'Burnt fireweed').length >= 2, 'fireweed drawn with all its parts (stems and petals)');
+  ok(names.includes('Burnt shoots') && names.includes('Burnt ground fireweed'), 'shoots and the fireweed ground');
+  const taken = trees.filter((_, i) => scale(trunks, i) === 0).length;
+  ok(taken >= 8 && taken <= 20, `about one tree in four or five becomes a snag or log (${taken} of 60)`);
+  // A knocked-down burnt tree (vegetation.js writes both matrices) keeps no crown.
+  const fall = new THREE.Matrix4().makeRotationZ(1.2).setPosition(5, 0, 5);
+  crowns.setMatrixAt(0, fall); trunks.setMatrixAt(0, fall);
+  eq(scale(crowns, 0), 0, 'a knocked-down burnt tree grows no crown');
+  const upright = new THREE.Matrix4().makeTranslation(5, 0, 5);
+  crowns.setMatrixAt(0, upright);
   look.apply({course, look: null});
-  ok(trees.every((_, i) => scale(crowns, i) === 1 && scale(trunks, i) === 1), 'healed: every tree back as it was');
-  eq([...trunks.instanceColor?.array.slice(0, 3) ?? [1, 1, 1]], [1, 1, 1], 'with its own bark colour');
+  const off = trees.map((_, i) => [i, +scale(crowns, i).toFixed(3), +scale(trunks, i).toFixed(3)]).filter(([, c, k]) => c !== 1 || k !== 1);
+  eq(off, [], 'healed: every tree back, as vegetation last put it');
+  eq(look.group.children.length, 0, 'and nothing of the burn is left');
   // A scar burns only its own cells.
   const first = (Math.floor(5 / 20) + 512) * 1024 + (Math.floor(5 / 20) + 512);
   look.apply({course, look: {stage: null, smoke: false, scars: [{cells: [first], stage: 'shoots'}], live: []}});
   ok(scale(crowns, 0) === 0 && scale(crowns, 1) === 1, 'a scar: only the trees in its cells');
   eq(cellStages({scars: [{cells: [1, 2], stage: 'black'}], live: [2]}), new Map([[1, 'black'], [2, 'black']]), 'stages by cell');
   ok(lookSignature(null) === '' && lookSignature({stage: 'black'}) !== lookSignature({stage: 'shoots'}), 'a new stage draws again');
+  look.dispose();
 }
 
 console.log(`test-fire-view: ${checks} checks passed`);
