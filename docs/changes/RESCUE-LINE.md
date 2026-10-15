@@ -69,7 +69,7 @@ Needs: FIRE-MISSIONS and FIRE-BUCKET merged.
 - `node tools/test-heli-mode.mjs`: 150 checks pass, including the import
   guard and the no page, clock, storage or randomness rule for the new file.
 - `node tools/test-repo-hygiene.mjs`: placement passes.
-- Lane tier and build: run by the lead.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`) after merging integration: 22 passed, 0 failed, 0 not run in 106 s. `npm run build`: passed.
 
 ## Changed assertions
 
