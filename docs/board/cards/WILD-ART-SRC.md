@@ -186,3 +186,12 @@ Use the minimum actual paw sole as the feet pivot, as Claude approved, and prese
 Independent source review is CLEAR on clean625b8398: the four owned files preserve default generation, views, pure planning, old assertions and the complete candidate BIN. Only the approved root uniform scale and Y translation may change. Real minimum-paw datum anchors zero; unchanged front sole offset1.774mm and tail penetration14.902mm are recorded, not called all-four-foot grounding.
 
 After fresh holds/capacity, admit ONE existing test-blender-output suite/jobs4. If green, ONE plain-Python fit-only execution into absent private .qa-dist/wild-beaver-fit-625b8398. No Blender import, paint, geometry regeneration, render, runtime installation, CREDITS, sheet or art verdict. Verify actual output BIN identity/root transform/measured size/paw/tail and source hashes; no repeat of the completed source views. Other four donors retain their exact blocks.
+
+
+## Private fitted beaver completed, 15 October 01:14 PT
+
+Exact clean625b8398: existing test-blender-output passed1/1,98checks,zero failures/notRun,jobs4,6781.974ms. One plain-Python fit completed08:13:36UTC,exit0,80.7743ms,source unchanged. Output in the existing lane: .qa-dist/wild-beaver-fit-625b8398/beaver-source-fitted.glb and fit-manifest.json. Fitted GLB152000B/SHA2569b2d4a0989ceb3b5f905b7df58e921bb2e951a248ac4d49279fab31a7a1d5d7b.
+
+Separate actual-container inspection confirms the complete149844-byte candidate BIN is exact, including geometry, atlas and padding; JSON differs only by Geo_Beaver root uniform scale.009854149844873853 and translation[0,.1807245082090349,0]. Actual length1.10m, minimum rear-paw datum0, original front offset1.774mm, unchanged tail14.902mm below datum (within approved20mm). No all-four-coplanar or in-game-grounding claim. Original and unfitted candidate hashes remain exact. Receipts and independent verification are under integration .evidence/2026-10-15/WILD-ART-SRC/fit-625b8398.
+
+This completes only the authorized private beaver fit. No runtime/CREDITS, art sheet/verdict, gate/build or merge. North woods round1 still waits for four donors: deer/wolf retry only15October22:00PT; moose/bear await Kyle's official originals. No further generation or views are needed now. Fold these actual results into the lane's own note with its next genuine source change, not a results-only lane commit.
