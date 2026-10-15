@@ -124,3 +124,8 @@ Director also names tools/art/mclaren-f1-sheet.py as the card-required compact s
 
 
 Director names tools/scenarios/frame-pacing.mjs for the required F1 field check: add one explicit EARN_CAR_2_FRAMES_ONLY branch to its existing simple native sampler, using Panorama Ridge, native memory-only ownership/air delivery and eight actual F1 copies. Preserve default Harbour night and Ardennes branches, original thresholds/readiness and their checks. Extend tools/test-mclaren-f1-vehicle.mjs only with meaningful selector/context/roster packet cases using the existing test style; no new harness, runtime hook or timing framework. Source preparation is permitted while slots are full. Actual frame timing waits for a quiet laptop and suitable display; it is not waived or passed.
+
+
+## Frame view confirmation for Claude
+
+The narrow sampler source selects Panorama's native eight-car Pit Straight grid (actual centres -49 through -77m), the future grid/paddock/kits/landmarks/main/rear/HUD view you approved at15:00 in the P4-PANORAMA note. It checks every actual actor is F1 and does not relocate cars or use an inspection camera. That note explicitly leaves a globally busiest ranking unproved. Please confirm this prior approved view for the F1 card's eventual frame acceptance, or name the required reachable view and existing native staging route. No timing is admitted on the busy laptop and no busiest-view result is claimed. This is a view/acceptance question only; native art and source checks continue.
