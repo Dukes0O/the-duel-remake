@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T04:19:26.764Z
+Observed at: 2026-10-15T04:22:27.939Z
 
-Observation commit: 0d5f47c85ec15fb68290e3628780913ed9f549d5
+Observation commit: 61b5e186c3dda058d25842ff495ae9ad28cb081d
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 0d5f47c85ec15fb68290e3628780913ed9f549d5
+Integration HEAD: 61b5e186c3dda058d25842ff495ae9ad28cb081d
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -77,7 +77,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
 | codex/qa-titan-replay-timeout | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-titan-replay-timeout |
-| codex/summit-gallery-cover | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-gallery-cover |
+| codex/summit-gallery-cover | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-gallery-cover |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 19 | unknown | true | false | unknown |
@@ -99,6 +99,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T20:54:33-07:00 | 0 | last commit 2026-10-14T20:54:33-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/qa-titan-replay-timeout | QA-TITAN-REPLAY-TIMEOUT | 2026-10-14T19:39:55-07:00 | 0 | last commit 2026-10-14T19:39:55-07:00 | docs/changes/QA-TITAN-REPLAY-TIMEOUT.md, tools/run-tests.mjs, tools/test-test-runner.mjs, tools/test-titan-climb.mjs |
+| codex/summit-gallery-cover | SUMMIT-GALLERY-COVER | 2026-10-14T21:21:42-07:00 | 0 | last commit 2026-10-14T21:21:42-07:00 | docs/changes/SUMMIT-GALLERY-COVER.md, src/circuits/summit-run.js, src/race-structures.js, tools/test-tunnel-detail.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-14T19:19:19-07:00 | 0 | last commit 2026-10-14T19:19:19-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json |
 
@@ -114,9 +115,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,348,046 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 145,716 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 192,592 B | +46,876 B | 5,000,000 B |
 | All `public/` | 298,113,947 B | +0 B | unavailable |
-| Git objects | 410,910,720 B | +206,848 B | unavailable |
+| Git objects | 411,041,792 B | +131,072 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -125,7 +126,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 0d5f47c85ec15fb68290e3628780913ed9f549d5
+- Local integration/wasteland: 61b5e186c3dda058d25842ff495ae9ad28cb081d
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
