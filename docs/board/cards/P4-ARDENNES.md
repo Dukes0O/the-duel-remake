@@ -409,3 +409,12 @@ Read-only review is checking whether the fixture BoxGeometry height5.9 translate
 ## Exact synthetic fixture repair approved after independent confirmation
 
 Independent source review confirms the fixture fault: Float32 stores -2.95 slightly below its intended value before translation; the kit correctly seats its actual negative minimum. This is not a production grounding fault. Lease ONLY the new test fixture at tools/test-circuit-ardennes.mjs:928: BoxGeometry(.4,6,.4).translate(0,3,0), plus own note explaining the changed fixture. Binary-exact3 gives the intended zero base. Keep line943 strict equality, all fall/reset/default/real-asset assertions, production source and GLBs exact. Freeze for confirmation before rerunning only the affected circuit suite; do not repeat passing track-kits or export. Existing08:03UTC failure cutoff remains.
+
+
+## Fixture repaired; final native packet admitted on current integration union
+
+Root confirmed exactbaa151f0 changed only the independently approved synthetic height6/translation3 and note. Affected test-circuit-ardennes rerun57501 passed1/1 suite/all36cases at07:37:37.7568557UTC,12188.1503ms,jobs4,zero failures/notRun,source unchanged. Original passing track-kits and export were not repeated. The failure investigation is closed within its budget; no assertion or game limit changed.
+
+Normal sync with current integration is conflict-free at688eb0946122f8a6ac9e09bdb6eb6b6418d830fc. Root verified all reviewed Ardennes runtime/scenario bytes unchanged; additive HELI roster/credits both preserved, current release landing included. Lane is clean. No post-merge gate was run.
+
+After fresh holds/capacity, admit ONE existing ardennes-views native packet on exact688e,private autoport/memory-only. Expected28 real views: original22 plus three clear-second-lap close views per quality. Preserve original stock/field/readOnly/light/mist/knownincident guards and actual car-eye approach. Output only .evidence/2026-10-15/P4-ARDENNES/round3-688eb094, receipt native-688eb094. No repeated export, altered driver/scene/lighting, frame timing, signature, gate/build or art verdict yet. Root must inspect the three complete raw High pictures before ONE final R3 Claude submission. If native fails, keep the actual failure and stop for a bounded precise fix; do not silently waive it or submit a broken packet.

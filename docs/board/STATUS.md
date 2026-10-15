@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T07:35:16.785Z
+Observed at: 2026-10-15T07:39:20.716Z
 
-Observation commit: 2f4d6c46cc5a7f19752dc2bd19416fcc9a9733f4
+Observation commit: c90ecd84510628260ebed3612b96aaa590d2be9e
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2f4d6c46cc5a7f19752dc2bd19416fcc9a9733f4
+Integration HEAD: c90ecd84510628260ebed3612b96aaa590d2be9e
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -53,7 +53,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/p4-ardennes | P4-ARDENNES | 2026-10-15T00:29:50-07:00 | 0 | last commit 2026-10-15T00:29:50-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/board/looks/ardennes-art/round-2-review.md, docs/board/looks/ardennes-art/round-2.jpg, docs/changes/P4-ARDENNES.md |
+| codex/p4-ardennes | P4-ARDENNES | 2026-10-15T00:38:28-07:00 | 0 | last commit 2026-10-15T00:38:28-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/board/looks/ardennes-art/round-2-review.md, docs/board/looks/ardennes-art/round-2.jpg, docs/changes/P4-ARDENNES.md |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -76,7 +76,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 523,148 B | +0 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 419,211,264 B | +39,936 B | unavailable |
+| Git objects | 419,375,104 B | +163,840 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,7 +85,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 2f4d6c46cc5a7f19752dc2bd19416fcc9a9733f4
+- Local integration/wasteland: c90ecd84510628260ebed3612b96aaa590d2be9e
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
