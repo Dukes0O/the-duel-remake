@@ -9,6 +9,7 @@ import { COURSE_PRICES, isCourseUnlocked, purchaseCourse } from '../src/course-a
 import { createProfile, eventKey, loadPlayers, normalizeProfile, stageEventId, PLAYERS_KEY, PROFILE_KEY } from '../src/progression.js';
 import { supportsCombat } from '../src/combat.js';
 import { courseAccessPanel } from '../src/course-access-ui.js';
+import { GRAND_PRIX_COURSES } from '../src/race-field.js';
 import { loadLeaderboard, LEADERBOARD_KEY } from '../src/leaderboard.js';
 import { loadGhosts, GHOST_KEY } from '../src/ghost.js';
 
@@ -137,8 +138,18 @@ for (const file of files) {
   if (rawGhosts) equal(loadGhosts(storage).records.map(row => row.key), rawGhosts.records.map(row => row.key), `${fixture.shape}: ghost keys unchanged`);
 }
 
-// 5. Every appended course remains a pure race with a rival; combat matrices cover the independently selected combat roster.
-for (const definition of ALL_CIRCUITS) ok(!supportsCombat(definition) && definition.hasRival && definition.noCombat === true, 'registered circuits are race-only');
+// 5. All circuits remain race-only; only the accepted solo Summit child has no rival.
+for (const definition of ALL_CIRCUITS) {
+  ok(!supportsCombat(definition) && definition.noCombat === true, 'registered circuits are race-only');
+  if (definition.id === 'summit-time-attack') {
+    const manifest = CIRCUIT_MANIFESTS.find(row => row.id === definition.id);
+    equal([definition.flag, definition.defaultMode, definition.laps, definition.grandPrixLaps, definition.fieldSize, definition.hasRival, definition.noTraffic],
+      ['summit-run', 'timetrial', 1, 1, 1, false, true], 'Attack is the exact solo Time Trial exception');
+    equal([manifest.state, manifest.price, manifest.releaseOrder, manifest.grandPrix, manifest.unlock],
+      ['dev', 0, 6, false, {kind: 'owned-course', defaultEventId: 'summit-run'}], 'Attack shares only parent ownership and dev admission');
+    ok(!GRAND_PRIX_COURSES.includes(definition.id), 'Attack is never a Grand Prix event');
+  } else ok(definition.hasRival, 'every other registered circuit retains its rival');
+}
 ok(!supportsCombat(COURSE[panorama]) && COURSE[panorama].hasRival && COURSE[panorama].noCombat === true, 'Panorama Ridge has a rival but no Mad Max Duel');
 equal(COURSE.filter(supportsCombat).length, 11, 'eleven combat courses, as before');
 

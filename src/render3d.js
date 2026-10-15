@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
 import {createWaterline} from './deep/waterline.js';
@@ -196,7 +197,7 @@ export function attachRenderer(host, app) {
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
   let preparedTrackKits = null, preparedTrackKitKey = null, snowmenView=null, avalancheView=null;
   const hasSnowmen=next=>snowmenEnabled(next,app._switches?.()??app.duel.featureFlags);
-  const hasAvalanche=next=>next.def.id==='summit-run' && (app._switches?.()??app.duel.featureFlags).enabled('summit-run');
+  const hasAvalanche=next=>(next.def.id==='summit-run'||isSummitAttack(next.def)) && (app._switches?.()??app.duel.featureFlags).enabled('summit-run');
   const kitWorldKey=next=>environmentKey(next)+(hasSnowmen(next)?':snowmen':'')+(hasAvalanche(next)?':avalanche':'');
   const winterEnabled=next=>snowWorldEnabled(next,app._switches?.()??app.duel.featureFlags);
   function prepareKitWorld(next, {retry=false}={}) {
@@ -467,7 +468,7 @@ export function attachRenderer(host, app) {
     if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!prepareKitWorld(next)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedRoof=app.getRoofLook?.(carKey,{menu})??null;
-    const needsYeti=(next.def.id==='summit-run'&&(app._switches?.()??app.duel.featureFlags).enabled('yeti')&&
+    const needsYeti=((next.def.id==='summit-run'||isSummitAttack(next.def))&&(app._switches?.()??app.duel.featureFlags).enabled('yeti')&&
       (app._switches?.()??app.duel.featureFlags).enabled('summit-run')) || selectedRoof==='yeti';
     if(needsYeti&&yetiAssets.status!=='ready'){
       if(yetiAssets.status==='idle')yetiAssets.load();host.dataset.yetiAsset=yetiAssets.status;host.dataset.yetiError=yetiAssets.error;

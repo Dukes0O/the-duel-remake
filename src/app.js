@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
@@ -418,14 +419,14 @@ export class App {
     this._stageStartCrashes=0;
     this._campaignStart=stageIndex;this._runPlayerId=this.player.id;
     this.cpuDifficulty=['easy','medium','hard'].includes(options.cpuDifficulty)?options.cpuDifficulty:this.cpuDifficulty;
-    const mode=stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
-    const yetiSeed=stage.id==='summit-run'&&this._switches().enabled('summit-run')&&this._switches().enabled('yeti')
+    const mode=isSummitAttack(stage)?'timetrial':stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
+    const yetiSeed=(stage.id==='summit-run'||isSummitAttack(stage))&&this._switches().enabled('summit-run')&&this._switches().enabled('yeti')
       ?hash32(this.seed,this.runId):undefined;
     const difficulty=options.difficulty??this.duel.state.difficulty;
-    const laps=this.getLapChoice(stageIndex,mode,options.laps);
+    const laps=isSummitAttack(stage)?1:this.getLapChoice(stageIndex,mode,options.laps);
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(stage,mode))
       this._lapChoices.set(this._lapChoiceKey(stageIndex,mode),laps);
-    const rival=Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
+    const rival=isSummitAttack(stage)?null:Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
     // A new field seed for every Grand Prix, so the same circuit does not always play out the same way.
     if(mode==='grandprix'&&options.fieldSeed==null)options={...options,fieldSeed:Math.floor(Math.random()*4294967296)>>>0};
     // Winter tyres count only where there is snow or ice to use them on.
@@ -438,7 +439,7 @@ export class App {
     this._resetKeyboardInput();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,laps,tyre,yetiSeed,weaponLevels:getProfileWeapons(this.profile).levels,
+    this.duel.startCampaign({...options,...(isSummitAttack(stage)?{opponentCount:0,qualifying:false}:{}),laps,tyre,yetiSeed,weaponLevels:getProfileWeapons(this.profile).levels,
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
@@ -717,7 +718,7 @@ export class App {
     if(state.arena)return;
     const yetiFinish=state===this.duel.state && result===state.results && !state.qualifying &&
       result.yetiEnabled===true && result.yetiSeen===true && state.yeti?.seen===true &&
-      this.duel.course?.def.id==='summit-run' && this._switches().enabled('yeti') && this._switches().enabled('summit-run');
+      (this.duel.course?.def.id==='summit-run'||isSummitAttack(this.duel.course?.def)) && this._switches().enabled('yeti') && this._switches().enabled('summit-run');
     const gpWithoutPay=state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving');
     if(gpWithoutPay&&!yetiFinish){
       if(isYetiGrandPrixInput(this.profile.activeRace)&&state===this.duel.state&&(result===state.results||result.abandoned===true)&&
@@ -1381,7 +1382,7 @@ export class App {
     return true;
   }
   _markActiveRace(state){
-    const yetiInput=COURSE[state.stageIndex]?.id==='summit-run'&&validYetiSeed(state.yetiSeed)&&
+    const yetiInput=(COURSE[state.stageIndex]?.id==='summit-run'||isSummitAttack(COURSE[state.stageIndex]))&&validYetiSeed(state.yetiSeed)&&
       this._switches().enabled('summit-run')&&this._switches().enabled('yeti');
     if(state.arena||state.mode==='grandprix'&&!yetiInput)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { Course } from '../src/course.js';
 import { COURSE } from '../src/config.js';
+import { SUMMIT_RUN } from '../src/circuits/summit-run.js';
+import { disposeTree } from '../src/world.js';
 import { addRaceStructures } from '../src/race-structures.js';
 import { buildTunnelWallDetails,createTunnelConcrete,TUNNEL_CONCRETE_TILE_METRES } from '../src/tunnel-detail.js';
 
@@ -28,6 +30,37 @@ for(const seed of[1989,42])for(const def of COURSE.filter(def=>def.sections.some
       maximumGap=Math.max(maximumGap,Math.abs(hit.distance-.15));check(Math.abs(hit.distance-.15)<.00015,`${def.id}: new detail protrudes from the existing wall plane`);
     }
   }
+}
+// Compare actual generated Gallery geometry, including both rock dispatches.
+// Only explicit false removes cover; every remaining mesh/light stays exact.
+{
+  const course=new Course(SUMMIT_RUN,1989),tunnels=course.features.tunnels;
+  check(tunnels.length===1&&tunnels[0].cover===false,'Summit forwards its authored cover opt-out to the actual Gallery');
+  const snapshots=[];
+  for(const cover of[undefined,true,false]){
+    course.features.tunnels=tunnels.map(({cover:_cover,...tunnel})=>({...tunnel,...(cover===undefined?{}:{cover})}));
+    const physical=JSON.stringify(course.features),world=new THREE.Group(),structures=addRaceStructures(world,course);
+    try{
+      structures.updateMatrixWorld(true);
+      snapshots.push(structures.children.map(object=>{
+        const {uuid,...geometry}=object.geometry?.toJSON()??{};
+        return {name:object.name,type:object.type,geometry,
+          position:object.position.toArray(),quaternion:object.quaternion.toArray(),scale:object.scale.toArray(),
+          matrix:object.matrix.toArray(),count:object.count,
+          instances:object.instanceMatrix?Array.from(object.instanceMatrix.array):null,
+          colours:object.instanceColor?Array.from(object.instanceColor.array):null,
+          light:object.isLight?{colour:object.color.getHex(),intensity:object.intensity,distance:object.distance,decay:object.decay}:null};
+      }));
+      check(JSON.stringify(course.features)===physical,'Cover selection never changes physical tunnel features');
+    }finally{disposeTree(world);}
+  }
+  assert.deepEqual(snapshots[1],snapshots[0]);checks++;
+  check(snapshots[0].some(object=>object.name==='Circuit rock surface'),'Default and explicit true retain actual rock geometry');
+  check(!snapshots[2].some(object=>object.name==='Circuit rock surface'),'Explicit false removes the cover and portal rock geometry');
+  assert.deepEqual(snapshots[2],snapshots[0].filter(object=>object.name!=='Circuit rock surface'));checks++;
+  check(snapshots[2].some(object=>object.name==='Circuit lining surface')&&
+    snapshots[2].some(object=>object.name==='Circuit tunnelConcrete surface')&&
+    snapshots[2].some(object=>object.name==='Tunnel ceiling pool'),'Uncovered Gallery retains lining, portals and actual lights');
 }
 for(const portal of[false,true]){
   const mat=createTunnelConcrete(portal),shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,uniforms:{}};mat.onBeforeCompile(shader);

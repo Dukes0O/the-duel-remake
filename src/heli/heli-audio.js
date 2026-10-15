@@ -40,6 +40,10 @@ export const HELI_LIBRARY_CUES = Object.freeze({
   'heli.bucket.dent': cue('vehicle', {file: 'heli/bucket-dent.ogg', volume: .85, priority: 65, limit: 2}),
   // Steam where water lands on fire; the game scales it by the litres.
   'heli.fire.hiss': cue('ambience', {file: 'heli/fire-hiss.ogg', volume: .7, priority: 50, limit: 3}),
+  // H4 Rescue (docs/HELI_RESCUE.md section 9).
+  'heli.flare': cue('ambience', {file: 'heli/flare.ogg', volume: .7, priority: 55, limit: 1}),
+  'heli.snow.dig': cue('vehicle', {file: 'heli/snow-dig.ogg', volume: .6, loop: true, priority: 50, limit: 1}),
+  'heli.rescue.clip': cue('vehicle', {file: 'heli/rescue-clip.ogg', volume: .8, priority: 60, limit: 2}),
 });
 
 // Chime, horn, click and hiss are made from tones and noise, with no file.
@@ -64,6 +68,11 @@ export const HELI_TONE_CUES = Object.freeze({
     tone(880, .28, .12, 'triangle', .64), tone(660, .28, .12, 'triangle', .96)]}),
   'heli.aim.lock': cue('interface', {priority: 70, limit: 1, volume: .6,
     layers: [tone(1760, .05, .12, 'sine', 0), tone(2349, .06, .1, 'sine', .05)]}),
+  // H4 Rescue: the beacon's beep, played above the rotor at a pitch the game
+  // sets as you close in (900 to 1,400 Hz); a soft tick each second in a
+  // rescue clock's last minute, under the rotor.
+  'heli.beacon.beep': cue('interface', {priority: 75, limit: 2, volume: .7, layers: [tone(1000, .07, .16, 'sine', 0)]}),
+  'heli.clock.tick': cue('interface', {priority: 30, limit: 1, volume: .35, layers: [tone(2200, .025, .08, 'triangle', 0)]}),
   'heli.badge': cue('interface', {priority: 85, limit: 1, volume: .7, layers: [
     tone(784, .3, .12, 'sine', 0), tone(988, .3, .12, 'sine', .14), tone(1175, .3, .12, 'sine', .28),
     tone(1568, .7, .12, 'sine', .42)]}),
@@ -75,7 +84,9 @@ export const HELI_RADIO_CUES = Object.freeze(Object.fromEntries(Object.entries(H
 
 export const HELI_CUES = Object.freeze({...HELI_RADIO_CUES, ...HELI_LIBRARY_CUES, ...HELI_TONE_CUES});
 // The H2 Fire recordings: loaded only when a fire needs them.
-export const FIRE_CUE_IDS = Object.freeze(['heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.bucket.dent', 'heli.fire.hiss']);
+export const FIRE_CUE_IDS = Object.freeze(['heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.bucket.dent', 'heli.fire.hiss',
+  // H4 Rescue's recordings load with the missions too.
+  'heli.flare', 'heli.snow.dig', 'heli.rescue.clip']);
 
 // Flight and cable events (heli-flight.js, heli-cable.js) and what they sound like.
 // scale and rate change the cue's volume and pitch for that one play.
@@ -371,8 +382,9 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     return voice;
   }
 
-  // Tones and noise made on the spot (the chime and the horn).
-  function startLayers(id, scale = 1) {
+  // Tones and noise made on the spot (the chime and the horn). rate raises
+  // every tone's pitch (the beacon's beep, 900 to 1,400 Hz from a 1,000 Hz cue).
+  function startLayers(id, scale = 1, rate = 1) {
     const ctx = audio.context, def = cues[id];
     if (!audible() || ctx !== context) return null;
     const tones = def.layers.filter(layer => layer.kind === 'tone');
@@ -386,8 +398,8 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
       const at = ctx.currentTime + (layer.delay || 0), finish = at + layer.duration;
       const level = ctx.createGain(), osc = ctx.createOscillator();
       osc.type = layer.type;
-      osc.frequency.setValueAtTime(layer.frequency, at);
-      if (layer.endFrequency) osc.frequency.linearRampToValueAtTime(layer.endFrequency, finish);
+      osc.frequency.setValueAtTime(layer.frequency * rate, at);
+      if (layer.endFrequency) osc.frequency.linearRampToValueAtTime(layer.endFrequency * rate, finish);
       level.gain.setValueAtTime(0, at);
       level.gain.linearRampToValueAtTime(layer.volume, at + .01);
       level.gain.linearRampToValueAtTime(0, finish);
@@ -419,7 +431,7 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     if (disposed || !def || id.startsWith('heli.radio.') || !audible()) return null;
     follow();
     if (def.loop || def.bus === 'voice') return null;
-    if (def.layers) return startLayers(id, options.scale ?? 1);
+    if (def.layers) return startLayers(id, options.scale ?? 1, options.rate ?? 1);
     if (!buffers.has(id)) { void load([id]); return null; }
     return start(id, options);
   }

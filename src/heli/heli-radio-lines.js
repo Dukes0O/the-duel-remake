@@ -66,5 +66,34 @@ const FIRE_LINES = {
   'heli.radio.bucket.dented': {voice: 'brian', file: 'heli-radio-bucket-dented.mp3', text: 'You dented the bucket. It will leak until the shop fixes it.'},
 };
 
-export const HELI_RADIO_LINES = Object.freeze(Object.fromEntries(Object.entries({...H1_LINES, ...FIRE_LINES})
+// H4 Rescue (docs/HELI_RESCUE.md section 8): mountain rescue and the lodge
+// (Roger), the rangers (Sarah) and the rescue line (Brian).
+const RESCUE_LINES = {
+  'heli.radio.avalanche.call': {voice: 'roger', file: 'heli-radio-avalanche-call.mp3', text: 'Calling all pilots. Avalanche on the ski hill. A skier is buried. Kestrel One, can you take it?'},
+  'heli.radio.hoist.call': {voice: 'roger', file: 'heli-radio-hoist-call.mp3', text: 'Calling all pilots. A car has gone off the road, and the driver is stuck on the slope below. Kestrel One, can you take it?'},
+  'heli.radio.supply.call': {voice: 'roger', file: 'heli-radio-supply-call.mp3', text: 'Kestrel One, this is the lodge. Snow has shut the road and we are running low. Can you fly supplies up?'},
+  'heli.radio.hiker.call': {voice: 'sarah', file: 'heli-radio-hiker-call.mp3', text: 'Kestrel One, park rangers here. A hiker is lost in the forest and it will be dark soon. Can you search for them?'},
+  'heli.radio.rescue.answer': {voice: 'roger', file: 'heli-radio-rescue-answer.mp3', text: 'Thank you, Kestrel One. Fit the rescue line at the pad. Your rescuer is waiting.'},
+  'heli.radio.supply.answer': {voice: 'roger', file: 'heli-radio-supply-answer.mp3', text: 'Thanks, Kestrel One. Three crates are waiting by the pad. Bring them to the yard by the lodge.'},
+  'heli.radio.hiker.answer': {voice: 'sarah', file: 'heli-radio-hiker-answer.mp3', text: 'Thank you. They were last seen inside the circle on your map. Fly low and slow, and watch for an orange flare.'},
+  'heli.radio.rescue.later': {voice: 'roger', file: 'heli-radio-rescue-later.mp3', text: 'Understood. If you cannot get there, another crew will.'},
+  'heli.radio.rescue.taken': {voice: 'roger', file: 'heli-radio-rescue-taken.mp3', text: 'Another crew has taken that call, Kestrel One.'},
+  'heli.radio.beacon.signal': {voice: 'roger', file: 'heli-radio-beacon-signal.mp3', text: 'You have a signal. Follow the beeps. Faster means closer.'},
+  'heli.radio.rescue.steady': {voice: 'roger', file: 'heli-radio-rescue-steady.mp3', text: 'Hold her steady. The rescuer needs you still.'},
+  'heli.radio.rescue.clipped': {voice: 'roger', file: 'heli-radio-rescue-clipped.mp3', text: 'They are clipped on. Lift gently.'},
+  'heli.radio.rescue.fast': {voice: 'roger', file: 'heli-radio-rescue-fast.mp3', text: 'Slow down! People on the line.'},
+  'heli.radio.rescue.bump': {voice: 'roger', file: 'heli-radio-rescue-bump.mp3', text: 'Easy! Watch the people on the line.'},
+  'heli.radio.rescue.done': {voice: 'roger', file: 'heli-radio-rescue-done.mp3', text: 'Safe and sound. Great work, Kestrel One.'},
+  'heli.radio.rescue.late': {voice: 'roger', file: 'heli-radio-rescue-late.mp3', text: 'The ground team made it. Thanks for trying, Kestrel One.'},
+  'heli.radio.supply.crate': {voice: 'roger', file: 'heli-radio-supply-crate.mp3', text: 'Crate is down. Thank you.'},
+  'heli.radio.supply.done': {voice: 'roger', file: 'heli-radio-supply-done.mp3', text: 'That is everything. The whole lodge thanks you, Kestrel One.'},
+  'heli.radio.season.summer': {voice: 'roger', file: 'heli-radio-season-summer.mp3', text: 'Wildfire season is here. Keep an eye out for smoke.'},
+  'heli.radio.season.winter': {voice: 'roger', file: 'heli-radio-season-winter.mp3', text: 'Winter is here. Watch the ski hill for avalanches.'},
+  'heli.radio.hiker.spotted': {voice: 'sarah', file: 'heli-radio-hiker-spotted.mp3', text: 'That is them! There is a clearing close by. Land there and they will walk over.'},
+  'heli.radio.hiker.dusk': {voice: 'sarah', file: 'heli-radio-hiker-dusk.mp3', text: 'It is getting dark, Kestrel One.'},
+  'heli.radio.line.first': {voice: 'brian', file: 'heli-radio-line-first.mp3', text: 'That is the rescue line. Fly smooth, and keep her under forty knots with people on it.'},
+  'heli.radio.line.setdown': {voice: 'brian', file: 'heli-radio-line-setdown.mp3', text: 'Lower the rescuer gently, right beside them, and hold her there.'},
+};
+
+export const HELI_RADIO_LINES = Object.freeze(Object.fromEntries(Object.entries({...H1_LINES, ...FIRE_LINES, ...RESCUE_LINES})
   .map(([id, line]) => [id, Object.freeze({voice: 'brian', ...line})])));
