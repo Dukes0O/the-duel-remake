@@ -226,6 +226,18 @@ export async function run(context) {
       await writeFile(join(context.outputDir,'frame-pacing.json'),JSON.stringify(packet,null,2)+'\n');
       validateArdennesFramePacket(packet);
     } catch (error) {
+      let readiness;
+      try {
+        readiness = await context.evaluate(`(() => {
+          const app = window.__qaApp, state = app?.duel?.state;
+          return {course:app?.duel?.course?.def?.id, status:state?.status,
+            running:app?.running, visualReady:app?.visualReady, countdown:state?.field?.start?.elapsed,
+            cars:state?.opponents?.length + 1, visibility:document.visibilityState,
+            memoryOnlySaves:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value,
+            view:{...document.querySelector('#view3d')?.dataset}};
+        })()`);
+      } catch (captureError) { readiness = {captureError:captureError.message}; }
+      await writeFile(join(context.outputDir,'frame-readiness.json'),JSON.stringify(readiness,null,2)+'\n');
       await writeFile(join(context.outputDir,'frame-pacing.json'),JSON.stringify({schema:1,mode:'ardennes-simple',reports,error:error.message},null,2)+'\n');
       throw error;
     }
