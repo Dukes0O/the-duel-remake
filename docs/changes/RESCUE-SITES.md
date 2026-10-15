@@ -52,7 +52,7 @@ mission seed:
 - `node tools/test-heli-rescue.mjs`: 205 checks.
 - `node tools/test-heli-mode.mjs`: 152 checks (the import guard sees the new
   rules file).
-- Lane tier and build after the review fixes: below.
+- Lane tier (PowerShell, --tier lane --changed --jobs 4 --keep-going) after the review fixes and an integration merge: 24 passed, 0 failed, 0 not run in 186 s. npm run build: passed. Only the packet note changed after it (docs).
 
 ## Changed assertions
 
