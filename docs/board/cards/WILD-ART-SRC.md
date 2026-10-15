@@ -142,3 +142,10 @@ The original view job4541 completed at07:13:08.9353474UTC on clean4378ebff: exit
 Two real framing faults remain: top and underside clip the ends. Blender orthographic scale spans image width, so145.1 units at aspect1.6 leaves only90.7 vertical units for the111.6-unit animal. No formal art round was submitted. Do not repeat the four complete views or change donor transforms/materials.
 
 Narrow source amendment in the SAME four owned files: correct orthographic framing with the actual render aspect, and add optional repeated --source-view choices from the existing six named views, accepted only with --view-only, rejecting duplicates/invalid names before reads. Default six-view planning and generation contracts stay intact. Extend the existing planner cases only for this exact selection/refusal contract. Prepare a fresh private two-view leaf for plus-y/minus-y; no overwrite, image edits, fit, model export, art sheet or review. Freeze and Root review before a focused planner check and ONE corrected two-view CPU4 render. Framing investigation ends07:50UTC, then note and move on. Original four complete pictures remain the evidence; old clipped pictures are not called valid.
+
+
+## Two-view correction reviewed
+
+Root reviewed cleanc55288dc1a51f627300371869ce138d30434778f against4378ebff: CLEAR. The new scale accounts for actual image/pixel aspect; only selected existing axis views run. Invalid or duplicate choices are rejected before reads, and default generation/six-view planner contracts remain unchanged. Donor transforms, materials, lights, geometry, floor and pose are unchanged.
+
+Admit one existing test-blender-output suite on exactcleanc552,jobs4,after fresh holds/capacity. If it passes, admit only the corrected plus-y/minus-y CPU4/48sample views into fresh .qa-dist/wild-beaver-source-views-c55288dc. Keep the original four complete4378 pictures; no full-six repeat, fit, export, art review, gate or build. Preserve actual receipts and inspect both full new pictures before any completion claim. The07:50UTC framing cutoff remains.
