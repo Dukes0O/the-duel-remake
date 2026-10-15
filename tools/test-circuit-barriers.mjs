@@ -9,6 +9,7 @@ import { KIT_FOOTPRINTS } from '../src/kit-footprints.js';
 import { TREMBLANT_WOODS } from '../src/circuits/tremblant-woods.js';
 import { HARBOUR_LIGHTS } from '../src/circuits/harbour-lights.js';
 import { PANORAMA_RIDGE } from '../src/circuits/panorama-ridge.js';
+import {buildKitPlacements} from '../src/circuit-kit-layout.js';
 
 // A barrier you can see is a barrier you hit. Found on Tremblant Woods: the
 // armco, tyre walls and catch fence were drawn but had no collision, so a car
@@ -139,7 +140,7 @@ test('Harbour Lights: every kit barrier stands at one of the circuit walls, and 
   }, Infinity);
   let worst = 0;
   for (const piece of HARBOUR_LIGHTS.kitPlacements.filter(item => ['concrete-wall', 'catch-fence', 'tyre-wall'].includes(item.id))) {
-    const at = harbour.groundAt(piece.s, piece.lateral);
+    const at = piece.worldPosition ?? harbour.groundAt(piece.s, piece.lateral);
     worst = Math.max(worst, reach(at.x, at.z));
   }
   // The pieces beside the run-off roads are cut to their own lengths and stand within a metre and a half of a wall box.
@@ -156,4 +157,30 @@ test('Harbour Lights: every kit barrier stands at one of the circuit walls, and 
   assert.equal(panorama.features.kitSolids.length, pitPieces.length + hellPieces.length);
   assert.ok(panorama.features.kitSolids.every(box => box.id.endsWith('-pit-wall') || box.id.endsWith('-concrete-wall')));
   assert.equal(panorama.features.walls.filter(wall => wall.pitWall).length, 0);
+});
+
+
+test('Harbour escape linings carry actual world positions and keep physical walls unchanged when disabled', () => {
+  const harbour = new Course(HARBOUR_LIGHTS, 1989);
+  const pins = HARBOUR_LIGHTS.kitPlacements.filter(row => row.worldPosition);
+  assert.ok(pins.length > 0, 'both escape roads retain actual world-coordinate rows');
+  assert.ok(pins.every(row => ['concrete-wall', 'catch-fence', 'tyre-wall'].includes(row.id)));
+  for (const escape of harbour.escapeRoads) {
+    assert.ok(pins.some(row => {
+      const dx = row.worldPosition.x - escape.origin.x, dz = row.worldPosition.z - escape.origin.z;
+      const u = dx * escape.forward.x + dz * escape.forward.z;
+      return u > 0 && u < escape.run;
+    }), 'the authored escape has pinned linings');
+  }
+  const old = new Course({...HARBOUR_LIGHTS, completeTerrainRibbon: false}, 1989);
+  assert.deepEqual(harbour.features.walls, old.features.walls, 'drawing corrections do not move a physical wall');
+});
+
+
+test('wall layout options preserve exact old defaults and reject unknown escape turns', () => {
+  const walls = {wall: 'concrete-wall', fence: 'catch-fence', tyres: 'tyre-wall', openToWater: true};
+  assert.deepEqual(buildKitPlacements(HARBOUR_LIGHTS, {walls: {...walls, alignEscapeTurns: []}}),
+    buildKitPlacements(HARBOUR_LIGHTS, {walls}), 'absent and empty options have the exact old output');
+  for (const alignEscapeTurns of [true, ['Not an escape'], ['Lantern Hairpin', 'Lantern Hairpin']])
+    assert.throws(() => buildKitPlacements(HARBOUR_LIGHTS, {walls: {...walls, alignEscapeTurns}}), /existing escape turns/);
 });

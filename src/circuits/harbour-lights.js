@@ -25,9 +25,9 @@
 // bring it back. Closest separate stretches: the hairpin approach and exit.
 // Easier pass, Claude, 14 October 2026 (layoutVersion 2, P4-FINISH-1014): Kyle found the street too hard.
 // Casino Corner opens from radius 22 to 27; the old town is 12 m wide (was 10) and the hairpin approach,
-// hairpin and the road after it 13 m (was 12); the radius of the Lantern Hairpin stays 9, it is the slowest
-// corner on purpose. The descent no longer starts as a drop at Precinct Bend (that crest launched a car at
-// the hairpin's braking point) but is spread over the Hillside and the Reservoir Run, and the hairpin itself
+// hairpin and the road after it 13 m (was 12). Claude's road-clearance correction opens the Lantern Hairpin
+// from radius 9 to 10 m; it remains the slowest corner on purpose. The descent no longer starts as a drop at
+// Precinct Bend (that crest launched a car at the hairpin's braking point) but is spread over the Hillside and the Reservoir Run, and the hairpin itself
 // lies level so the two arms of the road beside it meet the same ground. The loop closes by stretching its
 // straights by under 1% as before; every distance after Casino Corner moved by 9 to 20 m.
 import { defineScriptedCourse } from '../track-script.js';
@@ -40,7 +40,7 @@ const BASE = defineScriptedCourse({
   id: 'harbour-lights', name: 'Harbour Lights', flag: 'harbour-lights',
   theme: 'city', timeOfDay: 'night', stage: 17, kind: 'circuit', layoutVersion: 2,
   closed: true, laps: 4, grandPrixLaps: 4, hasRival: true, hasRadar: false, noTraffic: true, noCombat: true, speedLimitMph: 100,
-  airborne: true, terrainHalfWidth: 64, scenery: { trees: 100, rocks: 40, mountains: false },
+  airborne: true, terrainHalfWidth: 64, completeTerrainRibbon: true, scenery: { trees: 100, rocks: 40, mountains: false },
   sections: [
     { theme: 'city', name: 'Seafront', share: .30 },
     { theme: 'city', name: 'Old Town', share: .45 },
@@ -74,7 +74,7 @@ const BASE = defineScriptedCourse({
     { id: 'reservoir-upper', s: 2474, lateral: -57, along: 160, across: 43, surface: -2, depth: .8, bank: .1, blend: 20, keep: 4 },
     { id: 'reservoir-lower', s: 2894, lateral: -57, along: 180, across: 43, surface: -2.2, depth: .8, bank: .1, blend: 20, keep: 4 },
   ],
-  // The wall inside the Lantern Hairpin (radius 9 m) is drawn as one smooth ribbon, not as short boxes that splay into a jagged edge.
+  // The wall inside the Lantern Hairpin (radius 10 m) is drawn as one smooth ribbon, not as short boxes that splay into a jagged edge.
   smoothInnerWalls: { maxRadius: 15 },
   // Straight run-offs behind openings in the wall, on the outside of the two
   // slow corners (src/track-script-course.js).
@@ -151,7 +151,7 @@ const BASE = defineScriptedCourse({
     ['straight', 103, { climb: -4, name: 'Hillside' }],
     ['turn', 'L', 29.5, 60, { climb: -3, name: 'Precinct Bend' }],
     ['straight', 220, { climb: -2, name: 'Hairpin Approach', width: 13 }],
-    ['turn', 'R', 175, 9, { name: 'Lantern Hairpin' }],
+    ['turn', 'R', 175, 10, { name: 'Lantern Hairpin' }],
     ['straight', 99],
     ['turn', 'L', 60, 45, { climb: -4, name: 'Fishmarket Bend', width: 14 }],
     ['straight', 827, { climb: -17, name: 'Reservoir Run' }],
@@ -200,7 +200,8 @@ const BASE = defineScriptedCourse({
 // The street (docs/CIRCUITS.md 5.2), laid out for the kit loader by src/circuit-kit-layout.js.
 const TINTS = [0xe9d3b0, 0xd89a8a, 0x9cc0bb, 0xdcb25a, 0xa9b4d0, 0xc98562];
 const STREET = {
-  walls: { wall: 'concrete-wall', fence: 'catch-fence', tyres: 'tyre-wall', openToWater: true },
+  walls: { wall: 'concrete-wall', fence: 'catch-fence', tyres: 'tyre-wall', openToWater: true,
+    alignEscapeTurns: ['Casino Corner', 'Lantern Hairpin'] },
   paddock: {
     gantry: { at: -2.5 },
     garages: { side: 1, from: -92, to: 96, lane: 9 },

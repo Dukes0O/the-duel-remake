@@ -59,3 +59,12 @@ credits and no bonuses, and no new save field.
   gold sooner is fine.
 - **Cue:** `race.finish.flag` on every finish, then `interface.win` only when a
   medal is earned. No lose cue for a solo run.
+
+
+## Read-only settlement preflight before the dependency merges
+
+Save reviewer read exact8e55339f existing contracts; no source/test/lane started. The later Attack-only settleRace branch goes after shared validity/practice/duplicate guards and before generic abandonment/reward calculation. Identify the event from COURSE[result.stageIndex].id, never a caller zero-pay flag. Complete validtimetrial/noqualifying/noPractice finishes remain record-eligible independently of won; return awarded:true with normal PB/best metadata and reward/charge/fine0 for existing App leaderboard/ghost flow. Handle Attack abandonment here too: normalized activeRace omits timetrial mode, so stable event identity must protect reload cleanup even when mode is absent.
+
+Only existing settledResults key once, matching activeRace cleanup, valid canonical personalBests improvement and bounded zero-finance history row update. Credits, streak, pbBonusRuns, fines ledger, milestones, circuit wins, podiums and unrelated progress stay exact after normal profile validation. No new saved field/key format. Preserve Claude EARN-MEDALS normalize/unlock/grant/postguard-counter hooks; timetrial never counts toward its earned-car medals. Final actual source needs fresh independent save/pay review.
+
+Course-list medal uses the existing validated leaderboard path: normalize through mergeLeaderboards, query exact player/event/timetrial once per existing DRIVERS id without car/event-key filters, then choose the fastest valid returned time. One default club query misses other driver classes; raw prefix minima cannot prove valid record layout/context. This is design/API preparation only; no invented T, code, benchmark, lane or gate starts before Avalanche is merged.

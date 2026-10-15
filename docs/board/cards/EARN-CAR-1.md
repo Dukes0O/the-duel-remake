@@ -101,3 +101,7 @@ stickers and the flanks are too flat. SPEC 0.11 caps art at three rounds, so
 it stops here. Recommendation: allow one more round, building the lamp
 clusters as real recessed geometry and adding a waist line along the doors.
 Nothing is merged or registered until it passes.
+
+Kyle, 14 October 2026: "4th round." Round 4 builds the lamp clusters as
+recessed geometry and adds a waist line along the doors, then the sheet goes
+to Kyle again.
