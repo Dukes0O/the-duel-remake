@@ -224,6 +224,61 @@ assert.ok(shader.vertexShader.includes('vWinterWeight=winterWeight'));
 assert.ok(shader.fragmentShader.includes('clamp(vWinterWeight,0.0,1.0)'));
 assert.equal(material.customProgramCacheKey(),'prior-terrain-winter-v1');
 material.dispose();geom.dispose();
+// Optional wind patches preserve the existing callback and cache path on omission.
+{
+  const variants=[];
+  const compileWinter=(options,drifts=true,variation=true,nativeKey=false)=>{
+    const material=new THREE.MeshStandardMaterial();variants.push(material);
+    if(!nativeKey){material.onBeforeCompile=shader=>{shader.uniforms.prior={value:42};};material.customProgramCacheKey=()=> 'prior-terrain';}
+    winterTerrainMaterial(material,drifts,variation,options);
+    const shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,uniforms:{}};
+    material.onBeforeCompile(shader);
+    return {shader,key:material.customProgramCacheKey(),callback:material.onBeforeCompile.toString(),material};
+  };
+  try{
+    for(const drifts of[false,true])for(const variation of[false,true])for(const nativeKey of[false,true]){
+      const original=compileWinter(undefined,drifts,variation,nativeKey);
+      for(const options of[{}, {variationStrength:.20}]){
+        const same=compileWinter(options,drifts,variation,nativeKey);
+        assert.deepEqual(same.shader,original.shader,'omitted/default wind options retain every compiled shader field');
+        assert.equal(same.callback,original.callback,'effective defaults retain the actual callback text');
+        assert.equal(same.key,original.key,'effective defaults retain custom and native Three cache keys');
+      }
+      if(!variation){
+        const ignored=compileWinter({variationStrength:NaN,variationScale:Infinity},drifts,false,nativeKey);
+        assert.deepEqual(ignored.shader,original.shader,'disabled variation never changes dry/drift shader behavior');
+        assert.equal(ignored.key,original.key);assert.equal(ignored.callback,original.callback);
+      }
+    }
+    const legacy=compileWinter(),wind=compileWinter({variationStrength:.20,variationScale:800}),
+      repeated=compileWinter({variationScale:800}),otherScale=compileWinter({variationScale:200}),
+      otherStrength=compileWinter({variationStrength:.30,variationScale:800});
+    assert.equal(wind.shader.uniforms.prior.value,42,'opted wind patches compose the actual prior shader');
+    assert.deepEqual(wind.shader.vertexShader,legacy.shader.vertexShader,'wind patches add no vertex transform or geometry input');
+    assert.equal(wind.key,repeated.key,'equivalent effective parameters share their program');
+    assert.deepEqual(wind.shader,repeated.shader);assert.notEqual(wind.key,legacy.key);
+    assert.notEqual(wind.key,otherScale.key);assert.notEqual(wind.key,otherStrength.key);
+    assert.ok(otherStrength.shader.fragmentShader.includes('mix('+(.88-.30)+','+(.88+.30)+',blown)'),
+      'changed strength reaches the actual fragment multiplier about the existing .88 mean');
+    const oldField='float blown=.5+.5*sin(vWinterPosition.x*.071+vWinterPosition.z*.037)*cos(vWinterPosition.z*.061);',
+      field=wind.shader.fragmentShader.match(/float blown=[^;]+;/)?.[0];
+    assert.ok(field&&field.includes('normalize(vec2(.071,.037))'),'broad wind keeps the normalized authored direction');
+    assert.ok(field.includes('*'+(2*Math.PI/800)+')'),'actual shader uses the requested world-metre wavelength');
+    assert.ok(otherScale.shader.fragmentShader.includes('*'+(2*Math.PI/200)+')'),'the other approved endpoint changes the actual shader wavelength');
+    assert.equal(wind.shader.fragmentShader.replace(field,oldField),legacy.shader.fragmentShader,
+      'default contrast, winter mask, grain, drifts and dry terrain remain exact around the opted field');
+    assert.ok(wind.shader.fragmentShader.includes('mix(.68,1.08,blown)*clamp(vWinterWeight,0.0,1.0)+(1.0-clamp(vWinterWeight,0.0,1.0))'),
+      'zero winter weight keeps a unit multiplier and the existing contrast is unchanged');
+    assert.deepEqual(wind.material.color.toArray(),legacy.material.color.toArray());
+    assert.equal(wind.material.roughness,legacy.material.roughness);
+    for(const variationStrength of[0,.88])assert.doesNotThrow(()=>compileWinter({variationStrength}));
+    for(const variationScale of[200,800])assert.doesNotThrow(()=>compileWinter({variationScale}));
+    for(const variationStrength of[NaN,Infinity,-Infinity,-.01,.880001,null,'0.2'])
+      assert.throws(()=>compileWinter({variationStrength}),/variation strength/i);
+    for(const variationScale of[NaN,Infinity,-Infinity,199.999,800.001,0,null,'800'])
+      assert.throws(()=>compileWinter({variationScale}),/variation scale/i);
+  }finally{for(const material of variants)material.dispose();}
+}
 // Actual approved High/LOD meshes must fit the exact physical bands on bends.
 const parser=new GLTFLoader();
 parser.register(()=>({name:'SNOW_HEADLESS_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
