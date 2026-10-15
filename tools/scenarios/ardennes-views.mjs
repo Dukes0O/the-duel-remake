@@ -7,7 +7,9 @@ import {nativeBundle} from './p4-panorama.mjs';
 const names = ['La Fontaine', 'Red Water', 'The Wall', 'Kestrel Straight', 'Les Combes', 'Riverside', 'Stavelot', 'Bus Stop Exit'];
 
 
-// Only the independently proved stock-driver outlier is admitted; unknowns fail.
+// The repaired full-field test driver must now finish without a player crash.
+// Keep complete observer/CPU receipt consistency; the former Long Left exception
+// is no longer an admission path.
 export function ardennesPlayerCrashAccepted(setup, final, observer) {
   if (!observer?.restored || !Array.isArray(observer.playerEvents) || !Array.isArray(observer.incidents) ||
       !Array.isArray(observer.playerIncidents) || !Array.isArray(observer.cpuIncidents) ||
@@ -18,23 +20,7 @@ export function ardennesPlayerCrashAccepted(setup, final, observer) {
   if (JSON.stringify(observer.playerIncidents) !== JSON.stringify(player) ||
       JSON.stringify(observer.cpuIncidents) !== JSON.stringify(cpu) ||
       player.length !== events.length || events.length !== final.stageCrashes) return false;
-  if (final.crashes === 0) return events.length === 0;
-  if (final.crashes !== 1 || events.length !== 1 || setup.id !== 'ardennes-forest' ||
-      setup.seed !== 1989 || setup.fieldSeed !== 1000 || setup.car !== 'stuttgart_959s' ||
-      setup.cpuDifficulty !== 'medium' || setup.lineSkill !== .95 || setup.stock !== true) return false;
-  const event = events[0], prop = event?.contact?.selectedProp, placement = prop?.authoredPlacement;
-  const actual = event?.contact?.actualResolutionEnd, expected = event?.contact?.expectedResolutionEnd;
-  if (!actual || !expected || ![actual.x, actual.z].every(Number.isFinite) ||
-      actual.x !== expected.x || actual.y !== expected.y || actual.z !== expected.z) return false;
-  const knownPlacement = row => row?.id === 'armco' && row.s === 3618.585968309014 &&
-    row.lateral === -28.3 && row.heading === Math.PI / 2 && row.solid === true;
-  return event.completedLaps === 0 && event.piece?.name === 'Long Left' &&
-    event.s >= event.piece.s0 && event.s < event.piece.s1 && event.s >= 3330 && event.s <= 3730 &&
-    event.event?.crash === 'prop' && event.propIdentityVerified === true && event.contact?.verified === true &&
-    prop?.id === 'kit-solid-1901-armco' && prop.kind === 'prop' && prop.kitSolid === true &&
-    prop.barrier === true && prop.halfX === 2 && prop.halfZ === .4 &&
-    knownPlacement(placement) && knownPlacement(setup.placement) &&
-    JSON.stringify(placement) === JSON.stringify(setup.placement);
+  return final.crashes === 0 && final.stageCrashes === 0 && events.length === 0;
 }
 
 // Reused selected-sweep/resolution-endpoint observer; no input or solver changes.
@@ -346,7 +332,7 @@ export async function run(context) {
       }
       const final = progress.at(-1), observer = await context.evaluate('window.__finishArdennesObserver()');
       const playerAccepted = ardennesPlayerCrashAccepted(setup, final, observer);
-      report.qualities.push({quality,...setup,witness,progress,final,observer,playerAccepted, knownPlayerException: playerAccepted && final.crashes === 1}); await persist();
+      report.qualities.push({quality,...setup,witness,progress,final,observer,playerAccepted, knownPlayerException: false}); await persist();
       if (!final?.allDone || final.laps !== 2 || final.finished !== 7 || !playerAccepted || final.resets !== 0 || final.firstLapPileUp)
         report.failures.push({quality, error: 'Native Ardennes field did not finish: '+JSON.stringify(final)});
       if (targetIndex !== targets.length || !clear) throw Error('Native required art views were not reached');
