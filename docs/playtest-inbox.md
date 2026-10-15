@@ -999,3 +999,5 @@ The Director will add a short summary when work reaches its first checkpoint.
 Seekers merged from f0989887 after lane 366/366 (599.22 s), build (516 ms)
 and source review passed. Kyle's 8-damage exception above is retained.
 
+
+- Ardennes review found missing initial enabled-course replay coverage. Card now names only tools/replays/courses/ardennes-forest.json; existing replay recipe/inputs, all old fixture bytes/assertions exact. Correct before priority gate; still waiting shared capacity, no new heavy launch.
