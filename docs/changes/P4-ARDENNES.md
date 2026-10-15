@@ -261,3 +261,14 @@ Actual High: 492 triangles, 68,232 bytes, SHA-256 7100974c0824a23e7e8f014ba33b4d
 Receipt and original export output: `.evidence/2026-10-15/P4-ARDENNES/beech-export-ca47179c`. Actual exported-asset focused tests, native three-close-view R3, Claude verdict, first world signature, final nearby gate and build remain pending. No export repeat, render, native capture, signature or art review ran for this asset commit.
 
 Removed: pendingExport provenance is replaced by actual pair measurements and file hashes. No original landmark asset, source recipe, old assertion or current artwork was removed.
+
+
+## Exact-zero synthetic beech fixture correction
+
+Original asset-focused job 81857 on clean 3185f91b ended 07:32:35 UTC, exit 1, 100,006.5922 ms runner duration. Track kits PASS in 99,936.0715 ms; circuit 35/36 in 13,599.0226 ms. The single failure was the new synthetic bound-beech ground equality: root Y 7.730397496511783 versus expected ground 7.730397437346509. The real exported mesh, embedded texture, provenance and budget cases passed; no aggregate green or native/art acceptance follows.
+
+Independent review confirmed a fixture fault: BoxGeometry stores its positions as Float32 before translation. Height 5.9 translated by 2.95 leaves a minimum about -4.768e-8 m, and the production kit correctly compensates that actual negative base. Under c90ecd84, only this new mock becomes height 6 translated by 3, both exactly representable, so its intended base is exactly zero. Line 943's strict equality and every fall/reset/default/real-asset assertion and tolerance remain unchanged. All production and real GLB bytes remain exact.
+
+This two-file correction is unrun pending Root confirmation. Root may rerun only the affected circuit suite; the passing track-kit suite and original export are not repeated. Original receipt remains `.evidence/2026-10-15/P4-ARDENNES/beech-assets-3185f91b`. Native R3, Claude acceptance, signature, final gate and build remain pending.
+
+Removed: only the unintended tiny negative base of the new synthetic test box. No real grounding behavior, assertion or asset is removed.

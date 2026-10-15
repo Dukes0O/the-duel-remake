@@ -925,7 +925,7 @@ test('Ardennes beech replaces only stable existing tree drawings with no simulat
 test('bound beech uses actual ground and the unchanged tree fall/reset calculation and owner disposal', async () => {
   const course = new Course(ARDENNES_FOREST,1989), rows=beechTreePlacements(course), before=JSON.stringify(course.features);
   const resources=[], pending=[];
-  const asset=()=>{const scene=new THREE.Group(), geometry=new THREE.BoxGeometry(.4,5.9,.4).translate(0,2.95,0), material=new THREE.MeshStandardMaterial();
+  const asset=()=>{const scene=new THREE.Group(), geometry=new THREE.BoxGeometry(.4,6,.4).translate(0,3,0), material=new THREE.MeshStandardMaterial();
     scene.add(new THREE.Mesh(geometry,material));for(const item of [geometry,material]){const record={disposed:0};resources.push(record);item.addEventListener('dispose',()=>record.disposed++);}return {scene};};
   const kitCourse=Object.create(course);kitCourse.def={...course.def,kitPlacements:[]};
   const kits=createTrackKits(kitCourse,{loadAsset:async()=>asset()});
