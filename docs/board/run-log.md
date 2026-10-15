@@ -1170,3 +1170,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-15 SNOW-VARIATION merged7b447e50/source2d42f7ad:112/112/jobs4, build838ms, independent CLEAR, actual final art ACCEPT4/3; defaults exact, no clean-merge rerun, own lane recycled.
 
 - 2026-10-15 HELI-ART-SRC mergeda7505637/source54ba9f66:29/29/jobs4,build971ms,independent CLEAR,actualR2 ACCEPT; pad/pump exact,conflict-free/no rerun,own links unlinked but lane recycle refused by Windows and retained pending cleanup.
+
+- 2026-10-15 PERF quiet: currentSummit6384 baseline both18.3ms/world896,919PASS; AO0.5candidate65fb HighSummit18.3/Harbour18.4PASS but PerfSummitworld1954FAIL/Harbourp9518.6FAIL; no retry/merge, window released23:29PT.
