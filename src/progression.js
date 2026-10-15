@@ -1,3 +1,4 @@
+import {CUPS, normalizeCups, cupStandings, cupBonus} from './grand-prix-cups.js';
 import {normalizeDrivingLessons} from './lessons/drive-lesson-save.js';
 import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
@@ -168,6 +169,7 @@ export function normalizeProfile(value) {
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
   if (Object.hasOwn(value, 'heli')) profile.heli = normalizeHeli(value.heli);
   if (Object.hasOwn(value, 'drivingLessons')) profile.drivingLessons = normalizeDrivingLessons(value.drivingLessons);
+  if (Object.hasOwn(value, 'cups')) profile.cups = normalizeCups(value.cups);
   if (Object.hasOwn(value, 'grandPrixPodiums'))
     profile.grandPrixPodiums = normalizeGrandPrixPodiums(value.grandPrixPodiums);
   profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
@@ -962,4 +964,27 @@ export function upgradedCar(car, levels = {}) {
     boostCapacity: (car.boostCapacity ?? 1) * (1 + tank * 0.25),
     roughnessScale: 1 / (1 + suspension * 0.18)
   };
+}
+
+// Cup pay follows the final native race's own settlement, never replaces it.
+export function settleCup(profile,{seriesId,ownerId,activePlayerId}={}){
+  const cups=normalizeCups(profile?.cups),active=cups.active;
+  const no=()=>({profile,settled:false,reward:0});
+  const definition=CUPS.find(cup=>cup.id===active?.cupId);
+  if(cups.version!==1||!definition||active.id!==seriesId||active.ownerId!==ownerId||
+    ownerId!==activePlayerId||cups.settled.includes(seriesId)||active.results.length!==definition.events.length||
+    !Object.hasOwn(CARS,active.car)||!Number.isSafeInteger(profile.credits)||profile.credits<0||profile.credits>1_000_000_000)
+    return no();
+  // Each classification must have passed the existing race settlement first.
+  if(!active.results.every(result=>profile.history.some(row=>row.eventId===result.eventId&&
+    row.key.startsWith(result.runId+':')&&profile.settledResults.includes(row.key)&&row.completed===true&&
+    row.car===active.car&&row.cpuDifficulty===active.cpuDifficulty)))return no();
+  const standings=cupStandings(active.results),won=standings[0]?.you===true;
+  const key=active.cupId+':'+active.cpuDifficulty,first=won&&!cups.trophies.includes(key);
+  const reward=first?Math.min(cupBonus(active.cupId,active.cpuDifficulty),1_000_000_000-profile.credits):0;
+  const updated={...profile,credits:profile.credits+reward,cups:{...cups,active:null,
+    trophies:first?[...cups.trophies,key]:cups.trophies,settled:[...cups.settled,seriesId].slice(-200)},
+    history:[...profile.history,{key:'cup:'+seriesId,eventId:active.cupId,car:active.car,
+      won,completed:true,reward,charge:0,cpuDifficulty:active.cpuDifficulty,at:Date.now()}].slice(-60)};
+  return {profile:updated,settled:true,reward,won,standings,trophy:first?key:null};
 }

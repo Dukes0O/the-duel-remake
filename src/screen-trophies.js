@@ -1,0 +1,31 @@
+import {CUPS, normalizeCups, cupStandings, cupAvailability, cupBonus} from './grand-prix-cups.js';
+const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const difficulty=cpu=>({easy:'Easy',medium:'Medium',hard:'Hard'}[cpu]||'');
+
+export function trophyCase(profile,{enabled=false}={}){
+  if(!enabled)return '';
+  const state=normalizeCups(profile?.cups);
+  const rows=state.version===1?state.trophies:[];
+  return '<section class="paint-panel" aria-label="Cup trophy case"><h3>CUP TROPHY CASE</h3><p>One trophy per cup and difficulty. Win bonuses are paid once.</p><ul>'+CUPS.flatMap(cup=>['easy','medium','hard'].map(cpu=>{
+    const earned=rows.includes(cup.id+':'+cpu);
+    return '<li><span aria-hidden="true">'+(earned?'🏆':'○')+'</span> '+cup.name+' · '+difficulty(cpu)+' · '+(earned?'WON':'Not yet won')+'</li>';
+  })).join('')+'</ul></section>';
+}
+export function cupsPanel(profile,{enabled=false,courses=[],owns=()=>false,playerId}={}){
+  if(!enabled)return '';
+  const state=normalizeCups(profile?.cups);
+  if(state.version!==1)return '<section class="paint-panel"><h3>CUPS</h3><p>This saved cup uses a newer game version.</p></section>';
+  const active=state.active?.ownerId===playerId?state.active:null;
+  if(active){
+    const cup=CUPS.find(row=>row.id===active.cupId),event=courses.find(row=>row.id===cup.events[active.results.length]);
+    const rows=cupStandings(active.results);
+    return '<section class="paint-panel" aria-label="Current cup"><h3>'+cup.name.toUpperCase()+'</h3><p>'+difficulty(active.cpuDifficulty)+' · '+active.results.length+' / '+cup.events.length+' races complete</p><p>Next: '+escape(event?.name||'Course not yet available')+'</p>'+
+      (rows.length?'<ol>'+rows.map(row=>'<li>'+escape(row.you?'YOU':row.name)+' · '+row.points+' points</li>').join('')+'</ol>':'')+
+      '<button type="button" data-cup-continue="true">SELECT NEXT CUP RACE</button><button type="button" data-cup-abandon="true">ABANDON CUP · NO BONUS</button></section>';
+  }
+  return '<section class="paint-panel" aria-label="Grand Prix cups"><h3>CUPS</h3><p>Race a series against seven drivers. Points: 10, 8, 6, 5, 4, 3, 2, 1. Your car and difficulty stay fixed for the cup.</p>'+CUPS.map(cup=>{
+    const available=cupAvailability(state,cup.id,{courses,owns,enabled});
+    return '<article class="course-access-card"><div><h3>'+cup.name+'</h3><p>'+cup.events.map(id=>escape(courses.find(row=>row.id===id)?.name||id.replaceAll('-',' '))).join(' → ')+'</p><p>First win bonus: '+['easy','medium','hard'].map(cpu=>difficulty(cpu)+' '+cupBonus(cup.id,cpu)).join(' · ')+' credits</p>'+
+      (available.ok?'':'<p>'+escape(available.reason)+'</p>')+'</div><button type="button" data-cup-start="'+cup.id+'" '+(available.ok?'':'disabled')+'>SELECT CUP</button></article>';
+  }).join('')+'</section>';
+}
