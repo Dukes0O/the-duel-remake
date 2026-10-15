@@ -3,7 +3,9 @@
 # mesh, no textures to license. Follows the model contract on the card
 # docs/board/cards/HELI-ART-SRC.md: metres, glTF +Y up, nose toward +Z,
 # origin on the ground under the main rotor mast, nodes body, main_rotor,
-# tail_rotor, skids, instrument_panel and the empties cable_hook, pilot_eye.
+# tail_rotor, skids, instrument_panel and the empties cable_hook, pilot_eye,
+# plus the gear mounts mount_nose, mount_belly and mount_side_right (SKIN-ART-GEAR
+# part 2; the skin gear in tools/blender/skin-gear.py has its origin at these points).
 #
 # Blender is Z-up and the glTF exporter maps Blender -Y to glTF +Z, so the
 # nose points along Blender -Y here. Run:
@@ -331,7 +333,13 @@ set_origin(tail_rotor, TAIL_HUB)
 root_empty = bpy.data.objects.new('kestrel_one', None); scene.collection.objects.link(root_empty)
 hook = bpy.data.objects.new('cable_hook', None); hook.location = (0, 0, 0.62); scene.collection.objects.link(hook)
 eye = bpy.data.objects.new('pilot_eye', None); eye.location = (-0.33, -1.10, 1.70); scene.collection.objects.link(eye)
-for ob in (body, main_rotor, tail_rotor, skids, hook, eye):
+# Gear mounts, on the body surface and turned like the model (no rotation). glTF metres (x, y, z) are
+# Blender (x, -z, y): nose (0, 1.08, 2.30), belly (0, 0.74, 1.50), right side (-0.60, 1.55, 0.45).
+mounts = []
+for name, loc in (('mount_nose', (0, -2.30, 1.08)), ('mount_belly', (0, -1.50, 0.74)), ('mount_side_right', (-0.60, -0.45, 1.55))):
+    m_ob = bpy.data.objects.new(name, None); m_ob.location = loc; scene.collection.objects.link(m_ob)
+    mounts.append(m_ob)
+for ob in (body, main_rotor, tail_rotor, skids, hook, eye, *mounts):
     ob.parent = root_empty
 
 def triangles():
