@@ -247,12 +247,15 @@ function reaches(node, target, visited = new Set()) {
   return node.connections.some(next => reaches(next, target, visited));
 }
 check('released sound-bank entries and other exports stay exact', () => {
+  assert.equal(hash(bank.CAR_VOICES.mclaren_f1),
+    'fb3929542f02781c47ae6f4ab2068f67ffb40e366194aaa3e4e8eaa4b8b938aa',
+    'F1 uses its own existing-sample voice while historical exports remain pinned');
   assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !BANK_ADDITIONS.has(id)).map(oldFlagShape))),
     'b63edbe579c7709c32af22b2467fa8706aee2585ed957c20fde8062064f7f2b4',
     'all released cues, including Oil and Smoke, remain exact');
   assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => key !== 'SOUND_BANK').map(([key, value]) =>
-    // The Enzo's engine voice (EARN-CAR-1) is a new entry; every released voice stays exact.
-    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => id !== 'ferrari_enzo')) : value]))),
+    // Medal-car voices are appended entries; every released voice stays exact.
+    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['ferrari_enzo', 'mclaren_f1'].includes(id))) : value]))),
     '8bed9e05cbd48321670c377483bc87c841b01eac228a6237889b8ce5602a2b38',
     'existing sound-bank exports remain exact');
 });

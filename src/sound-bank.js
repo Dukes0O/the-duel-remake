@@ -817,6 +817,15 @@ export const CAR_VOICES = {
     exhaust: 0.16,
     intake: 0.15,
   },
+  // Earned car 2: a smooth road V12 using the existing engine layers.
+  mclaren_f1: {
+    pitch: 1.035,
+    brightness: 1.06,
+    gain: 0.98,
+    accent: 1.02,
+    exhaust: 0.14,
+    intake: 0.17,
+  },
   titan_monster: {
     pitch: 0.83,
     brightness: 0.76,
