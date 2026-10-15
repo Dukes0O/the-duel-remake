@@ -444,9 +444,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "building"
-    claimed_by: "codex-heli-art-2026-10-14"
-    branch: "codex/heli-art-src"
+    status: "done"
     needs: [HELI-PACKET]
     locks: []
     flag: "helicopter"

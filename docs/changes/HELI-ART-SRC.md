@@ -197,3 +197,7 @@ licensed cache file. Earlier uppercase/skid-midpoint/cable-model suggestions
 remain superseded by Claude's exact export contract. Round 2 replaces only the previous runtime hook bytes and removes the old
 ring/orange-rod path and unused orange material. Accepted pad/pump bytes,
 licensed originals, foreign folders and the retained lane remain intact.
+
+## Final checked integration
+
+Exact clean54ba9f66 original29/29 nearby/jobs4,zero failures/notRun,runner219191.3218ms/wall230810.8692ms; build971ms/wall1611.9196ms. Root source/actual conflict union CLEAR. Actual replay/world/track-kit/snow/Blender guards pass, assertions/signatures/fixtures unchanged. Mergeda7505637 conflict-free, no clean-merge rerun. Actual R2 ACCEPT and current154597B sheetSHA2569fc6fd688098bd6826ad86e4e2ccc65a7ba48b8937f0f1da69435d59db18e70d retained; optional thick pivot nonblocking. Heartbeat paused. Own dependency/evidence links safely unlinked, shared integration targets intact; Windows refuses whole-lane Recycle Bin operation, so merged clean lane/branch retained pending cleanup. No force or permanent delete; no native-flight/frame/release/push claim.
