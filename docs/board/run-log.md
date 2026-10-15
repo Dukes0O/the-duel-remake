@@ -1164,3 +1164,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 
 - 2026-10-15 P4-SUMMIT-ATTACK mergede075304a/sourcea0e954e8:363/363/jobs4, build735ms, independent code/save CLEAR; trueT266.6, zero finance, dev; conflict-free/no rerun, own lane recycled.
 - 2026-10-15 QA-REVIEW-BLACK-FRAMES merged29568807/source4a3a9b44:21/21/jobs4, build1.11s, independent CLEAR, native16 visible views; one existing hairpin controller shortfall retained; conflict-free/no rerun, own lane recycled.
+
+- 2026-10-15 QA-TITAN-REPLAY-TIMEOUT mergede80e6ca4/source1e55b12f:429/429/jobs4, build703ms, independent source CLEAR; one actual replay per final plan, standalone guards exact; conflict-free/no rerun, own lane recycled.

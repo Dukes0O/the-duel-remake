@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T04:54:40.561Z
+Observed at: 2026-10-15T05:38:31.680Z
 
-Observation commit: 295688076710f07f476de7a906e6881eea7449e0
+Observation commit: 68ce773ac888dbbaa6f3363e8f225c57f2bb283c
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 295688076710f07f476de7a906e6881eea7449e0
+Integration HEAD: 68ce773ac888dbbaa6f3363e8f225c57f2bb283c
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -41,11 +41,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-yeti-native | 0 | unknown | true | false | unknown |
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
-| codex/qa-titan-replay-timeout | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-titan-replay-timeout |
+| codex/snow-variation | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/snow-variation |
+| codex/summit-pit-balance | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-pit-balance |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 19 | unknown | true | false | unknown |
-| lane/audio/aud-12 | 19 | unknown | true | false | unknown |
+| lane/audio/aud-12 | 20 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 19 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
@@ -59,9 +60,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T20:54:33-07:00 | 0 | last commit 2026-10-14T20:54:33-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T21:58:19-07:00 | 0 | last commit 2026-10-14T21:58:19-07:00 | docs/changes/PERF-HIGH-NIGHT.md, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/qa-titan-replay-timeout | QA-TITAN-REPLAY-TIMEOUT | 2026-10-14T19:39:55-07:00 | 0 | last commit 2026-10-14T19:39:55-07:00 | docs/changes/QA-TITAN-REPLAY-TIMEOUT.md, tools/run-tests.mjs, tools/test-test-runner.mjs, tools/test-titan-climb.mjs |
+| codex/snow-variation | SNOW-VARIATION | 2026-10-14T22:36:33-07:00 | 0 | last commit 2026-10-14T22:36:33-07:00 | docs/board/looks/snow-variation/round-1.jpg, docs/board/looks/snow-variation/round-2.jpg, docs/board/looks/snow-variation/round-3-review.md, docs/changes/SNOW-VARIATION.md, src/circuits/summit-run.js |
+| codex/summit-pit-balance | SUMMIT-PIT-BALANCE | 2026-10-14T22:26:49-07:00 | 0 | last commit 2026-10-14T22:26:49-07:00 | docs/changes/SUMMIT-PIT-BALANCE.md, src/circuits/summit-run.js, src/pit-lane.js, src/race-surfaces.js, src/sim-driving.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-14T19:19:19-07:00 | 0 | last commit 2026-10-14T19:19:19-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json |
 
@@ -77,9 +79,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,348,046 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 38,722 B | +859 B | 5,000,000 B |
+| Added bytes in last merge | 70,231 B | +0 B | 5,000,000 B |
 | All `public/` | 299,706,593 B | +0 B | unavailable |
-| Git objects | 411,713,536 B | +270,336 B | unavailable |
+| Git objects | 414,015,488 B | +115,712 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -88,7 +90,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 295688076710f07f476de7a906e6881eea7449e0
+- Local integration/wasteland: 68ce773ac888dbbaa6f3363e8f225c57f2bb283c
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -96,6 +98,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit 2f650fb2d6f65a72019f3be44a564b7914a41fc4.
+- Remote origin/integration/wasteland: matches local; cached commit 68ce773ac888dbbaa6f3363e8f225c57f2bb283c.
 
 Issue: Circuit manifest summit-time-attack.js has unknown or malformed literal metadata.

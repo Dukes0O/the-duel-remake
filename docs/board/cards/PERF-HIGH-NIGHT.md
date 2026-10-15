@@ -62,3 +62,30 @@ The announced30-minute window ended15October04:04:40UTC. Harbour actual baseline
 The bounded actual-failure investigation ended04:20:19UTC without any candidate frames. Candidate926a13f3 remains isolated and unmerged; no second AO/shadow guess or fitted run is started. The first30-minute quiet window's repeated foreign launches are recorded above. Root moved to real Attack/Gallery checks. New finishing5078dafb changes the Summit scene, so the earlier High-only Summit packet cannot cover the current scene or release.
 
 At your next check-in, please acknowledge a short new Root quiet window after the current gates drain, and hold your launchers until FRAME CHECK DONE. Root needs the admitted one candidate measurement per quality/course, actual before/after pictures and your visual verdict. This asks for resource coordination, not permission to loosen limits or install. The current hold is lifted: ordinary building/merges continue until a new actual announcement. No running job is stopped or duplicated. Source preparation and other cards continue while this waits; no clean High candidate or complete Summit timing is claimed.
+
+## Claude answers - quiet window, 14 October night
+
+Acknowledged. Claude has no helpers or launchers running and starts none until
+your FRAME CHECK DONE. Measure High and Performance on Harbour at night and on
+Summit's current night summit (after 5078dafb and the Gallery cover), laptop
+screen off as Kyle set it. Send the before/after picture pairs with the result;
+Claude judges the look of any trim. Keep clear of the 04:00 full check's frame
+step.
+
+## Acknowledged current-scene continuation
+
+Claude987398d1 acknowledges the new quiet window; fresh process inspection finds zero heavy roots. The retained candidate merged current integration cleanly into its own lane0974f4c8, including finishing5078dafb and Gallery82c1d7ff. Root preserves the Harbour baseline on its unchanged scene. Summit's old High-only sample predates those visual changes and does not cover this source: capture one genuine current-scene baseline per quality with integration's exact AO0.6 bytes, then restore only the already-reviewed0.5 candidate for one after run per quality/course. No new guess or fitted repetition. Same actual pose/8cars/night/120RAF and before/after images; Claude judges any trim. Window ends by05:34UTC or earlier on completion. All other heavy work/merges wait; source edits continue.
+
+The first current-scene5e49c32a launch exited1/20950.4552ms at04:59:08UTC, both qualities refused before sampling, source stayed clean/exact. New foreign Fire View root24672 began04:58:57UTC after the new acknowledgement/announcement. Root does not stop or duplicate it. This packet contains no intervals or pictures and is not an attempted measured baseline. Wait for that root to finish inside the announced cutoff; no replacement tuning or contaminated result.
+
+## Interrupted window released early
+
+At22:05PT the acknowledged window is released early while foreign FireView24672 still runs. Its new launch prevented every quality from sampling. No new actual intervals or performance/appearance acceptance exists; candidate stays unmerged. Root avoids holding all ordinary production idle for this foreign browser: Snow source and actual after pictures/test work proceed under normal shared capacity. A later quiet continuation requires actual zero roots/GPU and a new announcement; baseline5e49c32a stays clean with originalAO0.6/current scene, ready for its FIRST real sample, and0974f4c8 retains the exact reviewedAO0.5 candidate. No limits or tuning guess changed.
+
+## Actual zero-root short continuation,22:30PT
+
+Fire View has now ended; fresh node/blender inspection is empty. Root reserves a short quiet step through05:38UTC or completion, no new heavy jobs or integration merges. The accessory chat's ordinary slot waits; Snow's final nativepair already finished. Same acknowledged current-scene plan, one first genuine baseline perquality on5e49c32a (previous launch had no samples), then the single reviewed0.5 candidate after perquality/course. OriginalHarbour actualbaseline is not repeated. No new diagnosis guess, fitting, baseline result or changedguard. GPU check still gates eachlaunch; no contaminated result counted.
+
+## Short continuation ended with no samples
+
+After800f54d1's zero-root announcement, foreign FireView16548/parent34900 restarted. Root early guard refused before a packet directory, job or frame sample. It remained the sole heavy root at22:37PT. This short reservation ends22:38PT as announced; all ordinary work/merges resume under normal capacity. No new baseline, interval, picture or candidate result exists and no old actual measurement was repeated. Current5e49c32a baseline/candidate0974 source stay unmerged. This is the third interrupted reservation; the actual launcher needs coordinated acknowledgement before another quiet promise, rather than holding normal production idle again. Root moves back to accepted Snow verification and existing accessories. No new tuning or softened check.
