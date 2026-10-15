@@ -200,7 +200,7 @@ test('existing private driver tools pass only the named tyre switch into native 
 });
 
 
-test('actual drift-event driver intentionally holds the approved slide ask in a corner',async()=>{
+test('actual drift-event driver requests approved ask without exceeding low-speed authority',async()=>{
   await withReferenceApp(async app=>{
     app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});
     app.duel.startCampaign({startStage:COURSE.findIndex(c=>c.id==='neon-drift-trial'),car:'banshee_muscle',difficulty:'pro',seed:1989});
@@ -208,10 +208,13 @@ test('actual drift-event driver intentionally holds the approved slide ask in a 
     for(let i=0;i<600&&app.duel.state.status!=='racing';i++)app.advance(1/120,1/120);
     const s=app.duel.state,course=app.duel.course;
     let at=0;while(at<course.length&&Math.abs(course.at(at).curvature)<.001)at+=5;
-    assert.ok(at<course.length,'native Neon corner exists');s.s=at;s.speedMph=65;
+    assert.ok(at<course.length,'native Neon corner exists');
+    for(const mph of [46,50,65]) {s.s=at;s.speedMph=mph;
     app._driveAutopilot(1/120);
     const surface=app.duel._drivingSurface(s.s,s.lateral),limits=tyreSlipSteering({speedMph:s.speedMph,
       grip:app.duel.car.grip,traction:surface.traction,car:app.duel.car,brake:s.input.brake});
-    near(Math.abs(s.input.steer)*limits.steerGain/limits.peakYaw,1.12);
+    near(Math.abs(s.input.steer)*limits.steerGain/limits.peakYaw,Math.min(1.12,limits.steerGain/limits.peakYaw));
+    assert.ok(Math.abs(s.input.steer)<=1,'approved authority is never increased');
+    }
   });
 });
