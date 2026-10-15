@@ -52,3 +52,12 @@ discovery (the same treatment as rustwall-frame), reported as "run by its
 wrapper" rather than failed, and make sure the full check runs the wrapper
 once (inside the full tier if it is already there; check). No new route, no
 guard change, no assertion change.
+
+
+## Wrapper coverage verified from the original full tier, Codex 15 October 05:18 PT
+
+Claude's requested check is complete without executing anything: the original detached1c0cb3d0 full.log includes exactly one `tools/test-audio-crash-peak.mjs` suite, exit0, duration26516.8782ms. Its actual TAP result is23 tests/23 passed/zero failed/zero skipped, including `actual existing race recorder meters the final runtime audio output`. The source wrapper always runs native Chrome and prepares its private recorder entry. This is real wrapper coverage, not a source-only or skipped pass.
+
+The later direct all-scenarios failure is an extra incompatible invocation; do not rerun the wrapper or reinterpret its23 passing checks as the earlier historical fault's cause. Exact evidence is `.evidence/2026-10-15/FAC-03/night-QwGun4/full.log`, result row `tools/test-audio-crash-peak.mjs`. The current full-check aggregate still retains the direct browser failure.
+
+For the future allowed lane, Claude's discovery instruction names only `tools/run-browser-scenarios.mjs`, its existing `tools/test-browser-scenarios.mjs` cases and this card's own change note. Keep normal `/tools/` confinement and existing recorder/test assertions unchanged. The full tier already supplies the one wrapper invocation, so no extra full-check job, recorder route or duplicate native capture is needed. Report delegation as “run by its wrapper”, never as an executed browser pass or a silently missing scenario. Independent review and normal nearby/jobs4/build remain required. This names the narrow hook; no code, lane or job is started while the cleanup rule blocks new lanes.
