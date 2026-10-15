@@ -771,3 +771,12 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-YETI-THREE.md"
+  - id: ARDENNES-SWITCH-ON
+    title: "Ardennes switch-on preparation after driver, frames and finishing"
+    owner: "codex"
+    lane: "COURSE"
+    size: "S"
+    status: "backlog"
+    needs: [P4-ARDENNES, P4-FINISH-ARDENNES]
+    locks: [circuit-registry, world-signatures]
+    details: "docs/board/cards/ARDENNES-SWITCH-ON.md"
