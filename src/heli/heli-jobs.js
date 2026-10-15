@@ -8,6 +8,8 @@ import {CARS} from '../config.js';
 import {makeRng} from '../rng.js';
 import {liftCheck} from './heli-cable.js';
 
+import {carAt} from './heli-save.js';
+
 export const HOME_COURSE = 'tremblant-woods';
 
 export const HELI_DESTINATIONS = Object.freeze({
@@ -52,6 +54,13 @@ export const AIR_ONLY_CARS = Object.freeze(['koenigsegg_jesko']);
 
 export function isAirOnlyCar(carId) {
   return AIR_ONLY_CARS.includes(carId);
+}
+
+// What the menu says when an air-only car is chosen on a course it has not
+// been flown to (the same words the app uses when it refuses the race).
+export function airOnlyNote({enabled = false, profile, carId, courseId, carName = 'This car'} = {}) {
+  if (enabled !== true || !isAirOnlyCar(carId) || carAt(profile, carId) === courseId) return null;
+  return `The ${carName} travels only by air. Fly it here from the helipad first.`;
 }
 
 export function isDestination(courseId) {

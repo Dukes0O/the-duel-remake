@@ -1,4 +1,5 @@
-import {CARS} from './config.js';
+import {CARS, COURSE} from './config.js';
+import {airOnlyNote} from './heli/heli-jobs.js';
 import {isCourseUnlocked} from './course-access.js';
 
 export function createRendererReadiness({app, ui, choices, profile, isDisposed, importRenderer=()=>import('./render3d.js'), reportError=console.error}) {
@@ -31,7 +32,15 @@ function syncRendererReadiness(s) {
     const preparing=!failed&&asset==='ready'&&!app.visualReady;
     ui['renderer-loading'].hidden=!(loading||preparing);
     ui['renderer-loading'].lastChild.textContent=kitLoading?' LOADING TRACK SCENERY':preparing?' PREPARING THE ROAD':` LOADING ${CARS[ui.view3d.dataset.vehicleKey]?.name.toUpperCase()||'VEHICLE'}`;
-    ui['start-engine'].disabled=failed||kitLoading||asset!=='ready'||!app.visualReady||!isCourseUnlocked(profile(),choices.startStage);
+    // Special cars travel only by air (docs/HELICOPTER.md section 5): say why
+    // START is closed instead of letting it do nothing.
+    const menuCar=app.menuCar||choices.car,airOnly=s.status==='menu'?airOnlyNote({enabled:app._switches?.().enabled('helicopter')===true,
+      profile:profile(),carId:menuCar,courseId:COURSE[choices.startStage]?.id,carName:CARS[menuCar]?.name}):null;
+    ui['start-engine'].disabled=failed||kitLoading||asset!=='ready'||!app.visualReady||!isCourseUnlocked(profile(),choices.startStage)||!!airOnly;
+    const note=ui['start-engine'].parentElement?.querySelector?.('.start-note');
+    if(note){if(airOnly){if(note.textContent!==airOnly){note.dataset.before=note.textContent;note.textContent=airOnly;}note.dataset.airOnly='1';note.dataset.airOnlyText=airOnly;}
+      // Put the saved line back only if the menu has not written a newer one.
+      else if(note.dataset.airOnly){if(note.textContent===note.dataset.airOnlyText)note.textContent=note.dataset.before||'';delete note.dataset.airOnly;delete note.dataset.before;delete note.dataset.airOnlyText;}}
     ui['renderer-error'].hidden=!failed;
     if(kitFailed){
       ui['renderer-error'].querySelector('strong').textContent="The track scenery couldn't load.";
