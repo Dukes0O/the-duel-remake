@@ -4,7 +4,8 @@ import {createHudScreen} from '../src/screen-hud.js';
 import {createLeaderboardScreen} from '../src/screen-leaderboard.js';
 import {App} from '../src/app.js';
 import {COURSE,DRIVE,LIVES,CARS} from '../src/config.js';
-import {courseAccessPanel} from '../src/course-access-ui.js';
+import {courseAccessPanel,bestSummitAttackTime} from '../src/course-access-ui.js';
+import {createResultsScreen} from '../src/screen-results.js';
 import {DRIVERS} from '../src/drivers.js';
 import {getLeaderboard} from '../src/leaderboard.js';
 import {eventKey} from '../src/progression.js';
@@ -54,3 +55,67 @@ try{
   check(updates===3,'only successful or duplicate menu purchases and selection refresh the menu');
 }finally{if(originalStorage===undefined)delete globalThis.localStorage;else globalThis.localStorage=originalStorage;}
 console.log(`Course/practice UI: ${checks} production action, purchase separation, race guards and actual-state HUD checks passed.`);
+
+
+{
+  const {SUMMIT_RUN}=await import('../src/circuits/summit-run.js');
+  const {SUMMIT_TIME_ATTACK}=await import('../src/circuits/summit-time-attack.js');
+  const {summitAttackTargets}=await import('../src/summit-attack.js');
+  const {recordFinish,createLeaderboard}=await import('../src/leaderboard.js');
+  const {createProfile}=await import('../src/progression.js');
+  const count=COURSE.length;
+  let restoredAttack,attackIndex=-1;
+  try{
+    if(!COURSE.some(row=>row.id===SUMMIT_RUN.id))COURSE.push(SUMMIT_RUN);
+    const attack={...SUMMIT_TIME_ATTACK,attackTimes:summitAttackTargets(100)};
+    const existing=COURSE.findIndex(row=>row.id===attack.id),index=existing<0?COURSE.length:existing;
+    attackIndex=index;restoredAttack=existing<0?undefined:COURSE[existing];
+    if(existing<0)COURSE.push(attack);else COURSE[existing]=attack;
+    const profile={...createProfile(),courses:{version:1,unlocked:['pacific-canyon','summit-run']}};
+    let board=createLeaderboard();
+    const otherDriver=Object.keys(DRIVERS).find(id=>id!=='club');
+    const add=(timeSec,driverId='club',playerId='attack-player',mode='timetrial',car='falcone_f42')=>{
+      const saved=recordFinish(board,{stageIndex:index,seed:1989,laps:1,completed:true,won:false,timeSec,
+        mode,car,driverId,difficulty:driverId==='club'?'casual':'pro',cpuDifficulty:driverId==='club'?'medium':'hard',upgrades:{}},{id:playerId,name:'Attack QA'});
+      check(saved.recorded,'fixture uses an actual validated record');board=saved.board;
+    };
+    add(114);add(102,otherDriver,'attack-player','timetrial','stuttgart_959s');
+    add(90,'club','different-player');
+    const otherMode={...board.entries[0],mode:'duel',timeSec:80};
+    otherMode.eventKey=eventKey({...otherMode,stageIndex:index});
+    board={...board,entries:[...board.entries,otherMode]};
+    const before=JSON.stringify(board);
+    same(bestSummitAttackTime(board,'attack-player'),102,'best valid solo time includes another car and driver, excluding other players and modes');
+    same(bestSummitAttackTime(board,''),null,'missing player never queries every player');
+    const damaged={...board,entries:[...board.entries,{...board.entries[0],timeSec:1,eventKey:'invalid-layout'}]};
+    same(bestSummitAttackTime(damaged,'attack-player'),102,'malformed raw rows cannot manufacture a medal');
+    const markup=courseAccessPanel(profile,index,'',{leaderboard:board,playerId:'attack-player'});
+    const card=markup.split('<article').find(row=>row.includes('Summit Time Attack'));
+    check(card.includes('BEST GOLD')&&card.includes('102.0 s'),'course card shows best medal across valid contexts');
+    check(card.includes('ONE RUN')&&card.includes('NO PAY'),'solo card explains its actual event');
+    check(!card.includes('data-course-unlock=')&&!card.includes('data-team-room='),'solo card cannot sell the free challenge or offer a duplicate Team Room');
+    same(JSON.stringify(board),before,'medal queries never mutate leaderboard rows');
+    const app={runId:'attack-ui',duel:{state:null},_switches:()=>({enabled:()=>false})};
+    const render=createResultsScreen({app,profile:()=>profile,credits:String,escapeHTML:String,time:value=>Number(value).toFixed(1)});
+    for(const [timeSec,won,label]of [[102,true,'GOLD'],[107,true,'SILVER'],[114,true,'BRONZE'],[116,false,null]]){
+      const state={stageIndex:index,status:'stage_result',mode:'timetrial',stageTimeSec:timeSec,lapsTotal:1,
+        completedLaps:1,results:{completed:true,won,timeSec,medal:label?.toLowerCase()??null,creditReward:0}};
+      app.duel.state=state;const snapshot=JSON.stringify(state),html=render(state);
+      check(html.includes('FINISHED.'),'legal solo completion always says Finished');
+      if(label)check(html.includes('MEDAL')&&html.includes(label),'earned medal appears under the time');
+      else check(!html.includes('MEDAL'),'slower-than-bronze legal finish has no medal');
+      check(!html.includes('LOSS CHARGE')&&!html.includes('CREDITS EARNED')&&!html.includes('bonus is included'),'solo results never promise pay or bonuses');
+      check(html.includes('GOLD')&&html.includes('103.0'),'measured-derived medal targets are shown');
+      same(JSON.stringify(state),snapshot,'results presentation never writes race state');
+      app.profileSaved=false;
+      const sessionOnly=render(state);
+      check(sessionOnly.includes('Storage is unavailable; progress lasts for this session.'),'medal and over-bronze finishes disclose failed profile storage');
+      check(sessionOnly.includes('FINISHED.'),'session-only storage does not turn a legal finish into a failure');
+      if(label)check(sessionOnly.includes('MEDAL')&&sessionOnly.includes(label),'session-only finish retains its actual earned medal');
+      else check(!sessionOnly.includes('MEDAL'),'session-only over-bronze finish still has no medal');
+      same(JSON.stringify(state),snapshot,'session-only result warning never writes race state');
+      app.profileSaved=true;
+      check(!render(state).includes('Storage is unavailable'),'successful profile storage does not show a session-only warning');
+    }
+  }finally{if(restoredAttack)COURSE[attackIndex]=restoredAttack;COURSE.splice(count);}
+}

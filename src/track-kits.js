@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 import * as THREE from 'three';
 import {renderedGroundHeight} from './rendered-ground.js';
 import {escapeFrame} from './escape-roads.js';
@@ -37,7 +38,7 @@ export function normalizeKitPlacements(course, entries) {
     let nodeTranslations;
     if(entry.nodeTranslations!==undefined){
       const values=entry.nodeTranslations;
-      if(entry.id!=='gallery'||course.def.id!=='summit-run'||entry.s!==10176||!values||
+      if(entry.id!=='gallery'||!(course.def.id==='summit-run'||isSummitAttack(course.def))||entry.s!==10176||!values||
           typeof values!=='object'||Array.isArray(values)||!Object.keys(values).length)
         fail('named translations belong only to the authored Summit Gallery entrance.');
       const names=new Set(['gallery-concrete-pillar','gallery-concrete-pillar.001']);

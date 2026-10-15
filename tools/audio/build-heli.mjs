@@ -40,6 +40,11 @@ export const HELI_RECIPES = Object.freeze([
   recipe('heli.bucket.dent', 513797, .82, .7, {highpass: 60, lowpass: 2400, loudness: -18}),
   // Steam hissing where water lands on fire; the game scales it by the litres.
   recipe('heli.fire.hiss', 479296, .3, 1.2, {highpass: 300, lowpass: 9000, loudness: -24}),
+  // H4 Rescue (docs/HELI_RESCUE.md section 9): the hiker's flare lighting, a
+  // shovel in snow while the rescuer digs, and a carabiner as someone clips on.
+  recipe('heli.flare', 348767, .25, 2.5, {highpass: 120, lowpass: 8000, loudness: -24, quality: 3}),
+  recipe('heli.snow.dig', 201888, 1.5, 4, {loop: true, overlap: .3, highpass: 100, lowpass: 7000, loudness: -24, quality: 3}),
+  recipe('heli.rescue.clip', 457454, 0, .3, {highpass: 400, lowpass: 9000, loudness: -20}),
 ]);
 export const heliRuntimeName = spec => `heli/${spec.id.slice(5).replaceAll('.', '-')}.ogg`;
 
