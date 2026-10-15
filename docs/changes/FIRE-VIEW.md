@@ -55,7 +55,7 @@ cells, grown by the game's own rules.
 
 ## Tests
 
-- `node tools/test-fire-view.mjs` (new): 41 checks (the bucket model's
+- `node tools/test-fire-view.mjs` (new): 50 checks, loading the real props (the bucket model's
   nodes; no download before a fire; the sprite caps on High and Performance
   for a 60-cell picture; a fresh one-cell fire a few sprites; another
   course's fire not drawn; the same frame drawn the same; the bucket's body,
@@ -64,6 +64,31 @@ cells, grown by the game's own rules.
   snags, healing back exactly, scars by cell, stages by cell).
 - `test-heli-view` (98), `test-heli-mode` (150): passed.
 - Browser look and frame check, lane tier and build: below.
+
+## Files beyond the card's list (for the Director)
+
+The card names heli-fire-view.js, heli-scene.js, heli-ui.js, heli-ui.css and
+burnt-look.js. Drawing the fire also needed: `src/render3d.js` (one line
+each frame, under `busy-game-files`, which this card holds), `src/app.js`
+(`fireLookFor`, the look for the course being drawn), `src/heli/heli-fire-run.js`
+(FIRE-HOOKS' file: the fire picture lists burning and burnt cells and the
+wind's direction for drawing), `tools/test-heli-mode.mjs` (the drawing file
+list), and the new test and browser scenario. None of them changes race
+state. Please confirm the re-slice when merging.
+
+## Review
+
+One independent review (rule 17). Fixed: the burnt look placed from the
+pines' own positions (no ground sampling, so no stall and nothing on the
+road); every mesh of a prop drawn (fireweed's petals); a knocked-down burnt
+tree keeps its crown off; a tree becomes a snag only once the snag is in;
+shared art kept; the trunks' colour readied when a fire starts; the fire
+layers hidden and uploading nothing with no fire or bucket; the aim ring
+drawn over slopes; the app remembering the look while the save is
+unchanged; the renderer freeing the look and reporting its state; tests
+with the real props; the browser check flying a drop, timing the fireweed
+stage and failing over 18.5 ms. After it: thicker smoke at the base, so
+the fire reads from straight above.
 
 ## Changed assertions
 
