@@ -347,6 +347,7 @@ tasks:
     size: "S"
     status: "ready"
     needs: []
+    locks: [busy-game-files]
     details: "docs/board/cards/QA-STOCK-SNOW.md"
 
   - id: QA-TITAN-REPLAY-TIMEOUT
