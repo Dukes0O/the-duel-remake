@@ -38,3 +38,7 @@ on Tremblant Snow: no stop at Beaver Hairpin and no corner minimum under 20 mph.
 ## Read-only preparation and actual core lock
 
 The existing board TOOLS tag does not make this an independent tools edit. The exact App._driveAutopilot operand needs busy-game-files, now named on the board; Attack holds it and this card remains unstarted. No lane, code, import, test or stock run was created. Minimal future scope is the named App planner hook, additive existing race-surfaces acceptance and the own change note. Only snow/ice effective grip belongs inside the curve square root; preserve straight cap, all non-snow/ice inputs, steering and pit overrides. Actual dry stock-input preservation needs evidence beyond unchanged recorded replays. The existing memory-only stock Tremblant Snow review must finish with Beaver no stop and corner minima at least20mph; CPU/line-driver passes cannot substitute. Higher-priority core cards retain their order.
+
+## Build resumed — 15 October afternoon
+
+Kyle directed Codex to keep building after the held GP prototype. Opened qa-stock-snow/codex/qa-stock-snow from 74b95cf4; this card now holds busy-game-files. Owns only App._driveAutopilot snow/ice corner-speed operand, additive tools/test-race-surfaces.mjs cases and docs/changes/QA-STOCK-SNOW.md. Preserve dry stock inputs, steering, pit overrides and physical surface tables. HELI remains untouched; this continuation does not authorize its cleanup bypass.

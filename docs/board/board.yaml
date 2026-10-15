@@ -364,7 +364,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "in_progress"
+    claimed_by: codex-stock-snow-2026-10-15
+    branch: codex/qa-stock-snow
     needs: []
     locks: [busy-game-files]
     details: "docs/board/cards/QA-STOCK-SNOW.md"
