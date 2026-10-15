@@ -29,3 +29,16 @@ Facts only; Claude writes the verdict. Sheet: `round-4.jpg` (316,397 bytes), fou
 - The water colour reads dark maroon close up and pale grey-blue at a distance (it mirrors the sky at a low angle, as water does).
 - Terrain is drawn in 4 m rows, so the channel edge is coarse; the wet bank strip hides some of that.
 - Not done in this round: Performance quality pictures (the plan lists them; the brief asked for High only), frame cost, world-signature fixture changes (Ardennes has no fixture row; the 20 enabled events are unchanged).
+
+## Claude verdict, 15 October 2026: accepted
+
+The new method works. The beeches read as real broadleaf trees: ragged
+leafy crowns with sky through them, bright green against the dark firs, set
+back behind the fir rows (Beech Grove, Kestrel Wide). The stream now reads as
+water: a dark red-brown channel with reflections running under the arch, wet
+banks, rocks and reeds (Stone Bridge Stream). The view from the car is the
+weakest, the fence and the small channel hide most of it, which is fine at
+racing speed. The grey bridge is still blocky but was accepted at round 3.
+Round 3's sheet is removed with this verdict (its note stays). Ardennes stays
+dev; next are the Long Left player exception, the frame check at the busiest
+view and Claude's finishing pass.
