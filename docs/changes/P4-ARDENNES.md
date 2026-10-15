@@ -205,3 +205,15 @@ Changed assertions: the two removed-authoring tests are replaced, not changed fr
 These repaired cases are source-only and UNRUN pending Root confirmation. No test, import, native, export, picture, signature, fixture, gate or build was run in this repair. The original failure packet is retained. Rule-four diagnosis ends by 06:34 UTC; no acceptance, tolerance or driver change is inferred.
 
 Removed: only the unused generic kit-footprint branch, its unused test imports and the two stale removed-village cases. No historical replacement fixture, actual current building, source asset, church support check or accepted native guard is removed.
+
+## Actual round-two native receipt and earlier bridge approach
+
+After Root's source confirmation, the one affected circuit rerun passed 31/31 cases in 13,781.9503 ms, exit 0; the original passing church and road suites were not repeated. All 46 current houses retained 11,342 bounded footing samples: highest foundation bottom minus ground -0.384383982 m, minimum floor clearance 0.323331160 m. These measurements do not replace actual pictures.
+
+The original native 22-view packet on clean 4bb1c85e completed at 06:14:59 UTC, exit 0, 91,597.4219 ms, private/memory-only, no issues/warnings. Field, stock, two-lap, read-only and exact known-player-exception guards passed. Root viewed the full critical pictures: Stavelot looks grounded, while Red Water's stream/fog still needs Claude's judgment. The player-eye bridge image shows cockpit/bonnet and sky, with no bridge. This is a genuine framing failure despite the passing mechanical packet; no round-two sheet or art submission exists yet.
+
+Both qualities actually captured s 1552.4976626 against bridge s 1557.5884861: 5.0908235 m before it. The production inspection view fixes vertical FOV at 48 degrees. The original deck is roughly 6 m above the actual 1.05 m eye, so the close approach places it above the frustum. No rendered bridge world-matrix/bounding-box measurement was invented. Under written 28ac1f05, only the native target moves from bridge.s - 6 to bridge.s - 24; both scenario and compositor now require actual first-lap capture in [bridge.s - 24, bridge.s - 18). The actual rendered-root eye, 18 m forward target, root matrix, FOV and 0.001 settle guard remain unchanged, as do the other 20 intended views, all motion/input/scene/light, field/incidents and read-only guards.
+
+This source-only framing correction is UNRUN pending Root review and the quiet-window end at 06:34 UTC or FRAME CHECK DONE. No native repeat, compositor, art, fixture, gate or build was started here. The first packet remains real guard-pass/bridge-visibility-fail evidence. The bounded framing issue ends by 06:47 UTC; another failure requires a short note and stop rather than new camera machinery.
+
+Removed: only the too-close six-metre capture operand/window. No old source image, accepted guard, real bridge or original camera construction is removed.

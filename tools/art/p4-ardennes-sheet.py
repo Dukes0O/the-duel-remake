@@ -75,7 +75,7 @@ def main():
                 matrix = view.get('rootMatrix') or []
                 if (view.get('kind') != 'actual-player-eye' or len(matrix) != 16 or
                         view.get('eyeHeight') != 1.05 or capture['laps'] != 0 or
-                        not view['bridgeS'] - 6 <= capture['s'] < view['bridgeS'] or view['s'] != capture['s']):
+                        not view['bridgeS'] - 24 <= capture['s'] < view['bridgeS'] - 18 or view['s'] != capture['s']):
                     raise ValueError('Actual first-lap player-height bridge view is missing')
                 def point(x, y, z):
                     return [matrix[i] * x + matrix[i + 4] * y + matrix[i + 8] * z + matrix[i + 12] for i in range(3)]

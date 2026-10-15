@@ -183,7 +183,7 @@ export async function run(context) {
           const a = window.__qaApp, c = a.duel.course, s = a.duel.state;
           if (${JSON.stringify(name)} === 'Kestrel Underbridge') {
             const bridge = c.def.kitPlacements.find(row => row.id === 'forest-footbridge');
-            if (!bridge || s.completedLaps !== 0 || s.s < bridge.s - 6 || s.s >= bridge.s)
+            if (!bridge || s.completedLaps !== 0 || s.s < bridge.s - 24 || s.s >= bridge.s - 18)
               throw Error('Actual first-lap footbridge approach was not reached');
             window.__render.renderFrame();
             const ground = c.groundAt(s.s, s.lateral);
@@ -231,7 +231,7 @@ export async function run(context) {
         const c=window.__qaApp.duel.course, targets=${JSON.stringify(names)}.map(name=>({name,s:c.script.pieces.find(piece=>piece.name===name).s0}));
         const bridge=c.def.kitPlacements.find(row=>row.id==='forest-footbridge');
         if(!bridge)throw Error('Authored Kestrel footbridge is missing');
-        targets.splice(targets.findIndex(row=>row.name==='Kestrel Straight')+1,0,{name:'Kestrel Underbridge',s:bridge.s-6});
+        targets.splice(targets.findIndex(row=>row.name==='Kestrel Straight')+1,0,{name:'Kestrel Underbridge',s:bridge.s-24});
         return targets;
       })()`);
       const progress = []; let targetIndex = 0, clear = false;
