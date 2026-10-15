@@ -1136,3 +1136,12 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 14 October: HELI-WILDLIFE-PACKET merged (H3 Wildlife and skins packet docs/HELI_WILDLIFE.md and thirteen WILD and SKIN cards); lane 14/14 jobs4 527.18 s, build passed, clean merge; lane deleted.
 14 October: RESCUE-PROPS merged (winch, stretcher, searchlight, beacon, debris, three supply loads; two rounds); lane 29/29 jobs4, build passed; board conflict fixed (completed line, kept the H3 cards); lane deleted.
 14 October: PANORAMA-TOWN merged (code-drawn country town, 64 houses, church, 13 lamps; review CLEAR after fixes; world signature recaptured from the reviewed sheet); lane 88/88 jobs4 from PowerShell, build passed; board conflict fixed (completed line); lane deleted.
+14 October: HELI-WILDLIFE-PACKET answers merged (Kyle: gear with its skin; TV camera flights parked); lane 12/12 jobs4 272.61 s, build passed, clean merge; lane deleted.
+
+- 14 October: QA-BROWSER-SWEEP runtime76826758 merged, lane46/46/build668ms/one clear review; nativeonfoot6/daynight8 and audio5 pass, audio needed permitted same-source rerun with low-priority control follow-up; recorder/frame failures remain explicit separate cards; no aggregate full/release claim.
+
+- 14 October: QA-FRAME-ENVIRONMENT aea43b4c merged, focused43/43/lane21/21/jobs4/build746ms/one review; world1s and coldload5s warning perKyle, failed-frame metrics preserved; actual frames unrun and PERF-HIGH-NIGHT open.
+
+- 14 October: joint Harbour radius/seam442e826f merged, lane114/114/jobs4/build598ms/one review, actual native8views and measured Harbour-only scene; all strict road/barrier/ground guards green. Both coupled cards complete; Avalanche takes placement hook for its corrected gate, no postmerge rerun/release/push.
+
+- 14 October: FIRE-SAVE acee0826 merged (H2 save fields, course-closures.js, forest-fire switch dev, fixture 11), lane265/265/jobs4/build passed/one review (4 faults fixed); integration focused heli/save/switch suites green after merge. Janitor: lane folder and branch removed.

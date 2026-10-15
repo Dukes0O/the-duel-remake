@@ -95,8 +95,11 @@ async function measureNight(context, quality) {
       requestAnimationFrame(sample);
     });
     if (!(state.field.start.elapsed > before)) throw Error('App simulation did not run during the frame sample.');
+    const worldBuildText = view.dataset.worldBuildMs, worldBuildMs = Number(worldBuildText);
+    if (typeof worldBuildText !== 'string' || !worldBuildText.trim() || !Number.isFinite(worldBuildMs))
+      throw Error('Missing or malformed actual world-build measurement.');
     return {course: course.def.id, cars: state.opponents.length + 1, night: true, intervals,
-      constructionMs, worldBuildMs: Number(view.dataset.worldBuildMs), worldReadyMs: Number(view.dataset.worldReadyMs),
+      constructionMs, worldBuildMs, worldReadyMs: Number(view.dataset.worldReadyMs),
       appRunning: app.running, countdownBefore: before, countdownAfter: state.field.start.elapsed,
       rearView: view.dataset.rearView, renderPipeline: view.dataset.renderPipeline,
       visible: document.visibilityState === 'visible',
@@ -134,10 +137,14 @@ export async function runNightFrames(context,{measure=measureNight,writeText=wri
       reports.push(failed);failures.push(failed);
     }
   }
-  const packet={schema:1,mode:'night-simple',reports,failures};
-  await writeText(join(context.outputDir,'frame-pacing.json'),JSON.stringify(packet,null,2)+'\n');
-  if(failures.length)throw Error(failures.map(row=>row.quality+': '+row.error).join('; '));
-  validateFramePacket(packet);
+  const packet={schema:1,mode:'night-simple',reports,failures,warnings:[]};
+  if(failures.length) {
+    await writeText(join(context.outputDir,'frame-pacing.json'),JSON.stringify(packet,null,2)+'\n');
+    throw Error(failures.map(row=>row.quality+': '+row.error).join('; '));
+  }
+  try {validateFramePacket(packet,{warn:message=>packet.warnings.push(message)});}
+  finally {await writeText(join(context.outputDir,'frame-pacing.json'),JSON.stringify(packet,null,2)+'\n');}
+  for(const message of packet.warnings)console.log('WARNING '+message);
   return packet;
 }
 

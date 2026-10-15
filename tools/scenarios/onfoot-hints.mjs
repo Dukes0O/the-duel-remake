@@ -39,7 +39,7 @@ async function sample(context) {
   return context.evaluate('(() => {const a=window.__qaApp,s=a.duel.state,' +
     'h=document.querySelector("#onfoot-hint"),f=s.fighter;' +
     'return {onFoot:!!s.onFoot,health:f?.health,maxHealth:f?.maxHealth,' +
-    'needsRelease:s.footTransition?.needsRelease,hidden:h.hidden,text:h.textContent,' +
+    'needsRelease:s.footTransition?.needsRelease,paused:s.paused,hidden:h.hidden,text:h.textContent,' +
     'mode:s.mode,context:a.activeInputContext(),objective:s.objective?.kind};})()');
 }
 async function expectHint(context, pattern) {
@@ -144,6 +144,21 @@ async function qualityRun(context, quality) {
   await key(context, 'keyDown', 'Escape', 'Escape', 27);
   await key(context, 'keyUp', 'Escape', 'Escape', 27);
   await refresh(context);
+  if (!(await sample(context)).paused) {
+    await context.waitFor(
+      '!document.pointerLockElement && performance.now()-window.__qaApp._footPointerReleasedAt >= 250',
+      'native pointer release and Escape grace');
+    // Pointer release can itself pause; never toggle that pause back off.
+    if (!(await sample(context)).paused) {
+      await key(context, 'keyDown', 'Escape', 'Escape', 27);
+      await key(context, 'keyUp', 'Escape', 'Escape', 27);
+      await refresh(context);
+    }
+  }
+  await refresh(context);
+  const paused = await sample(context);
+  if (paused.paused !== true)
+    throw Error('Native Escape did not pause: ' + JSON.stringify(paused));
   await expectNoHint(context, 'Pause');
 
   await context.command('Emulation.setDeviceMetricsOverride',
