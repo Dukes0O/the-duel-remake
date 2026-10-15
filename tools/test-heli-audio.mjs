@@ -552,6 +552,26 @@ const voices = context => context.sources.filter(source => source.buffer?.decode
   heli.dispose();
 }
 
+// The mission loops: the winch and the snow dig hold while their level is up.
+{
+  const {context, heli} = setup();
+  const readout = {rotorPct: 100, engine: true, weightKg: 1630, airspeedKts: 0};
+  heli.update(readout);
+  await heli.preloadWildlife();
+  await heli.load(['heli.snow.dig']);
+  await flush();
+  const before = voices(context).filter(s => s.loop).length;
+  heli.missionBeds({winch: 1, dig: .6});
+  assert.equal(voices(context).filter(s => s.loop).length, before + 2, 'the winch and the dig loop start');
+  heli.missionBeds({winch: 1, dig: .6});
+  assert.equal(voices(context).filter(s => s.loop).length, before + 2, 'and hold, never doubled');
+  heli.missionBeds({});
+  await flush();
+  heli.missionBeds({});
+  assert(voices(context).filter(s => s.loop).length <= before, 'a level of 0 lets them go');
+  heli.dispose();
+}
+
 // Dispose stops everything and nothing sounds afterward.
 {
   const {context, audio, heli} = setup();

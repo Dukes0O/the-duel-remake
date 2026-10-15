@@ -39,8 +39,17 @@ sections 8 and 9. Needs: RESCUE-RADIO (merged).
   "moose call" was a person at a Moose Lodge, so the moose is the
   Moose_Elk field recording.
 - The eleven recordings load only when asked (`WILDLIFE_CUE_IDS`,
-  `preloadWildlife()`), never on an ordinary flight. WILD-HOOKS calls it
-  when the wildlife switch is on; until then nothing plays them.
+  `preloadWildlife()`), never on an ordinary flight.
+- `missionBeds({dig, winch})`, built like `fireBeds`: called every frame, it
+  holds the snow-dig loop (H4, which had no way to start) and the winch loop
+  at a level from 0 to 1, and lets them go at 0.
+- **For the Director (re-slice):** nothing calls `preloadWildlife` or
+  `missionBeds` yet. The call belongs in `src/app.js` beside
+  `preloadFire` and `fireBeds`, and the counting and washing events need
+  entries in `HELI_EVENT_CUES`. SKIN-HOOKS owns the wiring but lists only
+  `heli-session.js` and `heli-board.js`; please add `src/app.js` and
+  `heli-audio.js`'s event table to its files (and RESCUE-HOOKS should call
+  `missionBeds` for the dig).
 - **Credits pages** name the 79 lines and the eleven recordings.
 
 ## Round one listening (measured; I cannot listen)
@@ -68,7 +77,8 @@ sound wrong can be recut by changing one recipe line.
   voices and words checked against section 8's table; their loudness
   against the earlier lines; the eleven cues, buses, the winch loop and its
   seam, files, hashes and catalog rows; an ordinary flight fetches none of
-  the wildlife sounds and `preloadWildlife` fetches all eleven.
+  the wildlife sounds and `preloadWildlife` fetches all eleven; the winch
+  and dig loops start, hold without doubling and let go.
 - `node tools/test-p4-audio.mjs` and `test-arsenal-wave1-audio.mjs` (the
   pinned older catalog rows are untouched; new rows sit after the
   helicopter rows) and `test-heli-hooks.mjs` (283): passed.
@@ -81,6 +91,14 @@ sound wrong can be recut by changing one recipe line.
   library sound cap rises from 480 KB to 720 KB (the eleven recordings add
   about 233 KB and load only with wildlife; the helicopter's sounds are
   701,304 bytes).
+
+## Review
+
+One independent review (rule 17): nothing serious. Fixed: the winch (and
+H4's snow dig) had no way to sound, so `missionBeds` is added; the note now
+names the card that wires the sounds in and asks for the re-slice. Kept as
+noted: the size cap leaves about 36 KB of room (sizes are targets, SPEC 0.8
+rule 8), and the marmot and bear stand-ins wait for Kyle's ears.
 
 ## Removed
 

@@ -570,6 +570,17 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     }
   }
 
+  // The mission loops, each 0 to 1, called every frame with update: H4's
+  // shovel in snow while the rescuer digs, and the winch while it reels
+  // (medevac). Like fireBeds, a level of 0 lets the loop go.
+  function missionBeds({dig = 0, winch = 0} = {}) {
+    if (disposed || !isEnabled() || !audio.context || !audible() || crashHold) return;
+    for (const [id, level] of [['heli.snow.dig', dig], ['heli.winch', winch]]) {
+      const voice = {gain: clamp(level, 0, 1), rate: 1, lowpass: 9000};
+      steer(bed(id, voice.gain > .01, voice), voice, cues[id]);
+    }
+  }
+
   function event(ev, state = {}) {
     if (Array.isArray(ev)) { for (const item of ev) event(item, state); return; }
     if (!ev || typeof ev !== 'object' || disposed || seen.has(ev)) return;
@@ -622,6 +633,6 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
   }
   const preloadFire = () => load(FIRE_CUE_IDS.filter(id => cues[id]));
   const preloadWildlife = () => load(WILDLIFE_CUE_IDS.filter(id => cues[id]));
-  return {load, preloadFire, preloadWildlife, fireBeds, say, skip, clearRadio, subtitle, update, event, play, stop, dispose,
+  return {load, preloadFire, preloadWildlife, fireBeds, missionBeds, say, skip, clearRadio, subtitle, update, event, play, stop, dispose,
     get busy() { return !!current || queue.length > 0; }, get queued() { return [...queue]; }};
 }
