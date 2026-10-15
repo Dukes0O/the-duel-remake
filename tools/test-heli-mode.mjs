@@ -337,7 +337,11 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     // HELI-VIEW: the instruments panel and its styles in the page.
     'src/screen-router.js|heli/heli-ui.js', 'src/screen-router.js|heli/heli-ui.css',
     'tools/test-p4-audio.mjs|heli/heli-audio.js', 'tools/test-arsenal-core-audio.mjs|heli/heli-audio.js',
-    'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js']);
+    'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js',
+    // FIRE-VIEW's browser check grows its fire by the game's own rules.
+    ...['heli-ground', 'heli-session', 'heli-fire', 'heli-missions', 'heli-save'].map(name => `tools/scenarios/fire-view.mjs|heli/${name}.js`),
+    // And its node test reads the drawing files it checks.
+    ...['heli-fire-view', 'heli-ui', 'heli-scene'].map(name => `tools/test-fire-view.mjs|heli/${name}.js`)]);
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
   for (const path of walk(join(root, 'src')).concat(walk(join(root, 'tools')), pages)) {

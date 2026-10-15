@@ -1,6 +1,7 @@
 # FIRE-VIEW, round 1 (15 October 2026)
 
-Sheet: `round-1.jpg`, browser captures with memory-only saves, made by
+Sheet: removed once round 2 replaced it (the looks folder's 20 MB limit);
+round 2's sheet shows the same nine views. Browser captures with memory-only saves, made by
 `FIRE_VIEW_SHEET=1 node tools/browser-harness.mjs scenario fire-view`: the
 biggest fire that can burn (43 cells) from 150 m, a drop with the aim ring
 locked, the fire from the side after the drop, the burnt course from 150 m

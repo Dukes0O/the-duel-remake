@@ -47,7 +47,9 @@ dependency is met by HELI-FINISH's code at 64198f94.
   and fire lost.
 - `tools/scenarios/fire-view.mjs` (new): the browser look and frame check,
   and with `FIRE_VIEW_SHEET=<round>` the comparison sheet.
-- `docs/board/looks/fire-view/`: rounds 1 and 2, sheets and reviews.
+- `docs/board/looks/fire-view/`: the round 2 sheet (190 KB) and both
+  rounds' reviews; round 1's sheet was removed, since the looks folder sits
+  just under its 20 MB limit (about 19.6 MB before this card).
 
 ## The packet's 60-cell fire
 
@@ -107,7 +109,10 @@ the fire reads from straight above.
 ## Changed assertions
 
 - `tools/test-heli-mode.mjs`: `heli-fire-view.js` joins the drawing files
-  (the import guard's rules-file checks do not apply to drawing).
+  (the import guard's rules-file checks do not apply to drawing). The
+  import allow-list gains the browser check's rule imports (it grows its
+  fire by the game's own rules) and `test-fire-view.mjs`'s reads of the
+  three drawing files it checks; nothing else is let through.
 
 ## Removed
 
