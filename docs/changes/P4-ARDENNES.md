@@ -185,3 +185,11 @@ Prepared helper source uses the existing native terrain reader only when later c
 ## Opt-in shader-cache review correction
 
 Root found a real source fault before execution: damp shaders with equal range counts shared a cache key even when their retained wet/dry clamp floors produced different fragment bodies. The optional key now includes wet/dry; all absent/default keys remain exact. The existing road test gains a valid damp wet/dry comparison requiring different keys and fragment bodies and shared uniforms across repeated compilation of each same material. Its explicit new opt-in key expectation changes for this correction only. All old keys, material values, masks, floors and other assertions remain unchanged. No check or source execution ran. Removed: the opt-in wet/dry shader-cache collision.
+
+## Current source union before round-two execution
+
+Normal non-rewriting integration union takes a5f38a39 into reviewed ff941313. Exactly two files conflicted: track-kits.js keeps both retained footprint validation and incoming accepted named Gallery translations; CREDITS keeps the full incoming text plus the original Ardennes paragraph once. world.js auto-merges Ardennes damp-road options/binding with Snow's fourth terrain-material options argument. Incoming Attack registry assertions and HELI generator rows remain beside all retained grounding/native guards and the Ardennes native-generator registration. No course, driver, acceptance, selected bridge asset or shader redesign follows from the union.
+
+The existing three focused suites are test-circuit-ardennes.mjs, test-course-landmarks.mjs and test-road-surface.mjs. Root must confirm this clean union before any execution. The actual 13-house High/LOD and full <=.5m nave/tower support, neutral road, both-quality native 22-view packet and round-two art remain pending; no new export, fixture, signature, gate/build, frame or native pass is claimed. Existing known player exception and separate CPU incident accounting stay exact. Root owns all scheduling and integration metadata.
+
+Removed: merge markers only. Neither accepted named translations nor footprint seating, old assertions, licence text or prior evidence is removed.

@@ -20,6 +20,7 @@ const views=[
 ];
 
 export async function run(context){
+  if(process.env.DUEL_SUMMIT_SNOW_ART==='1')return runSnowArt(context);
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   const photos=[],facts=[];
   for(const quality of ['high','performance']){
@@ -98,4 +99,81 @@ export async function run(context){
   await writeFile(sheetPath,bytes);context.screenshots.push(sheetPath);
   await writeFile(join(context.outputDir,'summit-run.json'),JSON.stringify({memoryOnly:true,frameMeasurement:false,facts,views:photos.map(photo=>photo.label),sheet:{bytes:bytes.length,width:sheet.width,height:sheet.height,quality:sheet.quality}},null,2)+'\n');
   console.log(`Summit native views: ${photos.length}, ${bytes.length} byte sheet; no frame timing.`);
+}
+
+// Explicit daylight ART copies only: the ordinary Summit recipe above stays exact.
+async function runSnowArt(context){
+  await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
+  const packet={artOnly:true,memoryOnly:true,frameMeasurement:false,passed:false,
+    lighting:'Same declared daylight ART override on both Course copies; no normal race lighting change',
+    requested:{piece:'Whiteout Crest',snapshotS:centre('Whiteout Crest'),up:140,ahead:500,quality:'high'},legs:[]};
+  try{
+    for(const leg of ['before','after']){
+      // Full navigation makes a fresh document/renderer/world for each leg.
+      await context.navigate(entry);
+      await context.waitFor(`document.readyState==='complete'&&window.__qaApp&&window.__render&&document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'&&!document.querySelector('#start-engine')?.disabled`,'fresh native snow art menu',60000);
+      await context.evaluate(`(()=>{
+        const app=window.__qaApp;
+        if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value||!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only storage is required');
+        if(app.duel.state.status!=='menu')throw Error('Snow art must remain in the menu');
+        app.stop();app.audio.setMuted(true);app.setGraphicsQuality('high');
+        const index=[...document.querySelector('#scene-select').options].map(option=>Number(option.value)).find(index=>app.getMenuCourse(index)?.def.id==='summit-run');
+        if(index==null)throw Error('Actual Summit is missing');
+        const original=app.getMenuCourse(index),snowWorld=structuredClone(original.def.snowWorld);
+        if(original.seed!==1989)throw Error('Actual Summit menu seed differs');
+        if(${JSON.stringify(leg)}==='before'){delete snowWorld.variationStrength;delete snowWorld.variationScale;}
+        const course=new original.constructor({...original.def,snowWorld,lightPath:undefined,timeOfDay:'day'},1989);
+        if(JSON.stringify(course.features)!==JSON.stringify(original.features))throw Error('ART copy changed physical course features');
+        const readOnly=()=>JSON.stringify({state:app.duel.state,profile:app.profile,storage:Array.from({length:localStorage.length},(_,i)=>{const key=localStorage.key(i);return [key,localStorage.getItem(key)];})});
+        window.__snowArt={course,original,readOnly,before:readOnly(),features:JSON.stringify(course.features),settled:false,
+          worldBuildsBefore:Number(document.querySelector('#view3d').dataset.worldBuilds||0)};
+        window.__render.captureTrackSnapshot({course,flag:{id:'snow-variation-daylight-art',snapshotS:${centre('Whiteout Crest')},camera:{up:140,ahead:500}}})
+          .then(canvas=>{window.__snowArt.canvas=canvas;window.__snowArt.settled=true;},error=>{window.__snowArt.error=error.message;window.__snowArt.settled=true;});
+        window.__render.renderFrame();
+      })()`);
+      await context.waitFor(`(()=>{window.__render.renderFrame();return window.__snowArt.settled;})()`,'daylight open snowfield '+leg,25000);
+      const captured=await context.evaluate(`(async()=>{
+        const shot=window.__snowArt,api=window.__render,host=document.querySelector('#view3d');
+        if(shot.error)throw Error(shot.error);
+        if(shot.before!==shot.readOnly()||window.__qaApp.duel.state.status!=='menu')throw Error('ART snapshot changed state/profile/storage');
+        if(JSON.stringify(shot.course.features)!==shot.features)throw Error('Snapshot changed actual course features');
+        if(!shot.canvas||shot.canvas.width!==960||shot.canvas.height!==540||host.dataset.trackKitAsset!=='ready')throw Error('Actual snapshot canvas/kits not ready');
+        const hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
+        const geometry=[],terrain=[];let snowVertices=0,dryVertices=0;
+        api.scene.traverse(node=>{if(node.geometry?.getAttribute('winterWeight'))terrain.push(node);});
+        for(const mesh of terrain){
+          const positions=mesh.geometry.getAttribute('position'),weights=mesh.geometry.getAttribute('winterWeight');
+          let winter=0,dry=0;for(const value of weights.array){if(value>0)winter++;else dry++;}
+          snowVertices+=winter;dryVertices+=dry;
+          const raw=array=>new Uint8Array(array.buffer,array.byteOffset,array.byteLength);
+          geometry.push({name:mesh.name,vertices:positions.count,winterVertices:winter,dryVertices:dry,
+            positions:await hash(raw(positions.array)),weights:await hash(raw(weights.array)),
+            index:mesh.geometry.index?await hash(raw(mesh.geometry.index.array)):null,
+            matrix:mesh.matrixWorld.toArray(),materialKey:mesh.material.customProgramCacheKey()});
+        }
+        if(!terrain.length||!snowVertices)throw Error('Actual winter terrain coverage is missing');
+        if(!(Number(host.dataset.worldBuilds)>shot.worldBuildsBefore))throw Error('ART snapshot reused a prior world');
+        const facts={seed:shot.course.seed,status:window.__qaApp.duel.state.status,readOnly:true,
+          timeOfDay:shot.course.def.timeOfDay,hasLightPath:shot.course.def.lightPath!==undefined,
+          options:{variation:shot.course.def.snowWorld.variation,strength:shot.course.def.snowWorld.variationStrength??null,scale:shot.course.def.snowWorld.variationScale??null},
+          dimensions:[shot.canvas.width,shot.canvas.height],featuresHash:await hash(new TextEncoder().encode(shot.features)),
+          worldBuildsBefore:shot.worldBuildsBefore,worldBuildsAfter:Number(host.dataset.worldBuilds),
+          worldBuildMs:host.dataset.worldBuildMs,snowVertices,dryVertices,geometry,
+          pose:{position:api.camera.position.toArray(),quaternion:api.camera.quaternion.toArray(),fov:api.camera.fov,aspect:api.camera.aspect}};
+        return {facts,url:shot.canvas.toDataURL('image/png')};
+      })()`);
+      const path=join(context.outputDir,'snow-'+leg+'.png');
+      await writeFile(path,Buffer.from(captured.url.split(',')[1],'base64'),{flag:'wx'});
+      context.screenshots.push(path);packet.legs.push({leg,image:path,...captured.facts});
+      await context.evaluate('window.__render.clearTrackSnapshot()');
+    }
+    const [before,after]=packet.legs;
+    const geometry=leg=>leg.geometry.map(({materialKey,...actual})=>actual);
+    if(before.featuresHash!==after.featuresHash||JSON.stringify(geometry(before))!==JSON.stringify(geometry(after))||JSON.stringify(before.pose)!==JSON.stringify(after.pose))
+      throw Error('The two actual static worlds do not share geometry and camera');
+    if(before.geometry.some((row,index)=>row.materialKey===after.geometry[index].materialKey))throw Error('The actual opted material key did not change');
+    packet.passed=true;
+  }catch(error){packet.error=String(error.stack??error);throw error;}
+  finally{await writeFile(join(context.outputDir,'snow-art.json'),JSON.stringify(packet,null,2)+'\n');}
+  console.log('Snow variation: two actual static daylight ART snapshots, no frame timing or race changes.');
 }

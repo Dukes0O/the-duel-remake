@@ -112,6 +112,12 @@ shipped in `public/`.
 and packed from sprites in the **Kenney** [Particle Pack](https://kenney.nl/assets/particle-pack),
 CC0, by `tools/art/fire-fx.py`. The ember frame is drawn by the same script.
 
+The six rescue people in `heli/people/` (rescuer, hiker, skier, stranded
+driver, two paramedics) start from the **Quaternius** [Universal Base
+Characters, Standard](https://quaternius.com), CC0. The recipe
+`tools/blender/rescue-people.py` poses the rigged bodies, thins them, colours
+them and adds original clothing and gear; no Quaternius texture is shipped.
+
 ## Ardennes original circuit landmarks
 
 The stone stream bridge, forest footbridge and forest timing tower are original project geometry made for Ardennes Forest. They use no external models, textures or downloads. The editable recipe is `tools/blender/ardennes-landmarks.py`. The measured High/LOD provenance is recorded by that recipe in `tools/art/ardennes-landmarks.json`. Prior kit credits remain unchanged.

@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 import * as THREE from 'three';
 import {renderedGroundHeight} from './rendered-ground.js';
 import {escapeFrame} from './escape-roads.js';
@@ -37,6 +38,18 @@ export function normalizeKitPlacements(course, entries) {
       fail('scale must contain three positive finite values.');
     const grounding = entry.grounding;
     if (grounding !== undefined && grounding !== 'footprint') fail('grounding must be footprint when authored.');
+    let nodeTranslations;
+    if(entry.nodeTranslations!==undefined){
+      const values=entry.nodeTranslations;
+      if(entry.id!=='gallery'||!(course.def.id==='summit-run'||isSummitAttack(course.def))||entry.s!==10176||!values||
+          typeof values!=='object'||Array.isArray(values)||!Object.keys(values).length)
+        fail('named translations belong only to the authored Summit Gallery entrance.');
+      const names=new Set(['gallery-concrete-pillar','gallery-concrete-pillar.001']);
+      const pairs=Object.entries(values).sort(([a],[b])=>a.localeCompare(b));
+      if(pairs.some(([name,vector])=>!names.has(name)||!Array.isArray(vector)||vector.length!==3||!vector.every(finite)))
+        fail('named translations need approved mesh names and three finite model-local values.');
+      nodeTranslations=Object.freeze(Object.fromEntries(pairs.map(([name,vector])=>[name,Object.freeze([...vector])])));
+    }
     const worldPosition = entry.worldPosition;
     if (worldPosition !== undefined && (!worldPosition ||
         !['concrete-wall', 'catch-fence', 'tyre-wall'].includes(entry.id) ||
@@ -68,6 +81,7 @@ export function normalizeKitPlacements(course, entries) {
       ...(grounding !== undefined ? {grounding} : {}),
       ...(snowmanId ? {snowmanId} : {}),
       ...(patch ? {physicalPatch:patch} : {}),
+      ...(nodeTranslations ? {nodeTranslations} : {}),
       ...(worldPosition !== undefined ? {worldPosition:Object.freeze({x:worldPosition.x,z:worldPosition.z})} : {})});
   }));
 }
@@ -234,7 +248,7 @@ function checkPlacementClearance(course, row, asset, matrix, bounds, roadBoxes) 
 // A circuit may ask for a piece's parts to be joined by material (`mergeKitMeshes: ['shopfront-a']`):
 // a model of many small parts then costs a few draws instead of one per part, in every view and in
 // the contact-shading pass. The picture is unchanged. Pieces with a skeleton are left alone.
-function mergeModelByMaterial(model) {
+function mergeModelByMaterial(model,disposeGeometry=geometry=>geometry.dispose()) {
   const scene = model?.scene;
   if (!scene?.isObject3D) return;
   scene.updateMatrixWorld(true);
@@ -268,13 +282,13 @@ function mergeModelByMaterial(model) {
     });
     const indexed = geometries.every(geometry => geometry.index);
     const joined = mergeGeometries(indexed ? geometries : geometries.map(geometry => geometry.index ? geometry.toNonIndexed() : geometry),false);
-    for (const geometry of geometries) geometry.dispose();
+    for (const geometry of geometries) disposeGeometry(geometry);
     if (!joined) return;
     const mesh = new THREE.Mesh(joined,material);
     mesh.name = (list[0].name || 'part')+' (joined)';
     merged.push(mesh);
   }
-  for (const mesh of meshes) mesh.geometry.dispose();
+  for (const mesh of meshes) disposeGeometry(mesh.geometry);
   scene.clear();
   for (const mesh of merged) scene.add(mesh);
   scene.updateMatrixWorld(true);
@@ -361,6 +375,40 @@ function applyKitLook(look,model,own) {
   });
 }
 
+
+// Variants are private to this world; cached donor geometry/materials stay read only.
+function cloneNamedVariant(source,translations,own) {
+  const model={...source,scene:cloneSkeleton(source.scene)};
+  const geometries=new Map(),materials=new Map(),textures=new Map();
+  const cloneMaterial=source=>{
+    if(materials.has(source))return materials.get(source);
+    const material=source.clone();material.userData={...source.userData};materials.set(source,material);own(material);
+    for(const [key,value] of Object.entries(material))if(value?.isTexture){
+      if(!textures.has(value)){const texture=value.clone();texture.userData={...value.userData};textures.set(value,texture);own(texture);}
+      material[key]=textures.get(value);
+    }
+    return material;
+  };
+  model.scene.traverse(node=>{
+    if(node.geometry){
+      if(!geometries.has(node.geometry)){const geometry=node.geometry.clone();geometry.userData={...node.geometry.userData};geometries.set(node.geometry,geometry);own(geometry);}
+      node.geometry=geometries.get(node.geometry);
+    }
+    if(node.material)node.material=Array.isArray(node.material)?node.material.map(cloneMaterial):cloneMaterial(node.material);
+    if(node.isSkinnedMesh)own(node.skeleton);
+  });
+  model.scene.updateMatrixWorld(true);
+  const rootInverse=model.scene.matrixWorld.clone().invert();
+  for(const [name,values] of Object.entries(translations)){
+    const nodes=[];
+    model.scene.traverse(node=>{if((node.userData.name??node.name)===name)nodes.push(node);});
+    if(nodes.length!==1||!nodes[0].isMesh)fail('named translation has no unique actual mesh '+name+'.');
+    const node=nodes[0],parentToRoot=rootInverse.clone().multiply(node.parent.matrixWorld);
+    const delta=new THREE.Vector4(...values,0).applyMatrix4(parentToRoot.invert());
+    node.position.add(new THREE.Vector3(delta.x,delta.y,delta.z));node.updateMatrix();
+  }
+  model.scene.updateMatrixWorld(true);return model;
+}
 // Own cache and instances for one world. No module-global asset lifetime.
 export function createTrackKits(course, options) {
   const enteredAt = performance.now();
@@ -401,6 +449,8 @@ export function createTrackKits(course, options) {
   const stats = {high:0,low:0,visibleChunks:0,
     presentation:{constructionMs:null,activeCpuMs:performance.now()-normalizeStarted},
     clearance:{trianglePlacements:0,broadPhaseSkipped:0,runtimeSkipped:0}};
+  const variantKey=row=>row.nodeTranslations?'/'+JSON.stringify(row.nodeTranslations):'';
+  const assetFor=(row,version)=>assets.get(row.id+'/'+version+variantKey(row));
   const scratch = new THREE.Vector3(), transform = new THREE.Matrix4();
   const frustumMatrix = new THREE.Matrix4();
   function refreshChunkBounds(chunk) {
@@ -415,7 +465,7 @@ export function createTrackKits(course, options) {
       const matrix = placementMatrix(course,row,high.bounds);
       const placedBounds = new THREE.Box3();
       for (const version of ['high','low']) {
-        const asset = assets.get(row.id+'/'+version);
+        const asset = assetFor(row,version);
         placedBounds.union((asset.visualBounds ?? asset.bounds).clone().applyMatrix4(matrix));
         if (!validateClearance) stats.clearance.runtimeSkipped++;
         else if (checkPlacementClearance(course,row,asset.model,matrix,asset.visualBounds ?? asset.bounds,roadBoxes))
@@ -432,14 +482,14 @@ export function createTrackKits(course, options) {
       instances.push(instance);
       const entry = {row,index,instance};
       chunk.entries.push(entry); chunk.bounds.union(placedBounds);
-      const key = row.id + '/' + chunkIndex;
+      const key = row.id + '/' + chunkIndex+variantKey(row);
       let entries = grouped.get(key);
       if (!entries) { entries = []; grouped.set(key,entries); }
       entries.push(entry);
     });
     for (const entries of grouped.values()) for (const version of ['high','low']) {
       const id = entries[0].row.id, chunk = entries[0].instance.chunk;
-      const asset = assets.get(id+'/'+version);
+      const asset = assetFor(entries[0].row,version);
       let skinned = false;
       asset.model.scene.traverse(node => {if (node.isSkinnedMesh) skinned = true;});
       if (id === 'start-gantry' || skinned) {
@@ -619,6 +669,28 @@ export function createTrackKits(course, options) {
     Promise.all(ids.flatMap(id => ['high','low'].map(async version => {
       const path = '/assets/models/circuits/kits/'+id+(version === 'low' ? '-lod' : '')+'.glb';
       const model = await load(path);
+      const translated=rows.filter(row=>row.id===id&&row.nodeTranslations);
+      if(translated.length){
+        // The original donor defines every placement anchor, including variants.
+        // Its resources are owned but never marked/changed or put in the scene.
+        if(model?.scene?.isObject3D)for(const resource of resourcesOf(model.scene)){
+          if(retired||failed)release(resource);else resources.add(resource);
+        }
+        if(retired||failed)return;
+        const variants=new Map([['',{}],...translated.map(row=>[variantKey(row),row.nodeTranslations])]);
+        let originalBounds;
+        for(const [key,translations] of variants){
+          const clone=cloneNamedVariant(model,translations,own);
+          if(course.def.mergeKitMeshes?.includes(id))mergeModelByMaterial(clone,release);
+          for(const resource of resourcesOf(clone.scene))own(resource);
+          applyKitLook(course.def.kitLook?.[id],clone,own);
+          const bounds=validateSource(clone,id);
+          if(!key)originalBounds=bounds;
+          assets.set(id+'/'+version+key,{model:clone,bounds:originalBounds,
+            ...(key?{visualBounds:bounds}:{})});
+        }
+        return;
+      }
       if (course.def.mergeKitMeshes?.includes(id)) mergeModelByMaterial(model);
       if (model?.scene?.isObject3D) for (const resource of resourcesOf(model.scene)) own(resource);
       if (retired || failed) return;
@@ -660,7 +732,7 @@ export function createTrackKits(course, options) {
       instance.matrix.copy(matrix); instance.revision++;
       instance.bounds.makeEmpty();
       for (const version of ['high','low']) {
-        const asset=assets.get(row.id+'/'+version);
+        const asset=assetFor(row,version);
         instance.bounds.union((asset.visualBounds ?? asset.bounds).clone().applyMatrix4(matrix));
       }
       refreshChunkBounds(instance.chunk);
