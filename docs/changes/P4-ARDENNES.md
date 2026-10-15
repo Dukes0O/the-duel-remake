@@ -162,3 +162,8 @@ The selected future export is `Blender -b --disable-autoexec --python-exit-code 
 ## Generator roster review correction, source only
 
 Root found a real coverage gap: the all-Blender-generators guard enumerates every recipe, but the original Ardennes directory-plan recipe had no native suite registration. Under 1dbb9ebb, add its existing circuit suite to nativeGenerators, without inventing Blend outputs or changing the recipe API. Before that registration, add original CLI cases to the existing suite: isolated stdlib Python, two empty temporary roots, exact six default filenames and two selected bridge filenames, exact runtime/provenance destinations, no files created and malformed model rejection. Every older case and budget stays exact. These cases are authored but unrun; no executed RED or GREEN is claimed. Removed: the roster's missing Ardennes coverage only; no generator, old assertion or runtime asset is removed.
+
+
+## Selected actual bridge export
+
+Reviewed source972ea98d exported only stone-stream-bridge with original Blender4.5.13 CLI, threads4, exit0, wall1133.6766ms with one foreign gate. All four footbridge/timing-tower GLBs are byte-exact before/after. Actual bridge pair127044bytes, High1356tri/99848bytes, LOD324tri/27196bytes; same12.1499996x4.5999999x5.5m bounds. New actual hashes cbe671def0b098686003538f148df76979200a5d81119ea5aeecaca6d62b0142 and4991dbd0e02ffc167a6760d30371cd054cc793e769c7e2cc0f37c4d8d3d8b4df; measured model records replace pendingExport. No render, native, whole-scene grounding, gate/build or round2-art pass is claimed. Roof/road helper holds still apply.

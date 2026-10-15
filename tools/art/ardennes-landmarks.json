@@ -2,12 +2,6 @@
   "version": 1,
   "units": "metres",
   "up": "Y",
-  "pendingExport": {
-    "model": "stone-stream-bridge",
-    "status": "source-only; not exported",
-    "arguments": "--model stone-stream-bridge",
-    "change": "Weathered neutral grey materials only; original geometry and all current measured model records below remain unchanged."
-  },
   "models": [
     {
       "id": "stone-stream-bridge",
@@ -18,13 +12,13 @@
       "files": [
         {
           "path": "stone-stream-bridge.glb",
-          "bytes": 99856,
-          "sha256": "0fe17bc4dadd5cdd7584f374c570e3511a49c7b5f8300bc468b983cef8317a00"
+          "bytes": 99848,
+          "sha256": "cbe671def0b098686003538f148df76979200a5d81119ea5aeecaca6d62b0142"
         },
         {
           "path": "stone-stream-bridge-lod.glb",
-          "bytes": 27204,
-          "sha256": "6b15ccedb637b6d4479c39f339a24f8fae80900ccd12e1cf3cc74cf9c7649925"
+          "bytes": 27196,
+          "sha256": "4991dbd0e02ffc167a6760d30371cd054cc793e769c7e2cc0f37c4d8d3d8b4df"
         }
       ],
       "highTriangles": 1356,
@@ -39,7 +33,7 @@
         4.599999904632568,
         5.5
       ],
-      "bytes": 127060
+      "bytes": 127044
     },
     {
       "id": "forest-footbridge",
