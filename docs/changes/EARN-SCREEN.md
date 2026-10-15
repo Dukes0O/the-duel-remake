@@ -1,0 +1,56 @@
+# EARN-SCREEN
+
+- Task: the medal sheet on the car screen, the results lines, and earned cars
+  hidden while the switch is off (Cockpit T-013).
+- Status: complete, switch dev. Kind: screens. Built by Claude in place of
+  Codex (Kyle, 14 October 2026). Held `busy-game-files` after
+  P4-SUMMIT-ATTACK for the one `src/app.js` change.
+- Switch: `earned-cars`, dev (from EARN-MEDALS).
+
+## Settled design (docs/EARNED_CARS.md section 5)
+
+- `src/earned-cars-ui.js`: `shownCars` and `shownCarIds` (medal cars only
+  with the switch on), `medalProgressLabel` ("MEDALS 4/6", "MEDALS 20/24 ·
+  GOLD 4/6"), `medalSheetPanel`, `medalUnlockCard`, `medalResultLines`.
+- Garage: the medal sheet panel on every owned car, under the stat bars; the
+  list label; the locked page ("EARNED, NOT BOUGHT", medal and gold bars, no
+  Buy button, "No credits", the Kestrel One line with the helicopter on); the
+  "MEDAL REWARD" note on an owned medal car. The rating bars scale against the
+  cars shown. The Jesko's label, page and note are unchanged.
+- Results: the new-medal line with the credits actually paid, and the
+  new-car lines; the general bonus list leaves `medal` out so it shows once.
+- Every car list uses `shownCars`: the garage, the menu picker, its "01 / 09"
+  count and the "N EARNABLE CARS" note, the armory, the rival car choice and
+  the leaderboard filter. A hidden car is never the menu car, and a hidden
+  rival car returns to "match".
+- `src/app.js`: passes `earnedCarsEnabled` to settlement beside
+  `grandPrixCareerEnabled`, copies `medal` and `earnedCars` onto the result,
+  and sends one `{medalEarned: true}` sound event. Settlement runs after the
+  race's own sound events, so the cue needs this event; `src/audio.js` plays
+  the existing `interface.bonus` for it (one line). The card did not list
+  `src/audio.js`; it is the smallest place for the named cue.
+- `src/heli/heli-jobs.js`: `AIR_ONLY_CARS` is the Jesko plus every medal car;
+  with today's cars it is exactly `['koenigsegg_jesko']`.
+- Medal discs are drawn in CSS (`src/screen-garage.css`); no image file.
+
+## Evidence
+
+- `tools/test-earned-cars-ui.mjs`: 4 tests, all pass. A real App Rival Duel
+  at Easy fills the box, shows the line and plays the cue once, a repeat adds
+  only to the count; switch off adds nothing; on a scratch copy with three
+  test medal cars (recycled after) the lists, counts, labels, locked pages,
+  rewards, air-only list and the hidden menu and rival car all behave.
+- Existing suites that render these screens pass unchanged:
+  `test-koenigsegg-ui`, `test-driver-ui`, `test-course-access-ui`,
+  `test-heli-jobs`, `test-heli-hooks`, `test-grand-prix-career-menu`.
+- Browser scenario `earned-cars`: see below.
+- Lane tier and build: see below.
+- Review: see below.
+
+## Changed assertions
+
+None.
+
+## Removed
+
+Nothing.
