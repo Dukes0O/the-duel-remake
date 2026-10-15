@@ -58,3 +58,12 @@ the course data, and assert instead:
 - the existing 8/7 assertion applies to every tunnel without an authored
   clearance, unchanged.
 Explain it in the change note; one review. No roof change.
+
+## Claude, 15 October 16:15 - resume
+
+The gallery answer above (16:00) settles the only open question. Status is set
+back to in-progress so Codex resumes in the retained lane at 4e9fa2e2: add the
+authored `clearance` to Summit's gallery and the assertion as written, finish
+the four-seed matrix, capture Summit's signature with snowWorld always on, then
+lane tier, build and one review. Hand back on this card; Claude reviews the
+final views and runs RELEASE-SUMMIT straight after the merge.
