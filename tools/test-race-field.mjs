@@ -13,11 +13,12 @@ import { testCourseAccess } from './career-fixture.mjs';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { FIELD, FIELD_TUNING, CATCH_UP_GAP_SEC, gridPose, chooseRacers, performanceIndex, racerSpec, catchUpFactor,
   classify } from '../src/race-field.js';
-import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro } from '../src/race-field-driver.js';
+import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro, playerPaceMph } from '../src/race-field-driver.js';
 import { shortRacerName, runningOrderRows, fieldResultsTable, fieldResultsText } from '../src/screen-field.js';
 import { installTestDriver } from './race-field-balance.mjs';
 import { App } from '../src/app.js';
 import { createFeatureFlags } from '../src/feature-flags.js';
+import {summarizeRacecraft} from './racecraft-rate.mjs';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -25,8 +26,8 @@ const equal = (actual, expected, message) => { assert.equal(actual, expected, me
 const close = (actual, expected, tolerance, message) => { assert.ok(Math.abs(actual - expected) <= tolerance, `${message} (got ${actual}, want ${expected})`); checks++; };
 const STEP = 1 / 60;
 
-function start({ cpu = 'medium', seed = 1989, fieldSeed = 4242, size = 7, car = 'falcone_f42', flag = true, mode = 'grandprix' } = {}) {
-  const duel = new Duel({ seed, featureFlags: { 'grand-prix': flag } });
+function start({ cpu = 'medium', seed = 1989, fieldSeed = 4242, size = 7, car = 'falcone_f42', flag = true, mode = 'grandprix', racecraft = false } = {}) {
+  const duel = new Duel({ seed, featureFlags: { 'grand-prix': flag, 'cpu-racecraft': racecraft } });
   duel.startCampaign({ mode, startStage: 0, car, seed, fieldSeed, fieldSize: size, cpuDifficulty: cpu, difficulty: 'casual' });
   return duel;
 }
@@ -70,6 +71,35 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
   check(r.boosting,'nitro can defend against an adjacent car');
   r.boost=0; stepCpuNitro(r,run,1,{straight:true,attack:true});
   check(!r.boosting && r.boost>0,'an empty tank recharges instead of creating free thrust');
+}
+
+{
+  const d=racing(start({racecraft:true})), s=d.state;
+  const line=racingLineFor(d.course), profile=buildSpeedProfile(line,d.car);
+  playerPaceMph(d);
+  for(let i=0;i<720;i++){
+    s.s+=profile.at(s.s)*DRIVE.mphToWorld*.85/60;s.stageTimeSec+=1/60;
+    playerPaceMph(d);
+  }
+  const pace=playerPaceMph(d);s.speedMph=0;
+  equal(playerPaceMph(d),pace,'instant braking cannot erase measured road pace');
+  close(pace/profile.at(s.s),.85,.001,'player pace uses comparable two-second road sectors');
+}
+{
+  const a=start({racecraft:true}),b=start({racecraft:true});
+  for(const d of [a,b]){racing(d);d.setInput({throttle:1,steer:0});run(d,18);}
+  equal(JSON.stringify(a.state),JSON.stringify(b.state),'enabled racecraft repeats from seed and inputs');
+}
+
+{
+  const courses=['panorama-ridge','tremblant-woods','pacific-canyon'];
+  const rows=courses.flatMap(course=>Array.from({length:20},(_,index)=>['normal','slow','nitro'].flatMap(mode=>[false,true].map(enabled=>
+    ({course,index,mode,enabled,wide:true,passes:enabled?4:2,crashes:0,pileUp:false,passedPlayer:true,firstLapPosition:2,finished:7,playerFinished:true,meanCpuTime:100}))))).flat(2);
+  check(summarizeRacecraft(rows,{courses,races:20}).passed,'reporter accepts complete qualifying fixture data');
+  check(!summarizeRacecraft(rows.slice(1),{courses,races:20}).passed,'a missing measurement cannot become a pass');
+  const incomplete=rows.map((r,i)=>i? r : {...r,finished:6,meanCpuTime:null});
+  check(!summarizeRacecraft(incomplete,{courses,races:20}).passed,'unfinished measurement cannot hide behind averages');
+  check(!summarizeRacecraft(rows.filter(r=>r.index===0),{courses,races:1}).passed,'a probe cannot count as the twenty-race acceptance');
 }
 
 // ---- the switch and the old modes ----
@@ -241,6 +271,15 @@ function quietStretch(duel) {
   check(started, 'a faster car close behind a slower one on a straight tries to pass');
   check(widest > 2.3, 'it pulls out to the side with room to spare');
   check(duel.relativeS(fast.s, slow.s) - slow.s > 0 || fast.field.passes.done > 0, 'and gets by');
+}
+{
+  // An opted-in racer may use a clear passing lane before the old ten-second hold.
+  const d=start({racecraft:true}),base=quietStretch(d),line=racingLineFor(d.course);
+  placeScene(d,[{s:base+20,lateral:line.offsetAt(base+20),v:110},{s:base+4,lateral:line.offsetAt(base+4),v:138}]);
+  d.state.stageTimeSec=3;
+  d.state.opponents[0].field.skillRoll=.8;d.state.opponents[1].field.skillRoll=1.2;
+  run(d,.5);
+  check(d.state.opponents[1].field.passes.start>0,'clear opening passes do not wait ten seconds');
 }
 {
   // Defending: one move to cover the inside before a braking zone, never once the attacker is alongside.

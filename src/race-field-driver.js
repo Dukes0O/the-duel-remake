@@ -28,6 +28,55 @@ export function stepCpuNitro(r, run, dt, {straight=false, attack=false, defend=f
 const MPH = DRIVE.mphToWorld;
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 
+// Normalize measured progress against the road, so braking for a corner does
+// not suddenly make a player look slower. Samples are private per race.
+const playerPaces=new WeakMap();
+export function playerPaceMph(duel){
+  const s=duel.state, field=s.field, line=racingLineFor(duel.course);
+  let p=playerPaces.get(field);
+  if(!p){
+    const profile=buildSpeedProfile(line,duel.car);
+    p={profile,time:s.stageTimeSec,s:s.s,elapsed:0,distance:0,expected:0,sectors:[]};
+    playerPaces.set(field,p);
+  }
+  const dt=s.stageTimeSec-p.time, distance=s.s-p.s;
+  if(dt>0){
+    if(distance>=0 && distance<duel.car.topSpeed*MPH*1.5*dt+1){
+      p.elapsed+=dt;p.distance+=distance;p.expected+=p.profile.at(p.s)*MPH*dt;
+      if(p.elapsed>=2){
+        p.sectors.push({time:s.stageTimeSec,ratio:p.distance/Math.max(1,p.expected)});
+        p.elapsed=0;p.distance=0;p.expected=0;
+      }
+    }else{p.elapsed=0;p.distance=0;p.expected=0;}
+    p.time=s.stageTimeSec;p.s=s.s;
+    p.sectors=p.sectors.filter(row=>s.stageTimeSec-row.time<=10);
+  }
+  let ratio=p.sectors.length ? Math.max(...p.sectors.map(row=>row.ratio)) : FIELD_TUNING[s.cpuDifficulty].pace;
+  if(s.lapTimes.length){
+    if(p.laps!==s.lapTimes.length){
+      let reference=0;
+      for(let i=0;i<p.profile.count;i++)reference+=p.profile.line.length/p.profile.count/(Math.max(1,p.profile.mph[i])*MPH);
+      p.lapRatio=reference/(Math.min(...s.lapTimes)/1000);p.laps=s.lapTimes.length;
+    }
+    ratio=p.lapRatio;
+  }
+  return p.profile.at(s.s)*Math.max(.05,ratio);
+}
+
+// Award a real close pass once per rival/lap; contact earns no recharge.
+function closePassRefill(r,run,near){
+  const seen=r.field.nitroPassed??={};
+  for(const c of near){
+    const previous=c.ds+(r.s-r.prevS)-(c.o.s-c.o.prevS);
+    if(previous>0 && c.ds<=0 && seen[c.index]!==r.completedLaps &&
+        Math.abs(c.dl)>=run.halfWidth+c.hw+.15 && Math.abs(c.dl)<6.4 &&
+        r.speedMph>=65 && !(r.contactCooldown>0)){
+      seen[c.index]=r.completedLaps;
+      r.boost=Math.min(1,r.boost+BOOST.nearMissRefill*CPU_NITRO.refill);
+    }
+  }
+}
+
 // Each racer's seeded random stream lives in plain numbers on its state.
 function rand(f) {
   let a = f.rng | 0;
@@ -250,6 +299,7 @@ export function stepFieldRacer(duel, r, dt) {
   const t = f.traits, now = s.stageTimeSec;
   const halfRoad = surface.roadHalfWidth;
   const near = sense(duel, r, run);
+  if(f.racecraft){playerPaceMph(duel);closePassRefill(r,run,near);}
   const zone = nextCorner(profile, r.s);
   const lineOffset = line.offsetAt(look);
 
@@ -316,10 +366,12 @@ export function stepFieldRacer(duel, r, dt) {
 
   // ---- passing: pull out beside a slower car, finish the move once alongside ----
   // How close behind a slower car this racer waits before pulling out; keener racers go sooner.
-  const window = Math.min(1.2, .5 + .7 * t.aggression * tuning.aggression * (r.completedLaps === 0 ? 1 + t.firstLap : 1));
+  const window = Math.min(f.racecraft ? 1.5 : 1.2, .5 + (f.racecraft ? 1 : .7) * t.aggression * tuning.aggression * (r.completedLaps === 0 ? 1 + t.firstLap : 1));
   // The lane beside a car on `side`: clear of the car and of the racing line where it is running.
   const passLane = (side, other, otherHalfWidth, ds) => {
-    const clear = run.halfWidth + otherHalfWidth + .3, onLine = line.offsetAt(r.s + ds);
+    const clear = run.halfWidth + otherHalfWidth + .3;
+    if(f.racecraft) return other.lateral+side*clear;
+    const onLine = line.offsetAt(r.s + ds);
     return side > 0 ? Math.max(onLine + clear + .1, other.lateral + clear) : Math.min(onLine - clear - .1, other.lateral - clear);
   };
   const cp = f.pass && (f.pass.index < 0 ? s : s.opponents[f.pass.index]);
@@ -343,9 +395,9 @@ export function stepFieldRacer(duel, r, dt) {
       else passIntent = lane;
     }
   }
-  if (!f.pass && blocker && blocker.gap > -1 && now >= (f.passCool || 0) && now > 10) {
+  if (!f.pass && blocker && blocker.gap > -1 && now >= (f.passCool || 0) && now > (f.racecraft ? 0 : 10)) {
     // Quicker than the car ahead in its own right, not just for a moment (the player's pace is its speed).
-    const theirs = blocker.index >= 0 ? runtimeOf(duel, blocker.o).profile.at(blocker.o.s) * (1 + paceForm(blocker.o.field, now)) : blocker.speed;
+    const theirs = blocker.index >= 0 ? runtimeOf(duel, blocker.o).profile.at(blocker.o.s) * (1 + paceForm(blocker.o.field, now)) : (f.racecraft ? playerPaceMph(duel) : blocker.speed);
     const closing = profile.at(r.s + blocker.ds) * (1 + formNow) - theirs;
     const gapTime = Math.max(0, blocker.gap) / Math.max(12, mps);
     const straight = Math.abs(line.curvatureAt(look)) < 1 / 300 && Math.abs(line.curvatureAt(look + 70)) < 1 / 260 &&
@@ -353,14 +405,14 @@ export function stepFieldRacer(duel, r, dt) {
     // Is there road enough before the next braking zone to finish the move?
     const roadAhead = zone && zone.toEntry > -10 ? zone.toEntry : Infinity;
     const needed = mps * (blocker.gap + 8) / Math.max(1, closing * MPH) + 30;
-    if (closing > Math.max(2, r.speedMph * .008) && gapTime < window && straight && roadAhead > needed) {
+    if (closing > Math.max(2, r.speedMph * .008) && gapTime < window && straight && roadAhead > (f.racecraft && now<10 ? Math.min(needed,mps+5) : needed)) {
       const inside = zone && zone.toApex < 320 ? zone.corner.dir : 0;
       const roomed = side => roadLimit - Math.abs(passLane(side, blocker.o, blocker.hw, blocker.ds));
       const sides = (inside || (roomed(1) >= roomed(-1) ? 1 : -1)) > 0 ? [1, -1] : [-1, 1];
       for (const side of sides) {
         const lane = passLane(side, blocker.o, blocker.hw, blocker.ds);
         if (Math.abs(lane) > roadLimit - .6) continue;
-        const crowded = near.some(c => c !== blocker && c.ds > -(run.halfLength + c.hl + 4) && c.ds < blocker.ds + 30 &&
+        const crowded = near.some(c => c !== blocker && c.ds > -(run.halfLength + c.hl + 4) && c.ds < (f.racecraft ? Math.max(run.halfLength+c.hl, mps) : blocker.ds+30) &&
           Math.abs(c.o.lateral - lane) < run.halfWidth + c.hw + .3);
         if (crowded) continue;
         f.pass = { index: blocker.index, side, since: now, bestGap: blocker.gap, bestAt: now };
