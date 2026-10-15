@@ -172,3 +172,10 @@ Claude approved1.10m uniform nose-to-tail scale, feet pivot and up to2cm tail pe
 Before implementation, decode the actual indexed dark paw-region vertices from the approved donor and prove the four feet contact plane from those coordinates and viewed anatomy. Use its real foot minimum as anchor, uniformscale1.10/actual nose-to-tail extent, +Yup/+Zhead. Preserve complete candidate BIN bytes; only root node scale/translation and container JSON lengths may change. Measured transformed feet must touch0 and tail stay within[-.02,0]; fail rather than change pose or force a ground claim if the actual geometry disagrees. Keep actual source hashes/licence, no clips/rigs invented. Reuse existing GLB container serialization and existing planner cases; no new harness or dependencies.
 
 Freeze the precise foot/transform source plan and code for review before any import/test/fit generation/export/render. No already-finished source view is repeated. Source-preparation limit30minutes, by08:20UTC; then note/move. Root remains scheduler and integration editor.
+
+
+## Foot datum clarification within the approved unchanged-donor fit
+
+Read-only source inspection measures both rear paw minima atY-18.33993911743164 and front minima at-18.159942626953125. At1.10m scale the original front soles sit1.774mm above the rear datum; tail reaches14.90mm below it. No pose or tail edit is allowed.
+
+Use the minimum actual paw sole as the feet pivot, as Claude approved, and preserve the donor exactly. Root withdraws its additional requirement that four distinct original paw minima become mathematically coplanar: uniform scaling cannot do that without changing the approved donor. The fit check proves the lowest real paw datum is0 and tail stays within2cm; it records the untouched front-foot offset instead of calling all four feet grounded or inventing an acceptance tolerance. This is private source fitting, not game-placement or art acceptance. All other source-only scope and08:20UTC limit remain.
