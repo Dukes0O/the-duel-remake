@@ -24,3 +24,7 @@ reward lands once and never on a retake; a maxed car gets the credits; the
 save checker passes with the new fixture; lane tier, build, one review (the
 save helper review that AGENTS rule 6 asks for).
 Removed: nothing.
+
+## Build claim — 15 October afternoon
+
+Kyle directed continued building. drive-lesson-save/codex/drive-lesson-save holds save-shape, separate from the frozen Snow lane. Build only the settled optional save/reward slice; no lesson gameplay or switch-on. A successful finish takes a finite positive challenge margin, retains the best margin, and grants the one-time reward atomically on the passed car. Retakes may improve best but never pay again. A separate reward call can settle a done-but-unrewarded lesson once. Unknown lesson IDs and invalid/locked cars cannot earn. The existing fixture roster now includes heli/fire and medals; add the named11-driving-lessons fixture without replacing either. Save helper review required.

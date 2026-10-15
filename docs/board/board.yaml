@@ -658,7 +658,9 @@ tasks:
     owner: "codex"
     lane: "SAVE"
     size: "S"
-    status: "ready"
+    status: "in_progress"
+    claimed_by: codex-drive-lesson-save-2026-10-15
+    branch: codex/drive-lesson-save
     needs: []
     locks: [save-shape]
     flag: "driving-lessons"
