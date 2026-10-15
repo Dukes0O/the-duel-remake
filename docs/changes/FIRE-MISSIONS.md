@@ -49,6 +49,16 @@ session ruled the pending H1 release is not a build dependency).
   the new rules file).
 - Lane tier and build: below.
 
+## Review (rule 17)
+
+One independent reviewer read the three lanes cut from FIRE-SAVE. Fixed
+here: `runEngine` rounded to tenths on every call, so the 20 engine
+minutes never ran down when fed a frame at a time; it now keeps the exact
+value (the save keeps tenths), with a test that runs 72,000 frames down to
+0. `openCall` now opens a call only when one is due, so a second ring can
+never reopen or reset a waiting call (tested). The 20 s answer window
+(`MISSION_RULES.answerSeconds`) is timed by the session: FIRE-HOOKS owns it.
+
 ## Changed assertions
 
 None.
