@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T23:30:00.096Z
+Observed at: 2026-10-15T23:30:24.598Z
 
-Observation commit: 9e14b71e0a6936a0859736fa48199a426043f930
+Observation commit: 9cfd6bcb9fb468d7deb741a52e8045b995a76eb4
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 9e14b71e0a6936a0859736fa48199a426043f930
+Integration HEAD: 9cfd6bcb9fb468d7deb741a52e8045b995a76eb4
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -31,7 +31,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
-| codex/heli-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src |
 | codex/intel-levels | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/intel-levels |
 | codex/p4-ardennes | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-finish | 4 | unknown | false | false | unknown |
@@ -83,7 +82,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 297,528 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 440,090,624 B | +84,992 B | unavailable |
+| Git objects | 440,116,224 B | +25,600 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -92,7 +91,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 9e14b71e0a6936a0859736fa48199a426043f930
+- Local integration/wasteland: 9cfd6bcb9fb468d7deb741a52e8045b995a76eb4
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
