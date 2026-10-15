@@ -272,3 +272,16 @@ Independent review confirmed a fixture fault: BoxGeometry stores its positions a
 This two-file correction is unrun pending Root confirmation. Root may rerun only the affected circuit suite; the passing track-kit suite and original export are not repeated. Original receipt remains `.evidence/2026-10-15/P4-ARDENNES/beech-assets-3185f91b`. Native R3, Claude acceptance, signature, final gate and build remain pending.
 
 Removed: only the unintended tiny negative base of the new synthetic test box. No real grounding behavior, assertion or asset is removed.
+
+
+## Proven UV and final-picture corrections before submission
+
+The original final native packet 85114 on clean 688eb094 completed 07:41:18.6393889 UTC, exit 0, 79,113.6539 ms, all 28 views, private/memory-only, no issues or warnings. Root inspected the three original High close PNGs: streets are legible, the stone bridge is end-on, and the beech is flat bright green with foreground firs hiding its trunk. No final JPEG or formal Claude R3 was submitted. Mechanical native success is not art acceptance.
+
+Independent GLB inspection proved both qualities select constant TEXCOORD_0 for both leaf materials; the varying coordinates are TEXCOORD_1 because crown Original leaves and cone UVMap became separate layers on join. Lease 882ebc4a changes only the crown layer name to UVMap. The existing actual-GLB case now decodes the UV channel each actual leaf material selects, including an explicit texture-transform channel override, and requires finite varying U/V on both materials in both files. Original mesh, image, budget, provenance and other assertions remain. No palette, geometry, lighting or threshold changed. This new regression is unrun against the old files; the corrected pair has not been exported.
+
+The stone camera targets the correct Red Water row at s 783.8296472423 / lateral 36, not Kestrel's footbridge at s 1557.5884861117. Its former high longitudinal view hid the real arch behind an end pier. Only this close pose now looks broadside: eye at bridge.s - 6 / lateral - 18 / actual ground + 5, target at bridge.s / lateral / actual ground + 1.5. Beech selection now picks an actual road-edge Kestrel replacement by minimum absolute lateral, midpoint distance and stable ID. Its eye stays at that tree's station, 12 m toward the road, at actual eye ground plus half the drawn bound height; it aims at the actual bound centre after native camera settling. The compositor checks these same recorded poses. No fir is hidden and no visibility pass is assumed.
+
+Source-only correction: no tests, imports, export repeat, native, art, signature, gate or build ran. All original 28 views, stock/seed/field/incident/light/read-only guards and actual assets remain intact. Root review precedes one old-file UV regression, one corrected export, affected acceptance and any corrected native packet. Final R3 remains the only available art round; failure investigation stops by 08:12 UTC.
+
+Removed: the mismatched crown UV-layer name and the two obscuring close-view choices. No real model geometry, image, palette, physical tree, existing view or assertion was removed.

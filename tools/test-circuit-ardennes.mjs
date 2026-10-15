@@ -992,6 +992,28 @@ test('the actual original beech pair has embedded leafy images and retains its s
     assert.ok(gltf.images.length>0&&gltf.images.every(image=>Number.isInteger(image.bufferView)&&image.mimeType==='image/png'&&!image.uri));
     const primitives=gltf.meshes.flatMap(mesh=>mesh.primitives);
     assert.ok(primitives.every(primitive=>(primitive.mode??4)===4&&Number.isInteger(primitive.attributes.NORMAL)&&Number.isInteger(primitive.attributes.TEXCOORD_0)));
+    const jsonLength=bytes.readUInt32LE(12),binHeader=20+jsonLength;
+    assert.equal(bytes.readUInt32LE(binHeader+4),0x004e4942);const binStart=binHeader+8;
+    const leafMaterials=new Set();
+    for(const primitive of primitives){
+      const material=gltf.materials[primitive.material],leafName=material.name.replace(/\.\d+$/,'');
+      if(!['summer beech leaves','dark beech leaf underside'].includes(leafName))continue;
+      const texture=material.pbrMetallicRoughness?.baseColorTexture;assert.ok(texture,'each actual leaf material samples its original texture');
+      const channel=texture.extensions?.KHR_texture_transform?.texCoord??texture.texCoord??0;
+      const accessorIndex=primitive.attributes['TEXCOORD_'+channel];assert.ok(Number.isInteger(accessorIndex),'material-selected leaf UV channel exists');
+      const accessor=gltf.accessors[accessorIndex],view=gltf.bufferViews[accessor.bufferView];
+      assert.equal(accessor.type,'VEC2');assert.equal(accessor.componentType,5126);assert.equal(view.buffer,0);
+      const stride=view.byteStride??8,start=binStart+(view.byteOffset??0)+(accessor.byteOffset??0);
+      let minU=Infinity,minV=Infinity,maxU=-Infinity,maxV=-Infinity;
+      for(let vertex=0;vertex<accessor.count;vertex++){
+        const at=start+vertex*stride;assert.ok(at+8<=binStart+(view.byteOffset??0)+view.byteLength);
+        const u=bytes.readFloatLE(at),v=bytes.readFloatLE(at+4);assert.ok(Number.isFinite(u)&&Number.isFinite(v));
+        minU=Math.min(minU,u);maxU=Math.max(maxU,u);minV=Math.min(minV,v);maxV=Math.max(maxV,v);
+      }
+      assert.ok(maxU>minU&&maxV>minV,material.name+': the selected UV channel must vary, not sample one constant leaf texel');
+      leafMaterials.add(leafName);
+    }
+    assert.deepEqual([...leafMaterials].sort(),['dark beech leaf underside','summer beech leaves']);
     const triangles=primitives.reduce((sum,primitive)=>sum+gltf.accessors[primitive.indices].count/3,0);
     assert.ok(triangles>0&&triangles<=[684,240][index]);assert.equal(triangles,record[index?'lowTriangles':'highTriangles']);
     const materials=gltf.materials.map(material=>material.name);

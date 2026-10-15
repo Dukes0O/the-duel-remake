@@ -104,7 +104,7 @@ def crown(index, lobe, low, leaves, underside):
     mesh.from_pydata(vertices, [], faces)
     mesh.materials.append(leaves)
     mesh.materials.append(underside)
-    uv = mesh.uv_layers.new(name="Original leaves")
+    uv = mesh.uv_layers.new(name="UVMap")
     for polygon in mesh.polygons:
         polygon.use_smooth = True
         polygon.material_index = int(sum(vertices[i][2] for i in polygon.vertices) / len(polygon.vertices) < z - .2)

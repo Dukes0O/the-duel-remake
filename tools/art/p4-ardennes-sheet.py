@@ -56,6 +56,16 @@ def final_close_sheet(args, report):
         if (row.get('laps') != 1 or row.get('fogNear') != 360 or not row.get('stateUnchanged') or
                 row.get('nativeFieldSize') != 8 or not 1 <= row.get('nativeCars', 0) <= 8 or row.get('closeView', {}).get('kind') != kind):
             raise ValueError('A close view must retain actual clear second-lap native context')
+        if kind == 'actual-stone-bridge-stream':
+            view = row['closeView']
+            bridge = view.get('bridge', {})
+            if (bridge.get('id') != 'stone-stream-bridge' or view.get('station') != bridge.get('s') or
+                    view.get('eyeS') != bridge['s'] - 6 or view.get('eyeOff') != bridge['lateral'] - 18 or
+                    view.get('targetS') != bridge['s'] or view.get('targetOff') != bridge['lateral'] or
+                    view.get('eyeHeight') != 5 or view.get('targetHeight') != 1.5 or
+                    abs(row['camera'][1] - (view['eyeGround'] + 5)) >= .001 or
+                    view['target'][1] != view['targetGround'] + 1.5):
+                raise ValueError('Stone bridge close view must retain the actual broadside pose')
         if kind == 'actual-beech-grove':
             view = row['closeView']
             bounds = view.get('bounds', {})
@@ -63,6 +73,13 @@ def final_close_sheet(args, report):
                     len(bounds.get('min', [])) != 3 or len(bounds.get('max', [])) != 3 or
                     any(not low < high for low, high in zip(bounds['min'], bounds['max']))):
                 raise ValueError('Beech close view lacks its actual bound original tree/crown')
+            tree = view.get('tree', {})
+            side = 1 if tree['off'] > 0 else -1 if tree['off'] < 0 else 0
+            if (view.get('eyeS') != tree['s'] or view.get('eyeOff') != tree['off'] - side * 12 or
+                    view.get('eyeHeight') != (bounds['max'][1] - bounds['min'][1]) * .5 or
+                    view.get('target') != [(a + b) * .5 for a, b in zip(bounds['min'], bounds['max'])] or
+                    abs(row['camera'][1] - (view['eyeGround'] + view['eyeHeight'])) >= .001):
+                raise ValueError('Beech close view must retain its actual roadside eye and bound centre')
         image = Image.open(args.browser / row['file']).convert('RGB')
         if image.size != (1280, 720):
             raise ValueError('Close view is not the original full native viewport')
