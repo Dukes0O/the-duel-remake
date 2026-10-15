@@ -79,7 +79,10 @@ burning cells, grown by the game's own rules.
   the camera, so the cable view never fills with one square sprite.
 - The scenario's race frames wait for the start: the frame measurement
   stops itself when the race moves from the countdown to racing.
-- Lane tier and build: below.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`)
+  with FIRE-HOOKS and integration merged in: 189 passed, 0 failed, 0 not
+  run in 639 s. `npm run build`: passed. (The run before found the import
+  allow-list and the looks folder's 20 MB limit; both fixed above.)
 
 ## Files beyond the card's list (for the Director)
 
