@@ -345,6 +345,7 @@ tasks:
     lane: "TOOLS"
     size: "S"
     status: "ready"
+    waiting_on: claude
     needs: []
     details: "docs/board/cards/QA-STOCK-SNOW.md"
 
