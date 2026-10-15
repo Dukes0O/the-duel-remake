@@ -807,6 +807,16 @@ export const CAR_VOICES = {
     exhaust: 0.17,
     intake: 0.19,
   },
+  // Earned car 1: a naturally aspirated V12, so a touch higher and brighter
+  // than the muscle car, with a clear intake and a loud exhaust.
+  ferrari_enzo: {
+    pitch: 1.05,
+    brightness: 1.1,
+    gain: 1,
+    accent: 1.04,
+    exhaust: 0.16,
+    intake: 0.15,
+  },
   titan_monster: {
     pitch: 0.83,
     brightness: 0.76,

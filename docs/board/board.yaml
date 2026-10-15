@@ -387,7 +387,7 @@ tasks:
     claimed_by: "claude-design-2026-10-14"
     branch: "claude/enzo-model"
     needs: [EARN-SCREEN]
-    locks: [sound-bank]
+    locks: []
     flag: "earned-cars"
     details: "docs/board/cards/EARN-CAR-1.md"
 
