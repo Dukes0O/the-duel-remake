@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T03:28:18.708Z
+Observed at: 2026-10-15T03:32:44.527Z
 
-Observation commit: 147db79b6c18cfe1d63e9ba38cfb4eb788cc457b
+Observation commit: 2ec1c701197bd30f9a06238dae3b415c1098417b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 147db79b6c18cfe1d63e9ba38cfb4eb788cc457b
+Integration HEAD: 2ec1c701197bd30f9a06238dae3b415c1098417b
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-15T03:04:30.279Z; tested commit: aa95cf955aced2d8982deec008f25b3ec0509f55.
+Last recorded full run: 2026-10-15T03:31:23.814Z; tested commit: aa95cf955aced2d8982deec008f25b3ec0509f55.
 
 ## Feature switches
 
@@ -97,7 +97,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-summit-attack | P4-SUMMIT-ATTACK | 2026-10-14T20:27:15-07:00 | 0 | last commit 2026-10-14T20:27:15-07:00 | docs/changes/P4-SUMMIT-ATTACK.md, src/app.js, src/audio.js, src/circuit-manifests.js, src/circuits/summit-time-attack.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T20:21:30-07:00 | 0 | last commit 2026-10-14T20:21:30-07:00 | docs/changes/PERF-HIGH-NIGHT.md, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T20:30:07-07:00 | 0 | last commit 2026-10-14T20:30:07-07:00 | docs/changes/PERF-HIGH-NIGHT.md, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/qa-titan-replay-timeout | QA-TITAN-REPLAY-TIMEOUT | 2026-10-14T19:39:55-07:00 | 0 | last commit 2026-10-14T19:39:55-07:00 | docs/changes/QA-TITAN-REPLAY-TIMEOUT.md, tools/run-tests.mjs, tools/test-test-runner.mjs, tools/test-titan-climb.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
@@ -115,9 +115,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,947,441 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 269,207 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 146,684 B | -122,523 B | 5,000,000 B |
 | All `public/` | 298,113,947 B | +0 B | unavailable |
-| Git objects | 407,216,128 B | -22,583,296 B | unavailable |
+| Git objects | 407,414,784 B | +198,656 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -126,7 +126,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 147db79b6c18cfe1d63e9ba38cfb4eb788cc457b
+- Local integration/wasteland: 2ec1c701197bd30f9a06238dae3b415c1098417b
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
