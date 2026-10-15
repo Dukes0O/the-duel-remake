@@ -82,6 +82,8 @@ pending H1 release is not a build dependency).
   Fifteen suites after it were not run by the stopped lane; they were run by
   hand with the runner and all pass.
 
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`) after merging integration: 132 passed, 0 failed, 0 not run in 2,163 s. `npm run build`: passed.
+
 ## Changed assertions
 
 One, at the coordinator's direction: `tools/test-heli-mode.mjs` lets the
