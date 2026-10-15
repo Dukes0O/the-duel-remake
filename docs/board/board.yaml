@@ -181,8 +181,7 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "blocked"
-    waiting_on: claude
+    status: "building"
     claimed_by: codex-intel-levels-2026-10-15
     branch: codex/intel-levels
     locks: [busy-game-files, save-shape]
@@ -361,8 +360,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "blocked"
-    waiting_on: claude
+    status: "building"
     claimed_by: codex-tyre-slip-2026-10-15
     branch: codex/tyre-slip
     needs: []

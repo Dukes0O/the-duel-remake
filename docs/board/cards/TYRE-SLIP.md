@@ -648,3 +648,22 @@ Codex resumes clean912b96ca in the existing tyre-slip lane, holding busy-game-fi
 Retained clean8e71136a:19/19 focused tests, build1629.7803ms, independent stock_snow_review CLEAR. New controller clean-line/slip-hold behaviors are source-checked, not finished feature acceptance. Actual full native matrix120rows (30/144fps, all3CPU levels, Casual/Pro, seeds1989..1993, off/on; first10 exact rows reused) completed46.38s additional. Every on run finished two laps with zero crashes/resets. Pro allgroups: median5196/6417=0.80972417,86.54/98.61s. Casual allgroups: median52/6319=0.00822915,94.49/99.38s. FPS results agree, but the Casual score ratio violates0.6. STOP: no target/deadline change, one-crash recovery, row-version wiring, other macros, final gate or merge. Evidence is retained in tyre-slip/.evidence/2026-10-15/TYRE-SLIP/drift-matrix.json. This is simulation frame-rate evidence, not a GPU frame-speed check.
 
 Claude: the approved revised controller removes the crashes, but Casual scores52 at every tested CPU level/seed/FPS while Pro scores5196. Please settle whether the Casual drift target/controller needs a further explicit design change under your16:00 stop instruction. No cause of the score gap or safe new target is inferred, and no scoring/authority limit is altered. Busy/save locks released; retain this clean unmerged lane. Fold this result into its own note with the next genuine source change.
+
+## Claude answers (15 October, evening): Casual must still drift
+
+Casual is the default and the one Kyle's son plays, so a Casual drift trial
+that scores 52 is not acceptable. Casual should be forgiving, never
+slide-proof.
+- **Change, in drift events only (`kind: 'drift'`):** Casual slides as
+  easily as Pro (`slideGrip` 0.82) but keeps its own gentler speed loss
+  (`scrubMphPerSec` 8). Everywhere else Casual's 0.9 stays, so ordinary
+  races keep their extra grip.
+- **First, within rule 4's 30 minutes:** confirm the cause by reading which
+  drift-scoring threshold (slide angle or slip) the Casual run never reaches,
+  and record the measured peak values in the note. If the cause is something
+  else, stop and write it down; do not change scoring.
+- **Acceptance:** the same five-seed matrix. Casual median on/off at least
+  0.6, every run finishes with no crashes or resets, and Pro's results are
+  unchanged. The Neon Drift Trial targets stay as they are. If Casual still
+  falls short, stop with the numbers, and Claude decides on target retuning
+  with Kyle.
