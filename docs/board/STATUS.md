@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T01:02:15.622Z
+Observed at: 2026-10-15T01:10:21.644Z
 
-Observation commit: 4f2ae4d07bae374d170d747c0a8a680541a2a255
+Observation commit: 78e2f46ff091ea45f123e2d501e919692bba265f
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 4f2ae4d07bae374d170d747c0a8a680541a2a255
+Integration HEAD: 78e2f46ff091ea45f123e2d501e919692bba265f
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -86,7 +86,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/heli-art-src | HELI-ART-SRC | 2026-10-14T18:00:01-07:00 | 0 | last commit 2026-10-14T18:00:01-07:00 | docs/board/looks/heli-accessories/round-1-review.md, docs/board/looks/heli-accessories/round-1.jpg, docs/changes/HELI-ART-SRC.md, public/assets/heli/cargo-hook.glb, public/assets/heli/fuel-pump.glb |
-| codex/p4-ardennes | P4-ARDENNES | 2026-10-14T18:02:05-07:00 | 0 | last commit 2026-10-14T18:02:05-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb |
+| codex/p4-ardennes | P4-ARDENNES | 2026-10-14T18:05:46-07:00 | 0 | last commit 2026-10-14T18:05:46-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb |
 | codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T17:25:38-07:00 | 0 | last commit 2026-10-14T17:25:38-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, src/track-kits.js, src/track-script-course.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
@@ -108,7 +108,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,783,956 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 314,138 B | +0 B | 5,000,000 B |
 | All `public/` | 293,933,151 B | +0 B | unavailable |
-| Git objects | 422,660,096 B | +392,192 B | unavailable |
+| Git objects | 424,397,824 B | +1,737,728 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -117,7 +117,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 4f2ae4d07bae374d170d747c0a8a680541a2a255
+- Local integration/wasteland: 78e2f46ff091ea45f123e2d501e919692bba265f
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

@@ -814,6 +814,7 @@ tasks:
     lane: "ART"
     size: "M"
     status: "ready"
+    waiting_on: claude
     needs: []
     locks: []
     flag: "wildlife"
