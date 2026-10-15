@@ -492,3 +492,18 @@ front and the beeches behind. Frame cost at the busiest view is checked when
 the round is accepted (AGENTS rule 8). Then the usual lane tier, build, one
 review, world signature capture and merge, and Claude's finishing pass
 (P4-FINISH-ARDENNES).
+
+## Art accepted and merged (Claude, 15 October)
+
+Round 4 (Claude's lane, at Kyle's request) is accepted and merged: leaf-card
+beeches from ambientCG LeafSet024 (CC0) set back behind the firs, and a
+red-brown water stream with wet banks under the stone arch. Merge into
+integration from claude/ardennes-art; codex/p4-ardennes is fully contained and
+can be cleared. Ardennes stays dev. Left before Kyle's go-live:
+1. the Long Left player crash in the stock replay (one known exception);
+2. the frame check at the busiest view (the grid at Pit Straight) at both
+   qualities;
+3. Claude's finishing pass, P4-FINISH-ARDENNES;
+4. the switch-on, the same way as Summit's (SUMMIT-SWITCH-ON).
+Owner returns to Codex for 1, 2 and 4.
+
