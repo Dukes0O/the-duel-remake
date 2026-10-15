@@ -128,3 +128,10 @@ driver, two paramedics) start from the **Quaternius** [Universal Base
 Characters, Standard](https://quaternius.com), CC0. The recipe
 `tools/blender/rescue-people.py` poses the rigged bodies, thins them, colours
 them and adds original clothing and gear; no Quaternius texture is shipped.
+
+## Ardennes original circuit landmarks
+
+The stone stream bridge, forest footbridge and forest timing tower are original project geometry made for Ardennes Forest. They use no external models, textures or downloads. The editable recipe is `tools/blender/ardennes-landmarks.py`. The measured High/LOD provenance is recorded by that recipe in `tools/art/ardennes-landmarks.json`. Prior kit credits remain unchanged.
+
+
+The Ardennes-only summer beech has an original trunk and limbs (authored in `tools/blender/ardennes-beech.py`) and a crown of crossed leaf cards. The leaves are real beech-leaf photographs from the **ambientCG** [Leaf Set 024](https://ambientcg.com/a/LeafSet024) (asset id `LeafSet024`, file `LeafSet024_1K-JPG.zip`), released under **CC0 1.0** (https://docs.ambientcg.com/license/). `tools/art/ardennes-leaf-sprite.py` cuts the nine leaves out of the set's colour and opacity maps and scatters them into one small spray tile; the Blender recipe puts that tile on the cards (alpha test, no blending) and embeds it in the two GLBs. Only the two small tiles ship, inside the GLBs; the downloaded set is not kept. High/LOD measurements, the set's file hashes and the tile hashes are written to `tools/art/ardennes-beech.json` by the export recipe.

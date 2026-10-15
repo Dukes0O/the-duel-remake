@@ -1,6 +1,6 @@
 // Ardennes Forest (docs/CIRCUITS.md section 5.5): a fast, flowing forest circuit
-// with big height changes, the longest lap in the game. Road layout only; art,
-// light, landmarks, the safety kit and the full field belong to later cards.
+// with big height changes, the longest lap in the game. The approved road stays
+// unchanged while this card adds its course-owned forest and circuit dressing.
 //
 // The script below is Claude's fitted layout (13 October 2026), copied exactly
 // from CIRCUITS.md 5.5. A width stays in force until a piece sets another, so
@@ -14,9 +14,9 @@
 //
 // No full-length walls: the road keeps the default 12 m of run-off on both sides
 // (the same open edge Tremblant Woods uses). Barriers are the safety-kit card's job.
-import {defineScriptedCourse} from '../track-script.js';
+import {defineScriptedCourse, buildTrackScript} from '../track-script.js';
 
-export const ARDENNES_FOREST = defineScriptedCourse({
+const ARDENNES_ROAD = defineScriptedCourse({
   id: 'ardennes-forest', name: 'Ardennes Forest', flag: 'ardennes-forest',
   theme: 'alpine', stage: 21, kind: 'circuit', layoutVersion: 1,
   closed: true, laps: 2, hasRival: true, hasRadar: false, noTraffic: true, noCombat: true, speedLimitMph: 100,
@@ -67,6 +67,173 @@ export const ARDENNES_FOREST = defineScriptedCourse({
   ],
   // The pit lane runs along the right of Pit Straight, as at Panorama Ridge.
   pitLane: Object.freeze({straight: 'Pit Straight', side: 'right'}),
+});
+
+
+const LONG_LEFT_RUNOFF = Object.freeze([Object.freeze({s0: 3330, s1: 3730, side: -1, width: 20, taper: 40})]);
+const road = buildTrackScript({...ARDENNES_ROAD, runoffBands: LONG_LEFT_RUNOFF});
+const named = name => road.pieces.find(piece => piece.name === name);
+const wrap = s => ((s % road.length) + road.length) % road.length;
+const row = (id, s, lateral, extra = {}) => Object.freeze({id, s: wrap(s), lateral, ...extra});
+const PIT_END = named('Pit Straight').s1;
+// The stream crosses Red Water on a line midway between two of the near ground's 4 m rows (it is drawn in rows
+// at every 4 m of road), so the channel has two rows of bed and a bank row on each side.
+const RED_WATER_S = Math.floor((named('Red Water').s0 + named('Red Water').s1) / 8) * 4 + 2;
+
+function paddock() {
+  const out = [row('start-gantry', 0, 0, {heading: Math.PI})];
+  for (let s = 70; s < PIT_END - 65; s += 7.5)
+    out.push(row('pit-garage', s, -31, {heading: Math.PI / 2, solid: true}));
+  for (let s = 55; s < PIT_END - 30; s += 15)
+    out.push(row('grandstand', s, 31, {heading: -Math.PI / 2, solid: true, crowd: true}));
+  // The existing native pit divider owns both drawing and collision.
+  // Do not duplicate its wall with a second kit face.
+  return out;
+}
+
+function safety() {
+  const out = [];
+  // Standard run-off stays at 12 m; the answered Long Left outside band
+  // widens to 20 m. The right-hand paddock and native pit openings stay clear.
+  for (let s = 4; s < road.length - 4; s += 8) for (const side of [-1, 1]) {
+    if (side < 0 && (s <= PIT_END + 15 || s >= road.length - 75)) continue;
+    const band = LONG_LEFT_RUNOFF[0];
+    const lateral = side === band.side && s >= band.s0 && s <= band.s1
+      ? side * (road.halfWidthAt(s) + road.runoffWidthAt(s, side, 12) + 2.3)
+      : side * (road.halfWidthAt(s) + 14.3);
+    out.push(row('catch-fence', s, lateral,
+      {heading: Math.PI / 2, scale: Object.freeze([2, 1, 1]), solid: true}));
+  }
+  for (const name of ['La Fontaine', 'Red Water', 'The Wall', 'Les Combes', 'Malmedy',
+    'Riverside', 'Woodland Left', 'Long Left', 'Fagnes', 'Campus', 'Stavelot',
+    'Woodcutter', 'Whitewood', 'Bus Stop', 'Bus Stop 2']) {
+    const piece = named(name), side = -piece.dir;
+    for (let s = piece.s0 - 8; s < piece.s1 + 8; s += 4) {
+      if (side < 0 && wrap(s) <= PIT_END + 15) continue;
+      const lateral = name === 'Long Left' && side === -1
+        ? side * (road.halfWidthAt(s) + road.runoffWidthAt(s, side, 12) + .8)
+        : side * (road.halfWidthAt(s) + 12.8);
+      out.push(row('armco', s, lateral,
+        {heading: Math.PI / 2, solid: true}));
+    }
+  }
+  return out;
+}
+
+function landmarks() {
+  const out = [];
+  const fontaine = named('La Fontaine'), wall = named('The Wall'), red = named('Red Water');
+  // The outside terrace uses the accepted lodge and shopfront kits.
+  out.push(row('ski-lodge', fontaine.s0 + 20, 44, {heading: -Math.PI / 2, scale: .7, clear: 12}));
+  out.push(row('wooden-dock', fontaine.s0 + 20, 35, {heading: -Math.PI / 2, scale: .75, clear: 10}));
+  out.push(row('stone-stream-bridge', RED_WATER_S, 36, {heading: Math.PI / 2, clear: 12}));
+  for (let i = 0; i < 6; i++) out.push(row('grandstand', wall.s0 - 15 + i * 15, -34,
+    {heading: Math.PI / 2, crowd: true, solid: true, clear: 11}));
+  const kestrel = named('Kestrel Straight');
+  out.push(row('forest-footbridge', kestrel.s0 + (kestrel.s1 - kestrel.s0) * .58, 0, {clear: 38}));
+  out.push(row('forest-timing-tower', named('Bus Stop Exit').s0, -42, {heading: Math.PI, clear: 12}));
+  return out;
+}
+
+// Two compact streets on the low ribbon beside Stavelot, not the old far hillside.
+// The shared helper seats each footing; whole church support still needs review.
+const VILLAGE = Object.freeze({s: named('Stavelot').s0 + 30, lateral: 38});
+function valleyTown() {
+  const houses = [], lamps = [], taken = [{s: VILLAGE.s, lateral: VILLAGE.lateral, along: 12, across: 11}];
+  const free = (s, lateral, along, across) => taken.every(other =>
+    Math.abs(other.s - s) >= other.along + along || Math.abs(other.lateral - lateral) >= other.across + across);
+  for (const street of [28, 48]) for (let along = -65, i = 0; along < 135; along += 13, i++) {
+    const s = named('Stavelot').s0 + along, centre = street + 1.2 * Math.sin(along / 70);
+    for (const side of [-1, 1]) {
+      const width = 6.2 + i % 3 * .5, depth = 6.4 + i % 2 * .6;
+      const lateral = centre + side * 8.5, middle = lateral - side * 1.15;
+      const halfAlong = width / 2 + .6, halfAcross = (depth + 2.3) / 2 + .5;
+      if (!free(s, middle, halfAlong, halfAcross)) continue;
+      taken.push({s, lateral: middle, along: halfAlong, across: halfAcross});
+      houses.push(Object.freeze({s, lateral, heading: -side * Math.PI / 2,
+        width, depth, storeys: i % 4 === 0 ? 2 : 1}));
+    }
+    if (i % 4 === 0 && free(s, centre + 3, .5, .5)) {
+      taken.push({s, lateral: centre + 3, along: .5, across: .5});
+      lamps.push(Object.freeze({s, lateral: centre + 3}));
+    }
+  }
+  const streets = [28, 48].map(lateral => Object.freeze({width: 4,
+    points: Object.freeze(Array.from({length: 196}, (_, i) => {
+      const s = named('Stavelot').s0 - 65 + i;
+      return Object.freeze({s, lateral: lateral + 1.2 * Math.sin((s - named('Stavelot').s0) / 70)});
+    }))}));
+  return {houses: Object.freeze(houses), lamps: Object.freeze(lamps), streets: Object.freeze(streets)};
+}
+// The Red Water stream: two long, narrow basins cut across the road line, one each side, so the existing
+// circuit water (src/circuit-water.js) lies in a channel dug 0.6 to 1 m into the ground. The ground within
+// 6 m of the road edge is never touched, so the road and its shoulders cover the crossing as before.
+const RED_WATER_BASINS = Object.freeze([
+  // Bridge side: the stone arch stands at lateral 36 in the middle of this channel.
+  Object.freeze({id: 'red-water-bridge', s: RED_WATER_S, lateral: 35, along: 3, across: 19, surface: -.25, depth: .2,
+    bank: .5, blend: 6, keep: 6, colour: 0x4a2418, shallow: 0x2c170f}),
+  Object.freeze({id: 'red-water-far', s: RED_WATER_S, lateral: -33, along: 3, across: 17, surface: -.95, depth: .4,
+    bank: .5, blend: 6, keep: 6, colour: 0x4a2418, shallow: 0x2c170f}),
+]);
+export const ARDENNES_FOREST = Object.freeze({
+  ...ARDENNES_ROAD,
+  water: Object.freeze({glitter: false}),
+  basins: RED_WATER_BASINS,
+  fieldSize: 8, grandPrixLaps: 2,
+  runoffBands: LONG_LEFT_RUNOFF,
+  circuitLandmarks: Object.freeze([
+    Object.freeze({id: 'stavelot-valley-town', type: 'town', ...VILLAGE, height: 12,
+      // Original deterministic town selection, restricted to the answered slate/red palette.
+      roofColours: Object.freeze([0x414a50, 0x5a352c, 0x50545a]), ...valleyTown()}),
+    Object.freeze({id: 'stavelot-church', type: 'church', ...VILLAGE, height: 22, churchStyle: 'stone', grounding: 'footprint'}),
+  ]),
+  lightPath: Object.freeze({axis: 'distance', wrap: false, palette: 'forest-morning', keyframes: Object.freeze([
+    Object.freeze({at: 0, look: 'golden'}), Object.freeze({at: road.length, look: 'day'}),
+  ])}),
+  kitLook: Object.freeze({'autumn-tree': Object.freeze({leafColour: 0x38592c}),
+    'lantern-tower': Object.freeze({glow: .15})}),
+  effects: Object.freeze({
+    // The wet banks, rocks and reeds along the two basins below; the water itself is the existing circuit water.
+    stream: Object.freeze({s: RED_WATER_S, width: 5, reach: 68, colour: 0x1c100b, basins: Object.freeze(RED_WATER_BASINS.map(basin => basin.id))}),
+    valleyMist: Object.freeze([
+      Object.freeze({s: named('Red Water').s0, lateral: 42, along: 75, across: 25, count: 12, height: 2, opacity: .23, colour: 0xd1ddda, fadeEnd: 1}),
+      Object.freeze({s: named('Riverside').s0, lateral: -42, along: 100, across: 26, count: 12, height: 2, opacity: .2, colour: 0xd1ddda, fadeEnd: 1}),
+      Object.freeze({s: named('Stavelot').s0, lateral: -38, along: 95, across: 22, count: 10, height: 2.5, opacity: .18, colour: 0xd1ddda, fadeEnd: 1}),
+      Object.freeze({s: named('Kestrel Straight').s1 - 70, lateral: 44, along: 110, across: 26, count: 10, height: 22, opacity: .18, colour: 0xe4e9e7, fadeEnd: 1}),
+    ]),
+  }),
+  // Existing damp asphalt presentation. No tyre or surface-grip change.
+  wetRoad: Object.freeze({performanceShare: .5}),
+  dampRoad: Object.freeze({colour: 0x747474, dryRoughness: .9, dampRoughness: .58, mist: true,
+    shadeRanges: Object.freeze(['Kestrel Straight', 'Forest Run', 'Whitewood'].map(name => {
+      const piece = named(name); return Object.freeze({from: piece.s0, to: piece.s1});
+    })),
+  }),
+  // Beeches stand only 40 m or more beyond the road edge (26 m behind the catch fence); nearer trees stay fir.
+  beech: Object.freeze({scales:Object.freeze([.9,1,1.1]),setback:40,
+    groves:Object.freeze([['Kestrel Straight',.28],['Kestrel Straight',.68],['Forest Run',.3],['Forest Run',.75]].map(([name,fraction])=>{
+      const piece=named(name);return Object.freeze({s:piece.s0+(piece.s1-piece.s0)*fraction,reach:45});
+    }))}),
+  scenery: Object.freeze({
+    trees: 800, rocks: 120, mountains: false,
+    // First fir row is about 9 m behind the ordinary catch fence (14.3 m).
+    forest: Object.freeze({from: 23, to: 60, spacing: 3.8, rows: 7, thin: .12,
+      scale: Object.freeze([1.1, 2]), jitter: .8}),
+    // Current Tremblant grove renderer, in summer greens rather than autumn orange.
+    autumn: Object.freeze({share: .35, colours: Object.freeze([
+      Object.freeze([.22, .46, .16]), Object.freeze([.28, .52, .18]), Object.freeze([.19, .40, .14]),
+    ])}),
+    clear: Object.freeze([
+      Object.freeze({s0: 0, s1: PIT_END + 20, from: -60, to: 55}),
+      Object.freeze({s0: road.length - 80, s1: road.length, from: -60, to: 55}),
+      Object.freeze({s0: named('The Wall').s0 - 35, s1: named('The Wall').s0 + 90, from: -55, to: -20}),
+      Object.freeze({s0: named('Stavelot').s0 - 80, s1: named('Stavelot').s0 + 150, from: 12, to: 64}),
+    ]),
+  }),
+  // Gravel and grass colour only. The road and run-off grip stay unchanged.
+  groundLeaves: Object.freeze({strength: 0, gravel: Object.freeze({colour: Object.freeze([.64, .61, .54]),
+    width: 12, fade: 8, ends: 24, grass: Object.freeze([.56, .76, .52]), to: 55})}),
+  kitPlacements: Object.freeze([...paddock(), ...safety(), ...landmarks()]),
 });
 
 // Registration belongs to this course; generation and geometry stay unchanged.

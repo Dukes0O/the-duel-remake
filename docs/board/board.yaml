@@ -158,11 +158,11 @@ tasks:
 
   - id: P4-ARDENNES
     title: "Ardennes Forest: the Spa-style forest circuit"
-    owner: "claude"
+    owner: "codex"
     lane: "COURSE"
     size: "L"
     status: "building"
-    claimed_by: "claude-ardennes-art-2026-10-15"
+    claimed_by: "codex-ardennes-followup-2026-10-15"
     branch: "codex/p4-ardennes"
     needs: [P4-ARDENNES-ROAD]
     flag: "ardennes-forest"
@@ -429,7 +429,7 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "M"
-    status: "merging"  # holds busy-game-files after FIRE-HOOKS
+    status: "ready-to-merge"
     claimed_by: claude-fire-2026-10-14
     branch: claude/fire-view
     needs: [FIRE-HOOKS, HELI-FIRE-BUCKET, FIRE-ART-FX, FIRE-BURNT-LOOK]
@@ -771,3 +771,12 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-YETI-THREE.md"
+  - id: ARDENNES-SWITCH-ON
+    title: "Ardennes switch-on preparation after driver, frames and finishing"
+    owner: "codex"
+    lane: "COURSE"
+    size: "S"
+    status: "backlog"
+    needs: [P4-ARDENNES, P4-FINISH-ARDENNES]
+    locks: [circuit-registry, world-signatures]
+    details: "docs/board/cards/ARDENNES-SWITCH-ON.md"

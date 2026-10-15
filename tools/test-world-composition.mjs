@@ -5,6 +5,9 @@ import * as THREE from 'three';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {buildEnvironment,disposeTree} from '../src/world.js';
+import {readFile} from 'node:fs/promises';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createTrackKits} from '../src/track-kits.js';
 
 // Reviewed scene composition after spatial scenery batching and harbor detail.
 // Metric road-sign lettering changes only canvas texture commands. Restoring
@@ -76,11 +79,24 @@ function sceneSignature(world){
 try{
   equal(COURSE.length,Object.keys(baseline).filter(id=>COURSE.some(def=>def.id===id)).length,'every enabled event scene has its reviewed baseline');
   for(const def of COURSE){
-    const course=new Course(def,1989),before=JSON.stringify(course.features),world=buildEnvironment(course),signature=sceneSignature(world);
+    const course=new Course(def,1989),before=JSON.stringify(course.features);
+    let trackKits;
+    if(def.id==='ardennes-forest'&&def.beech){
+      const parser=new GLTFLoader();
+      parser.register(()=>({name:'KIT_HEADLESS_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+      trackKits=createTrackKits(course,{loadAsset:async path=>{
+        const bytes=await readFile(new URL('../public'+path,import.meta.url));
+        return parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+      }});
+      if(!await trackKits.ready){const error=trackKits.error;trackKits.dispose();throw error??Error('Ardennes original kits not ready');}
+    }
+    try {
+    const world=buildEnvironment(course,trackKits?{trackKits}:undefined),signature=sceneSignature(world);
     equal(JSON.stringify(course.features),before,`${def.id}: scene assembly never changes physical feature placement`);
     if(process.argv.includes('--capture'))console.log(`  '${def.id}':${JSON.stringify(signature)},`);
     else equal(signature,baseline[def.id],`${def.id}: exact geometry, materials, textures, transforms, resource sharing and child order`);
     disposeTree(world);
+    }finally{trackKits?.dispose();}
   }
 }finally{THREE.TextureLoader.prototype.load=oldLoad;if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;}
 console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across twenty events.`);
