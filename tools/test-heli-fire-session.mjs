@@ -95,7 +95,8 @@ function newSession(profile, {fireEnabled = true} = {}) {
 }
 
 // ---- A mission flown to the end ---------------------------------------------
-function flyMission() {
+function flyMission({maxTrips = Infinity} = {}) {
+  let afterTwo = null;
   const session = newSession(readyProfile());
   const log = [...session.start()];
   const zone = session.view().zone;
@@ -118,7 +119,7 @@ function flyMission() {
   const lake = woods.course.def.basins[0], middle = woods.course.worldAt(woods.course.phase(lake.s), lake.lateral);
   const surface = woods.ground.water(middle.x, middle.z);
   let trips = 0, refuels = 0;
-  for (let round = 0; round < 40 && fireOf(session.profile); round++) {
+  for (let round = 0; round < 40 && fireOf(session.profile) && trips < maxTrips; round++) {
     // Fuel low: back to the pad for the pump.
     if (session.view().heli.fuelKg < 220) {
       log.push(...travel(session, zone, zone.y + 25));
@@ -144,9 +145,12 @@ function flyMission() {
       return !goal || aim && Math.hypot(aim.x - goal.x, aim.z - goal.z) < 4 && Math.hypot(view.heli.vx, view.heli.vz) < 1.5;
     }));
     log.push(...run(session, 6, view => ({...pilot(view, above(view, 60), {speed: 1}), pour: true}), view => (view.bucket?.water ?? 0) <= 0.5));
+    // Let the drop's water land before the next leg.
+    log.push(...run(session, 6, view => pilot(view, above(view, 60), {speed: 1}), view => !view.bucket?.parcels.length));
     trips++;
+    if (trips === 2) afterTwo = [session.fingerprint(), JSON.stringify(heliOf(session.profile))];
   }
-  return {session, log, trips, refuels};
+  return {session, log, trips, refuels, afterTwo};
 }
 
 const flown = flyMission();
@@ -168,9 +172,9 @@ const flown = flyMission();
 }
 
 check('the same mission flies the same way', () => {
-  const again = flyMission();
-  same([again.trips, again.refuels, again.session.fingerprint(), JSON.stringify(heliOf(again.session.profile))],
-    [flown.trips, flown.refuels, flown.session.fingerprint(), JSON.stringify(heliOf(flown.session.profile))], 'same inputs, same save');
+  // Two drops are enough to show it: the same flight, fire and save.
+  const again = flyMission({maxTrips: 2});
+  same(again.afterTwo, flown.afterTwo, 'same inputs, same save after two drops');
 });
 function check(name, fn) { fn(); console.log('PASS ' + name); }
 

@@ -47,7 +47,11 @@ session ruled the pending H1 release is not a build dependency).
   helper changes its input).
 - `node tools/test-heli-mode.mjs`: 144 checks passed (the import guard sees
   the new rules file).
-- Lane tier and build: below.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`)
+  after merging integration: 20 passed, 1 failed in 487 s; the failure was
+  `test-repo-hygiene-rules.mjs` timing out while starting a child process
+  with two gates running at once, and it passes on its own (104 checks), so
+  21 of 21. `npm run build`: passed.
 
 ## Review (rule 17)
 

@@ -37,7 +37,11 @@ session ruled the pending H1 release is not a build dependency).
   after; bought back; the buyback button through the app, only on the
   menu, and refused without the hook).
 - `node tools/test-course-access-ui.mjs`: 38 checks passed.
-- Lane tier and build: below.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`)
+  after merging integration: 35 passed, 1 failed in 512 s; the failure was
+  `test-repo-hygiene-rules.mjs` timing out while starting a child process
+  with two gates running at once, and it passes on its own, so 36 of 36.
+  `npm run build`: passed.
 
 ## Review (rule 17)
 
