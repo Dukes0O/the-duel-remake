@@ -199,3 +199,7 @@ Own node_modules and .evidence junctions unlinked NONRECURSIVELY after exact int
 ## Owning-session cleanup handback
 
 Root read-only ACL inspection finds explicit Codex sandbox-SID deny entries on this merged lane. No ACL/ownership/security changes or bypass will be made. The existing authorized owning chat's same heartbeat is resumed for ONE cleanup-only Recycle Bin attempt under its own legitimate access, then report and pause; no art/card/build/test restart. If refused too, preserve lane/branch and report rather than loop. Root alone will prune only its exact stale registration/branch after actual successful recycle. Existing retained lanes continue; no new lane opens while this own merged cleanup remains unresolved.
+
+## Cleanup refused in both owning sessions
+
+The owning chat made its ONE permitted Recycle Bin attempt after independently verifying clean54ba9f66, merged ancestor, both links absent,zero reparse points,shared targets intact and all10 copied essential receipts present. Windows returned the same unauthorized-operation refusal. Both attempts stop; no ACL/ownership/protection changes, forced/permanent deletion or bypass. Keep exact merged lane/branch/registration heli-art-src; no new lane opens while this cleanup is unresolved. Its cleanup-only heartbeat is paused at final handback. Existing retained source work continues; no new test/art/build job is implied.

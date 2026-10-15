@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T06:16:07.316Z
+Observed at: 2026-10-15T06:18:51.328Z
 
-Observation commit: d5ececd90c1d1d8ffdc4cf3fb7d36fa2fdda34d9
+Observation commit: f8b8301ace0dbe7d8f71aa64994d50e95223f68e
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: d5ececd90c1d1d8ffdc4cf3fb7d36fa2fdda34d9
+Integration HEAD: f8b8301ace0dbe7d8f71aa64994d50e95223f68e
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -60,7 +60,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T22:59:35-07:00 | 0 | last commit 2026-10-14T22:59:35-07:00 | docs/changes/PERF-HIGH-NIGHT.md, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/summit-pit-balance | SUMMIT-PIT-BALANCE | 2026-10-14T22:50:28-07:00 | 0 | last commit 2026-10-14T22:50:28-07:00 | docs/changes/SUMMIT-PIT-BALANCE.md, src/circuits/summit-run.js, src/pit-lane.js, src/race-surfaces.js, src/sim-driving.js |
+| codex/summit-pit-balance | unknown | 2026-10-14T22:50:28-07:00 | 0 | last commit 2026-10-14T22:50:28-07:00 | docs/changes/SUMMIT-PIT-BALANCE.md, src/circuits/summit-run.js, src/pit-lane.js, src/race-surfaces.js, src/sim-driving.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-14T23:01:08-07:00 | 0 | last commit 2026-10-14T23:01:08-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py |
 
@@ -78,7 +78,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 968,996 B | +0 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 416,333,824 B | +501,760 B | unavailable |
+| Git objects | 416,427,008 B | +93,184 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -87,7 +87,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: d5ececd90c1d1d8ffdc4cf3fb7d36fa2fdda34d9
+- Local integration/wasteland: f8b8301ace0dbe7d8f71aa64994d50e95223f68e
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -95,6 +95,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit 68ce773ac888dbbaa6f3363e8f225c57f2bb283c.
+- Remote origin/integration/wasteland: matches local; cached commit f8b8301ace0dbe7d8f71aa64994d50e95223f68e.
 
 Issue: Circuit manifest summit-time-attack.js has unknown or malformed literal metadata.
