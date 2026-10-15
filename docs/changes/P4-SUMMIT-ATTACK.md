@@ -53,3 +53,15 @@ Claude's 14 October night answer (integration 4b17e44d) counts a completed Attac
 Three additive existing-suite cases cover once-only count and normalized reload, invalid/practice/abandoned/qualifying/timeout/mode/owner/unowned-car admission, and the real App result/save/duplicate/abandon/recovery path. Their seen/finish state is a controlled unit fixture, not native encounter or probability evidence. All older assertions and the measured T 266.6 / targets 274.6, 288.0 and 306.6 remain unchanged. These new cases are authored but UNRUN during Root's frame-check hold; no import, test, gate, build, browser or benchmark was started. Fresh save review is required before the final gate.
 
 Removed: the temporary Attack exclusion from the parent sighting admission. No ledger code, key, saved field, cosmetic policy, finance rule or benchmark output is replaced.
+
+## Bounded registry assertion repair
+
+The unchanged 642fe927 source completed its original lane gate with 358/363 suites passing, five failures and zero unrun. The final ten Attack cases and required save checks passed; this was not a green lane or build. The five failures were four older registry assertion files and the course-kit fixture's copied feature-flag test.
+
+Before editing: Attack is the accepted releaseOrder 6 child after Ardennes at 5, intentionally sharing Summit's switch and generation stage. It costs zero through owned-parent access, defaults to one solo Time Trial run and has no rival or Grand Prix membership. The older assumptions that every manifest adds a unique switch/stage, every circuit costs money and has a rival, and Ardennes remains last contradict those settled rules.
+
+Changed assertions: Ardennes retains its exact index/order/price/state and checks its previous Summit and next Attack neighbors rather than claiming it is last. Layout registration keeps every original own-id flag, positive price, rival and unique authored stage check for every non-Attack definition; the sole exact Attack branch instead checks its full shared-switch/free-parent/solo/noCombat/noGP contract and shared parent stage. Feature count uses distinct manifest switch names, then separately permits only the exact Summit/Attack shared pair; all existing feature states and the copied future-course guard stay intact. Release checks keep race-only/noCombat for every definition and the original rival requirement for all except the explicit solo Attack contract. No broad manifest skip or self-derived contract replaces an old requirement.
+
+The course-kit harness, production files, measured T 266.6 and targets 274.6/288.0/306.6, saves, old course prices/indices/states, replay/signature pins and tolerances are unchanged. This correction is source-only pending independent review, focused failing suites, the new original nearby gate and build. No native benchmark repeat.
+
+Removed: obsolete universal paid/rival/unique-stage/single-manifest-per-switch assumptions and the old Ardennes-last assertion. No old scenario, guard body, fixture or runtime path is removed.

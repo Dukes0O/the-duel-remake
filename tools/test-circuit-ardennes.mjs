@@ -81,7 +81,7 @@ test('the pit lane runs along the right of Pit Straight', () => {
   assert.ok(course.pitLane.exit - course.pitLane.entry > 300);
 });
 
-test('Ardennes Forest is a dev circuit: registered last, priced, off by default, and COURSE is unchanged without its switch', () => {
+test('Ardennes Forest is a dev circuit: registered after Summit, priced, off by default, and COURSE is unchanged without its switch', () => {
   assert.equal(ARDENNES_FOREST.id, 'ardennes-forest'); assert.equal(ARDENNES_FOREST.flag, 'ardennes-forest');
   assert.equal(ARDENNES_FOREST.name, 'Ardennes Forest'); assert.equal(ARDENNES_FOREST.kind, 'circuit');
   assert.equal(ARDENNES_FOREST.closed, true); assert.equal(ARDENNES_FOREST.laps, 2); assert.equal(ARDENNES_FOREST.layoutVersion, 1);
@@ -99,10 +99,15 @@ test('Ardennes Forest is a dev circuit: registered last, priced, off by default,
   const entry = CIRCUIT_ENTRIES.find(row => row.manifest.id === 'ardennes-forest');
   assert.equal(entry.definition, ARDENNES_FOREST, 'registry keeps the exact authored definition');
   assert.equal(entry.generationStage, 21);
-  assert.equal(CIRCUIT_MANIFESTS.at(-1).id, 'ardennes-forest', 'last in release order');
-  assert.equal(CIRCUIT_MANIFESTS.at(-2).id, 'summit-run', 'straight after Summit Run');
-  assert.ok(CIRCUIT_MANIFESTS.every(row => row.id === 'ardennes-forest' || row.releaseOrder < manifest.releaseOrder), 'released courses keep their places');
-  assert.equal(ALL_CIRCUITS.at(-1), ARDENNES_FOREST);
+  const index = CIRCUIT_MANIFESTS.findIndex(row => row.id === 'ardennes-forest');
+  assert.equal(index, 5, 'Ardennes keeps its original registered position');
+  assert.equal(manifest.releaseOrder, 5);
+  assert.equal(CIRCUIT_MANIFESTS[index - 1].id, 'summit-run', 'straight after Summit Run');
+  assert.deepEqual([CIRCUIT_MANIFESTS[index + 1].id, CIRCUIT_MANIFESTS[index + 1].releaseOrder],
+    ['summit-time-attack', 6], 'the accepted solo child appends after Ardennes');
+  assert.ok(CIRCUIT_MANIFESTS.slice(0, index).every(row => row.releaseOrder < manifest.releaseOrder), 'earlier courses keep their places');
+  assert.ok(CIRCUIT_MANIFESTS.slice(index + 1).every(row => row.releaseOrder > manifest.releaseOrder), 'later courses append after Ardennes');
+  assert.equal(ALL_CIRCUITS[index], ARDENNES_FOREST);
   // Switch off: players and tests see COURSE exactly as before.
   const released = CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
   assert.ok(!CIRCUITS.some(circuit => circuit.id === 'ardennes-forest'));
