@@ -43,6 +43,12 @@ export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evide
 export function validateFramePacket(packet,{warn=()=>{}}={}) {
   if(packet?.schema!==1||packet.mode!=='night-simple'||packet.reports?.length!==2)
     throw Error('Missing complete simple night frame packet.');
+  // Load warnings describe the measured packet even if a frame verdict fails.
+  for(const [index,quality]of ['High','Performance'].entries()) {
+    const row=packet.reports[index];
+    if(row?.quality===quality&&Number.isFinite(row.constructionMs)&&row.constructionMs>5000)
+      warn(`${quality}: full first-race load ${row.constructionMs} ms exceeds 5000 ms (warning only).`);
+  }
   for(const [index,quality]of ['High','Performance'].entries()) {
     const row=packet.reports[index];
     if(row.quality!==quality||row.course!=='harbour-lights'||row.cars!==8||row.night!==true||
@@ -53,8 +59,6 @@ export function validateFramePacket(packet,{warn=()=>{}}={}) {
       !Number.isFinite(row.worldBuildMs)||row.worldBuildMs<0||row.worldBuildMs>=1000||
       !Number.isFinite(row.constructionMs)||row.constructionMs<0)
       throw Error(`${quality}: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.`);
-    if(row.constructionMs>5000)
-      warn(`${quality}: full first-race load ${row.constructionMs} ms exceeds 5000 ms (warning only).`);
   }
   return packet;
 }
@@ -402,15 +406,25 @@ export async function runNight(options,overrides={}) {
             row.failureNames=(actual.rows||[]).filter(item=>item.passed!==true).map(item=>'browser: '+item.name);
           }catch{}
         }
+        let frameError;
+        if(stage.id==='frames') {
+          row.warnings=[];
+          try {
+            const frames=json(await dependencies.readText(stage.packet));
+            if(frames?.schema===1&&frames.mode==='night-simple'&&frames.reports?.length===2)
+              row.reports=frames.reports.flatMap((report,index)=>
+                report?.quality===['High','Performance'][index]&&
+                Number.isFinite(report.p95)&&report.p95>0&&
+                Number.isFinite(report.worldBuildMs)&&report.worldBuildMs>=0&&
+                Number.isFinite(report.constructionMs)&&report.constructionMs>=0
+                  ?[{quality:report.quality,p95:report.p95,worldBuildMs:report.worldBuildMs,constructionMs:report.constructionMs}]:[]);
+            validateFramePacket(frames,{warn:message=>row.warnings.push(message)});
+          }catch(error){frameError=error;row.reportError=error.message;}
+        }
         if(stage.id==='full')row.generatedReport=await consumeFullReport(dependencies,copy,source,originalFullReport,result,packet.evidence);
         if(result.exitCode!==0)throw Error(result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
         if(stage.id==='full')validateFull(fullPacket(result.stdout));
-        else if(stage.id==='frames') {
-          const frames=json(await dependencies.readText(stage.packet));
-          row.warnings=[];
-          validateFramePacket(frames,{warn:message=>row.warnings.push(message)});
-          row.reports=frames.reports.map(({quality,p95,worldBuildMs,constructionMs})=>({quality,p95,worldBuildMs,constructionMs}));
-        }
+        else if(stage.id==='frames') {if(frameError)throw frameError;}
         else if(stage.id==='browser')validateBrowser(json(await dependencies.readText(stage.packet)),await dependencies.scenarioNames(copy.root));
         else validateCombat(json(result.stdout));
         await assertCopy();
