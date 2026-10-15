@@ -40,3 +40,16 @@ Claude's own finishing pass (P4-FINISH-SUMMIT), not a Codex art round. Sheet `ro
 ## Removed
 
 The old town light rows (48 lights on the lower road near 5.8 km, hidden behind the hills) are replaced by the valley rows. No file, asset or test was removed.
+
+## Claude verdict, 14 October night
+
+Keep: the lit hut windows and observatory slot, the pine clumps and frozen
+ponds. Keep for now: the valley town lights with the dry `ledge-valley` bowl;
+they read as distant dots, not yet a glowing town, and the bowl's walls show
+shading stripes from above. Not done and now Codex cards: the Gallery cover
+(SUMMIT-GALLERY-COVER, the tested two-line hook), snow tone (SNOW-VARIATION),
+yeti fur tint (YETI-FUR-TINT), Open Road edge banks (lower priority) and the
+review tool's black frames (QA-REVIEW-BLACK-FRAMES). Summit is not ready to go
+live tonight: the Gallery still fails the signature-moment checks and the pit
+choice still misses its settled targets (SUMMIT-PIT-BALANCE).
+
