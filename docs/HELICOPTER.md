@@ -178,6 +178,7 @@ damped pendulum (no new library; it borrows the tether ideas in
   | Falcone F42 | 1,250 kg | Yes |
   | Dusthawk Rally | 1,280 kg | Yes |
   | Aurora GTR | 1,350 kg | Yes |
+  | Ferrari Enzo (earned, 6 medals) | 1,365 kg | Yes |
   | Koenigsegg Jesko Absolut | 1,390 kg | Yes |
   | Stuttgart 959-S | 1,450 kg | Yes |
   | Banshee Muscle | 1,810 kg | No: needs the Lab's lift upgrade (L1) |
@@ -196,7 +197,7 @@ damped pendulum (no new library; it borrows the tether ideas in
   have, it takes what you have and forgives the rest. A save never goes
   below zero.
 - **Special cars travel only by air** (Kyle). In H1 the special car is the
-  Koenigsegg Jesko Absolut; the three earned cars from the medal sheets
+  Koenigsegg Jesko Absolut and, since EARN-CAR-1, the Ferrari Enzo; the two later earned cars from the medal sheets
   (`docs/EARNED_CARS.md`, each 1,500 kg or less) join the list as they land. With the switch on, a special car races only
   on the course where it was last set down, and it starts at the home pad.
   Existing saves keep the car; it simply starts at Tremblant Woods.

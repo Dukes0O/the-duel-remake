@@ -57,24 +57,24 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
     for (const x of [.38, .66]) {
       cylinder(b, m.carbon, .095, .05, [side * x, .64, -2.33], [Math.PI / 2, 0, 0], 24);
       const lamp = new THREE.TorusGeometry(.068, .018, 8, 28);
-      b.add(lamp, m.brake, [side * x, .64, -2.362]); lamp.dispose();
-      cylinder(b, m.brake, .045, .012, [side * x, .64, -2.355], [Math.PI / 2, 0, 0], 20);
+      b.add(lamp, m.brake, [side * x, .64, -2.35]); lamp.dispose();
+      cylinder(b, m.brake, .045, .012, [side * x, .64, -2.345], [Math.PI / 2, 0, 0], 20);
     }
     // Rocker panel and the lower door crease.
     b.box(m.carbon, [.07, .06, 2.0], [side * .985, .215, -.05], [0, 0, 0], .018);
   }
   // The beak: a narrow nose with its own splitter and a dark centre intake.
   b.box(m.carbon, [1.62, .04, .26], [0, .175, 2.20], [0, 0, 0], .02);
-  b.box(m.carbon, [.34, .09, .05], [0, .26, 2.34], [-.08, 0, 0], .02);
+  b.box(m.carbon, [.34, .09, .05], [0, .26, 2.32], [-.08, 0, 0], .02);
   // Short tail: integrated lip spoiler, a black rear panel and a deep diffuser.
-  b.box(m.paint, [1.50, .06, .16], [0, .815, -2.30], [-.18, 0, 0], .02);
-  b.box(m.carbon, [1.40, .20, .04], [0, .46, -2.335], [0, 0, 0], .02);
+  b.box(m.paint, [1.50, .06, .16], [0, .815, -2.285], [-.18, 0, 0], .02);
+  b.box(m.carbon, [1.40, .20, .04], [0, .46, -2.325], [0, 0, 0], .02);
   for (let i = -3; i <= 3; i++) b.box(m.carbon, [.022, .15, .40], [i * .19, .27, -2.16], [.12, 0, 0], .002);
   b.box(m.carbon, [1.42, .024, .34], [0, .19, -2.20], [.12, 0, 0], .01);
-  b.box(m.plate, [.50, .11, .01], [0, .44, -2.358], [0, 0, 0], .004);
-  cockpit(vehicle, b, m, [.29, .07, -.04], .84);
+  b.box(m.plate, [.50, .11, .01], [0, .44, -2.348], [0, 0, 0], .004);
+  cockpit(vehicle, b, m, [.29, -.045, -.04], .80);
   wheels(vehicle, m, { radius: .35, width: .27, track: .86, axles: AXLES, spokes: 5, roadSmooth: true, broadSpokes: true });
-  exhaust(vehicle, b, m, [[-.09, .36, -2.30], [.09, .36, -2.30]], .055);
+  exhaust(vehicle, b, m, [[-.09, .36, -2.26], [.09, .36, -2.26]], .055);
   b.finish(data);
   fittedDetails(vehicle, m);
   prepareVehicleDamage(vehicle);

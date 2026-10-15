@@ -6,10 +6,11 @@ import {DRIVERS,getDriverState,getEquippedDriverId,applyDriverModifiers} from '.
 import {driverSkillLabel} from '../src/driver-ui.js';
 import {speedKph,formatSpeed} from '../src/speed-format.js';
 import {createMenuScreen,screenMarkup} from '../src/screen-menu.js';
+import {shownCars} from '../src/earned-cars-ui.js';
 import {createGarageScreen,handleGarageUpgrade} from '../src/screen-garage.js';
 
 let checks=0;const same=(a,b,label)=>{assert.deepEqual(a,b,label);checks++;},ok=(value,label)=>{assert.ok(value,label);checks++;};
-const reward='koenigsegg_jesko',others=Object.keys(CARS).filter(key=>key!==reward),max=Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type=>[type,3]));
+const reward='koenigsegg_jesko',others=Object.keys(CARS).filter(key=>key!==reward&&!CARS[key].unlockRequirement),max=Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type=>[type,3]));
 let saved=createProfile(),garageCar=reward,message='';
 const credits=value=>Math.floor(value||0).toLocaleString('en-US'),escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const choices={car:'falcone_f42'},textValues={},ui={'car-select':{options:Object.keys(CARS).map(value=>({value})),value:''},'driver-select':{innerHTML:'',value:''},'entry-reward':{}},app={duel:{state:{}},profileSaved:true,player:{name:'Tester'}};
@@ -34,5 +35,5 @@ ok(message.includes('Koenigsegg Jesko Absolut unlocked!')&&message.includes('All
 html=garage();const upgradeTags=tags(html).filter(tag=>tag.includes('data-upgrade='));same(upgradeTags.length,7,'Owned reward shows all seven upgrade categories');ok(upgradeTags.every(tag=>tag.includes('disabled')),'All reward upgrades are complete and cannot be charged again');same((html.match(/FULLY TUNED<\/span>/g)||[]).length,7,'Each included upgrade is visibly fully tuned');ok(html.includes('No further upgrades are needed.')&&html.includes('DRIVE THIS CAR'),'Owned reward is ready to drive, not an unfinished build');
 choices.car=reward;menu();same(choices.car,reward,'Owned reward remains selected');same(textValues['car-speed'],String(speedKph(upgradedCar(CARS[reward]).topSpeed)),'Selected reward speed matches garage and tuning');
 const owner=saved;saved=createProfile();menu();same(choices.car,'falcone_f42','Switching to a fresh profile restores a valid owned car');ok(ui['car-select'].options.find(item=>item.value===reward).textContent.endsWith('MAX OTHER CARS 0/8'),'Fresh profile displays its own achievement progress');saved=normalizeProfile(owner);choices.car=reward;menu();same(choices.car,reward,'Switching back restores earned reward selection');
-same(Object.values(CARS).filter(car=>car.price>0||car.unlockRequirement).length,7,'Earnable count includes six credit cars and the achievement reward');ok(screenMarkup({choices:{car:reward,cpuDifficulty:'medium',difficulty:'arcade',startStage:0},arrow:'',sound:'',escapeHTML}).includes('7 EARNABLE CARS'),'Actual start-note count includes the reward');
+same(shownCars(false).filter(([,car])=>car.price>0||car.unlockRequirement).length,7,'Earnable count includes six credit cars and the achievement reward');ok(screenMarkup({choices:{car:reward,cpuDifficulty:'medium',difficulty:'arcade',startStage:0},arrow:'',sound:'',escapeHTML}).includes('7 EARNABLE CARS'),'Actual start-note count includes the reward');
 console.log(`Koenigsegg UI: ${checks} checks passed for actual menu/garage/action rendering, achievement requirements, prices, maxed upgrades, player isolation and metric speeds.`);

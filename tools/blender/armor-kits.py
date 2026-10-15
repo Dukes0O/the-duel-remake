@@ -1,4 +1,4 @@
-"""Build nine vehicle-local armor kit GLBs from the approved scrap texture.
+"""Build ten vehicle-local armor kit GLBs from the approved scrap texture.
 
 Run Blender headless: blender -b --python tools/blender/armor-kits.py -- --root <repo>
 All dimensions are metres, +Z forward. Empty nodes are the stable runtime
@@ -21,6 +21,7 @@ SIZES = {
     'viper_proto': (2.20, 4.90, 1.10),
     'titan_monster': (2.80, 5.20, 3.60),
     'koenigsegg_jesko': (2.10, 4.95, 1.25),
+    'ferrari_enzo': (2.04, 4.70, 1.15),
 }
 
 if '--paths-only' in sys.argv:
