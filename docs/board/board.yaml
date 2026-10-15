@@ -210,6 +210,15 @@ tasks:
     needs: [P4-INTEL-LEVELS]
     details: "docs/board/cards/P4-FINISH-TEAMROOM.md"
 
+  - id: RELEASE-SUMMIT
+    title: "Summit Run release (Kyle: live overnight only if all green)"
+    owner: "claude"
+    lane: "OPS"
+    size: "S"
+    status: "ready"
+    needs: [P4-FINISH-SUMMIT]
+    details: "docs/board/cards/RELEASE-SUMMIT.md"
+
   - id: P4-FINISH-SUMMIT
     title: "Claude's finishing pass: Summit Run"
     owner: "claude"
