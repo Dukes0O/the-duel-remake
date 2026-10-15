@@ -83,3 +83,6 @@ pictures under the new gates (give the fixture profile the laps, finish or
 purchase that level needs). Keep every picture, read-only and semantic
 assertion as it is, and add one check that a locked level shows its lock and
 price.
+
+
+The evening reference-data/control and disposable-scenario answers are received. Existing a32b36e1 remains intact; pause source while TYRE-SLIP holds the shared busy/save lease. No unanswered-Claude blocker is implied and no new lane is needed. Resume this existing lane after the lease is free.

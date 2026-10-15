@@ -683,3 +683,8 @@ arenas keep their sharp steering. So:
 - add the difficulty case to the tests and the change note.
 Then continue to the remaining acceptance (recovery, row versions, final
 gate and one review).
+
+
+## Resume Kyle's explicit Casual decision, after restart
+
+Root resumes existing clean8e71136a lane; no new lane. Freeze the reviewed cup candidate0dd37e84 pending heavy capacity and transfer busy-game-files/save-shape lease here. Intel's new answers are received but its source stays held until this lease returns. Apply only Kyle's explicit Casual-off latch, preserving actual existing Casual state/results/records and the accepted Pro model/controller; then the already approved remaining recovery/version/native acceptance, one independent review and gate/build. No drift retuning or repeated120race matrix, no live feature flip. Heavy checks stay queued behind Ardennes and the shared cap; source and bounded tests may proceed.

@@ -172,11 +172,11 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-cups-2026-10-15
     branch: codex/p4-cups
     needs: [P4-CAREER, P4-SUMMIT, P4-VARIANTS, P4-TREMBLANT-SNOW, P4-GP-EXISTING]
-    locks: [save-shape, busy-game-files]
+    locks: []
     flag: "grand-prix"
     details: "docs/board/cards/P4-CUPS.md"
 
@@ -185,10 +185,10 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-intel-levels-2026-10-15
     branch: codex/intel-levels
-    locks: [busy-game-files, save-shape]
+    locks: []
     needs: [P4-INTEL-TELEMETRY, P4-CAREER]
     flag: "grand-prix"
     details: "docs/board/cards/P4-INTEL-LEVELS.md"
