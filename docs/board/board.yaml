@@ -213,6 +213,7 @@ tasks:
     lane: "DESIGN"
     size: "M"
     status: "building"
+    claimed_by: "claude-finish-summit-2026-10-14"
     needs: [P4-SUMMIT, P4-AVALANCHE, P4-REVIEW-TOOL]
     details: "docs/board/cards/P4-FINISH-SUMMIT.md"
 
