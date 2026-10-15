@@ -127,6 +127,30 @@ assert.deepEqual(position.toArray(),[20,2,100]);assert.deepEqual(scale.toArray()
 assert.ok(new THREE.Vector3(0,0,1).applyQuaternion(rotation).distanceTo(new THREE.Vector3(1,0,0))<1e-10);
 assert.ok(Object.isFrozen(transformed.placements[0].scenery));transformed.dispose();
 
+// FIX-ROAD-SEAM: pins remain escape-only, copied, and subject to real triangle clearance.
+{
+  const escaped = {...course, escapeRoads: [{origin: {x: 0, z: 0}, forward: {x: 0, z: 1}, left: {x: 1, z: 0},
+    side: 1, inner: -2, outer: 8, run: 120, tyreDepth: 1.8}]};
+  const pin = {x: 8.74, z: 100}, authoredPin = {id: 'catch-fence', s: 100, lateral: 20, worldPosition: pin};
+  const normalized = normalizeKitPlacements(escaped, [authoredPin])[0];
+  assert.deepEqual(normalized.worldPosition, pin); assert.ok(Object.isFrozen(normalized.worldPosition));
+  assert.notEqual(normalized.worldPosition, pin); pin.x = 99; assert.equal(normalized.worldPosition.x, 8.74);
+  for (const worldPosition of [null, {}, {x: NaN, z: 100}, {x: 8, z: Infinity}, {x: 99, z: 100}])
+    assert.throws(() => normalizeKitPlacements(escaped, [{...authoredPin, worldPosition}]), /world position/i);
+  assert.throws(() => normalizeKitPlacements(escaped, [{id: 'shopfront-a', s: 100, lateral: 20,
+    worldPosition: {x: 8, z: 100}}]), /world position/i);
+  assert.throws(() => normalizeKitPlacements(course, [{...authoredPin, worldPosition: {x: 8, z: 100}}]), /world position/i);
+  const pinned = createTrackKits(escaped, {placements: [{...authoredPin, worldPosition: {x: 8.74, z: 100}}], loadAsset: async () => fake()});
+  try {
+    assert.equal(await pinned.ready, true, pinned.error?.message);
+    assert.equal(pinned.getPlacementPose(0).elements[12], 8.74, 'transform keeps actual world x');
+    assert.equal(pinned.getPlacementPose(0).elements[14], 100, 'transform keeps actual world z');
+    assert.equal(pinned.getPlacementPose(0).elements[13], 2, 'height still comes from actual ground');
+  } finally {pinned.dispose();}
+  const onRoad = createTrackKits(escaped, {placements: [{...authoredPin, worldPosition: {x: 0, z: 100}}], loadAsset: async () => fake()});
+  try {assert.equal(await onRoad.ready, false); assert.match(onRoad.error.message, /clearance/i);} finally {onRoad.dispose();}
+}
+
 // Lift is above the rendered terrain anchor and never waives road headroom.
 const raised=createTrackKits(course,{placements:[{id:'lantern-string',s:100,lateral:0,lift:5}],
   loadAsset:async()=>fake()});
@@ -236,6 +260,10 @@ console.log('Track kits: 70 real assets, metadata, transforms, quality, countdow
   const harbour=new Course(HARBOUR_LIGHTS,1989),before=JSON.stringify(harbour.features);
   const rows=[1160,1780,2140].map(s=>HARBOUR_LIGHTS.kitPlacements.filter(row=>
     row.id==='concrete-wall'||row.id==='catch-fence').reduce((best,row)=>Math.abs(row.s-s)<Math.abs(best.s-s)?row:best));
+  for (const id of ['concrete-wall', 'catch-fence', 'tyre-wall']) {
+    const pin = HARBOUR_LIGHTS.kitPlacements.find(row => row.id === id && row.worldPosition);
+    assert.ok(pin, 'actual escape lining has a world-position witness'); rows.push(pin);
+  }
   const assets=new Map(),seated=createTrackKits(harbour,{placements:rows,loadAsset:async path=>{
     const bytes=await readFile(new URL('../public'+path,import.meta.url));
     const asset=await parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
@@ -249,7 +277,8 @@ console.log('Track kits: 70 real assets, metadata, transforms, quality, countdow
       for(const x of [bounds.min.x,(bounds.min.x+bounds.max.x)/2,bounds.max.x])
         for(const z of [bounds.min.z,(bounds.min.z+bounds.max.z)/2,bounds.max.z]){
           const base=new THREE.Vector3(x,bounds.min.y,z).applyMatrix4(matrix),at=harbour.nearest(base.x,base.z,row.s);
-          const ground=renderedGroundHeight(harbour,{...harbour.groundAt(at.s,at.lateral),s:at.s,off:at.lateral},{requireSurface:true});
+          const ground=renderedGroundHeight(harbour,{...harbour.groundAt(at.s,at.lateral),
+            ...(row.worldPosition ? {x:base.x,z:base.z} : {}),s:at.s,off:at.lateral},{requireSurface:true});
           assert.ok(Number.isFinite(ground),'actual drawn ground exists');
           assert.ok(base.y-ground<=.45,'actual model base float retains .45 m bound');
           assert.ok(ground-base.y<=1.5,'actual model base sink retains 1.5 m bound');
