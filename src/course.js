@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 import {installDeepCourse} from './deep/deep-journey.js';
 // Closed, arc-length sampled circuits. The same surface and obstacle data drive
 // the renderer, player, CPU and checkpoint validation.
@@ -414,6 +415,7 @@ export class Course {
     if(!this.script)return'asphalt';
     const p=this.phase(s);
     const branch=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);
+    if((this.def.id==='summit-run'||isSummitAttack(this.def))&&branch?.id==='summit-open-road'&&Math.abs(lateral)>this.script.halfWidthAt(p)&&['asphalt','snow'].includes(branch.gripKind))return branch.gripKind;
     if(Math.abs(lateral)>this.script.halfWidthAt(p)&&!branch){
       for(const patch of this.features.surfacePatches)if(patch.snowBank&&p>=patch.s0&&p<=patch.s1&&lateral>=patch.from&&lateral<=patch.to)return patch.kind;
       return'asphalt';

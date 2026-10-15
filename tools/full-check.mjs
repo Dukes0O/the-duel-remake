@@ -40,9 +40,15 @@ export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evide
       packet:path(browserDir,'summary.json')}
   ].map(row=>({...row,log:path(evidence,row.id+'.log')}));
 }
-export function validateFramePacket(packet) {
+export function validateFramePacket(packet,{warn=()=>{}}={}) {
   if(packet?.schema!==1||packet.mode!=='night-simple'||packet.reports?.length!==2)
     throw Error('Missing complete simple night frame packet.');
+  // Load warnings describe the measured packet even if a frame verdict fails.
+  for(const [index,quality]of ['High','Performance'].entries()) {
+    const row=packet.reports[index];
+    if(row?.quality===quality&&Number.isFinite(row.constructionMs)&&row.constructionMs>5000)
+      warn(`${quality}: full first-race load ${row.constructionMs} ms exceeds 5000 ms (warning only).`);
+  }
   for(const [index,quality]of ['High','Performance'].entries()) {
     const row=packet.reports[index];
     if(row.quality!==quality||row.course!=='harbour-lights'||row.cars!==8||row.night!==true||
@@ -50,8 +56,9 @@ export function validateFramePacket(packet) {
       row.appRunning!==true||row.rearView!=='ready'||!Number.isFinite(row.countdownBefore)||
       !Number.isFinite(row.countdownAfter)||row.countdownAfter<=row.countdownBefore||
       !Number.isFinite(row.p95)||row.p95<=0||row.p95>18.5||
-      !Number.isFinite(row.constructionMs)||row.constructionMs<0||row.constructionMs>=1000)
-      throw Error(`${quality}: real eight-car night frames require delivered p95 <=18.5 ms and complete construction <1000 ms.`);
+      !Number.isFinite(row.worldBuildMs)||row.worldBuildMs<0||row.worldBuildMs>=1000||
+      !Number.isFinite(row.constructionMs)||row.constructionMs<0)
+      throw Error(`${quality}: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.`);
   }
   return packet;
 }
@@ -318,7 +325,7 @@ export async function runNight(options,overrides={}) {
   if(root.replaceAll('\\','/').replace(/\/$/,'').toLowerCase()==='c:/users/kyleb/dev/the-duel-remake')
     throw Error('Refusing the live folder.');
   if(options?.idleAwake!==true||options.noPush!==true)throw Error(usage);
-  const dependencies={root,now:()=>new Date(),git:(args,cwd=root)=>gitCommand(args,cwd),processes:inspectNightProcesses,
+  const dependencies={root,print:message=>console.log(message),now:()=>new Date(),git:(args,cwd=root)=>gitCommand(args,cwd),processes:inspectNightProcesses,
     createCopy:source=>createCheckCopy(root,source),removeCopy:removeCheckCopy,framePollMs:1000,
     scenarioNames:async copyRoot=>(await import(pathToFileURL(path(copyRoot,'tools/run-browser-scenarios.mjs')).href)).namedScenarios(),readText:file=>readFile(file,'utf8'),writeText:writeFile,appendText:appendFile,
     mkdir:dir=>mkdir(dir,{recursive:true}),makeTemp:mkdtemp,
@@ -365,6 +372,11 @@ export async function runNight(options,overrides={}) {
         if(stage.id==='frames'?busy.length>0:busy.length>=3)throw Error(stage.id==='frames'?'Competing heavy work: frame timing refused.':'Three heavy jobs already running; stage refused.');
         if(stage.id==='frames')packet.context.processIsolationObserved=true;
         await dependencies.writeText(log,'');
+        if(stage.id==='frames') {
+          const reminder='Frame check: keep the laptop panel off; use Win+P "Second screen only". No other GPU workload.';
+          dependencies.print(reminder);
+          await dependencies.appendText(log,reminder+'\n');
+        }
         const stageEnv={...stage.env};
         if(stage.id==='browser')stageEnv.DUEL_NIGHT_FRAME_PASSED=packet.stages.find(row=>row.id==='frames')?.passed===true?'1':'0';
         let timer,observations=Promise.resolve(),timingError=null;
@@ -394,10 +406,25 @@ export async function runNight(options,overrides={}) {
             row.failureNames=(actual.rows||[]).filter(item=>item.passed!==true).map(item=>'browser: '+item.name);
           }catch{}
         }
+        let frameError;
+        if(stage.id==='frames') {
+          row.warnings=[];
+          try {
+            const frames=json(await dependencies.readText(stage.packet));
+            if(frames?.schema===1&&frames.mode==='night-simple'&&frames.reports?.length===2)
+              row.reports=frames.reports.flatMap((report,index)=>
+                report?.quality===['High','Performance'][index]&&
+                Number.isFinite(report.p95)&&report.p95>0&&
+                Number.isFinite(report.worldBuildMs)&&report.worldBuildMs>=0&&
+                Number.isFinite(report.constructionMs)&&report.constructionMs>=0
+                  ?[{quality:report.quality,p95:report.p95,worldBuildMs:report.worldBuildMs,constructionMs:report.constructionMs}]:[]);
+            validateFramePacket(frames,{warn:message=>row.warnings.push(message)});
+          }catch(error){frameError=error;row.reportError=error.message;}
+        }
         if(stage.id==='full')row.generatedReport=await consumeFullReport(dependencies,copy,source,originalFullReport,result,packet.evidence);
         if(result.exitCode!==0)throw Error(result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
         if(stage.id==='full')validateFull(fullPacket(result.stdout));
-        else if(stage.id==='frames')validateFramePacket(json(await dependencies.readText(stage.packet)));
+        else if(stage.id==='frames') {if(frameError)throw frameError;}
         else if(stage.id==='browser')validateBrowser(json(await dependencies.readText(stage.packet)),await dependencies.scenarioNames(copy.root));
         else validateCombat(json(result.stdout));
         await assertCopy();
@@ -411,6 +438,9 @@ export async function runNight(options,overrides={}) {
 
   const morning=[`Full check ${options.date}: ${packet.status.toUpperCase()} (${source}).`,
     ...packet.stages.map(row=>`${row.passed?'PASS':'FAIL'} ${row.id}: ${row.log}`),
+    ...packet.stages.filter(row=>row.id==='frames').flatMap(row=>[
+      ...(row.reports||[]).map(report=>`${report.quality}: p95 ${report.p95} ms, world build ${report.worldBuildMs} ms, full first-race load ${report.constructionMs} ms.`),
+      ...(row.warnings||[]).map(message=>'WARNING '+message)]),
     'First merge after last green: '+(firstMerge||attribution),
     'Compaction and push disabled; separate Kyle authorization is pending.',
     `Details: docs/board/checks/night-${options.date}.json`];

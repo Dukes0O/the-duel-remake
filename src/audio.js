@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 // Audio rendering reads simulation state; all authored cues live in the bank.
 import {
   SOUND_BANK,
@@ -249,12 +250,13 @@ export class EngineAudio {
     this._loadCueBuffers();
   }
 
-  _loadCueBuffers() {
+  _loadCueBuffers({summitAttack=false}={}) {
     const grandPrix = this.flags.enabled('grand-prix'), snowmen=this.flags.enabled('snowmen');
     const addSnowmen=snowmen && !this._snowmanCueStarted;
     const yeti=this.flags.enabled('yeti'),addYeti=yeti&&!this._yetiCueStarted;
     const avalanche=this.flags.enabled('summit-run'),addAvalanche=avalanche && !this._avalancheCueStarted;
-    if (this._cueBuffersPromise && (!grandPrix || this._p4CueBuffersStarted) && !addSnowmen && !addAvalanche && !addYeti)
+    const addSummitAttack=summitAttack && avalanche && !this._summitAttackCueStarted;
+    if (this._cueBuffersPromise && (!grandPrix || this._p4CueBuffersStarted) && !addSnowmen && !addAvalanche && !addYeti && !addSummitAttack)
       return this._cueBuffersPromise;
     const pending = this._cueBuffersPromise;
     // A later Grand Prix activation adds only its own batch. Existing cue and
@@ -263,6 +265,7 @@ export class EngineAudio {
     if(snowmen || grandPrix)this._snowmanCueStarted=true;
     if(avalanche || grandPrix)this._avalancheCueStarted=true;
     if(yeti || grandPrix)this._yetiCueStarted=true;
+    if(addSummitAttack)this._summitAttackCueStarted=true;
     const loading = Promise.allSettled(
       Object.entries(SOUND_BANK)
         .filter(
@@ -270,7 +273,7 @@ export class EngineAudio {
             cue.flag !== 'the-deep' && cue.flag !== 'helicopter' &&
             (!pending || cue.flag === 'grand-prix') &&
             (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
-            (cue.flag !== 'grand-prix' || grandPrix || id==='snowman.burst' && addSnowmen || ['avalanche.rumble','avalanche.slide'].includes(id) && addAvalanche || id==='yeti.roar' && addYeti),
+            (cue.flag !== 'grand-prix' || grandPrix || id==='snowman.burst' && addSnowmen || ['avalanche.rumble','avalanche.slide'].includes(id) && addAvalanche || id==='yeti.roar' && addYeti || id==='race.finish.flag' && addSummitAttack),
         )
         .map(async ([id, cue]) => {
           const buffers = await Promise.all(
@@ -977,6 +980,28 @@ export class EngineAudio {
     return result;
   }
 
+  _summitAttackEvent(ev, state, course) {
+    if (!isSummitAttack(course?.def)) return false;
+    const result=ev?.stageResult;
+    if (!this.flags.enabled('summit-run') || state?.mode!=='timetrial' ||
+        state.status!=='stage_result' || result!==state.results || result?.completed!==true) return true;
+    const seen=this._summitAttackFinishes??=new WeakSet();
+    if (seen.has(result)) return true;
+    seen.add(result);
+    if (this.muted || this.paused || state.paused || this.context?.state!=='running') return true;
+    const epoch=this._snowmanAudioStage??0;
+    const play=()=>{
+      if (epoch!==(this._snowmanAudioStage??0) || this.muted || this.paused || state.paused ||
+          this.context?.state!=='running' || !this.flags.enabled('summit-run') ||
+          state.status!=='stage_result' || state.results!==result || !this.cueBuffers['race.finish.flag']) return;
+      this._playCue('race.finish.flag',{summitAttack:true});
+      if (['gold','silver','bronze'].includes(result.medal)) this._playCue('interface.win');
+    };
+    if (this.cueBuffers['race.finish.flag']) play();
+    else this._loadCueBuffers({summitAttack:true}).then(play);
+    return true;
+  }
+
   _recordedImpact(id, event, state, course) {
     const output = this._spatialOutput(event, state, course);
     const filter = this.context.createBiquadFilter();
@@ -994,7 +1019,7 @@ export class EngineAudio {
     });
   }
 
-  _playCue(id, { destination, scale = 1, onEnd = null, crewShock = false } = {}) {
+  _playCue(id, { destination, scale = 1, onEnd = null, crewShock = false, summitAttack = false } = {}) {
     this._syncMixer();
     const def = bank(id);
     if (!def) throw Error('Unknown audio cue: ' + id);
@@ -1003,7 +1028,8 @@ export class EngineAudio {
       this.flags.enabled('warlord-cards') && this.flags.enabled('crew-gear');
     const admittedSnowman=id==='snowman.burst' && this.flags.enabled('snowmen');
     const admittedAvalanche=['avalanche.rumble','avalanche.slide'].includes(id) && this.flags.enabled('summit-run');
-    if (def.flag && !this.flags.enabled(def.flag) && !admittedShock && !admittedSnowman && !admittedAvalanche && !(id==='yeti.roar'&&this.flags.enabled('yeti'))) return null;
+    const admittedAttack=id==='race.finish.flag' && summitAttack===true && this.flags.enabled('summit-run');
+    if (def.flag && !this.flags.enabled(def.flag) && !admittedShock && !admittedSnowman && !admittedAvalanche && !admittedAttack && !(id==='yeti.roar'&&this.flags.enabled('yeti'))) return null;
     if (def.flag === 'arsenal-wave3' && !this.flags.enabled('arsenal')) return null;
     return this._runCue(
       id,
@@ -1627,6 +1653,7 @@ export class EngineAudio {
       this.shiftStarted = this.shiftUntil = 0;
     }
     const grandPrix = this._grandPrixEvent(ev, state);
+    const summitAttack=this._summitAttackEvent(ev,state,course);
     if (
       !this.context ||
       this.context.state !== 'running' ||
@@ -1654,7 +1681,7 @@ export class EngineAudio {
         else this._loadCueBuffers().then(play);
       }
     }
-    if(ev.summitAvalanche && course?.def.id==='summit-run' && this.flags.enabled('summit-run')){
+    if(ev.summitAvalanche && (course?.def.id==='summit-run'||isSummitAttack(course?.def)) && this.flags.enabled('summit-run')){
       const hit=ev.summitAvalanche,key=hit.id+':'+hit.phase,seen=this._avalancheAudioHits ??= new Set();
       const expected='avalanche.'+(hit.phase==='tell'?'rumble':'slide');
       if(['tell','slide'].includes(hit.phase) && hit.cue===expected && state?.avalanche?.id===hit.id &&
@@ -1670,7 +1697,7 @@ export class EngineAudio {
         if(this.cueBuffers[hit.cue])play();else this._loadCueBuffers().then(play);
       }
     }
-    if(ev.yetiSighting && state?.yeti?.seen===true && course?.def.id==='summit-run' &&
+    if(ev.yetiSighting && state?.yeti?.seen===true && (course?.def.id==='summit-run'||isSummitAttack(course?.def)) &&
       this.flags.enabled('yeti') && this.flags.enabled('summit-run')){
       const hit=ev.yetiSighting,seen=this._yetiAudioHits??=new Set();
       if(hit.cue==='yeti.roar' && typeof hit.id==='string' && !seen.has(hit.id) &&
@@ -1766,6 +1793,8 @@ export class EngineAudio {
         );
       else this._playCue('engine.shift-fallback');
     }
+    // A new medal or an earned car on the results screen (docs/EARNED_CARS.md 5.2).
+    if (ev.medalEarned) this._playCue('interface.bonus');
     if (ev.chickenBonus) {
       this._playCue('interface.bonus');
       this._flutter();
@@ -1779,10 +1808,10 @@ export class EngineAudio {
     if (ev.nearMiss) {
       this._playCue('interface.near-miss');
     }
-    if (ev.escaped || (ev.stageResult?.won && !grandPrix.finish) || ev.complete) {
+    if (ev.escaped || (ev.stageResult?.won && !grandPrix.finish && !summitAttack) || (ev.complete && !summitAttack)) {
       this._playCue('interface.win');
     }
-    if (ev.ticket || ev.gameover || (ev.stageResult?.won === false && !grandPrix.finish))
+    if (!summitAttack && (ev.ticket || ev.gameover || (ev.stageResult?.won === false && !grandPrix.finish)))
       this._playCue('interface.lose');
     // These Arsenal launches already emit their own recorded native cue.
     if (ev.weaponFired && !['harpoon', 'caltrops', 'rockets',

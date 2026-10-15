@@ -219,6 +219,11 @@ final numbers on the card.
 | Answered one play day late (3 more steps) | Out in 8 to 14 drops |
 | Answered two play days late | Out in 14 to 22 drops, needing a refuel |
 
+FIRE-SPREAD's tuning (its card, "Claude answers") changed four rules to fit
+Tremblant Woods' strip of forest: cells grow before they spread, embers
+carry two cells downwind, the base chance is 0.55 with 180 litres per
+point, and a fire is lost at 45 cells.
+
 In plain time: answer at once and it is about 8 to 12 minutes of flying; a
 fire ignored on a racing-only player's machine is lost on its third to fifth
 play day.

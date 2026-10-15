@@ -105,3 +105,30 @@ const oldSnow={...fresh,credits:4567,courses:{version:1,unlocked:[...fresh.cours
 same(normalizeProfile(oldSnow).courses,oldSnow.courses,'old explicit Snow ownership remains exact');
 check(isCourseUnlocked(normalizeProfile(oldSnow),snow),'old Snow ownership needs no GP podium');
 same(purchaseCourse({...fresh,credits:1800},snow).cost,1800,'ordinary Snow purchase still uses the exact price');
+
+
+// The solo challenge derives access from the parent's existing entitlement.
+{
+  const {SUMMIT_RUN}=await import('../src/circuits/summit-run.js');
+  const {SUMMIT_TIME_ATTACK}=await import('../src/circuits/summit-time-attack.js');
+  const count=COURSE.length;
+  try{
+    for(const definition of [SUMMIT_RUN,SUMMIT_TIME_ATTACK])if(!COURSE.some(row=>row.id===definition.id))COURSE.push(definition);
+    const soloFresh=createProfile(),parentOwner={...soloFresh,credits:1234,
+      courses:{version:1,unlocked:[...soloFresh.courses.unlocked,'summit-run']}};
+    const snapshot=JSON.stringify(parentOwner);
+    check(!isCourseUnlocked(soloFresh,SUMMIT_TIME_ATTACK),'zero-price Attack is not included without Summit');
+    check(isCourseUnlocked(parentOwner,SUMMIT_TIME_ATTACK),'Summit ownership alone unlocks Attack, without any GP podium');
+    same(courseUnlockRequirement(SUMMIT_TIME_ATTACK).kind,'owned-course','solo access is distinct from future GP-podium variants');
+    check(courseUnlockRequirement(SUMMIT_TIME_ATTACK).condition.includes('Own Summit Run'),'locked solo card names parent ownership');
+    same(normalizeCourseAccess({version:1,unlocked:[...parentOwner.courses.unlocked,SUMMIT_TIME_ATTACK.id]}),parentOwner.courses,'child access never creates a saved entitlement');
+    for(const profile of [soloFresh,parentOwner]){
+      const purchase=purchaseCourse(profile,SUMMIT_TIME_ATTACK);
+      check(!purchase.ok,'solo event cannot be bought before or after parent ownership');
+      same(purchase.profile,profile,'refused solo purchase leaves exact wallet/profile reference');
+      same(purchase.cost,0,'solo purchase refusal never debits');
+    }
+    same(JSON.stringify(parentOwner),snapshot,'all derived solo access queries preserve the parent profile');
+    check(!isCourseUnlocked({...parentOwner,courses:soloFresh.courses},SUMMIT_TIME_ATTACK),'removing parent entitlement removes derived solo access');
+  }finally{COURSE.splice(count);}
+}

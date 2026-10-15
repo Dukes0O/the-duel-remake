@@ -199,6 +199,14 @@ async function checkHairpinCamera(context,data) {
     failures:packet.failures,apexPicture:packet.apexPicture,pictureVerdict:packet.pictureVerdict};
 }
 
+// Closed circuits keep the original second-lap fixture. An open road has
+// one physical run, so its requested views and run-ups stay on that road.
+export function reviewPlacementPlan(course,pointS,mph,mphToWorld,length) {
+  const run=Math.max(30,Math.min(160,mph*mphToWorld*1.3));
+  if(course.closed!==false)return {target:length+pointS,from:length+pointS-run,reportBase:length};
+  return {target:pointS,from:Math.max(0,pointS-run),reportBase:0};
+}
+
 export async function run(context) {
   let inputPath = process.env[INPUT_ENV];
   if (!inputPath) {
@@ -210,7 +218,7 @@ export async function run(context) {
   }
   const data = JSON.parse(readFileSync(inputPath, 'utf8'));
   const dir = data.outputDir;
-  const result = { pack: null, frameErrors: {}, browserErrors: [], warnings: [] };
+  const result = { pack: null, frameErrors: {}, framePoses: {}, browserErrors: [], warnings: [] };
   const flags = data.options.flags.length ? `flags=${data.options.flags.join(',')}&` : '';
 
   // --- map and speed trace (canvas only) ---
@@ -250,14 +258,16 @@ export async function run(context) {
     R.clearField=s0=>{const s=a.duel.state;for(const t of s.traffic||[]){t.s=s0+L/2;}for(const o of s.opponents||[]){o.s=o.prevS=s0+L/2;}if(s.rival){s.rival.s=s.rival.prevS=s0+L/2;}};
     R.place=(pointS,mph,lateral)=>{
       const s=a.duel.state;if(s.status!=='racing')throw Error('Race is not running ('+s.status+')');
-      const target=L+pointS,run=Math.max(30,Math.min(160,mph*M2W*1.3)),from=target-run;
+      const course=a.duel.course,plan=(${reviewPlacementPlan.toString()})(course,pointS,mph,M2W,L);
+      const {target,from}=plan;
       R.clearField(from);
       s.s=s.prevS=from;s.lateral=s.prevLateral=lateral||0;s.headingError=0;s.speedMph=mph;s.impactTimer=0;s.airHeight=0;
       a.autopilot=true;let guard=0;
       while(s.s<target&&guard++<600){a.advance(1/60,1/60);if(s.status!=='racing')throw Error('Race stopped during run-up ('+s.status+')');}
       a.autopilot=false;a.duel.setInput({throttle:0,brake:0,steer:0,boost:false});
       R.clearField(target);
-      return{s:s.s-L,mph:s.speedMph,air:!!s.airborne,lateral:s.lateral};
+      return{s:s.s-plan.reportBase,mph:s.speedMph,air:!!s.airborne,lateral:s.lateral,
+        requestedS:pointS,target,runupFrom:from,absoluteS:s.s,coursePhase:course.phase(s.s),closed:course.closed};
     };
   })()`);
   await context.evaluate('window.__review.begin()');
@@ -279,6 +289,7 @@ export async function run(context) {
     writeFileSync(join(dir, data.files.frameFolder, frame.file), Buffer.from(image, 'base64'));
     const errors = takeIssues(context, before);
     if (errors.length) { result.frameErrors[frame.index] = errors; result.browserErrors.push(`frame ${frame.index + 1} (${frame.label}): ${errors.join(' | ')}`); }
+    result.framePoses[frame.index]=info;
     frames.push({ frame, image, info });
     console.log(`Frame ${frame.index + 1}/${data.frames.length}: ${frame.label} at ${Math.round(frame.s)} m${errors.length ? ' (BROWSER ERROR)' : ''}`);
   }

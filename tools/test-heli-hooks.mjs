@@ -166,6 +166,51 @@ try {
     ok(!app._airOnlyRefused('falcone_f42', 'scrapdome'), 'other cars can');
   }
 
+  // The menu explains a closed START for an air-only car, in the app's words.
+  {
+    const {airOnlyNote} = await import('../src/heli/heli-jobs.js');
+    const app = makeApp(true);
+    app.profile = {...app.profile, credits: 1_000_000, unlockedCars: [...new Set([...app.profile.unlockedCars, 'koenigsegg_jesko'])],
+      courses: {...app.profile.courses, unlocked: [...new Set([...(app.profile.courses?.unlocked || []), 'tremblant-woods', 'panorama-ridge'])]},
+      heli: {version: 1, carsAt: {}}};
+    app._saveProfile();
+    const stage = id => COURSE.findIndex(item => item.id === id);
+    const note = airOnlyNote({enabled: true, profile: app.profile, carId: 'koenigsegg_jesko', courseId: 'panorama-ridge', carName: 'Koenigsegg Jesko Absolut'});
+    const started = app.startCampaign({startStage: stage('panorama-ridge'), car: 'koenigsegg_jesko'});
+    ok(!started && app.courseAccessMessage === note, 'the menu note and the refusal say the same thing');
+    ok(airOnlyNote({enabled: true, profile: app.profile, carId: 'koenigsegg_jesko', courseId: 'tremblant-woods'}) === null, 'no note where the car is');
+    ok(airOnlyNote({enabled: true, profile: app.profile, carId: 'falcone_f42', courseId: 'panorama-ridge'}) === null, 'no note for other cars');
+    ok(airOnlyNote({enabled: false, profile: app.profile, carId: 'koenigsegg_jesko', courseId: 'panorama-ridge'}) === null, 'no note with the switch off');
+  }
+
+  // The menu line under START: the note replaces it, and when the note goes
+  // the line is put back unless the menu has already written a newer one.
+  {
+    const {createRendererReadiness} = await import('../src/screen-readiness.js');
+    const app = makeApp(true);
+    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'koenigsegg_jesko'])],
+      courses: {...app.profile.courses, unlocked: [...new Set([...(app.profile.courses?.unlocked || []), 'tremblant-woods', 'panorama-ridge'])]},
+      heli: {version: 1, carsAt: {}}};
+    app._saveProfile();
+    const stage = id => COURSE.findIndex(item => item.id === id);
+    const line = {textContent: 'OLD COURSE LINE', dataset: {}};
+    const ui = {view3d: {dataset: {}, classList: {add() {}}}, 'renderer-loading': {hidden: false, lastChild: {textContent: ''}},
+      'renderer-error': {hidden: true, querySelector: () => ({textContent: ''})},
+      'start-engine': {disabled: false, parentElement: {querySelector: () => line}}};
+    const choices = {car: 'koenigsegg_jesko', startStage: stage('panorama-ridge')};
+    app.menuCar = 'koenigsegg_jesko';
+    const ready = createRendererReadiness({app, ui, choices, profile: () => app.profile, isDisposed: () => false,
+      importRenderer: async () => ({attachRenderer: () => ({prepareVehicle(key) { ui.view3d.dataset.vehicleKey = key; ui.view3d.dataset.vehicleAsset = 'ready'; }, dispose() {}})})});
+    await ready.ensureRenderer();
+    ok(line.textContent.includes('travels only by air') && ui['start-engine'].disabled, 'the note replaces the line and START closes');
+    choices.startStage = stage('tremblant-woods'); line.textContent = 'WOODS LINE';
+    ready.syncRendererReadiness(app.duel.state);
+    ok(line.textContent === 'WOODS LINE', 'a newer menu line stays when the note goes');
+    choices.startStage = stage('panorama-ridge'); ready.syncRendererReadiness(app.duel.state);
+    app.menuCar = choices.car = 'falcone_f42'; ready.syncRendererReadiness(app.duel.state);
+    ok(line.textContent === 'WOODS LINE', 'the saved line comes back when only the car changed');
+  }
+
   // The four camera views read the session view and nothing else.
   {
     const view = {heli: {x: 0, y: 30, z: 0, heading: 0, pitch: 0, roll: 0}, load: {x: 0, y: 14, z: 0, hooked: true}};

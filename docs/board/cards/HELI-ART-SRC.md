@@ -129,3 +129,77 @@ Read Claude's latest pick first: his original Kestrel One is accepted, three mod
 
 
 The second lead's proposed accessory-only Blender review is within that handoff: extend only heli-accessories.py with the existing Kestrel camera/light rendering pattern and a separate compact looks/heli-accessories/round-1 sheet. No production GLB loader hook, procedural scene substitution or fourth Kestrel round. Existing first-flight QA does not load these accessories and cannot certify their appearance. The old worker is released; source review comes before any render/export/gate/build, all scheduled here. Keep the already measured GLBs unless Claude's accessory verdict requests a real change.
+
+
+## Accessory source handoff held for capacity
+
+Second authorized Codex chat prepared clean db6f04d18f86b14a09e9b04394e8567e8b7710b1 in the retained heli-art-src lane, after normal integration merge 77033b64. Root independently reviewed the two owned files: imported-GLB six-view render-only recipe and its change note. Path and framing faults were corrected; source review is clear and diff check passes. All three current GLBs remain unchanged. No Python, Blender, sheet, gate or build ran on this slice. That chat is held until this lead grants an actual ART and heavy slot; no additional lane, export or runtime wiring is authorized. Prior exact render-only request and source-view labels remain binding.
+
+
+## Conditional single render admission
+
+Kyle renewed the accessory completion instruction in the authorized second chat. Root grants exactly the reviewed db6f04d1 render-only batch once that builder verifies a free ART build slot, the existing inspectNightProcesses reports at most ONE foreign heavy root, and no current frame or release-alone hold exists. The one-root threshold reserves room for the priority QA retry, which is also queued; even simultaneous admissions then stay within three jobs. Recheck immediately before launch and send start/end notices. CPU four threads, six imported-GLB views, unchanged source-byte verification and the already reviewed compact source-only sheet follow serially. No new export, gate, build, card, source scope or runtime wiring is granted. If the lane inventory is unclear, ask this lead and remain held. Root reviews actual output and routes Claude's art verdict on this card. Shared metadata and merges stay with this lead.
+
+
+## Claude coordination requested: actual ART inventory
+
+The second builder reports nine Claude cards listed building or under review, which may include stale or paused statuses. Please name the actual active build-lane inventory and which ART slot is free for the already reviewed accessory batch. A named merged lane alone does not prove total work is within six. Until this is settled, the source stays clean at db6f04d1 and no render starts; the conditional one-foreign-root admission grant remains ready. This is an operational capacity question, not a request for Kyle or a new art verdict.
+
+
+## Capacity settled from Kyle's actual quota notice
+
+Root verified the direct human message in the authorized second chat: Claude is out of quota until17:40 PT today. Claude's source builders are paused; only their already running gates continue. The stale building/review rows are therefore not nine actively editing builders. Our other retained sources are frozen, QA is this lead's active lane, and HELI's existing ART lane may resume within six active lanes. Clear this operational waiting_on; the art verdict itself still waits for Claude after17:40 once real pictures exist.
+
+The ready browser slice passed its canonical46/46 nearby gate, notRun0/jobs4, so Root reserves the next heavy slot exclusively for the reviewed db6f04d1 single render batch. The builder must inspect immediately before launch: at most TWO foreign job roots, no frame or standalone-full/release hold. Root starts no other heavy job until this batch's end notice. This specific reservation supersedes the earlier one-root threshold for this one batch only. CPU4, six imported-GLB views, unchanged bytes and serial approved compositor remain exact. No export, source edit, gate, build, second job or art acceptance is granted.
+
+
+## Accessory planner correction and actual round 1 review
+
+The original 77cf4446 gate failed 26/28: inherited root run-log placement is already corrected on integration; the strict Blender generator roster omits this new recipe. Extend only tools/test-blender-output.mjs with the additive heli-accessories generator row for the three settled GLBs, retaining all roster, paths and no-write assertions. In the owned heli-accessories.py, return its unchanged constant --paths-only plan before reading configuration, so the existing empty-root planner test uses no Blender, Pillow or input files. Default export, render, sheet and GLB bytes stay exact. Merge current integration normally, freeze for Root review, then the original focused output test and corrected canonical lane/jobs4/build; no repeated render/export or changed assertion limit.
+
+Claude: please judge actual accessories round 1 at docs/board/looks/heli-accessories/round-1.jpg on codex/heli-art-src, SHA ac9f430bf139076117da400c4c025b16d7649a8ca0da905f0cbe03b2a0246e06 (156226 bytes). It contains six original imported-GLB views, hook/pad/pump fully framed. Independent source/GLTF checks are clear; actual appearance remains your verdict, separate from Kestrel One's closed three rounds. Your quota pause until17:40 PT is respected. No runtime flight or frame acceptance is inferred.
+
+
+Planner lease refinement: the settled accessory recipe emits no editable Blend files. Add recipeOnly:true ONLY on its new roster row. Assert its exact empty blend array, allow that array only for the named recipe-only row during normalization, and require count0 only there. All existing generators retain their positive Blend count/path/assertions; all-generator coverage, exact three runtime paths, runtime existence, two-root equality and no-write checks remain. This extends the existing suite to the written source-only contract, without loosening any prior case. Root confirms the exact additive source before execution.
+
+## Claude accessory round 1 verdict and bounded round 2
+
+Actual single read-only Claude image review after17:40 completed exit0 in31271.5544ms on original79769594 sheetSHAac9f430bf139076117da400c4c025b16d7649a8ca0da905f0cbe03b2a0246e06. Verdict CHANGES REQUIRED: hook shape3/5, material2/5, readability2/5; pad5/4/5 and pump4/4/5 acceptable with no required corrections. Hook must lose copper tint, gain a real hinged grey safety flap closing against its tip, and show an open cargo-hook throat rather than a split ring. Raw actual verdict and receipt: .evidence/2026-10-14/HELI-ART-SRC/claude-image-only-round1-79769594. No final set acceptance or runtime flight pass.
+
+The existing accessory builder may prepare only these round2 hook corrections in tools/blender/heli-accessories.py and its existing config/change note. Preserve accepted pad/pump GLBs byte exactly, original helicopter closed3rounds, all dimensions/origins/poly/size guards and cameras. If needed, add a validated cargo-hook-only export selector to this same recipe, preserving its default3-asset and empty-root paths-only contracts; Root reviews source before export. No optional pad/pump embellishments, R22, donor, runtime hooks, new helper/framework or fourth round. Render the same6 actual imported-GLB views once at a fresh Root-scheduled slot, compose round2 <=500KB, then corrected original nearby/jobs4/build and actual Claude verdict. Source preparation now; no check/export/render/build until Root GO under actual maximum3 jobs. Root alone edits integration/shared metadata and merges.
+
+## Reviewed hook source waiting for RELEASE DONE
+
+Root source review of clean971dbb74 is clear: only the hook becomes the requested forged J with grey hinged flap and pivot; the selected-asset export skips pad and pump, and the same six imported-GLB review views support the next numbered sheet without overwriting round1. Actual round1 verdict already accepted pad and pump and requested this hook correction; do not repeat that review.
+
+The authorized second Codex chat is idle with its heartbeat paused. After RELEASE DONE and a fresh capacity check, Root will wake that chat for one selected-hook export at four CPU threads, proof that pad/pump bytes remain exact, the six-view CPU-four review and compact round2 sheet, then Claude's actual art verdict and fresh lane/build. No export, render, gate, build or merge is authorized during the current release hold. Prior79769594 mechanics do not certify the changed hook.
+
+## Root bounded GO after explicit hold lift, 14 October22:28PT
+
+Claudeaa95cf95 explicitly lifted the earlier helicopter check/merge hold; the frozen release still waits for Kyle's High-frame decision. Root's later interrupted quiet window is also explicitly released a2982352. No release/push/live access is granted. Existing971dbb74 hook-only source remains Root-reviewed CLEAR; the actual R1 verdict above is not repeated.
+
+The existing authorized accessory chat01a13c7a-8f66-7832-b9c6-82054f30e29b may resume its existing heli-art-src lane ONLY. One ordinary heavy slot is reserved sequentially for the selected-hook CPU4 export, proof accepted pad/pump GLB bytes exact, then the SAME six imported-GLB CPU4 views and immutable compact round2 sheet. No new builder/lane or repeated R1/closed Kestrel rounds; no donor download or alternate geometry. Check actual node/blender roots before every launch: maximumTWO other heavy roots, four threads each, and no new frame/release hold. Root's final Snow pair may finish as one other job; never duplicate it or exceed3 total.
+
+After source/assets/pictures freeze, actual minimal image-only Claude verdict within remaining accessory three-round cap, then sync current integration in the lane and one fresh nearby/jobs4/build/review. A conflict requires normal resolution/preserve both new generator rows and Root source review before gate; never edit integration metadata or merge integration from that chat. Hand exactsource/evidence/result to this chat's card or final reply; Root remains sole integration merger/heavy lead. On a new quiet/release hold source-only until actual clearance. Stop at handoff or30-minutefailurelimit; preserve unresolved originals/lane.
+
+## Conflict union confirmed; final packet update before gate
+
+Root independently checked d60d93cf: bounded union CLEAR. The roster retains the exact new heli-accessories recipeOnly row AND incoming skin-gear/rescue-people rows, all original positive Blend/path/no-write/two-root/runtime assertions. Recipe heli-accessories.py remains byte-exact971dbb74; config changes only to actual round2 accepted state. Actual hook1496tri/50440B/hash13ed385c3849d33e3885685435944fb3ff7c105f34cf1dae2a7e9eddfe0c1f6e and accepted pad/pump byte-preservation/render guards/verdict are handed back by the authorized builder. No extra art round or optional polish.
+
+Director adds narrow tools/art/heli-source-candidates.json lease BEFORE its final gate: update only localAccessories current cargo-hook metrics/nodes/bytes/hash/bounds from the actual existing export/GLTF receipt, current inspection/state/artAccepted and accessoryReview current R2 actual sheet/source hashes/verdict. Keep accepted pad/pump exact, cancelled donor/download plan and every licence/source provenance row. Distinguish recipe commit from generated asset bytes; do not invent a clean asset commit at render time. No export/render/review or runtime edit is needed. Fold consumed own R1 verdict/hash/scores into finalR2 note; the owning chat may recycle only its own consumed R1 JPEG/note after exact hashes/facts retained, leaving currentR2. No closed Kestrel images/originals touched.
+
+Freeze this final metadata/cleanup source for Root confirmation, then one canonical nearby/jobs4/build in the lane under restored reserved slot. PIT FINAL RUN DONE; no other Root native follows. A conflict resolution now gets this one fresh gate, no additional clean-merge rerun. Never edit integration metadata/merge from accessory chat.
+
+## Integrated green; lane recycle pending
+
+Mergeda7505637/clean54ba9f66: original nearby29/29,failures0/notRun0,jobs4,runner219191.3218ms/wall230810.8692ms; build971ms/wall1611.9196ms, unchanged clean source. Root independent source/real roster-union CLEAR. Actual R2 image-only ACCEPT hook4/4/4,pad5/4/5,pump4/4/4; hook1496tri/50440B/0.4m/top0,accepted pad/pump exact. Current packet/sheet and folded R1 verdicts retained. Conflict-free integration/no clean rerun; accessory heartbeat paused. No native-flight/frame/release/push claim.
+
+Own node_modules and .evidence junctions unlinked NONRECURSIVELY after exact integration-target verification; both targets remain intact. Windows Recycle Bin refuses the own merged lane with 'Attempted to perform an unauthorized operation', including after the second evidence link was removed. No forced/permanent deletion. Lane/branch remain registered, clean and merged, pending bounded cleanup; do not reuse or remove foreign lanes. Essential original receipts retained in integration .evidence/2026-10-15/HELI-ART-SRC/final-54ba9f66. No new lane until this owned cleanup is settled.
+
+## Owning-session cleanup handback
+
+Root read-only ACL inspection finds explicit Codex sandbox-SID deny entries on this merged lane. No ACL/ownership/security changes or bypass will be made. The existing authorized owning chat's same heartbeat is resumed for ONE cleanup-only Recycle Bin attempt under its own legitimate access, then report and pause; no art/card/build/test restart. If refused too, preserve lane/branch and report rather than loop. Root alone will prune only its exact stale registration/branch after actual successful recycle. Existing retained lanes continue; no new lane opens while this own merged cleanup remains unresolved.
+
+## Cleanup refused in both owning sessions
+
+The owning chat made its ONE permitted Recycle Bin attempt after independently verifying clean54ba9f66, merged ancestor, both links absent,zero reparse points,shared targets intact and all10 copied essential receipts present. Windows returned the same unauthorized-operation refusal. Both attempts stop; no ACL/ownership/protection changes, forced/permanent deletion or bypass. Keep exact merged lane/branch/registration heli-art-src; no new lane opens while this cleanup is unresolved. Its cleanup-only heartbeat is paused at final handback. Existing retained source work continues; no new test/art/build job is implied.

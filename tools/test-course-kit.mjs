@@ -11,6 +11,9 @@ import {TREMBLANT_WOODS} from '../src/circuits/tremblant-woods.js';
 import {TREMBLANT_SNOW} from '../src/circuits/tremblant-snow.js';
 import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
 import {PANORAMA_RIDGE} from '../src/circuits/panorama-ridge.js';
+import {SUMMIT_RUN,manifest as summitManifest} from '../src/circuits/summit-run.js';
+import {SUMMIT_TIME_ATTACK,manifest as attackManifest} from '../src/circuits/summit-time-attack.js';
+import {SUMMIT_ATTACK_ID,isSummitAttack,summitAttackTargets,summitAttackMedal} from '../src/summit-attack.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const originals = [TREMBLANT_WOODS, TREMBLANT_SNOW, HARBOUR_LIGHTS, PANORAMA_RIDGE];
@@ -102,6 +105,63 @@ test('future free variants require a valid default GP manifest without changing 
   assert.throws(()=>api.registerCircuits([{...child,manifest:{...child.manifest,
     unlock:{kind:'default-gp-podium',defaultEventId:'career-test-reverse'}}},next]),/default|chain|cycle/i);
 });
+test('Summit Attack is a narrow shared-switch child with parent-only free access',()=>{
+  requireApi();
+  const parent={manifest:summitManifest,circuit:SUMMIT_RUN};
+  const child={manifest:attackManifest,circuit:SUMMIT_TIME_ATTACK};
+  const before=JSON.stringify([parent,child]);
+  const registered=api.registerCircuits([child,parent]);
+  assert.deepEqual(registered.map(row=>row.manifest.id),['summit-run',SUMMIT_ATTACK_ID]);
+  assert.equal(registered[1].generationStage,SUMMIT_RUN.stage);
+  assert.ok(Object.isFrozen(registered[1].manifest.unlock));
+  assert.equal(JSON.stringify([parent,child]),before);
+  assert.equal(attackManifest.releaseOrder,6);
+  assert.deepEqual(attackManifest.unlock,{kind:'owned-course',defaultEventId:'summit-run'});
+  for(const patch of [{price:1},{grandPrix:true},{state:'on'},{flag:'another-switch'},
+    {unlock:{kind:'owned-course',defaultEventId:'missing'}},
+    {unlock:{kind:'owned-course',defaultEventId:SUMMIT_ATTACK_ID}}]){
+    const m={...attackManifest,...patch},circuit={...SUMMIT_TIME_ATTACK,flag:m.flag};
+    assert.throws(()=>api.registerCircuits([parent,{manifest:m,circuit}]),/unlock|parent|owned|flag|state/i);
+  }
+  const {unlock,...ordinaryManifest}=attackManifest;
+  const other={manifest:{...ordinaryManifest,id:'unrelated-shared-flag',releaseOrder:7},
+    circuit:{...SUMMIT_TIME_ATTACK,id:'unrelated-shared-flag'}};
+  assert.throws(()=>api.registerCircuits([parent,other]),/unlock|Duplicate/i);
+  assert.throws(()=>api.registerCircuits([child]),/parent|default/i);
+});
+test('Summit Attack preserves the authored parent road and has only the solo event overrides',()=>{
+  const before=JSON.stringify(SUMMIT_RUN);
+  for(const seed of [1989,42]){
+    const parent=new Course(SUMMIT_RUN,seed),attack=new Course(SUMMIT_TIME_ATTACK,seed);
+    assert.deepEqual(attack.samples,parent.samples,'same complete unrounded road samples');
+  }
+  for(const key of ['script','scriptDefaults','pitLane','roadBranches','galleries','kitPlacements','surfacePatches','snowWorld','lightPath'])
+    assert.deepEqual(SUMMIT_TIME_ATTACK[key],SUMMIT_RUN[key],key+' remains exact');
+  assert.equal(SUMMIT_TIME_ATTACK.id,SUMMIT_ATTACK_ID);
+  assert.equal(SUMMIT_TIME_ATTACK.closed,false);
+  assert.equal(SUMMIT_TIME_ATTACK.defaultMode,'timetrial');
+  assert.equal(SUMMIT_TIME_ATTACK.laps,1);
+  assert.equal(SUMMIT_TIME_ATTACK.fieldSize,1);
+  assert.equal(SUMMIT_TIME_ATTACK.hasRival,false);
+  assert.equal(SUMMIT_TIME_ATTACK.noCombat,true);
+  assert.equal(SUMMIT_TIME_ATTACK.noTraffic,true);
+  assert.equal(JSON.stringify(SUMMIT_RUN),before);
+});
+test('Attack medals use inclusive rounded tenths without writing a medal save field',()=>{
+  assert.equal(isSummitAttack(SUMMIT_ATTACK_ID),true);
+  assert.equal(isSummitAttack({id:SUMMIT_ATTACK_ID}),true);
+  for(const value of [null,{},'summit-run','summit-time-attack-extra'])assert.equal(isSummitAttack(value),false);
+  const targets=summitAttackTargets(101);
+  assert.deepEqual(targets,{gold:104.1,silver:109.1,bronze:116.2});
+  assert.ok(Object.isFrozen(targets));
+  for(const [time,medal]of [[104.1,'gold'],[104.10001,'silver'],[109.1,'silver'],[109.10001,'bronze'],[116.2,'bronze'],[116.20001,null]])
+    assert.equal(summitAttackMedal(time,targets),medal);
+  for(const value of [undefined,null,NaN,Infinity,-1,0,'101',Number.MAX_VALUE])assert.throws(()=>summitAttackTargets(value),/baseline/i);
+  for(const value of [undefined,null,NaN,Infinity,-1,0,'101'])assert.equal(summitAttackMedal(value,targets),null);
+  for(const invalid of [null,{}, {gold:110,silver:109,bronze:116}, {...targets,bronze:NaN}])
+    assert.equal(summitAttackMedal(100,invalid),null);
+});
+
 test('adding only one course and its own reference/replay/signature files registers every consumer', async () => {
   requireApi();
   const id = 'fac04-test-' + randomUUID().replaceAll('-', '');
