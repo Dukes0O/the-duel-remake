@@ -291,38 +291,39 @@
     "recipe": "tools/blender/heli-accessories.py",
     "parameters": "tools/art/heli-accessories.json",
     "decision": "Claude 3e034b28 / Director 8c912a66",
-    "state": "exported-review-pending",
+    "state": "round-2-accepted",
     "exported": true,
-    "artAccepted": false,
+    "artAccepted": true,
     "donorsUsed": false,
     "supersedes": "Only the unselected hook-block, helipad-h and fuel-pump donor suggestions; their provenance is retained.",
     "exports": [
       {
         "id": "cargo-hook",
         "path": "public/assets/heli/cargo-hook.glb",
-        "bytes": 41748,
-        "sha256": "0d9b8524390d901aff67d35f945a03a713a0e3bd7709beb1411a39ead157e3df",
+        "bytes": 50440,
+        "sha256": "13ed385c3849d33e3885685435944fb3ff7c105f34cf1dae2a7e9eddfe0c1f6e",
         "min": [
-          -0.115129254758358,
+          -0.09796150773763657,
           -0.4000000059604645,
-          -0.02502809837460518
+          -0.035059910267591476
         ],
         "max": [
-          0.09477625042200089,
-          0,
-          0.02502809837460518
+          0.12374085187911987,
+          0.0,
+          0.035059910267591476
         ],
         "sizeM": [
-          0.2099055051803589,
+          0.22170235961675644,
           0.4000000059604645,
-          0.05005619674921036
+          0.07011982053518295
         ],
-        "triangles": 2108,
+        "triangles": 1496,
         "nodes": [
           "Scene",
           "cargo_hook",
           "attachment_eye",
           "forged_hook",
+          "latch_pivot",
           "safety_latch",
           "swivel"
         ],
@@ -409,7 +410,7 @@
         "animations": 0
       }
     ],
-    "inspection": "One Blender export passed unchanged original recipe guards; existing GLTFLoader world bounds/triangles/names/materials agree. Visual acceptance remains unrun."
+    "inspection": "R1 existing GLTFLoader inspection remains historical. R2 selected-hook export and actual imported-GLB bounds, triangle, named-part and texture guards passed; the same six views preserve all source hashes. Pad/pump bytes are exact. Actual image-only Claude R2 ACCEPT; no native placement or frame claim."
   },
   "helicopterDownloadPlan": {
     "status": "superseded-by-claude-original-kestrel",
@@ -420,16 +421,16 @@
     "licensedOriginalsAndCandidateProvenanceRetained": true
   },
   "accessoryReview": {
-    "round": 1,
-    "status": "awaiting-Claude-art-verdict-after-2026-10-14T17:40:00-07:00",
+    "round": 2,
+    "status": "ACCEPT",
     "kind": "BLENDER IMPORTED GLB / NOT GAME",
-    "sourceCommit": "db6f04d18f86b14a09e9b04394e8567e8b7710b1",
-    "sheet": "docs/board/looks/heli-accessories/round-1.jpg",
-    "sheetBytes": 156226,
-    "sheetSha256": "ac9f430bf139076117da400c4c025b16d7649a8ca0da905f0cbe03b2a0246e06",
+    "sourceCommit": "971dbb74",
+    "sheet": "docs/board/looks/heli-accessories/round-2.jpg",
+    "sheetBytes": 154597,
+    "sheetSha256": "9fc6fd688098bd6826ad86e4e2ccc65a7ba48b8937f0f1da69435d59db18e70d",
     "actualViews": 6,
     "sourceSha256": {
-      "cargo-hook": "0d9b8524390d901aff67d35f945a03a713a0e3bd7709beb1411a39ead157e3df",
+      "cargo-hook": "13ed385c3849d33e3885685435944fb3ff7c105f34cf1dae2a7e9eddfe0c1f6e",
       "helipad": "e2fba42ee52fa5b1922c825aa7f4fb9f44b22d6ada5da4b63c45d7881276685c",
       "fuel-pump": "d50c46cf94dafeeca9993def01ac344c1b5371fc16612a628554f806dd5757f7"
     },
@@ -441,6 +442,36 @@
       "viewTransform": "AgX",
       "gameAxes": "+Y up, +Z front, metres"
     },
-    "runtimeAppearanceOrFrameAcceptance": false
+    "runtimeAppearanceOrFrameAcceptance": false,
+    "sourceCommitScope": "Recipe used for export/render; generated hook and sheet were not committed at render time.",
+    "generatedAssetsCleanAtRender": false,
+    "postReviewAssetFreezeCommit": "d96e9ac9",
+    "artAccepted": true,
+    "actualVerdict": {
+      "reviewer": "claude-opus-4-8[1m]",
+      "payload": "one actual JPEG and short visual brief only",
+      "tools": [],
+      "exitCode": 0,
+      "durationMs": 22710.862,
+      "scores": {
+        "cargo-hook": {
+          "shape": 4,
+          "material": 4,
+          "readability": 4
+        },
+        "helipad": {
+          "shape": 5,
+          "material": 4,
+          "readability": 5
+        },
+        "fuel-pump": {
+          "shape": 4,
+          "material": 4,
+          "readability": 4
+        }
+      },
+      "requiredCorrections": [],
+      "optionalCaveat": "Hinge pivot looks slightly thick from the front; nonblocking."
+    }
   }
 }

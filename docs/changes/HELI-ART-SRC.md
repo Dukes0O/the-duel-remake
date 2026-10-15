@@ -142,7 +142,8 @@ Accepted pad and pump hashes stay exact before/after export and rendering.
 The same six actual imported-GLB CPU-four views passed original guards in
 44273.2477 ms. Serial composition passed in 600.0582 ms: round-2.jpg is
 154597 bytes, SHA256 9fc6fd688098bd6826ad86e4e2ccc65a7ba48b8937f0f1da69435d59db18e70d.
-Round 1 stays immutable. No alternate geometry, native flight or frame pass.
+Round 1 remained byte-exact through R2 capture; its consumed facts/hashes
+are now folded into the final R2 review before its own sheet/note are recycled. No alternate geometry, native flight or frame pass.
 
 Actual single image-only Claude R2: ACCEPT, exit 0 in 22710.862 ms, no tools.
 Hook shape/material/readability 4/4/4; pad 5/4/5; pump 4/4/4. The requested
@@ -153,9 +154,12 @@ proof remains in .evidence/2026-10-14/HELI-ART-SRC/round2-971dbb74/, with the
 minimal JPEG-and-brief-only transcript in claude-image-only/. No repository
 instructions/documents/manifests were transmitted. Recipe/config geometry
 remains the independently reviewed 971dbb74; only config status now records
-this actual acceptance. Existing source-candidate packet's R1 hook metrics
-are superseded by these actual R2 values; Root can fold that metadata at
-integration without a new asset export or art round.
+this actual acceptance. Root's narrow lease refreshes only the source packet's existing
+accessoryRecipe hook row/current acceptance and accessoryReview R2 fields
+from these actual bytes/import measurements. Pad/pump rows, licence/donor
+provenance and cancelled download plan stay exact. Recipe source 971dbb74
+is distinguished from post-review asset freeze d96e9ac9; the generated assets
+were uncommitted at render time. No new export or art review.
 
 Current integration sync in the lane and one fresh nearby/jobs4/build follow
 this art freeze. Root consumes the exact receipts and folds final results
@@ -171,6 +175,19 @@ No assertion, path expectation or old positive Blend contract changes. Root
 confirms this bounded union before the fresh nearby/jobs4 gate. The accepted
 asset and sheet bytes remain frozen; no rerender or review repeat follows.
 Root's short final pit run takes the next slot before this gate.
+
+## Final narrow packet and consumed-evidence correction
+
+Root independently cleared d60d93cf's roster union and granted this packet
+correction before the final gate. Only existing accessoryRecipe/accessoryReview
+current data change; historical discovery, contract/licence/source and cancelled
+donor provenance are preserved. Current actual hook bytes, imported bounds,
+nodes, triangles and texture/image/animation counts are recorded. The accepted
+pad/pump GLBs and their packet rows remain exact. R1's actual verdict, scores,
+sheet hash and note hash are folded into the final R2 review; only our own
+verified consumed R1 JPEG/note are recycled. The current R2 sheet is unchanged.
+No generated output is repeated, no Kestrel image/original is touched, and
+no assertion is changed. Freeze for Root's confirmation before the fresh gate.
 
 ## Removed
 
