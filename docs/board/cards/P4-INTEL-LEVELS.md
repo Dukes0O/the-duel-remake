@@ -38,3 +38,6 @@ Owned pure increment6fd887b4 complete as a source slice:8focused cases/build pas
   five) and 4 (podium). A two-car Duel win is not a top five in a field, so a
   Duel finish does not count for 3 or 4; Duel, Time Trial and race laps all
   count towards level 2's three laps. Credits buy 3 and 4 as stated.
+
+
+Codex resumes the retained6fd887b4 lane after Claude16:00 approved the exact App/progression/screen-router hooks and explicit GP-only positions3/4. Reclaim busy-game-files/save-shape released by the new tyre stop. Continue native lap receipts, named-player settlement, menu-only purchases and level4 TimeTrial reference ghost using the approved pure core. Duel/TT/race valid laps may earn2; no Duel-position inference or historical credit. No new lane; no existing off-state save mutation or ghost/store budget change. Required code/save review, native acceptance and nearby/build precede merge.
