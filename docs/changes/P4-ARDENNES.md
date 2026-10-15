@@ -310,3 +310,46 @@ Corrected native15425 completed07:57:34.4392421UTC,exit0,80187.8527ms,28views,pr
 Actual final round 3: CHANGES REQUIRED, village4/forest2/road4/bridges3/cohesion3. Beech crowns still read as striped faceted plastic; stream reads as a matte path. Full verdict is in docs/board/looks/ardennes-art/round-3-review.md. The third-round cap is exhausted. Acceptance cannot be met within the authorized cap, so work stops under AGENTS and Kyle has been asked. Retain this unmerged candidate. No fourth round, final signature, gate/build or merge. Mechanical passes do not accept the art.
 
 Removed: nothing in this stop; preserve the current unmerged assets and final sheet pending Kyle.
+
+
+## Claude's new art plan, round 4 (15 October 2026)
+
+Kyle held Ardennes for a new art plan; Claude built it in the lane `claude/ardennes-art` (from `codex/p4-ardennes` at e78733bc, then merged current integration). Two things changed, each by a new method; the road, village, church, firs, mist, bridge shapes, landmarks and Long Left barriers are untouched.
+
+### What changed
+
+- **Beech crowns are leaf cards.** `tools/blender/ardennes-beech.py` keeps the round 3 trunk and forked limbs and replaces the seven solid lobes with seven clusters of crossed cut-out cards (70 crossed pairs = 140 cards at High, 42 pairs = 84 at LOD; the plan's "40 to 80 crossed quads" read as pairs). Alpha test at 0.5, never blended, both faces drawn, upper cards in `summer beech leaves` and lower cards in the darker `dark beech leaf underside`. Per tree: 436 triangles High (limit 684) and 224 LOD (limit 240); the two GLBs total 101,048 bytes (limit 250,000). Both existing material names, seven clusters (`lobes: 7`) and the old budgets are kept, so every earlier beech test passes unchanged.
+- **Beeches only behind the firs.** New optional `setback` on the course's `beech` data (40 m beyond the road edge) and one line in `beechTreePlacements` (`src/vegetation.js`). Beeches fall from 382 to 191 and every one stands 25.9 m or more behind the catch fence (median 36 m, furthest 55 m). Nearer trees are the accepted firs. No tree, random draw or simulation value changes: the same drawn trees are chosen, just fewer.
+- **The stream is real water in a dug channel.** `src/circuits/ardennes-forest.js` adds `water` and two narrow `basins` (`red-water-bridge` at lateral 35, `red-water-far` at lateral -33) across the road line, so the existing circuit water (`src/circuit-water.js`, the Harbour surface) lies in a channel 0.6 to 1 m below the natural ground at the stream line, tapering toward its ends; ground within 6 m of the road edge is untouched. The stream line and the stone arch move 1.8 m to s 782 (midway between two of the near ground's 4 m rows, so the channel gets two rows of bed).
+- **Shared-code hook (own commit fe4e415c).** `addCircuitWater` now uses a basin's own `colour` and `shallow` when it has them (two-line change, same colours as before when absent). Harbour and Tremblant are unchanged. It is the only edit outside Ardennes-owned code and can be reverted on its own if Claude prefers another route (the water then shows its default teal).
+- **Wet banks, rocks, reeds.** `addStream` in `src/circuit-effects.js` now draws a 1 m darker, glossier bank along each shore where the water meets the bank (the mesh keeps its name and its on-the-ground heights), plus 10 rocks (the course's boulder shape and granite picture) and 34 reed clumps (the meadow tuft blades). Nothing uses a random generator.
+- **Views.** `tools/scenarios/ardennes-views.mjs`: `Stone Bridge Stream` now looks at the arch from the bank beside the water; new `Stream From Car` (the player car at the crossing, eye moved to the road edge and raised, looking up the channel) and `Kestrel Wide` (back along the straight, firs in front, beeches behind); `Beech Grove` stands inside the fence and looks at the thickest group from the spot with the fewest firs between. `ARDENNES_VIEW_QUALITIES` (default `high,performance`) lets a round judge High only. `tools/art/p4-ardennes-sheet.py --round 4` builds the four-picture sheet.
+- **Sheet.** `docs/board/looks/ardennes-art/round-4.jpg` (316,397 B) and `round-4-review.md` (facts only). One native packet, High only, private port, memory-only, 16 views, zero issues or warnings; the two-lap race is bit-identical to round 3 (290.6167 s, 13368.8749 m, laps 151.295 and 139.306 s, the same one known Long Left armco crash, zero resets).
+
+### Sources and licences
+
+- Leaf photographs: ambientCG **Leaf Set 024**, asset id `LeafSet024`, https://ambientcg.com/a/LeafSet024, file `LeafSet024_1K-JPG.zip` (4,744,373 B, SHA-256 5038f0df...7ace1, recorded in full in `tools/art/ardennes-beech.json`). **CC0 1.0** (https://docs.ambientcg.com/license/). Only the 256 px and 128 px spray tiles made from nine of its leaves ship, embedded in the two beech GLBs; the download is not kept. Credits are in `public/assets/models/CREDITS.md` and the provenance file. `tools/art/ardennes-leaf-sprite.py` (new) makes the tiles; the Blender recipe takes them with `--leaf-dir`.
+- Everything else is original project geometry and the course's existing textures.
+
+### Tests and checks
+
+- `node tools/test-circuit-ardennes.mjs`: 38/38 (36 earlier cases untouched, two new: beeches 25 m behind the fence; channel depth, untouched ground near the road and the two water meshes).
+- `node tools/test-circuits.mjs`: passes (116,894 checks, 20 events).
+- `node tools/test-world-composition.mjs`: passes, 41 checks.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` on commit 91e1ca32 (175 suites): 174 passed, 1 failed, 0 not run. The one failure is `tools/test-review-evidence.mjs` (the 20 MB cap on `docs/board/looks`: 20,374,929 B with `round-3.jpg` still in place, 19,962,599 B once it is removed). Replay fingerprints (198 checks) and every Ardennes, track-kit, circuit, Blender-output and world-composition suite pass with no assertion changed.
+- `npm run build`: passes.
+
+### Signature effect
+
+Ardennes is a dev circuit with no row in the world-signature fixtures, so no fixture was regenerated and the 20 enabled events' exact scene signatures still pass (41/41). Ardennes' own scene changed: beech GLBs 64,308 / 54,952 B to 72,324 / 28,724 B (new hashes in the provenance file), 382 to 191 drawn beeches, two water meshes added, the flat stream mesh replaced by the wet-bank mesh, ground dug in two channels beyond 6 m of the road edge. Replay fingerprints (198 checks) pass; the native two-lap race is unchanged.
+
+### Looks folder size
+
+`docs/board/looks` has under 400 KB of room below the 20 MB cap checked by `tools/test-review-evidence.mjs`. The consumed round 1 and round 2 sheets were removed (their review notes and verdicts stay). `round-3.jpg` (412,330 B) is kept as asked; the cap test fails until it is removed, so remove it with the round-4 verdict.
+
+### Removed
+
+- The solid-lobe crown code and its generated lobe meshes (replaced by leaf cards in the same recipe) and both old beech binaries (replaced in place).
+- The flat red-brown stream ribbon (replaced by the wet-bank mesh, same name).
+- The round 3 sheet mode of `p4-ardennes-sheet.py` and the old single-tree beech close view (their pictures no longer exist); `--round 4` replaces them.
+- `round-1.jpg` and `round-2.jpg` (consumed). `round-3.jpg` waits for Claude's verdict.
