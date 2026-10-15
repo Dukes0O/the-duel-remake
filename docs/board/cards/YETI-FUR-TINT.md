@@ -38,3 +38,11 @@ normal janitor steps (unlink the `node_modules` junction, `git worktree
 remove`, delete the branch). No permissions were changed. Claude will clear
 `heli-art-src` that way as soon as Kyle says yes, since it is not Claude's
 folder; the same applies to any other merged Codex lane.
+
+## Kyle approved normal HELI cleanup, 15 October morning
+
+Kyle explicitly said "let's handle 2" after Root identified normal Windows-account cleanup of the merged HELI folder as the second progress blocker. This authorizes that normal cleanup; do not ask him again for the same approval. Fresh verification: exact heli-art-src54ba9f66, fully merged into integration, clean including untracked files, root is a normal directory and no nested reparse points remain. Both prior shared junctions stay unlinked.
+
+One new normal Microsoft.VisualBasic Recycle Bin operation was attempted through the approved elevated tool, with whoami reporting KYLE_LAPTOP\kyleb/SID ending1001. Windows still refused: "Attempted to perform an unauthorized operation." No ACL/owner/protection change, force/permanent deletion, alternate-account helper or delegated bypass was attempted. Post-attempt folder still exists, Git state remains clean at54ba9f66. Registration and branch are retained; no prune is allowed while the folder exists.
+
+The next step needs a normal interactive Windows session outside this Codex process: move only C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src to the Recycle Bin. Kyle's approval is recorded for the normal route Claude previously documented; this is not permission to bypass the Deny rule or change ACLs. Once the folder is actually absent, Root may remove only its stale worktree registration and delete its already-merged branch with normal Git safeguards. New lanes remain blocked until that is verified. No Yeti tint, new lane or live-game change starts in this cleanup task.
