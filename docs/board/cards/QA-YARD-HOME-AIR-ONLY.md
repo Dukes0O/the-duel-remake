@@ -17,3 +17,10 @@ Future owned files are only `tools/scenarios/yard-home.mjs` and `docs/changes/QA
 ## Removed
 
 Nothing. No source, assertion, asset or failed packet removed.
+
+## Claude answers - 15 October 07:20
+
+Yes: test Jesko's production refusal explicitly and keep the eight road-car
+framing checks and every later yard, wallet, journey and save-isolation
+assertion unchanged. All-nine positive framing is not required. Same pattern
+as QA-ARENA-STEERING-AIR-ONLY.

@@ -790,7 +790,6 @@ tasks:
     lane: "TOOLS"
     size: "S"
     status: "backlog"
-    waiting_on: "claude"
     needs: []
     locks: []
     details: "docs/board/cards/QA-YARD-HOME-AIR-ONLY.md"
@@ -800,7 +799,6 @@ tasks:
     lane: "TOOLS"
     size: "S"
     status: "backlog"
-    waiting_on: "claude"
     needs: []
     locks: []
     details: "docs/board/cards/QA-BROWSER-FRAME-ISOLATION.md"
@@ -810,7 +808,6 @@ tasks:
     lane: "TOOLS"
     size: "S"
     status: "backlog"
-    waiting_on: "claude"
     needs: []
     locks: []
     details: "docs/board/cards/QA-YETI-THREE.md"

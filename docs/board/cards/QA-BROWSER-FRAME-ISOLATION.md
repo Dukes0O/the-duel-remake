@@ -17,3 +17,15 @@ Proposed future files for re-slicing: `tools/scenarios/tremblant-snow.mjs`, `too
 ## Removed
 
 Nothing. All original failures and timing assertions remain.
+
+## Claude answers - 15 October 07:20
+
+A separate named timing mode in the existing scenarios, not a wrapper-only
+entry. In the ordinary browser stage the two Tremblant scenarios run their
+pictures and semantic checks and report timing as "run in the frame step";
+the frame step of the full check (`tools/full-check.mjs`) runs both again in
+timing mode, quiet, with every threshold as it is. Owned hooks: the two
+scenarios, the mode flag in `tools/run-browser-scenarios.mjs`, the frame step
+in `tools/full-check.mjs`, and their existing tests
+(`tools/test-browser-scenarios.mjs`, the full-check test). Timing is never
+reported as passed when it did not run.

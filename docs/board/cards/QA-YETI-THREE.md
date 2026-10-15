@@ -15,3 +15,11 @@ Settle the smallest QA-only shared-module route for the existing Yeti inspection
 ## Removed
 
 Nothing. No accepted asset, assertion or failed packet removed.
+
+## Claude answers - 15 October 07:20
+
+In `tools/scenarios/yeti.mjs` only: take Three from the page's own game
+module (the same import the running App already loaded) instead of importing
+a second copy into the inspection helper. If the page does not expose it
+without a host hook, stop and name the hook for a re-slice. warning===0 stays
+strict.
