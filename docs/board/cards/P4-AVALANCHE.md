@@ -298,3 +298,21 @@ Ardennes genericfootprint hook is frozen514a, its currentbuilder owns ONLY local
 ## Director existing test hook and final draw precision — 14 October
 
 Grant tools/test-circuit-summit.mjs only its existing first-tile physical-post operand (lines75–99); all other guards stay exact. Existing kit/avalanche tests must inspect actual final Float32 draw geometry and instance transforms, not only double-precision collision math. The smallest outward millimetre offsets are [-10.541,0,0] and [-12.799,0,0]: actual LOD clearance1.5007014/1.5011107m, High1.5162922/1.5116233m. Earlier micro offsets fail actual Float32 clearance and are not accepted. Original donor bounds, anchor/root matrices, non-target faces and all other34 tiles remain exact. Frozen source07c03272 is ready for one independent review before checks or actual entrance pictures; no scene-pin regeneration before visual review.
+
+## Original gate bounded failures — 14 October
+
+Exact3f15b6fa originalunfiltered315selected/jobs4 completed313/315/notRun0/exit1,1948848.6143ms/wall1955570.2267ms(includesabout297s reversiblecapacitypauses, no canceled/restartedgate). Failures: test-circuit-summit:133 stillassertssnowforclear Open, nowactualasphalt peryoursettled27d9decision; test-circuits:45 Harbour1989wall-right-1105 at2056/lateral−3.5. Allother313includingactualkit/donor/lifetime/world-signatures/replays passed. No lane/buildpass claimed.
+
+Grant existing tools/test-circuit-summit.mjs:133 ONLY expected clearOpen'asphalt' andmeaningfulsame-s mainroadsnowassert, preservingallotherguards/predicates/tolerances/source. This is anexplicitretiredoldsurfaceexpectationfollowingClaude'sdesign, not a waivedfailure; notebefore/after. Rootconfirmscorrection andfocusedexistingSummittest next, no repeatednativebecauseproductionbyteexact. Do NOTchangeHarbouroritsroadprobe. Oneunchanged test-circuits baseline onintegration3760b089(noAVmerged) reproducesexactsameHarbourfailure,exit1/wall2094.7459ms(exactreceiptpreserved). New QA-HARBOUR-ROAD-CLEARANCE requestsClaude'sreleased-coursedecision. AVfinalgreen gate/build/mergewaitsthatfix; do notwaiveinheritedguardorclaim315pass. Actualfourroutes/entrancepixels remainacceptedseparatefacts. Buildothercardswhilewaiting.
+
+
+## Existing winter-material fixture reslice — 14 October
+
+Corrected2fe3234d focusedSummittest reachednextobsolete fixture:158 expectsSnowclone foractualOpen, whose authoredsurfaceisnowasphalt; roadBranchMaterial correctlyreturnsoriginalasphalt. Clear/asphalt+same-smainSnow guards pass. Grantonlyexistinglines155–160 fixture: additionallyassert actualclearOpen retainsoriginalasphalt evenwithwinteron; preserveALLoldpositiveSnowclone/notEqual/tone/.94/source.6/disposal assertions usinga frozenhistoricalSnowbranch descriptor {...open,surface:'snow',gripKind:'snow'}, explicitlylabelledlegacyhelpercontract, never a runtimecourse or placeholder. No renderer/physical/source/threshold change, no removedassertion or waiver. Rootconfirmsnewfixture+focusedexistingonce; no315rerun/build/nativeuntilreleasedHarbourbaselinefix. Nextguardfault ifany getsits ownactualreceipt inside30min, notblindchanges.
+
+Sourceinspectionclarifieslegacyfixtureoperand: actualworld.js roadBranchMaterial selectsnormalizedcut.gripKind. ThefrozenhistoricalSnowdescriptor explicitlysetsbothsurfaceandgripKind to'snow'; actualcurrentOpen retains'asphalt'. ThispreservestheexistingpositivehelpercasewithoutlyingaboutcurrentOpen orchangingproduction.
+
+
+## Complete audit of the old snow-color fixtures
+
+The next focused run reaches the same obsolete assumption at line330. Grant the two existing final-art helper calls around329–333 to use the already frozen historicalSnowBranch for their snow tone and fallback-color cases. Keep both original color assertions and disposal checks. Add an identity assertion that the actual clear Open branch retains branchBase with winter on; label the historical snow assertion accurately. All other snow, pole, lighting, RNG, terrain, collider and route checks stay exact. This completes the read-only audit of every Open/snow-material assumption in this suite. Production remains unchanged. One corrected focused run follows source review; no full gate until Harbour is resolved.

@@ -26,6 +26,10 @@ const generators = [
   { script: 'tools/blender/rustwall.py', args: ['--round', '1'], glb: ['wall', 'wash'].map(name => `public/assets/models/wasteland/rustwall/${name}.glb`) },
   { script: 'tools/build-course-landmarks.py', args: [], glb: [], json: ['src/generated/course-landmarks.json'] },
   { script: 'tools/blender/muddy-hollow-props.py', args: [], glb: [], json: ['src/generated/muddy-hollow-props.json'] },
+  { script: 'tools/blender/kestrel-one.py', args: [], glb: ['public/assets/heli/kestrel-one.glb'] },
+  { script: 'tools/blender/rescue-props.py', args: [], glb: ['public/assets/heli/rescue/winch.glb', 'public/assets/heli/rescue/stretcher.glb', 'public/assets/heli/rescue/searchlight.glb', 'public/assets/heli/rescue/beacon.glb', 'public/assets/heli/rescue/debris.glb', 'public/assets/heli/rescue/crate-food.glb', 'public/assets/heli/rescue/crate-medicine.glb', 'public/assets/heli/rescue/crate-fuel.glb'] },
+  { script: 'tools/blender/fire-bucket.py', args: [], glb: ['public/assets/heli/fire-bucket.glb'] },
+  { script: 'tools/blender/burnt-forest.py', args: [], glb: ['public/assets/burnt/tremblant-woods/burnt-props.glb'] },
 ];
 // Private fitted candidates have no editable Blend or runtime installation.
 // Register them separately so the established runtime assertions stay intact.

@@ -140,3 +140,8 @@ Remove both failed Gallery-ice descriptors and their superseded proposal
 checks in the same source change. The settled original snowfield patches stay.
 The 60 m curve and retired absolute-time proposals are absent. No other tile,
 roof, model, branch parameter, surface table, driver or normal event is removed.
+
+
+## Current integration union after Harbour is green
+
+Harbour radius/seam merged8e55339f after114/114/build598ms. The Avalanche normal union found only two neighbouring normalization hunks: its existing named Gallery translations and the accepted escape worldPosition field. Root preserves both exact independent validators and both immutable output fields; no transform, guard, footprint or tolerance is dropped. Original Avalanche source/controlled/native evidence otherwise stays exact. One corrected canonical/jobs4/build follows this actual source conflict resolution, also including the already reviewed obsolete Open/snow fixture correction. No fresh balance, native, signature or frame run is justified by these additive conflict hunks; no postmerge rerun or release claim.

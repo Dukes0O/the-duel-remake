@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createProfile, normalizeProfile, loadProfile, saveProfile, loadPlayers, PLAYERS_KEY} from '../src/progression.js';
 import {HELI_SAVE_VERSION, HELI_MONEY, HELI_LESSONS, createHeli, normalizeHeli, heliOf, buyFuel, setFuel,
-  chargeRepair, repairCost, fuelTruck, notePlayDay, finishLesson, placeCar, carAt, countFlight} from '../src/heli/heli-save.js';
+  chargeRepair, repairCost, fuelTruck, notePlayDay, finishLesson, placeCar, carAt, countFlight,
+  takeJob, dropJob, finishJob} from '../src/heli/heli-save.js';
 
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log('PASS ' + name); }
@@ -139,7 +140,8 @@ check('with the switch off every helper refuses and hands back the same profile'
   const calls = [p => buyFuel(p, 10, {enabled: false}), p => buyFuel(p, 10), p => buyFuel(p, 10, {enabled: 'yes'}),
     p => setFuel(p, 10, {enabled: false}), p => chargeRepair(p, 10, {enabled: false}), p => fuelTruck(p, {}),
     p => notePlayDay(p, '2026-10-14', {enabled: undefined}), p => finishLesson(p, 'hover', {enabled: false}),
-    p => placeCar(p, 'falcone_f42', 'panorama-ridge', {enabled: false}), p => countFlight(p, {enabled: 1})];
+    p => placeCar(p, 'falcone_f42', 'panorama-ridge', {enabled: false}), p => countFlight(p, {enabled: 1}),
+    p => takeJob(p, 'd1-1', 1, {enabled: false}), p => dropJob(p, {}), p => finishJob(p, 'd1-1', 300, {enabled: 'yes'})];
   for (const call of calls) {
     const result = call(profile);
     assert.deepEqual([result.ok, result.reason], [false, 'The helicopter is not available yet.']);
@@ -221,12 +223,61 @@ check('lessons, car places and flights record and validate', () => {
   assert.equal(setFuel(withHeli(), NaN, on).ok, false);
 });
 
+check('jobs are taken one at a time, dropped, finished and paid once', () => {
+  const start = withHeli({}, 100);
+  const first = takeJob(start, 'd3-1', 3, on);
+  assert.equal(first.ok, true);
+  assert.deepEqual(first.profile.heli.jobs, {day: 3, taken: 'd3-1', done: []});
+  assert.equal(first.profile.credits, 100);
+  assert.equal(takeJob(first.profile, 'd3-1', 3, on).already, true, 'the same job again changes nothing');
+  assert.equal(takeJob(first.profile, 'd3-1', 3, on).profile, first.profile);
+  const second = takeJob(first.profile, 'd3-2', 3, on);
+  assert.equal(second.ok, false, 'one job at a time');
+  assert.match(second.reason, /drop/);
+  assert.equal(second.profile, first.profile);
+  const dropped = dropJob(first.profile, on);
+  assert.deepEqual([dropped.ok, dropped.dropped, dropped.profile.heli.jobs], [true, true, {day: 3, taken: null, done: []}]);
+  assert.equal(dropJob(dropped.profile, on).dropped, false, 'dropping nothing changes nothing');
+  assert.equal(dropJob(dropped.profile, on).profile, dropped.profile);
+  const paid = finishJob(first.profile, 'd3-1', 375, on);
+  assert.equal(paid.ok, true);
+  assert.deepEqual([paid.paid, paid.profile.credits, paid.profile.heli.jobs], [375, 475, {day: 3, taken: null, done: ['d3-1']}]);
+  assert.equal(finishJob(paid.profile, 'd3-1', 375, on).ok, false, 'a job pays once');
+  assert.equal(finishJob(dropped.profile, 'd3-1', 375, on).ok, false, 'only the job in hand pays');
+  assert.equal(finishJob(first.profile, 'd3-2', 375, on).ok, false);
+  const again = takeJob(paid.profile, 'd3-1', 3, on);
+  assert.equal(again.ok, false, 'a finished job is not offered again that day');
+  assert.match(again.reason, /done/);
+  assert.equal(takeJob(paid.profile, 'd3-2', 3, on).profile.heli.jobs.done[0], 'd3-1', 'the done list is kept within the day');
+  // A new play day: the board is new, so old finished jobs and an old job in hand are cleared.
+  const next = takeJob(paid.profile, 'd4-1', 4, on);
+  assert.deepEqual(next.profile.heli.jobs, {day: 4, taken: 'd4-1', done: []});
+  const stale = takeJob(first.profile, 'd4-2', 4, on);
+  assert.deepEqual([stale.ok, stale.profile.heli.jobs], [true, {day: 4, taken: 'd4-2', done: []}], 'a job left from yesterday does not block today');
+  for (const bad of [[start, '', 3], [start, 'Bad Id', 3], [start, 'd3-1', -1], [start, 'd3-1', 2.5], [start, 'd3-1', '3'], [start, 7, 3]])
+    assert.equal(takeJob(...bad, on).ok, false, JSON.stringify(bad.slice(1)));
+  for (const pay of [-1, 1.5, NaN, Infinity, '300', null]) assert.equal(finishJob(first.profile, 'd3-1', pay, on).ok, false, String(pay));
+  assert.equal(finishJob(first.profile, 'd3-1', 0, on).profile.credits, 100, 'a job can pay nothing');
+});
+
+check('pay is capped like the rest of the save and a damaged wallet reads as zero', () => {
+  const rich = withHeli({jobs: {day: 1, taken: 'd1-1', done: []}}, 999_999_900);
+  const paid = finishJob(rich, 'd1-1', 600, on);
+  assert.deepEqual([paid.profile.credits, paid.paid], [1_000_000_000, 100]);
+  const broken = deepFreeze({...createProfile(), credits: NaN, heli: {...createHeli(), jobs: {day: 1, taken: 'd1-1', done: []}}});
+  assert.equal(finishJob(broken, 'd1-1', 300, on).profile.credits, 300);
+  const survives = normalizeProfile(JSON.parse(JSON.stringify(finishJob(withHeli({jobs: {day: 2, taken: 'd2-3', done: ['d2-1']}}), 'd2-3', 450, on).profile)));
+  assert.deepEqual(survives.heli.jobs, {day: 2, taken: null, done: ['d2-1', 'd2-3']}, 'the job fields survive a save and load');
+  assert.equal(survives.credits, 1450);
+});
+
 check('no helper changes the profile it was given', () => {
   // Frozen inputs make any in-place change throw, so reaching the end proves they were left alone.
   const profile = withHeli({fuelKg: 50, refuels: 1}, 500), bare = deepFreeze({...createProfile(), credits: 500});
   for (const p of [profile, bare]) {
     buyFuel(p, 100, on); buyFuel(p, Infinity, on); setFuel(p, 10, on); chargeRepair(p, 100, on); fuelTruck(p, on);
     notePlayDay(p, '2026-10-14', on); finishLesson(p, 'carry', on); placeCar(p, 'falcone_f42', 'panorama-ridge', on); countFlight(p, on);
+    takeJob(p, 'd1-1', 1, on); dropJob(p, on); finishJob(p, 'd1-1', 300, on);
     heliOf(p); normalizeHeli(p.heli);
   }
   assert.equal(profile.heli.fuelKg, 50);
