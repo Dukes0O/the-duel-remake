@@ -2,16 +2,56 @@
   "version": 1,
   "units": "metres",
   "up": "Y",
-  "models": [{
-    "id": "ardennes-beech",
-    "original": true,
-    "author": "The Duel project",
-    "recipe": "tools/blender/ardennes-beech.py",
-    "source": "Original procedural beech and embedded original leafy pixels. No external donor or texture.",
-    "pendingExport": true,
-    "triangleCeilings": {"high": 684, "low": 240},
-    "scaleVariants": [0.9, 1, 1.1],
-    "lobes": 7,
-    "files": [{"path": "ardennes-beech.glb"}, {"path": "ardennes-beech-lod.glb"}]
-  }]
+  "models": [
+    {
+      "id": "ardennes-beech",
+      "original": true,
+      "author": "The Duel project",
+      "recipe": "tools/blender/ardennes-beech.py",
+      "source": "Original procedural beech and embedded original leafy pixels. No external donor or texture.",
+      "scaleVariants": [
+        0.9,
+        1,
+        1.1
+      ],
+      "lobes": 7,
+      "files": [
+        {
+          "path": "ardennes-beech.glb",
+          "bytes": 68232,
+          "sha256": "7100974c0824a23e7e8f014ba33b4d7850ba42a727e705ed90d05094e2036221"
+        },
+        {
+          "path": "ardennes-beech-lod.glb",
+          "bytes": 56976,
+          "sha256": "25a310758f9c9e8906d6b68b6485c762f18001295e8b6b96ec6ece88b35a82e9"
+        }
+      ],
+      "crownSize": [
+        7.579208135604858,
+        3.049999952316284,
+        5.547226905822754
+      ],
+      "visibleTrunk": 3.200000047683716,
+      "highTriangles": 492,
+      "size": [
+        7.579208135604858,
+        6.25,
+        5.547226905822754
+      ],
+      "lowCrownSize": [
+        7.1657555103302,
+        3.049999952316284,
+        5.310881853103638
+      ],
+      "lowVisibleTrunk": 3.200000047683716,
+      "lowTriangles": 196,
+      "lowSize": [
+        7.1657555103302,
+        6.25,
+        5.310881853103638
+      ],
+      "bytes": 125208
+    }
+  ]
 }

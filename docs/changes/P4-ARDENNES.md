@@ -248,3 +248,16 @@ The existing scenario now prepares Beech Grove from an actual bound Kestrel tree
 Prior exact street source 10ef2beb was independently reviewed CLEAR. Root's original two focused suites (test-course-landmarks and test-circuit-ardennes) passed 2/2, zero failures/notRun, jobs 4, 13,078.4472 ms; 06:59:27.5350022–06:59:40.6542343 UTC with no other actual roots. Receipts: `.evidence/2026-10-15/P4-ARDENNES/streets-10ef2beb/{result.json,receipt.json,stderr.log}`. They were not repeated. This new source still needs independent review, actual export/ground/geometry checks, final native R3/Claude verdict, the first approved course signature and final nearby gate/build. No fourth round or performance acceptance is implied.
 
 Removed: only the pine drawings for the explicitly selected existing tree IDs are replaced; their physical trees remain. No original landmark/model, default material, old tree path, street source, native guard or submitted art sheet is removed. The six current original landmark GLBs and measured provenance remain untouched.
+
+
+## Actual original beech export
+
+Independent source review is CLEAR on ca47179cedfdbc0d17f39c764c89110daf4abd92. Root then ran the existing Blender-registration suite: 1/1 PASS, 4,186.9996 ms. The single existing Node beech-planner case passed in 700.0158 ms at 07:28:20 UTC; its other circuit cases were not run, so this is not a complete circuit-suite pass. No planner output wrote runtime files.
+
+The ONE selected original beech export on that unchanged source completed 07:28:49.9193678 UTC, exit 0, receipt duration 756.1144 ms, four Blender threads, no competing actual roots. It produced only the two intended runtime GLBs and measured tools/art/ardennes-beech.json. The recipe checked all six existing landmark files against their recorded byte counts and SHA-256 hashes before export and again afterward; all remained exact, and their provenance was not rewritten.
+
+Actual High: 492 triangles, 68,232 bytes, SHA-256 7100974c0824a23e7e8f014ba33b4d7850ba42a727e705ed90d05094e2036221. Actual LOD: 196 triangles, 56,976 bytes, SHA-256 25a310758f9c9e8906d6b68b6485c762f18001295e8b6b96ec6ece88b35a82e9. Pair 125,208 bytes, within the unchanged 684/240 triangle and 250 KB ceilings. Both are 6.25 m tall with 3.2000000477 m visible lower trunk. High crown spans 7.5792081356 by 5.5472269058 m horizontally and 3.0499999523 m vertically; LOD spans 7.1657555103 by 5.3108818531 m with the same crown height. These are exported geometry measurements, not art or native-grounding acceptance.
+
+Receipt and original export output: `.evidence/2026-10-15/P4-ARDENNES/beech-export-ca47179c`. Actual exported-asset focused tests, native three-close-view R3, Claude verdict, first world signature, final nearby gate and build remain pending. No export repeat, render, native capture, signature or art review ran for this asset commit.
+
+Removed: pendingExport provenance is replaced by actual pair measurements and file hashes. No original landmark asset, source recipe, old assertion or current artwork was removed.
