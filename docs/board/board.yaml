@@ -359,7 +359,7 @@ tasks:
     size: "M"
     status: "ready"
     needs: []
-    locks: [busy-game-files]
+    locks: [busy-game-files, save-shape]
     flag: "tyre-slip"
     details: "docs/board/cards/TYRE-SLIP.md"
 
