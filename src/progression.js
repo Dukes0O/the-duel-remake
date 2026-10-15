@@ -8,6 +8,7 @@ import { weaponSignature } from './weapon-upgrades.js';
 import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './config.js';
 import { normalizeCosmetics } from './paint-presets.js';
 import { normalizeRaceSettings } from './race-settings.js';
+import { isSummitAttack } from './summit-attack.js';
 import {
   DRIVERS,
   normalizeDrivers,
@@ -225,7 +226,7 @@ export function normalizeProfile(value) {
       cpuDifficulty: Object.hasOwn(CPU_REWARDS, race.cpuDifficulty) ? race.cpuDifficulty : 'easy',
       pendingPoliceFineCount,
       pendingPoliceFines: pendingPoliceFineCount * POLICE.ticketBaseFine,
-      ...(COURSE[raceIndex].id==='summit-run'&&validYetiSeed(race.yetiSeed)?{yetiSeed:race.yetiSeed,
+      ...((COURSE[raceIndex].id==='summit-run'||isSummitAttack(COURSE[raceIndex])&&race.mode!=='grandprix')&&validYetiSeed(race.yetiSeed)?{yetiSeed:race.yetiSeed,
         ...(race.mode==='grandprix'?{mode:'grandprix'}:{})}:{})
     };
   }
@@ -563,7 +564,8 @@ export function settleRace(profile, result = {}) {
     typeof result.won === 'boolean';
   const key = `${result.runId}:${result.stageIndex}`;
   const grandPrix = result.mode === 'grandprix';
-  const yeti=countYetiFinish(profile,result,valid && COURSE[result.stageIndex]?.id==='summit-run' &&
+  const yeti=countYetiFinish(profile,result,valid && (COURSE[result.stageIndex]?.id==='summit-run' ||
+    isSummitAttack(COURSE[result.stageIndex]) && result.mode==='timetrial') &&
     !COURSE[result.stageIndex].practice && isValidFinish(result) &&
     !profile.settledResults.includes(key) && !profile.wasteland?.settledResults?.includes(key) &&
     (!grandPrix || validGrandPrixPosition(result)));
@@ -579,6 +581,47 @@ export function settleRace(profile, result = {}) {
     profile.settledResults.includes(key) ||
     profile.wasteland?.settledResults?.includes(key))
     return { profile, reward: 0, awarded: false, personalBest: false, breakdown: {} };
+  // This solo challenge records legal times, but never changes career earnings.
+  // Interrupted pending races retain their stable event id, not timetrial mode.
+  if (isSummitAttack(COURSE[result.stageIndex])) {
+    const abandoned = result.abandoned === true && result.completed === false &&
+      result.timeout !== true &&
+      (result.mode === 'timetrial' || result.mode === undefined &&
+        profile.activeRace?.key === key && isSummitAttack(profile.activeRace.stageId)),
+      finished = result.mode === 'timetrial' && isValidFinish(result);
+    if (result.qualifying === true || result.practice === true ||
+      !Object.hasOwn(CARS, result.car) ||
+      result.driverId != null && !Object.hasOwn(DRIVERS, result.driverId) ||
+      !finished && !abandoned)
+      return {profile, reward: 0, charge: 0, policeFineCharge: 0,
+        awarded: false, personalBest: false, breakdown: {}};
+    const cpu = Object.hasOwn(CPU_REWARDS, result.cpuDifficulty) ? result.cpuDifficulty : 'easy',
+      comparison = bestKey({...result, cpuDifficulty: cpu}),
+      previous = finished ? profile.personalBests[comparison] : undefined,
+      personalBest = finished && (previous == null || result.timeSec < previous - 0.005),
+      personalBestStatus = !finished ? 'ineligible' : previous == null ? 'baseline' :
+        personalBest ? 'improved' : 'not-improved',
+      breakdown = {base: 0, clean: 0, personalBest: 0, streak: 0, jumps: 0,
+        crush: 0, drift: 0, police: 0, manual: 0, milestones: 0, policeFines: 0},
+      updated = {
+        ...profile,
+        settledResults: [...profile.settledResults, key],
+        activeRace: profile.activeRace?.key === key ? null : profile.activeRace,
+        personalBests: personalBest
+          ? {...profile.personalBests, [comparison]: result.timeSec} : profile.personalBests,
+        history: [...profile.history, {
+          key, eventId: stageEventId(result.stageIndex), car: result.car,
+          won: finished && result.won, completed: finished,
+          ...(abandoned ? {abandoned: true} : {}),
+          timeSec: finished ? result.timeSec : null, cpuDifficulty: cpu,
+          reward: 0, charge: 0, policeFineCharge: 0, breakdown, milestones: [], at: Date.now()
+        }].slice(-60)
+      };
+    return {profile: updated, reward: 0, charge: 0, policeFineCharge: 0, ...yetiAward,
+      awarded: true, personalBest, personalBestStatus, previousBest: previous ?? null,
+      best: finished ? updated.personalBests[comparison] ?? null : null,
+      breakdown, winStreak: updated.winStreak, milestones: []};
+  }
   // Race earnings are deferred until the finish. Leaving discards that attempt
   // and its pending fines without touching any credits already in the bank.
   if (result.abandoned === true) {
