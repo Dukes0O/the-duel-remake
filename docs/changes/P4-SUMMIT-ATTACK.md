@@ -65,3 +65,8 @@ Changed assertions: Ardennes retains its exact index/order/price/state and check
 The course-kit harness, production files, measured T 266.6 and targets 274.6/288.0/306.6, saves, old course prices/indices/states, replay/signature pins and tolerances are unchanged. This correction is source-only pending independent review, focused failing suites, the new original nearby gate and build. No native benchmark repeat.
 
 Removed: obsolete universal paid/rival/unique-stage/single-manifest-per-switch assumptions and the old Ardennes-last assertion. No old scenario, guard body, fixture or runtime path is removed.
+## Final green merge
+
+Merged e075304a from clean a0e954e8 after the original corrected nearby gate: 363/363, zero failures or unrun, jobs4; build735ms. Root independently reviewed the code and the bounded old registry assertion repairs. Final independent save review CLEAR on this exact source: 12 required suites, 12 historical fixtures/387 preservation checks, damaged profiles86 tests/3654 checks, storage3.54MB/4MB including future ghost reservation, and Attack10/10. No fixture, replay, financial or storage policy was weakened.
+
+The single native parent baseline remains T266.6 and targets274.6/288.0/306.6; no repeat or fitting attempt. Claude's accepted once-only parent Yeti ledger applies, with zero Attack finance and no earned-car medals. Any later pit/tyre physics change must settle baseline revalidation. Summit stays dev; no release or push. Clean merge required no repeated checks. The owned lane and branch were recycled/deleted after ancestry and clean-source verification; other lanes remain. Core, registry, placement and save leases are handed back.

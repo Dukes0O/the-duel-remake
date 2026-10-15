@@ -23,3 +23,9 @@ The normal harness uses a private port and memory-only saves. No port 5174, live
 ## Removed
 
 Removed the invalid second-lap offset and negative run-up possibility for open-road review pictures only. Closed-course behavior, actual driver/input/timing rules, assertions and all game files remain unchanged. No earlier evidence or other team's files were removed.
+
+## Final native and green merge
+
+Merged29568807 from clean4a3a9b44. Original memory-only/private51358 native16-view Summit High check passed exit0 in25932.1443ms, zero browser warnings/errors. Root inspected the actual frames.jpg: all16 main views are visible, including night views. All15 placed poses remain inside the open course with Course.phase equal to actual station. Fourteen targets are within0.59m; Engineer's Hairpin reaches the unchanged600-step guard12.73156m short, lateral20.2937m/speed0.53277mph. That picture shows trees, not black; no claim that all targets are exact or that the controller was fixed.
+
+Canonical nearby21/21, zero failures/unrun, jobs4; build1.11s. Root independent source review CLEAR. Closed arithmetic and all game files remain unchanged. The native packet was generated before the investigation cutoff, not reconstructed from Claude's deleted scratch packet. No timing or visual art acceptance is inferred. Conflict-free merge needed no rerun. Owned lane and branch recycled/deleted after ancestry and clean-source verification.
