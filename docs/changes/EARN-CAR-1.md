@@ -37,7 +37,9 @@
 - `tools/fixtures/saves/12-medals.json`: the Enzo, owned and fully tuned, with
   the six medals that earn it (Falcone F42 duel 3/1/0 and Grand Prix 1/0/0,
   Aurora duel hard 2, Stuttgart duel easy 1 and medium 1 = 6 medals; the
-  unknown `future_car` row still counts for nothing).
+  unknown `future_car` row still counts for nothing). The Stuttgart row sits
+  before `future_car`, the order a normalized save writes, because
+  `test-deep-save` and `test-grand-prix-podiums` compare exact bytes.
 - `tools/test-enzo-vehicle.mjs` (new): the settled numbers and rules, the
   vehicle contract (driver, steering, four wheels, only the front axle
   steers, brake lights, boost flames, paint, four glazing zones), bounds
@@ -78,7 +80,12 @@ blender-output, light-path, audio, audio-vehicles, drivers, driver-ui,
 arena-shove, arena-junk-shove, arena-pit, arena-event, arena-steering,
 arena-steering-ceiling, titan-handling, career-budget, course-access,
 course-car-choice, paint-presets, yeti, storage-budget, summit-attack.
-The lane tier and the build result is in `docs/board/run-log.md`.
+Lane tier (`--changed --jobs 4 --keep-going`, PowerShell): 381 suites. The
+first run stopped at `src/test.js` (the real-name check), so it was rerun with
+`--keep-going`; that run had 377 pass and 4 fail (`test-arsenal-core-audio`,
+`test-arsenal-wave1-audio`, `test-deep-save`, `test-grand-prix-podiums`), all
+from the new car, all fixed as written under Changed assertions and rerun alone
+to a pass. `npm run build` passed.
 
 With the switch off the Enzo appears nowhere: `tools/test-earned-cars-ui.mjs`
 now checks the real Enzo (not only scratch test cars): no menu picker entry,
@@ -132,6 +139,12 @@ out of a list it does not belong to. No tolerance was loosened.
   (`docs/EARNED_CARS.md` 4.2, Kyle 14 October 2026), so the search now skips
   the Enzo's own entry, and a new check says the Enzo is the one car with its
   real name. Every other car is searched exactly as before.
+- `tools/test-arsenal-core-audio.mjs` and `tools/test-arsenal-wave1-audio.mjs`:
+  each pins a hash of every sound-bank export except the cue list, and that
+  includes the engine voices, so the new Enzo voice changed it. The hash is now
+  taken with the Enzo's voice left out, and the old hash still matches exactly
+  (every released voice is unchanged). The Enzo's own voice is checked in
+  `tools/test-enzo-vehicle.mjs`.
 - `tools/test-vehicle-sockets.mjs`: message wording only.
 
 ## Not done
