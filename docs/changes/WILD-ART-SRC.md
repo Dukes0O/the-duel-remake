@@ -40,3 +40,11 @@ None. No existing tests, fixtures, budgets or source contracts changed.
 ## Removed
 
 No originals or deliverables removed. The two quota responses were renamed from misleading .gltf filenames to their actual HTML type. No placeholder model or speculative five-animal recipe was added. The accessible beaver-only source supersedes the earlier all-five preparation hold; no licensed source, review verdict or runtime asset was removed.
+
+## Existing planner acceptance source
+
+Director 964a0790 grants the additive registration and real beaver CLI cases in tools/test-blender-output.mjs only. The normal integration union is conflict-free at 6b9b6ed2. The same existing suite is the recipe's native CLI owner; no new test file or harness is added. It reuses the unchanged kitPlanAudit and existing two empty roots, invoking the actual beaver --paths-only entry with stdlib-only Python. The beaver's exact private unfitted GLB, PNG and manifest form a distinct contract; old tanker no-external-atlas/fit-config and every existing kit assertion stay unchanged.
+
+New cases require identical relative paths on both empty roots, no output/input/config/donor access or Blender imports, dedicated private evidence planning, and refusal of an unavailable model, public output, traversal, sibling root/directory and linked escape before any input or write. Existing exact-link cleanup and fixture helpers are reused. This is authored test source only: no planner, suite, import, texture, model, Blender, native, gate or build has run. Root review and one focused existing-suite slot precede execution. Four other donors remain blocked and no art round is consumed.
+
+Removed: no old planner, fixture, assertion, output contract or model is replaced. The unregistered-recipe gap is covered by this additive existing-suite owner row and actual CLI cases.

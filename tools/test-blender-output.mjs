@@ -46,6 +46,7 @@ const privateGenerators = [
 const nativeGenerators = [
   {script: 'tools/blender/vesper-blackiron.py', test: 'tools/test-vesper-art.mjs'},
   {script: 'tools/blender/salt-flats.py', test: 'tools/test-salt-flats-output.mjs'},
+  {script: 'tools/blender/wildlife-north-woods.py', test: 'tools/test-blender-output.mjs'},
 ];
 // Circuit kits plan directories rather than one editable Blend per model.
 const kitGenerators = [{ script: 'tools/blender/p4-kits.py', round: 3 }];
@@ -251,6 +252,24 @@ function kitPathPlan(generator, fixtureRoot) {
   return {runtime: relative(fixtureRoot, resolve(plan.runtime)).split(sep).join('/'), evidence};
 }
 
+// Beaver has an explicit private PNG contract; it never uses the tanker's
+// fit-config or changes that recipe's embedded-only atlas assertions.
+function beaverPlanCall(fixtureRoot, output, model = 'beaver') {
+  const before = fixtureTree(fixtureRoot);
+  const call = spawnSync('python', ['-I', '-B', '-S', '-c', kitPlanAudit,
+    join(root, 'tools/blender/wildlife-north-woods.py'), '--', '--root', fixtureRoot,
+    '--model', model, '--output-dir', output, '--paths-only'],
+    {cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000});
+  assert.equal(call.error, undefined, call.error?.message);
+  assert.deepEqual(fixtureTree(fixtureRoot), before, 'beaver planning changed its temporary root');
+  const receipt = call.stderr.split(/\r?\n/).find(line => line.startsWith('DUEL_KIT_PATH_AUDIT='));
+  assert.ok(receipt, 'actual beaver CLI retains the existing filesystem/import audit');
+  const audit = JSON.parse(receipt.slice('DUEL_KIT_PATH_AUDIT='.length));
+  assert.deepEqual(audit.denied, [], 'beaver planning attempted input/config/donor access, imports or writes');
+  assert.ok(audit.imports.every(name => !['bpy', 'bmesh', 'mathutils', 'numpy'].includes(name.split('.')[0])),
+    'beaver planning imported a Blender or array dependency');
+  return call;
+}
 check('all Blender asset generators are covered', () => {
   const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && name !== 'fidelity-sheet.py')
     .map(name => `tools/blender/${name}`);
@@ -307,6 +326,62 @@ try {
     fixtureRoots.forEach(fixtureRoot => assert.deepEqual(readdirSync(fixtureRoot), [], 'planning created files'));
   });
 
+  check('beaver plans only its exact private unfitted GLB, PNG and manifest on both empty roots', () => {
+    const relativePlans = fixtureRoots.map(fixtureRoot => {
+      const output = join(fixtureRoot, '.qa-dist', 'beaver-private');
+      const call = beaverPlanCall(fixtureRoot, output);
+      assert.equal(call.status, 0, call.stderr || call.stdout);
+      const plan = JSON.parse(call.stdout);
+      assert.deepEqual(plan, {blend: [], glb: [join(output, 'beaver-source-unfitted.glb')],
+        json: [join(output, 'manifest.json')], atlas: [join(output, 'beaver-colour.png')], evidence: [], summary: []});
+      const outputs = [...plan.glb, ...plan.json, ...plan.atlas];
+      assert.equal(new Set(outputs).size, 3, 'private model, image and manifest destinations are distinct');
+      assert.deepEqual(readdirSync(fixtureRoot), [], 'actual planning created no files or directories');
+      return outputs.map(path => relative(fixtureRoot, path).split(sep).join('/'));
+    });
+    assert.deepEqual(relativePlans[0], relativePlans[1], 'beaver relative outputs are independent of planning root');
+  });
+  check('beaver permits its same exact private evidence paths without source/config reads', () => {
+    const output = join(fixtureRoots[0], '.evidence', 'beaver-private');
+    const call = beaverPlanCall(fixtureRoots[0], output);
+    assert.equal(call.status, 0, call.stderr || call.stdout);
+    assert.deepEqual(JSON.parse(call.stdout), {blend: [], glb: [join(output, 'beaver-source-unfitted.glb')],
+      json: [join(output, 'manifest.json')], atlas: [join(output, 'beaver-colour.png')], evidence: [], summary: []});
+  });
+  check('beaver refuses an unavailable animal before source/config reads or Blender imports', () => {
+    const call = beaverPlanCall(fixtureRoots[0], join(fixtureRoots[0], '.qa-dist', 'beaver-private'), 'moose');
+    assert.notEqual(call.status, 0);
+    assert.equal(call.stdout.trim(), '', 'unavailable animal cannot claim a model plan');
+    assert.match(call.stderr, /invalid choice.*moose/i);
+  });
+  for (const [label, output] of [
+    ['public runtime output', join(fixtureRoots[0], 'public', 'assets', 'wildlife', 'beaver')],
+    ['another planning root', join(fixtureRoots[1], '.qa-dist', 'beaver-private')],
+    ['traversal into public', join(fixtureRoots[0], '.qa-dist') + sep + '..' + sep + 'public' + sep + 'beaver'],
+    ['a private-looking sibling', join(fixtureRoots[0], '.qa-dist-other', 'beaver')],
+  ]) check('beaver refuses ' + label + ' before input reads or writes', () => {
+    const call = beaverPlanCall(fixtureRoots[0], output);
+    assert.notEqual(call.status, 0);
+    assert.equal(call.stdout.trim(), '', 'unsafe output cannot claim a valid plan');
+    assert.match(call.stderr, /private child|supplied root/i);
+    assert.deepEqual(readdirSync(fixtureRoots[1]), [], 'rejected plan changed the other root');
+  });
+  check('beaver refuses a linked private-directory escape without touching its target', () => {
+    const privateRoot = join(fixtureRoots[0], '.qa-dist'), link = join(privateRoot, 'linked-beaver');
+    mkdirSync(privateRoot);
+    symlinkSync(fixtureRoots[1], link, process.platform === 'win32' ? 'junction' : 'dir');
+    try {
+      const call = beaverPlanCall(fixtureRoots[0], join(link, 'beaver-private'));
+      assert.notEqual(call.status, 0);
+      assert.equal(call.stdout.trim(), '');
+      assert.match(call.stderr, /private child|supplied root/i);
+      assert.deepEqual(readdirSync(fixtureRoots[1]), [], 'linked planning changed its target');
+    } finally {
+      assert.ok(lstatSync(link).isSymbolicLink(), 'fixture link unexpectedly changed');
+      unlinkSync(link);
+      rmdirSync(privateRoot);
+    }
+  });
   for (const generator of privateGenerators) {
     check(generator.script + ' plans private model, manifest and packed atlas without Blender, licensed reads or writes', () => {
       const plans = fixtureRoots.map(fixtureRoot => privateRelativePlan(generator, fixtureRoot, join(fixtureRoot, '.qa-dist', 'tanker-private')));
