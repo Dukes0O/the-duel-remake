@@ -3,10 +3,22 @@ import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
-import {createHeliSession} from './heli/heli-session.js';
+import {createHeliSession, courseSite} from './heli/heli-session.js';
+import {fireOnNewDay, fireWorld} from './heli/heli-fire-run.js';
+import {notePlayDay, buyBack as buyBackSave, fireOf} from './heli/heli-save.js';
+import {courseClosed, closureCard} from './course-closures.js';
 import {groundFromCourse} from './heli/heli-ground.js';
 import {createHeliAudio} from './heli/heli-audio.js';
 import {carAt} from './heli/heli-save.js';
+// H2 Fire: the crackle (more burning and nearer, within 400 m), the scoop
+// and the pour, each 0 to 1, from the helicopter's view.
+function fireSounds(view) {
+  const fire = view.fire, here = fire && fire.courseId === view.courseId && fire.target;
+  const crackle = here ? Math.min(1, .25 + fire.cells / 40) * Math.max(0, 1 - fire.target.distance / 400) : 0;
+  return {crackle, scoop: (view.bucket?.filling ?? 0) / 100, pour: view.bucket?.pouring ? 1 : 0};
+}
+// H2 Fire: today's date as the play day note reads it.
+const todayString = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 import {isAirOnlyCar} from './heli/heli-jobs.js';
 import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hints.js';
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
@@ -120,6 +132,7 @@ export class App {
     this._keyboardThrottle=createKeyboardThrottle();
     this._keyboardArena=null;
     this.players=loadPlayers();this.player=activePlayer(this.players);this.profile=this.player.profile;
+    this._fireCourses=new Map();
     this._legacyRaceDefaults={...DEFAULT_RACE_SETTINGS,routeVariant:readRoutePreference(),lightingMood:readLightingMood(),ghostEnabled:readGhostEnabled()};
     // Capture old browser preferences once for every existing legacy player.
     // Later global compatibility writes cannot change another player's setup.
@@ -128,6 +141,7 @@ export class App {
       this.player=activePlayer(this.players);this.profile=this.player.profile;this.profileSaved=savePlayers(this.players);
     }
     this._rememberWarlordOwner();
+    this._noteFirePlayDay();
     this._lapChoices = new Map();
     this.leaderboard=loadLeaderboard();this.cpuDifficulty=DEFAULT_CPU_DIFFICULTY;
     this.lapTelemetry=new LapTelemetryStore();this.lapTelemetryRecorder=null;this.ghosts=loadGhosts();this.ghostEnabled=readGhostEnabled();this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';this._ghostPoseBuffer={};
@@ -344,6 +358,7 @@ export class App {
     if (this.heliSession) {
       const view = this.heliSession.view();
       if (view.readout) this.heliAudio.update(view.readout);
+      if (this._fireOn()) this.heliAudio.fireBeds(fireSounds(view));
     }
     const deepEnvironment=this.duel.deepEnvironment();
     this.deepAudio.update(state,deepEnvironment);
@@ -390,6 +405,7 @@ export class App {
     const selectedCar=options.car||this.duel.state.car;
     const car=isCarUnlocked(this.profile,selectedCar)?selectedCar:'falcone_f42';
     if(this._airOnlyRefused(car,stage.id))return false;
+    if(this._fireClosedRefused(stage))return false;
     const driverId=isDriverUnlocked(this.profile,options.driverId)?normalizeDriverId(options.driverId):getEquippedDriverId(this.profile);
     const explicitSeed=Number.isSafeInteger(options.seed)?options.seed>>>0:null;
     // Keep legacy headless callers that set duel.seed before their first start.
@@ -1190,6 +1206,52 @@ export class App {
     this._saveProfile();
     this.heliAudio.stop();
   }
+  // ---- H2 Fire (docs/HELI_FIRE.md) ----------------------------------------
+  // Forest fires need both switches; off, nothing below changes anything.
+  _fireOn() {
+    return this._switches().enabled('helicopter') === true && this._switches().enabled('forest-fire') === true;
+  }
+  // A course model at the helicopter's seed, built once, for fire grids; it
+  // never touches the course being raced or flown.
+  _fireCourse(courseId) {
+    if (!this._fireCourses.has(courseId)) {
+      const course = new Course(COURSE.find(stage => stage.id === courseId), 1989);
+      this._fireCourses.set(courseId, {course, ground: groundFromCourse(course)});
+    }
+    return this._fireCourses.get(courseId);
+  }
+  // The play day counts when a player who flies becomes active on a date, so
+  // closures count days the player only races; a fire burning takes its
+  // three day steps. A player who has never flown gains nothing.
+  _noteFirePlayDay(date = todayString()) {
+    if (!this._fireOn() || !this.player || !this.profile?.heli) return false;
+    const noted = notePlayDay(this.profile, date, {enabled: true});
+    if (!noted.ok || !noted.newDay) return false;
+    let profile = noted.profile;
+    const burning = fireOf(profile);
+    if (burning) {
+      const loaded = this._fireCourse(burning.courseId);
+      profile = fireOnNewDay(profile, {enabled: true, world: fireWorld(loaded, courseSite(loaded.course, loaded.ground, burning.courseId))}).profile;
+    }
+    this.profile = profile;
+    this._saveProfile();
+    return true;
+  }
+  _fireClosedRefused(stage) {
+    if (!this._fireOn() || !courseClosed(this.profile, stage.id, undefined, {enabled: true})) return false;
+    this.courseAccessMessage = closureCard(this.profile, stage.id, undefined, {enabled: true, name: stage.name}).refusal;
+    return true;
+  }
+  // Buy back a course closed after a forest fire, from the course menu.
+  buyBackCourse(courseId) {
+    if (this.duel.state.status !== 'menu') return {ok: false, reason: 'Return to the menu first.'};
+    if (!this._fireOn()) return {ok: false, reason: 'Forest fires are not available yet.'};
+    this._refreshPlayer();
+    const result = buyBackSave(this.profile, courseId, {enabled: true});
+    if (result.ok) { this.profile = result.profile; this._saveProfile(); this.duel.emit({courses: true}); }
+    return result;
+  }
+  forestFireEnabled() { return this._fireOn(); }
   heliAvailable() {
     return !!this.player && this._switches().enabled('helicopter') === true;
   }
@@ -1210,7 +1272,10 @@ export class App {
     };
     const today = new Date(), pad = n => String(n).padStart(2, '0');
     this._heliCreditsAtStart = this.profile.credits;
+    const fireOn = this._fireOn();
+    if (fireOn) this.heliAudio.preloadFire?.();
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
+      fireEnabled: fireOn, playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       persist: profile => {
         // Credits the session charged since its last save move the app's
@@ -1226,7 +1291,9 @@ export class App {
   }
   _heliEvents(events) {
     for (const event of events) {
-      if (event.type === 'radio') this.heliAudio.say(event.line);
+      if (event.type === 'cue') this.heliAudio.play(event.id);
+      else if (event.type === 'fireHiss') this.heliAudio.play('heli.fire.hiss', {scale: Math.min(1, .3 + event.litres / 150)});
+      else if (event.type === 'radio') this.heliAudio.say(event.line);
       else this.heliAudio.event(event);
       if (event.type === 'crashed') this.heliAudio.say('heli.radio.crash');
     }
@@ -1321,7 +1388,7 @@ export class App {
   selectPlayer(id){
     if(this.duel.state.status!=='menu')return false;
     this._refreshPlayers();if(!this.players.players.some(p=>p.id===id))return false;
-    this.players=selectPlayer(this.players,id);this.player=activePlayer(this.players);this.profile=this.player.profile;this._restoreRaceSettings();this._rememberRaceSettings();this._recoverInterruptedRace();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return true;
+    this.players=selectPlayer(this.players,id);this.player=activePlayer(this.players);this.profile=this.player.profile;this._restoreRaceSettings();this._rememberRaceSettings();this._recoverInterruptedRace();this._noteFirePlayDay();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return true;
   }
   isYardHomeActive(){
     const state=this.duel.state, journey=state.hiddenRoadJourney;
@@ -1557,6 +1624,7 @@ export class App {
     else if (action === 'heli-hook') this._heliPress(session => session.pressHook());
     else if (action === 'heli-autopilot') this._heliPress(session => session.pressAutopilot());
     else if (action === 'heli-cruise') this._heliPress(session => session.acceptCruise());
+    else if (action === 'heli-radio') this._heliPress(session => session.pressRadio());
     else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % 4; this.duel.emit({heli: true}); }
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');

@@ -535,6 +535,17 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     steer(bed('heli.wind', rotor.gain > 0 && wind.gain > .001, wind), wind, cues['heli.wind']);
   }
 
+  // H2 Fire's loops, each 0 to 1, called every frame with update: the
+  // crackle (louder with more burning and nearer, heard within 400 m), the
+  // scoop (with the fill rate) and the pour (while H pours).
+  function fireBeds({crackle = 0, scoop = 0, pour = 0} = {}) {
+    if (disposed || !isEnabled() || !audio.context || !audible() || crashHold) return;
+    for (const [id, level] of [['heli.fire.crackle', crackle], ['heli.bucket.scoop', scoop], ['heli.bucket.pour', pour]]) {
+      const voice = {gain: clamp(level, 0, 1), rate: 1, lowpass: 9000};
+      steer(bed(id, voice.gain > .01, voice), voice, cues[id]);
+    }
+  }
+
   function event(ev, state = {}) {
     if (Array.isArray(ev)) { for (const item of ev) event(item, state); return; }
     if (!ev || typeof ev !== 'object' || disposed || seen.has(ev)) return;
@@ -586,6 +597,6 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     pending.clear();
   }
   const preloadFire = () => load(FIRE_CUE_IDS.filter(id => cues[id]));
-  return {load, preloadFire, say, skip, clearRadio, subtitle, update, event, play, stop, dispose,
+  return {load, preloadFire, fireBeds, say, skip, clearRadio, subtitle, update, event, play, stop, dispose,
     get busy() { return !!current || queue.length > 0; }, get queued() { return [...queue]; }};
 }
