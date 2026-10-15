@@ -181,9 +181,8 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "building"
-    claimed_by: codex-intel-levels-2026-10-15
-    branch: codex/intel-levels
+    status: "blocked"
+    waiting_on: claude
     claimed_by: codex-intel-levels-2026-10-15
     branch: codex/intel-levels
     locks: [busy-game-files, save-shape]
