@@ -122,10 +122,9 @@ function fittedDetails(vehicle, m) {
   const skins = vehicle.userData.damageMeshes.filter(({ mesh }) => mesh.material === m.paint).map(({ mesh }) => mesh), b = batch(vehicle);
   const patch = (corners, axis, side = 1, material = m.carbon, lift = .004) => fitSurfacePatch(skins, b, material, corners, axis, side, .64, lift);
   for (const side of [-1, 1]) {
-    // Long headlamps sunk into the tops of the front fenders.
+    // Long dark headlamp recesses in the tops of the front fenders; the lamps themselves are built
+    // below as real lenses and a running-light strip inside them, not painted shapes.
     patch([[side * .56, 2.10], [side * .74, 2.04], [side * .90, 1.62], [side * .88, 1.38], [side * .74, 1.40], [side * .62, 1.80]], 'top');
-    // A slim lamp strip along the outer edge of the dark recess, not a white panel.
-    patch([[side * .70, 2.00], [side * .75, 1.98], [side * .87, 1.62], [side * .855, 1.48], [side * .825, 1.50], [side * .72, 1.84]], 'top', 1, m.headlight, .009);
     // The side scoops: a deep dark intake behind each door, swept up at the back.
     patch([[.26, -.05], [.30, -.55], [.46, -1.02], [.66, -.98], [.62, -.55], [.52, -.10]], 'side', side);
     patch([[.30, -.10], [.34, -.55], [.48, -.94], [.52, -.90], [.42, -.52], [.36, -.12]], 'side', side, m.darkAlloy, .008);
@@ -142,6 +141,37 @@ function fittedDetails(vehicle, m) {
     ray.set(new THREE.Vector3(x, 3, z), new THREE.Vector3(0, -1, 0));
     const hit = ray.intersectObjects(skins, false)[0];
     if (hit) b.box(m.carbon, [.18, .016, .045], [x, hit.point.y + .012, z], [.08, 0, 0], .004);
+  }
+  const surfaceY = (x, z) => {
+    ray.set(new THREE.Vector3(x, 3, z), new THREE.Vector3(0, -1, 0));
+    const hit = ray.intersectObjects(skins, false)[0]; return hit ? hit.point.y : null;
+  };
+  for (const side of [-1, 1]) {
+    // Headlamps: two round projector lenses in a dark bezel, sitting in the recess and facing forward,
+    // with a slim running-light strip along the recess's outer edge.
+    for (const [x, z] of [[.71, 1.96], [.79, 1.74]]) {
+      const y = surfaceY(side * x, z); if (y === null) continue;
+      // Facing straight forward and sunk into the recess: a dark tinted lens with a thin lit ring.
+      cylinder(b, m.carbon, .062, .06, [side * x, y - .012, z], [Math.PI / 2, 0, 0], 20);
+      cylinder(b, m.glass, .05, .012, [side * x, y - .012, z + .031], [Math.PI / 2, 0, 0], 20);
+      const ring = new THREE.TorusGeometry(.046, .006, 6, 24);
+      b.add(ring, m.headlight, [side * x, y - .012, z + .036]); ring.dispose();
+    }
+    const strip = [];
+    for (let i = 0; i <= 8; i++) {
+      const z = 2.0 - i * .065, x = side * (.74 + .12 * i / 8), y = surfaceY(x, z);
+      if (y !== null) strip.push([x, y + .016, z]);
+    }
+    if (strip.length > 1) b.tube(m.headlight, strip, .0085, strip.length);
+    // A waist line: a crease along the doors from the front arch to the scoop, fitted to the side.
+    const crease = [];
+    for (let i = 0; i <= 16; i++) {
+      const z = 1.0 - i * .08, y = .50 + .03 * (i / 16);
+      ray.set(new THREE.Vector3(side * 3, y, z), new THREE.Vector3(-side, 0, 0));
+      const hit = ray.intersectObjects(skins, false)[0];
+      if (hit && hit.point.x * side > .7) crease.push(hit.point.clone().addScaledVector(hit.face.normal, .006).toArray());
+    }
+    if (crease.length > 1) b.tube(m.carbon, crease, .0055, crease.length);
   }
   b.finish(vehicle.userData);
 }
