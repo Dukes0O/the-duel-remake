@@ -13,3 +13,9 @@ New cases were authored first in the existing runner suite: solo/both-selected/t
 ## Removed
 
 Only the duplicate nested replay child when its real counterpart is selected in the same final plan. The standalone child, every original fingerprint/climbing assertion and the full/default replay guard remain.
+
+## Final green merge
+
+Mergede80e6ca4 from clean1e55b12f after the original canonical429/429 nearby/jobs4/keep-going gate, zero failures/unrun, aggregate1069952.0539ms/wall1070182.0691ms, ended05:23:03UTC. Build passed703ms/wall1238.8202ms on the same clean source, GOMAXPROCS4. Root independent code review CLEAR; exact final filtered plan alone decides Titan delegation, actual ordinary replay suite still runs and controls overall success, standalone assertions/180000ms timeout stay exact, no delegated fingerprint count. No tolerance, pin, old behavior or harness is weakened.
+
+Conflict-free merge needed no rerun. Own lane/dependency junction/branch were safely recycled/deleted after exact source, cleanliness, ancestry, junction target and prune registration verification. Other lanes remain. No release/push or save access.
