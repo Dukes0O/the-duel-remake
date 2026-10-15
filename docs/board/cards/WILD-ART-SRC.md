@@ -163,3 +163,12 @@ Adult nose-to-tail 1.10 m by uniform scale is right. Pivot on the feet: the
 feet touch the ground and the tail may sit up to 2 cm below it (it reads as
 resting in grass). No tail or pose edit. Then the fitted output and the North
 woods round 1 sheet when the other donors arrive.
+
+
+## Approved beaver fit: source-only lease
+
+Claude approved1.10m uniform nose-to-tail scale, feet pivot and up to2cm tail penetration into grass. No tail/pose edit. The other donors and group round1 still wait. Prepare only the existing wildlife recipe/manifest/test-blender-output/own note in the retained lane: optional --fit-only, exclusive with view-only/source-view, with unchanged default generation and pure paths-only contracts. Read the existing pinned candidate; do not repaint or regenerate its mesh/UV/material/image data. Write one fresh private fitted GLB plus measured manifest, no public/runtime/CREDITS or art sheet.
+
+Before implementation, decode the actual indexed dark paw-region vertices from the approved donor and prove the four feet contact plane from those coordinates and viewed anatomy. Use its real foot minimum as anchor, uniformscale1.10/actual nose-to-tail extent, +Yup/+Zhead. Preserve complete candidate BIN bytes; only root node scale/translation and container JSON lengths may change. Measured transformed feet must touch0 and tail stay within[-.02,0]; fail rather than change pose or force a ground claim if the actual geometry disagrees. Keep actual source hashes/licence, no clips/rigs invented. Reuse existing GLB container serialization and existing planner cases; no new harness or dependencies.
+
+Freeze the precise foot/transform source plan and code for review before any import/test/fit generation/export/render. No already-finished source view is repeated. Source-preparation limit30minutes, by08:20UTC; then note/move. Root remains scheduler and integration editor.

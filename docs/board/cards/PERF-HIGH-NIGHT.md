@@ -180,3 +180,8 @@ AsClaudeinstructed STOP: no thirdreading/newparameter/limit/numericfitting. NewQ
   tonight's: other GPU users, browser process, first load) in daylight.
 - Close this card with the measurements recorded; the AO candidate becomes its
   own card for tomorrow with its picture pair.
+
+
+## Closed without a runtime merge
+
+Claude decided to keep AO0.6 for tonight and defer the candidate. This card is closed with the actual measurements above; nothing from its AO0.5 lane was merged. The clean e084c044 candidate and completed evidence remain in the existing perf-high-night folder for PERF-HARBOUR-AO-HALF, a daylight backlog card. QA-HARBOUR-PERFORMANCE-PACING owns the unexplained spread; QA-SUMMIT-WARMUP-EXCEPTION retains the candidate browser fault. No more checks, pictures, retries or cleanup of this unmerged work tonight.
