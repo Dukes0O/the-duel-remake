@@ -1206,3 +1206,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-15 P4-ARDENNES mechanical 4495c042: existing619db9ef lane42/42/jobs4/807.60s, build1.25s, final reviewCLEAR; LongLeft zero-crash, timing skipped by Kyle, course dev, old lane retained.
 
 - 2026-10-15 pause by Kyle for restart: SUMMIT-SWITCH-ON exactd27d7c75 retained, geometry164654/build2099ms/reviewCLEAR/Claude approved; original canonical gate outcome pending inspection, no merge or release. See card restart point.
+15 October: helicopter answers merged (Kyle: seasons decide, no forest fire in winter, card FIRE-SEASONS before H2 releases; people can get hurt and failure costs, card RESCUE-HURT); lane 15/15 jobs4 343.37 s, build passed, clean merge; lane deleted.
