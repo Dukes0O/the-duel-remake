@@ -36,8 +36,6 @@ export function normalizeKitPlacements(course, entries) {
     const scale = Array.isArray(entry.scale) ? [...entry.scale] : Array(3).fill(entry.scale ?? 1);
     if (scale.length !== 3 || !scale.every(value => finite(value) && value > 0))
       fail('scale must contain three positive finite values.');
-    const grounding = entry.grounding;
-    if (grounding !== undefined && grounding !== 'footprint') fail('grounding must be footprint when authored.');
     let nodeTranslations;
     if(entry.nodeTranslations!==undefined){
       const values=entry.nodeTranslations;
@@ -78,7 +76,6 @@ export function normalizeKitPlacements(course, entries) {
       heading:entry.heading ?? 0,scale:Object.freeze(scale),lift:entry.lift ?? 0,
       ...(bands ? {bands:Object.freeze(bands.map(band => Object.freeze([...band])))} : {}),
       ...(scenery ? {scenery:Object.freeze({...scenery})} : {}),
-      ...(grounding !== undefined ? {grounding} : {}),
       ...(snowmanId ? {snowmanId} : {}),
       ...(patch ? {physicalPatch:patch} : {}),
       ...(nodeTranslations ? {nodeTranslations} : {}),
@@ -128,8 +125,7 @@ function validateSource(asset, id) {
 const CONTINUOUS_LININGS = new Set(['armco','concrete-wall','catch-fence','tyre-wall','pit-wall']);
 
 // The base height is shared with the geometry report; model/collider rows stay
-// read only. Authored footprint seating and validated escape world pins use
-// the same actual ground samples; ordinary lining margins remain unchanged.
+// read only. Lower a continuous lining only when its footprint would float.
 function placementGround(course, row) {
   const ground = course.groundAt(row.s, row.lateral);
   return row.worldPosition ? {...ground, x: row.worldPosition.x, z: row.worldPosition.z} : ground;
@@ -138,8 +134,7 @@ export function kitBaseHeight(course,row,bounds) {
   const ground=placementGround(course,row);
   const height=renderedGroundHeight(course,{...ground,s:row.s,off:row.lateral},{requireSurface:true});
   if(!finite(height))return height;
-  const lining = CONTINUOUS_LININGS.has(row.id);
-  if(!course.script || !lining && row.grounding !== 'footprint')return height+(row.lift??0);
+  if(!course.script||!CONTINUOUS_LININGS.has(row.id))return height+(row.lift??0);
   const scale=Array.isArray(row.scale)?row.scale:Array(3).fill(row.scale??1);
   const heading=ground.heading+(row.heading??0),cs=Math.cos(heading),sn=Math.sin(heading);
   const x=[bounds.min.x,(bounds.min.x+bounds.max.x)/2,bounds.max.x];
@@ -151,7 +146,6 @@ export function kitBaseHeight(course,row,bounds) {
     const under=renderedGroundHeight(course,{x:px,z:pz,s:at.s,off:at.lateral},{requireSurface:true});
     if(finite(under))lowest=Math.min(lowest,under);
   }
-  if (!lining && row.grounding === 'footprint') return lowest + (row.lift ?? 0);
   return Math.min(height,lowest+.449)+(row.lift??0);
 }
 

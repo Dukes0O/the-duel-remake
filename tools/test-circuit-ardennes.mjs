@@ -16,7 +16,8 @@ import {syncScene} from '../src/scene-systems.js';
 import {disposeTree} from '../src/world.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {terrainGeometry, farTerrainGeometry} from '../src/world-surfaces.js';
-import {createTrackKits, normalizeKitPlacements, kitBaseHeight} from '../src/track-kits.js';
+import {createTrackKits} from '../src/track-kits.js';
+import {addCircuitLandmarks} from '../src/circuit-landmarks.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mkdtempSync, readFileSync, readdirSync, rmdirSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
@@ -442,89 +443,108 @@ test('gravel-only terrain builds finite native vertex colours without fallen lea
 });
 
 
-test('village footprint grounding validates its opt-in and retains all other placement defaults', () => {
-  const course = new Course(ARDENNES_FOREST, 1989);
-  const village = ARDENNES_FOREST.kitPlacements.filter(row => row.grounding !== undefined);
-  assert.equal(village.length, 13);
-  assert.equal(village.filter(row => row.id === 'shopfront-a' || row.id === 'shopfront-b').length, 12);
-  assert.equal(village.filter(row => row.id === 'lantern-tower').length, 1);
-  assert.ok(village.every(row => row.grounding === 'footprint' && Object.isFrozen(row)));
-  const before = JSON.stringify(village);
-  const normalized = normalizeKitPlacements(course, village);
-  assert.ok(Object.isFrozen(normalized) && normalized.every(row => Object.isFrozen(row) && row.grounding === 'footprint'));
-  for (const value of [null, false, true, 0, 'anchor', {}, []])
-    assert.throws(() => normalizeKitPlacements(course, [{...village[0], grounding: value}]), /grounding/);
-  const ordinary = normalizeKitPlacements(course, [{id: 'shopfront-a', s: 4600, lateral: 100}])[0];
-  assert.equal(Object.hasOwn(ordinary, 'grounding'), false, 'legacy rows acquire no grounding descriptor');
-  const bounds = new THREE.Box3(new THREE.Vector3(-3, 0, -3), new THREE.Vector3(3, 8, 3));
-  const point = course.groundAt(ordinary.s, ordinary.lateral);
-  const ground = renderedGroundHeight(course, {...point, s: ordinary.s, off: ordinary.lateral}, {requireSurface: true});
-  assert.equal(kitBaseHeight(course, ordinary, bounds), ground, 'unannotated kit keeps exact centre-anchor height');
-  const lining = {...ordinary, id: 'armco'};
-  assert.equal(kitBaseHeight(course, {...lining, grounding: 'footprint'}, bounds), kitBaseHeight(course, lining, bounds),
-    'continuous-lining seating remains exact even with the new descriptor');
-  assert.equal(JSON.stringify(village), before, 'normalization does not mutate authored rows');
+test('the current Stavelot village authors two frozen nonempty streets and a grounded stone church', () => {
+  const town = ARDENNES_FOREST.circuitLandmarks.find(row => row.id === 'stavelot-valley-town');
+  const church = ARDENNES_FOREST.circuitLandmarks.find(row => row.id === 'stavelot-church');
+  assert.equal(town?.type, 'town'); assert.equal(church?.type, 'church');
+  assert.ok(Object.isFrozen(town) && Object.isFrozen(town.houses) && town.houses.length > 0);
+  assert.ok(town.houses.every(Object.isFrozen));
+  assert.deepEqual(town.roofColours, [0x414a50, 0x5a352c, 0x50545a]);
+  assert.ok(Object.isFrozen(town.roofColours));
+  const streets = new Set(town.houses.map(house => {
+    assert.ok([house.s, house.lateral, house.heading, house.width, house.depth].every(Number.isFinite));
+    assert.ok(house.width > 0 && house.depth > 0 && [1, 2].includes(house.storeys));
+    assert.equal(Math.abs(house.heading), Math.PI / 2);
+    const centre = house.lateral + Math.sign(house.heading) * 8.5;
+    return Math.round(centre - 1.2 * Math.sin((house.s - piece('Stavelot').s0) / 70));
+  }));
+  assert.deepEqual([...streets].sort((a, b) => a - b), [28, 48]);
+  assert.ok(Object.isFrozen(church)); assert.equal(church.churchStyle, 'stone');
+  assert.equal(church.grounding, 'footprint');
 });
 
-test('actual village High and LOD footprints contact the drawn hillside without moving terrain or donors', async () => {
-  const course = new Course(ARDENNES_FOREST, 1989);
-  const rows = ARDENNES_FOREST.kitPlacements.filter(row => row.grounding === 'footprint');
-  assert.equal(rows.length, 13);
+test('every actual current town foundation and veranda has drawn-terrain support without mutation or leaked owners', () => {
+  const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
   const before = JSON.stringify({definition: ARDENNES_FOREST, features: course.features});
-  const material = new THREE.MeshBasicMaterial({side: THREE.DoubleSide});
-  const terrain = [terrainGeometry, farTerrainGeometry].map(build => new THREE.Mesh(build(course), material));
-  const loader = new GLTFLoader();
-  loader.register(() => ({name: 'ARDENNES_HEADLESS_TEXTURE', loadTexture: () => Promise.resolve(new THREE.Texture())}));
-  const assets = new Map();
-  const donorSnapshot = asset => {
-    const nodes = [];
-    asset.scene.traverse(node => nodes.push({matrix: node.matrix.toArray(),
-      geometry: node.geometry?.attributes.position?.array ? [...node.geometry.attributes.position.array] : null,
-      colours: [].concat(node.material || []).map(material => material.color?.toArray())}));
-    return JSON.stringify(nodes);
-  };
-  const owner = createTrackKits(course, {placements: rows, loadAsset: async path => {
-    const bytes = readFileSync(new URL('../public' + path, import.meta.url));
-    const model = await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
-    model.scene.updateMatrixWorld(true);
-    assets.set(path, {model, bounds: new THREE.Box3().setFromObject(model.scene), snapshot: donorSnapshot(model)});
-    return model;
-  }});
-  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
-  const measurements = [];
+  const spec = ARDENNES_FOREST.circuitLandmarks.find(row => row.id === 'stavelot-valley-town');
+  assert.ok(spec.houses.length > 0);
+  const terrainMaterial = new THREE.MeshBasicMaterial({side: THREE.DoubleSide});
+  const terrain = [terrainGeometry, farTerrainGeometry].map(build => new THREE.Mesh(build(course), terrainMaterial));
+  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0), owned = new Map(), measurements = [];
+  let disposed = false;
   try {
-    assert.equal(await owner.ready, true, owner.error?.message);
-    for (const [index, row] of rows.entries()) {
-      const matrix = owner.getPlacementPose(index);
-      for (const suffix of ['', '-lod']) {
-        const asset = assets.get('/assets/models/circuits/kits/' + row.id + suffix + '.glb');
-        assert.ok(asset, 'actual High and LOD donor loaded');
-        const bounds = asset.bounds, gaps = [];
-        for (const x of [bounds.min.x, (bounds.min.x + bounds.max.x) / 2, bounds.max.x])
-          for (const z of [bounds.min.z, (bounds.min.z + bounds.max.z) / 2, bounds.max.z]) {
-            const base = new THREE.Vector3(x, bounds.min.y, z).applyMatrix4(matrix);
-            ray.set(new THREE.Vector3(base.x, 2000, base.z), down);
-            const hit = ray.intersectObjects(terrain, false)[0];
-            assert.ok(hit, 'every actual village footprint sample has drawn terrain');
-            gaps.push(base.y - hit.point.y);
-          }
-        assert.ok(gaps.every(gap => gap <= 1e-4), 'no actual High or LOD footprint point floats above drawn ground');
-        assert.ok(Math.max(...gaps) >= -1e-4, 'each actual model has ground contact instead of a guessed excessive sink');
-        assert.equal(donorSnapshot(asset.model), asset.snapshot, 'source geometry and transforms remain exact');
-        measurements.push({id: row.id, s: row.s, lateral: row.lateral, version: suffix ? 'LOD' : 'High',
-          maxFloat: Math.max(...gaps), maxSink: -Math.min(...gaps)});
-      }
+    const group = addCircuitLandmarks(world, course); world.updateMatrixWorld(true);
+    const town = group.getObjectByName(spec.id), footings = town.getObjectByName('town footings'),
+      houses = town.getObjectByName('town houses'), roofs = town.getObjectByName('town roofs'),
+      verandas = town.getObjectByName('town verandas'), doors = town.getObjectByName('town doors'),
+      posts = town.getObjectByName('town veranda posts');
+    for (const mesh of [footings, houses, roofs, verandas]) {
+      assert.ok(mesh?.isInstancedMesh); assert.equal(mesh.count, spec.houses.length);
     }
-    assert.equal(JSON.stringify({definition: ARDENNES_FOREST, features: course.features}), before,
-      'visual seating cannot change authored rows or native geometry');
-    console.log('Ardennes actual village footprint measurements: ' + JSON.stringify(measurements));
+    assert.equal(posts.count, spec.houses.length * 3); assert.equal(doors.count, spec.houses.length * 2);
+    const matrixAt = (mesh, index) => {
+      const matrix = new THREE.Matrix4(); mesh.getMatrixAt(index, matrix); return mesh.matrixWorld.clone().multiply(matrix);
+    };
+    const support = (x, z, label, actualRay = false) => {
+      const near = course.nearest(x, z);
+      assert.ok(near.distance >= course.roadHalfWidthAt(near.s) + 3, label + ': actual footprint clears every road');
+      if (actualRay) {
+        ray.set(new THREE.Vector3(x, 2000, z), down);
+        const hit = ray.intersectObjects(terrain, false)[0];
+        assert.ok(hit, label + ': actual near/far drawn triangle exists'); return hit.point.y;
+      }
+      const ground = renderedGroundHeight(course, {x, z, s: near.s, off: near.lateral}, {requireSurface: true});
+      assert.ok(Number.isFinite(ground), label + ': actual drawn terrain support is finite'); return ground;
+    };
+    for (let index = 0; index < spec.houses.length; index++) {
+      const footing = matrixAt(footings, index), house = matrixAt(houses, index), deck = matrixAt(doors, index * 2);
+      const floor = new THREE.Vector3(0, -.5, 0).applyMatrix4(house).y;
+      const expectedColours = spec.roofColours.map(value => new THREE.Color(value).toArray().map(Math.fround));
+      assert.ok(expectedColours.some(value => JSON.stringify(value) === JSON.stringify(Array.from(roofs.instanceColor.array.slice(index * 3, index * 3 + 3)))));
+      let samples = 0, maximumBottom = -Infinity, minimumFloor = Infinity;
+      const checkFooting = (u, v, actualRay = false) => {
+        const bottom = new THREE.Vector3(u, -.5, v).applyMatrix4(footing), top = new THREE.Vector3(u, .5, v).applyMatrix4(footing);
+        const label = 'house ' + index + ' footing ' + u + ',' + v, ground = support(bottom.x, bottom.z, label, actualRay);
+        assert.ok(bottom.y <= ground && top.y >= ground,
+          label + ': actual foundation [' + bottom.y + ',' + top.y + '] must span drawn ground ' + ground);
+        assert.ok(floor >= ground, label + ': actual house floor must clear drawn support');
+        maximumBottom = Math.max(maximumBottom, bottom.y - ground); minimumFloor = Math.min(minimumFloor, floor - ground); samples++;
+      };
+      for (const u of [-.5, 0, .5]) for (const v of [-.5, 0, .5]) checkFooting(u, v, true);
+      const nx = Math.ceil(Math.hypot(...footing.elements.slice(0, 3)) / .5), nz = Math.ceil(Math.hypot(...footing.elements.slice(8, 11)) / .5);
+      for (let x = 0; x <= nx; x++) for (let z = 0; z <= nz; z++) checkFooting(-.5 + x / nx, -.5 + z / nz);
+      const dx = Math.ceil(Math.hypot(...deck.elements.slice(0, 3)) / .5), dz = Math.ceil(Math.hypot(...deck.elements.slice(8, 11)) / .5);
+      for (let x = 0; x <= dx; x++) for (let z = 0; z <= dz; z++) {
+        const point = new THREE.Vector3(-.5 + x / dx, .5, -.5 + z / dz).applyMatrix4(deck);
+        assert.ok(point.y >= support(point.x, point.z, 'house ' + index + ' veranda'), 'actual veranda deck clears its whole sampled ground footprint');
+      }
+      for (let post = 0; post < 3; post++) {
+        const matrix = matrixAt(posts, index * 3 + post), vertices = posts.geometry.getAttribute('position');
+        const bottom = posts.geometry.boundingBox ?? (posts.geometry.computeBoundingBox(), posts.geometry.boundingBox);
+        for (let vertex = 0; vertex < vertices.count; vertex++) if (vertices.getY(vertex) === bottom.min.y) {
+          const point = new THREE.Vector3().fromBufferAttribute(vertices, vertex).applyMatrix4(matrix), ground = support(point.x, point.z, 'house ' + index + ' veranda post');
+          assert.ok(point.y <= ground, 'actual veranda post base reaches drawn ground');
+          assert.ok(new THREE.Vector3(0, .5, 0).applyMatrix4(matrix).y >= ground, 'actual veranda post spans support');
+        }
+      }
+      measurements.push({index, s: spec.houses[index].s, lateral: spec.houses[index].lateral, samples, maximumBottom, minimumFloor});
+    }
+    assert.equal(measurements.length, spec.houses.length);
+    assert.equal(JSON.stringify({definition: ARDENNES_FOREST, features: course.features}), before, 'actual town construction/support checks never change course or features');
+    world.traverse(object => {
+      for (const resource of [object.isInstancedMesh ? object : null, object.geometry, ...[].concat(object.material ?? [])])
+        if (resource && !resource.userData.sharedAsset && !owned.has(resource)) {
+          owned.set(resource, 0); resource.addEventListener('dispose', () => owned.set(resource, owned.get(resource) + 1));
+        }
+    });
+    assert.ok(owned.size > 0); disposeTree(world); disposed = true;
+    assert.ok([...owned.values()].every(count => count === 1), 'each actual owned town/church resource disposes exactly once');
+    console.log('Ardennes actual current town support: ' + JSON.stringify(measurements));
   } finally {
-    owner.dispose();
-    for (const mesh of terrain) mesh.geometry.dispose();
-    material.dispose();
+    if (!disposed) disposeTree(world);
+    for (const mesh of terrain) mesh.geometry.dispose(); terrainMaterial.dispose();
   }
 });
-
 
 test('Long Left outside run-off has the approved local width and forty-metre transitions', () => {
   const script = buildTrackScript(ARDENNES_FOREST);
