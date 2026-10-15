@@ -364,7 +364,7 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "in_progress"
+    status: "building"
     claimed_by: codex-stock-snow-2026-10-15
     branch: codex/qa-stock-snow
     needs: []
@@ -658,7 +658,7 @@ tasks:
     owner: "codex"
     lane: "SAVE"
     size: "S"
-    status: "in_progress"
+    status: "building"
     claimed_by: codex-drive-lesson-save-2026-10-15
     branch: codex/drive-lesson-save
     needs: []
