@@ -2,6 +2,7 @@
 // lights, no jump starts, passing and defending, corner sharing, slipstream,
 // catch-up and repeatability. Every race here is headless and seeded.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import { Duel } from '../src/game.js';
 import { COURSE, CARS, DRIVE } from '../src/config.js';
 import { Course } from '../src/course.js';
@@ -12,7 +13,7 @@ import { testCourseAccess } from './career-fixture.mjs';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { FIELD, FIELD_TUNING, CATCH_UP_GAP_SEC, gridPose, chooseRacers, performanceIndex, racerSpec, catchUpFactor,
   classify } from '../src/race-field.js';
-import { runtimeOf, followLimitMph } from '../src/race-field-driver.js';
+import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro } from '../src/race-field-driver.js';
 import { shortRacerName, runningOrderRows, fieldResultsTable, fieldResultsText } from '../src/screen-field.js';
 import { installTestDriver } from './race-field-balance.mjs';
 import { App } from '../src/app.js';
@@ -33,6 +34,43 @@ const racing = duel => { while (duel.state.status === 'countdown') duel.step(STE
 const run = (duel, seconds) => { for (let i = 0; i < seconds * 60 && duel.state.status === 'racing'; i++) duel.step(STEP); return duel; };
 const fingerprint = duel => JSON.stringify([duel.state.stageTimeSec.toFixed(3), duel.state.s.toFixed(3), duel.state.speedMph.toFixed(3),
   ...duel.state.opponents.map(r => [r.s.toFixed(3), r.lateral.toFixed(3), r.speedMph.toFixed(3), r.completedLaps, !!r.knock])]);
+
+// GP-RACECRAFT: protect the released simulation before testing opt-in behavior.
+check(FEATURE_STATES['cpu-racecraft'] === 'dev', 'racecraft is preview-only');
+for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d5064025fef0abb8b5572057b66'],
+  [42, 'e047afb2d58f76a7a03ceec2514b31a315f3268e21778a92236761d64319192b'],
+  [17, '60f430f2b0cf7fc6d360450142f544b4f81296a33315a5ebafac5606e801b214']]) {
+  const d = racing(start({seed})); d.setInput({throttle: 1, steer: 0}); run(d, 30);
+  const s = d.state;
+  equal(createHash('sha256').update(JSON.stringify([s.s, s.lateral, s.speedMph, s.stageTimeSec, s.field, s.opponents])).digest('hex'),
+    hash, 'racecraft off preserves the original state and RNG, seed ' + seed);
+}
+{
+  const d = new Duel({seed:1989, featureFlags:{'grand-prix':true, 'cpu-racecraft':true}});
+  d.startCampaign({mode:'grandprix', startStage:0, car:'falcone_f42',seed:1989,fieldSeed:4242,fieldSize:7,cpuDifficulty:'medium'});
+  for(const r of d.state.opponents) {
+    close(r.field.bias, r.lateral-racingLineFor(d.course).offsetAt(r.s), 1e-10, 'grid bias starts at the actual slot');
+    check(r.field.racecraft === true, 'only opted-in racers have racecraft state');
+  }
+}
+{
+  equal(CPU_NITRO.strength, .5, 'CPU nitro is half strength');
+  equal(CPU_NITRO.refill, .5, 'CPU nitro refills at half rate');
+  const r = {boost: .8, boosting:false, speedMph:100, upgrades:{nitro:0}, field:{traits:{aggression:.7}}};
+  const run = {spec:{boostCapacity:2}};
+  stepCpuNitro(r,run,1,{straight:true,attack:true});
+  check(r.boosting, 'a racer attacks with nitro on a straight');
+  close(r.boost,.8-.19/2,1e-12,'drain uses the actual car tank capacity');
+  stepCpuNitro(r,run,1,{straight:false,attack:true});
+  check(!r.boosting,'nitro stops before a bend');
+  close(r.boost,.8-.19/2+.028*.5,1e-12,'recharge takes twice as long');
+  stepCpuNitro(r,run,1,{straight:true,attack:true,pit:true});
+  check(!r.boosting,'nitro never runs in the pit lane');
+  stepCpuNitro(r,run,1,{straight:true,attack:false,defend:true});
+  check(r.boosting,'nitro can defend against an adjacent car');
+  r.boost=0; stepCpuNitro(r,run,1,{straight:true,attack:true});
+  check(!r.boosting && r.boost>0,'an empty tank recharges instead of creating free thrust');
+}
 
 // ---- the switch and the old modes ----
 check(FEATURE_STATES['grand-prix'] === 'on', 'the Grand Prix switch is released (on, 11 October 2026)');
