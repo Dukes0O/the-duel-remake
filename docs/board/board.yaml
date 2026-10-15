@@ -346,7 +346,9 @@ tasks:
     owner: "codex"
     lane: "TOOL"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-frame-environment-2026-10-14"
+    branch: "codex/qa-frame-environment"
     needs: []
     details: "docs/board/cards/QA-FRAME-ENVIRONMENT.md"
 

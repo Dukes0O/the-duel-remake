@@ -70,3 +70,8 @@ under 1000, keep the p95 18.5 ms limit exactly, and add the 5 s warning for
 `constructionMs`. This is a changed assertion decided by Kyle: explain it in
 the change note and give it one review. Also make the frame step print a
 reminder that the laptop's own screen should be off. Then close this card.
+
+
+## Director tools-only scope
+
+Use new qa-frame-environment lane, tools/full-check.mjs, the named existing frame-pacing scenario if its same predicate applies, tools/test-full-check.mjs and own docs/changes/QA-FRAME-ENVIRONMENT.md only. Implement the exact finite worldBuildMs<1000 predicate Kyle decided; retain18.5ms/eightcars/120frames/all existing quiet/storage/admission checks. Report finite full-load constructionMs and warning only above5000ms; missing/malformed data remains an honest report error. Print panel-off/Second screen only reminder before the frame stage. Extend existing meaningful full-check fixtures first, document every changed assertion as the decision by Kyle. Do not run actual frames, modify display settings, or claim PERF-HIGH-NIGHT resolved. Source freeze/Root independent review before any existing focused/nearby/jobs4/build; no new machinery or shared metadata from the builder.
