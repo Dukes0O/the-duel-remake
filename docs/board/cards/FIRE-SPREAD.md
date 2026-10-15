@@ -25,14 +25,19 @@ front can move at most one cell a step along a strip. So:
 - Base chance **0.55** (packet 0.12); **180 litres** per intensity point
   (packet 150); lost at **45 cells** (1.8 ha) or 40% of the forest,
   whichever is smaller (packet 80).
+- Water a burning cell does not need (more than 180 litres a point) runs on
+  once to its burning neighbours, and with none burning soaks the forest
+  round it (damp). A stationary 600 L drop on a fresh edge cell (which needs
+  45 litres) would otherwise waste the rest; this is what the drop robot
+  already assumed, and the targets below hold with it.
 - A fire starts only in a stretch of connected forest at least twice the
   lost size, so a fire left alone always grows to lost.
 - Drop robot: the first drop two steps after the call (pad, bucket, lake),
   then one 600 L drop per step, 75% on the burning edge, downwind first.
 
 Medians over 50 seeds (target): left alone calm **15** (12 to 16), windy
-**11** (8 to 11), answered at once **5** drops (4 to 8), one play day late
-**11** (8 to 14), two play days late **20** (14 to 22); about a quarter of
+**11** (8 to 11), answered at once **4** drops (4 to 8), one play day late
+**10** (8 to 14), two play days late **19** (14 to 22); about a quarter of
 two-days-late fires are lost.
 
 The windy median sits at the top of its range: on a strip of forest a front

@@ -22,6 +22,7 @@ const median = list => [...list].sort((a, b) => a - b)[Math.floor(list.length / 
 const CALM = Object.freeze({speed: 0.5, toward: Object.freeze({x: 1, z: 0})});
 const WINDY = Object.freeze({speed: 7, toward: Object.freeze({x: Math.SQRT1_2, z: Math.SQRT1_2})});
 const SEEDS = Array.from({length: 50}, (_, k) => 1000 + k * 7919);
+const same3 = (a, b, label) => assert.deepEqual(a, b, label);
 const newFire = seed => startFire({id: 'fire-1', courseId: 'tremblant-woods', grid, seed, startDay: 0, candidates: starts});
 
 check('the tuned numbers are the ones on the card', () => {
@@ -163,6 +164,14 @@ check('water: 180 litres puts out a fully burning cell; water on dry forest make
   assert.deepEqual([done.fire.burning, done.fire.burnt, done.cellsOut, fireOut(done.fire)], [[], [cellId(0, 0)], 1, true]);
   const damp = applyWater(fire, fake, [{x: 30, z: 10, litres: 30, radius: 3}]);
   assert.deepEqual(damp.fire.damp, [[cellId(1, 0), FIRE.dampSteps]]);
+  // A heavy drop on a fresh edge cell: the water it does not need runs on to
+  // the burning cell next to it, and then soaks the forest round it.
+  const pair = {...fire, burning: [[cellId(0, 0), 25], [cellId(1, 0), 100]]};
+  const heavy = applyWater(pair, fake, [{x: 10, z: 10, litres: 600, radius: 3}]);
+  same3(heavy.fire.burning, [], 'both cells out');
+  same3(heavy.cellsOut, 2, 'two cells out from one drop');
+  const lone = applyWater({...fire, burning: [[cellId(0, 0), 25]]}, fake, [{x: 10, z: 10, litres: 600, radius: 3}]);
+  same3(lone.fire.damp, [[cellId(1, 0), FIRE.dampSteps]], 'with nothing else burning, the rest makes the forest damp');
   const lost = {...fire, burning: [[cellId(0, 0), 100], [cellId(1, 0), 25]]};
   assert.equal(fireLost(lost, fake), true);
   assert.equal(fireSize(lost), 2);
