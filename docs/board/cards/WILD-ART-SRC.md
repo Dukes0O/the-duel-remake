@@ -126,3 +126,10 @@ Reuse heli-accessories.py actual import/hash/CPU4/48sample rendering pattern ins
 Root read complete4378ebff2f8aeabc453f137c60aa324b48fcf79e vsf066a8d6: CLEAR. Only four grantedfiles; actualcandidate/originalhashpin, nonmutatingimportedobject path, source-axis mapping, measuredminimumfloor/labelledunderside, bounds-relativeorthographicCPU4, freshprivateoutput and before/afterevidence are coherent. Defaultgeneration bodies and old assertions/audit retain their original contract. No art/metric/feetground acceptance inferred.
 
 Admit ONE existing test-blender-output on exact clean4378, jobs4, after freshactualcapacity/holds. Actualimport/render remains UNRUN and requires originalplannerPASS then RootGO; no generation/export/runtime/CREDITS/fit or formalart. Current oneforeignheavyroot is merelyobserved, notstopped or duplicated. Do not rerun earlier3defgeneration or its finishedplanner.
+
+
+## View planner passed; one source-inspection packet admitted
+
+Exact clean4378ebff existing test-blender-output completed07:10:18.3902658UTC,exit0/7991.3896ms,1/1 suite,zero failures/notRun,jobs4,source unchanged; one foreignlane38352 was observed under sharedcapacity. Receipt/result: .evidence/2026-10-15/WILD-ART-SRC/view-planner-4378ebff. Defaultplanner and new actual sixview/refusal cases pass; do notrepeat.
+
+Root admits ONE unchanged-source CPU4/48sample --view-only inspection of existing candidate into new absent .qa-dist/wild-beaver-source-views-4378ebff, after freshholds/capacity. Six SOURCE INSPECTION/UNFITTED/NOTGAME axisPNGs and actual inspectionmanifest only; no regeneratedpaint,model fit/export/runtime/CREDITS,sheet,artverdict,gate/build/nativegame. Recordsourcebeforeafter/rendererrors; actual anatomical/foot-tail/axes conclusions wait allreal pictures, never camera labels alone. Stop after30min onfault; no duplicate/retry or transformadjustment. This is not a Northwoodsgroupartround.
