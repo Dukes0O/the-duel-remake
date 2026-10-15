@@ -27,6 +27,8 @@ const generators = [
   { script: 'tools/build-course-landmarks.py', args: [], glb: [], json: ['src/generated/course-landmarks.json'] },
   { script: 'tools/blender/muddy-hollow-props.py', args: [], glb: [], json: ['src/generated/muddy-hollow-props.json'] },
   { script: 'tools/blender/kestrel-one.py', args: [], glb: ['public/assets/heli/kestrel-one.glb'] },
+  { script: 'tools/blender/heli-accessories.py', args: [], recipeOnly: true,
+    glb: ['cargo-hook', 'helipad', 'fuel-pump'].map(name => `public/assets/heli/${name}.glb`) },
   { script: 'tools/blender/skin-gear.py', args: [], glb: ['public/assets/heli/gear/drop-sight.glb', 'public/assets/heli/gear/heat-camera.glb', 'public/assets/heli/gear/zoom-camera.glb', 'public/assets/heli/gear/nose-camera.glb', 'public/assets/heli/gear/cargo-net.glb', 'public/assets/heli/gear/main-rotor-quiet.glb'] },
   { script: 'tools/blender/rescue-props.py', args: [], glb: ['public/assets/heli/rescue/winch.glb', 'public/assets/heli/rescue/stretcher.glb', 'public/assets/heli/rescue/searchlight.glb', 'public/assets/heli/rescue/beacon.glb', 'public/assets/heli/rescue/debris.glb', 'public/assets/heli/rescue/crate-food.glb', 'public/assets/heli/rescue/crate-medicine.glb', 'public/assets/heli/rescue/crate-fuel.glb'] },
   { script: 'tools/blender/rescue-people.py', args: [], glb: ['public/assets/heli/people/rescuer-hanging.glb', 'public/assets/heli/people/rescuer-casualty-hanging.glb', 'public/assets/heli/people/hiker-standing.glb', 'public/assets/heli/people/skier-standing.glb', 'public/assets/heli/people/driver-standing.glb', 'public/assets/heli/people/hiker-sitting.glb', 'public/assets/heli/people/skier-sitting.glb', 'public/assets/heli/people/driver-lying.glb', 'public/assets/heli/people/hiker-walking.glb', 'public/assets/heli/people/paramedic-1-walking.glb', 'public/assets/heli/people/paramedic-2-walking.glb'] },
@@ -270,7 +272,13 @@ try {
     if (!plans) continue;
     check(`${generator.script} keeps editable sources in ignored ${generator.evidence || 'art-build'}`, () => {
       for (const [index, plan] of plans.entries()) {
-        const blends = relativePaths(fixtureRoots[index], plan.blend, '.blend');
+        let blends;
+        if (generator.recipeOnly) {
+          assert.deepEqual(plan.blend, [], 'recipe-only exports plan no editable Blend files');
+          blends = [];
+        } else {
+          blends = relativePaths(fixtureRoots[index], plan.blend, '.blend');
+        }
         assert.ok(blends.every(path => path.startsWith((generator.evidence || 'art-build') + '/')), `Blend outputs outside ${generator.evidence || 'art-build'}: ${blends.join(', ')}`);
         if (generator.evidence) assert.deepEqual(blends, generator.glb.map(path => `${generator.evidence}/${path.split('/').pop().replace(/\.glb$/, '.blend')}`).sort(), 'exact Deep editable source paths');
         assert.equal(new Set(blends).size, blends.length, 'duplicate Blend output');
@@ -278,14 +286,15 @@ try {
     });
     check(`${generator.script} keeps runtime outputs at reproducible paths`, () => {
       const relativePlans = plans.map((plan, index) => ({
-        blend: relativePaths(fixtureRoots[index], plan.blend, '.blend'),
+        blend: generator.recipeOnly ? [] : relativePaths(fixtureRoots[index], plan.blend, '.blend'),
         glb: plan.glb.length ? relativePaths(fixtureRoots[index], plan.glb, '.glb') : [],
         json: plan.json?.length ? relativePaths(fixtureRoots[index], plan.json, '.json') : [],
       }));
       assert.deepEqual(relativePlans[0], relativePlans[1], 'same recipe produced different relative paths');
       assert.deepEqual(relativePlans[0].glb, [...generator.glb].sort(), 'runtime GLB location changed');
       assert.deepEqual(relativePlans[0].json, [...(generator.json || [])].sort(), 'runtime landmark JSON location changed');
-      assert.equal(relativePlans[0].blend.length, generator.glb.length || 1, 'one editable Blend per exported model is expected');
+      assert.equal(relativePlans[0].blend.length, generator.recipeOnly ? 0 : generator.glb.length || 1,
+        generator.recipeOnly ? 'recipe-only exports plan no editable Blend files' : 'one editable Blend per exported model is expected');
       for (const runtimePath of [...relativePlans[0].glb, ...relativePlans[0].json]) {
         assert.ok(existsSync(join(root, runtimePath)), `${runtimePath} is missing from the runtime recipe`);
       }

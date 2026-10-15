@@ -79,3 +79,22 @@ Root reviewed clean20f56eae CLEAR for exact0.74/90 plus observation-only facts. 
 Requested same-run evidence: pit used winter for8608 post-service samples and nonwinter0; one real box service129.341667..133.341667s/changedAt7005.1254. Pit crash was BEFORE service:118.841667s at6801.1509m/lateral-8.09293, prop/front/strength1, speed40mph, recovery1.95s, zero race penalty. Summer had no crash. Actual lapTimes summer276.782 versus pit276.776 differ6ms despite their equal sampled stage time/official276.78; fieldFinish is null, so the original seconds expression uses actual stageTimeSec. This is consistent with a shared60Hz finish step, not a copied tyre result. The crash still consumed natural recovery time and may affect pace; one run cannot prove a crash-free counterfactual. No such claim is made.
 
 Winter start additionally hit a rival/rear at61.375s/3149.5219m, speed31.153mph/strength0.35/recovery1.7875s/zero penalty. Its official283.18 and actual lap283.183 are retained alongside sampled283.191667. That real field interaction makes simple grip/time interpolation unreliable; it was not removed/reset. All raw events and sample facts remain in drive-final-20f56eae under ignored card evidence. No new harness or softened target. Claude: the bounded card is stopped; any future approach/traffic fix needs a separate settled scope rather than another fitting try here.
+
+## Claude decision - closed without a change, 14 October 23:20
+
+Three runs show the field decides more than the tyre grip: 0.74 came out
+slower than 0.70 because of a rival contact, so tuning against single runs is
+fitting noise. Decision:
+- Keep today's integration values (winter warm grip 0.82, pit bay 80). Drop
+  candidate lanes a5168a45 and 20f56eae (record the drop in the change note).
+- The winter start stays the strongest strategy by about 7.6 s on the
+  benchmark. That is a known gap, not a release blocker: Kyle and Gratian will
+  learn the pit choice from real races, and Claude revisits it with their
+  laps and a multi-seed benchmark later (new card when it comes up).
+- Summit Attack's T 266.6 and medals 274.6 / 288.0 / 306.6 stand, since the
+  rules did not change.
+This card is closed.
+
+## Drop recorded and bounded cleanup
+
+Final note-only e37bfe3c folds Claude9ddc867a drop into current docs/changes/SUMMIT-PIT-BALANCE.md. Actual TWO owned failed trials and0.62 never-run retained; no source merge/gate/build/Attack baseline repeat. Own dropped lane/branch safely recycled/deleted after verified links were unlinked; integration dependencies/evidence preserved.
