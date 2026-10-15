@@ -13,7 +13,9 @@
 #                              `rescuer` and `casualty`)
 #   hiker-standing, skier-standing, driver-standing   standing and waving
 #   hiker-sitting, skier-sitting                      sitting on a slope
-#   driver-stretcher           lying on a rescue litter under a foil blanket
+#   driver-lying               lying on his back under a foil blanket, sized to lie in the
+#                              RESCUE-PROPS stretcher: origin at the middle of the litter floor
+#                              under him, body along +Z with the head toward +Z
 #   hiker-walking, paramedic-1-walking, paramedic-2-walking   static mid-stride
 # The walking files are one frozen stride, not a looping animation.
 #
@@ -30,7 +32,7 @@ parser.add_argument('--only', default='')
 options = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(options.root).resolve()
 NAMES = ['rescuer-hanging', 'rescuer-casualty-hanging', 'hiker-standing', 'skier-standing', 'driver-standing',
-         'hiker-sitting', 'skier-sitting', 'driver-stretcher', 'hiker-walking', 'paramedic-1-walking',
+         'hiker-sitting', 'skier-sitting', 'driver-lying', 'hiker-walking', 'paramedic-1-walking',
          'paramedic-2-walking']
 OUT = root / 'public/assets/heli/people'
 BLEND = root / 'art-build/heli/people'
@@ -462,7 +464,7 @@ def build_person(spec, pose, gear=None, tri_scale=1.0):
 # ---------------------------------------------------------------------------
 # Finishing: scale, ground, merge, export
 
-def transform_person(person, scale, drop_to=None, origin=None, offset=Vector((0, 0, 0))):
+def transform_person(person, scale, drop_to=None, origin=None, offset=Vector((0, 0, 0)), center=True):
     """Scale about the origin, put the lowest point at height drop_to (None keeps z), centre the feet on x/y."""
     S = Matrix.Scale(scale, 4)
     for me, _, _ in person.pieces: me.transform(S)
@@ -472,7 +474,7 @@ def transform_person(person, scale, drop_to=None, origin=None, offset=Vector((0,
     low = min(v.co.z for me, _, _ in person.pieces for v in me.vertices)
     dz = (drop_to - low) if drop_to is not None else 0.0
     feet = (person.ankles[0] + person.ankles[1]) / 2
-    shift = Vector((-feet.x, -feet.y, dz)) + offset
+    shift = Vector((-feet.x if center else 0.0, -feet.y if center else 0.0, dz)) + offset
     M = Matrix.Translation(shift)
     for me, _, _ in person.pieces: me.transform(M)
     person.harness = M @ person.harness
@@ -621,13 +623,13 @@ def rescue_harness(parts, rig):
         rays = [((0, -1, RING_Z - 0.01), (0, 1, 0)), ((sign * 0.06, -1, 1.30), (0, 1, 0)), ((sign * 0.085, -1, 1.42), (0, 1, 0)),
                 ((sign * 0.11, -0.1, 2.0), (0, 0, -1)), ((sign * 0.1, 1, 1.46), (0, -1, 0)), ((sign * 0.07, 1, 1.32), (0, -1, 0)),
                 ((0, 1, 1.26), (0, -1, 0))]
-        strap(parts, rig, 'webbing', rays, 'spine_03', width=0.042, off=0.013)
+        strap(parts, rig, 'webbing', rays, 'spine_03', width=0.042, off=0.024)
         strap(parts, rig, 'webbing', [((sign * 0.07, -1, 1.12), (0, 1, 0)), ((sign * 0.09, -1, 1.03), (0, 1, 0)), ((sign * 0.114, -1, 0.9), (0, 1, 0))],
               'pelvis', width=0.035, per=4)
         b = parts.new('thigh-loop', 'webbing', f'thigh_{side}')
         t = (rig.head['thigh_' + side].z - 0.82) / 0.43
         band(b, rig, on_bone(rig, 'thigh_' + side, t), (0, 0, 1), 0.075, off=0.008, n=14, reach=0.3)
-    strap(parts, rig, 'webbing', [((-0.08, -1, 1.34), (0, 1, 0)), ((0, -1, 1.34), (0, 1, 0)), ((0.08, -1, 1.34), (0, 1, 0))], 'spine_03', width=0.025, per=3, off=0.013)
+    strap(parts, rig, 'webbing', [((-0.08, -1, 1.34), (0, 1, 0)), ((0, -1, 1.34), (0, 1, 0)), ((0.08, -1, 1.34), (0, 1, 0))], 'spine_03', width=0.025, per=3, off=0.022)
     waist_band(parts, rig, 'webbing', z=1.05, width=0.12, off=0.012)
     chest_ring(parts, rig)
 
@@ -782,15 +784,14 @@ def pose_stand_tired(side='l'):
 
 def pose_hanging(rescuer=True, pair=False):
     if rescuer:
-        pose = dict(lean=(-5, 0, 0), head=(-8, 0, 0))
+        pose = dict(lean=(-5, 0, 0), head=(-3, 0, 0))
+        # right hand grips the line above the head, left hand rests on the harness strap at the hip
+        pose['arm_r'] = dict(hand=(-0.08, -0.17, 1.9), pole=(-1.0, 0.3, -0.2), curl=0.95, shoulder=0.35, hand_dir=(0, 0, 1))
+        pose['arm_l'] = dict(hand=(0.2, -0.1, 1.04), pole=(1.0, 0.6, 0.0), curl=0.55, shoulder=-0.1)
         if pair:
-            pose['arm_l'] = dict(hand=(0.17, -0.38, 1.22), pole=(1.0, 0.2, -0.3), curl=0.9, shoulder=-0.05)
-            pose['arm_r'] = dict(hand=(-0.17, -0.38, 1.22), pole=(-1.0, 0.2, -0.3), curl=0.9, shoulder=-0.05)
             pose['leg_l'] = dict(ankle=(0.11, -0.06, 0.11), pole=(0.1, -1, 0.2), foot=(0, -0.25, -1), ball=(0, -0.45, -0.9))
             pose['leg_r'] = dict(ankle=(-0.10, 0.02, 0.13), pole=(-0.1, -1, 0.2), foot=(0, -0.25, -1), ball=(0, -0.45, -0.9))
         else:
-            pose['arm_l'] = dict(hand=(0.06, -0.19, 1.38), pole=(1.0, 0.3, -0.7), curl=0.9, shoulder=0.1, hand_dir=(0.1, -0.2, 1))
-            pose['arm_r'] = dict(hand=(-0.06, -0.19, 1.46), pole=(-1.0, 0.3, -0.7), curl=0.9, shoulder=0.1, hand_dir=(-0.1, -0.2, 1))
             pose['leg_l'] = dict(ankle=(0.11, -0.06, 0.11), pole=(0.1, -1, 0.2), foot=(0, -0.25, -1), ball=(0, -0.45, -0.9))
             pose['leg_r'] = dict(ankle=(-0.10, -0.15, 0.15), pole=(-0.1, -1, 0.2), foot=(0, -0.25, -1), ball=(0, -0.45, -0.9))
         return pose
@@ -864,24 +865,11 @@ def body_bvh(person):
         polys += [tuple(base + i for i in p.vertices) for p in me.polygons]
     return BVHTree.FromPolygons(verts, polys)
 
-def post_stretcher(person):
-    """A rescue litter under the casualty and a foil blanket over the legs and hips."""
+def post_lying(person):
+    """A foil blanket over the legs and hips. Everything is then turned and moved so the man lies along
+    +Z (head toward +Z), centred on the origin, his back on the floor of the rescue litter (y 0)."""
     bvh = body_bvh(person)
-    pad = 0.25
-    def litter(bm):
-        add_box(bm, (0.64, 2.15, 0.03), (0, 0.9, pad - 0.03), bevel=0.01)
-        for sx in (-1, 1):
-            add_box(bm, (0.04, 2.15, 0.1), (sx * 0.31, 0.9, pad + 0.015), bevel=0.012)
-        for sy in (-1, 1):
-            add_box(bm, (0.64, 0.04, 0.07), (0, 0.9 + sy * 1.065, pad), bevel=0.012)
-    add_static(person, 'litter', 'litter', litter)
-    def frame(bm):
-        for sx in (-1, 1):
-            add_box(bm, (0.045, 2.3, 0.045), (sx * 0.22, 0.9, 0.03), bevel=0.01)
-            for y in (-0.05, 0.9, 1.85):
-                add_box(bm, (0.04, 0.05, pad - 0.07), (sx * 0.22, y, 0.03 + (pad - 0.07) / 2), bevel=0.006)
-    add_static(person, 'litter-frame', 'steel', frame)
-    # foil blanket draped over the body
+    pad = 0.0
     nx, ny = 14, 28
     def blanket(bm):
         grid = []
@@ -889,14 +877,14 @@ def post_stretcher(person):
             y = 0.18 + (0.72 - 0.18) * j / ny
             row = []
             for i in range(nx + 1):
-                x = -0.33 + 0.66 * i / nx
+                x = -0.27 + 0.54 * i / nx
                 zs = []
                 for ox, oy in ((0, 0), (0.04, 0), (-0.04, 0), (0, 0.04), (0, -0.04), (0.04, 0.04), (-0.04, -0.04), (0.04, -0.04), (-0.04, 0.04)):
                     hit = bvh.ray_cast(Vector((x + ox, y + oy, 2.0)), Vector((0, 0, -1)))
                     if hit[0] is not None: zs.append(hit[0].z)
-                z = (max(zs) + 0.03) if zs else pad + 0.012
+                z = (max(zs) + 0.03) if zs else pad + 0.03
                 edge = min(i, nx - i)
-                z = max(z, pad + 0.012) if edge else pad + 0.012
+                z = max(z, pad + 0.03) if edge else pad + 0.03
                 z += 0.004 * math.sin(j * 1.7 + i * 0.9)
                 row.append(bm.verts.new((x, y, z)))
             grid.append(row)
@@ -907,17 +895,13 @@ def post_stretcher(person):
         for f in bm.faces:
             if f.normal.z < 0: f.normal_flip()
     add_static(person, 'blanket', 'foil', blanket, smooth=True)
-    def straps(bm):
-        for y in (0.4, 0.7, 1.15):
-            pts = []
-            for i in range(0, 14):
-                x = -0.33 + 0.66 * i / 13
-                zs = [h[0].z for h in (bvh.ray_cast(Vector((x + ox, y + oy, 2.0)), Vector((0, 0, -1))) for ox, oy in ((0, 0), (0.04, 0), (-0.04, 0), (0, 0.04), (0, -0.04))) if h[0] is not None]
-                z = (max(zs) + 0.05) if zs else pad + 0.02
-                if i in (0, 13): z = pad + 0.02
-                pts.append((Vector((x, y, max(z, pad + 0.02))), Vector((0, 0, 1))))
-            add_ribbon(bm, pts, 0.05, side_axis=Vector((0, 1, 0)))
-    add_static(person, 'litter-straps', 'litter_strap', straps)
+    ys = [v.co.y for me, _, _ in person.pieces for v in me.vertices]
+    mid = (min(ys) + max(ys)) / 2
+    M = Matrix.Rotation(math.pi, 4, 'Z') @ Matrix.Translation((0, -mid, 0))
+    for me, _, _ in person.pieces: me.transform(M)
+    person.harness = M @ person.harness
+    person.ankles = [M @ a for a in person.ankles]
+    person.points = {k: M @ v for k, v in person.points.items()}
 
 def post_bag(person):
     h = person.points['hand_r']
@@ -953,8 +937,8 @@ def finish_pair(name, rescuer, casualty, scale_r, scale_c):
     export_scene(name)
     return tri
 
-def finish_single(name, person, scale, drop_to=0.0, post=None):
-    transform_person(person, scale, drop_to)
+def finish_single(name, person, scale, drop_to=0.0, post=None, center=True):
+    transform_person(person, scale, drop_to, center=center)
     if post: post(person)
     clear_scene()
     merge_pieces(name, person.pieces)
@@ -991,9 +975,9 @@ def make(name):
     if name == 'skier-sitting':
         sp = SPECS['skier']; p = build_person(sp, pose_sit_skier(), lambda a, b, c: gear_skier(a, b, c, skis=False))
         return finish_single(name, p, sp['scale'], post=post_skis_on_ground)
-    if name == 'driver-stretcher':
+    if name == 'driver-lying':
         sp = SPECS['driver']; p = build_person(sp, pose_lying(), sp['gear'])
-        return finish_single(name, p, sp['scale'], drop_to=0.25, post=post_stretcher)
+        return finish_single(name, p, sp['scale'], drop_to=0.0, post=post_lying, center=False)
     if name == 'hiker-walking':
         sp = SPECS['hiker']; p = build_person(sp, pose_walk(), sp['gear'])
         return finish_single(name, p, sp['scale'])
@@ -1032,7 +1016,7 @@ def render_glb(name, folder):
     views = {'': (-0.55, -1.0), 'back': (0.75, 0.85)}  # front three-quarter, then back three-quarter
     for suffix, (vx, vy) in views.items():
         direction = Vector((vx, vy, 0.28)).normalized()
-        cam.location = centre + direction * size * 1.95
+        cam.location = centre + direction * size * 2.15
         cam.rotation_euler = (centre - cam.location).to_track_quat('-Z', 'Y').to_euler()
         scene.render.filepath = str(folder / f'{name}{"-" + suffix if suffix else ""}.png')
         bpy.ops.render.render(write_still=True)
