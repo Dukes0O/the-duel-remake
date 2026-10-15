@@ -17,7 +17,7 @@ const catalog = JSON.parse(read('tools/audio/catalog.json'));
 
 // ---- The cue table ---------------------------------------------------------
 const lineIds = Object.keys(HELI_RADIO_LINES);
-assert.equal(lineIds.length, 46, 'twenty-seven H1 lines and nineteen H2 Fire lines');
+assert.equal(lineIds.length, 70, 'twenty-seven H1 lines, nineteen H2 Fire lines and twenty-four H4 Rescue lines');
 assert.equal(HELI_RADIO_VOICE.name, 'Brian');
 // Three stock voices with the same settings (docs/HELI_FIRE.md section 10).
 assert.deepEqual(Object.fromEntries(Object.entries(HELI_VOICES).map(([key, voice]) => [key, [voice.name, voice.voiceId]])), {
@@ -46,7 +46,22 @@ const FIRE_LINES = {
 };
 for (const [id, [voice, text]] of Object.entries(FIRE_LINES))
   assert.deepEqual([HELI_RADIO_LINES[id]?.voice, HELI_RADIO_LINES[id]?.text], [voice, text], id + ' as the packet writes it');
-for (const id of lineIds) if (!Object.hasOwn(FIRE_LINES, id)) assert.equal(HELI_RADIO_LINES[id].voice, 'brian', id + ' stays the instructor');
+// H4 Rescue (docs/HELI_RESCUE.md section 8): every line in its voice, as written.
+const RESCUE_VOICES = {avalanche: 'roger', hoist: 'roger', supply: 'roger', rescue: 'roger', beacon: 'roger', season: 'roger',
+  hiker: 'sarah', line: 'brian'};
+const rescueIds = lineIds.filter(id => /^heli\.radio\.(avalanche|hoist|supply|hiker|rescue|beacon|season|line)\./.test(id));
+assert.equal(rescueIds.length, 24, 'twenty-four rescue lines');
+for (const id of rescueIds) assert.equal(HELI_RADIO_LINES[id].voice, RESCUE_VOICES[id.split('.')[2]], id + ' voice');
+assert.equal(HELI_RADIO_LINES['heli.radio.rescue.done'].text, 'Safe and sound. Great work, Kestrel One.');
+// Every rescue line's voice and words exactly as the packet's table has them.
+{
+  const table = new Map([...readFileSync(new URL('../docs/HELI_RESCUE.md', import.meta.url), 'utf8')
+    .matchAll(/^\| `(heli\.radio\.[a-z.]+)` \| (\w+) \| (.+?) \|$/gm)].map(m => [m[1], {voice: m[2].toLowerCase(), text: m[3]}]));
+  assert.deepEqual([...table.keys()].sort(), [...rescueIds].sort(), 'the packet lists the same 24 lines');
+  for (const id of rescueIds) assert.deepEqual({voice: HELI_RADIO_LINES[id].voice, text: HELI_RADIO_LINES[id].text}, table.get(id), id + ' as written');
+}
+assert.equal(HELI_RADIO_LINES['heli.radio.hiker.spotted'].text, 'That is them! There is a clearing close by. Land there and they will walk over.');
+for (const id of lineIds) if (!Object.hasOwn(FIRE_LINES, id) && !rescueIds.includes(id)) assert.equal(HELI_RADIO_LINES[id].voice, 'brian', id + ' stays the instructor');
 // Every take plays within the H1 lines' loudness: measured level plus its gain.
 {
   const played = id => {
@@ -88,10 +103,11 @@ for (const [id, line] of Object.entries(HELI_RADIO_LINES)) {
 assert.deepEqual(Object.keys(HELI_LIBRARY_CUES).sort(), [
   'heli.cable.creak', 'heli.engine.start', 'heli.engine.stop', 'heli.hook.release',
   'heli.rotor', 'heli.setdown.thud', 'heli.wind',
-  'heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.bucket.dent', 'heli.fire.hiss'].sort());
+  'heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.bucket.dent', 'heli.fire.hiss',
+  'heli.flare', 'heli.snow.dig', 'heli.rescue.clip'].sort());
 assert.deepEqual(Object.keys(HELI_TONE_CUES).sort(), [
   'heli.fuel.low', 'heli.radio.click', 'heli.radio.hiss', 'heli.rotor.low',
-  'heli.fire.alert', 'heli.aim.lock', 'heli.badge'].sort());
+  'heli.fire.alert', 'heli.aim.lock', 'heli.badge', 'heli.beacon.beep', 'heli.clock.tick'].sort());
 assert.equal(HELI_CUES['heli.fire.crackle'].volume, .5, 'the crackle sits under the rotor');
 // The alert stays no louder than the low-fuel chime: the click cue it was first
 // matched to is never played (the radio chain makes its own click).
@@ -108,12 +124,15 @@ const buses = {
   'heli.fuel.low': 'interface', 'heli.rotor.low': 'interface', 'heli.radio.click': 'interface',
   'heli.fire.crackle': 'ambience', 'heli.fire.hiss': 'ambience', 'heli.bucket.scoop': 'vehicle', 'heli.bucket.pour': 'vehicle',
   'heli.bucket.dent': 'vehicle', 'heli.fire.alert': 'interface', 'heli.aim.lock': 'interface', 'heli.badge': 'interface',
+  'heli.flare': 'ambience', 'heli.snow.dig': 'vehicle', 'heli.rescue.clip': 'vehicle', 'heli.beacon.beep': 'interface', 'heli.clock.tick': 'interface',
 };
+// The beeps sit above the rotor (they are the instrument you fly by), the ticks under it.
+assert(HELI_CUES['heli.beacon.beep'].volume > HELI_CUES['heli.clock.tick'].volume, 'beeps above ticks');
 let libraryBytes = 0;
 for (const [id, bus] of Object.entries(buses)) {
   assert.equal(HELI_CUES[id].bus, bus, id + ' bus');
   assert.equal(HELI_CUES[id].loop === true, ['heli.rotor', 'heli.wind', 'heli.radio.hiss',
-    'heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour'].includes(id), id + ' loop');
+    'heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.snow.dig'].includes(id), id + ' loop');
 }
 for (const [id, def] of Object.entries(HELI_LIBRARY_CUES)) {
   const spec = HELI_RECIPES.find(item => item.id === id);
@@ -140,7 +159,8 @@ for (const [id, def] of Object.entries(HELI_LIBRARY_CUES)) {
     assert(credits.includes(row.page), id + ' credit is on the credits page');
   }
 }
-assert(libraryBytes < 400 * 1024, 'helicopter library sounds stay small: ' + libraryBytes);
+// H4 Rescue's three recordings (about 64 KB) raised the cap from 400 to 480 KB.
+assert(libraryBytes < 480 * 1024, 'helicopter library sounds stay small: ' + libraryBytes);
 for (const def of Object.values(HELI_TONE_CUES)) assert(def.layers.length > 0 && !def.file, 'made from tones or noise');
 for (const [id, def] of Object.entries(HELI_CUES)) {
   assert.equal(def.flag, 'helicopter', id + ' flag');
@@ -483,6 +503,24 @@ const voices = context => context.sources.filter(source => source.buffer?.decode
   assert(voices(context).filter(s => s.loop).length >= 1, 'a fresh readout brings them back');
   // Several events at once.
   heli.event([{type: 'setDown'}, {type: 'released'}]);
+  heli.dispose();
+}
+
+// The beacon's beep: rate sets its pitch (900 to 1,400 Hz from the 1,000 Hz cue).
+{
+  const {context, heli} = setup();
+  heli.update({rotorPct: 100, engine: true, weightKg: 1630, airspeedKts: 0});
+  await flush();
+  const pitch = rate => {
+    const before = ofKind(context, 'osc').length;
+    heli.play('heli.beacon.beep', {rate});
+    return ofKind(context, 'osc').slice(before).map(node => node.frequency.calls.find(call => call[0] === 'set')?.[1]);
+  };
+  assert.deepEqual(pitch(1.4), [1400], 'on top of the beacon: 1,400 Hz');
+  context.currentTime += 1;
+  assert.deepEqual(pitch(.9), [900], 'at the edge of range: 900 Hz');
+  context.currentTime += 1;
+  assert.deepEqual(pitch(undefined), [1000], 'no rate plays the cue as made');
   heli.dispose();
 }
 
