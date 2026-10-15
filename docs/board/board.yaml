@@ -784,3 +784,33 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/PERF-HARBOUR-AO-HALF.md"
+  - id: QA-YARD-HOME-AIR-ONLY
+    title: "Yard fixture respects Jesko air-only admission"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    waiting_on: "claude"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-YARD-HOME-AIR-ONLY.md"
+  - id: QA-BROWSER-FRAME-ISOLATION
+    title: "Separate quiet Tremblant timing from concurrent view scenarios"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    waiting_on: "claude"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-BROWSER-FRAME-ISOLATION.md"
+  - id: QA-YETI-THREE
+    title: "Reuse the Yeti QA page Three instance"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    waiting_on: "claude"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-YETI-THREE.md"
