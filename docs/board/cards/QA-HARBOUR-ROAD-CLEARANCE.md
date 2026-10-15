@@ -86,3 +86,20 @@ exactly as it was. Fix the course instead, with a design number Claude owns:
 Continue the existing own qa-harbour-clearance lane. Merge current integration normally, then remove only this lane's failed midpoint correction by restoring tools/test-circuits.mjs exactly from integration. Own src/circuits/harbour-lights.js only Lantern Hairpin radius9 to10 and truthful local comments; keep175 degrees, widths, layoutVersion2, field/grid and all other design numbers exact. Own the exact existing radius-design expectation in tools/test-circuit-layouts.mjs; identify any second explicit pin before editing its file. The slowest flying-lap 12..35mph and all other safety/handling/tolerance checks remain exact. Keep the failed midpoint facts in the change note.
 
 Future measured outputs are limited to Harbour's own generated reference JSON and world-signature fixture after the original focused geometry succeeds, as Claude approved; no shared fixture, other course row or blind regeneration. Source freezes for Root review before any focused run. If radius10 still hits the hairpin wall, stop at that actual contact and return to Claude without another geometry guess. Root coordinates all jobs (currently three Claude jobs occupy capacity), reference/signature validation, original nearby/jobs4/build and merge. No heavy work from this builder.
+
+
+## Radius 10 focused result
+
+Source 4a2c1c9e passed the unchanged original geometry suite: 116894 checks across 20 events and four seeds, exit 0, wall 64227.7844 ms. The existing scene capture completed in 37578.8062 ms; all 19 other scene rows match exactly. Own approved Harbour fixture is 0ec4194da979120d71138537d38a0f34ab87abf9dbe0a02c41f2b6b2adab4d9c, committed with the measured facts at 634573f5. The reference-lap rebuild, nearby gate and build remain unrun pending a shared heavy slot. The wall failure is resolved in this focused test; this is not a merge or release pass.
+
+
+## Radius 10 gate finds the existing seam/alignment dependency
+
+Canonical c8cf8f53 gate completed38/40, notRun0, jobs4, exit1 in270927.5126ms (wall278105.3904ms). Only test-circuit-barriers and test-track-kits fail; no build started. A pinned read-only original-source query compares radius10 with unchanged integration radius9, seed1989. Baseline worst barrier gap1.327588m/zero missing anchors; radius10 worst2.634362m at catch-fence row789 (s2059.82889/off8.74), plus concrete-wall row788 and escape fence row1445. Visual3.5m bins and physical3m bins leave different samples at the escape opening; escape world-to-road reconstruction also drifts. Gantry1906, garage1919 and grandstand1936 fall in the undrawn final3.6582195m of length4071.6582195; far ground correctly omits the road, so no fallback is justified.
+
+FIX-ROAD-SEAM already asks for these two faults. It moves ahead as this card's dependency. Preserve all original contact/strict1.5m/actual-triangle guards, widths, steering, replay and paid rules. Radius10 remains frozen; no repeated geometry guess, midpoint revival or tolerance waiver. After the real seam/alignment fix, merge integration normally and rerun the corrected canonical gate/build once. Other ready cards continue; no Kyle answer or release is requested.
+
+
+## Integrated with its coupled correction
+
+Joint442e826f: one corrected canonical114/114/notRun0/jobs4, build598ms, independent source/fixture review clear, original joint native8views bothqualities with memory-only/private40067 and no issues/warnings. Both radius10 and real seam/alignment correction complete in this atomic conflict-free merge. Measured own Harbour hash feb4256c74d44e99a8deebc6be850a77f587ee6d2856312725bf68f27df8cb46;19other scene rows exact. Reference77613ms/f64d259d preserved, original contact/handling/strict1.5m/triangle guards green. No postmerge gate, frame/release/push or real-save claim. Own merged lanes/evidence cleared after this commit.

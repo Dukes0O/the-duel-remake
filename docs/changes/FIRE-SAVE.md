@@ -76,7 +76,12 @@ the pending H1 release, which waits on Kyle, is not a build dependency).
   checks each H2 field is kept exactly when saved and never added.
 - `node tools/test-feature-flags.mjs`, `test-arena-settlement.mjs`,
   `test-career-backup.mjs`, `test-heli-hooks.mjs`: passed.
-- Lane tier and build: see below.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`) on
+  the lane tip after merging integration (27f5e2e1): 265 passed, 0 failed,
+  0 not run in 1,242 s. The run before it had three failures, all fixed:
+  the switch roster test and the preview flags did not know `forest-fire`,
+  and a stray root `run-log.md` on integration (fixed there in c2c28be1).
+- `npm run build`: passed.
 
 ## Changed assertions
 
@@ -87,6 +92,11 @@ the pending H1 release, which waits on Kyle, is not a build dependency).
 - `tools/test-heli-mode.mjs`: the import guard lets helicopter rules files
   import `../course-closures.js` as well (the save prices a buyback from
   it; it imports nothing from the helicopter).
+- `tools/test-wasteland-beta.mjs`: its full list of switches gains
+  `'forest-fire': 'dev'`.
+- `start-preview.bat` (not a test, but outside the card's files): the
+  preview requests every development switch, so `forest-fire` joins its
+  flag list after `helicopter`, as H1 did. Nobody held `circuit-registry`.
 - `tools/test-feature-flags.mjs`: the switch count rises from 26 to 27 (the
   new `forest-fire` switch).
 - `tools/test-save-fixtures.mjs`, `tools/test-arena-settlement.mjs`,

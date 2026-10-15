@@ -135,13 +135,13 @@
 .backup-blocked button:hover{background:#ffe0a5}
 .backup-blocked button:focus-visible{outline:3px solid #fff;outline-offset:4px}
 
-/* The controls help appears only when asked for (H) and stays clear of the
-   driving view: down the left side, above the route map. */
+/* The controls help appears only when asked for (H). Keep its full text
+   beside the route map, whose left edge is 35px and width is 40vh. */
 .controls-help {
   position: absolute;
-  left: 20px;
+  left: calc(35px + 40vh + 16px);
   top: 160px;
-  width: min(450px, 40vw);
+  width: min(450px, calc(100vw - 40vh - 71px));
   margin: 0;
   padding: 10px 12px;
   border: 1px solid #d3945b;

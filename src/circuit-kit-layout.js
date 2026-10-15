@@ -86,6 +86,10 @@ export function buildKitPlacements(def, spec) {
     return u > -1.5 && u < escape.run + 1.5 && v > escape.inner - .8 && v < escape.outer + 1.2;
   };
   if (spec.walls) {
+    const alignedTurns = spec.walls.alignEscapeTurns ?? [];
+    if (!Array.isArray(alignedTurns) || new Set(alignedTurns).size !== alignedTurns.length ||
+        alignedTurns.some(name => !escapes.some(escape => escape.piece === name)))
+      throw new Error('Aligned kit walls must name existing escape turns.');
     for (const span of road.walls) {
       // Long pieces on straights and wide bends, short ones round tight corners; the loader
       // checks every piece against the road, so fewer, longer pieces keep the world quick to build.
@@ -95,6 +99,8 @@ export function buildKitPlacements(def, spec) {
       let target = turn.kind === 'straight' ? 16 : turn.radius >= 60 ? 8 : turn.radius >= 30 ? 6 : 3.5;
       // The wall on the inside of a tight bend runs round a very small circle: its pieces must be shorter still.
       if (turn.kind === 'turn' && span.side === turn.dir) target = Math.min(target, Math.max(1.4, (turn.radius - road.halfWidthAt(span.s0) - 1.5) * 1.6));
+      const aligned = alignedTurns.includes(turn.name);
+      if (aligned) target = turn.radius < 30 ? 3 : 4;
       // Where the road changes width the wall slants: split a piece until it follows the wall to within 20 cm.
       const pieces = [];
       const split = (a, b) => {
@@ -102,9 +108,14 @@ export function buildKitPlacements(def, spec) {
         if (b - a > target + 1e-6 || (off > .2 && b - a > 3)) { split(a, mid); split(mid, b); } else pieces.push([a, b]);
       };
       const count0 = Math.max(1, Math.ceil((span.s1 - span.s0) / target));
-      for (let i = 0; i < count0; i++) split(span.s0 + (span.s1 - span.s0) * i / count0, span.s0 + (span.s1 - span.s0) * (i + 1) / count0);
+      if (aligned) {
+        // Same centres and opening admission as the unchanged physical wall boxes.
+        const size = (span.s1 - span.s0) / count0;
+        for (let i = 0; i < count0; i++) {const a = span.s0 + i * size; pieces.push([a, a + size]);}
+      } else for (let i = 0; i < count0; i++) split(span.s0 + (span.s1 - span.s0) * i / count0, span.s0 + (span.s1 - span.s0) * (i + 1) / count0);
       for (const [a, b] of pieces) {
-        const c = (a + b) / 2, size = b - a, lateral = span.side * (road.halfWidthAt(c) + WALL_OUT / 2 + .5);
+        const c = (a + b) / 2, size = b - a, lateral = span.side * (road.halfWidthAt(c) +
+          (aligned ? TRACK_SCRIPT.wallSetback + TRACK_SCRIPT.wallThickness / 2 : WALL_OUT / 2 + .5));
         const p = course.worldAt(c, lateral);
         if (escapes.some(escape => inOpening(escape, c, p.x, p.z))) continue;
         const k = [(size - .1) / PIECES['concrete-wall'].size[0], 1, 1];
@@ -120,7 +131,8 @@ export function buildKitPlacements(def, spec) {
       const put = (id, u, v, scale) => {
         const w = worldOf(u, v), n = course.nearest(w.x, w.z), f = course.at(n.s);
         const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
-        place(id, n.s, n.lateral, wrap(escape.heading - f.heading - HALF_PI), scale);
+        place(id, n.s, n.lateral, wrap(escape.heading - f.heading - HALF_PI), scale,
+          alignedTurns.includes(escape.piece) ? {worldPosition: Object.freeze({...w})} : {});
       };
       // The outer wall carries straight on beside the run-off road, and a tyre wall closes its end.
       for (let i = 0; i < lengthWise; i++) {
@@ -130,7 +142,8 @@ export function buildKitPlacements(def, spec) {
       const across = escape.outer + 1 - (escape.inner - .8), middle = (escape.inner - .8 + escape.outer + 1) / 2, n = Math.max(1, Math.ceil(across / 4));
       for (let row = 0; row < 2; row++) for (let i = 0; i < n; i++) {
         const w = worldOf(escape.run + .5 + row * .8, middle - across / 2 + (i + .5) * across / n), f = course.nearest(w.x, w.z), frame = course.at(f.s);
-        place(spec.walls.tyres ?? 'tyre-wall', f.s, f.lateral, Math.atan2(Math.sin(escape.heading - frame.heading), Math.cos(escape.heading - frame.heading)), [across / n / 4, 1, 1]);
+        place(spec.walls.tyres ?? 'tyre-wall', f.s, f.lateral, Math.atan2(Math.sin(escape.heading - frame.heading), Math.cos(escape.heading - frame.heading)), [across / n / 4, 1, 1],
+          alignedTurns.includes(escape.piece) ? {worldPosition: Object.freeze({...w})} : {});
       }
     }
   }

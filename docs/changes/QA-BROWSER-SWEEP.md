@@ -1,4 +1,8 @@
-# QA-BROWSER-SWEEP — first repair
+# QA-BROWSER-SWEEP — integrated
+
+Final runtime slice76826758 is independently reviewed and green: lane46/46, notRun0/jobs4,226220.8681ms; build668ms. Native onfoot-hints passed High/Performance,6pictures/private53067/46188.4233ms, memory-only, no issues/warnings. Native p4-daynight passed8views/private62377/47893.5583ms, memory-only, zero late programs, no issues/warnings; frames explicitly not scheduled. Audio baseline first failed only legacy repeat control (race0.000016480684 at unchanged0.000002) in20990.1474ms. Its one permitted unchanged-source rerun passed all5cases in18703.2211ms, maximumrepeat and pre-mastering differences0.0000002384185791. All thresholds/runtimeaudio/reference/PCM contracts remain exact. QA-AUDIO-BASELINE-CONTROL records this unreliable control separately; no third run.
+
+This closes the23-failure triage and repair card across its earlier consumed slices. It does not claim an aggregate129-scenario/full-check or official frame pass. The genuine later recorder timeout stays open on QA-AUDIO-CRASH-RELIABILITY, and timing/reporting remain QA-FRAME-ENVIRONMENT/PERF-HIGH-NIGHT. Preserve actual failed packets/rawPCM for those cards. This conflict-free merge consumes exact passing evidence without another gate; no release or push.
 
 ## Change
 
@@ -139,3 +143,47 @@ Source 96bb1d47 passed the original nearby tier 20/20, notRun0/jobs4, 204324.745
 The candidate passes eight exact public controls, sixteen attacker-role cases, eight additional walls, four obliques, sixteen ordinary shove cases and four normal-wall cases. All eight baseline/candidate traces and measured geometries match exactly. Six samples retain the explicitly classified inherited body/rail crossing; the existing centre containment and original predicates pass. This is captured-source repeatability, not historical pre-card regression or new whole-body containment clearance. Root viewed actual High world and Performance close controls. Both timing rows explicitly say not run. No global physics, assets, save or frame claim.
 
 This conflict-free merge consumes the exact existing evidence without another gate. The parent remains open for the answered audio comparator and the two scoped UI/world-identity repairs, plus separate recorder and quiet-frame failures. Its owned Arena lane and consumed packet can now be cleared. No release or push.
+
+
+## Remaining UI, world reuse and answered audio comparator
+
+Root independently reviewed the combined source. The controls-help panel moves beside the enlarged map with a viewport-bounded width; its text, fonts, visibility and controls remain exact. environmentKey omits only the top-level lightPath from its local definition copy so mood changes retain the prepared world. It preserves the real basin-water first-night shader/colour choice with a conditional structural suffix. Absent-path legacy keys, all original structural fields and hidden/muddy/ramp identities remain exact; no donor mutation or water/warmup rewrite. Additive cases were written first in the existing render-reuse test, retaining every old assertion.
+
+Claude's explicit comparator answer changes only the second historical-audio failing operand: already recorded beforeLimiterPeak replaces final peakDifference at the same0.000002 limit. The original repeatPeak limit stays0.000002. Final-output differences are labelled informational because the released+6.4dB/4x mastering change was accepted. All five native offline cases, twelve channels, samples, seeds, fetch restoration and historical reference remain unchanged. No runtime audio, mastering, threshold or waveform changes.
+
+The prior Arena folder, branch and334945917 bytes of consumed evidence were recycled before this new runtime slice. Current integration is merged normally into the lane before its first checks. Source review is CLEAR; original nearby/jobs4/build and unchanged onfoot-hints, p4-daynight and audio-baseline native scenarios are UNRUN on this freeze. Recorder reliability and official quiet frames remain separate open failures; no full sweep or release claim.
+
+Removed: the help panel's overlapping left placement, full lightPath as a structural world key, and the obsolete final-output failure operand. The original layout/program-ID assertions and all strict audio controls remain.
+
+
+The final source also includes exactly the already approved two-file recorder setup from9ff34067. Its captureNative/nativeRecorderEntry bodies and all23 assertions are unchanged; the directly called recorder/contact/storage APIs were verified byte-identical. Root reviewed the ES/tools-page entry, early genuine capture.json persistence and removal of the replaced private page/harness bypass. A stage file is diagnostic only. The nearby tier deliberately excludes this NIGHT_ONLY suite, so run its existing test exactly once separately, before the canonical gate; do not duplicate it with another scenario invocation. If it fails, stop at the measured stage and preserve it on the existing reliability follow-up. No actual recorder, browser-sweep or sound pass is claimed before execution.
+
+
+## Daytime water fixture correction
+
+The first original focused render-reuse run on b61842ba failed after 3561.3832 ms at the new first-night water assertion. The fixture copied HarborHighlands, which already has timeOfDay: 'night'. Actual circuit-water keeps that water night regardless of the first path look, so the runtime guard was correct and the fixture did not represent daytime water.
+
+Only the new fixture now explicitly sets timeOfDay: 'day'. Every assertion, including the separate existing-night case, and all runtime code, suffixes and limits stay unchanged. The correction is unrun pending Root review and one corrected focused run. No passing result is claimed.
+
+Removed: the new daytime fixture's accidental inherited night setting. No source asset or other worker's edit was removed.
+
+
+Root confirmed 57c53ddf changes only the new synthetic water fixture to explicit daytime, matching circuit-water's existing OR condition. All assertions, the independent already-night case and runtime source remain exact. The corrected existing focused suite passed: 361 checks, exit 0, wall 5020.5237 ms. This resolves the fixture fault within the bounded investigation. Canonical nearby gate, build, recorder and three native scenarios remain unrun on this source. Current integration is merged normally before them.
+
+
+## Recorder observation stopped and kept on its reliability card
+
+One invocation failed before browser start because Root redirected its live log into Vite's empty-out directory: EBUSY, exit 1, wall 1936.3062 ms, zero audio checks. Root moved those own closed logs to ignored evidence and corrected only the command's output paths. The permitted real execution on unchanged 47fb630d then failed in 96625.2104 ms at Runtime.evaluate in the later actual recorder probe. It reached zero of the23 final assertions. Private port41277 and memory-only storage are confirmed, with no browser issues or warnings. Crucially the genuine initial capture.json now exists: native48kHz, three contact rows, no actualRecorder member. Thus the first capture returned; the remaining timeout is in the later probe, with its precise internal step/cause unproved. No autoplay, continuity or peak conclusion is inferred.
+
+Preserve .evidence/2026-10-14/AUD-CRASH-PEAK/native-2026-10-14T23-12-28-383Z and QA-BROWSER-SWEEP/runtime-47fb; the real raw PCM is needed by QA-AUDIO-CRASH-RELIABILITY. Stop here under the card's bounded follow-up rule. Remove the two unpassed recorder setup files from this ready UI/audio-comparator slice by restoring their exact current integration bytes; the prepared9ff34067 source and47fb630d history retain the candidate for that separate card. This split claims no recorder repair,23-check audio pass or whole129-scenario pass. The unchanged native onfoot/daynight/comparator checks, canonical nearby gate and build remain pending on the corrected ready slice. No runtime audio, samples, thresholds or existing assertions changed.
+
+
+## Native on-foot pause action correction
+
+The first unchanged onfoot-hints run on 3f539da6 failed at Pause retained a hint after 19215.9722 ms. Its three desktop layout pictures and actual F/gamepad exit, release, reentry and distant-hint checks had passed. One Escape does not prove pause: the released App can first exit pointer lock and suppress Escape during its existing 250 ms release grace.
+
+The recipe keeps that first native Escape and now samples actual paused state. If still unpaused, it waits for real pointer release and the existing grace, samples again, and sends the next native Escape only if still needed. The second sample preserves a pause triggered by the native pointerlockchange handler. It asserts paused is true before the original unchanged hidden-and-empty hint guard. Every other layout, input, health, release, bailout, mode, objective, arena, quality and flag-off guard remains unchanged. No runtime state assignment, timeout, tolerance or runtime source changed.
+
+Checks: source correction only; corrected nearby, build and native run are UNRUN pending Root review and scheduling. The earlier failure remains recorded; no native or full-sweep pass is claimed.
+
+Removed: the recipe's assumption that one Escape always reaches pause. No runtime behavior or hint assertion was removed.
