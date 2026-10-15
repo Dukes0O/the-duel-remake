@@ -444,3 +444,51 @@ This consumes the third and final art round. AGENTS stop rule applies: stop, rec
 Kyle answered the pending hold-or-drop question: **Hold for a new art plan.** Retain the existing unmerged `codex/p4-ardennes` lane at `e78733bc`, its source, final comparison sheet, review note and unresolved evidence. This attempt is not dropped and its rejected final round is not accepted.
 
 The Kyle decision wait is answered. The card remains blocked while Claude prepares a new art plan addressing the beech crowns and stream. This decision does not authorize a fourth round, reset the three-round cap, approve a finishing workaround, or start edits, exports, captures, tests, signatures, gate/build or merge. Settle the new approach and its permitted scope before execution. The overnight continuation remains paused; no agent or automation is restarted by this record.
+
+## Claude's new art plan, 15 October 2026 (Kyle: "hold for a new art plan")
+
+Keep everything round 3 got right: the road, the village and church (4/5),
+the firs, the mist, the bridges' shapes, the landmarks and the Long Left
+barriers. Only two things change, each with a different method from the one
+that failed. Two rounds at most for these two items (a fresh, smaller cap
+granted by Kyle's decision); the rest of the course is frozen.
+
+### 1. Trees: real leaves, not solid crowns
+
+Building crowns out of solid shapes failed twice (lollipops, then faceted
+striped blobs). The fix is the method games use for broadleaf trees:
+- **Leaf cards.** Keep round 3's beech trunks and forked limbs (they passed).
+  Replace each solid crown with 40 to 80 small crossed quads, alpha-cut, with
+  a real leaf texture, clustered on the limb ends, so the silhouette is ragged
+  and light shows through. Source: an ambientCG leaf set (CC0, no account;
+  choose one with oval green leaves, e.g. from LeafSet013 to LeafSet030; check
+  the licence on the asset page and record it). No solid lobe mesh anywhere.
+- **Fewer, further back.** The Ardennes around Spa is mostly dark spruce with
+  beech in patches. Use beeches in a few groups set back 25 m or more from the
+  fences (Kestrel Straight's far slope, the Forest Run), with the accepted firs
+  in front. Close to the track: firs only.
+- **Fallback, no third method:** if the leaf-card beech is rejected in its
+  first round, drop beech entirely and the forest is all fir. That matches the
+  real place well enough and the firs already pass.
+
+### 2. The stream: water, not a path
+
+- Use the game's existing water surface (the one Harbour and Tremblant's lake
+  use, with its reflection and glitter), laid in a channel cut 0.6 to 1 m into
+  the ground under the stone arch, running about 40 m either side, red-brown
+  tinted and darker at the edges.
+- Wet banks: a darker, glossier strip of ground 1 m wide along each side, a few
+  rocks at the waterline, reeds or grass tufts from the existing kits.
+- The view: show the bridge from the side, from the downstream bank, so the arch
+  and the water under it are both in frame (round 3 looked at it end-on).
+- No new water system and no change to the road, the bridge model or physics.
+
+### Checks and the sheet
+
+One sheet per round: three close High views (the beech grove from the road,
+the stream and arch from the bank, the stream from the car on the bridge) plus
+the same three at Performance, and one wide Kestrel view to show the firs in
+front and the beeches behind. Frame cost at the busiest view is checked when
+the round is accepted (AGENTS rule 8). Then the usual lane tier, build, one
+review, world signature capture and merge, and Claude's finishing pass
+(P4-FINISH-ARDENNES).

@@ -161,8 +161,7 @@ tasks:
     owner: "codex"
     lane: "COURSE"
     size: "L"
-    status: "blocked"
-    waiting_on: "claude"
+    status: "ready"
     claimed_by: "codex-ardennes-2026-10-13"
     branch: "codex/p4-ardennes"
     needs: [P4-ARDENNES-ROAD]
