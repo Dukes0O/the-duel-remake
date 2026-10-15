@@ -48,14 +48,24 @@ function pilot(view, target, {speed = 12, sink = 4} = {}) {
     // The height error is capped, so it climbs and sinks at most `sink` m/s.
     lift: clamp(Math.max(-sink, Math.min(sink, target.y - h.y)) * 0.3 - h.vy * 0.3), yaw: 0};
 }
-// Up to a safe height where it is, across high, then down at the goal.
-const CRUISE = 95;
-function travel(session, goal, finalY, {speed = 14} = {}) {
-  const zoneY = session.view().zone.y, high = zoneY + CRUISE, events = [];
+// Up to a safe height for the leg (the bucket clears the trees and ground on
+// its line by 15 m), straight across, then down at the goal.
+function legHeight(from, to) {
+  let top = -Infinity;
+  for (let k = 0; k <= 40; k++) {
+    const x = from.x + (to.x - from.x) * k / 40, z = from.z + (to.z - from.z) * k / 40;
+    top = Math.max(top, woods.ground.highest(x, z, 8));
+  }
+  return top + 15 + 19;
+}
+function travel(session, goal, finalY, {speed = 22} = {}) {
+  const view = session.view(), high = Math.max(finalY, legHeight(view.heli, goal)), events = [];
   events.push(...run(session, 60, view => pilot(view, {x: view.heli.x, z: view.heli.z, y: high}, {speed: 1}), view => view.heli.y > high - 3));
   events.push(...run(session, 300, view => pilot(view, {x: goal.x, z: goal.z, y: high}, {speed}),
     view => Math.hypot(view.heli.x - goal.x, view.heli.z - goal.z) < 3 && Math.hypot(view.heli.vx, view.heli.vz) < 1));
-  events.push(...run(session, 180, view => pilot(view, {x: goal.x, z: goal.z, y: finalY}, {speed: 2, sink: 2}),
+  // Down fast while high, gently near the ground (the bucket hangs 19 m below).
+  const sinkAt = view => Math.max(1.5, Math.min(6, (view.heli.y - finalY) / 6));
+  events.push(...run(session, 180, view => pilot(view, {x: goal.x, z: goal.z, y: finalY}, {speed: 2, sink: sinkAt(view)}),
     view => Math.abs(view.heli.y - finalY) < 0.6 && Math.abs(view.heli.vy) < 0.4));
   return events;
 }
@@ -140,10 +150,6 @@ function flyMission() {
 }
 
 const flown = flyMission();
-if (process.env.FIRE_DEBUG) {
-  const pick = flown.log.filter(e => ['fireLost', 'fireOut', 'fireSpread', 'cellsOut', 'fireHiss', 'pourStart', 'pourStop', 'bucketFull', 'touchdown', 'fuelBought', 'crash', 'bucketHit'].includes(e.type)).slice(0, 80);
-  (await import('node:fs')).writeFileSync(process.env.FIRE_DEBUG, JSON.stringify(pick, null, 1));
-}
 {
   const {session, log, trips} = flown;
   const out = log.find(event => event.type === 'fireOut');
@@ -182,6 +188,25 @@ function check(name, fn) { fn(); console.log('PASS ' + name); }
   ok(missionsOf(session.profile).call.answered, 'answered later');
   ok(dispatchBoardMarkup(session.view(), {fire: {repairCost: 0}}).includes('% out'), 'the board shows the fire in hand');
   ok(!dispatchBoardMarkup(session.view(), {}).includes('heli-board-radio'), 'no Radio box with the switch off');
+}
+
+// ---- The autopilot on the fire course ------------------------------------------
+{
+  const session = newSession(readyProfile());
+  session.start();
+  const zone = session.view().zone;
+  run(session, 120, view => pilot(view, {x: zone.x, z: zone.z, y: zone.y + 45}), (view, seen) => has(seen, 'fireCall'));
+  session.pressRadio();
+  run(session, 120, view => pilot(view, {x: zone.x, z: zone.z, y: zone.y - 2}, {speed: 4, sink: 1}), view => view.heli.onGround);
+  ok(session.fitBucket().ok, 'bucket on');
+  const lake = woods.course.def.basins[0], middle = woods.course.worldAt(woods.course.phase(lake.s), lake.lateral);
+  const surface = woods.ground.water(middle.x, middle.z);
+  ok(session.pressAutopilot(), 'the autopilot takes over');
+  const log = run(session, 240, () => ({}), (view, seen) => has(seen, 'autopilotArrived'));
+  const view = session.view();
+  ok(has(log, 'autopilotArrived') && Math.hypot(view.heli.x - middle.x, view.heli.z - middle.z) < 6, 'with an empty bucket it flies to the lake');
+  ok(Math.abs(view.heli.y - (surface + 25)) < 2, `and hovers about 25 m above the water (${(view.heli.y - surface).toFixed(1)} m)`);
+  ok(!has(log, 'crash') && view.bucket.water === 0, 'scooping stays the pilot\'s');
 }
 
 // ---- Switch off: the visit is H1 exactly ----------------------------------------

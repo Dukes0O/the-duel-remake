@@ -4,7 +4,7 @@
 // save the profile; HELI-HOOKS plugs it into the game loop. Same inputs and
 // the same profile give the same flight.
 import {HELI_STEP, KESTREL, createHeliState, stepHeli, heliReadout, refuelHeli, heliFingerprint} from './heli-flight.js';
-import {createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, wantsControl} from './heli-autopilot.js';
+import {AUTOPILOT, createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, wantsControl} from './heli-autopilot.js';
 import {CABLE, createLoad, liftCheck, carMassKg, canHook, hook, release, stepCable} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
   placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave} from './heli-save.js';
@@ -170,7 +170,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   const fireFlag = {enabled: fireEnabled === true};
   const bucketLoad = () => loads.find(car => car.bucket) ?? null;
   // The aim ring, worked out 20 times a second; the lock tick plays when it turns on.
-  let ring = null, aimCount = 0;
+  let ring = null, aimCount = 0, dropWater = [];
   function aimStep(bucket) {
     if (aimCount++ % 6 !== 0) return;
     const point = bucket.water > 0 ? aimPoint(bucket, {ground: world.ground, wind: fire?.windNow() ?? null}) : null;
@@ -305,7 +305,32 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const x = heli.x + toward.x * reach, z = heli.z + toward.z * reach;
     return {x, z, groundY: world.ground.height(x, z)};
   }
-  const autopilotGoal = () => !destination ? null : destination === site.courseId ? zoneTarget() : departureTarget();
+  // On the fire's course with the bucket and the call answered, and no other
+  // destination (docs/HELI_FIRE.md section 9): empty, to the lake, stopping
+  // 25 m above the water; with water, to the upwind side of the hot edge,
+  // stopping 40 m above the trees. Scooping and pouring stay the pilot's.
+  function fireGoal() {
+    const bucket = bucketLoad(), info = fire?.view(heli);
+    if (destination || !bucket || !info?.call?.answered || info.courseId !== site.courseId) return null;
+    const hover = AUTOPILOT.hoverAbove + CABLE.length + BUCKET.hang;
+    if (bucket.water <= 1) {
+      const lake = world.course.def?.basins?.[0];
+      if (!lake) return null;
+      const middle = world.course.worldAt(world.course.phase(lake.s), lake.lateral), surface = world.ground.water(middle.x, middle.z);
+      return surface === null ? null : {x: middle.x, z: middle.z, groundY: surface + 25 - hover};
+    }
+    if (!info.target) return null;
+    const wind = fire.windNow(), x = info.target.x - wind.toward.x * 12, z = info.target.z - wind.toward.z * 12;
+    return {x, z, groundY: world.ground.highest(x, z, 10) + 40 - hover};
+  }
+  const autopilotGoal = () => fireGoal() ?? (!destination ? null : destination === site.courseId ? zoneTarget() : departureTarget());
+  // The fire's goal moves with the fire: checked once a second.
+  let goalCount = 0;
+  function refreshFireGoal() {
+    if (!fire || !autopilot.engaged || goalCount++ % 120 !== 0) return;
+    const goal = fireGoal(), now = autopilot.target;
+    if (goal && (!now || Math.hypot(goal.x - now.x, goal.z - now.z) > 5 || Math.abs(goal.groundY - now.groundY) > 2)) setAutopilotTarget(autopilot, goal);
+  }
 
   // Nobody is stranded: an empty tank on the ground calls the fuel truck,
   // except at the home pad while the pump can still sell a reserve of 60 kg
@@ -479,6 +504,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (phase !== 'flying') return api.takeEvents();
       const held = loads.find(car => car.hooked) ?? null;
       const hang = held ? CABLE.length + (held.bucket ? BUCKET.hang : 1) : 0;
+      refreshFireGoal();
       const ap = autopilotStep(autopilot, heli, controls, {ground: world.ground, hang, load: held, dt});
       handle(ap.events);
       // Every car steps; only the one on the cable pulls on the helicopter.
@@ -487,7 +513,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         if (car.bucket) {
           const poured = stepBucket(car, {ground: world.ground, wind: fire?.windNow() ?? null, pour: controls.pour === true}, dt);
           for (const event of poured.events) { emit(event); fire?.bucketEvent(event); }
-          fire?.water(site.courseId, poured.patches);
+          // A drop reaches the fire as a whole, once all its water has landed.
+          dropWater.push(...poured.patches);
+          if (dropWater.length && !car.pouring && !car.parcels.length) { fire?.water(site.courseId, dropWater); dropWater = []; }
           aimStep(car);
         }
         const cable = stepCable(car, heli, {ground: world.ground, zone: site.zone, fallen}, dt);
