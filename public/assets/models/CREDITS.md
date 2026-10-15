@@ -108,6 +108,9 @@ shipped in `public/`.
   scan downloads remain unavailable (401). Kyle may supply better sources
   for DEEP-ART-FINAL; these authored/refitted assets remain working art.
 
+`heli/fire-fx.png` (the H2 fire, smoke, steam and spray atlas) is coloured
+and packed from sprites in the **Kenney** [Particle Pack](https://kenney.nl/assets/particle-pack),
+CC0, by `tools/art/fire-fx.py`. The ember frame is drawn by the same script.
 
 ## Ardennes original circuit landmarks
 

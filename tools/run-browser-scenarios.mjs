@@ -50,9 +50,10 @@ export function parseSuiteArguments(args) {
   return options;
 }
 
-export async function namedScenarios() {
+export async function namedScenarios({includeManual = false} = {}) {
   return (await readdir(scenarioDir))
     .filter(file => /^[a-z][a-z0-9-]*\.mjs$/.test(file) && !['smoke.mjs', 'review-sheet.mjs'].includes(file))
+    .filter(file => includeManual || file !== 'rustwall-frame.mjs')
     .map(file => file.slice(0, -4))
     .sort();
 }
@@ -81,7 +82,7 @@ export async function main(args = process.argv.slice(2), {
   cleanup = recycleQaBundle, log = console.log, error: logError = console.error,
 } = {}) {
   const options = parseSuiteArguments(args);
-  const discovered = await discover();
+  const discovered = await discover({includeManual: !!options.names});
   const names = options.names ?? discovered;
   if (!names.length) throw Error('No named browser scenarios were found.');
   for (const name of names) if (!discovered.includes(name)) throw Error('Unknown scenario: ' + name);

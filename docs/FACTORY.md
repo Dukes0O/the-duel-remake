@@ -51,6 +51,7 @@ never build at the same time; the board shows the second as waiting.
 | `audio-mix` | `src/audio-output.js` mastering | stays |
 | `sound-bank` | `src/sound-bank.js` cue registry | stays; one card adding cues at a time |
 | `surfaces` | `src/race-surfaces.js` surface and tyre tables | stays; one card changing surfaces at a time |
+| `track-kit-placement` | `src/track-kits.js`, named kit collision transforms in `src/track-script-course.js` | stays; one placement-hook builder at a time, frozen readers do not edit |
 | `release` | switch flips, README, VERIFICATION, COURSE_ACCESS | stays; one release at a time, several cards per release |
 
 After FAC-04, a new course holds only `release`, and only at release time.
@@ -193,6 +194,10 @@ these before any lane starts, so builders never stop to ask:
 8. Sound cues and loudness; art sources and the look target.
 9. How it is checked: the targeted tests, the full check, the drive-through
    check, and Kyle's "go live".
+10. Water and trees (Kyle, 14 October 2026): where the course's lake or
+    other body of water is (every new course has one, for the helicopter's
+    fire bucket), and whether its forest can burn (`docs/HELI_FIRE.md`
+    section 4.1); a burnable course orders its burnt look with its art.
 
 The first packets written this way: `docs/FACTORY.md` itself (FAC cards)
 and `docs/THE_DEEP.md` section 10.

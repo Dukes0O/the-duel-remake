@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T17:22:40.246Z
+Observed at: 2026-10-15T00:20:34.520Z
 
-Observation commit: bbf1e92f6cd329096737cd126d3e1f2acda88389
+Observation commit: 4e99556e4e0facdb4e8c555bb430ceeeb3f6a7f1
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: bbf1e92f6cd329096737cd126d3e1f2acda88389
+Integration HEAD: 4e99556e4e0facdb4e8c555bb430ceeeb3f6a7f1
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -53,6 +53,7 @@ Last recorded full run: 2026-10-13T19:34:19.618Z; tested commit: bb8d3a99c01140c
 | summit-run | dev |
 | ardennes-forest | dev |
 | the-deep | dev |
+| helicopter | dev |
 
 ## Lane branches
 
@@ -60,19 +61,20 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/aud-15-p1-mix | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/aud-15-p1-mix |
 | codex/deep-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
+| codex/fix-road-seam | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fix-road-seam |
+| codex/heli-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-avalanche-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
-| codex/p4-finish | 2 | unknown | false | false | unknown |
+| codex/p4-finish | 3 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
-| codex/p4-panorama | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
+| codex/p4-panorama | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-qualifying | 3 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/p4-yeti | 0 | unknown | false | false | unknown |
-| codex/p4-yeti-native | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-yeti |
-| codex/qa-browser-recipes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-browser-recipes |
+| codex/p4-yeti-native | 0 | unknown | true | false | unknown |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
+| codex/qa-harbour-clearance | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-harbour-clearance |
 | codex/tools/callback-diagnostics | 9 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 19 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 19 | unknown | true | false | unknown |
@@ -84,15 +86,15 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/aud-15-p1-mix | AUD-15-P1 | 2026-10-14T10:21:22-07:00 | 0 | last commit 2026-10-14T10:21:22-07:00 | docs/changes/AUD-15-P1.md, src/audio.js, tools/scenarios/audio-vehicles.mjs, tools/test-audio-vehicles.mjs |
-| codex/p4-ardennes | P4-ARDENNES | 2026-10-14T10:13:39-07:00 | 0 | last commit 2026-10-14T10:13:39-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb, public/assets/models/circuits/kits/forest-footbridge.glb, public/assets/models/circuits/kits/forest-timing-tower-lod.glb |
-| codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T09:45:34-07:00 | 0 | last commit 2026-10-14T09:45:34-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, tools/test-summit-avalanche.mjs |
-| codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
+| codex/fix-road-seam | FIX-ROAD-SEAM | 2026-10-14T17:13:46-07:00 | 0 | last commit 2026-10-14T17:13:46-07:00 | docs/changes/FIX-ROAD-SEAM.md, docs/changes/QA-HARBOUR-ROAD-CLEARANCE.md, src/circuit-kit-layout.js, src/circuits/harbour-lights.js, src/generated/reference-laps/harbour-lights.json |
+| codex/heli-art-src | HELI-ART-SRC | 2026-10-14T16:51:55-07:00 | 0 | last commit 2026-10-14T16:51:55-07:00 | docs/board/looks/heli-accessories/round-1-review.md, docs/board/looks/heli-accessories/round-1.jpg, docs/changes/HELI-ART-SRC.md, public/assets/heli/cargo-hook.glb, public/assets/heli/fuel-pump.glb |
+| codex/p4-ardennes | P4-ARDENNES | 2026-10-14T13:48:22-07:00 | 0 | last commit 2026-10-14T13:48:22-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb |
+| codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T13:24:53-07:00 | 0 | last commit 2026-10-14T13:24:53-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, src/track-kits.js, src/track-script-course.js |
+| codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/p4-yeti-native | P4-YETI | 2026-10-14T10:02:18-07:00 | 0 | last commit 2026-10-14T10:02:18-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/qa-browser-recipes | QA-BROWSER-SWEEP | 2026-10-14T10:01:50-07:00 | 0 | last commit 2026-10-14T10:01:50-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/first-person-review.mjs, tools/run-browser-scenarios.mjs, tools/scenarios/convoy-tanker-art.mjs, tools/scenarios/first-person-polish.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
+| codex/qa-harbour-clearance | QA-HARBOUR-ROAD-CLEARANCE | 2026-10-14T16:30:30-07:00 | 0 | last commit 2026-10-14T16:30:30-07:00 | docs/changes/QA-HARBOUR-ROAD-CLEARANCE.md, src/circuits/harbour-lights.js, src/generated/reference-laps/harbour-lights.json, tools/fixtures/world-signatures/harbour-lights.json, tools/test-circuit-layouts.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -106,10 +108,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 203,507 B | +136,399 B | 5,000,000 B |
-| All `public/` | 290,229,319 B | +0 B | unavailable |
-| Git objects | 401,876,992 B | +159,744 B | unavailable |
+| Review `looks/` | 19,783,956 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 453,200 B | -83,978 B | 5,000,000 B |
+| All `public/` | 293,933,151 B | +0 B | unavailable |
+| Git objects | 420,554,752 B | +137,216 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -118,7 +120,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: bbf1e92f6cd329096737cd126d3e1f2acda88389
+- Local integration/wasteland: 4e99556e4e0facdb4e8c555bb430ceeeb3f6a7f1
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -126,4 +128,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit 9c226c8e5d0ba1e8fc96e603e93f4ff2dc7b05a9.
+- Remote origin/integration/wasteland: behind local; cached commit 58ff946e10fc90507faf64100e22c040b7e54b12.

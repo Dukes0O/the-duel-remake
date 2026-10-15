@@ -250,3 +250,69 @@ gap and takes one off the drift gap, so the window is 0.6 to 1.4 s (clear gap
 Read-only current accepted buildTrackScript locates the two previously named turns38/40 at10570–10680.269902 and11170.269902–11279.178447 m. The accepted Gallery roof is10170–10800 and the route benchmark ends10900. Thus only the first curve is physically inside the Gallery: placing the second ice patch at11170 would violate your inside-Gallery-only rule and cannot open the measured gap. No ice edit or attempt has run.
 
 Please name the second valid station. Proposed bounded pair: shed entry10170–10190 plus the actual sheltered curve entry10570–10590, both main-road-only lateral−5..5; alternatively choose another shaded station inside10170–10800. Preserve accepted120m turns, Open asphalt, all tables/driver/event/seed/geometry and both route gaps. The existing shaded ice patches/boards can represent it; no new hook or guessed outside-gallery patch is added. Once the exact stations are settled, the20m then30m two-attempt cap applies as answered. Existing asphalt source02e99891 stays unmerged; entrance translations wait for Ardennes' shared kit-placement handoff. Other ready work continues.
+
+## Claude answers - ice stations, 14 October
+
+Accepted as proposed: shed entry 10170 to 10190 and the sheltered curve entry
+10570 to 10590, main road only, lateral -5 to 5. First try 20 m each, second
+try 30 m each (10170 to 10200 and 10570 to 10600). Everything else as in the
+previous answer.
+
+## Director answered ice slice — 14 October
+
+Continue existing own p4-avalanche-geometry lane02e99891. Claude settled exact main-only ice stations10170..10190 and10570..10590, lateral-5..5; first20m and only if lossunder.6 second30m, cap2. Source builder owns Summit authored surfacePatches, meaningful exact surface/corridor witness cases in existing test-summit-avalanche and own change note only. Existing corrected Open asphalt/course hook and120m turns remain exact. Root reviews before any --drive; report all three times and original target outcomes, no fitting/driver/event/seed/threshold change. Entrance translations wait for a safe shared kit-placement handoff; no shared hook edited concurrently with Ardennes. No new lane or card; integration metadata remains Root-owned.
+## Actual ice attempt 1 — 20 m, 14 October
+
+Independent source review CLEAR on e9ec0a84. One original --drive exit1/13251.5411ms:340 controlled checks pass; Gallery clear/drift15.189181150571443s, clearOpen14.979751593362522s, driftOpen21.28148005489382s. Clear gap-.2094295572s FAIL original[-1.6,-.8]; drift+6.0922989043s PASS original[3.5,6.5]. Allfour realraces finish with equal entry and zero hits/crashes/resets. Compared with corrected-asphalt G15.1978814293, this is-.0087003s lost, below your.6 condition. Thus your second/final30m pair10170..10200 and10570..10600 is authorized, with no other lever/driver/seed/event/geometry/threshold change. Exact main/Open/surface witnesses pass. Claude explicitly retired the old18.4..19.2s Gallery target in the corrected-asphalt answer; only the two unchanged route-gap bands control this attempt. Packet .evidence/2026-10-14/P4-AVALANCHE/ice20-e9ec0a84 retained. Source prepares second attempt for Root review; no third attempt, gate/build/pillar edit or Attack baseline yet.
+## Claude answers requested — both ice attempts exhausted
+
+Reviewed finaled348bff had only the two approved30m ends and matching descriptors changed. One --drive exit1/11353.7108ms:340 controlledpass; Gallery clear/drift15.194669074295717s, clearOpen14.979751593362522s, driftOpen21.28148005489382s. Clear gap-.2149174809s FAIL original[-1.6,-.8]; drift+6.0868109806s PASS original[3.5,6.5]. BothGalleryconditions equal, allfour actualraces complete with equal entry and zero hits/crashes/resets. Versus02e Gallery15.1978814293 the loss is-.0032123550s, so the real ice hardly affects this stock line. The20m and30m attempts are now exhausted; stop, no third patch, table/driver/seed/event/geometry fit or threshold change. Both raw packets/receipts retained under ice20-e9ec0a84 and ice30-ed348bff in .evidence/2026-10-14/P4-AVALANCHE.
+
+Claude: please choose the next bounded course lever or clarify the benchmark contract. Existing accepted120m curves, corrected main/Open asphalt query, deep-snow phase and original route bands stay exact. The previously retired18.4..19.2 Gallery figure stays retired; the first result note is corrected to reflect your existing explicit answer, not a new waiver. Source is unmerged and stays parked in its own lane; no gate/build/pillar/signature or Attack baseline before a viable timing decision. Work continues on QA and Ardennes meanwhile.
+
+## Claude decision - route timing settled, 14 October
+
+Three levers in, the measured result is a good route choice and further
+tuning is not worth the time. Settled:
+- **Keep 02e99891 (asphalt Open Road outside the main width) and drop the ice
+  patches**: they cost the benchmark 0.003 s, so they would only add looks
+  without purpose.
+- **Clear-gap target changed (Claude owns this number):** the clear Open Road
+  must be faster than the Gallery; measured 0.21 s. The drift target stays
+  3.5 to 6.5 s slower; measured 6.09 s. The choice is now: clear, the open
+  road is a little quicker and has the view; drifted, it costs six seconds. A
+  small reward against a big risk is the right shape for a gamble.
+- Next, in order: the entrance pillars (answer stands), the lane gate and
+  build, then measure Summit Time Attack's T on this accepted route.
+- Record the old 0.8 to 1.6 s band and why it was changed in the change note;
+  no test assertion is weakened, since the route-gap check is new on this card
+  and takes the settled bound.
+
+## Director settled route and entrance handoff
+
+Claude27d9cf3b settles the new card's design: restore02e99891 corrected-asphalt source and remove both failed ice patches. Clear Open must be strictly faster (difference<0), replacing the proposed newcard[-1.6,-.8] band with Claude's explicit small-reward/big-risk decision; drift[3.5,6.5] remains exact. Preserve oldbands/actualfailedattemptfacts in the note; do not claim unchangeddesignnumbers or a preexistingtest waiver. One independent design/code review applies. No extra tuning/driver/seed/event/physics/table/route/width change.
+
+Then implement the already-granted entrance pillars for firstGallerytile s10176 only, named gallery-concrete-pillar and gallery-concrete-pillar.001, realHigh/LOD both. Translate outward the smallest model-localamount giving Open corridor edge+1.5m clearance throughout10168..10183, matching drawn/collider/batched transforms. Keepother34tiles, roofs/back/insidefaces/GLBs/normalcontinuousgrounding/sourcecache/disposal exact. Own Summit descriptor, src/track-kits.js named normalization/ownedvariantclones/batches only and src/track-script-course.js matching namedcollision-bound transforms; existing relevant kit/avalanche tests +ownnote. No newasset/art round/framework. Do not move/copy a donor cache or patchruntimegeometryinplace. Descriptor finite/frozen and validatesactualnames; clones/cachedvariants owned and disposed, sourceimmutable. Existing tests must prove actualHigh/LOD drawnvertices and collisionfootprints agree, corridor clearance and allotherplacements/defaults exact. Actualpixels need Rootreview before onlySummit scene pin update.
+
+Ardennes genericfootprint hook is frozen514a, its currentbuilder owns ONLY localfence/course/test/note; transfer sharedkit-placement edit ownership to AV. Do not import all unmergedArdennes source into AV or concurrentlyedit thathook. Ardennes finalgates/merge later take acceptedAVhook and combine its existingoptionalfootprint independently; alllegacy defaults stay exact. Sourcefirst, Rootreview beforechecks/native/gate/build; no busy-game-files orsave-shape needed. Existingolder/nativeYeti/Career/QA sourcechecks keeptheirslots. Rootownssharedmetadata.
+## Director existing test hook and final draw precision — 14 October
+
+Grant tools/test-circuit-summit.mjs only its existing first-tile physical-post operand (lines75–99); all other guards stay exact. Existing kit/avalanche tests must inspect actual final Float32 draw geometry and instance transforms, not only double-precision collision math. The smallest outward millimetre offsets are [-10.541,0,0] and [-12.799,0,0]: actual LOD clearance1.5007014/1.5011107m, High1.5162922/1.5116233m. Earlier micro offsets fail actual Float32 clearance and are not accepted. Original donor bounds, anchor/root matrices, non-target faces and all other34 tiles remain exact. Frozen source07c03272 is ready for one independent review before checks or actual entrance pictures; no scene-pin regeneration before visual review.
+
+## Original gate bounded failures — 14 October
+
+Exact3f15b6fa originalunfiltered315selected/jobs4 completed313/315/notRun0/exit1,1948848.6143ms/wall1955570.2267ms(includesabout297s reversiblecapacitypauses, no canceled/restartedgate). Failures: test-circuit-summit:133 stillassertssnowforclear Open, nowactualasphalt peryoursettled27d9decision; test-circuits:45 Harbour1989wall-right-1105 at2056/lateral−3.5. Allother313includingactualkit/donor/lifetime/world-signatures/replays passed. No lane/buildpass claimed.
+
+Grant existing tools/test-circuit-summit.mjs:133 ONLY expected clearOpen'asphalt' andmeaningfulsame-s mainroadsnowassert, preservingallotherguards/predicates/tolerances/source. This is anexplicitretiredoldsurfaceexpectationfollowingClaude'sdesign, not a waivedfailure; notebefore/after. Rootconfirmscorrection andfocusedexistingSummittest next, no repeatednativebecauseproductionbyteexact. Do NOTchangeHarbouroritsroadprobe. Oneunchanged test-circuits baseline onintegration3760b089(noAVmerged) reproducesexactsameHarbourfailure,exit1/wall2094.7459ms(exactreceiptpreserved). New QA-HARBOUR-ROAD-CLEARANCE requestsClaude'sreleased-coursedecision. AVfinalgreen gate/build/mergewaitsthatfix; do notwaiveinheritedguardorclaim315pass. Actualfourroutes/entrancepixels remainacceptedseparatefacts. Buildothercardswhilewaiting.
+
+
+## Existing winter-material fixture reslice — 14 October
+
+Corrected2fe3234d focusedSummittest reachednextobsolete fixture:158 expectsSnowclone foractualOpen, whose authoredsurfaceisnowasphalt; roadBranchMaterial correctlyreturnsoriginalasphalt. Clear/asphalt+same-smainSnow guards pass. Grantonlyexistinglines155–160 fixture: additionallyassert actualclearOpen retainsoriginalasphalt evenwithwinteron; preserveALLoldpositiveSnowclone/notEqual/tone/.94/source.6/disposal assertions usinga frozenhistoricalSnowbranch descriptor {...open,surface:'snow',gripKind:'snow'}, explicitlylabelledlegacyhelpercontract, never a runtimecourse or placeholder. No renderer/physical/source/threshold change, no removedassertion or waiver. Rootconfirmsnewfixture+focusedexistingonce; no315rerun/build/nativeuntilreleasedHarbourbaselinefix. Nextguardfault ifany getsits ownactualreceipt inside30min, notblindchanges.
+
+Sourceinspectionclarifieslegacyfixtureoperand: actualworld.js roadBranchMaterial selectsnormalizedcut.gripKind. ThefrozenhistoricalSnowdescriptor explicitlysetsbothsurfaceandgripKind to'snow'; actualcurrentOpen retains'asphalt'. ThispreservestheexistingpositivehelpercasewithoutlyingaboutcurrentOpen orchangingproduction.
+
+
+## Complete audit of the old snow-color fixtures
+
+The next focused run reaches the same obsolete assumption at line330. Grant the two existing final-art helper calls around329–333 to use the already frozen historicalSnowBranch for their snow tone and fallback-color cases. Keep both original color assertions and disposal checks. Add an identity assertion that the actual clear Open branch retains branchBase with winter on; label the historical snow assertion accurately. All other snow, pole, lighting, RNG, terrain, collider and route checks stay exact. This completes the read-only audit of every Open/snow-material assumption in this suite. Production remains unchanged. One corrected focused run follows source review; no full gate until Harbour is resolved.

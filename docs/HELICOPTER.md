@@ -196,10 +196,34 @@ damped pendulum (no new library; it borrows the tether ideas in
   have, it takes what you have and forgives the rest. A save never goes
   below zero.
 - **Special cars travel only by air** (Kyle). In H1 the special car is the
-  Koenigsegg Jesko Absolut; earned cars from the medal sheets (Cockpit
-  T-013) join the list later. With the switch on, a special car races only
+  Koenigsegg Jesko Absolut; the three earned cars from the medal sheets
+  (`docs/EARNED_CARS.md`, each 1,500 kg or less) join the list as they land. With the switch on, a special car races only
   on the course where it was last set down, and it starts at the home pad.
   Existing saves keep the car; it simply starts at Tremblant Woods.
+
+**Settled while building HELI-CABLE (14 October 2026).** Checked in
+`tools/test-heli-cable.mjs`:
+
+- Hooking: hover with the hook (15 m below the skids) within 3 m of the
+  load sideways and 2 m up or down, moving under 1.5 m/s, and press H. H
+  again lets go.
+- The helicopter is free to move, so it swings back against the car: a
+  1,300 kg car swings about once every 5.8 seconds, not the 7.8 of a fixed
+  hook. Air drag and a little swing damping settle it.
+- The car turns nose first into the way it flies once it moves faster than
+  5 m/s. At 30 m/s the air trails it about 7 degrees back.
+- The autopilot builds speed gently (0.7 m/s2) and leans the hook toward a
+  swinging car; carrying the Jesko at 30 m/s the cable stays within about
+  10 degrees of straight down.
+- Cargo hits by speed: light from 4 to 8 m/s, heavy from 8 to 14 m/s,
+  wreck above 14 m/s. One strike is charged once: a tree is hit once, then
+  lies down; a building or rock pushes the car back out, and the same one
+  can be charged again only after the car has come away from it.
+- Released at 1 m or lower the car simply settles with no charge. A
+  hooked car on the ground can be dragged (grip 0.7 of its weight); it
+  never anchors the helicopter. A set-down is counted once per hook-up.
+- The cable's pull is capped at four times the hook limit's weight, so a
+  stretched cable never flings the load.
 
 ## 6. The dispatch board and flights between courses
 
@@ -227,6 +251,82 @@ damped pendulum (no new library; it borrows the tether ideas in
   offers "Race here", which starts the normal race at that course with that
   car. Flying never changes how a race runs.
 
+**Settled while building HELI-MODE (14 October 2026).** Checked in
+`tools/test-heli-mode.mjs`:
+
+- Each landing zone is the first clear, level 12 m circle (no more than
+  1.5 m of rise, nothing taller than 0.5 m in it or 4 m around it, off
+  every road) searched outward from the start line, 30 to 80 m to either
+  side. At home the pad is that zone and the car parks 25 m from it.
+- The flying area is the course, the zone and every arrival point, plus
+  250 m. Without a destination its sides and ceiling hold the helicopter
+  in; with one, crossing a side or climbing through the ceiling offers
+  Cruise (Enter, or the gamepad's A).
+- The cruise leg fades for 1.5 s and arrives 1.5 km out at 150 m, facing
+  the zone, flying toward it at 20 m/s, the car still on the cable and the
+  autopilot still on if it was. Departures and arrivals face the way of a
+  small map (Tremblant Snow is just north of the Woods, Panorama Ridge to
+  the north-west).
+- The pump is at the home pad only, on the ground. Buying with no amount
+  fills the tank, so the free first tank is always a full one.
+- A crash charges its repair and returns you to the home pad 3 s later,
+  with the fuel you had; a car on the cable goes back to where it was last
+  set down. An empty tank on the ground calls the fuel truck (300 plus the
+  fuel, taking what you have and forgiving the rest), anywhere except the
+  home pad while the pump can still sell a 60 kg reserve (90 credits).
+  Nobody is ever stranded.
+- A car is delivered when it is let go (H) inside a landing zone; the save
+  then remembers it there.
+- Every circle in this packet is measured from its centre: the landing
+  circle reaches 12 m out, lesson 2's hover circle 4 m and lesson 4's
+  crate circle 10 m. Generous on purpose for a keyboard pilot.
+- Save rule for later sprints: before H2 adds any key to `heli`,
+  `normalizeHeli` must keep unknown keys, so a one-release rollback loses
+  nothing; heli save fixtures are written in `createHeli()` order (the
+  save review, 14 October).
+
+**Settled while building HELI-DISPATCH (14 October 2026).** Checked in
+`tools/test-heli-jobs.mjs` and `tools/test-heli-save.mjs`:
+
+- **The day's jobs.** The board offers one job on each of the three routes
+  every play day, in a mixed order, each for a different customer car. The
+  customer cars are the cars Kestrel One can lift, leaving out the special
+  cars that travel only by air. The same play day always gives the same jobs
+  (the seeded generator, seeded from the day number); the ids look like
+  `d3-2`. Pay is 300, 450 and 600 credits; Real pays a quarter more
+  (375, 563 and 750, rounded to a whole credit).
+- **Taking a job.** At the home pad, on the ground, like the pump. One job at
+  a time; "Drop job" hands it back and it can be taken again. A job finished
+  today is not offered again that day. A job left in hand from an earlier
+  play day is out of date and does not block a new one. "Fly my car" takes
+  nothing and sets no destination.
+- **The customer's car.** It waits at its pick-up: the parking spot at home,
+  the landing zone elsewhere, or a spare spot beside the pad when the
+  player's own car already stands there (two cars never sit on top of each
+  other, even two of the same model). Nothing about where it is gets saved:
+  a new visit finds it at its pick-up again, and a crash sends it back there.
+  It is never the player's car, so setting it down never moves the player's
+  car in the save.
+- **Where to fly.** Taking a job points the destination at the pick-up, or at
+  the drop-off when the car is already here. Hooking the customer's car points
+  the destination at the drop-off, so the autopilot (P) knows where to go.
+- **Delivery and pay.** A clean release of the customer's car inside the
+  drop-off course's landing zone finishes the job and pays at once; the radio
+  says so. The car stays there for the rest of the visit. A car let go from
+  more than 1 m up is charged as a drop and pays nothing; the job stays in
+  hand, and hooking the car again and setting it down gently finishes it.
+- **Race here.** After the player's own car is set down on a course the
+  player owns, the session offers that course and car. Hooking the car again
+  or leaving the course withdraws the offer. A customer's car never makes an
+  offer.
+- **The panel.** `src/heli/heli-board.js` writes the board as plain markup
+  and handles its buttons through the session. The jobs part shows only on
+  the home pad's ground; the "Race here" button shows wherever the offer is.
+  HELI-VIEW mounts and styles it.
+- **Save.** `takeJob`, `dropJob` and `finishJob` in `heli-save.js` change only
+  the `jobs` field and the credits, and credits stop at the same
+  1,000,000,000 as the rest of the save. They need the save review.
+
 ## 7. Lessons and the radio
 
 The instructor (stock voice **Brian**, deep and calm) speaks over the radio.
@@ -247,6 +347,24 @@ from the instructor's board. About 25 lines in H1: the opening, each lesson's
 steps, praise and retries, low fuel, out of fuel, hard landing, crash, job
 taken, job done, cruise refused. Lines are written in HELI-RADIO to fit the
 month's voice credits.
+
+**Settled while building HELI-LESSONS (14 October 2026).** Checked in
+`tools/test-heli-lessons.mjs`, which flies all four lessons headless:
+
+- A new pilot (no lesson done) hears the opening (welcome and the
+  controls) on the pad; the instructor's board offers lesson 1 and "Skip
+  the opening", which marks lessons 1 and 2 done.
+- Lesson 1 passes at 2.5 to 4.5 m above the ground held 5 s. Lesson 2:
+  within 4 m of the H, 2 to 5 m up, for 10 s. Lesson 3: a good touchdown
+  under 1 m/s within 3 m of the H, after lifting off. Lesson 4: the 500 kg
+  crate waits 18 m from the pad; its circle (10 m from the centre) is
+  about 200 m out, clear and level; a clean release inside it passes. A
+  hard landing, a crash or a dropped crate means "try again"; the crate
+  goes back beside the pad. Lessons start on the pad and can be retaken.
+- What they open: the pump after the free first tank opens with lesson 3
+  (a tank below 15% can always be filled, so nobody is stuck); the
+  dispatch board opens with lesson 3; carrying cars (the player's or a
+  customer's) opens with lesson 4.
 
 ## 8. What the player sees and hears
 
@@ -290,11 +408,15 @@ guard test like The Deep's enforces it):
   playDay: {last, count}, jobs: {day, taken, done}, carsAt: {carId: courseId},
   refuels, flights}`. One line in `normalizeProfile`, a fixture
   `tools/fixtures/saves/10-heli.json`, and the save checker.
-- **`busy-game-files`:** `app.js` (a `visitHeli()` verb, the session in
-  `_simulate` and `_applyInput`, `returnToMenu`, dispose, "Race here") and
-  `render3d.js` (a private scene hook like the Deep's). Held by HELI-MODE
-  and HELI-DISPATCH, one at a time.
-- **`sound-bank`:** the cues above, held by HELI-RADIO.
+- **`busy-game-files` and `sound-bank`:** held once, together, by one
+  short wiring card, HELI-HOOKS: `app.js` (a `visitHeli()` verb, the
+  session in `_simulate` and `_applyInput`, `returnToMenu`, dispose, "Race
+  here"), `render3d.js` (a private scene hook like the Deep's) and one line
+  in `sound-bank.js` that maps the helicopter's cue list (kept in
+  `heli-audio.js`, the way `fight-voices.js` keeps its lines). Every other
+  helicopter card builds against those hooks without a lock. (Re-sliced
+  14 October 2026 while AUD-15-P1 held both locks: one short turn instead
+  of three, which also leaves TYRE-SLIP a single wait.)
 - **Unlocked shared files:** `input-contexts.js` (a `heli` context),
   `screen-router.js` and `screen-menu.js` (a menu entry shown only with the
   switch on).
@@ -311,9 +433,10 @@ flowchart LR
   P --> RD[C: HELI-RADIO]
   FL --> CB[C: HELI-CABLE]
   FL & SV --> MD[C: HELI-MODE]
-  MD & ART --> VW[C: HELI-VIEW]
+  MD & RD --> HK[C: HELI-HOOKS]
+  HK & ART --> VW[C: HELI-VIEW]
   MD & RD & VW --> LS[C: HELI-LESSONS]
-  CB & MD --> DP[C: HELI-DISPATCH]
+  CB & HK --> DP[C: HELI-DISPATCH]
   LS & DP --> FN[C: HELI-FINISH]
 ```
 
@@ -341,9 +464,21 @@ the art passes, HELI-VIEW may draw a plain stand-in in dev builds only.
 - HELI-FINISH: Claude flies the whole slice, sends Kyle pictures, and the
   release waits for Kyle's word.
 
+**Where H1 stands (14 October 2026, HELI-FINISH).** Every acceptance line
+above is met in development builds: lessons 1 to 4, fuel, jobs and the
+player's own car to Tremblant Snow or Panorama Ridge, set down and raced;
+repairs and the fuel truck; the autopilot; four views; instruments tested
+against the simulation; replays, signatures and balance untouched (lane
+guards); the frame check passed at 16.8 ms p95 on both qualities with the
+stand-in model, and again at 16.8 ms with Kestrel One's real model wired
+in. The release waits for Kyle's word (and HELI-ART-SRC's hook, helipad and
+pump models).
+
 ## 12. After H1
 
 Cockpit project "The Duel" holds the later sprints: H2 Fire (T-035),
 H3 Wildlife and skins (T-036), H4 Rescue (T-037), H5 Heli-skiing (T-038),
 the Lab (T-009 to T-012), and the driving lessons (T-039, T-040). Each gets
 a packet here when its turn comes; Kyle's storyboard holds the decisions.
+H2 Fire's packet is `docs/HELI_FIRE.md`; H3 Wildlife and skins' is `docs/HELI_WILDLIFE.md`; H4 Rescue's is
+`docs/HELI_RESCUE.md`.

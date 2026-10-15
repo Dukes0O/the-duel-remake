@@ -12,8 +12,9 @@ const READY = "window.__render.scene.getObjectByName('First-person hands and gea
 // All state fixtures below belong to the private memory-only browser. Action
 // interactions use production inputs; matched poses use labelled snapshots.
 export async function run(context) {
-  const round=Number(process.env.GFX_FIRST_PERSON_ROUND || 1);
+  const round=Number(process.env.GFX_FIRST_PERSON_ROUND || 3);
   if (!Number.isInteger(round)||round<1||round>10) throw Error('First-person round must be 1..10');
+  const legacyTiming=process.env.DUEL_BROWSER_LEGACY_TIMING==='1';
   const root=fileURLToPath(new URL('../../',import.meta.url));
   const directory=context.outputDir,relative=pathRelative(root,directory).replaceAll('\\','/');
   const manifestPath=join(directory,'captures.json');
@@ -28,7 +29,7 @@ export async function run(context) {
   const blender=JSON.parse(blenderText);
   if(blender.hands.length!==8)throw Error('Freeze all eight hands before capture');
   const evidence={round,observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
-    camera:blender.camera,qualities:['high','performance'],assets:{},captures:[],counts:{},interactions:{},frameCost:{},loadErrors:[]};
+    camera:blender.camera,timing:{status:legacyTiming?'legacy-manual':'not-run',reason:'Separate quiet manual measurement; no frame acceptance'},qualities:['high','performance'],assets:{},captures:[],counts:{},interactions:{},frameCost:{},loadErrors:[]};
   for(const asset of [...blender.tools,...blender.hands]) {
     const path=`public/assets/models/wasteland/first-person/${blender.hands.includes(asset)?'hands/':''}${asset.id}.glb`;
     const hash=sha(await readFile(join(root,path)));
@@ -77,6 +78,7 @@ export async function run(context) {
       })()`);
       await context.waitFor(`(() => {window.__render.renderFrame();return ${READY};})()`,'largest hands and loaded RPG',60000);
     }
+    if(legacyTiming){
     evidence.frameCost[quality]=await context.evaluate(`(async () => {
       const rig=window.__render.scene.getObjectByName('First-person hands and gear'),materials=new Set();
       rig.traverse(n=>{if(n.isMesh)for(const material of [].concat(n.material))materials.add(material);});
@@ -96,6 +98,7 @@ export async function run(context) {
       return{baseline,held,crew:rig.userData.presentation.crewId,tool:rig.userData.presentation.weapon,
         scope:'Same stopped course, camera, quality and pose updates; baseline hides held materials. Measures added held rendering cost, not total presentation CPU overhead.'};
     })()`);
+    }else evidence.frameCost[quality]={status:'not-run',reason:'Separate quiet manual measurement; no frame acceptance'};
     await context.evaluate(`(() => {
       const r=window.__render;
       window.requestAnimationFrame=()=>0;

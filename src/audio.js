@@ -267,7 +267,7 @@ export class EngineAudio {
       Object.entries(SOUND_BANK)
         .filter(
           ([id, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome &&
-            cue.flag !== 'the-deep' &&
+            cue.flag !== 'the-deep' && cue.flag !== 'helicopter' &&
             (!pending || cue.flag === 'grand-prix') &&
             (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
             (cue.flag !== 'grand-prix' || grandPrix || id==='snowman.burst' && addSnowmen || ['avalanche.rumble','avalanche.slide'].includes(id) && addAvalanche || id==='yeti.roar' && addYeti),
@@ -731,6 +731,11 @@ export class EngineAudio {
     return Math.sqrt(levels.reduce((sum, gain) => sum + gain * gain, 0));
   }
 
+  _vehicleEngineLevel(actor) {
+    const speed = Number.isFinite(actor?.speedMph) ? Math.abs(actor.speedMph) : 0;
+    return clamp(.2 + .8 * speed / 200, .2, 1);
+  }
+
   _retireVehicleVoice(entry, immediate = false) {
     if (entry.retiring) {
       if (immediate) entry.voice?.stop({immediate: true});
@@ -762,7 +767,6 @@ export class EngineAudio {
       if (entry.stage !== snapshot.stage) this._retireVehicleVoice(entry, true);
       else if (!targets.some(target => same(entry, target))) this._retireVehicleVoice(entry);
     }
-    const level = this._playerEngineLevel();
     const rateFor = (row, cue) => engineRate(engineTone(Number.isFinite(row.revs) ? row.revs :
       clamp(Math.abs(row.speedMph || 0) / 200, 0, 1)), cue.toneHz,
       row.kind === 'rival' ? (CAR_VOICES[row.car] || CAR_VOICES.falcone_f42).pitch : 1);
@@ -771,12 +775,12 @@ export class EngineAudio {
       const cue = bank(cueId);
       const entry = [...this.vehicleVoices].find(row => !row.retiring && same(row, target));
       if (entry) {
-        Object.assign(entry, target, {listener});
-        entry.voice?.update(target.position, listener, {rate: rateFor(target, cue), volume: level});
+        Object.assign(entry, target, {listener, ownLevel: this._vehicleEngineLevel(target.actor)});
+        entry.voice?.update(target.position, listener, {rate: rateFor(target, cue), volume: entry.ownLevel});
         continue;
       }
       if (this.vehicleVoices.size >= 7 || [...this.vehicleVoices].filter(row => row.kind === target.kind).length >= cue.limit) continue;
-      const reservation = {...target, listener, stage: snapshot.stage, retiring: false, voice: null};
+      const reservation = {...target, listener, ownLevel: this._vehicleEngineLevel(target.actor), stage: snapshot.stage, retiring: false, voice: null};
       this.vehicleVoices.add(reservation);
       const bind = () => {
         if (reservation.retiring || reservation.group !== (reservation.kind === 'rival' ? state.opponents : state.traffic) ||
@@ -791,8 +795,9 @@ export class EngineAudio {
           (reservation.kind === 'rival' ? this.samples.engine?.source?.buffer : null);
         if (!buffer) { this.vehicleVoices.delete(reservation); return; }
         const donorCue = this.samples[cue.donor]?.source?.buffer ? cue : {...cue, toneHz: 86};
+        reservation.ownLevel = this._vehicleEngineLevel(reservation.actor);
         reservation.voice = this.mixer.playMoving(cueId, buffer, reservation.position, reservation.listener, {
-          loop: true, rate: rateFor(reservation, donorCue), volume: this._playerEngineLevel(),
+          loop: true, rate: rateFor(reservation, donorCue), volume: reservation.ownLevel,
           fadeIn: .4, fadeOut: .4, admitted: true,
           onEnded: () => this.vehicleVoices.delete(reservation),
         });

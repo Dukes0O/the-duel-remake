@@ -1,5 +1,10 @@
 # QA-BROWSER-SWEEP
 
+## Open Claude sound decision
+
+Claude has answered the audio comparator: retain the strict pre-limiter and repeat-control checks, with the intentionally changed final output informational. The repair follows the merged Arena slice; the parent remains incomplete until its named runtime, recorder and quiet-frame failures are resolved.
+
+
 The short board entry controls current state, ownership, dependencies and locks.
 
 Claude, 14 October 08:00 PT. The full check's browser stage has failed two
@@ -127,3 +132,124 @@ Delete tools/scenarios/vesper-art.mjs (looks/vesper/round-2-review.md) and convo
 Salt-flats.mjs contains both consumed frozen ground-round-3 art (looks/salt-flats/round-3-review.md) and the current real clickable public-entry/rematch/yard-return recipe. Remove ONLY the consumed candidate/pose/frame block and imports used solely by it. Keep existing settled/click/runPublicEntry and all its native gameplay/save/isolation/assertions exact; export runPublicEntry as run so the same existing full-check scenario now exercises actual reachable gameplay, with no old evidence candidate. Do not delete the gameplay recipe or weaken its checks.
 
 Keep rustwall-frame.mjs unchanged for manual use; namedScenarios default/all excludes it, while explicit selection/direct harness still accepts it. All other current gameplay scenarios, frame reuse and unknown-name/containment/resource behavior stay unchanged. Add relevant cases to existing dispatcher tests, no new harness. Actual gameplay pins and arena-shove baseline are separate next work after exact accepting-note proof; leave them untouched now. One independent review, original nearby/jobs4/build, and existing Salt public-entry native after source freeze/Root GO; no whole browser sweep/frame or historical-art rerun. Each removal cites its verdict in Removed; recycle only the removed files in this own lane, not foreign folders or candidate caches. Root owns metadata/merge/cleanup; builder preserves all other teams' edits.
+
+## Consumed-recipe slice merged — 14 October
+
+03146282 passed independent review, dispatcher8/8, original19/19/jobs4/build838ms and real Salt public-entry four cases/eight images with no issues or warnings. Merge is conflict-free with no rerun. Three historical candidate recipes are gone, retained helper/gameplay semantics exact; dedicated rustwall-frame stays manual. Parent remains open for gameplay pins and unresolved audio/runtime cases; no full-sweep pass. Root clears the owned recipe lane before its next slice.
+
+## Director accepted-runtime pin and quiet-timing slice — 14 October
+
+Pull completed before new same-card qa-browser-pins / codex/qa-browser-pins. Own only tools/scenarios/first-person-gear.mjs, tools/scenarios/rustwall.mjs and docs/changes/QA-BROWSER-SWEEP.md. No game assets, historical manifests, gameplay predicates, mastering, dispatcher or harness changes. Root owns metadata and one independent review. Source only until Root GO; no heavy job from the builder.
+
+Read-only history proof establishes that current first-person ten GLBs exactly match initial GFX-02 round3 manifest and accepted b441eeee / looks/first-person/round-3-review.md (14a51e3 rewrite map227). Default GFX_FIRST_PERSON_ROUND becomes3; explicit rounds and supplied local manifests retain their existing precedence and exact pins. Later P1/P2 Rook candidates were never promoted.
+
+Current Rustwall wall f834469c33e2d6798f9c3a4393f535abb0ac0b488e72b265adfd87bc07bb7c58 and wash 09e75a486978129950d58ebecb9ff0e580ff3c1d7767bbef4cc767923fafd8b4 exactly match accepted a51a3c89/d0e26a1f, looks/rustwall-p2/round-10-review.md and final dev merge71398d8a. No round10 Blender fixture exists. Preserve round1's camera/pose/reference recipe; ONLY the ordinary default with no explicit round and no supplied local manifest uses separately named accepted runtime asset pins. Evidence must distinguish cameraRecipe round1 from runtimeAcceptance P2 round10; never overwrite a historical manifest or imply its captures used these later bytes. Explicit historical round/local-manifest paths retain their original hash assertions.
+
+Both existing gameplay recipes unconditionally measure old hidden/visible art timing, without a timing acceptance predicate. Under factory rules7/9/13, move ONLY those unchanged measurement blocks behind explicit tool-only DUEL_BROWSER_LEGACY_TIMING=1. Ordinary gameplay records timing not run, reason separate quiet manual measurement; it claims no frame pass. Keep manual measurement bodies, visibility restoration, original metrics and camera setup exact. Keep all native gameplay/input/HUD/geometry/state/resource predicates and pure prepared-ground triangle estimate exact. No new timing machinery, threshold, retries or tolerance. Existing dedicated rustwall-frame remains unchanged/manual. One original nearby/jobs4/build and actual default gameplay natives after source review and Root GO, with all explicit historical-pin behavior retained. The parent stays open for unrelated runtime/audio faults.
+## Actual accepted-pin gameplay and bounded Rustwall entry correction
+
+Reviewed234493ef original nearby18/18/notRun0/jobs4/duration145911.516ms/wall155842.3354; build638ms/wall1218.7756. Default first-person round3 actualbothqualities56images/46matchedcaptures passes private38035/memory/noerrorswarnings,70422.8919ms; timing explicitlynot-run. Original defaultRustwall native fails readiness after66879.272ms/private33823/memory/errorswarnings0/noimages. Checksum guard passed; no placement/frame/gameplay pass exists. Actualpacket retained under pins-final-234493ef/rustwall.
+
+Within7minutes read-only current-source diagnosis proves the old recipe startsDuel, but hiddenRoadInRace permits Wasteland/actualHiddenRoadVisit only; Game passesfalse toCourse inDuel, Course has no hiddenRoad, world never builds Rustwall. The current exact Rustwall object/loading/ready/failed+loadErrors guard is valid. Grant ONLY existing rustwall.mjs startCampaign mode:'duel' to mode:'wasteland', the real entry already used by passing first-person/hidden-road recipes. All other seed/car/difficulty/state/camera/placement/hash/error/timeouts/predicates remain exact. Do not loosenREADY, inventadmission flags/visit/scene or touchproduction. Dedicated rustwall-frame has the same historical entry issue but is unowned/manual and stays untouched; list it for later.
+
+Freeze corrected source, Root confirms the actual fault correction, then correctedoriginalnearby/jobs4/build and ONE actualdefaultRustwall retry with freshslot/hold check. First-person code is byte-exact, existing actualreceipt applies; no repeatedfirst-person/native/frame for unrelatedsource. Default timing staysnot-run; manualbodies historicaloverrides/assets untouched. No newtestmachinery or quiettimingclaim, nowhole-sweep pass. Rootownsmetadata/merge/ownfoldercleanup.
+
+## Accepted-pin gameplay slice merged
+
+aa7c0f80 passed confirmedreview/original18of18/jobs4/build947ms and actualfirst-person/Rustwall gameplay at bothqualities/private memory with no errors or warnings. InitialRustwall staleDuel admission is corrected; its readiness/camera/support/load/pin guards remain strict. Defaulttimingnot-run, explicitmanualrecipe retained. Conflict-free merge without anothergate; ownlane and consumedevidence cleared. Parent staysready for remaining runtime/audio cases; full23-failure resolution not claimed. Dedicatedmanualrustwall-frame uses the sameobsoleteDuel entry and is flagged, untouched.
+
+## Director current Harbour and telemetry admission slice — 14 October
+
+Integration pulled before new qa-browser-admission / codex/qa-browser-admission; cleared prior owned pins lane. Own ONLY tools/scenarios/harbour-night.mjs, tools/scenarios/lap-telemetry.mjs and own change note. Harbour's hardcoded stage16 is now Tremblant Woods, while its memory fixture owns Harbour; resolve actual menu index by stable id harbour-lights, assert actual start succeeds and course/GrandPrix/field admission. Preserve five lights/eight cars/eight HUD rows/four laps/zero traffic/running order/police hidden/oldtown pictures and both qualities; use actual existing laps:4 option, never loosen guards. Telemetry's exact flag-state dev guard is stale now Grand Prix is on: accept enabled===true, preserving memory/backup providers, named player/real purchase, routeC/reference fingerprint track-v1-6eceb630, seed17/real Time Trial/native finish/durable byte/focus guards.
+
+Grant Harbour only the same explicit tool-only DUEL_BROWSER_LEGACY_TIMING=1 split already accepted for other historical art timing. Keep original baseline/measurement/comparison bodies, metrics,33.5/12 historical observation thresholds and manual behavior exact; ordinary parallel gameplay reports timing not run/separate quiet manual check/no frame pass. Keep every gameplay/photo action; no new timing machinery, tolerance or frame acceptance. Historical pacingMisses was never a thrown predicate; do not invent a pass from it. No dispatcher/game/assets/physics/storage/mastering change. Source only until Root reviews freeze and coordinates original nearby/jobs4/build plus these actual memory natives serially. Parent stays open for unrelated audio/runtime failures. Root owns shared metadata and own cleanup.
+
+## Actual Harbour admission checked — 14 October
+
+Reviewed f6dcd2be/current clean02b26308 original19/19/notRun0/jobs4/duration258045.3187ms/wall274570.8864/build1.14s/wall2048.9349ms. Actual original Harbour native42172/memory passed in124480.0285ms,8High/Performance images/errorswarnings0. Stable-course/start/GP/field admission and unchanged five-red-light sampled guard/eightcars/eightHUDrows/fourlaps/zero traffic pass. BothHUDsamples show LAP1/4 and /08; global and all4timingentries explicitlynot-run. Root reviewed actual Highstart/PerformanceHUDpixels: start screenshot has already advanced to GO after sampled lights, Performance25s image shows car atwall/2kmh. These are viewport/admission receipts, not complete field/handling/race-finish or quietframe acceptance; no extra guard is invented or waived. Telemetry remains UNRUN awaitingcapacity. Currentsource/pins/memory/providers/defaults unchanged; nofull23-failure resolution claim. Questions concerning released driving stayClaude's; this narrowtools correction remainsindependent.
+
+
+## Admission slice merged — 14 October
+
+Clean02b26308 source original19/19/jobs4/build1.14s, RootreviewCLEAR, actualHarbour+telemetry High/Performance/private/memory/errorswarnings0 passed unchanged guards. Telemetry2native laps/54270ms/221samples/writer1/nativeDbOpens0 pernamedplayer, exactsavebytes/realpurchase/readOnlyUI verified; Rootpictureinspection complete. Mergeconflictfree/no rerun. Parentready for remaining runtime/audio cases; nofullsweep/frame claim. Ownlane/consumedreceipts clearbefore its nextslice.
+
+
+## Remaining original failures and next kit dependency slice — 14 October
+
+Read-only originalnight99wbhD audit:15of23failedrecipes are fixed/consumed withactual narrowreceipts; rustwall-frame is explicitmanual/accounted-notpassed. Sevenremain: arena-shove baseline, audio-baseline masteringverdict, audio-crash-peak recorderreliability(stoppedafteroriginal+permittedrerun), frame-pacing underquietenvironmentcard, actualonfoot .route-hud overlap, p4-daynight post-readyshaderpreparation, p4-kits duplicateThreewarnings. No aggregate129rerun or fullpassclaimed. Arenacurrentbaseline requireshonestnewprovenancewhileexplicitold0f934845remainsstrict; no baselineassertionchange now. RuntimeUI/shaderwork needsnamedcorelease; sound/timing stay their existingverdict/quiet boundaries.
+
+Newsame-card qa-kit-module / codex/qa-kit-module followsintegrationpull andclearedownadmissionlane. Own ONLY tools/scenarios/p4-kits.mjs, tools/menu-check.js andownnote. Sourceproof:privateNativeBundle esbuildIIFE reexecutes Three/GLTFLoader fourtimes (normal+YetiHigh/Performance), matchingfourwarnings; originalactual40pictures/allgameplayguards otherwisepassed. ExistingpagealreadyusescorrectThree, buthasNOsharedconstructorbridge. Granttools/menu-check.js ONLY explicitp4-kits-native=1 query namespace for the SAMEexistingP4KitsQa exports usingimports inits singleViteQAgraph, afterisolatedstorageadmission andwithoutchangingdefault/blocked-IDB/archive/storage/startup paths. ExistingP4KitsQa helper/API isreused, no newframework/nativeHTML/generalbridge. Same namedThree constructors+GLTFLoader mustshareexistingmoduleidentity. p4-kits.mjs addsopt-in toits twoexistingURLs andconsumesnamespace insteadofindependentlybundling/evaluating copies. No global__THREE__markerdelete, warningsilencing, esbuilddefine, hackedhashedexports, dependencyinstall or src/dispatcher/harness/config/asset/thresholdchange.
+
+Preservealloriginal35piece/pin/actualHighLOD/animation/grounding/framing/readOnly/disposal/photo legs/predicates andwarnings==0. No historicalart rerun/timing/machineguard. SourcefreezeRootindependentreviewbeforeoriginalnearby/jobs4/build andONEexistingcurrentnative withfreshall-teampreflight. Actualwarningsmustbezero; anyremainingactualfailuregetsboundeddiagnosis, neverwaiver. Rootownsmetadata/merge/cleanup; buildernotalone.
+
+
+## Duplicate kit-module slice merged — 14 October
+
+Actualf61881b2 tools-onlysource original19/19/jobs4/build589ms/reviewCLEAR; originalnative40pictures/all35modelsbothqualities/twoYeti-nightlegs pass, errorswarningsZERO, no suppression. Rootactualpixels reviewed, no newart/framepass. Cleanmerge/no rerun; ownlane+consumedpacketclearbefore nextslice.16originalfailuresnowfixed/consumedwithnarrowreceipts,1explicitmanual/accounted,6remain: arena baseline,2audio,frameenvironment,onfoot overlap,nightshaderprep. No aggregate129pass. Earlier7remainingdescription is supersededonlybythisactualkitresult; runtime/sound/releasedcourseownership boundariescontinue.
+
+
+## Current Arena baseline slice — 14 October
+
+Integration pulled before opening qa-browser-arena, branch codex/qa-browser-arena. Own only tools/scenarios/arena-shove.mjs, additive provenance cases in existing tools/test-arena-shove.mjs, and this card's change note. Claude already directed a current-integration baseline using the existing recipe. Reuse its existing snapshot preparation and native public eight-case matrix; make the ordinary full-check path prepare and consume its real verified report automatically. Keep the explicit historical 0f934845 path strict and labelled separately. A current comparison proves repeatability on its captured integrated source, never historical pre-card regression.
+
+The detached full check must anchor its captured integration commit, rather than a later advancing HEAD. Verify that the chosen base is in integration's first-parent history and that candidate source and runtime asset trees and bytes match; archive and verify every original file as before, with only the owned recipe overlay. Use only non-live integration dependencies and ignored output. Run baseline and candidate serially; propagate failures, restore environment, and clean only this slice's own checked snapshot and junction. No new general harness, production, physics, assets, input matrix, containment rule, timeout or threshold.
+
+Preserve all eight native input/seed/spawn/actor comparisons, contact observer/restoration checks, inherited-crossing classifications, shove minima, protection, wreck deadline and normal/oblique wall predicates. Separate only the unchanged historical 150 RAF diagnostic behind DUEL_BROWSER_LEGACY_TIMING=1, as accepted on the other recipes; default reports timing not run. Add meaningful strict historical/current provenance rejection cases without running a browser inside a pure test. Root reviews the exact source before any heavy job. Then original nearby/jobs4/build and one original Arena native run; no aggregate browser sweep or frame claim. Root owns shared metadata and cleanup; other teams' work stays intact.
+
+
+## Next runtime slice, after Arena's own lane is merged and cleared
+
+Read-only diagnosis identifies two separate current runtime faults. The on-foot hint's help panel occupies the same horizontal column as the enlarged route HUD at 1280 by 720. Keep both visible; place the help beside the map with a viewport-bounded width. Own only the controls-help/onfoot-hint layout in src/style.css. Preserve content, controls, fonts, other HUD layout and every original onfoot-hints scenario predicate. Its real browser rectangles are the geometry check; no new layout harness or hidden overlay workaround.
+
+The original day/night packet reacquires 40 shader program IDs at each mood change. environmentKey includes the entire lightPath, including its purely presentation changes, so each path change rebuilds and disposes the world instead of retaining its already prepared materials. Own src/environment-key.js only to omit lightPath from structural identity, using a local copy with no donor mutation. Keep exact old keys when lightPath is absent, and every seed, layout, timeOfDay, hidden-road, muddy-hollow and Deep-ramp distinction. Add meaningful equality and frozen-donor cases in existing tools/test-render-reuse.mjs, retaining every original structural inequality. Existing scene-lighting reads the current path each frame; do not change App, Game, renderer warmup, materials, preparation counters or shader assertions pre-emptively.
+
+These files are outside Claude's current helicopter hooks. No new lane starts before the Arena lane is consumed. Root will assign the separate slice then; source review precedes the original nearby/jobs4/build and unchanged onfoot-hints and p4-daynight browser runs. No timing, threshold, retries, whole sweep or new general machinery. A new measured fault gets its own bounded diagnosis, not an assumed warmup fix.
+
+## Claude answers - audio baseline comparator, 14 October
+
+The first option. The historical pre-bank comparison certifies that the voices
+are unchanged before mastering, using its recorded strict pre-limiter and
+repeat-control limits (both pass: repeat 0.00000177 under 0.000002, pre-limiter
+under 0.00000024). The final output is judged only by the existing approved
+mastering and crash recipes, since the +6.4 dB and 4x ceiling curve were
+accepted on purpose (c0bb9b18, 719bde78, 9e9bcebd). Report the final-output
+difference as information, not a failure. No threshold changes.
+
+
+### Preserve the real water dependency in that next slice
+
+A bounded read found one structural reader: circuit-water builds a different shader and lake colours when water and nonempty basins exist and the first light keyframe makes it night. The environment-key change must retain that effective water-night distinction. Omit the full top-level path from the definition copy, then add a structural suffix only when water/basins exist, timeOfDay is not already night, and the first path look is night. Definitions without a path keep exact original keys. Do not mutate the donor or rewrite water or warmup. Extend the existing render-reuse cases for day/night water, absent/empty basins, later keyframe changes and night timeOfDay, alongside every old structural inequality. The original HarborHighlands browser fixture has no circuit water, so its mood changes can retain the prepared world without concealing this actual dependency.
+
+
+## Arena slice merged
+
+Reviewed96bb1d47: original20/20/jobs4/build823ms; original native passes all scoped guards, private14136/memory-only/202pictures, no issues or warnings. Automatic baseline private46212 passes eight cases/24pictures; all1545 archived files verified. All eight matched input traces and geometries are exact; inherited crossings stay explicitly classified. The temporary snapshot was recycled safely. No frame or historical regression claim. Clean merge has no repeat gate. Clear this own lane before the next runtime/audio slice. Seventeen original failures are now fixed or consumed, rustwall-frame remains manual/accounted, and five remain: audio comparator, recorder reliability, quiet frames, on-foot layout and day/night preparation. No aggregate129 pass.
+
+
+## Runtime and answered-audio slice claimed
+
+Arena3ffe4a2c is merged and its own folder, branch and334945917 bytes of consumed evidence were recycled. Integration pulled before new qa-browser-runtime / codex/qa-browser-runtime. Implement only the already named CSS/help and environment-key/render-reuse scopes above. Also grant tools/audio/baseline-comparison.mjs and/or tools/scenarios/audio-baseline.mjs only after reading their actual existing comparator: retain every strict pre-limiter/repeat-control limit and case, report the intentionally changed final-output difference as information exactly as Claude answered. Name the actual file hook before code; no mastering, waveform, baseline reference, runtime audio, Chrome policy or threshold change. Use existing meaningful tests only if needed. Root owns the combined change note, shared metadata, review and heavy-job scheduling. Builders own separate files in this one card's folder and preserve each other's work. No source execution until Root has reviewed the combined freeze.
+
+
+## Remaining recorder: use the already approved stage observation
+
+Kyle explicitly renewed completion of this card. The earlier two c5 Runtime.evaluate failures produced no PCM packet and no passed audio assertions. The prepared 9ff34067 repair remains unrun and unmerged. Read-only comparison confirms the directly called recorder helper, contact fixture and isolated-storage APIs are byte-identical to that prepared source. Use only its previously granted audio-crash-peak.mjs and existing test-audio-crash-peak.mjs delta in this same runtime lane; no other old-branch files. The ordinary tools-page ES recorder entry replaces the forbidden generated evidence page and patched private harness. The existing capture.json is persisted after the first actual capture, before the recorder probe, then overwritten with the original complete packet. All23 PCM/peak/continuity/graph/cleanup assertions, clocks, inputs, thresholds, timeout and runtime audio stay exact.
+
+This adds one useful stage observation, not another blind repeat. A packet without actualRecorder means the initial capture returned and the later probe did not; no packet means the initial evaluate did not return, with its internal cause still unknown. Root reviews the exact source before the first combined nearby gate and one actual existing recorder execution. Do not run it separately if that gate already supplies the same original native checks and complete packet. If it still fails, preserve the new stage facts and stop under the existing30-minute bound; no guessed autoplay, Chrome flag, PCM fill or tolerance fix. Record the unresolved defect on its existing reliability card and continue the priority Harbour/Avalanche/Attack queue. No audio or aggregate browser pass is inferred from a stage file.
+
+
+## Shared check slot requested from Claude
+
+The reviewed runtime freeze is now 47fb630d. Root found and confirmed a real additive test fixture mistake: the synthetic daytime water inherited Harbor's existing timeOfDay night. Only that new fixture now says day; all original and new assertions, including the separate already-night case, remain intact. The corrected focused suite passes361 checks in5020.5237ms. No native recorder, gate, build or three runtime browser scenarios have run. Multiple replacement foreign jobs have kept the shared three-job limit occupied for about25 minutes; a single admission watcher starts the existing recorder test only when at most two other roots remain and no current frame/release-alone hold exists. Claude, please hold replacement heavy jobs until this priority check is admitted. Code work can continue within the lane cap. The accessory render-only batch is next as capacity permits. No failures are waived and no source is released.
+
+
+## Existing on-foot recipe pause action correction
+
+The first unchanged native onfoot-hints run on3f539da6 passed all three desktop layout views, actual F/gamepad exits and reentries, and the distant hint, then failed Pause retained a hint in19215.9722ms. The released App key handler first exits pointer lock on Escape and ignores Escape during its existing250ms pointer-release grace. The recipe sent one Escape and checked hint exclusion without proving the race was paused. It therefore reached the guard while still on foot and unpaused; do not change runtime pause behavior or hide a live hint.
+
+Own tools/scenarios/onfoot-hints.mjs only its existing pause-action leg and truthful paused sample. Keep the first real Escape; if it only releases the pointer, wait for the native pointer-release grace to finish and send the next real Escape. If the first Escape already pauses, do not toggle it back. Prove actual paused state before the original unchanged hint-hidden/empty-text assertion. Preserve every layout, input, health, release timing, bailout, mode, objective, arena, quality and flag-off guard. No direct state.paused assignment, synthetic pause, longer capture timeout, tolerance or new machinery. Root reviews the exact correction, then one corrected original nearby/build and actual onfoot native; the daynight/comparator remain pending. Other ready cards continue.
+
+
+## Final runtime slice integrated
+
+76826758: independent review clear, original nearby46/46/notRun0/jobs4 and build668ms. Original onfoot-hints and p4-daynight pass both qualities,6/8pictures, memory-only/privateports53067/62377, no issues/warnings; daynight has zero late shader programs and no frame timing. Audio baseline initially failed only the old repeated-control guard, then its single unchanged-source rule3 rerun passed all5cases with original0.000002 limits. QA-AUDIO-BASELINE-CONTROL is the low-priority unreliable-check follow-up; no third attempt. The genuine raw-PCM later recorder timeout stays on QA-AUDIO-CRASH-RELIABILITY and actual frames on their existing cards. All23original failures are repaired, consumed/manual, or explicitly carried on those separate cards; no aggregate129-scenario/full/release pass is claimed. Conflict-free merge, no repeated gate; own runtime lane/consumed successes are cleared after this commit, failed/raw evidence preserved.

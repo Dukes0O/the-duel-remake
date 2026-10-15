@@ -24,7 +24,7 @@ async function setup(context,quality){
     if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value ||
       !window.name.startsWith('__duel_qa_tab_v2:') || !window.__duelQaBackupStore)
       throw Error('Memory-only physical and backup stores are required.');
-    if(app._switches().state('grand-prix')!=='dev' || !app._switches().enabled('grand-prix'))
+    if(app._switches().enabled('grand-prix')!==true)
       throw Error('The actual FIELD grand-prix entry must be enabled.');
     const held=(await navigator.locks.query()).held.filter(row=>row.name.startsWith('the-duel-career-writer-v1-qa-'));
     if(held.length!==1)throw Error('Exactly one native Preview career writer must be admitted.');

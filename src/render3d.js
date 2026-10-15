@@ -1,6 +1,7 @@
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
 import {createWaterline} from './deep/waterline.js';
+import {createHeliView} from './heli/heli-scene.js';
 import {createTrackKits,trackKitsOf} from './track-kits.js';
 import {snowmenEnabled,snowmanPlacements} from './snowmen.js';
 import {createSnowmenView} from './snowmen-view.js';
@@ -181,6 +182,9 @@ export function attachRenderer(host, app) {
   const stopDeepEvents=app.duel.onChange((_state,event)=>{if(event.menu||event.stageLoaded!=null||event.arenaLoaded!=null||event.deepExited)deepView.reset();});
   let deepRevision=deepView.revision;
 
+  // The helicopter's group joins the scene before the lighting roots are
+  // taken, so a world rebuild never removes it.
+  const heliView=createHeliView({THREE,scene});
   const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
@@ -554,6 +558,7 @@ export function attachRenderer(host, app) {
     }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const deepPose=!menu?deepPresentation(app.duel):null;
+    const heliPose=st.status==='heli'&&app.heliSession?heliView.update(app.heliView(),{cameraIndex:app.heliCamera,dt}):(heliView.hide(),null);
     const physicalCourse=deepPose?app.duel.course:course;
     const pp = vehicleGroundPoint(physicalCourse,distance,lateral);
     const journeyView=hiddenRoadPresentation(st,course);
@@ -616,6 +621,13 @@ export function attachRenderer(host, app) {
     for (const flame of player.userData.boostFlames || []) { flame.visible = !!st.boosting && !menu; flame.scale.z = .7 + Math.sin(ambientNow * .052) * .3; }
     for (const pivot of player.userData.wheelPivots || []) if (pivot.userData.front) pivot.rotation.y = -steering * .22;
     player.visible = menu || st.onFoot || app.cameraMode !== 'hood' || st.catastrophic;
+    if(heliPose){
+      // The player's car hangs on the cable, waits beside the pad or sits
+      // where it was set down; any other load is drawn by the helicopter.
+      const load=heliPose.load;
+      player.visible=!!load&&load.id===st.car;
+      if(player.visible){player.position.set(load.x,load.y-.7,load.z);player.rotation.set(0,load.heading,0);}
+    }
     let firstPersonView=false;
     if (menu) {
       const cp = worldAtExtended(course, distance + 6.4, lateral + 7.7 + Math.sin(ambientNow * .00009) * .6);
@@ -672,6 +684,7 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(deepPose){camTarget.set(deepPose.camera.position.x,deepPose.camera.position.y,deepPose.camera.position.z);lookTarget.set(deepPose.camera.target.x,deepPose.camera.target.y,deepPose.camera.target.z);player.visible=true;firstPersonView=false;}
+    if(heliPose?.camera){camTarget.set(heliPose.camera.position.x,heliPose.camera.position.y,heliPose.camera.position.z);lookTarget.set(heliPose.camera.target.x,heliPose.camera.target.y,heliPose.camera.target.z);camera.fov=heliPose.camera.fov;firstPersonView=false;}
     const yardHomePose=yardPresentation?.homeCamera?.();
     if(yardHomePose){
       camTarget.set(yardHomePose.position.x,yardHomePose.position.y,yardHomePose.position.z);
@@ -681,21 +694,21 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
-    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose) camera.position.copy(camTarget);
+    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
       // Follow longitudinal motion immediately: world-space damping otherwise
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu&&!deepPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
+    if(!menu&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
-    if(!menu&&!deepPose)constrainMountainCamera(course,camera.position,distance);
-    if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
+    if(!menu&&!deepPose&&!heliPose)constrainMountainCamera(course,camera.position,distance);
+    if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
       camera.position.copy(clearCameraSightline(course,camera.position,
         {x:player.position.x,y:player.position.y+(tall?1.65:1.05),z:player.position.z},distance));
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
-    if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!journeyView.camera&&!spurCamera&&
+    if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&
         !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){
       camera.updateMatrixWorld();
       cameraBodyTarget.copy(player.position);cameraBodyTarget.y+=tall?1.65:1.05;
@@ -988,7 +1001,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);

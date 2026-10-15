@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {courseScreen} from '../src/screen-courses.js';
 import {App} from '../src/app.js';
 import {CARS,COURSE} from '../src/config.js';
-import {COURSE_PRICES,normalizeCourseAccess,isCourseUnlocked,purchaseCourse} from '../src/course-access.js';
+import {COURSE_PRICES,normalizeCourseAccess,isCourseUnlocked,purchaseCourse,courseUnlockRequirement} from '../src/course-access.js';
 import {courseAccessPanel} from '../src/course-access-ui.js';
 import {createProfile,normalizeProfile,createPlayerRegistry,savePlayers,loadPlayers,bestKey,eventKey,settleRace,isValidFinish} from '../src/progression.js';
 import {normalizeRaceSettings} from '../src/race-settings.js';
@@ -96,3 +96,12 @@ check(css.includes('.course-access-card>button:focus-visible'),'course cards hav
 same(courseScreen(fresh,0,'<safe>'),zero,'production course screen uses the tested panel unchanged');
 check(router.includes('courseScreen(profile(),choices.startStage,courseMessage)')&&router.includes("case 'next': app.nextStage()"),'production UI uses the tested panel and guarded App campaign verb');
 console.log(`Course access: ${checks} pricing, migration, App ownership, campaign, practice, persistence and accessible UI checks passed.`);
+
+const snow=COURSE.find(course=>course.id==='tremblant-snow');
+check(!!snow,'released Tremblant Snow remains an independent actual event');
+same(COURSE_PRICES[snow.id],1800,'old Snow price remains exactly 1800 credits');
+same(courseUnlockRequirement(snow),null,'Snow has no prospective default-podium gate');
+const oldSnow={...fresh,credits:4567,courses:{version:1,unlocked:[...fresh.courses.unlocked,snow.id]}};
+same(normalizeProfile(oldSnow).courses,oldSnow.courses,'old explicit Snow ownership remains exact');
+check(isCourseUnlocked(normalizeProfile(oldSnow),snow),'old Snow ownership needs no GP podium');
+same(purchaseCourse({...fresh,credits:1800},snow).cost,1800,'ordinary Snow purchase still uses the exact price');

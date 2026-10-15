@@ -3,6 +3,11 @@ import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
+import {createHeliSession} from './heli/heli-session.js';
+import {groundFromCourse} from './heli/heli-ground.js';
+import {createHeliAudio} from './heli/heli-audio.js';
+import {carAt} from './heli/heli-save.js';
+import {isAirOnlyCar} from './heli/heli-jobs.js';
 import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hints.js';
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
@@ -41,7 +46,7 @@ import {grandPrixCourse} from './race-field.js';
 import {pitTransitTarget} from './pit-lane.js';
 import {createKeyboardSteering,createKeyboardThrottle,keyboardSteeringDirection} from './keyboard-steering.js';
 import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDrive,
-  footGamepadInput,footControlInput,preventCarKeyDefault} from './input-contexts.js';
+  footGamepadInput,footControlInput,preventCarKeyDefault,heliControls} from './input-contexts.js';
 import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as buyDriver,selectDriver as equipDriver} from './drivers.js';
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
 import {courseHasWinterSurfaces} from './race-surfaces.js';
@@ -141,6 +146,12 @@ export class App {
     this.cameraMode = 'chase';
     this.audio = new EngineAudio({flags: raceFlags});
     this.deepAudio = createDeepAudio({audio:this.audio});
+    // The helicopter (docs/HELICOPTER.md): its own session and sound, used
+    // only while a helicopter visit runs. The session's radio events are the
+    // one source of instructor lines.
+    this.heliSession = null; this.heliLog = []; this.heliCamera = 0;
+    this.heliAudio = createHeliAudio({audio: this.audio, autoRadio: false,
+      enabled: () => this._switches().enabled('helicopter') === true});
     this.duel.onChange((state, event) => {
       this._syncHiddenRoadDiscovery();
       this.audio.event(event,state,this.duel.course);
@@ -267,7 +278,7 @@ export class App {
     return !gate||gate.ready&&gate.state===this.duel.state&&gate.course===this.duel.course;
   }
   dispose(){
-    this.deepAudio.dispose();
+    this._leaveHeli();this.deepAudio.dispose();this.heliAudio.dispose();
     this.duel.clearDeep();
     this.duel.state.hiddenRoadJourney = null;
     this.stop();this._inputEvents?.abort();this.keys={};this._resetKeyboardInput();this.onFrame=null;
@@ -330,6 +341,10 @@ export class App {
       vy: 0,
       vz: Math.cos(heading) * speed,
     };
+    if (this.heliSession) {
+      const view = this.heliSession.view();
+      if (view.readout) this.heliAudio.update(view.readout);
+    }
     const deepEnvironment=this.duel.deepEnvironment();
     this.deepAudio.update(state,deepEnvironment);
     this.audio.update(state, {
@@ -351,6 +366,12 @@ export class App {
     this._stepAccumulator += seconds;
     while (this._stepAccumulator + 1e-10 >= SIMULATION_STEP) {
       if(!this.visualReady){this._stepAccumulator=0;this._resetKeyboardInput();break;}
+      if(this.heliSession&&this.duel.state.status==='heli'){
+        // The pad is read even while paused, so its Start button can resume.
+        const pad=this._readGamepad(SIMULATION_STEP).pad;
+        if(this.heliSession&&!this.duel.state.paused)this._heliEvents(this.heliSession.step(heliControls(this.keys,pad)));
+        this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);continue;
+      }
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
       this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
@@ -368,6 +389,7 @@ export class App {
     this._settleAbandoned();
     const selectedCar=options.car||this.duel.state.car;
     const car=isCarUnlocked(this.profile,selectedCar)?selectedCar:'falcone_f42';
+    if(this._airOnlyRefused(car,stage.id))return false;
     const driverId=isDriverUnlocked(this.profile,options.driverId)?normalizeDriverId(options.driverId):getEquippedDriverId(this.profile);
     const explicitSeed=Number.isSafeInteger(options.seed)?options.seed>>>0:null;
     // Keep legacy headless callers that set duel.seed before their first start.
@@ -462,6 +484,8 @@ export class App {
     this._applyRaceSettings(settings,customSeed);this.duel.emit({raceSettingsChanged:true});return this.getRaceChoices();
   }
   restart() {
+    // A helicopter visit has no run to restart; the pause menu leaves it.
+    if (this.duel.state.status === 'heli') return false;
     if (this.duel.state.arena?.mode === 'warlord')
       return this.startWarlordFight(this.duel.state.arena.warlordId);
     if (this.duel.state.arena) return this.startArenaEvent({
@@ -1118,6 +1142,7 @@ export class App {
         !(this.isYardHomeActive() || state.arena)) return false;
     const count = ambush ? 0 : mode === 'convoy-raid' ? 3 : Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
+    if (this._airOnlyRefused(car, venueId)) return false;
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
     const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: level,
       ...(mode === 'fuel-run' ? {brain: ['collector', 'rammer', 'hunter'][index]} : {})}));
@@ -1144,6 +1169,92 @@ export class App {
     return warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
   }
+  // ---- the helicopter --------------------------------------------------
+  // Special cars travel only by air while the helicopter is on: they drive
+  // only on the course where they were last set down (Tremblant Woods until
+  // flown), so never into the Wasteland or an arena either.
+  _airOnlyRefused(car, courseId) {
+    if (this._switches().enabled('helicopter') !== true || !isAirOnlyCar(car) || carAt(this.profile, car) === courseId) return false;
+    this.courseAccessMessage = `The ${CARS[car].name} travels only by air. Fly it here from the helipad first.`;
+    return true;
+  }
+  // Leave a helicopter visit: keep the session's own changes (its heli
+  // field and the credits it spent or earned) on top of the current profile.
+  _leaveHeli() {
+    const session = this.heliSession;
+    if (!session) return;
+    this.heliSession = null;
+    const left = session.leave();
+    const spent = left.credits - (this._heliCreditsAtStart ?? left.credits);
+    this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(left.heli ? {heli: left.heli} : {})};
+    this._saveProfile();
+    this.heliAudio.stop();
+  }
+  heliAvailable() {
+    return !!this.player && this._switches().enabled('helicopter') === true;
+  }
+  // From the main menu to the helipad at Tremblant Woods.
+  visitHeli({mode = 'assisted'} = {}) {
+    if (this.duel.state.status !== 'menu' || !this.heliAvailable()) return false;
+    this._refreshPlayer();
+    const car = this.menuCar, driverId = getEquippedDriverId(this.profile);
+    this.runId = this._runPlayerId = this._markedRaceKey = null;
+    this.ghostRecorder = this.ghostRecord = this.ghostPose = this.grandPrixLapRecorder = null; this.lapTelemetryRecorder = null; this.ghostStatus = 'none';
+    this._stepAccumulator = 0; this.heliLog = []; this.heliCamera = 0;
+    this.audio.unlock(); this.audio.setPaused(false);
+    const loadCourse = courseId => {
+      if (!this.duel.startHeliVisit({courseId, playerId: this.player.id, car, driverId,
+        upgrades: getUpgradeLevels(this.profile, car), seed: 1989,
+        difficulty: this._raceSettings.difficulty})) throw new Error(`Cannot fly to ${courseId}`);
+      return {course: this.duel.course, ground: groundFromCourse(this.duel.course)};
+    };
+    const today = new Date(), pad = n => String(n).padStart(2, '0');
+    this._heliCreditsAtStart = this.profile.credits;
+    this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
+      today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
+      persist: profile => {
+        // Credits the session charged since its last save move the app's
+        // credits by the same amount; its heli field is its own.
+        const spent = profile.credits - (this._heliCreditsAtStart ?? profile.credits);
+        this._heliCreditsAtStart = profile.credits;
+        this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(profile.heli ? {heli: profile.heli} : {})};
+        this._saveProfile();
+      }});
+    this.setInputContext(null);
+    this._heliEvents(this.heliSession.start());
+    return true;
+  }
+  _heliEvents(events) {
+    for (const event of events) {
+      if (event.type === 'radio') this.heliAudio.say(event.line);
+      else this.heliAudio.event(event);
+      if (event.type === 'crashed') this.heliAudio.say('heli.radio.crash');
+    }
+    if (events.length) this.heliLog = [...this.heliLog, ...events].slice(-40);
+    if (events.length) this.duel.emit({heli: true});
+  }
+  heliView() {
+    return this.heliSession?.view() ?? null;
+  }
+  heliBuyFuel(kg = Infinity) {
+    const result = this.heliSession?.buyFuel(kg) ?? {ok: false};
+    this._heliEvents(this.heliSession?.takeEvents() ?? []);
+    return result;
+  }
+  heliSetDestination(courseId) {
+    return this.heliSession?.setDestination(courseId) ?? false;
+  }
+  // Race here: leave the helicopter and start the normal race on this course
+  // with this car. Flying never changes how the race runs.
+  raceHere({courseId, carId}) {
+    const stageIndex = COURSE.findIndex(stage => stage.id === courseId);
+    if (!this.heliSession || stageIndex < 0 || !isCourseUnlocked(this.profile, COURSE[stageIndex])) return false;
+    if (this._airOnlyRefused(carId && isCarUnlocked(this.profile, carId) ? carId : this.menuCar, courseId)) return false;
+    this.returnToMenu();
+    this.menuStage = stageIndex;
+    if (carId && isCarUnlocked(this.profile, carId)) this.menuCar = carId;
+    return this.startCampaign({startStage: stageIndex, car: this.menuCar});
+  }
   returnToYard() {
     if (!this.duel.state.arena) return false;
     this.returnToMenu();
@@ -1154,6 +1265,7 @@ export class App {
     this._refreshPlayer();
     const discovery = this.getHiddenRoadDiscovery();
     if (!discovery.enabled || !discovery.discoveredGate) return false;
+    if (this._airOnlyRefused(this.menuCar, 'pacific-canyon')) return false;
     const car = this.menuCar, driverId = getEquippedDriverId(this.profile);
     this.runId = this._runPlayerId = this._markedRaceKey = null;
     this._settledHiddenRoadJourney = null;
@@ -1318,7 +1430,7 @@ export class App {
   }
   togglePause() {
     const st = this.duel.state;
-    if (!['racing', 'countdown', 'exploring'].includes(st.status)) return;
+    if (!['racing', 'countdown', 'exploring', 'heli'].includes(st.status)) return;
     st.paused = !st.paused;
     this._footPointer.lookX = this._footPointer.lookY = 0;
     this._footPointer.fire = this._footPointer.aim = false;
@@ -1355,6 +1467,8 @@ export class App {
     this._resetKeyboardInput();
     const st = this.duel.state;
     this.duel.clearDeep();this.deepAudio.stop();
+    this._leaveHeli();
+    if (st.heliVisit) st.heliVisit = null;
     st.paused = false; st.status = 'menu'; st.boosting = false;
     const wasVisit = !!st.hiddenRoadVisit;
     st.hiddenRoadJourney = null; st.hiddenRoadVisit = null;
@@ -1414,6 +1528,7 @@ export class App {
   // ---- input -----------------------------------------------------------
   activeInputContext() {
     return this.inputContext ?? (this.duel.state.status === 'menu' ? 'menu' :
+      this.duel.state.status === 'heli' && this.heliSession ? 'heli' :
       this.duel.state.onFoot ? 'foot' : 'car');
   }
   setInputContext(context = null) {
@@ -1439,8 +1554,17 @@ export class App {
     else if (action.startsWith('gear:')) this.duel.selectFootGear(Number(action.slice(5)));
     else if (action === 'shift-up') this.duel.setInput({ shiftUp: true });
     else if (action === 'shift-down') this.duel.setInput({ shiftDown: true });
+    else if (action === 'heli-hook') this._heliPress(session => session.pressHook());
+    else if (action === 'heli-autopilot') this._heliPress(session => session.pressAutopilot());
+    else if (action === 'heli-cruise') this._heliPress(session => session.acceptCruise());
+    else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % 4; this.duel.emit({heli: true}); }
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
+  }
+  _heliPress(press) {
+    if (!this.heliSession || this.duel.state.paused) return;
+    press(this.heliSession);
+    this._heliEvents(this.heliSession.takeEvents());
   }
   _resetKeyboardInput() {
     this._keyboardSteering.reset();
@@ -1497,6 +1621,7 @@ export class App {
     if (pressed.some(Boolean)) this.audio.unlock();
     for (const action of gamepadEdgeActions(this.activeInputContext(), pressed, this._gamepadButtons)) this._inputAction(action);
     this._gamepadButtons = pressed;
+    if (this.activeInputContext() === 'heli') return {...neutral, pad};
     return this.activeInputContext()==='foot' ?
       footGamepadInput(pad,pressed,dt) : carGamepadDrive(pad, pressed);
   }

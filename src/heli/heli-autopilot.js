@@ -4,7 +4,7 @@
 // cable barely swings) and stops in a hover 20 m above the landing zone.
 // Landing and setting down stay with the pilot in H1. Any control beyond
 // 30% hands control straight back. Pure: it only turns state into targets.
-import {GRAVITY, HORIZONTAL_DRAG, heliMass} from './heli-flight.js';
+import {GRAVITY, HELI_STEP, HORIZONTAL_DRAG, heliMass} from './heli-flight.js';
 
 const DEG = Math.PI / 180;
 
@@ -24,13 +24,15 @@ export const AUTOPILOT = Object.freeze({
   lookAhead: Object.freeze([0, 2, 4, 6, 8, 10]),
   // Slows down when the ground ahead is higher than it can climb to in time.
   slowSpeed: 8,
+  speedUp: 0.7,
+  antiSway: 0.5,
 });
 
 const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 
 export function createAutopilot() {
-  return {engaged: false, holdY: 0, holdHeading: 0, target: null, arrived: false, cruiseY: 0};
+  return {engaged: false, holdY: 0, holdHeading: 0, target: null, arrived: false, cruiseY: 0, speed: 0};
 }
 
 // target: {x, z, groundY} of the landing zone, or null to just hold.
@@ -38,6 +40,7 @@ export function setAutopilotTarget(autopilot, target) {
   const ok = target && [target.x, target.z, target.groundY].every(Number.isFinite);
   autopilot.target = ok ? {x: target.x, z: target.z, groundY: target.groundY} : null;
   autopilot.arrived = false;
+  autopilot.speed = null;
 }
 
 export function toggleAutopilot(autopilot, state) {
@@ -46,6 +49,7 @@ export function toggleAutopilot(autopilot, state) {
     autopilot.holdY = state.y;
     autopilot.holdHeading = state.heading;
     autopilot.cruiseY = state.y;
+    autopilot.speed = null;
     autopilot.arrived = false;
   }
   return autopilot.engaged;
@@ -58,7 +62,9 @@ export function wantsControl(controls = {}) {
 // Returns {commands, events}. commands is null when the pilot is flying.
 // hang: metres the load hangs below the skids (cable plus car), kept clear
 // of the ground on the way.
-export function autopilotStep(autopilot, state, controls, {ground = null, hang = 0} = {}) {
+// load: the hooked load {vx, vz} when one hangs; the autopilot leans the
+// hook toward the load's swing, which damps it.
+export function autopilotStep(autopilot, state, controls, {ground = null, hang = 0, load = null, dt = HELI_STEP} = {}) {
   const events = [];
   if (!autopilot.engaged) return {commands: null, events};
   if (wantsControl(controls) || state.crashed || state.onGround && !autopilot.target) {
@@ -90,12 +96,19 @@ export function autopilotStep(autopilot, state, controls, {ground = null, hang =
 
   // Wanted ground velocity: cruise speed, easing off so it can stop at the
   // approach point without passing it.
-  let speed = Math.min(AUTOPILOT.cruiseSpeed, Math.sqrt(2 * AUTOPILOT.brake * Math.max(0, distance - 1)));
-  if (climbShort > 10) speed = Math.min(speed, AUTOPILOT.slowSpeed);
+  // The wanted speed builds gently (0.7 m/s2) so a hanging car never gets a
+  // sudden jerk; braking follows the stopping curve.
+  let limit = Math.min(AUTOPILOT.cruiseSpeed, Math.sqrt(2 * AUTOPILOT.brake * Math.max(0, distance - 1)));
+  if (climbShort > 10) limit = Math.min(limit, AUTOPILOT.slowSpeed);
+  // A fresh target starts from the speed already made toward it.
+  if (!Number.isFinite(autopilot.speed)) autopilot.speed = distance > 1e-6 ? Math.max(0, (state.vx * dx + state.vz * dz) / distance) : 0;
+  autopilot.speed = Math.min(limit, autopilot.speed + AUTOPILOT.speedUp * dt);
+  const speed = autopilot.speed;
   const wantX = distance > 1e-6 ? dx / distance * speed : 0, wantZ = distance > 1e-6 ? dz / distance * speed : 0;
   const mass = heliMass(state), groundSpeed = Math.hypot(state.vx, state.vz);
   const dragX = HORIZONTAL_DRAG * state.vx * groundSpeed / mass, dragZ = HORIZONTAL_DRAG * state.vz * groundSpeed / mass;
-  const ax = 0.6 * (wantX - state.vx) + dragX, az = 0.6 * (wantZ - state.vz) + dragZ;
+  const swayX = load ? AUTOPILOT.antiSway * (load.vx - state.vx) : 0, swayZ = load ? AUTOPILOT.antiSway * (load.vz - state.vz) : 0;
+  const ax = 0.6 * (wantX - state.vx) + dragX + swayX, az = 0.6 * (wantZ - state.vz) + dragZ + swayZ;
   const fwdX = Math.sin(state.heading), fwdZ = Math.cos(state.heading);
   const along = ax * fwdX + az * fwdZ, across = ax * -fwdZ + az * fwdX;
   // Keep the combined tilt within 10 degrees, not each axis alone.

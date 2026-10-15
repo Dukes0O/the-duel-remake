@@ -189,7 +189,7 @@ const BASE = defineScriptedCourse({
       'old-town-esses-3': { line: 'Kerb to kerb.', note: 'Keep the rhythm.' },
       'old-town-esses-4': { line: 'Run wide on the exit up the Hillside.', note: 'Get the exit right; the Hillside is short.' },
       'precinct-bend': { line: 'Stay right after the bend to set up the hairpin.', note: 'Downhill now. Line up on the right for the hairpin.' },
-      'lantern-hairpin': { brakeBoard: 150, line: 'Far right on entry, turn late, use the whole road around.', note: 'The slowest corner in the game: about 30 km/h. Brake early, be patient, and drive out cleanly. Rushing it loses more than braking early.' },
+      'lantern-hairpin': { brakeBoard: 150, line: 'Far right on entry, turn late, use the whole road around.', note: 'The slowest corner on the lap: about 55 km/h. Brake early, be patient, and drive out cleanly. Rushing it loses more than braking early.' },
       'fishmarket-bend': { line: 'Wide exit onto the Reservoir Run.', note: 'Everything you carry out of here lasts the length of the reservoir.' },
       'reservoir-sweep': { line: 'Turn in early and hold it, walls close on the outside.', note: 'Flat out if you are brave. A small lift if a car is alongside.' },
       'harbour-turn': { brakeBoard: 100, line: 'Brake straight, turn in, inside kerb.', note: 'Second chance to pass, and the last on the lap.' },

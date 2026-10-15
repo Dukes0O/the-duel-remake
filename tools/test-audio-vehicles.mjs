@@ -73,13 +73,31 @@ const update=()=>audio._updateVehicleVoices(state,{vehicles:snapshot(),listener}
 update();
 equal(audio.vehicleVoices.size,7,'three rivals plus four traffic have seven actual reservations');
 check([...audio.vehicleVoices].every(row=>row.voice),'available donors create real moving voices');
-const playerLevel=audio._playerEngineLevel();
+const ownLevel=actor=>Math.max(.2,Math.min(1,.2+.8*(Number.isFinite(actor.speedMph)?Math.abs(actor.speedMph):0)/200));
 for(const row of audio.vehicleVoices){
   const cue=SOUND_BANK[row.kind==='rival'?'vehicle.rival-engine':'vehicle.traffic-engine'];
-  equal(row.voice.gain.gain.calls.find(call=>call[0]==='ramp')?.[1],playerLevel*cue.volume,'gain follows current player engine level');
+  equal(row.voice.gain.gain.calls.find(call=>call[0]==='ramp')?.[1],ownLevel(row.actor)*cue.volume,'gain follows only its own actual actor speed');
   equal(row.voice.gain.gain.calls.find(call=>call[0]==='ramp')?.[2],.4,'fade-in is .4 seconds');
   check(row.voice.source.buffer===audio.samples[row.kind==='rival'?'loadHigh':'engine'].source.buffer,'actual existing donor buffer is reused');
 }
+const rememberedSpeeds=new Map([...audio.vehicleVoices].map(row=>[row.actor,row.actor.speedMph]));
+const rivals=[...audio.vehicleVoices].filter(row=>row.kind==='rival');
+rivals[0].actor.speedMph=20;rivals[1].actor.speedMph=100;
+audio.engineGain.gain.value=0;audio.samples.loadHigh.gain.gain.value=0;audio.samples.engine.gain.gain.value=0;
+update();equal(audio._playerEngineLevel(),0,'actual player engine reference can be silent');
+for(const row of audio.vehicleVoices){
+  const cue=SOUND_BANK[row.kind==='rival'?'vehicle.rival-engine':'vehicle.traffic-engine'];
+  equal(row.voice.gain.gain.value,ownLevel(row.actor)*cue.volume,'silent player does not silence another actual engine');
+  equal(row.ownLevel,ownLevel(row.actor),'reservation reports its actual selected own-car level');
+}
+check(rivals[1].voice.gain.gain.value>rivals[0].voice.gain.gain.value,'different own speeds produce different dry gains');
+const independentGains=new Map([...audio.vehicleVoices].map(row=>[row,row.voice.gain.gain.value]));
+audio.engineGain.gain.value=.9;audio.samples.loadHigh.gain.gain.value=.8;audio.samples.engine.gain.gain.value=.7;update();
+for(const row of audio.vehicleVoices)equal(row.voice.gain.gain.value,independentGains.get(row),'changed player gain cannot change own-car level');
+for(const [actual,speed] of rememberedSpeeds)actual.speedMph=speed;
+audio.engineGain.gain.value=.2;audio.samples.loadHigh.gain.gain.value=.4;audio.samples.engine.gain.gain.value=.1;update();
+for(const speed of [NaN,Infinity,-Infinity,0,-100,500])equal(audio._vehicleEngineLevel({speedMph:speed}),ownLevel({speedMph:speed}),
+  'own-speed idle floor/absolute/finite/ceiling: '+speed);
 const first=[...audio.vehicleVoices].find(row=>row.kind==='rival');
 const originalRate=first.voice.source.playbackRate.value;
 first.actor.car='banshee_muscle';update();
@@ -219,4 +237,19 @@ await Promise.resolve();await Promise.resolve();
 equal(audio.vehicleVoices.size,0,'menu event pending reservations drain only after decode');
 equal(ctx.nodes.filter(node=>node.type==='source').length,0,'menu event never creates a late source');
 state.status='racing';state.paused=false;
+({audio,ctx}=audioFixture());audio.samples={};
+let ownReady;audio._samplesPromise=new Promise(done=>{ownReady=done;});update();
+const pendingOwn=[...audio.vehicleVoices],previousOwn=new Map(pendingOwn.map(row=>[row.actor,row.actor.speedMph]));
+for(let i=0;i<pendingOwn.length;i++)pendingOwn[i].actor.speedMph=25+i*20;
+audio.engineGain.gain.value=0;
+audio.samples={loadHigh:{source:{buffer:{duration:5}}},engine:{source:{buffer:{duration:5}}}};ownReady();
+await Promise.resolve();await Promise.resolve();
+for(const row of audio.vehicleVoices){
+  const cue=SOUND_BANK[row.kind==='rival'?'vehicle.rival-engine':'vehicle.traffic-engine'];
+  equal(row.voice.gain.gain.calls.find(call=>call[0]==='ramp')?.[1],ownLevel(row.actor)*cue.volume,
+    'late donor gain uses current actor speed without another snapshot update');
+  equal(row.ownLevel,ownLevel(row.actor),'late donor records the current actual selected level');
+}
+for(const [actual,speed] of previousOwn)actual.speedMph=speed;
+audio.setPaused(true);ctx.advance(.001);equal(audio.vehicleVoices.size,0,'new own-speed late-bind case drains all original resources');
 console.log(`Vehicle audio: ${checks} controlled snapshot, moving-loop and resource checks passed; native mix/listening remain pending.`);

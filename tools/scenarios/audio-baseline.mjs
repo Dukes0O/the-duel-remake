@@ -4,7 +4,8 @@ import { join } from 'node:path';
 
 // Render reference, candidate and a reference control in the same native
 // offline clock. Separate stereo outputs retain each engine's complete graph.
-// The strict peak threshold is unchanged; a noisy control fails explicitly.
+// The strict pre-limiter and repeat-control thresholds are unchanged.
+// Accepted mastering changes make final-output differences informational only.
 export async function run(context) {
   const ref = process.env.DUEL_AUDIO_BASELINE || 'cf72d9c';
   const legacy = execFileSync('git', ['show', ref + ':src/audio.js'], {
@@ -136,13 +137,16 @@ export async function run(context) {
   const rows = await context.evaluate('window.__baselineResult');
   await writeFile(
     join(context.outputDir, 'baseline-comparison.json'),
-    JSON.stringify({ ref, memoryOnlySaves: true, rows }, null, 2) + '\n',
+    JSON.stringify({ ref, memoryOnlySaves: true,
+      acceptance: 'Historical pre-bank voices before mastering; strict pre-limiter and repeat control.',
+      finalOutput: 'Informational only: accepted +6.4 dB and 4x ceiling curve; mastering and crash recipes judge final output.',
+      rows }, null, 2) + '\n',
   );
   console.log(JSON.stringify(rows));
   if (rows.some((row) => row.repeatPeak > 0.000002))
     throw Error(
       'Baseline control is not repeatable at the unchanged threshold.',
     );
-  if (rows.some((row) => row.peakDifference > 0.000002))
-    throw Error('Baseline audio changed; investigate before handoff.');
+  if (rows.some((row) => row.beforeLimiterPeak > 0.000002))
+    throw Error('Baseline pre-limiter voices changed; investigate before handoff.');
 }
