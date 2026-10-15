@@ -442,7 +442,7 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "review"
+    status: "merging"  # holds busy-game-files from 15 October; FIRE-VIEW next
     claimed_by: claude-fire-2026-10-14
     branch: claude/fire-hooks
     needs: [FIRE-MISSIONS, FIRE-SPREAD, FIRE-BUCKET, FIRE-RADIO, FIRE-CLOSE]
