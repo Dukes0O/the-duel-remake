@@ -46,6 +46,8 @@ const privateGenerators = [
 const nativeGenerators = [
   {script: 'tools/blender/vesper-blackiron.py', test: 'tools/test-vesper-art.mjs'},
   {script: 'tools/blender/salt-flats.py', test: 'tools/test-salt-flats-output.mjs'},
+  {script: 'tools/blender/ardennes-landmarks.py', test: 'tools/test-circuit-ardennes.mjs'},
+  {script: 'tools/blender/ardennes-beech.py', test: 'tools/test-circuit-ardennes.mjs'},
 ];
 // Circuit kits plan directories rather than one editable Blend per model.
 const kitGenerators = [{ script: 'tools/blender/p4-kits.py', round: 3 }];

@@ -27,13 +27,40 @@ export function finishVegetationCell(mesh, key, entries) {
   return mesh;
 }
 
-export function addPineTrees(group, trees, course) {
+// Presentation-only replacement of existing Ardennes trees; never draws simulation RNG.
+export function beechTreePlacements(course) {
+  const spec=course?.def?.id==='ardennes-forest' ? course.def.beech : null;
+  if (!spec) return [];
+  if (!Array.isArray(spec.groves) || !spec.groves.length || spec.groves.some(grove =>
+      ![grove.s,grove.reach].every(Number.isFinite) || grove.s<0 || grove.s>=course.length || grove.reach<=0) ||
+      !Array.isArray(spec.scales) || spec.scales.length!==3 || spec.scales.some(scale=>!Number.isFinite(scale)||scale<=0))
+    throw Error('Ardennes beech needs finite authored groves and three scale variants.');
+  if (spec.setback!==undefined && !(Number.isFinite(spec.setback)&&spec.setback>=0))
+    throw Error('Ardennes beech setback must be a finite distance beyond the road edge.');
+  const rows=[];
+  for (const tree of course.features.trees) {
+    if (!spec.groves.some(grove=>Math.abs(tree.s-grove.s)<=grove.reach) ||
+        Math.abs(tree.off)<course.roadHalfWidthAt(tree.s)+Math.max(course.def.scenery.forest.from,spec.setback??0)) continue;
+    let hash=2166136261;
+    for (let i=0;i<tree.id.length;i++) hash=Math.imul(hash^tree.id.charCodeAt(i),16777619)>>>0;
+    if (hash%3===0) continue; // Keep actual firs interleaved inside each group.
+    rows.push(Object.freeze({id:'ardennes-beech',s:tree.s,lateral:tree.off,
+      heading:tree.heading-course.at(tree.s).heading,scale:tree.scale*spec.scales[Math.floor(hash/3)%3],
+      scenery:Object.freeze({kind:'tree',id:tree.id})}));
+  }
+  return rows;
+}
+
+export function addPineTrees(group, trees, course, {kits} = {}) {
   if (!trees.length) return;
-  const assets = pineTreeAssets(), object = new THREE.Object3D();
+  const selected=beechTreePlacements(course), ids=new Set(selected.map(row=>row.scenery.id));
+  if (selected.length && kits?.status!=='ready') throw Error('Ardennes beech needs its prepared original track-kit owner.');
+  const pines=selected.length?trees.filter(tree=>!ids.has(tree.id)):trees;
+  const assets = pines.length?pineTreeAssets():null, object = new THREE.Object3D();
   const instances = new Map(), active = new Set(), seen = new Set(), changed = new Set();
   const axis = new THREE.Vector3(), fall = new THREE.Quaternion(), yaw = new THREE.Quaternion(),
     rotation = new THREE.Quaternion(), matrix = new THREE.Matrix4();
-  for (const { key, entries } of vegetationCells(trees)) {
+  for (const { key, entries } of vegetationCells(pines)) {
     const trunks = new THREE.InstancedMesh(assets.trunk, assets.bark, entries.length);
     const leaves = new THREE.InstancedMesh(assets.crown, assets.needles, entries.length);
     trunks.name = `Pine trunks ${key}`; leaves.name = `Pine crowns ${key}`;
@@ -51,7 +78,18 @@ export function addPineTrees(group, trees, course) {
     });
     group.add(finishVegetationCell(trunks, key, entries), finishVegetationCell(leaves, key, entries));
   }
+  if (selected.length) {
+    const byId=new Map(trees.map(tree=>[tree.id,tree]));
+    for (const [index,row] of kits.placements.entries()) if (row.id==='ardennes-beech' && ids.has(row.scenery?.id)) {
+      const tree=byId.get(row.scenery.id), upright=kits.getPlacementPose(index);
+      if (!tree || !upright || instances.has(tree.id)) throw Error('Ardennes beech binding is absent or duplicated.');
+      instances.set(tree.id,{tree,index,kit:true,meshes:[],root:new THREE.Vector3().setFromMatrixPosition(upright),
+        upright,drawScale:row.scale[0],progress:null});
+    }
+    if (selected.some(row=>!instances.has(row.scenery.id))) throw Error('Ardennes beech binding is incomplete.');
+  }
   return state => {
+    let changedKits=false;
     seen.clear(); changed.clear();
     const now = Number.isFinite(state?.stageTimeSec) ? state.stageTimeSec : 0;
     const events = state?.status === 'menu' ? [] : state?.brokenScenery || [];
@@ -76,11 +114,13 @@ export function addPineTrees(group, trees, course) {
       object.position.copy(item.root);
       object.position.x += (event.directionX || 0) * distance;
       object.position.z += (event.directionZ || 0) * distance;
-      matrix.compose(object.position, rotation, object.scale.setScalar(hidden ? 0 : item.tree.scale));
+      matrix.compose(object.position, rotation, object.scale.setScalar(hidden ? 0 : item.drawScale ?? item.tree.scale));
       for (const mesh of item.meshes) { mesh.setMatrixAt(item.index, matrix); changed.add(mesh); }
+      if (item.kit) {kits.setPlacementPose(item.index,matrix,false);changedKits=true;}
     }
     for (const item of active) if (!seen.has(item.tree.id)) {
       for (const mesh of item.meshes) { mesh.setMatrixAt(item.index, item.upright); changed.add(mesh); }
+      if (item.kit) {kits.setPlacementPose(item.index,item.upright,false);changedKits=true;}
       item.progress = null; active.delete(item);
     }
     for (const mesh of changed) {
@@ -88,6 +128,7 @@ export function addPineTrees(group, trees, course) {
       mesh.computeBoundingBox(); mesh.boundingBox.expandByScalar(.02);
       mesh.computeBoundingSphere(); mesh.boundingSphere.radius += .02;
     }
+    if (changedKits) kits.refresh();
   };
 }
 

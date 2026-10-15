@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "units": "metres",
+  "up": "Y",
+  "models": [
+    {
+      "id": "stone-stream-bridge",
+      "original": true,
+      "author": "The Duel project",
+      "recipe": "tools/blender/ardennes-landmarks.py",
+      "source": "Original geometry authored for CIRCUITS.md section 5.5. No external model, texture or download.",
+      "files": [
+        {
+          "path": "stone-stream-bridge.glb",
+          "bytes": 99848,
+          "sha256": "cbe671def0b098686003538f148df76979200a5d81119ea5aeecaca6d62b0142"
+        },
+        {
+          "path": "stone-stream-bridge-lod.glb",
+          "bytes": 27196,
+          "sha256": "4991dbd0e02ffc167a6760d30371cd054cc793e769c7e2cc0f37c4d8d3d8b4df"
+        }
+      ],
+      "highTriangles": 1356,
+      "size": [
+        12.149999618530273,
+        4.599999904632568,
+        5.5
+      ],
+      "lowTriangles": 324,
+      "lowSize": [
+        12.149999618530273,
+        4.599999904632568,
+        5.5
+      ],
+      "bytes": 127044
+    },
+    {
+      "id": "forest-footbridge",
+      "original": true,
+      "author": "The Duel project",
+      "recipe": "tools/blender/ardennes-landmarks.py",
+      "source": "Original geometry authored for CIRCUITS.md section 5.5. No external model, texture or download.",
+      "files": [
+        {
+          "path": "forest-footbridge.glb",
+          "bytes": 142808,
+          "sha256": "4b64c225fe22a292e358a2baabdc65d92ac21f52c062c8cec1090ce0525fa3b9"
+        },
+        {
+          "path": "forest-footbridge-lod.glb",
+          "bytes": 53752,
+          "sha256": "1af90fa5825e2dcec5c21b5b557bd25aac9a0b8b69f4eccbaccc1c212a261c39"
+        }
+      ],
+      "highTriangles": 1980,
+      "size": [
+        69.10840606689453,
+        8.291847467422485,
+        3.7000001668930054
+      ],
+      "lowTriangles": 708,
+      "lowSize": [
+        69.10840606689453,
+        8.291847467422485,
+        3.7000001668930054
+      ],
+      "bytes": 196560
+    },
+    {
+      "id": "forest-timing-tower",
+      "original": true,
+      "author": "The Duel project",
+      "recipe": "tools/blender/ardennes-landmarks.py",
+      "source": "Original geometry authored for CIRCUITS.md section 5.5. No external model, texture or download.",
+      "files": [
+        {
+          "path": "forest-timing-tower.glb",
+          "bytes": 67040,
+          "sha256": "4d0810804bc8287ae35bf360831fcfda989636d634eb4d7fef9497145d09ed8a"
+        },
+        {
+          "path": "forest-timing-tower-lod.glb",
+          "bytes": 53604,
+          "sha256": "54a379fe30e185dfa6160471874649a2a2464475f13798cf0630bffdcf0d9d36"
+        }
+      ],
+      "highTriangles": 888,
+      "size": [
+        6.300000190734863,
+        16.299999237060547,
+        6.099999904632568
+      ],
+      "lowTriangles": 696,
+      "lowSize": [
+        6.300000190734863,
+        16.299999237060547,
+        6.099999904632568
+      ],
+      "bytes": 120644
+    }
+  ]
+}

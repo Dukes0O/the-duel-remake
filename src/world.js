@@ -15,7 +15,7 @@ import { addRallyDetail } from './rally-detail.js';
 import { addMountainLandscape, rockTexture } from './mountain-landscape.js';
 import { addCheckpointGates } from './checkpoint-gates.js';
 import { createTerrainMaterial } from './terrain-style.js';
-import { createPavedRoadMaterial, createPavedShoulderMaterial } from './road-surface.js';
+import { createPavedRoadMaterial, createPavedShoulderMaterial, bindPavedDampRoad } from './road-surface.js';
 import { addCitySkyline } from './city-skyline.js';
 import { addCityParking } from './city-parking.js';
 import { addTrackScriptScene } from './track-script-scene.js';
@@ -67,7 +67,8 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   if(winter&&trackKits?.status!=='ready')throw Error('Winter world needs its prepared approved track kits.');
   const omitFoliageAt=winter?(course.def.snowWorld.mixed?(x,z)=>winterWeight(course,course.nearest(x,z).s)>0:()=>true):undefined;
   const winterTrees=winter?snowPineIds(course):null,winterRocks=winter?snowRockFeatures(course):null;
-  const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night,wet:!!course.def.wetRoad});
+  const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night,wet:!!course.def.wetRoad,
+    ...(course.def.dampRoad !== undefined ? {dampRoad:course.def.dampRoad,courseLength:course.length,mistBanks:course.def.effects?.valleyMist} : {})});
   const groundMat=course.def.practice?new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),bumpMap:surfaceTexture('gravel'),bumpScale:.06,color:0xd0b28a,roughness:1,vertexColors:true}):createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
   if(winter)winterTerrainMaterial(groundMat,course.def.snowWorld.drifts===true,course.def.snowWorld.variation===true,course.def.snowWorld);
   const terrainFor=geometry=>winter?applySnowTerrain(geometry,course):geometry;
@@ -104,6 +105,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
     }
   }
   if(course.script)addTrackScriptScene(group,course,{snow:winter});
+  if(course.def.dampRoad !== undefined)bindPavedDampRoad(group,course,roadMat);
   addCircuitWater(group,course);addRoadGlow(group,course);addNightGlows(group,course);addWaterside(group,course);
   for(const theme of new Set(course.sections.map(s=>s.theme))){
     if(theme==='arena')continue;
@@ -113,7 +115,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
       view.features.rocks=view.features.rocks.filter(rock=>!winterRocks.has(rock));}
     view.features.mountains=filterMuddyHollowMountains(course,view.features.mountains);
     view.detailSections=course.sections.filter(s=>s.theme===theme);
-    const updateLandscape=addLandscape(group,view);if(updateLandscape)registerSceneSystem(group,{sync:updateLandscape});
+    const updateLandscape=addLandscape(group,view,trackKits);if(updateLandscape)registerSceneSystem(group,{sync:updateLandscape});
     addLandscapeDetail(group,view,theme==='alpine',{omitFoliageAt});
   }
   addFurniture(group, course, metal);
@@ -321,11 +323,12 @@ function addHiddenRoad(group, course) {
   group.add(root);
 }
 
-function addLandscape(group,course){
+function addLandscape(group,course,trackKits){
   addMountainLandscape(group,course);
   const trees=course.features.trees;
   const pine=course.def.theme!=='desert';
-  if(pine)return addPineTrees(group,trees,course);
+  if(pine)return course.def.id==='ardennes-forest'&&course.def.beech
+    ?addPineTrees(group,trees,course,{kits:trackKits}):addPineTrees(group,trees,course);
   else return addDesertCacti(group,course);
 }
 
