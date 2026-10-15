@@ -212,7 +212,7 @@ tasks:
     owner: "claude"
     lane: "DESIGN"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: [P4-SUMMIT, P4-AVALANCHE, P4-REVIEW-TOOL]
     details: "docs/board/cards/P4-FINISH-SUMMIT.md"
 
