@@ -181,7 +181,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-p4-variants-2026-10-15
+    branch: codex/p4-variants
     needs: [P4-PANORAMA, P4-HARBOUR, P4-TREMBLANT, P4-CAREER]
     locks: [circuit-registry]
     details: "docs/board/cards/P4-VARIANTS.md"
