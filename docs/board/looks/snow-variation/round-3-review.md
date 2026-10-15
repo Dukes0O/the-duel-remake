@@ -32,3 +32,5 @@ These verdicts and limits are folded here so Root may recycle the owned consumed
 ## Pending
 
 Round-three JPEG publication, any approved actual Summit signature update, the original nearby lane and production build are PENDING. No future JPEG hash or gate/build pass is claimed. Root owns publication, scheduling, cleanup and integration metadata.
+
+Published current round-3.jpg: 122278 bytes, SHA256 cc6e09f3c94916937b12a5debc98c54927143b2b64bb832dd0875fc780264d90. The accepted original raw PNGs supply this unchanged full-image JPEG; no second art review was run. Consumed R1/R2 JPEGs (453108 + 120900 = 574008 bytes) were hash-verified and sent to Recycle Bin only after their verdicts were folded above. All three scores/limits/provenance remain.
