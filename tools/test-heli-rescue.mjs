@@ -329,13 +329,13 @@ const target = {x: 40, z: -10};
 // Supply crates.
 {
   eq(SUPPLY_CRATES.summitRun.map(c => c.id).join(), 'food,medicine,fuel', 'three crates: food, medicine, fuel');
-  eq(SUPPLY_CRATES.summitRun.map(c => c.massKg).join(), '300,200,450', 'Summit Run: 300, 200 and 450 kg');
+  eq(SUPPLY_CRATES.summitRun.map(c => c.massKg).join(), '300,200,820', 'Summit Run: 300, 200 and 820 kg (drums tuned to the climb)');
   eq(SUPPLY_CRATES.tremblantSnow.map(c => c.massKg).join(), '400,500,900', 'Tremblant Snow\'s lodge: 400, 500 and 900 kg');
   eq(SUPPLY_CRATES.tremblantSnow.map(c => c.id).join(), 'food,medicine,fuel', 'with the same three ids');
   ok(Object.isFrozen(SUPPLY_CRATES) && Object.isFrozen(SUPPLY_CRATES.summitRun[0]), 'the table is frozen');
   const crate = createSupplyCrate({id: 'fuel', x: 10, z: 20, ground: flat});
   ok(crate.supply && crate.id === 'fuel' && !crate.hooked && crate.onGround, 'a crate is a supply load on the ground, not yet hooked');
-  eq(crate.massKg, 450, 'the fuel drums weigh 450 kg');
+  eq(crate.massKg, 820, 'the fuel drums weigh 820 kg');
   near(crate.y, CABLE.restHeight, 1e-9, 'resting like the lesson crate');
   eq(createSupplyCrate({id: 'fuel', set: 'tremblantSnow', ground: flat}).massKg, 900, 'the snow set is heavier');
   eq(createSupplyCrate({id: 'food', massKg: 275, ground: flat}).massKg, 275, 'a tuned mass overrides the table');

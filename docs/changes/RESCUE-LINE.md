@@ -48,7 +48,7 @@ Needs: FIRE-MISSIONS and FIRE-BUCKET merged.
 - Handover: the pair on the ground, sliding at 1 m/s or less, with the
   helicopter at 1 m/s or less, inside any listed circle (12 m if a circle has
   no radius). It happens once and the line is then `done`.
-- Supply crates: Summit Run food 300, medicine 200, fuel drums 450 kg;
+- Supply crates: Summit Run food 300, medicine 200, fuel drums 820 kg;
   Tremblant Snow fallback 400, 500, 900 kg. Pay 300 a crate, 150 less when
   released from higher than 1 m, 100 more when all three are down in time
   (1,000 for three clean ones). The hut yard is a 10 m circle.
