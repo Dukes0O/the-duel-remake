@@ -162,6 +162,16 @@ this art freeze. Root consumes the exact receipts and folds final results
 into its integration merge; no status-only lane commit or autonomous merge.
 Changed assertions: none. Replay/world guards are part of that fresh gate.
 
+## Current integration sync before the fresh gate
+
+The lane sync has one adjacent-row conflict in tools/test-blender-output.mjs.
+Keep both the unchanged accessory recipeOnly row and integration's skin-gear
+row. The incoming rescue-people row and every other integration addition stay.
+No assertion, path expectation or old positive Blend contract changes. Root
+confirms this bounded union before the fresh nearby/jobs4 gate. The accepted
+asset and sheet bytes remain frozen; no rerender or review repeat follows.
+Root's short final pit run takes the next slot before this gate.
+
 ## Removed
 
 Replace the pending accessory donor question with Claude's original-recipe

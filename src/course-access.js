@@ -22,7 +22,7 @@ export function courseUnlockRequirement(course){
   const unlock=requirementOf(idOf(course));
   if(!unlock)return null;
   const name=CIRCUIT_ENTRIES.find(row=>row.manifest.id===unlock.defaultEventId).definition.name;
-  return {...unlock,condition:`Finish top three in the ${name} Grand Prix.`};
+  return {...unlock,condition:unlock.kind==='owned-course'?`Own ${name} to enter this solo challenge for free.`:`Finish top three in the ${name} Grand Prix.`};
 }
 
 export function normalizeCourseAccess(value,legacyProfile){
@@ -50,14 +50,14 @@ export function isCourseUnlocked(profile,course){
   const id=idOf(course);
   if(!known(id))return false;
   const unlock=requirementOf(id);
-  if(unlock)return isCourseUnlocked(profile,unlock.defaultEventId)&&getGrandPrixPodiums(profile).includes(unlock.defaultEventId);
+  if(unlock)return isCourseUnlocked(profile,unlock.defaultEventId)&&(unlock.kind==='owned-course'||getGrandPrixPodiums(profile).includes(unlock.defaultEventId));
   return COURSE_PRICES[id]===0||profile?.courses?.version===1&&Array.isArray(profile.courses.unlocked)&&profile.courses.unlocked.includes(id);
 }
 export function purchaseCourse(profile,course){
   const id=idOf(course),failure=reason=>({profile,ok:false,reason,cost:0});
   if(!known(id))return failure('Choose an available course.');
   const requirement=courseUnlockRequirement(id);
-  if(requirement)return failure(isCourseUnlocked(profile,id)?'This variant is already available for free.':requirement.condition);
+  if(requirement)return failure(isCourseUnlocked(profile,id)?requirement.kind==='owned-course'?'This solo challenge is already available for free.':'This variant is already available for free.':requirement.condition);
   if(isCourseUnlocked(profile,id))return failure('This course is already unlocked.');
   const cost=COURSE_PRICES[id];
   if(!Number.isFinite(profile?.credits)||profile.credits<cost)return failure(`You need ${Math.max(0,cost-(profile?.credits||0))} more credits.`);

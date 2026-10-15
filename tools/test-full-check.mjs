@@ -13,13 +13,13 @@ import { parseNightArguments, nightPlan, validateFramePacket, runChild, runNight
 const date = '2026-10-12', head = 'a'.repeat(40), previous = 'b'.repeat(40), merge = 'c'.repeat(40);
 const root = 'C:/qa/the-duel-remake';
 const report = quality => ({quality, course:'harbour-lights', cars:8, night:true,
-  appRunning:true,rearView:'ready',countdownBefore:0,countdownAfter:2,frames:120, p95:18.5, constructionMs:999, headed:true, visible:true, memoryOnlySaves:true});
+  appRunning:true,rearView:'ready',countdownBefore:0,countdownAfter:2,frames:120, p95:18.5, worldBuildMs:999, constructionMs:999, headed:true, visible:true, memoryOnlySaves:true});
 const frames = () => ({schema:1, mode:'night-simple', reports:[report('High'),report('Performance')]});
 const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed:2,
   failures:[],notRun:0,total:2,results:[{label:'a',passed:true,exitCode:0},{label:'b',passed:true,exitCode:0}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
-function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false}={}) {
-  const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [], copies = [];
+function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText}={}) {
+  const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [], copies = [], messages = [];
   const copyRoot=root+'-copy/source',reportName='docs/board/checks/full-tier.json';
   const sourceReport='original copied report\n';
   files.set(copyRoot+'/'+reportName,sourceReport);
@@ -27,7 +27,7 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
   let plan = nightPlan({date,root});
   if(lastGreen)files.set(`${root}/docs/board/checks/night-2026-10-11.json`,
     JSON.stringify({schema:1,status:'passed',source:previous,date:'2026-10-11'}));
-  const deps = {root, now:()=>new Date('2026-10-12T20:00:00Z'),
+  const deps = {root, print:message=>messages.push(message), now:()=>new Date('2026-10-12T20:00:00Z'),
     git:async (args,cwd=root)=>{
       if(cwd===copyRoot) {
         if(args[0]==='status')return [files.get(copyRoot+'/'+reportName)!==sourceReport?' M '+reportName:'',
@@ -87,7 +87,11 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
           if(otherMutation)files.set(copyRoot+'/src/game.js','unexpected game edit');
           text=JSON.stringify(packet)+'\n';
         }
-        if(stage.id==='frames'&&missing!==stage.id)files.set(stage.packet,JSON.stringify(frames()));
+        if(stage.id==='frames'&&missing!==stage.id){
+          assert.match(messages.at(-1),/laptop panel off.*Second screen only/);
+          const packet=frames();Object.assign(packet.reports[0],framePatch);
+          files.set(stage.packet,frameText??JSON.stringify(packet));
+        }
         if(stage.id==='browser'&&missing!==stage.id)files.set(stage.packet,JSON.stringify(browser()));
         if(stage.id==='combat')text=JSON.stringify({flags:[],policyRuns:51,baselineRaces:90,
           crossbowAim:{hitRate:.5},ownBombs:{maxSpeedLossPct:10}})+'\n';        child.stdout.end(text);child.stderr.end(fail===stage.id?'actual fixture error\n':'');
@@ -95,7 +99,7 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
       });
       return child;
     }};
-  return {deps,files,committedFiles,calls,logs,metadata,copies,maximum:()=>maximum};
+  return {deps,files,committedFiles,calls,logs,metadata,copies,messages,maximum:()=>maximum};
 }
 const opts=()=>parseNightArguments(['--idle-awake','--no-push','--date',date]);
 
@@ -117,13 +121,99 @@ test('real plan runs every required stage serially with jobs at most four',()=>{
 });
 test('frame acceptance requires both real qualities and all original limits',()=>{
   assert.doesNotThrow(()=>validateFramePacket(frames()));
-  for(const patch of [{p95:18.501},{constructionMs:1000},{frames:119},{cars:7},{headed:false},
+  for(const patch of [{p95:18.501},{worldBuildMs:1000},{frames:119},{cars:7},{headed:false},
     {visible:false},{appRunning:false},{rearView:'off'},{countdownAfter:0},{night:false},{memoryOnlySaves:false},{course:'azure'},
-    {p95:NaN},{constructionMs:null}]){
+    {p95:NaN},{constructionMs:null},{constructionMs:undefined},{constructionMs:NaN},
+    {constructionMs:Infinity},{constructionMs:-1},{constructionMs:'5000'},
+    {worldBuildMs:null},{worldBuildMs:undefined},{worldBuildMs:NaN},{worldBuildMs:Infinity},
+    {worldBuildMs:-1},{worldBuildMs:'999'}]){
     const packet=frames();Object.assign(packet.reports[0],patch);
     assert.throws(()=>validateFramePacket(packet));
   }
   assert.throws(()=>validateFramePacket({reports:[report('High')]}));
+});
+test('Kyle construction rule keeps the exact world limit and warns only above five seconds',()=>{
+  for(const constructionMs of [0,1000,5000,5000.001,6500]){
+    const packet=frames(),warnings=[];
+    for(const row of packet.reports)Object.assign(row,{worldBuildMs:999.999,constructionMs});
+    assert.equal(validateFramePacket(packet,{warn:message=>warnings.push(message)}),packet);
+    assert.equal(warnings.length,constructionMs>5000?2:0);
+    if(warnings.length){
+      assert.match(warnings[0],/High: full first-race load .* exceeds 5000 ms.*warning only/);
+      assert.match(warnings[1],/Performance: full first-race load .* exceeds 5000 ms.*warning only/);
+    }
+  }
+  for(const quality of [0,1]){
+    const packet=frames();packet.reports[quality].worldBuildMs=1000;
+    assert.throws(()=>validateFramePacket(packet),/world build <1000/);
+  }
+});
+test('full-check reports real construction metrics and warnings without failing a slow file load',async()=>{
+  const f=fixture({framePatch:{worldBuildMs:610,constructionMs:5300}});
+  const packet=await runNight(opts(),f.deps),stage=packet.stages.find(row=>row.id==='frames');
+  assert.equal(packet.status,'passed',JSON.stringify(packet.failures));
+  assert.equal(stage.passed,true);
+  assert.deepEqual(stage.reports,[{quality:'High',p95:18.5,worldBuildMs:610,constructionMs:5300},
+    {quality:'Performance',p95:18.5,worldBuildMs:999,constructionMs:999}]);
+  assert.equal(stage.warnings.length,1);
+  const morning=f.files.get(`${root}/docs/board/checks/night-${date}.md`);
+  assert.match(morning,/High: p95 18.5 ms, world build 610 ms, full first-race load 5300 ms/);
+  assert.match(morning,/WARNING High: full first-race load 5300 ms exceeds 5000 ms/);
+  assert.match(f.messages[0],/laptop panel off.*Second screen only/);
+  assert.ok(f.logs.some(([file,text])=>file.endsWith('/frames.log')&&/Second screen only/.test(text)));
+});
+test('simple frame scenario retains both actual loads and their warning-only verdict',async()=>{
+  const packets=[];
+  const packet=await runNightFrames({outputDir:root},{
+    measure:async(_,quality)=>({...report(quality==='high'?'High':'Performance'),worldBuildMs:610,constructionMs:5300}),
+    writeText:async(_,text)=>packets.push(JSON.parse(text))
+  });
+  assert.equal(packet.warnings.length,2);
+  assert.deepEqual(packets[0],packet);
+  assert.equal(packet.reports.length,2);
+  assert.doesNotThrow(()=>validateFramePacket(packet));
+});
+test('failed frame verdicts retain actual metrics and slow-load warnings without passing',async()=>{
+  for(const fail of [undefined,'frames']){
+    const f=fixture({fail,framePatch:{p95:33.3,worldBuildMs:610,constructionMs:5300}});
+    const packet=await runNight(opts(),f.deps),stage=packet.stages.find(row=>row.id==='frames');
+    assert.equal(packet.status,'failed');assert.equal(stage.passed,false);
+    assert.deepEqual(stage.reports,[{quality:'High',p95:33.3,worldBuildMs:610,constructionMs:5300},
+      {quality:'Performance',p95:18.5,worldBuildMs:999,constructionMs:999}]);
+    assert.equal(stage.warnings.length,1);
+    assert.match(stage.reportError,/18.5/);
+    assert.match(stage.error,fail?/actual fixture error/:/18.5/);
+    assert.deepEqual(packet.failures.map(row=>row.name),['frames']);
+    const morning=f.files.get(`${root}/docs/board/checks/night-${date}.md`);
+    assert.match(morning,/FAIL frames:/);
+    assert.match(morning,/High: p95 33.3 ms, world build 610 ms, full first-race load 5300 ms/);
+    assert.match(morning,/WARNING High: full first-race load 5300 ms exceeds 5000 ms/);
+  }
+});
+test('missing and malformed failed-frame packets preserve original child errors without invented metrics',async()=>{
+  for(const settings of [{missing:'frames'},{frameText:'{'},{frameText:'null'},
+    {framePatch:{p95:null,worldBuildMs:null,constructionMs:null}}]){
+    const f=fixture({fail:'frames',...settings}),packet=await runNight(opts(),f.deps);
+    const stage=packet.stages.find(row=>row.id==='frames');
+    assert.equal(packet.status,'failed');assert.equal(stage.passed,false);
+    assert.equal(stage.error,'actual fixture error');assert.equal(typeof stage.reportError,'string');
+    assert.deepEqual(packet.failures.map(row=>row.name),['frames']);
+    assert.equal((stage.reports||[]).some(row=>row.quality==='High'),false);
+    assert.equal(stage.warnings.length,0);
+  }
+});
+test('scenario preserves slow-load warnings even when High delivered frames fail',async()=>{
+  const packets=[];
+  await assert.rejects(()=>runNightFrames({outputDir:root},{
+    measure:async(_,quality)=>({...report(quality==='high'?'High':'Performance'),
+      p95:quality==='high'?33.3:16.8,worldBuildMs:610,constructionMs:5300}),
+    writeText:async(_,text)=>packets.push(JSON.parse(text))
+  }),/18.5/);
+  assert.equal(packets.length,1);
+  assert.equal(packets[0].reports[0].p95,33.3);
+  assert.equal(packets[0].reports[1].p95,16.8);
+  assert.equal(packets[0].warnings.length,2);
+  assert.throws(()=>validateFramePacket(packets[0]),/18.5/);
 });
 test('controlled child process drains streams and retains real nonzero output',async()=>{
   const writes=[];

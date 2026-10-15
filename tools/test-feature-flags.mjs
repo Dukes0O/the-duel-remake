@@ -20,12 +20,21 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 26 + CIRCUIT_MANIFESTS.length
-    && ['snow-world', 'the-deep', 'grand-prix-career', 'yeti', 'rival-voices'].every(name => FEATURE_STATES[name] === 'dev')
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 28 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
+    && ['snow-world', 'the-deep', 'grand-prix-career', 'yeti', 'rival-voices', 'earned-cars'].every(name => FEATURE_STATES[name] === 'dev')
     && ['lap-choice', 'snowmen'].every(name => FEATURE_STATES[name] === 'on')
     && FEATURE_STATES['grand-prix'] === 'on'
     && CIRCUIT_MANIFESTS.every(manifest => FEATURE_STATES[manifest.flag] === manifest.state),
-  'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix is released; lap choice and snowmen are released (on, 13 October 2026); career backup, Snow, The Deep, the yeti, rival voices and Grand Prix career stay dev; registered course switches follow their manifests; retired switches stay absent');
+  'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix is released; lap choice and snowmen are released (on, 13 October 2026); career backup, Snow, The Deep, the yeti, rival voices, Grand Prix career and earned cars stay dev; registered course switches follow their manifests; retired switches stay absent');
+const sharedCourseFlags = [...new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag))]
+  .map(flag => CIRCUIT_MANIFESTS.filter(manifest => manifest.flag === flag))
+  .filter(group => group.length > 1);
+assert.deepEqual(sharedCourseFlags.map(group => group.map(manifest => manifest.id)),
+  [['summit-run', 'summit-time-attack']], 'only the exact Summit solo child shares an existing course switch'); checks++;
+for (const manifest of CIRCUIT_MANIFESTS) {
+  check(manifest.flag === (manifest.id === 'summit-time-attack' ? 'summit-run' : manifest.id),
+    `${manifest.id}: every other course retains its own named switch`);
+}
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 // These switches were released on 9 October 2026, with seekers on 10 October. Their development-switch
 // isolation, proved earlier on the real catalog, is kept by pinning each one to dev.

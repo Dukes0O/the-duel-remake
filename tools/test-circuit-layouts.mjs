@@ -11,6 +11,7 @@ import { HARBOUR_LIGHTS } from '../src/circuits/harbour-lights.js';
 import { TREMBLANT_WOODS } from '../src/circuits/tremblant-woods.js';
 import { FEATURE_STATES, createFeatureFlags } from '../src/feature-flags.js';
 import { COURSE_PRICES } from '../src/course-access.js';
+import { GRAND_PRIX_COURSES } from '../src/race-field.js';
 import { buildTrackScript } from '../src/track-script.js';
 import { driveCircuit, lapTime } from './track-script-drive.mjs';
 import { courseHasWinterSurfaces } from '../src/race-surfaces.js';
@@ -27,10 +28,22 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   // Tremblant Woods (RELEASE-TREMBLANT), Tremblant Snow (RELEASE-TREMBLANT-SNOW), Harbour Lights (RELEASE-HARBOUR) and Panorama Ridge (RELEASE-PANORAMA) are released.
   const released = CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
   for (const circuit of ALL_CIRCUITS) {
-    assert.equal(circuit.flag, circuit.id);
-    assert.equal(FEATURE_STATES[circuit.flag], CIRCUIT_MANIFESTS.find(row => row.id === circuit.id).state);
-    assert.ok(COURSE_PRICES[circuit.id] > 0);
-    assert.equal(circuit.kind, 'circuit'); assert.equal(circuit.noTraffic, true); assert.equal(circuit.hasRival, true);
+    const manifest = CIRCUIT_MANIFESTS.find(row => row.id === circuit.id);
+    assert.equal(FEATURE_STATES[circuit.flag], manifest.state);
+    if (circuit.id === 'summit-time-attack') {
+      assert.deepEqual([circuit.flag, manifest.flag, manifest.state, manifest.price, manifest.releaseOrder, manifest.grandPrix],
+        ['summit-run', 'summit-run', 'dev', 0, 6, false]);
+      assert.deepEqual(manifest.unlock, {kind: 'owned-course', defaultEventId: 'summit-run'});
+      assert.equal(COURSE_PRICES[circuit.id], 0);
+      assert.deepEqual([circuit.defaultMode, circuit.laps, circuit.grandPrixLaps, circuit.fieldSize, circuit.hasRival, circuit.noCombat],
+        ['timetrial', 1, 1, 1, false, true]);
+      assert.equal(GRAND_PRIX_COURSES.includes(circuit.id), false);
+    } else {
+      assert.equal(circuit.flag, circuit.id);
+      assert.ok(COURSE_PRICES[circuit.id] > 0);
+      assert.equal(circuit.hasRival, true);
+    }
+    assert.equal(circuit.kind, 'circuit'); assert.equal(circuit.noTraffic, true);
     assert.ok(Object.isFrozen(circuit) && circuit.lengthU > 2500);
   }
   for (const manifest of CIRCUIT_MANIFESTS) assert.equal(COURSE_PRICES[manifest.id], manifest.price);
@@ -38,7 +51,11 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   assert.equal(COURSE.length, BASE_COURSE_COUNT + released.length);
   assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id)), [], 'the sixteen earlier events are unchanged and in place');
   assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), released, 'enabled courses append in declared order');
-  assert.equal(new Set(ALL_CIRCUITS.map(circuit => circuit.stage)).size, ALL_CIRCUITS.length);
+  const originalDefinitions = ALL_CIRCUITS.filter(circuit => circuit.id !== 'summit-time-attack');
+  assert.equal(new Set(originalDefinitions.map(circuit => circuit.stage)).size, originalDefinitions.length,
+    'all non-Attack courses retain unique authored generation identities');
+  assert.equal(ALL_CIRCUITS.find(circuit => circuit.id === 'summit-time-attack').stage,
+    ALL_CIRCUITS.find(circuit => circuit.id === 'summit-run').stage, 'the solo child keeps the exact parent generation identity');
   assert.ok(ALL_CIRCUITS.every(circuit => circuit.stage > 15), 'appended after the existing events');
   const on = createFeatureFlags({ storage: null, qa: true, search: '?flags=harbour-lights,tremblant-woods' });
   assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), CIRCUIT_MANIFESTS.filter(row => on.enabled(row.flag)).map(row => row.id), 'the requested circuit plus every released one, in release order');
@@ -88,7 +105,7 @@ test('Harbour Lights: walls everywhere, the Lantern Hairpin, night', () => {
   const road = buildTrackScript(HARBOUR_LIGHTS), course = new Course(HARBOUR_LIGHTS, 1989), hairpin = piece(road, 'Lantern Hairpin');
   assert.equal(HARBOUR_LIGHTS.laps, 4); assert.equal(HARBOUR_LIGHTS.timeOfDay, 'night'); assert.equal(HARBOUR_LIGHTS.theme, 'city');
   assert.ok(road.pieces.every(item => item.walls === 'both'));
-  assert.equal(hairpin.radius, 9); assert.ok(hairpin.degrees > 170);
+  assert.equal(hairpin.radius, 10); assert.ok(hairpin.degrees > 170);
   assert.ok(road.halfWidthAt((hairpin.s0 + hairpin.s1) / 2) >= 6, 'at least 12 m wide at the hairpin');
   near(road.halfWidthAt(piece(road, 'Seafront Straight').s0 + 300) * 2, 14, 1e-9);
   assert.ok(course.features.walls.length > 600);

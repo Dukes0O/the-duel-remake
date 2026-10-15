@@ -13,6 +13,7 @@ import {registerSceneSystem} from '../src/scene-systems.js';
 import {Course} from '../src/course.js';
 import {PANORAMA_RIDGE} from '../src/circuits/panorama-ridge.js';
 import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
+import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
 import {COURSE} from '../src/config.js';
 import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
@@ -127,6 +128,30 @@ assert.deepEqual(position.toArray(),[20,2,100]);assert.deepEqual(scale.toArray()
 assert.ok(new THREE.Vector3(0,0,1).applyQuaternion(rotation).distanceTo(new THREE.Vector3(1,0,0))<1e-10);
 assert.ok(Object.isFrozen(transformed.placements[0].scenery));transformed.dispose();
 
+// FIX-ROAD-SEAM: pins remain escape-only, copied, and subject to real triangle clearance.
+{
+  const escaped = {...course, escapeRoads: [{origin: {x: 0, z: 0}, forward: {x: 0, z: 1}, left: {x: 1, z: 0},
+    side: 1, inner: -2, outer: 8, run: 120, tyreDepth: 1.8}]};
+  const pin = {x: 8.74, z: 100}, authoredPin = {id: 'catch-fence', s: 100, lateral: 20, worldPosition: pin};
+  const normalized = normalizeKitPlacements(escaped, [authoredPin])[0];
+  assert.deepEqual(normalized.worldPosition, pin); assert.ok(Object.isFrozen(normalized.worldPosition));
+  assert.notEqual(normalized.worldPosition, pin); pin.x = 99; assert.equal(normalized.worldPosition.x, 8.74);
+  for (const worldPosition of [null, {}, {x: NaN, z: 100}, {x: 8, z: Infinity}, {x: 99, z: 100}])
+    assert.throws(() => normalizeKitPlacements(escaped, [{...authoredPin, worldPosition}]), /world position/i);
+  assert.throws(() => normalizeKitPlacements(escaped, [{id: 'shopfront-a', s: 100, lateral: 20,
+    worldPosition: {x: 8, z: 100}}]), /world position/i);
+  assert.throws(() => normalizeKitPlacements(course, [{...authoredPin, worldPosition: {x: 8, z: 100}}]), /world position/i);
+  const pinned = createTrackKits(escaped, {placements: [{...authoredPin, worldPosition: {x: 8.74, z: 100}}], loadAsset: async () => fake()});
+  try {
+    assert.equal(await pinned.ready, true, pinned.error?.message);
+    assert.equal(pinned.getPlacementPose(0).elements[12], 8.74, 'transform keeps actual world x');
+    assert.equal(pinned.getPlacementPose(0).elements[14], 100, 'transform keeps actual world z');
+    assert.equal(pinned.getPlacementPose(0).elements[13], 2, 'height still comes from actual ground');
+  } finally {pinned.dispose();}
+  const onRoad = createTrackKits(escaped, {placements: [{...authoredPin, worldPosition: {x: 0, z: 100}}], loadAsset: async () => fake()});
+  try {assert.equal(await onRoad.ready, false); assert.match(onRoad.error.message, /clearance/i);} finally {onRoad.dispose();}
+}
+
 // Lift is above the rendered terrain anchor and never waives road headroom.
 const raised=createTrackKits(course,{placements:[{id:'lantern-string',s:100,lateral:0,lift:5}],
   loadAsset:async()=>fake()});
@@ -231,11 +256,174 @@ assert.equal(real.stats.low,35);assert.ok(real.group.children.some(node=>node.is
 assert.ok(real.group.children.some(node=>node.name==='yeti low'));real.dispose();
 console.log('Track kits: 70 real assets, metadata, transforms, quality, countdown, clearance, readiness and exact lifetime passed.');
 
+
+// Real named entrance variants retain original anchors, donors and all other faces.
+{
+  const rows=SUMMIT_RUN.kitPlacements.filter(row=>row.id==='gallery');
+  const oldRows=rows.map(({nodeTranslations,...row})=>row);
+  const base=new Course({...SUMMIT_RUN,kitPlacements:oldRows},1989),moved=new Course(SUMMIT_RUN,1989);
+  const normalized=normalizeKitPlacements(moved,rows);
+  assert.ok(Object.isFrozen(normalized[0].nodeTranslations));
+  assert.ok(Object.values(normalized[0].nodeTranslations).every(Object.isFrozen));
+  assert.notEqual(normalized[0].nodeTranslations,rows[0].nodeTranslations);
+  for(const nodeTranslations of [{unknown:[1,0,0]},{'gallery-concrete-pillar':[NaN,0,0]},
+      {'gallery-concrete-pillar':[1,0]},null])
+    assert.throws(()=>normalizeKitPlacements(moved,[{...rows[0],nodeTranslations}]),/translation/i);
+  assert.throws(()=>normalizeKitPlacements(moved,[{...rows[1],nodeTranslations:rows[0].nodeTranslations}]),/entrance/i);
+  const parser=new GLTFLoader();
+  parser.register(()=>({name:'KIT_HEADLESS_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const raw=new Map(),sourceCounts=new Map(),snapshots=new Map();
+  const snapshot=model=>{
+    const nodes=[];model.scene.traverse(node=>{if(node.isMesh)nodes.push({name:node.userData.name??node.name,
+      position:node.position.toArray(),matrix:node.matrix.toArray(),geometryUserData:node.geometry.userData,
+      attributes:Object.fromEntries(Object.entries(node.geometry.attributes).map(([key,value])=>[key,Array.from(value.array)])),
+      materials:[].concat(node.material).map(material=>({colour:material.color?.toArray(),roughness:material.roughness,
+        metalness:material.metalness,emissive:material.emissive?.toArray(),intensity:material.emissiveIntensity,userData:material.userData}))});});
+    return JSON.stringify(nodes);
+  };
+  const load=async path=>{
+    const bytes=await readFile(new URL('../public'+path,import.meta.url));
+    const model=await parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+    model.scene.updateMatrixWorld(true);return model;
+  };
+  const baseline=createTrackKits(base,{placements:oldRows,loadAsset:load});
+  const translated=createTrackKits(moved,{placements:rows,loadAsset:async path=>{
+    const model=await load(path);raw.set(path,model);snapshots.set(path,snapshot(model));
+    model.scene.traverse(node=>{if(node.isMesh)for(const resource of [node.geometry,...[].concat(node.material)]){
+      if(!sourceCounts.has(resource)){const count={disposed:0};resource.addEventListener('dispose',()=>count.disposed++);sourceCounts.set(resource,count);}
+    }});return model;
+  }});
+  assert.equal(await baseline.ready,true,baseline.error?.message);
+  assert.equal(await translated.ready,true,translated.error?.message);
+  for(let index=0;index<rows.length;index++)assert.deepEqual(translated.getPlacementPose(index).elements,baseline.getPlacementPose(index).elements,
+    'expanded post bounds never move the original whole-tile anchor, including all other34 tiles');
+  const defaultSolids=new Map(base.features.obstacles.filter(row=>row.sourceBounds?.startsWith('gallery-')).map(row=>[row.id,row]));
+  const targeted=new Set(Object.keys(rows[0].nodeTranslations));
+  for(const solid of moved.features.obstacles.filter(row=>row.sourceBounds?.startsWith('gallery-'))){
+    const original=defaultSolids.get(solid.id);
+    if(solid.kitS!==10176||!targeted.has(solid.sourceBounds))assert.deepEqual(solid,original,'all non-target roof/back/inside and other-tile physical poses remain exact');
+    else{
+      const delta=rows[0].nodeTranslations[solid.sourceBounds],frame=moved.groundAt(10176,0);
+      assert.ok(Math.abs(solid.x-original.x-Math.cos(frame.heading)*delta[0]*rows[0].scale[0])<1e-8);
+      assert.ok(Math.abs(solid.z-original.z+Math.sin(frame.heading)*delta[0]*rows[0].scale[0])<1e-8);
+      for(const key of ['minY','maxY','height','halfX','halfZ'])assert.equal(solid[key],original[key],'original High bounds and grounding retain the same envelope');
+    }
+  }
+  const frame=moved.groundAt(10176,0),cs=Math.cos(frame.heading),sn=Math.sin(frame.heading),cut=moved.features.shortcuts.find(row=>row.id==='summit-open-road');
+  const parts=version=>translated.group.children.filter(mesh=>mesh.isInstancedMesh&&mesh.userData.trackKitVersion===version&&mesh.userData.trackKitPlacementIndices.includes(0));
+  const checkEdgeMinimum=(rectangle,label)=>{
+    const distance=s=>{
+      const p=moved.worldAt(s,moved.shortcutOffset(cut,s)-cut.halfWidth);
+      const x=(p.x-frame.x)*cs-(p.z-frame.z)*sn,z=(p.x-frame.x)*sn+(p.z-frame.z)*cs;
+      return Math.hypot(Math.max(rectangle.minX-x,0,x-rectangle.maxX),Math.max(rectangle.minZ-z,0,z-rectangle.maxZ));
+    };
+    for(let s=10168;s<=10183;s+=.25)assert.ok(distance(s)>=1.5,label+' clears the actual Open edge by 1.5 m');
+    let lo=10168,hi=10183;
+    for(let i=0;i<100;i++){const a=lo+(hi-lo)/3,b=hi-(hi-lo)/3;if(distance(a)<distance(b))hi=b;else lo=a;}
+    assert.ok(Math.min(distance(10168),distance(10183),distance((lo+hi)/2))>=1.5,
+      label+' continuous edge minimum retains the exact 1.5 m requirement');
+  };
+  const rectangleFromWorld=points=>{
+    const rectangle={minX:Infinity,maxX:-Infinity,minZ:Infinity,maxZ:-Infinity};
+    for(const point of points){
+      const x=(point.x-frame.x)*cs-(point.z-frame.z)*sn,z=(point.x-frame.x)*sn+(point.z-frame.z)*cs;
+      rectangle.minX=Math.min(rectangle.minX,x);rectangle.maxX=Math.max(rectangle.maxX,x);
+      rectangle.minZ=Math.min(rectangle.minZ,z);rectangle.maxZ=Math.max(rectangle.maxZ,z);
+    }
+    assert.ok(Object.values(rectangle).every(Number.isFinite),'the real post has finite transformed vertices');
+    return rectangle;
+  };
+  for(const solid of moved.features.obstacles.filter(row=>row.kitS===10176&&targeted.has(row.sourceBounds))){
+    const cosine=Math.cos(solid.heading),sine=Math.sin(solid.heading),points=[];
+    for(const x of [-solid.halfX,solid.halfX])for(const z of [-solid.halfZ,solid.halfZ])
+      points.push({x:solid.x+cosine*x+sine*z,z:solid.z-sine*x+cosine*z});
+    checkEdgeMinimum(rectangleFromWorld(points),'double-precision collision '+solid.sourceBounds);
+  }
+  for(const version of ['high','low']){
+    translated.update({high:version==='high',position:frame,state:{status:'menu'}});
+    translated.group.updateMatrixWorld(true);
+    const model=raw.get('/assets/models/circuits/kits/gallery'+(version==='low'?'-lod':'')+'.glb');
+    const vertices=new Set();
+    for(const mesh of parts(version)){const p=mesh.geometry.attributes.position;for(let i=0;i<p.count;i++)vertices.add([p.getX(i),p.getY(i),p.getZ(i)].join('|'));}
+    model.scene.traverse(node=>{if(!node.isMesh)return;
+      const name=node.userData.name??node.name,delta=rows[0].nodeTranslations[name]??[0,0,0],p=node.geometry.attributes.position;
+      const expectedPost=new Set();
+      for(let i=0;i<p.count;i++){
+        const v=new THREE.Vector3(p.getX(i),p.getY(i),p.getZ(i)).applyMatrix4(node.matrixWorld);
+        const expected=[Math.fround(v.x+delta[0]),Math.fround(v.y+delta[1]),Math.fround(v.z+delta[2])];
+        assert.ok(vertices.has(expected.join('|')),'actual '+version+' drawn vertices match only the named move; every roof/back/inside vertex remains exact');
+        expectedPost.add(expected.join('|'));
+      }
+      if(!targeted.has(name))return;
+      const box=new THREE.Box3().setFromBufferAttribute(p).applyMatrix4(node.matrixWorld);
+      const rectangle={minX:Math.min((box.min.x+delta[0])*rows[0].scale[0],Math.fround(box.min.x+delta[0])*rows[0].scale[0]),
+        maxX:Math.max((box.max.x+delta[0])*rows[0].scale[0],Math.fround(box.max.x+delta[0])*rows[0].scale[0]),
+        minZ:box.min.z*rows[0].scale[2],maxZ:box.max.z*rows[0].scale[2]};
+      checkEdgeMinimum(rectangle,'source '+version+' '+name);
+      const drawn=[];
+      for(const mesh of parts(version)){
+        const slot=mesh.userData.trackKitDrawnPlacementIndices.indexOf(0);
+        assert.ok(mesh.visible&&slot>=0&&slot<mesh.count,'the actual entrance instance is submitted in '+version);
+        assert.equal(mesh.instanceMatrix.array.constructor,Float32Array,'draw matrices have actual Float32 storage');
+        const instance=new THREE.Matrix4();mesh.getMatrixAt(slot,instance);
+        const positions=mesh.geometry.attributes.position;
+        assert.equal(positions.array.constructor,Float32Array,'merged draw geometry has actual Float32 storage');
+        for(let i=0;i<positions.count;i++){
+          const v=new THREE.Vector3(positions.getX(i),positions.getY(i),positions.getZ(i));
+          if(expectedPost.has(v.toArray().join('|')))drawn.push(v.applyMatrix4(instance).applyMatrix4(mesh.matrixWorld));
+        }
+      }
+      assert.ok(drawn.length>0,'actual '+version+' draw contains the named post vertices');
+      checkEdgeMinimum(rectangleFromWorld(drawn),'final Float32 '+version+' '+name);
+    });
+  }
+  // Each untouched tile must also retain the final uploaded matrices and geometry.
+  for(const version of ['high','low'])for(let index=1;index<rows.length;index++){
+    const position=moved.groundAt(rows[index].s,rows[index].lateral);
+    for(const runtime of [baseline,translated]){
+      runtime.update({high:version==='high',position,state:{status:'menu'}});
+      runtime.group.updateMatrixWorld(true);
+    }
+    const drawn=runtime=>runtime.group.children.filter(mesh=>mesh.isInstancedMesh&&mesh.visible&&
+      mesh.userData.trackKitVersion===version&&mesh.userData.trackKitDrawnPlacementIndices.includes(index));
+    const original=drawn(baseline),current=drawn(translated);
+    assert.ok(original.length>0,'untouched tile '+index+' has actual '+version+' draws');
+    assert.equal(current.length,original.length,'untouched tile keeps the original draw parts');
+    for(let part=0;part<original.length;part++){
+      const before=original[part],after=current[part],a=new THREE.Matrix4(),b=new THREE.Matrix4();
+      before.getMatrixAt(before.userData.trackKitDrawnPlacementIndices.indexOf(index),a);
+      after.getMatrixAt(after.userData.trackKitDrawnPlacementIndices.indexOf(index),b);
+      assert.deepEqual(b.elements,a.elements,'every untouched tile retains its final Float32 draw matrix');
+      assert.deepEqual(after.matrixWorld.elements,before.matrixWorld.elements,'untouched draw parent poses stay exact');
+      assert.deepEqual(Array.from(after.geometry.attributes.position.array),Array.from(before.geometry.attributes.position.array),
+        'every untouched tile retains its original drawn geometry');
+    }
+  }
+  for(const [path,model] of raw)assert.equal(snapshot(model),snapshots.get(path),'cached actual source geometry/materials/names stay immutable');
+  assert.ok([...sourceCounts.values()].every(row=>row.disposed===0),'variants never retire the raw donor while the owner is live');
+  const privateCounts=new Map();translated.group.traverse(mesh=>{if(mesh.isMesh)for(const resource of [mesh.geometry,...[].concat(mesh.material)]){
+    if(!privateCounts.has(resource)){const count={disposed:0};resource.addEventListener('dispose',()=>count.disposed++);privateCounts.set(resource,count);}
+  }});
+  translated.dispose();translated.dispose();baseline.dispose();
+  assert.ok([...sourceCounts.values()].every(row=>row.disposed===1),'each actual loaded donor resource is retired once');
+  assert.ok([...privateCounts.values()].every(row=>row.disposed===1),'owned batched variant geometry/materials retire once');
+  const missing=createTrackKits(moved,{placements:[rows[0]],loadAsset:async path=>{
+    const model=await load(path);if(path.includes('-lod'))model.scene.traverse(node=>{
+      if((node.userData.name??node.name)==='gallery-concrete-pillar.001'){node.userData.name='missing-in-this-controlled-source';node.name='missing-in-this-controlled-source';}
+    });return model;
+  }});
+  assert.equal(await missing.ready,false,'a missing actual LOD named mesh cannot silently leave an unmoved post');
+  assert.match(missing.error.message,/unique actual mesh/);missing.dispose();
+}
 // Actual model matrices must meet the same nine footprint samples as the ground report.
 {
   const harbour=new Course(HARBOUR_LIGHTS,1989),before=JSON.stringify(harbour.features);
   const rows=[1160,1780,2140].map(s=>HARBOUR_LIGHTS.kitPlacements.filter(row=>
     row.id==='concrete-wall'||row.id==='catch-fence').reduce((best,row)=>Math.abs(row.s-s)<Math.abs(best.s-s)?row:best));
+  for (const id of ['concrete-wall', 'catch-fence', 'tyre-wall']) {
+    const pin = HARBOUR_LIGHTS.kitPlacements.find(row => row.id === id && row.worldPosition);
+    assert.ok(pin, 'actual escape lining has a world-position witness'); rows.push(pin);
+  }
   const assets=new Map(),seated=createTrackKits(harbour,{placements:rows,loadAsset:async path=>{
     const bytes=await readFile(new URL('../public'+path,import.meta.url));
     const asset=await parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
@@ -249,7 +437,8 @@ console.log('Track kits: 70 real assets, metadata, transforms, quality, countdow
       for(const x of [bounds.min.x,(bounds.min.x+bounds.max.x)/2,bounds.max.x])
         for(const z of [bounds.min.z,(bounds.min.z+bounds.max.z)/2,bounds.max.z]){
           const base=new THREE.Vector3(x,bounds.min.y,z).applyMatrix4(matrix),at=harbour.nearest(base.x,base.z,row.s);
-          const ground=renderedGroundHeight(harbour,{...harbour.groundAt(at.s,at.lateral),s:at.s,off:at.lateral},{requireSurface:true});
+          const ground=renderedGroundHeight(harbour,{...harbour.groundAt(at.s,at.lateral),
+            ...(row.worldPosition ? {x:base.x,z:base.z} : {}),s:at.s,off:at.lateral},{requireSurface:true});
           assert.ok(Number.isFinite(ground),'actual drawn ground exists');
           assert.ok(base.y-ground<=.45,'actual model base float retains .45 m bound');
           assert.ok(ground-base.y<=1.5,'actual model base sink retains 1.5 m bound');

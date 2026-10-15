@@ -34,6 +34,8 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'snow-world': 'dev', // Phase 4: development switch
     'the-deep': 'dev', // The Deep (D0 DEEP-LOOK): the hidden underwater world, off, nothing reaches it yet
     helicopter: 'dev', // The helicopter (HELI-MODE): Kestrel One, H1 First flight, off in the game
+    'forest-fire': 'dev', // H2 Fire (FIRE-SAVE): forest fires and burnt courses, off in the game
+    'earned-cars': 'dev', // Earned cars and medal sheets (EARN-MEDALS), off in the game
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);

@@ -239,6 +239,13 @@ rescues.
 - **Fuel.** The pump stays at the home pad (H1), and the cruise leg to
   Summit Run is long (section 5.5), so the player plans: arrive with enough
   fuel for three climbs, but light enough to lift.
+- **Settled by RESCUE-SITES (14 October).** From the start area the job
+  cannot be done: a crate leg there is 7.6 km and needs most of a tank. The
+  crates wait instead at a pickup on the open road 100 m below where the
+  race's avalanche crosses it (about 3,430 m, 2.3 km and 150 m below the hut
+  yard), with the lodge's fuel truck beside them selling fuel at the pump's
+  price; the drums are 640 kg. "The start area" in sections 3.1, 5.4 and
+  12 means that pickup. Numbers and reasons: the RESCUE-SITES card.
 - **Without Summit Run** (its switch off), the same run goes from the home
   pad to the yard by Tremblant Snow's lodge, with crates of 400, 500 and 900
   kg: snow has shut the road there instead.

@@ -8,6 +8,7 @@ import { weaponSignature } from './weapon-upgrades.js';
 import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './config.js';
 import { normalizeCosmetics } from './paint-presets.js';
 import { normalizeRaceSettings } from './race-settings.js';
+import { isSummitAttack } from './summit-attack.js';
 import {
   DRIVERS,
   normalizeDrivers,
@@ -20,6 +21,8 @@ import { rivalSignature } from './rival-settings.js';
 import { COMBAT_TUNING } from './wasteland-tuning.js';
 import { normalizeWasteland } from './wasteland-progress.js';
 import { combatNotoriety, MAX_NOTORIETY_XP, rankForXp } from './notoriety.js';
+import { normalizeMedals, medalRowFor, countMedalWin, medalCarProgress, medalCarsToGrant,
+  medalRequirement, medalRequirementLabel } from './medals.js';
 import { applyWastelandResult } from './wasteland-career.js';
 
 export const PROFILE_KEY = 'the-duel-profile-v1';
@@ -158,6 +161,8 @@ export function normalizeProfile(value) {
   for (const car of profile.unlockedCars) profile.upgrades[car] = getUpgradeLevels(value, car);
   // Reward old, fully built garages on load, before validating the selected car.
   // A previously earned reward stays owned if the roster grows in a later update.
+  // Medal sheets are optional: normalized only when saved, never added to an older save.
+  if (Object.hasOwn(value, 'medals')) profile.medals = normalizeMedals(value.medals);
   profile = grantCompletionCars(profile);
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
   if (Object.hasOwn(value, 'heli')) profile.heli = normalizeHeli(value.heli);
@@ -221,7 +226,7 @@ export function normalizeProfile(value) {
       cpuDifficulty: Object.hasOwn(CPU_REWARDS, race.cpuDifficulty) ? race.cpuDifficulty : 'easy',
       pendingPoliceFineCount,
       pendingPoliceFines: pendingPoliceFineCount * POLICE.ticketBaseFine,
-      ...(COURSE[raceIndex].id==='summit-run'&&validYetiSeed(race.yetiSeed)?{yetiSeed:race.yetiSeed,
+      ...((COURSE[raceIndex].id==='summit-run'||isSummitAttack(COURSE[raceIndex])&&race.mode!=='grandprix')&&validYetiSeed(race.yetiSeed)?{yetiSeed:race.yetiSeed,
         ...(race.mode==='grandprix'?{mode:'grandprix'}:{})}:{})
     };
   }
@@ -340,7 +345,7 @@ export function getUpgradeLevels(profile, car = DEFAULT_CAR) {
 export function completionCarProgress(profile, car = 'koenigsegg_jesko') {
   const required =
     CARS[car]?.unlockRequirement === 'max-all-other-cars'
-      ? Object.keys(CARS).filter(key => key !== car)
+      ? Object.keys(CARS).filter(key => key !== car && !CARS[key].unlockRequirement)
       : [];
   const maxed = required.filter(
     key =>
@@ -358,10 +363,12 @@ export function completionCarProgress(profile, car = 'koenigsegg_jesko') {
       : ''
   };
 }
+// Grants every reward car the profile has earned: the Jesko and the medal cars.
+// A granted car is never taken back if the rules or the roster change later.
 function grantCompletionCars(profile) {
-  const earned = completionCars().filter(
+  const earned = [...completionCars().filter(
     car => !isCarUnlocked(profile, car) && completionCarProgress(profile, car).eligible
-  );
+  ), ...medalCarsToGrant(profile)];
   const updated = earned.length
     ? {
         ...profile,
@@ -557,7 +564,8 @@ export function settleRace(profile, result = {}) {
     typeof result.won === 'boolean';
   const key = `${result.runId}:${result.stageIndex}`;
   const grandPrix = result.mode === 'grandprix';
-  const yeti=countYetiFinish(profile,result,valid && COURSE[result.stageIndex]?.id==='summit-run' &&
+  const yeti=countYetiFinish(profile,result,valid && (COURSE[result.stageIndex]?.id==='summit-run' ||
+    isSummitAttack(COURSE[result.stageIndex]) && result.mode==='timetrial') &&
     !COURSE[result.stageIndex].practice && isValidFinish(result) &&
     !profile.settledResults.includes(key) && !profile.wasteland?.settledResults?.includes(key) &&
     (!grandPrix || validGrandPrixPosition(result)));
@@ -573,6 +581,47 @@ export function settleRace(profile, result = {}) {
     profile.settledResults.includes(key) ||
     profile.wasteland?.settledResults?.includes(key))
     return { profile, reward: 0, awarded: false, personalBest: false, breakdown: {} };
+  // This solo challenge records legal times, but never changes career earnings.
+  // Interrupted pending races retain their stable event id, not timetrial mode.
+  if (isSummitAttack(COURSE[result.stageIndex])) {
+    const abandoned = result.abandoned === true && result.completed === false &&
+      result.timeout !== true &&
+      (result.mode === 'timetrial' || result.mode === undefined &&
+        profile.activeRace?.key === key && isSummitAttack(profile.activeRace.stageId)),
+      finished = result.mode === 'timetrial' && isValidFinish(result);
+    if (result.qualifying === true || result.practice === true ||
+      !Object.hasOwn(CARS, result.car) ||
+      result.driverId != null && !Object.hasOwn(DRIVERS, result.driverId) ||
+      !finished && !abandoned)
+      return {profile, reward: 0, charge: 0, policeFineCharge: 0,
+        awarded: false, personalBest: false, breakdown: {}};
+    const cpu = Object.hasOwn(CPU_REWARDS, result.cpuDifficulty) ? result.cpuDifficulty : 'easy',
+      comparison = bestKey({...result, cpuDifficulty: cpu}),
+      previous = finished ? profile.personalBests[comparison] : undefined,
+      personalBest = finished && (previous == null || result.timeSec < previous - 0.005),
+      personalBestStatus = !finished ? 'ineligible' : previous == null ? 'baseline' :
+        personalBest ? 'improved' : 'not-improved',
+      breakdown = {base: 0, clean: 0, personalBest: 0, streak: 0, jumps: 0,
+        crush: 0, drift: 0, police: 0, manual: 0, milestones: 0, policeFines: 0},
+      updated = {
+        ...profile,
+        settledResults: [...profile.settledResults, key],
+        activeRace: profile.activeRace?.key === key ? null : profile.activeRace,
+        personalBests: personalBest
+          ? {...profile.personalBests, [comparison]: result.timeSec} : profile.personalBests,
+        history: [...profile.history, {
+          key, eventId: stageEventId(result.stageIndex), car: result.car,
+          won: finished && result.won, completed: finished,
+          ...(abandoned ? {abandoned: true} : {}),
+          timeSec: finished ? result.timeSec : null, cpuDifficulty: cpu,
+          reward: 0, charge: 0, policeFineCharge: 0, breakdown, milestones: [], at: Date.now()
+        }].slice(-60)
+      };
+    return {profile: updated, reward: 0, charge: 0, policeFineCharge: 0, ...yetiAward,
+      awarded: true, personalBest, personalBestStatus, previousBest: previous ?? null,
+      best: finished ? updated.personalBests[comparison] ?? null : null,
+      breakdown, winStreak: updated.winStreak, milestones: []};
+  }
   // Race earnings are deferred until the finish. Leaving discards that attempt
   // and its pending fines without touching any credits already in the bank.
   if (result.abandoned === true) {
@@ -641,6 +690,12 @@ export function settleRace(profile, result = {}) {
       profile.wasteland.discoveredGate === true,
     recordEligible = isValidFinish(result),
     won = result.won && recordEligible;
+  // Medal sheets (docs/EARNED_CARS.md): a counted win fills a box; a new medal pays once.
+  const medalsOn = result.earnedCarsEnabled === true,
+    medalRow = medalRowFor(result),
+    medalWin = medalsOn && won && medalRow && result.qualifying !== true && result.practice !== true
+      ? countMedalWin(profile, { car: result.car, row: medalRow, cpuDifficulty: cpu }) : null,
+    newMedal = medalWin?.newMedal ?? null;
   const notoriety = profile.wasteland?.version === 1
     ? combatNotoriety(result, { finished, won }) : null;
   const previousXp = integer(profile.wasteland?.xp, MAX_NOTORIETY_XP);
@@ -689,6 +744,7 @@ export function settleRace(profile, result = {}) {
     ...(combatRace ? { combat: finished ? combatCreditBonus(result, base) : 0 } : {}),
     manual: 0,
     milestones: milestones.reward,
+    ...(newMedal ? { medal: newMedal.bonus } : {}),
     ...(grandPrix ? {snowmen: grandPrixSnowmanPay(result)} :
       result.snowmenEnabled===true && COURSE[result.stageIndex]?.snowmen?.length &&
       ['duel','timetrial'].includes(result.mode) && result.qualifying!==true &&
@@ -709,7 +765,7 @@ export function settleRace(profile, result = {}) {
   breakdown.manual = result.difficulty === 'pro' ? (grandPrix ? positionPay : finishingPay) + recurringBonus : 0;
   if (separateCareer) for (const name of Object.keys(breakdown)) breakdown[name] = 0;
   const charge = grandPrix || won || combatRace ? 0 : Math.min(profile.credits, -breakdown.base),
-    bonus = recurringBonus + breakdown.manual + breakdown.milestones;
+    bonus = recurringBonus + breakdown.manual + breakdown.milestones + (breakdown.medal || 0);
   const grossReward = (grandPrix ? positionPay : won ? finishingPay : -charge) + bonus + (breakdown.snowmen || 0);
   const pendingFines =
     !grandPrix && profile.activeRace?.key === key
@@ -732,7 +788,7 @@ export function settleRace(profile, result = {}) {
     stageEventId(result.stageIndex), {finished, won});
   const podiumProfile = grandPrix && recordEligible && result.practice !== true && result.position <= 3
     ? recordGrandPrixPodium(profile, stageEventId(result.stageIndex)) : profile;
-  const updated = {
+  let updated = {
     ...(finished && result.qualifying !== true ? countDeepFinish(podiumProfile, {enabled: result.deepEnabled === true,
       eventId: stageEventId(result.stageIndex), mode: result.mode}) : podiumProfile),
     ...(notoriety || pacificFinish || muddyHollowFinish || career.wasteland !== profile.wasteland ? {wasteland: {
@@ -780,8 +836,14 @@ export function settleRace(profile, result = {}) {
       }
     ].slice(-60)
   };
+  const owned = updated.unlockedCars;
+  if (medalWin && medalWin.profile !== profile)
+    updated = grantCompletionCars({ ...updated, medals: medalWin.profile.medals });
+  const earnedCars = medalsOn ? updated.unlockedCars.filter(car => !owned.includes(car)) : [];
   return {
     profile: updated,
+    // The medal reports what was paid: nothing in the separate Wasteland career.
+    ...(medalsOn ? { medal: newMedal && { ...newMedal, bonus: breakdown.medal }, earnedCars } : {}),
     ...yetiAward,
     reward,
     ...(separateCareer ? {scrapEarned: career.scrapEarned} : {}),
@@ -824,6 +886,14 @@ export function purchaseUpgrade(profile, car, type) {
   };
 }
 export function unlockCar(profile, car) {
+  if (medalRequirement(car)) {
+    if (isCarUnlocked(profile, car))
+      return { profile, ok: false, reason: 'This car is already in your garage.', cost: 0 };
+    const progress = medalCarProgress(profile, car);
+    if (!progress.eligible)
+      return { profile, ok: false, reason: medalRequirementLabel(progress), cost: 0 };
+    return { profile: grantCompletionCars(profile), ok: true, reason: '', cost: 0, earnedCars: [car] };
+  }
   if (CARS[car]?.unlockRequirement === 'max-all-other-cars') {
     if (isCarUnlocked(profile, car))
       return { profile, ok: false, reason: 'This car is already in your garage.', cost: 0 };

@@ -160,20 +160,21 @@ No author endorsement is implied.
 
 ## The helicopter
 
-The instructor's 27 radio lines are generated with
-[ElevenLabs](https://elevenlabs.io/), using its stock Brian voice, under the
-free-plan non-commercial and attribution terms recorded in the catalog. The
+The 70 radio lines are generated with [ElevenLabs](https://elevenlabs.io/),
+using its stock voices Brian (the instructor), Sarah (the park rangers) and
+Roger (fire and rescue dispatch), under the free-plan non-commercial and attribution
+terms recorded in the catalog. The
 runtime MP3s are exact copies of the kept takes in `audio-src/voices/`; the
 game plays them through the radio filter in `src/heli/heli-audio.js`. Copy them
 with `node tools/audio/build-heli.mjs --voices`. No author endorsement is implied.
 
-Seven sounds are selected public HQ previews, all
+Fifteen sounds are selected public HQ previews, all
 [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). The recipes in
 `tools/audio/build-heli.mjs` cut, filter, fade and loudness-match them; the
-rotor and wind are crossfaded mono Vorbis loops. The engine stop is the idle of
+rotor, wind, fire crackle, bucket scoop and pour are crossfaded mono Vorbis loops. The engine stop is the idle of
 a running helicopter read at a falling speed while it fades. The low-fuel
-chime, low-rotor horn, radio click and radio hiss are original tones and
-noise made in `src/heli/heli-audio.js`. Source and runtime hashes are in the
+chime, low-rotor horn, radio click, radio hiss, fire alert, aim tick and
+badge chime, beacon beep and clock tick are original tones and noise made in `src/heli/heli-audio.js`. Source and runtime hashes are in the
 audio catalog. No author endorsement is implied.
 
 - [Helicopter Rotor Loop.flac](https://freesound.org/people/qubodup/sounds/187681/), by **qubodup**: rotor loop.
@@ -183,3 +184,11 @@ audio catalog. No author endorsement is implied.
 - [rope leathery creaking.wav](https://freesound.org/people/vestibule-door/sounds/664929/), by **vestibule-door**: cable creak.
 - [Karabiner_Click_03.wav](https://freesound.org/people/Rudmer_Rotteveel/sounds/457455/), by **Rudmer_Rotteveel**: hook release.
 - [Medium Thud 1](https://freesound.org/people/sgrowe/sounds/342535/), by **sgrowe**: set-down thud.
+- [Fireplace_Outside_Fire_3](https://freesound.org/people/SMKoski02/sounds/868895/), by **SMKoski02**: forest fire crackle.
+- [Rushing River Loop](https://freesound.org/people/ThanksForTheInspiration/sounds/523022/), by **ThanksForTheInspiration**: bucket filling.
+- [Ambiance_Waterfall_Big_Skogafoss_Loop_Stereo.wav](https://freesound.org/people/Nox_Sound/sounds/690224/), by **Nox_Sound**: bucket pouring.
+- [metallic tube is hitting metallic bucket.wav](https://freesound.org/people/lartti/sounds/513797/), by **lartti**: bucket dent.
+- [R19-39-Steam Hiss.wav](https://freesound.org/people/craigsmith/sounds/479296/), by **craigsmith**: steam where water lands on fire.
+- [road flare ignite burns.wav](https://freesound.org/people/frankelmedico/sounds/348767/), by **frankelmedico**: the hiker's flare.
+- [Snow removing.mp3](https://freesound.org/people/Gutek/sounds/201888/), by **Gutek**: digging in snow.
+- [Karabiner_Click_04.wav](https://freesound.org/people/Rudmer_Rotteveel/sounds/457454/), by **Rudmer_Rotteveel**: clipping on to the rescue line.
