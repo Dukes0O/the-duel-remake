@@ -163,9 +163,9 @@ export const ARDENNES_FOREST = Object.freeze({
   runoffBands: LONG_LEFT_RUNOFF,
   circuitLandmarks: Object.freeze([
     Object.freeze({id: 'stavelot-valley-town', type: 'town', ...VILLAGE, height: 12,
-      // Conditional shared palette hook: not active until its separately leased change lands.
+      // Original deterministic town selection, restricted to the answered slate/red palette.
       roofColours: Object.freeze([0x414a50, 0x5a352c, 0x50545a]), ...valleyTown()}),
-    Object.freeze({id: 'stavelot-church', type: 'church', ...VILLAGE, height: 22}),
+    Object.freeze({id: 'stavelot-church', type: 'church', ...VILLAGE, height: 22, churchStyle: 'stone', grounding: 'footprint'}),
   ]),
   lightPath: Object.freeze({axis: 'distance', wrap: false, palette: 'forest-morning', keyframes: Object.freeze([
     Object.freeze({at: 0, look: 'golden'}), Object.freeze({at: road.length, look: 'day'}),
@@ -183,6 +183,11 @@ export const ARDENNES_FOREST = Object.freeze({
   }),
   // Existing damp asphalt presentation. No tyre or surface-grip change.
   wetRoad: Object.freeze({performanceShare: .5}),
+  dampRoad: Object.freeze({colour: 0x747474, dryRoughness: .9, dampRoughness: .58, mist: true,
+    shadeRanges: Object.freeze(['Kestrel Straight', 'Forest Run', 'Whitewood'].map(name => {
+      const piece = named(name); return Object.freeze({from: piece.s0, to: piece.s1});
+    })),
+  }),
   scenery: Object.freeze({
     trees: 800, rocks: 120, mountains: false,
     // First fir row is about 9 m behind the ordinary catch fence (14.3 m).

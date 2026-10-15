@@ -25,6 +25,7 @@ import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {ardennesPlayerCrashAccepted} from './scenarios/ardennes-views.mjs';
+import {createPavedRoadMaterial, bindPavedDampRoad} from '../src/road-surface.js';
 
 // Ardennes Forest road layout (docs/CIRCUITS.md section 5.5, P4-ARDENNES-ROAD).
 // The original road acceptance remains intact beside the P4-ARDENNES source acceptance.
@@ -762,5 +763,52 @@ test('original landmark CLI plans default and bridge-only outputs in two empty r
   } finally {
     // Only empty fixture roots are removed; unexpected writes remain for diagnosis.
     for (const fixture of roots) if (readdirSync(fixture).length === 0) rmdirSync(fixture);
+  }
+});
+
+test('optional neutral damp road reads actual first-lap mist opacity without state writes or stale shader variants', () => {
+  const added=!COURSE.some(def=>def.id===ARDENNES_FOREST.id);
+  if(added)COURSE.push(ARDENNES_FOREST);
+  const world=new THREE.Group(), asphalt=new THREE.Texture(); asphalt.userData.sharedAsset=true;
+  let disposed=false;
+  try {
+    const duel=new Duel({seed:1989,featureFlags:{'grand-prix':true}});
+    duel.startCampaign({mode:'grandprix',startStage:COURSE.findIndex(def=>def.id===ARDENNES_FOREST.id),
+      car:'stuttgart_959s',seed:1989,fieldSeed:1000,cpuDifficulty:'medium'});
+    assert.equal(duel.state.status,'countdown');assert.ok(duel.state.s<0);
+    const course=duel.course, features=JSON.stringify(course.features), definition=JSON.stringify(course.def);
+    const originalLoad=THREE.TextureLoader.prototype.load;
+    THREE.TextureLoader.prototype.load=()=>new THREE.Texture();
+    try {addCircuitEffects(world,course);} finally {THREE.TextureLoader.prototype.load=originalLoad;}
+    const material=createPavedRoadMaterial({asphalt,wet:true,dampRoad:course.def.dampRoad,
+      courseLength:course.length,mistBanks:course.def.effects.valleyMist});
+    world.add(new THREE.Mesh(new THREE.BufferGeometry(),material));
+    bindPavedDampRoad(world,course,material);
+    const shaders=[0,1].map(()=>({uniforms:{},vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader}));
+    shaders.forEach(shader=>material.onBeforeCompile(shader));
+    const materials=[];world.traverse(node=>{if(node.name==='Ardennes valley mist'&&!materials.includes(node.material))materials.push(node.material);});
+    assert.equal(materials.length,4);assert.equal(material.color.getHex(),0x747474);
+    assert.equal(material.roughness,.9);assert.equal(material.metalness,0);
+    assert.equal(shaders[0].uniforms.roadMistRanges,shaders[1].uniforms.roadMistRanges);
+    assert.deepEqual(shaders[0].uniforms.roadShadeRanges.value.map(row=>row.toArray()),
+      ['Kestrel Straight','Forest Run','Whitewood'].map(name=>{const p=course.script.pieces.find(row=>row.name===name);return[p.s0,p.s1];}));
+    const countdown=structuredClone(duel.state);
+    for(const state of [countdown,{...countdown,status:'racing',s:-.001},{...countdown,status:'racing',s:0},
+      {...countdown,status:'racing',s:course.length/2},{...countdown,status:'racing',s:course.length,completedLaps:1},
+      {...countdown,status:'menu',s:course.length/2,completedLaps:1}]) {
+      Object.freeze(state);const before=JSON.stringify(state);
+      syncScene(world,state,1/60);
+      for(let i=0;i<4;i++)assert.equal(shaders[0].uniforms.roadMistRanges.value[i].z,
+        materials[i].opacity/course.def.effects.valleyMist[i].opacity,'read actual shared bank fade after existing mist sync');
+      assert.equal(JSON.stringify(state),before);
+    }
+    assert.equal(JSON.stringify(course.features),features);assert.equal(JSON.stringify(course.def),definition);
+    const previous=shaders[0].uniforms.roadMistRanges.value.map(row=>row.z);
+    disposeTree(world);disposed=true;
+    syncScene(world,Object.freeze({...countdown,status:'racing',s:course.length,completedLaps:1}),1/60);
+    assert.deepEqual(shaders[0].uniforms.roadMistRanges.value.map(row=>row.z),previous,'retired world cannot update captured uniforms');
+  } finally {
+    if(!disposed)disposeTree(world);asphalt.dispose();
+    if(added)COURSE.splice(COURSE.findIndex(def=>def.id===ARDENNES_FOREST.id),1);
   }
 });

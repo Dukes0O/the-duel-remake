@@ -79,6 +79,10 @@ function gableGeometry() {
 function town(course, spec) {
   const group = new THREE.Group(), houses = spec.houses || [], lamps = spec.lamps || [];
   if (!houses.length || houses.length > 120 || lamps.length > 40) throw new Error('Invalid circuit landmark town.');
+  const roofColours = spec.roofColours === undefined ? TOWN_ROOFS : spec.roofColours;
+  if (!Array.isArray(roofColours) || spec.roofColours !== undefined &&
+      (roofColours.length < 2 || roofColours.length > 3 || roofColours.some(colour => !Number.isSafeInteger(colour) || colour < 0 || colour > 0xffffff)))
+    throw new Error('Invalid circuit landmark roof palette.');
   const box = new THREE.BoxGeometry(1, 1, 1), gable = gableGeometry(), post = new THREE.CylinderGeometry(.07, .07, 1, 6);
   const walls = weatheredMaterial('town weatherboard', 0xffffff), roofs = weatheredMaterial('town roof iron', 0xffffff, .45);
   const stone = weatheredMaterial('town stone footing', 0x77726a), timber = weatheredMaterial('town dark timber', 0x3b2e25);
@@ -108,7 +112,7 @@ function town(course, spec) {
     const footing = Math.max(.35, high - low + .35), floor = low + footing, wall = storeys * 3.0;
     const frame = {x: centre.x, z: centre.z, turn};
     const put = (list, x, y, z, sx, sy, sz, more = {}) => list.push({frame, x, y, z, sx, sy, sz, ...more});
-    const roofColour = TOWN_ROOFS[Math.floor(hash(i + 40) * TOWN_ROOFS.length)];
+    const roofColour = roofColours[Math.floor(hash(i + 40) * roofColours.length)];
     put(rows.footings, 0, low + footing / 2 - .2, 0, width + .3, footing + .4, depth + .3);
     put(rows.walls, 0, floor + wall / 2, 0, width, wall, depth, {colour: TOWN_WALLS[Math.floor(hash(i) * TOWN_WALLS.length)]});
     put(rows.roofs, 0, floor + wall, 0, depth + .8, Math.min(depth, width) * .42, width + .8, {colour: roofColour, spin: Math.PI / 2});
@@ -170,13 +174,39 @@ function town(course, spec) {
 // A country town church (Panorama's valley town, PANORAMA-TOWN): painted weatherboard nave under a pitched
 // corrugated-iron roof, a square tower at the road end with a shingled spire, tall windows that glow at dusk
 // (the world lighting lights any material named 'window'), a dark timber door. Faces the road like the mast.
-function church(height) {
+// Opt-in stone footings sample both real rotated footprints, never analytic ground.
+// This is a bounded .5 m sample, not a continuous triangle-intersection proof.
+function churchFootprint(course, base) {
+  const rectangles = [[-3.9, 3.9, -7.3, 7.3], [-1.9, 1.9, 6.4, 10.2]];
+  const cos = Math.cos(base.heading), sin = Math.sin(base.heading), lows = [];
+  let top = -Infinity;
+  for (const [x0, x1, z0, z1] of rectangles) {
+    const nx = Math.ceil((x1 - x0) / .5), nz = Math.ceil((z1 - z0) / .5);
+    let low = Infinity;
+    for (let ix = 0; ix <= nx; ix++) for (let iz = 0; iz <= nz; iz++) {
+      const x = x0 + (x1 - x0) * ix / nx, z = z0 + (z1 - z0) * iz / nz;
+      const point = {x: base.x + x * cos + z * sin, z: base.z - x * sin + z * cos};
+      const near = course.nearest(point.x, point.z);
+      if (near.distance < course.roadHalfWidthAt(near.s) + 1) throw new Error('Circuit landmark hides another road segment.');
+      const y = renderedGroundHeight(course, {...point, s: near.s, off: near.lateral}, {requireSurface: true});
+      if (!Number.isFinite(y)) throw new Error('Church footprint lacks actual drawn ground support.');
+      low = Math.min(low, y); top = Math.max(top, y);
+    }
+    lows.push(low);
+  }
+  return {top, lows};
+}
+function church(height, {stoneWalls = false, footprint = null} = {}) {
   const group = new THREE.Group();
-  const boards = weatheredMaterial('church weatherboard', 0xd8d0bf), iron = weatheredMaterial('church roof iron', 0x6b7177, .45);
+  const boards = stoneWalls ? weatheredMaterial('church weathered stone', 0x747570) : weatheredMaterial('church weatherboard', 0xd8d0bf);
+  const iron = weatheredMaterial('church roof iron', 0x6b7177, .45);
   const trim = weatheredMaterial('church dark timber', 0x3a2c22), stone = weatheredMaterial('church stone footing', 0x7a756b);
   const glass = new THREE.MeshStandardMaterial({name: 'church window', color: 0x2d2a26, roughness: .3});
   const nave = {width: 7.2, wall: 5.6, length: 14};
-  block(group, nave.width + .6, .5, nave.length + .6, 0, .25, 0, stone);
+  if (footprint) {
+    const depth = .5 + footprint.top - footprint.lows[0] + .2;
+    block(group, nave.width + .6, depth, nave.length + .6, 0, .5 - depth / 2, 0, stone).name = 'church nave foundation';
+  } else block(group, nave.width + .6, .5, nave.length + .6, 0, .25, 0, stone);
   block(group, nave.width, nave.wall, nave.length, 0, .5 + nave.wall / 2, 0, boards);
   // Pitched roof: a triangular prism along the nave, eaves a little proud of the walls.
   const gable = new THREE.Shape();
@@ -189,7 +219,10 @@ function church(height) {
     block(group, .08, 2.4, 1.0, side * (nave.width / 2 + .02), .5 + 2.9, -nave.length / 2 + 2.6 + i * 3, glass);
   // The tower at the road end (+z), with louvred belfry openings and a spire.
   const tower = {size: 3.4, top: height - 6.5}, front = nave.length / 2 + tower.size / 2 - .4;
-  block(group, tower.size + .4, .5, tower.size + .4, 0, .25, front, stone);
+  if (footprint) {
+    const depth = .5 + footprint.top - footprint.lows[1] + .2;
+    block(group, tower.size + .4, depth, tower.size + .4, 0, .5 - depth / 2, front, stone).name = 'church tower foundation';
+  } else block(group, tower.size + .4, .5, tower.size + .4, 0, .25, front, stone);
   block(group, tower.size, tower.top, tower.size, 0, .5 + tower.top / 2, front, boards);
   block(group, 1.5, 2.6, .1, 0, 1.8, front + tower.size / 2 + .03, trim);
   block(group, 1.0, 1.8, .1, 0, 4.6, front + tower.size / 2 + .03, glass);
@@ -266,10 +299,13 @@ export function addCircuitLandmarks(world, course) {
       const at = course.worldAt(spec.s + along, spec.lateral + side), nearest = course.nearest(at.x, at.z);
       if (nearest.distance < course.roadHalfWidthAt(nearest.s) + 1) throw new Error('Circuit landmark hides another road segment.');
     }
-    const detail = spec.type === 'radio-mast' ? {group: radioMast(spec.height)} :
-      spec.type === 'church' ? {group: church(spec.height)} : scoreboard(spec.height, spec.title || 'CIRCUIT');
+    if (spec.type === 'church' && (spec.churchStyle !== undefined && spec.churchStyle !== 'stone' ||
+        spec.grounding !== undefined && spec.grounding !== 'footprint')) throw new Error('Invalid church style or grounding.');
     const base = course.groundAt(spec.s, spec.lateral);
-    detail.group.position.set(base.x, renderedGroundHeight(course, {...base, s: spec.s, off: spec.lateral}), base.z);
+    const footprint = spec.type === 'church' && spec.grounding === 'footprint' ? churchFootprint(course, base) : null;
+    const detail = spec.type === 'radio-mast' ? {group: radioMast(spec.height)} :
+      spec.type === 'church' ? {group: church(spec.height, {stoneWalls: spec.churchStyle === 'stone', footprint})} : scoreboard(spec.height, spec.title || 'CIRCUIT');
+    detail.group.position.set(base.x, footprint ? footprint.top : renderedGroundHeight(course, {...base, s: spec.s, off: spec.lateral}), base.z);
     detail.group.rotation.y = base.heading; detail.group.name = spec.id; group.add(detail.group);
     if (detail.sync) systems.push(detail.sync);
   }
