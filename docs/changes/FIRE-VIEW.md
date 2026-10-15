@@ -122,4 +122,10 @@ the fire reads from straight above.
 
 ## Removed
 
-Nothing.
+- `docs/board/looks/heli-fire/round-2.jpg` (FIRE-ART-FX) and
+  `docs/board/looks/burnt-forest/round-2.jpg` (FIRE-BURNT-LOOK, the props):
+  FIRE-VIEW's round 2 sheet shows the same art in the game, and with it the
+  looks folder would pass its 20 MB limit (20.16 MB). Both cards are
+  finished; their review notes keep the verdicts and say where the art is
+  seen now.
+- Round 1's own sheet (above).

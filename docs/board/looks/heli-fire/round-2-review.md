@@ -1,6 +1,7 @@
 # FIRE-ART-FX, rounds 1 and 2 (14 October 2026)
 
-Sheet: `round-2.jpg`: the atlas on a striped backing (left), and the frames
+Sheet: removed 15 October (the looks folder's 20 MB limit); the frames are
+now seen in the game on `../fire-view/round-2.jpg`. It showed the atlas on a striped backing (left), and the frames
 used together over the burnt and fireweed ground textures (right): a
 burning edge with scorch, a smoke column leaning downwind, embers, steam and
 a water drop. Recipe: `tools/art/fire-fx.py`, Kenney Particle Pack (CC0).
