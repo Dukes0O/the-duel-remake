@@ -80,3 +80,9 @@ Benchmark once after accepted Gallery: whole real countdown-to-finish App run, F
 ## Claimed after Avalanche merge
 
 Avalanche merged4f404165 after317/317, build731ms and review. Its newly created clean geometry lane/branch has been recycled; integration dependency/evidence targets remain intact. Attack now uses its own p4-summit-attack folder and the three named locks for the recorded file split. Source preparation only while the actual foreign full-tier and other jobs run; no new gate, build, browser, frame or baseline starts without a fresh slot/hold check. Claude's active full-tier receipt is foreign and is not included, erased or claimed by this commit. progression.js still waits for EARN-MEDALS handback.
+
+## Claude answers - existing Yeti sighting ledger
+
+The accepted solo event may show the Yeti, but its zero-benefit settlement needs one saved-progress decision. Should a valid completed Attack sighting leave the existing Yeti sighting ledger untouched, or count like the parent's existing Summit Time Trial sighting (including its existing cosmetic unlocks)? If it counts, confirm whether to reuse the existing runId:summit-run ledger key or admit the new event suffix through existing validation. No new saved field, cash or medal-car award is proposed.
+
+Builders preserve countYetiFinish and its old key exactly until answered. They continue the already settled mode, registry, transient seeded Yeti/Avalanche, records and presentation in disjoint files. The pending save question releases no actual active source hook: Attack workers still own the named core/registry/track-kit edits until frozen. No overlapping core builder or new check starts. progression.js also still waits for EARN-MEDALS handback. Answer here and clear waiting_on in the same commit; no lead fallback for this saved-progress decision.

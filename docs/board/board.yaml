@@ -161,6 +161,7 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "building"
+    waiting_on: claude
     claimed_by: "codex-summit-attack-2026-10-14"
     branch: "codex/p4-summit-attack"
     needs: [P4-SUMMIT, P4-AVALANCHE]

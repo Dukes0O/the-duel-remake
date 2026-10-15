@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T01:49:16.580Z
+Observed at: 2026-10-15T01:53:26.322Z
 
-Observation commit: 8395d078982915d75273556b8a70f9d6a25947c5
+Observation commit: 8e5ea78b075935364292649c1d70f2a648dcc401
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 8395d078982915d75273556b8a70f9d6a25947c5
+Integration HEAD: 8e5ea78b075935364292649c1d70f2a648dcc401
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -70,7 +70,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-panorama | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-qualifying | 3 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
-| codex/p4-summit-attack | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit-attack |
+| codex/p4-summit-attack | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit-attack |
 | codex/p4-yeti | 0 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 0 | unknown | true | false | unknown |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
@@ -99,15 +99,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 302,171,760 B | +2,773 B | 250,000,000 B |
+| Build `dist/` | 302,171,760 B | +0 B | 250,000,000 B |
 | Wasteland models | 112,189,772 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,863,360 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 38,716 B | -149,530 B | 5,000,000 B |
+| Added bytes in last merge | 38,716 B | +0 B | 5,000,000 B |
 | All `public/` | 296,906,962 B | +0 B | unavailable |
-| Git objects | 425,943,040 B | +922,624 B | unavailable |
+| Git objects | 425,963,520 B | +20,480 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -116,7 +116,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 8395d078982915d75273556b8a70f9d6a25947c5
+- Local integration/wasteland: 8e5ea78b075935364292649c1d70f2a648dcc401
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -124,4 +124,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: matches local; cached commit 8395d078982915d75273556b8a70f9d6a25947c5.
+- Remote origin/integration/wasteland: behind local; cached commit 8395d078982915d75273556b8a70f9d6a25947c5.
