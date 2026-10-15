@@ -395,7 +395,10 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-review-black-2026-10-14"
+    branch: "codex/qa-review-black-frames"
+    locks: []
     needs: []
     details: "docs/board/cards/QA-REVIEW-BLACK-FRAMES.md"
 
