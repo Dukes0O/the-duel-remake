@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T23:13:20.540Z
+Observed at: 2026-10-15T23:14:21.251Z
 
-Observation commit: bcb6750dbb4de0fb927c3f9280cd09b8095f4f6a
+Observation commit: 4495c042f116ecf02afbf9d7d5f3786667b11db2
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: bcb6750dbb4de0fb927c3f9280cd09b8095f4f6a
+Integration HEAD: 4495c042f116ecf02afbf9d7d5f3786667b11db2
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -33,7 +33,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
 | codex/heli-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src |
 | codex/intel-levels | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/intel-levels |
-| codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
+| codex/p4-ardennes | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-finish | 3 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 3 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -59,7 +59,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T15:49:20-07:00 | 0 | last commit 2026-10-15T15:49:20-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/intel-levels.js, tools/test-intel-levels.mjs |
-| codex/p4-ardennes | P4-ARDENNES | 2026-10-15T11:22:23-07:00 | 0 | last commit 2026-10-15T11:22:23-07:00 | docs/changes/P4-ARDENNES.md, tools/scenarios/ardennes-views.mjs, tools/scenarios/frame-pacing.mjs, tools/test-circuit-ardennes.mjs, tools/test-track-script.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -82,9 +81,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 554,108 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 297,528 B | -256,580 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 439,100,416 B | +112,640 B | unavailable |
+| Git objects | 439,264,256 B | +163,840 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -93,7 +92,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: bcb6750dbb4de0fb927c3f9280cd09b8095f4f6a
+- Local integration/wasteland: 4495c042f116ecf02afbf9d7d5f3786667b11db2
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
