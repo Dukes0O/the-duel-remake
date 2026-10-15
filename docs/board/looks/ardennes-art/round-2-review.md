@@ -1,10 +1,10 @@
 # Ardennes Forest: native round 2
 
-Status: awaiting ONE actual image-only Claude verdict. Round1 required six corrections; this is the second submitted round of at most three. No art acceptance, signature, lane/build or frame pass is inferred.
+Status: CHANGES REQUIRED in the actual image-only Claude verdict. Round1 required six corrections; this is the second submitted round of at most three. No art acceptance, signature, lane/build or frame pass is inferred.
 
 ## Actual source and pictures
 
-Native source2684855922f52beddffa99b9d3d4dca08c31f42b includes six requested source changes: two low Stavelot streets with46 grounded pitched-roof houses and a stone church; close summer beech/fir groves; neutral damp road with authored shade/actual first-lap mist; selected weathered stone bridge over the red-brown stream; real player-eye footbridge approach. Claude judges whether these are visible and sufficient, especially bridge/stream under the existing first-lap mist. Other lighting/tower/grandstand finishing remains Claude's later pass.
+Native source2684855922f52beddffa99b9d3d4dca08c31f42b includes the requested source preparation: two low Stavelot house-row corridors with 46 grounded pitched-roof houses and a stone church; dense firs with some summer-green tinted pine crowns; neutral damp road with authored shade/actual first-lap mist; selected weathered stone bridge over the red-brown stream; real player-eye footbridge approach. The actual verdict below finds the bridge/stream insufficiently visible and requires real streets and a distinct broadleaf view. Other lighting/tower/grandstand finishing remains Claude's later pass.
 
 ONE corrected original native packet21403 completed06:31:39UTC/71250.8201ms/exit0, source unchanged/clean, private autoport/memory-only, zero issues/warnings. All22 actual1280x720 views, eleven each High/Performance, retain real stockStuttgart959s/.95/Medium/1989/field1000/eight-car two-lap race. Both have the exact known first-lap LongLeft kit-solid-1901 armco player exception and5 CPU incident events; not zero-crash races. Player/CPU incident identity and all original finish/reset/state/readOnly/mist guards passed. All7 opponents and player complete; no synthetic finishes.
 
@@ -23,3 +23,11 @@ Retained lane .evidence/2026-10-15/P4-ARDENNES/round2-26848559/{report.json,arde
 ## Removed
 
 The two stale13-kit-village assertions and now-unused track-kit footprint option were removed with their actual authored replacement; meaningful current-town tests replace them, not13-to0 or a historical fixture. The prior failed bridge picture is superseded for review, with its cause retained above. No current runtime asset, licensed original or original accepted guard removed. Round1 is retained through this judgment; its verdict can be folded after consumption.
+
+## Actual Claude verdict and final-round limits
+
+Review 26767 completed 06:38:23 UTC, exit 0, 44,253.4946 ms, tools/MCP/calls empty. Village 3/5, forest 3/5, road 4/5, bridges 3/5, overall 3/5. Claude accepts the neutral road, dense firs and actual player-eye footbridge. Final round must show a weathered stone bridge with red-brown water on both sides, a distinct lighter broadleaf beech grove, and two or three legible village streets. Verdict: CHANGES REQUIRED, not acceptance.
+
+Source inspection corrects the earlier description above: the 46 houses have two placement corridors but no drawn streets, and the green `autumn` option tints pine crowns; it does not provide a broadleaf silhouette. The final source adds only optional grounded street ribbons and prepares two actual second-lap close views. Beech remains waiting for Claude's source choice. No final photos, JPEG, fixture, gate or build exists from this preparation. Raw review: `.evidence/2026-10-15/P4-ARDENNES/claude-image-only-round2-380c3283/verdict.txt`.
+
+Both submitted round-one and round-two verdicts remain recorded; the final third round is the only remaining art review. Earlier sheets may be consumed only after their verdicts and final publication are retained. No fourth round is authorized.

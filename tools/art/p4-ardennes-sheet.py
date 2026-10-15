@@ -40,6 +40,44 @@ def player_crash_accepted(detail):
             prop.get('halfX') == 2 and prop.get('halfZ') == .4 and prop.get('authoredPlacement') == placement and detail['placement'] == placement)
 
 
+def final_close_sheet(args, report):
+    # Final round also hands these original PNGs to Claude; the sheet never replaces them.
+    if args.output.exists():
+        raise ValueError('The final round output is immutable')
+    names = [('Village Streets', 'actual-town-streets'),
+             ('Stone Bridge Stream', 'actual-stone-bridge-stream'),
+             ('Beech Grove', 'actual-beech-grove')]
+    pictures = []
+    for name, kind in names:
+        matches = [row for row in report['captures'] if row['quality'] == 'high' and row['name'] == name and row['phase'] == 'clear-second-lap']
+        if len(matches) != 1:
+            raise ValueError('The complete final three actual close views are required: ' + name)
+        row = matches[0]
+        if (row.get('laps') != 1 or row.get('fogNear') != 360 or not row.get('stateUnchanged') or
+                row.get('nativeFieldSize') != 8 or not 1 <= row.get('nativeCars', 0) <= 8 or row.get('closeView', {}).get('kind') != kind):
+            raise ValueError('A close view must retain actual clear second-lap native context')
+        image = Image.open(args.browser / row['file']).convert('RGB')
+        if image.size != (1280, 720):
+            raise ValueError('Close view is not the original full native viewport')
+        pictures.append((name, row['file'], image))
+    sheet = Image.new('RGB', (960, 1850), '#11201d')
+    draw = ImageDraw.Draw(sheet)
+    font = ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf', 20)
+    draw.text((12, 12), 'ARDENNES FINAL ROUND 3 - actual clear second-lap close views', font=font, fill='#e7d6ad')
+    for i, (name, file, image) in enumerate(pictures):
+        y = 54 + i * 592
+        draw.text((12, y), name + ' / High / original PNG supplied separately', font=font, fill='#e0e9e1')
+        sheet.paste(image.resize((960, 540), Image.Resampling.LANCZOS), (0, y + 30))
+    draw.text((12, 1824), 'Full viewports resized only. No crop, retouch, lighting override or frame timing.', font=font, fill='#bdcec5')
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    for quality in [88, 84, 80, 76, 72, 68, 64]:
+        sheet.save(args.output, quality=quality, optimize=True)
+        if args.output.stat().st_size <= 500000:
+            print(str(args.output) + ': ' + str(args.output.stat().st_size) + ' bytes; original PNGs: ' + ', '.join(row[1] for row in pictures))
+            return
+    raise ValueError('Final actual close-view sheet exceeds 500 KB')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--browser', type=Path, required=True)
@@ -84,6 +122,9 @@ def main():
                     raise ValueError('Bridge camera is not the actual rendered player eye and forward target')
             captures.append(capture)
         rows.append(captures)
+    if args.round == 3:
+        final_close_sheet(args, report)
+        return
     cell = 256
     sheet = Image.new('RGB', (cell * len(keys), 610), '#11201d')
     draw = ImageDraw.Draw(sheet)

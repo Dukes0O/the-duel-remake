@@ -463,6 +463,53 @@ test('the current Stavelot village authors two frozen nonempty streets and a gro
   assert.equal(church.grounding, 'footprint');
 });
 
+test('the two current village corridors have real frozen four-metre gravel street descriptors', () => {
+  const town = ARDENNES_FOREST.circuitLandmarks.find(row => row.type === 'town');
+  assert.ok(Object.isFrozen(town.streets)); assert.equal(town.streets.length, 2);
+  for (const [index, street] of town.streets.entries()) {
+    assert.ok(Object.isFrozen(street) && Object.isFrozen(street.points));
+    assert.equal(street.width, 4); assert.equal(street.points.length, 196);
+    for (const [i, point] of street.points.entries()) {
+      assert.ok(Object.isFrozen(point)); assert.equal(point.s, piece('Stavelot').s0 - 65 + i);
+      assert.equal(point.lateral, [28, 48][index] + 1.2 * Math.sin((point.s - piece('Stavelot').s0) / 70));
+    }
+  }
+  const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
+  const before = JSON.stringify({definition: ARDENNES_FOREST, features: course.features});
+  const material = new THREE.MeshBasicMaterial({side: THREE.DoubleSide});
+  const terrain = [terrainGeometry, farTerrainGeometry].map(build => new THREE.Mesh(build(course), material));
+  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
+  try {
+    const group = addCircuitLandmarks(world, course);
+    for (let i = 0; i < town.streets.length; i++) {
+      const mesh = group.getObjectByName('town street ' + i), positions = mesh?.geometry.getAttribute('position');
+      assert.ok(positions?.count > 0); assert.ok(mesh.geometry.index.count > 0);
+      const rows = mesh.userData.streetRows;
+      for (const row of [rows[0], rows[Math.floor(rows.length / 2)], rows.at(-1)])
+        for (const j of [row.start, Math.floor((row.start + row.end) / 2), row.end]) {
+          ray.set(new THREE.Vector3(positions.getX(j), 2000, positions.getZ(j)), down);
+          const hit = ray.intersectObjects(terrain, false)[0];
+          assert.ok(hit, 'street has an actual near/far drawn triangle at each 3x3 witness');
+          near(positions.getY(j), hit.point.y + .04, .002, 'street uses the existing actual stream Float32 ground bound');
+        }
+      for (const row of rows) {
+        for (let j = row.start; j <= row.end; j++) {
+          const x = positions.getX(j), z = positions.getZ(j), nearest = course.nearest(x, z);
+          const y = renderedGroundHeight(course, {x, z, s: nearest.s, off: nearest.lateral}, {requireSurface: true});
+          assert.equal(positions.getY(j), Math.fround(y + .04));
+          assert.ok(nearest.distance >= course.roadHalfWidthAt(nearest.s) + 3);
+          if (j > row.start) assert.ok(Math.hypot(x - positions.getX(j - 1), z - positions.getZ(j - 1)) <= .5);
+          if (row.previous !== null) {
+            const k = row.previous + j - row.start;
+            assert.ok(Math.hypot(x - positions.getX(k), z - positions.getZ(k)) <= 1);
+          }
+        }
+      }
+    }
+    assert.equal(JSON.stringify({definition: ARDENNES_FOREST, features: course.features}), before);
+  } finally {disposeTree(world); for (const mesh of terrain) mesh.geometry.dispose(); material.dispose();}
+});
+
 test('every actual current town foundation and veranda has drawn-terrain support without mutation or leaked owners', () => {
   const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
   const before = JSON.stringify({definition: ARDENNES_FOREST, features: course.features});

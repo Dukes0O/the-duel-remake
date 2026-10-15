@@ -76,6 +76,55 @@ function gableGeometry() {
   geometry.translate(0, 0, -.5); geometry.rotateY(Math.PI / 2);
   return geometry;
 }
+// Optional visual streets follow authored station/lateral paths, never the race surface.
+function townStreetRows(course, streets) {
+  const invalid = () => {throw new Error('Invalid circuit landmark street or missing clear drawn support.');};
+  if (!Array.isArray(streets) || streets.length < 1 || streets.length > 3) invalid();
+  return streets.map(street => {
+    if (!street || !Number.isFinite(street.width) || street.width <= 0 || street.width > 8 ||
+        !Array.isArray(street.points) || street.points.length < 2 || street.points.length > 512) invalid();
+    for (let i = 0; i < street.points.length; i++) {
+      const point = street.points[i];
+      if (!point || ![point.s, point.lateral].every(Number.isFinite) || point.s < 0 || point.s >= course.length ||
+          i > 0 && point.s <= street.points[i - 1].s) invalid();
+    }
+    const positions = [], indices = [], rows = [], across = Math.floor(street.width / .5) + 1;
+    let previous = null;
+    const append = (s, lateral) => {
+      const start = positions.length / 3;
+      for (let i = 0; i <= across; i++) {
+        const point = course.worldAt(s, lateral + street.width * (i / across - .5));
+        // Query the exact Float32 x/z that the renderer will draw, not a displaced double proxy.
+        const x = Math.fround(point.x), z = Math.fround(point.z), near = course.nearest(x, z);
+        if (near.distance < course.roadHalfWidthAt(near.s) + 3) invalid();
+        const ground = renderedGroundHeight(course, {x, z, s: near.s, off: near.lateral}, {requireSurface: true});
+        if (!Number.isFinite(ground)) invalid();
+        positions.push(x, Math.fround(ground + .04), z);
+      }
+      const end = positions.length / 3 - 1;
+      rows.push({start, end, previous});
+      if (previous !== null) for (let i = 0; i < across; i++)
+        indices.push(previous + i, start + i, previous + i + 1, previous + i + 1, start + i, start + i + 1);
+      previous = start;
+    };
+    for (let i = 1; i < street.points.length; i++) {
+      const a = street.points[i - 1], b = street.points[i];
+      let length = 0;
+      for (const side of [-.5, .5]) {
+        const from = course.worldAt(a.s, a.lateral + side * street.width), to = course.worldAt(b.s, b.lateral + side * street.width);
+        length = Math.max(length, Math.hypot(to.x - from.x, to.z - from.z));
+      }
+      // One extra subdivision keeps stored Float32 edges strictly below the sampling bounds.
+      const steps = Math.ceil(length) + 1;
+      for (let j = i === 1 ? 0 : 1; j <= steps; j++) {
+        const fraction = j / steps;
+        append(a.s + (b.s - a.s) * fraction, a.lateral + (b.lateral - a.lateral) * fraction);
+      }
+    }
+    if (!indices.length) invalid();
+    return {positions, indices, rows};
+  });
+}
 function town(course, spec) {
   const group = new THREE.Group(), houses = spec.houses || [], lamps = spec.lamps || [];
   if (!houses.length || houses.length > 120 || lamps.length > 40) throw new Error('Invalid circuit landmark town.');
@@ -83,6 +132,7 @@ function town(course, spec) {
   if (!Array.isArray(roofColours) || spec.roofColours !== undefined &&
       (roofColours.length < 2 || roofColours.length > 3 || roofColours.some(colour => !Number.isSafeInteger(colour) || colour < 0 || colour > 0xffffff)))
     throw new Error('Invalid circuit landmark roof palette.');
+  const streets = spec.streets === undefined ? null : townStreetRows(course, spec.streets);
   const box = new THREE.BoxGeometry(1, 1, 1), gable = gableGeometry(), post = new THREE.CylinderGeometry(.07, .07, 1, 6);
   const walls = weatheredMaterial('town weatherboard', 0xffffff), roofs = weatheredMaterial('town roof iron', 0xffffff, .45);
   const stone = weatheredMaterial('town stone footing', 0x77726a), timber = weatheredMaterial('town dark timber', 0x3b2e25);
@@ -169,6 +219,16 @@ function town(course, spec) {
   build('town dark windows', box, dark, rows.dark, false);
   build('town lamp posts', post, steel, rows.poles);
   build('town lamp heads', box, lampGlass, rows.heads, false);
+  if (streets) {
+    const gravel = weatheredMaterial('town gravel streets', 0x81796a); gravel.side = THREE.DoubleSide;
+    streets.forEach((street, i) => {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(street.positions, 3));
+      geometry.setIndex(street.indices); geometry.computeVertexNormals();
+      const mesh = new THREE.Mesh(geometry, gravel); mesh.name = 'town street ' + i;
+      mesh.receiveShadow = true; mesh.userData.streetRows = street.rows; group.add(mesh);
+    });
+  }
   return group;
 }
 // A country town church (Panorama's valley town, PANORAMA-TOWN): painted weatherboard nave under a pitched

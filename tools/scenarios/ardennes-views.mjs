@@ -199,6 +199,25 @@ export async function run(context) {
             window.__render.renderFrame();
             return {position: a.inspectionCamera.position, playerCamera};
           }
+          if (['Stone Bridge Stream', 'Village Streets'].includes(${JSON.stringify(name)})) {
+            if (s.completedLaps !== 1) throw Error('Close art view requires the actual clear second lap');
+            const bridge = c.def.kitPlacements.find(row => row.id === 'stone-stream-bridge');
+            const town = c.def.circuitLandmarks.find(row => row.id === 'stavelot-valley-town');
+            const village = ${JSON.stringify(name)} === 'Village Streets';
+            if (!bridge || !town?.streets?.length) throw Error('Actual close-view descriptors missing');
+            const station = village ? town.s - 30 : bridge.s;
+            const eyeS = village ? station - 40 : station - 60, eyeOff = village ? -2 : 0;
+            const targetS = village ? station + 20 : station, targetOff = village ? 38 : bridge.lateral / 2;
+            const e = c.groundAt(eyeS, eyeOff), t = c.groundAt(targetS, targetOff);
+            const ground = window.__panQa.renderedGroundHeight(c, {...e, s: eyeS, off: eyeOff}, {requireSurface: true});
+            const targetGround = window.__panQa.renderedGroundHeight(c, {...t, s: targetS, off: targetOff}, {requireSurface: true});
+            if (![ground, targetGround].every(Number.isFinite)) throw Error('Close view has no actual drawn ground');
+            a.inspectionCamera = {position: [e.x, ground + (village ? 35 : 32), e.z], target: [t.x, targetGround + 1.5, t.z]};
+            window.__render.renderFrame();
+            return {position: a.inspectionCamera.position, closeView: {kind: village ? 'actual-town-streets' : 'actual-stone-bridge-stream',
+              station, eyeS, eyeOff, targetS, targetOff, target: a.inspectionCamera.target,
+              ...(village ? {streets: town.streets.length} : {bridge: {...bridge}, stream: {...c.def.effects.stream}})}};
+          }
           const piece = c.script.pieces.find(piece => piece.name === ${JSON.stringify(name)});
           if (!piece) throw Error('Missing authored view');
           const at = ${JSON.stringify(name)} === 'Pit Straight' ? 0 : Math.max(0, piece.s0 - 35);
@@ -224,7 +243,7 @@ export async function run(context) {
             camera: window.__render.camera.position.toArray(), stateUnchanged: true};
         })()`);
         const file = 'ardennes-' + name.toLowerCase().replaceAll(' ', '-') + '-' + quality + '-' + phase;
-        await context.screenshot(file); report.captures.push({quality, name, phase, file: file + '.png', ...facts, ...(camera.playerCamera ? {playerCamera: camera.playerCamera} : {})}); await persist();
+        await context.screenshot(file); report.captures.push({quality, name, phase, file: file + '.png', ...facts, ...(camera.playerCamera ? {playerCamera: camera.playerCamera} : {}), ...(camera.closeView ? {closeView: camera.closeView} : {})}); await persist();
       }
       await capture('Pit Straight', 'mist-grid');
       const targets = await context.evaluate(`(() => {
@@ -234,14 +253,22 @@ export async function run(context) {
         targets.splice(targets.findIndex(row=>row.name==='Kestrel Straight')+1,0,{name:'Kestrel Underbridge',s:bridge.s-24});
         return targets;
       })()`);
+      const closeTargets = await context.evaluate(`(() => {
+        const c=window.__qaApp.duel.course;
+        return [{name:'Stone Bridge Stream',s:c.def.kitPlacements.find(row=>row.id==='stone-stream-bridge').s},
+          {name:'Village Streets',s:c.def.circuitLandmarks.find(row=>row.id==='stavelot-valley-town').s}].sort((a,b)=>a.s-b.s);
+      })()`);
+      let closeIndex = 0;
       const progress = []; let targetIndex = 0, clear = false;
       for (let batch = 0; batch < 70; batch++) {
         const target = targets[targetIndex]?.s ?? null;
+        const closeTarget = closeTargets[closeIndex]?.s ?? null;
         const result = await context.evaluate(`(() => {
-          const a=window.__qaApp,d=a.duel,s=d.state,target=${JSON.stringify(target)};
+          const a=window.__qaApp,d=a.duel,s=d.state,target=${JSON.stringify(target)},closeTarget=${JSON.stringify(closeTarget)};
           for(let i=0;i<600;i++) {
             if(!['racing','countdown'].includes(s.status) || s.completedLaps>=2&&s.opponents.every(r=>r.finished))break;
             if(target!==null&&s.completedLaps===0&&s.s>=target)break;
+            if(closeTarget!==null&&s.completedLaps===1&&d.course.phase(s.s)>=closeTarget)break;
             a.advance(1/60,1/60);
           }
           const before=JSON.stringify(s);window.__render.renderFrame();if(JSON.stringify(s)!==before)throw Error('Render wrote race');
@@ -254,6 +281,9 @@ export async function run(context) {
         progress.push(result);
         if(target!==null&&result.laps===0&&result.s>=target) {await capture(targets[targetIndex].name,'first-lap');targetIndex++;}
         if(result.laps>=1&&!clear) {await capture('Pit Straight','clear-second-lap');clear=true;}
+        if(closeTarget!==null&&result.laps===1&&result.s-setup.length>=closeTarget) {
+          await capture(closeTargets[closeIndex].name,'clear-second-lap');closeIndex++;
+        }
         if(result.allDone||!['racing','countdown'].includes(result.status))break;
       }
       const final = progress.at(-1), observer = await context.evaluate('window.__finishArdennesObserver()');
@@ -262,6 +292,7 @@ export async function run(context) {
       if (!final?.allDone || final.laps !== 2 || final.finished !== 7 || !playerAccepted || final.resets !== 0 || final.firstLapPileUp)
         report.failures.push({quality, error: 'Native Ardennes field did not finish: '+JSON.stringify(final)});
       if (targetIndex !== targets.length || !clear) throw Error('Native required art views were not reached');
+      if (closeIndex !== closeTargets.length) throw Error('Native clear close views were not reached');
       } finally {
         const observer = await context.evaluate('window.__finishArdennesObserver()');
         report.observers.push({quality, ...observer}); await persist();

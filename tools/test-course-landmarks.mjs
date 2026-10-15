@@ -119,4 +119,38 @@ for(const extra of [{churchStyle:'plastic'},{grounding:'centre'}]) {
   assert.throws(()=>circuitWorld(PANORAMA_RIDGE,[{...panoChurch,...extra}]), /church/i); checks++;
 }
 assert.throws(()=>circuitWorld(ARDENNES_FOREST,[{...ARDENNES_FOREST.circuitLandmarks.find(row=>row.type==='church'),lateral:100000}]), /support/i); checks++;
+// Final-round streets are presentation-only; no descriptor keeps the original town exact.
+{
+  const original = circuitWorld(PANORAMA_RIDGE, [panoTown]);
+  try {assert.equal(original.placed.getObjectByName('town street 0'), undefined); checks++;}
+  finally {disposeTree(original.world);}
+  const spec = ARDENNES_FOREST.circuitLandmarks.find(row => row.type === 'town');
+  for (const streets of [null, [], [{width: 4, points: []}], [{width: NaN, points: [{s: 1, lateral: 28}, {s: 2, lateral: 28}]}],
+      [{width: 4, points: [{s: 2, lateral: 28}, {s: 1, lateral: 28}]}],
+      [{width: 4, points: [{s: 1, lateral: 0}, {s: 2, lateral: 0}]}]]) {
+    assert.throws(() => circuitWorld(ARDENNES_FOREST, [{...spec, streets}]), /street/i); checks++;
+  }
+  const before = JSON.stringify(spec), fixture = circuitWorld(ARDENNES_FOREST, [spec]);
+  let disposed = false;
+  try {
+    for (let i = 0; i < spec.streets.length; i++) {
+      const mesh = fixture.placed.getObjectByName('town street ' + i);
+      assert.ok(mesh?.isMesh && mesh.geometry.index.count > 0);
+      assert.equal(mesh.material.name, 'town gravel streets');
+      const positions = mesh.geometry.getAttribute('position');
+      for (let j = 0; j < positions.count; j++) {
+        const x = positions.getX(j), z = positions.getZ(j), near = fixture.course.nearest(x, z);
+        const y = renderedGroundHeight(fixture.course, {x, z, s: near.s, off: near.lateral}, {requireSurface: true});
+        assert.ok(Number.isFinite(y));
+        assert.equal(positions.getY(j), Math.fround(y + .04));
+        assert.ok(near.distance >= fixture.course.roadHalfWidthAt(near.s) + 3); checks += 3;
+      }
+    }
+    assert.equal(JSON.stringify(spec), before);
+    const resources = new Map();
+    fixture.world.traverse(node => {for (const item of [node.isInstancedMesh ? node : null, node.geometry, ...[].concat(node.material ?? [])])
+      if (item && !resources.has(item)) {resources.set(item, 0); item.addEventListener('dispose', () => resources.set(item, resources.get(item) + 1));}});
+    disposeTree(fixture.world); disposed = true; assert.ok([...resources.values()].every(count => count === 1)); checks += 2;
+  } finally {if (!disposed) disposeTree(fixture.world);}
+}
 console.log(`Blender course landmarks: ${checks} checks; ${triangles} triangles across six reusable models.`);

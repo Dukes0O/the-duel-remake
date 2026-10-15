@@ -155,7 +155,12 @@ function valleyTown() {
       lamps.push(Object.freeze({s, lateral: centre + 3}));
     }
   }
-  return {houses: Object.freeze(houses), lamps: Object.freeze(lamps)};
+  const streets = [28, 48].map(lateral => Object.freeze({width: 4,
+    points: Object.freeze(Array.from({length: 196}, (_, i) => {
+      const s = named('Stavelot').s0 - 65 + i;
+      return Object.freeze({s, lateral: lateral + 1.2 * Math.sin((s - named('Stavelot').s0) / 70)});
+    }))}));
+  return {houses: Object.freeze(houses), lamps: Object.freeze(lamps), streets: Object.freeze(streets)};
 }
 export const ARDENNES_FOREST = Object.freeze({
   ...ARDENNES_ROAD,
