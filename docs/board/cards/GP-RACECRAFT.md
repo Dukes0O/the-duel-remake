@@ -91,3 +91,7 @@ only), `src/feature-flags.js` (the switch), `tools/preview-flags.mjs`,
 `tools/test-race-field.mjs` (new cases only), a new measuring tool
 `tools/racecraft-rate.mjs`, and `docs/changes/GP-RACECRAFT.md`. Locks:
 `busy-game-files`.
+
+## Kyle's lane exception, 15 October afternoon
+
+Kyle explicitly approved one GP-RACECRAFT lane while HELI waits for a normal Codex restart. This exception applies only to codex/gp-racecraft in the gp-racecraft folder. It does not authorize another lane, HELI cleanup bypass, Claude's files, live installation or a release. Root owns the card's named files and busy-game-files lock; cpu-racecraft stays dev and is enabled only in the existing desktop preview after acceptance. CPU strength/refill remain exactly0.5/0.5. Preserve off-switch race data and random draws. Build in small tested slices; one independent code/numbers review, nearby/jobs4 and production build precede merge. The retained Ardennes and all other lanes stay intact.
