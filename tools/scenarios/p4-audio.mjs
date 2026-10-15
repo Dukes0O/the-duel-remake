@@ -207,7 +207,7 @@ async function nativeRecorder(audio, helpers) {
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   const demand = (yes, message) => { if (!yes) throw Error(message); };
   const segments = [];
-  let active = null;
+  let active = null, clockFailure = null;
   async function settle(test, label) {
     const end = performance.now() + 5000;
     while (!test()) { if (performance.now() > end) throw Error(label); await wait(16); }
@@ -261,6 +261,18 @@ async function nativeRecorder(audio, helpers) {
       for (const chunk of chunks) {
         demand(chunk.pcm.length === 4096 && chunk.witness.length === 2048, 'Short native block: ' + name);
         const from = Math.max(row.startFrame, chunk.frame), to = Math.min(endFrame, chunk.frame + 2048);
+        if (from !== covered && !clockFailure) {
+          const header={segment:row.index,track:name,sampleRate:rate,startFrame:row.startFrame,endFrame,
+            expected:covered,actual:from,chunkFrame:chunk.frame,scope:'four raw neighboring chunks per stem; not a whole segment'};
+          try {
+            clockFailure={...header,tracks:Object.fromEntries(Object.entries(row.tracks).map(([stem,input])=>{
+              const center=input.chunks.reduce((best,item,index)=>Math.abs(item.frame-chunk.frame)<Math.abs(input.chunks[best].frame-chunk.frame)?index:best,0);
+              return [stem,input.chunks.slice(Math.max(0,center-2),center+2).map(item=>({
+                frame:item.frame,callbacks:item.callbacks,pcmFrames:item.pcm.length/2,witnessFrames:item.witness.length,
+                pcmBase64:encode(item.pcm),witnessBase64:encode(item.witness)}))];
+            }))};
+          } catch(error) {clockFailure={...header,retentionError:error.message};}
+        }
         demand(from === covered, 'Missing or duplicated native sample frames: ' + name + ' ' + JSON.stringify({
           segment: row.index, startFrame: row.startFrame, endFrame, expected: covered, actual: from,
           chunkFrame: chunk.frame, previousFrames: chunks.slice(Math.max(0, chunks.indexOf(chunk) - 2), chunks.indexOf(chunk) + 2).map(item => item.frame),
@@ -283,11 +295,13 @@ async function nativeRecorder(audio, helpers) {
       for (const sample of pcm) demand(Number.isFinite(sample), 'Nonfinite recorded sample: ' + name);
       output[name] = {pcmBase64: encode(pcm), identity, callbacks, disconnectedSilentInputCallbacks: emptyInput,
         startFrame: row.startFrame, endFrame, frames: pcm.length / 2};
-      track.chunks.length = 0;
     }
+    // Keep earlier stems available if a later stem fails validation.
+    for (const track of Object.values(row.tracks)) track.chunks.length = 0;
     return {index: row.index, sampleRate: rate, startFrame: row.startFrame, endFrame, tracks: output};
   }
   return {
+    failurePacket() { return clockFailure; },
     async begin() { active = await segment(); return {sampleRate: rate, startFrame: active.startFrame}; },
     age() { return active ? ctx.currentTime - active.startFrame / rate : 0; },
     async rotate() {
@@ -480,6 +494,27 @@ export async function run(context) {
       q.report.functionalVerdict={nativeEvents:true,replay:true,lifecycle:true,genuineThreeLapFinish:true,listeningApproved:false};
     })()`);
   } finally {
+    // Retain the actual disputed samples before recorder cleanup. The original
+    // thrown continuity assertion still decides this run's failure.
+    try {
+      const failure=await context.evaluate('window.__p4Capture.failurePacket()');
+      if(failure) {
+        const tracks={};
+        for(const [stem,chunks] of Object.entries(failure.tracks??{})) {
+          tracks[stem]=[];
+          for(const [index,chunk] of chunks.entries()) {
+            const {pcmBase64,witnessBase64,...header}=chunk;
+            const pcmFile='clock-'+stem+'-'+index+'-pcm.f32',witnessFile='clock-'+stem+'-'+index+'-witness.f32';
+            const pcm=Buffer.from(pcmBase64,'base64'),witness=Buffer.from(witnessBase64,'base64');
+            await writeFile(join(context.outputDir,pcmFile),pcm);
+            await writeFile(join(context.outputDir,witnessFile),witness);
+            tracks[stem].push({...header,pcmFile,witnessFile,pcmBytes:pcm.length,witnessBytes:witness.length});
+          }
+        }
+        await writeFile(join(context.outputDir,'clock-failure.json'),JSON.stringify({...failure,tracks},null,2)+'\n');
+        recording.clockDispute={file:'clock-failure.json',scope:failure.scope,retentionError:failure.retentionError??null};
+      }
+    } catch(error) {recording.clockRetentionError=error.message;}
     await context.evaluate('window.__qaApp.stop(); window.__p4Capture.stop()');
     const report = await context.evaluate('window.__p4Audio.result()');
     await writeFile(join(context.outputDir, 'p4-audio.json'), JSON.stringify(report, null, 2) + '\n');
