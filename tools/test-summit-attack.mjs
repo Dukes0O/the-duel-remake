@@ -127,10 +127,12 @@ if(!process.argv.includes('--drive')) {
     for(const [medal,time] of [['gold',SUMMIT_TIME_ATTACK.attackTimes.gold],['silver',SUMMIT_TIME_ATTACK.attackTimes.silver],
       ['bronze',SUMMIT_TIME_ATTACK.attackTimes.bronze],[null,SUMMIT_TIME_ATTACK.attackTimes.bronze+1]]){
       const result=payload({runId:'attack-'+medal,timeSec:time,won:medal!==null,clean:true,manual:true,snowmen:10,snowmenEnabled:true,
-        jumps:9,crushCount:9,policeEscapes:9}),before=pendingProfile(result),settled=settleRace(before,result);
+        jumps:9,crushCount:9,policeEscapes:9,difficulty:'pro'}),seeded=pendingProfile(result),
+        before=normalizeProfile({...seeded,personalBests:{...seeded.personalBests,[bestKey(result)]:time+5}}),settled=settleRace(before,result);
       assert.equal(isValidFinish(result),true);assert.equal(settled.awarded,true);assert.equal(settled.reward,0);
       assert.equal(settled.charge,0);assert.equal(settled.policeFineCharge,0);assert.ok(Object.values(settled.breakdown).every(value=>value===0));
       assert.deepEqual(protectedProfile(settled.profile),protectedProfile(before));assert.equal(settled.profile.activeRace,null);
+      assert.equal(settled.personalBestStatus,'improved');assert.equal(before.personalBests[bestKey(result)],time+5);
       assert.equal(settled.profile.personalBests[bestKey(result)],time);assert.equal(settled.profile.history.at(-1).reward,0);
       assert.equal(settled.profile.history.at(-1).charge,0);assert.equal(settled.profile.settledResults.filter(key=>key===result.runId+':'+result.stageIndex).length,1);
       assert.equal(settleRace(settled.profile,result).profile,settled.profile);
@@ -187,12 +189,14 @@ if(!process.argv.includes('--drive')) {
       assert.ok(startRecorded(app,stage));app.autopilot=true;app._scriptedCrashDone=true;useRacingLine(app,.95);
       const d=app.duel,s=d.state;packet.setup={courseId:d.course.def.id,seed:s.seed,courseSeed:d.course.seed,yetiSeed:s.yetiSeed,runId:app.runId,
         car:s.car,driverId:s.driverId,upgrades:{...s.upgrades},tyre:s.tyre,difficulty:s.difficulty,cpuDifficulty:s.cpuDifficulty,
-        mode:s.mode,laps:s.lapsTotal,opponents:s.opponents.length,traffic:s.traffic.length,pitServiceCount:0,lineSkill:.95,fps:120};
+        mode:s.mode,laps:s.lapsTotal,opponents:s.opponents.length,traffic:s.traffic.length,pitStrategy:'no service',lineSkill:.95,fps:120};
       assert.equal(s.seed,1989);assert.equal(s.yetiSeed,3395618052);assert.equal(s.car,'falcone_f42');assert.equal(s.driverId,'club');
       assert.equal(s.tyre,'winter');assert.deepEqual(s.upgrades,upgrades);assert.equal(s.mode,'timetrial');assert.equal(s.lapsTotal,1);
       assert.equal(s.opponents.length,0);assert.equal(s.traffic.length,0);assert.ok(!s.field);assert.ok(s.avalanche&&s.yeti);
+      packet.pitServices=[];const gallery=d.course.def.galleries.find(row=>row.id==='summit-gallery');assert.ok(gallery);
       let previousPhase=null,lastSecond=-1;const off=d.onChange((state,event)=>{
         packet.events.push({time:state.stageTimeSec,s:state.s,event:structuredClone(event)});
+        if(event.pitCue==='pit.wrench'||event.pitCue==='pit.go')packet.pitServices.push({time:state.stageTimeSec,s:state.s,cue:event.pitCue});
         if(event.crash||event.boundaryReset||event.checkpointReset)packet.failures.push({time:state.stageTimeSec,s:state.s,event:structuredClone(event)});
       });
       try {
@@ -203,7 +207,8 @@ if(!process.argv.includes('--drive')) {
           const surface=d.course.surfaceAt(s.s,s.lateral),second=Math.floor(s.stageTimeSec);
           if(![s.s,s.lateral,s.speedMph,s.stageTimeSec].every(Number.isFinite))throw Error('Nonfinite native state');
           if(s.tyre!=='winter'||s.pit?.phase==='servicing'||s.pit?.phase==='ready')throw Error('Native benchmark changed tyre or used pit service');
-          if(s.s>=10170&&s.s<=10800&&surface.shortcutId==='summit-open-road')throw Error('Existing Gallery line unexpectedly entered Open Road');
+          if(s.s>=gallery.start&&s.s<=gallery.end&&(!surface.road||surface.shortcutId==='summit-open-road'||!d.course.tunnelAt(s.s,s.lateral)))
+            throw Error('Existing line left the actual Gallery road corridor');
           if(second!==lastSecond){packet.samples.push({time:s.stageTimeSec,s:s.s,lateral:s.lateral,speedMph:s.speedMph,
             status:s.status,phase,shortcut:surface.shortcutId??null,tunnel:d.course.tunnelAt(s.s,s.lateral)?.id??null,
             input:{...s.input},pit:structuredClone(s.pit??null),yeti:structuredClone(s.yeti??null)});lastSecond=second;}
@@ -213,7 +218,7 @@ if(!process.argv.includes('--drive')) {
         boundaryResets:s.boundaryResets,checkpointResets:s.checkpointResets,pit:structuredClone(s.pit??null),
         avalanche:structuredClone(s.avalanche),yeti:structuredClone(s.yeti),result:structuredClone(s.results)};
       assert.equal(s.results?.completed,true);assert.equal(s.completedLaps,1);assert.equal(s.stageCrashes,0);assert.equal(s.boundaryResets,0);
-      assert.equal(packet.failures.length,0);assert.ok(Number.isFinite(s.results.timeSec)&&s.results.timeSec>0);
+      assert.equal(packet.failures.length,0);assert.equal(packet.pitServices.length,0);assert.ok(Number.isFinite(s.results.timeSec)&&s.results.timeSec>0);
       assert.equal(packet.activeRace?.yetiSeed,3395618052);packet.baselineSec=s.results.timeSec;packet.passed=true;
         } catch(error){packet.failures.push({error:String(error?.stack??error)});throw error;}finally{
       const state=app.duel.state;

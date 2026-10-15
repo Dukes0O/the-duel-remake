@@ -19,3 +19,5 @@ None of the older suites or fixtures changes. These are new card-owned acceptanc
 ## Removed
 
 Nothing replaced in this test-source contribution. No new harness, controller, saved field or generated benchmark output is committed.
+
+Static API alignment uses unique actual run IDs for repeated unit starts; the single native benchmark alone retains its prescribed yeti-run-0 input. Finance fixtures include a genuine normalized pre-existing slower best and Pro settings, so PB/streak/manual/clean/snowman opportunities cannot hide behind baseline-only cases. Native no-pit evidence reads real pit phases and actual pit.wrench/pit.go events. Gallery acceptance reads its actual authored range, road surface and tunnel corridor; it never changes steering or phase. All remain unrun.
