@@ -1,3 +1,7 @@
+import {reviewPlacementPlan} from './scenarios/track-review.mjs';
+import {Course} from '../src/course.js';
+import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
+import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
 import assert from 'node:assert/strict';
 import {
   parseArguments, reviewOutputDir, frameFileName, OUTPUT_FILES, FRAME_COUNT, sampleCourse, detectCorners, detectCrests,
@@ -137,5 +141,27 @@ drawSpeed(speedView.ctx, 1700, 900, { title: 'Test', subtitle: 's', lapNote: 'n'
   corners, crests: [{ s: 350, airborne: false }], topMph: 180, topAtS: 100, heights: profile.rows.map(r => [r.s, r.y]), gradeText: '1%' });
 check(speedView.texts.includes('1:23.15'), 'speed trace prints the lap time');
 check(speedView.texts.some(t => t.startsWith('1 8')), 'speed trace labels corner minimum speeds');
+
+// Use actual course queries: open roads clamp, closed roads wrap.
+const summitCourse=new Course(SUMMIT_RUN,1989),harbourCourse=new Course(HARBOUR_LIGHTS,1989);
+const summitBefore=JSON.stringify({closed:summitCourse.closed,length:summitCourse.length});
+const finishStraight=summitCourse.script.pieces.find(piece=>piece.name==='Summit Finish');
+for(const pointS of [0,10,summitCourse.length*.25,(finishStraight.s0+finishStraight.s1)/2]){
+  const plan=reviewPlacementPlan(summitCourse,pointS,80,.44704,Math.round(summitCourse.length));
+  equal(plan.target,pointS,'open-road view uses the requested first-run station');
+  equal(summitCourse.phase(plan.target),pointS,'actual open-course phase is the requested station, not the clamped finish');
+  equal(summitCourse.at(plan.target),summitCourse.at(pointS),'actual road query stays at the requested view');
+  check(plan.from>=0&&plan.from<=plan.target,'open run-up remains inside the actual road');
+  equal(plan.reportBase,0,'open pose reports its actual first-run distance');
+}
+equal(reviewPlacementPlan(summitCourse,10,80,.44704,Math.round(summitCourse.length)).from,0,'near-start open view bounds only the run-up at zero');
+equal(JSON.stringify({closed:summitCourse.closed,length:summitCourse.length}),summitBefore,'placement planning never changes the authored course');
+for(const pointS of [0,10,harbourCourse.length*.4]){
+  const length=Math.round(harbourCourse.length),mph=80,mphToWorld=.44704;
+  const legacyTarget=length+pointS,legacyRun=Math.max(30,Math.min(160,mph*mphToWorld*1.3));
+  const plan=reviewPlacementPlan(harbourCourse,pointS,mph,mphToWorld,length);
+  equal(plan,{target:legacyTarget,from:legacyTarget-legacyRun,reportBase:length},'closed circuit retains exact old second-lap arithmetic');
+  equal(harbourCourse.phase(plan.target),harbourCourse.phase(legacyTarget),'closed wrapped course view stays exact');
+}
 
 console.log(`Track review: ${checks} checks.`);
