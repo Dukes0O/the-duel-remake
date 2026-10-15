@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T03:11:49.676Z
+Observed at: 2026-10-15T03:13:50.830Z
 
-Observation commit: 9d9f7eb520d526c32dd3c46dbdc6068bc418272c
+Observation commit: 0e311392ab7e3591e64fdf61ffae3d62c60ec303
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 9d9f7eb520d526c32dd3c46dbdc6068bc418272c
+Integration HEAD: 0e311392ab7e3591e64fdf61ffae3d62c60ec303
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -95,7 +95,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-14T18:05:46-07:00 | 0 | last commit 2026-10-14T18:05:46-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
-| codex/p4-summit-attack | P4-SUMMIT-ATTACK | 2026-10-14T19:06:47-07:00 | 0 | last commit 2026-10-14T19:06:47-07:00 | docs/changes/P4-SUMMIT-ATTACK.md, src/app.js, src/audio.js, src/circuit-manifests.js, src/circuits/summit-time-attack.js |
+| codex/p4-summit-attack | P4-SUMMIT-ATTACK | 2026-10-14T20:12:05-07:00 | 0 | last commit 2026-10-14T20:12:05-07:00 | docs/changes/P4-SUMMIT-ATTACK.md, src/app.js, src/audio.js, src/circuit-manifests.js, src/circuits/summit-time-attack.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/qa-titan-replay-timeout | QA-TITAN-REPLAY-TIMEOUT | 2026-10-14T19:39:55-07:00 | 0 | last commit 2026-10-14T19:39:55-07:00 | docs/changes/QA-TITAN-REPLAY-TIMEOUT.md, tools/run-tests.mjs, tools/test-test-runner.mjs, tools/test-titan-climb.mjs |
@@ -113,10 +113,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 19,947,441 B | +84,081 B | 20,000,000 B |
-| Added bytes in last merge | 2,909,069 B | +2,607,501 B | 5,000,000 B |
-| All `public/` | 298,113,947 B | +1,206,985 B | unavailable |
-| Git objects | 429,415,424 B | +432,128 B | unavailable |
+| Review `looks/` | 19,947,441 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 269,207 B | -2,639,862 B | 5,000,000 B |
+| All `public/` | 298,113,947 B | +0 B | unavailable |
+| Git objects | 429,570,048 B | +154,624 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -125,7 +125,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 9d9f7eb520d526c32dd3c46dbdc6068bc418272c
+- Local integration/wasteland: 0e311392ab7e3591e64fdf61ffae3d62c60ec303
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

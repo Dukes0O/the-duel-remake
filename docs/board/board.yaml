@@ -165,7 +165,7 @@ tasks:
     claimed_by: "codex-summit-attack-2026-10-14"
     branch: "codex/p4-summit-attack"
     needs: [P4-SUMMIT, P4-AVALANCHE]
-    locks: [circuit-registry, busy-game-files, track-kit-placement]
+    locks: [circuit-registry, busy-game-files, track-kit-placement, save-shape]
     flag: "summit-run"
     details: "docs/board/cards/P4-SUMMIT-ATTACK.md"
 
