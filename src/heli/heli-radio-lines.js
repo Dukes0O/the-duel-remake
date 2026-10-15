@@ -3,13 +3,15 @@
 // voices: Brian the instructor, Sarah for the park rangers and Roger for fire
 // dispatch, all with the same settings. Lines name no prices and no course, so
 // repair costs can change and new burnable courses need no new lines.
+import {HELI_RADIO_VOICE} from '../lessons/radio-voice.js';
+
 export const HELI_VOICES = Object.freeze({
-  brian: Object.freeze({name: 'Brian', voiceId: 'nPczCjzI2devNBz1zQrb'}),
+  brian: HELI_RADIO_VOICE,
   sarah: Object.freeze({name: 'Sarah', voiceId: 'EXAVITQu4vr4xnSDxMaL'}),
   roger: Object.freeze({name: 'Roger', voiceId: 'CwhRBWXzGAHq8TQ4Fs17'}),
 });
-// The instructor's voice, for the H1 lines.
-export const HELI_RADIO_VOICE = HELI_VOICES.brian;
+// The instructor's voice, for the H1 lines (shared with driving lessons).
+export {HELI_RADIO_VOICE};
 
 const H1_LINES = {
   'heli.radio.welcome': {file: 'heli-radio-welcome.mp3', text: 'Kestrel One, this is Tremblant base. Welcome aboard. I will be on the radio the whole way, so take your time.'},
