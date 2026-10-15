@@ -60,6 +60,7 @@ function modalScreen(s) {
     const targets=COURSE[s.stageIndex].attackTimes;
     eyebrow='SUMMIT TIME ATTACK';title=completed?'FINISHED.':'RUN<br>INCOMPLETE.';
     description=completed?(medal?`${medal.toUpperCase()} medal earned. Your valid time is recorded.`:'Your valid time is recorded. Finish within the bronze target to earn a medal.'):'This run did not finish. Try the climb again.';
+    if(app.profileSaved===false)description+=' Storage is unavailable; progress lasts for this session.';
     metrics=metric('RACE TIME',time(result.timeSec??result.stageTimeSec??s.stageTimeSec),true);
     if(medal)metrics+=metric('MEDAL',medal.toUpperCase(),true);
     if(targets)metrics+=metric('GOLD',time(targets.gold))+metric('SILVER',time(targets.silver))+metric('BRONZE',time(targets.bronze));

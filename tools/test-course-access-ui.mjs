@@ -107,6 +107,15 @@ console.log(`Course/practice UI: ${checks} production action, purchase separatio
       check(!html.includes('LOSS CHARGE')&&!html.includes('CREDITS EARNED')&&!html.includes('bonus is included'),'solo results never promise pay or bonuses');
       check(html.includes('GOLD')&&html.includes('103.0'),'measured-derived medal targets are shown');
       same(JSON.stringify(state),snapshot,'results presentation never writes race state');
+      app.profileSaved=false;
+      const sessionOnly=render(state);
+      check(sessionOnly.includes('Storage is unavailable; progress lasts for this session.'),'medal and over-bronze finishes disclose failed profile storage');
+      check(sessionOnly.includes('FINISHED.'),'session-only storage does not turn a legal finish into a failure');
+      if(label)check(sessionOnly.includes('MEDAL')&&sessionOnly.includes(label),'session-only finish retains its actual earned medal');
+      else check(!sessionOnly.includes('MEDAL'),'session-only over-bronze finish still has no medal');
+      same(JSON.stringify(state),snapshot,'session-only result warning never writes race state');
+      app.profileSaved=true;
+      check(!render(state).includes('Storage is unavailable'),'successful profile storage does not show a session-only warning');
     }
   }finally{if(restoredAttack)COURSE[attackIndex]=restoredAttack;COURSE.splice(count);}
 }
