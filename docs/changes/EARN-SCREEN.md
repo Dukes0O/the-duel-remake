@@ -44,7 +44,7 @@
   `test-koenigsegg-ui`, `test-driver-ui`, `test-course-access-ui`,
   `test-heli-jobs`, `test-heli-hooks`, `test-grand-prix-career-menu`.
 - Browser scenario `earned-cars` (private port, memory-only, 1280 x 720): the garage medal sheet and a Hard win's results line ("NEW MEDAL · GOLD · FALCONE F42 · DUEL · HARD · +375 CR", 2,125 credits = 1,500 + 150 clean + 100 clean debut + 375 gold); 0 warnings, 0 errors. Claude looked at both pictures: the first round's row-label column took a quarter of the width, so it was narrowed to 84 px and checked again. Pictures recycled after review.
-- Lane tier and build: see below.
+- Lane tier (`--changed --jobs 4 --keep-going`, from PowerShell, integration merged in): 180 suites passed, 0 failed, 839 s. The run before failed only `test-heli-mode.mjs` on its import rules (see Changed assertions). Build passed.
 - Review (independent, code read only while the release frame check ran): no
   blocking faults; four small ones, all fixed. The cue test counted events,
   not sounds, so a new test gives the sound code a stand-in running context
