@@ -1201,3 +1201,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-15 janitor: recycled only the new merged QA-STOCK-SNOW lane after validated dependency-junction unlink; shared target intact, exact missing registration pruned and branch safely deleted. Integrator prompt bug recorded on QA-FACTORY-RECYCLE-JUNCTION; HELI and retained lanes untouched.
 - 2026-10-15 DRIVE-LESSON-SAVE merged 66269a4a: lane 263/263 in 1233.22 s, build 3908.8468 ms, review drive_lesson_save_review clear.
 - 2026-10-15 QA-AUDIO-CLOCK merged 93cbae89: lane 21/21 in 307.00 s, build 2320 ms, review stock_snow_review: retention source only clear.
+- 2026-10-15 P4-VARIANTS merged e628cb6a: lane 327/327 in 1470.48 s, build 1439.8983 ms, review stock_snow_review clear.

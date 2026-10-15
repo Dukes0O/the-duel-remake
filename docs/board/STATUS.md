@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T23:06:28.544Z
+Observed at: 2026-10-15T23:10:43.360Z
 
-Observation commit: 645916e4c565f3f90d287522a909f46b70f573ea
+Observation commit: e628cb6ac3a8cf9b7a63aed9273f39c5073f453d
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 645916e4c565f3f90d287522a909f46b70f573ea
+Integration HEAD: e628cb6ac3a8cf9b7a63aed9273f39c5073f453d
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -39,7 +39,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-panorama | 3 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-qualifying | 4 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
-| codex/p4-variants | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-variants |
+| codex/p4-variants | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-variants |
 | codex/p4-yeti | 1 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 1 | unknown | true | false | unknown |
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
@@ -63,7 +63,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-15T11:22:23-07:00 | 0 | last commit 2026-10-15T11:22:23-07:00 | docs/changes/P4-ARDENNES.md, tools/scenarios/ardennes-views.mjs, tools/scenarios/frame-pacing.mjs, tools/test-circuit-ardennes.mjs, tools/test-track-script.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
-| codex/p4-variants | P4-VARIANTS | 2026-10-15T15:45:16-07:00 | 0 | last commit 2026-10-15T15:45:16-07:00 | docs/changes/P4-VARIANTS.md, src/circuit-effects.js, src/circuit-hills.js, src/circuit-variants.js, src/circuits/harbour-lights-dusk.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
@@ -84,9 +83,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 35,655 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 554,108 B | +518,453 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 438,630,400 B | +144,384 B | unavailable |
+| Git objects | 438,824,960 B | +194,560 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -95,7 +94,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 645916e4c565f3f90d287522a909f46b70f573ea
+- Local integration/wasteland: e628cb6ac3a8cf9b7a63aed9273f39c5073f453d
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -105,4 +104,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
 - Remote origin/integration/wasteland: behind local; cached commit d716e262858b76f1638b777c8f791d86eb15be4e.
 
-Issue: Circuit manifest summit-time-attack.js has unknown or malformed literal metadata.
+Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
