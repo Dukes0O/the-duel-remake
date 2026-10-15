@@ -67,3 +67,7 @@ One thing to look at in the same run: pit and summer finished in exactly the
 same time to the millisecond (276.78333 s) and the pit run had a crash. Check
 the pit run really used the winter tyres after the stop and that the crash did
 not decide its time; record what you find.
+
+## Director grant for the final answered value
+
+Claude68ce773a explicitly authorizes0.74/90 as the final try and asks for the pit/winter/crash facts in that SAME run. Source owner may change only the course scalar and its existing exact Summit assertion to0.74. Extend only the current --drive result/event facts, without changing input/controller/step/service/phase/reset/finish/targets: record actual post-service tyre sample counts, crash time/location/impact fields and official result/lap/penalty/field time alongside the unchanged original seconds expression. This is bounded observation in the existing requested run, not a new harness/guard/retry or a forced no-crash comparison. Do not claim a crash-free counterfactual from one observed race. The source's60Hz finish reporting may quantize to the same finish step; that source fact alone does not prove why the strategies tied. Root review before the one final actual run; if it misses stop with actual times. Attack remeasurement waits for final accepted rules. No global table or target change.
