@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T01:20:18.966Z
+Observed at: 2026-10-15T01:23:52.276Z
 
-Observation commit: 8698ce05cac7064b8a7b4b81d7aba31ec24d5534
+Observation commit: 346ef1811dc1d0f8098a899e51bfb71f71a197c2
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 8698ce05cac7064b8a7b4b81d7aba31ec24d5534
+Integration HEAD: 346ef1811dc1d0f8098a899e51bfb71f71a197c2
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -87,7 +87,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/heli-art-src | HELI-ART-SRC | 2026-10-14T18:00:01-07:00 | 0 | last commit 2026-10-14T18:00:01-07:00 | docs/board/looks/heli-accessories/round-1-review.md, docs/board/looks/heli-accessories/round-1.jpg, docs/changes/HELI-ART-SRC.md, public/assets/heli/cargo-hook.glb, public/assets/heli/fuel-pump.glb |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-14T18:05:46-07:00 | 0 | last commit 2026-10-14T18:05:46-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb |
-| codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T17:25:38-07:00 | 0 | last commit 2026-10-14T17:25:38-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, src/track-kits.js, src/track-script-course.js |
+| codex/p4-avalanche-geometry | unknown | 2026-10-14T17:25:38-07:00 | 0 | last commit 2026-10-14T17:25:38-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, src/track-kits.js, src/track-script-course.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -105,10 +105,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 19,783,956 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 314,138 B | +0 B | 5,000,000 B |
-| All `public/` | 293,933,151 B | +0 B | unavailable |
-| Git objects | 424,649,728 B | +224,256 B | unavailable |
+| Review `looks/` | 19,863,360 B | +79,404 B | 20,000,000 B |
+| Added bytes in last merge | 1,904,159 B | +1,590,021 B | 5,000,000 B |
+| All `public/` | 295,534,878 B | +1,601,727 B | unavailable |
+| Git objects | 424,767,488 B | +117,760 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -117,7 +117,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 8698ce05cac7064b8a7b4b81d7aba31ec24d5534
+- Local integration/wasteland: 346ef1811dc1d0f8098a899e51bfb71f71a197c2
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

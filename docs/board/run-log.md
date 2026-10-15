@@ -1146,3 +1146,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 
 - 14 October: FIRE-SAVE acee0826 merged (H2 save fields, course-closures.js, forest-fire switch dev, fixture 11), lane265/265/jobs4/build passed/one review (4 faults fixed); integration focused heli/save/switch suites green after merge. Janitor: lane folder and branch removed.
 14 October: SKIN-ART-GEAR part 1 (six gear models) and SKIN-ART-PAINT (seven paints, camouflage, grime masks) merged; lane 29/29 jobs4 from PowerShell, build passed; lane deleted. Gear part 2 (mount empties in kestrel-one.py) waits for the H1 release.
+- 2026-10-14 P4-AVALANCHE merged: source4415b339, corrected lane317/317 in1671.03s/jobs4, build731ms, Root review clear; accepted native geometry/route evidence retained, no clean-merge rerun or release.
