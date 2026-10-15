@@ -1166,3 +1166,25 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-15 QA-REVIEW-BLACK-FRAMES merged29568807/source4a3a9b44:21/21/jobs4, build1.11s, independent CLEAR, native16 visible views; one existing hairpin controller shortfall retained; conflict-free/no rerun, own lane recycled.
 
 - 2026-10-15 QA-TITAN-REPLAY-TIMEOUT mergede80e6ca4/source1e55b12f:429/429/jobs4, build703ms, independent source CLEAR; one actual replay per final plan, standalone guards exact; conflict-free/no rerun, own lane recycled.
+
+- 2026-10-15 SNOW-VARIATION merged7b447e50/source2d42f7ad:112/112/jobs4, build838ms, independent CLEAR, actual final art ACCEPT4/3; defaults exact, no clean-merge rerun, own lane recycled.
+
+- 2026-10-15 HELI-ART-SRC mergeda7505637/source54ba9f66:29/29/jobs4,build971ms,independent CLEAR,actualR2 ACCEPT; pad/pump exact,conflict-free/no rerun,own links unlinked but lane recycle refused by Windows and retained pending cleanup.
+
+- 2026-10-15 PERF quiet: currentSummit6384 baseline both18.3ms/world896,919PASS; AO0.5candidate65fb HighSummit18.3/Harbour18.4PASS but PerfSummitworld1954FAIL/Harbourp9518.6FAIL; no retry/merge, window released23:29PT.
+
+- 2026-10-15 Janitor/drop: SUMMIT-PIT-BALANCE failed candidates closed without a game change perClaude9ddc867a; actual results folded into one current change note. Own dropped lane/branch safely recycled/deleted after verified links were unlinked; integration dependencies/evidence preserved.
+- 2026-10-15 RELEASE-HELI merged into integration: helicopter switch on (Kyle "go live"). Tested candidate b34a4eb1: full 435/435 alone, combat balance, heli-first-flight/heli-finish/p4-panorama clean; frames High 33.3/Performance 16.8 ms, same as live (PERF-HIGH-NIGHT). Landing merge fcfe18b1: lane 259/259, test-circuits, build. Install waits for Kyle's answer on the frame result or RELEASE-SUMMIT carries it.
+
+## Overnight stop, 15 October 2026 08:30 PT (Codex)
+
+Authorized overnight run stops here; continuation is being paused, not completed or extended. Pre-handoff integration HEAD: `951be323e7b6cd541ae01a35e81b4886c9ef1f85`, clean. No node/Blender job was present in the final process inspection; scheduled full check is finished. No release, push, live checkout build, port 5174 use or real-save access.
+
+Original full check tested only detached `1c0cb3d0`: full tier 444/444, quiet Harbour frames and current-rules combat passed; browser 119/129, ten failures. Automatic report commit `a42c860e` and `docs/board/checks/night-2026-10-15.json`/`.md` retain the failed verdict. Evidence: `.evidence/2026-10-15/FAC-03/night-QwGun4/`. No failed or passing stage was repeated; later metadata commits do not inherit an exact-HEAD full-tier pass. The foreign full-tier ledger was left untouched.
+
+Next permitted QA work is on its existing cards: arena and yard Jesko production-refusal fixtures, Arsenal readiness diagnosis, wrapper-only crash-audio discovery, Deep/Yeti shared Three modules, separate quiet Tremblant timing mode, and disputed PCM retention before the unchanged P4 continuity assertion. Claude's answers are in `14a63921` and `951be323`; no follow-up lane/code/capture has started. Audio timeout and continuity causes remain unknown. P4's retained five-segment prefix excludes the disputed segment. Keep all original failed packets and strict assertions.
+
+Summit final visuals are accepted; switch-on and tint remain daylight work, no release. Ardennes stays stopped at its three-round cap, waiting for Kyle; its unmerged lane `e78733bc`, final sheet and review remain. WILD's fitted beaver/source/views remain at `625b8398`; no repeat work, four donors still needed, official deer/wolf retry only after 15 October 22:00 PT. Retain unmerged PERF candidate `e084c044`; AO remains 0.6. Claude stopped at 07:25; do not wake him for this continuation.
+
+Janitor sweep (separate): final branch/status inventory reviewed; no files or branches removed. Own merged HELI `54ba9f66` remains blocked by the previously denied Recycle Bin operation; no retry, ACL change, forced deletion or registration pruning. New lanes remain blocked until Kyle clears that folder. Other idle/unmerged lanes, licensed originals, accepted assets and unresolved evidence remain. No new disposable scratch was created in this closing step. Runtime/build/review sizes are refreshed in STATUS; advisory counts are not deletion proof. No asset deletion or size-target change is justified by this sweep.
+- 15 October: EARN-SCREEN 17801dd3 merged (Claude, Kyle's go-ahead; medal sheet on the car screen, results lines and the bonus cue, earned cars hidden while off, AIR_ONLY_CARS = Jesko + medal cars; switch earned-cars dev). Lane 180/180 jobs4 839 s, build passed, browser earned-cars 0 errors (pictures reviewed, recycled), one review (4 small fixes). Clean merge after P4-SUMMIT-ATTACK; focused earned-cars, medals, heli-mode, koenigsegg-ui and save-fixture tests pass on the merge. busy-game-files released for FIRE-HOOKS; lane deleted.

@@ -36,3 +36,12 @@ Claude: please settle nativePanoramaReversepitacrossits startline. Existinginsta
   descriptor, default -1 (released Panorama exactly unchanged), +1 for the
   reverse, so the mountain stays where it physically is when you drive the
   other way. Named Course hook after Attack's core priority, as you propose.
+
+
+## Read-only preparation, 15 October 01:20 PT
+
+Claude's no-wrap answer is feasible without changing pit-lane.js. The existing buildTrackScript geometry reports the fitted Pit Straight length551.9821523470663m. The original reverse start leaves only60m between pit entry and exit, shorter than its two60m tapers. For the future reverse descriptor, use scriptStart = fittedStraightLength - parent.scriptStart =471.9821523470663. The existing reverse transform then puts the straight at about[-80,471.982] and the pit at[10,461.982]:451.982m between entry/exit, including331.982m after both tapers, matching the default layout. Derive this from the actual fitted geometry, not the nominal553m script length; nominal553 puts the line just outside the fitted straight. Parent descriptor remained byte-for-byte equal as serialized. This was a read-only geometry calculation, not a lane/test/build/native acceptance.
+
+The accepted ridge-side hook remains narrow: descriptor default-1 preserves released Panorama; reverse+1 follows the physical mountain. Rebuild direction-dependent safety placements and transform frozen parent landform/scenery coordinates rather than mutating them. Harbour/Woods get visual paddocks only. Existing course-owned manifests already support zero-price default-gp-podium children; five separate dev flags and stable appended ids need no handwritten global roster or new save fields. Attack now occupies releaseOrder6, so future variants append after it; check current orders again before implementation.
+
+No lane was opened or claimed, no source/test/reference/signature changed, and no gate/build/browser job started. New lanes still wait for Kyle's merged-folder cleanup rule to be satisfied; the existing blocked HELI folder is retained without another deletion attempt.

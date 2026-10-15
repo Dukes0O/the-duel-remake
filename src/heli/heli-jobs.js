@@ -7,6 +7,9 @@
 import {CARS} from '../config.js';
 import {makeRng} from '../rng.js';
 import {liftCheck} from './heli-cable.js';
+import {MEDAL_CARS} from '../medals.js';
+
+import {carAt} from './heli-save.js';
 
 export const HOME_COURSE = 'tremblant-woods';
 
@@ -46,12 +49,19 @@ export function bearing(from, to) {
 
 // Special cars travel only by air (Kyle, 14 October 2026): with the
 // helicopter switch on, one races only on the course where it was last set
-// down, starting at the home pad. Earned cars from the medal sheets join
-// this list later.
-export const AIR_ONLY_CARS = Object.freeze(['koenigsegg_jesko']);
+// down, starting at the home pad. The cars earned with medals
+// (docs/EARNED_CARS.md) are special cars too.
+export const AIR_ONLY_CARS = Object.freeze(['koenigsegg_jesko', ...MEDAL_CARS]);
 
 export function isAirOnlyCar(carId) {
   return AIR_ONLY_CARS.includes(carId);
+}
+
+// What the menu says when an air-only car is chosen on a course it has not
+// been flown to (the same words the app uses when it refuses the race).
+export function airOnlyNote({enabled = false, profile, carId, courseId, carName = 'This car'} = {}) {
+  if (enabled !== true || !isAirOnlyCar(carId) || carAt(profile, carId) === courseId) return null;
+  return `The ${carName} travels only by air. Fly it here from the helipad first.`;
 }
 
 export function isDestination(courseId) {
