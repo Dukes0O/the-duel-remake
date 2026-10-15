@@ -53,7 +53,9 @@ Design: `docs/HELI_FIRE.md` section 16; answers on
   fire-finish`): passed, 5 pictures, 0 warnings, 0 errors; the fire out in
   2 drops, +1,500 credits, the badge; the left fire lost overnight and the
   course closed at 10,000 to buy back.
-- Lane tier and build: below.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`)
+  after the review fixes: 179 passed, 0 failed, 0 not run in 879 s.
+  `npm run build`: passed.
 
 ## Changed assertions
 
