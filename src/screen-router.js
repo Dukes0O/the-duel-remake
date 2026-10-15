@@ -139,7 +139,8 @@ const courseScreen = (playerProfile, selectedStage, message) => courseScreenMark
     grandPrixCareerEnabled: app._switches().enabled('grand-prix-career'),
     grandPrixAvailable: course => app.grandPrixAvailable(course), selectedMode: choices.mode,
     leaderboard: app.leaderboard, playerId: app.player.id,
-    lapChoiceFor: app._switches().enabled('lap-choice') ? (course,mode)=>app.getLapChoice(COURSE.indexOf(course),mode) : undefined});
+    lapChoiceFor: app._switches().enabled('lap-choice') ? (course,mode)=>app.getLapChoice(COURSE.indexOf(course),mode) : undefined,
+    forestFire: app.forestFireEnabled?.() === true});
 let teamRoomPlayerId = null;
 const teamRoom = createTeamRoom({host: root,
   getDossier(eventId) {

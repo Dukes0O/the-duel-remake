@@ -4,7 +4,7 @@
 // save the profile; HELI-HOOKS plugs it into the game loop. Same inputs and
 // the same profile give the same flight.
 import {HELI_STEP, KESTREL, createHeliState, stepHeli, heliReadout, refuelHeli, heliFingerprint} from './heli-flight.js';
-import {createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, wantsControl} from './heli-autopilot.js';
+import {AUTOPILOT, createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, wantsControl} from './heli-autopilot.js';
 import {CABLE, createLoad, liftCheck, carMassKg, canHook, hook, release, stepCable} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
   placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave} from './heli-save.js';
@@ -12,6 +12,10 @@ import {HOME_COURSE, HELI_DESTINATIONS, legFuelKg, bearing, isDestination, dayJo
 import {isCourseUnlocked} from '../course-access.js';
 import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson} from './heli-lessons.js';
 import {CRATE} from './heli-cable.js';
+import {BUCKET, createBucket, stepBucket, bucketHit, bucketWords, bucketHolds, aimPoint, aimLocked, aimRingRadius} from './heli-bucket.js';
+import {bucketDamageOf, damageBucket as damageBucketSave, repairBucket as repairBucketSave, FIRE_MONEY} from './heli-save.js';
+import {createFireRun, fireWorld} from './heli-fire-run.js';
+import {courseClosed} from '../course-closures.js';
 
 export const HELI_SESSION = Object.freeze({
   zoneRadius: CABLE.landingRadius,
@@ -27,6 +31,8 @@ export const HELI_SESSION = Object.freeze({
   // A second parking spot, at least this far from the first, for a
   // customer's car waiting beside the player's own.
   spareApart: 10,
+  // Where a fitted bucket is laid out, to the helicopter's right (H2 Fire).
+  bucketBeside: 6,
 });
 
 const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
@@ -123,7 +129,7 @@ export function insideArea(area, x, y, z) {
 // {course, ground}, persist(profile), carId, mode 'assisted'|'real', today
 // 'YYYY-MM-DD'.
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
-  mode = 'assisted', today = null} = {}) {
+  mode = 'assisted', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
   if (typeof loadCourse !== 'function') throw new Error('createHeliSession needs loadCourse(courseId)');
   const flag = {enabled: true};
@@ -150,6 +156,29 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     return result;
   };
   const emit = event => { pending.push(event); if (lesson) lessonEvents.push(event); return event; };
+  // H2 Fire (docs/HELI_FIRE.md): only with the forest-fire switch on. Each
+  // course's fire grid is built once from its own course model at the
+  // helicopter's seed (loadFireCourse), never from the course being flown,
+  // so building one never moves the visit.
+  if (fireEnabled === true && typeof loadFireCourse !== 'function') throw new Error('Forest fires need loadFireCourse(courseId)');
+  const fireWorlds = new Map();
+  const fireWorldOf = id => {
+    if (!fireWorlds.has(id)) { const loaded = loadFireCourse(id); fireWorlds.set(id, fireWorld(loaded, courseSite(loaded.course, loaded.ground, id))); }
+    return fireWorlds.get(id);
+  };
+  const fire = fireEnabled === true ? createFireRun({getSave: () => save, commit, emit, world: fireWorldOf, playerName, today,
+    owns: id => isCourseUnlocked(save, id)}) : null;
+  const fireFlag = {enabled: fireEnabled === true};
+  const bucketLoad = () => loads.find(car => car.bucket) ?? null;
+  // The aim ring, worked out 20 times a second; the lock tick plays when it turns on.
+  let ring = null, aimCount = 0, dropWater = [];
+  function aimStep(bucket) {
+    if (aimCount++ % 6 !== 0) return;
+    const point = bucket.water > 0 ? aimPoint(bucket, {ground: world.ground, wind: fire?.windNow() ?? null}) : null;
+    const locked = !!point && aimLocked(point, (x, z) => fire?.burningAt(site.courseId, x, z) ?? false);
+    if (locked && !ring?.locked) emit({type: 'cue', id: 'heli.aim.lock'});
+    ring = point ? Object.freeze({x: point.x, y: point.y, z: point.z, radius: aimRingRadius(0), locked}) : null;
+  }
   const lessonsDone = () => heliOf(save).lessons;
   const charge = (kind, amount) => {
     const result = commit(chargeRepair(save, amount, flag));
@@ -162,6 +191,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   };
 
   function enter(courseId, {arriveFrom = null} = {}) {
+    dropWater = [];
     if (!isDestination(courseId)) throw new Error(`Not a helicopter destination: ${courseId}`);
     const carried = loads.find(car => car.hooked) ?? null;
     rememberLoads();
@@ -277,7 +307,35 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const x = heli.x + toward.x * reach, z = heli.z + toward.z * reach;
     return {x, z, groundY: world.ground.height(x, z)};
   }
-  const autopilotGoal = () => !destination ? null : destination === site.courseId ? zoneTarget() : departureTarget();
+  // On the fire's course with the bucket and the call answered, and no other
+  // destination (docs/HELI_FIRE.md section 9): empty, to the lake, stopping
+  // 25 m above the water; with water, to the upwind side of the hot edge,
+  // stopping 40 m above the trees. Scooping and pouring stay the pilot's.
+  function fireGoal() {
+    const bucket = bucketLoad(), info = fire?.view(heli);
+    // Home as the destination (left after a cruise leg) is no other destination.
+    if ((destination && destination !== site.courseId) || !bucket || !info?.call?.answered || info.courseId !== site.courseId) return null;
+    const hover = AUTOPILOT.hoverAbove + CABLE.length + BUCKET.hang;
+    if (bucket.water <= 1) {
+      const lake = world.course.def?.basins?.[0];
+      if (!lake) return null;
+      const middle = world.course.worldAt(world.course.phase(lake.s), lake.lateral), surface = world.ground.water(middle.x, middle.z);
+      return surface === null ? null : {x: middle.x, z: middle.z, groundY: surface + 25 - hover};
+    }
+    if (!info.target) return null;
+    const wind = fire.windNow(), x = info.target.x - wind.toward.x * 12, z = info.target.z - wind.toward.z * 12;
+    return {x, z, groundY: world.ground.highest(x, z, 10) + 40 - hover};
+  }
+  const autopilotGoal = () => fireGoal() ?? (!destination ? null : destination === site.courseId ? zoneTarget() : departureTarget());
+  // The fire's goal moves with the fire: checked once a second.
+  let goalCount = 0, firing = false;
+  function refreshFireGoal() {
+    if (!fire || !autopilot.engaged || goalCount++ % 120 !== 0) return;
+    const goal = fireGoal(), now = autopilot.target;
+    if (goal && (!now || Math.hypot(goal.x - now.x, goal.z - now.z) > 5 || Math.abs(goal.groundY - now.groundY) > 2)) { setAutopilotTarget(autopilot, goal); firing = true; }
+    // The fire is out (or the bucket off): back to the usual goal.
+    else if (!goal && firing) { firing = false; setAutopilotTarget(autopilot, autopilotGoal()); }
+  }
 
   // Nobody is stranded: an empty tank on the ground calls the fuel truck,
   // except at the home pad while the pump can still sell a reserve of 60 kg
@@ -313,7 +371,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function handle(events) {
     for (const event of events) {
       emit(event);
+      if (event.type === 'liftoff') fire?.liftoff({lesson: !!lesson});
       if (event.type === 'touchdown') {
+        fire?.landed();
         storeFuel();
         if (event.result === 'hard') {
           charge('hardLanding', HELI_MONEY.hardLanding);
@@ -332,7 +392,20 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     }
   }
 
-  const primaryLoad = () => loads.find(car => car.hooked) ?? loads.find(car => car.own) ?? loads[0] ?? null;
+  function bucketCableEvents(bucket, events) {
+    for (const event of events) {
+      if (event.type === 'cargoHit') {
+        const damage = bucketHit(bucket, event);
+        const stored = commit(damageBucketSave(save, damage, fireFlag));
+        emit({...event, type: 'bucketHit'});
+        if (stored.worse) { emit({type: 'bucketDamaged', damage}); fire?.bucketEvent({type: 'bucketDamaged', damage}); }
+      } else if (event.type === 'treeDown') emit(event);
+      else if (!['cargoHit', 'drop'].includes(event.type)) emit({...event, bucket: true});
+    }
+  }
+
+  const carLoads = () => loads.filter(car => !car.bucket);
+  const primaryLoad = () => carLoads().find(car => car.hooked) ?? carLoads().find(car => car.own) ?? carLoads()[0] ?? null;
   const loadView = car => Object.freeze({id: car.id, x: car.x, y: car.y, z: car.z, heading: car.heading,
     hooked: car.hooked, onGround: car.onGround, own: !!car.own, job: car.job ?? null});
 
@@ -374,6 +447,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (!lessonsDone()[id]) commit(finishLessonSave(save, id, flag));
       endLesson();
       emit({type: 'lessonPassed', lesson: id});
+      fire?.lessonPassed();
     } else if (result.result === 'retry') {
       emit({type: 'lessonRetry', lesson: lesson.id});
       if (lesson.id === 'carry') {
@@ -389,7 +463,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
 
   const api = {
     start(courseId = HOME_COURSE) {
-      if (today) commit(notePlayDay(save, today, flag));
+      const noted = today ? commit(notePlayDay(save, today, flag)) : null;
+      fire?.start({newDay: noted?.newDay === true});
       destination = null;
       enter(courseId);
       // A new pilot hears the opening: welcome and the controls.
@@ -433,18 +508,33 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       }
       if (phase !== 'flying') return api.takeEvents();
       const held = loads.find(car => car.hooked) ?? null;
-      const hang = held ? CABLE.length + 1 : 0;
+      const hang = held ? CABLE.length + (held.bucket ? BUCKET.hang : 1) : 0;
+      refreshFireGoal();
       const ap = autopilotStep(autopilot, heli, controls, {ground: world.ground, hang, load: held, dt});
       handle(ap.events);
       // Every car steps; only the one on the cable pulls on the helicopter.
       let pull;
       for (const car of loads) {
+        if (car.bucket) {
+          const poured = stepBucket(car, {ground: world.ground, wind: fire?.windNow() ?? null, pour: controls.pour === true}, dt);
+          for (const event of poured.events) {
+            emit(event);
+            if (event.type === 'bucketDamaged') commit(damageBucketSave(save, event.damage, fireFlag));
+            fire?.bucketEvent(event);
+          }
+          // A drop reaches the fire as a whole, once all its water has landed.
+          dropWater.push(...poured.patches);
+          if (dropWater.length && !car.pouring && !car.parcels.length) { fire?.water(site.courseId, dropWater); dropWater = []; }
+          aimStep(car);
+        }
         const cable = stepCable(car, heli, {ground: world.ground, zone: site.zone, fallen}, dt);
-        handle(cable.events);
+        if (car.bucket) bucketCableEvents(car, cable.events);
+        else handle(cable.events);
         if (car.hooked || pull === undefined) pull = cable.force;
       }
       handle(stepHeli(heli, ap.commands ? {} : controls, {ground: world.ground, external: pull, commands: ap.commands}, dt));
       if (phase !== 'flying') return api.takeEvents();
+      fire?.step({dt, engine: heli.engine === true, aboveGround: heli.y - world.ground.height(heli.x, heli.z), lesson: !!lesson});
       if (lesson) stepLessonNow(dt);
       if (strandedOnGround()) {
         storeFuel();
@@ -477,7 +567,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // landing zone delivers the car there: the player's own car is saved
     // there, and a customer's car at its drop-off finishes the job.
     pressHook() {
-      if (phase !== 'flying' || !loads.length) return null;
+      if (phase !== 'flying' || !loads.length || bucketLoad()) return null;
       const held = loads.find(car => car.hooked);
       if (held) {
         const result = release(held, world.ground);
@@ -487,7 +577,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         if (held.own && inZone) {
           commit(placeCar(save, carId, site.courseId, flag));
           emit({type: 'delivered', carId, courseId: site.courseId, dropped: result.event.type === 'releasedHigh'});
-          offer = isCourseUnlocked(save, site.courseId) ? {courseId: site.courseId, carId} : null;
+          offer = isCourseUnlocked(save, site.courseId) && !courseClosed(save, site.courseId, undefined, fireFlag) ? {courseId: site.courseId, carId} : null;
         } else if (held.job && inZone) deliverJob(held, result.event);
         return result.event;
       }
@@ -542,6 +632,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         return false;
       }
       heli.fuelKg -= fuel;
+      fire?.cruise(fuel);
       cruiseTo = destination;
       phase = 'cruise';
       timer = HELI_SESSION.fadeSeconds;
@@ -558,6 +649,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (result.ok) {
         refuelHeli(heli, heliOf(save).fuelKg);
         emit({type: 'fuelBought', kg: result.kg, cost: result.cost});
+        fire?.refuel();
       }
       return result;
     },
@@ -647,9 +739,52 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       emit({type: 'openingSkipped'});
       return true;
     },
+    // ---- H2 Fire: the radio and the bucket (docs/HELI_FIRE.md sections 5 and 9) ----
+    // R: answer a waiting call, in the air or on the ground.
+    pressRadio() {
+      if (!fire || phase !== 'flying') return false;
+      return fire.pressRadio();
+    },
+    // Fit the bucket on the home pad's ground: free, never with a car on the cable.
+    fitBucket() {
+      if (!fire) return {ok: false, reason: 'Forest fires are not available yet.'};
+      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The bucket is at the home pad.'};
+      if (bucketLoad()) return {ok: true, already: true};
+      if (loads.some(car => car.hooked)) return {ok: false, reason: 'Set the car down first.'};
+      if (lesson) return {ok: false, reason: 'Finish the lesson first.'};
+      // Laid out on the ground beside the helicopter, clear of its body, so
+      // the cable is slack until the helicopter lifts it.
+      const side = HELI_SESSION.bucketBeside, x = heli.x + Math.cos(heli.heading) * side, z = heli.z - Math.sin(heli.heading) * side;
+      loads.push(createBucket({damage: bucketDamageOf(save), x, z, heading: heli.heading, ground: world.ground}));
+      emit({type: 'bucketFitted'});
+      fire.bucketFitted();
+      return {ok: true};
+    },
+    takeOffBucket() {
+      if (!bucketLoad()) return {ok: true, already: true};
+      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The bucket comes off at the home pad.'};
+      loads = loads.filter(car => !car.bucket);
+      emit({type: 'bucketRemoved'});
+      return {ok: true};
+    },
+    // Repair at the pad: takes what the player has and forgives the rest.
+    repairBucket() {
+      if (!fire) return {ok: false, reason: 'Forest fires are not available yet.'};
+      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'Repairs are at the home pad.'};
+      const result = commit(repairBucketSave(save, fireFlag));
+      if (result.ok && result.repaired) {
+        const bucket = bucketLoad();
+        if (bucket) { bucket.damage = 0; bucket.massKg = BUCKET.emptyKg + bucket.water; }
+        emit({type: 'charged', kind: 'bucket', amount: result.charged + result.forgiven, charged: result.charged, forgiven: result.forgiven});
+      }
+      return result;
+    },
+    bucketRepairCost() { return FIRE_MONEY.bucketRepair[bucketDamageOf(save)]; },
     get lesson() { return lesson ? {id: lesson.id, held: lesson.held, target: lesson.target, spot: lesson.spot} : null; },
     // Leave the mode: the fuel left in the tank is kept.
     leave() {
+      if (dropWater.length && site) { fire?.water(site.courseId, dropWater); dropWater = []; }
+      fire?.flush();
       if (heli && phase !== 'idle') storeFuel();
       phase = 'idle';
       return save;
@@ -671,7 +806,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         // load: the car on the cable, else the player's own car, else any
         // other car here. loads: every car on this course.
         load: primaryLoad() ? loadView(primaryLoad()) : null,
-        loads: Object.freeze(loads.map(loadView)),
+        loads: Object.freeze(carLoads().map(loadView)),
+        bucket: bucketView(),
+        fire: fire?.view(heli) ?? null,
         job: jobInHand(),
         lesson: lesson ? Object.freeze({id: lesson.id, held: lesson.held, spot: lesson.spot, target: lesson.target}) : null,
         crate: site?.crate ?? null,
@@ -688,6 +825,15 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         loads.slice(1).map(car => `|${car.id}|${spot(car)}`).join('');
     },
   };
+  function bucketView() {
+    const bucket = bucketLoad();
+    if (!bucket) return null;
+    return Object.freeze({x: bucket.x, y: bucket.y, z: bucket.z, heading: bucket.heading, water: bucket.water, holds: bucketHolds(bucket),
+      damage: bucket.damage, words: bucketWords(bucket), pouring: bucket.pouring, filling: bucket.filling,
+      parcels: Object.freeze(bucket.parcels.map(p => Object.freeze({x: p.x, y: p.y, z: p.z}))),
+      aim: bucket.water > 0 ? ring : null});
+  }
+
   return api;
 }
 

@@ -31,10 +31,41 @@ function jobRow(job, mode) {
     `${button}</li>`;
 }
 
+// H2 Fire (docs/HELI_FIRE.md section 9). The board never lists fires; its
+// Radio box shows a waiting call with its Answer button, or the mission in
+// hand. With the fire switch on, the bucket's buttons sit with the board on
+// the home pad's ground.
+const COMPASS_WORDS = Object.freeze({N: 'north', NE: 'north-east', E: 'east', SE: 'south-east', S: 'south', SW: 'south-west', W: 'west', NW: 'north-west'});
+function radioBox(fire) {
+  if (!fire?.call) return '';
+  const course = esc(fire.courseName ?? 'the forest');
+  if (!fire.call.answered)
+    return `<div class="heli-board-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">Fire reported at ${course}.</span>` +
+      `<button type="button" class="heli-board-button" data-heli-board="radio-answer">Answer</button></div>`;
+  const wind = fire.wind.speed < 1 ? 'wind light' : `wind ${COMPASS_WORDS[fire.wind.name] ?? fire.wind.name} ${Math.round(fire.wind.speed)} m/s`;
+  return `<div class="heli-board-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">Fire at ${course}: ${fire.shareOut}% out, ${esc(wind)}</span></div>`;
+}
+function bucketBox(view, {repairCost = 0}) {
+  if (!atHomePad(view)) return '';
+  const bucket = view.bucket, words = bucket?.words ?? null;
+  const fit = bucket ? `<button type="button" class="heli-board-button" data-heli-board="bucket-off">Take off the bucket</button>`
+    : `<button type="button" class="heli-board-button" data-heli-board="bucket-fit"${view.load?.hooked ? ' disabled' : ''}>Fit the bucket</button>`;
+  const repair = repairCost > 0 ? `<button type="button" class="heli-board-button" data-heli-board="bucket-repair">Repair the bucket: ${repairCost} credits</button>` : '';
+  const state = bucket ? `<span class="heli-board-text">Bucket: ${esc(words)}</span>` : '';
+  return `<div class="heli-board-bucket"><h3 class="heli-board-title">Bucket</h3>${state}${fit}${repair}</div>`;
+}
+
 // view: the session's view. jobs: session.boardJobs(). offer:
-// session.raceHereOffer(). Returns '' when there is nothing to show.
-export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assisted'} = {}) {
+// session.raceHereOffer(). fire: with the fire switch on, {repairCost}.
+// Returns '' when there is nothing to show.
+export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assisted', fire = null} = {}) {
   const parts = [];
+  if (fire) {
+    const radio = radioBox(view?.fire);
+    if (radio) parts.push(radio);
+    const bucket = bucketBox(view, fire);
+    if (bucket) parts.push(bucket);
+  }
   if (jobs.length && atHomePad(view))
     parts.push(`<div class="heli-board-jobs"><h3 class="heli-board-title">Dispatch board</h3><ul class="heli-board-list">` +
       `${jobs.map(job => jobRow(job, mode)).join('')}</ul></div>`);
@@ -54,6 +85,10 @@ export function handleBoardAction(action, app) {
   const settle = result => { app._heliEvents?.(session.takeEvents()); return result; };
   if (action.startsWith('take:')) return settle(session.takeJob(action.slice(5)));
   if (action === 'drop') return settle(session.dropJob());
+  if (action === 'radio-answer') return settle(session.pressRadio());
+  if (action === 'bucket-fit') return settle(session.fitBucket());
+  if (action === 'bucket-off') return settle(session.takeOffBucket());
+  if (action === 'bucket-repair') return settle(session.repairBucket());
   if (action === 'race-here') {
     const offer = session.raceHereOffer();
     return offer ? app.raceHere(offer) : false;
@@ -68,7 +103,8 @@ export function createDispatchBoard({root, app}) {
   let last = null;
   const render = () => {
     const session = app.heliSession, view = app.heliView?.() ?? null;
-    const markup = session && view ? dispatchBoardMarkup(view, {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode}) : '';
+    const fire = app.forestFireEnabled?.() === true && session?.bucketRepairCost ? {repairCost: session.bucketRepairCost()} : null;
+    const markup = session && view ? dispatchBoardMarkup(view, {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode, fire}) : '';
     if (markup !== last) { root.innerHTML = markup; last = markup; }
     if ('hidden' in root) root.hidden = markup === '';
     return markup;
