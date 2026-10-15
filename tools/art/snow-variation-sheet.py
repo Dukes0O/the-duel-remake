@@ -31,10 +31,13 @@ def digest(data):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", required=True, help="Existing SNOW-VARIATION packet directory")
-    parser.add_argument("--output", required=True, help="Owned immutable round-1.jpg")
+    parser.add_argument("--output", required=True, help="Owned immutable review JPG")
+    parser.add_argument("--round", type=int, choices=(1, 2), default=1)
     args = parser.parse_args()
     evidence, output = Path(args.evidence).resolve(), Path(args.output).resolve()
     evidence.relative_to((ROOT / ".evidence").resolve())
+    if args.round == 2:
+        return round_two(evidence, output)
     expected_output = (ROOT / "docs/board/looks/snow-variation/round-1.jpg").resolve()
     if output != expected_output:
         raise ValueError("This recipe owns only round 1; later rounds require new reviewed inputs (cap three).")
@@ -120,6 +123,102 @@ def main():
         handle.write(encoded)
     record = {"round": 1, "captures": captures, "operations": "Full viewport RGB resize and JPEG compression only; labels outside source pixels",
               "output": str(output), "bytes": len(encoded), "sha256": digest(encoded), "artAccepted": False}
+    with manifest.open("x", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(record, indent=2) + "\n")
+    print(json.dumps({"output": str(output), "bytes": len(encoded), "sha256": digest(encoded), "manifest": str(manifest)}))
+
+
+def round_two(evidence, output):
+    source = "3ea6100b448dbb27c53fac97cf75fd4e0479d23a"
+    packet_dir = evidence / "daylight-round2-3ea6100b"
+    expected_output = (ROOT / "docs/board/looks/snow-variation/round-2.jpg").resolve()
+    manifest = evidence / "round-2-inputs.json"
+    if output != expected_output:
+        raise ValueError("Round 2 owns only its named output; the cap is three reviewed rounds.")
+    if output.exists() or manifest.exists():
+        raise FileExistsError("Round 2 is immutable; retain all original round-one provenance.")
+    receipt = read_json(evidence / "daylight-round2.receipt.json")
+    if not (receipt["source"] == receipt["sourceAfter"] == source and
+            receipt["exitCode"] == 0 and receipt["dirtyAfter"] == []):
+        raise ValueError("Static pair lacks its real successful unchanged-source receipt.")
+    report, packet = read_json(packet_dir / "report.json"), read_json(packet_dir / "snow-art.json")
+    if not (report["scenario"] == "summit-run" and report["passed"] and report["memoryOnlySaves"] and
+            not report["issues"] and not report["warnings"] and packet["passed"] and
+            packet["artOnly"] and packet["memoryOnly"] and packet["frameMeasurement"] is False):
+        raise ValueError("Actual daylight ART packet failed.")
+    if packet["requested"] != {"piece": "Whiteout Crest", "snapshotS": 9149.692113607956,
+                               "up": 140, "ahead": 500, "quality": "high"}:
+        raise ValueError("Actual camera request differs from the reviewed static pair.")
+    if len(packet["legs"]) != 2 or [row["leg"] for row in packet["legs"]] != ["before", "after"]:
+        raise ValueError("Exactly the original two static legs are required.")
+    hashes = {"before": "5b77bc2e63b5fc064926e34726bb3c0db6e771d416a5c6c0f6ad30f75b8b2bec",
+              "after": "f9bb7b409c84bcdb191f6cc1fb3c3810ebecfc27a73180f538429fed2f3b3c48"}
+    pictures, inputs = [], []
+    for leg in packet["legs"]:
+        name = leg["leg"]
+        expected_options = {"variation": True, "strength": None if name == "before" else .20,
+                            "scale": None if name == "before" else 800}
+        if not (leg["seed"] == 1989 and leg["status"] == "menu" and leg["readOnly"] and
+                leg["timeOfDay"] == "day" and leg["hasLightPath"] is False and
+                leg["dimensions"] == [960, 540] and leg["options"] == expected_options and
+                leg["worldBuildsAfter"] > leg["worldBuildsBefore"] and leg["snowVertices"] > 0):
+            raise ValueError("Actual " + name + " world/read-only/lighting/coverage witness differs.")
+        path = packet_dir / ("snow-" + name + ".png")
+        if Path(leg["image"]).resolve() != path.resolve():
+            raise ValueError("Packet image does not name its original source file.")
+        data = path.read_bytes()
+        if digest(data) != hashes[name]:
+            raise ValueError("Actual source PNG SHA256 changed.")
+        with Image.open(BytesIO(data)) as image:
+            if image.size != (960, 540) or image.mode not in ("RGB", "RGBA"):
+                raise ValueError("Unexpected native static canvas dimensions or colour mode.")
+            if image.mode == "RGBA" and image.getchannel("A").getextrema() != (255, 255):
+                raise ValueError("Source PNG must be fully opaque; no compositing or pixel alteration.")
+            # Dropping a verified opaque alpha channel preserves every RGB pixel.
+            pictures.append(image.convert("RGB"))
+        inputs.append({"path": str(path), "sha256": digest(data), "dimensions": [960, 540], "witness": leg})
+    before, after = packet["legs"]
+    geometry = lambda leg: [{key: value for key, value in row.items() if key != "materialKey"}
+                            for row in leg["geometry"]]
+    if not (before["featuresHash"] == after["featuresHash"] and before["pose"] == after["pose"] and
+            geometry(before) == geometry(after) and len(before["geometry"]) == 2):
+        raise ValueError("Actual static geometry/features/camera equality is missing.")
+    key = "terrain-slope-mosaic-v2-winter-v1-drifts-authored-variation"
+    if any(row["materialKey"] != key for row in before["geometry"]) or any(
+            row["materialKey"] != key + "-wind-strength:0.2-scale:800" for row in after["geometry"]):
+        raise ValueError("Actual original/candidate material keys differ from the approved source.")
+    sheet = Image.new("RGB", (1968, 730), "#121923")
+    draw = ImageDraw.Draw(sheet)
+    font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 23)
+    small = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 18)
+    draw.text((16, 12), "SNOW-VARIATION | Round 2 | Whiteout Crest open snowfield | High", font=font, fill="white")
+    draw.text((16, 48), "Same static native camera | BOTH legs: declared daylight ART override, normal race lighting unchanged", font=small, fill="#c3cfdf")
+    for column, (image, label) in enumerate(zip(pictures, ["BEFORE: original wind field / optional values omitted", "AFTER: same contrast .20 / broad 800 m wind field"])):
+        x = 16 + column * 976
+        draw.text((x, 91), label, font=small, fill="white")
+        sheet.paste(image, (x, 124))
+    draw.text((16, 680), "Original full native 960 x 540 canvases. No crop, retouch or brightness change; labels outside original pixels.", font=small, fill="#c3cfdf")
+    draw.text((16, 706), "ART comparison only: no normal game-lighting, race, frame-timing or acceptance claim.", font=small, fill="#c3cfdf")
+    encoded = fallback = None
+    for quality in (86, 81, 76, 71, 66, 61, 56, 51):
+        stream = BytesIO()
+        sheet.save(stream, format="JPEG", quality=quality, optimize=True)
+        data = stream.getvalue()
+        if len(data) <= 500000 and fallback is None:
+            fallback = data
+        if len(data) <= 180000:
+            encoded = data
+            break
+    encoded = encoded or fallback
+    if encoded is None:
+        raise ValueError("Static review pair exceeds 500 KB.")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("xb") as handle:
+        handle.write(encoded)
+    record = {"round": 2, "source": source, "receipt": receipt, "inputs": inputs,
+              "operations": "Original full opaque native canvases, JPEG compression only; outside labels",
+              "lighting": packet["lighting"], "output": str(output), "bytes": len(encoded),
+              "sha256": digest(encoded), "artAccepted": False, "performanceAccepted": False}
     with manifest.open("x", encoding="utf-8", newline="\n") as handle:
         handle.write(json.dumps(record, indent=2) + "\n")
     print(json.dumps({"output": str(output), "bytes": len(encoded), "sha256": digest(encoded), "manifest": str(manifest)}))
