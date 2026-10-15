@@ -32,12 +32,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", required=True, help="Existing SNOW-VARIATION packet directory")
     parser.add_argument("--output", required=True, help="Owned immutable review JPG")
-    parser.add_argument("--round", type=int, choices=(1, 2), default=1)
+    parser.add_argument("--round", type=int, choices=(1, 2, 3), default=1)
     args = parser.parse_args()
     evidence, output = Path(args.evidence).resolve(), Path(args.output).resolve()
     evidence.relative_to((ROOT / ".evidence").resolve())
-    if args.round == 2:
-        return round_two(evidence, output)
+    if args.round in (2, 3):
+        return round_static(evidence, output, args.round)
     expected_output = (ROOT / "docs/board/looks/snow-variation/round-1.jpg").resolve()
     if output != expected_output:
         raise ValueError("This recipe owns only round 1; later rounds require new reviewed inputs (cap three).")
@@ -128,16 +128,26 @@ def main():
     print(json.dumps({"output": str(output), "bytes": len(encoded), "sha256": digest(encoded), "manifest": str(manifest)}))
 
 
-def round_two(evidence, output):
-    source = "3ea6100b448dbb27c53fac97cf75fd4e0479d23a"
-    packet_dir = evidence / "daylight-round2-3ea6100b"
-    expected_output = (ROOT / "docs/board/looks/snow-variation/round-2.jpg").resolve()
-    manifest = evidence / "round-2-inputs.json"
+def round_static(evidence, output, round_number):
+    config = {
+        2: {"source": "3ea6100b448dbb27c53fac97cf75fd4e0479d23a", "packet": "daylight-round2-3ea6100b",
+            "strength": .20, "before": "5b77bc2e63b5fc064926e34726bb3c0db6e771d416a5c6c0f6ad30f75b8b2bec",
+            "after": "f9bb7b409c84bcdb191f6cc1fb3c3810ebecfc27a73180f538429fed2f3b3c48",
+            "label": "AFTER: same contrast .20 / broad 800 m wind field"},
+        3: {"source": "5bfd6e8d3410d89dd18211df6056b669b3960a25", "packet": "daylight-round3-5bfd6e8d",
+            "strength": .45, "before": "4fb1322c983179840b8687121f0b974b4d859292afcb3518f89c020955d7ac80",
+            "after": "75226b475182b780d54d9ce0a67dfc9a0137db5b79894bdb8dec3238cbbd5617",
+            "label": "AFTER: final contrast .45 / broad 800 m wind field"},
+    }[round_number]
+    source = config["source"]
+    packet_dir = evidence / config["packet"]
+    expected_output = (ROOT / f"docs/board/looks/snow-variation/round-{round_number}.jpg").resolve()
+    manifest = evidence / f"round-{round_number}-inputs.json"
     if output != expected_output:
-        raise ValueError("Round 2 owns only its named output; the cap is three reviewed rounds.")
+        raise ValueError(f"Round {round_number} owns only its named output; the cap is three reviewed rounds.")
     if output.exists() or manifest.exists():
-        raise FileExistsError("Round 2 is immutable; retain all original round-one provenance.")
-    receipt = read_json(evidence / "daylight-round2.receipt.json")
+        raise FileExistsError(f"Round {round_number} is immutable; retain all earlier provenance.")
+    receipt = read_json(evidence / f"daylight-round{round_number}.receipt.json")
     if not (receipt["source"] == receipt["sourceAfter"] == source and
             receipt["exitCode"] == 0 and receipt["dirtyAfter"] == []):
         raise ValueError("Static pair lacks its real successful unchanged-source receipt.")
@@ -151,12 +161,11 @@ def round_two(evidence, output):
         raise ValueError("Actual camera request differs from the reviewed static pair.")
     if len(packet["legs"]) != 2 or [row["leg"] for row in packet["legs"]] != ["before", "after"]:
         raise ValueError("Exactly the original two static legs are required.")
-    hashes = {"before": "5b77bc2e63b5fc064926e34726bb3c0db6e771d416a5c6c0f6ad30f75b8b2bec",
-              "after": "f9bb7b409c84bcdb191f6cc1fb3c3810ebecfc27a73180f538429fed2f3b3c48"}
+    hashes = {name: config[name] for name in ("before", "after")}
     pictures, inputs = [], []
     for leg in packet["legs"]:
         name = leg["leg"]
-        expected_options = {"variation": True, "strength": None if name == "before" else .20,
+        expected_options = {"variation": True, "strength": None if name == "before" else config["strength"],
                             "scale": None if name == "before" else 800}
         if not (leg["seed"] == 1989 and leg["status"] == "menu" and leg["readOnly"] and
                 leg["timeOfDay"] == "day" and leg["hasLightPath"] is False and
@@ -185,15 +194,15 @@ def round_two(evidence, output):
         raise ValueError("Actual static geometry/features/camera equality is missing.")
     key = "terrain-slope-mosaic-v2-winter-v1-drifts-authored-variation"
     if any(row["materialKey"] != key for row in before["geometry"]) or any(
-            row["materialKey"] != key + "-wind-strength:0.2-scale:800" for row in after["geometry"]):
+            row["materialKey"] != key + f"-wind-strength:{config['strength']}-scale:800" for row in after["geometry"]):
         raise ValueError("Actual original/candidate material keys differ from the approved source.")
     sheet = Image.new("RGB", (1968, 730), "#121923")
     draw = ImageDraw.Draw(sheet)
     font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 23)
     small = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 18)
-    draw.text((16, 12), "SNOW-VARIATION | Round 2 | Whiteout Crest open snowfield | High", font=font, fill="white")
+    draw.text((16, 12), f"SNOW-VARIATION | Round {round_number} | Whiteout Crest open snowfield | High", font=font, fill="white")
     draw.text((16, 48), "Same static native camera | BOTH legs: declared daylight ART override, normal race lighting unchanged", font=small, fill="#c3cfdf")
-    for column, (image, label) in enumerate(zip(pictures, ["BEFORE: original wind field / optional values omitted", "AFTER: same contrast .20 / broad 800 m wind field"])):
+    for column, (image, label) in enumerate(zip(pictures, ["BEFORE: original wind field / optional values omitted", config["label"]])):
         x = 16 + column * 976
         draw.text((x, 91), label, font=small, fill="white")
         sheet.paste(image, (x, 124))
@@ -215,7 +224,7 @@ def round_two(evidence, output):
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("xb") as handle:
         handle.write(encoded)
-    record = {"round": 2, "source": source, "receipt": receipt, "inputs": inputs,
+    record = {"round": round_number, "source": source, "receipt": receipt, "inputs": inputs,
               "operations": "Original full opaque native canvases, JPEG compression only; outside labels",
               "lighting": packet["lighting"], "output": str(output), "bytes": len(encoded),
               "sha256": digest(encoded), "artAccepted": False, "performanceAccepted": False}
