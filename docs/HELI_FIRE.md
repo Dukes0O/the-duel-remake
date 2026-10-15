@@ -158,8 +158,11 @@ New file `src/heli/heli-fire.js`, pure and repeatable, no graphics.
 
 Each cell has an intensity from 0 to 1. The fire moves in **spread steps**:
 
-- One step for every 90 seconds the engine runs, on any course (simulated
-  time, not the clock). A cruise leg counts its own flying time: its fuel
+- One step for every 200 seconds the engine runs, on any course (simulated
+  time, not the clock). FIRE-FINISH set this from play: a real bucket
+  round trip, refuels included, takes about 200 s, so the section 4.5
+  targets (tuned at one drop a step) hold in the air; at 90 s a fire
+  answered at once took 11 drops and 36 minutes. A cruise leg counts its own flying time: its fuel
   divided by 0.6 kg/s.
 - Three steps at the start of each new play day while the fire burns.
 - Nothing while the game is closed, and nothing during races (racing days
@@ -224,8 +227,9 @@ Tremblant Woods' strip of forest: cells grow before they spread, embers
 carry two cells downwind, the base chance is 0.55 with 180 litres per
 point, and a fire is lost at 45 cells.
 
-In plain time: answer at once and it is about 8 to 12 minutes of flying; a
-fire ignored on a racing-only player's machine is lost on its third to fifth
+In plain time: answer at once and it is about 15 to 25 minutes of flying
+(5 drops in FIRE-FINISH's headless mission, at one spread step per 200 s);
+a fire ignored on a racing-only player's machine is lost on its third to fifth
 play day.
 
 ## 5. The bucket
@@ -497,7 +501,8 @@ missions: {seed, draws, need, count, last: 'fire' | null,
   quiet: {untilDay, engineSeconds}, firesOut, badges: ['firefighter']}
 fire: null | {id, courseId, seed, startDay, steps, engineSeconds,
   burning: [[cell, percent]], burnt: [cell], damp: [[cell, steps]]}
-burnt: {courseId: {day, boughtBack}}
+burnt: {courseId: {day, boughtBack, heard?: 'reopen' | 'shoots' | 'fireweed'}}
+  (heard: Sarah's last regrowth news, only forward; a new burn has none)
 scars: [{courseId, day, cells: [cell]}]
 bucket: {damage: 0 | 1 | 2 | 3}
 ```

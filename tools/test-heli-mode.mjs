@@ -342,6 +342,8 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js',
     // FIRE-VIEW's browser check grows its fire by the game's own rules.
     ...['heli-ground', 'heli-session', 'heli-fire', 'heli-missions', 'heli-save'].map(name => `tools/scenarios/fire-view.mjs|heli/${name}.js`),
+    // FIRE-FINISH's play-through arms the mission engine in its saves.
+    ...['heli-missions', 'heli-save'].map(name => `tools/scenarios/fire-finish.mjs|heli/${name}.js`),
     // And its node test reads the drawing files it checks.
     ...['heli-fire-view', 'heli-ui', 'heli-scene'].map(name => `tools/test-fire-view.mjs|heli/${name}.js`),
     // EARN-SCREEN: earned cars are air-only; its test reads the list it extends.

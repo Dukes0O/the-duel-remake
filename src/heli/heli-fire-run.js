@@ -8,9 +8,12 @@ import {armed, armMissions, noteRefuel, runEngine, callDue, callTime, openCall, 
   createCallClock, tickCallClock, MISSION_RULES} from './heli-missions.js';
 import {FIRE, BURNT_LOOKS, fireGrid, courseBurnCheck, startCells, startFire, dayWind, applyWater, fireOut, shareOut,
   hottestEdge, cellIJ, runFireEngine, fireNewDay, cruiseSeconds} from './heli-fire.js';
-import {heliOf, missionsOf, fireOf, setMissions, setFire, putOutFire, loseFire} from './heli-save.js';
+import {heliOf, missionsOf, fireOf, setMissions, setFire, putOutFire, loseFire, hearBurnNews, BURN_NEWS} from './heli-save.js';
 import {HELI_DESTINATIONS} from './heli-jobs.js';
 import {courseClosed, burnStage} from '../course-closures.js';
+
+// The regrowth stage each piece of Sarah's news belongs to (section 8.4).
+const NEWS_FOR_STAGE = Object.freeze({black: 'reopen', shoots: 'shoots', fireweed: 'fireweed'});
 
 // Engine time is saved in whole chunks, so the save's tenths never stall it.
 const FLUSH_SECONDS = 10;
@@ -112,6 +115,20 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
     emit({type: 'fireCall', courseId: started.courseId, answerSeconds: answerLeft});
   }
 
+  // The first visit of a regrowth stage: Sarah says so, once. A course
+  // whose news came days late hears only its latest stage. One line a visit.
+  function burnNews() {
+    for (const courseId of Object.keys(heliOf(getSave()).burnt ?? {}).sort()) {
+      const news = NEWS_FOR_STAGE[burnStage(getSave(), courseId, day(), flag)];
+      const heard = heliOf(getSave()).burnt[courseId].heard;
+      if (!news || BURN_NEWS.indexOf(news) <= BURN_NEWS.indexOf(heard)) continue;
+      commit(hearBurnNews(getSave(), courseId, news, flag));
+      radio(`heli.radio.burn.${news}`);
+      emit({type: 'burnNews', courseId, news});
+      return;
+    }
+  }
+
   const api = {
     // A visit starts: arm, and on a new play day run the fire's day steps.
     start({newDay = false} = {}) {
@@ -122,6 +139,7 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
         commit({ok: true, profile: result.profile});
         if (result.lost) { radio('heli.radio.fire.lost'); emit({type: 'fireLost', courseId: burning.courseId}); }
       }
+      burnNews();
     },
     lessonPassed() { arm(); },
     // Each lift-off: a due call gets its clock; the first lift-off of a play

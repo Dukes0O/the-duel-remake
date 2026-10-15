@@ -17,7 +17,7 @@ export const FIRE = Object.freeze({
   baseChance: 0.55, litresPerPoint: 180,
   startPercent: 75, neighbourPercent: 50, litPercent: 25, growPercent: 25, spreadFrom: 50,
   dampSteps: 2, damp: 0.2, spot: 3, regionCells: 2,
-  stepSeconds: 90, dayStepCount: 3, cruiseKgPerSecond: 0.6,
+  stepSeconds: 200, dayStepCount: 3, cruiseKgPerSecond: 0.6,
   // Saved cells and scars name cells of the grid built from this course
   // seed (the helicopter's), so every caller builds the same grid.
   courseSeed: 1989,
@@ -286,7 +286,7 @@ export function hottestEdge(fire, grid, wind = null) {
 }
 
 // ---- the fire's clock (section 4.2) -----------------------------------------
-// One spread step for every 90 s the engine runs, on any course; three at the
+// One spread step for every 200 s the engine runs, on any course; three at the
 // start of each new play day; nothing while the game is closed or in a race.
 // Steps stop as soon as the fire is lost. The engine seconds below a step are
 // kept in the record without rounding, so a frame at a time adds up.
