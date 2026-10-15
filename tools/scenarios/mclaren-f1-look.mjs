@@ -25,5 +25,6 @@ export async function run(context) {
   await context.waitFor(`document.querySelector('#stats').textContent.includes(' · damaged')`, 'actual directional damage applied',10000);
   await context.screenshot('f1-damage');
   await context.evaluate(`[...document.querySelectorAll('#views button')].find(button=>button.textContent==='Steer driver').click()`);
+  await context.evaluate('new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))');
   await context.screenshot('f1-driver');
 }
