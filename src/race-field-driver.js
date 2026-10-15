@@ -13,6 +13,13 @@ import { racingLineFor, buildSpeedProfile, nextCorner, accelAt } from './race-li
 import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget,pitSpeedLimitAt} from './pit-lane.js';
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex } from './race-field.js';
 
+// Hold the road-relative grid lane through the first corner, then blend out.
+export function startLaneTarget(field, station, lineOffset) {
+  const t = clamp((station - field.gridStartS - field.startMergeFrom) / 500, 0, 1);
+  const share = 1 - t * t * (3 - 2 * t);
+  return lineOffset + (field.startLateral - lineOffset) * share;
+}
+
 export const CPU_NITRO = Object.freeze({strength:.5, refill:.5});
 export const cpuNitroExtraMph=(r,spec)=>spec.topSpeed*(BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(spec.nitroSpeedBonus??0))*CPU_NITRO.strength;
 export const cpuNitroAcceleration=(r,spec)=>BOOST.accelMphPerSec*(1+(r.upgrades.nitro||0)*.15)*(spec.nitroAcceleration??1)*CPU_NITRO.strength;
@@ -336,11 +343,11 @@ export function stepFieldRacer(duel, r, dt) {
   }
   let speedCap = Infinity, desired = lineOffset;
   if(f.racecraft && r.completedLaps===0){
-    f.startMergeDistance ??= Math.max(500,nextCorner(profile,f.gridStartS)?.toEntry??0);
-    const share=clamp(1-(r.s-f.gridStartS)/f.startMergeDistance,0,1);
-    desired+=f.startBias*share;
-    const merging=near.some(c=>c.ds>0 && c.gap<reach && Math.abs(c.o.lateral-desired)<run.halfWidth+c.hw+.5);
-    if(share>0 && merging) desired=lineOffset+f.bias;
+    f.startMergeFrom ??= Math.max(500, nextCorner(profile, f.gridStartS)?.toApex ?? 0);
+    desired = startLaneTarget(f, r.s, lineOffset);
+    const merging = near.some(c => c.ds > 0 && c.gap < reach &&
+      Math.abs(c.o.lateral - desired) < run.halfWidth + c.hw + .5);
+    if (merging) desired = f.intent;
   }
   // Between walls a racer keeps further off them (`wallRoom`, metres), as a car at speed overshoots a lane.
   const roadLimit = Math.max(0, halfRoad - run.halfWidth - .5 - (follow.wallRoom ?? 0));

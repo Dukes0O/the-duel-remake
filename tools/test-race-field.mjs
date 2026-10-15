@@ -1,3 +1,4 @@
+import {startLaneTarget} from '../src/race-field-driver.js';
 // Racing a full field (docs/CIRCUITS.md 3.2, card P4-FIELD): grid, start
 // lights, no jump starts, passing and defending, corner sharing, slipstream,
 // catch-up and repeatability. Every race here is headless and seeded.
@@ -462,6 +463,18 @@ function oneLapApp(deferFinish) {
     check(r.field.every(row => row.name && row.carName), 'with names and cars');
     equal(r.creditReward, 0, 'no pay yet, that comes with the career card');
   } finally { restore(); }
+}
+
+// The start lane is absolute road lateral, not an offset from a moving line.
+{
+  const f = {startLateral: 2.6, gridStartS: -40, startMergeFrom: 500};
+  for (const line of [-4, 0, 4]) {
+    close(startLaneTarget(f, 410, line), 2.6, 1e-12, 'hold the grid lane through the first corner');
+    close(startLaneTarget(f, 960, line), line, 1e-12, 'merge onto the current line afterwards');
+    close(startLaneTarget(f, 710, line), (2.6 + line) / 2, 1e-12, 'merge smoothly between lane and line');
+  }
+  const later = {...f, startMergeFrom: 800};
+  close(startLaneTarget(later, 700, -4), 2.6, 1e-12, 'a distant first corner delays the merge');
 }
 
 // ---- what the screens show ----
