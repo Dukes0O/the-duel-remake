@@ -337,7 +337,9 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     // HELI-VIEW: the instruments panel and its styles in the page.
     'src/screen-router.js|heli/heli-ui.js', 'src/screen-router.js|heli/heli-ui.css',
     'tools/test-p4-audio.mjs|heli/heli-audio.js', 'tools/test-arsenal-core-audio.mjs|heli/heli-audio.js',
-    'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js']);
+    'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js',
+    // EARN-SCREEN: earned cars are air-only; its test reads the list it extends.
+    'tools/test-earned-cars-ui.mjs|heli/heli-jobs.js']);
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
   for (const path of walk(join(root, 'src')).concat(walk(join(root, 'tools')), pages)) {
@@ -359,9 +361,10 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     // access rule says which courses the player owns (Race here). FIRE-SAVE:
     // the save prices a buyback from the course closure rules, which import
     // nothing from the helicopter. FIRE-BUCKET: the water query reads the
-    // course's lake outline.
+    // course's lake outline. EARN-SCREEN: the medal cars are air-only; medals.js
+    // is pure rules and imports only config.js.
     ok(imports.every(spec => spec.startsWith('./heli-') || ['../config.js', '../rendered-ground.js', '../rng.js', '../course-access.js',
-      '../course-closures.js', '../circuit-hills.js'].includes(spec)),
+      '../course-closures.js', '../circuit-hills.js', '../medals.js'].includes(spec)),
       `${name} imports only helicopter rules (${imports.join(', ')})`);
     ok(!/\bdocument\b|\bwindow\b|Math\.random|Date\.now|new Date|performance\.now|localStorage|requestAnimationFrame|\bcrypto\b|import\s*\(/.test(source),
       `${name} uses no page, clock, storage or randomness`);
