@@ -1,7 +1,7 @@
 # EARN-MEDALS
 
 - Task: medal sheets in the save and the earned-car rule (Cockpit T-013).
-- Status: complete, switch dev. Kind: save and pay. Built by Claude in place
+- Status: complete, switch dev. Kind: save and pay. Merged 14 October 2026. Built by Claude in place
   of Codex (Kyle, 14 October 2026). Held `save-shape` after FIRE-SAVE.
 - Switch: `earned-cars`, dev (new).
 
@@ -50,7 +50,7 @@
   what was paid. The old-code comparison depended on a commit id (above). A
   `__proto__` car id was lost from a sheet; it is now skipped. The packet said
   any version other than 1 is kept; it now says a newer whole-number version.
-- Lane tier and build: see below.
+- Lane tier (`--changed --jobs 4 --keep-going`, run from PowerShell on the lane with FIRE-SAVE and the helicopter release merged in): 273 suites passed, 0 failed, 1,170 s. Build passed.
 
 ## Changed assertions
 
