@@ -1,3 +1,5 @@
+import {withReferenceApp} from './build-reference-laps.mjs';
+import {createFeatureFlags} from '../src/feature-flags.js';
 import {Duel} from '../src/game.js';
 import {COURSE} from '../src/config.js';
 import {createKeyboardSteering} from '../src/keyboard-steering.js';
@@ -143,4 +145,19 @@ test('actual player driving builds a braking slide and sheds it in the air',()=>
   for(let i=0;i<36;i++){s.speedMph=100;d._drive(1/120);}
   assert.ok(s.tyreSlip>=1.25,'full-brake turn reaches the reviewed slide within0.3s');assert.ok(s.speedMph<100);
   const previous=s.tyreSlip;s.airborne=true;d._drive(1/120);assert.ok(s.tyreSlip<previous,'airborne tyres stop building a slide');
+});
+
+
+test('real App automatic steering asks for no more than the braking-adjusted peak',async()=>{
+  await withReferenceApp(async app=>{
+    app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});
+    assert.ok(app.startCampaign({startStage:0,opponentCount:0,car:'falcone_f42',difficulty:'casual',seed:1989}));
+    app.autopilot=true;app._scriptedCrashDone=true;
+    for(let i=0;i<600&&app.duel.state.status!=='racing';i++)app.advance(1/120,1/120);
+    const s=app.duel.state;assert.equal(s.tyreSlipRules,true);s.speedMph=100;s.headingError=.5;
+    app._driveAutopilot(1/120);
+    const surface=app.duel._drivingSurface(s.s,s.lateral),limits=tyreSlipSteering({speedMph:s.speedMph,
+      grip:app.duel.car.grip,traction:surface.traction,car:app.duel.car,brake:s.input.brake});
+    assert.ok(Math.abs(s.input.steer)*limits.steerGain<=limits.peakYaw+1e-12,'native App helper respects peak including braking');
+  });
 });

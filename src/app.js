@@ -44,7 +44,7 @@ import {warlordEnabled} from './warlords/index.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
-import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority } from './config.js';
+import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority, steerForYaw } from './config.js';
 import { EngineAudio } from './audio.js';
 import { loadPlayers, savePlayers, PLAYERS_KEY, playerName, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
@@ -1691,7 +1691,10 @@ export class App {
     const arena=this.duel.course?.def.venue===true&&this.duel.course?.def.arena===true;
     if(this._keyboardArena!==arena){this._resetKeyboardInput();this._keyboardArena=arena;}
     const steering=arena?this._arenaKeyboardSteering:this._keyboardSteering;
-    const keyboardSteer = steering.update(keyboardSteeringDirection(k),dt,st.speedMph);
+    const tyreKeyboard = st.tyreSlipRules === true && !st.airborne && st.speedMph >= 0
+      ? {tyreSlip: true, car: this.duel.car, grip: this.duel.car.grip,
+        traction: this.duel._drivingSurface(st.s,st.lateral).traction, course: this.duel.course} : undefined;
+    const keyboardSteer = steering.update(keyboardSteeringDirection(k),dt,st.speedMph,tyreKeyboard);
     const pressedThrottle=heldInput(context,'throttle',k);
     const keyboardThrottle=arena?(pressedThrottle?1:0):this._keyboardThrottle.update(pressedThrottle,dt);
     this.duel.setInput({
@@ -1738,7 +1741,13 @@ export class App {
 
     // Visit the shoulder once to exercise reduced grip and recovery steering.
     if (!this._scriptedCrashDone && !st.objective && st.s > 250) {
-      d.setInput({ throttle: 1, brake: 0, steer: 1 }); // swerve off the road
+      let swerve = 1;
+      if (st.tyreSlipRules && !st.airborne && st.speedMph >= 0) {
+        const traction = d._drivingSurface(st.s,st.lateral).traction;
+        swerve = steerForYaw(-steeringYawAuthority(st.speedMph,d.car.grip,traction,d.car),
+          {speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake:0,tyreSlip:true});
+      }
+      d.setInput({ throttle: 1, brake: 0, steer: swerve }); // swerve off the road
       if (st.offRoad && Math.abs(st.lateral) > (d.course.roadHalfWidthAt?.(st.s)??DRIVE.roadHalfWidth) + 2) this._scriptedCrashDone = true;
       else return;
     }
@@ -1771,8 +1780,6 @@ export class App {
     const look = d.course.at(st.s + metresPerSec * .18);
     const desiredYaw = look.curvature * metresPerSec + (headingTarget - st.headingError) * 6;
     const drivingSurface=d._drivingSurface(st.s,st.lateral),traction=drivingSurface.traction;
-    const authority = Math.max(.05, steeringYawAuthority(st.speedMph, d.car.grip, traction, d.car));
-    const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     const bend = Math.max(Math.abs(frame.curvature), Math.abs(d.course.at(st.s + 100).curvature), Math.abs(d.course.at(st.s + 220).curvature));
     // Winter corners use the same actual traction as steering. Other surfaces
     // retain the old plan, including winter tyres on dry asphalt.
@@ -1781,6 +1788,8 @@ export class App {
     const targetSpeed = Math.min(drivingSurface.speedLimit,transit?.speedMph ?? cornerSpeed);
     const throttle = st.speedMph < targetSpeed ? 1 : 0;
     const brake = st.speedMph > targetSpeed + 4 ? Math.min(1, (st.speedMph - targetSpeed) / 20) : 0;
+    const steer = steerForYaw(desiredYaw,{speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake,
+      tyreSlip:st.tyreSlipRules === true && !st.airborne && st.speedMph >= 0});
     d.setInput({ throttle, brake, steer, boost: false });
   }
 

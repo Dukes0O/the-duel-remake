@@ -1,3 +1,4 @@
+import {tyreSlipRawSound} from './config.js';
 import {isSummitAttack} from './summit-attack.js';
 // Audio rendering reads simulation state; all authored cues live in the bank.
 import {
@@ -106,6 +107,7 @@ export class EngineAudio {
     this._ambiencePromise = null;
     this.smoothedLoad = 0;
     this.smoothedSlip = 0;
+    this.tyreSlipSmoothed = 0;
     this.lastThrottle = 0;
     this.lastUpdateTime = 0;
     this.nextThrottle = 0;
@@ -1323,7 +1325,12 @@ export class EngineAudio {
     this.smoothedSlip +=
       (rawSlip - this.smoothedSlip) *
       (1 - Math.exp(-dt / (rawSlip > this.smoothedSlip ? 0.045 : 0.12)));
-    const slip = this.smoothedSlip,
+    const tyreInput = st.tyreSlipRules === true && !st.onFoot && !st.knock && grounded
+      ? tyreSlipRawSound(st.tyreSlip || 0) : 0;
+    const previousTyreSlip = this.tyreSlipSmoothed || 0;
+    this.tyreSlipSmoothed = previousTyreSlip + (tyreInput - previousTyreSlip) *
+      (1 - Math.exp(-dt / (tyreInput > previousTyreSlip ? 0.045 : 0.12)));
+    const slip = st.tyreSlipRules === true ? (st.onFoot || st.knock ? 0 : this.tyreSlipSmoothed) : this.smoothedSlip,
       recordedSlip = clamp((slip - 0.08) / 0.92, 0, 1),
       squeal = recordedSlip * recordedSlip * (3 - 2 * recordedSlip);
     for (let i = 0; i < ENGINE_BANDS.length; i++) {
