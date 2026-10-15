@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T08:26:38.914Z
+Observed at: 2026-10-15T11:36:20.486Z
 
-Observation commit: c27b2ab3ac6249262e3194b5b9c604bb8ac3732c
+Observation commit: db85e8778109755f04db992c425e12ff7de49be3
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: c27b2ab3ac6249262e3194b5b9c604bb8ac3732c
+Integration HEAD: db85e8778109755f04db992c425e12ff7de49be3
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -43,7 +43,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
-| lane/audio/aud-10 | 19 | unknown | true | false | unknown |
+| lane/audio/aud-10 | 20 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 20 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 19 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
@@ -76,7 +76,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 523,148 B | +0 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 420,755,456 B | +96,256 B | unavailable |
+| Git objects | 430,187,520 B | +9,432,064 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,7 +85,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: c27b2ab3ac6249262e3194b5b9c604bb8ac3732c
+- Local integration/wasteland: db85e8778109755f04db992c425e12ff7de49be3
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -93,6 +93,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: matches local; cached commit c27b2ab3ac6249262e3194b5b9c604bb8ac3732c.
+- Remote origin/integration/wasteland: behind local; cached commit c27b2ab3ac6249262e3194b5b9c604bb8ac3732c.
 
 Issue: Circuit manifest summit-time-attack.js has unknown or malformed literal metadata.
