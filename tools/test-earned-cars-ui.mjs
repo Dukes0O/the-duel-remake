@@ -7,6 +7,7 @@ import {cp, mkdir, mkdtemp, readFile, writeFile} from 'node:fs/promises';
 import {join, relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {App} from '../src/app.js';
+import {EngineAudio} from '../src/audio.js';
 import {CARS} from '../src/config.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {PLAYERS_KEY} from '../src/progression.js';
@@ -72,6 +73,20 @@ test('switch on: an Easy Rival Duel win fills the box, shows the line and plays 
     assert.match(panel, /OPENS WITH THE GRAND PRIX CAREER/);
     assert.match(medalSheetPanel(app.profile, 'falcone_f42', {grandPrixCareer: true}), /GRAND PRIX<\/th><td class="medal empty">/);
   });
+});
+
+test('the medal event plays the existing bonus cue exactly once', () => {
+  const audio = new EngineAudio();
+  const played = [];
+  // A stand-in running sound context: node has no audio, so record the cues.
+  Object.assign(audio, {context: {state: 'running', currentTime: 0}, muted: false, paused: false,
+    _syncMixer: () => {}, _playCue: id => played.push(id)});
+  const state = {status: 'finished', opponents: [], traffic: []};
+  audio.event({medalEarned: true}, state, null);
+  assert.deepEqual(played, ['interface.bonus']);
+  played.length = 0;
+  audio.event({}, state, null);
+  assert.deepEqual(played, [], 'an event without a medal plays nothing');
 });
 
 test('switch off: the same race adds no sheet, no medal and no cue', () => {

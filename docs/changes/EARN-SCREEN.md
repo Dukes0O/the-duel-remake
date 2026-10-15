@@ -45,7 +45,15 @@
   `test-heli-jobs`, `test-heli-hooks`, `test-grand-prix-career-menu`.
 - Browser scenario `earned-cars` (private port, memory-only, 1280 x 720): the garage medal sheet and a Hard win's results line ("NEW MEDAL · GOLD · FALCONE F42 · DUEL · HARD · +375 CR", 2,125 credits = 1,500 + 150 clean + 100 clean debut + 375 gold); 0 warnings, 0 errors. Claude looked at both pictures: the first round's row-label column took a quarter of the width, so it was narrowed to 84 px and checked again. Pictures recycled after review.
 - Lane tier and build: see below.
-- Review: see below.
+- Review (independent, code read only while the release frame check ran): no
+  blocking faults; four small ones, all fixed. The cue test counted events,
+  not sounds, so a new test gives the sound code a stand-in running context
+  and checks `interface.bonus` plays exactly once. The medal table sat 12 px
+  left (a 100% table ignores its negative margins); widening it made it spill
+  out of the panel, which the browser check caught, so the negative margin
+  went and the cells now sit evenly 6 px in from both edges. The menu's first count text used every car; it now
+  uses the shown list. `src/audio.js` was outside the card's files; the card
+  now lists it with the reason.
 
 ## Changed assertions
 
