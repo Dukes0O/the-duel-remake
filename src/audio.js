@@ -1793,6 +1793,8 @@ export class EngineAudio {
         );
       else this._playCue('engine.shift-fallback');
     }
+    // A new medal or an earned car on the results screen (docs/EARNED_CARS.md 5.2).
+    if (ev.medalEarned) this._playCue('interface.bonus');
     if (ev.chickenBonus) {
       this._playCue('interface.bonus');
       this._flutter();

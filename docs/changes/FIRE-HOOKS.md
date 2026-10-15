@@ -74,6 +74,9 @@ build dependency).
   `src/screen-router.js`, both changes kept: the leaderboard and the
   forest fire switch): 171 passed, 0 failed, 0 not run in 607 s; build
   passed.
+  Once more after EARN-SCREEN merged (one conflict in
+  `tools/test-heli-mode.mjs`'s import allow-list, both entries kept): 172
+  passed, 0 failed, 0 not run in 842 s; build passed.
   `npm run build`: passed.
 
 ## Review (rule 17)
