@@ -354,7 +354,10 @@ tasks:
     owner: "codex"
     lane: "WORLD"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-summit-gallery-2026-10-14"
+    branch: "codex/summit-gallery-cover"
+    locks: [world-signatures]
     needs: []
     details: "docs/board/cards/SUMMIT-GALLERY-COVER.md"
 
