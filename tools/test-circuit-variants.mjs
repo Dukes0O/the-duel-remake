@@ -164,3 +164,12 @@ test('every reversed kit anchor has actual rendered terrain, including the mirro
     }
   }
 });
+
+
+test('Panorama reverse fences stay behind the complete reversed road-width blend',()=>{
+  const d=reverses[0].definition,c=new Course(d,1989);
+  // Actual catch-fence asset x spans -2..2m, authored scaleX2 and heading PI/2.
+  for(const p of d.kitPlacements.filter(p=>p.id==='catch-fence'))
+    assert.ok(Math.abs(p.lateral)>=Math.max(...[-4,0,4].map(ds=>c.roadHalfWidthAt(p.s+ds)))+1.8-1e-12,
+      'full4m half-panel keeps the approved fence setback');
+});

@@ -25,3 +25,11 @@ All five actual native sheets were inspected before first signatures. Automatic 
 ## Removed
 
 Copied forward-direction Woods manual braking boards are replaced by correct missing reverse-approach boards, without duplicating native boards. No parent scenery, asset, original or runtime dependency is removed. Raw reviews remain temporary until their verdict and merge receipt are recorded; the new recipes/fixtures are the retained result.
+
+## First gate and bounded fixes
+
+Frozeneca7f07c nearby323/327/jobs4/zero unrun failed four suites. Updated existing registry fixtures retain all paid-parent/Attack checks and explicitly check the five free podium children and their inherited generation identities; Attack stays exact order6 with later append-only entries. Existing exact road.length===definition.lengthU assertion is unchanged: reverse lengthU now comes from its native reverse build, resolving a4e-12m summation difference.
+
+Native kit failure was reverse Panorama fence335 at station2205.041904555239/lateral-8.3, where the reversed width blend is wider than its donor. Only this variant's six road-adjacent fence positions now retain at least1.8m setback over each complete real4m-half-length panel. Released parent placements/assets and every clearance guard remain unchanged. New focused span case failed first; variants8/8 and actual471High/LOD reverse Panorama placements pass. Changed native pictures/signature and fresh gate/build/review are required before merge.
+
+The unchanged shortcut generator rebuilt all15native solutions. Every entry/version exactly equals its pre-edit payload; only the source freshness fingerprint changed because Course has new opt-in terrain hooks. No shortcut, old geometry, replay or world pin changed. First gate failures remain recorded, not green.

@@ -70,6 +70,7 @@ export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, 
       ...(p.houses ? {houses: p.houses.map(point)} : {}), ...(p.lamps ? {lamps: p.lamps.map(point)} : {}),
       ...(p.id === 'pit-timing' ? {s: 45, lateral: -p.lateral} : {})}))} : {})};
   let definition = copyCourseDescriptor(parent, changes), kits = null;
+  definition = copyCourseDescriptor(definition, {lengthU: buildTrackScript(definition).length});
   const mappedKit = p => {
     if (p.id === 'start-gantry') return {...p, s: 0}; // Face the incoming race, not the old one.
     return {...point({...p, heading: p.heading ?? 0}), ...(p.ride ? {ride: {...p.ride,
