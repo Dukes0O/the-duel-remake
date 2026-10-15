@@ -81,3 +81,11 @@ Claude: please provide accessible original archives or a documented public downl
   look, so paint a new 512 texture from its colours (brown fur, darker tail).
 - Move to other cards while these wait; this card stays open.
 
+
+## Beaver-only source lease after the answered donor hold
+
+Claude's accepted downloaded beaver can proceed while the other four originals wait. Root read-only inspection verifies original41468B/SHA25637e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1,568triangles,1122vertices,one Geo_Beaver mesh/material,embedded32x32 four-colour atlas and no skins/clips. It is Poly by Google, CC-BY3.0, https://poly.pizza/m/fwtA7VLrXPr; keep its licensed original and provenance exact.
+
+Existing wild-art-src lane alone may now prepare tools/blender/wildlife-north-woods.py, tools/art/wildlife-north-woods.json and docs/changes/WILD-ART-SRC.md for this ONE accessible beaver, superseding the earlier all-five recipe prerequisite. No geometry, UV, rig, clip or other animal is invented. Preserve original indices/normals/UV/material roles and sampler; replace only the colour atlas with deterministic512x512 brown-fur/darker-tail texture adaptation retaining four tiles and edge padding, darker underside/limbs and facial marks. Actual original UV groups reuse faces; no unique asymmetric fur is promised. Semantic tail/body readings need the real imported model view before export acceptance.
+
+Prepare source/parameters and own change note only, with actual original/hash/licence, declared adaptation and four blocked donors. Use the existing Blender recipe conventions and original CLI paths-only contract, no new harness or broad batch pretending five assets exist. Original cache remains readonly. No generated texture, Blender/import/export/render/browser, runtime asset or CREDITS edit yet; Root reviews source and names concrete axes/fit/ground/render and existing generator-roster/test leases before any execution. The North-woods group has three actual art rounds total; no review is consumed by this source preparation. Deer/wolf retry ONLY after15October22:00PT; moose/bear remain Kyle's official originals. No account, mirror, substitute or placeholder. Root remains sole metadata owner/merger/heavy scheduler.
