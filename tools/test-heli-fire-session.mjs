@@ -10,7 +10,7 @@ import {createHeliSession, courseSite} from '../src/heli/heli-session.js';
 import {fireOnNewDay, fireWorld} from '../src/heli/heli-fire-run.js';
 import {startFire, startCells} from '../src/heli/heli-fire.js';
 import {armMissions, openCall} from '../src/heli/heli-missions.js';
-import {heliOf, missionsOf, fireOf, setMissions, setFire, notePlayDay, createMissions} from '../src/heli/heli-save.js';
+import {heliOf, missionsOf, fireOf, setMissions, setFire, notePlayDay, createMissions, hearBurnNews} from '../src/heli/heli-save.js';
 import {courseClosed, buybackPrice} from '../src/course-closures.js';
 import {dispatchBoardMarkup, handleBoardAction} from '../src/heli/heli-board.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
@@ -244,6 +244,43 @@ function check(name, fn) { fn(); console.log('PASS ' + name); }
   ok(courseClosed(profile, 'tremblant-woods', undefined, on) && buybackPrice(profile, 'tremblant-woods', undefined, on) === 10_000, 'closed, 10,000 to buy back');
   same([missionsOf(profile).call, missionsOf(profile).count], [null, 0], 'the mission ends with no pay');
   ok(!courseClosed(profile, 'tremblant-snow', undefined, on), 'Tremblant Snow stays open');
+}
+
+// ---- Sarah's regrowth news: once per stage, at the first visit ------------------
+{
+  // Tremblant Woods burnt on play day 8; a visit on play day count.
+  const visit = (count, burn = {day: 8, boughtBack: false}) => {
+    const base = readyProfile();
+    const profile = {...base, heli: {...heliOf(base), playDay: {last: DAY, count}, burnt: {'tremblant-woods': burn}}};
+    const session = newSession(profile);
+    const events = [...session.start(), ...session.step({})];
+    return {events, heard: heliOf(session.profile).burnt['tremblant-woods'].heard, session};
+  };
+  const closed = visit(12);
+  same(lines(closed.events).filter(line => line.startsWith('heli.radio.burn.')), [], 'closed (day 4 of the burn): no news yet');
+  same(closed.heard, undefined, 'and nothing heard');
+  const black = visit(18);
+  same(lines(black.events).filter(line => line.startsWith('heli.radio.burn.')), ['heli.radio.burn.reopen'], 'reopened (day 10): "The burnt woods are open again"');
+  same(black.heard, 'reopen', 'saved as heard');
+  const again = newSession(black.session.profile);
+  same(lines([...again.start(), ...again.step({})]).filter(line => line.startsWith('heli.radio.burn.')), [], 'the next visit of the same stage says nothing');
+  same(lines(visit(30).events).filter(line => line.startsWith('heli.radio.burn.')), ['heli.radio.burn.shoots'], 'shoots (day 22)');
+  same(lines(visit(45).events).filter(line => line.startsWith('heli.radio.burn.')), ['heli.radio.burn.fireweed'], 'fireweed (day 37), even with the earlier news missed');
+  same(lines(visit(70).events).filter(line => line.startsWith('heli.radio.burn.')), [], 'healed (day 62): nothing');
+  same(lines(visit(12, {day: 8, boughtBack: true}).events).filter(line => line.startsWith('heli.radio.burn.')), ['heli.radio.burn.reopen'],
+    'bought back early: open again at once');
+  const off = createHeliSession({profile: {...readyProfile(), heli: {...heliOf(readyProfile()), playDay: {last: DAY, count: 18},
+    burnt: {'tremblant-woods': {day: 8, boughtBack: false}}}}, enabled: true, loadCourse, loadFireCourse: loadCourse, fireEnabled: false,
+    playerName: 'Fire QA', today: DAY, carId: 'falcone_f42'});
+  same(lines([...off.start(), ...off.step({})]).filter(line => line.startsWith('heli.radio.burn.')), [], 'switch off: no news');
+  // The save keeps news only forward and only for a burn.
+  let profile = black.session.profile;
+  same(hearBurnNews(profile, 'tremblant-woods', 'reopen', on).already, true, 'the same news again changes nothing');
+  profile = hearBurnNews(profile, 'tremblant-woods', 'fireweed', on).profile;
+  same(heliOf(hearBurnNews(profile, 'tremblant-woods', 'shoots', on).profile).burnt['tremblant-woods'].heard, 'fireweed', 'news never goes back');
+  same(hearBurnNews(profile, 'tremblant-snow', 'reopen', on).ok, false, 'a course with no burn has no news');
+  same(hearBurnNews(profile, 'tremblant-woods', 'smoke', on).ok, false, 'only the three pieces of news');
+  same(hearBurnNews(profile, 'tremblant-woods', 'fireweed', {enabled: false}).ok, false, 'switch off: nothing saved');
 }
 
 // ---- The app: race start, buyback, play days and the switch ----------------------

@@ -223,6 +223,9 @@ export const FIRE_MONEY = Object.freeze({firePay: 1500, bucketRepair: Object.fre
 export const MISSION_KINDS = Object.freeze(['fire']);
 export const BADGES = Object.freeze(['firefighter']);
 export const BUCKET_DAMAGE = Object.freeze(['whole', 'dented', 'torn', 'ruined']);
+// Sarah's regrowth news for a burnt course, in order (section 8.4): a burn
+// remembers the last one heard, so each plays once.
+export const BURN_NEWS = Object.freeze(['reopen', 'shoots', 'fireweed']);
 export const MAX_SCARS = 4;
 // A fire holds at most 80 burning and burnt cells; damp lasts at most 2 steps.
 export const MAX_FIRE_CELLS = 80;
@@ -296,7 +299,10 @@ const validDay = value => Number.isSafeInteger(value) && value >= 0 && value <= 
 function normalizeBurnt(value) {
   const out = {};
   for (const [courseId, entry] of Object.entries(value))
-    if (validCourse(courseId) && isObject(entry) && validDay(entry.day)) out[courseId] = {day: entry.day, boughtBack: entry.boughtBack === true};
+    if (validCourse(courseId) && isObject(entry) && validDay(entry.day)) {
+      out[courseId] = {day: entry.day, boughtBack: entry.boughtBack === true};
+      if (BURN_NEWS.includes(entry.heard)) out[courseId].heard = entry.heard;
+    }
   return out;
 }
 
@@ -386,6 +392,16 @@ export function loseFire(profile, fireId, {enabled} = {}) {
   const heli = heliOf(profile), fire = heli.fire;
   if (!fire || fire.id !== fireId) return failure(profile, 'That fire is not burning.');
   return {ok: true, profile: withHeli(profile, {...withBurn(heli, fire.courseId, heli.playDay.count), fire: null}), courseId: fire.courseId};
+}
+
+// Sarah's regrowth news was heard for a burnt course. Only forward: an
+// earlier or repeated piece of news changes nothing.
+export function hearBurnNews(profile, courseId, news, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  const heli = heliOf(profile), entry = heli.burnt?.[courseId];
+  if (!entry || !BURN_NEWS.includes(news)) return failure(profile, 'That course has no burn, or that is not regrowth news.');
+  if (BURN_NEWS.indexOf(news) <= BURN_NEWS.indexOf(entry.heard)) return {ok: true, profile, already: true};
+  return {ok: true, profile: withHeli(profile, {...heli, burnt: {...heli.burnt, [courseId]: {...entry, heard: news}}}), already: false};
 }
 
 // Buying a burnt course back early: a purchase, so the whole price or nothing.
