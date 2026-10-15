@@ -143,6 +143,12 @@ test('native App cup admission and saved continuation do not bypass car transpor
       assert.equal(COURSE[app.menuStage].id,'tremblant-woods');
       assert.equal(app.startCup('night').ok,false);
       assert.equal(app.abandonCup().ok,true);assert.equal(app.profile.cups.active,null);
+      app.profile={...app.profile,unlockedCars:[...app.profile.unlockedCars,'koenigsegg_jesko']};app._saveProfile();
+      app.setRaceSettings({car:'koenigsegg_jesko'});
+      assert.equal(app.getRaceChoices().car,'koenigsegg_jesko');
+      const refusal=app.startCup('night');assert.equal(refusal.ok,false);
+      assert.match(refusal.reason,/travels only by air/);
+      assert.equal(app.profile.cups.active,null,'unlocking an air-only car cannot place it at Harbour');
     });
   }finally{COURSE.splice(0,COURSE.length,...before);}
 });
