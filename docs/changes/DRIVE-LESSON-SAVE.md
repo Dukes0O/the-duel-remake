@@ -13,3 +13,7 @@ Seven focused acceptance cases were written first (initially missing module), th
 ## Removed
 
 Nothing. This is the card's saved-progress foundation, with no new test framework, runtime dependency, storage key, real-save operation or live installation.
+
+## Save review correction
+
+The independent save review found the existing career-backup suite also pinned12fixtures; its first assertion failed13!==12. Director named that narrow hook and changed only the roster to13. All backup/migration/restore assertions remain. The original0ce86e2b canonical run was cancelled before editing, not passed or a completed gate; final source requires a fresh complete nearby gate/build and same-reviewer confirmation.
