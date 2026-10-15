@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T21:23:53.648Z
+Observed at: 2026-10-15T21:26:06.502Z
 
-Observation commit: f103562bacf0d501592ff28f4be56ba50c0910b9
+Observation commit: a0dd197154de172f948d0b52f8aa9c9630821cf1
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: f103562bacf0d501592ff28f4be56ba50c0910b9
+Integration HEAD: a0dd197154de172f948d0b52f8aa9c9630821cf1
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -43,6 +43,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-yeti-native | 1 | unknown | true | false | unknown |
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/qa-browser-sweep | 1 | unknown | false | false | unknown |
+| codex/summit-switch-on | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 20 | unknown | true | false | unknown |
@@ -80,7 +81,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 136,396 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 436,480,000 B | +93,184 B | unavailable |
+| Git objects | 436,501,504 B | +21,504 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -89,7 +90,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: f103562bacf0d501592ff28f4be56ba50c0910b9
+- Local integration/wasteland: a0dd197154de172f948d0b52f8aa9c9630821cf1
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
