@@ -1,11 +1,11 @@
 {
   "version": 1,
   "group": "north-woods",
-  "status": "source-access-blocked",
+  "status": "beaver-source-prepared-other-donors-blocked",
   "retrievedAtUtc": "2026-10-15T02:19:19.6940597Z",
   "cacheRoot": "C:/Users/kyleb/dev/art-library/wild-north-woods",
   "runtimeInstalled": false,
-  "recipePrepared": false,
+  "recipePrepared": true,
   "limits": {
     "triangles": 5000,
     "textureEdge": 1024,
@@ -174,11 +174,95 @@
           "bytes": 114
         }
       ],
-      "artAccepted": false
+      "artAccepted": false,
+      "adaptationPlan": {
+        "status": "source-only-unrun",
+        "size": 512,
+        "padding": 16,
+        "seed": 1989,
+        "coordinateConvention": "PNG image rows from top-left; retain original glTF UVs and sampler",
+        "tiles": [
+          {
+            "tile": "upper-left",
+            "roleHypothesis": "brown body/head fur",
+            "sourceColour": "#744229",
+            "colour": [
+              116,
+              66,
+              41
+            ],
+            "detail": "fur",
+            "strength": 1.0,
+            "triangles": 316
+          },
+          {
+            "tile": "upper-right",
+            "roleHypothesis": "long negative-Z tail-shaped appendage; actual view still required",
+            "sourceColour": "#837373",
+            "colour": [
+              55,
+              37,
+              28
+            ],
+            "detail": "tail",
+            "strength": 1.0,
+            "triangles": 72
+          },
+          {
+            "tile": "lower-left",
+            "roleHypothesis": "darker underside and limbs",
+            "sourceColour": "#2C1E1E",
+            "colour": [
+              44,
+              30,
+              30
+            ],
+            "detail": "fur",
+            "strength": 0.65,
+            "triangles": 144
+          },
+          {
+            "tile": "lower-right",
+            "roleHypothesis": "dark facial marks",
+            "sourceColour": "#070101",
+            "colour": [
+              7,
+              1,
+              1
+            ],
+            "detail": "marks",
+            "strength": 0.15,
+            "triangles": 36
+          }
+        ],
+        "preserve": [
+          "complete original positions/normals/UV/index binary prefix",
+          "accessor and primitive definitions",
+          "original material and sampler",
+          "original nodes and transforms",
+          "zero skins and clips"
+        ],
+        "uvEvidence": {
+          "crossQuadrantTriangles": 0,
+          "distinctTriangleUVFootprints": 369,
+          "repeatedTriangleUVGroups": 199,
+          "uniqueAsymmetricFurPromised": false
+        },
+        "outputs": {
+          "privateOnly": true,
+          "model": "beaver-source-unfitted.glb",
+          "texture": "beaver-colour.png",
+          "receipt": "manifest.json",
+          "metricFitVerified": false,
+          "groundingVerified": false,
+          "artAccepted": false
+        },
+        "credit": "Beaver by Poly by Google, https://poly.pizza/m/fwtA7VLrXPr, CC BY3.0 https://creativecommons.org/licenses/by/3.0/. Adapted colour atlas; original geometry and UVs retained."
+      }
     }
   ],
   "downloadPolicySource": "https://sketchfab.com/developers/download-api/downloading-models",
-  "blockedNextStep": "Director/Claude supplies accessible approved creator archives or settles a documented no-account source route. No substitute, account or extraction workaround.",
+  "blockedNextStep": "Beaver recipe source is prepared only; Root must grant fit/view/test scope before execution. Quaternius deer/wolf retry once only after2026-10-15T22:00:00-07:00, no mirrors. Moose/bear wait for Kyle to supply official originals; no new account.",
   "cacheReceipts": [
     {
       "file": "CC-BY-3.0-legalcode.html",
@@ -245,5 +329,9 @@
       "bytes": 95444,
       "sha256": "312996914cb13af286f5721aa07f12e6cbebcc81ef3a343bd37500650c0172ef"
     }
-  ]
+  ],
+  "preparedModels": [
+    "beaver"
+  ],
+  "recipe": "tools/blender/wildlife-north-woods.py"
 }

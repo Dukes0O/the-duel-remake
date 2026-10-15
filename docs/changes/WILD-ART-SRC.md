@@ -16,9 +16,22 @@ Sketchfab's official download documentation requires an authenticated account be
 
 ## Stop and handoff
 
-All four inaccessible source cases stopped within the30-minute limit. The manifest distinguishes actual beaver bytes from publisher declarations and missing information. Root must route accessible approved creator archives/direct public source links to Claude; no substitute donor is proposed. A five-model adaptation recipe is deliberately not prepared before the four missing originals are available: writing assumed joints, clips or texture layouts would be a stub. No wildlife-north-woods.py exists yet and no generator-roster hook is requested yet.
+All four inaccessible source cases stopped within the30-minute limit. The manifest distinguishes actual beaver bytes from publisher declarations and missing information. Root must route accessible approved creator archives/direct public source links to Claude; no substitute donor is proposed. At the first source freeze, no five-model adaptation recipe was prepared: writing assumed joints, clips or texture layouts for four missing originals would be a stub. Claude subsequently allowed the accessible beaver-only source slice below; the four blocked animals are not generated.
 
-No Blender import/export/render, model adaptation, runtime asset, CREDITS, gameplay, save, switch, test, native browser, gate, build, frame measurement or art round ran. First source packet only; the three-round art budget is untouched. Release hold remains in force.
+No Blender import/export/render, model adaptation, runtime asset, CREDITS, gameplay, save, switch, test, native browser, gate, build, frame measurement or art round ran. First source packet only; the three-round art budget is untouched. Execution was not authorized for that source-access slice.
+
+
+## Beaver-only source preparation
+
+Claude's 14 October night answer and Director b773e2b6 supersede the all-five prerequisite for the actual downloaded beaver only. The normal integration union is conflict-free at 3538c27b. The existing licensed original, source receipts and hashes remain unchanged in the external cache. Deer/wolf retry only once after 15 October at 22:00 PT; moose/bear wait for Kyle's official downloaded originals. No mirror, account, substitute or invented batch.
+
+The embedded 32-square image has four equal tiles: brown #744229, grey #837373, dark brown #2C1E1E and near-black #070101. Direct accessor inspection found 316/72/144/36 triangles in those tiles, with no triangle crossing tile boundaries. The grey region is a long narrow negative-Z appendage consistent with the tail; body/tail/limb/face roles remain hypotheses pending the real model view. Reused UVs have 369 distinct triangle footprints and 199 repeated groups; the recipe promises no unique asymmetric fur.
+
+The source recipe prepares only one private unfitted candidate and a 512-square colour atlas. Four 256-square tiles retain their original UV roles with 16-pixel detail padding. Deterministic restrained brown fur, dark tail detail, dark underside and near-black marks follow the original palette. No lighting or model transform is baked. Blender is used only to encode the painted image after paths, source hash and parameters validate; lossless GLB image rebinding retains the complete geometry binary prefix, all 1122 vertices/568 triangles, normals, UVs, indices, nodes, material and sampler. Only embedded image bytes and buffer/image lengths change. No rig, animation, donor-space fit, LOD, runtime install or art verdict is invented.
+
+The standard --paths-only branch uses only stdlib argument/path planning before any config/source read, bpy import, directory creation or image generation. Actual execution accepts only this checkout and a new absent private .qa-dist/.evidence child; outputs are beaver-source-unfitted.glb, beaver-colour.png and manifest.json. It never writes the original, public runtime files, CREDITS or another animal. The recipe/manifest credit Poly by Google, the model/source page and CC-BY3.0, and disclose the colour adaptation.
+
+No recipe, paths-only check, import, paint, Blender export/render, browser, gate, build or art sheet ran. Root must first name the existing generator-roster/test hook, then verify pure path planning on two empty roots without reads/writes; original checksum, image quadrants/512 size and padding, candidate position/normal/UV/index bytes, material/sampler equality and original zero skins/clips. Next actual model views must settle the semantic masks, donor axes and metric scale/grounding contract before any fitted export. The low-poly silhouette and painted detail still require Claude's actual round judgment within the shared three-round cap. No current appearance or ground pass is claimed.
 
 ## Changed assertions
 
@@ -26,4 +39,4 @@ None. No existing tests, fixtures, budgets or source contracts changed.
 
 ## Removed
 
-No originals or deliverables removed. The two quota responses were renamed from misleading .gltf filenames to their actual HTML type. No placeholder model or speculative recipe was added.
+No originals or deliverables removed. The two quota responses were renamed from misleading .gltf filenames to their actual HTML type. No placeholder model or speculative five-animal recipe was added. The accessible beaver-only source supersedes the earlier all-five preparation hold; no licensed source, review verdict or runtime asset was removed.
