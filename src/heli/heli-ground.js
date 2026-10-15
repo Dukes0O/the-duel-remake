@@ -2,6 +2,7 @@
 // course's own samplers (docs/HELICOPTER.md section 9). Pure: the flight
 // asks this for heights and rotor strikes and never touches the course.
 import {renderedGroundHeight} from '../rendered-ground.js';
+import {basinReach} from '../circuit-hills.js';
 
 const BUCKET = 32;
 const bucketKey = (i, j) => i * 100_003 + j;
@@ -9,7 +10,9 @@ const bucketKey = (i, j) => i * 100_003 + j;
 // heightAt(x, z) is the drawn ground; it is read lazily on a 4 m grid and
 // blended between grid points, so a long flight costs a few samples a step.
 // obstacles: [{x, z, radius, base, top, shape: 'column' | 'cone'}].
-export function createHeliGround({heightAt, obstacles = [], cell = 4} = {}) {
+// water(x, z) is the surface height of a lake the bucket can scoop from, or
+// null: a ground without one never has water.
+export function createHeliGround({heightAt, obstacles = [], cell = 4, water = null} = {}) {
   if (typeof heightAt !== 'function') throw new Error('createHeliGround needs heightAt(x, z)');
   const grid = new Map();
   const point = (i, j) => {
@@ -86,7 +89,8 @@ export function createHeliGround({heightAt, obstacles = [], cell = 4} = {}) {
     }
     return Math.max(top, tallestIn(x, z, radius));
   };
-  return Object.freeze({height, near, rotorStrike, highest, topAt, sampled: () => grid.size});
+  const waterAt = typeof water === 'function' ? (x, z) => water(x, z) ?? null : () => null;
+  return Object.freeze({height, near, rotorStrike, highest, topAt, water: waterAt, sampled: () => grid.size});
 }
 
 // Tall things on a course that a rotor or a hanging car can hit. Trees use
@@ -115,7 +119,26 @@ export function groundFromCourse(course) {
     const drawn = renderedGroundHeight(course, {x, z}, {requireSurface: true});
     return Number.isFinite(drawn) ? drawn : fallback(x, z);
   };
-  return createHeliGround({heightAt, obstacles: courseObstacles(course)});
+  return createHeliGround({heightAt, obstacles: courseObstacles(course), water: courseWater(course)});
+}
+
+// The surface height of a `basins` lake at a place, or null. The same oval
+// and surface height installBasins digs and circuit-effects fills, with the
+// lap wrapped so a lake over the start line is found from both sides.
+export function courseWater(course) {
+  // A frozen lake (Tremblant Snow) is ice: nothing to scoop.
+  const frozen = course.def?.effects?.lake?.frozen === true ? course.def.effects.lake : null;
+  const basins = (course.def?.basins ?? []).filter(basin => !(frozen && frozen.s === basin.s && frozen.lateral === basin.lateral));
+  if (!basins.length) return () => null;
+  return (x, z) => {
+    const near = course.nearest(x, z), phase = course.phase(near.s);
+    for (const basin of basins) {
+      let along = phase - basin.s;
+      if (course.closed) along -= Math.round(along / course.length) * course.length;
+      if (basinReach(basin, along, near.lateral - basin.lateral) < 1) return course._height(basin.s) + basin.surface;
+    }
+    return null;
+  };
 }
 
 export function flatGround(y = 0, obstacles = []) {

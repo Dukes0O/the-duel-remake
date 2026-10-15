@@ -356,9 +356,10 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     // HELI-DISPATCH: the seeded generator picks the day's jobs and the course
     // access rule says which courses the player owns (Race here). FIRE-SAVE:
     // the save prices a buyback from the course closure rules, which import
-    // nothing from the helicopter.
+    // nothing from the helicopter. FIRE-BUCKET: the water query reads the
+    // course's lake outline.
     ok(imports.every(spec => spec.startsWith('./heli-') || ['../config.js', '../rendered-ground.js', '../rng.js', '../course-access.js',
-      '../course-closures.js'].includes(spec)),
+      '../course-closures.js', '../circuit-hills.js'].includes(spec)),
       `${name} imports only helicopter rules (${imports.join(', ')})`);
     ok(!/\bdocument\b|\bwindow\b|Math\.random|Date\.now|new Date|performance\.now|localStorage|requestAnimationFrame|\bcrypto\b|import\s*\(/.test(source),
       `${name} uses no page, clock, storage or randomness`);
