@@ -23,6 +23,10 @@ def arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--paths-only", action="store_true")
+    parser.add_argument("--asset", choices=["cargo-hook", "helipad", "fuel-pump"],
+                        help="Export only this existing accessory")
+    parser.add_argument("--round", type=int, choices=[1, 2, 3], default=1,
+                        help="Accessory render/sheet round; default 1")
     review = parser.add_mutually_exclusive_group()
     review.add_argument("--review-dir", type=Path, help="Import existing GLBs and render six review views only")
     review.add_argument("--sheet", type=Path, help="Compose the existing six-view review manifest only")
@@ -160,14 +164,39 @@ def cargo_hook(settings, surfaces):
             -.039 + math.cos(math.tau * i / 40) * .03, 0) for i in range(40)]
     tube("attachment_eye", parent, surfaces["bright-steel"], eye, .009, closed=True)
     tube("swivel", parent, surfaces["steel"],
-         [(0, -.06, 0), (0, -.095, 0), (-.018, -.14, 0), (-.03, -.17, 0)], .023, sides=12)
-    arc = []
-    for i in range(49):
-        angle = math.radians(35 + i * 290 / 48)
-        arc.append((.09 * math.cos(angle), -.267 + .108 * math.sin(angle), 0))
-    tube("forged_hook", parent, surfaces["steel"], arc, .025, sides=12)
-    tube("safety_latch", parent, surfaces["safety-orange"],
-         [(.076, -.205, 0), (.082, -.26, 0), (.076, -.329, 0)], .007, sides=8)
+         [(0, -.06, 0), (0, -.095, 0), (-.035, -.13, 0), (-.045, -.16, 0)], .023, sides=12)
+
+    def forged_profile(name, outline, depth, bevel):
+        # Vertices carry the full shape; object transforms remain identity for fitting.
+        count = len(outline)
+        points = [(x, y, z) for z in [-depth / 2, depth / 2] for x, y in outline]
+        faces = [tuple(reversed(range(count))), tuple(range(count, count * 2))]
+        faces += [(i, (i + 1) % count, (i + 1) % count + count, i + count)
+                  for i in range(count)]
+        obj = mesh(name, parent, surfaces["steel"], points, faces)
+        modifier = obj.modifiers.new("Forged edge", "BEVEL")
+        modifier.width = bevel
+        modifier.segments = 2
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
+        return obj
+
+    # Long left shank and heavy lower bowl; the short right toe tapers upward.
+    # The open throat is distinct from the old near-circular, constant-width ring.
+    forged_profile("forged_hook", [
+        (-.07, -.12), (-.09, -.19), (-.095, -.27), (-.083, -.33),
+        (-.045, -.371), (.012, -.389), (.065, -.375), (.102, -.337),
+        (.12, -.288), (.115, -.248), (.098, -.225), (.084, -.232),
+        (.085, -.265), (.066, -.295), (.035, -.314), (.003, -.311),
+        (-.021, -.289), (-.029, -.253), (-.026, -.21), (-.016, -.165),
+        (-.017, -.126),
+    ], .055, .004)
+    # Grey steel spring flap pivots at the neck and seats on the hook's pointed toe.
+    forged_profile("safety_latch", [
+        (-.027, -.158), (-.024, -.171), (.097, -.238), (.104, -.224), (-.018, -.149),
+    ], .018, .0015)
+    tube("latch_pivot", parent, surfaces["steel"],
+         [(-.021, -.164, -.034), (-.021, -.164, .034)], .011, sides=12)
     # Fit the original complete hook uniformly; attachment top stays exactly zero.
     meshes = [obj for obj in parent.children if obj.type == "MESH"]
     vertices = [vertex.co for obj in meshes for vertex in obj.data.vertices]
@@ -316,7 +345,7 @@ def review_views():
     ]
 
 
-def render_review(root, directory, config):
+def render_review(root, directory, config, round_number):
     # Import the published bytes, never rebuild or export review substitutes.
     directory = evidence_path(root, directory)
     sources = {key: root / settings["path"] for key, settings in config["assets"].items()}
@@ -384,7 +413,7 @@ def render_review(root, directory, config):
         after = {key: checksum(path) for key, path in sources.items()}
         if after != before:
             raise ValueError("A source GLB changed during accessory review")
-    manifest = {"card": "HELI-ART-SRC", "round": 1, "kind": "BLENDER IMPORTED GLB / NOT GAME",
+    manifest = {"card": "HELI-ART-SRC", "round": round_number, "kind": "BLENDER IMPORTED GLB / NOT GAME",
                 "sourceSha256Before": before, "sourceSha256After": after, "views": records,
                 "render": {"engine": "CYCLES", "device": "CPU", "samples": 48, "threads": 4,
                            "viewTransform": "AgX", "gameAxes": "+Y up, +Z front, metres"},
@@ -395,27 +424,27 @@ def render_review(root, directory, config):
     print("Accessory imported-GLB review manifest: " + str(manifest_path))
 
 
-def compose_review(root, manifest_path, config):
+def compose_review(root, manifest_path, config, round_number):
     # Pillow is supplied by the workspace Python runtime; no Blender import.
     from PIL import Image, ImageDraw, ImageFont, ImageOps
     manifest_path = evidence_path(root, manifest_path)
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     expected = [(asset, name) for asset, name, *_ in review_views()]
-    if (manifest.get("card") != "HELI-ART-SRC" or manifest.get("round") != 1 or
+    if (manifest.get("card") != "HELI-ART-SRC" or manifest.get("round") != round_number or
             manifest.get("kind") != "BLENDER IMPORTED GLB / NOT GAME" or
             [(row["asset"], row["view"]) for row in manifest["views"]] != expected):
         raise ValueError("Sheet requires the six original accessory review views")
     actual = {key: checksum(root / settings["path"]) for key, settings in config["assets"].items()}
     if actual != manifest["sourceSha256Before"] or actual != manifest["sourceSha256After"]:
         raise ValueError("Reviewed accessory GLBs differ from the current sources")
-    target = root / "docs/board/looks/heli-accessories/round-1.jpg"
+    target = root / f"docs/board/looks/heli-accessories/round-{round_number}.jpg"
     if target.exists():
-        raise ValueError("Accessory round-one sheet already exists; do not overwrite it")
+        raise ValueError("Accessory round sheet already exists; do not overwrite it")
     sheet = Image.new("RGB", (1600, 1720), (27, 31, 33))
     draw = ImageDraw.Draw(sheet)
     font = ImageFont.truetype("C:/Windows/Fonts/segoeui.ttf", 20)
     title = ImageFont.truetype("C:/Windows/Fonts/segoeuib.ttf", 28)
-    draw.text((24, 12), "HELI ACCESSORIES | ROUND 1", font=title, fill=(240, 232, 210))
+    draw.text((24, 12), f"HELI ACCESSORIES | ROUND {round_number}", font=title, fill=(240, 232, 210))
     draw.text((24, 52), "BLENDER IMPORTED GLB / NOT GAME | actual source bytes, full frames", font=font,
               fill=(220, 226, 225))
     for index, row in enumerate(manifest["views"]):
@@ -441,7 +470,7 @@ def compose_review(root, manifest_path, config):
     target.parent.mkdir(parents=True, exist_ok=True)
     with target.open("xb") as output:
         output.write(encoded)
-    print("Accessory round-one sheet: " + str(target) + " (" + str(len(encoded)) + " bytes)")
+    print("Accessory round sheet: " + str(target) + " (" + str(len(encoded)) + " bytes)")
 
 
 def main():
@@ -450,7 +479,9 @@ def main():
     paths = {"cargo-hook": "public/assets/heli/cargo-hook.glb",
              "helipad": "public/assets/heli/helipad.glb",
              "fuel-pump": "public/assets/heli/fuel-pump.glb"}
-    outputs = [args.root / path for path in paths.values()]
+    if args.asset and (args.review_dir or args.sheet):
+        raise ValueError("--asset is an export selector and cannot be combined with review modes")
+    outputs = [args.root / path for key, path in paths.items() if not args.asset or key == args.asset]
     if args.paths_only and (args.review_dir or args.sheet):
         raise ValueError("--paths-only cannot be combined with review modes")
     if args.paths_only:
@@ -462,17 +493,19 @@ def main():
             config["assets"][key]["path"] != path for key, path in paths.items()):
         raise ValueError("This recipe exports only the three settled accessory paths")
     if args.sheet:
-        compose_review(args.root, args.sheet, config)
+        compose_review(args.root, args.sheet, config, args.round)
         return
     global bpy, Vector
     import bpy
     from mathutils import Vector
     if args.review_dir:
-        render_review(args.root, args.review_dir, config)
+        render_review(args.root, args.review_dir, config, args.round)
         return
     factories = {"cargo-hook": cargo_hook, "helipad": helipad, "fuel-pump": fuel_pump}
     reports = []
     for identifier, settings in config["assets"].items():
+        if args.asset and identifier != args.asset:
+            continue
         bpy.ops.wm.read_factory_settings(use_empty=True)
         bpy.context.scene.render.threads_mode = "FIXED"
         bpy.context.scene.render.threads = 4

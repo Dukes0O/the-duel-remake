@@ -119,6 +119,18 @@ The new accessory recipe was missing from the existing strict generator roster. 
 
 The actual existing roster invokes --paths-only against an empty temporary root. The accessory planner therefore returns its existing constant path list before reading its config. Actual export, review and sheet modes still read and strictly validate the same config. No Blender/Pillow/config read or file output occurs during planning. No asset or render function changes, and no repeated export or art round is needed. Root reviews the new source freeze before the focused original suite and fresh canonical gate/build.
 
+## Actual Claude decision and round 2 design before code
+
+The successful single image-only Claude review returned CHANGES REQUIRED: hook shape/material/readability 3/2/2; helipad 5/4/5 accepted; pump 4/4/5 accepted. Only the 156226-byte JPEG and basic visual brief were transmitted, with tools disabled; the larger repository packet had been rejected before its process ran. The raw verdict is preserved in claude-image-only-round1-79769594. No art pass or invented game result is recorded.
+
+Settle the hook correction from that actual art decision: replace the near-circular C/ring body with an asymmetric forged J profile and clearly tapered upturned tip. Use a grey steel flat flap, hinged visibly at the neck and seated against the tip. Keep the attachment eye, swivel and existing required node names; add a small latch_pivot if needed. Preserve exact 0.4 m height below the top attachment origin, no textures and the 4000-triangle ceiling. All geometry uses identity mesh transforms before the existing uniform fit. Do not alter the accepted pad/pump geometry, material or bytes. Remove the superseded orange rod/body and its unused orange material in the same change.
+
+The bounded recipe support is a selected --asset export so only cargo-hook.glb is rebuilt, plus --round choices 1 to 3 (default 1) for the existing immutable review manifest/sheet. Default planning remains three exact paths and no config/Blender/Pillow read. Render and sheet modes reject an export selector. Round 1 is preserved; round 2 gets its own folder, JPEG and provenance. This is the same original-asset recipe and review workflow, not new test machinery, a runtime loader, a fourth Kestrel round or another task. Freeze for the lead's code review before any export/render/check.
+
+The prior mechanical freeze 79769594 passed the focused original 63-check planner suite, canonical 28/28 lane with jobs 4/no skips (277152.1125 ms, 282266.2025 ms wall) and build (1201.6639 ms wall, Vite 696 ms). Those results do not certify the next changed hook. The generated build copy was recycled; raw round-one views and receipts remain until review use is complete.
+
+The prepared round-two source passed an independent read-only review: no blockers. Reviewed SHA256 values: recipe 69714e14b16b4eefd7fe0bb9ebde025c70ae359003b2be5796cf09bce357f8df; config 78c15dba7ef526f7aca9c5377e802a834e2e5829a9f02dd3e300a04118ebdfb5. This confirms source correctness, not the next art verdict. Export, render, second sheet and fresh lane/build remain unrun at source freeze.
+
 ## Removed
 
 Replace the pending accessory donor question with Claude's original-recipe

@@ -6,12 +6,11 @@
   "license": "Original project geometry; no third-party donor",
   "units": "metres",
   "axes": "+Y up, +Z front; Blender conversion (x,-z,y), glTF export_yup=true",
-  "state": "exports measured; art verdict unrun",
+  "state": "round 1 pad and pump accepted; hook round 2 source awaiting export",
   "textures": "none; geometric normals and scalar PBR materials",
   "materials": {
     "steel": {"color": [0.32, 0.36, 0.38, 1], "metallic": 0.82, "roughness": 0.31},
     "bright-steel": {"color": [0.58, 0.62, 0.63, 1], "metallic": 0.9, "roughness": 0.24},
-    "safety-orange": {"color": [0.8, 0.19, 0.035, 1], "metallic": 0.1, "roughness": 0.46},
     "concrete": {"color": [0.19, 0.21, 0.22, 1], "metallic": 0, "roughness": 0.94},
     "white-paint": {"color": [0.86, 0.87, 0.83, 1], "metallic": 0, "roughness": 0.82},
     "yellow-paint": {"color": [0.74, 0.53, 0.035, 1], "metallic": 0, "roughness": 0.78},
@@ -26,7 +25,7 @@
       "origin": "Top cable attachment, y=0; the hook hangs below it",
       "heightM": 0.4,
       "trianglesMax": 4000,
-      "parts": ["attachment_eye", "swivel", "forged_hook", "safety_latch"],
+      "parts": ["attachment_eye", "swivel", "forged_hook", "safety_latch", "latch_pivot"],
       "cable": "No cable mesh; the game draws its existing line"
     },
     "helipad": {
