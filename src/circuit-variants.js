@@ -48,7 +48,7 @@ export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, 
       towers: parent.effects.lift.towers.map(x => -x).reverse(), lines: parent.effects.lift.lines.map(x => -x).reverse()}} : {}),
     ...(parent.effects.backdrop ? {backdrop: {...parent.effects.backdrop, hills: parent.effects.backdrop.hills.map(h => ({...h,
       x: anchor.x - h.x, z: anchor.z - h.z, angle: (h.angle ?? 0) + Math.PI}))}} : {})};
-  const changes = {id, name, flag: id, reverse: true, scriptStart, intel: undefined,
+  const changes = {id, name, flag: id, reverse: true, scriptStart, intel: undefined, completeTerrainRibbon: true,
     terrainDonor: Object.freeze({definition: parent, offset}),
     ...(parent.pitLane ? {pitLane: {...parent.pitLane, side: parent.pitLane.side === 'left' ? 'right' : 'left'}} : {}),
     ...(parent.ridgeLandform ? {ridgeLandform: {...parent.ridgeLandform, side: 1,

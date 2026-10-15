@@ -1,3 +1,4 @@
+import {renderedGroundHeight} from '../src/rendered-ground.js';
 import * as panoramaReverse from '../src/circuits/panorama-ridge-reverse.js';
 import * as harbourReverse from '../src/circuits/harbour-lights-reverse.js';
 import * as woodsReverse from '../src/circuits/tremblant-woods-reverse.js';
@@ -150,4 +151,16 @@ test('Woods reverse authored distance boards face the incoming corner rather tha
     assert.ok(Math.abs(Math.atan2(Math.sin(board.heading - Math.PI), Math.cos(board.heading - Math.PI))) < 1e-12, 'numbered face points at approaching traffic');
   }
   for (const name of ['Ridge Corner', 'Lodge Bend', 'Final Turn', 'Beaver Hairpin']) assert.ok(marked.has(name), 'retain authored warning at ' + name);
+});
+
+
+test('every reversed kit anchor has actual rendered terrain, including the mirrored lap-line paddock', () => {
+  for (const {definition: d} of reverses) {
+    const c = new Course(d,1989);
+    for (const p of d.kitPlacements) {
+      const point = c.groundAt(p.s,p.lateral);
+      const height = renderedGroundHeight(c,{...point,s:p.s,off:p.lateral},{requireSurface:true});
+      assert.ok(Number.isFinite(height), d.id + '/' + p.id + '@' + p.s + ': actual rendered terrain beneath anchor');
+    }
+  }
 });
