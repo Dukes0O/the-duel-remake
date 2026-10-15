@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T00:49:00.589Z
+Observed at: 2026-10-15T01:25:00.775Z
 
-Observation commit: fa8ecb73aeab4191bd480a5b6be617c9e1f5bc43
+Observation commit: dea3d6af402f7c72a5bc283e55ea4866f15b9ce6
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: fa8ecb73aeab4191bd480a5b6be617c9e1f5bc43
+Integration HEAD: dea3d6af402f7c72a5bc283e55ea4866f15b9ce6
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -65,7 +65,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/deep-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/heli-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
-| codex/p4-avalanche-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
+| codex/p4-avalanche-geometry | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
 | codex/p4-finish | 3 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -85,9 +85,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/heli-art-src | HELI-ART-SRC | 2026-10-14T16:51:55-07:00 | 0 | last commit 2026-10-14T16:51:55-07:00 | docs/board/looks/heli-accessories/round-1-review.md, docs/board/looks/heli-accessories/round-1.jpg, docs/changes/HELI-ART-SRC.md, public/assets/heli/cargo-hook.glb, public/assets/heli/fuel-pump.glb |
-| codex/p4-ardennes | P4-ARDENNES | 2026-10-14T17:35:00-07:00 | 0 | last commit 2026-10-14T17:35:00-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb |
-| codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T17:25:38-07:00 | 0 | last commit 2026-10-14T17:25:38-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, src/track-kits.js, src/track-script-course.js |
+| codex/heli-art-src | HELI-ART-SRC | 2026-10-14T18:00:01-07:00 | 0 | last commit 2026-10-14T18:00:01-07:00 | docs/board/looks/heli-accessories/round-1-review.md, docs/board/looks/heli-accessories/round-1.jpg, docs/changes/HELI-ART-SRC.md, public/assets/heli/cargo-hook.glb, public/assets/heli/fuel-pump.glb |
+| codex/p4-ardennes | P4-ARDENNES | 2026-10-14T18:05:46-07:00 | 0 | last commit 2026-10-14T18:05:46-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -100,15 +99,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 299,187,427 B | +0 B | 250,000,000 B |
+| Build `dist/` | 302,168,987 B | +2,981,560 B | 250,000,000 B |
 | Wasteland models | 112,189,772 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 19,783,956 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 314,138 B | +0 B | 5,000,000 B |
-| All `public/` | 293,933,151 B | +0 B | unavailable |
-| Git objects | 421,653,504 B | +428,032 B | unavailable |
+| Review `looks/` | 19,863,360 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 188,246 B | -1,715,913 B | 5,000,000 B |
+| All `public/` | 296,906,962 B | +1,372,084 B | unavailable |
+| Git objects | 425,020,416 B | +252,928 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -117,7 +116,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: fa8ecb73aeab4191bd480a5b6be617c9e1f5bc43
+- Local integration/wasteland: dea3d6af402f7c72a5bc283e55ea4866f15b9ce6
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
