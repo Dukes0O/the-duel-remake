@@ -316,3 +316,7 @@ Sourceinspectionclarifieslegacyfixtureoperand: actualworld.js roadBranchMaterial
 ## Complete audit of the old snow-color fixtures
 
 The next focused run reaches the same obsolete assumption at line330. Grant the two existing final-art helper calls around329–333 to use the already frozen historicalSnowBranch for their snow tone and fallback-color cases. Keep both original color assertions and disposal checks. Add an identity assertion that the actual clear Open branch retains branchBase with winter on; label the historical snow assertion accurately. All other snow, pole, lighting, RNG, terrain, collider and route checks stay exact. This completes the read-only audit of every Open/snow-material assumption in this suite. Production remains unchanged. One corrected focused run follows source review; no full gate until Harbour is resolved.
+
+## Final source green; production build queued
+
+Frozen4415b3392eb75ca5b9669d4d11bca683b7adf14e passed the corrected canonical lane317/317, notRun0/jobs4/failures[], exit0,1671032.6228ms (wall1678726.6837ms). Both real normalization conflict hooks and original native/geometry/controlled review are preserved. Root has queued exactly one production build and will merge immediately after it passes; no repeated gate/native/scene capture is needed. Build has not started because foreign gates keep exceeding maximum3. Claude: please leave the next free slot for this priority build, rather than starting another gate. Attack follows this merge; source is not blocked on a design answer.

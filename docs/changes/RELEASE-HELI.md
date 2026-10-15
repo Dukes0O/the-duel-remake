@@ -44,6 +44,15 @@ Three items Kyle approved, recorded in their own change notes:
 - STEER-055 (8fd3e494).
 - P4-FINISH-1014 (bc85df40).
 - P4-FINISH-PANORAMA (c458cf29).
+- PANORAMA-TOWN (66d93044): Panorama Ridge's valley town redrawn in code
+  (64 houses, a church, lamps); looks only, world signature recaptured after
+  a reviewed sheet. It changes how a released course looks, so the release
+  browser checks include it.
+- Art for later helicopter sprints under `public/assets/heli/` (fire bucket,
+  fire effects, rescue props, burnt Tremblant props and textures, the Barely
+  News logo). Nothing loads it yet; it only adds bytes to the build.
+- FIRE-SAVE (ac89c5eb): H2 save fields behind the new `forest-fire` switch,
+  which stays `dev` (off for players).
 
 Everything else merged on integration since the last release stays behind
 its own development switch (unchanged for players).

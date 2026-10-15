@@ -22,7 +22,9 @@ tap starts at 55% of the wheel, full lock in 300 ms, and the keys give up 30%
 at 120 mph and above), to match the car's speed; an easier Harbour
 road with neon and lamp light, and autumn pines and boards in the Woods
 (Harbour lap times start fresh); and at Panorama Ridge the marshal posts sit
-on the ground and the final lap is framed at dusk.
+on the ground and the final lap is framed at dusk. The valley town under
+Conrod Straight at Panorama Ridge is now a country town of weatherboard
+houses, verandas and a church, with lit windows and street lamps at night.
 
 ## Steering and race screen release – 13 October 2026
 

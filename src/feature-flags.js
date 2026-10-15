@@ -21,6 +21,8 @@ export const FEATURE_STATES = Object.freeze({
   'the-deep': 'dev',
   // The helicopter (docs/HELICOPTER.md): Kestrel One, H1 First flight. Released 14 October 2026.
   helicopter: 'on',
+  // H2 Fire (docs/HELI_FIRE.md): forest fires, the bucket and burnt courses. Works only with the helicopter on.
+  'forest-fire': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

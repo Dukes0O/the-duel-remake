@@ -7,7 +7,7 @@ import { loadGhosts, saveGhosts, GHOST_KEY } from '../src/ghost.js';
 
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
 const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWith('.json')).sort();
-assert.equal(files.length, 10, 'review the historical save-shape fixture roster');
+assert.equal(files.length, 11, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
   const values = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));
@@ -51,6 +51,11 @@ function preserveProfile(raw, loaded, label) {
   if (raw.heli) {
     for (const field of ['fuelKg', 'lessons', 'carsAt', 'refuels', 'flights']) {
       equal(loaded.heli?.[field], raw.heli[field], `${label}: heli ${field}`);
+    }
+    // H2 Fire fields are optional too: kept exactly when saved.
+    for (const field of ['missions', 'fire', 'burnt', 'scars', 'bucket']) {
+      if (Object.hasOwn(raw.heli, field)) equal(loaded.heli?.[field], raw.heli[field], `${label}: heli ${field}`);
+      else equal(Object.hasOwn(loaded.heli ?? {}, field), false, `${label}: no heli ${field} appears`);
     }
   } else {
     equal(Object.hasOwn(loaded, 'heli'), false, `${label}: no heli field appears`);
