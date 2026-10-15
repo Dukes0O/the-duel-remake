@@ -70,7 +70,8 @@ This file holds the settled design, the tests and the acceptance. Design:
 
 ## Re-sliced while building (Claude, 14 October 2026)
 
-`src/audio.js` joins the hooks for one line: the race's sound events go out
+`tools/test-heli-mode.mjs` also gains one approved import for the earned-car
+test (it reads `AIR_ONLY_CARS`). `src/audio.js` joins the hooks for one line: the race's sound events go out
 before settlement, so the new-medal cue needs its own `{medalEarned: true}`
 event, which plays the existing `interface.bonus`. No new sound, and the
 `sound-bank` lock is not needed (no cue is added to the bank).

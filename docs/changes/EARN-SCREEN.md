@@ -57,7 +57,12 @@
 
 ## Changed assertions
 
-None.
+- `tools/test-heli-mode.mjs`: the list of files allowed to import helicopter
+  code gains `tools/test-earned-cars-ui.mjs -> heli/heli-jobs.js`, because the
+  earned-car test checks the air-only list this card extends; and the list of
+  modules a helicopter rules file may import gains `../medals.js` (pure rules,
+  imports only `config.js`), for `AIR_ONLY_CARS`. Nothing else in those checks
+  changed.
 
 ## Removed
 
