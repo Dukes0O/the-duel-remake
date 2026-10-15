@@ -44,6 +44,14 @@ export const HELI_LIBRARY_CUES = Object.freeze({
   'heli.flare': cue('ambience', {file: 'heli/flare.ogg', volume: .7, priority: 55, limit: 1}),
   'heli.snow.dig': cue('vehicle', {file: 'heli/snow-dig.ogg', volume: .6, loop: true, priority: 50, limit: 1}),
   'heli.rescue.clip': cue('vehicle', {file: 'heli/rescue-clip.ogg', volume: .8, priority: 60, limit: 2}),
+  // H3 Wildlife (docs/HELI_WILDLIFE.md section 9): a camera shutter as an
+  // animal is counted, the pressure washer at the pad, the winch motor while
+  // it reels, and a call when the helicopter hovers within 80 m of a herd.
+  'heli.survey.click': cue('interface', {file: 'heli/survey-click.ogg', volume: .6, priority: 55, limit: 3}),
+  'heli.wash': cue('vehicle', {file: 'heli/wash.ogg', volume: .7, priority: 55, limit: 1}),
+  'heli.winch': cue('vehicle', {file: 'heli/winch.ogg', volume: .6, loop: true, priority: 55, limit: 1}),
+  ...Object.fromEntries(['moose', 'wolf', 'bear', 'kookaburra', 'cockatoo', 'sheep', 'marmot', 'raven'].map(species =>
+    [`heli.animal.${species}`, cue('ambience', {file: `heli/animal-${species}.ogg`, volume: .7, priority: 45, limit: 2})])),
 });
 
 // Chime, horn, click and hiss are made from tones and noise, with no file.
@@ -87,6 +95,9 @@ export const HELI_CUES = Object.freeze({...HELI_RADIO_CUES, ...HELI_LIBRARY_CUES
 export const FIRE_CUE_IDS = Object.freeze(['heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.bucket.dent', 'heli.fire.hiss',
   // H4 Rescue's recordings load with the missions too.
   'heli.flare', 'heli.snow.dig', 'heli.rescue.clip']);
+// The H3 Wildlife recordings: loaded only when wildlife needs them (preloadWildlife).
+export const WILDLIFE_CUE_IDS = Object.freeze(Object.keys(HELI_LIBRARY_CUES).filter(id =>
+  id === 'heli.survey.click' || id === 'heli.wash' || id === 'heli.winch' || id.startsWith('heli.animal.')));
 
 // Flight and cable events (heli-flight.js, heli-cable.js) and what they sound like.
 // scale and rate change the cue's volume and pitch for that one play.
@@ -319,7 +330,8 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     if (disposed || !audio.context) return Promise.resolve([]);
     follow();
     // A flight loads its own sounds; the fire sounds wait until a fire needs them (preloadFire).
-    const wanted = ids || Object.keys(cues).filter(id => cues[id].file && !id.startsWith('heli.radio.') && !FIRE_CUE_IDS.includes(id));
+    const wanted = ids || Object.keys(cues).filter(id => cues[id].file && !id.startsWith('heli.radio.') && !FIRE_CUE_IDS.includes(id) &&
+      !WILDLIFE_CUE_IDS.includes(id));
     return Promise.allSettled(wanted.filter(id => cues[id]?.file && !failed.has(id)).map(id => {
       if (buffers.has(id)) return Promise.resolve(buffers.get(id));
       if (!pending.has(id)) pending.set(id, fetchBuffer(id).finally(() => pending.delete(id)));
@@ -609,6 +621,7 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     pending.clear();
   }
   const preloadFire = () => load(FIRE_CUE_IDS.filter(id => cues[id]));
-  return {load, preloadFire, fireBeds, say, skip, clearRadio, subtitle, update, event, play, stop, dispose,
+  const preloadWildlife = () => load(WILDLIFE_CUE_IDS.filter(id => cues[id]));
+  return {load, preloadFire, preloadWildlife, fireBeds, say, skip, clearRadio, subtitle, update, event, play, stop, dispose,
     get busy() { return !!current || queue.length > 0; }, get queued() { return [...queue]; }};
 }

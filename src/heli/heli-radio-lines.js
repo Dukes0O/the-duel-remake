@@ -95,5 +95,19 @@ const RESCUE_LINES = {
   'heli.radio.line.setdown': {voice: 'brian', file: 'heli-radio-line-setdown.mp3', text: 'Lower the rescuer gently, right beside them, and hold her there.'},
 };
 
-export const HELI_RADIO_LINES = Object.freeze(Object.fromEntries(Object.entries({...H1_LINES, ...FIRE_LINES, ...RESCUE_LINES})
+// H3 Wildlife and skins (docs/HELI_WILDLIFE.md section 8): Sarah for the
+// wildlife survey, Brian for the paint and the wash.
+const WILD_LINES = {
+  'heli.radio.survey.taken': {voice: 'sarah', file: 'heli-radio-survey-taken.mp3', text: 'Thanks, Kestrel One. Fly straight lines across the square, and stay high enough not to scare them.'},
+  'heli.radio.survey.scared': {voice: 'sarah', file: 'heli-radio-survey-scared.mp3', text: 'Too low! You are scaring them off.'},
+  'heli.radio.survey.good': {voice: 'sarah', file: 'heli-radio-survey-good.mp3', text: 'Spot on. That matches our ground count. Thank you.'},
+  'heli.radio.survey.close': {voice: 'sarah', file: 'heli-radio-survey-close.mp3', text: 'Close enough to be useful. Thanks.'},
+  'heli.radio.survey.off': {voice: 'sarah', file: 'heli-radio-survey-off.mp3', text: 'That is a long way from our numbers. Try more lines next time.'},
+  'heli.radio.survey.rare': {voice: 'sarah', file: 'heli-radio-survey-rare.mp3', text: 'Did you see that? That one is rare. Lucky you.'},
+  'heli.radio.skin.earned': {voice: 'brian', file: 'heli-radio-skin-earned.mp3', text: 'Five missions of the same kind. There is a new coat of paint waiting for you at the pad.'},
+  'heli.radio.wash.hint': {voice: 'brian', file: 'heli-radio-wash-hint.mp3', text: 'She is filthy, Kestrel One. A wash at the pad will fix that.'},
+  'heli.radio.wash.done': {voice: 'brian', file: 'heli-radio-wash-done.mp3', text: 'Shiny as new.'},
+};
+
+export const HELI_RADIO_LINES = Object.freeze(Object.fromEntries(Object.entries({...H1_LINES, ...FIRE_LINES, ...RESCUE_LINES, ...WILD_LINES})
   .map(([id, line]) => [id, Object.freeze({voice: 'brian', ...line})])));
