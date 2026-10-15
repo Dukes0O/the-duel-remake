@@ -429,7 +429,7 @@ export class App {
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(stage,mode))
       this._lapChoices.set(this._lapChoiceKey(stageIndex,mode),laps);
     const rival=isSummitAttack(stage)?null:Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
-    const cupRun=normalizeCups(this.profile.cups).active;
+    const cupState=normalizeCups(this.profile.cups),cupRun=cupState.version===1?cupState.active:null;
     const cupRound=this.cupsAvailable()&&cupRun?.ownerId===this.player.id&&mode==='grandprix'&&
       CUPS.find(cup=>cup.id===cupRun.cupId)?.events[cupRun.results.length]===stage.id&&
       cupRun.car===car&&cupRun.cpuDifficulty===this.cpuDifficulty&&cupRun.difficulty===difficulty&&
@@ -749,7 +749,7 @@ export class App {
   }
   prepareCupRace(){
     if(this.duel.state.status!=='menu'||!this.cupsAvailable())return {ok:false,reason:'Return to the menu to continue your cup.'};
-    this._refreshPlayer();const active=normalizeCups(this.profile.cups).active;
+    this._refreshPlayer();const cups=normalizeCups(this.profile.cups),active=cups.version===1?cups.active:null;
     if(!active||active.ownerId!==this.player.id)return {ok:false,reason:'No cup is in progress for this player.'};
     const id=CUPS.find(cup=>cup.id===active.cupId)?.events[active.results.length];
     const course=COURSE.find(row=>row.id===id);
@@ -770,7 +770,7 @@ export class App {
     const race=this._cupRace;
     if(!this.cupsAvailable()||!race||race.state!==state||state!==this.duel.state||result!==state.results||
       race.runId!==this.runId||race.ownerId!==this.player.id||state.playerId!==this.player.id||state.qualifying)return;
-    const recorded=recordCupRace(this.profile.cups,{...race,eventId:COURSE[state.stageIndex]?.id,
+    const recorded=recordCupRace(this.profile.cups,{...race,eventId:COURSE[state.stageIndex]?.id,stageIndex:state.stageIndex,
       car:state.car,cpuDifficulty:state.cpuDifficulty,fieldSeed:state.fieldSeed,mode:state.mode,
       completed:result.completed===true,qualifying:false,field:result.field});
     if(!recorded.recorded)return;

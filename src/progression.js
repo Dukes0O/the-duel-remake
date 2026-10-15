@@ -975,10 +975,9 @@ export function settleCup(profile,{seriesId,ownerId,activePlayerId}={}){
     ownerId!==activePlayerId||cups.settled.includes(seriesId)||active.results.length!==definition.events.length||
     !Object.hasOwn(CARS,active.car)||!Number.isSafeInteger(profile.credits)||profile.credits<0||profile.credits>1_000_000_000)
     return no();
-  // Each classification must have passed the existing race settlement first.
-  if(!active.results.every(result=>profile.history.some(row=>row.eventId===result.eventId&&
-    row.key.startsWith(result.runId+':')&&profile.settledResults.includes(row.key)&&row.completed===true&&
-    row.car===active.car&&row.cpuDifficulty===active.cpuDifficulty)))return no();
+  // The permanent ledger survives display-history eviction and moved menu positions.
+  // App stores this exact key only after the current native race is awarded.
+  if(!active.results.every(result=>profile.settledResults.includes(result.settlementKey)))return no();
   const standings=cupStandings(active.results),won=standings[0]?.you===true;
   const key=active.cupId+':'+active.cpuDifficulty,first=won&&!cups.trophies.includes(key);
   const reward=first?Math.min(cupBonus(active.cupId,active.cpuDifficulty),1_000_000_000-profile.credits):0;

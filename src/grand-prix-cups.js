@@ -29,8 +29,9 @@ function activeRun(value){
   const ids=new Set(),results=[];
   for(const [index,result] of value.results.entries()){
     const field=classification(result?.field);
-    if(!field||!identifier(result.runId)||ids.has(result.runId)||result.eventId!==definition.events[index])return null;
-    ids.add(result.runId);results.push({runId:result.runId,eventId:result.eventId,field});
+    if(!field||!identifier(result.runId)||!Number.isSafeInteger(result.stageIndex)||result.stageIndex<0||
+      result.settlementKey!==result.runId+':'+result.stageIndex||ids.has(result.runId)||result.eventId!==definition.events[index])return null;
+    ids.add(result.runId);results.push({runId:result.runId,eventId:result.eventId,stageIndex:result.stageIndex,settlementKey:result.settlementKey,field});
   }
   return {id:value.id,ownerId:value.ownerId,cupId:definition.id,cpuDifficulty:value.cpuDifficulty,
     difficulty:value.difficulty,car:value.car,fieldSeed:value.fieldSeed,results};
@@ -91,10 +92,10 @@ export function recordCupRace(value,receipt){
   if(state.version!==1||!active||!field||receipt.ownerId!==active.ownerId||receipt.seriesId!==active.id||
     receipt.mode!=='grandprix'||receipt.completed!==true||receipt.qualifying!==false||
     receipt.car!==active.car||receipt.cpuDifficulty!==active.cpuDifficulty||receipt.fieldSeed!==active.fieldSeed||
-    !identifier(receipt.runId)||active.results.some(row=>row.runId===receipt.runId))return no();
+    !identifier(receipt.runId)||!Number.isSafeInteger(receipt.stageIndex)||receipt.stageIndex<0||active.results.some(row=>row.runId===receipt.runId))return no();
   const definition=findCup(active.cupId),index=active.results.length;
   if(receipt.eventId!==definition.events[index])return no();
-  const results=[...active.results,{runId:receipt.runId,eventId:receipt.eventId,field}];
+  const results=[...active.results,{runId:receipt.runId,eventId:receipt.eventId,stageIndex:receipt.stageIndex,settlementKey:receipt.runId+':'+receipt.stageIndex,field}];
   return {cups:{...state,active:{...active,results}},recorded:true,finished:results.length===definition.events.length};
 }
 export function abandonCup(value,ownerId){

@@ -12,7 +12,7 @@ const start=(state={},extra={})=>beginCup(state,{...options,...extra},admission)
 const order=(winner='player')=>[winner,...['player',...Array.from({length:7},(_,i)=>'gp-'+(i+1))].filter(id=>id!==winner)]
   .map((id,index)=>({id,position:index+1,name:id,you:id==='player'}));
 const receipt=(round,extra={})=>({ownerId:owner,seriesId:'series-1',runId:'race-'+round,
-  eventId:CUPS[0].events[round],cpuDifficulty:'medium',car:'falcone_f42',fieldSeed:1989,
+  eventId:CUPS[0].events[round],stageIndex:round,cpuDifficulty:'medium',car:'falcone_f42',fieldSeed:1989,
   completed:true,qualifying:false,mode:'grandprix',field:order(),...extra});
 
 test('approved immutable catalog, eight-place points and exact cup bonuses',()=>{
@@ -194,4 +194,33 @@ test('a complete real eight-car Mountain Cup advances and banks only actual nati
       assert.equal(ownerId,app.player.id);
     });
   }finally{COURSE.splice(0,COURSE.length,...before);}
+});
+
+
+test('a saved cup survives more than sixty unrelated races and moved menu positions',async()=>{
+  const {createProfile,settleCup}=await import('../src/progression.js');
+  let cups=start().cups;
+  for(let round=0;round<3;round++)cups=recordCupRace(cups,receipt(round,{stageIndex:80+round})).cups;
+  const keys=cups.active.results.map((result,index)=>result.runId+':'+(80+index));
+  const history=Array.from({length:60},(_,index)=>({key:'ordinary-'+index+':0',eventId:'pacific-canyon',
+    won:false,completed:true,reward:100,car:'falcone_f42',cpuDifficulty:'easy'}));
+  const profile={...createProfile(),credits:100,cups,history,settledResults:[...keys,...history.map(row=>row.key)]};
+  const paid=settleCup(profile,{seriesId:options.id,ownerId:owner,activePlayerId:owner});
+  assert.equal(paid.settled,true,'the permanent race settlement receipts survive the short history');
+  assert.equal(paid.reward,1500);assert.equal(paid.profile.cups.active,null);
+});
+
+
+test('future cup schemas remain opaque to App while ordinary races still start',async()=>{
+  const {withReferenceApp}=await import('./build-reference-laps.mjs');
+  const {createFeatureFlags}=await import('../src/feature-flags.js');
+  await withReferenceApp(async app=>{
+    app.duel.featureFlags=createFeatureFlags({storage:null,qa:true,search:'?flags=grand-prix-career'});
+    const future={version:9,active:{ownerId:app.player.id,cupId:'mountain'},opaque:'retain'};
+    app.profile={...app.profile,cups:future};app._saveProfile();
+    assert.equal(app.prepareCupRace().ok,false);
+    assert.equal(app.abandonCup().ok,false);
+    assert.equal(app.startCampaign({startStage:0,mode:'grandprix',car:'falcone_f42',fieldSeed:1000}),true);
+    assert.equal(app._cupRace,null);assert.deepEqual(app.profile.cups,future);
+  });
 });

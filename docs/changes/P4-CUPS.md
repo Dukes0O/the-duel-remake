@@ -11,3 +11,7 @@ New card-owned tests were authored before the pure implementation; no existing a
 ## Removed
 
 Nothing replaced. Ordinary individual Grand Prix starts, race settlement, records and ghosts remain on their existing path. No temporary runtime substitute or generated placements.
+
+Independent review found a real long-break failure:60unrelated race results could evict an early cup receipt from display history and strand the final round. Added regression failed first. Each native cup result now retains its exact existing race settlement key, validated against settledResults; no short-history dependency or inferred current menu index. Existing real-result/player/sequence guards remain. Review confirmation and native acceptance pending.
+
+The same review found App reads into preserved future cups state. A new native fixture reproduced its missing-results crash. App now treats versions above1 as opaque, preserving them while allowing ordinary races. The broad negative-pattern focused command was interrupted after partial output and is not a pass; use positive named checks and the final full native suite.
