@@ -159,7 +159,7 @@ console.log(`Summit Avalanche: ${checks} controlled simulation, route, view and 
 if(process.argv.includes('--drive')){
   const {App}=await import('../src/app.js');
   const {useRacingLine}=await import('./track-script-drive.mjs');
-  const {steeringYawAuthority}=await import('../src/config.js');
+  const {steerForYaw}=await import('../src/config.js');
   const {makeRng}=await import('../src/rng.js');
   const {execFileSync}=await import('node:child_process');
   const {sweepObstacle}=await import('../src/collision.js');
@@ -230,9 +230,9 @@ if(process.argv.includes('--drive')){
           const curvature=angle(Math.atan2(farther.x-after.x,farther.z-after.z),tangent)/Math.max(.01,Math.hypot(farther.x-before.x,farther.z-before.z)*.5);
           const wanted=angle(tangent,course.at(at).heading)+Math.atan((offsetAt(clamp(look,begin,end))-state.lateral)*2.5/Math.max(15,v));
           const yaw=curvature*v+(wanted-state.headingError)*6,surface=duel._drivingSurface(state.s,state.lateral);
-          const authority=Math.max(.05,steeringYawAuthority(state.speedMph,duel.car.grip,surface.traction,duel.car));
           const target=Math.min(surface.speedLimit,duel.car.topSpeed*.97,referenceSpeed(state.s)*.95*Math.sqrt(duel.car.grip/.82*(surface.traction||1))/DRIVE.mphToWorld);
-          duel.setInput({throttle:state.speedMph<target?1:0,brake:state.speedMph>target+3?Math.min(1,(state.speedMph-target)/14):0,steer:clamp(-yaw/authority,-1,1),boost:false});
+          const brake=state.speedMph>target+3?Math.min(1,(state.speedMph-target)/14):0;
+          duel.setInput({throttle:state.speedMph<target?1:0,brake,steer:steerForYaw(yaw,{speedMph:state.speedMph,grip:duel.car.grip,traction:surface.traction,car:duel.car,brake:brake,tyreSlip:state.tyreSlipRules===true&&!state.airborne&&state.speedMph>=0}),boost:false});
         };
         const events=[],strip=[],phases=[];let entry=null,exit=null,crashes=0,resets=0,finite=true,firstCrash=null,firstScrape=null;
         const contactWitness=()=>{

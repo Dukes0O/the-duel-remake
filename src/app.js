@@ -44,7 +44,7 @@ import {warlordEnabled} from './warlords/index.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
-import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority, steerForYaw } from './config.js';
+import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority, steerForYaw, TYRE_SLIP, tyreSlipSteering } from './config.js';
 import { EngineAudio } from './audio.js';
 import { loadPlayers, savePlayers, PLAYERS_KEY, playerName, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
@@ -1784,12 +1784,18 @@ export class App {
     // Winter corners use the same actual traction as steering. Other surfaces
     // retain the old plan, including winter tyres on dry asphalt.
     const cornerGrip = ['snow', 'deep-snow', 'ice'].includes(drivingSurface.gripKind) ? traction : 1;
-    const cornerSpeed = Math.min(d.car.topSpeed * .94, .85 * Math.sqrt(DRIVE.maxLateralAccel * d.car.grip * cornerGrip / Math.max(.0001, bend)) / DRIVE.mphToWorld);
+    const driftRules = st.tyreSlipRules === true && d.course.def.kind === 'drift' && !st.airborne && st.speedMph >= 0;
+    const cornerFactor = driftRules ? TYRE_SLIP.driftCornerFactor : .85;
+    const cornerSpeed = Math.min(d.car.topSpeed * .94, cornerFactor * Math.sqrt(DRIVE.maxLateralAccel * d.car.grip * cornerGrip / Math.max(.0001, bend)) / DRIVE.mphToWorld);
     const targetSpeed = Math.min(drivingSurface.speedLimit,transit?.speedMph ?? cornerSpeed);
     const throttle = st.speedMph < targetSpeed ? 1 : 0;
     const brake = st.speedMph > targetSpeed + 4 ? Math.min(1, (st.speedMph - targetSpeed) / 20) : 0;
-    const steer = steerForYaw(desiredYaw,{speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake,
+    let steer = steerForYaw(desiredYaw,{speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake,
       tyreSlip:st.tyreSlipRules === true && !st.airborne && st.speedMph >= 0});
+    if (driftRules && st.speedMph > 45 && Math.abs(frame.curvature) > .0001) {
+      const {peakYaw,steerGain}=tyreSlipSteering({speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake});
+      steer=-Math.sign(frame.curvature)*Math.min(1,TYRE_SLIP.driftAsk*peakYaw/Math.max(.05,steerGain));
+    }
     d.setInput({ throttle, brake, steer, boost: false });
   }
 

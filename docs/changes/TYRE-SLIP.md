@@ -33,3 +33,9 @@ The new audio case initially expected legacy smoothedSlip near1 while its chosen
 ## Independent early review correction
 
 Reviewer found that the new squeal input reused the shared slip local, so road scrub, its filter and gravel also changed despite the independent legacy state. Added actual paired graph-gain/filter comparisons first; they failed on road gain. Kept legacy slip local for these layers and introduced a separate tyreLoopSlip only for squeal. Every old assertion and new gain tolerance remains unchanged. Full driver/drift/save/macro acceptance is still pending.
+
+## Driver copies and intentional drift slice
+
+All named stock steering copies now call the production steerForYaw helper after computing their actual brake. Each retains its original grip/traction/car argument list (including callers that omitted car), and disabled/airborne/reverse paths use old authority. The two existing GP browser recipes receive the actual helper dependencies, including exported clamp, without copied math. The line/field/reference tools accept the named tyre switch, combat flag validation includes it, and CLI switch-on references require probe so existing published laps cannot be overwritten. Actual line/balance wrapper peak checks and native flag pass-through tests failed first and now pass. Existing reference343checks and combat-tool34checks passed.
+
+The native drift App now requests the settled ask1.12 above45mph in actual corners and uses amended corner factor1.058; a real Neon driver-input case failed first and now passes. This is the specified candidate, not a successful retune: actual five-seed/two-frame-rate/Casual-Pro/three-level measurement, recovery, saved result versions and all final macros remain pending. No targets, deadlines or old records have changed.

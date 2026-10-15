@@ -227,6 +227,8 @@ export function steeringYawAuthority(speedMph, grip = 1, traction = 1, car = nul
 // TYRE-SLIP's reviewed road-tyre model. These pure helpers are wired only by
 // the race-latched dev rules; the released authority function above stays exact.
 export const TYRE_SLIP = Object.freeze({
+  driftAsk: 1.12,
+  driftCornerFactor: 1.058,
   headroom: 1.25, width: .25, brakeUse: .6, riseRate: 12, fallRate: 8,
   minSpeedMph: 15, minWorldSpeed: 8, quietSlip: .9, soundWidth: .35,
   angleAtQuiet: .045, angleAtPeak: .075,
@@ -234,7 +236,7 @@ export const TYRE_SLIP = Object.freeze({
   casual: Object.freeze({slideGrip: .9, scrubMphPerSec: 8}),
   pro: Object.freeze({slideGrip: .82, scrubMphPerSec: 14}),
 });
-const tyreClamp = (value, low = 0, high = 1) => Math.max(low, Math.min(high, value));
+export const tyreClamp = (value, low = 0, high = 1) => Math.max(low, Math.min(high, value));
 export function steeringGrip(speedMph, grip = 1, car = null) {
   return car?.lowSpeedSteer === true && speedMph < 45 ? Math.max(grip, 1) : grip;
 }

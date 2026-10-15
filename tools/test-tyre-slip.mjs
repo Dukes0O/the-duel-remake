@@ -161,3 +161,57 @@ test('real App automatic steering asks for no more than the braking-adjusted pea
     assert.ok(Math.abs(s.input.steer)*limits.steerGain<=limits.peakYaw+1e-12,'native App helper respects peak including braking');
   });
 });
+
+
+test('actual line and balance driver wrappers respect the latched braking peak',async()=>{
+  const {useRacingLine}=await import('./track-script-drive.mjs');
+  const {installTestDriver}=await import('./race-field-balance.mjs');
+  for(const install of [useRacingLine,installTestDriver]) await withReferenceApp(async app=>{
+    app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});
+    app.duel.startCampaign({startStage:COURSE.findIndex(c=>c.id==='panorama-ridge'),opponentCount:0,car:'falcone_f42',difficulty:'casual',seed:1989});
+    assert.ok(app.duel.course.racingLine,'authored line fixture uses actual Panorama');
+    app.autopilot=true;app._scriptedCrashDone=true;
+    for(let i=0;i<600&&app.duel.state.status!=='racing';i++)app.advance(1/120,1/120);
+    install(app);
+    const s=app.duel.state;s.speedMph=100;s.headingError=.8;
+    app._driveAutopilot(1/120);
+    const surface=app.duel._drivingSurface(s.s,s.lateral),limits=tyreSlipSteering({speedMph:s.speedMph,
+      grip:app.duel.car.grip,traction:surface.traction,car:app.duel.car,brake:s.input.brake});
+    assert.ok(Math.abs(s.input.steer)*limits.steerGain<=limits.peakYaw+1e-12,install.name+' caps actual steering demand');
+  });
+});
+
+
+test('existing private driver tools pass only the named tyre switch into native races',async()=>{
+  const {driveCircuit}=await import('./track-script-drive.mjs');
+  const {runRace}=await import('./race-field-balance.mjs');
+  const {parseArgs}=await import('./combat-balance.mjs');
+  const {runReferenceWorker}=await import('./build-reference-laps.mjs');
+  assert.deepEqual(parseArgs(['--flags','tyre-slip']).flags,['tyre-slip']);
+  assert.throws(()=>driveCircuit(COURSE[0],{flags:['typo']}),/Unsupported/);
+  let lineRules=null,fieldRules=null;
+  driveCircuit(COURSE[0],{flags:['tyre-slip'],driver:'stock',maxSeconds:5,onTick:s=>{lineRules=s.tyreSlipRules;}});
+  assert.equal(lineRules,true,'actual line-tool Duel latched requested rules');
+  runRace('easy',0,{flags:['tyre-slip'],maxSec:.02,onStep:d=>{fieldRules=d.state.tyreSlipRules;}});
+  assert.equal(fieldRules,true,'actual field-tool App latched requested rules');
+  const catalog=await runReferenceWorker({flags:['tyre-slip'],catalogOnly:true});
+  assert.equal(catalog.flags.find(row=>row.name==='tyre-slip')?.enabled,true,'fresh reference worker enables actual dev switch');
+  await assert.rejects(()=>runReferenceWorker({flags:['typo'],catalogOnly:true}),/Unsupported/);
+});
+
+
+test('actual drift-event driver intentionally holds the approved slide ask in a corner',async()=>{
+  await withReferenceApp(async app=>{
+    app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});
+    app.duel.startCampaign({startStage:COURSE.findIndex(c=>c.id==='neon-drift-trial'),car:'banshee_muscle',difficulty:'pro',seed:1989});
+    app.autopilot=true;app._scriptedCrashDone=true;
+    for(let i=0;i<600&&app.duel.state.status!=='racing';i++)app.advance(1/120,1/120);
+    const s=app.duel.state,course=app.duel.course;
+    let at=0;while(at<course.length&&Math.abs(course.at(at).curvature)<.001)at+=5;
+    assert.ok(at<course.length,'native Neon corner exists');s.s=at;s.speedMph=65;
+    app._driveAutopilot(1/120);
+    const surface=app.duel._drivingSurface(s.s,s.lateral),limits=tyreSlipSteering({speedMph:s.speedMph,
+      grip:app.duel.car.grip,traction:surface.traction,car:app.duel.car,brake:s.input.brake});
+    near(Math.abs(s.input.steer)*limits.steerGain/limits.peakYaw,1.12);
+  });
+});

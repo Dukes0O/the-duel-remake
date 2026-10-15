@@ -11,7 +11,7 @@ import {applySnowTerrain,winterWeight,snowPineIds,winterLightingSettings,createS
 import {sampleCourseLightPath} from '../src/light-path.js';
 import {circuitLighting,resolveLightingSettings} from '../src/lighting-moods.js';
 import {Duel} from '../src/game.js';
-import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
+import {COURSE,DRIVE,steerForYaw} from '../src/config.js';
 import {App} from '../src/app.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {PIT,pitSpeedLimitAt} from '../src/pit-lane.js';
@@ -271,13 +271,13 @@ if(process.argv.includes('--drive')){
           const wanted=Math.atan((offset-state.lateral)*2.4/Math.max(15,v));
           const yaw=(wanted-state.headingError)*6;
           const surface=duel._drivingSurface(state.s,state.lateral);
-          const authority=Math.max(.05,steeringYawAuthority(state.speedMph,duel.car.grip,surface.traction,duel.car));
           const remaining=lane.box-state.s;
           const stop=Math.sqrt(2*DRIVE.brakeAccel*duel.car.braking*DRIVE.mphToWorld*Math.max(0,remaining-2))/DRIVE.mphToWorld;
           const normal=duel.course.racingLine.speedAt(state.s)*.95*Math.sqrt(duel.car.grip/.82*(surface.traction||1))/DRIVE.mphToWorld;
           const laneTarget=pitSpeedLimitAt(duel.course,state.s,state.lateral)??Math.min(surface.speedLimit,duel.car.topSpeed*.97,normal);
           const target=state.tyre==='winter'?laneTarget:Math.min(laneTarget,stop);
-          duel.setInput({throttle:state.speedMph<target?1:0,brake:state.speedMph>target?Math.min(1,(state.speedMph-target)/6):0,steer:Math.max(-1,Math.min(1,-yaw/authority)),boost:false});
+          const brake=state.speedMph>target?Math.min(1,(state.speedMph-target)/6):0;
+          duel.setInput({throttle:state.speedMph<target?1:0,brake,steer:steerForYaw(yaw,{speedMph:state.speedMph,grip:duel.car.grip,traction:surface.traction,car:duel.car,brake:brake,tyreSlip:state.tyreSlipRules===true&&!state.airborne&&state.speedMph>=0}),boost:false});
         };
       }
       for(let step=0;step<60*900&&['countdown','racing'].includes(state.status);step++){
