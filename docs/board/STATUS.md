@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T07:39:20.716Z
+Observed at: 2026-10-15T07:46:39.507Z
 
-Observation commit: c90ecd84510628260ebed3612b96aaa590d2be9e
+Observation commit: aaa11e4e9ccc1a571cc2ee32123334b67bfa2efd
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: c90ecd84510628260ebed3612b96aaa590d2be9e
+Integration HEAD: aaa11e4e9ccc1a571cc2ee32123334b67bfa2efd
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -76,7 +76,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 523,148 B | +0 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 419,375,104 B | +163,840 B | unavailable |
+| Git objects | 419,525,632 B | +150,528 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,7 +85,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: c90ecd84510628260ebed3612b96aaa590d2be9e
+- Local integration/wasteland: aaa11e4e9ccc1a571cc2ee32123334b67bfa2efd
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -93,6 +93,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit 56cb69697f6cad6ac7209dcb045ab12debd8184d.
+- Remote origin/integration/wasteland: behind local; cached commit 500aec33047d4fac5d343868e3395d3b9efe6016.
 
 Issue: Circuit manifest summit-time-attack.js has unknown or malformed literal metadata.
