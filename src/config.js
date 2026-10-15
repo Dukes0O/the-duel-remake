@@ -228,7 +228,11 @@ export function steeringYawAuthority(speedMph, grip = 1, traction = 1, car = nul
 // the race-latched dev rules; the released authority function above stays exact.
 export const TYRE_SLIP = Object.freeze({
   driftAsk: 1.12,
-  driftCornerFactor: 1.058,
+  driftLineSkill: .95,
+  driftMinMph: 56,
+  driftAskLow: 1.10,
+  driftLiftSlip: 1.20,
+  driftRecoveryMeters: 2,
   headroom: 1.25, width: .25, brakeUse: .6, riseRate: 12, fallRate: 8,
   minSpeedMph: 15, minWorldSpeed: 8, quietSlip: .9, soundWidth: .35,
   angleAtQuiet: .045, angleAtPeak: .075,

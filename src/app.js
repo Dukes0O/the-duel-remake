@@ -1,3 +1,4 @@
+import {racingLineFor,buildSpeedProfile} from './race-lines.js';
 import {isSummitAttack} from './summit-attack.js';
 import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
@@ -1739,6 +1740,11 @@ export class App {
       d.setInput({ shiftUp: st.revs > .95, shiftDown: st.revs < .48 && st.gear > 0 });
     }
 
+    if (st.tyreSlipRules === true && d.course.def.kind === 'drift' && !st.airborne && st.speedMph >= 0) {
+      this._driveSlipDrift();
+      return;
+    }
+
     // Visit the shoulder once to exercise reduced grip and recovery steering.
     if (!this._scriptedCrashDone && !st.objective && st.s > 250) {
       let swerve = 1;
@@ -1784,19 +1790,48 @@ export class App {
     // Winter corners use the same actual traction as steering. Other surfaces
     // retain the old plan, including winter tyres on dry asphalt.
     const cornerGrip = ['snow', 'deep-snow', 'ice'].includes(drivingSurface.gripKind) ? traction : 1;
-    const driftRules = st.tyreSlipRules === true && d.course.def.kind === 'drift' && !st.airborne && st.speedMph >= 0;
-    const cornerFactor = driftRules ? TYRE_SLIP.driftCornerFactor : .85;
+    const cornerFactor = .85;
     const cornerSpeed = Math.min(d.car.topSpeed * .94, cornerFactor * Math.sqrt(DRIVE.maxLateralAccel * d.car.grip * cornerGrip / Math.max(.0001, bend)) / DRIVE.mphToWorld);
     const targetSpeed = Math.min(drivingSurface.speedLimit,transit?.speedMph ?? cornerSpeed);
     const throttle = st.speedMph < targetSpeed ? 1 : 0;
     const brake = st.speedMph > targetSpeed + 4 ? Math.min(1, (st.speedMph - targetSpeed) / 20) : 0;
     let steer = steerForYaw(desiredYaw,{speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake,
       tyreSlip:st.tyreSlipRules === true && !st.airborne && st.speedMph >= 0});
-    if (driftRules && st.speedMph > 45 && Math.abs(frame.curvature) > .0001) {
-      const {peakYaw,steerGain}=tyreSlipSteering({speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake});
-      steer=-Math.sign(frame.curvature)*Math.min(1,TYRE_SLIP.driftAsk*peakYaw/Math.max(.05,steerGain));
-    }
     d.setInput({ throttle, brake, steer, boost: false });
+  }
+
+  _driveSlipDrift() {
+    const d=this.duel, st=d.state, course=d.course;
+    let route=this._driftLine;
+    if (!route || route.course!==course || route.car!==d.car) {
+      const line=racingLineFor(course);
+      this._driftLine=route={course,car:d.car,line,profile:buildSpeedProfile(line,d.car)};
+    }
+    const v=st.speedMph*DRIVE.mphToWorld;
+    const targetLat=route.line.offsetAt(st.s+Math.max(12,v*.45));
+    const error=targetLat-st.lateral;
+    const heading=Math.atan(error*2.5/Math.max(15,v));
+    const look=course.at(st.s+v*.18);
+    const desiredYaw=look.curvature*v+(heading-st.headingError)*6;
+    const surface=d._drivingSurface(st.s,st.lateral);
+    const targetSpeed=Math.min(surface.speedLimit,d.car.topSpeed*.97,
+      route.profile.at(st.s)*TYRE_SLIP.driftLineSkill*Math.sqrt(surface.traction||1));
+    const brake=st.speedMph>targetSpeed+3?Math.min(1,(st.speedMph-targetSpeed)/14):0;
+    let throttle=st.speedMph<targetSpeed?1:0;
+    let steer=steerForYaw(desiredYaw,{speedMph:st.speedMph,grip:d.car.grip,
+      traction:surface.traction,car:d.car,brake,tyreSlip:true});
+    if (st.speedMph>=TYRE_SLIP.driftMinMph) {
+      if (Math.abs(error)<=TYRE_SLIP.driftRecoveryMeters && Math.abs(look.curvature)>.0001) {
+        const {peakYaw,steerGain}=tyreSlipSteering({speedMph:st.speedMph,grip:d.car.grip,
+          traction:surface.traction,car:d.car,brake});
+        const ask=Math.abs(steer)*steerGain/Math.max(.000001,peakYaw);
+        if (ask<TYRE_SLIP.driftAskLow || ask>TYRE_SLIP.driftAsk) {
+          steer=-Math.sign(look.curvature)*Math.min(1,TYRE_SLIP.driftAsk*peakYaw/Math.max(.05,steerGain));
+        }
+      }
+      if (st.tyreSlip>TYRE_SLIP.driftLiftSlip) throttle=0;
+    }
+    d.setInput({throttle,brake,steer,boost:false});
   }
 
   _bindKeys() {

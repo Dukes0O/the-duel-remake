@@ -200,7 +200,7 @@ test('existing private driver tools pass only the named tyre switch into native 
 });
 
 
-test('actual drift-event driver requests approved ask without exceeding low-speed authority',async()=>{
+test('actual drift-event driver preserves capacity at46/50 and holds approved ask at65',async()=>{
   await withReferenceApp(async app=>{
     app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});
     app.duel.startCampaign({startStage:COURSE.findIndex(c=>c.id==='neon-drift-trial'),car:'banshee_muscle',difficulty:'pro',seed:1989});
@@ -209,12 +209,50 @@ test('actual drift-event driver requests approved ask without exceeding low-spee
     const s=app.duel.state,course=app.duel.course;
     let at=0;while(at<course.length&&Math.abs(course.at(at).curvature)<.001)at+=5;
     assert.ok(at<course.length,'native Neon corner exists');
-    for(const mph of [46,50,65]) {s.s=at;s.speedMph=mph;
+    const {racingLineFor}=await import('../src/race-lines.js'),line=racingLineFor(course);
+    for(const mph of [46,50,65]) {s.s=at;s.speedMph=mph;s.lateral=line.offsetAt(at+Math.max(12,mph*DRIVE.mphToWorld*.45));s.headingError=0;
     app._driveAutopilot(1/120);
     const surface=app.duel._drivingSurface(s.s,s.lateral),limits=tyreSlipSteering({speedMph:s.speedMph,
       grip:app.duel.car.grip,traction:surface.traction,car:app.duel.car,brake:s.input.brake});
-    near(Math.abs(s.input.steer)*limits.steerGain/limits.peakYaw,Math.min(1.12,limits.steerGain/limits.peakYaw));
+    if(mph>=56)near(Math.abs(s.input.steer)*limits.steerGain/limits.peakYaw,Math.min(1.12,limits.steerGain/limits.peakYaw));
+    const capacity=Math.min(1,1.12*limits.peakYaw/limits.steerGain);
+    near(capacity*limits.steerGain/limits.peakYaw,Math.min(1.12,limits.steerGain/limits.peakYaw));
     assert.ok(Math.abs(s.input.steer)<=1,'approved authority is never increased');
     }
+  });
+});
+
+
+test('slip-hold returns to the real clean line below56mph and beyond2m',async()=>{
+  await withReferenceApp(async app=>{
+    app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});
+    app.duel.startCampaign({startStage:COURSE.findIndex(c=>c.id==='neon-drift-trial'),car:'banshee_muscle',difficulty:'pro',seed:1989});
+    app.autopilot=true;app._scriptedCrashDone=true;
+    for(let i=0;i<600&&app.duel.state.status!=='racing';i++)app.advance(1/120,1/120);
+    const {racingLineFor}=await import('../src/race-lines.js'),d=app.duel,s=d.state,course=d.course,line=racingLineFor(course);
+    let at=0;while(at<course.length&&Math.abs(course.at(at).curvature)<.001)at+=5;
+    assert.ok(at<course.length,'native Neon corner exists');
+    for(const [mph,error] of [[46,.3],[50,.3],[65,3]]){
+      const v=mph*DRIVE.mphToWorld,targetLat=line.offsetAt(at+Math.max(12,v*.45));
+      Object.assign(s,{s:at,speedMph:mph,lateral:targetLat+error,headingError:.1});
+      app._driveAutopilot(1/120);
+      const heading=Math.atan((targetLat-s.lateral)*2.5/Math.max(15,v));
+      const yaw=course.at(at+v*.18).curvature*v+(heading-s.headingError)*6;
+      const expected=steerForYaw(yaw,{speedMph:mph,grip:d.car.grip,traction:d._drivingSurface(at,s.lateral).traction,car:d.car,brake:s.input.brake,tyreSlip:true});
+      near(s.input.steer,expected);assert.ok(Math.abs(s.input.steer)<=1);
+    }
+  });
+});
+
+test('slip-hold cuts actual throttle above1.20 slip near the clean line',async()=>{
+  await withReferenceApp(async app=>{
+    app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});
+    app.duel.startCampaign({startStage:COURSE.findIndex(c=>c.id==='neon-drift-trial'),car:'banshee_muscle',difficulty:'pro',seed:1989});
+    app.autopilot=true;app._scriptedCrashDone=true;
+    for(let i=0;i<600&&app.duel.state.status!=='racing';i++)app.advance(1/120,1/120);
+    const {racingLineFor}=await import('../src/race-lines.js'),d=app.duel,s=d.state,line=racingLineFor(d.course);
+    let at=0;while(at<d.course.length&&Math.abs(d.course.at(at).curvature)<.001)at+=5;
+    Object.assign(s,{s:at,speedMph:57,lateral:line.offsetAt(at+Math.max(12,57*DRIVE.mphToWorld*.45)),headingError:0,tyreSlip:1.25});
+    app._driveAutopilot(1/120);assert.equal(s.input.throttle,0,'excessive actual slip cuts throttle');
   });
 });
