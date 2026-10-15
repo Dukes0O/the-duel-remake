@@ -1,7 +1,7 @@
 // The forest fire (docs/HELI_FIRE.md sections 4 and 8.5).
 import assert from 'node:assert/strict';
 import {FIRE, BURNT_LOOKS, cellId, cellIJ, fireGrid, burnCheck, courseBurnCheck, startCells, dayWind, startFire, spreadChance,
-  spotChance, spreadStep, applyWater, fireOut, fireLost, fireSize, shareOut, hottestEdge} from '../src/heli/heli-fire.js';
+  spotChance, spreadStep, applyWater, fireOut, fireLost, fireSize, shareOut, hottestEdge, runFireEngine, fireNewDay, cruiseSeconds} from '../src/heli/heli-fire.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {courseSite} from '../src/heli/heli-session.js';
 import {isDestination} from '../src/heli/heli-jobs.js';
@@ -82,9 +82,11 @@ check('the wind: calm, breeze or windy from eight points, the same each play day
   }
   assert(kinds.calm > 330 && kinds.calm < 470 && kinds.breeze > 330 && kinds.breeze < 470 && kinds.windy > 140 && kinds.windy < 260, JSON.stringify(kinds));
   assert.deepEqual(dayWind(42, 3), dayWind(42, 3));
-  const north = {speed: 7, from: 0, toward: {x: 0, z: -1}};
-  assert.equal(dayWind(42, 3).name.length > 0, true);
-  void north;
+  // From the north (+z) the wind blows toward -z; from the east toward -x.
+  const days = Array.from({length: 200}, (_, day) => dayWind(42, day));
+  const fromNorth = days.find(wind => wind.from === 0), fromEast = days.find(wind => wind.from === 2);
+  assert.deepEqual([fromNorth.name, Math.round(fromNorth.toward.z) || 0, Math.round(fromNorth.toward.x) || 0], ['N', -1, 0]);
+  assert.deepEqual([fromEast.name, Math.round(fromEast.toward.x) || 0, Math.round(fromEast.toward.z) || 0], ['E', -1, 0]);
 });
 
 check('spread is faster uphill and downwind, and slower when damp', () => {
@@ -105,14 +107,50 @@ check('spread is faster uphill and downwind, and slower when damp', () => {
   assert.equal(spotChance(grid, a.id, b.id, null), 0, 'no embers without wind');
 });
 
-check('roads and the lake never burn: no fire ever leaves the forest grid', () => {
-  for (const seed of SEEDS.slice(0, 10)) {
-    let fire = newFire(seed);
-    for (let n = 0; n < 40; n++) {
-      fire = spreadStep(fire, grid, WINDY);
-      for (const [cell] of fire.burning) assert(grid.cells.has(cell));
+check('roads and the lake never burn: fire never crosses them and stays in its stretch of forest', () => {
+  // No two neighbouring forest cells have the road or the lake between them.
+  for (const cell of grid.cells.values()) for (const [di, dj] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+    const other = grid.cells.get(cellId(cell.i + di, cell.j + dj));
+    if (!other) continue;
+    for (const t of [0.25, 0.5, 0.75]) {
+      const x = cell.x + (other.x - cell.x) * t, z = cell.z + (other.z - cell.z) * t;
+      const near = woods.course.nearest(x, z);
+      assert(Math.abs(near.lateral) > woods.course.roadHalfWidthAt(woods.course.phase(near.s)), 'no road between neighbours');
+      assert.equal(woods.ground.water(x, z), null, 'no lake between neighbours');
     }
   }
+  for (const seed of SEEDS.slice(0, 10)) {
+    let fire = newFire(seed);
+    const stretch = grid.regionSize(fire.burning[0][0]);
+    for (let n = 0; n < 40; n++) {
+      fire = spreadStep(fire, grid, WINDY);
+      for (const [cell] of fire.burning) {
+        assert(grid.cells.has(cell));
+        assert.equal(grid.regionSize(cell), stretch, 'lit cells stay in the stretch the fire started in');
+      }
+    }
+  }
+});
+
+check('the clock: a step per 90 s of engine time, three a new play day, a cruise by its fuel, nothing once lost', () => {
+  let fire = newFire(21), steps = 0;
+  for (let n = 0; n < 60 * 179; n++) { const run = runFireEngine(fire, grid, 1 / 60, CALM); fire = run.fire; steps += run.steps; }
+  assert.equal(steps, 1, '179 s a frame at a time is one step');
+  assert(Math.abs(fire.engineSeconds - 89) < 1e-6, 'and keeps the 89 s left over');
+  const day = fireNewDay(newFire(21), grid, CALM);
+  assert.equal(day.steps, 3);
+  assert.equal(day.fire.steps, 3);
+  assert.equal(cruiseSeconds(120), 200, 'a 120 kg cruise leg is 200 s of flying');
+  assert.equal(runFireEngine(newFire(21), grid, cruiseSeconds(120), CALM).steps, 2);
+  let lost = newFire(5);
+  while (!fireLost(lost, grid)) lost = spreadStep(lost, grid, WINDY);
+  assert.deepEqual([runFireEngine(lost, grid, 900, WINDY).steps, fireNewDay(lost, grid, WINDY).steps], [0, 0], 'a lost fire grows no more');
+  assert.equal(runFireEngine(newFire(21), grid, 0, CALM).steps, 0);
+});
+
+check('the grid is built from the helicopter course seed only', () => {
+  const other = new Course(ALL_CIRCUITS.find(def => def.id === 'tremblant-woods'), 1990);
+  assert.throws(() => fireGrid(other, groundFromCourse(other), null), /course seed 1989/);
 });
 
 check('water: 180 litres puts out a fully burning cell; water on dry forest makes it damp; out and lost', () => {

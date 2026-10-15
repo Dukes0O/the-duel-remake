@@ -49,7 +49,7 @@ day late 11 (8 to 14), two play days late 20 (14 to 22).
 
 ## Tests
 
-- `node tools/test-heli-fire.mjs` (new): 10 groups passed (the numbers; the
+- `node tools/test-heli-fire.mjs` (new): 12 groups passed (the numbers; the
   four rules on the three real courses; the grid never on road, lake or
   pad; start cell rules and scars; the wind's mix and repeatability; uphill,
   downwind and damp chances; no fire ever leaves the forest grid in 40
@@ -57,6 +57,20 @@ day late 11 (8 to 14), two play days late 20 (14 to 22).
   targets; same drops, same fire).
 - `node tools/test-heli-mode.mjs`: 146 checks passed.
 - Lane tier and build: below.
+
+## Review (rule 17)
+
+One independent reviewer read the three lanes cut from FIRE-SAVE. It ran
+200 seeds with odd drops: a saved and reloaded fire never drifted from the
+live one, the biggest fire stayed under the save's 80 cells, no fire left
+its stretch of forest. Fixed: the fire's clock (one step per 90 s of engine
+time, three per new play day, cruise by fuel) existed only as numbers; it
+is now `runFireEngine`, `fireNewDay` and `cruiseSeconds`, tested a frame
+at a time. The grid is pinned to course seed 1989 (a different seed builds
+a different grid). Embers checked one in-between cell on one side and two
+on the other; now the same both ways. New tests: no road or lake between
+neighbouring forest cells, lit cells stay in the fire's stretch, and the
+wind blows from where it is named.
 
 ## Changed assertions
 

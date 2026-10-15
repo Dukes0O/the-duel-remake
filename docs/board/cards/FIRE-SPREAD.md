@@ -34,3 +34,14 @@ Medians over 50 seeds (target): left alone calm **15** (12 to 16), windy
 **11** (8 to 11), answered at once **5** drops (4 to 8), one play day late
 **11** (8 to 14), two play days late **20** (14 to 22); about a quarter of
 two-days-late fires are lost.
+
+The windy median sits at the top of its range: on a strip of forest a front
+moves at most a cell or two a step, and stronger embers (3.5, 4) did not
+move it. The test reads Tremblant Woods' real trees, so a lane that moves
+those trees can move these medians; rerun `tools/test-heli-fire.mjs` then.
+
+The clock (section 4.2) is `runFireEngine` (a step per 90 s of engine time,
+leftover seconds kept unrounded), `fireNewDay` (three steps) and
+`cruiseSeconds` (fuel / 0.6 kg/s); none steps a lost fire. The grid is
+built only from course seed 1989, the helicopter's, so saved cells always
+name the same trees.

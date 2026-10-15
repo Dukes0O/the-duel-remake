@@ -18,6 +18,9 @@ export const FIRE = Object.freeze({
   startPercent: 75, neighbourPercent: 50, litPercent: 25, growPercent: 25, spreadFrom: 50,
   dampSteps: 2, damp: 0.2, spot: 3, regionCells: 2,
   stepSeconds: 90, dayStepCount: 3, cruiseKgPerSecond: 0.6,
+  // Saved cells and scars name cells of the grid built from this course
+  // seed (the helicopter's), so every caller builds the same grid.
+  courseSeed: 1989,
   lostCells: 45, lostShare: 0.4,
   roadGap: 40, startLineGap: 150, padGap: 150, shoreNear: 250, shoreFar: 1000,
   maxScars: 4,
@@ -39,6 +42,7 @@ const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
 // except on the road, the lake, the paddock and the pad. `site` is the
 // helicopter's courseSite (its zone is the pad). Built once per course.
 export function fireGrid(course, ground, site = null) {
+  if (course.seed !== FIRE.courseSeed) throw new Error(`The fire grid is built from course seed ${FIRE.courseSeed}, not ${course.seed}`);
   const counts = new Map();
   for (const o of course.features?.obstacles ?? []) {
     if (o.kind !== 'tree' || !Number.isFinite(o.x) || !Number.isFinite(o.z)) continue;
@@ -187,7 +191,9 @@ export function spreadStep(fire, grid, wind) {
       const roll = rng.float();
       if (burning.has(n) || burnt.has(n) || lit.has(n)) continue;
       // Embers never cross a road or the lake: a cell between must be forest.
-      const between = [cellId(i + Math.trunc(di / 2), j + Math.trunc(dj / 2)), cellId(i + Math.round(di / 2), j + Math.round(dj / 2))];
+      // The one or two cells between, the same on every side.
+      const half = d => Math.sign(d) * Math.ceil(Math.abs(d) / 2);
+      const between = [cellId(i + Math.trunc(di / 2), j + Math.trunc(dj / 2)), cellId(i + half(di), j + half(dj))];
       if (!between.some(b => grid.cells.has(b))) continue;
       if (roll < spotChance(grid, cell, n, wind, damp.has(n))) lit.add(n);
     }
@@ -259,4 +265,29 @@ export function hottestEdge(fire, grid, wind = null) {
     if (score > bestScore) { bestScore = score; best = cell; }
   }
   return best;
+}
+
+// ---- the fire's clock (section 4.2) -----------------------------------------
+// One spread step for every 90 s the engine runs, on any course; three at the
+// start of each new play day; nothing while the game is closed or in a race.
+// Steps stop as soon as the fire is lost. The engine seconds below a step are
+// kept in the record without rounding, so a frame at a time adds up.
+
+export const cruiseSeconds = fuelKg => Number(fuelKg) > 0 ? Number(fuelKg) / FIRE.cruiseKgPerSecond : 0;
+
+function runSteps(fire, grid, wind, count) {
+  let steps = 0;
+  while (steps < count && !fireLost(fire, grid) && !fireOut(fire)) { fire = spreadStep(fire, grid, wind); steps++; }
+  return {fire, steps, lost: fireLost(fire, grid)};
+}
+
+export function runFireEngine(fire, grid, seconds, wind) {
+  if (!(seconds > 0)) return {fire, steps: 0, lost: fireLost(fire, grid)};
+  const total = (fire.engineSeconds || 0) + seconds, due = Math.floor(total / FIRE.stepSeconds + 1e-9);
+  const result = runSteps(fire, grid, wind, due);
+  return {...result, fire: {...result.fire, engineSeconds: Math.max(0, total - due * FIRE.stepSeconds)}};
+}
+
+export function fireNewDay(fire, grid, wind) {
+  return runSteps(fire, grid, wind, FIRE.dayStepCount);
 }
