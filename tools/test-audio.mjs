@@ -1403,6 +1403,26 @@ check(
       steerVisual:0,input:{throttle:0,brake:1}}));
   }
   check(slipVoice.audio.samples.squeal.gain.gain.value===0,'Straight-line full braking has no tyre squeal under new rules');
+  for (const looseSurface of [false,true]) {
+    const oldVoice=await makeAudio(),newVoice=await makeAudio();
+    for(let i=0;i<120;i++) {
+      for (const [voice,enabled] of [[oldVoice,false],[newVoice,true]]) {
+        voice.context.currentTime+=1/60;
+        voice.audio.update(state({speedMph:100,tyreSlipRules:enabled,tyreSlip:0,
+          slipAngle:.31,steerVisual:1,input:{throttle:0,brake:1}}),{looseSurface});
+      }
+    }
+    for (const [label,read] of [
+      ['road gain',a=>a.tires.gain.gain.value],
+      ['road filter',a=>a.tires.filter.frequency.value],
+      ['gravel gain',a=>a.gravel.gain.gain.value],
+      ['gravel filter',a=>a.gravel.filter.frequency.value],
+    ]) check(read(newVoice.audio)===read(oldVoice.audio),
+      'Actual '+label+' retains legacy slip on '+(looseSurface?'gravel':'road'));
+    check(newVoice.audio.samples.squeal.gain.gain.value===0,
+      'Quiet real slip stays independent of legacy surface noise');
+  }
+
 }
 
 console.log(seamRows.join('\n'));
