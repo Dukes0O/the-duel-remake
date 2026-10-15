@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T13:17:26.736Z
+Observed at: 2026-10-15T15:30:54.456Z
 
-Observation commit: a42c860e7d9d996f22fe2bead44cb86eb4d64f6d
+Observation commit: 951be323e7b6cd541ae01a35e81b4886c9ef1f85
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a42c860e7d9d996f22fe2bead44cb86eb4d64f6d
+Integration HEAD: 951be323e7b6cd541ae01a35e81b4886c9ef1f85
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -33,10 +33,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/heli-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-finish | 3 | unknown | false | false | unknown |
-| codex/p4-gp-existing | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
+| codex/p4-gp-existing | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-qualifying | 4 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
-| codex/p4-summit | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
+| codex/p4-summit | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/p4-yeti | 1 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 0 | unknown | true | false | unknown |
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
@@ -45,7 +45,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 20 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 20 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 19 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-17-picks | 20 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -76,7 +76,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 523,148 B | +0 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 430,639,104 B | +9,216 B | unavailable |
+| Git objects | 430,814,208 B | +175,104 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,7 +85,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: a42c860e7d9d996f22fe2bead44cb86eb4d64f6d
+- Local integration/wasteland: 951be323e7b6cd541ae01a35e81b4886c9ef1f85
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -93,6 +93,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit 14a6392154b9eb1eb0d9d7bbc03361aa49586216.
+- Remote origin/integration/wasteland: matches local; cached commit 951be323e7b6cd541ae01a35e81b4886c9ef1f85.
 
 Issue: Circuit manifest summit-time-attack.js has unknown or malformed literal metadata.
