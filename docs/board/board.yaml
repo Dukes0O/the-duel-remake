@@ -237,6 +237,17 @@ tasks:
     needs: []
     details: "docs/board/cards/SUMMIT-SWITCH-ON.md"
 
+  - id: GP-RACECRAFT
+    title: "Grand Prix racecraft: wide starts, real passing, CPU nitro (switch cpu-racecraft, preview first)"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: [busy-game-files]
+    flag: "cpu-racecraft"
+    details: "docs/board/cards/GP-RACECRAFT.md"
+
   - id: RELEASE-SUMMIT
     title: "Summit Run release (Kyle: live overnight only if all green)"
     owner: "claude"
