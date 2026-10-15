@@ -43,3 +43,10 @@ P4-VARIANTS is in its corrected final gate, so prepare the next gameplay card wi
   Abandoning a cup clears its run with no pay. The card takes the
   `save-shape` lock for this. Existing named-player, duplicate and save
   guards stay exactly as they are. Independent save and pay review required.
+
+
+## Continued build after Kyle restarted
+
+HELI cleanup is resolved; Kyle directs continued building while away. Root opens p4-cups/codex/p4-cups from current integration, holding save-shape/busy-game-files. Use Claude's exact pay, GrandTour unlock and tie answers above. First owned slice is pure immutable catalog, current-course/ownership eligibility, native eight-position points/countback and sequential idempotent saved series operations, with tests before code. Mountain uses tremblant-woods/panorama-ridge/summit-run; Night harbour-lights/panorama-ridge-night/neon-docks; Winter tremblant-snow/summit-run/alpine-serpent; GrandTour the original four defaults (Panorama/Harbour/Woods/Summit) plus eifel-crown. Resolve actual stable IDs from current definitions. A dev course is unavailable in normal play; a cup cannot start by bypassing that admission. All races use real GrandPrix results and stable native participant IDs, not generated placements.
+
+Then use the approved progression optional-cups/one-time-wallet/history hooks and existing App/course/garage hooks; no new save version, unrelated menu/controller/audio change or new harness. Keep the current named-player/result duplicate guards, old saves and personal records exact. Independent code/save/pay review and nearby/jobs4/build before merge. No release/install of incomplete cup code.

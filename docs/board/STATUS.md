@@ -1,6 +1,6 @@
 # Build status
 
-Observed at: 2026-10-15T23:34:36.263Z
+Observed at: 2026-10-15T23:34:41.966Z
 
 Observation commit: 6c49c03c24cb4cb30ca84edf0d1fbbfe1b0e828d
 
@@ -85,7 +85,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 297,528 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 440,553,472 B | +310,272 B | unavailable |
+| Git objects | 440,606,720 B | +53,248 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -94,7 +94,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 6c49c03c24cb4cb30ca84edf0d1fbbfe1b0e828d
+- Local integration/wasteland: a75c31bcfb0d8d9a085c9641fd8422826be82e94
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
