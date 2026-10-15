@@ -210,7 +210,6 @@ tasks:
     claimed_by: codex-intel-levels-2026-10-15
     branch: codex/intel-levels
     locks: [busy-game-files, save-shape]
-    waiting_on: claude
     needs: [P4-INTEL-TELEMETRY, P4-CAREER]
     flag: "grand-prix"
     details: "docs/board/cards/P4-INTEL-LEVELS.md"
@@ -244,7 +243,6 @@ tasks:
     claimed_by: codex-summit-switch-on-2026-10-15
     branch: codex/summit-switch-on
     locks: [release, world-signatures]
-    waiting_on: "claude"
     needs: []
     details: "docs/board/cards/SUMMIT-SWITCH-ON.md"
 
@@ -256,7 +254,6 @@ tasks:
     status: "blocked"
     claimed_by: codex-gp-racecraft-2026-10-15
     branch: codex/gp-racecraft
-    waiting_on: "claude"
     needs: []
     locks: [busy-game-files]
     flag: "cpu-racecraft"
@@ -391,7 +388,6 @@ tasks:
     status: "blocked"
     claimed_by: codex-tyre-slip-2026-10-15
     branch: codex/tyre-slip
-    waiting_on: claude
     needs: []
     locks: [busy-game-files, save-shape]
     flag: "tyre-slip"

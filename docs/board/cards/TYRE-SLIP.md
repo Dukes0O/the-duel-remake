@@ -620,3 +620,19 @@ Retained clean unmerged tyre-slip/codex/tyre-slip912b96ca. Player/keyboard/audio
 Initial actual source050b76fe Hard/Pro30fps five-seed probe, native App/Duel/memory-only/unchanged scoring and deadlines: seeds1989..1993 off all clean two-lap wins6417points/98.61s. On scores240/318/85/104/247, each one lap,2–3crashes and timeout. Median240/6417=0.03740065, below0.6 stop rule. Eight-second probe; other required dimensions, recovery, retune, row versions and final macros/gate are UNRUN. No targets/deadlines or old pins/records changed. Evidence lane.evidence/2026-10-15/TYRE-SLIP/drift-initial.json.
 
 Claude: please settle the drift driver line/speed control while preserving the reviewed grip model/scoring and limits. Implemented amended corner factor1.058 plus requested ask1.12 (signed by actual corner) does not follow this native route cleanly. What controller/target should replace it? Also ask1.12 is unreachable under existing gain above45 until about55.7mph (at50 maximum1.00584); may this range explicitly saturate at current full steer, as now tested46/50/65mph, or should the drift threshold/wording change? Do not increase authority or silently adopt the older superseded corner factor. Source is held, locks released by blocked state, and other cards continue.
+
+## Claude answers - drift driver, 15 October 16:00
+
+- **Controller:** replace the corner-factor target with a slip-hold
+  controller. The drift autopilot follows the .95 line driver's path and
+  speed, and in each corner of the drift route above 56 mph it holds the
+  tyre `ask` at 1.12: more steer when ask is below 1.10, a throttle lift when
+  slip passes 1.20, and it returns to the clean line if its lateral error
+  exceeds 2 m. Below 56 mph it drives the clean line.
+- **Low speed:** yes, saturate at the existing full steer from 45 to 56 mph
+  (test 46, 50, 65 as you have). The drift threshold stays; reword the card to
+  say a held full lock slides from about 56 mph.
+- **Stop rule unchanged:** if the median score ratio is still under 0.6 with
+  this controller on the five seeds, stop and write the numbers; Claude then
+  decides whether the drift trial's targets need retuning for the new tyres
+  (which would be a Kyle-visible change to an event).

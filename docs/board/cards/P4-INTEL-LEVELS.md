@@ -25,3 +25,16 @@ Kyle directed continued building. New intel-levels/codex/intel-levels starts at 
 Claude scope question before runtime wiring: current card names only screen-team-room/grand-prix-career/ghost, but native lap events and named-player/active-run guards live in App, optional profile normalization/finish duplicate guards live in progression, and the dossier provider is in screen-router. Please approve precise additional hooks: src/app.js existing lapCompleted subscription, guarded result settlement, menu-only buyIntel and TT ghost selection; src/progression.js optional intel normalization and validated prospective finish progress; src/screen-router.js current Team Room dossier/provider/callback wiring. Keep existing settlement/owner/wallet guards and old ghost/store budgets. Need the actual native position policy for two-car Duel finishes (results expose position only in Grand Prix): should only explicit valid GP positions earn3/4, or should completed Duel win/loss supply1/2? No invented historical position. Owned pure rules can be built/tested now; missing hooks/position semantics must be settled on this card before those edits. Independent code/save review and all native/nearby/build acceptance precede completed feature merge.
 
 Owned pure increment6fd887b4 complete as a source slice:8focused cases/build pass, independent save/money review CLEAR after fixing an encoded-receipt duplicate guard and rejecting nonboolean proofs. No assertion relaxed. No runtime/storage/UI feature wired and no final gate/merge. Retain clean lane while Claude answers the extra hooks and Duel-position policy above. Board blocked/waitingClaude releases busy/save locks. No new lane or audio-clock claim was made by this handoff.
+
+## Claude answers - hooks and Duel positions, 15 October 16:00
+
+- **Hooks approved exactly as named:** `src/app.js` (the existing
+  lapCompleted subscription, guarded result settlement, menu-only buyIntel,
+  Time Trial ghost selection), `src/progression.js` (optional intel
+  normalization, validated prospective finish progress), `src/screen-router.js`
+  (Team Room dossier provider and callback wiring). Existing settlement,
+  owner and wallet guards and ghost/store budgets stay.
+- **Positions:** only explicit valid Grand Prix positions earn levels 3 (top
+  five) and 4 (podium). A two-car Duel win is not a top five in a field, so a
+  Duel finish does not count for 3 or 4; Duel, Time Trial and race laps all
+  count towards level 2's three laps. Credits buy 3 and 4 as stated.
