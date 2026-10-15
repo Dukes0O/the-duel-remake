@@ -224,6 +224,60 @@ export function steeringYawAuthority(speedMph, grip = 1, traction = 1, car = nul
   return arena ? Math.min(authority, DRIVE.arenaMaxYawRate) : authority;
 }
 
+// TYRE-SLIP's reviewed road-tyre model. These pure helpers are wired only by
+// the race-latched dev rules; the released authority function above stays exact.
+export const TYRE_SLIP = Object.freeze({
+  headroom: 1.25, width: .25, brakeUse: .6, riseRate: 12, fallRate: 8,
+  minSpeedMph: 15, minWorldSpeed: 8, quietSlip: .9, soundWidth: .35,
+  angleAtQuiet: .045, angleAtPeak: .075,
+  maxAngle: Object.freeze({road: .21, gravel: .25, offroad: .31}),
+  casual: Object.freeze({slideGrip: .9, scrubMphPerSec: 8}),
+  pro: Object.freeze({slideGrip: .82, scrubMphPerSec: 14}),
+});
+const tyreClamp = (value, low = 0, high = 1) => Math.max(low, Math.min(high, value));
+export function steeringGrip(speedMph, grip = 1, car = null) {
+  return car?.lowSpeedSteer === true && speedMph < 45 ? Math.max(grip, 1) : grip;
+}
+export function tyreSlipGrip(slip, difficulty = 'casual') {
+  const rule = difficulty === 'pro' ? TYRE_SLIP.pro : TYRE_SLIP.casual;
+  return 1 - (1 - rule.slideGrip) * tyreClamp((slip - 1) / TYRE_SLIP.width);
+}
+export function tyreSlipScrub(slip, difficulty = 'casual') {
+  const rule = difficulty === 'pro' ? TYRE_SLIP.pro : TYRE_SLIP.casual;
+  return rule.scrubMphPerSec * tyreClamp((slip - 1) / TYRE_SLIP.width);
+}
+export function tyreSlipSteering({speedMph, grip = 1, traction = 1, car = null, brake = 0}) {
+  const assisted = car?.lowSpeedSteer === true;
+  const rolling = Math.min(1, assisted && speedMph > 3 ? Math.max(speedMph / 30, .55) : Math.max(0, speedMph) / 30);
+  const effectiveGrip = steeringGrip(speedMph, grip, car);
+  const highSpeed = 1 / (1 + Math.max(0, speedMph - 110) * .0022);
+  const steeringLimit = DRIVE.yawRate * rolling * highSpeed * effectiveGrip * traction;
+  const unbrakedPeak = DRIVE.maxLateralAccel * effectiveGrip * traction / Math.max(TYRE_SLIP.minWorldSpeed, speedMph * DRIVE.mphToWorld);
+  const brakeShare = Math.sqrt(1 - (TYRE_SLIP.brakeUse * tyreClamp(brake)) ** 2);
+  return {peakYaw: unbrakedPeak * brakeShare, steerGain: Math.min(steeringLimit, TYRE_SLIP.headroom * unbrakedPeak)};
+}
+export function stepTyreSlip(slip, ask, dt, {reversing = false, airborne = false, knock = false, speedMph = Infinity} = {}) {
+  const target = reversing || airborne || knock || speedMph < TYRE_SLIP.minSpeedMph ? 0 : Math.max(0, ask);
+  const rate = target > slip ? TYRE_SLIP.riseRate : TYRE_SLIP.fallRate;
+  return slip + (target - slip) * (1 - Math.exp(-rate * dt));
+}
+export function tyreSlipAngle(slip, steerVisual, surface = 'road') {
+  const maximum = TYRE_SLIP.maxAngle[surface] ?? TYRE_SLIP.maxAngle.road;
+  const amount = slip <= TYRE_SLIP.quietSlip ? TYRE_SLIP.angleAtQuiet * tyreClamp(slip / TYRE_SLIP.quietSlip)
+    : slip <= 1 ? TYRE_SLIP.angleAtQuiet + (TYRE_SLIP.angleAtPeak - TYRE_SLIP.angleAtQuiet) * (slip - TYRE_SLIP.quietSlip) / (1 - TYRE_SLIP.quietSlip)
+    : TYRE_SLIP.angleAtPeak + (maximum - TYRE_SLIP.angleAtPeak) * tyreClamp((slip - 1) / TYRE_SLIP.width);
+  return -Math.sign(steerVisual) * amount;
+}
+export function tyreSlipRawSound(slip) {
+  return tyreClamp((slip - TYRE_SLIP.quietSlip) / TYRE_SLIP.soundWidth);
+}
+export function steerForYaw(desiredYaw, {speedMph, grip = 1, traction = 1, car = null, course = null, brake = 0, tyreSlip = false}) {
+  if (tyreSlip !== true || course?.def?.arena === true)
+    return tyreClamp(-desiredYaw / Math.max(.05, steeringYawAuthority(speedMph, grip, traction, car, course)), -1, 1);
+  const {peakYaw, steerGain} = tyreSlipSteering({speedMph, grip, traction, car, brake});
+  return tyreClamp(-tyreClamp(desiredYaw, -peakYaw, peakYaw) / Math.max(.05, steerGain), -1, 1);
+}
+
 export const BOOST = {
   drainPerSec: 0.19,
   refillPerSec: 0.028,
