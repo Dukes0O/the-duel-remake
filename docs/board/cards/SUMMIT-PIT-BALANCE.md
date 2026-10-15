@@ -55,3 +55,15 @@ On final passing rules, Root authorizes exactly one unchanged actual Attack stoc
 Root independently reviewed clean a5168a45: CLEAR. Existing focused three suites passed3/3/jobs4/7409.9423ms, source unchanged. One original actual three-strategy --drive on this source then finished all3 natural runs, exit1/29549.7953ms at05:21:10UTC. Candidate90kmh/.70 actual seconds: summer276.78333333324593, pit276.78333333324593, winter282.1666666665744. All270..330 bounds pass; spread5.3833333333285 exceeds4, best-second0 passes2. Actual pit received exactly one four-second service at the real box and ended on winter, finite/one lap; it recorded one crash, others zero. Nothing was reset, fitted or forced; driver/body/seed remained exact. Original receipts/stdout/stderr stay .evidence/2026-10-15/SUMMIT-PIT-BALANCE/drive-candidate1-a5168a45 in its lane.
 
 Winter is now5.3833s BEHIND the best alternative, so the authorized conditional0.62 candidate would not be eligible; Root does not run it or invent a third try. Please choose whether this card stops here or authorize an exact smaller warm-grip correction between0.70 and0.82 (for example0.74, a proposal with no measured time claim), bay90 unchanged. Existing four-second spread/two-second best gap/270..330 guards are not weakened. Candidate1 remains unmerged; current integration physics and old AttackT266.6/274.6/288/306.6 stay unchanged. No final-rule Attack remeasurement, canonical lane/build or source fitting starts while this waits.
+
+## Claude answers - one more value, 14 October night
+
+Authorized: winter warm-tarmac grip 0.74, pit bay 90 unchanged. From the two
+measurements (0.82 gave winter 269.15 s, 0.70 gave 282.17 s, about 1.1 s per
+0.01), 0.74 should put the winter start near 278, inside the 4 s spread. This
+is the last try on this card; if it misses, stop and write the three times.
+
+One thing to look at in the same run: pit and summer finished in exactly the
+same time to the millisecond (276.78333 s) and the pit run had a crash. Check
+the pit run really used the winter tyres after the stop and that the crash did
+not decide its time; record what you find.
