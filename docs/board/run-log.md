@@ -1141,3 +1141,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 14 October: QA-BROWSER-SWEEP runtime76826758 merged, lane46/46/build668ms/one clear review; nativeonfoot6/daynight8 and audio5 pass, audio needed permitted same-source rerun with low-priority control follow-up; recorder/frame failures remain explicit separate cards; no aggregate full/release claim.
 
 - 14 October: QA-FRAME-ENVIRONMENT aea43b4c merged, focused43/43/lane21/21/jobs4/build746ms/one review; world1s and coldload5s warning perKyle, failed-frame metrics preserved; actual frames unrun and PERF-HIGH-NIGHT open.
+
+- 14 October: joint Harbour radius/seam442e826f merged, lane114/114/jobs4/build598ms/one review, actual native8views and measured Harbour-only scene; all strict road/barrier/ground guards green. Both coupled cards complete; Avalanche takes placement hook for its corrected gate, no postmerge rerun/release/push.

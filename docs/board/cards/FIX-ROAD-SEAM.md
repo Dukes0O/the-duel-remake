@@ -24,3 +24,8 @@ Source freeze and Root review precede any execution; all jobs are scheduled by R
 ## Director atomic acceptance reslice
 
 The reviewed source9ea6 passes22ground/barrier cases and8native Harbour views; its measured capture changes only Harbour,19other scenes exact. Original radius9 still fails the separate road-contact guard, while accepted radius10 exposes this seam/alignment fault. They therefore form one atomic correction. Root will merge the already reviewed qa-harbour-clearance branch normally into this lane, preserving both real histories and exact radius/reference/12..35mph assertions. No builder copies or guesses geometry. Only the overlapping own Harbour scene fixture must be recaptured on the combined reviewed source; do not choose either stale fixture. One canonical nearby/jobs4/build on that combined freeze covers both cards and any actual conflict resolution. Both complete in the same integration merge, then Avalanche gates once on that source. No intermediate broken-source merge, assertion waiver or new lane.
+
+
+## Integrated with its coupled correction
+
+Joint442e826f: one corrected canonical114/114/notRun0/jobs4, build598ms, independent source/fixture review clear, original joint native8views bothqualities with memory-only/private40067 and no issues/warnings. Both radius10 and real seam/alignment correction complete in this atomic conflict-free merge. Measured own Harbour hash feb4256c74d44e99a8deebc6be850a77f587ee6d2856312725bf68f27df8cb46;19other scene rows exact. Reference77613ms/f64d259d preserved, original contact/handling/strict1.5m/triangle guards green. No postmerge gate, frame/release/push or real-save claim. Own merged lanes/evidence cleared after this commit.
