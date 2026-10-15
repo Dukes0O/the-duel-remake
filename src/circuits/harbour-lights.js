@@ -40,7 +40,7 @@ const BASE = defineScriptedCourse({
   id: 'harbour-lights', name: 'Harbour Lights', flag: 'harbour-lights',
   theme: 'city', timeOfDay: 'night', stage: 17, kind: 'circuit', layoutVersion: 2,
   closed: true, laps: 4, grandPrixLaps: 4, hasRival: true, hasRadar: false, noTraffic: true, noCombat: true, speedLimitMph: 100,
-  airborne: true, terrainHalfWidth: 64, scenery: { trees: 100, rocks: 40, mountains: false },
+  airborne: true, terrainHalfWidth: 64, completeTerrainRibbon: true, scenery: { trees: 100, rocks: 40, mountains: false },
   sections: [
     { theme: 'city', name: 'Seafront', share: .30 },
     { theme: 'city', name: 'Old Town', share: .45 },
@@ -200,7 +200,8 @@ const BASE = defineScriptedCourse({
 // The street (docs/CIRCUITS.md 5.2), laid out for the kit loader by src/circuit-kit-layout.js.
 const TINTS = [0xe9d3b0, 0xd89a8a, 0x9cc0bb, 0xdcb25a, 0xa9b4d0, 0xc98562];
 const STREET = {
-  walls: { wall: 'concrete-wall', fence: 'catch-fence', tyres: 'tyre-wall', openToWater: true },
+  walls: { wall: 'concrete-wall', fence: 'catch-fence', tyres: 'tyre-wall', openToWater: true,
+    alignEscapeTurns: ['Casino Corner', 'Lantern Hairpin'] },
   paddock: {
     gantry: { at: -2.5 },
     garages: { side: 1, from: -92, to: 96, lane: 9 },
