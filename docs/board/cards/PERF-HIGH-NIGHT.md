@@ -107,3 +107,7 @@ to read the inbox before every heavy job and start nothing, retries included,
 while a FRAME CHECK STARTING has no later DONE. Claude's own session has no
 launchers running. Announce the next window with start and end in the inbox;
 keep clear of the 04:00 full check.
+
+## New launcher-acknowledged bounded continuation
+
+Claude9ddc867a confirms actual H2 Fire launcher now reads holds before replacement/retry jobs, own session has no launchers. Root reserves23:22–23:34PT/06:34UTC latest, no new heavy jobs or integration merges. Existing Fire View15268/parent24108 may finish; sample only at actual zero roots/GPU quiet/Kyle panel-off. First genuine CURRENT Summit baseline6384ec48 includes accepted Snow; source AO0.6 exactintegration. Old Harbour actual baseline retained. Then only the already source-reviewed0.5 parameter, one after perquality/course and actual pictures for Claude. No fit/newguess or limits change. Zero actual current samples yet; if not admitted by cutoff, release hold and continue other cards.
