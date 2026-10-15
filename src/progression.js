@@ -1,3 +1,4 @@
+import {normalizeIntel,recordIntelFinish} from './intel-levels.js';
 import {normalizeDrivingLessons} from './lessons/drive-lesson-save.js';
 import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
@@ -17,7 +18,7 @@ import {
   normalizeDriverId,
   driverModifierSignature
 } from './drivers.js';
-import { normalizeCourseAccess } from './course-access.js';
+import { normalizeCourseAccess,isCourseUnlocked } from './course-access.js';
 import { rivalSignature } from './rival-settings.js';
 import { COMBAT_TUNING } from './wasteland-tuning.js';
 import { normalizeWasteland } from './wasteland-progress.js';
@@ -168,6 +169,7 @@ export function normalizeProfile(value) {
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
   if (Object.hasOwn(value, 'heli')) profile.heli = normalizeHeli(value.heli);
   if (Object.hasOwn(value, 'drivingLessons')) profile.drivingLessons = normalizeDrivingLessons(value.drivingLessons);
+  if (Object.hasOwn(value, 'intel')) profile.intel = normalizeIntel(value.intel);
   if (Object.hasOwn(value, 'grandPrixPodiums'))
     profile.grandPrixPodiums = normalizeGrandPrixPodiums(value.grandPrixPodiums);
   profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
@@ -838,6 +840,10 @@ export function settleRace(profile, result = {}) {
       }
     ].slice(-60)
   };
+  if (result.intelEnabled === true && recordEligible && result.qualifying !== true) {
+    updated=recordIntelFinish(updated,stageEventId(result.stageIndex),result,
+      {owned:isCourseUnlocked(updated,result.stageIndex),validated:true});
+  }
   const owned = updated.unlockedCars;
   if (medalWin && medalWin.profile !== profile)
     updated = grantCompletionCars({ ...updated, medals: medalWin.profile.medals });

@@ -13,3 +13,10 @@ Nothing. No existing implementation was replaced in this pure slice.
 ## Early independent correction
 
 Save reviewer found accepted escaped run IDs could encode beyond the retained receipt bound, causing duplicate lap credit after normalization. The encoded key is now checked against that same180character bound before recording. Ownership and finish proof now require explicit true rather than truthy values. Two added cases failed first, then pass without changed assertions: escaped IDs retain duplicate protection across reload, oversized keys count nothing, and nonboolean proof earns/spends nothing. Runtime remains unwired and unaccepted.
+
+
+## Native earning and purchase increment
+
+Approved16:00 App/progression hooks now consume actual unassisted native lap crossings (including timed qualifying laps under a separate receipt phase), with current state, lap-time, run/player and ownership guards. Only validated once-only explicit GP finish positions grant3/4. Menu-only current-owner purchases use the pure400/800credit operation; normalization touches only a present intel field and preserves future data. No old profile gains intel on load or when the grand-prix switch is off. Added three existing-suite tests first; all failed on the missing wiring while the original eight passed, including a real three-lap GP rather than fabricated crossings. UI level gating and actual reference-ghost playback are still pending; no final gate/merge or completed-feature claim. Removed: nothing in this incremental slice.
+
+Native increment validation:11/11 cases pass, including actual3lapGP in24.29s (alltests25.05s); existing save-fixtures and progression suites pass without changed old assertions; production build passes. This is earning/API work only, UI/recorded-reference-ghost remains unmerged pending the precise data/control hook answer.

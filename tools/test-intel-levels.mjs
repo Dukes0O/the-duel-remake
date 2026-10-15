@@ -77,3 +77,50 @@ test('native ownership and finish validation require explicit boolean proof',()=
   assert.equal(purchaseIntel(p,id,3,{owned:proof}).profile,p);
  }
 });
+
+
+test('profile normalization validates only present intel and native settlement grants prospective GP levels once',async()=>{
+ const {createProfile,normalizeProfile,settleRace}=await import('../src/progression.js');
+ const old=createProfile();assert.equal(Object.hasOwn(normalizeProfile(old),'intel'),false);
+ const bad=normalizeProfile({...old,intel:{version:1,events:{'pacific-canyon':{laps:99,level:99,lapKeys:['a','a']}}}});
+ assert.equal(bad.intel.events['pacific-canyon'].laps,3);assert.equal(bad.intel.events['pacific-canyon'].level,4);
+ const base={runId:'intel-native-gp',stageIndex:0,mode:'grandprix',grandPrixCareerEnabled:true,intelEnabled:true,completed:true,won:false,
+  position:5,fieldSize:8,laps:3,seed:1989,timeSec:300,car:'falcone_f42',driverId:'club',difficulty:'casual',cpuDifficulty:'medium',clean:false};
+ const earned=settleRace(old,base);assert.ok(earned.awarded);assert.equal(intelLevel(earned.profile,'pacific-canyon',{owned:true}),3);
+ assert.equal(settleRace(earned.profile,base).profile,earned.profile);
+ for(const extra of [{intelEnabled:false},{mode:'duel',won:true},{qualifying:true},{position:9}]){
+  const r=settleRace(old,{...base,...extra});assert.equal(Object.hasOwn(r.profile,'intel'),false);
+ }
+ const podium=settleRace(old,{...base,position:3});assert.equal(intelLevel(podium.profile,'pacific-canyon',{owned:true}),4);
+});
+
+test('native menu intel purchase uses current named owner and cannot debit during a race',async()=>{
+ const {withReferenceApp}=await import('./build-reference-laps.mjs');const {createFeatureFlags}=await import('../src/feature-flags.js');
+ await withReferenceApp(async app=>{
+  app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'grand-prix':true}});
+  app.profile={...app.profile,credits:1500};app._saveProfile();
+  const first=app.buyIntel('pacific-canyon',3);assert.ok(first.ok);assert.equal(first.cost,400);assert.equal(app.profile.credits,1100);
+  assert.equal(app.buyIntel('pacific-canyon',3).cost,0);assert.equal(app.profile.credits,1100);
+  assert.equal(app.buyIntel('panorama-ridge',4).ok,false,'unowned course cannot charge');
+  assert.ok(app.startCampaign({startStage:0,car:'falcone_f42',mode:'timetrial',seed:1989}));
+  assert.equal(app.buyIntel('pacific-canyon',4).ok,false);assert.equal(app.profile.credits,1100);
+  app.returnToMenu();assert.ok(app.addPlayer('Intel second player').ok);assert.equal(app.getIntelLevel('pacific-canyon'),1);
+ });
+});
+
+test('actual native three-lap GP earns distinct laps and its real placing without replay credits',async()=>{
+ const {withReferenceApp}=await import('./build-reference-laps.mjs');const {createFeatureFlags}=await import('../src/feature-flags.js');
+ const {COURSE}=await import('../src/config.js');const {useRacingLine}=await import('./track-script-drive.mjs');
+ await withReferenceApp(async app=>{
+  app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'grand-prix':true,'grand-prix-career':true}});
+  app.profile={...app.profile,credits:50000};app._saveProfile();assert.ok(app.purchaseCourse('panorama-ridge').ok);
+  assert.ok(app.startCampaign({startStage:COURSE.findIndex(c=>c.id==='panorama-ridge'),car:'stuttgart_959s',mode:'grandprix',fieldSize:7,fieldSeed:1000,seed:1989,cpuDifficulty:'easy'}));
+  app.autopilot=true;useRacingLine(app,.95);let ticks=0;
+  while(!['stage_result','gameover','complete'].includes(app.duel.state.status)&&ticks++<120*420)app.advance(1/120);
+  const s=app.duel.state;assert.ok(s.results.completed,'real native GP finishes');assert.equal(s.completedLaps,3);
+  const row=app.profile.intel.events['panorama-ridge'];assert.equal(row.laps,3);assert.equal(row.lapKeys.length,3);
+  assert.equal(app.getIntelLevel('panorama-ridge'),s.results.position<=3?4:s.results.position<=5?3:2);
+  const before=JSON.stringify(app.profile);app._recordIntelLap({lapCompleted:3,lapTimeSec:s.lapTimes.at(-1),assisted:false},s);
+  assert.equal(JSON.stringify(app.profile),before,'duplicate receipt and completed-state callback cannot write');
+ });
+});

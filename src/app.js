@@ -1,3 +1,4 @@
+import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {isSummitAttack} from './summit-attack.js';
 import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
@@ -195,6 +196,7 @@ export class App {
       if(event.qualifyingFlyingStart)this.lapTelemetryRecorder?.armQualifying(state);
       // The native final qualifying finish must be captured before stage reload.
       if(event.qualifyingLap)this._updateLapTelemetry(state);
+      if(event.lapCompleted)this._recordIntelLap(event,state);
       if(event.lapCompleted && state.mode==='grandprix' && this._switches().enabled('grand-prix-career')===true){
         const lap=this.grandPrixLapRecorder?.complete(state,event,this.player);
         if(lap){
@@ -692,6 +694,36 @@ export class App {
     }
   }
   purchaseDriver(id){return this._driverOperation(id,true);}
+  getIntelLevel(eventId) {
+    return this._switches().enabled('grand-prix')===true
+      ?intelLevel(this.profile,eventId,{owned:isCourseUnlocked(this.profile,eventId)}):0;
+  }
+  buyIntel(eventId,level) {
+    if(this.duel.state.status!=='menu'||this._switches().enabled('grand-prix')!==true)
+      return {ok:false,cost:0,reason:'Return to the menu before buying track intel.'};
+    this._refreshPlayer();
+    const stage=COURSE.find(course=>course.id===eventId);
+    const result=purchaseIntel(this.profile,eventId,level,
+      {owned:!!stage&&!stage.practice&&!stage.arena&&stage.closed!==false&&isCourseUnlocked(this.profile,stage)});
+    if(result.changed){this.profile=result.profile;result.saved=this._saveProfile();this.duel.emit({intelPurchased:eventId,level});}
+    return result;
+  }
+  _recordIntelLap(event,state) {
+    const lap=event?.lapCompleted, stage=COURSE[state?.stageIndex];
+    if(this._switches().enabled('grand-prix')!==true||state!==this.duel.state||state.status!=='racing'||
+      !this.runId||!this.player||this._runPlayerId!==this.player.id||state.playerId!==this.player.id||
+      !stage||stage.practice||stage.arena||this.duel.course.closed===false||
+      !Number.isSafeInteger(lap)||lap<1||lap!==state.completedLaps||event.assisted!==false||
+      state.assistedLaps?.[lap-1]!==false||!Number.isFinite(event.lapTimeSec)||event.lapTimeSec<=0||
+      state.lapTimes?.[lap-1]!==event.lapTimeSec)return false;
+    this._refreshPlayer();
+    if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
+    const runId=event.qualifyingLap?this.runId+':qualifying':this.runId;
+    const next=recordIntelLap(this.profile,stage.id,{runId,lap,valid:true},
+      {owned:isCourseUnlocked(this.profile,stage)});
+    if(next===this.profile)return false;
+    this.profile=next;this._saveProfile();return true;
+  }
   purchaseCourse(id){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the menu before unlocking courses.',cost:0};
     this._refreshPlayer();const result=buyCourse(this.profile,id);
@@ -743,6 +775,7 @@ export class App {
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
       deepEnabled:this._switches().enabled('the-deep')===true,
       earnedCarsEnabled:this._switches().enabled('earned-cars')===true,
+      intelEnabled:this._switches().enabled('grand-prix')===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(COURSE[state.stageIndex],state.mode)){
       payload.lapChoiceEnabled=true;
