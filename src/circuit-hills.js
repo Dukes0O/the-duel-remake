@@ -26,7 +26,8 @@ function slopeHeight(hill, du, dv) {
   const reach = hillReach(hill, du, dv);
   if (reach >= 1) return 0;
   const dome = .5 * (1 + Math.cos(Math.PI * reach));
-  const uneven = 1 + .07 * Math.sin(du * .043 + dv * .021) + .05 * Math.sin(dv * .067 - du * .031);
+  const orientation = hill.orientation ?? 1;
+  const uneven = 1 + .07 * Math.sin(orientation * (du * .043 + dv * .021)) + .05 * Math.sin(orientation * (dv * .067 - du * .031));
   return hill.height * dome * dome * Math.min(1.1, uneven);
 }
 
@@ -66,12 +67,15 @@ export function runWeight(hill, du, dv) {
 // ---------------------------------------------------------------------------
 
 // The shore is not a perfect oval. `angle` is the direction round the lake.
-export const shoreFactor = angle => 1 + .09 * Math.sin(angle * 3 + 1.1) + .05 * Math.sin(angle * 5 + 2.3) + .03 * Math.sin(angle * 9);
+export const shoreFactor = (angle, orientation = 1) => {
+  if (orientation === -1) angle += Math.PI;
+  return 1 + .09 * Math.sin(angle * 3 + 1.1) + .05 * Math.sin(angle * 5 + 2.3) + .03 * Math.sin(angle * 9);
+};
 
 // 1 at the shore, 0 in the middle, more than 1 outside it.
 export function basinReach(basin, du, dv) {
   const x = du / basin.along, y = dv / basin.across;
-  return Math.hypot(x, y) / shoreFactor(Math.atan2(y, x));
+  return Math.hypot(x, y) / shoreFactor(Math.atan2(y, x), basin.orientation);
 }
 
 // Where the ground should be and how firmly it is held there, as

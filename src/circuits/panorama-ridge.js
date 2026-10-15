@@ -95,18 +95,18 @@ const TOWN_STREETS = Object.freeze([
   Object.freeze({from: 170, to: 470, lateral: 80, bend: 6, wave: 95, phase: 0}),
   Object.freeze({from: 215, to: 505, lateral: 118, bend: 5, wave: 120, phase: 1.4, square: 330}),
 ]);
-function panoramaPlacements(road) {
+export function panoramaPlacements(road, pitSide = -1) {
   const placements = [{id: 'start-gantry', s: 0, lateral: 0, scale: [1.06, 1, 1]}];
   for (let s = 120; s <= 400; s += 35) {
-    placements.push({id: 'pit-garage', s, lateral: -27, heading: Math.PI / 2});
+    placements.push({id: 'pit-garage', s, lateral: pitSide * 27, heading: -pitSide * Math.PI / 2});
   }
   for (let s = 70; s <= 420; s += 55) {
-    placements.push({id: 'grandstand', s, lateral: 25, heading: -Math.PI / 2});
+    placements.push({id: 'grandstand', s, lateral: -pitSide * 25, heading: pitSide * Math.PI / 2});
   }
   const pitStraight = road.pieces.find(piece => piece.name === 'Pit Straight');
   // Match the existing 65 m entry/exit openings of the actual pit divider.
   for (let s = Math.max(0, pitStraight.s0) + 75; s < pitStraight.s1 - 75; s += 4) {
-    placements.push({id: 'pit-wall', s, lateral: -8.4, heading: Math.PI / 2, solid: true});
+    placements.push({id: 'pit-wall', s, lateral: pitSide * 8.4, heading: -pitSide * Math.PI / 2, solid: true});
   }
   // Hell Gate has no script wall, and both Mountain Straight walls begin where it
   // ends. A plain concrete wall on its outside closes the run-off, so a car that

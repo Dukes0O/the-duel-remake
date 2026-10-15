@@ -1,3 +1,9 @@
+import * as panoramaReverse from '../src/circuits/panorama-ridge-reverse.js';
+import * as harbourReverse from '../src/circuits/harbour-lights-reverse.js';
+import * as woodsReverse from '../src/circuits/tremblant-woods-reverse.js';
+import {TREMBLANT_WOODS} from '../src/circuits/tremblant-woods.js';
+import {createHash} from 'node:crypto';
+import {hillHeight, basinReach} from '../src/circuit-hills.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {PANORAMA_RIDGE_NIGHT, manifest as nightManifest} from '../src/circuits/panorama-ridge-night.js';
@@ -54,4 +60,68 @@ test('night and dusk use existing approved looks all race and leave parent geome
     }
     assert.equal(JSON.stringify(parent), before, 'immutable parent data');
   }
+});
+
+// Reverse acceptance uses the actual Course and native road builder, not a copied fixture.
+const reverses = [panoramaReverse, harbourReverse, woodsReverse];
+const parents = [PANORAMA_RIDGE, HARBOUR_LIGHTS, TREMBLANT_WOODS];
+const parentPins = ['4344a85539f43631172bbb8f438c0f0499d3e4fd003015d53ff09d943ffbef1e',
+  '4f5c15e528892111535bbdc305a764279516c37a5d8c7ec93a6ffa4955f304bd',
+  'ffc85aaa625a8bee6c73fd003700ed6c3598fbd92547ddd53e70dba7bd4bfebb'];
+
+test('released parents keep exact pre-edit road, ground and obstacle fingerprints', () => {
+  parents.forEach((d, n) => {
+    const hash = createHash('sha256');
+    for (const seed of [1989, 42, 17]) {
+      const c = new Course(d, seed), ground = [];
+      for (let i = 0; i < 79; i++) for (const off of [-180, -70, -15, 0, 15, 70, 180]) ground.push(c.groundAt(c.length * i / 79, off));
+      hash.update(JSON.stringify({samples: c.samples, ground, obstacles: c.features.obstacles}));
+    }
+    assert.equal(hash.digest('hex'), parentPins[n], d.id);
+  });
+});
+
+test('reverse roads and terrain follow the physical donor, with rebuilt boards, kerbs and full pit', () => {
+  reverses.forEach((module, n) => {
+    const d = module.definition, parent = parents[n], before = JSON.stringify(parent);
+    assert.equal(module.manifest.state, 'dev');assert.equal(module.manifest.releaseOrder, 9 + n);
+    assert.deepEqual(module.manifest.unlock, {kind: 'default-gp-podium', defaultEventId: parent.id});
+    for (const seed of [1989, 42, 17]) {
+      const c = new Course(d, seed), donor = new Course(parent, seed), offset = d.terrainDonor.offset;
+      const anchor = donor.worldAt(offset);
+      assert.ok(Math.abs(c.length - donor.length) < 1e-6);
+      for (let i = 0; i < 97; i++) for (const off of [-110, -40, -10, 0, 10, 40, 110]) {
+        const s = c.length * (i + .25) / 97, a = c.worldAt(s, off), b = donor.worldAt(offset - s, -off);
+        const centre = c.worldAt(s), oldCentre = donor.worldAt(offset - s);
+        assert.ok(Math.hypot(centre.x - (anchor.x - oldCentre.x), centre.z - (anchor.z - oldCentre.z)) < .01, 'native road centre within one centimetre');
+        const headingError = Math.abs(Math.atan2(Math.sin(a.heading - b.heading), Math.cos(a.heading - b.heading)));
+        assert.ok(headingError < .0002, 'native road tangent interpolation');
+        assert.ok(Math.hypot(a.x - (anchor.x - b.x), a.z - (anchor.z - b.z)) < .01 + Math.abs(off) * .0002, 'road-space offset follows the native centre/tangent bounds');
+        assert.ok(Math.abs(a.y - b.y) < .002, 'native reversed elevation');
+        // Native pit paving is deliberately rebuilt at the moved start, not donor ground.
+        if (!c.pitLane || s < c.pitLane.entry || s > c.pitLane.exit || Math.abs(off) > 25)
+          assert.ok(Math.abs(c.groundAt(s, off).y - donor.groundAt(offset - s, -off).y) < 1e-8, 'same physical terrain');
+      }
+      assert.deepEqual(c.features.boards, c.script.boards, 'boards rebuilt for incoming reverse corners');
+      assert.deepEqual(c.features.kerbs, c.script.kerbs);
+      const oldTurns = donor.script.pieces.filter(p => p.kind === 'turn');
+      for (const p of c.script.pieces.filter(p => p.kind === 'turn')) assert.equal(p.dir, -oldTurns.find(o => o.name === p.name).dir);
+      if (n === 0) {
+        assert.equal(c.pitLane.side, 1);assert.equal(d.ridgeLandform.side, 1);
+        assert.ok(Math.abs(c.pitLane.exit - c.pitLane.entry - 451.9821523470663) < 1e-6, 'full no-wrap service bay');
+        assert.ok(d.kitPlacements.filter(p => p.id === 'pit-garage').every(p => p.lateral > 0 && p.s > c.pitLane.entry && p.s < c.pitLane.exit));
+      } else assert.equal(c.pitLane, undefined, 'visual paddock only');
+    }
+    assert.equal(JSON.stringify(parent), before, 'parent descriptor and lazy kit data immutable');
+  });
+});
+
+test('reverse hill, lake and chairlift keep their physical orientation', () => {
+  const d = reverses[2].definition, hill = d.hills[0], old = TREMBLANT_WOODS.hills[0];
+  for (const du of [-80, -20, 0, 62, 100]) for (const dv of [-60, -12, 0, 40])
+    assert.ok(Math.abs(hillHeight(hill, -du, -dv) - hillHeight(old, du, dv)) < 1e-10);
+  for (const du of [-200, -90, 10, 190]) for (const dv of [-70, 20, 60])
+    assert.ok(Math.abs(basinReach(d.basins[0], -du, -dv) - basinReach(TREMBLANT_WOODS.basins[0], du, dv)) < 1e-10);
+  assert.deepEqual(d.effects.lift.towers, TREMBLANT_WOODS.effects.lift.towers.map(x => -x));
+  assert.deepEqual(d.effects.lift.lines, TREMBLANT_WOODS.effects.lift.lines.map(x => -x));
 });

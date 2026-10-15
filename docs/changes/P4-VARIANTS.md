@@ -13,3 +13,11 @@ Panorama/Harbour/Woods Reverse (orders9/10/11), meaningful reverse geometry/terr
 ## Removed
 
 Nothing yet; variants are new dev events. Parent scenery, licensed originals and current assets remain.
+
+## Kyle-approved reverse test coordinate correction
+
+Kyle explicitly approved this correction in chat15October after automatic approval review rejected the initial attempt; the rejected edit was not executed. The new first draft required1cm world-position match even110m off-road. Moving Panorama start changes native sample phase: actual road-centre difference6.594mm and tangent0.00016943rad accumulate to19.114mm110m away. The new test keeps the centre below1cm, separately requires tangent below0.0002rad, then bounds lateral position by those same two errors. Harbour/Woods agree to numerical precision. No existing test or road-builder tolerance changed. Independent review must assess this new assertion. Ground-height identity still requires1e-8m.
+
+## Reverse source slice
+
+All three reverse descriptors now build with native reversePieces. Parent road/ground/obstacle pins across1989/42/17 stay exact. Reverse terrain follows an independent parent Course; optional hill/basin orientation keeps the lake bowl and ski runs physically aligned. Panorama gets the approved moved start and full451.982m left-side bay with rebuilt garages; Harbour rebuilds street walls/openings/shops from its existing layout; Woods mirrors its visual paddock, lodge/lift/clearances. Native boards and kerbs rebuild for the incoming direction. Focused suite5/5 passes. Final native pictures, actual references/signatures, lane/build/review remain pending; no release or merge.
