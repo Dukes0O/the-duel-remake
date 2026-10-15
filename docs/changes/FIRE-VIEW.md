@@ -83,6 +83,9 @@ burning cells, grown by the game's own rules.
   with FIRE-HOOKS and integration merged in: 189 passed, 0 failed, 0 not
   run in 639 s. `npm run build`: passed. (The run before found the import
   allow-list and the looks folder's 20 MB limit; both fixed above.)
+  Again after FIRE-HOOKS merged and integration came in (one conflict in
+  the import allow-list, EARN-SCREEN's entry and this card's kept): 169
+  passed, 0 failed, 0 not run in 1328 s; build passed.
 
 ## Files beyond the card's list (for the Director)
 
