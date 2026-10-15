@@ -1,18 +1,18 @@
 # Build status
 
-Observed at: 2026-10-15T16:18:58.976Z
+Observed at: 2026-10-15T16:28:14.320Z
 
-Observation commit: e9c9c19bd6d6bc1609d5fdcc2a032074929a6efe
+Observation commit: f4908c38d0d8cc6e0eb1c6965e843e6d370758ca
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e9c9c19bd6d6bc1609d5fdcc2a032074929a6efe
+Integration HEAD: f4908c38d0d8cc6e0eb1c6965e843e6d370758ca
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
-Live commit: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
+Live commit: not checked
 
-Live build version: 20261015161329-187a6c9406c6
+Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
@@ -74,9 +74,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 749,125 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 915,814 B | +166,689 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 431,667,200 B | +412,672 B | unavailable |
+| Git objects | 431,888,384 B | +221,184 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,9 +85,9 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: e9c9c19bd6d6bc1609d5fdcc2a032074929a6efe
+- Local integration/wasteland: f4908c38d0d8cc6e0eb1c6965e843e6d370758ca
 
-Local rollback build (dist-previous): 20261014035636-e7c3f590285b. Manifest presence does not verify the full rollback build.
+Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
