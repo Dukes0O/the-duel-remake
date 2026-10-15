@@ -111,3 +111,9 @@ shipped in `public/`.
 `heli/fire-fx.png` (the H2 fire, smoke, steam and spray atlas) is coloured
 and packed from sprites in the **Kenney** [Particle Pack](https://kenney.nl/assets/particle-pack),
 CC0, by `tools/art/fire-fx.py`. The ember frame is drawn by the same script.
+
+The six rescue people in `heli/people/` (rescuer, hiker, skier, stranded
+driver, two paramedics) start from the **Quaternius** [Universal Base
+Characters, Standard](https://quaternius.com), CC0. The recipe
+`tools/blender/rescue-people.py` poses the rigged bodies, thins them, colours
+them and adds original clothing and gear; no Quaternius texture is shipped.
