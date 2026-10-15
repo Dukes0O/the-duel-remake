@@ -119,3 +119,5 @@ Model key mclaren_f1, constructor createMclarenF1Vehicle, nominal width2.00m/len
 
 
 Director names tools/scenarios/mclaren-f1-look.mjs as the card-required native look recipe: use the existing memory-isolated browser harness and existing vehicle-art-check page/buttons, capture front/rear/side/detail plus real damage/driver controls. No new harness, runtime host hook, lighting change or timing claim. Photography starts only after the actual model/registration source is frozen; raw output is ignored evidence and the single compact round sheet remains the card's requested output.
+
+Director also names tools/art/mclaren-f1-sheet.py as the card-required compact sheet recipe, following the existing Pillow sheet pattern. It resizes the six actual showroom pictures only, checks their original viewport and the native report, caps the one JPG at500KB and never edits models, lighting or image content. No new test machinery or dependency.
