@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T21:39:21.525Z
+Observed at: 2026-10-15T21:40:42.827Z
 
-Observation commit: 141f6eed74a309208a279d396441413f8599f617
+Observation commit: 66269a4af215b3620ac6d67bdf748c0196262a02
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 141f6eed74a309208a279d396441413f8599f617
+Integration HEAD: 66269a4af215b3620ac6d67bdf748c0196262a02
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -30,7 +30,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
-| codex/drive-lesson-save | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/drive-lesson-save |
+| codex/drive-lesson-save | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/drive-lesson-save |
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
 | codex/heli-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
@@ -57,7 +57,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/drive-lesson-save | DRIVE-LESSON-SAVE | 2026-10-15T14:16:27-07:00 | 0 | last commit 2026-10-15T14:16:27-07:00 | docs/changes/DRIVE-LESSON-SAVE.md, src/lessons/drive-lesson-save.js, src/progression.js, tools/fixtures/saves/11-driving-lessons.json, tools/test-arena-settlement.mjs |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-15T11:22:23-07:00 | 0 | last commit 2026-10-15T11:22:23-07:00 | docs/changes/P4-ARDENNES.md, tools/scenarios/ardennes-views.mjs, tools/scenarios/frame-pacing.mjs, tools/test-circuit-ardennes.mjs, tools/test-track-script.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
@@ -81,9 +80,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 136,396 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 97,416 B | -38,980 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 436,658,176 B | +43,008 B | unavailable |
+| Git objects | 436,713,472 B | +55,296 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -92,7 +91,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 141f6eed74a309208a279d396441413f8599f617
+- Local integration/wasteland: 66269a4af215b3620ac6d67bdf748c0196262a02
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
