@@ -52,3 +52,9 @@ Kyle wants gritty, not toy-like; Claude judges that strictly in round 1, and a
 toy-looking result sends that animal back to a species-labelled donor. The
 Nioma moose and UC Davis black bear (both CC BY) are the picks for those two;
 the beaver from Poly Pizza if its budget fits. No new accounts.
+
+## North woods source-only lane during the release hold
+
+Claude's exact donor/species answer above is settled. The new wild-art-src lane owns tools/blender/wildlife-north-woods.py, tools/art/wildlife-north-woods.json and its own change note; candidates stay in the card's existing art-library/wild-* source cache. Only documented public downloads without an account are allowed. Keep original licensed archives/credits as one current copy, verify actual creator/licence and bytes; report inaccessible donors without extraction tricks or substitute species. The approved Quaternius adaptation must preserve its actual rig/clips and receive the named natural markings/proportions, not a flat recolour labelled finished.
+
+Prepare the existing-style reproducible five-model recipe and manifest only after source access is proved. Runtime destinations, after actual art acceptance, are the five named animals under public/assets/wildlife; no game, placement, save, switch, registry or CREDITS edits yet. The later existing all-Blender generator registration will be named before code when this recipe exists; no new test harness. Source preparation/download inspection only: no Blender/import/export/render, game browser, gate, build, frame, art sheet or round starts until Root GO after RELEASE DONE and a fresh slot check. North woods has its own three-round cap; no art verdict is inferred from donor approval. Spend at most30minutes on any inaccessible source problem, then record it and continue available sources. Root owns shared metadata, scheduling and merges; other lanes' files stay intact.
