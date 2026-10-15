@@ -59,7 +59,9 @@ day late 10 (8 to 14), two play days late 19 (14 to 22).
   windy steps; water, damp, out, lost and the save shape; the section 4.5
   targets; same drops, same fire).
 - `node tools/test-heli-mode.mjs`: 146 checks passed.
-- Lane tier and build: below.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`)
+  after merging integration: 22 passed, 0 failed, 0 not run in 483 s.
+  `npm run build`: passed.
 
 ## Review (rule 17)
 
