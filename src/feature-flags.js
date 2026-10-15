@@ -23,6 +23,8 @@ export const FEATURE_STATES = Object.freeze({
   helicopter: 'on',
   // H2 Fire (docs/HELI_FIRE.md): forest fires, the bucket and burnt courses. Works only with the helicopter on.
   'forest-fire': 'dev',
+  // Earned cars and medal sheets (docs/EARNED_CARS.md). Off in the game.
+  'earned-cars': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

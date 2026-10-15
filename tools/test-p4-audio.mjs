@@ -5,6 +5,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {stepField, finishGrandPrix} from '../src/race-field.js';
 import {EngineAudio} from '../src/audio.js';
+import {SUMMIT_TIME_ATTACK} from '../src/circuits/summit-time-attack.js';
 import {ffmpeg} from './audio/codec.mjs';
 // HELI-HOOKS: the helicopter's own cues joined the bank behind its switch; exactly that list is left out.
 import {HELI_CUES} from '../src/heli/heli-audio.js';
@@ -209,6 +210,72 @@ for (const end of ['mute', 'pause', 'newStage', 'menuUpdate']) {
   console.log('P4 native FIELD audio race fingerprint:', hashObject(a.state));
 }
 
+// Attack result protocol controls use the same existing event rig. The sink
+// records cue requests; this does not claim a native listening verdict.
+function attackCueRig(medal='gold') {
+  const rig=eventRig({enabled:false});
+  rig.audio.flags={enabled:name=>name==='summit-run'};
+  rig.audio.cueBuffers['race.finish.flag']={duration:1};
+  const result={completed:true,won:medal!==null,medal};
+  const state={mode:'timetrial',status:'stage_result',paused:false,results:result};
+  return {...rig,result,state,course:{def:SUMMIT_TIME_ATTACK},event:{stageResult:result}};
+}
+for(const medal of ['gold','silver','bronze',null]) {
+  const r=attackCueRig(medal),before=hashObject(r.state);
+  r.audio.event(r.event,r.state,r.course);
+  r.audio.event({...r.event},r.state,r.course);
+  r.audio.event({stageResult:{...r.result}},r.state,r.course);
+  r.audio.event({complete:true},r.state,r.course);
+  assert.deepEqual(r.ids(),['race.finish.flag',...(medal?['interface.win']:[])],
+    'Attack '+medal+': exactly one finish flag, medal-only win, no loss or complete double');
+  assert.equal(hashObject(r.state),before,'Attack finish audio never mutates the result or race');
+}
+for(const gate of ['muted','paused','locked','statePaused']) {
+  const r=attackCueRig();
+  if(gate==='muted')r.audio.setMuted(true);
+  if(gate==='paused')r.audio.setPaused(true);
+  if(gate==='locked')r.audio.context.state='suspended';
+  if(gate==='statePaused')r.state.paused=true;
+  r.audio.event(r.event,r.state,r.course);
+  r.audio.setMuted(false);r.audio.setPaused(false);r.audio.context.state='running';r.state.paused=false;
+  r.audio.event({...r.event},r.state,r.course);
+  assert.deepEqual(r.ids(),[],gate+': missed Attack finish is consumed, never replayed on resume');
+}
+{
+  const r=attackCueRig(null);
+  r.result.completed=false;r.result.timeout=true;
+  r.audio.event(r.event,r.state,r.course);
+  assert.deepEqual(r.ids(),[],'incomplete solo result gets neither finish, win nor loss cue');
+}
+for(const end of ['decoded','mute','pause','newStage','menu']) {
+  const r=attackCueRig();let release;
+  delete r.audio.cueBuffers['race.finish.flag'];
+  r.audio._loadCueBuffers=options=>{
+    assert.deepEqual(options,{summitAttack:true},'only Attack opts into its existing finish recording');
+    return new Promise(resolve=>{release=resolve;});
+  };
+  r.audio.event(r.event,r.state,r.course);
+  assert.deepEqual(r.ids(),[],'undecoded Attack finish does not synthesize a substitute');
+  if(end==='mute'){r.audio.setMuted(true);r.audio.setMuted(false);}
+  if(end==='pause'){r.audio.setPaused(true);r.audio.setPaused(false);}
+  if(end==='newStage')r.audio.event({stageLoaded:20},r.state,r.course);
+  if(end==='menu'){r.state.status='menu';r.audio.event({menu:true},r.state,r.course);}
+  r.audio.cueBuffers['race.finish.flag']={duration:1};release();await Promise.resolve();await Promise.resolve();
+  assert.deepEqual(r.ids(),end==='decoded'?['race.finish.flag','interface.win']:[],
+    end+': only a still-current completed Attack can play after actual decode completion');
+  r.audio.event({...r.event},r.state,r.course);
+  assert.deepEqual(r.ids(),end==='decoded'?['race.finish.flag','interface.win']:[],
+    end+': late/repeated delivery adds no double');
+}
+{
+  const r=attackCueRig(),started=[];
+  r.audio._playCue=EngineAudio.prototype._playCue;
+  r.audio._runCue=id=>{started.push(id);return {};};
+  assert.equal(r.audio._playCue('race.finish.flag'),null,'GP-off default caller cannot bypass the old finish gate');
+  r.audio.event(r.event,r.state,r.course);
+  assert.deepEqual(started,['race.finish.flag','interface.win'],'only actual Attack finish admits the existing flag cue with GP off');
+}
+
 // Exercise the real loader with memory-only responses; never touch player storage.
 const savedFetch = globalThis.fetch;
 try {
@@ -260,6 +327,24 @@ try {
     for (const release of releases) release();
     await Promise.all([ordinaryLoad, activatedLoad]);
     assert.deepEqual(CUES.filter(id => renderer.cueBuffers[id]), CUES, 'all new buffers become available');
+  }
+  // Attack extends only its actual existing finish asset after the unchanged
+  // Summit-only ordinary loader has selected the two avalanche recordings.
+  {
+    const requested=[];
+    globalThis.fetch=async url=>{requested.push(url);return {ok:true,arrayBuffer:async()=>new ArrayBuffer(4)};};
+    const audio=Object.create(EngineAudio.prototype);
+    Object.assign(audio,{flags:{enabled:name=>name==='summit-run'},
+      context:{decodeAudioData:async()=>({duration:1})},cueBuffers:{}});
+    await audio._loadCueBuffers();
+    assert.deepEqual(requested.filter(url=>url.startsWith('/assets/audio/p4/')).sort(),
+      ['/assets/audio/p4/avalanche-rumble.ogg','/assets/audio/p4/avalanche-slide.ogg'],
+      'ordinary Summit-only load is unchanged');
+    const old=[...requested];await audio._loadCueBuffers({summitAttack:true});
+    assert.deepEqual(requested.slice(old.length),['/assets/audio/'+SOUND_BANK['race.finish.flag'].file],
+      'Attack adds only the existing flag asset, no old or unrelated P4 refetch');
+    const count=requested.length;await audio._loadCueBuffers({summitAttack:true});
+    assert.equal(requested.length,count,'Attack finish asset loading remains memoized');
   }
 } finally { globalThis.fetch = savedFetch; }
 

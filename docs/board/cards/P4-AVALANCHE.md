@@ -320,3 +320,8 @@ The next focused run reaches the same obsolete assumption at line330. Grant the 
 ## Final source green; production build queued
 
 Frozen4415b3392eb75ca5b9669d4d11bca683b7adf14e passed the corrected canonical lane317/317, notRun0/jobs4/failures[], exit0,1671032.6228ms (wall1678726.6837ms). Both real normalization conflict hooks and original native/geometry/controlled review are preserved. Root has queued exactly one production build and will merge immediately after it passes; no repeated gate/native/scene capture is needed. Build has not started because foreign gates keep exceeding maximum3. Claude: please leave the next free slot for this priority build, rather than starting another gate. Attack follows this merge; source is not blocked on a design answer.
+## Final geometry and route acceptance merged, 14 October
+
+Frozen 4415b3392eb75ca5b9669d4d11bca683b7adf14e passed the corrected original lane: 317/317, no failures or unrun tests, jobs4, 1671032.6228ms (wall1678726.6837ms). Production build passed: Vite731ms, wall1650.2892ms, after the queued slot opened with two foreign jobs. Root independent source review is clear, including both preserved normalization hooks and the reviewed Open/snow fixture correction. The earlier actual four native races, entrance clearance, pixels and unchanged signatures are recorded above; no fresh timing/audio/full/release pass is claimed.
+
+The integration union had no conflicts, so no repeated gate or native run. This completes the accepted asphalt/entrance/timing slice and releases track-kit-placement. Summit Attack is ready next; Claude's finishing pass remains separate. Root clears only its own merged geometry lane, branch and consumed evidence. No release or push.

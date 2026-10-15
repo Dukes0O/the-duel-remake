@@ -245,8 +245,9 @@ profile.medals = {
   drops a malformed one. It keeps entries for car ids this build does not
   know (at most 64 entries, ids up to 64 characters), so a car added later
   and then rolled back does not lose its wins. They are kept but not counted.
-- `version` other than 1: the field is kept untouched and nothing is counted
-  or written to it, so a newer save is never damaged by an older build.
+- A newer version (a whole number above 1): the field is kept untouched and
+  nothing is counted or written to it, so a newer save is never damaged by an
+  older build. Any other malformed sheet starts empty.
 - The earned-car grant runs on load, after `grantCompletionCars`, like the
   Jesko's.
 
@@ -282,11 +283,11 @@ With that order nothing is lost.
 ### 6.5 The save checker
 
 EARN-MEDALS holds the `save-shape` lock, adds one fixture to
-`tools/fixtures/saves/` (a player with medals and a malformed entry; EARN-CAR-1
-adds its earned car to that fixture once the car exists) and gets a fresh save review (the save checker) as well as the
-ordinary code review. The fixture roster count in
-`tools/test-save-fixtures.mjs` goes from 10 to 11; the change note explains
-that changed assertion.
+`tools/fixtures/saves/` (a player with a clean saved sheet that includes an
+unknown car; EARN-CAR-1 adds its earned car once the car exists; malformed
+sheets are tested in `tools/test-medals.mjs`) and gets a fresh save review
+(the save checker) as well as the ordinary code review. The fixture roster
+count goes from 11 to 12; the change note explains each changed assertion.
 
 ## 7. The switch
 
@@ -309,7 +310,7 @@ that changed assertion.
 | --- | --- | --- |
 | `src/medals.js` | EARN-MEDALS | Sheet rules, counting, totals, earned-car progress and grant |
 | `tools/test-medals.mjs` | EARN-MEDALS | Rules, save, old saves, rollback, player isolation |
-| `tools/fixtures/saves/11-medals.json` | EARN-MEDALS | The new save fixture |
+| `tools/fixtures/saves/12-medals.json` | EARN-MEDALS | The new save fixture |
 | `src/earned-cars-ui.js` | EARN-SCREEN | Which cars show, the medal panel, the lines |
 | `tools/test-earned-cars-ui.mjs` | EARN-SCREEN | Real App and screens, memory-only |
 | `src/<car>-vehicle.js` | EARN-CAR-1 to 3 | Each car's original model |

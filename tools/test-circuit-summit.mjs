@@ -84,11 +84,12 @@ for(const bounds of SUMMIT_GALLERY_BOUNDS){
   const row=SUMMIT_RUN.kitPlacements.find(row=>row.id==='gallery'),frame=course.groundAt(row.s,row.lateral);
   const actor=course.features.obstacles.find(actor=>actor.sourceBounds===bounds.name&&actor.kitS===row.s);
   assert.ok(actor,`${bounds.name} has a real physical collider`);
-  const xLocal=(accessor.min[0]+accessor.max[0])*.5*row.scale[0],zLocal=(accessor.min[2]+accessor.max[2])*.5*row.scale[2];
+  const move=row.nodeTranslations?.[bounds.name]??[0,0,0];
+  const xLocal=((accessor.min[0]+accessor.max[0])*.5+move[0])*row.scale[0],zLocal=((accessor.min[2]+accessor.max[2])*.5+move[2])*row.scale[2];
   const x=frame.x+Math.cos(frame.heading)*xLocal+Math.sin(frame.heading)*zLocal;
   const z=frame.z-Math.sin(frame.heading)*xLocal+Math.cos(frame.heading)*zLocal;
   assert.ok(Math.hypot(actor.x-x,actor.z-z)<1e-8,'actual post/roof position follows the displayed tile transform');
-  assert.equal(actor.minY,frame.y+accessor.min[1]*row.scale[1]);
+  assert.equal(actor.minY,frame.y+(accessor.min[1]+move[1])*row.scale[1]);
   assert.equal(actor.height,(accessor.max[1]-accessor.min[1])*row.scale[1]);
   if(bounds.name.includes('pillar'))assert.ok(Math.abs(zLocal)>7,'visible pillars are at the tile ends, not the old centre collider');
 }
@@ -129,7 +130,8 @@ assert.ok(!course.features.walls.some(wall=>wall.id.startsWith('gallery-')),'act
 
 const open=course.features.shortcuts.find(branch=>branch.id==='summit-open-road');
 assert.equal(course.surfaceAt(10500,course.shortcutOffset(open,10500)).road,true,'the Open Road is real driveable road');
-assert.equal(course.gripKindAt(10500,course.shortcutOffset(open,10500)),'snow','branch road uses the native snow surface');
+assert.equal(course.gripKindAt(10500,course.shortcutOffset(open,10500)),'asphalt','clear Open Road uses Claude\'s settled ploughed asphalt surface');
+assert.equal(course.gripKindAt(10500,0),'snow','same-station main road retains its unchanged snow surface');
 assert.equal(sampleCourseLightPath(course,{distance:0}).settings.nightAmount,0);
 assert.equal(sampleCourseLightPath(course,{distance:11000}).settings.nightAmount,1);
 const baseLight=sampleCourseLightPath(course,{distance:0}).settings;
@@ -152,7 +154,10 @@ assert.ok(edgeLight.exposure<baseLight.exposure&&edgeLight.exposure>winterLighti
 assert.deepEqual(baseLight,beforeLight,'winter blending does not change the source palette');
 const asphalt=new THREE.MeshStandardMaterial({color:0x222222,roughness:.6});
 assert.equal(roadBranchMaterial(course,open,asphalt,false),asphalt,'dry branch retains original material');
-const snowMaterial=roadBranchMaterial(course,open,asphalt,true);
+assert.equal(roadBranchMaterial(course,open,asphalt,true),asphalt,'actual clear Open retains asphalt with winter presentation enabled');
+// Preserve the historical snow helper case without changing the actual course.
+const historicalSnowBranch=Object.freeze({...open,surface:'snow',gripKind:'snow'});
+const snowMaterial=roadBranchMaterial(course,historicalSnowBranch,asphalt,true);
 assert.notEqual(snowMaterial,asphalt);
 assert.deepEqual(snowMaterial.color.toArray(),new THREE.Color(SUMMIT_RUN.snowWorld.branchTone).toArray(),'Summit branch draws its reviewed darker packed-snow tone');
 assert.equal(snowMaterial.roughness,.94);
@@ -321,10 +326,12 @@ if(process.argv.includes('--drive')){
   assert.ok(poses.every((p,i)=>i%2===0?poses[i+1].s===p.s&&poses[i+1].off===-p.off:true),'both sides have matching road guidance');
   assert.equal(JSON.stringify(course.features),before,'visual snow never writes physical features');
   assert.equal(course.rng.float(),seedControl.rng.float(),'snow visual controls never consume simulation RNG');
-  const branchBase=new THREE.MeshStandardMaterial({color:0xffffff}),branch=roadBranchMaterial(course,open,branchBase,true);
-  assert.equal(branch.color.getHex(),SUMMIT_RUN.snowWorld.branchTone,'Open Road actually draws the authored darker packed-snow tone');
+  const branchBase=new THREE.MeshStandardMaterial({color:0xffffff});
+  assert.equal(roadBranchMaterial(course,open,branchBase,true),branchBase,'actual clear Open retains the original material with winter on');
+  const branch=roadBranchMaterial(course,historicalSnowBranch,branchBase,true);
+  assert.equal(branch.color.getHex(),SUMMIT_RUN.snowWorld.branchTone,'historical snow branch retains the authored darker packed-snow tone');
   assert.equal(branchBase.color.getHex(),0xffffff,'branch look leaves shared road material unchanged');
-  const ordinary=roadBranchMaterial({def:{snowWorld:{} }},open,branchBase,true);
+  const ordinary=roadBranchMaterial({def:{snowWorld:{} }},historicalSnowBranch,branchBase,true);
   assert.deepEqual(ordinary.color.toArray(),[.34,.38,.42],'absent branch tone keeps legacy snow values');
   const lightGroup=new THREE.Group(),glows=addNightGlows(lightGroup,course);
   assert.equal(glows.groundLightRows.length,48,'town view owns its forty-eight actual grounded lights');

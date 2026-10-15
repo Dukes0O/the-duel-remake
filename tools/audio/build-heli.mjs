@@ -17,8 +17,8 @@ const recipe = (id, source, start, duration, options = {}) => Object.freeze({
   id, source: String(source), start, duration, rate: 1, loop: false, overlap: .18,
   highpass: 50, lowpass: 3000, loudness: -20, quality: 5, ...options,
 });
-// Rotor, wind and the engine sounds come from real recordings. The chime, horn,
-// click and hiss are authored in heli-audio.js (tones and noise), so they have
+// Rotor, wind, the engine, fire and water sounds come from real recordings.
+// The chimes, horn, alert, tick, click and radio hiss are authored in heli-audio.js (tones and noise), so they have
 // no file here.
 export const HELI_RECIPES = Object.freeze([
   // A six-second recording of a rotor turning, sold as a loop; a short crossfade closes its seam.
@@ -31,6 +31,20 @@ export const HELI_RECIPES = Object.freeze([
   recipe('heli.cable.creak', 664929, 2.5, 1.7, {highpass: 180, lowpass: 5000, loudness: -26}),
   recipe('heli.hook.release', 457455, .35, .45, {highpass: 250, lowpass: 7000, loudness: -20}),
   recipe('heli.setdown.thud', 342535, .15, .8, {highpass: 35, lowpass: 650, loudness: -18}),
+  // H2 Fire (docs/HELI_FIRE.md section 11). An outdoor fire, cut from its steady first part.
+  recipe('heli.fire.crackle', 868895, 6, 6.5, {loop: true, overlap: .4, highpass: 80, lowpass: 6000, loudness: -26, quality: 3}),
+  // A river loop for the water rushing into the bucket; a big waterfall for 600 litres letting go.
+  recipe('heli.bucket.scoop', 523022, 1, 5, {loop: true, overlap: .3, highpass: 90, lowpass: 5000, loudness: -22, quality: 3}),
+  recipe('heli.bucket.pour', 690224, 5, 4, {loop: true, overlap: .3, highpass: 70, lowpass: 5000, loudness: -20, quality: 3}),
+  // The second, harder hit of a tube on a metal bucket, darkened to a dull clank.
+  recipe('heli.bucket.dent', 513797, .82, .7, {highpass: 60, lowpass: 2400, loudness: -18}),
+  // Steam hissing where water lands on fire; the game scales it by the litres.
+  recipe('heli.fire.hiss', 479296, .3, 1.2, {highpass: 300, lowpass: 9000, loudness: -24}),
+  // H4 Rescue (docs/HELI_RESCUE.md section 9): the hiker's flare lighting, a
+  // shovel in snow while the rescuer digs, and a carabiner as someone clips on.
+  recipe('heli.flare', 348767, .25, 2.5, {highpass: 120, lowpass: 8000, loudness: -24, quality: 3}),
+  recipe('heli.snow.dig', 201888, 1.5, 4, {loop: true, overlap: .3, highpass: 100, lowpass: 7000, loudness: -24, quality: 3}),
+  recipe('heli.rescue.clip', 457454, 0, .3, {highpass: 400, lowpass: 9000, loudness: -20}),
 ]);
 export const heliRuntimeName = spec => `heli/${spec.id.slice(5).replaceAll('.', '-')}.ogg`;
 

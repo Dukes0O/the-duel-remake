@@ -108,6 +108,23 @@ shipped in `public/`.
   scan downloads remain unavailable (401). Kyle may supply better sources
   for DEEP-ART-FINAL; these authored/refitted assets remain working art.
 
+## Original helicopter accessories (HELI-ART-SRC)
+
+`public/assets/heli/cargo-hook.glb`, `helipad.glb` and `fuel-pump.glb` are
+original geometry for The Duel, made from the rebuildable Blender recipe
+`tools/blender/heli-accessories.py` and its parameters in
+`tools/art/heli-accessories.json`. The forged hook, painted H pad and clean
+aviation pump use scalar PBR materials and no external mesh or texture donor.
+No helicopter donor is included in these three accessories. Their source and
+export measurements are recorded in `tools/art/heli-source-candidates.json`;
+actual accessory art acceptance is still pending.
+
 `heli/fire-fx.png` (the H2 fire, smoke, steam and spray atlas) is coloured
 and packed from sprites in the **Kenney** [Particle Pack](https://kenney.nl/assets/particle-pack),
 CC0, by `tools/art/fire-fx.py`. The ember frame is drawn by the same script.
+
+The six rescue people in `heli/people/` (rescuer, hiker, skier, stranded
+driver, two paramedics) start from the **Quaternius** [Universal Base
+Characters, Standard](https://quaternius.com), CC0. The recipe
+`tools/blender/rescue-people.py` poses the rigged bodies, thins them, colours
+them and adds original clothing and gear; no Quaternius texture is shipped.
