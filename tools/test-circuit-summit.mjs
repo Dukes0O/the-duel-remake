@@ -24,7 +24,7 @@ import {surfaceRuns} from '../src/track-script-scene.js';
 import {referenceTargets,runReferenceWorker} from './build-reference-laps.mjs';
 import {CIRCUIT_ENTRIES,BASE_COURSE_COUNT} from '../src/circuit-manifests.js';
 
-assert.deepEqual(manifest,{id:'summit-run',flag:'summit-run',state:'dev',price:2600,grandPrix:true,releaseOrder:4,
+assert.deepEqual(manifest,{id:'summit-run',flag:'summit-run',state:'on',price:2600,grandPrix:true,releaseOrder:4,
   driver:{car:'falcone_f42',driverId:'club',controller:'racing-line',skill:.95}},'course-owned price/state/driver contract');
 assert.ok(Object.isFrozen(manifest)&&Object.isFrozen(manifest.driver));
 const registered=CIRCUIT_ENTRIES.find(entry=>entry.manifest.id==='summit-run');
@@ -34,7 +34,7 @@ const actualCatalog=await runReferenceWorker({catalogOnly:true});
 assert.equal(actualCatalog.events.indexOf('summit-run'),BASE_COURSE_COUNT+manifest.releaseOrder,'actual QA COURSE appends Summit after the four authored events');
 assert.equal(actualCatalog.events.filter(id=>id==='summit-run').length,1,'stable id appears once');
 assert.equal(actualCatalog.storageLength,0,'catalogue fixture has only empty memory storage');
-assert.equal(actualCatalog.flags.find(flag=>flag.name==='summit-run')?.state,'dev');
+assert.equal(actualCatalog.flags.find(flag=>flag.name==='summit-run')?.state,'on');
 assert.equal(actualCatalog.flags.find(flag=>flag.name==='summit-run')?.enabled,true);
 assert.equal(SUMMIT_RUN.id, 'summit-run');
 assert.equal(SUMMIT_RUN.flag, 'summit-run');
@@ -344,3 +344,6 @@ if(process.argv.includes('--drive')){
   lightGroup.traverse(node=>{node.geometry?.dispose();node.material?.dispose();});
   branch.dispose();ordinary.dispose();branchBase.dispose();snow.dispose();
 }
+
+assert.equal(SUMMIT_RUN.snowWorld.always,true,'reviewed Summit winter presentation is always active');
+assert.notEqual(TREMBLANT_SNOW.snowWorld?.always,true,'released Snow presentation is not switched here');
