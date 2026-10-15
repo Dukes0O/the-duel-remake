@@ -608,3 +608,7 @@ Kyle directed continued building. New tyre-slip/codex/tyre-slip starts atb8b6a1e
 ## Named per-race latch and on-foot reset details
 
 The existing owned game.js hooks include the precise _loadStage/_loadArena flag installation required by the arena exclusion: snapshot the requested switch once in startCampaign, install tyreSlipRules only for a non-arena stage, and explicitly false in native venue _loadArena. Existing stage and listed actor/crash/journey resets clear only the player tyreSlip field; do not add it to CPU actors that never had it. The already named onfoot-transition.js hook includes clearing that player field at actual entry/exit transitions; parked-car _drive remains on the old yaw path while on foot. These settle implementation of existing exclusions, not new rules or tuning. Pure foundation71c41f1f and optional keyboard44aade10 are committed with10focused/443existingkeyboard checks/build passing; runtime and macro acceptance remain pending.
+
+## Named existing audio acceptance cases
+
+Add switch-on cases to existing tools/test-audio.mjs using its present MockContext/makeAudio/state recipe, without changing any old assertion or adding a harness. They check actual recorded tyre-loop gain at reviewed slip values, quiet straight-line braking, and preservation of the separate legacy smoothedSlip used by road/gravel. The new tyreSlipSmoothed variable belongs to the existing src/audio.js constructor plus named squeal block. No sound-bank, PCM recipe, mix threshold or loop gain ceiling changes.
