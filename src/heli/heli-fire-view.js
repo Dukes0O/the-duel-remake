@@ -164,7 +164,7 @@ export function createFireView({THREE, scene, load = defaultLoad, quality = 'hig
         const u = hash(cell.cell, 50 + k), cycle = 9, age = (time + u * cycle) % cycle, share = age / cycle;
         const frame = r.smoke[Math.floor(u * r.smoke.length)];
         cover.add(cell.x + wx * age * .8 + (u - .5) * 8, cell.y + 10 + age * 5.5, cell.z + wz * age * .8 + (hash(cell.cell, 60 + k) - .5) * 8,
-          10 + share * 26, frame, (.62 - share * .5) * (0.5 + cell.percent / 200), .42, .38, .34);
+          14 + share * 34, frame, (.85 - share * .6) * (0.6 + cell.percent / 250), .34, .31, .28);
       }
     }
     for (const [cell, at] of cooled) {

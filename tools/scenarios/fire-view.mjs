@@ -19,12 +19,12 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // The biggest fire that can burn: one cell short of the lost size (45 since
 // FIRE-SPREAD's tuning; the packet's 60-cell figure predates it).
-function biggestFire() {
+function biggestFire(limit = null) {
   const course = new Course(ALL_CIRCUITS.find(def => def.id === 'tremblant-woods'), 1989), ground = groundFromCourse(course);
   const grid = fireGrid(course, ground, courseSite(course, ground, 'tremblant-woods'));
   let fire = startFire({id: 'fire-1', courseId: 'tremblant-woods', grid, seed: 4242, startDay: 5, candidates: startCells(course, ground, grid, [])});
   const calm = {speed: 0.5, toward: {x: 1, z: 0}};
-  while (fire.burning.length + fire.burnt.length < grid.lostAt - 1) {
+  while (fire.burning.length + fire.burnt.length < (limit ?? grid.lostAt - 1)) {
     const next = spreadStep(fire, grid, calm);
     if (next.burning.length + next.burnt.length >= grid.lostAt) break;
     fire = next;
@@ -100,7 +100,6 @@ async function overTheFire(context, quality, fire, {pictures}) {
   await pause(1500);
   if (pictures) await context.screenshot(`fire-150m-${quality}`);
   const frames = FRAMES ? await measure(context, `${quality}, 150 m over a ${fire.burning.length}-cell fire`) : null;
-  if (pictures && quality === 'high') await drop(context);
   return frames;
 }
 
@@ -108,10 +107,6 @@ async function overTheFire(context, quality, fire, {pictures}) {
 // by hand, the autopilot to the hot edge, then H held over the ring.
 async function drop(context) {
   const app = 'window.__qaApp';
-  await context.evaluate(`(() => { const v = ${app}.heliView(); window.__pilot = {x: v.zone.x, z: v.zone.z, y: v.zone.y + 60, speed: 18}; })()`);
-  await context.waitFor(`(() => { const v = ${app}.heliView(); return Math.hypot(v.heli.x - v.zone.x, v.heli.z - v.zone.z) < 4 && Math.hypot(v.heli.vx, v.heli.vz) < 1; })()`, 'over the pad', 240_000);
-  await context.evaluate(`(() => { const v = ${app}.heliView(); window.__pilot = {x: v.zone.x, z: v.zone.z, y: v.zone.y - 2, speed: 1, sink: 1.5}; })()`);
-  await context.waitFor(`${app}.heliView().heli.onGround`, 'on the pad', 120_000);
   await context.evaluate(`(() => { window.__pilot = null; const r = ${app}.heliSession.fitBucket(); ${app}._heliEvents(${app}.heliSession.takeEvents()); if (!r.ok) throw Error(r.reason); })()`);
   await context.evaluate(`(() => { const v = ${app}.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.zone.y + 45, speed: 1, sink: 3}; })()`);
   await context.waitFor(`${app}.heliView().heli.y - ${app}.heliView().zone.y > 40`, 'lift the bucket', 60_000);
@@ -160,6 +155,13 @@ export async function run(context) {
     const result = await overTheFire(context, quality, fire, {pictures: true});
     if (result) frames.push(result);
   }
+  // A drop on a small fire (a big one would be lost while flying to the lake).
+  await menu(context, 'high', fightingHeli(biggestFire(8)));
+  await context.evaluate(`document.querySelector('#heli-visit').click()`);
+  await context.waitFor(`window.__qaApp.duel.state.status==='heli' && window.__qaApp.visualReady`, 'helipad for the drop', 120_000);
+  await installPilot(context);
+  await context.evaluate(`window.__qaApp.heliCamera = 2`);
+  await drop(context);
   for (const [stage, days] of [['black', 12], ['shoots', 25], ['fireweed', 40]]) {
     const result = await burntRace(context, 'high', {stage, days});
     if (result) frames.push(result);

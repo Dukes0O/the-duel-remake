@@ -216,8 +216,9 @@ export function createBurntLook({THREE, scene, load = defaultLoad}) {
       if (gone.length) hide(trunks, gone);
     }
     if (!ready) return;
-    for (const [name, matrices] of props) group.add(...instanced(partsOf(set, name), matrices, name));
-    for (const kind of ['shoots', 'fireweed']) group.add(...instanced(partsOf(set, kind), clumps[kind], kind));
+    const addAll = meshes => { if (meshes.length) group.add(...meshes); };
+    for (const [name, matrices] of props) addAll(instanced(partsOf(set, name), matrices, name));
+    for (const kind of ['shoots', 'fireweed']) addAll(instanced(partsOf(set, kind), clumps[kind], kind));
     for (const [stage, matrices] of ash) {
       const texture = set.textures.get(BURNT_LOOK.ground[stage]);
       if (!texture) continue;
