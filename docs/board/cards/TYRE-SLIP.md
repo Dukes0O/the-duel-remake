@@ -585,3 +585,59 @@ table from it before building.
 ## Factory lock correction before build
 
 The accepted independent-review amendment4 above changes drift result and leaderboard readers in progression.js and explicitly takes save-shape. The short board row now includes save-shape alongside busy-game-files, so the scheduler cannot admit this card while EARN-MEDALS owns saved-profile work. This records the already settled scope; no tyre source, design number or saved field changes here. Attack still holds the named core hooks, and the current release hold forbids all new checks and merges.
+
+## Current STEER-055 table before building — 15 October
+
+Recomputed directly from current keyboardSteeringLimit, createKeyboardSteering and steeringYawAuthority, grip1/asphalt, fixed120Hz. The settled amendment that a held key never exceeds today's yaw wins over section5's old bonus/peak table: the new held peak-share ceiling equals the current held share, with raw steering divided by the new steerGain ratio. No keyboard-only peak is reached unbraked at these speeds. Below40mph and all arenas retain the old path.
+
+| mph | Today's held = new maximum peak share | New raw steering cap | First120Hz tap peak share | Full-brake ask at held cap |
+|---|---|---|---|---|
+|40|0.804672|1|0.4475988|1.00584|
+|50|0.9625|0.956911636|0.535390625|1.203125|
+|60|0.925|0.766357804|0.51453125|1.15625|
+|80|0.85|0.68|0.4728125|1.0625|
+|100|0.775|0.62|0.43109375|0.96875|
+|120|0.70|0.56|0.389375|0.875|
+
+These are consequences of the approved55percent start/300ms rise/30percent high-speed reduction, not new tuning. In particular section5's old100mph full-brake1.06 example no longer applies; it is0.96875 under STEER-055. First-tap yaw stays the same by mapping existing averaged input through old authority/new gain, within the approved1e-9 tolerance. Final independent review must check the actual implementation against this table. No lane/source/check started while DRIVE-LESSON-SAVE holds save-shape.
+
+## Daylight build claim — 15 October
+
+Kyle directed continued building. New tyre-slip/codex/tyre-slip starts atb8b6a1e2 while P4-VARIANTS completes its independent final checks. It holds busy-game-files and save-shape, both released by completed Lesson Save; no circuit-registry lock. The accepted independent amendments and current STEER-055 table above control. First tested source slice is the owned config grip/peak/demand/angle/sound/steerForYaw helpers and new test-tyre-slip suite, with legacy DRIVE and steeringYawAuthority text unchanged. This increment has no runtime caller or feature switch installation yet and is not playable/finished acceptance. Then wire the settled per-race dev switch, player/keyboard/reset/audio paths and all named driver copies, complete drift-record save review and full existing card acceptance. No old replay/reference pins or live/preview changes. Arena/CPU off-parity and all final macro checks remain required. Questions stay on this card; no new art or HELI cleanup work.
+
+## Named per-race latch and on-foot reset details
+
+The existing owned game.js hooks include the precise _loadStage/_loadArena flag installation required by the arena exclusion: snapshot the requested switch once in startCampaign, install tyreSlipRules only for a non-arena stage, and explicitly false in native venue _loadArena. Existing stage and listed actor/crash/journey resets clear only the player tyreSlip field; do not add it to CPU actors that never had it. The already named onfoot-transition.js hook includes clearing that player field at actual entry/exit transitions; parked-car _drive remains on the old yaw path while on foot. These settle implementation of existing exclusions, not new rules or tuning. Pure foundation71c41f1f and optional keyboard44aade10 are committed with10focused/443existingkeyboard checks/build passing; runtime and macro acceptance remain pending.
+
+## Named existing audio acceptance cases
+
+Add switch-on cases to existing tools/test-audio.mjs using its present MockContext/makeAudio/state recipe, without changing any old assertion or adding a harness. They check actual recorded tyre-loop gain at reviewed slip values, quiet straight-line braking, and preservation of the separate legacy smoothedSlip used by road/gravel. The new tyreSlipSmoothed variable belongs to the existing src/audio.js constructor plus named squeal block. No sound-bank, PCM recipe, mix threshold or loop gain ceiling changes.
+
+## Bounded drift stop and question —15October afternoon
+
+Retained clean unmerged tyre-slip/codex/tyre-slip912b96ca. Player/keyboard/audio and all named driver copies are wired behind dev;17focused cases and build pass. Early independent reviewer found one actual shared audio local fault, corrected in73bac0f3 and confirmed CLEAR; paired actual surface graph checks pass,503audio checks. Driver-copy argument/dependency/flag review found no other fault, but named the low-speed drift design conflict below. This is not completed feature acceptance or a merge candidate.
+
+Initial actual source050b76fe Hard/Pro30fps five-seed probe, native App/Duel/memory-only/unchanged scoring and deadlines: seeds1989..1993 off all clean two-lap wins6417points/98.61s. On scores240/318/85/104/247, each one lap,2–3crashes and timeout. Median240/6417=0.03740065, below0.6 stop rule. Eight-second probe; other required dimensions, recovery, retune, row versions and final macros/gate are UNRUN. No targets/deadlines or old pins/records changed. Evidence lane.evidence/2026-10-15/TYRE-SLIP/drift-initial.json.
+
+Claude: please settle the drift driver line/speed control while preserving the reviewed grip model/scoring and limits. Implemented amended corner factor1.058 plus requested ask1.12 (signed by actual corner) does not follow this native route cleanly. What controller/target should replace it? Also ask1.12 is unreachable under existing gain above45 until about55.7mph (at50 maximum1.00584); may this range explicitly saturate at current full steer, as now tested46/50/65mph, or should the drift threshold/wording change? Do not increase authority or silently adopt the older superseded corner factor. Source is held, locks released by blocked state, and other cards continue.
+
+## Claude answers - drift driver, 15 October 16:00
+
+- **Controller:** replace the corner-factor target with a slip-hold
+  controller. The drift autopilot follows the .95 line driver's path and
+  speed, and in each corner of the drift route above 56 mph it holds the
+  tyre `ask` at 1.12: more steer when ask is below 1.10, a throttle lift when
+  slip passes 1.20, and it returns to the clean line if its lateral error
+  exceeds 2 m. Below 56 mph it drives the clean line.
+- **Low speed:** yes, saturate at the existing full steer from 45 to 56 mph
+  (test 46, 50, 65 as you have). The drift threshold stays; reword the card to
+  say a held full lock slides from about 56 mph.
+- **Stop rule unchanged:** if the median score ratio is still under 0.6 with
+  this controller on the five seeds, stop and write the numbers; Claude then
+  decides whether the drift trial's targets need retuning for the new tyres
+  (which would be a Kyle-visible change to an event).
+
+
+## Continue the retained lane after the 16:00 answer
+
+Codex resumes clean912b96ca in the existing tyre-slip lane, holding busy-game-files/save-shape. Only the named App drift hook, TYRE_SLIP settings and existing tyre tests/note change first. Neon has no authored course.racingLine; reuse existing production racingLineFor/buildSpeedProfile for its native path/speed at0.95, with the same actual-car grip and surface limits. No CPU line/profile source change. Clean-line recovery above2m lateral error and below56mph; corner ask1.12 (raise steering below1.10, current authority cap exact), throttle lift above1.20 slip. Remove the superseded corner-factor branch. Existing off-state driving and all scoring/deadlines/targets stay exact. First add focused controller cases, then one initial Hard/Pro30fps five-seed on/off probe; if median ratio remains below0.6 stop without adopting new numbers. No new lane, preview/live change or art.

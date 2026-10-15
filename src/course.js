@@ -57,10 +57,21 @@ export class Course {
     this.sections=sections.map((section,i)=>{const end=i===sections.length-1?this.length:start+section.share*this.length;
       const result={...section,start,end};start=end;return result;});
     this.features={checkpoints:[],lapGates:[],rushGates:[],radarTraps:[],scenery:[],rocks:[],obstacles:[],mountains:[],stations:[],trees:[],buildings:[],barriers:[],turns:[],flocks:[],poles:[],landmarks:[],shortcuts:[],passingLanes:[],tunnels:[],ramps:[],crushables:[],signs:[],chevrons:[]};
-    if(def.relief)installReliefScale(this);
-    if(def.basins)installBasins(this);
-    if(def.hills?.some(hill=>hill.pads?.length))installHillPads(this);
-    if(def.farGround)installFarGround(this);
+    // A reverse borrows its parent's physical terrain through an independent Course.
+    // No parent instance, cached descriptor or released generation path is mutated.
+    const donor=def.terrainDonor;
+    if(donor){
+      if(donor.definition.terrainDonor)throw Error('Terrain donors cannot form a chain.');
+      this._terrainDonor=new Course(donor.definition,seed);
+      this._terrainAnchor=this._terrainDonor.worldAt(donor.offset);
+      if(this._terrainDonor.farGroundY)this.farGroundY=(x,z,s,off)=>this._terrainDonor.farGroundY(
+        this._terrainAnchor.x-x,this._terrainAnchor.z-z,donor.offset-s,-off);
+    }else{
+      if(def.relief)installReliefScale(this);
+      if(def.basins)installBasins(this);
+      if(def.hills?.some(hill=>hill.pads?.length))installHillPads(this);
+      if(def.farGround)installFarGround(this);
+    }
     this._build();
     if(hiddenRoad && def.id === 'pacific-canyon') installHiddenRoad(this);
     if(muddyHollow && def.id === 'high-country') installMuddyHollow(this);
@@ -207,7 +218,7 @@ export class Course {
       const span=range=>smooth((p-range[0])/80)*smooth((range[1]-p)/80);
       const hillside=span(landform.hillside),ridge=span(landform.ridge);
       const floor=landform.valleyFloor-this.worldAt(p).y;
-      const bank=off<0?Math.min(110,edge*landform.hillsideGrade):Math.max(floor,-edge*landform.hillsideGrade);
+      const bank=off*(landform.side??-1)>0?Math.min(110,edge*landform.hillsideGrade):Math.max(floor,-edge*landform.hillsideGrade);
       const drop=Math.max(floor,-Math.min(110,edge*landform.ridgeGrade));
       const target=lerp(bank,drop,ridge);
       h=lerp(h,target,Math.max(hillside,ridge)*smooth(edge/8));
@@ -219,7 +230,9 @@ export class Course {
     for(const cut of this.features.shortcuts)if(p>=cut.start&&p<=cut.end){const distance=Math.abs(off-this.shortcutOffset(cut,p)),blend=smooth((p-cut.start)/36)*smooth((cut.end-p)/36);h*=1-blend*(1-smooth((distance-cut.halfWidth-3)/6));}
     return h;
   }
-  _baseGroundAt(s,off=0){const p=this.worldAt(s,off);p.y+=this._relief(s,off);
+  _baseGroundAt(s,off=0){const p=this.worldAt(s,off);
+    if(this._terrainDonor){p.y=this._terrainDonor.groundAt(this.def.terrainDonor.offset-s,-off).y;return p;}
+    p.y+=this._relief(s,off);
     if(Math.abs(off)>this.roadHalfWidthAt(s)+1)for(const station of this.features.stations){
       const ds=angleDiff((this.phase(s)-station.s)/this.length*TAU,0)*this.length/TAU,dl=off-station.off,c=Math.cos(station.angle),sn=Math.sin(station.angle),x=c*dl-sn*ds,z=sn*dl+c*ds;
       const weight=(1-smooth((Math.abs(x)-11)/4))*(1-smooth((Math.abs(z)-9.5)/4.5));

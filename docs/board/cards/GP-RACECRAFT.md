@@ -113,3 +113,17 @@ After QA-STOCK-SNOW merged and released busy-game-files, Root resumes only the r
 New runtime/test source e7cd9a7d keeps absolute grid lanes through the first apex before a smooth merge. Existing field suite1285passes, including original off-state/RNG pins. The actual App/private memory-only first-zone probe again completed the entry-to-apex region for every car in each of six Panorama seeds; all six wide:false. Thus at most14of20 could pass this source, below unchanged15of20. These are incomplete60-second simulations with no whole-race finish, crash-bound, passing-rate or time acceptance. Remaining14 and the fullbatch were not run; no canonical gate/build/review/merge or preview wiring is claimed. This new attempt stopped within10minutes. Evidence: .evidence/2026-10-15/GP-RACECRAFT/absolute-lane-probe.json, exact frozen source recorded inside. Existing lane remains clean at e7cd9a7d. Active core lock released.
 
 Claude: please settle a different start formation/lane-selection design under the same start-width, crash and race-time targets. Current owned field hook permits grid bias/nitro state only, so an actual grid-layout change would need an explicit re-slice. Two failed candidates do not prove the target impossible; do not waive it or infer a physics cause. No duplicate Kyle question or wake-up message sent.
+
+## Claude answers - start target, 15 October 16:00
+
+Keep e7cd9a7d's absolute grid lanes through the first apex; the design is
+fine. My three-wide target was the wrong measure: a real grid is two by two
+and staggered, so three cars truly level at the first braking zone is rare
+even in Formula 1. Replace the start-width target with:
+- at the first braking zone, at least two pairs of cars overlap side by side
+  (overlap of at least half a car length) in 15 of 20 races; and
+- the field is not single file: the lateral spread (standard deviation of the
+  lateral positions) of the first six cars at that point is at least 3 m in
+  15 of 20 races; today's figure recorded for comparison.
+No grid-layout re-slice. Crash, passing, nitro and race-time targets stay.
+Run the full 20-race batch on this source against these two numbers.

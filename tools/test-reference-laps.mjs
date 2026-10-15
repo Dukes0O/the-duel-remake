@@ -160,6 +160,26 @@ equal(duel.course.features.radarTraps, [{s: 30}], 'Physical course data is not d
 fixture.dispose();
 check(duel._police.toString().includes('must not run police'), 'Disposal restores the native instance methods');
 
+// Every new variant must enter through the actual parent-podium rule.
+for (const definition of ALL_CIRCUITS.filter(d => CIRCUIT_MANIFESTS.find(m => m.id === d.id)?.unlock?.kind === 'default-gp-podium')) {
+  const previousLength = COURSE.length;
+  if (!COURSE.includes(definition)) COURSE.push(definition);
+  try {
+    await withReferenceApp(async app => {
+      const parentId = CIRCUIT_MANIFESTS.find(m => m.id === definition.id).unlock.defaultEventId;
+      const target = {eventId: definition.id, key: definition.id + '|fixed', route: 'fixed', seed: 1989};
+      app.profile = {...app.profile, grandPrixPodiums: ['tremblant-woods'],
+        courses: {version: 1, unlocked: [parentId]}};
+      const {fixture: eligible} = startReferenceApp(app, target);
+      try {
+        equal(app.duel.course.def.id, definition.id, 'Actual production variant admission succeeds with earned parent fixture');
+        check(app.profile.grandPrixPodiums.includes(parentId), 'Fixture has the required real parent podium');
+        check(app.profile.grandPrixPodiums.includes('tremblant-woods'), 'Existing profile results are preserved');
+      } finally {eligible.dispose();}
+    });
+  } finally {if (COURSE.length !== previousLength) COURSE.pop();}
+}
+
 if (process.argv.includes('--native')) {
   const {Duel} = await import('../src/game.js');
   const {courseFingerprint} = await import('../src/track-analysis.js');
