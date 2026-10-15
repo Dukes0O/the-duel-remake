@@ -64,3 +64,16 @@ Independent structural verification is true: 512×512 RGBA, fully opaque, 16-pix
 The candidate remains unfitted, artAccepted false and runtimeInstalled false. No model import, fit, grounding, render, native view, natural-look judgment, formal art round, gate, build, runtime file or CREDITS edit has occurred. Root must grant the axes/metric-fit/grounding/view work before any next execution. Four donors stay blocked under the exact scheduled Quaternius retry and Kyle-originals policy. No structural pass is promoted into an art pass or a complete five-animal batch.
 
 Removed: no licensed original, source receipt, asset or generated candidate is removed by this two-file metadata update; no output is regenerated or overwritten.
+
+
+## Selected source views: source contract, not execution
+
+Director 4cf611ba permits an optional --view-only path in the existing recipe only. Its additive existing-suite cases are authored first: the same unchanged stdlib audit and two empty fixtures must plan exactly six source-axis PNGs and one inspection manifest, with no donor/config reads, bpy imports, writes or model/atlas/Blend outputs. Invalid animal, public/traversal/sibling/foreign-root and linked-escape cases retain the original refusal contract. All old generation planner cases, tanker/kit assertions and audit code remain unchanged.
+
+The view branch will pin the actual original and the one 3defc568 candidate by complete bytes/SHA256 before importing the candidate unchanged. It uses CPU four threads/48 samples and bounds-relative orthographic +/-X,+/-Z,+/-Y cameras, neutral lights and a measured-minimum floor hidden only for the labelled underside. It does not fit, move, scale, rebind or export donor objects, meshes, materials, UVs, rigs or poses. Native import matrices/bounds, image hashes and both source hashes before/after belong in the private inspection manifest. Every view is SOURCE INSPECTION / UNFITTED / NOT GAME; artAccepted and runtimeInstalled remain false. Numeric size, anatomical masks and foot-versus-tail contact await actual views and a later fit decision.
+
+At this source freeze no new planner, test, model import, render, fit, native check, art round, gate or build has run. The earlier one-generation structural facts remain the only executed beaver evidence. Four donors retain their exact blocks and retry policy.
+
+Changed assertions: additive view-only planner/rejection cases only; no old assertion or threshold changed. Removed: nothing; no source original, existing candidate, recipe path or runtime asset is replaced. No temporary output was created by this source-only edit.
+
+Source-only comparison confirms output_plan/read_original/noise/paint_atlas/adapt_container unchanged; default main is exact after removing the opt-in branch. Removing only the new view cases and optional helper argument restores the complete previous test/audit text. All prior manifest data remains equal. No recipe or test source was imported or executed for this text comparison.

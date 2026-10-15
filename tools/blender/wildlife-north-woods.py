@@ -19,6 +19,12 @@ from pathlib import Path
 
 ORIGINAL_SHA256 = "37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1"
 ORIGINAL_BYTES = 41468
+CANDIDATE_BYTES = 151888
+CANDIDATE_SHA256 = "834d024ab14cc4ec14e7402f28b3ec06df311748c8dd380bf26e306ad0e1705b"
+CANDIDATE_RELATIVE = ".qa-dist/wild-beaver-3defc568/beaver-source-unfitted.glb"
+SOURCE_VIEWS = (("plus-x", (1, 0, 0)), ("minus-x", (-1, 0, 0)),
+                ("plus-z", (0, 0, 1)), ("minus-z", (0, 0, -1)),
+                ("plus-y", (0, 1, 0)), ("minus-y", (0, -1, 0)))
 ORIGINAL_PATH = Path("C:/Users/kyleb/dev/art-library/wild-north-woods/poly-beaver-original.glb")
 
 
@@ -28,6 +34,8 @@ def arguments():
     parser.add_argument("--model", choices=("beaver",), default="beaver")
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--paths-only", action="store_true")
+    parser.add_argument("--view-only", action="store_true",
+                        help="Inspect the pinned private candidate unchanged; do not generate or fit")
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
     args = parser.parse_args(argv)
     root = args.root.resolve()
@@ -43,6 +51,134 @@ def output_plan(output):
     return {"blend": [], "glb": [str(output / "beaver-source-unfitted.glb")],
             "json": [str(output / "manifest.json")],
             "atlas": [str(output / "beaver-colour.png")], "evidence": [], "summary": []}
+
+
+def view_plan(output):
+    return {"blend": [], "glb": [], "json": [str(output / "inspection-manifest.json")],
+            "atlas": [], "evidence": [str(output / (name + ".png")) for name, _ in SOURCE_VIEWS],
+            "summary": []}
+
+
+def inspect_source_views(root, output):
+    # No config read or paint/export: inspect only the one structurally verified candidate.
+    candidate_path = root / CANDIDATE_RELATIVE
+    paths = {"original": ORIGINAL_PATH, "candidate": candidate_path}
+    def receipts():
+        result = {}
+        for name, path in paths.items():
+            data = path.read_bytes()
+            result[name] = {"path": str(path), "bytes": len(data),
+                            "sha256": hashlib.sha256(data).hexdigest()}
+        return result
+    before = receipts()
+    if (before["original"]["bytes"], before["original"]["sha256"]) != (ORIGINAL_BYTES, ORIGINAL_SHA256):
+        raise ValueError("Approved original changed before source inspection")
+    if (before["candidate"]["bytes"], before["candidate"]["sha256"]) != (CANDIDATE_BYTES, CANDIDATE_SHA256):
+        raise ValueError("The one verified private candidate changed before source inspection")
+    # Import only after argument, containment, absence and complete input hash checks.
+    import bpy
+    from mathutils import Vector
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.import_scene.gltf(filepath=str(candidate_path))
+    imported = list(bpy.context.scene.objects)
+    meshes = [obj for obj in imported if obj.type == "MESH"]
+    if not meshes:
+        raise ValueError("Actual imported candidate has no mesh")
+    bpy.context.view_layer.update()
+    def matrices():
+        return [{"name": obj.name, "type": obj.type,
+                 "matrixLocal": [list(row) for row in obj.matrix_local],
+                 "matrixWorld": [list(row) for row in obj.matrix_world],
+                 "materials": [slot.material.name if slot.material else None for slot in obj.material_slots]}
+                for obj in imported]
+    imported_before = matrices()
+    corners = [obj.matrix_world @ Vector(corner) for obj in meshes for corner in obj.bound_box]
+    low = Vector(tuple(min(point[axis] for point in corners) for axis in range(3)))
+    high = Vector(tuple(max(point[axis] for point in corners) for axis in range(3)))
+    if any(not math.isfinite(value) for point in (low, high) for value in point):
+        raise ValueError("Actual imported bounds must be finite")
+    centre, span = (low + high) * .5, max(high - low)
+    if span <= 0:
+        raise ValueError("Actual imported source bounds are empty")
+    output.mkdir(parents=True, exist_ok=False)
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = 48
+    scene.cycles.use_denoising = True
+    scene.render.threads_mode, scene.render.threads = "FIXED", 4
+    scene.render.resolution_x, scene.render.resolution_y = 960, 600
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = "PNG"
+    scene.view_settings.view_transform = "AgX"
+    world = bpy.data.worlds.new("source-inspection-neutral")
+    scene.world = world
+    world.use_nodes = True
+    world.node_tree.nodes["Background"].inputs["Color"].default_value = (.35, .35, .35, 1)
+    world.node_tree.nodes["Background"].inputs["Strength"].default_value = .8
+    for name, offset, energy in (("key", (1, -1, 2), 600), ("fill", (-1, 1, 1), 300)):
+        light = bpy.data.lights.new(name, "AREA")
+        light.energy, light.shape, light.size = energy * span * span, "DISK", span * 2
+        obj = bpy.data.objects.new(name, light)
+        scene.collection.objects.link(obj)
+        obj.location = centre + Vector(offset) * span
+        obj.rotation_euler = (centre - obj.location).to_track_quat("-Z", "Y").to_euler()
+    # A bounds floor is a diagnostic reference, not a claim that the feet are grounded.
+    bpy.ops.mesh.primitive_plane_add(size=span * 3, location=(centre.x, centre.y, low.z))
+    floor = bpy.context.object
+    floor.name = "source-bounds-floor-not-fitted"
+    floor_material = bpy.data.materials.new("source-neutral-floor")
+    floor_material.diffuse_color = (.25, .25, .25, 1)
+    floor.data.materials.append(floor_material)
+    camera_data = bpy.data.cameras.new("source-inspection-camera")
+    camera = bpy.data.objects.new("source-inspection-camera", camera_data)
+    scene.collection.objects.link(camera)
+    scene.camera = camera
+    camera_data.type, camera_data.ortho_scale = "ORTHO", span * 1.3
+    camera_data.clip_start, camera_data.clip_end = span * .001, span * 10
+    records = []
+    error = None
+    try:
+        for name, source_axis in SOURCE_VIEWS:
+            # Standard glTF +Y-up import maps source XYZ to Blender X,-Z,Y.
+            direction = Vector((source_axis[0], -source_axis[2], source_axis[1]))
+            camera.location = centre + direction * span * 3
+            camera.rotation_euler = (centre - camera.location).to_track_quat("-Z", "Y").to_euler()
+            floor.hide_render = name == "minus-y"
+            image = output / (name + ".png")
+            scene.render.filepath = str(image)
+            bpy.context.view_layer.update()
+            bpy.ops.render.render(write_still=True)
+            records.append({"view": name, "label": "SOURCE INSPECTION / UNFITTED / NOT GAME" +
+                            (" / UNDERSIDE / FLOOR HIDDEN" if floor.hide_render else " / BOUNDS FLOOR"),
+                            "sourceAxis": list(source_axis), "image": str(image),
+                            "sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
+                            "cameraBlender": list(camera.location), "targetBlender": list(centre),
+                            "cameraMatrixWorld": [list(row) for row in camera.matrix_world],
+                            "orthoScale": camera_data.ortho_scale, "floorHidden": floor.hide_render})
+    except Exception as caught:
+        error = str(caught)
+        raise
+    finally:
+        after = receipts()
+        imported_after = matrices()
+        unchanged = after == before and imported_after == imported_before
+        manifest = {"card": "WILD-ART-SRC", "kind": "SOURCE INSPECTION / UNFITTED / NOT GAME",
+                    "sourceBefore": before, "sourceAfter": after, "sourceAndTransformsUnchanged": unchanged,
+                    "importedBefore": imported_before, "importedAfter": imported_after,
+                    "boundsBlender": {"min": list(low), "max": list(high), "centre": list(centre)},
+                    "floorBlenderZ": low.z, "floorMeaning": "measured minimum, not a feet-grounding pass",
+                    "axes": "source glTF +Y-up; imported Blender X,-Z,Y; donor units, not metres",
+                    "render": {"engine": "CYCLES", "device": "CPU", "threads": 4, "samples": 48,
+                               "resolution": [960, 600], "viewTransform": "AgX"},
+                    "views": records, "error": error, "unfitted": True, "axesVerified": False,
+                    "groundingVerified": False, "artAccepted": False, "runtimeInstalled": False}
+        with (output / "inspection-manifest.json").open("x", encoding="utf-8", newline="\n") as handle:
+            json.dump(manifest, handle, indent=2)
+            handle.write("\n")
+        if not unchanged:
+            raise ValueError("A source file or imported donor transform/material binding changed during inspection")
+    print(json.dumps(view_plan(output)))
 
 
 def read_original(data):
@@ -141,12 +277,15 @@ def adapt_container(document, binary, image_index, png):
 def main():
     args, root, output = arguments()
     if args.paths_only:
-        print(json.dumps(output_plan(output)))
+        print(json.dumps(view_plan(output) if args.view_only else output_plan(output)))
         return
     if root != Path(__file__).resolve().parents[2]:
         raise ValueError("Actual adaptation must use this recipe's own checkout")
     if output.exists():
         raise ValueError("Use a new absent private output leaf; never overwrite a prior packet")
+    if args.view_only:
+        inspect_source_views(root, output)
+        return
     config = json.loads((root / "tools/art/wildlife-north-woods.json").read_text(encoding="utf-8"))
     beaver = next(row for row in config["models"] if row["id"] == "beaver")
     if (beaver["author"], beaver["licence"], beaver["original"]["file"], beaver["original"]["sha256"]) != (

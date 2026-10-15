@@ -254,11 +254,11 @@ function kitPathPlan(generator, fixtureRoot) {
 
 // Beaver has an explicit private PNG contract; it never uses the tanker's
 // fit-config or changes that recipe's embedded-only atlas assertions.
-function beaverPlanCall(fixtureRoot, output, model = 'beaver') {
+function beaverPlanCall(fixtureRoot, output, model = 'beaver', viewOnly = false) {
   const before = fixtureTree(fixtureRoot);
   const call = spawnSync('python', ['-I', '-B', '-S', '-c', kitPlanAudit,
     join(root, 'tools/blender/wildlife-north-woods.py'), '--', '--root', fixtureRoot,
-    '--model', model, '--output-dir', output, '--paths-only'],
+    '--model', model, '--output-dir', output, '--paths-only', ...(viewOnly ? ['--view-only'] : [])],
     {cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000});
   assert.equal(call.error, undefined, call.error?.message);
   assert.deepEqual(fixtureTree(fixtureRoot), before, 'beaver planning changed its temporary root');
@@ -378,6 +378,56 @@ try {
       assert.deepEqual(readdirSync(fixtureRoots[1]), [], 'linked planning changed its target');
     } finally {
       assert.ok(lstatSync(link).isSymbolicLink(), 'fixture link unexpectedly changed');
+      unlinkSync(link);
+      rmdirSync(privateRoot);
+    }
+  });
+  check('beaver view-only plans six source-axis pictures and one inspection manifest on both empty roots', () => {
+    const names = ['plus-x', 'minus-x', 'plus-z', 'minus-z', 'plus-y', 'minus-y'];
+    const plans = fixtureRoots.map(fixtureRoot => {
+      const output = join(fixtureRoot, '.qa-dist', 'beaver-source-views');
+      const call = beaverPlanCall(fixtureRoot, output, 'beaver', true);
+      assert.equal(call.status, 0, call.stderr || call.stdout);
+      const plan = JSON.parse(call.stdout);
+      assert.deepEqual(plan, {blend: [], glb: [], json: [join(output, 'inspection-manifest.json')],
+        atlas: [], evidence: names.map(name => join(output, name + '.png')), summary: []});
+      const outputs = [...plan.json, ...plan.evidence];
+      assert.equal(new Set(outputs).size, 7, 'source views never export models, atlases or Blend files');
+      assert.deepEqual(readdirSync(fixtureRoot), [], 'view planning created no files or directories');
+      return outputs.map(path => relative(fixtureRoot, path).split(sep).join('/'));
+    });
+    assert.deepEqual(plans[0], plans[1], 'source view paths do not depend on the empty fixture root');
+  });
+  check('beaver view-only refuses another animal before donor reads or Blender imports', () => {
+    const call = beaverPlanCall(fixtureRoots[0], join(fixtureRoots[0], '.qa-dist', 'beaver-views'), 'moose', true);
+    assert.notEqual(call.status, 0);
+    assert.equal(call.stdout.trim(), '');
+    assert.match(call.stderr, /invalid choice.*moose/i);
+  });
+  for (const [label, output] of [
+    ['public output', join(fixtureRoots[0], 'public', 'beaver-views')],
+    ['another root', join(fixtureRoots[1], '.qa-dist', 'beaver-views')],
+    ['traversal', join(fixtureRoots[0], '.qa-dist') + sep + '..' + sep + 'public' + sep + 'beaver-views'],
+    ['private-looking sibling', join(fixtureRoots[0], '.qa-dist-other', 'beaver-views')],
+  ]) check('beaver view-only rejects ' + label + ' before input reads or writes', () => {
+    const call = beaverPlanCall(fixtureRoots[0], output, 'beaver', true);
+    assert.notEqual(call.status, 0);
+    assert.equal(call.stdout.trim(), '');
+    assert.match(call.stderr, /private child|supplied root/i);
+    assert.deepEqual(readdirSync(fixtureRoots[1]), [], 'rejected view plan changed another root');
+  });
+  check('beaver view-only refuses a linked private-directory escape', () => {
+    const privateRoot = join(fixtureRoots[0], '.qa-dist'), link = join(privateRoot, 'linked-beaver-view');
+    mkdirSync(privateRoot);
+    symlinkSync(fixtureRoots[1], link, process.platform === 'win32' ? 'junction' : 'dir');
+    try {
+      const call = beaverPlanCall(fixtureRoots[0], join(link, 'views'), 'beaver', true);
+      assert.notEqual(call.status, 0);
+      assert.equal(call.stdout.trim(), '');
+      assert.match(call.stderr, /private child|supplied root/i);
+      assert.deepEqual(readdirSync(fixtureRoots[1]), [], 'linked view planning changed its target');
+    } finally {
+      assert.ok(lstatSync(link).isSymbolicLink(), 'view fixture link unexpectedly changed');
       unlinkSync(link);
       rmdirSync(privateRoot);
     }

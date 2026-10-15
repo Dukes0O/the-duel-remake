@@ -308,6 +308,52 @@
         "naturalLookVerified": false,
         "artAccepted": false,
         "runtimeInstalled": false
+      },
+      "sourceViewPlan": {
+        "status": "source-only-unrun",
+        "option": "--view-only",
+        "input": ".qa-dist/wild-beaver-3defc568/beaver-source-unfitted.glb",
+        "candidateBytes": 151888,
+        "candidateSha256": "834d024ab14cc4ec14e7402f28b3ec06df311748c8dd380bf26e306ad0e1705b",
+        "originalBytes": 41468,
+        "originalSha256": "37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1",
+        "output": "new absent private output-dir only",
+        "views": [
+          "plus-x",
+          "minus-x",
+          "plus-z",
+          "minus-z",
+          "plus-y",
+          "minus-y"
+        ],
+        "floor": "actual imported minimum; hidden only for labelled minus-y underside; not fitted feet",
+        "render": {
+          "engine": "CYCLES",
+          "device": "CPU",
+          "threads": 4,
+          "samples": 48,
+          "resolution": [
+            960,
+            600
+          ]
+        },
+        "record": [
+          "source hashes and bytes before/after",
+          "native imported local/world matrices and material bindings before/after",
+          "actual world bounds",
+          "camera/target/floor",
+          "image hashes and errors"
+        ],
+        "label": "SOURCE INSPECTION / UNFITTED / NOT GAME",
+        "modifiesDonor": false,
+        "exportsModel": false,
+        "artAccepted": false,
+        "runtimeInstalled": false,
+        "fitDecisionMissing": [
+          "adult metric size",
+          "anatomical role confirmation",
+          "feet versus tail ground anchor"
+        ]
       }
     }
   ],
