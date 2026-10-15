@@ -158,8 +158,11 @@ New file `src/heli/heli-fire.js`, pure and repeatable, no graphics.
 
 Each cell has an intensity from 0 to 1. The fire moves in **spread steps**:
 
-- One step for every 90 seconds the engine runs, on any course (simulated
-  time, not the clock). A cruise leg counts its own flying time: its fuel
+- One step for every 200 seconds the engine runs, on any course (simulated
+  time, not the clock). FIRE-FINISH set this from play: a real bucket
+  round trip, refuels included, takes about 200 s, so the section 4.5
+  targets (tuned at one drop a step) hold in the air; at 90 s a fire
+  answered at once took 11 drops and 36 minutes. A cruise leg counts its own flying time: its fuel
   divided by 0.6 kg/s.
 - Three steps at the start of each new play day while the fire burns.
 - Nothing while the game is closed, and nothing during races (racing days

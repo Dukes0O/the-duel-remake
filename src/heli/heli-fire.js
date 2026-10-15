@@ -17,7 +17,7 @@ export const FIRE = Object.freeze({
   baseChance: 0.55, litresPerPoint: 180,
   startPercent: 75, neighbourPercent: 50, litPercent: 25, growPercent: 25, spreadFrom: 50,
   dampSteps: 2, damp: 0.2, spot: 3, regionCells: 2,
-  stepSeconds: 90, dayStepCount: 3, cruiseKgPerSecond: 0.6,
+  stepSeconds: 200, dayStepCount: 3, cruiseKgPerSecond: 0.6,
   // Saved cells and scars name cells of the grid built from this course
   // seed (the helicopter's), so every caller builds the same grid.
   courseSeed: 1989,

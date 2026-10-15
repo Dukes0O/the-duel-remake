@@ -158,6 +158,9 @@ const flown = flyMission();
   const {session, log, trips} = flown;
   const out = log.find(event => event.type === 'fireOut');
   ok(out, `the fire is put out (${trips} drops)`);
+  // Section 4.5: a fire answered at once goes out in 4 to 8 drops. A fire step
+  // lasts one real bucket trip (FIRE-FINISH), so this holds in play too.
+  ok(trips <= 8, `answered at once, out within 8 drops (${trips})`);
   ok(trips >= 2 && trips <= 14, `in a sensible number of drops: ${trips}`);
   same([out.paid, out.firstBadge], [1500, true], '1,500 credits and the badge the first time');
   const heli = heliOf(session.profile);
