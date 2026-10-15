@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T06:32:21.502Z
+Observed at: 2026-10-15T06:42:12.513Z
 
-Observation commit: 2a2963a70764f50c8644161df31561ae921175c7
+Observation commit: 3108a0a12e3bc8d8ad0f2a89b1d544b94587ac5a
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2a2963a70764f50c8644161df31561ae921175c7
+Integration HEAD: 3108a0a12e3bc8d8ad0f2a89b1d544b94587ac5a
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -35,7 +35,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-finish | 3 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
-| codex/p4-qualifying | 3 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
+| codex/p4-qualifying | 4 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/p4-yeti | 1 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 0 | unknown | true | false | unknown |
@@ -53,9 +53,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/p4-ardennes | P4-ARDENNES | 2026-10-14T23:22:23-07:00 | 0 | last commit 2026-10-14T23:22:23-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb |
+| codex/p4-ardennes | P4-ARDENNES | 2026-10-14T23:36:13-07:00 | 0 | last commit 2026-10-14T23:36:13-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/board/looks/ardennes-art/round-2-review.md, docs/board/looks/ardennes-art/round-2.jpg, docs/changes/P4-ARDENNES.md |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
-| codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
+| codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T23:23:50-07:00 | 0 | last commit 2026-10-14T23:23:50-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
@@ -76,7 +76,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 968,996 B | +0 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 416,914,432 B | +166,912 B | unavailable |
+| Git objects | 417,326,080 B | +411,648 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,7 +85,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 2a2963a70764f50c8644161df31561ae921175c7
+- Local integration/wasteland: 3108a0a12e3bc8d8ad0f2a89b1d544b94587ac5a
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

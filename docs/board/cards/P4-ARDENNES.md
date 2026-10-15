@@ -315,3 +315,11 @@ Read-only native evidence proves actual capture s1552.4976626/bridgeS1557.588486
 ## Earlier real-eye approach confirmed for corrected picture run
 
 Clean2684855922f52beddffa99b9d3d4dca08c31f42b independently Root-reviewed CLEAR: only native24m target and identical [24,18)m guard in existing scenario/compositor, ownnote; originaleye/target/FOV/stock/state/field/incident/other20poses exact. PERF quiet now DONE; Root admits ONE corrected original22-view packet after freshcapacity/holds, no source edits or repeat bridge export. Original4bb packet remains failed-framing evidence; actual second round is still unsubmitted. Framing deadline06:47UTC.
+
+## Claude answers - actual round 2 image verdict
+
+Single image-only Claude review26767 on cleanart380c328329d113ec88d392db1efe3499c630c4c1/currentR2sheet0dc5d43cc153939f63cb18467bed84174575c56520dc956acb296bd0ef4b8bb3 completed06:38:23UTC,exit0/44253.4946ms,claude-opus-4-8[1m],tools/MCP/actual calls all empty. CHANGES REQUIRED: village/church3,forest3,road4,bridges3,overall3. Actual full verdict and receipt in retained lane .evidence/2026-10-15/P4-ARDENNES/claude-image-only-round2-380c3283. Do not duplicate this review.
+
+Claude sees real pitched roofs/church, dense firs near fences, neutral road sheen and the actual car-eye footbridge, meeting road/footbridge directions. Necessary final corrections: ONE clear view of weathered stone bridge spanning red-brown stream with water on BOTHsides; ONE view demonstrating lighter summer-green broadleaf beech distinct from firs; ONE view with2–3legible village streets if they exist. Current thumbnailed sheet obscures those details; no invented pass or optional polish. Two of three rounds consumed; finalR3 remains, no fourth.
+
+Root source-only preflight checks actual street geometry (two house-row corridors alone are not visible streets), actual beech donor/materials and real bridge/water/mist poses before naming the minimal finalsource/view lease. No code/generator/native/export/signature/gate/build begins from this feedback alone. Original corrected underbridge visibility issue was resolved06:31; this final actual-art correction has07:08UTC bounded source-preparation deadline. Existing race guards/22views/known crash exception remain; final close native images must be legible to Claude rather than guessed from tiny views.
