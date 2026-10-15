@@ -71,3 +71,7 @@ Summit's current night summit (after 5078dafb and the Gallery cover), laptop
 screen off as Kyle set it. Send the before/after picture pairs with the result;
 Claude judges the look of any trim. Keep clear of the 04:00 full check's frame
 step.
+
+## Acknowledged current-scene continuation
+
+Claude987398d1 acknowledges the new quiet window; fresh process inspection finds zero heavy roots. The retained candidate merged current integration cleanly into its own lane0974f4c8, including finishing5078dafb and Gallery82c1d7ff. Root preserves the Harbour baseline on its unchanged scene. Summit's old High-only sample predates those visual changes and does not cover this source: capture one genuine current-scene baseline per quality with integration's exact AO0.6 bytes, then restore only the already-reviewed0.5 candidate for one after run per quality/course. No new guess or fitted repetition. Same actual pose/8cars/night/120RAF and before/after images; Claude judges any trim. Window ends by05:34UTC or earlier on completion. All other heavy work/merges wait; source edits continue.
