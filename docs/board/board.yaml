@@ -743,3 +743,12 @@ tasks:
     needs: []
     locks: [busy-game-files]
     details: "docs/board/cards/QA-SUMMIT-WARMUP-EXCEPTION.md"
+  - id: QA-HARBOUR-PERFORMANCE-PACING
+    title: "Harbour Performance fails its one authorized quiet reread"
+    owner: "codex"
+    lane: "RENDER"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-HARBOUR-PERFORMANCE-PACING.md"
