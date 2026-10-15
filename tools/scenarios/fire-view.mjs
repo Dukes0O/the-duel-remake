@@ -1,9 +1,14 @@
-// FIRE-VIEW's look and frame check (docs/HELI_FIRE.md section 16): a
-// 60-cell fire at Tremblant Woods seen from 150 m on High and Performance,
-// a drop with the aim ring, and a race on the burnt course at each regrowth
-// stage. Saves are memory-only. Run:
+// FIRE-VIEW's look and frame check (docs/HELI_FIRE.md section 16): the
+// biggest fire that can burn at Tremblant Woods seen from 150 m on High and
+// Performance, a drop with the aim ring, the fire from the side, the burnt
+// course from 150 m at each stage, and a race on it at each regrowth stage.
+// Saves are memory-only. Run:
 //   node tools/browser-harness.mjs scenario fire-view
-// FIRE_VIEW_FRAMES=0 takes the pictures only.
+// FIRE_VIEW_FRAMES=0 takes the pictures only. FIRE_VIEW_SHEET=<round> also
+// writes the comparison sheet to docs/board/looks/fire-view/round-<round>.jpg.
+import {readFile, writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import {publishReviewSheet} from './review-sheet.mjs';
 import {Course} from '../../src/course.js';
 import {ALL_CIRCUITS} from '../../src/circuits/index.js';
 import {groundFromCourse} from '../../src/heli/heli-ground.js';
@@ -15,7 +20,28 @@ import {createMissions} from '../../src/heli/heli-save.js';
 const entry = '/tools/menu-check.html?flags=helicopter,forest-fire,tremblant-woods,tremblant-snow';
 const P95_LIMIT_MS = 18.5;
 const FRAMES = process.env.FIRE_VIEW_FRAMES !== '0';
+const SHEET_ROUND = Number(process.env.FIRE_VIEW_SHEET || 0);
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+// The pictures that go on the comparison sheet, in order.
+const sheetShots = [];
+const shoot = async (context, name, label) => { const path = await context.screenshot(name); if (label) sheetShots.push({label, path}); return path; };
+
+async function writeSheet(context, path) {
+  const shots = await Promise.all(sheetShots.map(async shot => ({label: shot.label, data: 'data:image/png;base64,' + (await readFile(shot.path)).toString('base64')})));
+  const png = await context.evaluate(`(async () => {
+    const shots = ${JSON.stringify(shots)}, c = document.createElement('canvas'), w = 640, h = 360, cols = 3;
+    c.width = w * cols; c.height = 44 + Math.ceil(shots.length / cols) * (h + 30);
+    const x = c.getContext('2d'); x.fillStyle = '#14191a'; x.fillRect(0, 0, c.width, c.height);
+    x.fillStyle = '#eadabc'; x.font = '22px sans-serif'; x.fillText('FIRE-VIEW round ${SHEET_ROUND}: the fire, the bucket and the burnt course (browser captures, memory-only saves)', 16, 30);
+    for (let i = 0; i < shots.length; i++) {
+      const im = new Image(); im.src = shots[i].data; await im.decode();
+      const left = (i % cols) * w, top = 44 + Math.floor(i / cols) * (h + 30);
+      x.drawImage(im, left + 4, top, w - 8, h);
+      x.fillStyle = '#fff'; x.font = '17px sans-serif'; x.fillText(shots[i].label, left + 10, top + h + 21);
+    }
+    return c.toDataURL('image/png'); })()`);
+  await writeFile(path, Buffer.from(png.split(',')[1], 'base64'));
+}
 
 // The biggest fire that can burn: one cell short of the lost size (45 since
 // FIRE-SPREAD's tuning; the packet's 60-cell figure predates it).
@@ -98,7 +124,7 @@ async function overTheFire(context, quality, fire, {pictures}) {
   await context.waitFor(`(() => { const v = window.__qaApp.heliView(), t = window.__pilot;
     return Math.hypot(v.heli.x - t.x, v.heli.z - t.z) < 6 && Math.abs(v.heli.y - t.y) < 3 && Math.hypot(v.heli.vx, v.heli.vz) < 1; })()`, 'over the fire', 240_000);
   await pause(1500);
-  if (pictures) await context.screenshot(`fire-150m-${quality}`);
+  if (pictures) await shoot(context, `fire-150m-${quality}`, quality === 'high' ? 'The fire from 150 m (High)' : null);
   // From the side as well: the smoke columns stand up.
   const frames = FRAMES ? await measure(context, `${quality}, 150 m over a ${fire.burning.length}-cell fire`) : null;
   return frames;
@@ -123,7 +149,7 @@ async function drop(context) {
   await context.waitFor(`${app}.heliLog.some(e => e.type === 'autopilotArrived')`, 'the autopilot at the fire', 300_000);
   await context.evaluate(`(() => { ${app}._inputAction('heli-autopilot'); window.__pilot = null; window.__pour = true; })()`);
   await pause(700);
-  await context.screenshot('fire-drop');
+  await shoot(context, 'fire-drop', 'A drop: the aim ring locked, water falling');
   await context.waitFor(`(${app}.heliView().bucket?.water ?? 0) <= 1`, 'the bucket empties', 30_000);
   await context.evaluate(`window.__pour = false`);
   await pause(3000);
@@ -135,7 +161,7 @@ async function drop(context) {
   await context.waitFor(`(() => { const v = ${app}.heliView(), t = window.__pilot;
     return Math.hypot(v.heli.x - t.x, v.heli.z - t.z) < 6 && Math.abs(v.heli.y - t.y) < 3 && Math.hypot(v.heli.vx, v.heli.vz) < 1; })()`, 'beside the fire', 240_000);
   await pause(2000);
-  await context.screenshot('fire-side');
+  await shoot(context, 'fire-side', 'The fire from the side, after the drop');
 }
 
 async function burntRace(context, quality, {stage, days}) {
@@ -151,10 +177,25 @@ async function burntRace(context, quality, {stage, days}) {
   // The frame measurement stops if the race moves from the countdown to racing, so wait for the start.
   await context.waitFor(`window.__qaApp.duel.state.status === 'racing'`, `the start ${stage}`, 30_000);
   await pause(1500);
-  await context.screenshot(`burnt-${stage}-${quality}`);
+  await shoot(context, `burnt-${stage}-${quality}`, quality === 'high' && stage !== 'shoots' ? `Racing on the ${stage} course` : null);
   const frames = FRAMES && (stage === 'black' || stage === 'fireweed') ? await measure(context, `${quality}, a race on the ${stage} course`) : null;
   await context.evaluate(`window.__qaApp.returnToMenu()`);
   return frames;
+}
+
+// The burnt course from 150 m above the pad, at one stage.
+async function burntFromAir(context, {stage, days}) {
+  const heli = {version: 1, fuelKg: 400, refuels: 3, lessons: trained, playDay: {last: '2026-10-20', count: 70},
+    burnt: {'tremblant-woods': {day: 70 - days, boughtBack: false}}};
+  await menu(context, 'high', heli);
+  await context.evaluate(`document.querySelector('#heli-visit').click()`);
+  await context.waitFor(`window.__qaApp.duel.state.status==='heli' && window.__qaApp.visualReady`, `helipad, ${stage}`, 120_000);
+  await context.waitFor(`document.querySelector('#view3d')?.dataset.burntLook === 'ready'`, `burnt art from the air, ${stage}`, 60_000);
+  await installPilot(context);
+  await context.evaluate(`(() => { const v = window.__qaApp.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.zone.y + 150, speed: 4, sink: 6}; window.__qaApp.heliCamera = 2; })()`);
+  await context.waitFor(`(() => { const v = window.__qaApp.heliView(); return v.heli.y - v.zone.y > 147 && Math.abs(v.heli.vy) < 1; })()`, `150 m up, ${stage}`, 120_000);
+  await pause(1500);
+  await shoot(context, `air-${stage}`, `The ${stage} course from 150 m (day ${days})`);
 }
 
 export async function run(context) {
@@ -173,6 +214,7 @@ export async function run(context) {
   await installPilot(context);
   await context.evaluate(`window.__qaApp.heliCamera = 2`);
   await drop(context);
+  for (const [stage, days] of [['closed', 3], ['black', 12], ['shoots', 25], ['fireweed', 40]]) await burntFromAir(context, {stage, days});
   for (const [stage, days] of [['black', 12], ['shoots', 25], ['fireweed', 40]]) {
     const result = await burntRace(context, 'high', {stage, days});
     if (result) frames.push(result);
@@ -181,6 +223,11 @@ export async function run(context) {
     for (const stage of [['black', 12], ['fireweed', 40]]) {
       const result = await burntRace(context, 'performance', {stage: stage[0], days: stage[1]});
       if (result) frames.push(result);
+    }
+    if (SHEET_ROUND) {
+      const raw = join(context.outputDir, 'sheet.png');
+      await writeSheet(context, raw);
+      console.log(`Comparison sheet: ${await publishReviewSheet(context, raw, 'fire-view', SHEET_ROUND)}`);
     }
     const failed = frames.filter(item => item.p95 > P95_LIMIT_MS);
     console.log(`Frame check: ${frames.map(item => `${item.label} p95 ${item.p95} ms`).join('; ')} (limit ${P95_LIMIT_MS} ms)${failed.length ? ' FAILED' : ''}`);
