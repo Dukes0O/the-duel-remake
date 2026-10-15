@@ -134,7 +134,7 @@ export const SUMMIT_RUN=defineScriptedCourse({
     Object.freeze({s:at(index)+35,lateral:geometry.pieces[index].kind==='turn'
       ? -geometry.pieces[index].dir*17 : i%2?-17:17}))),
   lightPath:{axis:'distance',keyframes:[{at:0,look:'day'},{at:at(26),look:'golden'},{at:at(29),look:'dusk'},{at:10100,look:'night'}]},
-  snowWorld:{mixed:true,softBanks:true,bankHeaps:true,snowPoles:true,variation:true,rockTint:0x343936,branchTone:0x293135,drifts:true,nightExposure:1.02,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],
+  snowWorld:{mixed:true,softBanks:true,bankHeaps:true,snowPoles:true,variation:true,variationStrength:.45,variationScale:800,rockTint:0x343936,branchTone:0x293135,drifts:true,nightExposure:1.02,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],
     // Tone breaks in the snowfields (finishing pass): dark pine clumps and a few frozen ponds on flat ground.
     pineClusters:[[7450,30],[7760,-30],[8050,30],[8350,-30],[8700,-30],[9000,30],[9350,30],[9650,-30],[9950,30],[11100,-30],[11700,30],[12300,-28],[12650,30],[13200,-28]]
       .map(([s,lateral])=>({s,lateral,count:7,radius:10})),

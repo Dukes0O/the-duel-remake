@@ -1,0 +1,73 @@
+# SNOW-VARIATION
+
+Summit alone opts into variationStrength 0.20 and variationScale 800 metres. Strength is the half-range around the existing 0.88 mean; its original 0.68..1.08 contrast remains. Scale gives both normalized directional wind waves their world-metre wavelength, keeping the existing wind direction and broad alternating lighter/darker patches. Authored scale is finite 200..800 metres and strength finite 0..0.88, as approved before code. No light, snow albedo, texture, route, physics or seeded state changes.
+
+The original winterTerrainMaterial callback text is byte-exact on omission, empty options, explicit effective default strength and variation disabled. A wrapper changes only the existing blown field or contrast for effective opted-in parameters; its program key names those effective values. Default custom and native Three cache behavior remains. world.js only forwards the existing snow options; other courses omit the new options. No other material behavior changes.
+
+Existing test-snow-world cases were added before the implementation. They cover original callback/shader/cache identity with both prior and native Three keys, disabled variation, prior shader composition, actual wavelength and strength literals, dry-weight identity, unchanged base colour/roughness, equivalent/different option keys, valid endpoints and invalid values. All previous assertions stay intact. Source byte comparison also confirms the original callback SHA256 880097ce477e9b42b4693d7d00931f4e658b38ce7b200be90e43d88350019473.
+
+Root's genuine corrected 16-view BEFORE packet on clean 989bf3c1 passed with exit 0 in 21,555.1723 ms, private port 6958, no browser warnings/errors; Root viewed all pictures. It remains .evidence/2026-10-15/SNOW-VARIATION/before-989bf3c1. No new tests, imports, builds or native captures ran during the subsequent frame hold. AFTER pictures, Claude's verdict, the single nearby lane and build are pending. No visual acceptance or world-signature change is claimed; only an actual reviewed Summit difference may update its row.
+
+## Removed
+
+Only Summit's fixed short-scale wind field is replaced when its new authored options are used. The original default callback and every other course's material path remain. No asset, fixture, helper framework or old assertion is removed.
+
+## First comparison recipe, not yet executed
+
+Root's original AFTER capture on unchanged 6402a40c passed with exit 0 in 20,289.0585 ms, ending 05:04:59 UTC, private memory-only browser and no browser errors/warnings. Its genuine 16-view packet is .evidence/2026-10-15/SNOW-VARIATION/after-6402a40c. Root viewed the full sheet and saw no obvious wind change at that scale; no art verdict is inferred. Native vertical vehicle poses differ in some pictures, so this is not a strict identical-physics screenshot pair.
+
+The owned snow-variation-sheet.py prepares one immutable round-1.jpg from actual frame 06 Engineer's braking/daylight distant snow and frame 14 Last Breath braking/night approach. It checks successful unchanged-source receipts, exact source ids, native memory/browser reports, matching requested station metadata, four actual image SHA256 values and original 1280 x 800 RGB dimensions. The source-course comparison permits only the two snow options; all route geometry is exact. It uses the full viewports, resized only, with honest outside-image labels and no crop, retouch or brightness change. Only the <=500 KB JPG is a deliverable; its small provenance manifest stays in ignored evidence. Later rounds require new reviewed inputs within the three-round cap. The recipe is authored but UNRUN; no picture, fixture, test, import, native retry, gate or build is produced by this source commit. Original 6402a40c runtime/test blobs remain exact; Root schedules the compositor and Claude's verdict next.
+
+Removed: nothing further. The recipe replaces no native source image or earlier review sheet.
+
+The reviewed compositor executed once successfully. Actual round-1.jpg is453108 bytes/SHA256a0c897791a99c8d6512b766a4d1e5e40836188f14a37031d987148699e8e9b33. Root viewed it: native daylight and night source pixels are intact, no clear wind-patch improvement is claimed. Selected frame positions/inputs match exactly in browser-result; actual screenshot vehicle vertical positions may differ. Claude must judge the visual change before acceptance. No signature regenerated or changed; all tests/build remain pending.
+
+## Round-one verdict and bounded daylight ART view
+
+Claude's image-only round-one review completed at 05:10:53 UTC (exit 0, 22,605 ms, no tools/MCP). NOT REVIEWED: the image is visible, but distant thin daylight snow and dark roadside views do not show a broad snowfield. Patch visibility was 1/5 and natural appearance 3/5; this is neither runtime failure nor acceptance. Claude requested several hundred metres of open snow in daylight, with a static matched camera. Round one stays immutable and consumed one of three review rounds.
+
+The named opt-in DUEL_SUMMIT_SNOW_ART=1 in the existing Summit scenario now prepares that pair only. The original default scenario body is byte-exact after removing its one early selector. Each leg fully navigates to a fresh memory-only menu document/renderer, stays in menu and constructs the real Course 1989 from the actual menu course's constructor. Both copies apply the same explicitly labelled daylight ART lightPath/timeOfDay override; only BEFORE removes the two wind options and AFTER uses 0.20/800. The normal race course, authored lighting path and all runtime 6402a40c source remain unchanged.
+
+The actual captureTrackSnapshot API supplies the full native 960 x 540 canvas at Whiteout Crest with up 140/ahead 500, High only. Source checks retain unchanged physical features, state/profile/storage, real kit readiness, world build counts and actual terrain position/index/winter-coverage hashes, material keys and camera pose; both legs must share geometry and camera. It writes two original PNGs plus small JSON evidence without altering pixels. No vehicle, race-state pose/time/phase assignment, full 16-view repeat, frame measurement, fixture or new harness is added. The recipe source is frozen UNRUN for Root review; actual capture and an immutable round-two compositor follow only on Root GO. Framing remains a Claude decision, bounded by 05:40 UTC.
+
+Removed: nothing further; the insufficient round-one evidence and verdict are retained, with no fourth round or changed runtime candidate.
+
+## Actual static daylight pair and round-two compositor source
+
+The single static pair on unchanged 3ea6100b passed with exit 0 in 38,040.9553 ms, ending 05:18:42 UTC, private port 11845, no browser warnings/errors. Both real 960 x 540 PNGs show open snowfields. Actual course-feature/terrain/camera equality, material-key change, read-only state/profile/storage, fresh worlds and winter coverage passed. World construction 2,945/2,488 ms occurred under ordinary contention and is ART evidence only, never a performance pass. Packet: .evidence/2026-10-15/SNOW-VARIATION/daylight-round2-3ea6100b. Root sees original striations and broader candidate changes; only Claude may accept the look.
+
+The existing compositor's explicit --round 2 mode validates the actual clean source receipt, native report, both original PNG hashes, exact camera/request, options, read-only/fresh-world/winter coverage and actual geometry/material witnesses. It pastes the full native canvases without crop, resize, retouch or brightness change; their verified opaque alpha is dropped without changing RGB. Outside-image labels declare the common daylight ART override and deny race, normal-lighting and timing acceptance. Output is immutable round-2.jpg, at most 500 KB with a preferred 180 KB target; its small manifest remains ignored evidence. Default round-one composition and all round-one inputs/output stay unchanged. This source is UNRUN pending Root review; no new native pair, tests, build, gate, fixture or art verdict is claimed. The three-round cap remains.
+
+Removed: nothing. Round one and all its provenance remain; the current runtime candidate is unchanged.
+
+The one admitted actual static pair on clean3ea6100b completed exit0/38040.9553ms at05:18:42UTC/private11845/zero browser warnings/errors. Both native Course1989 copies stayed menu/read-only, equal physical features/terrain buffers/winter weights/camera, new world per leg and only material keys differed. Both shared the declared daylight ART override; no ordinary race lighting changed or performance acceptance inferred (world builds2945/2488ms under ordinary contention). Root viewed the original full960x540 canvases.
+
+Reviewed round2 compositor executed once: immutable120900B JPG/SHA2568bc5cbfcfe17c5f270704ab85328d12f364d7e98aab8e9085c3faa6e06c5c0ab. It retains full source RGB pixels with JPEG compression and outside labels only; no crop, retouch, brightness or repeated native capture. Source PNGs/witnesses are in its ignored input manifest. Actual broad open fields are now framed; acceptance remains Claude's pending second visual review. All runtime6402/test blobs remain exact, all gates/build/fixture changes pending.
+
+## Claude round-two verdict and final candidate source
+
+Claude's one actual image-only round-two review completed successfully at 05:23:13 UTC (exit 0, 20,207 ms, no tools/MCP). CHANGES REQUIRED: combined visibility/natural appearance 2/5; the AFTER was too homogeneous and smoother/whiter, without distinct broad darker/lighter regions. Claude requested increased amplitude at the same 800 m scale, two to three broad quarter-to-half-view regions and no high-frequency bands, using the same static pair. Its receipt/UTF8 verdict completed; only terminal printing had a cp1252 error. No review was repeated.
+
+The granted final Summit candidate changes only variationStrength from 0.20 to 0.45, retaining mean 0.88, range 0.43..1.33 and scale 800. Shader/default arithmetic and existing tests remain byte-exact. The existing ART hook now keeps AFTER's actual authored snow options instead of hard-coding them; BEFORE alone removes the two wind values. Every camera, fresh-page, daylight ART override, read-only and geometry witness remains unchanged. These source edits are UNRUN pending Root review before the one final native pair. No new compositor pins, signature, tests, gate, build, benchmark or art verdict are claimed. Rounds one and two remain immutable. Round three is final; if it fails or misses the bounded 05:40 UTC view window, stop rather than submit a fourth.
+
+Removed: the ART hook's duplicated hard-coded AFTER options. No runtime shader, test assertion, physics or original image is removed.
+
+## Final native pair and final numbered composition source
+
+The single FINAL static pair on unchanged 5bfd6e8d passed with exit 0 in 25,999.8244 ms, ending 05:27:44 UTC, private port 27318, zero browser warnings/errors. Packet daylight-round3-5bfd6e8d retains original before/after PNGs SHA256 4fb1322c983179840b8687121f0b974b4d859292afcb3518f89c020955d7ac80 / 75226b475182b780d54d9ce0a67dfc9a0137db5b79894bdb8dec3238cbbd5617. Actual geometry/features/camera match, state/profile/storage remain read-only, both worlds are fresh and AFTER uses the actual authored 0.45/800 material key. World construction 1,533/1,542 ms under ordinary contention is ART-only evidence, never frame acceptance. Root viewed a broad snowfield; no art verdict is inferred.
+
+The existing compositor shares its static-pair body between narrowly pinned rounds two and three. Round two keeps every original source/hash/label/option and validation; default round one is unchanged. Round three pins only the actual new source/receipt/PNGs and 0.45 material, labels its real contrast, keeps full native canvases/JPEG-only/outside daylight ART labels and exclusive immutable output, and prefers 180 KB within the 500 KB cap. No fourth path exists. This final recipe source is UNRUN pending Root review and execution; actual minimal Claude round-three judgment is required before any signature/gate/build acceptance. No runtime, shader, existing test, camera, prior sheet or fixture changes in this source step.
+
+Removed: duplicated static-round code is avoided through the existing body's two pinned configurations. No prior evidence or native pixel is removed.
+
+## Final Claude acceptance, publication and gates still pending
+
+Claude's final minimal image-only review completed successfully at 05:32:18 UTC, exit 0, 26,867.2291 ms, tools/MCP empty. ACCEPT: patch visibility 4/5, natural appearance 3/5. It judged the two original native PNGs, not an unwritten JPEG: BEFORE 4fb1322c983179840b8687121f0b974b4d859292afcb3518f89c020955d7ac80 and AFTER 75226b475182b780d54d9ce0a67dfc9a0137db5b79894bdb8dec3238cbbd5617, native source 5bfd6e8d / review source 86fe20e1. Broad right bright-cap/dark-band, lighter left midground and gentle left foreground modulation satisfy the requested visible regions; a hazy/soft whiteout character remains an accepted limitation. This is no ordinary night-lighting, performance, race or save verdict.
+
+The final round-3-review.md folds all actual earlier verdicts: R1 NOT REVIEWED (visibility 1/5, natural 3/5), R2 CHANGES REQUIRED (combined 2/5), R3 ACCEPT (4/5, 3/5), with exact reviewed-input and receipt scope. It preserves the normal authored .45 / 800 m options and the distinct presentation-only daylight override. Root may consume the earlier owned sheets only after publishing the final JPEG; none is removed here. Round-three JPEG publication, actual approved signature update, original nearby lane and build remain PENDING, with no future hash/pass claimed. The quiet hold still prohibits export/checks. Runtime 5bfd6e8d, scenario, existing tests and compositor 86fe20e1 stay exact in this docs-only commit. No fourth round, native repeat or polish follows.
+
+Removed: no files in this step; consumed earlier verdicts now live in the final review note for Root's later cleanup.
+
+Final immutable comparison published: 122278 bytes / SHA256 cc6e09f3c94916937b12a5debc98c54927143b2b64bb832dd0875fc780264d90. Root reviewed the already-frozen compositor and verified actual source pins. Claude's acceptance refers to the two original raw PNGs; the JPEG only places/compresses those full images with outside labels. No extra art round or normal-lighting/performance pass.
+
+Removed: own consumed R1/R2 sheets574008B, hash-verified and recycled after all verdicts folded into the final review note. Only current round3 picture remains; runtime5bfd source/scenario/test/compositor bytes remain exact. No signature regenerated/changed, canonical lane/build still pending.

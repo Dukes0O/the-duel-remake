@@ -131,7 +131,15 @@ export function applySnowTerrain(geometry,course){
 }
 // `drifts` (a course's snowWorld.drifts) adds broad soft drifts and fine wind ripples in slightly bluer
 // snow, so open ground has form instead of one flat white.
-export function winterTerrainMaterial(material,drifts=false,variation=false){
+export function winterTerrainMaterial(material,drifts=false,variation=false,options={}){
+  const strength=options?.variationStrength===undefined ? .20 : options.variationStrength,
+    scale=options?.variationScale;
+  if(variation){
+    if(!Number.isFinite(strength)||strength<0||strength>.88)
+      throw Error('Winter variation strength needs a finite half-range from 0 to 0.88.');
+    if(scale!==undefined&&(!Number.isFinite(scale)||scale<200||scale>800))
+      throw Error('Winter variation scale needs a finite wavelength from 200 to 800 metres.');
+  }
   const previous=material.onBeforeCompile,key=material.customProgramCacheKey.bind(material);
   material.onBeforeCompile=shader=>{
     previous.call(material,shader);
@@ -151,7 +159,24 @@ export function winterTerrainMaterial(material,drifts=false,variation=false){
       float blown=.5+.5*sin(vWinterPosition.x*.071+vWinterPosition.z*.037)*cos(vWinterPosition.z*.061);
       diffuseColor.rgb*=mix(.68,1.08,blown)*clamp(vWinterWeight,0.0,1.0)+(1.0-clamp(vWinterWeight,0.0,1.0));`:''}`);
   };
-  material.customProgramCacheKey=()=>key()+(drifts?'-winter-v1-drifts':'-winter-v1')+(variation?'-authored-variation':'');material.needsUpdate=true;return material;
+  material.customProgramCacheKey=()=>key()+(drifts?'-winter-v1-drifts':'-winter-v1')+(variation?'-authored-variation':'');
+  // Keep the original callback text and native Three cache path for defaults.
+  if(variation&&(strength!==.20||scale!==undefined)){
+    const compile=material.onBeforeCompile,legacyKey=material.customProgramCacheKey;
+    material.onBeforeCompile=shader=>{
+      compile.call(material,shader);
+      if(scale!==undefined)shader.fragmentShader=shader.fragmentShader.replace(
+        'float blown=.5+.5*sin(vWinterPosition.x*.071+vWinterPosition.z*.037)*cos(vWinterPosition.z*.061);',
+        `float blown=.5+.5*sin(dot(vWinterPosition.xz,normalize(vec2(.071,.037)))*${2*Math.PI/scale})*cos(vWinterPosition.z*${2*Math.PI/scale});`);
+      if(strength!==.20){
+        const number=value=>Number.isInteger(value)?value+'.0':String(value);
+        shader.fragmentShader=shader.fragmentShader.replace('mix(.68,1.08,blown)',
+          `mix(${number(.88-strength)},${number(.88+strength)},blown)`);
+      }
+    };
+    material.customProgramCacheKey=()=>legacyKey()+`-wind-strength:${strength}-scale:${scale??'legacy'}`;
+  }
+  material.needsUpdate=true;return material;
 }
 export function winterSurfaceMaterial(material,kind){
   if(kind==='ice'){material.color.setRGB(.12,.19,.24);material.roughness=.065;material.metalness=.18;material.envMapIntensity=.9;material.emissive?.set(0);}
