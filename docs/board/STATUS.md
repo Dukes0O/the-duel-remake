@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T02:59:09.375Z
+Observed at: 2026-10-15T03:11:49.676Z
 
-Observation commit: a90acb56e65497544f5c189f5ad21abcf151bda9
+Observation commit: 9d9f7eb520d526c32dd3c46dbdc6068bc418272c
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a90acb56e65497544f5c189f5ad21abcf151bda9
+Integration HEAD: 9d9f7eb520d526c32dd3c46dbdc6068bc418272c
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-13T19:34:19.618Z; tested commit: bb8d3a99c01140cfc60f9a492250be6049848675.
+Last recorded full run: 2026-10-15T03:04:30.279Z; tested commit: aa95cf955aced2d8982deec008f25b3ec0509f55.
 
 ## Feature switches
 
@@ -75,6 +75,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-summit-attack | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit-attack |
 | codex/p4-yeti | 0 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 0 | unknown | true | false | unknown |
+| codex/perf-high-night | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
 | codex/qa-titan-replay-timeout | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-titan-replay-timeout |
 | codex/tools/callback-diagnostics | 9 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
@@ -112,10 +113,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 19,863,360 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 301,568 B | +0 B | 5,000,000 B |
-| All `public/` | 296,906,962 B | +0 B | unavailable |
-| Git objects | 428,983,296 B | +194,560 B | unavailable |
+| Review `looks/` | 19,947,441 B | +84,081 B | 20,000,000 B |
+| Added bytes in last merge | 2,909,069 B | +2,607,501 B | 5,000,000 B |
+| All `public/` | 298,113,947 B | +1,206,985 B | unavailable |
+| Git objects | 429,415,424 B | +432,128 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -124,7 +125,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: a90acb56e65497544f5c189f5ad21abcf151bda9
+- Local integration/wasteland: 9d9f7eb520d526c32dd3c46dbdc6068bc418272c
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

@@ -335,7 +335,9 @@ tasks:
     owner: "codex"
     lane: "RENDER"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-perf-high-night-2026-10-14"
+    branch: "codex/perf-high-night"
     needs: []
     details: "docs/board/cards/PERF-HIGH-NIGHT.md"
 
