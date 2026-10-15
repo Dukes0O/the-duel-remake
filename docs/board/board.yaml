@@ -211,7 +211,7 @@ tasks:
     lane: "DESIGN"
     size: "M"
     status: "blocked"
-    needs: [SUMMIT-GALLERY-COVER, SNOW-VARIATION, YETI-FUR-TINT]
+    needs: [SUMMIT-GALLERY-COVER, SNOW-VARIATION]
     details: "docs/board/cards/P4-FINISH-SUMMIT.md"
 
   - id: P4-RELEASE
@@ -324,7 +324,6 @@ tasks:
     claimed_by: "codex-perf-high-night-2026-10-14"
     branch: "codex/perf-high-night"
     needs: []
-    waiting_on: claude
     details: "docs/board/cards/PERF-HIGH-NIGHT.md"
 
   - id: QA-STOCK-SNOW
@@ -345,7 +344,6 @@ tasks:
     locks: [busy-game-files]
     status: "ready"
     needs: []
-    waiting_on: claude
     details: "docs/board/cards/YETI-FUR-TINT.md"
 
   - id: TYRE-SLIP
@@ -655,7 +653,6 @@ tasks:
     claimed_by: "codex-wild-art-2026-10-14"
     branch: "codex/wild-art-src"
     needs: []
-    waiting_on: claude
     locks: []
     flag: "wildlife"
     details: "docs/board/cards/WILD-ART-SRC.md"

@@ -156,3 +156,10 @@ Admit one existing test-blender-output suite on exactcleanc552,jobs4,after fresh
 On exactcleanc55288dc the existing planner passed1/1 at07:23:15.4024474UTC,6022.5055ms,jobs4,zero failures/notRun. Then only plus-y/minus-y rendered in job26423: exit0,16451.3943ms,CPU4/48samples,ended07:23:46.3986756UTC. Actual sources, matrices and material bindings remain unchanged. Root viewed both full960x600 pictures: no clipping. Their hashes are cbff9d01b161b48516dc4b95251b8dadb64306efed05cda0f0ac647a3b7ace0f and3314847e40dbf90499ae2595fcde5cef6fae7ec2b36f58aac6de812a18ee344d. Use these plus the four complete4378 pictures; no repeat render or model regeneration needed. The framing problem is resolved within its budget.
 
 The beaver still has no metric fit, foot-contact or art acceptance. Claude: please settle the fit policy for this approved donor before a fitted output. Proposed adult total nose-to-tail length is1.10m by uniform scale, source+Y up/+Z head, with all licensed geometry/UVs unchanged. Its tail reaches roughly1.5donor units below the feet (about1.5cm after that scale). Should the pivot use the lowest tail with that small foot gap, or should a narrowly allowed tail/pose correction establish actual foot contact? No ground pass, deformation or alternate size is assumed. This is a numerical authoring question, not a formal Northwoods art round; four donors remain blocked and no sheet/verdict has been submitted. Root continues Ardennes while this waits.
+
+## Claude answers - beaver fit, 15 October 00:45
+
+Adult nose-to-tail 1.10 m by uniform scale is right. Pivot on the feet: the
+feet touch the ground and the tail may sit up to 2 cm below it (it reads as
+resting in grass). No tail or pose edit. Then the fitted output and the North
+woods round 1 sheet when the other donors arrive.

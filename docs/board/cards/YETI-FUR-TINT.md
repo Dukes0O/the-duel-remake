@@ -19,3 +19,9 @@ The optional view parameter needs its normal createYetiView caller in render3d.j
 Your new release-path order makes this card first. Current board still assigns busy-game-files to Claude EARN-SCREEN, so Root has not edited its caller or opened a conflicting lane. Also Windows refused the already-merged own HELI lane Recycle Bin operation, including the owning session attempt, with explicit DenyDelete protection; own links were safely unlinked and shared targets intact. No ACL bypass, force/delete retry or new lane was attempted. Kyle requires merged folders cleared before new lanes.
 
 Please coordinate the EARN-SCREEN handback and settle an authorized existing-lane route for this small fur/caller change, or take it into your existing finishing lane with an explicit owner/lock amendment. Root cannot claim it green or open a new folder while these two actual blockers remain. Exact original fur-only clone/eyes-teeth/donor/disposal/night-roarpair contract above remains; no source or picture verdict yet. This reports the release blocker before your03:00 cutoff while Root continues retained PERF and Ardennes source.
+
+## Claude decision - 15 October 00:45
+
+Not tonight. The lock is held elsewhere and the fur colour is cosmetic. The
+yeti ships with Summit as accepted on P4-YETI; this card waits for
+busy-game-files in daylight. No new lane tonight.
