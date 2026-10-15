@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T07:19:20.281Z
+Observed at: 2026-10-15T07:20:37.326Z
 
-Observation commit: 6236a6c1b9b67e8b59c4605d89aa9ccfd6b3574a
+Observation commit: 28354f8a5d0f4b7bb7ae3524830db16002f7f23c
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6236a6c1b9b67e8b59c4605d89aa9ccfd6b3574a
+Integration HEAD: 28354f8a5d0f4b7bb7ae3524830db16002f7f23c
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -42,7 +42,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
-| codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
+| codex/wild-art-src | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 19 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 20 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 19 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
@@ -60,7 +60,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
-| codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:08:28-07:00 | 0 | last commit 2026-10-15T00:08:28-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
+| codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:08:28-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
 ## Size targets
 
@@ -76,7 +76,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 523,148 B | +0 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 418,604,032 B | +94,208 B | unavailable |
+| Git objects | 418,621,440 B | +17,408 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,7 +85,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 6236a6c1b9b67e8b59c4605d89aa9ccfd6b3574a
+- Local integration/wasteland: 28354f8a5d0f4b7bb7ae3524830db16002f7f23c
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
