@@ -57,3 +57,23 @@ test('normalization and each update preserve additive fields and future versions
  const future=freeze({...profile(),intel:{version:7,opaque:[1,2,3]}});assert.equal(normalizeIntel(future.intel),future.intel);
  assert.equal(recordIntelLap(future,id,lap('run',1),owned),future);assert.equal(recordIntelFinish(future,id,finish(1),{...owned,validated:true}),future);assert.equal(purchaseIntel(future,id,4,owned).profile,future);
 });
+
+
+test('escaped lap receipt IDs cannot lose their duplicate guard on normalize or repeat',()=>{
+ const p=freeze(profile()),receipt=lap('"'.repeat(70),1);
+ const once=recordIntelLap(p,id,receipt,owned);assert.equal(once.intel.events[id].laps,1);
+ assert.equal(recordIntelLap(once,id,receipt,owned),once);
+ const loaded={...once,intel:normalizeIntel(once.intel)};
+ assert.equal(recordIntelLap(loaded,id,receipt,owned),loaded);
+ const oversized=lap('"'.repeat(100),1);
+ assert.equal(recordIntelLap(p,id,oversized,owned),p,'an unretainable encoded key never counts');
+});
+test('native ownership and finish validation require explicit boolean proof',()=>{
+ const p=freeze(profile());for(const proof of ['false','true',1,{},null]){
+  assert.equal(intelLevel(p,id,{owned:proof}),0);
+  assert.equal(recordIntelLap(p,id,lap('run',1),{owned:proof}),p);
+  assert.equal(recordIntelFinish(p,id,finish(1),{owned:proof,validated:true}),p);
+  assert.equal(recordIntelFinish(p,id,finish(1),{owned:true,validated:proof}),p);
+  assert.equal(purchaseIntel(p,id,3,{owned:proof}).profile,p);
+ }
+});

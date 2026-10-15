@@ -9,3 +9,7 @@ Tests were written first and failed for the missing module. They cover per-event
 ## Removed
 
 Nothing. No existing implementation was replaced in this pure slice.
+
+## Early independent correction
+
+Save reviewer found accepted escaped run IDs could encode beyond the retained receipt bound, causing duplicate lap credit after normalization. The encoded key is now checked against that same180character bound before recording. Ownership and finish proof now require explicit true rather than truthy values. Two added cases failed first, then pass without changed assertions: escaped IDs retain duplicate protection across reload, oversized keys count nothing, and nonboolean proof earns/spends nothing. Runtime remains unwired and unaccepted.

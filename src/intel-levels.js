@@ -28,7 +28,7 @@ function current(profile,id) {
   return row(data?.version===1&&object(data.events)&&Object.hasOwn(data.events,id)?data.events[id]:null);
 }
 export function intelLevel(profile,id,{owned=false}={}) {
-  if(!owned||!eventId(id))return 0;
+  if(owned!==true||!eventId(id))return 0;
   const data=current(profile,id);
   return Math.max(1,data.level,data.laps>=3?2:1);
 }
@@ -37,18 +37,18 @@ function put(profile,id,next) {
   return {...profile,intel:{...data,version:1,events:{...(object(data.events)?data.events:{}),[id]:next}}};
 }
 export function recordIntelLap(profile,id,receipt,{owned=false}={}) {
-  if(!owned||!eventId(id)||!supported(profile)||receipt?.valid!==true||
+  if(owned!==true||!eventId(id)||!supported(profile)||receipt?.valid!==true||
     typeof receipt.runId!=='string'||!receipt.runId.length||receipt.runId.length>120||
     !Number.isSafeInteger(receipt.lap)||receipt.lap<1)return profile;
   const before=current(profile,id),key=JSON.stringify([receipt.runId,receipt.lap]);
-  if(before.laps>=3||before.lapKeys.includes(key))return profile;
+  if(key.length>180||before.laps>=3||before.lapKeys.includes(key))return profile;
   const laps=before.laps+1;
   return put(profile,id,{...before,laps,level:Math.max(before.level,laps>=3?2:0),lapKeys:[...before.lapKeys,key]});
 }
 export function recordIntelFinish(profile,id,result,{owned=false,validated=false}={}) {
   // No inferred historical or two-car positions. Native GP results carry an
   // explicit size and position; the existing settlement must validate first.
-  if(!owned||!validated||!eventId(id)||!supported(profile)||result?.mode!=='grandprix'||
+  if(owned!==true||validated!==true||!eventId(id)||!supported(profile)||result?.mode!=='grandprix'||
     result.completed!==true||!Number.isFinite(result.timeSec)||result.timeSec<=0||
     !Number.isSafeInteger(result.laps)||result.laps<1||
     !Number.isSafeInteger(result.fieldSize)||result.fieldSize<2||result.fieldSize>8||
@@ -58,7 +58,7 @@ export function recordIntelFinish(profile,id,result,{owned=false,validated=false
 }
 export function purchaseIntel(profile,id,level,{owned=false}={}) {
   const reject=reason=>({ok:false,changed:false,profile,cost:0,reason});
-  if(!owned||!eventId(id)||!supported(profile)||!Object.hasOwn(INTEL_PRICES,level)||!Number.isInteger(level))return reject('unavailable');
+  if(owned!==true||!eventId(id)||!supported(profile)||!Object.hasOwn(INTEL_PRICES,level)||!Number.isInteger(level))return reject('unavailable');
   const before=current(profile,id);
   if(intelLevel(profile,id,{owned})>=level)return {ok:true,changed:false,profile,cost:0,level};
   const cost=INTEL_PRICES[level];
