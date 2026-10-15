@@ -507,3 +507,13 @@ can be cleared. Ardennes stays dev. Left before Kyle's go-live:
 4. the switch-on, the same way as Summit's (SUMMIT-SWITCH-ON).
 Owner returns to Codex for 1, 2 and 4.
 
+
+## Kyle follow-up scope, 15 October: driver, frames, switch-on preparation
+
+Kyle keeps Ardennes switched off and authorizes three jobs: fix the remaining Long Left test-driver crash, run the frame-speed check, and prepare switch-on the same way as Summit. Current accepted art merge010c81ad and source15e28ca0 supersede the earlier art hold. Do not alter the accepted art, road, barriers, physics, seeds, published reference or released courses. Claude finishing/release and Kyle go-live remain separate.
+
+Reuse the existing codex/p4-ardennes lane for this same card, fast-forwarding its clean contained head to current integration; no new lane or cleanup bypass. Root owns board/inbox/status. First bounded driver diagnosis: reproduce the original stock959/.95/1989/Medium/fieldSeed1000 full-field setup using existing App/Duel and observer hooks, retaining actual steering/brake/slip and opponent/target facts. Prove the minimal cause before editing. Own test-only tools/track-script-drive.mjs, existing tools/test-track-script.mjs and tools/test-circuit-ardennes.mjs, existing ardennes-views observer/acceptance only when removing the fixed exception, and own change note. No src/app.js/controller/simulation or course geometry edits. Existing no-opponent/default replay fingerprints and original guards remain; a fix requires the original full-field player to finish with zero crashes/resets, not a new exception or changed seed/skill. One independent code review and nearby/jobs4/build before merge. Stop a single investigation after30minutes with concrete facts if unresolved.
+
+Frame preparation may reuse the existing frame-pacing scenario with an Ardennes Pit Straight selector named on this card before implementation: real native eight-car grid, actual accepted course, both qualities,120 delivered intervals, headed/visible/memory-only, p95<=18.5ms and world build<1000ms; first load>5s warning only. No extra art packet. Timing runs only after zero competing jobs, actual GPU quiet and panel-off confirmation, under an announced reservation. Do not claim timing from source or competing/headless runs.
+
+Switch-on preparation is a separate written future slice while state remains dev. Name the exact Ardennes manifest/state pins/world-signature coverage and approved-art signature hook, preserve all other course baselines and save/menu order. No feature flip, release, live write or push is authorized here. Any required additional hook gets a precise card amendment first.
