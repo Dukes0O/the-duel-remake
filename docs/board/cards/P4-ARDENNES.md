@@ -397,3 +397,10 @@ Admit exactly the existing Node test named original beech planner names only its
 The existing native planner case passed once on ca471 at07:28:20.4318171UTC,700.0158ms. Then the ONE selected CPU4 export completed07:28:49.9193678UTC,exit0,756.1144ms. The six old landmarks stayed byte/hash exact. Actual beech High492tri/68232B/SHA7100974c0824a23e7e8f014ba33b4d7850ba42a727e705ed90d05094e2036221; LOD196tri/56976B/SHA25a310758f9c9e8906d6b68b6485c762f18001295e8b6b96ec6ece88b35a82e9. Pair125208B,actual visible trunk3.2m/height6.25m; no art verdict inferred.
 
 Actual assets/provenance/note are frozen clean3185f91b9f4ff8461fc4c012d1feaf6eee6b6333. Reviewed ca471 code/tests/recipe are unchanged. Root admits ONE focused run of existing test-circuit-ardennes and test-track-kits,jobs4,after fresh holds/capacity. These now read real GLBs and measure actual placement,ground,fall/reset,resource and default contracts; no missing-file waiver. Do not repeat the export or earlier standalone planner. Native final-round pictures,Claude acceptance,first signature and final nearby/build still wait these checks and Root admission.
+
+
+## Actual asset check failure: one new fixture ground assertion
+
+Original job81857 on clean3185 completed07:32:35.5141545UTC,exit1,100006.5922ms,jobs4,source unchanged. test-track-kits passed(99936.0715ms); test-circuit-ardennes passed35/36 cases(13599.0226ms). Only the new bound-beech fixture fails at line943: rootY7.730397496511783 versus expected ground7.730397437346509, about5.9e-8m. Real exported budget/texture/provenance cases pass; no overall green or native/art admission.
+
+Read-only review is checking whether the fixture BoxGeometry height5.9 translated2.95 has a tiny negative Float32 minimum, which the real kit anchor correctly compensates. If confirmed, the smallest proposed fix is an exactly representable synthetic height6/translation3, preserving every strict ground/fall assertion and all production code/assets. No changed tolerance, waived grounding, fake real-asset pass or retry yet. Original evidence stays under beech-assets-3185f91b. Investigate only until08:03UTC, then note and move on.
