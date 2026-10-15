@@ -41,7 +41,7 @@ mission seed:
   climb with the real flight model; same seed, same sites).
 - `node tools/test-heli-mode.mjs`: 152 checks (the import guard sees the new
   rules file).
-- Lane tier and build: below.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`) after merging integration: 24 passed, 0 failed, 0 not run in 129 s. `npm run build`: passed.
 
 ## Changed assertions
 
