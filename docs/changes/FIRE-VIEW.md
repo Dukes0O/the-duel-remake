@@ -88,6 +88,8 @@ burning cells, grown by the game's own rules.
   passed, 0 failed, 0 not run in 1328 s; build passed.
   Final, after the Ardennes art came in and two superseded sheets were
   removed: 169 passed, 0 failed, 0 not run in 842 s; build passed.
+  And after EARN-CAR-1 came in and two more sheets went: 169 passed, 0
+  failed, 0 not run in 692 s; build passed.
 
 ## Files beyond the card's list (for the Director)
 
