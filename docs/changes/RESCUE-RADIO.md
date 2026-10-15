@@ -45,12 +45,17 @@ FIRE-RADIO added (1.5 LU either side after gain).
 
 ## Tests
 
-- `node tools/test-heli-audio.mjs`: passed (70 lines; the 24 rescue lines'
-  voices and texts; the new cues, buses, loops and levels).
+- `node tools/test-heli-audio.mjs`: passed (70 lines; all 24 rescue lines'
+  voices and words checked against the packet's section 8 table; the beacon
+  beep's pitch following the rate the game passes, 900 and 1,400 Hz; the new
+  cues, buses, loops and levels).
 - `node tools/test-p4-audio.mjs` (the pinned older catalog rows are
   untouched: new rows sit after the helicopter rows) and
   `test-heli-hooks.mjs` (236): passed.
-- Lane tier and build: below.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`)
+  after merging integration: 162 passed, 0 failed, 0 not run in 539 s.
+  `npm run build`: passed. The review fixes after it touch only the audio
+  test and the two credits pages; `test-heli-audio.mjs` passes again.
 
 ## Changed assertions
 
@@ -58,6 +63,20 @@ FIRE-RADIO added (1.5 LU either side after gain).
   lists, buses and loops gain the five rescue cues; the helicopter library
   sound cap rises from 400 KB to 480 KB (the three rescue recordings add
   about 64 KB; the helicopter's sounds are 468,070 bytes).
+
+## Review
+
+One independent review (rule 17) of the line, the sites and the radio lines.
+Fixed here: every rescue line's words are now pinned to the packet (only one
+was); the beep's pitch has a test; the credits name Roger as fire and rescue
+dispatch, since he now speaks the rescue calls too.
+
+Left for RESCUE-HOOKS, as the packet has it: the supply lines say "the
+lodge" and "waiting by the pad", which fits Tremblant Snow's fallback. On
+Summit Run the yard is by the summit hut and the crates wait at the start's
+landing zone, so the panel must name the place (section 8: "the panel names
+the place"). If Kyle wants the Summit words exact, two more recordings
+would be needed.
 
 ## Removed
 

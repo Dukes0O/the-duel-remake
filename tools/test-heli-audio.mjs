@@ -53,6 +53,13 @@ const rescueIds = lineIds.filter(id => /^heli\.radio\.(avalanche|hoist|supply|hi
 assert.equal(rescueIds.length, 24, 'twenty-four rescue lines');
 for (const id of rescueIds) assert.equal(HELI_RADIO_LINES[id].voice, RESCUE_VOICES[id.split('.')[2]], id + ' voice');
 assert.equal(HELI_RADIO_LINES['heli.radio.rescue.done'].text, 'Safe and sound. Great work, Kestrel One.');
+// Every rescue line's voice and words exactly as the packet's table has them.
+{
+  const table = new Map([...readFileSync(new URL('../docs/HELI_RESCUE.md', import.meta.url), 'utf8')
+    .matchAll(/^\| `(heli\.radio\.[a-z.]+)` \| (\w+) \| (.+?) \|$/gm)].map(m => [m[1], {voice: m[2].toLowerCase(), text: m[3]}]));
+  assert.deepEqual([...table.keys()].sort(), [...rescueIds].sort(), 'the packet lists the same 24 lines');
+  for (const id of rescueIds) assert.deepEqual({voice: HELI_RADIO_LINES[id].voice, text: HELI_RADIO_LINES[id].text}, table.get(id), id + ' as written');
+}
 assert.equal(HELI_RADIO_LINES['heli.radio.hiker.spotted'].text, 'That is them! There is a clearing close by. Land there and they will walk over.');
 for (const id of lineIds) if (!Object.hasOwn(FIRE_LINES, id) && !rescueIds.includes(id)) assert.equal(HELI_RADIO_LINES[id].voice, 'brian', id + ' stays the instructor');
 // Every take plays within the H1 lines' loudness: measured level plus its gain.
@@ -496,6 +503,24 @@ const voices = context => context.sources.filter(source => source.buffer?.decode
   assert(voices(context).filter(s => s.loop).length >= 1, 'a fresh readout brings them back');
   // Several events at once.
   heli.event([{type: 'setDown'}, {type: 'released'}]);
+  heli.dispose();
+}
+
+// The beacon's beep: rate sets its pitch (900 to 1,400 Hz from the 1,000 Hz cue).
+{
+  const {context, heli} = setup();
+  heli.update({rotorPct: 100, engine: true, weightKg: 1630, airspeedKts: 0});
+  await flush();
+  const pitch = rate => {
+    const before = ofKind(context, 'osc').length;
+    heli.play('heli.beacon.beep', {rate});
+    return ofKind(context, 'osc').slice(before).map(node => node.frequency.calls.find(call => call[0] === 'set')?.[1]);
+  };
+  assert.deepEqual(pitch(1.4), [1400], 'on top of the beacon: 1,400 Hz');
+  context.currentTime += 1;
+  assert.deepEqual(pitch(.9), [900], 'at the edge of range: 900 Hz');
+  context.currentTime += 1;
+  assert.deepEqual(pitch(undefined), [1000], 'no rate plays the cue as made');
   heli.dispose();
 }
 

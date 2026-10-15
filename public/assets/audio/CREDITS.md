@@ -162,7 +162,7 @@ No author endorsement is implied.
 
 The 70 radio lines are generated with [ElevenLabs](https://elevenlabs.io/),
 using its stock voices Brian (the instructor), Sarah (the park rangers) and
-Roger (fire dispatch), under the free-plan non-commercial and attribution
+Roger (fire and rescue dispatch), under the free-plan non-commercial and attribution
 terms recorded in the catalog. The
 runtime MP3s are exact copies of the kept takes in `audio-src/voices/`; the
 game plays them through the radio filter in `src/heli/heli-audio.js`. Copy them
