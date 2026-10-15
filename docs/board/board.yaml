@@ -158,11 +158,11 @@ tasks:
 
   - id: P4-ARDENNES
     title: "Ardennes Forest: the Spa-style forest circuit"
-    owner: "codex"
+    owner: "claude"
     lane: "COURSE"
     size: "L"
-    status: "ready"
-    claimed_by: "codex-ardennes-2026-10-13"
+    status: "building"
+    claimed_by: "claude-ardennes-art-2026-10-15"
     branch: "codex/p4-ardennes"
     needs: [P4-ARDENNES-ROAD]
     flag: "ardennes-forest"
