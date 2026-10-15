@@ -124,10 +124,12 @@ the fire reads from straight above.
 
 ## Removed
 
-- `docs/board/looks/heli-fire/round-2.jpg` (FIRE-ART-FX) and
-  `docs/board/looks/burnt-forest/round-2.jpg` (FIRE-BURNT-LOOK, the props):
+- `docs/board/looks/heli-fire/round-2.jpg` (FIRE-ART-FX),
+  `burnt-forest/round-2.jpg` and `burnt-ground/round-1.jpg` (FIRE-BURNT-LOOK)
+  and `fire-bucket/round-3.jpg` (HELI-FIRE-BUCKET):
   FIRE-VIEW's round 2 sheet shows the same art in the game, and with it the
-  looks folder would pass its 20 MB limit (20.16 MB). Both cards are
+  looks folder would pass its 20 MB limit (integration was already at
+  20.04 MB after EARN-CAR-1; after this merge about 19.93 MB). Both cards are
   finished; their review notes keep the verdicts and say where the art is
   seen now.
 - Round 1's own sheet (above).
