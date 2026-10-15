@@ -121,7 +121,8 @@ function addTunnel(group, batch, course, tunnel) {
     }
     rockRows.push(row);
   }
-  batch.geometry('lining', surface(rows)); batch.geometry('rock', surface(rockRows, true));
+  batch.geometry('lining', surface(rows));
+  if(tunnel.cover!==false)batch.geometry('rock', surface(rockRows, true));
   for(const[kind,geometry]of Object.entries(buildTunnelWallDetails(course,tunnel)))batch.geometry(kind,geometry);
   for (const s of [start, end]) {
     const inner = archProfile(width, height), outer = archProfile(width, height, .72);
@@ -133,7 +134,7 @@ function addTunnel(group, batch, course, tunnel) {
       const a = Math.PI - i / 28 * Math.PI;
       rockBand.push(point(course, s, (width + .72) * Math.cos(a), 3.6 + (height - 3.6 + .72) * Math.sin(a)));
     }
-    batch.geometry('rock', surface([rockBand, rock], true));
+    if(tunnel.cover!==false)batch.geometry('rock', surface([rockBand, rock], true));
     for (const side of [-1, 1]) {
       batch.local(course, s, side * (width + .35), 1.9, 'tunnelConcrete', [.7, 3.8, 1.4]);
       batch.local(course, s - (s === start ? .78 : -.78), side * (width + .35), 1.1, 'yellow', [.64, 1.7, .06]);
