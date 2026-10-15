@@ -18,13 +18,13 @@
       "files": [
         {
           "path": "ardennes-beech.glb",
-          "bytes": 68232,
-          "sha256": "7100974c0824a23e7e8f014ba33b4d7850ba42a727e705ed90d05094e2036221"
+          "bytes": 64308,
+          "sha256": "9f575505c7193f80a37b1c24f62ce0fcdb693a3e3d48bfcd5389e3898a002332"
         },
         {
           "path": "ardennes-beech-lod.glb",
-          "bytes": 56976,
-          "sha256": "25a310758f9c9e8906d6b68b6485c762f18001295e8b6b96ec6ece88b35a82e9"
+          "bytes": 54952,
+          "sha256": "b951758bb4bce5e14eae964c67faa91d349b5ffef73aab705210d63f0ad23b9d"
         }
       ],
       "crownSize": [
@@ -51,7 +51,7 @@
         6.25,
         5.310881853103638
       ],
-      "bytes": 125208
+      "bytes": 119260
     }
   ]
 }

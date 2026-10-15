@@ -285,3 +285,14 @@ The stone camera targets the correct Red Water row at s 783.8296472423 / lateral
 Source-only correction: no tests, imports, export repeat, native, art, signature, gate or build ran. All original 28 views, stock/seed/field/incident/light/read-only guards and actual assets remain intact. Root review precedes one old-file UV regression, one corrected export, affected acceptance and any corrected native packet. Final R3 remains the only available art round; failure investigation stops by 08:12 UTC.
 
 Removed: the mismatched crown UV-layer name and the two obscuring close-view choices. No real model geometry, image, palette, physical tree, existing view or assertion was removed.
+
+
+## Actual UV regression and corrected asset pair
+
+Independent repair confirmation is CLEAR on a6f8e69927f622d11357267fb3aa66b5b2886bda. Root ran only the new actual old-file UV regression case at 07:51:31 UTC: expected RED, 543.2957 ms, failing the material-selected channel variance assertion. This is the intended real fault witness, not a failed full circuit suite or an accepted old asset.
+
+The ONE corrected selected export completed 07:52:00.983959 UTC on unchanged a6f8e699, four Blender threads, exit 0, 803.9041 ms. Only the two owned beech GLBs and measured provenance changed. Corrected High: 64,308 bytes, SHA-256 9f575505c7193f80a37b1c24f62ce0fcdb693a3e3d48bfcd5389e3898a002332. Corrected LOD: 54,952 bytes, SHA-256 b951758bb4bce5e14eae964c67faa91d349b5ffef73aab705210d63f0ad23b9d. Pair 119,260 bytes, replacing the earlier 125,208-byte pair in place. Triangles remain 492/196; geometry, bounds, visible trunk, source images and all six original landmark files remain unchanged by the reviewed single UV-layer repair.
+
+No further test, source edit, export, native run, compositor, art submission, signature, gate or build ran for this asset commit. The affected circuit acceptance and one corrected native packet await Root admission. Formal R3 is still unused; mechanical success in the earlier 28-view packet did not accept its pictures. The 08:12 UTC investigation cutoff remains.
+
+Removed: the two superseded beech binaries with the constant material-selected leaf UV channel are replaced by the corrected pair. No duplicate runtime version is retained.
