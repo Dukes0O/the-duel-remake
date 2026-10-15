@@ -151,3 +151,10 @@ SOURCE-ONLY lease in existing tools/scenarios/frame-pacing.mjs, tools/test-full-
 Root read exacte084c04470050f83e12dbd8672d1350b679383d6 vs65fbac29, all three grantedfiles: CLEAR. DefaultmeasureNight/runNightFrames/fullvalidator/reuse unchanged; manualroute pins exactoriginalcourseleaf/hash/source/context/failedPerformance/harnessincludingissues, cleanruntime+QA/buildinputcompatibility, fixednewoutput/nooverwrite and one SAMEPerformancecall. One-rowcomplete:false diagnostic cannot certify fullcheck/card or erase Summitexceptions. Addedexistingtests retain alloldassertions and meaningful rejection/order/provenance/onecall checks.
 
 Root admits ONE existing test-full-check focused suite on exactcleane084, jobs4, after freshcapacity/holds. No actualframe/quietwindow/automaticretry/runtimefix/art/gate/build yet. OriginalHigh/baselines stay completedandunrepeated. Actual sourceinspectionrender has alreadyfinished, no competing Rootjob remains.
+
+
+## Authorized one-time Performance diagnostic quiet window
+
+Originale084focusedexistingtest-full-check completed07:14:13.4599939UTC,exit0/4515.5738ms,1/1suite,zero failures/notRun,jobs4,source unchanged/clean,otherRoots[]. Receipt diagnostic-selector-e084c044; no repeat.
+
+Freshheavyinspection00:14PT is zero. Root reserves NOW through07:25UTC/00:25PT latest or FRAMECHECKDONE for exactlyONEPerformance-onlydiagnostic on each course using clean toolse084/runtimeexact65fb; NOHigh/currentbaseline repeats,newparameter/limit/retry. Sourceprepcontinues; no other gate/build/browser/Blender/export/render/integrationmerge. Actualsamplesstillrequirezeroroots/GPUquiet/paneloff, privateautopport/memory/real8cars/120orderedRAF/Summitpose. The two old Summitexceptions remain independentcardblocker, no newtimingwaiver. Integration now includes Claudea34ba0fe landing HELIswitch but these explicitly requested SAME-candidate rereads remain pinned65fb; later union/releasecheck is not inferred. Quiet ends early on completion; ifeither genuinePerformance reading failsagain, stopandwriteownfaultcard, no furtherretry.
