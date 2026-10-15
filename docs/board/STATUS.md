@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T22:13:33.206Z
+Observed at: 2026-10-15T22:37:34.336Z
 
-Observation commit: b8b6a1e23a2b77717c217a7b44169f9ab6f69235
+Observation commit: af79f972a47d2fd83a23d70c1ff6f595cbd02883
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: b8b6a1e23a2b77717c217a7b44169f9ab6f69235
+Integration HEAD: af79f972a47d2fd83a23d70c1ff6f595cbd02883
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -45,7 +45,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/qa-browser-sweep | 1 | unknown | false | false | unknown |
 | codex/summit-switch-on | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
-| codex/tyre-slip | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tyre-slip |
+| codex/tyre-slip | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tyre-slip |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 20 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 20 | unknown | true | false | unknown |
@@ -67,6 +67,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T14:32:34-07:00 | 0 | last commit 2026-10-15T14:32:34-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/circuits/summit-run.js, src/course.js, src/feature-flags.js, tools/test-circuit-summit.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
+| codex/tyre-slip | TYRE-SLIP | 2026-10-15T15:37:17-07:00 | 0 | last commit 2026-10-15T15:37:17-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
 ## Size targets
@@ -83,7 +84,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 97,416 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 437,304,320 B | +590,848 B | unavailable |
+| Git objects | 437,971,968 B | +667,648 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -92,7 +93,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: b8b6a1e23a2b77717c217a7b44169f9ab6f69235
+- Local integration/wasteland: af79f972a47d2fd83a23d70c1ff6f595cbd02883
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
