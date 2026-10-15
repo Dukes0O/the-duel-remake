@@ -770,6 +770,7 @@ tasks:
     lane: "ART"
     size: "M"
     status: "building"
+    waiting_on: claude
     claimed_by: "codex-wild-art-2026-10-14"
     branch: "codex/wild-art-src"
     needs: []
