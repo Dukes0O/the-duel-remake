@@ -585,3 +585,18 @@ table from it before building.
 ## Factory lock correction before build
 
 The accepted independent-review amendment4 above changes drift result and leaderboard readers in progression.js and explicitly takes save-shape. The short board row now includes save-shape alongside busy-game-files, so the scheduler cannot admit this card while EARN-MEDALS owns saved-profile work. This records the already settled scope; no tyre source, design number or saved field changes here. Attack still holds the named core hooks, and the current release hold forbids all new checks and merges.
+
+## Current STEER-055 table before building — 15 October
+
+Recomputed directly from current keyboardSteeringLimit, createKeyboardSteering and steeringYawAuthority, grip1/asphalt, fixed120Hz. The settled amendment that a held key never exceeds today's yaw wins over section5's old bonus/peak table: the new held peak-share ceiling equals the current held share, with raw steering divided by the new steerGain ratio. No keyboard-only peak is reached unbraked at these speeds. Below40mph and all arenas retain the old path.
+
+| mph | Today's held = new maximum peak share | New raw steering cap | First120Hz tap peak share | Full-brake ask at held cap |
+|---|---|---|---|---|
+|40|0.804672|1|0.4475988|1.00584|
+|50|0.9625|0.956911636|0.535390625|1.203125|
+|60|0.925|0.766357804|0.51453125|1.15625|
+|80|0.85|0.68|0.4728125|1.0625|
+|100|0.775|0.62|0.43109375|0.96875|
+|120|0.70|0.56|0.389375|0.875|
+
+These are consequences of the approved55percent start/300ms rise/30percent high-speed reduction, not new tuning. In particular section5's old100mph full-brake1.06 example no longer applies; it is0.96875 under STEER-055. First-tap yaw stays the same by mapping existing averaged input through old authority/new gain, within the approved1e-9 tolerance. Final independent review must check the actual implementation against this table. No lane/source/check started while DRIVE-LESSON-SAVE holds save-shape.
