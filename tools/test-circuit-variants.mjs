@@ -133,3 +133,21 @@ test('reverse hill, lake and chairlift keep their physical orientation', () => {
   });
   assert.deepEqual(d.effects.lift.lines, TREMBLANT_WOODS.effects.lift.lines.map(x => -x).reverse());
 });
+
+
+test('Woods reverse authored distance boards face the incoming corner rather than its exit', () => {
+  const d = woodsReverse.definition, c = new Course(d, 1989), wrap = s => ((s % c.length) + c.length) % c.length;
+  const boards = d.kitPlacements.filter(p => /^braking-board-/.test(p.id));
+  assert.ok(boards.length > 0, 'keep the additional authored approach boards');
+  const marked = new Set(c.features.boards.map(p => p.name));
+  for (const board of boards) {
+    const distance = Number(board.id.split('-').at(-1));
+    const corner = c.script.pieces.find(p => p.kind === 'turn' && Math.abs(wrap(board.s + distance) - wrap(p.s0)) < 1e-6);
+    assert.ok(corner, 'every actual kit board gives its true incoming-corner distance');
+    marked.add(corner.name);
+    assert.ok(!c.features.boards.some(p => p.name === corner.name && p.distance === distance), 'do not double the existing native board');
+    assert.equal(Math.sign(board.lateral), -corner.dir, 'outside of the incoming turn');
+    assert.ok(Math.abs(Math.atan2(Math.sin(board.heading - Math.PI), Math.cos(board.heading - Math.PI))) < 1e-12, 'numbered face points at approaching traffic');
+  }
+  for (const name of ['Ridge Corner', 'Lodge Bend', 'Final Turn', 'Beaver Hairpin']) assert.ok(marked.has(name), 'retain authored warning at ' + name);
+});
