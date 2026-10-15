@@ -76,7 +76,12 @@ the pending H1 release, which waits on Kyle, is not a build dependency).
   checks each H2 field is kept exactly when saved and never added.
 - `node tools/test-feature-flags.mjs`, `test-arena-settlement.mjs`,
   `test-career-backup.mjs`, `test-heli-hooks.mjs`: passed.
-- Lane tier and build: see below.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`) on
+  the lane tip after merging integration (27f5e2e1): 265 passed, 0 failed,
+  0 not run in 1,242 s. The run before it had three failures, all fixed:
+  the switch roster test and the preview flags did not know `forest-fire`,
+  and a stray root `run-log.md` on integration (fixed there in c2c28be1).
+- `npm run build`: passed.
 
 ## Changed assertions
 
