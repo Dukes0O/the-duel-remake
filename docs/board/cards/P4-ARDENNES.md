@@ -383,3 +383,10 @@ Read-only source preflight finds existing test-world-composition buildEnvironmen
 Independent reviewer /root/frame_setup_review read exactca47179cedfdbc0d17f39c764c89110daf4abd92 against10ef2beb and all fourteen granted files: CLEAR, no real fault. The review confirms default/other-course behavior, existing tree identities and race data, original fall/reset math, kit ownership/disposal, unchanged signature guards and original native view contracts. Exported budgets, leaf appearance, actual grounding and final art remain unproved.
 
 Root admits one existing test-blender-output focused suite on clean ca471, jobs4, after fresh holds/capacity. It checks the actual pure planner before export. The circuit/kit suites that require actual new assets wait for the single reviewed beech pair export; no missing-file assertion is waived. No native, art round, world-signature capture, lane gate/build or merge begins from this planner admission.
+
+
+## Registration passed; actual beech planner still needs its own check
+
+The original ca471 test-blender-output run passed1/1 at07:26:51.9263515UTC,4186.9996ms,jobs4,source unchanged. Its native-generator registration checks the existing native test home, not this new recipe executable. Root corrects the earlier wording: the actual beech planner has NOT run yet, and no export pass is claimed.
+
+Admit exactly the existing Node test named original beech planner names only its High/LOD pair and does not create files, using Node --test-name-pattern/--test-concurrency=4 in test-circuit-ardennes.mjs. This runs the real existing planner case before assets exist; other cases are explicitly skipped, not called passed. After that case passes, Root may admit one reviewed CPU4 selected beech pair export into only public/assets/models/circuits/kits/ardennes-beech{,-lod}.glb and tools/art/ardennes-beech.json. Existing six landmark bytes/hashes must verify before and after, no rewrite. Actual asset-dependent circuit/track-kit suites and first visual/signature checks still wait. No new harness or assertion change.
