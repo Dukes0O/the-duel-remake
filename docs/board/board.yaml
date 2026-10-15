@@ -512,7 +512,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-fire-2026-10-14
+    branch: claude/rescue-sites
     needs: [FIRE-MISSIONS]
     locks: []
     flag: "rescue"
@@ -523,7 +525,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-fire-2026-10-14
+    branch: claude/rescue-line
     needs: [FIRE-BUCKET, FIRE-MISSIONS]
     locks: []
     flag: "rescue"
@@ -545,7 +549,9 @@ tasks:
     owner: "claude"
     lane: "AUD"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-fire-2026-10-14
+    branch: claude/rescue-radio
     needs: [FIRE-RADIO, FIRE-MISSIONS]
     locks: []
     flag: "rescue"
