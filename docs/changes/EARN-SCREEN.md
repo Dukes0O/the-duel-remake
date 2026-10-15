@@ -43,7 +43,7 @@
 - Existing suites that render these screens pass unchanged:
   `test-koenigsegg-ui`, `test-driver-ui`, `test-course-access-ui`,
   `test-heli-jobs`, `test-heli-hooks`, `test-grand-prix-career-menu`.
-- Browser scenario `earned-cars`: see below.
+- Browser scenario `earned-cars` (private port, memory-only, 1280 x 720): the garage medal sheet and a Hard win's results line ("NEW MEDAL · GOLD · FALCONE F42 · DUEL · HARD · +375 CR", 2,125 credits = 1,500 + 150 clean + 100 clean debut + 375 gold); 0 warnings, 0 errors. Claude looked at both pictures: the first round's row-label column took a quarter of the width, so it was narrowed to 84 px and checked again. Pictures recycled after review.
 - Lane tier and build: see below.
 - Review: see below.
 
