@@ -1317,6 +1317,7 @@ export class App {
     const stageIndex = COURSE.findIndex(stage => stage.id === courseId);
     if (!this.heliSession || stageIndex < 0 || !isCourseUnlocked(this.profile, COURSE[stageIndex])) return false;
     if (this._airOnlyRefused(carId && isCarUnlocked(this.profile, carId) ? carId : this.menuCar, courseId)) return false;
+    if (this._fireClosedRefused(COURSE[stageIndex])) return false;
     this.returnToMenu();
     this.menuStage = stageIndex;
     if (carId && isCarUnlocked(this.profile, carId)) this.menuCar = carId;

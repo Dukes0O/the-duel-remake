@@ -61,13 +61,34 @@ build dependency).
   closed for 10,000; the app: a closed course refuses the race with its
   reason, buyback on play day 3 for 7,000 then the race starts, switch off
   closes nothing, a new date is a play day once, a player who never flew
-  gains nothing. About 100 s.
+  gains nothing. The repeat run flies two drops and compares the save then.
+  About 100 s with other gates running.
 - H1 suites unchanged and passing: `test-heli-mode` (150), `test-heli-jobs`
   (554), `test-heli-lessons` (63), `test-heli-hooks` (178), `test-heli-view`
   (98), `test-heli-cable`, `test-heli-flight`; also `test-input-contexts`,
   `test-course-access-ui`, `test-app-lifecycle`, `test-fire-close`,
   `test-heli-missions`, `test-heli-fire`, `test-heli-bucket`.
 - Lane tier and build: below.
+
+## Review (rule 17)
+
+One independent reviewer read the hooks files. Fixed: a dent from dragging
+the bucket through the water was not saved (now it is, so the repair
+button shows); "Race here" was still offered on a closed course and ended
+the visit before the refusal (no offer now, and the app refuses before
+leaving); the session saved every 10 s even when nothing changed, and
+wrote an empty mission record for a pilot not yet armed (now only real
+changes are saved); the autopilot's fire goal stopped after a cruise leg
+home (home as the destination now counts as none) and kept its old target
+when the fire went out (now it falls back); the first lift-off of every
+visit built the fire grid (about 0.2 to 0.3 s) even with no call possible
+(the cheap checks now come first); half out and Brian's bucket lines
+repeated on later visits (half out is remembered from the fire, the bucket
+lines play only until the first fire is out); a drop's pending water was
+not cleared on a course change or applied on leaving; the engine-time lost
+event named no course; the test's repeat run flew a whole second mission.
+Kept: the board's Radio box shows in flight too, and after a crash the
+bucket must be fitted again (its damage stays saved).
 
 ## Changed assertions
 

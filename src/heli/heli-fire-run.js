@@ -4,7 +4,7 @@
 // graphics; heli-session.js drives it and owns the bucket on its cable.
 // Every save change goes through heli-save.js; the fire and mission records
 // stay the save's own shape, so a reload carries on where it stopped.
-import {armed, armMissions, noteRefuel, runEngine, callDue, callTime, openCall, answerCall, endMission,
+import {armed, armMissions, noteRefuel, runEngine, callDue, callTime, openCall, answerCall, endMission, inQuietSpell,
   createCallClock, tickCallClock, MISSION_RULES} from './heli-missions.js';
 import {FIRE, BURNT_LOOKS, fireGrid, courseBurnCheck, startCells, startFire, dayWind, applyWater, fireOut, shareOut,
   hottestEdge, cellIJ, runFireEngine, fireNewDay, cruiseSeconds} from './heli-fire.js';
@@ -55,12 +55,16 @@ const WIND_LINES = Object.freeze({calm: 'heli.radio.wind.calm', breeze: 'heli.ra
 export function createFireRun({getSave, commit, emit, world, playerName = 'Player', today = null, owns = () => true}) {
   const flag = {enabled: true};
   let clock = null, answerLeft = 0, engineBank = 0, halfSaid = null, lastFireDay = null, fullSaid = false, firstFill = true;
+  { const burning = fireOf(getSave()); if (burning && shareOut(burning) >= 50) halfSaid = burning.id; }
+  // Brian's bucket lines are for a new firefighter: only until the first fire is out.
+  const newFirefighter = () => missionsOf(getSave()).firesOut === 0;
   const day = () => heliOf(getSave()).playDay.count;
   const missions = () => missionsOf(getSave());
   const fire = () => fireOf(getSave());
   const radio = line => emit({type: 'radio', line});
   const cue = id => emit({type: 'cue', id});
-  const saveMissions = next => commit(setMissions(getSave(), next, flag));
+  // Saved only when the record really changed.
+  const saveMissions = (next, before = missions()) => next === before ? {ok: true, profile: getSave()} : commit(setMissions(getSave(), next, flag));
   const conditions = () => ({fire: burnableCourses(getSave(), world, {enabled: true, owns})});
   const windToday = () => dayWind(missions().seed, day());
 
@@ -70,11 +74,11 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
     saveMissions(armMissions(missions(), {date: today ?? '2026-01-01', playerName}));
   }
 
-  function fireLost(id) {
+  function fireLost(id, courseId) {
     commit({ok: true, profile: finishLost(getSave(), id, flag)});
     clock = null; answerLeft = 0;
     radio('heli.radio.fire.lost');
-    emit({type: 'fireLost', courseId: fire()?.courseId ?? null});
+    emit({type: 'fireLost', courseId});
   }
 
   // Engine seconds: the quiet spell and the fire's clock, saved every 10 s.
@@ -82,13 +86,14 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
     if (engineBank <= 0) return;
     const seconds = engineBank;
     engineBank = 0;
-    saveMissions(runEngine(missions(), seconds));
+    const quiet = missions();
+    saveMissions(runEngine(quiet, seconds), quiet);
     const burning = fire();
     if (!burning) return;
     const run = runFireEngine(burning, world(burning.courseId).grid, seconds, windToday());
     commit(setFire(getSave(), run.fire, flag));
     if (run.steps) emit({type: 'fireSpread', steps: run.steps, cells: run.fire.burning.length});
-    if (run.lost) fireLost(burning.id);
+    if (run.lost) fireLost(burning.id, burning.courseId);
   }
 
   function ring() {
@@ -122,7 +127,9 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
     // Each lift-off: a due call gets its clock; the first lift-off of a play
     // day with a fire burning hears the wind (or, unanswered, a reminder).
     liftoff({lesson = false} = {}) {
-      if (!lesson && callDue(missions(), {playDay: day(), conditions: conditions(), fireOpen: !!fire()})) clock = createCallClock(callTime(missions()));
+      const m = missions();
+      const could = armed(m) && !m.call && !fire() && m.count >= m.need && !inQuietSpell(m, day());
+      if (!lesson && could && callDue(m, {playDay: day(), conditions: conditions(), fireOpen: false})) clock = createCallClock(callTime(m));
       const call = missions().call;
       if (fire() && call && lastFireDay !== day()) {
         lastFireDay = day();
@@ -143,7 +150,7 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
       }
     },
     cruise(fuelKg) { engineBank += cruiseSeconds(fuelKg); flush(); },
-    refuel() { saveMissions(noteRefuel(missions(), {fireOpen: !!fire()})); },
+    refuel() { const before = missions(); saveMissions(noteRefuel(before, {fireOpen: !!fire()}), before); },
     // R: answer the call, now or later, in the air or on the ground.
     pressRadio() {
       const call = missions().call;
@@ -180,12 +187,12 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
     },
     // Bucket news from heli-session (first fill, too fast, dented).
     bucketEvent(event) {
-      if (event.type === 'bucketFull' && !fullSaid) { fullSaid = true; radio('heli.radio.bucket.full'); }
+      if (event.type === 'bucketFull' && !fullSaid) { fullSaid = true; if (newFirefighter()) radio('heli.radio.bucket.full'); }
       else if (event.type === 'bucketFast') radio('heli.radio.bucket.fast');
       else if (event.type === 'bucketDamaged') { cue('heli.bucket.dent'); radio('heli.radio.bucket.dented'); }
     },
     bucketFitted() {
-      if (firstFill) { firstFill = false; radio('heli.radio.bucket.first'); radio('heli.radio.drop.tip'); }
+      if (firstFill && newFirefighter()) { firstFill = false; radio('heli.radio.bucket.first'); radio('heli.radio.drop.tip'); }
     },
     flush,
     // Today's wind: it moves the falling water and the fire.
