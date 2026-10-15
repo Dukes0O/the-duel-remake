@@ -28,7 +28,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "blocked"
+    status: "building"
+    claimed_by: codex-card-answers-01a141d7
+    branch: codex/qa-arena-air-only
     needs: []
     locks: []
     details: "docs/board/cards/QA-ARENA-STEERING-AIR-ONLY.md"
@@ -170,7 +172,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-cups-2026-10-15
+    branch: codex/p4-cups
     needs: [P4-CAREER, P4-SUMMIT, P4-VARIANTS, P4-TREMBLANT-SNOW, P4-GP-EXISTING]
     locks: [save-shape, busy-game-files]
     flag: "grand-prix"
@@ -424,10 +428,32 @@ tasks:
     status: "review"
     waiting_on: kyle
     claimed_by: claude-fire-2026-10-15
-    needs: [FIRE-VIEW]
+    needs: [FIRE-VIEW, FIRE-SEASONS]
     locks: []
     flag: "forestFire"
     details: "docs/board/cards/FIRE-FINISH.md"
+
+  - id: FIRE-SEASONS
+    title: "Seasons in the mission engine: no forest fire in winter"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "forestFire"
+    details: "docs/board/cards/FIRE-SEASONS.md"
+
+  - id: RESCUE-HURT
+    title: "People can get hurt: condition, pay by condition, new lines"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "rescue"
+    details: "docs/board/cards/RESCUE-HURT.md"
 
   - id: RESCUE-SAVE
     title: "Mission fields for rescues, counts and the rescue badge"
@@ -446,7 +472,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "backlog"
-    needs: [FIRE-MISSIONS, RESCUE-SAVE]
+    needs: [FIRE-MISSIONS, RESCUE-SAVE, FIRE-SEASONS]
     locks: []
     flag: "rescue"
     details: "docs/board/cards/RESCUE-ENGINE.md"
@@ -457,7 +483,7 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "backlog"
-    needs: [FIRE-HOOKS, RESCUE-ENGINE, RESCUE-LINE, RESCUE-SITES, RESCUE-RADIO]
+    needs: [FIRE-HOOKS, RESCUE-ENGINE, RESCUE-LINE, RESCUE-SITES, RESCUE-RADIO, RESCUE-HURT]
     locks: []
     flag: "rescue"
     details: "docs/board/cards/RESCUE-HOOKS.md"

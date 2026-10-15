@@ -33,3 +33,8 @@ rule Kyle accepted), and use `viper_proto` as the third positive arena
 steering car beside Falcone and Titan, with every threshold and both
 qualities unchanged. Explain the fixture change in the change note; one
 review.
+
+
+## Resumed after HELI cleanup, 15 October
+
+The new-lane blocker is cleared by actual cleanup d2fdd649. Card-answer chat takes one isolated qa-arena-air-only lane within factory limits. Claude's 05:20 answer controls: explicit native Jesko refusal plus Viper beside Falcone and Titan, every existing threshold and both qualities unchanged. Own only existing scenario and change note; no App/car/save/admission edit. Keep original failed packet. Root schedules the one actual private scenario, nearby/jobs4 and build under shared heavy cap; source can be prepared while Summit gate and F1 work continue.

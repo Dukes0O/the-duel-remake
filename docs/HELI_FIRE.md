@@ -115,6 +115,28 @@ to fourth play day, and a player who mostly races meets almost none.
 A mission ends when the fire is out or the course is lost. Then count goes
 to 0, a new need is drawn and the quiet spell starts.
 
+### 3.6 Seasons: no fires in winter
+
+Kyle, 15 October 2026: seasons decide which emergency comes, and there is
+no forest fire in winter. Card FIRE-SEASONS adds this to the engine before
+H2 releases.
+
+- **The dispatch season** turns every 12 play days, in order, starting with
+  summer on the first play day: summer, autumn, winter, spring. It is worked
+  out from `playDay.count`, so nothing new is saved. The board shows it:
+  "Summer, play day 4 of 12".
+- **Weights.** The engine's pick becomes a seeded weighted pick among the
+  kinds whose condition holds, with the season's weights from
+  `docs/HELI_RESCUE.md` section 3.2. For fire: summer 4, autumn 2, winter 0,
+  spring 1. While fire is the only kind, a weight of 0 means no call: in
+  winter the count stands still.
+- **The first snow.** When winter begins, a fire still burning goes out by
+  itself: no pay, no loss, and the board says "The first snow put out the
+  fire at <course>." A course already closed stays closed; its play days
+  keep counting.
+- Roger's season lines (`heli.radio.season.summer`, `.winter`, recorded with
+  RESCUE-RADIO) play at the first lift-off of those seasons.
+
 ## 4. The forest fire
 
 New file `src/heli/heli-fire.js`, pure and repeatable, no graphics.
@@ -615,11 +637,12 @@ flowchart LR
   HF --> BK[C: FIRE-BUCKET]
   HF --> RD[C: FIRE-RADIO]
   SV --> MS[C: FIRE-MISSIONS]
+  MS --> SE[C: FIRE-SEASONS]
   SV --> SP[C: FIRE-SPREAD]
   SV --> CL[C: FIRE-CLOSE]
   MS & SP & BK & RD & CL --> HK[C: FIRE-HOOKS]
   HK & AB & AF & AR --> VW[C: FIRE-VIEW]
-  VW --> FN[C: FIRE-FINISH]
+  VW & SE --> FN[C: FIRE-FINISH]
 ```
 
 The three art cards start now (two Claude, one Codex). When HELI-FINISH merges, FIRE-SAVE,

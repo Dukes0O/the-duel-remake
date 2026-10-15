@@ -43,3 +43,15 @@ P4-VARIANTS is in its corrected final gate, so prepare the next gameplay card wi
   Abandoning a cup clears its run with no pay. The card takes the
   `save-shape` lock for this. Existing named-player, duplicate and save
   guards stay exactly as they are. Independent save and pay review required.
+
+
+## Continued build after Kyle restarted
+
+HELI cleanup is resolved; Kyle directs continued building while away. Root opens p4-cups/codex/p4-cups from current integration, holding save-shape/busy-game-files. Use Claude's exact pay, GrandTour unlock and tie answers above. First owned slice is pure immutable catalog, current-course/ownership eligibility, native eight-position points/countback and sequential idempotent saved series operations, with tests before code. Mountain uses tremblant-woods/panorama-ridge/summit-run; Night harbour-lights/panorama-ridge-night/neon-docks; Winter tremblant-snow/summit-run/alpine-serpent; GrandTour the original four defaults (Panorama/Harbour/Woods/Summit) plus eifel-crown. Resolve actual stable IDs from current definitions. A dev course is unavailable in normal play; a cup cannot start by bypassing that admission. All races use real GrandPrix results and stable native participant IDs, not generated placements.
+
+Then use the approved progression optional-cups/one-time-wallet/history hooks and existing App/course/garage hooks; no new save version, unrelated menu/controller/audio change or new harness. Keep the current named-player/result duplicate guards, old saves and personal records exact. Independent code/save/pay review and nearby/jobs4/build before merge. No release/install of incomplete cup code.
+
+
+## Preview candidate, 15 October after restart
+
+Frozen23a97397 implements the complete series/rules, approved optional progression normalization and one-time wallet/history banking, named App/course/garage hooks and trophy case. Both grand-prix and dev grand-prix-career must be enabled; no production flag flip. Actual native eight-car result identity, owning player, ordered course, fixed car/CPU/driving difficulty and field seed are required. Cup results use native classified projection just as individual GP does; no generated placements. Existing GrandPrix finish sound cue is reused, no new audio hook. First9focused tests pass including real memory-only App admission and old-profile/no-new-field behavior; actual three-race Mountain acceptance is written but UNRUN. Required independent code/save/pay review cups_save_review is read-only in progress. Native acceptance, lane/jobs4 and build wait for shared capacity after Ardennes priority; no merge/install yet.

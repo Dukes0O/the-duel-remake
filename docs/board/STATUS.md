@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T23:31:16.640Z
+Observed at: 2026-10-15T23:45:49.874Z
 
-Observation commit: e723199efbab4be836cd35a699d93178bbba1844
+Observation commit: 086f5d22f3cf84b1b12e6735e7ec1cdae7d375f9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e723199efbab4be836cd35a699d93178bbba1844
+Integration HEAD: 086f5d22f3cf84b1b12e6735e7ec1cdae7d375f9
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,11 +29,13 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/ardennes-switch-on | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on |
 | codex/deep-art-src | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
-| codex/earn-car-2 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2 |
+| codex/earn-car-2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2 |
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
 | codex/intel-levels | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/intel-levels |
 | codex/p4-ardennes | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
+| codex/p4-cups | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-cups |
 | codex/p4-finish | 4 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 2 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 3 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -42,6 +44,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-yeti | 1 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 1 | unknown | true | false | unknown |
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
+| codex/qa-arena-air-only | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-arena-air-only |
 | codex/qa-browser-sweep | 1 | unknown | false | false | unknown |
 | codex/summit-switch-on | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
@@ -57,12 +60,16 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T16:35:06-07:00 | 0 | last commit 2026-10-15T16:35:06-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, tools/fixtures/world-signatures/ardennes-forest.json, tools/test-circuit-ardennes.mjs |
+| codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T16:45:38-07:00 | 0 | last commit 2026-10-15T16:45:38-07:00 | docs/HELICOPTER.md, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb, src/config.js, src/mclaren-f1-vehicle.js |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T16:22:01-07:00 | 0 | last commit 2026-10-15T16:22:01-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/intel-levels.js, src/progression.js, tools/test-intel-levels.mjs |
+| codex/p4-cups | P4-CUPS | 2026-10-15T16:44:14-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-CUPS.md, src/app.js, src/grand-prix-cups.js, src/progression.js, src/screen-courses.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 4 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/qa-arena-air-only | QA-ARENA-STEERING-AIR-ONLY | 2026-10-15T16:36:47-07:00 | 0 | last commit 2026-10-15T16:36:47-07:00 | docs/changes/QA-ARENA-STEERING-AIR-ONLY.md, tools/scenarios/arena-steering.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T16:28:57-07:00 | 0 | last commit 2026-10-15T16:28:57-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/circuits/summit-run.js, src/course.js, src/feature-flags.js, tools/fixtures/world-signatures/summit-time-attack.json |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
@@ -81,9 +88,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 297,528 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 187,463 B | -110,065 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 440,243,200 B | +126,976 B | unavailable |
+| Git objects | 442,671,104 B | +2,064,384 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -92,7 +99,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: e723199efbab4be836cd35a699d93178bbba1844
+- Local integration/wasteland: 086f5d22f3cf84b1b12e6735e7ec1cdae7d375f9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -100,6 +107,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: behind local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit d716e262858b76f1638b777c8f791d86eb15be4e.
+- Remote origin/integration/wasteland: behind local; cached commit a3a2d597a2b120197d44a7b3a97ce68852e619f2.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
