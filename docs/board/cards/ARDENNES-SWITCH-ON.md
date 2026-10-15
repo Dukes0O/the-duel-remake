@@ -25,3 +25,7 @@ One nearby lane tier/jobs4, build and independent code review precede merge; do 
 ## Removed
 
 Nothing during preparation. Future implementation replaces only the dev state and its old state/count expectation; no accepted asset, historical decision, current course baseline or save is removed.
+
+## Mechanical preparation checkpoint
+
+The original Long Left full-field regression is now green in retained unmerged619db9ef, with independent review, nearby42/42/jobs4 and build passed. Frame acceptance remains blocked: original headed attempt timed out without saved timing rows, and no diagnostic attempt was admitted before the bounded stop. See QA-ARDENNES-FRAME-READINESS. This preparation does not waive that prerequisite, change Ardennes dev state, or authorize go-live.
