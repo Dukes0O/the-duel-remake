@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T07:52:42.927Z
+Observed at: 2026-10-15T07:59:27.400Z
 
-Observation commit: a627867eaa261a216c6d74576ddb52ee1b676cd5
+Observation commit: 7e1eacefd422e3c1d9974f9b02eb766e3b7781c9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a627867eaa261a216c6d74576ddb52ee1b676cd5
+Integration HEAD: 7e1eacefd422e3c1d9974f9b02eb766e3b7781c9
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -60,7 +60,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
-| codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:21:00-07:00 | 0 | last commit 2026-10-15T00:21:00-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
+| codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
 ## Size targets
 
@@ -76,7 +76,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 523,148 B | +0 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 419,860,480 B | +292,864 B | unavailable |
+| Git objects | 419,944,448 B | +83,968 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,7 +85,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: a627867eaa261a216c6d74576ddb52ee1b676cd5
+- Local integration/wasteland: 7e1eacefd422e3c1d9974f9b02eb766e3b7781c9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
