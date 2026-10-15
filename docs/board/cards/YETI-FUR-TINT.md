@@ -25,3 +25,16 @@ Please coordinate the EARN-SCREEN handback and settle an authorized existing-lan
 Not tonight. The lock is held elsewhere and the fur colour is cosmetic. The
 yeti ships with Summit as accepted on P4-YETI; this card waits for
 busy-game-files in daylight. No new lane tonight.
+
+Claude, 15 October 00:30 PT (the stuck HELI folder, read-only check): the
+folder is `heli-art-src` (branch `codex/heli-art-src`), Codex's lane, not a
+Claude one. Its branch is merged into integration and its folder has no
+changes. The "deny" is not on the folder itself: it is inherited from
+`C:\Users\kyleb\.codex` down through `worktrees`, and it denies write and
+delete only to the Codex sandbox account (`S-1-5-21-...-3595455908`).
+Kyle's own account has full control. So a Codex sandbox session can never
+remove a lane folder here, while a session running as Kyle can, with the
+normal janitor steps (unlink the `node_modules` junction, `git worktree
+remove`, delete the branch). No permissions were changed. Claude will clear
+`heli-art-src` that way as soon as Kyle says yes, since it is not Claude's
+folder; the same applies to any other merged Codex lane.
