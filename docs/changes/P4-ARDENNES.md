@@ -303,3 +303,10 @@ Removed: the two superseded beech binaries with the constant material-selected l
 On clean74c1ffed, the corrected selected-UV circuit suite passed1/1/all36cases at07:54:38.4078923UTC,12893.5208ms,jobs4,zero failures/notRun. Original passing kit/default checks were not repeated.
 
 Corrected native15425 completed07:57:34.4392421UTC,exit0,80187.8527ms,28views,private/memory-only,issues[]/warnings[],source unchanged. Root inspected all three full High close images: real streets, broadside stone arch/stream and real textured beech/trunk among firs are visible. This is evidence, not art acceptance. Existing compositor produced the final numbered sheet once: 412330B/SHA256 e768c45b8ee8f2eebf0eb2174fc6ddfcd41cd22796c07830c7049483dacf6333. No crop, retouch, relighting or overwrite. The real image-only final verdict still waits.
+
+
+## Final art verdict and stop
+
+Actual final round 3: CHANGES REQUIRED, village4/forest2/road4/bridges3/cohesion3. Beech crowns still read as striped faceted plastic; stream reads as a matte path. Full verdict is in docs/board/looks/ardennes-art/round-3-review.md. The third-round cap is exhausted. Acceptance cannot be met within the authorized cap, so work stops under AGENTS and Kyle has been asked. Retain this unmerged candidate. No fourth round, final signature, gate/build or merge. Mechanical passes do not accept the art.
+
+Removed: nothing in this stop; preserve the current unmerged assets and final sheet pending Kyle.
