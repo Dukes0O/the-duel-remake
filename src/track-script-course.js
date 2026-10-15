@@ -335,11 +335,16 @@ export function trackScriptSolids(course) {
     const scale=Array.isArray(row.scale)?row.scale:Array(3).fill(row.scale??1);
     const frame=course.groundAt(row.s,row.lateral),heading=frame.heading+(row.heading??0);
     const cs=Math.cos(heading),sn=Math.sin(heading);
+    if(row.nodeTranslations&&Object.entries(row.nodeTranslations).some(([name,vector])=>
+        !(gallery.collisions??[]).some(bounds=>bounds.name===name)||!Array.isArray(vector)||
+        vector.length!==3||!vector.every(Number.isFinite)))
+      throw new TrackScriptError('Gallery named translations need actual collision names and three finite model-local values.');
     for(const bounds of gallery.collisions ?? []){
-      const off=(bounds.min[0]+bounds.max[0])*.5*scale[0];
-      const along=(bounds.min[2]+bounds.max[2])*.5*scale[2];
+      const move=row.nodeTranslations?.[bounds.name]??[0,0,0];
+      const off=((bounds.min[0]+bounds.max[0])*.5+move[0])*scale[0];
+      const along=((bounds.min[2]+bounds.max[2])*.5+move[2])*scale[2];
       const x=frame.x+cs*off+sn*along,z=frame.z-sn*off+cs*along;
-      const near=course.nearest(x,z,row.s),y=frame.y+bounds.min[1]*scale[1]+(row.lift??0);
+      const near=course.nearest(x,z,row.s),y=frame.y+(bounds.min[1]+move[1])*scale[1]+(row.lift??0);
       const height=(bounds.max[1]-bounds.min[1])*scale[1];
       f.obstacles.push({id:`gallery-${bounds.name}-${row.s}`,kind:'prop',shape:'box',trackWall:true,
         sourceBounds:bounds.name,kitS:row.s,s:near.s,off:near.lateral,x,z,y,heading,

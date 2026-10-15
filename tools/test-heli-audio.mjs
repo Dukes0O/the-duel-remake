@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync, existsSync, statSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {HELI_RADIO_LINES, HELI_RADIO_VOICE} from '../src/heli/heli-radio-lines.js';
+import {HELI_RADIO_LINES, HELI_RADIO_VOICE, HELI_VOICES} from '../src/heli/heli-radio-lines.js';
 import {
   HELI_CUES, HELI_LIBRARY_CUES, HELI_TONE_CUES, HELI_RADIO_CUES, HELI_EVENT_CUES, HELI_EVENT_LINES, RADIO_FILTER,
   createHeliAudio, createRadioChain, rotorVoice, softClipCurve, windVoice,
@@ -17,8 +17,51 @@ const catalog = JSON.parse(read('tools/audio/catalog.json'));
 
 // ---- The cue table ---------------------------------------------------------
 const lineIds = Object.keys(HELI_RADIO_LINES);
-assert.equal(lineIds.length, 27, 'twenty-seven instructor lines');
+assert.equal(lineIds.length, 46, 'twenty-seven H1 lines and nineteen H2 Fire lines');
 assert.equal(HELI_RADIO_VOICE.name, 'Brian');
+// Three stock voices with the same settings (docs/HELI_FIRE.md section 10).
+assert.deepEqual(Object.fromEntries(Object.entries(HELI_VOICES).map(([key, voice]) => [key, [voice.name, voice.voiceId]])), {
+  brian: ['Brian', 'nPczCjzI2devNBz1zQrb'], sarah: ['Sarah', 'EXAVITQu4vr4xnSDxMaL'], roger: ['Roger', 'CwhRBWXzGAHq8TQ4Fs17']});
+assert.equal(HELI_RADIO_VOICE, HELI_VOICES.brian);
+const FIRE_LINES = {
+  'heli.radio.fire.call': ['roger', 'Calling all pilots, calling all pilots. Smoke and flames reported in the forest. Kestrel One, can you take it?'],
+  'heli.radio.fire.answer': ['roger', 'Thank you, Kestrel One. Fit the bucket at the pad. The lake is your water.'],
+  'heli.radio.fire.later': ['roger', 'Understood. Call us back when you can. It will not wait forever.'],
+  'heli.radio.fire.reminder': ['roger', 'Kestrel One, that fire is still burning, and it is growing.'],
+  'heli.radio.wind.calm': ['roger', 'Wind is light today.'],
+  'heli.radio.wind.breeze': ['roger', 'There is a breeze. Watch where the water drifts.'],
+  'heli.radio.wind.strong': ['roger', 'It is windy out there. The fire runs with the wind, so hit the downwind side first.'],
+  'heli.radio.fire.half': ['roger', 'Good work, Kestrel One. It is half out.'],
+  'heli.radio.fire.out': ['roger', 'That is the last of it. Fire is out. Great flying, Kestrel One.'],
+  'heli.radio.fire.lost': ['roger', 'We have lost those woods. The course is closed. Nobody was hurt.'],
+  'heli.radio.fire.thanks': ['sarah', 'From all of us at the park, thank you. The animals thank you too.'],
+  'heli.radio.burn.reopen': ['sarah', 'The burnt woods are open again. All black for now, but it will come back.'],
+  'heli.radio.burn.shoots': ['sarah', 'Green shoots are coming up in the burn.'],
+  'heli.radio.burn.fireweed': ['sarah', 'Fireweed is blooming in the burn. It is always the first flower back after a fire.'],
+  'heli.radio.bucket.first': ['brian', 'That is the bucket. Hover low and slow over the lake and let it sink and fill.'],
+  'heli.radio.bucket.full': ['brian', 'Bucket is full. She is heavier now, so give her more collective.'],
+  'heli.radio.bucket.fast': ['brian', 'Too fast over the water. Slow down or you will tear the bucket.'],
+  'heli.radio.drop.tip': ['brian', 'Hold H to let the water go. Drop low, and a little short. The water keeps moving as it falls.'],
+  'heli.radio.bucket.dented': ['brian', 'You dented the bucket. It will leak until the shop fixes it.'],
+};
+for (const [id, [voice, text]] of Object.entries(FIRE_LINES))
+  assert.deepEqual([HELI_RADIO_LINES[id]?.voice, HELI_RADIO_LINES[id]?.text], [voice, text], id + ' as the packet writes it');
+for (const id of lineIds) if (!Object.hasOwn(FIRE_LINES, id)) assert.equal(HELI_RADIO_LINES[id].voice, 'brian', id + ' stays the instructor');
+// Every take plays within the H1 lines' loudness: measured level plus its gain.
+{
+  const played = id => {
+    const m = measureLoudness(read('public/assets/audio/voices/' + HELI_RADIO_LINES[id].file));
+    return m.available ? m.integratedLufs + 20 * Math.log10(HELI_RADIO_LINES[id].gain || 1) : null;
+  };
+  const h1 = lineIds.filter(id => !Object.hasOwn(FIRE_LINES, id)).map(played).filter(v => v !== null);
+  if (h1.length) {
+    const low = Math.min(...h1) - 1.5, high = Math.max(...h1) + 1.5;
+    for (const id of Object.keys(FIRE_LINES)) {
+      const level = played(id);
+      assert(level === null || level >= low && level <= high, id + ' plays at ' + level?.toFixed(1) + ' LUFS, outside ' + low.toFixed(1) + ' to ' + high.toFixed(1));
+    }
+  }
+}
 for (const [id, line] of Object.entries(HELI_RADIO_LINES)) {
   assert(id.startsWith('heli.radio.'), id);
   assert(line.text.length > 10 && !line.text.includes(String.fromCharCode(8212)), id + ' has plain words');
@@ -26,6 +69,7 @@ for (const [id, line] of Object.entries(HELI_RADIO_LINES)) {
   assert(cue, id + ' has a cue');
   assert.equal(cue.bus, 'voice');
   assert.equal(cue.file, 'voices/' + line.file);
+  assert.equal(cue.volume, line.gain || 1, id + ' plays at its gain');
   const bytes = read('public/assets/audio/' + cue.file);
   const take = read('audio-src/voices/' + line.file);
   assert(bytes.length > 8000, id + ' has a real recording');
@@ -33,7 +77,8 @@ for (const [id, line] of Object.entries(HELI_RADIO_LINES)) {
   const row = catalog.sounds.find(item => item.cue === id);
   assert(row, id + ' has a catalog row');
   assert.equal(row.source, 'elevenlabs');
-  assert.equal(row.voiceId, HELI_RADIO_VOICE.voiceId);
+  assert.equal(row.voiceId, HELI_VOICES[line.voice].voiceId, id + ' is recorded in its own voice');
+  assert.deepEqual(row.settings, {stability: .4, similarity_boost: .8, style: .35, use_speaker_boost: true}, id + ' uses the same settings');
   assert.equal(row.text, line.text);
   assert.equal(row.file, 'audio-src/voices/' + line.file);
   assert.equal(row.sha256, hash(take));
@@ -42,20 +87,33 @@ for (const [id, line] of Object.entries(HELI_RADIO_LINES)) {
 
 assert.deepEqual(Object.keys(HELI_LIBRARY_CUES).sort(), [
   'heli.cable.creak', 'heli.engine.start', 'heli.engine.stop', 'heli.hook.release',
-  'heli.rotor', 'heli.setdown.thud', 'heli.wind'].sort());
+  'heli.rotor', 'heli.setdown.thud', 'heli.wind',
+  'heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.bucket.dent', 'heli.fire.hiss'].sort());
 assert.deepEqual(Object.keys(HELI_TONE_CUES).sort(), [
-  'heli.fuel.low', 'heli.radio.click', 'heli.radio.hiss', 'heli.rotor.low'].sort());
+  'heli.fuel.low', 'heli.radio.click', 'heli.radio.hiss', 'heli.rotor.low',
+  'heli.fire.alert', 'heli.aim.lock', 'heli.badge'].sort());
+assert.equal(HELI_CUES['heli.fire.crackle'].volume, .5, 'the crackle sits under the rotor');
+// The alert stays no louder than the low-fuel chime: the click cue it was first
+// matched to is never played (the radio chain makes its own click).
+const peak = id => HELI_CUES[id].volume * Math.max(...HELI_CUES[id].layers.map(layer => layer.volume));
+assert(peak('heli.fire.alert') <= peak('heli.fuel.low') && HELI_CUES['heli.fire.alert'].layers.every(layer => layer.type !== 'square'),
+  'the alert is no louder than the low-fuel chime');
+for (const id of ['heli.fire.alert', 'heli.aim.lock', 'heli.badge'])
+  assert(HELI_CUES[id].layers.every(layer => layer.kind === 'tone'), id + ' is made from tones');
 assert.deepEqual(HELI_RECIPES.map(spec => spec.id).sort(), Object.keys(HELI_LIBRARY_CUES).sort());
 const buses = {
   'heli.rotor': 'engine', 'heli.engine.start': 'engine', 'heli.engine.stop': 'engine',
   'heli.wind': 'ambience', 'heli.radio.hiss': 'ambience',
   'heli.cable.creak': 'vehicle', 'heli.hook.release': 'vehicle', 'heli.setdown.thud': 'vehicle',
   'heli.fuel.low': 'interface', 'heli.rotor.low': 'interface', 'heli.radio.click': 'interface',
+  'heli.fire.crackle': 'ambience', 'heli.fire.hiss': 'ambience', 'heli.bucket.scoop': 'vehicle', 'heli.bucket.pour': 'vehicle',
+  'heli.bucket.dent': 'vehicle', 'heli.fire.alert': 'interface', 'heli.aim.lock': 'interface', 'heli.badge': 'interface',
 };
 let libraryBytes = 0;
 for (const [id, bus] of Object.entries(buses)) {
   assert.equal(HELI_CUES[id].bus, bus, id + ' bus');
-  assert.equal(HELI_CUES[id].loop === true, ['heli.rotor', 'heli.wind', 'heli.radio.hiss'].includes(id), id + ' loop');
+  assert.equal(HELI_CUES[id].loop === true, ['heli.rotor', 'heli.wind', 'heli.radio.hiss',
+    'heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour'].includes(id), id + ' loop');
 }
 for (const [id, def] of Object.entries(HELI_LIBRARY_CUES)) {
   const spec = HELI_RECIPES.find(item => item.id === id);

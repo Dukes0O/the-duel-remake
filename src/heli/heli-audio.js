@@ -32,6 +32,14 @@ export const HELI_LIBRARY_CUES = Object.freeze({
   'heli.cable.creak': cue('vehicle', {file: 'heli/cable-creak.ogg', volume: .7, priority: 50, limit: 2}),
   'heli.hook.release': cue('vehicle', {file: 'heli/hook-release.ogg', volume: .8, priority: 60, limit: 2}),
   'heli.setdown.thud': cue('vehicle', {file: 'heli/setdown-thud.ogg', volume: .9, priority: 65, limit: 2}),
+  // H2 Fire (docs/HELI_FIRE.md section 11). The crackle sits under the rotor
+  // and the game scales it with the burning cells and the distance (400 m).
+  'heli.fire.crackle': cue('ambience', {file: 'heli/fire-crackle.ogg', volume: .5, loop: true, priority: 45, limit: 1}),
+  'heli.bucket.scoop': cue('vehicle', {file: 'heli/bucket-scoop.ogg', volume: .7, loop: true, priority: 55, limit: 1}),
+  'heli.bucket.pour': cue('vehicle', {file: 'heli/bucket-pour.ogg', volume: .8, loop: true, priority: 60, limit: 1}),
+  'heli.bucket.dent': cue('vehicle', {file: 'heli/bucket-dent.ogg', volume: .85, priority: 65, limit: 2}),
+  // Steam where water lands on fire; the game scales it by the litres.
+  'heli.fire.hiss': cue('ambience', {file: 'heli/fire-hiss.ogg', volume: .7, priority: 50, limit: 3}),
 });
 
 // Chime, horn, click and hiss are made from tones and noise, with no file.
@@ -48,6 +56,17 @@ export const HELI_TONE_CUES = Object.freeze({
     layers: [noise(1800, RADIO_FILTER.clickMs / 1000, .16)]}),
   'heli.radio.hiss': cue('ambience', {priority: 20, limit: 1, volume: 1, loop: true,
     layers: [noise(3200, 1, RADIO_FILTER.hiss)]}),
+  // H2 Fire: the dispatch alert before a call, two soft alternating tones no
+  // louder than the low-fuel chime; a short tick when the aim ring locks; a
+  // rising chime with the badge.
+  'heli.fire.alert': cue('interface', {priority: 88, limit: 1, volume: .6, layers: [
+    tone(880, .28, .12, 'triangle', 0), tone(660, .28, .12, 'triangle', .32),
+    tone(880, .28, .12, 'triangle', .64), tone(660, .28, .12, 'triangle', .96)]}),
+  'heli.aim.lock': cue('interface', {priority: 70, limit: 1, volume: .6,
+    layers: [tone(1760, .05, .12, 'sine', 0), tone(2349, .06, .1, 'sine', .05)]}),
+  'heli.badge': cue('interface', {priority: 85, limit: 1, volume: .7, layers: [
+    tone(784, .3, .12, 'sine', 0), tone(988, .3, .12, 'sine', .14), tone(1175, .3, .12, 'sine', .28),
+    tone(1568, .7, .12, 'sine', .42)]}),
 });
 
 export const HELI_RADIO_CUES = Object.freeze(Object.fromEntries(Object.entries(HELI_RADIO_LINES).map(
@@ -55,6 +74,8 @@ export const HELI_RADIO_CUES = Object.freeze(Object.fromEntries(Object.entries(H
     priority: 90, limit: 1, duck: 'voice'})])));
 
 export const HELI_CUES = Object.freeze({...HELI_RADIO_CUES, ...HELI_LIBRARY_CUES, ...HELI_TONE_CUES});
+// The H2 Fire recordings: loaded only when a fire needs them.
+export const FIRE_CUE_IDS = Object.freeze(['heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.bucket.dent', 'heli.fire.hiss']);
 
 // Flight and cable events (heli-flight.js, heli-cable.js) and what they sound like.
 // scale and rate change the cue's volume and pitch for that one play.
@@ -286,7 +307,8 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
   function load(ids) {
     if (disposed || !audio.context) return Promise.resolve([]);
     follow();
-    const wanted = ids || Object.keys(cues).filter(id => cues[id].file && !id.startsWith('heli.radio.'));
+    // A flight loads its own sounds; the fire sounds wait until a fire needs them (preloadFire).
+    const wanted = ids || Object.keys(cues).filter(id => cues[id].file && !id.startsWith('heli.radio.') && !FIRE_CUE_IDS.includes(id));
     return Promise.allSettled(wanted.filter(id => cues[id]?.file && !failed.has(id)).map(id => {
       if (buffers.has(id)) return Promise.resolve(buffers.get(id));
       if (!pending.has(id)) pending.set(id, fetchBuffer(id).finally(() => pending.delete(id)));
@@ -563,6 +585,7 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     buffers.clear();
     pending.clear();
   }
-  return {load, say, skip, clearRadio, subtitle, update, event, play, stop, dispose,
+  const preloadFire = () => load(FIRE_CUE_IDS.filter(id => cues[id]));
+  return {load, preloadFire, say, skip, clearRadio, subtitle, update, event, play, stop, dispose,
     get busy() { return !!current || queue.length > 0; }, get queued() { return [...queue]; }};
 }

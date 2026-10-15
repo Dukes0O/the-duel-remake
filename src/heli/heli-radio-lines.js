@@ -1,9 +1,17 @@
-// The instructor's radio lines (docs/HELICOPTER.md section 7). Stock voice
-// Brian, recorded clean and played through the radio filter in
-// heli-audio.js. Lines name no prices, so repair costs can change freely.
-export const HELI_RADIO_VOICE = Object.freeze({name: 'Brian', voiceId: 'nPczCjzI2devNBz1zQrb'});
+// The radio lines (docs/HELICOPTER.md section 7, docs/HELI_FIRE.md section 10),
+// recorded clean and played through the radio filter in heli-audio.js. Stock
+// voices: Brian the instructor, Sarah for the park rangers and Roger for fire
+// dispatch, all with the same settings. Lines name no prices and no course, so
+// repair costs can change and new burnable courses need no new lines.
+export const HELI_VOICES = Object.freeze({
+  brian: Object.freeze({name: 'Brian', voiceId: 'nPczCjzI2devNBz1zQrb'}),
+  sarah: Object.freeze({name: 'Sarah', voiceId: 'EXAVITQu4vr4xnSDxMaL'}),
+  roger: Object.freeze({name: 'Roger', voiceId: 'CwhRBWXzGAHq8TQ4Fs17'}),
+});
+// The instructor's voice, for the H1 lines.
+export const HELI_RADIO_VOICE = HELI_VOICES.brian;
 
-export const HELI_RADIO_LINES = Object.freeze({
+const H1_LINES = {
   'heli.radio.welcome': {file: 'heli-radio-welcome.mp3', text: 'Kestrel One, this is Tremblant base. Welcome aboard. I will be on the radio the whole way, so take your time.'},
   'heli.radio.controls': {file: 'heli-radio-controls.mp3', text: 'W and S raise and lower the collective. The arrow keys tilt her. A and D turn the nose.'},
   'heli.radio.liftoff.start': {file: 'heli-radio-liftoff-start.mp3', text: 'Lesson one. Ease up on W and lift her three metres off the pad. Then hold her there.'},
@@ -31,4 +39,32 @@ export const HELI_RADIO_LINES = Object.freeze({
   'heli.radio.cruise.ready': {file: 'heli-radio-cruise-ready.mp3', text: 'You are clear of the area. Cruise when you are ready.'},
   'heli.radio.cruise.refused': {file: 'heli-radio-cruise-refused.mp3', text: 'Negative, Kestrel One. Not enough fuel for that leg. Fill up first.'},
   'heli.radio.arrived': {file: 'heli-radio-arrived.mp3', text: 'Landing zone in sight. Bring her in nice and slow.'},
-});
+};
+
+// H2 Fire: fire dispatch (Roger), the rangers (Sarah) and the bucket (Brian).
+// gain evens the takes out at play: Sarah's come out about 7 dB louder than
+// the rest, and Roger's "fire is out" about 2 dB quieter.
+const FIRE_LINES = {
+  'heli.radio.fire.call': {voice: 'roger', file: 'heli-radio-fire-call.mp3', text: 'Calling all pilots, calling all pilots. Smoke and flames reported in the forest. Kestrel One, can you take it?'},
+  'heli.radio.fire.answer': {voice: 'roger', file: 'heli-radio-fire-answer.mp3', text: 'Thank you, Kestrel One. Fit the bucket at the pad. The lake is your water.'},
+  'heli.radio.fire.later': {voice: 'roger', file: 'heli-radio-fire-later.mp3', text: 'Understood. Call us back when you can. It will not wait forever.'},
+  'heli.radio.fire.reminder': {voice: 'roger', file: 'heli-radio-fire-reminder.mp3', text: 'Kestrel One, that fire is still burning, and it is growing.'},
+  'heli.radio.wind.calm': {voice: 'roger', file: 'heli-radio-wind-calm.mp3', text: 'Wind is light today.'},
+  'heli.radio.wind.breeze': {voice: 'roger', file: 'heli-radio-wind-breeze.mp3', text: 'There is a breeze. Watch where the water drifts.'},
+  'heli.radio.wind.strong': {voice: 'roger', file: 'heli-radio-wind-strong.mp3', text: 'It is windy out there. The fire runs with the wind, so hit the downwind side first.'},
+  'heli.radio.fire.half': {voice: 'roger', file: 'heli-radio-fire-half.mp3', text: 'Good work, Kestrel One. It is half out.'},
+  'heli.radio.fire.out': {voice: 'roger', gain: 1.25, file: 'heli-radio-fire-out.mp3', text: 'That is the last of it. Fire is out. Great flying, Kestrel One.'},
+  'heli.radio.fire.lost': {voice: 'roger', file: 'heli-radio-fire-lost.mp3', text: 'We have lost those woods. The course is closed. Nobody was hurt.'},
+  'heli.radio.fire.thanks': {voice: 'sarah', gain: .5, file: 'heli-radio-fire-thanks.mp3', text: 'From all of us at the park, thank you. The animals thank you too.'},
+  'heli.radio.burn.reopen': {voice: 'sarah', gain: .5, file: 'heli-radio-burn-reopen.mp3', text: 'The burnt woods are open again. All black for now, but it will come back.'},
+  'heli.radio.burn.shoots': {voice: 'sarah', gain: .5, file: 'heli-radio-burn-shoots.mp3', text: 'Green shoots are coming up in the burn.'},
+  'heli.radio.burn.fireweed': {voice: 'sarah', gain: .5, file: 'heli-radio-burn-fireweed.mp3', text: 'Fireweed is blooming in the burn. It is always the first flower back after a fire.'},
+  'heli.radio.bucket.first': {voice: 'brian', file: 'heli-radio-bucket-first.mp3', text: 'That is the bucket. Hover low and slow over the lake and let it sink and fill.'},
+  'heli.radio.bucket.full': {voice: 'brian', file: 'heli-radio-bucket-full.mp3', text: 'Bucket is full. She is heavier now, so give her more collective.'},
+  'heli.radio.bucket.fast': {voice: 'brian', file: 'heli-radio-bucket-fast.mp3', text: 'Too fast over the water. Slow down or you will tear the bucket.'},
+  'heli.radio.drop.tip': {voice: 'brian', file: 'heli-radio-drop-tip.mp3', text: 'Hold H to let the water go. Drop low, and a little short. The water keeps moving as it falls.'},
+  'heli.radio.bucket.dented': {voice: 'brian', file: 'heli-radio-bucket-dented.mp3', text: 'You dented the bucket. It will leak until the shop fixes it.'},
+};
+
+export const HELI_RADIO_LINES = Object.freeze(Object.fromEntries(Object.entries({...H1_LINES, ...FIRE_LINES})
+  .map(([id, line]) => [id, Object.freeze({voice: 'brian', ...line})])));
