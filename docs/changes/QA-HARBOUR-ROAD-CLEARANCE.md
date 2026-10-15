@@ -28,3 +28,6 @@ The existing single-event build-reference-laps tool completed unchanged on 63457
 
 
 The original existing Lantern Hairpin test also passed on792ca6b9, one selected test with no skips/failures, wall6495.316ms (native test duration5340.3815ms). Its12..35mph flying-lap limit, zero crashes and every clean-lap assertion remain exact. Source review is clear; current integration, including the accepted Panorama town helper, is merged normally before the canonical Harbour gate. Own radius, test expectation, measured reference and approved Harbour fixture remain unchanged. No gate or build has yet run on this final union.
+
+
+The radius10 gate38/40 exposed the already carded closing-strip/lining fault. FIX-ROAD-SEAM is reviewed and merged into the joint acceptance lane; the failed midpoint stays removed and every contact/12..35mph/1.5m/triangle guard stays exact. Joint b1fc8b1f native passes8High/Performance views with temporary saves and zero issues/warnings. Capture keeps19other scenes exact; measured combined Harbour hash feb4256c74d44e99a8deebc6be850a77f587ee6d2856312725bf68f27df8cb46 replaces this card's earlier0ec radius-only hash. Reference77613ms/f64d259d remains exact. Both cards merge atomically only after the corrected canonical/jobs4/build; no intermediate broken-source merge or release.
