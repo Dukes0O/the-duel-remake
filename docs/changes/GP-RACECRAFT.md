@@ -13,3 +13,9 @@ Three pre-change exact30-second complete field/RNG hashes are pinned in the exis
 ## Removed
 
 Nothing yet. Existing drivers and all disabled-switch behavior stay required. No saves, released settings, artwork or current assets are removed.
+
+## First probe and measurement definition
+
+09c20a17 paired seed1989/field1000 on all three courses: slower-player passed3/3, nitro-from-last lap-one first0/3 versus2/3 baseline; normal CPU passes Panorama3->10, Woods10->10, Pacific3->6. No20-race pass claimed. Disabled Panorama already has18 recorded crashes versus12 enabled; the card's unchanged less-than8 bound is not met. Race-time changes in these pairs are all below1percent.
+
+The initial tool sampled width only on the single frame when pole crossed braking entry. The implementation now measures the actual first braking zone (entry through apex), requiring all three cars to be inside it with the exact half-width longitudinal band and real lateral clearance. The original entry-frame verdict and all car positions remain in the packet for independent review. This fixes the newly written tool's coverage; it does not waive the card's3-wide/15-of20 threshold or claim that any previous probe passed.

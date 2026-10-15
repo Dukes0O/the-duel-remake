@@ -44,12 +44,12 @@ export function playerPaceMph(duel){
     if(distance>=0 && distance<duel.car.topSpeed*MPH*1.5*dt+1){
       p.elapsed+=dt;p.distance+=distance;p.expected+=p.profile.at(p.s)*MPH*dt;
       if(p.elapsed>=2){
-        p.sectors.push({time:s.stageTimeSec,ratio:p.distance/Math.max(1,p.expected)});
+        p.sectors.push({time:s.stageTimeSec,start:s.stageTimeSec-p.elapsed,ratio:p.distance/Math.max(1,p.expected)});
         p.elapsed=0;p.distance=0;p.expected=0;
       }
     }else{p.elapsed=0;p.distance=0;p.expected=0;}
     p.time=s.stageTimeSec;p.s=s.s;
-    p.sectors=p.sectors.filter(row=>s.stageTimeSec-row.time<=10);
+    p.sectors=p.sectors.filter(row=>row.start>=s.stageTimeSec-10);
   }
   let ratio=p.sectors.length ? Math.max(...p.sectors.map(row=>row.ratio)) : FIELD_TUNING[s.cpuDifficulty].pace;
   if(s.lapTimes.length){
@@ -64,11 +64,11 @@ export function playerPaceMph(duel){
 }
 
 // Award a real close pass once per rival/lap; contact earns no recharge.
-function closePassRefill(r,run,near){
-  const seen=r.field.nitroPassed??={};
+export function closePassRefill(r,run,near,now){
+  const seen=r.field.nitroPassed??={},history=r.field.nitroNear??={};
   for(const c of near){
-    const previous=c.ds+(r.s-r.prevS)-(c.o.s-c.o.prevS);
-    if(previous>0 && c.ds<=0 && seen[c.index]!==r.completedLaps &&
+    const previous=history[c.index];history[c.index]={ds:c.ds,time:now};
+    if(previous && now-previous.time<=.1 && previous.ds>0 && c.ds<=0 && seen[c.index]!==r.completedLaps &&
         Math.abs(c.dl)>=run.halfWidth+c.hw+.15 && Math.abs(c.dl)<6.4 &&
         r.speedMph>=65 && !(r.contactCooldown>0)){
       seen[c.index]=r.completedLaps;
@@ -208,7 +208,7 @@ function move(duel, r, run, dt, target, intent, surface, look, route = null) {
 
 export function stepFieldRacer(duel, r, dt) {
   const s = duel.state, f = r.field, run = runtimeOf(duel, r);
-  if(f.racecraft && (r.finished || r.knock || r.pit || pitTransitTarget(duel.course,r,r.s))) r.boosting=false;
+  if(f.racecraft && (r.finished || r.knock || r.pit || pitTransitTarget(duel.course,r,r.s))) stepCpuNitro(r,run,dt,{pit:true});
   if(r.pit?.phase==='servicing'&&stepPitService(duel,r,dt)){f.stuck=0;f.offSec=0;return;}
   if (r.knock) {
     // A knocked car is a free body until its tyres bite; the shared rules apply.
@@ -299,7 +299,7 @@ export function stepFieldRacer(duel, r, dt) {
   const t = f.traits, now = s.stageTimeSec;
   const halfRoad = surface.roadHalfWidth;
   const near = sense(duel, r, run);
-  if(f.racecraft){playerPaceMph(duel);closePassRefill(r,run,near);}
+  if(f.racecraft){playerPaceMph(duel);closePassRefill(r,run,near,s.stageTimeSec);}
   const zone = nextCorner(profile, r.s);
   const lineOffset = line.offsetAt(look);
 
@@ -338,7 +338,7 @@ export function stepFieldRacer(duel, r, dt) {
     const share=clamp(1-(r.s-f.gridStartS)/f.startMergeDistance,0,1);
     desired+=f.startBias*share;
     const merging=near.some(c=>c.ds>0 && c.gap<reach && Math.abs(c.o.lateral-desired)<run.halfWidth+c.hw+.5);
-    if(share>0 && merging) desired=r.lateral;
+    if(share>0 && merging) desired=lineOffset+f.bias;
   }
   // Between walls a racer keeps further off them (`wallRoom`, metres), as a car at speed overshoots a lane.
   const roadLimit = Math.max(0, halfRoad - run.halfWidth - .5 - (follow.wallRoom ?? 0));

@@ -13,7 +13,7 @@ import { testCourseAccess } from './career-fixture.mjs';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { FIELD, FIELD_TUNING, CATCH_UP_GAP_SEC, gridPose, chooseRacers, performanceIndex, racerSpec, catchUpFactor,
   classify } from '../src/race-field.js';
-import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro, playerPaceMph } from '../src/race-field-driver.js';
+import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro, playerPaceMph, closePassRefill } from '../src/race-field-driver.js';
 import { shortRacerName, runningOrderRows, fieldResultsTable, fieldResultsText } from '../src/screen-field.js';
 import { installTestDriver } from './race-field-balance.mjs';
 import { App } from '../src/app.js';
@@ -100,6 +100,18 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
   const incomplete=rows.map((r,i)=>i? r : {...r,finished:6,meanCpuTime:null});
   check(!summarizeRacecraft(incomplete,{courses,races:20}).passed,'unfinished measurement cannot hide behind averages');
   check(!summarizeRacecraft(rows.filter(r=>r.index===0),{courses,races:1}).passed,'a probe cannot count as the twenty-race acceptance');
+}
+
+{
+  const r={boost:.2,speedMph:100,completedLaps:0,contactCooldown:0,field:{}};
+  const run={halfWidth:1};const c={index:2,ds:1,dl:3,hw:1};
+  closePassRefill(r,run,[c],1);c.ds=-1;closePassRefill(r,run,[c],1+1/60);
+  close(r.boost,.2+.22*.5,1e-12,'a real close pass awards half the player recharge');
+  closePassRefill(r,run,[c],1+2/60);
+  close(r.boost,.31,1e-12,'the same close pass cannot refill every frame');
+  const contact={...r,boost:.2,field:{},contactCooldown:1};c.ds=1;
+  closePassRefill(contact,run,[c],2);c.ds=-1;closePassRefill(contact,run,[c],2+1/60);
+  close(contact.boost,.2,1e-12,'contact cannot earn close-pass recharge');
 }
 
 // ---- the switch and the old modes ----

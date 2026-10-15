@@ -12,8 +12,8 @@ const STEP=1/60;
 const average=values=>values.length ? values.reduce((a,b)=>a+b,0)/values.length : null;
 function memoryStorage(){const rows=new Map();return {get length(){return rows.size;},key:i=>[...rows.keys()][i]??null,
   getItem:k=>rows.get(k)??null,setItem:(k,v)=>rows.set(k,String(v)),removeItem:k=>rows.delete(k)};}
-function threeWide(duel){
-  const actors=[duel.state,...duel.state.opponents].filter(r=>!r.finished&&!r.knock);
+function threeWide(duel,entry=-Infinity,apex=Infinity){
+  const actors=[duel.state,...duel.state.opponents].filter(r=>!r.finished&&!r.knock&&r.s>=entry&&r.s<=apex);
   for(let i=0;i<actors.length;i++)for(let j=i+1;j<actors.length;j++)for(let k=j+1;k<actors.length;k++){
     const rows=[actors[i],actors[j],actors[k]], shells=rows.map(r=>duel._vehicleSpec(r));
     const stations=rows.map(r=>duel.relativeS(r.s,rows[0].s));
@@ -51,15 +51,24 @@ export function measureRace({course,index=0,enabled=false,mode='normal',maxSec=n
     };
     const front=s.opponents.reduce((a,b)=>a.s>b.s?a:b), profile=runtimeOf(d,front).profile;
     const phase=d.course.phase(front.s), length=d.course.length;
-    const entries=profile.corners.map(c=>(c.entryS-phase+length)%length).filter(distance=>distance>1);
-    const entry=entries.length ? front.s+Math.min(...entries) : null;
-    let wide=null,firstLapPosition=null,passedPlayer=false,boostFrames=0;
+    const entries=profile.corners.map(c=>({corner:c,distance:(c.entryS-phase+length)%length})).filter(row=>row.distance>1).sort((a,b)=>a.distance-b.distance);
+    const first=entries[0],entry=first ? front.s+first.distance : null;
+    const apex=first ? entry+(first.corner.apexS-first.corner.entryS+length)%length : null;
+    let wide=false,entryInstantWide=null,entryCars=null,firstLapPosition=null,passedPlayer=false,boostFrames=0;
     const sides=new Map(s.opponents.map((r,i)=>[i,Math.sign(d.relativeS(r.s,s.s)-s.s)]));
     maxSec??=d.course.script?Math.max(420,d.course.raceLength/14):420;
     while(s.status==='countdown'||s.status==='racing'){
       app.advance(STEP,STEP);
       if(s.status!=='racing')continue;
-      if(wide===null && entry!==null && s.opponents.some(r=>r.s>=entry))wide=threeWide(d);
+      if(entry!==null){
+        if(entryInstantWide===null && s.opponents.some(r=>r.s>=entry)){
+          entryInstantWide=threeWide(d);
+          entryCars=[s,...s.opponents].map(r=>({s:r.s,lateral:r.lateral,speed:r.speedMph,bias:r.field?.bias,passes:r.field?.passes?.start}));
+        }
+        // Measure cars physically in this first braking zone, not just the
+        // instant pole arrives or an unrelated group elsewhere on the track.
+        if(!wide)wide=threeWide(d,entry,apex);
+      }
       s.opponents.forEach((r,i)=>{
         const ds=d.relativeS(r.s,s.s)-s.s,previous=sides.get(i);
         const side=ds>4?1:ds< -4?-1:previous;
@@ -71,7 +80,7 @@ export function measureRace({course,index=0,enabled=false,mode='normal',maxSec=n
       if(s.stageTimeSec>maxSec)break;
     }
     const times=s.opponents.map(r=>r.finished?r.lapStartedAt:null),stats=s.field.stats;
-    return {course,index,seed,fieldSeed,enabled,mode,wide,entry,passedPlayer,firstLapPosition,
+    return {course,index,seed,fieldSeed,enabled,mode,wide,entry,apex,entryInstantWide,entryCars,passedPlayer,firstLapPosition,
       passes:stats.passes,crashes:stats.crashes.length,playerCrashes:s.stageCrashes,
       pileUp:new Set(stats.crashes.filter(c=>c.t<=30).map(c=>c.index)).size>=3,
       finished:times.filter(v=>v!==null).length,playerFinished:s.completedLaps>=s.lapsTotal,
