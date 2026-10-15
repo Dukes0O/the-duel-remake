@@ -2,6 +2,12 @@
   "version": 1,
   "units": "metres",
   "up": "Y",
+  "pendingExport": {
+    "model": "stone-stream-bridge",
+    "status": "source-only; not exported",
+    "arguments": "--model stone-stream-bridge",
+    "change": "Weathered neutral grey materials only; original geometry and all current measured model records below remain unchanged."
+  },
   "models": [
     {
       "id": "stone-stream-bridge",

@@ -19,6 +19,7 @@ def arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--paths-only", action="store_true")
+    parser.add_argument("--model", choices=list(BUDGETS), help="Export only this existing High/LOD pair; preserve the others")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
     args.root = args.root.resolve()
     return args
@@ -69,8 +70,8 @@ def wedge(name, theta0, theta1, inner, outer, depth, surface):
 
 
 def stone_bridge(low):
-    stone = [material("weathered sandstone " + str(i), colour) for i, colour in enumerate(
-        [(.31, .30, .27), (.39, .37, .32), (.45, .43, .37), (.35, .35, .32)])]
+    stone = [material("weathered grey stone " + str(i), colour, roughness=.94) for i, colour in enumerate(
+        [(.20, .22, .21), (.27, .29, .28), (.32, .33, .32), (.24, .26, .25)])]
     coping = material("dark worn coping", (.24, .25, .23))
     steps = 8 if low else 14
     for i in range(steps):
@@ -180,10 +181,28 @@ def main():
     args = arguments()
     runtime = args.root / "public/assets/models/circuits/kits"
     provenance = args.root / "tools/art/ardennes-landmarks.json"
+    selected = [args.model] if args.model else list(BUDGETS)
     if args.paths_only:
-        print(json.dumps({"runtime": str(runtime), "files": [id + suffix + ".glb" for id in BUDGETS for suffix in ["", "-lod"]],
+        print(json.dumps({"runtime": str(runtime), "files": [id + suffix + ".glb" for id in selected for suffix in ["", "-lod"]],
                           "provenance": str(provenance)}))
         return
+    # A selected pair must not erase or silently replace another model's provenance.
+    previous = None
+    if args.model:
+        previous = json.loads(provenance.read_text(encoding="utf-8"))
+        if (previous.get("version") != 1 or previous.get("units") != "metres" or previous.get("up") != "Y" or
+                [row.get("id") for row in previous.get("models", [])] != list(BUDGETS)):
+            raise ValueError("Selected export needs the complete current measured provenance")
+        for record in previous["models"]:
+            if record["id"] == args.model:
+                continue
+            expected = [record["id"] + suffix + ".glb" for suffix in ["", "-lod"]]
+            if [item.get("path") for item in record["files"]] != expected:
+                raise ValueError("Invalid untouched model pair")
+            for item in record["files"]:
+                path = runtime / item["path"]
+                if path.stat().st_size != item["bytes"] or hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
+                    raise ValueError("Untouched model differs from its measured provenance: " + item["path"])
     global bpy, Vector
     import bpy
     from mathutils import Vector
@@ -191,7 +210,8 @@ def main():
     provenance.parent.mkdir(parents=True, exist_ok=True)
     records = []
     builders = {"stone-stream-bridge": stone_bridge, "forest-footbridge": footbridge, "forest-timing-tower": timing_tower}
-    for identifier, builder in builders.items():
+    for identifier in selected:
+        builder = builders[identifier]
         record = {"id": identifier, "original": True, "author": "The Duel project", "recipe": "tools/blender/ardennes-landmarks.py",
                   "source": "Original geometry authored for CIRCUITS.md section 5.5. No external model, texture or download.", "files": []}
         for low in [False, True]:
@@ -222,6 +242,9 @@ def main():
         if record["bytes"] > 250000:
             raise ValueError(identifier + " High/LOD pair exceeds 250 KB")
         records.append(record)
+    if previous:
+        replacements = {row["id"]: row for row in records}
+        records = [replacements.get(row["id"], row) for row in previous["models"]]
     provenance.write_text(json.dumps({"version": 1, "units": "metres", "up": "Y", "models": records}, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(json.dumps({"models": records}), flush=True)
 

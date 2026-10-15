@@ -123,35 +123,50 @@ function landmarks() {
   // The outside terrace uses the accepted lodge and shopfront kits.
   out.push(row('ski-lodge', fontaine.s0 + 20, 44, {heading: -Math.PI / 2, scale: .7, clear: 12}));
   out.push(row('wooden-dock', fontaine.s0 + 20, 35, {heading: -Math.PI / 2, scale: .75, clear: 10}));
-  out.push(row('stone-stream-bridge', (red.s0 + red.s1) / 2, 36, {heading: 0, clear: 12}));
+  out.push(row('stone-stream-bridge', (red.s0 + red.s1) / 2, 36, {heading: Math.PI / 2, clear: 12}));
   for (let i = 0; i < 6; i++) out.push(row('grandstand', wall.s0 - 15 + i * 15, -34,
     {heading: Math.PI / 2, crowd: true, solid: true, clear: 11}));
   const kestrel = named('Kestrel Straight');
   out.push(row('forest-footbridge', kestrel.s0 + (kestrel.s1 - kestrel.s0) * .58, 0, {clear: 38}));
-  const stavelot = named('Stavelot');
-  for (let i = 0; i < 12; i++) out.push(row(i % 2 ? 'shopfront-a' : 'shopfront-b', stavelot.s0 + 30 + i * 14,
-    92 + i % 3 * 14, {heading: Math.PI, scale: .8, clear: 9, grounding: 'footprint'}));
-  // The accepted pointed lantern tower forms the village spire above its roofs.
-  out.push(row('lantern-tower', stavelot.s0 + 98, 108,
-    {scale: Object.freeze([.75, 1.5, .75]), clear: 10, grounding: 'footprint'}));
   out.push(row('forest-timing-tower', named('Bus Stop Exit').s0, -42, {heading: Math.PI, clear: 12}));
-  // Existing leafy trees beside the darker fir rows. Their actual leaves use
-  // the course-owned material colour; no donor GLB is regenerated.
-  for (let s = PIT_END + 100; s < road.length - 100; s += 105) for (const side of [-1, 1]) {
-    const at = wrap(s + (side > 0 ? 25 : 0));
-    const lateral = side * (road.halfWidthAt(at) + 22);
-    const corner = road.pieceAt(at);
-    if (corner.kind === 'turn' && side === corner.dir) continue;
-    if (Math.abs(at - (kestrel.s0 + (kestrel.s1 - kestrel.s0) * .58)) < 40) continue;
-    out.push(row('autumn-tree', at, lateral, {scale: 1.05, clear: 5}));
-  }
   return out;
 }
 
+// Two compact streets on the low ribbon beside Stavelot, not the old far hillside.
+// The shared helper seats each footing; whole church support still needs review.
+const VILLAGE = Object.freeze({s: named('Stavelot').s0 + 30, lateral: 38});
+function valleyTown() {
+  const houses = [], lamps = [], taken = [{s: VILLAGE.s, lateral: VILLAGE.lateral, along: 12, across: 11}];
+  const free = (s, lateral, along, across) => taken.every(other =>
+    Math.abs(other.s - s) >= other.along + along || Math.abs(other.lateral - lateral) >= other.across + across);
+  for (const street of [28, 48]) for (let along = -65, i = 0; along < 135; along += 13, i++) {
+    const s = named('Stavelot').s0 + along, centre = street + 1.2 * Math.sin(along / 70);
+    for (const side of [-1, 1]) {
+      const width = 6.2 + i % 3 * .5, depth = 6.4 + i % 2 * .6;
+      const lateral = centre + side * 8.5, middle = lateral - side * 1.15;
+      const halfAlong = width / 2 + .6, halfAcross = (depth + 2.3) / 2 + .5;
+      if (!free(s, middle, halfAlong, halfAcross)) continue;
+      taken.push({s, lateral: middle, along: halfAlong, across: halfAcross});
+      houses.push(Object.freeze({s, lateral, heading: -side * Math.PI / 2,
+        width, depth, storeys: i % 4 === 0 ? 2 : 1}));
+    }
+    if (i % 4 === 0 && free(s, centre + 3, .5, .5)) {
+      taken.push({s, lateral: centre + 3, along: .5, across: .5});
+      lamps.push(Object.freeze({s, lateral: centre + 3}));
+    }
+  }
+  return {houses: Object.freeze(houses), lamps: Object.freeze(lamps)};
+}
 export const ARDENNES_FOREST = Object.freeze({
   ...ARDENNES_ROAD,
   fieldSize: 8, grandPrixLaps: 2,
   runoffBands: LONG_LEFT_RUNOFF,
+  circuitLandmarks: Object.freeze([
+    Object.freeze({id: 'stavelot-valley-town', type: 'town', ...VILLAGE, height: 12,
+      // Conditional shared palette hook: not active until its separately leased change lands.
+      roofColours: Object.freeze([0x414a50, 0x5a352c, 0x50545a]), ...valleyTown()}),
+    Object.freeze({id: 'stavelot-church', type: 'church', ...VILLAGE, height: 22}),
+  ]),
   lightPath: Object.freeze({axis: 'distance', wrap: false, palette: 'forest-morning', keyframes: Object.freeze([
     Object.freeze({at: 0, look: 'golden'}), Object.freeze({at: road.length, look: 'day'}),
   ])}),
@@ -170,11 +185,18 @@ export const ARDENNES_FOREST = Object.freeze({
   wetRoad: Object.freeze({performanceShare: .5}),
   scenery: Object.freeze({
     trees: 800, rocks: 120, mountains: false,
-    forest: Object.freeze({from: 16, to: 40, spacing: 5.2, rows: 4, thin: .35,
-      scale: Object.freeze([.9, 1.9]), jitter: 1.1}),
+    // First fir row is about 9 m behind the ordinary catch fence (14.3 m).
+    forest: Object.freeze({from: 23, to: 60, spacing: 3.8, rows: 7, thin: .12,
+      scale: Object.freeze([1.1, 2]), jitter: .8}),
+    // Current Tremblant grove renderer, in summer greens rather than autumn orange.
+    autumn: Object.freeze({share: .35, colours: Object.freeze([
+      Object.freeze([.22, .46, .16]), Object.freeze([.28, .52, .18]), Object.freeze([.19, .40, .14]),
+    ])}),
     clear: Object.freeze([
       Object.freeze({s0: 0, s1: PIT_END + 20, from: -60, to: 55}),
       Object.freeze({s0: road.length - 80, s1: road.length, from: -60, to: 55}),
+      Object.freeze({s0: named('The Wall').s0 - 35, s1: named('The Wall').s0 + 90, from: -55, to: -20}),
+      Object.freeze({s0: named('Stavelot').s0 - 80, s1: named('Stavelot').s0 + 150, from: 12, to: 64}),
     ]),
   }),
   // Gravel and grass colour only. The road and run-off grip stay unchanged.

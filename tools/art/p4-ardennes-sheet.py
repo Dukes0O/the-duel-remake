@@ -51,7 +51,7 @@ def main():
     if not report.get('passed') or not harness.get('passed') or not harness.get('memoryOnlySaves') or harness.get('issues'):
         raise ValueError('Complete actual memory-only native acceptance is required')
     keys = [('Pit Straight', 'mist-grid')] + [(name, 'first-lap') for name in
-        ['La Fontaine', 'Red Water', 'The Wall', 'Kestrel Straight', 'Les Combes', 'Riverside', 'Stavelot', 'Bus Stop Exit']] + [('Pit Straight', 'clear-second-lap')]
+        ['La Fontaine', 'Red Water', 'The Wall', 'Kestrel Straight', 'Kestrel Underbridge', 'Les Combes', 'Riverside', 'Stavelot', 'Bus Stop Exit']] + [('Pit Straight', 'clear-second-lap')]
     rows = []
     for quality in ['high', 'performance']:
         detail = next(row for row in report['qualities'] if row['quality'] == quality)
@@ -70,6 +70,18 @@ def main():
                 raise ValueError('Authored morning start is missing')
             if phase == 'clear-second-lap' and (capture['laps'] < 1 or capture['fogNear'] != 360):
                 raise ValueError('Clear light must come from actual second-lap progress')
+            if name == 'Kestrel Underbridge':
+                view = capture.get('playerCamera') or {}
+                matrix = view.get('rootMatrix') or []
+                if (view.get('kind') != 'actual-player-eye' or len(matrix) != 16 or
+                        view.get('eyeHeight') != 1.05 or capture['laps'] != 0 or
+                        not view['bridgeS'] - 6 <= capture['s'] < view['bridgeS'] or view['s'] != capture['s']):
+                    raise ValueError('Actual first-lap player-height bridge view is missing')
+                def point(x, y, z):
+                    return [matrix[i] * x + matrix[i + 4] * y + matrix[i + 8] * z + matrix[i + 12] for i in range(3)]
+                if (view['eye'] != point(0, 1.05, 0) or view['target'] != point(0, 1.05, 18) or
+                        sum((a - b) ** 2 for a, b in zip(capture['camera'], view['eye'])) ** .5 >= .001):
+                    raise ValueError('Bridge camera is not the actual rendered player eye and forward target')
             captures.append(capture)
         rows.append(captures)
     cell = 256

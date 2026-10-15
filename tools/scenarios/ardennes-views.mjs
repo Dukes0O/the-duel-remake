@@ -181,14 +181,31 @@ export async function run(context) {
       async function capture(name, phase) {
         const camera = await context.evaluate(`(() => {
           const a = window.__qaApp, c = a.duel.course, s = a.duel.state;
+          if (${JSON.stringify(name)} === 'Kestrel Underbridge') {
+            const bridge = c.def.kitPlacements.find(row => row.id === 'forest-footbridge');
+            if (!bridge || s.completedLaps !== 0 || s.s < bridge.s - 6 || s.s >= bridge.s)
+              throw Error('Actual first-lap footbridge approach was not reached');
+            window.__render.renderFrame();
+            const ground = c.groundAt(s.s, s.lateral);
+            const roots = window.__render.scene.children.filter(root => root.visible && root.userData?.vehicleKey === s.car &&
+              root.position.x === ground.x && root.position.z === ground.z);
+            if (roots.length !== 1) throw Error('Actual rendered player root is missing or ambiguous');
+            const root = roots[0]; root.updateWorldMatrix(true, false);
+            const eye = root.localToWorld(root.position.clone().set(0, 1.05, 0));
+            const target = root.localToWorld(root.position.clone().set(0, 1.05, 18));
+            const playerCamera = {kind: 'actual-player-eye', bridgeS: bridge.s, s: s.s, lateral: s.lateral,
+              eyeHeight: 1.05, rootMatrix: root.matrixWorld.toArray(), eye: eye.toArray(), target: target.toArray()};
+            a.inspectionCamera = {position: playerCamera.eye, target: playerCamera.target};
+            window.__render.renderFrame();
+            return {position: a.inspectionCamera.position, playerCamera};
+          }
           const piece = c.script.pieces.find(piece => piece.name === ${JSON.stringify(name)});
           if (!piece) throw Error('Missing authored view');
-          let distance = name => c.script.pieces.find(piece => piece.name === name).s0;
           const at = ${JSON.stringify(name)} === 'Pit Straight' ? 0 : Math.max(0, piece.s0 - 35);
-          const off = ${JSON.stringify(name)} === 'Stavelot' ? 55 : -32;
+          const off = -32;
           const e = c.groundAt(at, off);
-          const targetS = ${JSON.stringify(name)} === 'Stavelot' ? distance('Stavelot') + 100 : piece.s0 + 25;
-          const targetOff = ${JSON.stringify(name)} === 'Stavelot' ? 104 : ${JSON.stringify(name)} === 'Red Water' ? 36 : 0;
+          const targetS = ${JSON.stringify(name)} === 'Stavelot' ? c.def.circuitLandmarks.find(row => row.id === 'stavelot-valley-town').s : piece.s0 + 25;
+          const targetOff = ${JSON.stringify(name)} === 'Stavelot' ? c.def.circuitLandmarks.find(row => row.id === 'stavelot-valley-town').lateral : ${JSON.stringify(name)} === 'Red Water' ? 36 : 0;
           const t = c.groundAt(targetS, targetOff);
           const ground = window.__panQa.renderedGroundHeight(c, {...e, s: at, off}, {requireSurface: true});
           const targetGround = window.__panQa.renderedGroundHeight(c, {...t, s: targetS, off: targetOff}, {requireSurface: true});
@@ -207,10 +224,16 @@ export async function run(context) {
             camera: window.__render.camera.position.toArray(), stateUnchanged: true};
         })()`);
         const file = 'ardennes-' + name.toLowerCase().replaceAll(' ', '-') + '-' + quality + '-' + phase;
-        await context.screenshot(file); report.captures.push({quality, name, phase, file: file + '.png', ...facts}); await persist();
+        await context.screenshot(file); report.captures.push({quality, name, phase, file: file + '.png', ...facts, ...(camera.playerCamera ? {playerCamera: camera.playerCamera} : {})}); await persist();
       }
       await capture('Pit Straight', 'mist-grid');
-      const targets = await context.evaluate(`(() => {const c=window.__qaApp.duel.course;return ${JSON.stringify(names)}.map(name=>({name,s:c.script.pieces.find(piece=>piece.name===name).s0}));})()`);
+      const targets = await context.evaluate(`(() => {
+        const c=window.__qaApp.duel.course, targets=${JSON.stringify(names)}.map(name=>({name,s:c.script.pieces.find(piece=>piece.name===name).s0}));
+        const bridge=c.def.kitPlacements.find(row=>row.id==='forest-footbridge');
+        if(!bridge)throw Error('Authored Kestrel footbridge is missing');
+        targets.splice(targets.findIndex(row=>row.name==='Kestrel Straight')+1,0,{name:'Kestrel Underbridge',s:bridge.s-6});
+        return targets;
+      })()`);
       const progress = []; let targetIndex = 0, clear = false;
       for (let batch = 0; batch < 70; batch++) {
         const target = targets[targetIndex]?.s ?? null;
