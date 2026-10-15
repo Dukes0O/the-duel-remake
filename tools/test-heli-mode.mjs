@@ -330,6 +330,8 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     // exactly the helicopter's cue list.
     'src/app.js|heli/heli-session.js', 'src/app.js|heli/heli-ground.js', 'src/app.js|heli/heli-audio.js',
     'src/app.js|heli/heli-save.js', 'src/app.js|heli/heli-jobs.js',
+    // FIRE-HOOKS: the fire's day steps when a player becomes active.
+    'src/app.js|heli/heli-fire-run.js',
     // RELEASE-HELI: the menu says why START is closed for an air-only car.
     'src/screen-readiness.js|heli/heli-jobs.js',
     'src/sound-bank.js|heli/heli-audio.js',
