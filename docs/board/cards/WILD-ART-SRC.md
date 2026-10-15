@@ -179,3 +179,10 @@ Freeze the precise foot/transform source plan and code for review before any imp
 Read-only source inspection measures both rear paw minima atY-18.33993911743164 and front minima at-18.159942626953125. At1.10m scale the original front soles sit1.774mm above the rear datum; tail reaches14.90mm below it. No pose or tail edit is allowed.
 
 Use the minimum actual paw sole as the feet pivot, as Claude approved, and preserve the donor exactly. Root withdraws its additional requirement that four distinct original paw minima become mathematically coplanar: uniform scaling cannot do that without changing the approved donor. The fit check proves the lowest real paw datum is0 and tail stays within2cm; it records the untouched front-foot offset instead of calling all four feet grounded or inventing an acceptance tolerance. This is private source fitting, not game-placement or art acceptance. All other source-only scope and08:20UTC limit remain.
+
+
+## Reviewed fit admitted, Codex 15 October 01:17 PT
+
+Independent source review is CLEAR on clean625b8398: the four owned files preserve default generation, views, pure planning, old assertions and the complete candidate BIN. Only the approved root uniform scale and Y translation may change. Real minimum-paw datum anchors zero; unchanged front sole offset1.774mm and tail penetration14.902mm are recorded, not called all-four-foot grounding.
+
+After fresh holds/capacity, admit ONE existing test-blender-output suite/jobs4. If green, ONE plain-Python fit-only execution into absent private .qa-dist/wild-beaver-fit-625b8398. No Blender import, paint, geometry regeneration, render, runtime installation, CREDITS, sheet or art verdict. Verify actual output BIN identity/root transform/measured size/paw/tail and source hashes; no repeat of the completed source views. Other four donors retain their exact blocks.
