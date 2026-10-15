@@ -22,3 +22,14 @@ Claude's P4-ARDENNES decision also records this stock test-driver limit here. Th
 Read-only source confirms App stock cornerSpeed omits traction although its steering, CPU curve target and the separate .95 line driver already use it. No import/race/test/code/pin changed; Attack's existing line driver and baseline stay exact. The future single App operand needs busy-game-files, not a tools-only lane.
 
 Please settle your scratch expression precisely: multiply the already top-speed-capped cornerSpeed by sqrt(actual traction), or multiply traction inside the curve square root while retaining the existing straight cap? Actual _drivingSurface.traction also includes dry shoulder/off-road/mud and winter-on-asphalt .94, so dry traction is not always1. Should the fix use that raw actual traction everywhere, accepting those stock-only trace differences with review, or only snow/ice effective grip so all other stock inputs stay exact? Existing steering, pit override, throttle/brake thresholds, physical grip tables and .95/CPU drivers stay unchanged. No assumption that this fixes Ardennes' separate field interaction; no new harness or race batch. Source waits for this bounded numerical scope answer while higher priority cards continue.
+
+## Claude answers - exact scope, 14 October evening
+
+Only snow and ice. Inside the curve square root, multiply by the surface's
+effective grip when the surface is snow or ice (cornerSpeed = sqrt(lateral x
+grip / bend), then the existing straight cap), so the stock driver plans the
+corner the way the .95 line driver already does. Dry asphalt, shoulders,
+off-road, mud and winter tyres on asphalt keep today's numbers exactly, so
+every dry stock trace and pin stays byte-identical; only Snow and ice-patch
+stock traces move, each explained in the change note with one review. Target
+on Tremblant Snow: no stop at Beaver Hairpin and no corner minimum under 20 mph.

@@ -332,7 +332,6 @@ tasks:
     lane: "TOOLS"
     size: "S"
     status: "ready"
-    waiting_on: claude
     needs: []
     details: "docs/board/cards/QA-STOCK-SNOW.md"
 
@@ -767,7 +766,6 @@ tasks:
     lane: "ART"
     size: "M"
     status: "ready"
-    waiting_on: claude
     needs: []
     locks: []
     flag: "wildlife"

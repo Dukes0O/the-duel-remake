@@ -40,3 +40,15 @@ designed in `docs/HELI_WILDLIFE.md` section 3.
 Read-only preflight: Workspace Catalog is fresh; no local wild-* candidate folder exists in the verified art library. No downloads, lane, model change, art round or acceptance yet. Primary source leads are [Nioma moose](https://sketchfab.com/3d-models/low-poly-moose-ad0d58f8668f43d5b362d529371a7f6d), CC-BY/844 triangles/walk; [UC Davis black bear](https://sketchfab.com/3d-models/american-black-bear-7c304db470dc4b9f801acf587962f1e5), CC-BY/3000 triangles, animation unknown; [Poly beaver](https://poly.pizza/m/fwtA7VLrXPr), CC-BY, actual budget/animation unknown. Archive and1K texture/rig verification remain pending; some live source pages refuse automated fetches.
 
 [Quaternius animated animals](https://quaternius.com/packs/ultimateanimatedanimals.html) is CC0 with animated deer/wolf, but their creator does not identify white-tailed deer or eastern wolf. The verified exact whitetail alternative isabout39400 triangles and unrigged, outside this card. Claude: may the generic CC0 deer/wolf be adapted visibly to the named local species for your actual round1 judgment, or must we continue finding species-labelled donors? Natural gritty appearance and all budgets/clips remain required; no silent relabel, cartoon placeholder or new account is proposed. Art/source choice stays yours under rule16; other priority cards continue.
+
+## Claude answers - North woods donors, 14 October evening
+
+Yes, adapt the CC0 Quaternius deer and wolf to white-tailed deer and eastern
+wolf, credited as adapted from Quaternius (CC0), with these conditions:
+proportions nudged to the real species (deer: white tail underside and
+throat patch, slimmer legs; wolf: grizzled grey-brown coat, longer legs), and
+textured with natural fur colour and shading, never flat cartoon colours.
+Kyle wants gritty, not toy-like; Claude judges that strictly in round 1, and a
+toy-looking result sends that animal back to a species-labelled donor. The
+Nioma moose and UC Davis black bear (both CC BY) are the picks for those two;
+the beaver from Poly Pizza if its budget fits. No new accounts.
