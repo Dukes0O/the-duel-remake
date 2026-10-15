@@ -117,7 +117,7 @@ test('opt-in keyboard keeps every fixed-speed tap and held yaw within STEER-055'
 
 
 test('actual released fixed-step driving retains its pre-edit named-state fingerprint',()=>{
-  const d=new Duel({seed:1989,featureFlags:{}});d.startCampaign({seed:1989,startStage:0,opponentCount:0});const h=createHash('sha256');
+  const d=new Duel({seed:1989,featureFlags:{}});d.startCampaign({seed:1989,startStage:0,opponentCount:0,difficulty:'pro'});const h=createHash('sha256');
   for(let i=0;i<2400;i++){
     d.setInput({throttle:1,brake:i>1800?.4:0,steer:i<500?0:i<1200?.06:-.04,boost:false});d.step(1/120);
     const s=d.state;h.update(JSON.stringify(['status','s','lateral','speedMph','headingError','yawVelocity','slipAngle','drifting','airborne','airHeight','lives','crashes'].map(k=>s[k])));
@@ -127,9 +127,9 @@ test('actual released fixed-step driving retains its pre-edit named-state finger
 
 test('rules latch once at race start and all arena definitions refuse the new rules',()=>{
   let enabled=true;const flags={enabled:name=>name==='tyre-slip'&&enabled};const d=new Duel({seed:1989,featureFlags:flags});
-  d.startCampaign({startStage:0,opponentCount:0});assert.equal(d.state.tyreSlipRules,true);assert.equal(d.state.tyreSlip,0);
+  d.startCampaign({startStage:0,opponentCount:0,difficulty:'pro'});assert.equal(d.state.tyreSlipRules,true);assert.equal(d.state.tyreSlip,0);
   enabled=false;for(let i=0;i<10;i++)d.step(1/120);assert.equal(d.state.tyreSlipRules,true,'toggle cannot rewrite a running race');
-  d.startCampaign({startStage:0,opponentCount:0});assert.equal(d.state.tyreSlipRules,false);
+  d.startCampaign({startStage:0,opponentCount:0,difficulty:'pro'});assert.equal(d.state.tyreSlipRules,false);
   enabled=true;
   for(const course of COURSE.filter(c=>c.arena===true)){
     d.startCampaign({startStage:COURSE.indexOf(course),opponentCount:0});
@@ -138,7 +138,7 @@ test('rules latch once at race start and all arena definitions refuse the new ru
 });
 
 test('actual player driving builds a braking slide and sheds it in the air',()=>{
-  const d=new Duel({seed:1989,featureFlags:{'tyre-slip':true}});d.startCampaign({startStage:0,opponentCount:0});
+  const d=new Duel({seed:1989,featureFlags:{'tyre-slip':true}});d.startCampaign({startStage:0,opponentCount:0,difficulty:'pro'});
   for(let i=0;i<600&&d.state.status!=='racing';i++)d.step(1/120);assert.equal(d.state.status,'racing');
   const s=d.state;s.speedMph=100;s.gear=2;s.steerVisual=1;d.setInput({throttle:0,brake:1,steer:1});
   // Fixed-speed input probe isolates the reviewed tyre transient in real _drive.
@@ -151,7 +151,7 @@ test('actual player driving builds a braking slide and sheds it in the air',()=>
 test('real App automatic steering asks for no more than the braking-adjusted peak',async()=>{
   await withReferenceApp(async app=>{
     app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});
-    assert.ok(app.startCampaign({startStage:0,opponentCount:0,car:'falcone_f42',difficulty:'casual',seed:1989}));
+    assert.ok(app.startCampaign({startStage:0,opponentCount:0,car:'falcone_f42',difficulty:'pro',seed:1989}));
     app.autopilot=true;app._scriptedCrashDone=true;
     for(let i=0;i<600&&app.duel.state.status!=='racing';i++)app.advance(1/120,1/120);
     const s=app.duel.state;assert.equal(s.tyreSlipRules,true);s.speedMph=100;s.headingError=.5;
@@ -168,7 +168,7 @@ test('actual line and balance driver wrappers respect the latched braking peak',
   const {installTestDriver}=await import('./race-field-balance.mjs');
   for(const install of [useRacingLine,installTestDriver]) await withReferenceApp(async app=>{
     app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});
-    app.duel.startCampaign({startStage:COURSE.findIndex(c=>c.id==='panorama-ridge'),opponentCount:0,car:'falcone_f42',difficulty:'casual',seed:1989});
+    app.duel.startCampaign({startStage:COURSE.findIndex(c=>c.id==='panorama-ridge'),opponentCount:0,car:'falcone_f42',difficulty:'pro',seed:1989});
     assert.ok(app.duel.course.racingLine,'authored line fixture uses actual Panorama');
     app.autopilot=true;app._scriptedCrashDone=true;
     for(let i=0;i<600&&app.duel.state.status!=='racing';i++)app.advance(1/120,1/120);
@@ -189,11 +189,12 @@ test('existing private driver tools pass only the named tyre switch into native 
   const {runReferenceWorker}=await import('./build-reference-laps.mjs');
   assert.deepEqual(parseArgs(['--flags','tyre-slip']).flags,['tyre-slip']);
   assert.throws(()=>driveCircuit(COURSE[0],{flags:['typo']}),/Unsupported/);
-  let lineRules=null,fieldRules=null;
-  driveCircuit(COURSE[0],{flags:['tyre-slip'],driver:'stock',maxSeconds:5,onTick:s=>{lineRules=s.tyreSlipRules;}});
+  let lineRules=null,fieldRules=null,fieldRequested=null;
+  driveCircuit(COURSE[0],{flags:['tyre-slip'],difficulty:'pro',driver:'stock',maxSeconds:5,onTick:s=>{lineRules=s.tyreSlipRules;}});
   assert.equal(lineRules,true,'actual line-tool Duel latched requested rules');
-  runRace('easy',0,{flags:['tyre-slip'],maxSec:.02,onStep:d=>{fieldRules=d.state.tyreSlipRules;}});
-  assert.equal(fieldRules,true,'actual field-tool App latched requested rules');
+  runRace('easy',0,{flags:['tyre-slip'],maxSec:.02,onStep:d=>{fieldRules=d.state.tyreSlipRules;fieldRequested=d.featureFlags.enabled('tyre-slip');}});
+  assert.equal(fieldRequested,true,'actual field-tool App receives the requested switch');
+  assert.equal(fieldRules,false,'field tool default Casual keeps released tyres under Kyle decision');
   const catalog=await runReferenceWorker({flags:['tyre-slip'],catalogOnly:true});
   assert.equal(catalog.flags.find(row=>row.name==='tyre-slip')?.enabled,true,'fresh reference worker enables actual dev switch');
   await assert.rejects(()=>runReferenceWorker({flags:['typo'],catalogOnly:true}),/Unsupported/);
@@ -255,4 +256,34 @@ test('slip-hold cuts actual throttle above1.20 slip near the clean line',async()
     Object.assign(s,{s:at,speedMph:57,lateral:line.offsetAt(at+Math.max(12,57*DRIVE.mphToWorld*.45)),headingError:0,tyreSlip:1.25});
     app._driveAutopilot(1/120);assert.equal(s.input.throttle,0,'excessive actual slip cuts throttle');
   });
+});
+
+
+test('Kyle Casual exception latches released tyres while Pro keeps the reviewed slide',()=>{
+  let enabled=true;const d=new Duel({seed:1989,featureFlags:{enabled:name=>name==='tyre-slip'&&enabled}});
+  d.startCampaign({difficulty:'casual',startStage:0,opponentCount:0});
+  assert.equal(d.state.tyreSlipRules,false,'Casual uses today tyres even when requested');
+  for(let tick=0;tick<20;tick++)d.step(1/120);
+  assert.equal(d.state.tyreSlipRules,false);
+  d.startCampaign({difficulty:'pro',startStage:0,opponentCount:0});assert.equal(d.state.tyreSlipRules,true);
+  enabled=false;for(let tick=0;tick<20;tick++)d.step(1/120);
+  assert.equal(d.state.tyreSlipRules,true,'a running Pro race keeps its latched rules');
+  d.startCampaign({difficulty:'casual',startStage:0,opponentCount:0});assert.equal(d.state.tyreSlipRules,false);
+});
+
+test('requested Casual tyres preserve complete native states in road and drift events',()=>{
+  for(const eventId of ['pacific-canyon','neon-drift-trial']){
+    const startStage=COURSE.findIndex(course=>course.id===eventId);
+    const run=enabled=>{
+      const d=new Duel({seed:1989,featureFlags:{'tyre-slip':enabled}});
+      d.startCampaign({startStage,difficulty:'casual',car:'banshee_muscle',opponentCount:0,seed:1989});
+      const hash=createHash('sha256');
+      for(let tick=0;tick<1800;tick++){
+        d.setInput({throttle:1,brake:tick>1300?.3:0,steer:tick<600?0:tick<1200?.2:-.15,boost:false});
+        d.step(1/120);hash.update(JSON.stringify(d.state));
+      }
+      return hash.digest('hex');
+    };
+    assert.equal(run(true),run(false),eventId+' entire actual Casual state stream remains exact');
+  }
 });
