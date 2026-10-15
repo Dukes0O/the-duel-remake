@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 import {offeredRaceLaps, supportsLapChoice, distanceFinishingPay} from './lap-choice.js';
 import {hiddenRoadHints} from './hidden-road-hints.js';
 import {hudMarkup} from './screen-hud.js';
@@ -66,6 +67,14 @@ function updateEntryReward(){
   const record=app.getGhostRecord(choices);ui['ghost-control'].hidden=!record;ui['ghost-hint'].hidden=choices.mode!=='timetrial'||!!record;ui['ghost-toggle'].checked=app.ghostEnabled;
   if(stage.practice){ui['ghost-control'].hidden=true;ui['ghost-hint'].hidden=true;}
   if(record){const build=Object.values(record.upgrades).reduce((sum,n)=>sum+n,0);text('ghost-record-label',`${time(record.timeSec)} · RECORD BUILD ${build}/21`);ui['ghost-control'].title=Object.entries(record.upgrades).map(([key,level])=>`${UPGRADE_TYPES[key]?.name||key}: ${level}`).join(' · ');}
+  if(isSummitAttack(stage)){
+    const targets=stage.attackTimes;
+    text('entry-reward','SOLO TIME TRIAL · ONE RUN · NO PAY'+(targets?` · GOLD ${time(targets.gold)} · SILVER ${time(targets.silver)} · BRONZE ${time(targets.bronze)}`:''));
+    ui['entry-reward'].title='Every legal finish records its time. Medals award no credits or bonuses. Your ghost uses the matching car and settings.';
+    text('cpu-target-label','MEDAL TARGETS');
+    ui['event-brief'].hidden=false;
+    text('event-brief','One climb against the clock and your ghost. The avalanche follows the recorded start seed; the yeti may appear. No rivals, traffic or combat.');
+  }
 }
 function updatePlayers(){
   ui['player-select'].innerHTML=app.players.players.map(player=>`<option value="${escapeHTML(player.id)}">${escapeHTML(player.name)}</option>`).join('');ui['player-select'].value=app.player.id;
@@ -73,6 +82,8 @@ function updatePlayers(){
 function updateMenuScene() {
   const savedChoices=app.setRaceSettings(choices)||app.getRaceChoices();delete choices.rival;delete choices.tyre;delete choices.laps;Object.assign(choices,savedChoices);
   const stage = COURSE[choices.startStage] || COURSE[0];
+  const attack=isSummitAttack(stage);
+  if(attack)choices.mode='timetrial';
   if(stage.id!==previousSetupCourse&&stage.defaultMode==='grandprix'&&app.grandPrixAvailable?.(stage)){
     choices.mode='grandprix';app.setRaceSettings(choices);
   }
@@ -88,8 +99,8 @@ function updateMenuScene() {
   const grandPrix=app.grandPrixAvailable?.(stage)===true;
   for(const button of root.querySelectorAll('[data-mode="grandprix"]')){button.hidden=!grandPrix;button.textContent=stage.closed===false?'RACE':'GRAND PRIX';}
   if(choices.mode==='grandprix'&&!grandPrix)choices.mode='duel';
-  for(const button of root.querySelectorAll('[data-mode]')){button.disabled=(stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||!!stage.stuntTrial)&&button.dataset.mode==='timetrial'||button.dataset.mode==='wasteland'&&!supportsCombat(stage);button.classList.toggle('on',button.dataset.mode===choices.mode);button.setAttribute('aria-pressed',String(button.dataset.mode===choices.mode));if(button.dataset.mode==='duel')button.textContent=stage.practice?'FREE PRACTICE':stage.checkpointRush?'CHECKPOINT RUSH':stage.driftTrial?'DRIFT TRIAL':stage.stuntTrial?'STUNT TRIAL':stage.kind==='chase'?'ESCAPE THE PURSUIT':'RIVAL DUEL';}
-  for(const button of root.querySelectorAll('[data-cpu-difficulty]'))button.disabled=!!stage.practice;
+  for(const button of root.querySelectorAll('[data-mode]')){button.disabled=attack?button.dataset.mode!=='timetrial':(stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||!!stage.stuntTrial)&&button.dataset.mode==='timetrial'||button.dataset.mode==='wasteland'&&!supportsCombat(stage);button.classList.toggle('on',button.dataset.mode===choices.mode);button.setAttribute('aria-pressed',String(button.dataset.mode===choices.mode));if(button.dataset.mode==='duel')button.textContent=stage.practice?'FREE PRACTICE':stage.checkpointRush?'CHECKPOINT RUSH':stage.driftTrial?'DRIFT TRIAL':stage.stuntTrial?'STUNT TRIAL':stage.kind==='chase'?'ESCAPE THE PURSUIT':'RIVAL DUEL';}
+  for(const button of root.querySelectorAll('[data-cpu-difficulty]'))button.disabled=!!stage.practice||attack;
   // Tyres matter only on a circuit with snow or ice.
   ui['tyre-choice'].hidden=!courseHasWinterSurfaces(stage);
   syncRaceChoiceButtons(root,choices);
@@ -98,7 +109,7 @@ function updateMenuScene() {
   const raceLaps=lapChoiceOn?app.getLapChoice(choices.startStage,choices.mode):choices.mode==='grandprix'?stage.grandPrixLaps??3:stage.laps||2;
   if(lapChoiceOn)choices.laps=raceLaps;else delete choices.laps;
   const intro=root.querySelector('.menu-description');
-  if(intro)intro.innerHTML=lapChoiceOn?`${raceLaps} laps. New horizons.<br>Build your way to the arena.`:'Two laps. New horizons.<br>Build your way to the arena.';
+  if(intro)intro.innerHTML=attack?'One run. Your time.<br>Climb to the summit.':lapChoiceOn?`${raceLaps} laps. New horizons.<br>Build your way to the arena.`:'Two laps. New horizons.<br>Build your way to the arena.';
   const lapControl=ui['lap-choice'];
   if(lapControl){
     lapControl.hidden=!lapChoiceOn;
@@ -137,6 +148,11 @@ function updateMenuScene() {
       text('event-brief','Climb from the desert to the snowy summit. Choose winter tyres at the tree-line pit. The Gallery shelters you; the Open Road runs beneath the avalanche slope.');
       root.querySelector('.start-note').textContent=`SUMMIT RUN · ${fieldSize} CARS · ONE RUN · NO TRAFFIC OR POLICE`;
     }
+  }
+  if(attack){
+    text('scene-length',`${(stage.lengthU/1000).toFixed(1)} KM · ONE RUN`);
+    text('menu-shortcuts','ONE RUN TO THE SUMMIT');
+    root.querySelector('.start-note').textContent='SUMMIT TIME ATTACK · SOLO · ONE RUN · NO PAY';
   }
 }
   return {updateMenuCar, updateMenuScene, updatePlayers};
