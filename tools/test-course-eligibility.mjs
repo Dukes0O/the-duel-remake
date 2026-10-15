@@ -40,7 +40,11 @@ try{
     same(new App().getRaceChoices(),app.getRaceChoices(),'per-player setup persists any owned vehicle/course pairing');
     // With the helicopter on, an air-only car (the Jesko) races only where it
     // was last set down; everywhere else START is refused with the reason.
-    if(app._airOnlyRefused(car,event.id)){airOnlyRefusals++;check(!app.startCampaign(),'an air-only car is refused away from where it sits');
+    // Named here, not asked of the game: only the Jesko is air-only, and a
+    // fresh save has it at Tremblant Woods.
+    const expectRefused=car==='koenigsegg_jesko'&&event.id!=='tremblant-woods';
+    same(app._airOnlyRefused(car,event.id),expectRefused,`${car} at ${event.id}: air-only refusal only for the Jesko away from Tremblant Woods`);
+    if(expectRefused){airOnlyRefusals++;check(!app.startCampaign(),'an air-only car is refused away from where it sits');
       check(app.courseAccessMessage.includes('travels only by air'),'the refusal says why');same(app.duel.state.status,'menu','a refused start stays on the menu');continue;}
     check(app.startCampaign(),'saved pairing starts');same(app.duel.state.car,car,'raw simulation receives the chosen owned car');same(app.duel.state.stageIndex,startStage,'raw simulation receives the chosen course');
     same(app.duel.state.mode,event.practice||event.stuntTrial||['chase','drift','checkpoint'].includes(event.kind)?'duel':'timetrial','objective-only modes remain enforced without vehicle forcing');

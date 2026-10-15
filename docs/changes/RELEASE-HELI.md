@@ -77,8 +77,10 @@ card.
 - `tools/test-wasteland-beta.mjs`: the pinned switch table expects
   `helicopter: 'on'`.
 - `tools/test-course-eligibility.mjs`: "every owned car starts on every
-  course" now expects the Jesko to start only where it sits and be refused
-  with the reason everywhere else (exactly one course). Other cars unchanged.
+  course" now expects the Jesko to start only at Tremblant Woods (where a
+  fresh save has it) and be refused with the reason on the other 19 courses.
+  The test names that answer itself and checks every other car is never
+  refused.
 - `tools/test-koenigsegg-driver.mjs`, `-driving.mjs`, `-progression.mjs`:
   the Jesko's save records it as flown to the course each race uses, so the
   same races and handling checks run unchanged.
