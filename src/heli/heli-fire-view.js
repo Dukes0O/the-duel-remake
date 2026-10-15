@@ -21,12 +21,15 @@ const hash = (cell, k) => {
 
 const VERTEX = `
 attribute float size; attribute vec4 rect; attribute float alpha; attribute vec3 tint;
-uniform float scale; varying vec4 vRect; varying float vAlpha; varying vec3 vTint;
+uniform float scale; uniform vec2 nearFade; varying vec4 vRect; varying float vAlpha; varying vec3 vTint;
 void main() {
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
   gl_Position = projectionMatrix * mv;
   gl_PointSize = min(640.0, size * scale / max(1.0, -mv.z));
-  vRect = rect; vAlpha = alpha; vTint = tint;
+  // A sprite close to the camera fades out instead of filling the screen
+  // with one square edge.
+  float fade = nearFade.y > 0.0 ? smoothstep(nearFade.x, nearFade.y, -mv.z) : 1.0;
+  vRect = rect; vAlpha = alpha * fade; vTint = tint;
 }`;
 const FRAGMENT = `
 uniform sampler2D atlas; varying vec4 vRect; varying float vAlpha; varying vec3 vTint;
@@ -37,12 +40,12 @@ void main() {
   gl_FragColor = vec4(c.rgb * vTint, c.a * vAlpha);
 }`;
 
-function spriteLayer(THREE, capacity, blending) {
+function spriteLayer(THREE, capacity, blending, nearFade = [0, 0]) {
   const geometry = new THREE.BufferGeometry();
   const make = (name, size) => geometry.setAttribute(name, new THREE.BufferAttribute(new Float32Array(capacity * size), size).setUsage(THREE.DynamicDrawUsage));
   make('position', 3); make('size', 1); make('rect', 4); make('alpha', 1); make('tint', 3);
   geometry.setDrawRange(0, 0);
-  const material = new THREE.ShaderMaterial({uniforms: {atlas: {value: null}, scale: {value: 900}}, vertexShader: VERTEX,
+  const material = new THREE.ShaderMaterial({uniforms: {atlas: {value: null}, scale: {value: 900}, nearFade: {value: new THREE.Vector2(...nearFade)}}, vertexShader: VERTEX,
     fragmentShader: FRAGMENT, transparent: true, depthWrite: false, blending});
   const points = new THREE.Points(geometry, material);
   points.frustumCulled = false;
@@ -88,7 +91,8 @@ export function createFireView({THREE, scene, load = defaultLoad, quality = 'hig
   const limit = () => FIRE_SPRITE_LIMITS[quality] ?? FIRE_SPRITE_LIMITS.high;
   // Flames and embers glow (added light); smoke, steam and spray cover.
   const glow = spriteLayer(THREE, FIRE_SPRITE_LIMITS.high, THREE.AdditiveBlending);
-  const cover = spriteLayer(THREE, FIRE_SPRITE_LIMITS.high, THREE.NormalBlending);
+  // Smoke and steam fade out within 40 m of the camera (the cable view flies through them).
+  const cover = spriteLayer(THREE, FIRE_SPRITE_LIMITS.high, THREE.NormalBlending, [12, 40]);
   cover.points.renderOrder = 2; glow.points.renderOrder = 3;
   group.add(cover.points, glow.points);
   const art = {status: 'idle', rects: null, error: ''};
@@ -158,13 +162,15 @@ export function createFireView({THREE, scene, load = defaultLoad, quality = 'hig
           .9, r.ember[0], 1 - rise / 9, 1, .7, .35);
       }
     }
-    // Smoke: thick, grey-brown at the base, rising and leaning downwind.
+    // Smoke: thick and grey-brown at the base, paling to a light grey as it
+    // rises and leans downwind, so it reads against the forest from above.
     for (const cell of cells) {
       for (let k = 0; k < 2 && total() < max; k++) {
         const u = hash(cell.cell, 50 + k), cycle = 9, age = (time + u * cycle) % cycle, share = age / cycle;
         const frame = r.smoke[Math.floor(u * r.smoke.length)];
+        const shade = .42 + .3 * share;
         cover.add(cell.x + wx * age * .8 + (u - .5) * 8, cell.y + 10 + age * 5.5, cell.z + wz * age * .8 + (hash(cell.cell, 60 + k) - .5) * 8,
-          14 + share * 34, frame, (.85 - share * .6) * (0.6 + cell.percent / 250), .34, .31, .28);
+          14 + share * 34, frame, (.85 - share * .55) * (0.6 + cell.percent / 250), shade, shade * .96, shade * .9);
       }
     }
     for (const [cell, at] of cooled) {

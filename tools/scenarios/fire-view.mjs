@@ -100,8 +100,16 @@ async function overTheFire(context, quality, fire, {pictures}) {
   await pause(1500);
   if (pictures) await context.screenshot(`fire-150m-${quality}`);
   // From the side as well: the smoke columns stand up.
-  if (pictures && quality === 'high') { await context.evaluate(`window.__qaApp.heliCamera = 0`); await pause(1200); await context.screenshot('fire-150m-side'); await context.evaluate(`window.__qaApp.heliCamera = 2`); }
   const frames = FRAMES ? await measure(context, `${quality}, 150 m over a ${fire.burning.length}-cell fire`) : null;
+  // From the side as well: 200 m south of the fire, facing it, the smoke columns stand up.
+  if (pictures && quality === 'high') {
+    await context.evaluate(`(() => { const v = window.__qaApp.heliView(), t = v.fire.target;
+      window.__pilot = {x: t.x, z: t.z - 200, y: v.zone.y + 60, speed: 18}; window.__qaApp.heliCamera = 0; })()`);
+    await context.waitFor(`(() => { const v = window.__qaApp.heliView(), t = window.__pilot;
+      return Math.hypot(v.heli.x - t.x, v.heli.z - t.z) < 6 && Math.abs(v.heli.y - t.y) < 3 && Math.hypot(v.heli.vx, v.heli.vz) < 1; })()`, 'beside the fire', 240_000);
+    await pause(1500);
+    await context.screenshot('fire-150m-side');
+  }
   return frames;
 }
 
@@ -141,7 +149,9 @@ async function burntRace(context, quality, {stage, days}) {
   await context.waitFor(`['countdown','racing'].includes(window.__qaApp.duel.state.status) && window.__qaApp.duel.course.def.id==='tremblant-woods' && window.__qaApp.visualReady`, `race ${stage}`, 120_000);
   // The burnt art arrives a moment after the race is ready; wait for it.
   await context.waitFor(`document.querySelector('#view3d')?.dataset.burntLook === 'ready'`, `burnt art ${stage}`, 60_000);
-  await pause(2500);
+  // The frame measurement stops if the race moves from the countdown to racing, so wait for the start.
+  await context.waitFor(`window.__qaApp.duel.state.status === 'racing'`, `the start ${stage}`, 30_000);
+  await pause(1500);
   await context.screenshot(`burnt-${stage}-${quality}`);
   const frames = FRAMES && (stage === 'black' || stage === 'fireweed') ? await measure(context, `${quality}, a race on the ${stage} course`) : null;
   await context.evaluate(`window.__qaApp.returnToMenu()`);
