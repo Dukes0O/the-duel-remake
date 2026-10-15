@@ -337,6 +337,7 @@ tasks:
     claimed_by: "codex-perf-high-night-2026-10-14"
     branch: "codex/perf-high-night"
     needs: []
+    waiting_on: "claude"
     details: "docs/board/cards/PERF-HIGH-NIGHT.md"
 
   - id: QA-STOCK-SNOW
@@ -386,6 +387,7 @@ tasks:
     size: "S"
     status: "ready"
     needs: []
+    waiting_on: "claude"
     details: "docs/board/cards/SUMMIT-PIT-BALANCE.md"
 
   - id: QA-REVIEW-BLACK-FRAMES
