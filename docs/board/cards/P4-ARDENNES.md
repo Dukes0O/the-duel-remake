@@ -376,3 +376,10 @@ Prepare THIRD actual second-lap closeview Beech Grove/actual-beech-grove centred
 ## Exact existing world-suite prepared-owner amendment
 
 Read-only source preflight finds existing test-world-composition buildEnvironment synchronous/default without preparedassets. For ONLY Ardennes, lease tools/test-world-composition.mjs preparedkitowner setup with installed GLTFLoader/currentheadlesstextureplugin following existing test-track-kits precedent, awaitcreateTrackKits thenpassowner. Keep originalsignaturepresenceguard/capturepath/othercoursebranches/21oldfixturebytes exact. No fixturebootstrap/dummyhash/capture/execution now. Existing test-track-kits Ardennes expected count may be authoredkitPlacements plus ACTUALbeechTreePlacements count; everyold/default/explicitplacementsoverridecount exact. No pinefallback/omittedbeech/fakecount accepted. Sourcefreeze/reviewstillrequired before actual assets/tests/native.
+
+
+## Original beech source independently clear; planner admission
+
+Independent reviewer /root/frame_setup_review read exactca47179cedfdbc0d17f39c764c89110daf4abd92 against10ef2beb and all fourteen granted files: CLEAR, no real fault. The review confirms default/other-course behavior, existing tree identities and race data, original fall/reset math, kit ownership/disposal, unchanged signature guards and original native view contracts. Exported budgets, leaf appearance, actual grounding and final art remain unproved.
+
+Root admits one existing test-blender-output focused suite on clean ca471, jobs4, after fresh holds/capacity. It checks the actual pure planner before export. The circuit/kit suites that require actual new assets wait for the single reviewed beech pair export; no missing-file assertion is waived. No native, art round, world-signature capture, lane gate/build or merge begins from this planner admission.
