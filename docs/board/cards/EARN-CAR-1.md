@@ -124,5 +124,5 @@ quick but older and softer than the Jesko, light enough for Kestrel One.
 - `offRoadGrip: 0.62`, `offRoadSpeed: 58`, `offRoadScrub: 0.56` (a low supercar, poor off the road).
 - `mass: 1365`, `collision: {halfWidth: 1.02, halfLength: 2.35}`, `height: 1.15`, `kind: 'hypercar'`.
 - `color: 0xb3121a` (deep Rosso), `accent: 0x16181b`.
-- `unlockRequirement: {kind: 'medals', count: 6}`, `factoryMaxed: true`, no price.
+- `unlockRequirement: {kind: 'medals', medals: 6}`, `factoryMaxed: true`, no price.
 - Look: round 4 picked (`docs/board/looks/earned-cars/round-4.jpg` and its review).
