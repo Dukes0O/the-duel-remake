@@ -20,7 +20,10 @@ eq(LIVES.missedStationCost, 1, 'missed station = -1 life');
 // --- CANON two core cars (F40 / 959 homages, fictional names) ---
 ok(CARS.falcone_f42 && /F40/.test(CARS.falcone_f42.homage), 'Falcone F42 present (F40 homage)');
 ok(CARS.stuttgart_959s && /959/.test(CARS.stuttgart_959s.homage), 'Stuttgart 959-S present (959 homage)');
-ok(!/ferrari|porsche/i.test(JSON.stringify(CARS)), 'no real trademarks in car data');
+// The earned Ferrari Enzo carries its real name by design (docs/EARNED_CARS.md 4.2,
+// Kyle 14 October 2026); every other car must stay free of real trademarks.
+ok(CARS.ferrari_enzo?.name === 'Ferrari Enzo', 'the Enzo is the one car with its real name');
+ok(!/ferrari|porsche/i.test(JSON.stringify(Object.fromEntries(Object.entries(CARS).filter(([id]) => id !== 'ferrari_enzo')))), 'no real trademarks in car data');
 
 // --- Mixed-biome circuits close cleanly and keep the driving lanes clear ---
 eq(COURSE.filter(course => !course.kind).length, 3, 'three mixed circuits in the campaign');

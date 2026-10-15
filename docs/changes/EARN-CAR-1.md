@@ -127,6 +127,11 @@ out of a list it does not belong to. No tolerance was loosened.
 - `tools/replays/titan-handling.json`: a seeded race fingerprint for the Enzo
   is added (a new car needs its own row); the other eight rows are unchanged
   and still match.
+- `src/test.js`: "no real trademarks in car data" searched every car for
+  "ferrari" or "porsche". The Enzo carries its real name by design
+  (`docs/EARNED_CARS.md` 4.2, Kyle 14 October 2026), so the search now skips
+  the Enzo's own entry, and a new check says the Enzo is the one car with its
+  real name. Every other car is searched exactly as before.
 - `tools/test-vehicle-sockets.mjs`: message wording only.
 
 ## Not done
