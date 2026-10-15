@@ -19,6 +19,7 @@ import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {createRendererReadiness} from '../src/screen-readiness.js';
 import {createTrackKits, normalizeKitPlacements, TRACK_KIT_IDS} from '../src/track-kits.js';
+import {beechTreePlacements} from '../src/vegetation.js';
 
 // Claude check-in7: kit thresholds are total construction and delivered p95.
 assert.equal(kitConstructionAccepted(999.999),true);
@@ -59,8 +60,8 @@ const course = {
   nearest: (x, z) => ({s: z, lateral: x}), roadHalfWidthAt: () => 7,
 };
 const originalKitIds = TRACK_KIT_IDS.slice(0, 35);
-assert.equal(TRACK_KIT_IDS.length, 38);
-assert.deepEqual(TRACK_KIT_IDS.slice(35), ['stone-stream-bridge', 'forest-footbridge', 'forest-timing-tower']);
+assert.equal(TRACK_KIT_IDS.length, 39);
+assert.deepEqual(TRACK_KIT_IDS.slice(35), ['stone-stream-bridge', 'forest-footbridge', 'forest-timing-tower', 'ardennes-beech']);
 assert.deepEqual(originalKitIds, [
   'start-gantry','pit-garage','pit-wall','grandstand','armco','concrete-wall',
   'catch-fence','tyre-wall','braking-board-150','braking-board-100','braking-board-50',
@@ -709,7 +710,7 @@ async function validateCircuitKits(definition) {
   }});
   try {
     assert.equal(await owner.ready,true,owner.error?.message);
-    assert.equal(owner.placements.length,definition.kitPlacements.length);
+    assert.equal(owner.placements.length,definition.kitPlacements.length+beechTreePlacements(course).length);
     assert.equal(owner.stats.clearance.runtimeSkipped,0,'build validates every real High/LOD placement');
     assert.equal(owner.stats.clearance.trianglePlacements+owner.stats.clearance.broadPhaseSkipped,
       owner.placements.length*2);

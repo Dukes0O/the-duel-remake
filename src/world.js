@@ -115,7 +115,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
       view.features.rocks=view.features.rocks.filter(rock=>!winterRocks.has(rock));}
     view.features.mountains=filterMuddyHollowMountains(course,view.features.mountains);
     view.detailSections=course.sections.filter(s=>s.theme===theme);
-    const updateLandscape=addLandscape(group,view);if(updateLandscape)registerSceneSystem(group,{sync:updateLandscape});
+    const updateLandscape=addLandscape(group,view,trackKits);if(updateLandscape)registerSceneSystem(group,{sync:updateLandscape});
     addLandscapeDetail(group,view,theme==='alpine',{omitFoliageAt});
   }
   addFurniture(group, course, metal);
@@ -323,11 +323,12 @@ function addHiddenRoad(group, course) {
   group.add(root);
 }
 
-function addLandscape(group,course){
+function addLandscape(group,course,trackKits){
   addMountainLandscape(group,course);
   const trees=course.features.trees;
   const pine=course.def.theme!=='desert';
-  if(pine)return addPineTrees(group,trees,course);
+  if(pine)return course.def.id==='ardennes-forest'&&course.def.beech
+    ?addPineTrees(group,trees,course,{kits:trackKits}):addPineTrees(group,trees,course);
   else return addDesertCacti(group,course);
 }
 

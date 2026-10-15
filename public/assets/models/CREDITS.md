@@ -121,3 +121,6 @@ them and adds original clothing and gear; no Quaternius texture is shipped.
 ## Ardennes original circuit landmarks
 
 The stone stream bridge, forest footbridge and forest timing tower are original project geometry made for Ardennes Forest. They use no external models, textures or downloads. The editable recipe is `tools/blender/ardennes-landmarks.py`. The measured High/LOD provenance is recorded by that recipe in `tools/art/ardennes-landmarks.json`. Prior kit credits remain unchanged.
+
+
+The Ardennes-only summer beech is original project geometry with original embedded leafy pixel textures, authored in `tools/blender/ardennes-beech.py`. It uses no external model, image or download. Its High/LOD measurements and file hashes are written to `tools/art/ardennes-beech.json` by the export recipe. Source preparation does not claim an exported model or Claude art acceptance.

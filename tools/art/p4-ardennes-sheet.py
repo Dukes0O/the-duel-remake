@@ -56,6 +56,13 @@ def final_close_sheet(args, report):
         if (row.get('laps') != 1 or row.get('fogNear') != 360 or not row.get('stateUnchanged') or
                 row.get('nativeFieldSize') != 8 or not 1 <= row.get('nativeCars', 0) <= 8 or row.get('closeView', {}).get('kind') != kind):
             raise ValueError('A close view must retain actual clear second-lap native context')
+        if kind == 'actual-beech-grove':
+            view = row['closeView']
+            bounds = view.get('bounds', {})
+            if (not isinstance(view.get('treeId'), str) or view.get('version') != 'high' or view.get('groupCount', 0) < 1 or
+                    len(bounds.get('min', [])) != 3 or len(bounds.get('max', [])) != 3 or
+                    any(not low < high for low, high in zip(bounds['min'], bounds['max']))):
+                raise ValueError('Beech close view lacks its actual bound original tree/crown')
         image = Image.open(args.browser / row['file']).convert('RGB')
         if image.size != (1280, 720):
             raise ValueError('Close view is not the original full native viewport')

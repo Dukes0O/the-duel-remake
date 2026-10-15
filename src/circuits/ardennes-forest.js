@@ -193,6 +193,10 @@ export const ARDENNES_FOREST = Object.freeze({
       const piece = named(name); return Object.freeze({from: piece.s0, to: piece.s1});
     })),
   }),
+  beech: Object.freeze({scales:Object.freeze([.9,1,1.1]),
+    groves:Object.freeze([['Kestrel Straight',.28],['Kestrel Straight',.68],['Forest Run',.3],['Forest Run',.75]].map(([name,fraction])=>{
+      const piece=named(name);return Object.freeze({s:piece.s0+(piece.s1-piece.s0)*fraction,reach:45});
+    }))}),
   scenery: Object.freeze({
     trees: 800, rocks: 120, mountains: false,
     // First fir row is about 9 m behind the ordinary catch fence (14.3 m).

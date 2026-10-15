@@ -16,7 +16,7 @@ import {syncScene} from '../src/scene-systems.js';
 import {disposeTree} from '../src/world.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {terrainGeometry, farTerrainGeometry} from '../src/world-surfaces.js';
-import {createTrackKits} from '../src/track-kits.js';
+import {createTrackKits, normalizeKitPlacements} from '../src/track-kits.js';
 import {addCircuitLandmarks} from '../src/circuit-landmarks.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mkdtempSync, readFileSync, readdirSync, rmdirSync} from 'node:fs';
@@ -27,6 +27,8 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {ardennesPlayerCrashAccepted} from './scenarios/ardennes-views.mjs';
 import {createPavedRoadMaterial, bindPavedDampRoad} from '../src/road-surface.js';
+import {beechTreePlacements, addPineTrees} from '../src/vegetation.js';
+import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 
 // Ardennes Forest road layout (docs/CIRCUITS.md section 5.5, P4-ARDENNES-ROAD).
 // The original road acceptance remains intact beside the P4-ARDENNES source acceptance.
@@ -883,4 +885,120 @@ test('optional neutral damp road reads actual first-lap mist opacity without sta
     if(!disposed)disposeTree(world);asphalt.dispose();
     if(added)COURSE.splice(COURSE.findIndex(def=>def.id===ARDENNES_FOREST.id),1);
   }
+});
+
+
+test('Ardennes beech replaces only stable existing tree drawings with no simulation or random-stream changes', () => {
+  const current = new Course(ARDENNES_FOREST, 1989), original = new Course({...ARDENNES_FOREST, beech: undefined}, 1989);
+  assert.deepEqual(current.features, original.features);
+  const before = JSON.stringify(current.features), rows = beechTreePlacements(current), trees = new Map(current.features.trees.map(tree => [tree.id, tree]));
+  assert.ok(rows.length > 0 && rows.length < trees.size);
+  assert.deepEqual(beechTreePlacements(current), rows);
+  assert.deepEqual(beechTreePlacements(original), []);
+  assert.deepEqual(beechTreePlacements({...current, def:{...current.def,id:'tremblant-woods'}}), []);
+  assert.equal(new Set(rows.map(row => row.scenery.id)).size, rows.length);
+  assert.equal(normalizeKitPlacements(current,rows).length,rows.length);
+  for(const invalid of [[{...rows[0],s:rows[0].s+1}],[{...rows[0],scale:rows[0].scale*2}],
+      [{...rows[0],scenery:{kind:'tree',id:'missing'}}],[rows[0],rows[0]]])
+    assert.throws(()=>normalizeKitPlacements(current,invalid),/beech/i);
+  assert.throws(()=>normalizeKitPlacements(original,[rows[0]]),/beech/i);
+  assert.throws(()=>normalizeKitPlacements({...current,def:{...current.def,id:'tremblant-woods'}},[rows[0]]),/beech/i);
+  const sizes = new Set();
+  for (const row of rows) {
+    const tree = trees.get(row.scenery.id); assert.ok(tree);
+    assert.equal(row.id, 'ardennes-beech'); assert.equal(row.s, tree.s); assert.equal(row.lateral, tree.off);
+    assert.equal(row.heading, tree.heading - current.at(tree.s).heading);
+    assert.ok(ARDENNES_FOREST.beech.groves.some(grove => Math.abs(tree.s-grove.s) <= grove.reach));
+    const variant = ARDENNES_FOREST.beech.scales.find(value => row.scale === tree.scale * value);
+    assert.ok(variant); sizes.add(variant);
+  }
+  assert.equal(sizes.size, 3); assert.equal(JSON.stringify(current.features), before);
+  for(const beech of [{groves:[],scales:[.9,1,1.1]},
+      {groves:[{s:NaN,reach:45}],scales:[.9,1,1.1]},
+      {groves:[{s:100,reach:0}],scales:[.9,1,1.1]},
+      {groves:[{s:100,reach:45}],scales:[1]},
+      {groves:[{s:100,reach:45}],scales:[.9,Infinity,1.1]}])
+    assert.throws(()=>beechTreePlacements({...current,def:{...current.def,beech}}),/beech/i);
+  console.log('Ardennes original tree count / replaced drawings: ' + trees.size + ' / ' + rows.length);
+});
+
+test('bound beech uses actual ground and the unchanged tree fall/reset calculation and owner disposal', async () => {
+  const course = new Course(ARDENNES_FOREST,1989), rows=beechTreePlacements(course), before=JSON.stringify(course.features);
+  const resources=[], pending=[];
+  const asset=()=>{const scene=new THREE.Group(), geometry=new THREE.BoxGeometry(.4,5.9,.4).translate(0,2.95,0), material=new THREE.MeshStandardMaterial();
+    scene.add(new THREE.Mesh(geometry,material));for(const item of [geometry,material]){const record={disposed:0};resources.push(record);item.addEventListener('dispose',()=>record.disposed++);}return {scene};};
+  const kitCourse=Object.create(course);kitCourse.def={...course.def,kitPlacements:[]};
+  const kits=createTrackKits(kitCourse,{loadAsset:async()=>asset()});
+  assert.equal(await kits.ready,true); assert.equal(kits.placements.length,rows.length);
+  const load=THREE.TextureLoader.prototype.load; THREE.TextureLoader.prototype.load=()=>new THREE.Texture();
+  const world=new THREE.Group(); let update;
+  try {update=addPineTrees(world,course.features.trees,course,{kits});} finally {THREE.TextureLoader.prototype.load=load;}
+  try {
+    const selected=new Set(rows.map(row=>row.scenery.id));
+    const trunks=world.children.filter(mesh=>mesh.name.startsWith('Pine trunks '));
+    assert.equal(trunks.reduce((n,mesh)=>n+mesh.count,0)+rows.length,course.features.trees.length);
+    assert.ok(trunks.every(mesh=>mesh.userData.vegetationCell.entries.every(row=>!selected.has(row.feature.id))));
+    const tree=course.features.trees.find(tree=>tree.id===rows[0].scenery.id), upright=kits.getPlacementPose(0);
+    assert.equal(upright.elements[12],tree.x); assert.equal(upright.elements[14],tree.z);
+    assert.equal(upright.elements[13],renderedGroundHeight(course,{...course.groundAt(tree.s,tree.off),s:tree.s,off:tree.off},{requireSurface:true}));
+    const event={kind:'tree',id:tree.id,atTime:1,directionX:1,directionZ:0,outcome:'knock'};
+    update({status:'racing',stageTimeSec:1.36,brokenScenery:[event]});
+    const progress=THREE.MathUtils.clamp((1.36-1)/.72,0,1), eased=progress*progress*(3-2*progress);
+    const position=new THREE.Vector3().setFromMatrixPosition(upright);
+    position.x+=COMBAT_TUNING.roadside.sceneryKnockDistance*eased;
+    const rotation=new THREE.Quaternion().multiplyQuaternions(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,-1),eased*1.38),
+      new THREE.Quaternion().setFromAxisAngle(THREE.Object3D.DEFAULT_UP,tree.heading));
+    const expected=new THREE.Matrix4().compose(position,rotation,new THREE.Vector3().setScalar(rows[0].scale));
+    assert.deepEqual(kits.getPlacementPose(0).elements,expected.elements);
+    update({status:'menu',stageTimeSec:0,brokenScenery:[event]});assert.deepEqual(kits.getPlacementPose(0).elements,upright.elements);
+    update({status:'racing',stageTimeSec:100,brokenScenery:[{...event,outcome:'obliterate'}]});
+    assert.equal(new THREE.Vector3().setFromMatrixScale(kits.getPlacementPose(0)).length(),0);
+    update({status:'racing',stageTimeSec:0,brokenScenery:[]});assert.deepEqual(kits.getPlacementPose(0).elements,upright.elements);
+    assert.equal(JSON.stringify(course.features),before);
+  } finally {disposeTree(world);kits.dispose();kits.dispose();}
+  assert.ok(resources.every(row=>row.disposed===1));
+  const explicit=createTrackKits(course,{placements:[],loadAsset:()=>{throw Error('Explicit empty override loaded an asset');}});
+  assert.equal(await explicit.ready,true);assert.equal(explicit.placements.length,0);explicit.dispose();
+  const late=createTrackKits(kitCourse,{loadAsset:()=>new Promise(resolve=>pending.push(resolve))});
+  late.dispose();for(const resolve of pending)resolve(asset());assert.equal(await late.ready,false);
+  assert.equal(late.group.children.length,0);assert.ok(resources.every(row=>row.disposed===1));
+});
+
+test('original beech planner names only its High/LOD pair and does not create files', () => {
+  const root=mkdtempSync(join(tmpdir(),'ardennes-beech-'));
+  try {
+    const planned=spawnSync('python',['tools/blender/ardennes-beech.py','--','--root',root,'--paths-only'],{encoding:'utf8',windowsHide:true});
+    assert.equal(planned.status,0,planned.stderr);const plan=JSON.parse(planned.stdout);
+    assert.deepEqual(plan.files,['ardennes-beech.glb','ardennes-beech-lod.glb']);
+    assert.equal(plan.runtime,join(root,'public/assets/models/circuits/kits'));
+    assert.equal(plan.provenance,join(root,'tools/art/ardennes-beech.json'));
+    assert.deepEqual(readdirSync(root),[]);
+    const invalid=spawnSync('python',['tools/blender/ardennes-beech.py','--','--root',root,'--model','forest-footbridge','--paths-only'],{encoding:'utf8',windowsHide:true});
+    assert.notEqual(invalid.status,0);assert.deepEqual(readdirSync(root),[]);
+  } finally {rmdirSync(root);}
+});
+
+
+test('the actual original beech pair has embedded leafy images and retains its strict per-tree budgets', () => {
+  const record=JSON.parse(readFileSync(new URL('../tools/art/ardennes-beech.json',import.meta.url),'utf8')).models[0];
+  assert.equal(record.id,'ardennes-beech');assert.equal(record.original,true);assert.equal(record.pendingExport,undefined);
+  assert.equal(record.recipe,'tools/blender/ardennes-beech.py');assert.deepEqual(record.scaleVariants,[.9,1,1.1]);assert.equal(record.lobes,7);
+  let total=0;
+  for(const [index,suffix] of ['','-lod'].entries()) {
+    const bytes=readFileSync(new URL('../public/assets/models/circuits/kits/ardennes-beech'+suffix+'.glb',import.meta.url));
+    assert.equal(bytes.readUInt32LE(0),0x46546c67);assert.equal(bytes.readUInt32LE(4),2);assert.equal(bytes.readUInt32LE(8),bytes.length);
+    assert.equal(bytes.readUInt32LE(16),0x4e4f534a);
+    const gltf=JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString('utf8'));
+    assert.ok(gltf.images.length>0&&gltf.images.every(image=>Number.isInteger(image.bufferView)&&image.mimeType==='image/png'&&!image.uri));
+    const primitives=gltf.meshes.flatMap(mesh=>mesh.primitives);
+    assert.ok(primitives.every(primitive=>(primitive.mode??4)===4&&Number.isInteger(primitive.attributes.NORMAL)&&Number.isInteger(primitive.attributes.TEXCOORD_0)));
+    const triangles=primitives.reduce((sum,primitive)=>sum+gltf.accessors[primitive.indices].count/3,0);
+    assert.ok(triangles>0&&triangles<=[684,240][index]);assert.equal(triangles,record[index?'lowTriangles':'highTriangles']);
+    const materials=gltf.materials.map(material=>material.name);
+    assert.ok(materials.some(name=>name.includes('smooth grey')));assert.ok(materials.some(name=>name.includes('underside')));
+    const size=record[index?'lowSize':'size'],crown=record[index?'lowCrownSize':'crownSize'];
+    assert.ok(Math.max(crown[0],crown[2])>crown[1]);assert.ok(record[index?'lowVisibleTrunk':'visibleTrunk']>=size[1]/3);
+    assert.equal(bytes.length,record.files[index].bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),record.files[index].sha256);total+=bytes.length;
+  }
+  assert.equal(total,record.bytes);assert.ok(total<=250000);
 });

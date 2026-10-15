@@ -1,4 +1,5 @@
 import {isSummitAttack} from './summit-attack.js';
+import {beechTreePlacements} from './vegetation.js';
 import * as THREE from 'three';
 import {renderedGroundHeight} from './rendered-ground.js';
 import {escapeFrame} from './escape-roads.js';
@@ -14,7 +15,7 @@ export const TRACK_KIT_IDS = Object.freeze([
   'harbour-boat','ski-lodge','chairlift-tower','chairlift-cable','chairlift-chair',
   'wooden-dock','autumn-tree','autumn-tree-golden','autumn-tree-copper','snow-pine',
   'snow-ground','snow-rock','plough-bank','gallery','summit-hut','observatory','snowman','yeti',
-  'stone-stream-bridge','forest-footbridge','forest-timing-tower',
+  'stone-stream-bridge','forest-footbridge','forest-timing-tower','ardennes-beech',
 ]);
 const approved = new Set(TRACK_KIT_IDS);
 const owners = new WeakMap();
@@ -28,6 +29,9 @@ const fail = message => {throw new Error('Track kit '+message);};
 
 export function normalizeKitPlacements(course, entries) {
   if (!Array.isArray(entries)) fail('placements must be an array.');
+  const beeches=entries.some(entry=>entry?.id==='ardennes-beech')
+    ?new Map(beechTreePlacements(course).map(row=>[row.scenery.id,row])):null;
+  const boundBeeches=new Set();
   return Object.freeze(entries.map(entry => {
     if (!entry || !approved.has(entry.id) || !finite(entry.s) || entry.s < 0 ||
         entry.s > course.length || !finite(entry.lateral) || !finite(entry.heading ?? 0) ||
@@ -61,6 +65,13 @@ export function normalizeKitPlacements(course, entries) {
     const scenery = entry.scenery;
     if (scenery && (scenery.kind !== 'tree' || typeof scenery.id !== 'string' || !scenery.id))
       fail('scenery binding must name an existing tree.');
+    if(entry.id==='ardennes-beech'){
+      const expected=beeches?.get(scenery?.id);
+      if(!expected||boundBeeches.has(scenery.id)||entry.s!==expected.s||entry.lateral!==expected.lateral||
+          (entry.heading??0)!==expected.heading||(entry.lift??0)!==0||scale.some(value=>value!==expected.scale))
+        fail('Ardennes beech must bind once to its exact selected existing tree.');
+      boundBeeches.add(scenery.id);
+    }
     const patch = entry.physicalPatch;
     if (patch && (entry.id !== 'plough-bank' || patch.kind !== 'deep-snow' ||
         !course.features?.surfacePatches?.includes(patch) ||
@@ -437,7 +448,7 @@ export function createTrackKits(course, options) {
   const normalizeStarted = performance.now();
   try {
     if (typeof validateClearance !== 'boolean') fail('clearance option must be boolean.');
-    rows = normalizeKitPlacements(course,[...placements,...extraPlacements]);
+    rows = normalizeKitPlacements(course,[...placements,...extraPlacements,...(options?.placements===undefined?beechTreePlacements(course):[])]);
     if (!Array.isArray(requiredIds) || !requiredIds.every(id => approved.has(id))) fail('required id is unknown.');
   } catch (caught) {failed = true;status = 'error';error = caught;}
   const stats = {high:0,low:0,visibleChunks:0,

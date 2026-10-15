@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "units": "metres",
+  "up": "Y",
+  "models": [{
+    "id": "ardennes-beech",
+    "original": true,
+    "author": "The Duel project",
+    "recipe": "tools/blender/ardennes-beech.py",
+    "source": "Original procedural beech and embedded original leafy pixels. No external donor or texture.",
+    "pendingExport": true,
+    "triangleCeilings": {"high": 684, "low": 240},
+    "scaleVariants": [0.9, 1, 1.1],
+    "lobes": 7,
+    "files": [{"path": "ardennes-beech.glb"}, {"path": "ardennes-beech-lod.glb"}]
+  }]
+}
