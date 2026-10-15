@@ -99,6 +99,8 @@ async function overTheFire(context, quality, fire, {pictures}) {
     return Math.hypot(v.heli.x - t.x, v.heli.z - t.z) < 6 && Math.abs(v.heli.y - t.y) < 3 && Math.hypot(v.heli.vx, v.heli.vz) < 1; })()`, 'over the fire', 240_000);
   await pause(1500);
   if (pictures) await context.screenshot(`fire-150m-${quality}`);
+  // From the side as well: the smoke columns stand up.
+  if (pictures && quality === 'high') { await context.evaluate(`window.__qaApp.heliCamera = 0`); await pause(1200); await context.screenshot('fire-150m-side'); await context.evaluate(`window.__qaApp.heliCamera = 2`); }
   const frames = FRAMES ? await measure(context, `${quality}, 150 m over a ${fire.burning.length}-cell fire`) : null;
   return frames;
 }
@@ -116,8 +118,8 @@ async function drop(context) {
     window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.heli.y - 7.6, speed: 1, sink: 1.5}; })()`);
   await context.waitFor(`${app}.heliView().bucket?.words === 'full'`, 'a full bucket', 120_000);
   await context.screenshot('fire-scoop');
-  await context.evaluate(`(() => { const v = ${app}.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.heli.y + 40, speed: 1, sink: 4}; })()`);
-  await context.waitFor(`(() => { const v = ${app}.heliView(); return v.heli.y - v.zone.y > 50; })()`, 'climb out', 60_000);
+  await context.evaluate(`(() => { const v = ${app}.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.zone.y + 60, speed: 1, sink: 4}; })()`);
+  await context.waitFor(`(() => { const v = ${app}.heliView(); return v.heli.y - v.zone.y > 52; })()`, 'climb out', 90_000);
   await context.evaluate(`(() => { window.__pilot = null; ${app}.heliLog = []; ${app}._inputAction('heli-autopilot'); })()`);
   await context.waitFor(`${app}.heliLog.some(e => e.type === 'autopilotArrived')`, 'the autopilot at the fire', 300_000);
   await context.evaluate(`(() => { ${app}._inputAction('heli-autopilot'); window.__pilot = null; window.__pour = true; })()`);
