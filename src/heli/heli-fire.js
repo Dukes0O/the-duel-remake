@@ -216,15 +216,33 @@ export function applyWater(fire, grid, patches) {
   }
   const burning = new Map(fire.burning), burnt = new Set(fire.burnt), damp = new Map(fire.damp);
   let hit = 0, out = 0;
+  // Water on a burning cell beyond what puts it out runs on to its burning
+  // neighbours (once); with none burning it soaks the forest round it, which
+  // turns damp. So a heavy drop on the edge works the cells around it too.
+  const spill = new Map();
+  const douse = (cell, l) => {
+    const need = burning.get(cell) * FIRE.litresPerPoint / 100, used = Math.min(l, need);
+    hit += used;
+    const left = round1(burning.get(cell) - used * 100 / FIRE.litresPerPoint);
+    if (left <= 0) { burning.delete(cell); burnt.add(cell); out++; } else burning.set(cell, left);
+    return l - used;
+  };
+  const around = cell => { const [i, j] = cellIJ(cell); return NEIGHBOURS.map(([di, dj]) => cellId(i + di, j + dj)); };
   for (const [cell, l] of [...litres].sort((a, b) => a[0] - b[0])) {
     if (burning.has(cell)) {
-      const left = round1(burning.get(cell) - l * 100 / FIRE.litresPerPoint);
-      hit += Math.min(l, burning.get(cell) * FIRE.litresPerPoint / 100);
-      if (left <= 0) { burning.delete(cell); burnt.add(cell); out++; } else burning.set(cell, left);
+      const rest = douse(cell, l);
+      if (rest < 1) continue;
+      const lit = around(cell).filter(n => burning.has(n) && !litres.has(n)), wet = lit.length ? lit : around(cell).filter(n => grid.cells.has(n) && !burnt.has(n));
+      for (const n of wet) spill.set(n, (spill.get(n) ?? 0) + rest / wet.length);
     } else if (grid.cells.has(cell) && !burnt.has(cell) && l >= 1) damp.set(cell, FIRE.dampSteps);
   }
+  for (const [cell, l] of [...spill].sort((a, b) => a[0] - b[0])) {
+    if (burning.has(cell)) douse(cell, l);
+    else if (!burnt.has(cell) && l >= 1) damp.set(cell, FIRE.dampSteps);
+  }
+  for (const cell of burnt) damp.delete(cell);
   return {fire: {...fire, burning: [...burning].sort((a, b) => a[0] - b[0]), burnt: [...burnt].sort((a, b) => a - b),
-    damp: [...damp].sort((a, b) => a[0] - b[0])}, litresOnFire: round1(hit), cellsOut: out};
+    damp: [...damp].filter(([cell]) => !burning.has(cell)).sort((a, b) => a[0] - b[0])}, litresOnFire: round1(hit), cellsOut: out};
 }
 
 // How a disc of water splits among cells, by sampling it on a 2 m lattice.

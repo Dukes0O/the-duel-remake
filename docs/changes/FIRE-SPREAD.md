@@ -35,7 +35,10 @@ H1 release is not a build dependency).
   cells downwind that never cross a road or the lake).
 - `applyWater(fire, grid, patches)`: each wet patch shared among the cells
   its disc covers; 180 litres take a burning cell from 1 to 0; a cell put
-  out turns burnt; water on unburnt forest makes it damp. It never imports
+  out turns burnt; water on unburnt forest makes it damp; water a burning
+  cell does not need runs on once to its burning neighbours (or dampens the
+  forest round it). Found flying the mission headless in FIRE-HOOKS: a
+  hovering drop on one fresh edge cell wasted about 550 of its 600 litres. It never imports
   heli-bucket.js.
 - `fireOut`, `fireLost`, `fireSize`, `shareOut`, and `hottestEdge` (the
   burning edge cell, downwind first, for the autopilot, the instruments and
@@ -44,8 +47,8 @@ H1 release is not a build dependency).
 ## Tuning
 
 See the card. Medians over 50 seeds: left alone calm 15 steps (target 12
-to 16), windy 11 (8 to 11); answered at once 5 drops (4 to 8), one play
-day late 11 (8 to 14), two play days late 20 (14 to 22).
+to 16), windy 11 (8 to 11); answered at once 4 drops (4 to 8), one play
+day late 10 (8 to 14), two play days late 19 (14 to 22).
 
 ## Tests
 
