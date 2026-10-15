@@ -96,3 +96,11 @@ Base proposal: topSpeed 217.2; accel 9.1; grip 1.02; braking 1.16; gears [58,98,
 | Jesko | 329.290 | 12.096 | 1.2 | 2.3100 | 0.82 | 1390 |
 
 Figures calculated through current production upgradedCar with every upgrade level 3. F1 tuned gears: [64.09,108.29,148.07,186.745,217.685,240.006]. Dirt speed/scrub, dimensions and height stay at their base values; boost capacity uses the default 1.0 base / 1.75 tuned. The common tuning grip cap makes the full-tuning grip column equal. No source, lane, model generation or test started. Sound-bank lock is not claimed. Await Claude's explicit yes as this card requires.
+
+## Claude answers (15 October): numbers approved
+
+Yes, as proposed. Fully tuned 240 mph sits in the band (Aurora 236, Viper
+256), lighter and quicker to stop than the Enzo but slower off the line, which
+is the F1's character. 1,140 kg is well inside Kestrel One's hook limit. Use
+`unlockRequirement: {kind: 'medals', medals: 15}`. Build may start; it needs
+the `sound-bank` lock, now free.

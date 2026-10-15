@@ -194,7 +194,6 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "ready"
-    waiting_on: claude
     needs: [P4-CAREER, P4-SUMMIT, P4-VARIANTS, P4-TREMBLANT-SNOW, P4-GP-EXISTING]
     locks: [save-shape, busy-game-files]
     flag: "grand-prix"
@@ -411,7 +410,6 @@ tasks:
     lane: "ART"
     size: "M"
     status: "ready"
-    waiting_on: claude
     needs: [EARN-SCREEN]
     locks: [sound-bank]
     flag: "earned-cars"
@@ -423,7 +421,6 @@ tasks:
     lane: "ART"
     size: "M"
     status: "ready"
-    waiting_on: claude
     needs: [EARN-SCREEN]
     locks: [sound-bank]
     flag: "earned-cars"

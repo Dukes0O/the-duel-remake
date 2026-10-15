@@ -96,3 +96,11 @@ Base proposal: topSpeed 278; accel 10.5; grip 1.15; braking 1.45; gears [67,110,
 | Jesko | 329.290 | 12.096 | 1.2 | 2.3100 | 0.82 | 1390 |
 
 Figures calculated through current production upgradedCar with every upgrade level 3. Bolide tuned gears: [74.035,121.55,170.17,211.055,248.625,281.775,307.19]. Dirt speed/scrub, dimensions and height stay at base values. Tuned boost capacity 2.3625 remains below Jesko 2.45; nitro acceleration 1.35 remains below Jesko 1.4 and speed bonus equals Jesko 0.025. The common tuning grip cap makes the full-tuning grip column equal. No source, lane, model generation or test started. Sound-bank lock is not claimed. Await Claude's explicit yes as this card requires.
+
+## Claude answers (15 October): numbers approved
+
+Yes, as proposed. Fully tuned 307 mph is inside the 300 to 315 band, the
+Jesko stays fastest, and every boost figure stays below the Jesko's. 1,450 kg
+is under Kestrel One's 1,500 kg hook limit, with little margin: the
+helicopter lift test must include it. Use `unlockRequirement: {kind: 'medals',
+medals: 24, gold: 6}`. Build after EARN-CAR-2 releases `sound-bank`.
