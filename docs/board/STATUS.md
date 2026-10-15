@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T05:14:03.041Z
+Observed at: 2026-10-15T05:17:06.522Z
 
-Observation commit: 882f7e603635366b5ca57c6da59158668f1142fd
+Observation commit: e93c86f1263dc24be8b2d71451d304f6dd29a8f8
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 882f7e603635366b5ca57c6da59158668f1142fd
+Integration HEAD: e93c86f1263dc24be8b2d71451d304f6dd29a8f8
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -43,10 +43,11 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
 | codex/qa-titan-replay-timeout | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-titan-replay-timeout |
 | codex/snow-variation | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/snow-variation |
+| codex/summit-pit-balance | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-pit-balance |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 19 | unknown | true | false | unknown |
-| lane/audio/aud-12 | 19 | unknown | true | false | unknown |
+| lane/audio/aud-12 | 20 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 19 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
@@ -63,7 +64,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T21:58:19-07:00 | 0 | last commit 2026-10-14T21:58:19-07:00 | docs/changes/PERF-HIGH-NIGHT.md, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/qa-titan-replay-timeout | QA-TITAN-REPLAY-TIMEOUT | 2026-10-14T19:39:55-07:00 | 0 | last commit 2026-10-14T19:39:55-07:00 | docs/changes/QA-TITAN-REPLAY-TIMEOUT.md, tools/run-tests.mjs, tools/test-test-runner.mjs, tools/test-titan-climb.mjs |
-| codex/snow-variation | SNOW-VARIATION | 2026-10-14T22:10:03-07:00 | 0 | last commit 2026-10-14T22:10:03-07:00 | docs/board/looks/snow-variation/round-1.jpg, docs/changes/SNOW-VARIATION.md, src/circuits/summit-run.js, src/snow-world.js, src/world.js |
+| codex/snow-variation | SNOW-VARIATION | 2026-10-14T22:16:57-07:00 | 0 | last commit 2026-10-14T22:16:57-07:00 | docs/board/looks/snow-variation/round-1.jpg, docs/changes/SNOW-VARIATION.md, src/circuits/summit-run.js, src/snow-world.js, src/world.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-14T19:19:19-07:00 | 0 | last commit 2026-10-14T19:19:19-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json |
 
@@ -81,7 +82,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,348,046 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 38,722 B | +0 B | 5,000,000 B |
 | All `public/` | 299,706,593 B | +0 B | unavailable |
-| Git objects | 412,822,528 B | +45,056 B | unavailable |
+| Git objects | 412,873,728 B | +51,200 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -90,7 +91,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 882f7e603635366b5ca57c6da59158668f1142fd
+- Local integration/wasteland: e93c86f1263dc24be8b2d71451d304f6dd29a8f8
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

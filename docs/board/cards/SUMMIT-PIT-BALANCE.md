@@ -39,3 +39,13 @@ both in the change note):
 - **Summit Attack:** re-measure T once on the final rules with the same
   stock-winter benchmark and recompute the medals with the same multipliers
   (1.03 / 1.08 / 1.15, rounded up to the tenth). Record old and new.
+
+## Claimed bounded course-only candidates
+
+Fetched/pulled integration before new summit-pit-balance/codex/summit-pit-balance. Existing retained/frozen lanes are not duplicated; source-work slots use only this card and Snow, alongside the already-running Titan gate. Director grants surfaces lock and these exact hooks: src/circuits/summit-run.js only pitLane.limitKph and new top-level winterWarmGrip (never Snow's snowWorld block); src/race-surfaces.js optional context in effectiveGrip/gripFor and its HUD call; src/sim-driving.js only _roadGrip's final gripFor call; src/pit-lane.js only pitEstimate's gripFor call. Existing tools/test-race-surfaces.mjs, test-pit-lane.mjs, test-circuit-summit.mjs and own change note. After final actual rules only src/circuits/summit-time-attack.js baseline value may change from one genuine authorized remeasurement. No core/registry/snow/world/signature/presentation hook or saved field.
+
+New property winterWarmGrip is consulted only on Summit Run/Attack definitions, only warm-tarmac with winter tyres, finite0.62..0.88; missing/malformed/out-of-range/foreign definition falls back to the exact existing global0.82. The frozen global tyre table remains byte-exact. All3 actual callers receive course.def consistently; player/CPU/HUD/pit estimate agree. Other surfaces/tyres/top-share and ordinary courses retain exact behavior. Valid course literals are covered in existing tests; no generic course-builder edit or new harness.
+
+Claude's retired targets and actual historical276.78/277.37/269.15 are retained as history. Candidate1 owns90kmh/.70; only if winter remains more than2s ahead of the better alternative may candidate2 use90/.62. New all3 spread<=4s and best-second<=2s replace ONLY the two expressly retired design assertions; unchanged270..330 bounds now cover all3 legs. Actual three-strategy body, six-car setup,900s cap, seed1989/4242, .95 input controller, stockF42 and four-second service stay exact. Root source review precedes any drive or test. No source/drive/gate/build started by this claim.
+
+On final passing rules, Root authorizes exactly one unchanged actual Attack stock-winter parent recipe to measure final T, retaining recordedYeti/normalAvalanche/no pit/no resets/no forced phase or Open override. Recompute original rounded-up multipliers and record old/new; no repeated fitting baseline. Independent code/design review plus nearby/jobs4/build before merge. Saves/finance/ledger remain untouched.

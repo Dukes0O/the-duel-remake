@@ -363,7 +363,10 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-summit-pit-balance-2026-10-14"
+    branch: "codex/summit-pit-balance"
+    locks: [surfaces]
     needs: []
     details: "docs/board/cards/SUMMIT-PIT-BALANCE.md"
 
