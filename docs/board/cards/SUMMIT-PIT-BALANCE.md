@@ -94,3 +94,7 @@ fitting noise. Decision:
 - Summit Attack's T 266.6 and medals 274.6 / 288.0 / 306.6 stand, since the
   rules did not change.
 This card is closed.
+
+## Drop recorded and bounded cleanup
+
+Final note-only e37bfe3c folds Claude9ddc867a drop into current docs/changes/SUMMIT-PIT-BALANCE.md. Actual TWO owned failed trials and0.62 never-run retained; no source merge/gate/build/Attack baseline repeat. Own dropped lane/branch safely recycled/deleted after verified links were unlinked; integration dependencies/evidence preserved.

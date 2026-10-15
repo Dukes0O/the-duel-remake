@@ -1172,3 +1172,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-15 HELI-ART-SRC mergeda7505637/source54ba9f66:29/29/jobs4,build971ms,independent CLEAR,actualR2 ACCEPT; pad/pump exact,conflict-free/no rerun,own links unlinked but lane recycle refused by Windows and retained pending cleanup.
 
 - 2026-10-15 PERF quiet: currentSummit6384 baseline both18.3ms/world896,919PASS; AO0.5candidate65fb HighSummit18.3/Harbour18.4PASS but PerfSummitworld1954FAIL/Harbourp9518.6FAIL; no retry/merge, window released23:29PT.
+
+- 2026-10-15 Janitor/drop: SUMMIT-PIT-BALANCE failed candidates closed without a game change perClaude9ddc867a; actual results folded into one current change note. Own dropped lane/branch safely recycled/deleted after verified links were unlinked; integration dependencies/evidence preserved.
