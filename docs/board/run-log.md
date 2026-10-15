@@ -1204,3 +1204,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-15 P4-VARIANTS merged e628cb6a: lane 327/327 in 1470.48 s, build 1439.8983 ms, review stock_snow_review clear.
 
 - 2026-10-15 P4-ARDENNES mechanical 4495c042: existing619db9ef lane42/42/jobs4/807.60s, build1.25s, final reviewCLEAR; LongLeft zero-crash, timing skipped by Kyle, course dev, old lane retained.
+
+- 2026-10-15 pause by Kyle for restart: SUMMIT-SWITCH-ON exactd27d7c75 retained, geometry164654/build2099ms/reviewCLEAR/Claude approved; original canonical gate outcome pending inspection, no merge or release. See card restart point.

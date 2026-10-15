@@ -87,3 +87,10 @@ accepted a574e548 scene, so the views accepted on P4-FINISH-SUMMIT stand and
 the Time Attack fixture is that same scene. No further view packet needed.
 Finish with the lane tier, build and the one independent review, then merge;
 Claude starts RELEASE-SUMMIT on the merge commit.
+
+
+## Paused by Kyle for a conversation restart, 15 October
+
+This chat (01a141d7) is paused at Kyle's request. Retain the existing summit-switch-on lane and branch, exact clean source d27d7c75b120c507715a6aa2f26734aac7df21c9. The approved clearance/side-bound checks and enabled Summit/Time Attack signature are committed. Original four-seed geometry passed164654 checks/22events; actual composition capture kept all20 unrelated scenes exact and both Summit scenes equal the accepted a574e548 hash. Build passed in2099ms. Independent summit_review is CLEAR on that exact SHA; Claude separately approved the patch and retained final views in a67dccef. The original canonical lane gate is still running (root PID40268, exec session28636); its complete result is not yet available. Let that existing run drain; do not start a duplicate. If restart stops it, record it as interrupted, not passed, before deciding on a fresh gate.
+
+No Summit merge, live install, push, frame check or real-save access occurred in this chat. On restart: read current board/inbox first (the overnight chat is active on intel), then inspect this retained lane and the original gate result, fix any actual failure, and use integrate-lane with exact evidence only if green. Fold the old held/blocker paragraphs in docs/changes/SUMMIT-SWITCH-ON.md into resolved history with final handoff metadata; reviewer called this a wording correction, not a code fault. Do not delete this retained lane. Own generated dist and evidence remain pending outcome/handoff; no cleanup retry or new lane starts during this pause. Read-only janitor inventory before merge: tracked347900632B/public300960742B/looks19935101B; advisory candidates are not deletion proof.
