@@ -85,7 +85,7 @@ pass; one ordinary code review; Claude's look verdict recorded.
 
 Please approve or amend these gameplay numbers before code or art starts. The Bolide is a fast track car with strong braking, poor dirt performance and a tuned top speed below Jesko. These are game settings, not claimed physical performance. Bugatti gives 1,450 kg for the production car: https://newsroom.bugatti.com/press-releases/bugatti-developing-production-version-of-the-bolide-experimental-hyper-sports-car . This leaves the game mass below the existing 1,500 kg helicopter limit. Official pictures are viewing references only; no model, badge, texture or logo was downloaded.
 
-Base proposal: topSpeed 278; accel 10.5; grip 1.15; braking 1.45; gears [67,110,154,191,225,255,278]; offRoadGrip 0.58; offRoadSpeed 50; offRoadScrub 0.64; mass 1450; collision {halfWidth:1.05,halfLength:2.5}; height 1.05; kind hypercar; boostCapacity 1.35; nitroAcceleration 1.35; nitroSpeedBonus 0.025. factoryMaxed true; unlockRequirement {kind:'medals',total:24,gold:6}. Confirm the requirement field names against current production when implementing.
+Base proposal: topSpeed 278; accel 10.5; grip 1.15; braking 1.45; gears [67,110,154,191,225,255,278]; offRoadGrip 0.58; offRoadSpeed 50; offRoadScrub 0.64; mass 1450; collision {halfWidth:1.05,halfLength:2.5}; height 1.05; kind hypercar; boostCapacity 1.35; nitroAcceleration 1.35; nitroSpeedBonus 0.025. factoryMaxed true; unlockRequirement {kind:'medals',medals:24,gold:6}. Requirement field names follow the current production medal contract.
 
 | Car, full tuning | Speed mph | Accel | Grip | Braking | Dirt grip | Mass kg |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
