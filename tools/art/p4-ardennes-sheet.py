@@ -40,78 +40,63 @@ def player_crash_accepted(detail):
             prop.get('halfX') == 2 and prop.get('halfZ') == .4 and prop.get('authoredPlacement') == placement and detail['placement'] == placement)
 
 
-def final_close_sheet(args, report):
-    # Final round also hands these original PNGs to Claude; the sheet never replaces them.
+def close_sheet(args, report):
+    """Round 4: the three close High views and the wide Kestrel view, each the full native picture."""
     if args.output.exists():
-        raise ValueError('The final round output is immutable')
-    names = [('Village Streets', 'actual-town-streets'),
+        raise ValueError('The round output is immutable')
+    names = [('Beech Grove', 'actual-beech-grove'),
              ('Stone Bridge Stream', 'actual-stone-bridge-stream'),
-             ('Beech Grove', 'actual-beech-grove')]
+             ('Stream From Car', 'actual-stream-from-car'),
+             ('Kestrel Wide', 'actual-kestrel-wide')]
     pictures = []
     for name, kind in names:
         matches = [row for row in report['captures'] if row['quality'] == 'high' and row['name'] == name and row['phase'] == 'clear-second-lap']
         if len(matches) != 1:
-            raise ValueError('The complete final three actual close views are required: ' + name)
+            raise ValueError('The complete round-four views are required: ' + name)
         row = matches[0]
         if (row.get('laps') != 1 or row.get('fogNear') != 360 or not row.get('stateUnchanged') or
                 row.get('nativeFieldSize') != 8 or not 1 <= row.get('nativeCars', 0) <= 8 or row.get('closeView', {}).get('kind') != kind):
-            raise ValueError('A close view must retain actual clear second-lap native context')
-        if kind == 'actual-stone-bridge-stream':
-            view = row['closeView']
-            bridge = view.get('bridge', {})
-            if (bridge.get('id') != 'stone-stream-bridge' or view.get('station') != bridge.get('s') or
-                    view.get('eyeS') != bridge['s'] - 6 or view.get('eyeOff') != bridge['lateral'] - 18 or
-                    view.get('targetS') != bridge['s'] or view.get('targetOff') != bridge['lateral'] or
-                    view.get('eyeHeight') != 5 or view.get('targetHeight') != 1.5 or
-                    abs(row['camera'][1] - (view['eyeGround'] + 5)) >= .001 or
-                    view['target'][1] != view['targetGround'] + 1.5):
-                raise ValueError('Stone bridge close view must retain the actual broadside pose')
-        if kind == 'actual-beech-grove':
-            view = row['closeView']
-            bounds = view.get('bounds', {})
-            if (not isinstance(view.get('treeId'), str) or view.get('version') != 'high' or view.get('groupCount', 0) < 1 or
-                    len(bounds.get('min', [])) != 3 or len(bounds.get('max', [])) != 3 or
-                    any(not low < high for low, high in zip(bounds['min'], bounds['max']))):
-                raise ValueError('Beech close view lacks its actual bound original tree/crown')
-            tree = view.get('tree', {})
-            side = 1 if tree['off'] > 0 else -1 if tree['off'] < 0 else 0
-            if (view.get('eyeS') != tree['s'] or view.get('eyeOff') != tree['off'] - side * 12 or
-                    view.get('eyeHeight') != (bounds['max'][1] - bounds['min'][1]) * .5 or
-                    view.get('target') != [(a + b) * .5 for a, b in zip(bounds['min'], bounds['max'])] or
-                    abs(row['camera'][1] - (view['eyeGround'] + view['eyeHeight'])) >= .001):
-                raise ValueError('Beech close view must retain its actual roadside eye and bound centre')
+            raise ValueError('A view must retain actual clear second-lap native context: ' + name)
+        view = row['closeView']
+        if kind in ('actual-beech-grove', 'actual-kestrel-wide') and not view.get('fenceToTree', 0) >= 25:
+            raise ValueError('The grove must stand 25 m or more behind the catch fence')
         image = Image.open(args.browser / row['file']).convert('RGB')
         if image.size != (1280, 720):
-            raise ValueError('Close view is not the original full native viewport')
+            raise ValueError('View is not the original full native viewport')
         pictures.append((name, row['file'], image))
-    sheet = Image.new('RGB', (960, 1850), '#11201d')
+    cell_w, cell_h, gap, head = 720, 405, 8, 34
+    sheet = Image.new('RGB', (cell_w * 2 + gap * 3, 54 + (cell_h + head + gap) * 2 + 30), '#11201d')
     draw = ImageDraw.Draw(sheet)
     font = ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf', 20)
-    draw.text((12, 12), 'ARDENNES FINAL ROUND 3 - actual clear second-lap close views', font=font, fill='#e7d6ad')
+    draw.text((gap, 12), 'ARDENNES ROUND 4 - leaf-card beeches and the Red Water stream, High, actual clear second lap', font=font, fill='#e7d6ad')
     for i, (name, file, image) in enumerate(pictures):
-        y = 54 + i * 592
-        draw.text((12, y), name + ' / High / original PNG supplied separately', font=font, fill='#e0e9e1')
-        sheet.paste(image.resize((960, 540), Image.Resampling.LANCZOS), (0, y + 30))
-    draw.text((12, 1824), 'Full viewports resized only. No crop, retouch, lighting override or frame timing.', font=font, fill='#bdcec5')
+        x, y = gap + (i % 2) * (cell_w + gap), 54 + (i // 2) * (cell_h + head + gap)
+        draw.text((x, y), name + ' / High', font=font, fill='#e0e9e1')
+        sheet.paste(image.resize((cell_w, cell_h), Image.Resampling.LANCZOS), (x, y + head))
+    draw.text((gap, sheet.height - 28), 'Full native viewports resized only. No crop, retouch, lighting override or frame timing.', font=font, fill='#bdcec5')
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    for quality in [88, 84, 80, 76, 72, 68, 64]:
+    # 500 KB is the sheet limit; this one aims lower because docs/board/looks has under 400 KB of room below its 20 MB cap.
+    for quality in [88, 84, 80, 76, 72, 68, 64, 60, 56, 52]:
         sheet.save(args.output, quality=quality, optimize=True)
-        if args.output.stat().st_size <= 500000:
-            print(str(args.output) + ': ' + str(args.output.stat().st_size) + ' bytes; original PNGs: ' + ', '.join(row[1] for row in pictures))
+        if args.output.stat().st_size <= 330000:
+            print(str(args.output) + ': ' + str(args.output.stat().st_size) + ' bytes at JPEG quality ' + str(quality) + '; originals: ' + ', '.join(row[1] for row in pictures))
             return
-    raise ValueError('Final actual close-view sheet exceeds 500 KB')
+    raise ValueError('Round-four sheet exceeds 330 KB')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--browser', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--round', type=int, choices=[1, 2, 3], required=True)
+    parser.add_argument('--round', type=int, choices=[1, 2, 4], required=True)
     args = parser.parse_args()
     report = json.loads((args.browser / 'ardennes-views.json').read_text(encoding='utf-8'))
     harness = json.loads((args.browser / 'report.json').read_text(encoding='utf-8'))
     if not report.get('passed') or not harness.get('passed') or not harness.get('memoryOnlySaves') or harness.get('issues'):
         raise ValueError('Complete actual memory-only native acceptance is required')
+    if args.round == 4:
+        close_sheet(args, report)
+        return
     keys = [('Pit Straight', 'mist-grid')] + [(name, 'first-lap') for name in
         ['La Fontaine', 'Red Water', 'The Wall', 'Kestrel Straight', 'Kestrel Underbridge', 'Les Combes', 'Riverside', 'Stavelot', 'Bus Stop Exit']] + [('Pit Straight', 'clear-second-lap')]
     rows = []
@@ -146,9 +131,6 @@ def main():
                     raise ValueError('Bridge camera is not the actual rendered player eye and forward target')
             captures.append(capture)
         rows.append(captures)
-    if args.round == 3:
-        final_close_sheet(args, report)
-        return
     cell = 256
     sheet = Image.new('RGB', (cell * len(keys), 610), '#11201d')
     draw = ImageDraw.Draw(sheet)

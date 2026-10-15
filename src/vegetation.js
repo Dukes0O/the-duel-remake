@@ -35,10 +35,12 @@ export function beechTreePlacements(course) {
       ![grove.s,grove.reach].every(Number.isFinite) || grove.s<0 || grove.s>=course.length || grove.reach<=0) ||
       !Array.isArray(spec.scales) || spec.scales.length!==3 || spec.scales.some(scale=>!Number.isFinite(scale)||scale<=0))
     throw Error('Ardennes beech needs finite authored groves and three scale variants.');
+  if (spec.setback!==undefined && !(Number.isFinite(spec.setback)&&spec.setback>=0))
+    throw Error('Ardennes beech setback must be a finite distance beyond the road edge.');
   const rows=[];
   for (const tree of course.features.trees) {
     if (!spec.groves.some(grove=>Math.abs(tree.s-grove.s)<=grove.reach) ||
-        Math.abs(tree.off)<course.roadHalfWidthAt(tree.s)+course.def.scenery.forest.from) continue;
+        Math.abs(tree.off)<course.roadHalfWidthAt(tree.s)+Math.max(course.def.scenery.forest.from,spec.setback??0)) continue;
     let hash=2166136261;
     for (let i=0;i<tree.id.length;i++) hash=Math.imul(hash^tree.id.charCodeAt(i),16777619)>>>0;
     if (hash%3===0) continue; // Keep actual firs interleaved inside each group.

@@ -179,37 +179,112 @@ function addValleyMist(group, course, entries) {
   }});
 }
 
-// A visible stream on both sides of Red Water. The unchanged road and its
-// shoulders cover the crossing. No water surface, basin, grip or reset rule.
+// The Red Water stream. The water is the circuit's existing water (src/circuit-water.js) lying in the dug
+// channel of the two `basins` named by `spec.basins`; this adds what makes the channel read as a stream: a
+// darker, glossier wet bank `spec.bank` metres wide along each shore, a few rocks at the waterline and tufts
+// of reed. All of it stands on the actual drawn ground and stays clear of the road and its shoulders. Drawing
+// only: no water of its own, no grip, no reset rule, and nothing from the course's random stream.
+const STREAM_STATIONS = 96;
 function addStream(group, course, spec) {
-  if (![spec.s, spec.width, spec.reach].every(Number.isFinite) || spec.s < 0 || spec.s > course.length ||
-      spec.width <= 0 || spec.width > 12 || spec.reach <= 20 || spec.reach > 128 ||
-      !Number.isSafeInteger(spec.colour) || spec.colour < 0 || spec.colour > 0xffffff)
+  if (![spec.s, spec.width, spec.reach, spec.bank ?? 1].every(Number.isFinite) || spec.s < 0 || spec.s > course.length ||
+      spec.width <= 0 || spec.width > 12 || spec.reach <= 20 || spec.reach > 128 || (spec.bank ?? 1) <= 0 || (spec.bank ?? 1) > 3 ||
+      !Number.isSafeInteger(spec.colour) || spec.colour < 0 || spec.colour > 0xffffff ||
+      !Array.isArray(spec.basins) || !spec.basins.length)
     throw Error('Stream needs bounded authored dimensions.');
-  const positions = [], indices = [];
-  const start = course.roadHalfWidthAt(spec.s) + ROAD_SHOULDER_WIDTH + 1;
-  for (const side of [-1, 1]) for (let depth = start; depth < spec.reach; depth += 2) {
-    const quad = [];
-    for (const [ds, off] of [[-spec.width / 2, depth], [spec.width / 2, depth],
-      [-spec.width / 2, Math.min(spec.reach, depth + 2)], [spec.width / 2, Math.min(spec.reach, depth + 2)]]) {
-      const point = course.worldAt(spec.s + ds, side * off), nearest = course.nearest(point.x, point.z, spec.s);
-      if (nearest.distance <= course.roadHalfWidthAt(nearest.s) + ROAD_SHOULDER_WIDTH + .5) break;
-      const height = renderedGroundHeight(course, {...point, s: nearest.s, off: nearest.lateral}, {requireSurface: true});
-      if (!Number.isFinite(height)) throw Error('Stream has no actual rendered ground.');
-      quad.push([point.x, height + .04, point.z]);
+  const basins = spec.basins.map(id => (course.def.basins ?? []).find(basin => basin.id === id));
+  if (basins.some(basin => !basin)) throw Error('Stream names a basin the course does not have.');
+  const bank = spec.bank ?? 1, roadEdge = ROAD_SHOULDER_WIDTH + .5;
+  // A point on the actual drawn ground, or null where it would lie on the road or its shoulder.
+  const onGround = (s, lateral) => {
+    const point = course.worldAt(s, lateral), nearest = course.nearest(point.x, point.z, spec.s);
+    if (nearest.distance <= course.roadHalfWidthAt(nearest.s) + roadEdge) return null;
+    const height = renderedGroundHeight(course, {...point, s: nearest.s, off: nearest.lateral}, {requireSurface: true});
+    if (!Number.isFinite(height)) throw Error('Stream has no actual rendered ground.');
+    return [point.x, height, point.z];
+  };
+  // The shore of a basin as the water draws it (`lakeGeometry`), with the way out of the water.
+  const shore = basin => Array.from({length: STREAM_STATIONS}, (_, k) => {
+    const angle = k / STREAM_STATIONS * TAU, factor = shoreFactor(angle);
+    const out = [Math.cos(angle) / basin.along, Math.sin(angle) / basin.across], length = Math.hypot(...out);
+    return {s: basin.s + Math.cos(angle) * factor * basin.along, lateral: basin.lateral + Math.sin(angle) * factor * basin.across,
+      ds: out[0] / length, dl: out[1] / length};
+  });
+  // The same simple hash everywhere: no random generator is drawn from.
+  const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const positions = [], colours = [], indices = [], rocks = [], reeds = [], wet = new THREE.Color(spec.colour);
+  basins.forEach((basin, index) => {
+    const ring = shore(basin);
+    const edge = ring.map(point => [onGround(point.s, point.lateral), onGround(point.s + point.ds * bank, point.lateral + point.dl * bank)]);
+    for (let k = 0; k < ring.length; k++) {
+      const a = edge[k], b = edge[(k + 1) % ring.length];
+      if (!a[0] || !a[1] || !b[0] || !b[1]) continue;
+      const first = positions.length / 3;
+      // Wet at the waterline, fading to dry ground at the outer edge so it reads as a damp bank, not an edging.
+      for (const [point, alpha] of [[a[0], .9], [a[1], 0], [b[0], .9], [b[1], 0]]) {
+        positions.push(point[0], point[1] + .04, point[2]); colours.push(wet.r, wet.g, wet.b, alpha);
+      }
+      indices.push(first, first + 2, first + 1, first + 1, first + 2, first + 3);
+      const seed = index * 1000 + k;
+      // A rock now and then, half in the water and half on the bank; a clump of reed more often.
+      if (hash(seed) < .13) rocks.push({s: ring[k].s - ring[k].ds * .25, lateral: ring[k].lateral - ring[k].dl * .25, seed});
+      if (hash(seed + .5) < .42) reeds.push({s: ring[k].s + ring[k].ds * (.2 + .9 * hash(seed + .7)),
+        lateral: ring[k].lateral + ring[k].dl * (.2 + .9 * hash(seed + .7)), seed});
     }
-    if (quad.length !== 4) continue;
-    const first = positions.length / 3;
-    for (const point of quad) positions.push(...point);
-    indices.push(first, first + 2, first + 1, first + 1, first + 2, first + 3);
-  }
+  });
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colours, 4));
   geometry.setIndex(indices); geometry.computeVertexNormals();
-  const material = new THREE.MeshStandardMaterial({name: 'Red-brown stream', color: spec.colour,
-    roughness: .36, metalness: .08, side: THREE.DoubleSide});
+  // Wet earth: darker than the dry bank and glossy, so it shines where the water has just been.
+  const material = new THREE.MeshStandardMaterial({name: 'Red-brown stream', vertexColors: true, transparent: true, depthWrite: false,
+    roughness: .4, metalness: 0, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2});
   const mesh = new THREE.Mesh(geometry, material); mesh.name = 'Ardennes red-brown stream';
   mesh.receiveShadow = true; group.add(mesh);
+  const ground = rows => rows.map(row => ({...row, at: onGround(row.s, row.lateral)})).filter(row => row.at);
+  addStreamStones(group, ground(rocks), hash);
+  addStreamReeds(group, ground(reeds), hash);
+}
+
+// The same rock and granite picture as the course's boulders, small and rounded by the water.
+function addStreamStones(group, rows, hash) {
+  if (!rows.length) return;
+  const map = new THREE.TextureLoader().load('/assets/textures/alpine-granite.png');
+  map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(2, 2); map.anisotropy = 8;
+  const material = new THREE.MeshStandardMaterial({color: 0x8c8a84, map, bumpMap: map, bumpScale: .24, roughness: .8});
+  const stones = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 1), material, rows.length);
+  stones.name = 'Ardennes stream rocks'; stones.castShadow = true; stones.receiveShadow = true;
+  const object = new THREE.Object3D();
+  rows.forEach((row, i) => {
+    object.position.set(row.at[0], row.at[1] + .05, row.at[2]);
+    object.scale.set(.3 + .35 * hash(row.seed + 1), .16 + .14 * hash(row.seed + 2), .3 + .35 * hash(row.seed + 3));
+    object.rotation.set(0, hash(row.seed + 4) * TAU, 0); object.updateMatrix(); stones.setMatrixAt(i, object.matrix);
+  });
+  group.add(stones);
+}
+
+// Clumps of bent blades, dark at the root and pale green at the tip, the same blades the meadow tufts use.
+function addStreamReeds(group, rows, hash) {
+  if (!rows.length) return;
+  const v = [], c = [];
+  for (let i = 0; i < 11; i++) {
+    const a = i * 2.4, x = Math.sin(a), z = Math.cos(a), h = .4 + (i % 4) * .16;
+    for (const [px, py, pz] of [[-z * .035, 0, x * .035], [z * .035, 0, -x * .035], [x * .12 + z * .02, h * .6, z * .12 - x * .02],
+        [-z * .035, 0, x * .035], [x * .12 + z * .02, h * .6, z * .12 - x * .02], [x * .3, h, z * .3]]) {
+      v.push(px, py, pz); c.push(.16 + py * .22, .26 + py * .3, .1 + py * .08);
+    }
+  }
+  const blades = new THREE.BufferGeometry();
+  blades.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); blades.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+  blades.computeVertexNormals();
+  const reeds = new THREE.InstancedMesh(blades, new THREE.MeshStandardMaterial({vertexColors: true, roughness: 1, side: THREE.DoubleSide}), rows.length);
+  reeds.name = 'Ardennes stream reeds'; reeds.receiveShadow = true;
+  const object = new THREE.Object3D();
+  rows.forEach((row, i) => {
+    object.position.set(row.at[0], row.at[1] - .02, row.at[2]);
+    object.scale.setScalar(.6 + .6 * hash(row.seed + 5)); object.rotation.set(0, hash(row.seed + 6) * TAU, 0);
+    object.updateMatrix(); reeds.setMatrixAt(i, object.matrix);
+  });
+  group.add(reeds);
 }
 
 // A tile of tree crowns seen from far off, in grey, made in code (no image to load):

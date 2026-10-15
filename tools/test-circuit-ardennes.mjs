@@ -28,6 +28,7 @@ import {createHash} from 'node:crypto';
 import {ardennesPlayerCrashAccepted} from './scenarios/ardennes-views.mjs';
 import {createPavedRoadMaterial, bindPavedDampRoad} from '../src/road-surface.js';
 import {beechTreePlacements, addPineTrees} from '../src/vegetation.js';
+import {addCircuitWater} from '../src/circuit-water.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 
 // Ardennes Forest road layout (docs/CIRCUITS.md section 5.5, P4-ARDENNES-ROAD).
@@ -1023,4 +1024,34 @@ test('the actual original beech pair has embedded leafy images and retains its s
     assert.equal(bytes.length,record.files[index].bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),record.files[index].sha256);total+=bytes.length;
   }
   assert.equal(total,record.bytes);assert.ok(total<=250000);
+});
+
+test('beeches stand 25 m or more behind the catch fence; trees nearer the track stay fir', () => {
+  const course = new Course(ARDENNES_FOREST, 1989), trees = new Map(course.features.trees.map(tree => [tree.id, tree]));
+  const rows = beechTreePlacements(course);
+  assert.ok(rows.length > 0 && rows.length < trees.size);
+  for (const row of rows) {
+    const tree = trees.get(row.scenery.id), fence = course.roadHalfWidthAt(tree.s) + 14.3;
+    assert.ok(Math.abs(tree.off) - fence >= 25, tree.id + ' stands only ' + (Math.abs(tree.off) - fence).toFixed(1) + ' m behind the fence');
+  }
+  assert.ok(trees.size - rows.length > 0 && course.features.trees.some(tree => !rows.some(row => row.scenery.id === tree.id) && Math.abs(tree.off) < course.roadHalfWidthAt(tree.s) + 40));
+});
+
+test('the Red Water stream is the circuit water in a channel 0.6 to 1 m below the natural ground, clear of the road edge', () => {
+  const course = new Course(ARDENNES_FOREST, 1989), natural = new Course({...ARDENNES_FOREST, basins: undefined, water: undefined}, 1989);
+  assert.equal(ARDENNES_FOREST.basins.length, 2);
+  for (const basin of ARDENNES_FOREST.basins) {
+    // The bed rows either side of the stream line: the deepest cut stays within one metre, and the channel is at least 0.6 m deep.
+    const cuts = [-2, 2].map(ds => natural.groundAt(basin.s + ds, basin.lateral).y - course.groundAt(basin.s + ds, basin.lateral).y);
+    assert.ok(cuts.every(cut => cut >= .6 && cut <= 1.05), basin.id + ' cut ' + cuts.map(cut => cut.toFixed(2)).join('/'));
+    // Within 6 m of the road edge the ground is exactly the natural ground.
+    for (const ds of [-8, -4, 0, 4, 8]) for (const side of [-1, 1]) {
+      const lateral = side * (course.roadHalfWidthAt(basin.s) + 6);
+      assert.equal(course.groundAt(basin.s + ds, lateral).y, natural.groundAt(basin.s + ds, lateral).y);
+    }
+  }
+  const world = new THREE.Group(), water = addCircuitWater(world, course);
+  assert.equal(water.basins, 2);
+  for (const basin of ARDENNES_FOREST.basins) assert.ok(world.getObjectByName('water-' + basin.id)?.isMesh);
+  disposeTree(world);
 });

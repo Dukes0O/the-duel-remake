@@ -144,7 +144,7 @@ export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   const bundle = await nativeBundle();
   try {
-    for (const quality of ['high', 'performance']) {
+    for (const quality of (process.env.ARDENNES_VIEW_QUALITIES ?? 'high,performance').split(',')) {
       await context.navigate('/tools/menu-check.html?flags=grand-prix,ardennes-forest');
       await context.waitFor('window.__qaApp?.visualReady && !!window.__render', 'memory-only Ardennes menu', 60000);
       await context.evaluate(bundle);
@@ -199,25 +199,56 @@ export async function run(context) {
             window.__render.renderFrame();
             return {position: a.inspectionCamera.position, playerCamera};
           }
-          if (${JSON.stringify(name)} === 'Beech Grove') {
-            if (s.completedLaps !== 1) throw Error('Beech close view requires the actual clear second lap');
+          if (${JSON.stringify(name)} === 'Beech Grove' || ${JSON.stringify(name)} === 'Kestrel Wide') {
+            if (s.completedLaps !== 1) throw Error('Beech view requires the actual clear second lap');
             const group=window.__render.scene.getObjectByName('Approved track kits');
             const kestrel=c.script.pieces.find(piece=>piece.name==='Kestrel Straight');
             const rows=group?.userData.trackKitPlacements;
             const choices=(rows??[]).map((row,index)=>({row,index})).filter(({row})=>row.id==='ardennes-beech'&&row.s>=kestrel.s0&&row.s<=kestrel.s1);
-            choices.sort((a,b)=>Math.abs(a.row.lateral)-Math.abs(b.row.lateral)||Math.abs(a.row.s-(kestrel.s0+kestrel.s1)/2)-Math.abs(b.row.s-(kestrel.s0+kestrel.s1)/2)||a.row.scenery.id.localeCompare(b.row.scenery.id));
+            // The thickest beech group on the straight (most beeches within 22 m of one of them, then nearest its middle).
+            const byId=new Map(c.features.trees.map(tree=>[tree.id,tree]));
+            const crowd=row=>{const own=byId.get(row.scenery.id);return choices.filter(({row:other})=>{const t=byId.get(other.scenery.id);
+              return Math.sign(t.off)===Math.sign(own.off)&&Math.hypot(t.x-own.x,t.z-own.z)<=22;}).length;};
+            choices.sort((a,b)=>crowd(b.row)-crowd(a.row)||Math.abs(a.row.s-(kestrel.s0+kestrel.s1)/2)-Math.abs(b.row.s-(kestrel.s0+kestrel.s1)/2)||a.row.scenery.id.localeCompare(b.row.scenery.id));
             const chosen=choices[0];
             if (!chosen) throw Error('No actual bound Kestrel beech group');
-            const tree=c.features.trees.find(tree=>tree.id===chosen.row.scenery.id);
+            const tree=byId.get(chosen.row.scenery.id);
             if (!tree) throw Error('Beech has no original simulation tree identity');
-            const eyeS=tree.s,eyeOff=tree.off-Math.sign(tree.off)*12,e=c.groundAt(eyeS,eyeOff);
+            const side=Math.sign(tree.off)||1, wide=${JSON.stringify(name)}==='Kestrel Wide';
+            const group22=choices.map(({row})=>byId.get(row.scenery.id)).filter(t=>Math.sign(t.off)===side&&Math.hypot(t.x-tree.x,t.z-tree.z)<=22);
+            const centre={x:group22.reduce((n,t)=>n+t.x,0)/group22.length,z:group22.reduce((n,t)=>n+t.z,0)/group22.length,s:group22.reduce((n,t)=>n+t.s,0)/group22.length,off:group22.reduce((n,t)=>n+t.off,0)/group22.length};
+            // Close view: from beside the road inside the catch fence, looking at the group from the spot along the road with the
+            // fewest firs between (counted on the map). Wide view: back along the straight and higher.
+            const beechIds=new Set(choices.map(({row})=>row.scenery.id)), firs=c.features.trees.filter(t=>!beechIds.has(t.id)&&Math.abs(t.s-centre.s)<120);
+            const blocked=(eyeS0,off0)=>{const p0=c.groundAt(eyeS0,off0);return firs.filter(t=>{
+              const dx=centre.x-p0.x,dz=centre.z-p0.z,len2=dx*dx+dz*dz,u=((t.x-p0.x)*dx+(t.z-p0.z)*dz)/len2;
+              return u>.05&&u<.95&&Math.hypot(t.x-(p0.x+u*dx),t.z-(p0.z+u*dz))<1.5+t.scale;}).length;};
+            const eyeOff=side*(c.roadHalfWidthAt(centre.s)+(wide?6:10));
+            let eyeS=centre.s-55;
+            if(!wide){let best=Infinity;for(let d=-45;d<=45;d+=3){const n=blocked(centre.s+d,eyeOff);if(n<best){best=n;eyeS=centre.s+d;}}}
+            const e=c.groundAt(eyeS,eyeOff);
             const ground=window.__panQa.renderedGroundHeight(c,{...e,s:eyeS,off:eyeOff},{requireSurface:true});
-            const t=c.groundAt(tree.s,tree.off),targetGround=window.__panQa.renderedGroundHeight(c,{...t,s:tree.s,off:tree.off},{requireSurface:true});
+            const targetGround=window.__panQa.renderedGroundHeight(c,{x:centre.x,z:centre.z,s:centre.s,off:centre.off},{requireSurface:true});
             if (![ground,targetGround].every(Number.isFinite)) throw Error('Beech camera has no actual drawn ground');
-            a.inspectionCamera={position:[e.x,ground+6,e.z],target:[t.x,targetGround+4,t.z]};window.__render.renderFrame();
-            return {position:a.inspectionCamera.position,closeView:{kind:'actual-beech-grove',station:tree.s,
-              eyeS,eyeOff,eyeGround:ground,target:a.inspectionCamera.target,treeId:tree.id,placementIndex:chosen.index,
+            const eyeHeight=wide?7:4.5,targetHeight=wide?8:6.5;
+            a.inspectionCamera={position:[e.x,ground+eyeHeight,e.z],target:[centre.x,targetGround+targetHeight,centre.z]};window.__render.renderFrame();
+            return {position:a.inspectionCamera.position,closeView:{kind:wide?'actual-kestrel-wide':'actual-beech-grove',station:tree.s,
+              eyeS,eyeOff,eyeGround:ground,eyeHeight,targetHeight,target:a.inspectionCamera.target,treeId:tree.id,placementIndex:chosen.index,
+              fenceToTree:Math.abs(tree.off)-c.roadHalfWidthAt(tree.s)-14.3,groupBeeches:group22.length,groupCentre:centre,
               tree:{s:tree.s,off:tree.off,x:tree.x,y:tree.y,z:tree.z,heading:tree.heading,scale:tree.scale},groupCount:choices.length}};
+          }
+          if (${JSON.stringify(name)} === 'Stream From Car') {
+            // The actual player car at the Red Water crossing; the eye keeps the car's place on the road, raised, and looks along the stream.
+            if (s.completedLaps !== 1) throw Error('Stream car view requires the actual clear second lap');
+            const bridge = c.def.kitPlacements.find(row => row.id === 'stone-stream-bridge');
+            // Level with the stream line, from the road edge beside the car and a little above the fence, looking up the channel toward the arch.
+            const eyeOff = s.lateral + 6, eye = c.groundAt(bridge.s, eyeOff), eyeGround = window.__panQa.renderedGroundHeight(c, {...eye, s: bridge.s, off: eyeOff}, {requireSurface: true});
+            const aim = c.groundAt(bridge.s, bridge.lateral - 8), aimGround = window.__panQa.renderedGroundHeight(c, {...aim, s: bridge.s, off: bridge.lateral - 8}, {requireSurface: true});
+            if (![eyeGround, aimGround].every(Number.isFinite)) throw Error('Stream car view has no actual drawn ground');
+            a.inspectionCamera = {position: [eye.x, eyeGround + 3.4, eye.z], target: [aim.x, aimGround - .6, aim.z]};
+            window.__render.renderFrame();
+            return {position: a.inspectionCamera.position, closeView: {kind: 'actual-stream-from-car', station: s.s, lateral: s.lateral,
+              bridgeS: bridge.s, eyeOff, eyeGround, eyeHeight: 3.4, target: a.inspectionCamera.target}};
           }
           if (['Stone Bridge Stream', 'Village Streets'].includes(${JSON.stringify(name)})) {
             if (s.completedLaps !== 1) throw Error('Close art view requires the actual clear second lap');
@@ -226,16 +257,17 @@ export async function run(context) {
             const village = ${JSON.stringify(name)} === 'Village Streets';
             if (!bridge || !town?.streets?.length) throw Error('Actual close-view descriptors missing');
             const station = village ? town.s - 30 : bridge.s;
-            const eyeS = village ? station - 40 : station - 6, eyeOff = village ? -2 : bridge.lateral - 18;
-            const targetS = village ? station + 20 : station, targetOff = village ? 38 : bridge.lateral;
+            // Bridge: stand on the bank beside the water, a little toward the road, and look at the arch with the stream in front of it.
+            const eyeS = village ? station - 40 : station + 6.5, eyeOff = village ? -2 : bridge.lateral - 12;
+            const targetS = village ? station + 20 : station - .5, targetOff = village ? 38 : bridge.lateral - 2;
             const e = c.groundAt(eyeS, eyeOff), t = c.groundAt(targetS, targetOff);
             const ground = window.__panQa.renderedGroundHeight(c, {...e, s: eyeS, off: eyeOff}, {requireSurface: true});
             const targetGround = window.__panQa.renderedGroundHeight(c, {...t, s: targetS, off: targetOff}, {requireSurface: true});
             if (![ground, targetGround].every(Number.isFinite)) throw Error('Close view has no actual drawn ground');
-            a.inspectionCamera = {position: [e.x, ground + (village ? 35 : 5), e.z], target: [t.x, targetGround + 1.5, t.z]};
+            a.inspectionCamera = {position: [e.x, ground + (village ? 35 : 2.1), e.z], target: [t.x, targetGround + (village ? 1.5 : 1.7), t.z]};
             window.__render.renderFrame();
             return {position: a.inspectionCamera.position, closeView: {kind: village ? 'actual-town-streets' : 'actual-stone-bridge-stream',
-              station, eyeS, eyeOff, eyeGround:ground, eyeHeight:village?35:5, targetGround, targetHeight:1.5, targetS, targetOff, target: a.inspectionCamera.target,
+              station, eyeS, eyeOff, eyeGround:ground, eyeHeight:village?35:2.1, targetGround, targetHeight:village?1.5:1.7, targetS, targetOff, target: a.inspectionCamera.target,
               ...(village ? {streets: town.streets.length} : {bridge: {...bridge}, stream: {...c.def.effects.stream}})}};
           }
           const piece = c.script.pieces.find(piece => piece.name === ${JSON.stringify(name)});
@@ -253,27 +285,6 @@ export async function run(context) {
           window.__render.renderFrame(); return {position: a.inspectionCamera.position};
         })()`);
         await context.waitFor(`(()=>{const c=window.__render.camera,p=${JSON.stringify(camera.position)};window.__render.renderFrame();return Math.hypot(c.position.x-p[0],c.position.y-p[1],c.position.z-p[2])<.001;})()`, 'actual ground camera', 10000);
-        if (name === 'Beech Grove') {
-          camera.closeView = await context.evaluate(`(() => {
-            const a=window.__qaApp,group=window.__render.scene.getObjectByName('Approved track kits');
-            const view=${JSON.stringify(camera.closeView)},version=${JSON.stringify(quality)}==='high'?'high':'low';let bounds;
-            group.traverse(mesh=>{
-              if(!mesh.isInstancedMesh||!mesh.visible||mesh.userData.trackKitId!=='ardennes-beech'||mesh.userData.trackKitVersion!==version)return;
-              const index=mesh.userData.trackKitDrawnPlacementIndices.indexOf(view.placementIndex);
-              if(index<0)return;
-              if(!mesh.geometry.boundingBox)throw Error('Actual beech geometry has no bounds');
-              const matrix=mesh.matrixWorld.clone();mesh.getMatrixAt(index,matrix);matrix.premultiply(mesh.matrixWorld);
-              const box=mesh.geometry.boundingBox.clone().applyMatrix4(matrix);if(bounds)bounds.union(box);else bounds=box;
-            });
-            if(!bounds||bounds.isEmpty())throw Error('Actual selected beech is not drawn after native camera settling');
-            const target=bounds.getCenter(window.__render.camera.position.clone()),eyeHeight=(bounds.max.y-bounds.min.y)*.5;
-            a.inspectionCamera.position[1]=view.eyeGround+eyeHeight;
-            a.inspectionCamera.target=target.toArray();window.__render.renderFrame();
-            return {...view,eyeHeight,target:a.inspectionCamera.target,version,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()}};
-          })()`);
-          camera.position[1]=camera.closeView.eyeGround+camera.closeView.eyeHeight;
-          await context.waitFor(`(()=>{const c=window.__render.camera,p=${JSON.stringify(camera.position)};window.__render.renderFrame();return Math.hypot(c.position.x-p[0],c.position.y-p[1],c.position.z-p[2])<.001;})()`, 'actual beech bound-height camera', 10000);
-        }
         const facts = await context.evaluate(`(() => {
           const a = window.__qaApp, d = a.duel, s = d.state, c = d.course, before = JSON.stringify(s), profile = JSON.stringify(a.profile);
           window.__render.renderFrame(); if (JSON.stringify(s) !== before || JSON.stringify(a.profile) !== profile) throw Error('Photo changed native state');
@@ -299,9 +310,10 @@ export async function run(context) {
         const kestrel=c.script.pieces.find(piece=>piece.name==='Kestrel Straight');
         const rows=window.__render.scene.getObjectByName('Approved track kits').userData.trackKitPlacements;
         const trees=rows.filter(row=>row.id==='ardennes-beech'&&row.s>=kestrel.s0&&row.s<=kestrel.s1);
-        trees.sort((a,b)=>Math.abs(a.lateral)-Math.abs(b.lateral)||Math.abs(a.s-(kestrel.s0+kestrel.s1)/2)-Math.abs(b.s-(kestrel.s0+kestrel.s1)/2)||a.scenery.id.localeCompare(b.scenery.id));
+        trees.sort((a,b)=>Math.abs(a.s-(kestrel.s0+kestrel.s1)/2)-Math.abs(b.s-(kestrel.s0+kestrel.s1)/2)||a.scenery.id.localeCompare(b.scenery.id));
         if(!trees.length)throw Error('Actual bound Kestrel beech view missing');
-        return [{name:'Beech Grove',s:trees[0].s},{name:'Stone Bridge Stream',s:c.def.kitPlacements.find(row=>row.id==='stone-stream-bridge').s},
+        const bridge=c.def.kitPlacements.find(row=>row.id==='stone-stream-bridge');
+        return [{name:'Beech Grove',s:trees[0].s},{name:'Kestrel Wide',s:trees[0].s-60},{name:'Stone Bridge Stream',s:bridge.s},{name:'Stream From Car',s:bridge.s-4},
           {name:'Village Streets',s:c.def.circuitLandmarks.find(row=>row.id==='stavelot-valley-town').s}].sort((a,b)=>a.s-b.s);
       })()`);
       let closeIndex = 0;

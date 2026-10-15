@@ -76,6 +76,9 @@ const named = name => road.pieces.find(piece => piece.name === name);
 const wrap = s => ((s % road.length) + road.length) % road.length;
 const row = (id, s, lateral, extra = {}) => Object.freeze({id, s: wrap(s), lateral, ...extra});
 const PIT_END = named('Pit Straight').s1;
+// The stream crosses Red Water on a line midway between two of the near ground's 4 m rows (it is drawn in rows
+// at every 4 m of road), so the channel has two rows of bed and a bank row on each side.
+const RED_WATER_S = Math.floor((named('Red Water').s0 + named('Red Water').s1) / 8) * 4 + 2;
 
 function paddock() {
   const out = [row('start-gantry', 0, 0, {heading: Math.PI})];
@@ -123,7 +126,7 @@ function landmarks() {
   // The outside terrace uses the accepted lodge and shopfront kits.
   out.push(row('ski-lodge', fontaine.s0 + 20, 44, {heading: -Math.PI / 2, scale: .7, clear: 12}));
   out.push(row('wooden-dock', fontaine.s0 + 20, 35, {heading: -Math.PI / 2, scale: .75, clear: 10}));
-  out.push(row('stone-stream-bridge', (red.s0 + red.s1) / 2, 36, {heading: Math.PI / 2, clear: 12}));
+  out.push(row('stone-stream-bridge', RED_WATER_S, 36, {heading: Math.PI / 2, clear: 12}));
   for (let i = 0; i < 6; i++) out.push(row('grandstand', wall.s0 - 15 + i * 15, -34,
     {heading: Math.PI / 2, crowd: true, solid: true, clear: 11}));
   const kestrel = named('Kestrel Straight');
@@ -162,8 +165,20 @@ function valleyTown() {
     }))}));
   return {houses: Object.freeze(houses), lamps: Object.freeze(lamps), streets: Object.freeze(streets)};
 }
+// The Red Water stream: two long, narrow basins cut across the road line, one each side, so the existing
+// circuit water (src/circuit-water.js) lies in a channel dug 0.6 to 1 m into the ground. The ground within
+// 6 m of the road edge is never touched, so the road and its shoulders cover the crossing as before.
+const RED_WATER_BASINS = Object.freeze([
+  // Bridge side: the stone arch stands at lateral 36 in the middle of this channel.
+  Object.freeze({id: 'red-water-bridge', s: RED_WATER_S, lateral: 35, along: 3, across: 19, surface: -.25, depth: .2,
+    bank: .5, blend: 6, keep: 6, colour: 0x4a2418, shallow: 0x2c170f}),
+  Object.freeze({id: 'red-water-far', s: RED_WATER_S, lateral: -33, along: 3, across: 17, surface: -.95, depth: .4,
+    bank: .5, blend: 6, keep: 6, colour: 0x4a2418, shallow: 0x2c170f}),
+]);
 export const ARDENNES_FOREST = Object.freeze({
   ...ARDENNES_ROAD,
+  water: Object.freeze({glitter: false}),
+  basins: RED_WATER_BASINS,
   fieldSize: 8, grandPrixLaps: 2,
   runoffBands: LONG_LEFT_RUNOFF,
   circuitLandmarks: Object.freeze([
@@ -178,7 +193,8 @@ export const ARDENNES_FOREST = Object.freeze({
   kitLook: Object.freeze({'autumn-tree': Object.freeze({leafColour: 0x38592c}),
     'lantern-tower': Object.freeze({glow: .15})}),
   effects: Object.freeze({
-    stream: Object.freeze({s: (named('Red Water').s0 + named('Red Water').s1) / 2, width: 5, reach: 68, colour: 0x704033}),
+    // The wet banks, rocks and reeds along the two basins below; the water itself is the existing circuit water.
+    stream: Object.freeze({s: RED_WATER_S, width: 5, reach: 68, colour: 0x1c100b, basins: Object.freeze(RED_WATER_BASINS.map(basin => basin.id))}),
     valleyMist: Object.freeze([
       Object.freeze({s: named('Red Water').s0, lateral: 42, along: 75, across: 25, count: 12, height: 2, opacity: .23, colour: 0xd1ddda, fadeEnd: 1}),
       Object.freeze({s: named('Riverside').s0, lateral: -42, along: 100, across: 26, count: 12, height: 2, opacity: .2, colour: 0xd1ddda, fadeEnd: 1}),
@@ -193,7 +209,8 @@ export const ARDENNES_FOREST = Object.freeze({
       const piece = named(name); return Object.freeze({from: piece.s0, to: piece.s1});
     })),
   }),
-  beech: Object.freeze({scales:Object.freeze([.9,1,1.1]),
+  // Beeches stand only 40 m or more beyond the road edge (26 m behind the catch fence); nearer trees stay fir.
+  beech: Object.freeze({scales:Object.freeze([.9,1,1.1]),setback:40,
     groves:Object.freeze([['Kestrel Straight',.28],['Kestrel Straight',.68],['Forest Run',.3],['Forest Run',.75]].map(([name,fraction])=>{
       const piece=named(name);return Object.freeze({s:piece.s0+(piece.s1-piece.s0)*fraction,reach:45});
     }))}),
