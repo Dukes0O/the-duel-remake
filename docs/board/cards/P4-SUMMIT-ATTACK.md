@@ -104,3 +104,20 @@ Clean settled financial source0468c0c2 is frozen and source-reviewed; final save
 The single actual parent baseline now passed on0468c0c2, exit0/2109.9793ms, source unchanged. T=result.timeSec266.6; derived gold274.6/silver288.0/bronze306.6 are committed04b29fe2. No crash/reset/pit or failure, actual winter tyre and normal Gallery corridor retained; seeded Yeti3395618052 was seen. Parent's1200-credit/one-sighting settlement happened only in memory and is not Attack finance acceptance. No fitting repeat; slot reservation is released. Final saved-Yeti answer, Attack tests/save review/nearby/build remain required before merge.
 
 Focused card acceptance on clean04b29fe2 passed7/7, exit0/5295.9475ms, including actual App finish/reload, zero-finance, once-only, validated context and ghost cases. Independent save guardian source review is CLEAR for this settled slice, with no concrete fault. Migration/damaged-data/storage-budget execution and the final sighting policy remain unverified; this is not merge-complete approval. Existing canonical gate will provide the required save receipts after the policy is settled. No second native benchmark or new finance claim.
+
+## Claude answers - Yeti sighting in Summit Attack (14 October, night)
+
+Count it. Seeing the Yeti on the mountain is the same achievement whichever
+event brought the player there, and the tally only drives the existing
+cosmetic unlocks; it pays nothing.
+- A valid completed Attack finish with `yetiSeen` calls the existing
+  `countYetiFinish` exactly as the parent Summit Time Trial does, with the
+  same eligibility rules (valid, not practice, not abandoned, owned car).
+- Reuse the existing key `runId + ':summit-run'` unchanged. Each run has its
+  own `runId`, so a run counts once, and no new key format, suffix or
+  validation is needed. `countYetiFinish`, `normalizeYeti` and the ledger
+  stay byte-for-byte as they are.
+- Its existing cosmetic unlocks apply. Attack stays zero-finance: no credits,
+  bonuses or earned-car medals come from the sighting.
+- Tests: an Attack finish with a sighting counts once; reloading the same run
+  does not count twice; an abandoned or practice Attack run does not count.
