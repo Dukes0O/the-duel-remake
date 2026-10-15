@@ -25,3 +25,8 @@ Kyle directed continued building. Reuse unchanged retained619db9ef for exactly o
 
 
 Quiet admission deferred after the variants merge: no Duel heavy roots remain, but two one-second GPU samples show desktop compositor2572 at about7.5–19.8percent3D, Claude GPU23912 at2.1–2.2percent and Codex GPU5400 once1.5percent. No timing was launched or counted, no new readiness packet exists, and no cause of the old timeout is inferred. Kyle was asked for a current idle-window confirmation. Queued reservation released now so building can continue; a later timing admission requires a fresh announcement and actual quiet.
+
+
+## Kyle: skip the frame check, 15 October afternoon
+
+Kyle said to skip this timing work because his multiple Codex and Claude Code sessions will remain active, and to record that decision and progress. No further quiet reservation, GPU polling or timing attempt for this work period. The frame check is SKIPPED at Kyle's direction, not a pass; no p95/world/load result exists and the old setup timeout cause remains unknown. Ardennes stays dev. The already green Long Left test-driver fix may proceed on its42/42 nearby/build/independent review evidence; switch-on remains written preparation, with no release/live install or flag flip.
