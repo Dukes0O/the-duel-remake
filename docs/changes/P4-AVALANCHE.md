@@ -1,57 +1,153 @@
 # P4-AVALANCHE
 
-Only enabled Summit receives the seeded event. The first car crossing 10000 m arms a 6–12 s slide delay; tell starts three seconds earlier, slide lasts 2.5 s, and the existing deep-snow drift remains at 10420–10580 m on the actual Open Road. Gallery and all other surfaces stay unchanged.
+Enabled Summit alone receives the seeded avalanche. Crossing 10000 m arms a
+6–12 second delay; the tell begins three seconds earlier and the slide lasts
+2.5 seconds. Open Road drift stays at 10420–10580 m, with unchanged deep-snow
+arithmetic and the 45 mph surface cap. CPU route choices commit once after
+actual motion across 9950 m, including normal knock motion. Existing traits
+must produce at least .55 aggression for clear Open; tell/slide/after choose
+Gallery. Other courses and flag-off policy remain unchanged.
 
-Racers decide once at 9950 m from the observed phase. Existing trait aggression times difficulty and course aggression must reach .55 to take clear Open Road. Tell, slide and after choose Gallery; a past decision is retained. Legacy Easy/Medium policy stays exact elsewhere.
+The actual equal-mass solver and normal knock stepping supply one 8.94 m/s
+outward shove per actor/slide. Speeds above 30 mph ease down in .5 seconds.
+Only the tagged Summit environmental knock avoids field-crash accounting;
+ordinary replacement collisions still count. No damage, wreck, life, pay,
+save, bank, seed, table or renderer-owned simulation change is introduced.
+Existing rumble/slide cues and read-only views remain admitted for Summit.
 
-An exposed car receives one actual solveVehicleImpact with an equal-mass virtual body moving 8.94 m/s outward. Normal startKnock/stepping owns motion, with no hop, relocation, crash, damage, wreck, lives or pay changes. Speeds above 30 mph ease to that limit over .5 s. Only the tagged actual Summit environmental knock avoids field-crash bookkeeping (Director bc2fe9f5); ordinary replacement impacts still count.
+## Accepted checks and retained failures
 
-Presentation reads state for plumes, snow, small shake and real fork signs. Existing avalanche.rumble/slide cues may be admitted while Summit is enabled even if Grand Prix is off. No solver, surface table, bank, save, flag, registry or reference-lap changes.
+Source 05383cbd passed 106 affected controlled checks, the corrected original
+282/282 nearby gate and build (Vite 1.11 s). The independent review corrected
+and cleared the real pre-motion/tell and ordinary-knock decision fault.
+The earlier superseded gate was canceled after 135950.1109 ms, exit -1.
+The optional native diagnostic source 86082572 passed 16/16 nearby and build
+(Vite 704 ms); its earlier raced gate was canceled after 106439.5767 ms.
+Neither canceled packet is a pass. The original native Open route failed its
+finish near 10827.55 m with a real prop/front contact; Gallery was 15.197881 s.
 
-Tests first: actual initialization failed (undefined versus waiting), then passed after the controller hook. The corrected affected acceptance passes 106 controlled checks (4.91 s), including all four real crossing regressions. Controlled acceptance covers actual fixed-step timing, repeatability, equal-mass shove, late entrants, Gallery safety, reset, off identity, CPU steering, field bookkeeping, read-only view and GP-off audio. The new fixture initially assumed .55 for both tyres; it now pins the unchanged summer arithmetic .55 × .75 = .4125 and winter .55, with the existing 45 mph cap. Its listener/input setup was corrected to the existing APIs, and the late-course GP fixture now begins after the unchanged start reaction. Ordinary review found a real crossing-order bug: pre-motion choice could use the next step's tell, and knock movement skipped it. Actual Duel/GP normal/knock crossing regressions failed before correction. Normal and knock movement now commit immediately after actual motion from that step's observed phase. The superseded ed21e861 nearby gate was stopped only in its verified owned tree after 135.95 s; its incomplete raw packet remains separate, with no pass or build claim. Corrected nearby lane and production build remain pending. Native F42 winter/.95 route timing from 10000 to10900 m, actual audio/views and their .8–1.6 s clear advantage /3.5–6.5 s drift disadvantage remain deferred; no source-only timing claim.
+Claude's rejoin fix ends Gallery at 10800 m and removes tiles 10806/10824.
+Its source 8ee201c8 passed 33/33 nearby and build (Vite 587 ms). That native
+benchmark finished all four races safely but failed both old gap targets:
+Gallery 15.1978814293 s, clear Open 17.5921796527 s, drift Open 23.4498034463 s.
+The later 60 m curve proposal failed: Gallery 15.8840152747 s, clear Open
+18.4622384629 s, drift Open 23.8472483621 s. It is retired; accepted turns
+are 120 m with their original angles and inherited 10 m width.
+
+Corrected asphalt source 02e99891 passed 197 controlled checks. Actual F42,
+Club, winter, .95, Medium, seed 1989 times were Gallery 15.1978814293 s,
+clear Open 14.9797515934 s and drift Open 21.2814800549 s. All four races
+finished with equal paired entry and zero crashes, resets or hits. Clear
+asphalt and after-phase deep snow were observed. The first asphalt query
+had changed overlapping main road and failed; the corrected query only
+admits the real Open corridor outside main-road width. That query stays exact.
+
+Both permitted Gallery ice attempts failed the old clear band. Twenty metres
+(e9ec0a84, 340 controlled checks, exit 1, 13251.5411 ms): Gallery
+15.189181150571443 s, clear 14.979751593362522 s, drift 21.28148005489382 s;
+gaps -0.2094295572 s and +6.0922989043 s. Thirty metres (ed348bff, 340 checks,
+exit 1, 11353.7108 ms): Gallery 15.194669074295717 s, unchanged Open times;
+gaps -0.2149174809 s and +6.0868109806 s. All four races in each packet
+finished safely with equal entry. Both raw failed packets remain for review.
+
+## Settled route and entrance source — 14 October
+
+Claude explicitly keeps corrected asphalt and drops both failed ice patches.
+The new card's proposed clear band [-1.6,-.8] seconds becomes strict difference
+<0: a small clear reward against the six-second drift risk. Drift [3.5,6.5]
+seconds is unchanged. The old 18.4–19.2 second Gallery figure was already
+retired by Claude's asphalt answer; it is not a current acceptance target.
+Existing default event/solver/replay safeguards and native driver/input/seed,
+entry, finish, phase, corridor and safety checks remain unchanged.
+
+Only tile s10176 translates gallery-concrete-pillar by [-10.541,0,0] and
+gallery-concrete-pillar.001 by [-12.799,0,0] in model-local metres. Both real
+High/LOD models contain these names; GLTFLoader's preserved userData.name
+retains the authored .001 name after sanitization. The donor GLBs, original
+placement anchor, roof/back/inside faces and other 34 tiles remain unchanged.
+The renderer creates private named variants before material batching, keeps
+the original bounds for placement, and disposes its owned clones/resources.
+Physical boxes receive the same local translation without reshaping bounds.
+
+Root-authorized read-only production geometry calculations found micrometre
+offsets -10.540351/-12.798047 insufficient after actual Float32 draw matrices:
+LOD gaps 1.4999414/1.4999663 m. The first outward millimetre values above give
+LOD gaps 1.5007014/1.5011107 m, High 1.5162922/1.5116233 m, and double-precision
+collision gaps 1.5163515/1.5116562 m throughout the authored Open edge segment
+10168–10183 m. The original placement matrix and its grounding are identical.
+No tolerance or 1.5 m target changed. Existing kit tests now verify actual
+Float32 geometry and instance matrices, finite collision bounds, every other
+face/placement, missing real LOD names, donor immutability and exact disposal.
+The existing first-tile physical expectation adds only the named translation;
+all original GLB pins and other bounds expectations remain.
+
+Independent code/design review cleared07c03272. Existing test-track-kits passed
+all actual High/LOD placement, Float32 clearance, donor and lifetime checks.
+Actual --drive on clean7c444780 passed201 controlled checks and all four native
+races in24332.3582ms: Gallery15.1978814293s, clearOpen14.9797515934s,
+driftOpen21.2814800549s; clear difference−.2181298359s/drift+6.0835986256s.
+Equal actual entry, four finishes and zero crashes/resets/hits all pass.
+
+Existing Summit native on7c444780 passed in75323.6941ms/private46387/memory,
+19actual High/Performance views/no issues or warnings. Root inspected both
+entrance/Open and approach pictures: corridor and translated first-tile posts
+are visible, original roof and remaining gallery retained. No new formal art
+round. Initial sibling output path was rejected before Chrome launch after
+2232.9235ms; corrected existing lane .evidence junction invocation succeeds.
+After visual review, existing --capture compared20scene rows; ALL remain exact,
+including Summit4e30db18. No signature is regenerated: the scene guard does not
+need a new pin for these owned asynchronous loaded mesh variants. Actual drawn
+mesh changes are checked by dedicated existing kit tests and native pictures.
+The original unfiltered nearby gate on 3f15b6fa completed 313/315, zero unrun,
+exit 1: aggregate 1948848.6143 ms / wall 1955570.2267 ms, including about 297 s
+of reversible capacity pauses. No canceled or restarted run, no gate/build pass.
+The Summit fixture still expected clear Open snow at 10500 m, but Claude's
+settled design explicitly makes that real branch asphalt. The corrected
+expectation pins asphalt at the actual branch offset and adds an unchanged
+snow assertion on the main road at the same station. Every other predicate,
+assertion, tolerance, production byte, native result and scene pin stays exact.
+This updates a retired design expectation, rather than relaxing a guard for
+an unexplained failure. Root's focused run on 2fe3234d passed those new surface
+assertions, then failed the next legacy snow-material fixture at line 158:
+it expected a snow clone from actual Open, which now correctly returns the
+original asphalt material. The renderer's real selector is cut.gripKind.
+The corrected test additionally pins actual Open/winter asphalt identity,
+then uses Object.freeze({...open,surface:'snow',gripKind:'snow'}) only for the
+existing historical positive snow-helper case. Its clone identity, reviewed
+tone, .94 roughness, unchanged source .6 roughness and disposal assertions are
+all retained. This historical descriptor is not a runtime course, placeholder
+or production mutation. The focused run on 754c3388 passed those earlier cases
+and reached the same retired snow assumption in the final material block at
+line 330. Root audited every remaining Open/snow helper call in the suite:
+only that last tone and no-tone fallback pair needed the same historical input.
+Both now use historicalSnowBranch, retaining the original authored tone,
+[.34,.38,.42] fallback, source-material and disposal checks. A separate identity
+check pins actual Open/winter to branchBase; the snow label now describes its
+historical helper case accurately. No other pole, light, RNG, terrain,
+collision or route assertion changes. Root independently reviewed the three fixture corrections: all historical snow-helper predicates remain, while actual Open asphalt gets its own identity checks. The corrected original focused suite passed on 79438609 in 2866.9094 ms, exit 0. Receipt: .evidence/2026-10-14/P4-AVALANCHE/summit-focused-79438609/receipt.json. No production bytes or tolerances changed.
+
+The other failure is test-circuits:45, Harbour seed 1989 wall-right-1105 near
+2056 m/lateral -3.5. Root reproduced that exact failure on integration baseline
+3760b089 without Avalanche. QA-HARBOUR-ROAD-CLEARANCE owns the released-course
+decision. No Harbour source, road probe or inherited guard changes here.
+A corrected nearby gate, build and merge wait for that fix; the actual four
+routes and accepted entrance pictures remain separate valid facts. Attack T
+and finishing pass remain separate. No quiet frame or release claim.
 
 ## Removed
 
-None. Existing physics, ordinary planners and authored geometry remain.
-
-## Accepted source handoff, 13 October 02:39 PT
-
-Source05383cbd50ad7b5d270e4720e648c0ce511c85cb passed one corrected original unfiltered nearby lane:282/282 actual rows, failures[], zero unrun, exit0, jobs4,702219.0225ms (wall706512.7503ms). Production build exit0, wall2575.2799ms / Vite1.11s. Same ordinary reviewer CLEAR, including the actual pre-tell crossing and ordinary-knock regression repair. Affected acceptance106 checks /4.91s. Superseded ed21 gate was canceled for the real review fault after135950.1109ms, exit-1; no pass or build claimed for it. Every prior assertion remains.
-
-Merged conflict-free with no rerun. Busy-game-files is released and this run's clean lane/branch/consumed evidence are recycled by Root. The full card stays open for actual native F42 winter/.95 route timings from10.0 to10.9km (.8–1.6s clear advantage and3.5–6.5s drift disadvantage), views and cue listening; these are not proved by source tests or by an unrelated full batch. Summit stays dev. No release, push, bank/table/save/pay/geometry change or real saves.
+Remove both failed Gallery-ice descriptors and their superseded proposal
+checks in the same source change. The settled original snowfield patches stay.
+The 60 m curve and retired absolute-time proposals are absent. No other tile,
+roof, model, branch parameter, surface table, driver or normal event is removed.
 
 
-## Optional native-drive slice: design before execution
+## Current integration union after Harbour is green
 
-Keep all 106 default checks unchanged. Only --drive adds the existing-style memory-only App/native fixed-step loop, F42, Club, winter tyres, .95 and zero opponents. Gallery retains useRacingLine unchanged. Open uses actual shortcut/world/ground points, the existing reference line's immutable dynamics and its same corner/braking/acceleration and .95 traction arithmetic; no CPU target-speed policy or runtime/course/line mutation. Route input begins after the actual 10 km crossing so paired entry state is identical.
+Harbour radius/seam merged8e55339f after114/114/build598ms. The Avalanche normal union found only two neighbouring normalization hunks: its existing named Gallery translations and the accepted escape worldPosition field. Root preserves both exact independent validators and both immutable output fields; no transform, guard, footprint or tolerance is dropped. Original Avalanche source/controlled/native evidence otherwise stays exact. One corrected canonical/jobs4/build follows this actual source conflict resolution, also including the already reviewed obsolete Open/snow fixture correction. No fresh balance, native, signature or frame run is justified by these additive conflict hunks; no postmerge rerun or release claim.
 
-Use only three existing reference seeds (1989, 1000, 6), choosing the longest and shortest existing isolated avalanche delays before driving, with the actual initialized delay checked. These are four first native traversals, not a race sweep. Clear/drift labels require real enabled phases and surface witnesses across the entire 10420–10580 m strip. If those first traversals cannot supply them, the native acceptance fails honestly; no event-off substitute, artificial phase, pose or clock, complex reverse preparation or softened target is introduced. Each run continues to its actual native finish. Timing interpolates actual fixed-step 10000/10900 crossings and rejects unequal entry, wrong corridor, crash/reset, missing drift or incomplete finish. Original .8–1.6 s and 3.5–6.5 s limits stay.
+## Final geometry and route acceptance merged, 14 October
 
-Raw stdout includes source, seed, tyre, route, entry/exit, phases, actual surface/lateral/speed/ground points, real cue events, hits and native finish. Source code is prepared while the full-check frame hold is active; no new check, native drive, gate, build or browser run has occurred. Actual views and cue listening remain UNRUN: the current Summit picture recipe is muted/static and cannot prove them. No new scenario, framework, helper file or runtime hook.
+Frozen 4415b3392eb75ca5b9669d4d11bca683b7adf14e passed the corrected original lane: 317/317, no failures or unrun tests, jobs4, 1671032.6228ms (wall1678726.6837ms). Production build passed: Vite731ms, wall1650.2892ms, after the queued slot opened with two foreign jobs. Root independent source review is clear, including both preserved normalization hooks and the reviewed Open/snow fixture correction. The earlier actual four native races, entrance clearance, pixels and unchanged signatures are recorded above; no fresh timing/audio/full/release pass is claimed.
 
-Removed: none; this optional acceptance uses the existing test and leaves the default controlled path intact.
-
-
-The first actual --drive on 87a5aadc failed at 05:02:40, exit 1 after 27.435 s. Default 106 checks passed. Both Gallery runs completed in 15.197881 s for the measured segment, without crash/reset. Open seeds 1989/6 both received the real slide shove and never reached the rejoin or native finish; each recorded one ordinary crash and stopped near 10827.55 m after the bounded 900-second simulation. Exact entry states matched. The selected 9.678321/6.838388-second delays did not yield a clear or wholly post-slide strip. No route difference can be accepted from these incomplete/mixed runs.
-
-The Director permits one bounded diagnostic rerun only. Add read-only first ordinary crash/scrape and terminal pose/input/ground/surface/nearby-solid witnesses to this same optional test. Zero-length sweeps at the recorded native pose identify current solid overlaps; they are geometric witnesses, not replacements for native contacts. Keep all four runs' original inputs, profiles, seeds, limits and assertions exact. No new seeds, race sweep, reverse preparation, driver tuning or runtime/geometry change. Stop once the actual contact cause is known or at 05:32. Views/listening remain UNRUN.
-
-## Verified native diagnostic integration, 13 October 06:18 PT
-
-Frozen 8608257232790451f493f949dd23576d85125174: one fresh original unfiltered nearby lane 16/16, failures[], zero unrun, exit0, jobs4,201895.4927ms (wall209008.7004ms). Build exit0, Vite704ms/wall1914.0142ms. Root's independent ordinary source review CLEAR. Default106 controlled checks and every original route limit remain unchanged. Conflict-free merge without a repeated gate.
-
-The optional native drive remains FAILED: both Gallery segments15.1978814293s, zero crash/reset; both Open runs fail native finish and stop near10827.55m after one ordinary prop/front crash. Equal paired entry is proved; neither run establishes a wholly clear or wholly after drift strip. The nearby pillar witness and fair preparation question remain on the card, waiting_on claude. Views/listening are UNRUN. The raced superseded nearby gate was canceled exit-1 after106439.5767ms with incomplete output; no pass/build claim. Failed native evidence remains for Claude. No geometry, driver, runtime, save, pay or timing-limit change. Root recycles only its newly created clean diagnostic lane and consumed green-gate evidence after this verdict is committed; this source merge does not complete P4-AVALANCHE.
-
-## Claude's exact rejoin and fixed-condition benchmark, 13 October
-
-Tests first: the new existing-test assertion fails on actual Gallery end10830 versus approved10800 before geometry changes. Set only Gallery end10800 and trim the final two repeated kit tiles (10806 and10824); last retained tile10788 has actual solid/roof footprint ending below10800. The previously blocking pillar at10831.3334 is removed with its containing last tile, preserving every other authored road/branch/landmark and all mesh transforms.
-
-The optional --drive test uses one original reference seed1989 for clear and drift. At native race start only, set the existing event scheduling fields to never arm (waiting with infinite future schedule) or already after (finished schedule before zero). The tool exposes no runtime/API/menu switch, changes no event clock/phase while driving, and asserts the fixed condition each real step. Normal play/controller, all106 controlled event/shove tests, original F42/winter/.95 input-only driver, equal entry/native finish/no collision and .8–1.6/3.5–6.5 limits remain unchanged. No seed sweep, geometry fitting, input tuning or additional framework. Existing tests add exact shed/solid bounds; actual native acceptance and original nearby/build/review remain pending.
-
-Removed: only the two final Gallery tiles obstructing the settled open rejoin; obsolete longest/shortest event-delay seed selection in the optional road benchmark is replaced by Claude's same-seed fixed-condition method. Normal seeded event behavior is unchanged.
-
-## Verified rejoin source integration, 13 October
-
-Frozen8ee201c8c31dc81f9b6fb737ec0c11061284be07: one original unfiltered nearby33/33, failures[], zero unrun, exit0, jobs4,221919.894ms/wall228962.494ms. Build exit0, Vite587ms/wall1124.9722ms. Independent ordinary source review CLEAR on exact clean source. Conflict-free merge without another gate or drive. The useful exact10.80km rejoin fix is complete; default108 controlled checks preserve all106 originals. Only last Gallery tiles10806/10824 are removed. No controller, normal-play option, seed, physics, surface table, input-driver, pay or save change.
-
-Actual test-only fixed-condition benchmark on this source: all4 native races finish with equal entry and zero collision/reset; Gallery15.1978814293s, clearOpen17.5921796527s (difference+2.3942982234), driftOpen23.4498034463s (difference+8.2519220170). Both unchanged route-time targets FAIL; exit1/17190.4437ms. Real clear/drift surfaces/phases are proved. Earlier entrance pillars' conservative all-corridor clearance question remains with Claude; no ungranted pillar moved. The parent remains open waiting_on claude, not a completed timing card. Views/listening follow Claude's finishing pass. Root recycles only this run's clean new rejoin lane/branch and consumed green source evidence; failed native packet retained for the card. Summit final art must keep the merged rejoin correction. No release/push/real saves/live-port.
+The integration union had no conflicts, so no repeated gate or native run. This completes the accepted asphalt/entrance/timing slice and releases track-kit-placement. Summit Attack is ready next; Claude's finishing pass remains separate. Root clears only its own merged geometry lane, branch and consumed evidence. No release or push.
