@@ -283,11 +283,11 @@ With that order nothing is lost.
 ### 6.5 The save checker
 
 EARN-MEDALS holds the `save-shape` lock, adds one fixture to
-`tools/fixtures/saves/` (a player with medals and a malformed entry; EARN-CAR-1
-adds its earned car to that fixture once the car exists) and gets a fresh save review (the save checker) as well as the
-ordinary code review. The fixture roster count in
-`tools/test-save-fixtures.mjs` goes from 11 to 12; the change note explains
-that changed assertion.
+`tools/fixtures/saves/` (a player with a clean saved sheet that includes an
+unknown car; EARN-CAR-1 adds its earned car once the car exists; malformed
+sheets are tested in `tools/test-medals.mjs`) and gets a fresh save review
+(the save checker) as well as the ordinary code review. The fixture roster
+count goes from 11 to 12; the change note explains each changed assertion.
 
 ## 7. The switch
 

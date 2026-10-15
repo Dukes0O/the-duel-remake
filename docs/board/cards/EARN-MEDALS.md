@@ -90,10 +90,10 @@ This file holds the settled design, the tests and the acceptance. Design:
    a police fine can take from it as from a milestone; zero in the separate
    Wasteland career; nothing with the switch off. Every existing pay test
    passes unchanged.
-9. The new fixture `12-medals.json` (medals for real cars, one malformed
-   entry, no earned car: none exists yet, and the fixture test would drop its
-   id; EARN-CAR-1 adds it); `tools/test-save-fixtures.mjs` roster 11 to 12, explained in the
-   change note.
+9. The new fixture `12-medals.json` (a clean sheet for real cars and an
+   unknown car, no earned car: none exists yet; EARN-CAR-1 adds it). Built:
+   malformed sheets are tested in `tools/test-medals.mjs` instead, because two
+   suites compare every fixture byte for byte with older code (change note).
 
 ## Acceptance
 
