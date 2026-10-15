@@ -1,41 +1,27 @@
 # P4-VARIANTS
 
-Task: P4-VARIANTS. Status: building in thin source slices; not merged or preview-installed. All five events have separate dev switches and native parent top-three access, not new save fields.
+Five new dev events append after Attack: Panorama Night7, Harbour Dusk8, Panorama Reverse9, Harbour Reverse10 and Woods Reverse11. Each uses its own switch, zero price and existing parent-owned/default-top-three access. Parent generation stages and data stay unchanged. Nothing is installed in preview or live, released or pushed.
 
-## Lighting slice
+## Behavior
 
-Panorama Ridge Night (order7) and Harbour Lights Dusk (order8) derive immutable parent descriptors. The helper copies property descriptors so Harbour's private kit getter stays lazy and identical. They reuse parent generation stages/seeds and existing approved constant night/dusk looks. Parent road samples and physical obstacles are byte-for-byte equal across1989/42/17, and parents remain unchanged after construction. Real existing course-access policy requires both parent ownership and its prospective top-three finish. The focused new variants suite2/2 passes; production build passes. No world/replay baseline changed and no runtime dependency added.
+Night/Dusk reuse existing constant looks and preserve exact parent road/obstacles. The reverse routes use native reversePieces, rebuilt boards/kerbs and independent donor terrain. Copied hill pads/runs, lake outlines, scenery clearances and lift lines/chair phases follow the reversed route. Panorama's moved start derives from the actual fitted straight; its left-side pit retains451.982m between entry/exit and full60m tapers. Harbour rebuilds street kit and escape openings. Harbour/Woods get mirrored visual paddocks only. Lazy parent kit getters stay lazy.
 
-## Remaining
+The existing reference/review fixtures supply the required parent podium in disposable memory, then use real production admission. No runtime access/save rule changes. New reverse courses opt into the existing complete closing terrain ribbon: a mirrored Woods pit wall otherwise landed in the undrawn last2m and correctly prevented model readiness.
 
-Panorama/Harbour/Woods Reverse (orders9/10/11), meaningful reverse geometry/terrain/pit/placement checks and actual native reviews; current actual reference/world fixtures for all five; complete nearby/jobs4, final production build and one independent review. Preserve the exact approved no-wrap Panorama pit and reverse ridge-side decision. Lighting source is an increment, not acceptance of the whole card.
+## Checks and review
+
+- Focused variants7/7: actual native access, three-seed parent road/ground/obstacle pins, reverse road/elevation/terrain/pit mapping, hill/lake/lift orientation, real braking-board distance/side/facing and rendered kit anchors.
+- Existing circuit geometry with all five private flags:151,026 unchanged checks across25events/four seeds. Reference suite408checks; review math85checks.
+- Five actual native three-lap racing-line references: Night87.540s; Dusk77.613s; Panorama Reverse87.264s; Harbour Reverse77.642s; Woods Reverse76.750s. No copied reference records or old fingerprint edits.
+- Private memory-only native pictures:16frames for each event, zero browser issues/warnings. Woods changed-source0142c8c8 completed after the closing-ground fix. Original Woods readiness timeout remains failed in its own packet. Stock Panorama Reverse and Harbour Dusk headless review drivers ended gameover; their pictures completed, but these are not clean stock-driving passes. Their separate racing-line references completed three laps. No timing claim.
+- Independent review0142c8c8CLEAR after fixing reversed Woods authored boards and closing-ground readiness. Capture-hook reviewacc12cebCLEAR. Final frozen source lane/jobs4 and production build are recorded with the integration receipt.
+
+Kyle explicitly approved correcting this new test's first1cm far-offset premise: retain1cm road-centre bound, independently require0.0002rad tangent bound, and derive the off-road allowance from those two. Measured Panorama differences6.594mm/0.00016943rad give19.114mm at110m. Existing test tolerances remain unchanged; independent review found the bound sound.
+
+## Initial scene signatures
+
+All five actual native sheets were inspected before first signatures. Automatic review rejected the proposed temporary-null bootstrap; no part of that command ran. The named --capture-new option in the existing scene checker requires known disabled dev targets with no baseline and rejects duplicates/unknown/enabled/existing targets. The original enabled-course coverage assertion and every existing exact comparison remain unchanged. It captured five actual new scene records while passing existing comparisons; only these five new fixture files were written. No placeholder or old scene/replay baseline changed.
 
 ## Removed
 
-Nothing yet; variants are new dev events. Parent scenery, licensed originals and current assets remain.
-
-## Kyle-approved reverse test coordinate correction
-
-Kyle explicitly approved this correction in chat15October after automatic approval review rejected the initial attempt; the rejected edit was not executed. The new first draft required1cm world-position match even110m off-road. Moving Panorama start changes native sample phase: actual road-centre difference6.594mm and tangent0.00016943rad accumulate to19.114mm110m away. The new test keeps the centre below1cm, separately requires tangent below0.0002rad, then bounds lateral position by those same two errors. Harbour/Woods agree to numerical precision. No existing test or road-builder tolerance changed. Independent review must assess this new assertion. Ground-height identity still requires1e-8m.
-
-## Reverse source slice
-
-All three reverse descriptors now build with native reversePieces. Parent road/ground/obstacle pins across1989/42/17 stay exact. Reverse terrain follows an independent parent Course; optional hill/basin orientation keeps the lake bowl and ski runs physically aligned. Panorama gets the approved moved start and full451.982m left-side bay with rebuilt garages; Harbour rebuilds street walls/openings/shops from its existing layout; Woods mirrors its visual paddock, lodge/lift/clearances. Native boards and kerbs rebuild for the incoming direction. Focused suite5/5 passes. Final native pictures, actual references/signatures, lane/build/review remain pending; no release or merge.
-
-## Native QA eligibility fixtures
-
-The first actual Night reference correctly refused an unearned variant. Existing reference and track-review fixtures now supply the required parent ownership/top-three result in disposable memory profiles; production admission, registry, save rules and deadlines are unchanged. No failed attempt is relabelled as passing. Existing reference tests now cover actual native admission and preservation of prior profile results for each variant.
-
-The reverse lift source review found that the existing animation requires increasing tower laterals. Copying negated tower order would hide chairs through a negative travel span. The variant now sorts copied tower records, reverses cable-line identity and chair phase; existing animation code is unchanged. Focused tests retain exact physical hill/lake checks and now check actual tower ordering, cable identity and chair phase, rather than the incorrect raw-array-order assumption. Road references are unaffected by this presentation fix.
-
-## Independent review correction: reverse distance boards
-
-The reviewer found copied Woods manual braking boards after the reversed corner exits, facing away. A new actual-kit geometry case reproduced the fault. Woods now discards those copied board placements and rebuilds missing approach warnings from actual reverse turn starts, facing incoming traffic. Native boards are retained unchanged and are not duplicated. The test requires every actual kit board to state its true incoming distance/side/facing, forbids duplicate native boards, and requires the combined native/extra warning coverage at the named corners. Its initial kit-only coverage assumption was corrected because reverse Beaver already has automatic native boards. Other assets remain. The first Woods picture run was started before this presentation fix and will not be treated as final-source acceptance.
-
-## Native Woods readiness correction
-
-The c793bb12 Woods private54778 picture attempt failed its unchanged90s readiness wait, no browser issues/warnings and no scene pictures. A bounded actual-GLB loader probe proved Track kit placement has no rendered terrain beneath its anchor. The exact offending copied pit-wall is s4440.7538254395795/lateral22, two metres before the lap line. A new all-reverse actual-anchor test reproduces it. New reverse descriptors now opt into the existing completeTerrainRibbon option so the closing terrain cell is drawn, as Harbour already does. No source renderer/guard/deadline change, no parent terrain edit and no asset deletion. The original failed packet remains failed. A changed-source native review is required.
-
-## Initial scene baseline recipe
-
-Automatic review rejected temporary null-header bootstrap before visual review; the rejected command did not run. After inspecting actual native sheets, the existing scene checker gains a narrow --capture-new=<ids> option: every existing enabled-course coverage assertion and exact comparison remains; appended capture targets must be known, disabled dev scenes with no existing baseline. Unknown/duplicate/enabled/already-baselined targets throw. It prints actual new signatures without any placeholder or old-fixture rewrite. Ordinary and legacy capture modes remain unchanged. This explicitly named hook receives the required independent review.
+Copied forward-direction Woods manual braking boards are replaced by correct missing reverse-approach boards, without duplicating native boards. No parent scenery, asset, original or runtime dependency is removed. Raw reviews remain temporary until their verdict and merge receipt are recorded; the new recipes/fixtures are the retained result.
