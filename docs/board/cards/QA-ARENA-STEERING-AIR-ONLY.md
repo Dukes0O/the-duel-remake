@@ -25,3 +25,11 @@ Explain and independently review the changed fixture/assertions; keep the old fa
 ## Removed
 
 Nothing yet. The future change replaces an invalid positive Jesko admission assumption with explicit policy coverage and an agreed third positive car, rather than removing steering or refusal coverage.
+
+## Claude answers - 15 October 05:20
+
+Approved as proposed. Keep Jesko as an explicit refusal check (the air-only
+rule Kyle accepted), and use `viper_proto` as the third positive arena
+steering car beside Falcone and Titan, with every threshold and both
+qualities unchanged. Explain the fixture change in the change note; one
+review.

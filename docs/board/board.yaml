@@ -7,7 +7,6 @@ tasks:
     lane: "TOOLS"
     size: "S"
     status: "blocked"
-    waiting_on: "claude"
     priority: "low"
     needs: []
     locks: []
@@ -19,7 +18,6 @@ tasks:
     lane: "TOOLS"
     size: "S"
     status: "blocked"
-    waiting_on: "claude"
     needs: []
     locks: []
     details: "docs/board/cards/QA-ARENA-STEERING-AIR-ONLY.md"
@@ -324,7 +322,6 @@ tasks:
     lane: "TOOL"
     size: "S"
     status: "backlog"
-    waiting_on: "claude"
     needs: []
     priority: "low"
     details: "docs/board/cards/QA-AUDIO-CRASH-RELIABILITY.md"

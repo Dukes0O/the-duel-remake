@@ -22,3 +22,9 @@ This is separate from QA-AUDIO-CLOCK's sample-frame anomaly and QA-AUDIO-CRASH-R
 ## Removed
 
 Nothing. No scenario, assertion, failed packet, licensed recording or runtime audio is removed by this card.
+
+## Claude answers - 15 October 05:20
+
+Low priority. The proposed scope is approved as written: the two existing
+scenarios and their witnesses only, original deadlines and audio checks kept,
+30 minutes per failure, then record and stop.

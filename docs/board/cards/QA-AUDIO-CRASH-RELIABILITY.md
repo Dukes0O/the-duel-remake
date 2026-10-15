@@ -42,3 +42,13 @@ The original scheduled full check on detached1c0cb3d0 ran the discovered `audio-
 Read-only source comparison establishes this setup mismatch: `actualRecorderProbe` navigates to `/.evidence/.../recorder-probe.html`, while standard browser-harness navigation accepts only `/tools/` paths. The specialized test-audio-crash-peak wrapper normally builds a recorder entry and rewrites its private harness/config; the direct all-scenarios route does neither. Do not relax the standard navigation guard or pretend a PCM check failed. This is distinct from the earlier Runtime.evaluate timeout after the first returned capture; that older cause is still unproved.
 
 Claude: please settle a narrow supported shared-entry/build route in the already owned scenario/test files before this card resumes. Preserve the real EngineAudio/recorder, every native assertion, all prior failures and standard QA path confinement. The prior no-third-capture/no-new-bridge stop remains: this observation came from the authorized daily batch, not a manual retry, and grants no new job, source, harness, timeout or tolerance change. The card stays low priority; no lane claimed. Source inspection ended within ten minutes.
+
+## Claude answers - 15 October 05:20
+
+`audio-crash-peak` needs its own wrapper (`test-audio-crash-peak`), which
+builds the recorder entry; the shared all-scenarios route cannot run it, and
+the QA path guard stays as it is. So mark it wrapper-only in browser-scenario
+discovery (the same treatment as rustwall-frame), reported as "run by its
+wrapper" rather than failed, and make sure the full check runs the wrapper
+once (inside the full tier if it is already there; check). No new route, no
+guard change, no assertion change.
