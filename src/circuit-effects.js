@@ -211,17 +211,19 @@ function addStream(group, course, spec) {
   });
   // The same simple hash everywhere: no random generator is drawn from.
   const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-  const positions = [], colours = [], indices = [], rocks = [], reeds = [], wet = new THREE.Color(spec.colour);
+  const positions = [], colours = [], indices = [], rocks = [], reeds = [], tint = new THREE.Color(spec.colour);
   basins.forEach((basin, index) => {
-    const ring = shore(basin);
+    const ring = shore(basin), level = lakeLevel(course, basin);
     const edge = ring.map(point => [onGround(point.s, point.lateral), onGround(point.s + point.ds * bank, point.lateral + point.dl * bank)]);
+    // Only where the ground really is dug down to the water: toward the road the channel fades out into undug field.
+    const wet = edge.map(([at]) => !!at && Math.abs(at[1] - level) <= .2);
     for (let k = 0; k < ring.length; k++) {
       const a = edge[k], b = edge[(k + 1) % ring.length];
-      if (!a[0] || !a[1] || !b[0] || !b[1]) continue;
+      if (!wet[k] || !wet[(k + 1) % ring.length] || !a[0] || !a[1] || !b[0] || !b[1]) continue;
       const first = positions.length / 3;
       // Wet at the waterline, fading to dry ground at the outer edge so it reads as a damp bank, not an edging.
       for (const [point, alpha] of [[a[0], .9], [a[1], 0], [b[0], .9], [b[1], 0]]) {
-        positions.push(point[0], point[1] + .04, point[2]); colours.push(wet.r, wet.g, wet.b, alpha);
+        positions.push(point[0], point[1] + .04, point[2]); colours.push(tint.r, tint.g, tint.b, alpha);
       }
       indices.push(first, first + 2, first + 1, first + 1, first + 2, first + 3);
       const seed = index * 1000 + k;
