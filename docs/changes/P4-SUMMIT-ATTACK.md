@@ -37,3 +37,11 @@ Abandonment uses the actual course id. A recovered pending Attack may omit mode 
 This source adopts the merged EARN-MEDALS normalization, grants and counters without editing them. Existing Attack finance/records/abandon/reload cases were read before implementation. All new source and acceptance remain UNRUN: no imports, tests, benchmark, gate or build occurred in this slice. Root requires ordinary and save review before execution.
 
 Removed: Attack's fall-through into generic loss, streak reset, bonuses and milestone pay. No saved field, history format, monetary authority, fixture or tolerance is added.
+
+## Actual one-run baseline and production targets
+
+The single genuine whole native run on clean0468c0c27de400b8a4809cffc2a16dbf433b93da passed, exit0,2109.9793ms wall, ended2026-10-15T03:25:49.5314959Z. Source stayed clean and exact throughout. Earlier capacity guards launched no physics and created no packet. This actual attempt used the approved memory-only parent Summit Run, stock F42, winter tyres, no pit, Club/casual/Medium,1989, existing .95 line, normal seeded Avalanche and recorded Yeti input3395618052. Result.timeSec266.6 is T; the raw lap266.598 and floating state time are not substituted for the requested result time.
+
+Whole run completed one lap, no stage/major crashes, no boundary/checkpoint resets, no pit/service and no recorded failure; Gallery road/corridor stayed valid. Avalanche phases were natural and no forced Open/clear override was used. The Yeti appeared and was seen at213.8416666666365s; the approved recorded seed is present in the actual active race. Parent settlement/ghost behavior remained normal in isolated memory: its1200-credit reward and one sighting are parent evidence, not Attack zero-pay or saved-ledger acceptance.
+
+The derived module now uses actual T266.6 with unchanged ceiling-to-next-tenth multipliers: gold274.6, silver288.0, bronze306.6s. No fitting run, invented target or fourth art round. Packet, invocation, stdout/stderr and source-preservation receipt remain .evidence/2026-10-14/P4-SUMMIT-ATTACK/baseline-0468c0c2. Attack unit tests, final Yeti policy, independent save review, canonical nearby gate and build remain pending; no merge/release pass is claimed.

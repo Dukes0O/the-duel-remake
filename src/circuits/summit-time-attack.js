@@ -1,13 +1,16 @@
 import {SUMMIT_RUN, manifest as summitManifest} from './summit-run.js';
-import {SUMMIT_ATTACK_ID} from '../summit-attack.js';
+import {SUMMIT_ATTACK_ID, summitAttackTargets} from '../summit-attack.js';
 
 // The same authored road and generation identity; only the event changes.
-// Root supplies attackBaselineSec and attackTimes after the accepted native run.
+// One genuine stock F42 / winter / .95-line / Medium / 1989 whole run.
+const attackBaselineSec = 266.6;
 export const SUMMIT_TIME_ATTACK = Object.freeze({
   ...SUMMIT_RUN,
   id: SUMMIT_ATTACK_ID,
   name: 'Summit Time Attack',
   defaultMode: 'timetrial',
+  attackBaselineSec,
+  attackTimes: summitAttackTargets(attackBaselineSec),
   laps: 1,
   grandPrixLaps: 1,
   fieldSize: 1,
