@@ -30,3 +30,15 @@ Tremblant Snow's live look stays as it is) failed four checks:
 The lane was removed; nothing changed on integration. New Codex card
 SUMMIT-SWITCH-ON prepares the switch-on in daylight; Claude then runs the
 release with Kyle's go (or tonight's all-green rule if he renews it).
+
+## Kyle, 15 October about 16:40 (in chat with Claude)
+
+On the ten browser failures already on QA cards: "I don't care about the 10
+known browser failures if they end up being a problem in the game. We'll fix
+them going forward." Confirmed directly: "it may go live. If everything else
+passes ... And if the browser checks fail, you know, it's fine."
+
+Rule for this release: Summit goes live if the full tier (alone, jobs 4),
+combat balance and both frame checks at Summit's busiest view pass. Browser
+check failures do not hold it; any new one gets a QA card and is named in the
+release note.

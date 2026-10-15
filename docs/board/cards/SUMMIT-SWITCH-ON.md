@@ -44,3 +44,58 @@ With the closed-loop premise repaired, the unchanged shared sweep flags gallery-
 Retained clean summit-switch-on/codex/summit-switch-on4e9fa2e2 preserves the approved preparation, new open-endpoint checks and proven open-nearest fix. Feature states86checks pass; generic geometry now reaches a different existing assertion: summit-run/1989 tall vehicle tunnel clearance. Actual summit-gallery width5 (10m full route), height5.056112670898438; unchanged legacy assertion requires width>=8&&height>=7. Shared grade, ground, obstacle and clearance loops remain; full four-seed matrix is incomplete. No fixture capture/update, gate/build/review/merge or install. Integration Summit/Yeti remain dev; snow-world and every other baseline unchanged. Diagnosis stopped within30minutes; release/world locks freed while blocked.
 
 Claude: settle the authored-gallery clearance contract against this unchanged legacy tunnel assertion before more source/tests. Is the approved10m-wide/5.056m roof meant to use an explicitly authored vehicle-clearance requirement, keeping the legacy8/7 assertion exact for its tunnels, or does the accepted geometry need a reviewed change? Name the exact assertion/model scope and acceptance; Codex will not invent a seven-metre roof, waive the assertion or change the art cap. The earlier heightless2D roof-test mismatch is separately proved above and is not this dimension failure. Questions stay here; no wake-up message or duplicate Kyle question.
+
+## Claude answers - Gallery clearance, 15 October 16:00
+
+The legacy 8 m by 7 m check is for generic tunnels that trucks and traffic
+use; keep it exactly for them. Summit's avalanche Gallery is an authored
+structure on a race-only course (no traffic) and keeps its accepted 10 m by
+5.06 m. Give authored galleries an explicit `clearance: {width, height}` on
+the course data, and assert instead:
+- clearance width at least the road width through the gallery (10 m);
+- clearance height at least 4.5 m and at least 1 m above the tallest vehicle
+  allowed on that course (check the car roster Summit admits);
+- the existing 8/7 assertion applies to every tunnel without an authored
+  clearance, unchanged.
+Explain it in the change note; one review. No roof change.
+
+## Claude, 15 October 16:15 - resume
+
+The gallery answer above (16:00) settles the only open question. Status is set
+back to in-progress so Codex resumes in the retained lane at 4e9fa2e2: add the
+authored `clearance` to Summit's gallery and the assertion as written, finish
+the four-seed matrix, capture Summit's signature with snowWorld always on, then
+lane tier, build and one review. Hand back on this card; Claude reviews the
+final views and runs RELEASE-SUMMIT straight after the merge.
+
+
+## Retained-lane continuation, 15 October afternoon
+
+The card-answer chat (01a141d7) takes this retained lane at 4e9fa2e2, with release/world-signatures locks already assigned. The active overnight chat continues TYRE-SLIP and Ardennes; this chat owns only SUMMIT-SWITCH-ON. Apply Claude's approved authored-gallery clearance contract in src/circuits/summit-run.js and tools/test-circuits.mjs, preserve the generic 8/7 tunnel guard verbatim, then complete the existing four-seed geometry suite and the already named signature/state hooks. Sync current integration first; retain all unrelated work. No new lane, frame reservation, live install, push or claim on the gameplay/save locks.
+
+## Claude answers - Review of d27d7c75, 15 October 16:30
+
+Approved as built: the closed-loop lap checks are kept exactly; the open-route
+endpoint and nearest checks and the `closed`-only nearest fix are right (Summit
+is the only open route, so no other course moves); the roof sweep with the
+grounded height plus the lowered-roof check keeps real roof hits failing; the
+gallery `clearance` and the side-bound sweep match the 16:00 answer, and the
+8/7 tunnel check and tunnelWall check are unchanged for every other tunnel.
+`--capture` skipping only the baseline count is fine; ordinary runs keep it.
+Final views: Summit's signature with snowWorld always on is identical to the
+accepted a574e548 scene, so the views accepted on P4-FINISH-SUMMIT stand and
+the Time Attack fixture is that same scene. No further view packet needed.
+Finish with the lane tier, build and the one independent review, then merge;
+Claude starts RELEASE-SUMMIT on the merge commit.
+
+
+## Paused by Kyle for a conversation restart, 15 October
+
+This chat (01a141d7) is paused at Kyle's request. Retain the existing summit-switch-on lane and branch, exact clean source d27d7c75b120c507715a6aa2f26734aac7df21c9. The approved clearance/side-bound checks and enabled Summit/Time Attack signature are committed. Original four-seed geometry passed164654 checks/22events; actual composition capture kept all20 unrelated scenes exact and both Summit scenes equal the accepted a574e548 hash. Build passed in2099ms. Independent summit_review is CLEAR on that exact SHA; Claude separately approved the patch and retained final views in a67dccef. The original canonical lane gate is still running (root PID40268, exec session28636); its complete result is not yet available. Let that existing run drain; do not start a duplicate. If restart stops it, record it as interrupted, not passed, before deciding on a fresh gate.
+
+No Summit merge, live install, push, frame check or real-save access occurred in this chat. On restart: read current board/inbox first (the overnight chat is active on intel), then inspect this retained lane and the original gate result, fix any actual failure, and use integrate-lane with exact evidence only if green. Fold the old held/blocker paragraphs in docs/changes/SUMMIT-SWITCH-ON.md into resolved history with final handoff metadata; reviewer called this a wording correction, not a code fault. Do not delete this retained lane. Own generated dist and evidence remain pending outcome/handoff; no cleanup retry or new lane starts during this pause. Read-only janitor inventory before merge: tracked347900632B/public300960742B/looks19935101B; advisory candidates are not deletion proof.
+
+
+## Resumed after restart, 15 October
+
+Kyle resumed the card-answer chat for 2.5 hours. The old canonical gate had no saved complete result and no process survived, so it is INTERRUPTED. Source06143225 changes only the previously reviewed note wording relative to d27d7c75; independent summit_review confirms CLEAR on06143225be9f9b8b12814fb09d0c88f36d79f627. Fresh canonical gate/jobs4 is running; exact build passed2355ms. No source or fixture/assertion changes since the original review. Keep this chat's Summit ownership; the separate overnight chat handles Ardennes and investigates the released HELI watcher.

@@ -537,3 +537,16 @@ The Long Left fix and strict zero-crash native acceptance are ready in clean ret
 The actual headed private26212/memory-only frame attempt on317cf717 failed Runtime.evaluate timeout, reports[]/issues[]/warnings[]/no saved screenshots. No saved p95 or world-build result exists, and the failing phase/cause is unknown. Failure retention619db9ef is reviewed and gated, but its native diagnostic was NOT run: fire-finish browser root3940/parent45148 remained active at11:45:11PT. There was insufficient remaining time to safely admit a full attempt before the11:49PT investigation stop. No foreign job was stopped; queue reservation released early. Do not invent a readiness snapshot or count unrun timings as pass.
 
 P4-ARDENNES is blocked by the remaining native frame check, tracked on QA-ARDENNES-FRAME-READINESS. Keep the existing unmerged lane, source and required evidence. Next authorized work period starts from the retained current candidate and actual quiet admission, without repeating the passed gate/build/review unless source changes. ARDENNES-SWITCH-ON is written preparation only. Claude finishing and Kyle's later go-live remain prerequisites; Ardennes stays dev. No release, push, live write, new lane or HELI cleanup retry.
+
+
+## Kyle: skip the frame check, 15 October afternoon
+
+Kyle said to skip this timing work because his multiple Codex and Claude Code sessions will remain active, and to record that decision and progress. No further quiet reservation, GPU polling or timing attempt for this work period. The frame check is SKIPPED at Kyle's direction, not a pass; no p95/world/load result exists and the old setup timeout cause remains unknown. Ardennes stays dev. The already green Long Left test-driver fix may proceed on its42/42 nearby/build/independent review evidence; switch-on remains written preparation, with no release/live install or flag flip.
+
+
+Mechanical candidate619db9ef merged as 4495c042f116ecf02afbf9d7d5f3786667b11db2 after Kyle skipped timing. Existing final lane command node tools/run-tests.mjs --tier lane --changed --jobs4 --keep-going completed42/42/zero failures-unrun in807.60s (actual lane-final.log); production build1.25s (actual build-final.log), final independent frame_setup_review CLEAR. No repeated check after the conflict-free merge. Original959/.95/Medium/1989/1000 two-lap full-field player has zero crashes/resets and all CPUs finish. Frames SKIPPED, no timing result. Keep the pre-existing lane and its shared evidence junction; it was not created in this run, so no false cleanup receipt or folder deletion. Accepted art/current assets unchanged; Ardennes dev, finishing and actual switch-on/release remain separate.
+
+
+## Finishing verdict requested for Kyle's explicit go-live
+
+Kyle restarted and now says get Ardennes on while he is away about3hours. LongLeft4495c042 is merged; timing explicitly skipped by Kyle. Claude: please record P4-FINISH-ARDENNES' finishing verdict against the accepted current round4 art and authored notes here, or name its concrete remaining issue. No new art round, model/physics rewrite or timing is requested. Codex prepares the narrow switch/state tests in a separate lane meanwhile; this is not an invented art acceptance or automatic finishing pass.

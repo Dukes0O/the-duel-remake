@@ -29,3 +29,30 @@ Nothing during preparation. Future implementation replaces only the dev state an
 ## Mechanical preparation checkpoint
 
 The original Long Left full-field regression is now green in retained unmerged619db9ef, with independent review, nearby42/42/jobs4 and build passed. Frame acceptance remains blocked: original headed attempt timed out without saved timing rows, and no diagnostic attempt was admitted before the bounded stop. See QA-ARDENNES-FRAME-READINESS. This preparation does not waive that prerequisite, change Ardennes dev state, or authorize go-live.
+
+
+## Updated mechanical handoff, 15 October afternoon
+
+Long Left candidate619db9ef is now merged4495c042 after42/42nearby/jobs4/build/independent review, with no conflict or repeated gate. Kyle explicitly said to skip timing because his other sessions stay active. It is recorded as SKIPPED, with no timing result or pass; do not queue or retry it during this work period. This supersedes the earlier unmerged/frame-blocked checkpoint above. Ardennes stays dev and this card remains written preparation. Claude finishing and an actual future switch-on/release remain separate; no go-live inferred.
+
+
+## Kyle directs Ardennes on after restarting, 15 October afternoon
+
+Kyle: I restarted; let's get Ardennes on; away about3hours; please keep going. This authorizes the switch-on implementation and subsequent release/install when its remaining checks are satisfied, superseding the earlier preparation-only boundary. The prior explicit timing skip is retained as SKIPPED, not converted to a pass or silently retried. LongLeft is merged and the accepted round4 art is the candidate; no further art edit is requested. Claude's finishing verdict remains a release prerequisite and is requested on P4-ARDENNES.
+
+Root creates one new Ardennes switch lane (actual folder ardennes-switch-on/codex/ardennes-switch-on) from current integration. Initial phase leases circuit-registry only for the exact manifest and existing admission/state tests. SUMMIT-SWITCH-ON is actively using world-signatures: do not edit shared composition tooling, capture or baseline until its owner releases that lock. Then claim world-signatures and add only Ardennes' actual accepted scene baseline, preserving every other fixture. Finishing is checked before merge/install; the board implementation dependency is P4-ARDENNES so the explicit current switch request can be prepared while that verdict arrives. No other flags, art, assets, physics, roster, save schema or prices change.
+
+
+## Per-course baseline scope, before capture
+
+FAC04 already split signatures into per-course files. Current existing --capture-new=ardennes-forest safely captures this known disabled dev scene before its first baseline, checks every existing scene, and loads actual Ardennes beech kits. No shared composition-tool or global count edit is needed. Therefore this card can use that existing read-only recipe and write only its owned tools/fixtures/world-signatures/ardennes-forest.json while holding circuit-registry; Summit keeps exclusive ownership of its shared composition-tool changes and its own scene files. Never edit that shared file or a foreign fixture here. Capture the actual current accepted dev scene first, then flip only Ardennes state and compare it in the ordinary strict suite. All old files must hash exactly as before. This replaces the unnecessary broad world-signatures lease for a course-owned initial file.
+
+
+## Current source and queued gate
+
+Frozen c2826ec8: only manifest state changes; selected production/admission tests pass2/2 after failing2/2 first; feature flags91 and ordinary strict composition43checks pass; build7598.37ms. Actual first scene hash46f792e1d00d444a4aa39f82d9ed48fbc5e009fe207bafdf0afeb97c0ad8e930,1109nodes/1050meshes/35282instances. Every old fixture remains byte-identical. Initial lane admission was cancelled immediately after the inventory showed three other heavy roots; lane.json is empty and the process drained, so INTERRUPTED/UNRUN, not pass. The next actual free heavy slot is requested for Ardennes' complete jobs4 gate; enforce existing inspectNightProcesses count<3 before launching. No foreign job was stopped.
+
+
+## Review correction: first course-owned replay, before code
+
+Independent review of c2826ec8 found enabled-course replay coverage missing Ardennes (21 enabled,20 covered). Own tools/replays/courses/ardennes-forest.json only for its first actual seeded input fingerprint at30/60/144FPS. Use the unchanged replay() and recorded inputs from tools/test-replays.mjs, with a temporary recipe under .qa-dist that writes only this new file; no existing replay file, assertion, input, tolerance or runner changes. Capture all three actual cadences and require exact equality. Preserve all previous fixture bytes, then let the unchanged full replay guard verify the union in the final lane gate. This corrects a real review fault before gate/review confirmation; no runtime physics or driver change.

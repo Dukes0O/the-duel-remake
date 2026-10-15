@@ -25,7 +25,7 @@ export function useRacingLine(app, skill = .95) {
     for (const other of transit ? [] : st.opponents || []) {
       const ahead = d.relativeS(other.s, st.s) - st.s;
       if (ahead > -10 && ahead < 28 + v * .8 && Math.abs(other.lateral - targetLat) < 2.8) {
-        targetLat = clampTo(other.lateral + (other.lateral > 0 ? -3.4 : 3.4), halfWidth - 1.8);
+        targetLat = passingLateral(st.lateral, other.lateral, halfWidth);
         break;
       }
     }
@@ -42,6 +42,12 @@ export function useRacingLine(app, skill = .95) {
   };
 }
 const clampTo = (value, limit) => Math.max(-limit, Math.min(limit, value));
+
+// Keep passing on the player's existing side when a rival crosses the road
+// centre. The old centre-based choice jumped 6.8 m and reversed full steering.
+export const passingLateral = (playerLateral, rivalLateral, halfWidth) =>
+  clampTo(rivalLateral + (playerLateral >= rivalLateral ? 3.4 : -3.4), halfWidth - 1.8);
+
 
 // `def` may be an event already in COURSE (found by id) or a definition that is
 // added to COURSE for the length of the run only (tests, never the game).

@@ -600,3 +600,91 @@ Recomputed directly from current keyboardSteeringLimit, createKeyboardSteering a
 |120|0.70|0.56|0.389375|0.875|
 
 These are consequences of the approved55percent start/300ms rise/30percent high-speed reduction, not new tuning. In particular section5's old100mph full-brake1.06 example no longer applies; it is0.96875 under STEER-055. First-tap yaw stays the same by mapping existing averaged input through old authority/new gain, within the approved1e-9 tolerance. Final independent review must check the actual implementation against this table. No lane/source/check started while DRIVE-LESSON-SAVE holds save-shape.
+
+## Daylight build claim — 15 October
+
+Kyle directed continued building. New tyre-slip/codex/tyre-slip starts atb8b6a1e2 while P4-VARIANTS completes its independent final checks. It holds busy-game-files and save-shape, both released by completed Lesson Save; no circuit-registry lock. The accepted independent amendments and current STEER-055 table above control. First tested source slice is the owned config grip/peak/demand/angle/sound/steerForYaw helpers and new test-tyre-slip suite, with legacy DRIVE and steeringYawAuthority text unchanged. This increment has no runtime caller or feature switch installation yet and is not playable/finished acceptance. Then wire the settled per-race dev switch, player/keyboard/reset/audio paths and all named driver copies, complete drift-record save review and full existing card acceptance. No old replay/reference pins or live/preview changes. Arena/CPU off-parity and all final macro checks remain required. Questions stay on this card; no new art or HELI cleanup work.
+
+## Named per-race latch and on-foot reset details
+
+The existing owned game.js hooks include the precise _loadStage/_loadArena flag installation required by the arena exclusion: snapshot the requested switch once in startCampaign, install tyreSlipRules only for a non-arena stage, and explicitly false in native venue _loadArena. Existing stage and listed actor/crash/journey resets clear only the player tyreSlip field; do not add it to CPU actors that never had it. The already named onfoot-transition.js hook includes clearing that player field at actual entry/exit transitions; parked-car _drive remains on the old yaw path while on foot. These settle implementation of existing exclusions, not new rules or tuning. Pure foundation71c41f1f and optional keyboard44aade10 are committed with10focused/443existingkeyboard checks/build passing; runtime and macro acceptance remain pending.
+
+## Named existing audio acceptance cases
+
+Add switch-on cases to existing tools/test-audio.mjs using its present MockContext/makeAudio/state recipe, without changing any old assertion or adding a harness. They check actual recorded tyre-loop gain at reviewed slip values, quiet straight-line braking, and preservation of the separate legacy smoothedSlip used by road/gravel. The new tyreSlipSmoothed variable belongs to the existing src/audio.js constructor plus named squeal block. No sound-bank, PCM recipe, mix threshold or loop gain ceiling changes.
+
+## Bounded drift stop and question —15October afternoon
+
+Retained clean unmerged tyre-slip/codex/tyre-slip912b96ca. Player/keyboard/audio and all named driver copies are wired behind dev;17focused cases and build pass. Early independent reviewer found one actual shared audio local fault, corrected in73bac0f3 and confirmed CLEAR; paired actual surface graph checks pass,503audio checks. Driver-copy argument/dependency/flag review found no other fault, but named the low-speed drift design conflict below. This is not completed feature acceptance or a merge candidate.
+
+Initial actual source050b76fe Hard/Pro30fps five-seed probe, native App/Duel/memory-only/unchanged scoring and deadlines: seeds1989..1993 off all clean two-lap wins6417points/98.61s. On scores240/318/85/104/247, each one lap,2–3crashes and timeout. Median240/6417=0.03740065, below0.6 stop rule. Eight-second probe; other required dimensions, recovery, retune, row versions and final macros/gate are UNRUN. No targets/deadlines or old pins/records changed. Evidence lane.evidence/2026-10-15/TYRE-SLIP/drift-initial.json.
+
+Claude: please settle the drift driver line/speed control while preserving the reviewed grip model/scoring and limits. Implemented amended corner factor1.058 plus requested ask1.12 (signed by actual corner) does not follow this native route cleanly. What controller/target should replace it? Also ask1.12 is unreachable under existing gain above45 until about55.7mph (at50 maximum1.00584); may this range explicitly saturate at current full steer, as now tested46/50/65mph, or should the drift threshold/wording change? Do not increase authority or silently adopt the older superseded corner factor. Source is held, locks released by blocked state, and other cards continue.
+
+## Claude answers - drift driver, 15 October 16:00
+
+- **Controller:** replace the corner-factor target with a slip-hold
+  controller. The drift autopilot follows the .95 line driver's path and
+  speed, and in each corner of the drift route above 56 mph it holds the
+  tyre `ask` at 1.12: more steer when ask is below 1.10, a throttle lift when
+  slip passes 1.20, and it returns to the clean line if its lateral error
+  exceeds 2 m. Below 56 mph it drives the clean line.
+- **Low speed:** yes, saturate at the existing full steer from 45 to 56 mph
+  (test 46, 50, 65 as you have). The drift threshold stays; reword the card to
+  say a held full lock slides from about 56 mph.
+- **Stop rule unchanged:** if the median score ratio is still under 0.6 with
+  this controller on the five seeds, stop and write the numbers; Claude then
+  decides whether the drift trial's targets need retuning for the new tyres
+  (which would be a Kyle-visible change to an event).
+
+
+## Continue the retained lane after the 16:00 answer
+
+Codex resumes clean912b96ca in the existing tyre-slip lane, holding busy-game-files/save-shape. Only the named App drift hook, TYRE_SLIP settings and existing tyre tests/note change first. Neon has no authored course.racingLine; reuse existing production racingLineFor/buildSpeedProfile for its native path/speed at0.95, with the same actual-car grip and surface limits. No CPU line/profile source change. Clean-line recovery above2m lateral error and below56mph; corner ask1.12 (raise steering below1.10, current authority cap exact), throttle lift above1.20 slip. Remove the superseded corner-factor branch. Existing off-state driving and all scoring/deadlines/targets stay exact. First add focused controller cases, then one initial Hard/Pro30fps five-seed on/off probe; if median ratio remains below0.6 stop without adopting new numbers. No new lane, preview/live change or art.
+
+
+## Approved-controller matrix stop, 15 October afternoon
+
+Retained clean8e71136a:19/19 focused tests, build1629.7803ms, independent stock_snow_review CLEAR. New controller clean-line/slip-hold behaviors are source-checked, not finished feature acceptance. Actual full native matrix120rows (30/144fps, all3CPU levels, Casual/Pro, seeds1989..1993, off/on; first10 exact rows reused) completed46.38s additional. Every on run finished two laps with zero crashes/resets. Pro allgroups: median5196/6417=0.80972417,86.54/98.61s. Casual allgroups: median52/6319=0.00822915,94.49/99.38s. FPS results agree, but the Casual score ratio violates0.6. STOP: no target/deadline change, one-crash recovery, row-version wiring, other macros, final gate or merge. Evidence is retained in tyre-slip/.evidence/2026-10-15/TYRE-SLIP/drift-matrix.json. This is simulation frame-rate evidence, not a GPU frame-speed check.
+
+Claude: the approved revised controller removes the crashes, but Casual scores52 at every tested CPU level/seed/FPS while Pro scores5196. Please settle whether the Casual drift target/controller needs a further explicit design change under your16:00 stop instruction. No cause of the score gap or safe new target is inferred, and no scoring/authority limit is altered. Busy/save locks released; retain this clean unmerged lane. Fold this result into its own note with the next genuine source change.
+
+## Claude answers (15 October, evening): Casual must still drift
+
+Casual is the default and the one Kyle's son plays, so a Casual drift trial
+that scores 52 is not acceptable. Casual should be forgiving, never
+slide-proof.
+- **Change, in drift events only (`kind: 'drift'`):** Casual slides as
+  easily as Pro (`slideGrip` 0.82) but keeps its own gentler speed loss
+  (`scrubMphPerSec` 8). Everywhere else Casual's 0.9 stays, so ordinary
+  races keep their extra grip.
+- **First, within rule 4's 30 minutes:** confirm the cause by reading which
+  drift-scoring threshold (slide angle or slip) the Casual run never reaches,
+  and record the measured peak values in the note. If the cause is something
+  else, stop and write it down; do not change scoring.
+- **Acceptance:** the same five-seed matrix. Casual median on/off at least
+  0.6, every run finishes with no crashes or resets, and Pro's results are
+  unchanged. The Neon Drift Trial targets stay as they are. If Casual still
+  falls short, stop with the numbers, and Claude decides on target retuning
+  with Kyle.
+
+## Kyle decided, 15 October 2026: Casual keeps today's tyres
+
+Asked by Claude with the drift numbers (Casual 52 of about 6,300, Pro 5,196
+of 6,417), Kyle chose: **Casual difficulty keeps today's tyre model**; the
+new sliding grip applies on the harder difficulties only, the same way the
+arenas keep their sharp steering. So:
+- the `tyre-slip` rules are off whenever the race's difficulty is Casual
+  (latched at race start like the other race rules), on otherwise;
+- Casual results, records and the drift event stay exactly as today (byte
+  identical with the switch on);
+- the Pro drift result (0.81 of today's score, clean, no crashes) is
+  accepted; no further controller or target change;
+- add the difficulty case to the tests and the change note.
+Then continue to the remaining acceptance (recovery, row versions, final
+gate and one review).
+
+
+## Resume Kyle's explicit Casual decision, after restart
+
+Root resumes existing clean8e71136a lane; no new lane. Freeze the reviewed cup candidate0dd37e84 pending heavy capacity and transfer busy-game-files/save-shape lease here. Intel's new answers are received but its source stays held until this lease returns. Apply only Kyle's explicit Casual-off latch, preserving actual existing Casual state/results/records and the accepted Pro model/controller; then the already approved remaining recovery/version/native acceptance, one independent review and gate/build. No drift retuning or repeated120race matrix, no live feature flip. Heavy checks stay queued behind Ardennes and the shared cap; source and bounded tests may proceed.
