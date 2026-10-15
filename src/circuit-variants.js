@@ -45,7 +45,7 @@ export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, 
   const effects = parent.effects && {...parent.effects,
     ...(parent.effects.lake ? {lake: basin(parent.effects.lake)} : {}),
     ...(parent.effects.lift ? {lift: {...parent.effects.lift, s: station(parent.effects.lift.s),
-      towers: parent.effects.lift.towers.map(x => -x), lines: parent.effects.lift.lines.map(x => -x)}} : {}),
+      towers: parent.effects.lift.towers.map(x => -x).reverse(), lines: parent.effects.lift.lines.map(x => -x).reverse()}} : {}),
     ...(parent.effects.backdrop ? {backdrop: {...parent.effects.backdrop, hills: parent.effects.backdrop.hills.map(h => ({...h,
       x: anchor.x - h.x, z: anchor.z - h.z, angle: (h.angle ?? 0) + Math.PI}))}} : {})};
   const changes = {id, name, flag: id, reverse: true, scriptStart, intel: undefined,
@@ -73,12 +73,22 @@ export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, 
   const mappedKit = p => {
     if (p.id === 'start-gantry') return {...p, s: 0}; // Face the incoming race, not the old one.
     return {...point({...p, heading: p.heading ?? 0}), ...(p.ride ? {ride: {...p.ride,
-      ...(Number.isFinite(p.ride.a) ? {a: -p.ride.a, b: -p.ride.b} : {})}} : {})};
+      line: parent.effects.lift.lines.length - 1 - p.ride.line,
+      ...(Number.isFinite(p.ride.a) ? {a: -p.ride.a, b: -p.ride.b} : {}),
+      ...(Number.isInteger(p.ride.k) ? {k: (p.ride.count - p.ride.k) % p.ride.count} : {})}} : {})};
   };
   // Private parent getter is evaluated only when this new course's kit is requested.
   const descriptors = Object.getOwnPropertyDescriptors(definition);
-  descriptors.kitPlacements = {enumerable: true, get: () => (kits ??= Object.freeze((placements
-    ? placements(definition, {point, spans, station, mappedKit}) : parent.kitPlacements.map(mappedKit)).map(Object.freeze)))};
+  descriptors.kitPlacements = {enumerable: true, get: () => {
+    if (kits) return kits;
+    const rows = placements ? placements(definition, {point, spans, station, mappedKit}) : parent.kitPlacements.map(mappedKit);
+    // The existing lift animation walks towers in increasing lateral order.
+    // Reverse both cable-line identity and chair travel so it still follows the physical donor.
+    const towers = rows.filter(p => p.id === 'chairlift-tower').sort((a,b) => a.lateral - b.lateral);
+    let tower = 0;
+    kits = Object.freeze(rows.map(p => Object.freeze(p.id === 'chairlift-tower' ? towers[tower++] : p)));
+    return kits;
+  }};
   definition = Object.freeze(Object.defineProperties({}, descriptors));
   const manifest = Object.freeze({id, flag: id, state: 'dev', price: 0, grandPrix: true, releaseOrder,
     driver: parentManifest.driver, unlock: Object.freeze({kind: 'default-gp-podium', defaultEventId: parent.id})});

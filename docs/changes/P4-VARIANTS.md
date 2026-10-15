@@ -25,3 +25,5 @@ All three reverse descriptors now build with native reversePieces. Parent road/g
 ## Native QA eligibility fixtures
 
 The first actual Night reference correctly refused an unearned variant. Existing reference and track-review fixtures now supply the required parent ownership/top-three result in disposable memory profiles; production admission, registry, save rules and deadlines are unchanged. No failed attempt is relabelled as passing. Existing reference tests now cover actual native admission and preservation of prior profile results for each variant.
+
+The reverse lift source review found that the existing animation requires increasing tower laterals. Copying negated tower order would hide chairs through a negative travel span. The variant now sorts copied tower records, reverses cable-line identity and chair phase; existing animation code is unchanged. Focused tests retain exact physical hill/lake checks and now check actual tower ordering, cable identity and chair phase, rather than the incorrect raw-array-order assumption. Road references are unaffected by this presentation fix.

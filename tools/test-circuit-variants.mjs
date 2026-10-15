@@ -122,6 +122,14 @@ test('reverse hill, lake and chairlift keep their physical orientation', () => {
     assert.ok(Math.abs(hillHeight(hill, -du, -dv) - hillHeight(old, du, dv)) < 1e-10);
   for (const du of [-200, -90, 10, 190]) for (const dv of [-70, 20, 60])
     assert.ok(Math.abs(basinReach(d.basins[0], -du, -dv) - basinReach(TREMBLANT_WOODS.basins[0], du, dv)) < 1e-10);
-  assert.deepEqual(d.effects.lift.towers, TREMBLANT_WOODS.effects.lift.towers.map(x => -x));
-  assert.deepEqual(d.effects.lift.lines, TREMBLANT_WOODS.effects.lift.lines.map(x => -x));
+  assert.deepEqual(d.effects.lift.towers, TREMBLANT_WOODS.effects.lift.towers.map(x => -x).reverse());
+  const towers = d.kitPlacements.filter(p => p.id === 'chairlift-tower');
+  assert.deepEqual(towers.map(p => p.lateral), d.effects.lift.towers, 'actual animation tower order is increasing');
+  const oldChairs = TREMBLANT_WOODS.kitPlacements.filter(p => p.ride?.role === 'chair');
+  const chairs = d.kitPlacements.filter(p => p.ride?.role === 'chair');
+  chairs.forEach((p, i) => {
+    assert.equal(p.ride.line, 1 - oldChairs[i].ride.line, 'physical return cable stays the return cable');
+    assert.equal(p.ride.k, (p.ride.count - oldChairs[i].ride.k) % p.ride.count, 'initial chair position follows physical reversal');
+  });
+  assert.deepEqual(d.effects.lift.lines, TREMBLANT_WOODS.effects.lift.lines.map(x => -x).reverse());
 });
