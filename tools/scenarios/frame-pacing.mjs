@@ -13,23 +13,48 @@ export function assertNightFrameContext(context, env = process.env, busy = []) {
     throw Error('Official night frames require actual headed mode and declared idle, awake context.');
   if (busy.length) throw Error('Official night frames refused: another heavy job is active.');
 }
+export function assertArdennesFrameContext(context, env = process.env, busy = []) {
+  if (context?.headed !== true || context.launchMode !== 'headed' ||
+      env.ARDENNES_FRAMES_ONLY !== '1' || env.DUEL_FRAME_IDLE_AWAKE !== '1')
+    throw Error('Ardennes frames require headed mode and declared idle, awake context.');
+  if (busy.length) throw Error('Ardennes frames refused: another heavy job is active.');
+}
+export function validateArdennesFramePacket(packet) {
+  if (packet?.schema !== 1 || packet.mode !== 'ardennes-simple' || packet.reports?.length !== 2)
+    throw Error('Missing complete Ardennes frame packet.');
+  for (const [index, quality] of ['High', 'Performance'].entries()) {
+    const row = packet.reports[index];
+    if (row.quality !== quality || row.course !== 'ardennes-forest' || row.gridPiece !== 'Pit Straight' ||
+        row.cars !== 8 || row.frames !== 120 || row.headed !== true || row.visible !== true ||
+        row.memoryOnlySaves !== true || row.appRunning !== true || row.rearView !== 'ready' ||
+        !Number.isFinite(row.countdownBefore) || !Number.isFinite(row.countdownAfter) ||
+        row.countdownAfter <= row.countdownBefore || !Number.isFinite(row.p95) || row.p95 <= 0 || row.p95 > 18.5 ||
+        !Number.isFinite(row.worldBuildMs) || row.worldBuildMs < 0 || row.worldBuildMs >= 1000 ||
+        !Number.isFinite(row.constructionMs) || row.constructionMs < 0)
+      throw Error(quality + ': invalid or failed real Ardennes eight-car grid frames.');
+  }
+  return packet;
+}
 export function summarizeNightFrames(values) {
   if (values.length !== 120 || values.some(value => !Number.isFinite(value) || value <= 0))
     throw Error('Expected 120 real positive delivered RAF intervals.');
   const sorted = [...values].sort((a, b) => a - b);
   return {frames: 120, p50: sorted[59], p95: sorted[113], max: sorted[119]};
 }
-export function prepareNightPlayer(app, quality) {
+export function prepareNightPlayer(app, quality, courseId = 'harbour-lights') {
   app.returnToMenu();
   if (!app.addPlayer('Frame QA ' + quality).ok)
     throw Error('Memory-only native temporary player creation failed.');
   app.profile = {...app.profile, credits: 50000};
-  if (!app._saveProfile() || !app.purchaseCourse('harbour-lights').ok)
+  if (!app._saveProfile() || !app.purchaseCourse(courseId).ok)
     throw Error('Memory-only native course purchase failed.');
 }
-async function measureNight(context, quality) {
-  assertNightFrameContext(context, process.env, inspectNightProcesses());
-  await context.navigate(`${entry}?frame-pacing=night-${quality}`);
+async function measureNight(context, quality, courseId = 'harbour-lights') {
+  const ardennes = courseId === 'ardennes-forest';
+  const assertContext = ardennes ? assertArdennesFrameContext : assertNightFrameContext;
+  assertContext(context, process.env, inspectNightProcesses());
+  await context.navigate(ardennes ? `${entry}?flags=ardennes-forest&frame-pacing=ardennes-${quality}` :
+    `${entry}?frame-pacing=night-${quality}`);
   await context.waitFor(`document.readyState==='complete' && !!window.__qaApp &&
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' &&
     !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`, `${quality} isolated night menu`, 60_000);
@@ -43,13 +68,14 @@ async function measureNight(context, quality) {
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'`, `${quality} normal renderer`, 60_000);
   const observed = await context.evaluate(`(async () => {
     const app = window.__qaApp, view = document.querySelector('#view3d');
+    const requestedCourse = ${JSON.stringify(courseId)};
     if (document.hidden || document.visibilityState !== 'visible') throw Error('Night tab is hidden.');
-    if (app._switches().state('harbour-lights') !== 'on' || app._switches().state('grand-prix') !== 'on')
+    if ((requestedCourse === 'harbour-lights' ? app._switches().state(requestedCourse) !== 'on' : !app._switches().enabled(requestedCourse)) || app._switches().state('grand-prix') !== 'on')
       throw Error('Night frames require released Harbour Lights and Grand Prix.');
     const stage = [...document.querySelector('#scene-select').options].map(option => Number(option.value))
-      .find(index => app.getMenuCourse(index).def.id === 'harbour-lights');
+      .find(index => app.getMenuCourse(index).def.id === requestedCourse);
     if (!Number.isInteger(stage)) throw Error('Released Harbour Lights is absent from the real menu.');
-    (${prepareNightPlayer.toString()})(app, ${JSON.stringify(quality)});
+    (${prepareNightPlayer.toString()})(app, ${JSON.stringify(quality)}, requestedCourse);
     app.setLightingMood('clear');
     const previousBuild = view.dataset.worldBuilds, started = performance.now();
     if (!app.startCampaign({startStage: stage, seed: 1989, fieldSeed: 12, fieldSize: 7,
@@ -57,8 +83,9 @@ async function measureNight(context, quality) {
       throw Error('Native night grid did not start.');
     app.start();
     const state = app.duel.state, course = app.duel.course;
-    if (course.def.id !== 'harbour-lights' || course.def.timeOfDay !== 'night' ||
-      !course.def.lightPath?.keyframes?.length || course.def.lightPath.keyframes.some(key => key.look !== 'night') ||
+    if (course.def.id !== requestedCourse || (requestedCourse === 'harbour-lights' && (course.def.timeOfDay !== 'night' ||
+      !course.def.lightPath?.keyframes?.length || course.def.lightPath.keyframes.some(key => key.look !== 'night'))) ||
+      (requestedCourse === 'ardennes-forest' && course.script.pieceAt(state.s).name !== 'Pit Straight') ||
       state.mode !== 'grandprix' || state.opponents.length + 1 !== 8 || state.traffic.length ||
       state.qualifying || app.autopilot || app.inspectionCamera || state.paused)
       throw Error('Native grid, night lighting or normal gameplay context is wrong.');
@@ -98,18 +125,18 @@ async function measureNight(context, quality) {
     const worldBuildText = view.dataset.worldBuildMs, worldBuildMs = Number(worldBuildText);
     if (typeof worldBuildText !== 'string' || !worldBuildText.trim() || !Number.isFinite(worldBuildMs))
       throw Error('Missing or malformed actual world-build measurement.');
-    return {course: course.def.id, cars: state.opponents.length + 1, night: true, intervals,
+    return {course: course.def.id, cars: state.opponents.length + 1, night: course.def.timeOfDay === 'night', gridPiece: course.script?.pieceAt(state.s)?.name ?? null, intervals,
       constructionMs, worldBuildMs, worldReadyMs: Number(view.dataset.worldReadyMs),
       appRunning: app.running, countdownBefore: before, countdownAfter: state.field.start.elapsed,
       rearView: view.dataset.rearView, renderPipeline: view.dataset.renderPipeline,
       visible: document.visibilityState === 'visible',
       memoryOnlySaves: !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value};
   })()`);
-  assertNightFrameContext(context, process.env, inspectNightProcesses());
+  assertContext(context, process.env, inspectNightProcesses());
   const {intervals, ...details} = observed;
   const report = {quality: quality === 'high' ? 'High' : 'Performance', ...details,
     ...summarizeNightFrames(intervals), headed: context.headed};
-  await context.screenshot(`night-simple-${quality}`);
+  await context.screenshot(`${ardennes ? 'ardennes-simple' : 'night-simple'}-${quality}`);
   return report;
 }
 export async function reuseNightFrames(context,{packetPath,priorPassed,
@@ -191,6 +218,19 @@ export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {
     width: 1280, height: 720, deviceScaleFactor: 1, mobile: false,
   });
+  if (process.env.ARDENNES_FRAMES_ONLY === '1') {
+    const reports = [];
+    try {
+      for (const quality of ['high', 'performance']) reports.push(await measureNight(context, quality, 'ardennes-forest'));
+      const packet = {schema:1,mode:'ardennes-simple',reports};
+      await writeFile(join(context.outputDir,'frame-pacing.json'),JSON.stringify(packet,null,2)+'\n');
+      validateArdennesFramePacket(packet);
+    } catch (error) {
+      await writeFile(join(context.outputDir,'frame-pacing.json'),JSON.stringify({schema:1,mode:'ardennes-simple',reports,error:error.message},null,2)+'\n');
+      throw error;
+    }
+    return;
+  }
   if (process.env.DUEL_NIGHT_FRAMES === '1') return runNightFrames(context);
   const reports=[];
   for(const quality of ['high','performance'])reports.push(await measure(context,quality));
