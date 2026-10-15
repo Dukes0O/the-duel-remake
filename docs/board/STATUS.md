@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T23:02:05.072Z
+Observed at: 2026-10-15T23:06:28.544Z
 
-Observation commit: 93cbae8971e39319a91de5b904f5403a161ec44f
+Observation commit: 645916e4c565f3f90d287522a909f46b70f573ea
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 93cbae8971e39319a91de5b904f5403a161ec44f
+Integration HEAD: 645916e4c565f3f90d287522a909f46b70f573ea
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -43,7 +43,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-yeti | 1 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 1 | unknown | true | false | unknown |
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
-| codex/qa-audio-clock | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-audio-clock |
 | codex/qa-browser-sweep | 1 | unknown | false | false | unknown |
 | codex/summit-switch-on | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
@@ -85,9 +84,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 35,655 B | -61,761 B | 5,000,000 B |
+| Added bytes in last merge | 35,655 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 438,486,016 B | +144,384 B | unavailable |
+| Git objects | 438,630,400 B | +144,384 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -96,7 +95,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 93cbae8971e39319a91de5b904f5403a161ec44f
+- Local integration/wasteland: 645916e4c565f3f90d287522a909f46b70f573ea
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

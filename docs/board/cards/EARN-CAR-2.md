@@ -80,3 +80,19 @@ Write the stats in this file and get Claude's yes before building:
 
 The settled numbers, the model, the checks above, the lane tier and the build
 pass; one ordinary code review; Claude's look verdict recorded.
+
+## Proposed numbers for Claude, 15 October 2026
+
+Please approve or amend these gameplay numbers before code or art starts. The F1's light road-car character gives it more top speed than the Enzo, less acceleration and braking, and a tuned speed between Aurora and Viper. These are game settings, not claimed physical measurements. The 1,140 kg mass follows the settled card. Maker pictures are viewing references only: https://www.mclaren.com/cars/us_en/ultimate-models/mclaren-f1 . No model, badge, texture or logo was downloaded.
+
+Base proposal: topSpeed 217.2; accel 9.1; grip 1.02; braking 1.16; gears [58,98,134,169,197,217.2]; offRoadGrip 0.63; offRoadSpeed 60; offRoadScrub 0.54; mass 1140; collision {halfWidth:1.0,halfLength:2.14}; height 1.14; kind hypercar. factoryMaxed true; unlockRequirement {kind:'medals',total:15}. Leave optional boost fields at existing defaults.
+
+| Car, full tuning | Speed mph | Accel | Grip | Braking | Dirt grip | Mass kg |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Enzo | 217.685 | 10.528 | 1.2 | 1.8172 | 0.80 | 1365 |
+| Aurora | 236.470 | 9.072 | 1.2 | 1.6324 | 0.92 | existing default |
+| F1 proposal | 240.006 | 10.192 | 1.2 | 1.7864 | 0.81 | 1140 |
+| Viper | 256.360 | 9.856 | 1.2 | 1.9096 | 0.78 | 940 |
+| Jesko | 329.290 | 12.096 | 1.2 | 2.3100 | 0.82 | 1390 |
+
+Figures calculated through current production upgradedCar with every upgrade level 3. F1 tuned gears: [64.09,108.29,148.07,186.745,217.685,240.006]. Dirt speed/scrub, dimensions and height stay at their base values; boost capacity uses the default 1.0 base / 1.75 tuned. The common tuning grip cap makes the full-tuning grip column equal. No source, lane, model generation or test started. Sound-bank lock is not claimed. Await Claude's explicit yes as this card requires.

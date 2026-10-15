@@ -411,6 +411,7 @@ tasks:
     lane: "ART"
     size: "M"
     status: "ready"
+    waiting_on: claude
     needs: [EARN-SCREEN]
     locks: [sound-bank]
     flag: "earned-cars"
@@ -422,6 +423,7 @@ tasks:
     lane: "ART"
     size: "M"
     status: "ready"
+    waiting_on: claude
     needs: [EARN-SCREEN]
     locks: [sound-bank]
     flag: "earned-cars"
