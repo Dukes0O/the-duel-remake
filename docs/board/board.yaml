@@ -223,9 +223,8 @@ tasks:
     owner: "claude"
     lane: "DESIGN"
     size: "M"
-    status: "building"
-    claimed_by: "claude-finish-summit-2026-10-14"
-    needs: [P4-SUMMIT, P4-AVALANCHE, P4-REVIEW-TOOL]
+    status: "blocked"
+    needs: [SUMMIT-GALLERY-COVER, SNOW-VARIATION, YETI-FUR-TINT, SUMMIT-PIT-BALANCE]
     details: "docs/board/cards/P4-FINISH-SUMMIT.md"
 
   - id: P4-RELEASE
@@ -349,6 +348,51 @@ tasks:
     needs: []
     locks: [busy-game-files]
     details: "docs/board/cards/QA-STOCK-SNOW.md"
+
+  - id: SUMMIT-GALLERY-COVER
+    title: "Summit: hide the dark rock cover so the pale concrete Gallery shows"
+    owner: "codex"
+    lane: "WORLD"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/SUMMIT-GALLERY-COVER.md"
+
+  - id: SNOW-VARIATION
+    title: "Snow reads as one flat blue tone at distance (Summit, Tremblant Snow)"
+    owner: "codex"
+    lane: "WORLD"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/SNOW-VARIATION.md"
+
+  - id: YETI-FUR-TINT
+    title: "Yeti fur reads dark grey-green against snow at night"
+    owner: "codex"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/YETI-FUR-TINT.md"
+
+  - id: SUMMIT-PIT-BALANCE
+    title: "Summit pit choice misses its settled targets"
+    owner: "codex"
+    lane: "RACE"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/SUMMIT-PIT-BALANCE.md"
+
+  - id: QA-REVIEW-BLACK-FRAMES
+    title: "Review tool frames 2 to 16 render black on Summit"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-REVIEW-BLACK-FRAMES.md"
 
   - id: QA-TITAN-REPLAY-TIMEOUT
     title: "Bound the unreliable nested Titan replay check"
