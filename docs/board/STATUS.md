@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T23:31:16.640Z
+Observed at: 2026-10-15T23:34:36.263Z
 
-Observation commit: e723199efbab4be836cd35a699d93178bbba1844
+Observation commit: 6c49c03c24cb4cb30ca84edf0d1fbbfe1b0e828d
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e723199efbab4be836cd35a699d93178bbba1844
+Integration HEAD: 6c49c03c24cb4cb30ca84edf0d1fbbfe1b0e828d
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,8 +29,9 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/ardennes-switch-on | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on |
 | codex/deep-art-src | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
-| codex/earn-car-2 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2 |
+| codex/earn-car-2 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2 |
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
 | codex/intel-levels | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/intel-levels |
 | codex/p4-ardennes | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
@@ -57,6 +58,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T16:34:12-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/EARN-CAR-2.md, tools/scenarios/mclaren-f1-look.mjs, docs/HELICOPTER.md, src/config.js, src/sound-bank.js |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T16:22:01-07:00 | 0 | last commit 2026-10-15T16:22:01-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/intel-levels.js, src/progression.js, tools/test-intel-levels.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 4 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
@@ -83,7 +85,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 297,528 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 440,243,200 B | +126,976 B | unavailable |
+| Git objects | 440,553,472 B | +310,272 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -92,7 +94,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: e723199efbab4be836cd35a699d93178bbba1844
+- Local integration/wasteland: 6c49c03c24cb4cb30ca84edf0d1fbbfe1b0e828d
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -100,6 +102,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: behind local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit d716e262858b76f1638b777c8f791d86eb15be4e.
+- Remote origin/integration/wasteland: behind local; cached commit a3a2d597a2b120197d44a7b3a97ce68852e619f2.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.

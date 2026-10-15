@@ -28,7 +28,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "blocked"
+    status: "building"
+    claimed_by: codex-card-answers-01a141d7
+    branch: codex/qa-arena-air-only
     needs: []
     locks: []
     details: "docs/board/cards/QA-ARENA-STEERING-AIR-ONLY.md"
@@ -170,7 +172,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-cups-2026-10-15
+    branch: codex/p4-cups
     needs: [P4-CAREER, P4-SUMMIT, P4-VARIANTS, P4-TREMBLANT-SNOW, P4-GP-EXISTING]
     locks: [save-shape, busy-game-files]
     flag: "grand-prix"
