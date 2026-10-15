@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T21:05:25.171Z
+Observed at: 2026-10-15T21:14:54.887Z
 
-Observation commit: 1a447808484261a7a2a94c452ff1c59fbceaaa76
+Observation commit: 5a85be03355b736307df308eb45cb3676ed3cbe6
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 1a447808484261a7a2a94c452ff1c59fbceaaa76
+Integration HEAD: 5a85be03355b736307df308eb45cb3676ed3cbe6
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -43,7 +43,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-yeti-native | 1 | unknown | true | false | unknown |
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/qa-browser-sweep | 1 | unknown | false | false | unknown |
-| codex/qa-stock-snow | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-stock-snow |
+| codex/qa-stock-snow | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-stock-snow |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 20 | unknown | true | false | unknown |
@@ -56,7 +56,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/drive-lesson-save | DRIVE-LESSON-SAVE | 2026-10-15T14:04:18-07:00 | 0 | last commit 2026-10-15T14:04:18-07:00 | docs/changes/DRIVE-LESSON-SAVE.md, src/lessons/drive-lesson-save.js, src/progression.js, tools/fixtures/saves/11-driving-lessons.json, tools/test-drive-lesson-save.mjs |
+| codex/drive-lesson-save | DRIVE-LESSON-SAVE | 2026-10-15T14:07:20-07:00 | 0 | last commit 2026-10-15T14:07:20-07:00 | docs/changes/DRIVE-LESSON-SAVE.md, src/lessons/drive-lesson-save.js, src/progression.js, tools/fixtures/saves/11-driving-lessons.json, tools/test-career-backup.mjs |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T13:15:51-07:00 | 0 | last commit 2026-10-15T13:15:51-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-15T11:22:23-07:00 | 0 | last commit 2026-10-15T11:22:23-07:00 | docs/changes/P4-ARDENNES.md, tools/scenarios/ardennes-views.mjs, tools/scenarios/frame-pacing.mjs, tools/test-circuit-ardennes.mjs, tools/test-track-script.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
@@ -64,7 +64,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/qa-stock-snow | QA-STOCK-SNOW | 2026-10-15T13:57:45-07:00 | 0 | last commit 2026-10-15T13:57:45-07:00 | docs/changes/QA-STOCK-SNOW.md, src/app.js, tools/test-race-surfaces.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
@@ -80,9 +79,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 344,897 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 136,396 B | -208,501 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 436,079,616 B | +73,728 B | unavailable |
+| Git objects | 436,135,936 B | +56,320 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -91,7 +90,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 1a447808484261a7a2a94c452ff1c59fbceaaa76
+- Local integration/wasteland: 5a85be03355b736307df308eb45cb3676ed3cbe6
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
