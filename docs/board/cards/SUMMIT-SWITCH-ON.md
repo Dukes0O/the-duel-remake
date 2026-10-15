@@ -67,3 +67,8 @@ authored `clearance` to Summit's gallery and the assertion as written, finish
 the four-seed matrix, capture Summit's signature with snowWorld always on, then
 lane tier, build and one review. Hand back on this card; Claude reviews the
 final views and runs RELEASE-SUMMIT straight after the merge.
+
+
+## Retained-lane continuation, 15 October afternoon
+
+The card-answer chat (01a141d7) takes this retained lane at 4e9fa2e2, with release/world-signatures locks already assigned. The active overnight chat continues TYRE-SLIP and Ardennes; this chat owns only SUMMIT-SWITCH-ON. Apply Claude's approved authored-gallery clearance contract in src/circuits/summit-run.js and tools/test-circuits.mjs, preserve the generic 8/7 tunnel guard verbatim, then complete the existing four-seed geometry suite and the already named signature/state hooks. Sync current integration first; retain all unrelated work. No new lane, frame reservation, live install, push or claim on the gameplay/save locks.
