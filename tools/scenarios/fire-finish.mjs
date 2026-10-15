@@ -63,7 +63,8 @@ async function flyOneOut(context) {
   await context.evaluate(`document.querySelector('#heli-visit').click()`);
   await context.waitFor(`${app}.duel.state.status==='heli' && ${app}.visualReady`, 'helipad', 120_000);
   await installPilot(context);
-  await context.evaluate(`(() => { ${app}.heliLog = []; const v = ${app}.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.zone.y + 30, speed: 2, sink: 4}; ${app}.heliCamera = 0; })()`);
+  await context.evaluate(`(() => { ${app}.heliLog = []; const v = ${app}.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.zone.y + 45, speed: 2, sink: 4}; ${app}.heliCamera = 0; })()`);
+  // The call rings only 30 m or more above the ground (MISSION_RULES.callHeight).
   await context.waitFor(logged('fireCall'), 'the radio call', 150_000);
   await pause(1200);
   await shoot(context, 'fire-finish-call', 'The call: dispatch on the radio, R to answer');
