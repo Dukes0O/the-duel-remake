@@ -1,6 +1,6 @@
 ---
 task: WILD-PLACE
-status: ready-for-review
+status: ready-for-review (review fixes made)
 kind: feature
 flag: none yet (see below)
 player_facing: no
@@ -25,9 +25,10 @@ world signature can change.
     the moose sometimes stands in the shallows.
   - **Spots**: count is the reference lap over 45 s, rounded, 1 to 8
     (`sightingSpotCount`; Tremblant Woods at 77 s gives 2). Each spot has its
-    own stretch of lap time, and the stretches are 25 s apart, so two spots
-    are never closer than 25 s of reference lap whatever positions they pick
-    (`planWildlife`, `lapClock`). Time along the lap comes from the bundled
+    own stretch of lap time, and the stretches are 26 s apart (one second in
+    hand), so two spots are never closer than 25 s of reference lap whatever
+    positions they pick (`planWildlife`, `lapClock`). A very short lap or open
+    road gets fewer spots rather than closer ones (a 68 s open road has one). Time along the lap comes from the bundled
     reference trace.
   - **Herds**: one herd per spot, species by weight, herd size from the
     table. One race in five (a fixed roll from the seed) one spot holds the
@@ -52,7 +53,8 @@ world signature can change.
     distance band, and `wildlifeRng(..., purpose)` gives the count job its own
     generator. Nothing else is needed from this card.
 - `tools/test-wildlife.mjs` (new, found by the test runner on its own, in the
-  lane tier like every `tools/test-*.mjs`): 5,045 checks, about 6 seconds.
+  lane tier like every `tools/test-*.mjs`): 33,492 checks, 2,355 animals,
+  about 8 seconds.
   - Same seed gives the same animals; a different race number, day or course
     gives different ones; spot counts (Tremblant Woods 77 s gives 2, and the
     bounds); spacing of at least 25 s on 12 courses over 6 races each; each
@@ -68,10 +70,44 @@ world signature can change.
     rare rate, obstacles, tunnels, lakes, pit side, paddock, ski lodge,
     escape roads) and the test caught each one.
 
+## Review fixes (14 October 2026)
+
+The independent review found three real faults, all fixed:
+
+1. **Animals inside buildings and rocks.** The check only asked for obstacles
+   filed under the animal's nearest stretch of road, so where two stretches run
+   side by side an obstacle filed under the other one was missed (a cat inside a
+   Harbour Lights warehouse; a deer inside a Tremblant Snow rock). Every obstacle
+   the course lists is now filed by where it stands in the world and checked.
+2. **Places a real race builds beyond the road.** The hidden road of Pacific
+   Canyon (a jackrabbit stood 2.6 m from its centre) and High Country's Muddy
+   Hollow zone are now refused, with a margin (6 m beyond the hidden road's
+   width; 10 m round the hollow). The Deep: `installDeepCourse` replaces the
+   course's `surfaceAt`, so its ramp already counts as road, and the checker
+   also refuses the ramp's strip with an 8 m margin. The Deep is only built with
+   its switch, kit and providers, which a test cannot supply, so the ramp is
+   tested with a stand-in ramp shape.
+3. **Spacing on open roads.** A slot was only 2 s wide at minimum, so a 68 s open
+   road gave two spots 24 s apart. The spot count is now cut until every slot
+   fits, and the gap between slots is 26 s.
+
+Test gaps closed: a sweep of Harbour Lights, Tremblant Snow, Tremblant Woods and
+Panorama Ridge (days 9 and 20, 40 races each) against the full obstacle list;
+120 races each on Pacific Canyon with its hidden road and High Country with
+Muddy Hollow, plus direct refusals inside both; spacing measured with a second
+lap clock made in the test; the maximum-edge check now includes shortcuts and
+branches (measured every 2 m, 3 m allowed for the module's coarser sampling);
+open and closed short laps from 30 to 900 s; and the raccoon at Harbour Lights
+on a night course. To give Harbour Lights the raccoon within four common
+species, the black kite moved out of its list (it stays on the other city
+courses): pigeon, egret, cat, raccoon. I broke the code on purpose again for
+the obstacle filing, hidden road, hollow, deep ramp and both spacing rules, and
+the test caught each.
+
 ## Tests run
 
 `node tools/test-wildlife.mjs` passes. `node tools/test-repo-hygiene.mjs`
-passes. The lane tier, the build and the browser checks were not run in this
+passes (both run before the frame check began). The lane tier, the build and the browser checks were not run in this
 lane because the laptop was in a release window; the lane gate and build are
 still to be run before merge.
 
@@ -113,7 +149,7 @@ None.
   bighorn, collared lizard (rare condor); Pacific Canyon has roadrunner,
   jackrabbit, coyote, pelican (rare condor). City courses other than Harbour
   Lights get pigeon, black kite, cat, raccoon (rare owl); Harbour Lights gets
-  pigeon, black kite, egret, cat (rare black-faced spoonbill). The cat and
+  pigeon, egret, cat, raccoon (rare black-faced spoonbill). The cat and
   raccoon appear on night courses only. Claude to confirm or change.
 - **Wolf tracks** at Tremblant Snow are a decal, not a model. The id
   `wolf-tracks` has to be in the approved list for them to appear.

@@ -26,6 +26,8 @@ export const SEA_LEVEL = -15;          // the same level as src/coastal-water.js
 export const ESTIMATED_PACE = 45;
 
 const TAU = Math.PI * 2;
+const SLOT_GAP_SECONDS = MIN_GAP_SECONDS + 1;  // one second in hand, so another clock still reads 25 s
+const MIN_SLOT_SECONDS = 2;            // the least lap time a spot may choose from
 const OPEN_ROAD_MARGIN = 8;            // seconds left clear at each end of an open road
 const LAKE_GAP = 1.5;                  // other animals stay this far from the water
 const OBSTACLE_MARGIN = 1;
@@ -143,7 +145,7 @@ export const COURSE_SPECIES = Object.freeze({
     row('roadrunner', 3, 1, 2), row('jackrabbit', 4, 1, 3), row('coyote', 3, 1, 2), row('pelican', 2, 1, 3),
   ], row('condor', 1, 1, 1)),
   'harbour-lights': course([
-    row('pigeon', 4, 4, 8), row('black-kite', 3, 1, 3), row('egret', 3, 1, 3), row('cat', 2, 1, 1, { night: true }),
+    row('pigeon', 4, 4, 8), row('egret', 3, 1, 3), row('cat', 2, 1, 1, { night: true }), row('raccoon', 2, 1, 2, { night: true }),
   ], row('black-faced-spoonbill', 1, 1, 3)),
   'harbor-highlands': CITY(row('owl', 1, 1, 1)),
   'neon-docks': CITY(row('owl', 1, 1, 1)),
@@ -229,24 +231,25 @@ export function lapClock(referenceLap, length, closed = true) {
 // ---------------------------------------------------------------------------
 // The plan for one race: how many spots, when each may be, which holds the
 // rare animal. Needs no course, so it is cheap to run over many seeds.
-// Each spot gets a slot of lap time; consecutive slots are MIN_GAP_SECONDS
+// Each spot gets a slot of lap time; consecutive slots are SLOT_GAP_SECONDS
 // apart, so any two spots are at least that far apart whatever they pick.
 // ---------------------------------------------------------------------------
 export function planWildlife({ courseId, playDay, raceNumber, lapSeconds, closed = true }) {
   const seed = wildlifeSeed(courseId, playDay, raceNumber);
-  const count = sightingSpotCount(lapSeconds);
+  const start = closed ? 0 : Math.min(OPEN_ROAD_MARGIN, lapSeconds / 4);
+  const span = closed ? lapSeconds : lapSeconds - 2 * start;
+  // Every slot is a gap plus a little room, so a short lap has fewer spots rather than closer ones.
+  const count = Math.max(1, Math.min(sightingSpotCount(lapSeconds), Math.floor(span / (SLOT_GAP_SECONDS + MIN_SLOT_SECONDS))));
   const rng = makeRng(seed);
   const rare = rng.chance(RARE_CHANCE);
   const rareIndex = rare ? rng.int(0, count - 1) : null;
   const shift = rng.float();
-  const start = closed ? 0 : Math.min(OPEN_ROAD_MARGIN, lapSeconds / 4);
-  const span = closed ? lapSeconds : lapSeconds - 2 * start;
   const each = span / count;
   const phase = closed ? shift * each : 0;
   const slots = [];
   for (let index = 0; index < count; index++) {
-    const from = start + phase + index * each + MIN_GAP_SECONDS / 2;
-    const width = Math.max(2, each - MIN_GAP_SECONDS);
+    const from = start + phase + index * each + SLOT_GAP_SECONDS / 2;
+    const width = Math.max(MIN_SLOT_SECONDS, each - SLOT_GAP_SECONDS);  // wider than the gap only matters for a lone spot
     slots.push(Object.freeze({ index, from, to: from + width }));
   }
   return Object.freeze({ seed, count, rareIndex, slots: Object.freeze(slots), lapSeconds, closed });
@@ -316,6 +319,52 @@ function kitFootprints(course) {
   return { circles, belt };
 }
 
+// Every obstacle the course lists, filed by where it stands in the world (not
+// by its place along the road: where two stretches of road run side by side,
+// an obstacle filed under one stretch still stands beside the other).
+const GRID_CELL = 64;
+function hazardGrid(course) {
+  const cells = new Map();
+  for (const o of course.features?.obstacles ?? []) {
+    const reach = Math.hypot(o.halfX, o.halfZ) + OBSTACLE_MARGIN + 1;
+    for (let i = Math.floor((o.x - reach) / GRID_CELL); i <= Math.floor((o.x + reach) / GRID_CELL); i++)
+      for (let j = Math.floor((o.z - reach) / GRID_CELL); j <= Math.floor((o.z + reach) / GRID_CELL); j++) {
+        const key = i + ':' + j;
+        if (!cells.has(key)) cells.set(key, []);
+        cells.get(key).push(o);
+      }
+  }
+  return { near: (x, z) => cells.get(Math.floor(x / GRID_CELL) + ':' + Math.floor(z / GRID_CELL)) ?? [] };
+}
+
+// Places a real race builds beyond the road itself (src/game.js builds the
+// course with these): Pacific Canyon's hidden road (`hiddenRoad`), High
+// Country's Muddy Hollow zone (`muddyHollow`) and the Pacific Deep ramp
+// (`deepRamp`, installed only with the deep providers, switch and kit). Each is
+// read from the course when it is there and costs nothing when it is not.
+const HIDDEN_ROAD_MARGIN = 6;
+const HOLLOW_MARGIN = 10;
+const DEEP_RAMP_MARGIN = 8;
+function unreachable(course, x, z) {
+  const hidden = course.hiddenRoad;
+  if (hidden) {
+    const near = hidden.nearest(x, z);
+    if (near.distance <= hidden.widthAt(near.progress) + HIDDEN_ROAD_MARGIN) return true;
+  }
+  const hollow = course.muddyHollow;
+  if (hollow) {
+    if (hollow.contains(x, z)) return true;
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (hollow.contains(x + dx * HOLLOW_MARGIN, z + dz * HOLLOW_MARGIN)) return true;
+  }
+  const ramp = course.deepRamp;
+  if (ramp) {
+    const first = ramp.points[0], last = ramp.points.at(-1), dx = x - first.x, dz = z - first.z;
+    const along = dx * Math.sin(ramp.heading) + dz * Math.cos(ramp.heading), across = dx * Math.cos(ramp.heading) - dz * Math.sin(ramp.heading);
+    if (along > -DEEP_RAMP_MARGIN && along < last.horizontal + 6 + DEEP_RAMP_MARGIN && Math.abs(across) < ramp.width / 2 + DEEP_RAMP_MARGIN) return true;
+  }
+  return false;
+}
+
 function pointToPolyline(points, x, z) {
   let best = Infinity;
   for (let i = 0; i < points.length; i++) best = Math.min(best, Math.hypot(points[i].x - x, points[i].z - z));
@@ -326,8 +375,7 @@ export function createPlacementChecker(course) {
   const branches = branchRoads(course);
   const { circles, belt } = kitFootprints(course);
   const basins = course.def.basins ?? [];
-  const everything = course.features?.obstacles ?? [];
-  const nearbyObstacles = s => typeof course.obstaclesNear === 'function' && course.obstacleBuckets ? course.obstaclesNear(s - 30, s + 30) : everything;
+  const hazards = hazardGrid(course);
 
   // Metres into a lake (positive) or from its shore (negative), along the line
   // out from the lake's middle. Water that is deeper than the shore line is
@@ -369,7 +417,8 @@ export function createPlacementChecker(course) {
       if (along >= belt.from && along <= belt.to && Math.abs(n.lateral) <= room) return null;
     }
     for (const circle of circles) if (Math.hypot(circle.x - x, circle.z - z) < circle.radius) return null;
-    for (const o of nearbyObstacles(phase)) if (insideObstacle(o, x, z, OBSTACLE_MARGIN)) return null;
+    for (const o of hazards.near(x, z)) if (insideObstacle(o, x, z, OBSTACLE_MARGIN)) return null;
+    if (unreachable(course, x, z)) return null;
     const water = lakeOut(n);
     if (lake === 'avoid' && water.out > -LAKE_GAP) return null;
     if (lake === 'shallows' && water.out > SHALLOWS_METRES) return null;
