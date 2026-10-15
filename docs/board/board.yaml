@@ -152,9 +152,7 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "S"
-    status: "building"
-    claimed_by: codex-audio-clock-2026-10-15
-    branch: codex/qa-audio-clock
+    status: "backlog"
     needs: []
     details: "docs/board/cards/QA-AUDIO-CLOCK.md"
 
