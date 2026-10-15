@@ -10,7 +10,7 @@ import {createHeliSession, courseSite} from '../src/heli/heli-session.js';
 import {fireOnNewDay, fireWorld} from '../src/heli/heli-fire-run.js';
 import {startFire, startCells} from '../src/heli/heli-fire.js';
 import {armMissions, openCall} from '../src/heli/heli-missions.js';
-import {heliOf, missionsOf, fireOf, setMissions, setFire, notePlayDay, createMissions, hearBurnNews} from '../src/heli/heli-save.js';
+import {heliOf, missionsOf, fireOf, setMissions, setFire, notePlayDay, createMissions, hearBurnNews, buyBack, burnCourse} from '../src/heli/heli-save.js';
 import {courseClosed, buybackPrice} from '../src/course-closures.js';
 import {dispatchBoardMarkup, handleBoardAction} from '../src/heli/heli-board.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
@@ -284,6 +284,11 @@ function check(name, fn) { fn(); console.log('PASS ' + name); }
   same(hearBurnNews(profile, 'tremblant-snow', 'reopen', on).ok, false, 'a course with no burn has no news');
   same(hearBurnNews(profile, 'tremblant-woods', 'smoke', on).ok, false, 'only the three pieces of news');
   same(hearBurnNews(profile, 'tremblant-woods', 'fireweed', {enabled: false}).ok, false, 'switch off: nothing saved');
+  // A bought-back burn keeps its news; a new burn starts with none.
+  const rich = {...profile, credits: 50_000};
+  same(heliOf(buyBack(rich, 'tremblant-woods', on).profile ?? rich).burnt['tremblant-woods'].heard, 'fireweed', 'a buyback keeps the news heard');
+  same(Object.hasOwn(heliOf(burnCourse(profile, 'tremblant-woods', heliOf(profile).playDay.count, on).profile).burnt['tremblant-woods'], 'heard'), false,
+    'the course burning again starts with no news heard');
 }
 
 // ---- The app: race start, buyback, play days and the switch ----------------------

@@ -286,7 +286,7 @@ export function hottestEdge(fire, grid, wind = null) {
 }
 
 // ---- the fire's clock (section 4.2) -----------------------------------------
-// One spread step for every 90 s the engine runs, on any course; three at the
+// One spread step for every 200 s the engine runs, on any course; three at the
 // start of each new play day; nothing while the game is closed or in a race.
 // Steps stop as soon as the fire is lost. The engine seconds below a step are
 // kept in the record without rounding, so a frame at a time adds up.
