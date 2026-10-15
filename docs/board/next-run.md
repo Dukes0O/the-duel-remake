@@ -23,7 +23,10 @@ set the laptop screen off (Dells on) for frame checks.
      heavier), measured on Harbour and on Summit's night summit;
    - **P4-SUMMIT-ATTACK**, measure T on the accepted route and finish it. If it
      is not green by 02:30, Summit ships without Time Attack (it stays dev).
-2. **Claude** finishes P4-FINISH-SUMMIT in lane claude-finish-summit, merges
+2. **Codex, right after those two:** SUMMIT-GALLERY-COVER, SUMMIT-PIT-BALANCE
+   (Claude settles its number), SNOW-VARIATION, YETI-FUR-TINT, then
+   QA-REVIEW-BLACK-FRAMES. Summit's finishing pass part 1 is merged.
+   **Claude** finishes P4-FINISH-SUMMIT in lane claude-finish-summit, merges
    it, then prepares and runs the Summit release (RELEASE-SUMMIT), posting the
    usual hold and RELEASE DONE.
 3. **The 04:00 full check stays** (scheduled task). A Summit release full tier

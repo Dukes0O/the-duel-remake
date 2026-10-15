@@ -10,7 +10,7 @@ import {CABLE, createLoad, hook, release, stepCable} from '../src/heli/heli-cabl
 import {createBucket} from '../src/heli/heli-bucket.js';
 import {
   RESCUE, SUPPLY_CRATES, SUPPLY_PAY, createRescueLine, setLineWho, peopleOnLine, hNothing, canFitLine, holdFraction,
-  stepRescue, rescueHit, rescuePay, createSupplyCrate, crateResult, cratePay, supplyPay,
+  stepRescue, rescueHit, rescuePay, createSupplyCrate, noteCrateRelease, crateResult, cratePay, supplyPay,
 } from '../src/heli/heli-rescue.js';
 
 let checks = 0;
@@ -112,7 +112,9 @@ ok(RESCUE.speedLimit < RESCUE.warnSpeed, 'the limit sits under the warning');
   const pair = createRescueLine({ground: flat}); setLineWho(pair, 'pair');
   eq(count(rules(pair, still(0, 0, 0, 30), 1), 'rescueFast'), 1, 'a pair is warned too');
   const gone = createRescueLine({ground: flat}); gone.done = true;
-  eq(rules(gone, still(0, 0, 0, 30), 1).length, 0, 'a finished line says nothing');
+  eq(types(rules(gone, still(0, 0, 0, 30), 1)).join(), 'rescueFast', 'after the handover the rescuer still rides the line, so Roger still warns');
+  gone.hooked = false;
+  eq(rules(gone, still(0, 0, 0, 30), 1).length, 0, 'a line taken off says nothing');
 }
 
 // Bumps over 4 m/s, and the pay.
@@ -139,11 +141,11 @@ ok(RESCUE.speedLimit < RESCUE.warnSpeed, 'the limit sits under the warning');
   eq(rescuePay(1200, 9), 0, 'and pay never goes below 0');
   eq(rescuePay(1000, 3), 100, 'one hiker: 1,000 less three bumps is 100');
   eq(rescuePay(0, 1), 0, 'no pay stays 0');
-  const credits = {credits: 5000};
-  rescueHit(line, {type: 'cargoHit', id: 'rescue', speed: 9}); rescuePay(1200, line.bumps);
-  eq(credits.credits, 5000, 'the line never touches credits');
+  eq(Object.keys(rescueHit(line, {type: 'cargoHit', id: 'rescue', speed: 9})).sort().join(), 'bump,bumps,cut,event', 'a bump reports a cut; paying it is the session\'s job');
   const done = createRescueLine({ground: flat}); done.done = true;
-  eq(rescueHit(done, {type: 'cargoHit', id: 'rescue', speed: 9}).bump, false, 'nobody is on a finished line');
+  eq(rescueHit(done, {type: 'cargoHit', id: 'rescue', speed: 9}).bump, false, 'after the handover the pay is settled: no more bumps');
+  eq(rescueHit(createRescueLine({ground: flat}), {type: 'cargoHit', id: 'rescue', speed: 9, with: 'helicopter'}).bump, false,
+    'the line swinging into the helicopter is not a bump');
   // A real hit from H1's cable: the rescuer slid into a tree faster than 4 m/s.
   const tree = flatGround(0, [{x: 12, z: 0, radius: 0.5, base: 0, top: 15, height: 15, kind: 'tree', id: 't1', shape: 'cylinder'}]);
   const slider = createRescueLine({ground: tree, x: 7, z: 0});
@@ -201,8 +203,12 @@ const target = {x: 40, z: -10};
   // Reset when the helicopter speeds up mid-hold.
   const wobble = rescuer();
   rules(wobble, still(41, -9), 4, {target, kind: 'hoist'});
-  const dragged = rules(wobble, still(41, -9, 2, 0), 0.1, {target, kind: 'hoist'});
-  eq(count(dragged, 'holdReset'), 1, 'the helicopter moving off resets the hold');
+  eq(rules(wobble, still(41, -9, 2, 0), 0.2, {target, kind: 'hoist'}).length, 0, 'a moment over 1.5 m/s (0.2 s) is forgiven');
+  ok(wobble.holding && wobble.hold > 3.9, 'and the hold carries on');
+  for (let i = 0; i < 240; i++) rules(wobble, still(41, -9, i % 12 < 6 ? 1.55 : 1.45, 0), 1 / 120, {target, kind: 'hoist'});
+  ok(wobble.holding, 'a speed wobbling around 1.5 m/s does not reset the hold');
+  const dragged = rules(wobble, still(41, -9, 2, 0), 0.3, {target, kind: 'hoist'});
+  eq(count(dragged, 'holdReset'), 1, 'the helicopter moving off for 0.25 s resets the hold');
   eq(wobble.hold, 0, 'the count is back to 0');
   const again = rules(wobble, still(41, -9), 7.9, {target, kind: 'hoist'});
   eq(count(again, 'holdStarted'), 1, 'it starts again');
@@ -213,7 +219,7 @@ const target = {x: 40, z: -10};
   const slide = rescuer();
   rules(slide, still(41, -9), 3, {target, kind: 'hoist'});
   slide.vx = 2;
-  const slid = rules(slide, still(41, -9), 0.1, {target, kind: 'hoist'});
+  const slid = rules(slide, still(41, -9), 0.3, {target, kind: 'hoist'});
   eq(slid.find(e => e.type === 'holdReset')?.reason, 'dragged', 'the rescuer dragged at 2 m/s resets the hold');
   slide.vx = 1;
   eq(count(rules(slide, still(41, -9), 0.1, {target, kind: 'hoist'}), 'holdStarted'), 1, 'at 1 m/s it holds again');
@@ -222,7 +228,7 @@ const target = {x: 40, z: -10};
   const lift = rescuer();
   rules(lift, still(41, -9), 5, {target, kind: 'hoist'});
   lift.onGround = false;
-  const lifted = rules(lift, still(41, -9), 0.1, {target, kind: 'hoist'});
+  const lifted = rules(lift, still(41, -9), 0.3, {target, kind: 'hoist'});
   eq(lifted.find(e => e.type === 'holdReset')?.reason, 'lifted', 'lifting the rescuer off resets the hold');
   eq(count(rules(lift, still(41, -9), 9, {target, kind: 'hoist'}), 'holdDone'), 0, 'in the air it never finishes');
   lift.onGround = true;
@@ -232,7 +238,7 @@ const target = {x: 40, z: -10};
   const drift = rescuer();
   rules(drift, still(41, -9), 2, {target, kind: 'avalanche'});
   drift.x = 45;
-  eq(count(rules(drift, still(45, -9), 0.1, {target, kind: 'avalanche'}), 'holdReset'), 1, 'sliding out of the ring resets the dig');
+  eq(count(rules(drift, still(45, -9), 0.3, {target, kind: 'avalanche'}), 'holdReset'), 1, 'sliding out of the ring resets the dig');
   eq(count(rules(drift, still(45, -9), 5, {target, kind: 'avalanche'}), 'holdReset'), 0, 'and does not repeat the reset');
 
   // A real cable: hover at rest on the target, the load sits still, the hold runs.
@@ -256,14 +262,27 @@ const target = {x: 40, z: -10};
 // The handover: the pair at rest inside a landing circle at 1 m/s or less.
 {
   const zones = [{x: 100, z: 0, radius: 12}, {x: 0, z: 0, radius: 12}];
-  const pairAt = (x, z) => { const l = createRescueLine({x, z, ground: flat}); setLineWho(l, 'pair'); return l; };
+  // A pair already carried (lifted) and set down gently.
+  const pairAt = (x, z) => { const l = createRescueLine({x, z, ground: flat}); setLineWho(l, 'pair'); l.lifted = true; return l; };
   const inside = pairAt(105, 5);
   const events = rules(inside, still(105, 5), 1, {zones});
   eq(types(events).join(), 'handover', 'a pair set down inside a circle is handed over');
   eq(events[0].zone, 0, 'naming the circle');
   ok(inside.done, 'and the line is done');
   eq(rules(inside, still(105, 5), 2, {zones}).length, 0, 'the handover happens once');
-  ok(!peopleOnLine(inside), 'no people remain on the line');
+  eq(inside.who, 'rescuer', 'the casualty goes to the paramedics');
+  eq(inside.massKg, 90, 'leaving the rescuer\'s 90 kg on the line');
+  ok(peopleOnLine(inside) && hNothing(inside), 'the rescuer rides home: H still does nothing');
+  // Clipped on but never lifted: no handover where the casualty lay.
+  const unlifted = createRescueLine({x: 105, z: 5, ground: flat}); setLineWho(unlifted, 'pair');
+  eq(rules(unlifted, still(105, 5), 2, {zones}).length, 0, 'a pair never lifted is not handed over');
+  // Set down hard: the speed it touched the ground at counts.
+  for (const [speed, handed] of [[0.9, true], [2, false], [3.5, false]]) {
+    const pair = pairAt(105, 5); pair.onGround = false; pair.vy = -speed;
+    rules(pair, still(105, 5), 1 / 120, {zones});
+    pair.onGround = true; pair.vy = 0;
+    eq(count(rules(pair, still(105, 5), 2, {zones}), 'handover'), handed ? 1 : 0, `set down at ${speed} m/s: ${handed ? 'handed over' : 'no handover'}`);
+  }
   eq(rules(pairAt(3, -4), still(3, -4), 1, {zones: []}).length, 0, 'no circles, no handover');
   eq(rules(pairAt(3, -4), still(3, -4), 1).length, 0, 'same with none given');
   eq(types(rules(pairAt(3, -4), still(3, -4), 1, {zones: [zones[1]]})).join(), 'handover', 'the home pad\'s circle works');
@@ -312,7 +331,9 @@ const target = {x: 40, z: -10};
   ok(!hNothing(null), 'and with no list');
   ok(!hNothing(createBucket({ground: flat})), 'and with the bucket');
   line.done = true;
-  ok(!hNothing(line), 'H works again once the handover is done');
+  ok(hNothing(line), 'the rescuer rides home after the handover, so H still does nothing');
+  line.hooked = false;
+  ok(!hNothing(line), 'H works again once the line is taken off at the pad');
   // The cable itself would let go; the rule is the caller's to apply.
   const held = createRescueLine({ground: flat});
   ok(release(held, flat).ok, 'the cable lets go of any hooked load, so the session must apply hNothing');
@@ -374,6 +395,7 @@ const target = {x: 40, z: -10};
     const c = createSupplyCrate({id: 'food', x: 3, z: 0, ground: flat});
     Object.assign(c, {hooked: true, onGround: false, y: CABLE.restHeight + height, vx: 0, vy: 0, vz: 0});
     const out = release(c, flat);
+    noteCrateRelease(c, out.event);
     const events = [];
     for (let i = 0; i < 600; i++) events.push(...stepCable(c, {x: 3, y: 60, z: 0, vx: 0, vy: 0, vz: 0}, {ground: flat, zone: yard}).events);
     return {c, out, events};
@@ -386,6 +408,11 @@ const target = {x: 40, z: -10};
   near(crateResult(dropped.c, yard).dropMetres, 6, 1e-6, 'from 6 m');
   eq(cratePay(crateResult(dropped.c, yard)), 150, 'for 150');
   ok(types(dropped.events).includes('drop'), 'H1 reports the drop');
+  // Dropped, hooked again on the ground and let go there: the clean release counts.
+  dropped.c.hooked = true;
+  noteCrateRelease(dropped.c, release(dropped.c, flat).event);
+  eq(cratePay(crateResult(dropped.c, yard)), 300, 'a crate dropped, picked up again and let go on the ground pays 300');
+  eq(noteCrateRelease(createSupplyCrate({id: 'food', ground: flat}), {type: 'cargoHit'}), 0, 'other events change nothing');
   const away = place(0.5); away.c.x = 40;
   eq(crateResult(away.c, yard).released, false, 'a crate outside the yard is not delivered');
   const slung = createSupplyCrate({id: 'food', x: 1, z: 0, ground: flat}); slung.hooked = true;

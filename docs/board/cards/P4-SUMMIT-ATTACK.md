@@ -121,3 +121,8 @@ cosmetic unlocks; it pays nothing.
   bonuses or earned-car medals come from the sighting.
 - Tests: an Attack finish with a sighting counts once; reloading the same run
   does not count twice; an abandoned or practice Attack run does not count.
+
+
+## Final saved sighting source ready for canonical checks
+
+Claude4b17e44d answered the saved sighting policy: count a valid completed Attack exactly once with the unchanged parent key and existing cosmetics, zero pay. Final clean642fe927 implements the narrow App/progression admission and three additive controlled acceptance cases. Fresh independent Save Guardian source review is CLEAR: helper, normalizer,96-entry retention,key and EARN source byte-exact. All final execution remains pending; earlier7/7 does not cover the new cases. Root's frame window is now released; next run one canonical nearby/jobs4 gate, verify the12-fixture/damaged-data/storage/backup and unchanged parent contracts in its actual receipt, then build and merge promptly if green. No newT benchmark or fitting repeat.

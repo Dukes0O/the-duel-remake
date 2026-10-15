@@ -26,7 +26,8 @@ Needs: FIRE-MISSIONS and FIRE-BUCKET merged.
   - `hNothing(loadOrLoads)`: true while people are on the line, so the
     session can make H do nothing. `canFitLine(loads)`: one fitting at a
     time (car, bucket or line), with a reason when it says no.
-  - `SUPPLY_CRATES` (the numbers table), `createSupplyCrate`, `crateResult`,
+  - `SUPPLY_CRATES` (the numbers table), `createSupplyCrate`,
+    `noteCrateRelease` (call it with H1's `released` or `releasedHigh` event), `crateResult`,
     `cratePay`, `supplyPay`, and `SUPPLY_PAY`.
 - `tools/test-heli-rescue.mjs` (new, found by the runner by its name).
 
@@ -37,30 +38,41 @@ Needs: FIRE-MISSIONS and FIRE-BUCKET merged.
   Roger warns over 25 m/s, once per crossing. The warning is given again only
   after the helicopter has slowed to 24 m/s or less, so a speed wobbling
   around 25 does not repeat it.
-- Bumps: any cargo hit over 4 m/s with people on the line costs 300 credits;
-  pay never goes below 0. The hit class (light, heavy, wreck) does not change
-  the 300.
+- Bumps: striking terrain, a tree or a building over 4 m/s with people on
+  the line costs 300 credits; the line swinging into the helicopter is not a
+  bump, and after the handover the pay is settled so nothing more counts. Pay
+  never goes below 0. The hit class (light, heavy, wreck) does not change the
+  300.
 - Set-down and hold: the rescuer at rest on the ground within 3 m of the
   target, the helicopter's ground speed and the rescuer's sliding both at 1.5
   m/s or less. Hoist 8 s, avalanche 12 s. Dragged faster, lifted off or slid
-  out of the ring resets the hold; `holdReset` is sent only if a hold was
-  running. At the end: `holdDone`, then `clipped`, and the load becomes 170 kg.
-- Handover: the pair on the ground, sliding at 1 m/s or less, with the
-  helicopter at 1 m/s or less, inside any listed circle (12 m if a circle has
-  no radius). It happens once and the line is then `done`.
+  out of the ring for 0.25 s resets the hold (a shorter moment over, such as
+  a speed wobbling around 1.5 m/s, is forgiven); `holdReset` is sent only if
+  a hold was running. At the end: `holdDone`, then `clipped`, and the load becomes 170 kg.
+- Handover: the pair carried (lifted off since the clip) and set down at 1
+  m/s or less (the speed it touched the ground at), at rest, with the
+  helicopter at 1 m/s or less, inside any listed circle (12 m radius if a
+  circle has none). It happens once and the line is then `done`: the
+  casualty goes to the paramedics and the rescuer (90 kg) rides the line
+  home, so the speed warning and "H does nothing" last until the line is
+  taken off at the pad.
 - Supply crates: Summit Run food 300, medicine 200, fuel drums 820 kg;
   Tremblant Snow fallback 400, 500, 900 kg. Pay 300 a crate, 150 less when
   released from higher than 1 m, 100 more when all three are down in time
-  (1,000 for three clean ones). The hut yard is a 10 m circle.
+  (1,000 for three clean ones). The hut yard is a circle of 10 m radius.
+  A crate's pay reads its last release, so one dropped, picked up again and
+  let go on the ground pays the full 300.
 
 ## Tests
 
-- `node tools/test-heli-rescue.mjs`: 191 checks pass. The weights read by the
+- `node tools/test-heli-rescue.mjs`: 205 checks pass. The weights read by the
   real cable (90 then 170 kg), the speed warning and its limits, bumps and
   pay (including a real slide into a tree), the hold at each edge (3 m,
   1.5 m/s, 8 s and 12 s), resets from dragging, lifting and drifting, a real
   cable hold and a real cable drag, the handover at the circle edge and at
-  1 m/s, a pair lowered onto the ground on the real cable, H doing nothing,
+  1 m/s, no handover for a pair never lifted or set down at 2 or 3.5 m/s,
+  the rescuer left on the line after the handover, a hold surviving a speed
+  wobble around 1.5 m/s, a pair lowered onto the ground on the real cable, H doing nothing,
   one fitting at a time, the crate table, crate pay with the drop rule and the
   all-three bonus (clean and dropped real crates), the line steady on the
   cable under a moving helicopter for 60 s (rescuer and pair: the cable never
@@ -69,23 +81,55 @@ Needs: FIRE-MISSIONS and FIRE-BUCKET merged.
 - `node tools/test-heli-mode.mjs`: 150 checks pass, including the import
   guard and the no page, clock, storage or randomness rule for the new file.
 - `node tools/test-repo-hygiene.mjs`: placement passes.
-- Lane tier and build: run by the lead.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`) after the review fixes: 22 passed, 0 failed, 0 not run in 217 s. `npm run build`: passed.
 
 ## Changed assertions
 
-None.
+All in the card's own new test, after the review:
+
+- "a finished line says nothing" became "after the handover the rescuer
+  still rides the line, so Roger still warns", plus "a line taken off says
+  nothing": the rescuer now stays on the line after the handover.
+- "H works again once the handover is done" became "the rescuer rides home
+  after the handover, so H still does nothing" and "H works again once the
+  line is taken off at the pad", for the same reason.
+- "nobody is on a finished line" (rescueHit) now reads "after the handover
+  the pay is settled: no more bumps"; the result is the same.
+- The hold resets (helicopter moving off, rescuer dragged, lifted, sliding
+  out of the ring) now run 0.3 s over the limits instead of 0.1 s, because
+  of the 0.25 s grace.
+- The handover helper `pairAt` now marks the pair as already carried, since
+  a handover needs the pair lifted since the clip.
+- The "never touches credits" check compared an object nothing could reach;
+  it now checks that `rescueHit` only reports the cut.
 
 ## For the cards that wire it in
 
 - The session's `handle` charges a repair for every `cargoHit`. For the
   rescue line, RESCUE-HOOKS must call `rescueHit` instead and skip the repair
   (the pay cut is the cost), and must apply `hNothing` before `pressHook`.
-- A supply crate that was ever released from more than 1 m keeps its drop
-  height (H1 only resets it on the next high release), so picking it up again
-  does not clean its pay. Delivery counts when the crate is unhooked, at rest
-  and inside the yard circle (`crateResult`).
+- Pass every H1 `released` and `releasedHigh` event for a crate to
+  `noteCrateRelease`: H1 keeps `dropFrom` from an older high release when
+  a crate is let go on the ground, so the crate's own record is what pays.
+  Delivery counts when the crate is unhooked, at rest and inside the yard
+  circle (`crateResult`).
+- The session also plays "Careful with the cargo" (`heli.radio.cargo.hit`)
+  for every `cargoHit`; for the rescue line RESCUE-HOOKS should play only
+  Roger's "Easy!" so one bump gives one radio line.
+- Taking off the rescue line at the pad (`hooked = false`) ends "H does
+  nothing" and the speed warning.
 - The crate masses are starting values; RESCUE-SITES tunes them to the hut's
   real height (`createSupplyCrate` takes a `massKg` override).
+
+## Review
+
+One independent review (rule 17) of the line, the sites and the radio lines.
+Fixed here: the handover needed a gentle set-down and the pair carried
+first; the rescuer now stays on the line after the handover; the hold has a
+0.25 s grace so a wobble does not reset it; crate pay reads the last release
+(`noteCrateRelease`); the line hitting the helicopter is not a bump; the
+yard's 10 m is stated as a radius; an empty credits check replaced; new
+tests for set-downs at 2 and 3.5 m/s and for the wobble.
 
 ## Removed
 

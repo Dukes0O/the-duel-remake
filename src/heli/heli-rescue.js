@@ -50,7 +50,8 @@ export const SUPPLY_PAY = Object.freeze({
   // Released from higher than 1 m (H1's drop rule) counts, but pays this much less.
   highCut: 150, dropFrom: CABLE.dropFrom,
   allCratesBonus: 100,
-  // The hut yard: a clear circle this big, found near the summit hut.
+  // The hut yard: a clear circle of this radius near the summit hut (a
+  // "10 m circle", radius as in H1's 12 m landing circle).
   yardRadius: 10,
 });
 
@@ -62,8 +63,8 @@ const massOf = who => who === 'pair' ? RESCUE.pairKg : RESCUE.rescuerKg;
 // once the casualty is clipped on.
 export function createRescueLine({x = 0, z = 0, heading = 0, ground = null} = {}) {
   const load = createLoad({id: RESCUE.id, massKg: RESCUE.rescuerKg, x, z, heading, ground, restHeight: RESCUE.restHeight});
-  return Object.assign(load, {hooked: true, rescue: true, who: 'rescuer', hold: 0, holding: false,
-    bumps: 0, fastWarned: false, done: false});
+  return Object.assign(load, {hooked: true, rescue: true, who: 'rescuer', hold: 0, holding: false, overFor: 0,
+    bumps: 0, fastWarned: false, done: false, lifted: false, airSpeed: 0, landSpeed: 0, wasOnGround: true});
 }
 
 // Sets who is on the line and the mass the cable reads.
@@ -73,8 +74,11 @@ export function setLineWho(line, who) {
   return line.who;
 }
 
-// Anyone on the line, until the handover.
-export const peopleOnLine = line => !!line && !!line.rescue && line.hooked && !line.done;
+// Anyone on the line: the rescuer rides it home after the handover too, so
+// the speed limit and "H does nothing" last until the line is taken off at
+// the pad. done marks the handover: the rescue is paid and bumps no longer
+// change it.
+export const peopleOnLine = line => !!line && !!line.rescue && line.hooked;
 
 // H does nothing while people are on the line (a load or a list of loads).
 export const hNothing = loads => [].concat(loads ?? []).some(peopleOnLine);
@@ -97,6 +101,10 @@ export function holdFraction(line, kind) {
   return seconds ? clamp(line.hold / seconds, 0, 1) : 0;
 }
 
+// A hold forgives a moment over the limits (a wobble near 1.5 m/s or a
+// bounce): it resets only after this long over them.
+const HOLD_GRACE = 0.25;
+
 // One step of the line, before stepCable moves it. env: {ground, target
 // {x, z}, kind 'hoist' | 'avalanche', zones [{x, z, radius}]}. Returns {events}:
 //   rescueFast                      airspeed crossed 25 m/s with people aboard
@@ -114,6 +122,12 @@ export function stepRescue(line, heli, {target = null, kind = null, zones = []} 
 
   const heliSpeed = air;
   const slide = Math.hypot(line.vx, line.vz);
+  // How hard the line last came down: its speed on the step before it
+  // touched the ground (the cable moves it after this step).
+  if (!line.onGround) { line.airSpeed = Math.hypot(line.vx, line.vy, line.vz); if (line.who === 'pair') line.lifted = true; }
+  else if (!line.wasOnGround) line.landSpeed = line.airSpeed;
+  line.wasOnGround = line.onGround;
+  if (line.done) return {events};
   const still = line.onGround && !line.falling && slide <= RESCUE.setDownSpeed && heliSpeed <= RESCUE.setDownSpeed;
 
   // Set-down and hold: the rescuer at rest within 3 m of the casualty or beacon.
@@ -124,11 +138,12 @@ export function stepRescue(line, heli, {target = null, kind = null, zones = []} 
     if (!line.onGround || line.falling) reason = 'lifted';
     else if (slide > RESCUE.setDownSpeed || heliSpeed > RESCUE.setDownSpeed) reason = 'dragged';
     else if (away > RESCUE.setDownRadius) reason = 'away';
-    if (reason) {
+    if (reason && (!line.holding || (line.overFor += dt) >= HOLD_GRACE)) {
       if (line.holding) events.push({type: 'holdReset', reason});
-      line.holding = false; line.hold = 0;
-    } else {
+      line.holding = false; line.hold = 0; line.overFor = 0;
+    } else if (!reason) {
       if (!line.holding) { line.holding = true; line.hold = 0; events.push({type: 'holdStarted', kind, seconds}); }
+      line.overFor = 0;
       line.hold += dt;
       if (line.hold >= seconds - 1e-9) {
         events.push({type: 'holdDone', kind, seconds});
@@ -137,24 +152,29 @@ export function stepRescue(line, heli, {target = null, kind = null, zones = []} 
         events.push({type: 'clipped', who: 'pair', massKg: line.massKg});
       }
     }
-  } else if (line.who === 'pair' && still) {
-    // Handover: set down at rest inside any landing circle.
+  } else if (line.who === 'pair' && still && line.lifted && line.landSpeed <= RESCUE.handoverSpeed) {
+    // Handover: the pair carried and set down gently (1 m/s or less) inside
+    // a landing circle. The casualty goes to the paramedics; the rescuer
+    // rides the line home.
     const speed = Math.hypot(line.vx, line.vy, line.vz);
     const index = speed <= RESCUE.handoverSpeed ? (zones ?? []).findIndex(zone =>
       Math.hypot(line.x - zone.x, line.z - zone.z) <= (zone.radius ?? RESCUE.handoverRadius)) : -1;
     if (index >= 0 && heliSpeed <= RESCUE.handoverSpeed) {
       line.done = true;
+      setLineWho(line, 'rescuer');
       events.push({type: 'handover', zone: index});
     }
   }
   return {events};
 }
 
-// An H1 cargoHit event from stepCable for the line: any hit faster than 4 m/s
-// with people on it is a bump. Returns {bump, cut, bumps, event}; cut is the
-// pay cut in credits (300). Credits are never touched here.
+// An H1 cargoHit event from stepCable for the line: striking terrain, a tree
+// or a building faster than 4 m/s with people on it is a bump (the line
+// swinging into the helicopter is not), until the handover settles the pay.
+// Returns {bump, cut, bumps, event}; cut is the pay cut in credits (300).
+// Credits are never touched here.
 export function rescueHit(line, event) {
-  if (!peopleOnLine(line) || event?.type !== 'cargoHit' || (event.id !== undefined && event.id !== line.id) ||
+  if (!peopleOnLine(line) || line.done || event?.type !== 'cargoHit' || event.with === 'helicopter' || (event.id !== undefined && event.id !== line.id) ||
     !(event.speed > RESCUE.bumpSpeed)) return {bump: false, cut: 0, bumps: line?.bumps ?? 0, event: null};
   line.bumps++;
   return {bump: true, cut: RESCUE.bumpCut, bumps: line.bumps, event: {type: 'rescueBump', speed: event.speed, bumps: line.bumps}};
@@ -173,13 +193,22 @@ export function createSupplyCrate({id, set = 'summitRun', massKg, x = 0, z = 0, 
   return Object.assign(load, {supply: true, name: entry.name});
 }
 
+// Remember how the crate was last let go (from the cable's released or
+// releasedHigh event), so its pay reads this release, not an older one.
+export function noteCrateRelease(crate, event) {
+  if (event?.type === 'released') crate.releaseDrop = 0;
+  else if (event?.type === 'releasedHigh') crate.releaseDrop = event.heightM;
+  return crate.releaseDrop ?? 0;
+}
+
 // Is this crate down in the yard: unhooked, at rest on the ground, inside
-// the yard circle? Returns what cratePay reads: {released, dropMetres}.
-// dropMetres is the height it fell from, 0 for a clean release (H1's drop rule).
+// the yard circle? Returns what cratePay reads: {released, dropMetres}:
+// the height of its last release, 0 for a clean one (H1's drop rule).
 export function crateResult(crate, yard) {
   const inside = !!yard && Math.hypot(crate.x - yard.x, crate.z - yard.z) <= (yard.radius ?? SUPPLY_PAY.yardRadius);
   const released = !!crate.supply && !crate.hooked && !crate.falling && crate.onGround && inside;
-  return {released, dropMetres: released && crate.dropFrom > SUPPLY_PAY.dropFrom ? crate.dropFrom : 0};
+  const drop = crate.releaseDrop ?? 0;
+  return {released, dropMetres: released && drop > SUPPLY_PAY.dropFrom ? drop : 0};
 }
 
 // 300 credits a crate set down in the yard, 150 less when it was released
