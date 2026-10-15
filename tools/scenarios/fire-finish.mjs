@@ -15,6 +15,11 @@ const SHEET_ROUND = Number(process.env.FIRE_FINISH_SHEET || 0);
 const app = 'window.__qaApp';
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const shots = [];
+let refuels = 0;
+// What the helicopter was doing when a step timed out.
+const state = context => context.evaluate(`(() => { const v = ${app}.heliView();
+  return JSON.stringify({fuel: Math.round(v.heli.fuelKg), up: Math.round(v.heli.y - v.zone.y), speed: Math.round(Math.hypot(v.heli.vx, v.heli.vz)),
+    autopilot: ${app}.heliSession.autopilotOn, bucket: v.bucket?.words, fire: v.fire?.burning?.length ?? null, log: ${app}.heliLog.slice(-6).map(e => e.type)}); })()`);
 const shoot = async (context, name, label) => { shots.push({label, path: await context.screenshot(name)}); };
 const logged = type => `${app}.heliLog.some(e => e.type === ${JSON.stringify(type)})`;
 const settled = `(() => { const v = ${app}.heliView(), t = window.__pilot;
@@ -39,6 +44,14 @@ async function landAtPad(context) {
 // One bucket: the autopilot to the lake, a dip by hand, the climb, the
 // autopilot to the hot edge, H held until the bucket is empty.
 async function oneDrop(context, n) {
+  // Fuel low: back to the pad for the pump, as a player would.
+  if (await context.evaluate(`${app}.heliView().heli.fuelKg < 220`)) {
+    await landAtPad(context);
+    await context.evaluate(`(() => { const r = ${app}.heliSession.buyFuel(Infinity); ${app}._heliEvents(${app}.heliSession.takeEvents()); if (!r.ok) throw Error(r.reason); })()`);
+    refuels++;
+    await context.evaluate(`(() => { const v = ${app}.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.zone.y + 45, speed: 1, sink: 3}; })()`);
+    await context.waitFor(`${app}.heliView().heli.y - ${app}.heliView().zone.y > 40`, `drop ${n}: lift the bucket after the pump`, 60_000);
+  }
   await context.evaluate(`(() => { ${app}.heliLog = []; window.__pilot = null; if (!${app}.heliSession.autopilotOn) ${app}._inputAction('heli-autopilot'); })()`);
   await context.waitFor(logged('autopilotArrived'), `drop ${n}: the autopilot at the lake`, 300_000);
   await context.evaluate(`(() => { ${app}._inputAction('heli-autopilot'); const v = ${app}.heliView();
@@ -76,13 +89,18 @@ async function flyOneOut(context) {
   await context.waitFor(`${app}.heliView().heli.y - ${app}.heliView().zone.y > 40`, 'lift the bucket', 60_000);
   const start = await context.evaluate(`${app}.profile.credits`);
   let drops = 0, out = false;
-  while (!out && drops < 12) out = await oneDrop(context, ++drops);
+  try {
+    while (!out && drops < 12) out = await oneDrop(context, ++drops);
+  } catch (error) {
+    await context.screenshot('fire-finish-stuck');
+    throw Error(`${error.message} (state: ${await state(context)})`);
+  }
   if (!out) throw Error(`The fire was not out after ${drops} drops`);
   await context.evaluate(`(() => { window.__pilot = null; const v = ${app}.heliView(); window.__pilot = {x: v.heli.x, z: v.heli.z, y: v.heli.y, speed: 1}; ${app}.heliCamera = 0; })()`);
   await pause(1500);
   await shoot(context, 'fire-finish-out', 'Fire out: the pay and the badge');
   const result = await context.evaluate(`({credits: ${app}.profile.credits, firesOut: ${app}.profile.heli.missions.firesOut, fire: !!${app}.profile.heli.fire})`);
-  console.log(`Fire flown out in ${drops} drops: +${result.credits - start} credits, fires out ${result.firesOut}, fire left ${result.fire}`);
+  console.log(`Fire flown out in ${drops} drops and ${refuels} refuels: +${result.credits - start} credits, fires out ${result.firesOut}, fire left ${result.fire}`);
   if (result.fire || result.firesOut !== 1 || result.credits - start < 1500) throw Error('The fire did not end as out and paid');
   return drops;
 }
