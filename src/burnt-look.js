@@ -17,8 +17,9 @@ export const BURNT_LOOK = Object.freeze({
   // Charred bark (FIRE-VIEW card): linear 0.012, 0.011, 0.010.
   charcoal: Object.freeze([0.012, 0.011, 0.010]),
   snagEvery: 6, logEvery: 11,
-  // Ash under each burnt tree: a square this wide, just above its root.
-  ashSize: 7,
+  // Ash under each burnt tree: a square this wide, just above its root, wide
+  // enough that neighbours join into one dark floor seen from 150 m.
+  ashSize: 13,
   ground: Object.freeze({closed: 'ground-black.jpg', black: 'ground-black.jpg', shoots: 'ground-shoots.jpg', fireweed: 'ground-fireweed.jpg'}),
   // Clumps beside each burnt tree, by stage: [shoots, fireweed] per tree.
   clumps: Object.freeze({closed: [0, 0], black: [0, 0], shoots: [1, 0], fireweed: [1, 1]}),
@@ -247,7 +248,7 @@ export function createBurntLook({THREE, scene, load = defaultLoad}) {
     if (fade) return fade;
     const size = 64, data = new Uint8Array(size * size * 4);
     for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-      const d = Math.hypot(x - size / 2 + .5, y - size / 2 + .5) / (size / 2), v = Math.round(255 * Math.max(0, Math.min(1, (1 - d) * 2.2)));
+      const d = Math.hypot(x - size / 2 + .5, y - size / 2 + .5) / (size / 2), v = Math.round(255 * Math.max(0, Math.min(1, (1 - d) * 1.6)));
       data.set([v, v, v, 255], (y * size + x) * 4);
     }
     fade = new THREE.DataTexture(data, size, size);
