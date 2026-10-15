@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "group": "north-woods",
+  "status": "source-access-blocked",
+  "retrievedAtUtc": "2026-10-15T02:19:19.6940597Z",
+  "cacheRoot": "C:/Users/kyleb/dev/art-library/wild-north-woods",
+  "runtimeInstalled": false,
+  "recipePrepared": false,
+  "limits": {
+    "triangles": 5000,
+    "textureEdge": 1024,
+    "formalRounds": 3,
+    "sheetBytes": 500000
+  },
+  "models": [
+    {
+      "id": "white-tailed-deer",
+      "approvedDonor": "Quaternius Deer, Ultimate Animated Animal Pack",
+      "author": "Quaternius",
+      "source": "https://quaternius.com/packs/ultimateanimatedanimals.html",
+      "licence": "CC0-1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "publicFile": "https://drive.google.com/file/d/1iGpXKrqYGyZCPGHPPSuDAoKnOXLhXJ0q/view",
+      "access": "Public download returned Google Drive - Quota exceeded HTML; no model bytes",
+      "downloadReceipt": "quaternius-deer-quota.html",
+      "actualMesh": null,
+      "actualRig": null,
+      "actualClips": null,
+      "actualTextures": null,
+      "adaptationRequired": [
+        "white tail underside",
+        "white throat patch",
+        "slimmer legs",
+        "natural fur colour and shading"
+      ],
+      "speciesVerified": false,
+      "artAccepted": false
+    },
+    {
+      "id": "eastern-wolf",
+      "approvedDonor": "Quaternius Wolf, Ultimate Animated Animal Pack",
+      "author": "Quaternius",
+      "source": "https://quaternius.com/packs/ultimateanimatedanimals.html",
+      "licence": "CC0-1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "publicFile": "https://drive.google.com/file/d/1lFQoQ9ln2Z2wGuFFWObj9i5jHqUl_ftG/view",
+      "access": "Public download returned Google Drive - Quota exceeded HTML; no model bytes",
+      "downloadReceipt": "quaternius-wolf-quota.html",
+      "actualMesh": null,
+      "actualRig": null,
+      "actualClips": null,
+      "actualTextures": null,
+      "adaptationRequired": [
+        "grizzled grey-brown coat",
+        "longer legs",
+        "natural fur colour and shading"
+      ],
+      "speciesVerified": false,
+      "artAccepted": false
+    },
+    {
+      "id": "moose",
+      "approvedDonor": "Low Poly Moose",
+      "author": "Nioma van der Steen (@fromthestone)",
+      "source": "https://sketchfab.com/3d-models/low-poly-moose-ad0d58f8668f43d5b362d529371a7f6d",
+      "licence": "CC-BY-4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "access": "Public source page available; official model download requires authenticated account; no archive acquired",
+      "sourceReceipt": "nioma-moose-source.html",
+      "publisherMetadata": {
+        "faces": 844,
+        "totalTriangles": 1664,
+        "rigged": true,
+        "animationCount": 1,
+        "description": "A simple walk animation. For our project, Faunawatch.",
+        "textureFiles": [
+          {
+            "name": "textures/moose male texture.png",
+            "width": 1024,
+            "height": 1024
+          }
+        ]
+      },
+      "actualMesh": null,
+      "actualRig": null,
+      "actualClips": null,
+      "actualTextures": null,
+      "artAccepted": false
+    },
+    {
+      "id": "black-bear",
+      "approvedDonor": "American Black Bear",
+      "author": "ucdavisterc",
+      "source": "https://sketchfab.com/3d-models/american-black-bear-7c304db470dc4b9f801acf587962f1e5",
+      "licence": "CC-BY-4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "access": "Public source page available; official model download requires authenticated account; no archive acquired",
+      "sourceReceipt": "uc-davis-black-bear-source.html",
+      "publisherMetadata": {
+        "faces": 3028,
+        "totalTriangles": 3028,
+        "rigged": true,
+        "animationCount": 1,
+        "clipNames": null,
+        "textureFiles": [
+          {
+            "name": "textures/Black_bear_mat_BaseColor.png",
+            "width": 2048,
+            "height": 2048
+          },
+          {
+            "name": "textures/Black_bear_mat_Normal.png",
+            "width": 2048,
+            "height": 2048
+          },
+          {
+            "name": "textures/Black_bear_mat_Roughness.png",
+            "width": 2048,
+            "height": 2048
+          }
+        ]
+      },
+      "adaptationRequired": [
+        "reduce each actual texture to at most1024 after archive access and approved export"
+      ],
+      "actualMesh": null,
+      "actualRig": null,
+      "actualClips": null,
+      "actualTextures": null,
+      "artAccepted": false
+    },
+    {
+      "id": "beaver",
+      "approvedDonor": "Beaver",
+      "author": "Poly by Google",
+      "source": "https://poly.pizza/m/fwtA7VLrXPr",
+      "licence": "CC-BY-3.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "publicDownload": "https://static.poly.pizza/fb953f9b-18e0-4c1e-9df0-dc69d1499aab.glb",
+      "access": "Openly published GLB downloaded without login",
+      "original": {
+        "file": "poly-beaver-original.glb",
+        "bytes": 41468,
+        "sha256": "37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1"
+      },
+      "actualMesh": {
+        "inspection": "GLB JSON/accessors and embedded PNG header only; no 3D import",
+        "triangles": 568,
+        "vertices": 1122,
+        "meshCount": 1,
+        "primitiveMode": 4,
+        "rawPositionMin": [
+          -18.6143913269043,
+          -19.8521823883057,
+          -55.8140487670898
+        ],
+        "rawPositionMax": [
+          18.6143913269043,
+          19.8521823883057,
+          55.8140487670898
+        ],
+        "physicalScaleVerified": false
+      },
+      "actualRig": {
+        "skins": 0
+      },
+      "actualClips": [],
+      "actualTextures": [
+        {
+          "name": "Tex_Beaver",
+          "mimeType": "image/png",
+          "width": 32,
+          "height": 32,
+          "bytes": 114
+        }
+      ],
+      "artAccepted": false
+    }
+  ],
+  "downloadPolicySource": "https://sketchfab.com/developers/download-api/downloading-models",
+  "blockedNextStep": "Director/Claude supplies accessible approved creator archives or settles a documented no-account source route. No substitute, account or extraction workaround.",
+  "cacheReceipts": [
+    {
+      "file": "CC-BY-3.0-legalcode.html",
+      "bytes": 51105,
+      "sha256": "967a3670bcbfdc50614e71062b18effed899007a0e364541328ebdb863520132"
+    },
+    {
+      "file": "CC-BY-4.0-legalcode.html",
+      "bytes": 48742,
+      "sha256": "58230517b7895aa219ff46a6ed63e67057a1582fb9ea054b16728a8c13525650"
+    },
+    {
+      "file": "CC0-1.0-legalcode.html",
+      "bytes": 32223,
+      "sha256": "b43732f4c1463b087cf10d4daf8d8766514b2bf8f21bc5ef50905f95be227726"
+    },
+    {
+      "file": "nioma-moose-source.html",
+      "bytes": 95110,
+      "sha256": "7808dd8d307536f94e6f6611004f3b8d972b93474c3d5bc9d03cefc6deb7b4fb"
+    },
+    {
+      "file": "poly-beaver-original.glb",
+      "bytes": 41468,
+      "sha256": "37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1"
+    },
+    {
+      "file": "poly-beaver-source.html",
+      "bytes": 108364,
+      "sha256": "9fe9850f9d0ed9c14c60e33ca2926cf38fcb1c3bae5d83f3c10f2c4ff325cb5f"
+    },
+    {
+      "file": "quaternius-deer-quota.html",
+      "bytes": 2040,
+      "sha256": "2b7f8b6a9ba920c0ccae8edd94948e35702812cd97522eface20f98140cb409f"
+    },
+    {
+      "file": "quaternius-download-listing.html",
+      "bytes": 364344,
+      "sha256": "863fa485b5a569715d4d2d5287514a999d0c3e99097865c57ae62002c7612118"
+    },
+    {
+      "file": "quaternius-gltf-listing.html",
+      "bytes": 419008,
+      "sha256": "0e0d019b71e4db01f72f4b5b62c175a09007d45c59be1a179a8e621acb39f6dc"
+    },
+    {
+      "file": "quaternius-source.html",
+      "bytes": 15479,
+      "sha256": "cff83a95676549b244a26626a77e630d9ac8d95b0348f5e2e2c53ca821af4391"
+    },
+    {
+      "file": "quaternius-wolf-quota.html",
+      "bytes": 2040,
+      "sha256": "9b3a70f708f61bb1b0ddaa6ba798262244ef1c4bfd2978f71f6d9902ab188954"
+    },
+    {
+      "file": "sketchfab-official-download-requirements.html",
+      "bytes": 68634,
+      "sha256": "6ea8fe7ec0c1d08653f3496feb79e6bcc59176c7cedb58911ae6fad40902e769"
+    },
+    {
+      "file": "uc-davis-black-bear-source.html",
+      "bytes": 95444,
+      "sha256": "312996914cb13af286f5721aa07f12e6cbebcc81ef3a343bd37500650c0172ef"
+    }
+  ]
+}
