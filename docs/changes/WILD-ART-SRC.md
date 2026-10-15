@@ -77,3 +77,14 @@ At this source freeze no new planner, test, model import, render, fit, native ch
 Changed assertions: additive view-only planner/rejection cases only; no old assertion or threshold changed. Removed: nothing; no source original, existing candidate, recipe path or runtime asset is replaced. No temporary output was created by this source-only edit.
 
 Source-only comparison confirms output_plan/read_original/noise/paint_atlas/adapt_container unchanged; default main is exact after removing the opt-in branch. Removing only the new view cases and optional helper argument restores the complete previous test/audit text. All prior manifest data remains equal. No recipe or test source was imported or executed for this text comparison.
+
+
+## Actual source views and bounded framing correction
+
+Root ran the original 4378ebff planner once: 1/1 passed, zero failures/notRun, 7991.3896 ms. The actual six-view CPU4/48-sample job then exited 0 in 58199.3261 ms at 07:13:08.9353474 UTC. All six PNGs are 960x600; source hashes, imported matrices and material bindings stayed exact. Root viewed all six: four side/front/rear views are complete and confirm source +Z head / -Z tail. Top and underside clip the ends. No game, fit, ground-contact, natural-look or formal art pass is claimed.
+
+Director 28354f8a permits only the actual aspect correction and selected-view CLI. The old orthographic width span*1.3 gave about 90.7 vertical donor units at 1.6 aspect, clipping the actual 111.6-unit length. The camera now reserves span*1.3*max(1, actual pixel aspect ratio) across image width. No object, pose, mesh, material, UV, light or floor policy changes. Optional repeated --source-view accepts only the six existing names with --view-only; duplicate, invalid and generation-mode selection fail before inputs. Default six-view output names/order and default generation remain unchanged.
+
+Only plus-y and minus-y are planned for the next fresh absent private leaf. The four complete images will not be repeated or overwritten. Existing suite additions cover exactly this two-view plan on both empty roots and the selection refusals through the same unchanged no-read/no-write audit. The correction and its new cases have not run; Root review and GO are required before one planner check and one two-view render. Framing investigation stops at 07:50 UTC. Adult metric size and feet-versus-tail anchoring still need a later settled fit contract.
+
+Changed assertions: additive selection/refusal cases only; no old predicate, budget, donor pin or output path changes. Removed: no original or complete picture removed; the clipped top/underside images are retained as failed framing evidence until Root commits the corrected verdict. No output, scratch copy or render was created by these source edits.

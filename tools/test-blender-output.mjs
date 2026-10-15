@@ -254,11 +254,12 @@ function kitPathPlan(generator, fixtureRoot) {
 
 // Beaver has an explicit private PNG contract; it never uses the tanker's
 // fit-config or changes that recipe's embedded-only atlas assertions.
-function beaverPlanCall(fixtureRoot, output, model = 'beaver', viewOnly = false) {
+function beaverPlanCall(fixtureRoot, output, model = 'beaver', viewOnly = false, sourceViews = []) {
   const before = fixtureTree(fixtureRoot);
   const call = spawnSync('python', ['-I', '-B', '-S', '-c', kitPlanAudit,
     join(root, 'tools/blender/wildlife-north-woods.py'), '--', '--root', fixtureRoot,
-    '--model', model, '--output-dir', output, '--paths-only', ...(viewOnly ? ['--view-only'] : [])],
+    '--model', model, '--output-dir', output, '--paths-only', ...(viewOnly ? ['--view-only'] : []),
+    ...sourceViews.flatMap(name => ['--source-view', name])],
     {cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000});
   assert.equal(call.error, undefined, call.error?.message);
   assert.deepEqual(fixtureTree(fixtureRoot), before, 'beaver planning changed its temporary root');
@@ -397,6 +398,30 @@ try {
       return outputs.map(path => relative(fixtureRoot, path).split(sep).join('/'));
     });
     assert.deepEqual(plans[0], plans[1], 'source view paths do not depend on the empty fixture root');
+  });
+  check('beaver view-only can plan only the two cropped source views on both empty roots', () => {
+    const plans = fixtureRoots.map(fixtureRoot => {
+      const output = join(fixtureRoot, '.qa-dist', 'beaver-top-underside');
+      const call = beaverPlanCall(fixtureRoot, output, 'beaver', true, ['plus-y', 'minus-y']);
+      assert.equal(call.status, 0, call.stderr || call.stdout);
+      const plan = JSON.parse(call.stdout);
+      assert.deepEqual(plan, {blend: [], glb: [], json: [join(output, 'inspection-manifest.json')],
+        atlas: [], evidence: [join(output, 'plus-y.png'), join(output, 'minus-y.png')], summary: []});
+      assert.deepEqual(readdirSync(fixtureRoot), [], 'selected view planning created no output');
+      return [...plan.json, ...plan.evidence].map(path => relative(fixtureRoot, path).split(sep).join('/'));
+    });
+    assert.deepEqual(plans[0], plans[1], 'selected view output stays independent of fixture root');
+  });
+  for (const [label, viewOnly, views, message] of [
+    ['without view-only', false, ['plus-y'], /source-view.*view-only/i],
+    ['duplicate view', true, ['plus-y', 'plus-y'], /duplicate.*source-view/i],
+    ['unknown view', true, ['front'], /invalid choice.*front/i],
+  ]) check('beaver rejects source-view ' + label + ' before inputs, Blender imports or writes', () => {
+    const call = beaverPlanCall(fixtureRoots[0], join(fixtureRoots[0], '.qa-dist', 'beaver-selected'),
+      'beaver', viewOnly, views);
+    assert.notEqual(call.status, 0);
+    assert.equal(call.stdout.trim(), '');
+    assert.match(call.stderr, message);
   });
   check('beaver view-only refuses another animal before donor reads or Blender imports', () => {
     const call = beaverPlanCall(fixtureRoots[0], join(fixtureRoots[0], '.qa-dist', 'beaver-views'), 'moose', true);

@@ -36,8 +36,14 @@ def arguments():
     parser.add_argument("--paths-only", action="store_true")
     parser.add_argument("--view-only", action="store_true",
                         help="Inspect the pinned private candidate unchanged; do not generate or fit")
+    parser.add_argument("--source-view", action="append", choices=tuple(name for name, _ in SOURCE_VIEWS),
+                        help="Select an existing source view; repeat only with --view-only")
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
     args = parser.parse_args(argv)
+    if args.source_view and not args.view_only:
+        parser.error("--source-view requires --view-only")
+    if args.source_view and len(set(args.source_view)) != len(args.source_view):
+        parser.error("Duplicate --source-view is not allowed")
     root = args.root.resolve()
     output = (root / args.output_dir).resolve()
     if ".." in args.output_dir.parts or not any(
@@ -53,13 +59,13 @@ def output_plan(output):
             "atlas": [str(output / "beaver-colour.png")], "evidence": [], "summary": []}
 
 
-def view_plan(output):
+def view_plan(output, views=SOURCE_VIEWS):
     return {"blend": [], "glb": [], "json": [str(output / "inspection-manifest.json")],
-            "atlas": [], "evidence": [str(output / (name + ".png")) for name, _ in SOURCE_VIEWS],
+            "atlas": [], "evidence": [str(output / (name + ".png")) for name, _ in views],
             "summary": []}
 
 
-def inspect_source_views(root, output):
+def inspect_source_views(root, output, views):
     # No config read or paint/export: inspect only the one structurally verified candidate.
     candidate_path = root / CANDIDATE_RELATIVE
     paths = {"original": ORIGINAL_PATH, "candidate": candidate_path}
@@ -134,12 +140,15 @@ def inspect_source_views(root, output):
     camera = bpy.data.objects.new("source-inspection-camera", camera_data)
     scene.collection.objects.link(camera)
     scene.camera = camera
-    camera_data.type, camera_data.ortho_scale = "ORTHO", span * 1.3
+    aspect = (scene.render.resolution_x * scene.render.pixel_aspect_x /
+              (scene.render.resolution_y * scene.render.pixel_aspect_y))
+    # Landscape ortho_scale spans width; reserve the full donor span vertically too.
+    camera_data.type, camera_data.ortho_scale = "ORTHO", span * 1.3 * max(1, aspect)
     camera_data.clip_start, camera_data.clip_end = span * .001, span * 10
     records = []
     error = None
     try:
-        for name, source_axis in SOURCE_VIEWS:
+        for name, source_axis in views:
             # Standard glTF +Y-up import maps source XYZ to Blender X,-Z,Y.
             direction = Vector((source_axis[0], -source_axis[2], source_axis[1]))
             camera.location = centre + direction * span * 3
@@ -170,7 +179,7 @@ def inspect_source_views(root, output):
                     "floorBlenderZ": low.z, "floorMeaning": "measured minimum, not a feet-grounding pass",
                     "axes": "source glTF +Y-up; imported Blender X,-Z,Y; donor units, not metres",
                     "render": {"engine": "CYCLES", "device": "CPU", "threads": 4, "samples": 48,
-                               "resolution": [960, 600], "viewTransform": "AgX"},
+                               "resolution": [960, 600], "aspect": aspect, "viewTransform": "AgX"},
                     "views": records, "error": error, "unfitted": True, "axesVerified": False,
                     "groundingVerified": False, "artAccepted": False, "runtimeInstalled": False}
         with (output / "inspection-manifest.json").open("x", encoding="utf-8", newline="\n") as handle:
@@ -178,7 +187,7 @@ def inspect_source_views(root, output):
             handle.write("\n")
         if not unchanged:
             raise ValueError("A source file or imported donor transform/material binding changed during inspection")
-    print(json.dumps(view_plan(output)))
+    print(json.dumps(view_plan(output, views)))
 
 
 def read_original(data):
@@ -276,15 +285,16 @@ def adapt_container(document, binary, image_index, png):
 
 def main():
     args, root, output = arguments()
+    views = tuple((name, dict(SOURCE_VIEWS)[name]) for name in args.source_view) if args.source_view else SOURCE_VIEWS
     if args.paths_only:
-        print(json.dumps(view_plan(output) if args.view_only else output_plan(output)))
+        print(json.dumps(view_plan(output, views) if args.view_only else output_plan(output)))
         return
     if root != Path(__file__).resolve().parents[2]:
         raise ValueError("Actual adaptation must use this recipe's own checkout")
     if output.exists():
         raise ValueError("Use a new absent private output leaf; never overwrite a prior packet")
     if args.view_only:
-        inspect_source_views(root, output)
+        inspect_source_views(root, output, views)
         return
     config = json.loads((root / "tools/art/wildlife-north-woods.json").read_text(encoding="utf-8"))
     beaver = next(row for row in config["models"] if row["id"] == "beaver")
