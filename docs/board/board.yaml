@@ -784,3 +784,12 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-ARDENNES-FRAME-READINESS.md"
+
+  - id: QA-FACTORY-RECYCLE-JUNCTION
+    title: "Factory cleanup prompts on a Windows directory junction"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    needs: []
+    details: "docs/board/cards/QA-FACTORY-RECYCLE-JUNCTION.md"
