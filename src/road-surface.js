@@ -118,7 +118,7 @@ export function createPavedRoadMaterial({ asphalt, night = false, wet = false, d
         roughnessFactor=clamp(`);
     }
   };
-  material.customProgramCacheKey = damp ? () => `paved-road-wear-v3-damp-${damp.uniforms.roadShadeRanges.value.length}-4` :
+  material.customProgramCacheKey = damp ? () => `paved-road-wear-v3-damp-${damp.uniforms.roadShadeRanges.value.length}-4-${wet ? 'wet' : 'dry'}` :
     () => (wet ? 'paved-road-wear-v2-wet' : 'paved-road-wear-v2');
   return material;
 }

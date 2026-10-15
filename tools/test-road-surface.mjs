@@ -78,9 +78,19 @@ const configBefore=JSON.stringify({dampRoad,mistBanks});
   const material=createPavedRoadMaterial({asphalt,wet:true,dampRoad,courseLength:100,mistBanks});
   const first=shaderFor(material),second=shaderFor(material);
   assert.equal(material.color.getHex(),0x747474);assert.equal(material.roughness,.9);assert.equal(material.metalness,0);
-  assert.equal(material.customProgramCacheKey(),'paved-road-wear-v3-damp-3-4');
+  assert.equal(material.customProgramCacheKey(),'paved-road-wear-v3-damp-3-4-wet');
   assert.equal(first.uniforms.roadMistRanges,second.uniforms.roadMistRanges);
   assert.equal(first.uniforms.roadShadeRanges,second.uniforms.roadShadeRanges);
+  const dryMaterial=createPavedRoadMaterial({asphalt,wet:false,dampRoad,courseLength:100,mistBanks});
+  try {
+    const dryFirst=shaderFor(dryMaterial),drySecond=shaderFor(dryMaterial);
+    assert.equal(dryMaterial.customProgramCacheKey(),'paved-road-wear-v3-damp-3-4-dry');
+    assert.notEqual(dryMaterial.customProgramCacheKey(),material.customProgramCacheKey());
+    assert.notEqual(dryFirst.fragmentShader,first.fragmentShader,'retained wet/dry floors require separate shader programs');
+    assert.equal(dryFirst.uniforms.roadMistRanges,drySecond.uniforms.roadMistRanges);
+    assert.equal(dryFirst.uniforms.roadShadeRanges,drySecond.uniforms.roadShadeRanges);
+    checks+=5;
+  } finally {dryMaterial.dispose();}
   assert.ok(first.fragmentShader.includes('vRoadSurfaceUv.y*10.0') && first.fragmentShader.includes('roadDampRoughness'));
   assert.ok(!material.transparent && material.depthWrite && material.map===asphalt && material.bumpMap===asphalt);
   assert.throws(()=>bindPavedDampRoad(new THREE.Group(),{},material),/four actual valley mist/i);
