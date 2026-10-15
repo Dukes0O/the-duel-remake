@@ -58,7 +58,7 @@ export function renderedGroundHeight(course,point,{requireSurface=false}={}){
       cells=[];
       for(let s=0;s<course.length;s+=step){
         const end=Math.min(s+step,course.length);
-        if(end<s+step&&!course.def.ridgeLandform)break;
+        if(end<s+step&&!course.def.ridgeLandform&&course.def.completeTerrainRibbon!==true)break;
         const previous=row(s),next=row(end),points=[...previous,...next];
         cells.push({previous,next,minX:Math.min(...points.map(p=>p.x)),
           maxX:Math.max(...points.map(p=>p.x)),minZ:Math.min(...points.map(p=>p.z)),
