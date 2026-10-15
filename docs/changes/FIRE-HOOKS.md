@@ -70,6 +70,10 @@ build dependency).
   `test-heli-missions`, `test-heli-fire`, `test-heli-bucket`.
 - Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`)
   after merging integration: 168 passed, 0 failed, 0 not run in 974 s.
+  Again after merging integration on 15 October (one conflict in
+  `src/screen-router.js`, both changes kept: the leaderboard and the
+  forest fire switch): 171 passed, 0 failed, 0 not run in 607 s; build
+  passed.
   `npm run build`: passed.
 
 ## Review (rule 17)
