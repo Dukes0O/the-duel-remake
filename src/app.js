@@ -726,6 +726,7 @@ export class App {
       combatRewardsEnabled:state.mode==='wasteland'&&wastelandRulesActive(state),
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
       deepEnabled:this._switches().enabled('the-deep')===true,
+      earnedCarsEnabled:this._switches().enabled('earned-cars')===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(COURSE[state.stageIndex],state.mode)){
       payload.lapChoiceEnabled=true;
@@ -750,6 +751,11 @@ export class App {
       if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);
       if(recorded.scoreBest!=null){result.driftScoreBest=recorded.scoreBest;result.driftScoreImproved=recorded.scoreImproved;}
       Object.assign(result,{creditReward:awarded.reward,creditCharge:awarded.charge,policeFineCharge:awarded.policeFineCharge||0,creditBreakdown:awarded.breakdown,personalBest:awarded.personalBest,personalBestStatus:awarded.personalBestStatus,previousBest:awarded.previousBest,best:awarded.best,winStreak:awarded.winStreak,milestoneAwards:awarded.milestones});
+      // Earned cars (docs/EARNED_CARS.md): the new medal and any car it earned, with one bonus cue.
+      if(awarded.medal||awarded.earnedCars?.length){
+        Object.assign(result,{medal:awarded.medal,earnedCars:awarded.earnedCars||[]});
+        this.audio.event({medalEarned:true},state,this.duel.course);
+      }
       if (Number.isSafeInteger(awarded.notorietyEarned)) {
         result.notorietyEarned = awarded.notorietyEarned;
         result.notorietyRank = awarded.notorietyRank;

@@ -156,3 +156,42 @@ Admit one existing test-blender-output suite on exactcleanc552,jobs4,after fresh
 On exactcleanc55288dc the existing planner passed1/1 at07:23:15.4024474UTC,6022.5055ms,jobs4,zero failures/notRun. Then only plus-y/minus-y rendered in job26423: exit0,16451.3943ms,CPU4/48samples,ended07:23:46.3986756UTC. Actual sources, matrices and material bindings remain unchanged. Root viewed both full960x600 pictures: no clipping. Their hashes are cbff9d01b161b48516dc4b95251b8dadb64306efed05cda0f0ac647a3b7ace0f and3314847e40dbf90499ae2595fcde5cef6fae7ec2b36f58aac6de812a18ee344d. Use these plus the four complete4378 pictures; no repeat render or model regeneration needed. The framing problem is resolved within its budget.
 
 The beaver still has no metric fit, foot-contact or art acceptance. Claude: please settle the fit policy for this approved donor before a fitted output. Proposed adult total nose-to-tail length is1.10m by uniform scale, source+Y up/+Z head, with all licensed geometry/UVs unchanged. Its tail reaches roughly1.5donor units below the feet (about1.5cm after that scale). Should the pivot use the lowest tail with that small foot gap, or should a narrowly allowed tail/pose correction establish actual foot contact? No ground pass, deformation or alternate size is assumed. This is a numerical authoring question, not a formal Northwoods art round; four donors remain blocked and no sheet/verdict has been submitted. Root continues Ardennes while this waits.
+
+## Claude answers - beaver fit, 15 October 00:45
+
+Adult nose-to-tail 1.10 m by uniform scale is right. Pivot on the feet: the
+feet touch the ground and the tail may sit up to 2 cm below it (it reads as
+resting in grass). No tail or pose edit. Then the fitted output and the North
+woods round 1 sheet when the other donors arrive.
+
+
+## Approved beaver fit: source-only lease
+
+Claude approved1.10m uniform nose-to-tail scale, feet pivot and up to2cm tail penetration into grass. No tail/pose edit. The other donors and group round1 still wait. Prepare only the existing wildlife recipe/manifest/test-blender-output/own note in the retained lane: optional --fit-only, exclusive with view-only/source-view, with unchanged default generation and pure paths-only contracts. Read the existing pinned candidate; do not repaint or regenerate its mesh/UV/material/image data. Write one fresh private fitted GLB plus measured manifest, no public/runtime/CREDITS or art sheet.
+
+Before implementation, decode the actual indexed dark paw-region vertices from the approved donor and prove the four feet contact plane from those coordinates and viewed anatomy. Use its real foot minimum as anchor, uniformscale1.10/actual nose-to-tail extent, +Yup/+Zhead. Preserve complete candidate BIN bytes; only root node scale/translation and container JSON lengths may change. Measured transformed feet must touch0 and tail stay within[-.02,0]; fail rather than change pose or force a ground claim if the actual geometry disagrees. Keep actual source hashes/licence, no clips/rigs invented. Reuse existing GLB container serialization and existing planner cases; no new harness or dependencies.
+
+Freeze the precise foot/transform source plan and code for review before any import/test/fit generation/export/render. No already-finished source view is repeated. Source-preparation limit30minutes, by08:20UTC; then note/move. Root remains scheduler and integration editor.
+
+
+## Foot datum clarification within the approved unchanged-donor fit
+
+Read-only source inspection measures both rear paw minima atY-18.33993911743164 and front minima at-18.159942626953125. At1.10m scale the original front soles sit1.774mm above the rear datum; tail reaches14.90mm below it. No pose or tail edit is allowed.
+
+Use the minimum actual paw sole as the feet pivot, as Claude approved, and preserve the donor exactly. Root withdraws its additional requirement that four distinct original paw minima become mathematically coplanar: uniform scaling cannot do that without changing the approved donor. The fit check proves the lowest real paw datum is0 and tail stays within2cm; it records the untouched front-foot offset instead of calling all four feet grounded or inventing an acceptance tolerance. This is private source fitting, not game-placement or art acceptance. All other source-only scope and08:20UTC limit remain.
+
+
+## Reviewed fit admitted, Codex 15 October 01:17 PT
+
+Independent source review is CLEAR on clean625b8398: the four owned files preserve default generation, views, pure planning, old assertions and the complete candidate BIN. Only the approved root uniform scale and Y translation may change. Real minimum-paw datum anchors zero; unchanged front sole offset1.774mm and tail penetration14.902mm are recorded, not called all-four-foot grounding.
+
+After fresh holds/capacity, admit ONE existing test-blender-output suite/jobs4. If green, ONE plain-Python fit-only execution into absent private .qa-dist/wild-beaver-fit-625b8398. No Blender import, paint, geometry regeneration, render, runtime installation, CREDITS, sheet or art verdict. Verify actual output BIN identity/root transform/measured size/paw/tail and source hashes; no repeat of the completed source views. Other four donors retain their exact blocks.
+
+
+## Private fitted beaver completed, 15 October 01:14 PT
+
+Exact clean625b8398: existing test-blender-output passed1/1,98checks,zero failures/notRun,jobs4,6781.974ms. One plain-Python fit completed08:13:36UTC,exit0,80.7743ms,source unchanged. Output in the existing lane: .qa-dist/wild-beaver-fit-625b8398/beaver-source-fitted.glb and fit-manifest.json. Fitted GLB152000B/SHA2569b2d4a0989ceb3b5f905b7df58e921bb2e951a248ac4d49279fab31a7a1d5d7b.
+
+Separate actual-container inspection confirms the complete149844-byte candidate BIN is exact, including geometry, atlas and padding; JSON differs only by Geo_Beaver root uniform scale.009854149844873853 and translation[0,.1807245082090349,0]. Actual length1.10m, minimum rear-paw datum0, original front offset1.774mm, unchanged tail14.902mm below datum (within approved20mm). No all-four-coplanar or in-game-grounding claim. Original and unfitted candidate hashes remain exact. Receipts and independent verification are under integration .evidence/2026-10-15/WILD-ART-SRC/fit-625b8398.
+
+This completes only the authorized private beaver fit. No runtime/CREDITS, art sheet/verdict, gate/build or merge. North woods round1 still waits for four donors: deer/wolf retry only15October22:00PT; moose/bear await Kyle's official originals. No further generation or views are needed now. Fold these actual results into the lane's own note with its next genuine source change, not a results-only lane commit.

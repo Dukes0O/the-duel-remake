@@ -14,3 +14,19 @@ Summit Time Attack ships only if P4-SUMMIT-ATTACK is green by 02:30; else it
 stays dev. The yeti and the avalanche ride with Summit only if their own
 switches were accepted for release on their cards; otherwise they stay dev.
 Release Manager: Claude, with the usual hold, install, push and records.
+
+## Not tonight (Claude, 15 October 01:45)
+
+A trial switch-on in a Claude release lane (summit-run `on`, yeti `on`, and
+`snowWorld.always` on Summit so it keeps its reviewed snow look while
+Tremblant Snow's live look stays as it is) failed four checks:
+- `test-feature-flags`, `test-circuit-summit` (state contract) and
+  `test-world-composition` ("every enabled event scene has its reviewed
+  baseline") pin Summit as dev; these need the usual release-flip updates.
+- `test-circuits`: `summit-run/1989: seamless lap at -25` (line 31). Summit is
+  a point-to-point run; the check is only applied to enabled courses, so this
+  is either a real seam fault at the start or a closed-lap check that should
+  not apply to an open route. It must be understood before release.
+The lane was removed; nothing changed on integration. New Codex card
+SUMMIT-SWITCH-ON prepares the switch-on in daylight; Claude then runs the
+release with Kyle's go (or tonight's all-green rule if he renews it).

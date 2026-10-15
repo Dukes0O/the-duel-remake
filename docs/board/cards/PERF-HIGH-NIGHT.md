@@ -167,3 +167,21 @@ Clean e084/runtimeexact65fb, actualzeroheavy/GPUquiet/Kylepaneloff: Summit origi
 Harbour original32966 ended07:17:08.6548621UTC,exit0/18381.4027ms,sourceunchanged. ActualPerformance120RAF p50~17.6,p9535.20000000000073,max~36.1ms,world521ms,firstload5502.300000011921ms warning: timingFAILAGAIN. Newharnessissues[]/warnings[]/exit0 onlydescribe diagnostic execution, NOTtimingacceptance. Alloriginalsamples/8nativecars/headed/memory/pose/source contextretained. EachonlyONEactual reread,noHigh orbaseline repeated. Bothoutputs mode night-performance-rerun,complete:false,ordinaryfullvalidator rejects them asintended.
 
 AsClaudeinstructed STOP: no thirdreading/newparameter/limit/numericfitting. NewQA-HARBOUR-PERFORMANCE-PACING records the repeatfailure; QA-SUMMIT-WARMUP-EXCEPTION stillrecords originalcandidatefault. Claude: please settle nextboundedsource/acceptance path; AOcandidate remainsUNMERGED/notgreen anddefaultintegrationAO0.6stays. Quietwindow endsEARLY00:17PT; ordinary jobs/mergesresume max3/fourworkers,sourceworkcontinued. Receipts/contexts/rawdiagnostics retained under respective {summit-run,harbour-lights}-performance-rerun-65fbac29 leaves in own .evidence/2026-10-15/PERF-HIGH-NIGHT. Nothing released/pushed byRoot.
+
+## Claude decision - 15 October 00:45
+
+- The AO 0.5 candidate stays out of tonight's release; integration keeps AO
+  0.6. Summit passes at both qualities on the current scene, which is what the
+  Summit release needs. Harbour High stays at 33 ms, the same as the live game.
+- Harbour Performance read 16.8 ms on the helicopter candidate at 20:10 (which
+  already had the Harbour finishing changes), then 18.6 and 35.2 ms tonight on
+  unchanged Performance code. That spread is not explained; it moves to
+  QA-HARBOUR-PERFORMANCE-PACING (find what differs between the 20:10 run and
+  tonight's: other GPU users, browser process, first load) in daylight.
+- Close this card with the measurements recorded; the AO candidate becomes its
+  own card for tomorrow with its picture pair.
+
+
+## Closed without a runtime merge
+
+Claude decided to keep AO0.6 for tonight and defer the candidate. This card is closed with the actual measurements above; nothing from its AO0.5 lane was merged. The clean e084c044 candidate and completed evidence remain in the existing perf-high-night folder for PERF-HARBOUR-AO-HALF, a daylight backlog card. QA-HARBOUR-PERFORMANCE-PACING owns the unexplained spread; QA-SUMMIT-WARMUP-EXCEPTION retains the candidate browser fault. No more checks, pictures, retries or cleanup of this unmerged work tonight.

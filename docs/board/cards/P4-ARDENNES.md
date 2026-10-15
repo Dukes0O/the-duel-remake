@@ -409,3 +409,86 @@ Read-only review is checking whether the fixture BoxGeometry height5.9 translate
 ## Exact synthetic fixture repair approved after independent confirmation
 
 Independent source review confirms the fixture fault: Float32 stores -2.95 slightly below its intended value before translation; the kit correctly seats its actual negative minimum. This is not a production grounding fault. Lease ONLY the new test fixture at tools/test-circuit-ardennes.mjs:928: BoxGeometry(.4,6,.4).translate(0,3,0), plus own note explaining the changed fixture. Binary-exact3 gives the intended zero base. Keep line943 strict equality, all fall/reset/default/real-asset assertions, production source and GLBs exact. Freeze for confirmation before rerunning only the affected circuit suite; do not repeat passing track-kits or export. Existing08:03UTC failure cutoff remains.
+
+
+## Fixture repaired; final native packet admitted on current integration union
+
+Root confirmed exactbaa151f0 changed only the independently approved synthetic height6/translation3 and note. Affected test-circuit-ardennes rerun57501 passed1/1 suite/all36cases at07:37:37.7568557UTC,12188.1503ms,jobs4,zero failures/notRun,source unchanged. Original passing track-kits and export were not repeated. The failure investigation is closed within its budget; no assertion or game limit changed.
+
+Normal sync with current integration is conflict-free at688eb0946122f8a6ac9e09bdb6eb6b6418d830fc. Root verified all reviewed Ardennes runtime/scenario bytes unchanged; additive HELI roster/credits both preserved, current release landing included. Lane is clean. No post-merge gate was run.
+
+After fresh holds/capacity, admit ONE existing ardennes-views native packet on exact688e,private autoport/memory-only. Expected28 real views: original22 plus three clear-second-lap close views per quality. Preserve original stock/field/readOnly/light/mist/knownincident guards and actual car-eye approach. Output only .evidence/2026-10-15/P4-ARDENNES/round3-688eb094, receipt native-688eb094. No repeated export, altered driver/scene/lighting, frame timing, signature, gate/build or art verdict yet. Root must inspect the three complete raw High pictures before ONE final R3 Claude submission. If native fails, keep the actual failure and stop for a bounded precise fix; do not silently waive it or submit a broken packet.
+
+
+## Real final-picture faults found before submission
+
+Original native85114 on clean688eb094 passed at07:41:18.6393889UTC,79113.6539ms,28 actual views,private/memory-only,issues[]/warnings[]. Root viewed all three High close pictures. Streets are legible. The bridge is end-on and does not show its arch/water clearly; beech leaves are flat bright colours and foreground firs hide the trunk. No final JPEG or Claude R3 review was created. Native success is not art acceptance.
+
+Independent binary audit proves the leaf fault in BOTH GLBs: materials select default TEXCOORD_0, which is constant(0,1); authored varying coordinates are TEXCOORD_1. Crown layer Original leaves and cone layer UVMap become separate channels on join. High/LOD identity is correct, so neither lighting nor a wrong LOD is blamed. Lease the exact recipe layer name Original leaves to UVMap, matching cones, plus meaningful assertions in the existing actual-GLB test: decode each textured primitive material-selected UV channel and require finite, nonconstant coordinates for both leaf materials in both files. Preserve every old budget, image, geometry, physics and default assertion. No palette, silhouette, lighting or threshold guess.
+
+The bridge camera targets the RIGHT stone row at s783.829647/lateral36/headingPI/2; Kestrel footbridge is s1557.588486. Lease ONLY Stone Bridge Stream close pose: eye at bridge.s-6,off bridge.lateral-18,actualground+5; aim at bridge.s/lateral,actualground+1.5. This gives a broadside view through the real arch. No bridge/stream geometry,world placement,light,vehicle or original view changes.
+
+For Beech Grove only, choose an actual existing selected Kestrel beech at the road-facing edge (minimum absolute lateral, then distance to Kestrel midpoint and stableID), keeping all authored trees. Prepare a closer descriptor-derived roadside eye about12m toward the road from that tree, no along-road offset, aim at its actual bound centre/halfheight. Use actual ground and bound height, retaining the real full-tree/fir context, clear second-lap light/readOnly and High/LOD witnesses. This is one local inspection-camera correction, not a guaranteed visibility claim or a new visibility/culling/raycast framework. Actual new pictures must prove trunk/crown legibility; no hidden firs, fake car, lighting or LOD override.
+
+Own only the existing beech recipe, actual-GLB test, existing scenario/compositor consistency and own note for source. Freeze and independent review before execution. Then Root may admit one existing UV regression case against OLD files (must expose the constant channel), ONE corrected pair export with unchanged triangles/geometry/images/six old landmarks, and affected suite once. No repeat of passing kit/default suites or formal art yet. One corrected existing native packet follows only after explicit Root admission. These are proven source/framing repairs within the final round, not a fourth round. Stop this fault investigation at08:12UTC if unresolved, record why and move on.
+
+
+## Final round 3 rejected; stopped at the art cap, 15 October 01:13 PT
+
+The actual tool-free image-only Claude review on clean bab7a9cb completed at 08:05:09 UTC, 22,835.4825 ms. Verdict: CHANGES REQUIRED. Scores: village/church 4, forest 2, road 4, bridges 3, cohesion 3. The village and road pass their picture requirements. The beech crowns remain faceted, striped plastic-looking blobs; the red-brown stream under the stone arch reads as a matte path, without a waterline or reflection.
+
+This consumes the third and final art round. AGENTS stop rule applies: stop, record why and ask Kyle. Work is held for Kyle; the question has already been sent in this chat. No fourth round, finishing-pass workaround, signature capture, final gate/build or merge is authorized. Keep the existing unmerged lane and final sheet. The corrected mechanical/native checks are evidence, not art acceptance. Final image: p4-ardennes/docs/board/looks/ardennes-art/round-3.jpg, 412330 bytes, SHA-256 e768c45b8ee8f2eebf0eb2174fc6ddfcd41cd22796c07830c7049483dacf6333. Full verdict/receipt remain in that lane's .evidence/2026-10-15/P4-ARDENNES/claude-image-only-round3-bab7a9cb. Lane review note records the verdict; no game asset is installed on integration.
+
+## Kyle decision, 15 October 2026: hold for a new art plan
+
+Kyle answered the pending hold-or-drop question: **Hold for a new art plan.** Retain the existing unmerged `codex/p4-ardennes` lane at `e78733bc`, its source, final comparison sheet, review note and unresolved evidence. This attempt is not dropped and its rejected final round is not accepted.
+
+The Kyle decision wait is answered. The card remains blocked while Claude prepares a new art plan addressing the beech crowns and stream. This decision does not authorize a fourth round, reset the three-round cap, approve a finishing workaround, or start edits, exports, captures, tests, signatures, gate/build or merge. Settle the new approach and its permitted scope before execution. The overnight continuation remains paused; no agent or automation is restarted by this record.
+
+## Claude's new art plan, 15 October 2026 (Kyle: "hold for a new art plan")
+
+Keep everything round 3 got right: the road, the village and church (4/5),
+the firs, the mist, the bridges' shapes, the landmarks and the Long Left
+barriers. Only two things change, each with a different method from the one
+that failed. Two rounds at most for these two items (a fresh, smaller cap
+granted by Kyle's decision); the rest of the course is frozen.
+
+### 1. Trees: real leaves, not solid crowns
+
+Building crowns out of solid shapes failed twice (lollipops, then faceted
+striped blobs). The fix is the method games use for broadleaf trees:
+- **Leaf cards.** Keep round 3's beech trunks and forked limbs (they passed).
+  Replace each solid crown with 40 to 80 small crossed quads, alpha-cut, with
+  a real leaf texture, clustered on the limb ends, so the silhouette is ragged
+  and light shows through. Source: an ambientCG leaf set (CC0, no account;
+  choose one with oval green leaves, e.g. from LeafSet013 to LeafSet030; check
+  the licence on the asset page and record it). No solid lobe mesh anywhere.
+- **Fewer, further back.** The Ardennes around Spa is mostly dark spruce with
+  beech in patches. Use beeches in a few groups set back 25 m or more from the
+  fences (Kestrel Straight's far slope, the Forest Run), with the accepted firs
+  in front. Close to the track: firs only.
+- **Fallback, no third method:** if the leaf-card beech is rejected in its
+  first round, drop beech entirely and the forest is all fir. That matches the
+  real place well enough and the firs already pass.
+
+### 2. The stream: water, not a path
+
+- Use the game's existing water surface (the one Harbour and Tremblant's lake
+  use, with its reflection and glitter), laid in a channel cut 0.6 to 1 m into
+  the ground under the stone arch, running about 40 m either side, red-brown
+  tinted and darker at the edges.
+- Wet banks: a darker, glossier strip of ground 1 m wide along each side, a few
+  rocks at the waterline, reeds or grass tufts from the existing kits.
+- The view: show the bridge from the side, from the downstream bank, so the arch
+  and the water under it are both in frame (round 3 looked at it end-on).
+- No new water system and no change to the road, the bridge model or physics.
+
+### Checks and the sheet
+
+One sheet per round: three close High views (the beech grove from the road,
+the stream and arch from the bank, the stream from the car on the bridge) plus
+the same three at Performance, and one wide Kestrel view to show the firs in
+front and the beeches behind. Frame cost at the busiest view is checked when
+the round is accepted (AGENTS rule 8). Then the usual lane tier, build, one
+review, world signature capture and merge, and Claude's finishing pass
+(P4-FINISH-ARDENNES).
