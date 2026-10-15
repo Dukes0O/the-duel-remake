@@ -94,7 +94,8 @@ The helicopter's library sounds stay under the 400 KB the H1 test allows
 - `node tools/test-heli-hooks.mjs` (178), `test-heli-lessons.mjs` (63),
   `test-heli-jobs.mjs` (554): passed.
 - First lane tier: 159 passed, 2 failed (the two pinned catalog hashes,
-  fixed above); build passed. Rerun: below.
+  fixed above); build passed. Rerun:
+  Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`) after merging integration: 161 passed, 0 failed, 0 not run in 2,254 s. `npm run build`: passed.
 
 ## Changed assertions
 

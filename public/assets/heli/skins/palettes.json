@@ -1,0 +1,93 @@
+{
+ "version": 1,
+ "materials": {
+  "body": "paint_white",
+  "lower": "paint_navy",
+  "stripe": "paint_red"
+ },
+ "grime": {
+  "dust": {
+   "mask": "grime-dust.jpg",
+   "colour": "#8a7a5e"
+  },
+  "mud": {
+   "mask": "grime-mud.jpg",
+   "colour": "#3e3020"
+  },
+  "soot": {
+   "mask": "grime-soot.jpg",
+   "colour": "#1c1a18"
+  },
+  "salt": {
+   "mask": "grime-salt.jpg",
+   "colour": "#d8d6cc"
+  }
+ },
+ "skins": {
+  "stock": {
+   "body": "#e7e7e4",
+   "lower": "#283654",
+   "stripe": "#b0312a"
+  },
+  "fire": {
+   "body": "#a8261c",
+   "lower": "#e2a51c",
+   "stripe": "#ecebe5"
+  },
+  "medevac": {
+   "body": "#ededea",
+   "lower": "#ededea",
+   "stripe": "#b3231c"
+  },
+  "rescue": {
+   "body": "#e9b512",
+   "lower": "#b3231c",
+   "stripe": "#161616"
+  },
+  "wildlife": {
+   "body": "camo.jpg",
+   "lower": "camo.jpg",
+   "stripe": "#2c3a22"
+  },
+  "supply": {
+   "body": "#d9671b",
+   "lower": "#ededea",
+   "stripe": "#161616"
+  },
+  "tv": {
+   "body": "#141516",
+   "lower": "#141516",
+   "stripe": "#b8902e",
+   "decal": {
+    "image": "../barely-news.svg",
+    "size": 0.5,
+    "doors": [
+     {
+      "centre": [
+       0.72,
+       1.28,
+       0.78
+      ],
+      "normal": [
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "centre": [
+       -0.72,
+       1.28,
+       0.78
+      ],
+      "normal": [
+       -1,
+       0,
+       0
+      ]
+     }
+    ]
+   }
+  }
+ }
+}
