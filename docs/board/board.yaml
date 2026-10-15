@@ -374,10 +374,12 @@ tasks:
 
   - id: EARN-SCREEN
     title: "Medal sheet on the car screen, results lines, earned cars hidden while off"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-earn-screen-2026-10-14"
+    branch: "claude/earn-screen"
     needs: [EARN-MEDALS]
     locks: [busy-game-files]
     flag: "earned-cars"
