@@ -144,7 +144,8 @@ for (const [label, def] of [['Tremblant Woods', TREMBLANT_WOODS], ['Tremblant Sn
   for (const piece of def.kitPlacements) {
     const foot = KIT_FOOTPRINTS[piece.id] ? [KIT_FOOTPRINTS[piece.id].width, KIT_FOOTPRINTS[piece.id].depth] : FOOT[piece.id];
     if (!foot || piece.ride) continue;
-    const scale = Array.isArray(piece.scale) ? piece.scale : Array(3).fill(piece.scale ?? 1), at = course.groundAt(piece.s, piece.lateral);
+    const scale = Array.isArray(piece.scale) ? piece.scale : Array(3).fill(piece.scale ?? 1), original = course.groundAt(piece.s, piece.lateral);
+    const at = piece.worldPosition ? {...original, ...piece.worldPosition} : original;
     // Where the loader sets the piece down (src/track-kits.js), and the hill lift circuit-effects.js adds.
     let base = kitBaseHeight(course, piece, {min:{x:-foot[0]/2,z:-foot[1]/2},max:{x:foot[0]/2,z:foot[1]/2}});
     if (piece.hill !== undefined) { const hill = course.def.hills[piece.hill]; base += hillHeight(hill, ...hillLocal(hill, piece.s, piece.lateral)) - (piece.sink ?? 0); }
@@ -181,4 +182,44 @@ for (const [label, def] of [['Tremblant Woods', TREMBLANT_WOODS], ['Tremblant Sn
   // stood on that step (82 degrees). Rounded hills, a lake bowl and a ski slope are all well under these.
   assert.ok(worst(farTerrainGeometry(course)) < 60, 'far ground');
   def.effects.backdrop.hills.forEach((hill, i) => assert.ok(worst(backdropGeometry(course, hill, def.effects.backdrop.colours)) < 75, `backdrop hill ${i + 1}`));
+});
+
+
+// FIX-ROAD-SEAM: actual closed Harbour variants expose arbitrary fractional seams.
+test('opted Harbour closing terrain covers fractional lengths with the same actual triangle reader', () => {
+  for (const finalStraight of [61.125, 62, 63, 64.25]) {
+    const script = HARBOUR_LIGHTS.script.map((entry, index, all) => index === all.length - 1 ? [entry[0], finalStraight, ...entry.slice(2)] : entry);
+    const def = {...HARBOUR_LIGHTS, script, kitPlacements: []};
+    const complete = new Course({...def, completeTerrainRibbon: true}, 1989);
+    const old = new Course({...def, completeTerrainRibbon: false}, 1989);
+    const original = terrainGeometry(old), closed = terrainGeometry(complete);
+    try {
+      const bins = indexTriangles(closed), last = Math.floor(complete.length / 4) * 4;
+      assert.ok(complete.length > last, 'the actual fitted test length has a fractional final cell');
+      for (const share of [.25, .5, .75]) for (const lateral of [-22.62, -18, 0, 18, 22.62]) {
+        const atS = last + (complete.length - last) * share, at = complete.groundAt(atS, lateral);
+        const drawn = drawnHeight(bins, at.x, at.z);
+        assert.ok(Number.isFinite(drawn), 'the last partial strip has actual drawn triangles');
+        const sampled = renderedGroundHeight(complete, {...at, s: atS, off: lateral}, {requireSurface: true});
+        assert.ok(Number.isFinite(sampled), 'required ground cannot use an analytic fallback');
+        assert.ok(Math.abs(sampled - drawn) < 1e-4, 'grounding matches actual Float32 triangles');
+      }
+      for (const name of ['position', 'color', 'uv', 'biomeWeights']) {
+        const prior = original.getAttribute(name).array, actual = closed.getAttribute(name).array;
+        assert.deepEqual(actual.slice(0, prior.length), prior, 'every previous sampled row remains exact');
+      }
+      assert.equal(JSON.stringify(complete.features), JSON.stringify(old.features), 'terrain closure cannot change collision features');
+    } finally {original.dispose(); closed.dispose();}
+  }
+});
+
+test('unopted terrain and the already complete Panorama ridge retain exact geometry', () => {
+  for (const def of [TREMBLANT_WOODS, TREMBLANT_SNOW, PANORAMA_RIDGE]) {
+    const old = terrainGeometry(new Course(def, 1989));
+    const same = terrainGeometry(new Course({...def, completeTerrainRibbon: false}, 1989));
+    try {
+      for (const name of Object.keys(old.attributes)) assert.deepEqual(same.getAttribute(name).array, old.getAttribute(name).array);
+      assert.deepEqual(same.index.array, old.index.array); assert.deepEqual(same.groups, old.groups);
+    } finally {old.dispose(); same.dispose();}
+  }
 });

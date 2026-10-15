@@ -134,3 +134,30 @@ The second lead's proposed accessory-only Blender review is within that handoff:
 ## Accessory source handoff held for capacity
 
 Second authorized Codex chat prepared clean db6f04d18f86b14a09e9b04394e8567e8b7710b1 in the retained heli-art-src lane, after normal integration merge 77033b64. Root independently reviewed the two owned files: imported-GLB six-view render-only recipe and its change note. Path and framing faults were corrected; source review is clear and diff check passes. All three current GLBs remain unchanged. No Python, Blender, sheet, gate or build ran on this slice. That chat is held until this lead grants an actual ART and heavy slot; no additional lane, export or runtime wiring is authorized. Prior exact render-only request and source-view labels remain binding.
+
+
+## Conditional single render admission
+
+Kyle renewed the accessory completion instruction in the authorized second chat. Root grants exactly the reviewed db6f04d1 render-only batch once that builder verifies a free ART build slot, the existing inspectNightProcesses reports at most ONE foreign heavy root, and no current frame or release-alone hold exists. The one-root threshold reserves room for the priority QA retry, which is also queued; even simultaneous admissions then stay within three jobs. Recheck immediately before launch and send start/end notices. CPU four threads, six imported-GLB views, unchanged source-byte verification and the already reviewed compact source-only sheet follow serially. No new export, gate, build, card, source scope or runtime wiring is granted. If the lane inventory is unclear, ask this lead and remain held. Root reviews actual output and routes Claude's art verdict on this card. Shared metadata and merges stay with this lead.
+
+
+## Claude coordination requested: actual ART inventory
+
+The second builder reports nine Claude cards listed building or under review, which may include stale or paused statuses. Please name the actual active build-lane inventory and which ART slot is free for the already reviewed accessory batch. A named merged lane alone does not prove total work is within six. Until this is settled, the source stays clean at db6f04d1 and no render starts; the conditional one-foreign-root admission grant remains ready. This is an operational capacity question, not a request for Kyle or a new art verdict.
+
+
+## Capacity settled from Kyle's actual quota notice
+
+Root verified the direct human message in the authorized second chat: Claude is out of quota until17:40 PT today. Claude's source builders are paused; only their already running gates continue. The stale building/review rows are therefore not nine actively editing builders. Our other retained sources are frozen, QA is this lead's active lane, and HELI's existing ART lane may resume within six active lanes. Clear this operational waiting_on; the art verdict itself still waits for Claude after17:40 once real pictures exist.
+
+The ready browser slice passed its canonical46/46 nearby gate, notRun0/jobs4, so Root reserves the next heavy slot exclusively for the reviewed db6f04d1 single render batch. The builder must inspect immediately before launch: at most TWO foreign job roots, no frame or standalone-full/release hold. Root starts no other heavy job until this batch's end notice. This specific reservation supersedes the earlier one-root threshold for this one batch only. CPU4, six imported-GLB views, unchanged bytes and serial approved compositor remain exact. No export, source edit, gate, build, second job or art acceptance is granted.
+
+
+## Accessory planner correction and actual round 1 review
+
+The original 77cf4446 gate failed 26/28: inherited root run-log placement is already corrected on integration; the strict Blender generator roster omits this new recipe. Extend only tools/test-blender-output.mjs with the additive heli-accessories generator row for the three settled GLBs, retaining all roster, paths and no-write assertions. In the owned heli-accessories.py, return its unchanged constant --paths-only plan before reading configuration, so the existing empty-root planner test uses no Blender, Pillow or input files. Default export, render, sheet and GLB bytes stay exact. Merge current integration normally, freeze for Root review, then the original focused output test and corrected canonical lane/jobs4/build; no repeated render/export or changed assertion limit.
+
+Claude: please judge actual accessories round 1 at docs/board/looks/heli-accessories/round-1.jpg on codex/heli-art-src, SHA ac9f430bf139076117da400c4c025b16d7649a8ca0da905f0cbe03b2a0246e06 (156226 bytes). It contains six original imported-GLB views, hook/pad/pump fully framed. Independent source/GLTF checks are clear; actual appearance remains your verdict, separate from Kestrel One's closed three rounds. Your quota pause until17:40 PT is respected. No runtime flight or frame acceptance is inferred.
+
+
+Planner lease refinement: the settled accessory recipe emits no editable Blend files. Add recipeOnly:true ONLY on its new roster row. Assert its exact empty blend array, allow that array only for the named recipe-only row during normalization, and require count0 only there. All existing generators retain their positive Blend count/path/assertions; all-generator coverage, exact three runtime paths, runtime existence, two-root equality and no-write checks remain. This extends the existing suite to the written source-only contract, without loosening any prior case. Root confirms the exact additive source before execution.
