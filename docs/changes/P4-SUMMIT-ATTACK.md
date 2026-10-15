@@ -27,3 +27,13 @@ Static API alignment uses unique actual run IDs for repeated unit starts; the si
 Root found that direct Game admission checked the raw stage argument before the existing normalizer could select Attack from a fractional or upper-clamped index. The simulation owner fixes that guard. Additive owned cases now require actual resolved Attack stages to stay solo TT for both inputs, with unchanged first-course Duel behavior for negative/nonfinite inputs. No executed RED or corrected pass is claimed.
 
 The unrun native recipe also replaces its nonexistent checkpointResets state read with explicit counters from the existing boundaryReset/checkpointReset events. Both observed zero counts must pass; the original actual boundaryResets and stage-crash checks remain. Last-state/final packets retain those actual observed counts on success or failure. No new observer wrapper, control path, input, tolerance or extra run is added. Removed: the raw-index regression gap and an undefined checkpoint state field from the packet.
+
+## Financial settlement source
+
+The Attack-only branch follows the existing validity, practice and duplicate guards and precedes generic abandonment and pay. A legal Time Trial finish records its canonical best even without a medal. It returns awarded true for the existing record and ghost flow, with zero reward, charge, fine and breakdown. Best improvement keeps the existing 0.005-second rule. Only the existing best map, settlement key, matching pending race and last 60 history rows change; credits, streak, PB bonus ledger, fines, milestones, circuit wins, podiums, earned-car medals and ownership stay unchanged.
+
+Abandonment uses the actual course id. A recovered pending Attack may omit mode only when its key and stable event id match. It settles once with no charge or streak reset. Wrong mode, qualifying, practice, malformed car/driver and incomplete finishes are rejected. Normalization retains the recorded private Yeti seed for a non-GP Attack; the parent's GP admission and all sighting count/key/reward logic remain unchanged pending Claude's answer.
+
+This source adopts the merged EARN-MEDALS normalization, grants and counters without editing them. Existing Attack finance/records/abandon/reload cases were read before implementation. All new source and acceptance remain UNRUN: no imports, tests, benchmark, gate or build occurred in this slice. Root requires ordinary and save review before execution.
+
+Removed: Attack's fall-through into generic loss, streak reset, bonuses and milestone pay. No saved field, history format, monetary authority, fixture or tolerance is added.
