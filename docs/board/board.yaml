@@ -344,7 +344,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-titan-timeout-2026-10-14"
+    branch: "codex/qa-titan-replay-timeout"
     priority: "low"
     needs: []
     details: "docs/board/cards/QA-TITAN-REPLAY-TIMEOUT.md"

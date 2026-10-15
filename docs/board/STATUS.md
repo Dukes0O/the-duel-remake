@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T02:26:59.552Z
+Observed at: 2026-10-15T02:37:35.792Z
 
-Observation commit: 462bdd02c805ccfbf25ec81b9a4a0c82072a88f7
+Observation commit: b9fcdda5529a9c6791f05af42f95b9aed57a85c4
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 462bdd02c805ccfbf25ec81b9a4a0c82072a88f7
+Integration HEAD: b9fcdda5529a9c6791f05af42f95b9aed57a85c4
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-15T01:35:13.062Z; tested commit: bbb5ae4cd9f9f821b630b3b12560bbb7efb367ec.
+Last recorded full run: 2026-10-13T19:34:19.618Z; tested commit: bb8d3a99c01140cfc60f9a492250be6049848675.
 
 ## Feature switches
 
@@ -74,6 +74,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-yeti | 0 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 0 | unknown | true | false | unknown |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
+| codex/qa-titan-replay-timeout | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-titan-replay-timeout |
 | codex/tools/callback-diagnostics | 9 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 19 | unknown | true | false | unknown |
@@ -110,7 +111,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,863,360 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 38,716 B | +0 B | 5,000,000 B |
 | All `public/` | 296,906,962 B | +0 B | unavailable |
-| Git objects | 428,398,592 B | +29,696 B | unavailable |
+| Git objects | 428,473,344 B | +74,752 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -119,7 +120,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 462bdd02c805ccfbf25ec81b9a4a0c82072a88f7
+- Local integration/wasteland: b9fcdda5529a9c6791f05af42f95b9aed57a85c4
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
