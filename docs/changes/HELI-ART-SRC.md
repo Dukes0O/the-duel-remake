@@ -131,10 +131,42 @@ The prior mechanical freeze 79769594 passed the focused original 63-check planne
 
 The prepared round-two source passed an independent read-only review: no blockers. Reviewed SHA256 values: recipe 69714e14b16b4eefd7fe0bb9ebde025c70ae359003b2be5796cf09bce357f8df; config 78c15dba7ef526f7aca9c5377e802a834e2e5829a9f02dd3e300a04118ebdfb5. This confirms source correctness, not the next art verdict. Export, render, second sheet and fresh lane/build remain unrun at source freeze.
 
+## Actual accepted accessory round 2
+
+After Root's bounded GO and the explicit 05:38 UTC quiet-window cutoff, one
+hook-only CPU-four export passed in 886.7909 ms. Actual hook: 1496 triangles,
+50440 bytes, 0.221702360 x 0.400000006 x 0.070119821 m, attachment top y=0,
+required parts including latch_pivot, no textures. SHA256 is
+13ed385c3849d33e3885685435944fb3ff7c105f34cf1dae2a7e9eddfe0c1f6e.
+Accepted pad and pump hashes stay exact before/after export and rendering.
+The same six actual imported-GLB CPU-four views passed original guards in
+44273.2477 ms. Serial composition passed in 600.0582 ms: round-2.jpg is
+154597 bytes, SHA256 9fc6fd688098bd6826ad86e4e2ccc65a7ba48b8937f0f1da69435d59db18e70d.
+Round 1 stays immutable. No alternate geometry, native flight or frame pass.
+
+Actual single image-only Claude R2: ACCEPT, exit 0 in 22710.862 ms, no tools.
+Hook shape/material/readability 4/4/4; pad 5/4/5; pump 4/4/4. The requested
+J throat and grey hinged flat flap seated on the tip are accepted. A thick
+pivot is optional and nonblocking, so no further round or polish. The full
+verdict is summarized in looks/heli-accessories/round-2-review.md; raw actual
+proof remains in .evidence/2026-10-14/HELI-ART-SRC/round2-971dbb74/, with the
+minimal JPEG-and-brief-only transcript in claude-image-only/. No repository
+instructions/documents/manifests were transmitted. Recipe/config geometry
+remains the independently reviewed 971dbb74; only config status now records
+this actual acceptance. Existing source-candidate packet's R1 hook metrics
+are superseded by these actual R2 values; Root can fold that metadata at
+integration without a new asset export or art round.
+
+Current integration sync in the lane and one fresh nearby/jobs4/build follow
+this art freeze. Root consumes the exact receipts and folds final results
+into its integration merge; no status-only lane commit or autonomous merge.
+Changed assertions: none. Replay/world guards are part of that fresh gate.
+
 ## Removed
 
 Replace the pending accessory donor question with Claude's original-recipe
 decision. Preserve those unselected candidates' provenance and every original
 licensed cache file. Earlier uppercase/skid-midpoint/cable-model suggestions
-remain superseded by Claude's exact export contract. No runtime asset is
-replaced or removed, and no foreign folder or retained lane is cleaned.
+remain superseded by Claude's exact export contract. Round 2 replaces only the previous runtime hook bytes and removes the old
+ring/orange-rod path and unused orange material. Accepted pad/pump bytes,
+licensed originals, foreign folders and the retained lane remain intact.
