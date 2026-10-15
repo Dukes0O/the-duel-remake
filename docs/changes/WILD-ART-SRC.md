@@ -31,11 +31,11 @@ The source recipe prepares only one private unfitted candidate and a 512-square 
 
 The standard --paths-only branch uses only stdlib argument/path planning before any config/source read, bpy import, directory creation or image generation. Actual execution accepts only this checkout and a new absent private .qa-dist/.evidence child; outputs are beaver-source-unfitted.glb, beaver-colour.png and manifest.json. It never writes the original, public runtime files, CREDITS or another animal. The recipe/manifest credit Poly by Google, the model/source page and CC-BY3.0, and disclose the colour adaptation.
 
-No recipe, paths-only check, import, paint, Blender export/render, browser, gate, build or art sheet ran. Root must first name the existing generator-roster/test hook, then verify pure path planning on two empty roots without reads/writes; original checksum, image quadrants/512 size and padding, candidate position/normal/UV/index bytes, material/sampler equality and original zero skins/clips. Next actual model views must settle the semantic masks, donor axes and metric scale/grounding contract before any fitted export. The low-poly silhouette and painted detail still require Claude's actual round judgment within the shared three-round cap. No current appearance or ground pass is claimed.
+At the 602a7cb1 source freeze no recipe or planner had run. Root subsequently granted the existing planner cases and single private generation documented below; these structural facts do not prove appearance or fit. Next actual model views must settle the semantic masks, donor axes and metric scale/grounding contract before any fitted export. The low-poly silhouette and painted detail still require Claude's actual round judgment within the shared three-round cap. No current appearance or ground pass is claimed.
 
 ## Changed assertions
 
-None. No existing tests, fixtures, budgets or source contracts changed.
+No existing assertion, fixture or budget changed. Only the additive actual CLI cases and registration described below extend the existing planner suite.
 
 ## Removed
 
@@ -45,6 +45,22 @@ No originals or deliverables removed. The two quota responses were renamed from 
 
 Director 964a0790 grants the additive registration and real beaver CLI cases in tools/test-blender-output.mjs only. The normal integration union is conflict-free at 6b9b6ed2. The same existing suite is the recipe's native CLI owner; no new test file or harness is added. It reuses the unchanged kitPlanAudit and existing two empty roots, invoking the actual beaver --paths-only entry with stdlib-only Python. The beaver's exact private unfitted GLB, PNG and manifest form a distinct contract; old tanker no-external-atlas/fit-config and every existing kit assertion stay unchanged.
 
-New cases require identical relative paths on both empty roots, no output/input/config/donor access or Blender imports, dedicated private evidence planning, and refusal of an unavailable model, public output, traversal, sibling root/directory and linked escape before any input or write. Existing exact-link cleanup and fixture helpers are reused. This is authored test source only: no planner, suite, import, texture, model, Blender, native, gate or build has run. Root review and one focused existing-suite slot precede execution. Four other donors remain blocked and no art round is consumed.
+New cases require identical relative paths on both empty roots, no output/input/config/donor access or Blender imports, dedicated private evidence planning, and refusal of an unavailable model, public output, traversal, sibling root/directory and linked escape before any input or write. Existing exact-link cleanup and fixture helpers are reused. At the 3defc568 test-source freeze no planner or generation had run. Root reviewed the source, then owned the actual checks and single generation below. Four other donors remain blocked and no art round is consumed.
 
 Removed: no old planner, fixture, assertion, output contract or model is replaced. The unregistered-recipe gap is covered by this additive existing-suite owner row and actual CLI cases.
+
+## One actual private generation and structural verification
+
+Root ran the existing test-blender-output suite once on clean 3defc56866ec1a4b3c867b661619cada2d0b23c9: 1/1 passed in 5146.5681 ms. No rerun. Root then generated the one unfitted beaver colour candidate, exit 0, four threads, duration 1166.4748 ms, 2026-10-15 06:52:34.9967132–06:52:36.1958063 UTC. Source before/after stayed exact 3defc568 and clean. The actual output is .qa-dist/wild-beaver-3defc568; invocation/receipt and independent structural verification are under integration .evidence/2026-10-15/WILD-ART-SRC/beaver-3defc568. This update reads those receipts and the actual private manifest; it generates nothing.
+
+| Actual file | Bytes | SHA256 |
+| --- | ---: | --- |
+| Licensed original | 41468 | 37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1 |
+| Private unfitted GLB | 151888 | 834d024ab14cc4ec14e7402f28b3ec06df311748c8dd380bf26e306ad0e1705b |
+| Private colour PNG | 110530 | d5cbdc7f194a1db71679ee3099a2b9472b851aed095bdccb2d1d343e7fd7098d |
+
+Independent structural verification is true: 512×512 RGBA, fully opaque, 16-pixel tile-edge padding; 568 triangles, 1122 vertices, zero skins/clips. The original 39312-byte geometry prefix is byte-exact, SHA256 921dd3810610a2421086d5c16bc3d9176c91eb2ebdf6ae76fb388d2f8561487b. JSON changes only image/buffer lengths; embedded PNG bytes equal the actual external PNG exactly. Thus original geometry, UVs, normals, indices, material/sampler and node definitions remain intact. The four measured tile colours retain the planned brown, darker tail, underside and near-black roles; their anatomical interpretation still needs the actual model view.
+
+The candidate remains unfitted, artAccepted false and runtimeInstalled false. No model import, fit, grounding, render, native view, natural-look judgment, formal art round, gate, build, runtime file or CREDITS edit has occurred. Root must grant the axes/metric-fit/grounding/view work before any next execution. Four donors stay blocked under the exact scheduled Quaternius retry and Kyle-originals policy. No structural pass is promoted into an art pass or a complete five-animal batch.
+
+Removed: no licensed original, source receipt, asset or generated candidate is removed by this two-file metadata update; no output is regenerated or overwritten.

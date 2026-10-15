@@ -1,7 +1,7 @@
 {
   "version": 1,
   "group": "north-woods",
-  "status": "beaver-source-prepared-other-donors-blocked",
+  "status": "beaver-private-generation-structurally-verified-unfitted",
   "retrievedAtUtc": "2026-10-15T02:19:19.6940597Z",
   "cacheRoot": "C:/Users/kyleb/dev/art-library/wild-north-woods",
   "runtimeInstalled": false,
@@ -176,7 +176,7 @@
       ],
       "artAccepted": false,
       "adaptationPlan": {
-        "status": "source-only-unrun",
+        "status": "private-generation-structurally-verified-unfitted",
         "size": 512,
         "padding": 16,
         "seed": 1989,
@@ -258,11 +258,61 @@
           "artAccepted": false
         },
         "credit": "Beaver by Poly by Google, https://poly.pizza/m/fwtA7VLrXPr, CC BY3.0 https://creativecommons.org/licenses/by/3.0/. Adapted colour atlas; original geometry and UVs retained."
+      },
+      "privateGeneration": {
+        "sourceCommit": "3defc56866ec1a4b3c867b661619cada2d0b23c9",
+        "sourceAfter": "3defc56866ec1a4b3c867b661619cada2d0b23c9",
+        "generationCount": 1,
+        "startedUtc": "2026-10-15T06:52:34.9967132Z",
+        "endedUtc": "2026-10-15T06:52:36.1958063Z",
+        "exitCode": 0,
+        "durationMs": 1166.4748,
+        "threads": 4,
+        "outputLeaf": ".qa-dist/wild-beaver-3defc568",
+        "candidate": {
+          "file": "beaver-source-unfitted.glb",
+          "bytes": 151888,
+          "sha256": "834d024ab14cc4ec14e7402f28b3ec06df311748c8dd380bf26e306ad0e1705b"
+        },
+        "texture": {
+          "file": "beaver-colour.png",
+          "bytes": 110530,
+          "sha256": "d5cbdc7f194a1db71679ee3099a2b9472b851aed095bdccb2d1d343e7fd7098d",
+          "width": 512,
+          "height": 512,
+          "mode": "RGBA",
+          "opaque": true,
+          "edgePaddingPixels": 16
+        },
+        "structuralVerification": {
+          "verified": true,
+          "geometryPrefixBytes": 39312,
+          "geometryPrefixSha256": "921dd3810610a2421086d5c16bc3d9176c91eb2ebdf6ae76fb388d2f8561487b",
+          "geometryPrefixByteExact": true,
+          "jsonOnlyImageAndBufferLengthsChanged": true,
+          "embeddedPngByteExact": true,
+          "triangles": 568,
+          "vertices": 1122,
+          "skins": 0,
+          "clips": []
+        },
+        "plannerSuite": {
+          "file": "tools/test-blender-output.mjs",
+          "passed": 1,
+          "total": 1,
+          "durationMs": 5146.5681
+        },
+        "unfitted": true,
+        "axesVerified": false,
+        "groundingVerified": false,
+        "naturalLookVerified": false,
+        "artAccepted": false,
+        "runtimeInstalled": false
       }
     }
   ],
   "downloadPolicySource": "https://sketchfab.com/developers/download-api/downloading-models",
-  "blockedNextStep": "Beaver recipe source is prepared only; Root must grant fit/view/test scope before execution. Quaternius deer/wolf retry once only after2026-10-15T22:00:00-07:00, no mirrors. Moose/bear wait for Kyle to supply official originals; no new account.",
+  "blockedNextStep": "Beaver private generation and structural verification are complete, not art acceptance. Await Root fit/axes/grounding/view scope before further execution. Quaternius deer/wolf retry once only after2026-10-15T22:00:00-07:00, no mirrors. Moose/bear wait for Kyle to supply official originals; no new account.",
   "cacheReceipts": [
     {
       "file": "CC-BY-3.0-legalcode.html",
