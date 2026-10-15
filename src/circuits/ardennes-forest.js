@@ -237,9 +237,9 @@ export const ARDENNES_FOREST = Object.freeze({
 });
 
 // Registration belongs to this course; generation and geometry stay unchanged.
-// A dev circuit: it is on COURSE only while its switch is requested for QA.
+// Released by Kyle: production admission still requires course ownership.
 export const manifest = Object.freeze({
-  id: 'ardennes-forest', flag: 'ardennes-forest', state: 'dev', price: 2000,
+  id: 'ardennes-forest', flag: 'ardennes-forest', state: 'on', price: 2000,
   grandPrix: true, releaseOrder: 5,
   driver: Object.freeze({car: 'stuttgart_959s', driverId: 'club', controller: 'racing-line', skill: .95}),
 });
