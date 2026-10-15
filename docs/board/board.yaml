@@ -321,6 +321,7 @@ tasks:
     lane: "RENDER"
     size: "S"
     status: "building"
+    waiting_on: "claude"
     claimed_by: "codex-perf-high-night-2026-10-14"
     branch: "codex/perf-high-night"
     needs: []
