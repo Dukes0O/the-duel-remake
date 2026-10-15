@@ -133,3 +133,13 @@ The Enzo is merged behind the `earned-cars` switch (lane 381/381, build
 passed, one review CLEAR). `sound-bank` is released for EARN-CAR-2 and 3.
 Still open on this card: the Panorama Ridge Grand Prix frame check in a field
 of Enzos (in the next full check) and Claude's in-game look verdict.
+
+## In-game look verdict, round 5 (Claude, 15 October 2026)
+
+**Pass: gritty, not toy-like.** Checked in the game at Panorama Ridge from the
+chase camera, the side, the front and the rear, plus damage, the showroom
+and the garage (`docs/board/looks/earned-cars/round-5.jpg` and its review).
+Two small fixes in `src/enzo-vehicle.js`: twin five-spoke wheels in brushed
+silver in place of flat white ones, and the splitter and diffuser pulled back
+inside the body. Still open: the Panorama Ridge Grand Prix frame check in a
+field of Enzos, left for the nightly full check.
