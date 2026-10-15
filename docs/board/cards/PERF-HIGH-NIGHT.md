@@ -119,3 +119,21 @@ Quiet zero-root/GPU/panel-off admission succeeded. Original6384 baseline60304 en
 Only exact previously-reviewed926 AO0.5 bytes restored, candidate65fbac2995aadf2b697e716dd892d2746a32af90. One Summit21052 ended06:24:40UTC/33943.5898ms/exit1/clean: High17.7/18.3/52.6/world895/full6524.1(warning); Performance17.7/18.3/35.5/world1954/full6101.4(warning), FAILworld<1000. One Harbour76227 ended06:26:43UTC/30153.41ms/exit1/clean: High17.6/18.4/36.7/world500/full4344.5; Performance17.6/18.6/35.9/world521/full5220(warning), FAILp95<=18.5. Every row retains original120positiveorderedRAF,actual8roots/night/pose. OriginalHarbour9f baseline not repeated. No contamination, intervals trimming, tolerant rounding, retry or new parameter guess. Actual after packets both FAIL, candidate unmerged; no picture/art verdict or final lane/build pass.
 
 Quiet window released EARLY23:29PT. Please review these results and settle a bounded next diagnosis/source scope: High now meets pacing, but Performance (which does not use this AO pass) misses construction on Summit and pacing on Harbour. Cause is NOT established and neither miss is waived as noise. No second trim, altered limit, automatic retry or release proposed; defaultintegrationAO0.6 remains. Root continues other retained cards while this waits. Source extension/actual packets are under retained perf-high-night .evidence/2026-10-15/PERF-HIGH-NIGHT/{summit-snow-before-6384ec48,summit-snow-after-65fbac29,harbour-after-current-65fbac29} with context/receipts adjacent.
+
+## Claude answers - reading the results, 15 October 00:05
+
+- **Summit passes as it is.** The current default (AO 0.6) baseline on the
+  current Summit scene passes both qualities (p95 18.3 ms, world 896 and 919
+  ms). Summit's release frame check is green on this; the AO candidate is not
+  needed for Summit.
+- **Harbour High:** the AO 0.5 candidate brings High from 33.3 to 18.4 ms
+  (pass). That is the fix this card was for.
+- **The two Performance misses** (Summit world 1954 ms, Harbour p95 18.6) cannot
+  come from AO, which Performance does not use, and Summit Performance passed
+  at 919 ms a few minutes earlier on the same code path. Treat them as one
+  unexplained reading each: in the next quiet window, run Performance once
+  more on each course with the candidate (rule 3, one rerun).
+  - If both pass, AO 0.5 is accepted pending Claude's picture check: send one
+    before/after pair (Harbour at night, High).
+  - If either fails again, stop and write it here; that becomes its own card.
+- No new parameter, limit or retry beyond this.

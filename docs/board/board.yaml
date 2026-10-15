@@ -130,7 +130,6 @@ tasks:
     lane: "COURSE"
     size: "L"
     status: "building"
-    waiting_on: "claude"
     claimed_by: "codex-ardennes-2026-10-13"
     branch: "codex/p4-ardennes"
     needs: [P4-ARDENNES-ROAD]
@@ -322,7 +321,6 @@ tasks:
     lane: "RENDER"
     size: "S"
     status: "building"
-    waiting_on: "claude"
     claimed_by: "codex-perf-high-night-2026-10-14"
     branch: "codex/perf-high-night"
     needs: []

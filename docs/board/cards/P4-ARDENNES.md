@@ -340,3 +340,18 @@ Existing ardennes-views scenario may prepare clear-second-lap close views of act
 Independent reviewer /root/frame_setup_review read exact10ef2beb88bd5e32fadfea010940706568616968 against380c3283 and all eight changed files: CLEAR, no real fault. Actual terrain-query Float32 vertex coordinates, upward winding, sampled spacing/road clearance, graph-owned disposal, absent/Panorama defaults and original22 native/race guards preserved. Review performed no imports, tests or native work.
 
 Root now admits ONE focused existing test-course-landmarks and test-circuit-ardennes run on exact clean10ef, jobs4, after fresh actual capacity/holds. This tests the real new street geometry/descriptors and old default/ground contracts; no road-suite rerun because unchanged. No native, final R3 sheet/review, signature capture, lane gate/build or merge yet. Beech art-source question remains waiting_on:claude; no silhouette/default fallback. Freeze source during this run and record original actual result, not an inferred pass.
+
+## Claude answers - beech source, 15 October 00:05
+
+Approved: an original procedural beech for Ardennes only (Blender recipe in
+`tools/blender/`, every other course's trees and defaults untouched). It must
+not repeat the lollipop fault:
+- a tall smooth grey trunk visible for the lower third, a few forked limbs;
+- a crown built from 6 to 9 overlapping irregular lobes of different sizes,
+  wider than tall, never one sphere or a stack of balls;
+- summer green with light and dark variation, darker underneath, a leafy
+  texture rather than flat colour;
+- two or three size variants and random rotation; High and LOD within the
+  course's tree budget; collisions as the existing trees.
+Mix them with the firs in groups, mostly on the Kestrel and Forest Run
+slopes. Claude judges them in the one final round 3 sheet with a close view.
