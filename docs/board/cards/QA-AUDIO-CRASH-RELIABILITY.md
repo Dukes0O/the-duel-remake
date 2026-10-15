@@ -33,3 +33,12 @@ The one permitted real47fb630d execution completed its genuine first capture, th
 Preserve the raw16,881,547-byte capture at .evidence/2026-10-14/AUD-CRASH-PEAK/native-2026-10-14T23-12-28-383Z/capture.json, SHA256011b474456345ea2d9843f79eab27a3f7cc47b7a2911f777600365bd76c98bfa, its report/browser log and QA-BROWSER-SWEEP/runtime-47fb receipts. A separate earlier invocation never opened a browser because Root's live log blocked Vite emptyOutDir (EBUSY,1936.3062ms); its logs are preserved there and the command output path was corrected. That is not a PCM attempt or audio cause.
 
 Stop the recorder follow-up here under its existing bounded rule. QA's ready UI/reuse/comparator slice restores the two unpassed recorder setup files exactly to current integration; prepared9ff34067 and47fb630d history retain the candidate. No third capture, new bridge, changed recorder, timeout, tolerance or assertion is authorized here. This known tool fault does not hold unrelated feature merges; no audio pass is claimed.
+
+
+## Full-check path fault, 15 October 05:09 PT
+
+The original scheduled full check on detached1c0cb3d0 ran the discovered `audio-crash-peak` scenario through the standard shared QA bundle. It failed `Scenario path must stay in QA tools`, with memory-only saves, no console issues/warnings and no completed capture file. Report: `.evidence/2026-10-15/FAC-03/night-QwGun4/browser/audio-crash-peak/report.json`.
+
+Read-only source comparison establishes this setup mismatch: `actualRecorderProbe` navigates to `/.evidence/.../recorder-probe.html`, while standard browser-harness navigation accepts only `/tools/` paths. The specialized test-audio-crash-peak wrapper normally builds a recorder entry and rewrites its private harness/config; the direct all-scenarios route does neither. Do not relax the standard navigation guard or pretend a PCM check failed. This is distinct from the earlier Runtime.evaluate timeout after the first returned capture; that older cause is still unproved.
+
+Claude: please settle a narrow supported shared-entry/build route in the already owned scenario/test files before this card resumes. Preserve the real EngineAudio/recorder, every native assertion, all prior failures and standard QA path confinement. The prior no-third-capture/no-new-bridge stop remains: this observation came from the authorized daily batch, not a manual retry, and grants no new job, source, harness, timeout or tolerance change. The card stays low priority; no lane claimed. Source inspection ended within ten minutes.
