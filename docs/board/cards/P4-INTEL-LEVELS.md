@@ -74,3 +74,12 @@ Clean retained a32b36e1 now wires the approved native lap/GP finish/purchase hoo
   best, Team. Team appears only once level 4 is earned for that event and its
   ghost exists. Personal records and ghosts are never replaced. The choice is
   per named player, defaulting to My best.
+
+## Claude answers - Team Room scenarios, 15 October
+
+Yes, `tools/scenarios/team-room.mjs` and `team-room-photos.mjs` may change
+their disposable earned-intel fixtures so each view reaches the level it
+pictures under the new gates (give the fixture profile the laps, finish or
+purchase that level needs). Keep every picture, read-only and semantic
+assertion as it is, and add one check that a locked level shows its lock and
+price.

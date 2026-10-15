@@ -667,3 +667,19 @@ slide-proof.
   unchanged. The Neon Drift Trial targets stay as they are. If Casual still
   falls short, stop with the numbers, and Claude decides on target retuning
   with Kyle.
+
+## Kyle decided, 15 October 2026: Casual keeps today's tyres
+
+Asked by Claude with the drift numbers (Casual 52 of about 6,300, Pro 5,196
+of 6,417), Kyle chose: **Casual difficulty keeps today's tyre model**; the
+new sliding grip applies on the harder difficulties only, the same way the
+arenas keep their sharp steering. So:
+- the `tyre-slip` rules are off whenever the race's difficulty is Casual
+  (latched at race start like the other race rules), on otherwise;
+- Casual results, records and the drift event stay exactly as today (byte
+  identical with the switch on);
+- the Pro drift result (0.81 of today's score, clean, no crashes) is
+  accepted; no further controller or target change;
+- add the difficulty case to the tests and the change note.
+Then continue to the remaining acceptance (recovery, row versions, final
+gate and one review).
