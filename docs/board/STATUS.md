@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T04:58:06.364Z
+Observed at: 2026-10-15T04:59:58.782Z
 
-Observation commit: 987398d134900f75463de9a684a3e4a5df6c1d4e
+Observation commit: 5cacb9209f076d77df3ba6e440fcc68b21bb7a4b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 987398d134900f75463de9a684a3e4a5df6c1d4e
+Integration HEAD: 5cacb9209f076d77df3ba6e440fcc68b21bb7a4b
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -42,7 +42,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
 | codex/qa-titan-replay-timeout | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-titan-replay-timeout |
-| codex/snow-variation | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/snow-variation |
+| codex/snow-variation | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/snow-variation |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | lane/audio/aud-10 | 19 | unknown | true | false | unknown |
@@ -60,9 +60,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T21:57:28-07:00 | 0 | last commit 2026-10-14T21:57:28-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T21:58:19-07:00 | 0 | last commit 2026-10-14T21:58:19-07:00 | docs/changes/PERF-HIGH-NIGHT.md, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/qa-titan-replay-timeout | QA-TITAN-REPLAY-TIMEOUT | 2026-10-14T19:39:55-07:00 | 0 | last commit 2026-10-14T19:39:55-07:00 | docs/changes/QA-TITAN-REPLAY-TIMEOUT.md, tools/run-tests.mjs, tools/test-test-runner.mjs, tools/test-titan-climb.mjs |
+| codex/snow-variation | SNOW-VARIATION | 2026-10-14T21:58:55-07:00 | 0 | last commit 2026-10-14T21:58:55-07:00 | docs/changes/SNOW-VARIATION.md, src/circuits/summit-run.js, src/snow-world.js, src/world.js, tools/test-snow-world.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-14T19:19:19-07:00 | 0 | last commit 2026-10-14T19:19:19-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json |
 
@@ -80,7 +81,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,348,046 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 38,722 B | +0 B | 5,000,000 B |
 | All `public/` | 299,706,593 B | +0 B | unavailable |
-| Git objects | 411,944,960 B | +75,776 B | unavailable |
+| Git objects | 412,134,400 B | +189,440 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -89,7 +90,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 987398d134900f75463de9a684a3e4a5df6c1d4e
+- Local integration/wasteland: 5cacb9209f076d77df3ba6e440fcc68b21bb7a4b
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -97,6 +98,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: matches local; cached commit 987398d134900f75463de9a684a3e4a5df6c1d4e.
+- Remote origin/integration/wasteland: behind local; cached commit 987398d134900f75463de9a684a3e4a5df6c1d4e.
 
 Issue: Circuit manifest summit-time-attack.js has unknown or malformed literal metadata.
