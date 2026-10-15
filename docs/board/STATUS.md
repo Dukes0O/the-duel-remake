@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T02:21:43.014Z
+Observed at: 2026-10-15T02:26:59.552Z
 
-Observation commit: e6448945b8f5e510cd8f1af42a0f9d85386d99b4
+Observation commit: 462bdd02c805ccfbf25ec81b9a4a0c82072a88f7
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e6448945b8f5e510cd8f1af42a0f9d85386d99b4
+Integration HEAD: 462bdd02c805ccfbf25ec81b9a4a0c82072a88f7
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -110,7 +110,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,863,360 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 38,716 B | +0 B | 5,000,000 B |
 | All `public/` | 296,906,962 B | +0 B | unavailable |
-| Git objects | 428,368,896 B | +49,152 B | unavailable |
+| Git objects | 428,398,592 B | +29,696 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -119,7 +119,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: e6448945b8f5e510cd8f1af42a0f9d85386d99b4
+- Local integration/wasteland: 462bdd02c805ccfbf25ec81b9a4a0c82072a88f7
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
