@@ -1,4 +1,4 @@
-import {CUPS, normalizeCups, cupAvailability, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
+import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
 import {settleCup} from './progression.js';
 import {isSummitAttack} from './summit-attack.js';
 import {velocity as audioActorVelocity} from './combat-weapons.js';
@@ -726,11 +726,6 @@ export class App {
   cupsAvailable(){
     return this._switches().enabled('grand-prix')===true&&this._switches().enabled('grand-prix-career')===true;
   }
-  getCupOptions(){
-    const cups=normalizeCups(this.profile.cups);
-    return CUPS.map(cup=>({...cup,...cupAvailability(cups,cup.id,{courses:COURSE,
-      owns:course=>isCourseUnlocked(this.profile,course)&&!courseClosed(this.profile,course.id,undefined,{enabled:this._fireOn()}),enabled:this.cupsAvailable()})}));
-  }
   startCup(cupId){
     if(this.duel.state.status!=='menu'||!this.cupsAvailable())return {ok:false,reason:'Return to the menu to start a cup.'};
     this._refreshPlayer();
@@ -775,10 +770,14 @@ export class App {
       completed:result.completed===true,qualifying:false,field:result.field});
     if(!recorded.recorded)return;
     this.profile={...this.profile,cups:recorded.cups};
+    const active=recorded.cups.active,definition=CUPS.find(cup=>cup.id===active.cupId);
+    result.cupSummary={id:active.cupId,rounds:active.results.length,total:definition.events.length,
+      finished:false,standings:cupStandings(active.results),bonus:0,trophy:null};
     if(recorded.finished){
       const settled=settleCup(this.profile,{seriesId:race.seriesId,ownerId:race.ownerId,activePlayerId:this.player.id});
       this.profile=settled.profile;result.cupBonus=settled.reward;result.cupStandings=settled.standings;
       result.cupTrophy=settled.trophy;
+      Object.assign(result.cupSummary,{finished:settled.settled,bonus:settled.reward,trophy:settled.trophy});
     }
     this._saveProfile();
   }

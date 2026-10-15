@@ -185,6 +185,11 @@ test('a complete real eight-car Mountain Cup advances and banks only actual nati
         for(let step=0;step<900*60&&['countdown','racing','ticket','crash'].includes(state.status);step++)app.advance(1/60,1/60);
         assert.equal(state.status,'stage_result','the real player must finish this course');
         assert.equal(state.results.completed,true);assert.equal(state.results.field.length,8);
+        const {createResultsScreen}=await import('../src/screen-results.js');
+        const resultScreen=createResultsScreen({app,profile:()=>app.profile,credits:String,escapeHTML:String,time:String,arrow:''});
+        const markup=resultScreen(state);assert.match(markup,/MOUNTAIN CUP/);
+        assert.equal(state.results.cupSummary.rounds,round+1);
+        if(round===2)assert.match(markup,/FINAL CUP STANDINGS/);
         fields.push(state.results.field.map(row=>({id:row.id,position:row.position,name:row.name,you:row.you})));
         if(round<2){
           assert.equal(app.profile.cups.active.results.length,round+1);
@@ -244,4 +249,17 @@ test('future cup schemas remain opaque to App while ordinary races still start',
     assert.equal(app.startCampaign({startStage:0,mode:'grandprix',car:'falcone_f42',fieldSeed:1000}),true);
     assert.equal(app._cupRace,null);assert.deepEqual(app.profile.cups,future);
   });
+});
+
+
+test('the result screen presents actual cup progress, placing and separately paid bonus only when enabled',async()=>{
+  const {cupResultPanel}=await import('../src/screen-trophies.js');
+  assert.equal(typeof cupResultPanel,'function');
+  const result={cupSummary:{id:'mountain',rounds:3,total:3,finished:true,standings:cupStandings([order(),order(),order()]),bonus:900,trophy:'mountain:easy'}};
+  assert.equal(cupResultPanel(result,{}),'');
+  const markup=cupResultPanel(result,{enabled:true});
+  assert.match(markup,/MOUNTAIN CUP/);assert.match(markup,/30 points/);assert.match(markup,/CUP BONUS \+900 CR/);
+  assert.match(markup,/TROPHY EARNED/);assert.equal(cupResultPanel({},{enabled:true}),'');
+  const partial=cupResultPanel({cupSummary:{...result.cupSummary,rounds:1,finished:false,bonus:0,trophy:null}},{enabled:true});
+  assert.match(partial,/1 \/ 3 races complete/);assert.match(partial,/Courses/);assert.ok(!partial.includes('TROPHY EARNED'));
 });

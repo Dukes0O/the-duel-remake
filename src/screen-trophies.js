@@ -29,3 +29,13 @@ export function cupsPanel(profile,{enabled=false,courses=[],owns=()=>false,playe
       (available.ok?'':'<p>'+escape(available.reason)+'</p>')+'</div><button type="button" data-cup-start="'+cup.id+'" '+(available.ok?'':'disabled')+'>SELECT CUP</button></article>';
   }).join('')+'</section>';
 }
+
+export function cupResultPanel(result,{enabled=false}={}){
+  const summary=result?.cupSummary,definition=CUPS.find(cup=>cup.id===summary?.id);
+  if(!enabled||!definition||!Array.isArray(summary.standings)||!summary.standings.length)return '';
+  return '<section class="paint-panel" aria-label="Cup standings"><h3>'+definition.name.toUpperCase()+'</h3><p>'+
+    (summary.finished?'FINAL CUP STANDINGS':summary.rounds+' / '+summary.total+' races complete')+'</p><ol>'+
+    summary.standings.map(row=>'<li>'+escape(row.you?'YOU':row.name)+' · '+row.points+' points</li>').join('')+'</ol>'+
+    (summary.finished?'<p>CUP BONUS +'+(Number.isSafeInteger(summary.bonus)?summary.bonus:0)+' CR'+
+      (summary.trophy?' · TROPHY EARNED':'')+'</p>':'<p>Continue your cup from Courses in the main menu.</p>')+'</section>';
+}
