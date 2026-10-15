@@ -72,3 +72,18 @@ final views and runs RELEASE-SUMMIT straight after the merge.
 ## Retained-lane continuation, 15 October afternoon
 
 The card-answer chat (01a141d7) takes this retained lane at 4e9fa2e2, with release/world-signatures locks already assigned. The active overnight chat continues TYRE-SLIP and Ardennes; this chat owns only SUMMIT-SWITCH-ON. Apply Claude's approved authored-gallery clearance contract in src/circuits/summit-run.js and tools/test-circuits.mjs, preserve the generic 8/7 tunnel guard verbatim, then complete the existing four-seed geometry suite and the already named signature/state hooks. Sync current integration first; retain all unrelated work. No new lane, frame reservation, live install, push or claim on the gameplay/save locks.
+
+## Claude answers - Review of d27d7c75, 15 October 16:30
+
+Approved as built: the closed-loop lap checks are kept exactly; the open-route
+endpoint and nearest checks and the `closed`-only nearest fix are right (Summit
+is the only open route, so no other course moves); the roof sweep with the
+grounded height plus the lowered-roof check keeps real roof hits failing; the
+gallery `clearance` and the side-bound sweep match the 16:00 answer, and the
+8/7 tunnel check and tunnelWall check are unchanged for every other tunnel.
+`--capture` skipping only the baseline count is fine; ordinary runs keep it.
+Final views: Summit's signature with snowWorld always on is identical to the
+accepted a574e548 scene, so the views accepted on P4-FINISH-SUMMIT stand and
+the Time Attack fixture is that same scene. No further view packet needed.
+Finish with the lane tier, build and the one independent review, then merge;
+Claude starts RELEASE-SUMMIT on the merge commit.
