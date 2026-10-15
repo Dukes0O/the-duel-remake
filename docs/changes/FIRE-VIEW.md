@@ -45,13 +45,15 @@ dependency is met by HELI-FINISH's code at 64198f94.
   seconds, "Bucket: full" (orange when the ring locks), "POUR (hold) H"
   with the bucket on, and notices for the call, answer, bucket, fire out
   and fire lost.
-- `tools/scenarios/fire-view.mjs` (new): the browser look and frame check.
+- `tools/scenarios/fire-view.mjs` (new): the browser look and frame check,
+  and with `FIRE_VIEW_SHEET=<round>` the comparison sheet.
+- `docs/board/looks/fire-view/`: rounds 1 and 2, sheets and reviews.
 
 ## The packet's 60-cell fire
 
 Since FIRE-SPREAD's tuning a fire is lost at 45 cells, so a 60-cell fire
-cannot burn. The frame check flies over the biggest fire that can: 44
-cells, grown by the game's own rules.
+cannot burn. The frame check flies over the biggest fire that can: 43
+burning cells, grown by the game's own rules.
 
 ## Tests
 
@@ -63,7 +65,19 @@ cells, grown by the game's own rules.
   the fire line, prompt and notices; the burnt look's crowns, charcoal,
   snags, healing back exactly, scars by cell, stages by cell).
 - `test-heli-view` (98), `test-heli-mode` (150): passed.
-- Browser look and frame check, lane tier and build: below.
+- Browser look and frame check (`FIRE_VIEW_SHEET=2 node tools/browser-harness.mjs
+  scenario fire-view`, memory-only saves): passed. p95 at most 18.5 ms
+  (rule 8): 18.2 ms in all six, 150 m over the 43-cell fire, racing on the
+  black course and on the fireweed course, each on High and Performance.
+  Earlier runs this session gave 18.1 to 18.5 ms, so there is little room;
+  p50 sits at about 17.6 ms in every case, the same with and without fire.
+- Look: two rounds (`docs/board/looks/fire-view/`). Round 1 found the
+  burnt forest floor did not read from the air; round 2 widened the ash and
+  is the pick. Smoke was made paler as it rises and fades within 40 m of
+  the camera, so the cable view never fills with one square sprite.
+- The scenario's race frames wait for the start: the frame measurement
+  stops itself when the race moves from the countdown to racing.
+- Lane tier and build: below.
 
 ## Files beyond the card's list (for the Director)
 
