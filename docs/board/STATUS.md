@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T21:18:44.623Z
+Observed at: 2026-10-15T21:23:53.648Z
 
-Observation commit: 692988c1eecea4bee1a39a12a2f697cbd2289ac1
+Observation commit: f103562bacf0d501592ff28f4be56ba50c0910b9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 692988c1eecea4bee1a39a12a2f697cbd2289ac1
+Integration HEAD: f103562bacf0d501592ff28f4be56ba50c0910b9
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -56,7 +56,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/drive-lesson-save | DRIVE-LESSON-SAVE | 2026-10-15T14:16:27-07:00 | 0 | last commit 2026-10-15T14:16:27-07:00 | docs/changes/DRIVE-LESSON-SAVE.md, src/lessons/drive-lesson-save.js, src/progression.js, tools/fixtures/saves/11-driving-lessons.json, tools/test-arena-settlement.mjs |
-| codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T13:15:51-07:00 | 0 | last commit 2026-10-15T13:15:51-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
+| codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-15T11:22:23-07:00 | 0 | last commit 2026-10-15T11:22:23-07:00 | docs/changes/P4-ARDENNES.md, tools/scenarios/ardennes-views.mjs, tools/scenarios/frame-pacing.mjs, tools/test-circuit-ardennes.mjs, tools/test-track-script.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
@@ -80,7 +80,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 136,396 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 436,386,816 B | +107,520 B | unavailable |
+| Git objects | 436,480,000 B | +93,184 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -89,7 +89,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 692988c1eecea4bee1a39a12a2f697cbd2289ac1
+- Local integration/wasteland: f103562bacf0d501592ff28f4be56ba50c0910b9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

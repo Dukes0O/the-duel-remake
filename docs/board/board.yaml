@@ -241,9 +241,10 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-gp-racecraft-2026-10-15
     branch: codex/gp-racecraft
+    waiting_on: "claude"
     needs: []
     locks: [busy-game-files]
     flag: "cpu-racecraft"
