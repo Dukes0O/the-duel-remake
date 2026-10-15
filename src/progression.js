@@ -799,7 +799,8 @@ export function settleRace(profile, result = {}) {
   const earnedCars = medalsOn ? updated.unlockedCars.filter(car => !owned.includes(car)) : [];
   return {
     profile: updated,
-    ...(medalsOn ? { medal: newMedal, earnedCars } : {}),
+    // The medal reports what was paid: nothing in the separate Wasteland career.
+    ...(medalsOn ? { medal: newMedal && { ...newMedal, bonus: breakdown.medal }, earnedCars } : {}),
     ...yetiAward,
     reward,
     ...(separateCareer ? {scrapEarned: career.scrapEarned} : {}),

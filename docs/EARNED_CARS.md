@@ -245,8 +245,9 @@ profile.medals = {
   drops a malformed one. It keeps entries for car ids this build does not
   know (at most 64 entries, ids up to 64 characters), so a car added later
   and then rolled back does not lose its wins. They are kept but not counted.
-- `version` other than 1: the field is kept untouched and nothing is counted
-  or written to it, so a newer save is never damaged by an older build.
+- A newer version (a whole number above 1): the field is kept untouched and
+  nothing is counted or written to it, so a newer save is never damaged by an
+  older build. Any other malformed sheet starts empty.
 - The earned-car grant runs on load, after `grantCompletionCars`, like the
   Jesko's.
 

@@ -51,7 +51,7 @@ export function normalizeMedals(value) {
   const cars = {};
   for (const [id, item] of ordered) {
     if (Object.keys(cars).length >= MAX_ENTRIES) break;
-    if (!id.length || id.length > MAX_ID_LENGTH) continue;
+    if (!id.length || id.length > MAX_ID_LENGTH || id === '__proto__') continue;
     const entry = normalizeEntry(item);
     if (entry) cars[id] = entry;
   }
