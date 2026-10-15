@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T02:48:50.220Z
+Observed at: 2026-10-15T02:52:00.592Z
 
-Observation commit: 278e817fdab94e02cdcfebee5b6404f5093e104f
+Observation commit: 5b93e7d5e64a788f099ae453610a57f532df17ad
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 278e817fdab94e02cdcfebee5b6404f5093e104f
+Integration HEAD: 5b93e7d5e64a788f099ae453610a57f532df17ad
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -64,7 +64,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/heli-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-art-src |
-| codex/janitor-consumed-looks-1014 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/janitor-consumed-looks-1014 |
+| codex/janitor-consumed-looks-1014 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/janitor-consumed-looks-1014 |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-finish | 3 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
@@ -89,6 +89,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/heli-art-src | HELI-ART-SRC | 2026-10-14T18:00:01-07:00 | 0 | last commit 2026-10-14T18:00:01-07:00 | docs/board/looks/heli-accessories/round-1-review.md, docs/board/looks/heli-accessories/round-1.jpg, docs/changes/HELI-ART-SRC.md, public/assets/heli/cargo-hook.glb, public/assets/heli/fuel-pump.glb |
+| codex/janitor-consumed-looks-1014 | JANITOR-LOOKS-CONSUMED | 2026-10-14T19:50:58-07:00 | 0 | last commit 2026-10-14T19:50:58-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/board/looks/deep-art/round-3-review.md, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-14T18:05:46-07:00 | 0 | last commit 2026-10-14T18:05:46-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
@@ -113,7 +114,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,863,360 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 38,716 B | +0 B | 5,000,000 B |
 | All `public/` | 296,906,962 B | +0 B | unavailable |
-| Git objects | 428,712,960 B | +139,264 B | unavailable |
+| Git objects | 428,761,088 B | +48,128 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -122,7 +123,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 278e817fdab94e02cdcfebee5b6404f5093e104f
+- Local integration/wasteland: 5b93e7d5e64a788f099ae453610a57f532df17ad
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -130,4 +131,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: matches local; cached commit 278e817fdab94e02cdcfebee5b6404f5093e104f.
+- Remote origin/integration/wasteland: behind local; cached commit 278e817fdab94e02cdcfebee5b6404f5093e104f.
