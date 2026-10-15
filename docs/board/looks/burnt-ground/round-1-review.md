@@ -1,6 +1,9 @@
 # Burnt ground textures for Tremblant Woods (14 October 2026)
 
-Sheet: `round-1.jpg`, each texture tiled 2 by 2 to show it repeats with no
+Sheet: removed 15 October (the looks folder's 20 MB limit); this art is
+now seen in the game on `../fire-view/round-2.jpg`.
+
+The sheet was `round-1.jpg`, each texture tiled 2 by 2 to show it repeats with no
 seam: black (closed), shoots, fireweed. Recipe: `tools/art/burnt-ground.py`
 (seeded noise built in frequency space, so every texture wraps). 1024 square
 JPGs, 75 to 141 KB each, in `public/assets/burnt/tremblant-woods/`.

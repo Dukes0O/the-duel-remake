@@ -49,7 +49,7 @@ export function noticeText(event) {
   switch (event?.type) {
     case 'charged': {
       const what = {hardLanding: 'Hard landing', crash: 'Crash', drop: 'Dropped load', cargoLight: 'Cargo knock',
-        cargoHeavy: 'Cargo hit', cargoWreck: 'Cargo wrecked', fuelTruck: 'Fuel truck'}[event.kind] ?? 'Repair';
+        cargoHeavy: 'Cargo hit', cargoWreck: 'Cargo wrecked', fuelTruck: 'Fuel truck', bucket: 'Bucket repair'}[event.kind] ?? 'Repair';
       return `${what}: ${event.charged} credits${event.forgiven ? ` (${event.forgiven} forgiven)` : ''}`;
     }
     case 'fuelBought': return event.cost ? `Fuel: ${fmt(event.kg, 1)} kg for ${event.cost} credits` : `Fuel: ${fmt(event.kg, 1)} kg, the first tank is free`;
@@ -65,6 +65,14 @@ export function noticeText(event) {
     case 'openingSkipped': return 'Lessons 1 and 2 marked done';
     case 'jobTaken': return 'Job taken';
     case 'jobDone': return `Job done: ${event.pay} credits`;
+    // H2 Fire.
+    case 'fireCall': return `Fire reported at ${course(event.courseId)}`;
+    case 'fireAnswered': return 'Fire call answered';
+    case 'bucketFitted': return 'Bucket fitted: hold H to pour';
+    case 'bucketRemoved': return 'Bucket off';
+    case 'bucketDamaged': return ['', 'Bucket dented: it leaks', 'Bucket torn: it leaks fast', 'Bucket ruined'][event.damage] ?? null;
+    case 'fireOut': return `Fire out: ${event.paid.toLocaleString('en-US')} credits${event.firstBadge ? ' and the firefighter badge' : ''}`;
+    case 'fireLost': return `The woods are lost: ${course(event.courseId)} is closed`;
     default: return null;
   }
 }
@@ -80,6 +88,25 @@ function horizon(pitch, roll) {
 const gauge = (label, value, extra = '', warn = false) =>
   `<div class="heli-gauge${warn ? ' warn' : ''}"><span>${label}</span><strong>${value}</strong>${extra ? `<small>${extra}</small>` : ''}</div>`;
 
+// H2 Fire on the instruments (docs/HELI_FIRE.md sections 6.1 and 9): the
+// answer prompt while a call rings, the fire line (bearing and distance to
+// the nearest burning edge, share out, wind) and the bucket in words.
+export function fireLineMarkup(view) {
+  const fire = view?.fire, parts = [];
+  if (fire?.call && !fire.call.answered && fire.answerLeft > 0)
+    parts.push(`<span class="heli-fire-call"><b>FIRE CALL</b> <kbd>R</kbd> answer now · ${Math.ceil(fire.answerLeft)} s</span>`);
+  else if (fire?.call && !fire.call.answered) parts.push('<span class="heli-fire-call">FIRE CALL WAITING <kbd>R</kbd></span>');
+  else if (fire?.call) {
+    const wind = fire.wind.speed < 1 ? 'wind light' : `wind ${fire.wind.name} ${Math.round(fire.wind.speed)}`;
+    const where = fire.target && fire.courseId === view.courseId
+      ? `FIRE ${String(Math.round(fire.target.bearing) % 360).padStart(3, '0')}° ${(fire.target.distance / 1000).toFixed(1)} km`
+      : `FIRE AT ${escape((fire.courseName ?? '').toUpperCase())}`;
+    parts.push(`<span class="heli-fire-line">${where} · ${fire.shareOut}% out · ${wind}</span>`);
+  }
+  if (view?.bucket) parts.push(`<span class="heli-bucket-words${view.bucket.aim?.locked ? ' locked' : ''}">Bucket: ${escape(view.bucket.words)}</span>`);
+  return parts.length ? `<div class="heli-fire">${parts.join('')}</div>` : '';
+}
+
 export function instrumentsMarkup(view, {cameraIndex = 0} = {}) {
   const r = instrumentReadings(view?.readout);
   if (!r) return '';
@@ -93,8 +120,8 @@ export function instrumentsMarkup(view, {cameraIndex = 0} = {}) {
   <div class="heli-status">
     <span>${view.autopilot ? 'AUTOPILOT ON' : 'AUTOPILOT OFF'} <kbd>P</kbd></span>
     <span>VIEW ${HELI_CAMERA_VIEWS[((cameraIndex % 4) + 4) % 4].toUpperCase()} <kbd>C</kbd></span>
-    <span>HOOK <kbd>H</kbd></span>
-  </div>`;
+    <span>${view.bucket ? 'POUR (hold)' : 'HOOK'} <kbd>H</kbd></span>
+  </div>${fireLineMarkup(view)}`;
 }
 
 // Where to fly, the pump at home, and the cruise prompt.

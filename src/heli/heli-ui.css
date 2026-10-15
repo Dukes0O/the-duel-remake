@@ -57,3 +57,11 @@
   line-height:1.35;background:#0f1614e6;border-left:3px solid #ffcf3f;border-radius:3px}
 .heli-radio b{margin-right:8px;font-size:10px;letter-spacing:2.5px;color:#ffcf3f}
 .heli-radio[hidden]{display:none}
+
+/* H2 Fire: the answer prompt, the fire line and the bucket in words. */
+.heli-fire{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;font:600 12px/1.4 system-ui,sans-serif;letter-spacing:.04em}
+.heli-fire span{padding:3px 8px;border-radius:3px;background:#0f1412cc;color:#e9e3d3}
+.heli-fire .heli-fire-call{background:#5a1d0dcc;color:#ffd9b0;animation:heli-fire-blink 1s steps(2,start) infinite}
+.heli-fire .heli-fire-line{color:#ffcf9a}
+.heli-fire .heli-bucket-words.locked{background:#6b3a0ccc;color:#ffe2b8}
+@keyframes heli-fire-blink{to{opacity:.55}}

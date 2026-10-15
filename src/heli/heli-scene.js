@@ -6,6 +6,7 @@
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {heliCameraPose} from './heli-camera.js';
 import {createVehicleAssets} from '../vehicle-assets.js';
+import {createFireView} from './heli-fire-view.js';
 
 const CABLE_LENGTH = 15;
 
@@ -39,7 +40,7 @@ function buildCrate(THREE) {
   return crate;
 }
 
-export function createHeliView({THREE, scene, vehicleAssets = createVehicleAssets(), load = loadModel}) {
+export function createHeliView({THREE, scene, vehicleAssets = createVehicleAssets(), load = loadModel, fireLoad = undefined, quality = 'high'}) {
   const group = new THREE.Group();
   group.name = 'Helicopter';
   group.visible = false;
@@ -104,6 +105,8 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     return mesh;
   }
   scene.add(group);
+  // H2 Fire: flames, smoke, water, the bucket and the aim ring (drawing only).
+  const fire = createFireView({THREE, scene, quality, ...(fireLoad ? {load: fireLoad} : {})});
   let spin = 0;
   const points = cableGeometry.attributes.position;
 
@@ -111,7 +114,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     group,
     // Returns the camera pose and the hanging load's pose for this frame.
     update(view, {cameraIndex = 0, dt = 1 / 60} = {}) {
-      if (!view?.heli) { group.visible = false; return null; }
+      if (!view?.heli) { group.visible = false; fire.hide(); return null; }
       ensureModel();
       // Nothing of the helicopter (cable and rings included) shows until
       // the model is in.
@@ -127,7 +130,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       if (parts.hook) { body.updateMatrixWorld(true); parts.hook.getWorldPosition(hookWorld); top = hookWorld; }
       const loads = view.loads ?? (view.load ? [view.load] : []);
       const load = loads.find(item => item.hooked) ?? null;
-      const end = load ? {x: load.x, y: load.y + .7, z: load.z} : {x: h.x, y: h.y - CABLE_LENGTH, z: h.z};
+      const end = load ? {x: load.x, y: load.y + .7, z: load.z} : fire.cableEnd(view) ?? {x: h.x, y: h.y - CABLE_LENGTH, z: h.z};
       const seen = new Set();
       for (const item of loads) {
         if (item.own) continue;
@@ -153,10 +156,12 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
         padMark.position.set(view.zone.x, view.zone.y + .1, view.zone.z);
         padMark.visible = view.courseId === 'tremblant-woods';
       }
+      fire.update(view, {dt});
       // The player's own car, wherever it is, for the race renderer to draw.
       return {camera: heliCameraPose(view, cameraIndex), load: loads.find(item => item.own) ?? null};
     },
-    hide() { group.visible = false; },
+    hide() { group.visible = false; fire.hide(); },
+    fire,
     get modelStatus() { return parts.status; },
     get modelError() { return parts.error; },
     dispose() {
@@ -166,6 +171,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       for (const mesh of others.values()) if (mesh.userData?.vehicleKey) group.remove(mesh);
       scene.remove(group);
       group.traverse(object => { object.geometry?.dispose?.(); object.material?.dispose?.(); });
+      fire.dispose();
     },
   };
 }

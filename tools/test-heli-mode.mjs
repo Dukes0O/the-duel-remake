@@ -340,6 +340,10 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     'src/screen-router.js|heli/heli-ui.js', 'src/screen-router.js|heli/heli-ui.css',
     'tools/test-p4-audio.mjs|heli/heli-audio.js', 'tools/test-arsenal-core-audio.mjs|heli/heli-audio.js',
     'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js',
+    // FIRE-VIEW's browser check grows its fire by the game's own rules.
+    ...['heli-ground', 'heli-session', 'heli-fire', 'heli-missions', 'heli-save'].map(name => `tools/scenarios/fire-view.mjs|heli/${name}.js`),
+    // And its node test reads the drawing files it checks.
+    ...['heli-fire-view', 'heli-ui', 'heli-scene'].map(name => `tools/test-fire-view.mjs|heli/${name}.js`),
     // EARN-SCREEN: earned cars are air-only; its test reads the list it extends.
     'tools/test-earned-cars-ui.mjs|heli/heli-jobs.js']);
   const offenders = [];
@@ -353,7 +357,7 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
   }
   assert.deepEqual(offenders, [], 'no unapproved src/heli imports'); checks++;
   // Every helicopter file except the drawing, page and sound ones is game rules.
-  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js']);
+  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js', 'heli-fire-view.js']);
   const sim = readdirSync(join(root, 'src/heli')).filter(name => name.endsWith('.js') && !drawing.has(name));
   ok(sim.length >= 7, `the rules files are checked (${sim.join(', ')})`);
   for (const name of sim) {
