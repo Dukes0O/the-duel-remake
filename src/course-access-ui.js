@@ -26,14 +26,16 @@ function classicDescription(course,laps) {
 // A course burnt in a forest fire (docs/HELI_FIRE.md section 8.2): the card
 // stays where it is, darkened with soot, with the play days left and the
 // buyback. Only with the forest-fire switch on.
+// Prices on a burnt card always read like the save's own messages ("7,000").
+const burntCredits = value => Math.floor(value || 0).toLocaleString('en-US');
 function burntCard(profile, course, owned) {
   const card = owned ? closureCard(profile, course.id, undefined, {enabled: true, credits: profile.credits, name: course.name}) : null;
   if (!card) return null;
   const lines = card.lines.map(line => `<p class="course-burnt-note">${escape(line)}</p>`).join('');
   if (!card.closed) return {closed: false, lines};
   const action = card.short > 0
-    ? `<button type="button" disabled aria-label="Buy back ${escape(course.name)}: you need ${credits(card.short)} more credits">BUY BACK · ${credits(card.price)} CR</button><p class="course-burnt-note">You need ${credits(card.short)} more credit${card.short === 1 ? '' : 's'}.</p>`
-    : `<button type="button" data-course-buyback="${escape(course.id)}" aria-label="Buy back ${escape(course.name)} for ${card.price} credits">BUY BACK · ${credits(card.price)} CR</button>`;
+    ? `<button type="button" disabled aria-label="Buy back ${escape(course.name)}: you need ${burntCredits(card.short)} more credit${card.short === 1 ? '' : 's'}">BUY BACK · ${burntCredits(card.price)} CR</button><p class="course-burnt-note">You need ${burntCredits(card.short)} more credit${card.short === 1 ? '' : 's'}.</p>`
+    : `<button type="button" data-course-buyback="${escape(course.id)}" aria-label="Buy back ${escape(course.name)} for ${burntCredits(card.price)} credits">BUY BACK · ${burntCredits(card.price)} CR</button>`;
   return {closed: true, lines, action};
 }
 

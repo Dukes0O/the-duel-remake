@@ -39,6 +39,17 @@ session ruled the pending H1 release is not a build dependency).
 - `node tools/test-course-access-ui.mjs`: 38 checks passed.
 - Lane tier and build: below.
 
+## Review (rule 17)
+
+One independent reviewer read the three lanes cut from FIRE-SAVE; for this
+card nothing serious: the menu is byte-identical with the switch off,
+names and ids are escaped, a closed card has no select button, buyback
+works only on the menu. Taken: the disabled button's label says "credit"
+for 1; the success message names the course instead of "the burnt woods";
+burnt prices always use one number format. Noted for FIRE-HOOKS: the
+selected stage can still point to a closed course and `nextStage()`
+passes the card, so the race-start `courseClosed` check is the guard.
+
 ## Changed assertions
 
 None.

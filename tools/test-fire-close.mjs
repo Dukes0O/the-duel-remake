@@ -48,7 +48,7 @@ const burnt = {'tremblant-woods': {day: 4, boughtBack: false}};
   check(!card.includes('data-course-buyback') && card.includes('disabled') && card.includes('BUY BACK · 7,000 CR'), 'disabled when short');
   check(card.includes('You need 450 more credits.'), 'says what is missing');
   const one = cardOf(courseAccessPanel(owner(999, 13, burnt), 0, '', {forestFire: true}), 'Tremblant Woods');
-  check(one.includes('Reopens in 1 play day.') && one.includes('You need 1 more credit.'), 'singular day and credit');
+  check(one.includes('Reopens in 1 play day.') && one.includes('You need 1 more credit.') && one.includes('you need 1 more credit"'), 'singular day and credit, also for screen readers');
 }
 
 // Reopening day and later.
@@ -69,7 +69,7 @@ const burnt = {'tremblant-woods': {day: 4, boughtBack: false}};
   const actions = createCourseActions({app, choices: {}, setMessage: value => message = value, setOpen: () => {}, updateMenuScene: () => {},
     invalidate: () => {}, renderState: () => redraws++});
   check(actions.handle({dataset: {courseBuyback: 'tremblant-woods'}}), 'the button is handled');
-  same([bought, message, redraws], ['tremblant-woods', 'Bought back. The burnt woods are open again.', 1], 'bought back through the app');
+  same([bought, message, redraws], ['tremblant-woods', 'Bought back. Tremblant Woods is open again.', 1], 'bought back through the app, naming the course');
   app.buyBackCourse = () => ({ok: false, reason: 'You need 450 more credits.'});
   actions.handle({dataset: {courseBuyback: 'tremblant-woods'}});
   same(message, 'You need 450 more credits.', 'a refusal is shown');

@@ -21,7 +21,8 @@ export function createCourseActions({app, choices, setMessage, setOpen, updateMe
     if (button.dataset.courseBuyback) {
       if (app.duel.state.status !== 'menu') return true;
       const result = app.buyBackCourse?.(button.dataset.courseBuyback) ?? {ok: false, reason: 'Forest fires are not available yet.'};
-      setMessage(result.ok ? 'Bought back. The burnt woods are open again.' : result.reason);
+      const name = COURSE.find(course => course.id === button.dataset.courseBuyback)?.name ?? 'The course';
+      setMessage(result.ok ? `Bought back. ${name} is open again.` : result.reason);
       updateMenuScene();
       invalidate();
       renderState();
