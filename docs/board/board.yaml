@@ -734,3 +734,12 @@ tasks:
     flag: "driving-lessons"
     details: "docs/board/cards/DRIVE-LESSONS-NEXT.md"
 
+  - id: QA-SUMMIT-WARMUP-EXCEPTION
+    title: "Summit candidate records two compile warmup exceptions"
+    owner: "codex"
+    lane: "RENDER"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: [busy-game-files]
+    details: "docs/board/cards/QA-SUMMIT-WARMUP-EXCEPTION.md"
