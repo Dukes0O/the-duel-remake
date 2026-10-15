@@ -21,3 +21,9 @@ None of the older suites or fixtures changes. These are new card-owned acceptanc
 Nothing replaced in this test-source contribution. No new harness, controller, saved field or generated benchmark output is committed.
 
 Static API alignment uses unique actual run IDs for repeated unit starts; the single native benchmark alone retains its prescribed yeti-run-0 input. Finance fixtures include a genuine normalized pre-existing slower best and Pro settings, so PB/streak/manual/clean/snowman opportunities cannot hide behind baseline-only cases. Native no-pit evidence reads real pit phases and actual pit.wrench/pit.go events. Gallery acceptance reads its actual authored range, road surface and tunnel corridor; it never changes steering or phase. All remain unrun.
+
+## Resolved-stage and observed-reset review corrections
+
+Root found that direct Game admission checked the raw stage argument before the existing normalizer could select Attack from a fractional or upper-clamped index. The simulation owner fixes that guard. Additive owned cases now require actual resolved Attack stages to stay solo TT for both inputs, with unchanged first-course Duel behavior for negative/nonfinite inputs. No executed RED or corrected pass is claimed.
+
+The unrun native recipe also replaces its nonexistent checkpointResets state read with explicit counters from the existing boundaryReset/checkpointReset events. Both observed zero counts must pass; the original actual boundaryResets and stage-crash checks remain. Last-state/final packets retain those actual observed counts on success or failure. No new observer wrapper, control path, input, tolerance or extra run is added. Removed: the raw-index regression gap and an undefined checkpoint state field from the packet.

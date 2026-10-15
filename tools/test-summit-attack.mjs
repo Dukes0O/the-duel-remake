@@ -123,6 +123,25 @@ if(!process.argv.includes('--drive')) {
     const parent=new Duel({featureFlags:flags(true)});parent.startCampaign({startStage:parentIndex(),mode:'grandprix',car:'falcone_f42',seed:1989,fieldSeed:1000});
     assert.equal(parent.state.mode,'grandprix');assert.equal(parent.state.opponents.length,5);assert.equal(parent.state.field.size,6);
   })));
+  test('direct Game resolves fractional and clamped stages before Attack-only solo admission',()=>withCatalog(()=>{
+    assert.equal(attackIndex(),COURSE.length-1,'the new Attack event is the appended event in this catalogue');
+    for(const startStage of [attackIndex()+.5,COURSE.length+20]) {
+      const duel=new Duel({featureFlags:flags(true)});
+      duel.startCampaign({startStage,mode:'grandprix',laps:9,opponentCount:3,qualifying:true,
+        rival:{car:'stuttgart_959s'},car:'falcone_f42',seed:1989,fieldSeed:1000,tyre:'winter'});
+      const state=duel.state;
+      assert.equal(state.stageIndex,attackIndex());assert.equal(duel.course.def.id,SUMMIT_ATTACK_ID);
+      assert.equal(state.mode,'timetrial');assert.equal(state.lapsTotal,1);assert.equal(state.opponents.length,0);
+      assert.ok(!state.rival);assert.ok(!state.field);assert.ok(!state.qualifying||state.qualifying.phase!=='driving');
+    }
+    for(const startStage of [-.5,-200,NaN,Infinity,-Infinity]) {
+      const duel=new Duel({featureFlags:flags(true)});
+      duel.startCampaign({startStage,mode:'duel',laps:2,opponentCount:0,qualifying:false,car:'falcone_f42',seed:1989});
+      assert.equal(duel.state.stageIndex,0);assert.equal(duel.course.def.id,COURSE[0].id);
+      assert.equal(duel.state.mode,'duel');assert.equal(duel.state.lapsTotal,COURSE[0].laps);
+      assert.equal(isSummitAttack(duel.course.def),false);
+    }
+  }));
   test('legal over-bronze and medal finishes record without any finance or unrelated progress',()=>withCatalog(()=>{
     for(const [medal,time] of [['gold',SUMMIT_TIME_ATTACK.attackTimes.gold],['silver',SUMMIT_TIME_ATTACK.attackTimes.silver],
       ['bronze',SUMMIT_TIME_ATTACK.attackTimes.bronze],[null,SUMMIT_TIME_ATTACK.attackTimes.bronze+1]]){
@@ -193,9 +212,11 @@ if(!process.argv.includes('--drive')) {
       assert.equal(s.seed,1989);assert.equal(s.yetiSeed,3395618052);assert.equal(s.car,'falcone_f42');assert.equal(s.driverId,'club');
       assert.equal(s.tyre,'winter');assert.deepEqual(s.upgrades,upgrades);assert.equal(s.mode,'timetrial');assert.equal(s.lapsTotal,1);
       assert.equal(s.opponents.length,0);assert.equal(s.traffic.length,0);assert.ok(!s.field);assert.ok(s.avalanche&&s.yeti);
-      packet.pitServices=[];const gallery=d.course.def.galleries.find(row=>row.id==='summit-gallery');assert.ok(gallery);
+      packet.pitServices=[];packet.resetEvents={boundary:0,checkpoint:0};const gallery=d.course.def.galleries.find(row=>row.id==='summit-gallery');assert.ok(gallery);
       let previousPhase=null,lastSecond=-1;const off=d.onChange((state,event)=>{
         packet.events.push({time:state.stageTimeSec,s:state.s,event:structuredClone(event)});
+        if(event.boundaryReset)packet.resetEvents.boundary++;
+        if(event.checkpointReset)packet.resetEvents.checkpoint++;
         if(event.pitCue==='pit.wrench'||event.pitCue==='pit.go')packet.pitServices.push({time:state.stageTimeSec,s:state.s,cue:event.pitCue});
         if(event.crash||event.boundaryReset||event.checkpointReset)packet.failures.push({time:state.stageTimeSec,s:state.s,event:structuredClone(event)});
       });
@@ -215,15 +236,15 @@ if(!process.argv.includes('--drive')) {
         }
       } finally {off();}
       packet.final={status:s.status,completedLaps:s.completedLaps,majorCrashes:s.majorCrashes,stageCrashes:s.stageCrashes,
-        boundaryResets:s.boundaryResets,checkpointResets:s.checkpointResets,pit:structuredClone(s.pit??null),
+        boundaryResets:s.boundaryResets,observedBoundaryResets:packet.resetEvents.boundary,observedCheckpointResets:packet.resetEvents.checkpoint,pit:structuredClone(s.pit??null),
         avalanche:structuredClone(s.avalanche),yeti:structuredClone(s.yeti),result:structuredClone(s.results)};
       assert.equal(s.results?.completed,true);assert.equal(s.completedLaps,1);assert.equal(s.stageCrashes,0);assert.equal(s.boundaryResets,0);
-      assert.equal(packet.failures.length,0);assert.equal(packet.pitServices.length,0);assert.ok(Number.isFinite(s.results.timeSec)&&s.results.timeSec>0);
+      assert.equal(packet.failures.length,0);assert.equal(packet.resetEvents.boundary,0);assert.equal(packet.resetEvents.checkpoint,0);assert.equal(packet.pitServices.length,0);assert.ok(Number.isFinite(s.results.timeSec)&&s.results.timeSec>0);
       assert.equal(packet.activeRace?.yetiSeed,3395618052);packet.baselineSec=s.results.timeSec;packet.passed=true;
         } catch(error){packet.failures.push({error:String(error?.stack??error)});throw error;}finally{
       const state=app.duel.state;
       packet.lastState={status:state.status,s:state.s,lateral:state.lateral,timeSec:state.stageTimeSec,completedLaps:state.completedLaps,
-        majorCrashes:state.majorCrashes,stageCrashes:state.stageCrashes,boundaryResets:state.boundaryResets,checkpointResets:state.checkpointResets,
+        majorCrashes:state.majorCrashes,stageCrashes:state.stageCrashes,boundaryResets:state.boundaryResets,observedBoundaryResets:packet.resetEvents?.boundary??0,observedCheckpointResets:packet.resetEvents?.checkpoint??0,
         tyre:state.tyre,pit:structuredClone(state.pit??null),avalanche:structuredClone(state.avalanche??null),yeti:structuredClone(state.yeti??null),result:structuredClone(state.results??null)};
       persist();
     }
