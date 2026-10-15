@@ -1,3 +1,4 @@
+import {normalizeDrivingLessons} from './lessons/drive-lesson-save.js';
 import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
 import {normalizeHeli} from './heli/heli-save.js';
@@ -166,6 +167,7 @@ export function normalizeProfile(value) {
   profile = grantCompletionCars(profile);
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
   if (Object.hasOwn(value, 'heli')) profile.heli = normalizeHeli(value.heli);
+  if (Object.hasOwn(value, 'drivingLessons')) profile.drivingLessons = normalizeDrivingLessons(value.drivingLessons);
   if (Object.hasOwn(value, 'grandPrixPodiums'))
     profile.grandPrixPodiums = normalizeGrandPrixPodiums(value.grandPrixPodiums);
   profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
