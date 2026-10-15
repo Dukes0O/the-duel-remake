@@ -5,7 +5,7 @@ import {createProfile,normalizeProfile,completionCarProgress,isCarUnlocked,getUp
 import {normalizeRaceSettings} from '../src/race-settings.js';
 import {purchasePaint,applyPaint} from '../src/paint-presets.js';
 
-const reward='koenigsegg_jesko',prerequisites=Object.keys(CARS).filter(car=>car!==reward),types=Object.keys(UPGRADE_TYPES),max=Object.fromEntries(types.map(type=>[type,3]));
+const reward='koenigsegg_jesko',prerequisites=Object.keys(CARS).filter(car=>car!==reward&&!CARS[car].unlockRequirement),types=Object.keys(UPGRADE_TYPES),max=Object.fromEntries(types.map(type=>[type,3]));
 let checks=0;
 const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;};
 const ok=(value,label)=>{assert.ok(value,label);checks++;};
