@@ -22,8 +22,6 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
   m.paint.name = 'Enzo red body'; m.paint.roughness = .26; m.paint.metalness = .36;
   m.accent.name = 'Enzo black trim'; m.glass.color.setHex(0x1e2a2e); m.glass.opacity = .62;
   m.carbon.color.setHex(0x16181b); m.carbon.roughness = .42;
-  // In-game look round 5: brushed silver wheels, not bright white ones.
-  m.alloy.color.setHex(0x8e9296); m.alloy.roughness = .36; m.alloy.metalness = .82;
   Object.assign(data, {
     paint: m.paint, originalColor: m.paint.color.clone(), wheels: [], wheelPivots: [],
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...ENZO_VEHICLE_DIMENSIONS[key] },
@@ -66,7 +64,7 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
     b.box(m.carbon, [.07, .06, 2.0], [side * .985, .215, -.05], [0, 0, 0], .018);
   }
   // The beak: a narrow nose with its own splitter and a dark centre intake.
-  b.box(m.carbon, [1.56, .04, .18], [0, .175, 2.12], [0, 0, 0], .02);
+  b.box(m.carbon, [1.56, .04, .18], [0, .175, 2.06], [0, 0, 0], .02);
   b.box(m.carbon, [.34, .09, .05], [0, .26, 2.32], [-.08, 0, 0], .02);
   // Short tail: integrated lip spoiler, a black rear panel and a deep diffuser.
   b.box(m.paint, [1.50, .06, .16], [0, .815, -2.285], [-.18, 0, 0], .02);
@@ -75,7 +73,7 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
   b.box(m.carbon, [1.42, .024, .26], [0, .19, -2.14], [.12, 0, 0], .01);
   b.box(m.plate, [.50, .11, .01], [0, .44, -2.348], [0, 0, 0], .004);
   cockpit(vehicle, b, m, [.29, -.045, -.04], .80);
-  wheels(vehicle, m, { radius: .35, width: .27, track: .86, axles: AXLES, spokes: 5, roadSmooth: true });
+  wheels(vehicle, m, { radius: .35, width: .27, track: .86, axles: AXLES, spokes: 5, roadSmooth: true }); // twin five-spoke, as on the real car
   exhaust(vehicle, b, m, [[-.09, .36, -2.26], [.09, .36, -2.26]], .055);
   b.finish(data);
   fittedDetails(vehicle, m);

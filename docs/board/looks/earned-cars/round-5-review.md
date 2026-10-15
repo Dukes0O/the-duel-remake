@@ -3,7 +3,8 @@
 Sheet: `round-5.jpg`, from the `enzo-look` browser scenario (private port,
 memory-only saves loaded from `tools/fixtures/saves/12-medals.json`, so the
 Enzo is owned; `earned-cars` on; 1280 x 720, High). The helicopter is live,
-so the save also says Kestrel One set the Enzo down at Panorama Ridge. The
+so the scenario also records that Kestrel One set the Enzo down at Panorama
+Ridge. The
 race is Panorama Ridge Sunset against a 959, so the Enzo is the only one on
 track. 0 warnings, 0 errors. Rebuild the sheet with
 `tools/art/enzo-look-sheet.py`.
@@ -23,7 +24,8 @@ track. 0 warnings, 0 errors. Rebuild the sheet with
 Fixed in this round (`src/enzo-vehicle.js`, one small lane):
 
 - The wheels were flat, bright white five-spoke discs and looked like a toy's.
-  They are now twin five-spoke wheels in brushed silver, like the real car's.
+  They are now dark grey twin five-spoke wheels with a silver rim, closer to
+  the real car's.
 - The front splitter and the diffuser fins stuck out past the nose and tail;
   both now sit inside the body.
 

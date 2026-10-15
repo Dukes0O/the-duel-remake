@@ -139,7 +139,7 @@ of Enzos (in the next full check) and Claude's in-game look verdict.
 **Pass: gritty, not toy-like.** Checked in the game at Panorama Ridge from the
 chase camera, the side, the front and the rear, plus damage, the showroom
 and the garage (`docs/board/looks/earned-cars/round-5.jpg` and its review).
-Two small fixes in `src/enzo-vehicle.js`: twin five-spoke wheels in brushed
-silver in place of flat white ones, and the splitter and diffuser pulled back
+Two small fixes in `src/enzo-vehicle.js`: dark grey twin five-spoke wheels with a
+silver rim in place of flat white ones, and the splitter and diffuser pulled back
 inside the body. Still open: the Panorama Ridge Grand Prix frame check in a
 field of Enzos, left for the nightly full check.

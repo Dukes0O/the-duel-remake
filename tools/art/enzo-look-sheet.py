@@ -43,6 +43,8 @@ def main(run, before, out):
         sheet.save(out, 'JPEG', quality=quality, optimize=True, progressive=True)
         if out.stat().st_size <= 500_000:
             break
+    else:
+        sys.exit(f'{out} is {out.stat().st_size} bytes, over the 500 KB limit')
     print(f'{out} {out.stat().st_size} bytes')
 
 

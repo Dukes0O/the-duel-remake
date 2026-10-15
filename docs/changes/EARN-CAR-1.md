@@ -160,8 +160,14 @@ out of a list it does not belong to. No tolerance was loosened.
   (207 KB) and `round-5-review.md`. 0 warnings, 0 errors. Evidence in the
   integration folder's `.evidence/2026-10-15/EARN-CAR-1/`.
 - Verdict: pass, gritty and not toy-like.
-- Fixed in `src/enzo-vehicle.js`: the wheels are twin five-spoke in brushed
-  silver (were flat white broad spokes), and the front splitter and the
+- One review: two faults fixed. The wording said brushed silver wheels, but
+  the twin spokes are the shared dark grey metal with a silver rim; a
+  material change that only dulled the rim lip, hub, mirror faces and
+  exhaust tips was removed. The splitter's front corners still stood about
+  8 cm outside the narrowing nose; it now sits 6 cm further back. The sheet
+  recipe now fails if the picture is over 500 KB.
+- Fixed in `src/enzo-vehicle.js`: the wheels are dark grey twin five-spoke
+  with a silver rim (were flat white broad spokes), and the front splitter and the
   diffuser fins are shortened to sit inside the nose and tail.
   `tools/test-enzo-vehicle.mjs`: 66,442 triangles (limit 73,600), 56 draws
   (limit 66). Every test that names the Enzo passes.
