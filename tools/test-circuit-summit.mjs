@@ -126,6 +126,7 @@ console.log('Gallery actual anchor witness: '+JSON.stringify({count:galleryAncho
 const actualRoof=SUMMIT_GALLERY_BOUNDS.find(bounds=>bounds.name==='gallery-heavy-concrete-roof');
 assert.equal(course.features.tunnels[0].height,actualRoof.min[1]*1.1,'camera underside agrees with the actual thick fascia');
 assert.ok(actualRoof.min[1]*1.1>=4.5,'approved road headroom stays at least 4.5 m');
+assert.deepEqual(course.features.tunnels[0].clearance,{width:10,height:actualRoof.min[1]*1.1},'authored Gallery states its actual full road width and roof clearance');
 assert.ok(!course.features.walls.some(wall=>wall.id.startsWith('gallery-')),'actual kit colliders do not draw substitute wall boxes');
 
 const open=course.features.shortcuts.find(branch=>branch.id==='summit-open-road');

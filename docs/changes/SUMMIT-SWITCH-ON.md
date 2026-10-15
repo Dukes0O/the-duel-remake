@@ -15,3 +15,15 @@ Feature-switch suite86passes. Direct open-nearest failure was reproduced before 
 ## Removed
 
 Replaced only the invalid open-course closed-lap premise and open nearest lap unwrapping. No old closed assertion, runtime model or source asset removed. No new harness or runtime dependency.
+
+## Claude's settled Gallery contract, 15 October
+
+The accepted roof is unchanged. Summit now declares full clearance width 10 m and actual underside height 5.056112670898438 m. The shared geometry test requires this width across the whole gallery, at least 4.5 m headroom and at least 1 m over every admitted car. All garage cars can race Summit; Titan is tallest at 3.6 m, so the effective minimum is 4.6 m. Physical width/height must also meet the declaration. Every generic tunnel retains the exact old width>=8 and height>=7 assertion. This is Claude's explicit 16:00 test-model approval, not a relaxed generic tolerance. Closed-loop assertions, all four seeds and all grade/ground/obstacle loops remain. Current integration was merged cleanly before this change. Final checks and signature remain pending.
+
+The next generic wall-tag assertion also exposed a model mismatch: authored Gallery colliders carry trackWall/sourceBounds/kitS, not generic tunnelWall. Director settles this existing-test hook before implementation: retain the old tunnelWall assertion exactly in the generic branch; for authored galleries require every placed non-roof source bound to exist with positive physical dimensions and prove a vehicle sweep actually hits each one. Existing native grounded/airborne/entrance-pillar tests remain unchanged. No runtime tag, collider, model, scene or wall is altered. This assertion-model change needs the same independent review.
+
+Enabling the shared Summit switch also enables summit-time-attack, which has no existing signature because it has never been enabled. Director extends the already named world-signature hook to tools/fixtures/world-signatures/summit-time-attack.json: capture this real scene separately with the parent; never copy a guessed hash. The existing --capture mode records scenes, so only that explicit mode omits the pre-existing-baseline-count demand; ordinary comparison keeps its exact count assertion and every scene equality. No new capture option or framework. All unrelated captured signatures must match their existing fixtures before either Summit fixture is written.
+
+## Current verification
+
+Original four-seed geometry suite passes: 164654 checks across 22 enabled events, legacy maximum grade 14.9%, expansion 27.9%. Real existing composition --capture records both Summit scenes with hash a574e548c9f6ca7ecb856dcc2ea5105507338b19cd6f790455fc935b173c6a5e (666 nodes, 641 meshes, 21123 instances), identical to the accepted parent signature; all 20 unrelated enabled scenes exactly match their fixtures. Only the newly enabled Attack needs a new fixture. No visual change or new art round is inferred. Canonical lane, build and final review follow on the frozen source; no full/release/browser/frame result claimed.

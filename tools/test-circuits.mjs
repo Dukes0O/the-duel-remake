@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {Course} from '../src/course.js';
-import {COURSE} from '../src/config.js';
+import {COURSE,CARS} from '../src/config.js';
 import {sweepObstacle} from '../src/collision.js';
 let checks=0,maxGrade=0,maxExpansionGrade=0;
 const check=(value,message)=>{assert.ok(value,message);checks++;};
@@ -80,8 +80,30 @@ for(const seed of[1989,42,17,2026])for(const def of COURSE){
   check(Math.abs(before.y-after.y)<.01,`${tag}: continuous ground at ${boundary}/${off}`);
  }
  for(const tunnel of course.features.tunnels){
+  if(tunnel.clearance){
+   const {width,height}=tunnel.clearance;
+   // Every garage car can race Summit, including the 3.6 m Titan.
+   const tallest=Math.max(...Object.values(CARS).map(car=>car.height??1.35));
+   check(Number.isFinite(width)&&Number.isFinite(height),`${tag}: authored clearance is finite`);
+   check(height>=4.5&&height>=tallest+1,`${tag}: authored gallery clears the admitted fleet by one metre`);
+   check(tunnel.width*2>=width&&tunnel.height>=height,`${tag}: physical gallery meets its declared clearance`);
+   for(let s=tunnel.start;s<=tunnel.end;s=Math.min(tunnel.end,s+8)){
+    check(width>=course.roadHalfWidthAt(s)*2,`${tag}: authored gallery clears the road at ${s}`);
+    if(s===tunnel.end)break;
+   }
+   const placements=(def.kitPlacements??[]).filter(row=>row.id==='gallery'&&row.s>=tunnel.start&&row.s<=tunnel.end);
+   const sides=(tunnel.collisions??[]).filter(bounds=>bounds.name!=='gallery-heavy-concrete-roof');
+   check(placements.length>0&&sides.length>0,`${tag}: authored gallery has placed side bounds`);
+   for(const row of placements)for(const bounds of sides){
+    const wall=course.features.obstacles.find(o=>o.kitS===row.s&&o.sourceBounds===bounds.name);
+    check(wall?.trackWall&&!wall.verticalClearance&&wall.halfX>0&&wall.halfZ>0&&wall.height>0,`${tag}: actual gallery side ${bounds.name} at ${row.s} is solid`);
+    const point={x:wall.x,y:wall.y,z:wall.z};
+    check(!!sweepObstacle(point,point,wall,wall.heading,{halfWidth:1.1,halfLength:2.45,height:1.35,useModelBounds:false}),`${tag}: actual gallery side catches a vehicle`);
+   }
+  }else{
   check(tunnel.width>=8&&tunnel.height>=7,`${tag}: tall vehicle tunnel clearance`);
   check(course.features.obstacles.some(o=>o.tunnelWall&&o.s>=tunnel.start&&o.s<tunnel.end),`${tag}: tunnel walls are solid`);
+  }
  }
  check(course.features.lapGates.every((gate,i,a)=>gate.s>0&&gate.s<course.length&&(!i||gate.s>a[i-1].s)),`${tag}: ordered lap gates`);
  // Authored Grand Prix circuits (def.script) set their own relief in docs/CIRCUITS.md; their tests check it.
