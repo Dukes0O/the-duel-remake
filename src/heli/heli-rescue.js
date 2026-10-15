@@ -33,10 +33,10 @@ export const SUPPLY_CRATES = Object.freeze({
   summitRun: Object.freeze([
     Object.freeze({id: 'food', name: 'Food', massKg: 300}),
     Object.freeze({id: 'medicine', name: 'Medicine', massKg: 200}),
-    // Tuned by RESCUE-SITES to Summit Run's real climb (start 2,860 m, the hut
-    // 720 m higher): with a full tank the drums sink at full lift; with half a
-    // tank they climb about 165 m a minute at the start and 60 near the hut.
-    Object.freeze({id: 'fuel', name: 'Fuel drums', massKg: 820}),
+    // Tuned by RESCUE-SITES to the thin air at Summit Run's pickup, below
+    // the avalanche (about 3,430 m; the hut yard is 150 m higher): with a full
+    // tank the drums do not climb; with half a tank they do, there and at the yard.
+    Object.freeze({id: 'fuel', name: 'Fuel drums', massKg: 640}),
   ]),
   // The fallback while Summit Run is not a destination: snow has shut the road at Tremblant Snow.
   tremblantSnow: Object.freeze([
