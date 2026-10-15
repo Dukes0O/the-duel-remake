@@ -1,5 +1,13 @@
 # Remake verification
 
+## Helicopter installed, 15 October 2026
+
+Kyle requested exact candidate `1c0cb3d0`; Codex installed it as Release Manager. Live master is `1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f`, production build `20261015161329-187a6c9406c6`. Production build staged from the exact Git archive outside live, private5188 entry/manifest/assets verified over direct loopback, then assets copied before entry/manifest. Live5174 HTTP matched; final inventory487/487 files exact. No browser reload or player-save access. Helicopter is on; Summit/Yeti stay dev.
+
+Original exact-source full check passed444/444 full suites, quiet Harbour frames (High18.2ms/world517ms; Performance18.4ms/world553ms; first-load6094.5ms warning), current-rules combat and both helicopter scenarios. Browser aggregate remains119/129, FAILED, with ten existing follow-up failures. Unknown audio causes remain unknown. Installation follows Kyle's explicit morning instruction after that failed-batch handoff; no all-green claim or check repetition. Existing large-chunk build warning retained. Staged verification was static HTTP, not a new browser runtime pass.
+
+One rollback build `20261014035636-e7c3f590285b` is retained in live dist-previous; the superseded rollback, live dist-next and owned temporary staging were recycled. Install receipt is integration `.evidence/2026-10-15/RELEASE-HELICOPTER-1c0cb3d0/install-receipt.json`. No push/history rewrite; nightly continuation stays paused.
+
 ## Steering and race screen release, 13 October 2026
 
 Kyle approved going live once green (13 October); Claude was Release Manager.

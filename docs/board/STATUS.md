@@ -1,18 +1,18 @@
 # Build status
 
-Observed at: 2026-10-15T16:12:21.191Z
+Observed at: 2026-10-15T16:18:58.976Z
 
-Observation commit: 17801dd3e7b92d01a79291201a507099c6e025ca
+Observation commit: e9c9c19bd6d6bc1609d5fdcc2a032074929a6efe
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 17801dd3e7b92d01a79291201a507099c6e025ca
+Integration HEAD: e9c9c19bd6d6bc1609d5fdcc2a032074929a6efe
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
-Live commit: not checked
+Live commit: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 
-Live build version: not checked
+Live build version: 20261015161329-187a6c9406c6
 
 Full tier: stale; exact HEAD passed: no.
 
@@ -74,25 +74,25 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 749,125 B | +225,977 B | 5,000,000 B |
+| Added bytes in last merge | 749,125 B | +0 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 431,254,528 B | +310,272 B | unavailable |
+| Git objects | 431,667,200 B | +412,672 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
+- Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 17801dd3e7b92d01a79291201a507099c6e025ca
+- Local integration/wasteland: e9c9c19bd6d6bc1609d5fdcc2a032074929a6efe
 
-Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
+Local rollback build (dist-previous): 20261014035636-e7c3f590285b. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
+- Remote origin/master: behind local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit d7dfc7b48cb0fcdceb24cb23c3b3e51be79ea433.
+- Remote origin/integration/wasteland: behind local; cached commit 8ed57f0397bce6aa275098042278a683489b7e7d.
 
 Issue: Circuit manifest summit-time-attack.js has unknown or malformed literal metadata.
