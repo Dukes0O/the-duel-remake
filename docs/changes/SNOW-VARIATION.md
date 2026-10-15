@@ -11,3 +11,11 @@ Root's genuine corrected 16-view BEFORE packet on clean 989bf3c1 passed with exi
 ## Removed
 
 Only Summit's fixed short-scale wind field is replaced when its new authored options are used. The original default callback and every other course's material path remain. No asset, fixture, helper framework or old assertion is removed.
+
+## First comparison recipe, not yet executed
+
+Root's original AFTER capture on unchanged 6402a40c passed with exit 0 in 20,289.0585 ms, ending 05:04:59 UTC, private memory-only browser and no browser errors/warnings. Its genuine 16-view packet is .evidence/2026-10-15/SNOW-VARIATION/after-6402a40c. Root viewed the full sheet and saw no obvious wind change at that scale; no art verdict is inferred. Native vertical vehicle poses differ in some pictures, so this is not a strict identical-physics screenshot pair.
+
+The owned snow-variation-sheet.py prepares one immutable round-1.jpg from actual frame 06 Engineer's braking/daylight distant snow and frame 14 Last Breath braking/night approach. It checks successful unchanged-source receipts, exact source ids, native memory/browser reports, matching requested station metadata, four actual image SHA256 values and original 1280 x 800 RGB dimensions. The source-course comparison permits only the two snow options; all route geometry is exact. It uses the full viewports, resized only, with honest outside-image labels and no crop, retouch or brightness change. Only the <=500 KB JPG is a deliverable; its small provenance manifest stays in ignored evidence. Later rounds require new reviewed inputs within the three-round cap. The recipe is authored but UNRUN; no picture, fixture, test, import, native retry, gate or build is produced by this source commit. Original 6402a40c runtime/test blobs remain exact; Root schedules the compositor and Claude's verdict next.
+
+Removed: nothing further. The recipe replaces no native source image or earlier review sheet.
