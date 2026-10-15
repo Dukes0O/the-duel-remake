@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T03:34:35.307Z
+Observed at: 2026-10-15T04:05:17.193Z
 
-Observation commit: e8d0d45db287198e9a9ce2a1eda6474e49c3439a
+Observation commit: c96b347dce6d1ac5de935e2dd1943bc3af3fbc8b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e8d0d45db287198e9a9ce2a1eda6474e49c3439a
+Integration HEAD: c96b347dce6d1ac5de935e2dd1943bc3af3fbc8b
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -95,9 +95,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-14T18:05:46-07:00 | 0 | last commit 2026-10-14T18:05:46-07:00 | docs/board/looks/ardennes-art/round-1-review.md, docs/board/looks/ardennes-art/round-1.jpg, docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 3 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
-| codex/p4-summit-attack | P4-SUMMIT-ATTACK | 2026-10-14T20:27:15-07:00 | 0 | last commit 2026-10-14T20:27:15-07:00 | docs/changes/P4-SUMMIT-ATTACK.md, src/app.js, src/audio.js, src/circuit-manifests.js, src/circuits/summit-time-attack.js |
+| codex/p4-summit-attack | P4-SUMMIT-ATTACK | 2026-10-14T20:49:15-07:00 | 0 | last commit 2026-10-14T20:49:15-07:00 | docs/changes/P4-SUMMIT-ATTACK.md, src/app.js, src/audio.js, src/circuit-manifests.js, src/circuits/summit-time-attack.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T20:30:07-07:00 | 0 | last commit 2026-10-14T20:30:07-07:00 | docs/changes/PERF-HIGH-NIGHT.md, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/perf-high-night | PERF-HIGH-NIGHT | 2026-10-14T20:54:33-07:00 | 0 | last commit 2026-10-14T20:54:33-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/qa-titan-replay-timeout | QA-TITAN-REPLAY-TIMEOUT | 2026-10-14T19:39:55-07:00 | 0 | last commit 2026-10-14T19:39:55-07:00 | docs/changes/QA-TITAN-REPLAY-TIMEOUT.md, tools/run-tests.mjs, tools/test-test-runner.mjs, tools/test-titan-climb.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
@@ -117,7 +117,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,947,441 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 146,684 B | +0 B | 5,000,000 B |
 | All `public/` | 298,113,947 B | +0 B | unavailable |
-| Git objects | 407,489,536 B | +74,752 B | unavailable |
+| Git objects | 409,815,040 B | +2,325,504 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -126,7 +126,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: e8d0d45db287198e9a9ce2a1eda6474e49c3439a
+- Local integration/wasteland: c96b347dce6d1ac5de935e2dd1943bc3af3fbc8b
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
