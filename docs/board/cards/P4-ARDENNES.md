@@ -256,3 +256,12 @@ Water with mist in the trees is the best view. Round 2, builder corrections:
 
 For Claude's finishing pass later: the light path timing, the grandstand at
 The Wall, and the timing tower framing. Frame check when wired in.
+
+
+## Round 2 source preparation lease
+
+Resume the retained p4-ardennes lane from its clean ba351920 source and merge current integration normally. Implement the six actual Claude round2 directions in owned src/circuits/ardennes-forest.js, tools/blender/ardennes-landmarks.py, tools/art/ardennes-landmarks.json, tools/scenarios/ardennes-views.mjs, tools/art/p4-ardennes-sheet.py and own change note only initially. Reuse the now merged addCircuitLandmarks town/church through course-owned circuitLandmarks data:2or3 grounded valley streets, real church base and varied pitched roof buildings with warm windows, road/bridge/stream clearances. Reuse current green grove/forest hooks for summer beech and dense firs within10m of the catch fences, keeping paddock/stands/valley clear. Preserve route/barriers/known driver exception/reference/native input and all20 original views.
+
+Prepare only the original stone-stream-bridge High/LOD pair for later weathered grey export, with red-brown stream visible both sides; do not rebuild other two pairs or assets. Name an explicit selected bridge export path before any export; preserve original default recipe behavior. Add one actual car-height Kestrel-underbridge view per quality through the existing read-only native view path; do not move race state or relabel the old off-road high camera. Grounded church/foundations need actual triangle evidence, not an assumed seated centre.
+
+No shared placement/terrain/helper source edits until Avalanche merges. For neutral damp asphalt with local tree/first-mist sheen, prepare the minimal opt-in design in the note; the later actual src/road-surface.js and src/world.js hook lease must be named before code and preserve all other courses/defaults. Use the existing town roof palette if it meets the direction; do not change the shared helper without a named later lease. Source preparation only: no export/render/browser/capture/gate/build/assets/signature/frame until Root reviews and schedules. Art family cap3; round2 not consumed until its actual sheet exists. Root owns shared metadata, exact source review and all jobs; no Kyle question or fourth round.
