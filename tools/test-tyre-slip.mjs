@@ -1,3 +1,4 @@
+import {createKeyboardSteering} from '../src/keyboard-steering.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -86,4 +87,26 @@ test('switch-on driver input respects the peak while braking and on low-grip roa
       const options={speedMph:mph,grip,traction,brake,tyreSlip:true},x=tyreSlipSteering(options),steer=steerForYaw(yaw,options);
       assert.ok(Math.abs(steer)<=1);assert.ok(Math.abs(steer)*x.steerGain<=x.peakYaw+1e-12);
     }
+});
+
+
+test('opt-in keyboard keeps every fixed-speed tap and held yaw within STEER-055',()=>{
+  for(const [speed,cap] of [[40,1],[50,.956911636],[60,.766357804],[80,.68],[100,.62],[120,.56]]){
+    const old=createKeyboardSteering(),next=createKeyboardSteering(),x=tyreSlipSteering({speedMph:speed});
+    let last;
+    for(let i=0;i<80;i++){
+      const a=old.update(1,1/120,speed),b=next.update(1,1/120,speed,{tyreSlip:true});
+      near(b*x.steerGain,a*steeringYawAuthority(speed),1e-9);last=b;
+    }
+    near(last,cap,1e-9);
+  }
+  for(const speed of [0,20,39.99,60,120])for(const arena of [false,true]){
+    const old=createKeyboardSteering({arena}),next=createKeyboardSteering({arena});
+    for(let i=0;i<100;i++){
+      const direction=i<40?1:i<70?-1:0;
+      const a=old.update(direction,1/120,speed),b=next.update(direction,1/120,speed,{tyreSlip:true,course:{def:{arena:true}}});
+      assert.equal(b,a,'all arena identities retain old raw keyboard output');
+    }
+    if(speed<40){const a=createKeyboardSteering(),b=createKeyboardSteering();for(let i=0;i<80;i++)assert.equal(b.update(1,1/120,speed,{tyreSlip:true}),a.update(1,1/120,speed));}
+  }
 });

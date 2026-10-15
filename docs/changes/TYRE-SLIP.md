@@ -15,3 +15,7 @@ Per-race dev flag and state/reset wiring; keyboard mapping against the current S
 ## Removed
 
 Nothing. The feature remains uninstalled; the future approved switch-on release owns removal of legacy branches as the card states.
+
+## Keyboard adapter slice
+
+The existing adapter accepts an optional per-update latched-rule object. The approved STEER-055 ramp is still averaged before its speed ceiling; enabled road inputs then scale by old authority/new demand gain. All fixed-speed taps and held yaw match the current curve within1e-9 and the recomputed raw caps match the card. Below40mph and every arena identity retain exact old output. Throttle is untouched. The App does not pass the option yet: actual per-race wiring and changing-speed simulation acceptance remain pending.
