@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {renderedGroundHeight} from './rendered-ground.js';
+import {escapeFrame} from './escape-roads.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {applyNightWash} from './night-wash.js';
@@ -36,6 +37,14 @@ export function normalizeKitPlacements(course, entries) {
       fail('scale must contain three positive finite values.');
     const grounding = entry.grounding;
     if (grounding !== undefined && grounding !== 'footprint') fail('grounding must be footprint when authored.');
+    const worldPosition = entry.worldPosition;
+    if (worldPosition !== undefined && (!worldPosition ||
+        !['concrete-wall', 'catch-fence', 'tyre-wall'].includes(entry.id) ||
+        !finite(worldPosition.x) || !finite(worldPosition.z) ||
+        !course.escapeRoads?.some(escape => {
+          const {u, v} = escapeFrame(escape, worldPosition.x, worldPosition.z);
+          return u > -4 && u < escape.run + 6 && v > escape.inner - 4 && v < escape.outer + 5;
+        }))) fail('world position must lie on an existing escape lining.');
     const snowmanId=entry.snowmanId;
     if(snowmanId && (entry.id!=='snowman' || typeof snowmanId!=='string'))fail('snowman binding is invalid.');
     const scenery = entry.scenery;
@@ -58,7 +67,8 @@ export function normalizeKitPlacements(course, entries) {
       ...(scenery ? {scenery:Object.freeze({...scenery})} : {}),
       ...(grounding !== undefined ? {grounding} : {}),
       ...(snowmanId ? {snowmanId} : {}),
-      ...(patch ? {physicalPatch:patch} : {})});
+      ...(patch ? {physicalPatch:patch} : {}),
+      ...(worldPosition !== undefined ? {worldPosition:Object.freeze({x:worldPosition.x,z:worldPosition.z})} : {})});
   }));
 }
 
@@ -104,10 +114,14 @@ function validateSource(asset, id) {
 const CONTINUOUS_LININGS = new Set(['armco','concrete-wall','catch-fence','tyre-wall','pit-wall']);
 
 // The base height is shared with the geometry report; model/collider rows stay
-// read only. Continuous linings keep their existing seating margin. An authored
-// footprint seats a village piece on the lowest actual ground under its base.
+// read only. Authored footprint seating and validated escape world pins use
+// the same actual ground samples; ordinary lining margins remain unchanged.
+function placementGround(course, row) {
+  const ground = course.groundAt(row.s, row.lateral);
+  return row.worldPosition ? {...ground, x: row.worldPosition.x, z: row.worldPosition.z} : ground;
+}
 export function kitBaseHeight(course,row,bounds) {
-  const ground=course.groundAt(row.s,row.lateral);
+  const ground=placementGround(course,row);
   const height=renderedGroundHeight(course,{...ground,s:row.s,off:row.lateral},{requireSurface:true});
   if(!finite(height))return height;
   const lining = CONTINUOUS_LININGS.has(row.id);
@@ -128,7 +142,7 @@ export function kitBaseHeight(course,row,bounds) {
 }
 
 function placementMatrix(course, row, bounds) {
-  const ground = course.groundAt(row.s,row.lateral);
+  const ground = placementGround(course,row);
   if (![ground.x,ground.y,ground.z,ground.heading].every(finite)) fail('terrain anchor is invalid.');
   const height=kitBaseHeight(course,row,bounds);
   if (!finite(height)) fail('placement has no rendered terrain beneath its anchor.');
