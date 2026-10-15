@@ -179,8 +179,8 @@ test('the Jesko still asks for the eight bought cars, exactly as before', () => 
     {...createProfile(), unlockedCars: bought, upgrades: maxed},
     {...createProfile(), unlockedCars: bought.slice(0, 7), upgrades: maxed},
     {...createProfile(), unlockedCars: [...bought, 'koenigsegg_jesko'], upgrades: {}}];
-  assert.deepEqual(bought, Object.keys(CARS).filter(car => car !== 'koenigsegg_jesko'),
-    'the list is every car but the Jesko, as before');
+  assert.deepEqual(bought, Object.keys(CARS).filter(car => car !== 'koenigsegg_jesko' && car !== 'ferrari_enzo'),
+    'the list is every car but the Jesko and the Enzo (an earned car never joins it), as before');
   assert.deepEqual(garages.map(garage => completionCarProgress(garage)).map(({maxed, total, eligible}) => [maxed, total, eligible]),
     [[0, 8, false], [8, 8, true], [7, 8, false], [0, 8, false]]);
   assert.equal(normalizeProfile(garages[2]).unlockedCars.includes('koenigsegg_jesko'), false);
@@ -224,8 +224,9 @@ test('one named player\'s wins never reach another\'s sheet', () => {
   assert.equal(Object.hasOwn(activePlayer(registry).profile, 'medals'), false);
 });
 
-// Medal cars do not exist in the game yet, so this runs a scratch copy of the
-// code with three test cars added to its config. Nothing is added to src/.
+// Only the first medal car (the Enzo) exists in the game so far, so this runs a
+// scratch copy of the code with three test cars added to its config, for the
+// 6, 15 and 24 rungs. Nothing is added to src/.
 test('medal cars are earned at 6, 15 and 24 (6 gold), arrive fully tuned and are never taken back', async () => {
   const sixMedals = {version: 1, cars: {falcone_f42: {duel: [1, 1, 1], grandprix: [1, 1, 1]}}};
   const saved = {...createProfile(), unlockedCars: ['falcone_f42', 'stuttgart_959s', 'medal_test_a'], medals: sixMedals};
@@ -255,7 +256,7 @@ import assert from 'node:assert/strict';
 import {COURSE} from './src/config.js';
 import {MEDAL_CARS, medalTotals} from './src/medals.js';
 import {createProfile, normalizeProfile, settleRace, unlockCar, completionCarProgress, getUpgradeLevels} from './src/progression.js';
-assert.deepEqual(MEDAL_CARS, ['medal_test_a', 'medal_test_b', 'medal_test_c']);
+assert.deepEqual(MEDAL_CARS, ['ferrari_enzo', 'medal_test_a', 'medal_test_b', 'medal_test_c']);
 assert.equal(completionCarProgress(createProfile()).total, 8, 'medal cars never join the Jesko list');
 const sheet = cars => ({version: 1, cars});
 const owns = (profile, car) => profile.unlockedCars.includes(car);
@@ -271,7 +272,7 @@ assert.equal(early.reason, '6 medals needed, you have 5.');
 const pacific = COURSE.findIndex(course => course.id === 'pacific-canyon');
 const win = settleRace(five, {runId: 'grant', stageIndex: pacific, car: 'stuttgart_959s', mode: 'duel', difficulty: 'casual',
   cpuDifficulty: 'easy', seed: 1989, laps: 2, completed: true, won: true, timeSec: 180, lapTimes: [90, 90], earnedCarsEnabled: true});
-assert.deepEqual(win.earnedCars, ['medal_test_a']);
+assert.deepEqual(win.earnedCars, ['ferrari_enzo', 'medal_test_a'], 'the real 6-medal Enzo and the 6-medal test car arrive together');
 assert.ok(owns(win.profile, 'medal_test_a')); assert.ok(fullyTuned(win.profile, 'medal_test_a'));
 assert.equal(unlockCar(win.profile, 'medal_test_a').reason, 'This car is already in your garage.');
 // A save that already has the medals earns it on load.

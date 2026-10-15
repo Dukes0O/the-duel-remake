@@ -77,6 +77,16 @@ export const CARS = {
     collision:{halfWidth:1.05,halfLength:2.475},height:1.25,kind:'hypercar',
     boostCapacity:1.4,nitroAcceleration:1.4,nitroSpeedBonus:.025,
   },
+  // Earned car 1 (EARN-CAR-1, docs/EARNED_CARS.md section 4): a medal car, never
+  // bought. Base figures; the factory tuning applies on top, so the tuned top
+  // speed is 197 x 1.105, about 218 mph.
+  ferrari_enzo: {
+    name:'Ferrari Enzo',homage:'Enzo-inspired V12 hypercar',gearbox:'manual',
+    unlockRequirement:{kind:'medals',medals:6},factoryMaxed:true,
+    topSpeed:197,accel:9.4,grip:1.08,braking:1.18,gears:[58,100,138,168,186,197],
+    color:0xb3121a,accent:0x16181b,offRoadGrip:.62,offRoadSpeed:58,offRoadScrub:.56,mass:1365,
+    collision:{halfWidth:1.02,halfLength:2.35},height:1.15,kind:'hypercar',
+  },
 };
 export const DEFAULT_CAR = 'falcone_f42';
 

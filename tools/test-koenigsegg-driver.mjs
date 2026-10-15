@@ -8,7 +8,7 @@ import {createLeaderboard,recordFinish,getLeaderboard,saveLeaderboard,loadLeader
 import {GhostRecorder,createGhostStore,storeGhost,findGhost,saveGhosts,loadGhosts,sampleGhost} from '../src/ghost.js';
 
 const car='koenigsegg_jesko',driverId='axel_storm',signature='v2:handling=1.3,nitro=1.2,suspension=1.2,tires=1.3';
-const prerequisites=Object.keys(CARS).filter(key=>key!==car),types=Object.keys(UPGRADE_TYPES),max=Object.fromEntries(types.map(type=>[type,3]));
+const prerequisites=Object.keys(CARS).filter(key=>key!==car&&!CARS[key].unlockRequirement),types=Object.keys(UPGRADE_TYPES),max=Object.fromEntries(types.map(type=>[type,3]));
 const modifiers={grip:1.3,braking:1.3,offRoadGrip:1.3,roughnessScale:1/1.2,nitroAcceleration:1.2,boostCapacity:1.2};
 let checks=0;
 const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;};

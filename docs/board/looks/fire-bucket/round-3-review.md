@@ -1,6 +1,9 @@
 # Fire bucket, Claude's original model (14 October 2026)
 
-Sheet: `round-3.jpg` (side and from above; the crumpled `bucket_dented`
+Sheet: removed 15 October (the looks folder's 20 MB limit); this art is
+now seen in the game on `../fire-view/round-2.jpg`.
+
+The sheet was `round-3.jpg` (side and from above; the crumpled `bucket_dented`
 beside the clean one). Recipe: `tools/blender/fire-bucket.py`. 2,842
 triangles, PBR colours.
 
