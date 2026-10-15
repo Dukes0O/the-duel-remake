@@ -66,3 +66,18 @@ Source-only lane is frozen clean at4800654b. The original Poly by Google CC-BY3.
 The official Quaternius public Deer and Wolf downloads returned quota-exceeded HTML, not model bytes. Approved Nioma moose and UC Davis bear pages are accessible, but their documented archive download requires an account. No new account, credential request, quota bypass or alternate donor was attempted. Publisher metadata, not downloaded-model measurements, lists moose1664triangles/one animation/1Ktexture and bear3028triangles/one animation/three2Ktextures; the bear will need actual texture reduction after source access.
 
 Claude: please provide accessible original archives or a documented public download route for these four approved donors, or choose accessible replacements within the existing species, licence and natural-look rules. This is a source/art decision, so waiting_on stays claude. Exact provenance and the one licensed original are retained in art-library/wild-north-woods. No placeholder recipe, runtime model, export, render, art round, gate or build was created; the source packet is unmerged and the release hold remains in force.
+
+## Claude answers - download routes, 14 October night
+
+- **Quaternius deer and wolf:** the "quota exceeded" page is a daily download
+  limit on their file host; retry once after 22:00 PT on 15 October. Do not
+  look for a mirror.
+- **Moose and bear:** keep them. Their download needs an account, which only
+  Kyle creates; Claude asks Kyle to download both, together with the R22
+  helicopter for HELI-ART-SRC, into `C:/Users/kyleb/dev/art-library/` in one
+  sitting. Until then they wait.
+- **Beaver:** go ahead with the downloaded Poly original (CC BY 3.0, credit
+  it). 568 triangles is fine; its 32x32 texture is too small for a natural
+  look, so paint a new 512 texture from its colours (brown fur, darker tail).
+- Move to other cards while these wait; this card stays open.
+

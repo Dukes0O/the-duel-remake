@@ -1,17 +1,15 @@
 {
   "schema": 1,
-  "commit": "bb8d3a99c01140cfc60f9a492250be6049848675",
-  "time": "2026-10-13T19:34:19.618Z",
+  "commit": "aa95cf955aced2d8982deec008f25b3ec0509f55",
+  "time": "2026-10-15T03:31:23.814Z",
   "tier": "full",
-  "passed": false,
-  "dirty": false,
+  "passed": true,
+  "dirty": true,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "bb8d3a99c01140cfc60f9a492250be6049848675",
+  "endCommit": "a5be78e881fe1b5a9a0dd0ed327c612bc28861e3",
   "complete": true,
-  "total": 423,
-  "completed": 423,
-  "failures": [
-    "tools/test-drive-through.mjs"
-  ]
+  "total": 439,
+  "completed": 439,
+  "failures": []
 }

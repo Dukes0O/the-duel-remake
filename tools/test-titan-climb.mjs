@@ -126,7 +126,9 @@ check('ordinary cars keep slope-neutral driving', () => {
     `ordinary slope speeds changed: ${speeds.map(speed => speed.toFixed(6)).join(', ')}`);
 });
 
-check('recorded replay fingerprints remain unchanged', () => {
+if (process.argv.includes('--replays-in-plan'))
+  console.log('Replay fingerprints delegated to the same runner plan: tools/test-replays.mjs. Duplicate child not run or counted.');
+else check('recorded replay fingerprints remain unchanged', () => {
   const root = fileURLToPath(new URL('..', import.meta.url));
   const replay = spawnSync(process.execPath, ['tools/test-replays.mjs'], {
     cwd: root,

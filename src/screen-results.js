@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 import {raceDistanceLabel} from './lap-choice.js';
 import {wantedPosterScreen} from './screen-card-wall.js';
 import {COURSE} from './config.js';
@@ -51,6 +52,20 @@ function modalScreen(s) {
     actions=action('BACK TO THE ROAD','resume',true)+action(practice?'RESTART PRACTICE':'RESTART RUN','restart')+action('MAIN MENU','menu');
   }
   else if (s.status==='ticket') { const t=s.police.ticket; eyebrow='HIGHWAY PATROL'; title='BUSTED.'; description=`${formatSpeed(t.speedMph)} in a ${formatSpeed(t.limitMph)} zone. The fine reduces only this race's earnings when you finish. Your saved credits are untouched. Quitting forfeits the race earnings, not your saved balance.${app.profileSaved===false?' Storage is unavailable; progress lasts for this session.':''}`; metrics=metric('TIME PENALTY',`+${t.penaltySec} SEC`,true)+metric('RACE FINE',`${credits(t.fine)} CR`,true)+metric('SAVED BALANCE',`${credits(profile().credits)} CR`); actions=action('GET BACK OUT THERE','ticket',true)+action('MAIN MENU','menu'); }
+  else if(isSummitAttack(COURSE[s.stageIndex])&&['stage_result','complete'].includes(s.status)) {
+    if(s.status==='stage_result')lastEventResult={state:s,stageIndex:s.stageIndex,runId:app.runId,result:r};
+    const result=s.status==='stage_result'?r:lastEventResult?.state===s&&lastEventResult.stageIndex===s.stageIndex&&lastEventResult.runId===app.runId?lastEventResult.result:r;
+    const completed=result.completed===true;
+    const medal=completed&&['gold','silver','bronze'].includes(result.medal)?result.medal:null;
+    const targets=COURSE[s.stageIndex].attackTimes;
+    eyebrow='SUMMIT TIME ATTACK';title=completed?'FINISHED.':'RUN<br>INCOMPLETE.';
+    description=completed?(medal?`${medal.toUpperCase()} medal earned. Your valid time is recorded.`:'Your valid time is recorded. Finish within the bronze target to earn a medal.'):'This run did not finish. Try the climb again.';
+    if(app.profileSaved===false)description+=' Storage is unavailable; progress lasts for this session.';
+    metrics=metric('RACE TIME',time(result.timeSec??result.stageTimeSec??s.stageTimeSec),true);
+    if(medal)metrics+=metric('MEDAL',medal.toUpperCase(),true);
+    if(targets)metrics+=metric('GOLD',time(targets.gold))+metric('SILVER',time(targets.silver))+metric('BRONZE',time(targets.bronze));
+    actions=action('RUN IT AGAIN','restart',true)+action('MAIN MENU','menu');
+  }
   else if (s.status==='stage_result' && r.grandPrix) {
     // A Grand Prix shows the whole finishing order (src/screen-field.js).
     const words=fieldResultsText(r,time);

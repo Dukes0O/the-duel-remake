@@ -1,3 +1,4 @@
+import {isSummitAttack} from './summit-attack.js';
 import {makeRng} from './rng.js';
 import {actorBody, startKnock} from './vehicle-knock.js';
 import {solveVehicleImpact} from './vehicle-collision.js';
@@ -6,7 +7,7 @@ import {DRIVE} from './config.js';
 export const AVALANCHE = Object.freeze({trigger:10000,decision:9950,split:10100,
   from:10420,to:10580,rejoin:10900,tellSec:3,slideSec:2.5,shoveMps:8.94,slowSec:.5,slowMph:30});
 export function avalancheEnabled(duel) {
-  return duel.course?.def.id==='summit-run' && duel.featureFlags?.enabled('summit-run')===true;
+  return (duel.course?.def.id==='summit-run'||isSummitAttack(duel.course?.def)) && duel.featureFlags?.enabled('summit-run')===true;
 }
 export function resetSummitAvalanche(duel) {
   const actors=[duel.state,...(duel.state.opponents ?? [])];
