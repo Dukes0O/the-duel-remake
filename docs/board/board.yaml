@@ -655,6 +655,7 @@ tasks:
     claimed_by: "codex-wild-art-2026-10-14"
     branch: "codex/wild-art-src"
     needs: []
+    waiting_on: claude
     locks: []
     flag: "wildlife"
     details: "docs/board/cards/WILD-ART-SRC.md"
