@@ -23,3 +23,7 @@ Owned files: src/snow-world.js, src/world.js (material options forwarding only),
 Set variationStrength as half-range around the existing0.88 mean; omitted0.20 preserves0.68..1.08 exactly. variationScale is a finite200..800m wavelength; omission uses the exact existing directional expression. Candidate Summit strength0.20/scale800m retains current contrast but makes broad wind patches. Preserve original omitted/default callback text and cache behavior; only opted-in material adds an effective-options key. Variation-disabled and dry ground stay unchanged.
 
 Before source edits, Root captures the genuine current clean native16-view baseline with the corrected normal recipe, memory-only/private port. Then source is implemented and frozen for one independent review, actual same-view after pair and Claude's verdict, nearby/jobs4/build. No frame timing or new harness. Questions and art verdicts stay on this card; none is inferred from a test.
+
+## Frozen source and actual baseline
+
+Genuine BEFORE989bf3c1 native16 completed exit0/21555.1723ms/private6958/zero browser warnings or errors; Root viewed every frame. Owned five-file6402a40c is clean and Root independent source review CLEAR. Original callback text/cache/default/dry paths remain exact, candidate Summit0.20/800m only. Existing acceptance cases are added, all execution still pending. No fixture or art verdict claimed. The interrupted PERF quiet window is released; Root schedules the first actual AFTER and nearby/jobs4/build under normal capacity.
