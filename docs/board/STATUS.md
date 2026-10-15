@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T16:28:14.320Z
+Observed at: 2026-10-15T17:25:19.577Z
 
-Observation commit: f4908c38d0d8cc6e0eb1c6965e843e6d370758ca
+Observation commit: f3a11270fafb2dc16a2992f3c8be89ae8a1592be
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: f4908c38d0d8cc6e0eb1c6965e843e6d370758ca
+Integration HEAD: f3a11270fafb2dc16a2992f3c8be89ae8a1592be
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -14,9 +14,9 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: dirty; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-15T03:31:23.814Z; tested commit: aa95cf955aced2d8982deec008f25b3ec0509f55.
+Last recorded full run: 2026-10-15T17:24:47.889Z; tested commit: f3a11270fafb2dc16a2992f3c8be89ae8a1592be.
 
 ## Feature switches
 
@@ -74,9 +74,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,633,553 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 915,814 B | +166,689 B | 5,000,000 B |
+| Added bytes in last merge | 915,814 B | +0 B | 5,000,000 B |
 | All `public/` | 299,940,281 B | +0 B | unavailable |
-| Git objects | 431,888,384 B | +221,184 B | unavailable |
+| Git objects | 433,278,976 B | +1,390,592 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,7 +85,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: f4908c38d0d8cc6e0eb1c6965e843e6d370758ca
+- Local integration/wasteland: f3a11270fafb2dc16a2992f3c8be89ae8a1592be
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
