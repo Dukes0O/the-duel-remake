@@ -162,3 +162,95 @@ for (const pitch of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) {
 }
 disposeTree(vehicle); disposeTree(sibling);
 console.log(`McLaren F1: ${checks} checks; ${triangles.toLocaleString()} triangles / ${draws} draws (limits 73,600 / 66); original three-seat body, exposed lamps, animation, grounding, directional damage, crush and exact private-instance reset.`);
+
+// The card's Panorama field check uses the existing native sampler. These are
+// headless recipe checks; no frame timing or browser verdict is inferred.
+const {earnCar2FrameSelection, assertEarnCar2FrameContext, validateEarnCar2FramePacket,
+  prepareEarnCar2FramePlayer} = await import('./scenarios/frame-pacing.mjs');
+const frameChecksBefore = checks;
+equal(earnCar2FrameSelection({}), null, 'F1 timing is an explicit opt-in');
+equal(earnCar2FrameSelection({EARN_CAR_2_FRAMES_ONLY: '0'}), null, 'A disabled selector keeps existing frame scenarios');
+equal(earnCar2FrameSelection({EARN_CAR_2_FRAMES_ONLY: '1'}), {
+  courseId: 'panorama-ridge', car: 'mclaren_f1', flags: 'panorama-ridge,earned-cars,grand-prix',
+}, 'The F1 selector enables the real course, car and Grand Prix');
+const frameContext = {headed: true, launchMode: 'headed'};
+const frameEnv = {EARN_CAR_2_FRAMES_ONLY: '1', DUEL_FRAME_IDLE_AWAKE: '1'};
+assertEarnCar2FrameContext(frameContext, frameEnv, []); checks++;
+for (const [context, env, busy] of [
+  [{headed: false, launchMode: 'headless'}, frameEnv, []],
+  [{headed: true, launchMode: 'headless'}, frameEnv, []],
+  [frameContext, {EARN_CAR_2_FRAMES_ONLY: '1'}, []],
+  [frameContext, {DUEL_FRAME_IDLE_AWAKE: '1'}, []],
+  [frameContext, frameEnv, [{kind: 'build'}]],
+]) {assert.throws(() => assertEarnCar2FrameContext(context, env, busy)); checks++;}
+const frameRow = quality => ({quality, course: 'panorama-ridge', sourceCar: 'mclaren_f1',
+  roster: Array(8).fill('mclaren_f1'), cars: 8, frames: 120, headed: true, visible: true,
+  memoryOnlySaves: true, appRunning: true, rearView: 'ready', countdownBefore: .1,
+  countdownAfter: 2.1, p95: 18.5, worldBuildMs: 999.9, constructionMs: 5000});
+const framePacket = () => ({schema: 1, mode: 'earn-car-2-simple',
+  reports: [frameRow('High'), frameRow('Performance')]});
+const validFrames = framePacket();
+equal(validateEarnCar2FramePacket(validFrames), validFrames, 'Both real F1 qualities retain the exact existing limits');
+for (const change of [
+  {course: 'harbour-lights'}, {sourceCar: 'falcone_f42'}, {roster: Array(8).fill('falcone_f42')},
+  {roster: ['ferrari_enzo', ...Array(7).fill('mclaren_f1')]}, {roster: Array(7).fill('mclaren_f1')},
+  {cars: 7}, {frames: 119}, {headed: false}, {visible: false}, {memoryOnlySaves: false},
+  {appRunning: false}, {rearView: 'pending'}, {countdownAfter: .1}, {p95: 18.501},
+  {p95: NaN}, {worldBuildMs: 1000}, {worldBuildMs: NaN}, {constructionMs: NaN},
+]) {
+  const packet = framePacket(); Object.assign(packet.reports[0], change);
+  assert.throws(() => validateEarnCar2FramePacket(packet)); checks++;
+}
+const slowLoad = framePacket(), loadWarnings = [];
+slowLoad.reports[0].constructionMs = 5001;
+equal(validateEarnCar2FramePacket(slowLoad, {warn: message => loadWarnings.push(message)}), slowLoad,
+  'A slow first-race load warns without weakening frame or world-build limits');
+equal(loadWarnings.length, 1, 'Only the slow quality emits a first-load warning');
+
+const {App} = await import('../src/app.js');
+const {CARS, COURSE} = await import('../src/config.js');
+const {ALL_CIRCUITS} = await import('../src/circuits/index.js');
+const {UPGRADE_TYPES, isCarUnlocked, getUpgradeLevels} = await import('../src/progression.js');
+const {isCourseUnlocked} = await import('../src/course-access.js');
+const {createFeatureFlags} = await import('../src/feature-flags.js');
+const frameGlobalNames = ['localStorage', '__DUEL_QA__', 'cancelAnimationFrame'];
+const frameGlobals = new Map(frameGlobalNames.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
+const frameMemory = new Map(), frameCourseCount = COURSE.length;
+let frameApp;
+try {
+  globalThis.localStorage = {getItem: key => frameMemory.get(key) ?? null,
+    setItem: (key, value) => frameMemory.set(key, String(value)), removeItem: key => frameMemory.delete(key)};
+  globalThis.__DUEL_QA__ = true; globalThis.cancelAnimationFrame = () => {};
+  if (!COURSE.some(course => course.id === 'panorama-ridge'))
+    COURSE.push(ALL_CIRCUITS.find(course => course.id === 'panorama-ridge'));
+  frameApp = new App();
+  frameApp.duel.featureFlags = createFeatureFlags({qa: true, search: '?flags=panorama-ridge,earned-cars,grand-prix'});
+  prepareEarnCar2FramePlayer(frameApp, 'high', UPGRADE_TYPES);
+  const firstPlayer = frameApp.player.id;
+  ok(isCarUnlocked(frameApp.profile, 'mclaren_f1'), 'Native private F1 player owns the actual car');
+  ok(isCourseUnlocked(frameApp.profile, 'panorama-ridge'), 'Native private player purchases Panorama');
+  equal(getUpgradeLevels(frameApp.profile, 'mclaren_f1'), Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, 3])),
+    'The private F1 receives all seven factory upgrades');
+  equal(frameApp.profile.heli.carsAt.mclaren_f1, 'panorama-ridge', 'The saved private F1 is delivered to Panorama');
+  ok(CARS.mclaren_f1.factoryMaxed, 'Timing selects the production factory-maxed car');
+  const stage = COURSE.findIndex(course => course.id === 'panorama-ridge');
+  ok(frameApp.startCampaign({startStage: stage, car: 'mclaren_f1', mode: 'grandprix',
+    seed: 1989, fieldSeed: 12, fieldSize: 7, difficulty: 'casual', cpuDifficulty: 'medium'}),
+    'Real App entry accepts the private earned and air-delivered F1');
+  equal([frameApp.duel.state.car, ...frameApp.duel.state.opponents.map(actor => actor.car)], Array(8).fill('mclaren_f1'),
+    'The actual native Grand Prix field is eight F1 copies');
+  frameApp.returnToMenu();
+  const firstProfile = JSON.stringify(frameApp.profile);
+  prepareEarnCar2FramePlayer(frameApp, 'performance', UPGRADE_TYPES);
+  ok(frameApp.player.id !== firstPlayer, 'The other quality uses a distinct native temporary player');
+  equal(JSON.stringify(frameApp.players.players.find(player => player.id === firstPlayer).profile), firstProfile,
+    'Preparing the other quality preserves the first private player');
+  equal(frameApp.duel.state.status, 'menu', 'Player preparation leaves the native menu ready to start');
+} finally {
+  try {frameApp?.dispose();} finally {
+    COURSE.splice(frameCourseCount);
+    for (const [name, descriptor] of frameGlobals)
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor); else delete globalThis[name];
+  }
+}
+console.log(`F1 frame recipe: ${checks - frameChecksBefore} headless selector, context, packet and native private eight-car field checks; actual timing remains separate.`);
