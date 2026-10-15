@@ -76,3 +76,53 @@ This is the named later scope, not a lane start before the dependency. One Attac
 The sole Attack settlement hook in progression.js stays held until Claude's EARN-MEDALS source is merged/handed back. Do not edit that file in parallel. Claude: please post the handback here or with your merge; the rest of Attack can build meanwhile. Final actual source gets fresh independent save/pay review, preserving the new medals normalization/grant/counter work.
 
 Benchmark once after accepted Gallery: whole real countdown-to-finish App run, F42 stock/winter/no pit/.95 line/Medium/start1989, normal seeded Avalanche, recorded existing Yeti input. Reuse the original useRacingLine helper; do not borrow the Avalanche comparison's forced clear/after clocks or Open steering override. Record actual whole result.timeSec as T with finish/crash/reset/input/tyre/pit/phase witnesses; one900-s simulated cap, no retry fitting or invented baseline. The card-owned existing-style --drive path is enough; no new scenario/framework. Actual measured T and rounded gold/silver/bronze must be in the final source before its gate/merge; course-id append cannot move any existing stable index. Standard timetrial records/ghosts remain the saved contract.
+
+## Claimed after Avalanche merge
+
+Avalanche merged4f404165 after317/317, build731ms and review. Its newly created clean geometry lane/branch has been recycled; integration dependency/evidence targets remain intact. Attack now uses its own p4-summit-attack folder and the three named locks for the recorded file split. Source preparation only while the actual foreign full-tier and other jobs run; no new gate, build, browser, frame or baseline starts without a fresh slot/hold check. Claude's active full-tier receipt is foreign and is not included, erased or claimed by this commit. progression.js still waits for EARN-MEDALS handback.
+
+## Claude answers - existing Yeti sighting ledger
+
+The accepted solo event may show the Yeti, but its zero-benefit settlement needs one saved-progress decision. Should a valid completed Attack sighting leave the existing Yeti sighting ledger untouched, or count like the parent's existing Summit Time Trial sighting (including its existing cosmetic unlocks)? If it counts, confirm whether to reuse the existing runId:summit-run ledger key or admit the new event suffix through existing validation. No new saved field, cash or medal-car award is proposed.
+
+Builders preserve countYetiFinish and its old key exactly until answered. They continue the already settled mode, registry, transient seeded Yeti/Avalanche, records and presentation in disjoint files. The pending save question releases no actual active source hook: Attack workers still own the named core/registry/track-kit edits until frozen. No overlapping core builder or new check starts. progression.js also still waits for EARN-MEDALS handback. Answer here and clear waiting_on in the same commit; no lead fallback for this saved-progress decision.
+
+## Save-owner handback received; sighting answer still open
+
+EARN-MEDALS merged88126eff, with completion/explicit save-shape release in f323642b. Its former progression.js ownership wait is satisfied. After the current release hold allows the lane's normal source union, adopt that exact current medal normalization/grant/counter source before the narrow Attack settlement edit and fresh save review. Do not copy an older progression.js over it. The saved-Yeti-ledger question above remains unanswered and waiting_on stays claude; no save-policy fallback applies.
+
+Claude now owns EARN-SCREEN (a90acb56) and its board says it merges after Attack releases busy-game-files. Attack's core/UI source remains frozen while the existing final reward-owner hook awaits the sighting decision; do not start overlapping core edits or silently drop either card's accepted source. PERF's read-only preflight needs only existing frame tools initially and can measure independently once the release/frame holds lift and the laptop is quiet.
+
+## Current source union and settled settlement slice
+
+Explicit aa95cf95 admits work despite the frozen helicopter release waiting for Kyle. Clean Attack union89109d9c integrates9d9f7eb5 without conflicts, including exact EARN-MEDALS88126eff source and rescue assets. No gate or benchmark has run. The now-free save-shape lock is claimed for progression.js only, alongside the existing Attack leases. The pending sighting-policy question does not release that file while its settled zero-finance branch is being built.
+
+Build only the already approved Attack-specific finish/abandon path, matching once-only cleanup, canonical existing PB threshold/key, zero financial breakdown, unchanged streak/bonus/fine/milestone/podium/earned-car state, and the already accepted recorded non-GP Yeti seed admission. Keep countYetiFinish and its ledger validation/key exactly unchanged until Claude answers the separate saved-progress question. No App sighting reward-owner payload or new count policy is selected. Final save review/gate/merge waits for the complete policy and measured targets. Freeze the whole source clean before the one actual native baseline; do not edit files while it runs. Source preparation is admitted while the three current foreign heavy jobs occupy all check slots.
+
+Clean settled financial source0468c0c2 is frozen and source-reviewed; final save review still waits for the sighting policy. The first prelaunch capacity guard returned HELD with three foreign roots, before creating a benchmark directory or starting native physics. No baseline attempt or result is claimed. The next free ordinary heavy slot is reserved for the single approved parent run; other builders keep at most two roots until its actual receipt is recorded. No quiet-frame or release hold is inferred from this short slot reservation.
+
+The single actual parent baseline now passed on0468c0c2, exit0/2109.9793ms, source unchanged. T=result.timeSec266.6; derived gold274.6/silver288.0/bronze306.6 are committed04b29fe2. No crash/reset/pit or failure, actual winter tyre and normal Gallery corridor retained; seeded Yeti3395618052 was seen. Parent's1200-credit/one-sighting settlement happened only in memory and is not Attack finance acceptance. No fitting repeat; slot reservation is released. Final saved-Yeti answer, Attack tests/save review/nearby/build remain required before merge.
+
+Focused card acceptance on clean04b29fe2 passed7/7, exit0/5295.9475ms, including actual App finish/reload, zero-finance, once-only, validated context and ghost cases. Independent save guardian source review is CLEAR for this settled slice, with no concrete fault. Migration/damaged-data/storage-budget execution and the final sighting policy remain unverified; this is not merge-complete approval. Existing canonical gate will provide the required save receipts after the policy is settled. No second native benchmark or new finance claim.
+
+## Claude answers - Yeti sighting in Summit Attack (14 October, night)
+
+Count it. Seeing the Yeti on the mountain is the same achievement whichever
+event brought the player there, and the tally only drives the existing
+cosmetic unlocks; it pays nothing.
+- A valid completed Attack finish with `yetiSeen` calls the existing
+  `countYetiFinish` exactly as the parent Summit Time Trial does, with the
+  same eligibility rules (valid, not practice, not abandoned, owned car).
+- Reuse the existing key `runId + ':summit-run'` unchanged. Each run has its
+  own `runId`, so a run counts once, and no new key format, suffix or
+  validation is needed. `countYetiFinish`, `normalizeYeti` and the ledger
+  stay byte-for-byte as they are.
+- Its existing cosmetic unlocks apply. Attack stays zero-finance: no credits,
+  bonuses or earned-car medals come from the sighting.
+- Tests: an Attack finish with a sighting counts once; reloading the same run
+  does not count twice; an abandoned or practice Attack run does not count.
+
+
+## Final saved sighting source ready for canonical checks
+
+Claude4b17e44d answered the saved sighting policy: count a valid completed Attack exactly once with the unchanged parent key and existing cosmetics, zero pay. Final clean642fe927 implements the narrow App/progression admission and three additive controlled acceptance cases. Fresh independent Save Guardian source review is CLEAR: helper, normalizer,96-entry retention,key and EARN source byte-exact. All final execution remains pending; earlier7/7 does not cover the new cases. Root's frame window is now released; next run one canonical nearby/jobs4 gate, verify the12-fixture/damaged-data/storage/backup and unchanged parent contracts in its actual receipt, then build and merge promptly if green. No newT benchmark or fitting repeat.

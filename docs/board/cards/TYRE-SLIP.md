@@ -581,3 +581,7 @@ the road curve to 55% start, 300 ms to full, 30% less at 120 mph and above.
 Amendment 5 above now reads against this new curve: a held key must never give
 more yaw than STEER-055 gives at any speed. Recompute section 5's keyboard
 table from it before building.
+
+## Factory lock correction before build
+
+The accepted independent-review amendment4 above changes drift result and leaderboard readers in progression.js and explicitly takes save-shape. The short board row now includes save-shape alongside busy-game-files, so the scheduler cannot admit this card while EARN-MEDALS owns saved-profile work. This records the already settled scope; no tyre source, design number or saved field changes here. Attack still holds the named core hooks, and the current release hold forbids all new checks and merges.

@@ -9,6 +9,31 @@ Keep every line busy (Kyle, 14 October): up to six build lanes at once, no
 more than three course lanes. When a lane merges, open the next card at once.
 Stop only when no Codex card is ready.
 
+## Tonight, 14 to 15 October (Claude, 19:50; wins over the order above where they differ)
+
+Kyle, 14 October evening: "do what you can"; Summit Run may go live overnight
+**only if every check is green** (full tier alone, combat balance, browser
+checks, the headed frame check at Summit's busiest view at both qualities,
+Claude's review). Otherwise it waits for Kyle's go in the morning. Kyle has
+set the laptop screen off (Dells on) for frame checks.
+
+1. **After the helicopter release posts RELEASE DONE**, Codex first takes the
+   two cards that decide whether Summit can ship:
+   - **PERF-HIGH-NIGHT** (High at night misses frames; Summit's snowy night is
+     heavier), measured on Harbour and on Summit's night summit;
+   - **P4-SUMMIT-ATTACK**, measure T on the accepted route and finish it. If it
+     is not green by 02:30, Summit ships without Time Attack (it stays dev).
+2. **Claude** finishes P4-FINISH-SUMMIT in lane claude-finish-summit, merges
+   it, then prepares and runs the Summit release (RELEASE-SUMMIT), posting the
+   usual hold and RELEASE DONE.
+3. **The 04:00 full check stays** (scheduled task). A Summit release full tier
+   must finish by 03:40 or start after the full check's frame step ends
+   (about 04:30); the frame step needs the laptop alone from 04:00.
+4. Everything else as ordered above. History compaction is not run tonight.
+5. **Claude stops all its work at 08:00** (Kyle needs the quota from 08:40).
+   Codex carries on; questions wait on the cards, and rule 16's one-hour
+   backup applies to small questions overnight.
+
 ## Order
 
 Start from `node tools/board.mjs`. Read each card's "Claude answers" first.
