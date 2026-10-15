@@ -157,7 +157,9 @@ test('a complete real eight-car Mountain Cup advances and banks only actual nati
   const before=[...COURSE];
   try{
     for(const id of CUPS[0].events)if(!COURSE.some(row=>row.id===id))COURSE.push(ALL_CIRCUITS.find(row=>row.id===id));
-    await withReferenceApp(async app=>{
+    await withReferenceApp(async initial=>{
+      let app=initial;
+      try {
       app.duel.featureFlags=createFeatureFlags({storage:null,qa:true,search:'?flags=grand-prix-career,summit-run'});
       app.profile={...app.profile,credits:20000};app._saveProfile();
       for(const id of CUPS[0].events)assert.equal(app.purchaseCourse(id).ok,true);
@@ -181,6 +183,18 @@ test('a complete real eight-car Mountain Cup advances and banks only actual nati
         if(round<2){
           assert.equal(app.profile.cups.active.results.length,round+1);
           assert.deepEqual(app.profile.cups.active.results[round].field,fields[round].sort((a,b)=>a.position-b.position));
+          if(round===0){
+            const saved=JSON.stringify(app.profile.cups);
+            app=new initial.constructor();
+            app.duel.featureFlags=createFeatureFlags({storage:null,qa:true,search:'?flags=grand-prix-career,summit-run'});
+            assert.equal(JSON.stringify(app.profile.cups),saved,'real App reload retains the series and first classification');
+            assert.equal(app.profile.cups.active.id,seriesId);assert.equal(app.profile.cups.active.fieldSeed,fieldSeed);
+            const other=app.addPlayer('Cup Guest');assert.equal(other.ok,true);
+            assert.notEqual(app.player.id,ownerId);assert.equal(Object.hasOwn(app.profile,'cups'),false);
+            const wallet=app.profile.credits;
+            assert.equal(app.prepareCupRace().ok,false);assert.equal(app.profile.credits,wallet);
+            assert.equal(app.selectPlayer(ownerId),true);assert.equal(JSON.stringify(app.profile.cups),saved);
+          }
         }else{
           assert.equal(app.profile.cups.active,null);assert.ok(app.profile.cups.settled.includes(seriesId));
           assert.deepEqual(state.results.cupStandings,cupStandings(fields));
@@ -192,6 +206,7 @@ test('a complete real eight-car Mountain Cup advances and banks only actual nati
         }
       }
       assert.equal(ownerId,app.player.id);
+      } finally {if(app!==initial)app.dispose();}
     });
   }finally{COURSE.splice(0,COURSE.length,...before);}
 });
