@@ -18,7 +18,11 @@ import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {terrainGeometry, farTerrainGeometry} from '../src/world-surfaces.js';
 import {createTrackKits, normalizeKitPlacements, kitBaseHeight} from '../src/track-kits.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {readFileSync} from 'node:fs';
+import {mkdtempSync, readFileSync, readdirSync, rmdirSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import {join, resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {ardennesPlayerCrashAccepted} from './scenarios/ardennes-views.mjs';
 
@@ -719,5 +723,44 @@ test('actual negative native grid keeps initial mist and light during countdown 
   } finally {
     if (world) disposeTree(world);
     if (added) COURSE.splice(COURSE.findIndex(def => def.id === ARDENNES_FOREST.id), 1);
+  }
+});
+
+// Invoke the original directory-plan CLI without importing Blender or writing outputs.
+test('original landmark CLI plans default and bridge-only outputs in two empty roots without creating files', () => {
+  const sourceRoot = fileURLToPath(new URL('../', import.meta.url));
+  const recipe = join(sourceRoot, 'tools/blender/ardennes-landmarks.py');
+  const expected = ['stone-stream-bridge', 'forest-footbridge', 'forest-timing-tower']
+    .flatMap(id => [id + '.glb', id + '-lod.glb']);
+  const roots = [];
+  try {
+    for (const tag of ['a', 'b']) {
+      const fixture = mkdtempSync(join(tmpdir(), 'duel-ardennes-plan-' + tag + '-'));
+      roots.push(fixture);
+      for (const selection of [[], ['--model', 'stone-stream-bridge']]) {
+        const call = spawnSync('python', ['-I', '-B', '-S', recipe, '--', '--root', fixture, '--paths-only', ...selection],
+          {cwd: sourceRoot, encoding: 'utf8', windowsHide: true, timeout: 10000});
+        assert.equal(call.error, undefined, call.error?.message);
+        assert.equal(call.status, 0, call.stderr || call.stdout);
+        assert.equal(call.stderr, '');
+        const plan = JSON.parse(call.stdout);
+        assert.deepEqual(Object.keys(plan), ['runtime', 'files', 'provenance']);
+        assert.equal(plan.runtime, resolve(fixture, 'public/assets/models/circuits/kits'));
+        assert.deepEqual(plan.files, selection.length ? expected.slice(0, 2) : expected);
+        assert.equal(plan.provenance, resolve(fixture, 'tools/art/ardennes-landmarks.json'));
+        assert.deepEqual(readdirSync(fixture), [], 'paths-only must not create runtime, provenance or scratch files');
+      }
+      const malformed = spawnSync('python', ['-I', '-B', '-S', recipe, '--', '--root', fixture,
+        '--paths-only', '--model', 'unregistered-landmark'],
+        {cwd: sourceRoot, encoding: 'utf8', windowsHide: true, timeout: 10000});
+      assert.equal(malformed.error, undefined, malformed.error?.message);
+      assert.equal(malformed.status, 2);
+      assert.match(malformed.stderr, /invalid choice/);
+      assert.equal(malformed.stdout, '');
+      assert.deepEqual(readdirSync(fixture), [], 'invalid selection must not create output');
+    }
+  } finally {
+    // Only empty fixture roots are removed; unexpected writes remain for diagnosis.
+    for (const fixture of roots) if (readdirSync(fixture).length === 0) rmdirSync(fixture);
   }
 });
