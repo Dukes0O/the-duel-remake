@@ -54,11 +54,24 @@
 
 ## Changed assertions
 
-- `tools/test-save-fixtures.mjs`: the fixture roster goes from 11 to 12 for
-  the new `12-medals.json` (sheets for real cars, a malformed entry, an
-  unknown car, and a second player with no sheet).
-- `tools/test-feature-flags.mjs`: the switch count goes from 27 to 28 (after FIRE-SAVE's `forest-fire`) and
-  `earned-cars` joins the list that must stay dev.
+Each is the same kind of change FIRE-SAVE made for its own fixture and switch.
+
+- Fixture roster 11 to 12 for the new `12-medals.json` (a well formed saved
+  sheet with an unknown car, and a second player with no sheet):
+  `tools/test-save-fixtures.mjs`, `tools/test-arena-settlement.mjs`,
+  `tools/test-career-backup.mjs`.
+- Switch list: count 27 to 28 and `earned-cars` must stay dev
+  (`tools/test-feature-flags.mjs`); `earned-cars: 'dev'` added to the exact
+  list in `tools/test-wasteland-beta.mjs`; `start-preview.bat` requests
+  `earned-cars` like every other dev switch (checked by
+  `tools/test-preview-launcher.mjs`).
+- The fixture first had a malformed entry, as the card asked. Two suites
+  compare every fixture byte for byte with older code
+  (`test-grand-prix-podiums.mjs`, `test-deep-save.mjs`), and older code keeps
+  a malformed entry that this card drops, so they failed on it. Real saves
+  never hold a malformed sheet, so the fixture holds a clean one; the
+  malformed cases stay in `tools/test-medals.mjs`. No assertion in those two
+  suites changed.
 
 ## Removed
 

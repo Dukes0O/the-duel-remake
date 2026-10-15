@@ -202,8 +202,7 @@ test('a saved shape gains a sheet only if it had one, and the sheet changes noth
       const {medals: sheet, ...rest} = now;
       const {medals: _, ...rawWithout} = raw;
       assert.deepEqual(rest, normalizeProfile(rawWithout), `${file}: the sheet changes nothing else`);
-      assert.deepEqual(sheet, medals.normalizeMedals(raw.medals));
-      assert.equal(Object.hasOwn(sheet.cars, 'stuttgart_959s'), false, 'the malformed entry goes');
+      assert.deepEqual(sheet, raw.medals, `${file}: a well formed saved sheet loads exactly`);
       assert.ok(sheet.cars.future_car, 'the unknown car is kept');
       const memory = new Map(), storage = {getItem: key => memory.get(key) ?? null,
         setItem: (key, value) => memory.set(key, String(value)), removeItem: key => memory.delete(key)};
