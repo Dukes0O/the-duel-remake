@@ -123,6 +123,30 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(new Set(lane.map(task=>task.suite)).size,actual.length-heavy.length,
     'fully affected lane loses exactly the nine proven heavy suites');
 }
+// Titan delegates only a duplicate child that this final plan really owns.
+{
+  const titan='tools/test-titan-climb.mjs',replay='tools/test-replays.mjs',other='tools/test-speed-format.mjs';
+  const task=(suite,args=[])=>({suite,label:suite,args});
+  const expected=[task(titan,['--replays-in-plan']),task(replay),task(other)];
+  for(const options of [{},{tier:'full'},{tier:'merge'},{tier:'lane',affected:[titan,other]},
+    {changed:true,affected:[titan,other]}])
+    same(selectPlan([titan,replay,other],options),expected,
+      'only Titan delegates when the same final default/full/merge/lane plan runs the real replay guard');
+  same(selectPlan([titan]),[task(titan)],'standalone Titan keeps its original nested replay');
+  same(selectPlan([titan,replay,other],{filters:['titan-climb']}),[task(titan)],
+    'filtering replay out restores the full standalone Titan contract');
+  same(selectPlan([titan,replay,other],{tier:'lane',affected:[titan,other],filters:['titan-climb','speed-format']}),
+    [task(titan),task(other)],'the delegation decision happens after lane and final filters');
+  same(selectPlan([titan,replay],{filters:['replays']}),[task(replay)],
+    'a replay-only filter runs the exact replay task without Titan or extra arguments');
+  same(selectPlan([titan,replay],{filters:['titan','replays','titan','replay']}),expected.slice(0,2),
+    'overlapping filters preserve one replay and one Titan argument');
+  same(selectPlan(['tools/test-titan-climb-copy.mjs',replay]),
+    [task('tools/test-titan-climb-copy.mjs'),task(replay)],'only the exact Titan suite receives delegation');
+  same(selectPlan([titan,'tools/test-combat-replays.mjs']),
+    [task(titan),task('tools/test-combat-replays.mjs')],'a different replay guard cannot replace the ordinary replay suite');
+}
+
 // New runner choices keep the complete inventory but set clear gate boundaries.
 {
   const merge=selectPlan(actual,{tier:'merge'});
@@ -293,6 +317,41 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same([launched,peak,all.failures,all.notRun],[3,2,['one'],0],
     'keep-going runs every suite and retains a failure summary');
 }
+// The scheduled replay's real child result remains authoritative even when
+// Titan's duplicate child is delegated. Reuse the existing captured fake child.
+for(const replayFailure of [{code:7,signal:null},{code:null,signal:'SIGTERM'}]) {
+  const titan='tools/test-titan-climb.mjs',replay='tools/test-replays.mjs',other='tools/test-speed-format.mjs';
+  const plan=selectPlan([titan,replay,other]),calls=[];
+  const child=(executable,args,options)=>{
+    calls.push({executable,args,options});
+    const handle=new EventEmitter();handle.stdout=new EventEmitter();handle.stderr=new EventEmitter();
+    const isReplay=args[0]===join(PROJECT_ROOT,replay);
+    queueMicrotask(()=>handle.emit('close',isReplay?replayFailure.code:0,isReplay?replayFailure.signal:null));
+    return handle;
+  };
+  const result=await runSuitesConcurrent(plan,{jobs:1,keepGoing:true,spawnChild:child,now:()=>0});
+  same(calls.map(row=>row.args),[[join(PROJECT_ROOT,titan),'--replays-in-plan'],[join(PROJECT_ROOT,replay)],[join(PROJECT_ROOT,other)]],
+    'actual dispatch passes only Titan the explicit argument and launches the original replay command');
+  same([result.exitCode,result.passed,result.failures,result.notRun],
+    [replayFailure.code??1,2,[replay],0],'replay nonzero or signal cannot be hidden by passing delegated Titan');
+  same(result.results[1].signal,replayFailure.signal,'the scheduled replay retains its actual termination cause');
+}
+{
+  const titan='tools/test-titan-climb.mjs',replay='tools/test-replays.mjs',other='tools/test-speed-format.mjs';
+  const plan=selectPlan([titan,other,replay]),calls=[];
+  const child=(executable,args)=>{
+    calls.push(args);const handle=new EventEmitter();
+    queueMicrotask(()=>handle.emit('close',args[0]===join(PROJECT_ROOT,other)?4:0,null));
+    return handle;
+  };
+  const result=await runSuitesConcurrent(plan,{jobs:1,spawnChild:child,now:()=>0});
+  same(calls,[[join(PROJECT_ROOT,titan),'--replays-in-plan'],[join(PROJECT_ROOT,other)]],
+    'fail-fast does not launch a later scheduled replay after another real failure');
+  same([result.exitCode,result.passed,result.failures,result.notRun],[4,1,[other],1],
+    'unrun delegated replay coverage stays explicitly incomplete in a failed aggregate');
+  check(!result.results.some(row=>row.suite===replay),'unrun replay is never reported as a passed fingerprint assertion');
+}
+
 {
   const audio='tools/test-audio-crash-peak.mjs';
   const ordinary=side=>Array.from({length:8},(_,index)=>'tools/test-'+side+'-'+index+'.mjs');
