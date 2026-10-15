@@ -104,3 +104,8 @@ Yes, as proposed. Fully tuned 240 mph sits in the band (Aurora 236, Viper
 is the F1's character. 1,140 kg is well inside Kestrel One's hook limit. Use
 `unlockRequirement: {kind: 'medals', medals: 15}`. Build may start; it needs
 the `sound-bank` lock, now free.
+
+
+## Next build reserved by card-answer chat, 15 October resumed session
+
+Kyle resumed this chat for 2.5 hours. Claude's approved numbers above control. This chat reserves EARN-CAR-2 and sound-bank, after completing the existing Summit handoff. The overnight chat is handling Ardennes and the old HELI cleanup. Do not duplicate that cleanup here. No new F1 folder, code or art starts until the actual HELI cleanup has cleared the recorded new-lane hold. Only the F1 card's files/hooks are reserved; EARN-CAR-3 waits for sound-bank. Record model, contract, real private images, kit and helicopter checks honestly; no stand-in acceptance.

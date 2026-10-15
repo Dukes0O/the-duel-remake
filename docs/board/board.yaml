@@ -388,7 +388,9 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-card-answers-01a141d7
+    branch: codex/earn-car-2
     needs: [EARN-SCREEN]
     locks: [sound-bank]
     flag: "earned-cars"

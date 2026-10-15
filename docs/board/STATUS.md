@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-15T23:26:52.829Z
+Observed at: 2026-10-15T23:30:00.096Z
 
-Observation commit: 6bc25bd4efdfe84e38a2b3d567f870fcd4bb26d8
+Observation commit: 9e14b71e0a6936a0859736fa48199a426043f930
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6bc25bd4efdfe84e38a2b3d567f870fcd4bb26d8
+Integration HEAD: 9e14b71e0a6936a0859736fa48199a426043f930
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -64,7 +64,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T16:17:45-07:00 | 0 | last commit 2026-10-15T16:17:45-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/circuits/summit-run.js, src/course.js, src/feature-flags.js, tools/fixtures/world-signatures/summit-time-attack.json |
+| codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T16:28:57-07:00 | 0 | last commit 2026-10-15T16:28:57-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/circuits/summit-run.js, src/course.js, src/feature-flags.js, tools/fixtures/world-signatures/summit-time-attack.json |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/tyre-slip | TYRE-SLIP | 2026-10-15T16:15:37-07:00 | 0 | last commit 2026-10-15T16:15:37-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
@@ -83,7 +83,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,935,101 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 297,528 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,742 B | +0 B | unavailable |
-| Git objects | 440,005,632 B | +98,304 B | unavailable |
+| Git objects | 440,090,624 B | +84,992 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -92,7 +92,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 6bc25bd4efdfe84e38a2b3d567f870fcd4bb26d8
+- Local integration/wasteland: 9e14b71e0a6936a0859736fa48199a426043f930
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
