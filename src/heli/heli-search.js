@@ -23,15 +23,8 @@ export const SEARCH = Object.freeze({
   yardRadius: 5, yardSearch: Object.freeze([15, 80]),
 });
 
-// Tuned to Summit Run's real climb (start 2,860 m, hut 720 m higher, about
-// 3,580 m): the drums with a full tank cannot climb out of the start area,
-// with half a tank they reach the hut (RESCUE-SITES card, Claude answers).
-export const SUPPLY_CRATES = Object.freeze({
-  'summit-run': Object.freeze([Object.freeze({id: 'food', massKg: 300}), Object.freeze({id: 'medicine', massKg: 200}),
-    Object.freeze({id: 'fuel-drums', massKg: 780})]),
-  'tremblant-snow': Object.freeze([Object.freeze({id: 'food', massKg: 400}), Object.freeze({id: 'medicine', massKg: 500}),
-    Object.freeze({id: 'fuel-drums', massKg: 900})]),
-});
+// The supply crates and their masses live in heli-rescue.js (SUPPLY_CRATES);
+// this card tuned the fuel drums there to 820 kg for Summit Run's climb.
 
 const rng = (seed, purpose, n = 0) => makeRng(heliHash(seed, purpose, n));
 const slopeAt = (ground, x, z, d = 5) => {
