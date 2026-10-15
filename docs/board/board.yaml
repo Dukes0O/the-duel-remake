@@ -160,9 +160,12 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "ready"
+    status: "building"
+    waiting_on: claude
+    claimed_by: "codex-summit-attack-2026-10-14"
+    branch: "codex/p4-summit-attack"
     needs: [P4-SUMMIT, P4-AVALANCHE]
-    locks: [circuit-registry]
+    locks: [circuit-registry, busy-game-files, track-kit-placement]
     flag: "summit-run"
     details: "docs/board/cards/P4-SUMMIT-ATTACK.md"
 
@@ -212,7 +215,8 @@ tasks:
     owner: "claude"
     lane: "DESIGN"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-finish-summit-2026-10-14"
     needs: [P4-SUMMIT, P4-AVALANCHE, P4-REVIEW-TOOL]
     details: "docs/board/cards/P4-FINISH-SUMMIT.md"
 
@@ -332,7 +336,6 @@ tasks:
     lane: "TOOLS"
     size: "S"
     status: "ready"
-    waiting_on: claude
     needs: []
     details: "docs/board/cards/QA-STOCK-SNOW.md"
 
@@ -766,8 +769,10 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     waiting_on: claude
+    claimed_by: "codex-wild-art-2026-10-14"
+    branch: "codex/wild-art-src"
     needs: []
     locks: []
     flag: "wildlife"
