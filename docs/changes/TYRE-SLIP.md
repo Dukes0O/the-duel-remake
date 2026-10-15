@@ -19,3 +19,7 @@ Nothing. The feature remains uninstalled; the future approved switch-on release 
 ## Keyboard adapter slice
 
 The existing adapter accepts an optional per-update latched-rule object. The approved STEER-055 ramp is still averaged before its speed ceiling; enabled road inputs then scale by old authority/new demand gain. All fixed-speed taps and held yaw match the current curve within1e-9 and the recomputed raw caps match the card. Below40mph and every arena identity retain exact old output. Throttle is untouched. The App does not pass the option yet: actual per-race wiring and changing-speed simulation acceptance remain pending.
+
+## Player simulation slice
+
+The dev switch now snapshots once per campaign start and installs its latched boolean only on road stages; every venue/arena is excluded. Actual player driving applies reviewed demand, braking peak, grip falloff, slip drawing and grounded road/gravel scrub. Reverse/airborne tyres shed slip and retain the old yaw path; parked on-foot cars retain old yaw. Existing player stage/crash/actor/journey/on-foot reset sites clear slip without adding fields to CPUs. An actual pre-edit2400step named-state fingerprint protects released driving. Driver/UI/audio wiring and full integration acceptance remain pending; this lane is not merged or release-ready.

@@ -1,5 +1,5 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
-import { DRIVE, BOOST, steeringYawAuthority } from './config.js';
+import { DRIVE, BOOST, steeringYawAuthority, TYRE_SLIP, tyreSlipSteering, stepTyreSlip, tyreSlipGrip, tyreSlipScrub, tyreSlipAngle } from './config.js';
 import { stepDrift, breakDrift } from './drift-scoring.js';
 import { offroadCapability, wrapHeading, limitClimb, slopeSpeedDelta, terrainAttitude } from './offroad-physics.js';
 import { clamp } from './sim-common.js';
@@ -84,7 +84,7 @@ export function _tickDrift(dt) {
 
 export function _drive(dt) {
   const s = this.state, car = this.car, d = this.diff;
-  if(stepPitService(this,s,dt))return;
+  if(stepPitService(this,s,dt)){s.tyreSlip = 0;return;}
   // A Grand Prix slipstream lifts top speed and push; it is exactly 1 elsewhere.
   const towTop = s.field ? 1 + FIELD.towTopSpeed * s.field.tow : 1, towPush = s.field ? 1 + FIELD.towAccel * s.field.tow : 1;
   let accelerationShare = (arsenalEnabled(this) ? carAcceleration(s) : 1) * towPush;
@@ -92,6 +92,7 @@ export function _drive(dt) {
   // A crash that knocked the car loose: it slides and spins until the tyres
   // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
   if (s.knock) {
+    s.tyreSlip = 0;
     stepKnock(this, s, dt);
     s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[Math.max(0, s.gear)]);
     s.boosting = false; s.steerVisual = 0; s.yawVelocity = 0;
@@ -212,14 +213,27 @@ export function _drive(dt) {
   s.roughness += (roughTarget - s.roughness) * (1 - Math.exp(-8 * dt));
   const traction = surface.traction;
   s.steerVisual += (s.input.steer - s.steerVisual) * (1 - Math.exp(-DRIVE.steerResponse * dt));
-  const targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), car.grip * (hazardsActive(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
+  let targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), car.grip * (hazardsActive(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
+  const tyreRules = s.tyreSlipRules === true && this.course.def.arena !== true && !s.onFoot;
+  if (tyreRules) {
+    const {peakYaw, steerGain} = tyreSlipSteering({speedMph: Math.abs(s.speedMph),
+      grip: car.grip * (hazardsActive(this) ? carGrip(s) : 1), traction, car, brake: s.input.brake});
+    const demand = Math.abs(s.steerVisual) * steerGain;
+    s.tyreSlip = stepTyreSlip(s.tyreSlip, peakYaw > 0 ? demand / peakYaw : 0, dt,
+      {reversing, airborne: s.airborne, knock: !!s.knock, speedMph: s.speedMph});
+    if (!reversing && !s.airborne)
+      targetYaw = -Math.sign(s.steerVisual) * Math.min(demand, tyreSlipGrip(s.tyreSlip, s.difficulty) * peakYaw);
+  } else if (s.tyreSlip) s.tyreSlip = 0;
   s.yawVelocity += (targetYaw - s.yawVelocity) * (1 - Math.exp(-DRIVE.yawResponse * dt));
   // The nose turns first while momentum carries the rear outward. A short
   // release or counter-steer settles the slide without steering toward the road.
   const driftSpeed=Math.max(0,Math.min(1,(s.speedMph-38)/85));
-  const slipTarget=-s.steerVisual*driftSpeed*(surface.preparedGravel?.25:s.offRoad?.31:.21)*(1+s.input.brake*.6);
+  const slipTarget=tyreRules ? tyreSlipAngle(s.tyreSlip, s.steerVisual, surface.preparedGravel?'gravel':s.offRoad?'offroad':'road')
+    : -s.steerVisual*driftSpeed*(surface.preparedGravel?.25:s.offRoad?.31:.21)*(1+s.input.brake*.6);
   s.slipAngle+=(slipTarget-s.slipAngle)*(1-Math.exp(-(s.input.steer*s.slipAngle>0?13:7)*dt));
   s.drifting=Math.abs(s.slipAngle)>.075&&s.speedMph>40;
+  if (tyreRules && !reversing && !s.airborne && s.speedMph > TYRE_SLIP.minSpeedMph && (surface.mainRoad || surface.preparedGravel))
+    s.speedMph = Math.max(0, s.speedMph - tyreSlipScrub(s.tyreSlip, s.difficulty) * dt);
   if (s.offRoad) {
     const offRoadLimit = surface.speedLimit * (s.boosting ? boostTopSpeed : 1);
     const scrub = surface.scrub;

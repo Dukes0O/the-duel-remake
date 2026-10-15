@@ -1,3 +1,5 @@
+import {Duel} from '../src/game.js';
+import {COURSE} from '../src/config.js';
 import {createKeyboardSteering} from '../src/keyboard-steering.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -109,4 +111,36 @@ test('opt-in keyboard keeps every fixed-speed tap and held yaw within STEER-055'
     }
     if(speed<40){const a=createKeyboardSteering(),b=createKeyboardSteering();for(let i=0;i<80;i++)assert.equal(b.update(1,1/120,speed,{tyreSlip:true}),a.update(1,1/120,speed));}
   }
+});
+
+
+test('actual released fixed-step driving retains its pre-edit named-state fingerprint',()=>{
+  const d=new Duel({seed:1989,featureFlags:{}});d.startCampaign({seed:1989,startStage:0,opponentCount:0});const h=createHash('sha256');
+  for(let i=0;i<2400;i++){
+    d.setInput({throttle:1,brake:i>1800?.4:0,steer:i<500?0:i<1200?.06:-.04,boost:false});d.step(1/120);
+    const s=d.state;h.update(JSON.stringify(['status','s','lateral','speedMph','headingError','yawVelocity','slipAngle','drifting','airborne','airHeight','lives','crashes'].map(k=>s[k])));
+  }
+  assert.equal(h.digest('hex'),'542b283978817357bbc84f7887691509227c4f72d705ad400b1033f66a4c9f7b');
+});
+
+test('rules latch once at race start and all arena definitions refuse the new rules',()=>{
+  let enabled=true;const flags={enabled:name=>name==='tyre-slip'&&enabled};const d=new Duel({seed:1989,featureFlags:flags});
+  d.startCampaign({startStage:0,opponentCount:0});assert.equal(d.state.tyreSlipRules,true);assert.equal(d.state.tyreSlip,0);
+  enabled=false;for(let i=0;i<10;i++)d.step(1/120);assert.equal(d.state.tyreSlipRules,true,'toggle cannot rewrite a running race');
+  d.startCampaign({startStage:0,opponentCount:0});assert.equal(d.state.tyreSlipRules,false);
+  enabled=true;
+  for(const course of COURSE.filter(c=>c.arena===true)){
+    d.startCampaign({startStage:COURSE.indexOf(course),opponentCount:0});
+    assert.equal(d.state.tyreSlipRules,false,course.id+' keeps released arena rules');
+  }
+});
+
+test('actual player driving builds a braking slide and sheds it in the air',()=>{
+  const d=new Duel({seed:1989,featureFlags:{'tyre-slip':true}});d.startCampaign({startStage:0,opponentCount:0});
+  for(let i=0;i<600&&d.state.status!=='racing';i++)d.step(1/120);assert.equal(d.state.status,'racing');
+  const s=d.state;s.speedMph=100;s.gear=2;s.steerVisual=1;d.setInput({throttle:0,brake:1,steer:1});
+  // Fixed-speed input probe isolates the reviewed tyre transient in real _drive.
+  for(let i=0;i<36;i++){s.speedMph=100;d._drive(1/120);}
+  assert.ok(s.tyreSlip>=1.25,'full-brake turn reaches the reviewed slide within0.3s');assert.ok(s.speedMph<100);
+  const previous=s.tyreSlip;s.airborne=true;d._drive(1/120);assert.ok(s.tyreSlip<previous,'airborne tyres stop building a slide');
 });

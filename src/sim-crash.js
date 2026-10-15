@@ -180,7 +180,7 @@ export function _safeReset(car, crashSite = null) {
   }
   car.s = car.prevS = chosen.s; car.lateral = car.prevLateral = chosen.lateral;
   car.speedMph = Math.max(0, Math.min(28, car.speedMph * .4));
-  car.headingError = local ? chosen.headingError : 0; car.yawVelocity = 0; car.pushVelocity = 0; car.slipAngle = 0; car.drifting = false;
+  car.headingError = local ? chosen.headingError : 0; car.yawVelocity = 0; car.pushVelocity = 0; car.slipAngle = 0; if(Object.hasOwn(car,'tyreSlip'))car.tyreSlip = 0; car.drifting = false;
   clearCarAlongPush(car);
   car.offRoad = false; car.offRoadTime = 0; car.roughness = 0; car.boosting = false;
   car.steerVisual = 0;
@@ -232,7 +232,7 @@ export function _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMp
   if (s.catastrophic) { s.impactDuration = DRIVE.catastrophicDuration; s.impactStrength = 1; }
   s.impactTimer = s.impactDuration;
   s.crashSpin = 0;
-  s.slipAngle = 0; s.drifting = false;
+  s.slipAngle = 0; s.tyreSlip = 0; s.drifting = false;
   s.invulnerableSec = s.impactDuration + DRIVE.recoverySec;
   s.speedMph = clamp(s.speedMph * .3, -DRIVE.crashSpeedCapMph, DRIVE.crashSpeedCapMph);
   s.gear = s.speedMph < 0 ? -1 : Math.max(0, s.gear); s.reverseHoldSec = 0;
