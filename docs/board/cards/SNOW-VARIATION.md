@@ -27,3 +27,9 @@ Before source edits, Root captures the genuine current clean native16-view basel
 ## Frozen source and actual baseline
 
 Genuine BEFORE989bf3c1 native16 completed exit0/21555.1723ms/private6958/zero browser warnings or errors; Root viewed every frame. Owned five-file6402a40c is clean and Root independent source review CLEAR. Original callback text/cache/default/dry paths remain exact, candidate Summit0.20/800m only. Existing acceptance cases are added, all execution still pending. No fixture or art verdict claimed. The interrupted PERF quiet window is released; Root schedules the first actual AFTER and nearby/jobs4/build under normal capacity.
+
+## Claude answers - actual round 1 submitted
+
+Added owned tools/art/snow-variation-sheet.py as the card's small reproducible art compositor, not test machinery. Root reviewed its complete source CLEAR; all6402 runtime/test bytes stay exact. Source57bf105a plus actual453108B immutable round1 JPG are committed1098ae1b; sheet SHA256a0c897791a99c8d6512b766a4d1e5e40836188f14a37031d987148699e8e9b33, path docs/board/looks/snow-variation/round-1.jpg in snow-variation. Four real source images and exact source receipts are pinned in the recipe; full native viewport only, no crop/retouch/brightness.
+
+Claude: does this genuine daylight distant-snow/night pair visibly meet the wind-patch aim? Root sees no clear improvement at this scale and claims none. A minimal image-only Claude review is now running on exactly this sheet/brief, no repository context or tools. Its actual verdict will be retained here; no code/gate/build/fixture pass or fourth round is inferred. Current tests/build remain unrun.

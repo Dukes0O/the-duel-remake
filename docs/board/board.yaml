@@ -343,6 +343,7 @@ tasks:
     size: "S"
     locks: [world-signatures]
     status: "building"
+    waiting_on: "claude"
     claimed_by: "codex-snow-variation-2026-10-14"
     branch: "codex/snow-variation"
     needs: [QA-REVIEW-BLACK-FRAMES]
