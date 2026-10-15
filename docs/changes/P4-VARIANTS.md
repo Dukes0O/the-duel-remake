@@ -35,3 +35,7 @@ The reviewer found copied Woods manual braking boards after the reversed corner 
 ## Native Woods readiness correction
 
 The c793bb12 Woods private54778 picture attempt failed its unchanged90s readiness wait, no browser issues/warnings and no scene pictures. A bounded actual-GLB loader probe proved Track kit placement has no rendered terrain beneath its anchor. The exact offending copied pit-wall is s4440.7538254395795/lateral22, two metres before the lap line. A new all-reverse actual-anchor test reproduces it. New reverse descriptors now opt into the existing completeTerrainRibbon option so the closing terrain cell is drawn, as Harbour already does. No source renderer/guard/deadline change, no parent terrain edit and no asset deletion. The original failed packet remains failed. A changed-source native review is required.
+
+## Initial scene baseline recipe
+
+Automatic review rejected temporary null-header bootstrap before visual review; the rejected command did not run. After inspecting actual native sheets, the existing scene checker gains a narrow --capture-new=<ids> option: every existing enabled-course coverage assertion and exact comparison remains; appended capture targets must be known, disabled dev scenes with no existing baseline. Unknown/duplicate/enabled/already-baselined targets throw. It prints actual new signatures without any placeholder or old-fixture rewrite. Ordinary and legacy capture modes remain unchanged. This explicitly named hook receives the required independent review.
