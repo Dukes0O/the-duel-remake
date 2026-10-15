@@ -39,7 +39,7 @@ reuse them. The helicopter keeps every name and behaviour it had.
   and the same selector weight; the panel, button, skip and hold-bar rules
   stay. `src/screen-router.js` imports `lessons/lesson-board.css` after
   `heli/heli-ui.css`.
-- `tools/test-lesson-core.mjs` (new): the contract, the coach timer, the
+- `tools/test-heli-lesson-core.mjs` (new; the card named it `test-lesson-core.mjs`, but it reads helicopter files to prove they use the shared pieces, and the import guard already allows `test-heli-*` files, so the guard needs no second change): the contract, the coach timer, the
   shared radio objects, the list (groups, escaping, locked rows, default
   action), the helipad panel wrapping the shared list exactly, and the moved
   styles.
@@ -53,7 +53,7 @@ reuse them. The helicopter keeps every name and behaviour it had.
 ## Checks
 
 `test-heli-lessons` 63, `test-heli-audio`, `test-heli-view` 98,
-`test-heli-mode` 154, `test-heli-hooks` 243 and `test-lesson-core` 37 pass;
+`test-heli-mode` 154, `test-heli-hooks` 243 and `test-heli-lesson-core` 37 pass;
 the helicopter lesson tests are unchanged. Lane tier, build, the
 `heli-first-flight` browser check and one review: see below.
 

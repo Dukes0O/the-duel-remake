@@ -44,7 +44,7 @@ same(COACH_EVERY, 6, 'one coaching line every 6 seconds at most');
 {
   const source = read('src/lessons/lesson-core.js');
   ok(!/\bimport\b/.test(source), 'the contract imports nothing');
-  ok(!/\bdocument\b|\bwindow\b|Math\.random|Date\.now|new Date|performance\.now|localStorage|requestAnimationFrame/.test(source),
+  ok(!/\bdocument\b|\bwindow\b|Math\.random|Date\.now|new Date|performance\.now|localStorage|requestAnimationFrame|crypto/.test(source),
     'the contract uses no page, clock, storage or randomness');
 }
 
@@ -107,4 +107,4 @@ ok(!/function createRadioChain|function softClipCurve|RADIO_FILTER = /.test(read
   ok(router.includes("import './lessons/lesson-board.css';"), 'the page loads the list styles');
 }
 
-console.log(`test-lesson-core: ${checks} checks passed`);
+console.log(`test-heli-lesson-core: ${checks} checks passed`);
