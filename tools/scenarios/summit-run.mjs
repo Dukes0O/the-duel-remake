@@ -121,8 +121,7 @@ async function runSnowArt(context){
         if(index==null)throw Error('Actual Summit is missing');
         const original=app.getMenuCourse(index),snowWorld=structuredClone(original.def.snowWorld);
         if(original.seed!==1989)throw Error('Actual Summit menu seed differs');
-        delete snowWorld.variationStrength;delete snowWorld.variationScale;
-        if(${JSON.stringify(leg)}==='after'){snowWorld.variationStrength=.20;snowWorld.variationScale=800;}
+        if(${JSON.stringify(leg)}==='before'){delete snowWorld.variationStrength;delete snowWorld.variationScale;}
         const course=new original.constructor({...original.def,snowWorld,lightPath:undefined,timeOfDay:'day'},1989);
         if(JSON.stringify(course.features)!==JSON.stringify(original.features))throw Error('ART copy changed physical course features');
         const readOnly=()=>JSON.stringify({state:app.duel.state,profile:app.profile,storage:Array.from({length:localStorage.length},(_,i)=>{const key=localStorage.key(i);return [key,localStorage.getItem(key)];})});
