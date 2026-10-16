@@ -71,3 +71,17 @@ Claude09:00 exact scope accepted. Prepare a temporary measurement probe in
 rendered-ground only; no optimization before actual all-row cost supports
 the150ms threshold. No heavy job yet: three foreign roots fill capacity,
 and the older instructor diagnostic reservation goes first.
+
+
+## Actual measurement setup
+
+Private existing QA bundle built unminified for stable stack attribution
+(not production/frame evidence); own5294preview19536/parent17224. Actual
+native menu created disposablefundedplayer/unlocked/selectedSummit. No cost
+value obtained: readonlybrowser scope reads DOM but not page-global probe.
+Temporary approved-file probe needs a DOM data witness outside the timed
+loop. Tabclosed/ownpreviewstopped09:25:28, no foreign termination. One-minute
+count4 had new foreigngate31972 started09:23:57 after own09:23:36; our
+setup voluntarilydrained for its witness fault. Bounded tool investigation
+ends09:53PT. No measured loopcost, optimization, snow comparison or timing
+pass yet. Ownsource remains temporary/uncommitted, never production-ready.
