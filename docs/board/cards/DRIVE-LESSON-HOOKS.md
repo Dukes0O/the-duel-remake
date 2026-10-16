@@ -148,3 +148,18 @@ DEV catalog rows; no native/browser/feature enablement implied. Required
 independent code/save union review and meaningful changed-file checks apply.
 Release the lease when this source is frozen. Instructor acceptance remains
 a final dependency, while this source union proceeds in parallel.
+
+
+## Dependency union frozen; core lease released
+
+Owned hook lane is clean de621ebdb774d75177ff2cca5b8fad746f7a7cb7 after
+combining exact integrationc6c2a608. One actual inventory conflict resolved:
+exact base33 count retains every foreign row plus approved driving-lessonsDEV.
+App retains Rescue admission and helicopter cue pitch; reviewed lesson
+start/owner/reward/retry source unchanged. Independent code/save union review
+CLEAR; foreign heli/save/Intel/reference source byte-identical to integration.
+Changed pure catalog91checks and Wasteland8tests PASS43.9142ms; syntax/diffclean.
+No unchanged18host cases repeated. No native/browser/lane/build, playable
+feature, reward-isolation or integration merge acceptance. Actual instructor
+and host acceptance remain final dependencies. Source frozen blocked/locks[];
+brief busy-game-files lease released, preserve this unfinished owned lane.

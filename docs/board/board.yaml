@@ -448,11 +448,11 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "M"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-parallel-resume-01a12e4f
     branch: codex/drive-lesson-hooks
     needs: [DRIVE-LESSON-1, DRIVE-LESSON-SAVE, DRIVE-LESSON-LINES]
-    locks: [busy-game-files]
+    locks: []
     flag: "driving-lessons"
     details: "docs/board/cards/DRIVE-LESSON-HOOKS.md"
 
