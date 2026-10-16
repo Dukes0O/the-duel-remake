@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T01:20:18.521Z
+Observed at: 2026-10-16T01:22:49.274Z
 
-Observation commit: bd566b99ad57def8904da5ce602287127be9cfcc
+Observation commit: 3f2ffb0e087dab43649c3c2b8d74b9b27ff0ebcd
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: bd566b99ad57def8904da5ce602287127be9cfcc
+Integration HEAD: 3f2ffb0e087dab43649c3c2b8d74b9b27ff0ebcd
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -59,8 +59,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T18:11:22-07:00 | 0 | last commit 2026-10-15T18:11:22-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, src/landscape-detail.js, src/pit-lane.js, src/road-surface.js |
-| codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T18:16:31-07:00 | 0 | last commit 2026-10-15T18:16:31-07:00 | docs/HELICOPTER.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-2.jpg, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb |
+| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T18:20:57-07:00 | 0 | last commit 2026-10-15T18:20:57-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, src/landscape-detail.js, src/pit-lane.js, src/road-surface.js |
+| codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T18:22:28-07:00 | 0 | last commit 2026-10-15T18:22:28-07:00 | docs/HELICOPTER.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-2.jpg, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T16:22:01-07:00 | 0 | last commit 2026-10-15T16:22:01-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/intel-levels.js, src/progression.js, tools/test-intel-levels.mjs |
 | codex/p4-cups | P4-CUPS | 2026-10-15T17:06:10-07:00 | 0 | last commit 2026-10-15T17:06:10-07:00 | docs/changes/P4-CUPS.md, src/app.js, src/grand-prix-cups.js, src/progression.js, src/screen-courses.js |
@@ -88,7 +88,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 201,395 B | +0 B | 5,000,000 B |
 | All `public/` | 302,319,039 B | +0 B | unavailable |
-| Git objects | 404,382,720 B | +519,168 B | unavailable |
+| Git objects | 404,633,600 B | +250,880 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -97,7 +97,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: bd566b99ad57def8904da5ce602287127be9cfcc
+- Local integration/wasteland: 3f2ffb0e087dab43649c3c2b8d74b9b27ff0ebcd
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
