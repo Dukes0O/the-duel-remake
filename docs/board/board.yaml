@@ -166,7 +166,7 @@ tasks:
     waiting_on: claude
     claimed_by: codex-intel-levels-2026-10-15
     branch: codex/intel-levels
-    locks: [save-shape, busy-game-files]
+    locks: []
     needs: [P4-INTEL-TELEMETRY, P4-CAREER]
     flag: "grand-prix"
     details: "docs/board/cards/P4-INTEL-LEVELS.md"
