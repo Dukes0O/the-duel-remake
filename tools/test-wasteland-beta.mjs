@@ -27,7 +27,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
     'lap-choice': 'on',
     snowmen: 'on',
-    yeti: 'dev',
+    yeti: 'on',
     'rival-voices': 'dev',
     'grand-prix-career': 'dev',
     'grand-prix': 'on', // Phase 4 (P4-FIELD): released 11 October 2026

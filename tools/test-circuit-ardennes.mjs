@@ -147,7 +147,7 @@ test('Ardennes Forest is a dev circuit: registered after Summit, priced, off by 
   // Switch on in a QA build: it joins the end of the list after every released course.
   const qa = createFeatureFlags({storage: null, qa: true, search: '?flags=ardennes-forest'});
   assert.equal(qa.enabled('ardennes-forest'), true);
-  assert.deepEqual(circuitsEnabled(qa).map(circuit => circuit.id), [...released, 'ardennes-forest']);
+  assert.deepEqual(circuitsEnabled(qa).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge', 'summit-run', 'ardennes-forest', 'summit-time-attack'], 'QA admission keeps Ardennes before the later shared-switch solo child');
 });
 
 

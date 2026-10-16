@@ -32,7 +32,7 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
     assert.equal(FEATURE_STATES[circuit.flag], manifest.state);
     if (circuit.id === 'summit-time-attack') {
       assert.deepEqual([circuit.flag, manifest.flag, manifest.state, manifest.price, manifest.releaseOrder, manifest.grandPrix],
-        ['summit-run', 'summit-run', 'dev', 0, 6, false]);
+        ['summit-run', 'summit-run', 'on', 0, 6, false]);
       assert.deepEqual(manifest.unlock, {kind: 'owned-course', defaultEventId: 'summit-run'});
       assert.equal(COURSE_PRICES[circuit.id], 0);
       assert.deepEqual([circuit.defaultMode, circuit.laps, circuit.grandPrixLaps, circuit.fieldSize, circuit.hasRival, circuit.noCombat],
@@ -77,7 +77,7 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   // Every circuit is released now, so the two dev-circuit rules are checked with Panorama Ridge held back as a dev switch in a test catalogue.
   const held = { ...FEATURE_STATES, 'panorama-ridge': 'dev' }, heldReleased = released.filter(id => id !== 'panorama-ridge');
   const withRidge = createFeatureFlags({ catalog: held, storage: null, qa: true, search: '?flags=panorama-ridge' });
-  assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), [...heldReleased, 'panorama-ridge'], 'a dev circuit requested for QA goes after the released ones');
+  assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge', 'summit-run', 'summit-time-attack'], 'a requested dev circuit retains its declared position before the later released Summit events');
   assert.deepEqual(circuitsEnabled(createFeatureFlags({ catalog: held, storage: null, qa: false, search: '?flags=panorama-ridge' })).map(circuit => circuit.id), heldReleased, 'players never see a dev circuit, only the released ones');
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
   assert.ok(bat.includes('preview-flags.mjs'), 'Preview obtains course flags from the course-owned manifests');

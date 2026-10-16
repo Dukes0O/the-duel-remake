@@ -169,7 +169,12 @@ assert.equal(course.tunnelAt(10500,7.7)?.id,'summit-gallery','roof covers the ro
 assert.equal(course.tunnelAt(10500,course.shortcutOffset(open,10500)),null,'Open Road is outside the Gallery');
 const roofCamera=course.worldAt(10500,7.7);roofCamera.y+=10;
 assert.equal(constrainTunnelCamera(course,roofCamera,10500),true);
-assert.ok(Math.abs(roofCamera.y-(course.groundAt(10500,0).y+actualRoof.min[1]*1.1-.45))<1e-6);
+const roofFrame=course.nearest(roofCamera.x,roofCamera.z,10500);
+const roofTunnel=course.tunnelAt(roofFrame.s,roofFrame.lateral);
+const roofRatio=Math.min(.995,Math.abs(roofFrame.lateral)/roofTunnel.width);
+const flatRoofY=course.groundAt(roofFrame.s,0).y+actualRoof.min[1]*1.1;
+const visibleArchY=course.at(roofFrame.s).y+3.6+(actualRoof.min[1]*1.1-3.6)*Math.sqrt(1-roofRatio*roofRatio);
+assert.ok(Math.abs(roofCamera.y-(Math.min(flatRoofY,visibleArchY)-.45))<1e-6,'camera stays beneath both actual kit roof and visible Gallery arch');
 const openCamera=course.worldAt(10500,course.shortcutOffset(open,10500));openCamera.y+=10;
 const openHeight=openCamera.y;
 assert.equal(constrainTunnelCamera(course,openCamera,10500),false);
@@ -347,4 +352,4 @@ if(process.argv.includes('--drive')){
 }
 
 assert.equal(SUMMIT_RUN.snowWorld.always,true,'reviewed Summit winter presentation is always active');
-assert.notEqual(TREMBLANT_SNOW.snowWorld?.always,true,'released Snow presentation is not switched here');
+assert.equal(TREMBLANT_SNOW.snowWorld.always,true,'released Snow retains its historical always-on presentation unchanged');

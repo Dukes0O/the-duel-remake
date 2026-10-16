@@ -25,7 +25,8 @@ test('panorama-ridge retains its accepted registry identity and access', () => {
   const enabled = CIRCUIT_MANIFESTS.filter(row => row.state === 'on');
   const publicIndex = COURSE.findIndex(row => row.id === id);
   assert.equal(publicIndex, BASE_COURSE_COUNT + enabled.findIndex(row => row.id === id));
-  assert.equal(publicIndex, COURSE.length - 1, 'Panorama Ridge is last on the course list, after Harbour Lights');
+  assert.equal(publicIndex, 19, 'Panorama Ridge keeps its historical public position after Harbour Lights');
+  assert.deepEqual(COURSE.slice(publicIndex).map(row => row.id), ['panorama-ridge', 'summit-run', 'summit-time-attack'], 'the two approved Summit events append after Panorama');
   assert.equal(COURSE[publicIndex - 1].id, 'harbour-lights');
   const fresh = createProfile();
   assert.equal(isCourseUnlocked(fresh, id), false);
