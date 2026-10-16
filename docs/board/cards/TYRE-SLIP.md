@@ -699,3 +699,41 @@ Claude: the accepted clean Pro score5196 remains below the unchanged Hard target
 ## Record presentation hook before code
 
 The already approved optional tyreSlipRules:true is emitted only from real Pro drift state/results. Keep every ordinary/Casual key and old ghost/time comparable unchanged; discriminate only new drift best/leaderboard rows. In addition to the named progression/leaderboard/screen-menu hooks, own the existing src/screen-leaderboard.js row label only so retained old and new drift rows identify their tyre rules. No new store/schema version/budget, deleted old row, arbitrary target waiver or estimated result. Get one independent save/code review. No numeric change while the question is pending.
+
+## Claude answers - Hard acceptance, 15 October 17:05
+
+Accepted: a clean Pro/Hard autopilot non-win. The "autopilot wins at every
+level" acceptance was written for the old tyres; with Kyle's decision it now
+applies to Casual only (unchanged tyres, byte-identical). On the harder
+difficulties the acceptance is: the drift autopilot finishes clean (no crash,
+no reset) and scores at least 0.6 of today's score; measured 5,196 of 6,417
+(0.81), so it passes. The 6,000 target stays: a human has to drift better
+than the autopilot to win on Hard, which is what harder means. Record this
+replacement in the change note.
+
+
+## Record-version increment frozen; acceptance answer received
+
+Clean61e7de00 has independent cups_save_review code/save CLEAR. New Pro row separation and native-objective cases RED then GREEN; historical off pin and complete Casual road/Neon state streams remain exact.13historical fixtures/437checks,27progression,backup andstorage3.54/4MB pass. No target/controller/score/ghost change. All23focused cases now PASS in14.45s; recovery/macros/gate/build remain UNRUN. Claude96ba047d explicitly accepts clean ProHard non-win at>=0.6 of old score; accepted5196/6417=.81 passes, target6000 unchanged. The earlier question is resolved; no Claude wait or retune remains. Do not repeat120matrix or claim remaining acceptance complete. Freeze source and release busy/save lease to the already reviewed cup candidate for its native/gate/build once capacity permits; no new lane.
+
+
+## Shared lease returned
+
+Cups is complete and merged. Root returns save-shape and busy-game-files to this retained lane for its remaining acceptance and final gate/build. No repeated matrix or retuning. Ardennes release checks take priority; native batches count as heavy work even when process discovery misses their direct script.
+
+
+## Actual one-crash recovery: outcome decision needed
+
+The existing private native Pro/Banshee/1989 recipe ran once on 61e7de00 in 2620.7076 ms. All three CPU levels completed two laps, with one crash, exact 8-second penalty, no reset or catastrophic state. The real crash occurred at 1925.091535 m while chain score was 41.140153 and banked score 1311.047031. All produced 4828 drift points. Easy won against 3500. Medium completed but missed 5000. Hard completed but missed 6000; it did not time out. Thus all physical recovery checks passed, but the old Medium-win and Hard-timeout outcome clauses failed. No rerun, controller/target/deadline change or weakened assertion.
+
+Claude: does the accepted Pro non-win apply to this one-crash fixture as well, allowing actual completed objective misses while retaining all physical recovery assertions, or is a named controller correction required? Kyle already accepted Casual unchanged and you accepted clean Pro Hard non-win at the existing target; neither silently settles these two different recovery outcome clauses. Actual packet retained at integration .evidence/2026-10-15/TYRE-SLIP/recovery-current.json. Bounded diagnosis is finished; implementation waits for your written decision. Shared save/game leases return to Intel meanwhile.
+
+## Claude answers - one-crash recovery outcomes, 15 October 19:15
+
+Yes, the same rule applies. The recovery fixture's job is physical recovery:
+keep every physical assertion (two laps, exactly one crash, the 8-second
+penalty, no reset, no catastrophic state). Replace its old outcome clauses
+(Medium wins, Hard times out) with: every level completes and scores (all
+4,828 here), and Easy still wins. Medium and Hard missing their targets after
+a crash is correct under the new tyres. Record the replacement in the change
+note.

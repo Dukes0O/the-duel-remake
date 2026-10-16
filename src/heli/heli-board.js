@@ -55,12 +55,23 @@ function bucketBox(view, {repairCost = 0}) {
   return `<div class="heli-board-bucket"><h3 class="heli-board-title">Bucket</h3>${state}${fit}${repair}</div>`;
 }
 
+// The dispatch season (docs/HELI_FIRE.md section 3.6), and the first
+// snow's note when it put a fire out on this visit.
+const SEASON_NAMES = Object.freeze({summer: 'Summer', autumn: 'Autumn', winter: 'Winter', spring: 'Spring'});
+function seasonBox(season) {
+  if (!season || !SEASON_NAMES[season.name]) return '';
+  const note = season.note ? `<span class="heli-board-text">${esc(season.note)}</span>` : '';
+  return `<div class="heli-board-season"><span class="heli-board-text">${SEASON_NAMES[season.name]}, play day ${season.day} of ${season.days}</span>${note}</div>`;
+}
+
 // view: the session's view. jobs: session.boardJobs(). offer:
 // session.raceHereOffer(). fire: with the fire switch on, {repairCost}.
 // Returns '' when there is nothing to show.
 export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assisted', fire = null} = {}) {
   const parts = [];
   if (fire) {
+    const season = seasonBox(view?.season);
+    if (season) parts.push(season);
     const radio = radioBox(view?.fire);
     if (radio) parts.push(radio);
     const bucket = bucketBox(view, fire);

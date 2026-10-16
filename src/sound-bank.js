@@ -1,6 +1,7 @@
 // Cue data is the single home for assets, routing and authored sound recipes.
 import {FIGHT_VOICE_LINES} from './fight-voices.js';
 import {HELI_CUES} from './heli/heli-audio.js';
+import {DRIVE_LESSON_CUES} from './lessons/drive-radio-lines.js';
 export const BUS_NAMES = Object.freeze([
   'engine',
   'vehicle',
@@ -41,6 +42,7 @@ export const SOUND_BANK = {
   // The Deep adapter lazy-loads these only during a submerged visit.
   // The helicopter (docs/HELICOPTER.md): radio lines, rotor and cable sounds, behind its switch.
   ...HELI_CUES,
+  ...DRIVE_LESSON_CUES,
   'deep.splash': cue('vehicle', {flag: 'the-deep', file: 'deep/splash.ogg', volume: .9, priority: 60, limit: 1}),
   'deep.engine-muffle': cue('engine', {flag: 'the-deep', file: 'deep/engine-muffle.ogg', volume: .65, priority: 50, limit: 1}),
   'deep.bubbles': cue('ambience', {flag: 'the-deep', file: 'deep/bubbles.ogg', volume: .6, loop: true, priority: 30, limit: 1}),

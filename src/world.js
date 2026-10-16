@@ -104,7 +104,8 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
       }
     }
   }
-  if(course.script)addTrackScriptScene(group,course,{snow:winter});
+  if(course.script)addTrackScriptScene(group,course,{snow:winter,
+    ...(course.def.dampRoad !== undefined ? {roadMaterial:roadMat} : {})});
   if(course.def.dampRoad !== undefined)bindPavedDampRoad(group,course,roadMat);
   addCircuitWater(group,course);addRoadGlow(group,course);addNightGlows(group,course);addWaterside(group,course);
   for(const theme of new Set(course.sections.map(s=>s.theme))){

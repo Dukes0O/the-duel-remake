@@ -86,3 +86,8 @@ price.
 
 
 The evening reference-data/control and disposable-scenario answers are received. Existing a32b36e1 remains intact; pause source while TYRE-SLIP holds the shared busy/save lease. No unanswered-Claude blocker is implied and no new lane is needed. Resume this existing lane after the lease is free.
+
+
+## Core lease returned
+
+Cups is merged and its newly created lane recycled. Tyre recovery now waits for the specific written outcome decision on its own card, with no retuning or repeat measurement. Intel may resume its existing approved UI/reference-ghost hooks under save-shape and busy-game-files. Existing source a32b36e1 and green native earning/purchase evidence stay retained. Ardennes release work has priority; no extra native batch during its eventual alone gate.
