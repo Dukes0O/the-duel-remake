@@ -799,3 +799,13 @@ Announced laptop restart stopped wrapper35212/runner13776 before any buffered JS
 ## Resume deferred for actual exclusive release check
 
 Resume admitted14:43:09UTC on same3e2bf73f (wrapper30480/runner13408/exec46346). Fresh inventory/hold immediately showed older Summit release full28640 started14:43:05UTC. Root stopped only its later verified gate and descendants; subsequent inventory shows all Tyre processes drained. No result JSON/receipt completed; cancellation is not a test failure or pass. Actual cancellation receipt retained under16October/TYRE-SLIP/resume-3e2bf73f. Source/review remain frozen; resume only after FULL TIER FOR RELEASE DONE and any frame hold clears. No ordinary job starts during this foreign hold.
+
+
+## Corrected canonical actually resumed16October09:14PT
+
+Exact clean3e2bf73f81c3f703ac9cce1b154adb4ee829d5a2, wrapper38356/
+runner7204/session44438, lane changed/jobs4/keep-going/json. Native
+.evidence/2026-10-16/TYRE-SLIP/canonical-resume-3e2bf73f/ will retain
+lane.json/log and lane-receipt.json; JSON can buffer, absent receipt is not
+a failure. One-minute count3 including two older foreign jobs. No result,
+build or merge yet; source frozen and leasesfree.

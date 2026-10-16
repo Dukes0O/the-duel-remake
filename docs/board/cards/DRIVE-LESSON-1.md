@@ -128,3 +128,19 @@ module remains Root-owned, with diagnostic error facts being added. No save,
 App or host edit; no overlapping runtime editor. Old tests/pins exact.
 
 Actual first failure receipt preserved; runtime guard now emits diagnostic state only. No control/threshold change or new native verdict. Current committed runtime diagnostic will be identified in the admitted rerun receipt; native acceptance preparation9f683e06 remains reviewed and unrun.
+
+
+## Actual input-filter correction,16October09:15PT
+
+Clean888f2725 in owned lesson lane inverses the existing120Hz native
+steering filter so the unchanged tyre yaw target reaches steerVisual on
+the braking transition. Actual diagnostic6389136d failed t0.883333s,
+brake1/command.64/tyreSlip1.018677 with roadvalid; retained steering
+through the existing filter explains that demand. New signed plain-value
+regression RED then1PASS127.9737ms; required independent code review CLEAR.
+No physicalstate overwrite, pace/board/physics/threshold change. Saturated
+commands still need actual clean native proof. No corrected native pass yet.
+Tyre canonical resumed09:14:02PT on exactclean3e2bf73f, runner7204/
+parent38356/session44438; one-minute actual roots3, no overcap. This is
+not a Tyre result; receipt remains pending. Root instructor diagnosis bound
+is09:23PT; preserve the correction if no admitted native slot by then.
