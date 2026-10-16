@@ -210,3 +210,13 @@ clean checks stay exactly as they are; anything after the finish never counts
 as a lesson fault, and a native tick that straddles the finish still fails
 closed. No racing line, pace, gate, physics or threshold change. Note: native
 runs wait for the screen hold (no windows before 12:00).
+
+
+## Direct windowless continuation,16October12:50PT
+
+Kyle asked to keep building the instructor and any other code without opening
+a window. Approved10:30 builder scope resumes now. Current integration was
+combined conflict-free in isolated lane64eac786, including the green Tyre
+dependency and every newer Rescue/skins/Intel change. Source only so far;
+no inherited integration check is claimed for the lesson. Native Node checks
+will use fresh ordinary heavy admission and never open a browser/game window.

@@ -447,7 +447,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/drive-lesson-1
     needs: [TYRE-SLIP, DRIVE-LESSON-CORE]
