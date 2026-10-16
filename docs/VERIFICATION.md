@@ -1,5 +1,11 @@
 # Remake verification
 
+## Ardennes release candidate, 15 October 2026
+
+Kyle requested switch-on and installation while away. The accepted course and finishing corrections passed 217/217 lane suites, jobs 4, a production build and independent code review on 55d2b7de. Claude accepted the actual finishing views in d807c0e2. The native eight-car packet has zero player crashes/resets and all seven CPUs finish; the last pit correction has separate valid grid/hairpin pictures. Only Ardennes' actual scene baseline changed; foreign baselines and old replays are exact.
+
+Kyle explicitly SKIPPED frame timing because other sessions stay active. No p95 or world-build pass is claimed. Exact release full-tier validation and staged installation are still pending on RELEASE-ARDENNES. The original 1c0cb3d0 night browser aggregate remains 119/129, failed; no old failure is relabelled green. Live still serves the Helicopter build below.
+
 ## Helicopter installed, 15 October 2026
 
 Kyle requested exact candidate `1c0cb3d0`; Codex installed it as Release Manager. Live master is `1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f`, production build `20261015161329-187a6c9406c6`. Production build staged from the exact Git archive outside live, private5188 entry/manifest/assets verified over direct loopback, then assets copied before entry/manifest. Live5174 HTTP matched; final inventory487/487 files exact. No browser reload or player-save access. Helicopter is on; Summit/Yeti stay dev.

@@ -206,3 +206,8 @@ Together with the round 4 trees and stream this completes P4-FINISH-ARDENNES.
 Write Ardennes' scene baseline from this packet (the reviewed visual
 difference is these pictures plus round 4). Then the frame check at the busiest
 view, the final gate and build, and Kyle's go.
+
+
+## Implementation merged
+
+Exact candidate 55d2b7de passed 217/217 lane suites with four workers and zero failures/unrun in 1808872.3022 ms; build 1839.7435 ms; independent review CLEAR. Claude d807c0e2 completes final art acceptance. Clean merge consumes that evidence without rerunning. Only Ardennes is switched on in integration; it is not installed yet. RELEASE-ARDENNES owns the exact final release gate and installation. Kyle's frame skip wins over the later generic reminder.

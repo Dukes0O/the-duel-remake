@@ -59,8 +59,11 @@ ok(COURSE.every((event, index) => index === harbour || !eventKey({ stageIndex: i
 equal(stageEventId(harbour), 'harbour-lights', 'position 18 saves as harbour-lights');
 const panorama = COURSE.findIndex(event => event.id === 'panorama-ridge');
 equal([tremblant, snow, harbour, panorama], [16, 17, 18, 19], 'the released courses keep their places (Tremblant Woods 17th, Tremblant Snow 18th, Harbour Lights 19th) and Panorama Ridge is 20th');
-equal(panorama, COURSE.length - 1, 'Panorama Ridge is the last entry on the course list');
-equal(CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge'], 'released circuits are listed in release order');
+const panoramaReleaseIds = ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge'];
+equal(COURSE.slice(EARLIER_EVENTS.length, panorama + 1).map(row => row.id), panoramaReleaseIds, 'the four earlier released circuits retain their exact public prefix');
+const panoramaRelease = circuitsEnabled({enabled: flag => panoramaReleaseIds.includes(flag)}).map(row => row.id);
+equal(panoramaRelease, panoramaReleaseIds, 'the historical Panorama release catalog retains its exact order');
+equal(EARLIER_EVENTS.length + panoramaRelease.indexOf('panorama-ridge'), EARLIER_EVENTS.length + panoramaRelease.length - 1, 'Panorama is last in its historical release catalog');
 const liveBeforePanorama = new Set(['tremblant-woods', 'tremblant-snow', 'harbour-lights']);
 equal(circuitsEnabled({ enabled: name => liveBeforePanorama.has(name) }).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights'],
   "with the switches that were live before Panorama Ridge the course list is identical to the live build's");

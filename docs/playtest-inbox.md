@@ -1046,3 +1046,6 @@ and source review passed. Kyle's 8-damage exception above is retained.
 
 
 - ARDENNES RELEASE RESERVATION EXPIRED at 19:05 PT, as promised. No release full tier started: final track-kit suite and final visual verdict still pending. Do not extend this hold. Existing shared HEAVY DRAIN STARTING notice remains authoritative; after roots<3 the named short Summit verification turn runs and clears it. No foreign job stopped, frame retry or live write. Root continues existing work.
+
+
+- Ardennes final source 55d2b7de is green 217/217/build/review and Claude finishing d807c0e2 is accepted. Root merges now and owns RELEASE-ARDENNES. Honor the queued short Summit verification turn, then drain existing heavy jobs for the exact release full tier alone/jobs4. Do not start follow-on heavy jobs into that window; source editing continues. The old 19:05 reservation expired; this new release admission has actual prerequisites ready. No frame run, foreign stop, live installation or full pass yet.
