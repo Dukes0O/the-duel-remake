@@ -1233,3 +1233,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 
 - 2026-10-15PT Kyle removes live rollback exception: recycled sole487file/305223013byte previousbuild; retained rollback builds0. Forward fixes only; current Ardennes/live service unchanged.
 - 2026-10-15 janitor (Claude, Kyle approved merged-only): removed six merged, clean lane folders (deep-art-src, p4-ardennes, p4-gp-existing, p4-panorama, p4-summit, p4-yeti) and their merged branches; four folders' leftover files went to the Recycle Bin after git could not delete them. Unmerged lanes kept.
+15 October: P4-FINISH-ARDENNES round 3 merged (17 braking boards moved to 2.4 m like the track's own; paddock past the grid, softer Riverside mist and Team Room notes already released; Ardennes signature recaptured from the reviewed round-3 sheet, Kyle approved); lane 43/43 jobs4, build passed, review confirmed; lane deleted.

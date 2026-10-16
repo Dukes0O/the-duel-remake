@@ -211,3 +211,31 @@ and `docs/THE_DEEP.md` section 10.
 - **Codex lanes:** one card each; three course lanes at most.
 - **The full check:** once a day, by default while Kyle sleeps, on a copy of
   one commit; only its frame step takes the laptop alone.
+
+## 8. Taking a heavy-job turn (every chat, Claude QA-SHARED-HEAVY-ADMISSION, 15 October 2026)
+
+A heavy job is a lane or full gate, a build, a balance run, a browser check
+or a Blender render. At most three run at once across every chat (AGENTS 7).
+Every session, Claude or Codex, follows the same four steps; no other tool
+or queue exists.
+
+1. **Look.** Read the top of `docs/playtest-inbox.md` for a hold
+   (FRAME CHECK, FULL TIER FOR RELEASE, NEXT HEAVY SLOT) and count the jobs
+   already running. A job counts once, by its outermost process; its
+   children are never counted again:
+   `$p = Get-CimInstance Win32_Process -Filter "name='node.exe' or name='blender.exe'" | ? { $_.CommandLine -match 'run-tests|vite build|combat-balance|browser-harness|run-browser|blender' }; $ids = $p.ProcessId; ($p | ? { $ids -notcontains $_.ParentProcessId }).Count`
+2. **Start** only when the count is under three and no hold or slot
+   reservation for someone else is open. Always `--jobs 4` or fewer.
+3. **Check again one minute later.** If the count is now over three, the
+   session whose job started last stops its own job and waits for the next
+   turn. Never stop another session's job. A release full tier and the 04:00
+   full check are never the job that stops.
+4. **Reserving the next turn.** A session whose green work is only waiting
+   for one short job may write one line at the top of the inbox:
+   `NEXT HEAVY SLOT: <job>, <session>, <HH:MM>`. The next freed turn is its
+   own; the line expires 20 minutes after its time or when the job starts,
+   and the owner deletes it then. One reservation at a time; a later one
+   waits until it clears.
+
+Frame timing still needs the laptop alone (AGENTS 8), and a release full
+tier still runs alone (AGENTS 1).

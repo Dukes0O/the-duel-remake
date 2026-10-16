@@ -79,6 +79,7 @@ team's merges back for hours):
    small now), each with `--jobs 4` or fewer. A frame measurement waits until
    no gate, build, balance run or browser check is going, and nobody starts
    one while it runs. The full tier on a release commit still runs alone (rule 1).
+   Every chat takes a turn the same way: `docs/FACTORY.md` section 8.
 8. A frame check is simple: one run per quality (Performance and High) at the
    track's busiest view with eight cars, passing at delivered p95 at most
    18.5 ms and the world build under 1 s (the full first-race load in a fresh
