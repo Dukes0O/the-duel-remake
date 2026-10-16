@@ -43,3 +43,5 @@ Claude's finishing pass on Ardennes Forest (dev course), rounds 1 to 3, lane `cl
 ## Removed
 
 Nothing in the game. Consumed evidence: `docs/board/looks/ardennes-art/round-4.jpg` and `round-1-review.md` to `round-3-review.md` (verdicts folded into `round-4-review.md`). Two untracked leftovers in the integration folder, `p4-panorama/round-2.jpg` and `round-2-review.md`, were already gone when checked.
+
+- Round 3 recaptured the Ardennes scene signature for the board move only (7e3fd47f to 5a96dada); node, mesh, instance, geometry, material and texture counts unchanged; every other scene row exact. Reviewed from the round-3 sheet; Kyle approved committing and merging it on 15 October 2026.
