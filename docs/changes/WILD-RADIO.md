@@ -86,7 +86,10 @@ sound wrong can be recut by changing one recipe line.
   after the review fixes: 168 passed, 0 failed, 0 not run in 1757 s.
   `npm run build`: passed. Again after merging integration (DRIVE-LESSON-CORE
   had moved the radio voice list; both files merged without a conflict):
-  169 passed, 0 failed, 0 not run in 1395 s; build passed.
+  169 passed, 0 failed, 0 not run in 1395 s; build passed. Final, after
+  RESCUE-HURT and DRIVE-LESSON-LINES came in (catalog, line count and
+  credits conflicts resolved with both kept): 170 passed, 0 failed, 0 not run
+  in 1264 s; build passed.
 
 ## Changed assertions
 
