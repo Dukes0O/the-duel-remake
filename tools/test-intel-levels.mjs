@@ -159,3 +159,68 @@ test('Team Room purchases are disabled outside the menu and feedback is escaped'
  assert.match(html,/data-team-buy="3"[^>]*disabled/);assert.match(html,/Return to the menu/);
  assert.doesNotMatch(html,/<img src=x/);assert.match(html,/&lt;img/);
 });
+
+test('reference ghost poses retain only the selected actual lap and reject absent native pose fields',async()=>{
+ const recipe=await import('./build-reference-laps.mjs');
+ assert.equal(typeof recipe.referencePoseSamples,'function');
+ const length=100,trace=Array.from({length:61},(_,i)=>{const s=i*5,lap=Math.min(2,Math.floor(s/100));
+  return {s,t:s<=100?s/10:s<=200?10+(s-100)*.08:18+(s-200)*.09,mph:40,
+   lateral:s/100,heading:.2,airHeight:0,groundHeight:-3+s/100,terrainPitch:.01,terrainRoll:-.02,tumble:false};});
+ const run={length,trace,lapTimes:[10,8,9],completedLaps:3,assistedLaps:[false,false,false]};
+ const selected=recipe.selectReferenceLap(run),before=JSON.stringify(run);
+ const samples=recipe.referencePoseSamples(selected,trace);
+ assert.equal(samples[0][0],0);assert.equal(samples.at(-1)[0],8000);
+ assert.equal(samples[0][1],0);assert.equal(samples.at(-1)[1],10000);
+ assert.equal(samples[0][2],100);assert.equal(samples.at(-1)[2],200);
+ assert.equal(samples[0][7],-200);assert.equal(samples.at(-1)[7],-100);
+ assert.ok(samples.every(r=>r.length===11&&r[3]===2000&&r[8]===100&&r[9]===-200));
+ assert.equal(JSON.stringify(run),before);
+ assert.throws(()=>recipe.referencePoseSamples(selected,trace.map(r=>({...r,lateral:undefined}))),/native pose/i);
+});
+test('adding reference poses never replaces the stored lap or attaches a different timing or trace',async()=>{
+ const recipe=await import('./build-reference-laps.mjs');
+ assert.equal(typeof recipe.retainReferencePoses,'function');
+ const old={eventId:id,route:'fixed',seed:1989,car:'stuttgart_959s',driver:'club',cpu:'medium',fixtureVersion:1,
+  courseFingerprint:'actual-fingerprint',lapMs:8000,sectorMs:[2000,3000,3000],trace:[[0,80],[100,80]],corners:[],extra:{keep:1}};
+ const poses=Array.from({length:12},(_,i)=>[Math.round(i*8000/11),Math.round(i*10000/11),0,0,0,400,0,-200,0,0,7]);
+ const rebuilt={...old,poseSamples:poses},before=JSON.stringify(old);
+ const accepted=recipe.retainReferencePoses(old,rebuilt);
+ assert.ok(accepted.attached);assert.deepEqual(accepted.record,{...old,poseSamples:poses});assert.equal(JSON.stringify(old),before);
+ for(const change of [{lapMs:8001},{courseFingerprint:'changed'},{trace:[[0,81],[100,80]]},{seed:42},{poseSamples:undefined}]){
+  const result=recipe.retainReferencePoses(old,{...rebuilt,...change});
+  assert.equal(result.attached,false);assert.equal(result.record,old);
+ }
+});
+
+test('bundled team poses reject incomplete clocks, stale roads and mismatched routes without entering personal storage',async()=>{
+ const refs=await import('../src/reference-laps.js');
+ assert.equal(typeof refs.validReferencePoses,'function');
+ const poses=Array.from({length:12},(_,i)=>[Math.round(i*8000/11),Math.round(i*10000/11),0,0,0,400,0,-200,0,0,7]);
+ const ref={eventId:id,route:'fixed',courseFingerprint:'actual-road',lapMs:8000,poseSamples:poses};
+ const context={eventId:id,route:'fixed',courseFingerprint:'actual-road',length:100};
+ assert.equal(refs.validReferencePoses(ref,context),true);
+ for(const patch of [{route:'route_a'},{courseFingerprint:'old-road'},{length:101},{eventId:'harbour-lights'}])
+  assert.equal(refs.validReferencePoses(ref,{...context,...patch}),false);
+ for(const samples of [poses.slice(1),poses.slice(0,-1),poses.map((r,i)=>i===5?[...r.slice(0,7),NaN,...r.slice(8)]:r),
+  poses.map((r,i)=>i===5?[poses[4][0],...r.slice(1)]:r)])
+  assert.equal(refs.validReferencePoses({...ref,poseSamples:samples},context),false);
+ assert.equal(refs.validReferencePoses({...ref,poseSamples:undefined},context),false);
+});
+
+test('team playback uses the retained native pose, repeats per lap, and cannot replace a personal ghost',async()=>{
+ const ghosts=await import('../src/ghost.js');
+ assert.equal(typeof ghosts.createTeamGhost,'function');assert.equal(typeof ghosts.sampleTeamGhost,'function');
+ const samples=Array.from({length:12},(_,i)=>[Math.round(i*8000/11),Math.round(i*10000/11),100,2000,0,400,0,-200,100,-200,7]);
+ const ref={eventId:id,route:'fixed',courseFingerprint:'native-road',lapMs:8000,car:'stuttgart_959s',poseSamples:samples};
+ const context={eventId:id,route:'fixed',courseFingerprint:'native-road',length:100,laps:2};
+ const record=ghosts.createTeamGhost(ref,context);assert.ok(record);
+ const first=ghosts.sampleTeamGhost(record,0);assert.equal(first.s,0);assert.equal(first.lateral,1);
+ assert.equal(first.headingError,.2);assert.equal(first.groundHeight,-2);assert.equal(first.terrainPitch,.01);
+ assert.equal(ghosts.sampleTeamGhost(record,8).s,100);assert.equal(ghosts.sampleTeamGhost(record,16).s,200);
+ assert.equal(ghosts.sampleTeamGhost(record,16.001),null);assert.equal(ghosts.sampleTeamGhost(record,-1),null);
+ assert.equal(ghosts.createTeamGhost(ref,{...context,route:'route_a'}),null);
+ assert.equal(ghosts.createTeamGhost(ref,{...context,courseFingerprint:'stale'}),null);
+ const store=ghosts.createGhostStore(),before=JSON.stringify(store);
+ assert.equal(ghosts.storeGhost(store,record).saved,false);assert.equal(JSON.stringify(store),before);
+ assert.equal(ghosts.sampleGhost(record,1),null,'personal playback never accepts a team record');
+});
