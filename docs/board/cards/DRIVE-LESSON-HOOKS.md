@@ -39,3 +39,18 @@ world signatures and combat balance unchanged; the browser scenario
 (private port, memory-only storage) shows the board, cones, panel and
 result card; lane tier, build, one review.
 Removed: nothing.
+
+
+## Independent presentation source while native checks wait
+
+Kyle directly instructed that every possible parallel part should proceed.
+Start this existing card's owned drive-lesson-ui.js, drive-lesson-ui.css,
+existing test-drive-lesson-run.mjs and own note as a pure presentation slice.
+Use actual settled lesson/car/course/result data; no fake instructor or
+pretend passing state. Reuse the shared lesson board. Complete useful board,
+HUD/rule/streak and result markup/styles plus callbacks for later host wiring.
+No App/game/renderer/save/feature-flag/screen hook edit now, no busy-game-files
+lease held. DRIVE-LESSON-1/SAVE/LINES remain final wiring/acceptance/merge
+dependencies. Later actual host wiring takes the core lock once and proves
+native reward isolation. Presentation source can build while instructor and
+Tyre native validation wait; it grants no native/UI/live acceptance.
