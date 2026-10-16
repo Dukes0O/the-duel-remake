@@ -17,8 +17,12 @@ words on screen change, no road, race rule, save or reference lap does.
   are met as 4, 3, 2, 1; the Panorama Ridge Esses are now a climb up to Skyline and The Cutting a steep drop;
   Lakeside Plunge is a climb.
 - Every slow corner has a `line` and a `note`. Each variant has a written signature view (Timber Straight and
-  the chairlift; the Lantern Hairpin; Skyline) and its passing zones (one on Tremblant Woods, two on each of
+  the chairlift; the Old Town Esses crest; Skyline) and its passing zones (one on Tremblant Woods, two on each of
   the others), with notes keyed under the flag id.
+- Harbour Lights Reverse keeps its signature view on the Old Town Esses crest, where the shared analysis already
+  put it. The Lantern Hairpin was tried first (as on the parent), but its picture is taken from a spot where the
+  camera is lifted above a nearby road, which the `team-room` browser check does not allow; the hairpin keeps its
+  written corner note.
 - `brakeBoard` is named only where a board of that distance stands before the corner. Devil's Chicane names
   none: its boards stand before the first half, not before the corner each note belongs to. Lantern Hairpin
   names the 50 m board, the only one it has.
@@ -33,7 +37,7 @@ variant; Tremblant Snow is a separate course with its own notes.)
 
 ## Tests
 
-`tools/test-track-analysis.mjs` (5052 checks): for each reverse variant, no note key without a real
+`tools/test-track-analysis.mjs` (5073 checks): for each reverse variant, no note key without a real
 corner or written flag; every slow corner has a written note; every corner flag and written flag has a line
 and a note over 20 characters; one signature and one or two written passing zones; no `sectors` in the resolved
 notes; a named brake board really stands that far before the corner (script board or placed board; a 150 m

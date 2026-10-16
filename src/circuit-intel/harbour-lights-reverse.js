@@ -5,7 +5,7 @@
 // reference lap is unchanged.
 export const HARBOUR_LIGHTS_REVERSE_INTEL = Object.freeze({
   flags: [
-    {id: 'lantern-hairpin', kind: 'signature', s: 2006, title: 'Lantern Hairpin'},
+    {id: 'signature', kind: 'signature', s: 2576, title: 'Old Town Esses crest'},
     {id: 'overtaking', kind: 'overtaking', s: 1740, title: 'Reservoir Run into Fishmarket Bend'},
     {id: 'seafront', kind: 'overtaking', s: 4000, title: 'Seafront Straight into Harbour Turn'},
   ],
@@ -34,6 +34,8 @@ export const HARBOUR_LIGHTS_REVERSE_INTEL = Object.freeze({
       note: 'A steep downhill with walls on both sides, so neat beats brave.'},
     'casino-corner': {brakeBoard: 100, line: 'Brake in a straight line on the right, turn in late and aim for the inside barrier of the left-hander.',
       note: 'The last tight corner of the lap, and the power you put down here carries you most of the way to the line.'},
+    signature: {line: 'Keep to the middle of the road over the crest, between the last two bends of the esses.',
+      note: 'The road tops out here and then falls away downhill, so learn this view and be settled before the top.'},
     overtaking: {line: 'Follow them closely down Reservoir Run, pull out of the slipstream early and out-brake them into Fishmarket Bend.',
       note: 'The longest straight on the lap is the best place to pass, and the right-hander at the end is a hard stop for everyone.'},
     seafront: {line: 'Stay in their slipstream along Seafront Straight and pull out before the line.',
