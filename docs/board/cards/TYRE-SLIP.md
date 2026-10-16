@@ -794,3 +794,8 @@ One final corrected canonical admitted07:24:01.174UTC: wrapper35212/runner13776/
 ## Restart interruption, 16October07:43PT
 
 Announced laptop restart stopped wrapper35212/runner13776 before any buffered JSON or receipt: actual lane.json/lane.log both zero bytes, no running process. Frozen3e2bf73f remains clean/reviewCLEAR. This is incomplete, not a passing gate or assertion failure. Resume the same corrected canonical once; no old passing native matrix/recovery/fixture recording repeated manually.
+
+
+## Resume deferred for actual exclusive release check
+
+Resume admitted14:43:09UTC on same3e2bf73f (wrapper30480/runner13408/exec46346). Fresh inventory/hold immediately showed older Summit release full28640 started14:43:05UTC. Root stopped only its later verified gate and descendants; subsequent inventory shows all Tyre processes drained. No result JSON/receipt completed; cancellation is not a test failure or pass. Actual cancellation receipt retained under16October/TYRE-SLIP/resume-3e2bf73f. Source/review remain frozen; resume only after FULL TIER FOR RELEASE DONE and any frame hold clears. No ordinary job starts during this foreign hold.
