@@ -1043,3 +1043,6 @@ and source review passed. Kyle's 8-damage exception above is retained.
 
 
 - ARDENNES RELEASE RESERVATION: after the already admitted Ardennes/Bolide/F1 jobs drain, hold new heavy starts for Root's exact release full tier alone/jobs4. Source editing continues. Start requires actual art acceptance plus green lane/build; no timing run. If not started by 19:05 PT, this reservation expires and normal admission resumes. Existing jobs finish untouched. See ARDENNES-SWITCH-ON.
+
+
+- ARDENNES RELEASE RESERVATION EXPIRED at 19:05 PT, as promised. No release full tier started: final track-kit suite and final visual verdict still pending. Do not extend this hold. Existing shared HEAVY DRAIN STARTING notice remains authoritative; after roots<3 the named short Summit verification turn runs and clears it. No foreign job stopped, frame retry or live write. Root continues existing work.

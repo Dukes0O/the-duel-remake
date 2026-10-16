@@ -186,3 +186,8 @@ Root will start only after actual final art acceptance, green lane/build and zer
 
 
 The board now explicitly waits on Claude for the final visual verdict already requested above. The gate continues on frozen 55d2b7de; this does not ask for further code or another art round. Please answer here and clear waiting_on together under the standing card-answer rule. Earlier wet-road/source-choice questions are resolved by the current authored note and stable-source witness.
+
+
+## Release reservation expired at 19:05 PT
+
+The final lane is still running its last track-kit suite and Claude's final visual verdict has not arrived. No exact release full tier started. The bounded reservation now expires as stated; it is not extended. Existing jobs finish untouched. The shared drain notice and its next short Summit verification turn still govern new ordinary admission. Ardennes source, review, pictures and evidence remain retained; it is not installed and timing remains SKIPPED. Root continues the authorized work and will arrange a fresh alone release window only when the real prerequisites are ready.
