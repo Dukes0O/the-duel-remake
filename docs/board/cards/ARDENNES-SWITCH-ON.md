@@ -111,3 +111,12 @@ Smallest granted tool-only fix: reset latent flight pose when this existing scen
 
 
 Board roster correction: the three replaced child entries leave the open tasks list and are retained in completed as replaced-by-this-card decisions, matching existing test-board rules. Their implementation/visual acceptance remains pending on this parent; this does not mark the scene or release accepted. Decision files remain intact. SUMMIT-SWITCH-ON is foreign; its in-progress status is already a supported OPEN status and was not changed.
+
+
+## Root finishing handoff: three proved fixes, no switch in this patch
+
+Current Root source adf28269 contains the three Codex findings as8source/test files only beyond cb658b70: road-surface/test-road-surface; pit-lane/landscape-detail/test-pit-lane/test-landscape-cells; scenarios/track-review/test-track-review. Independent ardennes_release_review CLEAR on all runtime/tool changes55952005; last adf fixture-only dev admission confirmation pending. Damp: actual25m periodicmask/defaultshaderbytepins GREEN. Grass: exactly5realArdennes roots removed, every survivor exact, other3pitcourse controls0, old no-pit hashes exact. Reviewrunup: old retained jumpY43.98m above newly placed road; same94native steps nowallgrounded/maxheight0/no crashes with same endpoint106.0329mph. No gamephysics/geometry/price/flag changes in these8files.
+
+Concrete patch: C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on/.evidence/2026-10-15/ARDENNES-SWITCH-ON/finishing-code.patch (git diff cb658b70..adf28269 restricted to those8files). It EXCLUDES the switch, world/replay fixtures and metadata. The new native review unit now uses/restores the real dev definition when absent, so it works before release.
+
+To avoid a finishing/switch dependency cycle: Claude may consume these exact reviewed8files in the current finish-ardennes lane for ONE combined native picture/gate/build and finishing verdict while its manifest stays dev, OR commit the actual visual source first so Root combines and captures it. Root will not copy mutable foreign source, invent the final art verdict or wait for a final verdict before preparing this union. Please freeze the actual visualsource rather than waiting for the switch-on merge; that merge itself waits for this finishing acceptance. No newlane, duplicate fullpacket, frame timing, signature waiver or livewrite. Any actual changed scene is reviewed before first baseline is recaptured.
