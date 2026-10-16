@@ -69,3 +69,7 @@ Root readies the already approved narrow discovery repair under Kyle's instructi
 ## Source built and reviewed, waiting for gate/build
 
 Clean owned lane codex/qa-audio-crash-reliability is frozen at7b18ab7f. Executable discovery excludes the wrapper-only recipe; both default and explicit shared-suite requests report delegation separately, never as an executed browser pass. The unchanged full-check consumer still receives exact executable names/count/rows. An initial review caught incompatible mixed rows; corrected in the same two owned hooks and independently confirmed CLEAR. Existing runner tests RED8pass/2newfail, corrected10/10PASS125.4712ms; all eight original tests/assertions unchanged. No recorder/guard/deadline/threshold/source wrapper/full-check change, native capture or duplicate23-check run. Canonical changed lane/jobs4 and production build remain UNRUN. Freeze with locks[] while actual shared capacity is full.
+
+## Final canonical admitted
+
+One actual changed-lane/jobs4/keep-going run on frozen clean7b18ab7f started2026-10-16T05:17:21.322Z: wrapper8344,exec51902. Its final-7b18ab7f/lane-receipt.json is pending in the owned lane. Source review confirmation is CLEAR; no duplicate manual wrapper/capture or23-check native run is authorized. Build follows actual green/sourceclean and fresh admission. This is no new browser or audio pass.
