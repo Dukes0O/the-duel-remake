@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T01:04:29.543Z
+Observed at: 2026-10-16T01:06:13.806Z
 
-Observation commit: 6c5d76f01beedee4bf49e2e4dd15c38a6caf760f
+Observation commit: c4fe26eb3afda20ca49237423e8608dd1cb85aa9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6c5d76f01beedee4bf49e2e4dd15c38a6caf760f
+Integration HEAD: c4fe26eb3afda20ca49237423e8608dd1cb85aa9
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -69,7 +69,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
-| codex/qa-arena-air-only | QA-ARENA-STEERING-AIR-ONLY | 2026-10-15T16:36:47-07:00 | 0 | last commit 2026-10-15T16:36:47-07:00 | docs/changes/QA-ARENA-STEERING-AIR-ONLY.md, tools/scenarios/arena-steering.mjs |
+| codex/qa-arena-air-only | unknown | 2026-10-15T16:36:47-07:00 | 0 | last commit 2026-10-15T16:36:47-07:00 | docs/changes/QA-ARENA-STEERING-AIR-ONLY.md, tools/scenarios/arena-steering.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T17:28:43-07:00 | 0 | last commit 2026-10-15T17:28:43-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/camera-clearance.js, src/circuits/summit-run.js, src/course.js, src/feature-flags.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
@@ -90,7 +90,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 1,893,879 B | +0 B | 5,000,000 B |
 | All `public/` | 302,319,039 B | +0 B | unavailable |
-| Git objects | 402,494,464 B | +195,584 B | unavailable |
+| Git objects | 402,764,800 B | +270,336 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -99,7 +99,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 6c5d76f01beedee4bf49e2e4dd15c38a6caf760f
+- Local integration/wasteland: c4fe26eb3afda20ca49237423e8608dd1cb85aa9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

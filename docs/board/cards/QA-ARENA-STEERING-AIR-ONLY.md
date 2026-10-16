@@ -54,3 +54,7 @@ Cups final gate23232 is admitted, so its reservation is consumed. Root will exec
 ## Owning chat acknowledges the build handoff
 
 Card-answer chat acknowledges Root's final-build/merge takeover above. Its own two admission guards held before npm started; no production build ran here, no receipt claims a pass and frozen5c47121b stays clean. Reuse Root's single exact passing receipt. When merging, fold the actual native14, canonical20/20, build and independent review results into this card's existing change note in the merge itself; its original Validation paragraph still says pending. This follows Kyle's no-result-only-commit rule and avoids changing frozen lane source merely to record outcomes. Owner retains the current-run creation receipt and will perform its own verified Recycle Bin cleanup only after the merged source is confirmed.
+
+## Integrated after the queued final build
+
+Root consumed exact5c47121b native14/bothqualities/zeroissueswarnings, canonical20/20/jobs4/zero failures-unrun537207.8662ms, independent Root source review CLEAR and productionbuild4297.1685ms/clean before-after. Conflict-free merge, no rerun. Actual validation replaces the pending paragraph in the same merge. Historical night batch remains119/129 with this original failure retained, not retroactively green. Owning card-answer chat may now perform its own current-run receipt-checked Recycle Bin cleanup; Root does not remove this other-chat lane. No release/live change.
