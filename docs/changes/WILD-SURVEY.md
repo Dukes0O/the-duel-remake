@@ -65,6 +65,15 @@ with the switch on and off. The test recomputes it and must equal it. With
 same profile object. `test-heli-missions.mjs` (its own pinned fire fingerprint)
 and `test-heli-jobs.mjs` are unchanged and pass.
 
+### Money review fix
+
+A report is accepted only from a run made by `createSurveyRun` (a module-level
+`WeakSet`; `isSurveyRun`), so a hand-made object or a copy of a run pays nothing
+(`reportSurvey` and `finishSurvey` both refuse it). `finishSurvey` also requires
+the run's plan to match today's job (id, course and species), so a count planned
+with Summit Run on is refused with it off. Tests cover the forged object, copies,
+the Summit Run mismatch, a wrong species, and a real run still paying.
+
 ## Tests
 
 `tools/test-heli-survey.mjs`, about 10,000 checks: every table value; the day's

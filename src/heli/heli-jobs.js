@@ -10,7 +10,7 @@ import {liftCheck} from './heli-cable.js';
 import {MEDAL_CARS} from '../medals.js';
 
 import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS} from './heli-save.js';
-import {surveyJob, surveyName, reportSurvey} from './heli-survey.js';
+import {surveyJob, surveyName, reportSurvey, isSurveyRun, SURVEY_NOT_A_RUN} from './heli-survey.js';
 
 export const HOME_COURSE = 'tremblant-woods';
 
@@ -216,7 +216,10 @@ export function finishSurvey(profile, run, {enabled, summitRun = false} = {}) {
   if (enabled !== true) return {ok: false, reason: 'The wildlife count is not available yet.', profile};
   const job = surveyJobOf(profile, {enabled, summitRun});
   if (!job) return {ok: false, reason: 'There is no count to report.', profile};
-  if (!run || run.jobId !== job.id) return {ok: false, reason: "That count is not today's job.", profile};
+  if (!isSurveyRun(run)) return {ok: false, reason: SURVEY_NOT_A_RUN, profile};
+  const plan = run.plan;
+  if (run.jobId !== job.id || plan?.jobId !== job.id || plan.courseId !== job.courseId || plan.species !== job.species)
+    return {ok: false, reason: "That count is not today's job.", profile};
   const report = reportSurvey(run);
   if (!report.ok) return {ok: false, reason: report.reason, profile};
   const wallet = Number.isFinite(profile?.credits) ? Math.max(0, Math.floor(profile.credits)) : 0;

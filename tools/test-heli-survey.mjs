@@ -15,7 +15,7 @@ import {
 } from '../src/heli/heli-jobs.js';
 import {
   SURVEY, SURVEY_PAY, SURVEY_TARGETS, SURVEY_NAMES, SURVEY_LINES, SURVEY_CELLS, SURVEY_REPORT_TOO_SOON,
-  surveyCourses, surveyJob, planSurvey as planBare, createSurveyRun, stepSurvey, surveyShare, surveyPercent, canReport, reportSurvey,
+  surveyCourses, surveyJob, planSurvey as planBare, createSurveyRun, isSurveyRun, stepSurvey, surveyShare, surveyPercent, canReport, reportSurvey,
 } from '../src/heli/heli-survey.js';
 
 // The session hands the species tables in; the tests do the same unless they say otherwise.
@@ -588,6 +588,32 @@ function goodRunFor(profile, {site = SQUARE_AT_ORIGIN} = {}) {
   equal(stale.ok, false, 'yesterday\'s run does not pay on the next day'); equal(stale.profile, next, '...and changes nothing');
   equal(finishSurvey(profile, null, {enabled: true}).ok, false, 'no run, no pay');
   equal(finishSurvey(profile, {...run, jobId: 's99'}, {enabled: true}).ok, false, 'a run for another job does not pay');
+  // A hand-made object never pays, whatever it says.
+  {
+    const forged = {jobId: 's5', plan: {jobId: 's5', courseId: job.courseId, species: job.species, truth: 10}, count: 10, coveredCells: 400, rareSeen: true};
+    const f = finishSurvey(profile, forged, {enabled: true});
+    equal(f.ok, false, 'a forged run pays nothing'); equal(f.profile, profile, '...and changes nothing');
+    equal(reportSurvey(forged).ok, false, 'a forged run cannot be reported');
+    equal(reportSurvey({...run}).ok, false, 'a copy of a real run is not a real run');
+    equal(finishSurvey(profile, {...run}, {enabled: true}).ok, false, 'a copy of a real run does not pay');
+    equal(isSurveyRun(run), true, 'a real run is one'); equal(isSurveyRun(null), false, 'null is not');
+    equal(finishSurvey(profile, run, {enabled: true}).ok, true, 'the real run still pays');
+    // A run planned for another course or species on the same day does not pay.
+    let found = null;
+    for (let day = 0; day < 200 && !found; day++) {
+      const p = profileOn(day), withSummit = surveyJobOf(p, {enabled: true, summitRun: true}), without = surveyJobOf(p, {enabled: true});
+      if (withSummit.courseId !== without.courseId) found = {p, withSummit};
+    }
+    ok(found, 'a day exists where Summit Run changes the course');
+    const summitRun = createSurveyRun(planSurvey(found.withSummit, {site: SQUARE_AT_ORIGIN}));
+    noClocks(() => flyLines(summitRun, 120));
+    const refusedOff = finishSurvey(found.p, summitRun, {enabled: true});
+    equal(refusedOff.ok, false, 'a Summit Run count is refused with Summit Run off'); equal(refusedOff.profile, found.p, '...and changes nothing');
+    equal(finishSurvey(found.p, summitRun, {enabled: true, summitRun: true}).ok, true, '...and pays with it on');
+    const wrongSpecies = createSurveyRun(planSurvey({...job, species: job.species === 'moose' ? 'black-bear' : 'moose'}, {site: SQUARE_AT_ORIGIN}));
+    noClocks(() => flyLines(wrongSpecies, 120));
+    equal(finishSurvey(profile, wrongSpecies, {enabled: true}).ok, false, 'a run for another species the same day does not pay');
+  }
   // Too little covered: no pay, not marked done, and it can be tried again.
   const thin = createSurveyRun(planSurvey(surveyJob(5), {site: SQUARE_AT_ORIGIN}));
   noClocks(() => fly(thin, [[0, 400], [800, 400]]));

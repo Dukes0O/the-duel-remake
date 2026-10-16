@@ -212,10 +212,17 @@ export function planSurvey(job, {site = null, canStand = null, wildlife = null} 
 // taking another job just drops it; a new run for the same job starts clean
 // (the count can be started again the same play day). stepSurvey changes the
 // run it is given.
+// Only runs made here can be reported, so a hand-made object never pays.
+const MADE_HERE = new WeakSet();
+export const isSurveyRun = run => run !== null && typeof run === 'object' && MADE_HERE.has(run);
+export const SURVEY_NOT_A_RUN = 'That is not a count made in flight.';
+
 export function createSurveyRun(plan) {
-  return {jobId: plan.jobId, plan, time: 0, last: null, count: 0, rareSeen: false,
+  const run = {jobId: plan.jobId, plan, time: 0, last: null, count: 0, rareSeen: false,
     covered: new Uint8Array(SURVEY_CELLS), coveredCells: 0,
     animals: plan.animals.map(a => ({id: a.id, role: a.role, x: a.x, z: a.z, counted: false, scaredUntil: 0}))};
+  MADE_HERE.add(run);
+  return run;
 }
 
 function distanceToSegment(px, pz, ax, az, bx, bz) {
@@ -285,6 +292,7 @@ export const canReport = run => run.coveredCells * SURVEY.minShare[1] >= SURVEY_
 // The pay is by how near that is to the true number, plus the rare bonus if the
 // course's rare animal was seen. Changes nothing; the board pays once.
 export function reportSurvey(run) {
+  if (!isSurveyRun(run)) return {ok: false, reason: SURVEY_NOT_A_RUN};
   if (!canReport(run)) return {ok: false, reason: SURVEY_REPORT_TOO_SOON};
   const truth = run.plan.truth;
   const estimate = Math.round(run.count * SURVEY_CELLS / run.coveredCells);
