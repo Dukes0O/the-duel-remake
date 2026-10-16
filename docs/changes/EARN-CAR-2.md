@@ -1,62 +1,49 @@
-# EARN-CAR-2
+# EARN-CAR-2: McLaren F1
 
-Status: building behind earned-cars (dev). Claude approved the gameplay proposal on the card.
+The original F1 model is accepted after two art rounds. Registration, kit, paint, grounding, helicopter and historical-save checks passed in the final candidate's386/389 canonical result. The card remains incomplete: a real new-voice collision awaits Claude's sound pick/file lease; corrected review tooling needs execution; the final gate/build and quiet native Panorama timing remain required. No live change or real save access.
 
-## Design before code
+## Approved behavior
 
-McLaren F1, key mclaren_f1, earned at15medals, factoryMaxed. Base topSpeed217.2, accel9.1, grip1.02, braking1.16, gears[58,98,134,169,197,217.2], dirt grip.63/speed60/scrub.54, mass1140kg, collision halfWidth1/halfLength2.14, height1.14, manual hypercar. Default boost values. Nominal body2.00x4.28x1.14m, central driver and two staggered passenger seats, roof intake, rounded low nose and short road-car tail. Silver paint and charcoal trim. Maker photos on https://www.mclaren.com/cars/us_en/ultimate-models/mclaren-f1 were viewed only; no maker asset is bundled.
+At15medals, unlock mclaren_f1 as a factory-maxed manual hypercar. Claude approved topSpeed217.2, accel9.1, grip1.02, braking1.16, gears58/98/134/169/197/217.2, dirtgrip.63/speed60/scrub.54, mass1140kg, halfWidth1/halfLength2.14/height1.14, default boost. Fully tuned speed240.006mph sits between Aurora236.470 and Viper256.360. Silver0xb8bdc2/trim0x202329; central driver/two staggered passengers. Existing cars and gameplay numbers stay exact.
 
-Root owns shared board, photography and integration. Model builder owns only src/mclaren-f1-vehicle.js and tools/test-mclaren-f1-vehicle.mjs. Registration builder owns the card's named config/router/socket/voice/kit/coverage hooks. Builders share this isolated lane and preserve each other's edits. Director's additional hooks are recorded on the integration card before source. Runtime shared helper behavior, old-car hashes and existing replay fixtures stay exact. No save schema or existing save-fixture rewrite.
+Original procedural model uses maker photographs only as viewing references; no maker model/logo/texture is bundled. Standard steering/wheels/lights/boost, directional damage/crush/private reset, paint and sockets are wired. Engine uses existing samples; armour uses the existing recipe. New kit492772bytes SHA256a6cb9b0e5199ad21c642219720734a29e4e52df4d94962fc85cd54b7cae47dfa; all11pre-existing kit/turret bytes stayed exact. No dependency, network request, account, key or save schema added.
 
-## Verification
+## Accepted art and model
 
-Pending model contract, all-car coverage, genuine private images and Claude's look verdict, kit fit, native helicopter lift coverage, Panorama full-field frame check, lane/jobs4, build and independent review. At most three art rounds. An unfinished model is never a finished card.
+Claude rejected round1's bubble cabin. Round2 replaces it with an opaque roof, four bounded dark panes and frames, centre intake, small corner optics, lower side intake/door lines and short mirrors. Two obsolete model geometry assertions now test actual roof helmet clearance (original1cm) and real pane rays; all dimension/seat/light/damage/reset limits stay. Positive opaque-roof/frame/scoop/lamp/mirror cases were added.
 
-## Changed assertions
+A quick test caught four missing fracture zones after the new side panes. F1-only damageSpaceY.80to.68 puts projection at.867m and keeps body/fracture coordinates aligned. All original four >=60float guards remain; measured132/126/156/156. Shared damage/grounding helpers are unchanged. Independent source and correction review CLEAR. Final model54655triangles/54draws, under unchanged73600/66limits.
 
-Roster counts grow from10 to11 and medal cars from1 to2. Starter, priced, Jesko-prerequisite and upgrade counts stay2/6/8/7. Enzo's order test freezes its exact original ten-car prefix instead of requiring it to remain last.
+Actual native source051ffdcd stayed clean: six views/private18354/memory-only/zeroerrorswarnings/8.287seconds. The current127237-byte car-2-round-2.jpg and car-2-review.md retain the reviewed comparison. Claude c150e044 accepted all five corrections; remaining screen curvature/close helmet are acceptable at play distance. No third round. Consumed round1 and round2 full-size captures/logs were recycled after verdicts; round2 cleanup removed1009628bytes. Current sheet and recipes remain, no old version archive.
 
-Eligibility seeds a valid15-medal profile and adds F1 to the explicit air-only refusal set. UI covers both real medal cars hidden while off, including owned cars; eligible on-count8 becomes9 and the scratch-car case11 becomes12. Medals keeps both reward cars outside the eight bought-car Jesko prerequisites and adds a real14-to15 grant/maxed/free/retention case. No save schema or historical fixture changes.
+The original icon-only failed photography packet was never a pass; the real empty-icon correction preserved all browser error checks. An interrupted ten-second paint diagnostic was not a failure/pass; the completed canonical result below now supplies actual paint/grounding evidence.
 
-Armour adds the unchanged formula's F1 result88.66830868758714 for1140kg. Helicopter coverage adds the1140kg lift/hold with the old0.10m/0.05m-per-second tolerances. Kit/grounding/paint/assets include the new roster row. Blender's expected kit list adds F1.
+## Changed existing coverage
 
-Solver tests preserve the pre-Enzo nine-car and Enzo ten-car subsets and exact old pins, then add the genuine eleven-car mass-pair pin b5b32ff149de5cdebda9dba356f07f218a5d65bfa7d9486b7b860e1b658d7bff. Titan adds only F1's actual seeded road pin fbebcadee80f7f0ffe83c6cef5aa0ec0632ffc1d0fdfcb11ba5a951db197fbe6. Existing sound-bank/export hashes exclude only the newly appended F1 voice as Enzo already did; F1's voice has its own pinned test. No old tolerance, signal assertion or hash value changes.
+New roster rows retain every historical subset/price/access/save assertion. Enzo relative append order remains; F1 appends after it. Armour adds unchanged-formula F1 protection88.66830868758714; lift/hold covers1140kg with original.10m/.05m-per-second tolerances. Native air-only eligibility and feature-off hiding use existing paths.
+
+Original nine-car and Enzo ten-car solver pins remain exact; new eleven-car pin b5b32ff149de5cdebda9dba356f07f218a5d65bfa7d9486b7b860e1b658d7bff and F1/Titan road pin fbebcadee80f7f0ffe83c6cef5aa0ec0632ffc1d0fdfcb11ba5a951db197fbe6 are genuine new cases. Old voice/bank hashes exclude only the appended earned-car rows, with independent new-car pins. No old fingerprint or numerical tolerance is replaced.
+
+## Actual final-candidate result
+
+Frozen de7c5f502b30861d6da7b0dc1269e633c95882af stayed clean: build2546.105ms PASS; canonical lane389suites/jobs4 completed386passed/3failed/0unrun in1981.524seconds. Full wrapper1997.993seconds includes build/inspection. This is RED, not a merge pass. Failures: test-audio, test-repo-hygiene, test-review-evidence. Saved originals remain under .evidence/2026-10-15/EARN-CAR-2/lane-final-de7c5f50*.
+
+Passed evidence includes351model+40native-field-setup checks,2596paintchecks/11models,6061groundingchecks/11models,96helicopterchecks, all fitted-kit suites,44Titan checks and13historical save shapes/437memory-only preservation checks. Prior personal save review CLEAR. The frame recipe's source audit confirms native ownership/max upgrades/air delivery, real seven-opponent F1 selection and eight actual rendered models; this is not timing evidence.
+
+## Bounded repairs after the red gate
+
+The existing dynamic distinct-voice assertion is correct. F1 and Dusthawk both pitch1.035 and produce the same unclamped steady sample rate1.8324905152510131. Claude is asked for F1-only1.04 (unique1.8413431264358007, below Enzo and existing2.2maximum) and Bolide's sound-bank lease. No voice source or assertion changes yet. Only the two existing F1-specific audio hash pins may follow that approved parameter change; every old bank hash stays.
+
+Director a322ec22 names three existing tooling files. Hygiene now accepts only the exact card-prescribed earned-cars/car-[1-3]-round-[1-3].jpg family in addition to existing generic round/look names; raw, misnamed and wrong-family output still fails. Existing fixture coverage tests all9valid combinations and9invalid cases.
+
+Kyle's current AGENTS says aggregate sizes are advisory and only wrong placement fails. The obsolete hard aggregate20MB review assertion is replaced with independent actual byte/report agreement against unchanged tools/size-targets.json. An actual41x490000-byte fixture (20090000total) proves advisory behavior without an oversized individual sheet. No target is raised, no foreign review removed. Git-ignore/no-raw-JSON/raw placement guards stay; retained earned-car sheets now also get unchanged <=500000 and matching car-N-review.md checks. Existing generic round-note and publisher limits remain exact. Independent final three-file source review CLEAR; syntax checks pass. These corrections are UNRUN under the Ardennes release hold.
+
+Integration through e8b74205 merged cleanly at4b9bf28a, including accepted Ardennes. The three reviewed tooling blobs remained exact. No accepted F1 model/kit/photo source changed. Concurrent Bolide remains a separate catalogue append; whoever merges second must preserve old subsets and verify the actual combined roster.
+
+## Remaining acceptance
+
+After Claude's voice answer/lease, implement only that pick, review its F1 pin updates, then run focused repairs and the required final canonical lane/build under shared admission. Required actual headed Panorama Pit Straight timing uses eight native F1cars,120frames/quality, p95<=18.5ms/worldbuild<1s; finite firstload>5s is a warning. Existing Harbour/Ardennes paths and thresholds remain. Timing is UNRUN: current release hold plus an active laptop panel and other Chrome GPU work prevent a valid quiet context. No waiver or third art round.
 
 ## Removed
 
-Round 2 removes the obsolete full bubble glazing and replaces the narrow painted roof with the approved opaque roof and bounded panes. No existing car, runtime asset, replay pin, dependency or save data is removed. Consumed round1 sheet and raw captures are recycled with the reviewed round2 replacement; its five-point rejection and source/measurement facts remain in the current review and card.
-
-## Current source evidence
-
-Model e52b752c passes328 focused checks: measured1.999x4.285x1.140m, tires at0,51610triangles/55draws. Registration97a73fce is independently code-review CLEAR. Focused source checks include progression27, paint2599, assets131, combat18, Enzo435, audio14+36, UI5, helicopter96, grounding6063 across11models, thirteen historical save shapes/437checks, Koenigsegg41, Blender placement71, medals11 and native-memory eligibility3018 across11cars/20courses. The first14/16 focused batch caught two invalid NEW disposable medal rows missing grandprix defaults; only those fixtures changed. Follow-on solver/Titan missing-new-pin failures are preserved, not passed; final source pins are added and await confirmation in the canonical gate.
-
-Only the new492772-byte armour GLB was added (SHA256a6cb9b0e5199ad21c642219720734a29e4e52df4d94962fc85cd54b7cae47dfa); all11 pre-existing kit/turret asset hashes stayed exact. Generated F1 blend and temporary kit texture were recycled. Native pictures, Claude art verdict, frame check and final lane/build are still pending. The card is not complete.
-
-
-Personal save review is CLEAR on417dfbc1: thirteen historical fixtures and437 first-load/round-trip checks passed in memory. The first six native pictures were captured, but that harness run is FAILED because the showroom requested an absent favicon. That failed packet was retained through the correction review, then recycled after its verdict; it was never called passed. The card-owned photography recipe now supplies an actual empty icon before page load, retaining every browser error check. Model, lighting, cameras and renderer are unchanged. A fresh native packet will verify this correction.
-
-
-The corrected native packet on8930a480 passed: private58916, memory-only saves, all six real views, zero errors and warnings. Root inspected every original. Formal round1 sheet is128555bytes with its review note under docs/board/looks/earned-cars; Claude rejected round1 and requested the five recorded corrections. The first uncommitted sheet had overlapping footer labels and was recycled, then rebuilt with clear spacing; model and pictures did not change. This is one formal round. Actual field timing, final canonical lane and build are still unrun.
-
-
-## Claude round 1 verdict and round 2 source
-
-Claude rejected round 1 on the card: the clear bubble cabin did not read as an F1. Round 2 source2bbcd82a replaces it with a broad body-colour roof, four bounded dark panes, swept frames/roof rails and a central snorkel with a physically exposed mouth. Smaller tinted corner optics, lower behind-door intakes/dihedral door seams and compact screen-base mirrors follow the other four requests. Wheels, round rear lamps, damage and steering remain. This is round 2 of at most three; no second-round art verdict is claimed.
-
-Exactly two obsolete geometry assertions change: the driver retains the original1cm helmet clearance against the actual opaque roof instead of removed overhead glass; finite glazing rays move to the actual front/rear/side panes instead of the former centreline bubble. Added roof rays require opaque painted cover and absence of hidden glass at nine points, plus physical frame, intake-mouth, small-lens and mirror checks. All old numeric bounds, seats, lamp exposure, private damage/crush/reset and frame-selector safeguards remain. No tolerance is relaxed.
-
-Independent source review CLEAR on2e7500e1 after a clean integration merge; shared model, damage and grounding helpers have no merge delta. Tests, measured round 2 budget, native round 2 pictures, field timing and final lane/build are unrun. The prior328checks/51610triangles/55draws describe round1 only. Claude confirmed Panorama Pit Straight with eight actual F1 copies for later quiet-laptop timing.
-
-
-## Round 2 real capture and regression repair
-
-Frozen051ffdcd passed the actual existing native recipe in8.287seconds at private18354: six views, zero errors/warnings, memory-only saves, exact clean source/postSHA. Root inspected all originals and the127237-byte formal round2 sheet. Claude verdict is pending; no third round or final art acceptance is inferred.
-
-The quick08a72202 model check was RED at the original four-fracture-zone requirement. Revised side panes ended below the old1.02m projector. F1-only damageSpaceY changes.80to.68, putting the centre at.867m and keeping body/fracture deformation in the same private space. Shared helpers, four>=60float assertions, damage/crush/reset safeguards and tolerances are unchanged. GREEN351model+40headless frame-setup checks in4.02seconds; fracturefloats132/126/156/156;54655triangles/54draws. Source/real-fault confirmation review CLEAR051ffdcd.
-
-A separate paint diagnostic on051ffdcd was stopped at its10second diagnostic budget, before any output/pass; grounding did not start. This is an interrupted check, not a proved game fault or a flaky-pass rerun. Final canonical lane/build and actual quiet field timing remain pending. The old round1 raw packets and comparison sheet were consumed and recycled after replacement; current recipes, decisions and round2 originals remain.
-
-
-## Accepted second round; final candidate
-
-Claude c150e044 accepted the actual127237-byte round2 sheet: all five requested features landed, remaining screen curvature and helmet visibility are acceptable at play distance, no third round. Native source051ffdcd and six originals remain the evidence above; final model54655triangles/54draws. Current integration through Cups ca7338e6 merged without conflict; no model, kit, photos or frame recipe changed. Final canonical lane/build and quiet Panorama timing are still unrun. This card remains incomplete until those checks pass.
+Removed obsolete bubble geometry and the invalid aggregate-size blocker, keeping its unchanged advisory target and measurement. Consumed raw review packets and superseded round1 sheet were recycled after replacement/verdict; generated blend/temporary kit texture were also recycled. No existing car/runtime asset/save data/old replay pin/guard/tolerance/dependency was removed.
