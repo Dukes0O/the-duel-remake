@@ -217,3 +217,15 @@ check posts DONE.
 ## Parallel source complete, 16 October
 
 Existing lane clean c674605fe921c96f2f3ee0b8fac6c9bbf9683a31 adds only approved cpu-racecraft dev/catalog/count rows plus own note. Course-kit copies both corrected inventory tests. Pure91catalog and8wasteland checks PASS; required independent delta review CLEAR. Runtime remains frozen3b175051; no native/gate/build/preview pass. Resume interrupted approved batch once under fresh admission; original failed360packet remainsfailed. Locks[].
+
+
+## Approved interrupted native batch actually resumed
+
+At16:59:22.865UTC actualclean c674605fe921c96f2f3ee0b8fac6c9bbf9683a31
+(runtime3b175051 plus only approvedinventorytests/note) admitted existing
+racecraft-rate --races20 --jobs4 --check. Wrapper43724/runner33468/
+Rootsession57454; PID33468 is new and not the earlier drained foreignsalt
+case. Own .evidence/2026-10-16/GP-RACECRAFT/accept-c674605f/report.json
+and receipt.json pending. No previous interrupted retained cases existed;
+old ce3 failed360packet remains unchanged. No result/gate/build/preview.
+Tyre7204 and olderforeignbrowser13744 are the other two roots.
