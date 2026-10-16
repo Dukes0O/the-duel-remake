@@ -117,3 +117,13 @@ and a stale completion cannot erase a newer request. No race/save/physics
 change. New mounted change-event regression RED before the fix, then 1/1 PASS
 103.3751ms; required independent lifecycle review CLEAR. Removed: the stale
 preparation path. Native host acceptance is still unfinished.
+
+
+### Approved switch inventory
+
+Claude's written card answer16October10:00 approves the exact driving-lessons
+DEV/catalog/count rows. The existing feature catalog now requires the new
+DEV name and30 non-course switches; Wasteland requires the same exactrow.
+Course-kit copies these two hooks, with no separate assertion relaxation.
+Actual91catalog checks and8Wasteland tests PASS783.4413ms; required independent
+delta review CLEAR. No native, lane or build pass. Removed: stale inventories.

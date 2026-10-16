@@ -36,6 +36,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     helicopter: 'on', // The helicopter (HELI-MODE): Kestrel One, H1 First flight, released 14 October 2026
     'forest-fire': 'on', // H2 Fire: forest fires and burnt courses, released 15 October 2026
     'tyre-slip': 'dev', // New tyre model remains private preview only.
+    'driving-lessons': 'dev', // Lesson host remains private preview only.
     'earned-cars': 'dev', // Earned cars and medal sheets (EARN-MEDALS), off in the game
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
