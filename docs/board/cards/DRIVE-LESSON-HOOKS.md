@@ -54,3 +54,16 @@ lease held. DRIVE-LESSON-1/SAVE/LINES remain final wiring/acceptance/merge
 dependencies. Later actual host wiring takes the core lock once and proves
 native reward isolation. Presentation source can build while instructor and
 Tyre native validation wait; it grants no native/UI/live acceptance.
+
+
+## Parallel presentation source frozen
+
+Owned lane drive-lesson-hooks/codex/drive-lesson-hooks clean
+8d25cadca64fedccb3853696eb212e26e016c7fe contains exactly the four
+named UI/CSS/test/note files. Shared lesson board, actual caller catalogs
+and ownership, stage/rule/streak panel, finished and unfinished results,
+and fresh-props callbacks are implemented. Missing-module RED then12 pure
+checks PASS419.7908ms; one independent code review CLEAR. No native import,
+App/race/save mutation, host edit, gate/build or browser check.
+Final dependencies and host/native/accessibility acceptance remain pending;
+this is useful source, not a playable or merged feature. Core lease free.

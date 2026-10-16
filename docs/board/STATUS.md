@@ -104,3 +104,8 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 - Remote origin/integration/wasteland: behind local; cached commit 94cfa3a84111cd48a7d34915d73121db42e13c3b.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
+
+
+## Parallel source update, 16 October
+
+DRIVE-LESSON-HOOKS frozen owned8d25cadca64fedccb3853696eb212e26e016c7fe: four presentation files,12 pure checks PASS, independent review CLEAR. Actual host/native/browser acceptance and lesson dependencies remain unfinished. No Root heavy job or core/save lease.
