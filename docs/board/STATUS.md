@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T05:05:41.267Z
+Observed at: 2026-10-16T05:13:02.902Z
 
-Observation commit: ecc3ced6b6bec7092a2c8ad47f3a6c9c61dabd7c
+Observation commit: ab383a5e2752c836cc5f1b634199572fd6162d85
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: ecc3ced6b6bec7092a2c8ad47f3a6c9c61dabd7c
+Integration HEAD: ab383a5e2752c836cc5f1b634199572fd6162d85
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -39,12 +39,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/qa-audio-crash-reliability | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-audio-crash-reliability |
 | codex/qa-browser-sweep | 1 | unknown | false | false | unknown |
-| codex/qa-deep-art-three | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-deep-art-three |
+| codex/qa-deep-art-three | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-deep-art-three |
 | codex/qa-yard-home-air-only | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-yard-home-air-only |
 | codex/qa-yeti-three | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-yeti-three |
 | codex/summit-switch-on | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on |
 | codex/tools/callback-diagnostics | 11 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
-| codex/tyre-slip | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tyre-slip |
+| codex/tyre-slip | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tyre-slip |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | codex/yeti-fur-tint | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/yeti-fur-tint |
 | lane/audio/aud-10 | 20 | unknown | true | false | unknown |
@@ -66,11 +66,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-audio-crash-reliability | QA-AUDIO-CRASH-RELIABILITY | 2026-10-15T21:42:08-07:00 | 0 | last commit 2026-10-15T21:42:08-07:00 | docs/changes/QA-AUDIO-CRASH-RELIABILITY.md, tools/run-browser-scenarios.mjs, tools/test-browser-scenarios.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/qa-deep-art-three | QA-DEEP-ART-THREE | 2026-10-15T22:02:20-07:00 | 0 | last commit 2026-10-15T22:02:20-07:00 | docs/changes/QA-DEEP-ART-THREE.md, tools/deep-look.js, tools/scenarios/deep-art.mjs |
 | codex/qa-yard-home-air-only | QA-YARD-HOME-AIR-ONLY | 2026-10-15T19:30:22-07:00 | 0 | last commit 2026-10-15T19:30:22-07:00 | docs/board/STATUS.md, docs/changes/QA-YARD-HOME-AIR-ONLY.md, tools/scenarios/yard-home.mjs |
 | codex/qa-yeti-three | QA-YETI-THREE | 2026-10-15T19:28:00-07:00 | 0 | last commit 2026-10-15T19:28:00-07:00 | docs/board/STATUS.md, docs/changes/QA-YETI-THREE.md, tools/scenarios/yeti.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 11 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
-| codex/tyre-slip | TYRE-SLIP | 2026-10-15T19:31:11-07:00 | 0 | last commit 2026-10-15T19:31:11-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
+| codex/tyre-slip | TYRE-SLIP | 2026-10-15T19:31:11-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 | codex/yeti-fur-tint | YETI-FUR-TINT | 2026-10-15T21:24:46-07:00 | 0 | last commit 2026-10-15T21:24:46-07:00 | docs/changes/YETI-FUR-TINT.md, src/render3d.js, src/yeti-view.js, tools/test-yeti.mjs |
 
@@ -86,9 +85,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 15,563,166 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 854,972 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 27,553 B | -827,419 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 417,426,432 B | +160,768 B | unavailable |
+| Git objects | 417,659,904 B | +233,472 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -97,7 +96,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 42dcb5b6b14c334c75158e96f73bda2683274b3d
 - Local main: missing
-- Local integration/wasteland: ecc3ced6b6bec7092a2c8ad47f3a6c9c61dabd7c
+- Local integration/wasteland: ab383a5e2752c836cc5f1b634199572fd6162d85
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
