@@ -5,10 +5,11 @@
 // Every save change goes through heli-save.js; the fire and mission records
 // stay the save's own shape, so a reload carries on where it stopped.
 import {armed, armMissions, noteRefuel, runEngine, callDue, callTime, openCall, answerCall, endMission, inQuietSpell,
-  createCallClock, tickCallClock, MISSION_RULES} from './heli-missions.js';
+  createCallClock, tickCallClock, MISSION_RULES, seasonOf} from './heli-missions.js';
 import {FIRE, BURNT_LOOKS, fireGrid, courseBurnCheck, startCells, startFire, dayWind, applyWater, fireOut, shareOut,
   hottestEdge, cellIJ, runFireEngine, fireNewDay, cruiseSeconds} from './heli-fire.js';
-import {heliOf, missionsOf, fireOf, setMissions, setFire, putOutFire, loseFire, hearBurnNews, BURN_NEWS} from './heli-save.js';
+import {heliOf, missionsOf, fireOf, setMissions, setFire, putOutFire, loseFire, hearBurnNews, BURN_NEWS, addScar,
+  MISSION_KINDS} from './heli-save.js';
 import {HELI_DESTINATIONS} from './heli-jobs.js';
 import {courseClosed, burnStage} from '../course-closures.js';
 
@@ -32,16 +33,35 @@ export function burnableCourses(profile, worlds, {enabled, owns = () => true} = 
 
 // A new play day with a fire burning: its three day steps, with that day's
 // wind, and the course lost if it grows too big. Used at a helicopter visit
-// and when a player's profile becomes active (app.js).
+// and when a player's profile becomes active (app.js). In winter the first
+// snow puts it out instead (section 3.6): no pay, no loss, its burnt cells
+// left as a scar, and the mission ends with its quiet spell.
 export function fireOnNewDay(profile, {enabled, world}) {
   const fire = fireOf(profile);
-  if (enabled !== true || !fire || !world) return {profile, steps: 0, lost: false};
+  if (enabled !== true || !fire) return {profile, steps: 0, lost: false, snowed: false};
+  if (seasonOf(heliOf(profile).playDay.count).name === 'winter') return snowOut(profile, fire, {enabled});
+  if (!world) return {profile, steps: 0, lost: false, snowed: false};
   const wind = dayWind(missionsOf(profile).seed, heliOf(profile).playDay.count);
   const run = fireNewDay(fire, world.grid, wind);
   let next = setFire(profile, run.fire, {enabled}).profile;
   if (run.lost) next = finishLost(next, fire.id, {enabled});
-  return {profile: next, steps: run.steps, lost: run.lost};
+  return {profile: next, steps: run.steps, lost: run.lost, snowed: false};
 }
+
+function snowOut(profile, fire, {enabled}) {
+  const day = heliOf(profile).playDay.count;
+  const cells = [...fire.burnt, ...fire.burning.map(([cell]) => cell)];
+  let next = addScar(profile, fire.courseId, day, cells, {enabled}).profile;
+  next = setFire(next, null, {enabled}).profile;
+  next = setMissions(next, endMission(missionsOf(next), {playDay: day}), {enabled}).profile;
+  return {profile: next, steps: 0, lost: false, snowed: true, courseId: fire.courseId};
+}
+
+// Roger's season lines, at the first lift-off of a visit in a season's first
+// two play days. Winter's speaks of avalanches, so it waits for that kind.
+const SEASON_LINES = Object.freeze({summer: 'heli.radio.season.summer', winter: 'heli.radio.season.winter'});
+const seasonLine = season => season.day <= 2 && (season.name !== 'winter' || MISSION_KINDS.includes('avalanche'))
+  ? SEASON_LINES[season.name] ?? null : null;
 
 function finishLost(profile, fireId, {enabled}) {
   const lost = loseFire(profile, fireId, {enabled});
@@ -58,6 +78,7 @@ const WIND_LINES = Object.freeze({calm: 'heli.radio.wind.calm', breeze: 'heli.ra
 export function createFireRun({getSave, commit, emit, world, playerName = 'Player', today = null, owns = () => true}) {
   const flag = {enabled: true};
   let clock = null, answerLeft = 0, engineBank = 0, halfSaid = null, lastFireDay = null, fullSaid = false, firstFill = true;
+  let seasonSaid = false, snowNote = null;
   { const burning = fireOf(getSave()); if (burning && shareOut(burning) >= 50) halfSaid = burning.id; }
   // Brian's bucket lines are for a new firefighter: only until the first fire is out.
   const newFirefighter = () => missionsOf(getSave()).firesOut === 0;
@@ -138,6 +159,10 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
         const result = fireOnNewDay(getSave(), {enabled: true, world: world(burning.courseId)});
         commit({ok: true, profile: result.profile});
         if (result.lost) { radio('heli.radio.fire.lost'); emit({type: 'fireLost', courseId: burning.courseId}); }
+        if (result.snowed) {
+          snowNote = `The first snow put out the fire at ${HELI_DESTINATIONS[burning.courseId]?.name ?? 'the forest'}.`;
+          emit({type: 'fireSnowedOut', courseId: burning.courseId});
+        }
       }
       burnNews();
     },
@@ -145,6 +170,8 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
     // Each lift-off: a due call gets its clock; the first lift-off of a play
     // day with a fire burning hears the wind (or, unanswered, a reminder).
     liftoff({lesson = false} = {}) {
+      const line = lesson || seasonSaid ? null : seasonLine(seasonOf(day()));
+      if (line) { seasonSaid = true; radio(line); }
       const m = missions();
       const could = armed(m) && !m.call && !fire() && m.count >= m.need && !inQuietSpell(m, day());
       if (!lesson && could && callDue(m, {playDay: day(), conditions: conditions(), fireOpen: false})) clock = createCallClock(callTime(m));
@@ -213,6 +240,9 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
       if (firstFill && newFirefighter()) { firstFill = false; radio('heli.radio.bucket.first'); radio('heli.radio.drop.tip'); }
     },
     flush,
+    // The dispatch season for the board, and the first snow's note if it
+    // fell on this visit.
+    season() { return Object.freeze({...seasonOf(day()), note: snowNote}); },
     // Today's wind: it moves the falling water and the fire.
     windNow() { return windToday(); },
     // For the board and instruments: the call, the fire in hand and the wind.

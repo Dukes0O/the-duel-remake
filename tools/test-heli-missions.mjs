@@ -1,8 +1,10 @@
 // The mission engine (docs/HELI_FIRE.md section 3).
 import assert from 'node:assert/strict';
 import {MISSION_RULES, createMissions, armed, armMissions, noteRefuel, runEngine, inQuietSpell, callDue, callTime,
-  openCall, answerCall, endMission, createCallClock, tickCallClock} from '../src/heli/heli-missions.js';
-import {normalizeHeli} from '../src/heli/heli-save.js';
+  openCall, answerCall, endMission, createCallClock, tickCallClock, SEASONS, SEASON_WEIGHTS, seasonOf} from '../src/heli/heli-missions.js';
+import {normalizeHeli, createHeli, fireOf, missionsOf} from '../src/heli/heli-save.js';
+import {fireOnNewDay} from '../src/heli/heli-fire-run.js';
+import {dispatchBoardMarkup} from '../src/heli/heli-board.js';
 
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log('PASS ' + name); }
@@ -153,6 +155,69 @@ check('no helper changes the record it was given', () => {
   noteRefuel(record); runEngine(record, 5); callDue(record, {playDay: 1, conditions: canBurn}); callTime(record);
   const opened = openCall(deepFreeze(refuel(armedFor(), 6)), {playDay: 1, conditions: canBurn});
   answerCall(deepFreeze(opened.missions)); endMission(deepFreeze(opened.missions), {playDay: 1});
+});
+
+// Seasons (docs/HELI_FIRE.md section 3.6, Kyle 15 October 2026).
+check('seasons turn every 12 play days, summer first', () => {
+  assert.deepEqual(SEASONS, ['summer', 'autumn', 'winter', 'spring']);
+  const at = day => seasonOf(day).name + ' ' + seasonOf(day).day;
+  assert.deepEqual([0, 1, 12, 13, 24, 25, 36, 37, 48, 49].map(at),
+    ['summer 1', 'summer 1', 'summer 12', 'autumn 1', 'autumn 12', 'winter 1', 'winter 12', 'spring 1', 'spring 12', 'summer 1']);
+  assert.deepEqual(Object.fromEntries(SEASONS.map(name => [name, SEASON_WEIGHTS[name].fire])), {summer: 4, autumn: 2, winter: 0, spring: 1});
+});
+
+check('no forest fire call in winter; the count stands still until spring', () => {
+  const full = refuel(armedFor(), 6);
+  for (let day = 25; day <= 36; day++) {
+    assert.equal(callDue(full, {playDay: day, conditions: canBurn}), false, 'winter day ' + day);
+    assert.deepEqual(openCall(full, {playDay: day, conditions: canBurn}), {missions: full, call: null});
+  }
+  for (const day of [1, 13, 24, 37, 49]) assert.equal(callDue(full, {playDay: day, conditions: canBurn}), true, 'day ' + day);
+});
+
+check('the season pick takes one draw, so the course pick is unchanged', () => {
+  const two = {fire: ['tremblant-woods', 'panorama-ridge']};
+  for (let k = 0; k < 40; k++) {
+    const full = refuel(armedFor('p' + k), 6), summer = openCall(full, {playDay: 1, conditions: two});
+    assert.deepEqual(openCall(full, {playDay: 40, conditions: two}).call.courseId, summer.call.courseId, 'spring and summer pick the same course');
+  }
+});
+
+const burningSave = playDay => {
+  const opened = openCall(refuel(armedFor(), 6), {playDay: 20, conditions: canBurn});
+  const heli = {...createHeli(), playDay: {last: '2026-11-10', count: playDay}, missions: answerCall(opened.missions),
+    fire: {id: opened.call.id, courseId: 'tremblant-woods', seed: 77, startDay: 20, steps: 4, engineSeconds: 0,
+      burning: [[525312, 75], [525313, 50]], burnt: [524800], damp: []}};
+  return {credits: 300, heli: normalizeHeli(heli)};
+};
+
+check('the first snow puts a burning fire out: no pay, no loss, a scar, the mission ends', () => {
+  const save = burningSave(25);
+  assert(fireOf(save), 'the fire is burning before the snow');
+  const result = fireOnNewDay(save, {enabled: true, world: null});
+  assert.equal(result.snowed, true);
+  assert.equal(result.courseId, 'tremblant-woods');
+  assert.equal(fireOf(result.profile), null);
+  assert.equal(result.profile.credits, 300, 'no pay');
+  assert.deepEqual(result.profile.heli.burnt ?? {}, {}, 'the course is not lost');
+  assert.deepEqual(result.profile.heli.scars.at(-1), {courseId: 'tremblant-woods', day: 25, cells: [524800, 525312, 525313]});
+  const missions = missionsOf(result.profile);
+  assert.equal(missions.call, null);
+  assert.equal(missions.count, 0);
+  assert.equal(missions.quiet.untilDay, 27);
+  assert.equal(missions.firesOut, 0, 'not counted as put out');
+  assert.equal(fireOnNewDay(burningSave(25), {enabled: false, world: null}).snowed, false, 'switch off: nothing');
+  const autumn = burningSave(24);
+  assert.equal(fireOnNewDay(autumn, {enabled: true, world: null}).snowed, false, 'autumn: the fire keeps burning');
+});
+
+check('the board shows the season, and the first snow note on that visit', () => {
+  const markup = dispatchBoardMarkup({season: {name: 'winter', day: 1, days: 12, note: 'The first snow put out the fire at Tremblant Woods.'}},
+    {fire: {repairCost: 0}});
+  assert.match(markup, /Winter, play day 1 of 12/);
+  assert.match(markup, /The first snow put out the fire at Tremblant Woods\./);
+  assert.doesNotMatch(dispatchBoardMarkup({season: {name: 'summer', day: 4, days: 12, note: null}}, {fire: null}), /Summer/,
+    'fire switch off: no season line');
 });
 
 console.log(`Heli missions: ${checks} groups passed.`);

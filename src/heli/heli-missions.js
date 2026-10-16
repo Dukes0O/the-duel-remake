@@ -4,7 +4,8 @@
 // repeatable: a missions record goes in and a new one comes out, and every
 // draw has its own generator, so one draw never shifts another and the same
 // save always gives the same missions. H2 has one kind, fire; rescues (H4)
-// join the same engine later.
+// join the same engine later. Seasons (section 3.6, Kyle 15 October 2026)
+// weight which kind comes, and there is no forest fire in winter.
 import {makeRng} from '../rng.js';
 import {heliHash, MISSION_KINDS, createMissions} from './heli-save.js';
 
@@ -16,6 +17,26 @@ export const MISSION_RULES = Object.freeze({
   quietDays: 2,
   quietEngineSeconds: 1200,
 });
+
+// The dispatch season turns every 12 play days: summer first (the first
+// play day), then autumn, winter, spring. Worked out from the play day
+// count, so nothing is saved. The weights are docs/HELI_RESCUE.md section
+// 3.2's table; a kind not in MISSION_KINDS yet is simply never offered.
+export const SEASONS = Object.freeze(['summer', 'autumn', 'winter', 'spring']);
+export const SEASON_DAYS = 12;
+export const SEASON_WEIGHTS = Object.freeze({
+  summer: Object.freeze({fire: 4, hiker: 2, avalanche: 0, hoist: 1, supply: 0}),
+  autumn: Object.freeze({fire: 2, hiker: 2, avalanche: 1, hoist: 1, supply: 1}),
+  winter: Object.freeze({fire: 0, hiker: 1, avalanche: 3, hoist: 1, supply: 3}),
+  spring: Object.freeze({fire: 1, hiker: 2, avalanche: 2, hoist: 1, supply: 1}),
+});
+
+export function seasonOf(playDay) {
+  const n = Math.max(0, Math.floor(Number.isFinite(playDay) ? playDay : 0) - 1);
+  return {name: SEASONS[Math.floor(n / SEASON_DAYS) % SEASONS.length], day: n % SEASON_DAYS + 1, days: SEASON_DAYS};
+}
+
+const weightOf = (kind, playDay) => SEASON_WEIGHTS[seasonOf(playDay).name][kind] ?? 0;
 
 const draw = (missions, purpose) => makeRng(heliHash(missions.seed, purpose, missions.draws));
 
@@ -53,14 +74,17 @@ export function runEngine(missions, seconds) {
 
 export const inQuietSpell = (missions, playDay) => playDay < missions.quiet.untilDay || missions.quiet.engineSeconds > 0;
 
-// The kinds whose condition holds now. `conditions` is {fire: [courseId,
-// ...]}: the courses each kind could happen on.
-const possible = conditions => MISSION_KINDS.filter(kind => (conditions?.[kind] ?? []).length > 0);
+// The kinds whose condition holds now and whose weight this season is
+// above 0. `conditions` is {fire: [courseId, ...]}: the courses each kind
+// could happen on. In winter fire weighs 0, so while fire is the only kind
+// no call comes and the count stands still.
+const possible = (conditions, playDay) => MISSION_KINDS.filter(kind =>
+  (conditions?.[kind] ?? []).length > 0 && weightOf(kind, playDay) > 0);
 
 // Is a call due on the next flight?
 export function callDue(missions, {playDay, fireOpen = false, conditions}) {
   return armed(missions) && !busy(missions, fireOpen) && missions.count >= missions.need &&
-    !inQuietSpell(missions, playDay) && possible(conditions).length > 0;
+    !inQuietSpell(missions, playDay) && possible(conditions, playDay).length > 0;
 }
 
 // How long after lift-off the call comes, the same for the same save.
@@ -68,14 +92,18 @@ export function callTime(missions) {
   return draw(missions, 'call-time').int(...MISSION_RULES.callAfter);
 }
 
-// The call: a seeded pick of a kind, then of a course for it. The same kind
-// may come twice or more in a row. Only when a call is due, so a second ring
+// The call: a seeded pick of a kind, weighted by the season, then of a
+// course for it. The same kind may come twice or more in a row. The kind
+// takes one draw, as an even pick did, so the course draw after it is
+// unchanged. Only when a call is due, so a second ring
 // can never reopen or reset a call.
 export function openCall(missions, {playDay, conditions, fireOpen = false}) {
   if (!callDue(missions, {playDay, conditions, fireOpen})) return {missions, call: null};
-  const kinds = possible(conditions);
+  const kinds = possible(conditions, playDay);
   const rng = draw(missions, 'pick');
-  const kind = kinds[rng.int(0, kinds.length - 1)];
+  const total = kinds.reduce((sum, k) => sum + weightOf(k, playDay), 0);
+  let left = rng.float() * total, kind = kinds[kinds.length - 1];
+  for (const k of kinds) { left -= weightOf(k, playDay); if (left < 0) { kind = k; break; } }
   const courses = [...conditions[kind]].sort();
   const courseId = courses[rng.int(0, courses.length - 1)];
   const call = {kind, id: `${kind}-${missions.draws}`, courseId, day: playDay, answered: false};
