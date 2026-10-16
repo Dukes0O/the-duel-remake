@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T15:31:03.005Z
+Observed at: 2026-10-16T15:50:41.471Z
 
-Observation commit: dcf5ac6bff47a0b086cd141a4916b865c2ed4df9
+Observation commit: 9279efa44cbfd3a28445c8835b77b1056e4f9a11
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: dcf5ac6bff47a0b086cd141a4916b865c2ed4df9
+Integration HEAD: 9279efa44cbfd3a28445c8835b77b1056e4f9a11
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -57,7 +57,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/drive-lesson-1 | DRIVE-LESSON-1 | 2026-10-16T08:20:41-07:00 | 0 | last commit 2026-10-16T08:20:41-07:00 | docs/changes/DRIVE-LESSON-1.md, docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T19:18:16-07:00 | 0 | last commit 2026-10-15T19:18:16-07:00 | docs/HELICOPTER.md, docs/board/STATUS.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-2.jpg, docs/changes/EARN-CAR-2.md |
-| codex/gp-racecraft | GP-RACECRAFT | 2026-10-16T00:28:55-07:00 | 0 | last commit 2026-10-16T00:28:55-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
+| codex/gp-racecraft | GP-RACECRAFT | 2026-10-16T08:47:42-07:00 | 0 | last commit 2026-10-16T08:47:42-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 4 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 5 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 2 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -68,7 +68,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 11 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/tyre-slip | TYRE-SLIP | 2026-10-16T00:23:21-07:00 | 0 | last commit 2026-10-16T00:23:21-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 1 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
-| codex/yeti-fur-tint | YETI-FUR-TINT | 2026-10-16T07:50:46-07:00 | 0 | last commit 2026-10-16T07:50:46-07:00 | docs/changes/YETI-FUR-TINT.md, src/render3d.js, src/yeti-view.js, tools/scenarios/yeti-fur-tint.mjs, tools/test-yeti.mjs |
+| codex/yeti-fur-tint | YETI-FUR-TINT | 2026-10-16T08:47:57-07:00 | 0 | last commit 2026-10-16T08:47:57-07:00 | docs/changes/YETI-FUR-TINT.md, src/render3d.js, src/yeti-view.js, tools/run-browser-scenarios.mjs, tools/scenarios/yeti-fur-tint.mjs |
 
 ## Size targets
 
@@ -82,18 +82,18 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 15,848,910 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 615,292 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 300,958 B | -314,334 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 429,126,656 B | +392,192 B | unavailable |
+| Git objects | 429,651,968 B | +525,312 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 42dcb5b6b14c334c75158e96f73bda2683274b3d
+- Local master: 9279efa44cbfd3a28445c8835b77b1056e4f9a11
 - Local main: missing
-- Local integration/wasteland: dcf5ac6bff47a0b086cd141a4916b865c2ed4df9
+- Local integration/wasteland: 9279efa44cbfd3a28445c8835b77b1056e4f9a11
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

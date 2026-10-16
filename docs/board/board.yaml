@@ -184,7 +184,7 @@ tasks:
     owner: "claude"
     lane: "OPS"
     size: "S"
-    status: "ready"
+    status: "released"
     needs: [SUMMIT-SWITCH-ON]
     details: "docs/board/cards/RELEASE-SUMMIT.md"
 
