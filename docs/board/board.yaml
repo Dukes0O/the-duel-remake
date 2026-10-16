@@ -329,7 +329,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-summit-heli-2026-10-16
+    branch: claude/summit-heli-rescues
     needs: []
     locks: []
     flag: "rescue"
