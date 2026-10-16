@@ -752,7 +752,7 @@ for (const line of seen) ok(HELI_RADIO_LINES[line], `${line} is a recorded line`
   ok(recovery && recovery.pay === 500 && recovery.title.startsWith('Recover the ') && recovery.title.endsWith('from Panorama Ridge'), 'the recovery job is on the board for 500 credits');
   const markup = dispatchBoardMarkup(session.view(), {jobs: session.boardJobs(), fire: {repairCost: 0}});
   ok(markup.includes(recovery.title) && markup.includes('500 credits') && markup.includes('Hook the car on the slope') && markup.includes('Pick up at Panorama Ridge'), 'and the board shows it with the others');
-  ok(!markup.includes('take:w6'), 'with no Take button yet');
+  ok(markup.includes('take:w6'), 'with a Take button (RESCUE-AUTOPILOT; it had none before)');
   const off = newSession(profile, {rescue: false});
   off.start();
   ok(!off.boardJobs().some(job => job.recovery), 'with the switch off it is not on the board');

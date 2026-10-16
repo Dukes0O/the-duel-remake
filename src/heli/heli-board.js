@@ -20,11 +20,13 @@ function jobRow(job, mode) {
   const pickUp = !own && job.from !== HOME_COURSE ? `Pick up at ${HELI_DESTINATIONS[job.from]?.name ?? job.from}` : '';
   const title = own ? `Fly my car${job.carId && CARS[job.carId] ? ` (${CARS[job.carId].name})` : ''}` : job.recovery ? job.title : jobTitle(job);
   let button = '';
-  if (job.recovery) button = `<span class="heli-board-note">Hook the car on the slope</span>`;
-  else if (own) button = `<button type="button" class="heli-board-button" data-heli-board="take:own">Fly my car</button>`;
+  // The recovery job (section 5.3) is taken and dropped like the day's jobs.
+  const note = job.recovery && !job.taken ? `<span class="heli-board-note">Hook the car on the slope</span>` : '';
+  if (own) button = `<button type="button" class="heli-board-button" data-heli-board="take:own">Fly my car</button>`;
   else if (job.done) button = `<span class="heli-board-note">Done today</span>`;
   else if (job.taken) button = `<button type="button" class="heli-board-button heli-board-drop" data-heli-board="drop">Drop job</button>`;
   else button = `<button type="button" class="heli-board-button" data-heli-board="take:${esc(job.id)}">Take job</button>`;
+  button = note + button;
   return `<li class="heli-board-job heli-board-${state}${own ? ' heli-board-own' : ''}" data-job="${esc(job.id)}">` +
     `<span class="heli-board-text">${esc(title)}</span>` +
     `<span class="heli-board-pay">${esc(pay)}</span>` +
