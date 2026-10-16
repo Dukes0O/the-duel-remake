@@ -118,3 +118,13 @@ it with full braking. Its yaw cap now uses the actual requested brake via
 the existing steerForYaw helper and the same line-steering law. Late raw
 steering already used that actual brake. No target or runtime hook changed.
 Syntax parsing/diff check only; all native cases remain unrun pending Root.
+
+
+First real instructor execution on f4e715e4 failed the existing clean-native
+guard (1463.8007ms, Panorama/Casual); receipt and error are retained under
+.evidence/2026-10-16/DRIVE-LESSON-1/first-native-f4e715e4/. No native success
+is inferred. The guard error now includes actual tick/distance/lateral/speed,
+heading/slip/off-road/status/impact and input facts. This changes diagnostic
+text only, not a threshold, control, physics or guard result. Source parses;
+its one bounded diagnostic rerun awaits admission. All native acceptance
+cases remain unrun, and the red board/design thresholds stay exact.

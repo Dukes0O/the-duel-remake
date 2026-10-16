@@ -332,7 +332,10 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
         // prove a contact or slide started after the line: fail closed.
         if (state.offRoad || state.tyreSlip > 1 || state.status !== 'racing' || state.impactTimer > 0) {
           faults.push({s: state.s, reason: 'offroad/slide/status'});
-          throw new Error('Instructor did not keep a clean native run');
+          throw new Error('Instructor did not keep a clean native run: '+JSON.stringify({
+            t:ticks/120,s:state.s,lateral:state.lateral,mph:state.speedMph,
+            headingError:state.headingError,offRoad:state.offRoad,tyreSlip:state.tyreSlip,
+            status:state.status,impactTimer:state.impactTimer,input:{...state.input}}));
         }
       }
     }
