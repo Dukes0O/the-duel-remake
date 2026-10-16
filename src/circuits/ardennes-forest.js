@@ -241,8 +241,9 @@ export const ARDENNES_FOREST = Object.freeze({
   runoffBands: LONG_LEFT_RUNOFF,
   circuitLandmarks: Object.freeze([
     Object.freeze({id: 'stavelot-valley-town', type: 'town', ...VILLAGE, height: 12,
-      // Original deterministic town selection, restricted to the answered slate/red palette.
-      roofColours: Object.freeze([0x414a50, 0x5a352c, 0x50545a]), ...valleyTown()}),
+      // Ardennes stone houses under steep dark slate (ARDENNES-STAVELOT-STONE, Kyle: "if Belgian, then
+      // Belgian look"); the same houses, footprints and positions as before.
+      houseStyle: 'ardennes-stone', roofColours: Object.freeze([0x2c3034, 0x363a3e, 0x303236]), ...valleyTown()}),
     Object.freeze({id: 'stavelot-church', type: 'church', ...VILLAGE, height: 22, churchStyle: 'stone', grounding: 'footprint'}),
   ]),
   lightPath: Object.freeze({axis: 'distance', wrap: false, palette: 'forest-morning', keyframes: Object.freeze([
