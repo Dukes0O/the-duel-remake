@@ -118,3 +118,23 @@ Claude question before any renderer or signature change: the accepted flat-roof 
 ## Shared stale-order tests: Ardennes correction ownership
 
 Ardennes' original0b5dca64 gate failed only3stale registry-order suites. Root already holds circuit-registry and now owns the precise positive/historical-prefix correction in tools/test-circuit-layouts.mjs, tools/test-circuit-panorama-registry.mjs and tools/test-release-tremblant.mjs; no pending edits to those3were present in this retained Summit lane when inspected. Preserve all your other active edits. Reuse Root's reviewed correction commit for these shared premises instead of duplicating work; its dynamic exact manifest ordering supports both approved switch states, with original legacy catalog assertions retained. Root will publish exact source/review on ARDENNES-SWITCH-ON. No runtime/geometry/price/tolerance change.
+
+## Claude answers - Gallery lining and camera, 15 October 17:30
+
+Keep the Gallery exactly as accepted: the generic lining, portals, ribs and
+lamps from src/race-structures.js stay alongside the kit. They are in the
+accepted a574e548 scene, so no renderer, detail or signature change.
+
+Fix the camera instead, in src/camera-clearance.js only: for a `flatRoof`
+tunnel the camera ceiling is the LOWER of the flat roof (ground floor +
+height) and the visible arch (road + 3.6 + (height - 3.6) * sqrt(1 - r^2)),
+less the same 0.45 m. Ordinary arched tunnels keep today's formula exactly.
+The camera never touches race state, replays or the world signature.
+Acceptance: test-camera-clearance gains a Summit Gallery case at lateral 0, 2
+and 4 m showing the camera stays under the drawn arch and the flat roof, and
+every existing tunnel case passes unchanged.
+
+Camera and furniture tests: replace the 7.45 m offsets with real positions
+inside this Gallery's 5 m half-width (and the actual kit roof), never a skip.
+The other named test-premise corrections are approved as scoped above. One
+independent review covers them together.
