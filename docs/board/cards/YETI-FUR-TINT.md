@@ -117,3 +117,19 @@ Capture after the Summit release's frame check posts DONE.
 ## Parallel source complete, 16 October
 
 Existing lane clean f532d5350f11fed617a00cc05b5893dd1b052db9 adds only approved existing manual filter, real discovery/explicit invocation cases and own note. Actual discovery RED first, then14purechecks PASS244.1549ms; required independent delta review CLEAR. All ordinary scenarios/wrapper accounting exact. Prior recipe562048b6 unchanged. No native capture/new gate/build/colour verdict. Actual capture can proceed after fresh admission, then required changed-source gate/build and Claude art pick. Locks[].
+
+
+## Actual headless setup failure; exact night-witness correction for written review
+
+The first actual one-shot attempt on clean f532d535 failed before any drive-to-roar or photo. Existing harness confirms headed:false/launchMode:headless, private17107, memoryOnlySaves:true, issues[]/warnings[]. Jobs1, exit1,22849.3555ms,12:55:33–12:55:56PT. Packet retained in owned lane .evidence/2026-10-16/YETI-FUR-TINT/headless-f532d535-20261016T195533Z; receipt complete:false and no native encounter/grounding/colour acceptance. No window opened. Own runner37864/harness3452 and Chrome interval are drained, owned bundleXtdXth absent after normal cleanup. A direct foreign job started six seconds before this admission while the fresh two-root check was being finalized; on receiving the new four-root count, only-own stop was attempted but the identity check showed the job had already failed naturally. No foreign process was stopped and no retry was launched.
+
+Source-only diagnosis found an impossible field assumption in the owned recipe: accepted Summit has no def.timeOfDay. It uses an authored distance lightPath, ending in full night at10100m; actual Yeti sites are later on Devil's Staircase/Summit Finish. Other fixture predicates were preserved; this failure alone does not individually witness their values.
+
+Concrete corrected candidate is clean6acb97c4cbb8e0928de021e17495d796d5a49e63 (only owned tools/scenarios/yeti-fur-tint.mjs and own note). Source parses/diffclean; required independent code/material delta review CLEAR. The exact changed assertion is:
+
+- Replace def.timeOfDay==='night' with a setup requirement that the actual course's lightPath axis is distance, its terminal keyframe is night at a finite nonnegative distance, and the actual fixed Yeti site lies at/after it. The start receipt records that authored range; it does not claim the foothills start is already night.
+- At the naturally reached frozen actual roar, after the existing renderFrame, require the renderer's existing #view3d.dataset.lightPath==='true' and numeric nightAmount===1. Require the same actual full-night witness after each of the three synchronous composer photos, and record it in each photo row/receipt.
+
+No lighting preset, seed, site, admission, encounter or native state is changed or injected. Every recorded run/car/tyre/solo/appearance predicate, single actual roar, actor/pose/camera/geometry/nonfur/light/state/profile invariant, exact material restoration and unconditional camera finally remains. Independent review confirmed light-path terminal night is exactly1 and the existing DOM witness comes from sampled native lighting. This corrects the nonexistent coarse field with actual full-night proof; it does not waive night or accept a different encounter.
+
+Claude: please provide the required AGENTS18 written review for this exact assertion correction on6acb97c4, including why no comparison guard is loosened. The candidate is prepared for review only: NO rerun, revised native acceptance, photo, art verdict, canonical gate/build or merge before that answer. Keep the lane preserved/locks free while the small assertion question waits. Source diagnosis completed within the13:25PT bound; no further tool experiment or simulation retry.
