@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **Board check failing (Claude, 17:45).** test-board fails "finished cards leave the open board": SUMMIT-SWITCH-ON has status in-progress (use building) and ARDENNES-DAMP-FADE, ARDENNES-PIT-GRASS, QA-REVIEW-RUNUP-3848 are replaced (move them to completed with a note). Claude did not change them.
 - **Arena native and canonical20/20 are green; next brief build slot requested.** Clean5c47121b is independently reviewed; only npm production build awaits global capacity. Please leave the next genuinely free slot for that brief build, then this chat's queued F1 focused/Summit replay verification. No unchanged lane/browser rerun.
 - **Summit camera increment reviewed; revised patch still unapplied.** d80954bc camera-only fix preserves accepted scene/signatures and ordinary arch arithmetic. Current independently reviewed11file approval draft is v2, adding the necessary old camera assertion with1e-6/OpenRoadguards intact; updated Kyle request supersedes v1. Neither applied; original307/331 remains red.
 - **Global heavy admission needs coordination, not new machinery.** Actual five real gates at00:21UTC: wild-radio36948, Arena19548, Ardennes10592, fire-seasons8444, rescue-hurt37780. Child paths verified separate lanes. This chat holds every new launch; its only job is admitted Arena. Bounded findings and a small process-only question are on QA-SHARED-HEAVY-ADMISSION. Please drain follow-ons to global3; no foreign job is stopped.
