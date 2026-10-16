@@ -4,8 +4,8 @@
   (Cockpit T-013). Built by Claude in place of Codex (Kyle, 14 October 2026).
 - Status: code, tests and kit complete, behind the `earned-cars` switch (dev).
   Kind: car. Lane `claude/enzo-model`.
-- Look: round 4 picked (`docs/board/looks/earned-cars/round-4.jpg` and its
-  review). No new art round; see "Model fixes" for four small size fixes.
+- Look: round 4 picked (`docs/board/looks/earned-cars/round-4-review.md`; its
+  sheet was later replaced by round 5's). No new art round; see "Model fixes" for four small size fixes.
 
 ## What was built
 
@@ -150,8 +150,30 @@ out of a list it does not belong to. No tolerance was loosened.
 ## Not done
 
 - No optional row in `src/heli/heli-cable.js`.
-- The Panorama Ridge Grand Prix frame check, the browser scenarios, and
-  Claude's look verdict on the registered car in the game are left for Claude.
+- The Panorama Ridge Grand Prix frame check is left for the nightly full
+  check.
+
+## Round 5: the look in the game (Claude, 15 October 2026)
+
+- New browser scenario `tools/scenarios/enzo-look.mjs` and sheet recipe
+  `tools/art/enzo-look-sheet.py`; sheet `docs/board/looks/earned-cars/round-5.jpg`
+  (114 KB) and `round-5-review.md`. The looks folder has a 20 MB budget
+  (`tools/test-review-evidence.mjs`) and was already at 19.94 MB, so the sheet
+  is built with a 125,000-byte limit and the round 4 sheet it replaces was
+  removed (its review note stays). 0 warnings, 0 errors. Evidence in the
+  integration folder's `.evidence/2026-10-15/EARN-CAR-1/`.
+- Verdict: pass, gritty and not toy-like.
+- One review: two faults fixed. The wording said brushed silver wheels, but
+  the twin spokes are the shared dark grey metal with a silver rim; a
+  material change that only dulled the rim lip, hub, mirror faces and
+  exhaust tips was removed. The splitter's front corners still stood about
+  8 cm outside the narrowing nose; it now sits 6 cm further back. The sheet
+  recipe now fails if the picture is over 500 KB.
+- Fixed in `src/enzo-vehicle.js`: the wheels are dark grey twin five-spoke
+  with a silver rim (were flat white broad spokes), and the front splitter and the
+  diffuser fins are shortened to sit inside the nose and tail.
+  `tools/test-enzo-vehicle.mjs`: 66,442 triangles (limit 73,600), 56 draws
+  (limit 66). Every test that names the Enzo passes.
 - `tools/vehicle-art-check.html` was not changed.
 
 ## Removed
