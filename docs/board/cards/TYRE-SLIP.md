@@ -782,3 +782,10 @@ The already owned missing-import repair is committed4f132806 (test-stunt-trial a
 
 Then one lane tier for the changed files (rule 19), build, merge. No full
 tier for this card; the 04:00 full check covers it.
+
+
+## Approved correction frozen; next canonical admitted
+
+Current clean3e2bf73f81c3f703ac9cce1b154adb4ee829d5a2 omits inactive tyre fields and guards existing owned resets. Six historical hash suites unchanged. New exact-shape regression RED thenPASS235.2278ms; approved exact dev/preview rows updated. Actual current-integration union had App imports/result payload and reference-worker flags/retainPoses conflicts: both behaviors preserved, no pin/reference regenerated. Required independent code/save delta review CLEAR.
+
+One final corrected canonical admitted07:24:01.174UTC: wrapper35212/runner13776/exec54240, lane --changed --jobs4 --keep-going --json, ownlane final-3e2bf73f/lane-receipt.json pending. The unchanged six suites run here, no duplicate manual batch. No gate/build/merge pass yet; freeze source/release core now, GP bounded source attempt may proceed under its fresh answer.
