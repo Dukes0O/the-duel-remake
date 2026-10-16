@@ -174,8 +174,9 @@ Kyle, 15 October 2026: people can get hurt, and failure has a cost.
   People are hurt, never killed.
 - **What makes it worse** (one step each unless noted):
   - a bump on the line faster than 4 m/s; faster than 8 m/s, two steps;
-  - setting the pair down at the handover between 1 and 3 m/s (faster than
-    that is a bump);
+  - setting the pair down anywhere harder than 1 m/s, once lifted: one step
+    (a touchdown the cable counts as a bump, above 4 m/s, is counted once, as
+    the bump);
   - the hiker in the cabin: an H1 hard landing; a crash makes them badly
     hurt;
   - the clock passing two thirds while they are still unhurt (section 3.4).

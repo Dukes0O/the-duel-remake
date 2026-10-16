@@ -10,26 +10,31 @@ section 4.1 (Kyle, 15 October 2026) and section 8. Switch: `rescue`.
     steps)` never goes past badly hurt. The casualty's condition rides on the
     line (`line.condition`, starting unhurt) and replaces the bump count.
   - **Bumps** (`rescueHit`): a hit over 4 m/s with the casualty on the line is
-    one step worse, over 8 m/s two. The rescuer alone is a professional and
-    is never hurt, so a bump before the casualty is clipped on changes
-    nothing. After the handover nothing changes.
+    one step worse, over 8 m/s two. With the medevac skin's stretcher
+    (`{stretcher: true}`, section 6.1) a bump starts above 8 m/s and is two
+    steps above 14. The rescuer alone is a professional and is never hurt, so
+    a bump before the casualty is clipped on changes nothing. After the
+    handover nothing changes.
   - **Rough set-down** (`stepRescue`, event `roughSetDown`): the pair touching
-    down after being lifted at more than 1 m/s and up to 4 m/s is one step
-    worse; above 4 m/s the cable's own hit is the bump, so it is not counted
-    twice. The handover still needs a set-down at 1 m/s or less, as in
-    RESCUE-LINE, so a rough set-down hurts them and the player sets them down
-    again gently.
+    down after being lifted harder than 1 m/s is one step worse, unless the
+    cable counted that touchdown as a ground bump (it measures the downward
+    speed or half the slide, above 4 m/s); `rescueHit` marks that touchdown
+    so it is counted once. The handover still needs a set-down at 1 m/s or
+    less, as in RESCUE-LINE, so a rough set-down hurts them and the player
+    sets them down again gently. Packet section 4.1 now says this.
   - **The clock** (`waitHurt`): still unhurt when two thirds of the time are
     gone, they get cold and hurt, once (Roger's `rescue.cold`).
   - **The hiker in the cabin** (`cabinHurt`): an H1 hard landing is one step;
     a crash makes them badly hurt.
   - **Pay** (`rescuePay(basePay, condition)`): unhurt 100%, hurt 60%, badly
-    hurt 25%, rounded to a whole credit, never below 0; an unknown condition
-    pays as badly hurt. This replaces the flat 300 credits a bump.
+    hurt 25%, rounded to a whole credit, never below 0 and never above the
+    base; a base that is not a finite number pays 0, and an unknown condition
+    (including names like `toString`) pays as badly hurt. This replaces the
+    flat 300 credits a bump.
   - **Handover** (`handoverOutcome`): walk and `rescue.done`, limp and
-    `rescue.hurt`, stretcher and `rescue.badly` (the stretcher threshold for
-    H3's medevac skin is badly hurt). `FAILED_CONDITION` is badly hurt for
-    RESCUE-ENGINE's failure rule (section 4.2).
+    `rescue.hurt`, carried on a stretcher and `rescue.badly`.
+    `FAILED_CONDITION` is badly hurt for RESCUE-ENGINE's failure rule
+    (section 4.2).
 - **Radio** (`src/heli/heli-radio-lines.js`): new words for `rescue.bump` and
   `rescue.late`; new `rescue.hurt`, `rescue.badly`, `rescue.cold` and
   `supply.late`, all Roger. Recorded once each through
@@ -50,17 +55,30 @@ section 4.1 (Kyle, 15 October 2026) and section 8. Switch: `rescue`.
 
 ## Tests
 
-- `tools/test-heli-rescue.mjs`: 242 checks pass. New: the steps, never past
+- `tools/test-heli-rescue.mjs`: 263 checks pass. New: the steps, never past
   badly hurt; the clock at two thirds, once; the cabin hard landing and crash;
   the handover look and line; pay at 100, 60 and 25% with rounding, unknown
-  condition and never below 0; bumps by speed (4 is none, 4.5 and 8 one step,
+  and built-in-named conditions, bases that are not finite numbers, never
+  below 0 or above the base; bumps by speed (4 is none, 4.5 and 8 one step,
   12 two), the rescuer alone never hurt, nothing after the handover, a real
-  cable hit; rough set-downs at 0.9, 2, 3.5 and 4.5 m/s, and the rescuer alone
-  set down hard.
+  cable hit; real touchdowns through H1's cable (gentle; 3.95 m/s down,
+  counted once; 2 down and 6 sliding, and 1 down and 7.9 sliding, one step
+  each; 6 down one step; 10 down two), the same on the stretcher (6 none, 10
+  one, 16 two; exactly 8 none, exactly 14 one); rough set-downs set by hand
+  at 0.9, 2, 3.5 and 6 m/s, and the rescuer alone set down hard.
 - `tools/test-heli-audio.mjs`, `test-p4-audio.mjs`, `test-audio-sourcing.mjs`,
   `test-heli-hooks.mjs`: pass.
 - Lane tier and build: see below.
-- Review: see below.
+- Review (independent, code and pay): four faults, all fixed. Pay could
+  return "not a number" for a missing base or a condition named like a
+  built-in, and could round a fraction of a credit up past the base; it is
+  now guarded. One touchdown could count twice (rough set-down and the
+  cable's ground bump) or be missed between 3 and 4 m/s or while sliding,
+  because the two measure speed differently; the ground-bump mark and the
+  dropped 4 m/s upper bound fix it, with tests through the real cable. The
+  packet's set-down wording now matches the code. The stretcher rule was
+  misread (it is the softer bump limits of section 6.1, not the badly hurt
+  look); it is now `rescueHit`'s stretcher option.
 
 ## Changed assertions
 

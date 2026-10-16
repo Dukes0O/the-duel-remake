@@ -17,6 +17,9 @@ export const RESCUE = Object.freeze({
   warnReset: 24,
   // A bump on the line hurts the casualty one step; harder than 8 m/s, two.
   bumpSpeed: CABLE.hitSpeed, bumpHardSpeed: CABLE.heavyHit,
+  // On the medevac skin's stretcher (section 6.1): only above 8 m/s, two
+  // steps only above 14.
+  stretcherBumpSpeed: CABLE.heavyHit, stretcherHardSpeed: CABLE.wreckHit,
   // The rescuer on the ground within 3 m of the casualty or beacon, with the
   // helicopter and the rescuer both under 1.5 m/s.
   setDownRadius: 3, setDownSpeed: 1.5,
@@ -152,7 +155,7 @@ const HOLD_GRACE = 0.25;
 // {x, z}, kind 'hoist' | 'avalanche', zones [{x, z, radius}]}. Returns {events}:
 //   rescueFast                      airspeed crossed 25 m/s with people aboard
 //   holdStarted, holdReset (reason), holdDone, clipped
-//   roughSetDown                    the pair came down at 1 to 4 m/s: one step worse
+//   roughSetDown                    the pair came down harder than 1 m/s: one step worse
 //   handover                        the pair set down in a landing circle
 export function stepRescue(line, heli, {target = null, kind = null, zones = []} = {}, dt = HELI_STEP) {
   const events = [];
@@ -172,13 +175,16 @@ export function stepRescue(line, heli, {target = null, kind = null, zones = []} 
   else if (!line.wasOnGround) {
     line.landSpeed = line.airSpeed;
     // Setting the pair down harder than the handover's 1 m/s hurts them one
-    // step; harder than 4 m/s the cable reports a bump instead (rescueHit).
-    if (line.who === 'pair' && line.lifted && !line.done &&
-      line.landSpeed > RESCUE.handoverSpeed && line.landSpeed <= RESCUE.bumpSpeed) {
+    // step, unless the cable already counted this touchdown as a ground bump
+    // (rescueHit marks it), so one touchdown is never counted twice.
+    if (line.who === 'pair' && line.lifted && !line.done && !(line.groundHitSteps > 0) &&
+      line.landSpeed > RESCUE.handoverSpeed) {
       line.condition = worsen(line.condition);
       events.push({type: 'roughSetDown', speed: line.landSpeed, condition: line.condition});
     }
   }
+  // The ground-bump mark lasts the touchdown it belongs to.
+  if (line.groundHitSteps > 0) line.groundHitSteps--;
   line.wasOnGround = line.onGround;
   if (line.done) return {events};
   const still = line.onGround && !line.falling && slide <= RESCUE.setDownSpeed && heliSpeed <= RESCUE.setDownSpeed;
@@ -225,23 +231,33 @@ export function stepRescue(line, heli, {target = null, kind = null, zones = []} 
 // or a building faster than 4 m/s with the casualty on it is a bump (the line
 // swinging into the helicopter is not): one step worse, two above 8 m/s,
 // until the handover. The rescuer alone is never hurt, so a bump before the
-// casualty is clipped on changes nothing. Returns {bump, steps, condition,
-// event}. Credits are never touched here.
-export function rescueHit(line, event) {
+// casualty is clipped on changes nothing. With the medevac skin's
+// stretcher ({stretcher: true}) a bump starts above 8 m/s and is two steps
+// above 14. Returns {bump, steps, condition, event}. Credits are never
+// touched here.
+export function rescueHit(line, event, {stretcher = false} = {}) {
   const none = {bump: false, steps: 0, condition: line?.condition ?? 'unhurt', event: null};
+  const bumpAt = stretcher ? RESCUE.stretcherBumpSpeed : RESCUE.bumpSpeed;
+  const hardAt = stretcher ? RESCUE.stretcherHardSpeed : RESCUE.bumpHardSpeed;
   if (!peopleOnLine(line) || line.done || line.who !== 'pair' || event?.type !== 'cargoHit' || event.with === 'helicopter' ||
-    (event.id !== undefined && event.id !== line.id) || !(event.speed > RESCUE.bumpSpeed)) return none;
-  const steps = event.speed > RESCUE.bumpHardSpeed ? 2 : 1;
+    (event.id !== undefined && event.id !== line.id)) return none;
+  // A ground hit is this touchdown's whole count: no rough set-down on top.
+  if (event.with === 'ground') line.groundHitSteps = 2;
+  if (!(event.speed > bumpAt)) return none;
+  const steps = event.speed > hardAt ? 2 : 1;
   line.condition = worsen(line.condition, steps);
   return {bump: true, steps, condition: line.condition,
     event: {type: 'rescueBump', speed: event.speed, steps, condition: line.condition}};
 }
 
 // The pay by the casualty's condition at the handover: 100%, 60% or 25%,
-// rounded to a whole credit, never below 0. An unknown condition pays as
-// badly hurt.
-export const rescuePay = (basePay, condition) =>
-  Math.max(0, Math.round(Math.max(0, Math.round(basePay)) * (CONDITION_PAY[condition] ?? CONDITION_PAY.badly)));
+// rounded to a whole credit, never below 0 and never above the base. A base
+// that is not a finite number pays 0; an unknown condition pays as badly hurt.
+export function rescuePay(basePay, condition) {
+  const base = Number.isFinite(basePay) ? Math.max(0, basePay) : 0;
+  const share = Object.hasOwn(CONDITION_PAY, condition) ? CONDITION_PAY[condition] : CONDITION_PAY.badly;
+  return Math.min(Math.floor(base), Math.round(base * share));
+}
 
 // A supply crate on the ground at (x, z), ready to hook, like the lesson
 // crate. set: 'summitRun' or 'tremblantSnow'; massKg overrides the table

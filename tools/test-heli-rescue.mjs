@@ -156,6 +156,12 @@ ok(RESCUE.speedLimit < RESCUE.warnSpeed, 'the limit sits under the warning');
   eq(rescuePay(1001, 'badly'), 250, 'rounded to a whole credit');
   eq(rescuePay(1200, 'lost'), 300, 'an unknown condition pays as badly hurt');
   eq(rescuePay(-5, 'unhurt'), 0, 'never below 0');
+  for (const bad of [undefined, null, NaN, Infinity, '1200'])
+    eq(rescuePay(bad, 'unhurt'), 0, `a base of ${String(bad)} pays 0, never a broken number`);
+  eq(rescuePay(1200, 'toString'), 300, 'a condition named like a built-in pays as badly hurt');
+  eq(rescuePay(1200, '__proto__'), 300, 'and so does __proto__');
+  eq(rescuePay(0.5, 'unhurt'), 0, 'never more than the base: half a credit pays 0');
+  eq(rescuePay(1200.9, 'unhurt'), 1200, 'and never more than the whole credits of the base');
   eq(rescuePay(0, 'unhurt'), 0, 'no pay stays 0');
 }
 
@@ -199,6 +205,39 @@ ok(RESCUE.speedLimit < RESCUE.warnSpeed, 'the limit sits under the warning');
   ok(strike, 'sliding into a tree makes H1 report a cargo hit');
   ok(rescueHit(slider, strike).bump, 'which becomes a bump');
   ok(slider.condition !== 'unhurt', 'and hurts them');
+}
+
+// A real touchdown through H1's cable: the rough set-down and the cable's
+// ground bump never both count, and no touchdown over 1 m/s slips through.
+{
+  const touchdown = (vy, vx, options) => {
+    const line = createRescueLine({x: 0, z: 0, ground: flat}); setLineWho(line, 'pair');
+    line.lifted = true; line.onGround = false; line.wasOnGround = false;
+    line.y += 0.02; line.vy = vy; line.vx = vx;
+    const heli = {x: 0, y: line.y + 14, z: 0, vx: 0, vy: 0, vz: 0};
+    const seen = [];
+    for (let i = 0; i < 60; i++) {
+      seen.push(...stepRescue(line, heli, {}).events.map(e => e.type));
+      for (const e of stepCable(line, heli, {ground: flat}).events) { seen.push(e.type); rescueHit(line, e, options); }
+    }
+    return {condition: line.condition, seen};
+  };
+  eq(touchdown(-0.5, 0).condition, 'unhurt', 'set down gently: unhurt');
+  const near4 = touchdown(-3.95, 0);
+  eq(near4.condition, 'hurt', 'straight down at 3.95 m/s: one step, never two');
+  ok(near4.seen.includes('cargoHit') !== near4.seen.includes('roughSetDown'), 'counted once: as the bump or as the rough set-down');
+  eq(touchdown(-2, 6).condition, 'hurt', 'down at 2 m/s while sliding at 6 m/s: one step, not missed');
+  eq(touchdown(-1, 7.9).condition, 'hurt', 'down at 1 m/s while sliding at 7.9 m/s: one step');
+  eq(touchdown(-6, 0).condition, 'hurt', 'straight down at 6 m/s: the cable bump, one step');
+  eq(touchdown(-10, 0).condition, 'badly', 'straight down at 10 m/s: two steps');
+  // On the medevac skin's stretcher a bump starts above 8 m/s and is two
+  // steps only above 14 (section 6.1).
+  eq(touchdown(-6, 0, {stretcher: true}).condition, 'unhurt', 'on the stretcher, 6 m/s is not a bump');
+  eq(touchdown(-10, 0, {stretcher: true}).condition, 'hurt', 'on the stretcher, 10 m/s is one step');
+  eq(touchdown(-16, 0, {stretcher: true}).condition, 'badly', 'on the stretcher, 16 m/s is two steps');
+  const stretcherLine = createRescueLine({ground: flat}); setLineWho(stretcherLine, 'pair');
+  eq(rescueHit(stretcherLine, {type: 'cargoHit', id: 'rescue', speed: 8, with: 'tree'}, {stretcher: true}).bump, false, 'exactly 8 m/s on the stretcher is no bump');
+  eq(rescueHit(stretcherLine, {type: 'cargoHit', id: 'rescue', speed: 14, with: 'tree'}, {stretcher: true}).steps, 1, 'exactly 14 m/s is one step');
 }
 
 // The hold: only with the rescuer at rest within 3 m and the helicopter slow.
@@ -320,9 +359,9 @@ const target = {x: 40, z: -10};
   const unlifted = createRescueLine({x: 105, z: 5, ground: flat}); setLineWho(unlifted, 'pair');
   eq(rules(unlifted, still(105, 5), 2, {zones}).length, 0, 'a pair never lifted is not handed over');
   // Set down hard: the speed it touched the ground at counts.
-  // Harder than 1 m/s hurts them one step (section 4.1); harder than 4 m/s the
-  // cable's own hit is the bump (rescueHit), so the set-down adds nothing.
-  for (const [speed, handed, condition] of [[0.9, true, 'unhurt'], [2, false, 'hurt'], [3.5, false, 'hurt'], [4.5, false, 'unhurt']]) {
+  // Harder than 1 m/s hurts them one step (section 4.1). Speeds set by hand
+  // here; the real cable's touchdowns are checked with the bumps above.
+  for (const [speed, handed, condition] of [[0.9, true, 'unhurt'], [2, false, 'hurt'], [3.5, false, 'hurt'], [6, false, 'hurt']]) {
     const pair = pairAt(105, 5); pair.onGround = false; pair.vy = -speed;
     rules(pair, still(105, 5), 1 / 120, {zones});
     pair.onGround = true; pair.vy = 0;
