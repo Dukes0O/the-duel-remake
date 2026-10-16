@@ -74,7 +74,7 @@ The one approved 20-seed, three-course, normal/slow/nitro, off/on batch complete
 | Nitro lap-one leaders <=5/20 | 0 PASS | 0 PASS | 3 PASS |
 | Maximum paired CPU time change <=2% | 2.542759% FAIL | 1.690259% PASS | 1.752851% PASS |
 
-Normal enabled crash ranges were8–24,2–17,0–8. Report-only distinct start-pair successes were2/20,2/20,1/20; spread>=3m successes5/20,0/20,5/20. These diagnostic readings are not gating and do not change the failures above. No cause is inferred from those counts.
+Normal enabled crash ranges were8â€“24,2â€“17,0â€“8. Report-only distinct start-pair successes were2/20,2/20,1/20; spread>=3m successes5/20,0/20,5/20. These diagnostic readings are not gating and do not change the failures above. No cause is inferred from those counts.
 
 The report and comparison rules were read once; no further simulation or changed target was used to diagnose the outcome. Claude's written one-attempt/fail decision now applies: park the retained lane. Its conditional preview-after-failure exception required crashes no worse than today, which this packet does not meet on any of the three courses. A different implementation/design needs Claude's written next direction; current targets, old fingerprints, original fixed crash fixture and CPU0.5/0.5 stay unchanged. Previous failed packets remain failed and the restart-interrupted packets remain incomplete.
 
