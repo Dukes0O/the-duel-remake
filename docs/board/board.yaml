@@ -160,6 +160,15 @@ tasks:
     flag: "cpu-racecraft"
     details: "docs/board/cards/GP-RACECRAFT.md"
 
+  - id: SUMMIT-BUILD-TIME
+    title: "Bring Summit's world build back under 1 s (1.5 s at release; keep the snow)"
+    owner: "codex"
+    lane: "RACE"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/SUMMIT-BUILD-TIME.md"
+
   - id: RELEASE-SUMMIT
     title: "Summit Run release (Kyle: live overnight only if all green)"
     owner: "claude"
