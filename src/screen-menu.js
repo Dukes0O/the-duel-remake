@@ -12,7 +12,7 @@ import {CPU_REWARDS, UPGRADE_TYPES, CAR_PRICES, bestKey, eventKey, completionCar
 import {getLeaderboard} from './leaderboard.js';
 import {getDriverState, getEquippedDriverId, applyDriverModifiers, DRIVERS} from './drivers.js';
 import {driverSkillLabel} from './driver-ui.js';
-import {syncRaceChoiceButtons, qualifyingChoiceMarkup, syncQualifyingChoice} from './race-settings-ui.js';
+import {syncRaceChoiceButtons, qualifyingChoiceMarkup, syncQualifyingChoice, syncCoachChoice} from './race-settings-ui.js';
 import {courseHasWinterSurfaces} from './race-surfaces.js';
 import {COURSE_PRICES, isCourseUnlocked} from './course-access.js';
 import {speedKph, formatSpeed} from './speed-format.js';
@@ -118,6 +118,7 @@ function updateMenuScene() {
   ui['tyre-choice'].hidden=!courseHasWinterSurfaces(stage);
   syncRaceChoiceButtons(root,choices);
   syncQualifyingChoice(root,choices,stage);
+  syncCoachChoice(root,app,choices,stage);
   const lapChoiceOn=app._switches?.().enabled('lap-choice')===true&&supportsLapChoice(stage,choices.mode);
   const raceLaps=lapChoiceOn?app.getLapChoice(choices.startStage,choices.mode):choices.mode==='grandprix'?stage.grandPrixLaps??3:stage.laps||2;
   if(lapChoiceOn)choices.laps=raceLaps;else delete choices.laps;

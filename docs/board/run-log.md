@@ -1244,3 +1244,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-15 P4-INTEL-LEVELS merged (Claude, after Codex's handback): variant Team Room entry and router admission d7715c1d on Codex's b7df3fde; team-room browser scenario PASS (4 views, 0 warnings), lane 276/276 jobs4 1174.12 s, build passed, one review with one real fault (router refused variants) fixed; two changed assertions reviewed by Claude on the change note; conflict-free merge.
 
 - 2026-10-16 QA-BROWSER-FRAME-ISOLATION merged: exact4fb3ced5 lane22/22/jobs4/172.24s, build1216.01ms, independent review CLEAR; ordinary views2/2/41pictures/zero warnings, no timing measurement.
+
+- 16 October00:17PT P4-COACH: e3522727 lane52/52/jobs4/0unrun455.67s, build1.40s, independent review CLEAR; actual private brake/apex visible after real asphalt-height fix, no state/save change; conflict-free merge, no rerun. Owned lane/consumed QA cleanup follows.

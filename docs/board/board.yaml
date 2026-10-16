@@ -135,19 +135,6 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-AUDIO-CLOCK.md"
 
-  - id: P4-COACH
-    title: "Coach markers for learning a track"
-    owner: "codex"
-    lane: "VIS"
-    size: "S"
-    status: "building"
-    claimed_by: codex-overnight-01a12e4f
-    branch: codex/p4-coach
-    needs: [P4-INTEL-LEVELS]
-    locks: []
-    flag: "grand-prix"
-    details: "docs/board/cards/P4-COACH.md"
-
   - id: TEAMROOM-VARIANT-NOTES
     title: "Engineer notes for the three reverse variant courses"
     owner: "claude"
