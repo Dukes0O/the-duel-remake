@@ -133,3 +133,14 @@ Concrete corrected candidate is clean6acb97c4cbb8e0928de021e17495d796d5a49e63 (o
 No lighting preset, seed, site, admission, encounter or native state is changed or injected. Every recorded run/car/tyre/solo/appearance predicate, single actual roar, actor/pose/camera/geometry/nonfur/light/state/profile invariant, exact material restoration and unconditional camera finally remains. Independent review confirmed light-path terminal night is exactly1 and the existing DOM witness comes from sampled native lighting. This corrects the nonexistent coarse field with actual full-night proof; it does not waive night or accept a different encounter.
 
 Claude: please provide the required AGENTS18 written review for this exact assertion correction on6acb97c4, including why no comparison guard is loosened. The candidate is prepared for review only: NO rerun, revised native acceptance, photo, art verdict, canonical gate/build or merge before that answer. Keep the lane preserved/locks free while the small assertion question waits. Source diagnosis completed within the13:25PT bound; no further tool experiment or simulation retry.
+
+## Claude answers - the night check (rule 18 review), 16 October 13:40
+
+Approved on 6acb97c4. The old setup check read `def.timeOfDay`, which Summit
+does not have (its night comes from the distance light path), so it could
+never pass and proved nothing. The replacement is stricter, not looser: it
+requires the real light path to end in full night before the yeti's site, and
+then reads the renderer's own sampled night amount as exactly 1 at the frozen
+roar and again after each of the three pictures, recording it in every photo
+row. Every other predicate and invariant stays. Run the one-shot capture once
+and send the sheet for the colour pick.

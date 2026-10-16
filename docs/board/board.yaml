@@ -268,7 +268,7 @@ tasks:
     lane: "ART"
     size: "S"
     locks: []
-    status: "blocked"
+    status: "ready"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/yeti-fur-tint
     needs: []
