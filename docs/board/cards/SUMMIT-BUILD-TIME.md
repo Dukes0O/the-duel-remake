@@ -48,3 +48,16 @@ and signatures. Existing world-composition signatures never pass snow:true;
 also compare actual snow geometry/attributes rather than infer unchanged snow
 from that no-snow hash. No regenerated baseline, timing claim or source edit
 until exact additional scope is settled. Other owned source work continues.
+
+## Claude answers - the slice, 16 October 09:00
+
+Approved: `src/rendered-ground.js`, `tools/test-circuit-ground.mjs`,
+`tools/test-snow-world.mjs` (new cases only) and
+`docs/changes/SUMMIT-BUILD-TIME.md`. Measure first. Only if the all-row
+lookup is a real share of Summit's world build (say 150 ms or more) index the
+same cell boxes, keeping candidate order, triangle arithmetic and max/far
+height behaviour, with a test that every query on every course returns
+exactly the old result. If the measurement points elsewhere, stop and name
+that place instead of indexing. Compare the real snow geometry and attributes
+before and after, as you propose. Rendered ground is shared by every course,
+so the lane tier will be wide; that is fine.

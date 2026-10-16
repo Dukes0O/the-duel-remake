@@ -175,8 +175,7 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "blocked"
-    waiting_on: claude
+    status: "ready"
     needs: []
     details: "docs/board/cards/SUMMIT-BUILD-TIME.md"
 
