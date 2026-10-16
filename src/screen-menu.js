@@ -77,7 +77,7 @@ function updateEntryReward(){
   ui['ghost-hint'].hidden=choices.mode!=='timetrial'||!!record;
   ui['ghost-toggle'].checked=ghostChoice!=='off';
   if(intelGhost)ui['ghost-toggle'].setAttribute('aria-label','Ghost: '+(ghostChoice==='team'?'Team':ghostChoice==='off'?'Off':'My best')+'. Change ghost source.');
-  if(intelGhost&&ghostChoice==='off')text('ghost-record-label','OFF');
+  if(intelGhost)text('ghost-record-label',ghostChoice==='off'?'OFF':ghostChoice==='team'?'TEAM':'MY BEST · NO RECORDING YET');
   if(stage.practice){ui['ghost-control'].hidden=true;ui['ghost-hint'].hidden=true;}
   if(record){const build=Object.values(record.upgrades).reduce((sum,n)=>sum+n,0);text('ghost-record-label',!intelGhost?`${time(record.timeSec)} · RECORD BUILD ${build}/21`:ghostChoice==='off'?'OFF':ghostChoice==='team'?`TEAM · ${time(record.timeSec)}`:`MY BEST · ${time(record.timeSec)} · RECORD BUILD ${build}/21`);ui['ghost-control'].title=Object.entries(record.upgrades).map(([key,level])=>`${UPGRADE_TYPES[key]?.name||key}: ${level}`).join(' · ');}
   if(isSummitAttack(stage)){

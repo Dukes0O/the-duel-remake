@@ -36,6 +36,16 @@ async function setup(context) {
       const course=app.getMenuCourse(index);
       if(course)app.profile.courses={version:1,unlocked:[...new Set([...(app.profile.courses?.unlocked||[]),course.def.id])]};}
     app._saveProfile();
+    // Disposable, memory-only purchase fixture; every picture uses earned access.
+    app.profile={...app.profile,credits:50000};app._saveProfile();
+    for(const index of [...document.querySelector('#scene-select').options].map(option=>Number(option.value))){
+      const course=app.getMenuCourse(index);
+      if(course && !course.def.practice && !course.def.arena && course.closed!==false) {
+        const result=app.buyIntel(course.def.id,4);
+        if(!result.ok)throw Error('Fixture intel purchase refused: '+course.def.id);
+      }
+    }
+
   })()`);
 }
 
