@@ -43,6 +43,12 @@ forest band (firs 23 to 60 m past the road edge) the hills were bare grass.
   1,372 (35 new vegetation cells, two meshes each); geometries 250,
   materials 157 and textures 84 unchanged. Hash 5a96dada to 1882d745. Every
   other course's signature is exact.
+- Recaptured again on top of ARDENNES-STAVELOT-STONE (8c310939), which merged
+  first: its signature 978ef547 (instances 36,465, meshes 1,244, nodes 1,303,
+  geometries 249, materials 156) becomes 1fe6dc9c (instances 40,829, meshes
+  1,314, nodes 1,373): the same +4,364 instances and +70 meshes and nodes,
+  geometries, materials and textures unchanged. The far band is still 2,182
+  trees and the first band and beeches match integration exactly.
 
 ## Pictures
 
