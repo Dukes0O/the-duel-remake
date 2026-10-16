@@ -77,3 +77,6 @@ Added the card-required three-event fixed-step replay assertion in the existing 
 ## Arena and CPU parity assertions
 
 Added native full-state requested-on/off comparisons for every real arena definition using explicit Pro, and sixty-second actual Duel-rival/seven-opponent Grand Prix transcripts with a neutral player. These enforce the existing exclusion/CPU acceptance without re-recording any old pin or changing runtime. Source-only until the release hold clears; no pass is claimed.
+
+
+A bounded177.4907ms actual _drive comparison now checks the reviewed Pro full-slide0.82 yaw share and exact14/120mph step loss against a matched below-peak native car. It passes with real road/gear state, not a mocked physics helper. No game source or number changed; remaining replay/CPU/native macro and final gates remain queued.

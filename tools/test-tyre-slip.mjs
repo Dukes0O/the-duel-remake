@@ -411,3 +411,24 @@ test('native Duel rival and full Grand Prix field stay exact for60seconds with a
     assert.equal(transcript(true),transcript(false),eventId+' complete CPU state stream is unchanged');
   }
 });
+
+
+test('native road driving applies the exact Pro grip and scrub loss only past the peak',()=>{
+  const make=slip=>{
+    const d=new Duel({seed:1989,featureFlags:{'tyre-slip':true}});
+    d.startCampaign({seed:1989,startStage:0,car:'falcone_f42',difficulty:'pro',opponentCount:0});
+    while(d.state.status==='countdown')d.step(1/120);
+    assert.equal(d.state.status,'racing');
+    Object.assign(d.state,{s:20,lateral:0,speedMph:80,gear:2,steerVisual:1,
+      headingError:0,yawVelocity:0,tyreSlip:slip});
+    d.setInput({throttle:0,brake:0,steer:1,boost:false});
+    return d;
+  };
+  const peak=make(0),slide=make(1.25);
+  for(const d of [peak,slide])d._drive(1/120);
+  assert.equal(peak.state.offRoad,false);assert.equal(slide.state.offRoad,false);
+  assert.ok(peak.state.tyreSlip<1);near(slide.state.tyreSlip,1.25);
+  assert.ok(Math.abs(peak.state.yawVelocity)>.01,'real native yaw was applied');
+  near(slide.state.yawVelocity/peak.state.yawVelocity,.82,1e-10);
+  near(peak.state.speedMph-slide.state.speedMph,14/120,1e-10);
+});
