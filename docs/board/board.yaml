@@ -167,6 +167,7 @@ tasks:
     status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/gp-racecraft
+    waiting_on: claude
     needs: []
     locks: []
     flag: "cpu-racecraft"
@@ -282,6 +283,7 @@ tasks:
     status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/yeti-fur-tint
+    waiting_on: claude
     needs: []
     details: "docs/board/cards/YETI-FUR-TINT.md"
 

@@ -135,3 +135,24 @@ Kyle explicitly directs continued building on another card rather than idling fo
 
 Root ce3a9a85 contains the approved first-braking snapshot/pair/spread measuring-tool increment;19pure arithmetic/report assertions pass, both files parse, diff clean. Required independent code/numbers review CLEAR on that exact SHA. No simulation/full field suite/build/gate or preview enable is claimed. Runtime absolute grid lanes andCPU0.5/0.5 remain exact. Existing slots still govern all real race measurements; no extra worker/job has been launched for GP. Summit's brief capture was actually admitted21:13 and its pending source remains separately frozen.
 The ce3a9a85 measuring increment is frozen/reviewCLEAR and waiting only for actual native acceptance/full-suite/gate/build. Release busy-game-files now; no runtime edits may resume without a new lease. Kyle's latest instruction explicitly says continue other ready code while checks wait, so this waiting source must not hold the core queue. Current gameplay and preview remain unchanged.
+
+## Actual approved native acceptance admitted
+
+On frozen clean ce3a9a85, the existing racecraft-rate --races20 --jobs4 --check batch is actually running from05:58:50.469UTC: wrapper40088,runner49924,Rootexec36197. One root alongside foreign TeamRoom44628 at admission; no frame/release hold. It measures all three circuits, normal/slow/nitro and actual off/on pairs, preserving the approved20race contract. Output lane.evidence/2026-10-15/GP-RACECRAFT/accept-ce3a9a85/report.json and receipt.json pending, run.log progress. Do not duplicate/edit frozen source or claim native acceptance before receipt. No core edit lease or preview enable. One-minute recount still required.
+
+
+## Full current-source acceptance FAILED; no repeat or preview
+
+The approved existing20seed x3course x3mode x off/on batch completed all360actual races on exact clean ce3a9a85 at06:28:02.572UTC, exit1,1752101.4924ms. Wrapper40088/runner49924/exec36197 drained. Actual report+receipt retained in lane .evidence/2026-10-15/GP-RACECRAFT/accept-ce3a9a85; historical older failed probes remain separate. No gate/build/merge/preview enable or waived target.
+
+| Course | Distinct pairs /20 | Leading6 spread>=3m /20 | Mean CPU passes off -> on | Slower player passed /20 | Maximum time change |
+| --- | --- | --- | --- | --- | --- |
+| Panorama | 0 | 10 | 1.65 -> 9.35 | 17 | 3.111645% |
+| Tremblant Woods | 0 | 0 | 9.95 -> 16.30 | 20 | 1.719919% |
+| Pacific Canyon | 0 | 0 | 3.55 -> 10.75 | 20 | 1.507613% |
+
+All normal races finished the player and all7CPUs. Nitro player led at end of lap1 in0/20 on every track (off:19/20 Panorama,2/20 Woods,20/20 Pacific). The new model passes that nitro condition but not the full card. Normal on crash ranges Panorama7-26 (19/20>=8), Woods1-13 (9/20>=8), Pacific0-7 (0/20>=8). Early pile-ups on:6/20,12/20,3/20 respectively, above unchanged1/20bound. Existing off baselines also exceed the crash bound on Panorama16/20 and Woods4/20, but that does not waive the new failures. One Panorama on snapshot has fewer than6active cars; it counts as missing spread, never as a pass.
+
+Bounded source/report diagnosis finished within ten minutes; no race was rerun. Existing field test really requires aggregate crashes<8; no per-actor reinterpretation. A concrete Panorama first-brake sample has the lead at512.33m and other leading cars at498.12,490.44,469.02,454.03,448.00m, so lateral width alone has not produced physical longitudinal body overlap. The current code supplies a starting-lane target but preserves existing following/avoidance/passing overrides; the report does not prove which interaction causes each failure. No guessed root cause or threshold/test edit.
+
+Claude: the full new formation contract now has its actual result. Should the next bounded driver approach explicitly retain formation through following/passing decisions before the first braking zone (within the existing owned race-field-driver hook and unchanged pace/contact/grid/CPU0.5rules), or should this failed prototype stay parked for a revised design? Any grid-layout/shared-core/new tuning hook needs a named re-slice first. Preserve all exact15/20pair/spread,2xpasses,<8crash/1of20pileup,allslowplayer,5of20nitro and2%time targets unless you write a new decision. Source remains clean/frozen/locks[]; move to other ready work while this question waits.
