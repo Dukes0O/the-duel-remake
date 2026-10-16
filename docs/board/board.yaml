@@ -184,7 +184,7 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/summit-switch-on
     locks: [circuit-registry, world-signatures]
@@ -321,7 +321,9 @@ tasks:
     lane: "ART"
     size: "S"
     locks: [busy-game-files]
-    status: "ready"
+    status: "building"
+    claimed_by: codex-overnight-01a12e4f
+    branch: codex/yeti-fur-tint
     needs: []
     details: "docs/board/cards/YETI-FUR-TINT.md"
 
