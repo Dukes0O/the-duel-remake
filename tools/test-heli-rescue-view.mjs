@@ -7,6 +7,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {JOB_CARS} from '../src/heli/heli-jobs.js';
+import {createVehicleAssets} from '../src/vehicle-assets.js';
 import {createRescueView, RESCUE_MODEL_URLS, RESCUE_LIMITS, HANDOVER, PEOPLE_SCALE, CRATE_SCALE} from '../src/heli/heli-rescue-view.js';
 import {createHeliView} from '../src/heli/heli-scene.js';
 import {rescueLineMarkup, instrumentsMarkup, fireLineMarkup, noticeText, duskShare, controlsMarkup} from '../src/heli/heli-ui.js';
@@ -97,7 +99,10 @@ async function ready(view, make, keys, frames = 3) {
   ok(helmets.length > 0 && helmets.every(color => color.r > .7 && color.g > .7), 'a white helmet on the red suit');
   near(actor.rotation.y, .4, 1e-9, 'facing the way the helicopter points');
   const end = view.cableEnd(v);
-  near(end.y, 40 + (2.22 - 1.36) * PEOPLE_SCALE, .05, 'the cable ends at his raised hand');
+  // The cable ends at the top of the file's model: since RESCUE-FINISH that is the hook above his head (it was his raised hand).
+  const fileRoot = await parseFile(RESCUE_MODEL_URLS.rescuer), file = new THREE.Box3().setFromObject(fileRoot), clip = fileRoot.getObjectByName('harness').position.y;
+  near(end.y, 40 + (file.max.y - clip) * PEOPLE_SCALE, .05, 'the cable ends at the hook above his head');
+  ok(file.max.y - clip > 1, `the hook hangs well above the chest ring (${(file.max.y - clip).toFixed(2)} m)`);
   v = await ready(view, () => make(lineAt(5, 6, {who: 'pair'})), ['pair']);
   eq(view.state.actors, [{name: 'line', key: 'pair'}], 'clipped together: the pair model');
   // Set down: he stays as he was set down while the helicopter turns.
@@ -237,6 +242,125 @@ async function ready(view, make, keys, frames = 3) {
   ok(end && end.y > hill(16, 5) + 20 && end.y < hill(16, 5) + 24, `the cable ends at the hooked crate (${end?.y.toFixed(2)})`);
   eq(view.cableEnd(supply(crates)), null, 'nothing hooked, no cable end');
   view.dispose();
+}
+
+// ---- The rescuer's pose and the pair, from the files (RESCUE-FINISH) -------------------------
+{
+  // The line's hook is over the middle of each file (the cable's end), well above the helmet; he reaches out ahead of his chest.
+  for (const [key, who] of [['rescuer', 'alone'], ['pair', 'with the casualty']]) {
+    const root = await parseFile(RESCUE_MODEL_URLS[key]), box = new THREE.Box3().setFromObject(root);
+    const top = [];
+    root.updateMatrixWorld(true);
+    root.traverse(object => {
+      if (!object.isMesh) return;
+      const p = object.geometry.attributes.position;
+      for (let i = 0; i < p.count; i++) { const v = new THREE.Vector3().fromBufferAttribute(p, i).applyMatrix4(object.matrixWorld); if (v.y > box.max.y - .06) top.push(v); }
+    });
+    const mid = top.reduce((sum, v) => sum.add(v), new THREE.Vector3()).divideScalar(top.length);
+    near(Math.hypot(mid.x, mid.z), 0, .06, `${who}: the hook is over the middle of the file (${mid.x.toFixed(2)}, ${mid.z.toFixed(2)})`);
+    near(box.min.y, 0, .05, `${who}: his boots hang just clear of the file's floor`);
+  }
+  const lone = await parseFile(RESCUE_MODEL_URLS.rescuer), ring = lone.getObjectByName('harness').position;
+  const reach = new THREE.Box3().setFromObject(lone).max.z - ring.z;
+  ok(reach > .35, `alone, his arms reach out ahead of the chest ring (${reach.toFixed(2)} m)`);
+  const pair = await parseFile(RESCUE_MODEL_URLS.pair), parts = Object.fromEntries(['rescuer', 'casualty'].map(name => [name, new THREE.Box3().setFromObject(pair.getObjectByName(name))]));
+  const gap = (parts.casualty.min.z + parts.casualty.max.z) / 2 - (parts.rescuer.min.z + parts.rescuer.max.z) / 2;
+  ok(gap > .15 && gap < .6, `the casualty hangs in front of him, face to face (${gap.toFixed(2)} m ahead)`);
+  ok(Math.abs(parts.casualty.max.y - parts.rescuer.max.y) < .35, 'both clipped to one hook, the heads near one another');
+}
+
+// ---- The stranded driver's car, and crates left in the yard (RESCUE-FINISH) --------------------
+{
+  const calls = {create: []};
+  const stub = {status: () => 'ready', load: () => Promise.resolve(true), create: id => { calls.create.push(id); const mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 4), new THREE.MeshBasicMaterial()); mesh.userData.id = id; return mesh; }};
+  const driver = {x: 30, z: 40, y: hill(30, 40)};
+  const site = (extra = {}) => ({driver, car: {x: 34, z: 41, y: hill(34, 41), heading: 1, ...extra}});
+  const hoist = (sites, extra = {}, line = null) => viewOf({line, active: active('hoist', extra, sites)});
+  // The session names the car: that one is drawn, beside the driver, lying on the slope.
+  const view = createRescueView({THREE, scene: new THREE.Scene(), load, vehicleAssets: stub});
+  const named = hoist(site({carId: JOB_CARS[1]}));
+  await ready(view, () => named, ['driver-standing']);
+  eq(view.state.car, JOB_CARS[1], 'the car the session names is drawn');
+  const car = view.object('car');
+  near(Math.hypot(car.position.x - driver.x, car.position.z - driver.z), Math.hypot(4, 1), 1e-9, 'beside the driver');
+  near(car.position.y, hill(34, 41), 1e-9, 'on the ground');
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(car.quaternion);
+  ok(up.y > .85 && up.y < 1, `it lies along the slope, not flat and not on its side (up.y ${up.y.toFixed(3)})`);
+  near(new THREE.Vector3(0, 0, 1).applyQuaternion(car.quaternion).dot(new THREE.Vector3(Math.sin(1), 0, Math.cos(1))), 1, .1, 'it points the way the site says (the slope only leans it)');
+  ok(view.group.children.includes(car), 'it is in the scene');
+  // With the driver clipped on the car stays; it goes when the rescue is over or is another kind.
+  view.update(hoist(site({carId: JOB_CARS[1]}), {stage: 'carry'}, lineAt(30, 40, {who: 'pair'})), {dt: 1 / 60});
+  eq(view.state.car, JOB_CARS[1], 'the car stays on the slope while the driver is carried away');
+  view.update(viewOf({}), {dt: 1 / 60});
+  eq(view.state.car, null, 'rescue over: the car is not drawn');
+  view.update(viewOf({active: active('hiker', {}, {lastSeen: {x: 90, z: 20}, clearing: {x: 40, z: 60, y: 20, radius: 12}, hiker: null, flareLeft: 0, aboard: false})}), {dt: 1 / 60});
+  eq(view.state.car, null, 'another kind of rescue: no car');
+  view.dispose();
+  // No car named: a seeded pick from the customer cars Kestrel One can lift, the same for the same site.
+  const pick = async sites => {
+    const v2 = createRescueView({THREE, scene: new THREE.Scene(), load, vehicleAssets: stub});
+    await ready(v2, () => hoist(sites), ['driver-standing']);
+    const id = v2.state.car;
+    v2.dispose();
+    return id;
+  };
+  const first = await pick(site()), again = await pick(site());
+  ok(JOB_CARS.includes(first), `a liftable customer car (${first})`);
+  eq(again, first, 'the same site always shows the same car');
+  const spread = new Set();
+  for (let i = 0; i < 24; i++) spread.add(await pick(site({x: 34 + i * 13, z: 41 + i * 7})));
+  ok(spread.size >= 3 && [...spread].every(id => JOB_CARS.includes(id)), `different sites show different cars (${spread.size} of ${JOB_CARS.length})`);
+  // The game's own car models draw too (the ones that are ready at once).
+  const real = createVehicleAssets(), readyId = JOB_CARS.find(id => real.status(id) === 'ready');
+  const v3 = createRescueView({THREE, scene: new THREE.Scene(), load, vehicleAssets: real});
+  await ready(v3, () => hoist(site({carId: readyId})), ['driver-standing']);
+  let meshes = 0;
+  v3.object('car')?.traverse(object => { if (object.isMesh) meshes++; });
+  ok(readyId && meshes > 5, `the real model of ${readyId} is in the scene (${meshes} parts)`);
+  v3.dispose();
+  // Nothing about cars is made or asked for unless a hoist rescue is shown.
+  const asked = {made: 0};
+  const lazy = createRescueView({THREE, scene: new THREE.Scene(), load, vehicleAssets: {status: () => { asked.made++; return 'ready'; }, load: () => Promise.resolve(true), create: () => { asked.made++; return null; }}});
+  await ready(lazy, () => viewOf({active: active('avalanche', {}, {slide, beacon})}), []);
+  await ready(lazy, () => viewOf({}), []);
+  eq(asked.made, 0, 'a slide or no rescue never asks for a car');
+  lazy.dispose();
+
+  // A crate set down in the yard stays where it was set down.
+  const yard = {x: 80, z: 90, y: hill(80, 90), radius: 10};
+  const rest = (id, i) => ({id, x: 78 + i * 4, y: hill(78 + i * 4, 92) + .7, z: 92, heading: .3 * i, hooked: false, onGround: true});
+  const run = (crates, states, {id = 'supply-1', courseId = 'tremblant-snow', kind = 'supply'} = {}) =>
+    ({...viewOf({crates, active: kind ? {...active(kind, {crates: states}, {yard}), id} : null}), courseId});
+  const sv = createRescueView({THREE, scene: new THREE.Scene(), load});
+  const food = rest('food', 0), medicine = rest('medicine', 1);
+  await ready(sv, () => run([food], [2, 0, 0]), ['crate-food']);
+  const placed = sv.object('crate-food').position.clone();
+  eq(names(sv.state), ['crate-food'], 'the crate set down is drawn');
+  // The session lets go of it (the course changed and came back, or the run ended): it still lies there.
+  sv.update(run([], [2, 0, 0]), {dt: 1 / 60});
+  eq(names(sv.state), ['crate-food'], 'gone from the session, still lying in the yard');
+  eq(sv.object('crate-food').position.toArray(), placed.toArray(), 'exactly where it was set down');
+  await ready(sv, () => run([medicine], [2, 2, 0]), ['crate-medicine']);
+  eq(names(sv.state), ['crate-food', 'crate-medicine'], 'the second crate joins the first');
+  sv.update(run([], [2, 2, 0], {courseId: 'tremblant-woods'}), {dt: 1 / 60});
+  eq(names(sv.state), [], 'over the home pad the yard is not drawn');
+  sv.update(run([], [2, 2, 0]), {dt: 1 / 60});
+  eq(names(sv.state), ['crate-food', 'crate-medicine'], 'back over the yard they are there');
+  sv.update(run([], [2, 2, 2], {kind: null}), {dt: 1 / 60});
+  eq(names(sv.state), ['crate-food', 'crate-medicine'], 'after the run ends they stay while this course is flown');
+  sv.update(run([], [0, 0, 0], {id: 'supply-2'}), {dt: 1 / 60});
+  eq(names(sv.state), [], 'a new rescue starts with an empty yard');
+  sv.update(run([], [2, 0, 0], {id: 'supply-2'}), {dt: 1 / 60});
+  eq(names(sv.state), [], 'nothing is remembered that was not seen at rest');
+  await ready(sv, () => run([food], [2, 0, 0], {id: 'supply-3'}), ['crate-food']);
+  sv.update({heli, courseId: 'tremblant-snow'}, {dt: 1 / 60});
+  sv.update(run([], [2, 0, 0], {id: 'supply-3'}), {dt: 1 / 60});
+  eq(names(sv.state), [], 'leaving the helicopter view forgets them');
+  // A crate still on the line is not "set down".
+  await ready(sv, () => run([{...food, hooked: true, onGround: false}], [1, 0, 0], {id: 'supply-4'}), ['crate-food']);
+  sv.update(run([], [1, 0, 0], {id: 'supply-4'}), {dt: 1 / 60});
+  eq(names(sv.state), [], 'a crate on the line is not left behind');
+  sv.dispose();
 }
 
 // ---- The handover: the paramedics come for a person set down ---------------------------------
