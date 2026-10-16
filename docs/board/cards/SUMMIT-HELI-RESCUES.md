@@ -15,3 +15,5 @@ Design: `docs/HELI_RESCUE.md` sections 2, 5.4 and 5.5.
   H1's thin-air thrust rule still applying) and test it.
 - Tests: Summit rescues appear only with both switches on; every other
   destination and fingerprint unchanged.
+
+Also (RESCUE-AUTOPILOT review, minor): `specialGoal` in `src/heli/heli-session.js` (about line 418) falls through to `recoveryGoal`, so with a recovery job in hand and a hoist or avalanche hold on the same course the autopilot would fly to the car. Add `|| live` to the first guard of `recoveryGoal` and test it.
