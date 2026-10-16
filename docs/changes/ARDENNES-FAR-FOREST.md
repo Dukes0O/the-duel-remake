@@ -46,7 +46,7 @@ forest band (firs 23 to 60 m past the road edge) the hills were bare grass.
 
 ## Pictures
 
-`docs/board/looks/ardennes/far-forest.jpg`: before and after at High, La
+`docs/board/looks/ardennes-far-forest/round-1.jpg` (review note beside it): before and after at High, La
 Fontaine, Les Combes, Riverside and Stavelot (native views from
 `tools/scenarios/ardennes-views.mjs`). Verdict (Claude): better. Firs now
 stand in groves on the Les Combes hill and on the slope behind Stavelot's
