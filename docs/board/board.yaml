@@ -612,7 +612,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-overnight-01a12e4f
+    branch: codex/qa-browser-frame-isolation
     needs: []
     locks: []
     details: "docs/board/cards/QA-BROWSER-FRAME-ISOLATION.md"
