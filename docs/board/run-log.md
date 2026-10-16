@@ -1240,3 +1240,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-16 SUMMIT-SWITCH-ON merged dd1a7de0: lane 343/343 in 1666.74 s, build 1329.0430000000001 ms, review drive_lesson_save_review clear.
 - 2026-10-16 QA-DEEP-ART-THREE merged ab383a5e: lane 20/20 in 281.33 s, build 1681.2403 ms, review drive_lesson_save_review (cfa3 code; later note only) clear.
 15 October: ARDENNES-FAR-FOREST merged (far band 60 to 220 m in groves, 2,182 trees, +23.9%, first band and 191 beeches identical; signature recaptured on top of Stavelot and Summit; sheet docs/board/looks/ardennes-far-forest/round-1.jpg); lane 150/150 jobs4 773.48 s, build passed, one review with one real fault fixed and confirmed, test-circuits by hand passed; frame check at the busiest view waits for a quiet laptop; lane deleted.
+- 2026-10-16 QA-AUDIO-CRASH-RELIABILITY merged 194d57e4: lane 18/18 in 245.81 s, build 2119.2214 ms, review drive_lesson_save_review clear.
