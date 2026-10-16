@@ -1,3 +1,4 @@
+import {INTEL_PRICES} from './intel-levels.js';
 import {compareLapTelemetry} from './lap-telemetry.js';
 import {referenceSpeedColour, cornerId, wrap} from './track-analysis.js';
 
@@ -74,6 +75,22 @@ function mapMarkup(dossier) {
     </svg>${map.flags.map(flag => `<button type="button" class="team-map-flag team-kind-${flag.kind}" data-team-flag="${escape(flag.id)}" data-team-label="${escape(flag.title)}" style="left:${(flag.x / 10).toFixed(2)}%;top:${(flag.y / 6.9).toFixed(2)}%" aria-pressed="false" aria-label="${escape(kindName[flag.kind])}: ${escape(flag.title)}">${symbol[flag.kind]}</button>`).join('')}<div class="team-map-tip" data-team-tip role="presentation" hidden></div></div>`;
 }
 
+const levelOf = dossier => Number.isInteger(dossier.intelLevel) ? Math.max(0, Math.min(4, dossier.intelLevel)) : 4;
+function intelLock(level, dossier) {
+  if (level === 2) return '<p class="team-intel-lock">Corner notes locked. Drive 3 laps of this track in any mode.</p>';
+  const requirement = level === 3 ? 'Finish in the top 5' : 'Finish on the podium';
+  return '<section class="team-intel-lock"><h3>' + (level === 3 ? 'Telemetry locked' : 'Team ghost locked') + '</h3><p>' + requirement +
+    ', or buy access.</p><button type="button" data-team-buy="' + level + '"' + (dossier.canBuyIntel === true ? '' : ' disabled') + '>' +
+    INTEL_PRICES[level] + ' credits</button>' + (dossier.canBuyIntel === true ? '' : '<p>Return to the menu to buy intel.</p>') + '</section>';
+}
+function intelProgress(dossier) {
+  if (!Object.hasOwn(dossier, 'intelLevel')) return '';
+  const level = levelOf(dossier);
+  return '<section class="team-intel-progress" aria-label="Track intel"><p>Intel level ' + level + ' of 4</p>' +
+    (level < 2 ? intelLock(2, dossier) : '') + (level < 3 ? intelLock(3, dossier) : '') + (level < 4 ? intelLock(4, dossier) : '') +
+    '<p role="status" data-team-intel-message>' + escape(dossier.intelMessage || '') + '</p></section>';
+}
+
 export function teamRoomMarkup(dossier) {
   const {analysis, reference} = dossier;
   const route = dossier.route === 'fixed' ? 'Circuit dossier' : dossier.route.replace('route_', 'Route ').toUpperCase();
@@ -81,17 +98,19 @@ export function teamRoomMarkup(dossier) {
     <header class="team-room-header"><div><p class="eyebrow">YOUR ENGINEER · ${escape(route)}</p><h2 id="team-room-title">${escape(dossier.name)}</h2></div><button type="button" class="shop-close" data-team-close aria-label="Close Team Room">×</button></header>
     <div class="team-room-summary"><span><b>${(analysis.profile.length / 1000).toFixed(2)} km</b> lap distance</span><span><b>${analysis.corners.length}</b> corners</span><span><b>${time(reference.lapMs)}</b> reference lap</span></div>
     <p class="team-reference-label">Reference lap: Stuttgart 959-S <span>· Club Driver · Medium · stock car</span></p>
+    ${intelProgress(dossier)}
     <div class="team-room-body"><section class="team-map-panel" aria-label="Track map">${mapMarkup(dossier)}
       <div class="team-speed-key"><span>${Math.round(analysis.reference.minMph * 1.609344)} km/h</span><i aria-hidden="true"></i><span>${Math.round(analysis.reference.topMph * 1.609344)} km/h</span></div>
-      <div class="team-sector-strip">${reference.sectorMs.map((value, index) => `<span>SECTOR ${index + 1}<b>${time(value)}</b></span>`).join('')}</div>
+      ${levelOf(dossier) >= 3 ? '<div class="team-sector-strip">' + reference.sectorMs.map((value, index) => '<span>SECTOR ' + (index + 1) + '<b>' + time(value) + '</b></span>').join('') + '</div>' : ''}
       <details class="team-corner-index"><summary>All corners</summary><ol>${analysis.corners.map(corner => `<li>${escape(corner.name || `Corner ${corner.number}`)} <span>${corner.direction === 'L' ? 'Left' : 'Right'} · ${corner.radius} m radius</span></li>`).join('')}</ol></details>
     </section><aside class="team-study-panel" aria-label="Study a track feature"><h3>Study the approach</h3><p class="team-study-intro">Choose a flag, on the list or on the map, to see the corner from above.</p>
       <div class="team-flag-list">${dossier.flags.map(flag => `<button type="button" data-team-flag="${escape(flag.id)}" data-team-snapshot-s="${flag.snapshotS}" data-team-camera-up="${flag.camera.up}" data-team-camera-ahead="${flag.camera.ahead}" data-team-kind="${flag.kind}" aria-pressed="false"><span class="team-flag-symbol">${symbol[flag.kind]}</span><span><small>${escape(kindName[flag.kind])} · ${Math.round(flag.s)} m</small><b>${escape(flag.title)}</b></span></button>`).join('')}</div>
       <section class="team-snapshot-panel" aria-live="polite"><h4 data-team-feature-title>Choose a flag</h4><div class="team-snapshot" data-team-snapshot></div><p class="team-snapshot-status" data-team-status role="status">The current track will be rendered when you select a feature.</p><div class="team-engineer" data-team-note></div></section>
-    </aside></div><div data-team-telemetry>${telemetryMarkup(dossier)}</div></section>`;
+    </aside></div><div data-team-telemetry>${levelOf(dossier) >= 3 ? telemetryMarkup(dossier) : ''}</div></section>`;
 }
 
-function engineerMarkup(flag) {
+export function engineerMarkup(flag, {intelLevel = 4} = {}) {
+  if (intelLevel < 2) return intelLock(2, {});
   const note = flag.engineer ?? {}, values = [];
   if (Number.isFinite(note.brakeBoard)) values.push(`Brake at the ${note.brakeBoard} m board.`);
   if (Number.isFinite(note.gear)) values.push(`Gear ${note.gear}.`);
@@ -101,7 +120,7 @@ function engineerMarkup(flag) {
 
 // Owns only DOM and transient canvases. All course/reference data and native
 // renderer access arrive through read-only providers from the router.
-export function createTeamRoom({host, getDossier, capture, clearCapture, onClose = () => {}}) {
+export function createTeamRoom({host, getDossier, capture, clearCapture, buyIntel = () => ({ok:false,reason:'Purchasing is unavailable.'}), onClose = () => {}}) {
   const layer = document.createElement('div');
   layer.className = 'team-room-layer';layer.hidden = true;host.append(layer);
   const events = new AbortController();
@@ -134,7 +153,7 @@ export function createTeamRoom({host, getDossier, capture, clearCapture, onClose
     layer.querySelectorAll('[data-team-flag]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.teamFlag === id)));
     showInList(id);
     layer.querySelector('[data-team-feature-title]').textContent = flag.title;
-    layer.querySelector('[data-team-note]').innerHTML = engineerMarkup(flag);
+    layer.querySelector('[data-team-note]').innerHTML = engineerMarkup(flag, {intelLevel:levelOf(dossier)});
     const picture = layer.querySelector('[data-team-snapshot]'), status = layer.querySelector('[data-team-status]');
     picture.replaceChildren();status.textContent = 'Rendering the current track…';
     try {
@@ -153,6 +172,19 @@ export function createTeamRoom({host, getDossier, capture, clearCapture, onClose
   }
   layer.addEventListener('click', event => {
     if (event.target.closest('[data-team-close]')) close();
+    const purchase = event.target.closest('[data-team-buy]');
+    if (purchase && !purchase.disabled && dossier) {
+      const result = buyIntel(dossier.courseId, Number(purchase.dataset.teamBuy));
+      const next = getDossier(dossier.courseId);
+      if (!next) {close();return;}
+      const reasons = {credits:'Not enough credits.', unavailable:'Intel is unavailable for this track or profile.'};
+      const message = result.ok ? (result.saved === false ? 'Intel unlocked for this session. Saving is unavailable.' : 'Intel unlocked.') :
+        reasons[result.reason] || result.reason || 'Intel could not be purchased.';
+      request++;captureAbort?.abort();captureAbort = null;clearCapture();dossier = next;
+      layer.innerHTML = teamRoomMarkup({...dossier,intelMessage:message});
+      layer.querySelector('[data-team-close]').focus({preventScroll:true});
+      return;
+    }
     const flag = event.target.closest('[data-team-flag]');
     if (flag) select(flag.dataset.teamFlag);
   }, {signal: events.signal});
@@ -186,6 +218,7 @@ export function createTeamRoom({host, getDossier, capture, clearCapture, onClose
 }
 
 export function telemetryMarkup(dossier){
+  if (levelOf(dossier) < 3) return intelLock(3, dossier);
   const view=dossier.telemetry;
   if(!view||view.status==='off')return '';
   const {lap}=view,comparison=compareLapTelemetry(lap,dossier.reference);
