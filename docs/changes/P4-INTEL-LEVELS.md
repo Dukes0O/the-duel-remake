@@ -56,3 +56,8 @@ The reviewer confirms both presentation fixes CLEAR on ae055aa8, without a brows
 ## Current integration union
 
 Merged current integration into the retained lane before final acceptance. Three real text conflicts were additive imports in App/progression and the adjacent optional profile fields. Resolved by retaining both Cups and Intel imports and normalizing each present field independently; neither path replaces the other. No source from other cards was dropped. These are real conflict fixes, so the final native acceptance, lane/jobs4, build and independent source confirmation must run on the resolved union. No earlier gate is carried over as a current-source pass.
+
+
+## Native optional terrain pose correction
+
+Source inspection found ordinary cars may leave groundHeight/terrainPitch/terrainRoll null: _terrainPose runs only for cars with off-road capability. The first pose helper incorrectly required those optional fields. A new regression failed on that requirement. It now preserves the existing seven-column representation when terrain pose is absent and the existing eleven-column presence bits when it is present; no ground or attitude is fabricated. Required lateral/heading/air/speed fields, clock, endpoints, identity and old-reference comparisons stay strict. The five relevant tests pass in 748.9309 ms. This changes only the new pose increment; no existing assertion or tolerance was relaxed.

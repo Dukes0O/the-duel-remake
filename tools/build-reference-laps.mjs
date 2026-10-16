@@ -59,7 +59,8 @@ export function selectReferenceLap(run) {
 // Keep observed native poses from the chosen flying lap. Only its two line
 // crossings interpolate neighbouring observations, as the timing trace does.
 export function referencePoseSamples(lap, nativeTrace) {
-  const fields = ['lateral', 'heading', 'airHeight', 'groundHeight', 'terrainPitch', 'terrainRoll', 'mph'];
+  const fields = ['lateral', 'heading', 'airHeight', 'mph'];
+  const optional = ['groundHeight','terrainPitch','terrainRoll'];
   const startS = lap.lap * lap.length;
   const poseAt = distance => {
     let index = nativeTrace.findIndex(row => row.s >= distance);
@@ -70,6 +71,12 @@ export function referencePoseSamples(lap, nativeTrace) {
     const blend = a === b ? 0 : (distance - a.s) / (b.s - a.s);
     if (!(blend >= 0 && blend <= 1)) throw Error('Invalid native pose crossing.');
     const pose = Object.fromEntries(fields.map(key => [key, a[key] + (b[key] - a[key]) * blend]));
+    for (const key of optional) {
+      if ([a[key],b[key]].some(value => value != null && !Number.isFinite(value)))
+        throw Error('Invalid optional native pose field.');
+      pose[key] = Number.isFinite(a[key]) && Number.isFinite(b[key]) ?
+        a[key] + (b[key]-a[key])*blend : null;
+    }
     pose.heading = a.heading + Math.atan2(Math.sin(b.heading - a.heading), Math.cos(b.heading - a.heading)) * blend;
     pose.tumble = !!a.tumble;
     return pose;
@@ -82,8 +89,11 @@ export function referencePoseSamples(lap, nativeTrace) {
     const pose = poseAt(startS + row.s);
     const packed = [Math.round(row.t * 1000), Math.round(row.s * 100), Math.round(pose.lateral * 100),
       Math.round(pose.heading * 10000), Math.round(Math.max(0, pose.airHeight) * 100),
-      Math.round(Math.max(0, pose.mph) * 10), 0, Math.round(pose.groundHeight * 100),
-      Math.round(pose.terrainPitch * 10000), Math.round(pose.terrainRoll * 10000), 7 | (pose.tumble ? 8 : 0)];
+      Math.round(Math.max(0, pose.mph) * 10), 0];
+    const flags = (pose.groundHeight != null ? 1 : 0) | (pose.terrainPitch != null ? 2 : 0) |
+      (pose.terrainRoll != null ? 4 : 0) | (pose.tumble ? 8 : 0);
+    if (flags) packed.push(Math.round((pose.groundHeight ?? 0)*100),
+      Math.round((pose.terrainPitch ?? 0)*10000),Math.round((pose.terrainRoll ?? 0)*10000),flags);
     if (rows.length && (packed[0] <= rows.at(-1)[0] || packed[1] < rows.at(-1)[1]))
       throw Error('Native reference pose clock or distance is not increasing.');
     rows.push(packed);next = row.t + interval;
@@ -97,7 +107,7 @@ export function retainReferencePoses(stored, rebuilt) {
   const difference = unchanged.find(key => JSON.stringify(stored?.[key]) !== JSON.stringify(rebuilt?.[key]));
   const samples = rebuilt?.poseSamples;
   if (difference || !Array.isArray(samples) || samples.length < 12 ||
-      samples.some(row => !Array.isArray(row) || row.length !== 11 || !row.every(Number.isFinite)))
+      samples.some(row => !Array.isArray(row) || ![7,11].includes(row.length) || !row.every(Number.isFinite)))
     return {record:stored,attached:false,reason:difference || 'missing native poses'};
   return {record:{...stored,poseSamples:samples},attached:true};
 }

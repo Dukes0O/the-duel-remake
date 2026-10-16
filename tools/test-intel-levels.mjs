@@ -272,3 +272,14 @@ test('actual App time-trial setup keeps team playback separate from personal rec
   assert.equal(JSON.stringify(app.ghosts),before,'team playback never updates personal records or usage timestamps');
  });
 });
+
+test('native references without terrain-attitude state keep the existing seven-column pose form',async()=>{
+ const recipe=await import('./build-reference-laps.mjs'),refs=await import('../src/reference-laps.js');
+ const trace=Array.from({length:61},(_,i)=>({s:i*5,t:i*.5,mph:40,lateral:.25,heading:.1,airHeight:0,
+  groundHeight:null,terrainPitch:null,terrainRoll:null,tumble:false}));
+ const selected=recipe.selectReferenceLap({length:100,trace,lapTimes:[10,10,10],completedLaps:3,assistedLaps:[]});
+ const samples=recipe.referencePoseSamples(selected,trace);
+ assert.ok(samples.every(r=>r.length===7),'absent native terrain pose is not fabricated as zero');
+ const ref={eventId:id,route:'fixed',courseFingerprint:'native-road',lapMs:10000,poseSamples:samples};
+ assert.equal(refs.validReferencePoses(ref,{eventId:id,route:'fixed',courseFingerprint:'native-road',length:100}),true);
+});

@@ -45,8 +45,9 @@ export function validReferencePoses(reference, context) {
   const finish = Math.round(context.length * 100);
   if (rows[0]?.[0] !== 0 || rows[0]?.[1] !== 0 ||
       rows.at(-1)?.[0] !== reference.lapMs || rows.at(-1)?.[1] !== finish) return false;
-  return rows.every((row,index) => Array.isArray(row) && row.length === 11 && row.every(Number.isSafeInteger) &&
+  return rows.every((row,index) => Array.isArray(row) && [7,11].includes(row.length) && row.every(Number.isSafeInteger) &&
     row[0] >= 0 && row[0] <= reference.lapMs && row[1] >= 0 && row[1] <= finish &&
-    row[4] >= 0 && row[5] >= 0 && row[6] === 0 && [7,15].includes(row[10]) &&
+    row[4] >= 0 && row[5] >= 0 && row[6] === 0 &&
+    (row.length === 7 || row[10] >= 0 && row[10] <= 15) &&
     (!index || row[0] > rows[index-1][0] && row[1] >= rows[index-1][1]));
 }
