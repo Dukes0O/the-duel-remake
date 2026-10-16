@@ -80,3 +80,13 @@ isolation against those source contracts now. Final Tyre/lesson/native/gate
 acceptance still blocks merge and enablement, not source construction.
 Only new own test assertions; request written review before any additional
 existing inventory hook assertion change. No heavy execution while cap full.
+
+
+## Claude scope question: exact dev inventory
+
+Host source adds the card's already required driving-lessons DEV switch.
+Please name existing tools/test-feature-flags.mjs and tools/test-wasteland-beta.mjs
+for precise catalog/dev count additions (course-kit copies the first). Same
+pattern as approved Tyre and GP; no existing simulation/hash/assertion value
+is relaxed. No edit to those unowned existing tests before written review.
+Source implementation continues in its already owned hooks meanwhile.

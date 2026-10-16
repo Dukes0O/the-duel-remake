@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **NEXT HEAVY SLOT: one short corrected-instructor check, Root,09:16PT (expires09:36/admission).** New reviewed888f2725 input-filter correction; one PanoramaCasual nativecase, no oldpacket overwrite. Investigation bound09:23, park if capacity still full. Hostsource and Summitmeasure preparation continue.
 - **Actual parallel progress09:15PT.** Tyre corrected canonical7204/parent38356 running exactclean3e2/jobs4; one-minute count3/noovercap, receiptpending. Lesson instructor888f2725 fixes actual smoothed-steering/braking transition, newpureRED->1PASS/reviewCLEAR/nativepending. Host source now actively builds with its corelease; presentation8d25cadc12purePASS/reviewCLEAR. Summit approved measurement source prepares separately; no profiling job yet.
 - **Instructor diagnostic turn consumed09:13PT.** Actual6389136d fails at0.8833s/100.34mph, roadstillvalid, fullbrake/inputsteer.64, smoothed tyreSlip1.018677. Wrapper37760/runner31848 drained; original and new receipts preserved. Investigating the input-smoothing/brake transition in owned controller only, deadline09:23, no lowered clean guard or physics change. Three other source threads continue.
 - **Parallel lesson presentation frozen/review CLEAR.** DRIVE-LESSON-HOOKS owned8d25cadc implements board/course choice, stage/rule/streak, real incomplete results and fresh-owner callbacks. Twelve pure checks PASS; no native/host/gate/build pass claimed. Locks free, dependencies unchanged. Instructor native diagnosis still reserved next short slot.
