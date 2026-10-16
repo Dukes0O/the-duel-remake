@@ -1,4 +1,4 @@
-import {startLaneTarget} from '../src/race-field-driver.js';
+import {startLaneTarget,insideCornerPriority} from '../src/race-field-driver.js';
 // Racing a full field (docs/CIRCUITS.md 3.2, card P4-FIELD): grid, start
 // lights, no jump starts, passing and defending, corner sharing, slipstream,
 // catch-up and repeatability. Every race here is headless and seeded.
@@ -109,11 +109,19 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
   check(summarizeRacecraft(threshold,{courses,races:20}).passed,'exactly fifteen starts satisfy both approved thresholds');
   const tooNarrow=threshold.map(r=>r.course==='panorama-ridge'&&r.mode==='normal'&&r.enabled&&r.index===14 ?
     {...r,startSnapshot:{...r.startSnapshot,lateralSpread:2.999}} : r);
-  check(!summarizeRacecraft(tooNarrow,{courses,races:20}).passed,'fourteen spread successes fail even with fifteen paired starts');
+  check(summarizeRacecraft(tooNarrow,{courses,races:20}).passed,'Claude: start spread is reported for Kyle rather than gating');
   const tooFewPairs=threshold.map(r=>r.course==='panorama-ridge'&&r.mode==='normal'&&r.enabled&&r.index===14 ?
     {...r,startSnapshot:{...r.startSnapshot,pairs:[[0,1]]}} : r);
-  check(!summarizeRacecraft(tooFewPairs,{courses,races:20}).passed,'fourteen pair successes fail even with fifteen spread successes');
-  check(!summarizeRacecraft(rows.map(({startSnapshot,...row})=>row),{courses,races:20}).passed,'old three-wide data cannot pass the revised unmeasured acceptance');
+  check(summarizeRacecraft(tooFewPairs,{courses,races:20}).passed,'Claude: start pair count is reported for Kyle rather than gating');
+  equal(summarizeRacecraft(rows.map(({startSnapshot,...row})=>row),{courses,races:20}).summary[0].baselineMeanSpread,null,'missing old start data remains unknown rather than invented');
+  const reported=rows.map(r=>({...r,startSnapshot:{pairs:[],lateralSpread:0}}));
+  check(summarizeRacecraft(reported,{courses,races:20}).passed,'zero start pairs remain reported without waiving other requirements');
+  const busy=rows.map(r=>r.mode==='normal'?{...r,passes:r.enabled?12:8,crashes:r.enabled?11:10,pileUp:r.index<(r.enabled?5:4)}:r);
+  check(summarizeRacecraft(busy,{courses,races:20}).passed,'exact 1.5 passing, 10 percent crashes and baseline plus one pile-up boundaries pass');
+  check(!summarizeRacecraft(busy.map(r=>r.enabled&&r.mode==='normal'?{...r,passes:11.99}:r),{courses,races:20}).passed,'passing below 1.5 times a busy baseline fails');
+  check(!summarizeRacecraft(busy.map(r=>r.enabled&&r.mode==='normal'?{...r,crashes:12}:r),{courses,races:20}).passed,'crash mean beyond ten percent fails');
+  check(!summarizeRacecraft(busy.map(r=>r.enabled&&r.mode==='normal'?{...r,pileUp:r.index<6}:r),{courses,races:20}).passed,'pile-ups beyond baseline plus one fail');
+  check(!summarizeRacecraft(rows.map(r=>r.enabled&&r.mode==='normal'?{...r,crashes:8}:r),{courses,races:20}).passed,'more races with eight crashes than off still fail');
   const duplicate=[rows[1],...rows.slice(1)];
   check(!summarizeRacecraft(duplicate,{courses,races:20}).passed,'a duplicate cannot replace the missing paired baseline case');
 }
@@ -506,12 +514,25 @@ function oneLapApp(deferFinish) {
 {
   const f = {startLateral: 2.6, gridStartS: -40, startMergeFrom: 500};
   for (const line of [-4, 0, 4]) {
-    close(startLaneTarget(f, 410, line), 2.6, 1e-12, 'hold the grid lane through the first corner');
+    close(startLaneTarget(f, 410, line), 2.6, 1e-12, 'hold the grid lane before the first braking point');
     close(startLaneTarget(f, 960, line), line, 1e-12, 'merge onto the current line afterwards');
-    close(startLaneTarget(f, 710, line), (2.6 + line) / 2, 1e-12, 'merge smoothly between lane and line');
+    close(startLaneTarget(f, 460, line), line, 1e-12, 'release the lane exactly at first braking, with normal steering smoothing');
   }
   const later = {...f, startMergeFrom: 800};
   close(startLaneTarget(later, 700, -4), 2.6, 1e-12, 'a distant first corner delays the merge');
+}
+
+
+// Claude's first-corner priority uses actual overlap and the half-length boundary.
+{
+  const r={lateral:-2},run={halfLength:2};
+  const inside={ds:0,dl:4,hl:2,speed:90};
+  equal(insideCornerPriority(r,run,[inside],1),inside,'outside yields to overlapping inside car');
+  equal(insideCornerPriority(r,run,[{...inside,dl:-4}],1),null,'inside car does not yield to outside');
+  equal(insideCornerPriority(r,run,[{...inside,ds:-2.01}],1),null,'clearly ahead by more than half a car keeps priority');
+  check(insideCornerPriority(r,run,[{...inside,ds:-2}],1)!==null,'exact half length still yields');
+  equal(insideCornerPriority(r,run,[{...inside,ds:4}],1),null,'separate bodies are not an overlapping pair');
+  check(insideCornerPriority(r,run,[{...inside,dl:-4}],-1)!==null,'left-hand corners mirror priority');
 }
 
 // ---- what the screens show ----

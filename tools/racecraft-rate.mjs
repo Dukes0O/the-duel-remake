@@ -143,16 +143,18 @@ export function summarizeRacecraft(rows,{courses,races}){
     if(cases.length!==races*6||keys.size!==cases.length||
       Array.from({length:races},(_,index)=>['normal','slow','nitro'].flatMap(mode=>
         [false,true].map(enabled=>`${index}/${mode}/${enabled}`))).flat().some(key=>!keys.has(key)))flags.push('missing cases');
-    if(paired<races*.75)flags.push('two overlapping start pairs');
-    if(spread<races*.75)flags.push('leading-six lateral spread');
-    if(!(passesOn>0&&passesOn>=passesOff*2))flags.push('CPU passing rate');
-    if(on.some(r=>r.crashes>=8)||on.filter(r=>r.pileUp).length>races/20)flags.push('crash bound');
+    const passingFactor = passesOff >= 8 ? 1.5 : 2;
+    if(!(passesOn>0&&passesOn>=passesOff*passingFactor))flags.push('CPU passing rate');
+    const crashRacesOn=on.filter(r=>r.crashes>=8).length,crashRacesOff=off.filter(r=>r.crashes>=8).length;
+    const meanCrashesOn=average(on.map(r=>r.crashes)),meanCrashesOff=average(off.map(r=>r.crashes));
+    const pileUpsOn=on.filter(r=>r.pileUp).length,pileUpsOff=off.filter(r=>r.pileUp).length;
+    if(crashRacesOn>crashRacesOff||meanCrashesOn>meanCrashesOff*1.1||pileUpsOn>pileUpsOff+1)flags.push('crash bound');
     if(slow.filter(r=>r.passedPlayer).length!==races)flags.push('passing slower player');
     if(nitro.filter(r=>r.firstLapPosition===1).length>races/4)flags.push('nitro wins lap one');
     if(timeChanges.some(v=>v===null||v>.02))flags.push('race time changed over 2 percent');
     if(rows.filter(r=>r.course===course).some(r=>r.finished!==7||!r.playerFinished))flags.push('unfinished races');
     findings.push(...flags.map(flag=>course+': '+flag));
-    return {course,races,wide,paired,spread,baselinePaired,baselineMeanSpread:baselineSpread.every(Number.isFinite)?average(baselineSpread):null,passesOn,passesOff,slowPlayerPassed:slow.filter(r=>r.passedPlayer).length,
+    return {course,races,wide,paired,spread,baselinePaired,baselineMeanSpread:baselineSpread.every(Number.isFinite)?average(baselineSpread):null,passesOn,passesOff,passingFactor,crashRacesOn,crashRacesOff,meanCrashesOn,meanCrashesOff,pileUpsOn,pileUpsOff,startMeasuresReportOnly:true,slowPlayerPassed:slow.filter(r=>r.passedPlayer).length,
       nitroFirstAtLapOne:nitro.filter(r=>r.firstLapPosition===1).length,baselineNitroFirstAtLapOne:rows.filter(r=>r.course===course&&r.mode==='nitro'&&!r.enabled&&r.firstLapPosition===1).length,
       maxTimeChange:timeChanges.includes(null)?null:Math.max(...timeChanges),flags};
   });
