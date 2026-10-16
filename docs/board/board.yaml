@@ -140,12 +140,11 @@ tasks:
     owner: "codex"
     lane: "VIS"
     size: "S"
-    status: "blocked"
-    waiting_on: claude
+    status: "building"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/p4-coach
     needs: [P4-INTEL-LEVELS]
-    locks: []
+    locks: [busy-game-files]
     flag: "grand-prix"
     details: "docs/board/cards/P4-COACH.md"
 
