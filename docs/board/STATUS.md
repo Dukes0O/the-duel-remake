@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T07:17:19.680Z
+Observed at: 2026-10-16T15:08:32.494Z
 
-Observation commit: d3fb2c97b3689cafed322fd0d154408692e356d9
+Observation commit: 3bc731f1f14cb07db430234353834839f3fd435d
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: d3fb2c97b3689cafed322fd0d154408692e356d9
+Integration HEAD: 3bc731f1f14cb07db430234353834839f3fd435d
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,9 +29,9 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/drive-lesson-1 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/drive-lesson-1 |
 | codex/earn-car-2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2 |
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
-| codex/p4-coach | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-coach |
 | codex/p4-finish | 4 | unknown | false | false | unknown |
 | codex/p4-qualifying | 5 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-yeti | 2 | unknown | false | false | unknown |
@@ -43,11 +43,11 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/summit-switch-on | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on |
 | codex/tools/callback-diagnostics | 11 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/tyre-slip | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tyre-slip |
-| codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
+| codex/wild-art-src | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | codex/yeti-fur-tint | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/yeti-fur-tint |
-| lane/audio/aud-10 | 20 | unknown | true | false | unknown |
+| lane/audio/aud-10 | 21 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 21 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 20 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-17-picks | 21 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -55,9 +55,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| codex/drive-lesson-1 | DRIVE-LESSON-1 | 2026-10-16T08:08:14-07:00 | 0 | last commit 2026-10-16T08:08:14-07:00 | docs/changes/DRIVE-LESSON-1.md, src/lessons/drive-lessons.js, tools/test-drive-lessons.mjs |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T19:18:16-07:00 | 0 | last commit 2026-10-15T19:18:16-07:00 | docs/HELICOPTER.md, docs/board/STATUS.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-2.jpg, docs/changes/EARN-CAR-2.md |
-| codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T21:12:48-07:00 | 0 | last commit 2026-10-15T21:12:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
-| codex/p4-coach | unknown | 2026-10-16T00:07:18-07:00 | 0 | last commit 2026-10-16T00:07:18-07:00 | docs/changes/P4-COACH.md, src/coach-markers.js, src/race-settings-ui.js, src/render3d.js, src/screen-menu.js |
+| codex/gp-racecraft | GP-RACECRAFT | 2026-10-16T00:28:55-07:00 | 0 | last commit 2026-10-16T00:28:55-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 4 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 5 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 2 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -66,9 +66,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/qa-yard-home-air-only | QA-YARD-HOME-AIR-ONLY | 2026-10-15T19:30:22-07:00 | 0 | last commit 2026-10-15T19:30:22-07:00 | docs/board/STATUS.md, docs/changes/QA-YARD-HOME-AIR-ONLY.md, tools/scenarios/yard-home.mjs |
 | codex/qa-yeti-three | QA-YETI-THREE | 2026-10-15T19:28:00-07:00 | 0 | last commit 2026-10-15T19:28:00-07:00 | docs/board/STATUS.md, docs/changes/QA-YETI-THREE.md, tools/scenarios/yeti.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 11 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
-| codex/tyre-slip | TYRE-SLIP | 2026-10-15T22:58:19-07:00 | 0 | last commit 2026-10-15T22:58:19-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
-| codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
-| codex/yeti-fur-tint | YETI-FUR-TINT | 2026-10-15T21:24:46-07:00 | 0 | last commit 2026-10-15T21:24:46-07:00 | docs/changes/YETI-FUR-TINT.md, src/render3d.js, src/yeti-view.js, tools/test-yeti.mjs |
+| codex/tyre-slip | TYRE-SLIP | 2026-10-16T00:23:21-07:00 | 0 | last commit 2026-10-16T00:23:21-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
+| codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 1 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
+| codex/yeti-fur-tint | YETI-FUR-TINT | 2026-10-16T07:50:46-07:00 | 0 | last commit 2026-10-16T07:50:46-07:00 | docs/changes/YETI-FUR-TINT.md, src/render3d.js, src/yeti-view.js, tools/scenarios/yeti-fur-tint.mjs, tools/test-yeti.mjs |
 
 ## Size targets
 
@@ -81,10 +81,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 15,681,656 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 675,203 B | +0 B | 5,000,000 B |
+| Review `looks/` | 15,848,910 B | +167,254 B | 20,000,000 B |
+| Added bytes in last merge | 615,292 B | -59,911 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 420,870,144 B | +936,960 B | unavailable |
+| Git objects | 428,333,056 B | +7,462,912 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -93,7 +93,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 42dcb5b6b14c334c75158e96f73bda2683274b3d
 - Local main: missing
-- Local integration/wasteland: d3fb2c97b3689cafed322fd0d154408692e356d9
+- Local integration/wasteland: 3bc731f1f14cb07db430234353834839f3fd435d
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

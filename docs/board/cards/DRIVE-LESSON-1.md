@@ -51,3 +51,22 @@ Removed: nothing.
 Kyle directly asked Root to keep building other work during Summit tests. Start only this card independent pure lesson-rules/cone-tracking slice now, with tests written first in its named files. It reads plain car views and does not import or change physics, App, renderer, saves or shared files. TYRE-SLIP stays an unmet final acceptance/merge dependency; no instructor simulation, late-versus-right acceptance, native gate/build or usable feature is claimed before that dependency is green. The instructor run, actual cone placement from it, both-corner FPS/late-screech/time acceptance and later hooks remain unfinished. Existing shared lesson-core is merged. No shared lock or heavy job is needed for source writing.
 
 Source activity replaces Root frozen GP/Yeti/Tyre editors; no course lane. Other chat QA/earned cars and Claude Rescue/variant source retain ownership. Existing Enzo is frozen for timing, Wild is donor-held; do not start their work. Named new lane only, preserve every retained lane.
+
+
+## Independent source frozen, 16 October 08:09 PT
+
+Owned lane `drive-lesson-1` / `codex/drive-lesson-1` is clean at
+`cca352a4de30a61994fa3df5a378e6176e1d1f7f`. The real pure attempt rules and
+swept cone tracking are implemented, with 20 plain-data tests passing in
+111.1817 ms. Required independent code/numbers review found gate-origin and
+false-coaching faults; both fixed and confirmation CLEAR. Follow-on elapsed
+time and challenge-summary fixes are also confirmed CLEAR. No simulation,
+App, renderer, storage, reward, design-number or existing-test change.
+No gate/build/native/browser job started during the release full hold.
+
+Keep the unfinished lane, source and creation receipt. No locks remain.
+TYRE-SLIP is still an unmet dependency. Instructor simulation, cone placement
+from native poses, both-corner Casual/Pro FPS and late/right acceptance,
+lane gate/build and merge remain unfinished. This is source progress, not a
+usable lesson or native pass. Resume this card after dependency/admission;
+do not recreate or rerun the unchanged pure checks.
