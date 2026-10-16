@@ -112,3 +112,17 @@ presentation card. Do not infer success or move the red board. Keep source,
 creation receipt and all frozen dependencies; locks[]. Summit full is now
 announced455/455PASS and exact runner28640/parent31228 drained. The new
 FRAME CHECK STARTING hold is active; no Root heavy starts before its DONE.
+
+
+## Native work resumed under Kyle's parallel instruction
+
+First actual Panorama/Casual instructor onf4e715e4 failed its clean guard
+in1463.8007ms. Actual receipt in owned lane
+.evidence/2026-10-16/DRIVE-LESSON-1/first-native-f4e715e4/; no native pass.
+Diagnosis bounded until09:23PT, no board/physics/threshold retune.
+In parallel worker prepared real native late/right/fast/slow acceptance in
+only existing test+note, bcac3baf then9f683e06. Review caught right steering
+using pre-override brake; fixed/confirmed CLEAR with actual full-brake yaw
+cap. Tests source parse only; every new native case remains UNRUN. Runtime
+module remains Root-owned, with diagnostic error facts being added. No save,
+App or host edit; no overlapping runtime editor. Old tests/pins exact.
