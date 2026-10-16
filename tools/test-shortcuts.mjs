@@ -7,12 +7,51 @@ import { sweepObstacle } from '../src/collision.js';
 // measurements use a different sampling interval and cannot make this pass by
 // merely reporting a positive saving.
 const seeds = [1989, 42, 17, 1, 20, 35, 48, 333, 9999];
-let cuts = 0, courses = 0, minimumSaving = 1, maximumSlope = 0, sweeps = 0;
+let authoredCuts = 0, cuts = 0, courses = 0, minimumSaving = 1, maximumSlope = 0, sweeps = 0;
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 for (const seed of seeds) for (const definition of COURSE) {
   const course = new Course(definition, seed), branches = course.features.shortcuts;
   if (definition.arena) { assert.equal(branches.length, 0); continue; }
-  if (definition.expansion || definition.script) { assert.equal(branches.length, 0, `${definition.id}/${seed}: authored circuits have no generated shortcuts`); continue; }
+  if (definition.expansion || definition.script) {
+    // An authored alternative is a declared road, not a solver's time-saving
+    // shortcut. Check its geometry and clearance without inventing a saving.
+    assert.deepEqual(branches, (definition.roadBranches ?? []).map(branch => ({...branch, offset: branch.offset * branch.side, transition: .15})), `${definition.id}/${seed}: exactly authored branches, no generated additions`);
+    for (const cut of branches) {
+      const label = `${definition.id}/${seed}/${cut.id}`;
+      assert.ok(cut.start >= 0 && cut.end > cut.start && cut.end <= course.length, `${label}: bounded branch range`);
+      assert.ok(cut.halfWidth >= 1.4 + 2.8, `${label}: three Titan-width lanes fit`);
+      for (const s of [cut.start, cut.end]) {
+        assert.ok(Math.abs(course.shortcutOffset(cut, s)) < 1e-8, `${label}: joined position`);
+        const near = s === cut.start ? s + .01 : s - .01;
+        assert.ok(Math.abs(course.shortcutOffset(cut, near) / .01) < .001, `${label}: joined tangent`);
+        assert.ok(distance(course.groundAt(s, 0), course.groundAt(s, course.shortcutOffset(cut, s))) < .001, `${label}: joined ground elevation`);
+      }
+      let previousOffset = 0;
+      const samples = Math.ceil(cut.end - cut.start), step = (cut.end - cut.start) / samples;
+      for (let i = 0; i <= samples; i++) {
+        const s = cut.start + i * step, offset = course.shortcutOffset(cut, s), surface = course.surfaceAt(s, offset);
+        assert.ok(surface.road && surface.shortcutId === cut.id, `${label}: continuous legal branch surface`);
+        assert.equal(surface.mainRoad, cut.surface === 'paved', `${label}: declared pavement retained`);
+        assert.equal(course.gripKindAt(s, offset), cut.gripKind ?? 'asphalt', `${label}: declared branch grip retained`);
+        if (i) maximumSlope = Math.max(maximumSlope, Math.abs(offset - previousOffset) / step);
+        previousOffset = offset;
+      }
+      for (const lane of [-2.8, 0, 2.8]) {
+        let previous = course.groundAt(cut.start, lane);
+        const count = Math.ceil((cut.end - cut.start) / 6);
+        for (let i = 1; i <= count; i++) {
+          const s = cut.start + (cut.end - cut.start) * i / count, p = course.groundAt(s, course.shortcutOffset(cut, s) + lane), heading = Math.atan2(p.x - previous.x, p.z - previous.z);
+          for (const obstacle of course.obstaclesNear(s - 8, s + 8)) {
+            const dimensions = {halfWidth: 1.4, halfLength: 2.6, ...(obstacle.verticalClearance ? {height: 1.35, useModelBounds: false} : {})};
+            assert.equal(sweepObstacle(previous, p, obstacle, heading, dimensions), null, `${label}: authored lane ${lane} blocked by ${obstacle.id}`); sweeps++;
+          }
+          previous = p;
+        }
+      }
+      authoredCuts++;
+    }
+    continue;
+  }
   courses++;
   assert.ok(branches.length>=1&&branches.length<=2, `${definition.id}/${seed}: retain only useful branches`);
   assert.ok(branches.every(c=>definition.offroad?c.surface==='gravel':['gravel','paved'].includes(c.surface)));
@@ -66,4 +105,4 @@ for (const seed of seeds) for (const definition of COURSE) {
   }
 }
 assert.ok(maximumSlope < .8, `Maximum lateral slope ${maximumSlope} stays driveable`);
-console.log(`Shortcuts: ${cuts} branches on ${courses} circuits; ${sweeps} clear obstacle sweeps. Minimum real 3D saving ${(minimumSaving * 100).toFixed(2)}%; maximum lateral slope ${maximumSlope.toFixed(3)}.`);
+console.log(`Shortcuts: ${cuts} generated branches on ${courses} circuits and ${authoredCuts} authored branches; ${sweeps} clear obstacle sweeps. Minimum real 3D saving ${(minimumSaving * 100).toFixed(2)}%; maximum lateral slope ${maximumSlope.toFixed(3)}.`);
