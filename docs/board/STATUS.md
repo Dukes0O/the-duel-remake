@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-16T18:01:48.394Z
+Observed at: 2026-10-16T18:02:20.630Z
 
-Observation commit: 075a28c36626cfb15902495b946f58c0e4bec10e
+Observation commit: 03ac78f0b38194864d238102543bbe60cd4cf8b4
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 075a28c36626cfb15902495b946f58c0e4bec10e
+Integration HEAD: 03ac78f0b38194864d238102543bbe60cd4cf8b4
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -44,7 +44,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/summit-build-time | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-build-time |
 | codex/summit-switch-on | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on |
 | codex/tools/callback-diagnostics | 11 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
-| codex/tyre-slip | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tyre-slip |
+| codex/tyre-slip | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tyre-slip |
 | codex/wild-art-src | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 | codex/yeti-fur-tint | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/yeti-fur-tint |
 | lane/audio/aud-10 | 21 | unknown | true | false | unknown |
@@ -70,7 +70,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/qa-yeti-three | QA-YETI-THREE | 2026-10-15T19:28:00-07:00 | 0 | last commit 2026-10-15T19:28:00-07:00 | docs/board/STATUS.md, docs/changes/QA-YETI-THREE.md, tools/scenarios/yeti.mjs |
 | codex/summit-build-time | SUMMIT-BUILD-TIME | 2026-10-16T09:52:40-07:00 | 0 | last commit 2026-10-16T09:52:40-07:00 | docs/changes/SUMMIT-BUILD-TIME.md |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 11 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
-| codex/tyre-slip | unknown | 2026-10-16T10:52:07-07:00 | 0 | last commit 2026-10-16T10:52:07-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 1 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 | codex/yeti-fur-tint | YETI-FUR-TINT | 2026-10-16T08:47:57-07:00 | 0 | last commit 2026-10-16T08:47:57-07:00 | docs/changes/YETI-FUR-TINT.md, src/render3d.js, src/yeti-view.js, tools/run-browser-scenarios.mjs, tools/scenarios/yeti-fur-tint.mjs |
 
@@ -86,9 +85,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 15,848,910 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 297,155 B | -20,140 B | 5,000,000 B |
+| Added bytes in last merge | 3,037,342 B | +2,740,187 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 434,406,400 B | +1,278,976 B | unavailable |
+| Git objects | 434,630,656 B | +224,256 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -97,7 +96,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 9279efa44cbfd3a28445c8835b77b1056e4f9a11
 - Local main: missing
-- Local integration/wasteland: 075a28c36626cfb15902495b946f58c0e4bec10e
+- Local integration/wasteland: 03ac78f0b38194864d238102543bbe60cd4cf8b4
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
