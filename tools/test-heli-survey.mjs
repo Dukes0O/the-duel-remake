@@ -5,7 +5,8 @@
 import assert from 'node:assert/strict';
 import {createProfile} from '../src/progression.js';
 import {HELI_RADIO_LINES} from '../src/heli/heli-radio-lines.js';
-import {COURSE_SPECIES, RARE_CHANCE, SPECIES} from '../src/wildlife.js';
+import * as wildlife from '../src/wildlife.js';
+const {COURSE_SPECIES, RARE_CHANCE, SPECIES} = wildlife;
 import {heliHash, createHeli, createMissions, heliOf, missionsOf, setMissions} from '../src/heli/heli-save.js';
 import {
   HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, REAL_PAY_BONUS, JOBS_PER_DAY, RECOVERY, HOME_COURSE,
@@ -14,8 +15,11 @@ import {
 } from '../src/heli/heli-jobs.js';
 import {
   SURVEY, SURVEY_PAY, SURVEY_TARGETS, SURVEY_NAMES, SURVEY_LINES, SURVEY_CELLS, SURVEY_REPORT_TOO_SOON,
-  surveyCourses, surveyJob, planSurvey, createSurveyRun, stepSurvey, surveyShare, surveyPercent, canReport, reportSurvey,
+  surveyCourses, surveyJob, planSurvey as planBare, createSurveyRun, stepSurvey, surveyShare, surveyPercent, canReport, reportSurvey,
 } from '../src/heli/heli-survey.js';
+
+// The session hands the species tables in; the tests do the same unless they say otherwise.
+const planSurvey = (job, options = {}) => planBare(job, {wildlife, ...options});
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -191,6 +195,14 @@ noClocks(() => {
   const good = checker.animals.filter(an => forbid(an.x, an.z)).length;
   ok(good / checker.animals.length > 0.9, `animals stand where they may (${good} of ${checker.animals.length})`);
 });
+// Without the species tables the square holds only the animals being counted.
+{
+  const bare = planBare(surveyJob(9), {site: SITE});
+  ok(bare.animals.every(a => a.role === 'target'), 'no tables: no other species and no rare animal');
+  equal(bare.rareSpecies, null, '...and no rare species named');
+  same(bare.animals.map(a => a.id), planSurvey(surveyJob(9), {site: SITE}).animals.filter(a => a.role === 'target').map(a => a.id), 'the counted animals are the same with or without the tables');
+  same(bare.animals.map(a => [a.x, a.z]), planSurvey(surveyJob(9), {site: SITE}).animals.filter(a => a.role === 'target').map(a => [a.x, a.z]), '...and stand in the same places');
+}
 // Nothing was drawn from the page's own random numbers; the race's generator is never touched.
 {
   const before = Math.random;

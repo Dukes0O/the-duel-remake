@@ -12,7 +12,6 @@
 // off the board has no count and nothing is paid.
 import {makeRng} from '../rng.js';
 import {heliHash} from './heli-save.js';
-import {RARE_CHANCE, SPECIES, speciesFor} from '../wildlife.js';
 
 // Every number of section 4, once. Metres and seconds.
 export const SURVEY = Object.freeze({
@@ -127,7 +126,11 @@ export function surveyJob(day, {summitRun = false} = {}) {
 // animal may stand at a point (not on the road, in a lake or inside a wall;
 // WILD-PLACE's createPlacementChecker is what the session builds it from).
 // Without a site the square is centred on the origin; without `canStand`
-// every point is fine.
+// every point is fine. `wildlife` is src/wildlife.js (pass `import * as
+// wildlife`): the helicopter rules may not import it themselves (the import
+// list in test-heli-mode.mjs), so the session hands in its species tables and
+// its one-in-five rare chance. Without it the square holds only the animals
+// being counted: no other species and no rare animal.
 function squareFor(job, site) {
   const rng = rngFor('square', job.id, job.courseId);
   const fit = (min, max) => {
@@ -150,13 +153,13 @@ function splitHerds(total, herds, rng) {
 // Other species beside the course's road that may stand in the square but
 // never count: the common ones with ground feet, not shore-bound, not tracks,
 // not the species being counted.
-function othersFor(courseId, target) {
-  const table = speciesFor(courseId);
+function othersFor(wildlife, courseId, target) {
+  const table = wildlife?.speciesFor?.(courseId);
   return table ? table.common.filter(row => row.species !== target && !row.night
-    && SPECIES[row.species]?.kind !== 'decal' && !SPECIES[row.species]?.lake) : [];
+    && wildlife.SPECIES[row.species]?.kind !== 'decal' && !wildlife.SPECIES[row.species]?.lake) : [];
 }
 
-export function planSurvey(job, {site = null, canStand = null} = {}) {
+export function planSurvey(job, {site = null, canStand = null, wildlife = null} = {}) {
   const square = squareFor(job, site);
   const stands = typeof canStand === 'function' ? canStand : () => true;
   const inside = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -184,7 +187,7 @@ export function planSurvey(job, {site = null, canStand = null} = {}) {
   const total = count.int(...SURVEY.animals), herds = count.int(...SURVEY.herds);
   splitHerds(total, herds, count).forEach((size, i) => addHerd('target', job.species, size, i, 'target'));
   // Other species, which do not count.
-  const others = othersFor(job.courseId, job.species), mix = rngFor('others', job.id, job.courseId);
+  const others = othersFor(wildlife, job.courseId, job.species), mix = rngFor('others', job.id, job.courseId);
   if (others.length) {
     const herdsOfOthers = mix.int(...SURVEY.otherHerds);
     for (let i = 0; i < herdsOfOthers; i++) {
@@ -195,9 +198,9 @@ export function planSurvey(job, {site = null, canStand = null} = {}) {
   }
   // The course's rare animal: one day in five, and not when it is what is being
   // counted (a cougar count has no separate rare animal).
-  const rare = speciesFor(job.courseId)?.rare ?? null;
+  const rare = wildlife?.speciesFor?.(job.courseId)?.rare ?? null;
   const rareRng = rngFor('rare', job.id, job.courseId);
-  if (rare && rare.species !== job.species && SPECIES[rare.species]?.kind !== 'decal' && rareRng.chance(RARE_CHANCE))
+  if (rare && rare.species !== job.species && wildlife.SPECIES[rare.species]?.kind !== 'decal' && rareRng.chance(wildlife.RARE_CHANCE))
     addHerd('rare', rare.species, rareRng.int(...rare.herd), 0, 'rareherd');
   return Object.freeze({jobId: job.id, courseId: job.courseId, species: job.species, square,
     truth: animals.filter(isCounted).length, rareSpecies: rare?.species ?? null,

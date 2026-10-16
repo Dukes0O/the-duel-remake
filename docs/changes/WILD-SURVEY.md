@@ -20,7 +20,7 @@ can be asked, by course), `SURVEY_NAMES`, `SURVEY_LINES` (Sarah's radio ids).
   moose. Panorama Ridge: kangaroos. Summit Run: bighorn sheep (weight 4) or
   cougar (weight 1, so one in five). Never a cougar at Tremblant. Id `s<day>`,
   shown pay 600.
-- **The square.** `planSurvey(job, {site, canStand})`. 800 m square placed at a
+- **The square.** `planSurvey(job, {site, canStand, wildlife})`. 800 m square placed at a
   seeded spot inside `site` ({minX, maxX, minZ, maxZ}, supplied by the session;
   centred on the origin without one). The counted species: 6 to 14 animals in 2
   to 6 herds (every herd at least 1). Other species that do not count (1 to 3
@@ -96,6 +96,14 @@ Nothing replaced.
 
 ## Open for Claude
 
+- **The species tables are handed in, not imported.** `test-heli-mode.mjs` lists
+  the only files the helicopter rules may import, and `../wildlife.js` is not on
+  it. That file is not this card's, so `planSurvey` takes `wildlife` (the session
+  passes `import * as wildlife from '../wildlife.js'`: `speciesFor`, `SPECIES`,
+  `RARE_CHANCE`) and the tests do the same. Without it the square holds only the
+  counted animals (no other species, no rare animal, no bonus). If you would
+  rather import it directly, add `'../wildlife.js'` to that list (with a comment,
+  as FIRE-BUCKET did for `circuit-hills.js`) and drop the argument.
 - **Where the square goes.** The packet says "a seeded forest destination" but
   the pure rules cannot see terrain. The session (SKIN-HOOKS) passes `site`
   (the box to choose from) and `canStand` (WILD-PLACE's
