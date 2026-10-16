@@ -169,3 +169,45 @@ This records the observed candidate; it grants no art or release approval. Claud
 Root inspected the actual before grid picture in integration review-high-r2 and the new native grid picture in its pit-tone/frames/01-grid.jpg. The blue-grey triangular overlap is gone; the pit and main road now use the same textured tone. The La Fontaine apron picture03-c1-apex.jpg is also at its requested corner. Exact geometry/paint/legacy-course tests and independent review are CLEAR. This is the reviewed visual difference for preparing the candidate Ardennes scene row; Claude's final art verdict remains pending.
 
 The small harness run returned success/no issues/warnings in12930.1669ms. Manual pose inspection found its middle braking view missed the target; it is excluded from the picture evidence and recorded separately on QA-REVIEW-RUNUP-START. Only the valid grid and hairpin views support this material check. The two-car Duel pack is not claimed as another eight-car acceptance. No further investigation or retake now.
+
+
+## Final candidate prepared; finishing verdict is the remaining art answer
+
+Frozen 55d2b7de includes the intended final wet-road setting, six flags, all reviewed mechanical fixes and actual shared pit material. Build passed in 1839.7435 ms; canonical lane/jobs4 is running. Independent final source review CLEAR. Actual scene capture and strict comparison passed: Ardennes hash 7e3fd47fd52db506a6e076e33d530868c4b2d9b0be20e2dbbbc73c40f76481a6; all 20 foreign enabled rows and 32 foreign scene/replay files exact. No timing result.
+
+Claude: please give the final finishing verdict here against the combined High packet already posted and the valid corrected grid/hairpin pictures in ardennes-switch-on/.evidence/2026-10-15/ARDENNES-SWITCH-ON/pit-tone/frames/01-grid.jpg and 03-c1-apex.jpg. Root inspected both: the blue-grey overlap is gone. Exclude the misplaced middle braking picture, already recorded separately. Your current authored finishing source agrees with this candidate except its intended on-state; the deeper forest idea is explicitly stopped. No additional picture round is requested. Root can merge after the actual gate and your verdict; installation then needs the exact release gate.
+
+
+## Ardennes release: next drained heavy window
+
+Kyle asked Root to get Ardennes live. Its final source 55d2b7de has a green production build and independent review; lane/jobs4 is active and the final visual verdict is requested on ARDENNES-SWITCH-ON. Existing Ardennes, Bolide and F1 gates finish untouched. After these admitted jobs drain, reserve the next clear window for the exact Ardennes release full tier, alone with four workers. Do not start a follow-on gate, build, browser, native batch or balance job in that reserved window until Root releases it. Source editing and normal commits may continue. No frame run or GPU quiet claim: Kyle explicitly skipped Ardennes timing.
+
+Root will start only after actual final art acceptance, green lane/build and zero competing heavy roots. This is a pending release reservation, not an active full pass or permission to install. If those prerequisites are still missing at 19:05 PT today, the reservation expires and ordinary three-job admission resumes; Root must post that expiry rather than silently extending this hold. No foreign process is stopped.
+
+
+The board now explicitly waits on Claude for the final visual verdict already requested above. The gate continues on frozen 55d2b7de; this does not ask for further code or another art round. Please answer here and clear waiting_on together under the standing card-answer rule. Earlier wet-road/source-choice questions are resolved by the current authored note and stable-source witness.
+
+
+## Release reservation expired at 19:05 PT
+
+The final lane is still running its last track-kit suite and Claude's final visual verdict has not arrived. No exact release full tier started. The bounded reservation now expires as stated; it is not extended. Existing jobs finish untouched. The shared drain notice and its next short Summit verification turn still govern new ordinary admission. Ardennes source, review, pictures and evidence remain retained; it is not installed and timing remains SKIPPED. Root continues the authorized work and will arrange a fresh alone release window only when the real prerequisites are ready.
+
+## Claude finishing verdict - combined High packet 545158d0, 15 October 19:15
+
+Accepted as Ardennes' finished look, against this exact packet:
+- **The Wall:** the climb, the grandstand above it and the damp road fading
+  towards Kestrel read well; the field strings out up the hill as it should.
+- **Pit Straight:** dark road, white lines, five full grandstands, the paddock
+  apron on the left; reads as a real start-finish straight.
+- **Riverside:** the mist in the hollow inside the hairpin shows a soft pale
+  patch. It is first-lap morning mist, it clears after lap one, and it reads
+  as mist rather than a fault. Accepted as it is; no retake.
+Together with the round 4 trees and stream this completes P4-FINISH-ARDENNES.
+Write Ardennes' scene baseline from this packet (the reviewed visual
+difference is these pictures plus round 4). Then the frame check at the busiest
+view, the final gate and build, and Kyle's go.
+
+
+## Implementation merged
+
+Exact candidate 55d2b7de passed 217/217 lane suites with four workers and zero failures/unrun in 1808872.3022 ms; build 1839.7435 ms; independent review CLEAR. Claude d807c0e2 completes final art acceptance. Clean merge consumes that evidence without rerunning. Only Ardennes is switched on in integration; it is not installed yet. RELEASE-ARDENNES owns the exact final release gate and installation. Kyle's frame skip wins over the later generic reminder.

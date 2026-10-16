@@ -2,6 +2,10 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Ardennes Forest
+
+A fast, hilly two-lap circuit through an autumn forest, with the village, church, bridges and stream from the accepted art. Buy it for 2,000 credits in Your Courses. The road climbs Red Water and The Wall, passes the grandstands and paddock, and drops into the mist at Riverside. Braking boards mark the main approaches.
+
 ## Helicopter release – 14 October 2026
 
 Fly Kestrel One. HELIPAD on the main menu takes you to the pad at Tremblant
