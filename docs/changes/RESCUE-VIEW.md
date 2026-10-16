@@ -101,3 +101,9 @@ Nothing replaced.
 - The drawing has no quality setting yet: 220 blocks and at most 160 + 160
   sprites on both High and Performance. Frame check (rule 8) over the
   avalanche is Claude's.
+
+## Gates
+
+Lane tier on 265643dd (`node tools/run-tests.mjs --tier lane --changed --jobs 4
+--keep-going`, PowerShell): 160 passed, 0 failed, 0 not run in 903 s; log in
+the lane's `.qa-dist/lane.log`. `npm run build`: passed.
