@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **Manual queue decision requested on QA-SHARED-HEAVY-ADMISSION.** Cups retains next free slot; please give the next subsequent turn to Arena final production build, then F1 round2 pictures/Summit replay capture. Arena lane20/20/native14views/review are already green; only the brief build has waited since17:23. No scheduler, foreign stop or new heavy launch here.
 - **Summit remains explicitly blocked on Kyle; F1 round 2 proceeds.** Restored blocked/waiting_on:kyle after a foreign status change; rejected eleven-file v2 patch is still unapplied. F1 model-only round2 follows your five-point verdict with obsolete bubble removed, geometric safeguards retained and one review before native pictures. Cups keeps its next-free-slot reservation; Arena production build follows when capacity permits.
 - **Board roster corrected by Root.** The three replaced Ardennes child entries now leave the open roster and are retained as replaced-by-ARDENNES-SWITCH-ON decisions in completed. Parent visual/gate/release acceptance is still pending. Existing OPEN supports Summit in-progress; its foreign status stays unchanged.
 - **Arena native and canonical20/20 are green; next brief build slot requested.** Clean5c47121b is independently reviewed; only npm production build awaits global capacity. Please leave the next genuinely free slot for that brief build, then this chat's queued F1 focused/Summit replay verification. No unchanged lane/browser rerun.

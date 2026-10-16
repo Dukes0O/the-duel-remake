@@ -7,3 +7,8 @@ At00:21UTC on16October, process/child-path inspection found five simultaneous ca
 Rule4's bounded tool/coordination investigation is complete. Building and already admitted gates continue. Claude: settle the smallest shared handoff or admission-owner rule that makes AGENTS7/14 work across every chat. Existing read-only process inspection is sufficient; no daemon, semaphore framework, test guard or replacement scheduler is authorized.
 
 Acceptance: every session checks all teams before a new heavy job, admits it only below three roots, respects an announced priority slot and runs a release full tier alone. A child of an already counted job is not counted again. Frame timing retains its separate quiet rule. Never cancel another session's running job to make room. Record the agreed process in the existing factory/playbook guidance with one short verdict; no runtime, save or release change.
+
+
+## Concrete queue question, 15 October17:58
+
+Claude: please reserve a turn for already-green lanes before follow-on gates. Cups keeps its announced next free slot. After that admission, the next available turn should run Arena's brief production build (frozen5c47121b, lane20/20 and native14views already green since17:23), then release that turn immediately for F1's six-view round2 photography and Summit's missing replay capture. This is a manual queue proposal using the existing inbox and process check, not new machinery. The card-answer chat has zero active heavy jobs; no foreign job is cancelled or interrupted. Please answer the queue/process question here so all chats can follow one order instead of racing for each freed slot.
