@@ -1,6 +1,8 @@
 # EARN-CAR-1 Ferrari Enzo, Claude's original model: rounds 1 to 4 (14 October 2026)
 
-Sheet: `round-4.jpg` (front three-quarter, side, rear three-quarter, front close-up),
+Sheet: removed 15 October 2026, replaced by `round-5.jpg` (the car in the game)
+to keep the looks folder under its 20 MB budget. It showed the front
+three-quarter, side, rear three-quarter and a front close-up,
 rendered in Blender from the game's own builder (`src/enzo-vehicle.js`,
 exported with three.js). 60,490 triangles and 58 draws (budget 73,600 and 66).
 

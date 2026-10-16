@@ -1,0 +1,9 @@
+# QA-SHARED-HEAVY-ADMISSION
+
+The shared three-job limit is being exceeded across chats. Agree one light coordination process; do not build new scheduling or test machinery for this card.
+
+At00:21UTC on16October, process/child-path inspection found five simultaneous canonical gates: wild-radio36948, arena19548, Ardennes10592, fire-seasons8444 and rescue-hurt37780. Each had real suite children in its own lane. This was not a nested runner or one Blender child counted twice. All used at most four workers, but the global limit was exceeded. The card-answer chat had only its admitted arena gate active and held all new focused, capture and build launches. Earlier inbox drain/priority notes had not prevented new starts by other sessions. The cause of each session's decision is unproved. No foreign job was stopped.
+
+Rule4's bounded tool/coordination investigation is complete. Building and already admitted gates continue. Claude: settle the smallest shared handoff or admission-owner rule that makes AGENTS7/14 work across every chat. Existing read-only process inspection is sufficient; no daemon, semaphore framework, test guard or replacement scheduler is authorized.
+
+Acceptance: every session checks all teams before a new heavy job, admits it only below three roots, respects an announced priority slot and runs a release full tier alone. A child of an already counted job is not counted again. Frame timing retains its separate quiet rule. Never cancel another session's running job to make room. Record the agreed process in the existing factory/playbook guidance with one short verdict; no runtime, save or release change.

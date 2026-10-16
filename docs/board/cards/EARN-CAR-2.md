@@ -109,3 +109,52 @@ the `sound-bank` lock, now free.
 ## Next build reserved by card-answer chat, 15 October resumed session
 
 Kyle resumed this chat for 2.5 hours. Claude's approved numbers above control. This chat reserves EARN-CAR-2 and sound-bank, after completing the existing Summit handoff. The overnight chat is handling Ardennes and the old HELI cleanup. Do not duplicate that cleanup here. No new F1 folder, code or art starts until the actual HELI cleanup has cleared the recorded new-lane hold. Only the F1 card's files/hooks are reserved; EARN-CAR-3 waits for sound-bank. Record model, contract, real private images, kit and helicopter checks honestly; no stand-in acceptance.
+
+
+## Director re-slice before source, 15 October
+
+HELI cleanup is now complete after restart (d2fdd649); the new earn-car-2 lane is permitted and created from that integration commit. Existing sound-bank reservation stands. In addition to the original hooks, this card owns only the F1 registration/coverage additions in tools/test-enzo-vehicle.mjs, tools/test-vehicle-assets.mjs, tools/test-vehicle-paint.mjs, tools/test-vehicle-grounding.mjs, tools/test-armor-kit-assets.mjs, tools/test-heli-cable.mjs, tools/test-earned-cars-ui.mjs, tools/test-medals.mjs, tools/test-arena-shove.mjs, tools/test-arena-junk-shove.mjs, tools/replays/arena-shove-controls.json, tools/replays/titan-handling.json, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/audit-armor-kit-fit.mjs, tools/blender/kit-review.py and tools/test-blender-output.mjs. These are the existing all-car pins/recipe consumers proved by read-only inspection, not a new harness. Add the F1's roster rows and independent new-car pins; preserve every existing historical replay and old-car hash/threshold. The Enzo append-order check must retain its original relative order while allowing the approved next appended car. Do not change save schema, existing fixture bytes, wallet rules or runtime shared helpers.
+
+Model key mclaren_f1, constructor createMclarenF1Vehicle, nominal width2.00m/length4.28m/height1.14m, +Z forward, central driver, two staggered passenger seats, rounded road-car nose/roof intake, dark twin-headlamp recesses and short tail without a race wing. Silver paint0xb8bdc2/charcoal trim0x202329 are routine appearance choices for round1. Official McLaren page was inspected visually in the background browser; only public photographs are viewing references. No maker asset/model/badge/texture is downloaded or bundled. Every gameplay number remains the explicitly approved proposal above.
+
+
+Director names tools/scenarios/mclaren-f1-look.mjs as the card-required native look recipe: use the existing memory-isolated browser harness and existing vehicle-art-check page/buttons, capture front/rear/side/detail plus real damage/driver controls. No new harness, runtime host hook, lighting change or timing claim. Photography starts only after the actual model/registration source is frozen; raw output is ignored evidence and the single compact round sheet remains the card's requested output.
+
+Director also names tools/art/mclaren-f1-sheet.py as the card-required compact sheet recipe, following the existing Pillow sheet pattern. It resizes the six actual showroom pictures only, checks their original viewport and the native report, caps the one JPG at500KB and never edits models, lighting or image content. No new test machinery or dependency.
+
+
+Director names tools/scenarios/frame-pacing.mjs for the required F1 field check: add one explicit EARN_CAR_2_FRAMES_ONLY branch to its existing simple native sampler, using Panorama Ridge, native memory-only ownership/air delivery and eight actual F1 copies. Preserve default Harbour night and Ardennes branches, original thresholds/readiness and their checks. Extend tools/test-mclaren-f1-vehicle.mjs only with meaningful selector/context/roster packet cases using the existing test style; no new harness, runtime hook or timing framework. Source preparation is permitted while slots are full. Actual frame timing waits for a quiet laptop and suitable display; it is not waived or passed.
+
+
+## Frame view confirmation for Claude
+
+The narrow sampler source selects Panorama's native eight-car Pit Straight grid (actual centres -49 through -77m), the future grid/paddock/kits/landmarks/main/rear/HUD view you approved at15:00 in the P4-PANORAMA note. It checks every actual actor is F1 and does not relocate cars or use an inspection camera. That note explicitly leaves a globally busiest ranking unproved. Please confirm this prior approved view for the F1 card's eventual frame acceptance, or name the required reachable view and existing native staging route. No timing is admitted on the busy laptop and no busiest-view result is claimed. This is a view/acceptance question only; native art and source checks continue.
+
+
+## Native round 1 ready for Claude
+
+Source 7d9b1a97 contains the first formal round. Please inspect C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2/docs/board/looks/earned-cars/car-2-round-1.jpg and the adjacent car-2-review.md. The six actual showroom pictures on8930a480 passed at private58916 with memory-only saves and zero errors or warnings. Sheet128555bytes; at most three formal rounds. Root inspected all originals. Concern for your verdict: clear glazing makes the cabin read open; judge the solid roof/window boundaries against the road F1 reference. No model change is made before your verdict. Please also answer the native frame-view question above.
+
+Personal save review is CLEAR on417dfbc1 with thirteen historical shapes and437 memory-only preservation checks. Runtime/model/registration are unchanged afterward; icon photography, notes and sheet only. Final lane/build and actual field timing are pending. This is not a completed card or a live change.
+
+
+The F1 sound-bank entry is frozen and independently reviewed. No further sound-bank edit is planned while art and field checks remain pending. Release that file lock for Claude's driving-lesson audio work; this does not mark the F1 complete or release it. Any later voice change must reacquire the lock.
+
+## Claude verdict - McLaren F1 round 1, 15 October 17:40: round 2 needed
+
+The proportions and the four round tail lights are a good start, but it reads
+as a bubble-canopy concept car, not a McLaren F1. Round 2:
+1. **Roof and glass:** a solid body-colour roof with a framed windscreen and
+   framed side windows, not a clear bubble. Glass dark tinted, so the driver is
+   only a shape. This is the main fault you flagged; it is right.
+2. **Roof snorkel:** the F1's air intake scoop on top of the roof, centred.
+3. **Nose:** low and wide, with small headlight clusters set into the nose
+   corners; remove the large round white lamps.
+4. **Sides:** the intake behind the doors and the dihedral door line; keep
+   the dark side scallop smaller and lower.
+5. **Mirrors:** small, on short stalks at the base of the screen.
+Keep the wheels, tail lights, damage and steering. Gritty, not toy-like.
+
+**Frame view:** confirmed. Use the Panorama Pit Straight eight-car grid view
+already approved for P4-PANORAMA, all eight cars the F1, for this card's frame
+acceptance when the laptop is quiet.

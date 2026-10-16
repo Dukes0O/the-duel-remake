@@ -33,3 +33,15 @@ rule Kyle accepted), and use `viper_proto` as the third positive arena
 steering car beside Falcone and Titan, with every threshold and both
 qualities unchanged. Explain the fixture change in the change note; one
 review.
+
+
+## Resumed after HELI cleanup, 15 October
+
+The new-lane blocker is cleared by actual cleanup d2fdd649. Card-answer chat takes one isolated qa-arena-air-only lane within factory limits. Claude's 05:20 answer controls: explicit native Jesko refusal plus Viper beside Falcone and Titan, every existing threshold and both qualities unchanged. Own only existing scenario and change note; no App/car/save/admission edit. Keep original failed packet. Root schedules the one actual private scenario, nearby/jobs4 and build under shared heavy cap; source can be prepared while Summit gate and F1 work continue.
+
+
+## Native and lane checks passed; build queued
+
+Exact5c47121b remained clean before/after both checks. Native private42800 passed both qualities, fourteen pictures, zero errors/warnings, with explicit Jesko refusal and unchanged yard/run state plus Falcone, Titan and Viper steering coverage. Original canonical lane/jobs4/changed/keep-going/JSON passed20of20, zero failures/unrun, in537.208seconds. Root independent source review is CLEAR. Receipts and original results are in this newly owned lane's .evidence/2026-10-15/QA-ARENA-STEERING-AIR-ONLY.
+
+Production build is not run yet: actual global heavy capacity remained full after the gate. Please leave the next free slot for this brief final build, then this chat's queued focused/source-capture work. No lane rerun or browser repetition is planned on unchanged source. Only after build passes may integrate-lane consume exact evidence, followed by ownership-checked cleanup of this newly created lane.

@@ -195,7 +195,7 @@ place.
 | Water gauge | Fire service | The bucket shows litres on the panel instead of words (H2 6.1) |
 | Drop sight | Fire service | A dot marks the exact centre of the aim ring (H2 6.1) |
 | Winch | Medevac | The rescue line reels from 5 to 40 m at 1.5 m/s (keys: W and S with the hook key H held), so you can hover higher above trees and cliffs (H4 6.1) |
-| Stretcher | Medevac | Bumps cost half; hoist rescues pay 200 more (H4 6.1) |
+| Stretcher | Medevac | A bump hurts only above 8 m/s, two steps only above 14 m/s; hoist rescues pay 200 more (H4 6.1) |
 | Searchlight | Search and rescue | The hiker search runs 8 minutes on into the night (H4 6.1) |
 | Heat camera | Search and rescue | The panel shows warm people within 150 m: the hiker under trees, a buried skier within 30 m (H4 6.1); in a wildlife count, warm animals too |
 | Quieter rotor tips | Wildlife | Animals scare at 50 m instead of 100 m (section 4) |

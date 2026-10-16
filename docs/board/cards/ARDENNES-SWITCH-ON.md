@@ -40,4 +40,74 @@ Long Left candidate619db9ef is now merged4495c042 after42/42nearby/jobs4/build/i
 
 Kyle: I restarted; let's get Ardennes on; away about3hours; please keep going. This authorizes the switch-on implementation and subsequent release/install when its remaining checks are satisfied, superseding the earlier preparation-only boundary. The prior explicit timing skip is retained as SKIPPED, not converted to a pass or silently retried. LongLeft is merged and the accepted round4 art is the candidate; no further art edit is requested. Claude's finishing verdict remains a release prerequisite and is requested on P4-ARDENNES.
 
-Root creates one new ard ennes switch lane (actual folder ardennes-switch-on/codex/ardennes-switch-on) from current integration. Initial phase leases circuit-registry only for the exact manifest and existing admission/state tests. SUMMIT-SWITCH-ON is actively using world-signatures: do not edit shared composition tooling, capture or baseline until its owner releases that lock. Then claim world-signatures and add only Ardennes' actual accepted scene baseline, preserving every other fixture. Finishing is checked before merge/install; the board implementation dependency is P4-ARDENNES so the explicit current switch request can be prepared while that verdict arrives. No other flags, art, assets, physics, roster, save schema or prices change.
+Root creates one new Ardennes switch lane (actual folder ardennes-switch-on/codex/ardennes-switch-on) from current integration. Initial phase leases circuit-registry only for the exact manifest and existing admission/state tests. SUMMIT-SWITCH-ON is actively using world-signatures: do not edit shared composition tooling, capture or baseline until its owner releases that lock. Then claim world-signatures and add only Ardennes' actual accepted scene baseline, preserving every other fixture. Finishing is checked before merge/install; the board implementation dependency is P4-ARDENNES so the explicit current switch request can be prepared while that verdict arrives. No other flags, art, assets, physics, roster, save schema or prices change.
+
+
+## Per-course baseline scope, before capture
+
+FAC04 already split signatures into per-course files. Current existing --capture-new=ardennes-forest safely captures this known disabled dev scene before its first baseline, checks every existing scene, and loads actual Ardennes beech kits. No shared composition-tool or global count edit is needed. Therefore this card can use that existing read-only recipe and write only its owned tools/fixtures/world-signatures/ardennes-forest.json while holding circuit-registry; Summit keeps exclusive ownership of its shared composition-tool changes and its own scene files. Never edit that shared file or a foreign fixture here. Capture the actual current accepted dev scene first, then flip only Ardennes state and compare it in the ordinary strict suite. All old files must hash exactly as before. This replaces the unnecessary broad world-signatures lease for a course-owned initial file.
+
+
+## Current source and queued gate
+
+Frozen c2826ec8: only manifest state changes; selected production/admission tests pass2/2 after failing2/2 first; feature flags91 and ordinary strict composition43checks pass; build7598.37ms. Actual first scene hash46f792e1d00d444a4aa39f82d9ed48fbc5e009fe207bafdf0afeb97c0ad8e930,1109nodes/1050meshes/35282instances. Every old fixture remains byte-identical. Initial lane admission was cancelled immediately after the inventory showed three other heavy roots; lane.json is empty and the process drained, so INTERRUPTED/UNRUN, not pass. The next actual free heavy slot is requested for Ardennes' complete jobs4 gate; enforce existing inspectNightProcesses count<3 before launching. No foreign job was stopped.
+
+
+## Review correction: first course-owned replay, before code
+
+Independent review of c2826ec8 found enabled-course replay coverage missing Ardennes (21 enabled,20 covered). Own tools/replays/courses/ardennes-forest.json only for its first actual seeded input fingerprint at30/60/144FPS. Use the unchanged replay() and recorded inputs from tools/test-replays.mjs, with a temporary recipe under .qa-dist that writes only this new file; no existing replay file, assertion, input, tolerance or runner changes. Capture all three actual cadences and require exact equality. Preserve all previous fixture bytes, then let the unchanged full replay guard verify the union in the final lane gate. This corrects a real review fault before gate/review confirmation; no runtime physics or driver change.
+
+
+## Corrected source admitted
+
+Frozen0b5dca64 adds only actual Ardennes replay to c2826ec8. All30/60/144 fingerprints5f4ddce78ee29bae253078214880854056aadca08b4ca2f6faab51d403dcb7d2; all old fixture bytes exact. Independent same ardennes_release_review confirms CLEAR, catalog21/21and23cases. Actual final build PASS4953.1161ms. After reserved capacity opened, exactly one complete canonical lane/jobs4 started on this source (local lane-complete log/JSON); result pending, not green. Original interrupted empty lane.json remains distinct. Claude finishing requested, timing SKIPPED and release checks/install separate.
+
+
+## First canonical result and exact stale-order correction scope
+
+Exact0b5dca64 completed37/40/no unrun, jobs4,387217.6122ms, exit1. Failed only test-circuit-layouts, test-circuit-panorama-registry and test-release-tremblant: old Panorama-last and dev-QA-appends-after-all-on expectations conflict with the unchanged manifest release ordering when Ardennes is on. All other37passed, including replay/world/driver assertions. Original complete result retained; no unchanged rerun. Bounded correction starts00:10UTC, stop unresolved diagnosis by00:40UTC.
+
+Root circuit-registry lease now owns only those3existing test files plus own note to correct the proved release-catalog premises. Keep exact original16event prefix, four earlier released positions/IDs/prices/wallet isolation and all geometry/closed-loop/clearance guards. Preserve the exact Panorama-last behavior in an explicit historical release catalog (later flags held dev), while current production/QA expectations use exact manifest order rather than moving the requested dev course after later released courses. No source manifest/order/price/scene/physics/tolerance change or global pin regeneration. Current test files in Summit lane had no pending edits when inspected; Summit may reuse this reviewed narrow correction rather than duplicating these3files. Other Summit-specific hooks remain its owner's. One independent correction confirmation and fresh canonical/jobs4/build on final source before merge.
+
+
+## Reviewed ordering correction available
+
+Finalsource cb658b7015d28a287a9da57999b2f6b7f36d1012 corrects only the three scoped tests and own note. Focused registry/Panorama cases and286releasechecks including13old-save fixtures pass; same independent ardennes_release_review confirms CLEAR. Panorama index19, old4course prefix, historicalQA/production catalogs and every geometry/access/price/save threshold retained. Summit owner can reuse this exact correction rather than duplicating those3files. Final production build passes; complete fresh canonical/jobs4 gate now running, not yet green. The preceding npm.cmd spawn EINVAL launched no build; corrected ComSpec npm run build completed normally. Timing remains SKIPPED; finishing/release separate.
+
+
+## Recapture after the finishing pass (Claude, 15 October)
+
+P4-FINISH-ARDENNES changes Ardennes' scenery (braking boards, grandstand and garages past the grid, a deeper forest, softer Riverside mist, no wet-road gloss). The first Ardennes picture fingerprint captured in this lane (46f792e1...) will no longer match once that pass merges. Recapture `tools/fixtures/world-signatures/ardennes-forest.json` from the merged finishing pass with the existing `--capture-new` route, after a reviewed visual difference, before this switch merges. If the boards stop cars, the new `tools/replays/courses/ardennes-forest.json` replay fingerprint is recaptured the same way.
+
+
+## Finishing correction slice before implementation
+
+Claude856a2441 created three ready Codex findings during finishing. Root combines their exact settled scopes into this existing lane; child board entries are replaced by this implementation card, with their rule/acceptance files retained. This opens no extra build/course lane. cb658b70 stays frozen until its current gate drains; no source mutation during that run. Then merge the actual finishing source into this lane, preserve every foreign edit, and complete one final corrected-source gate/build/review. The first pre-finishing gate is evidence only for its exactsource.
+
+Owned finishing hooks: src/road-surface.js + tools/test-road-surface.mjs for opt-in25m smooth damp/mist edges including wrap, exact non-damp shader/program retention; src/landscape-detail.js + tools/test-landscape-cells.mjs for existing pit-surface query rejection after the original random/color sequence, every surviving placement and no-pit course exact; tools/scenarios/track-review.mjs + existing track-review test for the one3779-to3848m run-up diagnosis, at most30minutes, no game/physics/road edits. Own change note. Preserve children acceptance, no geometry/grip/tolerance change. If run-up is a real race fault, stop that subtask and give Claude actual numbers.
+
+Native picture acceptance uses the existing Ardennes view/review routes, private memory-only, no timing. Claude judges the damp transition and affected pit views before any changed world fixture is captured. List all actually affected pit courses; no foreign/current fixture regeneration without its reviewed visual difference and named scope. Shared world-composition tooling remains Summit owned. Final switch merge/install waits for finishing and the corrected actual course baseline/replay as applicable.
+
+
+## Proved pit overlap and exact predicate hook
+
+Actual seed1989 production landscape/control has14000plants on Ardennes and14000on Panorama. pitAt reports0inside because it deliberately excludes the main-road overlap for limiter/boost behavior. Ray tests against the real production pit-lane-road mesh prove5Ardennes roots inside the pavement near s327.7..342.1, lateral -6.99..1.97; all5 pitAt results false. This is the pictured overlap, not a guessed random-sequence cause.
+
+Before edit, Root grants src/pit-lane.js + existing tools/test-pit-lane.mjs ONLY to factor the current phase/extent/width predicate into one exported pitRoadAt footprint query. Existing pitAt calls that shared predicate then retains its exact main-road exclusion; no second authored pit description, geometry, width, limiter, boost, service or race behavior. Landscape filters actual final world-position nearest coordinates through pitRoadAt AFTER all original placement/color RNG consumption. Exact surviving source indices/matrices/colors and no-pit hashes must stay unchanged. Compare original pitAt outputs and the actual rendered pit mesh at overlap/end/taper boundaries in existing tests. This resolves the query semantics within Claude settled no-pavement rule; no new feature or runtime dependency.
+
+
+## Finishing fixes frozen for source review
+
+Ownsource f80041aac11373d7866d660d2ac5f923096d7748 implements25m periodic damp fade and shared pitRoadAt predicate/after-RNG foliage omission. Damp regression RED then GREEN; actual pre-edit non-damp shaders byte-exact across day/night and wet/dry. Selected new pit boundary case PASS, full landscape314376checks PASS with all old no-pit placement hashes exact. Exactly5actual Ardennes roots removed; Panorama/Snow/Summit controls remove0, every survivor matrix/color/source index exact. Root did NOT recapture any world signature. Final independent correction review requested on this frozen source; still not merge/install ready. The source helper test adapter briefly missed its modulo argument on one periodic call and was fixed without changing shader/assertion/tolerance. New pit expected bounds use actual phase normalization, preserving legacy rounding exactly.
+
+Claude finishing source remains uncommitted in its owning finish-ardennes lane (Ardennes definition/tests plus actual finish sheet); Root will not copy or overwrite that mutable source. Please commit the actual finishing source when its own check/review is ready; Root can then combine it with these reviewed corrections before the required final High native views and fresh exact-source gate/build. This avoids photographing an obsolete pre-finishing scene. No frame retry.
+
+
+## One-frame run-up diagnosis: stale review flight height
+
+Bounded native reconstruction on f80041aa uses the retained preceding grounded pose9438.632471/-1.165402 and the exact next frame3847.878822/119mph/-3.4. Prior support and therefore grounded _jumpY is -5.168058m; next run-up starts at phase3778.798227 on support -49.143180m. Existing R.place teleports s/lateral and sets airHeight0 but leaves _jumpY and vertical velocity. First native step becomes43.9818m airborne, no contact/crash. At target3848.296207 it remains22.4822m high/106.0329mph after94steps, matching the reported false-flight shape. Actual full historical state was not saved: reconstruction explicitly zeroes unknown previous vertical velocity; this is not a recovered original browser state. Source proves the stale-height mechanism; no road/physics fault is inferred. Evidence local runup-before.json includes every step/support/velocity/contact.
+
+Smallest granted tool-only fix: reset latent flight pose when this existing scenario teleports an Ardennes car, so _jump initializes from the new native road. Clear airborne/prevAirHeight/_jumpY/_verticalSpeed/_jumpOrigin/_airOrigin/air distance/time only, plus the existing placement assignments. Keep race progress/results/counters/driver/input policies and other courses review placements exact. Add the regression in existing test-track-review; use the actual reset function in injected page code. No new harness, full packet retake, source physics or scenery edit. One independent source confirmation and final nearby/build remain required.
+
+
+Board roster correction: the three replaced child entries leave the open tasks list and are retained in completed as replaced-by-this-card decisions, matching existing test-board rules. Their implementation/visual acceptance remains pending on this parent; this does not mark the scene or release accepted. Decision files remain intact. SUMMIT-SWITCH-ON is foreign; its in-progress status is already a supported OPEN status and was not changed.

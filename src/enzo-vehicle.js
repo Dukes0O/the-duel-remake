@@ -64,16 +64,16 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
     b.box(m.carbon, [.07, .06, 2.0], [side * .985, .215, -.05], [0, 0, 0], .018);
   }
   // The beak: a narrow nose with its own splitter and a dark centre intake.
-  b.box(m.carbon, [1.62, .04, .26], [0, .175, 2.20], [0, 0, 0], .02);
+  b.box(m.carbon, [1.56, .04, .18], [0, .175, 2.06], [0, 0, 0], .02);
   b.box(m.carbon, [.34, .09, .05], [0, .26, 2.32], [-.08, 0, 0], .02);
   // Short tail: integrated lip spoiler, a black rear panel and a deep diffuser.
   b.box(m.paint, [1.50, .06, .16], [0, .815, -2.285], [-.18, 0, 0], .02);
   b.box(m.carbon, [1.40, .20, .04], [0, .46, -2.325], [0, 0, 0], .02);
-  for (let i = -3; i <= 3; i++) b.box(m.carbon, [.022, .15, .40], [i * .19, .27, -2.16], [.12, 0, 0], .002);
-  b.box(m.carbon, [1.42, .024, .34], [0, .19, -2.20], [.12, 0, 0], .01);
+  for (let i = -3; i <= 3; i++) b.box(m.carbon, [.022, .15, .30], [i * .19, .27, -2.12], [.12, 0, 0], .002);
+  b.box(m.carbon, [1.42, .024, .26], [0, .19, -2.14], [.12, 0, 0], .01);
   b.box(m.plate, [.50, .11, .01], [0, .44, -2.348], [0, 0, 0], .004);
   cockpit(vehicle, b, m, [.29, -.045, -.04], .80);
-  wheels(vehicle, m, { radius: .35, width: .27, track: .86, axles: AXLES, spokes: 5, roadSmooth: true, broadSpokes: true });
+  wheels(vehicle, m, { radius: .35, width: .27, track: .86, axles: AXLES, spokes: 5, roadSmooth: true }); // twin five-spoke, as on the real car
   exhaust(vehicle, b, m, [[-.09, .36, -2.26], [.09, .36, -2.26]], .055);
   b.finish(data);
   fittedDetails(vehicle, m);
