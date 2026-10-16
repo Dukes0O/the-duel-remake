@@ -819,6 +819,16 @@ export const CAR_VOICES = {
     exhaust: 0.16,
     intake: 0.15,
   },
+  // Earned car 3: a big quad-turbo engine, lower and smoother than the
+  // Enzo's V12, with a deep intake rush.
+  bugatti_bolide: {
+    pitch: 0.94,
+    brightness: 1.02,
+    gain: 1.04,
+    accent: 1.02,
+    exhaust: 0.17,
+    intake: 0.2,
+  },
   titan_monster: {
     pitch: 0.83,
     brightness: 0.76,

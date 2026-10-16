@@ -11,7 +11,7 @@ import { prepareVehicleDamage } from './vehicles.js';
 // a central horseshoe-shaped intake in a low nose, X-shaped lamps front and
 // rear, and a deep open diffuser. Shared helpers only construct small parts.
 export const BOLIDE_VEHICLE_DIMENSIONS = Object.freeze({
-  bugatti_bolide: Object.freeze({ width: 2.06, length: 4.76, height: 1.05, wheelRadius: .36 }),
+  bugatti_bolide: Object.freeze({ width: 2.06, length: 4.82, height: 1.18, wheelRadius: .36 }),
 });
 const { materials, batch, sculpt, panel, cylinder, cockpit, wheels, exhaust, fitSurfacePatch } = originalVehicleParts;
 const AXLES = Object.freeze([1.42, -1.33]);
@@ -30,7 +30,7 @@ export function createBolideVehicle({ key = 'bugatti_bolide', color = 0x1f4fa8, 
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...BOLIDE_VEHICLE_DIMENSIONS[key] },
     ultimateKey: key, designFeatures: Object.freeze(['horseshoe-intake', 'cockpit-bubble', 'roof-scoop', 'spine-fin',
       'swan-neck-wing', 'x-lamps', 'carbon-lower-body', 'open-diffuser']),
-    damageSpace: { scale: [.92, .78, 1.0], offset: [0, 0, 0], frontGlassZ: .82, rearGlassZ: -.84 },
+    damageSpace: { scale: [.92, .78, 1.0], offset: [0, 0, 0], frontGlassZ: .70, rearGlassZ: -.64 },
   });
 
   // Stations: [z, half width, floor, shoulder, crown, crown half width]. Low
@@ -88,7 +88,8 @@ export function createBolideVehicle({ key = 'bugatti_bolide', color = 0x1f4fa8, 
   for (let i = -3; i <= 3; i++) b.box(m.carbon, [.022, .17, .34], [i * .2, .27, -2.13], [.14, 0, 0], .002);
   b.box(m.carbon, [1.46, .024, .30], [0, .19, -2.15], [.14, 0, 0], .01);
 
-  cockpit(vehicle, b, m, [.22, -.075, -.02], .78);
+  // Seated a little inboard and smaller so the helmet stays under the bubble.
+  cockpit(vehicle, b, m, [.19, -.075, -.02], .76);
   wheels(vehicle, m, { radius: .36, width: .30, track: .88, axles: AXLES, spokes: 10, roadSmooth: true });
   exhaust(vehicle, b, m, [[-.20, .36, -2.30], [-.08, .36, -2.30], [.08, .36, -2.30], [.20, .36, -2.30]], .045);
   b.finish(data);
@@ -101,8 +102,8 @@ export function createBolideVehicle({ key = 'bugatti_bolide', color = 0x1f4fa8, 
 // A small cockpit bubble set mid-car: glass all round a short painted roof,
 // [z, half width, base, top].
 const canopySections = [
-  [-.84, .34, .72, .78], [-.58, .48, .66, .92], [-.22, .54, .62, .99],
-  [.14, .55, .61, 1.01], [.44, .52, .61, .95], [.68, .44, .61, .80], [.86, .32, .60, .64],
+  [-.84, .34, .72, .80], [-.58, .48, .66, .95], [-.22, .54, .62, 1.03],
+  [.14, .55, .61, 1.05], [.44, .52, .61, .99], [.68, .44, .61, .83], [.86, .32, .60, .65],
 ];
 function canopyPoint(z, angle, lift = 0) {
   const last = canopySections.length - 1;
