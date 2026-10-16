@@ -24,3 +24,10 @@ Cause: the tufts in `src/landscape-detail.js` are scattered 8.5 to 38 m either s
 ## Root implementation slice
 
 Implemented as a named subtask of the existing ARDENNES-SWITCH-ON lane, keeping this settled rule and acceptance intact. No extra lane or duplicate implementation. The source card remains the decision record; the parent owns code, review, gates and the final release handoff.
+
+
+## Proved pit overlap and exact predicate hook
+
+Actual seed1989 production landscape/control has14000plants on Ardennes and14000on Panorama. pitAt reports0inside because it deliberately excludes the main-road overlap for limiter/boost behavior. Ray tests against the real production pit-lane-road mesh prove5Ardennes roots inside the pavement near s327.7..342.1, lateral -6.99..1.97; all5 pitAt results false. This is the pictured overlap, not a guessed random-sequence cause.
+
+Before edit, Root grants src/pit-lane.js + existing tools/test-pit-lane.mjs ONLY to factor the current phase/extent/width predicate into one exported pitRoadAt footprint query. Existing pitAt calls that shared predicate then retains its exact main-road exclusion; no second authored pit description, geometry, width, limiter, boost, service or race behavior. Landscape filters actual final world-position nearest coordinates through pitRoadAt AFTER all original placement/color RNG consumption. Exact surviving source indices/matrices/colors and no-pit hashes must stay unchanged. Compare original pitAt outputs and the actual rendered pit mesh at overlap/end/taper boundaries in existing tests. This resolves the query semantics within Claude settled no-pavement rule; no new feature or runtime dependency.
