@@ -147,7 +147,7 @@ const teamRoom = createTeamRoom({host: root,
   getDossier(eventId) {
     if (!app._switches().enabled('grand-prix') || !['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) return null;
     const definition = COURSE.find(course => course.id === eventId);
-    if (!definition || definition.closed === false || courseUnlockRequirement(definition) || !isCourseUnlocked(profile(), definition)) return null;
+    if (!definition || definition.closed === false || courseUnlockRequirement(definition)?.kind === 'owned-course' || !isCourseUnlocked(profile(), definition)) return null;
     const selectedRoute = app.duel.state.status === 'menu' ? app.menuRouteId
       : getRouteVariantForSeed(app.duel.state.seed)?.id ?? app.menuRouteId;
     const route = supportsRouteVariants(definition) ? selectedRoute : 'fixed';

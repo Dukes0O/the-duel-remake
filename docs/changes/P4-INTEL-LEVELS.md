@@ -71,3 +71,29 @@ Merged current integration1c1d78e0 conflict-free before native generation (union
 ## Actual browser fixture ownership repair
 
 The first final browser pair on98656043 stopped before any picture because the disposable profile had course IDs but no variant parent GP podium. Both native reports: memory-only/0issues/0warnings; production admission correctly refused PanoramaNight. Corrected only the two approved disposable fixture profiles using current manifest parent-podium prerequisites, as the existing approved reference builder does. No runtime/ownership/economy/save/old assertion/picture/threshold change. Original failed pair and cancelled incomplete gate retained; changed-source acceptance still pending.
+
+## Variant Team Room entry (Claude, after Codex's handback)
+
+- `src/course-access-ui.js` courseCard: the five night and variant courses
+  (unlock kind `default-gp-podium`) get the Team Room button like their parent
+  courses, disabled until the variant is owned. Solo challenges
+  (`owned-course`), open routes and every other card are unchanged.
+- Changed assertion, `tools/test-course-kit.mjs`: the old check that a variant
+  card has no Team Room button is replaced by two stricter checks (a locked
+  variant shows the button disabled, an owned one shows it enabled). Claude's
+  review: the old check recorded the absence this card is meant to fix;
+  nothing is loosened (AGENTS rule 18).
+- `src/screen-router.js` getDossier (found by the independent review: the
+  button alone would have opened nothing): the router now refuses only solo
+  challenges (`owned-course`), not every course with an unlock requirement.
+  Ownership is still checked by `isCourseUnlocked` (parent podium included).
+- Second changed assertion, `tools/test-course-kit.mjs`: the check that the
+  router refuses an owned variant is replaced by two: a locked variant is
+  refused, an owned one passes every admission guard. Claude's review: the old
+  check recorded the same absence; stricter, nothing loosened.
+- Variants use the fixed route (none is in `ROUTE_EVENT_IDS`) and all five have
+  fixed-route reference laps, so the open path finds its reference.
+- Tests: course-kit 8/8, course-access 186, build-update 190, course-access-ui 38, grand-prix-career-menu,
+  track-analysis 233 and intel-levels pass on the change. Canonical lane tier
+  on b7df3fde passed 276/276 before it (Codex); the photos sheets stand
+  (rule 19).
