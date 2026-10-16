@@ -716,7 +716,9 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-stavelot-stone-2026-10-15"
+    branch: "claude/stavelot-stone"
     needs: []
     locks: []
     details: "docs/board/cards/ARDENNES-STAVELOT-STONE.md"
