@@ -1,9 +1,7 @@
 # ARDENNES-FAR-FOREST round 1
 
-Claude, 15 October 2026. Sheet `round-1.jpg` (223,208 bytes) is kept in
-`.evidence/2026-10-15/ARDENNES-FAR-FOREST/` in the integration folder, not
-committed: `docs/board/looks/` was 1,237 bytes under its 20 MB limit. Before
-and after at High, native
+Claude, 15 October 2026. Sheet `round-1.jpg` (117,553 bytes, re-encoded
+after the JANITOR-LOOKS sweep made room): before and after at High, native
 views from `tools/scenarios/ardennes-views.mjs`: La Fontaine, Les Combes,
 Riverside, Stavelot.
 
