@@ -220,3 +220,20 @@ combined conflict-free in isolated lane64eac786, including the green Tyre
 dependency and every newer Rescue/skins/Intel change. Source only so far;
 no inherited integration check is claimed for the lesson. Native Node checks
 will use fresh ordinary heavy admission and never open a browser/game window.
+
+
+## Approved loop source and actual windowless canonical
+
+Frozen e2f752bcf238332804cef8a98663d74b8412e20f implements the10:30
+builder answer. Whole approved exit window observed, old exit witness
+removed; exact gate-to-gate finish trimming and tick-origin fault accounting.
+New plain boundary regression RED then1PASS93.3757ms; required independent
+code/numbers review CLEAR. No pace/line/gate/physics/threshold change.
+
+Actual corrected lane tier admitted12:53:17PT on clean e2f752bc, wrapper36652/
+runner30232/Rootsession50304, lane changed/jobs4/keep-going/json. Existing
+suite includes actual both-course/settings/FPS instructor and student
+acceptance; do not duplicate manually or edit its running source. Receipt
+.evidence/2026-10-16/DRIVE-LESSON-1/final-e2f752bc/lane-receipt.json pending.
+Fresh actual count was zero; this is one Node-only/windowless job. No gate,
+native or build pass yet. All other chats/source remain independent.
