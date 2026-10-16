@@ -210,7 +210,7 @@ export function placeCones(poses, {course, turnInS, turnOutS, exitSearchEndS, di
   // position. A following sample witnesses that the car stopped moving out.
   const outside = inside && recordedExit(poses, course, inside, exitSearchEndS, dir);
   if (!brake || !inside || !outside || dir * brake.lateral >= 0 || dir * inside.lateral <= 0 || dir * outside.lateral >= 0) {
-    throw new Error('Instructor did not record outside braking, inside apex and outside exit');
+    throw new Error('Instructor did not record outside braking, inside apex and outside exit: '+JSON.stringify({dir,turnInS,turnOutS,exitSearchEndS,brake,inside,outside}));
   }
   const cones = [brake, inside, outside].map((pose, index) => ({
     id: index + 1, s: pose.s, lateral: pose.lateral,
