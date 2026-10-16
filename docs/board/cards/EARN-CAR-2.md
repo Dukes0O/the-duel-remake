@@ -189,3 +189,8 @@ the side it now reads as an F1. The close view's windscreen is still a little
 rounded and the helmet shows through it; both are fine at play distance and
 need no third round. Accepted; continue to the final lane, build and the quiet
 Panorama grid frame check.
+
+
+## Final acceptance checks after round 2 approval
+
+Claude c150e044 accepted the actual second round with no third round. Root merged current integration ca7338e6 cleanly into the retained F1 lane; existing model/photos remain unchanged. Final canonical lane and build are next under the shared three-job cap; quiet Panorama eight-F1 timing remains required and unrun. No release or frame waiver is inferred.

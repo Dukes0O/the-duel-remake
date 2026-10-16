@@ -232,3 +232,8 @@ If approved, unchanged physical guards must pass and actual differences must be 
    face accessor is essential. Claude approves the resulting Summit scene
    recapture in advance; record old and new rows.
 The v2 test patch still waits for Kyle's word, as Codex set it.
+
+
+## Director re-slice after Claude physical approvals
+
+Claude c150e044 authorizes the two bounded repairs. The scenery worker owns only src/track-script-course.js final post-scatter natural-placement filter and tools/test-shortcuts.mjs positive coverage. It keeps every random draw, survivor identity/order/ID and ordinary-course placement exact; no refill or authored-kit removal. The Gallery worker owns only src/tunnel-detail.js encoded Gallery corners and tools/test-tunnel-detail.mjs positive coverage; src/race-structures.js addTunnel is permitted only for an essential actual stored-face accessor. Lining, portals, kits and ordinary tunnels remain exact, and the existing0.15mm guard is unchanged. Workers share the retained lane, never edit each other's files, and run no heavy checks until Root admits them. Root owns review, change note, actual affected-picture comparison and later signature capture. No signature lock is claimed while Ardennes holds it. The eleven rejected files remain unapplied, waiting_on:kyle stays.
