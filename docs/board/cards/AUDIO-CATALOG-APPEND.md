@@ -12,7 +12,8 @@ row, and the tests that pin the old rows (`test-p4-audio`,
 had to restore the order by hand.
 
 Change: a new entry is appended at the end; an entry that replaces an
-existing one (same source and key) takes that row's place. No other row
+existing one (same source, key and cue, a missing cue counting as none)
+takes that row's place; one library sound may serve several cues. No other row
 moves and the file keeps its format.
 
 Owns: `tools/audio/sourcing.mjs` (`addCatalogEntry` only),

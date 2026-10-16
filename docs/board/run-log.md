@@ -1216,3 +1216,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-16 QA-ARENA-STEERING-AIR-ONLY merged from5c47121b: lane20/20/jobs4/537.208s, build4297.1685ms, native14/bothqualities/zeroissueswarnings, Root independent review CLEAR; clean merge, no rerun, owning-session cleanup pending.
 
 - 2026-10-15 janitor: owning card-answer chat recycled only its newly-created merged Arena lane, review evidence and dependency junction; removed its exact missing registration/merged branch. Owned Arena folders1->0; runtime assets0B changed by this fixture repair. Retained Summit and other chats' folders untouched. F1 capture turn remains next.
+- 2026-10-15 AUDIO-CATALOG-APPEND merged (Claude): recording a sound appends to the audio catalog or replaces its own row in place, never re-sorts. Lane 25/25, build, review (one fault fixed).
