@@ -68,8 +68,9 @@ switch keeps its state.
   a fixture gap in `test-expansion-vegetation-grounding.mjs`, was fixed and
   passed in its own reviewed lane (17/17). Rule 19: that covers this release
   except what changed since, which the lane tier covers.
-- Lane tier and build in this lane (below), covering the switch and every
-  suite that reads it.
+- Lane tier and build in this lane, covering the switch and every suite that
+  reads it: 267 passed, 0 failed, 0 not run in 2015 s (PowerShell, jobs 4);
+  `npm run build` passed.
 - Combat balance passed on ac8fd6c3 (51 policy runs, 90 baseline races, no
   flags); nothing combat-related has changed since.
 - H2's browser checks passed on the same code: FIRE-VIEW's look and frame
