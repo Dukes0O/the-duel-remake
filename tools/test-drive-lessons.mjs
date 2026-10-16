@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DRIVE_LESSON_CORNERS,createDriveLesson,stepDriveLesson} from '../src/lessons/drive-lessons.js';
+import {DRIVE_LESSON_CORNERS,createDriveLesson,stepDriveLesson,placeCones,instructorControls,buildInstructorRun} from '../src/lessons/drive-lessons.js';
 
 // Plain car-view tests only. These do not simulate a car or prove instructor physics.
 const corner={id:'test-corner',startS:80,finishS:200,dir:1};
@@ -161,3 +161,73 @@ test('challenge summary ignores cone rules just like the streak does',()=>{
   assert.equal(lesson.lastAttempt.rules[0],false);
   assert.equal(lesson.lastAttempt.passed,true);assert.equal(lesson.streak,1);
 });
+
+
+const straightCourse={roadHalfWidthAt:()=>6,groundAt:(s,lateral)=>({x:s,y:0,z:lateral})};
+test('cone placement uses recorded brake, closest inside and outside exit with the fixed board',()=>{
+  const poses=[{s:80,lateral:-4,brake:0},{s:100,lateral:-4,brake:.2},
+    {s:120,lateral:0,brake:0},{s:130,lateral:4,brake:0},
+    {s:160,lateral:-4,brake:0},{s:180,lateral:-2,brake:0}];
+  const before=JSON.stringify(poses);
+  const plan=placeCones(poses,{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:180,dir:1});
+  assert.deepEqual(plan.cones.map(c=>[c.id,c.s,c.lateral]),[[1,100,-4],[2,130,4],[3,160,-4]]);
+  assert.equal(plan.redBoardS,110);assert.equal(plan.finishS,220);
+  assert.equal(JSON.stringify(poses),before);
+  assert.throws(()=>placeCones(poses.map(p=>({...p,brake:0})),{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:180,dir:1}));
+});
+test('instructor controls retain settled pace and use the tyre yaw helper with braking',()=>{
+  const calls=[],steerForYaw=(yaw,options)=>{calls.push({yaw,options});return .123;};
+  const plan={course:straightCourse,car:{topSpeed:200,grip:1,gears:[80,120,200]},
+    line:{offsetAt:()=>0},profile:{at:()=>100},drive:{mphToWorld:.44704},steerForYaw,
+    turnInS:150,turnOutS:200,difficulty:'casual'};
+  const state={s:100,lateral:0,speedMph:100,headingError:0,revs:.8,gear:1,tyreSlipRules:true};
+  straightCourse.at=()=>({curvature:0});
+  const surface={speedLimit:300,traction:1};
+  const casual=instructorControls(state,surface,plan),pro=instructorControls(state,surface,{...plan,difficulty:'pro'});
+  assert.equal(casual.targetMph,92);assert.equal(pro.targetMph,97);
+  assert.equal(casual.steer,.123);assert.equal(casual.throttle,0);assert.ok(casual.brake>0);
+  assert.equal(calls[0].options.tyreSlip,true);assert.equal(calls[0].options.brake,casual.brake);
+  assert.equal(casual.boost,false);
+});
+
+
+test('instructor does not brake on a curved approach before the named corner',()=>{
+  const course={...straightCourse,at:()=>({curvature:.02})};
+  const plan={course,car:{grip:1,gears:[100]},line:{offsetAt:()=>0},profile:{at:()=>50},
+    drive:{mphToWorld:.44704},steerForYaw:()=>0,difficulty:'casual',turnInS:150,turnOutS:200};
+  const controls=instructorControls({s:100,lateral:0,speedMph:80,headingError:0,revs:.8,gear:0},
+    {speedLimit:300,traction:1},plan);
+  assert.equal(controls.brake,0);assert.equal(controls.throttle,0);
+});
+test('cone placement freezes the first outside exit instead of a later wider point',()=>{
+  const poses=[{s:80,lateral:-4,brake:0},{s:100,lateral:-4,brake:.2},
+    {s:120,lateral:0,brake:0},{s:130,lateral:4,brake:0},
+    {s:160,lateral:-4,brake:0},{s:180,lateral:-2,brake:0},
+    {s:240,lateral:-5,brake:0},{s:260,lateral:-3,brake:0}];
+  const plan=placeCones(poses,{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:270,dir:1});
+  assert.equal(plan.cones[2].s,160);assert.equal(plan.finishS,220);
+});
+
+
+// These are actual native runs, not the plain-view helper tests above.
+// Execute only under normal heavy admission / the canonical lane gate.
+for (const courseId of ['panorama-ridge','tremblant-woods']) {
+  for (const difficulty of ['casual','pro']) {
+    test(`native instructor ${courseId} ${difficulty}: clean, same seed, 30/60/144 FPS`,async()=>{
+      const options={courseId,difficulty,car:'falcone_f42',upgrades:{},seed:1989};
+      const baseline=await buildInstructorRun({...options,fps:30});
+      for (const fps of [30,60,144]) {
+        const actual=await buildInstructorRun({...options,fps});
+        assert.deepEqual(actual,baseline,`native poses and plan repeat at ${fps} FPS`);
+      }
+      const {corner,instructor}=baseline;
+      assert.ok(instructor.timeSec>0);
+      assert.equal(instructor.finishS,instructor.cones[2].s+60);
+      assert.equal(instructor.redBoardS,Math.min(instructor.cones[0].s+25,corner.turnInS));
+      assert.equal(instructor.poses[0].s,corner.startS);
+      assert.equal(instructor.poses.at(-1).s,corner.finishS);
+      assert.equal(instructor.poses.at(-1).t,instructor.timeSec);
+      assert.ok(instructor.poses.every(pose=>Number.isFinite(pose.x)&&Number.isFinite(pose.z)&&pose.tyreSlip<=1));
+    });
+  }
+}

@@ -44,3 +44,46 @@ DRIVE-LESSON-HOOKS remains a later dependent card.
 
 Nothing replaced. No scratch output or copies were created; preserve this
 unfinished owned lane and its creation receipt for the next source increment.
+
+
+## Instructor source increment, Kyle's direct instruction 16 October
+
+Combined exact frozen, reviewed Tyre candidate `3e2bf73f` into this lesson
+lane with no conflicts (`bfc3c4d6`); Tyre is not merged into integration and
+is not claimed green. Kyle explicitly authorized instructor building ahead
+of its tests. The module now includes `buildInstructorRun`, a lazy native
+factory: fresh isolated Duel, real race step at 120 Hz, explicit frame
+partitioning, the player's car/upgrades/driver and settled rolling start.
+No App autopilot, storage, reward or live race access. Casual lessons request
+new tyre rules only in this scratch lesson race, as the lesson design says;
+released Casual stays untouched. Controls use the existing racing-line
+steering law, the real tyre `steerForYaw`, the same-car speed profile at
+92% Casual/97% Pro and braking on straight road only. Recorded native poses
+supply the ghost path and actual brake/inside/first-outside-exit cones.
+The board stays min(first brake + 25 m, turn-in); finish is exit cone + 60 m.
+The recorder stops at its own finish and rejects ambiguous faulty final
+ticks. It checks the actual native trace against the shared cone counter.
+
+Two new helper tests were written first (missing exports RED), then passed.
+Four changed plain-data instructor/cone cases now PASS96.8481 ms, including
+curved approach braking and a first exit followed by a later wider point.
+The prior 20 unchanged stage cases were not repeated. Source syntax parses.
+The independent review found curved-approach braking, capture beyond the
+actual finish and ambiguous crossing fault handling; all fixed/confirmed
+CLEAR. Final source also records control onset at the pre-step native pose.
+
+**Native execution is still UNRUN.** No heavy gate, build, browser or native
+instructor job was launched under Summit's exclusive full. Cone positions,
+real instructor time, tyre cleanliness, same-seed/FPS repeatability, late
+loss/screech and right-try driving remain unmeasured. Source implementation
+is not native acceptance or a playable feature. Do not retune or move the
+board if real acceptance fails; use the card's stop/Director decision.
+
+
+Prepared native tests (UNRUN) now call the actual factory for both courses
+and both settings, comparing repeat-seed results at 30/60/144 FPS including
+all native poses, board/finish spacing, finite geometry and tyre cleanliness.
+They are normal tests, not an opt-in bypass or a new harness. A future file
+or canonical lane run is heavy; do not run it during the release hold.
+The four new native cases have no pass/fail result yet. Actual late-versus-
+right scripted acceptance still follows the first clean instructor result.
