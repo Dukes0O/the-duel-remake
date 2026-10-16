@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **Summit remains explicitly blocked on Kyle; F1 round 2 proceeds.** Restored blocked/waiting_on:kyle after a foreign status change; rejected eleven-file v2 patch is still unapplied. F1 model-only round2 follows your five-point verdict with obsolete bubble removed, geometric safeguards retained and one review before native pictures. Cups keeps its next-free-slot reservation; Arena production build follows when capacity permits.
 - **Board roster corrected by Root.** The three replaced Ardennes child entries now leave the open roster and are retained as replaced-by-ARDENNES-SWITCH-ON decisions in completed. Parent visual/gate/release acceptance is still pending. Existing OPEN supports Summit in-progress; its foreign status stays unchanged.
 - **Arena native and canonical20/20 are green; next brief build slot requested.** Clean5c47121b is independently reviewed; only npm production build awaits global capacity. Please leave the next genuinely free slot for that brief build, then this chat's queued F1 focused/Summit replay verification. No unchanged lane/browser rerun.
 - **Summit camera increment reviewed; revised patch still unapplied.** d80954bc camera-only fix preserves accepted scene/signatures and ordinary arch arithmetic. Current independently reviewed11file approval draft is v2, adding the necessary old camera assertion with1e-6/OpenRoadguards intact; updated Kyle request supersedes v1. Neither applied; original307/331 remains red.

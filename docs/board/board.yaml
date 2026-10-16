@@ -229,9 +229,10 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "in-progress"
+    status: "blocked"
     claimed_by: codex-card-answers-01a141d7
     branch: codex/summit-switch-on
+    waiting_on: "kyle"
     locks: []
     needs: []
     details: "docs/board/cards/SUMMIT-SWITCH-ON.md"
