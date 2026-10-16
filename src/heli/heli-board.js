@@ -36,7 +36,28 @@ function jobRow(job, mode) {
 // hand. With the fire switch on, the bucket's buttons sit with the board on
 // the home pad's ground.
 const COMPASS_WORDS = Object.freeze({N: 'north', NE: 'north-east', E: 'east', SE: 'south-east', S: 'south', SW: 'south-west', W: 'west', NW: 'north-west'});
-function radioBox(fire) {
+// H4 Rescue (docs/HELI_RESCUE.md section 7): a waiting rescue with its Answer
+// and Later buttons, or the one in hand with its clock. The panel names the
+// place; Roger's words do not.
+const RESCUE_WORDS = Object.freeze({hiker: 'Lost hiker at', avalanche: 'Avalanche at', hoist: 'Driver stranded at', supply: 'Supply run to'});
+const clockWords = seconds => { const whole = Math.max(0, Math.ceil(seconds)); return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`; };
+function rescueRadio(rescue) {
+  if (rescue.active) {
+    const a = rescue.active, place = esc(a.courseName ?? 'the mountain');
+    const crates = a.kind === 'supply' ? ` &middot; crates ${a.cratesDown}/3` : '';
+    return `<div class="heli-board-radio heli-board-rescue-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">` +
+      `${RESCUE_WORDS[a.kind]} ${place}${crates} &middot; ${clockWords(a.left)} left</span></div>`;
+  }
+  if (!rescue.call) return '';
+  const c = rescue.call;
+  return `<div class="heli-board-radio heli-board-rescue-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">` +
+    `${RESCUE_WORDS[c.kind]} ${esc(c.courseName ?? 'the mountain')}.</span>` +
+    `<button type="button" class="heli-board-button" data-heli-board="radio-answer">Answer</button>` +
+    `<button type="button" class="heli-board-button" data-heli-board="radio-later">Later</button></div>`;
+}
+function radioBox(fire, rescue = null) {
+  const rescueBox = rescue ? rescueRadio(rescue) : '';
+  if (rescueBox) return rescueBox;
   if (!fire?.call) return '';
   const course = esc(fire.courseName ?? 'the forest');
   if (!fire.call.answered)
@@ -53,6 +74,16 @@ function bucketBox(view, {repairCost = 0}) {
   const repair = repairCost > 0 ? `<button type="button" class="heli-board-button" data-heli-board="bucket-repair">Repair the bucket: ${repairCost} credits</button>` : '';
   const state = bucket ? `<span class="heli-board-text">Bucket: ${esc(words)}</span>` : '';
   return `<div class="heli-board-bucket"><h3 class="heli-board-title">Bucket</h3>${state}${fit}${repair}</div>`;
+}
+
+// The rescue line is fitted and taken off at the pad, like the bucket.
+function lineBox(view) {
+  if (!view?.rescue || !atHomePad(view)) return '';
+  const line = view.rescue.line;
+  const fit = line ? `<button type="button" class="heli-board-button" data-heli-board="rescue-off"${line.who === 'pair' && !line.done ? ' disabled' : ''}>Take off the rescue line</button>`
+    : `<button type="button" class="heli-board-button" data-heli-board="rescue-fit"${view.load?.hooked || view.bucket ? ' disabled' : ''}>Fit the rescue line</button>`;
+  const state = line ? `<span class="heli-board-text">Rescue line: ${line.who === 'pair' ? 'two on the line' : 'rescuer aboard'}</span>` : '';
+  return `<div class="heli-board-line"><h3 class="heli-board-title">Rescue line</h3>${state}${fit}</div>`;
 }
 
 // The dispatch season (docs/HELI_FIRE.md section 3.6), and the first
@@ -72,10 +103,12 @@ export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assi
   if (fire) {
     const season = seasonBox(view?.season);
     if (season) parts.push(season);
-    const radio = radioBox(view?.fire);
+    const radio = radioBox(view?.fire, view?.rescue ?? null);
     if (radio) parts.push(radio);
     const bucket = bucketBox(view, fire);
     if (bucket) parts.push(bucket);
+    const line = lineBox(view);
+    if (line) parts.push(line);
   }
   if (jobs.length && atHomePad(view))
     parts.push(`<div class="heli-board-jobs"><h3 class="heli-board-title">Dispatch board</h3><ul class="heli-board-list">` +
@@ -97,6 +130,9 @@ export function handleBoardAction(action, app) {
   if (action.startsWith('take:')) return settle(session.takeJob(action.slice(5)));
   if (action === 'drop') return settle(session.dropJob());
   if (action === 'radio-answer') return settle(session.pressRadio());
+  if (action === 'radio-later') return settle(session.declineCall?.() ?? false);
+  if (action === 'rescue-fit') return settle(session.fitRescueLine?.() ?? {ok: false});
+  if (action === 'rescue-off') return settle(session.takeOffRescueLine?.() ?? {ok: false});
   if (action === 'bucket-fit') return settle(session.fitBucket());
   if (action === 'bucket-off') return settle(session.takeOffBucket());
   if (action === 'bucket-repair') return settle(session.repairBucket());
