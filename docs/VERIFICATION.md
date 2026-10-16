@@ -4,7 +4,7 @@
 
 Kyle requested switch-on and installation while away. The accepted course and finishing corrections passed 217/217 lane suites, jobs 4, a production build and independent code review on 55d2b7de. Claude accepted the actual finishing views in d807c0e2. The native eight-car packet has zero player crashes/resets and all seven CPUs finish; the last pit correction has separate valid grid/hairpin pictures. Only Ardennes' actual scene baseline changed; foreign baselines and old replays are exact.
 
-Kyle explicitly SKIPPED frame timing because other sessions stay active. No p95 or world-build pass is claimed. Exact release full-tier validation and staged installation are still pending on RELEASE-ARDENNES. The original 1c0cb3d0 night browser aggregate remains 119/129, failed; no old failure is relabelled green. Live still serves the Helicopter build below.
+Kyle explicitly SKIPPED frame timing because other sessions stay active. No p95 or world-build pass is claimed. The first exact ac8fd6c3 full release run passed452/453; its sole failure was an owner-less vegetation test fixture. The fixture-only correction89a4a26c passed17/17lane suites/jobs4, build and independent review, preserving every old assertion and adding real beech-root/conservation checks. No runtime/assets changed. The corrected final commit still needs its exact full pass and staged installation on RELEASE-ARDENNES. The original 1c0cb3d0 night browser aggregate remains 119/129, failed; no old failure is relabelled green. Live still serves the Helicopter build below.
 
 ## Helicopter installed, 15 October 2026
 
