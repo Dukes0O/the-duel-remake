@@ -104,3 +104,32 @@ Claude821b829f chose exact historical state shape instead of projecting old hash
 Changed assertions: only this card new tyre tests now require absent inactive fields (stronger exact-shape guard), instead of explicit false, following Claude written state-shape decision. Active true/zero assertions remain. Exact catalog inventories add tyre-slip dev/count+1 and the private preview list adds tyre-slip, as Claude approved. Course-kit copies the actual existing catalog test, no separate duplicated hook edit needed. Original failed canonical remains historical; new changed-source canonical will run the six old suites unchanged and the affected reset/reader coverage. Required independent delta review, gate/build pending; old macro/recovery/pin captures are not repeated manually.
 
 Current integration union resolves actual App import/payload conflicts by keeping racing-line helpers, Intel imports and both exact tyre/Intel result fields. Reference worker/set/CLI conflicts keep both explicit tyre flags/probe-only publication guard and Intel retainPoses/poses-only behavior; no reference is regenerated. Automatically merged Coach/TeamRoom source and all current generated poses retained. Required delta review and gate cover this union.
+
+
+## Corrected canonical verdict and one missed new assertion
+
+Actual corrected3e2bf73f canonical completed16October17:13:43UTC:395/396,
+jobs4, zero notRun, exit1,3562173.9613ms. Source stayed clean/unchanged;
+wrapper38356 and runner7204 drained. This FAILED packet remains retained in
+.evidence/2026-10-16/TYRE-SLIP/canonical-resume-3e2bf73f. The sole failed
+suite was test-tyre-slip,28/29 passing: its new private field-tool case still
+expected explicit tyreSlipRules:false, although Claude821b829f required
+byte-identical inactive states with neither field. All six old whole-state
+suites, the other395 suites and prior physical/native acceptances remain
+unchanged/passed; no runtime or pin repair is needed.
+
+Changed only that card's new assertion: the actual Casual field-tool state
+must own NEITHER tyreSlip nor tyreSlipRules, rather than merely reading
+false. The requested flag must still be true, the actual Pro line-tool
+latch must still be true, and every old hash/crash/recording stays exact.
+This is the same written byte-identical-state decision as73461d90, correcting
+one missed own test, not relaxing a numeric or historical assertion. Both
+keys are checked explicitly, so an undefined-valued property is rejected.
+No native rerun/build executed for this edit; required delta review and the
+changed-file canonical remain pending. Do not repeat395 unchanged passes.
+
+The existing canonical CLI has no --base/--since option: changedFiles uses
+the integration merge base. Root will select the actual two-file commit
+delta through the existing exported main/getChanges API, retaining the real
+lane graph, smoke/replay guards, jobs4 and default native runner; no new
+framework or rewritten ref. Preserve the original failed packet separately.
