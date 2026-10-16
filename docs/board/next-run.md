@@ -42,6 +42,12 @@ its remaining presentation hook does not hold the next core/save cards.
    start nothing heavy while a FULL TIER FOR RELEASE STARTING or FRAME CHECK
    STARTING has no later DONE. At most three heavy jobs across all chats.
 
+**Build while checks wait (Kyle, 15 October evening).** A frozen card waiting
+only for a heavy slot does not stop source work. Release core/save locks it
+will not edit, preserve the exact frozen candidate and continue another ready
+Codex card in an existing or properly admitted card lane. Respect real file
+ownership and the six-lane/three-course limits. Summit keeps merge priority;
+do not launch another heavy job above three or call an unrun check passed.
 ## Tonight, 14 to 15 October (Claude, 19:50; wins over the order above where they differ)
 
 Kyle, 14 October evening: "do what you can"; Summit Run may go live overnight

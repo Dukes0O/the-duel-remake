@@ -13,7 +13,7 @@ export const FEATURE_STATES = Object.freeze({
   'fuel-run': 'on', 'bounty-hunt': 'on', arsenal: 'on', 'salt-flats': 'on',
   'crew-gear': 'on', 'fight-voices': 'on', 'cpu-crews': 'on', 'ambush-alley': 'on', gunn: 'on',
   // Phase 4 (docs/CIRCUITS.md): racing a full field in a Grand Prix.
-  'lap-choice': 'on', 'snowmen': 'on', yeti: 'dev', 'rival-voices': 'dev',
+  'lap-choice': 'on', 'snowmen': 'on', yeti: 'on', 'rival-voices': 'dev',
   'grand-prix': 'on', 'cpu-racecraft': 'dev', 'grand-prix-career': 'dev', 'snow-world': 'dev',
   // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.
   ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
@@ -22,7 +22,8 @@ export const FEATURE_STATES = Object.freeze({
   // The helicopter (docs/HELICOPTER.md): Kestrel One, H1 First flight. Released 14 October 2026.
   helicopter: 'on',
   // H2 Fire (docs/HELI_FIRE.md): forest fires, the bucket and burnt courses. Works only with the helicopter on.
-  'forest-fire': 'dev',
+  // Released 15 October 2026.
+  'forest-fire': 'on',
   // Earned cars and medal sheets (docs/EARNED_CARS.md). Off in the game.
   'earned-cars': 'dev',
 });

@@ -16,7 +16,7 @@ const saved=JSON.stringify(SHORTCUT_PRESET_DATA),reports=[];
 for(const definition of COURSE)for(const seed of supportsRouteVariants(definition)?ROUTE_VARIANTS.map(route=>route.seed):[1989]){
   const before=performance.now(),course=new Course(definition,seed),presetMs=performance.now()-before;
   if(definition.expansion||definition.script){
-    equal(course.features.shortcuts,[],'authored circuits do not generate shortcuts');
+    equal(course.features.shortcuts,(definition.roadBranches??[]).map(branch=>({...branch,offset:branch.offset*branch.side,transition:.15})),'authored circuits preserve exactly their declared branches without generating shortcuts');
     equal(course._shortcutSource,undefined,'authored circuits bypass the preset cache entirely');
     check(!SHORTCUT_PRESET_DATA.entries.some(entry=>entry.event===definition.id),'no empty expansion geometry is added to the legacy preset payload');
     continue;
