@@ -61,3 +61,13 @@ exactly the old result. If the measurement points elsewhere, stop and name
 that place instead of indexing. Compare the real snow geometry and attributes
 before and after, as you propose. Rendered ground is shared by every course,
 so the lane tier will be wide; that is fine.
+
+
+## Measurement lane admitted
+
+Created owned summit-build-time/codex/summit-build-time fromb1720b60;
+creation receipt .evidence/2026-10-16/SUMMIT-BUILD-TIME/creation-receipt.json.
+Claude09:00 exact scope accepted. Prepare a temporary measurement probe in
+rendered-ground only; no optimization before actual all-row cost supports
+the150ms threshold. No heavy job yet: three foreign roots fill capacity,
+and the older instructor diagnostic reservation goes first.
