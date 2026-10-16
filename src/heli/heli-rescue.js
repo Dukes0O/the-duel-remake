@@ -235,10 +235,13 @@ export function stepRescue(line, heli, {target = null, kind = null, zones = []} 
 // stretcher ({stretcher: true}) a bump starts above 8 m/s and is two steps
 // above 14. Returns {bump, steps, condition, event}. Credits are never
 // touched here.
-export function rescueHit(line, event, {stretcher = false} = {}) {
+export function rescueHit(line, event, {stretcher = false, gear = null} = {}) {
   const none = {bump: false, steps: 0, condition: line?.condition ?? 'unhurt', event: null};
-  const bumpAt = stretcher ? RESCUE.stretcherBumpSpeed : RESCUE.bumpSpeed;
-  const hardAt = stretcher ? RESCUE.stretcherHardSpeed : RESCUE.bumpHardSpeed;
+  // The worn stretcher's numbers (heli-skins.js gearStats) win; the base kit
+  // has none (null), and the older stretcher flag keeps its own pair.
+  const geared = Number.isFinite(gear?.bumpHurtAbove) && Number.isFinite(gear?.bumpTwoStepsAbove);
+  const bumpAt = geared ? gear.bumpHurtAbove : stretcher ? RESCUE.stretcherBumpSpeed : RESCUE.bumpSpeed;
+  const hardAt = geared ? gear.bumpTwoStepsAbove : stretcher ? RESCUE.stretcherHardSpeed : RESCUE.bumpHardSpeed;
   if (!peopleOnLine(line) || line.done || line.who !== 'pair' || event?.type !== 'cargoHit' || event.with === 'helicopter' ||
     (event.id !== undefined && event.id !== line.id)) return none;
   // A ground hit is this touchdown's whole count: no rough set-down on top.
@@ -253,11 +256,18 @@ export function rescueHit(line, event, {stretcher = false} = {}) {
 // The pay by the casualty's condition at the handover: 100%, 60% or 25%,
 // rounded to a whole credit, never below 0 and never above the base. A base
 // that is not a finite number pays 0; an unknown condition pays as badly hurt.
-export function rescuePay(basePay, condition) {
+// A bonus (the medevac skin's stretcher, hoistBonus) is added once, whole, to a
+// rescue that pays something; it is not cut by the casualty's condition.
+export function rescuePay(basePay, condition, bonus = 0) {
   const base = Number.isFinite(basePay) ? Math.max(0, basePay) : 0;
   const share = Object.hasOwn(CONDITION_PAY, condition) ? CONDITION_PAY[condition] : CONDITION_PAY.badly;
-  return Math.min(Math.floor(base), Math.round(base * share));
+  const extra = base > 0 && Number.isFinite(bonus) && bonus > 0 ? Math.floor(bonus) : 0;
+  return Math.min(Math.floor(base), Math.round(base * share)) + extra;
 }
+
+// The stretcher's extra pay (gear.hoistPayBonus) for a rescue of this kind:
+// hoist rescues only; every other kind, and the base kit, add nothing.
+export const hoistBonus = (gear, kind) => kind === 'hoist' && Number.isFinite(gear?.hoistPayBonus) ? Math.max(0, gear.hoistPayBonus) : 0;
 
 // A supply crate on the ground at (x, z), ready to hook, like the lesson
 // crate. set: 'summitRun' or 'tremblantSnow'; massKg overrides the table
@@ -301,4 +311,73 @@ export function supplyPay(crates, {inTime = true, count = 3} = {}) {
   const crateTotal = crates.reduce((sum, crate) => sum + cratePay(crate), 0);
   const bonus = inTime && down >= count ? SUPPLY_PAY.allCratesBonus : 0;
   return {crates: crateTotal, bonus, total: crateTotal + bonus, down};
+}
+
+// ---- the cargo net (supply skin, docs/HELI_WILDLIFE.md section 5.3) ----------
+// With the net worn (gear.crates is 2) a second crate rides the cable with the
+// first. The crate on the hook stays the cable's load (the pendulum, drag and
+// set-down all apply); the ones in the net are carried along with it and their
+// weights add to the load's. The hook limit is unchanged (gear.hookLimitKg).
+// The base kit carries one crate and none of this is reached.
+
+// The crates aboard a carrier, the one on the hook first.
+export const netCrates = carrier => [carrier, ...(carrier?.netCrates ?? [])];
+
+// Can this crate join the net now? It must be a supply crate on the ground
+// within the hook's reach of the carrier, not moving relative to it faster than
+// the hook can hook, and the weights together must stay under the hook limit.
+// Returns {ok, reason}.
+export function canNetCrate(carrier, crate, gear) {
+  const aboard = netCrates(carrier), room = Number.isFinite(gear?.crates) ? gear.crates : 1;
+  if (!carrier?.supply || !carrier.hooked) return {ok: false, reason: 'Hook a crate first.'};
+  if (!crate?.supply || crate === carrier || crate.hooked || aboard.includes(crate)) return {ok: false, reason: 'That is not a crate to net.'};
+  if (aboard.length >= room) return {ok: false, reason: 'The net is full.'};
+  if (!crate.onGround || crate.falling) return {ok: false, reason: 'The crate must be on the ground.'};
+  const reach = Number.isFinite(gear?.hookReach) ? gear.hookReach : CABLE.hookReach;
+  if (Math.hypot(carrier.x - crate.x, carrier.z - crate.z) > reach) return {ok: false, reason: 'Too far to net.'};
+  if (Math.hypot(carrier.vx - crate.vx, carrier.vy - crate.vy, carrier.vz - crate.vz) > CABLE.hookSpeed) return {ok: false, reason: 'Too fast to net.'};
+  const limit = Number.isFinite(gear?.hookLimitKg) ? gear.hookLimitKg : Infinity;
+  if (aboard.reduce((sum, one) => sum + (one === carrier ? carrier.ownKg ?? carrier.massKg : one.massKg), 0) + crate.massKg > limit)
+    return {ok: false, reason: 'Too heavy for the hook.'};
+  return {ok: true, reason: null};
+}
+
+// Puts the crate in the net: the carrier's mass becomes its own plus the net's.
+export function netCrate(carrier, crate, gear) {
+  const check = canNetCrate(carrier, crate, gear);
+  if (!check.ok) return check;
+  carrier.ownKg ??= carrier.massKg;
+  (carrier.netCrates ??= []).push(crate);
+  crate.netted = true;
+  crate.hooked = true;
+  crate.onGround = false;
+  carrier.massKg = carrier.ownKg + carrier.netCrates.reduce((sum, one) => sum + one.massKg, 0);
+  return {ok: true, reason: null, massKg: carrier.massKg};
+}
+
+// Run after each cable step: the crates in the net hang beside the carrier,
+// 1.5 m apart on the side of its heading, with its speed.
+export function carryNet(carrier) {
+  (carrier?.netCrates ?? []).forEach((crate, i) => {
+    const side = (i + 1) * 1.5, c = Math.cos(carrier.heading ?? 0), s = Math.sin(carrier.heading ?? 0);
+    Object.assign(crate, {x: carrier.x + c * side, y: carrier.y, z: carrier.z - s * side,
+      vx: carrier.vx, vy: carrier.vy, vz: carrier.vz, heading: carrier.heading ?? 0, onGround: carrier.onGround, falling: carrier.falling, hooked: true});
+  });
+}
+
+// The carrier has been let go and has come to rest: the crates in the net are
+// set down beside it, each remembering how it was last let go (the carrier's
+// noteCrateRelease), and the carrier is its own weight again. Returns the
+// crates set down. Does nothing while the carrier is still hooked or falling.
+export function spillNet(carrier) {
+  if (!carrier?.netCrates?.length || carrier.hooked || carrier.falling || !carrier.onGround) return [];
+  carryNet(carrier);
+  const crates = carrier.netCrates;
+  for (const crate of crates) {
+    Object.assign(crate, {hooked: false, falling: false, onGround: true, netted: false, vx: 0, vy: 0, vz: 0,
+      releaseDrop: carrier.releaseDrop ?? 0});
+  }
+  carrier.netCrates = [];
+  carrier.massKg = carrier.ownKg ?? carrier.massKg;
+  return crates;
 }
