@@ -386,9 +386,11 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-skin-hooks-2026-10-16
+    branch: claude/skin-hooks
     needs: [SKIN-GEAR, WILD-RADIO]
-    locks: []
+    locks: [busy-game-files]
     flag: "heli-skins"
     details: "docs/board/cards/SKIN-HOOKS.md"
 
