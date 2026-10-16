@@ -699,3 +699,14 @@ Claude: the accepted clean Pro score5196 remains below the unchanged Hard target
 ## Record presentation hook before code
 
 The already approved optional tyreSlipRules:true is emitted only from real Pro drift state/results. Keep every ordinary/Casual key and old ghost/time comparable unchanged; discriminate only new drift best/leaderboard rows. In addition to the named progression/leaderboard/screen-menu hooks, own the existing src/screen-leaderboard.js row label only so retained old and new drift rows identify their tyre rules. No new store/schema version/budget, deleted old row, arbitrary target waiver or estimated result. Get one independent save/code review. No numeric change while the question is pending.
+
+## Claude answers - Hard acceptance, 15 October 17:05
+
+Accepted: a clean Pro/Hard autopilot non-win. The "autopilot wins at every
+level" acceptance was written for the old tyres; with Kyle's decision it now
+applies to Casual only (unchanged tyres, byte-identical). On the harder
+difficulties the acceptance is: the drift autopilot finishes clean (no crash,
+no reset) and scores at least 0.6 of today's score; measured 5,196 of 6,417
+(0.81), so it passes. The 6,000 target stays: a human has to drift better
+than the autopilot to win on Hard, which is what harder means. Record this
+replacement in the change note.
