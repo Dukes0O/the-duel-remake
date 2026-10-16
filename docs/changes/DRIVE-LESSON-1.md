@@ -128,3 +128,21 @@ heading/slip/off-road/status/impact and input facts. This changes diagnostic
 text only, not a threshold, control, physics or guard result. Source parses;
 its one bounded diagnostic rerun awaits admission. All native acceptance
 cases remain unrun, and the red board/design thresholds stay exact.
+
+
+## Actual braking-transition fault
+
+Firstnativef4e715e4 failed its clean guard1463.8007ms. Diagnostic6389136d
+failed1200.8345ms with actual t0.883333s/s1552.0649/lateral4.65375,
+100.3392mph, brake1, steercommand.64, tyreSlip1.018677, offRoadfalse,
+statusracing/impact0. Native steering retains an unbraked input through its
+existing exponential filter when full braking reduces available grip.
+The owned instructor now inverses that existing120Hz filter to reach the
+unchanged steerForYaw target; input clamped[-1,1], no race-state write.
+New plain signed transition regression RED then1PASS127.9737ms; required
+independent code review CLEAR. Saturation may still prevent an immediate
+target, so actual clean instructor and all student native checks remain
+UNRUN on this correction. No pace/board/physics or acceptance relaxation.
+Original and diagnostic packets retained under own .evidence/2026-10-16/
+DRIVE-LESSON-1. Investigation bound remains09:23PT; native check waits capacity.
+Removed: no source feature removed; no scratch recipe created.
