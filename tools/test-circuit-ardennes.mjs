@@ -1142,3 +1142,19 @@ test('released Ardennes still requires real course ownership and native purchase
     assert.equal(app.duel.course.def.id,'ardennes-forest');assert.equal(app.duel.state.opponents.length,7);
   });
 });
+
+
+test('finishing intel keeps the generated Wall Crest and only analysed corner notes',async()=>{
+  const {buildTrackDossier,courseFingerprint}=await import('../src/track-analysis.js');
+  const {referenceLap}=await import('../src/reference-laps.js');
+  const reference=referenceLap('ardennes-forest');assert.ok(reference,'the actual bundled Ardennes reference is required');
+  const course=new Course(ARDENNES_FOREST,1989),dossier=buildTrackDossier(course,{reference});
+  const crest=dossier.flags.filter(flag=>flag.kind==='crest'&&flag.title.includes('Wall Crest'));
+  assert.equal(crest.length,1,'Wall Crest must not gain a second authored crest flag');
+  assert.equal(crest[0].id,'crest-2');assert.equal(crest[0].generated,true);
+  assert.equal(ARDENNES_FOREST.intel.flags.length,6);
+  for(const id of Object.keys(ARDENNES_FOREST.intel.notes))
+    assert.ok(Object.hasOwn(dossier.notes,id),'engineer notes belong to analysed corners: '+id);
+  assert.equal(courseFingerprint(course),courseFingerprint(new Course({...ARDENNES_FOREST,intel:undefined},1989)),
+    'finishing notes preserve the default-sector reference fingerprint');
+});

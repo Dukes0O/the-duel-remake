@@ -206,13 +206,13 @@ export const ARDENNES_FOREST = Object.freeze({
   fieldSize: 8, grandPrixLaps: 2,
   // Team Room intel (docs/CIRCUITS.md section 7b.1), written by Claude in the finishing pass. Sectors stay
   // the default thirds, so the course fingerprint and reference lap are unchanged. Target speeds and gears
-  // come from the reference lap; boards are named only where boards stand.
+  // come from the reference lap; boards are named only where boards stand. Wall Crest keeps the
+  // generated crest flag (crest-2): engineer notes apply only to analysed corners.
   intel: {
     flags: [
       {id: 'red-water', kind: 'signature', s: 785, title: 'Red Water and The Wall', camera: {back: 40, ahead: 90}},
       {id: 'kestrel', kind: 'overtaking', s: 1950, title: 'Kestrel into Les Combes'},
       {id: 'bus-stop', kind: 'overtaking', s: 6259, title: 'The Bus Stop'},
-      {id: 'wall-crest', kind: 'crest', s: 940, title: 'Wall Crest'},
       {id: 'la-fontaine', kind: 'corner', s: 390, title: 'La Fontaine'},
       {id: 'riverside', kind: 'corner', s: 2755, title: 'Riverside'},
       {id: 'long-left', kind: 'corner', s: 3519, title: 'Long Left'},
@@ -221,7 +221,6 @@ export const ARDENNES_FOREST = Object.freeze({
       'la-fontaine': {brakeBoard: 100, line: 'Stay left on the way down, brake in a straight line, late apex, let it run out to the left.', note: 'Downhill into the tightest corner on the lap. Lap one is a scramble: brake at the 150 board and stay out of trouble.'},
       'red-water': {line: 'Wide on the left, clip the left kerb over the stream, then straight across for The Wall.', note: 'The car squats at the bottom. Keep it straight through the dip; the stream is where you lose it.'},
       'the-wall': {line: 'Inside kerb on the right, then let the climb carry you left.', note: 'Twenty-three percent. The car is pressed into the road, so it takes more throttle than you think.'},
-      'wall-crest': {line: 'Aim at the middle of the treetops, small steering only.', note: 'Blind and light over the top. Never turn while it is in the air; Kestrel opens straight ahead.'},
       'les-combes': {brakeBoard: 100, line: 'Brake in a straight line on the right, turn in late, inside kerb.', note: 'The place to pass after Kestrel. Finish braking before you turn: it goes light over the top.'},
       'combes-exit': {line: 'Hold the right, late apex on the left, drift right for Malmedy.', note: 'A clean exit here is free time down the hill.'},
       'malmedy': {brakeBoard: 100, line: 'Brake early, it is downhill, middle apex.', note: 'The road falls away on the exit. Stay off the grass.'},
