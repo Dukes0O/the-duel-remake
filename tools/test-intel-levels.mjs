@@ -124,3 +124,38 @@ test('actual native three-lap GP earns distinct laps and its real placing withou
   assert.equal(JSON.stringify(app.profile),before,'duplicate receipt and completed-state callback cannot write');
  });
 });
+
+test('Team Room intel gates hide notes and sector data while keeping the actual map and prices',async()=>{
+ const screen=await import('../src/screen-team-room.js');
+ const {Course}=await import('../src/course.js');
+ const {COURSE}=await import('../src/config.js');
+ const {referenceLap}=await import('../src/reference-laps.js');
+ const {buildTrackDossier}=await import('../src/track-analysis.js');
+ const reference=referenceLap(id,'fixed');
+ const dossier=buildTrackDossier(new Course(COURSE.find(c=>c.id===id),reference.seed),{route:'fixed',reference});
+ const before=JSON.stringify(dossier);
+ const one=screen.teamRoomMarkup({...dossier,intelLevel:1,canBuyIntel:true});
+ assert.match(one,/Track map/);assert.match(one,/Drive 3 laps/);
+ assert.doesNotMatch(one,/SECTOR 1/);
+ assert.match(one,/data-team-buy="3"[^>]*>[^<]*400 credits/);
+ assert.match(one,/data-team-buy="4"[^>]*>[^<]*800 credits/);
+ assert.equal(typeof screen.engineerMarkup,'function');
+ const secret={kind:'corner',engineer:{brakeBoard:150,gear:3,targetKph:88,line:'secret line',note:'secret advice'}};
+ const locked=screen.engineerMarkup(secret,{intelLevel:1});
+ assert.doesNotMatch(locked,/secret|150 m|88 km/);
+ assert.match(screen.engineerMarkup(secret,{intelLevel:2}),/secret line/);
+ assert.match(screen.telemetryMarkup({...dossier,intelLevel:2}),/Finish in the top 5/);
+ assert.doesNotMatch(screen.teamRoomMarkup({...dossier,intelLevel:3}),/data-team-buy="3"/);
+ assert.match(screen.teamRoomMarkup({...dossier,intelLevel:3}),/SECTOR 1/);
+ assert.doesNotMatch(screen.teamRoomMarkup({...dossier,intelLevel:4}),/data-team-buy=/);
+ assert.equal(JSON.stringify(dossier),before,'rendering never mutates track/reference data');
+});
+test('Team Room purchases are disabled outside the menu and feedback is escaped',async()=>{
+ const {teamRoomMarkup}=await import('../src/screen-team-room.js');
+ const {Course}=await import('../src/course.js');const {COURSE}=await import('../src/config.js');
+ const {referenceLap}=await import('../src/reference-laps.js');const {buildTrackDossier}=await import('../src/track-analysis.js');
+ const reference=referenceLap(id,'fixed'),dossier=buildTrackDossier(new Course(COURSE.find(c=>c.id===id),reference.seed),{route:'fixed',reference});
+ const html=teamRoomMarkup({...dossier,intelLevel:1,canBuyIntel:false,intelMessage:'<img src=x onerror=bad>'});
+ assert.match(html,/data-team-buy="3"[^>]*disabled/);assert.match(html,/Return to the menu/);
+ assert.doesNotMatch(html,/<img src=x/);assert.match(html,/&lt;img/);
+});

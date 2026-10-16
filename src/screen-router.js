@@ -154,6 +154,7 @@ const teamRoom = createTeamRoom({host: root,
     const course = new Course(definition, reference?.seed ?? 1989);
     teamRoomPlayerId = app.player.id;
     return {...buildTrackDossier(course, {route, reference}), course,
+      intelLevel: app.getIntelLevel(eventId), canBuyIntel: app.duel.state.status === 'menu',
       telemetry: app.getLapTelemetry?.({eventId, route, courseFingerprint: reference.courseFingerprint})};
   },
   async capture(dossier, flag, {signal}) {
@@ -163,6 +164,8 @@ const teamRoom = createTeamRoom({host: root,
     return readiness.handle.captureTrackSnapshot({course: dossier.course, flag});
   },
   clearCapture: () => readiness.handle?.clearTrackSnapshot(),
+  buyIntel: (eventId,level) => app.player.id === teamRoomPlayerId ? app.buyIntel(eventId,level) :
+    {ok:false,reason:'Reopen the Team Room for the current player.'},
 });
 const courseActions = createCourseActions({app, choices,
   careerEnabled: () => app._switches().enabled('grand-prix-career'),
