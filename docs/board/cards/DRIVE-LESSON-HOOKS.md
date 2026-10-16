@@ -131,3 +131,9 @@ rows now include driving-lessons:91catalog checks and8Wasteland tests PASS,
 independent delta review CLEAR. Course-kit copies the corrected hooks.
 No native, browser, lane/build or playable acceptance; instructor and Tyre
 remain final dependencies. Core/save locks remain free.
+
+
+The reviewed own-line lesson47ee11cc is now combined conflict-free into the
+isolated hook lane, frozen2706279e382bc45273b248e4f8c2c27b3a44181c. No
+passing check repeated or acceptance inferred. The caller sampling question
+remains on DRIVE-LESSON-1; no integration merge or feature enablement.
