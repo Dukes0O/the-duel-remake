@@ -5,7 +5,8 @@ import {createProfile, normalizeProfile, loadProfile, saveProfile, loadPlayers, 
 import {HELI_SAVE_VERSION, HELI_MONEY, HELI_LESSONS, createHeli, normalizeHeli, heliOf, buyFuel, setFuel,
   chargeRepair, repairCost, fuelTruck, notePlayDay, finishLesson, placeCar, carAt, countFlight,
   takeJob, dropJob, finishJob, FIRE_MONEY, MISSION_KINDS, BADGES, BUCKET_DAMAGE, heliHash, createMissions, missionsOf, fireOf,
-  bucketDamageOf, setMissions, setFire, putOutFire, loseFire, burnCourse, addScar, buyBack, damageBucket, repairBucket} from '../src/heli/heli-save.js';
+  bucketDamageOf, setMissions, setFire, putOutFire, loseFire, burnCourse, addScar, buyBack, damageBucket, repairBucket,
+  RESCUE_KINDS, RESCUE_STAGES, RESCUE_BADGES} from '../src/heli/heli-save.js';
 
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log('PASS ' + name); }
@@ -499,6 +500,112 @@ check('no H2 helper changes the profile it was given', () => {
   addScar(profile, 'tremblant-woods', 0, [1], on); buyBack(profile, 'tremblant-woods', on); damageBucket(profile, 3, on); repairBucket(profile, on);
   notePlayDay(profile, '2026-12-01', on);
   assert.equal(profile.credits, 20_000);
+});
+
+// ---- H4 Rescue fields (docs/HELI_RESCUE.md section 10) ----
+const rescueRecord = {kind: 'hiker', id: 'hiker-5', courseId: 'tremblant-woods', seed: 1618033988, clockSeconds: 312.4, stage: 'carry',
+  crates: [0, 1, 2], condition: 1};
+const wreckRecord = {courseId: 'panorama-ridge', carId: 'falcone_f42', x: -182.4, z: 96.7, day: 11};
+const withMissions = missions => normalizeHeli({version: 1, missions}).missions;
+
+check('the rescue fixture keeps every H4 field through the real load and save, and older saves read back unchanged', () => {
+  const fixture = JSON.parse(readFileSync(new URL('./fixtures/saves/12-heli-rescue.json', import.meta.url), 'utf8'));
+  const [rescuer, fireOnly, plain] = fixture.storage[PLAYERS_KEY].players.map(player => player.profile.heli);
+  const players = loadPlayers(memoryStorage(fixture.storage));
+  assert.deepEqual(players.players[0].profile.heli, rescuer, 'written in normalized order and already clean');
+  assert.equal(JSON.stringify(players.players[0].profile.heli), JSON.stringify(rescuer), 'same bytes, same key order');
+  assert.equal(JSON.stringify(players.players[1].profile.heli), JSON.stringify(fireOnly), 'an H2 save gains no H4 field');
+  assert.equal(JSON.stringify(players.players[2].profile.heli), JSON.stringify(plain));
+  for (const field of ['rescue', 'hoists', 'searches', 'supplies', 'rescued', 'wreck'])
+    assert.equal(Object.hasOwn(players.players[1].profile.heli.missions, field), false, field);
+  assert.equal('condition' in rescuer.missions.rescue && !('bumps' in rescuer.missions.rescue), true, 'it saves condition, never bumps');
+  const store = memoryStorage();
+  assert(saveProfile(players.players[0].profile, store));
+  assert.deepEqual(loadProfile(store).heli, rescuer);
+});
+
+check('H4 fields are optional: the engine record and an H2 record gain none', () => {
+  assert.deepEqual(createMissions(), {seed: 0, draws: 0, need: 0, count: 0, last: null, call: null,
+    quiet: {untilDay: 0, engineSeconds: 0}, firesOut: 0, badges: []});
+  const h2 = {seed: 5, draws: 1, need: 3, count: 1, last: 'fire', call: {kind: 'fire', id: 'fire-1', courseId: 'tremblant-woods', day: 2, answered: true},
+    quiet: {untilDay: 4, engineSeconds: 10}, firesOut: 1, badges: ['firefighter']};
+  assert.deepEqual(withMissions(h2), h2);
+  assert.deepEqual([...RESCUE_KINDS], ['hiker', 'avalanche', 'hoist', 'supply']);
+  assert.deepEqual([...RESCUE_STAGES], ['fly', 'found', 'hold', 'carry']);
+  assert.deepEqual([...RESCUE_BADGES], ['firefighter', 'rescue']);
+  assert.deepEqual([...MISSION_KINDS], ['fire'], 'the engine offers no rescue kind yet');
+});
+
+check('the H4 fields normalize: condition, crates, stage, counts, kinds, badges and the wreck', () => {
+  const missions = {seed: 7, last: 'supply', badges: ['rescue', 'firefighter', 'rescue', 'mayor'], hoists: 2, searches: 1.5, supplies: -3, rescued: 2 ** 40,
+    call: {kind: 'hoist', id: 'hoist-2', courseId: 'panorama-ridge', day: 4, answered: false, flights: 2},
+    rescue: rescueRecord, wreck: wreckRecord};
+  const stored = withMissions(missions);
+  assert.equal(stored.last, 'supply');
+  assert.deepEqual(stored.badges, ['rescue', 'firefighter']);
+  assert.deepEqual([stored.hoists, 'searches' in stored, stored.supplies, stored.rescued], [2, false, 0, 1_000_000], 'counts are whole numbers from 0 to 1,000,000; a fraction is dropped');
+  assert.deepEqual(stored.call, {kind: 'hoist', id: 'hoist-2', courseId: 'panorama-ridge', day: 4, answered: false, flights: 2});
+  assert.deepEqual(stored.rescue, rescueRecord);
+  assert.deepEqual(stored.wreck, wreckRecord);
+  assert.deepEqual(withMissions(stored), stored, 'normalizing twice changes nothing');
+  // An old-style call has no flights, and a bad count is dropped, not zeroed.
+  const call = {kind: 'avalanche', id: 'a-1', courseId: 'tremblant-snow', day: 1};
+  assert.deepEqual([withMissions({call}).call, withMissions({call: {...call, flights: 'x'}}).call], [{...call, answered: false}, {...call, answered: false}]);
+  assert.equal(withMissions({call: {...call, kind: 'smoke'}}).call, null);
+  // Condition and crates are clamped, never thrown on; bumps is not a field.
+  const odd = withMissions({rescue: {...rescueRecord, condition: 9, crates: [5, -1, 'x', 1], bumps: 3, extra: true}}).rescue;
+  assert.deepEqual([odd.condition, odd.crates, 'bumps' in odd, 'extra' in odd], [2, [2, 0, 0], false, false]);
+  for (const condition of [-4, 'hurt', null, 1.5, NaN]) assert.equal(withMissions({rescue: {...rescueRecord, condition}}).rescue.condition, 0, String(condition));
+  assert.deepEqual(withMissions({rescue: {...rescueRecord, crates: 'x'}}).rescue.crates, [0, 0, 0]);
+  assert.deepEqual(withMissions({rescue: {...rescueRecord, crates: [2]}}).rescue.crates, [2, 0, 0]);
+  assert.deepEqual([withMissions({rescue: {...rescueRecord, seed: 2 ** 33, clockSeconds: 'soon'}}).rescue].map(r => [r.seed, r.clockSeconds]), [[0, 0]]);
+  assert.equal(withMissions({rescue: {...rescueRecord, clockSeconds: -5}}).rescue.clockSeconds, 0);
+  assert.equal(withMissions({rescue: {...rescueRecord, clockSeconds: 12.34}}).rescue.clockSeconds, 12.3);
+  for (const stage of RESCUE_STAGES) assert.equal(withMissions({rescue: {...rescueRecord, stage}}).rescue.stage, stage);
+  // A rescue that cannot say what, where and how far along it is reads as none; so does a wreck.
+  const none = [{...rescueRecord, kind: 'fire'}, {...rescueRecord, kind: 'smoke'}, {...rescueRecord, stage: 'sleep'}, {...rescueRecord, courseId: 'nowhere'},
+    {...rescueRecord, id: 'Bad Id'}, 'x', 7, [], null];
+  for (const rescue of none) assert.equal(withMissions({rescue}).rescue, null, JSON.stringify(rescue));
+  const lost = [{...wreckRecord, courseId: 'nowhere'}, {...wreckRecord, carId: 'no_such_car'}, {...wreckRecord, day: -1}, {...wreckRecord, day: 'x'},
+    {...wreckRecord, x: 'far'}, {...wreckRecord, z: NaN}, {...wreckRecord, x: 1e9}, 'x', null];
+  for (const wreck of lost) assert.equal(withMissions({wreck}).wreck, null, JSON.stringify(wreck));
+  assert.deepEqual(withMissions({wreck: {...wreckRecord, x: 1.234, z: -5.678}}).wreck, {...wreckRecord, x: 1.2, z: -5.7});
+});
+
+check('wrong-type H4 fields never throw, never wipe other progress, and the helpers still work on them', () => {
+  const heli = normalizeHeli({version: 1, fuelKg: 60, refuels: 4, missions: {seed: 9, count: 5, firesOut: 2, badges: ['firefighter'],
+    rescue: 5, wreck: [1], hoists: '3', searches: null, supplies: {}, rescued: true}});
+  assert.deepEqual([heli.fuelKg, heli.refuels, heli.missions.seed, heli.missions.count, heli.missions.firesOut, heli.missions.badges], [60, 4, 9, 5, 2, ['firefighter']]);
+  assert.deepEqual([heli.missions.rescue, heli.missions.wreck], [null, null]);
+  for (const field of ['hoists', 'searches', 'supplies', 'rescued']) assert.equal(Object.hasOwn(heli.missions, field), false, field);
+  const profile = withHeli(heli);
+  assert.equal(missionsOf(profile).count, 5);
+  assert.equal(notePlayDay(profile, '2026-12-01', on).ok, true);
+  assert.equal(setMissions(profile, {...missionsOf(profile), rescue: 'x', wreck: 3}, on).ok, true);
+});
+
+check('a rescue field stored through the engine record keeps the rest of the profile', () => {
+  const missions = {...createMissions(), seed: 4, rescue: rescueRecord, rescued: 1, badges: ['rescue']};
+  const stored = setMissions(withHeli({fuelKg: 80, flights: 3}), missions, on);
+  assert.deepEqual(missionsOf(stored.profile), missions);
+  assert.deepEqual([heliOf(stored.profile).fuelKg, heliOf(stored.profile).flights, stored.profile.credits], [80, 3, 1000]);
+  assert.equal(setMissions(withHeli(), missions, {enabled: false}).ok, false);
+});
+
+check('a wreck job goes after 3 play days, when a new play day is noted, and nothing else changes', () => {
+  const day = count => withHeli({playDay: {last: '2026-10-20', count}, missions: {...createMissions(), rescue: rescueRecord, rescued: 1, badges: ['rescue'],
+    wreck: {...wreckRecord, day: 5}}});
+  const kept = notePlayDay(day(7), '2026-10-21', on).profile;
+  assert.deepEqual([kept.heli.playDay.count, kept.heli.missions.wreck], [8, {...wreckRecord, day: 5}], 'still 3 play days old on day 8');
+  const gone = notePlayDay(day(8), '2026-10-21', on).profile;
+  assert.equal(gone.heli.playDay.count, 9);
+  assert.deepEqual(gone.heli.missions, {...day(8).heli.missions, wreck: null}, 'only the wreck leaves; the rescue, counts and badges stay');
+  const same = notePlayDay(gone, '2026-10-21', on);
+  assert.deepEqual([same.newDay, same.profile], [false, gone], 'the same day again changes nothing');
+  const bare = notePlayDay(withHeli({playDay: {last: '2026-10-20', count: 3}}), '2026-10-21', on).profile;
+  assert.equal(Object.hasOwn(bare.heli, 'missions'), false, 'a save with no missions gains none');
+  const noWreck = notePlayDay(withHeli({playDay: {last: '2026-10-20', count: 3}, missions: createMissions()}), '2026-10-21', on).profile;
+  assert.equal(Object.hasOwn(noWreck.heli.missions, 'wreck'), false, 'a record with no wreck gains none');
 });
 
 console.log(`Heli save: ${checks} groups passed using memory storage.`);
