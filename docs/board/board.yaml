@@ -379,9 +379,10 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "review"
+    status: "blocked"
     claimed_by: codex-card-answers-01a141d7
     branch: codex/earn-car-2
+    waiting_on: "claude"
     needs: [EARN-SCREEN]
     locks: []
     flag: "earned-cars"
