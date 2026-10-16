@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T03:35:30.545Z
+Observed at: 2026-10-16T03:39:28.407Z
 
-Observation commit: 5a8df7dc7e0fc57d60242d7265a062a42b536587
+Observation commit: fe746fc631df4c6ba92112e298065f749a5c8061
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 5a8df7dc7e0fc57d60242d7265a062a42b536587
+Integration HEAD: fe746fc631df4c6ba92112e298065f749a5c8061
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -56,7 +56,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T19:18:16-07:00 | 0 | last commit 2026-10-15T19:18:16-07:00 | docs/HELICOPTER.md, docs/board/STATUS.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-2.jpg, docs/changes/EARN-CAR-2.md |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
-| codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T20:31:23-07:00 | 0 | last commit 2026-10-15T20:31:23-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/generated/reference-laps/alpine-serpent.json, src/generated/reference-laps/ardennes-forest.json, src/generated/reference-laps/azure-riviera.json |
+| codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T20:35:36-07:00 | 0 | last commit 2026-10-15T20:35:36-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/generated/reference-laps/alpine-serpent.json, src/generated/reference-laps/ardennes-forest.json, src/generated/reference-laps/azure-riviera.json |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 4 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -80,10 +80,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 491,433 B | +0 B | 5,000,000 B |
+| Review `looks/` | 19,998,763 B | +17,891 B | 20,000,000 B |
+| Added bytes in last merge | 1,268,815 B | +777,382 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 411,957,248 B | +521,216 B | unavailable |
+| Git objects | 412,135,424 B | +178,176 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -92,7 +92,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 7d430cd011de0145f404b7b24500e26ac011d881
 - Local main: missing
-- Local integration/wasteland: 5a8df7dc7e0fc57d60242d7265a062a42b536587
+- Local integration/wasteland: fe746fc631df4c6ba92112e298065f749a5c8061
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
