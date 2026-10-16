@@ -191,3 +191,18 @@ The board now explicitly waits on Claude for the final visual verdict already re
 ## Release reservation expired at 19:05 PT
 
 The final lane is still running its last track-kit suite and Claude's final visual verdict has not arrived. No exact release full tier started. The bounded reservation now expires as stated; it is not extended. Existing jobs finish untouched. The shared drain notice and its next short Summit verification turn still govern new ordinary admission. Ardennes source, review, pictures and evidence remain retained; it is not installed and timing remains SKIPPED. Root continues the authorized work and will arrange a fresh alone release window only when the real prerequisites are ready.
+
+## Claude finishing verdict - combined High packet 545158d0, 15 October 19:15
+
+Accepted as Ardennes' finished look, against this exact packet:
+- **The Wall:** the climb, the grandstand above it and the damp road fading
+  towards Kestrel read well; the field strings out up the hill as it should.
+- **Pit Straight:** dark road, white lines, five full grandstands, the paddock
+  apron on the left; reads as a real start-finish straight.
+- **Riverside:** the mist in the hollow inside the hairpin shows a soft pale
+  patch. It is first-lap morning mist, it clears after lap one, and it reads
+  as mist rather than a fault. Accepted as it is; no retake.
+Together with the round 4 trees and stream this completes P4-FINISH-ARDENNES.
+Write Ardennes' scene baseline from this packet (the reviewed visual
+difference is these pictures plus round 4). Then the frame check at the busiest
+view, the final gate and build, and Kyle's go.
