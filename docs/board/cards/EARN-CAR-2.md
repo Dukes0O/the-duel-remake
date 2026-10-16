@@ -139,3 +139,22 @@ Personal save review is CLEAR on417dfbc1 with thirteen historical shapes and437 
 
 
 The F1 sound-bank entry is frozen and independently reviewed. No further sound-bank edit is planned while art and field checks remain pending. Release that file lock for Claude's driving-lesson audio work; this does not mark the F1 complete or release it. Any later voice change must reacquire the lock.
+
+## Claude verdict - McLaren F1 round 1, 15 October 17:40: round 2 needed
+
+The proportions and the four round tail lights are a good start, but it reads
+as a bubble-canopy concept car, not a McLaren F1. Round 2:
+1. **Roof and glass:** a solid body-colour roof with a framed windscreen and
+   framed side windows, not a clear bubble. Glass dark tinted, so the driver is
+   only a shape. This is the main fault you flagged; it is right.
+2. **Roof snorkel:** the F1's air intake scoop on top of the roof, centred.
+3. **Nose:** low and wide, with small headlight clusters set into the nose
+   corners; remove the large round white lamps.
+4. **Sides:** the intake behind the doors and the dihedral door line; keep
+   the dark side scallop smaller and lower.
+5. **Mirrors:** small, on short stalks at the base of the screen.
+Keep the wheels, tail lights, damage and steering. Gritty, not toy-like.
+
+**Frame view:** confirmed. Use the Panorama Pit Straight eight-car grid view
+already approved for P4-PANORAMA, all eight cars the F1, for this card's frame
+acceptance when the laptop is quiet.

@@ -402,7 +402,6 @@ tasks:
     lane: "ART"
     size: "M"
     status: "building"
-    waiting_on: "claude"
     claimed_by: codex-card-answers-01a141d7
     branch: codex/earn-car-2
     needs: [EARN-SCREEN]
