@@ -69,8 +69,10 @@ tally (`createFlightDirt`, `addFlightTime`, `addLanding`, `addDip`, `addDrop`,
   | Salt | 1 per 120 s below 50 m over the sea (the caller says "over the sea") |
 
 - **Cap.** `addDirt` keeps each kind at 100 and the four together at 100 (the
-  drawn grime, `grimeOf`), filling in the order dust, mud, soot, salt. It says
-  `hint: true` when the grime first passes 80.
+  drawn grime, `grimeOf`). When the coat is full, new dirt still goes on and the
+  same amount comes off the other kinds one level at a time, largest first (ties
+  in the order dust, mud, soot, salt). It says `hint: true` when the grime first
+  passes 80.
 - **Wash.** `washHelicopter`: 100 credits, on the ground only, all four dirts to
   0; whole price or nothing; a clean helicopter is neither washed nor charged.
   A dirty helicopter flies like a clean one: gear and skins are unchanged.
@@ -82,23 +84,33 @@ tally (`createFlightDirt`, `addFlightTime`, `addLanding`, `addDip`, `addDrop`,
 2. `summit-time-attack` is counted as Summit Run for dust (same mountain).
 3. A skin with 5 or more missions is refused by `buySkin` ("It is free")
    instead of sold at the 900 floor; the caller runs `earnSkins` first.
-4. The sum cap fills kinds in a fixed order rather than sharing the room.
-5. Several skins earned in one call come in `SKIN_KINDS` order.
-6. Part intervals (for example 7 minutes of engine time) are carried by the
+4. Several skins earned in one call come in `SKIN_KINDS` order.
+5. Part intervals (for example 7 minutes of engine time) are carried by the
    session in the flight tally's leftover; the save has no field for them, so
    they are lost when the game closes.
-7. Base values for the stretcher's bump limits are null: the H4 bump rule
+6. Base values for the stretcher's bump limits are null: the H4 bump rule
    without the gear lives in `heli-rescue.js` (SKIN-GEAR reads it there).
-8. The 1.5 second wear fade is the view's, not a rule here.
+7. The 1.5 second wear fade is the view's, not a rule here.
+
+## Claude decided
+
+Director's verdict on the open list: items 1, 2, 3, 5, 6, 7 and 8 stand as
+built. Item 4 changed: when the four dirt kinds together are at 100, new dirt of
+one kind still goes on and the same amount comes off the other kinds, largest
+first (ties in the order dust, mud, soot, salt), so the grime always shows the
+latest flying (a fire after a dusty week turns the coat sooty). Each kind still
+stops at 100 and the sum at 100. Built as one level at a time from the current
+largest, which levels the biggest kinds down together. When several kinds are
+added in one call they go on in dirt order, each taking from the others.
 
 ## Changed assertions
 
-None. No existing file is edited. No registry or count test needs a row: the
+None to any existing test. The cap tests written in the first commit of this card (never merged) were rewritten for the new cap rule. No existing file is edited. No registry or count test needs a row: the
 runner picks up `tools/test-heli-skins.mjs` by name.
 
 ## Checks
 
-`test-heli-skins` (57 groups) and `test-heli-save` (43 groups) pass. Lane tier on ce8ca496 (`--changed --jobs 4 --keep-going`): 23 passed, 0 failed, 0 not run, 190 s. `npm run build`: built, only the usual large-file notice.
+`test-heli-skins` (61 groups) and `test-heli-save` (43 groups) pass. Lane tier on ce8ca496 (`--changed --jobs 4 --keep-going`): 23 passed, 0 failed, 0 not run, 190 s. `npm run build`: built, only the usual large-file notice.
 
 ## Removed
 

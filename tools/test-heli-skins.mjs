@@ -4,7 +4,7 @@
 // effect on and off with its skin, dirt by event, the grime cap and the
 // wash. Pure: no storage, no clock, no random.
 import assert from 'node:assert/strict';
-import {createHeli, createMissions, SKIN_KINDS, DIRT_MAX, heliOf, normalizeHeli} from '../src/heli/heli-save.js';
+import {createHeli, createMissions, SKIN_KINDS, DIRT_KINDS, DIRT_MAX, heliOf, normalizeHeli} from '../src/heli/heli-save.js';
 import {
   EARN_AT, SKIN_PRICE, WASH, SKINS, GEAR, BASE_GEAR, DIRT_RULES, skinsOf, tallyOf, skinPrice, skinRows, earnSkins, buySkin,
   wearSkin, skinOffer, gearWorn, gearStats, grimeOf, createFlightDirt, addFlightTime, addLanding, addDip, addDrop,
@@ -506,16 +506,56 @@ check('each kind stops at 100', () => {
 check('the four kinds together stop at 100: the drawn grime', () => {
   const start = make({dirt: {dust: 40, mud: 30, soot: 20}});
   assert.equal(grimeOf(start), 90);
-  const result = addDirt(start, {dust: 5, mud: 5, soot: 5, salt: 5}, on);
-  assert.deepEqual(dirtOf(result.profile), {dust: 45, mud: 35, soot: 20, salt: 0});
+  const result = addDirt(start, {salt: 10}, on);
+  assert.deepEqual(dirtOf(result.profile), {dust: 40, mud: 30, soot: 20, salt: 10});
   assert.equal(grimeOf(result.profile), 100);
-  const full = addDirt(result.profile, {dust: 9, salt: 9}, on);
-  assert.equal(full.profile, result.profile, 'a full coat takes no more');
+  assert.equal(addDirt(result.profile, {dust: 0}, on).profile, result.profile, 'nothing added, nothing changes');
 });
 
-check('the cap fills kinds in order: dust, mud, soot, salt', () => {
-  const result = addDirt(make({dirt: {dust: 90}}), {mud: 6, soot: 6, salt: 6}, on);
-  assert.deepEqual(dirtOf(result.profile), {dust: 90, mud: 6, soot: 4, salt: 0});
+check('a full coat: new dirt goes on and the same amount comes off the others, largest first', () => {
+  const dusty = make({dirt: {dust: 100}});
+  const sooty = addDirt(dusty, {soot: 30}, on);
+  assert.deepEqual(dirtOf(sooty.profile), {dust: 70, mud: 0, soot: 30, salt: 0}, 'a fire after a dusty week turns the coat sooty');
+  const more = addDirt(sooty.profile, {mud: 5}, on);
+  assert.deepEqual(dirtOf(more.profile), {dust: 65, mud: 5, soot: 30, salt: 0}, 'the coat was full again, so dust gives way');
+  const full = make({dirt: {dust: 50, mud: 30, soot: 20}});
+  assert.deepEqual(dirtOf(addDirt(full, {salt: 10}, on).profile), {dust: 40, mud: 30, soot: 20, salt: 10});
+  assert.deepEqual(dirtOf(addDirt(full, {salt: 25}, on).profile), {dust: 27, mud: 28, soot: 20, salt: 25}, 'levelled from the top: dust 50 to 30, then dust and mud shaved in turn');
+});
+
+check('when kinds are level the one first in the order dust, mud, soot, salt gives way first', () => {
+  const level = make({dirt: {dust: 40, mud: 40, soot: 20}});
+  assert.deepEqual(dirtOf(addDirt(level, {salt: 1}, on).profile), {dust: 39, mud: 40, soot: 20, salt: 1});
+  assert.deepEqual(dirtOf(addDirt(level, {salt: 2}, on).profile), {dust: 39, mud: 39, soot: 20, salt: 2});
+  const three = make({dirt: {dust: 0, mud: 34, soot: 33, salt: 33}});
+  assert.deepEqual(dirtOf(addDirt(three, {dust: 1}, on).profile), {dust: 1, mud: 33, soot: 33, salt: 33});
+  assert.deepEqual(dirtOf(addDirt(three, {dust: 2}, on).profile), {dust: 2, mud: 32, soot: 33, salt: 33}, 'mud 33 ties soot and salt and goes first');
+});
+
+check('the added kind never loses dirt, no kind goes below 0 or above 100, and the sum is exactly 100 when full', () => {
+  const starts = [{dust: 100}, {mud: 100}, {dust: 25, mud: 25, soot: 25, salt: 25}, {dust: 97, mud: 3}, {dust: 1, mud: 1, soot: 98}, {salt: 60, soot: 40}];
+  for (const start of starts)
+    for (const kind of DIRT_KINDS)
+      for (const amount of [1, 7, 50, 100, 500]) {
+        const before = dirtOf(make({dirt: start})), result = dirtOf(addDirt(make({dirt: start}), {[kind]: amount}, on).profile);
+        const sum = DIRT_KINDS.reduce((total, other) => total + result[other], 0);
+        assert.ok(DIRT_KINDS.every(other => result[other] >= 0 && result[other] <= 100), JSON.stringify([start, kind, amount]));
+        assert.ok(result[kind] >= before[kind], 'the added kind never loses');
+        assert.equal(sum, Math.min(100, DIRT_KINDS.reduce((total, other) => total + before[other], 0) + amount), JSON.stringify([start, kind, amount]));
+      }
+});
+
+check('several kinds at once on a full coat keep the sum at 100', () => {
+  const result = addDirt(make({dirt: {dust: 100}}), {mud: 20, soot: 20, salt: 20}, on);
+  const dirt = dirtOf(result.profile);
+  assert.equal(DIRT_KINDS.reduce((total, kind) => total + dirt[kind], 0), 100);
+  assert.deepEqual(dirt, {dust: 40, mud: 20, soot: 20, salt: 20});
+});
+
+check('a coat over 100 from a hand-edited save comes back to 100 with the next dirt', () => {
+  const result = addDirt(make({dirt: {dust: 100, mud: 100}}), {soot: 10}, on);
+  assert.equal(grimeOf(result.profile), 100);
+  assert.equal(dirtOf(result.profile).soot, 10);
 });
 
 check('the grime is the sum, capped, and 0 for a save with no dirt', () => {

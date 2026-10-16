@@ -257,22 +257,30 @@ export function settleFlightDirt(record) {
     lowSeaSeconds: record.lowSeaSeconds - saltSea * salt.seaSeconds}};
 }
 
-// Adds whole levels to the saved dirt. Each kind stops at 100 and the four
-// together stop at 100 (the drawn grime), filled in the order of DIRT_KINDS.
-// `hint` is true when the grime first passes 80 (Brian suggests a wash).
+// Adds whole levels to the saved dirt, kind by kind in the order of DIRT_KINDS.
+// Each kind stops at 100 and the four together stop at 100 (the drawn grime).
+// When the room runs out, the new dirt still goes on and the same amount comes
+// off the other kinds one level at a time, from the largest first (ties in the
+// order dust, mud, soot, salt), so the grime shows the latest flying: a fire
+// after a dusty week turns the coat sooty. `hint` is true when the grime first
+// passes 80 (Brian suggests a wash).
 export function addDirt(profile, gains, {enabled} = {}) {
   if (enabled !== true) return off(profile);
   if (!isObject(gains)) return failure(profile, 'That is not a dirt amount.');
   const heli = heliOf(profile), before = {...zeroDirt(), ...heli.dirt};
   const after = {...before};
-  let room = Math.max(0, DIRT_MAX - DIRT_KINDS.reduce((sum, kind) => sum + before[kind], 0));
+  const total = dirt => DIRT_KINDS.reduce((sum, kind) => sum + dirt[kind], 0);
   for (const kind of DIRT_KINDS) {
-    const gain = Number.isSafeInteger(gains[kind]) && gains[kind] > 0 ? Math.min(gains[kind], room, DIRT_MAX - before[kind]) : 0;
+    const gain = Number.isSafeInteger(gains[kind]) && gains[kind] > 0 ? Math.min(gains[kind], DIRT_MAX - after[kind]) : 0;
     after[kind] += gain;
-    room -= gain;
+    for (let over = total(after) - DIRT_MAX; over > 0; over--) {
+      let largest = null;
+      for (const other of DIRT_KINDS) if (other !== kind && after[other] > 0 && (largest === null || after[other] > after[largest])) largest = other;
+      if (largest === null) break;
+      after[largest]--;
+    }
   }
   if (DIRT_KINDS.every(kind => after[kind] === before[kind])) return {ok: true, hint: false, profile};
-  const total = dirt => DIRT_KINDS.reduce((sum, kind) => sum + dirt[kind], 0);
   return {ok: true, hint: total(before) <= WASH.hintAbove && total(after) > WASH.hintAbove,
     profile: withHeli(profile, {...heli, dirt: after})};
 }
