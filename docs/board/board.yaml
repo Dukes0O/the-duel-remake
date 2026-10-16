@@ -340,7 +340,9 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-rescue-view-2026-10-16
+    branch: claude/rescue-view
     needs: [RESCUE-HOOKS, FIRE-VIEW, RESCUE-PEOPLE, RESCUE-PROPS]
     locks: []
     flag: "rescue"
@@ -384,7 +386,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-skin-gear-2026-10-16
+    branch: claude/skin-gear
     needs: [SKIN-RULES, RESCUE-HOOKS, WILD-SURVEY]
     locks: []
     flag: "heli-skins"
