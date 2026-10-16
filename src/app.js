@@ -9,6 +9,7 @@ import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
+import * as wildlifeRules from './wildlife.js';
 import {fireOnNewDay, fireWorld} from './heli/heli-fire-run.js';
 import {notePlayDay, buyBack as buyBackSave, fireOf} from './heli/heli-save.js';
 import {courseClosed, closureCard, burnStage, burnSmoke, scarLooks} from './course-closures.js';
@@ -1375,6 +1376,14 @@ export class App {
   _fireOn() {
     return this._switches().enabled('helicopter') === true && this._switches().enabled('forest-fire') === true;
   }
+  // Where an animal of the wildlife count may stand on a course: off the road,
+  // out of lakes and walls, anywhere in the square (not only near the road).
+  _surveyStand(courseId, world) {
+    this._standCheckers ??= new Map();
+    if (!this._standCheckers.has(courseId)) this._standCheckers.set(courseId, wildlifeRules.createPlacementChecker(world.course));
+    const checker = this._standCheckers.get(courseId);
+    return (x, z) => !!checker.inspect(x, z, {maxEdge: Infinity});
+  }
   // A course model at the helicopter's seed, built once, for fire grids; it
   // never touches the course being raced or flown.
   _fireCourse(courseId) {
@@ -1456,7 +1465,9 @@ export class App {
     const fireOn = this._fireOn();
     if (fireOn) this.heliAudio.preloadFire?.();
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
-      fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true, playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
+      fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true,
+      skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
+      wildlife: wildlifeRules, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       persist: profile => {
         // Credits the session charged since its last save move the app's
@@ -1803,11 +1814,11 @@ export class App {
     else if (action.startsWith('gear:')) this.duel.selectFootGear(Number(action.slice(5)));
     else if (action === 'shift-up') this.duel.setInput({ shiftUp: true });
     else if (action === 'shift-down') this.duel.setInput({ shiftDown: true });
-    else if (action === 'heli-hook') this._heliPress(session => session.pressHook());
+    else if (action === 'heli-hook') this._heliPress(session => session.hookKey());
     else if (action === 'heli-autopilot') this._heliPress(session => session.pressAutopilot());
     else if (action === 'heli-cruise') this._heliPress(session => session.acceptCruise());
     else if (action === 'heli-radio') this._heliPress(session => session.pressRadio());
-    else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % 4; this.duel.emit({heli: true}); }
+    else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % (this.heliSession?.cameraCount ?? 4); this.duel.emit({heli: true}); }
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
   }
@@ -2051,6 +2062,7 @@ export class App {
     },{signal});
     window.addEventListener('blur', () => {
       this.keys = {};
+      this.heliSession?.cancelHook();
       this._footPointer.fire=this._footPointer.aim=false;
       this._resetKeyboardInput();
       if (!this.duel.state.paused && ['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) this.togglePause();
