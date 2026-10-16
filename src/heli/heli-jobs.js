@@ -10,6 +10,7 @@ import {liftCheck} from './heli-cable.js';
 import {MEDAL_CARS} from '../medals.js';
 
 import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS} from './heli-save.js';
+import {surveyJob, surveyName, reportSurvey, isSurveyRun, SURVEY_NOT_A_RUN} from './heli-survey.js';
 
 export const HOME_COURSE = 'tremblant-woods';
 
@@ -185,4 +186,47 @@ export function finishRecovery(profile, {enabled, mode = 'assisted'} = {}) {
   const total = Math.min(1_000_000_000, wallet + jobPay(job, mode));
   const stored = setMissions({...profile, credits: total}, {...missionsOf(profile), wreck: null}, {enabled: true});
   return {ok: true, profile: stored.profile, paid: total - wallet, job};
+}
+
+// ---- the wildlife count (docs/HELI_WILDLIFE.md section 4) -----------------
+// One a play day on its own line below the car jobs, so dayJobs and its
+// fingerprints are untouched: "Count the <species> at <course>" for Sarah. The
+// rules, the square and the pay are heli-survey.js's. It is on the board only
+// with the wildlife switch on, and until it is finished that play day.
+
+// "Count the moose at Tremblant Woods".
+export function surveyTitle(job) {
+  const place = destinationsFor({summitRun: true})[job.courseId]?.name ?? job.courseId;
+  return `Count the ${surveyName(job.species)} at ${place}`;
+}
+
+// Today's count job from a profile, or null: switch off, or already finished today.
+export function surveyJobOf(profile, {enabled, summitRun = false} = {}) {
+  if (enabled !== true) return null;
+  const heli = heliOf(profile), day = heli.playDay.count;
+  if (heli.survey?.day === day && heli.survey.done === true) return null;
+  return surveyJob(day, {summitRun});
+}
+
+// The pilot reports to Sarah: pay by how near the estimate is, add one to the
+// wildlife counts, and mark today's count done. The run must be for the job on
+// the board today, so a count can never pay twice, on a replay or a second
+// press. Pay is the same in Assisted and Real, capped like every credit change.
+export function finishSurvey(profile, run, {enabled, summitRun = false} = {}) {
+  if (enabled !== true) return {ok: false, reason: 'The wildlife count is not available yet.', profile};
+  const job = surveyJobOf(profile, {enabled, summitRun});
+  if (!job) return {ok: false, reason: 'There is no count to report.', profile};
+  if (!isSurveyRun(run)) return {ok: false, reason: SURVEY_NOT_A_RUN, profile};
+  const plan = run.plan;
+  if (run.jobId !== job.id || plan?.jobId !== job.id || plan.courseId !== job.courseId || plan.species !== job.species)
+    return {ok: false, reason: "That count is not today's job.", profile};
+  const report = reportSurvey(run);
+  if (!report.ok) return {ok: false, reason: report.reason, profile};
+  const wallet = Number.isFinite(profile?.credits) ? Math.max(0, Math.floor(profile.credits)) : 0;
+  const total = Math.min(1_000_000_000, wallet + report.pay);
+  const missions = missionsOf(profile);
+  const stored = setMissions({...profile, credits: total},
+    {...missions, wildlifeCounts: (Number.isSafeInteger(missions.wildlifeCounts) ? missions.wildlifeCounts : 0) + 1}, {enabled: true});
+  const done = {...stored.profile, heli: {...heliOf(stored.profile), survey: {day: heliOf(profile).playDay.count, done: true}}};
+  return {ok: true, profile: done, paid: total - wallet, job, report};
 }
