@@ -25,3 +25,13 @@ Claude63c54565 approved tools/scenarios/yeti-fur-tint.mjs and three matched brig
 Source parses/diffclean only. No QA build, browser, native drive, picture, gate/build or final colour acceptance has run for this recipe. Existing84294d30 runtime46/46/build remains historical passed evidence, not a pass for this new source. Current integration union is conflict-free. Summit exclusive full hold prevents heavy validation. Exact additional existing discovery-filter/test hook is requested on card to keep this one-shot out of daily --all; no foreign runner edit before answer. Independent recipe review pending.
 
 Required source review found a real failure-path ordering fault: a restoration assertion could throw before restoring camera, and the colour-excluding invariant could not prove fur restoration. Fixed with inner finally for unconditional camera restore and explicit exact original colour-array equality; receipt now reports that actual check rather than a literal true. Source parses/diffclean; reviewer confirmation pending. No browser/native/art capture or heavy check during release hold.
+
+## Approved manual discovery hook
+
+Claude's 16 October 08:30 card answer approves these two existing hooks. The default browser discovery now excludes only the two manual names, rustwall-frame and yeti-fur-tint. Explicit discovery still includes both, so the existing runner executes a requested fur comparison normally. No ordinary scenario, quiet scheduling, recorder, threshold, wrapper delegation or runtime source changed.
+
+The existing discovery assertion now expects those exact two excluded names; it still proves no other scenario is hidden. Added assertions require the real fur recipe to remain available explicitly, and a mocked runner case proves --all omits it while explicit selection runs and reports it normally. This is the written, reviewed scope change on the card, not a dropped scenario result or a claimed photo pass.
+
+The actual discovery regression failed first while the fur recipe was still included in --all. After the one-name filter change, all 14 existing/new pure browser-runner tests pass in 244.1549 ms. The tests use mock builds/children and filesystem name discovery; no QA bundle, browser, native encounter, build or lane gate was launched. The prior recipe review fixes were confirmed CLEAR on 562048b6. Capture, the changed-source lane/build and Claude's colour choice remain pending under Root's admission control.
+
+Removed: the one-shot fur picture recipe from automatic nightly discovery only. Its source and explicit/manual invocation remain available; no accepted art or evidence is replaced.

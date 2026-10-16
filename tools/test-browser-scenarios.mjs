@@ -125,7 +125,9 @@ test('default discovery retires consumed art but retains current Salt and explic
   for(const consumed of ['vesper-art','convoy-tanker-art','first-person-polish'])assert.ok(!manual.includes(consumed),consumed+' consumed recipe is removed');
   assert.ok(!ordinary.includes('rustwall-frame'),'dedicated manual frame recipe is not all-browser work');
   assert.ok(manual.includes('rustwall-frame'),'manual recipe remains discoverable for explicit use');
-  assert.deepEqual(ordinary,manual.filter(name=>name!=='rustwall-frame'),'no other current scenario is hidden');
+  assert.ok(!ordinary.includes('yeti-fur-tint'),'one-shot fur comparison is not all-browser work');
+  assert.ok(manual.includes('yeti-fur-tint'),'fur comparison remains discoverable for explicit use');
+  assert.deepEqual(ordinary,manual.filter(name=>!['rustwall-frame','yeti-fur-tint'].includes(name)),'no other current scenario is hidden');
 });
 
 test('all omits manual frame while explicit selection preserves its original quiet execution',async()=>{
@@ -140,6 +142,18 @@ test('all omits manual frame while explicit selection preserves its original qui
   }
 });
 
+
+test('all omits one-shot fur comparison while explicit selection executes it normally',async()=>{
+  for(const explicit of [false,true]){
+    const f=fixture(['salt-flats','yeti-fur-tint']);let discovery;
+    f.operations.discover=async options=>{discovery=options;return options?.includeManual?['salt-flats','yeti-fur-tint']:['salt-flats'];};
+    const args=explicit?['--scenarios','yeti-fur-tint','--jobs','4','--output-dir',archive]:['--all','--jobs','4','--output-dir',archive];
+    assert.equal(await suite.main(args,f.operations),0);
+    assert.deepEqual(discovery,{includeManual:explicit});
+    assert.deepEqual(f.summary.rows.map(row=>row.name),[explicit?'yeti-fur-tint':'salt-flats']);
+    assert.equal(f.summary.passed,1);assert.equal(f.calls.at(-1),'cleanup');
+  }
+});
 
 test('wrapper-only audio recipe is visible but never executed or counted as a browser pass', async () => {
   assert.ok(!(await suite.namedScenarios()).includes('audio-crash-peak'), 'wrapper-only recipe is not a directly executable browser name');
