@@ -85,9 +85,9 @@ function replay(race, fps) {
     assert.equal(duel.state.lapsTotal, 1);
     assert.equal(duel.state.opponents.length, 0);
     assert.equal(duel.state.rival, null);
-    assert.equal(duel.state.field, null);
+    assert.equal(Object.hasOwn(duel.state, 'field'), false);
     assert.equal(duel.state.traffic.length, 0);
-    assert.equal(duel.state.qualifying, false);
+    assert.equal(Object.hasOwn(duel.state, 'qualifying'), false);
   }
   const samples = [];
   let tick = 0, inputIndex = 0, weaponIndex = 0;
