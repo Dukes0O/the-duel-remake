@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T03:50:51.339Z
+Observed at: 2026-10-16T03:56:13.551Z
 
-Observation commit: 97e7b5d843e0054f9eb74e04110019b3dcbbf0dc
+Observation commit: 1b1d62fdcbeba2d339d10ca49190718a210069b7
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 97e7b5d843e0054f9eb74e04110019b3dcbbf0dc
+Integration HEAD: 1b1d62fdcbeba2d339d10ca49190718a210069b7
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -64,7 +64,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/qa-yard-home-air-only | QA-YARD-HOME-AIR-ONLY | 2026-10-15T19:30:22-07:00 | 0 | last commit 2026-10-15T19:30:22-07:00 | docs/board/STATUS.md, docs/changes/QA-YARD-HOME-AIR-ONLY.md, tools/scenarios/yard-home.mjs |
 | codex/qa-yeti-three | QA-YETI-THREE | 2026-10-15T19:28:00-07:00 | 0 | last commit 2026-10-15T19:28:00-07:00 | docs/board/STATUS.md, docs/changes/QA-YETI-THREE.md, tools/scenarios/yeti.mjs |
-| codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T18:40:49-07:00 | 0 | last commit 2026-10-15T18:40:49-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/camera-clearance.js, src/circuits/summit-run.js, src/course.js, src/feature-flags.js |
+| codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T20:51:53-07:00 | 0 | last commit 2026-10-15T20:51:53-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/camera-clearance.js, src/circuits/summit-run.js, src/course.js, src/feature-flags.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 11 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/tyre-slip | TYRE-SLIP | 2026-10-15T19:31:11-07:00 | 0 | last commit 2026-10-15T19:31:11-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
@@ -83,7 +83,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,998,763 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 1,268,815 B | +0 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 413,415,424 B | +1,070,080 B | unavailable |
+| Git objects | 413,950,976 B | +535,552 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -92,7 +92,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 7d430cd011de0145f404b7b24500e26ac011d881
 - Local main: missing
-- Local integration/wasteland: 97e7b5d843e0054f9eb74e04110019b3dcbbf0dc
+- Local integration/wasteland: 1b1d62fdcbeba2d339d10ca49190718a210069b7
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
