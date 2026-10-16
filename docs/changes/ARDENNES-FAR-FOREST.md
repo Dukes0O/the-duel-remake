@@ -16,7 +16,12 @@ forest band (firs 23 to 60 m past the road edge) the hills were bare grass.
   avoids spots the first band already took. Far trees stand on the drawn
   ground (`renderedGroundHeight`), because beyond the first band the course's
   own ground differs from the drawn far terrain by about 2 m on average and
-  up to 55 m. They are marked `farForest: true`.
+  by over 100 m in places. They are marked `farForest: true`. Because the band reaches
+  220 m, it can cross toward other stretches of the circuit, so each far
+  tree is also measured from the nearest road: at least 60 m beyond its
+  edge and outside the clear stretches as seen from that road (the review
+  found 23 trees by the paddock, the grandstand or another road's catch
+  fence before this rule).
 - `src/vegetation.js`: `beechTreePlacements` skips far-band trees, so the
   beech set is the accepted one.
 - `src/circuits/ardennes-forest.js`: a far band from 60 to 220 m, one row
@@ -30,13 +35,13 @@ forest band (firs 23 to 60 m past the road edge) the hills were bare grass.
 
 ## Numbers
 
-- Trees: 9,131 before (191 of them drawn as beeches), 11,336 after: 2,205
-  far trees, +24.1%. Every earlier tree is identical in name, position,
+- Trees: 9,131 before (191 of them drawn as beeches), 11,313 after: 2,182
+  far trees, +23.9%. Every earlier tree is identical in name, position,
   height, scale and tint; the 191 beeches are identical.
-- World signature (Ardennes only): instances 35,277 to 39,687 (+4,410, a
+- World signature (Ardennes only): instances 35,277 to 39,641 (+4,364, a
   trunk and a crown per far tree), meshes 1,243 to 1,313 and nodes 1,302 to
   1,372 (35 new vegetation cells, two meshes each); geometries 250,
-  materials 157 and textures 84 unchanged. Hash 5a96dada to 759f7ad3. Every
+  materials 157 and textures 84 unchanged. Hash 5a96dada to 1882d745. Every
   other course's signature is exact.
 
 ## Pictures
@@ -55,10 +60,14 @@ band (no tree cost), as its own card.
 
 - `tools/test-circuit-ardennes.mjs`, three new tests: the first band and the
   beeches are identical with and without the far band, and the far band is
-  planted after every earlier tree; far trees keep every keep-clear rule and
-  stand on the drawn ground; a course without a far band has none.
+  planted after every earlier tree; far trees keep every keep-clear rule,
+  measured from both their own road and the nearest road, and stand on the
+  drawn ground; a course without a far band has none.
 - No existing assertion changed.
-- Lane tier, build and review: see the merge's run-log line.
+- One independent review: one real fault (looks only), fixed as above;
+  low-risk notes: two far trees stood 1.5 m behind a solid catch fence
+  (now gone with the 60 m rule), and collision checks scan about 24% more
+  trees. Lane tier and build: see the merge's run-log line.
 - Frame check (rule 8): waits for a quiet laptop; see the run-log line.
 
 ## Found, not changed

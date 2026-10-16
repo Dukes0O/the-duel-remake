@@ -236,17 +236,19 @@ test('far forest trees keep every keep-clear rule and stand on the drawn ground'
   const course = new Course(ARDENNES_FOREST, 1989), band = ARDENNES_FOREST.scenery.farForest;
   const zones = ARDENNES_FOREST.scenery.clear, corners = course.script.pieces.filter(piece => piece.kind === 'turn');
   for (const tree of course.features.trees.filter(tree => tree.farForest)) {
+    // Measured from the nearest road, which for a band reaching 220 m can be another stretch of the circuit.
     const nearest = course.nearest(tree.x, tree.z), edge = nearest.distance - course.roadHalfWidthAt(nearest.s);
-    assert.ok(edge >= 12, 'outside every road run-off');
+    assert.ok(edge >= band.from - 1e-6, `at least ${band.from} m from every road edge (${tree.id}: ${edge.toFixed(1)} m)`);
     const depth = Math.abs(tree.off) - course.roadHalfWidthAt(tree.s);
     assert.ok(depth >= band.from - 1e-9 && depth <= band.to + 1e-9, 'inside its band');
-    const phase = course.phase(tree.s), r = 2.5 * tree.scale;
-    assert.ok(!zones.some(zone => phase >= zone.s0 - r && phase <= zone.s1 + r && tree.off >= zone.from - r && tree.off <= zone.to + r),
-      'outside the course clear stretches (the paddock, The Wall, Stavelot village)');
+    const r = 2.5 * tree.scale;
+    for (const [phase, off] of [[course.phase(tree.s), tree.off], [course.phase(nearest.s), nearest.lateral]])
+      assert.ok(!zones.some(zone => phase >= zone.s0 - r && phase <= zone.s1 + r && off >= zone.from - r && off <= zone.to + r),
+        `outside the course clear stretches (the paddock, The Wall, Stavelot village): ${tree.id}`);
     const piece = course.script.pieceAt(nearest.s);
     assert.ok(!(piece.kind === 'turn' && Math.sign(nearest.lateral) === piece.dir && nearest.distance < course.roadHalfWidthAt(nearest.s) + 30),
       'never on the inside of a corner');
-    assert.ok(Math.abs(renderedGroundHeight(course, tree) - tree.y) < 1e-6, 'stands on the drawn ground');
+    assert.ok(Math.abs(renderedGroundHeight(course, tree) - tree.y) < 1e-6, 'stands on the drawn ground, not the course ground');
     assert.ok(course.features.obstacles.includes(tree), 'a solid scenery tree like the first band');
   }
   assert.ok(corners.length > 10);

@@ -260,6 +260,14 @@ function scatterScenery(course) {
       }
       if (!roadClear(s, off, 0, 1) || cleared(s, off, 2.5 * scale) || zones.length && ownClear(s, off, 2.5 * scale)) continue;
       const p = course.groundAt(s, off);
+      // A far band reaches across to other stretches of the circuit, so it is
+      // also measured from the nearest road: at least `from` beyond its edge,
+      // and outside the clear stretches as seen from that road.
+      if (drawnGround) {
+        const n = course.nearest(p.x, p.z);
+        if (n.distance - course.roadHalfWidthAt(n.s) < from || cleared(n.s, n.lateral, 2.5 * scale) ||
+          zones.length && ownClear(n.s, n.lateral, 2.5 * scale)) continue;
+      }
       if (crowded(p.x, p.z, 3.2 * scale)) continue;
       claim(p.x, p.z);
       const tree = add(`${prefix}-${serial++}`, 'tree', s, off, .23 * scale, .23 * scale, random.range(0, TAU), { scale });
