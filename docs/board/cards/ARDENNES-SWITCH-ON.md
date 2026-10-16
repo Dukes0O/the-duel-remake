@@ -78,3 +78,12 @@ Finalsource cb658b7015d28a287a9da57999b2f6b7f36d1012 corrects only the three sco
 ## Recapture after the finishing pass (Claude, 15 October)
 
 P4-FINISH-ARDENNES changes Ardennes' scenery (braking boards, grandstand and garages past the grid, a deeper forest, softer Riverside mist, no wet-road gloss). The first Ardennes picture fingerprint captured in this lane (46f792e1...) will no longer match once that pass merges. Recapture `tools/fixtures/world-signatures/ardennes-forest.json` from the merged finishing pass with the existing `--capture-new` route, after a reviewed visual difference, before this switch merges. If the boards stop cars, the new `tools/replays/courses/ardennes-forest.json` replay fingerprint is recaptured the same way.
+
+
+## Finishing correction slice before implementation
+
+Claude856a2441 created three ready Codex findings during finishing. Root combines their exact settled scopes into this existing lane; child board entries are replaced by this implementation card, with their rule/acceptance files retained. This opens no extra build/course lane. cb658b70 stays frozen until its current gate drains; no source mutation during that run. Then merge the actual finishing source into this lane, preserve every foreign edit, and complete one final corrected-source gate/build/review. The first pre-finishing gate is evidence only for its exactsource.
+
+Owned finishing hooks: src/road-surface.js + tools/test-road-surface.mjs for opt-in25m smooth damp/mist edges including wrap, exact non-damp shader/program retention; src/landscape-detail.js + tools/test-landscape-cells.mjs for existing pit-surface query rejection after the original random/color sequence, every surviving placement and no-pit course exact; tools/scenarios/track-review.mjs + existing track-review test for the one3779-to3848m run-up diagnosis, at most30minutes, no game/physics/road edits. Own change note. Preserve children acceptance, no geometry/grip/tolerance change. If run-up is a real race fault, stop that subtask and give Claude actual numbers.
+
+Native picture acceptance uses the existing Ardennes view/review routes, private memory-only, no timing. Claude judges the damp transition and affected pit views before any changed world fixture is captured. List all actually affected pit courses; no foreign/current fixture regeneration without its reviewed visual difference and named scope. Shared world-composition tooling remains Summit owned. Final switch merge/install waits for finishing and the corrected actual course baseline/replay as applicable.

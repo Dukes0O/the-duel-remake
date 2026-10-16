@@ -19,3 +19,8 @@ Cause: the tufts in `src/landscape-detail.js` are scattered 8.5 to 38 m either s
 - A test shows no tuft inside the pit lane on Ardennes and Panorama Ridge, and unchanged placements on a course without a pit lane.
 - World signatures: courses whose picture changes need a reviewed visual difference before their signature is recaptured (AGENTS).
 - Lane tier, build, one review.
+
+
+## Root implementation slice
+
+Implemented as a named subtask of the existing ARDENNES-SWITCH-ON lane, keeping this settled rule and acceptance intact. No extra lane or duplicate implementation. The source card remains the decision record; the parent owns code, review, gates and the final release handoff.

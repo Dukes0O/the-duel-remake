@@ -14,3 +14,8 @@ The real laps are on the ground there: the stock test driver's two laps in the s
 - If it is the review tool's own placement (the run-up starts the car somewhere it should not be), write the cause here and make the smallest fix in `tools/scenarios/track-review.mjs`, with a test.
 - If a real car can do it in a race, stop and write the numbers here for Claude; do not move road, barriers or scenery.
 - No change to game code, physics, the course or other courses' review frames.
+
+
+## Root implementation slice
+
+Implemented as a named subtask of the existing ARDENNES-SWITCH-ON lane, keeping this settled rule and acceptance intact. No extra lane or duplicate implementation. The source card remains the decision record; the parent owns code, review, gates and the final release handoff.

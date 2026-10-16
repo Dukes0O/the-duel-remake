@@ -20,3 +20,8 @@ Cause: in `src/road-surface.js` the damp mask uses `step()` at both ends of each
 - The existing `tools/test-road-surface.mjs` gains a case showing the opt-in path fades and the default path is unchanged.
 - One native Ardennes view from The Wall (High) shows no hard line across the road at Kestrel's start; Claude judges the picture.
 - Lane tier, build, one review.
+
+
+## Root implementation slice
+
+Implemented as a named subtask of the existing ARDENNES-SWITCH-ON lane, keeping this settled rule and acceptance intact. No extra lane or duplicate implementation. The source card remains the decision record; the parent owns code, review, gates and the final release handoff.
