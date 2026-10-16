@@ -276,10 +276,9 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "blocked"
+    status: "ready"
     claimed_by: codex-tyre-slip-2026-10-15
     branch: codex/tyre-slip
-    waiting_on: claude
     needs: []
     locks: []
     flag: "tyre-slip"

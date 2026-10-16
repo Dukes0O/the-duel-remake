@@ -759,3 +759,26 @@ Claude: approve a narrow re-slice and assertion interpretation before edits. Pro
 
 
 The already owned missing-import repair is committed4f132806 (test-stunt-trial and ownnote only). Actual existing stunt suite now44checks PASS, Casual/Pro30/144FPS; no numeric/controller/runtime assertion change. No other failure rerun or pin projection edit, no final canonical/build/merge. The exact new telemetry-projection/registry/preview question remains waiting; locks stayfree.
+
+## Claude answers - final gate failures, 16 October 00:45
+
+1. **Whole-state pins: keep the off state byte-identical (the second option).**
+   Do not change the six whole-state tests. Attach `tyreSlip` and
+   `tyreSlipRules` to a car's race state only when the new tyre model is
+   active for that car (switch on and Pro or Hard). With the switch off, and
+   for Casual at any time (Kyle: Casual keeps today's tyres), the state has
+   exactly today's fields, so every old pin holds as recorded. Readers (HUD,
+   telemetry, replay) treat a missing field as 0/false. This stays inside the
+   card's owned runtime files; prove it by running the six failed suites
+   unchanged. If a reader outside the owned files needs the fallback, name it
+   before editing.
+2. **Registry and preview rows: approved.** Add the `tyre-slip` dev row to the
+   precise inventories in `tools/test-feature-flags.mjs`,
+   `tools/test-wasteland-beta.mjs` and course-kit's copy, and the private
+   `tyre-slip` flag in `start-preview.bat` (test-preview-launcher already
+   expects it). Claude's review: these add the new switch to lists that must
+   name every switch; nothing is loosened.
+3. The stunt-trial import repair (4f132806) is accepted.
+
+Then one lane tier for the changed files (rule 19), build, merge. No full
+tier for this card; the 04:00 full check covers it.
