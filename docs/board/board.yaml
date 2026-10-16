@@ -421,7 +421,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-skin-rules-2026-10-16
+    branch: claude/skin-rules
     needs: [SKIN-SAVE]
     locks: []
     flag: "heli-skins"
