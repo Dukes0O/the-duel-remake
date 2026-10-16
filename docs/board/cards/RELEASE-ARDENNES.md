@@ -56,3 +56,8 @@ Kyle asked whether all tests had already passed and called a duplicate round a w
 ## Installed and complete
 
 Actual installation2026-10-16T03:08:26.937Z: live master7d430cd0, build20261016030307-f35c5308abb7. All537 current files match; liveHTTP entry/manifest verified. One previous Helicopter rollback487files kept;4old hashed assets temporarily retained for open races. Kyle explicitly said no further testing and install, so no duplicate full started. Exact-source-full false remains recorded; original452/453failed plus corrected17/17lane constitute all453passing suites cumulatively. Frames skipped. No real-save access/tabrefresh/push/history rewrite. Both owned release containers, merged correction branch and scratch recycled normally, sharedtargets intact. Current acceptance and source facts collected in VERIFICATION; original packets/actual receipt retained. Ordinary jobs continue under cap3; no Root full/quiet/release hold.
+
+
+## Kyle removes the rollback exception, 15 October
+
+Kyle said there is no rollback: future fixes, not a reversion when a course is added. The install had retained exactly1previous build,487files/305223013bytes. Root verified its exact path/build/inventory and sent only live/dist-previous to the Recycle Bin. Active rollback builds now0. Current live Ardennes build unchanged;4old hashed compatibility files still support any already-open old race. They do not form a retained build. AGENTS/SPEC/OPERATIONS/playbook now require forward fixes and no rollback build. No test/build/source/save/browser/server change.

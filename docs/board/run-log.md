@@ -1230,3 +1230,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-16 RELEASE-ARDENNES fixture merged:17/17lane/jobs4,197.996s; build1.504s; independent reviewCLEAR. Runtime unchanged; original ac8 full452/453 retained; corrected final exact full pending; frames skipped by Kyle.
 
 - 2026-10-16 RELEASE-ARDENNES installed7d430cd0/build20261016030307-f35c5308abb7:537currentfiles+liveHTTPverified; Kyle explicitly accepts original452full passes plus corrected17/17lane/no duplicate full; frames skipped; rollback kept, own staging/fixturelane/scratch recycled; no save/tabrefresh/push.
+
+- 2026-10-15PT Kyle removes live rollback exception: recycled sole487file/305223013byte previousbuild; retained rollback builds0. Forward fixes only; current Ardennes/live service unchanged.

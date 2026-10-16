@@ -188,8 +188,9 @@ Old best practices assumed code was expensive to write, so everything was kept
 in case it had to be rolled back. Here, redoing is cheap and storage, speed and
 small context matter. These rules win over habit:
 
-1. **Fix forward.** A mistake is a failing test, a fix and a pass. Rollback
-   exists only for the live game (the previous build, kept for one release).
+1. **Fix forward, including live releases (Kyle, 15 October 2026).** A mistake
+   is a failing test, a fix and a pass. Do not retain rollback builds or revert
+   a release to undo an added course. Correct faults in the next release.
 2. **Keep the recipe, not the output.** Commit scripts, prompts and settings.
    Rebuild models, renders, textures, reports and screenshots from them. Commit
    generated output only when the game loads it.
