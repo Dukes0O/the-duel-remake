@@ -15,3 +15,6 @@ The consumed round1 sheet and raw captures were recycled after their rejection a
 Reference photographs were viewed on [McLaren's F1 page](https://www.mclaren.com/cars/us_en/ultimate-models/mclaren-f1). No maker model, picture, texture, badge or logo is bundled.
 
 Claude confirmed Panorama Pit Straight with eight actual F1 copies for later quiet-laptop frame acceptance. Actual timing, final canonical lane and production build remain pending; the separate paint diagnostic timed out at its ten-second budget and has no passing result.
+
+
+Claude accepted round2 in c150e044: all five requests landed; remaining windscreen curvature and close-view helmet are acceptable at play distance. No third round. Final lane/build and quiet native eight-F1 Panorama timing remain separate pending acceptance.

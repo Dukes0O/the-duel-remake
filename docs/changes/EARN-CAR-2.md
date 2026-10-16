@@ -55,3 +55,8 @@ Frozen051ffdcd passed the actual existing native recipe in8.287seconds at privat
 The quick08a72202 model check was RED at the original four-fracture-zone requirement. Revised side panes ended below the old1.02m projector. F1-only damageSpaceY changes.80to.68, putting the centre at.867m and keeping body/fracture deformation in the same private space. Shared helpers, four>=60float assertions, damage/crush/reset safeguards and tolerances are unchanged. GREEN351model+40headless frame-setup checks in4.02seconds; fracturefloats132/126/156/156;54655triangles/54draws. Source/real-fault confirmation review CLEAR051ffdcd.
 
 A separate paint diagnostic on051ffdcd was stopped at its10second diagnostic budget, before any output/pass; grounding did not start. This is an interrupted check, not a proved game fault or a flaky-pass rerun. Final canonical lane/build and actual quiet field timing remain pending. The old round1 raw packets and comparison sheet were consumed and recycled after replacement; current recipes, decisions and round2 originals remain.
+
+
+## Accepted second round; final candidate
+
+Claude c150e044 accepted the actual127237-byte round2 sheet: all five requested features landed, remaining screen curvature and helmet visibility are acceptable at play distance, no third round. Native source051ffdcd and six originals remain the evidence above; final model54655triangles/54draws. Current integration through Cups ca7338e6 merged without conflict; no model, kit, photos or frame recipe changed. Final canonical lane/build and quiet Panorama timing are still unrun. This card remains incomplete until those checks pass.
