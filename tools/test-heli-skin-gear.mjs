@@ -16,7 +16,7 @@ import {flatGround, createHeliGround} from '../src/heli/heli-ground.js';
 import {CABLE, createLoad, hookPoint, canHook, hook, release, stepCable, swingAngle, createWinch, reelWinch, lineLengthOf} from '../src/heli/heli-cable.js';
 import {BUCKET, createBucket, stepBucket, bucketWords, aimPoint, setBucketWater, bucketReading, dropSightDot} from '../src/heli/heli-bucket.js';
 import {RESCUE, createRescueLine, setLineWho, stepRescue, rescueHit, rescuePay, hoistBonus, createSupplyCrate, noteCrateRelease,
-  crateResult, supplyPay, netCrates, canNetCrate, netCrate, carryNet, spillNet} from '../src/heli/heli-rescue.js';
+  crateResult, supplyPay, NET_REACH, netCrates, canNetCrate, netCrate, hookCrates, carryNet, spillNet} from '../src/heli/heli-rescue.js';
 import {pickHiker, hikerSpotted, hikerWalk, pickSlide, beaconSignal, liftAt, searchLimit, searchNight, heatContacts} from '../src/heli/heli-search.js';
 import {SURVEY, surveyJob, planSurvey, createSurveyRun, stepSurvey, reportSurvey, surveyShare, heatAnimals} from '../src/heli/heli-survey.js';
 import {HELI_CAMERA_VIEWS, cameraViewsFor, heliCameraPose} from '../src/heli/heli-camera.js';
@@ -449,50 +449,78 @@ const stockGear = gearFor('stock');
   const edge = createLoad({id: 'edge', massKg: 1500, x: 0, z: 0, ground: flat});
   eq(hook(heli, edge, supplyGear).ok, true, 'exactly 1,500 kg is fine');
 
-  // The net: a second crate rides with the first.
-  const a = hooked('food'), b = crate('medicine', 3, 0);
-  eq(a.massKg, 300, 'food 300 kg');
-  Object.assign(a, {onGround: false, y: 5});
-  eq(canNetCrate(a, b, undefined).reason, 'The net is full.', 'no gear: one crate at a time');
-  eq(canNetCrate(a, b, stockGear).ok, false, 'stock paint: one crate');
-  eq(canNetCrate(a, b, gearFor('supply', false)).ok, false, 'switch off: one crate');
-  eq(canNetCrate(a, b, fireGear).ok, false, 'another skin: one crate');
-  eq(netCrates(a), [a], 'only the carrier aboard');
-  Object.assign(a, {x: 0, y: 0.7, onGround: true});
-  eq(canNetCrate(a, b, supplyGear), {ok: true, reason: null}, 'the cargo net takes a second crate 3 m away');
-  eq(canNetCrate(a, crate('fuel', 5.5, 0), supplyGear).reason, 'Too far to net.', '5.5 m is too far');
-  eq(canNetCrate(a, crate('fuel', 4.9, 0), supplyGear).ok, true, '4.9 m is within the stronger hook');
-  eq(canNetCrate(crate('food'), b, supplyGear).reason, 'Hook a crate first.', 'the first crate must be on the hook');
-  eq(canNetCrate(a, a, supplyGear).ok, false, 'a crate cannot net itself');
-  const moving = crate('medicine', 3, 0); moving.vx = 2;
-  eq(canNetCrate(a, moving, supplyGear).reason, 'Too fast to net.', 'a moving crate is too fast');
-  const done = netCrate(a, b, supplyGear);
-  eq([done.ok, done.massKg, a.massKg], [true, 500, 500], 'their weights add: 300 + 200 = 500 kg');
-  eq(netCrates(a), [a, b], 'both aboard');
-  eq([b.hooked, b.netted], [true, true], 'the netted crate cannot be counted as set down');
-  eq(netCrate(a, crate('fuel', 1, 0), supplyGear).reason, 'The net is full.', 'a third will not fit: two crates');
-  eq(a.massKg, 500, 'still 500 kg');
-  // It can carry the heaviest pair: fuel 640 + medicine 200 = 840, under the hook limit.
-  const f = hooked('fuel'), m = crate('medicine', 1, 0);
-  eq(netCrate(f, m, supplyGear).massKg, 840, 'fuel and medicine: 840 kg');
-  const huge = hooked('food'); huge.massKg = 1400; huge.ownKg = undefined;
-  eq(netCrate(huge, crate('fuel', 1, 0), supplyGear).reason, 'Too heavy for the hook.', 'over 1,500 kg together: refused');
-  eq(huge.massKg, 1400, 'and nothing changed');
+  // The net: hooking up takes the nearest two crates within 10 m in one go.
+  const heliAt = {x: 0, y: 15.7, z: 0, vx: 0, vy: 0, vz: 0};
+  const yard = (spec, override = {}) => spec.map(([id, x, z]) => createSupplyCrate({id, set: 'summitRun', x, z, ground: flat, ...(override[id] ? {massKg: override[id]} : {})}));
+  eq(NET_REACH, 10, 'the net reaches 10 m from the hook point');
+  for (const gear of [undefined, stockGear, gearFor('supply', false), fireGear]) {
+    const crates = yard([['food', 2, 0], ['medicine', 8, 0]]);
+    const got = hookCrates(heliAt, crates, gear);
+    eq([got.ok, got.crates.map(c => c.id), crates[0].massKg], [true, ['food'], 300], 'no net: the nearest crate only');
+    eq(crates[1].netted, undefined, 'and the other is left');
+    eq(hookCrates(heliAt, yard([['food', 4, 0]]), gear).ok, false, 'no net: 4 m is out of the plain hook\'s reach');
+  }
+  {
+    const crates = yard([['fuel', 14, 0], ['medicine', 8, 0], ['food', 2, 0]]);
+    const got = hookCrates(heliAt, crates, supplyGear);
+    eq([got.ok, got.event.type, got.event.id], [true, 'hooked', 'food'], 'with the net the nearest is the load on the hook');
+    eq(got.crates.map(c => c.id), ['food', 'medicine'], 'and the next nearest comes with it; the one 14 m away is left');
+    eq(got.carrier.massKg, 500, 'their weights add: 300 + 200 = 500 kg');
+    eq([crates[0].netted, crates[0].hooked, crates[1].netted, crates[2].netted, crates[2].hooked], [undefined, false, true, undefined, true],
+      'the far crate is untouched; the net crate counts as carried');
+    eq(netCrate(got.carrier, crates[0], supplyGear).reason, 'The net is full.', 'a third will not fit: two crates');
+  }
+  eq(hookCrates(heliAt, yard([['food', 10.5, 0]]), supplyGear).ok, false, 'a crate 10.5 m away is too far even for the net');
+  eq(hookCrates(heliAt, yard([['food', 9.9, 0]]), supplyGear).crates.length, 1, 'one crate within 10 m: it goes alone');
+  eq(hookCrates({...heliAt, vx: 5}, yard([['food', 2, 0]]), supplyGear).ok, false, 'moving too fast: nothing hooks');
+  {
+    // Nearest first, and a tie goes to the first id.
+    const crates = yard([['medicine', -3, 0], ['food', 3, 0], ['fuel', 0, 9]]);
+    eq(hookCrates(heliAt, crates, supplyGear).crates.map(c => c.id), ['food', 'medicine'], 'a tie goes to the first id');
+  }
+  {
+    // The hook limit covers the total: two too heavy, only the nearest.
+    const crates = yard([['food', 2, 0], ['fuel', 6, 0]], {food: 1000, fuel: 640});
+    const got = hookCrates(heliAt, crates, supplyGear);
+    eq([got.crates.map(c => c.id), got.carrier.massKg, crates[1].netted], [['food'], 1000, undefined], '1,000 + 640 is over 1,500: only the nearest');
+    const fits = hookCrates(heliAt, yard([['food', 2, 0], ['fuel', 6, 0]], {food: 860}), supplyGear);
+    eq([fits.crates.length, fits.carrier.massKg], [2, 1500], 'exactly 1,500 kg together is fine');
+    eq(hookCrates(heliAt, yard([['food', 2, 0]], {food: 1501}), supplyGear).ok, false, 'one crate over the limit will not hook');
+    const fuel = yard([['fuel', 2, 0], ['medicine', 6, 0]]);
+    eq(hookCrates(heliAt, fuel, supplyGear).carrier.massKg, 840, 'fuel and medicine: 840 kg');
+  }
+  {
+    const [a, b] = yard([['food', 0, 0], ['medicine', 3, 0]]);
+    Object.assign(a, {hooked: true});
+    eq(canNetCrate(yard([['food', 0, 0]])[0], b, supplyGear).reason, 'Hook a crate first.', 'the first crate must be on the hook');
+    eq(canNetCrate(a, a, supplyGear).ok, false, 'a crate cannot net itself');
+    eq(canNetCrate(a, b, undefined).reason, 'The net is full.', 'no gear: one crate at a time');
+    eq(canNetCrate(a, b, stockGear).ok, false, 'stock paint: one crate');
+    eq(canNetCrate(a, b, gearFor('supply', false)).ok, false, 'switch off: one crate');
+    eq(canNetCrate(a, b, fireGear).ok, false, 'another skin: one crate');
+    eq(netCrates(a), [a], 'only the carrier aboard');
+    eq(canNetCrate(a, b, supplyGear), {ok: true, reason: null}, 'the cargo net takes a second crate');
+  }
 
   // Carried, released and set down: each crate is paid on its own.
   {
     const heli2 = {x: 0, y: 40, z: 0, vx: 0, vy: 0, vz: 0};
-    const first = hooked('food'), second = crate('medicine', 2, 0);
-    Object.assign(first, {onGround: false, y: 40 - 15.05});
-    netCrate(first, second, supplyGear);
-    for (let i = 0; i < 120 * 6; i++) { stepCable(first, heli2, {ground: flat}, HELI_STEP); carryNet(first); }
-    near(heli2.y - first.y, 15, 0.2, 'the net hangs on the same 15 m line');
+    const crates = yard([['food', 2, 0], ['medicine', 7, 0]]);
+    const [first, second] = crates;
+    Object.assign(heli2, {y: 15.7});
+    ok(hookCrates(heli2, crates, supplyGear).ok, 'hooked up on the ground');
+    Object.assign(heli2, {x: first.x, z: first.z, vy: 6});
+    for (let i = 0; i < 120 * 20; i++) {
+      if (heli2.y >= 40) Object.assign(heli2, {y: 40, vy: 0}); else heli2.y += 6 * HELI_STEP;
+      stepCable(first, heli2, {ground: flat}, HELI_STEP); carryNet(first);
+    }
+    near(heli2.y - first.y, 15, 0.3, 'the net hangs on the same 15 m line');
     ok(second.y === first.y && !second.onGround, 'the second crate hangs with it');
     eq([second.x !== first.x || second.z !== first.z], [true], 'beside it, not inside it');
     eq(spillNet(first), [], 'nothing spills while it is hooked');
     // Let go from 3 m and settle on the ground.
     Object.assign(heli2, {y: 3 + 15 + 0.7});
-    first.y = 3 + 0.7; first.vy = 0; first.vx = 0; first.vz = 0;
+    Object.assign(first, {y: 3 + 0.7, vy: 0, vx: 0, vz: 0, x: heli2.x, z: heli2.z});
     const released = release(first, flat);
     eq(released.event.type, 'releasedHigh', 'let go from 3 m');
     noteCrateRelease(first, released.event);
@@ -503,8 +531,8 @@ const stockGear = gearFor('stock');
     eq(first.massKg, 300, 'the first is its own weight again');
     eq(netCrates(first), [first], 'the net is empty');
     // Both count at the yard with the 3 m cut each.
-    const yard = {x: first.x, z: first.z, radius: 10};
-    const results = [crateResult(first, yard), crateResult(second, yard)];
+    const yardCircle = {x: first.x, z: first.z, radius: 10};
+    const results = [crateResult(first, yardCircle), crateResult(second, yardCircle)];
     eq(results.map(r => r.released), [true, true], 'both are down in the yard');
     eq(supplyPay(results, {inTime: true, count: 3}).crates, 150 * 2, 'each crate pays by its own release: 300 less 150 each');
   }

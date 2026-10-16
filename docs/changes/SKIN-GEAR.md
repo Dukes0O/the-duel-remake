@@ -22,25 +22,18 @@ Every gear argument is optional. Left out, `undefined`, or holding the base kit
 | Heat camera (rescue) | `heli-search.js`, `heli-survey.js` | `heatContacts(heli, {hiker, driver, skier}, gear)`: warm people within 150 m, the skier only within 30 m; `heatAnimals(run, heli, gear)`: warm animals within 150 m in a count (shown only) |
 | Quiet tips (wildlife) | `heli-survey.js` | `stepSurvey(run, step, gear)`: animals scare at 50 m, not 100 |
 | Zoom camera (wildlife) | `heli-survey.js` | same call: counts out to 100 m, not 60; the covered share uses the same reach |
-| Cargo net (supply) | `heli-rescue.js` | `canNetCrate`, `netCrate`, `carryNet`, `spillNet`, `netCrates`: a second crate rides with the first, weights add, set down beside it, each paid on its own |
+| Cargo net (supply) | `heli-rescue.js` | `hookCrates(heli, crates, gear)` hooks the nearest crate and, with the net, the next nearest within 10 m (`NET_REACH`) in one go; `canNetCrate`, `netCrate`, `carryNet`, `spillNet`, `netCrates`: weights add, the total stays under the hook limit (else only the nearest), set down beside each other, each paid on its own |
 | Stronger hook (supply) | `heli-cable.js` | `hookPoint`, `canHook`, `hook` take `gear`: reach 5 m; hook limit stays 1,500 kg |
 | Nose camera (TV) | `heli-camera.js` | `cameraViewsFor(gear)` and `heliCameraPose(view, index, gear)`: a fifth view "nose", 3 m ahead, looking level along the heading; pitch and roll do not move it |
 
-## Hooks the session and app need (not in this card's files)
+## Hooks the session and app need
 
-1. `src/heli/heli-session.js`: pass `gearStats(profile, {enabled: heli-skins})`
-   into `hookPoint`/`canHook`/`hook` (also its own copies of `CABLE.length` and
-   `CABLE.hookReach` at the hook, the arrival hang and the hover height), call
-   `reelWinch` each step with W/S while H is held, call `rescueHit(..., {gear})`,
-   `stepSurvey(..., gear)`, `carryNet` after each `stepCable`, skip crates with
-   `netted` in `stepCable`, and call `netCrate` and `spillNet` for the supply run.
-2. `src/heli/heli-missions.js`: `peoplePay(r, bonus = 0)` passing the bonus on to
-   `rescuePay` as its third argument (the session gives `hoistBonus(gear, r.kind)`),
-   and `rescueLimit`/`clockLeft`/`tickRescue` taking the extra seconds from
-   `searchLimit` for a hiker search (the light dims over the original last
-   3 minutes; `searchNight` says where dark falls).
-3. `src/app.js` line 1810: `% 4` becomes `% cameraViewsFor(gear).length`.
-4. SKIN-VIEW: gauge text, sight dot, heat inset and the nose view are drawing.
+Moved to SKIN-HOOKS (Director): the session passing `gear` into the hook calls
+(`hookCrates` for the supply pickup), `reelWinch`, `rescueHit`, `stepSurvey`,
+`carryNet` and `spillNet` (skipping `netted` crates in `stepCable`);
+`peoplePay(r, bonus)` and the hiker clock from `searchLimit` in
+`heli-missions.js`; `% cameraViewsFor(gear).length` at `src/app.js` line 1810.
+SKIN-VIEW draws the gauge, sight, heat inset and nose view.
 
 ## Open for Claude
 
@@ -58,16 +51,24 @@ Every gear argument is optional. Left out, `undefined`, or holding the base kit
 5. **Winch keys.** `command` -1 reels in and +1 pays out; which of W and S is
    which is the session's. The line starts at 15 m. With no winch the line is
    always 15 m and a leftover `lineLength` is cleared on the next `reelWinch`.
-6. **Net rules.** The first crate is the cable's load; the second joins while the
-   first sits on the ground and the second is within the hook reach (5 m with the
-   stronger hook) and not moving. Two crates is the net's limit; the hook limit
-   (1,500 kg) is checked against the weights together. Crates are 8 m or more
-   apart at the sites, so the pilot drags or sets the first down near the second.
+6. **Net rules.** Changed by the Director, see below.
 7. **Nose camera** is 3 m ahead of the mast and 0.4 m up; SKIN-VIEW may move it to
    the model's nose.
 8. The older `stretcher: true` flag and `RESCUE.stretcher*` numbers stay (existing
    tests use them); the new `gear` path reads `gearStats` and wins when both are
    given. A test checks they agree.
+
+## Claude decided
+
+Items 1 to 5, 7 and 8 stand as built. Item 6 (the net) changed: with the cargo
+net worn, hooking up takes the nearest two crates within 10 m of the hook point
+in one go (crates are 8 m or more apart, so two neighbours at the yard
+qualify), so nothing is set down near the other. The nearest is the cable's
+load, the next nearest rides with it, weights add, each crate is still paid on
+its own, and the 1,500 kg hook limit covers the total: if two exceed it, only
+the nearest is taken. Built as `hookCrates`; the 10 m is `NET_REACH`, a number
+in `heli-rescue.js` because the gear table has no net reach. Without the net the
+nearest crate within the hook's own reach (3 m) hooks alone, as before.
 
 ## Changed assertions
 
@@ -75,7 +76,7 @@ None. No existing test is edited.
 
 ## Checks
 
-- `tools/test-heli-skin-gear.mjs` (new, 262 checks): fingerprints of the old
+- `tools/test-heli-skin-gear.mjs` (new, 277 checks): fingerprints of the old
   cable, bucket, rescue, search, survey and camera results taken on f0bd1edb
   before any change; with no gear, stock paint, and each of the seven skins with
   the switch off, all six are identical; each skin changes only its own gear's

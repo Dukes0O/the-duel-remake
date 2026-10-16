@@ -6,7 +6,7 @@
 // randomness. It never touches credits; it hands back the pay for the session
 // to use. Run stepRescue before stepCable each step.
 import {HELI_STEP, horizontalSpeed} from './heli-flight.js';
-import {CABLE, createLoad} from './heli-cable.js';
+import {CABLE, createLoad, hookPoint, hook} from './heli-cable.js';
 
 export const RESCUE = Object.freeze({
   id: 'rescue',
@@ -314,28 +314,31 @@ export function supplyPay(crates, {inTime = true, count = 3} = {}) {
 }
 
 // ---- the cargo net (supply skin, docs/HELI_WILDLIFE.md section 5.3) ----------
-// With the net worn (gear.crates is 2) a second crate rides the cable with the
-// first. The crate on the hook stays the cable's load (the pendulum, drag and
-// set-down all apply); the ones in the net are carried along with it and their
-// weights add to the load's. The hook limit is unchanged (gear.hookLimitKg).
-// The base kit carries one crate and none of this is reached.
+// With the net worn (gear.crates is 2) hooking up takes the nearest two crates
+// within 10 m of the hook point in one go. The nearest is the cable's load (the
+// pendulum, drag and set-down all apply); the other is carried along with it
+// and its weight adds to the load's. The hook limit is unchanged
+// (gear.hookLimitKg) and covers the total: if two would be too heavy, only the
+// nearest is taken. Each crate is still paid on its own. The base kit hooks one
+// crate within the hook's own reach and none of the net is reached.
+export const NET_REACH = 10;
 
 // The crates aboard a carrier, the one on the hook first.
 export const netCrates = carrier => [carrier, ...(carrier?.netCrates ?? [])];
 
-// Can this crate join the net now? It must be a supply crate on the ground
-// within the hook's reach of the carrier, not moving relative to it faster than
-// the hook can hook, and the weights together must stay under the hook limit.
-// Returns {ok, reason}.
-export function canNetCrate(carrier, crate, gear) {
+const flatGap = (at, crate) => Math.hypot(at.x - crate.x, at.z - crate.z);
+
+// Can this crate join the net of a crate already on the hook? It must be a
+// supply crate resting on the ground within 10 m of the hook point (hookAt,
+// the carrier's own place if not given), there must be room in the net, and
+// the weights together must stay under the hook limit. Returns {ok, reason}.
+export function canNetCrate(carrier, crate, gear, hookAt = carrier) {
   const aboard = netCrates(carrier), room = Number.isFinite(gear?.crates) ? gear.crates : 1;
   if (!carrier?.supply || !carrier.hooked) return {ok: false, reason: 'Hook a crate first.'};
   if (!crate?.supply || crate === carrier || crate.hooked || aboard.includes(crate)) return {ok: false, reason: 'That is not a crate to net.'};
   if (aboard.length >= room) return {ok: false, reason: 'The net is full.'};
   if (!crate.onGround || crate.falling) return {ok: false, reason: 'The crate must be on the ground.'};
-  const reach = Number.isFinite(gear?.hookReach) ? gear.hookReach : CABLE.hookReach;
-  if (Math.hypot(carrier.x - crate.x, carrier.z - crate.z) > reach) return {ok: false, reason: 'Too far to net.'};
-  if (Math.hypot(carrier.vx - crate.vx, carrier.vy - crate.vy, carrier.vz - crate.vz) > CABLE.hookSpeed) return {ok: false, reason: 'Too fast to net.'};
+  if (flatGap(hookAt, crate) > NET_REACH) return {ok: false, reason: 'Too far to net.'};
   const limit = Number.isFinite(gear?.hookLimitKg) ? gear.hookLimitKg : Infinity;
   if (aboard.reduce((sum, one) => sum + (one === carrier ? carrier.ownKg ?? carrier.massKg : one.massKg), 0) + crate.massKg > limit)
     return {ok: false, reason: 'Too heavy for the hook.'};
@@ -343,8 +346,8 @@ export function canNetCrate(carrier, crate, gear) {
 }
 
 // Puts the crate in the net: the carrier's mass becomes its own plus the net's.
-export function netCrate(carrier, crate, gear) {
-  const check = canNetCrate(carrier, crate, gear);
+export function netCrate(carrier, crate, gear, hookAt = carrier) {
+  const check = canNetCrate(carrier, crate, gear, hookAt);
   if (!check.ok) return check;
   carrier.ownKg ??= carrier.massKg;
   (carrier.netCrates ??= []).push(crate);
@@ -353,6 +356,24 @@ export function netCrate(carrier, crate, gear) {
   crate.onGround = false;
   carrier.massKg = carrier.ownKg + carrier.netCrates.reduce((sum, one) => sum + one.massKg, 0);
   return {ok: true, reason: null, massKg: carrier.massKg};
+}
+
+// Hooking up on a supply run: the nearest crate within reach goes on the hook
+// (the hook's own reach, or 10 m with the net worn), then, with the net, the
+// next nearest within 10 m joins it if the weights stay under the hook limit.
+// gear is gearStats plus the winch's lineLength if any. Ties go to the crate
+// whose id sorts first. Returns {ok, event, carrier, crates} or {ok: false}.
+export function hookCrates(heli, crates, gear) {
+  const net = (Number.isFinite(gear?.crates) ? gear.crates : 1) >= 2;
+  const at = hookPoint(heli, gear);
+  const near = [...crates].filter(crate => crate?.supply && !crate.hooked && crate.onGround && !crate.falling)
+    .sort((a, b) => flatGap(at, a) - flatGap(at, b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const first = near[0];
+  if (!first) return {ok: false};
+  const result = hook(heli, first, net ? {...gear, hookReach: NET_REACH} : gear);
+  if (!result.ok) return {ok: false};
+  if (net && near[1]) netCrate(first, near[1], gear, at);
+  return {ok: true, event: result.event, carrier: first, crates: netCrates(first)};
 }
 
 // Run after each cable step: the crates in the net hang beside the carrier,
