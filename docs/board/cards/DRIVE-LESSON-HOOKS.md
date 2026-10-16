@@ -163,3 +163,23 @@ No unchanged18host cases repeated. No native/browser/lane/build, playable
 feature, reward-isolation or integration merge acceptance. Actual instructor
 and host acceptance remain final dependencies. Source frozen blocked/locks[];
 brief busy-game-files lease released, preserve this unfinished owned lane.
+
+
+## Windowless host code and compile proof
+
+Current isolated source79c8c1fe20ac382afbcad16f45e549a3e685b978 includes
+current integration, reviewed instructor e2, and one prepared actual native
+App menu-to-reward case in the existing test file. The case uses existing
+withReferenceApp/memory-only career, native inputs/steps/events and approved
+reward API; it never injects a pose, plan, lesson outcome, progress or reward.
+It checks reset, slow streak reset, actual3wins, durable once-only reward,
+ordinary record/pay/ghost isolation, leave and other-player ownership.
+Required independent code/save delta review CLEAR; syntax/diffclean only,
+this new native case is UNRUN. Existing19pure cases were not repeated.
+
+ONE production build on exactclean79c8c1fe PASS2260.6768ms, exit0, no window.
+Own build-79c8c1fe receipt retained, wrapper32356/runner14720 drained. This
+proves compilation only. Root's actual instructor gate failed its unchanged
+2m/reversal checks, so do not duplicate that known failure through the new
+host case. Host/native/browser/lane/merge acceptance remains unfinished;
+keep source frozen and core/save locks free while instructor direction waits.

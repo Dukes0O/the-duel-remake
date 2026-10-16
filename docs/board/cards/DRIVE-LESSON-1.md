@@ -237,3 +237,31 @@ acceptance; do not duplicate manually or edit its running source. Receipt
 .evidence/2026-10-16/DRIVE-LESSON-1/final-e2f752bc/lane-receipt.json pending.
 Fresh actual count was zero; this is one Node-only/windowless job. No gate,
 native or build pass yet. All other chats/source remain independent.
+
+
+## Actual corrected native result: stop/report clause
+
+Exact e2f752bc canonical ended19:57:32.632UTC,22/23suites/jobs4/zero
+notrun/exit1/254577.646ms, sourceclean. Wrapper36652/runner30232 and all
+children drained. Packet final-e2f752bc retains full outputs/receipt. Only
+lesson suite failed:27pure checks PASS,8native cases failed before a valid
+baseline. No instructor/FPS/student/gate/build/merge pass. Current clean
+7684b7c3 adds only the required actual failure note; runtime remains e2.
+
+Panorama dir+1 native lateral facts (brake / innermost / widest):
+Casual4.1865193693 /2.3106531947 /-6.3228974725 gives inward-1.8758661746m;
+Pro4.2735164715 /1.0588766484 /-6.2705748479 gives inward-3.2146398231m.
+Both fail the unchanged required+2m inward movement. Outward movement is
+8.6335506672m /7.3294514962m. These are failed trace candidates, not accepted
+cone coordinates. Woods Casual/Pro throw trace reversed; cause and lateral
+triplet remain unproved. No extra native retry or target/racingline/pace/
+gate/physics/clean-threshold change. The written stop/report rule is followed.
+
+Claude: please settle the next bounded implementation approach within the
+owned instructor. Its speed plan calls buildSpeedProfile(line,spec), whose
+current implementation uses the old lateral acceleration/feasibility and
+does not read tyre-slip rules. This is a source fact, not a proven cause.
+May the next bounded correction derive the feasible speed plan/controller
+from the existing tyre helper, retaining92%/97%, all gates, clean limits
+and the2m sanity checks, or do you choose another approach? No retune or
+retry until the direction is written. Core/save locks remain free.
