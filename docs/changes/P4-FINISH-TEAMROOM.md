@@ -30,7 +30,10 @@ Added to `tools/test-track-analysis.mjs` (4599 checks): crest folding on a built
 
 ## Checks
 
-Filled in below when the gates ran.
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`): first run on the first code commit 152 of 152 passed (940 s). After the later map fixes it ran again: 154 of 155 passed, and the one failure was the repository placement check, because the postcard sheet had been named `finish-round-1.jpg` (only `round-N.jpg` is admitted). The sheet is now `docs/board/looks/team-room/round-1.jpg` with `round-1-review.md`; `test-repo-hygiene` alone then passes. The Blender salt-flats errors in that run's error log come from its own deliberate failure controls.
+- `npm run build`: passed (twice).
+- Browser scenarios `team-room` and `team-room-photos`, one at a time, on the final code: both passed (4 screenshots, 72 photos across 34 event/routes, no warnings). The first run failed `team-room` honestly: a corner's own flag sat on its numbered circle and blocked the press; fixed in the map (see above), not in the scenario.
+- Sheet: `docs/board/looks/team-room/round-1.jpg` (167 KB), High quality, test overlay hidden, from a one-off copy of the `team-room` scenario that was not kept.
 
 ## Removed
 
