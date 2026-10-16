@@ -22,7 +22,8 @@ export const FEATURE_STATES = Object.freeze({
   // The helicopter (docs/HELICOPTER.md): Kestrel One, H1 First flight. Released 14 October 2026.
   helicopter: 'on',
   // H2 Fire (docs/HELI_FIRE.md): forest fires, the bucket and burnt courses. Works only with the helicopter on.
-  'forest-fire': 'dev',
+  // Released 15 October 2026.
+  'forest-fire': 'on',
   // Earned cars and medal sheets (docs/EARNED_CARS.md). Off in the game.
   'earned-cars': 'dev',
 });
