@@ -41,3 +41,8 @@ Root settles the fixture adapter within existing rules and names its exact owner
 ## Reviewed fixture correction merged; final candidate
 
 Only the existing grounding fixture and its release note changed on 89a4a26c. Independent review CLEAR. Canonical lane17/17/jobs4/zero failures-unrun/197996.1219ms and build1504.0365ms PASS. Corrected grounding suite72584checks/3709renderedroots/806far-only/55268.1817ms PASS, unchanged old assertions and tolerances. Conflict-free merge collects these facts and the release documentation; no duplicate lane run. Runtime, models, shaders, assets, features, package locks, combat tools and native recipes are byte-identical to the original ac8 candidate. Reuse their actual source-labelled acceptance; do not relabel executions as the new source. A fresh exact full/jobs4/alone and staged build precede installation. Original failed452/453 remains retained. Kyle frame skip unchanged.
+
+
+## Kyle questions the duplicate full tier
+
+All453 suites have passing evidence across original452/453 plus the corrected17/17lane; this is cumulative evidence, not an exact7d full pass. New stage7d430cd0 build20261016030307-f35c5308abb7 verified537/537privateHTTP, preview stopped. Independent installer/reuse reviewCLEAR. Root stopped only its pending wrapper44292 before any new full child or full-start receipt existed when Kyle questioned the repetition. Release drain cleared; no foreign stop. The exact-final-commit rule still needs Kyle's release-specific exception or a new exact full. No live install or pass fabrication. Normal owned correction-lane cleanup finished; original failed packet retained.

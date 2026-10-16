@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T03:02:21.250Z
+Observed at: 2026-10-16T03:05:58.564Z
 
-Observation commit: 836799e54c51e7c0018518b474c24af87b428b80
+Observation commit: 7d430cd011de0145f404b7b24500e26ac011d881
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 836799e54c51e7c0018518b474c24af87b428b80
+Integration HEAD: 7d430cd011de0145f404b7b24500e26ac011d881
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,7 +29,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/ardennes-release-grounding | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-fWITcC/source |
 | codex/deep-art-src | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/earn-car-2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2 |
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
@@ -60,7 +59,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/ardennes-release-grounding | unknown | 2026-10-15T19:56:49-07:00 | 0 | last commit 2026-10-15T19:56:49-07:00 | docs/changes/RELEASE-ARDENNES.md, tools/test-expansion-vegetation-grounding.mjs |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T19:18:16-07:00 | 0 | last commit 2026-10-15T19:18:16-07:00 | docs/HELICOPTER.md, docs/board/STATUS.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-2.jpg, docs/changes/EARN-CAR-2.md |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T19:01:28-07:00 | 0 | last commit 2026-10-15T19:01:28-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/ghost.js, src/intel-levels.js, src/progression.js |
@@ -88,9 +86,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 1,276,675 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 491,433 B | -785,242 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 409,731,072 B | +149,504 B | unavailable |
+| Git objects | 409,955,328 B | +224,256 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -99,7 +97,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 836799e54c51e7c0018518b474c24af87b428b80
+- Local integration/wasteland: 7d430cd011de0145f404b7b24500e26ac011d881
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
