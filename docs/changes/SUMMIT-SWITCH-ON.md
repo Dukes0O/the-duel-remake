@@ -46,3 +46,7 @@ Physical source ecee3e81 already passed both strict suites (89.964s) and19native
 ## Removed
 
 Removed invalid closed-lap/open-route premises and obsolete generic Gallery assumptions while retaining original closed guards and limits. The physical repair removes only intruding natural scenery/colliders; no old placement is archived or refilled. This note folds superseded progress wording into current decisions/evidence; Git retains text history. No asset, authored wall/kit, dependency, old replay pin or numerical tolerance is removed.
+
+## Current repaired scene captured
+
+Actual existing world-composition --capture on clean6ba450ab completed with exit0 in65889.5788ms. All23enabled scenes were captured exactly once; all21foreign rows deep-equal their unchanged baselines, including released Ardennes and Tremblant Snow. Only Summit and its inherited Attack rows change: olda574e548c9f6ca7ecb856dcc2ea5105507338b19cd6f790455fc935b173c6a5e to7a5a6a1c4dd0aecd2b6afd10a9b887541e6fb936471cb5dc9b02d093ebff9132;666nodes/641meshes/21121instances/112geometries/61materials/19textures. The two removed natural instances and Gallery's tiny encoded detail correction are the Claude-approved physical repairs, already directly checked and visually inspected; no new art or foreign change is accepted. Actual source/old/new/count receipt is .evidence/2026-10-15/SUMMIT-SWITCH-ON/signature-6ba450ab/receipt.json. The capture is not the final canonical guard/gate/build; those remain pending. The original failed packets stay exact.
