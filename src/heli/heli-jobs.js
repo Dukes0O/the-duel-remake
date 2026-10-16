@@ -9,7 +9,7 @@ import {makeRng} from '../rng.js';
 import {liftCheck} from './heli-cable.js';
 import {MEDAL_CARS} from '../medals.js';
 
-import {carAt} from './heli-save.js';
+import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS} from './heli-save.js';
 
 export const HOME_COURSE = 'tremblant-woods';
 
@@ -22,26 +22,48 @@ export const HELI_DESTINATIONS = Object.freeze({
     mapKm: Object.freeze({x: -6, z: 7}), home: false}),
 });
 
+// Summit Run (docs/HELI_RESCUE.md section 5.5), a fourth destination while
+// the `summit-run` switch is on (its course is in dev today). Base altitude
+// is the real start of the Pikes Peak road; on the small map it lies north-
+// west of Panorama Ridge (north is +z, as Tremblant Snow is north of the
+// Woods). It joins only through the `summitRun` option below, so with the
+// switch off every table, leg and answer is what H1 gave.
+export const SUMMIT_RUN = Object.freeze({id: 'summit-run', name: 'Summit Run', baseAltitude: 2860,
+  mapKm: Object.freeze({x: -10, z: 12}), home: false});
+export const HELI_DESTINATIONS_WITH_SUMMIT = Object.freeze({...HELI_DESTINATIONS, [SUMMIT_RUN.id]: SUMMIT_RUN});
+
+// The destinations to use: pass the summit-run switch as {summitRun}.
+export const destinationsFor = ({summitRun = false} = {}) => summitRun === true ? HELI_DESTINATIONS_WITH_SUMMIT : HELI_DESTINATIONS;
+
 // Fuel for each cruise leg, either way.
 const LEG_FUEL = Object.freeze({
   'tremblant-snow|tremblant-woods': 25,
   'panorama-ridge|tremblant-woods': 120,
   'panorama-ridge|tremblant-snow': 110,
 });
+// Summit Run's legs (section 5.5): 160 kg from the Woods, 150 from Tremblant
+// Snow, 90 from Panorama Ridge.
+const SUMMIT_LEG_FUEL = Object.freeze({
+  'summit-run|tremblant-woods': 160,
+  'summit-run|tremblant-snow': 150,
+  'panorama-ridge|summit-run': 90,
+});
 
 export function legKey(from, to) {
   return [from, to].sort().join('|');
 }
 
-export function legFuelKg(from, to) {
+export function legFuelKg(from, to, {summitRun = false} = {}) {
   if (from === to) return null;
-  return LEG_FUEL[legKey(from, to)] ?? null;
+  const key = legKey(from, to);
+  return LEG_FUEL[key] ?? (summitRun === true ? SUMMIT_LEG_FUEL[key] : undefined) ?? null;
 }
 
 // Bearing on the small map from one course toward another, as a unit
 // vector in world x and z.
-export function bearing(from, to) {
-  const a = HELI_DESTINATIONS[from]?.mapKm, b = HELI_DESTINATIONS[to]?.mapKm;
+export function bearing(from, to, options = {}) {
+  const table = destinationsFor(options);
+  const a = table[from]?.mapKm, b = table[to]?.mapKm;
   if (!a || !b) return null;
   const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
   return length > 0 ? {x: dx / length, z: dz / length} : null;
@@ -64,8 +86,8 @@ export function airOnlyNote({enabled = false, profile, carId, courseId, carName 
   return `The ${carName} travels only by air. Fly it here from the helipad first.`;
 }
 
-export function isDestination(courseId) {
-  return Object.hasOwn(HELI_DESTINATIONS, courseId);
+export function isDestination(courseId, options = {}) {
+  return Object.hasOwn(destinationsFor(options), courseId);
 }
 
 // ---- the dispatch board ------------------------------------------------
@@ -111,4 +133,56 @@ export function jobPay(job, mode = 'assisted') {
 // "Fly the Falcone F42 to Tremblant Snow".
 export function jobTitle(job) {
   return `Fly the ${CARS[job.carId]?.name ?? job.carId} to ${HELI_DESTINATIONS[job.to]?.name ?? job.to}`;
+}
+
+// ---- the car recovery job (docs/HELI_RESCUE.md section 5.3) --------------
+// After a hoist rescue the driver's car lies on the slope. The next play day
+// the board offers "Recover the <car> from Panorama Ridge" for 500 credits:
+// hook it and set it down in the landing zone. It stays 3 play days (the save
+// removes the wreck then, heli-save.js). It is an everyday job that sits on
+// the board beside the day's three, so dayJobs and its fingerprints are
+// untouched, and it pays as a dispatch job does (Real pays a quarter more).
+export const RECOVERY = Object.freeze({pay: 500, days: WRECK_DAYS});
+const WRECK_SEED = 0x57524b43;
+
+// The car left on the slope: a seeded pick from the customer cars Kestrel
+// One can lift, so the same rescue always leaves the same car.
+export function wreckFor({seed, courseId, x, z, day}) {
+  const rng = makeRng(((Number(seed) >>> 0) ^ WRECK_SEED) >>> 0);
+  return Object.freeze({courseId, carId: JOB_CARS[rng.int(0, JOB_CARS.length - 1)], x, z, day});
+}
+
+// The job for a wreck on a play day: on the board from the day after the
+// rescue, for 3 play days; none before or after.
+export function recoveryJob(wreck, playDay) {
+  if (!wreck || !Number.isSafeInteger(playDay) || !Number.isSafeInteger(wreck.day)) return null;
+  const age = playDay - wreck.day;
+  if (age < 1 || age > RECOVERY.days) return null;
+  return Object.freeze({id: `w${wreck.day}-${wreck.carId}`, kind: 'recovery', carId: wreck.carId, from: wreck.courseId,
+    to: wreck.courseId, pay: RECOVERY.pay, x: wreck.x, z: wreck.z});
+}
+
+// "Recover the Falcone F42 from Panorama Ridge".
+export function recoveryTitle(job) {
+  return `Recover the ${CARS[job.carId]?.name ?? job.carId} from ${HELI_DESTINATIONS[job.from]?.name ?? job.from}`;
+}
+
+// Today's recovery job from a profile, or null (also while the rescue switch is off).
+export function recoveryJobOf(profile, {enabled} = {}) {
+  if (enabled !== true) return null;
+  const heli = heliOf(profile);
+  return recoveryJob(heli.missions?.wreck, heli.playDay.count);
+}
+
+// The car is set down in the landing zone: pay the job (capped like every
+// credit change) and take the wreck out of the save. The job must be on the
+// board today, so it can never pay twice.
+export function finishRecovery(profile, {enabled, mode = 'assisted'} = {}) {
+  if (enabled !== true) return {ok: false, reason: 'Rescues are not available yet.', profile};
+  const job = recoveryJobOf(profile, {enabled});
+  if (!job) return {ok: false, reason: 'There is no car to recover.', profile};
+  const wallet = Number.isFinite(profile?.credits) ? Math.max(0, Math.floor(profile.credits)) : 0;
+  const total = Math.min(1_000_000_000, wallet + jobPay(job, mode));
+  const stored = setMissions({...profile, credits: total}, {...missionsOf(profile), wreck: null}, {enabled: true});
+  return {ok: true, profile: stored.profile, paid: total - wallet, job};
 }
