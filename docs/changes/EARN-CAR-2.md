@@ -24,7 +24,7 @@ Solver tests preserve the pre-Enzo nine-car and Enzo ten-car subsets and exact o
 
 ## Removed
 
-Round 2 removes the obsolete full bubble glazing and replaces the narrow painted roof with the approved opaque roof and bounded panes. No existing car, runtime asset, replay pin, dependency or save data is removed. Consumed round 1 evidence will be recycled once its replacement and verdict are recorded.
+Round 2 removes the obsolete full bubble glazing and replaces the narrow painted roof with the approved opaque roof and bounded panes. No existing car, runtime asset, replay pin, dependency or save data is removed. Consumed round1 sheet and raw captures are recycled with the reviewed round2 replacement; its five-point rejection and source/measurement facts remain in the current review and card.
 
 ## Current source evidence
 
@@ -33,10 +33,10 @@ Model e52b752c passes328 focused checks: measured1.999x4.285x1.140m, tires at0,5
 Only the new492772-byte armour GLB was added (SHA256a6cb9b0e5199ad21c642219720734a29e4e52df4d94962fc85cd54b7cae47dfa); all11 pre-existing kit/turret asset hashes stayed exact. Generated F1 blend and temporary kit texture were recycled. Native pictures, Claude art verdict, frame check and final lane/build are still pending. The card is not complete.
 
 
-Personal save review is CLEAR on417dfbc1: thirteen historical fixtures and437 first-load/round-trip checks passed in memory. The first six native pictures were captured, but that harness run is FAILED because the showroom requested an absent favicon. Its report and images remain in native-r1; no clean native pass or formal art verdict is claimed. The card-owned photography recipe now supplies an actual empty icon before page load, retaining every browser error check. Model, lighting, cameras and renderer are unchanged. A fresh native packet will verify this correction.
+Personal save review is CLEAR on417dfbc1: thirteen historical fixtures and437 first-load/round-trip checks passed in memory. The first six native pictures were captured, but that harness run is FAILED because the showroom requested an absent favicon. That failed packet was retained through the correction review, then recycled after its verdict; it was never called passed. The card-owned photography recipe now supplies an actual empty icon before page load, retaining every browser error check. Model, lighting, cameras and renderer are unchanged. A fresh native packet will verify this correction.
 
 
-The corrected native packet on8930a480 passed: private58916, memory-only saves, all six real views, zero errors and warnings. Root inspected every original. Formal round1 sheet is128555bytes with its review note under docs/board/looks/earned-cars; Claude verdict is pending. The first uncommitted sheet had overlapping footer labels and was recycled, then rebuilt with clear spacing; model and pictures did not change. This is one formal round. Actual field timing, final canonical lane and build are still unrun.
+The corrected native packet on8930a480 passed: private58916, memory-only saves, all six real views, zero errors and warnings. Root inspected every original. Formal round1 sheet is128555bytes with its review note under docs/board/looks/earned-cars; Claude rejected round1 and requested the five recorded corrections. The first uncommitted sheet had overlapping footer labels and was recycled, then rebuilt with clear spacing; model and pictures did not change. This is one formal round. Actual field timing, final canonical lane and build are still unrun.
 
 
 ## Claude round 1 verdict and round 2 source
@@ -46,3 +46,12 @@ Claude rejected round 1 on the card: the clear bubble cabin did not read as an F
 Exactly two obsolete geometry assertions change: the driver retains the original1cm helmet clearance against the actual opaque roof instead of removed overhead glass; finite glazing rays move to the actual front/rear/side panes instead of the former centreline bubble. Added roof rays require opaque painted cover and absence of hidden glass at nine points, plus physical frame, intake-mouth, small-lens and mirror checks. All old numeric bounds, seats, lamp exposure, private damage/crush/reset and frame-selector safeguards remain. No tolerance is relaxed.
 
 Independent source review CLEAR on2e7500e1 after a clean integration merge; shared model, damage and grounding helpers have no merge delta. Tests, measured round 2 budget, native round 2 pictures, field timing and final lane/build are unrun. The prior328checks/51610triangles/55draws describe round1 only. Claude confirmed Panorama Pit Straight with eight actual F1 copies for later quiet-laptop timing.
+
+
+## Round 2 real capture and regression repair
+
+Frozen051ffdcd passed the actual existing native recipe in8.287seconds at private18354: six views, zero errors/warnings, memory-only saves, exact clean source/postSHA. Root inspected all originals and the127237-byte formal round2 sheet. Claude verdict is pending; no third round or final art acceptance is inferred.
+
+The quick08a72202 model check was RED at the original four-fracture-zone requirement. Revised side panes ended below the old1.02m projector. F1-only damageSpaceY changes.80to.68, putting the centre at.867m and keeping body/fracture deformation in the same private space. Shared helpers, four>=60float assertions, damage/crush/reset safeguards and tolerances are unchanged. GREEN351model+40headless frame-setup checks in4.02seconds; fracturefloats132/126/156/156;54655triangles/54draws. Source/real-fault confirmation review CLEAR051ffdcd.
+
+A separate paint diagnostic on051ffdcd was stopped at its10second diagnostic budget, before any output/pass; grounding did not start. This is an interrupted check, not a proved game fault or a flaky-pass rerun. Final canonical lane/build and actual quiet field timing remain pending. The old round1 raw packets and comparison sheet were consumed and recycled after replacement; current recipes, decisions and round2 originals remain.

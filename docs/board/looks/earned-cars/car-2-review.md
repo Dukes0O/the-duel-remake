@@ -1,15 +1,17 @@
-# McLaren F1: round 1 rejected; round 2 source prepared
+# McLaren F1: round 2 submitted
 
-Claude requested round 2: replace the clear bubble with an opaque framed roof/window design, add a proper central snorkel, reduce corner lamps, lower the side scallop/define the door line and shrink the mirrors. His full verdict is on EARN-CAR-2. This record consumes the first of at most three formal rounds. Round 2 source is prepared and reviewed; its actual native pictures and verdict are pending.
+Claude's art verdict is pending. This is formal round 2 of at most three.
 
-[Native comparison sheet](car-2-round-1.jpg), 128555 bytes. The six real showroom views are front, rear, side, detail, damage and steering. The recipe resizes whole pictures and adds labels; it does not change the images, model, lighting or cameras.
+[Native comparison sheet](car-2-round-2.jpg), 127237 bytes. Six actual showroom views: front, rear, side, detail, damage and steering. The existing recipe resizes whole pictures and adds labels; model, cameras, lights and image content are unchanged by sheet composition.
 
-Capture source: 8930a48053f870f049c6e0ef81a7afaa8dc99a7b. Existing private browser harness, port 58916, memory-only saves, six pictures, zero errors and warnings. Original packet: .evidence/2026-10-15/EARN-CAR-2/native-r1-icon-fixed. The earlier native-r1 packet failed only on an absent favicon and is not a passing receipt.
+Capture source051ffdcd8152e471ecda7b3ffb4351c1a430f5ce stayed clean before and after. Existing private browser harness, port18354, memory-only saves, six pictures, zero errors/warnings, 8.287seconds. Current originals and receipt: .evidence/2026-10-15/EARN-CAR-2/native-r2. Root inspected all six originals and the compact sheet.
 
-Root inspected all six original pictures and this sheet. The low nose, three-seat cabin, roof intake, side intake and four round rear lights are visible. Damage and steering are shown on the actual model. Review concern: the glazing is very clear and the cabin reads open; Claude should judge whether its solid roof and window boundaries need more definition to read as a road F1. No art acceptance is inferred from code or triangle counts.
+Claude rejected round1 because it read as a bubble concept. This round replaces the full overhead glazing with a broad opaque roof and bounded dark panes, swept frames/rails and a raised central snorkel. Corner optics are smaller and tinted; side intakes are lower, door seams defined and mirrors smaller at the windscreen base. Wheels, four round rear lamps, actual damage and steering remain. The windscreen is still strongly curved and the driver helmet is visible in the close view; Claude should judge whether this now reads as the road F1. No art pass is inferred.
 
-Model budget: 51610 triangles and 55 draws. Showroom counters include its floor and shadows. The model and registration remain identical to reviewed 417dfbc1; only the icon recipe, notes and sheet layout changed afterward.
+Measured model54655triangles/54draws, within73600/66. Showroom counters include floor and shadows (58497submittedtriangles/56draws undamaged). The first quick round2 check caught missing side fracture zones; F1-only damage mapping now projects into the bounded panes. All original four fracture-zone minimums remain exact, with132/126/156/156floats. Green351model and40headless frame-setup checks; independent source and real-fault confirmation CLEAR.
 
-Reference pictures were viewed on [McLaren's F1 page](https://www.mclaren.com/cars/us_en/ultimate-models/mclaren-f1). No maker model, image, texture, badge or logo is bundled.
+The consumed round1 sheet and raw captures were recycled after their rejection and replacement were recorded. Its clean native source8930a480/private58916/six views/zeroissues remains historical evidence only; round1 model51610triangles/55draws. The earlier missing-favicon packet was failed, corrected, then recycled after its verdict. No failed packet is relabelled passed.
 
-Field timing, final lane gate and build remain pending. The separate frame-view question is on EARN-CAR-2.
+Reference photographs were viewed on [McLaren's F1 page](https://www.mclaren.com/cars/us_en/ultimate-models/mclaren-f1). No maker model, picture, texture, badge or logo is bundled.
+
+Claude confirmed Panorama Pit Straight with eight actual F1 copies for later quiet-laptop frame acceptance. Actual timing, final canonical lane and production build remain pending; the separate paint diagnostic timed out at its ten-second budget and has no passing result.
