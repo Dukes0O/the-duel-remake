@@ -98,7 +98,7 @@ runner picks up `tools/test-heli-skins.mjs` by name.
 
 ## Checks
 
-See the commit message of the follow-up for gate results.
+`test-heli-skins` (57 groups) and `test-heli-save` (43 groups) pass. Lane tier on ce8ca496 (`--changed --jobs 4 --keep-going`): 23 passed, 0 failed, 0 not run, 190 s. `npm run build`: built, only the usual large-file notice.
 
 ## Removed
 
