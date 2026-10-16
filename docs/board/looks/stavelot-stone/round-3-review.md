@@ -1,4 +1,4 @@
-# Stavelot in Ardennes stone, rounds 1 to 3 (Claude, 15 October 2026)
+# Stavelot in Ardennes stone, round 3 (Claude, 15 October 2026)
 
 Card ARDENNES-STAVELOT-STONE. Kyle: "if Belgian, then Belgian look". Sheets
 `round-1.jpg` to `round-3.jpg`: today's village on the left,
