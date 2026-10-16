@@ -333,9 +333,20 @@ tasks:
     claimed_by: claude-rescue-hooks-2026-10-16
     branch: claude/rescue-hooks
     needs: [FIRE-HOOKS, RESCUE-ENGINE, RESCUE-LINE, RESCUE-SITES, RESCUE-RADIO, RESCUE-HURT]
-    locks: []
+    locks: [busy-game-files]
     flag: "rescue"
     details: "docs/board/cards/RESCUE-HOOKS.md"
+
+  - id: RESCUE-AUTOPILOT
+    title: "Rescue autopilot goals and Summit Run as a helicopter destination"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "backlog"
+    needs: [RESCUE-HOOKS]
+    locks: []
+    flag: "rescue"
+    details: "docs/board/cards/RESCUE-AUTOPILOT.md"
 
   - id: RESCUE-VIEW
     title: "Draw the rescues"
