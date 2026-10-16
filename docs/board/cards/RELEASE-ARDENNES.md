@@ -17,3 +17,10 @@ Ardennes lane 55d2b7de: 217/217 suites, jobs 4, zero failures/unrun, 1808872.302
 ## Removed
 
 The merged owned switch lane is eligible for normal Recycle Bin cleanup after preserving needed release receipts. Foreign finishing and retained lanes remain their owners' responsibility. No current assets or licensed originals are discarded.
+
+
+## Exact release source and detached copy
+
+Source and collected release notes are frozen at ac8fd6c33f23f869150f84a90a3bf7c1ee5e9ec9. The clean conflict-free Ardennes merge did not rerun its 217-suite lane gate. Required original receipts are retained under integration .evidence/2026-10-15/RELEASE-ARDENNES/lane-evidence; the unresolved wrong-brake packet stays on its QA card. The owned merged switch lane was normally recycled after unlinking only its dependency junction; shared targets remain intact. A UTC comparison guard stopped before any mutation, then actual UTC birth 2026-10-15T23:31:23.5627159Z proved current-run ownership and normal cleanup succeeded.
+
+Existing createCheckCopy prepared full-check-fWITcC/source at exact ac8fd6c3, receipt check-copy.json. No full tier or live installation yet. The short Summit two-suite turn completed; current F1/Bolide jobs drain before the alone full run. Root can prepare the brief staged build in an ordinary free slot without timing. Integration full-tier.json remains untouched; later metadata heads are not exact-source passes.
