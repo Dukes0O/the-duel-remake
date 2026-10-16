@@ -72,3 +72,8 @@ Claude d807c0e2 accepts completed Medium/Hard misses under the new Pro tyres, re
 ## Remaining switch-on replay pins
 
 Added the card-required three-event fixed-step replay assertion in the existing tyre suite, using the unchanged historical recorded inputs and explicit Pro rules. It hashes every actual native step including new slip and rival state across30/60/144FPS, three runs each. The new owned fixture has not been recorded: missing-file RED first, then actual native fingerprint publication awaits heavy admission. No historical pin or input changed, no repeat120-race drift matrix, no claim of completed replay acceptance. The approved recovery append cf1ba22a received independent CLEAR; execution remains queued.
+
+
+## Arena and CPU parity assertions
+
+Added native full-state requested-on/off comparisons for every real arena definition using explicit Pro, and sixty-second actual Duel-rival/seven-opponent Grand Prix transcripts with a neutral player. These enforce the existing exclusion/CPU acceptance without re-recording any old pin or changing runtime. Source-only until the release hold clears; no pass is claimed.

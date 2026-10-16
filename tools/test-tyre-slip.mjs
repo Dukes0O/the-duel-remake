@@ -367,3 +367,47 @@ test('switch-on replay pins are stable at30/60/144fps with three runs per event'
       assert.equal(replayTyreInputs(recording,race,fps),race.fingerprint,race.eventId+' at'+fps+'fps run'+(run+1));
   }
 });
+
+
+test('all actual arenas keep complete native state streams exact with the switch requested',()=>{
+  for(const event of COURSE.filter(row=>row.arena===true)){
+    const transcript=enabled=>{
+      const d=new Duel({seed:1989,featureFlags:{'tyre-slip':enabled}});
+      d.startCampaign({seed:1989,startStage:COURSE.indexOf(event),car:'titan_monster',difficulty:'pro'});
+      assert.equal(d.state.tyreSlipRules,false,event.id+' refuses new road rules');
+      const hash=createHash('sha256');
+      for(let tick=0;tick<1200;tick++){
+        d.setInput({throttle:1,brake:tick>850?.4:0,steer:tick<450?.6:-.4,boost:false});
+        d.step(1/120);hash.update(JSON.stringify(d.state));
+      }
+      return hash.digest('hex');
+    };
+    assert.equal(transcript(true),transcript(false),event.id+' entire native arena transcript is unchanged');
+  }
+});
+
+test('native Duel rival and full Grand Prix field stay exact for60seconds with a neutral player',()=>{
+  for(const [eventId,mode] of [['pacific-canyon','duel'],['harbour-lights','grandprix']]){
+    const transcript=enabled=>{
+      const d=new Duel({seed:1989,featureFlags:{'tyre-slip':enabled,'grand-prix':true}});
+      d.startCampaign({seed:1989,fieldSeed:4242,startStage:COURSE.findIndex(row=>row.id===eventId),
+        car:'falcone_f42',difficulty:'pro',cpuDifficulty:'medium',mode,fieldSize:7});
+      assert.equal(d.state.tyreSlipRules,enabled);assert.equal(d.state.mode,mode);
+      if(mode==='grandprix')assert.equal(d.state.opponents.length,7,'the actual complete field is exercised');
+      else assert.ok(d.state.rival,'the actual Duel rival is exercised');
+      d.setInput({throttle:0,brake:1,steer:0,boost:false});
+      while(d.state.status==='countdown')d.step(1/120);
+      assert.equal(d.state.status,'racing');
+      const hash=createHash('sha256');let moved=false;
+      for(let tick=0;tick<60*120;tick++){
+        d.step(1/120);
+        const opponents=d.state.opponents||[],rival=d.state.rival;
+        moved ||= (rival?.speedMph||0)>20||opponents.some(car=>car.speedMph>20);
+        hash.update(JSON.stringify({rival,opponents}));
+      }
+      assert.ok(moved,'computer cars really drove during the comparison');
+      return hash.digest('hex');
+    };
+    assert.equal(transcript(true),transcript(false),eventId+' complete CPU state stream is unchanged');
+  }
+});
