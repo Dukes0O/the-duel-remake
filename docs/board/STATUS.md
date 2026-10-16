@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T00:42:09.719Z
+Observed at: 2026-10-16T00:43:24.456Z
 
-Observation commit: fa6007976fae3b595b70a6b994d698a2a2dadd9b
+Observation commit: 764b6c96ad86018e9fcd769b48b2e2742b529f79
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: fa6007976fae3b595b70a6b994d698a2a2dadd9b
+Integration HEAD: 764b6c96ad86018e9fcd769b48b2e2742b529f79
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -60,7 +60,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T17:40:27-07:00 | 0 | last commit 2026-10-15T17:40:27-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, src/landscape-detail.js, src/pit-lane.js, src/road-surface.js |
+| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T17:42:41-07:00 | 0 | last commit 2026-10-15T17:42:41-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, src/landscape-detail.js, src/pit-lane.js, src/road-surface.js |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T17:41:15-07:00 | 0 | last commit 2026-10-15T17:41:15-07:00 | docs/HELICOPTER.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-1.jpg, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T16:22:01-07:00 | 0 | last commit 2026-10-15T16:22:01-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/intel-levels.js, src/progression.js, tools/test-intel-levels.mjs |
@@ -90,7 +90,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 771,179 B | +0 B | 5,000,000 B |
 | All `public/` | 301,209,850 B | +0 B | unavailable |
-| Git objects | 401,629,184 B | +89,088 B | unavailable |
+| Git objects | 401,722,368 B | +93,184 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -99,7 +99,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: fa6007976fae3b595b70a6b994d698a2a2dadd9b
+- Local integration/wasteland: 764b6c96ad86018e9fcd769b48b2e2742b529f79
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
