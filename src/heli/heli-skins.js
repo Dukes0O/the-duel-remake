@@ -241,20 +241,25 @@ export function addDrop(record, fireDistance) {
 
 // Turns the tally into whole dirt levels and keeps what is left over (part of
 // an interval) so the session can carry it into the next stretch.
+// Many small time steps add up with a hair of float error (6000 s in 1/60 s
+// steps can land a hair short of 10 intervals); the slack makes them settle
+// like one big step.
+const SUM_SLACK = 1e-9;
+
 export function settleFlightDirt(record) {
   const {dust, mud, soot, salt} = DIRT_RULES;
-  const dustEngine = Math.floor(record.engineSeconds / dust.engineSeconds);
-  const dustLow = Math.floor(record.lowDrySeconds / dust.lowSeconds);
-  const sootFire = Math.floor(record.nearFireSeconds / soot.fireSeconds);
-  const saltSea = Math.floor(record.lowSeaSeconds / salt.seaSeconds);
+  const dustEngine = Math.floor(record.engineSeconds / dust.engineSeconds + SUM_SLACK);
+  const dustLow = Math.floor(record.lowDrySeconds / dust.lowSeconds + SUM_SLACK);
+  const sootFire = Math.floor(record.nearFireSeconds / soot.fireSeconds + SUM_SLACK);
+  const saltSea = Math.floor(record.lowSeaSeconds / salt.seaSeconds + SUM_SLACK);
   const gains = {dust: dustEngine + dustLow + record.dustLandings * dust.landing,
     mud: record.mudLandings * mud.landing + record.dips * mud.dip,
     soot: record.drops * soot.drop + sootFire, salt: saltSea};
   return {gains, rest: {...createFlightDirt(),
-    engineSeconds: record.engineSeconds - dustEngine * dust.engineSeconds,
-    lowDrySeconds: record.lowDrySeconds - dustLow * dust.lowSeconds,
-    nearFireSeconds: record.nearFireSeconds - sootFire * soot.fireSeconds,
-    lowSeaSeconds: record.lowSeaSeconds - saltSea * salt.seaSeconds}};
+    engineSeconds: Math.max(0, record.engineSeconds - dustEngine * dust.engineSeconds),
+    lowDrySeconds: Math.max(0, record.lowDrySeconds - dustLow * dust.lowSeconds),
+    nearFireSeconds: Math.max(0, record.nearFireSeconds - sootFire * soot.fireSeconds),
+    lowSeaSeconds: Math.max(0, record.lowSeaSeconds - saltSea * salt.seaSeconds)}};
 }
 
 // Adds whole levels to the saved dirt, kind by kind in the order of DIRT_KINDS.

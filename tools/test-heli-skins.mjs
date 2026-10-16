@@ -462,6 +462,22 @@ check('a flight tally adds up its stretches and keeps part intervals for later',
   assert.deepEqual(carried.gains, {dust: 0, mud: 0, soot: 1, salt: 0}, 'the remainder joins the next stretch');
 });
 
+check('many small steps settle exactly like one big step, for every kind with an interval', () => {
+  const ctx = {courseId: 'summit-run', height: 10, fireDistance: 50, overSea: true};
+  for (const seconds of [6000, 7200, 600, 120]) {
+    let small = createFlightDirt();
+    for (let i = 0; i < seconds * 60; i++) small = addFlightTime(small, 1 / 60, ctx);
+    const big = settleFlightDirt(addFlightTime(createFlightDirt(), seconds, ctx)), many = settleFlightDirt(small);
+    assert.deepEqual(many.gains, big.gains, `${seconds} s gains`);
+    for (const field of ['engineSeconds', 'lowDrySeconds', 'nearFireSeconds', 'lowSeaSeconds']) {
+      assert.ok(many.rest[field] >= 0, `${seconds} s ${field} never negative`);
+      assert.ok(Math.abs(many.rest[field] - big.rest[field]) < 1e-6, `${seconds} s ${field} leftover`);
+    }
+  }
+  const tenMinutes = settleFlightDirt((() => { let r = createFlightDirt(); for (let i = 0; i < 6000 * 60; i++) r = addFlightTime(r, 1 / 60, {}); return r; })());
+  assert.equal(tenMinutes.gains.dust, 10, '6000 s of engine time is exactly 10 levels of dust');
+});
+
 check('bad time stretches add nothing and the record is never changed in place', () => {
   const record = deepFreeze(createFlightDirt());
   for (const seconds of [0, -5, NaN, Infinity, 'x', undefined]) assert.equal(addFlightTime(record, seconds, {}), record, String(seconds));
