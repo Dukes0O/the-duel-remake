@@ -711,6 +711,16 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-REVIEW-RUNUP-START.md"
 
+  - id: ARDENNES-STAVELOT-STONE
+    title: "Stavelot's houses in Ardennes stone, not American suburban"
+    owner: "claude"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/ARDENNES-STAVELOT-STONE.md"
+
   - id: ARDENNES-FAR-FOREST
     title: "Ardennes far forest band, beeches untouched"
     owner: "claude"
