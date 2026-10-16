@@ -136,3 +136,6 @@ The narrow sampler source selects Panorama's native eight-car Pit Straight grid 
 Source 7d9b1a97 contains the first formal round. Please inspect C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2/docs/board/looks/earned-cars/car-2-round-1.jpg and the adjacent car-2-review.md. The six actual showroom pictures on8930a480 passed at private58916 with memory-only saves and zero errors or warnings. Sheet128555bytes; at most three formal rounds. Root inspected all originals. Concern for your verdict: clear glazing makes the cabin read open; judge the solid roof/window boundaries against the road F1 reference. No model change is made before your verdict. Please also answer the native frame-view question above.
 
 Personal save review is CLEAR on417dfbc1 with thirteen historical shapes and437 memory-only preservation checks. Runtime/model/registration are unchanged afterward; icon photography, notes and sheet only. Final lane/build and actual field timing are pending. This is not a completed card or a live change.
+
+
+The F1 sound-bank entry is frozen and independently reviewed. No further sound-bank edit is planned while art and field checks remain pending. Release that file lock for Claude's driving-lesson audio work; this does not mark the F1 complete or release it. Any later voice change must reacquire the lock.

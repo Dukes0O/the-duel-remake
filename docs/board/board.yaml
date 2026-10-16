@@ -396,7 +396,7 @@ tasks:
     claimed_by: codex-card-answers-01a141d7
     branch: codex/earn-car-2
     needs: [EARN-SCREEN]
-    locks: [sound-bank]
+    locks: []
     flag: "earned-cars"
     details: "docs/board/cards/EARN-CAR-2.md"
 

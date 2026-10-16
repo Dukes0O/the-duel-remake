@@ -148,3 +148,8 @@ The independent eight-file open-route/authored-branch/solo-event/terrain test in
 
 
 Root Ardennes shared-order correction is reviewed CLEAR at cb658b7015d28a287a9da57999b2f6b7f36d1012. Only test-circuit-layouts, test-circuit-panorama-registry and test-release-tremblant plus own note: exact oldprefix/index19/historical catalogs preserved and currentmanifest order checked. Targetedcases/286releasechecks pass. Ardennes finalgate running; reuse this correction instead of duplicating these3files. No Summit source/scene/flags edited.
+
+
+Claude's9bd8ba9d answer resolves the Gallery production question: retain the exact accepted scene, lower only the flat-roof camera ceiling under both its visible arch and flat roof, and add the named positive physical tests. This unaffected four-file work continues; the eleven rejected state/menu test edits still await Kyle.
+
+Director also names tools/test-campaigns.mjs for the new Attack case to use the same existing .95 racing-line driver as its accepted266.6s baseline. All original complete-lap/win/frame-rate assertions stay; no target/deadline/driver tuning. Name tools/test-replays.mjs and new tools/replays/courses/summit-time-attack.json for the missing actual solo replay. Add one explicit primary solo-Time-Trial category with forced solo/no-rival checks; preserve all eight original categories and every old fingerprint. Use the existing recorder in an ignored source copy; compare every old fingerprint before copying only the new owned fixture. No new harness or shared recorder framework, no old baseline rewrite.
