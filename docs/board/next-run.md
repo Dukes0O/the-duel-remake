@@ -229,7 +229,7 @@ The game queue is unfinished. Live/source/push ownership stays unchanged.
   cases fail before a valid baseline. Panorama inward-1.8759/-3.2146m fails
   unchanged2m; Woods trace reversed. Card has exact values and next bounded
   controller/speed-plan question. No retune/retry/build/merge; all jobs drained.
-  Packet lane.evidence/2026-10-16/DRIVE-LESSON-1/final-e2f752bc retained.
+  Packet `C:/Users/kyleb/.codex/worktrees/wasteland-integration/drive-lesson-1/.evidence/2026-10-16/DRIVE-LESSON-1/final-e2f752bc` retained.
 - Host79c8c1fe: current Tyre/Rescue/skins/Intel union reviewed/CLEAR,33exact
   flags. Prepared actual memory-only App menu-to-reward test reviewed/CLEAR
   and UNRUN; no injected native outcome. Production buildPASS2260.6768ms,
