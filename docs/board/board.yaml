@@ -340,7 +340,9 @@ tasks:
     owner: "claude"
     lane: "FINISH"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-rescue-finish-2026-10-16
+    branch: claude/rescue-finish
     needs: [RESCUE-VIEW, FIRE-FINISH]
     locks: []
     flag: "rescue"
