@@ -1,3 +1,4 @@
+import {pitRoadAt} from './pit-lane.js';
 import * as THREE from 'three';
 import { registerSceneSystem } from './scene-systems.js';
 import { makeRng } from './rng.js';
@@ -60,6 +61,11 @@ export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
       else if(palette==='stone')color.setHSL(desert?.1:.53,desert?.12:.025,.6+rng.float()*.3);
       else color.setHSL(coolStone||city ? .22 : .11,.16+rng.float()*.2,.25+rng.float()*.25);
       mesh.setColorAt(i,color);
+      // Reject after the complete original RNG sequence; surviving source indices stay exact.
+      if(options.kind==='foliage'&&course.pitLane){
+        const nearest=course.nearest(o.position.x,o.position.z);
+        if(pitRoadAt(course,nearest.s,nearest.lateral))omitted.add(i);
+      }
       if(options.kind==='foliage'&&omitFoliageAt?.(o.position.x,o.position.z))omitted.add(i);}
     if(cityPlacement&&(options.kind==='foliage'||options.kind==='grit'))(group.userData.cityDecorations??=[]).push({kind:options.kind,count,relocated,omitted:omitted.size});
     mesh.receiveShadow=true;mesh.castShadow=!!options.castShadow;

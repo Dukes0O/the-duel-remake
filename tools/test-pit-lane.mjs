@@ -294,3 +294,21 @@ test('opt-in bay computer stop branch retains normal profile outside the limiter
     assert.equal(actor.pit?.phase,'lane','no forced service or finish');
   }finally{COURSE.pop();}
 });
+
+
+test('shared pit pavement query includes the apron overlap without changing limiter semantics',async()=>{
+ const {pitRoadAt}=await import('../src/pit-lane.js');assert.equal(typeof pitRoadAt,'function');
+ const {ALL_CIRCUITS}=await import('../src/circuits/index.js');
+ for(const id of ['ardennes-forest','panorama-ridge']){
+  const course=new Course(ALL_CIRCUITS.find(row=>row.id===id),1989),lane=course.pitLane;
+  for(const s of [lane.entry-.001,lane.entry,lane.entry+15,lane.box,lane.exit-15,lane.exit,lane.exit+.001])
+   for(const delta of [-4.501,-4.5,-2,0,2,4.5,4.501]){
+    const off=lane.offsetAt(s)+delta,phase=course.phase(s),paved=phase>=lane.entry&&phase<=lane.exit&&Math.abs(off-lane.offsetAt(phase))<=4.5;
+    assert.equal(!!pitRoadAt(course,s,off),paved,'exact existing pavement boundary');
+    assert.equal(!!pitAt(course,s,off),paved&&Math.abs(off)>course.roadHalfWidthAt(phase),'original main-road limiter exclusion stays exact');
+   }
+  const s=lane.exit-15,off=lane.offsetAt(s);
+  assert.ok(Math.abs(off)<course.roadHalfWidthAt(s));assert.equal(pitRoadAt(course,s,off),lane);assert.equal(pitAt(course,s,off),null);
+ }
+ const course=new Course(COURSE[0],1989);assert.equal(pitRoadAt(course,0,0),null);
+});
