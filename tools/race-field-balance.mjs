@@ -17,7 +17,7 @@ import { performance } from 'node:perf_hooks';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createFeatureFlags } from '../src/feature-flags.js';
 import { App } from '../src/app.js';
-import { COURSE, DRIVE, steeringYawAuthority } from '../src/config.js';
+import { COURSE, DRIVE, steerForYaw } from '../src/config.js';
 import { ALL_CIRCUITS } from '../src/circuits/index.js';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { courseHasWinterSurfaces } from '../src/race-surfaces.js';
@@ -58,7 +58,8 @@ export function stageOf(courseId) {
   return at;
 }
 
-export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = null, fieldSize = 7, startStage = 0, course = null, onStep = null } = {}) {
+export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = null, fieldSize = 7, startStage = 0, course = null, flags = [], onStep = null } = {}) {
+  if(!Array.isArray(flags)||flags.some(flag=>flag!=='tyre-slip')) throw Error('Unsupported field flags.');
   const { seed, fieldSeed } = raceSeeds(index);
   if (course) startStage = stageOf(course);
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
@@ -68,7 +69,7 @@ export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = nu
     globalThis.localStorage = memoryStorage();
     globalThis.cancelAnimationFrame ??= () => {};
     app = new App();
-    app.duel.featureFlags = createFeatureFlags({ storage: null, qa: false, search: '', overrides: { 'grand-prix': true } });
+    app.duel.featureFlags = createFeatureFlags({ storage: null, qa: false, search: '', overrides: { 'grand-prix': true, ...Object.fromEntries(flags.map(flag=>[flag,true])) } });
     // A new circuit costs credits: the memory-only test profile buys it first.
     if (course) {
       app.profile = { ...app.profile, credits: 1e6 }; app._saveProfile();
@@ -107,6 +108,7 @@ export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = nu
     const position = playerTime == null ? state.opponents.length + 1 : 1 + faster;
     const first30 = new Set(stats.crashes.filter(crash => crash.t <= 30).map(crash => crash.index));
     return {
+      ...(flags.length ? {flags,tyreSlipRules:state.tyreSlipRules} : {}),
       cpuDifficulty, index, seed, fieldSeed, racers: state.opponents.length, finished,
       playerTime, position, won: position === 1, unfinished: slower,
       passes: stats.passes, passesAfterStart: stats.passesAfterStart,
@@ -177,8 +179,6 @@ export function installTestDriver(app, { lineSkill = LINE_SKILL } = {}) {
       desiredYaw = raceLine.curvatureAt(ahead) * metres + error * 6;
     }
     const surface = duel._drivingSurface(state.s, state.lateral);
-    const authority = Math.max(.05, steeringYawAuthority(state.speedMph, duel.car.grip, surface.traction, duel.car));
-    const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     let { throttle, brake } = state.input;
     if (line) {
       // The same speed profile the computer racers use, built for the player's own car.
@@ -206,6 +206,7 @@ export function installTestDriver(app, { lineSkill = LINE_SKILL } = {}) {
       cap = Math.min(cap, comfortable * (-.22 + Math.sqrt(.22 * .22 + 2 * room / comfortable)) / DRIVE.mphToWorld);
     }
     if (state.speedMph > cap) { throttle = 0; brake = Math.max(brake, Math.min(1, (state.speedMph - cap) / 12)); }
+    const steer = steerForYaw(desiredYaw, {speedMph:state.speedMph,grip:duel.car.grip,traction:surface.traction,car:duel.car,brake:brake,tyreSlip:state.tyreSlipRules===true&&!state.airborne&&state.speedMph>=0});
     duel.setInput({ throttle, brake, steer, boost: false });
   };
 }
@@ -256,13 +257,14 @@ function format(summary) {
 }
 
 function parse(args) {
-  const options = { races: 30, jobs: 8, difficulties: DIFFICULTIES, check: false, json: false, car: 'falcone_f42', probe: null, worker: null, course: null };
+  const options = { races: 30, jobs: 8, difficulties: DIFFICULTIES, check: false, json: false, car: 'falcone_f42', probe: null, worker: null, course: null, flags: [] };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--races') options.races = Number(args[++i]);
     else if (a === '--jobs') options.jobs = Number(args[++i]);
     else if (a === '--difficulty') options.difficulties = args[++i].split(',');
     else if (a === '--car') options.car = args[++i];
+    else if (a === '--flags') options.flags = args[++i]?.split(',') ?? [''];
     else if (a === '--course') options.course = args[++i];
     else if (a === '--check') options.check = true;
     else if (a === '--json') options.json = true;
@@ -271,13 +273,13 @@ function parse(args) {
     else throw Error(`Unknown option ${a}`);
   }
   if (!Number.isInteger(options.races) || options.races < 1 || !Number.isInteger(options.jobs) || options.jobs < 1 ||
-      options.difficulties.some(d => !DIFFICULTIES.includes(d))) throw Error('Invalid options.');
+      options.difficulties.some(d => !DIFFICULTIES.includes(d)) || options.flags.some(flag=>flag!=='tyre-slip')) throw Error('Invalid options.');
   return options;
 }
 
-function runInChild(cpu, index, car, course) {
+function runInChild(cpu, index, car, course, flags) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--worker', `${cpu},${index}`, '--car', car, ...(course ? ['--course', course] : [])],
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--worker', `${cpu},${index}`, '--car', car, ...(course ? ['--course', course] : []), ...(flags.length ? ['--flags',flags.join(',')] : [])],
       { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
     let out = '', err = '';
     child.stdout.on('data', chunk => { out += chunk; });
@@ -293,12 +295,12 @@ export async function main(args = process.argv.slice(2)) {
   const options = parse(args);
   if (options.worker) {
     const [cpu, index] = options.worker.split(',');
-    console.log(JSON.stringify(runRace(cpu, Number(index), { car: options.car, course: options.course })));
+    console.log(JSON.stringify(runRace(cpu, Number(index), { car: options.car, course: options.course, flags:options.flags })));
     return 0;
   }
   if (options.probe) {
     const [cpu, index] = options.probe.split(',');
-    console.log(JSON.stringify(runRace(cpu, Number(index), { car: options.car, course: options.course }), null, 1));
+    console.log(JSON.stringify(runRace(cpu, Number(index), { car: options.car, course: options.course, flags:options.flags }), null, 1));
     return 0;
   }
   const jobs = [];
@@ -309,7 +311,7 @@ export async function main(args = process.argv.slice(2)) {
   await Promise.all(Array.from({ length: Math.min(options.jobs, jobs.length) }, async () => {
     while (next < jobs.length) {
       const [cpu, index] = jobs[next++];
-      results.push(await runInChild(cpu, index, options.car, options.course));
+      results.push(await runInChild(cpu, index, options.car, options.course, options.flags));
     }
   }));
   results.sort((a, b) => DIFFICULTIES.indexOf(a.cpuDifficulty) - DIFFICULTIES.indexOf(b.cpuDifficulty) || a.index - b.index);

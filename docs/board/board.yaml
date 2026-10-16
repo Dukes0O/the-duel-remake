@@ -274,19 +274,6 @@ tasks:
     needs: []
     details: "docs/board/cards/YETI-FUR-TINT.md"
 
-  - id: TYRE-SLIP
-    title: "Sliding costs grip, like real tyres (grip peaks at a small slide; a long screech loses time)"
-    owner: "codex"
-    lane: "SIM"
-    size: "M"
-    status: "blocked"
-    claimed_by: codex-tyre-slip-2026-10-15
-    branch: codex/tyre-slip
-    needs: []
-    locks: []
-    flag: "tyre-slip"
-    details: "docs/board/cards/TYRE-SLIP.md"
-
   - id: EARN-CAR-1
     title: "Earned car 1: Ferrari Enzo (6 medals)"
     owner: "claude"

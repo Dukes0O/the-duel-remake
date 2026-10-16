@@ -134,7 +134,7 @@ function place(duel, x, z, heading, speed) {
   s.speedMph = speed; s.revs = Math.abs(speed) / duel.car.gears[Math.max(0, s.gear)];
   s.groundHeight = j._gate.y; s.prevGroundHeight = j._gate.y;
   s.airborne = false; s.airHeight = s.prevAirHeight = 0;
-  s.yawVelocity = s.pushVelocity = s.slipAngle = 0;
+  s.yawVelocity = s.pushVelocity = s.slipAngle = 0; if (Object.hasOwn(s, 'tyreSlip')) s.tyreSlip = 0;
   s.boosting = false; s.steerVisual = 0;
   j.progress = duel.course.hiddenRoad.nearest(x, z).progress;
 }

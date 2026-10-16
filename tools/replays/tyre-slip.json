@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "rules": "tyre-slip",
+  "difficulty": "pro",
+  "source": "b1edcddb8c8e5831d8a88bc725eea85b28a9e48e",
+  "recordedInputSha256": "fffb4af73944f97251728600e5a8cdfb40f13d4b583efa95e9b72c57721871ca",
+  "cases": [
+    {
+      "eventId": "pacific-canyon",
+      "car": "falcone_f42",
+      "fingerprint": "f6c550aadac6bd8817a2f1036ec263b6c5c6925a8f48ebfeac7379d58f55a4f3"
+    },
+    {
+      "eventId": "harbour-lights",
+      "car": "falcone_f42",
+      "fingerprint": "09c796063df077ca02a6204eaca9141c844594f2c08da2fa82be87f741abbfe0"
+    },
+    {
+      "eventId": "tremblant-snow",
+      "car": "falcone_f42",
+      "fingerprint": "09c796063df077ca02a6204eaca9141c844594f2c08da2fa82be87f741abbfe0"
+    }
+  ]
+}

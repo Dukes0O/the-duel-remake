@@ -828,3 +828,28 @@ existing runner main/getChanges seam with actual gitdiff3e2..13f, no runner
 edit or filters:17default affected/smoke/replay/world guard suites, jobs4.
 No unchanged396batch repeat. Reserved next turn10:20PT until10:40/admission;
 foreign newer jobs remain untouched. Build follows only actual green.
+
+
+## Complete: reviewed development merge, 16 October 11:02 PT
+
+TYRE-SLIP is complete and merged for development. The corrected3e2 gate remains
+historically FAILED395/396: only this card's new inactive-field expectation was
+wrong. The six old whole-state suites and all other395 suites passed unchanged.
+Strict absent-own-key correction13f09aa4 received independent CLEAR, then its
+actual two-file canonical delta passed17/17/jobs4/zero fail-notRun/exit0 in
+289681.3877ms and its production build passed1733.278ms; source unchanged.
+
+Current-integration union cb1840e5 preserves Rescue/wildlife/skins/TeamRoom,
+all current saves and exact inactive state. Its only two conflicts were the
+approved preview flag list and precise feature inventory: all foreign rows
+plus tyre-slip retained, exact base32 count. Independent code/save union
+review CLEAR. Actual conflict-hook canonical passed19/19/jobs4/zero fail-notRun/
+exit0 in462405.8415ms; one production build passed2140.9512ms on the same exact
+clean source. The final integration merge was conflict-free; no rerun.
+
+Receipts remain in the retained owned lane .evidence/2026-10-16/TYRE-SLIP/
+canonical-resume-3e2bf73f, delta-13f09aa4 and union-cb1840e5. All own jobs drained;
+locks[]; no real saves, live installation, push, replay recording or old120-race
+matrix repeated. Preserve this older lane/evidence: cleanup creation ownership
+is not proved. Casual/off remain byte-identical; the new model is Pro/Hard-only
+behind dev tyre-slip. This is not a live-enable or new full-tier claim.

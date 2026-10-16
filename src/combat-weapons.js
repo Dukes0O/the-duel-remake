@@ -159,7 +159,7 @@ function relocate(actor, pose) {
   actor.yawVelocity = 0;
   actor.pushVelocity = 0;
   clearCarAlongPush(actor);
-  actor.slipAngle = 0;
+  actor.slipAngle = 0; if(Object.hasOwn(actor,'tyreSlip'))actor.tyreSlip = 0;
   actor.airborne = false;
   actor.airHeight = 0;
   actor._jumpY = null;

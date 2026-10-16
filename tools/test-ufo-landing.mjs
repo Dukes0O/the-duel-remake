@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
-import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
+import {COURSE,DRIVE,steerForYaw} from '../src/config.js';
 import {supportsCombat,ufoDestination} from '../src/combat.js';
 
 const stages=COURSE.map((stage,index)=>supportsCombat(stage)?index:null).filter(index=>index!==null);
@@ -40,8 +40,7 @@ for(let n=0;n<260&&landings<100;n++){
     const headingTarget=Math.atan((targetLateral-player.lateral)*2.5/Math.max(15,metresPerSec));
     const desiredYaw=course.at(player.s+metresPerSec*.18).curvature*metresPerSec+(headingTarget-player.headingError)*6;
     const traction=duel._drivingSurface(player.s,player.lateral).traction;
-    const authority=Math.max(.05,steeringYawAuthority(player.speedMph,duel.car.grip,traction));
-    duel.setInput({throttle:0,brake:0,steer:Math.max(-1,Math.min(1,-desiredYaw/authority))});
+    duel.setInput({throttle:0,brake:0,steer:steerForYaw(desiredYaw,{speedMph:player.speedMph,grip:duel.car.grip,traction:traction,brake:0,tyreSlip:player.tyreSlipRules===true&&!player.airborne&&player.speedMph>=0})});
     duel.step(1/60);
   }
   assert.equal(player.stageCrashes,crashes,'no landing crash on '+COURSE[stage].id+' seed '+seed);

@@ -35,6 +35,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'the-deep': 'dev', // The Deep (D0 DEEP-LOOK): the hidden underwater world, off, nothing reaches it yet
     helicopter: 'on', // The helicopter (HELI-MODE): Kestrel One, H1 First flight, released 14 October 2026
     'forest-fire': 'on', // H2 Fire: forest fires and burnt courses, released 15 October 2026
+    'tyre-slip': 'dev', // New tyre model remains private preview only.
     'earned-cars': 'dev', // Earned cars and medal sheets (EARN-MEDALS), off in the game
     rescue: 'dev', // H4 Rescue (RESCUE-SAVE): rescue save fields, off in the game
     wildlife: 'dev', // H3 Wildlife (SKIN-SAVE): animals and the wildlife count, off in the game
