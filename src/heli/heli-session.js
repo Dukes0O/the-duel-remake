@@ -8,7 +8,7 @@ import {AUTOPILOT, createAutopilot, toggleAutopilot, setAutopilotTarget, autopil
 import {CABLE, createLoad, liftCheck, carMassKg, canHook, hook, release, stepCable} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
   placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave} from './heli-save.js';
-import {HOME_COURSE, HELI_DESTINATIONS, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle} from './heli-jobs.js';
+import {HOME_COURSE, HELI_DESTINATIONS, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle, recoveryJobOf, recoveryTitle} from './heli-jobs.js';
 import {isCourseUnlocked} from '../course-access.js';
 import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson} from './heli-lessons.js';
 import {CRATE} from './heli-cable.js';
@@ -17,7 +17,7 @@ import {bucketDamageOf, damageBucket as damageBucketSave, repairBucket as repair
 import {createFireRun, fireWorld} from './heli-fire-run.js';
 import {callOf, rescueOf, rescueConditions, isRescueKind, tickRescue, finishRescue, failRescue, clockLeft, duskOf, rescueLimit,
   peoplePay, DUSK_SECONDS} from './heli-missions.js';
-import {RESCUE, CONDITIONS, createRescueLine, setLineWho, hNothing, canFitLine, holdFraction, stepRescue, rescueHit, cabinHurt,
+import {RESCUE, CONDITIONS, createRescueLine, setLineWho, peopleOnLine, hNothing, canFitLine, holdFraction, stepRescue, rescueHit, cabinHurt,
   handoverOutcome, createSupplyCrate, noteCrateRelease, crateResult, cratePay, supplyPay} from './heli-rescue.js';
 import {hikerSpots, pickHiker, hikerSpotted, hikerWalk, slideSpots, pickSlide, beaconSignal, hoistSpots, pickHoist, supplyYard,
   crateSpots, SEARCH} from './heli-search.js';
@@ -401,7 +401,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     }
     charge('crash', HELI_MONEY.crash);
     emit({type: 'crashed', cause});
-    failRescueNow('crash');
+    crashRescue();
     phase = 'crashed';
     timer = HELI_SESSION.crashSeconds;
     autopilot.engaged = false;
@@ -581,6 +581,15 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const line = lineLoad();
     if (line) { line.done = true; line.holding = false; line.hold = 0; setLineWho(line, 'rescuer'); }
     loads = loads.filter(car => !car.supply);
+  }
+
+  // A crash fails the rescue only with people aboard or on the line (section 3.4). Before the pickup it
+  // goes on, with H1's crash repair as usual; a crate that was on the line is back at the pad.
+  function crashRescue() {
+    if (!live) return;
+    if (peopleOnLine(lineLoad()) || (live.kind === 'hiker' && rsite?.aboard === true)) { failRescueNow('crash'); return; }
+    if (live.crates.includes(1)) { live = {...live, crates: live.crates.map(c => c === 1 ? 0 : c)}; rdirty = true; }
+    if (rsite?.landedGood) rsite.landedGood = false;
   }
 
   // Out of time, a crash, or leaving: the ground team brings them out badly hurt (section 4.2).
@@ -994,11 +1003,14 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // today's three jobs, each marked taken or done from the save.
     boardJobs() {
       const day = playDay(), jobs = heliOf(save).jobs, sameDay = jobs.day === day;
+      const recovery = rescueOn ? recoveryJobOf(save, {enabled: true}) : null;
       const taken = sameDay ? jobs.taken : null, done = sameDay ? jobs.done : [];
       return Object.freeze([
         Object.freeze({id: 'own', own: true, carId, title: 'Fly my car', pay: 0}),
         ...dayJobs(day).map(job => Object.freeze({...job, title: jobTitle(job), payNow: jobPay(job, mode),
           taken: job.id === taken, done: done.includes(job.id)})),
+        // After a hoist rescue the driver's car waits on the slope (section 5.3): shown with the day's jobs.
+        ...(recovery ? [Object.freeze({...recovery, recovery: true, title: recoveryTitle(recovery), payNow: jobPay(recovery, mode), taken: false, done: false})] : []),
       ]);
     },
     // Jobs are taken at the home pad, on the ground, like the pump. "Fly my

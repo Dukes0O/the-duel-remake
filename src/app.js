@@ -1454,7 +1454,7 @@ export class App {
     const fireOn = this._fireOn();
     if (fireOn) this.heliAudio.preloadFire?.();
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
-      fireEnabled: fireOn, playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
+      fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       persist: profile => {
         // Credits the session charged since its last save move the app's
@@ -1470,7 +1470,7 @@ export class App {
   }
   _heliEvents(events) {
     for (const event of events) {
-      if (event.type === 'cue') this.heliAudio.play(event.id);
+      if (event.type === 'cue') { if (event.pitch > 0) this.heliAudio.play(event.id, {rate: event.pitch / 1000}); else this.heliAudio.play(event.id); }
       else if (event.type === 'fireHiss') this.heliAudio.play('heli.fire.hiss', {scale: Math.min(1, .3 + event.litres / 150)});
       else if (event.type === 'radio') this.heliAudio.say(event.line);
       else this.heliAudio.event(event);

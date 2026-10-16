@@ -15,6 +15,9 @@ import {bearing} from '../src/heli/heli-jobs.js';
 import {HELI_RADIO_LINES} from '../src/heli/heli-radio-lines.js';
 import {dispatchBoardMarkup, handleBoardAction} from '../src/heli/heli-board.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
+import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {raceFeatureFlags} from '../src/wasteland-access.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -348,9 +351,17 @@ function carryPair(session, world, zone) {
 const PAY = {hiker: 1000, avalanche: 1200, hoist: 1200};
 const profileOf = session => missionsOf(session.profile);
 
+// Into the nearest tree: the rotor strikes it, which is a crash in any mode.
+function crashFromHeight(session) {
+  const h = session.view().heli, courseId = session.view().courseId;
+  const world = courseId === 'tremblant-woods' ? home : courseId === 'tremblant-snow' ? snow : ridge;
+  const tall = world.ground.near(h.x, h.z, 400).filter(o => o.kind === 'tree' && o.top > h.y + 5);
+  const tree = tall.sort((a, b) => Math.hypot(a.x - h.x, a.z - h.z) - Math.hypot(b.x - h.x, b.z - h.z))[0];
+  return note(run(session, 120, v => pilot(v, {x: tree.x, z: tree.z, y: tree.top - 2}, {speed: 8}), (v, got) => has(got, 'crashed')));
+}
 // A lost hiker: spotted by the flare, picked up in the clearing, handed over at the pad.
-function flyHiker({wait = 0, waitSteps = 0, name = 'Rescue QA', stepLog = null} = {}) {
-  const {session, log} = begin('hiker', 'tremblant-woods', {name});
+function flyHiker({wait = 0, waitSteps = 0, name = 'Rescue QA', stepLog = null, mode = 'assisted', crashAboard = false} = {}) {
+  const {session, log} = begin('hiker', 'tremblant-woods', {name, mode});
   if (stepLog) {
     const original = session.step;
     session.step = (...args) => { const got = original(...args); stepLog.push(got); return got; };
@@ -368,6 +379,7 @@ function flyHiker({wait = 0, waitSteps = 0, name = 'Rescue QA', stepLog = null} 
   ok(has(log, 'hikerAboard') && session.view().rescue.active.stage === 'carry', 'the hiker walks over and climbs in');
   const aboardClock = session.view().rescue.active.clockSeconds, carrying = session.view().rescue.active.target;
   ok(carrying && Math.hypot(carrying.x - homeSite.zone.x, carrying.z - homeSite.zone.z) < 1e-6, 'carrying them, the panel points at the pad');
+  if (crashAboard) { log.push(...crashFromHeight(session)); return {session, log, aboardClock}; }
   if (wait) log.push(...note(run(session, wait, () => ({}), null, 0.05)));
   for (let i = 0; i < waitSteps; i++) log.push(...note(session.step({})));
   log.push(...note(travel(session, home, homeSite.zone, homeSite.zone.y + 30, {land: true})));
@@ -624,21 +636,49 @@ function handoverProbe(waitSteps) {
 console.log('PASS the clock fails the rescue first when a handover shares its step');
 
 // ---- A crash, leaving, and a rescue found stored -------------------------------------
+// A crash fails a rescue only with people aboard or on the line (section 3.4).
 {
-  // Real mode: dropping the collective from height is a crash, not a hard landing.
-  const {session, log} = begin('hiker', 'tremblant-woods', {mode: 'real'});
-  const zone = session.view().zone;
-  log.push(...run(session, 40, v => pilot(v, {x: zone.x, z: zone.z, y: zone.y + 40}), v => v.heli.y > zone.y + 35));
-  const fall = note(run(session, 60, () => ({lift: -1}), (v, got) => has(got, 'rescueFailed')));
-  const failed = fall.find(event => event.type === 'rescueFailed');
-  ok(has(fall, 'crashed') && failed, 'a crash with a rescue in hand fails it');
-  same([failed.reason, failed.charged, failed.crashRepair], ['crash', 400, true], 'out of the 400 for the ground team; the crash repair is the session\'s own');
+  // Before the pickup the rescue goes on; H1's crash repair is the only cost.
+  const {session} = begin('hiker', 'tremblant-woods', {});
+  const before = profileOf(session).rescue;
+  const fall = crashFromHeight(session);
+  ok(has(fall, 'crashed') && !has(fall, 'rescueFailed'), 'a crash before the pickup does not fail the rescue');
+  same(session.profile.credits, 2000 - 800, 'only the crash repair (800) is taken');
+  note(run(session, 4, () => ({})));
+  const after = session.view();
+  ok(after.phase === 'flying' && after.courseId === 'tremblant-woods' && after.heli.onGround, 'back at the pad');
+  same([after.rescue.active.kind, after.rescue.active.stage, profileOf(session).call.answered], ['hiker', 'fly', true], 'the hiker is still waiting and the call is answered');
+  ok(after.rescue.active.clockSeconds > before.clockSeconds && profileOf(session).rescue.seed === before.seed, 'the clock goes on, the same rescue');
+}
+{
+  // The same crash with the hiker aboard fails it: the crash repair (800) and the call-out (400).
+  const {session, log} = flyHiker({crashAboard: true});
+  const failed = log.find(event => event.type === 'rescueFailed');
+  ok(has(log, 'hikerAboard') && has(log, 'crashed') && failed, 'a crash with the hiker aboard fails the rescue');
+  same([failed.reason, failed.charged, failed.crashRepair], ['crash', 400, true], 'out of the 400 for the ground team; the crash repair is the session own');
   same(session.profile.credits, 2000 - 800 - 400, 'the crash repair (800) and the call-out (400) are both taken');
-  ok(lines(fall).includes('heli.radio.rescue.late'), 'Roger says the ground team got there first');
+  ok(lines(log).includes('heli.radio.rescue.late'), 'Roger says the ground team got there first');
   same([profileOf(session).rescue, profileOf(session).call, profileOf(session).searches], [null, null, undefined], 'nothing in hand, no pay');
   note(run(session, 4, () => ({})));
   ok(session.view().phase === 'flying' && session.view().courseId === 'tremblant-woods', 'and back at the pad after the crash');
   same(session.view().rescue.active, null, 'with no rescue on the panel');
+}
+{
+  // The rescuer on the line is a person on the line.
+  const {session, log} = begin('avalanche', 'tremblant-snow', {fit: true});
+  const fall = crashFromHeight(session);
+  const failed = fall.find(event => event.type === 'rescueFailed');
+  ok(has(fall, 'crashed') && failed && failed.reason === 'crash', 'a crash with the rescuer on the line fails the rescue');
+  same(session.profile.credits, 2000 - 800 - 400, 'and costs both');
+  ok(log.length > 0, 'the line was fitted first');
+}
+{
+  // A supply run has no people: a crash with a crate on the line only costs the repair, and the crate is back at the pad.
+  const {session} = begin('supply', 'tremblant-snow', {});
+  const fall = crashFromHeight(session);
+  ok(has(fall, 'crashed') && !has(fall, 'rescueFailed'), 'a crash on a supply run does not fail it');
+  note(run(session, 4, () => ({})));
+  same([session.profile.credits, session.view().rescue.crates.map(crate => crate.id)], [2000 - 800, ['food', 'medicine', 'fuel']], 'the crates wait at the pad again');
 }
 for (const [kind, courseId] of [['hoist', 'panorama-ridge'], ['avalanche', 'tremblant-snow']]) {
   const {session} = begin(kind, courseId, {fit: true});
@@ -701,6 +741,54 @@ console.log('PASS a crash, leaving or a stored rescue fails it');
 // Every radio line the session said is one of the 70 recorded lines.
 ok(seen.size > 20, `the flights said ${seen.size} different lines`);
 for (const line of seen) ok(HELI_RADIO_LINES[line], `${line} is a recorded line`);
+// The car left on the slope shows with the day's jobs.
+{
+  const base = readyProfile({count: 7});
+  const wreck = {courseId: 'panorama-ridge', carId: 'falcone_f42', x: 100, z: 200, day: 6};
+  const profile = setMissions(base, {...missionsOf(base), wreck}, on).profile;
+  const session = newSession(profile);
+  session.start();
+  const recovery = session.boardJobs().find(job => job.recovery);
+  ok(recovery && recovery.pay === 500 && recovery.title.startsWith('Recover the ') && recovery.title.endsWith('from Panorama Ridge'), 'the recovery job is on the board for 500 credits');
+  const markup = dispatchBoardMarkup(session.view(), {jobs: session.boardJobs(), fire: {repairCost: 0}});
+  ok(markup.includes(recovery.title) && markup.includes('500 credits') && markup.includes('Hook the car on the slope') && markup.includes('Pick up at Panorama Ridge'), 'and the board shows it with the others');
+  ok(!markup.includes('take:w6'), 'with no Take button yet');
+  const off = newSession(profile, {rescue: false});
+  off.start();
+  ok(!off.boardJobs().some(job => job.recovery), 'with the switch off it is not on the board');
+  const late = setMissions(base, {...missionsOf(base), wreck: {...wreck, day: 2}}, on).profile;
+  const gone = newSession(late);
+  gone.start();
+  ok(!gone.boardJobs().some(job => job.recovery), 'and it leaves after 3 play days');
+}
 console.log('PASS the line, H, the board and every line spoken');
+
+// ---- The app passes the switch and the beacon's pitch -----------------------------------
+{
+  const saved = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const memory = new Map();
+  const storage = {getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)),
+    removeItem: key => memory.delete(key), key: index => [...memory.keys()][index] ?? null, get length() { return memory.size; }};
+  Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: storage});
+  try {
+    const visit = overrides => {
+      const app = new App();
+      app.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides: {helicopter: true, ...overrides}, qa: true}), () => app.duel.state);
+      ok(app.visitHeli(), 'the helicopter visit starts');
+      return app;
+    };
+    const on = visit({'forest-fire': true, rescue: true}), noRescue = visit({'forest-fire': true, rescue: false}), noFire = visit({'forest-fire': false, rescue: true});
+    ok('rescue' in on.heliSession.view(), 'switches helicopter, forest-fire and rescue on: the session has rescues');
+    ok(!('rescue' in noRescue.heliSession.view()), 'rescue off: the session is the fire session');
+    ok(!('rescue' in noFire.heliSession.view()), 'forest-fire off: no rescues either');
+    const played = [];
+    on.heliAudio.play = (id, options) => played.push([id, options]);
+    on._heliEvents([{type: 'cue', id: 'heli.beacon.beep', pitch: 1200}, {type: 'cue', id: 'heli.fire.alert'}]);
+    same(played, [['heli.beacon.beep', {rate: 1.2}], ['heli.fire.alert', undefined]], 'the beacon beep plays at its pitch; other cues play as before');
+  } finally {
+    if (saved) Object.defineProperty(globalThis, 'localStorage', saved); else delete globalThis.localStorage;
+  }
+}
+console.log('PASS the app passes the rescue switch and the beep pitch');
 
 console.log(`test-heli-rescue-session: ${checks} checks passed`);

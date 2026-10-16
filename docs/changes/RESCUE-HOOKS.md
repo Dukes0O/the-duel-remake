@@ -105,7 +105,7 @@ free to ring, the fire answerable by R, and the record untouched even after
 
 ## Tests
 
-- `tools/test-heli-rescue-session.mjs` (new, 411 checks, about 28 s): the
+- `tools/test-heli-rescue-session.mjs` (new, 442 checks, about 30 to 60 s): the
   switch off; the call ringing in winter (eight saves, never a fire), the same
   save ringing the same call; the Radio box (Answer, Later, the clock) for
   each kind; a call taken by another crew (2 flights, 2 play days); a hiker
@@ -134,43 +134,42 @@ None.
 
 Nothing replaced.
 
+## Director's changes (second pass)
+
+- **App wiring** (`src/app.js`, two lines, busy-game-files): `visitHeli` passes
+  `rescueEnabled` (helicopter, forest-fire and rescue switches on), and
+  `_heliEvents` plays a cue that carries a `pitch` at `rate: pitch / 1000`
+  (the beacon's 900 to 1,400 Hz from its 1,000 Hz tone). Other cues play as before.
+  The test builds the app with each switch combination.
+- **Crash (packet 3.4):** a crash fails the rescue only with people aboard (the
+  hiker in the cabin) or on the line (the fitted rescuer). Before the pickup, or
+  on a supply run, the rescue goes on with H1's crash repair only, and a crate
+  that was on the line is back at the pad. Both cases are tested.
+- **Car recovery job on the board:** the wreck from a hoist rescue shows with
+  the day's jobs ("Recover the <car> from Panorama Ridge", 500 credits, Real
+  pays a quarter more), for 3 play days, only with the switch on. There is no
+  Take button yet: flying it and being paid (`finishRecovery`) is not wired.
+
 ## Open for Claude
 
-- **`app.js` must pass the switch.** `visitHeli` needs
-  `rescueEnabled: <helicopter on, forest-fire on, rescue on>` next to
-  `fireEnabled`, and `app.js`'s `_heliEvents` should hand the beacon cue's
-  `pitch` to `heliAudio.play`. This card has no `busy-game-files`, so it is not
-  done here; until then the switch does nothing in the game.
-- **`heli-fire-run.js` changed more than its four reads.** The card note named
-  only the reads; but a rescue call can only ring, be answered and be given
-  away from the host that owns the call clock, so those few lines went in too.
-  Every one is behind the switch, and the fingerprint proves it.
 - **Rescues need the fire switch.** The calls ring through the fire engine, so
-  `rescueEnabled` without `fireEnabled` does nothing. A rescue-only build would
-  need a way to turn fire's own kind off in `createFireRun`.
-- **A crash fails any rescue in hand,** not only one with people aboard or on
-  the line (simplest reading of section 3.4; a hiker not yet found counts).
+  `rescueEnabled` without `fireEnabled` does nothing.
 - **A rescue found stored at the start of a visit fails** (leaving it behind
   is the same as walking away). That also catches a closed browser tab.
 - **"2 more flights"** is counted at lift-off: the call hands on at the second
-  lift-off after the one it rang in, not after that flight lands.
+  lift-off after the one it rang in.
 - **Stages.** `found` is the hiker's flare, or the avalanche's first signal;
-  a hoist goes straight from `fly` to `hold`. A reset hold goes back to `found`
-  or `fly`. Say if the panel wants a hoist `found` (say, within 100 m).
-- **Not wired (beyond this card's list):** the autopilot's goals for rescues
-  (it still flies to a destination's circle, and holds 20 m/s with people on
-  the line), the car recovery job on the board and its delivery (`recoveryJobOf`
-  and `finishRecovery` are ready in `heli-jobs.js`), and Summit Run (it is not a
-  destination in the session).
+  a hoist goes straight from `fly` to `hold`.
+- **Recovery job:** shown, not yet takeable or payable in flight.
 - **First-hitch.** The first look at where rescues can happen costs about 1 s
-  (the hiker spot lists, on two courses). It is paid at the start of a visit
-  when a call is due. If that shows in the game, cache the lists or cap them.
+  (the hiker spot lists). It is paid at the start of a visit when a call is
+  due. If that shows in the game, cache the lists or cap them.
 - **Cruise legs are long.** A hoist rescue from the Woods spends 200 s of its
-  720 s on the cruise leg to Panorama Ridge, so the driver is cold before the
-  pad. That is the packet's rule (cruise time counts); say if it should not.
+  720 s on the cruise leg, so the driver is cold before the pad (the packet's rule).
+- Autopilot goals for rescues and Summit Run as a destination: RESCUE-AUTOPILOT.
 
 ## Gates
 
-- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, PowerShell, one other heavy job at most): 140 passed, 0 failed, 0 not run, 1,050.13 s. Log kept in the lane's `.qa-dist/lane.log`.
-- `npm run build`: passed.
-- No browser scenarios (screen hold until 12:00).
+See the end of the second pass below.
+
+Second pass (app wiring, crash rule, recovery job): fire session (79), mode (154), jobs (612), hooks (291), rescue (263) and the new suite (442 checks) pass. Lane tier (`--tier lane --changed --jobs 4 --keep-going`, PowerShell): 154 passed, 0 failed, 0 not run, 1,000.57 s; full log in the lane's `.qa-dist/lane.log`. `npm run build`: passed. No browser scenarios.

@@ -18,9 +18,10 @@ function jobRow(job, mode) {
   const state = job.done ? 'done' : job.taken ? 'taken' : 'open';
   const pay = own ? 'No pay' : `${job.payNow ?? job.pay} credits${mode === 'real' ? ' (+25% in Real)' : ''}`;
   const pickUp = !own && job.from !== HOME_COURSE ? `Pick up at ${HELI_DESTINATIONS[job.from]?.name ?? job.from}` : '';
-  const title = own ? `Fly my car${job.carId && CARS[job.carId] ? ` (${CARS[job.carId].name})` : ''}` : jobTitle(job);
+  const title = own ? `Fly my car${job.carId && CARS[job.carId] ? ` (${CARS[job.carId].name})` : ''}` : job.recovery ? job.title : jobTitle(job);
   let button = '';
-  if (own) button = `<button type="button" class="heli-board-button" data-heli-board="take:own">Fly my car</button>`;
+  if (job.recovery) button = `<span class="heli-board-note">Hook the car on the slope</span>`;
+  else if (own) button = `<button type="button" class="heli-board-button" data-heli-board="take:own">Fly my car</button>`;
   else if (job.done) button = `<span class="heli-board-note">Done today</span>`;
   else if (job.taken) button = `<button type="button" class="heli-board-button heli-board-drop" data-heli-board="drop">Drop job</button>`;
   else button = `<button type="button" class="heli-board-button" data-heli-board="take:${esc(job.id)}">Take job</button>`;
