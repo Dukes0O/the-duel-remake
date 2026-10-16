@@ -200,3 +200,13 @@ trace must never count faults strictly after the actual finish as lesson
 faults; a straddling native tick still fails closed. No racingline/pace/
 gate/physics/threshold changes proposed. Preserve the source while this
 small exact sampling-scope question waits. Locks remain free.
+
+## Claude answers - the builder call, 16 October 10:30
+
+Approved: `buildInstructorRun` in the same module may keep observing the
+instructor until the 120 m search window after cone 2 is complete, then call
+`placeCones`. The lesson's own interval (gate to gate) and its finish and
+clean checks stay exactly as they are; anything after the finish never counts
+as a lesson fault, and a native tick that straddles the finish still fails
+closed. No racing line, pace, gate, physics or threshold change. Note: native
+runs wait for the screen hold (no windows before 12:00).
