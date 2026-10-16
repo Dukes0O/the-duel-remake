@@ -17,6 +17,8 @@ const ray=new THREE.Raycaster();
 for(const seed of[1989,42])for(const def of COURSE.filter(def=>def.sections.some(section=>section.theme==='alpine'))){
   const course=new Course(def,seed),structures=addRaceStructures(new THREE.Group(),course);structures.updateMatrixWorld(true);
   const lining=structures.children.filter(mesh=>mesh.name==='Circuit lining surface');
+  const physicalBefore=JSON.stringify(course.features);
+  const liningBefore=lining.map(mesh=>Array.from(mesh.geometry.attributes.position.array));
   check(lining.length===(course.features.tunnels.length?1:0),`${def.id}: lining exists exactly when the actual course has tunnels`);
   if(def.expansion)check(course.features.tunnels.length===def.expansion.tunnelSections.length,`${def.id}: tunnels follow the authored expansion sections`);
   for(const tunnel of course.features.tunnels)if(tunnel.clearance){
@@ -26,6 +28,7 @@ for(const seed of[1989,42])for(const def of COURSE.filter(def=>def.sections.some
   }
   for(const tunnel of course.features.tunnels)for(const geometry of Object.values(buildTunnelWallDetails(course,tunnel))){
     const positions=geometry.attributes.position,normals=geometry.attributes.normal;triangles+=positions.count/3;
+    if(tunnel.id==='summit-gallery')check(positions.array instanceof Float32Array,`${def.id}: Gallery flush corners use the actual rendered Float32 format`);
     for(let i=0;i<positions.count;i++){
       const p=new THREE.Vector3().fromBufferAttribute(positions,i),n=course.nearest(p.x,p.z);
       check(Number.isFinite(p.x+p.y+p.z)&&Number.isFinite(normals.getX(i)+normals.getY(i)+normals.getZ(i)),`${def.id}: finite detail geometry`);
@@ -52,6 +55,8 @@ for(const seed of[1989,42])for(const def of COURSE.filter(def=>def.sections.some
       maximumGap=Math.max(maximumGap,gap);check(gap<.00015,`${def.id}: new detail protrudes from the existing wall plane${witness?' '+witness:''}`);
     }
   }
+  assert.deepEqual(lining.map(mesh=>Array.from(mesh.geometry.attributes.position.array)),liningBefore,'Detail construction leaves the actual stored lining byte-exact');checks++;
+  check(JSON.stringify(course.features)===physicalBefore,'Detail construction leaves Gallery and ordinary physical features unchanged');
 }
 // Compare actual generated Gallery geometry, including both rock dispatches.
 // Only explicit false removes cover; every remaining mesh/light stays exact.
