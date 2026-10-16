@@ -52,8 +52,9 @@ export function addCatalogEntry(entry, path = CATALOG_PATH) {
   const catalog = loadCatalog(path);
   // Never reorder the catalog: a new entry goes last, and a new take or fetch
   // for the same source, key and cue takes the old row's place (tests pin
-  // the rows). One library sound may serve several cues, one row each.
-  const at = catalog.sounds.findIndex(sound => sound.source === entry.source && sound.key === entry.key && sound.cue === entry.cue);
+  // the rows). One library sound may serve several cues, one row each; a row
+  // with no cue matches an entry whose cue is null.
+  const at = catalog.sounds.findIndex(sound => sound.source === entry.source && sound.key === entry.key && (sound.cue ?? null) === (entry.cue ?? null));
   if (at < 0) catalog.sounds.push(entry);
   else catalog.sounds[at] = entry;
   mkdirSync(dirname(path), { recursive: true });

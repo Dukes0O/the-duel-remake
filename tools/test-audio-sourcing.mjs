@@ -180,6 +180,12 @@ try {
     addCatalogEntry(row('freesound', '9', 'z.second'), orderPath);
     after = JSON.parse(readFileSync(orderPath, 'utf8')).sounds;
     check(after.length === 6 && after[0].cue === 'z.last' && after[5].cue === 'z.second', 'a second cue from one source gets its own row, last');
+    // Old Freesound rows have no cue field; a refetch without --cue writes cue: null and must replace them.
+    const { cue: _drop, ...noCue } = row('freesound', '7', 'unused');
+    addCatalogEntry(noCue, orderPath);
+    addCatalogEntry({ ...noCue, cue: null, file: 'refetch.ogg' }, orderPath);
+    after = JSON.parse(readFileSync(orderPath, 'utf8')).sounds;
+    check(after.length === 7 && after[6].file === 'refetch.ogg' && after[6].cue === null, 'a refetch with no cue replaces the old row that had none');
     check(readFileSync(orderPath, 'utf8').endsWith('}\n') && readFileSync(orderPath, 'utf8').startsWith('{\n  "version": 1'), 'the file keeps its format');
   }
 

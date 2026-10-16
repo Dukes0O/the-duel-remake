@@ -23,8 +23,11 @@ Claude, 15 October 2026. Card `docs/board/cards/AUDIO-CATALOG-APPEND.md`.
   every existing row and its order byte for byte and puts the new row last,
   that a same source, key and cue entry replaces its row in place while the
   same source's other cue stays, that a second cue from one source gets its
-  own row, and that the file keeps its format. They fail on the old code.
-  The existing checks are unchanged and pass (55).
+  own row, that a refetch with no cue replaces an old row that had no cue
+  field (review fault: `null` and a missing cue now match), and that the file
+  keeps its format. They fail on the old code.
+  The existing checks are unchanged and pass (56). The card text now
+  says source, key and cue.
 
 `tools/audio/catalog.json` is unchanged.
 
