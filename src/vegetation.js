@@ -4,6 +4,8 @@ import { renderedGroundHeight } from './rendered-ground.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 export const VEGETATION_CELL_SIZE = 200;
+// Far-band firs (ARDENNES-FAR-FOREST-LIGHT) are drawn in bigger cells: they are small and many, so fewer, larger draws.
+export const FAR_PINE_CELL_SIZE = 400;
 
 // Keep source indices stable: cactus shape, height and tint must not change
 // when a cell boundary splits the original feature list.
@@ -57,8 +59,11 @@ export function addPineTrees(group, trees, course, {kits} = {}) {
   if (!trees.length) return;
   const selected=beechTreePlacements(course), ids=new Set(selected.map(row=>row.scenery.id));
   if (selected.length && kits?.status!=='ready') throw Error('Ardennes beech needs its prepared original track-kit owner.');
-  const pines=selected.length?trees.filter(tree=>!ids.has(tree.id)):trees;
-  const assets = pines.length?pineTreeAssets():null, object = new THREE.Object3D();
+  const allPines=selected.length?trees.filter(tree=>!ids.has(tree.id)):trees;
+  // Far-band firs (60 m and more from every road) are drawn by their own light meshes below; the first band's cells
+  // are exactly what they were before the far band existed.
+  const farPines=allPines.filter(tree=>tree.farForest), pines=farPines.length?allPines.filter(tree=>!tree.farForest):allPines;
+  const assets = allPines.length?pineTreeAssets():null, object = new THREE.Object3D();
   const instances = new Map(), active = new Set(), seen = new Set(), changed = new Set();
   const axis = new THREE.Vector3(), fall = new THREE.Quaternion(), yaw = new THREE.Quaternion(),
     rotation = new THREE.Quaternion(), matrix = new THREE.Matrix4();
@@ -79,6 +84,27 @@ export function addPineTrees(group, trees, course, {kits} = {}) {
       instances.set(tree.id, {tree, index:i, meshes:[trunks,leaves], root:object.position.clone(), upright:object.matrix.clone(), progress:null});
     });
     group.add(finishVegetationCell(trunks, key, entries), finishVegetationCell(leaves, key, entries));
+  }
+  if (farPines.length) {
+    const crown = farPineCrown();
+    for (const { key, entries } of vegetationCells(farPines, FAR_PINE_CELL_SIZE)) {
+      const crowns = new THREE.InstancedMesh(crown, assets.needles, entries.length);
+      crowns.name = `Far pine crowns ${key}`;
+      if (entries.some(({ feature }) => feature.tint)) {
+        crowns.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(entries.length * 3).fill(1), 3);
+        entries.forEach(({ feature }, i) => { if (feature.tint) crowns.instanceColor.setXYZ(i, ...feature.tint); });
+      }
+      entries.forEach(({ feature: tree }, i) => {
+        object.position.set(tree.x, tree.y - .24, tree.z); object.rotation.set(0, tree.heading, 0); object.scale.setScalar(tree.scale); object.updateMatrix();
+        crowns.setMatrixAt(i, object.matrix);
+        instances.set(tree.id, {tree, index:i, meshes:[crowns], root:object.position.clone(), upright:object.matrix.clone(), progress:null});
+      });
+      finishVegetationCell(crowns, key, entries);
+      // Nothing out here is inside the sun's shadow box (45 m round the car), so the far firs neither cast a shadow
+      // nor need the shadow-map draw; the material and its shadow lookups stay the near firs' own program.
+      crowns.castShadow = false; crowns.userData.vegetationCell.size = FAR_PINE_CELL_SIZE;
+      group.add(crowns);
+    }
   }
   if (selected.length) {
     const byId=new Map(trees.map(tree=>[tree.id,tree]));
@@ -132,6 +158,26 @@ export function addPineTrees(group, trees, course, {kits} = {}) {
     }
     if (changedKits) kits.refresh();
   };
+}
+
+// A far fir (ARDENNES-FAR-FOREST-LIGHT): the near fir's crown built from 7 tiers of 7 arms with two cards each (98
+// cards, 196 triangles) instead of 324 cards (648 triangles), same bough texture, same height and spread, no trunk
+// (from 60 m its bare foot is a few pixels). Cards are cut larger so the crown fills the same outline.
+export function farPineCrown() {
+  const parts=[];
+  for(let tier=0;tier<7;tier++){
+    const mid=tier*1.7+.5;
+    for(let arm=0;arm<7;arm++){
+      const reach=(2.65-mid*.205)*(1+.19*Math.sin(arm*4.1+mid*1.7))*1.18,angle=arm*Math.PI*2/7+mid*.81+.17*Math.sin(arm*3.1+mid);
+      for(const tilt of [.8,1.57]){
+        const g=new THREE.PlaneGeometry(reach,reach*.68);
+        g.translate(reach*.46,0,0);g.rotateX(-Math.PI/2+tilt);g.rotateZ(-.12);
+        g.rotateY(angle);g.translate(0,.85+mid*.43+.09*Math.sin(arm*3+mid),0);parts.push(g);
+      }
+    }
+  }
+  const crown=mergeGeometries(parts);parts.forEach(g=>g.dispose());
+  return crown;
 }
 
 // Image-generated needle sprays form a full radial crown; roots are placed by
