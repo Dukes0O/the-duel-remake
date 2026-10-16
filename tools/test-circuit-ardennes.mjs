@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {App} from '../src/app.js';
+import {ownTestCourses} from './career-fixture.mjs';
+import {useRacingLine} from './track-script-drive.mjs';
+import {runRace} from './race-field-balance.mjs';
+import {assertArdennesFrameContext,validateArdennesFramePacket} from './scenarios/frame-pacing.mjs';
 import {ARDENNES_FOREST, manifest} from '../src/circuits/ardennes-forest.js';
 import {CIRCUIT_ENTRIES, CIRCUIT_MANIFESTS, BASE_COURSE_COUNT} from '../src/circuit-manifests.js';
 import {ALL_CIRCUITS, CIRCUITS, circuitsEnabled} from '../src/circuits/index.js';
@@ -103,7 +108,7 @@ test('the pit lane runs along the right of Pit Straight', () => {
   assert.ok(course.pitLane.exit - course.pitLane.entry > 300);
 });
 
-test('Ardennes Forest is a dev circuit: registered after Summit, priced, off by default, and COURSE is unchanged without its switch', () => {
+test('Ardennes Forest is a released circuit: stable registration, price, production admission and preserved disabled contract', () => {
   assert.equal(ARDENNES_FOREST.id, 'ardennes-forest'); assert.equal(ARDENNES_FOREST.flag, 'ardennes-forest');
   assert.equal(ARDENNES_FOREST.name, 'Ardennes Forest'); assert.equal(ARDENNES_FOREST.kind, 'circuit');
   assert.equal(ARDENNES_FOREST.closed, true); assert.equal(ARDENNES_FOREST.laps, 2); assert.equal(ARDENNES_FOREST.layoutVersion, 1);
@@ -115,9 +120,9 @@ test('Ardennes Forest is a dev circuit: registered after Summit, priced, off by 
   near(ARDENNES_FOREST.sections.reduce((sum, row) => sum + row.share, 0), 1, 1e-9, 'section shares');
   assert.ok(Object.isFrozen(manifest) && Object.isFrozen(manifest.driver));
   assert.deepEqual([manifest.id, manifest.flag, manifest.state, manifest.price, manifest.grandPrix],
-    ['ardennes-forest', 'ardennes-forest', 'dev', 2000, true]);
+    ['ardennes-forest', 'ardennes-forest', 'on', 2000, true]);
   assert.equal(COURSE_PRICES['ardennes-forest'], 2000);
-  assert.equal(FEATURE_STATES['ardennes-forest'], 'dev');
+  assert.equal(FEATURE_STATES['ardennes-forest'], 'on');
   const entry = CIRCUIT_ENTRIES.find(row => row.manifest.id === 'ardennes-forest');
   assert.equal(entry.definition, ARDENNES_FOREST, 'registry keeps the exact authored definition');
   assert.equal(entry.generationStage, 21);
@@ -130,19 +135,22 @@ test('Ardennes Forest is a dev circuit: registered after Summit, priced, off by 
   assert.ok(CIRCUIT_MANIFESTS.slice(0, index).every(row => row.releaseOrder < manifest.releaseOrder), 'earlier courses keep their places');
   assert.ok(CIRCUIT_MANIFESTS.slice(index + 1).every(row => row.releaseOrder > manifest.releaseOrder), 'later courses append after Ardennes');
   assert.equal(ALL_CIRCUITS[index], ARDENNES_FOREST);
-  // Switch off: players and tests see COURSE exactly as before.
   const released = CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
-  assert.ok(!CIRCUITS.some(circuit => circuit.id === 'ardennes-forest'));
-  assert.ok(!COURSE.some(event => event.id === 'ardennes-forest'));
+  assert.equal(CIRCUITS.filter(circuit => circuit.id === 'ardennes-forest').length,1);
+  assert.equal(COURSE.filter(event => event.id === 'ardennes-forest').length,1);
   assert.equal(COURSE.length, BASE_COURSE_COUNT + released.length);
-  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), released, 'COURSE is the base events plus the released circuits only');
-  const player = createFeatureFlags({storage: null, qa: false, search: '?flags=ardennes-forest'});
-  assert.equal(player.enabled('ardennes-forest'), false, 'a player build ignores the dev switch');
-  assert.deepEqual(circuitsEnabled(player).map(circuit => circuit.id), released);
-  // Switch on in a QA build: it joins the end of the list after every released course.
-  const qa = createFeatureFlags({storage: null, qa: true, search: '?flags=ardennes-forest'});
-  assert.equal(qa.enabled('ardennes-forest'), true);
-  assert.deepEqual(circuitsEnabled(qa).map(circuit => circuit.id), [...released, 'ardennes-forest']);
+  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id),released);
+  for(const search of ['', '?flags=ardennes-forest']){
+    const player=createFeatureFlags({storage:null,qa:false,search});
+    assert.equal(player.enabled('ardennes-forest'),true,'released admission needs no QA URL');
+    assert.deepEqual(circuitsEnabled(player).map(circuit=>circuit.id),released);
+  }
+  const devCatalog={...FEATURE_STATES,'ardennes-forest':'dev'},without=released.filter(id=>id!=='ardennes-forest');
+  for(const [qa,search,enabled] of [[false,'',false],[false,'?flags=ardennes-forest',false],[true,'',false],[true,'?flags=ardennes-forest',true]]){
+    const flags=createFeatureFlags({catalog:devCatalog,storage:null,qa,search});
+    assert.equal(flags.enabled('ardennes-forest'),enabled,'previous dev admission remains exact');
+    assert.deepEqual(circuitsEnabled(flags).map(circuit=>circuit.id),enabled?released:without);
+  }
 });
 
 
@@ -181,6 +189,18 @@ test('the forest and safety kit leave the original run-off and native pit road o
     if (row.lateral < 0 && row.s <= piece('Pit Straight').s1 + 15)
       assert.fail('no safety piece may close the pit entrance or exit');
   }
+  // Finishing-pass braking boards follow the script's own board rule: 2.4 m beyond the road edge on the
+  // outside, on straight road, never solid.
+  const boards = rows.filter(row => /^braking-board-/.test(row.id));
+  assert.ok(boards.length >= 15);
+  for (const row of boards) {
+    const edge = Math.abs(row.lateral) - course.roadHalfWidthAt(row.s);
+    assert.ok(Math.abs(edge - 2.4) < 1e-9, 'board stands 2.4 m from the road edge, like the script boards');
+    assert.equal(course.script.pieceAt(row.s).kind, 'straight');
+    const corner = course.script.pieces.find(piece => piece.kind === 'turn' && piece.s0 > row.s && piece.s0 - row.s <= 151);
+    assert.equal(Math.sign(row.lateral), -corner.dir, 'board stands on the outside of the corner it announces');
+    assert.notEqual(row.solid, true);
+  }
   assert.deepEqual(ARDENNES_FOREST.pitLane, {straight: 'Pit Straight', side: 'right'});
   assert.ok(rows.filter(row => row.id === 'pit-wall').every(row => row.solid !== true), 'visual divider retains the original native pit collision');
   assert.ok(course.features.walls.some(wall => wall.pitWall));
@@ -198,6 +218,7 @@ test('the forest and safety kit leave the original run-off and native pit road o
 test('the damp forest road keeps the original asphalt grip and alpine sound biome', () => {
   const course = new Course(ARDENNES_FOREST, 1989);
   assert.deepEqual(ARDENNES_FOREST.wetRoad, {performanceShare: .5});
+  assert.ok(ARDENNES_FOREST.dampRoad);
   const dry = new Course({...ARDENNES_FOREST, wetRoad: undefined}, 1989);
   for (let s = 0; s < course.length; s += 53) {
     assert.equal(course.themeAt(s), 'alpine');
@@ -710,9 +731,9 @@ function knownPlayerIncident() {
   };
 }
 
-test('native player exception admits zero or only the verified first-lap Long Left stock-driver incident', () => {
+test('native player acceptance now rejects the former Long Left exception and requires zero crashes', () => {
   const known = knownPlayerIncident();
-  assert.equal(ardennesPlayerCrashAccepted(known.setup, known.final, known.observer), true);
+  assert.equal(ardennesPlayerCrashAccepted(known.setup, known.final, known.observer), false);
   assert.equal(ardennesPlayerCrashAccepted(known.setup, {crashes: 0, stageCrashes: 0},
     {restored: true, incidents: [{index: 2, t: 9}], playerIncidents: [], cpuIncidents: [{index: 2, t: 9}], playerEvents: []}), true);
   for (const mutate of [
@@ -739,22 +760,26 @@ test('native player exception admits zero or only the verified first-lap Long Le
 });
 
 
-test('native player exception rejects incomplete or inconsistent field incident receipts', () => {
+test('zero-crash native player acceptance rejects incomplete or inconsistent field incident receipts', () => {
+  const clean = {setup: {}, final: {crashes:0,stageCrashes:0}, observer:{restored:true,
+    incidents:[{index:2,t:9}],playerIncidents:[],cpuIncidents:[{index:2,t:9}],playerEvents:[]}};
+  assert.equal(ardennesPlayerCrashAccepted(clean.setup,clean.final,clean.observer),true);
   for (const mutate of [
     row => {delete row.observer.incidents;},
-    row => {row.observer.incidents.push({index: 7, t: 12});},
-    row => {row.observer.incidents.push({index: -2, t: 12});},
-    row => {row.observer.incidents.push({index: .5, t: 12});},
-    row => {row.observer.playerIncidents[0].t = 85;},
-    row => {row.observer.cpuIncidents = [];},
-    row => {row.observer.incidents = row.observer.incidents.filter(item => item.index !== -1); row.observer.playerIncidents = [];},
-    row => {row.observer.incidents.push({index: -1, t: 86}); row.observer.playerIncidents.push({index: -1, t: 86});},
-    row => {row.final.stageCrashes = 0;},
-    row => {row.final.stageCrashes = 2;},
+    row => {row.observer.incidents.push({index:7,t:12});},
+    row => {row.observer.incidents.push({index:-2,t:12});},
+    row => {row.observer.incidents.push({index:.5,t:12});},
+    row => {row.observer.playerIncidents.push({index:-1,t:85});},
+    row => {row.observer.cpuIncidents=[];},
+    row => {row.observer.incidents=[];},
+    row => {row.observer.playerEvents.push({event:{crash:'prop'}});},
+    row => {row.observer.restored=false;},
+    row => {row.final.crashes=1;},
+    row => {row.final.stageCrashes=1;},
     row => {delete row.final.stageCrashes;},
   ]) {
-    const row = knownPlayerIncident(); mutate(row);
-    assert.equal(ardennesPlayerCrashAccepted(row.setup, row.final, row.observer), false);
+    const row=structuredClone(clean);mutate(row);
+    assert.equal(ardennesPlayerCrashAccepted(row.setup,row.final,row.observer),false);
   }
 });
 
@@ -1054,4 +1079,85 @@ test('the Red Water stream is the circuit water in a channel 0.6 to 1 m below th
   assert.equal(water.basins, 2);
   for (const basin of ARDENNES_FOREST.basins) assert.ok(world.getObjectByName('water-' + basin.id)?.isMesh);
   disposeTree(world);
+});
+
+test('Long Left original stock full-field replay finishes without the former player exception', () => {
+  const originalStart = App.prototype.startCampaign, originalCourses = [...COURSE];
+  let app, final, installed = false;
+  const added = !COURSE.some(def => def.id === ARDENNES_FOREST.id);
+  if (added) COURSE.push(ARDENNES_FOREST);
+  App.prototype.startCampaign = function(options) {
+    ownTestCourses(this); app = this; return originalStart.call(this, options);
+  };
+  try {
+    const result = runRace('medium', 0, {car:'stuttgart_959s',
+      startStage:COURSE.findIndex(def => def.id === ARDENNES_FOREST.id),
+      onStep(duel) {
+        assert.equal(duel, app.duel);
+        if (!installed) {useRacingLine(app, .95); installed = true;}
+        final = duel.state;
+      }});
+    assert.equal(result.seed, 1989); assert.equal(result.fieldSeed, 1000);
+    assert.equal(result.racers, 7); assert.equal(result.finished, 7);
+    assert.equal(result.unfinished, 0); assert.equal(result.pileUp, false);
+    assert.ok(Number.isFinite(result.playerTime));
+    assert.equal(final.completedLaps, 2);
+    assert.equal(final.majorCrashes, 0, 'original Long Left player must no longer hit the armco');
+    assert.equal(final.stageCrashes, 0);
+    assert.equal(final.boundaryResets, 0);
+  } finally {
+    App.prototype.startCampaign = originalStart;
+    if (added) COURSE.splice(COURSE.findIndex(def => def.id === ARDENNES_FOREST.id), 1);
+    assert.deepEqual(COURSE, originalCourses);
+  }
+});
+
+test('Ardennes simple frame admission preserves strict native grid, timing and quiet requirements', () => {
+  const context={headed:true,launchMode:'headed'}, env={ARDENNES_FRAMES_ONLY:'1',DUEL_FRAME_IDLE_AWAKE:'1'};
+  assert.doesNotThrow(()=>assertArdennesFrameContext(context,env,[]));
+  assert.throws(()=>assertArdennesFrameContext({...context,headed:false},env,[]));
+  assert.throws(()=>assertArdennesFrameContext(context,{},[]));
+  assert.throws(()=>assertArdennesFrameContext(context,env,[{pid:1}]));
+  const packet={schema:1,mode:'ardennes-simple',reports:['High','Performance'].map(quality=>({quality,
+    course:'ardennes-forest',gridPiece:'Pit Straight',cars:8,frames:120,headed:true,visible:true,
+    memoryOnlySaves:true,appRunning:true,rearView:'ready',countdownBefore:.1,countdownAfter:2.2,
+    p95:18.5,worldBuildMs:999,constructionMs:6500}))};
+  assert.equal(validateArdennesFramePacket(packet),packet,'first-load time is reported, not a timing waiver');
+  for (const [key,value] of [['course','harbour-lights'],['gridPiece','Long Left'],['cars',7],['frames',119],
+    ['headed',false],['visible',false],['memoryOnlySaves',false],['appRunning',false],['rearView','pending'],
+    ['countdownAfter',.1],['p95',18.501],['p95',NaN],['worldBuildMs',1000],['constructionMs',NaN]]) {
+    const changed=structuredClone(packet);changed.reports[0][key]=value;
+    assert.throws(()=>validateArdennesFramePacket(changed),key);
+  }
+  assert.throws(()=>validateArdennesFramePacket({...packet,reports:packet.reports.slice(0,1)}));
+});
+
+
+test('released Ardennes still requires real course ownership and native purchase',async()=>{
+  const {withReferenceApp}=await import('./build-reference-laps.mjs');
+  await withReferenceApp(async app=>{
+    app.duel.featureFlags=createFeatureFlags({storage:null,qa:false});
+    const stage=COURSE.findIndex(course=>course.id==='ardennes-forest');assert.ok(stage>=BASE_COURSE_COUNT);
+    assert.equal(app.startCampaign({startStage:stage,car:'stuttgart_959s'}),false,'locked production entry refused');
+    app.profile={...app.profile,credits:4000};app._saveProfile();
+    const purchase=app.purchaseCourse('ardennes-forest');assert.ok(purchase.ok);assert.equal(app.profile.credits,2000);
+    assert.ok(app.startCampaign({startStage:stage,car:'stuttgart_959s',mode:'grandprix',fieldSize:7,fieldSeed:1000}));
+    assert.equal(app.duel.course.def.id,'ardennes-forest');assert.equal(app.duel.state.opponents.length,7);
+  });
+});
+
+
+test('finishing intel keeps the generated Wall Crest and only analysed corner notes',async()=>{
+  const {buildTrackDossier,courseFingerprint}=await import('../src/track-analysis.js');
+  const {referenceLap}=await import('../src/reference-laps.js');
+  const reference=referenceLap('ardennes-forest');assert.ok(reference,'the actual bundled Ardennes reference is required');
+  const course=new Course(ARDENNES_FOREST,1989),dossier=buildTrackDossier(course,{reference});
+  const crest=dossier.flags.filter(flag=>flag.kind==='crest'&&flag.title.includes('Wall Crest'));
+  assert.equal(crest.length,1,'Wall Crest must not gain a second authored crest flag');
+  assert.equal(crest[0].id,'crest-2');assert.equal(crest[0].generated,true);
+  assert.equal(ARDENNES_FOREST.intel.flags.length,6);
+  for(const id of Object.keys(ARDENNES_FOREST.intel.notes))
+    assert.ok(Object.hasOwn(dossier.notes,id),'engineer notes belong to analysed corners: '+id);
+  assert.equal(courseFingerprint(course),courseFingerprint(new Course({...ARDENNES_FOREST,intel:undefined},1989)),
+    'finishing notes preserve the default-sector reference fingerprint');
 });

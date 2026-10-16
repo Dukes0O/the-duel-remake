@@ -26,13 +26,13 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const sheetShots = [];
 const shoot = async (context, name, label) => { const path = await context.screenshot(name); if (label) sheetShots.push({label, path}); return path; };
 
-async function writeSheet(context, path) {
-  const shots = await Promise.all(sheetShots.map(async shot => ({label: shot.label, data: 'data:image/png;base64,' + (await readFile(shot.path)).toString('base64')})));
+export async function writeSheet(context, path, list = sheetShots, title = `FIRE-VIEW round ${SHEET_ROUND}: the fire, the bucket and the burnt course (browser captures, memory-only saves)`) {
+  const shots = await Promise.all(list.map(async shot => ({label: shot.label, data: 'data:image/png;base64,' + (await readFile(shot.path)).toString('base64')})));
   const png = await context.evaluate(`(async () => {
     const shots = ${JSON.stringify(shots)}, c = document.createElement('canvas'), w = 640, h = 360, cols = 3;
     c.width = w * cols; c.height = 44 + Math.ceil(shots.length / cols) * (h + 30);
     const x = c.getContext('2d'); x.fillStyle = '#14191a'; x.fillRect(0, 0, c.width, c.height);
-    x.fillStyle = '#eadabc'; x.font = '22px sans-serif'; x.fillText('FIRE-VIEW round ${SHEET_ROUND}: the fire, the bucket and the burnt course (browser captures, memory-only saves)', 16, 30);
+    x.fillStyle = '#eadabc'; x.font = '22px sans-serif'; x.fillText(${JSON.stringify(title)}, 16, 30);
     for (let i = 0; i < shots.length; i++) {
       const im = new Image(); im.src = shots[i].data; await im.decode();
       const left = (i % cols) * w, top = 44 + Math.floor(i / cols) * (h + 30);
@@ -45,7 +45,7 @@ async function writeSheet(context, path) {
 
 // The biggest fire that can burn: one cell short of the lost size (45 since
 // FIRE-SPREAD's tuning; the packet's 60-cell figure predates it).
-function biggestFire(limit = null) {
+export function biggestFire(limit = null) {
   const course = new Course(ALL_CIRCUITS.find(def => def.id === 'tremblant-woods'), 1989), ground = groundFromCourse(course);
   const grid = fireGrid(course, ground, courseSite(course, ground, 'tremblant-woods'));
   let fire = startFire({id: 'fire-1', courseId: 'tremblant-woods', grid, seed: 4242, startDay: 5, candidates: startCells(course, ground, grid, [])});
@@ -62,7 +62,8 @@ function biggestFire(limit = null) {
 // The middle of the last fire biggestFire made, for the views over the burnt forest.
 let fireMiddle = null;
 
-async function menu(context, quality, heli) {
+// newDay: the save last played yesterday, so the visit starts a new play day.
+export async function menu(context, quality, heli, {newDay = false} = {}) {
   await context.navigate(entry);
   await context.waitFor(`document.readyState==='complete' && !!window.__qaApp &&
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' && !document.querySelector('#start-engine')?.disabled`, `${quality} menu`, 90_000);
@@ -74,6 +75,7 @@ async function menu(context, quality, heli) {
     app.profile = {...app.profile, credits: 20000,
       courses: {version: 1, unlocked: [...new Set([...(app.profile.courses?.unlocked || []), 'tremblant-woods'])]},
       heli: (() => { const heli = ${JSON.stringify(heli)}, d = new Date(), pad = n => String(n).padStart(2, '0');
+        if (${newDay}) d.setDate(d.getDate() - 1);
         if (heli.playDay) heli.playDay.last = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
         return heli; })()};
     if (!app._saveProfile()) throw Error('fixture not saved');
@@ -83,7 +85,7 @@ async function menu(context, quality, heli) {
   await context.waitFor(`document.querySelector('#graphics-quality')?.value===${JSON.stringify(quality)} && !document.querySelector('#start-engine')?.disabled`, `${quality} ready`, 60_000);
 }
 
-async function installPilot(context) {
+export async function installPilot(context) {
   await context.evaluate(`(() => {
     const app = window.__qaApp, session = app.heliSession, step = session.step.bind(session);
     const clamp = v => Math.max(-1, Math.min(1, v));
@@ -110,11 +112,11 @@ async function measure(context, label) {
   return {label, ...report};
 }
 
-const trained = {liftoff: true, hover: true, landing: true, carry: true};
+export const TRAINED = {liftoff: true, hover: true, landing: true, carry: true};
 function fightingHeli(fire) {
   const missions = {...armMissions(createMissions(), {date: '2026-10-14', playerName: 'QA'}), count: 4,
     call: {kind: 'fire', id: fire.id, courseId: 'tremblant-woods', day: 5, answered: true}};
-  return {version: 1, fuelKg: 400, refuels: 3, lessons: trained, playDay: {last: '2026-10-20', count: 5}, missions, fire};
+  return {version: 1, fuelKg: 400, refuels: 3, lessons: TRAINED, playDay: {last: '2026-10-20', count: 5}, missions, fire};
 }
 
 async function overTheFire(context, quality, fire, {pictures}) {
@@ -169,7 +171,7 @@ async function drop(context) {
 }
 
 async function burntRace(context, quality, {stage, days}) {
-  const heli = {version: 1, fuelKg: 0, refuels: 1, lessons: trained, playDay: {last: '2026-10-20', count: 70},
+  const heli = {version: 1, fuelKg: 0, refuels: 1, lessons: TRAINED, playDay: {last: '2026-10-20', count: 70},
     burnt: {'tremblant-woods': {day: 70 - days, boughtBack: days < 10}}};
   await menu(context, quality, heli);
   await context.evaluate(`(() => { const app = window.__qaApp;
@@ -189,7 +191,7 @@ async function burntRace(context, quality, {stage, days}) {
 
 // The burnt course from 150 m over the forest where the check's fire burns, at one stage.
 async function burntFromAir(context, {stage, days, over}) {
-  const heli = {version: 1, fuelKg: 400, refuels: 3, lessons: trained, playDay: {last: '2026-10-20', count: 70},
+  const heli = {version: 1, fuelKg: 400, refuels: 3, lessons: TRAINED, playDay: {last: '2026-10-20', count: 70},
     burnt: {'tremblant-woods': {day: 70 - days, boughtBack: false}}};
   await menu(context, 'high', heli);
   await context.evaluate(`document.querySelector('#heli-visit').click()`);

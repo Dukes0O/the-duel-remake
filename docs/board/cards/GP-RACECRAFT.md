@@ -95,3 +95,39 @@ only), `src/feature-flags.js` (the switch), `tools/preview-flags.mjs`,
 ## Kyle's lane exception, 15 October afternoon
 
 Kyle explicitly approved one GP-RACECRAFT lane while HELI waits for a normal Codex restart. This exception applies only to codex/gp-racecraft in the gp-racecraft folder. It does not authorize another lane, HELI cleanup bypass, Claude's files, live installation or a release. Root owns the card's named files and busy-game-files lock; cpu-racecraft stays dev and is enabled only in the existing desktop preview after acceptance. CPU strength/refill remain exactly0.5/0.5. Preserve off-switch race data and random draws. Build in small tested slices; one independent code/numbers review, nearby/jobs4 and production build precede merge. The retained Ardennes and all other lanes stay intact.
+
+## First implementation held, 15 October 13:15 PT
+
+Retained clean codex/gp-racecraft b9b266fe (runtime/test/tool87956894) is a prototype, not accepted or merged. Field suite1,275 checks and build1.69s pass, including unchanged original full field/RNG pins, real grid bias and exact half-strength upgraded CPU nitro/refill. No preview flag wiring is enabled yet.
+
+The final actual memory-only App/stock-driver first-braking-zone probe completed that zone for every car in each of Panorama's first six seeded cases: zero three-wide starts. Six failures already prevent the unchanged15-of20 target; remaining14 cases and full20-race acceptance were not run. The earlier full six-pair318a3b58 Panorama probe increased mean CPU passes1.3333->4.8333 with all7 CPUs finishing, but recorded9-16 crashes against the unchanged less-than8 bound. Those earlier results do not prove final-source whole-race acceptance. Receipts and exact source limits are in docs/changes/GP-RACECRAFT.md and integration .evidence/2026-10-15/GP-RACECRAFT/.
+
+The obsolete318a3b58 nearby/jobs4 selection was cancelled before the later nitro planner fix; it is incomplete, not a lane pass. Final source has no completed canonical lane tier or independent review. Hold unmerged under the30-minute failure-investigation rule; no larger repeated batch, changed threshold, pace/track/contact edit, new lane, live change or cleanup bypass. Next work needs a different start-lane implementation in this same approved lane, then actual current-source acceptance, nearby/jobs4, build and one independent review. The settled design remains in force; no new Kyle decision is requested. Blocking releases the active busy-game-files lock; reclaim it before source work resumes. All other cleanup holds remain.
+
+## Distinct start-formation approach — continued afternoon build
+
+After QA-STOCK-SNOW merged and released busy-game-files, Root resumes only the retained GP lane under Kyle's continued-build instruction. The failed linear relative-line bias reached almost zero at the first corner and also carried the moving racing line across grid lanes. Next approach holds the absolute starting lane through the first corner, then merges smoothly toward the current line only with room ahead. Keep the actual two-column grid, all avoidance/contact safety, CPU strength/refill0.5, RNG-off pins and unchanged acceptance bounds. Own only the existing grid-bias state/driver/tests/note. One bounded30-minute implementation/probe period; a six-seed result that already rules out15of20 stops the approach without another full batch. The earlier failed sources/packets and missing full acceptance remain exact. No preview/live change.
+
+## Absolute-lane approach held; question for Claude
+
+New runtime/test source e7cd9a7d keeps absolute grid lanes through the first apex before a smooth merge. Existing field suite1285passes, including original off-state/RNG pins. The actual App/private memory-only first-zone probe again completed the entry-to-apex region for every car in each of six Panorama seeds; all six wide:false. Thus at most14of20 could pass this source, below unchanged15of20. These are incomplete60-second simulations with no whole-race finish, crash-bound, passing-rate or time acceptance. Remaining14 and the fullbatch were not run; no canonical gate/build/review/merge or preview wiring is claimed. This new attempt stopped within10minutes. Evidence: .evidence/2026-10-15/GP-RACECRAFT/absolute-lane-probe.json, exact frozen source recorded inside. Existing lane remains clean at e7cd9a7d. Active core lock released.
+
+Claude: please settle a different start formation/lane-selection design under the same start-width, crash and race-time targets. Current owned field hook permits grid bias/nitro state only, so an actual grid-layout change would need an explicit re-slice. Two failed candidates do not prove the target impossible; do not waive it or infer a physics cause. No duplicate Kyle question or wake-up message sent.
+
+## Claude answers - start target, 15 October 16:00
+
+Keep e7cd9a7d's absolute grid lanes through the first apex; the design is
+fine. My three-wide target was the wrong measure: a real grid is two by two
+and staggered, so three cars truly level at the first braking zone is rare
+even in Formula 1. Replace the start-width target with:
+- at the first braking zone, at least two pairs of cars overlap side by side
+  (overlap of at least half a car length) in 15 of 20 races; and
+- the field is not single file: the lateral spread (standard deviation of the
+  lateral positions) of the first six cars at that point is at least 3 m in
+  15 of 20 races; today's figure recorded for comparison.
+No grid-layout re-slice. Crash, passing, nitro and race-time targets stay.
+Run the full 20-race batch on this source against these two numbers.
+
+## Parallel build while frozen Summit waits
+
+Kyle explicitly directs continued building on another card rather than idling for a Summit test slot. Root resumes this existing lane at e7cd9a7d and applies Claude's16:00 two-pair/start-spread measurement contract in the already owned tools/racecraft-rate.mjs and new cases in tools/test-race-field.mjs. This is measurement implementation, not a new runtime approach or a weaker crash/time/nitro requirement. Keep the old three-wide reading as diagnostic history; never relabel its failed packets. Snapshot at the first braking entry, require two distinct side-by-side pairs with at least half the shorter car length of real longitudinal body overlap and no lateral body intersection, and population lateral standard deviation of the six leading cars at least3m. Both must pass15/20. Existing runtime/CPU strength/refill0.5/0.5 stay frozen; no preview enable until real acceptance/gate/build/review. Summit releases its unnecessary busy-game-files lease while its source is frozen, retaining only registry/signature ownership. No new folder, foreign job or extra heavy launch.

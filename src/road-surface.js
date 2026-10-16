@@ -103,22 +103,30 @@ export function createPavedRoadMaterial({ asphalt, night = false, wet = false, d
         uniform float roadDampRoughness;
         uniform vec2 roadShadeRanges[${shadeCount}];
         uniform vec3 roadMistRanges[4];
+        float roadDampRange(float station, vec2 range) {
+          float wrapped=mod(station,roadDampLength);
+          float mask=0.0;
+          for(int image=-1;image<=1;image++)
+            mask=max(mask,smoothstep(range.x-25.0,range.x,wrapped+float(image)*roadDampLength)
+              *(1.0-smoothstep(range.y,range.y+25.0,wrapped+float(image)*roadDampLength)));
+          return mask;
+        }
       `).replace('roughnessFactor=clamp(', `
         float roadDampStation=mod(vRoadSurfaceUv.y*10.0,roadDampLength);
         float roadDampMask=0.0;
         for(int i=0;i<${shadeCount};i++) {
           vec2 range=roadShadeRanges[i];
-          roadDampMask=max(roadDampMask,step(range.x,roadDampStation)*step(roadDampStation,range.y));
+          roadDampMask=max(roadDampMask,roadDampRange(roadDampStation,range));
         }
         for(int i=0;i<4;i++) {
           vec3 range=roadMistRanges[i];
-          roadDampMask=max(roadDampMask,step(range.x,roadDampStation)*step(roadDampStation,range.y)*range.z);
+          roadDampMask=max(roadDampMask,roadDampRange(roadDampStation,range.xy)*range.z);
         }
         roughnessFactor=mix(roughnessFactor,roadDampRoughness,roadDampMask);
         roughnessFactor=clamp(`);
     }
   };
-  material.customProgramCacheKey = damp ? () => `paved-road-wear-v3-damp-${damp.uniforms.roadShadeRanges.value.length}-4-${wet ? 'wet' : 'dry'}` :
+  material.customProgramCacheKey = damp ? () => `paved-road-wear-v4-damp-${damp.uniforms.roadShadeRanges.value.length}-4-${wet ? 'wet' : 'dry'}` :
     () => (wet ? 'paved-road-wear-v2-wet' : 'paved-road-wear-v2');
   return material;
 }

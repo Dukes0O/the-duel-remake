@@ -1,3 +1,4 @@
+import {cupResultPanel} from './screen-trophies.js';
 import {isSummitAttack} from './summit-attack.js';
 import {raceDistanceLabel} from './lap-choice.js';
 import {medalResultLines} from './earned-cars-ui.js';
@@ -77,7 +78,7 @@ function modalScreen(s) {
       metrics+=metric('POSITION PAY',`${credits(r.creditPositionReward||0)} CR`)+rewardMetric(r)+metric('BALANCE',`${credits(profile().credits)} CR`);
       if(app.profileSaved===false)description+=' Storage is unavailable; earnings last for this session.';
     }
-    arenaExtra=fieldResultsTable(r,time);
+    arenaExtra=fieldResultsTable(r,time)+cupResultPanel(r,{enabled:app.cupsAvailable?.()===true});
     actions=action('RACE AGAIN','restart',true)+action('MAIN MENU','menu');
   }
   else if (s.status==='stage_result') {

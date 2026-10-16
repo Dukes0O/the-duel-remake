@@ -332,6 +332,9 @@ check('the H2 fields normalize: counts, cells, courses, kinds and badges', () =>
     burning: [[3, 25], [5, 100]], burnt: [2, 7, 9],
     damp: [[11, 2], [12, 1], [13, 1]]});
   assert.deepEqual(heli.burnt, {'tremblant-woods': {day: 4, boughtBack: false}});
+  // Sarah's regrowth news heard: one of the three, or nothing.
+  assert.deepEqual(normalizeHeli({version: 1, burnt: {'tremblant-woods': {day: 4, heard: 'shoots'}, 'tremblant-snow': {day: 2, heard: 'smoke'}}}).burnt,
+    {'tremblant-woods': {day: 4, boughtBack: false, heard: 'shoots'}, 'tremblant-snow': {day: 2, boughtBack: false}}, 'regrowth news heard survives; anything else is dropped');
   assert.deepEqual(heli.scars.map(scar => scar.day), [2, 3, 4, 5], 'at most four scars, the oldest goes');
   assert.deepEqual(heli.scars[0].cells, [2]);
   assert.deepEqual(heli.bucket, {damage: 0});

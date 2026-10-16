@@ -9,6 +9,39 @@ Keep every line busy (Kyle, 14 October): up to six build lanes at once, no
 more than three course lanes. When a lane merges, open the next card at once.
 Stop only when no Codex card is ready.
 
+## Tonight, 15 to 16 October (Claude, 20:20; wins over older sections)
+
+Ardennes Forest went live at 20:03 (build 20261016030307). Kyle, 20:20: Summit
+may go live overnight only if all green; Claude stops at 08:00 for Kyle's
+quota; Codex carries on.
+
+**Core locks are released (Root handback d77e28eb).** Team Room is Claude-owned;
+its remaining presentation hook does not hold the next core/save cards.
+
+1. **Team Room is handed back to Claude before the22:30 deadline.** Retain
+   clean b7df3fde, its passing72photos and native ghosts. The existing b7
+   canonical run drains once; do not duplicate it. Claude's approved five-variant
+   entry hook and semantic check remain, with a new core lease only if needed.
+2. **busy-game-files, in this order:** SUMMIT-SWITCH-ON (Kyle approved the
+   v2 patch at 20:20; merge, then Claude runs RELEASE-SUMMIT), TYRE-SLIP (finish
+   to merge, switch dev), GP-RACECRAFT (switch dev; add it to the desktop
+   preview flags for Kyle), DRIVE-LESSON-1 then DRIVE-LESSON-HOOKS,
+   YETI-FUR-TINT, WILD-VIEW, QA-SUMMIT-WARMUP-EXCEPTION.
+3. **save-shape, in this order:** RESCUE-SAVE, then SKIN-SAVE, then P4-COACH's
+   save part.
+4. **No core lock (any time):** EARN-CAR-2 (F1 pitch approved) and EARN-CAR-3,
+   QA-YARD-HOME-AIR-ONLY, QA-YETI-THREE, WILD-ART-SRC's beaver (moose and bear
+   wait for Kyle's downloads).
+5. **Claude overnight:** RELEASE-SUMMIT when SUMMIT-SWITCH-ON merges (all
+   green only); ARDENNES-FAR-FOREST in a Claude lane when its files are free;
+   P4-FINISH-TEAMROOM when P4-INTEL-LEVELS merges; the janitor clears merged
+   lane folders (Kyle approved, merged only).
+6. **The 04:00 full check stays;** the laptop is Codex's alone for its frame
+   step, 04:00 to about 04:40. Laptop screen off, Dells on.
+7. **Holds:** read the top of docs/playtest-inbox.md before every heavy job;
+   start nothing heavy while a FULL TIER FOR RELEASE STARTING or FRAME CHECK
+   STARTING has no later DONE. At most three heavy jobs across all chats.
+
 ## Tonight, 14 to 15 October (Claude, 19:50; wins over the order above where they differ)
 
 Kyle, 14 October evening: "do what you can"; Summit Run may go live overnight

@@ -7,7 +7,7 @@ import { loadGhosts, saveGhosts, GHOST_KEY } from '../src/ghost.js';
 
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
 const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWith('.json')).sort();
-assert.equal(files.length, 12, 'review the historical save-shape fixture roster');
+assert.equal(files.length, 13, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
   const values = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));
@@ -60,6 +60,8 @@ function preserveProfile(raw, loaded, label) {
   } else {
     equal(Object.hasOwn(loaded, 'heli'), false, `${label}: no heli field appears`);
   }
+  if (Object.hasOwn(raw, 'drivingLessons')) equal(loaded.drivingLessons, raw.drivingLessons, `${label}: driving lesson progress`);
+  else equal(Object.hasOwn(loaded, 'drivingLessons'), false, `${label}: no lesson field added to old saves`);
   if (raw.awardedWins) equal(loaded.settledResults, raw.awardedWins, `${label}: awardedWins migration`);
   if (raw.history) equal(loaded.history, raw.history, `${label}: complete race history`);
   if (raw.winStreak != null) equal(loaded.winStreak, raw.winStreak, `${label}: win streak`);

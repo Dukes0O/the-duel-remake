@@ -149,7 +149,10 @@ export function startReferenceApp(app, target) {
   const driver = referenceDriver(target);
   const startStage = COURSE.findIndex(definition => definition.id === target.eventId);
   if (startStage < 0) throw Error(`Unknown reference event: ${target.eventId}`);
-  app.profile = {...app.profile, courses: {version: 1, unlocked: COURSE.map(course => course.id)}};
+  const unlock = CIRCUIT_MANIFESTS.find(row => row.id === target.eventId)?.unlock;
+  app.profile = {...app.profile, courses: {version: 1, unlocked: COURSE.map(course => course.id)},
+    ...(unlock?.kind === 'default-gp-podium' ? {grandPrixPodiums:
+      [...new Set([...(app.profile.grandPrixPodiums ?? []), unlock.defaultEventId])]} : {})};
   app._saveProfile();
   const options = {startStage, seed: target.seed, mode: 'duel', car: driver.car,
     driverId: driver.driverId, cpuDifficulty: REFERENCE_POLICY.cpu,

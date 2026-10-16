@@ -201,6 +201,12 @@ async function checkHairpinCamera(context,data) {
 
 // Closed circuits keep the original second-lap fixture. An open road has
 // one physical run, so its requested views and run-ups stay on that road.
+// A review teleport must not carry an earlier Ardennes view's absolute flight height.
+export function resetReviewFlight(state) {
+  Object.assign(state,{airborne:false,airHeight:0,prevAirHeight:0,_jumpY:null,_verticalSpeed:0,
+    _jumpOrigin:null,_airOrigin:null,airDistance:0,airTime:0});
+}
+
 export function reviewPlacementPlan(course,pointS,mph,mphToWorld,length) {
   const run=Math.max(30,Math.min(160,mph*mphToWorld*1.3));
   if(course.closed!==false)return {target:length+pointS,from:length+pointS-run,reportBase:length};
@@ -236,7 +242,8 @@ export async function run(context) {
   await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.audio?.setMuted?.(true);a.setGraphicsQuality(${JSON.stringify(data.options.quality)});
     if(!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only storage missing');
     document.head.insertAdjacentHTML('beforeend','<style>details{display:none!important}</style>');
-    a.profile={...a.profile,courses:{version:1,unlocked:[...new Set([...(a.profile.courses?.unlocked||[]),${JSON.stringify(data.courseId)}])]}};
+    a.profile={...a.profile,courses:{version:1,unlocked:[...new Set([...(a.profile.courses?.unlocked||[]),${JSON.stringify(data.courseId)},...${JSON.stringify(data.defaultEventId ? [data.defaultEventId] : [])}])]},
+      grandPrixPodiums:[...new Set([...(a.profile.grandPrixPodiums||[]),...${JSON.stringify(data.defaultEventId ? [data.defaultEventId] : [])}])]};
     if(!a._saveProfile())throw Error('Review fixture could not be saved in temporary storage');})()`);
   // Helpers that live in the page. Targets sit on the second lap so a run-up
   // across the start line never finishes the race.
@@ -262,6 +269,7 @@ export async function run(context) {
       const {target,from}=plan;
       R.clearField(from);
       s.s=s.prevS=from;s.lateral=s.prevLateral=lateral||0;s.headingError=0;s.speedMph=mph;s.impactTimer=0;s.airHeight=0;
+      if(course.def.id==='ardennes-forest')(${resetReviewFlight.toString()})(s);
       a.autopilot=true;let guard=0;
       while(s.s<target&&guard++<600){a.advance(1/60,1/60);if(s.status!=='racing')throw Error('Race stopped during run-up ('+s.status+')');}
       a.autopilot=false;a.duel.setInput({throttle:0,brake:0,steer:0,boost:false});

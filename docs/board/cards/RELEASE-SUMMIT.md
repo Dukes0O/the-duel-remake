@@ -30,3 +30,29 @@ Tremblant Snow's live look stays as it is) failed four checks:
 The lane was removed; nothing changed on integration. New Codex card
 SUMMIT-SWITCH-ON prepares the switch-on in daylight; Claude then runs the
 release with Kyle's go (or tonight's all-green rule if he renews it).
+
+## Kyle, 15 October about 16:40 (in chat with Claude)
+
+On the ten browser failures already on QA cards: "I don't care about the 10
+known browser failures if they end up being a problem in the game. We'll fix
+them going forward." Confirmed directly: "it may go live. If everything else
+passes ... And if the browser checks fail, you know, it's fine."
+
+Rule for this release: Summit goes live if the full tier (alone, jobs 4),
+combat balance and both frame checks at Summit's busiest view pass. Browser
+check failures do not hold it; any new one gets a QA card and is named in the
+release note.
+
+## Kyle renewed the overnight rule, 15 October 20:20 PT
+
+Kyle: Summit may go live overnight without waking him **"if all green"**: the
+full tier alone on the exact candidate, combat balance, browser checks for the
+release, the headed frame check at Summit's busiest view at both qualities
+(laptop screen off), and Claude's review. Any red result and it waits for his
+go. Claude is Release Manager. Keep clear of the 04:00 full check's frame step
+(04:00 to about 04:40). The release carries everything merged on integration
+at the candidate commit; list it in the release notes.
+
+Also in this release under rule 18 (Claude, 20:50): switch `forest-fire` on
+(FIRE-FINISH is finished). Use rule 19: reuse any full-tier pass that covers
+the candidate instead of rerunning it.

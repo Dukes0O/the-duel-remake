@@ -63,7 +63,8 @@ export function lakeGeometry(course, lake) {
   const deep = new THREE.Color(lake.colour ?? 0x0d3640), shallow = new THREE.Color(lake.shallow ?? 0x2d6b66), mix = new THREE.Color();
   for (let ring = 0; ring <= rings; ring++) for (let a = 0; a < around; a++) {
     const reach = ring / rings * 1.05, angle = a / around * TAU;
-    const point = course.worldAt(lake.s + Math.cos(angle) * reach * shoreFactor(angle) * lake.along, lake.lateral + Math.sin(angle) * reach * shoreFactor(angle) * lake.across);
+    const outline = shoreFactor(angle, lake.orientation);
+    const point = course.worldAt(lake.s + Math.cos(angle) * reach * outline * lake.along, lake.lateral + Math.sin(angle) * reach * outline * lake.across);
     positions.push(point.x, level, point.z);
     // Deep blue-green in the middle, paler over the shallows, with long streaks of wind on it.
     const streak = .5 + .5 * Math.sin(angle * 7 + reach * 9) * Math.sin(reach * 5 + angle * 2);

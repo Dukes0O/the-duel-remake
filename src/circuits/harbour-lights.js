@@ -199,7 +199,7 @@ const BASE = defineScriptedCourse({
 
 // The street (docs/CIRCUITS.md 5.2), laid out for the kit loader by src/circuit-kit-layout.js.
 const TINTS = [0xe9d3b0, 0xd89a8a, 0x9cc0bb, 0xdcb25a, 0xa9b4d0, 0xc98562];
-const STREET = {
+export const HARBOUR_STREET = {
   walls: { wall: 'concrete-wall', fence: 'catch-fence', tyres: 'tyre-wall', openToWater: true,
     alignEscapeTurns: ['Casino Corner', 'Lantern Hairpin'] },
   paddock: {
@@ -231,7 +231,7 @@ const STREET = {
 // someone reads them (the kit loader, when this circuit's world is built), not when the game starts.
 let placements = null;
 export const HARBOUR_LIGHTS = Object.freeze(Object.defineProperty({ ...BASE }, 'kitPlacements', {
-  enumerable: true, get: () => (placements ??= Object.freeze(buildKitPlacements(BASE, STREET))),
+  enumerable: true, get: () => (placements ??= Object.freeze(buildKitPlacements(BASE, HARBOUR_STREET))),
 }));
 
 // Registration belongs to this course; generation and geometry stay unchanged.

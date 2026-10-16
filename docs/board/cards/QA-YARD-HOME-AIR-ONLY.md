@@ -24,3 +24,15 @@ Yes: test Jesko's production refusal explicitly and keep the eight road-car
 framing checks and every later yard, wallet, journey and save-isolation
 assertion unchanged. All-nine positive framing is not required. Same pattern
 as QA-ARENA-STEERING-AIR-ONLY.
+
+
+## Director readiness and source scope after restart
+
+Claude's07:20answer settles the question; the merged-folder blocker was cleared and this run cleaned its own merged Arena lane. With F1 waiting for Claude's sound pick and Summit waiting for Kyle, promote this bounded existing QA card to ready. Only source preparation proceeds during the Ardennes release hold; no gate/build/browser launch. Current active source lanes remain below six.
+
+Own only tools/scenarios/yard-home.mjs and docs/changes/QA-YARD-HOME-AIR-ONLY.md as already named. Pin the exact original eight road-car keys (F42, Heritage,959,Aurora,Dusthawk,Banshee,Viper,Titan) and retain every original framing/viewport/panel threshold. Test the known ninth historical Jesko separately through actual production visit refusal, with helicopter enabled/unlocked but no transport; no fake location, admission bypass or successful-frame count for refusal. Current hidden earned-car config entries are not silently added to this agreed released-road-car framing scope. Preserve every later yard UI/wallet/journey/save-isolation assertion.
+
+Applicable existing checks: tools/test-yard-home.mjs, tools/test-browser-harness.mjs and tools/test-browser-scenarios.mjs, then the actual existing private yard-home scenario with zero issues/warnings, the canonical changed lane/jobs4 and build, one independent source review. Do not add another test harness or alter runtime files. Stage source now; actual checks wait for explicit release-hold completion and global capacity.
+
+
+Created the one permitted source-only lane from395f49a3 at C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-yard-home-air-only, branchcodex/qa-yard-home-air-only; creation receipt runIdcard-answers-01a141d7-yard is in its ignored evidence. node_modules links only to integration. No suitable existing lane/artifact was present. The worker owns only the named scenario and change note, source-only during the release hold. No actual check is yet run or passed.

@@ -1,0 +1,11 @@
+{
+  "panorama-ridge-night": {
+    "hash": "d68a738f7933e3a73f0047d923ece11e4ac1f8499f6ab30c873f7f66380cff7c",
+    "nodes": 372,
+    "meshes": 360,
+    "instances": 21302,
+    "geometries": 82,
+    "materials": 50,
+    "textures": 16
+  }
+}
