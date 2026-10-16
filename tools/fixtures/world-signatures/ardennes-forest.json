@@ -1,11 +1,11 @@
 {
   "ardennes-forest": {
-    "hash": "46f792e1d00d444a4aa39f82d9ed48fbc5e009fe207bafdf0afeb97c0ad8e930",
-    "nodes": 1109,
-    "meshes": 1050,
-    "instances": 35282,
-    "geometries": 226,
-    "materials": 140,
-    "textures": 66
+    "hash": "7e3fd47fd52db506a6e076e33d530868c4b2d9b0be20e2dbbbc73c40f76481a6",
+    "nodes": 1302,
+    "meshes": 1243,
+    "instances": 35277,
+    "geometries": 250,
+    "materials": 157,
+    "textures": 84
   }
 }
