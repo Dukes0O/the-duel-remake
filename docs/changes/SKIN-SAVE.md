@@ -81,9 +81,10 @@ one new fixture or the two new switches.
 
 ## Checks
 
-See the commit report: `test-heli-save` (43 groups), `test-save-fixtures`
-(15 shapes, 554 checks), `test-feature-flags` (91), `test-preview-launcher`
-(23), then the lane tier and the build.
+`test-heli-save` (43 groups), `test-save-fixtures` (15 shapes, 554 checks),
+`test-feature-flags` (91), `test-preview-launcher` (23). Lane tier on e337f2fb
+(`--changed --jobs 4 --keep-going`): 284 passed, 0 failed, 0 not run, 2144 s.
+`npm run build`: built, only the usual large-file notice.
 
 ## Removed
 
