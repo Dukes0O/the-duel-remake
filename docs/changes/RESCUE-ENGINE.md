@@ -98,7 +98,7 @@ No screen, session or drawing changes (RESCUE-HOOKS and RESCUE-VIEW).
   car, and that no helper changes the record it is given.
 - `test-heli-save.mjs` (35), `test-heli-fire-session.mjs` (79), `test-heli-rescue.mjs`
   (263) and `test-heli-fire.mjs` (12) pass unchanged.
-- Lane tier and build: see the run-log line.
+- Lane tier (`--tier lane --changed --jobs 4 --keep-going`, PowerShell): 140 passed, 0 failed, 0 not run, 1,552.67 s. `npm run build`: passed.
 
 ## Changed assertions
 
