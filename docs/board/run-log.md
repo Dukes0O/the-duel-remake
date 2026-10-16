@@ -1221,3 +1221,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 
 
 - 2026-10-16 P4-CUPS merged: lane 271/271, jobs 4, 1422.30 s; build 2.24 s; native three-race acceptance 13/13; independent code/save/pay review clear.
+
+- Janitor, card-answer chat: removed 17 owned answered/stale inbox requests after folding facts into current cards/reviews; kept active Kyle patch block and F1 final-check/catalogue decisions. Consumed F1 round1 sheet/raw packets and Summit recorder copy/tar were recycled after replacement/review; current source, verdicts, failed original gate and approval artifacts retained. No runtime size delta.
