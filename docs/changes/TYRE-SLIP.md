@@ -83,3 +83,8 @@ A bounded177.4907ms actual _drive comparison now checks the reviewed Pro full-sl
 
 
 Independent test review found the arena loop covered only circuit entries; Scrapdome venues are deliberately outside COURSE. Added a separate real startArenaEvent/Scrapdome Pro transcript after a native road-rule latch, retaining the Titan/circuit tests. It checks loader refusal of the new road rules, actual fight motion/clock and entire state parity. This is a real coverage repair; reviewer confirmation and execution remain pending until the alone release tier drains. No production file or old assertion changed.
+
+
+## Actual new Pro replay fixture
+
+The prepared native recorder ran once on clean b1edcddb in2332.8488ms and wrote only tools/replays/tyre-slip.json. Historical recorded-inputs.json remains byte-exact SHA256babb20463ec3f2cad21485be313d78d95f44a6e0e026d3ecfe162eee79bfa235; no old pin was overwritten. Actual new cases: Pacific f6c550aadac6bd8817a2f1036ec263b6c5c6925a8f48ebfeac7379d58f55a4f3; Harbour and Tremblant Snow each09c796063df077ca02a6204eaca9141c844594f2c08da2fa82be87f741abbfe0. Those are actual fixed-step player/rival fingerprints; equality of two event hashes is retained honestly. The fixture source field names the recorded source. Its30/60/144FPS stability and new Pro recovery/real arena/CPU parity assertions remain for the one final canonical gate; no extra matrix or passing old test was repeated. Native receipt is lane .evidence/2026-10-15/TYRE-SLIP/pins-b1edcddb/receipt.json.
