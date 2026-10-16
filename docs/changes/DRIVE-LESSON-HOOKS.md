@@ -79,3 +79,29 @@ The browser scenario and precise inventory hooks remain unfinished.
 
 Removed: no current assets or released paths replaced; no scratch output
 created. Preserve this unfinished owned lane and the other source lanes.
+
+
+## Required review fixes
+
+The independent code/save review found three real faults. First, a changed
+player/setup/menu after the instructor await left its preparing token and
+message alive. Rejection now clears only the still-current token, preserving
+any newer request; duplicate preparation starts are refused. Second, nullable
+native ghost terrain fields were coerced to zero. Ghost interpolation now
+keeps missing/null witnesses absent so the ordinary terrain fallback applies.
+Third, a failed profile save was ignored. The reward remains once-only in
+memory, but the result explicitly says it is session-only and the last saved
+career is unchanged. The durable pass radio is withheld. Retry save persists
+the same already-rewarded profile without running the reward API again, with
+current owner/state checks and a retry button only for that failed session.
+
+Four new pure regressions exercise current-token isolation, null versus finite
+zero terrain witnesses, the actual App event/retry methods with memory-only
+failing storage then save/reload/retake, and current-owner retry UI. Actual
+changed presentation/host suite18/18 PASS479.3486ms; no native simulator or
+real storage is instantiated. Required reviewer confirmation is pending.
+All native/browser/lane/build acceptance remains unrun. The new ordinary
+browser recipe drive-lesson-run.mjs is source-prepared only: actual temporary
+funded career and course purchase, current-player access, native instructor,
+physical cones/panel, real KeyW attempt result, unchanged profile and next/leave.
+It never injects a plan, result, car pose or passing state; no browser executed.

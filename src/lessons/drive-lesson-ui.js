@@ -118,7 +118,7 @@ export function driveLessonResultMarkup(props = {}) {
   return `<section class="drive-lesson-result" role="region" aria-label="Attempt result" aria-live="polite">
     <h2>${title}</h2><p>${timing}</p><p>Instructor ${seconds(lesson.instructor?.timeSec > 0 ? lesson.instructor.timeSec : null)}</p>
     ${comparison}<p>Tyres screeched ${seconds(result.screechSeconds)}</p>${best}
-    ${nextButton(lesson)}<button type="button" data-drive-action="leave">Leave lesson</button></section>`;
+    ${nextButton(lesson)}${passed(lesson)&&props.lessonSaveFailed?'<button type="button" data-drive-action="retry-save">Retry save</button>':''}<button type="button" data-drive-action="leave">Leave lesson</button></section>`;
 }
 
 // Read props when an event happens. A stale menu cannot start a formerly owned
@@ -137,6 +137,7 @@ export function bindDriveLessonUi(root, readProps, callbacks = {}) {
     const props = readProps();
     if (action === 'leave') callbacks.onLeave?.();
     else if (action === 'next') next(props);
+    else if (action === 'retry-save' && props.lessonSaveFailed === true && passed(currentLesson(props) ?? {})) callbacks.onRetrySave?.();
     else if (action === 'start:corner') {
       const model = driveLessonBoardModel(props);
       if (model.start && !props.lesson) callbacks.onStart?.({...model.start});
@@ -166,7 +167,7 @@ export function mountDriveLessonUi(app,host){
   let previous='';
   const clean=bindDriveLessonUi(root,()=>app.driveLessonProps(),{
     onStart:request=>void app.startLesson({...request,car:request.carId}),
-    onNext:()=>app.nextLessonAttempt(),onLeave:()=>app.leaveLesson(),
+    onNext:()=>app.nextLessonAttempt(),onLeave:()=>app.leaveLesson(),onRetrySave:()=>app.retryLessonSave(),
     onSelectCourse:({courseId})=>{app.driveLessonCourse=courseId;previous='';update();},
   });
   const open=event=>{
@@ -209,4 +210,24 @@ export function driveLessonCompletion(run,state,playerId){
     lesson.lastAttempt?.finished!==true||lesson.lastAttempt?.passed!==true||
     !Number.isFinite(lesson.bestMargin)||lesson.bestMargin<=0)return null;
   return {id:'corner',carId:state.car,marginSeconds:lesson.bestMargin};
+}
+
+
+export function settleDriveLessonPreparation(host,token,message=''){
+  if(host._driveLessonPreparing!==token)return false;
+  host._driveLessonPreparing=null;host.driveLessonMessage=message;return true;
+}
+
+export function driveLessonGhostPose(poses,t,car,course){
+  const index=poses.findIndex(pose=>pose.t>=t);
+  if(index<0)return null;
+  const b=poses[index],a=poses[Math.max(0,index-1)];
+  const mix=b.t>a.t?Math.max(0,Math.min(1,(t-a.t)/(b.t-a.t))):0;
+  // Null/missing native ground witnesses remain absent. Arithmetic with null
+  // would invent a zero-height ground sample and lower the ghost to y=0.
+  const interpolate=key=>Number.isFinite(a[key])&&Number.isFinite(b[key])?a[key]+(b[key]-a[key])*mix:null;
+  const s=interpolate('s'),heading=a.heading+Math.atan2(Math.sin(b.heading-a.heading),Math.cos(b.heading-a.heading))*mix;
+  return {car,s,lateral:interpolate('lateral'),headingError:heading-course.at(s).heading,
+    speedMph:interpolate('mph'),airHeight:interpolate('airHeight'),groundHeight:interpolate('groundHeight'),
+    terrainPitch:interpolate('terrainPitch'),terrainRoll:interpolate('terrainRoll')};
 }

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFile} from 'node:fs/promises';
 import {driveLessonBoardModel, driveLessonBoardMarkup, driveLessonPanelMarkup,
-  driveLessonResultMarkup, bindDriveLessonUi, driveLessonCompletion} from '../src/lessons/drive-lesson-ui.js';
+  driveLessonResultMarkup, bindDriveLessonUi, driveLessonCompletion, settleDriveLessonPreparation, driveLessonGhostPose} from '../src/lessons/drive-lesson-ui.js';
 
 const base = () => ({
   playerId: 'kyle', carId: 'falcone', difficulty: 'pro',
@@ -191,4 +191,70 @@ test('owned host code isolates lessons from ordinary settlement, ghost saving an
   assert.match(branch,/this\._drive\(dt\)/);assert.match(branch,/this\._collisions\(\)/);
   assert.doesNotMatch(branch,/_advanceLaps|_finishStage|_traffic|_police|stepCombat|settleRace/);
   assert.match(game,/s\.traffic = grandPrix \|\| this\.drivingLesson \? \[\] : this\._spawnTraffic/);
+});
+
+
+test('preparation cleanup clears only its still-current token and cannot erase a newer attempt',()=>{
+  const old={},current={},host={_driveLessonPreparing:current,driveLessonMessage:'New run preparing'};
+  assert.equal(settleDriveLessonPreparation(host,old,'Old run rejected'),false);
+  assert.equal(host._driveLessonPreparing,current);assert.equal(host.driveLessonMessage,'New run preparing');
+  assert.equal(settleDriveLessonPreparation(host,current,'Setup changed'),true);
+  assert.equal(host._driveLessonPreparing,null);assert.equal(host.driveLessonMessage,'Setup changed');
+});
+
+test('nullable native ghost ground fields do not become invented zero-height witnesses',()=>{
+  const sample={t:0,s:10,lateral:2,heading:.2,mph:60,airHeight:0,groundHeight:null,terrainPitch:null};
+  const next={...sample,t:1,s:20,groundHeight:700,terrainPitch:.3,terrainRoll:.2};
+  const course={at:()=>({heading:.1})};
+  for(const time of [0,.5]){
+    const actual=driveLessonGhostPose([sample,next],time,'falcone',course);
+    assert.equal(actual.groundHeight,null);assert.equal(actual.terrainPitch,null);assert.equal(actual.terrainRoll,null);
+    assert.equal(actual.airHeight,0,'a genuine finite zero is preserved');
+  }
+  const actual=driveLessonGhostPose([{...sample,groundHeight:600,terrainPitch:.1,terrainRoll:0},next],.5,'falcone',course);
+  assert.equal(actual.groundHeight,650);assert.equal(actual.terrainPitch,.2);assert.equal(actual.terrainRoll,.1);
+});
+
+test('failed lesson save keeps one session reward, preserves durable progress and retry persists it once',async()=>{
+  const {finishDriveLesson}=await import('../src/lessons/drive-lesson-save.js');
+  const source=await readFile(new URL('../src/app.js',import.meta.url),'utf8');
+  const method=(name,next,...dependencies)=>{
+    const start=source.indexOf('  '+name+'('),end=source.indexOf('  '+next+'(',start);
+    assert.ok(start>=0&&end>start);
+    return Function('finishDriveLesson','driveLessonCompletion','return ({'+source.slice(start,end)+'}).'+name)(...dependencies);
+  };
+  const event=method('_driveLessonEvent','retryLessonSave',finishDriveLesson,driveLessonCompletion);
+  const retry=method('retryLessonSave','_sayDriveLesson',finishDriveLesson,driveLessonCompletion);
+  const state={playerId:'kyle',car:'falcone_f42',difficulty:'pro',driverId:'club'};
+  const lesson={id:'corner',stage:'challenge',phase:'result',done:true,streak:3,bestMargin:.4,
+    lastAttempt:{finished:true,passed:true}};
+  const run={state,ownerId:'kyle',plan:{car:state.car,difficulty:state.difficulty,driverId:state.driverId},lesson};
+  const profile={credits:100,unlockedCars:[state.car],upgrades:{[state.car]:{brakes:1}}};
+  let durable=JSON.stringify(profile),canSave=false,writes=0;
+  const radio=[],host={duel:{state,drivingLesson:run},player:{id:'kyle'},_runPlayerId:'kyle',profile,
+    audio:{context:null},_refreshPlayer(){},_sayDriveLesson:id=>radio.push(id),
+    _saveProfile(){writes++;this.profileSaved=canSave;if(canSave)durable=JSON.stringify(this.profile);return canSave;}};
+  const response={driveLessonAnswer:{result:'passed',radio:'drive.radio.corner.pass',cones:[]}};
+  event.call(host,state,response);
+  assert.equal(host.profile.upgrades[state.car].brakes,2);assert.equal(run.rewarded,true);assert.equal(run.saved,false);
+  assert.equal(JSON.parse(durable).upgrades[state.car].brakes,1,'failed storage retains the last durable career');
+  assert.match(host.driveLessonMessage,/this session|could not be saved/);assert.deepEqual(radio,[],'no durable success line before save');
+  event.call(host,state,response);assert.equal(host.profile.upgrades[state.car].brakes,2);assert.equal(writes,1,'duplicate event never pays or saves twice');
+  canSave=true;assert.equal(retry.call(host),true);assert.equal(run.saved,true);
+  const reloaded=JSON.parse(durable);
+  assert.equal(reloaded.upgrades[state.car].brakes,2);assert.equal(reloaded.drivingLessons.rewarded.corner,true);
+  assert.equal(finishDriveLesson(reloaded,'corner',.5,state.car).profile.upgrades[state.car].brakes,2,'retake after successful reload cannot pay again');
+  assert.deepEqual(radio,['drive.radio.corner.pass']);assert.equal(retry.call(host),false);
+});
+
+test('save retry is shown and dispatched only for a current completed session with failed persistence',()=>{
+  const props=run();Object.assign(props.lesson,{stage:'challenge',done:true,streak:3});
+  Object.assign(props.lesson.lastAttempt,{finished:true,passed:true});props.lessonSaveFailed=true;
+  assert.match(driveLessonResultMarkup(props),/data-drive-action="retry-save"/);
+  const d=dom();let retries=0;
+  const clean=bindDriveLessonUi(d.root,()=>props,{onRetrySave:()=>retries++});
+  d.emit('click',d.node({driveAction:'retry-save'}));assert.equal(retries,1);
+  props.runPlayerId='son';d.emit('click',d.node({driveAction:'retry-save'}));assert.equal(retries,1);
+  props.runPlayerId='kyle';props.lessonSaveFailed=false;d.emit('click',d.node({driveAction:'retry-save'}));assert.equal(retries,1);
+  assert.doesNotMatch(driveLessonResultMarkup(props),/data-drive-action="retry-save"/);clean();
 });
