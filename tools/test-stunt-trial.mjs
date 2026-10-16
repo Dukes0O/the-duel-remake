@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { Duel } from '../src/game.js';
-import { COURSE, DRIVE, LIVES, steeringYawAuthority } from '../src/config.js';
+import { COURSE, DRIVE, LIVES, steeringYawAuthority, steerForYaw } from '../src/config.js';
 
 let checks=0;const check=(condition,label)=>{assert.ok(condition,label);checks++;};
 const index=COURSE.findIndex(course=>course.id==='titan-stunt-trial');
@@ -53,11 +53,12 @@ function stuntInput(d) {
     .map(prop=>({...prop,gap:d.relativeS(prop.s,s.s)-s.s})).filter(prop=>prop.gap>-10&&prop.gap<105).sort((a,b)=>a.gap-b.gap)[0];
   const target=next?next.off:0,mps=s.speedMph*DRIVE.mphToWorld,frame=d.course.at(s.s),surface=d._drivingSurface(s.s,s.lateral);
   const heading=Math.atan((target-s.lateral)*2.5/Math.max(15,mps)),look=d.course.at(s.s+mps*.18);
-  const yaw=look.curvature*mps+(heading-s.headingError)*6,authority=Math.max(.05,steeringYawAuthority(s.speedMph,d.car.grip,surface.traction));
+  const yaw=look.curvature*mps+(heading-s.headingError)*6;
   const bend=Math.max(Math.abs(frame.curvature),Math.abs(d.course.at(s.s+100).curvature),Math.abs(d.course.at(s.s+220).curvature));
   const targetSpeed=Math.min(d.car.topSpeed*.94,surface.speedLimit,.85*Math.sqrt(DRIVE.maxLateralAccel*d.car.grip/Math.max(.0001,bend))/DRIVE.mphToWorld);
-  d.setInput({throttle:s.speedMph<targetSpeed?1:0,brake:s.speedMph>targetSpeed+4?Math.min(1,(s.speedMph-targetSpeed)/20):0,
-    steer:clamp(-yaw/authority,-1,1),boost:false,shiftUp:!d.diff.autoShift&&s.revs>.95,shiftDown:!d.diff.autoShift&&s.revs<.48&&s.gear>0});
+  const brake=s.speedMph>targetSpeed+4?Math.min(1,(s.speedMph-targetSpeed)/20):0;
+    d.setInput({throttle:s.speedMph<targetSpeed?1:0,brake,
+    steer:steerForYaw(yaw,{speedMph:s.speedMph,grip:d.car.grip,traction:surface.traction,brake:brake,tyreSlip:s.tyreSlipRules===true&&!s.airborne&&s.speedMph>=0}),boost:false,shiftUp:!d.diff.autoShift&&s.revs>.95,shiftDown:!d.diff.autoShift&&s.revs<.48&&s.gear>0});
 }
 const replays=[];
 for(const difficulty of ['casual','pro'])for(const fps of [30,144]) {
