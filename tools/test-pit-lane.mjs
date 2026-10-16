@@ -312,3 +312,39 @@ test('shared pit pavement query includes the apron overlap without changing limi
  }
  const course=new Course(COURSE[0],1989);assert.equal(pitRoadAt(course,0,0),null);
 });
+
+
+test('damp pit drawing shares the actual paved material with exact geometry and legacy controls',async()=>{
+  const {ALL_CIRCUITS}=await import('../src/circuits/index.js');
+  const {createPavedRoadMaterial}=await import('../src/road-surface.js');
+  const {disposeTree}=await import('../src/world.js');
+  assert.deepEqual(ALL_CIRCUITS.filter(row=>row.dampRoad!==undefined).map(row=>row.id),['ardennes-forest']);
+  const load=THREE.TextureLoader.prototype.load;THREE.TextureLoader.prototype.load=function(url){const texture=new THREE.Texture();texture.image={src:url};return texture;};
+  try{for(const id of ['ardennes-forest','panorama-ridge','tremblant-snow','summit-run']){
+    const course=new Course(ALL_CIRCUITS.find(row=>row.id===id),1989),before=JSON.stringify(course.features);
+    const control=new THREE.Group(),drawn=new THREE.Group();
+    addTrackScriptScene(control,course);
+    const texture=new THREE.Texture();
+    const roadMaterial=createPavedRoadMaterial({asphalt:texture,
+      ...(course.def.dampRoad!==undefined?{dampRoad:course.def.dampRoad,courseLength:course.length,mistBanks:course.def.effects?.valleyMist}:{})});
+    addTrackScriptScene(drawn,course,{snow:false,...(course.def.dampRoad!==undefined?{roadMaterial}:{})});
+    try{
+      const old=control.getObjectByName('pit-lane-road'),road=drawn.getObjectByName('pit-lane-road');
+      assert.ok(old&&road);assert.equal(road.receiveShadow,old.receiveShadow);
+      for(const key of ['position','normal','uv'])assert.deepEqual(road.geometry.attributes[key].array,old.geometry.attributes[key].array,'pit '+key+' unchanged');
+      assert.deepEqual(road.geometry.index.array,old.geometry.index.array);
+      const paints=group=>{const rows=[];group.traverse(node=>{if(node.name==='pit-entry-line'||node.name==='pit-exit-line'||node.name==='pit-player-box')rows.push([node.name,node.material.color.getHex(),node.material.roughness,Array.from(node.geometry.attributes.position.array)]);});return rows;};
+      assert.deepEqual(paints(drawn),paints(control),'every painted line and box stays exact');
+      assert.equal(JSON.stringify(course.features),before,'drawing cannot alter race features');
+      if(course.def.dampRoad!==undefined){
+        assert.equal(road.material,roadMaterial,'the pit must share the real main-road texture, tone and damp shader');
+        assert.equal(road.material.map,texture);assert.equal(road.material.bumpMap,texture);
+        assert.equal(road.material.color.getHex(),course.def.dampRoad.colour);
+      }else{
+        assert.notEqual(road.material,roadMaterial);assert.equal(road.material.color.getHex(),0x41454a);
+        assert.equal(road.material.roughness,.95);assert.equal(road.material.metalness,0);
+        assert.equal(road.material.map,null);assert.equal(road.material.bumpMap,null);
+      }
+    }finally{disposeTree(control);disposeTree(drawn);roadMaterial.dispose();texture.dispose();}
+  }}finally{THREE.TextureLoader.prototype.load=load;}
+});
