@@ -122,6 +122,6 @@ Nothing replaced.
 
 ## Gates
 
-Lane tier on 265643dd (`node tools/run-tests.mjs --tier lane --changed --jobs 4
---keep-going`, PowerShell): 160 passed, 0 failed, 0 not run in 903 s; log in
-the lane's `.qa-dist/lane.log`. `npm run build`: passed.
+Round 2, lane tier on 5531ed5a (`node tools/run-tests.mjs --tier lane --changed
+--jobs 4 --keep-going`, PowerShell): 160 passed, 0 failed, 0 not run in 799 s.
+`npm run build`: passed. (Round 1: 160 passed in 903 s, build passed.)
