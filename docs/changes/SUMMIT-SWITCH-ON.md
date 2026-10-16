@@ -43,3 +43,10 @@ The new, unrun solo replay checks originally expected null/false for field/quali
 ## Removed
 
 Removed the invalid closed-lap premise for open routes and open-route lap unwrapping. Replaced obsolete generic Gallery test assumptions with the approved physical model checks. Removed superseded blocker wording. No runtime model, asset, old closed-course guard, tolerance or dependency removed.
+
+
+## Solo replay capture, old baselines exact
+
+Existing --record recipe ran once in an ignored source copy verified byte-for-byte against1235tracked source files at425aacb3; no new harness. Actual writer passed24cases at30/60/144FPS in46.598seconds. The sole new summit-time-attack fixture has e06505a8f7e9f6e0ced8a925c80353b7acb618be5ff8424073c4cb4b70806eb2 at all three cadences. All19existing replay JSON files deep-equal their recomputed copy, and every old actual source file hash remains exact. No old fixture, input, fingerprint or numerical guard is replaced. Only the new challenge JSON is copied back.
+
+The existing success message had hard-coded20events/eightcategories; it now prints actual COURSE.length and expectedCategories.length. Assertions and fingerprint calculation are unchanged. Canonical replay repeat runs and new-source lane/build remain pending; original307/331 stays red. Independent fixture/report review is requested. The eleven-file v2 state/menu patch remains unapplied, requiring Kyle's explicit approval after automatic-review rejection.
