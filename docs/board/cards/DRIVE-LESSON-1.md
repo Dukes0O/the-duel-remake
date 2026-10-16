@@ -126,3 +126,5 @@ using pre-override brake; fixed/confirmed CLEAR with actual full-brake yaw
 cap. Tests source parse only; every new native case remains UNRUN. Runtime
 module remains Root-owned, with diagnostic error facts being added. No save,
 App or host edit; no overlapping runtime editor. Old tests/pins exact.
+
+Actual first failure receipt preserved; runtime guard now emits diagnostic state only. No control/threshold change or new native verdict. Current committed runtime diagnostic will be identified in the admitted rerun receipt; native acceptance preparation9f683e06 remains reviewed and unrun.
