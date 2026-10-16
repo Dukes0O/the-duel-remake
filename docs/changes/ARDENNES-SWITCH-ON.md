@@ -16,3 +16,7 @@ Replaced the course's dev state expectation with production admission and retain
 
 
 Independent review found missing initial replay coverage before the canonical gate. Added only tools/replays/courses/ardennes-forest.json from the unchanged existing replay() and actual recorded seed1989/input stream:30/60/144FPS all5f4ddce78ee29bae253078214880854056aadca08b4ca2f6faab51d403dcb7d2. Temporary scoped recipe under.qa-dist writes only that file; all old replay fixtures and runner/assertions remain exact. The original empty interrupted lane.json is not a pass. Final build, complete lane/jobs4 and review correction confirmation follow on this frozen source. Timing remains explicitly SKIPPED by Kyle; finishing/release evidence still pending.
+
+The complete gate on 0b5dca64 failed 37/40 (387217.6122 ms); all suites ran. Three assertions still assumed Panorama was the final public course. The scoped correction retains index19, the exact four-course prefix, historical production/QA catalogs and all existing access/save/geometry thresholds. Current QA catalogs are checked in exact manifest order, rather than moving a requested dev course behind later releases. No runtime, release order, price or tolerance changed. Original red gate is retained; fresh gate/build and independent confirmation required.
+
+The focused corrected registry case and Panorama registry case pass; RELEASE-TREMBLANT passes286 checks including13 old-save fixtures. Independent review and complete final gate/build follow on the committed source.
