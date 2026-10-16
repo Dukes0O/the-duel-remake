@@ -324,3 +324,46 @@ test('only actual latched Pro drift objectives emit the optional rules version',
     if(difficulty==='pro')assert.equal(result.tyreSlipRules,true);
   }
 });
+
+
+function replayTyreInputs(recording,race,fps){
+  const index=COURSE.findIndex(row=>row.id===race.eventId);
+  assert.ok(index>=0,'the pinned event exists');
+  const duel=new Duel({seed:recording.seed,featureFlags:{'tyre-slip':true}});
+  duel.startCampaign({startStage:index,seed:recording.seed,mode:'duel',car:race.car,
+    difficulty:'pro',cpuDifficulty:'easy'});
+  assert.equal(duel.state.tyreSlipRules,true,'repeatability probes actual new tyres');
+  const hash=createHash('sha256');let tick=0,input=0;
+  const frames=Math.ceil(recording.durationTicks*fps/recording.stepHz);
+  for(let frame=1;frame<=frames;frame++){
+    const until=Math.min(recording.durationTicks,Math.floor(frame*recording.stepHz/fps+1e-9));
+    while(tick<until){
+      if(recording.inputs[input]?.atTick===tick)duel.setInput(recording.inputs[input++]);
+      duel.step(1/recording.stepHz);tick++;
+      const s=duel.state;
+      hash.update(JSON.stringify({tick,player:['status','s','lateral','speedMph','headingError',
+        'yawVelocity','slipAngle','drifting','airborne','airHeight','lives','crashes',
+        'tyreSlip','tyreSlipRules','completedLaps','boundaryResets'].map(key=>s[key]),
+        rival:s.rival&&['s','lateral','speedMph','headingError','completedLaps','finished'].map(key=>s.rival[key])}));
+    }
+  }
+  assert.equal(tick,recording.durationTicks,'frame schedule consumes every fixed step');
+  assert.ok(duel.state.stageTimeSec>0&&duel.state.s>20,'native recorded inputs drive the event');
+  return hash.digest('hex');
+}
+
+test('switch-on replay pins are stable at30/60/144fps with three runs per event',async()=>{
+  const {readFile}=await import('node:fs/promises');
+  const pins=JSON.parse(await readFile(new URL('./replays/tyre-slip.json',import.meta.url),'utf8'));
+  const recording=JSON.parse(await readFile(new URL('./replays/recorded-inputs.json',import.meta.url),'utf8'));
+  assert.equal(pins.version,1);assert.equal(pins.difficulty,'pro');assert.equal(pins.rules,'tyre-slip');
+  assert.equal(pins.recordedInputSha256,createHash('sha256').update(JSON.stringify(recording)).digest('hex'),
+    'historical recorded input data is unchanged');
+  assert.deepEqual(pins.cases.map(row=>row.eventId),['pacific-canyon','harbour-lights','tremblant-snow']);
+  assert.equal(recording.stepHz,120);assert.deepEqual(recording.framesPerSecond,[30,60,144]);
+  for(const race of pins.cases){
+    assert.match(race.fingerprint,/^[a-f0-9]{64}$/);
+    for(const fps of recording.framesPerSecond)for(let run=0;run<3;run++)
+      assert.equal(replayTyreInputs(recording,race,fps),race.fingerprint,race.eventId+' at'+fps+'fps run'+(run+1));
+  }
+});

@@ -67,3 +67,8 @@ Two new cases failed first: new Pro results shared old personal-best/leaderboard
 ## Approved one-crash recovery acceptance
 
 Claude d807c0e2 accepts completed Medium/Hard misses under the new Pro tyres, retaining two laps, exactly one crash, the 8-second cost, no reset and no catastrophic state. The single actual native packet on61e7de00 is retained in integration: all three levels score4828, Easy wins, Medium/Hard complete below their unchanged5000/6000 targets. Its original outcome verdict remains failed; no manual rerun or120-race repeat. Added only new Pro cases to the existing drift suite, keeping every old/off assertion byte-for-byte. These cases enforce the actual latched rules, earned pre-crash chain, both laps, physical guards, deterministic score and all original targets/deadlines. Execution and independent confirmation remain pending behind the Ardennes release hold.
+
+
+## Remaining switch-on replay pins
+
+Added the card-required three-event fixed-step replay assertion in the existing tyre suite, using the unchanged historical recorded inputs and explicit Pro rules. It hashes every actual native step including new slip and rival state across30/60/144FPS, three runs each. The new owned fixture has not been recorded: missing-file RED first, then actual native fingerprint publication awaits heavy admission. No historical pin or input changed, no repeat120-race drift matrix, no claim of completed replay acceptance. The approved recovery append cf1ba22a received independent CLEAR; execution remains queued.
