@@ -135,6 +135,16 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-AUDIO-CLOCK.md"
 
+  - id: ARDENNES-FAR-FOREST-LIGHT
+    title: "Bring back the Ardennes far forest at a cost the frame check accepts"
+    owner: "claude"
+    lane: "VIS"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/ARDENNES-FAR-FOREST-LIGHT.md"
+
   - id: TEAMROOM-VARIANT-NOTES
     title: "Engineer notes for the three reverse variant courses"
     owner: "claude"
