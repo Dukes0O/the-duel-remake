@@ -66,3 +66,8 @@ Source inspection found ordinary cars may leave groundHeight/terrainPitch/terrai
 ## Final native data and actual playback
 
 Merged current integration1c1d78e0 conflict-free before native generation (unionb887f5de). Existing poses-only builder ran once for Panorama and once for each remaining event group: all26events/34event-route references reproduced their exact stored lap times, sectors, traces, corner analysis, identity and road fingerprints. Only actual selected-lap pose streams were added; no unmatched event and no historical field changed. Independent direct Git-data comparison confirms all prior fields exact. Actual existing-App integration on Pacific Canyon and Panorama uses the genuine bundled record without a sampler mock, accepts its road identity, purchases level4 once, advances native player/team playback, leaves personal records/storage exact and keeps the player recorder active. New acceptance case PASS1346.4659ms. Final browser fixtures, canonical lane/build and independent source/save confirmation now proceed; no repeated full tier, frame timing, live/preview install or real-save access.
+
+
+## Actual browser fixture ownership repair
+
+The first final browser pair on98656043 stopped before any picture because the disposable profile had course IDs but no variant parent GP podium. Both native reports: memory-only/0issues/0warnings; production admission correctly refused PanoramaNight. Corrected only the two approved disposable fixture profiles using current manifest parent-podium prerequisites, as the existing approved reference builder does. No runtime/ownership/economy/save/old assertion/picture/threshold change. Original failed pair and cancelled incomplete gate retained; changed-source acceptance still pending.
