@@ -128,3 +128,6 @@ Root own earlier conservative wait-for-foreign-commit is superseded for preparat
 
 
 Frozen545158d0 contains exact Claude2file snapshot plus reviewedRootfixes. Selected current manifest/safety/dampgrip tests pass3/3. Combined mechanical source review requested; actual nativeHigh and finalactualbaseline still pending. No foreign source touched and no othercourse/flag changed.
+
+
+Combined545158d0 has independent ardennes_release_review mechanical CLEAR: road/grip/seed/price/order/admission exact, boards nonsolid and newsolidpaddock outside run-off/pit. This is not a visual approval. The current existing --capture-new route correctly refuses this already-on known baseline, so after actual visual approval use existing read-only --capture, compare ALL foreign rows against their existing fixtures before writing ONLY the owned Ardennes row, then run ordinary strict comparison. Do not alter that guard/tool or any other baseline. All old fixture file hashes remain exact; unexpected foreign differences stop capture. No first-baseline disguise by deleting a file or toggling source. Final replay stays until the actual unchanged guard measures any difference.
