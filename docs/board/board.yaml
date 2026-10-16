@@ -449,7 +449,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-rescue-hurt-2026-10-15"
+    branch: "claude/rescue-hurt"
     needs: []
     locks: []
     flag: "rescue"
