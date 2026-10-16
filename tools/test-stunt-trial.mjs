@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { Duel } from '../src/game.js';
-import { COURSE, DRIVE, LIVES, steeringYawAuthority } from '../src/config.js';
+import { COURSE, DRIVE, LIVES, steeringYawAuthority, steerForYaw } from '../src/config.js';
 
 let checks=0;const check=(condition,label)=>{assert.ok(condition,label);checks++;};
 const index=COURSE.findIndex(course=>course.id==='titan-stunt-trial');
