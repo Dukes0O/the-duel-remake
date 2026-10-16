@@ -70,3 +70,15 @@ from native poses, both-corner Casual/Pro FPS and late/right acceptance,
 lane gate/build and merge remain unfinished. This is source progress, not a
 usable lesson or native pass. Resume this card after dependency/admission;
 do not recreate or rerun the unchanged pure checks.
+
+
+## Kyle authorizes instructor source ahead of dependency tests, 08:12 PT
+
+Kyle directly asked to keep building the instructor run without waiting for
+Tyre Slip's tests. Resume the existing owned lane for actual instructor source
+and cone placement in the same named files. Combine the exact reviewed frozen
+Tyre candidate as a dependency in this isolated lane if needed; do not merge
+Tyre into integration or claim it green. Final native driving acceptance,
+lane/build and integration merge still wait for Tyre and release admission.
+No heavy execution while Summit's exclusive hold remains active. No shared
+physics/App/save edit or extra source lane is needed.
