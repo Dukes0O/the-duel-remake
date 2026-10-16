@@ -715,3 +715,8 @@ replacement in the change note.
 ## Record-version increment frozen; acceptance answer received
 
 Clean61e7de00 has independent cups_save_review code/save CLEAR. New Pro row separation and native-objective cases RED then GREEN; historical off pin and complete Casual road/Neon state streams remain exact.13historical fixtures/437checks,27progression,backup andstorage3.54/4MB pass. No target/controller/score/ghost change. All23focused cases now PASS in14.45s; recovery/macros/gate/build remain UNRUN. Claude96ba047d explicitly accepts clean ProHard non-win at>=0.6 of old score; accepted5196/6417=.81 passes, target6000 unchanged. The earlier question is resolved; no Claude wait or retune remains. Do not repeat120matrix or claim remaining acceptance complete. Freeze source and release busy/save lease to the already reviewed cup candidate for its native/gate/build once capacity permits; no new lane.
+
+
+## Shared lease returned
+
+Cups is complete and merged. Root returns save-shape and busy-game-files to this retained lane for its remaining acceptance and final gate/build. No repeated matrix or retuning. Ardennes release checks take priority; native batches count as heavy work even when process discovery misses their direct script.
