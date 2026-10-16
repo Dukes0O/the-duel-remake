@@ -44,3 +44,10 @@ screech in the change note. If either corner misses the 0.25 s loss or the
 0.5 s screech with TYRE-SLIP's numbers, stop and ask Claude rather than
 move the red board.
 Removed: nothing.
+
+
+## Independent source slice while the dependency waits
+
+Kyle directly asked Root to keep building other work during Summit tests. Start only this card independent pure lesson-rules/cone-tracking slice now, with tests written first in its named files. It reads plain car views and does not import or change physics, App, renderer, saves or shared files. TYRE-SLIP stays an unmet final acceptance/merge dependency; no instructor simulation, late-versus-right acceptance, native gate/build or usable feature is claimed before that dependency is green. The instructor run, actual cone placement from it, both-corner FPS/late-screech/time acceptance and later hooks remain unfinished. Existing shared lesson-core is merged. No shared lock or heavy job is needed for source writing.
+
+Source activity replaces Root frozen GP/Yeti/Tyre editors; no course lane. Other chat QA/earned cars and Claude Rescue/variant source retain ownership. Existing Enzo is frozen for timing, Wild is donor-held; do not start their work. Named new lane only, preserve every retained lane.
