@@ -90,3 +90,24 @@ for precise catalog/dev count additions (course-kit copies the first). Same
 pattern as approved Tyre and GP; no existing simulation/hash/assertion value
 is relaxed. No edit to those unowned existing tests before written review.
 Source implementation continues in its already owned hooks meanwhile.
+
+
+## Real host source completed in parallel
+
+Frozen clean99a3ef10a7f52831b74363e93d3a173047c87e66 in owned hooklane.
+Hostb14c1e79 wires actual menu/board/instructor/rolling attempts, existing
+native driving+collision steps, stage/reset/results/leave, real cone/board
+and recordedghost presentation, radio and approved once-only reward API.
+No ordinary race progression/pay/record/ghost saving/medal/damagecost path.
+Required independent review found three real faults; cc26e21c fixes stale
+preparation after owner/setup changes, nullable ghost ground becomingzero,
+and hidden failed-save/session-only rewards. New failure/retry/reload cases
+in changedUI suite18/18PASS479.3486ms; required confirmation CLEAR.
+New owned actual memory-only browser recipe1e92bdc1 independentlyCLEAR,
+syntaxonly/UNRUN: real menu/purchases/nativeinstructor/KeyW attempt/result/
+next/leave, no synthetic pass or fullchallenge claim.
+Final99 union conflict-free adds reviewed instructor888/diagnostic0296;
+no check repeated or implied. Actual instructor still rejects requiredcone
+trace, so playable/nativehost/reward-isolation/browser/migration-budget/
+lane/build/merge remain unfinished. Release corelease now. Exact existing
+inventory hook question above still waits written Claude scope review.

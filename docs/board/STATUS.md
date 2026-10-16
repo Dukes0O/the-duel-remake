@@ -109,3 +109,8 @@ Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal 
 ## Parallel source update, 16 October
 
 DRIVE-LESSON-HOOKS frozen owned8d25cadca64fedccb3853696eb212e26e016c7fe: four presentation files,12 pure checks PASS, independent review CLEAR. Actual host/native/browser acceptance and lesson dependencies remain unfinished. No Root heavy job or core/save lease.
+
+
+## Further parallel source completion
+
+DRIVE-LESSON-HOOKS clean99a3ef10a7f52831b74363e93d3a173047c87e66 now includes real game/App/renderer/menu integration and reviewed preparation/ghost/save-failure corrections. Changedpure18checksPASS; actual browser recipe sourceCLEAR/UNRUN. Corelease free. DRIVE-LESSON-1 current0296a99f preserves reviewed888 input correction but actual cone trace stillfails; bounded diagnosis parked. No playable/merge acceptance. Corrected Tyre canonical7204/38356 is running exact3e2, receiptpending.
