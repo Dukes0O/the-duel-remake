@@ -1055,3 +1055,6 @@ and source review passed. Kyle's 8-damage exception above is retained.
 
 
 - Ardennes final candidate 55d2b7de: build passed, final lane/jobs4 active, independent review clear, Ardennes-only scene row captured with every foreign row/file exact. Final visual verdict requested on ARDENNES-SWITCH-ON with valid corrected pit grid/hairpin pictures. Cups merged ca7338e6 and its own new lane recycled. Tyre one-crash physical recovery passed, but Medium-win/Hard-timeout clauses failed; exact question and numbers on TYRE-SLIP. No retuning/retry. Intel receives the available core lease while that decision waits.
+
+
+- ARDENNES RELEASE RESERVATION: after the already admitted Ardennes/Bolide/F1 jobs drain, hold new heavy starts for Root's exact release full tier alone/jobs4. Source editing continues. Start requires actual art acceptance plus green lane/build; no timing run. If not started by 19:05 PT, this reservation expires and normal admission resumes. Existing jobs finish untouched. See ARDENNES-SWITCH-ON.
