@@ -87,7 +87,7 @@ export async function run(context) {
             const json=material.toJSON();if(materials.has(material))delete json.color;return json;})});});
         return JSON.stringify({nodes,state,profile:app.profile,camera:[camera.position.toArray(),camera.quaternion.toArray()],
           lights:draw.scene.children.filter(node=>node.isLight).map(node=>({uuid:node.uuid,colour:node.color.toArray(),intensity:node.intensity,position:node.position.toArray()}))});};
-      const photos=[];let invariant;
+      const photos=[];let invariant,furRestored=false;
       try {
         camera.position.set(centre.x+7,box.min.y+3,centre.z+8);camera.lookAt(centre);camera.updateMatrixWorld(true);
         invariant=snapshot();
@@ -99,13 +99,17 @@ export async function run(context) {
           photos.push({factor,jpeg:draw.renderer.domElement.toDataURL('image/jpeg',.9)});
         }
       } finally {
-        for(const [material,colour]of originals)material.color.fromArray(colour);
-        if(invariant&&snapshot()!==invariant)throw Error('Private fur restoration failed');
-        camera.position.copy(savedPosition);camera.quaternion.copy(savedRotation);camera.updateMatrixWorld(true);
+        try {
+          for(const [material,colour]of originals)material.color.fromArray(colour);
+          furRestored=originals.every(([material,colour])=>JSON.stringify(material.color.toArray())===JSON.stringify(colour));
+          if(!furRestored||(invariant&&snapshot()!==invariant))throw Error('Private fur restoration failed');
+        } finally {
+          camera.position.copy(savedPosition);camera.quaternion.copy(savedRotation);camera.updateMatrixWorld(true);
+        }
       }
       if(JSON.stringify(state)!==stateBefore||JSON.stringify(app.profile)!==profileBefore)throw Error('Photography changed real native race/profile state');
       return {photos,age:capture.age,stageTime:state.stageTimeSec,site:{...state.yeti.site},events:capture.events,
-        furMaterialCount:materials.size,samePoseCameraGeometryNonfur:true,originalCandidateRestored:true,
+        furMaterialCount:materials.size,samePoseCameraGeometryNonfur:true,originalCandidateRestored:furRestored,
         cameraRestored:camera.position.equals(savedPosition)&&camera.quaternion.equals(savedRotation)};
     })()`);
     const photos=result.photos;delete result.photos;Object.assign(packet,result);
