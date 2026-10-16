@@ -18,6 +18,8 @@ Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-10-15T17:24:47.889Z; tested commit: f3a11270fafb2dc16a2992f3c8be89ae8a1592be.
 
+GP-RACECRAFT handoff,16October10:59PT: actualc674605f360/360 cases FAILEDexit1/jobs4; sourceunchanged/alljobsdrained. Retainedc9f1e649 adds only failure note; locks[]/waiting_onClaude. Crash guards fail on all3courses; no retry/gate/build/preview/merge. Exact guard table and next-direction request: [GP-RACECRAFT](cards/GP-RACECRAFT.md).
+
 ## Feature switches
 
 | Switch | State |

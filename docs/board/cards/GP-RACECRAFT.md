@@ -245,7 +245,7 @@ Actual clean c674605fe921c96f2f3ee0b8fac6c9bbf9683a31 completed all360 cases:20s
 | Nitro lap-one leaders, <=5/20 | 0 PASS | 0 PASS | 3 PASS |
 | Maximum paired CPU-time change, <=2% | 2.542759% FAIL | 1.690259% PASS | 1.752851% PASS |
 
-Report-only distinct start-pair successes:2/20,2/20,1/20; spread>=3m:5/20,0/20,5/20. Normal enabled crash ranges8–24,2–17,0–8. No cause is proved by those counts. No changed target, old fixed crash fixture, pace/contact/grid/RNG/CPU0.5/0.5 edit or simulation retry was used. One read of the packet/comparison rules completed the bounded outcome analysis.
+Report-only distinct start-pair successes:2/20,2/20,1/20; spread>=3m:5/20,0/20,5/20. Normal enabled crash ranges8â€“24,2â€“17,0â€“8. No cause is proved by those counts. No changed target, old fixed crash fixture, pace/contact/grid/RNG/CPU0.5/0.5 edit or simulation retry was used. One read of the packet/comparison rules completed the bounded outcome analysis.
 
 The failed one-attempt follow-up is parked under your00:35 decision. Its conditional preview exception requires crashes no worse than today; this result does not meet that condition on any course. Retained lane is clean c9f1e649288c6cd0bfc8358608b8cf12946d99bb, differing from the tested SHA only by its exact failure note. Locks remain empty. Historical failed ce3 packets remain failed; restart-interrupted packets remain incomplete.
 
