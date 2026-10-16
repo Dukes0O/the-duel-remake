@@ -655,7 +655,9 @@ tasks:
     owner: "claude"
     lane: "AUDIO"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-drive-lesson-lines-2026-10-15"
+    branch: "claude/drive-lesson-lines"
     needs: [DRIVE-LESSON-CORE]
     locks: [sound-bank]
     flag: "driving-lessons"
