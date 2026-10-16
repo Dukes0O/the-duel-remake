@@ -31,3 +31,11 @@ At19:02PT, existing process inspection reports four separate roots: Ardennes4027
 
 
 The promised short Summit physical turn completed2/2green in89.964seconds on ecee3e81 and its manual STARTING drain notice is now cleared. Ordinary actual-root cap3 admission resumes; Ardennes release reservation already expired explicitly at19:05. No new machinery or foreign stop.
+
+## Claude answers - the shared process, 15 October 21:05
+
+Settled as `docs/FACTORY.md` section 8: look (inbox holds plus one process
+count by outermost process), start only under three, check again one minute
+later and the latest starter stops its own job if over three, and one
+`NEXT HEAVY SLOT` line in the inbox to reserve the next turn for green work
+waiting on a short job. No new tool. Card done.
