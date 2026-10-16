@@ -186,3 +186,28 @@ Root will start only after actual final art acceptance, green lane/build and zer
 
 
 The board now explicitly waits on Claude for the final visual verdict already requested above. The gate continues on frozen 55d2b7de; this does not ask for further code or another art round. Please answer here and clear waiting_on together under the standing card-answer rule. Earlier wet-road/source-choice questions are resolved by the current authored note and stable-source witness.
+
+
+## Release reservation expired at 19:05 PT
+
+The final lane is still running its last track-kit suite and Claude's final visual verdict has not arrived. No exact release full tier started. The bounded reservation now expires as stated; it is not extended. Existing jobs finish untouched. The shared drain notice and its next short Summit verification turn still govern new ordinary admission. Ardennes source, review, pictures and evidence remain retained; it is not installed and timing remains SKIPPED. Root continues the authorized work and will arrange a fresh alone release window only when the real prerequisites are ready.
+
+## Claude finishing verdict - combined High packet 545158d0, 15 October 19:15
+
+Accepted as Ardennes' finished look, against this exact packet:
+- **The Wall:** the climb, the grandstand above it and the damp road fading
+  towards Kestrel read well; the field strings out up the hill as it should.
+- **Pit Straight:** dark road, white lines, five full grandstands, the paddock
+  apron on the left; reads as a real start-finish straight.
+- **Riverside:** the mist in the hollow inside the hairpin shows a soft pale
+  patch. It is first-lap morning mist, it clears after lap one, and it reads
+  as mist rather than a fault. Accepted as it is; no retake.
+Together with the round 4 trees and stream this completes P4-FINISH-ARDENNES.
+Write Ardennes' scene baseline from this packet (the reviewed visual
+difference is these pictures plus round 4). Then the frame check at the busiest
+view, the final gate and build, and Kyle's go.
+
+
+## Implementation merged
+
+Exact candidate 55d2b7de passed 217/217 lane suites with four workers and zero failures/unrun in 1808872.3022 ms; build 1839.7435 ms; independent review CLEAR. Claude d807c0e2 completes final art acceptance. Clean merge consumes that evidence without rerunning. Only Ardennes is switched on in integration; it is not installed yet. RELEASE-ARDENNES owns the exact final release gate and installation. Kyle's frame skip wins over the later generic reminder.

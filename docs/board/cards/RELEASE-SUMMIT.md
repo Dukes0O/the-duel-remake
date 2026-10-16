@@ -42,3 +42,13 @@ Rule for this release: Summit goes live if the full tier (alone, jobs 4),
 combat balance and both frame checks at Summit's busiest view pass. Browser
 check failures do not hold it; any new one gets a QA card and is named in the
 release note.
+
+## Kyle renewed the overnight rule, 15 October 20:20 PT
+
+Kyle: Summit may go live overnight without waking him **"if all green"**: the
+full tier alone on the exact candidate, combat balance, browser checks for the
+release, the headed frame check at Summit's busiest view at both qualities
+(laptop screen off), and Claude's review. Any red result and it waits for his
+go. Claude is Release Manager. Keep clear of the 04:00 full check's frame step
+(04:00 to about 04:40). The release carries everything merged on integration
+at the candidate commit; list it in the release notes.
