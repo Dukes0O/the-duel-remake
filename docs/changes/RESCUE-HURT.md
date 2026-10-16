@@ -68,7 +68,7 @@ section 4.1 (Kyle, 15 October 2026) and section 8. Switch: `rescue`.
   at 0.9, 2, 3.5 and 6 m/s, and the rescuer alone set down hard.
 - `tools/test-heli-audio.mjs`, `test-p4-audio.mjs`, `test-audio-sourcing.mjs`,
   `test-heli-hooks.mjs`: pass.
-- Lane tier and build: see below.
+- Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`) after the review fixes and an integration merge: 68 passed, 0 failed, 0 not run in 814 s. `npm run build`: passed.
 - Review (independent, code and pay): four faults, all fixed. Pay could
   return "not a number" for a missing base or a condition named like a
   built-in, and could round a fraction of a credit up past the base; it is
