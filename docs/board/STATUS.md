@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-16T00:11:55.522Z
+Observed at: 2026-10-16T00:16:08.238Z
 
-Observation commit: a143a8a911ffced7d68c6d15762f7281173fcedd
+Observation commit: 30321df55f8ab13b7a3e5289836ddedc7204cea5
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a143a8a911ffced7d68c6d15762f7281173fcedd
+Integration HEAD: 30321df55f8ab13b7a3e5289836ddedc7204cea5
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -46,7 +46,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/qa-arena-air-only | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-arena-air-only |
 | codex/qa-browser-sweep | 1 | unknown | false | false | unknown |
-| codex/summit-switch-on | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on |
+| codex/summit-switch-on | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on |
 | codex/tools/callback-diagnostics | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/tyre-slip | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tyre-slip |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
@@ -60,8 +60,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T17:01:56-07:00 | 0 | last commit 2026-10-15T17:01:56-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, tools/fixtures/world-signatures/ardennes-forest.json, tools/replays/courses/ardennes-forest.json, tools/test-circuit-ardennes.mjs |
-| codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T16:52:39-07:00 | 0 | last commit 2026-10-15T16:52:39-07:00 | docs/HELICOPTER.md, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb, src/config.js, src/mclaren-f1-vehicle.js |
+| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T17:13:57-07:00 | 0 | last commit 2026-10-15T17:13:57-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, tools/fixtures/world-signatures/ardennes-forest.json, tools/replays/courses/ardennes-forest.json, tools/test-circuit-ardennes.mjs |
+| codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T17:14:53-07:00 | 0 | last commit 2026-10-15T17:14:53-07:00 | docs/HELICOPTER.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-1.jpg, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T16:22:01-07:00 | 0 | last commit 2026-10-15T16:22:01-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/intel-levels.js, src/progression.js, tools/test-intel-levels.mjs |
 | codex/p4-cups | P4-CUPS | 2026-10-15T17:06:10-07:00 | 0 | last commit 2026-10-15T17:06:10-07:00 | docs/changes/P4-CUPS.md, src/app.js, src/grand-prix-cups.js, src/progression.js, src/screen-courses.js |
@@ -71,7 +71,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-arena-air-only | QA-ARENA-STEERING-AIR-ONLY | 2026-10-15T16:36:47-07:00 | 0 | last commit 2026-10-15T16:36:47-07:00 | docs/changes/QA-ARENA-STEERING-AIR-ONLY.md, tools/scenarios/arena-steering.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T16:28:57-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/SUMMIT-SWITCH-ON.md, src/circuits/summit-run.js, src/course.js, src/feature-flags.js, tools/fixtures/world-signatures/summit-time-attack.json |
+| codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T17:13:03-07:00 | 0 | last commit 2026-10-15T17:13:03-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/circuits/summit-run.js, src/course.js, src/feature-flags.js, src/test.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/tyre-slip | TYRE-SLIP | 2026-10-15T17:00:44-07:00 | 0 | last commit 2026-10-15T17:00:44-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
@@ -88,9 +88,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 442,549 B | -183,486 B | 5,000,000 B |
+| Added bytes in last merge | 442,549 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,994 B | +0 B | unavailable |
-| Git objects | 445,778,944 B | +379,904 B | unavailable |
+| Git objects | 446,295,040 B | +516,096 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -99,7 +99,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: a143a8a911ffced7d68c6d15762f7281173fcedd
+- Local integration/wasteland: 30321df55f8ab13b7a3e5289836ddedc7204cea5
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

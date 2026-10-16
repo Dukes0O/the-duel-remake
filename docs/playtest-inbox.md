@@ -1016,3 +1016,5 @@ and source review passed. Kyle's 8-damage exception above is retained.
 
 
 - Ardennes review found missing initial enabled-course replay coverage. Card now names only tools/replays/courses/ardennes-forest.json; existing replay recipe/inputs, all old fixture bytes/assertions exact. Correct before priority gate; still waiting shared capacity, no new heavy launch.
+
+- Ardennes finalsource cb658b70 ordering correction is independently CLEAR; three exact sharedordering test files may be reused by Summit. Oldprefix/index19/historicalcatalogs preserved; finalgate running. Cups8a910245 actualnative3race acceptance13/13 and code/save/payreviewCLEAR; finalgate/build queued under sharedcap. No liveinstall yet.

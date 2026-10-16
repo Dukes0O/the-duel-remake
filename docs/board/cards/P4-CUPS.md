@@ -66,3 +66,8 @@ Frozen0dd37e84 has required independent save/pay/code CLEAR, including both repr
 
 
 Shared busy/save lease returns from frozen tyre increment61e7de00. Continue exact reviewed0dd37e84 native3race/lane/build, preserving its source. Ardennes gate now admitted in its priority slot, so no remaining unstarted Ardennes reservation; all additional heavy starts still require actual roots<3 and no fresh hold.
+
+
+## Actual native series acceptance complete
+
+Frozen8a910245 completed all13test-grand-prix-cups cases in73571.4594ms, including actual three-race eight-car MountainCup native classifications, reload afterround1, named-player isolation, final trophy/bonus and duplicate finish refusal. ExistingfieldSeed1000 pinned only during synchronous native cupcreation then Math.random restored immediately; no result fabrication. Same independent cups_save_review confirms CLEAR on finalsource; production exact0dd37e84. Root retains save-shape/busy-game-files through upcoming canonical/jobs4/build. No merge or liveenable claim yet.
