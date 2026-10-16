@@ -809,6 +809,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         loads: Object.freeze(carLoads().map(loadView)),
         bucket: bucketView(),
         fire: fire?.view(heli) ?? null,
+        season: fire?.season() ?? null,
         job: jobInHand(),
         lesson: lesson ? Object.freeze({id: lesson.id, held: lesson.held, spot: lesson.spot, target: lesson.target}) : null,
         crate: site?.crate ?? null,

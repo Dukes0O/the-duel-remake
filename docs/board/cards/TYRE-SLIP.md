@@ -620,3 +620,110 @@ Retained clean unmerged tyre-slip/codex/tyre-slip912b96ca. Player/keyboard/audio
 Initial actual source050b76fe Hard/Pro30fps five-seed probe, native App/Duel/memory-only/unchanged scoring and deadlines: seeds1989..1993 off all clean two-lap wins6417points/98.61s. On scores240/318/85/104/247, each one lap,2–3crashes and timeout. Median240/6417=0.03740065, below0.6 stop rule. Eight-second probe; other required dimensions, recovery, retune, row versions and final macros/gate are UNRUN. No targets/deadlines or old pins/records changed. Evidence lane.evidence/2026-10-15/TYRE-SLIP/drift-initial.json.
 
 Claude: please settle the drift driver line/speed control while preserving the reviewed grip model/scoring and limits. Implemented amended corner factor1.058 plus requested ask1.12 (signed by actual corner) does not follow this native route cleanly. What controller/target should replace it? Also ask1.12 is unreachable under existing gain above45 until about55.7mph (at50 maximum1.00584); may this range explicitly saturate at current full steer, as now tested46/50/65mph, or should the drift threshold/wording change? Do not increase authority or silently adopt the older superseded corner factor. Source is held, locks released by blocked state, and other cards continue.
+
+## Claude answers - drift driver, 15 October 16:00
+
+- **Controller:** replace the corner-factor target with a slip-hold
+  controller. The drift autopilot follows the .95 line driver's path and
+  speed, and in each corner of the drift route above 56 mph it holds the
+  tyre `ask` at 1.12: more steer when ask is below 1.10, a throttle lift when
+  slip passes 1.20, and it returns to the clean line if its lateral error
+  exceeds 2 m. Below 56 mph it drives the clean line.
+- **Low speed:** yes, saturate at the existing full steer from 45 to 56 mph
+  (test 46, 50, 65 as you have). The drift threshold stays; reword the card to
+  say a held full lock slides from about 56 mph.
+- **Stop rule unchanged:** if the median score ratio is still under 0.6 with
+  this controller on the five seeds, stop and write the numbers; Claude then
+  decides whether the drift trial's targets need retuning for the new tyres
+  (which would be a Kyle-visible change to an event).
+
+
+## Continue the retained lane after the 16:00 answer
+
+Codex resumes clean912b96ca in the existing tyre-slip lane, holding busy-game-files/save-shape. Only the named App drift hook, TYRE_SLIP settings and existing tyre tests/note change first. Neon has no authored course.racingLine; reuse existing production racingLineFor/buildSpeedProfile for its native path/speed at0.95, with the same actual-car grip and surface limits. No CPU line/profile source change. Clean-line recovery above2m lateral error and below56mph; corner ask1.12 (raise steering below1.10, current authority cap exact), throttle lift above1.20 slip. Remove the superseded corner-factor branch. Existing off-state driving and all scoring/deadlines/targets stay exact. First add focused controller cases, then one initial Hard/Pro30fps five-seed on/off probe; if median ratio remains below0.6 stop without adopting new numbers. No new lane, preview/live change or art.
+
+
+## Approved-controller matrix stop, 15 October afternoon
+
+Retained clean8e71136a:19/19 focused tests, build1629.7803ms, independent stock_snow_review CLEAR. New controller clean-line/slip-hold behaviors are source-checked, not finished feature acceptance. Actual full native matrix120rows (30/144fps, all3CPU levels, Casual/Pro, seeds1989..1993, off/on; first10 exact rows reused) completed46.38s additional. Every on run finished two laps with zero crashes/resets. Pro allgroups: median5196/6417=0.80972417,86.54/98.61s. Casual allgroups: median52/6319=0.00822915,94.49/99.38s. FPS results agree, but the Casual score ratio violates0.6. STOP: no target/deadline change, one-crash recovery, row-version wiring, other macros, final gate or merge. Evidence is retained in tyre-slip/.evidence/2026-10-15/TYRE-SLIP/drift-matrix.json. This is simulation frame-rate evidence, not a GPU frame-speed check.
+
+Claude: the approved revised controller removes the crashes, but Casual scores52 at every tested CPU level/seed/FPS while Pro scores5196. Please settle whether the Casual drift target/controller needs a further explicit design change under your16:00 stop instruction. No cause of the score gap or safe new target is inferred, and no scoring/authority limit is altered. Busy/save locks released; retain this clean unmerged lane. Fold this result into its own note with the next genuine source change.
+
+## Claude answers (15 October, evening): Casual must still drift
+
+Casual is the default and the one Kyle's son plays, so a Casual drift trial
+that scores 52 is not acceptable. Casual should be forgiving, never
+slide-proof.
+- **Change, in drift events only (`kind: 'drift'`):** Casual slides as
+  easily as Pro (`slideGrip` 0.82) but keeps its own gentler speed loss
+  (`scrubMphPerSec` 8). Everywhere else Casual's 0.9 stays, so ordinary
+  races keep their extra grip.
+- **First, within rule 4's 30 minutes:** confirm the cause by reading which
+  drift-scoring threshold (slide angle or slip) the Casual run never reaches,
+  and record the measured peak values in the note. If the cause is something
+  else, stop and write it down; do not change scoring.
+- **Acceptance:** the same five-seed matrix. Casual median on/off at least
+  0.6, every run finishes with no crashes or resets, and Pro's results are
+  unchanged. The Neon Drift Trial targets stay as they are. If Casual still
+  falls short, stop with the numbers, and Claude decides on target retuning
+  with Kyle.
+
+## Kyle decided, 15 October 2026: Casual keeps today's tyres
+
+Asked by Claude with the drift numbers (Casual 52 of about 6,300, Pro 5,196
+of 6,417), Kyle chose: **Casual difficulty keeps today's tyre model**; the
+new sliding grip applies on the harder difficulties only, the same way the
+arenas keep their sharp steering. So:
+- the `tyre-slip` rules are off whenever the race's difficulty is Casual
+  (latched at race start like the other race rules), on otherwise;
+- Casual results, records and the drift event stay exactly as today (byte
+  identical with the switch on);
+- the Pro drift result (0.81 of today's score, clean, no crashes) is
+  accepted; no further controller or target change;
+- add the difficulty case to the tests and the change note.
+Then continue to the remaining acceptance (recovery, row versions, final
+gate and one review).
+
+
+## Resume Kyle's explicit Casual decision, after restart
+
+Root resumes existing clean8e71136a lane; no new lane. Freeze the reviewed cup candidate0dd37e84 pending heavy capacity and transfer busy-game-files/save-shape lease here. Intel's new answers are received but its source stays held until this lease returns. Apply only Kyle's explicit Casual-off latch, preserving actual existing Casual state/results/records and the accepted Pro model/controller; then the already approved remaining recovery/version/native acceptance, one independent review and gate/build. No drift retuning or repeated120race matrix, no live feature flip. Heavy checks stay queued behind Ardennes and the shared cap; source and bounded tests may proceed.
+
+
+## Current decision applied; target clarification before numeric edits
+
+Native source796e085c applies Kyle's Casual-off latch after resolving difficulty. New case RED then4focused cases GREEN; full native Casual road/Neon state streams exactly equal switch off. Original off-state fingerprint remains exact. Existing model-on fixtures now explicitly use Pro without changing numeric limits; default Casual balance wrapper asserts requested flag true but active rules false. No target/controller edit or repeated120race matrix.
+
+Claude: the accepted clean Pro score5196 remains below the unchanged Hard target6000, so the old all-level autopilot-win acceptance cannot pass as written. Latest Kyle answer says no further controller or target change; that instruction wins and every target/deadline stays unchanged. Please settle whether clean ProHard non-win is accepted under this decision, or name any explicitly approved replacement acceptance. Do not infer an automatic retune. Recovery/native remainder stays queued for actual capacity; source work on the already approved optional record version can continue.
+
+## Record presentation hook before code
+
+The already approved optional tyreSlipRules:true is emitted only from real Pro drift state/results. Keep every ordinary/Casual key and old ghost/time comparable unchanged; discriminate only new drift best/leaderboard rows. In addition to the named progression/leaderboard/screen-menu hooks, own the existing src/screen-leaderboard.js row label only so retained old and new drift rows identify their tyre rules. No new store/schema version/budget, deleted old row, arbitrary target waiver or estimated result. Get one independent save/code review. No numeric change while the question is pending.
+
+## Claude answers - Hard acceptance, 15 October 17:05
+
+Accepted: a clean Pro/Hard autopilot non-win. The "autopilot wins at every
+level" acceptance was written for the old tyres; with Kyle's decision it now
+applies to Casual only (unchanged tyres, byte-identical). On the harder
+difficulties the acceptance is: the drift autopilot finishes clean (no crash,
+no reset) and scores at least 0.6 of today's score; measured 5,196 of 6,417
+(0.81), so it passes. The 6,000 target stays: a human has to drift better
+than the autopilot to win on Hard, which is what harder means. Record this
+replacement in the change note.
+
+
+## Record-version increment frozen; acceptance answer received
+
+Clean61e7de00 has independent cups_save_review code/save CLEAR. New Pro row separation and native-objective cases RED then GREEN; historical off pin and complete Casual road/Neon state streams remain exact.13historical fixtures/437checks,27progression,backup andstorage3.54/4MB pass. No target/controller/score/ghost change. All23focused cases now PASS in14.45s; recovery/macros/gate/build remain UNRUN. Claude96ba047d explicitly accepts clean ProHard non-win at>=0.6 of old score; accepted5196/6417=.81 passes, target6000 unchanged. The earlier question is resolved; no Claude wait or retune remains. Do not repeat120matrix or claim remaining acceptance complete. Freeze source and release busy/save lease to the already reviewed cup candidate for its native/gate/build once capacity permits; no new lane.
+
+
+## Shared lease returned
+
+Cups is complete and merged. Root returns save-shape and busy-game-files to this retained lane for its remaining acceptance and final gate/build. No repeated matrix or retuning. Ardennes release checks take priority; native batches count as heavy work even when process discovery misses their direct script.
+
+
+## Actual one-crash recovery: outcome decision needed
+
+The existing private native Pro/Banshee/1989 recipe ran once on 61e7de00 in 2620.7076 ms. All three CPU levels completed two laps, with one crash, exact 8-second penalty, no reset or catastrophic state. The real crash occurred at 1925.091535 m while chain score was 41.140153 and banked score 1311.047031. All produced 4828 drift points. Easy won against 3500. Medium completed but missed 5000. Hard completed but missed 6000; it did not time out. Thus all physical recovery checks passed, but the old Medium-win and Hard-timeout outcome clauses failed. No rerun, controller/target/deadline change or weakened assertion.
+
+Claude: does the accepted Pro non-win apply to this one-crash fixture as well, allowing actual completed objective misses while retaining all physical recovery assertions, or is a named controller correction required? Kyle already accepted Casual unchanged and you accepted clean Pro Hard non-win at the existing target; neither silently settles these two different recovery outcome clauses. Actual packet retained at integration .evidence/2026-10-15/TYRE-SLIP/recovery-current.json. Bounded diagnosis is finished; implementation waits for your written decision. Shared save/game leases return to Intel meanwhile.

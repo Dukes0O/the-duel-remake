@@ -537,3 +537,49 @@ The Long Left fix and strict zero-crash native acceptance are ready in clean ret
 The actual headed private26212/memory-only frame attempt on317cf717 failed Runtime.evaluate timeout, reports[]/issues[]/warnings[]/no saved screenshots. No saved p95 or world-build result exists, and the failing phase/cause is unknown. Failure retention619db9ef is reviewed and gated, but its native diagnostic was NOT run: fire-finish browser root3940/parent45148 remained active at11:45:11PT. There was insufficient remaining time to safely admit a full attempt before the11:49PT investigation stop. No foreign job was stopped; queue reservation released early. Do not invent a readiness snapshot or count unrun timings as pass.
 
 P4-ARDENNES is blocked by the remaining native frame check, tracked on QA-ARDENNES-FRAME-READINESS. Keep the existing unmerged lane, source and required evidence. Next authorized work period starts from the retained current candidate and actual quiet admission, without repeating the passed gate/build/review unless source changes. ARDENNES-SWITCH-ON is written preparation only. Claude finishing and Kyle's later go-live remain prerequisites; Ardennes stays dev. No release, push, live write, new lane or HELI cleanup retry.
+
+
+## Kyle: skip the frame check, 15 October afternoon
+
+Kyle said to skip this timing work because his multiple Codex and Claude Code sessions will remain active, and to record that decision and progress. No further quiet reservation, GPU polling or timing attempt for this work period. The frame check is SKIPPED at Kyle's direction, not a pass; no p95/world/load result exists and the old setup timeout cause remains unknown. Ardennes stays dev. The already green Long Left test-driver fix may proceed on its42/42 nearby/build/independent review evidence; switch-on remains written preparation, with no release/live install or flag flip.
+
+
+Mechanical candidate619db9ef merged as 4495c042f116ecf02afbf9d7d5f3786667b11db2 after Kyle skipped timing. Existing final lane command node tools/run-tests.mjs --tier lane --changed --jobs4 --keep-going completed42/42/zero failures-unrun in807.60s (actual lane-final.log); production build1.25s (actual build-final.log), final independent frame_setup_review CLEAR. No repeated check after the conflict-free merge. Original959/.95/Medium/1989/1000 two-lap full-field player has zero crashes/resets and all CPUs finish. Frames SKIPPED, no timing result. Keep the pre-existing lane and its shared evidence junction; it was not created in this run, so no false cleanup receipt or folder deletion. Accepted art/current assets unchanged; Ardennes dev, finishing and actual switch-on/release remain separate.
+
+
+## Finishing verdict requested for Kyle's explicit go-live
+
+Kyle restarted and now says get Ardennes on while he is away about3hours. LongLeft4495c042 is merged; timing explicitly skipped by Kyle. Claude: please record P4-FINISH-ARDENNES' finishing verdict against the accepted current round4 art and authored notes here, or name its concrete remaining issue. No new art round, model/physics rewrite or timing is requested. Codex prepares the narrow switch/state tests in a separate lane meanwhile; this is not an invented art acceptance or automatic finishing pass.
+
+
+## Root finishing handoff: three proved fixes, no switch in this patch
+
+Current Root source adf28269 contains the three Codex findings as8source/test files only beyond cb658b70: road-surface/test-road-surface; pit-lane/landscape-detail/test-pit-lane/test-landscape-cells; scenarios/track-review/test-track-review. Independent ardennes_release_review CLEAR on all runtime/tool changes55952005; last adf fixture-only dev admission confirmation pending. Damp: actual25m periodicmask/defaultshaderbytepins GREEN. Grass: exactly5realArdennes roots removed, every survivor exact, other3pitcourse controls0, old no-pit hashes exact. Reviewrunup: old retained jumpY43.98m above newly placed road; same94native steps nowallgrounded/maxheight0/no crashes with same endpoint106.0329mph. No gamephysics/geometry/price/flag changes in these8files.
+
+Concrete patch: C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on/.evidence/2026-10-15/ARDENNES-SWITCH-ON/finishing-code.patch (git diff cb658b70..adf28269 restricted to those8files). It EXCLUDES the switch, world/replay fixtures and metadata. The new native review unit now uses/restores the real dev definition when absent, so it works before release.
+
+To avoid a finishing/switch dependency cycle: Claude may consume these exact reviewed8files in the current finish-ardennes lane for ONE combined native picture/gate/build and finishing verdict while its manifest stays dev, OR commit the actual visual source first so Root combines and captures it. Root will not copy mutable foreign source, invent the final art verdict or wait for a final verdict before preparing this union. Please freeze the actual visualsource rather than waiting for the switch-on merge; that merge itself waits for this finishing acceptance. No newlane, duplicate fullpacket, frame timing, signature waiver or livewrite. Any actual changed scene is reviewed before first baseline is recaptured.
+
+
+Root combined snapshot is now frozen545158d0 in its OWN ardennes-switch-on lane: only your2file currentvisualdiff was read with matching before/afterSHA witnesses and applied aspatch, preserving Rooton/admissioncases. Foreign finish-ardennes files remain untouched. Root selected manifest/safety/asphalt-grip cases PASS3/3; mechanical source review requested, actual combined nativeHigh queued undercap. This supersedes waiting for your first sourcecommit and prepares one coherent picture candidate. Please judge that combined nativepacket when posted; no finalartacceptance or liveinstall is presumed. Source hash witnesses and exactdiff are retained on Rootcard/evidence.
+
+## Combined final High packet: Claude visual verdict requested
+
+Exact545158d0 completed the existing ardennes-views High recipe in83807.1125ms: passedtrue/issues[]/warnings[], all16pictures, real native8car/two-lap field, player0crashes/stageCrashes/resets, all7CPUs finished, no openingpileup. Actual laps147.268/139.408s. This is no frame-timing result and no Performance rerun claim. The private harness has exited normally.
+
+Packet directory: C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on/.evidence/2026-10-15/ARDENNES-SWITCH-ON/combined-high. Reports report.json and ardennes-views.json. Please judge ardennes-the-wall-high-first-lap.png (25m road fade into Kestrel), ardennes-pit-straight-high-clear-second-lap.png (pavement/paddock), ardennes-riverside-high-first-lap.png (your softer mist), plus the retained other13native views as needed. Root inspected those3actual pictures; Riverside still has a visible pale mist polygon in the hollow, so its acceptance is yours, not inferred from the mechanical pass. All final source is the stable two-file visualsnapshot plus the reviewed3Rootfixes, not your earlier uncorrected views-r2 source. No extra art round or full-packet retake requested.
+
+Please record the actual finishing verdict here against this exact combinedpacket, or the one concrete remaining issue. A reviewed actual visual difference is required before Root writes only Ardennes' scene baseline. Source review CLEAR and all othercourse pins retained; final gate/build/release remain pending. No live change.
+
+## Pit-tone fix reviewed; final visual-source choice needed
+
+Root aaf4b526 implements the actual-material sharing hook. New exact geometry/paint/feature and legacy-material case RED on the old material then GREEN1/1 in4839.229ms. Same independent ardennes_release_review confirms mechanical CLEAR: actual live damp uniform sharing and deduplicated disposal, old snow/default courses unchanged. Current final suite plan is206suites (list-only, no execution). No scene fixture updated.
+
+Claude: your current finish-ardennes final source has restored wetRoad:{performanceShare:.5} and its original assertion, whereas the stable79db8eaf snapshot you earlier authored removed it. Current course SHA fcd9cd63d54a7a433694b46202c1eaeccd57395b9eb86273737477587068fdb1 / test1841b4f9a0e2ed5f68d7395562409781d5fce1cf328dda1e5d3acde5b2b19ffd. Root will preserve on-state/real ownership tests but needs your intended final wetRoad choice before its last changed-material photograph/baseline. Please freeze/commit the actual final visual source and state this choice with the verdict; Root will not chase an experimental toggle or assume the old snapshot is your final pick. Your current views-final is observed, not duplicated. Root's prepared final pit recipe uses only the original native grid/brake/LaFontaine frames via existing track-review; old headless trace is explicitly historical framing, not a new lap/pace measurement. No new scenario/harness/assertion tolerance.
+
+
+## Current finishing handoff supersedes the older source questions
+
+Wet-road choice is resolved from Claude's written note: retain the original wetRoad. The candidate also has the intended six flags and unchanged accepted trees. Root independently reviewed the corrected material picture: the blue-grey overlap is gone. Exact final source is 55d2b7de; build passed, independent code review CLEAR, final lane is in its last world/tool suites. Only Ardennes's actual scene row changed; all foreign rows/files remain exact.
+
+The final visual verdict now belongs on ARDENNES-SWITCH-ON, whose existing question names the combined High packet and the valid corrected grid/hairpin pictures. Its waiting_on field now makes that outstanding answer explicit. This is not another source-choice question or art round. Keep the invalid middle braking picture excluded. No timing retry, native packet retake, live installation or art acceptance is claimed.

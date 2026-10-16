@@ -51,3 +51,8 @@ Independent review found two real presentation faults in the preceding source: c
 
 
 The reviewer confirms both presentation fixes CLEAR on ae055aa8, without a browser execution claim. Added one actual App setup/sampler wiring case using explicitly synthetic unit pose data: team playback is selected while the player recorder stays active, personal records/usage timestamps stay exact, and no synthetic data is published. It passes in 972.345 ms. Real native reference generation, browser fixture execution, old personal ghost suite and final nearby/build remain pending.
+
+
+## Current integration union
+
+Merged current integration into the retained lane before final acceptance. Three real text conflicts were additive imports in App/progression and the adjacent optional profile fields. Resolved by retaining both Cups and Intel imports and normalizing each present field independently; neither path replaces the other. No source from other cards was dropped. These are real conflict fixes, so the final native acceptance, lane/jobs4, build and independent source confirmation must run on the resolved union. No earlier gate is carried over as a current-source pass.

@@ -3,6 +3,7 @@ import {shownCars} from './earned-cars-ui.js';
 import './deep/deep-ui.css';
 import {createHeliUi} from './heli/heli-ui.js';
 import './heli/heli-ui.css';
+import './lessons/lesson-board.css';
 import {createWarlordCardArt} from './warlord-card-art.js';
 import './screen-card-wall.css';
 import {hiddenRoadHints,hiddenRoadMapKey} from './hidden-road-hints.js';

@@ -1,0 +1,11 @@
+{
+  "tremblant-woods-reverse": {
+    "hash": "1aad3602825a3fbcf159a8e23517c459727d0e99bf7f4f5befda80541b573770",
+    "nodes": 310,
+    "meshes": 274,
+    "instances": 25016,
+    "geometries": 38,
+    "materials": 25,
+    "textures": 15
+  }
+}

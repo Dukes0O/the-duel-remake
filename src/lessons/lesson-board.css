@@ -1,0 +1,9 @@
+/* The instructor's list (src/lessons/lesson-board.js), on the helipad and the driving Instructor screen. */
+ul.lesson-board{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.lesson-board li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.lesson-board li.lesson-board-locked{color:#ffffff66}
+.lesson-board li.lesson-board-done span{color:#9fd49a}
+.lesson-board li.lesson-board-group{font-size:9px;letter-spacing:2.5px;font-weight:750;color:var(--muted,#b6b1a5);margin-top:4px}
+.lesson-board button{padding:5px 9px;font:600 12px/1.2 inherit;color:var(--ink,#f3eddf);background:#ffffff14;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
+.lesson-board button:hover{background:#ffffff26}
+.lesson-board small{font-size:10px;color:#ffffff66}

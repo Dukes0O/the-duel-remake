@@ -1200,3 +1200,26 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 
 - 2026-10-15 janitor: recycled only the new merged QA-STOCK-SNOW lane after validated dependency-junction unlink; shared target intact, exact missing registration pruned and branch safely deleted. Integrator prompt bug recorded on QA-FACTORY-RECYCLE-JUNCTION; HELI and retained lanes untouched.
 - 2026-10-15 DRIVE-LESSON-SAVE merged 66269a4a: lane 263/263 in 1233.22 s, build 3908.8468 ms, review drive_lesson_save_review clear.
+- 2026-10-15 QA-AUDIO-CLOCK merged 93cbae89: lane 21/21 in 307.00 s, build 2320 ms, review stock_snow_review: retention source only clear.
+- 2026-10-15 P4-VARIANTS merged e628cb6a: lane 327/327 in 1470.48 s, build 1439.8983 ms, review stock_snow_review clear.
+
+- 2026-10-15 P4-ARDENNES mechanical 4495c042: existing619db9ef lane42/42/jobs4/807.60s, build1.25s, final reviewCLEAR; LongLeft zero-crash, timing skipped by Kyle, course dev, old lane retained.
+
+- 2026-10-15 pause by Kyle for restart: SUMMIT-SWITCH-ON exactd27d7c75 retained, geometry164654/build2099ms/reviewCLEAR/Claude approved; original canonical gate outcome pending inspection, no merge or release. See card restart point.
+15 October: helicopter answers merged (Kyle: seasons decide, no forest fire in winter, card FIRE-SEASONS before H2 releases; people can get hurt and failure costs, card RESCUE-HURT); lane 15/15 jobs4 343.37 s, build passed, clean merge; lane deleted.
+15 October: SKIN-ART-GEAR part 2 merged (mount_nose, mount_belly, mount_side_right empties on Kestrel One, snapped to the hull; model still 12,580 tris); lane 32/32 jobs4 from PowerShell, build passed; review by render; card complete, lane deleted.
+- 15 October: EARN-CAR-1 round 5 merged (Claude): the Enzo in the game at Panorama Ridge passes (gritty, not toy-like); twin five-spoke wheels, splitter and diffuser inside the body; scenario enzo-look 0 errors; sheet round-5.jpg 114 KB, round 4 sheet removed for the 20 MB looks budget; lane 31/31 jobs4, build passed, one review (2 faults fixed). Frame check left for the nightly full check. Lane deleted.
+- 2026-10-15 DRIVE-LESSON-CORE merged (Claude): lesson contract, radio voice and instructor list moved to src/lessons/ for driving lessons; helicopter unchanged. Lane 164/164, build, heli-first-flight clean, one review (one fault fixed).
+- 15 October: RESCUE-HURT fb00f7d5 merged (Claude): casualty condition (unhurt, hurt, badly), bumps by speed and the stretcher limits, rough set-downs counted once with the cable's ground bump, the clock at two thirds, the cabin, pay 100/60/25%; six Roger lines (about 180 credits by the account counter). Lane 68/68 jobs4, build passed, one review covering pay (4 faults fixed). Lane deleted.
+15 October: FIRE-SEASONS merged (no forest fire in winter, seasons weight the pick, first snow puts a fire out); lane 140/140 jobs4 1069.56 s, build passed, one review with two real faults fixed and confirmed, one assertion's play day moved from 30 to 20 (in the change note); clean merge; lane deleted.
+- 2026-10-15 DRIVE-LESSON-LINES merged (Claude): sixteen driving instructor lines (Brian, 1,097 voice credits) and the CC0 cone sound behind driving-lessons; start-up loading skips them. Lane 171/171, build, review CONFIRMED. sound-bank lock released.
+- 2026-10-16 QA-ARENA-STEERING-AIR-ONLY merged from5c47121b: lane20/20/jobs4/537.208s, build4297.1685ms, native14/bothqualities/zeroissueswarnings, Root independent review CLEAR; clean merge, no rerun, owning-session cleanup pending.
+
+- 2026-10-15 janitor: owning card-answer chat recycled only its newly-created merged Arena lane, review evidence and dependency junction; removed its exact missing registration/merged branch. Owned Arena folders1->0; runtime assets0B changed by this fixture repair. Retained Summit and other chats' folders untouched. F1 capture turn remains next.
+- 2026-10-15 AUDIO-CATALOG-APPEND merged (Claude): recording a sound appends to the audio catalog or replaces its own row in place, never re-sorts. Lane 25/25, build, review (one fault fixed).
+- 2026-10-15 WILD-RADIO merged 514d6b45 (nine wildlife and skin lines, 412 ElevenLabs credits; eleven CC0 sounds: survey shutter, pressure washer, winch loop, eight animal calls; preloadWildlife and missionBeds), lane170/170/jobs4/build passed/one review (2 fixes), after two integration merges (RESCUE-HURT and DRIVE-LESSON-LINES conflicts in the catalog, line count and credits resolved with both kept). Re-slice asked: the call into app.js for SKIN-HOOKS. Janitor: wild-radio folder and branch removed.
+
+
+- 2026-10-16 P4-CUPS merged: lane 271/271, jobs 4, 1422.30 s; build 2.24 s; native three-race acceptance 13/13; independent code/save/pay review clear.
+
+- Janitor, card-answer chat: removed 17 owned answered/stale inbox requests after folding facts into current cards/reviews; kept active Kyle patch block and F1 final-check/catalogue decisions. Consumed F1 round1 sheet/raw packets and Summit recorder copy/tar were recycled after replacement/review; current source, verdicts, failed original gate and approval artifacts retained. No runtime size delta.
