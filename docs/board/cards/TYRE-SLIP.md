@@ -737,3 +737,7 @@ penalty, no reset, no catastrophic state). Replace its old outcome clauses
 4,828 here), and Easy still wins. Medium and Hard missing their targets after
 a crash is correct under the new tyres. Record the replacement in the change
 note.
+
+## Night final acceptance resumes after Summit merge
+
+The missing Pro-only pin was recorded once on b1edcddb; only its new fixture and own note committed1f29566e. No old recording/pin changed. Root briefly reclaims busy-game-files/save-shape only to combine current integration before final gating: the actual merge has two textual conflicts, App imports and feature flags. Retain both racing-line and cup imports, tyre-slip dev plus merged Yeti on and every foreign released flag. Preserve automatically merged cup save/settlement logic. No retune, Casual change or replay re-recording. Freeze and release the core leases immediately after that union; one independent final delta review and the canonical gate execute the still pending new recovery/FPS/arena/CPU assertions. No extra120race matrix.
