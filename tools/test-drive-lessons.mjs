@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DRIVE_LESSON_CORNERS,createDriveLesson,stepDriveLesson,placeCones,instructorControls,buildInstructorRun} from '../src/lessons/drive-lessons.js';
+import {DRIVE_LESSON_CORNERS,createDriveLesson,stepDriveLesson,placeCones,instructorControls,buildInstructorRun,finishInstructorTrace} from '../src/lessons/drive-lessons.js';
 
 // Plain car-view tests only. These do not simulate a car or prove instructor physics.
 const corner={id:'test-corner',startS:80,finishS:200,dir:1};
@@ -240,6 +240,20 @@ test('approved relative cone placement rejects less than 2m actual inward or out
   assert.doesNotThrow(()=>placeCones(trace(0,2,0),options));
   assert.throws(()=>placeCones(trace(.001,2,0),options),/inward.*outward/);
   assert.throws(()=>placeCones(trace(0,2,.001),options),/inward.*outward/);
+});
+
+test('finish trace ignores only wholly post-finish faults and keeps straddling ticks closed',()=>{
+  const poses=[{t:0,s:0,lateral:0,heading:0},{t:1,s:9,lateral:1,heading:.1},
+    {t:2,s:11,lateral:3,heading:.3},{t:3,s:15,lateral:8,heading:.5}];
+  const before=JSON.stringify(poses);
+  const actual=finishInstructorTrace(poses,10,[{fromS:11,s:15,reason:'post-finish contact'}]);
+  assert.equal(actual.timeSec,1.5);assert.equal(actual.poses.at(-1).s,10);
+  assert.equal(actual.poses.at(-1).lateral,2);assert.equal(actual.poses.length,3);
+  assert.equal(JSON.stringify(poses),before,'observation poses stay unchanged');
+  assert.doesNotThrow(()=>finishInstructorTrace(poses,10,[{fromS:10,s:11}]));
+  assert.throws(()=>finishInstructorTrace(poses,10,[{fromS:9,s:11,reason:'straddles finish'}]),/straddles finish/);
+  assert.throws(()=>finishInstructorTrace(poses,10,[{fromS:0,s:9,reason:'before finish'}]),/before finish/);
+  assert.throws(()=>finishInstructorTrace(poses,10,[{s:15,reason:'unknown tick origin'}]),/unknown tick origin/);
 });
 
 // These are actual native runs, not the plain-view helper tests above.
