@@ -129,11 +129,11 @@ test('rules latch once at race start and all arena definitions refuse the new ru
   let enabled=true;const flags={enabled:name=>name==='tyre-slip'&&enabled};const d=new Duel({seed:1989,featureFlags:flags});
   d.startCampaign({startStage:0,opponentCount:0,difficulty:'pro'});assert.equal(d.state.tyreSlipRules,true);assert.equal(d.state.tyreSlip,0);
   enabled=false;for(let i=0;i<10;i++)d.step(1/120);assert.equal(d.state.tyreSlipRules,true,'toggle cannot rewrite a running race');
-  d.startCampaign({startStage:0,opponentCount:0,difficulty:'pro'});assert.equal(d.state.tyreSlipRules,false);
+  d.startCampaign({startStage:0,opponentCount:0,difficulty:'pro'});assert.equal(Object.hasOwn(d.state,'tyreSlipRules'),false);
   enabled=true;
   for(const course of COURSE.filter(c=>c.arena===true)){
     d.startCampaign({startStage:COURSE.indexOf(course),opponentCount:0});
-    assert.equal(d.state.tyreSlipRules,false,course.id+' keeps released arena rules');
+    assert.equal(Object.hasOwn(d.state,'tyreSlipRules'),false,course.id+' keeps released arena rules');
   }
 });
 
@@ -262,13 +262,13 @@ test('slip-hold cuts actual throttle above1.20 slip near the clean line',async()
 test('Kyle Casual exception latches released tyres while Pro keeps the reviewed slide',()=>{
   let enabled=true;const d=new Duel({seed:1989,featureFlags:{enabled:name=>name==='tyre-slip'&&enabled}});
   d.startCampaign({difficulty:'casual',startStage:0,opponentCount:0});
-  assert.equal(d.state.tyreSlipRules,false,'Casual uses today tyres even when requested');
+  assert.equal(Object.hasOwn(d.state,'tyreSlipRules'),false,'Casual uses today tyres even when requested');
   for(let tick=0;tick<20;tick++)d.step(1/120);
-  assert.equal(d.state.tyreSlipRules,false);
+  assert.equal(Object.hasOwn(d.state,'tyreSlipRules'),false);
   d.startCampaign({difficulty:'pro',startStage:0,opponentCount:0});assert.equal(d.state.tyreSlipRules,true);
   enabled=false;for(let tick=0;tick<20;tick++)d.step(1/120);
   assert.equal(d.state.tyreSlipRules,true,'a running Pro race keeps its latched rules');
-  d.startCampaign({difficulty:'casual',startStage:0,opponentCount:0});assert.equal(d.state.tyreSlipRules,false);
+  d.startCampaign({difficulty:'casual',startStage:0,opponentCount:0});assert.equal(Object.hasOwn(d.state,'tyreSlipRules'),false);
 });
 
 test('requested Casual tyres preserve complete native states in road and drift events',()=>{
@@ -374,7 +374,7 @@ test('all circuit arenas keep complete native state streams exact with the switc
     const transcript=enabled=>{
       const d=new Duel({seed:1989,featureFlags:{'tyre-slip':enabled}});
       d.startCampaign({seed:1989,startStage:COURSE.indexOf(event),car:'titan_monster',difficulty:'pro'});
-      assert.equal(d.state.tyreSlipRules,false,event.id+' refuses new road rules');
+      assert.equal(Object.hasOwn(d.state,'tyreSlipRules'),false,event.id+' refuses new road rules');
       const hash=createHash('sha256');
       for(let tick=0;tick<1200;tick++){
         d.setInput({throttle:1,brake:tick>850?.4:0,steer:tick<450?.6:-.4,boost:false});
@@ -392,7 +392,7 @@ test('native Duel rival and full Grand Prix field stay exact for60seconds with a
       const d=new Duel({seed:1989,featureFlags:{'tyre-slip':enabled,'grand-prix':true}});
       d.startCampaign({seed:1989,fieldSeed:4242,startStage:COURSE.findIndex(row=>row.id===eventId),
         car:'falcone_f42',difficulty:'pro',cpuDifficulty:'medium',mode,fieldSize:7});
-      assert.equal(d.state.tyreSlipRules,enabled);assert.equal(d.state.mode,mode);
+      assert.equal(d.state.tyreSlipRules===true,enabled);assert.equal(d.state.mode,mode);
       if(mode==='grandprix')assert.equal(d.state.opponents.length,7,'the actual complete field is exercised');
       else assert.ok(d.state.rival,'the actual Duel rival is exercised');
       d.setInput({throttle:0,brake:1,steer:0,boost:false});
@@ -438,12 +438,12 @@ test('native Scrapdome venue clears road rules and keeps the complete fight tran
   const transcript=enabled=>{
     const d=new Duel({seed:1989,featureFlags:{'tyre-slip':enabled}});
     d.startCampaign({seed:1989,startStage:0,car:'falcone_f42',difficulty:'pro',opponentCount:0});
-    assert.equal(d.state.tyreSlipRules,enabled,'the preceding native road race latches the requested model');
+    assert.equal(d.state.tyreSlipRules===true,enabled,'the preceding native road race latches the requested model');
     d.state.wastelandGateDiscovered=true;
     assert.equal(d.startArenaEvent({venueId:'scrapdome',car:'falcone_f42',difficulty:'pro',
       seed:1989,cpuDifficulty:'medium',opponents:[{car:'viper_proto',brain:'rammer'}]}),true);
     assert.equal(d.course.def.id,'scrapdome');assert.equal(d.state.difficulty,'pro');
-    assert.equal(d.state.tyreSlipRules,false,'the real venue loader clears latched road rules');
+    assert.equal(Object.hasOwn(d.state,'tyreSlipRules'),false,'the real venue loader clears latched road rules');
     const hash=createHash('sha256');let moved=false;
     for(let tick=0;tick<1200;tick++){
       d.setInput({throttle:1,brake:tick>850?.4:0,steer:tick<450?.6:-.4,boost:false});
@@ -454,4 +454,20 @@ test('native Scrapdome venue clears road rules and keeps the complete fight tran
     return hash.digest('hex');
   };
   assert.equal(transcript(true),transcript(false),'Scrapdome full native fight state remains exact');
+});
+
+
+test('inactive tyre model never adds state fields and clears them after an active race',()=>{
+  const d=new Duel({seed:1989,featureFlags:{'tyre-slip':true}});
+  const absent=()=>{for(const key of ['tyreSlip','tyreSlipRules'])assert.equal(Object.hasOwn(d.state,key),false,key+' is absent with released tyres');};
+  absent();
+  for(const difficulty of ['casual','pro','casual']){
+    d.startCampaign({seed:1989,startStage:0,opponentCount:0,difficulty});
+    if(difficulty==='pro'){assert.equal(d.state.tyreSlipRules,true);assert.equal(d.state.tyreSlip,0);}
+    else {absent();for(let tick=0;tick<120;tick++){d.setInput({throttle:1,brake:0,steer:.2});d.step(1/120);absent();}}
+  }
+  d.startCampaign({seed:1989,startStage:0,opponentCount:0,difficulty:'pro'});
+  d.state.wastelandGateDiscovered=true;
+  assert.equal(d.startArenaEvent({venueId:'scrapdome',car:'falcone_f42',difficulty:'pro',seed:1989,cpuDifficulty:'medium',opponents:[{car:'viper_proto',brain:'rammer'}]}),true);
+  absent();
 });

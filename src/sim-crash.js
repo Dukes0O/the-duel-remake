@@ -232,7 +232,7 @@ export function _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMp
   if (s.catastrophic) { s.impactDuration = DRIVE.catastrophicDuration; s.impactStrength = 1; }
   s.impactTimer = s.impactDuration;
   s.crashSpin = 0;
-  s.slipAngle = 0; s.tyreSlip = 0; s.drifting = false;
+  s.slipAngle = 0; if (Object.hasOwn(s, 'tyreSlip')) s.tyreSlip = 0; s.drifting = false;
   s.invulnerableSec = s.impactDuration + DRIVE.recoverySec;
   s.speedMph = clamp(s.speedMph * .3, -DRIVE.crashSpeedCapMph, DRIVE.crashSpeedCapMph);
   s.gear = s.speedMph < 0 ? -1 : Math.max(0, s.gear); s.reverseHoldSec = 0;

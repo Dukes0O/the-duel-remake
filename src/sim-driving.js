@@ -84,7 +84,7 @@ export function _tickDrift(dt) {
 
 export function _drive(dt) {
   const s = this.state, car = this.car, d = this.diff;
-  if(stepPitService(this,s,dt)){s.tyreSlip = 0;return;}
+  if(stepPitService(this,s,dt)){if (Object.hasOwn(s, 'tyreSlip')) s.tyreSlip = 0;return;}
   // A Grand Prix slipstream lifts top speed and push; it is exactly 1 elsewhere.
   const towTop = s.field ? 1 + FIELD.towTopSpeed * s.field.tow : 1, towPush = s.field ? 1 + FIELD.towAccel * s.field.tow : 1;
   let accelerationShare = (arsenalEnabled(this) ? carAcceleration(s) : 1) * towPush;
@@ -92,7 +92,7 @@ export function _drive(dt) {
   // A crash that knocked the car loose: it slides and spins until the tyres
   // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
   if (s.knock) {
-    s.tyreSlip = 0;
+    if (Object.hasOwn(s, 'tyreSlip')) s.tyreSlip = 0;
     stepKnock(this, s, dt);
     s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[Math.max(0, s.gear)]);
     s.boosting = false; s.steerVisual = 0; s.yawVelocity = 0;

@@ -94,7 +94,7 @@ export class Duel {
       // driving
       s: 0, lateral: 0, speedMph: 0, gear: 0, revs: 0, overrevSec: 0, reverseHoldSec: 0, offRoad: false,
       steerVisual: 0, boost: 1, boosting: false, invulnerableSec: 0,
-      headingError: 0, yawVelocity: 0, roughness: 0, offRoadTime: 0, preparedGravel: false, slipAngle: 0, drifting: false, tyreSlip: 0, tyreSlipRules: false,
+      headingError: 0, yawVelocity: 0, roughness: 0, offRoadTime: 0, preparedGravel: false, slipAngle: 0, drifting: false,
       surfaceMud: 0, waterDepth: 0, mudWheelSpin: 0,
       impactTimer: 0, impactDuration: 0, impactStrength: 0, impactSide: 1, crashSpin: 0,
       majorCrashes: 0, stageCrashes: 0, catastrophic: false,
@@ -283,7 +283,8 @@ export class Duel {
       muddyHollow: s.wastelandGateDiscovered === true,
       ...(this.deepProviders.length ? {deep:{providers:this.deepProviders,enabled:this.featureFlags.enabled('the-deep'),kit:this._deepKit,mode:s.mode,found:this._deepFound,qualifying:!!s.qualifying&&s.qualifying.phase!=='complete'}} : {}),
     });
-    s.tyreSlipRules = this._tyreSlipRaceEnabled === true && this.course.def.arena !== true;
+    if (this._tyreSlipRaceEnabled === true && this.course.def.arena !== true) s.tyreSlipRules = true;
+    else { delete s.tyreSlipRules; delete s.tyreSlip; }
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
     this._lapGates = [...new Set(rawGates.filter(distance => distance > 0 && distance < this.course.length))].sort((a, b) => a - b);
@@ -359,7 +360,7 @@ export class Duel {
     s.boost = 1; s.boosting = false; s.invulnerableSec = 0;
     s.headingError = 0; s.yawVelocity = 0; s.roughness = 0; s.offRoadTime = 0; s.preparedGravel = false;
     s.surfaceMud = 0; s.waterDepth = 0; s.mudWheelSpin = 0;
-    s.slipAngle = 0; s.drifting = false; s.tyreSlip = 0;
+    s.slipAngle = 0; s.drifting = false; if (s.tyreSlipRules === true) s.tyreSlip = 0;
     s.boundaryWarning = false; s.pushVelocity = 0; s.damageCooldown = 0; s.collectedFlocks = [];
     s.airborne = false; s.airHeight = 0; s.jumpScore = 0; s.jumps = 0; s.bestJumpMeters = 0; s.collectedJumps = [];
     s.airDistance = 0; s.airTime = 0; s._airOrigin = null;
@@ -457,7 +458,7 @@ export class Duel {
     // itself always reads `this.course` and `state.arena`.
     s.stageIndex = Math.max(0, COURSE.findIndex(course => course.id === 'titan-arena'));
     this.course = new Course(venue, this.seed);
-    s.tyreSlipRules = false;
+    delete s.tyreSlipRules; delete s.tyreSlip;
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     this._lapGates = [];
     this._resetStageDriving();
