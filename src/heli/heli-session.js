@@ -790,7 +790,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         done: line.done === true, onGround: line.onGround, x: line.x, y: line.y, z: line.z}) : null,
       crates: Object.freeze(crateLoads().map(crate => Object.freeze({id: crate.id, x: crate.x, y: crate.y, z: crate.z, heading: crate.heading,
         hooked: crate.hooked, onGround: crate.onGround}))),
-      call: waiting, active});
+      call: waiting, active,
+      // The course's ground height, so the drawing can stand people and snow blocks on the terrain.
+      ground: world?.ground ? (x, z) => world.ground.height(x, z) : null});
   }
 
   const api = {
