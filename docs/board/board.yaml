@@ -426,7 +426,7 @@ tasks:
     branch: claude/skin-save
     needs: [RESCUE-SAVE]
     locks: [save-shape]
-    flag: "heliSkins"
+    flag: "heli-skins"
     details: "docs/board/cards/SKIN-SAVE.md"
 
   - id: SKIN-RULES
@@ -437,7 +437,7 @@ tasks:
     status: "backlog"
     needs: [SKIN-SAVE]
     locks: []
-    flag: "heliSkins"
+    flag: "heli-skins"
     details: "docs/board/cards/SKIN-RULES.md"
 
   - id: SKIN-GEAR
@@ -448,7 +448,7 @@ tasks:
     status: "backlog"
     needs: [SKIN-RULES, RESCUE-HOOKS, WILD-SURVEY]
     locks: []
-    flag: "heliSkins"
+    flag: "heli-skins"
     details: "docs/board/cards/SKIN-GEAR.md"
 
   - id: SKIN-HOOKS
@@ -459,7 +459,7 @@ tasks:
     status: "backlog"
     needs: [SKIN-GEAR, WILD-RADIO]
     locks: []
-    flag: "heliSkins"
+    flag: "heli-skins"
     details: "docs/board/cards/SKIN-HOOKS.md"
 
   - id: SKIN-VIEW
@@ -470,7 +470,7 @@ tasks:
     status: "backlog"
     needs: [SKIN-HOOKS, RESCUE-VIEW, WILD-VIEW, SKIN-ART-PAINT, SKIN-ART-GEAR]
     locks: []
-    flag: "heliSkins"
+    flag: "heli-skins"
     details: "docs/board/cards/SKIN-VIEW.md"
 
   - id: SKIN-FINISH
@@ -481,7 +481,7 @@ tasks:
     status: "backlog"
     needs: [SKIN-VIEW, RESCUE-FINISH]
     locks: []
-    flag: "heliSkins"
+    flag: "heli-skins"
     details: "docs/board/cards/SKIN-FINISH.md"
 
   - id: WILD-ART-SRC
