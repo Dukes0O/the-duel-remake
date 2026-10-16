@@ -194,3 +194,35 @@ Actual corrected native/student acceptance and canonical/build follow once
 on this frozen source, windowless under ordinary admission. No pass yet.
 Removed: obsolete recordedExit and premature placement/whole-observation
 fault counting. Existing clean thresholds and all old fingerprints remain.
+
+
+### Actual corrected canonical result: blocked, not green
+
+Exact e2f752bc source stayed clean/unchanged. Lane tier ended19:57:32.632UTC,
+22/23 suites/jobs4/zero notrun/exit1/254577.646ms. Wrapper36652/runner30232
+and all children drained. Receipt/full output: own
+.evidence/2026-10-16/DRIVE-LESSON-1/final-e2f752bc. No build/merge.
+
+Only test-drive-lessons failed:27 pure checks passed; the4instructor and
+4student native cases stopped before obtaining a valid baseline. Therefore
+repeat-seed/FPS, student loss/screech/right/challenge and clean instructor
+acceptance remain unproved. Actual candidate trace facts, not cone acceptance:
+
+| Panorama setting | first brake lateral | innermost lateral | widest lateral | inward movement | outward movement |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Casual |4.1865193693|2.3106531947|-6.3228974725|-1.8758661746|8.6335506672|
+| Pro |4.2735164715|1.0588766484|-6.2705748479|-3.2146398231|7.3294514962|
+
+Turn direction+1, so both fail the unchanged required inward>=2m sanity
+check. Woods Casual/Pro throw Instructor trace reversed before a plan exists;
+no lateral triplet or specific cause is established there. No accepted cone
+positions can be reported for either corner. The gate also passed all other
+22suites, including its replay/world guards.
+
+Stop/report clause followed: no extra simulation retry, target/racingline/
+pace/gate/physics/threshold change. Source inspection only: instructor uses
+buildSpeedProfile(line,spec); its current implementation derives corner
+speed from old lateral acceleration/feasibility and does not read tyre-slip
+rules. Whether that is the cause here is unproved. Ask Claude for the next
+bounded controller/speed-plan approach within this owned module, or park.
+Failure facts were extracted once; no repeated diagnosis/status-only commit.
