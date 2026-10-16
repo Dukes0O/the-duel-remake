@@ -12,6 +12,33 @@ const STEP=1/60;
 const average=values=>values.length ? values.reduce((a,b)=>a+b,0)/values.length : null;
 function memoryStorage(){const rows=new Map();return {get length(){return rows.size;},key:i=>[...rows.keys()][i]??null,
   getItem:k=>rows.get(k)??null,setItem:(k,v)=>rows.set(k,String(v)),removeItem:k=>rows.delete(k)};}
+// A single real first-braking snapshot. Count distinct body-overlap pairs;
+// an actor cannot supply two pairs. At most eight cars, so exact matching is small.
+export function startFormation(actors) {
+  if (actors.some(row => ![row.s, row.lateral, row.halfLength, row.halfWidth].every(Number.isFinite) ||
+    row.halfLength <= 0 || row.halfWidth <= 0) || new Set(actors.map(row => row.id)).size !== actors.length)
+    throw Error('Invalid first-braking actor snapshot');
+  const alongside = (a, b) => {
+    const overlap = Math.min(a.s + a.halfLength, b.s + b.halfLength) -
+      Math.max(a.s - a.halfLength, b.s - b.halfLength);
+    return overlap >= Math.min(a.halfLength, b.halfLength) &&
+      Math.abs(a.lateral - b.lateral) >= a.halfWidth + b.halfWidth;
+  };
+  const matching = remaining => {
+    if (remaining.length < 2) return [];
+    const [first, ...rest] = remaining;
+    let best = matching(rest);
+    for (let i = 0; i < rest.length; i++) if (alongside(first, rest[i])) {
+      const pairs = [[first.id, rest[i].id], ...matching(rest.filter((_, j) => j !== i))];
+      if (pairs.length > best.length) best = pairs;
+    }
+    return best;
+  };
+  const leading = [...actors].sort((a, b) => b.s - a.s).slice(0, 6);
+  const mean = average(leading.map(row => row.lateral));
+  const lateralSpread = leading.length === 6 ? Math.sqrt(average(leading.map(row => (row.lateral - mean) ** 2))) : null;
+  return {pairs: matching(actors), lateralSpread, leading: leading.map(row => row.id)};
+}
 function threeWide(duel,entry=-Infinity,apex=Infinity){
   const actors=[duel.state,...duel.state.opponents].filter(r=>!r.finished&&!r.knock&&r.s>=entry&&r.s<=apex);
   for(let i=0;i<actors.length;i++)for(let j=i+1;j<actors.length;j++)for(let k=j+1;k<actors.length;k++){
@@ -54,16 +81,19 @@ export function measureRace({course,index=0,enabled=false,mode='normal',maxSec=n
     const entries=profile.corners.map(c=>({corner:c,distance:(c.entryS-phase+length)%length})).filter(row=>row.distance>1).sort((a,b)=>a.distance-b.distance);
     const first=entries[0],entry=first ? front.s+first.distance : null;
     const apex=first ? entry+(first.corner.apexS-first.corner.entryS+length)%length : null;
-    let wide=false,entryInstantWide=null,entryCars=null,firstLapPosition=null,passedPlayer=false,boostFrames=0;
+    let wide=false,entryInstantWide=null,entryCars=null,startSnapshot=null,firstLapPosition=null,passedPlayer=false,boostFrames=0;
     const sides=new Map(s.opponents.map((r,i)=>[i,Math.sign(d.relativeS(r.s,s.s)-s.s)]));
     maxSec??=d.course.script?Math.max(420,d.course.raceLength/14):420;
     while(s.status==='countdown'||s.status==='racing'){
       app.advance(STEP,STEP);
       if(s.status!=='racing')continue;
       if(entry!==null){
-        if(entryInstantWide===null && s.opponents.some(r=>r.s>=entry)){
+        if(entryInstantWide===null && [s,...s.opponents].some(r=>r.s>=entry)){
           entryInstantWide=threeWide(d);
-          entryCars=[s,...s.opponents].map(r=>({s:r.s,lateral:r.lateral,speed:r.speedMph,bias:r.field?.bias,passes:r.field?.passes?.start}));
+          entryCars=[s,...s.opponents].map((r,id)=>({id,s:r.s,lateral:r.lateral,speed:r.speedMph,
+            bias:r.field?.bias,passes:r.field?.passes?.start,...d._vehicleSpec(r)}));
+          const active=entryCars.filter((_,id)=>![s,...s.opponents][id].finished&&![s,...s.opponents][id].knock);
+          startSnapshot={time:s.stageTimeSec,entry,...startFormation(active)};
         }
         // Measure cars physically in this first braking zone, not just the
         // instant pole arrives or an unrelated group elsewhere on the track.
@@ -80,7 +110,7 @@ export function measureRace({course,index=0,enabled=false,mode='normal',maxSec=n
       if(s.stageTimeSec>maxSec)break;
     }
     const times=s.opponents.map(r=>r.finished?r.lapStartedAt:null),stats=s.field.stats;
-    return {course,index,seed,fieldSeed,enabled,mode,wide,entry,apex,entryInstantWide,entryCars,startZoneComplete:apex!==null&&[s,...s.opponents].every(r=>r.s>apex),passedPlayer,firstLapPosition,
+    return {course,index,seed,fieldSeed,enabled,mode,wide,entry,apex,entryInstantWide,entryCars,startSnapshot,startZoneComplete:apex!==null&&[s,...s.opponents].every(r=>r.s>apex),passedPlayer,firstLapPosition,
       passes:stats.passes,crashes:stats.crashes.length,playerCrashes:s.stageCrashes,
       pileUp:new Set(stats.crashes.filter(c=>c.t<=30).map(c=>c.index)).size>=3,
       finished:times.filter(v=>v!==null).length,playerFinished:s.completedLaps>=s.lapsTotal,
@@ -100,11 +130,21 @@ export function summarizeRacecraft(rows,{courses,races}){
     const normal=rows.filter(r=>r.course===course&&r.mode==='normal'),on=normal.filter(r=>r.enabled);
     const off=normal.filter(r=>!r.enabled),slow=rows.filter(r=>r.course===course&&r.mode==='slow'&&r.enabled);
     const nitro=rows.filter(r=>r.course===course&&r.mode==='nitro'&&r.enabled);
-    const wide=on.filter(r=>r.wide).length,passesOn=average(on.map(r=>r.passes)),passesOff=average(off.map(r=>r.passes));
+    const wide=on.filter(r=>r.wide).length;
+    const paired=on.filter(r=>r.startSnapshot?.pairs?.length>=2).length;
+    const spread=on.filter(r=>Number.isFinite(r.startSnapshot?.lateralSpread)&&r.startSnapshot.lateralSpread>=3).length;
+    const baselinePaired=off.filter(r=>r.startSnapshot?.pairs?.length>=2).length;
+    const baselineSpread=off.map(r=>r.startSnapshot?.lateralSpread);
+    const passesOn=average(on.map(r=>r.passes)),passesOff=average(off.map(r=>r.passes));
     const timeChanges=on.map(r=>{const before=off.find(b=>b.index===r.index);return before?.meanCpuTime&&r.meanCpuTime ? Math.abs(r.meanCpuTime/before.meanCpuTime-1) : null;});
     const flags=[];
-    if(on.length!==races||off.length!==races||slow.length!==races||nitro.length!==races)flags.push('missing cases');
-    if(wide<races*.75)flags.push('three-wide starts');
+    const cases=rows.filter(r=>r.course===course);
+    const keys=new Set(cases.map(r=>`${r.index}/${r.mode}/${r.enabled}`));
+    if(cases.length!==races*6||keys.size!==cases.length||
+      Array.from({length:races},(_,index)=>['normal','slow','nitro'].flatMap(mode=>
+        [false,true].map(enabled=>`${index}/${mode}/${enabled}`))).flat().some(key=>!keys.has(key)))flags.push('missing cases');
+    if(paired<races*.75)flags.push('two overlapping start pairs');
+    if(spread<races*.75)flags.push('leading-six lateral spread');
     if(!(passesOn>0&&passesOn>=passesOff*2))flags.push('CPU passing rate');
     if(on.some(r=>r.crashes>=8)||on.filter(r=>r.pileUp).length>races/20)flags.push('crash bound');
     if(slow.filter(r=>r.passedPlayer).length!==races)flags.push('passing slower player');
@@ -112,7 +152,7 @@ export function summarizeRacecraft(rows,{courses,races}){
     if(timeChanges.some(v=>v===null||v>.02))flags.push('race time changed over 2 percent');
     if(rows.filter(r=>r.course===course).some(r=>r.finished!==7||!r.playerFinished))flags.push('unfinished races');
     findings.push(...flags.map(flag=>course+': '+flag));
-    return {course,races,wide,passesOn,passesOff,slowPlayerPassed:slow.filter(r=>r.passedPlayer).length,
+    return {course,races,wide,paired,spread,baselinePaired,baselineMeanSpread:baselineSpread.every(Number.isFinite)?average(baselineSpread):null,passesOn,passesOff,slowPlayerPassed:slow.filter(r=>r.passedPlayer).length,
       nitroFirstAtLapOne:nitro.filter(r=>r.firstLapPosition===1).length,baselineNitroFirstAtLapOne:rows.filter(r=>r.course===course&&r.mode==='nitro'&&!r.enabled&&r.firstLapPosition===1).length,
       maxTimeChange:timeChanges.includes(null)?null:Math.max(...timeChanges),flags};
   });

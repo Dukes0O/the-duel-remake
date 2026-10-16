@@ -19,7 +19,7 @@ import { shortRacerName, runningOrderRows, fieldResultsTable, fieldResultsText }
 import { installTestDriver } from './race-field-balance.mjs';
 import { App } from '../src/app.js';
 import { createFeatureFlags } from '../src/feature-flags.js';
-import {summarizeRacecraft} from './racecraft-rate.mjs';
+import {summarizeRacecraft, startFormation} from './racecraft-rate.mjs';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -98,12 +98,24 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
 {
   const courses=['panorama-ridge','tremblant-woods','pacific-canyon'];
   const rows=courses.flatMap(course=>Array.from({length:20},(_,index)=>['normal','slow','nitro'].flatMap(mode=>[false,true].map(enabled=>
-    ({course,index,mode,enabled,wide:true,passes:enabled?4:2,crashes:0,pileUp:false,passedPlayer:true,firstLapPosition:2,finished:7,playerFinished:true,meanCpuTime:100}))))).flat(2);
+    ({course,index,mode,enabled,wide:true,startSnapshot:{pairs:[[0,1],[2,3]],lateralSpread:3},passes:enabled?4:2,crashes:0,pileUp:false,passedPlayer:true,firstLapPosition:2,finished:7,playerFinished:true,meanCpuTime:100}))))).flat(2);
   check(summarizeRacecraft(rows,{courses,races:20}).passed,'reporter accepts complete qualifying fixture data');
   check(!summarizeRacecraft(rows.slice(1),{courses,races:20}).passed,'a missing measurement cannot become a pass');
   const incomplete=rows.map((r,i)=>i? r : {...r,finished:6,meanCpuTime:null});
   check(!summarizeRacecraft(incomplete,{courses,races:20}).passed,'unfinished measurement cannot hide behind averages');
   check(!summarizeRacecraft(rows.filter(r=>r.index===0),{courses,races:1}).passed,'a probe cannot count as the twenty-race acceptance');
+  const threshold=rows.map(r=>r.course==='panorama-ridge'&&r.mode==='normal'&&r.enabled&&r.index>=15 ?
+    {...r,startSnapshot:{pairs:[[0,1]],lateralSpread:2.999}} : r);
+  check(summarizeRacecraft(threshold,{courses,races:20}).passed,'exactly fifteen starts satisfy both approved thresholds');
+  const tooNarrow=threshold.map(r=>r.course==='panorama-ridge'&&r.mode==='normal'&&r.enabled&&r.index===14 ?
+    {...r,startSnapshot:{...r.startSnapshot,lateralSpread:2.999}} : r);
+  check(!summarizeRacecraft(tooNarrow,{courses,races:20}).passed,'fourteen spread successes fail even with fifteen paired starts');
+  const tooFewPairs=threshold.map(r=>r.course==='panorama-ridge'&&r.mode==='normal'&&r.enabled&&r.index===14 ?
+    {...r,startSnapshot:{...r.startSnapshot,pairs:[[0,1]]}} : r);
+  check(!summarizeRacecraft(tooFewPairs,{courses,races:20}).passed,'fourteen pair successes fail even with fifteen spread successes');
+  check(!summarizeRacecraft(rows.map(({startSnapshot,...row})=>row),{courses,races:20}).passed,'old three-wide data cannot pass the revised unmeasured acceptance');
+  const duplicate=[rows[1],...rows.slice(1)];
+  check(!summarizeRacecraft(duplicate,{courses,races:20}).passed,'a duplicate cannot replace the missing paired baseline case');
 }
 
 {
@@ -116,6 +128,31 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
   const contact={...r,boost:.2,field:{},contactCooldown:1};c.ds=1;
   closePassRefill(contact,run,[c],2);c.ds=-1;closePassRefill(contact,run,[c],2+1/60);
   close(contact.boost,.2,1e-12,'contact cannot earn close-pass recharge');
+}
+
+// Claude's revised first-braking contract: distinct real body overlaps and
+// population lateral spread, measured together at the same entry snapshot.
+{
+  const actors = Array.from({length: 6}, (_, i) => ({
+    id: i, s: 100 - Math.floor(i / 2) * 12, lateral: i % 2 ? 3 : -3,
+    halfLength: 2, halfWidth: 1,
+  }));
+  const formation = startFormation(actors);
+  equal(formation.pairs.length, 3, 'three separate overlapping pairs count once each');
+  equal(new Set(formation.pairs.flat()).size, 6, 'one car cannot supply two pairs');
+  equal(formation.lateralSpread, 3, 'first six use population standard deviation');
+  const singleFile = startFormation(actors.map(row => ({...row, lateral: 0})));
+  equal(singleFile.pairs.length, 0, 'overlapping bodies in one lane are not side by side');
+  equal(singleFile.lateralSpread, 0, 'a single-file field has no lateral spread');
+  const gap = startFormation([{...actors[0], s: 100}, {...actors[1], s: 102.01}]);
+  equal(gap.pairs.length, 0, 'less than half a car length of overlap does not count');
+  const boundary = startFormation([{...actors[0], s: 100}, {...actors[1], s: 102}]);
+  equal(boundary.pairs.length, 1, 'exactly half a car length counts');
+  equal(boundary.lateralSpread, null, 'fewer than six cars cannot supply the spread acceptance');
+  const shared = startFormation([actors[0], actors[1], {...actors[2], s: 100}]);
+  equal(shared.pairs.length, 1, 'two potential pairings sharing a car are only one pair');
+  const tail = startFormation([...actors, {...actors[0], id: 6, s: 0, lateral: 100}]);
+  equal(tail.lateralSpread, 3, 'a distant seventh car cannot inflate the leading-six spread');
 }
 
 // ---- the switch and the old modes ----
