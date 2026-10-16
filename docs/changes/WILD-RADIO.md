@@ -9,7 +9,7 @@ sections 8 and 9. Needs: RESCUE-RADIO (merged).
   (6), Brian for the new paint and the wash (3). Recorded once each through
   `tools/audio/elevenlabs.mjs` with the helicopter's settings (stability
   0.4, similarity 0.8, style 0.35), kept in `audio-src/voices/`,
-  catalogued, and copied to `public/assets/audio/voices/` (79 lines in all).
+  catalogued, and copied to `public/assets/audio/voices/` (83 lines in all with RESCUE-HURT's four).
   **412 credits used** (the account read 4,926 used before and 5,338 after;
   4,662 left this month). One request hit the service's rate limit and was
   retried after a pause. No gain needed: all nine play within the earlier
@@ -50,7 +50,7 @@ sections 8 and 9. Needs: RESCUE-RADIO (merged).
   `heli-session.js` and `heli-board.js`; please add `src/app.js` and
   `heli-audio.js`'s event table to its files (and RESCUE-HOOKS should call
   `missionBeds` for the dig).
-- **Credits pages** name the 79 lines and the eleven recordings.
+- **Credits pages** name the 83 lines and the eleven recordings.
 
 ## Round one listening (measured; I cannot listen)
 
@@ -73,7 +73,7 @@ sound wrong can be recut by changing one recipe line.
 
 ## Tests
 
-- `node tools/test-heli-audio.mjs`: passed. 79 lines; all nine new lines'
+- `node tools/test-heli-audio.mjs`: passed. 83 lines; all nine new lines'
   voices and words checked against section 8's table; their loudness
   against the earlier lines; the eleven cues, buses, the winch loop and its
   seam, files, hashes and catalog rows; an ordinary flight fetches none of
@@ -90,7 +90,7 @@ sound wrong can be recut by changing one recipe line.
 
 ## Changed assertions
 
-- `tools/test-heli-audio.mjs`: the line count rises from 70 to 79; the cue
+- `tools/test-heli-audio.mjs`: the line count rises from 74 to 83 (nine lines; RESCUE-HURT had raised it from 70 to 74); the cue
   lists, buses and loops gain the eleven wildlife cues; the helicopter
   library sound cap rises from 480 KB to 720 KB (the eleven recordings add
   about 233 KB and load only with wildlife; the helicopter's sounds are

@@ -17,7 +17,7 @@ const catalog = JSON.parse(read('tools/audio/catalog.json'));
 
 // ---- The cue table ---------------------------------------------------------
 const lineIds = Object.keys(HELI_RADIO_LINES);
-assert.equal(lineIds.length, 79, 'twenty-seven H1 lines, nineteen H2 Fire lines, twenty-four H4 Rescue lines and nine H3 Wildlife lines');
+assert.equal(lineIds.length, 83, 'twenty-seven H1 lines, nineteen H2 Fire lines, twenty-eight H4 Rescue lines and nine H3 Wildlife lines');
 assert.equal(HELI_RADIO_VOICE.name, 'Brian');
 // Three stock voices with the same settings (docs/HELI_FIRE.md section 10).
 assert.deepEqual(Object.fromEntries(Object.entries(HELI_VOICES).map(([key, voice]) => [key, [voice.name, voice.voiceId]])), {
@@ -50,14 +50,14 @@ for (const [id, [voice, text]] of Object.entries(FIRE_LINES))
 const RESCUE_VOICES = {avalanche: 'roger', hoist: 'roger', supply: 'roger', rescue: 'roger', beacon: 'roger', season: 'roger',
   hiker: 'sarah', line: 'brian'};
 const rescueIds = lineIds.filter(id => /^heli\.radio\.(avalanche|hoist|supply|hiker|rescue|beacon|season|line)\./.test(id));
-assert.equal(rescueIds.length, 24, 'twenty-four rescue lines');
+assert.equal(rescueIds.length, 28, 'twenty-eight rescue lines (four added by RESCUE-HURT)');
 for (const id of rescueIds) assert.equal(HELI_RADIO_LINES[id].voice, RESCUE_VOICES[id.split('.')[2]], id + ' voice');
 assert.equal(HELI_RADIO_LINES['heli.radio.rescue.done'].text, 'Safe and sound. Great work, Kestrel One.');
 // Every rescue line's voice and words exactly as the packet's table has them.
 {
   const table = new Map([...readFileSync(new URL('../docs/HELI_RESCUE.md', import.meta.url), 'utf8')
     .matchAll(/^\| `(heli\.radio\.[a-z.]+)` \| (\w+) \| (.+?) \|$/gm)].map(m => [m[1], {voice: m[2].toLowerCase(), text: m[3]}]));
-  assert.deepEqual([...table.keys()].sort(), [...rescueIds].sort(), 'the packet lists the same 24 lines');
+  assert.deepEqual([...table.keys()].sort(), [...rescueIds].sort(), 'the packet lists the same 28 lines');
   for (const id of rescueIds) assert.deepEqual({voice: HELI_RADIO_LINES[id].voice, text: HELI_RADIO_LINES[id].text}, table.get(id), id + ' as written');
 }
 // H3 Wildlife (docs/HELI_WILDLIFE.md section 8): every line in its voice, as written.

@@ -158,3 +158,8 @@ Keep the wheels, tail lights, damage and steering. Gritty, not toy-like.
 **Frame view:** confirmed. Use the Panorama Pit Straight eight-car grid view
 already approved for P4-PANORAMA, all eight cars the F1, for this card's frame
 acceptance when the laptop is quiet.
+
+
+## Round 2 continuation, card-answer chat
+
+Claude's five-point round 1 verdict above controls the second model round. The model worker owns only src/mclaren-f1-vehicle.js and its model test. Replace the obsolete full bubble with actual bounded dark window panes, opaque roof and framing, visible central intake, small corner lights, lower side intake/door line and short mirrors. Preserve dimensions, seating and helmet clearance, private damage/reset and original steering contracts. Explain any geometry-specific assertion replacement against the approved roof design; no numerical tolerance relaxation. Root owns the existing native photography and compact sheet recipes. Sound-bank stays released; no new lane or heavy job is admitted by this note.

@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-16T00:38:06.850Z
+Observed at: 2026-10-16T01:00:45.389Z
 
-Observation commit: b5f360690ea8b03f329e35ca3b40043544fb242e
+Observation commit: 7c0a87cbda8906bac86e84bea8eb57b08865c511
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: b5f360690ea8b03f329e35ca3b40043544fb242e
+Integration HEAD: 7c0a87cbda8906bac86e84bea8eb57b08865c511
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -31,7 +31,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/ardennes-switch-on | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on |
 | codex/deep-art-src | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
-| codex/earn-car-2 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2 |
+| codex/earn-car-2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2 |
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
 | codex/intel-levels | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/intel-levels |
 | codex/p4-ardennes | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
@@ -60,8 +60,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T17:35:29-07:00 | 0 | last commit 2026-10-15T17:35:29-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, src/landscape-detail.js, src/pit-lane.js, src/road-surface.js |
-| codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T17:14:53-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/HELICOPTER.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-1.jpg, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb |
+| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T17:42:41-07:00 | 0 | last commit 2026-10-15T17:42:41-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, src/landscape-detail.js, src/pit-lane.js, src/road-surface.js |
+| codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T17:50:52-07:00 | 0 | last commit 2026-10-15T17:50:52-07:00 | docs/HELICOPTER.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-1.jpg, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T16:22:01-07:00 | 0 | last commit 2026-10-15T16:22:01-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/intel-levels.js, src/progression.js, tools/test-intel-levels.mjs |
 | codex/p4-cups | P4-CUPS | 2026-10-15T17:06:10-07:00 | 0 | last commit 2026-10-15T17:06:10-07:00 | docs/changes/P4-CUPS.md, src/app.js, src/grand-prix-cups.js, src/progression.js, src/screen-courses.js |
@@ -88,9 +88,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 442,549 B | +0 B | 5,000,000 B |
-| All `public/` | 300,960,994 B | +0 B | unavailable |
-| Git objects | 449,430,528 B | +97,280 B | unavailable |
+| Added bytes in last merge | 1,893,879 B | +1,764,715 B | 5,000,000 B |
+| All `public/` | 302,319,039 B | +1,109,189 B | unavailable |
+| Git objects | 402,298,880 B | +256,000 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -99,7 +99,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: b5f360690ea8b03f329e35ca3b40043544fb242e
+- Local integration/wasteland: 7c0a87cbda8906bac86e84bea8eb57b08865c511
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
