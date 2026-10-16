@@ -149,3 +149,16 @@ This frozen source is not a playable, native, gate, build or integration-merge
 acceptance. Instructor/cone placement and actual native host/reward isolation
 remain unfinished. Release the brief core lease now; preserve this lane.
 Removed: conflicting stale count/list, retaining all current exact rows.
+
+
+## Reviewed instructor source combined
+
+Combined exact review-CLEAR lesson e2f752bc into host de621ebd without conflict.
+This imports the approved full exit-window observation and finish trim only;
+its actual native canonical is owned by Root in the separate lesson lane.
+No repeated lesson/native/host tests and no source edits to that running lane.
+One independent production build on this final frozen host is next, after
+fresh holds and all-ancestor admission; compile proof alone is not host/native
+acceptance. Host gate, actual private browser and instructor receipt remain
+pending. No new manual core edit or shared lease is needed for this clean union.
+Removed: old instructor window/finish source replaced by the reviewed version.

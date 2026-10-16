@@ -173,3 +173,24 @@ scope needs Claude's answer because this answer explicitly says placeCones
 only. It remains untouched; do not treat the pure function as a playablefix.
 Removed: old centreline-sign and first-local-extremum placement assumptions
 in placeCones. Legacy builder sampling remains pending the named scope.
+
+
+### Approved builder observation loop,16October12:50PT
+
+Claude's10:30 answer names the existing builder. Current integration/green
+Tyre combined conflict-free64eac786. Its actual first Panorama/Casual native
+case was RED1078.9836ms: the old caller attempted placement before the new
+exit search completed. That receipt is builder-red-64eac786.
+
+The builder now observes the whole same120m apex-relative window (bounded
+by the next corner), then chooses the approved cones. Legacy first-exit
+witness code is removed. Native faults carry their tick origin. The finish
+helper keeps exactly the original gate-to-gate trace/interpolated finish;
+faults whose ticks begin before that gate still fail, including straddling
+ticks. Unknown origins fail closed. Wholly post-finish faults are excluded.
+No racingline/pace/gate/physics/threshold change. New plain boundary case
+RED then1PASS93.3757ms; required independent code/numbers review CLEAR.
+Actual corrected native/student acceptance and canonical/build follow once
+on this frozen source, windowless under ordinary admission. No pass yet.
+Removed: obsolete recordedExit and premature placement/whole-observation
+fault counting. Existing clean thresholds and all old fingerprints remain.

@@ -226,11 +226,21 @@ export function placeCones(poses, {course, turnInS, turnOutS, exitSearchEndS, di
   return {cones, redBoardS: Math.min(brake.s + 25, turnInS), finishS: outside.s + 60};
 }
 
-function recordedExit(poses, course, inside, endS, dir) {
-  const rows = poses.filter(pose => pose.s > inside.s && pose.s <= endS);
-  const gap = pose => course.roadHalfWidthAt(pose.s) + dir * pose.lateral;
-  return rows.find((pose, index) => index < rows.length - 1 && dir * pose.lateral < 0 &&
-    gap(pose) <= gap(rows[index - 1] ?? inside) && gap(pose) <= gap(rows[index + 1]));
+// Observation may extend beyond the lesson to find the widest exit point.
+// Keep only the gate-to-gate trace. A fault on a tick that starts before the
+// finish remains a fault even if that tick ends beyond it.
+export function finishInstructorTrace(poses, finishS, faults = []) {
+  const at = poses.findIndex(pose => pose.s >= finishS);
+  const fault = faults.find(item => !Number.isFinite(item.fromS) || item.fromS < finishS);
+  if (at <= 0 || fault) throw new Error('Instructor did not finish cleanly: '+JSON.stringify(fault ?? {finishS}));
+  const a = poses[at - 1], b = poses[at];
+  const fraction = (finishS - a.s) / (b.s - a.s);
+  const timeSec = a.t + (b.t - a.t) * fraction;
+  const finish = Object.fromEntries(Object.entries(b).map(([key, value]) => [key,
+    Number.isFinite(value) && Number.isFinite(a[key]) ? a[key] + (value - a[key]) * fraction : value]));
+  finish.s = finishS; finish.t = timeSec;
+  finish.heading = a.heading + Math.atan2(Math.sin(b.heading - a.heading), Math.cos(b.heading - a.heading)) * fraction;
+  return {timeSec, poses: [...poses.slice(0, at), finish]};
 }
 
 // The steering law is the existing racing-line follower's look-ahead and yaw
@@ -304,6 +314,7 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
   state.traffic = []; state.opponents = [];
   state.nextLapGate = duel._lapGates.filter(s => s <= startS).length;
   const poses = [], faults = [];
+  let tickStartS = startS;
   const capture = (t, brake = 0) => {
     const world = course.groundAt(state.s, state.lateral);
     return {t, s: state.s, lateral: state.lateral, brake, throttle: state.input.throttle,
@@ -313,56 +324,45 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
       x: world.x, y: world.y, z: world.z, tyreSlip: state.tyreSlip || 0};
   };
   const off = duel.onChange((current, event) => {
-    if (event.crash || event.scrape || event.boundaryReset || event.checkpointReset) faults.push({s: current.s, reason: 'contact/reset'});
+    if (event.crash || event.scrape || event.boundaryReset || event.checkpointReset) faults.push({fromS: tickStartS, s: current.s, reason: 'contact/reset'});
   });
-  let ticks = 0, frames = 0, placement = null;
+  let ticks = 0, frames = 0, placement = null, searchEndS = null;
   poses.push(capture(0));
   try {
-    // Freeze the first recorded outside exit once witnessed. Then drive only
-    // to its finish, never into an unrelated following corner for evidence.
-    while (state.s < (placement?.finishS ?? exitSearchEndS) && ticks < maxSeconds * 120) {
+    // Finish observing the approved exit window before choosing its widest
+    // point. Extra observations are trimmed from the actual lesson below.
+    const needsTick = () => state.s < (placement?.finishS ?? Math.max(turn.s1, searchEndS ?? exitSearchEndS));
+    while (needsTick() && ticks < maxSeconds * 120) {
       const frameTicks = Math.floor(++frames * 120 / fps + 1e-9);
-      while (ticks < frameTicks && ticks < maxSeconds * 120 && state.s < (placement?.finishS ?? exitSearchEndS)) {
+      while (ticks < frameTicks && ticks < maxSeconds * 120 && needsTick()) {
         const controls = instructorControls(state, duel._drivingSurface(state.s, state.lateral), plan);
         // Inputs start at the current native pose, not one tick later.
         // Cone 1 must mark the actual first brake application.
         poses.at(-1).brake = controls.brake;
         poses.at(-1).throttle = controls.throttle;
+        tickStartS = state.s;
         duel.setInput(controls);duel.step(1 / 120);ticks++;
         poses.push(capture(ticks / 120, controls.brake));
         if (!placement && state.s >= turn.s1) {
-          // A missing exit is expected while it is still moving outward.
-          // Other invalid trace data is not hidden by the pending placement.
-          const insideRows = poses.filter(pose => pose.s >= turn.s0 && pose.s <= turn.s1);
-          const apex = insideRows.reduce((a, b) => !a || course.roadHalfWidthAt(b.s) - turn.dir * b.lateral <
-            course.roadHalfWidthAt(a.s) - turn.dir * a.lateral ? b : a, null);
-          if (apex && recordedExit(poses, course, apex, exitSearchEndS, turn.dir)) {
-            placement = placeCones(poses, {course, turnInS: turn.s0,
-              turnOutS: turn.s1, exitSearchEndS, dir: turn.dir});
+          if (searchEndS === null) {
+            const insideRows = poses.filter(pose => pose.s >= turn.s0 && pose.s <= turn.s1);
+            const apex = insideRows.reduce((a, b) => !a || turn.dir * b.lateral > turn.dir * a.lateral ? b : a, null);
+            if (!apex) throw new Error('Instructor did not record the named corner');
+            searchEndS = Math.min(apex.s + 120, exitSearchEndS);
           }
+          if (state.s >= searchEndS) placement = placeCones(poses, {course,
+            turnInS: turn.s0, turnOutS: turn.s1, exitSearchEndS, dir: turn.dir});
         }
-        // The last tick may straddle the finish. Its end position cannot
-        // prove a contact or slide started after the line: fail closed.
         if (state.offRoad || state.tyreSlip > 1 || state.status !== 'racing' || state.impactTimer > 0) {
-          faults.push({s: state.s, reason: 'offroad/slide/status'});
-          throw new Error('Instructor did not keep a clean native run: '+JSON.stringify({
-            t:ticks/120,s:state.s,lateral:state.lateral,mph:state.speedMph,
-            headingError:state.headingError,offRoad:state.offRoad,tyreSlip:state.tyreSlip,
-            status:state.status,impactTimer:state.impactTimer,input:{...state.input}}));
+          faults.push({fromS: tickStartS, s: state.s, reason: 'offroad/slide/status',
+            t: ticks / 120, lateral: state.lateral, mph: state.speedMph,
+            headingError: state.headingError, offRoad: state.offRoad, tyreSlip: state.tyreSlip,
+            status: state.status, impactTimer: state.impactTimer, input: {...state.input}});
         }
       }
     }
-    if (!placement) throw new Error('Instructor never reached a recorded outside exit');
-    const at = poses.findIndex(pose => pose.s >= placement.finishS);
-    if (at <= 0 || faults.length) throw new Error('Instructor did not finish cleanly');
-    const a = poses[at - 1], b = poses[at];
-    const fraction = (placement.finishS - a.s) / (b.s - a.s);
-    const timeSec = a.t + (b.t - a.t) * fraction;
-    const finish = Object.fromEntries(Object.entries(b).map(([key, value]) => [key,
-      Number.isFinite(value) && Number.isFinite(a[key]) ? a[key] + (value - a[key]) * fraction : value]));
-    finish.s = placement.finishS;finish.t = timeSec;
-    finish.heading = a.heading + Math.atan2(Math.sin(b.heading - a.heading), Math.cos(b.heading - a.heading)) * fraction;
-    const recorded = [...poses.slice(0, at), finish];
+    if (!placement) throw new Error('Instructor did not complete the native exit-search observation');
+    const {timeSec, poses: recorded} = finishInstructorTrace(poses, placement.finishS, faults);
     const corner = {id: row.cornerName, startS, finishS: placement.finishS, dir: turn.dir,
       turnInS: turn.s0, turnOutS: turn.s1};
     const instructor = {...placement, timeSec, poses: recorded};
