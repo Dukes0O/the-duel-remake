@@ -84,7 +84,18 @@ next play day pays again, tally goes up by one and other mission fields stay).
 No clock and no `Math.random` (both made to throw during the checks).
 
 The existing suites (`test-heli-jobs.mjs`, `-missions`, `-save`, `-fire-session`,
-`-rescue`, `test-wildlife.mjs`) pass unchanged. See the gate lines below.
+`-rescue`, `test-wildlife.mjs`) pass unchanged.
+
+## Gates
+
+- `test-heli-survey.mjs`: 9,970 checks. `test-heli-jobs` 612, `test-heli-missions`
+  45 groups, `test-heli-save` 43 groups: pass.
+- Lane tier (`--tier lane --changed --jobs 4 --keep-going`, PowerShell): 141
+  passed, 0 failed, 0 not run, 886.52 s. A first run found one failure,
+  `tools/test-heli-mode.mjs` (its import list for the helicopter rules did not
+  allow `../wildlife.js`); fixed by handing the tables in (see Open), then the
+  whole tier was rerun clean.
+- `npm run build`: passed. No browser checks.
 
 ## Changed assertions
 
