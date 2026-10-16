@@ -71,3 +71,8 @@ Shared busy/save lease returns from frozen tyre increment61e7de00. Continue exac
 ## Actual native series acceptance complete
 
 Frozen8a910245 completed all13test-grand-prix-cups cases in73571.4594ms, including actual three-race eight-car MountainCup native classifications, reload afterround1, named-player isolation, final trophy/bonus and duplicate finish refusal. ExistingfieldSeed1000 pinned only during synchronous native cupcreation then Math.random restored immediately; no result fabrication. Same independent cups_save_review confirms CLEAR on finalsource; production exact0dd37e84. Root retains save-shape/busy-game-files through upcoming canonical/jobs4/build. No merge or liveenable claim yet.
+
+
+## Root next-slot reservation,16October00:38UTC
+
+Cups8a910245 is frozen native13/13/reviewCLEAR. Root reserves the NEXT free non-quiet heavy slot for its one final production build and canonical lane/jobs4 gate. Existing admitted jobs continue; other sessions do not start into that one slot before this gate is admitted. No global pause, foreign cancellation or frame hold. A disposable guarded launch waits up to30minutes, re-reading actual roots and fresh card/inbox holds; no new scheduler/machinery. Once admitted the reservation is consumed, normal cap3applies. Ardennes nativephotos await its owning finishing source commit, so cannot yet use this slot.

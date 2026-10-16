@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T00:34:49.636Z
+Observed at: 2026-10-16T00:35:58.920Z
 
-Observation commit: 63d60bd3cc0cbd6e90da78ba0a12b180d901a8e0
+Observation commit: 328e245adbd48fc9053544ebd7ea8ed88cc836f6
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 63d60bd3cc0cbd6e90da78ba0a12b180d901a8e0
+Integration HEAD: 328e245adbd48fc9053544ebd7ea8ed88cc836f6
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -60,7 +60,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T17:30:50-07:00 | 0 | last commit 2026-10-15T17:30:50-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, src/landscape-detail.js, src/pit-lane.js, src/road-surface.js |
+| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T17:35:29-07:00 | 0 | last commit 2026-10-15T17:35:29-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, src/landscape-detail.js, src/pit-lane.js, src/road-surface.js |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T17:14:53-07:00 | 0 | last commit 2026-10-15T17:14:53-07:00 | docs/HELICOPTER.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-1.jpg, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T16:22:01-07:00 | 0 | last commit 2026-10-15T16:22:01-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/intel-levels.js, src/progression.js, tools/test-intel-levels.mjs |
@@ -90,7 +90,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 442,549 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,994 B | +0 B | unavailable |
-| Git objects | 449,207,296 B | +204,800 B | unavailable |
+| Git objects | 449,333,248 B | +125,952 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -99,7 +99,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 63d60bd3cc0cbd6e90da78ba0a12b180d901a8e0
+- Local integration/wasteland: 328e245adbd48fc9053544ebd7ea8ed88cc836f6
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -107,6 +107,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: behind local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: matches local; cached commit 63d60bd3cc0cbd6e90da78ba0a12b180d901a8e0.
+- Remote origin/integration/wasteland: behind local; cached commit 63d60bd3cc0cbd6e90da78ba0a12b180d901a8e0.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
