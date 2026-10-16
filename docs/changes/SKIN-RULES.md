@@ -110,7 +110,7 @@ runner picks up `tools/test-heli-skins.mjs` by name.
 
 ## Checks
 
-`test-heli-skins` (61 groups) and `test-heli-save` (43 groups) pass. Lane tier on ce8ca496 (`--changed --jobs 4 --keep-going`): 23 passed, 0 failed, 0 not run, 190 s. `npm run build`: built, only the usual large-file notice.
+`test-heli-skins` (61 groups) and `test-heli-save` (43 groups) pass. Lane tier on 91ccb809 (`--changed --jobs 4 --keep-going`): 23 passed, 0 failed, 0 not run, 231 s. `npm run build`: built, only the usual large-file notice.
 
 ## Removed
 
