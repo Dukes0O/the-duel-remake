@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFile} from 'node:fs/promises';
 import {driveLessonBoardModel, driveLessonBoardMarkup, driveLessonPanelMarkup,
-  driveLessonResultMarkup, bindDriveLessonUi, driveLessonCompletion, settleDriveLessonPreparation, driveLessonGhostPose} from '../src/lessons/drive-lesson-ui.js';
+  driveLessonResultMarkup, mountDriveLessonUi, bindDriveLessonUi, driveLessonCompletion, settleDriveLessonPreparation, driveLessonGhostPose} from '../src/lessons/drive-lesson-ui.js';
 
 const base = () => ({
   playerId: 'kyle', carId: 'falcone', difficulty: 'pro',
@@ -257,4 +257,31 @@ test('save retry is shown and dispatched only for a current completed session wi
   props.runPlayerId='son';d.emit('click',d.node({driveAction:'retry-save'}));assert.equal(retries,1);
   props.runPlayerId='kyle';props.lessonSaveFailed=false;d.emit('click',d.node({driveAction:'retry-save'}));assert.equal(retries,1);
   assert.doesNotMatch(driveLessonResultMarkup(props),/data-drive-action="retry-save"/);clean();
+});
+
+
+test('changing the owned corner cancels its pending instructor preparation', () => {
+  const d = dom();
+  Object.assign(d.root, {classList: {toggle() {}}, querySelector() {return null;}, remove() {}});
+  const host = {ownerDocument: {createElement: () => d.root, activeElement: null},
+    append() {}, addEventListener() {}, removeEventListener() {}, querySelector() {return null;}};
+  const token = {}, app = {driveLessonCourse: 'panorama-ridge', _driveLessonPreparing: token,
+    driveLessonMessage: 'Preparing the instructor run.', driveLessonBoardOpen: true,
+    duel: {state: {status: 'menu'}}, drivingLessonsAvailable: () => true,
+    driveLessonProps() {return {...base(), ownedCourseIds: ['panorama-ridge', 'tremblant-woods'], courseId: this.driveLessonCourse};}};
+  const mounted = mountDriveLessonUi(app, host);
+  try {
+    d.emit('change', d.node({driveCourse: 'panorama-ridge'}, 'INPUT'));
+    assert.equal(app._driveLessonPreparing, token, 'same corner keeps its current preparation');
+    d.emit('change', d.node({driveCourse: 'unknown'}, 'INPUT'));
+    assert.equal(app._driveLessonPreparing, token, 'unavailable corner cannot cancel a real request');
+    d.emit('change', d.node({driveCourse: 'tremblant-woods'}, 'INPUT'));
+    assert.equal(app.driveLessonCourse, 'tremblant-woods');
+    assert.equal(app._driveLessonPreparing, null, 'the old corner must not launch after the selection changes');
+    assert.equal(app.driveLessonMessage, '');
+    const nextToken = {};
+    app._driveLessonPreparing = nextToken;
+    assert.equal(settleDriveLessonPreparation(app, token, 'old request failed'), false);
+    assert.equal(app._driveLessonPreparing, nextToken, 'the old continuation cannot cancel a newer preparation');
+  } finally {mounted.dispose();}
 });

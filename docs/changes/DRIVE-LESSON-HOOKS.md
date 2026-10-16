@@ -105,3 +105,15 @@ browser recipe drive-lesson-run.mjs is source-prepared only: actual temporary
 funded career and course purchase, current-player access, native instructor,
 physical cones/panel, real KeyW attempt result, unchanged profile and next/leave.
 It never injects a plan, result, car pose or passing state; no browser executed.
+
+
+### Corner selection during instructor preparation
+
+The actual mounted board previously kept an async instructor request alive
+when another owned corner was selected. Cancel only that pending transient
+request when the selected corner changes; the existing App token guard then
+rejects its old continuation. Same/invalid choices preserve preparation,
+and a stale completion cannot erase a newer request. No race/save/physics
+change. New mounted change-event regression RED before the fix, then 1/1 PASS
+103.3751ms; required independent lifecycle review CLEAR. Removed: the stale
+preparation path. Native host acceptance is still unfinished.

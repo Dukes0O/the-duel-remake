@@ -168,7 +168,12 @@ export function mountDriveLessonUi(app,host){
   const clean=bindDriveLessonUi(root,()=>app.driveLessonProps(),{
     onStart:request=>void app.startLesson({...request,car:request.carId}),
     onNext:()=>app.nextLessonAttempt(),onLeave:()=>app.leaveLesson(),onRetrySave:()=>app.retryLessonSave(),
-    onSelectCourse:({courseId})=>{app.driveLessonCourse=courseId;previous='';update();},
+    onSelectCourse:({courseId})=>{
+      const selected=driveLessonBoardModel(app.driveLessonProps()).selected?.id;
+      if(courseId!==selected&&app._driveLessonPreparing)
+        settleDriveLessonPreparation(app,app._driveLessonPreparing);
+      app.driveLessonCourse=courseId;previous='';update();
+    },
   });
   const open=event=>{
     const button=event.target?.closest?.('[data-drive-open]');
