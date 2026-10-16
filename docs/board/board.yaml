@@ -783,3 +783,33 @@ tasks:
     status: "backlog"
     needs: []
     details: "docs/board/cards/QA-FACTORY-RECYCLE-JUNCTION.md"
+
+  - id: ARDENNES-DAMP-FADE
+    title: "Fade the Ardennes damp-road edges over 25 m"
+    owner: "codex"
+    lane: "VIS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/ARDENNES-DAMP-FADE.md"
+
+  - id: ARDENNES-PIT-GRASS
+    title: "Keep grass tufts off the pit-lane surface"
+    owner: "codex"
+    lane: "VIS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/ARDENNES-PIT-GRASS.md"
+
+  - id: QA-REVIEW-RUNUP-3848
+    title: "Check the review run-up that flips the car at Ardennes 3,848 m"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-REVIEW-RUNUP-3848.md"

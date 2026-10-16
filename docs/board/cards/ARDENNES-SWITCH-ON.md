@@ -73,3 +73,8 @@ Root circuit-registry lease now owns only those3existing test files plus own not
 ## Reviewed ordering correction available
 
 Finalsource cb658b7015d28a287a9da57999b2f6b7f36d1012 corrects only the three scoped tests and own note. Focused registry/Panorama cases and286releasechecks including13old-save fixtures pass; same independent ardennes_release_review confirms CLEAR. Panorama index19, old4course prefix, historicalQA/production catalogs and every geometry/access/price/save threshold retained. Summit owner can reuse this exact correction rather than duplicating those3files. Final production build passes; complete fresh canonical/jobs4 gate now running, not yet green. The preceding npm.cmd spawn EINVAL launched no build; corrected ComSpec npm run build completed normally. Timing remains SKIPPED; finishing/release separate.
+
+
+## Recapture after the finishing pass (Claude, 15 October)
+
+P4-FINISH-ARDENNES changes Ardennes' scenery (braking boards, grandstand and garages past the grid, a deeper forest, softer Riverside mist, no wet-road gloss). The first Ardennes picture fingerprint captured in this lane (46f792e1...) will no longer match once that pass merges. Recapture `tools/fixtures/world-signatures/ardennes-forest.json` from the merged finishing pass with the existing `--capture-new` route, after a reviewed visual difference, before this switch merges. If the boards stop cars, the new `tools/replays/courses/ardennes-forest.json` replay fingerprint is recaptured the same way.
