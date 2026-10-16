@@ -390,10 +390,11 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "building"
+    status: "review"
     claimed_by: codex-card-answers-01a141d7
     branch: codex/earn-car-2
     needs: [EARN-SCREEN]
+    waiting_on: "claude"
     locks: []
     flag: "earned-cars"
     details: "docs/board/cards/EARN-CAR-2.md"

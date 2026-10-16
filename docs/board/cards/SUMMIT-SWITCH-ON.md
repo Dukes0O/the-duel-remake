@@ -199,3 +199,8 @@ exactly the 17:30 answer, at the same 1e-6 precision, with the Open Road
 "camera unchanged" check kept. Approved as Claude's review. Codex's hold for
 Kyle's own word is respected; the status stays as Codex set it. Claude's
 earlier status change is withdrawn.
+
+
+## Missing solo replay captured without changing old pins
+
+Existing tools/test-replays.mjs --record ran in an ignored copy matching all1235tracked source files on425aacb3. Actual writer passed24cases at30/60/144FPS in46.598seconds. New Summit solo hash is e06505a8f7e9f6e0ced8a925c80353b7acb618be5ff8424073c4cb4b70806eb2 at all three cadences. All19existing replay JSON files match recomputed data and their actual source bytes stayed exact. Only the new challenge fixture is copied back; source commit/review follows. Receipt/log remain in this lane's evidence. This is capture evidence, not a canonical pass: original307/331 remains red and the rejected eleven-file v2 patch is still unapplied pending Kyle.
