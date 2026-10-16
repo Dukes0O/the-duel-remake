@@ -1,3 +1,5 @@
+import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
+import {settleCup} from './progression.js';
 import {isSummitAttack} from './summit-attack.js';
 import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
@@ -427,6 +429,12 @@ export class App {
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(stage,mode))
       this._lapChoices.set(this._lapChoiceKey(stageIndex,mode),laps);
     const rival=isSummitAttack(stage)?null:Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
+    const cupState=normalizeCups(this.profile.cups),cupRun=cupState.version===1?cupState.active:null;
+    const cupRound=this.cupsAvailable()&&cupRun?.ownerId===this.player.id&&mode==='grandprix'&&
+      CUPS.find(cup=>cup.id===cupRun.cupId)?.events[cupRun.results.length]===stage.id&&
+      cupRun.car===car&&cupRun.cpuDifficulty===this.cpuDifficulty&&cupRun.difficulty===difficulty&&
+      options.qualifying!==true&&(options.fieldSize==null||options.fieldSize===7);
+    if(cupRound)options={...options,fieldSeed:cupRun.fieldSeed,fieldSize:7};
     // A new field seed for every Grand Prix, so the same circuit does not always play out the same way.
     if(mode==='grandprix'&&options.fieldSeed==null)options={...options,fieldSeed:Math.floor(Math.random()*4294967296)>>>0};
     // Winter tyres count only where there is snow or ice to use them on.
@@ -449,6 +457,8 @@ export class App {
       muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
       deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
+    this._cupRace=cupRound&&this.duel.state.mode==='grandprix'&&this.duel.state.field?.size===8
+      ?{seriesId:cupRun.id,ownerId:this.player.id,runId:this.runId,state:this.duel.state}:null;
     return true;
   }
   nextStage(){
@@ -713,6 +723,64 @@ export class App {
   grandPrixAvailable(stage=COURSE[this.menuStage]){
     return this._switches().enabled('grand-prix')===true&&grandPrixCourse(stage);
   }
+  cupsAvailable(){
+    return this._switches().enabled('grand-prix')===true&&this._switches().enabled('grand-prix-career')===true;
+  }
+  startCup(cupId){
+    if(this.duel.state.status!=='menu'||!this.cupsAvailable())return {ok:false,reason:'Return to the menu to start a cup.'};
+    this._refreshPlayer();
+    const id=globalThis.crypto?.randomUUID?.()||
+      'cup-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+    const selected=this.getRaceChoices();
+    if(!isCarUnlocked(this.profile,selected.car))return {ok:false,reason:'Choose an owned car.'};
+    const firstCourse=COURSE.find(row=>row.id===CUPS.find(cup=>cup.id===cupId)?.events[0]);
+    if(firstCourse&&this._airOnlyRefused(selected.car,firstCourse.id))return {ok:false,reason:this.courseAccessMessage};
+    const created=beginCup(this.profile.cups,{id,ownerId:this.player.id,cupId,cpuDifficulty:selected.cpuDifficulty,
+      difficulty:selected.difficulty,car:selected.car,fieldSeed:Math.floor(Math.random()*4294967296)>>>0},
+      {courses:COURSE,owns:course=>isCourseUnlocked(this.profile,course)&&!courseClosed(this.profile,course.id,undefined,{enabled:this._fireOn()}),enabled:true});
+    if(!created.ok)return created;
+    this.profile={...this.profile,cups:created.cups};this._saveProfile();
+    return this.prepareCupRace();
+  }
+  prepareCupRace(){
+    if(this.duel.state.status!=='menu'||!this.cupsAvailable())return {ok:false,reason:'Return to the menu to continue your cup.'};
+    this._refreshPlayer();const cups=normalizeCups(this.profile.cups),active=cups.version===1?cups.active:null;
+    if(!active||active.ownerId!==this.player.id)return {ok:false,reason:'No cup is in progress for this player.'};
+    const id=CUPS.find(cup=>cup.id===active.cupId)?.events[active.results.length];
+    const course=COURSE.find(row=>row.id===id);
+    if(!course||!isCourseUnlocked(this.profile,course)||this._airOnlyRefused(active.car,id)||this._fireClosedRefused(course))
+      return {ok:false,reason:'The next cup course is not available for this car.'};
+    if(!this.setRaceSettings({eventId:id,mode:'grandprix',car:active.car,cpuDifficulty:active.cpuDifficulty,difficulty:active.difficulty}))
+      return {ok:false,reason:'The cup race could not be selected.'};
+    return {ok:true,reason:'Cup race selected. Start when you are ready.'};
+  }
+  abandonCup(){
+    if(this.duel.state.status!=='menu'||!this.cupsAvailable())return {ok:false,reason:'Return to the menu to abandon your cup.'};
+    this._refreshPlayer();const cups=abandonCup(this.profile.cups,this.player.id);
+    if(cups===this.profile.cups)return {ok:false,reason:'No cup is in progress.'};
+    this.profile={...this.profile,cups};this._cupRace=null;this._saveProfile();
+    return {ok:true,reason:'Cup abandoned. Completed race earnings are safe; no cup bonus was paid.'};
+  }
+  _recordCupResult(result,state){
+    const race=this._cupRace;
+    if(!this.cupsAvailable()||!race||race.state!==state||state!==this.duel.state||result!==state.results||
+      race.runId!==this.runId||race.ownerId!==this.player.id||state.playerId!==this.player.id||state.qualifying)return;
+    const recorded=recordCupRace(this.profile.cups,{...race,eventId:COURSE[state.stageIndex]?.id,stageIndex:state.stageIndex,
+      car:state.car,cpuDifficulty:state.cpuDifficulty,fieldSeed:state.fieldSeed,mode:state.mode,
+      completed:result.completed===true,qualifying:false,field:result.field});
+    if(!recorded.recorded)return;
+    this.profile={...this.profile,cups:recorded.cups};
+    const active=recorded.cups.active,definition=CUPS.find(cup=>cup.id===active.cupId);
+    result.cupSummary={id:active.cupId,rounds:active.results.length,total:definition.events.length,
+      finished:false,standings:cupStandings(active.results),bonus:0,trophy:null};
+    if(recorded.finished){
+      const settled=settleCup(this.profile,{seriesId:race.seriesId,ownerId:race.ownerId,activePlayerId:this.player.id});
+      this.profile=settled.profile;result.cupBonus=settled.reward;result.cupStandings=settled.standings;
+      result.cupTrophy=settled.trophy;
+      Object.assign(result.cupSummary,{finished:settled.settled,bonus:settled.reward,trophy:settled.trophy});
+    }
+    this._saveProfile();
+  }
   _settleResult(result,state){
     // Scrapdome events settle through their own result, never as races.
     if(state.arena)return;
@@ -762,6 +830,7 @@ export class App {
     }
     if(awarded.awarded){
       this.profile=awarded.profile;this._saveProfile();
+      this._recordCupResult(result,state);
       if(state.mode==='grandprix')result.creditPositionReward=Math.min(Math.max(0,awarded.reward),Math.max(0,awarded.breakdown.base));
       const recorded=recordFinish(mergeLeaderboards(this.leaderboard,loadLeaderboard()),payload,this.player);this.leaderboard=recorded.board;
       if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);

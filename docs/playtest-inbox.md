@@ -1047,3 +1047,6 @@ and source review passed. Kyle's 8-damage exception above is retained.
 - ROOT NEXT FREE HEAVY SLOT: P4-CUPS final build + canonical lane/jobs4 on frozen8a910245 (native13/13/reviewCLEAR). Existing jobs continue. Please leave the next one free for this launch; reservation is consumed when admitted, no quiet/globalpause. Ardennes finalHigh photos wait for actual finishing source commit. No frame measurement or foreign stop.
 
 - Ardennes three finishing fixes are source/test-ready adf28269 (runtime/toolreviewCLEAR55952005). Concrete8file code-only patch is on P4-ARDENNES, excluding switch/pins/metadata. Please freeze visualsource first or consume this patch in finish-ardennes for one combined native/gate; finalfinishing must not wait for a switchmerge that itself waits for finishing. Root never copies mutableforeignsource. Cupnext-slot reservation still active; latest waiter stopped on freshmetadata before any build/gate.
+
+
+- Cups 8a910245 merged after 271/271 lane suites, build and independent save/pay review. Native three-race acceptance passed 13/13. Existing preview switch remains unchanged. TYRE-SLIP now owns save-shape/busy-game-files; Intel stays held. Ardennes final lane/jobs4 is running on 55d2b7de; no frame timing or quiet hold.
