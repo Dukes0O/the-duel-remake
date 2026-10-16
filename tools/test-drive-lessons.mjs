@@ -231,3 +231,111 @@ for (const courseId of ['panorama-ridge','tremblant-woods']) {
     });
   }
 }
+
+
+// Prepared native student acceptance. These runs are heavy, just like the
+// instructor cases above: no execution until Root admits the existing suite.
+async function nativeStudentAttempt(baseline, lesson, mode, fps) {
+  const [{Duel}, {COURSE, DRIVE, steerForYaw, tyreSlipSteering}, {racingLineFor, buildSpeedProfile}] = await Promise.all([
+    import('../src/game.js'), import('../src/config.js'), import('../src/race-lines.js'),
+  ]);
+  const {corner,instructor,courseId,car,upgrades,difficulty,seed}=baseline;
+  const duel=new Duel({seed,featureFlags:{enabled:name=>name==='tyre-slip'}});
+  duel.startCampaign({seed,car,upgrades:{...upgrades},difficulty,driverId:'club',
+    mode:'timetrial',opponentCount:0,startStage:COURSE.findIndex(row=>row.id===courseId)});
+  const state=duel.state,course=duel.course,spec=duel.car;
+  const line=racingLineFor(course),profile=buildSpeedProfile(line,spec);
+  const start=instructor.poses[0];
+  state.tyreSlipRules=true;state.tyreSlip=0;
+  state.status='racing';state.countdown=0;state.s=corner.startS;
+  state.lateral=start.lateral;state.headingError=start.heading-course.at(state.s).heading;
+  state.speedMph=start.mph;
+  const rollingGear=spec.gears.findIndex(top=>top*DRIVE.gearCeilFrac>=state.speedMph);
+  state.gear=rollingGear<0?spec.gears.length-1:rollingGear;
+  state.revs=state.speedMph/spec.gears[state.gear];
+  state.yawVelocity=line.curvatureAt(state.s)*state.speedMph*DRIVE.mphToWorld;
+  state.traffic=[];state.opponents=[];
+  state.nextLapGate=duel._lapGates.filter(s=>s<=state.s).length;
+  const pace=difficulty==='casual'?.92:.97;
+  // instructorControls multiplies its profile by pace. Divide once to ask
+  // for the actual 100% line speed, not 100% of the slower instructor.
+  const speedScale=mode==='fast'?1:mode==='slow'?pace*.8:pace;
+  const plan={course,car:spec,line,profile:{at:s=>profile.at(s)*speedScale/pace},
+    drive:DRIVE,steerForYaw,difficulty,turnInS:corner.turnInS,turnOutS:corner.turnOutS};
+  const cornerSpeed=Math.min(...instructor.poses.filter(p=>p.s>=corner.turnInS&&p.s<=corner.turnOutS).map(p=>p.mph));
+  assert.ok(Number.isFinite(cornerSpeed)&&cornerSpeed>0,'actual instructor corner speed exists');
+  let wallHit=false,brakingDone=false,ticks=0,frames=0,answer;
+  const off=duel.onChange((current,event)=>{
+    if(event.crash||event.scrape||event.boundaryReset||event.checkpointReset)wallHit=true;
+  });
+  const carView=controls=>({s:state.s,lateral:state.lateral,world:course.groundAt(state.s,state.lateral),
+    speedMph:state.speedMph,brake:controls.brake,throttle:controls.throttle,tyreSlip:state.tyreSlip||0,
+    offRoad:state.offRoad===true,status:'racing',paused:false});
+  try {
+    answer=stepDriveLesson(lesson,carView({brake:0,throttle:0}),{start:true},0);
+    while(lesson.phase==='driving'&&ticks<120*120){
+      const frameTicks=Math.floor(++frames*120/fps+1e-9);
+      while(ticks<frameTicks&&lesson.phase==='driving'&&ticks<120*120){
+        const surface=duel._drivingSurface(state.s,state.lateral);
+        let controls=instructorControls(state,surface,plan);
+        if(mode==='late'||mode==='right'){
+          const brakeS=mode==='late'?instructor.redBoardS:instructor.cones[0].s;
+          if(state.s>=brakeS&&state.speedMph<=cornerSpeed)brakingDone=true;
+          const brake=state.s>=brakeS&&!brakingDone?1:0;
+          controls={...controls,brake,throttle:mode==='late'&&state.s<brakeS?1:brake?0:controls.throttle};
+          if(mode==='late'){
+            // Use the real tyre steering gain but do not clip desired yaw
+            // to its grip peak: the late driver can ask for full steering.
+            const rawSteer=(yaw,options)=>{
+              const {steerGain}=tyreSlipSteering({...options,brake});
+              return Math.max(-1,Math.min(1,-yaw/Math.max(.05,steerGain)));
+            };
+            controls.steer=instructorControls(state,surface,{...plan,steerForYaw:rawSteer}).steer;
+          }
+        }
+        duel.setInput(controls);duel.step(1/120);ticks++;
+        answer=stepDriveLesson(lesson,carView(controls),{
+          wallHit:wallHit||state.impactTimer>0,crashed:state.status!=='racing',
+        },1/120);
+      }
+    }
+    assert.equal(lesson.phase,'result',mode+' must end at a real gate or physical failure');
+    return {answer,attempt:structuredClone(lesson.lastAttempt)};
+  } finally {off();}
+}
+
+for(const courseId of ['panorama-ridge','tremblant-woods']){
+  for(const difficulty of ['casual','pro']){
+    test(`native student ${courseId} ${difficulty}: late, right and full-pace challenge at 30/60/144 FPS`,async()=>{
+      const baseline=await buildInstructorRun({courseId,difficulty,car:'falcone_f42',upgrades:{},seed:1989,fps:60});
+      let reference=null;
+      for(const fps of [30,60,144]){
+        const lesson=createDriveLesson('corner',baseline),results=[];
+        const late=await nativeStudentAttempt(baseline,lesson,'late',fps);results.push(late);
+        assert.ok(late.attempt.firstBrakeS>=baseline.instructor.redBoardS,'late driver waits for the fixed board');
+        assert.ok(late.attempt.screechSeconds>=.5,'late entry must produce at least half a second of real screech');
+        assert.ok(late.attempt.finished?late.attempt.timeLostSeconds>=.25:
+          ['wall','offroad'].includes(late.attempt.endReason),'late entry loses at least .25s or ends at wall/off-road');
+        const right=await nativeStudentAttempt(baseline,lesson,'right',fps);results.push(right);
+        assert.equal(lesson.stage,'right');assert.equal(right.attempt.endReason,'finish');
+        assert.deepEqual(right.attempt.rules,[true,true,true,true],'native right try passes every settled rule');
+        for(let index=0;index<2;index++){
+          const fast=await nativeStudentAttempt(baseline,lesson,'fast',fps);results.push(fast);
+          assert.equal(lesson.stage,'challenge');assert.ok(fast.attempt.elapsedSeconds<baseline.instructor.timeSec);
+          assert.equal(lesson.streak,index+1);
+        }
+        const slow=await nativeStudentAttempt(baseline,lesson,'slow',fps);results.push(slow);
+        assert.equal(slow.attempt.endReason,'finish');assert.ok(slow.attempt.elapsedSeconds>=baseline.instructor.timeSec);
+        assert.equal(lesson.streak,0,'a real slower attempt resets the earned streak');
+        for(let index=0;index<3;index++){
+          const fast=await nativeStudentAttempt(baseline,lesson,'fast',fps);results.push(fast);
+          assert.equal(fast.attempt.endReason,'finish');assert.ok(fast.attempt.elapsedSeconds<baseline.instructor.timeSec);
+          assert.equal(fast.answer.result,index===2?'passed':'running');
+        }
+        assert.equal(lesson.done,true);assert.equal(lesson.streak,3);
+        if(reference)assert.deepEqual(results,reference,`native student scoring repeats at ${fps} FPS`);
+        else reference=results;
+      }
+    });
+  }
+}

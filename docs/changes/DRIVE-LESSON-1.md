@@ -87,3 +87,26 @@ They are normal tests, not an opt-in bypass or a new harness. A future file
 or canonical lane run is heavy; do not run it during the release hold.
 The four new native cases have no pass/fail result yet. Actual late-versus-
 right scripted acceptance still follows the first clean instructor result.
+
+
+## Prepared native student acceptance, parallel source only
+
+The existing test file now prepares fresh native Duel attempts, using the
+instructor's actual start and gate/cone plan, same car/settings and fixed
+120 Hz controls. For each corner, Casual/Pro and 30/60/144 FPS, it requires:
+late braking at the unchanged board, full brake until actual instructor
+corner speed and uncapped line steering, at least .5 s real screech and
+at least .25 s loss or wall/off-road; a real right try passing all four
+rules; a 100%-line-speed driver beating the instructor; a real slower run
+resetting an earned streak; then three native faster runs completing it.
+All observations go through the existing stage scorer. No state is moved
+after the scratch race's authorized rolling start; contact/reset events
+and off-road time are measured from the real simulation. FPS results must
+match exactly. No App, storage, save, reward, recording or live race API is
+used. The host's reward/no-record contract still needs its later hook tests.
+
+This is source preparation only. The helper and four new native cases have
+NOT RUN; no success, corner time, cone fit, screech or right-try verdict is
+claimed. Node syntax parsing only; Root owns native admission and review.
+No module, physics, board, target, old test assertion or runtime hook changed.
+No disposable output created or removed.
