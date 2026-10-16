@@ -90,3 +90,9 @@ None. No existing test is edited.
 ## Removed
 
 Nothing replaced; no old code, test or document is removed.
+
+## Review guards (Claude)
+
+The review was CLEAR. Two small guards from its notes: the net falls back to
+the stock hook limit (`KESTREL.hookLimitKg`) instead of no limit when a gear
+object lacks one, and the winch ignores a non-finite time step. Suites pass.

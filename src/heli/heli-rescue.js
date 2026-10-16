@@ -5,7 +5,7 @@
 // crates. Pure and repeatable, step 1/120 s like the flight: no clock, no
 // randomness. It never touches credits; it hands back the pay for the session
 // to use. Run stepRescue before stepCable each step.
-import {HELI_STEP, horizontalSpeed} from './heli-flight.js';
+import {HELI_STEP, KESTREL, horizontalSpeed} from './heli-flight.js';
 import {CABLE, createLoad, hookPoint, hook} from './heli-cable.js';
 
 export const RESCUE = Object.freeze({
@@ -339,7 +339,7 @@ export function canNetCrate(carrier, crate, gear, hookAt = carrier) {
   if (aboard.length >= room) return {ok: false, reason: 'The net is full.'};
   if (!crate.onGround || crate.falling) return {ok: false, reason: 'The crate must be on the ground.'};
   if (flatGap(hookAt, crate) > NET_REACH) return {ok: false, reason: 'Too far to net.'};
-  const limit = Number.isFinite(gear?.hookLimitKg) ? gear.hookLimitKg : Infinity;
+  const limit = Number.isFinite(gear?.hookLimitKg) ? gear.hookLimitKg : KESTREL.hookLimitKg;
   if (aboard.reduce((sum, one) => sum + (one === carrier ? carrier.ownKg ?? carrier.massKg : one.massKg), 0) + crate.massKg > limit)
     return {ok: false, reason: 'Too heavy for the hook.'};
   return {ok: true, reason: null};

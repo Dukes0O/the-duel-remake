@@ -97,7 +97,7 @@ export function reelWinch(winch, gear, command = 0, dt = HELI_STEP, load = null)
   }
   const lo = gear.lineMin, hi = gear.lineMax;
   const move = command > 0 ? 1 : command < 0 ? -1 : 0;
-  winch.length = clamp(clamp(winch.length, lo, hi) + move * gear.reelSpeed * Math.max(0, dt), lo, hi);
+  winch.length = clamp(clamp(winch.length, lo, hi) + move * gear.reelSpeed * (Number.isFinite(dt) ? Math.max(0, dt) : 0), lo, hi);
   if (load) load.lineLength = winch.length;
   return winch.length;
 }
