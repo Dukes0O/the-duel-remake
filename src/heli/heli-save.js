@@ -141,9 +141,11 @@ export function notePlayDay(profile, dateString, {enabled} = {}) {
 }
 
 // A new play day forgets burns that have healed: a burnt course after 60
-// play days, a scar after 40 (docs/HELI_FIRE.md sections 8.4 and 8.5).
+// play days, a scar after 40 (docs/HELI_FIRE.md sections 8.4 and 8.5), and a
+// wreck job after 3 (docs/HELI_RESCUE.md section 10).
 function healed(heli) {
   const today = heli.playDay.count, next = {...heli};
+  if (heli.missions?.wreck && today - heli.missions.wreck.day > WRECK_DAYS) next.missions = {...heli.missions, wreck: null};
   if (isObject(heli.burnt)) next.burnt = Object.fromEntries(Object.entries(heli.burnt)
     .filter(([, entry]) => today - entry.day < CLOSURE.healedDay));
   if (Array.isArray(heli.scars)) next.scars = heli.scars.filter(scar => today - scar.day < CLOSURE.scarHealedDay);
@@ -222,6 +224,18 @@ export function finishJob(profile, jobId, pay, {enabled} = {}) {
 export const FIRE_MONEY = Object.freeze({firePay: 1500, bucketRepair: Object.freeze([0, 100, 250, 600])});
 export const MISSION_KINDS = Object.freeze(['fire']);
 export const BADGES = Object.freeze(['firefighter']);
+// H4 Rescue (docs/HELI_RESCUE.md section 10). These are what a save may hold;
+// MISSION_KINDS stays the list of kinds the engine offers, so storing a
+// rescue field offers nothing by itself.
+export const RESCUE_KINDS = Object.freeze(['hiker', 'avalanche', 'hoist', 'supply']);
+export const RESCUE_STAGES = Object.freeze(['fly', 'found', 'hold', 'carry']);
+export const RESCUE_BADGES = Object.freeze([...BADGES, 'rescue']);
+export const RESCUE_COUNTS = Object.freeze(['hoists', 'searches', 'supplies', 'rescued']);
+// A wreck job stays on the board for 3 play days, then goes (section 5.3).
+export const WRECK_DAYS = 3;
+const SAVED_KINDS = Object.freeze([...MISSION_KINDS, ...RESCUE_KINDS]);
+const MAX_CONDITION = 2;
+const CRATES = 3;
 export const BUCKET_DAMAGE = Object.freeze(['whole', 'dented', 'torn', 'ruined']);
 // Sarah's regrowth news for a burnt course, in order (section 8.4): a burn
 // remembers the last one heard, so each plays once.
@@ -256,16 +270,51 @@ export function createMissions() {
     quiet: {untilDay: 0, engineSeconds: 0}, firesOut: 0, badges: []};
 }
 
+function normalizeCall(call) {
+  if (!isObject(call) || !SAVED_KINDS.includes(call.kind) || !validId(call.id) || !validCourse(call.courseId)) return null;
+  const out = {kind: call.kind, id: call.id, courseId: call.courseId, day: count(call.day), answered: call.answered === true};
+  // Flights since a rescue call came (section 3.3): only a call that has the count keeps it.
+  if (Number.isSafeInteger(call.flights)) out.flights = count(call.flights);
+  return out;
+}
+
+// The rescue in hand (section 10). Kyle, 15 October: it saves `condition`
+// (0 unhurt, 1 hurt, 2 badly hurt), never the bumps. A record that cannot say
+// what, where and how far along it is reads as none.
+const step = (value, max) => Number.isSafeInteger(value) ? Math.max(0, Math.min(max, value)) : 0;
+function normalizeRescue(value) {
+  if (!isObject(value) || !RESCUE_KINDS.includes(value.kind) || !validId(value.id) || !validCourse(value.courseId)
+    || !RESCUE_STAGES.includes(value.stage)) return null;
+  const crates = Array.isArray(value.crates) ? value.crates : [];
+  return {kind: value.kind, id: value.id, courseId: value.courseId, seed: seed32(value.seed),
+    clockSeconds: tenth(value.clockSeconds, MAX_COUNT), stage: value.stage,
+    crates: Array.from({length: CRATES}, (_, i) => step(crates[i], 2)), condition: step(value.condition, MAX_CONDITION)};
+}
+
+// A wrecked car waiting for the recovery job (section 5.3). Where it lies must
+// be real numbers, or the job could not place it.
+const MAX_METRES = 100_000;
+const metres = value => Number.isFinite(value) && Math.abs(value) <= MAX_METRES ? Math.round(value * 10) / 10 : null;
+function normalizeWreck(value) {
+  if (!isObject(value) || !validCourse(value.courseId) || !validCar(value.carId) || !validDay(value.day)) return null;
+  const x = metres(value.x), z = metres(value.z);
+  return x === null || z === null ? null : {courseId: value.courseId, carId: value.carId, x, z, day: value.day};
+}
+
 function normalizeMissions(value) {
-  const call = value.call;
   const quiet = isObject(value.quiet) ? value.quiet : {};
-  return {seed: seed32(value.seed), draws: count(value.draws), need: Math.min(count(value.need), 99), count: count(value.count),
-    last: MISSION_KINDS.includes(value.last) ? value.last : null,
-    call: isObject(call) && MISSION_KINDS.includes(call.kind) && validId(call.id) && validCourse(call.courseId)
-      ? {kind: call.kind, id: call.id, courseId: call.courseId, day: count(call.day), answered: call.answered === true} : null,
+  const out = {seed: seed32(value.seed), draws: count(value.draws), need: Math.min(count(value.need), 99), count: count(value.count),
+    last: SAVED_KINDS.includes(value.last) ? value.last : null,
+    call: normalizeCall(value.call),
     quiet: {untilDay: count(quiet.untilDay), engineSeconds: tenth(quiet.engineSeconds, MAX_COUNT)},
     firesOut: count(value.firesOut),
-    badges: [...new Set((Array.isArray(value.badges) ? value.badges : []).filter(badge => BADGES.includes(badge)))]};
+    badges: [...new Set((Array.isArray(value.badges) ? value.badges : []).filter(badge => RESCUE_BADGES.includes(badge)))]};
+  // The H4 fields appear only once a save has them, so an H2 save reads back
+  // exactly as it was written.
+  if (Object.hasOwn(value, 'rescue')) out.rescue = normalizeRescue(value.rescue);
+  for (const name of RESCUE_COUNTS) if (Number.isSafeInteger(value[name])) out[name] = count(value[name]);
+  if (Object.hasOwn(value, 'wreck')) out.wreck = normalizeWreck(value.wreck);
+  return out;
 }
 
 const cellList = list => [...new Set((Array.isArray(list) ? list : []).filter(validCell))].sort((a, b) => a - b);

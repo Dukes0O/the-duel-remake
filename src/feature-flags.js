@@ -26,6 +26,8 @@ export const FEATURE_STATES = Object.freeze({
   'forest-fire': 'on',
   // Earned cars and medal sheets (docs/EARNED_CARS.md). Off in the game.
   'earned-cars': 'dev',
+  // H4 Rescue (docs/HELI_RESCUE.md): rescues in the mission engine. Off in the game; works only with the helicopter on.
+  rescue: 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
