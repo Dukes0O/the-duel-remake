@@ -183,10 +183,10 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "ready"
-    claimed_by: codex-card-answers-01a141d7
+    status: "building"
+    claimed_by: codex-overnight-01a12e4f
     branch: codex/summit-switch-on
-    locks: []
+    locks: [busy-game-files, circuit-registry, world-signatures]
     needs: []
     details: "docs/board/cards/SUMMIT-SWITCH-ON.md"
 

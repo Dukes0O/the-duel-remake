@@ -262,3 +262,7 @@ approval of proposed-state-test-corrections-v2.patch (SHA256 d3bd711d...a2e9)
 as Claude reviewed it. Apply it as written, with the approved rock filter and
 Gallery seam fixes, run the lane tier and build, and merge. waiting_on is
 cleared.
+
+## Overnight continuation after Kyle approval
+
+Root resumes the existing clean ecee3e81 lane under Kyle's overnight instruction. The original card-answer chat left it ready; Root now holds busy-game-files, circuit-registry and world-signatures for this switch-on. Claude remains RELEASE-SUMMIT Release Manager. Apply the exact approved v2 artifact first, then sync integration. Preserve the newer reviewed Ardennes historical-prefix and dynamic manifest-order assertions when resolving their overlapping test hunks; add Summit's precise on/parent-owned expectations without replacing those assertions with stale lists. One independent review covers that union. Existing physical checks and 19-view inspection remain valid; do not repeat them. Only Summit/Attack scene rows may change after actual capture, with all foreign rows exact. No live install, release waiver or completed gate is implied.
