@@ -55,7 +55,7 @@ is what it was (proof below). The app does not pass either yet (see Open).
 - `src/heli/heli-missions.js`: `peoplePay(r, bonus)`; `rescueLimit(kind, gear)`,
   `clockLeft(r, gear)` and `tickRescue(..., {gear})` take the searchlight.
 - `src/app.js`: one line, C cycles `% (this.heliSession?.cameraCount ?? 4)`.
-- `tools/test-heli-skin-session.mjs` (new, 171 checks).
+- `tools/test-heli-skin-session.mjs` (new, 189 checks).
 
 ## Proof that the switches off change nothing
 
@@ -72,22 +72,20 @@ passes null for the gear, which the rules read as the base kit.
 
 ## Choices made (Open for Claude)
 
-1. **The app does not pass the switches.** `src/app.js` is held to the camera
-   line, so `createHeliSession` in `visitHeli` still gets neither
-   `skinsEnabled`, `wildlifeEnabled`, `wildlife` nor `surveyStand`. Until a card
-   passes them, nothing here shows. `surveyStand` (the animals' standing check
-   from WILD-PLACE) is optional; without it animals may stand anywhere.
-2. **No new import in `app.js`.** The line wanted `cameraViewsFor(gear).length`,
+1. **The app passes the switches (Director's change).** `visitHeli` now passes
+   `skinsEnabled` (heli-skins), `wildlifeEnabled` (wildlife), the wildlife module and
+   `surveyStand` (`App._surveyStand`, the placement checker with the whole square
+   allowed). With both off the app behaves as before.
+2. **No new import of `heli-camera` in `app.js`.** The line wanted `cameraViewsFor(gear).length`,
    but `test-heli-mode.mjs` lists the approved `heli/` imports of `app.js` and
-   `heli-camera.js` is not one. The session imports `cameraViewsFor` and offers
-   `cameraCount`; `app.js` uses that. `render3d.js` still has to pass the worn
-   gear to `heliCameraPose` (SKIN-VIEW).
-3. **Winch keys.** The packet says W and S with H held. The session reads
-   `controls.pour` (H held) with `controls.pitch` (W is +1) and also a plain
-   `controls.reel` (-1 in, +1 out). While reeling, pitch is zeroed so the
-   helicopter does not also tip. But pressing H is also the hook key, so holding
-   it to reel releases a car on the cable. The input map needs a decision (a
-   separate `reel` axis is the clean fix; it is not in `input-contexts.js`).
+   `heli-camera.js` is not one. The session offers `cameraCount`; `app.js` uses
+   that. Passing the worn gear to `heliCameraPose` in `render3d.js` goes to SKIN-VIEW.
+3. **The H key (Director's change).** W and S are the collective (lift), so the winch
+   reels on `controls.lift` while H is held (or a plain `controls.reel`); the lift is
+   not also applied. With the medevac coat the game calls `hookKey()` on key-down,
+   which only notes that H is held; letting go hooks or releases, unless W or S
+   reeled the winch meanwhile. With any other coat, or the switch off, `hookKey()`
+   is `pressHook()` on key-down exactly as before.
 4. **The count is reported in the air or on the ground** (R or the Report
    button), not only on landing, since the board is only at the home pad and
    most counts are at other courses. If "on landing" was meant, the check is one
@@ -116,7 +114,7 @@ None. No existing test is edited.
 
 ## Checks
 
-- `tools/test-heli-skin-session.mjs`: 171 checks, about 50 s. Every heli suite
+- `tools/test-heli-skin-session.mjs`: 189 checks, about 60 s. Every heli suite
   passes (listed in the hand-back).
 - Lane tier and build: see the hand-back.
 

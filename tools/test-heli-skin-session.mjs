@@ -18,6 +18,9 @@ import {hikerSpots, pickHiker, hoistSpots, pickHoist} from '../src/heli/heli-sea
 import {surveyJob} from '../src/heli/heli-survey.js';
 import {HELI_RADIO_LINES} from '../src/heli/heli-radio-lines.js';
 import * as wildlife from '../src/wildlife.js';
+import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {raceFeatureFlags} from '../src/wasteland-access.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 
 let checks = 0;
@@ -508,23 +511,28 @@ ok(/% \(this\.heliSession\?\.cameraCount \?\? 4\)/.test(readFileSync(new URL('..
   };
   const line = (worn, controls, seconds) => winch(worn, controls, seconds).view.skins.line;
   const near = (a, b, label) => ok(Math.abs(a - b) < 1e-6, `${label}: ${a} vs ${b}`);
-  near(line('medevac', {pour: true, pitch: 1}, 2), 15 - 3, 'H and W reel in 1.5 m/s for 2 s');
-  near(line('medevac', {pour: true, pitch: -1}, 4), 15 + 6, 'H and S pay out');
-  near(line('medevac', {pour: true, pitch: 1}, 20), 5, 'the line stops at 5 m');
-  near(line('medevac', {pour: true, pitch: -1}, 40), 40, 'and at 40 m');
+  near(line('medevac', {pour: true, lift: 1}, 2), 15 - 3, 'H and W reel in 1.5 m/s for 2 s');
+  near(line('medevac', {pour: true, lift: -1}, 4), 15 + 6, 'H and S pay out');
+  near(line('medevac', {pour: true, lift: 1}, 20), 5, 'the line stops at 5 m');
+  near(line('medevac', {pour: true, lift: -1}, 40), 40, 'and at 40 m');
   near(line('medevac', {reel: -1}, 2), 12, 'controls.reel works as well');
-  near(line('medevac', {pitch: 1}, 2), 15, 'W alone does not reel (H must be held)');
-  same(line('stock', {pour: true, pitch: 1}, 2), null, 'stock paint has no winch');
+  near(line('medevac', {lift: 1}, 2), 15, 'W alone does not reel (H must be held)');
+  same(line('stock', {pour: true, lift: 1}, 2), null, 'stock paint has no winch');
   same(winch('medevac', {}, 1).view.skins.gear.reelSpeed, 1.5, 'the gear table is the worn coat\'s');
-  // The keys are the winch\'s while reeling: the helicopter does not also pitch forward.
-  const moved = (worn, controls) => { const w = winch(worn, controls, 3); return Math.hypot(w.view.heli.x - w.view.zone.x, w.view.heli.z - w.view.zone.z); };
-  ok(moved('medevac', {pour: true, pitch: 1}) < 3 && moved('stock', {pitch: 1}) > 6, 'reeling does not fly the helicopter forward; plain W does');
+  // W and S are the winch's while reeling: the helicopter does not also climb or sink.
+  const rose = (worn, controls) => {
+    const w = winch(worn, {}, 0.5), before = w.session.view().heli.y;
+    run(w.session, 3, () => controls);
+    return w.session.view().heli.y - before;
+  };
+  const reelRise = rose('medevac', {pour: true, lift: 1}), idleRise = rose('medevac', {}), plainRise = rose('stock', {lift: 1});
+  ok(Math.abs(reelRise - idleRise) < 0.2 && plainRise - idleRise > 1, `reeling leaves the collective alone, plain W climbs (${reelRise.toFixed(2)}, ${idleRise.toFixed(2)} and ${plainRise.toFixed(2)} m)`);
   // A short line hooks a car from 5 m: stock paint cannot from that height.
   const hookWith = (worn, reelSeconds) => {
     const session = newSkinSession(skinProfile({owned: ['medevac'], worn}));
     session.start();
     const car = session.view().loads.find(c => c.own);
-    run(session, reelSeconds, () => worn === 'medevac' ? {pour: true, pitch: 1} : {});
+    run(session, reelSeconds, () => worn === 'medevac' ? {pour: true, lift: 1} : {});
     const goal = {x: car.x, z: car.z, y: car.y + 5.3};
     run(session, 60, v => pilot(v, {x: goal.x, z: goal.z, y: v.heli.y < car.y + 9 ? car.y + 9 : v.heli.y}, {speed: 4, sink: 3}), v => Math.hypot(v.heli.x - goal.x, v.heli.z - goal.z) < 1);
     run(session, 60, v => pilot(v, goal, {speed: 1, sink: 1}), v => Math.hypot(v.heli.x - goal.x, v.heli.z - goal.z) < 0.8 && Math.abs(v.heli.y - goal.y) < 0.3 && Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < 0.4);
@@ -880,4 +888,84 @@ console.log('PASS the count is dropped by leaving the course');
   const said = [...source.matchAll(/'(heli\.radio\.(?:survey|skin|wash)\.[a-z]+)'/g)].map(match => match[1]);
   ok(said.every(id => HELI_RADIO_LINES[id]), `the session names only real lines (${[...new Set(said)].join(', ')})`);
 }
+// ---- The H key: the medevac coat acts on key-up, unless the winch was reeled ----------------
+{
+  const overCar = (worn, extra = {}) => {
+    const session = newSkinSession(skinProfile({owned: worn === 'stock' ? [] : [worn], worn}), extra);
+    session.start();
+    const car = session.view().loads.find(c => c.own);
+    hoverAt(session, car.x, car.z, 15);
+    session.takeEvents();
+    return session;
+  };
+  const hooked = session => session.view().load?.hooked === true;
+  const tapped = session => {
+    const first = session.hookKey(), events = [...session.takeEvents()];
+    events.push(...session.step({pour: true}), ...session.step({pour: true}));
+    const midway = hooked(session);
+    events.push(...session.step({}), ...session.takeEvents());
+    return {first, midway, events};
+  };
+  // Medevac: nothing on key-down, the hook on key-up; again to let it go.
+  const medevac = overCar('medevac');
+  const tap = tapped(medevac);
+  same([tap.first, tap.midway, hooked(medevac), has(tap.events, 'hooked')], [null, false, true, true], 'medevac: H down does nothing, H up hooks the car');
+  const second = tapped(medevac);
+  same([hooked(medevac), has(second.events, 'released') || has(second.events, 'releasedHigh')], [false, true], 'and a second tap lets it go');
+  // Holding H and reeling: no hook, no release, at any moment.
+  const reeling = overCar('medevac');
+  reeling.hookKey();
+  const events = [];
+  for (let i = 0; i < 240; i++) events.push(...reeling.step({pour: true, lift: 1}));
+  events.push(...reeling.step({}));
+  events.push(...reeling.step({}));
+  same([hooked(reeling), has(events, 'hooked') || has(events, 'released'), Math.abs(reeling.view().skins.line - 12) < 1e-6], [false, false, true], 'medevac: H held with W reels the winch (2 s) and never hooks or releases');
+  const withLoad = overCar('medevac');
+  tapped(withLoad);
+  withLoad.hookKey();
+  for (let i = 0; i < 120; i++) withLoad.step({pour: true, lift: -1});
+  withLoad.step({});
+  same(hooked(withLoad), true, 'medevac: H with S while a car hangs pays out the line and does not release it');
+  // Other coats and the switch off: H acts on key-down, exactly as before.
+  for (const [label, session] of [['stock', overCar('stock')], ['fire', overCar('fire')], ['switch off', (() => {
+    const s = createHeliSession(sessionOptions(skinProfile())); s.start();
+    const car = s.view().loads.find(c => c.own); hoverAt(s, car.x, car.z, 15); s.takeEvents(); return s;
+  })()]]) {
+    const event = session.hookKey();
+    same([event?.type, hooked(session)], ['hooked', true], `${label}: H down hooks at once`);
+  }
+}
+console.log('PASS the hook acts on key-up with the medevac coat only');
+
+// ---- The app passes the two switches, the wildlife rules and the standing check -------------
+{
+  const saved = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const memory = new Map();
+  const storage = {getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)),
+    removeItem: key => memory.delete(key), key: index => [...memory.keys()][index] ?? null, get length() { return memory.size; }};
+  Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: storage});
+  try {
+    const visit = overrides => {
+      const app = new App();
+      app.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides: {helicopter: true, ...overrides}, qa: true}), () => app.duel.state);
+      ok(app.visitHeli(), 'the helicopter visit starts');
+      return app;
+    };
+    const both = visit({'heli-skins': true, wildlife: true}), plain = visit({}), skinsOnly = visit({'heli-skins': true}), wildOnly = visit({wildlife: true});
+    ok('skins' in both.heliSession.view() && 'survey' in both.heliSession.view(), 'both switches on: the session has skins and the count');
+    ok(!('skins' in plain.heliSession.view()) && !('survey' in plain.heliSession.view()), 'both off: neither');
+    ok('skins' in skinsOnly.heliSession.view() && !('survey' in skinsOnly.heliSession.view()), 'skins alone: no count');
+    ok(!('skins' in wildOnly.heliSession.view()) && 'survey' in wildOnly.heliSession.view(), 'wildlife alone: no skins');
+    const stand = both._surveyStand('tremblant-woods', {course: woods.course});
+    ok(typeof stand === 'function', 'the standing check is a function of a point');
+    const road = woods.course.worldAt(woods.course.phase(0), 0);
+    same(stand(road.x, road.z), false, 'an animal may not stand on the road');
+    const cycle = app => { app.heliCamera = 0; app._inputAction('heli-camera'); return app.heliCamera; };
+    same([cycle(plain), plain.heliSession.cameraCount], [1, 4], 'C moves to the next camera view');
+  } finally {
+    if (saved) Object.defineProperty(globalThis, 'localStorage', saved); else delete globalThis.localStorage;
+  }
+}
+console.log('PASS the app passes the skin and wildlife switches');
+
 console.log(`test-heli-skin-session: ${checks} checks passed`);

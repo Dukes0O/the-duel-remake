@@ -187,6 +187,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   const winch = createWinch();
   let flightDirt = createFlightDirt(), dirtBank = 0, skinNote = null;
   let surveyTaken = null, surveyRun = null, scareSaidAt = -Infinity;
+  let hookHeld = false, hookReeled = false;
   const heldLoad = () => loads.find(car => car.hooked && !car.netted) ?? null;
   // The worn skin's gear numbers, or null for stock paint and the switch off
   // (the rules read null as the base kit). Worked out again only when the save changes.
@@ -1083,17 +1084,25 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         return api.takeEvents();
       }
       if (phase !== 'flying') return api.takeEvents();
-      const held = heldLoad();
       const gear = gearNow();
-      // The medevac winch (docs/HELI_WILDLIFE.md section 7): with H held, W reels
-      // the line in and S pays it out (or controls.reel, -1 in and +1 out). The
-      // keys are the winch's while it reels, so they do not also pitch the helicopter.
+      // The medevac coat acts on H when it is let go, and only if the winch was
+      // not used while it was held (see hookKey): a tap hooks or releases.
+      if (hookHeld && controls.pour !== true) {
+        hookHeld = false;
+        if (!hookReeled) api.pressHook();
+      }
+      const held = heldLoad();
+      // The medevac winch (docs/HELI_WILDLIFE.md section 7): with H held, W (lift
+      // up) reels the line in and S (lift down) pays it out, or controls.reel (-1
+      // in, +1 out). The keys are the winch's while it reels, so they do not also
+      // raise or lower the helicopter, and the hook does not act on H.
       let flightControls = controls;
       if (gear?.reelSpeed > 0) {
         const hooking = controls.pour === true && !bucketLoad();
         const explicit = Number.isFinite(controls.reel) && controls.reel !== 0 ? Math.sign(controls.reel) : 0;
-        const reel = explicit || (hooking && controls.pitch ? -Math.sign(controls.pitch) : 0);
-        if (hooking && !explicit && controls.pitch) flightControls = {...controls, pitch: 0};
+        const reel = explicit || (hooking && controls.lift ? -Math.sign(controls.lift) : 0);
+        if (reel !== 0) hookReeled = true;
+        if (hooking && !explicit && controls.lift) flightControls = {...controls, lift: 0};
         reelWinch(winch, gear, reel, dt, held);
       }
       const hang = hangOf(held);
@@ -1218,6 +1227,15 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const job = hooked.job ? jobInHand() : null;
       if (job?.id === hooked.job) aim(job.to);
       return result.event;
+    },
+    // The H key going down (what the game calls). On every coat but medevac it is
+    // pressHook at once, exactly as it always was. With the medevac coat it only
+    // notes that H is held: letting go hooks or releases, unless W or S reeled
+    // the winch in the meantime.
+    hookKey() {
+      if (!(gearNow()?.reelSpeed > 0)) return api.pressHook();
+      hookHeld = true; hookReeled = false;
+      return null;
     },
     // P: the autopilot on or off. It flies toward the chosen destination.
     pressAutopilot() {
