@@ -87,7 +87,7 @@ armor-kit-assets, blender-output, audio-vehicles, arsenal-core-audio,
 arsenal-wave1-audio, enzo-vehicle, koenigsegg-driving, arena-junk-shove,
 titan-handling, repo-hygiene, review-evidence, `src/test.js`.
 
-Lane tier: see below. No browser scenario and no frame check were run: the
+Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`, after the review fixes and an integration merge, before the F1): 388 passed, 0 failed, 0 not run in 1,261 s. `npm run build`: passed. To be run once more after the F1 is merged in. No browser scenario and no frame check were run: the
 Panorama Ridge Grand Prix frame check in a field of Bolides waits for the
 nightly full check, as the Enzo's did, and the in-game look round follows
 registration.
