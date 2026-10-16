@@ -6,8 +6,7 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "blocked"
-    waiting_on: kyle
+    status: "building"
     claimed_by: codex-ardennes-release-2026-10-15
     needs: [ARDENNES-SWITCH-ON]
     locks: [release]

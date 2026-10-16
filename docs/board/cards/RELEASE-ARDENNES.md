@@ -46,3 +46,8 @@ Only the existing grounding fixture and its release note changed on 89a4a26c. In
 ## Kyle questions the duplicate full tier
 
 All453 suites have passing evidence across original452/453 plus the corrected17/17lane; this is cumulative evidence, not an exact7d full pass. New stage7d430cd0 build20261016030307-f35c5308abb7 verified537/537privateHTTP, preview stopped. Independent installer/reuse reviewCLEAR. Root stopped only its pending wrapper44292 before any new full child or full-start receipt existed when Kyle questioned the repetition. Release drain cleared; no foreign stop. The exact-final-commit rule still needs Kyle's release-specific exception or a new exact full. No live install or pass fabrication. Normal owned correction-lane cleanup finished; original failed packet retained.
+
+
+## Kyle directs narrow acceptance for this test-only correction
+
+Kyle asked whether all tests had already passed and called a duplicate round a waste of time and tokens. Root applies that direct steering as this release's exception: original452 passing full suites plus the sole corrected grounding suite in actual17/17lane; no duplicate full. Candidate remains exact7d430cd0 and the game/runtime/assets are unchanged from actualac8 full/combat/native source. All453 suites have passing evidence cumulatively; no exact7d full pass is claimed. Exception quotes/proof are retained in final-7d430cd0/release-exception.json. Originalfailed452/453 packet stays exact. Install only this staged reviewed candidate, no new source/build/release expansion. Kyle's frame skip remains.
