@@ -741,3 +741,5 @@ note.
 ## Night final acceptance resumes after Summit merge
 
 The missing Pro-only pin was recorded once on b1edcddb; only its new fixture and own note committed1f29566e. No old recording/pin changed. Root briefly reclaims busy-game-files/save-shape only to combine current integration before final gating: the actual merge has two textual conflicts, App imports and feature flags. Retain both racing-line and cup imports, tyre-slip dev plus merged Yeti on and every foreign released flag. Preserve automatically merged cup save/settlement logic. No retune, Casual change or replay re-recording. Freeze and release the core leases immediately after that union; one independent final delta review and the canonical gate execute the still pending new recovery/FPS/arena/CPU assertions. No extra120race matrix.
+
+Union committed clean de0371dd: exactly the two named conflicts resolved by keeping both sets of imports and tyre dev/Yeti on; new cup settlement normalized/preserved. App/flags parse and diff clean. Source frozen again; busy/save leases released immediately. Pending canonical/build and independent final delta confirmation remain, no new acceptance pass yet.
