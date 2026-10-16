@@ -114,3 +114,14 @@ DRIVE-LESSON-HOOKS frozen owned8d25cadca64fedccb3853696eb212e26e016c7fe: four pr
 ## Further parallel source completion
 
 DRIVE-LESSON-HOOKS clean99a3ef10a7f52831b74363e93d3a173047c87e66 now includes real game/App/renderer/menu integration and reviewed preparation/ghost/save-failure corrections. Changedpure18checksPASS; actual browser recipe sourceCLEAR/UNRUN. Corelease free. DRIVE-LESSON-1 current0296a99f preserves reviewed888 input correction but actual cone trace stillfails; bounded diagnosis parked. No playable/merge acceptance. Corrected Tyre canonical7204/38356 is running exact3e2, receiptpending.
+
+
+Parallel lesson source16October10:15PT: DRIVE-LESSON-1 clean47ee11cc
+implements Claude's own-line placement;3changedpurePASS/reviewCLEAR, actual
+builder sampling scope question oncard, native still unfinished. Hooklane
+e8b5855d fixes stale corner preparation (new1PASS/reviewCLEAR) and approved
+exact switch inventory (91+8PASS/reviewCLEAR). Neither lane is merged or
+playable. Tyre corrected canonical actually395/396/jobs4/exit1/sourceclean;
+new own inactive-field assertion delta is being fixed, no build. GP33468
+native receipt pending. Foreign browser13744 and newer gate43272 preserved.
+No Root core/save lease, private browser/server or overnight-watch restart.

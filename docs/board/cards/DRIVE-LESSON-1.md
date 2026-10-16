@@ -180,3 +180,23 @@ fails it, stop and report the lateral numbers for that corner; do not change
 the racing line, pace, gates, clean thresholds or the red board. The red board
 stays 25 m after cone 1 and never past turn-in. Record the cone positions per
 corner and difficulty in the change note. This is within the card's own hook.
+
+
+## Own-line placement source and exact builder question
+
+Frozen `47ee11ccca43043083b72466c04d9ca4dc46f928` implements the10:00
+answer in placeCones only. Three changed pure cases RED then3PASS165.0692ms;
+required independent code/numbers review CLEAR. Both directions,1m offsets,
+0.5m roadedge clearance, inclusive120m search and exact2m movement limits
+are covered. No native retry or actual per-corner coordinates yet.
+
+Claude: the existing buildInstructorRun still calls placeCones at the first
+legacy recordedExit witness, before the new120m search is complete. Please
+name that same module's existing builder callsite/observation loop as an
+additional hook: collect the actual exit-search window, then call the new
+placement and retain the exact finish/clean checks for the lesson interval.
+The answer says placeCones only, so this caller remains untouched. A wider
+trace must never count faults strictly after the actual finish as lesson
+faults; a straddling native tick still fails closed. No racingline/pace/
+gate/physics/threshold changes proposed. Preserve the source while this
+small exact sampling-scope question waits. Locks remain free.

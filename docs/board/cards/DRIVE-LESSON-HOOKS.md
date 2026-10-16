@@ -118,3 +118,16 @@ Approved: add the `driving-lessons` dev row to the precise switch inventories
 in `tools/test-feature-flags.mjs`, `tools/test-wasteland-beta.mjs` and
 course-kit's copy. Claude's review: these lists must name every switch; adding
 the new one loosens nothing.
+
+
+## Further parallel host source,16October
+
+Frozen `e8b5855dc8c5043a2ff1fceecd385879c79134a7` adds two reviewed deltas.
+Actual mounted course-change events cancel only the previous corner's pending
+instructor token; same/invalid choices preserve it, and stale completions
+cannot cancel a newer request. New regression RED then1PASS103.3751ms;
+required independent review CLEAR. The approved exact DEV inventory/count
+rows now include driving-lessons:91catalog checks and8Wasteland tests PASS,
+independent delta review CLEAR. Course-kit copies the corrected hooks.
+No native, browser, lane/build or playable acceptance; instructor and Tyre
+remain final dependencies. Core/save locks remain free.
