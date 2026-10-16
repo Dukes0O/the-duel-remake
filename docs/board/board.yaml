@@ -693,6 +693,7 @@ tasks:
   - id: ARDENNES-SWITCH-ON
     title: "Ardennes switch-on preparation after driver, frames and finishing"
     owner: "codex"
+    waiting_on: claude
     lane: "COURSE"
     size: "S"
     status: "building"

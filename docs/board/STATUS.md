@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T01:47:52.176Z
+Observed at: 2026-10-16T01:56:44.200Z
 
-Observation commit: 8437fdcefbbe78bd6c24a97f3b055bd5fe345fb6
+Observation commit: 62dfec69723380249fe02c8aca50bdc5b08d3038
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 8437fdcefbbe78bd6c24a97f3b055bd5fe345fb6
+Integration HEAD: 62dfec69723380249fe02c8aca50bdc5b08d3038
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -61,7 +61,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T18:34:55-07:00 | 0 | last commit 2026-10-15T18:34:55-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, src/landscape-detail.js, src/pit-lane.js, src/road-surface.js |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T18:37:32-07:00 | 0 | last commit 2026-10-15T18:37:32-07:00 | docs/HELICOPTER.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-2.jpg, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
-| codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T18:47:19-07:00 | 0 | last commit 2026-10-15T18:47:19-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/ghost.js, src/intel-levels.js, src/progression.js |
+| codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T18:56:17-07:00 | 0 | last commit 2026-10-15T18:56:17-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/ghost.js, src/intel-levels.js, src/progression.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 4 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -86,7 +86,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 1,038,946 B | +0 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 406,443,008 B | +428,032 B | unavailable |
+| Git objects | 406,932,480 B | +489,472 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -95,7 +95,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: 8437fdcefbbe78bd6c24a97f3b055bd5fe345fb6
+- Local integration/wasteland: 62dfec69723380249fe02c8aca50bdc5b08d3038
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
