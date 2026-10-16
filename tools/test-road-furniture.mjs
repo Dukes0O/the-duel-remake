@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import { Course } from '../src/course.js';
 import { COURSE } from '../src/config.js';
@@ -8,6 +9,10 @@ import { addRaceStructures } from '../src/race-structures.js';
 let checks=0,sweeps=0,minRock=Infinity,maxArchError=0;
 const check=(ok,message)=>{assert.ok(ok,message);checks++;};
 const ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0),up=new THREE.Vector3(0,1,0);
+const galleryBytes=readFileSync(new URL('../public/assets/models/circuits/kits/gallery.glb',import.meta.url));
+const galleryModel=JSON.parse(galleryBytes.subarray(20,20+galleryBytes.readUInt32LE(12)).toString('utf8'));
+const roofNode=galleryModel.nodes.find(node=>node.name==='gallery-heavy-concrete-roof');
+const roofAccessor=galleryModel.accessors[galleryModel.meshes[roofNode.mesh].primitives[0].attributes.POSITION];
 for(const seed of[1989,42,17,9999])for(const def of COURSE){
   const course=new Course(def,seed),features=course.features,hulls=features.obstacles.filter(o=>o.signSupport||o.tunnelCover);
   for(const sign of features.signs){
@@ -49,11 +54,31 @@ for(const seed of[1989,42,17,9999])for(const def of COURSE){
       check(!!hit,`${def.id}/${seed}: cover collider extends outside visible rock`);
       minRock=Math.min(minRock,hit.point.y-floor);check(hit.point.y-floor>1,`${def.id}: hillside hull has no substantial rock overhead`);
     }
-    for(const tunnel of features.tunnels)for(let s=tunnel.start+.5;s<tunnel.end;s+=11)for(const off of[-7.45,-6,0,6,7.45]){
+    for(const tunnel of features.tunnels.filter(row=>row.flatRoof)){
+      const declared=tunnel.collisions.find(row=>row.name==='gallery-heavy-concrete-roof');
+      assert.deepEqual(declared.min,roofAccessor.min,`${def.id}: physical roof minimum matches the actual kit`);checks++;
+      assert.deepEqual(declared.max,roofAccessor.max,`${def.id}: physical roof maximum matches the actual kit`);checks++;
+      const roofs=features.obstacles.filter(row=>row.sourceBounds===declared.name);
+      check(roofs.length>0,`${def.id}: actual Gallery roofs are placed`);
+      for(const roof of roofs)for(const off of[-4,-2,0,2,4]){
+        const p=course.worldAt(roof.kitS,off),placement=def.kitPlacements.find(row=>row.id==='gallery'&&row.s===roof.kitS);
+        const floor=course.groundAt(placement.s,placement.lateral).y;
+        check(roof.minY===floor+roofAccessor.min[1]*placement.scale[1],`${def.id}: actual kit roof underside uses its authored transform`);
+        check(!!sweepObstacle(p,p,roof,0,{halfWidth:0,halfLength:0}),`${def.id}: inside-Gallery witness lies under an actual kit roof`);
+        const arch=course.at(roof.kitS).y+3.6+(tunnel.height-3.6)*Math.sqrt(1-(off/tunnel.width)**2);
+        const cameraCeiling=Math.min(course.groundAt(roof.kitS,0).y+tunnel.height,arch)-.45;
+        check(cameraCeiling<=roof.minY-.45,`${def.id}: camera ceiling clears the actual flat kit roof`);
+      }
+    }
+    for(const tunnel of features.tunnels)for(let s=tunnel.start+.5;s<tunnel.end;s+=11)for(const off of(tunnel.flatRoof?[-4,-2,0,2,4]:[-7.45,-6,0,6,7.45])){
       const p=course.worldAt(s,off),ceiling=p.y+3.6+(tunnel.height-3.6)*Math.sqrt(1-(off/tunnel.width)**2);
       ray.set(new THREE.Vector3(p.x,p.y+.1,p.z),up);const hit=ray.intersectObjects(lining,false)[0];
       check(!!hit,`${def.id}: continuous tunnel roof`);maxArchError=Math.max(maxArchError,ceiling-hit.point.y);
       check(ceiling-hit.point.y<.1,`${def.id}: analytic camera ceiling differs from rendered arch`);
+      if(tunnel.flatRoof){
+        const flat=course.groundAt(s,0).y+tunnel.height;
+        check(Number.isFinite(ceiling)&&Math.min(flat,ceiling)-.45<hit.point.y-.25,`${def.id}: Gallery camera ceiling clears its actual lining`);
+      }
     }
   }
 }

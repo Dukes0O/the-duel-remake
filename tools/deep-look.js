@@ -7,6 +7,8 @@
 //   /tools/deep-look.html?quality=high|performance&view=1..6&time=SECONDS&clean=1
 //   window.__deepLook: showView(i), info()
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { installIsolatedStorage } from './qa-storage.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -191,6 +193,11 @@ window.__deepLook = {
   // Handles for poking at the scene from the console while tuning.
   debug: { scene, camera, renderer, look, car, school, kelp, floor, seagrass, rocks, headlights, renderFrame: seconds => renderFrame(seconds), setView },
 };
+
+// Photography reuses this page's module graph; ordinary look pages expose no hook.
+if (typeof __DUEL_QA__ !== 'undefined' && __DUEL_QA__ === true && query.get('art-qa') === '1') {
+  window.__deepLook.artQa = Object.freeze({ THREE, GLTFLoader, floorHeight, installIsolatedStorage });
+}
 
 // Live preview when opened by hand: view 1 and a running clock.
 setView(Number(query.get('view')) || 1, { time: query.get('time') ? Number(query.get('time')) : undefined });
