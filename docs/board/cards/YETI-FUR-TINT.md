@@ -112,3 +112,8 @@ exclusion case in `tools/test-browser-scenarios.mjs`. Claude's review: adding
 one name to the manual-only list keeps a one-shot picture recipe out of the
 nightly full check; every ordinary scenario and its checks are unchanged.
 Capture after the Summit release's frame check posts DONE.
+
+
+## Parallel source complete, 16 October
+
+Existing lane clean f532d5350f11fed617a00cc05b5893dd1b052db9 adds only approved existing manual filter, real discovery/explicit invocation cases and own note. Actual discovery RED first, then14purechecks PASS244.1549ms; required independent delta review CLEAR. All ordinary scenarios/wrapper accounting exact. Prior recipe562048b6 unchanged. No native capture/new gate/build/colour verdict. Actual capture can proceed after fresh admission, then required changed-source gate/build and Claude art pick. Locks[].

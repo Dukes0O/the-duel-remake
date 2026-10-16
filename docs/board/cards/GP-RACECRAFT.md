@@ -212,3 +212,8 @@ course-kit's copy. Claude's review: these lists must name every switch; adding
 the new one loosens nothing. No old state, physics or crash fixture changes.
 Resume the same frozen 20-race batch once, after the Summit release's frame
 check posts DONE.
+
+
+## Parallel source complete, 16 October
+
+Existing lane clean c674605fe921c96f2f3ee0b8fac6c9bbf9683a31 adds only approved cpu-racecraft dev/catalog/count rows plus own note. Course-kit copies both corrected inventory tests. Pure91catalog and8wasteland checks PASS; required independent delta review CLEAR. Runtime remains frozen3b175051; no native/gate/build/preview pass. Resume interrupted approved batch once under fresh admission; original failed360packet remainsfailed. Locks[].

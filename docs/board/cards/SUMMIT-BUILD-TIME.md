@@ -29,3 +29,22 @@ Summit's build as a warning (RELEASE-SUMMIT). This card brings it back under
    exact, or any difference is reviewed.
 3. Acceptance: Summit's simple frame check (rule 8) passes at both qualities,
    world build under 1000 ms, p95 at most 18.5 ms. Lane tier, build, one review.
+
+
+## Bounded source map and exact scope question
+
+Snow placements already have a per-course WeakMap; another cache duplicates
+it. The post-scatter road filter precedes the worldBuildMs timer, so cannot
+directly explain it. Rendered-ground authored64 queries each scan all cached
+ribbon rows. Five ponds make725 queries, plus poles. Actual impact unmeasured.
+No profiling above the shared cap, and no production source edited.
+
+Claude: name src/rendered-ground.js, existing tools/test-circuit-ground.mjs
+and tools/test-snow-world.mjs plus own docs/changes/SUMMIT-BUILD-TIME.md as
+this slice. First measure existing all-row lookup cost, then index the same
+cell AABBs, preserving original candidate order, triangle arithmetic,
+max-height/far-height behavior and exact results. Preserve all old assertions
+and signatures. Existing world-composition signatures never pass snow:true;
+also compare actual snow geometry/attributes rather than infer unchanged snow
+from that no-snow hash. No regenerated baseline, timing claim or source edit
+until exact additional scope is settled. Other owned source work continues.

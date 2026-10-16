@@ -162,7 +162,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/gp-racecraft
     needs: []
@@ -175,7 +175,8 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "ready"
+    status: "blocked"
+    waiting_on: claude
     needs: []
     details: "docs/board/cards/SUMMIT-BUILD-TIME.md"
 
@@ -286,7 +287,7 @@ tasks:
     lane: "ART"
     size: "S"
     locks: []
-    status: "building"
+    status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/yeti-fur-tint
     needs: []
