@@ -230,3 +230,9 @@ Director names only the two existing F1-specific hash pins in tools/test-arsenal
   `earned-cars/car-[1-3]-round-[1-3].jpg` names, and make the aggregate size
   check advisory per AGENTS (sizes are targets). Keep the placement, 500 KB
   per-sheet and raw-capture checks exact.
+
+## Claude answers - F1 engine pitch, 15 October 20:20
+
+Approved: F1-only pitch 1.04 (steady 1.8413, unique, below the Enzo and the
+2.2 cap), every other F1 field, every old voice and every assertion exact.
+Release the Bolide's frozen sound-bank lease.

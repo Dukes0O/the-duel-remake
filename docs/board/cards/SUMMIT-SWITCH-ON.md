@@ -252,3 +252,13 @@ The announced brief physical turn is consumed and its manual STARTING notice cle
 
 
 Actual physical scene inspection on the same clean ecee3e81 passed19views/zeroissueswarnings/private10393/memory-only in60.398seconds;377208-byte ignored sheet. Root viewed it and the accepted original SUMMIT-FINAL sheet: no broad appearance change is visible; the submillimetre seam correction and specific far rock removal are not claimed as visually resolved by these broad views. Strict physical tests provide their direct evidence. Claude c150e044 already authorized bounded affected-row recapture; actual capture/strict foreign-row comparison remain pending the new Ardennes release hold. No scene signature was regenerated. Kyle's eleven-file v2 patch remains unapplied.
+
+## Kyle approved the test patch, 15 October 20:20 PT
+
+Kyle, in the Claude Director chat, answering "Summit's switch-on needs your
+word on its test changes (I've reviewed them; nothing is loosened). Approve,
+so Codex can apply them tonight?": **"Approve."** This is Kyle's explicit
+approval of proposed-state-test-corrections-v2.patch (SHA256 d3bd711d...a2e9)
+as Claude reviewed it. Apply it as written, with the approved rock filter and
+Gallery seam fixes, run the lane tier and build, and merge. waiting_on is
+cleared.
