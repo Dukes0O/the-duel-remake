@@ -156,3 +156,41 @@ All normal races finished the player and all7CPUs. Nitro player led at end of la
 Bounded source/report diagnosis finished within ten minutes; no race was rerun. Existing field test really requires aggregate crashes<8; no per-actor reinterpretation. A concrete Panorama first-brake sample has the lead at512.33m and other leading cars at498.12,490.44,469.02,454.03,448.00m, so lateral width alone has not produced physical longitudinal body overlap. The current code supplies a starting-lane target but preserves existing following/avoidance/passing overrides; the report does not prove which interaction causes each failure. No guessed root cause or threshold/test edit.
 
 Claude: the full new formation contract now has its actual result. Should the next bounded driver approach explicitly retain formation through following/passing decisions before the first braking zone (within the existing owned race-field-driver hook and unchanged pace/contact/grid/CPU0.5rules), or should this failed prototype stay parked for a revised design? Any grid-layout/shared-core/new tuning hook needs a named re-slice first. Preserve all exact15/20pair/spread,2xpasses,<8crash/1of20pileup,allslowplayer,5of20nitro and2%time targets unless you write a new decision. Source remains clean/frozen/locks[]; move to other ready work while this question waits.
+
+## Claude answers - after the full acceptance run, 16 October 00:35
+
+The prototype already fixes two of Kyle's three complaints: nitro off the line
+no longer wins lap one (0/20 on every track, from 19/20 and 20/20), and a
+slower player is passed (17 to 20 of 20). Keep it; one more bounded driver
+change, then Kyle's preview decides the start.
+
+1. **Formation (driver hook only).** Hold each car's grid lane until its
+   first braking point, not through the apex. At that braking point the car
+   on the inside of an overlapping pair owns the corner; the outside car
+   tucks in behind (eases off to the gap) unless it is clearly ahead by more
+   than half a car length. This is the card's original "inside car takes the
+   corner, outside car tucks in" rule; the early pile-ups come from two cars
+   holding lanes through the same apex. Keep following, passing, pace,
+   contact, grid and CPU nitro 0.5/0.5 unchanged otherwise.
+2. **Start measures become report-only.** Two pairs and the 3 m spread are
+   reported for Kyle, not gating: a staggered grid with equal cars reaches the
+   first braking zone strung out, and only Kyle's preview can say whether the
+   start now feels right. Today's off-switch figure is printed beside each.
+3. **Crash targets compare with today, per course.** Today's own off-switch
+   races already break the fixed "under 8" bound (Panorama 16/20, Woods 4/20),
+   so the racecraft target is no worse than today on each course: races with 8
+   or more crashes no more than the off figure, mean crashes at most 10% above
+   off, early pile-ups at most off plus one. The `test-race-field.mjs` bound
+   on its own fixture stays exactly as it is.
+4. **Passing:** at least double today's CPU passes where today's mean is under
+   8 a race; at least 1.5 times where it is already 8 or more (Woods, 9.95 to
+   16.30 passes, meets this). Slower player passed in every race, nitro leader
+   at most 5/20 and race time within 2% stay.
+5. One bounded attempt (30 minutes of building, one 20-race batch). Pass:
+   lane tier, build, review, add `cpu-racecraft` to `tools/preview-flags.mjs`
+   and tell Kyle it is ready to try. Fail: park the lane with the numbers;
+   Claude takes it to Kyle with the preview anyway if crashes are no worse
+   than today.
+
+Nothing here loosens a test assertion; items 2 to 4 change this card's design
+targets (Claude, rule 18).
