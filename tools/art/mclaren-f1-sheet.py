@@ -20,7 +20,7 @@ def main():
     names = [('f1-front', 'Front three-quarter'), ('f1-rear', 'Rear three-quarter'),
              ('f1-side', 'Side silhouette'), ('f1-detail', 'Wheel and nose'),
              ('f1-damage', 'Actual damage'), ('f1-driver', 'Actual driver steering')]
-    sheet = Image.new('RGB', (1200, 1180), '#182126')
+    sheet = Image.new('RGB', (1200, 1212), '#182126')
     draw = ImageDraw.Draw(sheet)
     font_path = Path('C:/Windows/Fonts')
     title = ImageFont.truetype(str(font_path / 'segoeuib.ttf'), 27)
@@ -38,7 +38,7 @@ def main():
         x, y = (index % 2) * 600, 88 + (index // 2) * 360
         sheet.paste(image, (x, y))
         draw.text((x + 12, y + 338), caption, font=label, fill='#dce5e7')
-    draw.text((18, 1154), 'Appearance only. Gameplay, art verdict and field timing are separate checks.', font=label, fill='#bdcbd0')
+    draw.text((18, 1180), 'Appearance only. Gameplay, art verdict and field timing are separate checks.', font=label, fill='#bdcbd0')
     args.output.parent.mkdir(parents=True, exist_ok=True)
     for quality in [88, 84, 80, 76, 72, 68]:
         sheet.save(args.output, quality=quality, optimize=True)

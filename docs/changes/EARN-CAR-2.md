@@ -34,3 +34,6 @@ Only the new492772-byte armour GLB was added (SHA256a6cb9b0e5199ad21c64221972073
 
 
 Personal save review is CLEAR on417dfbc1: thirteen historical fixtures and437 first-load/round-trip checks passed in memory. The first six native pictures were captured, but that harness run is FAILED because the showroom requested an absent favicon. Its report and images remain in native-r1; no clean native pass or formal art verdict is claimed. The card-owned photography recipe now supplies an actual empty icon before page load, retaining every browser error check. Model, lighting, cameras and renderer are unchanged. A fresh native packet will verify this correction.
+
+
+The corrected native packet on8930a480 passed: private58916, memory-only saves, all six real views, zero errors and warnings. Root inspected every original. Formal round1 sheet is128555bytes with its review note under docs/board/looks/earned-cars; Claude verdict is pending. The first uncommitted sheet had overlapping footer labels and was recycled, then rebuilt with clear spacing; model and pictures did not change. This is one formal round. Actual field timing, final canonical lane and build are still unrun.
