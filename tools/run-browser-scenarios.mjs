@@ -59,6 +59,7 @@ export const WRAPPER_ONLY_SCENARIOS = Object.freeze({
 export async function namedScenarios({includeManual = false} = {}) {
   return (await readdir(scenarioDir))
     .filter(file => /^[a-z][a-z0-9-]*\.mjs$/.test(file) && !['smoke.mjs', 'review-sheet.mjs'].includes(file))
+    .filter(file => !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, file.slice(0, -4)))
     .filter(file => includeManual || file !== 'rustwall-frame.mjs')
     .map(file => file.slice(0, -4))
     .sort();
@@ -89,24 +90,25 @@ export async function main(args = process.argv.slice(2), {
 } = {}) {
   const options = parseSuiteArguments(args);
   const discovered = await discover({includeManual: !!options.names});
-  const names = options.names ?? discovered;
-  if (!names.length) throw Error('No named browser scenarios were found.');
-  for (const name of names) if (!discovered.includes(name)) throw Error('Unknown scenario: ' + name);
+  const selected = options.names ?? discovered;
+  for (const name of selected) if (!discovered.includes(name) && !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name))
+    throw Error('Unknown scenario: ' + name);
+  const names = selected.filter(name => !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name));
+  const delegatedNames = options.names ? selected.filter(name => Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name))
+    : Object.keys(WRAPPER_ONLY_SCENARIOS);
+  if (!names.length && !delegatedNames.length) throw Error('No named browser scenarios were found.');
+  const delegations = delegatedNames.map(name => ({name, passed: null, status: 'run by its wrapper',
+    wrapper: WRAPPER_ONLY_SCENARIOS[name], exitCode: null, evidenceDir: null, reportPath: null,
+    screenshots: [], warnings: null, issues: null, error: null}));
   const archive = options.outputDir ? resolveEvidenceDir(options.outputDir) : evidenceOutputDir('browser-suite');
   await makeDirectory(archive, {recursive: true});
   let bundle;
   const rows = new Array(names.length);
   try {
-    if (names.some(name => !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name))) bundle = await build();
+    for (const row of delegations) log(`${row.name}: run by its wrapper (${row.wrapper}); not executed here`);
+    if (names.length) bundle = await build();
     async function checkScenario(index) {
       const name = names[index], outputDir = join(archive, name);
-      if (Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name)) {
-        rows[index] = {name, passed: null, status: 'run by its wrapper',
-          wrapper: WRAPPER_ONLY_SCENARIOS[name], exitCode: null, evidenceDir: null,
-          reportPath: null, screenshots: [], warnings: null, issues: null, error: null};
-        log(`${name}: run by its wrapper (${WRAPPER_ONLY_SCENARIOS[name]}); not executed here`);
-        return;
-      }
       let run, report = null, evidenceDir = null, error = null;
       try {
         run = await scenario(name, outputDir, bundle);
@@ -137,8 +139,8 @@ export async function main(args = process.argv.slice(2), {
       await Promise.all(Array.from({length: Math.min(options.jobs, end - start)}, worker));
       start = end;
     }
-    const delegated = rows.filter(row => row.status === 'run by its wrapper').length;
-    const summary = {schema: 1, count: rows.length, executed: rows.length - delegated, delegated,
+    const delegated = delegations.length;
+    const summary = {schema: 1, count: rows.length, executed: rows.length, delegated, delegations,
       passed: rows.filter(row => row.passed === true).length,
       failed: rows.filter(row => row.passed === false).length, archive, rows};
     const summaryPath = join(archive, 'summary.json');
