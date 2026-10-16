@@ -710,3 +710,8 @@ no reset) and scores at least 0.6 of today's score; measured 5,196 of 6,417
 (0.81), so it passes. The 6,000 target stays: a human has to drift better
 than the autopilot to win on Hard, which is what harder means. Record this
 replacement in the change note.
+
+
+## Record-version increment frozen while acceptance question waits
+
+Clean61e7de00 has independent cups_save_review code/save CLEAR. New Pro row separation and native-objective cases RED then GREEN; historical off pin and complete Casual road/Neon state streams remain exact.13historical fixtures/437checks,27progression,backup andstorage3.54/4MB pass. No target/controller/score/ghost change. Full focused/recovery/macros/gate/build still UNRUN; do not claim finished acceptance or repeat120matrix. Wait for the precise Hard acceptance answer above. Freeze source and release busy/save lease to the already reviewed cup candidate for its native/gate/build once capacity permits; no new lane.

@@ -172,11 +172,11 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "blocked"
+    status: "building"
     claimed_by: codex-cups-2026-10-15
     branch: codex/p4-cups
     needs: [P4-CAREER, P4-SUMMIT, P4-VARIANTS, P4-TREMBLANT-SNOW, P4-GP-EXISTING]
-    locks: []
+    locks: [save-shape, busy-game-files]
     flag: "grand-prix"
     details: "docs/board/cards/P4-CUPS.md"
 
@@ -364,11 +364,12 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "blocked"
+    waiting_on: claude
     claimed_by: codex-tyre-slip-2026-10-15
     branch: codex/tyre-slip
     needs: []
-    locks: [busy-game-files, save-shape]
+    locks: []
     flag: "tyre-slip"
     details: "docs/board/cards/TYRE-SLIP.md"
 

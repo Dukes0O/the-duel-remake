@@ -63,3 +63,6 @@ Add only the existing GrandPrix branch in src/screen-results.js as a read-only r
 
 
 Frozen0dd37e84 has required independent save/pay/code CLEAR, including both reproduced real save fixes and final presentation; strengthened tests cover actual reload/player isolation/transport.11bounded tests pass plus named result-view case; full3race/lane/build still UNRUN. Heavy capacity is full. Pause source and release busy/save lease temporarily to the existing TYRE-SLIP card under Kyle's new explicit Casual decision; do not edit this frozen candidate until its lease returns. Ardennes retains heavy priority, then cup native/gate/build when admitted. No merge/install or final-complete claim.
+
+
+Shared busy/save lease returns from frozen tyre increment61e7de00. Continue exact reviewed0dd37e84 native3race/lane/build, preserving its source. Ardennes gate now admitted in its priority slot, so no remaining unstarted Ardennes reservation; all additional heavy starts still require actual roots<3 and no fresh hold.

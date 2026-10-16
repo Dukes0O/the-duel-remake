@@ -56,3 +56,8 @@ Frozen c2826ec8: only manifest state changes; selected production/admission test
 ## Review correction: first course-owned replay, before code
 
 Independent review of c2826ec8 found enabled-course replay coverage missing Ardennes (21 enabled,20 covered). Own tools/replays/courses/ardennes-forest.json only for its first actual seeded input fingerprint at30/60/144FPS. Use the unchanged replay() and recorded inputs from tools/test-replays.mjs, with a temporary recipe under .qa-dist that writes only this new file; no existing replay file, assertion, input, tolerance or runner changes. Capture all three actual cadences and require exact equality. Preserve all previous fixture bytes, then let the unchanged full replay guard verify the union in the final lane gate. This corrects a real review fault before gate/review confirmation; no runtime physics or driver change.
+
+
+## Corrected source admitted
+
+Frozen0b5dca64 adds only actual Ardennes replay to c2826ec8. All30/60/144 fingerprints5f4ddce78ee29bae253078214880854056aadca08b4ca2f6faab51d403dcb7d2; all old fixture bytes exact. Independent same ardennes_release_review confirms CLEAR, catalog21/21and23cases. Actual final build PASS4953.1161ms. After reserved capacity opened, exactly one complete canonical lane/jobs4 started on this source (local lane-complete log/JSON); result pending, not green. Original interrupted empty lane.json remains distinct. Claude finishing requested, timing SKIPPED and release checks/install separate.
