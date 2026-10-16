@@ -17,8 +17,8 @@ by name ("Follow rule 18: release H2 Fire"). Claude is Release Manager.
 One switch goes from dev to on: `forest-fire` (it works only with the
 helicopter, which is already on). With it on:
 
-- The mission engine: after lesson 4 and a few trips, a fire call comes
-  mid-flight; R answers now or later.
+- The mission engine: after lesson 4 and 3 to 6 fuel purchases at the pump,
+  a fire call comes mid-flight; R answers now or later.
 - The bucket at the pad, the lake, the aim ring, H to pour; fire spreads one
   step per 200 s of engine time and three steps a new play day.
 - A fire out pays 1,500 credits and the firefighter badge; a fire lost
@@ -34,8 +34,9 @@ The FIRE-SAVE unknown-key rule has been live since the helicopter release
 
 ## What else the release carries
 
-Since the live Ardennes build (7d430cd0): P4-FINISH-ARDENNES round 3, the
-braking boards beside the road (bf358e5a), already named in the README.
+Since the live Ardennes build (7d430cd0): P4-FINISH-ARDENNES round 3
+(bf358e5a), which moves Ardennes' braking boards from 13 m to 2.4 m from the
+road edge, with its reviewed scene fingerprint and test.
 Everything else merged since is documentation or board records; every other
 switch keeps its state.
 
@@ -43,6 +44,16 @@ switch keeps its state.
 
 - `src/feature-flags.js`: `'forest-fire': 'on'`.
 - `README.md`: the release paragraph.
+- Fix from the release review: on a course closed after a fire, START on the
+  main menu did nothing and the reason never reached the screen (the course
+  list still offers the course; only Your Courses showed it closed).
+  `src/course-closures.js`'s closure card gains a `startNote` ("Tremblant
+  Woods is closed after a forest fire. It reopens in 7 play days, or buy it
+  back in Your Courses."), and `src/screen-readiness.js` shows it under
+  START and closes START, the same way as the helicopter's air-only note.
+  `tools/test-heli-fire-session.mjs` checks the line, START closed, the
+  line going and START opening after a buyback, and nothing with the switch
+  off.
 
 ## Changed assertions (reviewed)
 
@@ -68,6 +79,16 @@ switch keeps its state.
   the page, so turning it on in the build changes nothing they measured.
 - At install: the staged build on a private port with the switch on by
   default, then the live HTTP checks (recorded in `docs/VERIFICATION.md`).
+
+## Review
+
+One independent release review: fit to ship. Fixed before release: the
+silent START on a closed course (above); the README now says the call comes
+after filling up at the pump a few times (that is what the engine counts);
+the braking-board note says what actually changed. It confirmed a player who
+never flies gets nothing written and nothing closed, saves from the 14
+October helicopter release load with every field, only `forest-fire`
+changes, and nothing reachable is unfinished.
 
 ## Removed
 
