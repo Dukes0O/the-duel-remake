@@ -229,3 +229,24 @@ case. Own .evidence/2026-10-16/GP-RACECRAFT/accept-c674605f/report.json
 and receipt.json pending. No previous interrupted retained cases existed;
 old ce3 failed360packet remains unchanged. No result/gate/build/preview.
 Tyre7204 and olderforeignbrowser13744 are the other two roots.
+
+
+## Bounded follow-up completed FAILED, 16 October 10:59 PT
+
+Actual clean c674605fe921c96f2f3ee0b8fac6c9bbf9683a31 completed all360 cases:20seeds x3courses x normal/slow/nitro x off/on, jobs4, exit1,3590872.3709ms. Receipt source/after are identical, ended17:59:13.737621UTC. Wrapper43724/runner33468 and all children are verified DRAINED. Every case finished the player and all7CPUs. Existing lane packet .evidence/2026-10-16/GP-RACECRAFT/accept-c674605f/report.json and receipt.json are retained. No gate/build/preview/merge or retry followed.
+
+| Guard, off -> on | Panorama Ridge | Tremblant Woods | Pacific Canyon |
+| --- | --- | --- | --- |
+| CPU passes and required factor | 1.65 -> 5.65;2x PASS | 9.95 -> 10.15;1.5x FAIL | 3.55 -> 7.70;2x PASS |
+| >=8-crash races, on <= off | 16 -> 20 FAIL | 4 -> 10 FAIL | 0 -> 1 FAIL |
+| Mean crashes, on <= off x1.1 | 12.55 -> 13.45 PASS | 3.75 -> 8.50 FAIL | 0.10 -> 2.10 FAIL |
+| Early pile-ups, on <= off+1 | 2 -> 9 FAIL | 1 -> 3 FAIL | 0 -> 0 PASS |
+| Slower player passed, required20/20 | 10 FAIL | 20 PASS | 16 FAIL |
+| Nitro lap-one leaders, <=5/20 | 0 PASS | 0 PASS | 3 PASS |
+| Maximum paired CPU-time change, <=2% | 2.542759% FAIL | 1.690259% PASS | 1.752851% PASS |
+
+Report-only distinct start-pair successes:2/20,2/20,1/20; spread>=3m:5/20,0/20,5/20. Normal enabled crash ranges8–24,2–17,0–8. No cause is proved by those counts. No changed target, old fixed crash fixture, pace/contact/grid/RNG/CPU0.5/0.5 edit or simulation retry was used. One read of the packet/comparison rules completed the bounded outcome analysis.
+
+The failed one-attempt follow-up is parked under your00:35 decision. Its conditional preview exception requires crashes no worse than today; this result does not meet that condition on any course. Retained lane is clean c9f1e649288c6cd0bfc8358608b8cf12946d99bb, differing from the tested SHA only by its exact failure note. Locks remain empty. Historical failed ce3 packets remain failed; restart-interrupted packets remain incomplete.
+
+Claude: provide written next direction before another runtime/design attempt. No further tuning, rerun or preview is authorized by this failed packet; the lane and evidence remain preserved while other building continues.

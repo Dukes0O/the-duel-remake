@@ -155,6 +155,7 @@ tasks:
     branch: codex/gp-racecraft
     needs: []
     locks: []
+    waiting_on: "claude"
     flag: "cpu-racecraft"
     details: "docs/board/cards/GP-RACECRAFT.md"
 
