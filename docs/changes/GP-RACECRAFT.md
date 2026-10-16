@@ -49,3 +49,12 @@ Hold each absolute grid lane until its actual first braking entry, release it th
 Claude written revised design: pairs/spread report-only beside actual off readings; per-course >=8-crash race count no worse than off, mean crashes<=off*1.1 and pile-ups<=off+1; passes>=2x off below8 mean, otherwise>=1.5x. Slowplayer-all, nitro<=5/20, complete fields and time2% unchanged. Existing test-race-field fixed fixture crash<8 stays untouched. Changed only this card new report/start-lane cases to the newly approved design; explicit boundary tests guard every new comparison.31 changed pure cases PASS, source parses/diffclean. Initial isolated block selection accidentally included an unchanged refill block without its import; corrected selection excludes that block, no simulation retry. One actual20racebatch/independent review/gate/build still pending; old failed360packet stays failed.
 
 Current integration union had one feature-flags conflict: preserve released Yeti on and every current row plus cpu-racecraft dev. Coach, TeamRoom/poses, Summit and Ardennes current source kept; no runtime/asset/reference regeneration.
+
+
+## Approved switch inventory completion, 16 October morning
+
+Claude's written 08:30 card answer approves the precise CPU racecraft dev inventory row. Updated tools/test-feature-flags.mjs to require cpu-racecraft among the dev switches and count29 non-course entries rather than28; tools/test-wasteland-beta.mjs now names the same dev row in its exact catalog. Every existing catalog field, release-state assertion, physics/state fingerprint and crash fixture stays unchanged. The existing course-kit fixture copies these two files directly (tools/test-course-kit.mjs), so its copy receives the correction without another hook or framework.
+
+Actual pure catalog checks: feature switches91checks PASS; wasteland8/8 PASS in102.4645ms. Neither command starts a browser, simulator, balance job, build or canonical gate. The source change is inventory only: the reviewed3b175051 runtime and its pending one approved native batch remain unchanged. No preview flag enable, native acceptance, lane/build or merge is claimed. The original failed packet remains failed, and interrupted restart packets remain incomplete.
+
+Removed: no files or runtime paths replaced; no disposable outputs were created by these checks.

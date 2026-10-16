@@ -30,6 +30,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     yeti: 'on',
     'rival-voices': 'dev',
     'grand-prix-career': 'dev',
+    'cpu-racecraft': 'dev',
     'grand-prix': 'on', // Phase 4 (P4-FIELD): released 11 October 2026
     'snow-world': 'dev', // Phase 4: development switch
     'the-deep': 'dev', // The Deep (D0 DEEP-LOOK): the hidden underwater world, off, nothing reaches it yet
