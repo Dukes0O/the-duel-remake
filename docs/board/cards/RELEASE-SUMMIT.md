@@ -52,3 +52,7 @@ release, the headed frame check at Summit's busiest view at both qualities
 go. Claude is Release Manager. Keep clear of the 04:00 full check's frame step
 (04:00 to about 04:40). The release carries everything merged on integration
 at the candidate commit; list it in the release notes.
+
+Also in this release under rule 18 (Claude, 20:50): switch `forest-fire` on
+(FIRE-FINISH is finished). Use rule 19: reuse any full-tier pass that covers
+the candidate instead of rerunning it.
