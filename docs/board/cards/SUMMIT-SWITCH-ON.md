@@ -138,3 +138,10 @@ Camera and furniture tests: replace the 7.45 m offsets with real positions
 inside this Gallery's 5 m half-width (and the actual kit roof), never a skip.
 The other named test-premise corrections are approved as scoped above. One
 independent review covers them together.
+
+
+## Approval block and separate test increment
+
+Automatic approval review rejected the eleven release-state/order/access test edits twice. It requires Kyle's explicit approval of the assertion changes; no file in that proposal was changed. Kyle has an asynchronous request with the concrete unapplied patch at C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on/.evidence/2026-10-15/SUMMIT-SWITCH-ON/proposed-state-test-corrections.patch. Do not apply it, split it or cherry-pick equivalent changes in this chat before approval. The separate overnight chat owns the three overlapping Ardennes ordering fixes described above; its work is not reverted.
+
+The independent eight-file open-route/authored-branch/solo-event/terrain test increment is committed03eaaff7, source-review CLEAR, execution still pending. Runtime, art and signatures did not change. Original canonical307/331 remains red. Gallery geometry still awaits Claude. Release/world-signatures locks are released while these external blockers remain; retain this lane and all required evidence. F1 and Arena proceed independently.
