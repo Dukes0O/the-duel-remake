@@ -36,7 +36,7 @@ export function createHeli() {
 }
 
 // Every field this game knows, so only a newer game's fields are copied as they are.
-const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket']);
+const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey']);
 
 export function normalizeHeli(value) {
   if (!isObject(value) || value.version !== HELI_SAVE_VERSION) return createHeli();
@@ -57,6 +57,7 @@ export function normalizeHeli(value) {
   heli.refuels = count(value.refuels);
   heli.flights = count(value.flights);
   normalizeFireFields(value, heli);
+  normalizeSkinFields(value, heli);
   // Keys from a newer game are kept as they are (a copy), so going back one
   // release loses nothing (docs/HELI_FIRE.md section 12). A known field that
   // failed its checks is dropped, never copied.
@@ -236,6 +237,12 @@ export const WRECK_DAYS = 3;
 const SAVED_KINDS = Object.freeze([...MISSION_KINDS, ...RESCUE_KINDS]);
 const MAX_CONDITION = 2;
 const CRATES = 3;
+// H3 Wildlife and skins (docs/HELI_WILDLIFE.md section 10). What a save may
+// hold; nothing here earns, buys or draws a skin (SKIN-RULES does).
+export const SKIN_KINDS = Object.freeze(['fire', 'medevac', 'rescue', 'wildlife', 'supply', 'tv']);
+export const DIRT_KINDS = Object.freeze(['dust', 'mud', 'soot', 'salt']);
+export const DIRT_MAX = 100;
+export const WILDLIFE_COUNTS = Object.freeze(['wildlifeCounts', 'cameraFlights']);
 export const BUCKET_DAMAGE = Object.freeze(['whole', 'dented', 'torn', 'ruined']);
 // Sarah's regrowth news for a burnt course, in order (section 8.4): a burn
 // remembers the last one heard, so each plays once.
@@ -314,6 +321,8 @@ function normalizeMissions(value) {
   if (Object.hasOwn(value, 'rescue')) out.rescue = normalizeRescue(value.rescue);
   for (const name of RESCUE_COUNTS) if (Number.isSafeInteger(value[name])) out[name] = count(value[name]);
   if (Object.hasOwn(value, 'wreck')) out.wreck = normalizeWreck(value.wreck);
+  // The H3 counts, the same way: kept only when stored as whole numbers.
+  for (const name of WILDLIFE_COUNTS) if (Number.isSafeInteger(value[name])) out[name] = count(value[name]);
   return out;
 }
 
@@ -368,6 +377,24 @@ function normalizeFireFields(value, heli) {
   if (isObject(value.burnt)) heli.burnt = normalizeBurnt(value.burnt);
   if (Array.isArray(value.scars)) heli.scars = normalizeScars(value.scars);
   if (isObject(value.bucket)) heli.bucket = {damage: bucketDamage(value.bucket)};
+}
+
+// The H3 fields of a stored helicopter, each only when it is there and an
+// object (section 10). Unknown skins are dropped; a worn skin that is not
+// owned reads as stock; a fresh skin is owned and not the one worn.
+const skinList = list => [...new Set((Array.isArray(list) ? list : []).filter(kind => SKIN_KINDS.includes(kind)))];
+function normalizeSkins(value) {
+  const owned = skinList(value.owned);
+  const worn = owned.includes(value.worn) ? value.worn : 'stock';
+  return {owned, worn, fresh: skinList(value.fresh).filter(kind => owned.includes(kind) && kind !== worn)};
+}
+const dirtLevel = value => Number.isSafeInteger(value) ? Math.max(0, Math.min(DIRT_MAX, value)) : 0;
+const normalizeDirt = value => Object.fromEntries(DIRT_KINDS.map(kind => [kind, dirtLevel(value[kind])]));
+const normalizeSurvey = value => ({day: count(value.day), done: value.done === true});
+function normalizeSkinFields(value, heli) {
+  if (isObject(value.skins)) heli.skins = normalizeSkins(value.skins);
+  if (isObject(value.dirt)) heli.dirt = normalizeDirt(value.dirt);
+  if (isObject(value.survey)) heli.survey = normalizeSurvey(value.survey);
 }
 
 const fireOff = profile => ({ok: false, reason: FIRE_OFF, profile});

@@ -28,6 +28,11 @@ export const FEATURE_STATES = Object.freeze({
   'earned-cars': 'dev',
   // H4 Rescue (docs/HELI_RESCUE.md): rescues in the mission engine. Off in the game; works only with the helicopter on.
   rescue: 'dev',
+  // H3 Wildlife (docs/HELI_WILDLIFE.md): animals beside the road, and the wildlife count when the helicopter is on. Off in the game.
+  wildlife: 'dev',
+  // H3 Skins (docs/HELI_WILDLIFE.md): mission skins, gear, dirt and the wash. Off in the game; works only with the helicopter on.
+  // Named heli-skins, not heliSkins as the packet says: switch names are lower case with hyphens.
+  'heli-skins': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
