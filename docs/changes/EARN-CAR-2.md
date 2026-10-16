@@ -24,7 +24,7 @@ Solver tests preserve the pre-Enzo nine-car and Enzo ten-car subsets and exact o
 
 ## Removed
 
-Nothing replaced yet. No existing car, asset, replay pin, dependency or save data is removed.
+Round 2 removes the obsolete full bubble glazing and replaces the narrow painted roof with the approved opaque roof and bounded panes. No existing car, runtime asset, replay pin, dependency or save data is removed. Consumed round 1 evidence will be recycled once its replacement and verdict are recorded.
 
 ## Current source evidence
 
@@ -37,3 +37,12 @@ Personal save review is CLEAR on417dfbc1: thirteen historical fixtures and437 fi
 
 
 The corrected native packet on8930a480 passed: private58916, memory-only saves, all six real views, zero errors and warnings. Root inspected every original. Formal round1 sheet is128555bytes with its review note under docs/board/looks/earned-cars; Claude verdict is pending. The first uncommitted sheet had overlapping footer labels and was recycled, then rebuilt with clear spacing; model and pictures did not change. This is one formal round. Actual field timing, final canonical lane and build are still unrun.
+
+
+## Claude round 1 verdict and round 2 source
+
+Claude rejected round 1 on the card: the clear bubble cabin did not read as an F1. Round 2 source2bbcd82a replaces it with a broad body-colour roof, four bounded dark panes, swept frames/roof rails and a central snorkel with a physically exposed mouth. Smaller tinted corner optics, lower behind-door intakes/dihedral door seams and compact screen-base mirrors follow the other four requests. Wheels, round rear lamps, damage and steering remain. This is round 2 of at most three; no second-round art verdict is claimed.
+
+Exactly two obsolete geometry assertions change: the driver retains the original1cm helmet clearance against the actual opaque roof instead of removed overhead glass; finite glazing rays move to the actual front/rear/side panes instead of the former centreline bubble. Added roof rays require opaque painted cover and absence of hidden glass at nine points, plus physical frame, intake-mouth, small-lens and mirror checks. All old numeric bounds, seats, lamp exposure, private damage/crush/reset and frame-selector safeguards remain. No tolerance is relaxed.
+
+Independent source review CLEAR on2e7500e1 after a clean integration merge; shared model, damage and grounding helpers have no merge delta. Tests, measured round 2 budget, native round 2 pictures, field timing and final lane/build are unrun. The prior328checks/51610triangles/55draws describe round1 only. Claude confirmed Panorama Pit Straight with eight actual F1 copies for later quiet-laptop timing.

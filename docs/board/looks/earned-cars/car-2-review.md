@@ -1,6 +1,6 @@
-# McLaren F1: round 1 submitted
+# McLaren F1: round 1 rejected; round 2 source prepared
 
-Claude's art verdict is pending. This is the first formal round of at most three.
+Claude requested round 2: replace the clear bubble with an opaque framed roof/window design, add a proper central snorkel, reduce corner lamps, lower the side scallop/define the door line and shrink the mirrors. His full verdict is on EARN-CAR-2. This record consumes the first of at most three formal rounds. Round 2 source is prepared and reviewed; its actual native pictures and verdict are pending.
 
 [Native comparison sheet](car-2-round-1.jpg), 128555 bytes. The six real showroom views are front, rear, side, detail, damage and steering. The recipe resizes whole pictures and adds labels; it does not change the images, model, lighting or cameras.
 
