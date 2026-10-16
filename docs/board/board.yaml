@@ -300,7 +300,7 @@ tasks:
     owner: "codex"
     lane: "TOOL"
     size: "S"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/qa-audio-crash-reliability
     locks: []

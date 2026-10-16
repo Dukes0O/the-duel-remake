@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T04:34:35.554Z
+Observed at: 2026-10-16T04:42:55.491Z
 
-Observation commit: 2531f6d30473305644c53a220e6d37d9424ddbed
+Observation commit: 413429adf40e7a05016399a59d11fdab480472c7
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2531f6d30473305644c53a220e6d37d9424ddbed
+Integration HEAD: 413429adf40e7a05016399a59d11fdab480472c7
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -37,6 +37,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-yeti | 1 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 1 | unknown | true | false | unknown |
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
+| codex/qa-audio-crash-reliability | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-audio-crash-reliability |
 | codex/qa-browser-sweep | 1 | unknown | false | false | unknown |
 | codex/qa-deep-art-three | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-deep-art-three |
 | codex/qa-yard-home-air-only | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-yard-home-air-only |
@@ -63,6 +64,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/qa-audio-crash-reliability | QA-AUDIO-CRASH-RELIABILITY | 2026-10-15T21:42:08-07:00 | 0 | last commit 2026-10-15T21:42:08-07:00 | docs/changes/QA-AUDIO-CRASH-RELIABILITY.md, tools/run-browser-scenarios.mjs, tools/test-browser-scenarios.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/qa-deep-art-three | QA-DEEP-ART-THREE | 2026-10-15T21:34:09-07:00 | 0 | last commit 2026-10-15T21:34:09-07:00 | docs/changes/QA-DEEP-ART-THREE.md, tools/deep-look.js, tools/scenarios/deep-art.mjs |
 | codex/qa-yard-home-air-only | QA-YARD-HOME-AIR-ONLY | 2026-10-15T19:30:22-07:00 | 0 | last commit 2026-10-15T19:30:22-07:00 | docs/board/STATUS.md, docs/changes/QA-YARD-HOME-AIR-ONLY.md, tools/scenarios/yard-home.mjs |
@@ -85,9 +87,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,998,763 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 132,001 B | -1,136,814 B | 5,000,000 B |
+| Added bytes in last merge | 132,001 B | +0 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 415,879,168 B | +464,896 B | unavailable |
+| Git objects | 416,473,088 B | +593,920 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -96,7 +98,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 42dcb5b6b14c334c75158e96f73bda2683274b3d
 - Local main: missing
-- Local integration/wasteland: 2531f6d30473305644c53a220e6d37d9424ddbed
+- Local integration/wasteland: 413429adf40e7a05016399a59d11fdab480472c7
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
