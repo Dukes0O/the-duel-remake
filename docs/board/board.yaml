@@ -168,6 +168,7 @@ tasks:
     status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/gp-racecraft
+    waiting_on: claude
     needs: []
     locks: []
     flag: "cpu-racecraft"
