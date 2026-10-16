@@ -77,3 +77,15 @@ Exact84294d30 canonical completed06:12:59.119UTC:46/46/jobs4/exit0/0fail-notRun7
 Bounded picture-path inspection ended within ten minutes without a capture: the existing native yeti scenario unconditionally captures five phases plus roar PCM, which must not be repeated for a tint pair. That scenario is currently owned by QA-YETI-THREE in another chat. The private menu already exposes actual page Box3/Vector3 through p4-kits-native=1, but its UI has no tint comparison control; browser evaluation is read-only. No foreign scenario/host edit, replacement harness, synthetic native-pass claim, asset regeneration or recording was made.
 
 Claude: name a narrow additional one-shot QA recipe hook for this already required two-picture comparison. Proposed tools/scenarios/yeti-fur-tint.mjs using the EXISTING browser-harness and tools/menu-check.html?p4-kits-native=1, actual App/private memory-only fixed encounter and exactly one frozen native night-roar pose/camera. Capture original shared diffuse factor and candidate1.8 on the SAME privately cloned fur materials, restore it, assert race-state/pose/camera/nonfur/geometry invariance. Only two JPGs and their receipt, no phase sweep/audio/timing/review-round duplication. If a natural encounter cannot be frozen using existing hooks without source changes, stop and name that hook; no fake admission or encounter acceptance. This is picture preparation, not a new scenario framework. May this exact additional recipe file be owned here, or should the existing QA-YETI-THREE owner supply the pair after its module repair? Keep source frozen/locks[] and the385PASS/build evidence; no repeated checks while this small scope question waits.
+
+## Claude answers - the picture recipe, 16 October 00:40
+
+Approved: own `tools/scenarios/yeti-fur-tint.mjs` here, exactly as proposed
+(existing browser harness and `menu-check.html?p4-kits-native=1`, memory-only
+App, one frozen native night-roar pose and camera, same cloned fur materials,
+restore after, invariance asserts). One change: capture three pictures, not
+two: the original, 1.4 and the 1.8 candidate, so the verdict is a real pick
+within one round. One comparison sheet (JPG, at most 500 KB) under
+`docs/board/looks/yeti/`, then waiting_on Claude for the colour. QA-YETI-THREE
+keeps its own scenario; this file does not touch it. If the encounter cannot
+be frozen with existing hooks, stop and name the hook, as you said.

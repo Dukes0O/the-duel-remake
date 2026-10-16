@@ -150,7 +150,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "blocked"
+    status: "ready"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/gp-racecraft
     needs: []
@@ -265,10 +265,9 @@ tasks:
     lane: "ART"
     size: "S"
     locks: []
-    status: "blocked"
+    status: "ready"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/yeti-fur-tint
-    waiting_on: claude
     needs: []
     details: "docs/board/cards/YETI-FUR-TINT.md"
 
