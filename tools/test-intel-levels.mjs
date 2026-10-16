@@ -283,3 +283,28 @@ test('native references without terrain-attitude state keep the existing seven-c
  const ref={eventId:id,route:'fixed',courseFingerprint:'native-road',lapMs:10000,poseSamples:samples};
  assert.equal(refs.validReferencePoses(ref,{eventId:id,route:'fixed',courseFingerprint:'native-road',length:100}),true);
 });
+
+test('actual bundled team reference starts and advances through App without changing personal ghosts',async()=>{
+ const {withReferenceApp}=await import('./build-reference-laps.mjs');
+ const {createFeatureFlags}=await import('../src/feature-flags.js');
+ const {COURSE}=await import('../src/config.js');
+ const {referenceLap}=await import('../src/reference-laps.js');
+ for(const eventId of ['pacific-canyon','panorama-ridge'])await withReferenceApp(async app=>{
+  app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'grand-prix':true}});
+  app.profile={...app.profile,credits:1500,courses:{version:1,unlocked:COURSE.map(course=>course.id)}};app._saveProfile();
+  const startStage=COURSE.findIndex(course=>course.id===eventId);assert.ok(startStage>=0);
+  const options={startStage,mode:'timetrial',car:'falcone_f42',seed:1989};
+  assert.ok(app.buyIntel(eventId,4).ok);assert.equal(app.profile.credits,700);
+  const record=app.getTeamGhostRecord(options),ref=referenceLap(eventId,eventId==='pacific-canyon'?'route_a':'fixed');
+  assert.ok(record,'actual current road accepts its native bundled reference');
+  assert.equal(record.samples,ref.poseSamples);assert.equal(record.timeSec,ref.lapMs/1000);
+  assert.ok(app.setGhostChoice('team',options).ok);
+  const personal=JSON.stringify(app.ghosts);assert.ok(app.startCampaign(options));
+  assert.ok(app.ghostRecord.teamReference);assert.ok(app.ghostRecorder);
+  app.autopilot=true;for(let frame=0;frame<300;frame++)app.advance(1/30,1/30);
+  assert.equal(app.duel.state.status,'racing');assert.ok(app.duel.state.s>0);
+  assert.ok(app.ghostPose);assert.equal(app.ghostPose.playerId,'team-reference');assert.ok(app.ghostPose.s>0);
+  assert.equal(JSON.stringify(app.ghosts),personal,'real team playback cannot replace or mark personal recordings used');
+  assert.equal(app.profile.credits,700,'playback does not buy intel twice');
+ });
+});
