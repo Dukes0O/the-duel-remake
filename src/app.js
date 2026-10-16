@@ -2062,6 +2062,7 @@ export class App {
     },{signal});
     window.addEventListener('blur', () => {
       this.keys = {};
+      this.heliSession?.cancelHook();
       this._footPointer.fire=this._footPointer.aim=false;
       this._resetKeyboardInput();
       if (!this.duel.state.paused && ['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) this.togglePause();

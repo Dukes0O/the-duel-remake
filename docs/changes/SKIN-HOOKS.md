@@ -55,7 +55,7 @@ is what it was (proof below). The app does not pass either yet (see Open).
 - `src/heli/heli-missions.js`: `peoplePay(r, bonus)`; `rescueLimit(kind, gear)`,
   `clockLeft(r, gear)` and `tickRescue(..., {gear})` take the searchlight.
 - `src/app.js`: one line, C cycles `% (this.heliSession?.cameraCount ?? 4)`.
-- `tools/test-heli-skin-session.mjs` (new, 189 checks).
+- `tools/test-heli-skin-session.mjs` (new, 200 checks).
 
 ## Proof that the switches off change nothing
 
@@ -86,6 +86,10 @@ passes null for the gear, which the rules read as the base kit.
    which only notes that H is held; letting go hooks or releases, unless W or S
    reeled the winch meanwhile. With any other coat, or the switch off, `hookKey()`
    is `pressHook()` on key-down exactly as before.
+   A held H is forgotten (`cancelHook`) on window blur, a crash, `start`, `enter` and
+   `leave`, and `hookKey` does nothing outside flight, so it never reads as a tap later.
+   Changing coats (`wearPaint`) is refused while a rescue is in hand, so the searchlight
+   clock cannot be shortened; the fit buttons' wear offer works while the call is waiting.
 4. **The count is reported in the air or on the ground** (R or the Report
    button), not only on landing, since the board is only at the home pad and
    most counts are at other courses. If "on landing" was meant, the check is one
@@ -114,7 +118,7 @@ None. No existing test is edited.
 
 ## Checks
 
-- `tools/test-heli-skin-session.mjs`: 189 checks, about 60 s. Every heli suite
+- `tools/test-heli-skin-session.mjs`: 200 checks, about 60 s. Every heli suite
   passes (listed in the hand-back).
 - Lane tier and build: see the hand-back.
 

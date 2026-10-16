@@ -270,6 +270,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
 
   function enter(courseId, {arriveFrom = null} = {}) {
     dropWater = [];
+    hookHeld = false; hookReeled = false;
     if (!isDestination(courseId, dflag)) throw new Error(`Not a helicopter destination: ${courseId}`);
     const carried = heldLoad();
     rememberLoads();
@@ -481,6 +482,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   }
 
   function crashed(cause) {
+    hookHeld = false; hookReeled = false;
     storeFuel();
     settleDirt();
     // A crash in a lesson means try again: it starts over on the pad.
@@ -1035,6 +1037,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
 
   const api = {
     start(courseId = HOME_COURSE) {
+      hookHeld = false; hookReeled = false;
       const noted = today ? commit(notePlayDay(save, today, flag)) : null;
       // A rescue found stored was left in hand: it cannot be resumed (section 3.4).
       if (rescueOn && rescueOf(missionsOf(save), rflag)) { live = {...rescueOf(missionsOf(save), rflag)}; failRescueNow('left'); }
@@ -1234,9 +1237,13 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // the winch in the meantime.
     hookKey() {
       if (!(gearNow()?.reelSpeed > 0)) return api.pressHook();
+      if (phase !== 'flying') return null;
       hookHeld = true; hookReeled = false;
       return null;
     },
+    // Focus lost, a crash or a new visit: an H that is still down is forgotten, so
+    // it can never read as a tap later.
+    cancelHook() { hookHeld = false; hookReeled = false; },
     // P: the autopilot on or off. It flies toward the chosen destination.
     pressAutopilot() {
       if (phase !== 'flying') return false;
@@ -1489,6 +1496,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     wearPaint(kind) {
       if (needSkins()) return needSkins();
       if (!atPad()) return {ok: false, reason: 'The paint shop is at the home pad.'};
+      // Changing coats would change the gear, and the searchlight's clock, mid-rescue.
+      if (live) return {ok: false, reason: 'Finish the rescue first.'};
       earnNow();
       const result = wearSkin(save, kind, sflag);
       if (!result.ok) return result;
@@ -1535,6 +1544,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     leave() {
       // Leaving with a rescue in hand is a failure (section 3.4).
       failRescueNow('left');
+      hookHeld = false; hookReeled = false;
       if (dropWater.length && site) { waterOnFire(dropWater); dropWater = []; }
       fire?.flush();
       if (heli && phase !== 'idle') storeFuel();

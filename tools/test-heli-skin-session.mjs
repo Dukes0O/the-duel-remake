@@ -464,7 +464,6 @@ console.log('PASS a fire trip: gauge, sight, mud and soot');
   same(offerFor('avalanche', 'tremblant-snow', ['medevac', 'rescue']).paintShop().offers.line, 'rescue', 'an avalanche call: search and rescue');
   same(offerFor('hiker', 'tremblant-woods', ['medevac']).paintShop().offers.line, null, 'no offer for a coat that is not owned');
   const session = offerFor('hoist', 'panorama-ridge', ['medevac', 'rescue']);
-  session.pressRadio();
   const markup = dispatchBoardMarkup(session.view(), {jobs: [], fire: {repairCost: 0}, skins: session.paintShop()});
   ok(markup.includes('Fit the rescue line and wear Medevac'), 'the board offers it');
   const events = [];
@@ -934,6 +933,34 @@ console.log('PASS the count is dropped by leaving the course');
     const event = session.hookKey();
     same([event?.type, hooked(session)], ['hooked', true], `${label}: H down hooks at once`);
   }
+  // Focus lost mid-hold: the key going up reads as nothing, not as a tap.
+  const blurred = overCar('medevac');
+  tapped(blurred);
+  blurred.hookKey();
+  blurred.step({pour: true});
+  blurred.cancelHook();
+  const afterBlur = [...blurred.step({}), ...blurred.step({})];
+  same([hooked(blurred), has(afterBlur, 'released') || has(afterBlur, 'releasedHigh')], [true, false], 'blur mid-hold releases nothing');
+  // H down while crashed (or before a visit) is forgotten.
+  const crashedSession = overCar('medevac', {mode: 'real'});
+  run(crashedSession, 40, () => ({lift: -1, pitch: 1}), () => crashedSession.phase === 'crashed');
+  ok(crashedSession.phase === 'crashed', 'the helicopter is put down hard: a crash');
+  same(crashedSession.hookKey(), null, 'H down while crashed is not remembered');
+  run(crashedSession, 5, () => ({}), () => crashedSession.phase === 'flying');
+  const reborn = crashedSession.view().load;
+  hoverAt(crashedSession, reborn.x, reborn.z, 15);
+  const afterCrash = [...crashedSession.step({}), ...crashedSession.step({})];
+  same([has(afterCrash, 'hooked'), hooked(crashedSession)], [false, false], 'and nothing fires on the next flight');
+  const atHome = newSkinSession(skinProfile({owned: ['medevac'], worn: 'medevac'}));
+  same(atHome.hookKey(), null, 'H down before the visit starts does nothing');
+  atHome.start();
+  const car = atHome.view().loads.find(c => c.own);
+  hoverAt(atHome, car.x, car.z, 15);
+  const quiet = [...atHome.step({}), ...atHome.step({})];
+  same([hooked(atHome), has(quiet, 'hooked')], [false, false], 'and does not fire on the first step of the flight');
+  atHome.hookKey(); atHome.leave(); atHome.start();
+  hoverAt(atHome, car.x, car.z, 15);
+  same(hooked({view: () => atHome.view()}), false, 'a held H does not survive leaving and starting again');
 }
 console.log('PASS the hook acts on key-up with the medevac coat only');
 
@@ -967,5 +994,20 @@ console.log('PASS the hook acts on key-up with the medevac coat only');
   }
 }
 console.log('PASS the app passes the skin and wildlife switches');
+
+// Changing coats during a rescue is refused (it would change the gear mid-clock).
+{
+  const profile = callProfile('hiker', 'tremblant-woods', {count: 30, heli: {skins: {owned: ['rescue', 'fire'], worn: 'rescue', fresh: ['fire']}}});
+  const session = newSkinSession(profile);
+  session.start();
+  ok(session.wearPaint('stock').ok, 'with only a call waiting a coat can still be changed');
+  session.wearPaint('rescue');
+  session.pressRadio();
+  const refused = session.wearPaint('fire');
+  same([refused.ok, refused.reason, skinsOfSave(session).worn], [false, 'Finish the rescue first.', 'rescue'], 'wear refused while a rescue is in hand');
+  same(session.view().rescue.active.limit, 900 + 8 * 60, 'the searchlight clock is untouched');
+  ok(/window\.addEventListener\('blur', \(\) => \{\s*this\.keys = \{\};\s*this\.heliSession\?\.cancelHook\(\);/.test(readFileSync(new URL('../src/app.js', import.meta.url), 'utf8')), 'the app forgets a held H when the window loses focus');
+}
+console.log('PASS no coat change during a rescue');
 
 console.log(`test-heli-skin-session: ${checks} checks passed`);
