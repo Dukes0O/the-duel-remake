@@ -160,7 +160,7 @@ No author endorsement is implied.
 
 ## The helicopter
 
-The 70 radio lines are generated with [ElevenLabs](https://elevenlabs.io/),
+The 74 radio lines are generated with [ElevenLabs](https://elevenlabs.io/),
 using its stock voices Brian (the instructor), Sarah (the park rangers) and
 Roger (fire and rescue dispatch), under the free-plan non-commercial and attribution
 terms recorded in the catalog. The

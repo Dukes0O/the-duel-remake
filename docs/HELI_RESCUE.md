@@ -183,20 +183,10 @@ Kyle, 15 October 2026: people can get hurt, and failure has a cost.
 - **Pay by condition** at the handover: unhurt 100%, hurt 60%, badly hurt
   25% (section 6). This replaces the flat 300 credits a bump that RESCUE-LINE
   built; card RESCUE-HURT changes it.
-- **New and changed lines** (Roger, through the radio filter). RESCUE-HURT
-  records them and moves them into section 8's table in the same change
-  (`tools/test-heli-audio.mjs` checks that table against the recorded
-  lines):
-
-  | Id | Line |
-  | --- | --- |
-  | `heli.radio.rescue.bump` (new words) | Easy! You are hurting them. |
-  | `heli.radio.rescue.late` (new words) | The ground team got there first. They are badly hurt and on their way to hospital. |
-  | `heli.radio.rescue.hurt` | They are hurt, but they will be all right. The paramedics have them. |
-  | `heli.radio.rescue.badly` | They are badly hurt. The paramedics are taking them to hospital. |
-  | `heli.radio.rescue.cold` | They are getting cold, Kestrel One. Hurry. |
-  | `heli.radio.supply.late` | The lodge sent a snowcat in the end. They are still short of supplies. |
-
+- **New and changed lines** (Roger, through the radio filter): the new
+  words for `rescue.bump` and `rescue.late`, and the new `rescue.hurt`,
+  `rescue.badly`, `rescue.cold` and `supply.late`. RESCUE-HURT recorded them;
+  they are in section 8's table.
 - **What it looks like.** Unhurt: they walk to the paramedics. Hurt: they
   limp, a paramedic beside them. Badly hurt: the paramedics carry them on a
   stretcher. Roger says which, at the handover.
@@ -409,11 +399,15 @@ prices and no courses; the panel names the place.
 | `heli.radio.rescue.steady` | Roger | Hold her steady. The rescuer needs you still. |
 | `heli.radio.rescue.clipped` | Roger | They are clipped on. Lift gently. |
 | `heli.radio.rescue.fast` | Roger | Slow down! People on the line. |
-| `heli.radio.rescue.bump` | Roger | Easy! Watch the people on the line. |
+| `heli.radio.rescue.bump` | Roger | Easy! You are hurting them. |
 | `heli.radio.rescue.done` | Roger | Safe and sound. Great work, Kestrel One. |
-| `heli.radio.rescue.late` | Roger | The ground team made it. Thanks for trying, Kestrel One. |
+| `heli.radio.rescue.late` | Roger | The ground team got there first. They are badly hurt and on their way to hospital. |
+| `heli.radio.rescue.hurt` | Roger | They are hurt, but they will be all right. The paramedics have them. |
+| `heli.radio.rescue.badly` | Roger | They are badly hurt. The paramedics are taking them to hospital. |
+| `heli.radio.rescue.cold` | Roger | They are getting cold, Kestrel One. Hurry. |
 | `heli.radio.supply.crate` | Roger | Crate is down. Thank you. |
 | `heli.radio.supply.done` | Roger | That is everything. The whole lodge thanks you, Kestrel One. |
+| `heli.radio.supply.late` | Roger | The lodge sent a snowcat in the end. They are still short of supplies. |
 | `heli.radio.season.summer` | Roger | Wildfire season is here. Keep an eye out for smoke. |
 | `heli.radio.season.winter` | Roger | Winter is here. Watch the ski hill for avalanches. |
 | `heli.radio.hiker.spotted` | Sarah | That is them! There is a clearing close by. Land there and they will walk over. |
@@ -421,8 +415,9 @@ prices and no courses; the panel names the place.
 | `heli.radio.line.first` | Brian | That is the rescue line. Fly smooth, and keep her under forty knots with people on it. |
 | `heli.radio.line.setdown` | Brian | Lower the rescuer gently, right beside them, and hold her there. |
 
-24 lines, made once each through `tools/audio/elevenlabs.mjs` and fitted to
-the month's voice credits; if credits run short, the season lines wait.
+28 lines, made once each through `tools/audio/elevenlabs.mjs` and fitted to
+the month's voice credits (24 by RESCUE-RADIO; RESCUE-HURT re-recorded two
+and added four).
 Brian's two lines play only on the first fitting and first set-down.
 
 ## 9. Sound cues
