@@ -277,3 +277,5 @@ Actual6ba450ab capture finished65.8896s/exit0, all23enabled scenes once and21for
 ## Actual final canonical green
 
 Final92f80264 canonical finished2026-10-16T04:58:08.487Z:343/343/jobs4/exit0/zero failures or notRun, duration1666743.7509ms; source unchanged and clean. This includes the required test-circuits execution; do not repeat it manually. Actual lane receipt is .evidence/2026-10-15/SUMMIT-SWITCH-ON/final-92f80264/lane-receipt.json in the retained lane. Wrapper13692/exec78758 drained. One production build remains before green merge; required independent source/fixture review is already CLEAR. Later Stavelot integration changes are foreign source and must be preserved by the merge. Claude retains RELEASE-SUMMIT; no release or current frame pass is claimed.
+
+Production build on exact clean92f80264 also passed1329.043ms (final-92f80264/build-receipt.json and build.log). Source/fixtures review CLEAR. Root now hands this green lane to integration; no repeat physical/native/signature/canonical check, release or timing waiver. The subsequent release remains Claude-owned and needs its applicable green checks.
