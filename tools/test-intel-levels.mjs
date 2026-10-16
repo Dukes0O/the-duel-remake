@@ -249,3 +249,26 @@ test('the existing personal ghost toggle remains effective after introducing sou
   app.setGhostEnabled(true);assert.equal(app.getGhostChoice(),'my-best');
  });
 });
+
+test('actual App time-trial setup keeps team playback separate from personal recording and storage',async()=>{
+ const {withReferenceApp}=await import('./build-reference-laps.mjs');
+ const {createFeatureFlags}=await import('../src/feature-flags.js');
+ const {createTeamGhost}=await import('../src/ghost.js');
+ await withReferenceApp(async app=>{
+  app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'grand-prix':true}});
+  app.profile={...app.profile,credits:1500};app._saveProfile();assert.ok(app.buyIntel('pacific-canyon',4).ok);
+  const length=app.getMenuCourse(0).length,lapMs=80000;
+  // Synthetic sampler unit data; this is not a generated native reference or a shipped asset.
+  const samples=Array.from({length:12},(_,i)=>[Math.round(i*lapMs/11),Math.round(i*length*100/11),0,0,0,400,0,0,0,0,7]);
+  const record=createTeamGhost({eventId:'pacific-canyon',route:'route_a',courseFingerprint:'unit-road',lapMs,car:'stuttgart_959s',poseSamples:samples},
+   {eventId:'pacific-canyon',route:'route_a',courseFingerprint:'unit-road',length,laps:2});
+  assert.ok(record);app.getTeamGhostRecord=()=>record;
+  assert.ok(app.setGhostChoice('team',{mode:'timetrial',startStage:0}).ok);
+  const before=JSON.stringify(app.ghosts);
+  assert.ok(app.startCampaign({startStage:0,car:'falcone_f42',mode:'timetrial',seed:1989}));
+  assert.equal(app.ghostRecord,record);assert.ok(app.ghostRecorder,'player recording stays independent');
+  app._updateGhost({...app.duel.state,status:'racing',stageTimeSec:1,racePenaltySec:0});
+  assert.equal(app.ghostPose.playerId,'team-reference');assert.equal(app.ghostPose.car,'stuttgart_959s');
+  assert.equal(JSON.stringify(app.ghosts),before,'team playback never updates personal records or usage timestamps');
+ });
+});
