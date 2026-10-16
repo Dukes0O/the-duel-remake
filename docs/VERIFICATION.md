@@ -1,5 +1,38 @@
 # Remake verification
 
+## Forest fires installed, 15 October 2026
+
+Kyle asked for this release under AGENTS rule 18 ("Follow rule 18: release H2
+Fire"); Claude was Release Manager. Live master is
+42dcb5b6b14c334c75158e96f73bda2683274b3d (fast-forward from 7d430cd0);
+production build 20261016043241-239fa3b298d2, built in the live folder's
+dist-next. All 537 staged files matched over HTTP on private port 5188; the
+assets went into dist first and index.html and build-version.json last, then
+a mirror left dist holding exactly the new build; all 537 live files match
+over HTTP on localhost:5174. No browser tab was opened or refreshed, no player
+save was read or written, and no rollback build is kept (fix forward). The
+live server was not running, so it was started hidden on 5174 with no
+browser opened.
+
+What changed for players: the `forest-fire` switch is on (H2 Fire: fire
+calls, the bucket, drops, fire out pays 1,500 credits and the firefighter
+badge, a lost fire closes Tremblant Woods for 10 play days with a buyback and
+regrowth, seasons with no fires in winter), the main menu says why START is
+closed on a burnt course (release review fix), and Ardennes' braking boards
+sit 2.4 m from the road edge (bf358e5a).
+
+Checks (rule 19): the full tier on ac8fd6c3, which already carried every H2
+card, ran 452/453 alone with four jobs, its one fixture gap fixed and passing
+in its own reviewed lane; combat balance passed on ac8fd6c3 (51 policy runs,
+90 baseline races, no flags) and nothing combat-related changed since. The
+release lane tier covered the switch and every suite that reads it: 267/267,
+jobs 4, 2015 s; build passed. One independent release review: fit to ship,
+with the silent START fixed before release. H2's browser checks on the same
+code: FIRE-VIEW's look and frame check (p95 18.2 ms on High and Performance
+over a 43-cell fire and racing on the burnt course) and FIRE-FINISH's
+play-through (a fire flown out and paid in 2 drops; a fire left to burn,
+lost overnight, the course closed with its buyback). No push to GitHub.
+
 ## Ardennes installed, 15 October 2026
 
 Kyle requested installation and explicitly directed no duplicate full run after the sole test fixture correction. Live master is 7d430cd011de0145f404b7b24500e26ac011d881; production build20261016030307-f35c5308abb7. All537 staged files matched private HTTP, all537 installed files match their hashes, and live5174 entry/manifest matched. Ardennes Forest is on at2000credits. Reload from the menu when ready; no open tab was refreshed and no real saves were read or written. Summit and other development switches remain off.
