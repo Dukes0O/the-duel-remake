@@ -8,10 +8,14 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const entry = '/tools/menu-check.html?flags=tremblant-woods,grand-prix';
+const QA_MODE = process.env.DUEL_TREMBLANT_QA_MODE || 'combined';
+if (!['combined','views','timing'].includes(QA_MODE)) throw Error('Unknown Tremblant QA mode');
+const PICTURES = QA_MODE !== 'timing';
 const COURSE_ID = 'tremblant-woods';
 // The usual limit: a 95th percentile frame no slower than 30 frames a second,
 // and no more than one frame in ten over that.
 const P95_LIMIT_MS = 33.5, SLOW_FRAMES_LIMIT = 12;
+const PACING = QA_MODE !== 'views';
 
 async function prepare(context, quality) {
   await context.navigate(entry);
@@ -57,7 +61,7 @@ async function startRace(context, mode) {
   await context.waitFor('window.__views.ready()', 'race scene', 120_000);
 }
 
-async function measure(context, quality, label) {
+async function measure(context, quality, label, cars) {
   const before = await context.evaluate(`(document.querySelector('#performance-results')?.textContent.match(/"frames": 120/g) || []).length`);
   await context.evaluate(`(() => {
     const button = [...document.querySelectorAll('button')].find(node => node.textContent === 'Measure frame pacing');
@@ -69,7 +73,8 @@ async function measure(context, quality, label) {
   const report = await context.evaluate(`JSON.parse(document.querySelector('#performance-results').textContent).at(-1)`);
   if (!Number.isFinite(report.p95) || report.p95 <= 0 || report.frames !== 120) throw Error(`${quality}: invalid frame measurement ${JSON.stringify(report)}`);
   console.log(`${quality}, ${label}: p50 ${report.p50} ms, p95 ${report.p95} ms, >33ms ${report.over33ms}, draws ${report.drawCalls}, triangles ${report.triangles}`);
-  return { quality, label, ...report };
+  const course = await context.evaluate('window.__qaApp.duel.course.def.id');
+  return { quality, label, cars, ...report, course };
 }
 
 const VIEWS = [
@@ -98,7 +103,7 @@ export async function run(context) {
   for (const quality of ['high', 'performance']) {
     await prepare(context, quality);
     // Landmark views from a free camera (High only; the pictures are for Claude's finishing pass).
-    if (quality === 'high') {
+    if (PICTURES && quality === 'high') {
       await startRace(context, 'duel');
       await context.evaluate(`(() => { const hud = document.querySelector('#race-hud'); if (hud) hud.style.visibility = 'hidden'; })()`);
       for (const [name, from, to] of VIEWS) {
@@ -118,8 +123,8 @@ export async function run(context) {
     if (lamps.cars !== 8) throw Error(`${quality}: the grid is wrong ${JSON.stringify(lamps)}`);
     // Hold the lights on while measuring: a sample is cancelled if the race changes state under it.
     await context.evaluate(`(() => { const s = window.__qaApp.duel.state; s.field.hold = 1e6; s.countdown = 1e6; })()`);
-    await context.screenshot(`tremblant-grid-lamps-${quality}`);
-    reports.push(await measure(context, quality, '8 cars on the grid'));
+    if (PICTURES) await context.screenshot(`tremblant-grid-lamps-${quality}`);
+    if (PACING) reports.push(await measure(context, quality, '8 cars on the grid', lamps.cars));
     // Eight cars close together on Timber Straight, under the chairlift.
     await context.evaluate(`(() => {
       const app = window.__qaApp, s = app.duel.state, L = app.duel.course.length;
@@ -131,10 +136,11 @@ export async function run(context) {
       app.autopilot = true;
       for (let i = 0; i < 40; i++) app.advance(1 / 60, 1 / 60);
     })()`);
-    await context.screenshot(`tremblant-timber-eight-cars-${quality}`);
-    reports.push(await measure(context, quality, '8 cars on Timber Straight'));
+    if (PICTURES) await context.screenshot(`tremblant-timber-eight-cars-${quality}`);
+    if (PACING) reports.push(await measure(context, quality, '8 cars on Timber Straight', lamps.cars));
   }
+  if (QA_MODE === 'views') console.log('Frame timing: run in the frame step');
   const misses = reports.filter(r => r.p95 > P95_LIMIT_MS || r.over33ms > SLOW_FRAMES_LIMIT);
-  await writeFile(join(context.outputDir, 'tremblant-frame-pacing.json'), JSON.stringify({ reports, misses: misses.length }, null, 2) + '\n');
+  await writeFile(join(context.outputDir, 'tremblant-frame-pacing.json'), JSON.stringify({ mode: QA_MODE, timing: QA_MODE === 'views' ? 'run in the frame step' : 'measured', reports, misses: QA_MODE === 'views' ? null : misses.length }, null, 2) + '\n');
   if (misses.length) throw Error('Frame limit missed: ' + misses.map(r => `${r.quality} ${r.label} p95 ${r.p95} ms, ${r.over33ms} slow frames`).join('; '));
 }

@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T05:31:36.315Z
+Observed at: 2026-10-16T05:50:20.747Z
 
-Observation commit: 194d57e4c2b4bda9a525bd3ebadcdd9a6581e4e1
+Observation commit: 347e303dbdf4ec0bdaebd4aa48ab745e9f210c94
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 194d57e4c2b4bda9a525bd3ebadcdd9a6581e4e1
+Integration HEAD: 347e303dbdf4ec0bdaebd4aa48ab745e9f210c94
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -31,13 +31,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/earn-car-2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2 |
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
-| codex/intel-levels | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/intel-levels |
 | codex/p4-finish | 4 | unknown | false | false | unknown |
 | codex/p4-qualifying | 4 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
-| codex/p4-yeti | 1 | unknown | false | false | unknown |
+| codex/p4-yeti | 2 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 1 | unknown | true | false | unknown |
 | codex/perf-high-night | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
-| codex/qa-audio-crash-reliability | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-audio-crash-reliability |
+| codex/qa-browser-frame-isolation | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-browser-frame-isolation |
 | codex/qa-browser-sweep | 1 | unknown | false | false | unknown |
 | codex/qa-yard-home-air-only | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-yard-home-air-only |
 | codex/qa-yeti-three | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-yeti-three |
@@ -58,11 +57,11 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T19:18:16-07:00 | 0 | last commit 2026-10-15T19:18:16-07:00 | docs/HELICOPTER.md, docs/board/STATUS.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-2.jpg, docs/changes/EARN-CAR-2.md |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T21:12:48-07:00 | 0 | last commit 2026-10-15T21:12:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
-| codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T21:14:41-07:00 | 0 | last commit 2026-10-15T21:14:41-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/course-access-ui.js, src/generated/reference-laps/alpine-serpent.json, src/generated/reference-laps/ardennes-forest.json |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 4 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
-| codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
+| codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 2 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/qa-browser-frame-isolation | unknown | 2026-10-15T22:43:07-07:00 | 0 | last commit 2026-10-15T22:43:07-07:00 | docs/changes/QA-BROWSER-FRAME-ISOLATION.md, tools/full-check.mjs, tools/run-browser-scenarios.mjs, tools/scenarios/tremblant-snow.mjs, tools/scenarios/tremblant-views.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/qa-yard-home-air-only | QA-YARD-HOME-AIR-ONLY | 2026-10-15T19:30:22-07:00 | 0 | last commit 2026-10-15T19:30:22-07:00 | docs/board/STATUS.md, docs/changes/QA-YARD-HOME-AIR-ONLY.md, tools/scenarios/yard-home.mjs |
 | codex/qa-yeti-three | QA-YETI-THREE | 2026-10-15T19:28:00-07:00 | 0 | last commit 2026-10-15T19:28:00-07:00 | docs/board/STATUS.md, docs/changes/QA-YETI-THREE.md, tools/scenarios/yeti.mjs |
@@ -83,9 +82,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 15,681,656 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 43,360 B | -933,801 B | 5,000,000 B |
+| Added bytes in last merge | 1,753,989 B | +1,710,629 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 418,666,496 B | +112,640 B | unavailable |
+| Git objects | 419,250,176 B | +583,680 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -94,7 +93,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 42dcb5b6b14c334c75158e96f73bda2683274b3d
 - Local main: missing
-- Local integration/wasteland: 194d57e4c2b4bda9a525bd3ebadcdd9a6581e4e1
+- Local integration/wasteland: 347e303dbdf4ec0bdaebd4aa48ab745e9f210c94
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
