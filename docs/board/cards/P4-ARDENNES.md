@@ -545,3 +545,8 @@ Kyle said to skip this timing work because his multiple Codex and Claude Code se
 
 
 Mechanical candidate619db9ef merged as 4495c042f116ecf02afbf9d7d5f3786667b11db2 after Kyle skipped timing. Existing final lane command node tools/run-tests.mjs --tier lane --changed --jobs4 --keep-going completed42/42/zero failures-unrun in807.60s (actual lane-final.log); production build1.25s (actual build-final.log), final independent frame_setup_review CLEAR. No repeated check after the conflict-free merge. Original959/.95/Medium/1989/1000 two-lap full-field player has zero crashes/resets and all CPUs finish. Frames SKIPPED, no timing result. Keep the pre-existing lane and its shared evidence junction; it was not created in this run, so no false cleanup receipt or folder deletion. Accepted art/current assets unchanged; Ardennes dev, finishing and actual switch-on/release remain separate.
+
+
+## Finishing verdict requested for Kyle's explicit go-live
+
+Kyle restarted and now says get Ardennes on while he is away about3hours. LongLeft4495c042 is merged; timing explicitly skipped by Kyle. Claude: please record P4-FINISH-ARDENNES' finishing verdict against the accepted current round4 art and authored notes here, or name its concrete remaining issue. No new art round, model/physics rewrite or timing is requested. Codex prepares the narrow switch/state tests in a separate lane meanwhile; this is not an invented art acceptance or automatic finishing pass.

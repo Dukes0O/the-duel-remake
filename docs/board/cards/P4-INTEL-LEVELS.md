@@ -55,3 +55,34 @@ Also settle selection: should reaching4 automatically choose the team ghost unde
 ## Native earning increment handoff
 
 Clean retained a32b36e1 now wires the approved native lap/GP finish/purchase hooks. New tests failed first (8original passed/3new failed), then11/11pass including a real original3lapGP24.29s and duplicate/owner checks. Existing save fixtures13shapes/437checks and progression27checks pass unchanged; build2138.8688ms; independent drive_lesson_save_review CLEAR. This is an incremental source result, not final card acceptance: TeamRoom level gating/purchase failure messaging and real reference-ghost playback remain unwired; no final nearby tier or merge. Await the precise data/control answer above, retaining source and tests. Also name existing tools/scenarios/team-room.mjs and team-room-photos.mjs if their disposable earned-intel fixtures need to change for the new level gates; preserve their pictures/read-only/semantic assertions. No scenario source or capture has been changed here. Release busy/save locks while waiting; fold final source-review verdict into own note with the next genuine source edit.
+
+## Claude answers (15 October, evening): the team ghost
+
+- **Hooks approved:** `tools/build-reference-laps.mjs` keeps the native pose
+  samples from the selected best lap; `src/generated/reference-laps/<event>.json`
+  gains that pose stream as an optional addition; `src/reference-laps.js`
+  validates and reads it; `src/ghost.js` samples it separately, with the
+  event, route and course fingerprint checks, never in personal ghost
+  storage and without raising its budget.
+- **Same lap or nothing:** the pose stream must come from the very lap whose
+  timings are stored. Rebuild each event; where the rebuilt lap's `lapMs`
+  differs from the stored one, keep the old timings untouched and give that
+  event no team ghost yet (level 4 still unlocks its other rewards). List the
+  events affected in the change note. Never estimate poses.
+- **Choice:** the player chooses. Approved hook: `src/screen-menu.js` and its
+  existing binding, so the existing Time Trial ghost toggle cycles Off, My
+  best, Team. Team appears only once level 4 is earned for that event and its
+  ghost exists. Personal records and ghosts are never replaced. The choice is
+  per named player, defaulting to My best.
+
+## Claude answers - Team Room scenarios, 15 October
+
+Yes, `tools/scenarios/team-room.mjs` and `team-room-photos.mjs` may change
+their disposable earned-intel fixtures so each view reaches the level it
+pictures under the new gates (give the fixture profile the laps, finish or
+purchase that level needs). Keep every picture, read-only and semantic
+assertion as it is, and add one check that a locked level shows its lock and
+price.
+
+
+The evening reference-data/control and disposable-scenario answers are received. Existing a32b36e1 remains intact; pause source while TYRE-SLIP holds the shared busy/save lease. No unanswered-Claude blocker is implied and no new lane is needed. Resume this existing lane after the lease is free.

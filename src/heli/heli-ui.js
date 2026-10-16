@@ -8,6 +8,7 @@ import {HELI_RADIO_LINES} from './heli-radio-lines.js';
 import {HELI_MONEY} from './heli-save.js';
 import {LESSON_RULES} from './heli-lessons.js';
 import {createDispatchBoard, atHomePad} from './heli-board.js';
+import {lessonBoardMarkup} from '../lessons/lesson-board.js';
 
 export const LESSON_TEXT = Object.freeze({
   liftoff: Object.freeze({name: '1 Lift-off', goal: 'Rise to 3 m and hold her there for 5 seconds.'}),
@@ -173,13 +174,8 @@ export function lessonsMarkup(view, board, {opening = false} = {}) {
       <p>${escape(text.goal)}</p>${hold}<button type="button" data-heli-lesson="stop">Stop the lesson</button></div>`;
   }
   if (!atHomePad(view) || !board?.length) return '';
-  const rows = board.map(item => {
-    const text = LESSON_TEXT[item.id];
-    const state = item.done ? 'done' : item.open ? 'open' : 'locked';
-    const button = item.open || item.done ? `<button type="button" data-heli-lesson="start:${item.id}">${item.done ? 'Retake' : 'Start'}</button>` : '<small>Opens later</small>';
-    return `<li class="heli-lesson-${state}"><span>${item.done ? '✓ ' : ''}${escape(text.name)}</span>${button}</li>`;
-  }).join('');
-  return `<div class="heli-lessons" role="group" aria-label="Instructor"><span>INSTRUCTOR</span><ul>${rows}</ul>${
+  const rows = board.map(item => ({group: 'Helicopter', id: item.id, name: LESSON_TEXT[item.id].name, open: item.open, done: item.done}));
+  return `<div class="heli-lessons" role="group" aria-label="Instructor"><span>INSTRUCTOR</span>${lessonBoardMarkup(rows, {action: 'data-heli-lesson'})}${
     opening ? '<button type="button" class="heli-skip" data-heli-lesson="skip">Skip the opening (marks lessons 1 and 2 done)</button>' : ''}</div>`;
 }
 
