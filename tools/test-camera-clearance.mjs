@@ -40,9 +40,11 @@ console.log(`Camera clearance: ${checks} portal, roof and damping checks passed.
  for(const roof of roofs)for(const off of[0,2,4]){
   const position=course.worldAt(roof.kitS,off);position.y+=12;
   assert.ok(constrainTunnelCamera(course,position,roof.kitS),'Gallery camera is clamped beneath both accepted roofs');checks++;
-  const road=course.at(roof.kitS).y,r=off/tunnel.width,arch=road+3.6+(tunnel.height-3.6)*Math.sqrt(1-r*r);
-  const flat=course.groundAt(roof.kitS,0).y+tunnel.height;
-  assert.ok(position.y<=arch-.45&&position.y<=flat-.45,'Gallery clamp respects both analytic ceilings');checks++;
+  const projected=course.nearest(position.x,position.z,roof.kitS),actualTunnel=course.tunnelAt(projected.s,projected.lateral);
+  const road=course.at(projected.s).y,r=Math.min(.995,Math.abs(projected.lateral)/actualTunnel.width);
+  const arch=road+3.6+(actualTunnel.height-3.6)*Math.sqrt(1-r*r);
+  const flat=course.groundAt(projected.s,0).y+actualTunnel.height;
+  assert.ok(position.y<=arch-.45&&position.y<=flat-.45,'Gallery clamp respects both analytic ceilings at the actual projected frame');checks++;
   assert.ok(sweepObstacle(position,position,roof,0,{halfWidth:0,halfLength:0}),'Gallery witness lies beneath the actual placed roof footprint');checks++;
   assert.ok(position.y<=roof.minY-.45,'Gallery camera clears the actual placed kit roof underside');checks++;
  }

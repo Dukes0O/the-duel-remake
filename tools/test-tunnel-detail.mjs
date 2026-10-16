@@ -43,7 +43,13 @@ for(const seed of[1989,42])for(const def of COURSE.filter(def=>def.sections.some
       p.add(new THREE.Vector3().fromBufferAttribute(positions,i+1)).add(new THREE.Vector3().fromBufferAttribute(positions,i+2)).divideScalar(3);
       const nearest=course.nearest(p.x,p.z),sign=Math.sign(nearest.lateral),frame=course.at(nearest.s),direction=new THREE.Vector3(Math.cos(frame.heading)*sign,0,-Math.sin(frame.heading)*sign);ray.set(p.clone().addScaledVector(direction,-.15),direction);ray.far=.35;
       const hit=ray.intersectObjects(lining,false)[0];check(!!hit,`${def.id}: detail has no existing wall behind it`);
-      maximumGap=Math.max(maximumGap,Math.abs(hit.distance-.15));check(Math.abs(hit.distance-.15)<.00015,`${def.id}: new detail protrudes from the existing wall plane`);
+      const gap=Math.abs(hit.distance-.15);
+      const witness=gap<.00015?'':JSON.stringify({seed,tunnel:tunnel.id,detail:geometry.name,triangle:i/3,
+        vertices:[0,1,2].map(offset=>new THREE.Vector3().fromBufferAttribute(positions,i+offset).toArray()),
+        centroid:p.toArray(),float32Spacing:p.toArray().map(value=>Math.abs(value)<2**-126?2**-149:2**(Math.floor(Math.log2(Math.abs(value)))-23)),
+        station:nearest.s,lateral:nearest.lateral,rayDirection:direction.toArray(),
+        hitDistance:hit.distance,hitPoint:hit.point.toArray(),faceNormal:hit.face.normal.toArray(),gap});
+      maximumGap=Math.max(maximumGap,gap);check(gap<.00015,`${def.id}: new detail protrudes from the existing wall plane${witness?' '+witness:''}`);
     }
   }
 }

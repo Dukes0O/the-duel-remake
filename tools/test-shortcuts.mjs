@@ -16,8 +16,16 @@ for (const seed of seeds) for (const definition of COURSE) {
     // An authored alternative is a declared road, not a solver's time-saving
     // shortcut. Check its geometry and clearance without inventing a saving.
     assert.deepEqual(branches, (definition.roadBranches ?? []).map(branch => ({...branch, offset: branch.offset * branch.side, transition: .15})), `${definition.id}/${seed}: exactly authored branches, no generated additions`);
+    const summitOpen = ['summit-run', 'summit-time-attack'].includes(definition.id);
+    if (summitOpen) assert.equal(branches.length, 1, `${definition.id}/${seed}: the approved Open Road is present exactly once`);
     for (const cut of branches) {
       const label = `${definition.id}/${seed}/${cut.id}`;
+      let snowJoinSamples = 0, ploughedSamples = 0;
+      if (summitOpen) {
+        assert.equal(cut.id, 'summit-open-road', `${label}: approved branch identity`);
+        assert.equal(cut.surface, 'paved', `${label}: the declared branch remains paved`);
+        assert.equal(cut.gripKind, 'asphalt', `${label}: the declared ploughed branch grip remains asphalt`);
+      }
       assert.ok(cut.start >= 0 && cut.end > cut.start && cut.end <= course.length, `${label}: bounded branch range`);
       assert.ok(cut.halfWidth >= 1.4 + 2.8, `${label}: three Titan-width lanes fit`);
       for (const s of [cut.start, cut.end]) {
@@ -32,9 +40,25 @@ for (const seed of seeds) for (const definition of COURSE) {
         const s = cut.start + i * step, offset = course.shortcutOffset(cut, s), surface = course.surfaceAt(s, offset);
         assert.ok(surface.road && surface.shortcutId === cut.id, `${label}: continuous legal branch surface`);
         assert.equal(surface.mainRoad, cut.surface === 'paved', `${label}: declared pavement retained`);
-        assert.equal(course.gripKindAt(s, offset), cut.gripKind ?? 'asphalt', `${label}: declared branch grip retained`);
+        if (summitOpen) {
+          // The real branch merges into the existing snow road at each end.
+          // Its ploughed asphalt override begins only beyond that road's edge.
+          assert.equal(course.script.surfaceAt(s), 'snow', `${label}: authored main-road snow coating retained`);
+          assert.equal(course.gripKindAt(s, 0), 'snow', `${label}: actual main-road snow grip retained`);
+          if (Math.abs(offset) <= course.script.halfWidthAt(s)) {
+            assert.equal(course.gripKindAt(s, offset), 'snow', `${label}: shared join retains main-road snow`);
+            snowJoinSamples++;
+          } else {
+            assert.equal(course.gripKindAt(s, offset), 'asphalt', `${label}: separated branch retains declared ploughed asphalt`);
+            ploughedSamples++;
+          }
+        } else assert.equal(course.gripKindAt(s, offset), cut.gripKind ?? 'asphalt', `${label}: declared branch grip retained`);
         if (i) maximumSlope = Math.max(maximumSlope, Math.abs(offset - previousOffset) / step);
         previousOffset = offset;
+      }
+      if (summitOpen) {
+        assert.ok(snowJoinSamples > 0 && ploughedSamples > 0, `${label}: both snowy shared joins and ploughed branch are exercised`);
+        for (const s of [cut.start, cut.end]) assert.equal(course.gripKindAt(s, 0), 'snow', `${label}: each actual endpoint joins the snow road`);
       }
       for (const lane of [-2.8, 0, 2.8]) {
         let previous = course.groundAt(cut.start, lane);
