@@ -1,6 +1,6 @@
 # P4-FINISH-ARDENNES
 
-Claude's finishing pass on Ardennes Forest (dev course), round 2, lane `claude/finish-ardennes`. Course data in `src/circuits/ardennes-forest.js`, plus its own test. The road, barriers, physics, seeds, reference lap, accepted art (merge 010c81ad: village, church, bridges, beeches, stream) and every released course are unchanged. Round 1 findings and the checklist verdicts are in the card report; the before and after sheet is `docs/board/looks/ardennes/round-2.jpg`.
+Claude's finishing pass on Ardennes Forest (dev course), round 2, lane `claude/finish-ardennes`. Course data in `src/circuits/ardennes-forest.js`, plus its own test. The road, barriers, physics, seeds, reference lap, accepted art (merge 010c81ad: village, church, bridges, beeches, stream) and every released course are unchanged. Round 1 findings and the checklist verdicts are in the card report; the before and after sheet is held in `.evidence/2026-10-15/P4-FINISH-ARDENNES/round-2.jpg` (integration folder) until it has room in the repository; see Looks budget.
 
 ## What changed
 
@@ -22,7 +22,7 @@ Claude's finishing pass on Ardennes Forest (dev course), round 2, lane `claude/f
 
 ## Pictures
 
-`docs/board/looks/ardennes/round-2.jpg` (458,543 bytes): before and after, High, from the same native views and review frames (`.evidence/2026-10-15/P4-FINISH-ARDENNES/views`, `views-final`, `review-high`, `review-final` in the integration folder). Honest reading: the grid is the clear gain (stands and garages on both sides of the field). The new boards read, but small: at 13 m from the road edge they stand at the fence line and look pale at a distance, smaller than the script's own boards at 2.4 m. The Riverside change is subtle (the inside of the hairpin is about 10 colour levels darker); the sheet's edge still shows faintly.
+`round-2.jpg` (458,543 bytes, held in evidence): before and after, High, from the same native views and review frames (`.evidence/2026-10-15/P4-FINISH-ARDENNES/views`, `views-final`, `review-high`, `review-final` in the integration folder). Honest reading: the grid is the clear gain (stands and garages on both sides of the field). The new boards read, but small: at 13 m from the road edge they stand at the fence line and look pale at a distance, smaller than the script's own boards at 2.4 m. The Riverside change is subtle (the inside of the hairpin is about 10 colour levels darker); the sheet's edge still shows faintly.
 
 ## Tests
 
@@ -30,10 +30,14 @@ Claude's finishing pass on Ardennes Forest (dev course), round 2, lane `claude/f
 - Second focused run: 4 of 4 passed (480 s).
 - World signature: this lane has no Ardennes signature file (the course is dev; the first one is being captured in the ardennes-switch-on lane). The switch-on card now says to recapture it after this pass merges.
 
+## Looks budget
+
+The lane tier's `tools/test-review-evidence.mjs` holds `docs/board/looks` under 20,000,000 bytes. The committed looks total is 19,935,199 bytes, so only 64,801 bytes are free and this 458,543-byte sheet failed the check (lane run 2: 41 passed, 1 failed). The sheet is therefore not committed. To commit it, about 394 KB must leave the looks folder first. Candidates, none removed here because they belong to other cards: `ardennes-art/round-4.jpg` (316,397 bytes, the accepted art sheet; its verdict is in `round-4-review.md` and on P4-ARDENNES) with the three superseded `ardennes-art/round-1..3-review.md` notes, or another family's consumed sheet in a janitor sweep. The integration folder also holds two untracked leftover files, `p4-panorama/round-2.jpg` and `round-2-review.md` (427,090 bytes, removed from Git by P4-FINISH-PANORAMA), which make that folder's disk total read higher than Git's.
+
 ## Changed assertions
 
 - None changed. Added: a check that every finishing-pass board stands beyond the run-off, inside the fence, on straight road, on the outside of the corner it announces, and is not solid.
 
 ## Removed
 
-Nothing in the game. The round 1 finishing sheet was never committed; this round-2 sheet replaces it. (The repository only admits look sheets named `round-N.jpg`, so the finishing sheet follows `round-1.jpg`, the accepted layout map, in the same folder.)
+Nothing in the game. The round 1 finishing sheet was never committed. When the round-2 sheet is committed it must be named `docs/board/looks/ardennes/round-2.jpg` (the repository admits only `round-N.jpg` look sheets; `round-1.jpg` there is the accepted layout map).
