@@ -529,7 +529,7 @@ export function createRescueView({THREE, scene, load = defaultLoad, quality = 'h
       for (const entry of models.values()) entry.root?.traverse(object => { object.geometry?.dispose?.(); (Array.isArray(object.material) ? object.material : [object.material]).forEach(m => m?.dispose?.()); });
       for (const layer of [glow, cover]) { layer.points.geometry.dispose(); layer.material.uniforms.atlas.value?.dispose?.(); layer.material.dispose(); }
       for (const ring of [clearingRing, yardRing, searchRing]) { ring.geometry.dispose(); ring.material.dispose(); }
-      for (const mesh of debris.meshes) mesh.geometry.dispose();
+      for (const mesh of debris.meshes) { mesh.geometry.dispose(); mesh.dispose?.(); }
       debris.meshes[0]?.material.dispose();
     },
   };

@@ -125,3 +125,7 @@ Nothing replaced.
 Round 2, lane tier on 5531ed5a (`node tools/run-tests.mjs --tier lane --changed
 --jobs 4 --keep-going`, PowerShell): 160 passed, 0 failed, 0 not run in 799 s.
 `npm run build`: passed. (Round 1: 160 passed in 903 s, build passed.)
+
+## Review (Claude)
+
+Review CLEAR. Applied its one note: the instanced debris meshes are disposed with the scene. The picture recipe stays a recurring browser check, like fire-view. The fourth destination button works once RESCUE-AUTOPILOT (which supplies `view().destinations`) is merged alongside.
