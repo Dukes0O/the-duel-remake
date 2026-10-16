@@ -408,11 +408,25 @@ noClocks(() => {
     ok(edge.coveredCells > 0 && edge.coveredCells < 40, 'a path just outside the edge covers a sliver');
     equal(edge.coveredCells, expectedCovered([[-50, 400], [-50, 500]]), '...the cells within 60 m');
   }
-  // Coverage is the path alone: height and fright do not change it (the packet's words).
+  // Cover grows only while the helicopter is at counting height (Director, 16 October); fright does not change it.
   {
-    const high = createSurveyRun(planOf([])); fly(high, [[0, 400], [800, 400]], {agl: 500});
-    const low = createSurveyRun(planOf([{x: 400, z: 400}])); fly(low, [[0, 400], [800, 400]], {agl: 10});
-    equal(high.coveredCells, 240, 'coverage is the same at 500 m'); equal(low.coveredCells, 240, '...and at 10 m');
+    const high = createSurveyRun(planOf([])); fly(high, [[0, 400], [800, 400]], {agl: 400});
+    equal(high.coveredCells, 0, 'a 400 m sweep covers 0 cells');
+    const edge = createSurveyRun(planOf([])); fly(edge, [[0, 400], [800, 400]], {agl: 150.5});
+    equal(edge.coveredCells, 0, 'just above 150 m covers nothing');
+    const limit = createSurveyRun(planOf([])); fly(limit, [[0, 400], [800, 400]], {agl: 150});
+    equal(limit.coveredCells, 240, 'at 150 m it covers');
+    const low = createSurveyRun(planOf([])); fly(low, [[0, 400], [800, 400]], {agl: 100});
+    equal(low.coveredCells, 240, 'a 100 m sweep covers as before');
+    const scared = createSurveyRun(planOf([{x: 400, z: 400}])); fly(scared, [[0, 400], [800, 400]], {agl: 10});
+    equal(scared.coveredCells, 240, 'low flying that frightens animals still covers');
+    const mixed = createSurveyRun(planOf([]));
+    fly(mixed, [[0, 400], [400, 400]], {agl: 400}); fly(mixed, [[400, 400], [800, 400]], {agl: 100});
+    equal(mixed.coveredCells, expectedCovered([[400, 400], [800, 400]]), 'a mixed path covers only its low part');
+    ok(mixed.coveredCells > 0 && mixed.coveredCells < 240, '...which is part of the strip');
+    const quick = createSurveyRun(planOf([])); fly(quick, [[0, 100], [800, 100], [800, 300], [0, 300], [0, 500], [800, 500], [800, 700], [0, 700]], {agl: 300, speed: 80});
+    equal(quick.coveredCells, 0, 'a quick high pass covers nothing');
+    equal(reportSurvey(quick).ok, false, '...so it cannot be reported for the 200 minimum');
   }
   // Each cell counts once.
   {

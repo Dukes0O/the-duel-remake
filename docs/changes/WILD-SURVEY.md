@@ -35,7 +35,8 @@ can be asked, by course), `SURVEY_NAMES`, `SURVEY_LINES` (Sarah's radio ids).
   animals within 100 m run and cannot be counted (or seen, if rare) for 120 s
   after the last fright. Events: `count`, `scare` (once per fright), `rare`.
 - **Cover.** 40 by 40 cells of 20 m; a cell is covered when its centre lies within
-  60 m of the path. `surveyShare`, `surveyPercent`, `canReport` (at least 400 of
+  60 m of the path, counted only while the helicopter is at most 150 m up.
+  `surveyShare`, `surveyPercent`, `canReport` (at least 400 of
   1,600 cells, kept in whole cells).
 - **The report.** `reportSurvey(run)`: estimate = count divided by share,
   rounded. Within 20% of the true number pays 600, within 40% pays 400, further
@@ -126,10 +127,11 @@ Nothing replaced.
   14 cougars in 2 to 6 groups).
 - **A cougar count has no rare bonus.** The cougar is Summit Run's rare animal,
   so when it is what is counted, there is no separate rare animal and no 100 bonus.
-- **Cover ignores height and fright.** Read literally: "within 60 m of your
-  path". So flying at 400 m covers the square but counts nothing. If cover should
-  only grow while an animal could be counted (at most 150 m up), it is one line in
-  `stepSurvey`.
+- **Claude decided (16 October):** cover grows only while the helicopter is at
+  most 150 m up (the counting height), so flying high covers nothing and a quick
+  high pass cannot earn the 200 minimum. Fright does not affect cover. Built
+  as a single height check in `stepSurvey`; tests: a 400 m sweep covers 0 cells, a
+  100 m sweep covers as before, a mixed path covers only its low part.
 - **Height and distance are read at the end of each step**, and distance is
   across the ground (not through the air). The path between steps is a straight
   line.
