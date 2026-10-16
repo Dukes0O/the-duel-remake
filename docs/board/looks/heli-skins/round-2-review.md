@@ -12,6 +12,7 @@ thinned tips (wildlife). Recipe `tools/blender/skin-gear.py`; one GLB each in
 - Round 2: the legs end on the bag's shoulders.
 
 Verdict (Claude): **pick.** Each origin is its mount point on Kestrel One:
-mount_nose (0, 0.85, 2.30), mount_belly (0, 0.76, 1.50), mount_side_right
-(-0.78, 1.55, 0.45) in glTF metres; the cargo net's origin is the top of its
+mount_nose (0, 1.08, 2.30), mount_belly (0, 0.74, 1.50), mount_side_right
+(-0.60, 1.55, 0.45) in glTF metres (moved onto the body surface in part 2;
+the first numbers, 0.85, 0.76 and -0.78, hung in the air); the cargo net's origin is the top of its
 hook; the rotor shares main_rotor's pivot and spin axis.

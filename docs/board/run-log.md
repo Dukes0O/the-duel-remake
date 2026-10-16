@@ -1207,3 +1207,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 
 - 2026-10-15 pause by Kyle for restart: SUMMIT-SWITCH-ON exactd27d7c75 retained, geometry164654/build2099ms/reviewCLEAR/Claude approved; original canonical gate outcome pending inspection, no merge or release. See card restart point.
 15 October: helicopter answers merged (Kyle: seasons decide, no forest fire in winter, card FIRE-SEASONS before H2 releases; people can get hurt and failure costs, card RESCUE-HURT); lane 15/15 jobs4 343.37 s, build passed, clean merge; lane deleted.
+15 October: SKIN-ART-GEAR part 2 merged (mount_nose, mount_belly, mount_side_right empties on Kestrel One, snapped to the hull; model still 12,580 tris); lane 32/32 jobs4 from PowerShell, build passed; review by render; card complete, lane deleted.
