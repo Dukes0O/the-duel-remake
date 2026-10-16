@@ -342,7 +342,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-rescue-hooks-2026-10-16
+    branch: claude/rescue-hooks
     needs: [FIRE-HOOKS, RESCUE-ENGINE, RESCUE-LINE, RESCUE-SITES, RESCUE-RADIO, RESCUE-HURT]
     locks: []
     flag: "rescue"
@@ -386,7 +388,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-wild-survey-2026-10-16
+    branch: claude/wild-survey
     needs: [WILD-PLACE, RESCUE-ENGINE]
     locks: []
     flag: "wildlife"
