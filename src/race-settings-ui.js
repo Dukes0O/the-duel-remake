@@ -54,6 +54,7 @@ export function syncCoachChoice(root, app, choices, stage) {
     anchor.insertAdjacentElement('afterend', group);
   }
   const available = stage.closed !== false && coachAllowed({enabled:true,
+    playerId:app.player?.id,runPlayerId:app.player?.id,racePlayerId:app.player?.id,
     flag:app._switches?.().enabled('grand-prix') === true,intelLevel:app.getIntelLevel?.(stage.id) ?? 0,
     status:'racing',mode:choices.mode,difficulty:choices.difficulty,cpuDifficulty:choices.cpuDifficulty,
     cup:!!app.profile?.cups?.active});

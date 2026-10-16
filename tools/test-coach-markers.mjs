@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {coachAllowed, buildCoachMarkers, setCoachEnabled, coachEnabled} from '../src/coach-markers.js';
-const context={enabled:true,flag:true,intelLevel:2,status:'racing',mode:'duel',difficulty:'hard',cpuDifficulty:'hard',cup:false};
+import {coachAllowed, buildCoachMarkers, setCoachEnabled, coachEnabled, coachRaceContext} from '../src/coach-markers.js';
+const context={playerId:'kyle',runPlayerId:'kyle',racePlayerId:'kyle',enabled:true,flag:true,intelLevel:2,status:'racing',mode:'duel',difficulty:'hard',cpuDifficulty:'hard',cup:false};
 const course={def:{id:'unit-course'},closed:true,length:1000,worldAt:(s,lateral)=>({x:s,z:lateral}),groundAt:()=>({y:4})};
 const dossier={courseId:'unit-course',route:'fixed',notes:{one:{note:'Brake before turning.'}},analysis:{corners:[{id:'one',number:1,apexS:200,entryS:170,exitS:230}]},reference:{eventId:'unit-course',route:'fixed',corners:[{id:'one',brakeS:145}],poseSamples:[[0,17000,-200,0,0,0,0],[1,20000,300,0,0,0,0],[2,23000,100,0,0,0,0]]}};
 // Unit corner IDs are supplied explicitly; native dossiers use stable corner IDs.
@@ -40,4 +40,34 @@ test('actual Panorama dossier produces read-only markers on the bundled team lap
  const markers=buildCoachMarkers(actual,dossier,context);assert.ok(markers.length>5);
  for(const marker of markers){assert.ok(marker.line.length>=2);for(const point of [marker.brake,...marker.line])assert.ok([point.x,point.y,point.z].every(Number.isFinite));}
  assert.equal(JSON.stringify(ref),before);assert.equal(ref,referenceLap('panorama-ridge','fixed'));
+});
+
+test('race context fails closed for missing course and foreign or stale run ownership',()=>{
+ const app={player:{id:'kyle'},_runPlayerId:'kyle',_switches:()=>({enabled:()=>true}),getIntelLevel:()=>2};
+ setCoachEnabled(app,true);const state={...context,playerId:'kyle'};
+ assert.equal(coachAllowed(coachRaceContext(app,course,state)),true);
+ assert.equal(coachAllowed(coachRaceContext(app,null,state)),false);
+ assert.equal(coachAllowed(coachRaceContext(app,course,{...state,playerId:'gratian'})),false);
+ app._runPlayerId='gratian';assert.equal(coachAllowed(coachRaceContext(app,course,state)),false);
+ for(const patch of [{playerId:null},{racePlayerId:'other'},{runPlayerId:'other'}])assert.equal(coachAllowed({...context,...patch}),false);
+});
+
+test('real setup helper binds once, reflects the current player and disables excluded choices',async()=>{
+ const {syncCoachChoice}=await import('../src/race-settings-ui.js');
+ function button(value){return {dataset:{coach:value},disabled:false,events:[],attributes:{},classList:{toggle(){}},setAttribute(k,v){this.attributes[k]=v;},addEventListener(_,fn){this.events.push(fn);}};}
+ const buttons=[button('off'),button('on')];let installed=null;
+ const group={querySelectorAll:()=>buttons};
+ const anchor={insertAdjacentElement(_,value){installed=value;}};
+ const root={ownerDocument:{createElement:()=>group},querySelector:q=>q==='#qualifying-choice'?anchor:installed};
+ const app={player:{id:'kyle'},profile:{},_switches:()=>({enabled:()=>true}),getIntelLevel:()=>2};
+ const choices={mode:'duel',difficulty:'medium',cpuDifficulty:'medium'},stage={id:'unit-course',closed:true};
+ syncCoachChoice(root,app,choices,stage);assert.equal(group.hidden,false);assert.equal(group.id,'coach-choice');
+ assert.match(group.innerHTML,/aria-label="Coach markers"/);assert.equal(buttons[0].attributes['aria-pressed'],'true');
+ buttons[1].events[0]();assert.equal(coachEnabled(app),true);assert.equal(buttons[1].events.length,1);
+ app.player={id:'gratian'};syncCoachChoice(root,app,choices,stage);assert.equal(coachEnabled(app),false);
+ app.profile.cups={active:{id:'cup'}};syncCoachChoice(root,app,choices,stage);assert.equal(group.hidden,true);assert.ok(buttons.every(b=>b.disabled));
+ buttons[1].events[0]();assert.equal(coachEnabled(app),false);
+ delete app.profile.cups;choices.mode='grandprix';choices.difficulty='hard';syncCoachChoice(root,app,choices,stage);assert.equal(group.hidden,true);
+ choices.mode='timetrial';app.getIntelLevel=()=>1;syncCoachChoice(root,app,choices,stage);assert.equal(group.hidden,true);
+ assert.deepEqual(app.profile,{});assert.equal(Object.hasOwn(choices,'coach'),false);
 });

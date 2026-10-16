@@ -8,7 +8,7 @@ The menu helper is implemented only in the owned race-settings-ui hook; the sing
 
 ## Verification
 
-Initial planner tests RED for missing implementation, then6/6 PASS including actual current Panorama dossier/reference geometry and no mutation. UI/renderer integration, required review, canonical gate/build and actual presentation verification remain pending. No old assertion changed, no timing or art acceptance claimed.
+Initial planner tests RED for missing implementation, then6/6 PASS including actual current Panorama dossier/reference geometry and no mutation. Actual setup helper and race-owner/missing-course guards added:8/8 planner/UI cases PASS. Independent review found two real guard gaps (missing course and foreign/stale race owner); both corrected with explicit pure race-context tests. Confirmation, canonical gate/build and actual presentation verification remain pending. No old assertion changed, no timing or art acceptance claimed.
 
 ## Removed
 

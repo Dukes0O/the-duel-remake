@@ -57,7 +57,7 @@ import {createTankerModel} from './arena/tanker-model.js';
 import {trackSnapshotPose, SNAPSHOT_FOV, buildTrackDossier} from './track-analysis.js';
 import {referenceLap} from './reference-laps.js';
 import {telemetryRoute} from './lap-telemetry.js';
-import {coachAllowed,coachEnabled,buildCoachMarkers} from './coach-markers.js';
+import {coachAllowed,coachRaceContext,buildCoachMarkers} from './coach-markers.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -167,12 +167,8 @@ export function attachRenderer(host, app) {
   scene.add(coachView);
   let coachCourse = null, coachReference = null;
   function updateCoach(next, state) {
-    const context = {enabled:coachEnabled(app),flag:app._switches?.().enabled('grand-prix') === true,
-      intelLevel:app.getIntelLevel?.(next.def.id) ?? 0,status:state.paused ? 'paused' : state.status,
-      mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty,
-      cup:!!app._cupRace || !!app.profile?.cups?.active,onFoot:state.onFoot,
-      inspection:!!app.inspectionCamera || !!state.deepJourney || !!state.helicopter};
-    coachView.visible = next.closed !== false && coachAllowed(context);
+    const context = coachRaceContext(app,next,state);
+    coachView.visible = !!next && next.closed !== false && coachAllowed(context);
     if (!coachView.visible) return;
     const route = telemetryRoute(next.def.id, state.seed), reference = referenceLap(next.def.id, route);
     if (coachCourse === next && coachReference === reference) return;

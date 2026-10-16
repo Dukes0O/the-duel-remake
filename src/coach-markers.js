@@ -19,7 +19,8 @@ export function setCoachEnabled(app, enabled) {
 export function coachEnabled(app) { return preference(app)?.enabled === true; }
 
 export function coachAllowed(context = {}) {
-  return context.enabled === true && context.flag === true && context.intelLevel >= 2 &&
+  return typeof context.playerId === 'string' && context.playerId.length > 0 &&
+    context.racePlayerId === context.playerId && context.runPlayerId === context.playerId && context.enabled === true && context.flag === true && context.intelLevel >= 2 &&
     context.status === 'racing' && context.cup !== true && context.onFoot !== true &&
     context.inspection !== true && ['duel','timetrial','grandprix'].includes(context.mode) &&
     !(context.mode === 'grandprix' &&
@@ -59,4 +60,14 @@ export function buildCoachMarkers(course, dossier, context) {
     markers.push({id, brake, line});
   }
   return markers;
+}
+
+export function coachRaceContext(app, course, state) {
+  if (!course?.def || !state) return {};
+  return {enabled:coachEnabled(app),flag:app._switches?.().enabled('grand-prix') === true,
+    playerId:app.player?.id,runPlayerId:app._runPlayerId,racePlayerId:state.playerId,
+    intelLevel:app.getIntelLevel?.(course.def.id) ?? 0,status:state.paused ? 'paused' : state.status,
+    mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty,
+    cup:!!app._cupRace || !!app.profile?.cups?.active,onFoot:state.onFoot,
+    inspection:!!app.inspectionCamera || !!state.deepJourney || !!state.helicopter};
 }
