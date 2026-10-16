@@ -140,7 +140,9 @@ tasks:
     owner: "claude"
     lane: "DESIGN"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-variant-notes-2026-10-16
+    branch: claude/teamroom-variant-notes
     needs: []
     locks: []
     details: "docs/board/cards/TEAMROOM-VARIANT-NOTES.md"
@@ -339,7 +341,9 @@ tasks:
     owner: "claude"
     lane: "SAVE"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-rescue-save-2026-10-16
+    branch: claude/rescue-save
     needs: [FIRE-SAVE, FIRE-MISSIONS]
     locks: [save-shape]
     flag: "rescue"
