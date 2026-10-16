@@ -6,6 +6,7 @@ import { escapeRoadsFor, escapeFrame } from './escape-roads.js';
 import { checkSurfaceRules, iceBoards, winterBankPatches } from './race-surfaces.js';
 import { hillLocal, hillReach, hillHeight, runWeight, basinReach } from './circuit-hills.js';
 import { makeRng } from './rng.js';
+import { renderedGroundHeight } from './rendered-ground.js';
 import {installPitLane, pitAt} from './pit-lane.js';
 import { KIT_FOOTPRINTS } from './kit-footprints.js';
 
@@ -212,9 +213,14 @@ function scatterScenery(course) {
   // off the road, the runoff and the inside of corners; the circuit's clear
   // zones and kit pieces keep it off the lake, the lift and the paddock. It has
   // its own random stream, so a circuit without one is exactly as it was.
-  const forest = course.def.scenery?.forest;
-  if (forest) {
-    const random = makeRng(0x6f7265 ^ (course.def.stage + 1) * 0x9e37), taken = new Map(), cell = 6;
+  // A far forest (`scenery.farForest`, the same fields plus its own `clear`
+  // stretches) is a second band planted after the first with its own random
+  // stream and names (`far-forest-N`), so the first band's trees, names and
+  // draws are exactly as they were; it only avoids the spots already taken.
+  // Its trees stand on the drawn ground (rendered-ground.js), which beyond
+  // the first band can differ from the course's own ground by metres.
+  const plantBand = (band, random, prefix, {zones = [], drawnGround = false} = {}) => {
+    const taken = new Map(), cell = 6;
     const key = (x, z) => `${Math.floor(x / cell)}:${Math.floor(z / cell)}`;
     const claim = (x, z) => { const k = key(x, z); if (!taken.has(k)) taken.set(k, []); taken.get(k).push([x, z]); };
     for (const o of f.obstacles) claim(o.x, o.z);
@@ -223,8 +229,12 @@ function scatterScenery(course) {
         for (const [ox, oz] of taken.get(key(x + i * cell, z + j * cell)) ?? []) if (Math.hypot(ox - x, oz - z) < radius) return true;
       return false;
     };
-    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35, scale: scaleRange, clumps, jitter = .9 } = forest;
-    const authoredRanges=forest.ranges;
+    const ownClear = (s, off, radius) => {
+      const phase = course.phase(s);
+      return zones.some(zone => phase >= zone.s0 - radius && phase <= zone.s1 + radius && off >= zone.from - radius && off <= zone.to + radius);
+    };
+    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35, scale: scaleRange, clumps, jitter = .9 } = band;
+    const authoredRanges=band.ranges;
     if(authoredRanges&&(!Array.isArray(authoredRanges)||!authoredRanges.length||authoredRanges.some(range=>
       !Number.isFinite(range.from)||!Number.isFinite(range.to)||range.from<0||range.to>course.length||range.to<=range.from)))
       throw new TrackScriptError('Forest ranges must lie on their authored course.');
@@ -248,13 +258,28 @@ function scatterScenery(course) {
         if (grove < clumps.cut) continue;
         scale *= 1 + (clumps.size ?? 0) * (grove - .5);
       }
-      if (!roadClear(s, off, 0, 1) || cleared(s, off, 2.5 * scale)) continue;
+      if (!roadClear(s, off, 0, 1) || cleared(s, off, 2.5 * scale) || zones.length && ownClear(s, off, 2.5 * scale)) continue;
       const p = course.groundAt(s, off);
+      // A far band reaches across to other stretches of the circuit, so it is
+      // also measured from the nearest road: at least `from` beyond its edge,
+      // and outside the clear stretches as seen from that road.
+      if (drawnGround) {
+        const n = course.nearest(p.x, p.z);
+        if (n.distance - course.roadHalfWidthAt(n.s) < from || cleared(n.s, n.lateral, 2.5 * scale) ||
+          zones.length && ownClear(n.s, n.lateral, 2.5 * scale)) continue;
+      }
       if (crowded(p.x, p.z, 3.2 * scale)) continue;
       claim(p.x, p.z);
-      f.trees.push(add(`forest-${serial++}`, 'tree', s, off, .23 * scale, .23 * scale, random.range(0, TAU), { scale }));
+      const tree = add(`${prefix}-${serial++}`, 'tree', s, off, .23 * scale, .23 * scale, random.range(0, TAU), { scale });
+      if (drawnGround) { tree.y = renderedGroundHeight(course, tree); tree.farForest = true; }
+      f.trees.push(tree);
     }
-  }
+  };
+  const forest = course.def.scenery?.forest;
+  if (forest) plantBand(forest, makeRng(0x6f7265 ^ (course.def.stage + 1) * 0x9e37), 'forest');
+  const farForest = course.def.scenery?.farForest;
+  if (farForest) plantBand(farForest, makeRng(0x666172 ^ (course.def.stage + 1) * 0x7f4a7c15), 'far-forest',
+    {zones: farForest.clear ?? [], drawnGround: true});
   // Autumn (`scenery.autumn`): `share` of every planted tree turns one of the
   // `colours` (red, gold and orange multipliers for the pine crowns), picked
   // from the tree's place along the road so the same trees turn on every build.

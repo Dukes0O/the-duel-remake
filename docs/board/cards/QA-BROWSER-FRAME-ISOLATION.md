@@ -29,3 +29,12 @@ scenarios, the mode flag in `tools/run-browser-scenarios.mjs`, the frame step
 in `tools/full-check.mjs`, and their existing tests
 (`tools/test-browser-scenarios.mjs`, the full-check test). Timing is never
 reported as passed when it did not run.
+
+## Ready implementation contract after discovery repair merge
+
+The old cleanup blocker is resolved; the wrapper-discovery repair is merged, so these runner hooks are now free. Root readies this existing Claude-approved no-core slice. Keep the existing four full-check stages: its single frame step uses the existing browser suite, serial/jobs1/headed, to run the original Harbour frame-pacing recipe plus the two existing Tremblant scenarios in named timing-only mode. No extra full-check stage, harness or duplicate photo pass. Keep the quiet admission/ongoing process observations around that one frame step. The ordinary browser route runs all original Tremblant photos and semantic/grid checks, reports timing as run in the frame step, and never asserts a timing pass. Timing-only skips photos but runs both qualities/eight cars/exact120frame and existing p95/slow-frame assertions. Direct legacy recipes retain their existing combined behavior; named timing cannot be disabled by the old picture-only environment override. Full-check validates complete actual timing reports as well as the existing Harbour packet; no unrun-as-pass. Only the two scenarios, runner mode hook, existing full-check frame step, existing browser-scenario/full-check tests and own change note. No renderer/scene/save/threshold change or new timing measurement while machines are busy.
+
+
+## Completed implementation and verification
+
+Exact4fb3ced5 final canonical22/22/jobs4/exit0/0fail-notRun172238.7759ms, production build1216.0108ms, source clean and independent code/numbers review CLEAR. Actual ordinary views on cd562be6 passed both scenarios with21Snow/20Woods pictures, zeroissueswarnings, memory-only54364.664ms; later timing-only guard delta independently reviewed, no recapture. Named timing rejects wrong Snow course/disabled pacing, validates actual course/quality/eight cars/120frames and unchanged thresholds. Existing quiet frame step remains one stage, serial/headed; ordinary views explicitly delegate timing and never claim an unrun pass. No actual timing measurement or art verdict. Conflict-free integration union preserves Team Room and every foreign row; no repeated gate/build. Owned checkout cleanup follows its creation receipt.

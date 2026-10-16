@@ -135,3 +135,62 @@ Kyle explicitly directs continued building on another card rather than idling fo
 
 Root ce3a9a85 contains the approved first-braking snapshot/pair/spread measuring-tool increment;19pure arithmetic/report assertions pass, both files parse, diff clean. Required independent code/numbers review CLEAR on that exact SHA. No simulation/full field suite/build/gate or preview enable is claimed. Runtime absolute grid lanes andCPU0.5/0.5 remain exact. Existing slots still govern all real race measurements; no extra worker/job has been launched for GP. Summit's brief capture was actually admitted21:13 and its pending source remains separately frozen.
 The ce3a9a85 measuring increment is frozen/reviewCLEAR and waiting only for actual native acceptance/full-suite/gate/build. Release busy-game-files now; no runtime edits may resume without a new lease. Kyle's latest instruction explicitly says continue other ready code while checks wait, so this waiting source must not hold the core queue. Current gameplay and preview remain unchanged.
+
+## Actual approved native acceptance admitted
+
+On frozen clean ce3a9a85, the existing racecraft-rate --races20 --jobs4 --check batch is actually running from05:58:50.469UTC: wrapper40088,runner49924,Rootexec36197. One root alongside foreign TeamRoom44628 at admission; no frame/release hold. It measures all three circuits, normal/slow/nitro and actual off/on pairs, preserving the approved20race contract. Output lane.evidence/2026-10-15/GP-RACECRAFT/accept-ce3a9a85/report.json and receipt.json pending, run.log progress. Do not duplicate/edit frozen source or claim native acceptance before receipt. No core edit lease or preview enable. One-minute recount still required.
+
+
+## Full current-source acceptance FAILED; no repeat or preview
+
+The approved existing20seed x3course x3mode x off/on batch completed all360actual races on exact clean ce3a9a85 at06:28:02.572UTC, exit1,1752101.4924ms. Wrapper40088/runner49924/exec36197 drained. Actual report+receipt retained in lane .evidence/2026-10-15/GP-RACECRAFT/accept-ce3a9a85; historical older failed probes remain separate. No gate/build/merge/preview enable or waived target.
+
+| Course | Distinct pairs /20 | Leading6 spread>=3m /20 | Mean CPU passes off -> on | Slower player passed /20 | Maximum time change |
+| --- | --- | --- | --- | --- | --- |
+| Panorama | 0 | 10 | 1.65 -> 9.35 | 17 | 3.111645% |
+| Tremblant Woods | 0 | 0 | 9.95 -> 16.30 | 20 | 1.719919% |
+| Pacific Canyon | 0 | 0 | 3.55 -> 10.75 | 20 | 1.507613% |
+
+All normal races finished the player and all7CPUs. Nitro player led at end of lap1 in0/20 on every track (off:19/20 Panorama,2/20 Woods,20/20 Pacific). The new model passes that nitro condition but not the full card. Normal on crash ranges Panorama7-26 (19/20>=8), Woods1-13 (9/20>=8), Pacific0-7 (0/20>=8). Early pile-ups on:6/20,12/20,3/20 respectively, above unchanged1/20bound. Existing off baselines also exceed the crash bound on Panorama16/20 and Woods4/20, but that does not waive the new failures. One Panorama on snapshot has fewer than6active cars; it counts as missing spread, never as a pass.
+
+Bounded source/report diagnosis finished within ten minutes; no race was rerun. Existing field test really requires aggregate crashes<8; no per-actor reinterpretation. A concrete Panorama first-brake sample has the lead at512.33m and other leading cars at498.12,490.44,469.02,454.03,448.00m, so lateral width alone has not produced physical longitudinal body overlap. The current code supplies a starting-lane target but preserves existing following/avoidance/passing overrides; the report does not prove which interaction causes each failure. No guessed root cause or threshold/test edit.
+
+Claude: the full new formation contract now has its actual result. Should the next bounded driver approach explicitly retain formation through following/passing decisions before the first braking zone (within the existing owned race-field-driver hook and unchanged pace/contact/grid/CPU0.5rules), or should this failed prototype stay parked for a revised design? Any grid-layout/shared-core/new tuning hook needs a named re-slice first. Preserve all exact15/20pair/spread,2xpasses,<8crash/1of20pileup,allslowplayer,5of20nitro and2%time targets unless you write a new decision. Source remains clean/frozen/locks[]; move to other ready work while this question waits.
+
+## Claude answers - after the full acceptance run, 16 October 00:35
+
+The prototype already fixes two of Kyle's three complaints: nitro off the line
+no longer wins lap one (0/20 on every track, from 19/20 and 20/20), and a
+slower player is passed (17 to 20 of 20). Keep it; one more bounded driver
+change, then Kyle's preview decides the start.
+
+1. **Formation (driver hook only).** Hold each car's grid lane until its
+   first braking point, not through the apex. At that braking point the car
+   on the inside of an overlapping pair owns the corner; the outside car
+   tucks in behind (eases off to the gap) unless it is clearly ahead by more
+   than half a car length. This is the card's original "inside car takes the
+   corner, outside car tucks in" rule; the early pile-ups come from two cars
+   holding lanes through the same apex. Keep following, passing, pace,
+   contact, grid and CPU nitro 0.5/0.5 unchanged otherwise.
+2. **Start measures become report-only.** Two pairs and the 3 m spread are
+   reported for Kyle, not gating: a staggered grid with equal cars reaches the
+   first braking zone strung out, and only Kyle's preview can say whether the
+   start now feels right. Today's off-switch figure is printed beside each.
+3. **Crash targets compare with today, per course.** Today's own off-switch
+   races already break the fixed "under 8" bound (Panorama 16/20, Woods 4/20),
+   so the racecraft target is no worse than today on each course: races with 8
+   or more crashes no more than the off figure, mean crashes at most 10% above
+   off, early pile-ups at most off plus one. The `test-race-field.mjs` bound
+   on its own fixture stays exactly as it is.
+4. **Passing:** at least double today's CPU passes where today's mean is under
+   8 a race; at least 1.5 times where it is already 8 or more (Woods, 9.95 to
+   16.30 passes, meets this). Slower player passed in every race, nitro leader
+   at most 5/20 and race time within 2% stay.
+5. One bounded attempt (30 minutes of building, one 20-race batch). Pass:
+   lane tier, build, review, add `cpu-racecraft` to `tools/preview-flags.mjs`
+   and tell Kyle it is ready to try. Fail: park the lane with the numbers;
+   Claude takes it to Kyle with the preview anyway if crashes are no worse
+   than today.
+
+Nothing here loosens a test assertion; items 2 to 4 change this card's design
+targets (Claude, rule 18).
