@@ -342,10 +342,8 @@ tasks:
     owner: "claude"
     lane: "FINISH"
     size: "S"
-    status: "building"
-    claimed_by: claude-rescue-finish-2026-10-16
-    branch: claude/rescue-finish
-    needs: [RESCUE-VIEW, FIRE-FINISH]
+    status: "backlog"
+    needs: [SUMMIT-HELI-RESCUES]
     locks: []
     flag: "rescue"
     details: "docs/board/cards/RESCUE-FINISH.md"
