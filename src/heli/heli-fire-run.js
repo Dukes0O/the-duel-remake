@@ -185,9 +185,15 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
   }
 
   // "Later": not answered in time (or said so). A fire waits and grows; a rescue goes to another crew.
+  // Roger says it once for each rescue call, however often Later is pressed (RESCUE-VIEW).
+  let laterFor = null;
   function later(call) {
-    if (isRescueKind(call.kind)) { radio('heli.radio.rescue.later'); emit({type: 'rescueLater', kind: call.kind}); }
-    else { radio('heli.radio.fire.later'); emit({type: 'fireLater'}); }
+    if (isRescueKind(call.kind)) {
+      if (laterFor === call.id) return false;
+      laterFor = call.id;
+      radio('heli.radio.rescue.later'); emit({type: 'rescueLater', kind: call.kind});
+    } else { radio('heli.radio.fire.later'); emit({type: 'fireLater'}); }
+    return true;
   }
 
   const api = {
@@ -267,8 +273,7 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
       const call = callNow();
       if (!call || call.answered || !isRescueKind(call.kind)) return false;
       answerLeft = 0;
-      later(call);
-      return true;
+      return later(call);
     },
     // Water from the bucket on this course.
     water(courseId, patches) {

@@ -861,7 +861,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         hooked: crate.hooked, onGround: crate.onGround}))),
       call: waiting, active,
       // Where the autopilot is flying (a rescue's area, the cliff spot, the handover circle), or null.
-      goal: autopilot.engaged && autopilot.target ? Object.freeze({...autopilot.target}) : null});
+      goal: autopilot.engaged && autopilot.target ? Object.freeze({...autopilot.target}) : null,
+      // The course's ground height, so the drawing can stand people and snow blocks on the terrain.
+      ground: world?.ground ? (x, z) => world.ground.height(x, z) : null});
   }
 
   const api = {

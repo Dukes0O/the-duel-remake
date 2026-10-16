@@ -383,6 +383,8 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js',
     // FIRE-VIEW's browser check grows its fire by the game's own rules.
     ...['heli-ground', 'heli-session', 'heli-fire', 'heli-missions', 'heli-save'].map(name => `tools/scenarios/fire-view.mjs|heli/${name}.js`),
+    // RESCUE-VIEW's look check picks the hiker with the game's own search and arms the engine in its saves.
+    ...['heli-ground', 'heli-session', 'heli-missions', 'heli-save', 'heli-search'].map(name => `tools/scenarios/rescue-view.mjs|heli/${name}.js`),
     // FIRE-FINISH's play-through arms the mission engine in its saves.
     ...['heli-missions', 'heli-save'].map(name => `tools/scenarios/fire-finish.mjs|heli/${name}.js`),
     // And its node test reads the drawing files it checks.
@@ -400,7 +402,7 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
   }
   assert.deepEqual(offenders, [], 'no unapproved src/heli imports'); checks++;
   // Every helicopter file except the drawing, page and sound ones is game rules.
-  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js', 'heli-fire-view.js']);
+  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js', 'heli-fire-view.js', 'heli-rescue-view.js']);
   const sim = readdirSync(join(root, 'src/heli')).filter(name => name.endsWith('.js') && !drawing.has(name));
   ok(sim.length >= 7, `the rules files are checked (${sim.join(', ')})`);
   for (const name of sim) {
