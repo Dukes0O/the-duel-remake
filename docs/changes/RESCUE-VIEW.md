@@ -28,6 +28,9 @@ sections 5, 7 and 13. Data: `view().rescue` from RESCUE-HOOKS. Switch:
   distance), the dig or hold bar, "CRATES 1/3", a HURT or BADLY HURT mark, notices for every
   rescue event, and the dusk: over the hiker's last 3 minutes the panel's
   dimming layer cools and darkens the picture behind the instruments.
+  The destination buttons come from `view.destinations` when the session gives
+  one (Summit Run on: a fourth "Summit Run" button, its name in the cruise
+  prompt and notices); without it they are the usual three, as before.
   The fire line no longer calls a rescue call a fire call (the rescue calls
   ring through the fire engine, so the old line said "FIRE CALL" for them).
 - `src/heli/heli-fire-run.js`: Roger's "later" line is said once for each
@@ -38,7 +41,7 @@ sections 5, 7 and 13. Data: `view().rescue` from RESCUE-HOOKS. Switch:
   drawing falls back to the heights the view already holds (the clearing,
   the beacon, the driver), which leaves the snow blocks off the ground
   (a flat guess misses the ski hill by 4 m on average, measured).
-- `tools/test-heli-rescue-view.mjs` (new, 149 checks) and
+- `tools/test-heli-rescue-view.mjs` (new, 155 checks) and
   `tools/scenarios/rescue-view.mjs` (new browser look check).
 
 ## The switch-off proof
@@ -52,14 +55,14 @@ false`, and by counting the scene's children and the files asked for.
 
 ## Tests
 
-- `test-heli-rescue-view` (149): the model contracts; the switch off; the
+- `test-heli-rescue-view` (155): the model contracts; the switch off; the
   rescuer and pair on the line (clip point, facing, the cable end); the
   hiker (ring on the ground, walking, waving, flare out after 60 s,
   hidden aboard, no sampler); the slide (inside the area, on the ground,
   skier rising with the hold, hidden when clipped); the driver; the
   crates resting on the ground and the cable end on a hooked crate; the
   handover for walk, limp and stretcher; the same frames drawn the same;
-  the mission line, beacon bar, hold bar, crates, orange, notices, and the
+  the destination buttons with and without a list; the mission line, beacon bar, hold bar, crates, orange, notices, and the
   fire line ignoring a rescue call; the real session's rescue view drawing
   and Later said once.
 - `test-fire-view` (50), `test-heli-view` (98), `test-heli-mode` (158),

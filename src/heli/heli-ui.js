@@ -2,7 +2,7 @@
 // (docs/HELICOPTER.md section 8). Drawn in the page like the speedometer.
 // Drawing only: it reads the app's helicopter view and log and never
 // changes flight state; its buttons call the app's helicopter actions.
-import {HELI_DESTINATIONS, HOME_COURSE, legFuelKg} from './heli-jobs.js';
+import {HELI_DESTINATIONS, HELI_DESTINATIONS_WITH_SUMMIT, HOME_COURSE, legFuelKg} from './heli-jobs.js';
 import {HELI_CAMERA_VIEWS} from './heli-camera.js';
 import {HELI_RADIO_LINES} from './heli-radio-lines.js';
 import {HELI_MONEY} from './heli-save.js';
@@ -52,7 +52,7 @@ export function instrumentReadings(readout) {
 
 // What a session event says on screen, if anything.
 export function noticeText(event) {
-  const course = id => HELI_DESTINATIONS[id]?.name ?? id;
+  const course = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? id;
   switch (event?.type) {
     case 'charged': {
       const what = {hardLanding: 'Hard landing', crash: 'Crash', drop: 'Dropped load', cargoLight: 'Cargo knock',
@@ -188,7 +188,9 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   const here = view.courseId;
   const onPad = here === HOME_COURSE && view.heli.onGround && view.zone &&
     Math.hypot(view.heli.x - view.zone.x, view.heli.z - view.zone.z) <= view.zone.radius;
-  const buttons = Object.values(HELI_DESTINATIONS).map(place => {
+  // The places to fly to: the session's own list when it gives one (Summit Run on), else the usual three.
+  const places = Array.isArray(view.destinations) ? view.destinations.map(id => HELI_DESTINATIONS_WITH_SUMMIT[id]).filter(Boolean) : Object.values(HELI_DESTINATIONS);
+  const buttons = places.map(place => {
     const leg = place.id === here ? null : legFuelKg(here, place.id);
     const chosen = view.destination === place.id;
     return `<button type="button" class="heli-place${chosen ? ' on' : ''}" data-heli-destination="${place.id}" aria-pressed="${chosen}">${escape(place.name)}${place.id === here ? ' (here)' : leg ? ` · ${leg} kg` : ''}</button>`;
@@ -197,7 +199,7 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   // can update it without rebuilding the buttons under the mouse.
   const label = pumpLabel(view.heli.fuelKg, {credits, refuels});
   const pump = onPad ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
-  const destination = view.destination ? HELI_DESTINATIONS[view.destination]?.name : null;
+  const destination = view.destination ? HELI_DESTINATIONS_WITH_SUMMIT[view.destination]?.name : null;
   return `<div class="heli-route" role="group" aria-label="Fly to"><span>FLY TO</span>${buttons}${pump}</div>
     ${view.cruiseOffered ? `<div class="heli-prompt" role="status">Clear of the area. Press <kbd>ENTER</kbd> to cruise to ${escape(destination)}.</div>` : ''}`;
 }

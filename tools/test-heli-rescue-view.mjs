@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createRescueView, RESCUE_MODEL_URLS, RESCUE_LIMITS, HANDOVER} from '../src/heli/heli-rescue-view.js';
 import {createHeliView} from '../src/heli/heli-scene.js';
-import {rescueLineMarkup, instrumentsMarkup, fireLineMarkup, noticeText, duskShare} from '../src/heli/heli-ui.js';
+import {rescueLineMarkup, instrumentsMarkup, fireLineMarkup, noticeText, duskShare, controlsMarkup} from '../src/heli/heli-ui.js';
 import {Course} from '../src/course.js';
 import {ALL_CIRCUITS} from '../src/circuits/index.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
@@ -311,6 +311,19 @@ function stretcherOr(look) { return look === 'stretcher' ? 'stretcher' : 'parame
   eq(noticeText({type: 'rescueFailed', reason: 'time', charged: 400}), 'Rescue failed, out of time: 400 credits', 'failed notice');
   eq(noticeText({type: 'crateDown', pay: 300}), 'Crate down: 300 credits', 'crate notice');
   eq(noticeText({type: 'hikerSpotted'}), 'Flare sighted', 'flare notice');
+}
+
+// ---- The destination buttons: the session's list when it gives one (Summit Run on), else the usual three ----
+{
+  const flying = extra => ({heli: {onGround: false, x: 0, z: 0, fuelKg: 300}, courseId: 'tremblant-woods', zone: null, destination: null, ...extra});
+  const buttons = markup => [...markup.matchAll(/data-heli-destination="([a-z-]+)"/g)].map(m => m[1]);
+  eq(buttons(controlsMarkup(flying({}))), ['tremblant-woods', 'tremblant-snow', 'panorama-ridge'], 'no list: the usual three buttons');
+  eq(buttons(controlsMarkup(flying({destinations: undefined}))), ['tremblant-woods', 'tremblant-snow', 'panorama-ridge'], 'an absent list: the usual three');
+  const four = controlsMarkup(flying({destinations: ['tremblant-woods', 'tremblant-snow', 'panorama-ridge', 'summit-run']}));
+  eq(buttons(four), ['tremblant-woods', 'tremblant-snow', 'panorama-ridge', 'summit-run'], 'with Summit Run on: a fourth button');
+  ok(four.includes('Summit Run'), 'named Summit Run');
+  ok(controlsMarkup(flying({destinations: ['tremblant-woods', 'summit-run', 'nowhere'], destination: 'summit-run', cruiseOffered: true})).includes('cruise to Summit Run'), 'the cruise prompt names it');
+  eq(noticeText({type: 'entered', courseId: 'summit-run', arrived: true}), 'Summit Run: the landing zone is ahead', 'and the notice');
 }
 
 // ---- The real session: its rescue view draws, and Later is said once -------------------------
