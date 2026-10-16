@@ -333,9 +333,20 @@ tasks:
     claimed_by: claude-rescue-autopilot-2026-10-16
     branch: claude/rescue-autopilot
     needs: [RESCUE-HOOKS]
-    locks: []
+    locks: [busy-game-files]
     flag: "rescue"
     details: "docs/board/cards/RESCUE-AUTOPILOT.md"
+
+  - id: SUMMIT-HELI-RESCUES
+    title: "Rescues at Summit Run: supply pickup and truck, and a flying ceiling that reaches the summit"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "backlog"
+    needs: [RESCUE-AUTOPILOT]
+    locks: []
+    flag: "rescue"
+    details: "docs/board/cards/SUMMIT-HELI-RESCUES.md"
 
   - id: RESCUE-VIEW
     title: "Draw the rescues"
