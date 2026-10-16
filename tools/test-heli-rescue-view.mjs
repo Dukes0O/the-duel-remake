@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {createRescueView, RESCUE_MODEL_URLS, RESCUE_LIMITS, HANDOVER} from '../src/heli/heli-rescue-view.js';
+import {createRescueView, RESCUE_MODEL_URLS, RESCUE_LIMITS, HANDOVER, PEOPLE_SCALE, CRATE_SCALE} from '../src/heli/heli-rescue-view.js';
 import {createHeliView} from '../src/heli/heli-scene.js';
 import {rescueLineMarkup, instrumentsMarkup, fireLineMarkup, noticeText, duskShare, controlsMarkup} from '../src/heli/heli-ui.js';
 import {Course} from '../src/course.js';
@@ -36,7 +36,6 @@ for (const [key, url] of Object.entries(RESCUE_MODEL_URLS)) {
   const root = await parseFile(url);
   ok(root.children.length > 0, `${key}: the file has something in it`);
   if (/^(rescuer|pair|hiker|skier|driver|paramedic)/.test(key) || key === 'stretcher') ok(root.getObjectByName('harness'), `${key}: has its harness empty`);
-  if (key === 'debris') eq([1, 2, 3, 4, 5, 6].map(n => !!root.getObjectByName('block_' + n)), new Array(6).fill(true), 'the debris has its six blocks');
   const box = new THREE.Box3().setFromObject(root);
   if (key.startsWith('crate-')) ok(box.min.y < 0 && box.min.y > -1.1, `${key}: hangs from its origin (${box.min.y.toFixed(2)})`);
 }
@@ -91,10 +90,14 @@ async function ready(view, make, keys, frames = 3) {
   eq(view.state.actors, [{name: 'line', key: 'rescuer'}], 'the rescuer hangs on the line');
   const actor = view.object('line');
   ok(actor, 'the model is in the scene');
-  near(actor.position.y, 40 - 1.36, .01, 'his clip point sits at the line load');
+  near(actor.position.y, 40 - 1.36 * PEOPLE_SCALE, .01, 'his clip point sits at the line load');
+  near(actor.scale.x, PEOPLE_SCALE, 1e-9, 'a little larger than life, so he reads from the cameras');
+  const helmets = [];
+  actor.traverse(object => { if (object.isMesh && object.material.name === 'helmet_black') helmets.push(object.material.color); });
+  ok(helmets.length > 0 && helmets.every(color => color.r > .7 && color.g > .7), 'a white helmet on the red suit');
   near(actor.rotation.y, .4, 1e-9, 'facing the way the helicopter points');
   const end = view.cableEnd(v);
-  near(end.y, 40 - 1.36 + 2.22, .05, 'the cable ends at his raised hand');
+  near(end.y, 40 + (2.22 - 1.36) * PEOPLE_SCALE, .05, 'the cable ends at his raised hand');
   v = await ready(view, () => make(lineAt(5, 6, {who: 'pair'})), ['pair']);
   eq(view.state.actors, [{name: 'line', key: 'pair'}], 'clipped together: the pair model');
   // Set down: he stays as he was set down while the helicopter turns.
@@ -129,7 +132,7 @@ async function ready(view, make, keys, frames = 3) {
   eq(state.actors[0].key, 'hiker-walking', 'walking to the clearing');
   ok(!state.searchRing && state.clearingRing, 'the clearing is ringed, the search ring gone');
   ok(state.sprites > 10 && state.glowSprites >= 2, `the flare burns with its smoke (${state.sprites} sprites)`);
-  ok(state.sprites <= RESCUE_LIMITS.sprites * 2, 'within the sprite cap');
+  ok(state.sprites <= RESCUE_LIMITS.high.sprites * 2, 'within the sprite cap');
   const hikerObject = view.object('hiker');
   near(hikerObject.position.y, hill(70, 40), .06, 'standing on the ground');
   near(hikerObject.rotation.y, Math.atan2(40 - 70, 60 - 40), 1e-9, 'facing the way he walks');
@@ -155,24 +158,38 @@ async function ready(view, make, keys, frames = 3) {
   const scene = new THREE.Scene(), view = createRescueView({THREE, scene, load});
   const sites = {slide, beacon};
   const make = (line, extra = {}) => viewOf({line, active: active('avalanche', {signal: {heard: false, bar: 0, interval: null, pitch: null}, ...extra}, sites)});
-  await ready(view, () => make(null), ['debris']);
+  await ready(view, () => make(null), []);
   let state = view.state;
-  eq(state.debris, RESCUE_LIMITS.debris, 'the whole slide is strewn with blocks');
+  eq(state.debris, RESCUE_LIMITS.high.debris, 'the whole slide is strewn with chunks');
   const meshes = view.group.children.filter(child => child.isInstancedMesh);
-  ok(meshes.length >= 6, `blocks are instanced, a few draws (${meshes.length})`);
-  ok(meshes.reduce((sum, mesh) => sum + mesh.count, 0) >= RESCUE_LIMITS.debris * meshes.length / 6 - 12, 'every block shape is used');
-  // Inside the 80 by 200 m debris area, on the ground.
+  eq(meshes.length, 4, 'four lump shapes, four draws');
+  eq(meshes.reduce((sum, mesh) => sum + mesh.count, 0), RESCUE_LIMITS.high.debris, 'every chunk is placed');
+  // Rounded lumps, not tiles: as tall as a good share of their width, with a smooth surface, white above and blue-grey below.
+  for (const mesh of meshes) {
+    mesh.geometry.computeBoundingBox();
+    const box = mesh.geometry.boundingBox, wide = Math.max(box.max.x - box.min.x, box.max.z - box.min.z), high = box.max.y - box.min.y;
+    ok(high / wide > .3 && high / wide < 1.2, `a lump is not a flat tile (${(high / wide).toFixed(2)})`);
+    const c = mesh.geometry.attributes.color;
+    let top = 0, side = 0;
+    for (let i = 0; i < c.count; i++) { top = Math.max(top, c.getX(i)); side = Math.min(side || 9, c.getX(i)); }
+    ok(top > .9 && side < .7 && c.getZ(0) >= c.getX(0), 'white on top, blue-grey in the shade');
+  }
+  // Inside the 80 by 200 m debris area, sunk in the ground, from half a metre to three metres across, thicker toward the foot.
   const m = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
-  let inside = 0, grounded = 0, total = 0;
+  let inside = 0, buried = 0, total = 0, small = 0, upper = 0, lower = 0, widest = 0;
   for (const mesh of meshes) for (let i = 0; i < mesh.count; i++) {
     mesh.getMatrixAt(i, m); m.decompose(p, q, s); total++;
     const across = (p.x - slide.x) * 1 + (p.z - slide.z) * 0, down = -(p.z - slide.z);
-    // Rings near the beacon may sit just outside the area's edge; the rest are inside.
     if (Math.abs(across) <= 100 && Math.abs(down) <= 41) inside++;
-    if (Math.abs(p.y - hill(p.x, p.z)) < .6) grounded++;
+    if (p.y < hill(p.x, p.z) && p.y > hill(p.x, p.z) - .6) buried++;
+    const wide = mesh.geometry.boundingBox.max.x * 2 * Math.max(s.x, s.z);
+    widest = Math.max(widest, wide); if (wide < 1.5) small++;
+    if (down < 0) upper++; else lower++;
   }
-  ok(inside >= total * .8, `most blocks are inside the debris area (${inside} of ${total})`);
-  eq(grounded, total, 'and every block sits on the ground');
+  ok(inside >= total * .8, `most chunks are inside the debris area (${inside} of ${total})`);
+  eq(buried, total, 'and every chunk is half sunk in the ground');
+  ok(widest <= 3.4 && small > total * .4, `mostly small, none over 3 m or so (widest ${widest.toFixed(2)} m, ${small} small)`);
+  ok(lower > upper * 1.3, `thickest down the slope (${lower} below the middle, ${upper} above)`);
   eq(names(state), [], 'the skier is buried: nobody to see');
   // The dig: the skier comes up as the hold fills; the beacon shows; snow flies.
   await ready(view, () => make(lineAt(108, 190, {holding: true, hold: .25, onGround: true, y: hill(108, 190) + 1.3})), ['skier-sitting', 'beacon', 'rescuer']);
@@ -209,11 +226,15 @@ async function ready(view, make, keys, frames = 3) {
   ok(view.state.yardRing, 'the yard is ringed');
   for (const crate of crates) {
     const box = new THREE.Box3().setFromObject(view.object(`crate-${crate.id}`));
-    near(box.min.y, hill(crate.x, 5), .02, `${crate.id} rests on the ground`);
+    near(box.min.y, hill(crate.x, 5), .12, `${crate.id} rests on the ground (its dark rim a little below)`);
+    near(view.object(`crate-${crate.id}`).scale.x, CRATE_SCALE, 1e-9, `${crate.id} is one and a half times larger`);
+    let rims = 0;
+    view.object(`crate-${crate.id}`).traverse(object => { if (object.isMesh && object.material.side === THREE.BackSide) rims++; });
+    ok(rims >= 2, `${crate.id} has its dark rim (${rims} parts)`);
   }
   const hooked = crates.map((crate, i) => i === 1 ? {...crate, hooked: true, onGround: false, y: crate.y + 20} : crate);
   const end = view.cableEnd(supply(hooked));
-  ok(end && end.y > hill(16, 5) + 20 && end.y < hill(16, 5) + 23, `the cable ends at the hooked crate (${end?.y.toFixed(2)})`);
+  ok(end && end.y > hill(16, 5) + 20 && end.y < hill(16, 5) + 24, `the cable ends at the hooked crate (${end?.y.toFixed(2)})`);
   eq(view.cableEnd(supply(crates)), null, 'nothing hooked, no cable end');
   view.dispose();
 }
@@ -311,6 +332,39 @@ function stretcherOr(look) { return look === 'stretcher' ? 'stretcher' : 'parame
   eq(noticeText({type: 'rescueFailed', reason: 'time', charged: 400}), 'Rescue failed, out of time: 400 credits', 'failed notice');
   eq(noticeText({type: 'crateDown', pay: 300}), 'Crate down: 300 credits', 'crate notice');
   eq(noticeText({type: 'hikerSpotted'}), 'Flare sighted', 'flare notice');
+}
+
+// ---- Performance has half the chunks and sprites; the cameras frame the rescuer like a car on the hook ----
+{
+  const slideView = () => viewOf({line: null, active: active('avalanche', {signal: null}, {slide, beacon})});
+  const hikerView = () => viewOf({active: active('hiker', {}, {lastSeen: {x: 90, z: 20}, clearing: {x: 40, z: 60, y: hill(40, 60), radius: 12}, hiker: {x: 55, z: 50, arrived: true}, flareLeft: 40, aboard: false})});
+  const run = async (quality, make, keys = []) => {
+    const view = createRescueView({THREE, scene: new THREE.Scene(), load, quality});
+    await ready(view, make, keys, 2);
+    const state = view.state;
+    view.dispose();
+    return state;
+  };
+  const high = await run('high', slideView), low = await run('performance', slideView);
+  eq([high.debris, low.debris], [RESCUE_LIMITS.high.debris, RESCUE_LIMITS.performance.debris], 'Performance: half the chunks');
+  const flareHigh = await run('high', hikerView, ['hiker-standing']), flareLow = await run('performance', hikerView, ['hiker-standing']);
+  ok(flareLow.sprites <= RESCUE_LIMITS.performance.sprites * 2 && flareLow.sprites < flareHigh.sprites, `Performance: fewer sprites (${flareLow.sprites} against ${flareHigh.sprites})`);
+  const switching = createRescueView({THREE, scene: new THREE.Scene(), load});
+  await ready(switching, slideView, []);
+  switching.setQuality('performance'); switching.update(slideView(), {dt: 1 / 60});
+  eq(switching.state.debris, RESCUE_LIMITS.performance.debris, 'the quality can change while flying');
+  switching.dispose();
+
+  const scene = new THREE.Scene();
+  const heliView = createHeliView({THREE, scene, vehicleAssets: {status: () => 'error', load: () => Promise.resolve(false), create: () => null},
+    load: () => new Promise(() => {}), fireLoad: load, rescueLoad: load});
+  const flying = extra => ({heli: {x: 0, y: 70, z: 0, heading: 0, pitch: 0, roll: 0, vx: 0, vy: 0, vz: 0, rotor: 1, onGround: false}, courseId: 'tremblant-snow', loads: [], zone: null, ...extra});
+  const back = pose => Math.hypot(pose.camera.position.x, pose.camera.position.z);
+  const bare = back(heliView.update(flying({}))), withLine = back(heliView.update(flying({rescue: viewOf({line: lineAt(0, 15)}).rescue})));
+  ok(withLine > bare + 10, `the behind camera stands further back for a rescuer on the line (${bare.toFixed(0)} m, then ${withLine.toFixed(0)} m)`);
+  heliView.fire.setQuality('performance');
+  eq(heliView.rescue.quality, 'performance', 'the rescue drawing follows the quality the game sets');
+  heliView.dispose();
 }
 
 // ---- The destination buttons: the session's list when it gives one (Summit Run on), else the usual three ----

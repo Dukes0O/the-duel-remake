@@ -10,6 +10,7 @@
 // heli-rescue-people, docs/board/looks/heli-rescue); the flare's smoke and
 // the digging snow reuse H2's fire atlas, tinted.
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
 import {FIRE_FX_URL, FIRE_FX_TABLE_URL} from './heli-fire-view.js';
 
 const PEOPLE = '/assets/heli/people/', PROPS = '/assets/heli/rescue/';
@@ -19,11 +20,14 @@ export const RESCUE_MODEL_URLS = Object.freeze({
   'skier-sitting': PEOPLE + 'skier-sitting.glb', 'skier-standing': PEOPLE + 'skier-standing.glb',
   'driver-standing': PEOPLE + 'driver-standing.glb', 'driver-lying': PEOPLE + 'driver-lying.glb',
   'paramedic-1': PEOPLE + 'paramedic-1-walking.glb', 'paramedic-2': PEOPLE + 'paramedic-2-walking.glb',
-  stretcher: PROPS + 'stretcher.glb', debris: PROPS + 'debris.glb', beacon: PROPS + 'beacon.glb',
+  stretcher: PROPS + 'stretcher.glb', beacon: PROPS + 'beacon.glb',
   'crate-food': PROPS + 'crate-food.glb', 'crate-medicine': PROPS + 'crate-medicine.glb', 'crate-fuel': PROPS + 'crate-fuel.glb',
 });
-// At most this many snow blocks and sprites (sections 13 and 16).
-export const RESCUE_LIMITS = Object.freeze({debris: 220, sprites: 160});
+// At most this many snow chunks and sprites by graphics quality (sections 13 and 16); Performance has half.
+export const RESCUE_LIMITS = Object.freeze({
+  high: Object.freeze({debris: 220, sprites: 160}), performance: Object.freeze({debris: 110, sprites: 80})});
+// A little larger than life, so a person reads from the helicopter's cameras; crates larger still.
+export const PEOPLE_SCALE = 1.25, CRATE_SCALE = 1.5;
 // Where each model's clip point and top sit above its origin (read from the file once it loads).
 const RESCUER = Object.freeze({harness: 1.36, top: 2.22});
 // A rescued person's walk away: how long the paramedics need to arrive and to leave.
@@ -72,11 +76,12 @@ function spriteLayer(THREE, capacity, blending, fades) {
     const height = renderer.getDrawingBufferSize?.(size).y ?? 900;
     material.uniforms.scale.value = camera.isPerspectiveCamera ? height / (2 * Math.tan(camera.fov * Math.PI / 360)) : height;
   };
-  let count = 0;
+  let count = 0, cap = capacity;
   return {points, material,
     reset() { count = 0; },
+    setCap(next) { cap = Math.min(capacity, next); },
     add(x, y, z, size, rect, alpha, r = 1, g = 1, b = 1) {
-      if (count >= capacity || !rect) return false;
+      if (count >= cap || !rect) return false;
       const a = geometry.attributes;
       a.position.setXYZ(count, x, y, z); a.size.setX(count, size); a.rect.setXYZW(count, ...rect);
       a.alpha.setX(count, alpha); a.tint.setXYZ(count, r, g, b);
@@ -101,12 +106,13 @@ const defaultLoad = {
   table: url => fetch(url).then(response => response.json()),
 };
 
-export function createRescueView({THREE, scene, load = defaultLoad}) {
+export function createRescueView({THREE, scene, load = defaultLoad, quality = 'high'}) {
   const group = new THREE.Group();
   group.name = 'H4 Rescue';
   group.visible = false;
   scene.add(group);
   let time = 0;
+  const limits = () => RESCUE_LIMITS[quality] ?? RESCUE_LIMITS.high;
 
   // ---- models: each file loads the first time something needs it ----
   const models = new Map();
@@ -122,16 +128,37 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
         entry.min = box.min.y; entry.max = box.max.y; entry.top = box.max.y;
         const harness = root.getObjectByName('harness');
         if (harness) entry.harness = harness.position.y;
+        if (key === 'rescuer' || key === 'pair') brightenRescuer(root);
+        if (key.startsWith('crate-')) outlineCrate(root);
         entry.root = root; entry.status = 'ready';
-        if (key === 'debris') debrisKey = '';   // lay the blocks out now the shapes are in
       }).catch(error => { entry.status = 'error'; entry.error = String(error?.message || error); console.warn(`Rescue model ${key} did not load: ${entry.error}`); });
     }
     return entry.status === 'ready' ? entry : null;
   }
 
+  // The rescuer reads from afar: a white helmet on the red suit, the suit a shade stronger.
+  function brightenRescuer(root) {
+    root.traverse(object => {
+      if (!object.isMesh || !object.material) return;
+      if (object.material.name === 'helmet_black') { object.material = object.material.clone(); object.material.color.setRGB(.82, .8, .76); object.material.roughness = .35; }
+      else if (object.material.name === 'red_suit') { object.material = object.material.clone(); object.material.color.setRGB(.62, .035, .02); }
+    });
+  }
+  // A dark rim round every part of a crate (a slightly larger copy seen from inside), so it shows on snow and on grass.
+  function outlineCrate(root) {
+    const rim = new THREE.MeshBasicMaterial({color: 0x15110c, side: THREE.BackSide}), parts = [];
+    root.traverse(object => { if (object.isMesh) parts.push(object); });
+    for (const part of parts) {
+      part.geometry.computeBoundingBox();
+      const centre = part.geometry.boundingBox.getCenter(new THREE.Vector3()), hull = new THREE.Mesh(part.geometry, rim);
+      hull.scale.setScalar(1.07); hull.position.copy(centre).multiplyScalar(-.07);
+      part.add(hull);
+    }
+  }
+
   // ---- actors: one clone of a model per role, moved each frame ----
   const actors = new Map(), touched = new Set();
-  function put(name, key, x, y, z, heading = 0) {
+  function put(name, key, x, y, z, heading = 0, scale = 1) {
     touched.add(name);
     const model = template(key);
     if (!model) return null;
@@ -144,12 +171,13 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
     actor.object.visible = true;
     actor.object.position.set(x, y, z);
     actor.object.rotation.set(0, heading, 0);
+    actor.object.scale.setScalar(scale);
     return actor.object;
   }
 
   // ---- sprites: the flare's smoke and the digging snow (the fire's atlas) ----
-  const glow = spriteLayer(THREE, RESCUE_LIMITS.sprites, THREE.AdditiveBlending, false);
-  const cover = spriteLayer(THREE, RESCUE_LIMITS.sprites, THREE.NormalBlending, true);
+  const glow = spriteLayer(THREE, RESCUE_LIMITS.high.sprites, THREE.AdditiveBlending, false);
+  const cover = spriteLayer(THREE, RESCUE_LIMITS.high.sprites, THREE.NormalBlending, true);
   cover.points.renderOrder = 2; glow.points.renderOrder = 3;
   group.add(cover.points, glow.points);
   const art = {status: 'idle', rects: null, error: ''};
@@ -195,63 +223,83 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
     searchGeometry.computeBoundingSphere();
   }
 
-  // ---- the slide: rough snow blocks scattered over the debris area ----
-  // Each of the debris file's six blocks is drawn as one instanced mesh per
-  // material, so a hundred blocks cost a dozen draws.
+  // ---- the slide: packed-snow chunks strewn over the debris area ----
+  // Rounded lumps of mixed size (0.5 to 3 m across), half sunk in the slope,
+  // white on top and blue-grey in the shade, thickest in a fan down the slope.
+  // Four lump shapes, each one instanced mesh, so a couple of hundred chunks
+  // cost four draws.
+  const CHUNK_SHAPES = 4;
+  function chunkGeometry(seed) {
+    let geometry = new THREE.IcosahedronGeometry(1, 2);
+    geometry.deleteAttribute('normal'); geometry.deleteAttribute('uv');
+    geometry = mergeVertices(geometry, 1e-4);
+    const p = geometry.attributes.position, v = new THREE.Vector3(), flat = [.82 + .18 * hash(seed, 1), .55 + .12 * hash(seed, 2), .78 + .2 * hash(seed, 3)];
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      // Each point pushed in or out by its place on the lump, and the lump squashed and its foot cut level.
+      const lump = .72 + .5 * hash(Math.round(v.x * 5) + seed * 17, Math.round(v.y * 5) * 31 + Math.round(v.z * 5) * 977 + seed)
+        + .12 * Math.sin(v.x * 4 + seed) * Math.cos(v.z * 3 - seed);
+      v.multiplyScalar(lump);
+      p.setXYZ(i, v.x * flat[0], Math.max(-.3, v.y * flat[1]), v.z * flat[2]);
+    }
+    geometry.computeVertexNormals();
+    const n = geometry.attributes.normal, colours = new Float32Array(p.count * 3);
+    for (let i = 0; i < p.count; i++) {
+      // White where it faces the sky, a cold blue-grey where it faces away.
+      const up = Math.min(1, Math.max(0, n.getY(i) * .5 + .5)) ** 1.6;
+      colours.set([.4 + .58 * up, .48 + .5 * up, .64 + .36 * up], i * 3);
+    }
+    geometry.setAttribute('color', new THREE.BufferAttribute(colours, 3));
+    return geometry;
+  }
   let debrisKey = '', debrisCount = 0;
-  const debris = {meshes: [], blocks: 0};
+  const debris = {meshes: []};
   const tmp = new THREE.Object3D(), tint = new THREE.Color();
-  function buildDebris(model) {
-    const blocks = [];
-    model.root.traverse(object => { if (object.isGroup && /^block_\d+$/.test(object.name)) blocks.push(object); });
-    debris.blocks = blocks.length;
-    const capacity = Math.ceil(RESCUE_LIMITS.debris / Math.max(1, blocks.length)) + 1;
-    blocks.forEach((block, index) => block.traverse(object => {
-      if (!object.isMesh) return;
-      const mesh = new THREE.InstancedMesh(object.geometry, object.material, capacity);
+  function buildDebris() {
+    const material = new THREE.MeshStandardMaterial({vertexColors: true, roughness: .93, metalness: 0});
+    const capacity = Math.ceil(RESCUE_LIMITS.high.debris / CHUNK_SHAPES) + 1;
+    for (let shape = 0; shape < CHUNK_SHAPES; shape++) {
+      const mesh = new THREE.InstancedMesh(chunkGeometry(shape + 1), material, capacity);
       mesh.count = 0; mesh.frustumCulled = false; mesh.castShadow = mesh.receiveShadow = true; mesh.visible = false;
-      mesh.userData.block = index;
+      mesh.userData.shape = shape;
       group.add(mesh); debris.meshes.push(mesh);
-    }));
+    }
   }
   function layoutDebris(slide, beacon, groundAt) {
-    const model = template('debris');
-    if (!model) return;
-    if (!debris.meshes.length) buildDebris(model);
-    const key = `${slide.x}|${slide.z}|${beacon.x}|${beacon.z}|${groundAt ? 1 : 0}`;
+    if (!debris.meshes.length) buildDebris();
+    const total = limits().debris;
+    const key = `${slide.x}|${slide.z}|${beacon.x}|${beacon.z}|${groundAt ? 1 : 0}|${total}`;
     if (key === debrisKey) return;
     debrisKey = key;
     const down = slide.down, across = {x: -down.z, z: down.x}, slope = Math.tan((slide.slope ?? 20) * Math.PI / 180);
-    const counts = new Array(debris.blocks).fill(0), placed = [];
-    for (let i = 0; i < RESCUE_LIMITS.debris; i++) {
-      // Thicker toward the foot of the slide; a fifth of them close around the buried beacon.
-      const near = i % 5 === 0;
-      let x, z;
-      if (near) {
+    const counts = new Array(CHUNK_SHAPES).fill(0), slot = new Array(CHUNK_SHAPES).fill(0);
+    for (let i = 0; i < total; i++) {
+      // A fan: narrow at the crown, wide at the foot, thickest down the middle and toward the foot;
+      // a sixth of the chunks lie close around the buried beacon, but never on it.
+      let x, z, toe = 1;
+      if (i % 6 === 0) {
         const a = hash(slide.x + i, 1) * Math.PI * 2, r = 5 + hash(slide.z + i, 2) * 12;
         x = beacon.x + Math.cos(a) * r; z = beacon.z + Math.sin(a) * r;
       } else {
-        const u = (hash(slide.x + i, 3) * 2 - 1) * 100 * .96, v = -40 + 80 * hash(slide.z + i, 4) ** .7;
+        toe = hash(slide.z + i, 4) ** .6;
+        const spread = 10 + 88 * toe, u = (hash(slide.x + i, 3) + hash(slide.x + i, 13) - 1) * spread, v = -40 + 80 * toe;
         x = slide.x + across.x * u + down.x * v; z = slide.z + across.z * u + down.z * v;
       }
       const y = groundAt ? groundAt(x, z) : beacon.y - slope * ((x - beacon.x) * down.x + (z - beacon.z) * down.z);
-      const size = 1.2 + 2.2 * hash(x, i + 11) ** 2;
-      const block = i % debris.blocks;
-      placed.push({block, x, y: y - .12 * size, z, turn: hash(z, i + 5) * Math.PI * 2, size});
-      counts[block]++;
-    }
-    const slot = new Array(debris.blocks).fill(0);
-    for (const item of placed) {
-      tmp.position.set(item.x, item.y, item.z); tmp.rotation.set(0, item.turn, 0); tmp.scale.set(item.size, item.size * .85, item.size);
+      // Mostly small, a few large, the large ones nearer the foot.
+      const size = (.3 + .9 * hash(x, i + 11) ** 1.5) * (.75 + .35 * toe);
+      const shape = i % CHUNK_SHAPES, mesh = debris.meshes[shape];
+      tmp.position.set(x, y - .12 * size, z);
+      tmp.rotation.set((hash(x, i + 31) - .5) * .35, hash(z, i + 5) * Math.PI * 2, (hash(z, i + 41) - .5) * .35);
+      tmp.scale.set(size * (.85 + .3 * hash(x, i + 51)), size * (.8 + .3 * hash(z, i + 61)), size * (.85 + .3 * hash(x, i + 71)));
       tmp.updateMatrix();
-      // Dirty, shadowed snow: darker than the clean slope so the blocks read against it, each a little different.
-      const shade = .56 + .26 * hash(item.x, item.block + 21);
-      tint.setRGB(shade * .92, shade * .97, shade * 1.08);
-      for (const mesh of debris.meshes) if (mesh.userData.block === item.block) { mesh.setMatrixAt(slot[item.block], tmp.matrix); mesh.setColorAt(slot[item.block], tint); }
-      slot[item.block]++;
+      const shade = .74 + .18 * hash(x + z, i + 21);
+      tint.setRGB(shade, shade, shade * 1.03);
+      mesh.setMatrixAt(slot[shape], tmp.matrix); mesh.setColorAt(slot[shape], tint);
+      slot[shape]++; counts[shape]++;
     }
-    for (const mesh of debris.meshes) { mesh.count = counts[mesh.userData.block]; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; mesh.visible = true; }
-    debrisCount = placed.length;
+    for (const mesh of debris.meshes) { mesh.count = counts[mesh.userData.shape]; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; mesh.visible = true; }
+    debrisCount = total;
   }
 
   // ---- a rescued person is taken away by two paramedics ----
@@ -302,7 +350,7 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
       const along = leaving > 0 ? HANDOVER.stand + offset + gone : here;
       const lateral = (offset - .4) * 1.1;
       const x = handover.x + away.x * along + side.x * lateral, z = handover.z + away.z * along + side.z * lateral;
-      put(name, key, x, groundAt(x, z, handover.y) + (arrive < 1 || leaving > 0 ? bob : 0), z, leaving > 0 ? leaveFace : walkFace);
+      put(name, key, x, groundAt(x, z, handover.y) + (arrive < 1 || leaving > 0 ? bob : 0), z, leaving > 0 ? leaveFace : walkFace, PEOPLE_SCALE);
     };
     medic('medic-1', 'paramedic-1', 0.2); medic('medic-2', 'paramedic-2', 1.6);
     const cx = standing.x + away.x * gone, cz = standing.z + away.z * gone;
@@ -311,10 +359,10 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
       // The litter lies by the rescuer, then is lifted and carried off between them.
       const lift = Math.min(1, Math.max(0, (t - HANDOVER.approach) / 1.2)) * .75;
       const turn = leaveFace + Math.PI / 2;
-      put('stretcher', 'stretcher', cx, cy + 1.21 + lift, cz, turn);
-      put('casualty', 'driver-lying', cx, cy + 1.21 - 1.02 + lift, cz, turn);
+      put('stretcher', 'stretcher', cx, cy + 1.21 * PEOPLE_SCALE + lift, cz, turn, PEOPLE_SCALE);
+      put('casualty', 'driver-lying', cx, cy + (1.21 - 1.02) * PEOPLE_SCALE + lift, cz, turn, PEOPLE_SCALE);
     } else {
-      put('casualty', CASUALTY_MODEL[handover.kind] ?? 'hiker-standing', cx, cy + (leaving > 0 ? bob * (look === 'limp' ? 1.6 : 1) : 0), cz, leaving > 0 ? leaveFace : walkFace + Math.PI);
+      put('casualty', CASUALTY_MODEL[handover.kind] ?? 'hiker-standing', cx, cy + (leaving > 0 ? bob * (look === 'limp' ? 1.6 : 1) : 0), cz, leaving > 0 ? leaveFace : walkFace + Math.PI, PEOPLE_SCALE);
     }
   }
 
@@ -325,11 +373,11 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
     if (!line) return;
     const key = line.who === 'pair' ? 'pair' : 'rescuer', model = template(key);
     const h = view.heli;
-    const origin = line.y - (model?.harness ?? RESCUER.harness);
+    const origin = line.y - (model?.harness ?? RESCUER.harness) * PEOPLE_SCALE;
     // In the air he faces the way the helicopter flies; on the ground he stays as he was set down.
     const heading = line.onGround && lineHeading != null ? lineHeading : h.heading || 0;
     if (!line.onGround) lineHeading = heading;
-    put('line', key, line.x, origin, line.z, heading);
+    put('line', key, line.x, origin, line.z, heading, PEOPLE_SCALE);
   }
   function drawHiker(a, r, view, ground) {
     const sites = a.sites;
@@ -343,10 +391,10 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
     const gy = ground ? ground(hiker.x, hiker.z) : hiker.y ?? sites.clearing.y;
     const walking = !hiker.arrived, h = view.heli;
     const toward = walking ? Math.atan2(sites.clearing.x - hiker.x, sites.clearing.z - hiker.z) : Math.atan2(h.x - hiker.x, h.z - hiker.z);
-    const body = put('hiker', walking ? 'hiker-walking' : 'hiker-standing', hiker.x, gy + (walking ? walkBob(time * 6.5, .05) : 0), hiker.z, toward);
+    const body = put('hiker', walking ? 'hiker-walking' : 'hiker-standing', hiker.x, gy + (walking ? walkBob(time * 6.5, .05) : 0), hiker.z, toward, PEOPLE_SCALE);
     if (body && walking) body.rotation.z = Math.sin(time * 6.5) * .025;
     // The flare in the raised hand, and its orange smoke leaning with the day's drift.
-    if (sites.flareLeft > 0 && art.rects) drawFlare(hiker.x, gy + 1.9, hiker.z, sites.flareLeft);
+    if (sites.flareLeft > 0 && art.rects) drawFlare(hiker.x, gy + 1.9 * PEOPLE_SCALE, hiker.z, sites.flareLeft);
   }
   function drawFlare(x, y, z, left) {
     const rects = art.rects, fade = Math.min(1, left / 6);
@@ -354,12 +402,12 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
     glow.add(x, y + .2, z, 1.2, rects.ember[0], fade, 1, .75, .55);
     // The steam frames are pale, so the tint gives them the flare's colour: strong red-orange at the flare,
     // paling and thinning as the column climbs.
-    const puffs = 22, cycle = 7;
-    for (let i = 0; i < puffs; i++) {
+    const puffs = 22, cycle = 7, every = quality === 'performance' ? 2 : 1;
+    for (let i = 0; i < puffs; i += every) {
       const age = (time + i * cycle / puffs) % cycle, share = age / cycle, rise = age * 9;
       const jitter = hash(i, 90) - .5, jitterZ = hash(i, 91) - .5;
       const frame = rects.steam[i % rects.steam.length];
-      const px = x + rise * .35 + jitter * 3 * (1 + share), py = y + 1 + rise, pz = z + jitterZ * 3 * (1 + share), size = 5 + share * 20;
+      const px = x + rise * .35 + jitter * 3 * (1 + share), py = y + 1 + rise, pz = z + jitterZ * 3 * (1 + share), size = (5 + share * 20) * (1 + (every - 1) * .3);
       cover.add(px, py, pz, size, frame, Math.min(1, (1 - share) ** .6 * 2.4) * fade, 1, .2 + share * .3, .03 + share * .22);
       // The low part of the column glows.
       if (share < .35) glow.add(px, py, pz, size * .8, frame, (.35 - share) * 1.4 * fade, 1, .38, .1);
@@ -375,9 +423,9 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
     if (!digging) return;
     const b = sites.beacon, gy = ground ? ground(b.x, b.z) : b.y, h = view.heli;
     // The skier comes up out of the snow as the hold fills.
-    put('skier', 'skier-sitting', b.x, gy - (1 - Math.min(1, line.hold)) * 1.05, b.z, Math.atan2(h.x - b.x, h.z - b.z));
+    put('skier', 'skier-sitting', b.x, gy - (1 - Math.min(1, line.hold)) * 1.05 * PEOPLE_SCALE, b.z, Math.atan2(h.x - b.x, h.z - b.z), PEOPLE_SCALE);
     put('beacon', 'beacon', b.x + .5, gy + .05, b.z);
-    if (art.rects) for (let i = 0; i < 10; i++) {
+    if (art.rects) for (let i = 0; i < 10; i += quality === 'performance' ? 2 : 1) {
       const age = (time * .9 + i / 10) % 1, spin = hash(i, 60) * Math.PI * 2, r0 = .6 + hash(i, 61) * 1.4;
       cover.add(b.x + Math.cos(spin) * r0 * (1 + age), gy + .4 + age * 2.6, b.z + Math.sin(spin) * r0 * (1 + age), 1.6 + age * 3.4,
         art.rects.steam[i % art.rects.steam.length], (1 - age) * .55, .93, .96, 1);
@@ -388,7 +436,7 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
     const sites = a.sites;
     if (!sites || a.stage === 'carry' || r.line?.who === 'pair') return;
     const d = sites.driver, h = view.heli;
-    put('driver', 'driver-standing', d.x, ground ? ground(d.x, d.z) : d.y, d.z, Math.atan2(h.x - d.x, h.z - d.z));
+    put('driver', 'driver-standing', d.x, ground ? ground(d.x, d.z) : d.y, d.z, Math.atan2(h.x - d.x, h.z - d.z), PEOPLE_SCALE);
   }
 
   function drawSupply(a, r, ground) {
@@ -405,8 +453,8 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
       if (!key) continue;
       const model = template(key);
       if (!model) { touched.add(`crate-${crate.id}`); continue; }
-      // Origin at the crate's rest height (0.7 m above the ground): the foot sits on the ground at rest.
-      put(`crate-${crate.id}`, key, crate.x, crate.y - .7 - model.min, crate.z, crate.heading || 0);
+      // Origin at the crate's rest height (0.7 m above the ground): the (larger) foot sits on the ground at rest.
+      put(`crate-${crate.id}`, key, crate.x, crate.y - .7 - model.min * CRATE_SCALE, crate.z, crate.heading || 0, CRATE_SCALE);
     }
   }
 
@@ -418,6 +466,7 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
       if (!view?.heli || !r) { carrying = null; handover = null; group.visible = false; return; }
       group.visible = true;
       touched.clear(); glow.reset(); cover.reset();
+      glow.setCap(limits().sprites); cover.setCap(limits().sprites);
       ensureArt();
       const ground = typeof r.ground === 'function' ? r.ground : null;
       const a = r.active;
@@ -448,12 +497,13 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
       if (line) {
         const model = models.get(line.who === 'pair' ? 'pair' : 'rescuer');
         const harness = model?.status === 'ready' ? model.harness : RESCUER.harness, top = model?.status === 'ready' ? model.top : RESCUER.top;
-        return {x: line.x, y: line.y - harness + top, z: line.z};
+        return {x: line.x, y: line.y + (top - harness) * PEOPLE_SCALE, z: line.z};
       }
       const crate = (r.crates ?? []).find(item => item.hooked);
       if (crate) {
         const model = models.get(CRATE_KEY[crate.id]);
-        return {x: crate.x, y: crate.y - .7 - (model?.status === 'ready' ? model.min : -.7) + (model?.status === 'ready' ? model.max : .5), z: crate.z};
+        const ready = model?.status === 'ready', low = ready ? model.min : -.7, high = ready ? model.max : .5;
+        return {x: crate.x, y: crate.y - .7 + (high - low) * CRATE_SCALE, z: crate.z};
       }
       return null;
     },
@@ -466,6 +516,8 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
     },
     // The model standing for a role ('line', 'hiker', 'skier', 'driver', 'crate-food', 'medic-1', ...), for the checks.
     object(name) { return actors.get(name)?.object ?? null; },
+    setQuality(next) { quality = next in RESCUE_LIMITS ? next : 'high'; },
+    get quality() { return quality; },
     get artStatus() { return art.status; },
     modelStatus(key) { return models.get(key)?.status ?? 'idle'; },
     get spriteCount() { return glow.count + cover.count; },
@@ -477,6 +529,8 @@ export function createRescueView({THREE, scene, load = defaultLoad}) {
       for (const entry of models.values()) entry.root?.traverse(object => { object.geometry?.dispose?.(); (Array.isArray(object.material) ? object.material : [object.material]).forEach(m => m?.dispose?.()); });
       for (const layer of [glow, cover]) { layer.points.geometry.dispose(); layer.material.uniforms.atlas.value?.dispose?.(); layer.material.dispose(); }
       for (const ring of [clearingRing, yardRing, searchRing]) { ring.geometry.dispose(); ring.material.dispose(); }
+      for (const mesh of debris.meshes) mesh.geometry.dispose();
+      debris.meshes[0]?.material.dispose();
     },
   };
   return api;

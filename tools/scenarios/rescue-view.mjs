@@ -5,7 +5,7 @@
 // memory-only saves (no frame timing: Claude runs that later).
 //   node tools/browser-harness.mjs scenario rescue-view
 // RESCUE_VIEW_ONLY=hiker,avalanche,hoist,supply,dusk,stretcher picks the shots.
-// RESCUE_VIEW_SHEET=<round> writes docs/board/looks/heli-rescue/round-<round>.jpg.
+// RESCUE_VIEW_SHEET=<round> writes docs/board/looks/heli-rescue-view/round-<round>.jpg.
 import {join} from 'node:path';
 import {appendFile, readFile, writeFile} from 'node:fs/promises';
 import {publishReviewSheet} from './review-sheet.mjs';
@@ -174,6 +174,12 @@ async function carryToZone(context, {rough = false} = {}) {
   }
   throw Error('The rescue was not handed over');
 }
+// With the rescuer resting on the ground: bring the helicopter down over the spot (the cable goes slack), so the side
+// camera, which centres on the helicopter and the rescuer, shows the people above the panel.
+async function lowerOver(context, p, gy, up) {
+  await pilotTo(context, {x: p.x, z: p.z, y: gy + up, speed: 2, sink: 1.5, face: {x: p.x, z: p.z + 100}});
+  await sim(context, 15, `v => Math.abs(v.heli.y - ${gy + up}) < .8 && Math.hypot(v.heli.vx, v.heli.vz) < .5`);
+}
 // The hold bar's share, and what the rescuer is doing, for the log.
 const lineState = context => view(context, 'JSON.stringify({condition: v.rescue.active?.conditionName, line: v.rescue.line && {hold: v.rescue.line.hold, holding: v.rescue.line.holding, onGround: v.rescue.line.onGround, who: v.rescue.line.who}, stage: v.rescue.active?.stage, signal: v.rescue.active?.signal})');
 const attempt = async (name, work) => { try { await work(); } catch (error) { failures.push(`${name}: ${error.message}`); note(`FAILED ${name}: ${error.message}`); } };
@@ -232,21 +238,31 @@ async function avalanche(context, {quick = false} = {}) {
     await note('Signal at 45 m back:', await lineState(context));
     await shoot(context, 'avalanche-beacon-bar', 'Closing on the beacon: the bar fills as the beeps quicken');
   } else await look(context, b, {back: 45, up: 28, speed: 28, within: 4});
-  // Set the rescuer down and dig, seen straight down the cable.
+  // Set the rescuer down and dig, seen from the side with the helicopter brought low.
   const gy = await groundAt(context, b.x, b.z);
-  await context.evaluate(`${app}.heliCamera = 2`);
   await setDown(context, b, gy);
-  await sim(context, 40, 'v => v.rescue.line?.holding && v.rescue.line.hold > .45');
+  await lowerOver(context, b, gy, 10.5);
+  await context.evaluate(`${app}.heliCamera = 3`);
+  await sim(context, 8, 'v => v.rescue.line?.holding && v.rescue.line.hold > .4');
   await note('Digging:', await lineState(context));
-  if (!quick) await shoot(context, 'avalanche-dig', 'The dig: the skier comes up out of the snow as the bar fills', {x: b.x, y: gy + .6, z: b.z}, 500);
+  if (!quick) await shoot(context, 'avalanche-dig', 'The dig: the skier comes up out of the snow as the bar fills', {x: b.x, y: gy + 1, z: b.z}, 400);
   await sim(context, 30, 'v => v.rescue.active.stage === "carry"');
   await note('After the dig:', await lineState(context));
+  if (!quick) {
+    // The pair under the helicopter, seen from behind as a pilot sees them.
+    await context.evaluate(`${app}.heliCamera = 3`);
+    await flyTo(context, {x: b.x, z: b.z - 40, y: gy + 40, speed: 12, face: {x: b.x, z: b.z + 100}}, 'a climb with the pair', {within: 6, tall: 4});
+    await sim(context, 3);
+    const pair = await view(context, '({x: v.rescue.line.x, y: v.rescue.line.y, z: v.rescue.line.z})');
+    await shoot(context, 'avalanche-carry', 'The skier on the line under the helicopter, from the side', pair, 600);
+  }
   // Carried to the landing zone and set down gently: the paramedics come for the skier.
   await carryToZone(context, {rough: quick});
   await note('Handed over:', await view(context, 'JSON.stringify({active: !!v.rescue.active, line: v.rescue.line && {who: v.rescue.line.who, onGround: v.rescue.line.onGround, done: v.rescue.line.done}})'));
-  const spot = await view(context, '({x: v.rescue.line.x, z: v.rescue.line.z})');
-  await context.evaluate(`${app}.heliCamera = 2`);
-  await shoot(context, quick ? 'stretcher-handover' : 'avalanche-handover', quick ? 'A badly hurt skier: the paramedics bring a stretcher' : 'The handover: two paramedics walk in to take the skier', {x: spot.x, y: (await groundAt(context, spot.x, spot.z)) + 1, z: spot.z}, 3500);
+  const spot = await view(context, '({x: v.rescue.line.x, z: v.rescue.line.z})'), ground = await groundAt(context, spot.x, spot.z);
+  await lowerOver(context, spot, ground, 9);
+  await context.evaluate(`${app}.heliCamera = 3`);
+  await shoot(context, quick ? 'stretcher-handover' : 'avalanche-handover', quick ? 'A badly hurt skier: the paramedics bring a stretcher' : 'The handover: two paramedics walk in to take the skier', {x: spot.x, y: ground + 1, z: spot.z}, 3800);
 }
 
 async function hoist(context) {
@@ -263,9 +279,11 @@ async function hoist(context) {
   const gy = await groundAt(context, d.x, d.z);
   await context.evaluate(`${app}.heliCamera = 2`);
   await setDown(context, d, gy);
+  // Lower the helicopter a little on the cliff for the side view; if the slope will not have it, the view stays down the cable.
+  try { await lowerOver(context, d, gy, 11); await context.evaluate(`${app}.heliCamera = 3`); } catch (error) { await note('Hoist kept high:', error.message); }
   await sim(context, 40, 'v => v.rescue.line?.holding && v.rescue.line.hold > .4');
   await note('Hold:', await lineState(context));
-  await shoot(context, 'hoist-hold', 'The hold: the rescuer at the driver on the steep slope', {x: d.x, y: gy + 1, z: d.z}, 500);
+  await shoot(context, 'hoist-hold', 'The hold: the rescuer at the driver on the steep slope', {x: d.x, y: gy + 1, z: d.z}, 400);
 }
 
 async function supply(context) {
@@ -284,8 +302,9 @@ async function supply(context) {
   if (!await view(context, 'v.rescue.crates.some(c => c.hooked)')) throw Error('The crate did not hook');
   await flyTo(context, {x: food.x, z: food.z, y: food.y + 40, speed: 5, sink: 3, face: {x: food.x, z: food.z + 100}}, 'up with the crate', {within: 3, tall: 3});
   await sim(context, 5);
-  await context.evaluate(`${app}.heliCamera = 2`);
-  await shoot(context, 'supply-carry', 'A crate on the line, seen down the cable: the run counts crates down', null, 800);
+  await context.evaluate(`${app}.heliCamera = 3`);
+  const hung = await view(context, 'v.rescue.crates.find(c => c.hooked)');
+  await shoot(context, 'supply-carry', 'A crate on the line, from the side: the run counts crates down', {x: hung.x, y: hung.y, z: hung.z}, 800);
 }
 
 async function dusk(context) {
@@ -300,27 +319,33 @@ async function dusk(context) {
   await shoot(context, 'dusk-panel', 'Dusk: the light falls over the last minutes and the clock turns orange', null, 1200);
 }
 
-// The sheet: each picture, and a closer look at the subject beside it.
+// The sheet: each picture, and a closer look at the subject beside it. Drawn one picture at a time, so no
+// single message to the browser carries every screenshot.
 async function writeSheet(context, path, title) {
   const cells = [];
   for (const shot of shots) {
-    const data = 'data:image/png;base64,' + (await readFile(shot.path)).toString('base64');
-    cells.push({label: shot.label, data});
-    if (shot.crop) cells.push({label: `${shot.label.split(':')[0]}: closer`, data, crop: shot.crop});
+    cells.push({label: shot.label, path: shot.path});
+    if (shot.crop) cells.push({label: `${shot.label.split(':')[0]}: closer`, path: shot.path, crop: shot.crop});
   }
-  const png = await context.evaluate(`(async () => {
-    const cells = ${JSON.stringify(cells)}, c = document.createElement('canvas'), w = 640, h = 360, cols = 3;
-    c.width = w * cols; c.height = 44 + Math.ceil(cells.length / cols) * (h + 30);
+  const w = 640, h = 360, cols = 3;
+  await context.evaluate(`(() => {
+    const c = window.__sheet = document.createElement('canvas');
+    c.width = ${w * cols}; c.height = 44 + Math.ceil(${cells.length} / ${cols}) * (${h} + 30);
     const x = c.getContext('2d'); x.fillStyle = '#14191a'; x.fillRect(0, 0, c.width, c.height);
     x.fillStyle = '#eadabc'; x.font = '22px sans-serif'; x.fillText(${JSON.stringify(title)}, 16, 30);
-    for (let i = 0; i < cells.length; i++) {
-      const im = new Image(); im.src = cells[i].data; await im.decode();
-      const left = (i % cols) * w, top = 44 + Math.floor(i / cols) * (h + 30), k = im.width / 1280, r = cells[i].crop;
-      if (r) x.drawImage(im, r[0] * k, r[1] * k, r[2] * k, r[3] * k, left + 4, top, w - 8, h);
-      else x.drawImage(im, left + 4, top, w - 8, h);
-      x.fillStyle = '#fff'; x.font = '17px sans-serif'; x.fillText(cells[i].label.slice(0, 70), left + 10, top + h + 21);
-    }
-    return c.toDataURL('image/png'); })()`);
+  })()`);
+  for (let i = 0; i < cells.length; i++) {
+    const data = 'data:image/png;base64,' + (await readFile(cells[i].path)).toString('base64');
+    await context.evaluate(`(async () => {
+      const c = window.__sheet, x = c.getContext('2d'), i = ${i}, r = ${JSON.stringify(cells[i].crop ?? null)};
+      const im = new Image(); im.src = ${JSON.stringify(data)}; await im.decode();
+      const left = (i % ${cols}) * ${w}, top = 44 + Math.floor(i / ${cols}) * (${h} + 30), k = im.width / 1280;
+      if (r) x.drawImage(im, r[0] * k, r[1] * k, r[2] * k, r[3] * k, left + 4, top, ${w - 8}, ${h});
+      else x.drawImage(im, left + 4, top, ${w - 8}, ${h});
+      x.fillStyle = '#fff'; x.font = '17px sans-serif'; x.fillText(${JSON.stringify(cells[i].label.slice(0, 70))}, left + 10, top + ${h} + 21);
+    })()`);
+  }
+  const png = await context.evaluate(`window.__sheet.toDataURL('image/png')`);
   await writeFile(path, Buffer.from(png.split(',')[1], 'base64'));
 }
 
@@ -336,7 +361,7 @@ export async function run(context) {
   if (SHEET_ROUND && shots.length) {
     const raw = join(context.outputDir, 'sheet.png');
     await writeSheet(context, raw, `RESCUE-VIEW round ${SHEET_ROUND}: H4 Rescue (browser captures, High quality, memory-only saves)`);
-    await note(`Comparison sheet: ${await publishReviewSheet(context, raw, 'heli-rescue', SHEET_ROUND)}`);
+    await note(`Comparison sheet: ${await publishReviewSheet(context, raw, 'heli-rescue-view', SHEET_ROUND)}`);
   }
   if (failures.length) throw Error(failures.join(' | '));
 }

@@ -9,18 +9,27 @@ sections 5, 7 and 13. Data: `view().rescue` from RESCUE-HOOKS. Switch:
 - `src/heli/heli-rescue-view.js` (new): the rescuer on the line (alone, or
   clipped to the casualty), the hiker (walking to the clearing, then standing
   and waving) with the orange flare and its smoke column, the faint 300 m
-  search ring, the 12 m clearing ring, the avalanche's snow blocks (up to 220
-  instanced blocks over the 80 by 200 m area, dirtier than the clean snow so
-  they read), the skier coming up out of the snow as the dig bar fills with
+  search ring, the 12 m clearing ring, the avalanche's packed-snow chunks (up
+  to 220 rounded lumps of 0.3 to 3 m in four shapes, half sunk in the slope,
+  white on top and blue-grey in the shade, thickest in a fan down the slope,
+  generated in code; Performance has half), the skier coming up out of the snow as the dig bar fills with
   the beacon and puffs of snow, the driver on the slope, the three supply
   crates and the yard ring, and the handover (two paramedics walk in, the
   person walks, limps or goes off on a stretcher, by condition). People and
   props are the RESCUE-PEOPLE and RESCUE-PROPS files; the flare's smoke
-  and the digging snow use H2's fire atlas, tinted. Every file loads the
+  and the digging snow use H2's fire atlas, tinted. Round 2: every person is
+  drawn 1.25 times life size (so they read from the cameras), the rescuer's
+  helmet is white on a stronger red suit, crates are 1.5 times larger with a
+  dark rim, and the paramedics are unchanged (upright; they only look flat
+  from straight above). Every file loads the
   first time something needs it.
 - `src/heli/heli-scene.js`: the helicopter view makes the rescue view only
   when the session gives a `rescue` view, hides it with the rest, and ends
-  the cable at the rescuer's raised hand or a hooked crate.
+  the cable at the rescuer's raised hand or a hooked crate. The cameras
+  frame a rescuer on the line or a hooked crate as they frame a car on the
+  hook, 8 m lower than it hangs so the instrument panel does not cover the
+  people. The rescue drawing follows the quality the game sets for the fire
+  (`fire.setQuality` passes it on; render3d is untouched).
 - `src/heli/heli-ui.js` and `heli-ui.css`: the mission line under the
   instruments ("RESCUE 120° 0.6 km · 9:40", orange and bold in the last
   minute; "RESCUE AT TREMBLANT SNOW" on another course), the answer prompt
@@ -41,7 +50,7 @@ sections 5, 7 and 13. Data: `view().rescue` from RESCUE-HOOKS. Switch:
   drawing falls back to the heights the view already holds (the clearing,
   the beacon, the driver), which leaves the snow blocks off the ground
   (a flat guess misses the ski hill by 4 m on average, measured).
-- `tools/test-heli-rescue-view.mjs` (new, 155 checks) and
+- `tools/test-heli-rescue-view.mjs` (new, 176 checks) and
   `tools/scenarios/rescue-view.mjs` (new browser look check).
 
 ## The switch-off proof
@@ -55,11 +64,13 @@ false`, and by counting the scene's children and the files asked for.
 
 ## Tests
 
-- `test-heli-rescue-view` (155): the model contracts; the switch off; the
+- `test-heli-rescue-view` (176): the model contracts; the switch off; the
   rescuer and pair on the line (clip point, facing, the cable end); the
   hiker (ring on the ground, walking, waving, flare out after 60 s,
-  hidden aboard, no sampler); the slide (inside the area, on the ground,
-  skier rising with the hold, hidden when clipped); the driver; the
+  hidden aboard, no sampler); the slide (four lump shapes, rounded and not
+  flat, white above and blue-grey below, inside the area, half sunk, mostly
+  small and none over about 3 m, thicker down the slope, half as many on
+  Performance and when the quality changes; skier rising with the hold, hidden when clipped); the driver; the
   crates resting on the ground and the cable end on a hooked crate; the
   handover for walk, limp and stretcher; the same frames drawn the same;
   the destination buttons with and without a list; the mission line, beacon bar, hold bar, crates, orange, notices, and the
@@ -70,7 +81,10 @@ false`, and by counting the scene's children and the files asked for.
   `test-heli-missions`, `test-heli-hooks` (291): pass.
 - Browser look check (`RESCUE_VIEW_SHEET=1 node tools/browser-harness.mjs
   scenario rescue-view`, headless, memory-only saves, High quality): passed;
-  round 1 sheet in `docs/board/looks/heli-rescue/`. No frame timing (Claude's).
+  round 2 sheet in `docs/board/looks/heli-rescue-view/` (RESCUE-PROPS already
+  has a `round-2.jpg` in `heli-rescue/`, so this card's sheets live in their own
+  folder; round 1's sheet was removed once round 2 replaced it). No frame
+  timing (Claude's).
 - Gates: see the end.
 
 ## Changed assertions
@@ -87,20 +101,24 @@ Nothing replaced.
 
 ## Open for Claude
 
-- `src/heli/heli-session.js` was touched for the ground sampler (above); drop
-  that commit if the sampler should come another way (render3d passing one).
+- `src/heli/heli-session.js` was touched for the ground sampler (accepted).
+- The rescuer's pose is the RESCUE-PEOPLE file's (one arm up on the line, legs
+  hanging, the line at his raised hand). Arms out to the casualty and the hook at
+  the chest need a change to `tools/blender/rescue-people.py`; here his helmet
+  is white, the suit redder and he is 1.25 times life size.
+- `public/assets/heli/rescue/debris.glb` (RESCUE-PROPS) is no longer loaded:
+  remove it with its part of `rescue-props.py` and `test-blender-output.mjs`.
 - The hiker's height while walking is the ground sampler's; without it, the
   clearing's.
 - The driver's car is not drawn: the view does not say which car it is.
 - The dusk is a dimming layer over the picture behind the panel, not a
   change to the world's lights (render3d's, not this card's).
 - The walking pose is the one frozen stride, with a small bob and sway.
-- The supply run was pictured at the home pad only (a crate on the line and
-  the three waiting); setting a crate down in the yard was not pictured.
+- The supply run was pictured at the home pad only; setting a crate down in
+  the yard was not pictured.
 - A stretcher's casualty is always the driver-lying model, whoever was rescued.
-- The drawing has no quality setting yet: 220 blocks and at most 160 + 160
-  sprites on both High and Performance. Frame check (rule 8) over the
-  avalanche is Claude's.
+- Performance (half the chunks, half the sprites) is tested but not pictured;
+  the frame check (rule 8) over the avalanche is Claude's.
 
 ## Gates
 
