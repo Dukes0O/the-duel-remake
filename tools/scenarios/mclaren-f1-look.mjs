@@ -1,6 +1,10 @@
 // EARN-CAR-2: the existing native showroom, original model and UI controls.
 // No player storage, synthetic mesh, camera override or timing measurement.
 export async function run(context) {
+  // Supply an actual empty icon before page load; retain all browser error checks.
+  await context.command('Page.addScriptToEvaluateOnNewDocument', {source: `document.addEventListener('DOMContentLoaded',()=>{
+    const icon=document.createElement('link');icon.rel='icon';icon.href='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E';document.head.append(icon);
+  },{once:true});`});
   await context.command('Emulation.setDeviceMetricsOverride', {width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.navigate('/tools/vehicle-art-check.html?car=mclaren_f1');
   await context.waitFor(`document.readyState==='complete' &&
