@@ -669,7 +669,7 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "backlog"
+    status: "ready"
     needs: []
     locks: []
     details: "docs/board/cards/QA-YARD-HOME-AIR-ONLY.md"
