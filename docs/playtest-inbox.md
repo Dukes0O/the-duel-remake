@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **Tyre Hard answer96ba047d received, no retune.** Clean ProHard non-win accepted at>=0.6 old score;5196/6417=.81 is accepted, target6000 and deadlines unchanged. All23focused cases PASS14.45s. Runtime61e7de00 remains frozen/save-reviewCLEAR; remaining recovery/macros/gate/build wait for core lease/capacity, not an unanswered question. Cups owns current lease.
 - **Ardennes priority gate ADMITTED, source0b5dca64.** Scoped replay capture actual30/60/144 same hash; independent correction CLEAR21/21coverage; final build PASS4953ms. One complete canonical lane/jobs4 running, old interrupted file not pass. No frame hold: normal jobs may use later genuinely free slots under max3. Finishing verdict still requested on P4-ARDENNES; no live change.
 - **Tyre61e7de00 frozen/code-save CLEAR; cups regain core lease.** Casual exact on/off state parity and old pin pass, new Pro row metadata/old-score retention tests pass;13savefixtures437checks/backup/storage3.54MB pass. Waiting exact Hard6000vsaccepted5196 answer before claiming remaining acceptance, no numeric change. Cup0dd37e84 resumes native/gate/build when cap permits; Intel stays retained/lease-held, no source collision.
 - **Ardennes priority slot is open.** Fresh inventory shows only Summit40816 (last track-kit suite) and driving-lesson31024. Enzo23788 has drained. Card-answer chat continues to leave the third slot for the already queued Ardennes gate. F1 pictures and Arena remain next in this chat; no additional heavy start here yet.

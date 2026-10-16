@@ -365,7 +365,6 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "blocked"
-    waiting_on: claude
     claimed_by: codex-tyre-slip-2026-10-15
     branch: codex/tyre-slip
     needs: []

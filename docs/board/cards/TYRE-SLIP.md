@@ -712,6 +712,6 @@ than the autopilot to win on Hard, which is what harder means. Record this
 replacement in the change note.
 
 
-## Record-version increment frozen while acceptance question waits
+## Record-version increment frozen; acceptance answer received
 
-Clean61e7de00 has independent cups_save_review code/save CLEAR. New Pro row separation and native-objective cases RED then GREEN; historical off pin and complete Casual road/Neon state streams remain exact.13historical fixtures/437checks,27progression,backup andstorage3.54/4MB pass. No target/controller/score/ghost change. Full focused/recovery/macros/gate/build still UNRUN; do not claim finished acceptance or repeat120matrix. Wait for the precise Hard acceptance answer above. Freeze source and release busy/save lease to the already reviewed cup candidate for its native/gate/build once capacity permits; no new lane.
+Clean61e7de00 has independent cups_save_review code/save CLEAR. New Pro row separation and native-objective cases RED then GREEN; historical off pin and complete Casual road/Neon state streams remain exact.13historical fixtures/437checks,27progression,backup andstorage3.54/4MB pass. No target/controller/score/ghost change. All23focused cases now PASS in14.45s; recovery/macros/gate/build remain UNRUN. Claude96ba047d explicitly accepts clean ProHard non-win at>=0.6 of old score; accepted5196/6417=.81 passes, target6000 unchanged. The earlier question is resolved; no Claude wait or retune remains. Do not repeat120matrix or claim remaining acceptance complete. Freeze source and release busy/save lease to the already reviewed cup candidate for its native/gate/build once capacity permits; no new lane.
