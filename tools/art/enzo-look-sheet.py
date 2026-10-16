@@ -2,7 +2,9 @@
 
 Builds one JPG (500 KB at most) from the screenshots of the `enzo-look`
 browser scenario. Usage:
-  python tools/art/enzo-look-sheet.py <final run folder> <before-fix side.png> <out.jpg>
+  python tools/art/enzo-look-sheet.py <final run folder> <before-fix side.png> <out.jpg> [max bytes]
+The looks folder has a 20 MB budget (tools/test-review-evidence.mjs), so the
+round 5 sheet was built with a 125,000-byte limit.
 """
 import sys
 from pathlib import Path
@@ -21,8 +23,8 @@ TILES = [
 ]
 
 
-def main(run, before, out):
-    run, out = Path(run), Path(out)
+def main(run, before, out, limit='500000'):
+    run, out, limit = Path(run), Path(out), int(limit)
     sheet = Image.new('RGB', (TILE[0] * 4, TILE[1] * 2 + 34), (18, 22, 20))
     draw = ImageDraw.Draw(sheet)
     try:
@@ -39,14 +41,14 @@ def main(run, before, out):
         sheet.paste(image, (x, y))
         draw.rectangle((x, y + TILE[1] - 24, x + TILE[0], y + TILE[1]), fill=(10, 12, 11))
         draw.text((x + 8, y + TILE[1] - 21), label, fill=(232, 190, 130), font=font)
-    for quality in (82, 76, 70, 64, 58):
+    for quality in (82, 76, 70, 64, 58, 52, 46, 40):
         sheet.save(out, 'JPEG', quality=quality, optimize=True, progressive=True)
-        if out.stat().st_size <= 500_000:
+        if out.stat().st_size <= limit:
             break
     else:
-        sys.exit(f'{out} is {out.stat().st_size} bytes, over the 500 KB limit')
+        sys.exit(f'{out} is {out.stat().st_size} bytes, over the {limit:,}-byte limit')
     print(f'{out} {out.stat().st_size} bytes')
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:5])

@@ -4,8 +4,8 @@
   (Cockpit T-013). Built by Claude in place of Codex (Kyle, 14 October 2026).
 - Status: code, tests and kit complete, behind the `earned-cars` switch (dev).
   Kind: car. Lane `claude/enzo-model`.
-- Look: round 4 picked (`docs/board/looks/earned-cars/round-4.jpg` and its
-  review). No new art round; see "Model fixes" for four small size fixes.
+- Look: round 4 picked (`docs/board/looks/earned-cars/round-4-review.md`; its
+  sheet was later replaced by round 5's). No new art round; see "Model fixes" for four small size fixes.
 
 ## What was built
 
@@ -157,7 +157,10 @@ out of a list it does not belong to. No tolerance was loosened.
 
 - New browser scenario `tools/scenarios/enzo-look.mjs` and sheet recipe
   `tools/art/enzo-look-sheet.py`; sheet `docs/board/looks/earned-cars/round-5.jpg`
-  (207 KB) and `round-5-review.md`. 0 warnings, 0 errors. Evidence in the
+  (114 KB) and `round-5-review.md`. The looks folder has a 20 MB budget
+  (`tools/test-review-evidence.mjs`) and was already at 19.94 MB, so the sheet
+  is built with a 125,000-byte limit and the round 4 sheet it replaces was
+  removed (its review note stays). 0 warnings, 0 errors. Evidence in the
   integration folder's `.evidence/2026-10-15/EARN-CAR-1/`.
 - Verdict: pass, gritty and not toy-like.
 - One review: two faults fixed. The wording said brushed silver wheels, but

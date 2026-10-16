@@ -125,7 +125,7 @@ quick but older and softer than the Jesko, light enough for Kestrel One.
 - `mass: 1365`, `collision: {halfWidth: 1.02, halfLength: 2.35}`, `height: 1.15`, `kind: 'hypercar'`.
 - `color: 0xb3121a` (deep Rosso), `accent: 0x16181b`.
 - `unlockRequirement: {kind: 'medals', medals: 6}`, `factoryMaxed: true`, no price.
-- Look: round 4 picked (`docs/board/looks/earned-cars/round-4.jpg` and its review).
+- Look: round 4 picked (`docs/board/looks/earned-cars/round-4-review.md`; its sheet was replaced by round 5).
 
 ## Merged, two checks left (15 October)
 
