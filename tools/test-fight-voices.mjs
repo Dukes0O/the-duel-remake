@@ -8,12 +8,15 @@ import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
 import {Duel} from '../src/game.js';
 import {COURSE} from '../src/config.js';
 import {fireWeapon} from '../src/combat-weapons.js';
+// DRIVE-LESSON-LINES: the driving instructor's cues joined the bank behind their switch; exactly that list is left out.
+import {DRIVE_LESSON_CUES} from '../src/lessons/drive-radio-lines.js';
+const DRIVE_BANK_CUES = new Set(Object.keys(DRIVE_LESSON_CUES));
 
 // AUD-18: approved takes stay exact. Native event routing and a pure caption
 // getter share presentation history without adding fields to the race state.
 const hash = value => createHash('sha256').update(value).digest('hex');
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
-const records = catalog.sounds.filter(row => row.source === 'elevenlabs' && !row.cue.startsWith('heli.'));
+const records = catalog.sounds.filter(row => row.source === 'elevenlabs' && !row.cue.startsWith('heli.') && !DRIVE_BANK_CUES.has(row.cue));
 const KEPT = records.filter(row => row.key !== 'gatekeeper.welcome');
 let checks = 0;
 const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual, expected, message); };
