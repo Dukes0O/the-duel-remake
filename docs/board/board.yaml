@@ -6,7 +6,7 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/qa-deep-art-three
     priority: "low"
@@ -300,7 +300,7 @@ tasks:
     owner: "codex"
     lane: "TOOL"
     size: "S"
-    status: "backlog"
+    status: "ready"
     needs: []
     priority: "low"
     details: "docs/board/cards/QA-AUDIO-CRASH-RELIABILITY.md"
