@@ -291,6 +291,11 @@ async function nativeStudentAttempt(baseline, lesson, mode, fps) {
               return Math.max(-1,Math.min(1,-yaw/Math.max(.05,steerGain)));
             };
             controls.steer=instructorControls(state,surface,{...plan,steerForYaw:rawSteer}).steer;
+          } else {
+            // The tyre yaw cap depends on the actual full-brake request,
+            // not the provisional brake computed by instructorControls.
+            const brakingSteer=(yaw,options)=>steerForYaw(yaw,{...options,brake});
+            controls.steer=instructorControls(state,surface,{...plan,steerForYaw:brakingSteer}).steer;
           }
         }
         duel.setInput(controls);duel.step(1/120);ticks++;

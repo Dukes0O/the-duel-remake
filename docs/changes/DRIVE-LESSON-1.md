@@ -110,3 +110,11 @@ NOT RUN; no success, corner time, cone fit, screech or right-try verdict is
 claimed. Node syntax parsing only; Root owns native admission and review.
 No module, physics, board, target, old test assertion or runtime hook changed.
 No disposable output created or removed.
+
+
+The independent review found a real preparation fault: right-try steering
+had been calculated using the provisional instructor brake before replacing
+it with full braking. Its yaw cap now uses the actual requested brake via
+the existing steerForYaw helper and the same line-steering law. Late raw
+steering already used that actual brake. No target or runtime hook changed.
+Syntax parsing/diff check only; all native cases remain unrun pending Root.
