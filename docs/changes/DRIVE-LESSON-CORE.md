@@ -1,6 +1,6 @@
 ---
 task: DRIVE-LESSON-CORE
-status: review
+status: done
 flag: driving-lessons
 player_facing: no
 ---
@@ -54,8 +54,11 @@ reuse them. The helicopter keeps every name and behaviour it had.
 
 `test-heli-lessons` 63, `test-heli-audio`, `test-heli-view` 98,
 `test-heli-mode` 154, `test-heli-hooks` 243 and `test-heli-lesson-core` 37 pass;
-the helicopter lesson tests are unchanged. Lane tier, build, the
-`heli-first-flight` browser check and one review: see below.
+the helicopter lesson tests are unchanged. Lane tier 164/164 and build on
+cb19e5b2; `heli-first-flight` passed (11 pictures, no warnings or errors) and
+the helipad instructor board looks as before. One review: one fault (the new
+test sat outside the import guard's `test-heli-*` exemption), fixed by the
+rename and confirmed.
 
 ## Removed
 
