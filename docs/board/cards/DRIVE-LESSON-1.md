@@ -82,3 +82,33 @@ Tyre into integration or claim it green. Final native driving acceptance,
 lane/build and integration merge still wait for Tyre and release admission.
 No heavy execution while Summit's exclusive hold remains active. No shared
 physics/App/save edit or extra source lane is needed.
+
+
+## Instructor implementation retained, 16 October 08:21 PT
+
+Kyle's follow-up is implemented in the existing lane: clean
+`f4e715e4449ca24e9c860b082d4dd6bd15b67038` includes the exact frozen
+reviewed Tyre dependency via conflict-free `bfc3c4d6`. This is not a Tyre or
+lesson integration merge. `buildInstructorRun` owns a fresh Duel with the
+same car/upgrades/driver, rolling start, real fixed-120-Hz rules, settled
+92%/97% speed plan, real tyre yaw helper, native pose recording and recorded
+brake/inside/first-outside-exit cones. Board min(brake+25m,turn-in) and finish
+cone3+60m stay unchanged. Straight road only for braking; actual first brake
+is recorded at the pre-step pose; the recorder stops at its own finish and
+fails closed on a faulty crossing tick. No App autopilot or saved state.
+
+Four new changed helper cases PASS96.8481ms after missing-export RED;
+required independent code/numbers review found real curved-braking,
+post-finish-capture and crossing-fault bugs, all fixed/confirmed CLEAR.
+The four prepared native course/setting cases and receipt fields are also
+review CLEAR but UNRUN: they compare actual repeat-seed poses at30/60/144FPS.
+No native drive, lane/build or browser job ran under the full/frame hold.
+Prior20stage cases stay passing historical source evidence, not repeated.
+
+Remaining real work: first native instructor result; both-corner/settings
+late/right scripted loss/screech acceptance; changed-source lane/build;
+Tyre green dependency and final merge, then the separate host/ghost/cone
+presentation card. Do not infer success or move the red board. Keep source,
+creation receipt and all frozen dependencies; locks[]. Summit full is now
+announced455/455PASS and exact runner28640/parent31228 drained. The new
+FRAME CHECK STARTING hold is active; no Root heavy starts before its DONE.

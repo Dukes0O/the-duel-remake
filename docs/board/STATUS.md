@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T15:08:32.494Z
+Observed at: 2026-10-16T15:21:52.644Z
 
-Observation commit: 3bc731f1f14cb07db430234353834839f3fd435d
+Observation commit: 249bf843d9f26d7a781c24d2c5c2d2193ed11cca
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 3bc731f1f14cb07db430234353834839f3fd435d
+Integration HEAD: 249bf843d9f26d7a781c24d2c5c2d2193ed11cca
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -55,7 +55,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/drive-lesson-1 | DRIVE-LESSON-1 | 2026-10-16T08:08:14-07:00 | 0 | last commit 2026-10-16T08:08:14-07:00 | docs/changes/DRIVE-LESSON-1.md, src/lessons/drive-lessons.js, tools/test-drive-lessons.mjs |
+| codex/drive-lesson-1 | DRIVE-LESSON-1 | 2026-10-16T08:20:41-07:00 | 0 | last commit 2026-10-16T08:20:41-07:00 | docs/changes/DRIVE-LESSON-1.md, docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T19:18:16-07:00 | 0 | last commit 2026-10-15T19:18:16-07:00 | docs/HELICOPTER.md, docs/board/STATUS.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-2.jpg, docs/changes/EARN-CAR-2.md |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-16T00:28:55-07:00 | 0 | last commit 2026-10-16T00:28:55-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 4 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
@@ -81,10 +81,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 15,848,910 B | +167,254 B | 20,000,000 B |
-| Added bytes in last merge | 615,292 B | -59,911 B | 5,000,000 B |
+| Review `looks/` | 15,848,910 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 615,292 B | +0 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 428,333,056 B | +7,462,912 B | unavailable |
+| Git objects | 428,734,464 B | +401,408 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -93,7 +93,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 42dcb5b6b14c334c75158e96f73bda2683274b3d
 - Local main: missing
-- Local integration/wasteland: 3bc731f1f14cb07db430234353834839f3fd435d
+- Local integration/wasteland: 249bf843d9f26d7a781c24d2c5c2d2193ed11cca
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
