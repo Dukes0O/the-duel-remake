@@ -127,3 +127,7 @@ even in Formula 1. Replace the start-width target with:
   15 of 20 races; today's figure recorded for comparison.
 No grid-layout re-slice. Crash, passing, nitro and race-time targets stay.
 Run the full 20-race batch on this source against these two numbers.
+
+## Parallel build while frozen Summit waits
+
+Kyle explicitly directs continued building on another card rather than idling for a Summit test slot. Root resumes this existing lane at e7cd9a7d and applies Claude's16:00 two-pair/start-spread measurement contract in the already owned tools/racecraft-rate.mjs and new cases in tools/test-race-field.mjs. This is measurement implementation, not a new runtime approach or a weaker crash/time/nitro requirement. Keep the old three-wide reading as diagnostic history; never relabel its failed packets. Snapshot at the first braking entry, require two distinct side-by-side pairs with at least half the shorter car length of real longitudinal body overlap and no lateral body intersection, and population lateral standard deviation of the six leading cars at least3m. Both must pass15/20. Existing runtime/CPU strength/refill0.5/0.5 stay frozen; no preview enable until real acceptance/gate/build/review. Summit releases its unnecessary busy-game-files lease while its source is frozen, retaining only registry/signature ownership. No new folder, foreign job or extra heavy launch.

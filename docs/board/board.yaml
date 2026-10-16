@@ -187,7 +187,7 @@ tasks:
     status: "building"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/summit-switch-on
-    locks: [busy-game-files, circuit-registry, world-signatures]
+    locks: [circuit-registry, world-signatures]
     needs: []
     details: "docs/board/cards/SUMMIT-SWITCH-ON.md"
 
@@ -196,8 +196,8 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "blocked"
-    claimed_by: codex-gp-racecraft-2026-10-15
+    status: "building"
+    claimed_by: codex-overnight-01a12e4f
     branch: codex/gp-racecraft
     needs: []
     locks: [busy-game-files]
