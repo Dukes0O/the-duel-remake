@@ -669,7 +669,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-card-answers-01a141d7
+    branch: codex/qa-yard-home-air-only
     needs: []
     locks: []
     details: "docs/board/cards/QA-YARD-HOME-AIR-ONLY.md"
