@@ -2,6 +2,7 @@ import {reviewPlacementPlan} from './scenarios/track-review.mjs';
 import * as placement from './scenarios/track-review.mjs';
 import {withReferenceApp} from './build-reference-laps.mjs';
 import {COURSE} from '../src/config.js';
+import {ARDENNES_FOREST} from '../src/circuits/ardennes-forest.js';
 import {Course} from '../src/course.js';
 import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
 import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
@@ -172,9 +173,12 @@ console.log(`Track review: ${checks} checks.`);
 
 // One reconstructed native run-up only: the prior grounded view is 44m higher.
 assert.equal(typeof placement.resetReviewFlight,'function');
-await withReferenceApp(async app=>{
+const fixtureAdded=!COURSE.some(row=>row.id===ARDENNES_FOREST.id);
+if(fixtureAdded)COURSE.push(ARDENNES_FOREST);
+try {await withReferenceApp(async app=>{
  const d=app.duel;d.startCampaign({startStage:COURSE.findIndex(c=>c.id==='ardennes-forest'),car:'falcone_f42',difficulty:'casual',cpuDifficulty:'medium',seed:1989});app._scriptedCrashDone=true;
  for(let i=0;i<900&&d.state.status!=='racing';i++)app.advance(1/60,1/60);
+ assert.equal(d.course.def.id,'ardennes-forest','the fixture drives the actual course even while dev');
  const s=d.state,c=d.course,L=6684,previous={s:9438.632471026523,lateral:-1.1654024792294946};
  Object.assign(s,{s:previous.s,prevS:previous.s,lateral:previous.lateral,prevLateral:previous.lateral,airborne:false,_verticalSpeed:0});s._jumpY=d._supportAt(s.s,s.lateral,s).y;
  const plan=reviewPlacementPlan(c,3847.8788224681985,119,.44704,L);
@@ -188,4 +192,4 @@ await withReferenceApp(async app=>{
  check(s.s>=plan.target,'the unchanged native App driver reaches the requested frame');
  equal([s.stageCrashes,s.majorCrashes],[0,0],'no contact/crash is hidden by the pose reset');
  console.log(JSON.stringify({reviewRunup:{steps,s:c.phase(s.s),mph:s.speedMph,maxHeight,airborne:s.airborne}}));
-});
+});} finally {if(fixtureAdded)assert.equal(COURSE.pop(),ARDENNES_FOREST,'temporary actual dev definition is restored');}
