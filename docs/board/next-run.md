@@ -212,3 +212,44 @@ lane gate20856/parent31796. Children count with their existing roots, not as
 extra slots. These jobs and any newer owner announcements remain untouched;
 read fresh process identities and holds before any later launch. There is
 no Root hold to release. Old overnight/accessory/Fire watches stay paused.
+
+
+## Direct windowless continuation,16October13:02PT
+
+Kyle explicitly resumed instructor and other windowless code work. The old
+overnight heartbeat remains PAUSED; this is direct work with no new schedule.
+The game queue is unfinished. Live/source/push ownership stays unchanged.
+
+- Tyre Slip is green development merge03ac78f0, exact reviewed unioncb1840e5:
+  correction17/17 and union19/19/jobs4/buildsPASS. It stays DEV/Pro-only.
+  Retain the older lane/evidence: cleanup ownership is unproved. No rerun.
+- Instructor runtimee2f752bc/currentnote7684b7c3: new full-window sampling and
+  finish-boundary regression reviewed/CLEAR. Actual gate22/23suites/jobs4/
+  zero notrun FAILED254577.646ms. Only lesson suite fails:27purePASS/8native
+  cases fail before a valid baseline. Panorama inward-1.8759/-3.2146m fails
+  unchanged2m; Woods trace reversed. Card has exact values and next bounded
+  controller/speed-plan question. No retune/retry/build/merge; all jobs drained.
+  Packet lane.evidence/2026-10-16/DRIVE-LESSON-1/final-e2f752bc retained.
+- Host79c8c1fe: current Tyre/Rescue/skins/Intel union reviewed/CLEAR,33exact
+  flags. Prepared actual memory-only App menu-to-reward test reviewed/CLEAR
+  and UNRUN; no injected native outcome. Production buildPASS2260.6768ms,
+  compileproof only. Do not duplicate the known instructor failure through
+  this case; native/browser/gate/integration merge remain unfinished.
+- Yeti6acb97c4: strict setup bug fixed in own recipe with actual authored/
+  renderer full-night witness; independent reviewCLEAR, awaitingClaude's
+  AGENTS18 written assertion review before rerun. Firstf532 headless attempt
+  failed before photos22849.3555ms, no window/issues/warnings, all own jobs/
+  profile/preview/bundle cleanup verified. Packet headless-f532d535-20261016T195533Z
+  retained. No photos/colour/art verdict or new gate/build.
+- GP3edb91a0 docs-only after actualtestedc674605f:360/360actual completeFAILED
+  at10:59PT, no-worse-crash condition fails. Source/packet retained, no retune/
+  retry/gate/build/preview. Card waits Claude's next direction.
+- Summit90a4533f runtimeunchanged: no measured loopcost/optimization. Exact
+  new headless one-off manual measurement hook question is oncard; existing
+  art recipe was not rerun and no new framework/job was started.
+
+Root has no active native/gate/browser/build job or core/save lease. No
+visible window was opened in this continuation; the existing Yeti harness
+proved its headless launch. Fresh all-ancestor process count and current
+FRAME/FULL/reservation holds still govern any next Node/headless job. No
+real save, live5174 edit/refresh/install, Root push or protected-ledger edit.

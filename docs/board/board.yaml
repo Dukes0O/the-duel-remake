@@ -167,6 +167,7 @@ tasks:
     status: "blocked"
     claimed_by: codex-parallel-resume-01a12e4f
     branch: codex/summit-build-time
+    waiting_on: "claude"
     locks: []
     needs: []
     details: "docs/board/cards/SUMMIT-BUILD-TIME.md"
