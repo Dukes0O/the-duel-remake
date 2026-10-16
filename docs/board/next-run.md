@@ -15,12 +15,13 @@ Ardennes Forest went live at 20:03 (build 20261016030307). Kyle, 20:20: Summit
 may go live overnight only if all green; Claude stops at 08:00 for Kyle's
 quota; Codex carries on.
 
-**The bottleneck is the lock queue.** P4-INTEL-LEVELS holds busy-game-files
-and save-shape, and eight cards wait behind it. So:
+**Core locks are released (Root handback d77e28eb).** Team Room is Claude-owned;
+its remaining presentation hook does not hold the next core/save cards.
 
-1. **Finish or hand back P4-INTEL-LEVELS first.** Merge it as soon as it is
-   green; if it cannot be green by 22:30, commit its progress and release both
-   locks, so the queue moves.
+1. **Team Room is handed back to Claude before the22:30 deadline.** Retain
+   clean b7df3fde, its passing72photos and native ghosts. The existing b7
+   canonical run drains once; do not duplicate it. Claude's approved five-variant
+   entry hook and semantic check remain, with a new core lease only if needed.
 2. **busy-game-files, in this order:** SUMMIT-SWITCH-ON (Kyle approved the
    v2 patch at 20:20; merge, then Claude runs RELEASE-SUMMIT), TYRE-SLIP (finish
    to merge, switch dev), GP-RACECRAFT (switch dev; add it to the desktop
@@ -41,6 +42,12 @@ and save-shape, and eight cards wait behind it. So:
    start nothing heavy while a FULL TIER FOR RELEASE STARTING or FRAME CHECK
    STARTING has no later DONE. At most three heavy jobs across all chats.
 
+**Build while checks wait (Kyle, 15 October evening).** A frozen card waiting
+only for a heavy slot does not stop source work. Release core/save locks it
+will not edit, preserve the exact frozen candidate and continue another ready
+Codex card in an existing or properly admitted card lane. Respect real file
+ownership and the six-lane/three-course limits. Summit keeps merge priority;
+do not launch another heavy job above three or call an unrun check passed.
 ## Tonight, 14 to 15 October (Claude, 19:50; wins over the order above where they differ)
 
 Kyle, 14 October evening: "do what you can"; Summit Run may go live overnight
