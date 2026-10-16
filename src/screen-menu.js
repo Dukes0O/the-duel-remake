@@ -69,9 +69,17 @@ function updateEntryReward(){
   const objective=stage.practice?'Unlimited nitro everywhere: hold SPACE, even off-road or in the air. Turn right from the starting area for the 4 km drag strip. Orange markings show the 600 m braking area. No timer or race rewards.':rush?`Pass all ${rush.gatesPerLap*(stage.laps||2)} gates in order over 2 laps. Start with ${rush.initialTimeSec[choices.cpuDifficulty]} seconds; each gate adds ${rush.extensionSec[choices.cpuDifficulty]}. Missing a gate cannot set a record.`:drift?`Bank ${credits(drift.targets[choices.cpuDifficulty])} drift points in 2 laps / ${drift.timeLimitSec[choices.cpuDifficulty]} seconds. Slide above ${formatSpeed(45)}. Straighten to bank; impacts and dirt lose your live chain.`:stunt?`Land ${stunt.jumps} jumps, crush ${stunt.crushes} cars, and finish both laps within ${stunt.timeLimitSec[choices.cpuDifficulty]} seconds.`:stage.arena?'Finish both laps. Land jumps and crush wrecks for bonus points.':stage.kind==='chase'?`Finish both laps within ${stage.chaseTimeLimit[choices.cpuDifficulty]} seconds and evade pursuit.`:'';
   text('cpu-target-label',stage.kind==='chase'?'PURSUIT LEVEL':rush?'GATE TIMER':drift?'DRIFT TARGET':stunt||choices.mode==='timetrial'?'TIME TARGET':'CPU RIVAL');
   ui['event-brief'].hidden=!objective&&!recommendation;text('event-brief',[objective,recommendation].filter(Boolean).join(' '));
-  const record=app.getGhostRecord(choices);ui['ghost-control'].hidden=!record;ui['ghost-hint'].hidden=choices.mode!=='timetrial'||!!record;ui['ghost-toggle'].checked=app.ghostEnabled;
+  const intelGhost=app._switches().enabled('grand-prix')===true;
+  const ghostChoice=intelGhost?(app.getGhostChoice?.(choices)??'my-best'):(app.ghostEnabled?'my-best':'off');
+  const personalGhost=app.getGhostRecord(choices),teamGhost=intelGhost?app.getTeamGhostRecord?.(choices):null;
+  const record=ghostChoice==='team'?teamGhost:personalGhost;
+  ui['ghost-control'].hidden=intelGhost?(choices.mode!=='timetrial'||(!personalGhost&&!teamGhost)):!record;
+  ui['ghost-hint'].hidden=choices.mode!=='timetrial'||!!record;
+  ui['ghost-toggle'].checked=ghostChoice!=='off';
+  if(intelGhost)ui['ghost-toggle'].setAttribute('aria-label','Ghost: '+(ghostChoice==='team'?'Team':ghostChoice==='off'?'Off':'My best')+'. Change ghost source.');
+  if(intelGhost&&ghostChoice==='off')text('ghost-record-label','OFF');
   if(stage.practice){ui['ghost-control'].hidden=true;ui['ghost-hint'].hidden=true;}
-  if(record){const build=Object.values(record.upgrades).reduce((sum,n)=>sum+n,0);text('ghost-record-label',`${time(record.timeSec)} · RECORD BUILD ${build}/21`);ui['ghost-control'].title=Object.entries(record.upgrades).map(([key,level])=>`${UPGRADE_TYPES[key]?.name||key}: ${level}`).join(' · ');}
+  if(record){const build=Object.values(record.upgrades).reduce((sum,n)=>sum+n,0);text('ghost-record-label',!intelGhost?`${time(record.timeSec)} · RECORD BUILD ${build}/21`:ghostChoice==='off'?'OFF':ghostChoice==='team'?`TEAM · ${time(record.timeSec)}`:`MY BEST · ${time(record.timeSec)} · RECORD BUILD ${build}/21`);ui['ghost-control'].title=Object.entries(record.upgrades).map(([key,level])=>`${UPGRADE_TYPES[key]?.name||key}: ${level}`).join(' · ');}
   if(isSummitAttack(stage)){
     const targets=stage.attackTimes;
     text('entry-reward','SOLO TIME TRIAL · ONE RUN · NO PAY'+(targets?` · GOLD ${time(targets.gold)} · SILVER ${time(targets.silver)} · BRONZE ${time(targets.bronze)}`:''));

@@ -174,7 +174,7 @@ const courseActions = createCourseActions({app, choices,
 function refreshRaceSetup(){
   delete choices.rival;Object.assign(choices,app.getRaceChoices());garageCar=choices.car;updatePlayers();updateMenuScene();lastScreen=null;renderState(app.duel.state);
 }
-ui['ghost-toggle'].addEventListener('change',event=>app.setGhostEnabled(event.target.checked));
+ui['ghost-toggle'].addEventListener('change',event=>app._switches().enabled('grand-prix')?app.cycleGhostChoice(choices):app.setGhostEnabled(event.target.checked));
 for(const id of ['rival-car','rival-driver','rival-upgrades'])ui[id].addEventListener('change',()=>{
   choices.rival={car:ui['rival-car'].value,driverId:ui['rival-driver'].value,upgradeLevel:Number(ui['rival-upgrades'].value)};
   updateMenuScene();

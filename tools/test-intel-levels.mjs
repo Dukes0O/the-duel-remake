@@ -224,3 +224,28 @@ test('team playback uses the retained native pose, repeats per lap, and cannot r
  assert.equal(ghosts.storeGhost(store,record).saved,false);assert.equal(JSON.stringify(store),before);
  assert.equal(ghosts.sampleGhost(record,1),null,'personal playback never accepts a team record');
 });
+
+test('ghost source choice belongs to the named player, defaults to My best and refuses unavailable team or race changes',async()=>{
+ const {withReferenceApp}=await import('./build-reference-laps.mjs');const {createFeatureFlags}=await import('../src/feature-flags.js');
+ await withReferenceApp(async app=>{
+  app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'grand-prix':true}});
+  assert.equal(typeof app.getGhostChoice,'function');assert.equal(app.getGhostChoice(),'my-best');
+  const original=app.player.id,credits=app.profile.credits;
+  assert.equal(app.setGhostChoice('off').ok,true);assert.equal(app.getGhostChoice(),'off');
+  assert.equal(app.setGhostChoice('team').ok,false,'no fabricated reference ghost');
+  assert.equal(app.profile.credits,credits);
+  assert.ok(app.addPlayer('Ghost choice second').ok);assert.equal(app.getGhostChoice(),'my-best');
+  assert.ok(app.selectPlayer(original));assert.equal(app.getGhostChoice(),'off');
+  assert.ok(app.startCampaign({startStage:0,car:'falcone_f42',mode:'timetrial',seed:1989}));
+  const before=JSON.stringify(app.profile);assert.equal(app.setGhostChoice('my-best').ok,false);assert.equal(JSON.stringify(app.profile),before);
+ });
+});
+
+test('the existing personal ghost toggle remains effective after introducing source choice',async()=>{
+ const {withReferenceApp}=await import('./build-reference-laps.mjs');const {createFeatureFlags}=await import('../src/feature-flags.js');
+ await withReferenceApp(async app=>{
+  app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'grand-prix':true}});
+  app.setGhostEnabled(false);assert.equal(app.getGhostChoice(),'off');
+  app.setGhostEnabled(true);assert.equal(app.getGhostChoice(),'my-best');
+ });
+});
