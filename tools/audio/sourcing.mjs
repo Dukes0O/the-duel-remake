@@ -50,9 +50,12 @@ export function addCatalogEntry(entry, path = CATALOG_PATH) {
   for (const field of ['source', 'key', 'license', 'file', 'sha256'])
     if (!entry[field]) throw new Error(`Catalog entry needs ${field}.`);
   const catalog = loadCatalog(path);
-  catalog.sounds = catalog.sounds.filter(sound => !(sound.source === entry.source && sound.key === entry.key));
-  catalog.sounds.push(entry);
-  catalog.sounds.sort((a, b) => `${a.source}:${a.key}`.localeCompare(`${b.source}:${b.key}`));
+  // Never reorder the catalog: a new entry goes last, and a new take or fetch
+  // for the same source, key and cue takes the old row's place (tests pin
+  // the rows). One library sound may serve several cues, one row each.
+  const at = catalog.sounds.findIndex(sound => sound.source === entry.source && sound.key === entry.key && sound.cue === entry.cue);
+  if (at < 0) catalog.sounds.push(entry);
+  else catalog.sounds[at] = entry;
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(catalog, null, 2) + '\n');
   return catalog;
