@@ -728,7 +728,9 @@ tasks:
     owner: "claude"
     lane: "VIS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-far-forest-2026-10-15"
+    branch: "claude/ardennes-far-forest"
     needs: []
     locks: []
     details: "docs/board/cards/ARDENNES-FAR-FOREST.md"
