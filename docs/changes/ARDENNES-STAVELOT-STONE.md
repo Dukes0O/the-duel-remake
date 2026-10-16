@@ -1,6 +1,6 @@
 ---
 task: ARDENNES-STAVELOT-STONE
-status: review
+status: done
 player_facing: yes
 ---
 
@@ -49,10 +49,28 @@ green change goes live).
 `tools/test-course-landmarks.mjs` (new check only): an unknown house style
 is refused.
 
+## Tests
+
+On 1e523546 (integration merged in, with P4-FINISH-ARDENNES and JANITOR-LOOKS):
+- Lane tier `node tools/run-tests.mjs --tier lane --changed --jobs 4`:
+  96 passed, 0 failed. It includes replay fingerprints (207 checks across 23
+  cases, 20 events, three frame rates, unchanged), combat replay fingerprints
+  (12 checks), `test-circuit-ardennes` (42), `test-course-landmarks`,
+  `test-world-composition` (only the Ardennes signature recaptured; the other
+  courses identical) and `test-review-evidence` (9).
+- `node tools/test-circuits.mjs`: 127,090 checks across 21 events and four
+  seeds, unchanged road.
+- `npm run build`: built.
+- Browser: `tools/scenarios/stavelot-stone.mjs` on a private port with
+  memory-only saves, High, four views per round plus a final pass on the
+  merged lane: no warnings or errors; pictures reviewed, then deleted.
+- One review: three faults (sheet names, doors above sloping ground, this
+  test record) fixed and confirmed.
+
 ## Race
 
 No road, run-off, solid or placement change: same houses in the same
-places. Replays are unchanged (lane tier).
+places; replay fingerprints unchanged.
 
 ## Removed
 
