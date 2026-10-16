@@ -20,6 +20,7 @@ import {addCircuitEffects} from '../src/circuit-effects.js';
 import {syncScene} from '../src/scene-systems.js';
 import {disposeTree} from '../src/world.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
+import {TREMBLANT_WOODS} from '../src/circuits/tremblant-woods.js';
 import {terrainGeometry, farTerrainGeometry} from '../src/world-surfaces.js';
 import {createTrackKits, normalizeKitPlacements} from '../src/track-kits.js';
 import {addCircuitLandmarks} from '../src/circuit-landmarks.js';
@@ -212,6 +213,49 @@ test('the forest and safety kit leave the original run-off and native pit road o
     assert.ok(nearest.distance >= course.roadHalfWidthAt(nearest.s) + 12, 'trees stay outside every road run-off');
   }
   assert.deepEqual(new Course(ARDENNES_FOREST, 1989).features.trees, course.features.trees, 'same seed gives the same forest');
+});
+
+
+// ARDENNES-FAR-FOREST (finishing pass F5): a second, far band of firs on the bald hills.
+test('the far forest band leaves the first band and the beeches exactly as they were', () => {
+  const withFar = new Course(ARDENNES_FOREST, 1989);
+  const without = new Course({...ARDENNES_FOREST, scenery: {...ARDENNES_FOREST.scenery, farForest: undefined}}, 1989);
+  const far = withFar.features.trees.filter(tree => tree.farForest);
+  const first = withFar.features.trees.filter(tree => !tree.farForest);
+  assert.deepEqual(first, without.features.trees, 'every earlier tree keeps its name, place, scale and tint');
+  assert.equal(without.features.trees.length, 9131);
+  assert.deepEqual(beechTreePlacements(withFar), beechTreePlacements(without), 'the accepted beech set is unchanged');
+  assert.equal(beechTreePlacements(withFar).length, 191);
+  assert.deepEqual(withFar.features.trees.slice(0, first.length), first, 'the far band is planted after every earlier tree');
+  assert.ok(far.length > 1500 && far.length <= .25 * first.length, `far band adds at most a quarter (${far.length})`);
+  assert.ok(far.every((tree, i) => tree.id === `far-forest-${i}`));
+  assert.deepEqual(new Course(ARDENNES_FOREST, 1989).features.trees, withFar.features.trees, 'same seed, same far band');
+});
+
+test('far forest trees keep every keep-clear rule and stand on the drawn ground', () => {
+  const course = new Course(ARDENNES_FOREST, 1989), band = ARDENNES_FOREST.scenery.farForest;
+  const zones = ARDENNES_FOREST.scenery.clear, corners = course.script.pieces.filter(piece => piece.kind === 'turn');
+  for (const tree of course.features.trees.filter(tree => tree.farForest)) {
+    const nearest = course.nearest(tree.x, tree.z), edge = nearest.distance - course.roadHalfWidthAt(nearest.s);
+    assert.ok(edge >= 12, 'outside every road run-off');
+    const depth = Math.abs(tree.off) - course.roadHalfWidthAt(tree.s);
+    assert.ok(depth >= band.from - 1e-9 && depth <= band.to + 1e-9, 'inside its band');
+    const phase = course.phase(tree.s), r = 2.5 * tree.scale;
+    assert.ok(!zones.some(zone => phase >= zone.s0 - r && phase <= zone.s1 + r && tree.off >= zone.from - r && tree.off <= zone.to + r),
+      'outside the course clear stretches (the paddock, The Wall, Stavelot village)');
+    const piece = course.script.pieceAt(nearest.s);
+    assert.ok(!(piece.kind === 'turn' && Math.sign(nearest.lateral) === piece.dir && nearest.distance < course.roadHalfWidthAt(nearest.s) + 30),
+      'never on the inside of a corner');
+    assert.ok(Math.abs(renderedGroundHeight(course, tree) - tree.y) < 1e-6, 'stands on the drawn ground');
+    assert.ok(course.features.obstacles.includes(tree), 'a solid scenery tree like the first band');
+  }
+  assert.ok(corners.length > 10);
+});
+
+test('a course without a far band has none and is unchanged', () => {
+  const course = new Course(TREMBLANT_WOODS, 1989);
+  assert.equal(course.features.trees.some(tree => tree.farForest || tree.id.startsWith('far-forest-')), false);
+  assert.equal(TREMBLANT_WOODS.scenery?.farForest, undefined);
 });
 
 
