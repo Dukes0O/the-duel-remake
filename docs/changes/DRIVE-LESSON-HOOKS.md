@@ -25,3 +25,57 @@ The assigned new pure test file first failed at the absent UI module. After impl
 ## Removed
 
 Nothing replaces a live path yet. The module and styles remain off until the later owned host wiring imports them; no App/game/renderer/screen/flag/save/audio/foreign file was edited and no busy-game-files lease was held. No scratch output was created.
+
+
+## Native host source increment (parallel work, not acceptance)
+
+Kyle authorized all possible parallel building. The card's named game/App
+hooks now implement a real lesson-only Time Trial start and rolling-gate
+reset. App computes the actual same-car/upgrades/driver instructor once,
+checks player/course/car/switch ownership before and after the await, and
+surfaces a clean-run failure instead of making a substitute plan. The new
+`driving-lessons` catalog row is DEV and requires `tyre-slip`; neither is
+enabled or merged by this source increment. Precise inventory test changes
+need their named-hook review and remain outside this edit.
+
+Duel's lesson branch calls existing native `_drive`, `_jump` and swept
+`_collisions`; it adds no alternate physics. The ordinary race/lap finish,
+traffic, police, combat, bonuses and record paths are excluded. Ordinary
+App settlement, active-race markers, ghosts, telemetry and Intel observers
+reject lesson races, including direct callers. Each new attempt uses the
+actual instructor rolling pose and resets transient damage; no repair pay
+or ordinary race reward is settled. No inactive race-state field is added.
+
+The App board/start/next/Enter/leave verbs mount the existing pure panel and
+results as their own DOM surface. The one menu button appears only with
+both dev flags, and the router gains only the owned stylesheet import.
+Cones and fixed red board are read-only Three objects at actual rendered
+ground height; cone tips read scorer events. Challenge playback reuses the
+existing vehicle ghost drawing with interpolation of actual instructor
+poses. Native physics never observes these objects.
+
+Radio cues use the existing banked recordings through the shared radio
+filter, in order, with current-run cancellation; subtitles show their exact
+line text. The approved `finishDriveLesson` API is called only for the actual
+current player/state/car/driver/settings and a completed three-win challenge.
+It retains exactly-once reward ownership; the existing App save API retains
+its normal session-only behavior if persistence is unavailable. No actual
+player save, localStorage profile, live app, browser, native simulation,
+heavy gate, build or release was accessed or executed during source work.
+
+Pure presentation/ownership/source-isolation tests:14/14 PASS203.5589ms.
+Syntax parsing and diff checking pass. A failed local Windows encoding write
+briefly emptied the owned menu file; exact clean HEAD was restored under a
+zero-byte precondition, then only its one button was reapplied. Existing
+Windows-encoded UI text was normalized to UTF-8. No foreign edits were lost.
+
+**Still unvalidated:** the instructor currently fails its real clean-run
+check in the separate lesson lane. This host cannot yet demonstrate a
+successful lesson. Full native menu-to-reward, repeatability, no-save-side-
+effects, actual radio/ghost/cone presentation and browser acceptance remain
+UNRUN, along with canonical lane/build and required independent save/code
+review. No synthetic plan, hidden bypass or claim of playable completion.
+The browser scenario and precise inventory hooks remain unfinished.
+
+Removed: no current assets or released paths replaced; no scratch output
+created. Preserve this unfinished owned lane and the other source lanes.

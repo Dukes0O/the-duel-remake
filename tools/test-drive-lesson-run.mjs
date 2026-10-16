@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFile} from 'node:fs/promises';
 import {driveLessonBoardModel, driveLessonBoardMarkup, driveLessonPanelMarkup,
-  driveLessonResultMarkup, bindDriveLessonUi} from '../src/lessons/drive-lesson-ui.js';
+  driveLessonResultMarkup, bindDriveLessonUi, driveLessonCompletion} from '../src/lessons/drive-lesson-ui.js';
 
 const base = () => ({
   playerId: 'kyle', carId: 'falcone', difficulty: 'pro',
@@ -156,4 +156,39 @@ test('presentation CSS stays within its own component and preserves visible keyb
     assert.ok(selector.split(',').every(value => value.trim().startsWith('.drive-lesson')), selector);
   }
   assert.match(css, /:focus-visible/); assert.doesNotMatch(css, /outline:\s*(none|0)/);
+});
+
+
+test('lesson completion requires actual current run/player/car/settings and a finished three-win challenge',()=>{
+  const state={playerId:'kyle',car:'falcone',difficulty:'pro',driverId:'club'};
+  const lesson={id:'corner',stage:'challenge',phase:'result',done:true,streak:3,bestMargin:.42,
+    lastAttempt:{finished:true,passed:true}};
+  const actual={state,ownerId:'kyle',plan:{car:'falcone',difficulty:'pro',driverId:'club'},lesson};
+  const before=JSON.stringify(actual);
+  assert.deepEqual(driveLessonCompletion(actual,state,'kyle'),{id:'corner',carId:'falcone',marginSeconds:.42});
+  assert.equal(driveLessonCompletion(actual,{...state},'kyle'),null,'an old/replaced state cannot pay');
+  assert.equal(driveLessonCompletion(actual,state,'son'),null,'a switched player cannot pay');
+  for(const patch of [{ownerId:'son'},{plan:{...actual.plan,car:'other'}},{plan:{...actual.plan,difficulty:'casual'}},
+    {plan:{...actual.plan,driverId:'other'}},{lesson:{...lesson,streak:2}},{lesson:{...lesson,phase:'driving'}},
+    {lesson:{...lesson,stage:'right'}},{lesson:{...lesson,bestMargin:0}},
+    {lesson:{...lesson,lastAttempt:{finished:false,passed:true}}}])
+    assert.equal(driveLessonCompletion({...actual,...patch},state,'kyle'),null);
+  assert.equal(JSON.stringify(actual),before,'eligibility is read-only');
+});
+
+test('owned host code isolates lessons from ordinary settlement, ghost saving and progression',async()=>{
+  const app=await readFile(new URL('../src/app.js',import.meta.url),'utf8');
+  const game=await readFile(new URL('../src/game.js',import.meta.url),'utf8');
+  for(const signature of ['_startLapTelemetry(state)','_updateLapTelemetry(state)','_startGhostStage(state)',
+    '_updateGhost(state)','_markActiveRace(state)','_settleResult(result,state)','_recordIntelLap(event,state)',
+    '_settlePoliceTicket(ticket,state)']){
+    const at=app.indexOf('  '+signature);
+    assert.ok(at>=0,signature+' exists');
+    assert.match(app.slice(at,at+115),/if\(this\.duel\.drivingLesson\)return;/,signature+' rejects lesson run');
+  }
+  const begin=game.indexOf('  _stepDriveLesson(dt)'),end=game.indexOf('  // ---- arena events',begin);
+  const branch=game.slice(begin,end);
+  assert.match(branch,/this\._drive\(dt\)/);assert.match(branch,/this\._collisions\(\)/);
+  assert.doesNotMatch(branch,/_advanceLaps|_finishStage|_traffic|_police|stepCombat|settleRace/);
+  assert.match(game,/s\.traffic = grandPrix \|\| this\.drivingLesson \? \[\] : this\._spawnTraffic/);
 });

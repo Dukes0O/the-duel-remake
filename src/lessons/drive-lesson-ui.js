@@ -49,7 +49,7 @@ export function driveLessonBoardMarkup(props = {}) {
   const choices = model.courses.map(course => `<label class="drive-lesson-course">
     <input type="radio" name="drive-lesson-course" data-drive-course="${escape(course.id)}"
       ${model.selected?.id === course.id ? 'checked' : ''} ${course.owned ? '' : 'disabled'}>
-    <span>${escape(course.name)} — ${escape(course.cornerName)}${course.owned ? '' : ' (not owned)'}</span></label>`).join('');
+    <span>${escape(course.name)} â€” ${escape(course.cornerName)}${course.owned ? '' : ' (not owned)'}</span></label>`).join('');
   const best = model.bestMargin == null ? '' : `<p>Best: ${seconds(model.bestMargin)} faster</p>`;
   const car = model.car ? escape(model.car.name) : 'Choose an unlocked car';
   const difficulty = props.difficulty === 'pro' ? 'Pro' : props.difficulty === 'casual' ? 'Casual' : 'Choose a setting';
@@ -156,4 +156,57 @@ export function bindDriveLessonUi(root, readProps, callbacks = {}) {
   };
   root.addEventListener('click', click); root.addEventListener('change', change); root.addEventListener('keydown', keydown);
   return () => {root.removeEventListener('click', click); root.removeEventListener('change', change); root.removeEventListener('keydown', keydown);};
+}
+
+
+// This owns only its DOM surface. Race and save actions remain App verbs.
+export function mountDriveLessonUi(app,host){
+  const root=host.ownerDocument.createElement('div');
+  root.className='drive-lesson-host';root.tabIndex=-1;root.hidden=true;host.append(root);
+  let previous='';
+  const clean=bindDriveLessonUi(root,()=>app.driveLessonProps(),{
+    onStart:request=>void app.startLesson({...request,car:request.carId}),
+    onNext:()=>app.nextLessonAttempt(),onLeave:()=>app.leaveLesson(),
+    onSelectCourse:({courseId})=>{app.driveLessonCourse=courseId;previous='';update();},
+  });
+  const open=event=>{
+    const button=event.target?.closest?.('[data-drive-open]');
+    if(button&&host.contains(button)&&!button.hidden)app.openDrivingLessons();
+  };
+  host.addEventListener('click',open);
+  function update(){
+    const available=app.drivingLessonsAvailable();
+    const button=host.querySelector('[data-drive-open]');
+    if(button)button.hidden=!available||app.duel.state.status!=='menu';
+    const props=app.driveLessonProps(),run=!!props.lesson;
+    root.hidden=!available||!run&&!app.driveLessonBoardOpen;
+    root.classList.toggle('drive-lesson-host-running',run);
+    if(root.hidden)return;
+    const markup=run?driveLessonPanelMarkup(props)+driveLessonResultMarkup(props):driveLessonBoardMarkup(props);
+    const message=app.driveLessonMessage;
+    const status=message?`<p class="drive-lesson-message" role="status">${escape(message)}</p>`:'';
+    const radio=run&&app.driveLessonRadioText?`<p class="drive-lesson-radio" aria-live="polite">${escape(app.driveLessonRadioText)}</p>`:'';
+    const content=markup+status+radio;
+    if(content!==previous){
+      const action=root.contains(host.ownerDocument.activeElement)?host.ownerDocument.activeElement?.dataset?.driveAction:null;
+      root.innerHTML=content;previous=content;
+      if(action)root.querySelector(`[data-drive-action="${action}"]`)?.focus({preventScroll:true});
+    }
+    root.classList.toggle('drive-lesson-host-result',run&&props.lesson.phase==='result');
+  }
+  return {update,dispose(){clean();host.removeEventListener('click',open);root.remove();}};
+}
+
+
+// Pure boundary check before the approved profile API is called. An old event
+// or a different player's finished lesson must never grant a reward.
+export function driveLessonCompletion(run,state,playerId){
+  const lesson=run?.lesson;
+  if(!playerId||run?.ownerId!==playerId||run.state!==state||state?.playerId!==playerId||
+    run.plan?.car!==state.car||run.plan?.difficulty!==state.difficulty||
+    run.plan?.driverId!==state.driverId||!lesson||lesson.id!=='corner'||
+    lesson.stage!=='challenge'||lesson.phase!=='result'||!lesson.done||lesson.streak!==3||
+    lesson.lastAttempt?.finished!==true||lesson.lastAttempt?.passed!==true||
+    !Number.isFinite(lesson.bestMargin)||lesson.bestMargin<=0)return null;
+  return {id:'corner',carId:state.car,marginSeconds:lesson.bestMargin};
 }

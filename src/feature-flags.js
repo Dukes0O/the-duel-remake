@@ -14,6 +14,7 @@ export const FEATURE_STATES = Object.freeze({
   'crew-gear': 'on', 'fight-voices': 'on', 'cpu-crews': 'on', 'ambush-alley': 'on', gunn: 'on',
   // Phase 4 (docs/CIRCUITS.md): racing a full field in a Grand Prix.
   'tyre-slip': 'dev',
+  'driving-lessons': 'dev',
   'lap-choice': 'on', 'snowmen': 'on', yeti: 'on', 'rival-voices': 'dev',
   'grand-prix': 'on', 'grand-prix-career': 'dev', 'snow-world': 'dev',
   // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.

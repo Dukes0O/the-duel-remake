@@ -28,3 +28,12 @@
 @media (max-width: 560px) {
   .drive-lesson-board, .drive-lesson-panel, .drive-lesson-result { padding: 12px; width: 100%; max-width: 100%; }
 }
+
+.drive-lesson-host { position: absolute; inset: 0; z-index: 80; display: grid; align-content: center; justify-items: center; gap: 10px; padding: 20px; background: #10161bd9; overflow: auto; }
+.drive-lesson-host[hidden] { display: none; }
+.drive-lesson-host-running { align-content: start; justify-items: start; inset: 90px auto auto 18px; padding: 0; max-width: min(560px, calc(100% - 36px)); background: none; pointer-events: none; }
+.drive-lesson-host-running .drive-lesson-panel, .drive-lesson-host-running .drive-lesson-result { pointer-events: auto; }
+.drive-lesson-host-result { inset: 85px 18px 18px; align-content: center; justify-items: center; max-width: none; background: #10161bd9; pointer-events: auto; padding: 12px; }
+.drive-lesson-host-result .drive-lesson-panel { display: none; }
+.drive-lesson-message, .drive-lesson-radio { margin: 0; padding: 10px 14px; max-width: 560px; color: #f3eddf; background: #172027f5; border-radius: 5px; }
+.drive-lesson-radio { border-left: 3px solid #edb65f; }
