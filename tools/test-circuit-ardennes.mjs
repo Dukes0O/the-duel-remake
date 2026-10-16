@@ -216,10 +216,23 @@ test('the forest and safety kit leave the original run-off and native pit road o
 });
 
 
-// ARDENNES-FAR-FOREST (finishing pass F5): a second, far band of firs on the bald hills.
+// ARDENNES-FAR-FOREST (finishing pass F5): a second, far band of firs on the bald hills. Taken out of the
+// Ardennes course on 16 October (its +2,182 trees missed the High frame limit at Pit Straight); the band code
+// stays, tested here on the same course with the accepted band added back, until a lighter far forest returns.
+const FAR_BAND = Object.freeze({from: 60, to: 220, spacing: 9, rows: 5, thin: .5,
+  scale: Object.freeze([1.4, 2.6]), jitter: .8, clumps: Object.freeze({cut: .5, size: .3})});
+const ARDENNES_WITH_FAR = Object.freeze({...ARDENNES_FOREST, scenery: Object.freeze({...ARDENNES_FOREST.scenery, farForest: FAR_BAND})});
+
+test('Ardennes ships without the far band', () => {
+  assert.equal(ARDENNES_FOREST.scenery.farForest, undefined);
+  const course = new Course(ARDENNES_FOREST, 1989);
+  assert.equal(course.features.trees.length, 9131);
+  assert.equal(course.features.trees.some(tree => tree.farForest || tree.id.startsWith('far-forest-')), false);
+});
+
 test('the far forest band leaves the first band and the beeches exactly as they were', () => {
-  const withFar = new Course(ARDENNES_FOREST, 1989);
-  const without = new Course({...ARDENNES_FOREST, scenery: {...ARDENNES_FOREST.scenery, farForest: undefined}}, 1989);
+  const withFar = new Course(ARDENNES_WITH_FAR, 1989);
+  const without = new Course(ARDENNES_FOREST, 1989);
   const far = withFar.features.trees.filter(tree => tree.farForest);
   const first = withFar.features.trees.filter(tree => !tree.farForest);
   assert.deepEqual(first, without.features.trees, 'every earlier tree keeps its name, place, scale and tint');
@@ -229,11 +242,11 @@ test('the far forest band leaves the first band and the beeches exactly as they 
   assert.deepEqual(withFar.features.trees.slice(0, first.length), first, 'the far band is planted after every earlier tree');
   assert.ok(far.length > 1500 && far.length <= .25 * first.length, `far band adds at most a quarter (${far.length})`);
   assert.ok(far.every((tree, i) => tree.id === `far-forest-${i}`));
-  assert.deepEqual(new Course(ARDENNES_FOREST, 1989).features.trees, withFar.features.trees, 'same seed, same far band');
+  assert.deepEqual(new Course(ARDENNES_WITH_FAR, 1989).features.trees, withFar.features.trees, 'same seed, same far band');
 });
 
 test('far forest trees keep every keep-clear rule and stand on the drawn ground', () => {
-  const course = new Course(ARDENNES_FOREST, 1989), band = ARDENNES_FOREST.scenery.farForest;
+  const course = new Course(ARDENNES_WITH_FAR, 1989), band = FAR_BAND;
   const zones = ARDENNES_FOREST.scenery.clear, corners = course.script.pieces.filter(piece => piece.kind === 'turn');
   for (const tree of course.features.trees.filter(tree => tree.farForest)) {
     // Measured from the nearest road, which for a band reaching 220 m can be another stretch of the circuit.

@@ -56,3 +56,20 @@ at the candidate commit; list it in the release notes.
 Also in this release under rule 18 (Claude, 20:50): switch `forest-fire` on
 (FIRE-FINISH is finished). Use rule 19: reuse any full-tier pass that covers
 the candidate instead of rerunning it.
+
+## Frame check and Director decision, 16 October 09:00
+
+Release candidate 7f108454: full tier 455/455 alone (jobs 4, 2141 s). Frame
+check, headed, eight cars, laptop panel off, GPU quiet:
+- Summit night summit: p95 16.8 ms at both qualities (pass), world build
+  1498/1533 ms (repeat 1510/1515), over the 1000 ms limit.
+- Ardennes Pit Straight: High p95 33.3 ms FAIL, Performance 16.8 ms, world
+  640/621 ms. Without the far forest band: High and Performance 16.8 ms, world
+  646/586 ms. The far forest leaves this release; boards and houses stay.
+
+Director decision (rule 18, not a Kyle-list item): Summit ships. Its 1.5 s
+build is a one-time pause before the countdown, the same kind of cost as the
+slow first load made a warning on 14 October, so for this release it is
+recorded as a warning and named in the release note. Rule 8 is unchanged for
+every other course and for future releases. SUMMIT-BUILD-TIME (Codex) brings
+it back under 1 s, keeping the snow.

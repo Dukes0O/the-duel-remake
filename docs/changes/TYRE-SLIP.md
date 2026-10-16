@@ -133,3 +133,23 @@ the integration merge base. Root will select the actual two-file commit
 delta through the existing exported main/getChanges API, retaining the real
 lane graph, smoke/replay guards, jobs4 and default native runner; no new
 framework or rewritten ref. Preserve the original failed packet separately.
+
+
+## Reviewed test delta and current integration union
+
+The strict absent-key correction13f09aa4 received independent CLEAR. Its actual
+canonical changed-only lane used the existing main/getChanges API with the real
+gitdiff3e2..13f paths, default affected graph and smoke/replay/world guards:
+17/17PASS, jobs4, zero failed/notRun, exit0,289681.3877ms, source unchanged.
+One production build on13f passed in1733.278ms. Original395/396 failure remains
+failed; no unchanged396-suite batch was repeated.
+
+Integration075a28c adds reviewed Rescue/skins/wildlife and TeamRoom changes.
+The union had only two actual conflicts: start-preview.bat retains rescue,
+wildlife,heli-skins and tyre-slip; test-feature-flags retains every foreign
+row and exact base32 count including tyre-slip. Feature catalog and Wasteland
+inventory merged automatically. No runtime, save, physics, old hash or replay
+pin is changed by these conflict resolutions. Required independent union
+review and one canonical lane for these two actual conflict hooks, followed
+by one build, remain pending before integration merge. Current foreign source
+keeps its own existing passing evidence; it is not rerun wholesale.

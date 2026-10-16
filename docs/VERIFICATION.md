@@ -1,5 +1,31 @@
 # Remake verification
 
+## Summit Run installed, 16 October 2026
+
+Release Manager: Claude, under AGENTS rule 18 (Kyle: "Follow rule 18 and
+release Summit"). Live master is 9279efa4 (fast-forward from 42dcb5b6; code
+equals 3abe9e00); production build 20261016154751-da048a9de7b2, built in the
+live folder's dist-next. All 537 staged files matched over HTTP on private
+port 5188; assets went into dist first and index.html and build-version.json
+last, then a mirror left dist holding exactly the new build (four old files
+gone). All 537 live files match over HTTP on localhost:5174. The live server
+was not running after the overnight restart, so it was started hidden on 5174
+with no browser opened. No tab refreshed, no save read or written, no rollback
+build kept.
+
+What changed for players: `summit-run` on (Summit Run, 2,600 credits, and the
+free Summit Time Attack), `yeti` on; Team Room intel levels, reference ghosts
+and engineer notes; the optional Coach; Ardennes braking boards and Stavelot
+stone houses. The Ardennes far forest band is not in this release.
+
+Evidence (details in docs/changes/RELEASE-SUMMIT.md): full tier 455/455 alone
+on 7f108454 (rule 19 covers 3abe9e00); combat balance flags []; frames headed,
+eight cars, panel off: Summit p95 16.8 ms both qualities with world build
+about 1.5 s shipped as a warning (Director decision, SUMMIT-BUILD-TIME to fix),
+Ardennes 16.8 ms both qualities without the far band. Browser scenarios were
+still running at install and do not hold the release; results follow in the
+inbox.
+
 ## Forest fires installed, 15 October 2026
 
 Kyle asked for this release under AGENTS rule 18 ("Follow rule 18: release H2

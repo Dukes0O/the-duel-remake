@@ -782,3 +782,49 @@ The already owned missing-import repair is committed4f132806 (test-stunt-trial a
 
 Then one lane tier for the changed files (rule 19), build, merge. No full
 tier for this card; the 04:00 full check covers it.
+
+
+## Approved correction frozen; next canonical admitted
+
+Current clean3e2bf73f81c3f703ac9cce1b154adb4ee829d5a2 omits inactive tyre fields and guards existing owned resets. Six historical hash suites unchanged. New exact-shape regression RED thenPASS235.2278ms; approved exact dev/preview rows updated. Actual current-integration union had App imports/result payload and reference-worker flags/retainPoses conflicts: both behaviors preserved, no pin/reference regenerated. Required independent code/save delta review CLEAR.
+
+One final corrected canonical admitted07:24:01.174UTC: wrapper35212/runner13776/exec54240, lane --changed --jobs4 --keep-going --json, ownlane final-3e2bf73f/lane-receipt.json pending. The unchanged six suites run here, no duplicate manual batch. No gate/build/merge pass yet; freeze source/release core now, GP bounded source attempt may proceed under its fresh answer.
+
+
+## Restart interruption, 16October07:43PT
+
+Announced laptop restart stopped wrapper35212/runner13776 before any buffered JSON or receipt: actual lane.json/lane.log both zero bytes, no running process. Frozen3e2bf73f remains clean/reviewCLEAR. This is incomplete, not a passing gate or assertion failure. Resume the same corrected canonical once; no old passing native matrix/recovery/fixture recording repeated manually.
+
+
+## Resume deferred for actual exclusive release check
+
+Resume admitted14:43:09UTC on same3e2bf73f (wrapper30480/runner13408/exec46346). Fresh inventory/hold immediately showed older Summit release full28640 started14:43:05UTC. Root stopped only its later verified gate and descendants; subsequent inventory shows all Tyre processes drained. No result JSON/receipt completed; cancellation is not a test failure or pass. Actual cancellation receipt retained under16October/TYRE-SLIP/resume-3e2bf73f. Source/review remain frozen; resume only after FULL TIER FOR RELEASE DONE and any frame hold clears. No ordinary job starts during this foreign hold.
+
+
+## Corrected canonical actually resumed16October09:14PT
+
+Exact clean3e2bf73f81c3f703ac9cce1b154adb4ee829d5a2, wrapper38356/
+runner7204/session44438, lane changed/jobs4/keep-going/json. Native
+.evidence/2026-10-16/TYRE-SLIP/canonical-resume-3e2bf73f/ will retain
+lane.json/log and lane-receipt.json; JSON can buffer, absent receipt is not
+a failure. One-minute count3 including two older foreign jobs. No result,
+build or merge yet; source frozen and leasesfree.
+
+
+## Actual corrected gate and final own-test delta
+
+The exact3e2 canonical finished17:13:43UTC:395/396/jobs4/zero notrun/exit1,
+source unchanged. Wrapper38356/runner7204 drained. Actual receipt and full
+outputs remain in canonical-resume-3e2bf73f. Only test-tyre-slip failed:28/29
+passed, one new private-tool assertion still expected false for an inactive
+Casual field. Claude's written821b829f decision requires absent inactive
+fields, not false/undefined keys. No runtime or old hash assertion failed.
+
+Frozen13f09aa4 corrects only that new test and ownnote: require both fields
+absent, fail if the observation callback never ran, retain requested-switch
+and actual Pro-on assertions. Required independent delta review CLEAR.
+No new test pass/build/merge yet. One changed-only canonical plan uses the
+existing runner main/getChanges seam with actual gitdiff3e2..13f, no runner
+edit or filters:17default affected/smoke/replay/world guard suites, jobs4.
+No unchanged396batch repeat. Reserved next turn10:20PT until10:40/admission;
+foreign newer jobs remain untouched. Build follows only actual green.

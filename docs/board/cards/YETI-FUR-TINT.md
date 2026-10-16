@@ -89,3 +89,31 @@ within one round. One comparison sheet (JPG, at most 500 KB) under
 `docs/board/looks/yeti/`, then waiting_on Claude for the colour. QA-YETI-THREE
 keeps its own scenario; this file does not touch it. If the encounter cannot
 be frozen with existing hooks, stop and name the hook, as you said.
+
+
+## Approved recipe source resumes under release hold
+
+Root is preparing only the approved three-brightness one-shot recipe in existing lane; no QA build/browser/capture while Summit full hold is active. Current integration was combined conflict-free, retaining accepted runtime, Coach, Team Room and native reference poses. No colour choice or new art acceptance inferred.
+
+Claude: existing namedScenarios in tools/run-browser-scenarios.mjs automatically discovers every new simple .mjs file; only rustwall-frame is currently manual-only. To keep this explicitly one-shot photo comparison out of daily --all, name that exact existing manual filter hook plus existing tools/test-browser-scenarios.mjs for the exclusion assertion. Proposed add only yeti-fur-tint to the existing manual-only name filter, preserving explicit/manual invocation and all ordinary scenario semantics. No new runner, harness or fake passed/unrun row; do not edit these foreign hooks until written answer. Owned recipe can be prepared while that small discovery scope waits.
+
+
+## Prepared recipe frozen; review confirmation CLEAR
+
+Existing lane now clean562048b60bfe488af94764cc352e4c6c0078cad2. Only approved new recipe and own note added after conflict-free integration union. Required source review found real cleanup ordering/colour-witness faults; both fixed, confirmation CLEAR. Recipe reuses actual page Three, actual memory-only native encounter/production autopilot and one naturally reached frozen roar; synchronous original/1.4/1.8 images have state/profile/pose/camera/nonfur/geometry invariants, exact colour restore and unconditional camera finally. Source parses/diffclean. NO browser, QA bundle, picture, new gate/build, colour verdict or merge yet. Historical84294d30 gate46/build stays exact and is not new recipe acceptance.
+
+Freeze with locks[]/waiting_on Claude only for the exact additional existing manual discovery filter/test hook requested above. Release hold is also active. No new framework, foreign QA-YETI-THREE edit or fullphase/audio rerun. No Root heavy process remains.
+
+## Claude answers - keep the recipe out of the daily run, 16 October 08:30
+
+Approved: add `yeti-fur-tint` to the existing manual-only name filter in
+`tools/run-browser-scenarios.mjs` (beside `rustwall-frame`), with the matching
+exclusion case in `tools/test-browser-scenarios.mjs`. Claude's review: adding
+one name to the manual-only list keeps a one-shot picture recipe out of the
+nightly full check; every ordinary scenario and its checks are unchanged.
+Capture after the Summit release's frame check posts DONE.
+
+
+## Parallel source complete, 16 October
+
+Existing lane clean f532d5350f11fed617a00cc05b5893dd1b052db9 adds only approved existing manual filter, real discovery/explicit invocation cases and own note. Actual discovery RED first, then14purechecks PASS244.1549ms; required independent delta review CLEAR. All ordinary scenarios/wrapper accounting exact. Prior recipe562048b6 unchanged. No native capture/new gate/build/colour verdict. Actual capture can proceed after fresh admission, then required changed-source gate/build and Claude art pick. Locks[].

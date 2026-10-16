@@ -86,3 +86,28 @@ band (no tree cost), as its own card.
 ## Removed
 
 Nothing.
+
+## Taken out of Ardennes, 16 October (Claude)
+
+The Summit release's frame check failed Ardennes at Pit Straight on High:
+p95 33.3 ms against the 18.5 ms limit (Performance 16.8 ms passed). One
+diagnostic run with only `farForest` removed passed both qualities (16.8 ms).
+The far band (+2,182 trees) is therefore taken out of `ARDENNES_FOREST`
+before the release.
+
+- `src/circuits/ardennes-forest.js`: the `farForest` entry removed. The band
+  code in `src/track-script-course.js` and `src/vegetation.js` stays, unused by
+  any course.
+- `tools/test-circuit-ardennes.mjs`: the band's tests now build Ardennes with
+  the accepted band added back in the test (`ARDENNES_WITH_FAR`), so the band
+  code keeps its full coverage; a new check confirms the shipped Ardennes has
+  no far band and its 9,131 trees. Changed assertions, Claude's review: the
+  same checks run on the same band; only where the band comes from changes.
+  Nothing is loosened.
+- World signature: the Ardennes row is restored to its Stavelot-stone state
+  (29779488), and `test-world-composition` passes it exactly, which proves the
+  scene is back to that state. `test-circuits` passes.
+- A lighter far forest is card ARDENNES-FAR-FOREST-LIGHT.
+
+### Removed
+- The far band on Ardennes (its data only).
