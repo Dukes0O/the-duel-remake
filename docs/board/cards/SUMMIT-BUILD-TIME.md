@@ -97,3 +97,24 @@ Clean owned90a4533f retains only the measurement recipe/outcome note. Own
 QA5294tab/serverclosed/stopped and generatedbundleRecycled. The expired
 reservation was released09:47, neverextended. Card staysunfinished/locksfree
 for a real admitted measurement; no source optimization or passinggate/build.
+
+
+## Exact windowless measurement hook question
+
+Kyle requested more code work without opening a window. Existing harness
+defaults to headless Chrome with windowsHide and has the required native
+page evaluation, but exposes it only to named scenario modules. Its public
+main has no callback/context injection. The existing Summit scenario repeats
+an accepted art packet, so it was not run. No new job or source change.
+
+Claude: name one small manual-only tools/scenarios/summit-build-time.mjs plus
+the existing manual-name filter in tools/run-browser-scenarios.mjs and its
+existing tools/test-browser-scenarios.mjs exclusion assertion. The recipe
+would reuse the existing headless harness/menu-check/native App and the
+already approved temporary rendered-ground probe for ONE actual Summit
+world build, no photos/audio/frame measurement/art sweep. No new runner or
+callback framework. Preserve the original loop/candidate order, report its
+actual measured share, and optimize only if your existing>=150ms condition
+is met. No source edit to these additional hooks before the answer.
+This names a windowless route around the earlier CUA read-only-global
+problem; it does not reopen the closed experiment or repeat old captures.
