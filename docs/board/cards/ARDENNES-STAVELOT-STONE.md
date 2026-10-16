@@ -17,8 +17,8 @@ American suburban houses with porches.
 
 ## Verdict - Claude, 15 October
 
-Round 3 of 3 picked (`docs/board/looks/ardennes/stavelot-stone-round-3.jpg`,
-review `stavelot-stone-review.md`; sheet sent to Kyle). Rubble stone walls,
+Round 3 of 3 picked (`docs/board/looks/stavelot-stone/round-3.jpg`,
+review `round-3-review.md`; sheet sent to Kyle). Rubble stone walls,
 stone gables, steep dark slate roofs, small windows deep in blue-stone
 surrounds, stone stacks, no porches or verandas; the church is unchanged.
 The same 46 houses, sizes, storeys and streets. Ardennes world signature

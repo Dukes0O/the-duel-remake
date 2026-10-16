@@ -16,7 +16,7 @@ function weatheredMaterial(name, color, metalness = 0) {
   };
   return material;
 }
-// Ardennes rubble stone (ARDENNES-STAVELOT-STONE): irregular courses of grey-brown stone in darker mortar,
+// Ardennes rubble stone (ARDENNES-STAVELOT-STONE): courses of grey-brown stones of varied length in darker mortar,
 // drawn in world space so every wall, whatever its size, shows stones of the same scale.
 function rubbleMaterial(name, color) {
   const material = new THREE.MeshStandardMaterial({name, color, roughness: .94});
@@ -46,8 +46,6 @@ vec3 rn=abs(vRubbleNormal);
 float u=rn.x>rn.z?vRubbleWorld.z:vRubbleWorld.x;
 float v=vRubbleWorld.y+(rn.y>.7?vRubbleWorld.z:0.0);
 float row=floor(v/.27);
-float rowJitter=.18*(rubbleHash(vec2(row,3.0))-.5);
-float vv=v/.27+rowJitter*0.0;
 float len=.32+.34*rubbleHash(vec2(row,7.0));
 float run=u/len+row*.53;
 vec2 cell=vec2(floor(run),row);
@@ -57,8 +55,7 @@ float fy=fract(v/.27),fx=fract(run);
 float wobble=.05*rubbleHash(floor(vec2(run*3.0,v/.09)));
 float edge=min(min(fy,1.0-fy)*1.6,min(fx,1.0-fx)*len*3.2)+wobble;
 float mortar=1.0-smoothstep(.04,.11,edge);
-float grime=.82+.18*smoothstep(0.0,3.0,vRubbleWorld.y-floor(vRubbleWorld.y/40.0)*40.0);
-diffuseColor.rgb*=mix(shade*tint,vec3(.36,.34,.31),mortar)*grime;`);
+diffuseColor.rgb*=mix(shade*tint,vec3(.36,.34,.31),mortar);`);
   };
   return material;
 }
@@ -192,7 +189,7 @@ function town(course, spec) {
   const lit = new THREE.MeshStandardMaterial({name: 'town window', color: 0x34302a, roughness: .3});
   const dark = new THREE.MeshStandardMaterial({name: 'town unlit pane', color: 0x1f2326, roughness: .25, metalness: .2});
   const lampGlass = new THREE.MeshStandardMaterial({name: 'town lamp window', color: 0x8a7a5a, roughness: .4});
-  const rows = {footings: [], walls: [], roofs: [], verandas: [], posts: [], doors: [], chimneys: [], lit: [], dark: [], poles: [], heads: [], frames: [], gables: []};
+  const rows = {footings: [], walls: [], roofs: [], verandas: [], posts: [], doors: [], chimneys: [], lit: [], dark: [], poles: [], heads: [], frames: [], gables: [], steps: []};
   const hash = n => {const x = Math.sin(n * 91.7 + 17.3) * 24634.6345; return x - Math.floor(x);};
   const heightAt = (x, z) => {
     const near = course.nearest(x, z);
@@ -214,8 +211,9 @@ function town(course, spec) {
     const footing = Math.max(.35, high - low + .35), floor = low + footing, wall = storeys * 3.0;
     const frame = {x: centre.x, z: centre.z, turn};
     const put = (list, x, y, z, sx, sy, sz, more = {}) => list.push({frame, x, y, z, sx, sy, sz, ...more});
-    // Ardennes stone: thick rubble walls on the same footprint, a steep slate roof with a short overhang, no
-    // veranda or porch; small windows sit deep in pale blue-stone surrounds, the chimney is stone at the gable.
+    // Ardennes stone: rubble walls on the same footprint, a steep slate roof with a short overhang and stone
+    // gables, no veranda or porch; small windows sit deep in blue-stone surrounds and a stone stack rises from
+    // a side wall. The ridge runs front to back, so the gable ends are the front and back walls.
     function stoneHouse() {
       const roofColour = roofColours[Math.floor(hash(i + 40) * roofColours.length)];
       const pitch = Math.min(depth, width) * .78, front = depth / 2, back = -depth / 2;
@@ -227,11 +225,18 @@ function town(course, spec) {
       // (the gable's first scale is the ridge length, as for the roof).
       put(rows.gables, 0, floor + wall - .01, 0, depth + .52, pitch * width / (width + .35), width,
         {colour: STONE_WALLS[Math.floor(hash(i) * STONE_WALLS.length)], spin: Math.PI / 2});
-      // The door: dark timber inside a stone surround, two steps of the footing under it.
+      // The door: dark timber under a stone lintel, with a rubble step from the ground in front up to the floor.
       put(rows.frames, width * .18, floor + 2.2, front + .08, 1.3, .22, .16);
       put(rows.doors, width * .18, floor + 1.05, front + .1, .9, 2.0, .08);
+      let stepGround = Infinity;
+      for (const [x, z] of [[-.65, 0], [.65, 0], [-.65, .7], [.65, .7], [0, .35]]) {
+        const px = width * .18 + x, pz = front + .15 + z;
+        stepGround = Math.min(stepGround, heightAt(centre.x + px * cos + pz * sin, centre.z - px * sin + pz * cos));
+      }
+      const stepHeight = floor - stepGround + .2;
+      put(rows.steps, width * .18, stepGround - .2 + stepHeight / 2, front + .5, 1.3, stepHeight, .7, {colour: 0x4f4b45});
       // A small pane just proud of the wall inside a blue-stone surround (lintel, sill and two jambs) that
-      // stands 0.15 m out: the opening reads deep. facing: the window is in a side (gable) wall.
+      // stands 0.15 m out: the opening reads deep. facing: the window is in a side (eave) wall.
       const deepWindow = (list, x, y, z, facing) => {
         const out = Math.sign(facing ? x : z), w = .8, h = 1.0, t = .15;
         const at = (along, up, sAlong, sUp) => facing
@@ -249,7 +254,7 @@ function town(course, spec) {
       for (const side of [-1, 1]) deepWindow(hash(i * 11 + side) < .5 ? rows.lit : rows.dark, side * (width / 2 + .06), floor + 1.6, 0, true);
       for (let storey = 0; storey < storeys; storey++) for (const x of [-width * .25, width * .25])
         deepWindow(hash(i * 13 + storey * 5 + (x > 0 ? 1 : 0)) < .6 ? rows.lit : rows.dark, x, floor + 1.6 + storey * 3, back - .06, false);
-      // A stone stack on the gable end, rising clear of the steep ridge.
+      // A stone stack against a side wall, rising clear of the steep ridge.
       const stack = pitch + 1.3;
       put(rows.chimneys, -width / 2 + .45, floor + wall - .1 + stack / 2, 0, .8, stack, .9, {colour: STONE_WALLS[Math.floor(hash(i + 7) * STONE_WALLS.length)]});
     }
@@ -309,6 +314,7 @@ function town(course, spec) {
   build('town doors', box, timber, rows.doors, false);
   build('town chimneys', box, stoneStyle ? walls : brick, rows.chimneys);
   build('town window frames', box, frames, rows.frames);
+  build('town door steps', box, walls, rows.steps);
   build('town lit windows', box, lit, rows.lit, false);
   build('town dark windows', box, dark, rows.dark, false);
   build('town lamp posts', post, steel, rows.poles);

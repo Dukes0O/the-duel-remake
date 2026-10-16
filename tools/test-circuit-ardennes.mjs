@@ -556,6 +556,7 @@ test('every actual current town foundation has drawn-terrain support without mut
       assert.ok(mesh?.isInstancedMesh); assert.equal(mesh.count, spec.houses.length);
     }
     assert.equal(verandas, undefined); assert.equal(posts, undefined); assert.equal(doors.count, spec.houses.length);
+    const steps = town.getObjectByName('town door steps'); assert.ok(steps?.isInstancedMesh); assert.equal(steps.count, spec.houses.length);
     const matrixAt = (mesh, index) => {
       const matrix = new THREE.Matrix4(); mesh.getMatrixAt(index, matrix); return mesh.matrixWorld.clone().multiply(matrix);
     };
@@ -587,6 +588,13 @@ test('every actual current town foundation has drawn-terrain support without mut
       for (const u of [-.5, 0, .5]) for (const v of [-.5, 0, .5]) checkFooting(u, v, true);
       const nx = Math.ceil(Math.hypot(...footing.elements.slice(0, 3)) / .5), nz = Math.ceil(Math.hypot(...footing.elements.slice(8, 11)) / .5);
       for (let x = 0; x <= nx; x++) for (let z = 0; z <= nz; z++) checkFooting(-.5 + x / nx, -.5 + z / nz);
+      // The door step runs from the drawn ground in front of the door up to the floor: no door hangs in the air.
+      const step = matrixAt(steps, index);
+      assert.ok(new THREE.Vector3(0, .5, 0).applyMatrix4(step).y >= floor - 1e-3, 'house ' + index + ': the door step reaches the floor (within the 32-bit instance matrix)');
+      for (const u of [-.5, 0, .5]) for (const v of [-.5, 0, .5]) {
+        const bottom = new THREE.Vector3(u, -.5, v).applyMatrix4(step);
+        assert.ok(bottom.y <= support(bottom.x, bottom.z, 'house ' + index + ' door step'), 'house ' + index + ': the door step reaches the drawn ground');
+      }
       measurements.push({index, s: spec.houses[index].s, lateral: spec.houses[index].lateral, samples, maximumBottom, minimumFloor});
     }
     assert.equal(measurements.length, spec.houses.length);
