@@ -1232,3 +1232,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-16 RELEASE-ARDENNES installed7d430cd0/build20261016030307-f35c5308abb7:537currentfiles+liveHTTPverified; Kyle explicitly accepts original452full passes plus corrected17/17lane/no duplicate full; frames skipped; rollback kept, own staging/fixturelane/scratch recycled; no save/tabrefresh/push.
 
 - 2026-10-15PT Kyle removes live rollback exception: recycled sole487file/305223013byte previousbuild; retained rollback builds0. Forward fixes only; current Ardennes/live service unchanged.
+- 2026-10-15 janitor (Claude, Kyle approved merged-only): removed six merged, clean lane folders (deep-art-src, p4-ardennes, p4-gp-existing, p4-panorama, p4-summit, p4-yeti) and their merged branches; four folders' leftover files went to the Recycle Bin after git could not delete them. Unmerged lanes kept.
