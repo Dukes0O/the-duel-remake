@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T03:56:13.551Z
+Observed at: 2026-10-16T04:16:50.469Z
 
-Observation commit: 1b1d62fdcbeba2d339d10ca49190718a210069b7
+Observation commit: b22ebdda19f47d3d75a5107048e2f92c8e6d79a6
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 1b1d62fdcbeba2d339d10ca49190718a210069b7
+Integration HEAD: b22ebdda19f47d3d75a5107048e2f92c8e6d79a6
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -55,8 +55,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T19:18:16-07:00 | 0 | last commit 2026-10-15T19:18:16-07:00 | docs/HELICOPTER.md, docs/board/STATUS.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-2.jpg, docs/changes/EARN-CAR-2.md |
-| codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
-| codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T20:35:36-07:00 | 0 | last commit 2026-10-15T20:35:36-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/generated/reference-laps/alpine-serpent.json, src/generated/reference-laps/ardennes-forest.json, src/generated/reference-laps/azure-riviera.json |
+| codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T21:12:48-07:00 | 0 | last commit 2026-10-15T21:12:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
+| codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T21:14:41-07:00 | 0 | last commit 2026-10-15T21:14:41-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/course-access-ui.js, src/generated/reference-laps/alpine-serpent.json, src/generated/reference-laps/ardennes-forest.json |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 4 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 4 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
@@ -64,7 +64,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/qa-yard-home-air-only | QA-YARD-HOME-AIR-ONLY | 2026-10-15T19:30:22-07:00 | 0 | last commit 2026-10-15T19:30:22-07:00 | docs/board/STATUS.md, docs/changes/QA-YARD-HOME-AIR-ONLY.md, tools/scenarios/yard-home.mjs |
 | codex/qa-yeti-three | QA-YETI-THREE | 2026-10-15T19:28:00-07:00 | 0 | last commit 2026-10-15T19:28:00-07:00 | docs/board/STATUS.md, docs/changes/QA-YETI-THREE.md, tools/scenarios/yeti.mjs |
-| codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T20:51:53-07:00 | 0 | last commit 2026-10-15T20:51:53-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/camera-clearance.js, src/circuits/summit-run.js, src/course.js, src/feature-flags.js |
+| codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T21:15:18-07:00 | 0 | last commit 2026-10-15T21:15:18-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/camera-clearance.js, src/circuits/summit-run.js, src/course.js, src/feature-flags.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 11 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/tyre-slip | TYRE-SLIP | 2026-10-15T19:31:11-07:00 | 0 | last commit 2026-10-15T19:31:11-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
@@ -83,7 +83,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,998,763 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 1,268,815 B | +0 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 413,950,976 B | +535,552 B | unavailable |
+| Git objects | 415,067,136 B | +1,116,160 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -92,7 +92,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 7d430cd011de0145f404b7b24500e26ac011d881
 - Local main: missing
-- Local integration/wasteland: 1b1d62fdcbeba2d339d10ca49190718a210069b7
+- Local integration/wasteland: b22ebdda19f47d3d75a5107048e2f92c8e6d79a6
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
