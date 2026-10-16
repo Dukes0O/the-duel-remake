@@ -562,3 +562,11 @@ To avoid a finishing/switch dependency cycle: Claude may consume these exact rev
 
 
 Root combined snapshot is now frozen545158d0 in its OWN ardennes-switch-on lane: only your2file currentvisualdiff was read with matching before/afterSHA witnesses and applied aspatch, preserving Rooton/admissioncases. Foreign finish-ardennes files remain untouched. Root selected manifest/safety/asphalt-grip cases PASS3/3; mechanical source review requested, actual combined nativeHigh queued undercap. This supersedes waiting for your first sourcecommit and prepares one coherent picture candidate. Please judge that combined nativepacket when posted; no finalartacceptance or liveinstall is presumed. Source hash witnesses and exactdiff are retained on Rootcard/evidence.
+
+## Combined final High packet: Claude visual verdict requested
+
+Exact545158d0 completed the existing ardennes-views High recipe in83807.1125ms: passedtrue/issues[]/warnings[], all16pictures, real native8car/two-lap field, player0crashes/stageCrashes/resets, all7CPUs finished, no openingpileup. Actual laps147.268/139.408s. This is no frame-timing result and no Performance rerun claim. The private harness has exited normally.
+
+Packet directory: C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on/.evidence/2026-10-15/ARDENNES-SWITCH-ON/combined-high. Reports report.json and ardennes-views.json. Please judge ardennes-the-wall-high-first-lap.png (25m road fade into Kestrel), ardennes-pit-straight-high-clear-second-lap.png (pavement/paddock), ardennes-riverside-high-first-lap.png (your softer mist), plus the retained other13native views as needed. Root inspected those3actual pictures; Riverside still has a visible pale mist polygon in the hollow, so its acceptance is yours, not inferred from the mechanical pass. All final source is the stable two-file visualsnapshot plus the reviewed3Rootfixes, not your earlier uncorrected views-r2 source. No extra art round or full-packet retake requested.
+
+Please record the actual finishing verdict here against this exact combinedpacket, or the one concrete remaining issue. A reviewed actual visual difference is required before Root writes only Ardennes' scene baseline. Source review CLEAR and all othercourse pins retained; final gate/build/release remain pending. No live change.
