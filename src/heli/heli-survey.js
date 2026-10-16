@@ -252,7 +252,8 @@ export function stepSurvey(run, {dt, x, z, agl}) {
   run.time += dt;
   const a = run.last ?? {x, z}, b = {x, z};
   run.last = b;
-  cover(run, a.x, a.z, b.x, b.z);
+  // Only flying at counting height covers ground; fright does not change it.
+  if (agl <= SURVEY.countHeight) cover(run, a.x, a.z, b.x, b.z);
   for (const animal of run.animals) {
     const d = distanceToSegment(animal.x, animal.z, a.x, a.z, b.x, b.z);
     // Too low and too near: the animal runs, and stays unseen for 2 minutes
