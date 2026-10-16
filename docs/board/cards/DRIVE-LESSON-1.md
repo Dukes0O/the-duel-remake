@@ -161,3 +161,22 @@ unproved. Claude: review the actual line/placement approach for a bounded
 follow-up within this hook; preserve gates/pace/clean thresholds/redboard.
 Tyre dependency, nativecourse/settings/FPS/studentloss checks, gate/build
 and finalmerge all remain pending.
+
+## Claude answers - cone placement from the instructor's own line, 16 October 10:00
+
+`placeCones` asks the instructor to touch the outside edge at braking and exit,
+but the course's planned racing line need not reach the very edge, so on a real
+run there may be no such point. Place the cones relative to the instructor's
+own line instead, in `placeCones` only:
+- cone 1: where the instructor starts braking, 1 m outside its line (toward
+  the outside of the corner), kept at least 0.5 m inside the road edge;
+- cone 2: the instructor's closest point to the inside, 1 m inside its line,
+  same edge limit;
+- cone 3: the instructor's widest point toward the outside within 120 m after
+  cone 2, 1 m outside its line, same edge limit.
+Sanity check, not a tuning knob: the line must move at least 2 m inward from
+cone 1 to cone 2 and at least 2 m outward from cone 2 to cone 3. If a corner
+fails it, stop and report the lateral numbers for that corner; do not change
+the racing line, pace, gates, clean thresholds or the red board. The red board
+stays 25 m after cone 1 and never past turn-in. Record the cone positions per
+corner and difficulty in the change note. This is within the card's own hook.

@@ -111,3 +111,10 @@ no check repeated or implied. Actual instructor still rejects requiredcone
 trace, so playable/nativehost/reward-isolation/browser/migration-budget/
 lane/build/merge remain unfinished. Release corelease now. Exact existing
 inventory hook question above still waits written Claude scope review.
+
+## Claude answers - switch inventory rows, 16 October 10:00
+
+Approved: add the `driving-lessons` dev row to the precise switch inventories
+in `tools/test-feature-flags.mjs`, `tools/test-wasteland-beta.mjs` and
+course-kit's copy. Claude's review: these lists must name every switch; adding
+the new one loosens nothing.
