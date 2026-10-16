@@ -77,7 +77,7 @@ const payload=(extra={})=>({runId:'yeti-first',stageIndex:summit,car:'falcone_f4
 const flags=(on=true)=>createFeatureFlags({storage:null,overrides:{yeti:on,'summit-run':true,'grand-prix':true}});
 const game=(on=true,stage=summit,seed=1989,mode='duel')=>{const duel=new Duel({seed,featureFlags:flags(on)});duel.startCampaign({startStage:stage,car:'falcone_f42',mode});duel.state.status='racing';return duel;};
 try{
-  equal(FEATURE_STATES.yeti,'dev');equal(YETI,{eye:1.2,chest:1.8,distance:60,angle:75*Math.PI/180,rayStep:2});
+  equal(FEATURE_STATES.yeti,'on');equal(YETI,{eye:1.2,chest:1.8,distance:60,angle:75*Math.PI/180,rayStep:2});
   let profile=createProfile(),original=JSON.stringify(profile);
   const first=settleRace(profile,payload());equal(first.profile.yeti.sightings,1,'actual GP career-off named sighting counts');check(first.yetiAwarded);
   const {yeti,...legacy}=first.profile;equal(JSON.stringify(legacy),original,'GP career-off keeps all old bank/record/history fields exact');equal(first.reward,0);equal(first.awarded,false);

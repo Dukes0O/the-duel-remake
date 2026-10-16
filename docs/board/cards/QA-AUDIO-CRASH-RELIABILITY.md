@@ -61,3 +61,19 @@ Claude's requested check is complete without executing anything: the original de
 The later direct all-scenarios failure is an extra incompatible invocation; do not rerun the wrapper or reinterpret its23 passing checks as the earlier historical fault's cause. Exact evidence is `.evidence/2026-10-15/FAC-03/night-QwGun4/full.log`, result row `tools/test-audio-crash-peak.mjs`. The current full-check aggregate still retains the direct browser failure.
 
 For the future allowed lane, Claude's discovery instruction names only `tools/run-browser-scenarios.mjs`, its existing `tools/test-browser-scenarios.mjs` cases and this card's own change note. Keep normal `/tools/` confinement and existing recorder/test assertions unchanged. The full tier already supplies the one wrapper invocation, so no extra full-check job, recorder route or duplicate native capture is needed. Report delegation as “run by its wrapper”, never as an executed browser pass or a silently missing scenario. Independent review and normal nearby/jobs4/build remain required. This names the narrow hook; no code, lane or job is started while the cleanup rule blocks new lanes.
+
+## Ready independent discovery repair, 15 October night
+
+Root readies the already approved narrow discovery repair under Kyle's instruction to continue independent code while frozen checks wait. The old cleanup blocker is resolved. Own only tools/run-browser-scenarios.mjs, tools/test-browser-scenarios.mjs and docs/changes/QA-AUDIO-CRASH-RELIABILITY.md; no core/save locks. Keep audio-crash-peak visible as delegated to its existing wrapper, with no executed browser-pass claim. Preserve explicit direct/manual discovery separately, standard tools-only confinement, all recorder/assertion/deadline behavior and the original failed batch. Existing full tier already runs its wrapper once; no wrapper execution, native capture or extra full-check job is needed. Existing runner mock tests will cover discovery, honest delegated counts and mixed real failure preservation, followed by changed lane/jobs4, build and one independent review.
+
+## Source built and reviewed, waiting for gate/build
+
+Clean owned lane codex/qa-audio-crash-reliability is frozen at7b18ab7f. Executable discovery excludes the wrapper-only recipe; both default and explicit shared-suite requests report delegation separately, never as an executed browser pass. The unchanged full-check consumer still receives exact executable names/count/rows. An initial review caught incompatible mixed rows; corrected in the same two owned hooks and independently confirmed CLEAR. Existing runner tests RED8pass/2newfail, corrected10/10PASS125.4712ms; all eight original tests/assertions unchanged. No recorder/guard/deadline/threshold/source wrapper/full-check change, native capture or duplicate23-check run. Canonical changed lane/jobs4 and production build remain UNRUN. Freeze with locks[] while actual shared capacity is full.
+
+## Final canonical admitted
+
+One actual changed-lane/jobs4/keep-going run on frozen clean7b18ab7f started2026-10-16T05:17:21.322Z: wrapper8344,exec51902. Its final-7b18ab7f/lane-receipt.json is pending in the owned lane. Source review confirmation is CLEAR; no duplicate manual wrapper/capture or23-check native run is authorized. Build follows actual green/sourceclean and fresh admission. This is no new browser or audio pass.
+
+## Actual final gate and build green
+
+Exact clean7b18ab7f final canonical18/18/jobs4/exit0/zero failures-notRun passed245811.3315ms; build2119.2214ms PASS on the same frozen source. Actual receipts are final-7b18ab7f/lane-receipt.json and build-receipt.json in the owned lane. Independent source/consumer correction review CLEAR. No native audio wrapper or capture was repeated; original23checks and old failed browser batch stay source-labelled historical facts. Root merges this narrow discovery repair now with no clean-merge rerun.

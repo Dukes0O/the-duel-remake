@@ -14,3 +14,13 @@ American suburban houses with porches.
 - Ardennes is live, so this changes released scenery: recapture only the
   Ardennes world signature from the reviewed sheet (AGENTS rule 18 lets a
   finished, green change go live; Claude's review is the approval).
+
+## Verdict - Claude, 15 October
+
+Round 3 of 3 picked (`docs/board/looks/stavelot-stone/round-3.jpg`,
+review `round-3-review.md`; sheet sent to Kyle). Rubble stone walls,
+stone gables, steep dark slate roofs, small windows deep in blue-stone
+surrounds, stone stacks, no porches or verandas; the church is unchanged.
+The same 46 houses, sizes, storeys and streets. Ardennes world signature
+recaptured on the lane after P4-FINISH-ARDENNES merged; every other course
+signature is unchanged.

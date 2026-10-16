@@ -24,7 +24,7 @@ import {surfaceRuns} from '../src/track-script-scene.js';
 import {referenceTargets,runReferenceWorker} from './build-reference-laps.mjs';
 import {CIRCUIT_ENTRIES,BASE_COURSE_COUNT} from '../src/circuit-manifests.js';
 
-assert.deepEqual(manifest,{id:'summit-run',flag:'summit-run',state:'dev',price:2600,grandPrix:true,releaseOrder:4,
+assert.deepEqual(manifest,{id:'summit-run',flag:'summit-run',state:'on',price:2600,grandPrix:true,releaseOrder:4,
   driver:{car:'falcone_f42',driverId:'club',controller:'racing-line',skill:.95}},'course-owned price/state/driver contract');
 assert.ok(Object.isFrozen(manifest)&&Object.isFrozen(manifest.driver));
 const registered=CIRCUIT_ENTRIES.find(entry=>entry.manifest.id==='summit-run');
@@ -34,7 +34,7 @@ const actualCatalog=await runReferenceWorker({catalogOnly:true});
 assert.equal(actualCatalog.events.indexOf('summit-run'),BASE_COURSE_COUNT+manifest.releaseOrder,'actual QA COURSE appends Summit after the four authored events');
 assert.equal(actualCatalog.events.filter(id=>id==='summit-run').length,1,'stable id appears once');
 assert.equal(actualCatalog.storageLength,0,'catalogue fixture has only empty memory storage');
-assert.equal(actualCatalog.flags.find(flag=>flag.name==='summit-run')?.state,'dev');
+assert.equal(actualCatalog.flags.find(flag=>flag.name==='summit-run')?.state,'on');
 assert.equal(actualCatalog.flags.find(flag=>flag.name==='summit-run')?.enabled,true);
 assert.equal(SUMMIT_RUN.id, 'summit-run');
 assert.equal(SUMMIT_RUN.flag, 'summit-run');
@@ -126,6 +126,7 @@ console.log('Gallery actual anchor witness: '+JSON.stringify({count:galleryAncho
 const actualRoof=SUMMIT_GALLERY_BOUNDS.find(bounds=>bounds.name==='gallery-heavy-concrete-roof');
 assert.equal(course.features.tunnels[0].height,actualRoof.min[1]*1.1,'camera underside agrees with the actual thick fascia');
 assert.ok(actualRoof.min[1]*1.1>=4.5,'approved road headroom stays at least 4.5 m');
+assert.deepEqual(course.features.tunnels[0].clearance,{width:10,height:actualRoof.min[1]*1.1},'authored Gallery states its actual full road width and roof clearance');
 assert.ok(!course.features.walls.some(wall=>wall.id.startsWith('gallery-')),'actual kit colliders do not draw substitute wall boxes');
 
 const open=course.features.shortcuts.find(branch=>branch.id==='summit-open-road');
@@ -168,7 +169,12 @@ assert.equal(course.tunnelAt(10500,7.7)?.id,'summit-gallery','roof covers the ro
 assert.equal(course.tunnelAt(10500,course.shortcutOffset(open,10500)),null,'Open Road is outside the Gallery');
 const roofCamera=course.worldAt(10500,7.7);roofCamera.y+=10;
 assert.equal(constrainTunnelCamera(course,roofCamera,10500),true);
-assert.ok(Math.abs(roofCamera.y-(course.groundAt(10500,0).y+actualRoof.min[1]*1.1-.45))<1e-6);
+const roofFrame=course.nearest(roofCamera.x,roofCamera.z,10500);
+const roofTunnel=course.tunnelAt(roofFrame.s,roofFrame.lateral);
+const roofRatio=Math.min(.995,Math.abs(roofFrame.lateral)/roofTunnel.width);
+const flatRoofY=course.groundAt(roofFrame.s,0).y+actualRoof.min[1]*1.1;
+const visibleArchY=course.at(roofFrame.s).y+3.6+(actualRoof.min[1]*1.1-3.6)*Math.sqrt(1-roofRatio*roofRatio);
+assert.ok(Math.abs(roofCamera.y-(Math.min(flatRoofY,visibleArchY)-.45))<1e-6,'camera stays beneath both actual kit roof and visible Gallery arch');
 const openCamera=course.worldAt(10500,course.shortcutOffset(open,10500));openCamera.y+=10;
 const openHeight=openCamera.y;
 assert.equal(constrainTunnelCamera(course,openCamera,10500),false);
@@ -344,3 +350,6 @@ if(process.argv.includes('--drive')){
   lightGroup.traverse(node=>{node.geometry?.dispose();node.material?.dispose();});
   branch.dispose();ordinary.dispose();branchBase.dispose();snow.dispose();
 }
+
+assert.equal(SUMMIT_RUN.snowWorld.always,true,'reviewed Summit winter presentation is always active');
+assert.equal(TREMBLANT_SNOW.snowWorld.always,true,'released Snow retains its historical always-on presentation unchanged');

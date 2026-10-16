@@ -1,3 +1,4 @@
+import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
 import {settleCup} from './progression.js';
 import {isSummitAttack} from './summit-attack.js';
@@ -52,7 +53,8 @@ import { loadPlayers, savePlayers, PLAYERS_KEY, playerName, activePlayer, create
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
 import {LapTelemetryRecorder,LapTelemetryStore,telemetryRoute} from './lap-telemetry.js';
 import {courseFingerprint} from './track-analysis.js';
-import {loadGhosts,saveGhosts,findGhost,ghostKey,mergeGhostStores,storeGhost,GhostRecorder,GrandPrixLapRecorder,sampleGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
+import {referenceLap} from './reference-laps.js';
+import {loadGhosts,saveGhosts,findGhost,ghostKey,mergeGhostStores,storeGhost,GhostRecorder,GrandPrixLapRecorder,sampleGhost,createTeamGhost,sampleTeamGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
 import {getPaintAppearance,purchasePaint as buyPaint,applyPaint as equipPaint} from './paint-presets.js';
 import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForSeed,supportsRouteVariants} from './route-variants.js';
 import {normalizeLightingMood} from './lighting-moods.js';
@@ -197,6 +199,7 @@ export class App {
       if(event.qualifyingFlyingStart)this.lapTelemetryRecorder?.armQualifying(state);
       // The native final qualifying finish must be captured before stage reload.
       if(event.qualifyingLap)this._updateLapTelemetry(state);
+      if(event.lapCompleted)this._recordIntelLap(event,state);
       if(event.lapCompleted && state.mode==='grandprix' && this._switches().enabled('grand-prix-career')===true){
         const lap=this.grandPrixLapRecorder?.complete(state,event,this.player);
         if(lap){
@@ -582,8 +585,58 @@ export class App {
       {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});
     if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});}return result;
   }
-  setGhostEnabled(enabled){
-    this._refreshPlayer();this.ghostEnabled=!!enabled;this._rememberRaceSettings({ghostEnabled:this.ghostEnabled});saveGhostEnabled(this.ghostEnabled);this._updateGhost(this.duel.state);this.duel.emit({ghostChanged:true});return this.ghostEnabled;
+  getTeamGhostRecord(options = {}) {
+    if (this._switches().enabled('grand-prix') !== true) return null;
+    const state = this.duel.state, stageIndex = options.startStage ?? options.stageIndex ?? this.menuStage;
+    const stage = COURSE[stageIndex], mode = options.mode ?? state.mode;
+    if (!stage || stage.practice || stage.closed === false || mode !== 'timetrial' || this.getIntelLevel(stage.id) < 4) return null;
+    const active = state.status !== 'menu' && state.stageIndex === stageIndex;
+    const seed = options.seed ?? (active ? state.seed : this.getMenuSeed(stageIndex));
+    const route = telemetryRoute(stage.id, seed), reference = referenceLap(stage.id, route);
+    if (!reference?.poseSamples) return null;
+    const course = active ? this.duel.course : this.getMenuCourse(stageIndex);
+    const laps = options.laps ?? (active ? state.lapsTotal : this.getLapChoice(stageIndex, 'timetrial'));
+    const cached = this._teamGhostView;
+    if (cached?.course === course && cached.reference === reference && cached.laps === laps) return cached.record;
+    const record = createTeamGhost(reference, {eventId:stage.id,route,length:course.length,
+      courseFingerprint:courseFingerprint(course,{route}),laps});
+    this._teamGhostView = {course,reference,laps,record};return record;
+  }
+  getGhostChoices(options = {}) {
+    return this.getTeamGhostRecord(options) ? ['off','my-best','team'] : ['off','my-best'];
+  }
+  getGhostChoice(options = {}) {
+    if (this._switches().enabled('grand-prix') !== true) return this.ghostEnabled ? 'my-best' : 'off';
+    const choice = this.profile.intel?.version === 1 ? this.profile.intel.ghostChoice : null;
+    return choice === 'off' ? 'off' : choice === 'team' && this.getTeamGhostRecord(options) ? 'team' :
+      choice === 'my-best' || choice === 'team' ? 'my-best' : this._raceSettings.ghostEnabled === false ? 'off' : 'my-best';
+  }
+  setGhostChoice(choice, options = {}) {
+    if (this.duel.state.status !== 'menu' || this._switches().enabled('grand-prix') !== true)
+      return {ok:false,reason:'Return to the menu before choosing a ghost.'};
+    this._refreshPlayer();
+    if (this.profile.intel?.version > 1 || !this.getGhostChoices(options).includes(choice))
+      return {ok:false,reason:'This ghost is unavailable.'};
+    const intel = this.profile.intel ?? {version:1,events:{}};
+    this.profile = {...this.profile,intel:{...intel,ghostChoice:choice}};
+    this.ghostEnabled = choice !== 'off';
+    this._rememberRaceSettings({ghostEnabled:this.ghostEnabled});
+    const saved = this._saveProfile();
+    this.duel.emit({ghostChanged:true});return {ok:true,choice,saved};
+  }
+  cycleGhostChoice(options = {}) {
+    const choices = this.getGhostChoices(options), current = this.getGhostChoice(options);
+    return this.setGhostChoice(choices[(choices.indexOf(current)+1)%choices.length],options);
+  }
+  setGhostEnabled(enabled) {
+    this._refreshPlayer();this.ghostEnabled = !!enabled;
+    if (this._switches().enabled('grand-prix') === true && this.profile.intel?.version === 1 && Object.hasOwn(this.profile.intel,'ghostChoice')) {
+      const intel = this.profile.intel ?? {version:1,events:{}};
+      this.profile = {...this.profile,intel:{...intel,ghostChoice:enabled?'my-best':'off'}};
+      this._saveProfile();
+    }
+    this._rememberRaceSettings({ghostEnabled:this.ghostEnabled});saveGhostEnabled(this.ghostEnabled);
+    this._updateGhost(this.duel.state);this.duel.emit({ghostChanged:true});return this.ghostEnabled;
   }
   getLapTelemetry({eventId=COURSE[this.menuStage]?.id,route,courseFingerprint:fingerprint}={}){
     if(!this._switches().enabled('grand-prix'))return {lap:null,status:'off',message:''};
@@ -626,8 +679,10 @@ export class App {
     if(this.ghostSaved!==false)this.ghosts=mergeGhostStores(this.ghosts,loadGhosts());
     const context={playerId:this.player.id,seed:state.seed,stageIndex:state.stageIndex,laps:state.lapsTotal,car:state.car,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty,upgrades:{...state.upgrades}};
     context.driverId=state.driverId;
-    this.ghostRecord=this.getGhostRecord(context);
-    if(this.ghostRecord){this.ghostRecord.lastUsedAt=Date.now();this.ghostSaved=saveGhosts(this.ghosts);}
+    const choice=this.getGhostChoice(context);
+    if(this._switches().enabled('grand-prix')===true)this.ghostEnabled=choice!=='off';
+    this.ghostRecord=choice==='team'?this.getTeamGhostRecord(context):this.getGhostRecord(context);
+    if(this.ghostRecord&&!this.ghostRecord.teamReference){this.ghostRecord.lastUsedAt=Date.now();this.ghostSaved=saveGhosts(this.ghosts);}
     this.ghostRecorder=new GhostRecorder(context);this._updateGhost(state);
   }
   _updateGhost(state){
@@ -636,7 +691,7 @@ export class App {
     if(COURSE[state.stageIndex]?.practice||state.mode!=='timetrial'||state.playerId!==this.player.id||!['countdown','racing','ticket'].includes(state.status)){this.ghostStatus='none';return;}
     this.ghostRecorder?.observe(state);
     this.ghostStatus=this.ghostRecord?(this.ghostEnabled?'playing':'off'):'recording';
-    if(this.ghostRecord&&this.ghostEnabled){this.ghostPose=sampleGhost(this.ghostRecord,state.stageTimeSec+(state.racePenaltySec||0),this._ghostPoseBuffer);if(!this.ghostPose)this.ghostStatus='finished';}
+    if(this.ghostRecord&&this.ghostEnabled){this.ghostPose=(this.ghostRecord.teamReference?sampleTeamGhost:sampleGhost)(this.ghostRecord,state.stageTimeSec+(state.racePenaltySec||0),this._ghostPoseBuffer);if(!this.ghostPose)this.ghostStatus='finished';}
   }
   _finishGhost(payload,state,awarded,result){
     // The wallet's comparable car best is authoritative, including valid losses.
@@ -702,6 +757,36 @@ export class App {
     }
   }
   purchaseDriver(id){return this._driverOperation(id,true);}
+  getIntelLevel(eventId) {
+    return this._switches().enabled('grand-prix')===true
+      ?intelLevel(this.profile,eventId,{owned:isCourseUnlocked(this.profile,eventId)}):0;
+  }
+  buyIntel(eventId,level) {
+    if(this.duel.state.status!=='menu'||this._switches().enabled('grand-prix')!==true)
+      return {ok:false,cost:0,reason:'Return to the menu before buying track intel.'};
+    this._refreshPlayer();
+    const stage=COURSE.find(course=>course.id===eventId);
+    const result=purchaseIntel(this.profile,eventId,level,
+      {owned:!!stage&&!stage.practice&&!stage.arena&&stage.closed!==false&&isCourseUnlocked(this.profile,stage)});
+    if(result.changed){this.profile=result.profile;result.saved=this._saveProfile();this.duel.emit({intelPurchased:eventId,level});}
+    return result;
+  }
+  _recordIntelLap(event,state) {
+    const lap=event?.lapCompleted, stage=COURSE[state?.stageIndex];
+    if(this._switches().enabled('grand-prix')!==true||state!==this.duel.state||state.status!=='racing'||
+      !this.runId||!this.player||this._runPlayerId!==this.player.id||state.playerId!==this.player.id||
+      !stage||stage.practice||stage.arena||this.duel.course.closed===false||
+      !Number.isSafeInteger(lap)||lap<1||lap!==state.completedLaps||event.assisted!==false||
+      state.assistedLaps?.[lap-1]!==false||!Number.isFinite(event.lapTimeSec)||event.lapTimeSec<=0||
+      state.lapTimes?.[lap-1]!==event.lapTimeSec)return false;
+    this._refreshPlayer();
+    if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
+    const runId=event.qualifyingLap?this.runId+':qualifying':this.runId;
+    const next=recordIntelLap(this.profile,stage.id,{runId,lap,valid:true},
+      {owned:isCourseUnlocked(this.profile,stage)});
+    if(next===this.profile)return false;
+    this.profile=next;this._saveProfile();return true;
+  }
   purchaseCourse(id){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the menu before unlocking courses.',cost:0};
     this._refreshPlayer();const result=buyCourse(this.profile,id);
@@ -811,6 +896,7 @@ export class App {
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
       deepEnabled:this._switches().enabled('the-deep')===true,
       earnedCarsEnabled:this._switches().enabled('earned-cars')===true,
+      intelEnabled:this._switches().enabled('grand-prix')===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(COURSE[state.stageIndex],state.mode)){
       payload.lapChoiceEnabled=true;
