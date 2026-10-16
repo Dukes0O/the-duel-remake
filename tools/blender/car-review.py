@@ -4,26 +4,35 @@ a neutral grey studio floor. Input is the review GLB from
 tools/art/car-review-export.mjs; output is four PNGs under .evidence/.
 
 Run:
-  blender -b --factory-startup --python tools/blender/car-review.py -- --root . --glb <in.glb> --out <folder>
+  blender -b --factory-startup --python tools/blender/car-review.py -- --root <repo> --glb <in.glb> --out <folder>
+With --paths-only (plain Python, no Blender) it prints the files it would
+write and writes nothing.
 """
 import argparse
-import math
+import json
 import sys
 from pathlib import Path
 
-import bpy
-from mathutils import Vector
+VIEW_NAMES = ('front-three-quarter', 'side', 'rear-three-quarter', 'front-close')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--glb', required=True)
 parser.add_argument('--out', required=True)
 parser.add_argument('--size', default='960x600')
-args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
+parser.add_argument('--paths-only', action='store_true')
+args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(args.root).resolve()
 out = Path(args.out).resolve()
 if not out.is_relative_to(root / '.evidence'):
-    raise SystemExit('Renders go under .evidence/.')
+    parser.error('Renders go under .evidence/.')
+if args.paths_only:
+    print(json.dumps({'blend': [], 'glb': [], 'evidence': [str(out / f'{name}.png') for name in VIEW_NAMES], 'summary': []}))
+    raise SystemExit(0)
+
+import bpy
+from mathutils import Vector
+
 out.mkdir(parents=True, exist_ok=True)
 width, height = (int(v) for v in args.size.split('x'))
 

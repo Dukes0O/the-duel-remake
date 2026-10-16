@@ -179,8 +179,8 @@ test('the Jesko still asks for the eight bought cars, exactly as before', () => 
     {...createProfile(), unlockedCars: bought, upgrades: maxed},
     {...createProfile(), unlockedCars: bought.slice(0, 7), upgrades: maxed},
     {...createProfile(), unlockedCars: [...bought, 'koenigsegg_jesko'], upgrades: {}}];
-  assert.deepEqual(bought, Object.keys(CARS).filter(car => car !== 'koenigsegg_jesko' && car !== 'ferrari_enzo'),
-    'the list is every car but the Jesko and the Enzo (an earned car never joins it), as before');
+  assert.deepEqual(bought, Object.keys(CARS).filter(car => !['koenigsegg_jesko', 'ferrari_enzo', 'bugatti_bolide'].includes(car)),
+    'the list is every car but the Jesko and the medal cars (an earned car never joins it), as before');
   assert.deepEqual(garages.map(garage => completionCarProgress(garage)).map(({maxed, total, eligible}) => [maxed, total, eligible]),
     [[0, 8, false], [8, 8, true], [7, 8, false], [0, 8, false]]);
   assert.equal(normalizeProfile(garages[2]).unlockedCars.includes('koenigsegg_jesko'), false);
@@ -256,7 +256,7 @@ import assert from 'node:assert/strict';
 import {COURSE} from './src/config.js';
 import {MEDAL_CARS, medalTotals} from './src/medals.js';
 import {createProfile, normalizeProfile, settleRace, unlockCar, completionCarProgress, getUpgradeLevels} from './src/progression.js';
-assert.deepEqual(MEDAL_CARS, ['ferrari_enzo', 'medal_test_a', 'medal_test_b', 'medal_test_c']);
+assert.deepEqual(MEDAL_CARS, ['ferrari_enzo', 'bugatti_bolide', 'medal_test_a', 'medal_test_b', 'medal_test_c']);
 assert.equal(completionCarProgress(createProfile()).total, 8, 'medal cars never join the Jesko list');
 const sheet = cars => ({version: 1, cars});
 const owns = (profile, car) => profile.unlockedCars.includes(car);
@@ -287,6 +287,7 @@ assert.ok(owns(fiveGold, 'medal_test_b')); assert.equal(owns(fiveGold, 'medal_te
 assert.equal(unlockCar(fiveGold, 'medal_test_c').reason, '24 medals needed, you have 29; 6 of them gold, you have 5.');
 const sixGold = normalizeProfile({...createProfile(), medals: sheet(rows(6))});
 assert.ok(owns(sixGold, 'medal_test_c')); assert.ok(fullyTuned(sixGold, 'medal_test_c'));
+assert.ok(owns(sixGold, 'bugatti_bolide') && !owns(fiveGold, 'bugatti_bolide'), 'the real Bolide follows the same 24-with-6-gold rule');
 // Once earned, never taken back, even with an empty sheet.
 const kept = normalizeProfile({...createProfile(), unlockedCars: ['falcone_f42', 'stuttgart_959s', 'medal_test_c']});
 assert.ok(owns(kept, 'medal_test_c'));

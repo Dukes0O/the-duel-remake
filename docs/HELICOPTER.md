@@ -179,6 +179,7 @@ damped pendulum (no new library; it borrows the tether ideas in
   | Dusthawk Rally | 1,280 kg | Yes |
   | Aurora GTR | 1,350 kg | Yes |
   | Ferrari Enzo (earned, 6 medals) | 1,365 kg | Yes |
+  | Bugatti Bolide (earned, 24 medals with 6 gold) | 1,450 kg | Yes, 50 kg under the limit |
   | Koenigsegg Jesko Absolut | 1,390 kg | Yes |
   | Stuttgart 959-S | 1,450 kg | Yes |
   | Banshee Muscle | 1,810 kg | No: needs the Lab's lift upgrade (L1) |

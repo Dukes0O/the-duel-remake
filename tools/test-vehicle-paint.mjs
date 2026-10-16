@@ -63,7 +63,7 @@ const assets=createVehicleAssets({loadHero:()=>hero});
 await Promise.all(Object.keys(CARS).map(key=>assets.load(key)));
 const fixtures = [];
 for (const key of Object.keys(CARS)) fixtures.push([key, () => assets.create(key)]);
-equal(fixtures.length,10,'Paint fixtures cover every current runtime car, including the Jesko and Enzo rewards');
+equal(fixtures.length,11,'Paint fixtures cover every current runtime car, including the Jesko, Enzo and Bolide rewards');
 
 for (const [label, make] of fixtures) {
   const vehicle = make(), other = make(), data = vehicle.userData, paint = data.paint;
