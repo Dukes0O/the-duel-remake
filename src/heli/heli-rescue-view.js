@@ -587,6 +587,8 @@ export function createRescueView({THREE, scene, load = defaultLoad, quality = 'h
     hide() { group.visible = false; },
     dispose() {
       scene.remove(group);
+      // The stranded driver's car is built fresh from the vehicle assets, so it is freed here.
+      wreck.object?.traverse(o => { o.geometry?.dispose?.(); [o.material].flat().forEach(m => m?.dispose?.()); });
       // The clones share their geometry and materials with the loaded files, so those are freed once.
       for (const entry of models.values()) entry.root?.traverse(object => { object.geometry?.dispose?.(); (Array.isArray(object.material) ? object.material : [object.material]).forEach(m => m?.dispose?.()); });
       for (const layer of [glow, cover]) { layer.points.geometry.dispose(); layer.material.uniforms.atlas.value?.dispose?.(); layer.material.dispose(); }

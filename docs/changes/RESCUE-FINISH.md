@@ -62,3 +62,7 @@ cable now ends at the hook. Nothing loosened.
   load of the licensed model if that car is picked). A one-line pass-through there would share it.
 - The casualty on the pair is always the driver model.
 - Part 2 (the frame check over the avalanche, `rescue` switch on) is Claude's.
+
+## Review fixes (Claude)
+
+The review found two small real faults, both fixed: the stranded car is freed when the rescue view is disposed, and the scene passes its own vehicle assets to the rescue view so the car models load once.

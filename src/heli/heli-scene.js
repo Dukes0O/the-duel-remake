@@ -164,7 +164,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
         padMark.visible = view.courseId === 'tremblant-woods';
       }
       fire.update(view, {dt});
-      if (view.rescue) rescue ??= createRescueView({THREE, scene, quality, ...(rescueLoad ? {load: rescueLoad} : {})});
+      if (view.rescue) rescue ??= createRescueView({THREE, scene, quality, vehicleAssets, ...(rescueLoad ? {load: rescueLoad} : {})});
       rescue?.update(view, {dt});
       // The player's own car, wherever it is, for the race renderer to draw.
       // The cameras frame a car on the hook; a rescuer on the line or a hooked crate is framed the same way.
