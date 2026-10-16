@@ -162,3 +162,22 @@ fresh holds and all-ancestor admission; compile proof alone is not host/native
 acceptance. Host gate, actual private browser and instructor receipt remain
 pending. No new manual core edit or shared lease is needed for this clean union.
 Removed: old instructor window/finish source replaced by the reviewed version.
+
+
+## Real native host acceptance prepared, not executed
+
+Added one actual App menu-to-reward acceptance to the existing owned host test.
+It uses existing withReferenceApp memory-only storage, supported QA flags,
+existing funded temporary career fixture, real course purchase/menu/startLesson,
+actual instructor and native Duel input steps at120Hz. Real late/right/fast/
+slow-reset/three-win stages must pass, without injecting poses, plan, result,
+progress or reward. It checks current owner, isolation from ordinary race pay,
+records/ghost storage, exact approved reward, actual persistence, no duplicate
+reward on finished ticks, and other-player/leave isolation. The first native
+test installs supported QA flags before dynamic game imports; globals restore.
+Existing19 pure host cases remain unchanged. Syntax only; all new native host
+acceptance is UNRUN until Root's instructor receipt and admission. No new
+framework/helper file or production hook; required independent code/save delta review CLEAR.
+The review confirms withReferenceApp does not install reference-completion
+overrides, and controls use actual Duel steps/App events without injected
+completion or reward. This is source review only, not a native pass.

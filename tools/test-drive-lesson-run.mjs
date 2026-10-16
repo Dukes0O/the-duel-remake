@@ -36,6 +36,138 @@ function dom() {
   return {root, node, emit, handlers};
 }
 
+// Heavy native acceptance uses the existing isolated App fixture. It is first
+// so supported QA flags are installed before any dynamic game/catalog import.
+// Do not execute while only source preparation or pure checks are admitted.
+test('native App lesson: real menu entry, attempts, once-only reward and owner isolation', async () => {
+  const savedGlobals = new Map(['__DUEL_QA__', 'location'].map(key =>
+    [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  Object.defineProperty(globalThis, '__DUEL_QA__', {configurable: true, value: true});
+  Object.defineProperty(globalThis, 'location', {configurable: true, value: {search: '?flags=driving-lessons,tyre-slip'}});
+  try {
+    const [{withReferenceApp}, {PLAYERS_KEY, loadPlayers}, {finishDriveLesson}] = await Promise.all([
+      import('./build-reference-laps.mjs'), import('../src/progression.js'),
+      import('../src/lessons/drive-lesson-save.js'),
+    ]);
+    await withReferenceApp(async app => {
+      assert.equal(app.drivingLessonsAvailable(), true, 'real QA feature catalog enables both named switches');
+      // Same existing funded temporary career fixture as tools/menu-check.js.
+      assert.equal(app.addPlayer('Native lesson owner').ok, true);
+      app.profile = {...app.profile, credits: 50000};
+      assert.equal(app._saveProfile(), true);
+      assert.equal(app.purchaseCourse('panorama-ridge').ok, true);
+      const owner = app.player.id;
+      assert.equal(app.addPlayer('Native lesson second player').ok, true);
+      const other = app.player.id, otherBefore = structuredClone(app.profile);
+      assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), false,
+        'an unopened board cannot start a lesson');
+      assert.equal(app.openDrivingLessons(), true);
+      assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), false,
+        'another player cannot use the owner course');
+      assert.equal(app.selectPlayer(owner), true);
+      app.setRaceSettings({eventId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'});
+      const before = structuredClone(app.profile), leaderboard = structuredClone(app.leaderboard), ghosts = structuredClone(app.ghosts);
+      const ordinaryStorage = () => Object.fromEntries(Array.from({length: localStorage.length}, (_, index) => localStorage.key(index))
+        .filter(key => key !== PLAYERS_KEY).sort().map(key => [key, localStorage.getItem(key)]));
+      const storageBefore = ordinaryStorage();
+      assert.equal(app.openDrivingLessons(), true);
+      assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), true,
+        app.driveLessonMessage || 'the real instructor must complete its native clean run');
+      const duel = app.duel, state = duel.state, run = duel.drivingLesson;
+      assert.equal(run.ownerId, owner); assert.equal(state.playerId, owner); assert.equal(app._runPlayerId, owner);
+      assert.equal(run.plan.car, state.car); assert.equal(run.plan.driverId, state.driverId);
+      assert.deepEqual(run.plan.upgrades, state.upgrades); assert.equal(state.mode, 'timetrial');
+      assert.equal(state.tyreSlipRules, true); assert.equal(state.speedMph, run.plan.instructor.poses[0].mph);
+      assert.equal(state.s, run.plan.corner.startS); assert.equal(run.lesson.stage, 'late');
+      assert.equal(app.selectPlayer(other), false, 'the active native run cannot change owners');
+      const isolated = () => {
+        assert.equal(state.rival, null); assert.deepEqual(state.opponents, []); assert.deepEqual(state.traffic, []);
+        assert.equal(state.combat, null); assert.equal(state.police.pursuit, null);
+        assert.equal(app.ghostRecorder, null); assert.equal(app.grandPrixLapRecorder, null); assert.equal(app.lapTelemetryRecorder, null);
+        assert.equal(app.profile.activeRace == null, true); assert.equal(app.runId, null);
+        assert.deepEqual(app.leaderboard, leaderboard); assert.deepEqual(app.ghosts, ghosts);
+        assert.deepEqual(ordinaryStorage(), storageBefore, 'no ordinary record or ghost storage is written');
+      };
+      isolated(); assert.deepEqual(app.profile, before, 'the instructor cannot settle a race or charge damage');
+      const late = await driveNativeHostAttempt(app, 'late');
+      assert.equal(late.firstBrakeS >= run.plan.instructor.redBoardS, true);
+      assert.equal(late.screechSeconds >= .5, true);
+      assert.equal(late.finished ? late.timeLostSeconds >= .25 : ['wall', 'offroad'].includes(late.endReason), true);
+      assert.deepEqual(app.profile, before); isolated();
+      assert.equal(app.nextLessonAttempt(), true); assert.equal(run.lesson.stage, 'right');
+      const right = await driveNativeHostAttempt(app, 'right');
+      assert.equal(right.endReason, 'finish'); assert.deepEqual(right.rules, [true, true, true, true]);
+      assert.deepEqual(app.profile, before); isolated();
+      assert.equal(app.nextLessonAttempt(), true); assert.equal(run.lesson.stage, 'challenge');
+      const first = await driveNativeHostAttempt(app, 'fast');
+      assert.equal(first.passed, true); assert.equal(run.lesson.streak, 1);
+      assert.equal(app.nextLessonAttempt(), true);
+      const slow = await driveNativeHostAttempt(app, 'slow');
+      assert.equal(slow.endReason, 'finish'); assert.equal(slow.passed, false); assert.equal(run.lesson.streak, 0);
+      for (let index = 0; index < 3; index++) {
+        assert.equal(app.nextLessonAttempt(), true);
+        const fast = await driveNativeHostAttempt(app, 'fast');
+        assert.equal(fast.endReason, 'finish'); assert.equal(fast.passed, true);
+        assert.equal(run.lesson.streak, index + 1); isolated();
+        if (index < 2) assert.deepEqual(app.profile, before, 'an incomplete challenge cannot pay');
+      }
+      assert.equal(run.lesson.done, true); assert.equal(run.rewarded, true); assert.equal(run.saved, true);
+      const expected = finishDriveLesson(before, 'corner', run.lesson.bestMargin, state.car);
+      assert.equal(expected.ok, true); assert.deepEqual(app.profile, expected.profile);
+      assert.equal(app.profile.credits, before.credits, 'this car earns brakes, not race pay');
+      assert.equal(app.profile.upgrades[state.car].brakes, (before.upgrades?.[state.car]?.brakes || 0) + 1);
+      const paid = structuredClone(app.profile);
+      for (let tick = 0; tick < 120; tick++) duel.step(1 / 120);
+      assert.equal(app.nextLessonAttempt(), false); assert.deepEqual(app.profile, paid, 'finished ticks never pay twice');
+      const durable = loadPlayers().players.find(player => player.id === owner).profile;
+      assert.deepEqual(durable, paid, 'the real save API persisted only the earned lesson outcome');
+      app.leaveLesson(); assert.equal(app.duel.drivingLesson, undefined); assert.equal(state.status, 'menu');
+      assert.equal(app.nextLessonAttempt(), false); assert.equal(app.getDriveLessonGhost(), null);
+      assert.equal(app.selectPlayer(other), true); assert.deepEqual(app.profile, otherBefore, 'the other career is untouched');
+      assert.equal(app.profile.drivingLessons?.done?.corner === true, false);
+    });
+  } finally {
+    for (const [key, descriptor] of savedGlobals) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key];
+    }
+  }
+});
+
+// Native inputs only: no pose placement, replacement instructor, fake result,
+// reward callback or lesson-progress assignment. App receives Duel events.
+async function driveNativeHostAttempt(app, mode) {
+  const [{DRIVE, steerForYaw, tyreSlipSteering}, {racingLineFor, buildSpeedProfile}, {instructorControls}] = await Promise.all([
+    import('../src/config.js'), import('../src/race-lines.js'), import('../src/lessons/drive-lessons.js'),
+  ]);
+  const duel = app.duel, state = duel.state, run = duel.drivingLesson;
+  const {corner, instructor, difficulty} = run.plan, course = duel.course, car = duel.car;
+  const pace = difficulty === 'casual' ? .92 : .97, line = racingLineFor(course), speed = buildSpeedProfile(line, car);
+  const scale = mode === 'fast' ? 1 : mode === 'slow' ? pace * .8 : pace;
+  const plan = {course, car, line, profile: {at: s => speed.at(s) * scale / pace}, drive: DRIVE,
+    steerForYaw, difficulty, turnInS: corner.turnInS, turnOutS: corner.turnOutS};
+  const cornerSpeed = Math.min(...instructor.poses.filter(pose => pose.s >= corner.turnInS && pose.s <= corner.turnOutS).map(pose => pose.mph));
+  assert.equal(Number.isFinite(cornerSpeed) && cornerSpeed > 0, true);
+  let brakingDone = false;
+  for (let tick = 0; tick < 120 * 120 && run.lesson.phase === 'driving'; tick++) {
+    const surface = duel._drivingSurface(state.s, state.lateral);
+    let controls = instructorControls(state, surface, plan);
+    if (mode === 'late' || mode === 'right') {
+      const brakeS = mode === 'late' ? instructor.redBoardS : instructor.cones[0].s;
+      if (state.s >= brakeS && state.speedMph <= cornerSpeed) brakingDone = true;
+      const brake = state.s >= brakeS && !brakingDone ? 1 : 0;
+      const actualSteer = mode === 'late' ? (yaw, options) => {
+        const {steerGain} = tyreSlipSteering({...options, brake});
+        return Math.max(-1, Math.min(1, -yaw / Math.max(.05, steerGain)));
+      } : (yaw, options) => steerForYaw(yaw, {...options, brake});
+      controls = {...controls, brake, throttle: mode === 'late' && state.s < brakeS ? 1 : brake ? 0 : controls.throttle,
+        steer: instructorControls(state, surface, {...plan, steerForYaw: actualSteer}).steer};
+    }
+    duel.setInput(controls); duel.step(1 / 120);
+  }
+  assert.equal(run.lesson.phase, 'result', `${mode} must produce a real native result`);
+  return structuredClone(run.lesson.lastAttempt);
+}
+
 test('board uses supplied course order, owned corner, actual car and setting without mutation', () => {
   const props = freeze(base()), model = driveLessonBoardModel(props);
   assert.deepEqual(model.start, {lessonId: 'corner', courseId: 'panorama-ridge', carId: 'falcone', difficulty: 'pro'});
