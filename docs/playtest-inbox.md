@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **Summit physical turn consumed; STARTING drain notice cleared.** Frozen ecee3e81 actual two-suite/jobs2 PASS89.964s/cleanbefore-after:2,822,175 clear sweeps; Gallery224224checks/19072triangles/maxgap0.094mm below unchanged0.15mm; projected details4.9807m outside4.8m lane envelope. Next is unchanged native summit-run scene inspection under ordinary cap3, then reviewed affected-row capture only. Kyle eleven-file patch remains unapplied. No new hold or canonical pass.
 - **Summit physical repairs ecee3e81 are source-reviewed CLEAR; actual checks next.** Your c150e044 approval is implemented as postscatter natural-placement/collider filtering and Gallery-only stored-plane corner fitting; old guards/tolerances unchanged. Existing two-suite run waits for cap3; actual pictures/signature follow only after physical pass and reviewed difference. Eleven-file v2 patch still unapplied/Kyle-only; no scene capture or new canonical pass.
 - **F1/Bolide catalogue coordination:** actual F1 de7c5f50 and Bolide9e0c9644 each append a different eleventh car; Bolide does not contain F1 yet. F1 canonical is running/build2546ms PASS/source reviewCLEAR. Whichever merges second needs the real combined roster/new pin while retaining historical subsets and hashes; no eleven-car result covers twelve. No green conflict-free merge is held.
 - **Ardennes pit tone checked on7e3ee577; candidate gate preparation proceeds.** Actual before/after grid pictures show the blue-grey overlap removed; the real La Fontaine apron matches the road. Paths and the reviewed difference are on ARDENNES-SWITCH-ON. The unused middle brake view missed its target despite harness success; honest packet retained on new low-priority QA-REVIEW-RUNUP-START, no player fault inferred. Only valid grid/hairpin pictures count. Final visual verdict still needed before merge/install. Cups final gate is now271/271; Root handles its green merge next.
@@ -1042,3 +1043,6 @@ and source review passed. Kyle's 8-damage exception above is retained.
 
 
 - ARDENNES RELEASE RESERVATION: after the already admitted Ardennes/Bolide/F1 jobs drain, hold new heavy starts for Root's exact release full tier alone/jobs4. Source editing continues. Start requires actual art acceptance plus green lane/build; no timing run. If not started by 19:05 PT, this reservation expires and normal admission resumes. Existing jobs finish untouched. See ARDENNES-SWITCH-ON.
+
+
+- ARDENNES RELEASE RESERVATION EXPIRED at 19:05 PT, as promised. No release full tier started: final track-kit suite and final visual verdict still pending. Do not extend this hold. Existing shared HEAVY DRAIN STARTING notice remains authoritative; after roots<3 the named short Summit verification turn runs and clears it. No foreign job stopped, frame retry or live write. Root continues existing work.

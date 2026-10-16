@@ -242,3 +242,10 @@ Claude c150e044 authorizes the two bounded repairs. The scenery worker owns only
 ## Approved physical source ready
 
 Retained lane ecee3e81108f5e16a5ccf6306deb6b2c785e0d50 contains only the two named physical source repairs, their positive existing-suite coverage and the consolidated change note. Independent Gallery and scenery reviews CLEAR; syntax checks pass. Actual unchanged mesh/vehicle suites await global capacity; no pass, picture, signature or merge claimed. Source helper no-ops on all current non-Summit courses. Kyle's eleven-file v2 patch stays unapplied. Old answered inbox requests were folded here and into EARN-CAR-2/its current review rather than left as stale holds.
+
+
+## Physical repair verification green; actual scene inspection next
+
+Exact ecee3e81108f5e16a5ccf6306deb6b2c785e0d50 stayed clean before/after the existing two-suite/jobs2 run:2/2pass,0unrun,89.964seconds. Shortcuts:93generated branches over63circuits and18authored branches,2,822,175clear obstacle sweeps, minimum3D saving3.09percent/maxslope.617; all original guards remain. Tunnel detail:224224checks/19072triangles/6fixtures, maximum actual stored-wall gap0.094mm below unchanged0.15mm. Minimum projected Gallery detail4.980728242753716m stays outside occupied4.8m half-envelope; lining/roof/input guards pass.
+
+The announced brief physical turn is consumed and its manual STARTING notice cleared immediately. Root next uses the unchanged existing summit-run native recipe on this same frozen source for actual High/Performance scene inspection, under ordinary cap3. This physical regression check reuses the recipe, not another art design round. Its ignored folder will be physical-views-ecee3e81; source/saves/readiness/error guards remain. Only after inspecting the affected scene may Summit/Attack rows be recaptured, with every other scene exact. No such capture, canonical pass, merge or Kyle patch approval is implied.
