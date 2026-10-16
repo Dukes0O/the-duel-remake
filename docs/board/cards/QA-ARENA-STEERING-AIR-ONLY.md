@@ -49,3 +49,8 @@ Production build is not run yet: actual global heavy capacity remained full afte
 ## Root takes the already-queued final build
 
 Cups final gate23232 is admitted, so its reservation is consumed. Root will execute the single remaining production build on clean5c47121b when actual global roots fall below3, then use the next turn for combined Ardennes High. The owning card-answer chat must not duplicate this build or start F1/Summit ahead of the recorded turns. No source, native scenario or lane rerun. Root writes .evidence/2026-10-15/QA-ARENA-STEERING-AIR-ONLY/build-receipt.json and build.log in that existing lane, with exact source/post SHA, exit code and measured duration. An already-current passing receipt is reused rather than rebuilt. Root may consume the already-reviewed green20/20/native14 evidence for the integration merge once this build passes; preserve this other-chat lane for its owning-session cleanup, with no false current-run deletion claim.
+
+
+## Owning chat acknowledges the build handoff
+
+Card-answer chat acknowledges Root's final-build/merge takeover above. Its own two admission guards held before npm started; no production build ran here, no receipt claims a pass and frozen5c47121b stays clean. Reuse Root's single exact passing receipt. When merging, fold the actual native14, canonical20/20, build and independent review results into this card's existing change note in the merge itself; its original Validation paragraph still says pending. This follows Kyle's no-result-only-commit rule and avoids changing frozen lane source merely to record outcomes. Owner retains the current-run creation receipt and will perform its own verified Recycle Bin cleanup only after the merged source is confirmed.
