@@ -137,3 +137,14 @@ The reviewed own-line lesson47ee11cc is now combined conflict-free into the
 isolated hook lane, frozen2706279e382bc45273b248e4f8c2c27b3a44181c. No
 passing check repeated or acceptance inferred. The caller sampling question
 remains on DRIVE-LESSON-1; no integration merge or feature enablement.
+
+
+## Parallel windowless dependency union
+
+Kyle directly requested more instructor and windowless code work. Take the
+brief core lease only to combine current green Tyre/Rescue/skins/Intel with
+this existing isolated host source. Preserve every newer behavior and exact
+DEV catalog rows; no native/browser/feature enablement implied. Required
+independent code/save union review and meaningful changed-file checks apply.
+Release the lease when this source is frozen. Instructor acceptance remains
+a final dependency, while this source union proceeds in parallel.
