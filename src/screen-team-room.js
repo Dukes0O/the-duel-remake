@@ -113,7 +113,8 @@ export function teamRoomMap(dossier) {
   const flagIds = new Set(dossier.flags.filter(flag => flag.kind === 'corner').map(flag => flag.id));
   // Each pin rides above the spot it marks, then moves aside only if it crowds another.
   const pins = spreadMarkers(dossier.flags.map(flag => {const spot = at(flag.s);return {x: spot.x, y: spot.y - 24, anchorX: spot.x, anchorY: spot.y};}),
-    {fixed: analysis.corners.map(corner => at(corner.apexS))});
+    // The START mark and its word are kept clear too, so a flag never hides them.
+    {fixed: [...analysis.corners.map(corner => at(corner.apexS)), ...[22, 48].map(across => ({x: at(0).x + across, y: at(0).y}))]});
   const corners = analysis.corners.map(corner => ({...at(corner.apexS), id: cornerId(corner),
     flagId: flagIds.has(cornerId(corner)) ? cornerId(corner) : null,
     number: corner.number, name: corner.name || `Corner ${corner.number}`, authoredName: corner.name}));
@@ -144,9 +145,9 @@ function mapMarkup(dossier) {
   };
   return `<div class="team-map"><svg viewBox="0 0 1000 690" role="group" aria-label="${escape(dossier.name)}. Track coloured by reference speed. Numbered corners and start line.">
     <g fill="none" stroke-width="9" stroke-linecap="round">${segments}</g>
+    <g transform="translate(${map.start.x.toFixed(1)} ${map.start.y.toFixed(1)})"><rect x="-10" y="-7" width="20" height="14" fill="#f0ead5" stroke="#081b24" stroke-width="3"/><text x="16" y="6" class="team-map-start">START</text></g>
     <g class="team-map-leaders" stroke-width="1.5">${leaders}</g>
     <g class="team-map-corners">${map.corners.map(corner).join('')}</g>
-    <g transform="translate(${map.start.x.toFixed(1)} ${map.start.y.toFixed(1)})"><rect x="-10" y="-7" width="20" height="14" fill="#f0ead5" stroke="#081b24" stroke-width="3"/><text x="16" y="6" class="team-map-start">START</text></g>
     </svg>${map.flags.map(flag => `<button type="button" class="team-map-flag team-kind-${flag.kind}" data-team-flag="${escape(flag.id)}" data-team-label="${escape(flag.title)}" style="left:${(flag.x / 10).toFixed(2)}%;top:${(flag.y / 6.9).toFixed(2)}%" aria-pressed="false" aria-label="${escape(kindName[flag.kind])}: ${escape(flag.title)}">${symbol[flag.kind]}</button>`).join('')}<div class="team-map-tip" data-team-tip role="presentation" hidden></div></div>`;
 }
 
