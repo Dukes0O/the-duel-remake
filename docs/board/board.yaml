@@ -640,7 +640,9 @@ tasks:
     owner: "claude"
     lane: "DESIGN"
     size: "S"
-    status: "ready"
+    status: "review"
+    claimed_by: "claude-drive-lesson-core-2026-10-15"
+    branch: "claude/drive-lesson-core"
     needs: []
     locks: []
     flag: "driving-lessons"
