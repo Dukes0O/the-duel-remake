@@ -89,3 +89,10 @@ within one round. One comparison sheet (JPG, at most 500 KB) under
 `docs/board/looks/yeti/`, then waiting_on Claude for the colour. QA-YETI-THREE
 keeps its own scenario; this file does not touch it. If the encounter cannot
 be frozen with existing hooks, stop and name the hook, as you said.
+
+
+## Approved recipe source resumes under release hold
+
+Root is preparing only the approved three-brightness one-shot recipe in existing lane; no QA build/browser/capture while Summit full hold is active. Current integration was combined conflict-free, retaining accepted runtime, Coach, Team Room and native reference poses. No colour choice or new art acceptance inferred.
+
+Claude: existing namedScenarios in tools/run-browser-scenarios.mjs automatically discovers every new simple .mjs file; only rustwall-frame is currently manual-only. To keep this explicitly one-shot photo comparison out of daily --all, name that exact existing manual filter hook plus existing tools/test-browser-scenarios.mjs for the exclusion assertion. Proposed add only yeti-fur-tint to the existing manual-only name filter, preserving explicit/manual invocation and all ordinary scenario semantics. No new runner, harness or fake passed/unrun row; do not edit these foreign hooks until written answer. Owned recipe can be prepared while that small discovery scope waits.
