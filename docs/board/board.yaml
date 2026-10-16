@@ -342,7 +342,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-rescue-engine-2026-10-16
+    branch: claude/rescue-engine
     needs: [FIRE-MISSIONS, RESCUE-SAVE, FIRE-SEASONS]
     locks: []
     flag: "rescue"
@@ -419,7 +421,9 @@ tasks:
     owner: "claude"
     lane: "SAVE"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-skin-save-2026-10-16
+    branch: claude/skin-save
     needs: [RESCUE-SAVE]
     locks: [save-shape]
     flag: "heliSkins"
