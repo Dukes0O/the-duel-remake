@@ -170,8 +170,12 @@ test('a complete real eight-car Mountain Cup advances and banks only actual nati
       app.profile={...app.profile,credits:20000};app._saveProfile();
       for(const id of CUPS[0].events)assert.equal(app.purchaseCourse(id).ok,true);
       app.setRaceSettings({car:'stuttgart_959s',cpuDifficulty:'easy',difficulty:'casual'});
-      assert.equal(app.startCup('mountain').ok,true);
+      const originalRandom=Math.random;let started;
+      try {Math.random=()=>1000/4294967296;started=app.startCup('mountain');}
+      finally {Math.random=originalRandom;}
+      assert.equal(started.ok,true);
       const seriesId=app.profile.cups.active.id,ownerId=app.player.id,fieldSeed=app.profile.cups.active.fieldSeed;
+      assert.equal(fieldSeed,1000,'the acceptance uses a repeatable actual field seed');
       const fields=[];
       for(let round=0;round<3;round++){
         if(round){app.returnToMenu();assert.equal(app.prepareCupRace().ok,true);}
