@@ -7,7 +7,7 @@ import { loadGhosts, saveGhosts, GHOST_KEY } from '../src/ghost.js';
 
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
 const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWith('.json')).sort();
-assert.equal(files.length, 13, 'review the historical save-shape fixture roster');
+assert.equal(files.length, 15, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
   const values = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));

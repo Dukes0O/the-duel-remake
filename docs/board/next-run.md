@@ -152,3 +152,63 @@ write one handoff line in docs/board/run-log.md.
   shared-snow art round.
 - Claude owns Harbour base and finishing cost.
 - An older full-tier result is not a pass for the current commit.
+
+
+## Morning handoff, 16 October 08:30 PT (Root)
+
+The authorized overnight run ends here; its heartbeat is paused after this
+handoff. The queue is not complete. All four unmerged owned lanes are clean
+and retained, with no Root heavy job, private browser/server, core/save lease
+or heavy reservation left active:
+
+- TYRE-SLIP `tyre-slip` / `codex/tyre-slip`,
+  `3e2bf73f81c3f703ac9cce1b154adb4ee829d5a2`: corrected inactive state remains
+  byte-identical; independent code/save delta review CLEAR. Corrected gate
+  was interrupted at restart, morning resume cancelled for the older release
+  full. Neither is a pass or failure; actual receipts are absent. Resume the
+  corrected canonical once under fresh admission, then build/merge if green.
+- GP-RACECRAFT `gp-racecraft` / `codex/gp-racecraft`,
+  `3b1750519230b3a25673ee44467b12cc68aa80e0`: revised formation/report source
+  and review CLEAR; native approved batch was interrupted, zero-byte outputs,
+  no retained completed races. Resume this frozen batch once after admission.
+  Exact additional catalog hooks still await written Claude answer; Kyle
+  preview remains required before live. Old failed360packet stays failed.
+- YETI-FUR-TINT `yeti-fur-tint` / `codex/yeti-fur-tint`,
+  `562048b60bfe488af94764cc352e4c6c0078cad2`: approved original/1.4/1.8 native
+  comparison recipe source and failure-path review CLEAR. No new native
+  capture, gate/build or colour verdict. Exact existing manual-discovery
+  filter/test hook awaits Claude. Do not rerun the foreign fullphase/audio.
+- DRIVE-LESSON-1 `drive-lesson-1` / `codex/drive-lesson-1`,
+  `f4e715e4449ca24e9c860b082d4dd6bd15b67038`: real instructor implementation,
+  stage rules and cone tracking built on Kyle's direct request ahead of
+  Tyre tests. Exact Tyre3e2 dependency is combined only inside this lane via
+  `bfc3c4d6`, not integrated or claimed green. First20stage checks and4new
+  helper cases passed; required code/numbers review and actual-fault fixes
+  CLEAR. Four native both-course/settings/FPS cases prepared but UNRUN.
+  First real instructor drive, late/right loss/screech acceptance, lane/build,
+  Tyre green/final merge and later presentation hooks remain unfinished.
+
+Evidence retained in each lane's `.evidence/2026-10-15/<CARD>/`; Tyre cancelled
+morning admission is `.evidence/2026-10-16/TYRE-SLIP/resume-3e2bf73f/`.
+No zero-byte interrupted packet grants a test verdict. Integration creation
+receipts remain `.evidence/2026-10-16/DRIVE-LESSON-1/creation-receipt.json`
+and `.evidence/2026-10-15/YETI-FUR-TINT/creation-receipt.json`. Current source
+and committed notes hold completed review verdicts; retain historical actual
+failed packets and every unfinished lane. No cleanup of foreign work.
+
+Release ownership stays Claude. Exact full runner28640/parent31228 drained;
+Claude announced candidate7f108454 full455/455/jobs4/0fail-notRun in2141s.
+FRAME CHECK DONE is posted: Summit p9516.8ms both qualities, but world
+1498/1533ms exceeds1000ms; Ardennes High33.3ms fails with far forest and
+16.8ms passes without it. RELEASE-SUMMIT records the Director's decision to
+remove the far forest from this release and treat Summit build time as a
+release warning; SUMMIT-BUILD-TIME retains the unchanged future under1s goal.
+Root made no release, waiver, live edit, frame run or push. No live release
+completion was verified here. Daily04:00 full check did not run after restart.
+
+Last observed foreign active roots at08:29PT: combat24384/parent32680;
+browser suite13744/parent1868 with harness1872 and preview34976 on53207;
+lane gate20856/parent31796. Children count with their existing roots, not as
+extra slots. These jobs and any newer owner announcements remain untouched;
+read fresh process identities and holds before any later launch. There is
+no Root hold to release. Old overnight/accessory/Fire watches stay paused.

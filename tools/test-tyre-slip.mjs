@@ -189,12 +189,12 @@ test('existing private driver tools pass only the named tyre switch into native 
   const {runReferenceWorker}=await import('./build-reference-laps.mjs');
   assert.deepEqual(parseArgs(['--flags','tyre-slip']).flags,['tyre-slip']);
   assert.throws(()=>driveCircuit(COURSE[0],{flags:['typo']}),/Unsupported/);
-  let lineRules=null,fieldRules=null,fieldRequested=null;
+  let lineRules=null,fieldKeys=null,fieldRequested=null;
   driveCircuit(COURSE[0],{flags:['tyre-slip'],difficulty:'pro',driver:'stock',maxSeconds:5,onTick:s=>{lineRules=s.tyreSlipRules;}});
   assert.equal(lineRules,true,'actual line-tool Duel latched requested rules');
-  runRace('easy',0,{flags:['tyre-slip'],maxSec:.02,onStep:d=>{fieldRules=d.state.tyreSlipRules;fieldRequested=d.featureFlags.enabled('tyre-slip');}});
+  runRace('easy',0,{flags:['tyre-slip'],maxSec:.02,onStep:d=>{fieldKeys=['tyreSlip','tyreSlipRules'].filter(key=>Object.hasOwn(d.state,key));fieldRequested=d.featureFlags.enabled('tyre-slip');}});
   assert.equal(fieldRequested,true,'actual field-tool App receives the requested switch');
-  assert.equal(fieldRules,false,'field tool default Casual keeps released tyres under Kyle decision');
+  assert.deepEqual(fieldKeys,[],'field tool default Casual keeps every released state field exact under Claude byte-identical decision');
   const catalog=await runReferenceWorker({flags:['tyre-slip'],catalogOnly:true});
   assert.equal(catalog.flags.find(row=>row.name==='tyre-slip')?.enabled,true,'fresh reference worker enables actual dev switch');
   await assert.rejects(()=>runReferenceWorker({flags:['typo'],catalogOnly:true}),/Unsupported/);

@@ -12,6 +12,7 @@ import {buildReview, drawMap} from './track-review.mjs';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {ALL_CIRCUITS} from '../src/circuits/index.js';
+import {buildTrackScript} from '../src/track-script.js';
 import {getRouteVariants} from '../src/route-variants.js';
 import {teamRoomMarkup, teamRoomMap, MAP_LABEL} from '../src/screen-team-room.js';
 import {referenceLap} from '../src/reference-laps.js';
@@ -395,6 +396,68 @@ assert.throws(() => buildTrackDossier(course, {route: 'route_b', reference}), /r
   for (const text of texts) {
     check(!/—/.test(text), `No em dash in: ${text}`);
     check(!/load-bearing|\bquiet|\bsilent/i.test(text), `Word rule kept in: ${text}`);
+  }
+}
+
+// Written notes for the reverse variants (TEAMROOM-VARIANT-NOTES): the same checks as the older courses, keyed to the
+// variant's own corners (met in the opposite order and direction), plus: a brake board is named only where one
+// stands in the world, and the dusk and night variants show exactly their parent's notes.
+{
+  const wrapS = (s, length) => ((s % length) + length) % length;
+  const texts = [];
+  let written = 0;
+  for (const id of ['tremblant-woods-reverse', 'harbour-lights-reverse', 'panorama-ridge-reverse']) {
+    const definition = ALL_CIRCUITS.find(circuit => circuit.id === id), reference = referenceLap(id);
+    check(circuitIntel(id), `${id} has engineer notes registered`);
+    check(reference, `${id} has a reference lap`);
+    const native = new Course(definition, reference.seed), road = buildTrackScript(definition);
+    const dossier = buildTrackDossier(native, {reference}), resolved = dossier.intel;
+    const flagIds = new Set(dossier.flags.map(flag => flag.id)), cornerIds = new Set(dossier.analysis.corners.map(cornerId));
+    for (const key of Object.keys(resolved.notes))
+      check(cornerIds.has(key) || flagIds.has(key), `${id}: note "${key}" lands on a real corner or flag`);
+    for (const corner of dossier.analysis.corners.filter(item => item.slow))
+      check(resolved.notes[cornerId(corner)], `${id}: slow corner ${cornerId(corner)} has a written note`);
+    equal(resolved.sectors, undefined, `${id}: written notes leave the sectors, and so the reference lap, alone`);
+    equal(Object.keys(resolved).filter(key => key === 'sectors'), [], `${id}: no sectors key at all`);
+    for (const flag of resolved.flags) {
+      check(Number.isFinite(flag.s) && flag.s >= 0 && flag.s < native.length, `${id}: written flag ${flag.id} sits on the lap`);
+      if (flag.kind === 'corner') check(cornerIds.has(flag.id), `${id}: written corner flag ${flag.id} is a real corner`);
+    }
+    for (const flag of dossier.flags.filter(item => item.kind === 'corner' || item.generated === false)) {
+      const engineer = flag.engineer;
+      check(typeof engineer.line === 'string' && engineer.line.length > 20 && typeof engineer.note === 'string' && engineer.note.length > 20,
+        `${id}: ${flag.id} has a written line and note`);
+      if (flag.kind === 'corner') check(engineer.authored === true, `${id}: corner flag ${flag.id} uses the written note`);
+      texts.push(engineer.line, engineer.note, flag.title);
+      written++;
+    }
+    check(dossier.flags.filter(flag => flag.kind === 'signature').length === 1, `${id}: one written signature view`);
+    const passing = dossier.flags.filter(flag => flag.kind === 'overtaking');
+    check(passing.length >= 1 && passing.length <= 2 && passing.every(flag => flag.generated === false), `${id}: passing zones are written`);
+    // A named board must stand that far before the corner, as a script board or a placed board.
+    for (const corner of dossier.analysis.corners) {
+      const board = resolved.notes[cornerId(corner)]?.brakeBoard;
+      if (!Number.isFinite(board)) continue;
+      const piece = road.pieces.find(item => item.kind === 'turn' && item.name === corner.name);
+      check(piece, `${id}: ${cornerId(corner)} names a board and is a scripted turn`);
+      const stands = road.boards.some(item => item.name === piece.name && item.distance === board) ||
+        definition.kitPlacements.some(item => item.id === `braking-board-${board}` && Math.abs(item.s - wrapS(piece.s0 - board, road.length)) < 1);
+      check(stands, `${id}: a ${board} m board stands before ${corner.name}`);
+    }
+  }
+  check(written >= 40, 'The reverse variants carry written notes');
+  for (const text of texts) {
+    check(!/—/.test(text), `No em dash in: ${text}`);
+    check(!/load-bearing|\bquiet|\bsilent/i.test(text), `Word rule kept in: ${text}`);
+  }
+  // Same road, same direction: the dusk and night variants carry their parent's notes and flags unchanged.
+  for (const [id, parentId] of [['harbour-lights-dusk', 'harbour-lights'], ['panorama-ridge-night', 'panorama-ridge']]) {
+    const variant = ALL_CIRCUITS.find(circuit => circuit.id === id), parent = ALL_CIRCUITS.find(circuit => circuit.id === parentId);
+    const variantIntel = resolveTrackIntel(new Course(variant, referenceLap(id).seed)), parentIntel = resolveTrackIntel(new Course(parent, referenceLap(parentId).seed));
+    check(Object.keys(parentIntel.notes).length > 5, `${parentId} has written notes`);
+    equal(variantIntel.notes, parentIntel.notes, `${id} shows the notes of ${parentId}`);
+    equal(variantIntel.flags, parentIntel.flags, `${id} shows the flags of ${parentId}`);
+    equal(variantIntel.sectors, parentIntel.sectors, `${id} keeps the sectors of ${parentId}`);
   }
 }
 
