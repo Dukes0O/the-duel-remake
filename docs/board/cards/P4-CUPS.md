@@ -76,3 +76,8 @@ Frozen8a910245 completed all13test-grand-prix-cups cases in73571.4594ms, includi
 ## Root next-slot reservation,16October00:38UTC
 
 Cups8a910245 is frozen native13/13/reviewCLEAR. Root reserves the NEXT free non-quiet heavy slot for its one final production build and canonical lane/jobs4 gate. Existing admitted jobs continue; other sessions do not start into that one slot before this gate is admitted. No global pause, foreign cancellation or frame hold. A disposable guarded launch waits up to30minutes, re-reading actual roots and fresh card/inbox holds; no new scheduler/machinery. Once admitted the reservation is consumed, normal cap3applies. Ardennes nativephotos await its owning finishing source commit, so cannot yet use this slot.
+
+
+## Completed implementation
+
+Frozen 8a910245 passed lane 271/271, jobs 4, zero failures/unrun, 1422301.5732 ms; build 2243.3033 ms; independent cups_save_review CLEAR. Actual native three-race/eight-car acceptance and reload/player/pay guards passed 13/13 in 73571.4594 ms. Merged without conflict; no repeated gate. Cup code stays behind the existing preview switch. Save-shape and busy-game-files leases return to the retained TYRE-SLIP card.

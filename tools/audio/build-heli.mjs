@@ -45,6 +45,22 @@ export const HELI_RECIPES = Object.freeze([
   recipe('heli.flare', 348767, .25, 2.5, {highpass: 120, lowpass: 8000, loudness: -24, quality: 3}),
   recipe('heli.snow.dig', 201888, 1.5, 4, {loop: true, overlap: .3, highpass: 100, lowpass: 7000, loudness: -24, quality: 3}),
   recipe('heli.rescue.clip', 457454, 0, .3, {highpass: 400, lowpass: 9000, loudness: -20}),
+  // H3 Wildlife (docs/HELI_WILDLIFE.md section 9): a camera shutter as an
+  // animal is counted, a pressure washer at the pad, the winch motor reeling
+  // (medevac), and a call for each species heard near a herd. Every cut starts
+  // at the call's loud part, read from its loudness outline.
+  recipe('heli.survey.click', 579876, 0, .6, {highpass: 300, lowpass: 9000, loudness: -22}),
+  recipe('heli.wash', 532823, 0, 3, {highpass: 120, lowpass: 8000, loudness: -24, quality: 3}),
+  recipe('heli.winch', 683807, .5, 4, {loop: true, overlap: .3, highpass: 80, lowpass: 6000, loudness: -24, quality: 3}),
+  recipe('heli.animal.moose', 486554, .6, 2, {highpass: 70, lowpass: 5000, loudness: -24, quality: 3}),
+  recipe('heli.animal.wolf', 472402, 0, 3, {highpass: 150, lowpass: 7000, loudness: -24, quality: 3}),
+  recipe('heli.animal.bear', 763026, 1.8, 2.8, {highpass: 60, lowpass: 4000, loudness: -24, quality: 3}),
+  recipe('heli.animal.kookaburra', 826086, 0, 4.5, {highpass: 300, lowpass: 9000, loudness: -24, quality: 3}),
+  recipe('heli.animal.cockatoo', 844340, .15, 1.1, {highpass: 400, lowpass: 9000, loudness: -24, quality: 3}),
+  recipe('heli.animal.sheep', 803460, 0, 1, {highpass: 150, lowpass: 7000, loudness: -24, quality: 3}),
+  // No CC0 marmot recording exists: a ground squirrel's alarm chirp (marmots are large ground squirrels).
+  recipe('heli.animal.marmot', 640992, 0, 1.2, {highpass: 400, lowpass: 9000, loudness: -24, quality: 3}),
+  recipe('heli.animal.raven', 716962, .2, 2.6, {highpass: 200, lowpass: 8000, loudness: -24, quality: 3}),
 ]);
 export const heliRuntimeName = spec => `heli/${spec.id.slice(5).replaceAll('.', '-')}.ogg`;
 
