@@ -723,7 +723,7 @@ tasks:
     claimed_by: codex-ardennes-switch-2026-10-15
     branch: codex/ardennes-switch-on
     needs: [P4-ARDENNES]
-    locks: [circuit-registry]
+    locks: [circuit-registry, world-signatures]
     details: "docs/board/cards/ARDENNES-SWITCH-ON.md"
 
   - id: QA-ARDENNES-FRAME-READINESS
