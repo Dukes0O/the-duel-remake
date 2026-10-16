@@ -13,7 +13,10 @@ const symbol = {corner: '•', crest: '↑', overtaking: '↗', signature: '★'
 // clicked one by one. Push them apart until every flag has its own spot; the
 // true position stays in anchorX/anchorY for the thin line drawn back to it.
 export const MAP_FLAG_GAP = 46;
-export function spreadMarkers(points, {gap = MAP_FLAG_GAP, minX = 24, maxX = 976, minY = 28, maxY = 662} = {}) {
+// `fixed` lists spots that never move (the numbered corner circles): a flag keeps `fixedGap` away from each, so
+// a flag never sits on a circle and hides the number that opens the same corner.
+export const MAP_CIRCLE_GAP = 28;
+export function spreadMarkers(points, {gap = MAP_FLAG_GAP, minX = 24, maxX = 976, minY = 28, maxY = 662, fixed = [], fixedGap = MAP_CIRCLE_GAP} = {}) {
   const spots = points.map((point, index) => ({...point, index}));
   for (let pass = 0; pass < 80; pass++) {
     let moved = false;
@@ -23,6 +26,13 @@ export function spreadMarkers(points, {gap = MAP_FLAG_GAP, minX = 24, maxX = 976
       if (distance < 1e-6) {const angle = (a * 2.399963 + b) % (Math.PI * 2);dx = Math.cos(angle);dy = Math.sin(angle);distance = 1;}
       const push = (gap - distance) / 2 + .05, ux = dx / distance, uy = dy / distance;
       spots[a].x -= ux * push;spots[a].y -= uy * push;spots[b].x += ux * push;spots[b].y += uy * push;moved = true;
+    }
+    for (const spot of spots) for (const anchor of fixed) {
+      let dx = spot.x - anchor.x, dy = spot.y - anchor.y, distance = Math.hypot(dx, dy);
+      if (distance >= fixedGap) continue;
+      if (distance < 1e-6) {dx = 0;dy = -1;distance = 1;}
+      const push = fixedGap - distance + .05;
+      spot.x += dx / distance * push;spot.y += dy / distance * push;moved = true;
     }
     for (const spot of spots) {spot.x = Math.min(maxX, Math.max(minX, spot.x));spot.y = Math.min(maxY, Math.max(minY, spot.y));}
     if (!moved) break;
@@ -102,7 +112,8 @@ export function teamRoomMap(dossier) {
   };
   const flagIds = new Set(dossier.flags.filter(flag => flag.kind === 'corner').map(flag => flag.id));
   // Each pin rides above the spot it marks, then moves aside only if it crowds another.
-  const pins = spreadMarkers(dossier.flags.map(flag => {const spot = at(flag.s);return {x: spot.x, y: spot.y - 24, anchorX: spot.x, anchorY: spot.y};}));
+  const pins = spreadMarkers(dossier.flags.map(flag => {const spot = at(flag.s);return {x: spot.x, y: spot.y - 24, anchorX: spot.x, anchorY: spot.y};}),
+    {fixed: analysis.corners.map(corner => at(corner.apexS))});
   const corners = analysis.corners.map(corner => ({...at(corner.apexS), id: cornerId(corner),
     flagId: flagIds.has(cornerId(corner)) ? cornerId(corner) : null,
     number: corner.number, name: corner.name || `Corner ${corner.number}`, authoredName: corner.name}));

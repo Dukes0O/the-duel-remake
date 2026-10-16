@@ -418,6 +418,21 @@ assert.throws(() => buildTrackDossier(course, {route: 'route_b', reference}), /r
     check(!touch(rect, {x0: map.start.x - 10, y0: map.start.y - 7, x1: map.start.x + 60, y1: map.start.y + 7}), `${name}: label is clear of the START mark`);
     rects.forEach((other, otherIndex) => { if (otherIndex !== index) check(!touch(rect, other), `${name}: label is clear of ${shown[otherIndex].authoredName}`); });
   });
+  // No flag pin sits over a numbered circle on any course, so every circle can still be pressed at its centre.
+  let pins = 0;
+  for (const definition of [...new Map([...COURSE, ...ALL_CIRCUITS].map(entry => [entry.id, entry])).values()].filter(entry => entry.closed !== false)) {
+    const routes = getRouteVariants(definition);
+    for (const route of routes) {
+      const routeKey = routes.length > 1 ? route.id : 'fixed', lap = referenceLap(definition.id, routeKey);
+      const everyMap = teamRoomMap(buildTrackDossier(new Course(definition, lap.seed), {route: routeKey, reference: lap}));
+      for (const corner of everyMap.corners) for (const flag of everyMap.flags) {
+        check(Math.abs(flag.x - corner.x) > MAP_LABEL.flag || Math.abs(flag.y - corner.y) > MAP_LABEL.flag,
+          `${definition.id}|${routeKey}: the ${flag.title} flag does not cover circle ${corner.number}`);
+        pins++;
+      }
+    }
+  }
+  check(pins > 1000, 'The circle check covered every course and route');
   const markup = teamRoomMarkup(dossier);
   check((markup.match(/class="team-map-name/g) ?? []).length === 11, 'Every named corner keeps a label in the markup, hidden ones included');
 }
