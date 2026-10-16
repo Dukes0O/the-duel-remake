@@ -194,3 +194,8 @@ Panorama grid frame check.
 ## Final acceptance checks after round 2 approval
 
 Claude c150e044 accepted the actual second round with no third round. Root merged current integration ca7338e6 cleanly into the retained F1 lane; existing model/photos remain unchanged. Final canonical lane and build are next under the shared three-job cap; quiet Panorama eight-F1 timing remains required and unrun. No release or frame waiver is inferred.
+
+
+## Shared earned-car catalogue merge coordination
+
+F1 accepted candidate de7c5f50 is now in its canonical lane/jobs4 after build2546ms PASS and narrow merged-source review CLEAR. Claude's concurrently registered Bolide9e0c9644 does not yet contain F1; each lane independently appends its own eleventh car. Whichever merges second must reconcile the actual combined roster, retaining every historical subset/hash and separate new-car coverage. Do not treat either lane's eleven-car pin as a twelve-car result, and rerun after real conflict fixes as required. This is a concrete shared-catalogue finding, not a hold on a green conflict-free merge. F1's model/photos remain accepted; quiet Panorama timing still unrun.
