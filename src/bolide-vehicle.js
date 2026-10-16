@@ -139,17 +139,20 @@ function buildCanopy(b, m) {
 function fittedDetails(vehicle, m) {
   vehicle.updateMatrixWorld(true);
   const skins = vehicle.userData.damageMeshes.filter(({ mesh }) => mesh.material === m.paint).map(({ mesh }) => mesh), b = batch(vehicle);
-  const patch = (corners, axis, side = 1, material = m.carbon, lift = .004) => fitSurfacePatch(skins, b, material, corners, axis, side, .64, lift);
+  const patch = (corners, axis, side = 1, material = m.carbon, lift = .004, minSide = .64) => fitSurfacePatch(skins, b, material, corners, axis, side, minSide, lift);
   const ray = new THREE.Raycaster();
   const surfaceY = (x, z) => {
     ray.set(new THREE.Vector3(x, 3, z), new THREE.Vector3(0, -1, 0));
     const hit = ray.intersectObjects(skins, false)[0]; return hit ? hit.point.y : null;
   };
   for (const side of [-1, 1]) {
+    // Bare carbon on the lower third, the Bolide's two-tone: a band along the
+    // bottom of each flank, deeper at the nose and tail.
+    patch([[.15, 2.42], [.15, -2.42], [.48, -2.42], [.47, -1.95], [.41, -1.10], [.40, 1.00], [.44, 1.95], [.46, 2.42]], 'side', side, m.carbon, .005, .5);
     // The side channel: a long dark scoop from behind the front wheel to the
-    // rear intake, cut into the blue flank.
-    patch([[.30, .88], [.26, .30], [.30, -.55], [.46, -.92], [.58, -.88], [.48, -.40], [.42, .30], [.44, .86]], 'side', side);
-    patch([[.32, .80], [.30, .30], [.34, -.50], [.46, -.82], [.50, -.80], [.42, -.40], [.38, .30], [.40, .78]], 'side', side, m.darkAlloy, .008);
+    // rear intake, cut into the blue flank above the carbon.
+    patch([[.44, .88], [.42, .30], [.45, -.55], [.56, -.92], [.66, -.88], [.58, -.40], [.54, .30], [.56, .86]], 'side', side);
+    patch([[.46, .80], [.45, .30], [.48, -.50], [.56, -.82], [.61, -.80], [.54, -.40], [.51, .30], [.53, .78]], 'side', side, m.darkAlloy, .008);
     // Louvres over the front wheels.
     // Headlamps fitted to the nose corners, facing out along the surface: a
     // dark bezel and an X of two slim lit bars.
@@ -169,6 +172,13 @@ function fittedDetails(vehicle, m) {
       }
     }
   }
+  // The nose and tail in bare carbon below the lamps, with open intakes at
+  // the nose corners either side of the horseshoe.
+  patch([[-1.1, .14], [1.1, .14], [1.1, .30], [-1.1, .30]], 'front', 1, m.carbon, .005, 0);
+  for (const side of [-1, 1]) patch([[side * .16, .17], [side * .54, .17], [side * .58, .29], [side * .18, .29]], 'front', 1, m.darkAlloy, .012, 0);
+  patch([[-1.1, .14], [1.1, .14], [1.1, .46], [-1.1, .46]], 'front', -1, m.carbon, .005, 0);
+  // Dark mesh vents across the back of the deck, behind the wing pylons.
+  patch([[-.78, -1.92], [.78, -1.92], [.74, -2.26], [-.74, -2.26]], 'top', 1, m.darkAlloy, .006);
   // The fin: from the roof scoop down the spine of the engine deck to the wing.
   const fin = [];
   for (let i = 0; i <= 10; i++) {

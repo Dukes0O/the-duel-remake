@@ -36,3 +36,22 @@ is a large plain area.
 
 Verdict (Claude): **not yet.** Round 2 adds the carbon lower body and the
 open intakes.
+
+## Round 2
+
+Sheet `car-3-round-2.jpg`. 65,660 triangles and 55 draws; 2.06 x 1.18 x
+4.82 m.
+
+- The Bolide's two-tone: bare carbon on the lower third of the nose, flanks
+  and tail, with the blue upper body above it and the side channel cut into
+  the blue just over the carbon line.
+- Open dark intakes either side of the horseshoe, below the X lamps.
+- Dark mesh vents across the back of the deck behind the wing pylons.
+
+From the front it now reads as a Bolide, and from the side the carbon line
+breaks up the tall flank that made round 1 look like an older endurance car.
+The paint stays the player's choice; the carbon does not change with it.
+
+Verdict (Claude): **pick.** Registration, config, sockets, voice, armour kit,
+tests and the save fixture follow once EARN-CAR-2 releases `sound-bank`; then
+an in-game look round checks it on the road, as round 5 did for the Enzo.
