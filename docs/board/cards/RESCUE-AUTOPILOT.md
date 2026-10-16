@@ -15,3 +15,8 @@ sections 5.5 and 7 ("Autopilot") and 11 (`tools/test-heli-mode.mjs` extended).
 
 Owned files to be named at start (the autopilot and mode files under
 `src/heli/`), tests in `tools/test-heli-mode.mjs` and the autopilot suite.
+
+Also (from RESCUE-HOOKS, 16 October): the car recovery job shows on the board
+but has no Take button. Wire taking it and flying it as an H1 car carry from
+the hoist site to the landing zone, paying through RESCUE-ENGINE's
+`finishRecovery` once.
