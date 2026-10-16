@@ -176,3 +176,28 @@ test('wrapper delegation preserves actual warnings, failures and caller row orde
   assert.equal(f.calls.filter(call => call === 'build').length, 1);
   assert.equal(f.calls.at(-1), 'cleanup');
 });
+
+
+test('named timing mode is explicit, headed and restricted to the existing frame recipes', async () => {
+  const options = suite.parseSuiteArguments(['--scenarios', 'frame-pacing,tremblant-snow,tremblant-views', '--timing-only', '--headed', '--jobs', '1']);
+  assert.equal(options.timingOnly, true); assert.equal(options.headed, true);
+  for (const args of [['--all','--timing-only'],['--scenarios','menu','--timing-only'],
+    ['--scenarios','tremblant-snow','--timing-only','--timing-only']]) assert.throws(() => suite.parseSuiteArguments(args));
+  const f = fixture(['frame-pacing','tremblant-snow','tremblant-views']);
+  const run = f.operations.scenario, modes = [];
+  f.operations.scenario = async (...args) => { modes.push(args[3]); return run(...args); };
+  assert.equal(await suite.main(['--scenarios','tremblant-snow,tremblant-views','--timing-only','--headed','--jobs','1','--output-dir',archive],f.operations),0);
+  assert.equal(f.maximum,1); assert.equal(f.summary.timingMode,'timing-only');
+  assert.ok(f.summary.rows.every(row=>row.timing==='timing-only'));
+  assert.deepEqual(modes,[{timingOnly:true,headed:true},{timingOnly:true,headed:true}]);
+});
+
+test('ordinary Tremblant views run concurrently with explicit semantic mode and no timing-pass claim', async () => {
+  assert.ok(!suite.QUIET_SCENARIOS.includes('tremblant-snow'));
+  assert.ok(!suite.QUIET_SCENARIOS.includes('tremblant-views'));
+  const f = fixture(['tremblant-snow','tremblant-views']); const run = f.operations.scenario;
+  f.operations.scenario = async (...args) => { assert.deepEqual(args[3],{timingOnly:false,headed:false});return run(...args); };
+  assert.equal(await suite.main(['--all','--jobs','4','--output-dir',archive],f.operations),0);
+  assert.equal(f.maximum,2);assert.equal(f.summary.timingMode,undefined);
+  assert.ok(f.summary.rows.every(row=>row.timing==='run in the frame step'));
+});
