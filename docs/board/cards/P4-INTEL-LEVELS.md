@@ -91,3 +91,8 @@ The evening reference-data/control and disposable-scenario answers are received.
 ## Core lease returned
 
 Cups is merged and its newly created lane recycled. Tyre recovery now waits for the specific written outcome decision on its own card, with no retuning or repeat measurement. Intel may resume its existing approved UI/reference-ghost hooks under save-shape and busy-game-files. Existing source a32b36e1 and green native earning/purchase evidence stay retained. Ardennes release work has priority; no extra native batch during its eventual alone gate.
+
+
+## Kyle hard finish-or-handoff deadline, 15 October20:27PT
+
+Team Room is Root's first work. Finish and merge by22:30PT (2026-10-16T05:30Z), or commit its exact unfinished source and hand it back to Claude, releasing both busy-game-files and save-shape. Do not extend this deadline or hold the eight-card queue for further work. Current clean sourceebb926d0 contains reviewed earning/purchases/UI/ghost selection and prepared native-pose builder/scenario fixtures. Actual native pose generation, existing browser scenarios and final canonical lane/build/review on the current integration union remain. Preserve all prior acceptance; no completed-feature claim yet.
