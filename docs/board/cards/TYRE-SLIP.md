@@ -809,3 +809,22 @@ runner7204/session44438, lane changed/jobs4/keep-going/json. Native
 lane.json/log and lane-receipt.json; JSON can buffer, absent receipt is not
 a failure. One-minute count3 including two older foreign jobs. No result,
 build or merge yet; source frozen and leasesfree.
+
+
+## Actual corrected gate and final own-test delta
+
+The exact3e2 canonical finished17:13:43UTC:395/396/jobs4/zero notrun/exit1,
+source unchanged. Wrapper38356/runner7204 drained. Actual receipt and full
+outputs remain in canonical-resume-3e2bf73f. Only test-tyre-slip failed:28/29
+passed, one new private-tool assertion still expected false for an inactive
+Casual field. Claude's written821b829f decision requires absent inactive
+fields, not false/undefined keys. No runtime or old hash assertion failed.
+
+Frozen13f09aa4 corrects only that new test and ownnote: require both fields
+absent, fail if the observation callback never ran, retain requested-switch
+and actual Pro-on assertions. Required independent delta review CLEAR.
+No new test pass/build/merge yet. One changed-only canonical plan uses the
+existing runner main/getChanges seam with actual gitdiff3e2..13f, no runner
+edit or filters:17default affected/smoke/replay/world guard suites, jobs4.
+No unchanged396batch repeat. Reserved next turn10:20PT until10:40/admission;
+foreign newer jobs remain untouched. Build follows only actual green.
