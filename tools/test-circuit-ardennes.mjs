@@ -473,7 +473,9 @@ test('the current Stavelot village authors two frozen nonempty streets and a gro
   assert.equal(town?.type, 'town'); assert.equal(church?.type, 'church');
   assert.ok(Object.isFrozen(town) && Object.isFrozen(town.houses) && town.houses.length > 0);
   assert.ok(town.houses.every(Object.isFrozen));
-  assert.deepEqual(town.roofColours, [0x414a50, 0x5a352c, 0x50545a]);
+  // ARDENNES-STAVELOT-STONE: Ardennes stone houses under dark slate.
+  assert.equal(town.houseStyle, 'ardennes-stone');
+  assert.deepEqual(town.roofColours, [0x2c3034, 0x363a3e, 0x303236]);
   assert.ok(Object.isFrozen(town.roofColours));
   const streets = new Set(town.houses.map(house => {
     assert.ok([house.s, house.lateral, house.heading, house.width, house.depth].every(Number.isFinite));
@@ -534,7 +536,7 @@ test('the two current village corridors have real frozen four-metre gravel stree
   } finally {disposeTree(world); for (const mesh of terrain) mesh.geometry.dispose(); material.dispose();}
 });
 
-test('every actual current town foundation and veranda has drawn-terrain support without mutation or leaked owners', () => {
+test('every actual current town foundation has drawn-terrain support without mutation or leaked owners', () => {
   const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
   const before = JSON.stringify({definition: ARDENNES_FOREST, features: course.features});
   const spec = ARDENNES_FOREST.circuitLandmarks.find(row => row.id === 'stavelot-valley-town');
@@ -549,10 +551,12 @@ test('every actual current town foundation and veranda has drawn-terrain support
       houses = town.getObjectByName('town houses'), roofs = town.getObjectByName('town roofs'),
       verandas = town.getObjectByName('town verandas'), doors = town.getObjectByName('town doors'),
       posts = town.getObjectByName('town veranda posts');
-    for (const mesh of [footings, houses, roofs, verandas]) {
+    // ARDENNES-STAVELOT-STONE: stone houses have no veranda, deck or posts; one door each, stone gables.
+    for (const mesh of [footings, houses, roofs, town.getObjectByName('town stone gables')]) {
       assert.ok(mesh?.isInstancedMesh); assert.equal(mesh.count, spec.houses.length);
     }
-    assert.equal(posts.count, spec.houses.length * 3); assert.equal(doors.count, spec.houses.length * 2);
+    assert.equal(verandas, undefined); assert.equal(posts, undefined); assert.equal(doors.count, spec.houses.length);
+    const steps = town.getObjectByName('town door steps'); assert.ok(steps?.isInstancedMesh); assert.equal(steps.count, spec.houses.length);
     const matrixAt = (mesh, index) => {
       const matrix = new THREE.Matrix4(); mesh.getMatrixAt(index, matrix); return mesh.matrixWorld.clone().multiply(matrix);
     };
@@ -568,7 +572,7 @@ test('every actual current town foundation and veranda has drawn-terrain support
       assert.ok(Number.isFinite(ground), label + ': actual drawn terrain support is finite'); return ground;
     };
     for (let index = 0; index < spec.houses.length; index++) {
-      const footing = matrixAt(footings, index), house = matrixAt(houses, index), deck = matrixAt(doors, index * 2);
+      const footing = matrixAt(footings, index), house = matrixAt(houses, index);
       const floor = new THREE.Vector3(0, -.5, 0).applyMatrix4(house).y;
       const expectedColours = spec.roofColours.map(value => new THREE.Color(value).toArray().map(Math.fround));
       assert.ok(expectedColours.some(value => JSON.stringify(value) === JSON.stringify(Array.from(roofs.instanceColor.array.slice(index * 3, index * 3 + 3)))));
@@ -584,19 +588,12 @@ test('every actual current town foundation and veranda has drawn-terrain support
       for (const u of [-.5, 0, .5]) for (const v of [-.5, 0, .5]) checkFooting(u, v, true);
       const nx = Math.ceil(Math.hypot(...footing.elements.slice(0, 3)) / .5), nz = Math.ceil(Math.hypot(...footing.elements.slice(8, 11)) / .5);
       for (let x = 0; x <= nx; x++) for (let z = 0; z <= nz; z++) checkFooting(-.5 + x / nx, -.5 + z / nz);
-      const dx = Math.ceil(Math.hypot(...deck.elements.slice(0, 3)) / .5), dz = Math.ceil(Math.hypot(...deck.elements.slice(8, 11)) / .5);
-      for (let x = 0; x <= dx; x++) for (let z = 0; z <= dz; z++) {
-        const point = new THREE.Vector3(-.5 + x / dx, .5, -.5 + z / dz).applyMatrix4(deck);
-        assert.ok(point.y >= support(point.x, point.z, 'house ' + index + ' veranda'), 'actual veranda deck clears its whole sampled ground footprint');
-      }
-      for (let post = 0; post < 3; post++) {
-        const matrix = matrixAt(posts, index * 3 + post), vertices = posts.geometry.getAttribute('position');
-        const bottom = posts.geometry.boundingBox ?? (posts.geometry.computeBoundingBox(), posts.geometry.boundingBox);
-        for (let vertex = 0; vertex < vertices.count; vertex++) if (vertices.getY(vertex) === bottom.min.y) {
-          const point = new THREE.Vector3().fromBufferAttribute(vertices, vertex).applyMatrix4(matrix), ground = support(point.x, point.z, 'house ' + index + ' veranda post');
-          assert.ok(point.y <= ground, 'actual veranda post base reaches drawn ground');
-          assert.ok(new THREE.Vector3(0, .5, 0).applyMatrix4(matrix).y >= ground, 'actual veranda post spans support');
-        }
+      // The door step runs from the drawn ground in front of the door up to the floor: no door hangs in the air.
+      const step = matrixAt(steps, index);
+      assert.ok(new THREE.Vector3(0, .5, 0).applyMatrix4(step).y >= floor - 1e-3, 'house ' + index + ': the door step reaches the floor (within the 32-bit instance matrix)');
+      for (const u of [-.5, 0, .5]) for (const v of [-.5, 0, .5]) {
+        const bottom = new THREE.Vector3(u, -.5, v).applyMatrix4(step);
+        assert.ok(bottom.y <= support(bottom.x, bottom.z, 'house ' + index + ' door step'), 'house ' + index + ': the door step reaches the drawn ground');
       }
       measurements.push({index, s: spec.houses[index].s, lateral: spec.houses[index].lateral, samples, maximumBottom, minimumFloor});
     }
