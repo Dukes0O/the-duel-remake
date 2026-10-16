@@ -51,3 +51,8 @@ All453 suites have passing evidence across original452/453 plus the corrected17/
 ## Kyle directs narrow acceptance for this test-only correction
 
 Kyle asked whether all tests had already passed and called a duplicate round a waste of time and tokens. Root applies that direct steering as this release's exception: original452 passing full suites plus the sole corrected grounding suite in actual17/17lane; no duplicate full. Candidate remains exact7d430cd0 and the game/runtime/assets are unchanged from actualac8 full/combat/native source. All453 suites have passing evidence cumulatively; no exact7d full pass is claimed. Exception quotes/proof are retained in final-7d430cd0/release-exception.json. Originalfailed452/453 packet stays exact. Install only this staged reviewed candidate, no new source/build/release expansion. Kyle's frame skip remains.
+
+
+## Installed and complete
+
+Actual installation2026-10-16T03:08:26.937Z: live master7d430cd0, build20261016030307-f35c5308abb7. All537 current files match; liveHTTP entry/manifest verified. One previous Helicopter rollback487files kept;4old hashed assets temporarily retained for open races. Kyle explicitly said no further testing and install, so no duplicate full started. Exact-source-full false remains recorded; original452/453failed plus corrected17/17lane constitute all453passing suites cumulatively. Frames skipped. No real-save access/tabrefresh/push/history rewrite. Both owned release containers, merged correction branch and scratch recycled normally, sharedtargets intact. Current acceptance and source facts collected in VERIFICATION; original packets/actual receipt retained. Ordinary jobs continue under cap3; no Root full/quiet/release hold.
