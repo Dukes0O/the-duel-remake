@@ -186,6 +186,17 @@ test('the forest and safety kit leave the original run-off and native pit road o
     if (row.lateral < 0 && row.s <= piece('Pit Straight').s1 + 15)
       assert.fail('no safety piece may close the pit entrance or exit');
   }
+  // Finishing-pass braking boards: beyond the run-off, inside the fence, on straight road, never solid.
+  const boards = rows.filter(row => /^braking-board-/.test(row.id));
+  assert.ok(boards.length >= 15);
+  for (const row of boards) {
+    const edge = Math.abs(row.lateral) - course.roadHalfWidthAt(row.s);
+    assert.ok(edge >= 12.5 && edge < 14.3, 'board stands beyond the 12 m run-off and inside the catch fence');
+    assert.equal(course.script.pieceAt(row.s).kind, 'straight');
+    const corner = course.script.pieces.find(piece => piece.kind === 'turn' && piece.s0 > row.s && piece.s0 - row.s <= 151);
+    assert.equal(Math.sign(row.lateral), -corner.dir, 'board stands on the outside of the corner it announces');
+    assert.notEqual(row.solid, true);
+  }
   assert.deepEqual(ARDENNES_FOREST.pitLane, {straight: 'Pit Straight', side: 'right'});
   assert.ok(rows.filter(row => row.id === 'pit-wall').every(row => row.solid !== true), 'visual divider retains the original native pit collision');
   assert.ok(course.features.walls.some(wall => wall.pitWall));
