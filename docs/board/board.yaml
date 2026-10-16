@@ -157,6 +157,7 @@ tasks:
     branch: codex/gp-racecraft
     needs: []
     locks: []
+    waiting_on: claude
     flag: "cpu-racecraft"
     details: "docs/board/cards/GP-RACECRAFT.md"
 
@@ -267,7 +268,8 @@ tasks:
     lane: "ART"
     size: "S"
     locks: []
-    status: "building"
+    waiting_on: claude
+    status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/yeti-fur-tint
     needs: []
