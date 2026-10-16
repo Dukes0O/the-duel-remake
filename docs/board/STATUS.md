@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T04:16:50.469Z
+Observed at: 2026-10-16T04:26:50.544Z
 
-Observation commit: b22ebdda19f47d3d75a5107048e2f92c8e6d79a6
+Observation commit: b33879e1e214b1fec6646a610bfb56c83855275f
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: b22ebdda19f47d3d75a5107048e2f92c8e6d79a6
+Integration HEAD: b33879e1e214b1fec6646a610bfb56c83855275f
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -44,6 +44,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/tools/callback-diagnostics | 11 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/tyre-slip | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tyre-slip |
 | codex/wild-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
+| codex/yeti-fur-tint | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/yeti-fur-tint |
 | lane/audio/aud-10 | 20 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 20 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 20 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
@@ -68,6 +69,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 11 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/tyre-slip | TYRE-SLIP | 2026-10-15T19:31:11-07:00 | 0 | last commit 2026-10-15T19:31:11-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
+| codex/yeti-fur-tint | YETI-FUR-TINT | 2026-10-15T21:24:46-07:00 | 0 | last commit 2026-10-15T21:24:46-07:00 | docs/changes/YETI-FUR-TINT.md, src/render3d.js, src/yeti-view.js, tools/test-yeti.mjs |
 
 ## Size targets
 
@@ -83,7 +85,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,998,763 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 1,268,815 B | +0 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 415,067,136 B | +1,116,160 B | unavailable |
+| Git objects | 415,414,272 B | +347,136 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -92,7 +94,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 7d430cd011de0145f404b7b24500e26ac011d881
 - Local main: missing
-- Local integration/wasteland: b22ebdda19f47d3d75a5107048e2f92c8e6d79a6
+- Local integration/wasteland: b33879e1e214b1fec6646a610bfb56c83855275f
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

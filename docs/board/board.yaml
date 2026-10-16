@@ -6,7 +6,7 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "backlog"
+    status: "ready"
     priority: "low"
     needs: []
     locks: []
@@ -320,8 +320,8 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "S"
-    locks: [busy-game-files]
-    status: "building"
+    locks: []
+    status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/yeti-fur-tint
     needs: []

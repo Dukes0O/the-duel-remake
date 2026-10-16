@@ -19,3 +19,7 @@ Within an allowed lane, prove one shared module path, verify the original 17-rol
 ## Removed
 
 Nothing yet. A future fix removes only the redundant QA module initialization; no licensed source, current asset, role, assertion or failed packet is removed.
+
+## Ready independent QA-only source slice
+
+Kyle explicitly directs continuing other independent code while frozen checks wait. The merged-folder blocker in this older card was resolved after his restart; no cleanup bypass applies. Root readies only this existing narrow card with no core/save/scene locks. Its defined QA-only page-instance hook and scenario scope are settled here; no Deep story/runtime/art acceptance is included. Applicable existing checks named before code: tools/test-deep-look.mjs, tools/test-deep-look-zone.mjs, tools/test-browser-scenarios.mjs and tools/test-browser-harness.mjs, followed by the unchanged actual17-role private deep-art recipe, changed lane/jobs4, build and one independent source review. Expose/reuse the existing page's Three/GLTFLoader module objects; require real class identity instead of suppressing duplicate-instance warnings. Preserve every existing source/asset/scale/camera/water/light/role/memory and zero-warning assertion. If another host file is required, stop and name the re-slice before editing it. Prepare this card only when the actual active builder limit admits it; frozen waiting candidates do not justify idle source time or another heavy launch above3.
