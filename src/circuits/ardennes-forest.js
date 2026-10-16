@@ -80,11 +80,17 @@ const PIT_END = named('Pit Straight').s1;
 // at every 4 m of road), so the channel has two rows of bed and a bank row on each side.
 const RED_WATER_S = Math.floor((named('Red Water').s0 + named('Red Water').s1) / 8) * 4 + 2;
 
+// Finishing pass (Claude, 15 October): the garages and the main grandstand now run back past the grid
+// from s -72.5, so the first view from the grid has the paddock beside it. The native pit lane starts at
+// s 10 and stays inside 18 m of the road centre, well short of the garages at 31 m. s -72.5 stays 7.5 m
+// inside the paddock's tree-free stretch, so no planted tree moves, and the 7.5 m garage spacing steps
+// over the 4 m closing seam just before the line (s -3.9 to 0), where no ground is drawn under an anchor.
+const PADDOCK_START = -72.5;
 function paddock() {
   const out = [row('start-gantry', 0, 0, {heading: Math.PI})];
-  for (let s = 70; s < PIT_END - 65; s += 7.5)
+  for (let s = PADDOCK_START; s < PIT_END - 65; s += 7.5)
     out.push(row('pit-garage', s, -31, {heading: Math.PI / 2, solid: true}));
-  for (let s = 55; s < PIT_END - 30; s += 15)
+  for (let s = PADDOCK_START; s < PIT_END - 30; s += 15)
     out.push(row('grandstand', s, 31, {heading: -Math.PI / 2, solid: true, crowd: true}));
   // The existing native pit divider owns both drawing and collision.
   // Do not duplicate its wall with a second kit face.
@@ -115,6 +121,24 @@ function safety() {
         : side * (road.halfWidthAt(s) + 12.8);
       out.push(row('armco', s, lateral,
         {heading: Math.PI / 2, solid: true}));
+    }
+  }
+  return out;
+}
+
+// Braking boards (150, 100, 50 m) before the slow corners the track script leaves without them (its own
+// boards stand only before turns tighter than 40 m). Finishing pass, Claude, 15 October. Like Tremblant's,
+// they stand on the outside on straight road and face the oncoming cars, but here they stand just beyond
+// the open 12 m run-off (13 m from the road edge, inside the 14.3 m catch fence) and are not solid.
+const BOARD_CORNERS = Object.freeze(['Les Combes', 'Malmedy', 'Woodland Left', 'Fagnes', 'Campus', 'Stavelot']);
+function brakingBoards() {
+  const out = [];
+  for (const name of BOARD_CORNERS) {
+    const corner = named(name), side = -corner.dir;
+    for (const distance of [150, 100, 50]) {
+      const s = corner.s0 - distance;
+      if (road.pieceAt(wrap(s)).kind !== 'straight') continue;
+      out.push(row(`braking-board-${distance}`, s, side * (road.halfWidthAt(s) + 13), {heading: Math.PI}));
     }
   }
   return out;
@@ -180,6 +204,41 @@ export const ARDENNES_FOREST = Object.freeze({
   water: Object.freeze({glitter: false}),
   basins: RED_WATER_BASINS,
   fieldSize: 8, grandPrixLaps: 2,
+  // Team Room intel (docs/CIRCUITS.md section 7b.1), written by Claude in the finishing pass. Sectors stay
+  // the default thirds, so the course fingerprint and reference lap are unchanged. Target speeds and gears
+  // come from the reference lap; boards are named only where boards stand.
+  intel: {
+    flags: [
+      {id: 'red-water', kind: 'signature', s: 785, title: 'Red Water and The Wall', camera: {back: 40, ahead: 90}},
+      {id: 'kestrel', kind: 'overtaking', s: 1950, title: 'Kestrel into Les Combes'},
+      {id: 'bus-stop', kind: 'overtaking', s: 6259, title: 'The Bus Stop'},
+      {id: 'wall-crest', kind: 'crest', s: 940, title: 'Wall Crest'},
+      {id: 'la-fontaine', kind: 'corner', s: 390, title: 'La Fontaine'},
+      {id: 'riverside', kind: 'corner', s: 2755, title: 'Riverside'},
+      {id: 'long-left', kind: 'corner', s: 3519, title: 'Long Left'},
+    ],
+    notes: {
+      'la-fontaine': {brakeBoard: 100, line: 'Stay left on the way down, brake in a straight line, late apex, let it run out to the left.', note: 'Downhill into the tightest corner on the lap. Lap one is a scramble: brake at the 150 board and stay out of trouble.'},
+      'red-water': {line: 'Wide on the left, clip the left kerb over the stream, then straight across for The Wall.', note: 'The car squats at the bottom. Keep it straight through the dip; the stream is where you lose it.'},
+      'the-wall': {line: 'Inside kerb on the right, then let the climb carry you left.', note: 'Twenty-three percent. The car is pressed into the road, so it takes more throttle than you think.'},
+      'wall-crest': {line: 'Aim at the middle of the treetops, small steering only.', note: 'Blind and light over the top. Never turn while it is in the air; Kestrel opens straight ahead.'},
+      'les-combes': {brakeBoard: 100, line: 'Brake in a straight line on the right, turn in late, inside kerb.', note: 'The place to pass after Kestrel. Finish braking before you turn: it goes light over the top.'},
+      'combes-exit': {line: 'Hold the right, late apex on the left, drift right for Malmedy.', note: 'A clean exit here is free time down the hill.'},
+      'malmedy': {brakeBoard: 100, line: 'Brake early, it is downhill, middle apex.', note: 'The road falls away on the exit. Stay off the grass.'},
+      'riverside': {brakeBoard: 100, line: 'Wide on the left, brake at the 100 board, very late apex.', note: 'Downhill hairpin: the car pushes wide. Wait for the exit before the throttle.'},
+      'woodland-left': {line: 'Hug the left, use all the road on the way out.', note: 'Downhill and blind to the exit. Settle the car for Long Left.'},
+      'long-left': {line: 'Two apexes: touch the first, wait, take the second, throttle from the middle.', note: 'Fast, long and downhill. Brake before it, not in it; the gravel outside is there for a reason.'},
+      'fagnes': {line: 'Brake on the left, quick right, set up for the left.', note: 'First of a pair. Give a little here to get Fagnes Exit right.'},
+      'fagnes-exit': {line: 'Clip the left kerb, straight line on the way out.', note: 'The slower of the pair.'},
+      'campus': {line: 'Late apex, keep left on the exit.', note: 'Short run to Stavelot. Do not overdo it.'},
+      'stavelot': {line: 'Wide entry, early throttle, use the exit kerb.', note: 'The lowest point. Every km/h out of here counts all the way up to the Bus Stop.'},
+      'woodcutter': {line: 'Flat, inside line.', note: 'Uphill and fast: a touch of steering only.'},
+      'whitewood': {line: 'Flat out in a good car, tight on the left.', note: 'The brave corner. Lift if unsure; a lift costs less than the trees.'},
+      'bus-stop': {brakeBoard: 100, line: 'Brake at the 100 board, right kerb, then straight across.', note: 'Last chance to pass: go down the inside. Do not run wide; the left comes at once.'},
+      'bus-stop-2': {line: 'Clip the left kerb, keep the car straight over it.', note: 'The slowest point on the lap. The exit matters more than the entry.'},
+      'bus-stop-exit': {line: 'Early throttle, run out to the left onto Pit Straight.', note: 'Timing tower on your left. Flat from here to the line.'},
+    },
+  },
   runoffBands: LONG_LEFT_RUNOFF,
   circuitLandmarks: Object.freeze([
     Object.freeze({id: 'stavelot-valley-town', type: 'town', ...VILLAGE, height: 12,
@@ -197,13 +256,14 @@ export const ARDENNES_FOREST = Object.freeze({
     stream: Object.freeze({s: RED_WATER_S, width: 5, reach: 68, colour: 0x1c100b, basins: Object.freeze(RED_WATER_BASINS.map(basin => basin.id))}),
     valleyMist: Object.freeze([
       Object.freeze({s: named('Red Water').s0, lateral: 42, along: 75, across: 25, count: 12, height: 2, opacity: .23, colour: 0xd1ddda, fadeEnd: 1}),
-      Object.freeze({s: named('Riverside').s0, lateral: -42, along: 100, across: 26, count: 12, height: 2, opacity: .2, colour: 0xd1ddda, fadeEnd: 1}),
+      // Finishing pass: Riverside's bank is fainter (.2 to .12) so its edge does not show from above the hairpin.
+      Object.freeze({s: named('Riverside').s0, lateral: -42, along: 100, across: 26, count: 12, height: 2, opacity: .12, colour: 0xd1ddda, fadeEnd: 1}),
       Object.freeze({s: named('Stavelot').s0, lateral: -38, along: 95, across: 22, count: 10, height: 2.5, opacity: .18, colour: 0xd1ddda, fadeEnd: 1}),
       Object.freeze({s: named('Kestrel Straight').s1 - 70, lateral: 44, along: 110, across: 26, count: 10, height: 22, opacity: .18, colour: 0xe4e9e7, fadeEnd: 1}),
     ]),
   }),
-  // Existing damp asphalt presentation. No tyre or surface-grip change.
-  wetRoad: Object.freeze({performanceShare: .5}),
+  // Damp asphalt presentation only; no tyre or surface-grip change. The finishing pass removed the glossy
+  // night-street `wetRoad` look: its repaired patches mirrored the sky as blue slabs at the grid and The Wall.
   dampRoad: Object.freeze({colour: 0x747474, dryRoughness: .9, dampRoughness: .58, mist: true,
     shadeRanges: Object.freeze(['Kestrel Straight', 'Forest Run', 'Whitewood'].map(name => {
       const piece = named(name); return Object.freeze({from: piece.s0, to: piece.s1});
@@ -233,7 +293,7 @@ export const ARDENNES_FOREST = Object.freeze({
   // Gravel and grass colour only. The road and run-off grip stay unchanged.
   groundLeaves: Object.freeze({strength: 0, gravel: Object.freeze({colour: Object.freeze([.64, .61, .54]),
     width: 12, fade: 8, ends: 24, grass: Object.freeze([.56, .76, .52]), to: 55})}),
-  kitPlacements: Object.freeze([...paddock(), ...safety(), ...landmarks()]),
+  kitPlacements: Object.freeze([...paddock(), ...safety(), ...brakingBoards(), ...landmarks()]),
 });
 
 // Registration belongs to this course; generation and geometry stay unchanged.
