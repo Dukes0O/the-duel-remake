@@ -6,6 +6,7 @@ import {readFileSync, existsSync} from 'node:fs';
 import {DRIVE_RADIO_LINES, DRIVE_RADIO_VOICE, DRIVE_LESSON_CUES} from '../src/lessons/drive-radio-lines.js';
 import {HELI_RADIO_VOICE, createRadioChain} from '../src/lessons/radio-voice.js';
 import {SOUND_BANK, BUS_NAMES} from '../src/sound-bank.js';
+import {EngineAudio} from '../src/audio.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -64,5 +65,19 @@ for (const id of Object.keys(DRIVE_RADIO_LINES)) {
     `${id}: plays like the helicopter's radio lines`);
 }
 ok(typeof createRadioChain === 'function', 'the radio chain the lines play through is shared');
+
+// Start-up loading leaves the driving cues out, with the switch off or on:
+// the lesson loads its own sounds when it starts (like the helicopter's).
+const driveFiles = new Set(Object.values(DRIVE_LESSON_CUES).map(cue => '/assets/audio/' + cue.file));
+for (const on of [false, true]) {
+  const audio = Object.create(EngineAudio.prototype), requested = [];
+  Object.assign(audio, {flags: {enabled: name => on && name === 'driving-lessons'}, cueBuffers: {},
+    context: {decodeAudioData: async () => ({}), state: 'running'}, muted: false, paused: false});
+  const fetchBefore = globalThis.fetch;
+  globalThis.fetch = async url => { requested.push(url); return {ok: true, arrayBuffer: async () => new ArrayBuffer(1)}; };
+  try { await audio._loadCueBuffers(); } finally { globalThis.fetch = fetchBefore; }
+  ok(requested.length > 0, `start-up loads the ordinary cues (switch ${on ? 'on' : 'off'})`);
+  ok(!requested.some(url => driveFiles.has(url)), `start-up loads no driving lesson sound (switch ${on ? 'on' : 'off'})`);
+}
 
 console.log(`test-drive-lesson-lines: ${checks} checks passed (${creditsUsed} voice credits, ${runtimeBytes} bytes)`);

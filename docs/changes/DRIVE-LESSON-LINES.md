@@ -28,11 +28,15 @@ nothing changes for players.
   rows keep their order: `addCatalogEntry` sorts the whole catalog when it
   saves, so the original order was restored and only the new rows appended.
 - `src/sound-bank.js`: one import and one spread, `...DRIVE_LESSON_CUES`.
+- `src/audio.js` (hook added by the design session, see the card): the start-up
+  cue loader skips `driving-lessons` cues, like the helicopter's, so nobody
+  downloads them at start-up; the lesson loads its own when it starts.
 - `tools/test-drive-lesson-lines.mjs` (new): the lines match the design, one
   record per take, hashes, unchanged runtime copies, Brian with the
   helicopter lines' settings, credits within budget, the cone CC0 and
   credited, the bank entries behind the switch and played like the
-  helicopter's radio.
+  helicopter's radio, and start-up loading that requests none of the
+  seventeen files with the switch off or on (it fails without the skip).
 
 ## Voice and sound
 
