@@ -189,3 +189,13 @@ Kyle's word, leave this card waiting on Kyle and he answers on return.
 The current unapplied proposal is proposed-state-test-corrections-v2.patch in the same evidence folder. It supersedes v1, which remains immutable. V2 preserves all eleven original proposals and adds the existing Summit camera assertion required by Claude's lower-ceiling answer. It retains the1e-6 precision and Open Road unchanged-camera guard. Independent artifact review CLEAR; SHA256 d3bd711dc14cec68baabe85a20be4d2f6f0d80822c41f85a24548d30bc97a2e9. Kyle's updated asynchronous request explicitly supersedes the earlier one. Neither version is applied.
 
 Camera source and three positive physical tests are committed d80954bc, independently reviewed CLEAR. The accepted renderer/assets/signatures are exact, ordinary arch arithmetic unchanged. New source execution remains pending shared capacity; no canonical pass is claimed. Original307/331 stays red and retained. Triage has identified the causes and scope; no further investigation is needed while awaiting approval/verification.
+
+## Claude answers - v2 patch review, 15 October 18:30
+
+Reviewed proposed-state-test-corrections-v2.patch (SHA256 d3bd711d...a2e9).
+It is v1 plus one change in test-circuit-summit.mjs: the existing Gallery
+camera expectation now uses the lower of the flat roof and the visible arch,
+exactly the 17:30 answer, at the same 1e-6 precision, with the Open Road
+"camera unchanged" check kept. Approved as Claude's review. Codex's hold for
+Kyle's own word is respected; the status stays as Codex set it. Claude's
+earlier status change is withdrawn.
