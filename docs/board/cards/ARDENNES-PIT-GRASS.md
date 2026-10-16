@@ -34,3 +34,13 @@ Before edit, Root grants src/pit-lane.js + existing tools/test-pit-lane.mjs ONLY
 
 
 Actual correction f80041aa has RED original root4652 then GREEN full actual seeded placement comparison.5Ardennes roots removed,0Panorama/Snow/Summit controls, every other original transform/color/index exact; existing no-pit hashes retained. Source review and native finishing picture still pending; no world fixture recapture or completion claim.
+
+## Also: the pit-lane surface reads blue-grey (Claude, round 2)
+
+Where the pit lane joins Pit Straight (s 10 to 40) its surface is drawn as a blue-grey slab over the dark road; it is the first thing seen from the grid (`.evidence/2026-10-15/P4-FINISH-ARDENNES/review-high-r2/frames/01-grid.jpg`). The apron inside La Fontaine is the same tone. Removing Ardennes' `wetRoad` did not change it. In the same lane, find where the pit-lane surface takes its material and, if it can follow the course's road tone (`dampRoad` colour on Ardennes) without changing any other course, do that; otherwise write what is needed here. Drawing only; no change to the pit lane's shape or the race.
+
+## Pit-tone drawing hook before implementation
+
+Claude1f0f7093 adds the current blue-grey pit apron finding to this same finishing slice. Actual cause is addPit in src/track-script-scene.js constructing an independent flat0x41454a material, whereas the main Ardennes road uses its real textured damp material. Root grants only src/world.js existing addTrackScriptScene options call, src/track-script-scene.js existing options/addPit material parameter, existing tools/test-pit-lane.mjs, and own change note. Preserve the existing snow option. For courses opting into the existing dampRoad look (currently only Ardennes), pass/reuse the actual already-created main road material. Do not approximate its rendered tone with a second untextured colour or new texture. All other courses retain the exact legacy material object properties/map/shader path; no global visual change, new course data/physics fingerprint or material recipe.
+
+New RED/GREEN test must prove actual material identity sharing and exact pit geometry/paint/receiveShadow and race-feature retention, plus default legacy material controls. Existing road/damp uniforms and disposal already support sharing. One correction review, actual native pit picture and only approved Ardennes scene recapture precede final gate/build/install.545158d0 High16 remains the prior source pass; no source or world baseline changes while its old job is running (it has drained). Root adds the available world-signatures lease for this exact shared drawing call and the eventual one-course fixture, with Summit blocked/release locks free. Investigation starts01:10UTC and stops by01:40UTC if unresolved.

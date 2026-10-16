@@ -4556,7 +4556,7 @@
       "source": "elevenlabs",
       "key": "heli.radio.rescue.bump",
       "cue": "heli.radio.rescue.bump",
-      "text": "Easy! Watch the people on the line.",
+      "text": "Easy! You are hurting them.",
       "voiceId": "CwhRBWXzGAHq8TQ4Fs17",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -4565,13 +4565,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 35,
+      "creditsUsed": 27,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/heli-radio-rescue-bump.mp3",
-      "sha256": "220522a04227362863c9ec596e5aae5fa8c2511aab11c0f37eb4fbccde7819ca",
-      "bytes": 37659,
-      "generated": "2026-10-15"
+      "sha256": "9234b99b81980b14103de5d834d510f358abd2434c71a871f68d75b3fa33226d",
+      "bytes": 31390,
+      "generated": "2026-10-16"
     },
     {
       "source": "elevenlabs",
@@ -4640,7 +4640,7 @@
       "source": "elevenlabs",
       "key": "heli.radio.rescue.late",
       "cue": "heli.radio.rescue.late",
-      "text": "The ground team made it. Thanks for trying, Kestrel One.",
+      "text": "The ground team got there first. They are badly hurt and on their way to hospital.",
       "voiceId": "CwhRBWXzGAHq8TQ4Fs17",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -4649,13 +4649,76 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 56,
+      "creditsUsed": 82,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/heli-radio-rescue-late.mp3",
-      "sha256": "10123cdfd6c9abd71be4087e386028c6f1bdd69e45280716acb7f67a0cbc3acb",
-      "bytes": 50198,
-      "generated": "2026-10-15"
+      "sha256": "8186c250037046a19c6eff96449b7847dc962c24e003b0c4fe5f0d46c5683c68",
+      "bytes": 75275,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "heli.radio.rescue.hurt",
+      "cue": "heli.radio.rescue.hurt",
+      "text": "They are hurt, but they will be all right. The paramedics have them.",
+      "voiceId": "CwhRBWXzGAHq8TQ4Fs17",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 68,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/heli-radio-rescue-hurt.mp3",
+      "sha256": "234f59b6dccca10a58c26ee8de1d5e75a760730bf1ebeeccda8db5ad9b3fa0d6",
+      "bytes": 61065,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "heli.radio.rescue.badly",
+      "cue": "heli.radio.rescue.badly",
+      "text": "They are badly hurt. The paramedics are taking them to hospital.",
+      "voiceId": "CwhRBWXzGAHq8TQ4Fs17",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 64,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/heli-radio-rescue-badly.mp3",
+      "sha256": "81db355f12b58d2465102147a4b83ca14a573098972a78fd89803e7d26dbb16e",
+      "bytes": 62736,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "heli.radio.rescue.cold",
+      "cue": "heli.radio.rescue.cold",
+      "text": "They are getting cold, Kestrel One. Hurry.",
+      "voiceId": "CwhRBWXzGAHq8TQ4Fs17",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 42,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/heli-radio-rescue-cold.mp3",
+      "sha256": "b0d5ad4dfd01c7686b7a7c440ab9be35e413976efeaa7aa1d9ec84590f9b7e2b",
+      "bytes": 40585,
+      "generated": "2026-10-16"
     },
     {
       "source": "elevenlabs",
@@ -4847,6 +4910,27 @@
       "generated": "2026-10-15"
     },
     {
+      "source": "elevenlabs",
+      "key": "heli.radio.supply.late",
+      "cue": "heli.radio.supply.late",
+      "text": "The lodge sent a snowcat in the end. They are still short of supplies.",
+      "voiceId": "CwhRBWXzGAHq8TQ4Fs17",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 70,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/heli-radio-supply-late.mp3",
+      "sha256": "cb60ac9fb7b6a8227b676dc7118af10b86fccf0d5a8edc856cf95652873faa9f",
+      "bytes": 65662,
+      "generated": "2026-10-16"
+    },
+    {
       "source": "freesound",
       "key": "201888",
       "title": "Snow removing.mp3",
@@ -4997,6 +5081,382 @@
         "integratedLufs": null,
         "truePeakDbtp": null,
         "loopSeam": null
+      }
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.challenge.one",
+      "cue": "drive.radio.corner.challenge.one",
+      "text": "That is one. Again.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 19,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-challenge-one.mp3",
+      "sha256": "9b688eeb135f82aeaeb258c911e2b9f64a21e0eb6fea196853ed1facbb2c43a6",
+      "bytes": 24702,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.challenge.reset",
+      "cue": "drive.radio.corner.challenge.reset",
+      "text": "Not that time. Back to zero. You know how.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 42,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-challenge-reset.mp3",
+      "sha256": "1a31d82051cb36f987ab0c6b3249c432e3f52c5435fecf4f44631492f719a555",
+      "bytes": 42674,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.challenge.start",
+      "cue": "drive.radio.corner.challenge.start",
+      "text": "Good. Now beat my time through the corner. Three in a row.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 58,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-challenge-start.mp3",
+      "sha256": "868cf7d2d8ae6434e1fef2cb3d345a676b53614e307c320abcf8b507149e0f58",
+      "bytes": 47690,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.challenge.two",
+      "cue": "drive.radio.corner.challenge.two",
+      "text": "Two. One more.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 14,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-challenge-two.mp3",
+      "sha256": "36023e0f1fcd9781ab2df122901a87da339727e35f13d8e3437d95f66f342a36",
+      "bytes": 21776,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.coach.brake",
+      "cue": "drive.radio.corner.coach.brake",
+      "text": "Brake at the first cone. Not before, not after.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 47,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-coach-brake.mp3",
+      "sha256": "e7b69240b44c887f238bd76cd095722d1ad78b0fe6a72f502188c2e6e6745532",
+      "bytes": 56049,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.coach.exit",
+      "cue": "drive.radio.corner.coach.exit",
+      "text": "Back on the gas sooner, and let the car run out wide.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 53,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-coach-exit.mp3",
+      "sha256": "fd3d91e4efe6a6a83cd68ebd6d79cce99859a74faccef7db4f079ed3ac596f5c",
+      "bytes": 51452,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.coach.inside",
+      "cue": "drive.radio.corner.coach.inside",
+      "text": "Get closer to the inside cone. Use the whole road.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 50,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-coach-inside.mp3",
+      "sha256": "8ff329ec67ec7a070b757db1d27de07526fcdadbe93022eeb2c3d7624b896c5c",
+      "bytes": 53123,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.coach.screech",
+      "cue": "drive.radio.corner.coach.screech",
+      "text": "I heard the tyres. Brake a little earlier and keep it smooth.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 61,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-coach-screech.mp3",
+      "sha256": "a0911eb9db43c9d06d398d2635f619e1cdebb55684873c463a5f9e755645c97e",
+      "bytes": 57721,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.intro",
+      "cue": "drive.radio.corner.intro",
+      "text": "Welcome to the track. Today is the most important corner skill there is: braking. Forget the course boards today and watch my cones.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 132,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-intro.mp3",
+      "sha256": "f5bdea8f12c4cc9a43797bbc35fc83834f8d434f7c6dc0bc734fc0d0a3e8a723",
+      "bytes": 132536,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.late.early",
+      "cue": "drive.radio.corner.late.early",
+      "text": "You braked early. Good instinct, but this time I wanted you to feel it. That one still counts.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 94,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-late-early.mp3",
+      "sha256": "f88f11aadec46eb51d992d2134893c987943b9652a2f3f1a6cd1614094783001",
+      "bytes": 92412,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.late.result",
+      "cue": "drive.radio.corner.late.result",
+      "text": "Hear that screech? That was your tyres sliding, and sliding is slow. Look at the time you lost.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 95,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-late-result.mp3",
+      "sha256": "edabf04be4a7f4e81cfe7351e5145a892f59b4569a004d3045ba95a2d97fd1b5",
+      "bytes": 104532,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.late.start",
+      "cue": "drive.radio.corner.late.start",
+      "text": "Let us see what happens when you leave it late. Keep your foot down and brake at the red board.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 95,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-late-start.mp3",
+      "sha256": "b6686605e83bfc923f2cd1aa127713b0e1f0ad50d4a89558c4ebdd34b5f66730",
+      "bytes": 80709,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.pass",
+      "cue": "drive.radio.corner.pass",
+      "text": "Three in a row. You have earned better brakes, and the next lesson is open.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 75,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-pass.mp3",
+      "sha256": "c02dd342706d1fb6ec942c6527bf821ed6c3885af62dc78f169d664a4a735d56",
+      "bytes": 68588,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.right.pass",
+      "cue": "drive.radio.corner.right.pass",
+      "text": "That is it. Quiet tyres, clean line, and quicker too.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 53,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-right-pass.mp3",
+      "sha256": "b04cc4fe3ca4e09ad22636a00e81568c93c2572eabb3484c60ccc1d32d8c03ba",
+      "bytes": 56049,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.corner.right.start",
+      "cue": "drive.radio.corner.right.start",
+      "text": "Now the right way. Brake hard at the first cone while the car is straight, turn in, touch the inside cone, and accelerate out wide past the third.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 146,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-corner-right-start.mp3",
+      "sha256": "368a4c9afb85ad49f073e199741b9da039aa7ffc125bfe60a17f0e1fd8c581d8",
+      "bytes": 150508,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "drive.radio.retake",
+      "cue": "drive.radio.retake",
+      "text": "Back for more? Good. Practice is how the fast drivers got fast.",
+      "voiceId": "nPczCjzI2devNBz1zQrb",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 63,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/drive-radio-retake.mp3",
+      "sha256": "aca02feb8f50564b643670269c545b103a54d0f9db7f9376cfbcfe4c576e2ec8",
+      "bytes": 61065,
+      "generated": "2026-10-16"
+    },
+    {
+      "source": "freesound",
+      "key": "525100",
+      "cue": "lesson.cone",
+      "title": "PlasticImpactB4.wav",
+      "author": "jomse",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/jomse/sounds/525100/",
+      "download": "https://cdn.freesound.org/previews/525/525100_5614717-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.464989,
+      "file": "freesound/525100-plasticimpactb4-wav.ogg",
+      "sha256": "c63483190d7ad57e57313ed93fe6ab0a357d56efa5e5d9c655bd2ee0d2baaaf9",
+      "bytes": 12227,
+      "fetched": "2026-10-16",
+      "processing": {
+        "script": "tools/audio/build-drive-lessons.mjs",
+        "id": "lesson.cone",
+        "source": "525100",
+        "start": 0,
+        "duration": 0.46,
+        "highpass": 120,
+        "lowpass": 2600,
+        "loudness": -22,
+        "quality": 5,
+        "file": "public/assets/audio/lessons/cone.ogg",
+        "normalization": "FFmpeg loudnorm, TP -3, LRA 11; limiter .70 without auto-level",
+        "codec": "Vorbis q5"
+      },
+      "runtime": {
+        "file": "public/assets/audio/lessons/cone.ogg",
+        "sha256": "3c24334740fc475c6a755d90643f48fdae2857b81b8c0663bde890d2c8bc1367",
+        "bytes": 7603,
+        "sampleRate": 48000,
+        "channels": 1,
+        "integratedLufs": -22.05,
+        "truePeakDbtp": -3.24
       }
     }
   ]
