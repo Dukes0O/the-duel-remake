@@ -300,7 +300,10 @@ tasks:
     owner: "codex"
     lane: "TOOL"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-overnight-01a12e4f
+    branch: codex/qa-audio-crash-reliability
+    locks: []
     needs: []
     priority: "low"
     details: "docs/board/cards/QA-AUDIO-CRASH-RELIABILITY.md"
