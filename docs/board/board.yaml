@@ -148,6 +148,16 @@ tasks:
     flag: "grand-prix"
     details: "docs/board/cards/P4-COACH.md"
 
+  - id: TEAMROOM-VARIANT-NOTES
+    title: "Engineer notes for the three reverse variant courses"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "backlog"
+    needs: [P4-FINISH-TEAMROOM]
+    locks: []
+    details: "docs/board/cards/TEAMROOM-VARIANT-NOTES.md"
+
   - id: P4-FINISH-TEAMROOM
     title: "Claude's finishing pass: the Team Room"
     owner: "claude"
