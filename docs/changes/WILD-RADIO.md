@@ -84,7 +84,9 @@ sound wrong can be recut by changing one recipe line.
   helicopter rows) and `test-heli-hooks.mjs` (283): passed.
 - Lane tier (PowerShell, `--tier lane --changed --jobs 4 --keep-going`)
   after the review fixes: 168 passed, 0 failed, 0 not run in 1757 s.
-  `npm run build`: passed.
+  `npm run build`: passed. Again after merging integration (DRIVE-LESSON-CORE
+  had moved the radio voice list; both files merged without a conflict):
+  169 passed, 0 failed, 0 not run in 1395 s; build passed.
 
 ## Changed assertions
 
