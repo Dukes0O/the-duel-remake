@@ -23,3 +23,8 @@ This is the existing Root scheduling duty applied to named ready work, not a new
 ## Queue correction after Arena cleanup
 
 Arena turn is consumed: build4297ms, conflict-free merge74004eb1; its owning chat verified exact current-run receipt/merged5c47121b/clean source/integration-only junction and recycled that folder, then removed only its missing registration and merged branch. Cups and combined Ardennes High have also been admitted. The fourth F1 round2/Summit replay turn is still UNRUN and remains next; the earlier Arena handoff's ordinary-start wording did not consume that fourth turn. No extra gate or source-only work claims an admission.
+
+
+## Repeated actual admission overlap, card-answer chat
+
+At19:02PT, existing process inspection reports four separate roots: Ardennes40272(wrapper30512), F140924, finishing29012 and Bolide24920. Child source paths prove the last two are finish-ardennes and bolide, not nested test fixtures. This is bounded proof only, no new investigation or machinery. Integration inbox now uses the already established manual STARTING drain notice: preserve admitted jobs, no follow-on; honor the Ardennes release reservation; after its expiry/release and roots<3, one short Summit two-suite/jobs2 verification gets the next ordinary turn and clears the notice. The corrected source has waited since18:40 and has no active job. No foreign process stopped.
