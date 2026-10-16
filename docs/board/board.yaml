@@ -159,11 +159,10 @@ tasks:
 
   - id: P4-INTEL-LEVELS
     title: "Team Room: earning intel levels and the reference ghost"
-    owner: "codex"
+    owner: "claude"
     lane: "RACE"
     size: "S"
-    status: "building"
-    claimed_by: codex-intel-levels-2026-10-15
+    status: "ready"
     branch: codex/intel-levels
     locks: []
     needs: [P4-INTEL-TELEMETRY, P4-CAREER]

@@ -127,3 +127,16 @@ with no old assertion changed (none changes, so no further test review is
 needed). Rerun only the semantic browser scenario on the changed source; the
 passed photo sheets stand (rule 19). The 22:30 finish-or-hand-back deadline
 stays.
+
+
+## Committed early handback to Claude, 15 October20:42PT
+
+Kyle authorized finish by22:30 or handback. Root hands this retained lane back now, with both locks already free, so the core queue does not wait on the last presentation decision. Board ownerClaude/ready/locks[]. Exact clean committed sourceb7df3fde0c6599833204dfdbe6bbd8ba33e97c13, branchcodex/intel-levels, folderC:/Users/kyleb/.codex/worktrees/wasteland-integration/intel-levels. No uncommitted code or new placeholder. Independent code/save reviewCLEAR on98656043 and fixture-onlyb7deltaCLEAR.
+
+Completed: pure and actual native lap/GP earning, once-only400/800purchases, owner-safe optional save normalization, TeamRoom level gates/messages, per-playerOff/Mybest/Team, isolated real team sampler preserving personal recording/storage, actual26events/34references/9701nativeposes with every historical field exact. Actual-App Pacific/Panorama real-data playback PASS1346.4659ms. Exact native data receipts are integration.evidence/2026-10-15/P4-INTEL-LEVELS/native-poses-b887f5de.
+
+Actual corrected photos acceptanceb7:72pictures/3JPEGs,0issues/warnings, PASS. Keep these for the finishing pass; do not repeat. Semanticb7:31Highviews plus6realmap interactions reached, then missing native TeamRoom entry atfirstvariant; FAILED, not a full scenario pass. Production course-access-ui excludes all requirement-bearing events. The exact proposed5variant-only presentation hook is the immediately preceding Claude question; no such edit has run. ExistingAttack open-route/solo exclusion and old assertions stay. Remaining: settle that hook, implement/test only that entry if approved, complete semantic scenario atbothqualities/variants, final build and accepted gate coverage, merge. No new native pose generation, photo retake or repeated passing core suite.
+
+One canonical lane/jobs4 on exactb7 is already RUNNING: Rootexec96228, runnerPID49744 (parent42624), started20:37:45PT. Its actual result will write integration.evidence/2026-10-15/P4-INTEL-LEVELS/final-b7df3fde/lane.json andlane-receipt.json; log beside them. Do not launch a duplicate or call it passed before receipt. Its wrapper will leave build pending because this inbox changed; build once after current admission, not a gate repeat. Photos/semantic original packets are still in lane.evidence/2026-10-15/P4-INTEL-LEVELS/final-b7df3fde/{team-room,team-room-photos}; retain the failed earlier986pair and cancelled initial lane separately. No full tier or timing is requested.
+
+Core/save files remain frozen and leases released: Summit and Rescue may start in tonight's order. Any later App/progression conflict or edit needs its own new lease, not a reclaimed indefinite Intel hold. Do not delete this unmerged lane. No merge/live release claim, real-save access, push, or overnight-automation restart. Root's handback is complete before22:30, not an extension of that cutoff.
