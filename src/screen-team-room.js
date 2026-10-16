@@ -13,7 +13,10 @@ const symbol = {corner: '•', crest: '↑', overtaking: '↗', signature: '★'
 // clicked one by one. Push them apart until every flag has its own spot; the
 // true position stays in anchorX/anchorY for the thin line drawn back to it.
 export const MAP_FLAG_GAP = 46;
-export function spreadMarkers(points, {gap = MAP_FLAG_GAP, minX = 24, maxX = 976, minY = 28, maxY = 662} = {}) {
+// `fixed` lists spots that never move (the numbered corner circles): a flag keeps `fixedGap` away from each, so
+// a flag never sits on a circle and hides the number that opens the same corner.
+export const MAP_CIRCLE_GAP = 28;
+export function spreadMarkers(points, {gap = MAP_FLAG_GAP, minX = 24, maxX = 976, minY = 28, maxY = 662, fixed = [], fixedGap = MAP_CIRCLE_GAP} = {}) {
   const spots = points.map((point, index) => ({...point, index}));
   for (let pass = 0; pass < 80; pass++) {
     let moved = false;
@@ -24,10 +27,76 @@ export function spreadMarkers(points, {gap = MAP_FLAG_GAP, minX = 24, maxX = 976
       const push = (gap - distance) / 2 + .05, ux = dx / distance, uy = dy / distance;
       spots[a].x -= ux * push;spots[a].y -= uy * push;spots[b].x += ux * push;spots[b].y += uy * push;moved = true;
     }
+    for (const spot of spots) for (const anchor of fixed) {
+      let dx = spot.x - anchor.x, dy = spot.y - anchor.y, distance = Math.hypot(dx, dy);
+      if (distance >= fixedGap) continue;
+      if (distance < 1e-6) {dx = 0;dy = -1;distance = 1;}
+      const push = fixedGap - distance + .05;
+      spot.x += dx / distance * push;spot.y += dy / distance * push;moved = true;
+    }
     for (const spot of spots) {spot.x = Math.min(maxX, Math.max(minX, spot.x));spot.y = Math.min(maxY, Math.max(minY, spot.y));}
     if (!moved) break;
   }
   return spots;
+}
+
+// Corner name labels. Each label takes a spot beside its numbered circle that touches no flag marker, no
+// other circle, no START mark and no other label, preferring spots that keep the label off the road. A
+// label with no free spot is hidden; it still shows when its corner is the selected flag.
+export const MAP_LABEL = {height: 16, charWidth: 7.6, margin: 3, gap: 6, circle: 14, flag: 13};
+const rectsTouch = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+const grow = (rect, by) => ({x0: rect.x0 - by, y0: rect.y0 - by, x1: rect.x1 + by, y1: rect.y1 + by});
+const around = (x, y, half) => ({x0: x - half, y0: y - half, x1: x + half, y1: y + half});
+
+export function placeMapLabels(corners, flags, start, roadPoints, {width = 1000, height = 690} = {}) {
+  const {height: labelHeight, charWidth, margin, gap, circle} = MAP_LABEL;
+  const blocks = [
+    ...flags.map(flag => ({rect: around(flag.x, flag.y, MAP_LABEL.flag + margin)})),
+    ...corners.map((corner, index) => ({owner: index, rect: around(corner.x, corner.y, circle + margin)})),
+    {rect: {x0: start.x - 14, y0: start.y - 12, x1: start.x + 62, y1: start.y + 12}},
+  ];
+  const spotsFor = corner => {
+    const labelWidth = Math.ceil(corner.authoredName.length * charWidth) + 4;
+    const near = circle + gap, middleX = corner.x - labelWidth / 2, middleY = corner.y - labelHeight / 2;
+    const spots = [
+      {anchor: 'start', x0: corner.x + near, y0: middleY},                                  // right of the circle
+      {anchor: 'end', x0: corner.x - near - labelWidth, y0: middleY},                       // left of the circle
+      {anchor: 'middle', x0: middleX, y0: corner.y - near - labelHeight},                   // above
+      {anchor: 'middle', x0: middleX, y0: corner.y + near},                                 // below
+      {anchor: 'start', x0: corner.x + circle - 2, y0: corner.y - near - labelHeight + 2},  // above and right
+      {anchor: 'end', x0: corner.x - circle + 2 - labelWidth, y0: corner.y - near - labelHeight + 2},
+      {anchor: 'start', x0: corner.x + circle - 2, y0: corner.y + near - 2},                // below and right
+      {anchor: 'end', x0: corner.x - circle + 2 - labelWidth, y0: corner.y + near - 2},
+    ];
+    // Corners on the right half of the map try the left side first, so labels read inward.
+    if (corner.x > width / 2) [spots[0], spots[1]] = [spots[1], spots[0]];
+    return spots.map(spot => {
+      const rect = {x0: spot.x0, y0: spot.y0, x1: spot.x0 + labelWidth, y1: spot.y0 + labelHeight};
+      const textX = spot.anchor === 'start' ? rect.x0 : spot.anchor === 'end' ? rect.x1 : (rect.x0 + rect.x1) / 2;
+      return {anchor: spot.anchor, rect, textX, textY: (rect.y0 + rect.y1) / 2 + 4};
+    });
+  };
+  // Standing over the road costs a little; touching a marker, circle, START mark or another label is never allowed.
+  const roadUnder = rect => roadPoints.filter(point =>
+    point.x > rect.x0 - 5 && point.x < rect.x1 + 5 && point.y > rect.y0 - 5 && point.y < rect.y1 + 5).length;
+  const crowding = corner => corners.filter(other => other !== corner && Math.hypot(other.x - corner.x, other.y - corner.y) < 110).length +
+    flags.filter(flag => Math.hypot(flag.x - corner.x, flag.y - corner.y) < 90).length;
+  const labels = new Array(corners.length).fill(null), taken = [];
+  // The most crowded corners choose first, so a label is hidden only when its corner really has no room.
+  const order = corners.map((corner, index) => index).filter(index => corners[index].authoredName)
+    .sort((a, b) => crowding(corners[b]) - crowding(corners[a]) || a - b);
+  for (const index of order) {
+    const options = spotsFor(corners[index]);
+    const best = options.map((option, rank) => ({option, rank}))
+      .filter(({option}) => option.rect.x0 >= 2 && option.rect.x1 <= width - 2 && option.rect.y0 >= 2 && option.rect.y1 <= height - 2 &&
+        !blocks.some(block => block.owner !== index && rectsTouch(grow(option.rect, margin), block.rect)) &&
+        !taken.some(rect => rectsTouch(grow(option.rect, margin), rect)))
+      .map(({option, rank}) => ({option, cost: roadUnder(option.rect) * 10 + rank}))
+      .sort((a, b) => a.cost - b.cost)[0]?.option;
+    labels[index] = {...(best ?? options[0]), hidden: !best};
+    if (best) taken.push(best.rect);
+  }
+  return labels;
 }
 
 export function teamRoomMap(dossier) {
@@ -43,18 +112,23 @@ export function teamRoomMap(dossier) {
   };
   const flagIds = new Set(dossier.flags.filter(flag => flag.kind === 'corner').map(flag => flag.id));
   // Each pin rides above the spot it marks, then moves aside only if it crowds another.
-  const pins = spreadMarkers(dossier.flags.map(flag => {const spot = at(flag.s);return {x: spot.x, y: spot.y - 24, anchorX: spot.x, anchorY: spot.y};}));
+  const pins = spreadMarkers(dossier.flags.map(flag => {const spot = at(flag.s);return {x: spot.x, y: spot.y - 24, anchorX: spot.x, anchorY: spot.y};}),
+    // The START mark and its word are kept clear too, so a flag never hides them.
+    {fixed: [...analysis.corners.map(corner => at(corner.apexS)), ...[22, 48].map(across => ({x: at(0).x + across, y: at(0).y}))]});
+  const corners = analysis.corners.map(corner => ({...at(corner.apexS), id: cornerId(corner),
+    flagId: flagIds.has(cornerId(corner)) ? cornerId(corner) : null,
+    number: corner.number, name: corner.name || `Corner ${corner.number}`, authoredName: corner.name}));
+  const flags = dossier.flags.map((flag, index) => ({...flag, x: pins[index].x, y: pins[index].y,
+    anchorX: pins[index].anchorX, anchorY: pins[index].anchorY}));
+  const start = at(0);
+  const labels = placeMapLabels(corners, flags, start, analysis.mapPoints.map(([x, z]) => project(x, z)));
   return {
     segments: analysis.mapPoints.map(([x, z, mph], index) => {
       const next = analysis.mapPoints[(index + 1) % analysis.mapPoints.length];
       return {from: project(x, z), to: project(next[0], next[1]),
         colour: referenceSpeedColour(mph, analysis.reference.minMph, analysis.reference.topMph)};
     }),
-    corners: analysis.corners.map(corner => ({...at(corner.apexS), id: cornerId(corner),
-      flagId: flagIds.has(cornerId(corner)) ? cornerId(corner) : null,
-      number: corner.number, name: corner.name || `Corner ${corner.number}`, authoredName: corner.name})),
-    flags: dossier.flags.map((flag, index) => ({...flag, x: pins[index].x, y: pins[index].y,
-      anchorX: pins[index].anchorX, anchorY: pins[index].anchorY})), start: at(0),
+    corners: corners.map((corner, index) => ({...corner, label: labels[index]})), flags, start,
   };
 }
 
@@ -65,13 +139,15 @@ function mapMarkup(dossier) {
   const leaders = map.flags.map(flag => `<line x1="${flag.anchorX.toFixed(1)}" y1="${flag.anchorY.toFixed(1)}" x2="${flag.x.toFixed(1)}" y2="${flag.y.toFixed(1)}"/><circle cx="${flag.anchorX.toFixed(1)}" cy="${flag.anchorY.toFixed(1)}" r="3.5"/>`).join('');
   const corner = item => {
     const label = item.flagId ? ` data-team-flag="${escape(item.flagId)}" role="button" tabindex="0" aria-pressed="false" aria-label="Corner ${item.number}: ${escape(item.name)}. Study the approach."` : '';
-    return `<g class="${item.flagId ? 'team-map-corner' : ''}" transform="translate(${item.x.toFixed(1)} ${item.y.toFixed(1)})"${label}><circle r="14"/><text text-anchor="middle" dy="5">${item.number}</text>${item.authoredName ? `<text x="${item.x > 500 ? -22 : 22}" dy="5" text-anchor="${item.x > 500 ? 'end' : 'start'}" class="team-map-name">${escape(item.authoredName)}</text>` : ''}<title>${escape(item.name)}</title></g>`;
+    // The name is drawn beside the circle, not inside the pressable marker, so the marker's own box stays on its circle.
+    const name = item.label ? `<text x="${item.label.textX.toFixed(1)}" y="${item.label.textY.toFixed(1)}" text-anchor="${item.label.anchor}" class="team-map-name${item.label.hidden ? ' team-map-name-hidden' : ''}">${escape(item.authoredName)}</text>` : '';
+    return `<g class="${item.flagId ? 'team-map-corner' : ''}" transform="translate(${item.x.toFixed(1)} ${item.y.toFixed(1)})"${label}><circle r="14"/><text text-anchor="middle" dy="5">${item.number}</text><title>${escape(item.name)}</title></g>${name}`;
   };
   return `<div class="team-map"><svg viewBox="0 0 1000 690" role="group" aria-label="${escape(dossier.name)}. Track coloured by reference speed. Numbered corners and start line.">
     <g fill="none" stroke-width="9" stroke-linecap="round">${segments}</g>
+    <g transform="translate(${map.start.x.toFixed(1)} ${map.start.y.toFixed(1)})"><rect x="-10" y="-7" width="20" height="14" fill="#f0ead5" stroke="#081b24" stroke-width="3"/><text x="16" y="6" class="team-map-start">START</text></g>
     <g class="team-map-leaders" stroke-width="1.5">${leaders}</g>
     <g class="team-map-corners">${map.corners.map(corner).join('')}</g>
-    <g transform="translate(${map.start.x.toFixed(1)} ${map.start.y.toFixed(1)})"><rect x="-10" y="-7" width="20" height="14" fill="#f0ead5" stroke="#081b24" stroke-width="3"/><text x="16" y="6" class="team-map-start">START</text></g>
     </svg>${map.flags.map(flag => `<button type="button" class="team-map-flag team-kind-${flag.kind}" data-team-flag="${escape(flag.id)}" data-team-label="${escape(flag.title)}" style="left:${(flag.x / 10).toFixed(2)}%;top:${(flag.y / 6.9).toFixed(2)}%" aria-pressed="false" aria-label="${escape(kindName[flag.kind])}: ${escape(flag.title)}">${symbol[flag.kind]}</button>`).join('')}<div class="team-map-tip" data-team-tip role="presentation" hidden></div></div>`;
 }
 

@@ -14,6 +14,8 @@
 /* Placed with margins, not a transform: the game's global button:active{transform} would move the pin out from under the mouse between press and release. */
 .team-map-flag{position:absolute;margin:-13px 0 0 -13px;width:26px;height:26px;border-radius:7px;border:1px solid #dfd18a;background:#17303b;color:#f8db80;font-size:15px;cursor:pointer;padding:0;box-shadow:0 3px 8px #0007}
 .team-map-corners .team-map-name{font-size:12px;paint-order:stroke;stroke:#081b23;stroke-width:4px;stroke-linejoin:round}
+/* A name with no free spot beside its circle stays hidden until that corner is the chosen flag. */
+.team-map-corners .team-map-name-hidden{display:none}.team-map-corner[aria-pressed=true]+.team-map-name-hidden{display:inline}
 .team-map-flag:hover,.team-map-flag[aria-pressed=true]{background:#d5c378;color:#08212c}.team-map-flag[aria-pressed=true]{box-shadow:0 0 0 3px #f2d78299,0 3px 8px #0007}
 .team-map-leaders line{stroke:#dfd18a99}.team-map-leaders circle{fill:#dfd18a}
 .team-map-corner{cursor:pointer}.team-map-corner:hover circle,.team-map-corner[aria-pressed=true] circle{fill:#d5c378}.team-map-corner:hover text:not(.team-map-name),.team-map-corner[aria-pressed=true] text:not(.team-map-name){fill:#08212c}.team-map-corner:focus{outline:none}.team-map-corner:focus-visible circle{stroke:#f2d782;stroke-width:5}
