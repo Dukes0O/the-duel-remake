@@ -31,7 +31,7 @@ const wrap = (s, length) => ((s % length) + length) % length;
 function groundPoint(course, s, lateral) {
   const world = course.worldAt(s, lateral), ground = course.groundAt(s, lateral);
   return world && Number.isFinite(world.x) && Number.isFinite(world.z) && Number.isFinite(ground?.y)
-    ? {x:world.x, y:ground.y + .06, z:world.z} : null;
+    ? {x:world.x, y:Math.max(Number.isFinite(world.y) ? world.y : ground.y, ground.y) + .06, z:world.z} : null;
 }
 
 // The caller supplies the same current, fingerprint-checked dossier used by

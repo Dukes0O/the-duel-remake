@@ -71,3 +71,15 @@ test('real setup helper binds once, reflects the current player and disables exc
  choices.mode='timetrial';app.getIntelLevel=()=>1;syncCoachChoice(root,app,choices,stage);assert.equal(group.hidden,true);
  assert.deepEqual(app.profile,{});assert.equal(Object.hasOwn(choices,'coach'),false);
 });
+
+test('braking guide is above the actual rendered asphalt, not buried by terrain relief',async()=>{
+ const THREE=await import('three');const {Course}=await import('../src/course.js');const {COURSE}=await import('../src/config.js');
+ const {referenceLap}=await import('../src/reference-laps.js');const {buildTrackDossier}=await import('../src/track-analysis.js');const {strip}=await import('../src/world-surfaces.js');
+ const ref=referenceLap('panorama-ridge','fixed'),actual=new Course(COURSE.find(c=>c.id==='panorama-ridge'),ref.seed);
+ const markers=buildCoachMarkers(actual,buildTrackDossier(actual,{route:'fixed',reference:ref}),context);
+ const road=new THREE.Mesh(strip(actual,s=>-actual.roadHalfWidthAt(s),s=>actual.roadHalfWidthAt(s),.035),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));
+ road.updateMatrixWorld();try{
+  const brake=markers[0].brake;const ray=new THREE.Raycaster(new THREE.Vector3(brake.x,brake.y+100,brake.z),new THREE.Vector3(0,-1,0));
+  const hit=ray.intersectObject(road)[0];assert.ok(hit,'actual road exists at reference braking point');assert.ok(brake.y>hit.point.y+.01,'guide clears the visible asphalt by at least1cm');assert.ok(brake.y-hit.point.y<.1,'guide stays close to road');
+ }finally{road.geometry.dispose();road.material.dispose();}
+});

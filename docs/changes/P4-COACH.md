@@ -13,3 +13,10 @@ Initial planner tests RED for missing implementation, then6/6 PASS including act
 ## Removed
 
 Nothing replaced. No scratch captures, new assets, saved fields or obsolete code path.
+
+
+## Actual private presentation found and fixed a height bug
+
+Exactb6150084 first canonical52/52/jobs4/0unrun371114.0033ms passed, but the manual native private view did not prove guide visibility. Actual road geometry raycast at Panorama brake300.925649m proved terrain ground13.94m +.06 placed marker14.00m below drawn asphalt14.03499985m. New actual rendered-road regression RED, then fix uses the higher actual road/ground height +.06;9/9focused planner/UI/native-road cases PASS. No old assertion/geometry/scene rule or saved data changed. Required review confirmation, changed-source canonical/build and corrected-source visibility check still pending. The earlier52pass belongs only tob6150084, no false final pass.
+
+Actual original-source private UI controls passed: notes purchase through real800credit UI, Coach defaultOff/On and HardGP hidden; console error/warning log empty. No real saves touched. The manual test's wall crash is QA driving, not a handling acceptance or recorded regression.
