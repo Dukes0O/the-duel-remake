@@ -140,3 +140,18 @@ lessons (63). Lane tier (`--tier lane --changed --jobs 4 --keep-going`,
 PowerShell, working tree before commit): 141 passed, 0 failed, 0 not run,
 619.41 s; full log in the lane's `.qa-dist/lane.log`. `npm run build`: passed.
 No browser scenarios, no frame check (nothing here is drawn).
+
+## Claude's review notes
+
+- Changed assertion in `tools/test-heli-rescue-session.mjs`: "no Take button
+  yet" becomes "the Take button is there", because this card adds it. Claude's
+  review: the old check recorded the missing button; the other recovery-row
+  checks are unchanged; nothing is loosened.
+- `src/app.js` (Claude, holds busy-game-files): `summitRunEnabled` is passed
+  only when fire, `rescue` and `summit-run` are all on. Summit Run is live as a
+  course, so gating it on the course switch alone would show an unfinished
+  helicopter destination to players; with `rescue` still dev it stays in
+  development.
+- Summit rescues (supply pickup and truck, the flying ceiling below the
+  pickup), the fourth destination button and Real-mode hooking go to later
+  cards (SUMMIT-HELI-RESCUES, RESCUE-VIEW).
