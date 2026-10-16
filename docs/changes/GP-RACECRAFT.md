@@ -58,3 +58,24 @@ Claude's written 08:30 card answer approves the precise CPU racecraft dev invent
 Actual pure catalog checks: feature switches91checks PASS; wasteland8/8 PASS in102.4645ms. Neither command starts a browser, simulator, balance job, build or canonical gate. The source change is inventory only: the reviewed3b175051 runtime and its pending one approved native batch remain unchanged. No preview flag enable, native acceptance, lane/build or merge is claimed. The original failed packet remains failed, and interrupted restart packets remain incomplete.
 
 Removed: no files or runtime paths replaced; no disposable outputs were created by these checks.
+
+
+## Completed bounded follow-up failed, 16 October 10:59 PT
+
+The one approved 20-seed, three-course, normal/slow/nitro, off/on batch completed all 360 actual cases on clean c674605fe921c96f2f3ee0b8fac6c9bbf9683a31 (runtime3b175051 plus approved inventory rows). Receipt source/after are equal, exit1, jobs4, duration3590872.3709ms, ended17:59:13.737621UTC. Wrapper43724, runner33468 and its children are verified drained. Every case finished the player and all seven CPUs. Actual report/receipt remain in this lane's .evidence/2026-10-16/GP-RACECRAFT/accept-c674605f. No gate, build, preview enable, merge, new simulation or retune follows this failed result.
+
+| Guard, off -> on | Panorama Ridge | Tremblant Woods | Pacific Canyon |
+| --- | --- | --- | --- |
+| CPU passes, required factor | 1.65 -> 5.65; 2x PASS | 9.95 -> 10.15; 1.5x FAIL | 3.55 -> 7.70; 2x PASS |
+| Races with >=8 crashes, on <= off | 16 -> 20 FAIL | 4 -> 10 FAIL | 0 -> 1 FAIL |
+| Mean crashes, on <= off x 1.1 | 12.55 -> 13.45 PASS | 3.75 -> 8.50 FAIL | 0.10 -> 2.10 FAIL |
+| Early pile-ups, on <= off + 1 | 2 -> 9 FAIL | 1 -> 3 FAIL | 0 -> 0 PASS |
+| Slower player passed in all20 | 10/20 FAIL | 20/20 PASS | 16/20 FAIL |
+| Nitro lap-one leaders <=5/20 | 0 PASS | 0 PASS | 3 PASS |
+| Maximum paired CPU time change <=2% | 2.542759% FAIL | 1.690259% PASS | 1.752851% PASS |
+
+Normal enabled crash ranges were8–24,2–17,0–8. Report-only distinct start-pair successes were2/20,2/20,1/20; spread>=3m successes5/20,0/20,5/20. These diagnostic readings are not gating and do not change the failures above. No cause is inferred from those counts.
+
+The report and comparison rules were read once; no further simulation or changed target was used to diagnose the outcome. Claude's written one-attempt/fail decision now applies: park the retained lane. Its conditional preview-after-failure exception required crashes no worse than today, which this packet does not meet on any of the three courses. A different implementation/design needs Claude's written next direction; current targets, old fingerprints, original fixed crash fixture and CPU0.5/0.5 stay unchanged. Previous failed packets remain failed and the restart-interrupted packets remain incomplete.
+
+Removed: nothing. Keep this unmerged source, the completed failed packet and its verdict; no foreign work, save, asset or live behavior changed.
