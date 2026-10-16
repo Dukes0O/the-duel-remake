@@ -140,7 +140,9 @@ tasks:
     owner: "claude"
     lane: "VIS"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-far-forest-light-2026-10-16
+    branch: claude/far-forest-light
     needs: []
     locks: []
     details: "docs/board/cards/ARDENNES-FAR-FOREST-LIGHT.md"
