@@ -325,7 +325,7 @@ test('damp pit drawing shares the actual paved material with exact geometry and 
     const control=new THREE.Group(),drawn=new THREE.Group();
     addTrackScriptScene(control,course);
     const texture=new THREE.Texture();
-    const roadMaterial=createPavedRoadMaterial({asphalt:texture,
+    const roadMaterial=createPavedRoadMaterial({asphalt:texture,night:course.def.theme==='city',wet:!!course.def.wetRoad,
       ...(course.def.dampRoad!==undefined?{dampRoad:course.def.dampRoad,courseLength:course.length,mistBanks:course.def.effects?.valleyMist}:{})});
     addTrackScriptScene(drawn,course,{snow:false,...(course.def.dampRoad!==undefined?{roadMaterial}:{})});
     try{

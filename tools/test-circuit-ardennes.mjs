@@ -214,10 +214,9 @@ test('the forest and safety kit leave the original run-off and native pit road o
 
 test('the damp forest road keeps the original asphalt grip and alpine sound biome', () => {
   const course = new Course(ARDENNES_FOREST, 1989);
-  // P4-FINISH-ARDENNES removed the glossy night-street wetRoad look; the damp look is dampRoad alone.
-  assert.equal(ARDENNES_FOREST.wetRoad, undefined);
+  assert.deepEqual(ARDENNES_FOREST.wetRoad, {performanceShare: .5});
   assert.ok(ARDENNES_FOREST.dampRoad);
-  const dry = new Course({...ARDENNES_FOREST, dampRoad: undefined}, 1989);
+  const dry = new Course({...ARDENNES_FOREST, wetRoad: undefined}, 1989);
   for (let s = 0; s < course.length; s += 53) {
     assert.equal(course.themeAt(s), 'alpine');
     for (const off of [0, -3, 3, -23, 23])

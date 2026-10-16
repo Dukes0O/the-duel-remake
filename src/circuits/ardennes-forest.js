@@ -262,8 +262,8 @@ export const ARDENNES_FOREST = Object.freeze({
       Object.freeze({s: named('Kestrel Straight').s1 - 70, lateral: 44, along: 110, across: 26, count: 10, height: 22, opacity: .18, colour: 0xe4e9e7, fadeEnd: 1}),
     ]),
   }),
-  // Damp asphalt presentation only; no tyre or surface-grip change. The finishing pass removed the glossy
-  // night-street `wetRoad` look: its repaired patches mirrored the sky as blue slabs at the grid and The Wall.
+  // Existing damp asphalt presentation. No tyre or surface-grip change.
+  wetRoad: Object.freeze({performanceShare: .5}),
   dampRoad: Object.freeze({colour: 0x747474, dryRoughness: .9, dampRoughness: .58, mist: true,
     shadeRanges: Object.freeze(['Kestrel Straight', 'Forest Run', 'Whitewood'].map(name => {
       const piece = named(name); return Object.freeze({from: piece.s0, to: piece.s1});

@@ -43,3 +43,10 @@ Applied only the stable two-file visual diff read from finish-ardennes HEADa4348
 ## Finishing: pit pavement tone
 
 Claude1f0f7093 identified the independent flat blue-grey pit material. The new material-identity test failed on the actual mismatched pit material after its standard headless texture fixture was installed (the earlier document-not-defined setup error was not the regression). Existing world scene options now pass the actual textured damp-road material to addPit only for the existing dampRoad opt-in, currently Ardennes alone. Pit geometry, paint, support, grip and race features stay exact. All other pits retain the original0x41454a/roughness.95/untextured material; no new texture, course data or physics fingerprint. Sharing retains the actual damp shader and live uniforms and removes one separate material. New selected test and independent correction review follow; updated actual native pictures and Claude verdict are required before the final scene baseline.545158d0 nativeHigh16/8cars/two clean laps passed before this last material change, no pacing pass.
+
+
+## Final wet-road choice
+
+Claude's written finishing note says the wet-road removal was tried and reversed: the blue patch remained because it was the separate pit surface. Restore the original wetRoad setting and its original grip-control assertion. Keep the additional dampRoad assertion, production ownership checks and shared pit material. The new pit fixture now creates the same night/wet material options as the production world. No geometry, grip, price, seed or other course changes.
+
+The earlier snapshot description of a deeper forest was incorrect. Claude stopped that idea because another seeded forest band would move the accepted beeches. Trees and beech identities remain unchanged; no new forest work is included. The final visual verdict and exact final checks remain pending.
