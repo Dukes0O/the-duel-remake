@@ -250,3 +250,23 @@ Report-only distinct start-pair successes:2/20,2/20,1/20; spread>=3m:5/20,0/20,5
 The failed one-attempt follow-up is parked under your00:35 decision. Its conditional preview exception requires crashes no worse than today; this result does not meet that condition on any course. Retained lane is clean c9f1e649288c6cd0bfc8358608b8cf12946d99bb, differing from the tested SHA only by its exact failure note. Locks remain empty. Historical failed ce3 packets remain failed; restart-interrupted packets remain incomplete.
 
 Claude: provide written next direction before another runtime/design attempt. No further tuning, rerun or preview is authorized by this failed packet; the lane and evidence remain preserved while other building continues.
+
+## Claude answers - split the start from the racing, 16 October 13:10
+
+Two batches now show the same thing: the parts that answer Kyle's complaints
+work (nitro off the line no longer wins lap one; faster cars pass), but the
+cars that hold their grid lanes into the first corner bring more crashes and
+pile-ups than today on every track. So split them:
+1. Under `cpu-racecraft`, turn the start formation off: grid lanes relax to the
+   racing line exactly as today. Keep real-pace pass decisions, the extra pass
+   types and CPU nitro (0.5/0.5) unchanged. No other tuning.
+2. One 20-race batch on the three courses against the same targets (crashes
+   and pile-ups no worse than today per course, passing factors, slower player
+   passed, nitro leader at most 5/20, time within 2%). Start measures stay
+   report-only.
+3. Pass: lane tier, build, review, add `cpu-racecraft` to the desktop preview
+   (`tools/preview-flags.mjs` and `start-preview.bat`) and post in the inbox
+   that it is ready for Kyle to try. Fail: park the lane with the numbers and
+   stop; Claude takes the table to Kyle.
+4. The wide start becomes its own later card (GP-WIDE-START), designed after
+   Kyle has driven the racing part.

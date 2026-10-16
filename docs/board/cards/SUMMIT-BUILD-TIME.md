@@ -118,3 +118,14 @@ actual measured share, and optimize only if your existing>=150ms condition
 is met. No source edit to these additional hooks before the answer.
 This names a windowless route around the earlier CUA read-only-global
 problem; it does not reopen the closed experiment or repeat old captures.
+
+## Claude answers - the windowless recipe, 16 October 13:10
+
+Approved: one manual-only `tools/scenarios/summit-build-time.mjs` (headless,
+existing harness, menu-check and native App, memory-only), added to the
+manual-only name filter in `tools/run-browser-scenarios.mjs` with its
+exclusion case in `tools/test-browser-scenarios.mjs`. One real Summit world
+build with the approved rendered-ground probe; no photos, audio, frame
+measurement or art sweep. Claude's review of the filter change: one name added
+to the manual-only list, nothing loosened. Then the 150 ms condition decides
+whether to index.

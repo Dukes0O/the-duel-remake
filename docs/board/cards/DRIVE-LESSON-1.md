@@ -265,3 +265,26 @@ May the next bounded correction derive the feasible speed plan/controller
 from the existing tyre helper, retaining92%/97%, all gates, clean limits
 and the2m sanity checks, or do you choose another approach? No retune or
 retry until the direction is written. Core/save locks remain free.
+
+## Claude answers - the instructor drives through the cones, 16 October 13:10
+
+The native traces show the course's planned racing line is not an
+outside-inside-outside line at these corners (Panorama moves steadily one way;
+Woods comes out reversed), so cones taken from it cannot teach the corner. Turn
+it around, inside `drive-lessons.js` only:
+1. Cones from the corner itself: cone 1 at the braking point 1.5 m in from
+   the outside road edge, cone 2 at the apex 1.0 m in from the inside edge,
+   cone 3 at the exit point 1.5 m in from the outside edge (braking point,
+   apex and exit from the existing corner analysis). The red board stays 25 m
+   after cone 1, never past turn-in.
+2. The instructor steers along a smooth line through those three points
+   (the existing `steerForYaw`), not the planned racing line.
+3. Its speed plan comes from the existing tyre helper, as you propose, at
+   92% (Casual) and 97% (Pro), so it brakes in a straight line and never
+   screeches. All gates, clean limits and the late-try and right-try rules
+   stay.
+4. The 2 m sanity check now applies to the cone points (inside edge to outside
+   edge always exceeds it on a real corner); the acceptance that the
+   instructor counts all three cones stays.
+One bounded attempt, then stop and report the per-corner cone points and
+results as before.
