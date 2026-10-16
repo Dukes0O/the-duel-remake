@@ -54,14 +54,19 @@ export async function run(context) {
       const state=app.duel.state;
       if(!ok||app.runId!==fixture.runId||state.yetiSeed!==fixture.yetiSeed||!state.yeti?.appears||
         state.mode!==fixture.mode||state.car!==fixture.car||state.tyre!==fixture.tyre||state.opponents.length||
-        app.duel.course.def.id!=='summit-run'||app.duel.course.def.timeOfDay!=='night')throw Error('Actual recorded night encounter fixture differs');
+        app.duel.course.def.id!=='summit-run')throw Error('Actual recorded night encounter fixture differs');
+      const lightPath=app.duel.course.def.lightPath,nightStart=lightPath?.keyframes?.at(-1);
+      if(lightPath?.axis!=='distance'||nightStart?.look!=='night'||!Number.isFinite(nightStart.at)||nightStart.at<0||
+        !Number.isFinite(state.yeti.site.s)||state.yeti.site.s<nightStart.at)
+        throw Error('Actual recorded site must be inside the authored terminal-night range');
       const capture=window.__yetiFurCapture={original:app.onFrame,frozen:false,events:[]};
       capture.unsubscribe=app.duel.onChange((s,event)=>{if(event.yetiSighting)capture.events.push({stageTime:s.stageTimeSec,...event.yetiSighting});});
       app.onFrame=(s,dt)=>{capture.original?.(s,dt);const age=s.yeti?.seen?s.stageTimeSec-s.yeti.seenAt:null;
         if(age!==null&&age>=.55&&age<1.7&&app.visualReady){app.stop();capture.frozen=true;capture.age=age;}};
       // Existing production autopilot only; never replace admission or sighting logic.
       app.autopilot=true;app._scriptedCrashDone=true;app.start();
-      return {runId:app.runId,seed:state.seed,yetiSeed:state.yetiSeed,site:{...state.yeti.site},memoryOnly:true,night:true};
+      return {runId:app.runId,seed:state.seed,yetiSeed:state.yetiSeed,site:{...state.yeti.site},memoryOnly:true,
+        authoredNightRange:{from:nightStart.at,site:state.yeti.site.s},nightRequiredAtCapture:true};
     })()`);
     started=true;packet.memoryOnly=packet.start.memoryOnly;
     await context.waitFor('window.__yetiFurCapture?.frozen===true','actual naturally reached frozen roar',12*60*1000);
@@ -70,6 +75,13 @@ export async function run(context) {
       if(app.running||!capture.frozen||!state.yeti?.seen||capture.events.length!==1||capture.events[0].cue!=='yeti.roar')throw Error('Actual once-only roar must be frozen');
       const stateBefore=JSON.stringify(state),profileBefore=JSON.stringify(app.profile);
       const seconds=state.stageTimeSec;draw.renderFrame({presentationSeconds:seconds});
+      const requireNativeNight=()=>{
+        const host=document.querySelector('#view3d');
+        if(host?.dataset.lightPath!=='true'||Number(host.dataset.nightAmount)!==1)
+          throw Error('Actual frozen roar must render the full authored night');
+        return {lightPath:host.dataset.lightPath,nightAmount:Number(host.dataset.nightAmount)};
+      };
+      const nativeNight=requireNativeNight();
       const group=draw.scene.getObjectByName('The yeti'),actor=group?.children.find(child=>child.visible);
       if(!group?.visible||!actor||!app.visualReady)throw Error('Actual accepted Yeti actor is not ready');
       const materials=new Set();actor.traverse(node=>{for(const material of Array.isArray(node.material)?node.material:node.material?[node.material]:[])if(material.name===${JSON.stringify(furName)})materials.add(material);});
@@ -95,8 +107,9 @@ export async function run(context) {
         for(const factor of [1,1.4,1.8]){
           for(const material of materials)material.color.setRGB(factor,factor,factor);
           draw.composer.render();
+          const night=requireNativeNight();
           if(snapshot()!==invariant)throw Error('Matched colour picture changed pose, state, geometry, nonfur, lighting or camera');
-          photos.push({factor,jpeg:draw.renderer.domElement.toDataURL('image/jpeg',.9)});
+          photos.push({factor,night,jpeg:draw.renderer.domElement.toDataURL('image/jpeg',.9)});
         }
       } finally {
         try {
@@ -108,13 +121,13 @@ export async function run(context) {
         }
       }
       if(JSON.stringify(state)!==stateBefore||JSON.stringify(app.profile)!==profileBefore)throw Error('Photography changed real native race/profile state');
-      return {photos,age:capture.age,stageTime:state.stageTimeSec,site:{...state.yeti.site},events:capture.events,
+      return {photos,nativeNight,age:capture.age,stageTime:state.stageTimeSec,site:{...state.yeti.site},events:capture.events,
         furMaterialCount:materials.size,samePoseCameraGeometryNonfur:true,originalCandidateRestored:furRestored,
         cameraRestored:camera.position.equals(savedPosition)&&camera.quaternion.equals(savedRotation)};
     })()`);
     const photos=result.photos;delete result.photos;Object.assign(packet,result);
     for(const photo of photos){const file='fur-'+String(photo.factor).replace('.','-')+'.jpg';const bytes=Buffer.from(photo.jpeg.split(',')[1],'base64');
-      await writeFile(join(context.outputDir,file),bytes,{flag:'wx'});packet.views.push({factor:photo.factor,file,bytes:bytes.length,sha256:digest(bytes)});}
+      await writeFile(join(context.outputDir,file),bytes,{flag:'wx'});packet.views.push({factor:photo.factor,night:photo.night,file,bytes:bytes.length,sha256:digest(bytes)});}
     const sheet=await context.evaluate(`(async()=>{
       const photos=${JSON.stringify(photos)},canvas=document.createElement('canvas');canvas.width=1280;canvas.height=280;
       const brush=canvas.getContext('2d');brush.fillStyle='#17212a';brush.fillRect(0,0,1280,280);brush.font='18px sans-serif';
