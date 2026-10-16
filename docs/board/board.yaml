@@ -511,11 +511,12 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/drive-lesson-1
     needs: [TYRE-SLIP, DRIVE-LESSON-CORE]
     locks: []
+    waiting_on: claude
     flag: "driving-lessons"
     details: "docs/board/cards/DRIVE-LESSON-1.md"
 

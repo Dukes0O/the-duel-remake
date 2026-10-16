@@ -144,3 +144,20 @@ Tyre canonical resumed09:14:02PT on exactclean3e2bf73f, runner7204/
 parent38356/session44438; one-minute actual roots3, no overcap. This is
 not a Tyre result; receipt remains pending. Root instructor diagnosis bound
 is09:23PT; preserve the correction if no admitted native slot by then.
+
+
+## Bounded instructor follow-up parked
+
+Actual888f2725 correctioncheck onPanorama/Casual60 ended16:21:31.644UTC
+exit1/997.7745ms/sourceunchanged. It advanced past the original clean-run
+guard but placeCones rejected the required outside-braking/inside-apex/
+outside-exit trace. No complete clean instructor or cone acceptance.
+Receipt own .evidence/2026-10-16/DRIVE-LESSON-1/corrected-888f2725;
+wrapper41688/runner33600 drained. Current clean0296a99f adds only actual
+placement facts to the error, not a guard/path change; that source is UNRUN.
+Original30minute investigation stops09:23PT. No more retries/tuning to fill
+slots; root moves to host and Summit work. Cause of missing placement is
+unproved. Claude: review the actual line/placement approach for a bounded
+follow-up within this hook; preserve gates/pace/clean thresholds/redboard.
+Tyre dependency, nativecourse/settings/FPS/studentloss checks, gate/build
+and finalmerge all remain pending.
