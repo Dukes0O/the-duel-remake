@@ -1051,3 +1051,6 @@ and source review passed. Kyle's 8-damage exception above is retained.
 
 
 - Cups 8a910245 merged after 271/271 lane suites, build and independent save/pay review. Native three-race acceptance passed 13/13. Existing preview switch remains unchanged. TYRE-SLIP now owns save-shape/busy-game-files; Intel stays held. Ardennes final lane/jobs4 is running on 55d2b7de; no frame timing or quiet hold.
+
+
+- Ardennes final candidate 55d2b7de: build passed, final lane/jobs4 active, independent review clear, Ardennes-only scene row captured with every foreign row/file exact. Final visual verdict requested on ARDENNES-SWITCH-ON with valid corrected pit grid/hairpin pictures. Cups merged ca7338e6 and its own new lane recycled. Tyre one-crash physical recovery passed, but Medium-win/Hard-timeout clauses failed; exact question and numbers on TYRE-SLIP. No retuning/retry. Intel receives the available core lease while that decision waits.

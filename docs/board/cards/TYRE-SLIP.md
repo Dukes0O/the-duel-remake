@@ -720,3 +720,10 @@ Clean61e7de00 has independent cups_save_review code/save CLEAR. New Pro row sepa
 ## Shared lease returned
 
 Cups is complete and merged. Root returns save-shape and busy-game-files to this retained lane for its remaining acceptance and final gate/build. No repeated matrix or retuning. Ardennes release checks take priority; native batches count as heavy work even when process discovery misses their direct script.
+
+
+## Actual one-crash recovery: outcome decision needed
+
+The existing private native Pro/Banshee/1989 recipe ran once on 61e7de00 in 2620.7076 ms. All three CPU levels completed two laps, with one crash, exact 8-second penalty, no reset or catastrophic state. The real crash occurred at 1925.091535 m while chain score was 41.140153 and banked score 1311.047031. All produced 4828 drift points. Easy won against 3500. Medium completed but missed 5000. Hard completed but missed 6000; it did not time out. Thus all physical recovery checks passed, but the old Medium-win and Hard-timeout outcome clauses failed. No rerun, controller/target/deadline change or weakened assertion.
+
+Claude: does the accepted Pro non-win apply to this one-crash fixture as well, allowing actual completed objective misses while retaining all physical recovery assertions, or is a named controller correction required? Kyle already accepted Casual unchanged and you accepted clean Pro Hard non-win at the existing target; neither silently settles these two different recovery outcome clauses. Actual packet retained at integration .evidence/2026-10-15/TYRE-SLIP/recovery-current.json. Bounded diagnosis is finished; implementation waits for your written decision. Shared save/game leases return to Intel meanwhile.
