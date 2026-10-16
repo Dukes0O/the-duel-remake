@@ -62,3 +62,8 @@ Off-state historical fingerprint fixture retains its exact original default diff
 ## Optional Pro drift record version
 
 Two new cases failed first: new Pro results shared old personal-best/leaderboard identity, and native objectives emitted no version. Only actual latched Pro drift now emits optional tyreSlipRules:true; App derives that field from the real current state. New drift best/row keys discriminate the model, while all ordinary and Casual keys stay exact. Existing rows are retained and labelled STANDARD TYRES versus SLIDING TYRES; menu score/time comparisons select current rules. Old targets, deadlines, score validation and layout/driver/finish guards stay unchanged. No ghost key/store/budget or save schema version changes, no historical row deleted. New true-tag Casual/ordinary finish records are rejected. Independent save/code review and native acceptance pending.
+
+
+## Approved one-crash recovery acceptance
+
+Claude d807c0e2 accepts completed Medium/Hard misses under the new Pro tyres, retaining two laps, exactly one crash, the 8-second cost, no reset and no catastrophic state. The single actual native packet on61e7de00 is retained in integration: all three levels score4828, Easy wins, Medium/Hard complete below their unchanged5000/6000 targets. Its original outcome verdict remains failed; no manual rerun or120-race repeat. Added only new Pro cases to the existing drift suite, keeping every old/off assertion byte-for-byte. These cases enforce the actual latched rules, earned pre-crash chain, both laps, physical guards, deterministic score and all original targets/deadlines. Execution and independent confirmation remain pending behind the Ardennes release hold.

@@ -111,3 +111,34 @@ for (const level of ['easy', 'medium', 'hard']) {
 console.log(JSON.stringify({ driftTrialReplays: replays }));
 console.log(JSON.stringify({ recoveryReplays }));
 console.log(`Neon Drift Trial: ${checks} checks passed.`);
+
+
+// Claude's 15 October recovery decision changes only the new Pro fixture.
+// Every released/off assertion above remains unchanged.
+const {createFeatureFlags}=await import('../src/feature-flags.js');
+for(const [level,target,limit] of [['easy',3500,150],['medium',5000,125],['hard',6000,110]]){
+  const app=new App();app.autopilot=true;
+  app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});
+  app.duel.startCampaign({startStage:index,car:'banshee_muscle',cpuDifficulty:level,difficulty:'pro',seed:1989});
+  app._scriptedCrashDone=true;
+  let hit=null,frames=0;
+  while(!['stage_result','gameover'].includes(app.duel.state.status)&&frames++<120*180){
+    const s=app.duel.state;
+    if(!hit&&s.s>1800&&s.drift.chainScore>40){
+      hit={s:s.s,chain:s.drift.chainScore,banked:s.drift.bankedScore};
+      app.duel._crash('building');
+    }
+    app.advance(1/120);
+  }
+  const s=app.duel.state,r=s.results;
+  check(s.tyreSlipRules===true&&r?.tyreSlipRules===true,'approved Pro one-crash recovery uses the actual latched rules');
+  check(hit?.chain>40&&hit.banked>0&&s.completedLaps===2&&r?.completed&&!r.timeout,
+    level+': a real earned chain precedes the crash, then both laps complete');
+  check(s.racePenaltySec===8&&s.stageCrashes===1&&s.majorCrashes===(r.won?0:1)&&
+    !s.boundaryResets&&!s.catastrophic,level+': every physical recovery assertion remains enforced');
+  check(r.driftScore===4828&&r.driftBestChain>40,level+': recovered real driving earns the accepted deterministic score');
+  check(r.driftTarget===target&&r.challengeLimitSec===limit,level+': released target and deadline stay exact');
+  check(r.won===(level==='easy')&&r.objectiveMissed===(level!=='easy'),
+    level+': Easy still wins; the completed Medium and Hard target misses are accepted');
+}
+console.log('Pro sliding-tyre recovery: all three levels complete with the physical assertions and unchanged targets.');
