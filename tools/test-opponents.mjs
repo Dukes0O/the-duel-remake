@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {App} from '../src/app.js';
-import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
+import {COURSE,DRIVE,steerForYaw} from '../src/config.js';
 import {RouteMap} from '../src/route-map.js';
 import {createHudScreen} from '../src/screen-hud.js';
 import {createResultsScreen} from '../src/screen-results.js';
@@ -179,11 +179,12 @@ for(const [stageIndex,stage] of COURSE.entries()){
           .filter(prop=>prop.gap>-10&&prop.gap<105).sort((a,b)=>a.gap-b.gap)[0];
         const target=next?next.off:0,mps=s.speedMph*DRIVE.mphToWorld,frame=duel.course.at(s.s),surface=duel._drivingSurface(s.s,s.lateral);
         const heading=Math.atan((target-s.lateral)*2.5/Math.max(15,mps)),look=duel.course.at(s.s+mps*.18);
-        const yaw=look.curvature*mps+(heading-s.headingError)*6,authority=Math.max(.05,steeringYawAuthority(s.speedMph,duel.car.grip,surface.traction));
+        const yaw=look.curvature*mps+(heading-s.headingError)*6;
         const bend=Math.max(Math.abs(frame.curvature),Math.abs(duel.course.at(s.s+100).curvature),Math.abs(duel.course.at(s.s+220).curvature));
         const targetSpeed=Math.min(duel.car.topSpeed*.94,surface.speedLimit,.85*Math.sqrt(DRIVE.maxLateralAccel*duel.car.grip/Math.max(.0001,bend))/DRIVE.mphToWorld);
-        duel.setInput({throttle:s.speedMph<targetSpeed?1:0,brake:s.speedMph>targetSpeed+4?Math.min(1,(s.speedMph-targetSpeed)/20):0,
-          steer:Math.max(-1,Math.min(1,-yaw/authority)),boost:false});
+        const brake=s.speedMph>targetSpeed+4?Math.min(1,(s.speedMph-targetSpeed)/20):0;
+    duel.setInput({throttle:s.speedMph<targetSpeed?1:0,brake,
+          steer:steerForYaw(yaw,{speedMph:s.speedMph,grip:duel.car.grip,traction:surface.traction,brake:brake,tyreSlip:s.tyreSlipRules===true&&!s.airborne&&s.speedMph>=0}),boost:false});
       }
       duel.step(1/120);
     }
