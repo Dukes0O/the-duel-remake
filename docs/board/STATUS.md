@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T02:30:07.065Z
+Observed at: 2026-10-16T02:55:23.536Z
 
-Observation commit: f36c4b801bed173e6c0d251c3702f6ec243b920a
+Observation commit: 3fc197f4318bbb92d5097fc342af3b8b88269853
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: f36c4b801bed173e6c0d251c3702f6ec243b920a
+Integration HEAD: 3fc197f4318bbb92d5097fc342af3b8b88269853
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -67,11 +67,11 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 1 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/qa-yard-home-air-only | QA-YARD-HOME-AIR-ONLY | 2026-10-15T19:26:55-07:00 | 0 | last commit 2026-10-15T19:26:55-07:00 | docs/board/STATUS.md, docs/changes/QA-YARD-HOME-AIR-ONLY.md, tools/scenarios/yard-home.mjs |
+| codex/qa-yard-home-air-only | QA-YARD-HOME-AIR-ONLY | 2026-10-15T19:30:22-07:00 | 0 | last commit 2026-10-15T19:30:22-07:00 | docs/board/STATUS.md, docs/changes/QA-YARD-HOME-AIR-ONLY.md, tools/scenarios/yard-home.mjs |
 | codex/qa-yeti-three | QA-YETI-THREE | 2026-10-15T19:28:00-07:00 | 0 | last commit 2026-10-15T19:28:00-07:00 | docs/board/STATUS.md, docs/changes/QA-YETI-THREE.md, tools/scenarios/yeti.mjs |
 | codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T18:40:49-07:00 | 0 | last commit 2026-10-15T18:40:49-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/camera-clearance.js, src/circuits/summit-run.js, src/course.js, src/feature-flags.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
-| codex/tyre-slip | TYRE-SLIP | 2026-10-15T19:26:29-07:00 | 0 | last commit 2026-10-15T19:26:29-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
+| codex/tyre-slip | TYRE-SLIP | 2026-10-15T19:31:11-07:00 | 0 | last commit 2026-10-15T19:31:11-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
 ## Size targets
@@ -88,7 +88,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 1,276,675 B | +0 B | 5,000,000 B |
 | All `public/` | 303,038,225 B | +0 B | unavailable |
-| Git objects | 408,900,608 B | +686,080 B | unavailable |
+| Git objects | 409,581,568 B | +680,960 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -97,7 +97,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: f36c4b801bed173e6c0d251c3702f6ec243b920a
+- Local integration/wasteland: 3fc197f4318bbb92d5097fc342af3b8b88269853
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

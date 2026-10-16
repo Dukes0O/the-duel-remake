@@ -11,6 +11,7 @@ tasks:
     needs: [ARDENNES-SWITCH-ON]
     locks: [release]
     details: "docs/board/cards/RELEASE-ARDENNES.md"
+    owns: [tools/test-expansion-vegetation-grounding.mjs, docs/changes/RELEASE-ARDENNES.md]
 
   - id: QA-SHARED-HEAVY-ADMISSION
     title: "Coordinate the shared heavy-job limit across chats"
