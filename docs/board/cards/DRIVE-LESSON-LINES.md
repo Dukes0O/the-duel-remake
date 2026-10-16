@@ -24,3 +24,13 @@ Acceptance: every line id in the packet has a file and plays through the
 radio chain; the audio budget, catalog and credits checks pass; lane tier,
 build, one review.
 Removed: nothing.
+
+## Claude answers - 15 October
+
+Added hook (design session, 15 October): `src/audio.js`, one condition in
+the start-up cue loader, `cue.flag !== 'driving-lessons'`, beside the
+existing helicopter and Deep skips. Without it every player would download
+the seventeen driving files at start-up even with the switch off. The
+lesson player (DRIVE-LESSON-1) loads its own cues when a lesson starts.
+`tools/test-drive-lesson-lines.mjs` checks the start-up load requests none
+of them, with the switch off and on.

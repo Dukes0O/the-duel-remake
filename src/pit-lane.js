@@ -44,14 +44,20 @@ export function installPitLane(course) {
   course.gripKindAt = (s, off = 0) => pitAt(course, s, off) ? 'asphalt' : grip(s, off);
 }
 
-export function pitAt(course, s, off) {
+// The drawn pavement includes the taper overlap with the main road.
+export function pitRoadAt(course, s, off) {
   const lane = course?.pitLane;
   if (!lane) return null;
   const p = course.phase(s);
   if (p < lane.entry || p > lane.exit || Math.abs(off - lane.offsetAt(p)) > lane.width / 2)
     return null;
+  return lane;
+}
+export function pitAt(course, s, off) {
+  const lane = pitRoadAt(course, s, off);
+  if (!lane) return null;
   // Branch tapers overlap the main road; apply the limiter beyond its edge.
-  if (Math.abs(off) <= course.roadHalfWidthAt(p)) return null;
+  if (Math.abs(off) <= course.roadHalfWidthAt(course.phase(s))) return null;
   return lane;
 }
 // The road/service lane stays whole; only opted-in bays limit its speed.

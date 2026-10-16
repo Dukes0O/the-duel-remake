@@ -421,7 +421,7 @@ export class Course {
     }
     for(let i=0;i<3;i++){const f=this.at(bestS),lat=(x-f.x)*Math.cos(f.heading)-(z-f.z)*Math.sin(f.heading),along=(x-f.x)*Math.sin(f.heading)+(z-f.z)*Math.cos(f.heading);bestS=this.phase(bestS+along/Math.max(.3,1-f.curvature*lat));}
     const frame=this.at(bestS),lateral=(x-frame.x)*Math.cos(frame.heading)-(z-frame.z)*Math.sin(frame.heading);
-    if(Number.isFinite(referenceS))bestS+=Math.round((referenceS-bestS)/this.length)*this.length;
+    if(this.closed&&Number.isFinite(referenceS))bestS+=Math.round((referenceS-bestS)/this.length)*this.length;
     return{...frame,s:bestS,lateral,distance:Math.hypot(x-frame.x,z-frame.z)};}
   // The road surface under a place (src/race-surfaces.js): the stretch the script gives it, then any patch. Verges are asphalt-kind: the old off-road rules govern them.
   gripKindAt(s,lateral=0){

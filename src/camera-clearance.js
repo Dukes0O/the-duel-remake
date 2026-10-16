@@ -7,7 +7,11 @@ export function constrainTunnelCamera(course,position,referenceS){
   if(!tunnel)return false;
   const ratio=Math.min(.995,Math.abs(frame.lateral)/tunnel.width);
   const floor=tunnel.flatRoof?course.groundAt(frame.s,0).y:course.at(frame.s).y;
-  const ceiling=floor+(tunnel.flatRoof?tunnel.height:3.6+(tunnel.height-3.6)*Math.sqrt(1-ratio*ratio))-.45;
+  // The accepted Gallery retains its visible arched lining beneath the kit.
+  // Keep the camera below both roofs without changing ordinary arch arithmetic.
+  const ceiling=tunnel.flatRoof
+    ?Math.min(floor+tunnel.height,course.at(frame.s).y+3.6+(tunnel.height-3.6)*Math.sqrt(1-ratio*ratio))-.45
+    :floor+(3.6+(tunnel.height-3.6)*Math.sqrt(1-ratio*ratio))-.45;
   if(position.y<=ceiling)return false;
   position.y=ceiling;return true;
 }

@@ -108,7 +108,7 @@ test('the pit lane runs along the right of Pit Straight', () => {
   assert.ok(course.pitLane.exit - course.pitLane.entry > 300);
 });
 
-test('Ardennes Forest is a dev circuit: registered after Summit, priced, off by default, and COURSE is unchanged without its switch', () => {
+test('Ardennes Forest is a released circuit: stable registration, price, production admission and preserved disabled contract', () => {
   assert.equal(ARDENNES_FOREST.id, 'ardennes-forest'); assert.equal(ARDENNES_FOREST.flag, 'ardennes-forest');
   assert.equal(ARDENNES_FOREST.name, 'Ardennes Forest'); assert.equal(ARDENNES_FOREST.kind, 'circuit');
   assert.equal(ARDENNES_FOREST.closed, true); assert.equal(ARDENNES_FOREST.laps, 2); assert.equal(ARDENNES_FOREST.layoutVersion, 1);
@@ -120,9 +120,9 @@ test('Ardennes Forest is a dev circuit: registered after Summit, priced, off by 
   near(ARDENNES_FOREST.sections.reduce((sum, row) => sum + row.share, 0), 1, 1e-9, 'section shares');
   assert.ok(Object.isFrozen(manifest) && Object.isFrozen(manifest.driver));
   assert.deepEqual([manifest.id, manifest.flag, manifest.state, manifest.price, manifest.grandPrix],
-    ['ardennes-forest', 'ardennes-forest', 'dev', 2000, true]);
+    ['ardennes-forest', 'ardennes-forest', 'on', 2000, true]);
   assert.equal(COURSE_PRICES['ardennes-forest'], 2000);
-  assert.equal(FEATURE_STATES['ardennes-forest'], 'dev');
+  assert.equal(FEATURE_STATES['ardennes-forest'], 'on');
   const entry = CIRCUIT_ENTRIES.find(row => row.manifest.id === 'ardennes-forest');
   assert.equal(entry.definition, ARDENNES_FOREST, 'registry keeps the exact authored definition');
   assert.equal(entry.generationStage, 21);
@@ -135,19 +135,22 @@ test('Ardennes Forest is a dev circuit: registered after Summit, priced, off by 
   assert.ok(CIRCUIT_MANIFESTS.slice(0, index).every(row => row.releaseOrder < manifest.releaseOrder), 'earlier courses keep their places');
   assert.ok(CIRCUIT_MANIFESTS.slice(index + 1).every(row => row.releaseOrder > manifest.releaseOrder), 'later courses append after Ardennes');
   assert.equal(ALL_CIRCUITS[index], ARDENNES_FOREST);
-  // Switch off: players and tests see COURSE exactly as before.
   const released = CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
-  assert.ok(!CIRCUITS.some(circuit => circuit.id === 'ardennes-forest'));
-  assert.ok(!COURSE.some(event => event.id === 'ardennes-forest'));
+  assert.equal(CIRCUITS.filter(circuit => circuit.id === 'ardennes-forest').length,1);
+  assert.equal(COURSE.filter(event => event.id === 'ardennes-forest').length,1);
   assert.equal(COURSE.length, BASE_COURSE_COUNT + released.length);
-  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), released, 'COURSE is the base events plus the released circuits only');
-  const player = createFeatureFlags({storage: null, qa: false, search: '?flags=ardennes-forest'});
-  assert.equal(player.enabled('ardennes-forest'), false, 'a player build ignores the dev switch');
-  assert.deepEqual(circuitsEnabled(player).map(circuit => circuit.id), released);
-  // Switch on in a QA build: it joins the end of the list after every released course.
-  const qa = createFeatureFlags({storage: null, qa: true, search: '?flags=ardennes-forest'});
-  assert.equal(qa.enabled('ardennes-forest'), true);
-  assert.deepEqual(circuitsEnabled(qa).map(circuit => circuit.id), [...released, 'ardennes-forest']);
+  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id),released);
+  for(const search of ['', '?flags=ardennes-forest']){
+    const player=createFeatureFlags({storage:null,qa:false,search});
+    assert.equal(player.enabled('ardennes-forest'),true,'released admission needs no QA URL');
+    assert.deepEqual(circuitsEnabled(player).map(circuit=>circuit.id),released);
+  }
+  const devCatalog={...FEATURE_STATES,'ardennes-forest':'dev'},without=released.filter(id=>id!=='ardennes-forest');
+  for(const [qa,search,enabled] of [[false,'',false],[false,'?flags=ardennes-forest',false],[true,'',false],[true,'?flags=ardennes-forest',true]]){
+    const flags=createFeatureFlags({catalog:devCatalog,storage:null,qa,search});
+    assert.equal(flags.enabled('ardennes-forest'),enabled,'previous dev admission remains exact');
+    assert.deepEqual(circuitsEnabled(flags).map(circuit=>circuit.id),enabled?released:without);
+  }
 });
 
 
@@ -186,6 +189,18 @@ test('the forest and safety kit leave the original run-off and native pit road o
     if (row.lateral < 0 && row.s <= piece('Pit Straight').s1 + 15)
       assert.fail('no safety piece may close the pit entrance or exit');
   }
+  // Finishing-pass braking boards follow the script's own board rule: 2.4 m beyond the road edge on the
+  // outside, on straight road, never solid.
+  const boards = rows.filter(row => /^braking-board-/.test(row.id));
+  assert.ok(boards.length >= 15);
+  for (const row of boards) {
+    const edge = Math.abs(row.lateral) - course.roadHalfWidthAt(row.s);
+    assert.ok(Math.abs(edge - 2.4) < 1e-9, 'board stands 2.4 m from the road edge, like the script boards');
+    assert.equal(course.script.pieceAt(row.s).kind, 'straight');
+    const corner = course.script.pieces.find(piece => piece.kind === 'turn' && piece.s0 > row.s && piece.s0 - row.s <= 151);
+    assert.equal(Math.sign(row.lateral), -corner.dir, 'board stands on the outside of the corner it announces');
+    assert.notEqual(row.solid, true);
+  }
   assert.deepEqual(ARDENNES_FOREST.pitLane, {straight: 'Pit Straight', side: 'right'});
   assert.ok(rows.filter(row => row.id === 'pit-wall').every(row => row.solid !== true), 'visual divider retains the original native pit collision');
   assert.ok(course.features.walls.some(wall => wall.pitWall));
@@ -203,6 +218,7 @@ test('the forest and safety kit leave the original run-off and native pit road o
 test('the damp forest road keeps the original asphalt grip and alpine sound biome', () => {
   const course = new Course(ARDENNES_FOREST, 1989);
   assert.deepEqual(ARDENNES_FOREST.wetRoad, {performanceShare: .5});
+  assert.ok(ARDENNES_FOREST.dampRoad);
   const dry = new Course({...ARDENNES_FOREST, wetRoad: undefined}, 1989);
   for (let s = 0; s < course.length; s += 53) {
     assert.equal(course.themeAt(s), 'alpine');
@@ -457,7 +473,9 @@ test('the current Stavelot village authors two frozen nonempty streets and a gro
   assert.equal(town?.type, 'town'); assert.equal(church?.type, 'church');
   assert.ok(Object.isFrozen(town) && Object.isFrozen(town.houses) && town.houses.length > 0);
   assert.ok(town.houses.every(Object.isFrozen));
-  assert.deepEqual(town.roofColours, [0x414a50, 0x5a352c, 0x50545a]);
+  // ARDENNES-STAVELOT-STONE: Ardennes stone houses under dark slate.
+  assert.equal(town.houseStyle, 'ardennes-stone');
+  assert.deepEqual(town.roofColours, [0x2c3034, 0x363a3e, 0x303236]);
   assert.ok(Object.isFrozen(town.roofColours));
   const streets = new Set(town.houses.map(house => {
     assert.ok([house.s, house.lateral, house.heading, house.width, house.depth].every(Number.isFinite));
@@ -518,7 +536,7 @@ test('the two current village corridors have real frozen four-metre gravel stree
   } finally {disposeTree(world); for (const mesh of terrain) mesh.geometry.dispose(); material.dispose();}
 });
 
-test('every actual current town foundation and veranda has drawn-terrain support without mutation or leaked owners', () => {
+test('every actual current town foundation has drawn-terrain support without mutation or leaked owners', () => {
   const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
   const before = JSON.stringify({definition: ARDENNES_FOREST, features: course.features});
   const spec = ARDENNES_FOREST.circuitLandmarks.find(row => row.id === 'stavelot-valley-town');
@@ -533,10 +551,12 @@ test('every actual current town foundation and veranda has drawn-terrain support
       houses = town.getObjectByName('town houses'), roofs = town.getObjectByName('town roofs'),
       verandas = town.getObjectByName('town verandas'), doors = town.getObjectByName('town doors'),
       posts = town.getObjectByName('town veranda posts');
-    for (const mesh of [footings, houses, roofs, verandas]) {
+    // ARDENNES-STAVELOT-STONE: stone houses have no veranda, deck or posts; one door each, stone gables.
+    for (const mesh of [footings, houses, roofs, town.getObjectByName('town stone gables')]) {
       assert.ok(mesh?.isInstancedMesh); assert.equal(mesh.count, spec.houses.length);
     }
-    assert.equal(posts.count, spec.houses.length * 3); assert.equal(doors.count, spec.houses.length * 2);
+    assert.equal(verandas, undefined); assert.equal(posts, undefined); assert.equal(doors.count, spec.houses.length);
+    const steps = town.getObjectByName('town door steps'); assert.ok(steps?.isInstancedMesh); assert.equal(steps.count, spec.houses.length);
     const matrixAt = (mesh, index) => {
       const matrix = new THREE.Matrix4(); mesh.getMatrixAt(index, matrix); return mesh.matrixWorld.clone().multiply(matrix);
     };
@@ -552,7 +572,7 @@ test('every actual current town foundation and veranda has drawn-terrain support
       assert.ok(Number.isFinite(ground), label + ': actual drawn terrain support is finite'); return ground;
     };
     for (let index = 0; index < spec.houses.length; index++) {
-      const footing = matrixAt(footings, index), house = matrixAt(houses, index), deck = matrixAt(doors, index * 2);
+      const footing = matrixAt(footings, index), house = matrixAt(houses, index);
       const floor = new THREE.Vector3(0, -.5, 0).applyMatrix4(house).y;
       const expectedColours = spec.roofColours.map(value => new THREE.Color(value).toArray().map(Math.fround));
       assert.ok(expectedColours.some(value => JSON.stringify(value) === JSON.stringify(Array.from(roofs.instanceColor.array.slice(index * 3, index * 3 + 3)))));
@@ -568,19 +588,12 @@ test('every actual current town foundation and veranda has drawn-terrain support
       for (const u of [-.5, 0, .5]) for (const v of [-.5, 0, .5]) checkFooting(u, v, true);
       const nx = Math.ceil(Math.hypot(...footing.elements.slice(0, 3)) / .5), nz = Math.ceil(Math.hypot(...footing.elements.slice(8, 11)) / .5);
       for (let x = 0; x <= nx; x++) for (let z = 0; z <= nz; z++) checkFooting(-.5 + x / nx, -.5 + z / nz);
-      const dx = Math.ceil(Math.hypot(...deck.elements.slice(0, 3)) / .5), dz = Math.ceil(Math.hypot(...deck.elements.slice(8, 11)) / .5);
-      for (let x = 0; x <= dx; x++) for (let z = 0; z <= dz; z++) {
-        const point = new THREE.Vector3(-.5 + x / dx, .5, -.5 + z / dz).applyMatrix4(deck);
-        assert.ok(point.y >= support(point.x, point.z, 'house ' + index + ' veranda'), 'actual veranda deck clears its whole sampled ground footprint');
-      }
-      for (let post = 0; post < 3; post++) {
-        const matrix = matrixAt(posts, index * 3 + post), vertices = posts.geometry.getAttribute('position');
-        const bottom = posts.geometry.boundingBox ?? (posts.geometry.computeBoundingBox(), posts.geometry.boundingBox);
-        for (let vertex = 0; vertex < vertices.count; vertex++) if (vertices.getY(vertex) === bottom.min.y) {
-          const point = new THREE.Vector3().fromBufferAttribute(vertices, vertex).applyMatrix4(matrix), ground = support(point.x, point.z, 'house ' + index + ' veranda post');
-          assert.ok(point.y <= ground, 'actual veranda post base reaches drawn ground');
-          assert.ok(new THREE.Vector3(0, .5, 0).applyMatrix4(matrix).y >= ground, 'actual veranda post spans support');
-        }
+      // The door step runs from the drawn ground in front of the door up to the floor: no door hangs in the air.
+      const step = matrixAt(steps, index);
+      assert.ok(new THREE.Vector3(0, .5, 0).applyMatrix4(step).y >= floor - 1e-3, 'house ' + index + ': the door step reaches the floor (within the 32-bit instance matrix)');
+      for (const u of [-.5, 0, .5]) for (const v of [-.5, 0, .5]) {
+        const bottom = new THREE.Vector3(u, -.5, v).applyMatrix4(step);
+        assert.ok(bottom.y <= support(bottom.x, bottom.z, 'house ' + index + ' door step'), 'house ' + index + ': the door step reaches the drawn ground');
       }
       measurements.push({index, s: spec.houses[index].s, lateral: spec.houses[index].lateral, samples, maximumBottom, minimumFloor});
     }
@@ -1114,4 +1127,34 @@ test('Ardennes simple frame admission preserves strict native grid, timing and q
     assert.throws(()=>validateArdennesFramePacket(changed),key);
   }
   assert.throws(()=>validateArdennesFramePacket({...packet,reports:packet.reports.slice(0,1)}));
+});
+
+
+test('released Ardennes still requires real course ownership and native purchase',async()=>{
+  const {withReferenceApp}=await import('./build-reference-laps.mjs');
+  await withReferenceApp(async app=>{
+    app.duel.featureFlags=createFeatureFlags({storage:null,qa:false});
+    const stage=COURSE.findIndex(course=>course.id==='ardennes-forest');assert.ok(stage>=BASE_COURSE_COUNT);
+    assert.equal(app.startCampaign({startStage:stage,car:'stuttgart_959s'}),false,'locked production entry refused');
+    app.profile={...app.profile,credits:4000};app._saveProfile();
+    const purchase=app.purchaseCourse('ardennes-forest');assert.ok(purchase.ok);assert.equal(app.profile.credits,2000);
+    assert.ok(app.startCampaign({startStage:stage,car:'stuttgart_959s',mode:'grandprix',fieldSize:7,fieldSeed:1000}));
+    assert.equal(app.duel.course.def.id,'ardennes-forest');assert.equal(app.duel.state.opponents.length,7);
+  });
+});
+
+
+test('finishing intel keeps the generated Wall Crest and only analysed corner notes',async()=>{
+  const {buildTrackDossier,courseFingerprint}=await import('../src/track-analysis.js');
+  const {referenceLap}=await import('../src/reference-laps.js');
+  const reference=referenceLap('ardennes-forest');assert.ok(reference,'the actual bundled Ardennes reference is required');
+  const course=new Course(ARDENNES_FOREST,1989),dossier=buildTrackDossier(course,{reference});
+  const crest=dossier.flags.filter(flag=>flag.kind==='crest'&&flag.title.includes('Wall Crest'));
+  assert.equal(crest.length,1,'Wall Crest must not gain a second authored crest flag');
+  assert.equal(crest[0].id,'crest-2');assert.equal(crest[0].generated,true);
+  assert.equal(ARDENNES_FOREST.intel.flags.length,6);
+  for(const id of Object.keys(ARDENNES_FOREST.intel.notes))
+    assert.ok(Object.hasOwn(dossier.notes,id),'engineer notes belong to analysed corners: '+id);
+  assert.equal(courseFingerprint(course),courseFingerprint(new Course({...ARDENNES_FOREST,intel:undefined},1989)),
+    'finishing notes preserve the default-sector reference fingerprint');
 });

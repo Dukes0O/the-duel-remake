@@ -117,7 +117,7 @@ test('Summit Attack is a narrow shared-switch child with parent-only free access
   assert.equal(JSON.stringify([parent,child]),before);
   assert.equal(attackManifest.releaseOrder,6);
   assert.deepEqual(attackManifest.unlock,{kind:'owned-course',defaultEventId:'summit-run'});
-  for(const patch of [{price:1},{grandPrix:true},{state:'on'},{flag:'another-switch'},
+  for(const patch of [{price:1},{grandPrix:true},{state:'dev'},{flag:'another-switch'},
     {unlock:{kind:'owned-course',defaultEventId:'missing'}},
     {unlock:{kind:'owned-course',defaultEventId:SUMMIT_ATTACK_ID}}]){
     const m={...attackManifest,...patch},circuit={...SUMMIT_TIME_ATTACK,flag:m.flag};

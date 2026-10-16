@@ -102,7 +102,9 @@ export function closureCard(profile, courseId, today = playDayOf(profile), {enab
     const wallet = Number.isFinite(credits) ? Math.max(0, Math.floor(credits)) : 0;
     return Object.freeze({closed: true, reopened: false, daysLeft: left, price, short: Math.max(0, price - wallet),
       lines: Object.freeze(['Closed: burnt in a forest fire.', `Reopens in ${left} play ${left === 1 ? 'day' : 'days'}.`]),
-      refusal: `${name} is closed after a forest fire.`});
+      refusal: `${name} is closed after a forest fire.`,
+      // The line under START on the main menu, so a closed course never leaves START doing nothing.
+      startNote: `${name} is closed after a forest fire. It reopens in ${left} play ${left === 1 ? 'day' : 'days'}, or buy it back in Your Courses.`});
   }
   // The play day it reopens by itself, the card says so once.
   if (days === CLOSURE.closedDays && !burnEntry(profile, courseId).boughtBack)

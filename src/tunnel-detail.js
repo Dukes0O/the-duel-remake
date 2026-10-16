@@ -54,10 +54,39 @@ export function tunnelDetailMaterials(){
 export function buildTunnelWallDetails(course,tunnel){
   const data={tunnelSeam:[],tunnelPanel:[],tunnelVent:[]},placements=[];
   const segments=Math.ceil((tunnel.end-tunnel.start)/4),step=(tunnel.end-tunnel.start)/segments;
+  const encodedGallery=tunnel.id==='summit-gallery'&&tunnel.flatRoof===true;
+  const galleryFaces=new Map();
+  const galleryCorner=(point,row,side)=>{
+    const key=row*2+(side>0?1:0);
+    let face=galleryFaces.get(key);
+    if(!face){
+      // Match addTunnel's row arithmetic and the lining buffer's storage.
+      const a=course.worldAt(tunnel.start+row/segments*(tunnel.end-tunnel.start),side*tunnel.width);
+      const b=course.worldAt(tunnel.start+(row+1)/segments*(tunnel.end-tunnel.start),side*tunnel.width);
+      const ax=Math.fround(a.x),az=Math.fround(a.z),dx=Math.fround(b.x)-ax,dz=Math.fround(b.z)-az;
+      const length=Math.hypot(dx,dz);
+      face={ax,az,nx:dz/length,nz:-dx/length};galleryFaces.set(key,face);
+    }
+    const {ax,az,nx,nz}=face,distance=(point[0]-ax)*nx+(point[2]-az)*nz;
+    const x=Math.fround(point[0]-distance*nx),z=Math.fround(point[2]-distance*nz);
+    const spacing=value=>Math.abs(value)<2**-126?2**-149:2**(Math.floor(Math.log2(Math.abs(value)))-23);
+    const sx=spacing(x),sz=spacing(z);
+    let bestX=x,bestZ=z,bestError=Infinity,bestMove=Infinity;
+    // Encoding an interpolated point can move it off an encoded face. Choose
+    // the closest plane fit among its immediate representable neighbours.
+    for(const cx of[x,Math.fround(x-sx),Math.fround(x+sx)])for(const cz of[z,Math.fround(z-sz),Math.fround(z+sz)]){
+      const error=Math.abs((cx-ax)*nx+(cz-az)*nz),move=(cx-point[0])**2+(cz-point[2])**2;
+      if(error<bestError||error===bestError&&move<bestMove){
+        bestError=error;bestMove=move;bestX=cx;bestZ=cz;
+      }
+    }
+    return[bestX,point[1],bestZ];
+  };
   const wallPoint=(s,y,side)=>{
     const row=Math.min(segments-1,Math.max(0,Math.floor((s-tunnel.start)/step))),start=tunnel.start+row*step,t=(s-start)/step;
     const a=course.worldAt(start,side*tunnel.width),b=course.worldAt(start+step,side*tunnel.width);
-    return[THREE.MathUtils.lerp(a.x,b.x,t),THREE.MathUtils.lerp(a.y,b.y,t)+y,THREE.MathUtils.lerp(a.z,b.z,t)];
+    const point=[THREE.MathUtils.lerp(a.x,b.x,t),THREE.MathUtils.lerp(a.y,b.y,t)+y,THREE.MathUtils.lerp(a.z,b.z,t)];
+    return encodedGallery?galleryCorner(point,row,side):point;
   };
   const quad=(kind,s0,s1,y0,y1,side)=>{
     // Split overlays at the lining's own four-metre rows. They remain exactly

@@ -265,6 +265,37 @@ function scatterScenery(course) {
   });
 }
 
+// Reserve authored branch roads only after every original scenery proposal,
+// random draw, vacancy decision, forest claim and autumn tint has completed.
+// Survivors retain their original objects, order and IDs; nothing is refilled.
+export function clearAuthoredRoadScenery(course) {
+  const authored = course.def.roadBranches;
+  if (!authored?.length) return 0;
+  const f = course.features, ids = new Set(authored.map(branch => branch.id));
+  const branches = f.shortcuts.filter(branch => ids.has(branch.id)), removed = new Set();
+  if (!branches.length) return 0;
+  const kinds = [
+    ['rocks', rock => Math.hypot(rock.scale[0], rock.scale[2]), 4],
+    ['trees', tree => 2.1 * tree.scale, 3],
+    ['buildings', building => Math.hypot(building.halfX, building.halfZ), 3],
+    ['mountains', mountain => Math.hypot(mountain.halfX, mountain.halfZ) * 1.1, 25],
+  ];
+  for (const [kind, radiusOf, margin] of kinds) {
+    const placements = f[kind], kept = [];
+    for (const placement of placements) {
+      const point = course.worldAt(placement.s, placement.off), near = course.nearest(point.x, point.z), radius = radiusOf(placement);
+      // This is the existing legacy shortcut reservation, including the join
+      // reach. Only its placement timing differs, to preserve authored draws.
+      const intrudes = branches.some(branch => near.s >= branch.start - 12 && near.s <= branch.end + 12 &&
+        Math.abs(near.lateral - course.shortcutOffset(branch, near.s)) < radius + branch.halfWidth + margin);
+      if (intrudes) removed.add(placement); else kept.push(placement);
+    }
+    if (kept.length !== placements.length) f[kind] = kept;
+  }
+  if (removed.size) f.obstacles = f.obstacles.filter(obstacle => !removed.has(obstacle) && !removed.has(obstacle.source));
+  return removed.size;
+}
+
 // ---------------------------------------------------------------------------
 // Solid kit pieces (`solid: true` on a circuit's `kitPlacements`): the barriers,
 // fences, posts and buildings a circuit stands beside the road are boxes a car
@@ -355,6 +386,7 @@ export function trackScriptSolids(course) {
   }
   f.obstacles.push(...f.walls);
   scatterScenery(course);
+  clearAuthoredRoadScenery(course);
   // After the planted scenery, so the trees stand exactly where they did.
   f.kitSolids = kitSolids(course);
   f.obstacles.push(...f.kitSolids);

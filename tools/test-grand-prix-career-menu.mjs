@@ -16,9 +16,11 @@ const credits=value=>Math.floor(value||0).toLocaleString();
 function legacyPanel(profile,selectedStage=0,message='',{teamRoomEnabled=false}={}){
   const cards=COURSE.map((course,index)=>{
     const owned=isCourseUnlocked(profile,course),selected=index===selectedStage,price=COURSE_PRICES[course.id];
-    const description=course.practice?'Untimed free driving. No credits, records or finish line.':course.stuntTrial?'Two laps, four landed jumps and four crushes.':course.kind==='drift'?'Bank the drift target and finish before the deadline.':course.kind==='checkpoint'?'Pass all twelve timed gates over two laps.':course.kind==='chase'?'Escape pursuit and finish before the deadline.':`${(course.lengthU/1000).toFixed(2).replace(/0$/,'')} km per lap · Two-lap ${course.kind?'standalone event':'campaign circuit'}.`;
+    const attack=course.id==='summit-time-attack';
+    const condition=attack&&!owned?'<p>Own Summit Run to enter this solo challenge for free.</p>':'';
+    const description=attack?`${(course.lengthU/1000).toFixed(2).replace(/0$/,'')} km · SOLO TIME TRIAL · ONE RUN · NO PAY.`:course.practice?'Untimed free driving. No credits, records or finish line.':course.stuntTrial?'Two laps, four landed jumps and four crushes.':course.kind==='drift'?'Bank the drift target and finish before the deadline.':course.kind==='checkpoint'?'Pass all twelve timed gates over two laps.':course.kind==='chase'?'Escape pursuit and finish before the deadline.':`${(course.lengthU/1000).toFixed(2).replace(/0$/,'')} km per lap · Two-lap ${course.kind?'standalone event':'campaign circuit'}.`;
     const teamRoom=teamRoomEnabled&&course.closed!==false?`<button type="button" data-team-room="${escape(course.id)}" aria-label="${owned?'Study':'Unlock to study'} ${escape(course.name)} in the Team Room" ${owned?'':'disabled'}>TEAM ROOM ↗</button>`:'';
-    return `<article class="course-access-card${selected?' selected':''}"><div><span class="field-label">${course.practice?'PRACTICE':owned?'UNLOCKED':`${credits(price)} CR`}</span><h3>${escape(course.name)}</h3><p>${description}</p>${course.requiredCar?`<p class="course-recommendation">${escape(CARS[course.requiredCar]?.name||'Titan')} recommended.${course.arena?' Lighter cars cannot crush wrecks.':''}</p>`:''}</div>${owned?`<button type="button" data-course-select="${course.id}" aria-label="Select ${escape(course.name)} for free" aria-pressed="${selected}" ${selected?'disabled':''}>${selected?'SELECTED':'SELECT COURSE'}</button>`:`<button type="button" data-course-unlock="${course.id}" aria-label="Unlock ${escape(course.name)} for ${price} credits" ${profile.credits<price?'disabled':''}>UNLOCK · ${credits(price)} CR</button>`}${teamRoom}</article>`;
+    return `<article class="course-access-card${selected?' selected':''}"><div><span class="field-label">${course.practice?'PRACTICE':owned?'UNLOCKED':attack?'LOCKED':`${credits(price)} CR`}</span><h3>${escape(course.name)}</h3><p>${description}</p>${condition}${course.requiredCar?`<p class="course-recommendation">${escape(CARS[course.requiredCar]?.name||'Titan')} recommended.${course.arena?' Lighter cars cannot crush wrecks.':''}</p>`:''}</div>${owned?`<button type="button" data-course-select="${course.id}" aria-label="Select ${escape(course.name)} for free" aria-pressed="${selected}" ${selected?'disabled':''}>${selected?'SELECTED':'SELECT COURSE'}</button>`:attack?`<button type="button" disabled aria-label="Own Summit Run to enter this solo challenge for free.">LOCKED</button>`:`<button type="button" data-course-unlock="${course.id}" aria-label="Unlock ${escape(course.name)} for ${price} credits" ${profile.credits<price?'disabled':''}>UNLOCK · ${credits(price)} CR</button>`}${teamRoom}</article>`;
   }).join('');
   return `<section class="career-panel course-access-panel" role="dialog" aria-modal="true" aria-labelledby="courses-title"><header class="shop-heading"><div><p class="eyebrow">EARN YOUR NEXT HORIZON</p><h2 id="courses-title">YOUR COURSES.</h2></div><div class="shop-wallet"><span>YOUR CREDITS</span><b>${credits(profile.credits)}<small> CR</small></b></div><button class="shop-close" data-action="courses-close" aria-label="Close course garage">×</button></header><p>Pacific Canyon is included. Unlocking a course does not select it. Any owned car can enter an unlocked course.</p><p class="course-access-message" role="status" aria-live="polite">${escape(message)||'Course purchases belong to this player. Completed race credits stay safe.'}</p><div class="course-access-grid">${cards}</div></section>`;
 }
@@ -69,11 +71,15 @@ test('enabled grouping uses actual App availability once, order, prices and base
   const html=courseAccessPanel(app.profile,0,'<safe>',options),gp=COURSE.filter(course=>app.grandPrixAvailable(course)),classic=COURSE.filter(course=>!app.grandPrixAvailable(course));
   assert.ok(html.includes('GRAND PRIX')&&html.includes('CLASSIC COURSES'));
   assert.equal(articles(html).length,COURSE.length);
-  assert.deepEqual(articles(html).map(card=>card.match(/data-course-(?:select|unlock)="([^"]+)"/)[1]),[...gp,...classic].map(course=>course.id));
+  assert.deepEqual(articles(html).map(card=>card.includes('<h3>Summit Time Attack</h3>')?'summit-time-attack':card.match(/data-course-(?:select|unlock)="([^"]+)"/)[1]),[...gp,...classic].map(course=>course.id));
   for(const course of COURSE){
-    const card=articles(html).find(card=>card.includes('="'+course.id+'"'));
-    assert.ok(card);assert.equal(articles(html).filter(card=>card.includes('="'+course.id+'"')).length,1);
-    if(!isCourseUnlocked(app.profile,course))assert.ok(card.includes('aria-label="Unlock '+escape(course.name)+' for '+COURSE_PRICES[course.id]+' credits"')&&card.includes('disabled'));
+    const matches=card=>course.id==='summit-time-attack'?card.includes('<h3>Summit Time Attack</h3>'):card.includes('="'+course.id+'"');
+    const card=articles(html).find(matches);
+    assert.ok(card);assert.equal(articles(html).filter(matches).length,1);
+    if(course.id==='summit-time-attack'){
+      assert.ok(card.includes('SOLO TIME TRIAL · ONE RUN · NO PAY.')&&card.includes('Own Summit Run to enter this solo challenge for free.'));
+      assert.ok(card.includes('disabled')&&!card.includes('data-course-unlock='),'the locked solo child offers no credit purchase');
+    }else if(!isCourseUnlocked(app.profile,course))assert.ok(card.includes('aria-label="Unlock '+escape(course.name)+' for '+COURSE_PRICES[course.id]+' credits"')&&card.includes('disabled'));
     assert.equal(card.includes('data-team-room='),course.closed!==false);
     if(course.requiredCar)assert.ok(card.includes('recommended.'));
     if(app.grandPrixAvailable(course)){

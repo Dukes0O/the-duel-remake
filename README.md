@@ -2,6 +2,27 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Forest fires – 15 October 2026
+
+Fight forest fires with Kestrel One. Once you have passed the four lessons
+and filled up at the pump a few times, the radio may call mid-flight: smoke
+at Tremblant Woods. Press R to answer. Land on the pad, choose Fit the bucket on the
+board, take it to the lake (the autopilot knows the way), hover low and slow
+until it is full, then fly to the fire and hold H over the flames. The ring
+under the bucket turns orange when the water will land on fire. Put it out
+for 1,500 credits and the firefighter badge. Leave a fire burning and it
+grows, faster in wind; if the woods are lost, Tremblant Woods closes for 10
+play days (you can buy it back early) and grows back in stages, from black
+trunks to green shoots to pink fireweed, with the park ranger telling you
+on the radio. While it is closed, the main menu says so under START and
+how many play days are left. Fires come in summer most and spring and
+autumn less; there are none in winter, and the first snow puts a burning
+fire out.
+
+## Ardennes Forest
+
+A fast, hilly two-lap circuit through an autumn forest, with the village, church, bridges and stream from the accepted art. Buy it for 2,000 credits in Your Courses. The road climbs Red Water and The Wall, passes the grandstands and paddock, and drops into the mist at Riverside. Braking boards mark the main approaches.
+
 ## Helicopter release – 14 October 2026
 
 Fly Kestrel One. HELIPAD on the main menu takes you to the pad at Tremblant
