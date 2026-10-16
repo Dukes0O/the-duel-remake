@@ -82,8 +82,11 @@ for(const car of Object.keys(CARS)){
 const reward=benchmark.find(row=>row.car===key);
 for(const row of benchmark.filter(row=>row.car!==key)){
   check(reward.brakingMeters<row.brakingMeters,`${row.car}: Jesko stops in less distance from 100 mph`);
-  check(reward.nitroSeconds>row.nitroSeconds*1.3,`${row.car}: Jesko nitro lasts substantially longer`);
-  check(reward.burstGain>row.burstGain*1.2,`${row.car}: Jesko has a stronger measured nitro impulse`);
+  // A medal car's approved boost sits just under the Jesko's (EARN-CAR-3), so
+  // the Jesko must only beat it; every bought car it beats by a wide margin.
+  const medal=CARS[row.car].unlockRequirement?.kind==='medals';
+  check(reward.nitroSeconds>row.nitroSeconds*(medal?1:1.3),`${row.car}: Jesko nitro lasts ${medal?'longer':'substantially longer'}`);
+  check(reward.burstGain>row.burstGain*(medal?1:1.2),`${row.car}: Jesko has a stronger measured nitro impulse`);
 }
 
 // Real garage purchases in private memory, followed by two input-only Pacific

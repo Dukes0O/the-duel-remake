@@ -28,6 +28,7 @@
   "description": "Native sitting-state shoves plus unchanged released solver and full-state road controls. Wall-pinned displacement is tangential; outward confinement stays a separate design question.",
   "solverFingerprint": "fb34f6167f8707be7c4cd3bee0addbde206a32ef9f5cddf3adb0a7c6a6baa9f2",
   "solverFingerprintWithEnzo": "7521460c9e1cf8158f666fe740e91d729d5f001fb45d568708d63cfd5047ec8f",
+  "solverFingerprintWithBolide": "f316b925b263e542e084372f12b7857c951400eaf2a5c83582344dacc42de26a",
   "roadTicks": 360,
   "roadControls": [
     {

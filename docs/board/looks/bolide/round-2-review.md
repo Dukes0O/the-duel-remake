@@ -8,12 +8,12 @@ logo). Unregistered: nothing in the game loads it until EARN-CAR-2 releases
 ```
 node tools/art/car-review-export.mjs bolide-vehicle.js createBolideVehicle .evidence/<date>/EARN-CAR-3/<round>/bolide.glb
 blender -b --factory-startup --python tools/blender/car-review.py -- --root . --glb <that glb> --out .evidence/<date>/EARN-CAR-3/<round>
-python tools/art/car-review-sheet.py .evidence/<date>/EARN-CAR-3/<round> docs/board/looks/earned-cars/car-3-round-<n>.jpg "<title>"
+python tools/art/car-review-sheet.py .evidence/<date>/EARN-CAR-3/<round> docs/board/looks/bolide/round-<n>.jpg "<title>"
 ```
 
 ## Round 1
 
-Sheet `car-3-round-1.jpg`. 62,623 triangles and 55 draws (budget 73,600 and
+Sheet removed when round 2 was picked (the looks folder has a 20 MB budget); Kyle has it. 62,623 triangles and 55 draws (budget 73,600 and
 66); 2.06 x 1.18 x 4.82 m with the wing (the body is 1.05 m tall).
 
 What reads right: a track car barely a metre tall and very wide; the small
@@ -39,7 +39,7 @@ open intakes.
 
 ## Round 2
 
-Sheet `car-3-round-2.jpg`. 65,660 triangles and 55 draws; 2.06 x 1.18 x
+Sheet `round-2.jpg`. 65,660 triangles and 55 draws; 2.06 x 1.18 x
 4.82 m.
 
 - The Bolide's two-tone: bare carbon on the lower third of the nose, flanks
