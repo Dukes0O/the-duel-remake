@@ -1456,7 +1456,7 @@ export class App {
     const fireOn = this._fireOn();
     if (fireOn) this.heliAudio.preloadFire?.();
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
-      fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
+      fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true, playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       persist: profile => {
         // Credits the session charged since its last save move the app's
