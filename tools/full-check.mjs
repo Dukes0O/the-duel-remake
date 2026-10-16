@@ -230,7 +230,8 @@ export function validateTremblantFramePacket(packet,name) {
     throw Error(name+': missing completed timing-only packet.');
   for(const [index,at]of expected.entries()) {
     const row=packet.reports[index];
-    if(row.quality!==at.quality||row.label!==at.label||row.cars!==8||row.frames!==120||
+    if(row.quality!==at.quality||row.label!==at.label||row.course!==(name==='tremblant-snow'?'tremblant-snow':'tremblant-woods')||
+      row.cars!==8||row.frames!==120||
       !Number.isFinite(row.p95)||row.p95<=0||row.p95>(name==='tremblant-snow'?18.5:33.5)||
       (name==='tremblant-views'&&(!Number.isInteger(row.over33ms)||row.over33ms<0||row.over33ms>12)))
       throw Error(name+': timing requires both qualities, eight cars,120frames and the unchanged frame limits.');

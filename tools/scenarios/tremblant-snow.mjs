@@ -14,6 +14,8 @@ const QA_MODE = process.env.DUEL_TREMBLANT_QA_MODE || 'combined';
 if (!['combined','views','timing'].includes(QA_MODE)) throw Error('Unknown Tremblant QA mode');
 const PICTURES = QA_MODE !== 'timing';
 const COURSE_ID = process.env.TREMBLANT_SNOW_COURSE || 'tremblant-snow';
+if (QA_MODE === 'timing' && COURSE_ID !== 'tremblant-snow')
+  throw Error('Named timing requires actual Tremblant Snow');
 // Card limit (Claude, 11 October): delivered 95th percentile frame at most 18.5 ms with eight cars on the grid.
 const P95_LIMIT_MS = 18.5;
 if (QA_MODE === 'timing' && process.env.TREMBLANT_SNOW_PACING === '0')
@@ -76,7 +78,8 @@ async function measure(context, quality, label, cars) {
   const report = await context.evaluate(`JSON.parse(document.querySelector('#performance-results').textContent).at(-1)`);
   if (!Number.isFinite(report.p95) || report.p95 <= 0 || report.frames !== 120) throw Error(`${quality}: invalid frame measurement ${JSON.stringify(report)}`);
   console.log(`${quality}, ${label}: p50 ${report.p50} ms, p95 ${report.p95} ms, >33ms ${report.over33ms}, draws ${report.drawCalls}, triangles ${report.triangles}`);
-  return { quality, label, cars, ...report };
+  const course = await context.evaluate('window.__qaApp.duel.course.def.id');
+  return { quality, label, cars, ...report, course };
 }
 
 const VIEWS = [

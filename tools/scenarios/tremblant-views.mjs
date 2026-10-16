@@ -73,7 +73,8 @@ async function measure(context, quality, label, cars) {
   const report = await context.evaluate(`JSON.parse(document.querySelector('#performance-results').textContent).at(-1)`);
   if (!Number.isFinite(report.p95) || report.p95 <= 0 || report.frames !== 120) throw Error(`${quality}: invalid frame measurement ${JSON.stringify(report)}`);
   console.log(`${quality}, ${label}: p50 ${report.p50} ms, p95 ${report.p95} ms, >33ms ${report.over33ms}, draws ${report.drawCalls}, triangles ${report.triangles}`);
-  return { quality, label, cars, ...report };
+  const course = await context.evaluate('window.__qaApp.duel.course.def.id');
+  return { quality, label, cars, ...report, course };
 }
 
 const VIEWS = [

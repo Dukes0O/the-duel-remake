@@ -95,7 +95,7 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
             rows:['frame-pacing','tremblant-snow','tremblant-views'].map(name=>({name,passed:true}))}));
           if(!timingMissing)for(const recipe of stage.timingPackets) {
             const labels=recipe.name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
-            const reports=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,cars:8,frames:120,
+            const reports=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,course:recipe.name==='tremblant-snow'?'tremblant-snow':'tremblant-woods',cars:8,frames:120,
               p95:recipe.name==='tremblant-snow'?18.5:33.5,over33ms:12})));
             Object.assign(reports[0],timingPatch);
             files.set(recipe.packet,JSON.stringify({mode:'timing',reports,misses:0}));
@@ -535,7 +535,7 @@ test('foreign heavy work appearing only during frames discards the actual timing
         rows:['frame-pacing','tremblant-snow','tremblant-views'].map(name=>({name,passed:true}))}));
       for(const recipe of stage.timingPackets) {
         const labels=recipe.name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
-        const reports=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,cars:8,frames:120,
+        const reports=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,course:recipe.name==='tremblant-snow'?'tremblant-snow':'tremblant-woods',cars:8,frames:120,
           p95:recipe.name==='tremblant-snow'?18.5:33.5,over33ms:12})));
         f.files.set(recipe.packet,JSON.stringify({mode:'timing',reports,misses:0}));
       }
@@ -642,9 +642,9 @@ test('Tremblant timing acceptance rejects missing qualities, unrun timing and ev
   assert.equal(typeof validateTremblantFramePacket,'function');
   for (const name of ['tremblant-snow','tremblant-views']) {
     const labels = name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
-    const packet = {mode:'timing',reports:['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,cars:8,frames:120,p95:name==='tremblant-snow'?18.5:33.5,over33ms:12}))),misses:0};
+    const packet = {mode:'timing',reports:['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,course:name==='tremblant-snow'?'tremblant-snow':'tremblant-woods',cars:8,frames:120,p95:name==='tremblant-snow'?18.5:33.5,over33ms:12}))),misses:0};
     assert.doesNotThrow(()=>validateTremblantFramePacket(packet,name));
-    for(const patch of [{frames:119},{cars:7},{p95:Infinity},{p95:0},{p95:name==='tremblant-snow'?18.501:33.501},...(name==='tremblant-views'?[{over33ms:13}]:[])]) {
+    for(const patch of [{frames:119},{cars:7},{course:name==='tremblant-snow'?'tremblant-woods':'tremblant-snow'},{p95:Infinity},{p95:0},{p95:name==='tremblant-snow'?18.501:33.501},...(name==='tremblant-views'?[{over33ms:13}]:[])]) {
       const bad=structuredClone(packet);Object.assign(bad.reports[0],patch);assert.throws(()=>validateTremblantFramePacket(bad,name));
     }
     const missing=structuredClone(packet);missing.reports.pop();assert.throws(()=>validateTremblantFramePacket(missing,name));

@@ -201,3 +201,15 @@ test('ordinary Tremblant views run concurrently with explicit semantic mode and 
   assert.equal(f.maximum,2);assert.equal(f.summary.timingMode,undefined);
   assert.ok(f.summary.rows.every(row=>row.timing==='run in the frame step'));
 });
+
+
+test('named Snow timing rejects the legacy Woods course override without removing direct comparison mode', async () => {
+  const keys=['DUEL_TREMBLANT_QA_MODE','TREMBLANT_SNOW_COURSE','TREMBLANT_SNOW_PACING'];
+  const old=keys.map(key=>process.env[key]);
+  try {
+    Object.assign(process.env,{DUEL_TREMBLANT_QA_MODE:'timing',TREMBLANT_SNOW_COURSE:'tremblant-woods',TREMBLANT_SNOW_PACING:'1'});
+    await assert.rejects(import('./scenarios/tremblant-snow.mjs?timing-course-guard'),/actual Tremblant Snow/);
+    process.env.DUEL_TREMBLANT_QA_MODE='combined';
+    assert.equal(typeof (await import('./scenarios/tremblant-snow.mjs?legacy-course-guard')).run,'function');
+  } finally {keys.forEach((key,i)=>{if(old[i]===undefined)delete process.env[key];else process.env[key]=old[i];});}
+});
