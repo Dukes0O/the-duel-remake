@@ -127,7 +127,9 @@ function mapMarkup(dossier) {
   const leaders = map.flags.map(flag => `<line x1="${flag.anchorX.toFixed(1)}" y1="${flag.anchorY.toFixed(1)}" x2="${flag.x.toFixed(1)}" y2="${flag.y.toFixed(1)}"/><circle cx="${flag.anchorX.toFixed(1)}" cy="${flag.anchorY.toFixed(1)}" r="3.5"/>`).join('');
   const corner = item => {
     const label = item.flagId ? ` data-team-flag="${escape(item.flagId)}" role="button" tabindex="0" aria-pressed="false" aria-label="Corner ${item.number}: ${escape(item.name)}. Study the approach."` : '';
-    return `<g class="${item.flagId ? 'team-map-corner' : ''}" transform="translate(${item.x.toFixed(1)} ${item.y.toFixed(1)})"${label}><circle r="14"/><text text-anchor="middle" dy="5">${item.number}</text>${item.label ? `<text x="${(item.label.textX - item.x).toFixed(1)}" y="${(item.label.textY - item.y).toFixed(1)}" text-anchor="${item.label.anchor}" class="team-map-name${item.label.hidden ? ' team-map-name-hidden' : ''}">${escape(item.authoredName)}</text>` : ''}<title>${escape(item.name)}</title></g>`;
+    // The name is drawn beside the circle, not inside the pressable marker, so the marker's own box stays on its circle.
+    const name = item.label ? `<text x="${item.label.textX.toFixed(1)}" y="${item.label.textY.toFixed(1)}" text-anchor="${item.label.anchor}" class="team-map-name${item.label.hidden ? ' team-map-name-hidden' : ''}">${escape(item.authoredName)}</text>` : '';
+    return `<g class="${item.flagId ? 'team-map-corner' : ''}" transform="translate(${item.x.toFixed(1)} ${item.y.toFixed(1)})"${label}><circle r="14"/><text text-anchor="middle" dy="5">${item.number}</text><title>${escape(item.name)}</title></g>${name}`;
   };
   return `<div class="team-map"><svg viewBox="0 0 1000 690" role="group" aria-label="${escape(dossier.name)}. Track coloured by reference speed. Numbered corners and start line.">
     <g fill="none" stroke-width="9" stroke-linecap="round">${segments}</g>
