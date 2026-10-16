@@ -74,3 +74,10 @@ Light suites (all pass): `test-heli-save` (35 groups), `test-save-fixtures`
 Nothing replaced; no old code, test or document is removed. The packet's
 `bumps` for a rescue in hand is not stored (RESCUE-HURT's pay-by-condition
 reads `condition`).
+
+## Preview launcher row (Claude)
+
+`start-preview.bat` now requests the new `rescue` dev switch, as
+`tools/test-preview-launcher.mjs` requires for every dev switch (it failed the
+first lane run). The switch adds nothing visible yet, so the preview is
+unchanged in play.
