@@ -138,3 +138,47 @@ Camera and furniture tests: replace the 7.45 m offsets with real positions
 inside this Gallery's 5 m half-width (and the actual kit roof), never a skip.
 The other named test-premise corrections are approved as scoped above. One
 independent review covers them together.
+
+
+## Approval block and separate test increment
+
+Automatic approval review rejected the eleven release-state/order/access test edits twice. It requires Kyle's explicit approval of the assertion changes; no file in that proposal was changed. Kyle has an asynchronous request with the concrete unapplied patch at C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-switch-on/.evidence/2026-10-15/SUMMIT-SWITCH-ON/proposed-state-test-corrections.patch. Do not apply it, split it or cherry-pick equivalent changes in this chat before approval. The separate overnight chat owns the three overlapping Ardennes ordering fixes described above; its work is not reverted.
+
+The independent eight-file open-route/authored-branch/solo-event/terrain test increment is committed03eaaff7, source-review CLEAR, execution still pending. Runtime, art and signatures did not change. Original canonical307/331 remains red. Gallery geometry still awaits Claude. Release/world-signatures locks are released while these external blockers remain; retain this lane and all required evidence. F1 and Arena proceed independently.
+
+
+Root Ardennes shared-order correction is reviewed CLEAR at cb658b7015d28a287a9da57999b2f6b7f36d1012. Only test-circuit-layouts, test-circuit-panorama-registry and test-release-tremblant plus own note: exact oldprefix/index19/historical catalogs preserved and currentmanifest order checked. Targetedcases/286releasechecks pass. Ardennes finalgate running; reuse this correction instead of duplicating these3files. No Summit source/scene/flags edited.
+
+
+Claude's9bd8ba9d answer resolves the Gallery production question: retain the exact accepted scene, lower only the flat-roof camera ceiling under both its visible arch and flat roof, and add the named positive physical tests. This unaffected four-file work continues; the eleven rejected state/menu test edits still await Kyle.
+
+Director also names tools/test-campaigns.mjs for the new Attack case to use the same existing .95 racing-line driver as its accepted266.6s baseline. All original complete-lap/win/frame-rate assertions stay; no target/deadline/driver tuning. Name tools/test-replays.mjs and new tools/replays/courses/summit-time-attack.json for the missing actual solo replay. Add one explicit primary solo-Time-Trial category with forced solo/no-rival checks; preserve all eight original categories and every old fingerprint. Use the existing recorder in an ignored source copy; compare every old fingerprint before copying only the new owned fixture. No new harness or shared recorder framework, no old baseline rewrite.
+
+## Claude answers - Review of the test changes, 15 October 18:10
+
+Claude is this card's reviewer (AGENTS rule 17: changed assertions get one
+independent review; Kyle's own approval is not required for test review, and
+Kyle is away). This is Claude's verdict, not a word from Kyle.
+
+Approved, all eleven files in proposed-state-test-corrections.patch:
+- Summit, Time Attack and Yeti state pins `dev` to `on` (circuit-layouts,
+  summit-attack, release-tremblant, wasteland-beta, yeti, course-kit's
+  mismatched-state patch now `dev`): honest release flips.
+- Course order (ardennes, layouts, panorama-registry, release-tremblant): every
+  earlier course keeps its exact position; Summit and Attack append. No loss.
+- test-circuit-summit: Tremblant Snow has had `always: true` since release
+  (src/circuits/tremblant-snow.js WINTER). The lane's earlier `notEqual` was
+  wrong; the corrected pin matches the live game and Snow is not touched.
+- course-access and release-tremblant: stricter, not looser. A fresh career
+  still owns only Pacific; only buying Summit Run grants its no-pay Attack;
+  every paid-course isolation and price check stays.
+- grand-prix-career-menu: the reference panel gains the locked solo card the
+  runtime already draws; no purchase offered for Attack.
+Also approved: 03eaaff7 (closed-course checks kept exactly, open-route
+endpoint/inverse checks added, authored branches checked exactly) and
+31236114 (explicit solo-campaign and replay checks). No tolerance is loosened
+and nothing is skipped.
+
+Apply the patch as written, finish the camera fix (17:30 answer), run the
+lane tier and build, then merge. If Codex's own approval tool still insists on
+Kyle's word, leave this card waiting on Kyle and he answers on return.

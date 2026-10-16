@@ -221,7 +221,7 @@ tasks:
     status: "in-progress"
     claimed_by: codex-card-answers-01a141d7
     branch: codex/summit-switch-on
-    locks: [release, world-signatures]
+    locks: []
     needs: []
     details: "docs/board/cards/SUMMIT-SWITCH-ON.md"
 
@@ -391,10 +391,11 @@ tasks:
     lane: "ART"
     size: "M"
     status: "building"
+    waiting_on: "claude"
     claimed_by: codex-card-answers-01a141d7
     branch: codex/earn-car-2
     needs: [EARN-SCREEN]
-    locks: [sound-bank]
+    locks: []
     flag: "earned-cars"
     details: "docs/board/cards/EARN-CAR-2.md"
 
@@ -781,3 +782,39 @@ tasks:
     status: "backlog"
     needs: []
     details: "docs/board/cards/QA-FACTORY-RECYCLE-JUNCTION.md"
+
+  - id: ARDENNES-DAMP-FADE
+    title: "Fade the Ardennes damp-road edges over 25 m"
+    owner: "codex"
+    lane: "VIS"
+    size: "S"
+    status: "replaced"
+    needs: []
+    locks: []
+    details: "docs/board/cards/ARDENNES-DAMP-FADE.md"
+
+    implementation_card: ARDENNES-SWITCH-ON
+
+  - id: ARDENNES-PIT-GRASS
+    title: "Keep grass tufts off the pit-lane surface"
+    owner: "codex"
+    lane: "VIS"
+    size: "S"
+    status: "replaced"
+    needs: []
+    locks: []
+    details: "docs/board/cards/ARDENNES-PIT-GRASS.md"
+
+    implementation_card: ARDENNES-SWITCH-ON
+
+  - id: QA-REVIEW-RUNUP-3848
+    title: "Check the review run-up that flips the car at Ardennes 3,848 m"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "replaced"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-REVIEW-RUNUP-3848.md"
+
+    implementation_card: ARDENNES-SWITCH-ON
