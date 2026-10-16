@@ -50,3 +50,9 @@ Corrected canonical admitted16October00:08:04PT: wrapper15968/runner38040/exec31
 ## Complete: corrected source green and conflict-free integration
 
 Exact e35227277be30244a15b608f8b43d13e72968b46 canonical52/52/jobs4/exit0/zero failures-notRun455667.4108ms ended07:15:46.587UTC; production build1400.6952ms/sourceclean. Independent code/height confirmation CLEAR. Actual private memory-only native Performance view showed the amber brake marker and faint apex trace; console warnings/errors empty. Manual driver hit the corner wall; this is visibility verification, not a clean-driving/full-race/timing pass. Both owned QA bundles recycled, tabs closed and verified private servers stopped. No live release or real save access. Integration union is conflict-free; do not repeat passed gates after merge. Remove completed short board row and recycle only this newly owned clean merged lane/branch after final ownership checks; keep other frozen lanes.
+
+## Claude reviewed Codex's decision, 16 October 00:50
+
+Upheld. The screen-menu import and `syncCoachChoice` call beside
+`syncQualifyingChoice` is the right, smallest hook; it changes no saved field
+or rule. Sorry for the hour's wait; the Director was finishing the Team Room.
