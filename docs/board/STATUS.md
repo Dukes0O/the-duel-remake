@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-16T00:28:26.827Z
+Observed at: 2026-10-16T00:31:37.482Z
 
-Observation commit: b5fdf0a84a95759d5d88960c12a87f27d367842a
+Observation commit: 8c6b82956b7d5da88702e2c1d2041d88cd177dda
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: b5fdf0a84a95759d5d88960c12a87f27d367842a
+Integration HEAD: 8c6b82956b7d5da88702e2c1d2041d88cd177dda
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,7 +29,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/ardennes-switch-on | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on |
+| codex/ardennes-switch-on | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on |
 | codex/deep-art-src | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/earn-car-2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-car-2 |
 | codex/gp-racecraft | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gp-racecraft |
@@ -60,7 +60,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T17:13:57-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, tools/fixtures/world-signatures/ardennes-forest.json, tools/replays/courses/ardennes-forest.json, tools/test-circuit-ardennes.mjs |
+| codex/ardennes-switch-on | ARDENNES-SWITCH-ON | 2026-10-15T17:30:50-07:00 | 0 | last commit 2026-10-15T17:30:50-07:00 | docs/changes/ARDENNES-SWITCH-ON.md, src/circuits/ardennes-forest.js, src/landscape-detail.js, src/pit-lane.js, src/road-surface.js |
 | codex/earn-car-2 | EARN-CAR-2 | 2026-10-15T17:14:53-07:00 | 0 | last commit 2026-10-15T17:14:53-07:00 | docs/HELICOPTER.md, docs/board/looks/earned-cars/car-2-review.md, docs/board/looks/earned-cars/car-2-round-1.jpg, docs/changes/EARN-CAR-2.md, public/assets/models/wasteland/kits/mclaren_f1.glb |
 | codex/gp-racecraft | GP-RACECRAFT | 2026-10-15T14:20:48-07:00 | 0 | last commit 2026-10-15T14:20:48-07:00 | docs/changes/GP-RACECRAFT.md, src/feature-flags.js, src/race-field-driver.js, src/race-field.js, tools/racecraft-rate.mjs |
 | codex/intel-levels | P4-INTEL-LEVELS | 2026-10-15T16:22:01-07:00 | 0 | last commit 2026-10-15T16:22:01-07:00 | docs/changes/P4-INTEL-LEVELS.md, src/app.js, src/intel-levels.js, src/progression.js, tools/test-intel-levels.mjs |
@@ -71,7 +71,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 0 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/qa-arena-air-only | QA-ARENA-STEERING-AIR-ONLY | 2026-10-15T16:36:47-07:00 | 0 | last commit 2026-10-15T16:36:47-07:00 | docs/changes/QA-ARENA-STEERING-AIR-ONLY.md, tools/scenarios/arena-steering.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 1 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T17:21:20-07:00 | 0 | last commit 2026-10-15T17:21:20-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/camera-clearance.js, src/circuits/summit-run.js, src/course.js, src/feature-flags.js |
+| codex/summit-switch-on | SUMMIT-SWITCH-ON | 2026-10-15T17:28:43-07:00 | 0 | last commit 2026-10-15T17:28:43-07:00 | docs/changes/SUMMIT-SWITCH-ON.md, src/camera-clearance.js, src/circuits/summit-run.js, src/course.js, src/feature-flags.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 10 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 | codex/tyre-slip | TYRE-SLIP | 2026-10-15T17:00:44-07:00 | 0 | last commit 2026-10-15T17:00:44-07:00 | docs/changes/TYRE-SLIP.md, src/app.js, src/arena/arena-event.js, src/audio.js, src/combat-weapons.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 0 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
@@ -90,7 +90,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,980,872 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 442,549 B | +0 B | 5,000,000 B |
 | All `public/` | 300,960,994 B | +0 B | unavailable |
-| Git objects | 447,475,712 B | +893,952 B | unavailable |
+| Git objects | 449,002,496 B | +1,526,784 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -99,7 +99,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f
 - Local main: missing
-- Local integration/wasteland: b5fdf0a84a95759d5d88960c12a87f27d367842a
+- Local integration/wasteland: 8c6b82956b7d5da88702e2c1d2041d88cd177dda
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
