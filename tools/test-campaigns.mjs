@@ -23,7 +23,8 @@ if(process.env.DUEL_SKIP_CAMPAIGNS){
   const expansionEvents=COURSE.filter(course=>course.kind&&!course.practice);
   // The stock demo driver (src/app.js) looks only 220 m ahead, so it cannot brake in time for Casino Corner at the end of Harbour Lights'
   // long straight or for the 9 m Lantern Hairpin (RELEASE-HARBOUR). That course is driven with the racing-line driver the circuit tests use.
-  const racingLineDriven=new Set(['harbour-lights']);
+  // Attack uses the same .95 line driver as its accepted one-run baseline.
+  const racingLineDriven=new Set(['harbour-lights','summit-time-attack']);
   let scenarioIndex=0;
   const runs = [];
   for (const seed of [1, 42, 1989, 2026, 90517]) {

@@ -7,7 +7,7 @@ import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 
 const expectedPath = fileURLToPath(new URL('./replays/expected-fingerprints.json', import.meta.url));
 const catalog = loadReplayCatalog(), fixture = catalog.fixture;
-const expectedCategories = ['duel', 'time trial', 'Mad Max', 'chase', 'drift', 'checkpoint rush', 'stunt', 'practice'];
+const expectedCategories = ['duel', 'time trial', 'Mad Max', 'chase', 'drift', 'checkpoint rush', 'stunt', 'practice', 'solo time trial'];
 const number = value => Number.isFinite(value) ? +value.toFixed(5) : value ?? null;
 const pick = (object, keys) => object ? Object.fromEntries(keys.map(key => [key, number(object[key])])) : null;
 
@@ -79,6 +79,16 @@ function replay(race, fps) {
   if (race.category === 'stunt') assert.ok(COURSE[index].stuntTrial && duel.state.objective, `${race.id}: no stunt objective`);
   if (race.category === 'Mad Max') assert.ok(duel.state.combat, `${race.id}: combat is inactive`);
   if (race.category === 'practice') assert.equal(duel.state.timeLimitSec, null, `${race.id}: practice has a deadline`);
+  if (race.category === 'solo time trial') {
+    assert.equal(race.eventId, 'summit-time-attack', 'only the approved solo challenge uses this primary category');
+    assert.equal(race.mode, 'timetrial');
+    assert.equal(duel.state.lapsTotal, 1);
+    assert.equal(duel.state.opponents.length, 0);
+    assert.equal(duel.state.rival, null);
+    assert.equal(duel.state.field, null);
+    assert.equal(duel.state.traffic.length, 0);
+    assert.equal(duel.state.qualifying, false);
+  }
   const samples = [];
   let tick = 0, inputIndex = 0, weaponIndex = 0;
   const frames = Math.ceil(fixture.durationTicks * fps / fixture.stepHz);
