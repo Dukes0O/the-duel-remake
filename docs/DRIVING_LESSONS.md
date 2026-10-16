@@ -309,7 +309,7 @@ credits) when lesson 1 first passes.
 - **New files:** in `src/lessons/`: `lesson-core.js`, `radio-voice.js`,
   `lesson-board.js`, `lesson-board.css`, `drive-lessons.js`,
   `drive-lesson-save.js`, `drive-radio-lines.js`, `drive-lesson-ui.js`,
-  `drive-lesson-ui.css`. Tests: `tools/test-lesson-core.mjs`,
+  `drive-lesson-ui.css`. Tests: `tools/test-heli-lesson-core.mjs`,
   `test-drive-lessons.mjs`, `test-drive-lesson-save.mjs`,
   `test-drive-lesson-run.mjs`, and a browser scenario. Audio: takes in
   `audio-src/voices/`, the build step `tools/audio/build-drive-lessons.mjs`,

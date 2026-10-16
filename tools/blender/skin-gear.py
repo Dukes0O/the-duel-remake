@@ -11,8 +11,8 @@
 #   main-rotor-quiet   wildlife: the main rotor with swept, thinned tips; same pivot
 #                      and spin axis as Kestrel One's main_rotor (origin at the hub)
 # Mount points on Kestrel One (glTF metres, origin on the ground under the mast):
-#   mount_nose (0, 0.85, 2.30), mount_belly (0, 0.76, 1.50), mount_side_right (-0.78, 1.55, 0.45);
-# they become empties in tools/blender/kestrel-one.py after the H1 release.
+#   mount_nose (0, 1.08, 2.30), mount_belly (0, 0.74, 1.50), mount_side_right (-0.60, 1.55, 0.45);
+# they are empties in tools/blender/kestrel-one.py, each on the body surface.
 # Run: blender -b --factory-startup --python tools/blender/skin-gear.py -- --root . [--render DIR]
 import argparse, json, math, sys
 from pathlib import Path

@@ -1,6 +1,6 @@
 # SUMMIT-SWITCH-ON
 
-Summit Run preparation remains blocked, not merged or released. Claude has approved the authored Gallery contract, the camera correction and the two bounded physical repairs below. Eleven state/access/menu test edits remain unapplied after automatic approval review required Kyle's explicit word. No real save, live folder or port5174 was used.
+Summit Run preparation is in progress, not merged or released. Kyle approved the reviewed v2 state/access/menu patch at20:20; exact artifact applied as cd96cb33. Claude approved the authored Gallery contract, camera correction and bounded physical repairs below. No real save, live folder or port5174 was used.
 
 ## Authored route and Gallery contract
 
@@ -36,10 +36,13 @@ Attack uses the existing accepted.95 racing-line driver and266.6s baseline; comp
 
 Existing --record ran once in an ignored copy byte-equal to1235tracked files on425aacb3:24cases/30-60-144FPS passed46.598seconds. Only new summit-time-attack.json was copied back. Hash e06505a8f7e9f6e0ced8a925c80353b7acb618be5ff8424073c4cb4b70806eb2 matches all cadences. All19old replay JSONs deep-equal recomputation and their actual source bytes stay exact. Success text reports actual event/category counts; assertions/hash calculation unchanged. The copy/tar were recycled after receipt/review; dependency junction safely unlinked. Physical-repair source still requires replay confirmation.
 
-## Kyle approval still required
+## Approved test patch and current integration union
 
-Automatic review rejected the eleven state/order/access/menu test edits twice. Neither proposal was applied. Current independently reviewed v2 artifact is .evidence/2026-10-15/SUMMIT-SWITCH-ON/proposed-state-test-corrections-v2.patch, SHA256 d3bd711dc14cec68baabe85a20be4d2f6f0d80822c41f85a24548d30bc97a2e9. It preserves old prices/order/wallet/fresh-Pacific-only access and parent-gated free Attack, plus the necessary old camera expectation at its unchanged1e-6 precision. Claude approved both versions and respects the separate Kyle-only hold. No split, equivalent cherry-pick or workaround.
+Kyle approved v2 at20:20, after Claude's written review. The actual SHA256 d3bd711dc14cec68baabe85a20be4d2f6f0d80822c41f85a24548d30bc97a2e9 patch applied exactly as cd96cb33. Its earlier automatic rejections remain historical, resolved by Kyle's explicit approval.
 
+Syncing current integration produced four real overlapping test hunks: Ardennes admission, generic circuit ordering, Panorama registry and historical release order. Retained every newer integration assertion: released Ardennes plus four dev-admission cases, historical three/four-course catalogs, exact index19 and dynamic current manifest ordering. These supersede stale v2 literal lists while preserving its intended Summit parent/solo admission. Paid-course isolation now selects all actual released positive-price courses, retaining Ardennes coverage and excluding only no-pay Attack; an additional literal Summit/Ardennes/Attack order check retains the exact reviewed append sequence. Other v2 hunks are unchanged. Independent union review and actual final lane/build remain pending.
+
+Physical source ecee3e81 already passed both strict suites (89.964s) and19native views with no issues/warnings; do not repeat. Actual current affected scene capture remains pending; old a574e548 is not the repaired scene's baseline evidence.
 ## Removed
 
 Removed invalid closed-lap/open-route premises and obsolete generic Gallery assumptions while retaining original closed guards and limits. The physical repair removes only intruding natural scenery/colliders; no old placement is archived or refilled. This note folds superseded progress wording into current decisions/evidence; Git retains text history. No asset, authored wall/kit, dependency, old replay pin or numerical tolerance is removed.

@@ -40,3 +40,13 @@ Design only: no game code.
 ## Removed
 
 Nothing: new design only.
+
+## Kyle's answers, 15 October
+
+- Seasons decide which emergency comes; no forest fire in winter. New card
+  FIRE-SEASONS puts the season clock in the engine before H2 releases.
+- People can get hurt and failure has a cost: a casualty's condition
+  (unhurt, hurt, badly hurt) sets the pay; a failed rescue pays nothing,
+  costs 400 credits and drops that skin's tally by one. New card
+  RESCUE-HURT changes the merged rescue line and lines; RESCUE-ENGINE and
+  RESCUE-SAVE carry the rest.

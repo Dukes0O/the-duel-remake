@@ -74,11 +74,17 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   assert.ok(ALL_CIRCUITS.every(circuit => circuit.stage > 15), 'appended after the existing events');
   const on = createFeatureFlags({ storage: null, qa: true, search: '?flags=harbour-lights,tremblant-woods' });
   assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), CIRCUIT_MANIFESTS.filter(row => on.enabled(row.flag)).map(row => row.id), 'the requested circuit plus every released one, in release order');
-  // Every circuit is released now, so the two dev-circuit rules are checked with Panorama Ridge held back as a dev switch in a test catalogue.
+  // A QA-enabled course keeps its manifest position even when later courses are released.
   const held = { ...FEATURE_STATES, 'panorama-ridge': 'dev' }, heldReleased = released.filter(id => id !== 'panorama-ridge');
   const withRidge = createFeatureFlags({ catalog: held, storage: null, qa: true, search: '?flags=panorama-ridge' });
-  assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge', 'summit-run', 'summit-time-attack'], 'a requested dev circuit retains its declared position before the later released Summit events');
+  assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), released, 'QA enables Panorama at its declared release position');
   assert.deepEqual(circuitsEnabled(createFeatureFlags({ catalog: held, storage: null, qa: false, search: '?flags=panorama-ridge' })).map(circuit => circuit.id), heldReleased, 'players never see a dev circuit, only the released ones');
+  const historicalReleased = ['tremblant-woods', 'tremblant-snow', 'harbour-lights'];
+  const historicalCatalog = Object.fromEntries(Object.entries(FEATURE_STATES).map(([id, state]) =>
+    [id, CIRCUIT_MANIFESTS.some(row => row.flag === id) ? (historicalReleased.includes(id) ? 'on' : 'dev') : state]));
+  const historicalQA = createFeatureFlags({ catalog: historicalCatalog, storage: null, qa: true, search: '?flags=panorama-ridge' });
+  assert.deepEqual(circuitsEnabled(historicalQA).map(circuit => circuit.id), [...historicalReleased, 'panorama-ridge'], 'in its original release catalog QA Panorama follows the three older circuits');
+  assert.deepEqual(circuitsEnabled(createFeatureFlags({ catalog: historicalCatalog, storage: null, qa: false, search: '?flags=panorama-ridge' })).map(circuit => circuit.id), historicalReleased, 'the historical production catalog still excludes dev Panorama');
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
   assert.ok(bat.includes('preview-flags.mjs'), 'Preview obtains course flags from the course-owned manifests');
   for (const circuit of ALL_CIRCUITS) assert.ok(previewCircuitFlags().includes(circuit.flag), `the Preview turns ${circuit.id} on`);

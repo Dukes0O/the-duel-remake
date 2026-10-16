@@ -22,14 +22,10 @@
 .heli-controls{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
 .heli-lessons,section.heli-board{width:300px;padding:10px;background:#0f1614d9;border:1px solid #ffffff1f;border-radius:6px}
 .heli-lessons>span{font-size:9px;letter-spacing:2.5px;font-weight:750;color:var(--muted,#b6b1a5)}
-.heli-lessons ul,.heli-board ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
-.heli-lessons li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
-.heli-lessons li.heli-lesson-locked{color:#ffffff66}
-.heli-lessons li.heli-lesson-done span{color:#9fd49a}
+.heli-board ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
 .heli-lessons p{margin:6px 0;font-size:14px;line-height:1.35}
 .heli-lessons button,.heli-board button{padding:5px 9px;font:600 12px/1.2 inherit;color:var(--ink,#f3eddf);background:#ffffff14;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
 .heli-lessons button:hover,.heli-board button:hover{background:#ffffff26}
-.heli-lessons small{font-size:10px;color:#ffffff66}
 .heli-skip{margin-top:8px;width:100%}
 .heli-lesson-hold{height:6px;margin:4px 0 8px;background:#ffffff1a;border-radius:3px;overflow:hidden}
 .heli-lesson-hold span{display:block;height:100%;background:#ffcf3f}

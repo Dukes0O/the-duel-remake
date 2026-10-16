@@ -1,3 +1,5 @@
+import {ALL_CIRCUITS} from '../src/circuits/index.js';
+import * as pitQueries from '../src/pit-lane.js';
 import {animateScene} from '../src/scene-systems.js';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -124,6 +126,31 @@ try{
       report.push({phase:fraction,color:`${a.triangles}→${b.triangles}`,shadow:`${as.triangles}→${bs.triangles}`,draws:`${a.draws}→${b.draws}`});
     }
     console.log(JSON.stringify({event:def.id,originalBatches:old.length,cellBatches:scene.children.length,samples:report}));
+  }
+
+  // Use actual course queries and original source indices, not a reseeded or relocated control.
+  for(const id of ['ardennes-forest','panorama-ridge','tremblant-snow','summit-run']){
+    const course=new Course(ALL_CIRCUITS.find(row=>row.id===id),1989);
+    const control=Object.create(course);control.pitLane=null;
+    const original=new THREE.Group(),filtered=new THREE.Group();
+    addLandscapeDetail(original,control,true);addLandscapeDetail(filtered,course,true);
+    const snapshot=group=>{
+      const values=new Map();for(const mesh of group.children){const data=mesh.userData.landscapeCell;if(!data)continue;
+        for(let i=0;i<mesh.count;i++)values.set(data.kind+'/'+data.indices[i],{
+          kind:data.kind,matrix:Array.from(mesh.instanceMatrix.array.subarray(i*16,i*16+16)),
+          color:mesh.instanceColor?Array.from(mesh.instanceColor.array.subarray(i*3,i*3+3)):null});}
+      return values;
+    };
+    const before=snapshot(original),after=snapshot(filtered);let expectedRemoved=0;
+    assert.equal(typeof pitQueries.pitRoadAt,'function');
+    for(const [key,row] of before){const n=course.nearest(row.matrix[12],row.matrix[14]);
+      const inPit=row.kind==='foliage'&&!!pitQueries.pitRoadAt(course,n.s,n.lateral);
+      if(inPit){expectedRemoved++;assert.ok(!after.has(key),'no original plant root remains on pit pavement: '+id+'/'+key);}
+      else assert.deepEqual(after.get(key),row,'every non-pit transform and color retains its original source index');
+    }
+    assert.equal(after.size,before.size-expectedRemoved);
+    if(id==='ardennes-forest')assert.equal(expectedRemoved,5,'actual pictured five roots, including the main-road apron overlap');
+    console.log(JSON.stringify({pitPlants:id,removed:expectedRemoved,retained:after.size}));
   }
 }finally{THREE.TextureLoader.prototype.load=originalLoad;}
 check(newTotal<oldTotal*.7,'Camera, AO and shadow submissions fall materially without reducing density');check(newShadows<oldShadows*.4,'Distant rocks are removed from local shadow submissions');

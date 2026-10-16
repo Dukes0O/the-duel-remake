@@ -59,8 +59,12 @@ ok(COURSE.every((event, index) => index === harbour || !eventKey({ stageIndex: i
 equal(stageEventId(harbour), 'harbour-lights', 'position 18 saves as harbour-lights');
 const panorama = COURSE.findIndex(event => event.id === 'panorama-ridge');
 equal([tremblant, snow, harbour, panorama], [16, 17, 18, 19], 'the released courses keep their places (Tremblant Woods 17th, Tremblant Snow 18th, Harbour Lights 19th) and Panorama Ridge is 20th');
-equal(COURSE.slice(panorama).map(event => event.id), ['panorama-ridge', 'summit-run', 'summit-time-attack'], 'Panorama keeps its position and the approved Summit parent and solo child append');
-equal(CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge', 'summit-run', 'summit-time-attack'], 'released circuits retain the historical prefix and append the approved Summit events');
+const panoramaReleaseIds = ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge'];
+equal(COURSE.slice(EARLIER_EVENTS.length, panorama + 1).map(row => row.id), panoramaReleaseIds, 'the four earlier released circuits retain their exact public prefix');
+const panoramaRelease = circuitsEnabled({enabled: flag => panoramaReleaseIds.includes(flag)}).map(row => row.id);
+equal(panoramaRelease, panoramaReleaseIds, 'the historical Panorama release catalog retains its exact order');
+equal(EARLIER_EVENTS.length + panoramaRelease.indexOf('panorama-ridge'), EARLIER_EVENTS.length + panoramaRelease.length - 1, 'Panorama is last in its historical release catalog');
+equal(COURSE.filter(event => ['summit-run', 'ardennes-forest', 'summit-time-attack'].includes(event.id)).map(event => event.id), ['summit-run', 'ardennes-forest', 'summit-time-attack'], 'the approved Summit parent and solo child retain their declared positions around released Ardennes');
 const liveBeforePanorama = new Set(['tremblant-woods', 'tremblant-snow', 'harbour-lights']);
 equal(circuitsEnabled({ enabled: name => liveBeforePanorama.has(name) }).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights'],
   "with the switches that were live before Panorama Ridge the course list is identical to the live build's");
@@ -71,7 +75,7 @@ ok(COURSE.every((event, index) => index === panorama || !eventKey({ stageIndex: 
 equal(stageEventId(panorama), 'panorama-ridge', 'position 19 saves as panorama-ridge');
 
 // 3. Every enabled paid course has isolated access. Literal prices and named UI checks belong to each course suite.
-const paidReleased = ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge', 'summit-run'];
+const paidReleased = released.filter(id => COURSE_PRICES[id] > 0);
 for (const id of paidReleased) {
   const fresh = createProfile(), price = COURSE_PRICES[id];
   ok(!isCourseUnlocked(fresh, id), 'a new profile has the paid course locked');

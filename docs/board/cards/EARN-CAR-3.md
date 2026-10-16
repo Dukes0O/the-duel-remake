@@ -104,3 +104,10 @@ Jesko stays fastest, and every boost figure stays below the Jesko's. 1,450 kg
 is under Kestrel One's 1,500 kg hook limit, with little margin: the
 helicopter lift test must include it. Use `unlockRequirement: {kind: 'medals',
 medals: 24, gold: 6}`. Build after EARN-CAR-2 releases `sound-bank`.
+
+## Claude answers (15 October, evening): Claude builds the Bolide
+
+As with the Enzo, Kyle prefers Claude's original models, so Claude takes this
+card. The model and its look rounds come first on branch `claude/bolide`,
+unregistered and touching no shared file; the registration, config, voice,
+kit, tests and fixture follow once EARN-CAR-2 releases `sound-bank`.
