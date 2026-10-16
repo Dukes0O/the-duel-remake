@@ -799,3 +799,57 @@ Announced laptop restart stopped wrapper35212/runner13776 before any buffered JS
 ## Resume deferred for actual exclusive release check
 
 Resume admitted14:43:09UTC on same3e2bf73f (wrapper30480/runner13408/exec46346). Fresh inventory/hold immediately showed older Summit release full28640 started14:43:05UTC. Root stopped only its later verified gate and descendants; subsequent inventory shows all Tyre processes drained. No result JSON/receipt completed; cancellation is not a test failure or pass. Actual cancellation receipt retained under16October/TYRE-SLIP/resume-3e2bf73f. Source/review remain frozen; resume only after FULL TIER FOR RELEASE DONE and any frame hold clears. No ordinary job starts during this foreign hold.
+
+
+## Corrected canonical actually resumed16October09:14PT
+
+Exact clean3e2bf73f81c3f703ac9cce1b154adb4ee829d5a2, wrapper38356/
+runner7204/session44438, lane changed/jobs4/keep-going/json. Native
+.evidence/2026-10-16/TYRE-SLIP/canonical-resume-3e2bf73f/ will retain
+lane.json/log and lane-receipt.json; JSON can buffer, absent receipt is not
+a failure. One-minute count3 including two older foreign jobs. No result,
+build or merge yet; source frozen and leasesfree.
+
+
+## Actual corrected gate and final own-test delta
+
+The exact3e2 canonical finished17:13:43UTC:395/396/jobs4/zero notrun/exit1,
+source unchanged. Wrapper38356/runner7204 drained. Actual receipt and full
+outputs remain in canonical-resume-3e2bf73f. Only test-tyre-slip failed:28/29
+passed, one new private-tool assertion still expected false for an inactive
+Casual field. Claude's written821b829f decision requires absent inactive
+fields, not false/undefined keys. No runtime or old hash assertion failed.
+
+Frozen13f09aa4 corrects only that new test and ownnote: require both fields
+absent, fail if the observation callback never ran, retain requested-switch
+and actual Pro-on assertions. Required independent delta review CLEAR.
+No new test pass/build/merge yet. One changed-only canonical plan uses the
+existing runner main/getChanges seam with actual gitdiff3e2..13f, no runner
+edit or filters:17default affected/smoke/replay/world guard suites, jobs4.
+No unchanged396batch repeat. Reserved next turn10:20PT until10:40/admission;
+foreign newer jobs remain untouched. Build follows only actual green.
+
+
+## Complete: reviewed development merge, 16 October 11:02 PT
+
+TYRE-SLIP is complete and merged for development. The corrected3e2 gate remains
+historically FAILED395/396: only this card's new inactive-field expectation was
+wrong. The six old whole-state suites and all other395 suites passed unchanged.
+Strict absent-own-key correction13f09aa4 received independent CLEAR, then its
+actual two-file canonical delta passed17/17/jobs4/zero fail-notRun/exit0 in
+289681.3877ms and its production build passed1733.278ms; source unchanged.
+
+Current-integration union cb1840e5 preserves Rescue/wildlife/skins/TeamRoom,
+all current saves and exact inactive state. Its only two conflicts were the
+approved preview flag list and precise feature inventory: all foreign rows
+plus tyre-slip retained, exact base32 count. Independent code/save union
+review CLEAR. Actual conflict-hook canonical passed19/19/jobs4/zero fail-notRun/
+exit0 in462405.8415ms; one production build passed2140.9512ms on the same exact
+clean source. The final integration merge was conflict-free; no rerun.
+
+Receipts remain in the retained owned lane .evidence/2026-10-16/TYRE-SLIP/
+canonical-resume-3e2bf73f, delta-13f09aa4 and union-cb1840e5. All own jobs drained;
+locks[]; no real saves, live installation, push, replay recording or old120-race
+matrix repeated. Preserve this older lane/evidence: cleanup creation ownership
+is not proved. Casual/off remain byte-identical; the new model is Pro/Hard-only
+behind dev tyre-slip. This is not a live-enable or new full-tier claim.

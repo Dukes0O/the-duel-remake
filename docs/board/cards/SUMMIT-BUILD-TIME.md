@@ -61,3 +61,39 @@ exactly the old result. If the measurement points elsewhere, stop and name
 that place instead of indexing. Compare the real snow geometry and attributes
 before and after, as you propose. Rendered ground is shared by every course,
 so the lane tier will be wide; that is fine.
+
+
+## Measurement lane admitted
+
+Created owned summit-build-time/codex/summit-build-time fromb1720b60;
+creation receipt .evidence/2026-10-16/SUMMIT-BUILD-TIME/creation-receipt.json.
+Claude09:00 exact scope accepted. Prepare a temporary measurement probe in
+rendered-ground only; no optimization before actual all-row cost supports
+the150ms threshold. No heavy job yet: three foreign roots fill capacity,
+and the older instructor diagnostic reservation goes first.
+
+
+## Actual measurement setup
+
+Private existing QA bundle built unminified for stable stack attribution
+(not production/frame evidence); own5294preview19536/parent17224. Actual
+native menu created disposablefundedplayer/unlocked/selectedSummit. No cost
+value obtained: readonlybrowser scope reads DOM but not page-global probe.
+Temporary approved-file probe needs a DOM data witness outside the timed
+loop. Tabclosed/ownpreviewstopped09:25:28, no foreign termination. One-minute
+count4 had new foreigngate31972 started09:23:57 after own09:23:36; our
+setup voluntarilydrained for its witness fault. Bounded tool investigation
+ends09:53PT. No measured loopcost, optimization, snow comparison or timing
+pass yet. Ownsource remains temporary/uncommitted, never production-ready.
+
+
+## Tool bound reached; no speculative optimization
+
+At09:53 actualroots13744/7204/31972 stillfilledcapacity. The corrected
+DOM witness was prepared/syntaxchecked but could not run. No actual loop
+cost,150ms proof, snow comparison or timing verdict. Runtime rendered-ground
+is restored byte-exact to HEAD; temporary activation/duplicateprobe removed.
+Clean owned90a4533f retains only the measurement recipe/outcome note. Own
+QA5294tab/serverclosed/stopped and generatedbundleRecycled. The expired
+reservation was released09:47, neverextended. Card staysunfinished/locksfree
+for a real admitted measurement; no source optimization or passinggate/build.

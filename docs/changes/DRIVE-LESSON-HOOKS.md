@@ -127,3 +127,25 @@ DEV name and30 non-course switches; Wasteland requires the same exactrow.
 Course-kit copies these two hooks, with no separate assertion relaxation.
 Actual91catalog checks and8Wasteland tests PASS783.4413ms; required independent
 delta review CLEAR. No native, lane or build pass. Removed: stale inventories.
+
+
+## Current dependency union, 16 October 12:55 PT
+
+Combined exact current integrationc6c2a608 into reviewed host2706279e in this
+isolated lane. One actual conflict, tools/test-feature-flags.mjs: exact
+non-course count33 is integration32 plus driving-lessons; rescue, wildlife,
+heli-skins, tyre-slip and driving-lessons stay dev, with every released row
+retained. Wasteland inventory and feature catalog merged automatically.
+The actual App integration delta adds rescueEnabled and helicopter cue pitch;
+reviewed lesson start/owner/reward/failure-retry code is unchanged. Foreign
+heli, progression, leaderboard, Intel/dossiers, save fixtures, lesson-save and
+reference builder remain byte-identical to integration. No physics or save
+format change was added by this union.
+
+Required independent code/save union review CLEAR. Actual changed pure flag
+checks91PASS and Wasteland8PASS43.9142ms; syntax and diff clean. No unchanged
+18-case host suite repeated, no native drive/browser/lane/build executed.
+This frozen source is not a playable, native, gate, build or integration-merge
+acceptance. Instructor/cone placement and actual native host/reward isolation
+remain unfinished. Release the brief core lease now; preserve this lane.
+Removed: conflicting stale count/list, retaining all current exact rows.

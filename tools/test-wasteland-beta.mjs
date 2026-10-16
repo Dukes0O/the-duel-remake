@@ -38,6 +38,9 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'tyre-slip': 'dev', // New tyre model remains private preview only.
     'driving-lessons': 'dev', // Lesson host remains private preview only.
     'earned-cars': 'dev', // Earned cars and medal sheets (EARN-MEDALS), off in the game
+    rescue: 'dev', // H4 Rescue (RESCUE-SAVE): rescue save fields, off in the game
+    wildlife: 'dev', // H3 Wildlife (SKIN-SAVE): animals and the wildlife count, off in the game
+    'heli-skins': 'dev', // H3 Skins (SKIN-SAVE): skin, dirt and survey save fields, off in the game
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);
