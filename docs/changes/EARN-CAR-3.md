@@ -84,14 +84,19 @@ course-eligibility, combat-armor, heli-cable, heli-jobs, heli-hooks,
 medals, earned-cars-ui, save-fixtures, vehicle-assets, vehicle-paint,
 vehicle-grounding, vehicle-sockets, armor-kit-fit, armor-kit-authored,
 armor-kit-assets, blender-output, audio-vehicles, arsenal-core-audio,
-arsenal-wave1-audio, enzo-vehicle, `src/test.js`.
+arsenal-wave1-audio, enzo-vehicle, koenigsegg-driving, arena-junk-shove,
+titan-handling, repo-hygiene, review-evidence, `src/test.js`.
 
-Lane tier: see below.
+Lane tier: see below. No browser scenario and no frame check were run: the
+Panorama Ridge Grand Prix frame check in a field of Bolides waits for the
+nightly full check, as the Enzo's did, and the in-game look round follows
+registration.
 
 ## Changed assertions
 
-Every change is the car list growing from ten to eleven, or the Bolide being
-kept out of a list it does not belong to. No tolerance was loosened.
+Almost every change is the car list growing from ten to eleven, or the
+Bolide being kept out of a list it does not belong to. One margin is
+loosened, for the Bolide only: the Jesko's nitro margin (below).
 
 - `tools/test-progression.mjs`: car count 10 to 11; medal cars 1 to 2.
 - `tools/test-vehicle-assets.mjs`, `tools/test-vehicle-paint.mjs`,
@@ -119,9 +124,10 @@ kept out of a list it does not belong to. No tolerance was loosened.
 - `tools/test-blender-output.mjs`: the new review script is covered as a
   review helper that writes a folder of four renders (a new `render:
   'folder'` kind in the check); the kit recipe's list gains the Bolide.
-- `tools/test-koenigsegg-driving.mjs`: the Jesko's nitro must last 30% longer
-  and hit 20% harder than every bought car, as before; against a medal car,
-  whose approved boost sits just under the Jesko's (capacity 1.35 against
+- `tools/test-koenigsegg-driving.mjs` (loosened for one car): the Jesko's
+  nitro must last 30% longer and hit 20% harder than every other car, the
+  Enzo included, as before. Against a car with its own enlarged boost tank,
+  which today is only the Bolide (approved capacity 1.35 against the Jesko's
   1.4), it must only last longer and hit harder.
 - `tools/test-arena-shove.mjs`, `tools/test-arena-junk-shove.mjs` and
   `tools/replays/arena-shove-controls.json`: the solver fingerprint covers
@@ -132,6 +138,18 @@ kept out of a list it does not belong to. No tolerance was loosened.
   Bolide is added; every other row is unchanged and still matches. The value
   came from the test's own replay, run alone, which reproduces the Enzo's
   and F42's existing rows exactly.
+
+## Review
+
+One independent review: config, routing, model safety, the pins, the
+removals and the wording clear. Five faults, all fixed: the Jesko's nitro
+margin was first loosened for every medal car, the Enzo too, while this note
+said nothing was loosened (now the Bolide only, and said so); one test line
+held a literal `\n` and was split; the Bolide's row broke the lift table's
+mass order; the look review still said "unregistered"; this note lacked the
+lane result, the frame check and four hand-run tests. A look note also
+fixed: the rear carbon patch reached 5 cm onto the blue rear-arch lips and
+now stops at the side carbon line (too small to need a new sheet).
 
 ## Looks folder budget
 

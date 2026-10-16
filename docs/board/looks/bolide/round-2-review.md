@@ -2,8 +2,8 @@
 
 Model: `src/bolide-vehicle.js`, built in code from public pictures of the
 Bolide as a viewing reference only (no downloaded model, texture, badge or
-logo). Unregistered: nothing in the game loads it until EARN-CAR-2 releases
-`sound-bank`. Sheets are rendered in Blender from the game's own builder:
+logo). Registered behind the `earned-cars` switch by the same card
+(`docs/changes/EARN-CAR-3.md`). Sheets are rendered in Blender from the game's own builder:
 
 ```
 node tools/art/car-review-export.mjs bolide-vehicle.js createBolideVehicle .evidence/<date>/EARN-CAR-3/<round>/bolide.glb
@@ -52,6 +52,6 @@ From the front it now reads as a Bolide, and from the side the carbon line
 breaks up the tall flank that made round 1 look like an older endurance car.
 The paint stays the player's choice; the carbon does not change with it.
 
-Verdict (Claude): **pick.** Registration, config, sockets, voice, armour kit,
-tests and the save fixture follow once EARN-CAR-2 releases `sound-bank`; then
-an in-game look round checks it on the road, as round 5 did for the Enzo.
+Verdict (Claude): **pick.** Registered with its config, sockets, voice,
+armour kit and tests (no save-fixture row: see the change note). An in-game
+look round on the road follows, as round 5 did for the Enzo.

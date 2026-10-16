@@ -207,7 +207,9 @@ assert.deepEqual(medalResultLines(win, {helicopter: true}), ['NEW MEDAL · BRONZ
 assert.deepEqual(medalResultLines(win).length, 3, 'no helicopter lines with the helicopter off');
 saved = win.profile; garageCar = 'medal_test_a'; html = garage();
 assert.ok(html.includes('MEDAL REWARD · Arrives fully tuned.'), 'the owned medal car has its own reward note');
-// The next car is the first unowned medal car in config order: the real Bolide\n// (24 with 6 gold) comes before the scratch cars here.\nassert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 24 WITH 6 GOLD'));
+// The next car is the first unowned medal car in config order: the real Bolide
+// (24 with 6 gold) comes before the scratch cars here.
+assert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 24 WITH 6 GOLD'));
 garageCar = 'koenigsegg_jesko'; html = garage();
 assert.ok(html.includes('GARAGE COMPLETION REWARD') || html.includes('MAX OTHER CARS'), 'the Jesko keeps its own page');
 // The menu: a hidden car is never the menu car or the rival's car.

@@ -177,7 +177,7 @@ function fittedDetails(vehicle, m) {
   // the nose corners either side of the horseshoe.
   patch([[-1.1, .14], [1.1, .14], [1.1, .30], [-1.1, .30]], 'front', 1, m.carbon, .005, 0);
   for (const side of [-1, 1]) patch([[side * .16, .17], [side * .54, .17], [side * .58, .29], [side * .18, .29]], 'front', 1, m.darkAlloy, .012, 0);
-  patch([[-1.1, .14], [1.1, .14], [1.1, .46], [-1.1, .46]], 'front', -1, m.carbon, .005, 0);
+  patch([[-1.1, .14], [1.1, .14], [1.1, .41], [-1.1, .41]], 'front', -1, m.carbon, .005, 0);
   // Dark mesh vents across the back of the deck, behind the wing pylons.
   patch([[-.78, -1.92], [.78, -1.92], [.74, -2.26], [-.74, -2.26]], 'top', 1, m.darkAlloy, .006);
   // The fin: from the roof scoop down the spine of the engine deck to the wing.
