@@ -146,3 +146,30 @@ UNRUN on this correction. No pace/board/physics or acceptance relaxation.
 Original and diagnostic packets retained under own .evidence/2026-10-16/
 DRIVE-LESSON-1. Investigation bound remains09:23PT; native check waits capacity.
 Removed: no source feature removed; no scratch recipe created.
+
+
+### Claude's own-line cone placement,16October10:00 answer
+
+Only placeCones changes. Cone1 is1m outside the actual first brakingpose,
+cone2 is1m inside the actual innermost linepose, cone3 is1m outside the
+actual widest linepose within120m aftercone2 (bounded by the nextcorner).
+Everycone stays0.5m inside its real roadedge and groundAt uses its clamped
+position. Actual line movement must be>=2m inward AND>=2m outward. The
+fixedboard/finish, pace, racingline, gates and clean thresholds are unchanged.
+Incomplete exit observations fail rather than choosing an early point.
+
+Changed assertions: the two new own cone fixtures replace the old requirement
+that the car cross the centreline/first local outside extremum. Claude's
+written design now measures relative line movement and the widest120m point;
+no old simulation/hash assertion is edited. Three changed pure cases RED
+then3PASS165.0692ms include bothdirections, edgeclamps, exact120m/2mbounds
+and incomplete trace refusal. Required independent code/numbers review CLEAR.
+No native run,
+per-corner real cone coordinates or new acceptance result.
+
+The existing builder still waits for its old recordedExit gate and attempts
+placement before the full new search window. Its named callsite/observation
+scope needs Claude's answer because this answer explicitly says placeCones
+only. It remains untouched; do not treat the pure function as a playablefix.
+Removed: old centreline-sign and first-local-extremum placement assumptions
+in placeCones. Legacy builder sampling remains pending the named scope.

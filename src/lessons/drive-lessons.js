@@ -205,17 +205,24 @@ export function placeCones(poses, {course, turnInS, turnOutS, exitSearchEndS, di
   const brake = poses.find(pose => pose.s <= turnInS && pose.brake > 0);
   const closest = (rows, gap) => rows.reduce((best, pose) => !best || gap(pose) < gap(best) ? pose : best, null);
   const inside = closest(poses.filter(pose => pose.s >= turnInS && pose.s <= turnOutS),
-    pose => course.roadHalfWidthAt(pose.s) - dir * pose.lateral);
-  // The first outside extremum is the exit, not a later corner's widest
-  // position. A following sample witnesses that the car stopped moving out.
-  const outside = inside && recordedExit(poses, course, inside, exitSearchEndS, dir);
-  if (!brake || !inside || !outside || dir * brake.lateral >= 0 || dir * inside.lateral <= 0 || dir * outside.lateral >= 0) {
-    throw new Error('Instructor did not record outside braking, inside apex and outside exit: '+JSON.stringify({dir,turnInS,turnOutS,exitSearchEndS,brake,inside,outside}));
+    pose => -dir * pose.lateral);
+  const endS = inside && Math.min(inside.s + 120, exitSearchEndS);
+  if (inside && poses.at(-1).s < endS) throw new Error('Instructor trace has not covered the 120m exit search');
+  const outside = inside && closest(poses.filter(pose => pose.s > inside.s && pose.s <= endS),
+    pose => dir * pose.lateral);
+  const inward = brake && inside ? dir * (inside.lateral - brake.lateral) : null;
+  const outward = inside && outside ? dir * (inside.lateral - outside.lateral) : null;
+  if (!brake || !inside || !outside || inward < 2 || outward < 2) {
+    throw new Error('Instructor line needs at least 2m inward and outward movement: '+JSON.stringify({
+      dir,turnInS,turnOutS,exitSearchEndS,inward,outward,brake,inside,outside}));
   }
-  const cones = [brake, inside, outside].map((pose, index) => ({
-    id: index + 1, s: pose.s, lateral: pose.lateral,
-    ...course.groundAt(pose.s, pose.lateral),
-  }));
+  const cones = [brake, inside, outside].map((pose, index) => {
+    const edge = course.roadHalfWidthAt(pose.s) - .5;
+    if (!Number.isFinite(edge) || edge <= 0) throw new Error('Instructor cone needs a valid road edge');
+    const offset = index === 1 ? dir : -dir;
+    const lateral = Math.max(-edge, Math.min(edge, pose.lateral + offset));
+    return {id: index + 1, s: pose.s, lateral, ...course.groundAt(pose.s, lateral)};
+  });
   return {cones, redBoardS: Math.min(brake.s + 25, turnInS), finishS: outside.s + 60};
 }
 
