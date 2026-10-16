@@ -789,3 +789,8 @@ tier for this card; the 04:00 full check covers it.
 Current clean3e2bf73f81c3f703ac9cce1b154adb4ee829d5a2 omits inactive tyre fields and guards existing owned resets. Six historical hash suites unchanged. New exact-shape regression RED thenPASS235.2278ms; approved exact dev/preview rows updated. Actual current-integration union had App imports/result payload and reference-worker flags/retainPoses conflicts: both behaviors preserved, no pin/reference regenerated. Required independent code/save delta review CLEAR.
 
 One final corrected canonical admitted07:24:01.174UTC: wrapper35212/runner13776/exec54240, lane --changed --jobs4 --keep-going --json, ownlane final-3e2bf73f/lane-receipt.json pending. The unchanged six suites run here, no duplicate manual batch. No gate/build/merge pass yet; freeze source/release core now, GP bounded source attempt may proceed under its fresh answer.
+
+
+## Restart interruption, 16October07:43PT
+
+Announced laptop restart stopped wrapper35212/runner13776 before any buffered JSON or receipt: actual lane.json/lane.log both zero bytes, no running process. Frozen3e2bf73f remains clean/reviewCLEAR. This is incomplete, not a passing gate or assertion failure. Resume the same corrected canonical once; no old passing native matrix/recovery/fixture recording repeated manually.

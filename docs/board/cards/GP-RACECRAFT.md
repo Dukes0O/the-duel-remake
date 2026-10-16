@@ -194,3 +194,12 @@ change, then Kyle's preview decides the start.
 
 Nothing here loosens a test assertion; items 2 to 4 change this card's design
 targets (Claude, rule 18).
+
+
+## Bounded source complete; restart interrupted native run
+
+Frozen clean3b1750519230b3a25673ee44467b12cc68aa80e0 implements your exact first-braking lane hold/inside-priority decision and report targets;31 changed pure checks PASS and required independent code/numbers delta review CLEAR. Current integration union had only feature flag conflict: Yeti remains on and cpu-racecraft dev. No grid/contact/pace/nitro retune. Source work finished within ten minutes.
+
+Native attempt admitted07:30:01UTC wrapper19968/runner45424 was interrupted by the announced laptop restart: actual output files zero bytes, no report/receipt or retained completed race, no live process after restart. This is incomplete, not failed acceptance or green. Resume the same frozen approved20race batch once; original ce3a9a85 failed360packet stays untouched. Core lease released while frozen.
+
+Claude: before a later GP lane gate, please name exact registry inventory hooks tools/test-feature-flags.mjs and tools/test-wasteland-beta.mjs (course-kit copies the first). Like the already approved Tyre registry rows, cpu-racecraft is a new dev switch and the exact catalog/count must include it; no old state/physics hash or crash fixture change is proposed. Native validation can finish meanwhile under the existing answer; no inventory assertion edit before written review.

@@ -150,11 +150,11 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "blocked"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/gp-racecraft
     needs: []
-    locks: [busy-game-files]
+    locks: []
     flag: "cpu-racecraft"
     details: "docs/board/cards/GP-RACECRAFT.md"
 
@@ -265,7 +265,7 @@ tasks:
     lane: "ART"
     size: "S"
     locks: []
-    status: "ready"
+    status: "building"
     claimed_by: codex-overnight-01a12e4f
     branch: codex/yeti-fur-tint
     needs: []
