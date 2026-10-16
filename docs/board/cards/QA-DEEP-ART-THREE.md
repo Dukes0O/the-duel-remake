@@ -29,3 +29,7 @@ Root builds this ready card while its frozen candidates wait for heavy slots. Th
 ## Source frozen while validation waits
 
 Owned lane codex/qa-deep-art-three is clean at cfa3e68b4ccf4abd2a070ceb703b508aea580b33. The redundant Vite helper bundle is removed; the QA-only page hook exposes actual page modules and the scenario checks real camera/scene/GLTF class identity before use. All17roles/18pictures and prior photography/source pins remain unchanged. Corrected focused verification passed17 counted pure checks; independent source review CLEAR. The actual private recipe, prescribed suites, canonical lane/jobs4 and production build remain UNRUN. No warning-free browser pass or new art verdict is claimed. Freeze source with locks[] while those checks wait; the historical failed packet stays failed.
+
+## Actual private recipe passed; final gate admitted
+
+Exact clean cfa3e68b actual unchanged17-role recipe passed1/1 with18pictures,zero warnings/issues,memory-only,wall9940.1996ms. Its native-cfa3e68b/receipt.json and summary are retained in the owned lane evidence. No art verdict changed. Final297b877c differs only by the note carrying that result; no game/QA code changed. One canonical lane/jobs4/keep-going is active: wrapper20520,runner29748,exec75258,started2026-10-16T05:03:41.895Z,final-297b877c/lane-receipt.json pending. One-minute recount3, no overcap. Do not repeat its passing actual recipe. Build follows actual green, no duplicate gate.
