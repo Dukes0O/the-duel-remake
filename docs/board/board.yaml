@@ -757,3 +757,14 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-FACTORY-RECYCLE-JUNCTION.md"
 
+  - id: AUDIO-CATALOG-APPEND
+    title: "Audio catalog: recording a sound appends instead of re-sorting the catalog"
+    owner: "claude"
+    lane: "AUDIO"
+    size: "S"
+    status: "building"
+    claimed_by: "claude-audio-catalog-append-2026-10-15"
+    branch: "claude/audio-catalog-append"
+    needs: []
+    locks: []
+    details: "docs/board/cards/AUDIO-CATALOG-APPEND.md"
