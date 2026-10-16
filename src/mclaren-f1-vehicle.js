@@ -15,7 +15,9 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
   const vehicle = new THREE.Group(); vehicle.name = key;
   const m = materials(color, accent), data = vehicle.userData, b = batch(vehicle);
   m.paint.name = 'F1 silver body'; m.paint.metalness = .58; m.paint.roughness = .29;
-  m.accent.name = 'F1 charcoal trim'; m.glass.color.setHex(0x3e555d); m.glass.opacity = .37;
+  m.accent.name = 'F1 charcoal trim'; m.glass.color.setHex(0x17242a); m.glass.opacity = .82;
+  m.glass.roughness = .085; m.glass.metalness = .3;
+  m.headlight.color.setHex(0xb6c0bd); m.headlight.emissive.setHex(0x7c928e); m.headlight.emissiveIntensity = .28;
   m.carbon.color.setHex(0x171b1e); m.seat.color.setHex(0x34373b);
   Object.assign(data, {
     paint: m.paint, originalColor: m.paint.color.clone(), wheels: [], wheelPivots: [],
@@ -47,10 +49,10 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
     b.box(m.carbon, [.22, .11, .09], [x, .81, -.64], [0, 0, 0], .025);
     b.box(m.accent, [.025, .32, .01], [x - side * .07, .59, -.535], [-.15, 0, side * -.07], .002);
     b.box(m.carbon, [.055, .07, 1.68], [side * .965, .205, -.04], [0, 0, 0], .018);
-    // Small door mirrors on slender stalks, not racing aero devices.
-    b.tube(m.carbon, [[side * .66, .73, .65], [side * .77, .78, .65], [side * .84, .80, .62]], .012, 8);
-    b.box(m.paint, [.15, .065, .15], [side * .85, .80, .60], [0, side * -.12, 0], .026);
-    b.box(m.alloy, [.113, .041, .009], [side * .85, .80, .523], [0, side * -.12, 0], .01);
+    // Compact mirrors grow from the base of the framed windscreen.
+    b.tube(m.carbon, [[side * .60, .71, .74], [side * .69, .75, .72], [side * .75, .765, .69]], .009, 8);
+    b.box(m.paint, [.115, .045, .11], [side * .76, .775, .68], [0, side * -.12, 0], .019);
+    b.box(m.alloy, [.085, .028, .007], [side * .76, .775, .623], [0, side * -.12, 0], .007);
     // Four round rear lamps sit outside the rear cap, facing rearward.
     for (const x of [.48, .70]) {
       cylinder(b, m.carbon, .083, .045, [side * x, .525, -2.115], [Math.PI / 2, 0, 0], 24);
@@ -75,23 +77,28 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
   return vehicle;
 }
 
-// Cross sections of the broad three-seat greenhouse. It narrows into the short
-// rear engine deck and curves down into the low front scuttle.
+// The three-seat cabin is a solid painted roof with four bounded glass panes.
+// The old continuous bubble shell is removed: no glazing remains under the roof.
 const CABIN = [
-  [-1.02, .32, .72, .77], [-.80, .55, .69, .97], [-.46, .66, .66, 1.075],
-  [-.12, .70, .65, 1.105], [.23, .69, .65, 1.09], [.57, .62, .65, .97], [.90, .45, .65, .68],
+  [-1.02, .32, .72, .77], [-.80, .55, .69, .97], [-.46, .66, .66, 1.06],
+  [-.12, .70, .65, 1.08], [.23, .69, .65, 1.07], [.57, .62, .65, .97], [.90, .45, .65, .68],
 ];
+const ROOF_EDGE = Math.PI * .18, ROOF_BACK = -.64, ROOF_FRONT = .30;
 function cabinPoint(z, angle, lift = 0) {
   let i = CABIN.findIndex(section => section[0] >= z);
   i = THREE.MathUtils.clamp(i < 0 ? CABIN.length - 1 : i, 1, CABIN.length - 1);
   const a = CABIN[i - 1], c = CABIN[i], t = THREE.MathUtils.clamp((z - a[0]) / (c[0] - a[0]), 0, 1), s = t * t * (3 - 2 * t);
   const width = THREE.MathUtils.lerp(a[1], c[1], s), low = THREE.MathUtils.lerp(a[2], c[2], t), high = THREE.MathUtils.lerp(a[3], c[3], s);
-  return [Math.cos(angle) * (width + lift), low + Math.sin(angle) * (high - low + lift), z];
+  // A flatter crown with rounded shoulders reads as a stamped road-car roof.
+  return [Math.cos(angle) * (width + lift), low + Math.pow(Math.sin(angle), .58) * (high - low + lift), z];
 }
 function cabinSheet(b, material, back, front, left, right, lift = 0) {
-  const positions = [], indices = [], rows = 30, columns = 24;
-  for (let row = 0; row <= rows; row++) for (let col = 0; col <= columns; col++)
-    positions.push(...cabinPoint(THREE.MathUtils.lerp(back, front, row / rows), THREE.MathUtils.lerp(left, right, col / columns), lift));
+  const positions = [], indices = [], rows = 24, columns = 20;
+  for (let row = 0; row <= rows; row++) for (let col = 0; col <= columns; col++) {
+    const angle = THREE.MathUtils.lerp(left, right, col / columns);
+    const z0 = typeof back === 'function' ? back(angle) : back, z1 = typeof front === 'function' ? front(angle) : front;
+    positions.push(...cabinPoint(THREE.MathUtils.lerp(z0, z1, row / rows), angle, lift));
+  }
   for (let row = 0; row < rows; row++) for (let col = 0; col < columns; col++) {
     const a = row * (columns + 1) + col, c = a + columns + 1;
     indices.push(a, c + 1, c, a, a + 1, c + 1);
@@ -100,23 +107,40 @@ function cabinSheet(b, material, back, front, left, right, lift = 0) {
   g.setIndex(indices); g.computeVertexNormals(); b.add(g, material); g.dispose();
 }
 function buildCabin(b, m) {
-  cabinSheet(b, m.glass, -1.02, .90, 0, Math.PI);
-  cabinSheet(b, m.paint, -.57, .20, Math.PI * .30, Math.PI * .70, .006);
+  const edgeShare = angle => Math.min(1, Math.min(angle, Math.PI - angle) / ROOF_EDGE);
+  const frontFrame = angle => THREE.MathUtils.lerp(.82, ROOF_FRONT, edgeShare(angle));
+  const rearFrame = angle => THREE.MathUtils.lerp(-.90, ROOF_BACK, edgeShare(angle));
+  // Each pane ends at its real painted boundary; there is no hidden roof glass.
+  cabinSheet(b, m.glass, frontFrame, .90, 0, Math.PI);
+  cabinSheet(b, m.glass, -1.02, rearFrame, 0, Math.PI);
+  cabinSheet(b, m.glass, rearFrame, frontFrame, 0, ROOF_EDGE);
+  cabinSheet(b, m.glass, rearFrame, frontFrame, Math.PI - ROOF_EDGE, Math.PI);
+  cabinSheet(b, m.paint, ROOF_BACK, ROOF_FRONT, ROOF_EDGE, Math.PI - ROOF_EDGE, .006);
   for (const angle of [0, Math.PI]) {
     const sill = []; for (let i = 0; i <= 24; i++) sill.push(cabinPoint(-1.02 + i * 1.92 / 24, angle, .007));
-    b.tube(m.carbon, sill, .013, 24);
+    b.tube(m.carbon, sill, .014, 24);
   }
-  for (const z of [-.57, .20]) {
-    const hoop = []; for (let i = 0; i <= 24; i++) hoop.push(cabinPoint(z, i * Math.PI / 24, .007));
-    b.tube(m.paint, hoop, .018, 24);
+  for (const boundary of [frontFrame, rearFrame]) {
+    const frame = []; for (let i = 0; i <= 30; i++) {
+      const angle = Math.PI * i / 30;
+      frame.push(cabinPoint(boundary(angle), angle, .008));
+    }
+    b.tube(m.paint, frame, .025, 30);
   }
-  // Roof-fed air scoop. The forward dark opening is hollow-looking rather than
-  // a black rectangle buried under a body panel; its lip reaches nominal height.
-  b.box(m.paint, [.245, .050, .49], [0, 1.112, -.38], [.012, 0, 0], .025);
-  b.box(m.carbon, [.185, .033, .014], [0, 1.114, -.131], [0, 0, 0], .009);
+  for (const angle of [ROOF_EDGE, Math.PI - ROOF_EDGE]) {
+    const rail = []; for (let i = 0; i <= 20; i++) rail.push(cabinPoint(THREE.MathUtils.lerp(ROOF_BACK, ROOF_FRONT, i / 20), angle, .009));
+    b.tube(m.paint, rail, .021, 20);
+  }
+  // The centred snorkel stands above the solid roof. Its front opening is on
+  // the outside of the shell, not a dark decal under a painted cap.
+  sculpt(b, m.paint, [
+    [-.60, .055, 1.055, 1.065, 1.075, .045],
+    [-.34, .12, 1.05, 1.105, 1.115, .10],
+    [.12, .14, 1.05, 1.105, 1.115, .115],
+  ], [], 0, 0);
+  b.box(m.carbon, [.20, .042, .012], [0, 1.106, .13], [0, 0, 0], .006);
   b.tube(m.carbon, [cabinPoint(.80, 1.24, .009), cabinPoint(.63, 1.42, .009), cabinPoint(.54, 1.73, .009)], .007, 8);
 }
-
 function fittedDetails(vehicle, m) {
   vehicle.updateMatrixWorld(true);
   const skins = vehicle.userData.damageMeshes.filter(({ mesh }) => mesh.material === m.paint).map(({ mesh }) => mesh), b = batch(vehicle), ray = new THREE.Raycaster();
@@ -126,24 +150,25 @@ function fittedDetails(vehicle, m) {
     return ray.intersectObjects(skins, false)[0]?.point.y;
   };
   for (const side of [-1, 1]) {
-    // Two wide dark headlamp wells, each containing two actual optical lenses.
-    patch([[side * .37, 1.93], [side * .70, 1.96], [side * .85, 1.70], [side * .79, 1.48], [side * .48, 1.50]], 'top');
+    // Small dark corner clusters contain restrained, tinted optical lenses.
+    patch([[side * .48, 1.92], [side * .73, 1.90], [side * .82, 1.74], [side * .77, 1.60], [side * .49, 1.65]], 'top');
     for (const [x, z] of [[.52, 1.78], [.72, 1.73]]) {
       const y = surfaceY(side * x, z);
       if (y === undefined) continue;
       const rotation = [.78, 0, 0], center = [side * x, y + .018, z];
-      cylinder(b, m.alloy, .061, .016, center, rotation, 24);
-      cylinder(b, m.headlight, .050, .012, [side * x, y + .030, z + .013], rotation, 24);
+      cylinder(b, m.darkAlloy, .033, .016, center, rotation, 20);
+      cylinder(b, m.headlight, .024, .010, [side * x, y + .030, z + .013], rotation, 20);
     }
     // Triangular lower side intake and an inset mesh-like secondary triangle.
-    patch([[.27, -.37], [.30, -.91], [.63, -.86]], 'side', side);
-    patch([[.30, -.43], [.33, -.84], [.55, -.81]], 'side', side, m.darkAlloy, .009);
+    patch([[.31, -.48], [.31, -1.04], [.56, -.95]], 'side', side);
+    patch([[.34, -.55], [.34, -.97], [.49, -.92]], 'side', side, m.darkAlloy, .009);
     // Door outlines are projected onto the actual curved side, avoiding floating
     // black lines. Their lower corner follows the diagonal intake leading edge.
     for (const points of [
-      [[.31, .75], [.30, .28], [.29, -.18], [.28, -.34]],
-      [[.28, -.34], [.42, -.54], [.60, -.70]],
-      [[.60, -.70], [.64, -.39], [.65, -.05], [.65, .34]],
+      [[.31, .76], [.45, .80], [.64, .70]],
+      [[.31, .76], [.30, .24], [.30, -.48]],
+      [[.30, -.48], [.42, -.62], [.64, -.64]],
+      [[.64, -.64], [.65, -.20], [.65, .34], [.64, .70]],
     ]) {
       const seam = [];
       for (let segment = 0; segment < points.length - 1; segment++) for (let j = 0; j <= 5; j++) {

@@ -63,8 +63,27 @@ for (const x of [-.40, 0, .40]) {
   ok(deck === undefined || deck < .32, `No painted deck cuts through seat ${x}`);
 }
 const driverBounds = new THREE.Box3().setFromObject(data.driver);
-ok(driverBounds.max.y < heightAt(glass, 0, .04) - .01, 'Driver helmet fits below the glass');
-for (const z of [-.80, -.4, 0, .4, .78]) ok(Number.isFinite(heightAt(glass, .18, z)), `Continuous curved glazing at ${z}`);
+// Claude's round2 replaces the bubble top with a solid roof. Preserve the
+// helmet's original 1 cm clearance against that real roof, below the snorkel.
+ok(driverBounds.max.y < heightAt(paint, 0, .04, 1.09) - .01, 'Driver helmet fits below the actual solid roof');
+// The old centreline glazing rays described the removed bubble. Test each real
+// windscreen/rear/side pane instead, with the same finite-intersection guarantee.
+for (const [x, z] of [[.18, -.80], [-.65, -.4], [.65, -.4], [-.65, 0], [.65, 0], [.18, .4], [.18, .78]])
+  ok(Number.isFinite(heightAt(glass, x, z)), `Bounded cabin glazing at ${x}, ${z}`);
+for (const x of [-.40, 0, .40]) for (const z of [-.30, 0, .20]) {
+  ok(heightAt(paint, x, z) > .98, `Broad solid painted roof at ${x}, ${z}`);
+  equal(heightAt(glass, x, z), undefined, `Obsolete bubble glass is removed below roof at ${x}, ${z}`);
+}
+ok(data.paint.opacity === 1 && !data.paint.transparent, 'The body-colour roof is physically opaque');
+ok(glass.every(mesh => mesh.material.opacity >= .75 && mesh.material.color.getHSL({}).l < .20), 'Dark tinted panes show the driver as a shape');
+for (const side of [-1, 1]) {
+  ray.set(new THREE.Vector3(side * .59, .79, 1.2), new THREE.Vector3(0, 0, -1));
+  const frame = ray.intersectObjects(paint, false)[0];
+  ok(frame && frame.point.z > .45 && frame.point.z < .75, `Painted swept windscreen frame at side ${side}`);
+}
+ray.set(new THREE.Vector3(0, 1.106, .60), new THREE.Vector3(0, 0, -1));
+const intakeMouth = ray.intersectObjects([...paint, ...trim], false)[0];
+ok(intakeMouth && trim.includes(intakeMouth.object) && intakeMouth.point.z > .12 && intakeMouth.point.z < .15, 'The central roof snorkel has an exposed forward intake mouth');
 // A side ray through each side window reaches the actual driver, while the
 // painted shell stays below that ray: the centre seat is visible through glass.
 const driverMeshes = []; data.driver.traverse(node => { if (node.isMesh) driverMeshes.push(node); });
@@ -81,6 +100,29 @@ for (const side of [-1, 1]) for (const [x, z] of [[.52, 1.78], [.72, 1.73]]) {
   ray.set(origin, target.clone().sub(origin).normalize());
   const hits = ray.intersectObjects([...paint, ...lamps], false);
   ok(hits.length > 0 && lamps.includes(hits[0].object), `Real front lens at ${side * x}, ${z} is exposed`);
+  const lensBounds = new THREE.Box3(), point = new THREE.Vector3();
+  for (const lamp of lamps) {
+    const positions = lamp.geometry.attributes.position;
+    for (let i = 0; i < positions.count; i++) {
+      point.fromBufferAttribute(positions, i).applyMatrix4(lamp.matrixWorld);
+      if (Math.abs(point.x - side * x) < .08 && Math.abs(point.z - z) < .08) lensBounds.expandByPoint(point);
+    }
+  }
+  const lensSize = lensBounds.getSize(new THREE.Vector3());
+  ok(!lensBounds.isEmpty() && lensSize.x < .065 && lensSize.y < .065 && lensSize.z < .065, `Small corner optic at ${side * x}, ${z}, not a large exposed white disk`);
+}
+for (const lamp of lamps) ok(lamp.material.emissiveIntensity < .5, 'Tinted corner lenses avoid the old bright white circles');
+for (const side of [-1, 1]) {
+  const mirrorBounds = new THREE.Box3(), point = new THREE.Vector3();
+  for (const skin of paint) {
+    const positions = skin.geometry.attributes.position;
+    for (let i = 0; i < positions.count; i++) {
+      point.fromBufferAttribute(positions, i).applyMatrix4(skin.matrixWorld);
+      if (point.x * side > .70 && point.x * side < .85 && point.y > .735 && point.y < .82 && point.z > .58 && point.z < .77) mirrorBounds.expandByPoint(point);
+    }
+  }
+  const mirrorSize = mirrorBounds.getSize(new THREE.Vector3());
+  ok(!mirrorBounds.isEmpty() && mirrorSize.x < .14 && mirrorSize.y < .06 && mirrorSize.z < .14, `Small mirror at the windscreen base, side ${side}`);
 }
 for (const side of [-1, 1]) for (const x of [.48, .70]) {
   ray.set(new THREE.Vector3(side * x, .525, -4), new THREE.Vector3(0, 0, 1));
