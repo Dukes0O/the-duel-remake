@@ -110,8 +110,14 @@ runner picks up `tools/test-heli-skins.mjs` by name.
 
 ## Checks
 
-`test-heli-skins` (61 groups) and `test-heli-save` (43 groups) pass. Lane tier on 91ccb809 (`--changed --jobs 4 --keep-going`): 23 passed, 0 failed, 0 not run, 231 s. `npm run build`: built, only the usual large-file notice.
+`test-heli-skins` (62 groups) and `test-heli-save` (43 groups) pass. Lane tier on f926cbaf (`--changed --jobs 4 --keep-going`): 23 passed, 0 failed, 0 not run, 191 s. `npm run build`: built, only the usual large-file notice.
 
 ## Removed
 
 Nothing replaced; no old code, test or document is removed.
+
+## Money review fix
+
+`settleFlightDirt` floored raw float sums, so 6000 s in 1/60 s steps gave 9 dust
+levels, not 10. Each floor now adds a 1e-9 slack and each leftover is clamped
+at 0. A new test checks small steps against one big step for every interval.
