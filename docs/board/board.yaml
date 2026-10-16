@@ -745,3 +745,13 @@ tasks:
     status: "backlog"
     needs: []
     details: "docs/board/cards/QA-FACTORY-RECYCLE-JUNCTION.md"
+
+  - id: QA-REVIEW-RUNUP-START
+    title: "Review run-up misses a requested view near the start line"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-REVIEW-RUNUP-START.md"
