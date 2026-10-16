@@ -1,13 +1,17 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { Course } from '../src/course.js';
-import { COURSE } from '../src/config.js';
+import { CARS, COURSE, DRIVE } from '../src/config.js';
+import { CAR_HALF_WIDTH } from '../src/collision.js';
 import { SUMMIT_RUN } from '../src/circuits/summit-run.js';
 import { disposeTree } from '../src/world.js';
 import { addRaceStructures } from '../src/race-structures.js';
 import { buildTunnelWallDetails,createTunnelConcrete,TUNNEL_CONCRETE_TILE_METRES } from '../src/tunnel-detail.js';
 
-let checks=0,maximumGap=0,triangles=0;
+let checks=0,maximumGap=0,triangles=0,minimumGalleryOffset=Infinity;
+// Every garage car can enter Summit. Preserve its actual ordinary lane centres
+// and use the widest admitted hull, including the Titan, without extra margin.
+const galleryLaneReach=DRIVE.laneOffset+Math.max(...Object.values(CARS).map(car=>car.collision?.halfWidth??CAR_HALF_WIDTH));
 const check=(ok,message)=>{assert.ok(ok,message);checks++;};
 const ray=new THREE.Raycaster();
 for(const seed of[1989,42])for(const def of COURSE.filter(def=>def.sections.some(section=>section.theme==='alpine'))){
@@ -15,12 +19,24 @@ for(const seed of[1989,42])for(const def of COURSE.filter(def=>def.sections.some
   const lining=structures.children.filter(mesh=>mesh.name==='Circuit lining surface');
   check(lining.length===(course.features.tunnels.length?1:0),`${def.id}: lining exists exactly when the actual course has tunnels`);
   if(def.expansion)check(course.features.tunnels.length===def.expansion.tunnelSections.length,`${def.id}: tunnels follow the authored expansion sections`);
+  for(const tunnel of course.features.tunnels)if(tunnel.clearance){
+    const {width,height}=tunnel.clearance,tallest=Math.max(...Object.values(CARS).map(car=>car.height??1.35));
+    check(Number.isFinite(width)&&Number.isFinite(height)&&height>=4.5&&height>=tallest+1,`${def.id}: authored Gallery clears the admitted fleet by one metre`);
+    check(tunnel.width*2>=width&&tunnel.height>=height,`${def.id}: physical Gallery meets its declared clearance`);
+  }
   for(const tunnel of course.features.tunnels)for(const geometry of Object.values(buildTunnelWallDetails(course,tunnel))){
     const positions=geometry.attributes.position,normals=geometry.attributes.normal;triangles+=positions.count/3;
     for(let i=0;i<positions.count;i++){
       const p=new THREE.Vector3().fromBufferAttribute(positions,i),n=course.nearest(p.x,p.z);
       check(Number.isFinite(p.x+p.y+p.z)&&Number.isFinite(normals.getX(i)+normals.getY(i)+normals.getZ(i)),`${def.id}: finite detail geometry`);
+      if(tunnel.clearance){
+        check(tunnel.clearance.width>=course.roadHalfWidthAt(n.s)*2,`${def.id}: authored Gallery clearance spans the road`);
+        check(tunnel.clearance.width/2>=galleryLaneReach,`${def.id}: declared Gallery width contains the admitted vehicle lanes`);
+        minimumGalleryOffset=Math.min(minimumGalleryOffset,Math.abs(n.lateral));
+        check(Math.abs(n.lateral)>galleryLaneReach,`${def.id}: Gallery detail stays outside every admitted vehicle lane`);
+      }else{
       check(Math.abs(n.lateral)>course.roadHalfWidthAt(n.s)+1,`${def.id}: tunnel detail enters vehicle corridor`);
+      }
       if(i%3)continue;
       // Interior triangle samples avoid ambiguous rays exactly on a portal's
       // open boundary while still testing every rendered overlay triangle.
@@ -98,3 +114,5 @@ for(const portal of[false,true]){
   }
 }
 console.log(`Tunnel detail: ${checks} checks passed; ${triangles} detail triangles over6fixtures; maximum wall-plane gap ${(maximumGap*1000).toFixed(3)}mm; roof unchanged.`);
+
+console.log('Gallery physical clearance: '+JSON.stringify({laneHalfEnvelope:galleryLaneReach,minimumProjectedDetailOffset:minimumGalleryOffset}));
