@@ -78,7 +78,7 @@ const WIND_LINES = Object.freeze({calm: 'heli.radio.wind.calm', breeze: 'heli.ra
 export function createFireRun({getSave, commit, emit, world, playerName = 'Player', today = null, owns = () => true}) {
   const flag = {enabled: true};
   let clock = null, answerLeft = 0, engineBank = 0, halfSaid = null, lastFireDay = null, fullSaid = false, firstFill = true;
-  let seasonSaid = false, snowNote = null;
+  let seasonSaid = false;
   { const burning = fireOf(getSave()); if (burning && shareOut(burning) >= 50) halfSaid = burning.id; }
   // Brian's bucket lines are for a new firefighter: only until the first fire is out.
   const newFirefighter = () => missionsOf(getSave()).firesOut === 0;
@@ -159,10 +159,7 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
         const result = fireOnNewDay(getSave(), {enabled: true, world: world(burning.courseId)});
         commit({ok: true, profile: result.profile});
         if (result.lost) { radio('heli.radio.fire.lost'); emit({type: 'fireLost', courseId: burning.courseId}); }
-        if (result.snowed) {
-          snowNote = `The first snow put out the fire at ${HELI_DESTINATIONS[burning.courseId]?.name ?? 'the forest'}.`;
-          emit({type: 'fireSnowedOut', courseId: burning.courseId});
-        }
+        if (result.snowed) emit({type: 'fireSnowedOut', courseId: burning.courseId});
       }
       burnNews();
     },
@@ -195,7 +192,7 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
       }
     },
     cruise(fuelKg) { engineBank += cruiseSeconds(fuelKg); flush(); },
-    refuel() { const before = missions(); saveMissions(noteRefuel(before, {fireOpen: !!fire()}), before); },
+    refuel() { const before = missions(); saveMissions(noteRefuel(before, {fireOpen: !!fire(), playDay: day()}), before); },
     // R: answer the call, now or later, in the air or on the ground.
     pressRadio() {
       const call = missions().call;
@@ -240,9 +237,16 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
       if (firstFill && newFirefighter()) { firstFill = false; radio('heli.radio.bucket.first'); radio('heli.radio.drop.tip'); }
     },
     flush,
-    // The dispatch season for the board, and the first snow's note if it
-    // fell on this visit.
-    season() { return Object.freeze({...seasonOf(day()), note: snowNote}); },
+    // The dispatch season for the board, and the first snow's note on the
+    // play day it fell. No fire burns in winter once the day has begun, so a
+    // scar dated today on a winter day is the snow's, whether the visit or
+    // app.js (a profile becoming active) noted the day.
+    season() {
+      const season = seasonOf(day());
+      const snowed = season.name === 'winter' ? (heliOf(getSave()).scars ?? []).find(scar => scar.day === day()) : null;
+      const note = snowed ? `The first snow put out the fire at ${HELI_DESTINATIONS[snowed.courseId]?.name ?? 'the forest'}.` : null;
+      return Object.freeze({...season, note});
+    },
     // Today's wind: it moves the falling water and the fire.
     windNow() { return windToday(); },
     // For the board and instruments: the call, the fire in hand and the wind.

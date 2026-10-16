@@ -38,6 +38,18 @@ export function seasonOf(playDay) {
 
 const weightOf = (kind, playDay) => SEASON_WEIGHTS[seasonOf(playDay).name][kind] ?? 0;
 
+// Can any kind come this season? While fire is the only kind, not in winter.
+export const seasonOpen = playDay => MISSION_KINDS.some(kind => weightOf(kind, playDay) > 0);
+
+// The weighted pick: u in [0, 1) from one draw, kinds already filtered to
+// those with weight above 0. A rounding slip falls on the last kind.
+export function pickKind(kinds, playDay, u) {
+  const total = kinds.reduce((sum, k) => sum + weightOf(k, playDay), 0);
+  let left = u * total;
+  for (const k of kinds) { left -= weightOf(k, playDay); if (left < 0) return k; }
+  return kinds[kinds.length - 1];
+}
+
 const draw = (missions, purpose) => makeRng(heliHash(missions.seed, purpose, missions.draws));
 
 export {createMissions};
@@ -58,9 +70,11 @@ export function armMissions(missions, {date, playerName}) {
 const busy = (missions, fireOpen) => missions.call !== null || fireOpen;
 
 // A pump purchase (buyFuel returning ok). The fuel truck never counts, nor
-// does a refuel during a mission. The count stops at need.
-export function noteRefuel(missions, {fireOpen = false} = {}) {
+// does a refuel during a mission, nor one in a season when no kind can come
+// (winter, while fire is the only kind). The count stops at need.
+export function noteRefuel(missions, {fireOpen = false, playDay} = {}) {
   if (!armed(missions) || busy(missions, fireOpen) || missions.count >= missions.need) return missions;
+  if (playDay !== undefined && !seasonOpen(playDay)) return missions;
   return {...missions, count: missions.count + 1};
 }
 
@@ -101,9 +115,7 @@ export function openCall(missions, {playDay, conditions, fireOpen = false}) {
   if (!callDue(missions, {playDay, conditions, fireOpen})) return {missions, call: null};
   const kinds = possible(conditions, playDay);
   const rng = draw(missions, 'pick');
-  const total = kinds.reduce((sum, k) => sum + weightOf(k, playDay), 0);
-  let left = rng.float() * total, kind = kinds[kinds.length - 1];
-  for (const k of kinds) { left -= weightOf(k, playDay); if (left < 0) { kind = k; break; } }
+  const kind = pickKind(kinds, playDay, rng.float());
   const courses = [...conditions[kind]].sort();
   const courseId = courses[rng.int(0, courses.length - 1)];
   const call = {kind, id: `${kind}-${missions.draws}`, courseId, day: playDay, answered: false};

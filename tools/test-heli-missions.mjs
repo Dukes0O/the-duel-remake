@@ -1,9 +1,9 @@
 // The mission engine (docs/HELI_FIRE.md section 3).
 import assert from 'node:assert/strict';
 import {MISSION_RULES, createMissions, armed, armMissions, noteRefuel, runEngine, inQuietSpell, callDue, callTime,
-  openCall, answerCall, endMission, createCallClock, tickCallClock, SEASONS, SEASON_WEIGHTS, seasonOf} from '../src/heli/heli-missions.js';
+  openCall, answerCall, endMission, createCallClock, tickCallClock, SEASONS, SEASON_WEIGHTS, seasonOf, seasonOpen, pickKind} from '../src/heli/heli-missions.js';
 import {normalizeHeli, createHeli, fireOf, missionsOf} from '../src/heli/heli-save.js';
-import {fireOnNewDay} from '../src/heli/heli-fire-run.js';
+import {fireOnNewDay, createFireRun} from '../src/heli/heli-fire-run.js';
 import {dispatchBoardMarkup} from '../src/heli/heli-board.js';
 
 let checks = 0;
@@ -117,7 +117,7 @@ check('the quiet spell: no call that play day or the next, nor within 20 minutes
   assert.equal(callDue(after, {playDay: 11, conditions: canBurn}), false, 'not the next play day');
   assert.equal(callDue(after, {playDay: 12, conditions: canBurn}), false, 'not before 20 minutes of engine time');
   after = runEngine(after, 1199.9);
-  assert.equal(callDue(after, {playDay: 30, conditions: canBurn}), false);
+  assert.equal(callDue(after, {playDay: 20, conditions: canBurn}), false, 'not before 20 minutes of engine time, on an open day');
   after = runEngine(after, 0.1);
   assert.equal(after.quiet.engineSeconds, 0);
   assert.equal(callDue(after, {playDay: 11, conditions: canBurn}), false, 'engine time alone is not enough');
@@ -175,6 +175,25 @@ check('no forest fire call in winter; the count stands still until spring', () =
   for (const day of [1, 13, 24, 37, 49]) assert.equal(callDue(full, {playDay: day, conditions: canBurn}), true, 'day ' + day);
 });
 
+check('refuels in winter do not count while fire is the only kind', () => {
+  const start = armedFor();
+  assert.equal(seasonOpen(25), false);
+  assert.equal(seasonOpen(24), true);
+  assert.equal(refuel(start, 6, {playDay: 30}).count, 0, 'winter: the count stands still');
+  assert.equal(refuel(start, 2, {playDay: 37}).count, 2, 'spring: it counts again');
+  assert.equal(refuel(start, 2).count, 2, 'no play day given: counts as before');
+});
+
+check('the weighted pick follows the season table', () => {
+  // Summer: fire 4, hiker 2, hoist 1 (of 7). Kinds with weight 0 are never passed in.
+  const kinds = ['fire', 'hiker', 'hoist'];
+  assert.deepEqual([0, 3.99 / 7, 4 / 7, 5.99 / 7, 6 / 7, 0.999999].map(u => pickKind(kinds, 1, u)),
+    ['fire', 'fire', 'hiker', 'hiker', 'hoist', 'hoist']);
+  // Winter: hiker 1, hoist 1, supply 3 (fire weighs 0 and is filtered out before the pick).
+  assert.deepEqual([0, 0.2, 0.4, 0.99].map(u => pickKind(['hiker', 'hoist', 'supply'], 25, u)), ['hiker', 'hoist', 'supply', 'supply']);
+  assert.equal(pickKind(['fire'], 1, 0.999999999), 'fire');
+});
+
 check('the season pick takes one draw, so the course pick is unchanged', () => {
   const two = {fire: ['tremblant-woods', 'panorama-ridge']};
   for (let k = 0; k < 40; k++) {
@@ -209,6 +228,17 @@ check('the first snow puts a burning fire out: no pay, no loss, a scar, the miss
   assert.equal(fireOnNewDay(burningSave(25), {enabled: false, world: null}).snowed, false, 'switch off: nothing');
   const autumn = burningSave(24);
   assert.equal(fireOnNewDay(autumn, {enabled: true, world: null}).snowed, false, 'autumn: the fire keeps burning');
+});
+
+check('the snow note shows that play day, however the day was noted', () => {
+  // app.js may note the day before the visit, so the note comes from the save.
+  const snowed = fireOnNewDay(burningSave(25), {enabled: true, world: null}).profile;
+  const run = save => createFireRun({getSave: () => save, commit: r => r, emit: () => {}, world: () => null});
+  assert.equal(run(snowed).season().note, 'The first snow put out the fire at Tremblant Woods.');
+  assert.equal(run(snowed).season().name, 'winter');
+  const nextDay = {...snowed, heli: {...snowed.heli, playDay: {last: '2026-11-11', count: 26}}};
+  assert.equal(run(nextDay).season().note, null, 'only on the day it fell');
+  assert.equal(run(burningSave(5)).season().note, null);
 });
 
 check('the board shows the season, and the first snow note on that visit', () => {
