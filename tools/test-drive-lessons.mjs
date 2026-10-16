@@ -191,6 +191,24 @@ test('instructor controls retain settled pace and use the tyre yaw helper with b
 });
 
 
+test('instructor cancels retained steering before the full-brake grip limit drops',()=>{
+  const state={s:100,lateral:0,speedMph:100,headingError:0,revs:.8,gear:1};
+  const plan={course:{at:()=>({curvature:0})},car:{grip:1,gears:[80,120,200]},
+    line:{offsetAt:()=>0},profile:{at:()=>50},drive:{mphToWorld:.44704,steerResponse:24},
+    difficulty:'casual'};
+  const alpha=1-Math.exp(-plan.drive.steerResponse/120);
+  for(const sign of [-1,1]){
+    const before={...state,steerVisual:sign*.8};
+    const controls=instructorControls(before,{speedLimit:300,traction:1},
+      {...plan,steerForYaw:()=>sign*.64});
+    assert.equal(controls.brake,1);
+    const actual=before.steerVisual+(controls.steer-before.steerVisual)*alpha;
+    assert.ok(Math.abs(actual-sign*.64)<1e-12,'existing native smoothing must reach the helper capped demand in this tick');
+    assert.equal(before.steerVisual,sign*.8,'controller cannot alter the native smoothing state');
+    assert.ok(Math.abs(controls.steer)<=1,'input stays inside the native command range');
+  }
+});
+
 test('instructor does not brake on a curved approach before the named corner',()=>{
   const course={...straightCourse,at:()=>({curvature:.02})};
   const plan={course,car:{grip:1,gears:[100]},line:{offsetAt:()=>0},profile:{at:()=>50},

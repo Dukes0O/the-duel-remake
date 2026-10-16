@@ -242,8 +242,14 @@ export function instructorControls(state, surface, plan) {
   // on the approach. A missed target must fail native acceptance, not slide.
   const turning = Math.abs(course.at(state.s).curvature) > 1e-12;
   const brake = !turning && state.speedMph > targetMph + 3 ? Math.min(1, (state.speedMph - targetMph) / 14) : 0;
-  const steer = steerForYaw(desiredYaw, {speedMph: state.speedMph, grip: car.grip,
+  const steerTarget = steerForYaw(desiredYaw, {speedMph: state.speedMph, grip: car.grip,
     traction: surface.traction, car, course, brake, tyreSlip: true});
+  // Native steering is smoothed before tyre demand is measured. On the first
+  // braking tick its retained unbraked input can exceed the new grip limit.
+  // Invert that existing 120 Hz input filter; never overwrite its race state.
+  const alpha = 1 - Math.exp(-drive.steerResponse / 120);
+  const steer = Number.isFinite(state.steerVisual) && alpha > 0
+    ? Math.max(-1, Math.min(1, (steerTarget - (1 - alpha) * state.steerVisual) / alpha)) : steerTarget;
   return {targetMph, throttle: state.speedMph < targetMph ? 1 : 0, brake, steer,
     shiftUp: state.revs > .95 && state.gear < car.gears.length - 1,
     shiftDown: state.revs < .48 && state.gear > 0, boost: false};
