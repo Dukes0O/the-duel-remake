@@ -130,6 +130,7 @@ for (const side of [-1, 1]) for (const x of [.48, .70]) {
   ok(hits.length > 0 && data.brakeLights.includes(hits[0].object), `Round rear brake lamp at ${side * x} is exposed`);
 }
 ok(data.fractures.length === 4 && data.fractures.every(f => f.rest.length >= 60), 'Four actual glazing fracture zones');
+console.log('F1 glazing fracture floats: '+JSON.stringify(Object.fromEntries(data.fractures.map(f=>[f.zone,f.rest.length]))));
 for (const steering of [-1, 0, 1]) {
   updateDriver(data.driver, steering, .13);
   for (const arm of data.driver.userData.arms) ok(arm.hand.position.toArray().every(Number.isFinite), 'Driver steering animation stays finite');

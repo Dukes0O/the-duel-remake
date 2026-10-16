@@ -23,7 +23,9 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
     paint: m.paint, originalColor: m.paint.color.clone(), wheels: [], wheelPivots: [],
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...MCLAREN_F1_VEHICLE_DIMENSIONS[key] },
     ultimateKey: key,
-    damageSpace: { scale: [.9, .80, .93], offset: [0, 0, 0], frontGlassZ: .85, rearGlassZ: -.97 },
+    // The shared projector's side-window centre is canonical y=1.275. Map it
+    // to the actual bounded pane at .867 m, below the opaque roof's side rail.
+    damageSpace: { scale: [.9, .68, .93], offset: [0, 0, 0], frontGlassZ: .85, rearGlassZ: -.97 },
   });
 
   // A wide rounded nose and nearly level shoulders, with a short rounded tail.
