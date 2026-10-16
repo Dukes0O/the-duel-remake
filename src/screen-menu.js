@@ -57,8 +57,9 @@ function updateMenuCar() {
   refreshEntryReward();
 }
 function updateEntryReward(){
-  const driverId=getEquippedDriverId(profile()),base=CPU_REWARDS[choices.cpuDifficulty],best=profile().personalBests[bestKey({stageIndex:choices.startStage,seed:app.getMenuSeed(choices.startStage),laps:choices.laps??COURSE[choices.startStage]?.laps??2,...choices,driverId})];
-  const scoreBest=COURSE[choices.startStage].kind==='drift'?getLeaderboard(app.leaderboard,{event:eventKey({stageIndex:choices.startStage,seed:app.getMenuSeed(),laps:2}),car:choices.car,playerId:app.player.id,driverId})[0]?.driftScore:null;
+  const tyreSlipRules=COURSE[choices.startStage]?.kind==='drift'&&choices.difficulty==='pro'&&app._switches?.().enabled('tyre-slip')===true;
+  const driverId=getEquippedDriverId(profile()),base=CPU_REWARDS[choices.cpuDifficulty],best=profile().personalBests[bestKey({stageIndex:choices.startStage,seed:app.getMenuSeed(choices.startStage),laps:choices.laps??COURSE[choices.startStage]?.laps??2,...choices,driverId,...(tyreSlipRules?{tyreSlipRules:true}:{})})];
+  const scoreBest=COURSE[choices.startStage].kind==='drift'?getLeaderboard(app.leaderboard,{event:eventKey({stageIndex:choices.startStage,seed:app.getMenuSeed(),laps:2}),car:choices.car,playerId:app.player.id,driverId,tyreSlipRules})[0]?.driftScore:null;
   const finishingPay=distanceFinishingPay(base,COURSE[choices.startStage],choices.laps??COURSE[choices.startStage].laps,choices.mode,app._switches?.().enabled('lap-choice')===true);
   const manual=choices.difficulty==='pro',settings=`${choices.cpuDifficulty.toUpperCase()} / ${manual?'MANUAL':'AUTO'}`;
   text('entry-reward',`WIN ${credits(finishingPay*(manual?2:1))} CR · LOSS −${credits(base/2)} CR${manual?' · 2× POINTS & RACE CREDITS':''} · ${best?`CAR BEST ${time(best)} (${settings}) · BEAT IT +${credits(base*.2*(manual?2:1))} CR`:`${settings}: FIRST FINISH SETS YOUR CAR BEST`}${scoreBest!=null?` · SCORE BEST ${credits(scoreBest)}`:''}`);

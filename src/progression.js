@@ -407,6 +407,7 @@ export function bestKey(
     result.mode || 'duel',
     result.difficulty || 'casual',
     result.cpuDifficulty || 'easy',
+    ...(COURSE[result.stageIndex]?.kind==='drift'&&result.tyreSlipRules===true?['tyre-slip:1']:[]),
     ...(signature ? [`driver:${signature}`] : []),
     ...(rival ? [`rival:${rival}`] : []),
     ...(weaponSignature(result) ? [`weapons:${weaponSignature(result)}`] : [])
@@ -431,6 +432,7 @@ function isCompletedRace(result) {
 export function isValidFinish(result) {
   if (!isCompletedRace(result)) return false;
   const stage = COURSE[result.stageIndex];
+  if(result.tyreSlipRules===true&&(stage.kind!=='drift'||result.difficulty!=='pro'))return false;
   if (!stage.stuntTrial && !['drift', 'checkpoint'].includes(stage.kind)) return true;
   const cpu = Object.hasOwn(CPU_REWARDS, result.cpuDifficulty) ? result.cpuDifficulty : 'easy';
   if (stage.stuntTrial) {

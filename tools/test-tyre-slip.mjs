@@ -287,3 +287,40 @@ test('requested Casual tyres preserve complete native states in road and drift e
     assert.equal(run(true),run(false),eventId+' entire actual Casual state stream remains exact');
   }
 });
+
+
+test('new Pro drift records remain separate without deleting any old score or ordinary key',async()=>{
+  const {createProfile,bestKey,settleRace,isValidFinish}=await import('../src/progression.js');
+  const {createLeaderboard,recordFinish,mergeLeaderboards,getLeaderboard}=await import('../src/leaderboard.js');
+  const stageIndex=COURSE.findIndex(course=>course.id==='neon-drift-trial');
+  const result={runId:'old-drift',stageIndex,completed:true,won:true,targetsMet:true,laps:2,timeSec:100,
+    driftScore:8000,driftBestChain:3000,driftMeters:2000,car:'banshee_muscle',driverId:'club',
+    difficulty:'pro',cpuDifficulty:'easy',mode:'duel',seed:1989};
+  const next={...result,runId:'new-drift',tyreSlipRules:true,driftScore:7000,timeSec:105};
+  assert.notEqual(bestKey(result),bestKey(next),'new drift rules get their own comparable personal best');
+  assert.equal(bestKey({...result,stageIndex:0}),bestKey({...result,stageIndex:0,tyreSlipRules:true}),'ordinary key unchanged');
+  assert.equal(isValidFinish({...next,difficulty:'casual'}),false,'Casual cannot claim sliding-model records');
+  const player={id:'driver-1',name:'Driver One'};
+  const old=recordFinish(createLeaderboard(),result,player);assert.equal(old.recorded,true);
+  const retained=structuredClone(old.board.entries[0]);
+  const added=recordFinish(old.board,next,player);assert.equal(added.recorded,true);
+  const loaded=mergeLeaderboards(JSON.parse(JSON.stringify(added.board)));
+  assert.equal(loaded.entries.length,2);assert.deepEqual(loaded.entries.find(row=>!row.tyreSlipRules),retained);
+  assert.equal(getLeaderboard(loaded,{eventId:'neon-drift-trial',driverId:'club',tyreSlipRules:true})[0].driftScore,7000);
+  assert.equal(getLeaderboard(loaded,{eventId:'neon-drift-trial',driverId:'club',tyreSlipRules:false})[0].driftScore,8000);
+  const first=settleRace(createProfile(),result),second=settleRace(first.profile,next);
+  assert.equal(second.personalBestStatus,'baseline');assert.ok(first.profile.personalBests[bestKey(result)]);
+  assert.equal(second.profile.personalBests[bestKey(result)],first.profile.personalBests[bestKey(result)]);
+  assert.equal(settleRace(second.profile,next).profile,second.profile,'existing run settlement stays once-only');
+});
+
+test('only actual latched Pro drift objectives emit the optional rules version',()=>{
+  const stageIndex=COURSE.findIndex(course=>course.id==='neon-drift-trial');
+  for(const difficulty of ['casual','pro']){
+    const d=new Duel({seed:1989,featureFlags:{'tyre-slip':true}});
+    d.startCampaign({startStage:stageIndex,difficulty,car:'banshee_muscle',seed:1989});
+    const result=d._objectiveResult();
+    assert.equal(Object.hasOwn(result,'tyreSlipRules'),difficulty==='pro');
+    if(difficulty==='pro')assert.equal(result.tyreSlipRules,true);
+  }
+});
