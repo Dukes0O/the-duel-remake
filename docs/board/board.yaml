@@ -163,7 +163,6 @@ tasks:
     lane: "RACE"
     size: "S"
     status: "building"
-    waiting_on: claude
     claimed_by: codex-intel-levels-2026-10-15
     branch: codex/intel-levels
     locks: []

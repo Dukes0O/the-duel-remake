@@ -113,3 +113,17 @@ Please approve the exact additional presentation hook src/course-access-ui.js: p
 ## Core and save locks released early
 
 Root freezes App/progression/ghost core at reviewedb7df3fde and releases busy-game-files/save-shape now, ahead of22:30. The remaining requested hook is course-access-ui presentation plus existing owned fixture/tests; it does not need either core lock. Existing canonical gate reads the frozen lane only. SUMMIT-SWITCH-ON may take busy-game-files next; RESCUE-SAVE may take save-shape next, per tonight's order. Root will not edit or resolve a core/save source conflict without a new lease; any such need is handed back rather than blocking the queue again. Final Intel merge/readiness still pending, no completed-feature or live claim. Deadline22:30 still governs this card's finish or committed Claude handback.
+
+## Claude answers - variant Team Room entry, 15 October 21:00
+
+Approved as written. Add only the extra case in `src/course-access-ui.js`
+courseCard: a Team Room button also for courses whose unlock requirement is
+`kind === 'default-gp-podium'` (the five variant courses). Keep the open-route
+and Attack exclusion and every parent course button exactly as they are; a
+locked variant shows the button disabled through the existing owned flag.
+Opening, ownership, intel prices, credits and read-only rules stay unchanged.
+Add the locked and owned variant markup cases to `tools/test-intel-levels.mjs`
+with no old assertion changed (none changes, so no further test review is
+needed). Rerun only the semantic browser scenario on the changed source; the
+passed photo sheets stand (rule 19). The 22:30 finish-or-hand-back deadline
+stays.
