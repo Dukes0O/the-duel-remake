@@ -139,3 +139,40 @@ test('all omits manual frame while explicit selection preserves its original qui
     assert.equal(f.maximum,1);assert.equal(f.calls.at(-1),'cleanup');
   }
 });
+
+
+test('wrapper-only audio recipe is visible but never executed or counted as a browser pass', async () => {
+  assert.ok(!(await suite.namedScenarios()).includes('audio-crash-peak'), 'wrapper-only recipe is not a directly executable browser name');
+  assert.ok(!(await suite.namedScenarios({includeManual:true})).includes('audio-crash-peak'));
+  assert.equal(suite.WRAPPER_ONLY_SCENARIOS['audio-crash-peak'], 'tools/test-audio-crash-peak.mjs');
+  for (const explicit of [false, true]) {
+    const f = fixture(['audio-crash-peak']);
+    const args = explicit ? ['--scenarios', 'audio-crash-peak'] : ['--all'];
+    assert.equal(await suite.main([...args, '--output-dir', archive], f.operations), 0);
+    assert.deepEqual(f.rows, [], 'the incompatible direct scenario is never launched');
+    assert.ok(!f.calls.includes('build'), 'delegation alone needs no QA bundle');
+    assert.ok(!f.calls.includes('cleanup'));
+    assert.deepEqual([f.summary.count, f.summary.executed, f.summary.passed, f.summary.failed, f.summary.delegated], [0, 0, 0, 0, 1]);
+    assert.deepEqual(f.summary.delegations[0], {name: 'audio-crash-peak', passed: null,
+      status: 'run by its wrapper', wrapper: 'tools/test-audio-crash-peak.mjs',
+      exitCode: null, evidenceDir: null, reportPath: null, screenshots: [], warnings: null, issues: null, error: null});
+  }
+});
+
+test('wrapper delegation preserves actual warnings, failures and caller row order', async () => {
+  const f = fixture(['one', 'audio-crash-peak', 'warnings', 'last']);
+  const run = f.operations.scenario;
+  f.operations.scenario = async (...args) => {
+    const result = await run(...args);
+    if (args[0] === 'warnings') f.reports.get(result.reportPath).warnings.push('real warning');
+    return result;
+  };
+  assert.equal(await suite.main(['--all', '--jobs', '4', '--output-dir', archive], f.operations), 1);
+  assert.deepEqual(f.summary.rows.map(row => row.name), ['one', 'warnings', 'last']);
+  assert.deepEqual([f.summary.count, f.summary.executed, f.summary.passed, f.summary.failed, f.summary.delegated], [3, 3, 2, 1, 1]);
+  assert.equal(f.summary.rows[1].passed, false, 'zero-warning acceptance is unchanged');
+  assert.ok(!f.rows.includes('audio-crash-peak'));
+  assert.equal(f.summary.delegations[0].name, 'audio-crash-peak');
+  assert.equal(f.calls.filter(call => call === 'build').length, 1);
+  assert.equal(f.calls.at(-1), 'cleanup');
+});
