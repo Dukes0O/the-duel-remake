@@ -67,3 +67,16 @@ checks PASS419.7908ms; one independent code review CLEAR. No native import,
 App/race/save mutation, host edit, gate/build or browser check.
 Final dependencies and host/native/accessibility acceptance remain pending;
 this is useful source, not a playable or merged feature. Core lease free.
+
+
+## Host source proceeds in parallel
+
+Kyle authorized every possible parallel part. The isolated hook lane now
+contains a conflict-free merge of instructor6389136d and its exact Tyre
+dependency; no integration merge or native pass is implied. Take the free
+busy-game-files lease for the already named game/App/renderer/menu/router
+and feature-flag hooks. Build real reset, attempt, presentation and reward
+isolation against those source contracts now. Final Tyre/lesson/native/gate
+acceptance still blocks merge and enablement, not source construction.
+Only new own test assertions; request written review before any additional
+existing inventory hook assertion change. No heavy execution while cap full.
