@@ -47,3 +47,10 @@ the dusk and night variants: notes, flags and sectors equal their parent's. No e
 ## Removed
 
 Nothing: the variants had no written notes, so there is nothing to replace.
+
+## Parent passing-zone notes (Claude)
+
+Harbour Lights `casino` and Panorama Ridge `conrod` and `murray` passing-zone
+flags showed only their title; each now has a written line and note under its
+flag id in the circuit's `intel.notes` (Harbour's `harbour-turn` already had
+one). Notes only; sectors and reference laps unchanged.
