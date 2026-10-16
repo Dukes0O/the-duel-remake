@@ -379,12 +379,11 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "blocked"
+    status: "building"
     claimed_by: codex-card-answers-01a141d7
     branch: codex/earn-car-2
-    waiting_on: "claude"
     needs: [EARN-SCREEN]
-    locks: []
+    locks: [sound-bank]
     flag: "earned-cars"
     details: "docs/board/cards/EARN-CAR-2.md"
 
@@ -397,7 +396,7 @@ tasks:
     claimed_by: "claude-earned-cars-2026-10-15"
     branch: "claude/bolide"
     needs: [EARN-SCREEN]
-    locks: [sound-bank]
+    locks: []
     flag: "earned-cars"
     details: "docs/board/cards/EARN-CAR-3.md"
 
