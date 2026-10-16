@@ -85,3 +85,15 @@ count4 had new foreigngate31972 started09:23:57 after own09:23:36; our
 setup voluntarilydrained for its witness fault. Bounded tool investigation
 ends09:53PT. No measured loopcost, optimization, snow comparison or timing
 pass yet. Ownsource remains temporary/uncommitted, never production-ready.
+
+
+## Tool bound reached; no speculative optimization
+
+At09:53 actualroots13744/7204/31972 stillfilledcapacity. The corrected
+DOM witness was prepared/syntaxchecked but could not run. No actual loop
+cost,150ms proof, snow comparison or timing verdict. Runtime rendered-ground
+is restored byte-exact to HEAD; temporary activation/duplicateprobe removed.
+Clean owned90a4533f retains only the measurement recipe/outcome note. Own
+QA5294tab/serverclosed/stopped and generatedbundleRecycled. The expired
+reservation was released09:47, neverextended. Card staysunfinished/locksfree
+for a real admitted measurement; no source optimization or passinggate/build.
