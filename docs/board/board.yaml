@@ -151,7 +151,9 @@ tasks:
     owner: "claude"
     lane: "DESIGN"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-finish-teamroom-2026-10-15
+    branch: claude/finish-teamroom
     needs: [P4-INTEL-LEVELS]
     details: "docs/board/cards/P4-FINISH-TEAMROOM.md"
 
