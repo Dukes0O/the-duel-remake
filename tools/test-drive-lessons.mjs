@@ -164,17 +164,23 @@ test('challenge summary ignores cone rules just like the streak does',()=>{
 
 
 const straightCourse={roadHalfWidthAt:()=>6,groundAt:(s,lateral)=>({x:s,y:0,z:lateral})};
-test('cone placement uses recorded brake, closest inside and outside exit with the fixed board',()=>{
-  const poses=[{s:80,lateral:-4,brake:0},{s:100,lateral:-4,brake:.2},
-    {s:120,lateral:0,brake:0},{s:130,lateral:4,brake:0},
-    {s:160,lateral:-4,brake:0},{s:180,lateral:-2,brake:0}];
-  const before=JSON.stringify(poses);
-  const plan=placeCones(poses,{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:180,dir:1});
-  assert.deepEqual(plan.cones.map(c=>[c.id,c.s,c.lateral]),[[1,100,-4],[2,130,4],[3,160,-4]]);
-  assert.equal(plan.redBoardS,110);assert.equal(plan.finishS,220);
-  assert.equal(JSON.stringify(poses),before);
-  assert.throws(()=>placeCones(poses.map(p=>({...p,brake:0})),{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:180,dir:1}));
+test('approved relative cone placement uses the native line with fixed edge and board limits',()=>{
+  for (const dir of [-1,1]) {
+    const poses=[{s:80,lateral:-2*dir,brake:0},{s:100,lateral:-2*dir,brake:.2},
+      {s:120,lateral:0,brake:0},{s:130,lateral:2*dir,brake:0},
+      {s:160,lateral:-2*dir,brake:0},{s:180,lateral:0,brake:0}];
+    const before=JSON.stringify(poses);
+    const plan=placeCones(poses,{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:180,dir});
+    assert.deepEqual(plan.cones.map(c=>[c.id,c.s,c.lateral]),[[1,100,-3*dir],[2,130,3*dir],[3,160,-3*dir]]);
+    assert.equal(plan.redBoardS,110);assert.equal(plan.finishS,220);
+    assert.equal(JSON.stringify(poses),before);
+    assert.throws(()=>placeCones(poses.map(p=>({...p,brake:0})),{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:180,dir}));
+    const edges=placeCones(poses.map(p=>({...p,lateral:p.lateral*2.5})),
+      {course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:180,dir});
+    assert.deepEqual(edges.cones.map(c=>c.lateral),[-5.5*dir,5.5*dir,-5.5*dir]);
+  }
 });
+
 test('instructor controls retain settled pace and use the tyre yaw helper with braking',()=>{
   const calls=[],steerForYaw=(yaw,options)=>{calls.push({yaw,options});return .123;};
   const plan={course:straightCourse,car:{topSpeed:200,grip:1,gears:[80,120,200]},
@@ -217,15 +223,24 @@ test('instructor does not brake on a curved approach before the named corner',()
     {speedLimit:300,traction:1},plan);
   assert.equal(controls.brake,0);assert.equal(controls.throttle,0);
 });
-test('cone placement freezes the first outside exit instead of a later wider point',()=>{
-  const poses=[{s:80,lateral:-4,brake:0},{s:100,lateral:-4,brake:.2},
-    {s:120,lateral:0,brake:0},{s:130,lateral:4,brake:0},
-    {s:160,lateral:-4,brake:0},{s:180,lateral:-2,brake:0},
-    {s:240,lateral:-5,brake:0},{s:260,lateral:-3,brake:0}];
+test('approved relative cone placement selects the widest trace point within 120m of the apex',()=>{
+  const poses=[{s:80,lateral:-2,brake:0},{s:100,lateral:-2,brake:.2},
+    {s:120,lateral:0,brake:0},{s:130,lateral:2,brake:0},
+    {s:160,lateral:-2,brake:0},{s:180,lateral:0,brake:0},
+    {s:250,lateral:-3,brake:0},{s:250.001,lateral:-5,brake:0},{s:270,lateral:0,brake:0}];
   const plan=placeCones(poses,{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:270,dir:1});
-  assert.equal(plan.cones[2].s,160);assert.equal(plan.finishS,220);
+  assert.equal(plan.cones[2].s,250);assert.equal(plan.cones[2].lateral,-4);assert.equal(plan.finishS,310);
+  assert.throws(()=>placeCones(poses.slice(0,6),{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:270,dir:1}),/not covered/);
 });
 
+test('approved relative cone placement rejects less than 2m actual inward or outward line movement',()=>{
+  const options={course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:270,dir:1};
+  const trace=(brake,inside,outside)=>[{s:100,lateral:brake,brake:.2},{s:130,lateral:inside,brake:0},
+    {s:220,lateral:outside,brake:0},{s:250,lateral:outside,brake:0}];
+  assert.doesNotThrow(()=>placeCones(trace(0,2,0),options));
+  assert.throws(()=>placeCones(trace(.001,2,0),options),/inward.*outward/);
+  assert.throws(()=>placeCones(trace(0,2,.001),options),/inward.*outward/);
+});
 
 // These are actual native runs, not the plain-view helper tests above.
 // Execute only under normal heavy admission / the canonical lane gate.
