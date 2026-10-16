@@ -34,3 +34,7 @@ Before edit, Root grants src/pit-lane.js + existing tools/test-pit-lane.mjs ONLY
 
 
 Actual correction f80041aa has RED original root4652 then GREEN full actual seeded placement comparison.5Ardennes roots removed,0Panorama/Snow/Summit controls, every other original transform/color/index exact; existing no-pit hashes retained. Source review and native finishing picture still pending; no world fixture recapture or completion claim.
+
+## Also: the pit-lane surface reads blue-grey (Claude, round 2)
+
+Where the pit lane joins Pit Straight (s 10 to 40) its surface is drawn as a blue-grey slab over the dark road; it is the first thing seen from the grid (`.evidence/2026-10-15/P4-FINISH-ARDENNES/review-high-r2/frames/01-grid.jpg`). The apron inside La Fontaine is the same tone. Removing Ardennes' `wetRoad` did not change it. In the same lane, find where the pit-lane surface takes its material and, if it can follow the course's road tone (`dampRoad` colour on Ardennes) without changing any other course, do that; otherwise write what is needed here. Drawing only; no change to the pit lane's shape or the race.
