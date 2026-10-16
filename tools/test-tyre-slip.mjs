@@ -369,7 +369,7 @@ test('switch-on replay pins are stable at30/60/144fps with three runs per event'
 });
 
 
-test('all actual arenas keep complete native state streams exact with the switch requested',()=>{
+test('all circuit arenas keep complete native state streams exact with the switch requested',()=>{
   for(const event of COURSE.filter(row=>row.arena===true)){
     const transcript=enabled=>{
       const d=new Duel({seed:1989,featureFlags:{'tyre-slip':enabled}});
@@ -431,4 +431,27 @@ test('native road driving applies the exact Pro grip and scrub loss only past th
   assert.ok(Math.abs(peak.state.yawVelocity)>.01,'real native yaw was applied');
   near(slide.state.yawVelocity/peak.state.yawVelocity,.82,1e-10);
   near(peak.state.speedMph-slide.state.speedMph,14/120,1e-10);
+});
+
+
+test('native Scrapdome venue clears road rules and keeps the complete fight transcript exact',()=>{
+  const transcript=enabled=>{
+    const d=new Duel({seed:1989,featureFlags:{'tyre-slip':enabled}});
+    d.startCampaign({seed:1989,startStage:0,car:'falcone_f42',difficulty:'pro',opponentCount:0});
+    assert.equal(d.state.tyreSlipRules,enabled,'the preceding native road race latches the requested model');
+    d.state.wastelandGateDiscovered=true;
+    assert.equal(d.startArenaEvent({venueId:'scrapdome',car:'falcone_f42',difficulty:'pro',
+      seed:1989,cpuDifficulty:'medium',opponents:[{car:'viper_proto',brain:'rammer'}]}),true);
+    assert.equal(d.course.def.id,'scrapdome');assert.equal(d.state.difficulty,'pro');
+    assert.equal(d.state.tyreSlipRules,false,'the real venue loader clears latched road rules');
+    const hash=createHash('sha256');let moved=false;
+    for(let tick=0;tick<1200;tick++){
+      d.setInput({throttle:1,brake:tick>850?.4:0,steer:tick<450?.6:-.4,boost:false});
+      d.step(1/120);moved ||= d.state.speedMph>10;
+      hash.update(JSON.stringify(d.state));
+    }
+    assert.ok(moved&&d.state.arena.clockSec>1,'real arena driving and its fight clock advanced');
+    return hash.digest('hex');
+  };
+  assert.equal(transcript(true),transcript(false),'Scrapdome full native fight state remains exact');
 });

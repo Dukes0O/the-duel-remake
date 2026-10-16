@@ -80,3 +80,6 @@ Added native full-state requested-on/off comparisons for every real arena defini
 
 
 A bounded177.4907ms actual _drive comparison now checks the reviewed Pro full-slide0.82 yaw share and exact14/120mph step loss against a matched below-peak native car. It passes with real road/gear state, not a mocked physics helper. No game source or number changed; remaining replay/CPU/native macro and final gates remain queued.
+
+
+Independent test review found the arena loop covered only circuit entries; Scrapdome venues are deliberately outside COURSE. Added a separate real startArenaEvent/Scrapdome Pro transcript after a native road-rule latch, retaining the Titan/circuit tests. It checks loader refusal of the new road rules, actual fight motion/clock and entire state parity. This is a real coverage repair; reviewer confirmation and execution remain pending until the alone release tier drains. No production file or old assertion changed.
