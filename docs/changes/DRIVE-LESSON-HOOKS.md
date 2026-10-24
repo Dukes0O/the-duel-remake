@@ -40,6 +40,8 @@ and combat balance are unchanged.
 - `src/game.js`: `startCampaign({lesson})`, `resetDriveLessonAttempt`, a lesson
   step that uses the native driving, jump and swept contacts only. The lesson
   lives outside the ordinary race snapshot so flag-off state is identical.
+- `start-preview.bat`: `driving-lessons` added to the private preview's flag list
+  (the existing preview-launcher test requires every dev switch to be requested).
 - `src/app.js`, `src/render3d.js`, `src/screen-menu.js` (one button),
   `src/screen-router.js` (one CSS import).
 
@@ -73,7 +75,14 @@ and combat balance are unchanged.
   case: real menu entry, late, right, fast, slow-resets, three wins, once-only
   durable reward, no ordinary pay/record/ghost writes, other player untouched,
   leave. `tools/test-drive-lessons.mjs`: 36 of 36 pass.
-- Lane tier and build: see the end of this note.
+- Lane tier `--changed --jobs 8 --keep-going` (Linux cloud): 290 suites pass.
+  The failures that remain are Windows-only and unrelated: `test-course-kit`,
+  `test-earned-cars-ui`, `test-medals` and `test-drive-through` ("test cleanup
+  requires the Recycle Bin"), `test-full-check` (needs `pwsh`), `test-salt-flats`
+  (a `C:\` art library path) and `test-salt-flats-art` (needs Blender). The two
+  real failures it found are fixed: the lines test (a design-table row I had
+  reworded) and the preview-launcher test (`start-preview.bat` above); both pass.
+  Replay, world-signature and combat-balance guards pass. `npm run build` passes.
 - **Browser scenario for the laptop to run**: `tools/scenarios/drive-lesson-run.mjs`
   (private port, memory-only storage). It uses the funded temporary career,
   buys Panorama Ridge, opens the board from the Instructor button, checks the
@@ -82,9 +91,8 @@ and combat balance are unchanged.
   card and that the profile is unchanged, then Next and Leave. It was syntax
   checked here only (the browser harness needs Windows and the Recycle Bin).
   Run: `node tools/run-browser-scenarios.mjs --scenarios drive-lesson-run`.
-- Suites that could not run here: the course-kit and earned-cars UI suites fail
-  only on "test cleanup requires the Recycle Bin" (Windows-only); every
-  browser scenario.
+- Not run here: the seven Windows-only suites above, every browser scenario, and
+  the full tier. The laptop should run them.
 
 ## Not changed
 

@@ -277,7 +277,7 @@ use the App autopilot.
 | --- | --- |
 | `drive.radio.corner.intro` | Welcome to the track. Today is the most important corner skill there is: braking. Forget the course boards today and watch my cones. |
 | `drive.radio.corner.late.start` | Let us see what happens when you leave it late. Keep your foot down and brake at the red board. |
-| `drive.radio.corner.late.result` (not played since 24 October 2026: it promises lost time; DRIVE-LESSON-LATE-LINE records a replacement, and until then the late try plays `drive.radio.corner.coach.screech`) | Hear that screech? That was your tyres sliding, and sliding is slow. Look at the time you lost. |
+| `drive.radio.corner.late.result` | Hear that screech? That was your tyres sliding, and sliding is slow. Look at the time you lost. |
 | `drive.radio.corner.late.early` | You braked early. Good instinct, but this time I wanted you to feel it. That one still counts. |
 | `drive.radio.corner.right.start` | Now the right way. Brake hard at the first cone while the car is straight, turn in, touch the inside cone, and accelerate out wide past the third. |
 | `drive.radio.corner.coach.brake` | Brake at the first cone. Not before, not after. |
@@ -291,6 +291,11 @@ use the App autopilot.
 | `drive.radio.corner.challenge.reset` | Not that time. Back to zero. You know how. |
 | `drive.radio.corner.pass` | Three in a row. You have earned better brakes, and the next lesson is open. |
 | `drive.radio.retake` | Back for more? Good. Practice is how the fast drivers got fast. |
+
+`drive.radio.corner.late.result` is not played since 24 October 2026: it promises lost time,
+which the tyres do not cost. Until DRIVE-LESSON-LATE-LINE records a replacement, the
+late try plays `drive.radio.corner.coach.screech` after a screech of at least 0.5 s
+(`late.early` if it braked early), and nothing otherwise.
 
 ## 7. The save (`save-shape`)
 
