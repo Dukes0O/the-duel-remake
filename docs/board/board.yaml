@@ -185,12 +185,12 @@ tasks:
 
   - id: GP-RACECRAFT
     title: "Grand Prix racecraft: wide starts, real passing, CPU nitro (switch cpu-racecraft, preview first)"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "ready"
-    claimed_by: codex-overnight-01a12e4f
-    branch: codex/gp-racecraft
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
+    branch: cloud/gp-racecraft
     needs: []
     locks: []
     flag: "cpu-racecraft"
@@ -445,12 +445,12 @@ tasks:
 
   - id: DRIVE-LESSON-1
     title: "Driving lesson 1, the sharp corner: lesson rules, cones and the instructor's run"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "ready"
-    claimed_by: codex-overnight-01a12e4f
-    branch: codex/drive-lesson-1
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
+    branch: cloud/drive-lesson-1
     needs: [TYRE-SLIP, DRIVE-LESSON-CORE]
     locks: []
     flag: "driving-lessons"
