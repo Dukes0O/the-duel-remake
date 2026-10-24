@@ -6,7 +6,8 @@ tasks:
     owner: "claude-cloud"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
     branch: cloud/drive-lesson-hud
     needs: []
     locks: []
@@ -386,7 +387,8 @@ tasks:
     owner: "claude-cloud"
     lane: "SAVE"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
     needs: []
     locks: [save-shape]
     flag: "lab"
@@ -843,7 +845,8 @@ tasks:
     owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
     needs: [DRIVE-LESSON-HOOKS]
     locks: []
     flag: "driving-lessons"
