@@ -168,7 +168,7 @@ const markup = on => screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 
 assert.equal(markup(false).includes('medal_test_a'), false, 'the menu car picker hides medal cars while off');
 assert.ok(markup(true).includes('<option value="medal_test_a">'));
 assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the earnable count is today\\'s while off');
-assert.ok(markup(true).includes(' 12 EARNABLE CARS'));
+assert.ok(markup(true).includes(' 13 EARNABLE CARS'));
 // Air only, never a customer's car.
 assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars]);
 assert.ok(medalCars.every(id => !JOB_CARS.includes(id)));
@@ -208,9 +208,9 @@ assert.deepEqual(medalResultLines(win, {helicopter: true}), ['NEW MEDAL · BRONZ
 assert.deepEqual(medalResultLines(win).length, 3, 'no helicopter lines with the helicopter off');
 saved = win.profile; garageCar = 'medal_test_a'; html = garage();
 assert.ok(html.includes('MEDAL REWARD · Arrives fully tuned.'), 'the owned medal car has its own reward note');
-// The next car is the first unowned medal car in config order: the real Bolide
-// (24 with 6 gold) comes before the scratch cars here.
-assert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 24 WITH 6 GOLD'));
+// The next car is the first unowned medal car in config order: the real F1
+// (15 medals) comes before the Bolide (24 with 6 gold) and the scratch cars here.
+assert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 15'));
 garageCar = 'koenigsegg_jesko'; html = garage();
 assert.ok(html.includes('GARAGE COMPLETION REWARD') || html.includes('MAX OTHER CARS'), 'the Jesko keeps its own page');
 // The menu: a hidden car is never the menu car or the rival's car.

@@ -166,3 +166,31 @@ sent to Kyle.
 
 - `docs/board/looks/earned-cars/round-5.jpg` (the Enzo's in-game sheet, verdict recorded).
 - The Bolide's round 1 sheet (replaced by round 2).
+
+## Merge after the F1 (24 October 2026)
+
+`codex/earn-car-2` (the McLaren F1, ace69ee7) and current `integration/wasteland`
+are merged into this lane, so the roster is now twelve cars: the original nine,
+then the Enzo, the F1 and the Bolide, in medal order. Conflicts were all the two
+cars appending to the same lists; both sides were kept (config, sound bank,
+vehicle routing, sockets, kit sizes, kit review, kit-fit matchers, heli table,
+medal lists, court/armour/audio pins). The F1 keeps the sound-bank pitch 1.04 it
+was approved for; the Bolide's voice (pitch 0.94) is distinct from it.
+
+Assertions changed, and why:
+- Car counts 11 to 12 (`test-progression`, `test-vehicle-assets`,
+  `test-vehicle-paint`, `test-vehicle-grounding`, `test-armor-kit-assets`);
+  medal cars 2 to 3; air-only refusals 3 to 4 courses-worth (`test-course-eligibility`).
+- Earnable cars shown with the switch on 12 to 13 and the garage "next car" text
+  after six medals is now the F1 (15 medals), not the Bolide, because the F1 comes
+  first in config order (`test-earned-cars-ui`).
+- Arena solver pins: the F1 lane's Enzo+F1 pin (`solverFingerprintWithF1`,
+  b5b32ff1...) is kept exact. The Bolide lane's Enzo+Bolide pin
+  (`solverFingerprintWithBolide`, f316b925...) described a roster that no longer
+  exists (no Bolide without the F1), so that key now pins the real twelve-car
+  roster: 14125b11b1705eb800aaca2a0e782e3a1bf6247d58c4340d87153c4137a486e3.
+  The nine-car and Enzo pins are unchanged and pass. The Titan road pins for the
+  F1 and the Bolide are independent and both kept.
+
+The Bolide takes back the sound-bank lock after the F1 merges (see the card).
+
