@@ -22,6 +22,11 @@ The one wiring card for the story, holding `busy-game-files` once:
 - Browser scenario (private port, memory-only storage): dive, badge,
   sonar, one bagged part, the garage sheet.
 
+The seaward side of the Drop-off lip must read as a real drop into dark water,
+because the Sirena rests on a ledge just below it. The Kelp Coast zone data
+(DEEP-TRAIL) marks the lip only with `rock` near 1 and a depth of about 25 m;
+it has no field for water beyond the trail, so the look draws the drop.
+
 Owns: `src/deep/sirena-view.js`, `src/deep/sirena-ui.css`, the scenario,
 `docs/changes/DEEP-SIRENA-VIEW.md`. Hooks: `src/app.js`, `src/game.js`,
 `src/render3d.js`, `src/screen-garage.js`, `src/controls-help.js`.

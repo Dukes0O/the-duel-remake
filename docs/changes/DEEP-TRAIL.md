@@ -29,10 +29,10 @@ with it off, or with the ramp unused, Pacific Canyon runs exactly as before
   A zone without it loads exactly as before (no `finds` key).
 - `src/main.js`: one line passing the provider to `App` (`deepProviders`).
 
-Design calls I made, for Claude to review, are in
-`docs/board/questions/DEEP-TRAIL.md` (6 m width at the ramp's foot, the V turn
-at the foot, no title for the returning forest stretch, deep water beyond the
-lip left to the look).
+Four design calls (6 m width at the ramp's foot, the V turn at the foot, no
+title for the returning forest stretch, deep water beyond the lip left to the
+look) were approved by Claude; the answers are on the DEEP-TRAIL card, and
+DEEP-SIRENA-VIEW now says the seaward side of the lip must read as a real drop.
 
 ## Checks (Linux cloud)
 
