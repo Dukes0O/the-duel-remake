@@ -33,27 +33,27 @@ try{
   same(app.profile.unlockedCars,createProfile().unlockedCars,'no course entry gifts vehicles');
   app.profile.credits=250000;app._saveProfile();for(const car of Object.keys(CAR_PRICES))if(!isCarUnlocked(app.profile,car))check(app.unlockCar(car).ok,'test-only wallet buys every priced car at catalog cost');
   for(const [car,spec]of Object.entries(CARS).filter(([,spec])=>!spec.unlockRequirement))for(const type of Object.keys(UPGRADE_TYPES))for(let level=0;level<3;level++)check(app.purchaseUpgrade(car,type).ok,'test-only wallet maxes the ordinary fleet through the real garage API');
-  // Six medals (any boxes, from any cars) earn the Enzo through the real grant, as a save would on load.
-  const medalProfile=normalizeProfile({...app.profile,medals:{version:1,cars:{falcone_f42:{duel:[1,1,1],grandprix:[1,1,1]}}}});
+  // Fifteen medals (any boxes, from any cars) earn the Enzo and F1 through the real grant, as a save would on load.
+  const medalProfile=normalizeProfile({...app.profile,medals:{version:1,cars:{falcone_f42:{duel:[1,1,1],grandprix:[1,1,1]},stuttgart_959s:{duel:[1,1,1],grandprix:[1,1,1]},falcone_heritage:{duel:[1,1,1],grandprix:[0,0,0]}}}});
   Object.assign(app.profile,{medals:medalProfile.medals,unlockedCars:medalProfile.unlockedCars,upgrades:medalProfile.upgrades});app._saveProfile();
-  check(Object.keys(CARS).every(car=>isCarUnlocked(app.profile,car)),'maxing the ordinary fleet earns the completion car, and six medals the Enzo, before eligibility checks');
+  check(Object.keys(CARS).every(car=>isCarUnlocked(app.profile,car)),'maxing the ordinary fleet earns the completion car, and fifteen medals the Enzo and F1, before eligibility checks');
   const bank=app.profile.credits;let airOnlyRefusals=0;
   for(const car of Object.keys(CARS))for(const [startStage,event]of COURSE.entries()){
     app.setRaceSettings({car,startStage,mode:'timetrial'});same(app.getRaceChoices().car,car,'all course changes preserve every owned car');same(app.getRaceChoices().startStage,startStage,'all vehicle changes preserve the course');
     same(new App().getRaceChoices(),app.getRaceChoices(),'per-player setup persists any owned vehicle/course pairing');
     // With the helicopter on, an air-only car (the Jesko) races only where it
     // was last set down; everywhere else START is refused with the reason.
-    // Named here, not asked of the game: only the Jesko and the Enzo are
+    // Named here, not asked of the game: only the Jesko, Enzo and F1 are
     // air-only, and a fresh save has them at Tremblant Woods.
-    const expectRefused=['koenigsegg_jesko','ferrari_enzo'].includes(car)&&event.id!=='tremblant-woods';
-    same(app._airOnlyRefused(car,event.id),expectRefused,`${car} at ${event.id}: air-only refusal only for the Jesko and the Enzo away from Tremblant Woods`);
+    const expectRefused=['koenigsegg_jesko','ferrari_enzo','mclaren_f1'].includes(car)&&event.id!=='tremblant-woods';
+    same(app._airOnlyRefused(car,event.id),expectRefused,`${car} at ${event.id}: air-only refusal only for the Jesko, Enzo and F1 away from Tremblant Woods`);
     if(expectRefused){airOnlyRefusals++;check(!app.startCampaign(),'an air-only car is refused away from where it sits');
       check(app.courseAccessMessage.includes('travels only by air'),'the refusal says why');same(app.duel.state.status,'menu','a refused start stays on the menu');continue;}
     check(app.startCampaign(),'saved pairing starts');same(app.duel.state.car,car,'raw simulation receives the chosen owned car');same(app.duel.state.stageIndex,startStage,'raw simulation receives the chosen course');
     same(app.duel.state.mode,event.practice||event.stuntTrial||['chase','drift','checkpoint'].includes(event.kind)?'duel':'timetrial','objective-only modes remain enforced without vehicle forcing');
     app.restart();same(app.duel.state.car,car,'restart preserves any chosen vehicle');same(app.duel.state.stageIndex,startStage,'restart preserves the course');app.returnToMenu();
   }
-  same(airOnlyRefusals,2*(COURSE.length-1),'the Jesko and the Enzo each start on exactly one course, where they sit');
+  same(airOnlyRefusals,3*(COURSE.length-1),'the Jesko, Enzo and F1 each start on exactly one course, where they sit');
   same(app.profile.credits,bank,'course/vehicle selection and restart cannot spend or gift credits');same(app.profile.history.length,0,'countdown-only eligibility checks create no race settlements');
   for(const [stageIndex,event]of COURSE.entries())for(const car of Object.keys(CARS)){
     const cpuDifficulty='medium',required=event.checkpointRush?.gatesPerLap*(event.laps||2),result={runId:'eligibility',stageIndex,car,driverId:'club',completed:true,won:true,targetsMet:true,laps:event.laps||2,timeSec:10,cpuDifficulty,

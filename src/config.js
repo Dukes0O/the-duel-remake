@@ -87,6 +87,15 @@ export const CARS = {
     color:0xb3121a,accent:0x16181b,offRoadGrip:.62,offRoadSpeed:58,offRoadScrub:.56,mass:1365,
     collision:{halfWidth:1.02,halfLength:2.35},height:1.15,kind:'hypercar',
   },
+  // Earned car 2: light, naturally aspirated road car; factory tuning adds
+  // to these approved base figures for a fully tuned top speed of 240 mph.
+  mclaren_f1: {
+    name:'McLaren F1',homage:'F1-inspired three-seat V12 road car',gearbox:'manual',
+    unlockRequirement:{kind:'medals',medals:15},factoryMaxed:true,
+    topSpeed:217.2,accel:9.1,grip:1.02,braking:1.16,gears:[58,98,134,169,197,217.2],
+    color:0xb8bdc2,accent:0x202329,offRoadGrip:.63,offRoadSpeed:60,offRoadScrub:.54,mass:1140,
+    collision:{halfWidth:1,halfLength:2.14},height:1.14,kind:'hypercar',
+  },
 };
 export const DEFAULT_CAR = 'falcone_f42';
 
