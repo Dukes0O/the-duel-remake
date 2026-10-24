@@ -430,10 +430,12 @@ tasks:
 
   - id: LAB-FAN-ART
     title: "The McMurtry Speirling model (Blender recipe, three rounds)"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-24
+    branch: claude/lab-fan-art
     needs: []
     locks: []
     flag: "lab"
