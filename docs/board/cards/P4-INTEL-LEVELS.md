@@ -91,3 +91,52 @@ The evening reference-data/control and disposable-scenario answers are received.
 ## Core lease returned
 
 Cups is merged and its newly created lane recycled. Tyre recovery now waits for the specific written outcome decision on its own card, with no retuning or repeat measurement. Intel may resume its existing approved UI/reference-ghost hooks under save-shape and busy-game-files. Existing source a32b36e1 and green native earning/purchase evidence stay retained. Ardennes release work has priority; no extra native batch during its eventual alone gate.
+
+
+## Kyle hard finish-or-handoff deadline, 15 October20:27PT
+
+Team Room is Root's first work. Finish and merge by22:30PT (2026-10-16T05:30Z), or commit its exact unfinished source and hand it back to Claude, releasing both busy-game-files and save-shape. Do not extend this deadline or hold the eight-card queue for further work. Current clean sourceebb926d0 contains reviewed earning/purchases/UI/ghost selection and prepared native-pose builder/scenario fixtures. Actual native pose generation, existing browser scenarios and final canonical lane/build/review on the current integration union remain. Preserve all prior acceptance; no completed-feature claim yet.
+
+
+## Browser fixture ownership correction before source
+
+Actual98656043 browser pair both stopped before pictures with0issues/warnings: Fixture intel purchase refused:panorama-ridge-night. The disposable setup unlocked course IDs but omitted the current manifest's required default-gp-podium parent record. Production correctly refused ownership. Existing approved source-data builder already supplies exactly that native profile prerequisite in its disposable fixture. Root corrects only the two already approved scenario fixtures: read current CIRCUIT_MANIFESTS, give the memory-only profile each named parent podium needed for enabled variants, then buy intel through unchanged App API. Preserve every old picture/read-only/pixel/camera/lock/price assertion and all production ownership, save and economy rules. No runtime or guard edit, fabricated shipped ghost, repeated unchanged capture or new harness. Stopped only Root's incomplete lane tree34308 before source edits; its cancelled packet is not a gate pass. One corrected-source final lane/build and browser pair remain, deadline22:30PT unchanged.
+
+
+## Claude question: existing course-menu hook for the five variants
+
+Correctedb7df3fde photos scenario PASSED with0issues/warnings and3actualsheets. Semantic scenario passed31Highviews/6realmap interactions unchanged, then production exposes no Team Room button for panorama-ridge-night. Source proof: src/course-access-ui.js courseCard deliberately suppresses every course with courseUnlockRequirement; all5newdev variants have default-gp-podium requirements. Buying intel succeeds after the fixture correction; their Team Room entry is absent. No capture retry or runtime entry change yet. Originalfailedpair and actualfirst31views retained.
+
+Please approve the exact additional presentation hook src/course-access-ui.js: preserve its existing open-route/Attack exclusion and all parent buttons, and permit Team Room buttons only additionally for requirement.kind===default-gp-podium (the5variant courses). Existing owned boolean still disables locked buttons; real App opening, ownership, intel, credits and read-only rules remain unchanged. Extend the already owned tools/test-intel-levels.mjs with real locked/owned variant markup tests, without changing any old assertion. This satisfies CIRCUITS7b everyevent/route; no parent/released course change, new harness or hidden-course bypass. Then complete unchanged semanticbrowser on that changed entry source; do NOT retake the passed3photo sheets. The current canonical gate continues on frozenb7; no further code edits until this hook is settled. Deadline22:30PT remains hard, with committed handback/locks released if unfinished.
+
+
+## Core and save locks released early
+
+Root freezes App/progression/ghost core at reviewedb7df3fde and releases busy-game-files/save-shape now, ahead of22:30. The remaining requested hook is course-access-ui presentation plus existing owned fixture/tests; it does not need either core lock. Existing canonical gate reads the frozen lane only. SUMMIT-SWITCH-ON may take busy-game-files next; RESCUE-SAVE may take save-shape next, per tonight's order. Root will not edit or resolve a core/save source conflict without a new lease; any such need is handed back rather than blocking the queue again. Final Intel merge/readiness still pending, no completed-feature or live claim. Deadline22:30 still governs this card's finish or committed Claude handback.
+
+## Claude answers - variant Team Room entry, 15 October 21:00
+
+Approved as written. Add only the extra case in `src/course-access-ui.js`
+courseCard: a Team Room button also for courses whose unlock requirement is
+`kind === 'default-gp-podium'` (the five variant courses). Keep the open-route
+and Attack exclusion and every parent course button exactly as they are; a
+locked variant shows the button disabled through the existing owned flag.
+Opening, ownership, intel prices, credits and read-only rules stay unchanged.
+Add the locked and owned variant markup cases to `tools/test-intel-levels.mjs`
+with no old assertion changed (none changes, so no further test review is
+needed). Rerun only the semantic browser scenario on the changed source; the
+passed photo sheets stand (rule 19). The 22:30 finish-or-hand-back deadline
+stays.
+
+
+## Committed early handback to Claude, 15 October20:42PT
+
+Kyle authorized finish by22:30 or handback. Root hands this retained lane back now, with both locks already free, so the core queue does not wait on the last presentation decision. Board ownerClaude/ready/locks[]. Exact clean committed sourceb7df3fde0c6599833204dfdbe6bbd8ba33e97c13, branchcodex/intel-levels, folderC:/Users/kyleb/.codex/worktrees/wasteland-integration/intel-levels. No uncommitted code or new placeholder. Independent code/save reviewCLEAR on98656043 and fixture-onlyb7deltaCLEAR.
+
+Completed: pure and actual native lap/GP earning, once-only400/800purchases, owner-safe optional save normalization, TeamRoom level gates/messages, per-playerOff/Mybest/Team, isolated real team sampler preserving personal recording/storage, actual26events/34references/9701nativeposes with every historical field exact. Actual-App Pacific/Panorama real-data playback PASS1346.4659ms. Exact native data receipts are integration.evidence/2026-10-15/P4-INTEL-LEVELS/native-poses-b887f5de.
+
+Actual corrected photos acceptanceb7:72pictures/3JPEGs,0issues/warnings, PASS. Keep these for the finishing pass; do not repeat. Semanticb7:31Highviews plus6realmap interactions reached, then missing native TeamRoom entry atfirstvariant; FAILED, not a full scenario pass. Production course-access-ui excludes all requirement-bearing events. The exact proposed5variant-only presentation hook is the immediately preceding Claude question; no such edit has run. ExistingAttack open-route/solo exclusion and old assertions stay. Remaining: settle that hook, implement/test only that entry if approved, complete semantic scenario atbothqualities/variants, final build and accepted gate coverage, merge. No new native pose generation, photo retake or repeated passing core suite.
+
+One canonical lane/jobs4 on exactb7 is already RUNNING: Rootexec96228, runnerPID49744 (parent42624), started20:37:45PT. Its actual result will write integration.evidence/2026-10-15/P4-INTEL-LEVELS/final-b7df3fde/lane.json andlane-receipt.json; log beside them. Do not launch a duplicate or call it passed before receipt. Its wrapper will leave build pending because this inbox changed; build once after current admission, not a gate repeat. Photos/semantic original packets are still in lane.evidence/2026-10-15/P4-INTEL-LEVELS/final-b7df3fde/{team-room,team-room-photos}; retain the failed earlier986pair and cancelled initial lane separately. No full tier or timing is requested.
+
+Core/save files remain frozen and leases released: Summit and Rescue may start in tonight's order. Any later App/progression conflict or edit needs its own new lease, not a reclaimed indefinite Intel hold. Do not delete this unmerged lane. No merge/live release claim, real-save access, push, or overnight-automation restart. Root's handback is complete before22:30, not an extension of that cutoff.

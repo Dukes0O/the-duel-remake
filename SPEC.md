@@ -285,6 +285,10 @@ remove; delete, don't archive; a branch lives as long as its work; size targets 
 never discard what can't be regenerated (player saves, Kyle's decisions,
 licensed files, current assets).
 
+**Kyle, 15 October 2026:** fix forward also applies to the live game. Do not
+retain rollback builds or revert a release to remove an added course. Correct
+faults in the next release. This replaces the old live-build rollback exception.
+
 **Done on 24 September 2026.** A second rewrite of the unpushed
 `integration/wasteland` history kept only the current version of each of the
 86 binary assets changed since `master`. The branch tip is identical; a push
@@ -1100,7 +1104,7 @@ There is no overnight schedule. The Integrator starts the full check itself, whi
 | `beta` | QA builds only (the Experimental menu was removed, 0.12) | Kyle plays it, or three days pass with no serious play-test note → `on` |
 | `on` | Everyone | The switch is removed after one clean release |
 
-A release (standing rule D3): full check green → Release Manager fast-forwards `master`, builds, keeps the previous build for rollback. The running game offers "Reload" from its menu. A plain-language "What's new to try" note goes into `docs/playtest-inbox.md`.
+A release (standing rule D3): full check green → Release Manager fast-forwards `master` and installs the staged build. Fix faults forward; retain no rollback build (Kyle, 15 October 2026). The running game offers "Reload" from its menu. A plain-language "What's new to try" note goes into `docs/playtest-inbox.md`.
 
 ### 4.5 Stop the line and escalation
 
@@ -1213,7 +1217,7 @@ The repo keeps its flat `src/` layout. New files use prefixes so they group toge
 | `AGENTS.md` | Rules every Codex agent reads first |
 | `.codex/agents/*.toml` | Helper agents (see playbook) |
 | `.gitattributes` | LF line endings for text, binary markers for assets |
-| `docs/OPERATIONS.md` | The one current guide to folders, ports, live server, release and rollback |
+| `docs/OPERATIONS.md` | The one current guide to folders, ports, live server, release and fixes |
 | `docs/board/board.yaml` | Task cards and status (Director only) |
 | `docs/board/checks/` | Full check reports |
 | `docs/changes/` | One change note per task |

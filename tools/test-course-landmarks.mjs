@@ -76,6 +76,8 @@ for (const palette of [undefined, [0x414a50, 0x5a352c], [0x414a50, 0x5a352c, 0x5
 for (const roofColours of [null, [], [0], [0, 1, 2, 3], [-1, 0], [0, 0x1000000], [0, 1.5]]) {
   assert.throws(() => circuitWorld(PANORAMA_RIDGE, [{...panoTown, roofColours}]), /roof palette/i); checks++;
 }
+// ARDENNES-STAVELOT-STONE: only the named house styles are drawn.
+assert.throws(() => circuitWorld(PANORAMA_RIDGE, [{...panoTown, houseStyle: 'tudor'}]), /house style/i); checks++;
 {
   const fixture = circuitWorld(PANORAMA_RIDGE, [panoChurch]);
   try {

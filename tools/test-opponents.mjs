@@ -1,18 +1,20 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {App} from '../src/app.js';
-import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
+import {COURSE,DRIVE,steerForYaw} from '../src/config.js';
 import {RouteMap} from '../src/route-map.js';
 import {createHudScreen} from '../src/screen-hud.js';
 import {createResultsScreen} from '../src/screen-results.js';
 import {useRacingLine} from './track-script-drive.mjs';
+import {isSummitAttack} from '../src/summit-attack.js';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 globalThis.cancelAnimationFrame ??= () => {};
 // The stock demo driver (src/app.js) looks only 220 m ahead, so it cannot brake in time for Casino Corner at the end of Harbour Lights'
 // long straight or for the 9 m Lantern Hairpin (RELEASE-HARBOUR). That course is driven with the racing-line driver the circuit tests use.
-const racingLineDriven = new Set(['harbour-lights']);
+// Summit uses the same line driver and winter tires as its accepted native run.
+const racingLineDriven = new Set(['harbour-lights', 'summit-run', 'summit-time-attack']);
 
 function crossCircuit(duel, actor) {
   const {course, raceLength} = duel;
@@ -37,6 +39,21 @@ for (const [stageIndex, stage] of COURSE.entries()) {
   if (stage.practice) {
     check(state.opponents.length === 0 && state.rival === null,
       `${stage.id}: untimed practice still has no opponents or finish line`);
+    continue;
+  }
+  if (isSummitAttack(stage)) {
+    check(state.mode === 'timetrial' && state.lapsTotal === 1 && state.opponents.length === 0 && state.rival === null,
+      `${stage.id}: a three-opponent request still starts the required solo Attack`);
+    state.status = 'racing';
+    for (let frame = 0; frame < 10; frame++) duel.step(1 / 120);
+    check(state.opponents.length === 0 && state.traffic.length === 0 && !state.field,
+      `${stage.id}: fixed steps never spawn a rival, traffic or field`);
+    state.stageTimeSec = stage.attackTimes.gold; state.racePenaltySec = 0;
+    crossCircuit(duel, state);
+    check(duel._finishStage() === true && state.results.completed === true && state.results.medal === 'gold' && state.results.won === true,
+      `${stage.id}: real gate completion gives the timed medal result`);
+    check(state.results.beatRival === null && state.results.opponentCount === undefined && state.results.position === undefined,
+      `${stage.id}: solo finish has no invented rival or field ranking`);
     continue;
   }
   check(state.opponents.length === 3 && state.rival === state.opponents[0],
@@ -162,11 +179,12 @@ for(const [stageIndex,stage] of COURSE.entries()){
           .filter(prop=>prop.gap>-10&&prop.gap<105).sort((a,b)=>a.gap-b.gap)[0];
         const target=next?next.off:0,mps=s.speedMph*DRIVE.mphToWorld,frame=duel.course.at(s.s),surface=duel._drivingSurface(s.s,s.lateral);
         const heading=Math.atan((target-s.lateral)*2.5/Math.max(15,mps)),look=duel.course.at(s.s+mps*.18);
-        const yaw=look.curvature*mps+(heading-s.headingError)*6,authority=Math.max(.05,steeringYawAuthority(s.speedMph,duel.car.grip,surface.traction));
+        const yaw=look.curvature*mps+(heading-s.headingError)*6;
         const bend=Math.max(Math.abs(frame.curvature),Math.abs(duel.course.at(s.s+100).curvature),Math.abs(duel.course.at(s.s+220).curvature));
         const targetSpeed=Math.min(duel.car.topSpeed*.94,surface.speedLimit,.85*Math.sqrt(DRIVE.maxLateralAccel*duel.car.grip/Math.max(.0001,bend))/DRIVE.mphToWorld);
-        duel.setInput({throttle:s.speedMph<targetSpeed?1:0,brake:s.speedMph>targetSpeed+4?Math.min(1,(s.speedMph-targetSpeed)/20):0,
-          steer:Math.max(-1,Math.min(1,-yaw/authority)),boost:false});
+        const brake=s.speedMph>targetSpeed+4?Math.min(1,(s.speedMph-targetSpeed)/20):0;
+    duel.setInput({throttle:s.speedMph<targetSpeed?1:0,brake,
+          steer:steerForYaw(yaw,{speedMph:s.speedMph,grip:duel.car.grip,traction:surface.traction,brake:brake,tyreSlip:s.tyreSlipRules===true&&!s.airborne&&s.speedMph>=0}),boost:false});
       }
       duel.step(1/120);
     }
@@ -183,8 +201,9 @@ for(const [stageIndex,stage] of COURSE.entries()){
   try {
   app.profile.courses={version:1,unlocked:COURSE.map(course=>course.id)};
   app._saveProfile();
-  check(app.startCampaign({startStage:stageIndex,seed:1989,mode:'duel',difficulty:'casual',opponentCount:3}),
-    `${stage.id}: real App starts three-opponent race`);
+  check(app.startCampaign({startStage:stageIndex,seed:1989,mode:'duel',difficulty:'casual',opponentCount:3,
+    ...(['summit-run','summit-time-attack'].includes(stage.id)?{tyre:'winter'}:{})}),
+    `${stage.id}: real App starts the requested race with course rules`);
   // Timed objectives have short default clocks. Extend the fixture clock so
   // this check isolates real lap driving and field ranking from target tuning.
   if(app.duel.state.timeLimitSec)app.duel.state.timeLimitSec=Math.max(600,app.duel.state.timeLimitSec);
@@ -197,7 +216,10 @@ for(const [stageIndex,stage] of COURSE.entries()){
   const result=app.duel.state;
   check(result.status==='stage_result'&&result.results?.completed===true&&result.completedLaps===result.lapsTotal,
     `${stage.id}: actual fixed-step three-opponent race completes all laps ${JSON.stringify({status:result.status,results:result.results,laps:result.completedLaps,total:result.lapsTotal,time:result.stageTimeSec,s:result.s,speed:result.speedMph,crashes:result.stageCrashes,nextGate:result.nextLapGate})}`);
-  check(result.opponents.length===3&&Number.isInteger(result.results.position)&&result.results.position>=1&&result.results.position<=4,
+  if(isSummitAttack(stage)){
+    check(result.mode==='timetrial'&&result.opponents.length===0&&result.rival===null&&result.traffic.length===0,`${stage.id}: actual fixed-step climb stays solo`);
+    check(result.results.beatRival===null&&result.results.opponentCount===undefined&&result.results.position===undefined&&Object.hasOwn(result.results,'medal'),`${stage.id}: actual finish records a timed medal outcome without invented rivals`);
+  }else check(result.opponents.length===3&&Number.isInteger(result.results.position)&&result.results.position>=1&&result.results.position<=4,
     `${stage.id}: actual finish ranks all three CPU cars`);
   } finally { app.dispose(); }
 }

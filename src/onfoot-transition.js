@@ -33,7 +33,7 @@ export function initializeFootTransition(duel) {
     delete state.boarding;
     return;
   }
-  state.onFoot = false;
+  state.onFoot = false; if (Object.hasOwn(state, 'tyreSlip')) state.tyreSlip = 0;
   state.fighter = null;
   state.footPresentation = null;
   if (crewGearEnabled(duel)) state.boarding = null;
@@ -180,7 +180,7 @@ export function stepFootTransition(duel, dt) {
       x: departing.x, y: departing.y, z: departing.z, yaw: departing.yaw},
       presentation: {clip: 'enter', startedAt: state.stageTimeSec, duration: .65,
         pose: {x: departing.x, y: departing.y, z: departing.z, yaw: departing.yaw}}};
-    state.onFoot = false;
+    state.onFoot = false; if (Object.hasOwn(state, 'tyreSlip')) state.tyreSlip = 0;
     state.fighter = null;
     state.fighterInput = {};
     transition.heldSeconds = 0;
@@ -220,7 +220,7 @@ export function stepFootTransition(duel, dt) {
     duration: bailout ? T.bailTumbleSeconds : .65, bailout};
   state.footPresentation = null;
   state.fighter = fighter;
-  state.onFoot = true;
+  state.onFoot = true; if (Object.hasOwn(state, 'tyreSlip')) state.tyreSlip = 0;
   state.fighterInput = {};
   resetFootWeaponUser(duel);
   state.input.throttle = state.input.steer = 0;

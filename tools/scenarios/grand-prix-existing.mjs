@@ -22,8 +22,8 @@ export async function nativeBundle() {
     resolveId(id){if(id.replaceAll('\\','/')===entry)return '\0gp-existing';},
     load(id){
       if(id!=='\0gp-existing')return null;
-      return 'import {DRIVE,steeringYawAuthority} from '+config+';'+
-        'export {COURSE,CARS,DRIVE,steeringYawAuthority} from '+config+';'+
+      return 'import {DRIVE,steeringYawAuthority,TYRE_SLIP,steeringGrip,tyreClamp,tyreSlipSteering,steerForYaw} from '+config+';'+
+        'export {COURSE,CARS,DRIVE,steeringYawAuthority,TYRE_SLIP,steeringGrip,tyreClamp,tyreSlipSteering,steerForYaw} from '+config+';'+
         'export {ownTestCourses} from '+access+';'+
         'import {racingLineFor,buildSpeedProfile} from '+lines+';'+
         'export {racingLineFor,buildSpeedProfile};'+
@@ -61,7 +61,7 @@ export async function run(context) {
     })()`);
     for (const id of ids) {
       const grid = await context.evaluate(`(async () => {
-        const {COURSE,CARS,DRIVE,steeringYawAuthority,ownTestCourses,
+        const {COURSE,CARS,DRIVE,steeringYawAuthority,TYRE_SLIP,steeringGrip,tyreClamp,tyreSlipSteering,steerForYaw,ownTestCourses,
           racingLineFor,buildSpeedProfile,installTestDriver}=GpExistingQa;
         const app=window.__qaApp; app.returnToMenu(); ownTestCourses(app);
         const stage=COURSE.findIndex(def=>def.id===${JSON.stringify(id)});

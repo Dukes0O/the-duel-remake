@@ -6,14 +6,17 @@ import {
   analyseTrack, sampleCourse, detectCorners, detectCrests, longestStraight,
   namedPieces, nameFeatures, cornerSpeeds, markSlowCorners, referenceSpeedColour, trackSectors,
   cornerId, resolveTrackIntel, courseFingerprint, buildTrackDossier, analyseLap, trackSnapshotPose,
-  SNAPSHOT_UP, SNAPSHOT_CHASE, SNAPSHOT_MAX_APPROACH,
+  SNAPSHOT_UP, SNAPSHOT_CHASE, SNAPSHOT_MAX_APPROACH, CREST_FOLD_BEFORE_M, CREST_FOLD_AFTER_M, angleDistance,
 } from '../src/track-analysis.js';
 import {buildReview, drawMap} from './track-review.mjs';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {ALL_CIRCUITS} from '../src/circuits/index.js';
+import {buildTrackScript} from '../src/track-script.js';
 import {getRouteVariants} from '../src/route-variants.js';
-import {teamRoomMarkup, teamRoomMap} from '../src/screen-team-room.js';
+import {teamRoomMarkup, teamRoomMap, MAP_LABEL} from '../src/screen-team-room.js';
+import {referenceLap} from '../src/reference-laps.js';
+import {circuitIntel} from '../src/circuit-intel/index.js';
 import {courseAccessPanel} from '../src/course-access-ui.js';
 import {createProfile} from '../src/progression.js';
 
@@ -31,7 +34,7 @@ const freeze = value => {
 
 // A known stadium, independent of the game's course generator. The 6 m hump
 // sits midway along a straight and the two semicircles each have radius 150 m.
-function stadium({hump = true, shift = 0} = {}) {
+function stadium({hump = true, shift = 0, humpAt = 350} = {}) {
   const straight = 700, radius = 150, arc = Math.PI * radius;
   const length = 2 * straight + 2 * arc;
   const phase = raw => ((raw + shift) % length + length) % length;
@@ -51,7 +54,7 @@ function stadium({hump = true, shift = 0} = {}) {
       return {x: radius + radius * Math.cos(a), z: -radius * Math.sin(a), y: 0, heading: Math.PI + a};
     },
     groundAt(raw) {
-      return {y: hump ? 6 * Math.exp(-(((phase(raw) - 350) / 40) ** 2)) : 0};
+      return {y: hump ? 6 * Math.exp(-(((phase(raw) - humpAt) / 40) ** 2)) : 0};
     },
   });
 }
@@ -261,7 +264,11 @@ equal(map.flags.length, dossier.flags.length, 'Every hot-spot flag appears on th
 check(map.segments.every(segment => /^rgb\(/.test(segment.colour)), 'Map segments use actual reference-speed colours');
 equal(dossier.flags.filter(flag => flag.kind === 'corner').length, dossier.analysis.corners.filter(corner => corner.slow).length,
   'Every slow corner has a selectable flag');
-equal(dossier.flags.filter(flag => flag.kind === 'crest').length, dossier.analysis.crests.length, 'Every crest has a selectable flag');
+// Changed in P4-FINISH-TEAMROOM (crest folding): a crest on the same spot as the signature view no longer gets a
+// second flag, so the check is now that every crest has a flag standing on it, a crest flag or the signature view.
+check(dossier.analysis.crests.every(crest => dossier.flags.some(flag =>
+  ['crest', 'signature'].includes(flag.kind) && Math.abs(angleDistance(flag.s, crest.s, course.length)) < 1)),
+'Every crest has a selectable flag, or the signature view standing on it');
 equal(dossier.flags.filter(flag => flag.kind === 'signature').length, 1, 'Exactly one generated signature is present');
 check(dossier.flags.some(flag => flag.kind === 'overtaking'), 'A native approach supplies an overtaking flag');
 equal(new Set(dossier.flags.map(flag => flag.id)).size, dossier.flags.length, 'Flag identities are unique');
@@ -316,6 +323,182 @@ equal(authoredDossier.flags.find(flag => flag.id === 'c1').engineer.note, '<em>P
   'Author text is retained as data for safe rendering');
 assert.throws(() => buildTrackDossier(course, {reference: {...reference, courseFingerprint: 'stale'}}), /rebuild|stale/i); checks++;
 assert.throws(() => buildTrackDossier(course, {route: 'route_b', reference}), /route|reference/i); checks++;
+
+// Crest folding (P4-FINISH-TEAMROOM): a generated crest flag that only repeats a nearby corner or the signature
+// view is dropped; a crest on open road, and any written flag, stays.
+{
+  const apex = analysis.corners[0].apexS, seen = {folded: 0, kept: 0};
+  const startView = {flags: [{id: 'start-view', kind: 'signature', s: 100, title: 'Start view'}]};
+  const dossierWith = (hill, authored) => buildTrackDossier(hill, {authored,
+    reference: {...reference, courseFingerprint: courseFingerprint(hill, {authored})}});
+  for (const humpAt of [apex - 100, apex - 140, apex - 175, apex - 30, apex + 40, apex + 90, 350]) {
+    const hill = stadium({humpAt}), result = dossierWith(hill, startView);
+    const crest = result.analysis.crests[0];
+    const near = result.analysis.corners.filter(corner => corner.slow).some(corner => {
+      const gap = angleDistance(corner.apexS, crest.s, hill.length);
+      return gap >= -CREST_FOLD_AFTER_M && gap <= CREST_FOLD_BEFORE_M;
+    });
+    const flagged = result.flags.some(flag => flag.kind === 'crest' && flag.id === `crest-${crest.number}`);
+    equal(flagged, !near, `A crest at ${Math.round(crest.s)} m is ${near ? 'folded into its corner' : 'kept on open road'}`);
+    seen[near ? 'folded' : 'kept']++;
+  }
+  check(seen.folded >= 3 && seen.kept >= 2, 'The folding check covers crests both inside and outside the corner window');
+  const onCorner = stadium({humpAt: apex - 100});
+  const written = dossierWith(onCorner, {flags: [...startView.flags, {id: 'crest-1', kind: 'crest', s: apex - 100, title: 'Written crest'}]});
+  check(written.flags.some(flag => flag.id === 'crest-1' && flag.title === 'Written crest' && flag.generated === false),
+    'A written crest flag is never folded away');
+  const onSignature = dossierWith(stadium(), undefined);
+  equal(onSignature.flags.filter(flag => flag.kind === 'crest').length, 0, 'A generated crest on the signature view is not flagged twice');
+  check(onSignature.flags.some(flag => flag.kind === 'signature' && Math.abs(flag.s - onSignature.analysis.crests[0].s) < 1),
+    'The signature view stays on the crest it stands for');
+}
+
+// Written notes for the older courses (P4-FINISH-TEAMROOM): every note lands on a real corner or a written flag,
+// every corner flag has a written line and note, and the words follow the house voice.
+{
+  const olderCourses = COURSE.filter(entry => entry.closed !== false && !ALL_CIRCUITS.some(circuit => circuit.id === entry.id));
+  check(olderCourses.length >= 16, 'The older closed courses are all found');
+  const texts = [];
+  let written = 0;
+  for (const definition of olderCourses) {
+    const intel = circuitIntel(definition.id);
+    check(intel, `${definition.id} has engineer notes registered`);
+    const routes = getRouteVariants(definition);
+    for (const route of routes) {
+      const routeKey = routes.length > 1 ? route.id : 'fixed';
+      const reference = referenceLap(definition.id, routeKey);
+      check(reference, `${definition.id}|${routeKey} has a reference lap`);
+      const native = new Course(definition, reference.seed);
+      const dossier = buildTrackDossier(native, {route: routeKey, reference});
+      const resolved = dossier.intel, label = `${definition.id}|${routeKey}`;
+      const flagIds = new Set(dossier.flags.map(flag => flag.id)), cornerIds = new Set(dossier.analysis.corners.map(cornerId));
+      for (const id of Object.keys(resolved.notes))
+        check(cornerIds.has(id) || flagIds.has(id), `${label}: note "${id}" lands on a real corner or flag`);
+      for (const flag of resolved.flags) {
+        check(Number.isFinite(flag.s) && flag.s >= 0 && flag.s < native.length, `${label}: written flag ${flag.id} sits on the lap`);
+        if (flag.kind === 'corner') check(cornerIds.has(flag.id), `${label}: written corner flag ${flag.id} is a real corner`);
+      }
+      equal(resolved.sectors, undefined, `${label}: written notes leave the sectors, and so the reference lap, alone`);
+      for (const flag of dossier.flags.filter(item => item.kind === 'corner' || item.generated === false)) {
+        const engineer = flag.engineer;
+        check(typeof engineer.line === 'string' && engineer.line.length > 20 && typeof engineer.note === 'string' && engineer.note.length > 20,
+          `${label}: ${flag.id} has a written line and note`);
+        if (flag.kind === 'corner') check(engineer.authored === true, `${label}: corner flag ${flag.id} uses the written note`);
+        check(!Number.isFinite(engineer.brakeBoard), `${label}: ${flag.id} names no brake board where none stands`);
+        texts.push(engineer.line, engineer.note, flag.title);
+        written++;
+      }
+      check(dossier.flags.filter(flag => flag.kind === 'signature').length === 1 &&
+        dossier.flags.some(flag => flag.kind === 'overtaking' && flag.generated === false), `${label}: signature and passing zone are written`);
+    }
+  }
+  check(written >= 60, 'The written notes cover a large number of flags');
+  for (const text of texts) {
+    check(!/—/.test(text), `No em dash in: ${text}`);
+    check(!/load-bearing|\bquiet|\bsilent/i.test(text), `Word rule kept in: ${text}`);
+  }
+}
+
+// Written notes for the reverse variants (TEAMROOM-VARIANT-NOTES): the same checks as the older courses, keyed to the
+// variant's own corners (met in the opposite order and direction), plus: a brake board is named only where one
+// stands in the world, and the dusk and night variants show exactly their parent's notes.
+{
+  const wrapS = (s, length) => ((s % length) + length) % length;
+  const texts = [];
+  let written = 0;
+  for (const id of ['tremblant-woods-reverse', 'harbour-lights-reverse', 'panorama-ridge-reverse']) {
+    const definition = ALL_CIRCUITS.find(circuit => circuit.id === id), reference = referenceLap(id);
+    check(circuitIntel(id), `${id} has engineer notes registered`);
+    check(reference, `${id} has a reference lap`);
+    const native = new Course(definition, reference.seed), road = buildTrackScript(definition);
+    const dossier = buildTrackDossier(native, {reference}), resolved = dossier.intel;
+    const flagIds = new Set(dossier.flags.map(flag => flag.id)), cornerIds = new Set(dossier.analysis.corners.map(cornerId));
+    for (const key of Object.keys(resolved.notes))
+      check(cornerIds.has(key) || flagIds.has(key), `${id}: note "${key}" lands on a real corner or flag`);
+    for (const corner of dossier.analysis.corners.filter(item => item.slow))
+      check(resolved.notes[cornerId(corner)], `${id}: slow corner ${cornerId(corner)} has a written note`);
+    equal(resolved.sectors, undefined, `${id}: written notes leave the sectors, and so the reference lap, alone`);
+    equal(Object.keys(resolved).filter(key => key === 'sectors'), [], `${id}: no sectors key at all`);
+    for (const flag of resolved.flags) {
+      check(Number.isFinite(flag.s) && flag.s >= 0 && flag.s < native.length, `${id}: written flag ${flag.id} sits on the lap`);
+      if (flag.kind === 'corner') check(cornerIds.has(flag.id), `${id}: written corner flag ${flag.id} is a real corner`);
+    }
+    for (const flag of dossier.flags.filter(item => item.kind === 'corner' || item.generated === false)) {
+      const engineer = flag.engineer;
+      check(typeof engineer.line === 'string' && engineer.line.length > 20 && typeof engineer.note === 'string' && engineer.note.length > 20,
+        `${id}: ${flag.id} has a written line and note`);
+      if (flag.kind === 'corner') check(engineer.authored === true, `${id}: corner flag ${flag.id} uses the written note`);
+      texts.push(engineer.line, engineer.note, flag.title);
+      written++;
+    }
+    check(dossier.flags.filter(flag => flag.kind === 'signature').length === 1, `${id}: one written signature view`);
+    const passing = dossier.flags.filter(flag => flag.kind === 'overtaking');
+    check(passing.length >= 1 && passing.length <= 2 && passing.every(flag => flag.generated === false), `${id}: passing zones are written`);
+    // A named board must stand that far before the corner, as a script board or a placed board.
+    for (const corner of dossier.analysis.corners) {
+      const board = resolved.notes[cornerId(corner)]?.brakeBoard;
+      if (!Number.isFinite(board)) continue;
+      const piece = road.pieces.find(item => item.kind === 'turn' && item.name === corner.name);
+      check(piece, `${id}: ${cornerId(corner)} names a board and is a scripted turn`);
+      const stands = road.boards.some(item => item.name === piece.name && item.distance === board) ||
+        definition.kitPlacements.some(item => item.id === `braking-board-${board}` && Math.abs(item.s - wrapS(piece.s0 - board, road.length)) < 1);
+      check(stands, `${id}: a ${board} m board stands before ${corner.name}`);
+    }
+  }
+  check(written >= 40, 'The reverse variants carry written notes');
+  for (const text of texts) {
+    check(!/—/.test(text), `No em dash in: ${text}`);
+    check(!/load-bearing|\bquiet|\bsilent/i.test(text), `Word rule kept in: ${text}`);
+  }
+  // Same road, same direction: the dusk and night variants carry their parent's notes and flags unchanged.
+  for (const [id, parentId] of [['harbour-lights-dusk', 'harbour-lights'], ['panorama-ridge-night', 'panorama-ridge']]) {
+    const variant = ALL_CIRCUITS.find(circuit => circuit.id === id), parent = ALL_CIRCUITS.find(circuit => circuit.id === parentId);
+    const variantIntel = resolveTrackIntel(new Course(variant, referenceLap(id).seed)), parentIntel = resolveTrackIntel(new Course(parent, referenceLap(parentId).seed));
+    check(Object.keys(parentIntel.notes).length > 5, `${parentId} has written notes`);
+    equal(variantIntel.notes, parentIntel.notes, `${id} shows the notes of ${parentId}`);
+    equal(variantIntel.flags, parentIntel.flags, `${id} shows the flags of ${parentId}`);
+    equal(variantIntel.sectors, parentIntel.sectors, `${id} keeps the sectors of ${parentId}`);
+  }
+}
+
+// Map labels (P4-FINISH-TEAMROOM): no corner name sits under a flag, a numbered circle, the START mark or another name.
+{
+  const woods = ALL_CIRCUITS.find(circuit => circuit.id === 'tremblant-woods'), reference = referenceLap('tremblant-woods');
+  const dossier = buildTrackDossier(new Course(woods, reference.seed), {reference}), map = teamRoomMap(dossier);
+  const touch = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+  const box = (x, y, half) => ({x0: x - half, y0: y - half, x1: x + half, y1: y + half});
+  const named = map.corners.filter(corner => corner.authoredName), shown = named.filter(corner => !corner.label.hidden);
+  check(named.length === 11, 'Tremblant Woods names all eleven corners on the map');
+  check(shown.length >= 9, 'Most Tremblant Woods corner names fit beside their circles');
+  const rects = shown.map(corner => corner.label.rect);
+  shown.forEach((corner, index) => {
+    const rect = rects[index], name = corner.authoredName;
+    check(rect.x1 - rect.x0 >= name.length * MAP_LABEL.charWidth && rect.x0 >= 0 && rect.x1 <= 1000 && rect.y0 >= 0 && rect.y1 <= 690,
+      `${name}: label is wide enough for its text and stays on the map`);
+    for (const flag of map.flags) check(!touch(rect, box(flag.x, flag.y, MAP_LABEL.flag)), `${name}: label is clear of the ${flag.title} flag`);
+    for (const other of map.corners) if (other !== corner) check(!touch(rect, box(other.x, other.y, MAP_LABEL.circle)), `${name}: label is clear of circle ${other.number}`);
+    check(!touch(rect, box(corner.x, corner.y, MAP_LABEL.circle)), `${name}: label is clear of its own circle`);
+    check(!touch(rect, {x0: map.start.x - 10, y0: map.start.y - 7, x1: map.start.x + 60, y1: map.start.y + 7}), `${name}: label is clear of the START mark`);
+    rects.forEach((other, otherIndex) => { if (otherIndex !== index) check(!touch(rect, other), `${name}: label is clear of ${shown[otherIndex].authoredName}`); });
+  });
+  // No flag pin sits over a numbered circle on any course, so every circle can still be pressed at its centre.
+  let pins = 0;
+  for (const definition of [...new Map([...COURSE, ...ALL_CIRCUITS].map(entry => [entry.id, entry])).values()].filter(entry => entry.closed !== false)) {
+    const routes = getRouteVariants(definition);
+    for (const route of routes) {
+      const routeKey = routes.length > 1 ? route.id : 'fixed', lap = referenceLap(definition.id, routeKey);
+      const everyMap = teamRoomMap(buildTrackDossier(new Course(definition, lap.seed), {route: routeKey, reference: lap}));
+      for (const corner of everyMap.corners) for (const flag of everyMap.flags) {
+        check(Math.abs(flag.x - corner.x) > MAP_LABEL.flag || Math.abs(flag.y - corner.y) > MAP_LABEL.flag,
+          `${definition.id}|${routeKey}: the ${flag.title} flag does not cover circle ${corner.number}`);
+        pins++;
+      }
+    }
+  }
+  check(pins > 1000, 'The circle check covered every course and route');
+  const markup = teamRoomMarkup(dossier);
+  check((markup.match(/class="team-map-name/g) ?? []).length === 11, 'Every named corner keeps a label in the markup, hidden ones included');
+}
 
 // The review browser sends drawMap as source, not as an imported closure.
 // Exercise that exact transport and compare the drawn segment colours.

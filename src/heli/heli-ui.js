@@ -2,13 +2,14 @@
 // (docs/HELICOPTER.md section 8). Drawn in the page like the speedometer.
 // Drawing only: it reads the app's helicopter view and log and never
 // changes flight state; its buttons call the app's helicopter actions.
-import {HELI_DESTINATIONS, HOME_COURSE, legFuelKg} from './heli-jobs.js';
+import {HELI_DESTINATIONS, HELI_DESTINATIONS_WITH_SUMMIT, HOME_COURSE, legFuelKg} from './heli-jobs.js';
 import {HELI_CAMERA_VIEWS} from './heli-camera.js';
 import {HELI_RADIO_LINES} from './heli-radio-lines.js';
 import {HELI_MONEY} from './heli-save.js';
 import {LESSON_RULES} from './heli-lessons.js';
 import {createDispatchBoard, atHomePad} from './heli-board.js';
 import {lessonBoardMarkup} from '../lessons/lesson-board.js';
+import {isRescueKind} from './heli-missions.js';
 
 export const LESSON_TEXT = Object.freeze({
   liftoff: Object.freeze({name: '1 Lift-off', goal: 'Rise to 3 m and hold her there for 5 seconds.'}),
@@ -16,6 +17,11 @@ export const LESSON_TEXT = Object.freeze({
   landing: Object.freeze({name: '3 Landing', goal: 'Land on the H, slow and gentle.'}),
   carry: Object.freeze({name: '4 Carry and set down', goal: 'Hook the crate (H), carry it to the yellow circle, set it down gently and let go (H).'}),
 });
+
+// What a rescue call is called, and why a rescue failed (docs/HELI_RESCUE.md section 3).
+const RESCUE_WORDS = Object.freeze({hiker: 'Lost hiker', avalanche: 'Avalanche', hoist: 'Driver off the road', supply: 'Supply run'});
+const FAIL_WORDS = Object.freeze({time: 'out of time', crash: 'a crash', left: 'left behind'});
+const clockText = seconds => { const whole = Math.max(0, Math.ceil(seconds)); return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`; };
 
 const fmt = (value, digits = 0) => Number.isFinite(value) ? value.toFixed(digits) : '-';
 const escape = text => String(text ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -46,7 +52,7 @@ export function instrumentReadings(readout) {
 
 // What a session event says on screen, if anything.
 export function noticeText(event) {
-  const course = id => HELI_DESTINATIONS[id]?.name ?? id;
+  const course = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? id;
   switch (event?.type) {
     case 'charged': {
       const what = {hardLanding: 'Hard landing', crash: 'Crash', drop: 'Dropped load', cargoLight: 'Cargo knock',
@@ -74,6 +80,18 @@ export function noticeText(event) {
     case 'bucketDamaged': return ['', 'Bucket dented: it leaks', 'Bucket torn: it leaks fast', 'Bucket ruined'][event.damage] ?? null;
     case 'fireOut': return `Fire out: ${event.paid.toLocaleString('en-US')} credits${event.firstBadge ? ' and the firefighter badge' : ''}`;
     case 'fireLost': return `The woods are lost: ${course(event.courseId)} is closed`;
+    // H4 Rescue.
+    case 'rescueCall': return `${RESCUE_WORDS[event.kind] ?? 'Rescue'} reported at ${course(event.courseId)}`;
+    case 'rescueAnswered': return 'Rescue call answered';
+    case 'rescueLater': return 'Put off: another crew may take it';
+    case 'rescueTaken': return 'Another crew took the call';
+    case 'rescueLineFitted': return 'Rescue line fitted';
+    case 'rescueLineRemoved': return 'Rescue line off';
+    case 'hikerSpotted': return 'Flare sighted';
+    case 'hikerAboard': return 'Hiker aboard';
+    case 'crateDown': return `Crate down: ${event.pay} credits`;
+    case 'rescueDone': return `Rescue done: ${event.paid.toLocaleString('en-US')} credits${event.firstBadge ? ' and the rescue badge' : ''}`;
+    case 'rescueFailed': return `Rescue failed, ${FAIL_WORDS[event.reason] ?? 'it is over'}${event.charged ? `: ${event.charged} credits` : ''}`;
     default: return null;
   }
 }
@@ -93,7 +111,8 @@ const gauge = (label, value, extra = '', warn = false) =>
 // answer prompt while a call rings, the fire line (bearing and distance to
 // the nearest burning edge, share out, wind) and the bucket in words.
 export function fireLineMarkup(view) {
-  const fire = view?.fire, parts = [];
+  // A rescue call rings through the fire engine; the rescue line below says it.
+  const fire = view?.fire && !(view.fire.call && isRescueKind(view.fire.call.kind)) ? view.fire : null, parts = [];
   if (fire?.call && !fire.call.answered && fire.answerLeft > 0)
     parts.push(`<span class="heli-fire-call"><b>FIRE CALL</b> <kbd>R</kbd> answer now · ${Math.ceil(fire.answerLeft)} s</span>`);
   else if (fire?.call && !fire.call.answered) parts.push('<span class="heli-fire-call">FIRE CALL WAITING <kbd>R</kbd></span>');
@@ -107,6 +126,44 @@ export function fireLineMarkup(view) {
   if (view?.bucket) parts.push(`<span class="heli-bucket-words${view.bucket.aim?.locked ? ' locked' : ''}">Bucket: ${escape(view.bucket.words)}</span>`);
   return parts.length ? `<div class="heli-fire">${parts.join('')}</div>` : '';
 }
+
+// H4 Rescue on the instruments (docs/HELI_RESCUE.md section 7): the answer
+// prompt while a call rings, the mission line under the compass (bearing and
+// distance, the clock, orange in its last minute), the beacon's signal bar,
+// the dig or hold bar, and the crates delivered. Nothing without the rescue view.
+export function rescueLineMarkup(view) {
+  const rescue = view?.rescue, parts = [];
+  if (!rescue) return '';
+  const call = rescue.call;
+  if (call && rescue.active == null) {
+    const what = `${escape(RESCUE_WORDS[call.kind] ?? 'Rescue')} at ${escape(call.courseName ?? 'the mountain')}`;
+    parts.push(call.answerLeft > 0
+      ? `<span class="heli-rescue-call"><b>RESCUE CALL</b> ${what} · <kbd>R</kbd> answer now · ${Math.ceil(call.answerLeft)} s</span>`
+      : `<span class="heli-rescue-call">RESCUE CALL WAITING · ${what} <kbd>R</kbd></span>`);
+  }
+  const a = rescue.active;
+  if (a) {
+    const where = a.target && a.here
+      ? `RESCUE ${String(Math.round(a.target.bearing) % 360).padStart(3, '0')}° ${(a.target.distance / 1000).toFixed(1)} km`
+      : `RESCUE AT ${escape((a.courseName ?? '').toUpperCase())}`;
+    parts.push(`<span class="heli-rescue-line${a.orange ? ' late' : ''}">${where} · ${clockText(a.left)}</span>`);
+    if (a.kind === 'supply') parts.push(`<span class="heli-rescue-crates">CRATES ${a.cratesDown}/${a.crates.length}</span>`);
+    if (a.kind === 'avalanche' && a.here && a.stage !== 'carry') {
+      const signal = a.signal;
+      parts.push(signal?.heard
+        ? `<span class="heli-rescue-signal"><em>BEACON</em><b><i style="width:${Math.round(signal.bar * 100)}%"></i></b></span>`
+        : '<span class="heli-rescue-signal none"><em>BEACON</em> NO SIGNAL</span>');
+    }
+    const line = rescue.line;
+    if (line?.holding && line.hold > 0)
+      parts.push(`<span class="heli-rescue-hold"><em>${a.kind === 'avalanche' ? 'DIGGING' : 'HOLD STEADY'}</em><b><i style="width:${Math.round(line.hold * 100)}%"></i></b></span>`);
+    if (a.kind !== 'supply' && a.condition > 0) parts.push(`<span class="heli-rescue-hurt${a.condition > 1 ? ' badly' : ''}">${a.condition > 1 ? 'BADLY HURT' : 'HURT'}</span>`);
+  }
+  return parts.length ? `<div class="heli-rescue">${parts.join('')}</div>` : '';
+}
+
+// How dark the light is (0 to 1): the hiker's last 3 minutes, drawing only.
+export const duskShare = view => Math.max(0, Math.min(1, view?.rescue?.active?.dusk ?? 0));
 
 export function instrumentsMarkup(view, {cameraIndex = 0} = {}) {
   const r = instrumentReadings(view?.readout);
@@ -122,7 +179,7 @@ export function instrumentsMarkup(view, {cameraIndex = 0} = {}) {
     <span>${view.autopilot ? 'AUTOPILOT ON' : 'AUTOPILOT OFF'} <kbd>P</kbd></span>
     <span>VIEW ${HELI_CAMERA_VIEWS[((cameraIndex % 4) + 4) % 4].toUpperCase()} <kbd>C</kbd></span>
     <span>${view.bucket ? 'POUR (hold)' : 'HOOK'} <kbd>H</kbd></span>
-  </div>${fireLineMarkup(view)}`;
+  </div>${fireLineMarkup(view)}${rescueLineMarkup(view)}`;
 }
 
 // Where to fly, the pump at home, and the cruise prompt.
@@ -131,7 +188,9 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   const here = view.courseId;
   const onPad = here === HOME_COURSE && view.heli.onGround && view.zone &&
     Math.hypot(view.heli.x - view.zone.x, view.heli.z - view.zone.z) <= view.zone.radius;
-  const buttons = Object.values(HELI_DESTINATIONS).map(place => {
+  // The places to fly to: the session's own list when it gives one (Summit Run on), else the usual three.
+  const places = Array.isArray(view.destinations) ? view.destinations.map(id => HELI_DESTINATIONS_WITH_SUMMIT[id]).filter(Boolean) : Object.values(HELI_DESTINATIONS);
+  const buttons = places.map(place => {
     const leg = place.id === here ? null : legFuelKg(here, place.id);
     const chosen = view.destination === place.id;
     return `<button type="button" class="heli-place${chosen ? ' on' : ''}" data-heli-destination="${place.id}" aria-pressed="${chosen}">${escape(place.name)}${place.id === here ? ' (here)' : leg ? ` · ${leg} kg` : ''}</button>`;
@@ -140,7 +199,7 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   // can update it without rebuilding the buttons under the mouse.
   const label = pumpLabel(view.heli.fuelKg, {credits, refuels});
   const pump = onPad ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
-  const destination = view.destination ? HELI_DESTINATIONS[view.destination]?.name : null;
+  const destination = view.destination ? HELI_DESTINATIONS_WITH_SUMMIT[view.destination]?.name : null;
   return `<div class="heli-route" role="group" aria-label="Fly to"><span>FLY TO</span>${buttons}${pump}</div>
     ${view.cruiseOffered ? `<div class="heli-prompt" role="status">Clear of the area. Press <kbd>ENTER</kbd> to cruise to ${escape(destination)}.</div>` : ''}`;
 }
@@ -242,6 +301,10 @@ export function createHeliUi({host, app}) {
       }
       shown = shown.filter(item => item.until > now).slice(-3);
       const tank = app.profile?.heli;
+      // Dusk over the hiker's last 3 minutes: the panel's dimming layer (CSS), set only when it falls.
+      const dusk = duskShare(view);
+      if (dusk > 0) { section.dataset.dusk = 'on'; section.style.setProperty('--heli-dusk', dusk.toFixed(3)); }
+      else if (section.dataset.dusk) { delete section.dataset.dusk; section.style.removeProperty('--heli-dusk'); }
       lastTop = set(top, instrumentsMarkup(view, {cameraIndex: app.heliCamera || 0}), lastTop);
       const controlsHtml = controlsMarkup(view, {credits: app.profile?.credits ?? 0, refuels: tank?.refuels ?? 0});
       if (controlsHtml.replace(PUMP_LABEL, '') === lastControls.replace(PUMP_LABEL, '')) {

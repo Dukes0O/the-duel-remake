@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createJumpHeightReadout as createFullJumpReadout} from '../src/jump-height.js';
 import {Duel} from '../src/game.js';
-import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
+import {COURSE,DRIVE,steerForYaw} from '../src/config.js';
 
 let checks=0;
 // Preserve the full historical height/lifecycle contract; distance and airtime
@@ -96,8 +96,8 @@ const stageIndex=COURSE.findIndex(stage=>stage.id==='titan-stunt-trial');
 function rampInput(d){
   const s=d.state,mps=s.speedMph*DRIVE.mphToWorld,surface=d._drivingSurface(s.s,s.lateral);
   const heading=Math.atan(-s.lateral*2.5/Math.max(15,mps)),look=d.course.at(s.s+mps*.18);
-  const yaw=look.curvature*mps+(heading-s.headingError)*6,authority=Math.max(.05,steeringYawAuthority(s.speedMph,d.car.grip,surface.traction));
-  d.setInput({throttle:1,brake:0,steer:Math.max(-1,Math.min(1,-yaw/authority)),boost:false});
+  const yaw=look.curvature*mps+(heading-s.headingError)*6;
+  d.setInput({throttle:1,brake:0,steer:steerForYaw(yaw,{speedMph:s.speedMph,grip:d.car.grip,traction:surface.traction,brake:0,tyreSlip:s.tyreSlipRules===true&&!s.airborne&&s.speedMph>=0}),boost:false});
 }
 function rampRun(fps,withReadout){
   const d=new Duel({seed:1989});d.startCampaign({startStage:stageIndex,car:'titan_monster',cpuDifficulty:'hard',difficulty:'casual'});

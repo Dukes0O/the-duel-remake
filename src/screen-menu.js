@@ -12,7 +12,7 @@ import {CPU_REWARDS, UPGRADE_TYPES, CAR_PRICES, bestKey, eventKey, completionCar
 import {getLeaderboard} from './leaderboard.js';
 import {getDriverState, getEquippedDriverId, applyDriverModifiers, DRIVERS} from './drivers.js';
 import {driverSkillLabel} from './driver-ui.js';
-import {syncRaceChoiceButtons, qualifyingChoiceMarkup, syncQualifyingChoice} from './race-settings-ui.js';
+import {syncRaceChoiceButtons, qualifyingChoiceMarkup, syncQualifyingChoice, syncCoachChoice} from './race-settings-ui.js';
 import {courseHasWinterSurfaces} from './race-surfaces.js';
 import {COURSE_PRICES, isCourseUnlocked} from './course-access.js';
 import {speedKph, formatSpeed} from './speed-format.js';
@@ -57,8 +57,9 @@ function updateMenuCar() {
   refreshEntryReward();
 }
 function updateEntryReward(){
-  const driverId=getEquippedDriverId(profile()),base=CPU_REWARDS[choices.cpuDifficulty],best=profile().personalBests[bestKey({stageIndex:choices.startStage,seed:app.getMenuSeed(choices.startStage),laps:choices.laps??COURSE[choices.startStage]?.laps??2,...choices,driverId})];
-  const scoreBest=COURSE[choices.startStage].kind==='drift'?getLeaderboard(app.leaderboard,{event:eventKey({stageIndex:choices.startStage,seed:app.getMenuSeed(),laps:2}),car:choices.car,playerId:app.player.id,driverId})[0]?.driftScore:null;
+  const tyreSlipRules=COURSE[choices.startStage]?.kind==='drift'&&choices.difficulty==='pro'&&app._switches?.().enabled('tyre-slip')===true;
+  const driverId=getEquippedDriverId(profile()),base=CPU_REWARDS[choices.cpuDifficulty],best=profile().personalBests[bestKey({stageIndex:choices.startStage,seed:app.getMenuSeed(choices.startStage),laps:choices.laps??COURSE[choices.startStage]?.laps??2,...choices,driverId,...(tyreSlipRules?{tyreSlipRules:true}:{})})];
+  const scoreBest=COURSE[choices.startStage].kind==='drift'?getLeaderboard(app.leaderboard,{event:eventKey({stageIndex:choices.startStage,seed:app.getMenuSeed(),laps:2}),car:choices.car,playerId:app.player.id,driverId,tyreSlipRules})[0]?.driftScore:null;
   const finishingPay=distanceFinishingPay(base,COURSE[choices.startStage],choices.laps??COURSE[choices.startStage].laps,choices.mode,app._switches?.().enabled('lap-choice')===true);
   const manual=choices.difficulty==='pro',settings=`${choices.cpuDifficulty.toUpperCase()} / ${manual?'MANUAL':'AUTO'}`;
   text('entry-reward',`WIN ${credits(finishingPay*(manual?2:1))} CR · LOSS −${credits(base/2)} CR${manual?' · 2× POINTS & RACE CREDITS':''} · ${best?`CAR BEST ${time(best)} (${settings}) · BEAT IT +${credits(base*.2*(manual?2:1))} CR`:`${settings}: FIRST FINISH SETS YOUR CAR BEST`}${scoreBest!=null?` · SCORE BEST ${credits(scoreBest)}`:''}`);
@@ -69,9 +70,17 @@ function updateEntryReward(){
   const objective=stage.practice?'Unlimited nitro everywhere: hold SPACE, even off-road or in the air. Turn right from the starting area for the 4 km drag strip. Orange markings show the 600 m braking area. No timer or race rewards.':rush?`Pass all ${rush.gatesPerLap*(stage.laps||2)} gates in order over 2 laps. Start with ${rush.initialTimeSec[choices.cpuDifficulty]} seconds; each gate adds ${rush.extensionSec[choices.cpuDifficulty]}. Missing a gate cannot set a record.`:drift?`Bank ${credits(drift.targets[choices.cpuDifficulty])} drift points in 2 laps / ${drift.timeLimitSec[choices.cpuDifficulty]} seconds. Slide above ${formatSpeed(45)}. Straighten to bank; impacts and dirt lose your live chain.`:stunt?`Land ${stunt.jumps} jumps, crush ${stunt.crushes} cars, and finish both laps within ${stunt.timeLimitSec[choices.cpuDifficulty]} seconds.`:stage.arena?'Finish both laps. Land jumps and crush wrecks for bonus points.':stage.kind==='chase'?`Finish both laps within ${stage.chaseTimeLimit[choices.cpuDifficulty]} seconds and evade pursuit.`:'';
   text('cpu-target-label',stage.kind==='chase'?'PURSUIT LEVEL':rush?'GATE TIMER':drift?'DRIFT TARGET':stunt||choices.mode==='timetrial'?'TIME TARGET':'CPU RIVAL');
   ui['event-brief'].hidden=!objective&&!recommendation;text('event-brief',[objective,recommendation].filter(Boolean).join(' '));
-  const record=app.getGhostRecord(choices);ui['ghost-control'].hidden=!record;ui['ghost-hint'].hidden=choices.mode!=='timetrial'||!!record;ui['ghost-toggle'].checked=app.ghostEnabled;
+  const intelGhost=app._switches().enabled('grand-prix')===true;
+  const ghostChoice=intelGhost?(app.getGhostChoice?.(choices)??'my-best'):(app.ghostEnabled?'my-best':'off');
+  const personalGhost=app.getGhostRecord(choices),teamGhost=intelGhost?app.getTeamGhostRecord?.(choices):null;
+  const record=ghostChoice==='team'?teamGhost:personalGhost;
+  ui['ghost-control'].hidden=intelGhost?(choices.mode!=='timetrial'||(!personalGhost&&!teamGhost)):!record;
+  ui['ghost-hint'].hidden=choices.mode!=='timetrial'||!!record;
+  ui['ghost-toggle'].checked=ghostChoice!=='off';
+  if(intelGhost)ui['ghost-toggle'].setAttribute('aria-label','Ghost: '+(ghostChoice==='team'?'Team':ghostChoice==='off'?'Off':'My best')+'. Change ghost source.');
+  if(intelGhost)text('ghost-record-label',ghostChoice==='off'?'OFF':ghostChoice==='team'?'TEAM':'MY BEST · NO RECORDING YET');
   if(stage.practice){ui['ghost-control'].hidden=true;ui['ghost-hint'].hidden=true;}
-  if(record){const build=Object.values(record.upgrades).reduce((sum,n)=>sum+n,0);text('ghost-record-label',`${time(record.timeSec)} · RECORD BUILD ${build}/21`);ui['ghost-control'].title=Object.entries(record.upgrades).map(([key,level])=>`${UPGRADE_TYPES[key]?.name||key}: ${level}`).join(' · ');}
+  if(record){const build=Object.values(record.upgrades).reduce((sum,n)=>sum+n,0);text('ghost-record-label',!intelGhost?`${time(record.timeSec)} · RECORD BUILD ${build}/21`:ghostChoice==='off'?'OFF':ghostChoice==='team'?`TEAM · ${time(record.timeSec)}`:`MY BEST · ${time(record.timeSec)} · RECORD BUILD ${build}/21`);ui['ghost-control'].title=Object.entries(record.upgrades).map(([key,level])=>`${UPGRADE_TYPES[key]?.name||key}: ${level}`).join(' · ');}
   if(isSummitAttack(stage)){
     const targets=stage.attackTimes;
     text('entry-reward','SOLO TIME TRIAL · ONE RUN · NO PAY'+(targets?` · GOLD ${time(targets.gold)} · SILVER ${time(targets.silver)} · BRONZE ${time(targets.bronze)}`:''));
@@ -110,6 +119,7 @@ function updateMenuScene() {
   ui['tyre-choice'].hidden=!courseHasWinterSurfaces(stage);
   syncRaceChoiceButtons(root,choices);
   syncQualifyingChoice(root,choices,stage);
+  syncCoachChoice(root,app,choices,stage);
   const lapChoiceOn=app._switches?.().enabled('lap-choice')===true&&supportsLapChoice(stage,choices.mode);
   const raceLaps=lapChoiceOn?app.getLapChoice(choices.startStage,choices.mode):choices.mode==='grandprix'?stage.grandPrixLaps??3:stage.laps||2;
   if(lapChoiceOn)choices.laps=raceLaps;else delete choices.laps;

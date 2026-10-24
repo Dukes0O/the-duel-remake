@@ -134,7 +134,7 @@ export const SUMMIT_RUN=defineScriptedCourse({
     Object.freeze({s:at(index)+35,lateral:geometry.pieces[index].kind==='turn'
       ? -geometry.pieces[index].dir*17 : i%2?-17:17}))),
   lightPath:{axis:'distance',keyframes:[{at:0,look:'day'},{at:at(26),look:'golden'},{at:at(29),look:'dusk'},{at:10100,look:'night'}]},
-  snowWorld:{mixed:true,softBanks:true,bankHeaps:true,snowPoles:true,variation:true,variationStrength:.45,variationScale:800,rockTint:0x343936,branchTone:0x293135,drifts:true,nightExposure:1.02,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],
+  snowWorld:{always:true,mixed:true,softBanks:true,bankHeaps:true,snowPoles:true,variation:true,variationStrength:.45,variationScale:800,rockTint:0x343936,branchTone:0x293135,drifts:true,nightExposure:1.02,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],
     // Tone breaks in the snowfields (finishing pass): dark pine clumps and a few frozen ponds on flat ground.
     pineClusters:[[7450,30],[7760,-30],[8050,30],[8350,-30],[8700,-30],[9000,30],[9350,30],[9650,-30],[9950,30],[11100,-30],[11700,30],[12300,-28],[12650,30],[13200,-28]]
       .map(([s,lateral])=>({s,lateral,count:7,radius:10})),
@@ -146,7 +146,7 @@ export const SUMMIT_RUN=defineScriptedCourse({
     {id:'snowfield-ice-3',kind:'ice',shaded:true,s0:at(36)+60,s1:at(36)+80},
   ],
   roadBranches:[{id:'summit-open-road',start:10100,end:10900,side:-1,offset:18,halfWidth:6,surface:'paved',gripKind:'asphalt'}],
-  galleries:[{id:'summit-gallery',cover:false,start:10170,end:10800,width:5,roofWidth:7.8,flatRoof:true,height:galleryRoof.min[1]*1.1,collisions:SUMMIT_GALLERY_BOUNDS}],
+  galleries:[{id:'summit-gallery',cover:false,start:10170,end:10800,width:5,roofWidth:7.8,flatRoof:true,height:galleryRoof.min[1]*1.1,clearance:{width:10,height:galleryRoof.min[1]*1.1},collisions:SUMMIT_GALLERY_BOUNDS}],
   scenery:{trees:120,rocks:100,mountains:false,
     forest:{from:13,to:56,spacing:5.2,rows:7,thin:.5,jitter:1.7,scale:[.45,2.1],clumps:{cut:.36,size:1.2},
       ranges:[{from:at(13),to:at(27),fadeOut:at(27)-at(26)+200}]}},
@@ -175,6 +175,6 @@ export const SUMMIT_RUN=defineScriptedCourse({
 
 // Course-owned registration preserves generation identity and release order.
 export const manifest=Object.freeze({
-  id:'summit-run',flag:'summit-run',state:'dev',price:2600,grandPrix:true,releaseOrder:4,
+  id:'summit-run',flag:'summit-run',state:'on',price:2600,grandPrix:true,releaseOrder:4,
   driver:Object.freeze({car:'falcone_f42',driverId:'club',controller:'racing-line',skill:.95}),
 });

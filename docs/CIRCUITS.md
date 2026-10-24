@@ -610,7 +610,9 @@ lap in the game.
 - **Signature: Red Water and The Wall.** You come down The Plunge flat out,
   cross the stream at the bottom (a compression you feel), then turn right and
   climb a 23% wall with the car squashed into the road. It ends at a blind
-  crest with only sky and treetops ahead. Brave drivers take it flat out.
+  crest where the car goes light. Brake, compress, climb: every car brakes
+  hard for the 80 m and 90 m corners (Claude, 15 October 2026, after the
+  finishing pass; the road stays as released).
 - **Overtaking:** the slipstream up Kestrel Straight into Les Combes; the late
   lunge into the Bus Stop.
 - **Commitment:** Whitewood, a long fast left through the trees, flat out in a
