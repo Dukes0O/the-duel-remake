@@ -27,6 +27,20 @@ const fmt = (value, digits = 0) => Number.isFinite(value) ? value.toFixed(digits
 const escape = text => String(text ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const NOTICE_SECONDS = 4.5;
 const RADIO_SECONDS = 6;
+// A failed H press says what to fix in one line for two seconds (FIX-HELI-HOOK);
+// a newer one replaces it. The session chose the reason; this only words it.
+export const HOOK_HINT_SECONDS = 2;
+export function hookHintText(event) {
+  switch (event?.reason) {
+    case 'bucket': return 'Take the bucket off at the pad';
+    case 'rescueLine': return 'Take the rescue line off at the pad';
+    case 'slowDown': return 'Slow down';
+    case 'lower': return `Lower ${event.metres} m`;
+    case 'higher': return `Higher ${event.metres} m`;
+    case 'closer': return 'Closer';
+    default: return null;
+  }
+}
 
 // Plain numbers for each gauge, rounded the way the gauges show them.
 export function instrumentReadings(readout) {
@@ -64,6 +78,7 @@ export function noticeText(event) {
     case 'cannotLift': return event.reason;
     case 'delivered': return `Delivered to ${course(event.courseId)}`;
     case 'hooked': return 'Hooked on';
+    case 'hookRefused': return hookHintText(event);
     case 'entered': return event.arrived ? `${course(event.courseId)}: the landing zone is ahead` : course(event.courseId);
     case 'autopilotOff': return event.reason === 'pilot' ? 'Autopilot off: you have control' : null;
     case 'autopilotOn': return 'Autopilot on';
@@ -293,7 +308,10 @@ export function createHeliUi({host, app}) {
         const seen = new Set(seenLog || []);
         for (const event of log.filter(e => !seen.has(e))) {
           const text = noticeText(event);
-          if (text) shown.push({text, until: now + NOTICE_SECONDS});
+          if (text && event.type === 'hookRefused') {
+            shown = shown.filter(item => !item.hint);
+            shown.push({text, until: now + HOOK_HINT_SECONDS, hint: true});
+          } else if (text) shown.push({text, until: now + NOTICE_SECONDS});
           if (event.type === 'radio' && HELI_RADIO_LINES[event.line]) radioLine = {text: HELI_RADIO_LINES[event.line].text, until: now + RADIO_SECONDS};
           if (event.type === 'crashed') radioLine = {text: HELI_RADIO_LINES['heli.radio.crash'].text, until: now + RADIO_SECONDS};
         }

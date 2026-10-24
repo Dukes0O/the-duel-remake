@@ -47,7 +47,7 @@ export const BASE_GEAR = Object.freeze({
   searchNightMinutes: 0,
   heatRange: 0, heatBuriedRange: 0, heatAnimals: false,
   scareDistance: 100, countReach: 60,
-  crates: 1, hookReach: 3, hookLimitKg: 1500,
+  crates: 1, hookReach: 4, hookLimitKg: 1500,
   noseCamera: false,
 });
 
@@ -63,8 +63,10 @@ export const GEAR = Object.freeze({
   'quiet-tips': Object.freeze({skin: 'wildlife', effect: Object.freeze({scareDistance: 50})}),
   'zoom-camera': Object.freeze({skin: 'wildlife', effect: Object.freeze({countReach: 100})}),
   'cargo-net': Object.freeze({skin: 'supply', effect: Object.freeze({crates: 2})}),
-  // The hook limit stays 1,500 kg (heavier lifting is the Lab's).
-  'strong-hook': Object.freeze({skin: 'supply', effect: Object.freeze({hookReach: 5})}),
+  // The hook limit stays 1,500 kg (heavier lifting is the Lab's). Its reach
+  // keeps its old share over the plain hook (5 m to 3 m) on the wider 4 m
+  // hook (FIX-HELI-HOOK): 4 x 5 / 3, to a tenth of a metre.
+  'strong-hook': Object.freeze({skin: 'supply', effect: Object.freeze({hookReach: 6.7})}),
   'nose-camera': Object.freeze({skin: 'tv', effect: Object.freeze({noseCamera: true})}),
 });
 
