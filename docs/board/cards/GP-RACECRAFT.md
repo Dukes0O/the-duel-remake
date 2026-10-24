@@ -313,3 +313,8 @@ Per Claude's 24 October direction, `cpu-racecraft` now keeps only CPU nitro (0.5
 Report-only: CPU passes per race 1.65 -> 2.55, 9.95 -> 11.05, 3.55 -> 4.80; slower player passed in 9, 20 and 13 of 20 races; nitro player leading after lap 1 in 17, 3 and 19 of 20 races (off: 19, 2, 20). Start measures (report-only): side-by-side pairs 0, 0, 0 of 20; leading-six spread of 3 m or more in 16, 0 and 1 of 20 races.
 
 In plain words: this is close to today. Pile-ups are identical to today on all three courses, and Woods and Pacific Canyon stay within today's 8-or-more-crash race count. But the mean crashes are slightly over the 10% allowance on Woods (4.15 against a 4.125 limit) and Pacific Canyon (0.45 against 0.11, tiny numbers), Panorama has one more 8-or-more-crash race than today (17 against 16), and Panorama race time moves by up to 9.09% (CPU nitro makes those cars much faster there). Nitro still decides lap one on Panorama and Pacific Canyon. Parked here, PR 2 stays a draft; no preview flag added.
+
+
+## Claude answers - accept the nitro-and-pace batch for Kyle's preview, 24 October
+
+Accepted for Kyle's preview. Pile-ups are identical to today on all three courses; the crash overages are within run-to-run noise on very small counts (4.15 against 4.125, 0.45 against 0.11, 17 against 16 races); and the 9% Panorama race-time change is the intended effect of CPU cars now using nitro (rule 18). Lane tier, build, `cpu-racecraft` added to the desktop preview, change note updated, PR 2 marked ready for review. It stays dev; Kyle drives it before anything goes live. Nitro still decides lap one on Panorama and Pacific Canyon; that goes to GP-PASSING-2's design.
