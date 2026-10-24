@@ -107,6 +107,15 @@ function coneDistance(from, to, cone) {
   return Math.hypot(from.world.x + dx * fraction - cone.x, from.world.z + dz * fraction - cone.z);
 }
 
+// A cone tips when the car's centre line passes this close (observeCones below).
+export const TIP_DISTANCE_M = .8;
+
+// The closest the instructor's path comes to each cone, in metres.
+export function instructorConeDistances(poses, cones) {
+  return cones.map(cone => Math.min(...poses.slice(1).map((pose, i) =>
+    coneDistance({world: {x: poses[i].x, z: poses[i].z}}, {world: {x: pose.x, z: pose.z}}, cone))));
+}
+
 function observeCones(lesson, from, to) {
   const attempt = lesson.attempt;
   const events = [];
@@ -115,7 +124,7 @@ function observeCones(lesson, from, to) {
     if (distance <= 2.5 && !attempt.cones.some(row => row.id === cone.id)) {
       attempt.cones.push({id: cone.id});
     }
-    if (distance <= .8 && !attempt.tipped.includes(cone.id)) {
+    if (distance <= TIP_DISTANCE_M && !attempt.tipped.includes(cone.id)) {
       attempt.tipped.push(cone.id);
       events.push({id: cone.id, tipped: true, cue: 'lesson.cone'});
     }
@@ -268,6 +277,10 @@ export const LESSON_LINE = Object.freeze({
   lineYawMargin: .85, // lesson 2's esses leave the steering less spare grip, so its plan keeps more of it back
   iceClearM: 6,        // snow: the instructor has finished braking this far before the ice
   snowLockMargin: 1.2, // snow: the hairpin is limited by steering lock, not grip, so the plan may ask up to 120% of lock: below 30 mph the demand and the lock both grow with speed, so the line is just past lock at any speed
+  coneClearM: 1.4, // the instructor's line passes the outside cones this far towards the middle of the road: more than 0.5 m past the 0.8 m tip distance
+  apexClearM: .8,  // ... and the inside cone this far: the car ends about 0.3 to 1.4 m wide of the line it aims for at the apex, so it passes 1.5 to 2.3 m from the cone (past the tip distance, inside the 2.5 m that counts the cone)
+  winterApexClearM: 1.3, // snow, winter run: the car holds the apex line better there, so the line aims further off the cone
+  minClearM: .5,   // every instructor run clears every cone by at least this much beyond the 0.8 m tip distance
   holdShare: .5,   // lesson 2 holds its speed while the line curves at least this share of its tightest
 });
 
@@ -280,11 +293,11 @@ export function cornerPoints({turnInS, turnOutS, dir, apexShare}) {
 
 // A smooth line through the corner points: on the outside up to turn-in,
 // across to the inside at the apex and back out to the outside at the exit.
-export function buildLessonLine(course, points, {startS, endS}) {
+export function buildLessonLine(course, points, {startS, endS, clearM = 0, apexClearM = 0}) {
   const {turnInS, apexS, exitS, dir} = points;
   if (!(startS < turnInS && exitS < endS)) throw new TypeError('Lesson line needs the whole corner');
-  const outside = s => -dir * (course.roadHalfWidthAt(s) - LESSON_LINE.outsideM);
-  const inside = s => dir * (course.roadHalfWidthAt(s) - LESSON_LINE.insideM);
+  const outside = s => -dir * (course.roadHalfWidthAt(s) - LESSON_LINE.outsideM - clearM);
+  const inside = s => dir * (course.roadHalfWidthAt(s) - LESSON_LINE.insideM - apexClearM);
   const smooth = u => (1 - Math.cos(Math.PI * Math.max(0, Math.min(1, u)))) / 2;
   const lateralAt = s => {
     if (s <= turnInS || s >= exitS) return outside(s);
@@ -382,19 +395,22 @@ export function buildWaypointLine(course, waypoints, {startS, endS, points, ease
 
 // Apex cones 1.0 m in from the inside edge, then the exit cone 1.5 m in from the
 // outside edge; the first, middle and last waypoints of the instructor's line.
-export function lineWaypoints(course, points, entryLeadM = 0) {
+export function lineWaypoints(course, points, entryLeadM = 0, clearM = 0, apexClearM = 0, entryClearM = 0) {
   const half = s => {
     const value = course.roadHalfWidthAt(s);
     if (!Number.isFinite(value) || value <= LESSON_LINE.outsideM + 1) throw new Error('Lesson cone needs a valid road edge');
     return value;
   };
   const first = points.apexes[0];
-  const rows = [{s: points.startS, lateral: -first.dir * (half(points.startS) - LESSON_LINE.outsideM), cone: false}];
+  // Lesson 2's only outside cone is the exit cone, so only the exit waypoint keeps clear of it and the entry stays at
+  // the edge; the snow lesson's braking cone is on the entry, which keeps clear by entryClearM.
+  const out = (s, clear = 0) => half(s) - LESSON_LINE.outsideM - clear, inn = s => half(s) - LESSON_LINE.insideM - apexClearM;
+  const rows = [{s: points.startS, lateral: -first.dir * out(points.startS, entryClearM), cone: false}];
   // Stay on the outside until just before the first turn-in, then sweep across to the apex.
   if (entryLeadM > 0) rows.push({s: Math.max(points.startS + 1, points.turnInS - entryLeadM),
-    lateral: -first.dir * (half(points.turnInS) - LESSON_LINE.outsideM), cone: false});
-  points.apexes.forEach(apex => rows.push({s: apex.s, lateral: apex.dir * (half(apex.s) - LESSON_LINE.insideM), cone: 'apex'}));
-  rows.push({s: points.exitS, lateral: -points.dir * (half(points.exitS) - LESSON_LINE.outsideM), cone: 'exit'});
+    lateral: -first.dir * out(points.turnInS, entryClearM), cone: false});
+  points.apexes.forEach(apex => rows.push({s: apex.s, lateral: apex.dir * inn(apex.s), cone: 'apex'}));
+  rows.push({s: points.exitS, lateral: -points.dir * out(points.exitS, clearM), cone: 'exit'});
   return rows;
 }
 
@@ -575,7 +591,7 @@ export async function lessonPlanFor(duel, row, pace) {
   const points = cornerPoints({turnInS: turn.s0, turnOutS: turn.s1, dir: turn.dir, apexShare: TRACK_SCRIPT.apexShare});
   const endS = points.exitS + 60 + 40;
   if (!(startS >= 0 && endS < course.length)) throw new Error('Lesson gates need an unwrapped corner');
-  const line = buildLessonLine(course, points, {startS, endS});
+  const line = buildLessonLine(course, points, {startS, endS, clearM: LESSON_LINE.coneClearM, apexClearM: LESSON_LINE.apexClearM});
   // Firm braking belongs to the straight after the previous bend.
   const before = pieces.filter(piece => piece.kind === 'turn' && piece !== turn && piece.s1 <= turn.s0).at(-1);
   const profile = buildLessonPlan(line, {car: duel.car, pace, rollingMph: row.rollingMph, drive: DRIVE,
@@ -591,7 +607,7 @@ export async function lessonPlanFor(duel, row, pace) {
 // the racing line is faster (tools/test-drive-lesson-2.mjs).
 export async function linePlanFor(duel, row, pace, {middle = false, rollingMph = null, ease = 'parabolic',
   entryLeadM = row.entryLeadM ?? LESSON_LINE.entryLeadM, startS: fixedStartS = null,
-  yawMargin = LESSON_LINE.lineYawMargin, lockMargin = yawMargin, noBrakeZones = [], brakeByTraction = false, cruiseMph = Infinity} = {}) {
+  yawMargin = LESSON_LINE.lineYawMargin, lockMargin = yawMargin, noBrakeZones = [], brakeByTraction = false, cruiseMph = Infinity, apexClearM = LESSON_LINE.apexClearM, entryClearM = 0} = {}) {
   const [{DRIVE, tyreSlipSteering}, {accelAt, racingLineFor, buildSpeedProfile}, {TRACK_SCRIPT}] = await Promise.all([
     import('../config.js'), import('../race-lines.js'), import('../track-script.js'),
   ]);
@@ -608,7 +624,7 @@ export async function linePlanFor(duel, row, pace, {middle = false, rollingMph =
   const racing = racingLineFor(course), racingProfile = buildSpeedProfile(racing, duel.car);
   const attempt = gateS => {
     const points = {...found, startS: gateS};
-    const waypoints = middle ? [{s: gateS, lateral: 0}, {s: endS, lateral: 0}] : lineWaypoints(course, points, entryLeadM);
+    const waypoints = middle ? [{s: gateS, lateral: 0}, {s: endS, lateral: 0}] : lineWaypoints(course, points, entryLeadM, LESSON_LINE.coneClearM, apexClearM, entryClearM);
     const line = buildWaypointLine(course, waypoints, {startS: gateS, endS, points, ease});
     // The rolling start is the speed the course's own racing line allows at the gate, at the instructor's pace.
     const natural = rollingMph ?? Math.floor(racingProfile.at(gateS) * pace);
@@ -667,7 +683,9 @@ export async function snowPlanFor(duel, row, pace, {fixed = null} = {}) {
     ({...duel._drivingSurface(s, lateral), traction: 1, gripKind: 'asphalt'})};
   // The speed is settled before the ice and held to the turn-in: the first ice stretch to the hairpin is a no-braking zone.
   const hold = ice.length ? [{s0: ice[0].s0 - LESSON_LINE.iceClearM, s1: probe.turnInS}] : [];
-  const options = {yawMargin: LESSON_LINE.lineYawMargin, lockMargin: LESSON_LINE.snowLockMargin, noBrakeZones: hold, brakeByTraction: true, cruiseMph: row.cruiseMph, rollingMph: fixed?.rollingMph ?? row.rollingMph,
+  const options = {yawMargin: LESSON_LINE.lineYawMargin, lockMargin: LESSON_LINE.snowLockMargin, noBrakeZones: hold,
+    entryClearM: LESSON_LINE.coneClearM,
+    apexClearM: duel.state?.tyre === 'winter' ? LESSON_LINE.winterApexClearM : LESSON_LINE.apexClearM, brakeByTraction: true, cruiseMph: row.cruiseMph, rollingMph: fixed?.rollingMph ?? row.rollingMph,
     ...(fixed ? {startS: fixed.startS} : {})};
   const made = await linePlanFor(duel, row, pace, options);
   // Where the same instructor would start braking on dry asphalt; used only to place the board.
@@ -767,7 +785,14 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
       speedMph: pose.mph, brake: pose.brake, throttle: pose.throttle, tyreSlip: pose.tyreSlip, status: 'racing'});
     stepDriveLesson(lesson, carView(recorded[0]), {start: true}, 0);
     for (let i = 1; i < recorded.length; i++) stepDriveLesson(lesson, carView(recorded[i]), {}, recorded[i].t - recorded[i - 1].t);
-    if (lesson.lastAttempt?.cones.length !== placement.cones.length) throw new Error('Instructor missed a native cone: ' + JSON.stringify(lesson.lastAttempt?.cones));
+    const nearest = instructorConeDistances(recorded, placement.cones);
+    if (lesson.lastAttempt?.cones.length !== placement.cones.length) {
+      throw new Error('Instructor missed a native cone: ' + JSON.stringify(lesson.lastAttempt?.cones) + ', nearest ' + nearest.map(n => n.toFixed(2)).join(' ') + ' m');
+    }
+    // Never look like clipping a cone: clear every cone by minClearM past the distance that tips it.
+    if (nearest.some(distance => distance < TIP_DISTANCE_M + LESSON_LINE.minClearM)) {
+      throw new Error('Instructor too close to a cone: nearest ' + nearest.map(n => n.toFixed(2)).join(' ') + ' m, needs ' + (TIP_DISTANCE_M + LESSON_LINE.minClearM) + ' m');
+    }
     return {corner, instructor, courseId, car, upgrades: {...upgrades}, difficulty, seed, ...(isLine || isSnow ? {lessonId, tyre} : {})};
   } finally { off(); }
 }

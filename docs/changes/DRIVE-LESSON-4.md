@@ -36,19 +36,48 @@ Lesson 3 (gears) is skipped, as asked.
   used only here (`lockMargin`, `noBrakeZones`, `brakeByTraction`, `cruiseMph`); lessons 1 and 2 pass `undefined`
   and get the previous behaviour.
 
+## Cone clearance (Claude's answer, 24 October): the instructor never clips a cone
+
+A cone tips when the car's centre line passes within 0.8 m (`TIP_DISTANCE_M`) and counts
+when it passes within 2.5 m. Every instructor run now clears every cone by at least
+0.5 m past the tip distance: nearest approach 1.3 m or more (`LESSON_LINE.minClearM`),
+still inside the 2.5 m that counts the cone. `buildInstructorRun` throws if a run is
+closer (and now reports the nearest distances when a cone is missed), and each of the
+three native instructor tests asserts it for every cone, both paces, and for snow also
+the winter run. Before this the instructors drove straight through the cones (0.0 to 1.0 m).
+
+How: the instructor's line is aimed off each cone towards the middle of the road
+(`coneClearM` 1.4 m for outside cones, `apexClearM` 0.8 m for apex cones; snow's winter
+run `winterApexClearM` 1.3 m because the winter car holds the apex line better), since
+the car at the apex ends 0.3 to 1.4 m wide of the line it aims for. The cones stay where
+they were. This applies to lessons 1, 2 and 4; lesson 2 shifts only its exit waypoint
+(its entry has no cone) so its gate keeps 3 s of road. Nearest approach, cone 1 / apex
+cones / exit cone, metres: Panorama Ridge 1.40 / 2.05 / 1.70 (Casual), 1.40 / 2.15 / 1.74
+(Pro); Tremblant Woods 1.40 / 1.58 / 1.56, 1.41 / 1.66 / 1.58; Fir Esses 1.93 / 2.29 / 2.18,
+1.99 / 2.32 / 1.83; Old Town 1.99 / 1.81 / 1.82 / 1.85 / 2.09, 2.05 / 1.91 / 1.85 / 1.90 / 2.13;
+snow summer 1.44 / 1.89 / 1.48 (Casual), 1.45 / 2.24 / 1.49 (Pro), snow winter 1.44 / 1.56 /
+1.48, 1.45 / 1.92 / 1.49.
+
+Re-recorded numbers (a deliberate change to the instructors' lines; no assertion was
+loosened and no test needed editing beyond the new clearance check): instructor times,
+Casual / Pro: Panorama Ridge 9.90 s / 9.58 s, Tremblant Woods corner 16.05 s / 15.49 s,
+Fir Esses 7.88 s / 7.72 s (was 8.03 / 7.76; gates 585 m and 575 m, was 585 and 580, with
+3.01 s and 3.07 s of road), Old Town 10.98 s / 10.58 s (was 10.75 / 10.35; gate 1301 m,
+3.36 s and 3.16 s of road).
+
 ## Numbers (native, Falcone F42, identical at 30, 60 and 144 FPS)
 
 | | Casual | Pro |
 | --- | --- | --- |
-| Summer instructor | 31.45 s | 29.95 s |
-| Winter instructor | 29.53 s | 28.08 s |
+| Summer instructor | 31.86 s | 30.32 s |
+| Winter instructor | 29.78 s | 28.31 s |
 | Gate, rolling start | 1498 m, 36 mph | 1498 m, 38 mph |
 | Snow cone, dry board | 1726 m, 1800 m | 1725 m, 1799 m |
 | Brake on the ice | 0.00 | 0.00 |
 
 ## The proofs
 
-- **Winter tyres make a faster instructor** (docs 12.4): 1.9 s faster, Casual and Pro.
+- **Winter tyres make a faster instructor** (docs 12.4): 2.1 s faster Casual, 2.0 s Pro.
 - **The dry board is too late**: a scripted driver follows the instructor to the snow cone, then waits
   for the dry board and brakes there; native, at every FPS, it screeches at least 0.5 s or ends on a wall or off the road.
 - **The right try passes all four rules** with a scripted driver braking hard at the snow cone, before the ice.
@@ -57,7 +86,7 @@ Lesson 3 (gears) is skipped, as asked.
 
 ## Checks (Linux cloud)
 
-- `tools/test-drive-lesson-4.mjs` 12 of 12; `tools/test-drive-lessons.mjs` and `tools/test-drive-lesson-2.mjs` unchanged and passing (53).
+- `tools/test-drive-lesson-4.mjs` 12 of 12; `tools/test-drive-lessons.mjs` and `tools/test-drive-lesson-2.mjs` pass (53), with the one clearance assertion added to each native instructor test.
 - Lane tier and build: see the end of this note.
 - Not run here: browser checks and the Windows-only suites (none is touched by this card).
 

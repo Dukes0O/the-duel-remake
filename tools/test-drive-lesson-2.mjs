@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DRIVE_LINE_ROWS, DRIVE_LESSON_CORNERS, createDriveLesson, stepDriveLesson, instructorControls,
-  buildInstructorRun, linePlanFor, linePointsFor, buildWaypointLine, lineWaypoints, placeLineCones}
+  buildInstructorRun, instructorConeDistances, TIP_DISTANCE_M, LESSON_LINE, linePlanFor, linePointsFor, buildWaypointLine, lineWaypoints, placeLineCones}
   from '../src/lessons/drive-lessons.js';
 
 // Lesson 2, the racing line (docs/DRIVING_LESSONS.md 12.2). The plain tests need no
@@ -169,6 +169,8 @@ for (const row of DRIVE_LINE_ROWS) {
       assert.equal(instructor.poses[0].s, corner.startS); assert.equal(instructor.poses.at(-1).s, corner.finishS);
       assert.equal(instructor.poses.at(-1).t, instructor.timeSec);
       assert.ok(instructor.poses.every(pose => Number.isFinite(pose.x) && Number.isFinite(pose.z) && pose.tyreSlip <= 1));
+      for (const distance of instructorConeDistances(instructor.poses, instructor.cones))
+        assert.ok(distance >= TIP_DISTANCE_M + LESSON_LINE.minClearM && distance <= 2.5, `cone clearance ${distance}`);
       assert.ok(instructor.markers.length > 20 && instructor.markers.every(marker => marker.lateral === 0), 'markers down the middle');
       assert.equal(instructor.redBoardS, undefined, 'lesson 2 has no red board');
       // The player must not have to brake the moment the lesson starts: at the speed the instructor
