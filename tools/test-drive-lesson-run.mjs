@@ -296,6 +296,30 @@ test('presentation CSS stays within its own component and preserves visible keyb
 });
 
 
+test('a lesson hides the Time Trial banner, lap count and style points, and only a lesson does', async () => {
+  const hudSource = await readFile(new URL('../src/screen-hud.js', import.meta.url), 'utf8');
+  const hudCss = await readFile(new URL('../src/screen-hud.css', import.meta.url), 'utf8');
+  assert.match(hudSource, /classList\.toggle\('is-lesson',!!app\.duel\.drivingLesson\)/,
+    'the class follows the lesson run and nothing else');
+  assert.equal((hudSource.match(/is-lesson/g) ?? []).length, 1);
+  const rule = hudCss.match(/([^{}\n]*\.is-lesson[^{}]*)\{display:none\}/);
+  assert.ok(rule, 'one rule hides the lesson-inapplicable readouts');
+  assert.deepEqual(rule[1].split(',').map(value => value.trim()).sort(), [
+    '.is-lesson #route-lap', '.is-lesson #style-score-panel', '.is-lesson .lap-readout', '.is-lesson .race-position']);
+  assert.equal((hudCss.match(/is-lesson/g) ?? []).length, 4, 'nothing else changes under the class');
+  for (const kept of ['#speed-value', '#gear-value', 'route-hud', 'route-map', 'race-clock'])
+    assert.doesNotMatch(rule[0], new RegExp(kept), `${kept} stays visible in a lesson`);
+});
+
+test('while driving, the instructor caption sits top right where the Time Trial banner was, not over the minimap', async () => {
+  const css = await readFile(new URL('../src/lessons/drive-lesson-ui.css', import.meta.url), 'utf8');
+  const caption = css.match(/\.drive-lesson-host-running:not\(\.drive-lesson-host-result\) \.drive-lesson-message, \.drive-lesson-host-running:not\(\.drive-lesson-host-result\) \.drive-lesson-radio \{([^}]*)\}/);
+  assert.ok(caption, 'the driving caption is its own rule');
+  assert.match(caption[1], /position: fixed; top: 128px; right: 35px;/);
+  assert.match(css, /@media \(max-width: 900px\) \{[^@]*top: 64px; left: 18px; right: 18px;/);
+  assert.doesNotMatch(css, /flex-direction: row/, 'the caption is no longer stacked beside or under the panel');
+});
+
 test('lesson completion requires actual current run/player/car/settings and a finished three-win challenge',()=>{
   const state={playerId:'kyle',car:'falcone',difficulty:'pro',driverId:'club'};
   const lesson={id:'corner',stage:'challenge',phase:'result',done:true,streak:3,bestMargin:.42,
