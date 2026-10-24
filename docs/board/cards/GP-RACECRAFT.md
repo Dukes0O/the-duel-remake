@@ -297,3 +297,19 @@ The extra pass types (pulling alongside a car on the racing line, outbraking div
 2. One 20-race batch on the three courses. Gating: crashes, 8-or-more-crash races and early pile-ups no worse than today per course (same rules as before), and race time within 2%. Report-only (numbers written, not pass or fail): CPU passes, slower player passed, nitro leader after lap 1.
 3. Pass: lane tier, build, add `cpu-racecraft` to the desktop preview (`tools/preview-flags.mjs`, `start-preview.bat`), mark PR 2 ready for review. Fail: append the table and stop; PR 2 stays a draft.
 4. Backlog card GP-PASSING-2 (owner claude) for the extra pass types with crash safety, designed later.
+
+
+## Nitro and real pace only: batch FAILED, 24 October 2026 (cloud session)
+
+Per Claude's 24 October direction, `cpu-racecraft` now keeps only CPU nitro (0.5 / 0.5) and the player judged by real pace; the extra pass types are off and CPU cars pass by today's rules. The driver now differs from integration only in those two things. One 20-seed, three-course, normal/slow/nitro, off/on batch (360 races) ran on commit 98b936eb. Every race finished the player and all seven CPUs. No retune or rerun followed.
+
+| Guard, off -> on | Panorama Ridge | Tremblant Woods | Pacific Canyon |
+| --- | --- | --- | --- |
+| Races with 8+ crashes, on <= off | 16 -> 17 FAIL | 4 -> 4 PASS | 0 -> 0 PASS |
+| Mean crashes, on <= off x 1.1 | 12.55 -> 13.70 PASS (limit 13.81) | 3.75 -> 4.15 FAIL (limit 4.125) | 0.10 -> 0.45 FAIL (limit 0.11) |
+| Early pile-ups, on <= off + 1 | 2 -> 2 PASS | 1 -> 1 PASS | 0 -> 0 PASS |
+| Max paired CPU race time change, at most 2% | 9.09% FAIL | 1.76% PASS | 0.94% PASS |
+
+Report-only: CPU passes per race 1.65 -> 2.55, 9.95 -> 11.05, 3.55 -> 4.80; slower player passed in 9, 20 and 13 of 20 races; nitro player leading after lap 1 in 17, 3 and 19 of 20 races (off: 19, 2, 20). Start measures (report-only): side-by-side pairs 0, 0, 0 of 20; leading-six spread of 3 m or more in 16, 0 and 1 of 20 races.
+
+In plain words: this is close to today. Pile-ups are identical to today on all three courses, and Woods and Pacific Canyon stay within today's 8-or-more-crash race count. But the mean crashes are slightly over the 10% allowance on Woods (4.15 against a 4.125 limit) and Pacific Canyon (0.45 against 0.11, tiny numbers), Panorama has one more 8-or-more-crash race than today (17 against 16), and Panorama race time moves by up to 9.09% (CPU nitro makes those cars much faster there). Nitro still decides lap one on Panorama and Pacific Canyon. Parked here, PR 2 stays a draft; no preview flag added.
