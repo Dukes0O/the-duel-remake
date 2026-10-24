@@ -264,7 +264,8 @@ A fourth stock voice from the voice service the game already uses, a warm
 woman's voice not yet used by any crew member or radio (Matilda if it is
 offered), recorded clean and played through the radio chain plus a slow
 warble, because the phone works by sound through water. Lines never name
-prices; cards show numbers. Ids are `deep.ana.<step>`.
+prices; cards show numbers. Ids are `deep.ana.<step>`. Recorded with Bella:
+Matilda is already Odessa on the crew.
 
 | Id | Line |
 | --- | --- |
