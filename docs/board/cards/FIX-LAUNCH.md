@@ -30,3 +30,12 @@ two to three times a real supercar.
 
 No switch: a tuning change to every race. Decide with Kyle at release whether
 Pro tyre grip (`tyre-slip`, dev) ships at the same time.
+
+## Claude answers
+
+Claude, 24 October: option 3 approved as built. `DRIVE.accelScale` 5.2 to 2.5,
+`BOOST.accelMphPerSec` 42 to 20.2 (same factor), Jesko `accel` 10.8 to 9.9. No
+curve change and no other per-car edits. One scale cannot meet both ends (the
+959-S is 1.81 times slower than the Jesko, the targets allow 1.75), and a curve
+change would reorder Titan, Dusthawk and Viper. Re-record what moves, keep every
+balance target unchanged.
