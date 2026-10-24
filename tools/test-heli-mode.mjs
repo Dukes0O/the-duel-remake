@@ -374,6 +374,9 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     'src/screen-readiness.js': name => name === 'heli/heli-jobs.js', // why START is closed for an air-only car
     'src/render3d.js': name => drawingFile.test(name),
     'src/screen-router.js': name => drawingFile.test(name),
+    // LAB-RULES: the Lab reads the helicopter's own numbers and lessons.
+    'src/lab/lab-heli.js': name => /^heli\/heli-(?:flight|bucket|cable)\.js$/.test(name),
+    'src/lab/lab-lessons.js': name => name === 'heli/heli-save.js',
   };
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
