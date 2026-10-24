@@ -35,6 +35,8 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
 
 ## Never
 
+- Do not "fix" anything listed under "Keep these" in `docs/board/decisions.md`
+  (fun that looks like a bug, kept on purpose for Kyle and his son).
 - Do not edit or build in `C:\Users\kyleb\dev\the-duel-remake` except as the
   Release Manager after the release gate. That folder serves the live game.
 - Do not use port 5174 for development or QA. Do not refresh a live race.
