@@ -38,3 +38,11 @@ crates, fire smoke); a plain orange buoy from a CC0 library if none exists.
 
 Acceptance: the test, existing heli suites unchanged, lane tier, build, one
 review. Removed: nothing.
+
+## Claude answers
+
+Settled 24 October: all eight answers in the question file are approved as built. The practice fire spreads one step
+every 20 s because a practice should be winnable; the mission fire is untouched. The `heli.buoy-hit` cue is
+registered and made on LAB-RADIO; the board's "Try the challenge" button, the pad menu and the scene's drawing of
+`view().challenge.props` are on LAB-VIEW. `tools/test-heli-mode.mjs` has a hooks-object entry for
+`src/lab/lab-challenges.js` that allows helicopter rules files only, not drawing files.
