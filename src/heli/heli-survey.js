@@ -231,8 +231,8 @@ function distanceToSegment(px, pz, ax, az, bx, bz) {
   return Math.hypot(px - (ax + dx * t), pz - (az + dz * t));
 }
 
-function cover(run, ax, az, bx, bz) {
-  const {square} = run.plan, reach = SURVEY.coverReach, cell = SURVEY.cell;
+function cover(run, ax, az, bx, bz, reach) {
+  const {square} = run.plan, cell = SURVEY.cell;
   const i0 = Math.max(0, Math.floor((Math.min(ax, bx) - reach - square.x0) / cell));
   const i1 = Math.min(CELLS_ACROSS - 1, Math.floor((Math.max(ax, bx) + reach - square.x0) / cell));
   const j0 = Math.max(0, Math.floor((Math.min(az, bz) - reach - square.z0) / cell));
@@ -253,23 +253,31 @@ function cover(run, ax, az, bx, bz) {
 // the height that matters is the height at the end of the step.
 // Returns the events of this step: {type: 'count' | 'scare' | 'rare', id}.
 // A step that is not finite numbers, or runs backward, is ignored.
-export function stepSurvey(run, {dt, x, z, agl}) {
+// gear is the worn gear's numbers (heli-skins.js gearStats): the wildlife
+// skin's quiet tips scare animals at gear.scareDistance (50 m, not 100) and its
+// zoom camera counts out to gear.countReach (100 m, not 60), and the share of
+// the square covered grows with that reach, so the estimate stays honest. Left
+// out, or holding the base kit, every answer is the one above.
+export function stepSurvey(run, {dt, x, z, agl}, gear) {
   if (![dt, x, z, agl].every(Number.isFinite) || dt < 0) return [];
   const events = [];
   run.time += dt;
   const a = run.last ?? {x, z}, b = {x, z};
   run.last = b;
   // Only flying at counting height covers ground; fright does not change it.
-  if (agl <= SURVEY.countHeight) cover(run, a.x, a.z, b.x, b.z);
+  const countReach = Number.isFinite(gear?.countReach) ? gear.countReach : SURVEY.countReach;
+  const scareReach = Number.isFinite(gear?.scareDistance) ? gear.scareDistance : SURVEY.scareReach;
+  const coverReach = Number.isFinite(gear?.countReach) ? gear.countReach : SURVEY.coverReach;
+  if (agl <= SURVEY.countHeight) cover(run, a.x, a.z, b.x, b.z, coverReach);
   for (const animal of run.animals) {
     const d = distanceToSegment(animal.x, animal.z, a.x, a.z, b.x, b.z);
     // Too low and too near: the animal runs, and stays unseen for 2 minutes
     // after the last time it was frightened.
-    if (agl < SURVEY.scareHeight && d <= SURVEY.scareReach) {
+    if (agl < SURVEY.scareHeight && d <= scareReach) {
       if (run.time >= animal.scaredUntil) events.push({type: 'scare', id: animal.id});
       animal.scaredUntil = run.time + SURVEY.scareSeconds;
     }
-    if (run.time < animal.scaredUntil || agl > SURVEY.countHeight || d > SURVEY.countReach) continue;
+    if (run.time < animal.scaredUntil || agl > SURVEY.countHeight || d > countReach) continue;
     if (animal.role === 'target' && !animal.counted) {
       animal.counted = true; run.count++;
       events.push({type: 'count', id: animal.id});
@@ -301,4 +309,20 @@ export function reportSurvey(run) {
   const rareBonus = run.rareSeen ? SURVEY_PAY.rareBonus : 0;
   return {ok: true, jobId: run.jobId, estimate, truth, count: run.count, share: surveyShare(run), band: hit.band,
     basePay: hit.pay, rareBonus, pay: hit.pay + rareBonus, rare: run.rareSeen, line: SURVEY_LINES[hit.band]};
+}
+
+// The heat camera in a count (gear.heatAnimals, with gear.heatRange): the warm
+// animals near the helicopter, nearest first, whatever they are (the panel does
+// not say which are being counted). heli is {x, z, agl}; distance is a straight
+// line, height included. Empty when the camera is not worn. It shows only: it
+// never counts, covers or scares.
+export function heatAnimals(run, heli, gear) {
+  const range = Number.isFinite(gear?.heatRange) ? gear.heatRange : 0;
+  if (gear?.heatAnimals !== true || !(range > 0) || !isSurveyRun(run)) return [];
+  const out = [];
+  for (const animal of run.animals) {
+    const distance = Math.hypot(heli.x - animal.x, heli.z - animal.z, heli.agl ?? 0);
+    if (distance <= range) out.push({id: animal.id, x: animal.x, z: animal.z, distance});
+  }
+  return out.sort((a, b) => a.distance - b.distance || (a.id < b.id ? -1 : 1));
 }

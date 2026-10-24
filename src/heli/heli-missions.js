@@ -12,6 +12,7 @@
 import {makeRng} from '../rng.js';
 import {heliHash, MISSION_KINDS, RESCUE_KINDS, RESCUE_STAGES, createMissions, missionsOf, heliOf, setMissions, chargeRepair} from './heli-save.js';
 import {CONDITIONS, waitHurt, rescuePay} from './heli-rescue.js';
+import {searchLimit} from './heli-search.js';
 import {wreckFor} from './heli-jobs.js';
 
 export const MISSION_RULES = Object.freeze({
@@ -267,9 +268,14 @@ export function beginRescue(missions, {rescue = false} = {}) {
     crates: [0, 0, 0], condition: 0}};
 }
 
-export const rescueLimit = kind => RESCUE_CLOCKS[kind] ?? 0;
-export const clockLeft = r => Math.max(0, rescueLimit(r.kind) - r.clockSeconds);
-// 0 in daylight to 1 at dark: the hiker's last 3 minutes. Drawing only.
+// gear is the worn gear's numbers (heli-skins.js gearStats): the search and
+// rescue skin's searchlight runs the hiker search 8 minutes on into the night.
+// Left out, or the base kit, the limit is the clock above.
+export const rescueLimit = (kind, gear) => searchLimit(RESCUE_CLOCKS[kind] ?? 0, kind, gear);
+export const clockLeft = (r, gear) => Math.max(0, rescueLimit(r.kind, gear) - r.clockSeconds);
+// 0 in daylight to 1 at dark: the hiker's last 3 minutes. Drawing only. Dark
+// falls at the plain clock whatever gear is worn; the searchlight only
+// lengthens the search into the night.
 export const duskOf = r => r.kind === 'hiker' ? Math.max(0, Math.min(1, 1 - clockLeft(r) / DUSK_SECONDS)) : 0;
 
 // Run the clock. `seconds` is simulated time, in the air, on the ground or a
@@ -277,17 +283,20 @@ export const duskOf = r => r.kind === 'hiker' ? Math.max(0, Math.min(1, 1 - cloc
 // frame at a time gives the same clock. An unhurt casualty is hurt at two
 // thirds (cold: true, once, for Roger's line); the clock stops at its limit
 // and expired says the time has run out.
-export function tickRescue(missions, seconds, {rescue = false} = {}) {
+export function tickRescue(missions, seconds, {rescue = false, gear = null} = {}) {
   const r = rescueOf(missions, {rescue});
-  if (!r || !(seconds > 0)) return {missions, cold: false, expired: !!r && clockLeft(r) <= 0};
-  const limit = rescueLimit(r.kind), clockSeconds = Math.min(limit, r.clockSeconds + seconds);
+  if (!r || !(seconds > 0)) return {missions, cold: false, expired: !!r && clockLeft(r, gear) <= 0};
+  const limit = rescueLimit(r.kind, gear), clockSeconds = Math.min(limit, r.clockSeconds + seconds);
   let condition = r.condition, cold = false;
-  if (CASUALTY_KINDS.includes(r.kind) && waitHurt(CONDITIONS[condition], clockSeconds, limit).cold) { condition = 1; cold = true; }
+  // The casualty gets cold two thirds into the plain clock, searchlight or not.
+  if (CASUALTY_KINDS.includes(r.kind) && waitHurt(CONDITIONS[condition], clockSeconds, rescueLimit(r.kind)).cold) { condition = 1; cold = true; }
   return {missions: {...missions, rescue: {...r, clockSeconds, condition}}, cold, expired: clockSeconds >= limit - 1e-9};
 }
 
 // The pay for a people rescue at the handover, by the casualty's condition.
-export const peoplePay = r => CASUALTY_KINDS.includes(r.kind) ? rescuePay(RESCUE_MONEY.basePay[r.kind], CONDITIONS[r.condition]) : 0;
+// bonus is the medevac skin's stretcher pay (heli-rescue.js hoistBonus): added
+// once, whole, after the condition share. Left out, nothing is added.
+export const peoplePay = (r, bonus = 0) => CASUALTY_KINDS.includes(r.kind) ? rescuePay(RESCUE_MONEY.basePay[r.kind], CONDITIONS[r.condition], bonus) : 0;
 
 const withCount = (missions, name, delta) => {
   if (delta > 0) return {...missions, [name]: Math.min(MAX_COUNT, (missions[name] ?? 0) + delta)};

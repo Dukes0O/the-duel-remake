@@ -1,0 +1,32 @@
+# FIX-LAUNCH
+
+The short board entry controls current state, ownership, dependencies and locks.
+
+Claude, 24 October. Kyle finds the cars hard to drive and believes they
+accelerate too quickly.
+
+**Cause (read in the code):** speed gain is
+`car.accel x accelFactor x throttle x DRIVE.accelScale` in `src/sim-driving.js`,
+with `DRIVE.accelScale: 5.2` ("immediate arcade launch") in `src/config.js`.
+That gives 0 to 60 mph in 1.1 s (Jesko at engine level 3) to 1.9 s (959-S),
+two to three times a real supercar.
+
+**Settled design:**
+- Targets for 0 to 60 mph on flat road, full throttle, Casual gearbox:
+  fastest car 2.4 to 2.8 s, slowest stock car 3.6 to 4.2 s. Every car keeps its
+  top speed and its place in the acceleration order.
+- Prefer one change to `DRIVE.accelScale`, adjusting the `accelFactor` curve
+  only if a single number cannot meet both ends. Do not edit per-car `accel`
+  values unless the order would change.
+- Boost (`BOOST.accelMphPerSec`) keeps its current feel relative to the new
+  launch: scale it by the same factor.
+- First write a test that measures 0 to 60 for every car through the real
+  driving step and fails today.
+- Re-record replay fingerprints, reference laps and course replays that move.
+  The CPU balance targets (`tools/balance-targets.mjs`) and combat balance with
+  `wasteland2` off and on must still pass with unchanged targets. If arenas
+  fail, an arena-only value is allowed; never widen a target.
+- List every changed fingerprint and lap time in the change note.
+
+No switch: a tuning change to every race. Decide with Kyle at release whether
+Pro tyre grip (`tyre-slip`, dev) ships at the same time.
