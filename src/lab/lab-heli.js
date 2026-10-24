@@ -4,6 +4,7 @@
 import {KESTREL} from '../heli/heli-flight.js';
 import {BUCKET} from '../heli/heli-bucket.js';
 import {CABLE} from '../heli/heli-cable.js';
+import {labOf, setCable} from './lab-save.js';
 
 export const LAB_HELI = Object.freeze({engine1: 1.05, engine2: 1.10, lightFrameKg: 80, heavyHookKg: 2000, bigBucketLitres: 800,
   longCableM: 25, altitudeScaleM: 10_000});
@@ -26,3 +27,9 @@ export function heliUpgrades(lab) {
     altitudeScaleM: has('altitude-tune') ? LAB_HELI.altitudeScaleM : KESTREL.airScaleHeight,
   };
 }
+
+// What the helicopter session asks of the Lab, so src/heli/ imports this one file: the upgrades a profile has bought,
+// the upgrades it owns by id (for the pad menu), and the line choice (15 or 25 m, saved like any other Lab step).
+export const heliUpgradesOf = profile => heliUpgrades(labOf(profile));
+export const ownedLabUpgrades = profile => labOf(profile).owned;
+export const chooseLabLine = (profile, metres, flags) => setCable(profile, metres, {flags});

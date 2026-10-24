@@ -50,11 +50,12 @@ export function carMassKg(carId) {
 }
 
 // Can Kestrel One lift this car in H1?
-export function liftCheck(carId) {
+// hookLimitKg: the Lab's Heavy hook (2,000 kg) when owned; left out, the base 1,500 kg.
+export function liftCheck(carId, hookLimitKg = KESTREL.hookLimitKg) {
   const massKg = carMassKg(carId);
   if (massKg === null) return {ok: false, massKg, reason: 'Unknown car.'};
   if (carId === 'titan_monster') return {ok: false, massKg, reason: 'Too heavy for any helicopter here.'};
-  if (massKg > KESTREL.hookLimitKg) return {ok: false, massKg, reason: "Needs the Lab's lift upgrade."};
+  if (massKg > hookLimitKg) return {ok: false, massKg, reason: "Needs the Lab's lift upgrade."};
   return {ok: true, massKg, reason: null};
 }
 

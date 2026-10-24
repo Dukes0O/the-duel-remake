@@ -13,7 +13,8 @@ import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs
 import {isCourseUnlocked} from '../course-access.js';
 import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson} from './heli-lessons.js';
 import {CRATE} from './heli-cable.js';
-import {BUCKET, createBucket, stepBucket, bucketHit, bucketWords, bucketHolds, aimPoint, aimLocked, aimRingRadius, bucketReading} from './heli-bucket.js';
+import {BUCKET, RETARDANT_LITRES, createBucket, stepBucket, setBucketWater, bucketHit, bucketWords, bucketHolds, aimPoint, aimLocked, aimRingRadius, bucketReading} from './heli-bucket.js';
+import {heliUpgrades, heliUpgradesOf, ownedLabUpgrades, chooseLabLine} from '../lab/lab-heli.js';
 import {bucketDamageOf, damageBucket as damageBucketSave, repairBucket as repairBucketSave, FIRE_MONEY, missionsOf, setMissions} from './heli-save.js';
 import {createFireRun, fireWorld} from './heli-fire-run.js';
 import {callOf, rescueOf, rescueConditions, isRescueKind, tickRescue, finishRescue, failRescue, clockLeft, duskOf, rescueLimit,
@@ -163,13 +164,15 @@ export function insideArea(area, x, y, z, ground = null) {
 // only with it on (docs/HELI_RESCUE.md section 5.5).
 // H3 Wildlife and skins (docs/HELI_WILDLIFE.md): skinsEnabled is the heli-skins
 // switch (paint shop, gear, dirt, the wash) and wildlifeEnabled the wildlife
-// switch (the count on the board). wildlife is src/wildlife.js (pass `import *
+// switch (the count on the board). labEnabled is the lab switch (docs/LAB.md 4.1): the Lab's bought upgrades then
+// act in flight, at the hook, in the bucket and on the aim ring; with it off, or nothing bought, every result is
+// what it was. wildlife is src/wildlife.js (pass `import *
 // as wildlife`; the helicopter rules may not import it) and surveyStand(courseId,
 // world) gives the count's `canStand(x, z)` for a course, or null. With both
 // switches off, or left out, every result is what it was.
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
   mode = 'assisted', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
-  summitRunEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null} = {}) {
+  summitRunEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
   if (typeof loadCourse !== 'function') throw new Error('createHeliSession needs loadCourse(courseId)');
   const flag = {enabled: true};
@@ -211,10 +214,45 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     return gearCache.gear;
   };
   // The gear plus the winch's line for the hook calls; null when no gear is worn.
-  const hookGear = () => { const gear = gearNow(); return gear && gear.reelSpeed > 0 ? {...gear, lineLength: winch.length} : gear; };
+  // The Lab's upgrades (docs/LAB.md 4.1), read from the save: null with the lab switch off or nothing bought,
+  // which every rule reads as the helicopter as it always was. Worked out again only when the save changes.
+  const labFlags = Object.freeze({enabled: name => name === 'lab'});
+  const STOCK_UP = heliUpgrades(null);
+  let labCache = {save: undefined, up: null};
+  const labNow = () => {
+    if (labEnabled !== true) return null;
+    if (labCache.save !== save) {
+      const up = heliUpgradesOf(save);
+      labCache = {save, up: Object.keys(STOCK_UP).every(key => up[key] === STOCK_UP[key]) ? null : Object.freeze(up)};
+    }
+    return labCache.up;
+  };
+  // What the flight state carries (thrust, empty mass, thin-air scale), or null when all three are stock.
+  const flightUpgrades = () => {
+    const up = labNow();
+    return up && (up.thrustFactor !== STOCK_UP.thrustFactor || up.emptyMassKg !== STOCK_UP.emptyMassKg || up.altitudeScaleM !== STOCK_UP.altitudeScaleM) ? up : null;
+  };
+  const liftLimit = () => labNow()?.hookLimitKg;
+  const labLine = () => labNow()?.lineLengthM ?? CABLE.length;
+  // The gear plus the winch's line for the hook calls, with the Lab's hook limit and cable when owned; null when no gear is worn and nothing is owned.
+  const hookGear = () => {
+    const gear = gearNow(), worn = gear && gear.reelSpeed > 0 ? {...gear, lineLength: winch.length} : gear, up = labNow();
+    if (!up) return worn;
+    const reeling = worn?.reelSpeed > 0;
+    return {...worn, hookLimitKg: Math.max(Number.isFinite(worn?.hookLimitKg) ? worn.hookLimitKg : KESTREL.hookLimitKg, up.hookLimitKg),
+      ...(!reeling && up.lineLengthM !== CABLE.length ? {lineLength: up.lineLengthM} : {})};
+  };
 
   const commit = result => {
-    if (result?.ok && result.profile !== save) { save = result.profile; persist(save); }
+    if (result?.ok && result.profile !== save) {
+      save = result.profile; persist(save);
+      // Bought or chosen on the pad: a helicopter standing on the ground takes the new numbers now; one in the air keeps its own.
+      if (labEnabled === true && heli?.onGround) {
+        const up = flightUpgrades();
+        if (up) heli.upgrades = Object.freeze({thrustFactor: up.thrustFactor, emptyMassKg: up.emptyMassKg, altitudeScaleM: up.altitudeScaleM});
+        else delete heli.upgrades;
+      }
+    }
     return result;
   };
   const emit = event => { pending.push(event); if (lesson) lessonEvents.push(event); return event; };
@@ -277,7 +315,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const point = bucket.water > 0 ? aimPoint(bucket, {ground: world.ground, wind: fire?.windNow() ?? null}) : null;
     const locked = !!point && aimLocked(point, (x, z) => fire?.burningAt(site.courseId, x, z) ?? false);
     if (locked && !ring?.locked) emit({type: 'cue', id: 'heli.aim.lock'});
-    ring = point ? Object.freeze({x: point.x, y: point.y, z: point.z, radius: aimRingRadius(0), locked}) : null;
+    ring = point ? Object.freeze({x: point.x, y: point.y, z: point.z, radius: aimRingRadius(labNow()?.ringIndex ?? 0), locked}) : null;
   }
   const lessonsDone = () => heliOf(save).lessons;
   const charge = (kind, amount) => {
@@ -309,7 +347,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const heading = overZone ? Math.atan2(-toward.x, -toward.z) : Math.atan2(site.zone.x - start.x, site.zone.z - start.z);
       const arriveSpeed = overZone ? 0 : HELI_SESSION.arrivalSpeed;
       heli = createHeliState({x: start.x, z: start.z, heading, fuelKg: fuel, mode, altitudeOffset: info.baseAltitude - site.startY,
-        ground: world.ground});
+        ground: world.ground, upgrades: flightUpgrades()});
       heli.y = site.zone.y + HELI_SESSION.arrivalHeight;
       heli.onGround = false;
       heli.vx = Math.sin(heading) * arriveSpeed;
@@ -323,7 +361,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       }
     } else {
       heli = createHeliState({x: site.zone.x, z: site.zone.z, heading: site.parking.heading, fuelKg: fuel, mode,
-        altitudeOffset: info.baseAltitude - site.startY, ground: world.ground});
+        altitudeOffset: info.baseAltitude - site.startY, ground: world.ground, upgrades: flightUpgrades()});
     }
     // Only a car on the cable comes along; the others wait where they are.
     const kept = arriveFrom ? carried : null;
@@ -1268,10 +1306,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const reach = car => Math.hypot(hookAt.x - car.x, hookAt.z - car.z);
       const load = loads.reduce((best, car) => car.netted || (!best.netted && reach(best) <= reach(car)) ? best : car);
       // The lesson crate is not a car; the hook limit still applies to it.
-      if (!load.crate && !load.supply && !liftCheck(load.id).ok) {
+      if (!load.crate && !load.supply && !liftCheck(load.id, liftLimit()).ok) {
         // Only when the hook is over the car.
         if (reach(load) <= hookReach && Math.abs(hookAt.y - load.y) <= CABLE.hookHeightSlack + 1)
-          emit({type: 'cannotLift', carId: load.id, reason: liftCheck(load.id).reason});
+          emit({type: 'cannotLift', carId: load.id, reason: liftCheck(load.id, liftLimit()).reason});
         return null;
       }
       if (!load.crate && !load.supply && !lessonsDone().carry) {
@@ -1291,6 +1329,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         if (!result.ok) return null;
       }
       if (gear?.reelSpeed > 0) hooked.lineLength = winch.length;
+      else if (labLine() !== CABLE.length) hooked.lineLength = labLine();
+      // Back to the plain line: a car that was last hung at the long one must not keep it.
+      else if (labEnabled === true) delete hooked.lineLength;
       if (hooked.job) result.event.job = hooked.job;
       emit(result.event);
       if (hooked.own) offer = null;
@@ -1515,7 +1556,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       // Laid out on the ground beside the helicopter, clear of its body, so
       // the cable is slack until the helicopter lifts it.
       const side = HELI_SESSION.bucketBeside, x = heli.x + Math.cos(heli.heading) * side, z = heli.z - Math.sin(heli.heading) * side;
-      loads.push(createBucket({damage: bucketDamageOf(save), x, z, heading: heli.heading, ground: world.ground}));
+      const fitting = createBucket({damage: bucketDamageOf(save), x, z, heading: heli.heading, ground: world.ground, litres: labNow()?.bucketLitres});
+      if (labLine() !== CABLE.length) fitting.lineLength = labLine();
+      loads.push(fitting);
       emit({type: 'bucketFitted'});
       fire.bucketFitted();
       return fitted(wear, 'fire', {ok: true});
@@ -1526,6 +1569,43 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       loads = loads.filter(car => !car.bucket);
       emit({type: 'bucketRemoved'});
       return {ok: true};
+    },
+    // The Lab's pad menu (docs/LAB.md 4.1). What it offers: whether the Retardant tank is owned, the loads and the lines.
+    get lab() {
+      const owned = labEnabled === true ? ownedLabUpgrades(save) : {};
+      return Object.freeze({on: labEnabled === true, retardant: owned.retardant === true, longCable: owned['long-cable'] === true,
+        line: labLine(), lines: Object.freeze(owned['long-cable'] === true ? [15, 25] : [15]), contents: bucketLoad()?.contents ?? 'water'});
+    },
+    // Fill the bucket on the home pad with retardant (once the tank is owned) or back to water. Retardant is 600 litres,
+    // filled only here; a lake never refills it, and it is a water bucket again once emptied.
+    loadBucket(kind) {
+      if (labEnabled !== true) return {ok: false, reason: 'The Lab is not available yet.'};
+      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The bucket is filled at the home pad.'};
+      const bucket = bucketLoad();
+      if (!bucket) return {ok: false, reason: 'Fit the bucket first.'};
+      if (bucket.pouring || bucket.parcels.length) return {ok: false, reason: 'Wait for the water to land.'};
+      if (kind === 'retardant') {
+        if (ownedLabUpgrades(save).retardant !== true) return {ok: false, reason: 'Buy the Retardant tank in the Lab first.'};
+        if (!(bucketHolds(bucket) > 0)) return {ok: false, reason: 'The bucket is ruined; repair it first.'};
+        bucket.contents = 'retardant';
+        setBucketWater(bucket, Math.min(RETARDANT_LITRES, bucketHolds(bucket)));
+        emit({type: 'bucketLoaded', kind});
+        return {ok: true, litres: bucket.water};
+      }
+      if (kind !== 'water') return {ok: false, reason: 'Load water or retardant.'};
+      if (bucket.contents !== 'retardant') return {ok: true, litres: bucket.water, already: true};
+      delete bucket.contents; setBucketWater(bucket, 0);
+      emit({type: 'bucketLoaded', kind});
+      return {ok: true, litres: bucket.water};
+    },
+    // The line for the next car: 15 m, or 25 m once Long cable is owned. Chosen on the pad with nothing on the hook.
+    chooseLine(metres) {
+      if (labEnabled !== true) return {ok: false, reason: 'The Lab is not available yet.'};
+      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The line is chosen at the home pad.'};
+      if (loads.some(car => car.hooked && !car.bucket)) return {ok: false, reason: 'Set the car down first.'};
+      const result = commit(chooseLabLine(save, metres, labFlags));
+      if (result.ok) for (const car of loads) if (car.bucket) { if (labLine() !== CABLE.length) car.lineLength = labLine(); else delete car.lineLength; }
+      return result.ok ? {ok: true, line: labLine()} : result;
     },
     // Repair at the pad: takes what the player has and forgives the rest.
     repairBucket() {
@@ -1694,7 +1774,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const refusal = hookRefusal(heli, load, opts);
     const limitKg = Number.isFinite(gear?.hookLimitKg) ? gear.hookLimitKg : KESTREL.hookLimitKg;
     const barred = !!bucketLoad() || rescueOn && hNothing(loads) || !(load.massKg <= limitKg) ||
-      !load.crate && !load.supply && (!liftCheck(load.id).ok || !lessonsDone().carry);
+      !load.crate && !load.supply && (!liftCheck(load.id, liftLimit()).ok || !lessonsDone().carry);
     return {load, refusal, ready: !refusal && !barred};
   }
   // A failed H press: the reason given (the bucket or the line), else what
@@ -1722,6 +1802,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       damage: bucket.damage, words: bucketWords(bucket), pouring: bucket.pouring, filling: bucket.filling,
       parcels: Object.freeze(bucket.parcels.map(p => Object.freeze({x: p.x, y: p.y, z: p.z}))),
       aim: bucket.water > 0 ? ring : null,
+      ...(bucket.contents ? {contents: bucket.contents} : {}),
       // The fire service coat's gauge (litres on the panel) and drop sight (a dot
       // at the ring's exact centre); absent on every other coat.
       ...(gearNow() ? {reading: bucketReading(bucket, gearNow()), sight: gearNow().dropSight === true && bucket.water > 0 && ring ? Object.freeze({x: ring.x, z: ring.z}) : null} : {})});
