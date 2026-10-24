@@ -15,3 +15,7 @@ holds `release` only then.
 - The rescuer pose: arms out to the casualty and the hook at the chest need `tools/blender/rescue-people.py`.
 - Frame check (rule 8) hovering over the avalanche, both qualities, before the `rescue` switch goes on (rule 9: not while players cannot reach it).
 - Still to draw: the driver car at the hoist site, a crate set down in the yard.
+
+## Part 1 merged (Claude, 16 October 16:00)
+
+Debris model removed, pose, car and yard crates done; look accepted at round 3 (the cap). Left for part 2: Claude flies each rescue after SUMMIT-HELI-RESCUES, the frame check over the avalanche (both qualities, laptop screen off) before the `rescue` switch goes on, and the release note.

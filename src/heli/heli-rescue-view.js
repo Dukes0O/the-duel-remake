@@ -12,6 +12,8 @@
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
 import {FIRE_FX_URL, FIRE_FX_TABLE_URL} from './heli-fire-view.js';
+import {JOB_CARS} from './heli-jobs.js';
+import {createVehicleAssets} from '../vehicle-assets.js';
 
 const PEOPLE = '/assets/heli/people/', PROPS = '/assets/heli/rescue/';
 export const RESCUE_MODEL_URLS = Object.freeze({
@@ -29,11 +31,12 @@ export const RESCUE_LIMITS = Object.freeze({
 // A little larger than life, so a person reads from the helicopter's cameras; crates larger still.
 export const PEOPLE_SCALE = 1.25, CRATE_SCALE = 1.5;
 // Where each model's clip point and top sit above its origin (read from the file once it loads).
-const RESCUER = Object.freeze({harness: 1.36, top: 2.22});
+const RESCUER = Object.freeze({harness: 1.36, top: 2.49});
 // A rescued person's walk away: how long the paramedics need to arrive and to leave.
 export const HANDOVER = Object.freeze({approach: 7, leave: 7, from: 13, stand: 1.4});
 const CASUALTY_MODEL = Object.freeze({hiker: 'hiker-standing', avalanche: 'skier-standing', hoist: 'driver-standing'});
 const CRATE_KEY = Object.freeze({food: 'crate-food', medicine: 'crate-medicine', fuel: 'crate-fuel'});
+const CRATE_ID_ORDER = Object.freeze(['food', 'medicine', 'fuel']);
 
 // A whole number from a seed, so each block and puff sits the same way every frame.
 const hash = (a, b) => {
@@ -106,7 +109,7 @@ const defaultLoad = {
   table: url => fetch(url).then(response => response.json()),
 };
 
-export function createRescueView({THREE, scene, load = defaultLoad, quality = 'high'}) {
+export function createRescueView({THREE, scene, load = defaultLoad, quality = 'high', vehicleAssets = null}) {
   const group = new THREE.Group();
   group.name = 'H4 Rescue';
   group.visible = false;
@@ -174,6 +177,46 @@ export function createRescueView({THREE, scene, load = defaultLoad, quality = 'h
     actor.object.scale.setScalar(scale);
     return actor.object;
   }
+
+  // ---- the stranded driver's car, beside the driver at the hoist site ----
+  // The session's hoist site says where it lies; which car it is comes from the site if the session names one,
+  // else a seeded pick from the customer cars Kestrel One can lift, the same list the recovery job draws from
+  // (heli-jobs.js wreckFor), so the same site always shows the same car.
+  const wreck = {id: '', object: null, assets: vehicleAssets};
+  const wreckCarId = site => site.car.carId ?? JOB_CARS[Math.floor(hash(site.car.x, site.car.z | 0) * JOB_CARS.length)];
+  function drawWreck(sites, ground) {
+    if (!sites?.car) return;
+    const id = wreckCarId(sites), spot = sites.car;
+    wreck.assets ??= createVehicleAssets();
+    const status = wreck.assets.status(id);
+    if (status === 'idle') void wreck.assets.load(id);
+    if (status !== 'ready') return;
+    if (wreck.id !== id || !wreck.object) {
+      if (wreck.object) group.remove(wreck.object);
+      wreck.object = wreck.assets.create(id);
+      wreck.id = id;
+      if (!wreck.object) return;
+      wreck.object.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; } });
+      group.add(wreck.object);
+    }
+    // It lies on the slope: its up follows the ground's.
+    const y = ground ? ground(spot.x, spot.z) : spot.y ?? 0;
+    let up = new THREE.Vector3(0, 1, 0);
+    if (ground) {
+      const d = 1.6;
+      up = new THREE.Vector3((ground(spot.x - d, spot.z) - ground(spot.x + d, spot.z)) / (2 * d), 1, (ground(spot.x, spot.z - d) - ground(spot.x, spot.z + d)) / (2 * d)).normalize();
+    }
+    wreck.object.position.set(spot.x, y, spot.z);
+    wreck.object.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), up)
+      .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), spot.heading || 0));
+    wreck.object.visible = true;
+  }
+
+  // ---- crates set down in the yard stay where they were set down ----
+  // The session keeps a crate only while its course is loaded, so each one seen resting in the yard is
+  // remembered here, and drawn again whenever the helicopter is back over that course in the same run (and
+  // after the last one, until the course changes or a new rescue begins).
+  let down = {run: '', course: '', crates: new Map()};
 
   // ---- sprites: the flare's smoke and the digging snow (the fire's atlas) ----
   const glow = spriteLayer(THREE, RESCUE_LIMITS.high.sprites, THREE.AdditiveBlending, false);
@@ -434,6 +477,7 @@ export function createRescueView({THREE, scene, load = defaultLoad, quality = 'h
 
   function drawHoist(a, r, view, ground) {
     const sites = a.sites;
+    drawWreck(sites, ground);
     if (!sites || a.stage === 'carry' || r.line?.who === 'pair') return;
     const d = sites.driver, h = view.heli;
     put('driver', 'driver-standing', d.x, ground ? ground(d.x, d.z) : d.y, d.z, Math.atan2(h.x - d.x, h.z - d.z), PEOPLE_SCALE);
@@ -447,15 +491,31 @@ export function createRescueView({THREE, scene, load = defaultLoad, quality = 'h
       yardRing.position.set(yard.x, (ground ? ground(yard.x, yard.z) : yard.y ?? 0) + .12, yard.z);
     }
   }
-  function drawCrates(r) {
+  function drawCrates(r, view) {
+    const a = r.active, live = new Set();
+    // Remember each crate seen at rest once the session counts it down; forget them all when a new rescue begins.
+    if (a && a.kind === 'supply' && down.run !== a.id) down = {run: a.id, course: '', crates: new Map()};
+    else if (a && a.kind !== 'supply') down = {run: '', course: '', crates: new Map()};
     for (const crate of r.crates ?? []) {
-      const key = CRATE_KEY[crate.id];
-      if (!key) continue;
-      const model = template(key);
-      if (!model) { touched.add(`crate-${crate.id}`); continue; }
-      // Origin at the crate's rest height (0.7 m above the ground): the (larger) foot sits on the ground at rest.
-      put(`crate-${crate.id}`, key, crate.x, crate.y - .7 - model.min * CRATE_SCALE, crate.z, crate.heading || 0, CRATE_SCALE);
+      live.add(crate.id);
+      const index = CRATE_ID_ORDER.indexOf(crate.id);
+      if (a?.kind === 'supply' && a.crates?.[index] === 2 && !crate.hooked) {
+        down.course = view.courseId ?? '';
+        down.crates.set(crate.id, {x: crate.x, y: crate.y, z: crate.z, heading: crate.heading || 0});
+      }
     }
+    const draw = (id, c) => {
+      const key = CRATE_KEY[id];
+      if (!key) return;
+      const model = template(key);
+      if (!model) { touched.add(`crate-${id}`); return; }
+      // Origin at the crate's rest height (0.7 m above the ground): the (larger) foot sits on the ground at rest.
+      put(`crate-${id}`, key, c.x, c.y - .7 - model.min * CRATE_SCALE, c.z, c.heading || 0, CRATE_SCALE);
+    };
+    for (const crate of r.crates ?? []) draw(crate.id, crate);
+    // Set down earlier and gone from the session's list: still lying in the yard while this course is the one flown.
+    if (down.crates.size && down.course === (view.courseId ?? '') && (!a || (a.kind === 'supply' && a.id === down.run)))
+      for (const [id, c] of down.crates) if (!live.has(id) && (!a || a.crates?.[CRATE_ID_ORDER.indexOf(id)] === 2)) draw(id, c);
   }
 
   const api = {
@@ -463,7 +523,7 @@ export function createRescueView({THREE, scene, load = defaultLoad, quality = 'h
     update(view, {dt = 1 / 60} = {}) {
       time += dt;
       const r = view?.rescue;
-      if (!view?.heli || !r) { carrying = null; handover = null; group.visible = false; return; }
+      if (!view?.heli || !r) { carrying = null; handover = null; down = {run: '', course: '', crates: new Map()}; group.visible = false; return; }
       group.visible = true;
       touched.clear(); glow.reset(); cover.reset();
       glow.setCap(limits().sprites); cover.setCap(limits().sprites);
@@ -477,6 +537,7 @@ export function createRescueView({THREE, scene, load = defaultLoad, quality = 'h
       if (a && handover) handover = null;
       searchRing.visible = false; clearingRing.visible = false; yardRing.visible = false;
       for (const mesh of debris.meshes) mesh.visible = false;
+      if (wreck.object) wreck.object.visible = false;
       drawLine(r, view);
       if (a?.here) {
         if (a.kind === 'hiker') drawHiker(a, r, view, ground);
@@ -484,7 +545,7 @@ export function createRescueView({THREE, scene, load = defaultLoad, quality = 'h
         else if (a.kind === 'hoist') drawHoist(a, r, view, ground);
       }
       if (a?.kind === 'supply') drawSupply(a, r, ground);
-      drawCrates(r);
+      drawCrates(r, view);
       drawHandover(r, dt);
       for (const [name, actor] of actors) if (!touched.has(name)) actor.object.visible = false;
       glow.finish(); cover.finish();
@@ -511,11 +572,12 @@ export function createRescueView({THREE, scene, load = defaultLoad, quality = 'h
     get state() {
       return {actors: [...actors].filter(([, actor]) => actor.object.visible).map(([name, actor]) => ({name, key: actor.key})),
         debris: debris.meshes.some(mesh => mesh.visible) ? debrisCount : 0, sprites: glow.count + cover.count, glowSprites: glow.count,
+        car: wreck.object?.visible ? wreck.id : null,
         searchRing: searchRing.visible, clearingRing: clearingRing.visible, yardRing: yardRing.visible,
         handover: handover ? {t: handover.t, look: handover.look, kind: handover.kind} : null};
     },
     // The model standing for a role ('line', 'hiker', 'skier', 'driver', 'crate-food', 'medic-1', ...), for the checks.
-    object(name) { return actors.get(name)?.object ?? null; },
+    object(name) { return name === 'car' ? wreck.object : actors.get(name)?.object ?? null; },
     setQuality(next) { quality = next in RESCUE_LIMITS ? next : 'high'; },
     get quality() { return quality; },
     get artStatus() { return art.status; },
@@ -525,6 +587,8 @@ export function createRescueView({THREE, scene, load = defaultLoad, quality = 'h
     hide() { group.visible = false; },
     dispose() {
       scene.remove(group);
+      // The stranded driver's car is built fresh from the vehicle assets, so it is freed here.
+      wreck.object?.traverse(o => { o.geometry?.dispose?.(); [o.material].flat().forEach(m => m?.dispose?.()); });
       // The clones share their geometry and materials with the loaded files, so those are freed once.
       for (const entry of models.values()) entry.root?.traverse(object => { object.geometry?.dispose?.(); (Array.isArray(object.material) ? object.material : [object.material]).forEach(m => m?.dispose?.()); });
       for (const layer of [glow, cover]) { layer.points.geometry.dispose(); layer.material.uniforms.atlas.value?.dispose?.(); layer.material.dispose(); }

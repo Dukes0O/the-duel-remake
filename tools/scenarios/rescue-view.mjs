@@ -6,6 +6,9 @@
 //   node tools/browser-harness.mjs scenario rescue-view
 // RESCUE_VIEW_ONLY=hiker,avalanche,hoist,supply,dusk,stretcher picks the shots.
 // RESCUE_VIEW_SHEET=<round> writes docs/board/looks/heli-rescue-view/round-<round>.jpg.
+// Round 3 (RESCUE-FINISH) retakes only the views that changed: RESCUE_VIEW_ONLY=avalanche,hoist,supply and
+// RESCUE_VIEW_FINISH=1 adds the rescuer alone and with the skier from the side and from behind, the driver's
+// car at the hoist site, and a crate set down in the yard.
 import {join} from 'node:path';
 import {appendFile, readFile, writeFile} from 'node:fs/promises';
 import {publishReviewSheet} from './review-sheet.mjs';
@@ -20,6 +23,9 @@ import {hikerSpots, pickHiker} from '../../src/heli/heli-search.js';
 
 const entry = '/tools/menu-check.html?flags=helicopter,forest-fire,rescue,tremblant-woods,tremblant-snow,panorama-ridge';
 const SHEET_ROUND = Number(process.env.RESCUE_VIEW_SHEET || 0);
+const FINISH = process.env.RESCUE_VIEW_FINISH === '1';
+// The round 3 sheet shows only the views RESCUE-FINISH changed.
+const KEEP = ['line-alone-side', 'line-alone-behind', 'avalanche-carry', 'line-pair-behind', 'hoist-car', 'supply-yard'];
 const ONLY = (process.env.RESCUE_VIEW_ONLY || 'hiker,avalanche,hoist,supply,dusk,stretcher').split(',');
 const app = 'window.__qaApp';
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -125,7 +131,8 @@ async function look(context, p, {back = 40, up = 30, speed = 22, within = 5, sid
 async function shoot(context, name, label, focus = null, ms = 1500) {
   await pause(ms);
   const path = await context.screenshot(name);
-  const shot = {label, path};
+  const shot = {name, label, path};
+  if (typeof focus === 'function') focus = await focus();
   if (focus) {
     const at = await screenOf(context, focus);
     if (!at.behind) shot.crop = [Math.min(1280 - 400, Math.max(0, at.x - 200)), Math.min(720 - 225, Math.max(0, at.y - 130)), 400, 225];
@@ -233,6 +240,12 @@ async function avalanche(context, {quick = false} = {}) {
   if (!quick) {
     await look(context, sites.slide, {back: 150, up: 60, speed: 28, within: 8});
     await shoot(context, 'avalanche-slide', 'The slide: rough snow blocks over the slope, no signal yet');
+    if (FINISH) {
+      // The rescuer alone on the line, held steady under the helicopter: the side camera, then the chase camera.
+      const alone = () => view(context, '({x: v.rescue.line.x, y: v.rescue.line.y - 1.4, z: v.rescue.line.z})');
+      await context.evaluate(`${app}.heliCamera = 3`);
+      await shoot(context, 'line-alone-side', 'The rescuer on the line, alone: from the side', alone, 1200);
+    }
     // Closing on the beacon: the bar fills.
     await look(context, b, {back: 45, up: 28, within: 4});
     await note('Signal at 45 m back:', await lineState(context));
@@ -242,19 +255,30 @@ async function avalanche(context, {quick = false} = {}) {
   const gy = await groundAt(context, b.x, b.z);
   await setDown(context, b, gy);
   await lowerOver(context, b, gy, 10.5);
+  if (FINISH && !quick) {
+    // From behind the cable is long: with the helicopter brought low the rescuer stands clear of the panel.
+    await context.evaluate(`${app}.heliCamera = 0`);
+    await shoot(context, 'line-alone-behind', 'The rescuer on the line, alone: from behind (set down at the beacon)', () => view(context, '({x: v.rescue.line.x, y: v.rescue.line.y - 1.4, z: v.rescue.line.z})'), 900);
+  }
   await context.evaluate(`${app}.heliCamera = 3`);
   await sim(context, 8, 'v => v.rescue.line?.holding && v.rescue.line.hold > .4');
   await note('Digging:', await lineState(context));
   if (!quick) await shoot(context, 'avalanche-dig', 'The dig: the skier comes up out of the snow as the bar fills', {x: b.x, y: gy + 1, z: b.z}, 400);
   await sim(context, 30, 'v => v.rescue.active.stage === "carry"');
   await note('After the dig:', await lineState(context));
+  if (FINISH && !quick) {
+    // The skier clipped on, the helicopter still low: from behind, then the side.
+    await context.evaluate(`${app}.heliCamera = 0`);
+    await shoot(context, 'line-pair-behind', 'The rescuer with the skier clipped on: from behind', () => view(context, '({x: v.rescue.line.x, y: v.rescue.line.y - 1.4, z: v.rescue.line.z})'), 900);
+    await context.evaluate(`${app}.heliCamera = 3`);
+  }
   if (!quick) {
     // The pair under the helicopter, seen from behind as a pilot sees them.
     await context.evaluate(`${app}.heliCamera = 3`);
     await flyTo(context, {x: b.x, z: b.z - 40, y: gy + 40, speed: 12, face: {x: b.x, z: b.z + 100}}, 'a climb with the pair', {within: 6, tall: 4});
     await sim(context, 3);
     const pair = await view(context, '({x: v.rescue.line.x, y: v.rescue.line.y, z: v.rescue.line.z})');
-    await shoot(context, 'avalanche-carry', 'The skier on the line under the helicopter, from the side', pair, 600);
+    await shoot(context, 'avalanche-carry', 'The rescuer with the skier clipped on: from the side, in the air', pair, 600);
   }
   // Carried to the landing zone and set down gently: the paramedics come for the skier.
   await carryToZone(context, {rough: quick});
@@ -277,6 +301,13 @@ async function hoist(context) {
   await look(context, d, {back: 110, up: 30, speed: 25, within: 6, side: 30});
   await shoot(context, 'hoist-approach', 'The hoist: the driver stands on the slope below the road');
   const gy = await groundAt(context, d.x, d.z);
+  if (FINISH) {
+    // Closer, to see the driver and the car that went off the road beside him.
+    const c = sites.car, mid = {x: (d.x + c.x) / 2, y: gy + 1, z: (d.z + c.z) / 2};
+    await note(`Car at ${c.x.toFixed(0)}, ${c.z.toFixed(0)}, ${c.y.toFixed(0)} heading ${c.heading.toFixed(2)}`);
+    await look(context, mid, {back: 42, up: 24, speed: 14, within: 4, side: 16});
+    await shoot(context, 'hoist-car', 'The hoist site: the driver and the car that left the road', mid, 900);
+  }
   await context.evaluate(`${app}.heliCamera = 2`);
   await setDown(context, d, gy);
   // Lower the helicopter a little on the cliff for the side view; if the slope will not have it, the view stays down the cable.
@@ -305,6 +336,30 @@ async function supply(context) {
   await context.evaluate(`${app}.heliCamera = 3`);
   const hung = await view(context, 'v.rescue.crates.find(c => c.hooked)');
   await shoot(context, 'supply-carry', 'A crate on the line, from the side: the run counts crates down', {x: hung.x, y: hung.y, z: hung.z}, 800);
+  if (FINISH) {
+    // Over to the yard by the lodge, and set the crate down gently inside its ring.
+    await cruiseTo(context, 'tremblant-snow');
+    const yard = await view(context, 'JSON.parse(JSON.stringify(v.rescue.active.sites.yard))');
+    const yg = await groundAt(context, yard.x, yard.z);
+    await note(`Yard at ${yard.x.toFixed(0)}, ${yard.z.toFixed(0)}, ${yg.toFixed(0)}`);
+    await flyTo(context, {x: yard.x, z: yard.z, y: yg + 40, speed: 20, face: {x: yard.x, z: yard.z + 100}}, 'over the yard', {within: 3, tall: 3, seconds: 300});
+    let state = null;
+    for (let i = 0; i < 160; i++) {
+      state = JSON.parse(await view(context, 'JSON.stringify({h: v.heli, c: v.rescue.crates.find(c => c.hooked) || null})'));
+      if (!state.c || state.c.y < yg + 1) break;
+      const high = state.c.y - yg > 8;
+      await pilotTo(context, {x: yard.x - (state.c.x - state.h.x), z: yard.z - (state.c.z - state.h.z), y: state.h.y - (high ? 3 : .5), speed: 1.5, sink: high ? 4 : .6, face: {x: yard.x, z: yard.z + 100}});
+      await sim(context, 1);
+    }
+    if (!state?.c) throw Error('The crate was not on the line over the yard');
+    await press(context, 'heli-hook');
+    await sim(context, 2);
+    await note('Crate states:', await view(context, 'JSON.stringify(v.rescue.active?.crates)'));
+    await context.evaluate(`${app}.heliCamera = 0`);
+    const down = () => view(context, '(c => ({x: c.x, y: c.y, z: c.z}))(v.rescue.crates.find(c => c.id === "food"))');
+    await look(context, await down(), {back: 15, up: 8, speed: 8, within: 3, side: 6});
+    await shoot(context, 'supply-yard', 'A crate set down in the yard, inside its ring', down, 1000);
+  }
 }
 
 async function dusk(context) {
@@ -324,6 +379,7 @@ async function dusk(context) {
 async function writeSheet(context, path, title) {
   const cells = [];
   for (const shot of shots) {
+    if (FINISH && !KEEP.includes(shot.name)) continue;
     cells.push({label: shot.label, path: shot.path});
     if (shot.crop) cells.push({label: `${shot.label.split(':')[0]}: closer`, path: shot.path, crop: shot.crop});
   }
