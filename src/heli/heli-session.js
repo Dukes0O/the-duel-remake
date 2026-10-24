@@ -17,7 +17,7 @@ import {BUCKET, createBucket, stepBucket, bucketHit, bucketWords, bucketHolds, a
 import {bucketDamageOf, damageBucket as damageBucketSave, repairBucket as repairBucketSave, FIRE_MONEY, missionsOf, setMissions} from './heli-save.js';
 import {createFireRun, fireWorld} from './heli-fire-run.js';
 import {callOf, rescueOf, rescueConditions, isRescueKind, tickRescue, finishRescue, failRescue, clockLeft, duskOf, rescueLimit,
-  peoplePay, DUSK_SECONDS} from './heli-missions.js';
+  peoplePay, dropSummitCall, DUSK_SECONDS} from './heli-missions.js';
 import {RESCUE, CONDITIONS, createRescueLine, setLineWho, peopleOnLine, hNothing, canFitLine, holdFraction, stepRescue, rescueHit, cabinHurt,
   handoverOutcome, createSupplyCrate, noteCrateRelease, crateResult, cratePay, supplyPay, hoistBonus, hookCrates, carryNet, spillNet} from './heli-rescue.js';
 import {hikerSpots, pickHiker, hikerSpotted, hikerWalk, slideSpots, pickSlide, beaconSignal, hoistSpots, pickHoist, supplyYard, supplyPickup,
@@ -233,6 +233,11 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   const rflag = {rescue: rescueOn};
   // Summit Run's rescues (SUMMIT-HELI-RESCUES) need both switches: only then does its ceiling follow the ground.
   const siteFlag = {summitRun: summitOn, summitRescue: summitOn && rescueOn};
+  // A call or rescue stored at Summit Run, met with the Summit switch off, is dropped quietly (RESCUE-SUMMIT-TUNE).
+  {
+    const stored = missionsOf(save), kept = dropSummitCall(stored, {rescue: rescueOn, summitRun: summitOn});
+    if (kept !== stored) commit(setMissions(save, kept, flag));
+  }
   const siteWorlds = new Map();
   const siteWorldOf = id => {
     if (fireWorlds.has(id)) return fireWorlds.get(id);
@@ -923,7 +928,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         target = site && (site.courseId === HOME_COURSE || here) ? bearingTo(site.zone.x, site.zone.z) : null;
       active = Object.freeze({kind: r.kind, id: r.id, courseId: r.courseId, courseName: places[r.courseId]?.name ?? null,
         stage: r.stage, condition: r.condition, conditionName: CONDITIONS[r.condition], here,
-        clockSeconds: r.clockSeconds, limit: rescueLimit(r.kind, gear), left, orange: left <= 60, dusk: duskOf(r),
+        clockSeconds: r.clockSeconds, limit: rescueLimit(r.kind, gear, r.courseId), left, orange: left <= 60, dusk: duskOf(r),
         crates: Object.freeze([...r.crates]), cratesDown: r.crates.filter(c => c === 2).length, target, signal, sites});
     }
     return Object.freeze({
@@ -1148,7 +1153,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       refreshFireGoal();
       // With people on the line the autopilot holds the line speed limit too (section 7).
       if (rescueOn && autopilot.engaged && Number.isFinite(autopilot.speed) && autopilot.speed > RESCUE.speedLimit && hNothing(loads)) autopilot.speed = RESCUE.speedLimit;
-      const ap = autopilotStep(autopilot, heli, flightControls, {ground: world.ground, hang, load: held, dt});
+      const ap = autopilotStep(autopilot, heli, flightControls, {ground: world.ground, hang, load: held, dt,
+        ceiling: (x, z) => ceilingAt(site.area, x, z, world.ground)});
       handle(ap.events);
       // Every car steps; only the one on the cable pulls on the helicopter.
       let pull;
@@ -1323,7 +1329,12 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (phase !== 'flying' || !pumpHere()) return {ok: false, reason: 'The pump is at the home pad.'};
       if (!pumpOpen()) return {ok: false, reason: 'Finish lesson 3, landing, to use the pump.'};
       storeFuel();
-      const result = commit(buyFuel(save, kg, flag));
+      // The free first tank is the home pad's: at the Summit truck fuel is always paid, and
+      // the pilot's free tank at the pad is left for the pad.
+      const freeTank = heliOf(save).refuels === 0 && !onHome();
+      let bought = freeTank ? buyFuel({...save, heli: {...heliOf(save), refuels: 1}}, kg, flag) : buyFuel(save, kg, flag);
+      if (freeTank && bought.ok) bought = {...bought, profile: {...bought.profile, heli: {...heliOf(bought.profile), refuels: 0}}};
+      const result = commit(bought);
       if (result.ok) {
         refuelHeli(heli, heliOf(save).fuelKg);
         emit({type: 'fuelBought', kg: result.kg, cost: result.cost});
