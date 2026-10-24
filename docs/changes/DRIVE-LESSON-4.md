@@ -87,7 +87,11 @@ Fir Esses 7.88 s / 7.72 s (was 8.03 / 7.76; gates 585 m and 575 m, was 585 and 5
 ## Checks (Linux cloud)
 
 - `tools/test-drive-lesson-4.mjs` 12 of 12; `tools/test-drive-lessons.mjs` and `tools/test-drive-lesson-2.mjs` pass (53), with the one clearance assertion added to each native instructor test.
-- Lane tier and build: see the end of this note.
+- Run once on this branch after merging current `integration/wasteland` (84768cb2), lane tier
+  `--changed --jobs 8 --keep-going`: 231 of 237 suites pass, including lessons 1, 2 and 4 and every replay
+  and world-signature guard. The six failures are the laptop-only suites: `test-course-kit`,
+  `test-earned-cars-ui`, `test-medals`, `test-full-check`, `test-salt-flats`, `test-salt-flats-art`.
+  `npm run build` passes.
 - Not run here: browser checks and the Windows-only suites (none is touched by this card).
 
 ## Removed
