@@ -115,9 +115,10 @@ Nothing replaced.
 
 ## Gates
 
-Owned suite: `test-heli-summit-tune` (105). 24 October 2026, from PowerShell in the lane
-folder: `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 148 passed, 0 failed
-(867 s), including `test-heli-summit-tune`, `test-heli-summit-rescues` (113),
-`test-heli-missions` (45 groups), the rescue session and autopilot rescue suites;
-`npm run build`: pass. (A first lane run stopped on `test-heli-missions`; see Changed
-assertions; the rerun above is on the committed fix.)
+Owned suite: `test-heli-summit-tune` (105). 24 October 2026, on the final commit, from
+PowerShell in the lane folder: `node tools/run-tests.mjs --tier lane --changed --jobs 4`:
+148 passed, 0 failed (1,265 s), including `test-heli-summit-tune`,
+`test-heli-summit-rescues` (113), `test-heli-missions` (45 groups) and the rescue session
+and autopilot rescue suites; `npm run build`: pass. Two earlier runs stopped on a
+`test-circuit-ardennes` timeout under load (it passes alone, 116 s) and on the two
+`test-heli-summit-rescues` assertions listed under Changed assertions.
