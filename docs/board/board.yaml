@@ -3,11 +3,12 @@ completed: [SUMMIT-HELI-RESCUES, SKIN-HOOKS, RESCUE-VIEW, RESCUE-AUTOPILOT, SKIN
 tasks:
   - id: RESCUE-SUMMIT-TUNE
     title: "Summit rescues: fair clocks, an autopilot that climbs, paid fuel at the truck"
-    owner: "claude-cloud"
+    owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "ready"
-    branch: cloud/rescue-summit-tune
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-24
+    branch: claude/rescue-summit-tune
     needs: []
     locks: []
     flag: "rescue"
