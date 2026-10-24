@@ -100,4 +100,9 @@ Nothing replaced.
 
 ## Gates
 
-Owned suite: `test-heli-summit-tune` (92). Lane tier and build: see below.
+Owned suite: `test-heli-summit-tune` (92). 24 October 2026, from PowerShell in the lane
+folder: `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 148 passed, 0 failed
+(867 s), including `test-heli-summit-tune`, `test-heli-summit-rescues` (113),
+`test-heli-missions` (45 groups), the rescue session and autopilot rescue suites;
+`npm run build`: pass. (A first lane run stopped on `test-heli-missions`; see Changed
+assertions; the rerun above is on the committed fix.)
