@@ -3,11 +3,12 @@ completed: [SIRENA-ART, FIX-HELI-HOOK, RESCUE-SUMMIT-TUNE, EARN-CAR-1, EARN-CAR-
 tasks:
   - id: RESCUE-SUMMIT-ARRIVAL
     title: "Summit cruise leg ends over the start area, so the autopilot misses the cliff"
-    owner: "claude-cloud"
+    owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "ready"
-    branch: cloud/rescue-summit-arrival
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-24
+    branch: claude/rescue-summit-arrival
     needs: []
     locks: []
     flag: "rescue"
@@ -520,7 +521,8 @@ tasks:
     owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
     needs: [SKI-RULES]
     locks: []
     flag: "heli-skiing"
@@ -820,7 +822,8 @@ tasks:
     owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
     needs: [DRIVE-LESSON-HOOKS]
     locks: []
     flag: "driving-lessons"
