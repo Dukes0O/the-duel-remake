@@ -33,12 +33,15 @@ const validBest = value => Number.isFinite(value) && value >= 0 ? value : null;
 
 // Whether a lesson can be played now. Corner is always open, line follows corner, gears follows line and
 // waits for the engine-curve switch ("Opens later"), and snow follows gears, or line while gears is not open.
-export function driveLessonAccess(drivingLessons, id, {engineCurve = false} = {}) {
+export function driveLessonAccess(drivingLessons, id, options) {
+  const engineCurve = options?.engineCurve === true;
   const index = DRIVE_LESSON_ORDER.indexOf(id);
   if (index < 0) return {open: false, reason: 'That driving lesson is not available.'};
+  // Progress from another version is read by that version only; nothing here opens or closes against it.
+  if (drivingLessons != null && drivingLessons.version !== 1) return {open: false, reason: 'This lesson progress belongs to another version.'};
   const done = normalizeDrivingLessons(drivingLessons).done;
-  if (id === 'gears' && engineCurve !== true) return {open: false, reason: 'Opens later'};
-  const before = id === 'snow' && engineCurve !== true ? 'line' : DRIVE_LESSON_ORDER[index - 1];
+  if (id === 'gears' && !engineCurve) return {open: false, reason: 'Opens later'};
+  const before = id === 'snow' && !engineCurve ? 'line' : DRIVE_LESSON_ORDER[index - 1];
   if (before && done[before] !== true) return {open: false, reason: 'Finish the earlier lesson first.'};
   return {open: true, reason: ''};
 }
@@ -64,22 +67,24 @@ export function grantDriveLessonReward(profile, id, carId) {
   const type = DRIVE_LESSON_UPGRADE[id];
   const level = CARS[carId].factoryMaxed ? 3 :
     Math.max(0, Math.min(3, Math.floor(Number.isFinite(levels[type]) ? levels[type] : 0)));
-  const reward = level >= 3 ? {kind: 'credits', credits: REWARD_CREDITS} : {kind: type, carId, level: level + 1};
+  const credits = Math.min(1_000_000_000, Math.max(0, profile.credits || 0) + REWARD_CREDITS);
+  const reward = level >= 3 ? {kind: 'credits', credits: credits - Math.min(1_000_000_000, Math.max(0, profile.credits || 0))}
+    : {kind: type, carId, level: level + 1};
   const paid = level >= 3
-    ? {...profile, credits: Math.min(1_000_000_000, Math.max(0, profile.credits || 0) + REWARD_CREDITS)}
+    ? {...profile, credits}
     : {...profile, upgrades: {...profile.upgrades, [carId]: {...levels, [type]: level + 1}}};
   return {ok: true, changed: true, reason: '', reward,
     profile: {...paid, drivingLessons: {...lessons, rewarded: {...lessons.rewarded, [id]: true}}}};
 }
 
-export function finishDriveLesson(profile, id, marginSeconds, carId, {engineCurve = false} = {}) {
+export function finishDriveLesson(profile, id, marginSeconds, carId, options) {
   const reason = invalid(profile, id, carId);
   if (reason) return failure(profile, reason);
   if (!Number.isFinite(marginSeconds) || marginSeconds <= 0)
     return failure(profile, 'A completed challenge needs a positive winning margin.');
   const lessons = normalizeDrivingLessons(profile.drivingLessons);
   // A lesson that is already done can be retaken whatever the order says; a new one must be open.
-  const access = driveLessonAccess(profile.drivingLessons, id, {engineCurve});
+  const access = driveLessonAccess(profile.drivingLessons, id, options);
   if (!lessons.done[id] && !access.open) return failure(profile, access.reason);
   const best = Math.max(lessons.best[id] ?? 0, marginSeconds);
   const changed = !lessons.done[id] || lessons.best[id] !== best;

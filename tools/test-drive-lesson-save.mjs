@@ -107,7 +107,7 @@ test('lessons open in order; gears says "Opens later" while engine-curve is off 
   assert.equal(open(done(['line', 'gears']), 'snow', true).open, true);
   assert.equal(open(done([]), 'snow', false).open, false);
   assert.equal(open(done(['line']), 'nope', true).open, false);
-  assert.equal(open({version: 2}, 'corner', false).open, true, 'a newer save is read, never rewritten');
+  assert.equal(open({version: 2}, 'corner', false).open, false, 'a newer save is read, never played over');
 });
 
 test('each lesson grants its own level once: handling, engine, tyres', () => {
@@ -196,4 +196,16 @@ test('a player who finished all four keeps it through memory-only save and reloa
   const levels = loaded.players[0].profile.upgrades.falcone_f42;
   assert.deepEqual([levels.brakes, levels.handling, levels.engine, levels.tires], [1, 1, 2, 1]);
   assert.deepEqual(loaded.players[1].profile.drivingLessons, {version: 1, done: {corner: true}, best: {corner: .3}, rewarded: {corner: true}});
+});
+
+test('access never throws on odd progress, a newer version opens nothing, and a capped wallet is told the truth', () => {
+  for (const value of [{version: 2}, {version: 2, done: null}, {version: 2, done: {line: true}}, {version: 99, done: 'x'}])
+    for (const id of DRIVE_LESSON_ORDER) assert.equal(driveLessonAccess(value, id, {engineCurve: true}).open, false, JSON.stringify(value) + id);
+  assert.deepEqual(driveLessonAccess({version: 2}, 'line'), {open: false, reason: 'This lesson progress belongs to another version.'});
+  for (const options of [null, undefined, {}, {engineCurve: 'true'}]) assert.equal(driveLessonAccess(undefined, 'gears', options).open, false);
+  assert.equal(driveLessonAccess(null, 'corner', null).open, true);
+  assert.equal(driveLessonAccess({version: 1, done: null}, 'line').open, false);
+  const nearCap = {...fresh(), credits: 999_999_900, upgrades: {falcone_f42: {brakes: 3}}};
+  const paid = finishDriveLesson(nearCap, 'corner', .4, 'falcone_f42');
+  assert.equal(paid.profile.credits, 1_000_000_000); assert.deepEqual(paid.reward, {kind: 'credits', credits: 100});
 });
