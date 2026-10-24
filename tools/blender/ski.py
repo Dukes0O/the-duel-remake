@@ -208,13 +208,13 @@ def pose_ski_tuck():
     return pose
 
 def pose_ski_air():
-    pose = dict(pelvis_off=(0, 0.08, -0.22), lean=(18, 0, 0), head=(-12, 0, 0),
-                arm_l=dict(hand=(0.56, -0.12, 1.14), pole=(1.0, 0.7, -0.1), curl=0.7, shoulder=0.2),
-                arm_r=dict(hand=(-0.56, -0.12, 1.14), pole=(-1.0, 0.7, -0.1), curl=0.7, shoulder=0.2))
-    pose['leg_l'] = dict(ankle=(0.15, 0.12, 0.46), pole=(0.1, -1, 0), foot=(0.05, -1, 0.3), ball=(0.05, -1, 0.25))
-    pose['leg_r'] = dict(ankle=(-0.15, 0.10, 0.42), pole=(-0.1, -1, 0), foot=(-0.05, -1, 0.3), ball=(-0.05, -1, 0.25))
-    pose['ski'] = {'l': ((0.07, -1, 0.26), 3.0), 'r': ((-0.07, -1, 0.24), -3.0)}
-    pose['poles'] = {'l': (0.35, 0.85, -0.3), 'r': (-0.35, 0.85, -0.3)}
+    pose = dict(pelvis_off=(0, 0.05, -0.15), lean=(12, 0, 0), head=(-8, 0, 0),
+                arm_l=dict(hand=(0.30, -0.52, 1.10), pole=(1.0, 0.7, -0.1), curl=0.7, shoulder=-0.02),
+                arm_r=dict(hand=(-0.30, -0.52, 1.10), pole=(-1.0, 0.7, -0.1), curl=0.7, shoulder=-0.02))
+    pose['leg_l'] = dict(ankle=(0.12, 0.06, 0.28), pole=(0.1, -1, 0), foot=(0.0, -1, -0.05), ball=(0.0, -1, -0.05))
+    pose['leg_r'] = dict(ankle=(-0.12, 0.06, 0.28), pole=(-0.1, -1, 0), foot=(0.0, -1, -0.05), ball=(0.0, -1, -0.05))
+    pose['ski'] = {'l': ((0, -1, 0.0), 0.0), 'r': ((0, -1, 0.0), 0.0)}
+    pose['poles'] = {'l': (0.06, 0.8, -0.35), 'r': (-0.06, 0.8, -0.35)}
     return pose
 
 def pose_ski_tumble():
@@ -412,18 +412,21 @@ def build_flag(kind):
     return finish_piece('flag-' + kind, parts)
 
 def build_kicker():
-    """A snow kicker: a curved ramp 8 m wide rising 1.4 m over 5 m to a lip, banks at the sides, a wooden lip board
-    and a steep snow face under it. +Z (Blender -Y) is the way the skier goes."""
+    """A snow kicker: a curved ramp 8 m wide rising 1.4 m over 5 m to a lip, with packed snow banks down each side,
+    a steep snow face under the lip, and a timber board set INTO the lip: flush with the ramp's surface at its top
+    edge and facing the drop. +Z (Blender -Y) is the way the skier goes."""
     nx, nz = 16, 40
-    def profile(u): return 1.4 * u ** 2.2
+    H = 1.4
+    def profile(u): return H * u ** 2.2
+    def edge_rise(u): return 0.28 * (0.35 + 0.65 * u)          # where the ramp's edge turns up into the bank
     verts = []; faces = []
     for j in range(nz + 1):
         u = j / nz; z = -2.5 + 5.0 * u; h = profile(u)
         for i in range(nx + 1):
             fx = -1 + 2 * i / nx; x = fx * 4.0
-            bank = 0.28 * max(0.0, abs(fx) - 0.80) / 0.20
+            bank = max(0.0, abs(fx) - 0.80) / 0.20
             wob = noise.noise(Vector((x * 0.5, z * 0.5, 1.0))) * 0.03
-            verts.append((x * (1 + 0.04 * bank), -z, h + bank * (0.35 + 0.65 * u) + wob))
+            verts.append((x * (1 + 0.04 * bank), -z, h + bank * edge_rise(u) + wob))
     for j in range(nz):
         for i in range(nx):
             a_ = j * (nx + 1) + i
@@ -438,58 +441,84 @@ def build_kicker():
             h0 = profile(u0) + 0.006; h1 = profile(u1) + 0.006
             ang = math.atan2(h1 - h0, z1 - z0)
             parts.append(box('track', 'snow_blue', (0.11, (z1 - z0) * 1.02, 0.004), (tx, -(z0 + z1) / 2, (h0 + h1) / 2), (-ang, 0, 0)))
-    # the steep face under the lip, and the fill of each bank down to the snow
+    # the steep face under the lip, across the whole width and out over the banks
+    bank_w = 1.6
     face_v = []; face_f = []
+    cols = []
     for i in range(nx + 1):
-        fx = -1 + 2 * i / nx; x = fx * 4.0; bank = 0.28 * max(0.0, abs(fx) - 0.80) / 0.20
-        face_v += [(x * (1 + 0.04 * bank), -2.5, 1.4 + bank * 0.75), (x * (1 + 0.04 * bank), -2.5, 0.0)]
+        fx = -1 + 2 * i / nx; bank = max(0.0, abs(fx) - 0.80) / 0.20
+        cols.append((fx * 4.0 * (1 + 0.04 * bank), H + bank * edge_rise(1.0)))
+    for x, h in cols: face_v += [(x, -2.5, h), (x, -2.5, 0.0)]
     for i in range(nx): face_f.append((2 * i, 2 * i + 2, 2 * i + 3, 2 * i + 1))
     fm = bpy.data.meshes.new('face'); fm.from_pydata(face_v, [], face_f); fm.update()
     fo = bpy.data.objects.new('face', fm); bpy.context.scene.collection.objects.link(fo); fo.data.materials.append(mat('snow_blue'))
     parts.append(fo)
+    # packed snow banks down each side: they rise from the ramp's edge, round off and slope out to the ground, lumpy
+    kb = 8
     for side in (-1, 1):
         sv = []; sf = []
         for j in range(nz + 1):
-            u = j / nz; z = -2.5 + 5.0 * u
-            sv += [(side * 4.0 * 1.04, -z, profile(u) + 0.28 * (0.35 + 0.4 * u) + 0.0), (side * 4.0 * 1.04, -z, 0.0)]
-        for j in range(nz): sf.append((2 * j, 2 * j + 2, 2 * j + 3, 2 * j + 1) if side > 0 else (2 * j, 2 * j + 1, 2 * j + 3, 2 * j + 2))
-        sm = bpy.data.meshes.new('side'); sm.from_pydata(sv, [], sf); sm.update()
-        so = bpy.data.objects.new('side', sm); bpy.context.scene.collection.objects.link(so); so.data.materials.append(mat('snow_blue'))
+            u = j / nz; z = -2.5 + 5.0 * u; h0 = profile(u) + edge_rise(u)
+            for k in range(kb + 1):
+                t = k / kb
+                crest = 1.0 + 0.35 * math.sin(min(t, 0.3) / 0.3 * math.pi / 2) * (0.5 + 0.5 * u)   # a rounded, packed top
+                lump = noise.noise(Vector((side * 3 + t * 2.0, z * 0.7, 4.0))) * 0.07 * (1 - t)
+                height = (h0 * crest * (1 - t) ** 1.5 + lump) if t < 1.0 else 0.0
+                sv.append((side * (4.16 + bank_w * t), -z, max(0.0, height)))
+        for j in range(nz):
+            for k in range(kb):
+                a_ = j * (kb + 1) + k
+                quad = (a_, a_ + 1, a_ + kb + 2, a_ + kb + 1)
+                sf.append(quad if side > 0 else quad[::-1])
+        # the bank's end at the drop: a sheet from its top edge down to the ground
+        base = len(sv)
+        for k in range(kb + 1):
+            t = k / kb
+            h0 = profile(1.0) + edge_rise(1.0); crest = 1.0 + 0.35 * math.sin(min(t, 0.3) / 0.3 * math.pi / 2) * 1.0
+            sv += [(side * (4.16 + bank_w * t), -2.5, h0 * crest * (1 - t) ** 1.5 if t < 1.0 else 0.0), (side * (4.16 + bank_w * t), -2.5, 0.0)]
+        for k in range(kb):
+            quad = (base + 2 * k, base + 2 * k + 2, base + 2 * k + 3, base + 2 * k + 1)
+            sf.append(quad if side > 0 else quad[::-1])
+        sm = bpy.data.meshes.new('bank'); sm.from_pydata(sv, [], sf); sm.update()
+        so = bpy.data.objects.new('bank', sm); bpy.context.scene.collection.objects.link(so); so.data.materials.append(mat('snow'))
         parts.append(so)
-    # the wooden lip: a board along the edge of the last metre, held by posts driven into the face, planks end to end
+    # the timber lip, set into the snow: planks lying in the ramp's last 0.4 m with their tops flush with its surface,
+    # and a board down the first 0.36 m of the face, its outer side flush with the snow
     for k in range(8):
-        parts.append(box('lip_plank', 'timber', (1.02, 0.30, 0.055), (-3.57 + k * 1.02, 2.46, 1.405), (math.radians(-6), 0, 0), bevel=0.006))
-        parts.append(box('lip_face', 'timber_dark', (1.0, 0.045, 0.30), (-3.57 + k * 1.02, 2.585, 1.27), (math.radians(-6), 0, 0), bevel=0.006))
-    for k in range(5):
-        parts.append(box('lip_post', 'timber_dark', (0.1, 0.1, 0.55), (-3.6 + k * 1.8, 2.56, 1.0)))
+        x = -3.5 + k * 1.0
+        zc = 2.5 - 0.22; uc = (zc + 2.5) / 5.0
+        hc = profile(uc); ang = math.atan2(profile(uc + 0.02) - profile(uc - 0.02), 0.2)
+        parts.append(box('lip_plank', 'timber', (0.97, 0.44, 0.07), (x, -zc, hc - 0.035 * math.cos(ang)), (-ang, 0, 0), bevel=0.006))
+        parts.append(box('lip_face', 'timber_dark', (0.97, 0.07, 0.36), (x, -2.5 + 0.032, H - 0.18 + 0.0), (0, 0, 0), bevel=0.006))
     for k in range(4):
-        parts.append(box('lip_screw_plate', 'post_grey', (0.12, 0.012, 0.06), (-2.7 + k * 1.8, 2.6, 1.31)))
-    return finish_piece('kicker', parts, 8000)
+        parts.append(box('lip_screw_plate', 'post_grey', (0.14, 0.012, 0.05), (-3.0 + k * 2.0, -2.5 - 0.004, H - 0.18)))
+    return finish_piece('kicker', parts, 9000)
 
 def build_netting():
     """A 12 m run of orange safety netting on four steel posts: a top and bottom rope, vertical and horizontal
     cords on a 0.2 m mesh, sagging between the posts, ground sleeves and guy ropes."""
     parts = []; height = 2.4; posts = [-6.0, -2.0, 2.0, 6.0]
     for x in posts:
-        parts.append(cyl('post', 'post_grey', 0.04, height + 0.3, (x, 0, (height + 0.3) / 2 - 0.15), verts=10))
-        parts.append(cyl('post_cap', 'post_grey', 0.05, 0.05, (x, 0, height + 0.17), verts=10))
-        parts.append(cyl('sleeve', 'rubber', 0.055, 0.35, (x, 0, 0.1), verts=10))
-        parts.append(tube('guy', 'net_orange', [(x, 0, height - 0.15), (x, 1.1, 0.0)], 0.007))
+        parts.append(cyl('post', 'post_grey', 0.065, height + 0.3, (x, 0, (height + 0.3) / 2 - 0.15), verts=10))
+        parts.append(cyl('post_cap', 'post_grey', 0.08, 0.06, (x, 0, height + 0.17), verts=10))
+        parts.append(cyl('sleeve', 'rubber', 0.09, 0.35, (x, 0, 0.1), verts=10))
+        parts.append(tube('guy', 'net_orange', [(x, 0, height - 0.15), (x, 1.1, 0.0)], 0.012))
     def sag(x):
         # distance from the nearest post: the net hangs a little between them
         d = min(abs(x - p) for p in posts); span = 2.0
         return 0.10 * math.sin(min(d, span) / span * math.pi / 2) ** 2
-    xs = [-6.0 + k * 0.2 for k in range(61)]
+    xs = [-6.0 + k * 0.25 for k in range(49)]
     top = [(x, 0, height - sag(x)) for x in xs]
-    parts.append(tube('top_rope', 'net_orange', top, 0.012))
-    parts.append(tube('bottom_rope', 'net_orange', [(x, 0, 0.1) for x in xs], 0.012))
+    parts.append(tube('top_rope', 'net_orange', top, 0.02))
+    parts.append(tube('bottom_rope', 'net_orange', [(x, 0, 0.1) for x in xs], 0.02))
     for k in range(len(xs) - 1):
-        x0, x1 = xs[k], xs[k + 1]; z0, z1 = height - sag(x0) - 0.08, height - sag(x1) - 0.08
-        parts.append(box('tape', 'net_orange', (x1 - x0 + 0.002, 0.012, 0.16), ((x0 + x1) / 2, 0, (z0 + z1) / 2 - 0.0), (0, -math.atan2(z1 - z0, x1 - x0), 0)))
+        x0, x1 = xs[k], xs[k + 1]; z0, z1 = height - sag(x0) - 0.17, height - sag(x1) - 0.17
+        parts.append(box('band', 'net_orange', (x1 - x0 + 0.004, 0.02, 0.34), ((x0 + x1) / 2, 0, (z0 + z1) / 2 - 0.0), (0, -math.atan2(z1 - z0, x1 - x0), 0)))
+        parts.append(box('foot_band', 'net_orange', (x1 - x0 + 0.004, 0.02, 0.22), ((x0 + x1) / 2, 0, 0.21)))
     for k, x in enumerate(xs):
-        parts.append(box('vertical', 'net_orange', (0.014, 0.014, height - 0.1 - sag(x)), (x, 0, 0.1 + (height - 0.1 - sag(x)) / 2)))
-    for z in [0.1 + 0.2 * k for k in range(1, 11)]:
-        parts.append(tube('cord', 'net_orange', [(x, 0, z - sag(x) * (z / height)) for x in xs], 0.008))
+        parts.append(box('vertical', 'net_orange', (0.022, 0.022, height - 0.1 - sag(x)), (x, 0, 0.1 + (height - 0.1 - sag(x)) / 2)))
+    for z in [0.1 + 0.25 * k for k in range(2, 8)]:
+        parts.append(tube('cord', 'net_orange', [(x, 0, z - sag(x) * (z / height)) for x in xs], 0.013))
     return finish_piece('netting', parts, 14000)
 
 PIECES = {'pole-red': lambda: build_pole('red'), 'pole-blue': lambda: build_pole('blue'), 'gate-red': lambda: build_gate('red'),
