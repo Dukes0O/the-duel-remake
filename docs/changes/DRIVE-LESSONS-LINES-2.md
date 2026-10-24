@@ -142,4 +142,7 @@ it keeps that id for the first tick.
 
 ## Tests
 
-(Filled in at the end of the card: card checks, lane tier, build.)
+- `node tools/test-drive-lesson-lines.mjs`: 453 checks passed.
+- `node tools/test-drive-lessons.mjs`: all passed (late-try cases above).
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 77 passed, 0 failed, 0 not run (integration/wasteland already merged, nothing to bring in).
+- `npm run build`: built.
