@@ -185,12 +185,12 @@ for (const model of manifest.models) {
   equal(g.index.count / 3, model.triangles, `${model.id}: triangle count matches the manifest`);
 }
 // Real-world sizes in metres.
-ok(loaded.wreck.x > 3 && loaded.wreck.z > 4.5, 'The wreck is car-sized with its sand');
+ok(loaded.wreck.x > 3 && loaded.wreck.z > 4.5 && loaded.wreck.y > 1.0 && loaded.wreck.y < 1.4, 'The wreck is car-sized with its sand and stands about a metre out of it');
 near(loaded.badge.x, .124, .02, 'The badge is about 12 cm across');
 near(loaded['steering-wheel'].x, .40, .06, 'The steering wheel is about 40 cm');
 near(loaded.wheel.y, .25, .06, 'The wheel lies on its side, about 25 cm thick');
-ok(loaded.bonnet.z > 1.2 && loaded.bonnet.x > .8, 'The bonnet is the car\'s real bonnet');
-ok(loaded.door.y < .15 && Math.max(loaded.door.x, loaded.door.z) > .9, 'The door lies flat, about a metre long');
+ok(loaded.bonnet.z > 1.2 && loaded.bonnet.x > .9, 'The bonnet is the real bonnet of the car, between the wing seams');
+ok(Math.max(loaded.door.x, loaded.door.z) > .9 && loaded.door.y > .4 && loaded.door.y < .9, 'The door leans on its edge, about a metre long and half a metre high with its window frame');
 ok(loaded['lift-bag'].y > 1.0 && loaded['lift-bag'].x < .9, 'The lift bag stands upright, about a metre tall');
 ok(loaded.abalone.x > .15 && loaded.abalone.x < .35, 'The red abalone is a hand-sized shell on a small rock');
 const scratch = join(root, '.qa-dist', `sirena-check-${process.pid}`);

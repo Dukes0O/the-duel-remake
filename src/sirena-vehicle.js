@@ -39,7 +39,7 @@ export function createSirenaVehicle({key='falcone_sirena',color=0x9c1217,accent=
 // the dull chrome of 1960s trim.
 export function sirenaMaterials(color,accent) {
   const m=materials(color,accent);
-  m.paint.metalness=.18;m.paint.roughness=.38;m.paint.clearcoat=.5;
+  m.paint.metalness=.22;m.paint.roughness=.27;m.paint.clearcoat=.85;m.paint.clearcoatRoughness=.14;
   m.accent.name='White livery';
   m.accent.metalness=.05;m.accent.roughness=.42;
   m.lamp=new THREE.MeshStandardMaterial({name:'Headlamp lenses',color:0xe9d9b0,emissive:0xb8924a,emissiveIntensity:.35,roughness:.2,metalness:.3});
@@ -47,6 +47,9 @@ export function sirenaMaterials(color,accent) {
   m.numeral=new THREE.MeshStandardMaterial({name:'Door numeral',color:0x14110f,roughness:.55,metalness:.05});
   m.perspex=new THREE.MeshPhysicalMaterial({name:'Glass lamp covers',color:0xe9f1ee,metalness:0,roughness:.05,transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide});
   m.glass.opacity=.34;
+  m.gap=new THREE.MeshStandardMaterial({name:'Panel gaps',color:0x0c0a09,roughness:.9});
+  m.chip=new THREE.MeshStandardMaterial({name:'Stone chips',color:0x4b4640,roughness:.8,metalness:.3});
+  m.sheen=new THREE.MeshBasicMaterial({name:'Glass sheen',color:0xffffff,transparent:true,opacity:.5,depthWrite:false});
   return m;
 }
 
@@ -60,14 +63,15 @@ export const SIRENA_SECTIONS=[
   [.45,.90,.16,.66,.68,.60],
   [1.00,.93,.17,.76,.77,.64],
   [1.55,.86,.17,.70,.68,.62],
-  [1.85,.77,.16,.61,.60,.56],
-  [2.05,.64,.16,.51,.51,.48],
-  [2.16,.52,.18,.42,.43,.38],
+  [1.78,.80,.16,.64,.62,.58],
+  [1.97,.71,.16,.56,.55,.52],
+  [2.10,.60,.17,.47,.48,.43],
+  [2.18,.48,.19,.40,.41,.34],
 ];
 
 // The painted shell before the cabin tub is opened: the wreck and the loose
 // bonnet and door are cut from this same surface (tools/art/sirena-props.mjs).
-export function sirenaBodyGeometry() { return body(SIRENA_SECTIONS,AXLES,RADIUS); }
+export function sirenaBodyGeometry() { return body(SIRENA_SECTIONS,AXLES,.30,.27); }
 
 function sirenaBody(vehicle,b,m) {
   const geometry=sirenaBodyGeometry(),positions=geometry.attributes.position,index=geometry.index,kept=[];
@@ -88,27 +92,54 @@ function sirenaBody(vehicle,b,m) {
   rearPlate(b,m,.40,-2.16,.30,.10);
 }
 
-// A low closed coupe cabin: raked screen, shallow roof, tall rear glass.
-function greenhouse(b,m) {
-  const glass=(points)=>{
-    const positions=points.flat(),indices=[];for(let i=1;i<points.length-1;i++)indices.push(0,i,i+1);
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();b.add(g,m.glass);g.dispose();
-    b.tube(m.chrome,[...points,points[0]],.012,Math.max(12,points.length*4));
-  };
-  // Windscreen: base at the end of the bonnet, top at the roof's leading edge.
-  glass([[-.72,.69,.60],[.72,.69,.60],[.56,1.00,-.06],[-.56,1.00,-.06]]);
-  // Rear window, raked down to the tail deck.
-  glass([[.62,1.00,-.86],[-.62,1.00,-.86],[-.76,.78,-1.36],[.76,.78,-1.36]]);
+// The closed coupe cabin, as pieces in car-local metres (material names are the
+// builder's own; the wreck reuses the same shapes without the glass): a bowed,
+// wrapped-round windscreen with a slim chrome frame, a gently crowned roof, a
+// raked rear window and slim body-colour pillars.
+function grid(rows,up=false) {
+  const positions=[],indices=[],width=rows[0].length;
+  for(const row of rows)for(const p of row)positions.push(...p);
+  for(let r=0;r<rows.length-1;r++)for(let c=0;c<width-1;c++){const a=r*width+c,b=a+1,d=a+width,e=d+1;if(up)indices.push(a,b,d,b,e,d);else indices.push(a,d,b,b,d,e);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();return g;
+}
+const lerp=(a,b,t)=>a+(b-a)*t;
+function frame(points,radius=.008) {
+  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal'),Math.max(10,points.length*4),radius,6);
+}
+export function sirenaGreenhousePieces() {
+  const pieces=[],add=(geometry,material)=>pieces.push({geometry,material});
+  const COLS=13;
+  const screen=(v,u)=>{const hw=lerp(.78,.56,v),x=u*hw;return [x,lerp(.69,1.0,v)+.012*Math.sin(v*Math.PI),lerp(.60,-.06,v)-.12*u*u*(1-.35*v)+.03*Math.sin(v*Math.PI)];};
+  const us=Array.from({length:COLS},(_,i)=>i/(COLS-1)*2-1);
+  const screenRows=[0,.33,.66,1].map(v=>us.map(u=>screen(v,u)));
+  add(grid(screenRows),'glass');
+  add(frame(us.map(u=>screen(0,u))),'chrome');add(frame(us.map(u=>screen(1,u))),'chrome');
+  // Roof: a crowned panel from the screen header to the rear window.
+  const roofRows=[];
+  for(let k=0;k<=8;k++){const t=k/8,z=lerp(-.06,-.86,t),hw=lerp(.56,.62,t);roofRows.push(Array.from({length:11},(_,i)=>{const x=(i/10*2-1)*hw;return [x,1.0+.042*(1-(x/hw)**2)-.0012*Math.sin(t*Math.PI),z];}));}
+  add(grid(roofRows,true),'paint');
+  // Rear window, raked down to the tail deck and bowed a little.
+  const rear=(v,u)=>[u*lerp(.62,.76,v),lerp(1.0,.78,v),lerp(-.86,-1.36,v)-.05*(1-u*u)*Math.sin(v*Math.PI)];
+  add(grid([0,.5,1].map(v=>us.map(u=>rear(v,u)))),'glass');
+  add(frame(us.map(u=>rear(1,u))),'chrome');add(frame(us.map(u=>rear(0,u))),'chrome');
   for(const side of[-1,1]) {
-    glass([[side*.80,.70,.52],[side*.55,1.00,-.04],[side*.55,1.00,-.84],[side*.82,.74,-1.28]]);
-    // A-pillar and C-pillar in body colour.
-    b.tube(m.paint,[[side*.75,.70,.60],[side*.57,1.00,-.05]],.021,10);
-    b.tube(m.paint,[[side*.56,1.00,-.86],[side*.80,.78,-1.38]],.030,10);
-    const quarter=[[side*.82,.74,-1.28],[side*.56,1.0,-.86],[side*.60,.98,-.95],[side*.86,.74,-1.40]];
-    panel(b,m.paint,side>0?quarter.reverse():quarter);
+    // Side glass: front edge follows the screen's wrapped edge, top follows the roof rail.
+    const front0=screen(0,side),front1=screen(1,side);
+    const side0=[front0[0],front0[1],front0[2]],side1=[front1[0],front1[1],front1[2]],rear1=[side*.58,1.0,-.86],rear0=[side*.82,.74,-1.28];
+    const sideGrid=grid([0,1].map(v=>[0,.25,.5,.75,1].map(t=>{const top=[lerp(side1[0],rear1[0],t),lerp(side1[1],rear1[1],t),lerp(side1[2],rear1[2],t)],bottom=[lerp(side0[0],rear0[0],t),lerp(side0[1],rear0[1],t),lerp(side0[2],rear0[2],t)];return [lerp(bottom[0],top[0],v),lerp(bottom[1],top[1],v),lerp(bottom[2],top[2],v)];})));
+    add(sideGrid,'glass');
+    add(frame([side0,side1,rear1,rear0,side0]),'chrome');
+    // Slim body-colour pillars and the roof rail.
+    add(frame([side0,[ (side0[0]+side1[0])/2+side*.01,(side0[1]+side1[1])/2,(side0[2]+side1[2])/2],side1],.016),'paint');
+    add(frame([side1,[side*.60,1.003,-.46],rear1],.016),'paint');
+    add(frame([rear1,[side*.70,.90,-1.10],[side*.84,.76,-1.32]],.030),'paint');
+    const quarter=[[side*.82,.74,-1.28],[side*.58,1.0,-.86],[side*.62,.98,-.95],[side*.86,.74,-1.40]];
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute((side>0?quarter.slice().reverse():quarter).flat(),3));g.setIndex([0,1,2,0,2,3]);g.computeVertexNormals();add(g,'paint');
   }
-  b.box(m.paint,[1.16,.034,.84],[0,1.006,-.46],[0,0,0],.016);
-  b.box(m.paint,[1.00,.020,.72],[0,1.026,-.46],[0,0,0],.010);
+  return pieces;
+}
+function greenhouse(b,m) {
+  for(const{geometry,material}of sirenaGreenhousePieces()){b.add(geometry,m[material]);geometry.dispose();}
 }
 
 // Long nose, nose intake and covered headlights set into the front wings.
@@ -143,7 +174,7 @@ function sides(b,m) {
     b.box(m.chrome,[.04,.025,.11],[side*.915,.54,-.80],[0,0,0],.008);
     // Racing mirrors on short stalks.
     b.tube(m.chrome,[[side*.75,.74,.48],[side*.88,.78,.44]],.008,3);
-    b.box(m.paint,[.09,.06,.05],[side*.91,.79,.44],[0,side*.4,0],.015);
+    b.box(m.chrome,[.09,.055,.045],[side*.91,.79,.44],[0,side*.4,0],.015);
     // Side-exit exhaust ahead of the rear wheel.
     cylinder(b,m.chrome,.034,.62,[side*.948,.235,-.48],[Math.PI/2,0,0],16);
     cylinder(b,m.exhaust,.022,.02,[side*.948,.235,-.17],[Math.PI/2,0,0],12);
@@ -197,21 +228,40 @@ function fittedMarkings(vehicle,m) {
   const surfaces=vehicle.userData.damageMeshes.filter(v=>v.mesh.material===m.paint).map(v=>v.mesh),b=batch(vehicle);
   fitSurfacePatch(surfaces,b,m.accent,[[-.13,.62],[.13,.62],[.13,2.2],[-.13,2.2]],'top',1,.5,.004);
   for(const side of[-1,1]) {
-    // Headlamps under flush perspex covers, faired into the front of each wing.
+    // Headlamps: a chrome ring and a dark bowl fitted to the wing, a warm lamp
+    // inside and a domed glass cover on top, with a glint across it.
     const lens=(rx,rz,cx,cz)=>{const p=[];for(let i=0;i<32;i++){const a=i/32*Math.PI*2;p.push([cx+Math.cos(a)*rx,cz+Math.sin(a)*rz]);}return p;};
     fitSurfacePatch(surfaces,b,m.chrome,lens(.150,.235,side*.525,1.86),'top',1,.5,.004);
     fitSurfacePatch(surfaces,b,m.darkAlloy,lens(.133,.215,side*.525,1.86),'top',1,.5,.007);
     fitSurfacePatch(surfaces,b,m.lamp,lens(.085,.13,side*.525,1.88),'top',1,.5,.010);
-    fitSurfacePatch(surfaces,b,m.perspex,lens(.138,.222,side*.525,1.86),'top',1,.5,.020);
+    const hit=new THREE.Raycaster(new THREE.Vector3(side*.525,3,1.86),new THREE.Vector3(0,-1,0)).intersectObjects(surfaces,false)[0];
+    if(hit) {
+      const normal=hit.face.normal.clone().transformDirection(hit.object.matrixWorld),tilt=new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),normal));
+      const dome=new THREE.SphereGeometry(1,28,10,0,Math.PI*2,0,Math.PI/2),at=hit.point.clone().addScaledVector(normal,.006);
+      b.add(dome,m.perspex,at.toArray(),[tilt.x,tilt.y,tilt.z],[.138,.034,.218]);
+      b.add(dome,m.sheen,at.clone().addScaledVector(normal,.026).add(new THREE.Vector3(side*-.045,0,.07)).toArray(),[tilt.x,tilt.y,tilt.z],[.034,.006,.075]);
+      dome.dispose();
+    }
     const disc=[];for(let i=0;i<40;i++){const a=i/40*Math.PI*2;disc.push([ROUNDEL.y+Math.sin(a)*ROUNDEL.radius,ROUNDEL.z+Math.cos(a)*ROUNDEL.radius]);}
     fitSurfacePatch(surfaces,b,m.accent,disc,'side',side,.5,.005);
     fitSurfacePatch(surfaces,b,m.numeral,sevenOutline(),'side',side,.5,.008);
     // Door shut lines.
-    fitSurfacePatch(surfaces,b,m.carbon,[[.17,-.80],[.66,-.80],[.66,-.795],[.17,-.795]],'side',side,.5,.004);
-    fitSurfacePatch(surfaces,b,m.carbon,[[.17,.24],[.66,.24],[.66,.245],[.17,.245]],'side',side,.5,.004);
+    fitSurfacePatch(surfaces,b,m.gap,[[.17,-.80],[.66,-.80],[.66,-.793],[.17,-.793]],'side',side,.5,.004);
+    fitSurfacePatch(surfaces,b,m.gap,[[.17,.24],[.66,.24],[.66,.247],[.17,.247]],'side',side,.5,.004);
+  }
+  // Wear: darker panel gaps round the bonnet and tail lid, and stone chips on the nose.
+  const gap=(x0,z0,x1,z1,t=.005)=>fitSurfacePatch(surfaces,b,m.gap,[[x0,z0],[x1,z0],[x1,z1],[x0,z1]].map(([x,z],i)=>[x+(i===1||i===2?t:0),z+(i>1?t:0)]),'top',1,.5,.003);
+  gap(-.50,.64,.50,.64);gap(-.50,2.02,.50,2.02);gap(-.50,.64,-.50,2.02);gap(.50,.64,.50,2.02);
+  gap(-.50,-2.00,.50,-2.00);gap(-.50,-1.46,.50,-1.46);gap(-.50,-2.00,-.50,-1.46);gap(.50,-2.00,.50,-1.46);
+  const chipRandom=seeded(1966),chipPoly=(cx,cy,r)=>Array.from({length:6},(_,i)=>{const a=i/6*Math.PI*2+chipRandom(),k=r*(.6+chipRandom()*.6);return [cx+Math.cos(a)*k,cy+Math.sin(a)*k];});
+  for(let i=0;i<70;i++) {
+    const r=.003+chipRandom()*.008;
+    if(i%2)fitSurfacePatch(surfaces,b,m.chip,chipPoly((chipRandom()*2-1)*.55,1.62+chipRandom()*.52,r),'top',1,.5,.005);
+    else fitSurfacePatch(surfaces,b,m.chip,chipPoly((chipRandom()*2-1)*.50,.22+chipRandom()*.30,r),'front',1,.5,.005);
   }
   b.finish(vehicle.userData);
 }
+function seeded(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
 
 // The numeral 7 as one polygon in (y,z): a top bar and a diagonal stroke.
 // +z is forward, so the 7 is mirrored when viewed from the car's right side by

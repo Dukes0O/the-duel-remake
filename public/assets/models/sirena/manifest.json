@@ -6,23 +6,23 @@
     {
       "id": "wreck",
       "path": "assets/models/sirena/wreck.glb",
-      "bytes": 415848,
-      "sha256": "881e16d9cdf6afe2fd78def8eb5d9a7345f9fd43895a04145fd9ac84188fa3ab",
-      "triangles": 9428,
-      "vertices": 9941,
+      "bytes": 453144,
+      "sha256": "114424a37efb28c8abe04e5ff1aba1469fbd65657415a85362e1aebb8d854ba4",
+      "triangles": 12107,
+      "vertices": 10529,
       "dimensionsMetres": [
-        4.6,
-        1.25,
-        5.7
+        3.7,
+        1.182,
+        5.4
       ]
     },
     {
       "id": "badge",
       "path": "assets/models/sirena/badge.glb",
-      "bytes": 29772,
-      "sha256": "bff372a9cf75d459caf1ee1c10773fe9cb534c0f71f75ae155fbe82a1e1a0b98",
-      "triangles": 638,
-      "vertices": 683,
+      "bytes": 45392,
+      "sha256": "cfedfaa892d2597264ba36f947a9b6bc94988443319375d2bed158f58d9706ec",
+      "triangles": 1068,
+      "vertices": 1045,
       "dimensionsMetres": [
         0.128,
         0.017,
@@ -33,7 +33,7 @@
       "id": "steering-wheel",
       "path": "assets/models/sirena/steering-wheel.glb",
       "bytes": 33076,
-      "sha256": "7786a1a02dd973ca72fb52fd4643342b25504d6a328d07eb705bbb9d3dc979ae",
+      "sha256": "061c6207899a044dc9ebd7b2ceac09fa1353bf95c1e9b7101a8deaa44583688b",
       "triangles": 791,
       "vertices": 749,
       "dimensionsMetres": [
@@ -46,7 +46,7 @@
       "id": "wheel",
       "path": "assets/models/sirena/wheel.glb",
       "bytes": 72456,
-      "sha256": "2bac84ba7b69861a1b149a1f46fdc3d2edcb5a46cd0f4251eac24c84c50fbc7b",
+      "sha256": "2ee2b1c9cf1fb10ff6b27c0f401f4d0bb2fcb55e9b95c113d948fe9a62474fc7",
       "triangles": 1481,
       "vertices": 1727,
       "dimensionsMetres": [
@@ -58,27 +58,27 @@
     {
       "id": "bonnet",
       "path": "assets/models/sirena/bonnet.glb",
-      "bytes": 86448,
-      "sha256": "9603b73876dc4dc2178d73ce76880bec8b814f3dbd364f7247877211e6c21e13",
-      "triangles": 1858,
-      "vertices": 2052,
+      "bytes": 62052,
+      "sha256": "ad54d14a2821b7f4ffae8d3bcc34f840eaac381591c9e305fcb5b2ccbba3d2f3",
+      "triangles": 984,
+      "vertices": 1520,
       "dimensionsMetres": [
-        1.874,
-        0.353,
-        1.544
+        1.174,
+        0.33,
+        1.45
       ]
     },
     {
       "id": "door",
       "path": "assets/models/sirena/door.glb",
-      "bytes": 61140,
-      "sha256": "aa93232764fd884c1ad10edc6f728551c6dcac52fef697988ae616ec4e312980",
-      "triangles": 1060,
-      "vertices": 1482,
+      "bytes": 75836,
+      "sha256": "9529bcfc11f0c3f4d3644d575a273e8fa432cb3e72b93f0bdc25e33f4c5a5d11",
+      "triangles": 1499,
+      "vertices": 1817,
       "dimensionsMetres": [
-        0.467,
-        0.123,
-        1.015
+        0.631,
+        0.615,
+        1.024
       ]
     },
     {
@@ -97,16 +97,16 @@
     {
       "id": "abalone",
       "path": "assets/models/sirena/abalone.glb",
-      "bytes": 54724,
-      "sha256": "28efa3871dc6fd987a63553979994e44609af8efc18863457452c19e37739dbe",
-      "triangles": 1876,
-      "vertices": 1168,
+      "bytes": 89808,
+      "sha256": "c22541874f2a68cc5736f4270c3dd4a4201c34e741907322cbc4de4aefb227b5",
+      "triangles": 3088,
+      "vertices": 1941,
       "dimensionsMetres": [
-        0.276,
-        0.119,
-        0.232
+        0.252,
+        0.115,
+        0.227
       ]
     }
   ],
-  "totalBytes": 806476
+  "totalBytes": 884776
 }

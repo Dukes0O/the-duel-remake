@@ -23,7 +23,7 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import {
   SIRENA_AXLES, SIRENA_WHEEL_RADIUS, SIRENA_TRACK, SIRENA_ROUNDEL,
-  sirenaBodyGeometry, sevenOutline, wireWheelPieces,
+  sirenaBodyGeometry, sirenaGreenhousePieces, sevenOutline, wireWheelPieces,
 } from '../../src/sirena-vehicle.js';
 import { originalVehicleParts } from '../../src/unlock-vehicles.js';
 
@@ -130,18 +130,18 @@ function compact(geometry) {
 }
 
 // ---------- sixty years of sea water ----------
-const RUST = [C(0x34200f), C(0x5b3418), C(0x86491f), C(0x9a5a28)];
-const PALETTE = { paint: C(0x6c2623), stripe: C(0xa49b86), algae: C(0x4a5430), slime: C(0x2f3a28), shell: C(0xb8b09b), shellDark: C(0x6f6a58), sand: C(0x8c7b5c) };
+const RUST = [C(0x2b1a0e), C(0x4c2d16), C(0x6e3d1d), C(0x824a24)];
+const PALETTE = { paint: C(0x6c2623), stripe: C(0xa49b86), algae: C(0x3b4326), slime: C(0x283025), shell: C(0xb8b09b), shellDark: C(0x6f6a58), sand: C(0x8c7b5c) };
 function steelColor(p, n, seed, { paintLeft = .5, algae = 1 } = {}) {
   const f = fbm(p, 5, seed), rustPick = fbm(p, 13, seed + 3), g = fbm(p, 3, seed + 11);
   let color = lerpColor(lerpColor(RUST[0], RUST[1], f * 2.2 - .2), lerpColor(RUST[2], RUST[3], rustPick), Math.max(0, g * 1.5 - .45));
   // Red lacquer survives where the water barely moved: low sheltered patches.
-  const paintMask = fbm(p, 4, seed + 21) * (1 - Math.max(0, n.y)) * paintLeft;
-  if (paintMask > .17) color = lerpColor(color, PALETTE.paint, Math.min(1, (paintMask - .17) * 9));
+  const paintMask = Math.max(0, fbm(p, 4, seed + 21) - .40) * 2.4 * (1 - Math.max(0, n.y)) * paintLeft;
+  if (paintMask > .02) color = lerpColor(color, PALETTE.paint, Math.min(1, paintMask * 3.2));
   // Slime and algae settle on whatever faces up.
-  const patch = Math.min(1, Math.max(0, (fbm(p, 3.5, seed + 31) - .42) * 6));
+  const patch = Math.min(1, Math.max(0, (fbm(p, 3.5, seed + 31) - .50) * 5));
   const up = Math.max(0, n.y) * algae * patch;
-  if (up > .05) color = lerpColor(color, fbm(p, 14, seed + 33) > .5 ? PALETTE.algae : PALETTE.slime, Math.min(.9, up * 1.4));
+  if (up > .05) color = lerpColor(color, fbm(p, 14, seed + 33) > .5 ? PALETTE.algae : PALETTE.slime, Math.min(.75, up * 1.2));
   return color;
 }
 function crust(geometry, seed, { dent = .016, ...options } = {}) {
@@ -201,65 +201,73 @@ function weed(anchor, direction, length, seed, width = .05) {
 }
 
 // ---------- the car's own pieces, cut and crusted ----------
-const isBonnet = (c, n) => c.z > .55 && c.z < 2.12 && c.y > .52 && n.y > .30;
-const isDoor = (c, n) => Math.abs(c.x) > .70 && c.y > .22 && c.y < .64 && c.z > -.82 && c.z < .15 && Math.abs(n.x) > .45;
+const isBonnet = (c, n) => Math.abs(c.x) < .50 && c.z > .62 && c.z < 2.02 && c.y > .50 && n.y > .30;
+const isDoor = (c, n) => Math.abs(c.x) > .62 && c.y > .20 && c.y < .78 && c.z > -.82 && c.z < .15 && n.y > -.25 && Math.abs(n.x) > .30;
 const isTub = (c) => Math.abs(c.x) < .60 && c.y > .45 && c.z > -.98 && c.z < .50;
 
 function wreck() {
   const shell = sirenaBodyGeometry();
+  // The Sirena's own shell, bonnet and doors gone, the tub open to the water.
   const [bonnetSkin, afterBonnet] = subset(shell, isBonnet);
   const [, afterDoors] = subset(afterBonnet, isDoor);
   const [, hull] = subset(afterDoors, isTub);
   bonnetSkin.dispose();
-  // Rust has eaten holes through the thin skin, most of all low down and at the tail.
-  const [, soundSkin] = subset(hull, (c) => fbm(c, 6, 9) > .66 || (c.y < .32 && fbm(c, 9, 10) > .62));
-  const pieces = [crust(soundSkin, 11, { dent: .03 })];
-  const add = (geometry, hex) => pieces.push(flat(hex)(geometry));
-  const rust = (geometry, seed, options) => pieces.push(crust(geometry, seed, { dent: .012, algae: .6, ...options }));
-  // Cabin: floor pan, bucket seat frames, the gearbox tunnel and a roof that has
-  // sagged onto its rear pillars. The windscreen and glass are gone.
-  rust(transformed(new THREE.BoxGeometry(1.20, .035, 1.55), [0, .24, -.22]), 12);
-  rust(transformed(new THREE.BoxGeometry(.34, .42, .30), [.33, .46, -.60], [-.16, 0, 0]), 13);
-  rust(transformed(new THREE.BoxGeometry(.34, .30, .30), [-.33, .40, -.62], [-.20, 0, .08]), 14);
-  rust(transformed(new THREE.BoxGeometry(.24, .22, 1.15), [0, .36, -.1]), 15);
-  rust(transformed(new THREE.BoxGeometry(1.14, .04, .80), [0, .93, -.55], [.05, 0, .05]), 16, { paintLeft: .9 });
-  for (const side of [-1, 1]) {
-    const pillar = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(side * .56, 1.0, -.86), new THREE.Vector3(side * .70, .88, -1.14), new THREE.Vector3(side * .80, .78, -1.38)]), 8, .028, 6);
-    rust(transformed(pillar), 17 + side);
+  const [, holed] = subset(hull, (c) => fbm(c, 10, 9) > .80 && c.y < .45);
+  const pieces = [crust(holed, 11, { dent: .018, paintLeft: 1 })];
+  // The white nose stripe, what is left of it, on the front of the nose.
+  const body = pieces[0], bp = body.attributes.position, bn = body.attributes.normal, bc = body.attributes.color, v = new THREE.Vector3();
+  for (let i = 0; i < bp.count; i++) {
+    v.fromBufferAttribute(bp, i);
+    if (Math.abs(v.x) < .13 && v.z > 1.9 && bn.getY(i) > .25 && fbm(v, 7, 19) > .25) { const old = new THREE.Color(bc.getX(i), bc.getY(i), bc.getZ(i)).lerp(PALETTE.stripe, .78); bc.setXYZ(i, old.r, old.g, old.b); }
   }
-  // A-pillar stubs: one snapped off low, the other bent flat across the cowl.
-  rust(transformed(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(.75, .70, .60), new THREE.Vector3(.70, .84, .40)]), 4, .024, 6)), 19);
-  rust(transformed(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-.75, .70, .60), new THREE.Vector3(-.6, .9, .1), new THREE.Vector3(-.2, .78, -.05)]), 6, .024, 6)), 20);
-  // The engine, bare under the missing bonnet: block, two heads and manifolds.
-  rust(transformed(new THREE.BoxGeometry(.60, .38, .76), [0, .40, 1.30]), 21, { dent: .02 });
-  for (const side of [-1, 1]) {
-    rust(transformed(new THREE.BoxGeometry(.24, .22, .70), [side * .27, .64, 1.30]), 22 + side);
-    rust(transformed(new THREE.CylinderGeometry(.03, .03, .8, 8), [side * .40, .52, 1.30], [Math.PI / 2, 0, 0]), 24 + side);
+  const rust = (geometry, seed, options) => pieces.push(crust(geometry, seed, { dent: .012, algae: .5, ...options }));
+  // The roof and pillars of the closed coupe stay (no glass); this is what makes
+  // it the restored car's silhouette. The roof has sagged a little.
+  for (const piece of sirenaGreenhousePieces()) {
+    if (piece.material === 'glass' || piece.material === 'chrome') continue;
+    rust(prepare(piece.geometry), 12 + pieces.length, { paintLeft: .8, dent: .02 });
   }
-  rust(transformed(new THREE.BoxGeometry(.74, .46, .08), [0, .42, 1.83]), 26);
-  // Side pipes, an axle line and the rest of the underbody.
-  for (const side of [-1, 1]) rust(transformed(new THREE.CylinderGeometry(.034, .034, .62, 8), [side * .948, .235, -.48], [Math.PI / 2, 0, 0]), 27 + side);
-  rust(transformed(new THREE.CylinderGeometry(.04, .04, 1.54, 8), [0, .345, SIRENA_AXLES[1]], [0, 0, Math.PI / 2]), 29);
+  // Cockpit and engine bay are full of silt, with the tops of two seats and the
+  // engine just showing through it.
+  pieces.push(silt(-.60, .60, -1.00, .56, .47, 8, 91));
+  pieces.push(silt(-.50, .50, .60, 2.00, .43, 8, 92));
+  for (const side of [-1, 1]) rust(transformed(new THREE.SphereGeometry(1, 12, 8), [side * .33, .62, -.66], [-.2, 0, side * .06], [.17, .20, .07]), 22 + side, { algae: .9 });
+  rust(transformed(new THREE.BoxGeometry(.46, .20, .60, 3, 3, 3), [0, .50, 1.20]), 26, { dent: .03, algae: .9 });
+  // Side pipes, an axle line.
+  for (const side of [-1, 1]) rust(transformed(new THREE.CylinderGeometry(.034, .034, .62, 8), [side * .948, .235, -.48], [Math.PI / 2, 0, 0]), 29 + side);
+  rust(transformed(new THREE.CylinderGeometry(.04, .04, 1.54, 8), [0, .345, SIRENA_AXLES[1]], [0, 0, Math.PI / 2]), 31);
   // Wheels: three of four. The left front wheel is the loose part on the forest floor.
   for (const [axleIndex, z] of SIRENA_AXLES.entries()) for (const side of [1, -1]) {
     if (axleIndex === 0 && side === 1) continue;
     pieces.push(...wheelPieces(side, 40 + axleIndex * 2 + (side > 0 ? 1 : 0), [side * SIRENA_TRACK, SIRENA_WHEEL_RADIUS, z], side > 0 ? .03 : -.05));
   }
-  // The tail lamps and plate are gone; rusty holes remain. Mud and the sand.
+  // Settle: nose down a few degrees and rolled a little, sunk to about the sills.
   const wreckBody = combine(pieces.splice(0));
-  wreckBody.translate(0, -.24, 0);
-  // Weed streams from the roof and the open bonnet.
+  wreckBody.translate(0, -.30, 0);
+  wreckBody.rotateX(.045); wreckBody.rotateZ(-.06);
+  wreckBody.translate(0, .02, 0);
   const growth = [];
-  const anchors = [[.52, .99, -.5], [-.4, .96, -.9], [.7, .74, 1.0], [-.62, .66, 1.6], [.2, .8, 1.45], [-.2, .95, .0]];
-  anchors.forEach(([x, y, z], i) => growth.push(weed(new THREE.Vector3(x, y - .24, z), new THREE.Vector3((i % 2 ? 1 : -1) * .75, .55, .25), .45 + (i % 3) * .15, 60 + i, .07)));
-  const crown = barnacles(wreckBody, 71, 380, { minUp: .25, size: .75 });
-  // Sand heaped round the car and drifted over its low side.
-  const sand = prepare(sandMound(1.75, 4.3, 81));
+  // Weed on upper surfaces only: the roof, the rear deck, the fender and nose tops.
+  const anchors = [[.30, 1.02, -.52], [-.35, 1.0, -.30], [0, .76, -1.62], [.70, .74, 1.0], [-.68, .72, 1.12], [.40, .50, 2.0], [-.45, .72, -1.2]];
+  anchors.forEach(([x, y, z], i) => growth.push(weed(new THREE.Vector3(x, y - .26, z), new THREE.Vector3((i % 2 ? 1 : -1) * .8, .5, .2), .32 + (i % 3) * .12, 60 + i, .06)));
+  const crown = barnacles(wreckBody, 71, 300, { minUp: .45, size: .75 });
+  const sand = prepare(sandMound(1.30, 4.0, 81));
   paint(sand, (q, n) => lerpColor(PALETTE.sand, C(0x6b5c42), fbm(q, 4, 83) * .9 + (1 - Math.max(0, n.y)) * .5));
   const merged = combine([wreckBody, ...growth, ...crown, sand]);
   merged.name = 'sirena-wreck';
   merged.computeBoundingBox();
   return merged;
+}
+// Silt filling a cavity: a lumpy grey-brown surface over a rectangle.
+function silt(x0, x1, z0, z1, height, steps, seed) {
+  const cols = steps * 2, rows = Math.round((z1 - z0) / (x1 - x0) * cols), positions = [], indices = [];
+  for (let r = 0; r <= rows; r++) for (let c = 0; c <= cols; c++) {
+    const x = x0 + (x1 - x0) * c / cols, z = z0 + (z1 - z0) * r / rows;
+    positions.push(x, height + (noise(x * 5, 0, z * 5, seed) - .5) * .06, z);
+  }
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const a = r * (cols + 1) + c, b = a + 1, d = a + cols + 1, e = d + 1; indices.push(a, d, b, b, d, e); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.setIndex(indices); g.computeVertexNormals();
+  return paint(g, (q) => lerpColor(C(0x5d5340), C(0x7a6d52), fbm(q, 9, seed)));
 }
 function wheelPieces(side, seed, position, tilt) {
   const random = rng(seed), out = [], colours = { rubber: C(0x1a2020), chrome: C(0x6d5a43), darkAlloy: C(0x2d2a26) };
@@ -326,8 +334,12 @@ function door() {
   originalVehicleParts.fitSurfacePatch(surfaces, collect(C(0x2a2219)), null, sevenOutline(), 'side', 1, .5, .008);
   // The two layers' faces are the same shell skin: shift the numerals out with it.
   pieces.push(...patches.map(g => crustPatch(g, 113)));
+  // The window frame standing up from the door's top edge, a handle and a lock.
+  const frame = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[.78, .67, .14], [.66, .90, .08], [.63, .99, -.02], [.62, 1.0, -.40], [.63, .99, -.78], [.80, .69, -.83]].map(q => new THREE.Vector3(...q)), false, 'centripetal'), 24, .012, 6);
+  pieces.push(crust(prepare(frame), 117, { dent: .004, algae: .4 }));
+  pieces.push(crust(transformed(new THREE.BoxGeometry(.04, .025, .11), [.915, .54, -.62]), 118, { dent: .004 }));
   pieces.push(...barnacles(pieces[0], 115, 130, { minUp: .0, size: .8 }));
-  const out = combine(pieces); out.rotateZ(Math.PI / 2); out.name = 'sirena-door'; return sinkToFloor(out);
+  const out = combine(pieces); out.rotateZ(.5); out.name = 'sirena-door'; return sinkToFloor(out); // leaning, outer face up and out, half out of the sand
 }
 // Numeral and roundel keep their own colour but pick up the same grime.
 function crustPatch(g, seed) {
@@ -359,13 +371,18 @@ function wheelPart() {
 function badge() {
   const radius = .058, parts = [];
   parts.push(paint(transformed(new THREE.CylinderGeometry(radius, radius, .01, 28)), (p, n) => lerpColor(C(0x6c6a5c), C(0x4a5a46), fbm(p, 40, 141))));
-  parts.push(paint(transformed(new THREE.TorusGeometry(radius, .006, 6, 28), [0, .005, 0], [Math.PI / 2, 0, 0]), (p) => lerpColor(C(0x8d8a78), C(0x4f5d45), fbm(p, 50, 142))));
-  parts.push(flat(0x9b1a1c)(transformed(new THREE.CylinderGeometry(radius * .84, radius * .84, .012, 28), [0, .001, 0])));
-  // A cream falcon in flight: two swept wings and a head, extruded thinly.
-  const wing = new THREE.Shape(); wing.moveTo(0, .0); wing.lineTo(-.045, .018); wing.lineTo(-.030, -.004); wing.lineTo(-.010, -.016); wing.lineTo(0, -.034); wing.lineTo(.010, -.016); wing.lineTo(.030, -.004); wing.lineTo(.045, .018); wing.lineTo(0, .0);
-  parts.push(flat(0xd8cba6)(transformed(new THREE.ExtrudeGeometry(wing, { depth: .004, bevelEnabled: false }), [0, .0065, 0], [Math.PI / 2, 0, 0])));
-  parts.push(...barnacles(parts[0], 145, 10, { minUp: .3, size: .22 }).map(g => g));
-  const out = combine(parts); out.rotateX(0); out.name = 'sirena-badge'; return sinkToFloor(out);
+  // Chrome rim, tarnished and crusted with sediment.
+  parts.push(paint(transformed(new THREE.TorusGeometry(radius, .006, 6, 28), [0, .005, 0], [Math.PI / 2, 0, 0]), (p) => lerpColor(lerpColor(C(0x8d8a78), C(0x4f5d45), fbm(p, 50, 142)), C(0x6a5a3c), fbm(p, 30, 144) * .8)));
+  // Red enamel with a few chips, then a gold ring and a white F with a swept gold wing.
+  parts.push(paint(transformed(new THREE.CylinderGeometry(radius * .86, radius * .86, .012, 32), [0, .001, 0]), (p) => lerpColor(C(0x93191c), C(0x5a1514), Math.max(0, fbm(p, 60, 146) - .55) * 3)));
+  parts.push(flat(0xc29a3e)(transformed(new THREE.TorusGeometry(radius * .72, .0028, 5, 32), [0, .0075, 0], [Math.PI / 2, 0, 0])));
+  const letter = new THREE.Shape();
+  letter.moveTo(-.017, -.025); letter.lineTo(-.008, -.025); letter.lineTo(-.008, -.004); letter.lineTo(.012, -.004); letter.lineTo(.012, .004);
+  letter.lineTo(-.008, .004); letter.lineTo(-.008, .015); letter.lineTo(.021, .015); letter.lineTo(.021, .025); letter.lineTo(-.017, .025); letter.lineTo(-.017, -.025);
+  parts.push(flat(0xe4dcc4)(transformed(new THREE.ExtrudeGeometry(letter, { depth: .004, bevelEnabled: false }), [-.002, .0075, 0], [-Math.PI / 2, 0, 0])));
+  for (const a of [.6, 2.1, 3.7, 5.2]) parts.push(flat(0xc29a3e)(transformed(new THREE.CylinderGeometry(.003, .003, .004, 6), [Math.cos(a) * radius * .78, .008, Math.sin(a) * radius * .78])));
+  parts.push(...barnacles(parts[0], 145, 8, { minUp: .3, size: .22 }));
+  const out = combine(parts); out.name = 'sirena-badge'; return sinkToFloor(out);
 }
 
 // ---------- the lift bag and the abalone ----------
@@ -389,14 +406,16 @@ function liftBag() {
   out.computeBoundingBox(); out.translate(0, -out.boundingBox.min.y, 0); return out;
 }
 function abalone() {
-  // The shell: a low ear with a spiral lip and radial ribs, a row of breathing
-  // holes along the margin, sitting on a lump of rock with pink crust.
-  const long = .095, wide = .068, high = .030, around = 48, rings = 16;
-  const surface = (t, a) => {
-    const spiral = 1 + .20 * Math.sin(a - 1.0) * (1 - t * .25), r = Math.sin(t * Math.PI / 2) * spiral;
-    const rib = 1 + Math.sin(a * 12) * .028 * t, curl = Math.pow(t, 7) * .012;
-    const y = high * (1 - Math.pow(t, 1.9)) * (1 + .3 * Math.cos(a - 1.0)) + curl;
-    return new THREE.Vector3(Math.cos(a) * long * r * rib, Math.max(0, y), Math.sin(a) * wide * r * rib);
+  // A red abalone: an ear-shaped oval, low and flattened, brick-red and rough on
+  // top, a curved row of raised holes along one edge and the spire at that end,
+  // clamped to a rock by its margin.
+  const long = .105, wide = .068, high = .021, around = 56, rings = 18;
+  const outline = a => 1 + .10 * Math.cos(a) - .05 * Math.cos(2 * a);
+  const surface = (rho, a) => {
+    const edge = outline(a) * rho, wrinkle = Math.sin(rho * 44 + a * 2) * .0016 * rho, rib = Math.sin(a * 15) * .0018 * rho * rho;
+    const cross = Math.max(0, 1 - rho * rho);
+    const y = high * Math.pow(cross, .7) * (1 + .22 * Math.cos(a - 3.0)) + wrinkle + rib + Math.pow(rho, 8) * .004;
+    return new THREE.Vector3(Math.cos(a) * long * edge, Math.max(0, y), Math.sin(a) * wide * edge);
   };
   const positions = [], indices = [];
   for (let i = 0; i <= rings; i++) for (let j = 0; j < around; j++) positions.push(...surface(i / rings, j / around * Math.PI * 2).toArray());
@@ -405,15 +424,23 @@ function abalone() {
     indices.push(a, b, c, b, d, c);
   }
   const shell = new THREE.BufferGeometry(); shell.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); shell.setIndex(indices); shell.computeVertexNormals();
-  shell.translate(0, .026, 0);
-  const parts = [paint(shell, (p, n) => lerpColor(lerpColor(C(0x8a3a24), C(0x5e2a1c), fbm(p, 55, 161)), C(0xb75a3c), Math.max(0, n.y) * .35 + Math.sin(Math.atan2(p.z, p.x) * 12) * .07))];
-  for (let k = 0; k < 5; k++) {
-    const point = surface(.80, 2.55 + k * .20).add(new THREE.Vector3(0, .026, 0));
-    parts.push(flat(0x1c1410)(transformed(new THREE.CylinderGeometry(.0065, .0065, .005, 8), point.toArray(), [0, 0, 0])));
+  shell.translate(0, .008, 0);
+  const brick = C(0x8a3524);
+  const parts = [paint(shell, (p, n) => {
+    const f = fbm(p, 70, 161), speck = fbm(p, 120, 164) > .72 ? .8 : 0, green = fbm(p, 40, 165) > .66 ? .35 : 0;
+    return lerpColor(lerpColor(lerpColor(brick, C(0x5c2619), f * 1.4 - .3), C(0xb86a50), Math.max(0, n.y - .6) * .3 + speck * .35), C(0x4a5430), green);
+  })];
+  // The row of holes, raised and rimmed, curving along the left edge.
+  for (let k = 0; k < 6; k++) {
+    const a = 2.50 + k * .14, point = surface(.80, a).add(new THREE.Vector3(0, .006, 0));
+    parts.push(flat(0x6e2a1c)(transformed(new THREE.TorusGeometry(.0072, .0028, 5, 10), point.toArray(), [Math.PI / 2, 0, 0])));
+    parts.push(flat(0x150f0c)(transformed(new THREE.CylinderGeometry(.0052, .0052, .004, 8), point.clone().add(new THREE.Vector3(0, .0012, 0)).toArray())));
   }
-  const lump = transformed(new THREE.IcosahedronGeometry(.11, 2), [0, -.012, 0], [0, 0, 0], [1.25, .38, 1.0]);
+  const spire = surface(.15, 3.2).add(new THREE.Vector3(0, .007, 0));
+  parts.push(paint(transformed(new THREE.SphereGeometry(1, 10, 6), spire.toArray(), [0, 0, 0], [.020, .010, .016]), (p) => lerpColor(brick, C(0x5c2619), fbm(p, 90, 166))));
+  const lump = transformed(new THREE.IcosahedronGeometry(.11, 2), [0, -.026, 0], [0, 0, 0], [1.18, .42, 1.0]);
   const rp = lump.attributes.position, v = new THREE.Vector3();
-  for (let i = 0; i < rp.count; i++) { v.fromBufferAttribute(rp, i); const d = (fbm(v, 14, 171) - .5) * .05; rp.setXYZ(i, v.x + d, v.y + d * .5, v.z + d); }
+  for (let i = 0; i < rp.count; i++) { v.fromBufferAttribute(rp, i); const d = (fbm(v, 14, 171) - .5) * .04; rp.setXYZ(i, v.x + d, v.y + d * .5, v.z + d); }
   lump.computeVertexNormals();
   parts.push(paint(lump, (p, n) => lerpColor(lerpColor(C(0x3f3c38), C(0x5c5750), fbm(p, 20, 172)), fbm(p, 9, 173) > .5 ? C(0xb0647a) : C(0x4d5a32), Math.max(0, n.y) * (fbm(p, 9, 173) - .3) * 1.4)));
   const out = combine(parts); out.name = 'red-abalone';
