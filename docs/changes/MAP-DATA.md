@@ -100,7 +100,21 @@ None. Art: none (drawn from data).
 
 ## Checks
 
-CHECKS_PLACEHOLDER
+Run once in the cloud (Linux, no graphics), on the branch merged with the
+current `integration/wasteland` (conflicts in the switch lists, the preview
+launcher, the heli-mode allow-list and the beta-switch table, all "keep both"):
+
+- `npm run build`: passes.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 417
+  passed, 8 failed. All eight need the laptop and none touches the map:
+  `test-course-kit`, `test-earned-cars-ui`, `test-drive-through`,
+  `test-full-check`, `test-medals` (each asserts `win32` or runs `pwsh`),
+  `test-salt-flats`, `test-salt-flats-art` (read
+  `C:\\Users\\kyleb\\dev\\art-library`) and `test-vesper-art` (needs a local
+  Blender).
+- `node tools/test-pilot-map.mjs` (300 checks) and
+  `node tools/build-pilot-map.mjs --check` pass.
+- Not run: browser scenarios and frame checks (nothing is drawn yet).
 
 ## Removed
 
