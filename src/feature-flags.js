@@ -41,6 +41,8 @@ export const FEATURE_STATES = Object.freeze({
   lab: 'dev',
   // Lab tuning (docs/LAB.md 5): the Tune page and its physics, a separate switch so the race feel is judged alone.
   'lab-tuning': 'dev',
+  // The pilot's map (docs/PILOT_MAP.md): the place table, regions, fuel pads and the new cruise legs. Off in the game; works only with the helicopter on.
+  'pilot-map': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
