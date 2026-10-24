@@ -487,7 +487,8 @@ export function stepFieldRacer(duel, r, dt) {
   if(f.racecraft){
     const straight=onStraight && Math.abs(line.curvatureAt(look))<1/300 && !(zone && zone.toEntry>-10 && zone.toEntry<80);
     const attack=!!f.pass || near.some(c=>c.ds>0 && c.gap<Math.max(12,mps) && !c.o.finished);
-    const defend=near.some(c=>c.ds<=0 && -c.ds<Math.max(run.halfLength+c.hl, mps*.5));
+    // GP-PASSING-2 step B: on lap 1 a car also defends against the player (index -1) from 1 s behind.
+    const defend=near.some(c=>c.ds<=0 && -c.ds<Math.max(run.halfLength+c.hl, mps*(r.completedLaps===0 && c.index<0 ? 1 : .5)));
     stepCpuNitro(r,run,dt,{straight,attack,defend,pit:!!r.pit || surface.boostAllowed===false || nitroLocked(r,s.field)});
     if(r.boosting){
       target+=cpuNitroExtraMph(r,run.spec);
