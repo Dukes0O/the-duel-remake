@@ -92,9 +92,23 @@ review is complete.
 
 ## Checks
 
-Lane tier and build: see the pull request. Not run here: browser
-scenarios and any frame check (no browser or graphics in the cloud). The ring
-and the hook size are judged by eye on the laptop (one picture pair).
+Run in the cloud container (Linux, no browser window or graphics):
+
+- All 24 `tools/test-heli-*.mjs` suites pass, including lesson 4
+  (`test-heli-lessons.mjs`, unchanged) and the new `test-heli-hook-window.mjs`.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`:
+  193 passed, 6 failed. The six need the laptop (Windows only) and none
+  touches the helicopter: `test-course-kit`, `test-earned-cars-ui`,
+  `test-full-check`, `test-drive-through`, `test-medals` (each asserts
+  `win32` or runs `pwsh`) and `test-salt-flats` (reads
+  `C:\Users\kyleb\dev\art-library`). The laptop's lane run covers them.
+  Two history-reading suites (`test-arsenal-runtime`, `test-deep-save`) first
+  failed only because the cloud clone was shallow; they pass once the history
+  is fetched.
+- `npm run build`: passes.
+- Not run here: browser scenarios and any frame check (no browser or
+  graphics). The ring and the hook size are judged by eye on the laptop
+  (one picture pair); the new refusal sound needs a listen.
 
 ## Removed
 
