@@ -41,4 +41,8 @@ Nothing replaced.
 
 ## Gates
 
-Pending.
+24 October 2026, once, on the final commit (integration already merged): all 22 GLBs rebuilt from the final recipe
+first; `node tools/test-blender-output.mjs` (80 checks, includes the recipe's path plan), `node
+tools/test-review-evidence.mjs` (9 passed), `node tools/test-repo-hygiene.mjs` passed, `node tools/run-tests.mjs
+--tier lane --changed --jobs 4`: 34 passed, 0 failed (347 s), `npm run build`: pass. No browser or frame check:
+nothing loads these models yet (rule 9).
