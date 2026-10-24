@@ -699,10 +699,12 @@ tasks:
 
   - id: DRIVE-LESSONS-LINES-2
     title: "Brian's lines for lessons 2 to 4, the true late-try lines, the shift-light cue"
-    owner: "codex"
+    owner: "claude"
     lane: "AUDIO"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-24
+    branch: claude/voice-lines
     needs: [DRIVE-LESSON-HOOKS]
     locks: [sound-bank]
     flag: "driving-lessons"
