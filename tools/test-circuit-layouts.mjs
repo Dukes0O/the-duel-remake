@@ -31,8 +31,9 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
     const manifest = CIRCUIT_MANIFESTS.find(row => row.id === circuit.id);
     assert.equal(FEATURE_STATES[circuit.flag], manifest.state);
     if (circuit.id === 'summit-time-attack') {
-      assert.deepEqual([circuit.flag, manifest.flag, manifest.state, manifest.price, manifest.releaseOrder, manifest.grandPrix],
-        ['summit-run', 'summit-run', 'on', 0, 6, false]);
+      // Release states and orders come from the manifests (QA-TEST-AUDIT): the solo child follows its parent's switch.
+      assert.deepEqual([circuit.flag, manifest.flag, manifest.state, manifest.price, manifest.grandPrix],
+        ['summit-run', 'summit-run', CIRCUIT_MANIFESTS.find(row => row.id === 'summit-run').state, 0, false]);
       assert.deepEqual(manifest.unlock, {kind: 'owned-course', defaultEventId: 'summit-run'});
       assert.equal(COURSE_PRICES[circuit.id], 0);
       assert.deepEqual([circuit.defaultMode, circuit.laps, circuit.grandPrixLaps, circuit.fieldSize, circuit.hasRival, circuit.noCombat],
@@ -40,16 +41,17 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
       assert.equal(GRAND_PRIX_COURSES.includes(circuit.id), false);
     } else if (manifest.unlock?.kind === 'default-gp-podium') {
       const expected = {
-        'panorama-ridge-night': ['panorama-ridge',7],
-        'harbour-lights-dusk': ['harbour-lights',8],
-        'panorama-ridge-reverse': ['panorama-ridge',9],
-        'harbour-lights-reverse': ['harbour-lights',10],
-        'tremblant-woods-reverse': ['tremblant-woods',11],
+        'panorama-ridge-night': ['panorama-ridge'],
+        'harbour-lights-dusk': ['harbour-lights'],
+        'panorama-ridge-reverse': ['panorama-ridge'],
+        'harbour-lights-reverse': ['harbour-lights'],
+        'tremblant-woods-reverse': ['tremblant-woods'],
       }[circuit.id];
       assert.ok(expected,'only the five approved children use free podium access');
       assert.deepEqual(manifest.unlock,{kind:'default-gp-podium',defaultEventId:expected[0]});
-      assert.deepEqual([manifest.price,COURSE_PRICES[circuit.id],manifest.releaseOrder,manifest.state,manifest.grandPrix],
-        [0,0,expected[1],'dev',true]);
+      assert.deepEqual([manifest.price,COURSE_PRICES[circuit.id],manifest.grandPrix],[0,0,true]);
+      assert.ok(manifest.releaseOrder > CIRCUIT_MANIFESTS.find(row => row.id === expected[0]).releaseOrder,
+        'a child is released after its parent');
       assert.equal(circuit.flag,circuit.id);assert.equal(circuit.hasRival,true);
       assert.equal(circuit.stage,ALL_CIRCUITS.find(def=>def.id===expected[0]).stage);
     } else {
@@ -61,6 +63,9 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
     assert.ok(Object.isFrozen(circuit) && circuit.lengthU > 2500);
   }
   for (const manifest of CIRCUIT_MANIFESTS) assert.equal(COURSE_PRICES[manifest.id], manifest.price);
+  const orders = CIRCUIT_MANIFESTS.map(row => row.releaseOrder);
+  assert.deepEqual(orders, [...orders].sort((a, b) => a - b), 'manifests are listed in release order');
+  assert.equal(new Set(orders).size, orders.length, 'each course has its own release order');
   assert.deepEqual(CIRCUITS.map(circuit => circuit.id), released, 'only the released circuits are on COURSE in the tests');
   assert.equal(COURSE.length, BASE_COURSE_COUNT + released.length);
   assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id)), [], 'the sixteen earlier events are unchanged and in place');
