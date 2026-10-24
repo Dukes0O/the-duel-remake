@@ -23,14 +23,15 @@ export const bestSlideDegrees = () => tyreSlipAngle(1, -1) * 180 / Math.PI;
 
 export const gripBench = makeBench({
   id: 'grip', cues: ['lab.fan'],
-  controls: [control('slideDeg', 'Slide', 'degrees', 0, 15, 0.5, 2), choice('driver', 'Driver level', ['casual', 'pro'], 'casual')],
+  controls: [// 12 degrees is as far as the game's tyre model draws a slide (slip 1.25 is 12.03 degrees).
+    control('slideDeg', 'Slide', 'degrees', 0, 12, 0.5, 2), choice('driver', 'Driver level', ['casual', 'pro'], 'casual')],
   run({slideDeg, driver}) {
     const slip = slipAtAngle(slideDeg * Math.PI / 180);
     return {slip, grip: tyreSlipGrip(slip, driver), squeal: tyreSlipRawSound(slip), bestSlideDeg: bestSlideDegrees()};
   },
   // The goal: a run on the best slide with full grip, and one past it where grip has fallen.
   goalMet: history => history.some(({result}) => result.grip === 1 && result.settings.slideDeg >= 3) && history.some(({result}) => result.grip < 1),
-  facts: () => ({bestSlideDeg: bestSlideDegrees(), gripPast: tyreSlipGrip(TYRE_SLIP.maxAngle ? 1 + TYRE_SLIP.width : 1.25, 'casual')}),
+  facts: () => ({bestSlideDeg: bestSlideDegrees(), gripPast: tyreSlipGrip(1 + TYRE_SLIP.width, 'casual')}),
 });
 
 // ---- Downforce: push against speed -------------------------------------------------------------------
@@ -45,7 +46,7 @@ export const downforceBench = makeBench({
   controls: [control('speedMph', 'Fan speed', 'mph', 50, 150, 10, 50), choice('wing', 'Wing', Object.keys(WING.wings), 'flat')],
   run({speedMph, wing}) {
     const now = downforce(speedMph, wing), flat = downforce(speedMph, 'flat');
-    // Top speed where the engine's push (taken as fixed) meets the drag: speed goes as 1 / cube root of the drag area.
+    // Top speed where the engine's power (taken as fixed) meets the drag: speed goes as 1 / cube root of the drag area.
     return {...now, topSpeedShare: Math.cbrt(flat.dragN / now.dragN)};
   },
   goalMet: history => history.some(({result}) => result.settings.wing !== 'flat' && result.settings.speedMph === 50)

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
-import {CARS, DRIVE, tyreSlipAngle, tyreSlipGrip} from '../src/config.js';
+import {CARS, DRIVE, TYRE_SLIP, tyreSlipAngle, tyreSlipGrip} from '../src/config.js';
 import {GRAVITY, HELI_STEP, KESTREL, createHeliState, heliMass, availableThrust, airFactor} from '../src/heli/heli-flight.js';
 import {BUCKET, DROP_AIM_RINGS, aimPoint} from '../src/heli/heli-bucket.js';
 import {FIRE, cellId, spreadStep} from '../src/heli/heli-fire.js';
@@ -97,12 +97,14 @@ test('projectile: the water lands where the bucket\'s own parcel model says, the
   assert.equal(facts.waterTopSpeedMs, BUCKET.fallSpeed);
   assert.equal(DROP_TARGET.radiusM, DROP_AIM_RINGS[0]);
   // A forward speed that carries the parcel onto the target counts; the one that falls short does not.
-  const hit = projectileBench.run({heightM: 60, speedMs: 30}), miss = projectileBench.run({heightM: 10, speedMs: 0});
-  assert.equal(projectileBench.goalMet([{settings: {}, result: miss}]), false);
-  assert.equal(projectileBench.goalMet([{settings: {}, result: miss}, {settings: {}, result: hit}]), hit.hit);
   const candidates = [];
-  for (let h = 10; h <= 60; h += 10) for (let v = 0; v <= 30; v += 5) candidates.push({heightM: h, speedMs: v});
-  assert.ok(candidates.some(settings => projectileBench.run(settings).hit), 'some setting reaches the target');
+  for (let h = 10; h <= 60; h += 5) for (let v = 0; v <= 30; v += 1) candidates.push({heightM: h, speedMs: v});
+  const hitting = candidates.find(settings => projectileBench.run(settings).hit), missing = candidates.find(settings => !projectileBench.run(settings).hit);
+  assert.ok(hitting && missing, 'some settings reach the target and some do not');
+  assert.equal(projectileBench.run(hitting).miss <= DROP_TARGET.radiusM, true);
+  assert.equal(projectileBench.run({}).hit, false, 'the default run does not already meet the goal');
+  assert.equal(projectileBench.goalMet(history(projectileBench, [missing])), false);
+  assert.equal(projectileBench.goalMet(history(projectileBench, [missing, hitting])), true);
   assert.ok(waterDrop(30, 10).distanceM > 0);
 });
 
@@ -144,6 +146,13 @@ test('pendulum: 5, 15 and 25 m strings swing in 4.5, 7.8 and 10 s whatever hangs
   const runs = [{lengthM: 5, weightKg: 10}, {lengthM: 15, weightKg: 10}, {lengthM: 25, weightKg: 10}];
   assert.equal(pendulumBench.goalMet(history(pendulumBench, runs)), false, 'three lengths are not enough: weight must change too');
   assert.equal(pendulumBench.goalMet(history(pendulumBench, [...runs, {lengthM: 15, weightKg: 90}])), true);
+  // A string and a cable of the same length are one length, not two.
+  assert.equal(pendulumBench.goalMet(history(pendulumBench, [{kind: 'string', lengthM: 15, weightKg: 20}, {kind: 'string', lengthM: 15, weightKg: 90},
+    {kind: 'cable', lengthM: 15, weightKg: 20}, {kind: 'cable', lengthM: 25, weightKg: 20}])), false, 'only two lengths');
+  // The game's cable is right over the whole range of weights the bench allows, not just from some weight up.
+  const weights = pendulumBench.controls.find(row => row.id === 'weightKg');
+  for (let weightKg = weights.min; weightKg <= weights.max; weightKg += 50) for (const length of [15, 25])
+    near(pendulumBench.run({kind: 'cable', lengthM: length, weightKg}).periodS, stringPeriod(length), 0.05, `cable ${length} m with ${weightKg} kg`);
 });
 
 test('altitude: the game\'s thrust falloff and the true air density are both shown', () => {
@@ -248,10 +257,18 @@ test('launch: 45 degrees goes furthest with no air on flat ground; air, and land
   assert.equal(bestAngle(30, {}), 45);
   // The drag is the ski rules' own: a skier's mass and drag area, not a number made up here.
   assert.ok(SKI.massKg > 0 && SKI.standingArea > 0);
-  const near40 = launchBench.run({angleDeg: 45, speedMs: 20, air: 'no air', landing: 'level'});
-  assert.equal(near40.hit, Math.abs(near40.rangeM - 40) <= 2);
-  assert.equal(launchBench.goalMet(history(launchBench, [{angleDeg: 20, speedMs: 10}])), false);
-  assert.equal(launchBench.goalMet(history(launchBench, [{angleDeg: 45, speedMs: 20}])), true, '20 m/s at 45 degrees goes 40.8 m');
+  // Air pulls the best angle below 45 at every speed the launcher has, not just the fast ones.
+  for (let speed = 5; speed <= 40; speed += 5) {
+    // At 5 m/s the air's pull is under a tenth of a degree, so the best angle stays at 45 on this grid; from 10 m/s it shows.
+    if (speed >= 10) assert.ok(bestAngle(speed, {air: true}) < 45, `with air at ${speed} m/s`); else assert.ok(bestAngle(speed, {air: true}) <= 45);
+    assert.ok(bestAngle(speed, {lower: true}) < 45, `landing lower at ${speed} m/s`);
+  }
+  // The landing is placed between steps: halving the step does not move the range by more than a few centimetres.
+  const defaultRun = launchBench.run({});
+  assert.equal(defaultRun.hit, false, 'the default run does not already meet the goal');
+  assert.equal(launchBench.run({angleDeg: 45, speedMs: 17}).hit, true, '17 m/s at 45 degrees goes 29.5 m, within 2 m of the 30 m target');
+  assert.equal(launchBench.goalMet(history(launchBench, [{angleDeg: 45, speedMs: 20}])), false);
+  assert.equal(launchBench.goalMet(history(launchBench, [{angleDeg: 45, speedMs: 20}, {angleDeg: 45, speedMs: 17}])), true);
 });
 
 test('wax: the ski rules\' own friction, one right wax for each snow, and the right wax glides faster', () => {
@@ -285,6 +302,11 @@ test('wind tunnel grip: full grip up to the tyre-slip rule\'s best slide, less b
   assert.ok(gripBench.run({slideDeg: 8, driver: 'pro'}).grip < gripBench.run({slideDeg: 8, driver: 'casual'}).grip);
   assert.equal(gripBench.run({slideDeg: 1}).squeal, 0, 'quiet well inside the limit');
   assert.ok(gripBench.run({slideDeg: 8}).squeal > 0.4, 'a squeal beyond it');
+  for (let deg = 0; deg <= 12; deg += 0.5) {
+    const slip = gripBench.run({slideDeg: deg}).slip;
+    assert.ok(slip <= 1 + TYRE_SLIP.width + 1e-6, `${deg} degrees is slip ${slip}, which the game's tyre never reaches`);
+  }
+  assert.equal(gripBench.controls.find(row => row.id === 'slideDeg').max, 12, 'the slide control stops where the game\'s tyre model does');
   assert.equal(gripBench.goalMet(history(gripBench, [{slideDeg: 4}])), false);
   assert.equal(gripBench.goalMet(history(gripBench, [{slideDeg: 4}, {slideDeg: 10}])), true);
 });
@@ -382,4 +404,17 @@ test('the explanations in docs/LAB.md section 4 quote numbers the benches produc
   assert.equal(HELI_DESTINATIONS['panorama-ridge'].baseAltitude, 860);
   // Suspension: says what the rig shows.
   quoted('shaken less'); quoted('shaking it harder');
+});
+
+test('a history from anywhere cannot make a goal check throw or pass', () => {
+  const junk = [[{result: {}}], [{result: 5}], [{result: null}], [null], [undefined], [{}], [{settings: {}}], 'x', 7, {length: 3}, [{result: {settings: null}}],
+    [{result: {settings: {collective: 1}}}], [{result: {settings: {}}}, {result: {settings: {}, arm: 3}}]];
+  for (const bench of BENCHES) for (const rows of junk) assert.doesNotThrow(() => bench.goalMet(rows), `${bench.id}: ${JSON.stringify(rows)}`);
+  for (const bench of BENCHES) for (const rows of junk.slice(0, 11)) assert.equal(bench.goalMet(rows), false, `${bench.id}: junk does not meet a goal`);
+  // Settings given as Infinity clamp to the top; numeric strings are not numbers and fall back to the default.
+  assert.equal(liftBench.run({cargoKg: Infinity}).settings.cargoKg, 3000);
+  assert.equal(liftBench.run({cargoKg: -Infinity}).settings.cargoKg, 0);
+  assert.equal(liftBench.run({cargoKg: '500'}).settings.cargoKg, 0);
+  // The screen is never handed the hook-arm answer.
+  assert.equal(JSON.stringify(strengthBench.run({part: 'hook arm'})).includes('lightest'), false);
 });

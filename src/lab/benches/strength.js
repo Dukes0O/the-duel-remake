@@ -59,12 +59,15 @@ const controls = [
 export const strengthBench = makeBench({
   id: 'strength', controls, cues: ['lab.creak', 'lab.snap'],
   run({part, material, loadKg, thicknessMm}) {
-    if (part === 'hook arm') return {part, arm: hookArm(material, thicknessMm), lightestMassKg: lightestArm().massKg};
+    if (part === 'hook arm') {
+      const arm = hookArm(material, thicknessMm);
+      return {part, arm, withinReach: arm.holds && arm.massKg <= lightestArm().massKg * 1.15};
+    }
     const bars = NAMES.map(name => loadBar(name, loadKg));
     return {part, bars, cue: bars.some(bar => bar.state === 'snapped') ? 'lab.snap' : bars.some(bar => bar.state === 'bent for good') ? 'lab.creak' : null};
   },
   // The goal: a hook arm that holds 2,000 kg and weighs no more than 15% over the lightest that can.
-  goalMet: history => history.some(({result}) => result.arm?.holds && result.arm.massKg <= result.lightestMassKg * 1.15),
+  goalMet: history => history.some(({result}) => result.withinReach === true),
   facts: () => ({aluminiumOverSteelDensity: MATERIALS.aluminium.density / MATERIALS.steel.density,
     snapped: NAMES.filter(name => MATERIALS[name].brittle), lightest: lightestArm()}),
 });

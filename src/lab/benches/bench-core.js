@@ -23,7 +23,8 @@ export function readSettings(controls, settings) {
   for (const row of controls) {
     const value = Object.hasOwn(given, row.id) ? given[row.id] : row.value;
     if (!isNumber(row)) { out[row.id] = row.options.includes(value) ? value : row.value; continue; }
-    const wanted = Number.isFinite(value) ? value : row.value;
+    // Infinity clamps to the top (or bottom); NaN, strings and other junk fall back to the default.
+    const wanted = typeof value === 'number' && !Number.isNaN(value) ? value : row.value;
     const snapped = row.min + Math.round((wanted - row.min) / row.step) * row.step;
     out[row.id] = Math.round(Math.max(row.min, Math.min(row.max, snapped)) * 1e9) / 1e9;
   }
@@ -35,7 +36,12 @@ export function makeBench({id, controls, cues = [], run, goalMet, facts}) {
   return Object.freeze({
     id, controls: frozen, cues: Object.freeze([...cues]),
     run: settings => { const read = readSettings(frozen, settings); return Object.freeze({settings: read, ...run(read)}); },
-    goalMet: history => Array.isArray(history) && history.length > 0 && goalMet(history.filter(row => row && row.result)) === true,
+    // A history row is {settings, result} with a result a run of this bench made; anything else is ignored, never thrown on.
+    goalMet: history => {
+      if (!Array.isArray(history)) return false;
+      const rows = history.filter(row => row && typeof row.result === 'object' && row.result !== null && typeof row.result.settings === 'object' && row.result.settings !== null);
+      try { return rows.length > 0 && goalMet(rows) === true; } catch { return false; }
+    },
     facts: () => facts(),
   });
 }

@@ -5,7 +5,7 @@
 import {SKI, SKI_STEP, GRAVITY, airDensity} from '../../ski/ski-physics.js';
 import {control, choice, makeBench} from './bench-core.js';
 
-export const TARGET = Object.freeze({rangeM: 40, withinM: 2});
+export const TARGET = Object.freeze({rangeM: 30, withinM: 2});
 const LOWER_M = 10;
 const controls = [
   control('angleDeg', 'Angle', 'degrees', 15, 75, 1, 45), control('speedMs', 'Speed', 'm/s', 5, 40, 1, 20),
@@ -22,17 +22,21 @@ export function rangeOf(angleDeg, speedMs, {air = false, lower = false} = {}) {
   const k = 0.5 * airDensity(0) * SKI.standingArea / SKI.massKg;
   let x = 0, y = drop, vx = along, vy = up, t = 0;
   while (t < 60) {
-    const speed = Math.hypot(vx, vy);
+    const speed = Math.hypot(vx, vy), lastX = x, lastY = y;
     vx -= k * speed * vx * SKI_STEP; vy -= (GRAVITY + k * speed * vy) * SKI_STEP;
     x += vx * SKI_STEP; y += vy * SKI_STEP; t += SKI_STEP;
-    if (y <= 0 && vy < 0) return {rangeM: x, seconds: t};
+    // The step that crosses the landing height: place the landing on that step by interpolation.
+    if (y <= 0 && vy < 0) { const share = lastY / (lastY - y); return {rangeM: lastX + (x - lastX) * share, seconds: t - SKI_STEP * (1 - share)}; }
   }
   return {rangeM: x, seconds: t};
 }
-// The angle that goes furthest, in half degrees from 15 to 75.
+// The angle that goes furthest, in tenths of a degree from 15 to 75.
 export function bestAngle(speedMs, options) {
   let best = 15;
-  for (let angle = 15; angle <= 75; angle += 0.5) if (rangeOf(angle, speedMs, options).rangeM > rangeOf(best, speedMs, options).rangeM) best = angle;
+  for (let step = 0; step <= 600; step++) {
+    const angle = 15 + step / 10;
+    if (rangeOf(angle, speedMs, options).rangeM > rangeOf(best, speedMs, options).rangeM) best = angle;
+  }
   return best;
 }
 

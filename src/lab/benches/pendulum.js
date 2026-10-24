@@ -9,7 +9,8 @@ const RELEASE_DEGREES = 5;
 const controls = [
   choice('kind', 'Hanging from', ['string', 'cable'], 'string'),
   choice('lengthM', 'Length', [5, 15, 25], 5),
-  control('weightKg', 'Weight', 'kg', 1, 1500, 1, 20),
+  // 10 kg up: the game's cable is very stiff, and a lighter load than its lightest (the 50 kg bucket) is not a case it models.
+  control('weightKg', 'Weight', 'kg', 10, 1500, 10, 20),
 ];
 
 export const stringPeriod = lengthM => 2 * Math.PI * Math.sqrt(lengthM / GRAVITY);
@@ -40,12 +41,12 @@ export const pendulumBench = makeBench({
     const periodS = kind === 'cable' ? cablePeriod(length, weightKg) : stringPeriod(length);
     return {kind, lengthM: length, weightKg, periodS, formulaS: stringPeriod(length)};
   },
-  // The goal: the player has timed three different lengths, and two weights on one length.
+  // The goal: the player has timed three different lengths (5, 15 and 25 m), and two weights on one length.
   goalMet(history) {
-    const lengths = new Set(history.map(({result}) => `${result.kind}${result.lengthM}`));
-    const byLength = new Map();
-    for (const {result} of history) { const key = `${result.kind}${result.lengthM}`; byLength.set(key, new Set([...(byLength.get(key) ?? []), result.weightKg])); }
-    return lengths.size >= 3 && [...byLength.values()].some(weights => weights.size >= 2);
+    const lengths = new Set(history.map(({result}) => result.lengthM));
+    const weightsAt = new Map();
+    for (const {result} of history) { const key = `${result.kind}${result.lengthM}`; weightsAt.set(key, new Set([...(weightsAt.get(key) ?? []), result.weightKg])); }
+    return lengths.size >= 3 && [...weightsAt.values()].some(weights => weights.size >= 2);
   },
   facts: () => ({stringPeriodsS: [5, 15, 25].map(stringPeriod), cablePeriodsS: [15, 25].map(length => cablePeriod(length, 1250))}),
 });
