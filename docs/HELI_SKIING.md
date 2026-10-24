@@ -12,8 +12,11 @@ fly on. Kyle handed this design to Claude on 24 October.
 
 - Kestrel One's thrust falls with height: most thrust = 1.08 x 3,130 kg x
   e^(-altitude / 8,500 m) (`docs/HELICOPTER.md` 3). Summit Run is a
-  destination (base 2,860 m) and its road climbs to the real summit of Pikes
-  Peak, 4,302 m.
+  destination (base 2,860 m) and the game reckons a height there as the base
+  plus the height above the start of the road (`altitudeOffset`). The road
+  climbs 726 m, so the highest clear landing circle in the Summit world, by the
+  hut, is at 3,586 m, not the real summit's 4,302 m. (Corrected 24 October
+  2026: the first draft quoted the real mountain.)
 - The flying area is the course plus 250 m, ceiling 300 m above the start.
 - The yeti lives at Summit. Snow surfaces, the avalanche and snowmen exist.
 - Free character models (Quaternius) and ski-resort pieces are in the art
@@ -32,19 +35,27 @@ fly on. One player at a time, as everywhere in the game.
 ## 3. Thin air: the part the Lab teaches
 
 Real heli-ski helicopters carry a guide and four or five guests. The game's
-own thrust rule makes the summit hard with a full group:
+own thrust rule (most thrust = 1.08 x 3,130 kg x e^(-altitude / 8,500 m)), at
+the altitudes the Summit world really has (the pads in section 6):
 
-| At | Most thrust | Full group (guide + 4 guests, 95 kg each) and full tank | Same, half tank |
+| At | Most thrust | Full group (guide + 4 guests, 95 kg each) and full tank: 2,105 kg | Same, half tank: 1,905 kg |
 | --- | --- | --- | --- |
-| Devils Playground pad, 3,960 m | 2,122 kg | 2,105 kg: barely hovers, cannot climb | 1,905 kg: fine |
-| Summit pad, 4,302 m | 2,038 kg | 2,105 kg: **cannot hover** | 1,905 kg: fine |
-| Summit, with the Lab's altitude tune | 2,199 kg | 2,105 kg: just | fine |
+| Pickup pad, 2,886 m | 2,407 kg | hovers, 302 kg to spare | hovers, 502 kg to spare |
+| Devils Playground pad, 3,237 m | 2,309 kg | hovers, 204 kg to spare | hovers, 404 kg to spare |
+| Summit pad, 3,586 m | 2,217 kg | hovers, 112 kg (5%) to spare | hovers, 312 kg to spare |
+| Summit pad, with the Lab's altitude tune (e^(-altitude / 10,000 m)) | 2,362 kg | 257 kg to spare | 457 kg to spare |
 
-So, as Kyle's storyboard says, you cannot reach the summit with a full tank
-and a full group: take half a tank (the legs are short) or fit the Lab's
-altitude tune. Solo, with only your own skis, it is easy. The radio says
-why the first time the collective runs out: "Thin air up here. Less air for
-the rotor to push. Lighten up: burn fuel or leave some behind."
+The weights are the empty helicopter 1,150 kg, the pilot 80 kg, the fuel and
+the group's 475 kg. So in this world a full group on a full tank **does**
+hover at the summit pad, only just: the thin air shows as a sluggish climb (112
+kg of spare lift is about 0.5 m/s2) and as a helicopter that cannot take much
+more. A full tank and the group would stop hovering at 4,027 m, which the
+Summit world does not have. The first draft of this packet said "take half a
+tank" because it used the real mountain's 4,302 m; that lesson is dropped,
+and nothing in the helicopter or the group's weight is tuned to bring it
+back. The Lab's air-and-altitude lesson still teaches thin air, and the radio
+says it the first time the collective runs out: "Thin air up here. Less air
+for the rotor to push. Lighten up: burn fuel or leave some behind."
 
 ## 4. Skiing (true, and how the game does it)
 
@@ -59,7 +70,7 @@ repeatable from inputs, runnable without graphics.
 | Turning | Tip the skis on edge and their curved sides bend them into an arc; more tip, tighter turn | Carving radius = 17 m x cos(edge angle), up to 60 degrees (8.5 m); a carve keeps its speed |
 | Slowing | Skis turned across the slope scrape | Skid: friction 0.4 while held |
 | Jumps | You leave the snow when the slope drops away faster than you fall | Leaves the ground when the ground falls away under the ballistic path; Space adds a small pop |
-| Landings | Landing on a downslope is gentle: you keep moving along it | Safe when the slope under you is within 20 degrees of your path and any spin or flip is finished (within 30 degrees); flat or crooked landings tumble (3 s, no other cost) |
+| Landings | Landing on a downslope is gentle: you keep moving along it | Safe when the slope under you is within 20 degrees of your path and any spin or flip is finished (within 30 degrees); flat or crooked landings tumble (3 s, no other cost). A landing hill may state a wider window: the aerials hill's is 40 degrees (Claude, 24 October 2026) |
 
 **Controls (one keyboard):** A and D tip the skis (turn), S skids to slow,
 Shift tucks (no hard turns while tucked), W skates on the flat (below
@@ -91,8 +102,10 @@ zone; climbing in at the pickup switches back.
 
 ## 6. The helicopter's part
 
-- **Pads:** two drop pads (Devils Playground, about 3,960 m; the summit,
-  4,302 m) and one pickup pad near the bottom of the runs. Summit's flying
+- **Pads:** two drop pads (Devils Playground, 3,237 m; the summit, 3,586 m)
+  and one pickup pad near the bottom of the runs (2,886 m): the Summit world's
+  own clear, level 12 m circles (`SUMMIT_PADS` in `src/ski/runs/summit-zones.js`),
+  348 m and 351 m apart. Summit's flying
   area grows to include them (its ceiling rises above the summit for these
   flights only).
 - **The drop:** land on a drop pad, choose the run, step out. The helicopter
@@ -117,8 +130,8 @@ zone; climbing in at the pickup switches back.
 
 Five runs give at most 2,500 credits in medals. The Lab's two snow lessons
 (Launch angles, Ski wax; `docs/LAB.md` 4.3) open the aerials tips and a wax
-kit; the altitude tune (`docs/LAB.md` 4.1) lets a full group reach the
-summit on a full tank.
+kit; the altitude tune (`docs/LAB.md` 4.1) adds thrust at every height
+(257 kg to spare at the summit pad with a full group).
 
 ## 8. Sounds, voice and art
 
@@ -167,8 +180,9 @@ its own zones after Kyle has skied Summit.
 
 - Summit Run comes first: it is the big mountain, it has the thin air and
   the yeti; Tremblant follows as the gentle mountain.
-- The group is a guide and four guests, as on real heli-ski trips; that is
-  what makes the summit need half a tank, and it keeps solo skiing easy.
+- The group is a guide and four guests, as on real heli-ski trips; it keeps
+  solo skiing easy and the helicopter heavy (the summit pad is only just within
+  reach of a full group; section 3).
 - A missed gate costs 5 s instead of hiking back up, so a child's run is
   never lost to one mistake.
 - Medals pay up to 500 credits a run, below a Hard race win per medal step.

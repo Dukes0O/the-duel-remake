@@ -7,8 +7,7 @@
 //
 // The zone's own frame: the drop pad is the origin (x 0, z 0), the run falls
 // toward +z, +x is the skier's left. drop.y and every height are metres above
-// the sea at the packet's altitudes (so the air is as thin as the design
-// says). `world` is where the helicopter lands for it in the Summit Run
+// the sea, at the pads' real altitudes (SKI_ALTITUDES). `world` is where the helicopter lands for it in the Summit Run
 // world: the clear, level 12 m circle (SUMMIT_PADS), with its ground height
 // there; the zone's top meets it, and a zone is drawn at the pad's x and z.
 // The zone's `ground`, `gates`, `line`, `stashes` and the rest are in the zone
@@ -16,8 +15,8 @@
 //
 // How long and how far: slalom 450 m long, 180 m drop, 50 gates; giant
 // slalom 1,100 m, 350 m, 40 gates; moguls 250 m at 28 degrees; aerials one
-// kicker (a 65 degree face) onto a 37 degree hill; powder the north bowl from
-// the summit, 692 m down. "Long" is measured along z (horizontally).
+// kicker (a 64 degree face, taking off at about 50 degrees) onto a 37 degree hill; powder the north bowl from
+// the summit, down to the pickup altitude. "Long" is measured along z (horizontally).
 import {SKI} from '../ski-physics.js';
 import {fallLine, fitDrop, bump, distanceToLine, gateAt, freezeDeep} from './recipe.js';
 import {guideRun} from '../ski-guide.js';
@@ -26,18 +25,30 @@ import {medalTimes, SCORE} from '../ski-score.js';
 const DEG = Math.PI / 180;
 const smooth = t => { const k = Math.min(1, Math.max(0, t)); return k * k * (3 - 2 * k); };
 
-// The packet's altitudes (metres above the sea).
-export const SKI_ALTITUDES = Object.freeze({devils: 3960, summit: 4302, pickup: 3610});
+// One world (SKI-RUNS question 2, answered 24 October 2026): the pads sit at
+// the Summit Run world's real heights, and a flight there reads its altitude
+// the way every Summit flight does, the course's 2,860 m base plus the height
+// above the start (heli-jobs SUMMIT_RUN.baseAltitude; heli-session
+// altitudeOffset), so the air the skier meets is the air the helicopter flew.
+export const SUMMIT_BASE_ALTITUDE = 2860;
+export const SUMMIT_START_Y = 14;
+export const altitudeOf = worldY => SUMMIT_BASE_ALTITUDE + worldY - SUMMIT_START_Y;
 
 // Three landing circles in the Summit Run world (course frame, seed 1989):
-// the highest clear level 12 m circle (the summit hut yard), one 342 m of
-// ground height lower (the packet's gap between the pads) and one 351 m lower
-// again, beside the start of the road. tools/test-ski-runs.mjs checks that each is clear,
-// level within 1.5 m and at its ground height.
+// the highest clear level 12 m circle (the summit hut yard), one 348 m lower
+// (the packet's 342 m between the pads, as near as the world has) and one 351 m
+// lower again (the packet's 350 m), beside the start of the road.
+// tools/test-ski-runs.mjs checks that each is clear, level within 1.5 m and at
+// its ground height.
 export const SUMMIT_PADS = Object.freeze({
   summit: Object.freeze({x: 3104.9, z: 6904, y: 739.7}),
   devils: Object.freeze({x: 2325.3, z: 3256.8, y: 391.5}),
   pickup: Object.freeze({x: 152, z: 758.9, y: 40}),
+});
+
+// The altitudes of the three pads, metres above the sea.
+export const SKI_ALTITUDES = Object.freeze({
+  summit: altitudeOf(SUMMIT_PADS.summit.y), devils: altitudeOf(SUMMIT_PADS.devils.y), pickup: altitudeOf(SUMMIT_PADS.pickup.y),
 });
 
 const PICKUP_RADIUS = 12;
@@ -63,7 +74,7 @@ function slalom() {
   const fall = slope([{z: 0, angle: 14}, {z: 30, angle: 14}, {z: 60, angle: 25}, {z: 420, angle: 25}, {z: 450, angle: 18}],
     450, 180, [{z: 480, angle: 6}, {z: 520, angle: 6}], 520);
   const gates = [];
-  for (let i = 0; i < 50; i++) gates.push(gateAt(30 + i * 8.2, i % 2 ? 1 : -1, 4, i % 2 ? 'blue' : 'red'));
+  for (let i = 0; i < 50; i++) gates.push(gateAt(30 + i * 8.2, i % 2 ? 1.1 : -1.1, 2, i % 2 ? 'blue' : 'red'));
   const start = gateAt(12, 0, 12, 'start'), end = gateAt(450, 0, 12, 'finish');
   return finish({
     id: 'slalom', kind: 'slalom', name: 'Slalom', pad: 'devils',
@@ -140,10 +151,11 @@ function moguls() {
   });
 }
 
-// ---- Aerials: one kicker (a 65 degree face) onto a 37 degree landing hill ------------
+// ---- Aerials: one kicker (a 64 degree face, taking off at about 50) onto a 37 degree landing hill ------------
 // Above the pickup: the helicopter lands at the pickup circle's world pad.
-// The landing hill is judged against a 40 degree window (SKI-RUNS question 1).
-const AERIALS = Object.freeze({inrun: 40, inrunAngle: 22, ramp: 12, face: -65, ease: 2, hill: 37, hillLength: 70, runOut: 30});
+// The landing hill is judged against a 40 degree window (approved by Claude,
+// 24 October 2026; every other zone keeps the ski rules' 20).
+const AERIALS = Object.freeze({inrun: 40, inrunAngle: 22, ramp: 14, face: -64, ease: 2, hill: 37, hillLength: 70, runOut: 30});
 function aerials() {
   const a = AERIALS;
   const lip = a.inrun + a.ramp + a.ease, hillEnd = lip + a.hillLength;
@@ -160,12 +172,12 @@ function aerials() {
     stashes: [], bounds: {minX: -30, maxX: 30, minZ: -10, maxZ: hillEnd + a.runOut + 30},
     pickup: {x: 0, z: hillEnd + a.runOut},
     safePathAngle: 40,
-    scoring: {kind: 'judged', height: 8, distance: 15, rotations: 1, axis: 'spin'},
+    scoring: {kind: 'judged', height: 6, distance: 14, rotations: 1, axis: 'spin'},
   });
 }
 
 // ---- Powder: the north bowl, no course ------------------------------------------------
-const POWDER = Object.freeze({length: 1300, drop: 692, bowl: 0.004, bowlLimit: 140, packedFriction: 0.12,
+const POWDER = Object.freeze({length: 1300, drop: SKI_ALTITUDES.summit - SKI_ALTITUDES.pickup, bowl: 0.004, bowlLimit: 140, packedFriction: 0.12,
   stashRadius: 9, packedWidth: 3, packedBlend: 2});
 function powder() {
   const top = SKI_ALTITUDES.summit;

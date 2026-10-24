@@ -145,6 +145,8 @@ const lip = (a1, a2, top = 3000) => {
   return {ground: (x, z) => top - (z < 0 ? t1 * z : t2 * z)};
 };
 const startOf = (world, speed) => createSkier({world, z: -30, speed});
+// How steeply the 20 m/s run off a lip meets its hill, degrees.
+const land0 = world => ski(startOf(world, 20), world, 4).find(e => e.type === 'skiLand').angle;
 {
   const world = lip(10, 35, 50000);
   const skier = startOf(world, 20);
@@ -160,6 +162,11 @@ const startOf = (world, speed) => createSkier({world, z: -30, speed});
 {
   // A clean landing on a slope that falls away with the jump: slope within 20 degrees of the path.
   const world = lip(10, 35);
+  // A hill may state its own window (aerials: 40); absent, it is the usual 20.
+  const narrow = {...world, safePathAngle: land0(world) - 1};
+  ok(!ski(startOf(narrow, 20), narrow, 4).find(e => e.type === 'skiLand').safe, 'a landing hill can narrow the window: the same landing tumbles');
+  const wide = {...world, safePathAngle: 40};
+  ok(ski(startOf(wide, 20), wide, 4).find(e => e.type === 'skiLand').safe, 'and widen it');
   const skier = startOf(world, 20);
   const events = ski(skier, world, 4);
   const land = events.find(e => e.type === 'skiLand');
