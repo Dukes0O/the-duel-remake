@@ -14,7 +14,7 @@ import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex, nitroLocked } from './race-field.js';
 
 // GP-PASSING-2: pass types that `cpu-racecraft` turns on, one row each; a type that fails its batch stays false.
-export const PASS_TYPES = Object.freeze({alongside: true});
+export const PASS_TYPES = Object.freeze({alongside: false, exitTow: true});
 
 export const CPU_NITRO = Object.freeze({strength:.5, refill:.5});
 export const cpuNitroExtraMph=(r,spec)=>spec.topSpeed*(BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(spec.nitroSpeedBonus??0))*CPU_NITRO.strength;
@@ -391,7 +391,7 @@ export function stepFieldRacer(duel, r, dt) {
     if (!cp || cp === r || cp.knock || now - f.pass.since > 30) { f.pass = null; f.passCool = now + 2; f.passes.timeout++; }
     else if (ds < -(run.halfLength + shell.halfLength + 3.5)) { f.pass = null; f.passCool = now + 1; f.passes.done++; }
     // Commit point: a side-by-side pass must be at least half alongside 60 m before the braking zone, or it backs out.
-    else if (alongsideOn && !f.pass.dive && zone && zone.toEntry > -10 && zone.toEntry < 60 &&
+    else if ((f.pass.type === 'alongside' || f.pass.type === 'exit') && zone && zone.toEntry > -10 && zone.toEntry < 60 &&
         run.halfLength + shell.halfLength - Math.abs(ds) < Math.min(run.halfLength, shell.halfLength)) {
       f.passes.backedOut = (f.passes.backedOut || 0) + 1;
       f.pass = null; f.passCool = now + 4;
@@ -411,10 +411,15 @@ export function stepFieldRacer(duel, r, dt) {
   if (!f.pass && blocker && blocker.gap > -1 && now >= (f.passCool || 0) && now > 10) {
     // Quicker than the car ahead in its own right, not just for a moment (the player's pace is its speed).
     const theirs = blocker.index >= 0 ? runtimeOf(duel, blocker.o).profile.at(blocker.o.s) * (1 + paceForm(blocker.o.field, now)) : (f.racecraft ? playerPaceMph(duel) : blocker.speed);
-    const closing = profile.at(r.s + blocker.ds) * (1 + formNow) - theirs;
+    const closingPace = profile.at(r.s + blocker.ds) * (1 + formNow) - theirs;
     const gapTime = Math.max(0, blocker.gap) / Math.max(12, mps);
     const straight = Math.abs(line.curvatureAt(look)) < 1 / 300 && Math.abs(line.curvatureAt(look + 70)) < 1 / 260 &&
       !(zone && zone.toEntry > -10 && zone.toEntry < 40);
+    // Pass type 2: on the straight after a corner, a car that left it at least 3 mph faster counts its tow.
+    const exitBonus = f.racecraft && PASS_TYPES.exitTow && straight && !onStraight && f.tow > 0 && r.speedMph - blocker.speed >= 3
+      ? FIELD.towTopSpeed * f.tow * target0 : 0;
+    const closing = closingPace + exitBonus;
+    const exitUsed = exitBonus > 0 && !(closingPace > Math.max(2, r.speedMph * .008));
     // Is there road enough before the next braking zone to finish the move?
     const roadAhead = zone && zone.toEntry > -10 ? zone.toEntry : Infinity;
     const needed = mps * (blocker.gap + 8) / Math.max(1, closing * MPH) + 30;
@@ -426,11 +431,11 @@ export function stepFieldRacer(duel, r, dt) {
         const lane = passLane(side, blocker.o, blocker.hw, blocker.ds);
         if (Math.abs(lane) > roadLimit - .6) continue;
         // Mirror check: a car closing from behind within 2 s counts as in the lane.
-        const mirror = c => alongsideOn ? Math.max(0, c.speed - r.speedMph) * MPH * 2 : 0;
+        const mirror = c => alongsideOn || exitUsed ? Math.max(0, c.speed - r.speedMph) * MPH * 2 : 0;
         const crowded = near.some(c => c !== blocker && c.ds > -(run.halfLength + c.hl + 4 + mirror(c)) && c.ds < blocker.ds + 30 &&
           Math.abs(c.o.lateral - lane) < run.halfWidth + c.hw + .3);
         if (crowded) continue;
-        const type = alongsideOn && Math.abs(lane - lineLane(side, blocker.o, blocker.hw, blocker.ds)) > .05 ? 'alongside' : 'line';
+        const type = exitUsed ? 'exit' : alongsideOn && Math.abs(lane - lineLane(side, blocker.o, blocker.hw, blocker.ds)) > .05 ? 'alongside' : 'line';
         f.pass = { index: blocker.index, side, since: now, bestGap: blocker.gap, bestAt: now, ...(f.racecraft ? {type} : {}) };
         f.passes.start++;
         passIntent = lane;

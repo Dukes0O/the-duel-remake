@@ -31,3 +31,16 @@ Needed because Panorama stayed above 5/20 after step A. On lap 1 a computer car 
 Report-only: CPU passes 1.9, 10.7, 3.8 per race; slower player passed 11, 20, 12 of 20.
 
 Outcome: both steps together fix Pacific Canyon completely (nitro leader 20 -> 0 of 20) and Woods stays at 0, but Panorama still has the nitro player leading 12 of 20 (from 19) and Woods has 3 early pile-ups against 1 (a count of 3 in 20 races, same with step A alone). By the card, both steps failing a gate is recorded and the pass types carry on. Steps A and B stay in the dev build; Claude to decide whether they stay.
+
+## Pass type 1: alongside a car on the racing line, with mirror check and commit point (fc3ec5b4), FAILED, switched off
+
+On top of steps A and B. The pass lane is measured from the car itself; a lane is crowded if a car is closing from behind within 2 s; a pass not half alongside 60 m before the braking zone backs out. Gates compared with the switch-off figures (card rule):
+
+| Gate | Panorama Ridge | Tremblant Woods | Pacific Canyon |
+| --- | --- | --- | --- |
+| 8+-crash races, on <= off (16, 4, 0) | 15 PASS | 3 PASS | 0 PASS |
+| Mean crashes <= off x 1.1 (12.55, 3.75, 0.10) | 11.45 PASS | 4.75 FAIL | 0.65 FAIL |
+| Early pile-ups <= off + 1 (2, 1, 0) | 1 PASS | 2 PASS | 0 PASS |
+| Max race time change vs off, 2% | 1.97% PASS | 1.34% PASS | 0.88% PASS |
+
+Report-only: CPU passes 2.2, 11.0, 4.0; slower player passed 12, 20, 11 of 20; nitro leader 13, 0, 0 of 20. Crashes by pass type (in the pass or within 3 s of it): Panorama dive 14 of 229; Woods dive 26, alongside 4, line 2 of 95; Pacific Canyon line 5, alongside 1 of 13. Pacific Canyon went from 1 crash (steps A+B) to 13 in 20 races. The type is off (`PASS_TYPES.alongside = false`); its mirror check and commit point stay in the code and are reused for the types that follow.
