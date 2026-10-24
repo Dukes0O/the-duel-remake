@@ -34,3 +34,9 @@ Art: LAB-ART.
 Acceptance: the scenario; screens never change race or helicopter state
 except through the Lab's own save calls; lane tier, build, one review.
 Removed: nothing.
+
+## Carried from LAB-HELI (Claude, 24 October)
+
+- Pass `labEnabled: flags.enabled('lab')` to `createHeliSession` in `src/app.js` so the Lab upgrades act in the game.
+- The fire view's litre bar divides by a fixed 600 (`heli-fire-view.js`); use the bucket's own `holds` so the bigger bucket fills the bar.
+- Draw the pad actions the session offers (`loadBucket('water'|'retardant')`, `chooseLine(15|25)`).
