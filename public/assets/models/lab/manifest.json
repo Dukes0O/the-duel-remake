@@ -17,8 +17,8 @@
       "yaw": 0
     },
     "weights-and-cans": {
-      "x": -5.2,
-      "z": 6.2,
+      "x": -6.2,
+      "z": 6.4,
       "yaw": 0
     },
     "drop-tower": {
@@ -37,12 +37,12 @@
       "yaw": 0
     },
     "nail-jars": {
-      "x": -8.8,
+      "x": -10.9,
       "z": -8.4,
       "yaw": 0
     },
     "bending-rig": {
-      "x": -5.4,
+      "x": -6.3,
       "z": -7.6,
       "yaw": 0
     },
@@ -57,25 +57,28 @@
       "yaw": 0
     },
     "snow-trays": {
-      "x": 5.2,
+      "x": 4.95,
       "z": -8.3,
       "yaw": 0
     },
     "wind-tunnel": {
       "x": 10.7,
-      "z": -6.9,
+      "z": -6.4,
       "yaw": 0
     },
     "turning-arm": {
-      "x": 8.6,
-      "z": 1.6,
+      "x": 9.9,
+      "z": 2,
       "yaw": 0
     },
     "map-table": {
-      "x": 12.9,
-      "z": 7,
+      "x": 13.4,
+      "z": 7.2,
       "yaw": 0
     }
+  },
+  "sweepRadius": {
+    "turning-arm": 4.8
   },
   "models": [
     {
@@ -485,17 +488,17 @@
     {
       "id": "turning-arm",
       "path": "assets/models/lab/turning-arm.glb",
-      "bytes": 166612,
-      "sha256": "db142907197d19ffa1f12f9b33b1c68b0c1ad61a1afef5b93be1a843eb79a261",
-      "triangles": 3278,
+      "bytes": 162484,
+      "sha256": "cbd00b73e722d8203aa59bc758c6a129c6c385c1e10b09efaafe906c64edb1d7",
+      "triangles": 3214,
       "dimensionsMetres": [
-        8.425,
+        7.825,
         3.719,
         7.29
       ],
       "footprint": {
         "minX": -3.645,
-        "maxX": 4.78,
+        "maxX": 4.18,
         "minZ": -3.645,
         "maxZ": 3.645
       },
@@ -743,5 +746,5 @@
       ]
     }
   ],
-  "totalBytes": 3606168
+  "totalBytes": 3602040
 }

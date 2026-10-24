@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { partMesh, triangleCount } from './lab-kit.mjs';
-import { HALL, HANGAR_LAYOUT, hangar } from './lab-hangar.mjs';
+import { HALL, HANGAR_LAYOUT, HANGAR_SWEEP, hangar } from './lab-hangar.mjs';
 import { BENCHES1 } from './lab-benches.mjs';
 import { BENCHES2 } from './lab-benches2.mjs';
 
@@ -47,7 +47,7 @@ const build = (id, opts) => {
 async function glb(object) { return Buffer.from(await new GLTFExporter().parseAsync(object, { binary: true })); }
 async function write(path, buffer) { await mkdir(dirname(path), { recursive: true }); await writeFile(path, buffer); }
 
-const manifest = { formatVersion: 1, source: 'tools/art/lab-props.mjs', coordinates: 'metres; glTF Y up; each model\'s origin on the floor, +Z facing the player; the hangar\'s open door is on its +Z side; part pivots are node positions', hall: HALL, layout: HANGAR_LAYOUT, models: [] };
+const manifest = { formatVersion: 1, source: 'tools/art/lab-props.mjs', coordinates: 'metres; glTF Y up; each model\'s origin on the floor, +Z facing the player; the hangar\'s open door is on its +Z side; part pivots are node positions', hall: HALL, layout: HANGAR_LAYOUT, sweepRadius: HANGAR_SWEEP, models: [] };
 const built = {};
 let totalBytes = 0;
 for (const id of Object.keys(MODELS)) {

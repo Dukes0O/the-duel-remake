@@ -104,12 +104,12 @@ function turningArm() {
   const parts = [main, needle('g-needle', -1.5, 1.2, -.58, .15)];
   // The arm: a braced beam with a counterweight, and a car-sized cradle at the end (own part, turns about the pylon).
   const arm = new Part('arm', [0, 1.62, 0]), A = tools(arm, 770);
-  A.box([5.6, .2, .3], [1.0, 1.7, 0], STEEL, { rust: .4, dirt: .3, chip: .07 });
-  A.box([5.6, .08, .5], [1.0, 1.82, 0], 0x4b585f, { rust: .4, dirt: .3 });
-  for (let i = 0; i < 6; i++) { A.bar([-1.4 + i * .95, 1.7, -.1], [-.9 + i * .95, 1.0, 0], .025, STEEL, { rust: .5 }); A.bar([-.9 + i * .95, 1.0, 0], [-.45 + i * .95, 1.7, .1], .025, STEEL, { rust: .5 }); }
+  A.box([5.0, .2, .3], [.7, 1.7, 0], STEEL, { rust: .4, dirt: .3, chip: .07 });
+  A.box([5.0, .08, .5], [.7, 1.82, 0], 0x4b585f, { rust: .4, dirt: .3 });
+  for (let i = 0; i < 5; i++) { A.bar([-1.4 + i * .95, 1.7, -.1], [-.9 + i * .95, 1.0, 0], .025, STEEL, { rust: .5 }); A.bar([-.9 + i * .95, 1.0, 0], [-.45 + i * .95, 1.7, .1], .025, STEEL, { rust: .5 }); }
   A.box([.8, .7, .5], [-1.6, 1.5, 0], IRON, { rust: .55, dirt: .4, chip: .1, oil: .6 });
   // The cradle: a rectangular frame 4.8 m long (tangent) and 2.2 m across (radial), with tyre rollers and tie-down eyes.
-  const cx = 3.6;
+  const cx = 3.0;
   for (const z of [-2.4, 2.4]) A.box([2.2, .14, .16], [cx, .5, z], STEEL, { rust: .45, dirt: .3, chip: .07, oil: .8 });
   for (const s of [-1, 1]) A.box([.16, .14, 4.96], [cx + s * 1.1, .5, 0], STEEL, { rust: .45, dirt: .3, chip: .07, oil: .8 });
   for (const z of [-1.35, 1.35]) for (const s of [-1, 1]) {

@@ -13,19 +13,22 @@ export const HALL = Object.freeze({ halfWidth: 15, halfDepth: 9, eaves: 6.4, rid
 // the model facing the door side unless a yaw turns it).
 export const HANGAR_LAYOUT = Object.freeze({
   'weighing-pad': { x: 0, z: 2.6, yaw: 0 },
-  'weights-and-cans': { x: -5.2, z: 6.2, yaw: 0 },
+  'weights-and-cans': { x: -6.2, z: 6.4, yaw: 0 },
   'drop-tower': { x: -11.4, z: -1.2, yaw: 0 },
   'fire-pit': { x: -11.6, z: 4.6, yaw: 0 },
   'pendulum-frame': { x: -5.4, z: -3.4, yaw: 0 },
-  'nail-jars': { x: -8.8, z: -8.4, yaw: 0 },
-  'bending-rig': { x: -5.4, z: -7.6, yaw: 0 },
+  'nail-jars': { x: -10.9, z: -8.4, yaw: 0 },
+  'bending-rig': { x: -6.3, z: -7.6, yaw: 0 },
   'rotor-stand': { x: -1.6, z: -7.3, yaw: 0 },
   'launcher-ramp': { x: 1.7, z: -7.0, yaw: 0 },
-  'snow-trays': { x: 5.2, z: -8.3, yaw: 0 },
-  'wind-tunnel': { x: 10.7, z: -6.9, yaw: 0 },
-  'turning-arm': { x: 8.6, z: 1.6, yaw: 0 },
-  'map-table': { x: 12.9, z: 7.0, yaw: 0 },
+  'snow-trays': { x: 4.95, z: -8.3, yaw: 0 },
+  'wind-tunnel': { x: 10.7, z: -6.4, yaw: 0 },
+  'turning-arm': { x: 9.9, z: 2.0, yaw: 0 },
+  'map-table': { x: 13.4, z: 7.2, yaw: 0 },
 });
+
+// Benches whose parts swing beyond their footprint: the swept circle's radius in metres about the model origin.
+export const HANGAR_SWEEP = Object.freeze({ 'turning-arm': 4.8 });
 
 const STEEL_BLUE = 0x56646d, WALL = 0xa3a597, ROOF = 0x7f8279;
 
