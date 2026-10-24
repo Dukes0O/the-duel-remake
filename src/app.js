@@ -1071,6 +1071,8 @@ export class App {
       if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);
       if(recorded.scoreBest!=null){result.driftScoreBest=recorded.scoreBest;result.driftScoreImproved=recorded.scoreImproved;}
       Object.assign(result,{creditReward:awarded.reward,creditCharge:awarded.charge,policeFineCharge:awarded.policeFineCharge||0,creditBreakdown:awarded.breakdown,personalBest:awarded.personalBest,personalBestStatus:awarded.personalBestStatus,previousBest:awarded.previousBest,best:awarded.best,winStreak:awarded.winStreak,milestoneAwards:awarded.milestones});
+      // The Coast Cup finished in the Sirena (docs/THE_DEEP.md 6.2): the view and sound read the event.
+      if(awarded.coastCup){result.coastCup=awarded.coastCup.paid;for(const event of awarded.coastCup.events)this.duel.emit(event);}
       // Earned cars (docs/EARNED_CARS.md): the new medal and any car it earned, with one bonus cue.
       if(awarded.medal||awarded.earnedCars?.length){
         Object.assign(result,{medal:awarded.medal,earnedCars:awarded.earnedCars||[]});

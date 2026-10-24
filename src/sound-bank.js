@@ -838,6 +838,15 @@ export const CAR_VOICES = {
     exhaust: 0.17,
     intake: 0.2,
   },
+  // The Sirena: a 1960s race V12, higher and rawer than the modern cars, with a loud open exhaust.
+  falcone_sirena: {
+    pitch: 1.09,
+    brightness: 1.08,
+    gain: 1.0,
+    accent: 1.04,
+    exhaust: 0.2,
+    intake: 0.1,
+  },
   titan_monster: {
     pitch: 0.83,
     brightness: 0.76,
