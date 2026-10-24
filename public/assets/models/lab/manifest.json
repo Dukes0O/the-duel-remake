@@ -1,0 +1,750 @@
+{
+  "formatVersion": 1,
+  "source": "tools/art/lab-props.mjs",
+  "coordinates": "metres; glTF Y up; each model's origin on the floor, +Z facing the player; the hangar's open door is on its +Z side; part pivots are node positions",
+  "hall": {
+    "halfWidth": 15,
+    "halfDepth": 9,
+    "eaves": 6.4,
+    "ridge": 8.4,
+    "doorHalfWidth": 9,
+    "doorHeight": 5.8
+  },
+  "layout": {
+    "weighing-pad": {
+      "x": 0,
+      "z": 2.6,
+      "yaw": 0
+    },
+    "weights-and-cans": {
+      "x": -6.2,
+      "z": 6.4,
+      "yaw": 0
+    },
+    "drop-tower": {
+      "x": -11.4,
+      "z": -1.2,
+      "yaw": 0
+    },
+    "fire-pit": {
+      "x": -11.6,
+      "z": 4.6,
+      "yaw": 0
+    },
+    "pendulum-frame": {
+      "x": -5.4,
+      "z": -3.4,
+      "yaw": 0
+    },
+    "nail-jars": {
+      "x": -10.9,
+      "z": -8.4,
+      "yaw": 0
+    },
+    "bending-rig": {
+      "x": -6.3,
+      "z": -7.6,
+      "yaw": 0
+    },
+    "rotor-stand": {
+      "x": -1.6,
+      "z": -7.3,
+      "yaw": 0
+    },
+    "launcher-ramp": {
+      "x": 1.7,
+      "z": -6.5,
+      "yaw": 0
+    },
+    "snow-trays": {
+      "x": -7.3,
+      "z": 3,
+      "yaw": 1.5707963267948966
+    },
+    "wind-tunnel": {
+      "x": 8.6,
+      "z": -6.3,
+      "yaw": 0
+    },
+    "turning-arm": {
+      "x": 9.9,
+      "z": 2,
+      "yaw": 0
+    },
+    "map-table": {
+      "x": 13.4,
+      "z": 7.2,
+      "yaw": 0
+    }
+  },
+  "sweepRadius": {
+    "turning-arm": 4.8
+  },
+  "models": [
+    {
+      "id": "hangar",
+      "path": "assets/models/lab/hangar.glb",
+      "bytes": 2189960,
+      "sha256": "4b6ce4a61a4943075f2712fd50c7a85bd87e245611ed144131ba0b4706c14645",
+      "triangles": 55373,
+      "dimensionsMetres": [
+        31.8,
+        8.555,
+        20.938
+      ],
+      "footprint": {
+        "minX": -15.9,
+        "maxX": 15.9,
+        "minZ": -9.418,
+        "maxZ": 11.52
+      },
+      "parts": [
+        {
+          "name": "hangar",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "weighing-pad",
+      "path": "assets/models/lab/weighing-pad.glb",
+      "bytes": 72612,
+      "sha256": "9862af59e177a1f6f7c7898c383580d4d2dbc69b1febe927a4af1a4cc4d9d727",
+      "triangles": 1058,
+      "dimensionsMetres": [
+        8.975,
+        2.585,
+        9.2
+      ],
+      "footprint": {
+        "minX": -4.5,
+        "maxX": 4.475,
+        "minZ": -4.6,
+        "maxZ": 4.6
+      },
+      "parts": [
+        {
+          "name": "pad",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "weights-and-cans",
+      "path": "assets/models/lab/weights-and-cans.glb",
+      "bytes": 90140,
+      "sha256": "51e5e0ee1fbc2347f9c5fcf4d4c03f95e4f47b66c58609d7f5420fe37296e3a5",
+      "triangles": 1828,
+      "dimensionsMetres": [
+        1.783,
+        0.8,
+        0.9
+      ],
+      "footprint": {
+        "minX": -0.68,
+        "maxX": 1.103,
+        "minZ": -0.45,
+        "maxZ": 0.45
+      },
+      "parts": [
+        {
+          "name": "weights",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drop-tower",
+      "path": "assets/models/lab/drop-tower.glb",
+      "bytes": 222416,
+      "sha256": "dd6550d50d41b8657af70d7016851b5ff69cea6e73b579d53ec324631ccb3a4f",
+      "triangles": 5030,
+      "dimensionsMetres": [
+        3.55,
+        6.472,
+        3.2
+      ],
+      "footprint": {
+        "minX": -1.6,
+        "maxX": 1.95,
+        "minZ": -1.6,
+        "maxZ": 1.6
+      },
+      "parts": [
+        {
+          "name": "tower",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "carriage",
+          "pivot": [
+            0,
+            5.4,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fire-pit",
+      "path": "assets/models/lab/fire-pit.glb",
+      "bytes": 157676,
+      "sha256": "6173493680543c9246310e5bdacd4cba640dbf80b490a21bd3510c8de7b62b66",
+      "triangles": 3322,
+      "dimensionsMetres": [
+        3.699,
+        1.702,
+        3.378
+      ],
+      "footprint": {
+        "minX": -2.089,
+        "maxX": 1.61,
+        "minZ": -1.47,
+        "maxZ": 1.908
+      },
+      "parts": [
+        {
+          "name": "pit",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "logs",
+          "pivot": [
+            -0.2,
+            0,
+            1.6
+          ]
+        },
+        {
+          "name": "lid",
+          "pivot": [
+            1,
+            0.62,
+            -0.6
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pendulum-frame",
+      "path": "assets/models/lab/pendulum-frame.glb",
+      "bytes": 173424,
+      "sha256": "ba4b0c78bf3717adcf161b47c54877cb1eb2ffae0e799500156ef89aa954bc3d",
+      "triangles": 2966,
+      "dimensionsMetres": [
+        6.1,
+        6.023,
+        2.7
+      ],
+      "footprint": {
+        "minX": -3.05,
+        "maxX": 3.05,
+        "minZ": -1.35,
+        "maxZ": 1.35
+      },
+      "parts": [
+        {
+          "name": "frame",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "cord-short",
+          "pivot": [
+            -1.6,
+            5.68,
+            0
+          ]
+        },
+        {
+          "name": "cord-medium",
+          "pivot": [
+            0,
+            5.68,
+            0
+          ]
+        },
+        {
+          "name": "cord-long",
+          "pivot": [
+            1.6,
+            5.68,
+            0
+          ]
+        },
+        {
+          "name": "cord-medium-heavy",
+          "pivot": [
+            0,
+            5.68,
+            0
+          ]
+        },
+        {
+          "name": "stopwatch-hand",
+          "pivot": [
+            1.6,
+            3.12,
+            -0.6
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rotor-stand",
+      "path": "assets/models/lab/rotor-stand.glb",
+      "bytes": 114128,
+      "sha256": "8756f018aa5c21a606eec2e06102285f80296a7e12a32ec3a8007f1eece6b290",
+      "triangles": 2328,
+      "dimensionsMetres": [
+        3.49,
+        2.02,
+        2.35
+      ],
+      "footprint": {
+        "minX": -1.69,
+        "maxX": 1.8,
+        "minZ": -1.175,
+        "maxZ": 1.175
+      },
+      "parts": [
+        {
+          "name": "stand",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "thrust-needle",
+          "pivot": [
+            1.55,
+            1.78,
+            0.86
+          ]
+        },
+        {
+          "name": "rotor",
+          "pivot": [
+            0,
+            1.88,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bending-rig",
+      "path": "assets/models/lab/bending-rig.glb",
+      "bytes": 93440,
+      "sha256": "a24a89cedfecd18c5ebd2662435d63cf62e536bc6b5fe75573ea8ee3f36825c8",
+      "triangles": 1616,
+      "dimensionsMetres": [
+        4.685,
+        2.105,
+        1.32
+      ],
+      "footprint": {
+        "minX": -2.085,
+        "maxX": 2.6,
+        "minZ": -0.66,
+        "maxZ": 0.66
+      },
+      "parts": [
+        {
+          "name": "rig",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "bar-aluminium",
+          "pivot": [
+            0,
+            0.66,
+            0
+          ]
+        },
+        {
+          "name": "bar-steel",
+          "pivot": [
+            0,
+            0.66,
+            0
+          ]
+        },
+        {
+          "name": "bar-carbon",
+          "pivot": [
+            0,
+            0.66,
+            0
+          ]
+        },
+        {
+          "name": "ram",
+          "pivot": [
+            0,
+            1.8,
+            0
+          ]
+        },
+        {
+          "name": "load-needle",
+          "pivot": [
+            1.3,
+            1.45,
+            0.34
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nail-jars",
+      "path": "assets/models/lab/nail-jars.glb",
+      "bytes": 167344,
+      "sha256": "c92c6dd2f3b23d77427f19313c128b581f1b3831e5eac52c0786d5f176b9809e",
+      "triangles": 2488,
+      "dimensionsMetres": [
+        2.65,
+        1.905,
+        0.749
+      ],
+      "footprint": {
+        "minX": -1.25,
+        "maxX": 1.4,
+        "minZ": -0.355,
+        "maxZ": 0.394
+      },
+      "parts": [
+        {
+          "name": "shelf",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "jar-dry",
+          "pivot": [
+            -0.9,
+            1.62,
+            0.02
+          ]
+        },
+        {
+          "name": "jar-fresh",
+          "pivot": [
+            -0.3,
+            1.62,
+            0.02
+          ]
+        },
+        {
+          "name": "jar-salt",
+          "pivot": [
+            0.3,
+            1.62,
+            0.02
+          ]
+        },
+        {
+          "name": "jar-zinc",
+          "pivot": [
+            0.9,
+            1.62,
+            0.02
+          ]
+        }
+      ]
+    },
+    {
+      "id": "turning-arm",
+      "path": "assets/models/lab/turning-arm.glb",
+      "bytes": 162484,
+      "sha256": "cbd00b73e722d8203aa59bc758c6a129c6c385c1e10b09efaafe906c64edb1d7",
+      "triangles": 3214,
+      "dimensionsMetres": [
+        7.825,
+        3.719,
+        7.29
+      ],
+      "footprint": {
+        "minX": -3.645,
+        "maxX": 4.18,
+        "minZ": -3.645,
+        "maxZ": 3.645
+      },
+      "parts": [
+        {
+          "name": "base",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "g-needle",
+          "pivot": [
+            -1.5,
+            1.2,
+            -0.58
+          ]
+        },
+        {
+          "name": "arm",
+          "pivot": [
+            0,
+            1.62,
+            0
+          ]
+        },
+        {
+          "name": "plumb",
+          "pivot": [
+            1.97,
+            3.38,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "map-table",
+      "path": "assets/models/lab/map-table.glb",
+      "bytes": 318172,
+      "sha256": "a762e3d1f358318d8ecacd7e12b6c69943aa7445a2082ab22644091297513551",
+      "triangles": 11056,
+      "dimensionsMetres": [
+        2.74,
+        1.811,
+        1.964
+      ],
+      "footprint": {
+        "minX": -1.25,
+        "maxX": 1.49,
+        "minZ": -0.774,
+        "maxZ": 1.19
+      },
+      "parts": [
+        {
+          "name": "table",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "compass-needle",
+          "pivot": [
+            -0.85,
+            1.1427085006669522,
+            0.42969091663356174
+          ]
+        },
+        {
+          "name": "ruler",
+          "pivot": [
+            0.2,
+            1.1023018923878594,
+            0.3360570231580689
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snow-trays",
+      "path": "assets/models/lab/snow-trays.glb",
+      "bytes": 144316,
+      "sha256": "2af15240cd0ff2717aed136f50e50832e5c042ce361fd7e61af732d631ef8ce7",
+      "triangles": 3884,
+      "dimensionsMetres": [
+        3.1,
+        1.18,
+        1.061
+      ],
+      "footprint": {
+        "minX": -1.55,
+        "maxX": 1.55,
+        "minZ": -0.557,
+        "maxZ": 0.503
+      },
+      "parts": [
+        {
+          "name": "table",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "tray-minus15",
+          "pivot": [
+            -1,
+            0.81,
+            0
+          ]
+        },
+        {
+          "name": "tray-minus5",
+          "pivot": [
+            0,
+            0.81,
+            0
+          ]
+        },
+        {
+          "name": "tray-zero",
+          "pivot": [
+            1,
+            0.81,
+            0
+          ]
+        },
+        {
+          "name": "skis",
+          "pivot": [
+            0,
+            1,
+            -0.4
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wind-tunnel",
+      "path": "assets/models/lab/wind-tunnel.glb",
+      "bytes": 548468,
+      "sha256": "130a35fab79b288fababe9df6855d371946ca0e72183b6ced57d0f8df894a916",
+      "triangles": 12454,
+      "dimensionsMetres": [
+        11.65,
+        3.136,
+        5.534
+      ],
+      "footprint": {
+        "minX": -5.3,
+        "maxX": 6.35,
+        "minZ": -2.6,
+        "maxZ": 2.934
+      },
+      "parts": [
+        {
+          "name": "tunnel",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "belt",
+          "pivot": [
+            -0.5,
+            0.34,
+            0
+          ]
+        },
+        {
+          "name": "fan",
+          "pivot": [
+            4.8,
+            1.35,
+            0
+          ]
+        },
+        {
+          "name": "smoke-rake",
+          "pivot": [
+            -4.6,
+            0.9,
+            0
+          ]
+        },
+        {
+          "name": "fan-dial-needle",
+          "pivot": [
+            -1,
+            1.36,
+            2.76
+          ]
+        },
+        {
+          "name": "reverse-switch",
+          "pivot": [
+            -0.4,
+            1.2,
+            2.76
+          ]
+        }
+      ]
+    },
+    {
+      "id": "launcher-ramp",
+      "path": "assets/models/lab/launcher-ramp.glb",
+      "bytes": 125160,
+      "sha256": "edff3eb9ad0263ccbef247973b71149aa6179c6af9c6bcc4d000df57074e49cf",
+      "triangles": 2268,
+      "dimensionsMetres": [
+        2.73,
+        3.17,
+        5.85
+      ],
+      "footprint": {
+        "minX": -1.15,
+        "maxX": 1.58,
+        "minZ": -2.35,
+        "maxZ": 3.5
+      },
+      "parts": [
+        {
+          "name": "launcher",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "ramp-arm",
+          "pivot": [
+            0,
+            1.3,
+            -1.5
+          ]
+        }
+      ]
+    }
+  ],
+  "totalBytes": 4579740
+}

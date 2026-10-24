@@ -27,6 +27,16 @@ cars were looked at as a viewing reference; there is no downloaded model,
 texture, badge or logo, and Falcone is the game's own fictional maker. Rebuild
 byte for byte with `node tools/art/sirena-props.mjs`.
 
+## The Lab hangar and its benches (LAB-ART)
+
+All original, with no third-party source. `lab/` holds fourteen vertex-coloured
+GLBs written by `tools/art/lab-props.mjs` (recipes in `lab-hangar.mjs`,
+`lab-benches.mjs`, `lab-benches2.mjs`): the hangar beside the home helipad and
+thirteen bench models, with a manifest of where each stands and each movable
+part's pivot. Kestrel One, the cars and the fire and smoke effects are the
+game's existing models and effects; they are not copied here. Rebuild byte for
+byte with `node tools/art/lab-props.mjs`.
+
 ## Original Blender course landmarks
 
 `course-landmarks.blend` contains six original, editable scenery collections:
