@@ -20,7 +20,11 @@ The Lab's rules, without any screen: the sixteen lessons and when each opens, wh
 
 ## Save review
 
-This card holds `save-shape`, so it needs the save checker and one independent save review. Save checker: `node tools/test-save-fixtures.mjs` passes with the new fixture (16 shapes, 614 checks). Changed assertions there: the roster count 15 to 16, and one added check that a saved `lab` is kept exactly while an older save gains no `lab` field (same as the existing `heli` and `drivingLessons` checks). No other assertion was changed. The independent review result is recorded below.
+This card holds `save-shape`, so it needs the save checker and one independent save review. Save checker: `node tools/test-save-fixtures.mjs` passes with the new fixture (16 shapes, 614 checks). Changed assertions there: the roster count 15 to 16, and one added check that a saved `lab` is kept exactly while an older save gains no `lab` field (same as the existing `heli` and `drivingLessons` checks). No other assertion was changed. The independent review is below.
+
+## Independent save review
+
+A fresh reviewer read the save code, the fixture and the tests without my conclusions. It found two things, both fixed and now tested: (1) a `drivingLessons` field from a newer game (`{version: 2}`, or `done: null`) made `lessonOpenState` throw and so stopped the Lab board and `passLesson`; it now reads that field only at version 1 and never throws. (2) The `lab-tuning` switch was declared but unused, so tuning steps, stock laps and the 400-credit bonus worked with only `lab` on; those three now also need `lab-tuning`. It confirmed: old saves gain and lose nothing, a version 2 `lab` is handed back exactly and never written over, no key injection through the maps, credits taken once and capped, nothing mutates its input, and every switch-off path returns the same profile. Optional nits left as they are: `payTunedBonus` reports `bonus: 400` even when the wallet was already at the cap; the tune row accepts the fuel setting for any car (the electric-car rule belongs to LAB-TUNE).
 
 ## Switch inventory (Claude's written review wanted, rule 18)
 
@@ -28,7 +32,9 @@ This card holds `save-shape`, so it needs the save checker and one independent s
 
 ## Tests
 
-Filled in after the lane tier and build (below).
+Run once on the branch after merging current `origin/integration/wasteland` (24 October): `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`: 300 passed, 6 failed. The six fail the same way on an untouched checkout of `integration/wasteland`, so none comes from this change: `test-course-kit` (subtest 8), `test-earned-cars-ui` (5), `test-medals` (10), `test-full-check` (42, a Windows Junction), and `test-salt-flats` and `test-salt-flats-art` (they open `C:\Users\kyleb\dev\art-library\kenney-car-kit`). `npm run build` passes. Card checks, all passing: `tools/test-lab-rules.mjs` (19 tests), `tools/test-save-fixtures.mjs` (the save checker: 16 shapes, 614 checks, with `17-lab.json`), `tools/test-feature-flags.mjs`, `tools/test-wasteland-beta.mjs`, `tools/test-preview-launcher.mjs`, `tools/test-heli-mode.mjs`.
+
+Pinned numbers moved by this card, one reason each: switch count 33 to 37 in `test-feature-flags` (35 plus `heli-skiing` and `cpu-racecraft` already on integration; `lab` and `lab-tuning` are the two new rows); fixture roster 15 to 16 in `test-save-fixtures`, `test-arena-settlement` and `test-career-backup` (the new `17-lab.json`); `test-heli-mode` approved-importer list gains `src/lab/lab-heli.js`, `src/lab/lab-lessons.js` and `tools/test-lab-rules.mjs` (the Lab reads the helicopter's own numbers and lessons); `start-preview.bat` requests `lab,lab-tuning` (the preview launcher test requires every dev switch). Not run in the cloud: browser scenarios, Windows-only suites, the full tier.
 
 ## Removed
 
