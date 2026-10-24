@@ -66,9 +66,11 @@ export function labOf(profile) {
 }
 
 const failure = (profile, reason) => ({ok: false, reason, profile});
-// {lab} when the Lab is on and this game can use the saved field, else {refusal} to hand back.
-export function labReady(profile, flags) {
+// {lab} when the Lab (and, for tuning, `lab-tuning`) is on and this game can use the saved field, else {refusal} to hand back.
+export function labReady(profile, flags, {tuning = false} = {}) {
   if (flags?.enabled?.('lab') !== true) return {refusal: failure(profile, 'The Lab is not available yet.')};
+  // Tuning (settings, stock laps, the tuned-lap bonus) has its own switch, so the race feel is judged on its own.
+  if (tuning && flags.enabled('lab-tuning') !== true) return {refusal: failure(profile, 'Tuning is not available yet.')};
   if (!isObject(profile)) return {refusal: failure(profile, 'Choose a player first.')};
   const lab = labOf(profile);
   if (lab.version !== LAB_SAVE_VERSION) return {refusal: failure(profile, 'This Lab progress belongs to another version.')};
@@ -113,7 +115,7 @@ export function setCable(profile, metres, {flags} = {}) {
 
 // One tuning step, -2 to +2, for one setting of one car. Each setting opens with its wind-tunnel lesson.
 export function setTune(profile, carId, setting, step, {flags} = {}) {
-  const {lab, refusal} = labReady(profile, flags);
+  const {lab, refusal} = labReady(profile, flags, {tuning: true});
   if (refusal) return refusal;
   if (!validCar(carId)) return failure(profile, 'Choose a car.');
   const lessonId = TUNNEL_LESSONS.find(name => TUNE_SETTING_OF[name] === setting);
@@ -126,7 +128,7 @@ export function setTune(profile, carId, setting, step, {flags} = {}) {
 
 // Keeps the best (lowest) stock Time Trial lap for a car on a course.
 export function recordStockLap(profile, carId, courseId, seconds, {flags} = {}) {
-  const {lab, refusal} = labReady(profile, flags);
+  const {lab, refusal} = labReady(profile, flags, {tuning: true});
   if (refusal) return refusal;
   if (!validCar(carId) || !validCourse(courseId)) return failure(profile, 'Choose a car and a course.');
   if (!Number.isFinite(seconds) || seconds <= 0) return failure(profile, 'A lap needs a time above zero.');
@@ -137,7 +139,7 @@ export function recordStockLap(profile, carId, courseId, seconds, {flags} = {}) 
 
 // The tuned-lap bonus: 400 credits, once per course (section 5.3). The caller has checked the 1% rule.
 export function payTunedBonus(profile, courseId, {flags} = {}) {
-  const {lab, refusal} = labReady(profile, flags);
+  const {lab, refusal} = labReady(profile, flags, {tuning: true});
   if (refusal) return refusal;
   if (!validCourse(courseId)) return failure(profile, 'Choose a course.');
   if (lab.tunedBonus.includes(courseId)) return failure(profile, 'That course has paid its bonus.');

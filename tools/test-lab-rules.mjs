@@ -20,6 +20,7 @@ const flagsOf = (...names) => ({enabled: name => names.includes(name)});
 const ON = flagsOf('lab');
 const WITH_HELI = flagsOf('lab', 'helicopter');
 const WITH_SKIING = flagsOf('lab', 'helicopter', 'heli-skiing');
+const TUNING = flagsOf('lab', 'lab-tuning');
 const OFF = flagsOf();
 const HELI_DONE = {version: 1, fuelKg: 0, lessons: Object.fromEntries(HELI_LESSONS.map(id => [id, true]))};
 const rich = (extra = {}) => ({...createProfile(), credits: 50_000, ...extra});
@@ -164,40 +165,40 @@ test('the cable is 15 m, or 25 m once Long cable is owned', () => {
 test('tuning settings open with their wind-tunnel lessons and hold five steps from -2 to +2', () => {
   const car = createProfile().unlockedCars[0];
   const profile = driven();
-  assert.equal(setTune(profile, car, 'pressure', 1, {flags: ON}).ok, false, 'Grip has not been passed');
+  assert.equal(setTune(profile, car, 'pressure', 1, {flags: TUNING}).ok, false, 'Grip has not been passed');
   const gripped = withLessons(profile, 'grip');
-  const tuned = setTune(gripped, car, 'pressure', -2, {flags: ON});
+  const tuned = setTune(gripped, car, 'pressure', -2, {flags: TUNING});
   assert.equal(tuned.ok, true);
   assert.deepEqual(tuned.profile.lab.tune[car], {pressure: -2, wing: 0, brakes: 0, springs: 0, fuel: 0});
-  assert.equal(setTune(gripped, car, 'pressure', 3, {flags: ON}).ok, false);
-  assert.equal(setTune(gripped, car, 'pressure', .5, {flags: ON}).ok, false);
-  assert.equal(setTune(gripped, car, 'wing', 1, {flags: ON}).ok, false, 'Downforce has not been passed');
-  assert.equal(setTune(gripped, 'no-such-car', 'pressure', 1, {flags: ON}).ok, false);
-  assert.equal(setTune(gripped, car, 'nonsense', 1, {flags: ON}).ok, false);
-  assert.equal(setTune(tuned.profile, car, 'pressure', 0, {flags: ON}).profile.lab.tune[car].pressure, 0, 'reset to zero is allowed');
+  assert.equal(setTune(gripped, car, 'pressure', 3, {flags: TUNING}).ok, false);
+  assert.equal(setTune(gripped, car, 'pressure', .5, {flags: TUNING}).ok, false);
+  assert.equal(setTune(gripped, car, 'wing', 1, {flags: TUNING}).ok, false, 'Downforce has not been passed');
+  assert.equal(setTune(gripped, 'no-such-car', 'pressure', 1, {flags: TUNING}).ok, false);
+  assert.equal(setTune(gripped, car, 'nonsense', 1, {flags: TUNING}).ok, false);
+  assert.equal(setTune(tuned.profile, car, 'pressure', 0, {flags: TUNING}).profile.lab.tune[car].pressure, 0, 'reset to zero is allowed');
 });
 
 test('stock laps keep the best, and the tuned-lap bonus pays 400 once per course', () => {
   const car = createProfile().unlockedCars[0], course = 'tremblant-woods';
   let profile = rich();
-  profile = recordStockLap(profile, car, course, 100, {flags: ON}).profile;
-  profile = recordStockLap(profile, car, course, 104, {flags: ON}).profile;
+  profile = recordStockLap(profile, car, course, 100, {flags: TUNING}).profile;
+  profile = recordStockLap(profile, car, course, 104, {flags: TUNING}).profile;
   assert.equal(profile.lab.stockLaps[`${car}|${course}`], 100);
-  profile = recordStockLap(profile, car, course, 99.5, {flags: ON}).profile;
+  profile = recordStockLap(profile, car, course, 99.5, {flags: TUNING}).profile;
   assert.equal(profile.lab.stockLaps[`${car}|${course}`], 99.5);
-  assert.equal(recordStockLap(profile, car, course, -3, {flags: ON}).ok, false);
-  assert.equal(recordStockLap(profile, 'no-such-car', course, 90, {flags: ON}).ok, false);
-  assert.equal(recordStockLap(profile, car, 'no-such-course', 90, {flags: ON}).ok, false);
-  const paid = payTunedBonus(profile, course, {flags: ON});
+  assert.equal(recordStockLap(profile, car, course, -3, {flags: TUNING}).ok, false);
+  assert.equal(recordStockLap(profile, 'no-such-car', course, 90, {flags: TUNING}).ok, false);
+  assert.equal(recordStockLap(profile, car, 'no-such-course', 90, {flags: TUNING}).ok, false);
+  const paid = payTunedBonus(profile, course, {flags: TUNING});
   assert.equal(paid.ok, true);
   assert.equal(paid.profile.credits, profile.credits + 400);
   assert.deepEqual(paid.profile.lab.tunedBonus, [course]);
-  const again = payTunedBonus(paid.profile, course, {flags: ON});
+  const again = payTunedBonus(paid.profile, course, {flags: TUNING});
   assert.equal(again.ok, false);
   assert.equal(again.profile, paid.profile, 'the second course lap pays nothing');
-  assert.equal(payTunedBonus(paid.profile, 'panorama-ridge', {flags: ON}).profile.credits, profile.credits + 800);
-  assert.equal(payTunedBonus(paid.profile, 'no-such-course', {flags: ON}).ok, false);
-  const nearCap = payTunedBonus({...rich(), credits: 999_999_800}, course, {flags: ON});
+  assert.equal(payTunedBonus(paid.profile, 'panorama-ridge', {flags: TUNING}).profile.credits, profile.credits + 800);
+  assert.equal(payTunedBonus(paid.profile, 'no-such-course', {flags: TUNING}).ok, false);
+  const nearCap = payTunedBonus({...rich(), credits: 999_999_800}, course, {flags: TUNING});
   assert.equal(nearCap.profile.credits, 1_000_000_000, 'credits stop at the save cap');
 });
 
@@ -304,4 +305,33 @@ test('with the switch off nothing changes: no operation edits a profile and the 
   const plain = rich();
   assert.equal(passLesson(plain, 'rust', {flags: OFF}).profile, plain);
   assert.equal(Object.hasOwn(plain, 'lab'), false);
+});
+
+test('tuning, stock laps and the tuned-lap bonus also need the lab-tuning switch', () => {
+  const car = createProfile().unlockedCars[0];
+  const profile = withLessons(driven(), 'grip');
+  for (const result of [setTune(profile, car, 'pressure', 1, {flags: ON}), recordStockLap(profile, car, 'tremblant-woods', 90, {flags: ON}),
+    payTunedBonus(profile, 'tremblant-woods', {flags: ON}), setTune(profile, car, 'pressure', 1, {flags: flagsOf('lab-tuning')})]) {
+    assert.equal(result.ok, false);
+    assert.equal(result.profile, profile);
+  }
+  assert.equal(setTune(profile, car, 'pressure', 1, {flags: TUNING}).ok, true);
+  assert.equal(passLesson(driven(), 'grip', {flags: ON}).ok, true, 'lessons themselves need only the Lab switch');
+});
+
+test('a newer game\'s save fields never make the Lab fail or get written over', () => {
+  for (const drivingLessons of [{version: 2}, {version: 2, done: null}, {version: 1, done: null}, null, 'x', 7, []]) {
+    const profile = {...rich(), drivingLessons};
+    assert.doesNotThrow(() => lessonRows(profile, ON));
+    assert.equal(open(profile, ON).grip, false, 'a driving field this game cannot read does not open the tunnel');
+    assert.equal(passLesson(profile, 'rust', {flags: ON}).ok, true);
+  }
+  const later = {version: 2, shape: 'new', done: {lift: true}};
+  const profile = {...flier(), lab: later};
+  for (const result of [passLesson(profile, 'rust', {flags: ON}), buyUpgrade(profile, 'galvanised', {flags: ON}), setRing(profile, 0, {flags: ON}),
+    setCable(profile, 15, {flags: ON}), markSecret(profile, {flags: ON})]) {
+    assert.equal(result.ok, false);
+    assert.equal(result.profile.lab, later, 'the newer Lab is handed back exactly');
+  }
+  assert.deepEqual(normalizeProfile(profile).lab, later);
 });

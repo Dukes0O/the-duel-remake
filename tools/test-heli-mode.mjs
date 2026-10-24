@@ -390,7 +390,11 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     // And its node test reads the drawing files it checks.
     ...['heli-fire-view', 'heli-ui', 'heli-scene'].map(name => `tools/test-fire-view.mjs|heli/${name}.js`),
     // EARN-SCREEN: earned cars are air-only; its test reads the list it extends.
-    'tools/test-earned-cars-ui.mjs|heli/heli-jobs.js']);
+    'tools/test-earned-cars-ui.mjs|heli/heli-jobs.js',
+    // LAB-RULES: the Lab reads the helicopter's own numbers and lessons (heliUpgrades, the lesson board); its test pins them.
+    ...['heli-flight', 'heli-bucket', 'heli-cable'].map(name => `src/lab/lab-heli.js|heli/${name}.js`),
+    'src/lab/lab-lessons.js|heli/heli-save.js',
+    ...['heli-save', 'heli-flight', 'heli-bucket', 'heli-cable'].map(name => `tools/test-lab-rules.mjs|heli/${name}.js`)]);
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
   for (const path of walk(join(root, 'src')).concat(walk(join(root, 'tools')), pages)) {

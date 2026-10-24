@@ -39,7 +39,9 @@ export function lessonOpenState(profile, id, flags) {
   if (!row) return {open: false, note: 'That lesson does not exist.'};
   const on = name => flags?.enabled?.(name) === true;
   if (!on('lab')) return {open: false, note: 'The Lab is not available yet.'};
-  const taught = normalizeDrivingLessons(profile?.drivingLessons).done.corner === true;
+  // A driving-lesson field from a newer game is not read, and never makes the board fail.
+  const driving = profile?.drivingLessons;
+  const taught = isObject(driving) && driving.version === 1 && normalizeDrivingLessons(driving).done.corner === true;
   if (row.group === 'Flying') {
     if (!on('helicopter')) return {open: false, note: 'Opens with the helicopter'};
     const flown = heliOf(profile).lessons;
