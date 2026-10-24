@@ -56,7 +56,13 @@ version as it is if Kyle wants that; it needs Claude's call because it touches t
 - `tools/test-drive-lesson-save.mjs`: 16 tests (7 existing, unchanged; 9 new for the keys,
   the order, each reward once, the 600-credit cases, locks, old saves, newer saves, a round trip
   through memory storage, and the access edge cases).
-- Lane tier after merging current `integration/wasteland`: see the end of this note.
+- Lane tier `--changed --jobs 8 --keep-going` on the branch with current `integration/wasteland`
+  (4b579b5b) merged: 185 of 190 suites pass, including the save checker and every replay and
+  world-signature guard. The five failures are laptop-only suites: `test-course-kit`,
+  `test-earned-cars-ui`, `test-medals`, `test-full-check`, `test-salt-flats`. `npm run build` passes.
+  The lane ran before the reviewer's fix; after it I reran the suites that import the changed file
+  (`test-drive-lesson-save`, `test-save-fixtures`, `test-wasteland-beta`, `test-drive-lesson-run`,
+  `test-lab-rules`, `test-career-backup`) and the build: all pass.
 - Not run here: browser checks and Windows-only suites (none touched).
 
 ## Removed
