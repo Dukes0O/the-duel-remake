@@ -156,3 +156,14 @@ The stone stream bridge, forest footbridge and forest timing tower are original 
 
 
 The Ardennes-only summer beech has an original trunk and limbs (authored in `tools/blender/ardennes-beech.py`) and a crown of crossed leaf cards. The leaves are real beech-leaf photographs from the **ambientCG** [Leaf Set 024](https://ambientcg.com/a/LeafSet024) (asset id `LeafSet024`, file `LeafSet024_1K-JPG.zip`), released under **CC0 1.0** (https://docs.ambientcg.com/license/). `tools/art/ardennes-leaf-sprite.py` cuts the nine leaves out of the set's colour and opacity maps and scatters them into one small spray tile; the Blender recipe puts that tile on the cards (alpha test, no blending) and embeds it in the two GLBs. Only the two small tiles ship, inside the GLBs; the downloaded set is not kept. High/LOD measurements, the set's file hashes and the tile hashes are written to `tools/art/ardennes-beech.json` by the export recipe.
+
+## The pilot's map art (MAP-ART)
+
+The five secret-course signs (`sign-*.glb`) and The Table (`table-mesa`, `table-lookout`,
+`table-plane-wreck`, `table-strip`, `table-logbook`) in `pilot-map/` are original project geometry
+with flat colours. They use no external model, texture or photograph. The bush plane is a generic
+high-wing aircraft of the 1950s style, not a model of a real type, and its tail number N4471K is
+made up. The editable recipe is `tools/blender/pilot-map-props.py`; rebuild with
+`blender -b --factory-startup --python tools/blender/pilot-map-props.py -- --root .`. The signs
+carry empties (`flame_n`, `smoke_n`, `window_light`) where the game's existing fire and smoke
+effects and its lighting go; the sprites for those are credited with the helicopter fire effects above.
