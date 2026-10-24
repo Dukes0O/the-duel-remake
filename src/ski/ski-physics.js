@@ -24,6 +24,8 @@
 //   A half turn lands backwards and so tumbles.
 // - Deep snow is the zone's business: world.extraFriction(x, z) is added to
 //   the snow friction (default none).
+// - A landing hill may widen the landing rule: world.safePathAngle (degrees)
+//   replaces the 20 degrees for that zone (aerials: 40; see SKI-RUNS).
 export const SKI_STEP = 1 / 120;
 export const GRAVITY = 9.81;
 const DEG = Math.PI / 180;
@@ -121,7 +123,7 @@ function setGroundVelocity(skier, world, speed) {
 
 // One fixed step. controls: {turn -1..1 (D right, A left), flip -1..1 (W
 // forward, S back; in the air), skid, tuck, skate, pop}. world: {ground(x,
-// z), extraFriction?(x, z)}. Returns the events of the step: skiPop,
+// z), extraFriction?(x, z), safePathAngle?}. Returns the events of the step: skiPop,
 // skiLand, skiTumble, skiCarve and skiSkid (each {on}).
 export function stepSkier(skier, controls, world, dt = SKI_STEP) {
   const events = [];
@@ -248,7 +250,8 @@ function land(skier, world, events) {
   const into = -(skier.vx * n.x + skier.vy * n.y + skier.vz * n.z);
   const angle = Math.asin(clamp(into / speed, 0, 1));
   const finished = offTurn(air.spin) <= SKI.safeRotation && offTurn(air.flip) <= SKI.safeRotation;
-  const safe = angle <= SKI.safePathAngle && finished;
+  const window = world.safePathAngle === undefined ? SKI.safePathAngle : world.safePathAngle * DEG;
+  const safe = angle <= window && finished;
   // What is kept is the speed along the snow; the push into it is absorbed.
   const keep = Math.max(0, into);
   const tx = skier.vx + n.x * keep, ty = skier.vy + n.y * keep, tz = skier.vz + n.z * keep;
