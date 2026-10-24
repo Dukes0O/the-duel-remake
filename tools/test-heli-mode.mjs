@@ -397,7 +397,10 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     // LAB-RULES: the Lab reads the helicopter's own numbers and lessons (heliUpgrades, the lesson board); its test pins them.
     ...['heli-flight', 'heli-bucket', 'heli-cable'].map(name => `src/lab/lab-heli.js|heli/${name}.js`),
     'src/lab/lab-lessons.js|heli/heli-save.js',
-    ...['heli-save', 'heli-flight', 'heli-bucket', 'heli-cable'].map(name => `tools/test-lab-rules.mjs|heli/${name}.js`)]);
+    ...['heli-save', 'heli-flight', 'heli-bucket', 'heli-cable'].map(name => `tools/test-lab-rules.mjs|heli/${name}.js`),
+    // LAB-BENCHES: each bench runs the helicopter's own functions and constants (never a copy); its test pins them.
+    ...['src/lab/benches/altitude.js|heli/heli-flight.js', 'src/lab/benches/altitude.js|heli/heli-jobs.js', 'src/lab/benches/fire.js|heli/heli-fire.js', 'src/lab/benches/gforce.js|heli/heli-flight.js', 'src/lab/benches/headings.js|heli/heli-jobs.js', 'src/lab/benches/lift.js|heli/heli-flight.js', 'src/lab/benches/pendulum.js|heli/heli-flight.js', 'src/lab/benches/pendulum.js|heli/heli-cable.js', 'src/lab/benches/projectile.js|heli/heli-flight.js', 'src/lab/benches/projectile.js|heli/heli-bucket.js', 'src/lab/benches/strength.js|heli/heli-flight.js', 'src/lab/benches/tunnel.js|heli/heli-flight.js', 'src/lab/benches/tunnel.js|heli/heli-cable.js'],
+    ...['heli-flight', 'heli-bucket', 'heli-fire', 'heli-jobs'].map(name => `tools/test-lab-benches.mjs|heli/${name}.js`)]);
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
   for (const path of walk(join(root, 'src')).concat(walk(join(root, 'tools')), pages)) {
