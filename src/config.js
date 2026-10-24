@@ -71,7 +71,7 @@ export const CARS = {
     name:'Koenigsegg Jesko Absolut',homage:'Jesko Absolut-inspired hypercar',gearbox:'manual',
     unlockRequirement:'max-all-other-cars',factoryMaxed:true,
     // Arcade base tuning: the included level-three upgrades apply exactly once.
-    topSpeed:298,accel:10.8,grip:1.12,braking:1.5,
+    topSpeed:298,accel:9.9,grip:1.12,braking:1.5,
     gears:[60,105,150,188,221,247,269,284,298],
     color:0xe7e9e7,accent:0x27c8bb,offRoadGrip:.64,offRoadSpeed:65,offRoadScrub:.48,mass:1390,
     collision:{halfWidth:1.05,halfLength:2.475},height:1.25,kind:'hypercar',
@@ -193,7 +193,7 @@ export const DRIVE = {
   dragCoeff: 0.6,         // passive deceleration
   offRoadGrip: 0.74,     // enough steering authority to return from the shoulder
   offRoadScrub: 0.48,
-  accelScale: 5.2,        // immediate arcade launch; falls off near redline
+  accelScale: 2.5,        // gentler launch (FIX-LAUNCH); falls off near redline
   gearCeilFrac: 1.04,     // throttle stops adding speed past gearMax * this
   redlineWarnFrac: 0.92,  // tach shows red from this rev fraction
   overRevFrac: 1.02,      // sustained revs above this can blow the engine (Pro)
@@ -288,7 +288,7 @@ export const BOOST = {
   drainPerSec: 0.19,
   refillPerSec: 0.028,
   nearMissRefill: 0.22,
-  accelMphPerSec: 42,
+  accelMphPerSec: 20.2,
   topSpeedMult: 1.12,
   minSpeedMph: 25,
 };
