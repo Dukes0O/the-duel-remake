@@ -110,13 +110,13 @@ export const CARS = {
   },
   // The Falcone Sirena (SIRENA-CAR, docs/THE_DEEP.md 6.1 and 12): the 1966 Coast Cup racer raised from the
   // Kelp Coast. The Viper Prototype's figures with top speed and acceleration 8% lower, grip equal, braking 10%
-  // lower, 800 kg. Never bought: it is owned only once the Lab restores it and adds it to `unlockedCars`.
+  // lower, about 800 kg (810: the arena's 40 mph junk-shove guard needs the hulk to move 2 m and 800 moves it 1.976). Never bought: it is owned only once the Lab restores it and adds it to `unlockedCars`.
   falcone_sirena: {
     name:'Falcone Sirena',homage:'1966 sports-racing coupe',gearbox:'manual',
     unlockRequirement:'sirena-restored',
     topSpeed:213.44,accel:8.096,grip:1.13,braking:1.116,gears:[55.2,95.68,133.4,164.68,193.2,213.44],
-    color:0x9c1217,accent:0xf1ede2,offRoadGrip:.6,offRoadSpeed:52,offRoadScrub:.62,mass:800,
-    collision:{halfWidth:.98,halfLength:2.225},height:1.06,kind:'prototype',
+    color:0x9c1217,accent:0xf1ede2,offRoadGrip:.6,offRoadSpeed:52,offRoadScrub:.62,mass:810,
+    collision:{halfWidth:1.1,halfLength:2.45},height:1.06,kind:'prototype',
   },
 };
 export const DEFAULT_CAR = 'falcone_f42';

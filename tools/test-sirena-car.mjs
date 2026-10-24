@@ -43,7 +43,7 @@ test('the Sirena is the Viper Prototype, 8% slower and 10% weaker on the brakes,
   assert.ok(Math.abs(sirena.accel - viper.accel * .92) < .001, `acceleration ${sirena.accel}`);
   assert.equal(sirena.grip, viper.grip);
   assert.ok(Math.abs(sirena.braking - viper.braking * .9) < .001, `braking ${sirena.braking}`);
-  assert.equal(sirena.mass, 800); assert.equal(sirena.gearbox, 'manual');
+  assert.equal(sirena.mass, 810, 'about 800 kg: 810 keeps the arena junk-shove guard (2 m at 40 mph) whole'); assert.equal(sirena.gearbox, 'manual');
   assert.equal(sirena.unlockRequirement, 'sirena-restored');
   assert.ok(!(sirena.price > 0), 'no price'); assert.ok(!sirena.factoryMaxed, 'upgrades work as for any car');
   assert.equal(sirena.gears.length, viper.gears.length);
@@ -142,7 +142,7 @@ test('helicopter: the Sirena is air-only, first set down at Pacific Canyon, and 
   assert.equal(airOnlyNote({enabled: false, profile, carId: SIRENA_CAR, courseId: 'tremblant-woods'}), null, 'with the helicopter off it is an ordinary car');
   const flown = placeCar(profile, SIRENA_CAR, 'tremblant-snow', {enabled: true});
   assert.equal(flown.ok, true); assert.equal(carAt(flown.profile, SIRENA_CAR), 'tremblant-snow', 'after that it travels like any special car');
-  assert.equal(carMassKg(SIRENA_CAR), 800); assert.equal(liftCheck(SIRENA_CAR).ok, true);
+  assert.equal(carMassKg(SIRENA_CAR), 810); assert.equal(liftCheck(SIRENA_CAR).ok, true);
 });
 
 test('medals and upgrades treat it as an ordinary car', () => {
