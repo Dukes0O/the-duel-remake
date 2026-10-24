@@ -53,7 +53,36 @@ Design calls with a recommended pick each are in the question file and the answe
   breakages (cooldown, range, lift time, lift range, pay, the car's order) were each caught.
 - `node tools/test-save-fixtures.mjs` (the save checker): 18 shapes, 751 checks. `tools/test-deep-save.mjs`,
   `tools/test-deep-look.mjs`, `tools/test-career-backup.mjs` and `tools/test-arena-settlement.mjs` pass.
-- Lane tier, build and the save review: see the end of this note.
+- Lane tier `--changed --jobs 8 --keep-going` with current `integration/wasteland` (877592a9) merged: 30 of 33 suites
+  pass, including the new test, the save checker, `test-deep-save`, `test-deep-look`, `test-career-backup` and every
+  replay and world-signature guard. The three failures are laptop-only suites: `test-earned-cars-ui`, `test-medals`,
+  `test-course-kit`. `npm run build` passes. The lane ran before the review fixes below; after them I reran the six
+  suites that import the changed files (`test-deep-sirena`, `-deep-save`, `-deep-look`, `-save-fixtures`,
+  `-career-backup`, `-arena-settlement`) and `test-deep-kelp-coast`, and the build: all pass.
+- Not run here: browser scenarios and Windows-only suites.
+
+## Save review
+
+The card holds `save-shape`, so it had one independent save review (a fresh reviewer read the diff cold and probed it
+with scripts). It found nothing a normal player save can reach, and five edge faults reachable only by a hand-edited or
+newer-build save. Three are fixed and tested; one is declined and one is a note:
+
+- A fractional or text wallet (`1500.5`, `'500'`) was read as 0, so a payment could lower it. Fixed: the wallet is
+  read the way loading reads it (whole, from 0), never reduced; a wallet past the cap is still left alone.
+- `sonar: true` without the badge in `raised` let a part be lifted on screen but refused it in the save. Fixed: the
+  save's sonar flag unlocks parts, in step with the dive state.
+- A raised list already at the 128-id limit would have cut off the id just raised on the next load, so it would be
+  paid again. Fixed: such a list drops an id this game does not know to make room.
+- Declined: a hand-edited `coastCup: true` with the car raised later looks the same as a real finished cup, so the
+  payment cannot be told apart; the card's save is the player's own and the amount is small.
+- Note: richer shapes from a newer build for these three fields (an object where a list is expected) are cleaned to
+  empty on the next save, exactly as `kit` and the other id lists already are.
+
+It confirmed: old saves round trip byte for byte and gain no new field; unknown keys survive; no injection or
+prototype pollution through ids; each reward pays exactly once with the cap held and the input never mutated; the
+order is enforced in the save and nobody gets stuck; the switch off records and pays nothing; and the three changed
+tests are not loosened. One thing to know: a single very long frame completes a lift in one step if the car is still
+in range at that moment.
 
 ## Removed
 

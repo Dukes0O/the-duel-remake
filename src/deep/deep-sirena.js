@@ -132,7 +132,9 @@ export function stepLift(state, car, input, dt) {
 
 // Credits stop at the save's cap; a wallet already past it is left alone.
 function payTo(profile, amount) {
-  const base = Math.max(0, Number.isSafeInteger(profile?.credits) ? profile.credits : 0);
+  // Read the wallet the way loading does (a whole number from 0), so a hand-built profile is never paid less than it holds.
+  const held = Number(profile?.credits);
+  const base = Number.isFinite(held) ? Math.max(0, Math.floor(held)) : 0;
   const credits = Math.max(base, Math.min(CREDIT_CAP, base + amount));
   return {credits, paid: credits - base};
 }
@@ -147,10 +149,15 @@ export function raiseFind(profile, id, {enabled = false} = {}) {
   if (enabled !== true || !SIRENA_FINDS.includes(id)) return same(false);
   const deep = normalizeDeep(profile?.deep), raised = deep.raised ?? [];
   if (raised.includes(id)) return same(true);
-  if (id !== BADGE && !raised.includes(BADGE)) return same(false);
+  // The sonar flag is what gives the sonar, as in createSirena; the badge normally sets both together.
+  if (id !== BADGE && !raised.includes(BADGE) && deep.sonar !== true) return same(false);
   if (id === CAR && !SIRENA_FINDS.filter(other => other !== CAR).every(other => raised.includes(other))) return same(false);
   const {credits, paid} = payTo(profile, id === CAR ? SIRENA_PAY.car : SIRENA_PAY.part);
-  return {profile: {...profile, credits, deep: {...deep, raised: [...raised, id], ...(id === BADGE ? {sonar: true} : {})}}, ok: true, paid};
+  // A list already at its 128-id limit (only a crafted or newer save) makes room by dropping ids this game does not know,
+  // so the id just raised is never the one cut off when the save is loaded.
+  let kept = raised;
+  while (kept.length >= 128 && kept.some(other => !SIRENA_FINDS.includes(other))) kept = kept.filter((other, i) => i !== kept.findIndex(x => !SIRENA_FINDS.includes(x)));
+  return {profile: {...profile, credits, deep: {...deep, raised: [...kept, id], ...(id === BADGE ? {sonar: true} : {})}}, ok: true, paid};
 }
 
 // The Coast Cup finished in the restored Sirena (SIRENA-CAR calls this): 1,000

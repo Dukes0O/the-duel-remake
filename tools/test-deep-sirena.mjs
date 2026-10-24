@@ -224,9 +224,15 @@ test('credits stop at the cap, and a bad wallet is treated as empty', () => {
   assert.equal(paid.profile.credits, 1_000_000_000); assert.equal(paid.paid, 50, 'only what fits');
   const over = raiseFind({...createProfile(), credits: 2_000_000_000}, 'sirena-badge', ON);
   assert.equal(over.profile.credits, 2_000_000_000); assert.equal(over.paid, 0, 'a wallet past the cap is left alone');
-  for (const credits of [undefined, NaN, -5, '12', 1.5]) {
+  for (const credits of [undefined, NaN, -5]) {
     const result = raiseFind({...createProfile(), credits}, 'sirena-badge', ON);
     assert.equal(result.profile.credits, 100, `credits ${String(credits)} count as 0`);
+  }
+  // A hand-built wallet is read as loading reads it (whole, from 0) and never reduced.
+  for (const [credits, expected] of [[1500.5, 1600], ['500', 600], [2500.7, 2600], ['12', 112], [1.5, 101]]) {
+    const result = raiseFind({...createProfile(), credits}, 'sirena-badge', ON);
+    assert.equal(result.profile.credits, expected, `credits ${String(credits)}`);
+    assert.ok(result.profile.credits >= Math.floor(Number(credits)), 'never below what the wallet held');
   }
 });
 
@@ -278,4 +284,18 @@ test('the save: three optional fields, unknown keys kept, old saves unchanged, b
   assert.deepEqual(normalizeDeep({sonar: 'yes', raised: 'sirena-badge', coastCup: 1}), {sonar: false, raised: [], coastCup: false});
   assert.deepEqual(normalizeDeep(saved), saved, 'normalising twice changes nothing');
   assert.equal(createSirena(straight(), {raised: ['sirena-wheel', 'not-a-find', 'sirena-badge']}, ON).raised.join(), 'sirena-wheel,sirena-badge', 'ids the zone does not know are ignored');
+});
+
+test('odd saves keep the badge payment in step and never lose the id just raised', () => {
+  // sonar given without the badge in the list: the part is accepted, in step with the dive state.
+  const sonarOnly = {...createProfile(), credits: 0, deep: {sonar: true}};
+  assert.equal(createSirena(straight(), sonarOnly.deep, ON).sonar, true);
+  const part = raiseFind(sonarOnly, 'sirena-wheel', ON);
+  assert.equal(part.ok, true); assert.equal(part.paid, 100); assert.deepEqual(part.profile.deep.raised, ['sirena-wheel']);
+  // A raised list already at the 128-id limit loses an id this game does not know, not the new one.
+  const crowded = {...createProfile(), deep: {raised: Array.from({length: 128}, (_, i) => `other-${i}`)}};
+  const badge = raiseFind(crowded, 'sirena-badge', ON);
+  assert.equal(badge.profile.deep.raised.length, 128); assert.equal(badge.profile.deep.raised.at(-1), 'sirena-badge');
+  assert.ok(normalizeProfile(badge.profile).deep.raised.includes('sirena-badge'), 'and it survives a reload');
+  assert.equal(raiseFind(normalizeProfile(badge.profile), 'sirena-badge', ON).paid, 0, 'so it is not paid twice');
 });
