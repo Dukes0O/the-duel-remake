@@ -22,10 +22,11 @@ function glbJson(bytes) {
   return JSON.parse(bytes.subarray(20, 20 + length).toString('utf8'));
 }
 
-test('all twelve cars have distinct local fitted kits with UVs and stable tier parts', async () => {
+// The car roster count is pinned once, in test-vehicle-assets; every car is checked here.
+test('every car has a distinct local fitted kit with UVs and stable tier parts', async () => {
   const hashes = new Set();
   const cars = Object.keys(CARS);
-  assert.equal(cars.length, 12);
+  assert.ok(cars.length >= 12, 'no car is skipped');
   for (const car of cars) {
     const bytes = await readFile(join(root, 'public/assets/models/wasteland/kits', `${car}.glb`));
     hashes.add(createHash('sha256').update(bytes).digest('hex'));

@@ -1,11 +1,10 @@
 {
   "version": 1,
   "capturedCommit": "ba53f81d46d632b1dc4a5f4e50216fce3c814986",
-  "scope": "Unmodified Scrapdome physical features/spawns and eight-second actual 120 Hz LCR trace with Kyle-approved 121-point ordinary-car armor; physical and main replay fingerprints remain unchanged. Ordinary replay file pin now covers non-circuit fixtures only (FAC-04); physical and trace pins unchanged.",
+  "scope": "Unmodified Scrapdome physical features/spawns and eight-second actual 120 Hz LCR trace with Kyle-approved 121-point ordinary-car armor; physical and main replay fingerprints remain unchanged. The ordinary replay file hash was dropped (QA-TEST-AUDIT): test-replays checks those fingerprints itself.",
   "scrapdome": {
     "physicalSha256": "50d9b86ee23123e9d92bc913c6ed16e275fce247ccd7c7e4f22cfbddd42e1993",
-    "traceSha256": "9c13f87711a4e17dbd91d4149bfaf8147d49af985d3b1f6ff3bfd0ac14f88e03",
-    "ordinaryReplayFileSha256": "b55182cbc6d6121a205fa24ba9049aeefabd7943a6e12ebba5a7f868c068c77a"
+    "traceSha256": "9c13f87711a4e17dbd91d4149bfaf8147d49af985d3b1f6ff3bfd0ac14f88e03"
   },
   "physicalUpdate": "SCRAPDOME-TANKER-FIX (11 October 2026): the ring outer wall pieces were lengthened to close open slots between them and the outer wall moved from 21 m to 20 m (the drawn face), so only physicalSha256 changed. The eight-second trace and the ordinary replay file hashes are unchanged."
 }

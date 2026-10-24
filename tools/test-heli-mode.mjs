@@ -361,51 +361,33 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     }
     return out;
   };
-  // Approved importers: the save normalizer and the helicopter's own tests.
-  // HELI-HOOKS adds the app, renderer, menu and sound bank lines. Any text
+  // The rule (QA-TEST-AUDIT, replacing a list of approved file pairs): in the
+  // game, only the named hook files may name a helicopter file, and the
+  // renderer and page hooks name only drawing files. Tools, tests and browser
+  // scenarios are not the game and may read any helicopter file. Any text
   // naming a helicopter file counts, whatever form the import takes.
-  const approved = new Set(['src/progression.js|heli/heli-save.js',
-    // HELI-RADIO's sound build reads the radio line list to copy the takes.
-    'tools/audio/build-heli.mjs|heli/heli-radio-lines.js',
-    // HELI-HOOKS: the game's hooks, and three sound bank pins that leave out
-    // exactly the helicopter's cue list.
-    'src/app.js|heli/heli-session.js', 'src/app.js|heli/heli-ground.js', 'src/app.js|heli/heli-audio.js',
-    'src/app.js|heli/heli-save.js', 'src/app.js|heli/heli-jobs.js',
-    // FIRE-HOOKS: the fire's day steps when a player becomes active.
-    'src/app.js|heli/heli-fire-run.js',
-    // RELEASE-HELI: the menu says why START is closed for an air-only car.
-    'src/screen-readiness.js|heli/heli-jobs.js',
-    'src/sound-bank.js|heli/heli-audio.js',
-    'src/render3d.js|heli/heli-scene.js', 'src/render3d.js|heli/heli-camera.js',
-    // HELI-VIEW: the instruments panel and its styles in the page.
-    'src/screen-router.js|heli/heli-ui.js', 'src/screen-router.js|heli/heli-ui.css',
-    'tools/test-p4-audio.mjs|heli/heli-audio.js', 'tools/test-arsenal-core-audio.mjs|heli/heli-audio.js',
-    'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js',
-    // FIRE-VIEW's browser check grows its fire by the game's own rules.
-    ...['heli-ground', 'heli-session', 'heli-fire', 'heli-missions', 'heli-save'].map(name => `tools/scenarios/fire-view.mjs|heli/${name}.js`),
-    // RESCUE-VIEW's look check picks the hiker with the game's own search and arms the engine in its saves.
-    ...['heli-ground', 'heli-session', 'heli-missions', 'heli-save', 'heli-search'].map(name => `tools/scenarios/rescue-view.mjs|heli/${name}.js`),
-    // FIRE-FINISH's play-through arms the mission engine in its saves.
-    ...['heli-missions', 'heli-save'].map(name => `tools/scenarios/fire-finish.mjs|heli/${name}.js`),
-    // And its node test reads the drawing files it checks.
-    ...['heli-fire-view', 'heli-ui', 'heli-scene'].map(name => `tools/test-fire-view.mjs|heli/${name}.js`),
-    // EARN-SCREEN: earned cars are air-only; its test reads the list it extends.
-    'tools/test-earned-cars-ui.mjs|heli/heli-jobs.js',
-    // SKI-RUNS: the ski zones' test checks the drop pads against the Summit Run world
-    // (its ground and clear-circle test) and the thin-air numbers against the thrust rule.
-    ...['heli-ground', 'heli-search', 'heli-flight', 'heli-jobs'].map(name => `tools/test-ski-runs.mjs|heli/${name}.js`),
-    // LAB-RULES: the Lab reads the helicopter's own numbers and lessons (heliUpgrades, the lesson board); its test pins them.
-    ...['heli-flight', 'heli-bucket', 'heli-cable'].map(name => `src/lab/lab-heli.js|heli/${name}.js`),
-    'src/lab/lab-lessons.js|heli/heli-save.js',
-    ...['heli-save', 'heli-flight', 'heli-bucket', 'heli-cable'].map(name => `tools/test-lab-rules.mjs|heli/${name}.js`)]);
+  const drawingFile = /^heli\/heli-(?:scene|camera|ui|fire-view|rescue-view)\.(?:js|css)$/;
+  const hooks = {
+    'src/app.js': () => true,                      // the game's hooks into the helicopter
+    'src/progression.js': name => name === 'heli/heli-save.js', // the save normalizer
+    'src/sound-bank.js': name => name === 'heli/heli-audio.js', // the helicopter's cue list
+    'src/screen-readiness.js': name => name === 'heli/heli-jobs.js', // why START is closed for an air-only car
+    'src/render3d.js': name => drawingFile.test(name),
+    'src/screen-router.js': name => drawingFile.test(name),
+    // LAB-RULES: the Lab reads the helicopter's own numbers and lessons.
+    'src/lab/lab-heli.js': name => /^heli\/heli-(?:flight|bucket|cable)\.js$/.test(name),
+    'src/lab/lab-lessons.js': name => name === 'heli/heli-save.js',
+  };
+  // LAB-BENCHES: each bench runs the helicopter's own rules (never its drawing files).
+  const labBench = name => !drawingFile.test(name);
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
-  for (const path of walk(join(root, 'src')).concat(walk(join(root, 'tools')), pages)) {
+  for (const path of walk(join(root, 'src')).concat(pages)) {
     const file = relative(root, path).replaceAll('\\', '/');
-    if (file.startsWith('src/heli/') || /^tools\/test-heli-[a-z-]+\.mjs$/.test(file)) continue;
+    if (file.startsWith('src/heli/')) continue;
     const source = readFileSync(path, 'utf8');
     for (const match of source.matchAll(/heli\/heli-[a-z-]+\.(?:js|css)/g))
-      if (!approved.has(`${file}|${match[0]}`)) offenders.push(`${file} -> ${match[0]}`);
+      if (!(hooks[file] ?? (file.startsWith('src/lab/benches/') ? labBench : null))?.(match[0])) offenders.push(`${file} -> ${match[0]}`);
   }
   assert.deepEqual(offenders, [], 'no unapproved src/heli imports'); checks++;
   // Every helicopter file except the drawing, page and sound ones is game rules.
