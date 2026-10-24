@@ -37,6 +37,8 @@ export const FEATURE_STATES = Object.freeze({
   'heli-skins': 'dev',
   // H5 Heli-skiing (docs/HELI_SKIING.md): the ski rules, runs and drops. Off in the game; works only with the helicopter on and Summit Run owned.
   'heli-skiing': 'dev',
+  // The pilot's map (docs/PILOT_MAP.md): the place table, regions, fuel pads and the new cruise legs. Off in the game; works only with the helicopter on.
+  'pilot-map': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
