@@ -1,4 +1,3 @@
-import {racingLineFor} from './race-lines.js';
 import {createDriveLesson,stepDriveLesson,DRIVE_LESSON_CORNERS} from './lessons/drive-lessons.js';
 import {isSummitAttack} from './summit-attack.js';
 import {copyDeepProviders,clearDeepJourney,initializeDeepJourney,deepProtected,checkDeepDeparture,stepDeepJourney,queueDeepChoice,deepEnvironment} from './deep/deep-journey.js';
@@ -196,7 +195,7 @@ export class Duel {
         throw new TypeError('Driving lesson setup does not belong to this race');
       const first=lesson.instructor?.poses?.[0],last=lesson.instructor?.poses?.at(-1);
       if(!first||!last||first.s!==lesson.corner?.startS||last.s!==lesson.corner?.finishS||
-        last.t!==lesson.instructor.timeSec||!['mph','heading','lateral'].every(key=>Number.isFinite(first[key]))||first.mph<=0)
+        last.t!==lesson.instructor.timeSec||!['mph','heading','lateral','yawVelocity'].every(key=>Number.isFinite(first[key]))||first.mph<=0)
         throw new TypeError('Driving lesson needs its recorded native rolling pose');
       const scoring=createDriveLesson('corner',lesson);
       this.drivingLesson={state:this.state,ownerId:playerId,plan:structuredClone(lesson),lesson:scoring,wallHit:false};
@@ -415,7 +414,7 @@ export class Duel {
     s.headingError=first.heading-this.course.at(s.s).heading;s.speedMph=first.mph;
     const gear=spec.gears.findIndex(top=>top*DRIVE.gearCeilFrac>=s.speedMph);
     s.gear=gear<0?spec.gears.length-1:gear;s.revs=s.speedMph/spec.gears[s.gear];
-    s.yawVelocity=racingLineFor(this.course).curvatureAt(s.s)*s.speedMph*DRIVE.mphToWorld;
+    s.yawVelocity=first.yawVelocity;
     s.opponents=[];s.traffic=[];s.combat=null;s.raiders=[];
     s.police={beep:0,triggered:false,pursuit:null,ticket:null,ticketCount:0,pendingFines:0};
     s.damageZones=freshDamageZones();s.nextLapGate=this._lapGates.filter(value=>value<=s.s).length;

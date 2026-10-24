@@ -444,7 +444,8 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
       mph: state.speedMph, heading: course.at(state.s).heading + state.headingError,
       airHeight: state.airHeight || 0, groundHeight: state.groundHeight,
       terrainPitch: state.terrainPitch, terrainRoll: state.terrainRoll,
-      x: world.x, y: world.y, z: world.z, tyreSlip: state.tyreSlip || 0};
+      x: world.x, y: world.y, z: world.z, tyreSlip: state.tyreSlip || 0,
+      yawVelocity: state.yawVelocity};
   };
   const off = duel.onChange((current, event) => {
     if (event.crash || event.scrape || event.boundaryReset || event.checkpointReset) faults.push({fromS: tickStartS, s: current.s, reason: 'contact/reset'});

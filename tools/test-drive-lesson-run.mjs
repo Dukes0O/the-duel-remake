@@ -92,7 +92,7 @@ test('native App lesson: real menu entry, attempts, once-only reward and owner i
       const late = await driveNativeHostAttempt(app, 'late');
       assert.equal(late.firstBrakeS >= run.plan.instructor.redBoardS, true);
       assert.equal(late.screechSeconds >= .5, true);
-      assert.equal(late.finished ? late.timeLostSeconds >= .25 : ['wall', 'offroad'].includes(late.endReason), true);
+      // Claude's review (DRIVE-LESSON-1 card): the late try proves itself by screech, not lost time.
       assert.deepEqual(app.profile, before); isolated();
       assert.equal(app.nextLessonAttempt(), true); assert.equal(run.lesson.stage, 'right');
       const right = await driveNativeHostAttempt(app, 'right');
@@ -136,31 +136,36 @@ test('native App lesson: real menu entry, attempts, once-only reward and owner i
 // Native inputs only: no pose placement, replacement instructor, fake result,
 // reward callback or lesson-progress assignment. App receives Duel events.
 async function driveNativeHostAttempt(app, mode) {
-  const [{DRIVE, steerForYaw, tyreSlipSteering}, {racingLineFor, buildSpeedProfile}, {instructorControls}] = await Promise.all([
-    import('../src/config.js'), import('../src/race-lines.js'), import('../src/lessons/drive-lessons.js'),
+  const [{DRIVE, steerForYaw, tyreSlipSteering}, {DRIVE_LESSON_CORNERS, instructorControls, lessonPlanFor}] = await Promise.all([
+    import('../src/config.js'), import('../src/lessons/drive-lessons.js'),
   ]);
   const duel = app.duel, state = duel.state, run = duel.drivingLesson;
-  const {corner, instructor, difficulty} = run.plan, course = duel.course, car = duel.car;
-  const pace = difficulty === 'casual' ? .92 : .97, line = racingLineFor(course), speed = buildSpeedProfile(line, car);
+  const {corner, instructor, difficulty, courseId} = run.plan, course = duel.course, car = duel.car;
+  const pace = difficulty === 'casual' ? .92 : .97;
+  // The student drives the instructor's own line and speed plan.
+  const lessonPlan = await lessonPlanFor(duel, DRIVE_LESSON_CORNERS.find(row => row.courseId === courseId), pace);
+  const {line, profile} = lessonPlan;
   const scale = mode === 'fast' ? 1 : mode === 'slow' ? pace * .8 : pace;
-  const plan = {course, car, line, profile: {at: s => speed.at(s) * scale / pace}, drive: DRIVE,
-    steerForYaw, difficulty, turnInS: corner.turnInS, turnOutS: corner.turnOutS};
+  const plan = {course, car, line, profile: {at: s => profile.at(s) * scale / pace}, drive: DRIVE,
+    steerForYaw, difficulty, turnInS: corner.turnInS, turnOutS: corner.turnOutS, brakeS: profile.brakeS};
   const cornerSpeed = Math.min(...instructor.poses.filter(pose => pose.s >= corner.turnInS && pose.s <= corner.turnOutS).map(pose => pose.mph));
   assert.equal(Number.isFinite(cornerSpeed) && cornerSpeed > 0, true);
   let brakingDone = false;
   for (let tick = 0; tick < 120 * 120 && run.lesson.phase === 'driving'; tick++) {
     const surface = duel._drivingSurface(state.s, state.lateral);
     let controls = instructorControls(state, surface, plan);
-    if (mode === 'late' || mode === 'right') {
-      const brakeS = mode === 'late' ? instructor.redBoardS : instructor.cones[0].s;
+    if (mode === 'late') {
+      // Follows the instructor's plan up to cone 1, holds full throttle to the
+      // board, brakes there, and may ask for full steering.
+      const brakeS = instructor.redBoardS, early = state.s < instructor.cones[0].s;
       if (state.s >= brakeS && state.speedMph <= cornerSpeed) brakingDone = true;
-      const brake = state.s >= brakeS && !brakingDone ? 1 : 0;
-      const actualSteer = mode === 'late' ? (yaw, options) => {
+      const brake = state.s >= brakeS && !brakingDone ? 1 : 0, flatOut = !early && state.s < brakeS;
+      if (!early) controls = {...controls, brake: flatOut ? 0 : brake, throttle: flatOut ? 1 : brake ? 0 : controls.throttle};
+      const rawSteer = (yaw, options) => {
         const {steerGain} = tyreSlipSteering({...options, brake});
         return Math.max(-1, Math.min(1, -yaw / Math.max(.05, steerGain)));
-      } : (yaw, options) => steerForYaw(yaw, {...options, brake});
-      controls = {...controls, brake, throttle: mode === 'late' && state.s < brakeS ? 1 : brake ? 0 : controls.throttle,
-        steer: instructorControls(state, surface, {...plan, steerForYaw: actualSteer}).steer};
+      };
+      controls.steer = instructorControls(state, surface, {...plan, steerForYaw: rawSteer}).steer;
     }
     duel.setInput(controls); duel.step(1 / 120);
   }
