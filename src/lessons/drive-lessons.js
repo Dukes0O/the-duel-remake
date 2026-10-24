@@ -225,6 +225,9 @@ export const LESSON_LINE = Object.freeze({
   yawMargin: .96,  // the plan asks for this share of the tyre's yaw, so feedback never tips it past grip
   mainBrake: .8,   // share of full braking the plan uses in the corner's braking zone
   lightBrake: .45, // a lift for an earlier bend stays under the 50% brake rule
+  roadSeconds: 3,  // lesson 2: seconds of road between the gate and the first braking point, at the gate speed
+  gateStepM: 5,    // ... and how far back the gate moves at a time to find them
+  gateClearM: 15,  // ... never closer than this to the end of the previous bend
   entryLeadM: 0,   // lesson 2: the outside-edge waypoint this far before the first turn-in (0 = none)
   lineYawMargin: .85, // lesson 2's esses leave the steering less spare grip, so its plan keeps more of it back
   holdShare: .5,   // lesson 2 holds its speed while the line curves at least this share of its tightest
@@ -538,28 +541,43 @@ export async function lessonPlanFor(duel, row, pace) {
 // Lesson 2's line and speed plan for one course, car and pace. With `middle` the
 // line is the middle of the road instead of the racing line, for the proof that
 // the racing line is faster (tools/test-drive-lesson-2.mjs).
-export async function linePlanFor(duel, row, pace, {middle = false, rollingMph = null, ease = 'parabolic', entryLeadM = row.entryLeadM ?? LESSON_LINE.entryLeadM} = {}) {
+export async function linePlanFor(duel, row, pace, {middle = false, rollingMph = null, ease = 'parabolic',
+  entryLeadM = row.entryLeadM ?? LESSON_LINE.entryLeadM, startS: fixedStartS = null} = {}) {
   const [{DRIVE, tyreSlipSteering}, {accelAt, racingLineFor, buildSpeedProfile}, {TRACK_SCRIPT}] = await Promise.all([
     import('../config.js'), import('../race-lines.js'), import('../track-script.js'),
   ]);
   const course = duel.course, pieces = course.script?.pieces ?? [];
-  const points = linePointsFor(course, row, TRACK_SCRIPT.apexShare);
-  const startS = points.startS, endS = points.exitS + 60 + 40;
-  if (!(startS >= 0 && endS < course.length)) throw new Error('Lesson gates need an unwrapped corner');
-  const waypoints = middle ? [{s: startS, lateral: 0}, {s: endS, lateral: 0}] : lineWaypoints(course, points, entryLeadM);
-  const line = buildWaypointLine(course, waypoints, {startS, endS, points, ease});
+  const found = linePointsFor(course, row, TRACK_SCRIPT.apexShare);
+  const endS = found.exitS + 60 + 40;
+  if (!(found.startS >= 0 && endS < course.length)) throw new Error('Lesson gates need an unwrapped corner');
   // Firm braking belongs to the straight after the previous bend.
-  const before = pieces.filter(piece => piece.kind === 'turn' && !points.corners.includes(piece) && piece.s1 <= points.turnInS).at(-1);
-  // The rolling start is the speed the course's own racing line allows at the gate, at the instructor's pace.
-  const natural = rollingMph ?? Math.floor(buildSpeedProfile(racingLineFor(course), duel.car).at(startS) * pace);
-  const profile = buildLessonPlan(line, {car: duel.car, pace, rollingMph: natural, drive: DRIVE,
-    accelAt, tyreSlipSteering, brakeZoneS: Math.max(startS, before?.s1 ?? startS), holdMode: 'curved', yawMargin: LESSON_LINE.lineYawMargin,
-    tractionAt: (s, lateral) => duel._drivingSurface(s, lateral).traction,
-    speedLimitAt: (s, lateral) => duel._drivingSurface(s, lateral).speedLimit});
-  const startMph = Math.min(natural, Math.floor(profile.at(startS) * pace));
-  const placement = placeLineCones(course, points);
-  const turn = {s0: points.turnInS, s1: points.turnOutS, dir: points.dir};
-  return {startS, turn, points, line, profile, placement, rollingMph: startMph};
+  const before = pieces.filter(piece => piece.kind === 'turn' && !found.corners.includes(piece) && piece.s1 <= found.turnInS).at(-1);
+  const racing = racingLineFor(course), racingProfile = buildSpeedProfile(racing, duel.car);
+  const attempt = gateS => {
+    const points = {...found, startS: gateS};
+    const waypoints = middle ? [{s: gateS, lateral: 0}, {s: endS, lateral: 0}] : lineWaypoints(course, points, entryLeadM);
+    const line = buildWaypointLine(course, waypoints, {startS: gateS, endS, points, ease});
+    // The rolling start is the speed the course's own racing line allows at the gate, at the instructor's pace.
+    const natural = rollingMph ?? Math.floor(racingProfile.at(gateS) * pace);
+    const profile = buildLessonPlan(line, {car: duel.car, pace, rollingMph: natural, drive: DRIVE,
+      accelAt, tyreSlipSteering, brakeZoneS: Math.max(gateS, before?.s1 ?? gateS), holdMode: 'curved', yawMargin: LESSON_LINE.lineYawMargin,
+      tractionAt: (s, lateral) => duel._drivingSurface(s, lateral).traction,
+      speedLimitAt: (s, lateral) => duel._drivingSurface(s, lateral).speedLimit});
+    const startMph = Math.min(natural, Math.floor(profile.at(gateS) * pace));
+    const placement = placeLineCones(course, points);
+    const turn = {s0: points.turnInS, s1: points.turnOutS, dir: points.dir};
+    return {startS: gateS, turn, points, line, profile, placement, rollingMph: startMph};
+  };
+  if (fixedStartS !== null) return attempt(fixedStartS);
+  // The player must not have to brake the moment the lesson starts: at the speed the
+  // instructor has at the gate there must be at least LESSON_LINE.roadSeconds of road
+  // before the first braking point. If the gate is closer than that, move it back along the road.
+  const earliest = Math.max(0, (before?.s1 ?? 0) + LESSON_LINE.gateClearM);
+  for (let gateS = found.startS; gateS >= earliest; gateS -= LESSON_LINE.gateStepM) {
+    const plan = attempt(gateS);
+    if (plan.profile.brakeS - plan.startS >= LESSON_LINE.roadSeconds * plan.rollingMph * DRIVE.mphToWorld) return plan;
+  }
+  throw new Error('No start gate gives ' + LESSON_LINE.roadSeconds + ' s of road before the first braking point');
 }
 
 // Heavy native work starts only when explicitly called, not on import. This
@@ -637,7 +655,8 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
     const {timeSec, poses: recorded} = finishInstructorTrace(poses, placement.finishS, faults);
     const corner = {id: isLine ? row.cornerNames[0].replace(/ \d+$/, '') : row.cornerName, startS, finishS: placement.finishS, dir: turn.dir,
       turnInS: turn.s0, turnOutS: turn.s1};
-    const instructor = {...placement, timeSec, poses: recorded};
+    // Lesson 2 also records where the plan starts braking, for the road-before-braking check.
+    const instructor = {...placement, timeSec, poses: recorded, ...(isLine ? {brakeS: profile.brakeS} : {})};
     // Use the very same physical cone counter as the student's lesson.
     const lesson = createDriveLesson(lessonId, {corner, instructor});
     const carView = pose => ({s: pose.s, lateral: pose.lateral, world: {x: pose.x, z: pose.z},

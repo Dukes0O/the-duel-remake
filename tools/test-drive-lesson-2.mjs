@@ -122,7 +122,7 @@ async function nativeAttempt(baseline, lesson, mode, fps) {
   const state = duel.state, course = duel.course, spec = duel.car, row = DRIVE_LINE_ROWS.find(item => item.courseId === courseId);
   const pace = difficulty === 'casual' ? .92 : .97, start = instructor.poses[0], middle = mode === 'middle';
   // The middle driver is built at 100% of what its line allows; the others use the instructor's own plan.
-  const made = await linePlanFor(duel, row, middle ? 1 : pace, {middle, rollingMph: start.mph});
+  const made = await linePlanFor(duel, row, middle ? 1 : pace, {middle, rollingMph: start.mph, startS: corner.startS});
   const {line, profile} = made;
   state.tyreSlipRules = true; state.tyreSlip = 0; state.status = 'racing'; state.countdown = 0; state.s = corner.startS;
   state.lateral = start.lateral; state.headingError = start.heading - course.at(state.s).heading; state.speedMph = start.mph;
@@ -171,6 +171,14 @@ for (const row of DRIVE_LINE_ROWS) {
       assert.ok(instructor.poses.every(pose => Number.isFinite(pose.x) && Number.isFinite(pose.z) && pose.tyreSlip <= 1));
       assert.ok(instructor.markers.length > 20 && instructor.markers.every(marker => marker.lateral === 0), 'markers down the middle');
       assert.equal(instructor.redBoardS, undefined, 'lesson 2 has no red board');
+      // The player must not have to brake the moment the lesson starts: at the speed the instructor
+      // has at the gate there are at least 3 s of road before the first braking point (the gate
+      // moves back along the road if it must), and the car really does not brake firmly before that.
+      const speed = instructor.poses[0].mph * .44704;
+      assert.ok((instructor.brakeS - corner.startS) / speed >= 3, `${((instructor.brakeS - corner.startS) / speed).toFixed(2)} s of road before braking`);
+      const firm = instructor.poses.find(pose => pose.brake >= .5);
+      assert.ok(firm && (firm.s - corner.startS) / speed >= 3, 'the first firm brake is at least 3 s of road from the gate');
+      assert.ok(corner.startS <= corner.turnInS - row.gateOffsetM, 'the gate only ever moves back');
       // Every cone is within the counting distance of the recorded line, by the lesson's own counter.
       const lesson = createDriveLesson('line', baseline), view = pose => ({s: pose.s, lateral: pose.lateral,
         world: {x: pose.x, z: pose.z}, speedMph: pose.mph, brake: pose.brake, throttle: pose.throttle, tyreSlip: pose.tyreSlip, status: 'racing'});
@@ -219,6 +227,30 @@ for (const row of DRIVE_LINE_ROWS) {
     });
   }
 }
+
+test('the gate moves back only when the road before braking is under 3 s, and never into the previous bend', async () => {
+  const {Duel} = await import('../src/game.js'), {COURSE, DRIVE} = await import('../src/config.js');
+  const {linePlanFor: plan} = await import('../src/lessons/drive-lessons.js');
+  const moved = {};
+  for (const row of DRIVE_LINE_ROWS) for (const [difficulty, pace] of [['casual', .92], ['pro', .97]]) {
+    const duel = new Duel({seed: 1989, featureFlags: {enabled: name => name === 'tyre-slip'}});
+    duel.startCampaign({seed: 1989, car: 'falcone_f42', difficulty, mode: 'timetrial', opponentCount: 0, startStage: COURSE.findIndex(item => item.id === row.courseId)});
+    const course = duel.course, nominal = linePointsFor(course, row, .55).startS, made = await plan(duel, row, pace);
+    const room = (made.profile.brakeS - made.startS) / (made.rollingMph * DRIVE.mphToWorld);
+    assert.ok(room >= 3, `${row.courseId} ${difficulty}: ${room.toFixed(2)} s of road before braking`);
+    const previous = course.script.pieces.filter(piece => piece.kind === 'turn' && piece.s1 <= nominal + 150 - row.gateOffsetM + 1 &&
+      !row.cornerNames.includes(piece.name)).at(-1);
+    assert.ok(made.startS <= nominal && made.startS >= previous.s1 + 15, 'back along the road, but clear of the previous bend');
+    // At the nominal gate the same plan would have had less than 3 s: that is why the gate moved.
+    if (made.startS < nominal) {
+      const fixed = await plan(duel, row, pace, {startS: nominal});
+      assert.ok((fixed.profile.brakeS - fixed.startS) / (fixed.rollingMph * DRIVE.mphToWorld) < 3);
+    } else assert.equal(made.startS, nominal, 'a gate that already has 3 s of road stays where the row puts it');
+    moved[row.courseId + ' ' + difficulty] = made.startS - nominal;
+  }
+  assert.ok(moved['tremblant-woods casual'] < 0 && moved['tremblant-woods pro'] < 0, 'Fir Esses needs its gate further back');
+  assert.equal(moved['harbour-lights casual'], 0); assert.equal(moved['harbour-lights pro'], 0);
+});
 
 test('points for a row come from the course pieces and the lesson never touches lesson 1', async () => {
   const [{Duel}, {COURSE}, {TRACK_SCRIPT}] = await Promise.all([import('../src/game.js'), import('../src/config.js'), import('../src/track-script.js')]);

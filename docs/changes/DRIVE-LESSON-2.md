@@ -11,8 +11,16 @@ starts this lesson yet. Lesson 1's tests are unchanged and pass.
 - **Rows** (`DRIVE_LINE_ROWS`): Tremblant Woods, Fir Esses 1 and 2; Harbour Lights,
   Old Town Esses 1 to 4. The start gate is 150 m before the first corner; the
   rolling start is the speed the course's own racing-line profile allows there, at
-  the instructor's pace (145 and 152 mph into Fir Esses, 92 and 97 mph into Old
-  Town, Casual and Pro).
+  the instructor's pace.
+- **Three seconds of road (Claude's answer, 24 October).** At that speed the player
+  must have at least 3 s of road between the gate and the first braking point, so a
+  child does not have to brake the moment the lesson starts. If the gate is closer,
+  it moves back along the road in 5 m steps (never within 15 m of the previous bend's
+  end) and the speed there is the instructor's own speed at the new gate. Old Town
+  already had 3.5 s (Casual) and 3.3 s (Pro) and keeps its gate (1301 m, 92 and
+  97 mph). Fir Esses had only 2.0 s and 1.9 s at 145 and 152 mph: its gate moves back
+  to 585 m (Casual, 128 mph, 3.09 s of road) and 580 m (Pro, 133 mph, 3.04 s). The
+  checks use the plan's braking point and the instructor's first firm brake.
 - **The instructor's line**: outside edge at the gate, level on the outside edge
   until a short lead before the first turn-in (40 m on Fir Esses, 20 m on Old
   Town, a per-row number), then the least-curvature S (two equal arcs, "parabolic"
@@ -49,8 +57,8 @@ instructor, measured on the lesson's own gate-to-gate clock, native, identical a
 
 | Row | Instructor | Middle at 100% | Middle loses |
 | --- | --- | --- | --- |
-| Fir Esses, Casual | 7.26 s | 8.14 s | 0.88 s |
-| Fir Esses, Pro | 6.92 s | 8.12 s | 1.20 s |
+| Fir Esses, Casual | 8.03 s | 8.89 s | 0.86 s |
+| Fir Esses, Pro | 7.76 s | 8.92 s | 1.16 s |
 | Old Town Esses, Casual | 10.75 s | 13.45 s | 2.70 s |
 | Old Town Esses, Pro | 10.35 s | 13.40 s | 3.04 s |
 
@@ -61,13 +69,13 @@ the road. The entry lead is what makes the racing line real.)
 Also checked, native, every row, both paces, at 30, 60 and 144 FPS: the instructor
 repeats exactly, counts every cone and passes its own three rules; the middle try
 finishes and plays `middle.result`; the right try passes all three rules; two
-100% drivers beat the instructor (by 0.35 s, 0.30 s, 1.07 s, 0.49 s on
+100% drivers beat the instructor (by 0.40 s, 0.34 s, 1.07 s, 0.49 s on
 Fir Casual, Fir Pro, Old Town Casual, Old Town Pro), a slow try resets the streak,
 three in a row pass.
 
 ## Checks (Linux cloud)
 
-- `tools/test-drive-lesson-2.mjs`: 15 of 15. `tools/test-drive-lessons.mjs` (lesson 1): 37 of 37, unchanged.
+- `tools/test-drive-lesson-2.mjs`: 16 of 16 (adds the 3 s of road checks on both rows and both paces, and the gate-move check). `tools/test-drive-lessons.mjs` (lesson 1): 37 of 37, unchanged.
 - Lane tier `--changed --jobs 8 --keep-going`: 230 of 236 suites pass, including the
   lesson 1, lesson 2, lesson-run and lines suites and every replay and world-signature
   guard. The six failures are Windows-only and unrelated: `test-course-kit`,
