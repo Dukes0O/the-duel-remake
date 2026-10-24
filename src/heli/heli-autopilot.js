@@ -44,8 +44,8 @@ const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 
 // The highest y the helicopter can still hold a hover at in thin air.
 function thrustCeiling(state) {
-  const need = FOLLOW.holdMargin * heliMass(state) * GRAVITY / KESTREL.maxThrust;
-  return need >= 1 ? -Infinity : -KESTREL.airScaleHeight * Math.log(need) - state.altitudeOffset;
+  const need = FOLLOW.holdMargin * heliMass(state) * GRAVITY / (KESTREL.maxThrust * (state.upgrades?.thrustFactor ?? 1));
+  return need >= 1 ? -Infinity : -(state.upgrades?.altitudeScaleM ?? KESTREL.airScaleHeight) * Math.log(need) - state.altitudeOffset;
 }
 
 // The floor the climb needs now, or -Infinity when the straight line is clear.

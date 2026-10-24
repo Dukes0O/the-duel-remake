@@ -403,9 +403,10 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     // nothing from the helicopter. FIRE-BUCKET: the water query reads the
     // course's lake outline. EARN-SCREEN: the medal cars are air-only; medals.js
     // is pure rules and imports only config.js. DRIVE-LESSON-CORE: the lesson
-    // contract shared with driving lessons is pure and imports nothing.
+    // contract shared with driving lessons is pure and imports nothing. LAB-HELI: the session reads the Lab's upgrades
+    // through the one file src/lab/lab-heli.js (docs/LAB.md section 10) and nothing else of the Lab.
     ok(imports.every(spec => spec.startsWith('./heli-') || ['../config.js', '../rendered-ground.js', '../rng.js', '../course-access.js',
-      '../course-closures.js', '../circuit-hills.js', '../medals.js', '../lessons/lesson-core.js'].includes(spec)),
+      '../course-closures.js', '../circuit-hills.js', '../medals.js', '../lessons/lesson-core.js', '../lab/lab-heli.js'].includes(spec)),
       `${name} imports only helicopter rules (${imports.join(', ')})`);
     ok(!/\bdocument\b|\bwindow\b|Math\.random|Date\.now|new Date|performance\.now|localStorage|requestAnimationFrame|\bcrypto\b|import\s*\(/.test(source),
       `${name} uses no page, clock, storage or randomness`);

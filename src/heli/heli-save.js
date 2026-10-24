@@ -251,6 +251,7 @@ export const MAX_SCARS = 4;
 // A fire holds at most 80 burning and burnt cells; damp lasts at most 2 steps.
 export const MAX_FIRE_CELLS = 80;
 const MAX_DAMP_STEPS = 2;
+const MAX_RETARDANT_LITRES = 1000;
 const FIRE_OFF = 'Forest fires are not available yet.';
 // A cell is (i + 512) x 1024 + (j + 512) for grid column i and row j.
 const MAX_CELL = 1024 * 1024 - 1;
@@ -346,8 +347,12 @@ function normalizeFire(value) {
   const lit = new Set([...gone, ...burning.map(([cell]) => cell)]);
   const damp = cellPairs(value.damp, steps => Number.isSafeInteger(steps) ? Math.max(1, Math.min(MAX_DAMP_STEPS, steps)) : 1)
     .filter(([cell]) => !lit.has(cell)).slice(0, MAX_FIRE_CELLS);
+  // The Lab's retardant (heli-fire.js applyRetardant): litres on each forest cell, kept only once some has landed.
+  const retardant = cellPairs(value.retardant, litres => tenth(litres, MAX_RETARDANT_LITRES))
+    .filter(([cell, litres]) => litres > 0 && !lit.has(cell)).slice(0, MAX_FIRE_CELLS);
   return {id: value.id, courseId: value.courseId, seed: seed32(value.seed), startDay: count(value.startDay),
-    steps: count(value.steps), engineSeconds: tenth(value.engineSeconds, MAX_COUNT), burning, burnt, damp};
+    steps: count(value.steps), engineSeconds: tenth(value.engineSeconds, MAX_COUNT), burning, burnt, damp,
+    ...(retardant.length ? {retardant} : {})};
 }
 
 // A burn or scar with a broken day is dropped, never moved to day 0, so the
