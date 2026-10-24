@@ -483,4 +483,5 @@ H3 Wildlife and skins (T-036), H4 Rescue (T-037), H5 Heli-skiing (T-038),
 the Lab (T-009 to T-012), and the driving lessons (T-039, T-040). Each gets
 a packet here when its turn comes; Kyle's storyboard holds the decisions.
 H2 Fire's packet is `docs/HELI_FIRE.md`; H3 Wildlife and skins' is `docs/HELI_WILDLIFE.md`; H4 Rescue's is
-`docs/HELI_RESCUE.md`.
+`docs/HELI_RESCUE.md`; H5 Heli-skiing's is `docs/HELI_SKIING.md`; the pilot's map is
+`docs/PILOT_MAP.md`; the Lab is `docs/LAB.md`.
