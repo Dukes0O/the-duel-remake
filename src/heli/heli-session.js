@@ -8,7 +8,8 @@ import {AUTOPILOT, createAutopilot, toggleAutopilot, setAutopilotTarget, autopil
 import {CABLE, createLoad, liftCheck, carMassKg, canHook, hook, release, stepCable, createWinch, reelWinch, lineLengthOf} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
   DIRT_KINDS, placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave} from './heli-save.js';
-import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle, recoveryJob, recoveryJobOf, recoveryTitle, finishRecovery} from './heli-jobs.js';
+import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle, recoveryJob, recoveryJobOf, recoveryTitle, finishRecovery,
+  wreckFor} from './heli-jobs.js';
 import {isCourseUnlocked} from '../course-access.js';
 import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson} from './heli-lessons.js';
 import {CRATE} from './heli-cable.js';
@@ -19,7 +20,7 @@ import {callOf, rescueOf, rescueConditions, isRescueKind, tickRescue, finishResc
   peoplePay, DUSK_SECONDS} from './heli-missions.js';
 import {RESCUE, CONDITIONS, createRescueLine, setLineWho, peopleOnLine, hNothing, canFitLine, holdFraction, stepRescue, rescueHit, cabinHurt,
   handoverOutcome, createSupplyCrate, noteCrateRelease, crateResult, cratePay, supplyPay, hoistBonus, hookCrates, carryNet, spillNet} from './heli-rescue.js';
-import {hikerSpots, pickHiker, hikerSpotted, hikerWalk, slideSpots, pickSlide, beaconSignal, hoistSpots, pickHoist, supplyYard,
+import {hikerSpots, pickHiker, hikerSpotted, hikerWalk, slideSpots, pickSlide, beaconSignal, hoistSpots, pickHoist, supplyYard, supplyPickup,
   crateSpots, SEARCH, searchNight, heatContacts} from './heli-search.js';
 import {SKINS, skinsOf, skinRows, skinOffer, earnSkins, buySkin, wearSkin, washHelicopter, gearStats, grimeOf, WASH, addDirt, settleFlightDirt,
   createFlightDirt, addFlightTime, addLanding, addDip, addDrop} from './heli-skins.js';
@@ -71,8 +72,11 @@ function clearCircle(course, ground, x, z, radius, flatness) {
 // The landing zone beside the start line, the home pad's parking spot for
 // the car, and the flying area. Chosen the same way every time. summitRun:
 // the Summit Run switch, which adds that destination's arrival point to the
-// area (and lets Summit Run itself be a course here).
-export function courseSite(course, ground, courseId, {summitRun = false} = {}) {
+// area (and lets Summit Run itself be a course here). summitRescue: Summit Run's
+// switch together with the rescue switch; Summit Run's ceiling is then 300 m above
+// the ground under the helicopter (never lower than the usual one), so the pickup
+// and the summit hut can be reached (see ceilingAt).
+export function courseSite(course, ground, courseId, {summitRun = false, summitRescue = false} = {}) {
   const radius = HELI_SESSION.zoneRadius;
   let zone = null;
   search: for (const s of [0, 20, -20, 40, -40, 60, -60, 90, -90, 120, -120, 160, -160, 200, -200]) {
@@ -128,7 +132,8 @@ export function courseSite(course, ground, courseId, {summitRun = false} = {}) {
   const m = HELI_SESSION.areaMargin;
   const startY = course.at(0).y;
   const area = {minX: Math.min(...xs) - m, maxX: Math.max(...xs) + m, minZ: Math.min(...zs) - m, maxZ: Math.max(...zs) + m,
-    ceiling: startY + HELI_SESSION.ceilingAbove};
+    ceiling: startY + HELI_SESSION.ceilingAbove,
+    ...(summitRescue === true && courseId === 'summit-run' ? {aboveGround: HELI_SESSION.ceilingAbove} : {})};
   return Object.freeze({courseId, zone: Object.freeze(zone), parking: Object.freeze(parking), spare: Object.freeze(spare), area: Object.freeze(area), startY,
     crate: crate && Object.freeze(crate), carryTarget: target && Object.freeze(target)});
 }
@@ -138,8 +143,16 @@ function arrivalPoint(zone, toward) {
   return {x: zone.x + toward.x * HELI_SESSION.arrivalDistance, z: zone.z + toward.z * HELI_SESSION.arrivalDistance};
 }
 
-export function insideArea(area, x, y, z) {
-  return x >= area.minX && x <= area.maxX && z >= area.minZ && z <= area.maxZ && y <= area.ceiling;
+// The top of the flying area over a spot: the flat ceiling, or, where the area
+// carries `aboveGround` (Summit Run with rescues on), that many metres over the
+// ground there when that is higher. H1's thin-air thrust rule still decides how
+// high the helicopter can actually climb.
+export function ceilingAt(area, x, z, ground = null) {
+  return area.aboveGround && ground ? Math.max(area.ceiling, ground.height(x, z) + area.aboveGround) : area.ceiling;
+}
+
+export function insideArea(area, x, y, z, ground = null) {
+  return x >= area.minX && x <= area.maxX && z >= area.minZ && z <= area.maxZ && y <= ceilingAt(area, x, z, ground);
 }
 
 // options: profile, enabled (the helicopter switch), loadCourse(id) ->
@@ -212,18 +225,20 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   if (fireEnabled === true && typeof loadFireCourse !== 'function') throw new Error('Forest fires need loadFireCourse(courseId)');
   const fireWorlds = new Map();
   const fireWorldOf = id => {
-    if (!fireWorlds.has(id)) { const loaded = loadFireCourse(id); fireWorlds.set(id, fireWorld(loaded, courseSite(loaded.course, loaded.ground, id, dflag))); }
+    if (!fireWorlds.has(id)) { const loaded = loadFireCourse(id); fireWorlds.set(id, fireWorld(loaded, courseSite(loaded.course, loaded.ground, id, siteFlag))); }
     return fireWorlds.get(id);
   };
   // H4 Rescue: each course's site facts (no fire grid needed), worked out once.
   const rescueOn = rescueEnabled === true && fireEnabled === true;
   const rflag = {rescue: rescueOn};
+  // Summit Run's rescues (SUMMIT-HELI-RESCUES) need both switches: only then does its ceiling follow the ground.
+  const siteFlag = {summitRun: summitOn, summitRescue: summitOn && rescueOn};
   const siteWorlds = new Map();
   const siteWorldOf = id => {
     if (fireWorlds.has(id)) return fireWorlds.get(id);
     if (!siteWorlds.has(id)) {
       const loaded = loadFireCourse(id);
-      siteWorlds.set(id, {course: loaded.course, ground: loaded.ground, site: courseSite(loaded.course, loaded.ground, id, dflag)});
+      siteWorlds.set(id, {course: loaded.course, ground: loaded.ground, site: courseSite(loaded.course, loaded.ground, id, siteFlag)});
     }
     return siteWorlds.get(id);
   };
@@ -235,12 +250,14 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     avalanche: id => { const w = siteWorldOf(id); return slideSpots(w.course, w.ground).length > 0; },
     hoist: id => { const w = siteWorldOf(id); return hoistSpots(w.course, w.ground).length > 0; },
     supply: id => {
-      const w = siteWorldOf(id), home = siteWorldOf(HOME_COURSE);
+      const w = siteWorldOf(id), home = siteWorldOf(HOME_COURSE), pickup = supplyPickup(w.course, w.ground);
+      // Summit Run's crates wait at its own pickup; Tremblant Snow's wait at the home pad.
+      if (pickup) return !!supplyYard(w.course, w.ground) && crateSpots(w.course, w.ground, pickup).length >= 3;
       return !!supplyYard(w.course, w.ground) && crateSpots(home.course, home.ground, home.site.zone).length >= 3;
     },
   };
   const rescueCourses = () => {
-    if (!rescueRows) rescueRows = Object.fromEntries(Object.entries(rescueConditions()).map(([kind, ids]) =>
+    if (!rescueRows) rescueRows = Object.fromEntries(Object.entries(rescueConditions({summitRun: summitOn})).map(([kind, ids]) =>
       [kind, ids.filter(id => isDestination(id, dflag) && READY[kind](id))]));
     return rescueRows;
   };
@@ -275,7 +292,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const carried = heldLoad();
     rememberLoads();
     world = loadCourse(courseId);
-    site = courseSite(world.course, world.ground, courseId, dflag);
+    site = courseSite(world.course, world.ground, courseId, siteFlag);
     const info = places[courseId];
     const fuel = heli ? heli.fuelKg : heliOf(save).fuelKg;
     if (arriveFrom) {
@@ -441,7 +458,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // usual way to the landing zone.
   function recoveryGoal() {
     const job = rescueOn && heli ? jobInHand() : null;
-    if (job?.kind !== 'recovery' || site.courseId !== job.from || (destination && destination !== site.courseId)) return null;
+    if (job?.kind !== 'recovery' || live || site.courseId !== job.from || (destination && destination !== site.courseId)) return null;
     const car = loads.find(item => item.job === job.id);
     return car && !car.hooked ? hoverAbove(car.x, car.z, 12) : null;
   }
@@ -471,7 +488,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // at once. The first tank there is free.
   function strandedOnGround() {
     if (!heli.onGround || heli.engine || heli.fuelKg > 0) return false;
-    if (!onHome()) return true;
+    if (!pumpHere()) return true;
     const tank = heliOf(save);
     return tank.refuels > 0 && save.credits < Math.ceil(KESTREL.tankKg * KESTREL.lowFuelShare * HELI_MONEY.creditsPerKg);
   }
@@ -480,6 +497,14 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     return site?.courseId === HOME_COURSE && heli?.onGround &&
       Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) <= site.zone.radius;
   }
+
+  // Summit Run's supply run: the lodge's fuel truck stands at the pickup, and sells
+  // fuel at the pump's price to a helicopter on the ground in the pickup's circle.
+  function atTruck() {
+    return !!live && live.kind === 'supply' && !!rsite?.pickup && site?.courseId === live.courseId && !!heli?.onGround &&
+      Math.hypot(heli.x - rsite.pickup.x, heli.z - rsite.pickup.z) <= rsite.pickup.radius;
+  }
+  const pumpHere = () => onHome() || atTruck();
 
   function crashed(cause) {
     hookHeld = false; hookReeled = false;
@@ -638,19 +663,27 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     }
     if (r.kind === 'hoist') {
       const picked = pickHoist(hoistSpots(w.course, w.ground), r.seed, w.ground);
-      return picked && {driver: picked.driver, car: picked.car};
+      // The car carries the id the recovery job later offers (the same seeded pick).
+      return picked && {driver: picked.driver, car: Object.freeze({...picked.car, carId: wreckFor({seed: r.seed, courseId: r.courseId, x: 0, z: 0, day: 0}).carId})};
     }
-    const home = siteWorldOf(HOME_COURSE), yard = supplyYard(w.course, w.ground), spots = crateSpots(home.course, home.ground, home.site.zone);
+    const yard = supplyYard(w.course, w.ground), pickup = supplyPickup(w.course, w.ground);
+    // Summit Run: the crates and the lodge's fuel truck wait at the pickup on its road (docs/HELI_RESCUE.md 5.4).
+    if (pickup) {
+      const spots = crateSpots(w.course, w.ground, pickup);
+      const truck = Object.freeze({x: pickup.x + pickup.radius * 0.75, z: pickup.z, y: w.ground.height(pickup.x + pickup.radius * 0.75, pickup.z)});
+      return yard && spots.length >= 3 ? {yard, pickup, truck, spots, results: [null, null, null]} : null;
+    }
+    const home = siteWorldOf(HOME_COURSE), spots = crateSpots(home.course, home.ground, home.site.zone);
     return yard && spots.length >= 3 ? {yard, spots, results: [null, null, null]} : null;
   }
 
-  // The crates wait at the home pad's spots until they are down in the yard.
+  // The crates wait at the home pad's spots (or, at Summit Run, at its pickup) until they are down in the yard.
   function layCrates() {
-    if (!live || live.kind !== 'supply' || !rsite || site.courseId !== HOME_COURSE) return;
+    if (!live || live.kind !== 'supply' || !rsite || site.courseId !== (rsite.pickup ? live.courseId : HOME_COURSE)) return;
     CRATE_IDS.forEach((id, i) => {
       if (live.crates[i] === 2 || loads.some(car => car.supply && car.id === id)) return;
       // Like the lesson crate, not a car and not a job's: the hook code reads both.
-      loads.push(Object.assign(createSupplyCrate({id, set: 'tremblantSnow', x: rsite.spots[i].x, z: rsite.spots[i].z, heading: 0, ground: world.ground}),
+      loads.push(Object.assign(createSupplyCrate({id, set: rsite.pickup ? 'summitRun' : 'tremblantSnow', x: rsite.spots[i].x, z: rsite.spots[i].z, heading: 0, ground: world.ground}),
         {own: false, job: null}));
     });
   }
@@ -876,9 +909,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           target = bearingTo(rsite.driver.x, rsite.driver.z);
           sites = Object.freeze({driver: rsite.driver, car: rsite.car});
         } else if (r.kind === 'supply') {
-          const goal = r.crates.includes(1) ? (here ? rsite.yard : null) : (site?.courseId === HOME_COURSE ? rsite.spots[0] : null);
+          const crateAt = rsite.pickup ? (here ? rsite.pickup : null) : (site?.courseId === HOME_COURSE ? rsite.spots[0] : null);
+          const goal = r.crates.includes(1) ? (here ? rsite.yard : null) : crateAt;
           target = goal ? bearingTo(goal.x, goal.z) : null;
-          if (here) sites = Object.freeze({yard: rsite.yard});
+          if (here) sites = Object.freeze(rsite.pickup ? {yard: rsite.yard, pickup: rsite.pickup, truck: rsite.truck, spots: rsite.spots, atTruck: atTruck()} : {yard: rsite.yard});
           else if (site?.courseId === HOME_COURSE) sites = Object.freeze({spots: rsite.spots});
         }
       }
@@ -1159,7 +1193,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       // The flying area: a destination elsewhere offers the cruise leg;
       // with none the edge holds the helicopter in.
       const a = site.area;
-      if (!insideArea(a, heli.x, heli.y, heli.z)) {
+      if (!insideArea(a, heli.x, heli.y, heli.z, world.ground)) {
         if (destination && destination !== site.courseId) {
           if (!cruiseOffered) {
             cruiseOffered = true;
@@ -1167,10 +1201,12 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
             emit({type: 'radio', line: 'heli.radio.cruise.ready'});
           }
         } else {
-          heli.x = clamp(heli.x, a.minX, a.maxX); heli.z = clamp(heli.z, a.minZ, a.maxZ); heli.y = Math.min(heli.y, a.ceiling);
+          heli.x = clamp(heli.x, a.minX, a.maxX); heli.z = clamp(heli.z, a.minZ, a.maxZ);
+          const top = ceilingAt(a, heli.x, heli.z, world.ground);
+          heli.y = Math.min(heli.y, top);
           if (heli.x === a.minX || heli.x === a.maxX) heli.vx = 0;
           if (heli.z === a.minZ || heli.z === a.maxZ) heli.vz = 0;
-          if (heli.y === a.ceiling) heli.vy = Math.min(0, heli.vy);
+          if (heli.y === top) heli.vy = Math.min(0, heli.vy);
         }
       } else if (cruiseOffered) cruiseOffered = false;
       return api.takeEvents();
@@ -1284,7 +1320,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // Fuel from the pump: only on the home pad, with the engine idling on
     // the ground. Infinity fills the tank (the free first tank).
     buyFuel(kg = Infinity) {
-      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The pump is at the home pad.'};
+      if (phase !== 'flying' || !pumpHere()) return {ok: false, reason: 'The pump is at the home pad.'};
       if (!pumpOpen()) return {ok: false, reason: 'Finish lesson 3, landing, to use the pump.'};
       storeFuel();
       const result = commit(buyFuel(save, kg, flag));

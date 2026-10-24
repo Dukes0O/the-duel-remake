@@ -26,9 +26,17 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
   or `master`, and never touches the live game. It runs the lane tier and
   `npm run build` and lists in the change note any suite it could not run
   there. The laptop merges after its own lane tier, build and any look check.
+- Questions from a cloud session: nobody reads its chat. Never stop to ask in
+  chat. Write the question to `docs/board/questions/<CARD>.md` on your branch
+  (what you need decided, the options, your recommended pick), commit and push
+  at once. Carry on with your recommended pick if the work can continue, and
+  say so in the file; stop only if it truly cannot. Claude answers by message
+  to the session and deletes the file when the card merges.
 
 ## Never
 
+- Do not "fix" anything listed under "Keep these" in `docs/board/decisions.md`
+  (fun that looks like a bug, kept on purpose for Kyle and his son).
 - Do not edit or build in `C:\Users\kyleb\dev\the-duel-remake` except as the
   Release Manager after the release gate. That folder serves the live game.
 - Do not use port 5174 for development or QA. Do not refresh a live race.
