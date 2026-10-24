@@ -126,7 +126,7 @@ function memoryStorage(initial) {
 test('every historical save fixture can receive an arena settlement', () => {
   const dir = new URL('./fixtures/saves/', import.meta.url);
   const files = readdirSync(fileURLToPath(dir)).filter(name => name.endsWith('.json')).sort();
-  assert.equal(files.length, 15);
+  assert.equal(files.length, 16);
   for (const file of files) {
     const fixture = JSON.parse(readFileSync(new URL(file, dir), 'utf8'));
     const registry = loadPlayers(memoryStorage(fixture.storage));

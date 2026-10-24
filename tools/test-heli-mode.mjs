@@ -393,7 +393,11 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     'tools/test-earned-cars-ui.mjs|heli/heli-jobs.js',
     // SKI-RUNS: the ski zones' test checks the drop pads against the Summit Run world
     // (its ground and clear-circle test) and the thin-air numbers against the thrust rule.
-    ...['heli-ground', 'heli-search', 'heli-flight', 'heli-jobs'].map(name => `tools/test-ski-runs.mjs|heli/${name}.js`)]);
+    ...['heli-ground', 'heli-search', 'heli-flight', 'heli-jobs'].map(name => `tools/test-ski-runs.mjs|heli/${name}.js`),
+    // LAB-RULES: the Lab reads the helicopter's own numbers and lessons (heliUpgrades, the lesson board); its test pins them.
+    ...['heli-flight', 'heli-bucket', 'heli-cable'].map(name => `src/lab/lab-heli.js|heli/${name}.js`),
+    'src/lab/lab-lessons.js|heli/heli-save.js',
+    ...['heli-save', 'heli-flight', 'heli-bucket', 'heli-cable'].map(name => `tools/test-lab-rules.mjs|heli/${name}.js`)]);
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
   for (const path of walk(join(root, 'src')).concat(walk(join(root, 'tools')), pages)) {

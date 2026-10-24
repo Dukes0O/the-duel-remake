@@ -37,7 +37,7 @@ function memoryBackups(){
 }
 const dir=new URL('./fixtures/saves/',import.meta.url);
 const fixtures=readdirSync(fileURLToPath(dir)).filter(name=>name.endsWith('.json')).sort();
-assert.equal(fixtures.length,15);
+assert.equal(fixtures.length,16);
 for(const name of fixtures){
   const fixture=JSON.parse(readFileSync(new URL(name,dir),'utf8'));
   const source=memoryStorage(Object.fromEntries(Object.entries(fixture.storage).map(([key,value])=>[key,JSON.stringify(value)])));

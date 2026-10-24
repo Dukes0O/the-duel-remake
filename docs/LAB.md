@@ -202,10 +202,12 @@ the Coast Cup.
 
 Optional `profile.lab`:
 `{version: 1, done: {<lesson>: true}, owned: {<upgrade>: true}, ring: 0..3,
-cable: 15 | 25, tune: {<carId>: {pressure, wing, brakes, springs, fuel}},
+ringBest: 0..3, cable: 15 | 25, tune: {<carId>: {pressure, wing, brakes, springs, fuel}},
 stockLaps: {"<car>|<course>": seconds}, tunedBonus: [<courseId>],
-secret: {reverse: true}}`. Every key optional; an old save reads as no
-lessons done, no upgrades and every setting 0. Lesson ids: `lift`,
+secret: {reverse: true}}`. `ringBest` is the best drop ring earned (0 is the 12 m ring; each pass of
+Projectile motion made with the best ring held earns the next); `ring` is the
+one in use and is never above `ringBest`. Every key optional; an old save
+reads as no lessons done, no upgrades and every setting 0. Lesson ids: `lift`,
 `projectile`, `fire`, `pendulum`, `altitude`, `strength`, `rust`, `gforce`,
 `headings`, `launch`, `wax`, `grip`, `downforce`, `braking`, `suspension`,
 `fuel`. Upgrade ids: `engine-1`, `engine-2`, `light-frame`, `big-bucket`,
