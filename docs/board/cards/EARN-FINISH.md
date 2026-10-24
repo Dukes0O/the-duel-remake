@@ -37,3 +37,10 @@ Kyle for release. Design: `docs/EARNED_CARS.md`.
 
 The four checks recorded in `docs/changes/EARN-FINISH.md` with their numbers;
 any tuning change merged with its lane tier; Kyle has the picture.
+
+## Carried from the three car cards (Claude, 24 October)
+
+All three earned cars are merged behind `earned-cars`. Each still owes one
+frame check with the laptop to itself: a Panorama Ridge Grand Prix with a
+field of that car (Enzo, F1, Bolide), High and Performance. Run them here,
+in one quiet window, before the earned-cars release.
