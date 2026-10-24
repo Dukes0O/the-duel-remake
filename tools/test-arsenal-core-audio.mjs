@@ -194,7 +194,7 @@ function nativeEvents() {
 }
 check('existing sound-bank entries and all other exports stay exact', () => {
   assert.equal(hash(bank.CAR_VOICES.mclaren_f1),
-    'fb3929542f02781c47ae6f4ab2068f67ffb40e366194aaa3e4e8eaa4b8b938aa',
+    '1c9f009e1c81b1a75b9804fd7d004dbcc5a79167693424b232e250b01af43699',
     'F1 uses its own existing-sample voice while historical exports remain pinned');
   assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !BANK_ADDITIONS.has(id)).map(oldFlagShape))),
     'cc6d14d4b734baeff5104526ef4e3841fa24c6cc3051e59c37f488f5734afeb9');
