@@ -580,24 +580,25 @@ function hoverAt(session, x, z, hangM = 15, {tolerance = 0.5} = {}) {
   net.pressHook();
   run(net, 6, v => pilot(v, {x: mid.x, z: mid.z, y: v.heli.y}, {speed: 1}));
   ok(spots(net).every(crate => !crate.hooked && crate.onGround), 'let go, both crates rest on the ground');
-  // Without the net the same spot hooks nothing (5.7 m is beyond the hook), and over one crate it takes one.
+  // Without the net the same spot hooks nothing (5.7 m is beyond the hook; H says "Closer"), and over one crate it takes one.
   const plain = supplySession('stock');
   hoverAt(plain, mid.x, mid.z);
-  same(plain.pressHook(), null, 'stock paint: nothing within reach');
+  const missed = plain.pressHook();
+  same([missed?.type, missed?.reason], ['hookRefused', 'closer'], 'stock paint: nothing within reach, and H says Closer');
   hoverAt(plain, a.x, a.z);
   plain.pressHook();
   same(spots(plain).filter(crate => crate.hooked).length, 1, 'stock paint hooks one crate');
-  // The stronger hook reaches 5 m sideways on an ordinary car; the plain hook only 3 m.
+  // The stronger hook reaches 6.7 m sideways on an ordinary car; the plain hook only 4 m.
   const carOff = worn => {
     const session = newSkinSession(skinProfile({owned: worn === 'stock' ? [] : [worn], worn}));
     session.start();
     const car = session.view().loads.find(c => c.own);
-    hoverAt(session, car.x + 4, car.z, 15);
+    hoverAt(session, car.x + 5.5, car.z, 15);
     const goalY = car.y + 15.3;
-    run(session, 30, v => pilot(v, {x: car.x + 4, z: car.z, y: goalY}, {speed: 1, sink: 1}), v => Math.abs(v.heli.y - goalY) < 0.3 && Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < 0.4);
+    run(session, 30, v => pilot(v, {x: car.x + 5.5, z: car.z, y: goalY}, {speed: 1, sink: 1}), v => Math.abs(v.heli.y - goalY) < 0.3 && Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < 0.4);
     return session.pressHook()?.type ?? null;
   };
-  same([carOff('supply'), carOff('stock')], ['hooked', null], 'a car 4 m to the side: hooked with the stronger hook, out of reach otherwise');
+  same([carOff('supply'), carOff('stock')], ['hooked', 'hookRefused'], 'a car 5.5 m to the side: hooked with the stronger hook, out of reach otherwise');
 }
 console.log('PASS the cargo net and the stronger hook');
 

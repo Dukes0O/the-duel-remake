@@ -205,9 +205,15 @@ damped pendulum (no new library; it borrows the tether ideas in
 **Settled while building HELI-CABLE (14 October 2026).** Checked in
 `tools/test-heli-cable.mjs`:
 
-- Hooking: hover with the hook (15 m below the skids) within 3 m of the
-  load sideways and 2 m up or down, moving under 1.5 m/s, and press H. H
-  again lets go.
+- Hooking: hover with the hook (15 m below the skids) within 4 m of the
+  load sideways and 3.5 m up or down, moving under 2.5 m/s relative to it,
+  and press H. H again lets go. (Widened from 3 m, 2 m and 1.5 m/s by
+  FIX-HELI-HOOK, 24 October 2026: that window needed a near-perfect hover.)
+  A press that does not hook says what to fix on the flight panel for two
+  seconds: "Take the bucket off at the pad", "Take the rescue line off at the
+  pad", "Slow down", "Lower N m" or "Higher N m", "Closer", in that order of
+  priority, and only when a load is within 10 m sideways. Within 10 m a ring
+  on the ground under the load turns green when H would hook.
 - The helicopter is free to move, so it swings back against the car: a
   1,300 kg car swings about once every 5.8 seconds, not the 7.8 of a fixed
   hook. Air drag and a little swing damping settle it.

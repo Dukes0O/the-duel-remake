@@ -10,6 +10,7 @@ import {createFireView} from './heli-fire-view.js';
 import {createRescueView} from './heli-rescue-view.js';
 
 const CABLE_LENGTH = 15;
+const GUIDE_WAIT = 0xf4f1e8, GUIDE_READY = 0x3ddc5a;
 
 // Kestrel One: Claude's original model (tools/blender/kestrel-one.py, review
 // in docs/board/looks/kestrel-one/). Metres, +Y up, nose toward +Z, origin
@@ -74,7 +75,9 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   const hookWorld = new THREE.Vector3();
   const cableGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, -CABLE_LENGTH, 0)]);
   const cable = new THREE.Line(cableGeometry, new THREE.LineBasicMaterial({color: 0x111111}));
-  const hookMesh = new THREE.Mesh(new THREE.SphereGeometry(.18, 8, 6), new THREE.MeshStandardMaterial({color: 0x8a6d1f, metalness: .6, roughness: .4}));
+  // About half a metre across, in high-visibility orange, so it can be seen
+  // from the cockpit views against grass, snow and rock (FIX-HELI-HOOK).
+  const hookMesh = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), new THREE.MeshStandardMaterial({color: 0xff7a1a, emissive: 0x401800, metalness: .3, roughness: .5}));
   const zoneRing = ring(THREE, 12, 0xf2c14e);
   const padMark = new THREE.Group();
   for (const [w, d, x] of [[.5, 4, -1.2], [.5, 4, 1.2], [2, .5, 0]]) {
@@ -84,7 +87,12 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     padMark.add(bar);
   }
   const hoverRing = ring(THREE, 4, 0x9fd4ff), targetRing = ring(THREE, 10, 0xffcf3f);
-  group.add(cable, hookMesh, zoneRing, padMark, hoverRing, targetRing);
+  // The hook guide: a ring on the ground under the load the hook is near,
+  // white while H would not take it and green when it would (the session's
+  // hookGuide decides; this only draws it).
+  const guideRing = ring(THREE, 2.2, GUIDE_WAIT);
+  guideRing.visible = false;
+  group.add(cable, hookMesh, zoneRing, padMark, hoverRing, targetRing, guideRing);
   // Cars and crates other than the player's own car (the race renderer
   // draws that one): the game's own car models, made on demand.
   const others = new Map();
@@ -153,6 +161,13 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       targetRing.visible = view.lesson?.id === 'carry' && !!view.lesson.target;
       if (view.zone) hoverRing.position.set(view.zone.x, view.zone.y + .12, view.zone.z);
       if (targetRing.visible) targetRing.position.set(view.lesson.target.x, view.lesson.target.y + .1, view.lesson.target.z);
+      const guide = view.hookGuide;
+      guideRing.visible = !!guide;
+      if (guide) {
+        guideRing.position.set(guide.x, guide.y + .14, guide.z);
+        guideRing.material.color.setHex(guide.ready ? GUIDE_READY : GUIDE_WAIT);
+        guideRing.material.opacity = guide.ready ? .8 : .55;
+      }
       points.setXYZ(0, top.x, top.y, top.z);
       points.setXYZ(1, end.x, end.y, end.z);
       points.needsUpdate = true;
