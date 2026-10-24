@@ -16,6 +16,27 @@ The original source GLB is retained for editing in Blender. `npm run assets:expo
 
 The six original playable cars are built in `src/classic-vehicles.js` and `src/unlock-vehicles.js`. Traffic and police sedans use `src/vehicles.js`. Current stations use the live environment mesh factories. The unused first-iteration Cinder coupe and station exports, and their obsolete builders, were removed; they remain recoverable in Git history. See `docs/ASSET_PIPELINE.md`.
 
+## The Falcone Sirena and its underwater models (SIRENA-ART)
+
+All original, with no third-party source. The restored 1966 Sirena is built in
+`src/sirena-vehicle.js` with the classic cars' helpers. `sirena/` holds eight
+vertex-coloured GLBs written by `tools/art/sirena-props.mjs` from the same body:
+the wreck half sunk in sand, the badge, steering wheel, wheel, bonnet and door,
+the lift bag and the red abalone. Only public pictures of mid-1960s endurance
+cars were looked at as a viewing reference; there is no downloaded model,
+texture, badge or logo, and Falcone is the game's own fictional maker. Rebuild
+byte for byte with `node tools/art/sirena-props.mjs`.
+
+## The Lab hangar and its benches (LAB-ART)
+
+All original, with no third-party source. `lab/` holds fourteen vertex-coloured
+GLBs written by `tools/art/lab-props.mjs` (recipes in `lab-hangar.mjs`,
+`lab-benches.mjs`, `lab-benches2.mjs`): the hangar beside the home helipad and
+thirteen bench models, with a manifest of where each stands and each movable
+part's pivot. Kestrel One, the cars and the fire and smoke effects are the
+game's existing models and effects; they are not copied here. Rebuild byte for
+byte with `node tools/art/lab-props.mjs`.
+
 ## Original Blender course landmarks
 
 `course-landmarks.blend` contains six original, editable scenery collections:

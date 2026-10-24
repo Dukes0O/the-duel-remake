@@ -6,15 +6,16 @@
   "baselineCommit": "58cf295b84029ba5b018d41302760d490c4a21b2",
   "description": "Pre-TITAN-HANDLING full-state seeded Pacific Canyon runs for every non-Titan car. The Enzo (EARN-CAR-1) was added with the same unchanged rules when it joined the game. The F1 (EARN-CAR-2) adds an independent new-car pin under the same unchanged rules.",
   "fingerprints": {
-    "falcone_f42": "166c69e1f9532e2a81288006741d8c371af6ea34110a570b7fc21695d1ca5751",
-    "stuttgart_959s": "5334ef774a92fb479c11d0b3a04669aca18482d7762987162d9422f08a3eec7a",
-    "falcone_heritage": "147fc40017c013912f7995eb32ead65170c6435abc43d6016cdd993206b6b2a6",
-    "aurora_gt": "293a2c3aec48e0a36cfe1eacdd84042c1d39924b8507cca8ef75bb2bc24c20ea",
-    "dusthawk_rally": "073d7309c71901af7d190183a7d9ab8d660a897b321617d066881c181dcc8059",
-    "banshee_muscle": "26bc571d16a5c097052c12732692d3404ff4d4e671cb056a12064f6e53155033",
-    "viper_proto": "d095985b7d995953226bd48a33f87f0cee293b99b404b417e59f39edb92da729",
-    "koenigsegg_jesko": "f6741310b5ac5f9b01d4c57c0322c4886b89b3d856488c89d42654f403419493",
-    "ferrari_enzo": "09ce0ce7124237efc075bb5f5603de8946dedf2406da7638cbb5e5180db65a3c",
-    "mclaren_f1": "218c842e53e0fd92bd7621634f2d5cdbd90d9ccd2079b61631fcc7b6a49468fa"
+    "falcone_f42": "4e21858b0a9fa432e5fa60a04f4edafa07d9a882e5946e91954f3b758c4cee81",
+    "stuttgart_959s": "48e3771f58a858a851037b6e579bd557571334c8b64afd38f0a0c34a2d1491ff",
+    "falcone_heritage": "70a0a47844e7c85e9027c8c438552b0d49b1209467ea39060d41827232a68621",
+    "aurora_gt": "f37807c821b7206f79726b9619e450824ce5340fdb365b85ef20fd18a5106219",
+    "dusthawk_rally": "8d8ed289728cfabe1f8ac566248a2d89761ab03881ab91401fc34beb7697d097",
+    "banshee_muscle": "9c4ae4e389cef2f78ca30cc9970bf9e84c128fc1708dea4c6e62a0150c2d0c83",
+    "viper_proto": "6f2922e0f7faeb13e56a6f83fb1d1396b9354f57ce63b9e2c0f0d2b260bd7eec",
+    "koenigsegg_jesko": "43e1bec178904e9663552f1f41d039b9f02ecf9535c2679437220278c4f676a9",
+    "ferrari_enzo": "4457557cc9fef67a24545d0dfe1cc11ca4549f7abaf294bff8216cba45829904",
+    "mclaren_f1": "fbebcadee80f7f0ffe83c6cef5aa0ec0632ffc1d0fdfcb11ba5a951db197fbe6",
+    "bugatti_bolide": "d7f483c569bd55b1a0ca3d8199c0dfb1292d3916dcb9a106229b1795db69d04d"
   }
 }

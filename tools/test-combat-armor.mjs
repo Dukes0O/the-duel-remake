@@ -92,6 +92,7 @@ test('all eleven car masses and both clamps set the exact base maximum armor', a
     koenigsegg_jesko: 97.90917677394559,
     ferrari_enzo: 97.02470357310182,
     mclaren_f1: 88.66830868758714,
+    bugatti_bolide: 100,
   };
   assert.deepEqual(Object.keys(CARS).sort(), Object.keys(expected).sort(),
     'every selectable car must have an armor expectation');

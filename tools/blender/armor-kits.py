@@ -23,6 +23,8 @@ SIZES = {
     'koenigsegg_jesko': (2.10, 4.95, 1.25),
     'ferrari_enzo': (2.04, 4.70, 1.15),
     'mclaren_f1': (2.00, 4.28, 1.14),
+    # The body's height; the Bolide's wing stands above the kit.
+    'bugatti_bolide': (2.06, 4.82, 1.05),
 }
 
 if '--paths-only' in sys.argv:

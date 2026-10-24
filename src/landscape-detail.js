@@ -51,11 +51,38 @@ export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
   };
   const sections=course.detailSections||course.sections,total=sections.reduce((n,s)=>n+s.end-s.start,0),fraction=total/course.length;
   const sampleS=()=>{let pick=rng.range(0,total);for(const sec of sections){if(pick<=sec.end-sec.start)return sec.start+pick;pick-=sec.end-sec.start;}return sections.at(-1).end-1;};
-  const foliagePoint=(s,off)=>{const side=Math.sign(off)||1;for(let i=0;i<5&&(course.surfaceAt(s,off).road||course.tunnelAt(s)&&Math.abs(off)<35);i++)off+=side*9;return point(s,off);};
+  // Grass, tufts and grit stand on the triangles that are drawn, not on the height formula,
+  // which differs over basin rims, stream cuts and where another stretch of road overlaps.
+  const drawnY=(p,s,off)=>renderedGroundHeight(course,{x:p.x,z:p.z,s,off});
+  // No grass, tuft or grit may stand on any stretch of road, including a different
+  // stretch that passes under the spot the placing stretch chose (hairpins, switchbacks): the nearest
+  // road over the whole course must be farther than its drawn width and half a metre (a hair more, so the edge itself counts as road).
+  const roadMargin=.51;
+  // The exact segment index gives the distance to the nearest road; the refined `nearest` is only
+  // needed for the lateral position beside a shortcut, and for the pit and salt-flat courses.
+  const segments=course._nearestIndex,plainRoad=!course.def.pit&&!course.def.saltFlats&&!!segments;
+  const onAnyRoad=p=>{
+    if(!plainRoad)return onRoadNear(course.nearest(p.x,p.z));
+    const hit=segments.query(p.x,p.z),s=hit.index<0?0:course.samples[hit.index-1].s+hit.t*course.step;
+    if(Math.sqrt(hit.distanceSq)<=course.roadHalfWidthAt(s)+roadMargin)return true;
+    return course.features.shortcuts.some(cut=>s>=cut.start-12&&s<=cut.end+12)&&onRoadNear(course.nearest(p.x,p.z));
+  };
+  const onRoadNear=near=>near.distance<=course.roadHalfWidthAt(near.s)+roadMargin||
+    course.features.shortcuts.some(cut=>near.s>=cut.start-12&&near.s<=cut.end+12&&
+      Math.abs(near.lateral-course.shortcutOffset(cut,near.s))<=cut.halfWidth+roadMargin);
+  const roadAvoid=group.userData.landscapeRoadAvoid??={placed:0,moved:0,dropped:0};
+  let blocked=false;
+  // A piece found on a road moves outward by 9 m, as the own-stretch rule does, up to five times;
+  // if it still lies on a road it is dropped (the seeded sequence is untouched: nothing here uses the rng).
+  const foliagePoint=(s,off)=>{const side=Math.sign(off)||1;for(let i=0;i<5&&(course.surfaceAt(s,off).road||course.tunnelAt(s)&&Math.abs(off)<35);i++)off+=side*9;
+    let p=point(s,off),moves=0;
+    while(moves<5&&onAnyRoad(p)){off+=side*9;p=point(s,off);moves++;}
+    blocked=onAnyRoad(p);roadAvoid.placed++;if(blocked)roadAvoid.dropped++;else if(moves)roadAvoid.moved++;
+    if(!course.def.ridgeLandform)p.y=drawnY(p,s,off);return p;};
   function instances(geometry,material,count,place,palette='plants',options={}){
     const mesh=new THREE.InstancedMesh(geometry,material,count),omitted=new Set();let relocated=0;
-    for(let i=0;i<count;i++){o.position.set(0,0,0);o.rotation.set(0,0,0);o.scale.setScalar(1);place(i,o);
-      if(cityPlacement&&(options.kind==='foliage'||options.kind==='grit')){const point=cityPlacement.relocate(o.position,i);if(!point)omitted.add(i);else if(point!==o.position){o.position.set(point.x,point.y+(options.kind==='grit'?.04:0),point.z);relocated++;}}
+    for(let i=0;i<count;i++){o.position.set(0,0,0);o.rotation.set(0,0,0);o.scale.setScalar(1);blocked=false;place(i,o);const onRoad=blocked;blocked=false;
+      if(cityPlacement&&(options.kind==='foliage'||options.kind==='grit')){const point=cityPlacement.relocate(o.position,i);if(!point)omitted.add(i);else if(point!==o.position){const at=course.nearest(point.x,point.z);o.position.set(point.x,drawnY(point,at.s,at.lateral)+(options.kind==='grit'?.04:0),point.z);relocated++;if(onAnyRoad(point)){omitted.add(i);roadAvoid.dropped++;}}}
       o.updateMatrix();mesh.setMatrixAt(i,o.matrix);
       if(palette==='meadow')color.setHSL(.14,.06,.75+rng.float()*.2);
       else if(palette==='stone')color.setHSL(desert?.1:.53,desert?.12:.025,.6+rng.float()*.3);
@@ -66,7 +93,8 @@ export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
         const nearest=course.nearest(o.position.x,o.position.z);
         if(pitRoadAt(course,nearest.s,nearest.lateral))omitted.add(i);
       }
-      if(options.kind==='foliage'&&omitFoliageAt?.(o.position.x,o.position.z))omitted.add(i);}
+      if(options.kind==='foliage'&&omitFoliageAt?.(o.position.x,o.position.z))omitted.add(i);
+      if(onRoad)omitted.add(i);}
     if(cityPlacement&&(options.kind==='foliage'||options.kind==='grit'))(group.userData.cityDecorations??=[]).push({kind:options.kind,count,relocated,omitted:omitted.size});
     mesh.receiveShadow=true;mesh.castShadow=!!options.castShadow;
     const cells=addLandscapeInstanceCells(group,mesh,{...options,omitted});

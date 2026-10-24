@@ -1,4 +1,5 @@
 import {App} from './app.js';
+import {kelpCoastProvider} from './deep/zones/kelp-coast.js';
 import {mountScreenRouter} from './screen-router.js';
 import {backupBeforeMigration, backupCareer, captureCareer, createCompleteCareerExport, createIndexedDbBackupStore, retireSharedBest} from './career-backup.js';
 import {acquireCareerWriter, CAREER_WRITER_LOCK, prepareCareerBudget, createBudgetCareerExport, ORIGIN_POINTER_KEY} from './career-budget.js';
@@ -68,6 +69,6 @@ await (async()=>{
   });
   throw error;
 });
-export const app = new App();
+export const app = new App({deepProviders:[kelpCoastProvider]});
 const screens = mountScreenRouter(app, downloadCareer, {budgetStorage, backupStore});
 export const refreshRaceSetup = screens.refreshRaceSetup;

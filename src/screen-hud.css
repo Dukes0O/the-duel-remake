@@ -8,6 +8,8 @@
 .jump-distance{display:block;margin-top:5px;color:#d3e5d9;font-size:9px;letter-spacing:.3px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .is-practice .race-clock>b{font-size:clamp(16px,2vw,24px);letter-spacing:.02em}
 .is-practice .lap-readout,.is-practice .race-progress{display:none}
+/* A driving lesson hides the Time Trial banner, lap count and style points; speed, gear and the minimap stay. */
+.is-lesson .race-position,.is-lesson .lap-readout,.is-lesson #route-lap,.is-lesson #style-score-panel{display:none}
 .jump-height[data-phase="landed"]{border-left-color:#edb57c;background:linear-gradient(120deg,#2b251eed,#211e19d6)}
 .jump-height[data-phase="landed"]>.field-label,.jump-height[data-phase="landed"] .jump-height-peak{color:#edcbaa}
 /* Drift points are separate from the live, unbanked chain. */

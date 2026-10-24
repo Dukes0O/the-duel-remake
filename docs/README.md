@@ -33,8 +33,10 @@ choose which one to read; they do not override the spec or current board.
 | Courses and driving | [Course expansion](COURSE_EXPANSION.md), [course access](COURSE_ACCESS.md), [route landforms](ROUTE_LANDFORMS.md), [shortcut pace](SHORTCUT_PACE_AUDIT.md), [physics](PHYSICS_EXPANSION.md), [freestyle](FREESTYLE_EXPANSION.md), [stunt trial](STUNT_TRIAL.md) |
 | Arena and warlords | [Scrapdome](SCRAPDOME.md): play design, architecture and the handoff cards |
 | Phase 4 racing | [Grand Circuits](CIRCUITS.md): new tracks, full-field Grand Prix racing, snow, pit stops and the Summit Run, settled for build |
-| Hidden underwater world | [The Deep](THE_DEEP.md): kelp, reefs, sea life and the boat-race route, approved by Kyle, built after Phase 4 cards |
+| Hidden underwater world | [The Deep](THE_DEEP.md): kelp, reefs, sea life, and the story of the lost Falcone Sirena (raise it, restore it, race the Coast Cup) |
 | The helicopter | [H1 First flight](HELICOPTER.md), [H2 Fire](HELI_FIRE.md), [H3 Wildlife and skins](HELI_WILDLIFE.md) and [H4 Rescue](HELI_RESCUE.md): Kestrel One, carrying cars, forest fires, animals, skins, then search and rescue, built by Claude |
+| Heli-skiing and the pilot's map | [H5 Heli-skiing](HELI_SKIING.md): drops at Summit Run, five runs, thin air; [The pilot's map](PILOT_MAP.md): one region drawn from our courses, secret courses and the Table |
+| The Lab | [The Lab](LAB.md): hands-on experiments that open helicopter and car upgrades, tuning with tuned-lap bonuses, and a secret fan car |
 | Driving lessons | [Driving lessons](DRIVING_LESSONS.md): the instructor's lessons on the road, starting with braking for a sharp corner; needs TYRE-SLIP |
 | Car weapons | [Arsenal](ARSENAL.md): the new weapons and their shared systems, settled for build |
 | Crew on foot | [Crew](CREW.md): signature gear, boarding and computer crews, settled for build |

@@ -102,15 +102,15 @@ test('switch off: the same race adds no sheet, no medal and no cue', () => {
   });
 });
 
-// Both real medal cars stay hidden behind earned-cars, including owned cars.
-test('the Enzo and F1 stay hidden everywhere while the switch is off, shown while on', () => {
-  const medalCars = ['ferrari_enzo', 'mclaren_f1'];
+// Every real medal car stay hidden behind earned-cars, including owned cars.
+test('the Enzo, F1 and Bolide stay hidden everywhere while the switch is off, shown while on', () => {
+  const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide'];
   const today = Object.keys(CARS).filter(id => !medalCars.includes(id));
   assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCars.includes(id)));
   assert.deepEqual(shownCars(true), Object.entries(CARS));
   assert.deepEqual(shownCarIds(false), today);
   assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars]);
-  assert.ok(medalCars.every(id => !JOB_CARS.includes(id)), 'neither earned car is a customer car');
+  assert.ok(medalCars.every(id => !JOB_CARS.includes(id)), 'no earned car is a customer car');
   const markup = on => screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 'easy', difficulty: 'casual', startStage: 0},
     arrow: '', sound: true, escapeHTML: String, earnedCars: on});
   for (const id of medalCars) {
@@ -118,7 +118,7 @@ test('the Enzo and F1 stay hidden everywhere while the switch is off, shown whil
     assert.ok(markup(true).includes('<option value="' + id + '">'));
   }
   assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the switch-off earnable count stays unchanged');
-  assert.ok(markup(true).includes(' 9 EARNABLE CARS'));
+  assert.ok(markup(true).includes(' 10 EARNABLE CARS'));
   const flags = {};
   const app = {_switches: () => ({enabled: name => flags[name] === true}), player: {name: 'Tester'}, profileSaved: true, duel: {state: {}}};
   const saved = {...createProfile(), unlockedCars: [...createProfile().unlockedCars, ...medalCars]};
@@ -128,7 +128,7 @@ test('the Enzo and F1 stay hidden everywhere while the switch is off, shown whil
   for (const id of medalCars) assert.equal(garage().includes(id), false, 'the garage hides an owned ' + id);
   flags['earned-cars'] = true;
   for (const id of medalCars) assert.ok(garage().includes('data-garage-car="' + id + '"'), 'the garage shows ' + id + ' while on');
-  assert.ok(garage().includes('Ferrari Enzo') && garage().includes('McLaren F1'));
+  assert.ok(garage().includes('Ferrari Enzo') && garage().includes('McLaren F1') && garage().includes('Bugatti Bolide'));
 });
 
 // The final rung does not exist yet, so the screens are also checked on a
@@ -158,7 +158,7 @@ import {shownCars, shownCarIds, medalResultLines} from './src/earned-cars-ui.js'
 import {screenMarkup, createMenuScreen} from './src/screen-menu.js';
 import {createGarageScreen} from './src/screen-garage.js';
 import {AIR_ONLY_CARS, JOB_CARS} from './src/heli/heli-jobs.js';
-const medalCars = ['ferrari_enzo', 'mclaren_f1', 'medal_test_a', 'medal_test_b', 'medal_test_c'];
+const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'medal_test_a', 'medal_test_b', 'medal_test_c'];
 const today = Object.keys(CARS).filter(id => !medalCars.includes(id));
 // Lists: off is today's, on adds the medal cars.
 assert.deepEqual(shownCarIds(false), today);
@@ -168,7 +168,7 @@ const markup = on => screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 
 assert.equal(markup(false).includes('medal_test_a'), false, 'the menu car picker hides medal cars while off');
 assert.ok(markup(true).includes('<option value="medal_test_a">'));
 assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the earnable count is today\\'s while off');
-assert.ok(markup(true).includes(' 12 EARNABLE CARS'));
+assert.ok(markup(true).includes(' 13 EARNABLE CARS'));
 // Air only, never a customer's car.
 assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars]);
 assert.ok(medalCars.every(id => !JOB_CARS.includes(id)));
@@ -208,6 +208,8 @@ assert.deepEqual(medalResultLines(win, {helicopter: true}), ['NEW MEDAL · BRONZ
 assert.deepEqual(medalResultLines(win).length, 3, 'no helicopter lines with the helicopter off');
 saved = win.profile; garageCar = 'medal_test_a'; html = garage();
 assert.ok(html.includes('MEDAL REWARD · Arrives fully tuned.'), 'the owned medal car has its own reward note');
+// The next car is the first unowned medal car in config order: the real F1
+// (15 medals) comes before the Bolide (24 with 6 gold) and the scratch cars here.
 assert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 15'));
 garageCar = 'koenigsegg_jesko'; html = garage();
 assert.ok(html.includes('GARAGE COMPLETION REWARD') || html.includes('MAX OTHER CARS'), 'the Jesko keeps its own page');
