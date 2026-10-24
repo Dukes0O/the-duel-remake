@@ -134,3 +134,11 @@ Nothing replaced.
 ## Gates
 
 Owned suites: `test-heli-summit-rescues` (113). Lane tier and build: see below.
+
+- 24 October 2026, after merging `integration/wasteland` (clean, no conflicts),
+  run from PowerShell in the lane folder:
+  `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 140 passed, 0 failed
+  (897 s), including `test-heli-summit-rescues` (113 checks, found by the
+  runner's automatic discovery, no registration needed), `test-heli-rescue-session`
+  (442) and `test-heli-rescue-view`. `npm run build`: pass.
+  No design decision was needed beyond the ones recorded above.
