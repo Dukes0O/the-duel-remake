@@ -34,3 +34,15 @@ Sound: emits the events that DEEP-AUDIO's `deep.sonar`, `deep.echo`,
 
 Acceptance: the test, the save checker with the new fixture, lane tier,
 build, one save review (rule 17). Removed: nothing.
+
+## Claude answers
+
+Cloud session questions (24 October 2026, Claude design lead): all seven approved
+as built. The badge is raised by stopping beside it, with no F and no bag; parts
+wait for the badge; the five parts (the badge included) pay 100 each, the car 500
+and the cup 1,000, 2,000 in all; the extra events (`echoSeconds` on `deepSonar`,
+`relative` on the blip, `deepLiftCancel`) stay; the car's speed is read in mph
+with the 3 km/h limit converted; the Coast Cup is paid once by SIRENA-CAR through
+`recordCoastCup`; and the changed assertions in `test-save-fixtures`,
+`test-deep-save` and `test-deep-look` are reviewed as fine. THE_DEEP 6.2 now says
+the badge comes up when you stop beside it.
