@@ -22,6 +22,8 @@ TILES = [
     ('layout/left-side.png', 'Left: drop tower, fire pit, pegboard'),
     ('layout/right-side.png', 'Right: wind tunnel, turning arm'),
     ('layout/weigh-pad.png', 'The weighing pad'),
+    ('layout/workshop.png', 'Workshop: benches, pegboard, tool chests'),
+    ('layout/coffee.png', 'Coffee corner and cable runs'),
     ('weighing-pad/three-quarter.png', 'Bench: weighing pad'),
     ('weights-and-cans/three-quarter.png', 'Bench: weights and fuel cans'),
     ('drop-tower/three-quarter.png', 'Bench: drop tower and sand pit'),

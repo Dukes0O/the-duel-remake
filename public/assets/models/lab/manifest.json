@@ -53,17 +53,17 @@
     },
     "launcher-ramp": {
       "x": 1.7,
-      "z": -7,
+      "z": -6.5,
       "yaw": 0
     },
     "snow-trays": {
-      "x": 4.95,
-      "z": -8.3,
-      "yaw": 0
+      "x": -7.3,
+      "z": 3,
+      "yaw": 1.5707963267948966
     },
     "wind-tunnel": {
-      "x": 10.7,
-      "z": -6.4,
+      "x": 8.6,
+      "z": -6.3,
       "yaw": 0
     },
     "turning-arm": {
@@ -84,19 +84,19 @@
     {
       "id": "hangar",
       "path": "assets/models/lab/hangar.glb",
-      "bytes": 1658528,
-      "sha256": "f3c294e213ed4f826ed26ca30b6cf6996a153a50cce603437ca30f04fc461e32",
-      "triangles": 42924,
+      "bytes": 2189960,
+      "sha256": "4b6ce4a61a4943075f2712fd50c7a85bd87e245611ed144131ba0b4706c14645",
+      "triangles": 55373,
       "dimensionsMetres": [
         31.8,
-        8.554,
-        19.113
+        8.555,
+        20.938
       ],
       "footprint": {
         "minX": -15.9,
         "maxX": 15.9,
         "minZ": -9.418,
-        "maxZ": 9.695
+        "maxZ": 11.52
       },
       "parts": [
         {
@@ -540,18 +540,18 @@
     {
       "id": "map-table",
       "path": "assets/models/lab/map-table.glb",
-      "bytes": 318112,
-      "sha256": "8cf275f8ffe1d76e032eb61319676e5d79db8492418ec85167c52177de8e632d",
+      "bytes": 318172,
+      "sha256": "a762e3d1f358318d8ecacd7e12b6c69943aa7445a2082ab22644091297513551",
       "triangles": 11056,
       "dimensionsMetres": [
         2.74,
         1.811,
-        1.975
+        1.964
       ],
       "footprint": {
         "minX": -1.25,
         "maxX": 1.49,
-        "minZ": -0.785,
+        "minZ": -0.774,
         "maxZ": 1.19
       },
       "parts": [
@@ -567,120 +567,16 @@
           "name": "compass-needle",
           "pivot": [
             -0.85,
-            1.08,
-            0.45
+            1.1427085006669522,
+            0.42969091663356174
           ]
         },
         {
           "name": "ruler",
           "pivot": [
             0.2,
-            1.07,
-            0.35
-          ]
-        }
-      ]
-    },
-    {
-      "id": "wind-tunnel",
-      "path": "assets/models/lab/wind-tunnel.glb",
-      "bytes": 155816,
-      "sha256": "2c612ae0122b4bf9c7907c1431f703c4196e5487103fcf175f9ace2502c0c030",
-      "triangles": 2766,
-      "dimensionsMetres": [
-        8.15,
-        2.6,
-        5.234
-      ],
-      "footprint": {
-        "minX": -4,
-        "maxX": 4.15,
-        "minZ": -2.5,
-        "maxZ": 2.734
-      },
-      "parts": [
-        {
-          "name": "tunnel",
-          "pivot": [
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "name": "belt",
-          "pivot": [
-            -0.4,
-            0.31,
-            0
-          ]
-        },
-        {
-          "name": "fan",
-          "pivot": [
-            3.3499999999999996,
-            1.3,
-            0
-          ]
-        },
-        {
-          "name": "smoke-rake",
-          "pivot": [
-            -3.08,
-            0.9,
-            0
-          ]
-        },
-        {
-          "name": "fan-dial-needle",
-          "pivot": [
-            -0.9,
-            1.36,
-            2.56
-          ]
-        },
-        {
-          "name": "reverse-switch",
-          "pivot": [
-            0,
-            1.2,
-            2.56
-          ]
-        }
-      ]
-    },
-    {
-      "id": "launcher-ramp",
-      "path": "assets/models/lab/launcher-ramp.glb",
-      "bytes": 71604,
-      "sha256": "78a548810713d931c51644131fabb17549f0e7acb196bbf0cfcdfb45d9570b93",
-      "triangles": 1328,
-      "dimensionsMetres": [
-        2.2,
-        2.68,
-        6.5
-      ],
-      "footprint": {
-        "minX": -0.62,
-        "maxX": 1.58,
-        "minZ": -1.7,
-        "maxZ": 4.8
-      },
-      "parts": [
-        {
-          "name": "launcher",
-          "pivot": [
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "name": "ramp-arm",
-          "pivot": [
-            0,
-            0.82,
-            -1.55
+            1.1023018923878594,
+            0.3360570231580689
           ]
         }
       ]
@@ -744,7 +640,111 @@
           ]
         }
       ]
+    },
+    {
+      "id": "wind-tunnel",
+      "path": "assets/models/lab/wind-tunnel.glb",
+      "bytes": 548468,
+      "sha256": "130a35fab79b288fababe9df6855d371946ca0e72183b6ced57d0f8df894a916",
+      "triangles": 12454,
+      "dimensionsMetres": [
+        11.65,
+        3.136,
+        5.534
+      ],
+      "footprint": {
+        "minX": -5.3,
+        "maxX": 6.35,
+        "minZ": -2.6,
+        "maxZ": 2.934
+      },
+      "parts": [
+        {
+          "name": "tunnel",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "belt",
+          "pivot": [
+            -0.5,
+            0.34,
+            0
+          ]
+        },
+        {
+          "name": "fan",
+          "pivot": [
+            4.8,
+            1.35,
+            0
+          ]
+        },
+        {
+          "name": "smoke-rake",
+          "pivot": [
+            -4.6,
+            0.9,
+            0
+          ]
+        },
+        {
+          "name": "fan-dial-needle",
+          "pivot": [
+            -1,
+            1.36,
+            2.76
+          ]
+        },
+        {
+          "name": "reverse-switch",
+          "pivot": [
+            -0.4,
+            1.2,
+            2.76
+          ]
+        }
+      ]
+    },
+    {
+      "id": "launcher-ramp",
+      "path": "assets/models/lab/launcher-ramp.glb",
+      "bytes": 125160,
+      "sha256": "edff3eb9ad0263ccbef247973b71149aa6179c6af9c6bcc4d000df57074e49cf",
+      "triangles": 2268,
+      "dimensionsMetres": [
+        2.73,
+        3.17,
+        5.85
+      ],
+      "footprint": {
+        "minX": -1.15,
+        "maxX": 1.58,
+        "minZ": -2.35,
+        "maxZ": 3.5
+      },
+      "parts": [
+        {
+          "name": "launcher",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "ramp-arm",
+          "pivot": [
+            0,
+            1.3,
+            -1.5
+          ]
+        }
+      ]
     }
   ],
-  "totalBytes": 3602040
+  "totalBytes": 4579740
 }

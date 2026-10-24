@@ -24,6 +24,7 @@ import { partMesh, triangleCount } from './lab-kit.mjs';
 import { HALL, HANGAR_LAYOUT, HANGAR_SWEEP, hangar } from './lab-hangar.mjs';
 import { BENCHES1 } from './lab-benches.mjs';
 import { BENCHES2 } from './lab-benches2.mjs';
+import { BENCHES3 } from './lab-benches3.mjs';
 
 globalThis.FileReader ??= class FileReader {
   readAsArrayBuffer(blob) { blob.arrayBuffer().then(result => { this.result = result; this.onloadend?.(); }, error => this.onerror?.(error)); }
@@ -37,7 +38,7 @@ const reviewDir = argValue('--review');
 if (outDir !== publicDir && relative(resolve(root, '.qa-dist'), outDir).startsWith('..')) throw new Error('--out goes under .qa-dist/.');
 if (reviewDir && relative(resolve(root, '.evidence'), reviewDir).startsWith('..')) throw new Error('Review GLBs go under .evidence/.');
 
-export const MODELS = { hangar: opts => hangar(opts), ...BENCHES1, ...BENCHES2 };
+export const MODELS = { hangar: opts => hangar(opts), ...BENCHES1, ...BENCHES2, ...BENCHES3 };
 const build = (id, opts) => {
   const group = new THREE.Group(); group.name = id;
   const parts = MODELS[id](opts);

@@ -145,3 +145,40 @@ export function corrugated(width, height, pitch = .3, depth = .045, rows = 4) {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.setIndex(indices); g.computeVertexNormals();
   return g;
 }
+
+// A thick duct shell lofted through elliptical rings: each ring is {x, cy, rz, ry}
+// (axis along X). The outer skin faces out, an inner skin sits `wall` inside it
+// facing in, and each end is closed with a flat ring of metal.
+export function duct(rings, wall = .12, segments = 36) {
+  const row = segments + 1, parts = [];
+  const skin = (inset, flip) => {
+    const positions = [], normals = [], indices = [];
+    for (const ring of rings) for (let j = 0; j <= segments; j++) {
+      const a = j / segments * Math.PI * 2, c = Math.cos(a), s = Math.sin(a), rz = ring.rz - inset, ry = ring.ry - inset;
+      positions.push(ring.x, ring.cy + s * ry, c * rz);
+      const nz = c / rz, ny = s / ry, l = Math.hypot(nz, ny) || 1, k = flip ? -1 : 1;
+      normals.push(0, k * ny / l, k * nz / l);
+    }
+    for (let i = 0; i < rings.length - 1; i++) for (let j = 0; j < segments; j++) {
+      const a = i * row + j, b = a + 1, d = a + row, e = d + 1;
+      if (flip) indices.push(a, d, b, b, d, e); else indices.push(a, b, d, b, e, d);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3)); g.setIndex(indices);
+    return g;
+  };
+  parts.push(skin(0, false), skin(wall, true));
+  for (const [ring, sign] of [[rings[0], -1], [rings.at(-1), 1]]) {
+    const positions = [], normals = [], indices = [];
+    for (let j = 0; j <= segments; j++) {
+      const a = j / segments * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+      positions.push(ring.x, ring.cy + s * ring.ry, c * ring.rz, ring.x, ring.cy + s * (ring.ry - wall), c * (ring.rz - wall));
+      normals.push(sign, 0, 0, sign, 0, 0);
+    }
+    for (let j = 0; j < segments; j++) { const a = j * 2, b = a + 1, d = a + 2, e = a + 3; if (sign > 0) indices.push(a, d, b, b, d, e); else indices.push(a, b, d, b, e, d); }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3)); g.setIndex(indices);
+    parts.push(g);
+  }
+  return mergeGeometries(parts, false);
+}

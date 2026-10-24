@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { C, Part, addSurface, corrugated, fbm, lerpColor, noise, rng, smooth, surface, thick, tools } from './lab-kit.mjs';
 import { YELLOW } from './lab-common.mjs';
+import { LAMPS, floorWear, lamps, workshop } from './lab-dressing.mjs';
 
 export const HALL = Object.freeze({ halfWidth: 15, halfDepth: 9, eaves: 6.4, ridge: 8.4, doorHalfWidth: 9, doorHeight: 5.8 });
 
@@ -20,9 +21,9 @@ export const HANGAR_LAYOUT = Object.freeze({
   'nail-jars': { x: -10.9, z: -8.4, yaw: 0 },
   'bending-rig': { x: -6.3, z: -7.6, yaw: 0 },
   'rotor-stand': { x: -1.6, z: -7.3, yaw: 0 },
-  'launcher-ramp': { x: 1.7, z: -7.0, yaw: 0 },
-  'snow-trays': { x: 4.95, z: -8.3, yaw: 0 },
-  'wind-tunnel': { x: 10.7, z: -6.4, yaw: 0 },
+  'launcher-ramp': { x: 1.7, z: -6.5, yaw: 0 },
+  'snow-trays': { x: -7.3, z: 3.0, yaw: Math.PI / 2 },
+  'wind-tunnel': { x: 8.6, z: -6.3, yaw: 0 },
   'turning-arm': { x: 9.9, z: 2.0, yaw: 0 },
   'map-table': { x: 13.4, z: 7.2, yaw: 0 },
 });
@@ -45,6 +46,7 @@ export function hangar({ roof = true } = {}) {
     const pool = noise(x * .32, 0, z * .32, 304) * .7 + noise(x * .8, 0, z * .8, 309) * .3 + Math.exp(-((x * x) / 18 + ((z - 2) * (z - 2)) / 30)) * .14;
     if (pool > .60) c = lerpColor(c, C(0x25221d), Math.min(.65, (pool - .60) * 4));
     if (pool > .68) c = lerpColor(c, C(0x14120f), Math.min(.5, (pool - .68) * 5));
+    for (const [lx, lz] of LAMPS) { const d = Math.hypot(x - lx, z - lz); if (d < 2.4) c = lerpColor(c, C(0xcfa468), (1 - d / 2.4) ** 2 * .22); }
     const dust = fbm(p, 3, 308); c = lerpColor(c, C(0x8d8a82), Math.max(0, dust - .55) * 1.2);
     // Rubber marks from the door to the pad.
     const mark = Math.abs(Math.sin((x + noise(z * .5, 0, 0, 306) * 2) * 2.6)); if (z > 0 && mark > .985 && noise(x, 0, z, 307) > .45) c = lerpColor(c, C(0x211f1c), .5);
@@ -132,6 +134,9 @@ export function hangar({ roof = true } = {}) {
   }
 
   dressing(part, t);
+  workshop(part, t);
+  floorWear(part, t);
+  if (roof) lamps(part, t);
   return [part];
 }
 
@@ -139,22 +144,12 @@ export function hangar({ roof = true } = {}) {
 // hangar that is used.
 function dressing(part, t) {
   const W = HALL.halfWidth, D = HALL.halfDepth, random = rng(401);
-  // Workbenches along the left wall, z from -8.6 to -3.3: heavy steel frames, plank tops, vices.
-  for (const [z, len] of [[-7.55, 2.2], [-5.3, 2.2]]) {
-    const x = -W + .55;
-    t.box([.8, .1, len], [x, .95, z], 0x7a5b36, { dirt: .35, oil: 1.2, rust: 0 });
-    for (const dz of [-len / 2 + .12, len / 2 - .12]) for (const dx of [-.34, .34]) t.box([.07, .9, .07], [x + dx, .45, z + dz], 0x4d555a, { rust: .5, dirt: .3 });
-    t.box([.74, .06, len - .2], [x, .25, z], 0x4d555a, { rust: .5, dirt: .3 });
-    t.cyl(.05, .05, .12, [x, 1.05, z - len / 2 + .35], 0x394044, { rust: .5 }); t.box([.18, .12, .2], [x + .06, 1.07, z - len / 2 + .35], 0x394044, { rust: .6 }); // vice
-    t.box([.34, .2, .5], [x + .05, 1.08, z + .3], 0x9a2a22, { dirt: .3, chip: .12, rust: .2 }); // red tool box
-    t.cyl(.07, .07, .04, [x + .12, 1.02, z + len / 2 - .4], 0x6a6860, { rust: .4 });
-  }
   // The pegboard: a grid of holes and the tools on their hooks.
-  const board = new THREE.BoxGeometry(.04, 2.3, 4.6);
-  t.geo(board, [-W + .04, 2.35, -6.0], 0x8c6c44, { dirt: .3, oil: .6 });
-  for (let u = -2.25; u <= 2.25; u += .12) for (let v = 1.28; v <= 3.4; v += .12) if (random() > .06) t.geo(new THREE.CircleGeometry(.012, 5).rotateY(Math.PI / 2), [-W + .063, v, -6.0 + u], 0x2b1f14, { dirt: 0 });
+  const board = new THREE.BoxGeometry(.04, 2.4, 5.4);
+  t.geo(board, [-W + .04, 2.45, -6.1], 0x8c6c44, { dirt: .3, oil: .6 });
+  for (let u = -2.65; u <= 2.65; u += .12) for (let v = 1.34; v <= 3.6; v += .12) if (random() > .06) t.geo(new THREE.CircleGeometry(.012, 5).rotateY(Math.PI / 2), [-W + .063, v, -6.1 + u], 0x2b1f14, { dirt: 0 });
   const hook = (v, u, kind) => {
-    const x = -W + .09, z = -6.0 + u;
+    const x = -W + .09, z = -6.1 + u;
     if (kind === 'wrench') { t.box([.012, .42, .035], [x, v, z], 0x8a8d90, { rust: .5, dirt: .3 }); t.cyl(.04, .04, .012, [x, v + .22, z], 0x8a8d90, { rust: .5 }, [0, 0, Math.PI / 2]); }
     if (kind === 'hammer') { t.box([.03, .34, .03], [x, v, z], 0x7a5230, { dirt: .4 }); t.box([.05, .045, .17], [x, v + .19, z], 0x4a4d50, { rust: .6 }); }
     if (kind === 'saw') { t.box([.008, .18, .62], [x, v, z], 0x9a9c9e, { rust: .7 }); t.box([.03, .1, .1], [x, v, z + .34], 0x7a3a22, { dirt: .3 }); }
@@ -164,7 +159,7 @@ function dressing(part, t) {
     if (kind === 'clamp') { t.tube([[x, v - .15, z - .08], [x, v - .15, z + .08], [x, v + .12, z + .08], [x, v + .12, z - .08]], .01, 0x6a6e70, { rust: .5 }, 12, 5); }
   };
   const kinds = ['wrench', 'hammer', 'saw', 'pliers', 'driver', 'tape', 'clamp'];
-  for (let row = 0; row < 3; row++) for (let i = 0; i < 9; i++) hook(1.72 + row * .7, -2.0 + i * .5 + (row % 2) * .12, kinds[(i + row * 2) % kinds.length]);
+  for (let row = 0; row < 3; row++) for (let i = 0; i < 11; i++) hook(1.78 + row * .7, -2.5 + i * .5 + (row % 2) * .12, kinds[(i + row * 2) % kinds.length]);
   // Shelving unit against the left wall by the door: boxes, cans, rags.
   for (let level = 0; level < 4; level++) t.box([.55, .04, 2.4], [-W + .4, .35 + level * .55, 6.6], 0x5a666d, { rust: .4, dirt: .3 });
   for (const dz of [-1.2, 1.2]) for (const dx of [-.25, .25]) t.box([.05, 2.3, .05], [-W + .4 + dx, 1.15, 6.6 + dz], 0x5a666d, { rust: .4 });
@@ -174,18 +169,11 @@ function dressing(part, t) {
     else if (kind < .7) t.cyl(.07, .07, .18, [-W + .4, .46 + level * .55, 5.7 + i * .45], [0xa83a2a, 0x2f5f86, 0x9a9a22][i % 3], { rust: .3, dirt: .3 });
     else t.cyl(.1, .1, .16, [-W + .4, .46 + level * .55, 5.7 + i * .45], 0x6a6a64, { dirt: .5 });
   }
-  // Oil drums, a stack of tyres, a hose reel and an extinguisher, by the right-hand door post.
-  for (const [x, z, hex] of [[W - .6, 7.8, 0x2f5a86], [W - .6, 6.9, 0x8a2a22], [W - 1.5, 7.9, 0x2f5a86]]) {
-    t.cyl(.29, .29, .88, [x, .44, z], hex, { rust: .45, dirt: .35, oil: .8, chip: .1 }, [0, 0, 0], 16);
-    for (const y of [.18, .44, .70]) t.geo(new THREE.TorusGeometry(.29, .012, 5, 16).rotateX(Math.PI / 2), [x, y, z], hex, { rust: .6, dirt: .3 });
-  }
-  for (let i = 0; i < 4; i++) t.geo(new THREE.TorusGeometry(.26, .12, 8, 20).rotateX(Math.PI / 2), [W - 2.8, .12 + i * .24, 8.0], 0x1d1f20, { dirt: .45 });
-  t.cyl(.32, .32, .12, [W - 1.1, .06, 5.2], 0x3c4448, { rust: .4 }, [0, 0, 0], 14); t.geo(new THREE.TorusGeometry(.3, .045, 6, 18), [W - 1.1, .35, 5.2], 0x2f5f2a, { dirt: .4 }, [Math.PI / 2, 0, 0]);
-  t.cyl(.07, .07, .42, [W - .2, 1.35, 3.3], 0xaa2822, { dirt: .3, chip: .1 }); t.cyl(.03, .03, .14, [W - .2, 1.62, 3.3], 0x2a2a2a, {});
+  t.cyl(.07, .07, .42, [W - .2, 1.35, 3.3], 0xaa2822, { dirt: .3, chip: .1 }); t.cyl(.03, .03, .14, [W - .2, 1.62, 3.3], 0x2a2a2a, {});   // an extinguisher on the right wall
   // A wall clock and a first-aid box on the back wall, a rolling stool, a coiled cable drum.
   t.glow(new THREE.CircleGeometry(.24, 20), [4.6, 4.3, -D + .02], 0xf2ecd8); t.cyl(.26, .26, .05, [4.6, 4.3, -D + .035], 0x2a2a2a, {}, [Math.PI / 2, 0, 0]);
   t.box([.4, .28, .12], [8.8, 1.9, -D + .08], 0x2a7a3a, { dirt: .3, chip: .1 });
-  t.cyl(.2, .2, .04, [-8.5, .58, -4.4], 0x2a2a2a, {}, [0, 0, 0], 12); t.cyl(.03, .03, .55, [-8.5, .3, -4.4], 0x66686a, { rust: .5 }, [0, 0, 0], 6);
+  t.cyl(.2, .2, .04, [-9.8, .58, -5.4], 0x2a2a2a, {}, [0, 0, 0], 12); t.cyl(.03, .03, .55, [-9.8, .3, -5.4], 0x66686a, { rust: .5 }, [0, 0, 0], 6);
   t.cyl(.45, .45, .08, [-4.6, .55, 8.1], 0x8a6a3a, { dirt: .4 }, [Math.PI / 2, 0, 0], 16); t.cyl(.45, .45, .08, [-4.6, .55, 7.6], 0x8a6a3a, { dirt: .4 }, [Math.PI / 2, 0, 0], 16); t.cyl(.22, .22, .5, [-4.6, .55, 7.85], 0x1d1d1d, { dirt: .3 }, [Math.PI / 2, 0, 0], 12);
   // A cluttered corner: a pallet of boxes and a trolley.
   t.box([1.2, .12, 1.0], [W - 1.2, .06, -2.5], 0x8a6a3a, { dirt: .5 }); for (let i = 0; i < 3; i++) t.box([.55, .35, .45], [W - 1.2 + (i - 1) * .35, .3, -2.5 + (i % 2) * .15], [0x9a8460, 0xb09a74, 0x8a7a5a][i], { dirt: .5 });

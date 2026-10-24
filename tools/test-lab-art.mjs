@@ -19,7 +19,7 @@ let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
 const equal = (value, expected, label) => { assert.deepEqual(value, expected, label); checks++; };
 
-const BENCHES = ['weighing-pad', 'weights-and-cans', 'drop-tower', 'fire-pit', 'pendulum-frame', 'rotor-stand', 'bending-rig', 'nail-jars', 'turning-arm', 'map-table', 'wind-tunnel', 'launcher-ramp', 'snow-trays'];
+const BENCHES = ['weighing-pad', 'weights-and-cans', 'drop-tower', 'fire-pit', 'pendulum-frame', 'rotor-stand', 'bending-rig', 'nail-jars', 'turning-arm', 'map-table', 'snow-trays', 'wind-tunnel', 'launcher-ramp'];
 equal(manifest.models.map(model => model.id), ['hangar', ...BENCHES], 'The hangar and the thirteen benches');
 equal(Object.keys(manifest.layout).sort(), [...BENCHES].sort(), 'Every bench has a place in the hangar');
 
@@ -86,8 +86,12 @@ ok(reverse && reverse.parent === loaded['wind-tunnel'].getObjectByName('tunnel')
 const foot = id => {
   const model = manifest.models.find(m => m.id === id), at = manifest.layout[id], f = model.footprint, sweep = manifest.sweepRadius[id];
   if (sweep) return { circle: { x: at.x, z: at.z, r: sweep } };
-  ok(at.yaw === 0, `${id}: placed square to the walls`);
-  return { rect: { x0: at.x + f.minX, x1: at.x + f.maxX, z0: at.z + f.minZ, z1: at.z + f.maxZ } };
+  const quarter = Math.round(at.yaw / (Math.PI / 2));
+  ok(Math.abs(at.yaw - quarter * Math.PI / 2) < 1e-9, `${id}: placed square to the walls`);
+  // A quarter turn about Y sends (x, z) to (z, -x) or (-z, x); a half turn flips both.
+  const turn = ((quarter % 4) + 4) % 4;
+  const [x0, x1, z0, z1] = [[f.minX, f.maxX, f.minZ, f.maxZ], [f.minZ, f.maxZ, -f.maxX, -f.minX], [-f.maxX, -f.minX, -f.maxZ, -f.minZ], [-f.maxZ, -f.minZ, f.minX, f.maxX]][turn];
+  return { rect: { x0: at.x + x0, x1: at.x + x1, z0: at.z + z0, z1: at.z + z1 } };
 };
 const overlap = (a, b) => {
   if (a.rect && b.rect) return a.rect.x0 < b.rect.x1 && b.rect.x0 < a.rect.x1 && a.rect.z0 < b.rect.z1 && b.rect.z0 < a.rect.z1;

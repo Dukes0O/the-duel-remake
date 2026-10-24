@@ -149,115 +149,28 @@ function mapTable() {
     if (Math.hypot(u - .74, v - .62) < .016) c = C(0x2a4a8a);
     return c.multiplyScalar(.92 + fbm(p, 30, 812) * .1);
   });
+  // Everything on the sloped top is placed through onTop(x, height above the map, z along the map).
+  const onTop = (x, dy, z) => [x, 1.0 + dy * Math.cos(tilt) - z * Math.sin(tilt), dy * Math.sin(tilt) + z * Math.cos(tilt)];
   main.add('solid', mapSurface.geometry, [0, 1.0, 0], [tilt, 0, 0], [1, 1, 1], mapSurface.colorAt);
-  for (const [w, d, x, z] of [[2.5, .08, 0, -.74], [2.5, .08, 0, .74], [.08, 1.5, -1.17, 0], [.08, 1.5, 1.17, 0]]) main.add('solid', new THREE.BoxGeometry(w, .06, d), [x, 1.02 + z * .2 * 0, z], [tilt, 0, 0], [1, 1, 1], (p, n) => worn(0x5b4126, p, n));
-  // Brass compass rose at one corner with a needle part; dividers, a pencil, a lamp on an arm.
-  T.cyl(.15, .15, .03, [-.85, 1.05, .45], BRASS, { dirt: .3, chip: .08 }, [tilt, 0, 0], 20);
-  T.glass(new THREE.CylinderGeometry(.14, .14, .01, 20), [-.85, 1.075, .45], 0xdde7e8, [tilt, 0, 0]);
-  for (let i = 0; i < 8; i++) T.box([.008, .04, .004], [-.85 + Math.sin(i * .785) * .12, 1.073 + Math.cos(i * .785) * .12 * -.21 - 0, .45 + Math.cos(i * .785) * .12 * .98], 0x1a1816, { dirt: 0 }, [tilt, 0, -i * .785]);
+  for (const [w, d, x, z] of [[2.5, .08, 0, -.74], [2.5, .08, 0, .74], [.08, 1.5, -1.17, 0], [.08, 1.5, 1.17, 0]]) main.add('solid', new THREE.BoxGeometry(w, .07, d), onTop(x, .02, z), [tilt, 0, 0], [1, 1, 1], (p, n) => worn(0x5b4126, p, n));
+  // Brass compass rose at one corner with a needle part; a ruler part, dividers, a pencil and a lamp on an arm.
+  T.cyl(.15, .15, .03, onTop(-.85, .02, .45), BRASS, { dirt: .3, chip: .08 }, [tilt, 0, 0], 20);
+  T.glass(new THREE.CylinderGeometry(.14, .14, .01, 20), onTop(-.85, .045, .45), 0xdde7e8, [tilt, 0, 0]);
+  for (let i = 0; i < 8; i++) T.box([.008, .04, .004], onTop(-.85 + Math.sin(i * .785) * .12, .04, .45 + Math.cos(i * .785) * .12), 0x1a1816, { dirt: 0 }, [tilt, 0, -i * .785]);
   const parts = [main];
-  const compass = new Part('compass-needle', [-.85, 1.08, .45]), Cp = tools(compass, 820);
-  Cp.box([.01, .02, .2], [-.85, 1.082, .45], 0xb02a22, {}, [tilt, 0, 0]); Cp.box([.01, .02, .1], [-.85, 1.082, .5], 0xe8e2cf, {}, [tilt, 0, 0]);
+  const nc = onTop(-.85, .05, .45), compass = new Part('compass-needle', nc), Cp = tools(compass, 820);
+  Cp.box([.01, .02, .2], nc, 0xb02a22, {}, [tilt, 0, 0]); Cp.box([.01, .02, .1], onTop(-.85, .05, .5), 0xe8e2cf, {}, [tilt, 0, 0]);
   parts.push(compass);
-  const ruler = new Part('ruler', [.2, 1.07, .35]), Rl = tools(ruler, 830);
-  Rl.box([.9, .008, .06], [.2, 1.07, .35], 0xc9b88a, { dirt: .3 }, [tilt, 0, 0]);
-  for (let i = 0; i < 18; i++) Rl.box([.003, .01, i % 5 === 0 ? .03 : .018], [-.2 + i * .05, 1.075, .33], 0x1a1816, { dirt: 0 }, [tilt, 0, 0]);
+  const rc = onTop(.2, .03, .35), ruler = new Part('ruler', rc), Rl = tools(ruler, 830);
+  Rl.box([.9, .008, .06], rc, 0xc9b88a, { dirt: .3 }, [tilt, 0, 0]);
+  for (let i = 0; i < 18; i++) Rl.box([.003, .01, i % 5 === 0 ? .03 : .018], onTop(-.2 + i * .05, .035, .33), 0x1a1816, { dirt: 0 }, [tilt, 0, 0]);
   parts.push(ruler);
-  T.bar([.7, 1.06, .2], [.95, 1.1, .1], .006, 0x8a8d90, { dirt: .3 }); T.bar([.7, 1.06, .2], [.62, 1.1, .12], .006, 0x8a8d90, { dirt: .3 });
-  T.bar([-.3, 1.05, .55], [-.15, 1.07, .45], .005, 0xc58a22, { dirt: .3 });
+  T.bar(onTop(.7, .03, .2), onTop(.95, .07, .1), .006, 0x8a8d90, { dirt: .3 }); T.bar(onTop(.7, .03, .2), onTop(.62, .07, .12), .006, 0x8a8d90, { dirt: .3 });
+  T.bar(onTop(-.3, .02, .55), onTop(-.15, .04, .45), .005, 0xc58a22, { dirt: .3 });
   T.bar([-1.1, .98, -.6], [-1.1, 1.8, -.6], .02, 0x3c4448, { rust: .5 }); T.bar([-1.1, 1.8, -.6], [-.6, 1.65, -.4], .012, 0x3c4448, { rust: .5 });
   T.cyl(.13, .06, .12, [-.58, 1.62, -.38], 0x2f5f2a, { dirt: .3, chip: .1 }, [0, 0, .2], 12); T.glow(new THREE.SphereGeometry(.045, 8, 6), [-.58, 1.56, -.38], 0xfff0c8);
   T.cyl(.19, .19, .04, [1.3, .55, 1.0], 0x2a2a2a, {}, [0, 0, 0], 12); T.cyl(.03, .03, .55, [1.3, .28, 1.0], 0x66686a, { rust: .5 }, [0, 0, 0], 6);
   return parts;
-}
-
-function windTunnel() {
-  const main = new Part('tunnel'), T = tools(main, 850);
-  const X0 = -3.8, X1 = 3.8, TS0 = -3.0, TS1 = 2.2;
-  // A heavy floor, then the test section: steel skirts, big glass windows, a top beam and roof.
-  T.box([8.0, .3, 3.5], [0, .15, 0], 0x464e52, { rust: .4, dirt: .35, oil: 1, chip: .06 });
-  for (const s of [-1, 1]) {
-    T.box([TS1 - TS0, .3, .08], [(TS0 + TS1) / 2, .45, s * 1.6], STEEL, { rust: .4, dirt: .3, chip: .07 });
-    T.box([TS1 - TS0, .2, .1], [(TS0 + TS1) / 2, 2.3, s * 1.6], STEEL, { rust: .4, dirt: .3, chip: .07 });
-    for (const x of [TS0, TS1, (TS0 + TS1) / 2]) T.box([.14, 2.1, .14], [x, 1.35, s * 1.6], STEEL, { rust: .45, dirt: .3, chip: .07 });
-    T.glass(new THREE.BoxGeometry(TS1 - TS0 - .2, 1.6, .03), [(TS0 + TS1) / 2, 1.4, s * 1.6], 0xcfe0e4);
-  }
-  T.box([TS1 - TS0, .1, 3.3], [(TS0 + TS1) / 2, 2.44, 0], 0x4b585f, { rust: .4, dirt: .35 });
-  // Inlet bell and honeycomb, diffuser, fan shroud.
-  main.add('solid', new THREE.CylinderGeometry(1.0, 1.75, 1.0, 4, 1, true).rotateZ(Math.PI / 2).rotateX(Math.PI / 4), [TS0 - .5, 1.35, 0], [0, 0, 0], [1, .66, .98], (p, n) => worn(0x56646d, p, n, { rust: .35, dirt: .3, seed: 851 }));
-  main.add('solid', new THREE.CylinderGeometry(1.0, 1.75, 1.0, 4, 1, true).rotateZ(Math.PI / 2).rotateX(Math.PI / 4).scale(-1, 1, 1), [TS0 - .5, 1.35, 0], [0, 0, 0], [1, .64, .94], (p) => lerpColor(C(0x23282a), C(0x3a4144), fbm(p, 8, 852)));
-  for (let i = -3; i <= 3; i++) T.box([.03, 1.5, .03], [X0 + .05, 1.35, i * .24], 0x2b2f31, { rust: .5 });
-  for (let i = 0; i <= 4; i++) T.box([.03, .03, 1.7], [X0 + .05, .9 + i * .24, 0], 0x2b2f31, { rust: .5 });
-  main.add('solid', new THREE.CylinderGeometry(1.25, 1.0, 1.0, 4, 1, true).rotateZ(Math.PI / 2).rotateX(Math.PI / 4), [TS1 + .5, 1.3, 0], [0, 0, 0], [1, .7, .97], (p, n) => worn(0x56646d, p, n, { rust: .35, dirt: .3, seed: 853 }));
-  main.add('solid', new THREE.CylinderGeometry(1.25, 1.25, .75, 28, 1, true).rotateZ(Math.PI / 2), [X1 - .45, 1.3, 0], [0, 0, 0], [1, 1, 1], (p, n) => worn(0x464e52, p, n, { rust: .45, dirt: .35, seed: 854, oil: .6 }));
-  main.add('solid', new THREE.TorusGeometry(1.25, .05, 6, 28).rotateY(Math.PI / 2), [X1 - .08, 1.3, 0], [0, 0, 0], [1, 1, 1], (p, n) => worn(0x3c4448, p, n, { rust: .5, seed: 855 }));
-  T.cyl(.3, .45, .5, [X1 + .1, 1.3, 0], 0x3c4448, { rust: .5, dirt: .35, oil: .7 }, [0, 0, Math.PI / 2], 14);
-  for (const z of [-1.0, 1.0]) T.box([.1, 1.3, .1], [X1 - .45, .9, z * 1.2], 0x3c4448, { rust: .5 });
-  // The rolling road: a belt with cleats between two drums, and four platform scales under the wheels.
-  const belt = new Part('belt', [-.4, .31, 0]);
-  belt.add('solid', new THREE.BoxGeometry(5.0, .025, 2.1), [-.4, .312, 0], [0, 0, 0], [1, 1, 1], (p) => { const band = Math.floor((p.x + 5) * 6) & 1; return lerpColor(C(band ? 0x1c1f20 : 0x2b2f31), C(0x424a4c), fbm(p, 8, 856) * .6); });
-  const B = tools(belt, 857);
-  for (const s of [-1, 1]) B.cyl(.17, .17, 2.2, [-.4 + s * 2.5, .3, 0], 0x6a6e70, { rust: .4, dirt: .3, oil: .8 }, [Math.PI / 2, 0, 0], 12);
-  for (const s of [-1, 1]) B.box([5.0, .06, .06], [-.4, .32, s * 1.08], YELLOW, { dirt: .4, chip: .1 });
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { T.box([.7, .02, .42], [-.4 + sx * 1.3, .325, sz * .88], 0xc2c6c8, { dirt: .3, chip: .08, oil: .8 }); T.glow(new THREE.PlaneGeometry(.22, .06), [-.4 + sx * 1.3, .45, sz * 1.64], 0x9bd36a); }
-  // Restraint struts that hold the car in place, one at each side.
-  for (const s of [-1, 1]) { T.bar([-.2, .32, s * 1.5], [-.2, .52, s * 1.05], .03, STEEL, { rust: .4 }, true); T.box([.18, .06, .14], [-.2, .53, s * 1.0], 0x2a2a2a, {}); }
-  const parts = [main, belt];
-  // The fan: nine blades on a hub in the shroud (own part, spins about the tunnel axis, X).
-  const fan = new Part('fan', [X1 - .45, 1.3, 0]), F = tools(fan, 860);
-  for (let i = 0; i < 9; i++) {
-    const a = i * Math.PI * 2 / 9;
-    F.box([.12, 1.05, .34], [X1 - .45, 1.3 + Math.cos(a) * .72, Math.sin(a) * .72], 0x8d9396, { rust: .35, dirt: .3, chip: .1, oil: .4 }, [a, 0, .5]);
-  }
-  F.cyl(.3, .3, .3, [X1 - .45, 1.3, 0], 0x464e52, { rust: .4, dirt: .3, oil: .5 }, [0, 0, Math.PI / 2], 14); F.geo(new THREE.SphereGeometry(.3, 12, 8, 0, Math.PI), [X1 - .45 - .1, 1.3, 0], 0x6a6e70, { rust: .3 }, [0, -Math.PI / 2, 0]);
-  parts.push(fan);
-  // The smoke rake in front of the inlet: a manifold and nine nozzles (own part), a hose to the generator.
-  const rake = new Part('smoke-rake', [TS0 - .08, .9, 0]), S = tools(rake, 870);
-  S.bar([TS0 - .08, .5, 0], [TS0 - .08, 2.1, 0], .035, 0x3c4448, { rust: .5 });
-  for (let i = 0; i < 9; i++) S.cyl(.012, .012, .26, [TS0 + .05, .6 + i * .16, 0], 0x8a8d90, { rust: .3 }, [0, 0, Math.PI / 2], 6);
-  parts.push(rake);
-  T.box([.6, .7, .6], [TS0 - .6, .65, -2.2], 0x4a6a8a, { dirt: .4, chip: .15, rust: .3, oil: .8 }); T.cyl(.18, .18, .4, [TS0 - .6, 1.2, -2.2], 0x6a6e70, { rust: .4 }, [0, 0, 0], 12);
-  T.tube([[TS0 - .6, 1.0, -1.9], [TS0 - .6, .5, -1.0], [TS0 - .2, .5, -.2], [TS0 - .08, .8, 0]], .03, 0x1d1d1d, { dirt: .3 }, 20);
-  // The control desk on the player's side: a fan dial, a speed readout, a stop button and the REVERSE switch.
-  T.box([2.0, .9, .7], [-.4, .5, 2.35], 0x464e52, { rust: .4, dirt: .35, chip: .08, oil: .7 });
-  T.box([1.9, .08, .66], [-.4, .99, 2.35], 0x2b2f31, { rust: .3, dirt: .3 });
-  T.box([1.9, .5, .06], [-.4, 1.35, 2.62], 0x2b2f31, { rust: .3, dirt: .3, chip: .1 }, [-.35, 0, 0]);
-  gauge(main, { x: -.9, y: 1.36, z: 2.56, r: .22, yaw: 0, ticks: 16 });
-  parts.push(needle('fan-dial-needle', -.9, 1.36, 2.56, .2));
-  T.glow(new THREE.PlaneGeometry(.5, .14), [-.2, 1.42, 2.53], 0x9bd36a);
-  T.geo(new THREE.CylinderGeometry(.07, .07, .05, 14).rotateX(Math.PI / 2 - .35), [.35, 1.22, 2.56], 0xa02a22, { dirt: .3 });
-  T.geo(new THREE.CylinderGeometry(.04, .04, .05, 10).rotateX(Math.PI / 2), [.62, 1.3, 2.58], 0x3a7a3a, { dirt: .3 });
-  // REVERSE: a guarded toggle, its own part so it can be hidden until the secret opens.
-  const rev = new Part('reverse-switch', [.0, 1.2, 2.56]), Rv = tools(rev, 880);
-  Rv.box([.18, .12, .1], [.0, 1.28, 2.56], 0x2b2f31, { dirt: .2, chip: .1 }); Rv.cyl(.012, .012, .12, [.0, 1.36, 2.56], 0xb9bcbe, {}, [-.2, 0, 0], 6); Rv.geo(new THREE.SphereGeometry(.022, 8, 6), [.0, 1.43, 2.54], 0xa02a22, {});
-  Rv.box([.2, .014, .12], [.0, 1.4, 2.5], 0xc9a227, { chip: .15 }, [.5, 0, 0]);
-  parts.push(rev);
-  return parts;
-}
-
-function launcherRamp() {
-  const main = new Part('launcher'), T = tools(main, 900);
-  // Two rails on legs, a hinge block at the near end, a protractor arc with a tick every 5 degrees, a spring box.
-  for (const s of [-1, 1]) { T.box([.1, .12, 3.4], [s * .5, .5, 0], STEEL, { rust: .45, dirt: .3, chip: .07 }); for (const z of [-1.5, 1.5]) T.box([.08, .5, .08], [s * .5, .25, z], 0x3c4448, { rust: .5 }); }
-  for (const z of [-1.5, 0, 1.5]) T.box([1.0, .06, .1], [0, .55, z], 0x3c4448, { rust: .5 });
-  T.box([.9, .3, .3], [0, .76, -1.55], 0x2b2f31, { rust: .4, dirt: .3, chip: .1 }); T.cyl(.07, .07, 1.1, [0, .82, -1.55], 0x6a6e70, { rust: .4 }, [0, 0, Math.PI / 2], 10);
-  const R = 1.35; // arc from 15 to 75 degrees about the hinge at (0, .82, -1.55)
-  for (let d = 15; d <= 75; d += 5) { const a = d * Math.PI / 180, major = d % 15 === 0; T.box([.2, .014, major ? .09 : .05], [-.52, .82 + Math.sin(a) * R, -1.55 + Math.cos(a) * R], major ? 0xe8e2cf : 0xb9b19a, { dirt: .3 }, [-a, 0, 0]); }
-  for (const s of [-1, 1]) T.tube(Array.from({ length: 13 }, (_, i) => { const a = (15 + i * 5) * Math.PI / 180; return [s * .55 + (s > 0 ? 0 : 0), .82 + Math.sin(a) * (R - .04), -1.55 + Math.cos(a) * (R - .04)]; }), .012, 0x6a6e70, { rust: .4, dirt: .3 }, 24, 5);
-  for (const s of [-1, 1]) T.box([.06, .06, .06], [s * .55, .82 + Math.sin(.26) * R, -1.55 + Math.cos(.26) * R], 0x3c4448, { rust: .5 });
-  T.box([.5, .32, .4], [1.0, .3, -1.2], 0x464e52, { rust: .4, dirt: .35, chip: .1, oil: .8 }); T.cyl(.06, .06, .1, [1.0, .5, -1.2], 0xa02a22, { dirt: .3 }, [0, 0, 0], 10);
-  // A 4 m tape measure laid out on the floor from the launch end, and cones at one, two and three metres.
-  T.box([.06, .008, 4.4], [1.5, .005, 2.6], 0xe3d9a8, { dirt: .5 });
-  for (let i = 0; i <= 8; i++) T.box([i % 2 ? .1 : .16, .01, .012], [1.5, .008, .4 + i * .5], 0x1a1816, { dirt: 0 });
-  for (const z of [1.4, 2.4, 3.4]) T.cyl(.01, .08, .22, [1.0, .11, z], 0xd9702a, { dirt: .4, chip: .1 }, [0, 0, 0], 10);
-  // The arm: a channel with a cradle for the ball (own part, tilts about the hinge, X).
-  const arm = new Part('ramp-arm', [0, .82, -1.55]), A = tools(arm, 910), tilt = Math.PI / 4;
-  const at = (l, h = 0) => [0, .82 + Math.sin(tilt) * l + Math.cos(tilt) * h, -1.55 + Math.cos(tilt) * l - Math.sin(tilt) * h];
-  A.box([.2, .06, 2.5], at(1.25), 0x8d9396, { rust: .35, dirt: .3, chip: .1, oil: .6 }, [-tilt + Math.PI / 2 * 0, 0, 0]);
-  for (const s of [-1, 1]) A.box([.03, .06, 2.5], [s * .1, at(1.25)[1] + Math.cos(tilt) * .05, at(1.25)[2] - Math.sin(tilt) * .05], 0x6a6e70, { rust: .4 }, [-tilt, 0, 0]);
-  A.geo(new THREE.SphereGeometry(.07, 12, 8), at(2.35, .1), 0xc9a227, { dirt: .3, chip: .2 });
-  A.box([.12, .1, .12], at(2.5, .02), 0x2b2f31, { rust: .4 }, [-tilt, 0, 0]);
-  return [main, arm];
 }
 
 function snowTrays() {
@@ -295,7 +208,5 @@ export const BENCHES2 = {
   'nail-jars': nailJars,
   'turning-arm': turningArm,
   'map-table': mapTable,
-  'wind-tunnel': windTunnel,
-  'launcher-ramp': launcherRamp,
   'snow-trays': snowTrays,
 };
