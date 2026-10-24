@@ -498,10 +498,12 @@ tasks:
 
   - id: SKI-ART
     title: "Heli-skiing art: skier, guide and guests, gates, kicker, pads"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-24
+    branch: claude/ski-art
     needs: []
     locks: []
     flag: "heli-skiing"
