@@ -105,7 +105,11 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   const heavy=['tools/test-audio-crash-peak.mjs','tools/test-convoy-tanker-art.mjs',
     'tools/test-first-person-contact.mjs','tools/test-first-person-cloth.mjs','tools/test-first-person-polish.mjs',
     'tools/test-rustwall-p2-relief.mjs','tools/test-rook-p2-candidate.mjs',
-    'tools/test-rustwall-p2.mjs','tools/test-rustwall-atlas-isolation.mjs'];
+    'tools/test-rustwall-p2.mjs','tools/test-rustwall-atlas-isolation.mjs',
+    // QA-TEST-AUDIT: slow suites with no real catch in 30 days.
+    'tools/test-campaigns.mjs','tools/test-expansion-driving.mjs','tools/test-opponents.mjs',
+    'tools/test-crossbow-aim.mjs','tools/test-circuit-layouts.mjs','tools/test-course-eligibility.mjs',
+    'tools/test-ufo-landing.mjs','tools/test-terrain.mjs','tools/test-grand-prix-existing.mjs'];
   check(heavy.every(suite=>actual.includes(suite)),'every explicitly deferred heavy suite actually exists');
   const lane=selectPlan(actual,{tier:'lane',affected:actual});
   check(heavy.every(suite=>!lane.some(task=>task.suite===suite)),
@@ -121,7 +125,7 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   check(heavy.every(suite=>selectPlan(actual,{tier:'full'}).some(task=>task.suite===suite)),
     'the night full tier still runs every heavy suite');
   same(new Set(lane.map(task=>task.suite)).size,actual.length-heavy.length,
-    'fully affected lane loses exactly the nine proven heavy suites');
+    'fully affected lane loses exactly the listed full-tier-only suites');
 }
 // Titan delegates only a duplicate child that this final plan really owns.
 {

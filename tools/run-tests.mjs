@@ -210,7 +210,13 @@ export const NIGHT_ONLY_SUITES=Object.freeze([
   'tools/test-rustwall-p2-relief.mjs',
   'tools/test-rook-p2-candidate.mjs',
   'tools/test-rustwall-p2.mjs',
-  'tools/test-rustwall-atlas-isolation.mjs'
+  'tools/test-rustwall-atlas-isolation.mjs',
+  // QA-TEST-AUDIT (24 October 2026): 90 s or more each and no real fault caught in
+  // the 30 days before; docs/board/checks/test-audit.md has their numbers. A card
+  // whose claim needs one names it as its check and runs it with --filter.
+  'tools/test-campaigns.mjs','tools/test-expansion-driving.mjs','tools/test-opponents.mjs',
+  'tools/test-crossbow-aim.mjs','tools/test-circuit-layouts.mjs','tools/test-course-eligibility.mjs',
+  'tools/test-ufo-landing.mjs','tools/test-terrain.mjs','tools/test-grand-prix-existing.mjs'
 ]);
 const normalized=path=>path.replaceAll('\\','/').replace(/^\.\//,'');
 const relativeName=(root,path)=>normalized(relative(root,path));
