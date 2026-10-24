@@ -38,9 +38,9 @@ const fingerprint = duel => JSON.stringify([duel.state.stageTimeSec.toFixed(3), 
 
 // GP-RACECRAFT: protect the released simulation before testing opt-in behavior.
 check(FEATURE_STATES['cpu-racecraft'] === 'dev', 'racecraft is preview-only');
-for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d5064025fef0abb8b5572057b66'],
-  [42, 'e047afb2d58f76a7a03ceec2514b31a315f3268e21778a92236761d64319192b'],
-  [17, '60f430f2b0cf7fc6d360450142f544b4f81296a33315a5ebafac5606e801b214']]) {
+for (const [seed, hash] of [[1989, 'b75e713ab4e369278cfd9e0a17d9e353df6f6d9d86bbf2f7928978fb77b267dd'],
+  [42, '70733cc0ac82ab2be4bbfdbdb9a635aa51414a252857d4027230543b8ea8e964'],
+  [17, '453ce3934758f1ff1a546264e9ea57ab0c88c26c6359fed341e10ea5d28efc5b']]) {
   const d = racing(start({seed})); d.setInput({throttle: 1, steer: 0}); run(d, 30);
   const s = d.state;
   equal(createHash('sha256').update(JSON.stringify([s.s, s.lateral, s.speedMph, s.stageTimeSec, s.field, s.opponents])).digest('hex'),
@@ -59,7 +59,8 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
   equal(CPU_NITRO.refill, .5, 'CPU nitro refills at half rate');
   const upgraded={upgrades:{nitro:2}},spec={topSpeed:200,nitroSpeedBonus:.02,nitroAcceleration:1.4};
   close(cpuNitroExtraMph(upgraded,spec),19,1e-12,'boost ceiling halves the complete upgraded car bonus');
-  close(cpuNitroAcceleration(upgraded,spec),38.22,1e-12,'acceleration halves the complete upgraded car bonus');
+  // FIX-LAUNCH: BOOST.accelMphPerSec 42 to 20.2, so the same formula (x1.3 upgrade, x1.4 car, half strength) gives 18.382 (was 38.22).
+  close(cpuNitroAcceleration(upgraded,spec),18.382,1e-12,'acceleration halves the complete upgraded car bonus');
   const r = {boost: .8, boosting:false, speedMph:100, upgrades:{nitro:0}, field:{traits:{aggression:.7}}};
   const run = {spec:{boostCapacity:2}};
   stepCpuNitro(r,run,1,{straight:true,attack:true});

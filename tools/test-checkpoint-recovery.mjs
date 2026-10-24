@@ -112,8 +112,8 @@ try {
   // CRASH-RELEASE: with crash physics on, seed 1989 no longer misses a gate;
   // seed 2009 was the first in 1989-2029 whose race does, once. FIX-LAUNCH
   // (gentler launch) moved every race: none of 1989-2029 misses a gate now and
-  // seed 2049 is the first in 1989-2149 that does, once.
-  app.startCampaign({ startStage: 0, seed: 2049, mode: 'wasteland',
+  // seed 2049 was the first in 1989-2149 that did, once; the stronger CPU launch moved it again and 2064 is the first in 1989-2090 now.
+  app.startCampaign({ startStage: 0, seed: 2064, mode: 'wasteland',
     car: 'falcone_f42', difficulty: 'casual', cpuDifficulty: 'medium' });
   app.autopilot = true; app._scriptedCrashDone = true;
   app.duel.onChange((state, event) => {

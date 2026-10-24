@@ -48,3 +48,11 @@ because its reference car (F42) is now the slowest road car, intent unchanged:
 the Easy field is no faster than the slowest road car; (4) lap sanity bound 150
 to 165 s; (5) the dev tyre-slip drift fixture is not tuned here: card
 TYRE-SLIP-DRIFT-RETUNE holds it (142 against 4828 points).
+
+Third round, Claude, 24 October: approved (1) Bolide base accel 10.5 to 9.5 (2.44 s,
+order kept, Jesko stays 9.9); (2) CPU launch per level, 1, 1.3 and 1.6 times the
+player launch, every band holds; (3) the one failing balance seed (Hard 1993) is a
+known demo-driver limit: merge with it written plainly in the change note and the
+pull request, card DEMO-DRIVER-UNSTUCK (needs FIX-LAUNCH) fixes it, do not drop
+seeds or change the measure, and the next release waits for that card; (4) staggered
+CPU attack gaps 520/540/560.
