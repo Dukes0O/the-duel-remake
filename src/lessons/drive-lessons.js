@@ -126,7 +126,11 @@ function finishAttempt(lesson, reason, cones) {
   lesson.phase = 'result';
   if (lesson.stage === 'late') {
     const early = attempt.firstBrakeS !== null && attempt.firstBrakeS < lesson.instructor.redBoardS;
-    return answer(line(early ? 'late.early' : 'late.result'), cones);
+    // On these tyres a late entry costs screech, not time, so the old "look at the
+    // time you lost" line (late.result) would be untrue. The existing screech
+    // coaching line fits; with no screech there is nothing to say.
+    const screeched = attempt.screechSeconds >= .5;
+    return answer(early ? line('late.early') : screeched ? line('coach.screech') : null, cones);
   }
   if (lesson.stage === 'right') {
     if (lesson.lastAttempt.passed) return answer(line('right.pass'), cones);
@@ -444,7 +448,8 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
       mph: state.speedMph, heading: course.at(state.s).heading + state.headingError,
       airHeight: state.airHeight || 0, groundHeight: state.groundHeight,
       terrainPitch: state.terrainPitch, terrainRoll: state.terrainRoll,
-      x: world.x, y: world.y, z: world.z, tyreSlip: state.tyreSlip || 0};
+      x: world.x, y: world.y, z: world.z, tyreSlip: state.tyreSlip || 0,
+      yawVelocity: state.yawVelocity};
   };
   const off = duel.onChange((current, event) => {
     if (event.crash || event.scrape || event.boundaryReset || event.checkpointReset) faults.push({fromS: tickStartS, s: current.s, reason: 'contact/reset'});
