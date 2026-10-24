@@ -18,6 +18,20 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
   If a card cannot meet its acceptance with the tools we have (free services,
   this laptop, SPEC 0.11's three-round art cap), stop, write why in the change
   note and ask Kyle. Never ship a placeholder or stub as the finished thing.
+- Cloud sessions (Kyle, 24 October 2026): `integration/wasteland` is GitHub's
+  front branch, so a cloud session starts from it. Cards with
+  `owner: claude-cloud` are built there. A cloud session works only on its
+  card's `cloud/<card>` branch, pushes that branch and opens a pull request
+  into `integration/wasteland`; it never merges, never pushes `integration`
+  or `master`, and never touches the live game. It runs the lane tier and
+  `npm run build` and lists in the change note any suite it could not run
+  there. The laptop merges after its own lane tier, build and any look check.
+- Questions from a cloud session: nobody reads its chat. Never stop to ask in
+  chat. Write the question to `docs/board/questions/<CARD>.md` on your branch
+  (what you need decided, the options, your recommended pick), commit and push
+  at once. Carry on with your recommended pick if the work can continue, and
+  say so in the file; stop only if it truly cannot. Claude answers by message
+  to the session and deletes the file when the card merges.
 
 ## Never
 

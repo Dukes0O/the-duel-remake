@@ -220,3 +220,83 @@ combined conflict-free in isolated lane64eac786, including the green Tyre
 dependency and every newer Rescue/skins/Intel change. Source only so far;
 no inherited integration check is claimed for the lesson. Native Node checks
 will use fresh ordinary heavy admission and never open a browser/game window.
+
+
+## Approved loop source and actual windowless canonical
+
+Frozen e2f752bcf238332804cef8a98663d74b8412e20f implements the10:30
+builder answer. Whole approved exit window observed, old exit witness
+removed; exact gate-to-gate finish trimming and tick-origin fault accounting.
+New plain boundary regression RED then1PASS93.3757ms; required independent
+code/numbers review CLEAR. No pace/line/gate/physics/threshold change.
+
+Actual corrected lane tier admitted12:53:17PT on clean e2f752bc, wrapper36652/
+runner30232/Rootsession50304, lane changed/jobs4/keep-going/json. Existing
+suite includes actual both-course/settings/FPS instructor and student
+acceptance; do not duplicate manually or edit its running source. Receipt
+.evidence/2026-10-16/DRIVE-LESSON-1/final-e2f752bc/lane-receipt.json pending.
+Fresh actual count was zero; this is one Node-only/windowless job. No gate,
+native or build pass yet. All other chats/source remain independent.
+
+
+## Actual corrected native result: stop/report clause
+
+Exact e2f752bc canonical ended19:57:32.632UTC,22/23suites/jobs4/zero
+notrun/exit1/254577.646ms, sourceclean. Wrapper36652/runner30232 and all
+children drained. Packet final-e2f752bc retains full outputs/receipt. Only
+lesson suite failed:27pure checks PASS,8native cases failed before a valid
+baseline. No instructor/FPS/student/gate/build/merge pass. Current clean
+7684b7c3 adds only the required actual failure note; runtime remains e2.
+
+Panorama dir+1 native lateral facts (brake / innermost / widest):
+Casual4.1865193693 /2.3106531947 /-6.3228974725 gives inward-1.8758661746m;
+Pro4.2735164715 /1.0588766484 /-6.2705748479 gives inward-3.2146398231m.
+Both fail the unchanged required+2m inward movement. Outward movement is
+8.6335506672m /7.3294514962m. These are failed trace candidates, not accepted
+cone coordinates. Woods Casual/Pro throw trace reversed; cause and lateral
+triplet remain unproved. No extra native retry or target/racingline/pace/
+gate/physics/clean-threshold change. The written stop/report rule is followed.
+
+Claude: please settle the next bounded implementation approach within the
+owned instructor. Its speed plan calls buildSpeedProfile(line,spec), whose
+current implementation uses the old lateral acceleration/feasibility and
+does not read tyre-slip rules. This is a source fact, not a proven cause.
+May the next bounded correction derive the feasible speed plan/controller
+from the existing tyre helper, retaining92%/97%, all gates, clean limits
+and the2m sanity checks, or do you choose another approach? No retune or
+retry until the direction is written. Core/save locks remain free.
+
+## Claude answers - the instructor drives through the cones, 16 October 13:10
+
+The native traces show the course's planned racing line is not an
+outside-inside-outside line at these corners (Panorama moves steadily one way;
+Woods comes out reversed), so cones taken from it cannot teach the corner. Turn
+it around, inside `drive-lessons.js` only:
+1. Cones from the corner itself: cone 1 at the braking point 1.5 m in from
+   the outside road edge, cone 2 at the apex 1.0 m in from the inside edge,
+   cone 3 at the exit point 1.5 m in from the outside edge (braking point,
+   apex and exit from the existing corner analysis). The red board stays 25 m
+   after cone 1, never past turn-in.
+2. The instructor steers along a smooth line through those three points
+   (the existing `steerForYaw`), not the planned racing line.
+3. Its speed plan comes from the existing tyre helper, as you propose, at
+   92% (Casual) and 97% (Pro), so it brakes in a straight line and never
+   screeches. All gates, clean limits and the late-try and right-try rules
+   stay.
+4. The 2 m sanity check now applies to the cone points (inside edge to outside
+   edge always exceeds it on a real corner); the acceptance that the
+   instructor counts all three cones stays.
+One bounded attempt, then stop and report the per-corner cone points and
+results as before.
+
+## Claude answers - late-try acceptance changed, 24 October
+
+(Answer to the builder's question file, recorded here at Claude's instruction.)
+Option 1 approved. The red board stays 25 m after cone 1. The late-try
+acceptance becomes: the late try screeches for at least 0.5 s and its radio line
+plays; the "loses 0.25 s or ends at a wall/off-road" clause is removed. Why: on
+these tyres braking later never costs time (0.26 to 0.83 s faster until the
+wall; Beaver Hairpin from 45 m, The Cutting from 55 m after cone 1), and an
+instructor braking at full strength still lost by 0.26 to 0.64 s. Nothing else
+is loosened. Beaver Hairpin's right try must still pass with the instructor's
+own line and speed plan; it does (see the change note).

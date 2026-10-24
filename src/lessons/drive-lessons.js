@@ -190,40 +190,136 @@ export function stepDriveLesson(lesson, view, events = {}, dt = 0) {
   return reason ? finishAttempt(lesson, reason, cones) : answer(null, cones);
 }
 
-// A native instructor trace supplies these points. Never move a cone or the
-// board to rescue a run that cannot teach the settled braking lesson.
-export function placeCones(poses, {course, turnInS, turnOutS, exitSearchEndS, dir}) {
-  for (const value of [turnInS, turnOutS, exitSearchEndS, dir]) finite(value, 'corner geometry');
-  if (!(turnInS < turnOutS && turnOutS <= exitSearchEndS) || Math.abs(dir) !== 1) throw new TypeError('Invalid corner geometry');
-  if (!Array.isArray(poses) || poses.length < 3) throw new TypeError('Instructor trace missing');
-  let previous = -Infinity;
-  for (const pose of poses) {
-    for (const key of ['s', 'lateral', 'brake']) finite(pose[key], 'instructor pose');
-    if (pose.s < previous) throw new TypeError('Instructor trace reversed');
-    previous = pose.s;
+// The lesson corner from the course's own corner analysis (the track
+// script's turn piece): turn-in at its start, the apex at its apex share, the
+// exit after the turn by the same distance as the apex sits before its end.
+// Cones sit a fixed distance in from the road edge; the braking point is
+// where the instructor's tyre speed plan starts braking for the corner.
+export const LESSON_LINE = Object.freeze({
+  outsideM: 1.5, insideM: 1.0, step: 1,
+  accelShare: .75, // the plan counts on this share of the helper's acceleration, which the car does not quite reach at speed
+  yawMargin: .96,  // the plan asks for this share of the tyre's yaw, so feedback never tips it past grip
+  mainBrake: .8,   // share of full braking the plan uses in the corner's braking zone
+  lightBrake: .45, // a lift for an earlier bend stays under the 50% brake rule
+});
+
+export function cornerPoints({turnInS, turnOutS, dir, apexShare}) {
+  for (const value of [turnInS, turnOutS, dir, apexShare]) finite(value, 'corner geometry');
+  if (!(turnInS < turnOutS) || Math.abs(dir) !== 1 || !(apexShare > 0 && apexShare < 1)) throw new TypeError('Invalid corner geometry');
+  const apexS = turnInS + (turnOutS - turnInS) * apexShare;
+  return {turnInS, apexS, exitS: turnOutS + (turnOutS - apexS), dir};
+}
+
+// A smooth line through the corner points: on the outside up to turn-in,
+// across to the inside at the apex and back out to the outside at the exit.
+export function buildLessonLine(course, points, {startS, endS}) {
+  const {turnInS, apexS, exitS, dir} = points;
+  if (!(startS < turnInS && exitS < endS)) throw new TypeError('Lesson line needs the whole corner');
+  const outside = s => -dir * (course.roadHalfWidthAt(s) - LESSON_LINE.outsideM);
+  const inside = s => dir * (course.roadHalfWidthAt(s) - LESSON_LINE.insideM);
+  const smooth = u => (1 - Math.cos(Math.PI * Math.max(0, Math.min(1, u)))) / 2;
+  const lateralAt = s => {
+    if (s <= turnInS || s >= exitS) return outside(s);
+    const u = s < apexS ? smooth((s - turnInS) / (apexS - turnInS)) : 1 - smooth((s - apexS) / (exitS - apexS));
+    return outside(s) + (inside(s) - outside(s)) * u;
+  };
+  const step = LESSON_LINE.step, count = Math.ceil((endS - startS) / step) + 1;
+  const offset = new Float64Array(count), px = new Float64Array(count), pz = new Float64Array(count);
+  const heading = new Float64Array(count), relHeading = new Float64Array(count), curvature = new Float64Array(count);
+  for (let i = 0; i < count; i++) {
+    offset[i] = lateralAt(startS + i * step);
+    const p = course.groundAt(startS + i * step, offset[i]);
+    px[i] = p.x; pz[i] = p.z;
   }
-  const brake = poses.find(pose => pose.s <= turnInS && pose.brake > 0);
-  const closest = (rows, gap) => rows.reduce((best, pose) => !best || gap(pose) < gap(best) ? pose : best, null);
-  const inside = closest(poses.filter(pose => pose.s >= turnInS && pose.s <= turnOutS),
-    pose => -dir * pose.lateral);
-  const endS = inside && Math.min(inside.s + 120, exitSearchEndS);
-  if (inside && poses.at(-1).s < endS) throw new Error('Instructor trace has not covered the 120m exit search');
-  const outside = inside && closest(poses.filter(pose => pose.s > inside.s && pose.s <= endS),
-    pose => dir * pose.lateral);
-  const inward = brake && inside ? dir * (inside.lateral - brake.lateral) : null;
-  const outward = inside && outside ? dir * (inside.lateral - outside.lateral) : null;
-  if (!brake || !inside || !outside || inward < 2 || outward < 2) {
-    throw new Error('Instructor line needs at least 2m inward and outward movement: '+JSON.stringify({
-      dir,turnInS,turnOutS,exitSearchEndS,inward,outward,brake,inside,outside}));
+  const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
+  for (let i = 0; i < count; i++) {
+    const a = Math.max(0, i - 1), b = Math.min(count - 1, i + 1);
+    heading[i] = Math.atan2(px[b] - px[a], pz[b] - pz[a]);
+    relHeading[i] = wrap(heading[i] - course.at(startS + i * step).heading);
   }
-  const cones = [brake, inside, outside].map((pose, index) => {
-    const edge = course.roadHalfWidthAt(pose.s) - .5;
-    if (!Number.isFinite(edge) || edge <= 0) throw new Error('Instructor cone needs a valid road edge');
-    const offset = index === 1 ? dir : -dir;
-    const lateral = Math.max(-edge, Math.min(edge, pose.lateral + offset));
-    return {id: index + 1, s: pose.s, lateral, ...course.groundAt(pose.s, lateral)};
+  for (let i = 0; i < count; i++) {
+    const a = Math.max(0, i - 1), b = Math.min(count - 1, i + 1);
+    const distance = Math.hypot(px[i] - px[a], pz[i] - pz[a]) + Math.hypot(px[b] - px[i], pz[b] - pz[i]);
+    curvature[i] = distance > 1e-6 ? wrap(heading[b] - heading[a]) / distance : 0;
+  }
+  const at = (table, s) => {
+    const p = Math.max(0, Math.min(count - 1, (s - startS) / step)), i = Math.min(count - 2, Math.floor(p));
+    return table[i] + (table[i + 1] - table[i]) * (p - i);
+  };
+  return Object.freeze({startS, endS, step, count, offset, curvature, points, lateralAt,
+    offsetAt: s => at(offset, s), relHeadingAt: s => at(relHeading, s), curvatureAt: s => at(curvature, s)});
+}
+
+// The instructor's speed plan from the tyre helper: in every bend the line's
+// yaw stays within the tyre's peak (no screech) at the given pace, with the
+// corner speed held from turn-in to the exit cone (no braking, no pull-away
+// while the line is still swinging), straight-line braking before the
+// corner and the car's real acceleration from the rolling start. `at` is
+// divided by the pace because instructorControls applies the pace itself.
+export function buildLessonPlan(line, {car, pace, rollingMph, tractionAt, speedLimitAt,
+  brakeZoneS, drive, accelAt, tyreSlipSteering}) {
+  const {count, step, startS, curvature, points} = line;
+  const mph = new Float64Array(count), toWorld = drive.mphToWorld;
+  const cornerMph = s => {
+    const k = Math.abs(line.curvatureAt(s)), traction = tractionAt(s, line.offsetAt(s));
+    const fits = speedMph => {
+      const {peakYaw, steerGain} = tyreSlipSteering({speedMph, grip: car.grip, traction, car, brake: 0});
+      return k * speedMph * toWorld <= LESSON_LINE.yawMargin * Math.min(peakYaw, steerGain);
+    };
+    let low = 1, high = Math.min(car.topSpeed, speedLimitAt(s, line.offsetAt(s)));
+    if (fits(high)) return high;
+    for (let i = 0; i < 60; i++) { const mid = (low + high) / 2; if (fits(mid)) low = mid; else high = mid; }
+    return low;
+  };
+  const index = s => Math.round((s - startS) / step);
+  for (let i = 0; i < count; i++) mph[i] = cornerMph(startS + i * step) * pace;
+  const turnIn = index(points.turnInS), apex = index(points.apexS), exit = index(points.exitS);
+  let held = Infinity;
+  for (let i = turnIn; i <= apex; i++) held = Math.min(held, mph[i]);
+  for (let i = turnIn; i <= exit; i++) mph[i] = Math.min(mph[i], held);
+  const fullBrake = drive.brakeAccel * car.braking * toWorld;
+  for (let i = count - 2; i >= 0; i--) {
+    const share = startS + i * step >= brakeZoneS ? LESSON_LINE.mainBrake : LESSON_LINE.lightBrake;
+    const v = mph[i + 1] * toWorld;
+    mph[i] = Math.min(mph[i], Math.sqrt(v * v + 2 * fullBrake * share * step) / toWorld);
+  }
+  mph[0] = Math.min(mph[0], rollingMph);
+  for (let i = 1; i < count; i++) {
+    const v = mph[i - 1] * toWorld;
+    mph[i] = Math.min(mph[i], Math.sqrt(v * v + 2 * LESSON_LINE.accelShare * accelAt(car, mph[i - 1]) * toWorld * step) / toWorld);
+  }
+  // The corner's braking point: where the plan starts falling toward turn-in.
+  let brake = turnIn;
+  while (brake > 0 && mph[brake - 1] > mph[brake] + 1e-9) brake--;
+  const at = s => {
+    const p = Math.max(0, Math.min(count - 1, (s - startS) / step)), i = Math.min(count - 2, Math.floor(p));
+    return (mph[i] + (mph[i + 1] - mph[i]) * (p - i)) / pace;
+  };
+  return Object.freeze({mph, pace, brakeS: startS + brake * step, cornerMph: held, at});
+}
+
+// Cones from the corner points, never from a trace: braking point and exit
+// 1.5 m in from the outside edge, apex 1.0 m in from the inside edge.
+export function placeCones(course, {brakeS, apexS, exitS, turnInS, dir}) {
+  for (const value of [brakeS, apexS, exitS, turnInS, dir]) finite(value, 'corner points');
+  if (!(brakeS <= turnInS && turnInS < apexS && apexS < exitS) || Math.abs(dir) !== 1) throw new TypeError('Invalid corner points');
+  const edge = s => {
+    const half = course.roadHalfWidthAt(s);
+    if (!Number.isFinite(half) || half <= LESSON_LINE.outsideM) throw new Error('Lesson cone needs a valid road edge');
+    return half;
+  };
+  const rows = [[brakeS, -dir * (edge(brakeS) - LESSON_LINE.outsideM)],
+    [apexS, dir * (edge(apexS) - LESSON_LINE.insideM)], [exitS, -dir * (edge(exitS) - LESSON_LINE.outsideM)]];
+  const inward = dir * (rows[1][1] - rows[0][1]), outward = dir * (rows[1][1] - rows[2][1]);
+  // A sanity check on the corner, not a tuning knob.
+  if (!(inward >= 2 && outward >= 2)) {
+    throw new Error('Lesson cones need at least 2m inward and outward movement: ' + JSON.stringify({dir, inward, outward, rows}));
+  }
+  const cones = rows.map(([s, lateral], index) => {
+    const {x, y, z} = course.groundAt(s, lateral);
+    return {id: index + 1, s, lateral, x, y, z};
   });
-  return {cones, redBoardS: Math.min(brake.s + 25, turnInS), finishS: outside.s + 60};
+  return {cones, redBoardS: Math.min(brakeS + 25, turnInS), finishS: exitS + 60};
 }
 
 // Observation may extend beyond the lesson to find the widest exit point.
@@ -244,21 +340,31 @@ export function finishInstructorTrace(poses, finishS, faults = []) {
 }
 
 // The steering law is the existing racing-line follower's look-ahead and yaw
-// correction. It supplies inputs to the real rules, never a replacement pose.
-// Helpers are supplied by the native factory below; plain tests can inspect
-// the control calculation without constructing or advancing a simulator.
+// correction, fed with the lesson line's own bend. It supplies inputs to the
+// real rules, never a replacement pose. Helpers are supplied by the native
+// factory below; plain tests can inspect the control calculation without
+// constructing or advancing a simulator.
 export function instructorControls(state, surface, plan) {
   const {car, course, line, profile, drive, steerForYaw} = plan;
   const pace = plan.difficulty === 'casual' ? .92 : .97;
   const speed = Math.max(0, state.speedMph) * drive.mphToWorld;
   const targetLat = line.offsetAt(state.s + Math.max(12, speed * .45));
   const headingTarget = Math.atan((targetLat - state.lateral) * 2.5 / Math.max(15, speed));
-  const desiredYaw = course.at(state.s + speed * .18).curvature * speed + (headingTarget - state.headingError) * 6;
-  const targetMph = Math.min(surface.speedLimit, profile.at(state.s) * pace);
-  // Stop adding brake after turn-in: the backward speed plan owns slowing
-  // on the approach. A missed target must fail native acceptance, not slide.
+  const desiredYaw = line.curvatureAt(state.s + speed * .18) * speed + (headingTarget - state.headingError) * 6;
+  const target = s => Math.min(surface.speedLimit, profile.at(s) * pace);
+  const targetMph = target(state.s);
+  // Brake on straight road, or on an earlier bend before the corner's braking
+  // point (light braking only): the speed plan finishes slowing before turn-in. A missed target must fail native acceptance, not slide.
+  // The planned slowing is fed forward so the car follows the braking curve
+  // from its first metre; before the corner's braking point a lift stays
+  // light, so the instructor's own first firm brake is at cone 1.
   const turning = Math.abs(course.at(state.s).curvature) > 1e-12;
-  const brake = !turning && state.speedMph > targetMph + 3 ? Math.min(1, (state.speedMph - targetMph) / 14) : 0;
+  const ahead = target(state.s + 2) * drive.mphToWorld, now = targetMph * drive.mphToWorld;
+  const fullBrake = (drive.brakeAccel ?? 52) * (car.braking ?? 1) * (surface.grip ?? 1) * drive.mphToWorld;
+  const planned = Math.max(0, (now * now - ahead * ahead) / 4) / fullBrake;
+  const cap = state.s < (plan.brakeS ?? -Infinity) ? LESSON_LINE.lightBrake : 1;
+  const brake = (!turning || state.s < (plan.brakeS ?? -Infinity)) && (state.speedMph > targetMph + 1 || (planned > 0 && state.speedMph > targetMph - .5))
+    ? Math.min(cap, Math.max(0, planned + (state.speedMph - targetMph) / 4)) : 0;
   const steerTarget = steerForYaw(desiredYaw, {speedMph: state.speedMph, grip: car.grip,
     traction: surface.traction, car, course, brake, tyreSlip: true});
   // Native steering is smoothed before tyre demand is measured. On the first
@@ -267,9 +373,34 @@ export function instructorControls(state, surface, plan) {
   const alpha = 1 - Math.exp(-drive.steerResponse / 120);
   const steer = Number.isFinite(state.steerVisual) && alpha > 0
     ? Math.max(-1, Math.min(1, (steerTarget - (1 - alpha) * state.steerVisual) / alpha)) : steerTarget;
-  return {targetMph, throttle: state.speedMph < targetMph ? 1 : 0, brake, steer,
+  return {targetMph, throttle: state.speedMph < targetMph && !brake ? 1 : 0, brake, steer,
     shiftUp: state.revs > .95 && state.gear < car.gears.length - 1,
     shiftDown: state.revs < .48 && state.gear > 0, boost: false};
+}
+
+// The lesson's line and speed plan for one course, car and pace. The student
+// checks use the very same plan as the instructor.
+export async function lessonPlanFor(duel, row, pace) {
+  const [{DRIVE, tyreSlipSteering}, {accelAt}, {TRACK_SCRIPT}] = await Promise.all([
+    import('../config.js'), import('../race-lines.js'), import('../track-script.js'),
+  ]);
+  const course = duel.course, pieces = course.script?.pieces;
+  const turn = pieces?.find(piece => piece.name === row.cornerName);
+  const gate = pieces?.find(piece => piece.name === row.gateBefore);
+  if (!turn || !gate) throw new Error('Authored lesson corner missing');
+  const startS = gate.s0 - row.gateOffsetM;
+  const points = cornerPoints({turnInS: turn.s0, turnOutS: turn.s1, dir: turn.dir, apexShare: TRACK_SCRIPT.apexShare});
+  const endS = points.exitS + 60 + 40;
+  if (!(startS >= 0 && endS < course.length)) throw new Error('Lesson gates need an unwrapped corner');
+  const line = buildLessonLine(course, points, {startS, endS});
+  // Firm braking belongs to the straight after the previous bend.
+  const before = pieces.filter(piece => piece.kind === 'turn' && piece !== turn && piece.s1 <= turn.s0).at(-1);
+  const profile = buildLessonPlan(line, {car: duel.car, pace, rollingMph: row.rollingMph, drive: DRIVE,
+    accelAt, tyreSlipSteering, brakeZoneS: Math.max(startS, before?.s1 ?? startS),
+    tractionAt: (s, lateral) => duel._drivingSurface(s, lateral).traction,
+    speedLimitAt: (s, lateral) => duel._drivingSurface(s, lateral).speedLimit});
+  const placement = placeCones(course, {...points, brakeS: profile.brakeS});
+  return {startS, turn, points, line, profile, placement};
 }
 
 // Heavy native work starts only when explicitly called, not on import. This
@@ -281,26 +412,18 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
       !Number.isFinite(maxSeconds) || maxSeconds <= 0) throw new TypeError('Invalid instructor options');
   const row = DRIVE_LESSON_CORNERS.find(item => item.courseId === courseId);
   if (!row) throw new TypeError('Course has no driving lesson');
-  const [{Duel}, {COURSE, CARS, DRIVE, steerForYaw}, {racingLineFor, buildSpeedProfile}] = await Promise.all([
-    import('../game.js'), import('../config.js'), import('../race-lines.js'),
+  const [{Duel}, {COURSE, CARS, DRIVE, steerForYaw}] = await Promise.all([
+    import('../game.js'), import('../config.js'),
   ]);
   if (!Object.hasOwn(CARS, car)) throw new TypeError('Instructor needs the player car');
   const duel = new Duel({seed, featureFlags: {enabled: name => name === 'tyre-slip'}});
   duel.startCampaign({seed, car, upgrades: {...upgrades}, difficulty, driverId,
     mode: 'timetrial', opponentCount: 0, startStage: COURSE.findIndex(item => item.id === courseId)});
-  const course = duel.course, state = duel.state;
-  const pieces = course.script?.pieces;
-  const turn = pieces?.find(piece => piece.name === row.cornerName);
-  const gate = pieces?.find(piece => piece.name === row.gateBefore);
-  if (!turn || !gate) throw new Error('Authored lesson corner missing');
-  const next = pieces.find(piece => piece.kind === 'turn' && piece.s0 >= turn.s1);
-  const exitSearchEndS = next?.s0 ?? course.length;
-  const startS = gate.s0 - row.gateOffsetM;
-  if (!(startS >= 0 && startS < turn.s0 && exitSearchEndS > turn.s1)) throw new Error('Lesson gates need an unwrapped corner');
-  const line = racingLineFor(course), spec = duel.car;
-  const profile = buildSpeedProfile(line, spec);
+  const course = duel.course, state = duel.state, spec = duel.car;
+  const pace = difficulty === 'casual' ? .92 : .97;
+  const {startS, turn, line, profile, placement} = await lessonPlanFor(duel, row, pace);
   const plan = {course, car: spec, line, profile, drive: DRIVE, steerForYaw,
-    difficulty, turnInS: turn.s0, turnOutS: turn.s1};
+    difficulty, turnInS: turn.s0, turnOutS: turn.s1, brakeS: profile.brakeS};
   // Lesson rules explicitly use the new tyres even in a Casual lesson. This
   // is confined to this fresh scratch race; ordinary Casual remains exact.
   state.tyreSlipRules = true; state.tyreSlip = 0;
@@ -326,33 +449,20 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
   const off = duel.onChange((current, event) => {
     if (event.crash || event.scrape || event.boundaryReset || event.checkpointReset) faults.push({fromS: tickStartS, s: current.s, reason: 'contact/reset'});
   });
-  let ticks = 0, frames = 0, placement = null, searchEndS = null;
+  let ticks = 0, frames = 0;
   poses.push(capture(0));
   try {
-    // Finish observing the approved exit window before choosing its widest
-    // point. Extra observations are trimmed from the actual lesson below.
-    const needsTick = () => state.s < (placement?.finishS ?? Math.max(turn.s1, searchEndS ?? exitSearchEndS));
+    const needsTick = () => state.s < placement.finishS;
     while (needsTick() && ticks < maxSeconds * 120) {
       const frameTicks = Math.floor(++frames * 120 / fps + 1e-9);
       while (ticks < frameTicks && ticks < maxSeconds * 120 && needsTick()) {
         const controls = instructorControls(state, duel._drivingSurface(state.s, state.lateral), plan);
         // Inputs start at the current native pose, not one tick later.
-        // Cone 1 must mark the actual first brake application.
         poses.at(-1).brake = controls.brake;
         poses.at(-1).throttle = controls.throttle;
         tickStartS = state.s;
         duel.setInput(controls);duel.step(1 / 120);ticks++;
         poses.push(capture(ticks / 120, controls.brake));
-        if (!placement && state.s >= turn.s1) {
-          if (searchEndS === null) {
-            const insideRows = poses.filter(pose => pose.s >= turn.s0 && pose.s <= turn.s1);
-            const apex = insideRows.reduce((a, b) => !a || turn.dir * b.lateral > turn.dir * a.lateral ? b : a, null);
-            if (!apex) throw new Error('Instructor did not record the named corner');
-            searchEndS = Math.min(apex.s + 120, exitSearchEndS);
-          }
-          if (state.s >= searchEndS) placement = placeCones(poses, {course,
-            turnInS: turn.s0, turnOutS: turn.s1, exitSearchEndS, dir: turn.dir});
-        }
         if (state.offRoad || state.tyreSlip > 1 || state.status !== 'racing' || state.impactTimer > 0) {
           faults.push({fromS: tickStartS, s: state.s, reason: 'offroad/slide/status',
             t: ticks / 120, lateral: state.lateral, mph: state.speedMph,
@@ -361,7 +471,6 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
         }
       }
     }
-    if (!placement) throw new Error('Instructor did not complete the native exit-search observation');
     const {timeSec, poses: recorded} = finishInstructorTrace(poses, placement.finishS, faults);
     const corner = {id: row.cornerName, startS, finishS: placement.finishS, dir: turn.dir,
       turnInS: turn.s0, turnOutS: turn.s1};
@@ -372,7 +481,7 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
       speedMph: pose.mph, brake: pose.brake, throttle: pose.throttle, tyreSlip: pose.tyreSlip, status: 'racing'});
     stepDriveLesson(lesson, carView(recorded[0]), {start: true}, 0);
     for (let i = 1; i < recorded.length; i++) stepDriveLesson(lesson, carView(recorded[i]), {}, recorded[i].t - recorded[i - 1].t);
-    if (lesson.lastAttempt?.cones.length !== 3) throw new Error('Instructor missed a native cone');
+    if (lesson.lastAttempt?.cones.length !== 3) throw new Error('Instructor missed a native cone: ' + JSON.stringify(lesson.lastAttempt?.cones));
     return {corner, instructor, courseId, car, upgrades: {...upgrades}, difficulty, seed};
   } finally { off(); }
 }

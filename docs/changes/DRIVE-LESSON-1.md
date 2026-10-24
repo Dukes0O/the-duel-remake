@@ -194,3 +194,128 @@ Actual corrected native/student acceptance and canonical/build follow once
 on this frozen source, windowless under ordinary admission. No pass yet.
 Removed: obsolete recordedExit and premature placement/whole-observation
 fault counting. Existing clean thresholds and all old fingerprints remain.
+
+
+### Actual corrected canonical result: blocked, not green
+
+Exact e2f752bc source stayed clean/unchanged. Lane tier ended19:57:32.632UTC,
+22/23 suites/jobs4/zero notrun/exit1/254577.646ms. Wrapper36652/runner30232
+and all children drained. Receipt/full output: own
+.evidence/2026-10-16/DRIVE-LESSON-1/final-e2f752bc. No build/merge.
+
+Only test-drive-lessons failed:27 pure checks passed; the4instructor and
+4student native cases stopped before obtaining a valid baseline. Therefore
+repeat-seed/FPS, student loss/screech/right/challenge and clean instructor
+acceptance remain unproved. Actual candidate trace facts, not cone acceptance:
+
+| Panorama setting | first brake lateral | innermost lateral | widest lateral | inward movement | outward movement |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Casual |4.1865193693|2.3106531947|-6.3228974725|-1.8758661746|8.6335506672|
+| Pro |4.2735164715|1.0588766484|-6.2705748479|-3.2146398231|7.3294514962|
+
+Turn direction+1, so both fail the unchanged required inward>=2m sanity
+check. Woods Casual/Pro throw Instructor trace reversed before a plan exists;
+no lateral triplet or specific cause is established there. No accepted cone
+positions can be reported for either corner. The gate also passed all other
+22suites, including its replay/world guards.
+
+Stop/report clause followed: no extra simulation retry, target/racingline/
+pace/gate/physics/threshold change. Source inspection only: instructor uses
+buildSpeedProfile(line,spec); its current implementation derives corner
+speed from old lateral acceleration/feasibility and does not read tyre-slip
+rules. Whether that is the cause here is unproved. Ask Claude for the next
+bounded controller/speed-plan approach within this owned module, or park.
+Failure facts were extracted once; no repeated diagnosis/status-only commit.
+
+## Cones from the corner, instructor drives through them (Claude's 16 October 13:10 answer)
+
+Built in `src/lessons/drive-lessons.js` and its test file. Result: **the
+instructor drives all four cases cleanly and counts all three cones, the right
+try passes on both corners at both paces, and all 36 checks in
+`tools/test-drive-lessons.mjs` pass**, after one reviewed assertion change (below).
+
+What changed. The cones come from the corner itself: cone 1 at the braking
+point 1.5 m in from the outside road edge, cone 2 at the apex 1.0 m in from the
+inside edge, cone 3 at the exit point 1.5 m in from the outside edge. The apex
+is the track script's own apex share of the turn; the exit is as far past the
+turn's end as the apex is before it; the braking point is where the
+instructor's speed plan starts slowing for the corner. The red board is 25 m
+after cone 1 and never past turn-in. The 2 m check now applies to the cone
+points. The instructor steers a smooth line through the three points with the
+existing `steerForYaw`. Its speed plan comes from the existing tyre helper
+(`tyreSlipSteering`) at 92% (Casual) and 97% (Pro): the fastest speed at which
+the line's bend stays inside the tyre's yaw limit (4% held back for steering
+feedback), corner speed held from turn-in to the exit cone, straight-line
+braking before the corner (80% of full braking), a light brake (under the 50%
+rule) for an earlier bend such as Beaver Kink, and 75% of the helper's
+acceleration (the car does not reach all of it at speed; at 100% the car ran
+about 6 mph under the plan and its first firm brake came 5.4 to 5.9 m after
+cone 1, outside the +5 m window). Gates, clean limits and the right-try rules
+are unchanged.
+
+Per-corner cone points (distance along the road in metres / lateral in metres,
+positive lateral is the right of the road):
+
+- The Cutting, Casual: cone 1 at 1597.0 / -6.00, cone 2 at 1727.9 / +5.52,
+  cone 3 at 1785.1 / -5.00; red board 1622.0; start gate 1513.0, turn-in
+  1693.0, finish 1845.1.
+- The Cutting, Pro: cone 1 at 1594.0 / -6.00 (cones 2 and 3 as above); red
+  board 1619.0.
+- Beaver Hairpin, Casual and Pro: cone 1 at 1760.2 / +5.50, cone 2 at
+  1858.7 / -6.00, cone 3 at 1940.2 / +5.50; red board 1785.2; start gate
+  1498.2, turn-in 1809.0, finish 2000.2.
+
+The instructor's result (same each time and at 30, 60 and 144 FPS; all three
+cones counted; never above 1.0 tyre slip, so no screech):
+
+- The Cutting Casual: 10.58 s, peak slip 0.90, lowest speed 42 mph.
+- The Cutting Pro: 10.24 s, peak slip 0.93, lowest speed 44 mph.
+- Beaver Hairpin Casual: 16.05 s, peak slip 0.95, lowest speed 46 mph.
+- Beaver Hairpin Pro: 15.50 s, peak slip 0.999, lowest speed 48 mph.
+
+Student tries (all pass at 30, 60 and 144 FPS). The right try drives the
+instructor's own line and speed plan with the ordinary steering helper and
+input limits, and passes all four rules on both corners and both paces (this is
+the fix for Beaver Hairpin, which previously missed cone 2; the old scripted
+right driver braked harder than the instructor and arrived too slow). Two
+full-pace tries beat the instructor, a slow try resets the streak, and three
+in a row pass.
+
+Late try (60 FPS; brakes at the board, steers with up to full steering):
+The Cutting Casual screeches 0.85 s, Pro 0.80 s; Beaver Hairpin Casual 1.12 s,
+Pro 1.16 s (needs 0.5 s). It plays `drive.radio.corner.late.result` and
+finishes 0.42 to 0.59 s *faster* than the instructor, with no wall.
+
+**Reviewed assertion change (Claude, design lead, 16 October answer to
+`docs/board/questions/DRIVE-LESSON-1.md`).** The late-try acceptance no longer
+requires losing 0.25 s or ending at a wall. It requires at least 0.5 s of
+screech and that the late try's radio line plays. Why: on these tyres a later
+brake costs no time. Measured: braking at the board, or 35, 45 or 55 m after
+cone 1, always finishes faster than the instructor (0.26 to 0.83 s) until it hits
+the wall (Beaver Hairpin from 45 m, The Cutting from 55 m); an instructor
+braking at full strength still lost by 0.26 to 0.64 s and made the full-pace
+driver crash on Casual. Nothing is loosened beyond that clause; the red board
+stays 25 m after cone 1.
+
+Other test changes. Removed the three trace-based `placeCones` tests
+(widest-point-within-120 m, less-than-2 m movement, relative placement with
+edge limits): they tested behaviour this change removes. Their replacements
+test cone points for both directions, the 2 m check, the board limits and the
+line itself. The `instructorControls` tests only gained a `curvatureAt` on the
+fake line and one new case (light brake before the corner's braking point). The
+native student helper now builds its plan with `lessonPlanFor`; the late driver
+follows the instructor's plan up to cone 1 (needed to survive Beaver Kink).
+
+Checks run here (Linux cloud): `tools/test-drive-lessons.mjs` 36 of 36 pass;
+lane tier `--changed --jobs 8`: every suite passes except
+`tools/test-earned-cars-ui.mjs` and `tools/test-course-kit.mjs`, which fail only
+on "test cleanup requires the Recycle Bin" (Windows-only, unrelated; the laptop
+should run them). `npm run build` passes. FIX-LAUNCH had not landed on
+`integration/wasteland` when this was written: merge it, rerun this suite and
+report any number that moved (instructor times, cone points and the late-try
+screech depend on how the car accelerates). The "native" instructor and student cases ran here
+(about 15 s). No browser or frame check was run.
+
+Removed: the instructor's use of the planned racing line and `buildSpeedProfile`,
+the trace-based `placeCones` (widest-point search) and the old exit-search
+observation window in `buildInstructorRun`, and the three tests above.
