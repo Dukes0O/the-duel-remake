@@ -146,4 +146,10 @@ Nothing.
 
 ## Tests
 
-(Filled in at the end of the card.)
+- `node tools/test-deep-phone.mjs`: 235 checks passed. `test-deep-audio`,
+  `test-p4-audio`, `test-fight-voices` and `test-deep-look` pass after the
+  assertion changes above.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 75 passed, 0
+  failed, 0 not run (after merging current `integration/wasteland`). A first
+  run failed three suites (the pinned checks above); fixed, rerun green.
+- `npm run build`: built.
