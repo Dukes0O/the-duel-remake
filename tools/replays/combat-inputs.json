@@ -49,7 +49,7 @@
       "eventId": "pacific-canyon",
       "car": "falcone_f42",
       "playerS": 500,
-      "opponents": [540, 565, 590],
+      "opponents": [520, 540, 560],
       "opponentLateral": [-3, 0, 3],
       "cpuAttacks": true,
       "durationTicks": 750,

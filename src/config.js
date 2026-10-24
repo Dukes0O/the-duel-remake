@@ -103,7 +103,7 @@ export const CARS = {
   bugatti_bolide: {
     name:'Bugatti Bolide',homage:'Bolide-inspired track hypercar',gearbox:'manual',
     unlockRequirement:{kind:'medals',medals:24,gold:6},factoryMaxed:true,
-    topSpeed:278,accel:10.5,grip:1.15,braking:1.45,gears:[67,110,154,191,225,255,278],
+    topSpeed:278,accel:9.5,grip:1.15,braking:1.45,gears:[67,110,154,191,225,255,278],
     color:0x1f4fa8,accent:0x111316,offRoadGrip:.58,offRoadSpeed:50,offRoadScrub:.64,mass:1450,
     collision:{halfWidth:1.05,halfLength:2.5},height:1.05,kind:'hypercar',
     boostCapacity:1.35,nitroAcceleration:1.35,nitroSpeedBonus:.025,

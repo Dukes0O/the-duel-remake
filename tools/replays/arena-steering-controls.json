@@ -9,62 +9,62 @@
     {
       "car": "falcone_f42",
       "course": "pacific-canyon",
-      "fingerprint": "ac6f4e924db3969177a3a874175f782cbeec5dcd88cc0f40a616fde6a69f495e",
-      "discoveredFingerprint": "12d21f4282acee0826ed151f74d5318f8c0de349eece0a547827e2beb935668a"
+      "fingerprint": "db1e0b05878647683947cbe6c523feb8b1772c9e0a63acfef8b243fe31e17fd8",
+      "discoveredFingerprint": "b826ea00c0d67067b134f75900a7a0d3c8c9b87211d2bef8b9a8dc6be00148e9"
     },
     {
       "car": "stuttgart_959s",
       "course": "pacific-canyon",
-      "fingerprint": "e4969adc2ba4814d3d021dacd2ee52dff819015a7b9191c87970448eb9291725",
-      "discoveredFingerprint": "e974fcf17c68fbbb43ca409b5d7ba5b06fdc39b4ae2f7436be7a1c48e33a9fce"
+      "fingerprint": "62d840f0852af5d4ba1d6e5ca2da0a29d8c07aee97877a1e15bfb72cbe449b9f",
+      "discoveredFingerprint": "45162752e4adefce720914b8139e130c1c9a398a1838260c91ddc8a825090307"
     },
     {
       "car": "falcone_heritage",
       "course": "pacific-canyon",
-      "fingerprint": "551aa377fa913999ea0de12a012696c06f2d2d286f57d601ada9f7f4fa9dab26",
-      "discoveredFingerprint": "c45a9a20efe4a4172c07cfee837d521ec68b71fd86113fea0e2bc8f8d20992ed"
+      "fingerprint": "76efe7fecf9fc4cf66da5e30dedba405d516ec8f8764eea9535bac9e09cf2add",
+      "discoveredFingerprint": "2ecb6ce5985611c85c6eef35802b1c1d2afbff025063ae12ecfc6c4d74733a2c"
     },
     {
       "car": "aurora_gt",
       "course": "pacific-canyon",
-      "fingerprint": "4f0293d20bbd7ede209dde59f98866fa47b344246ae92589965d337c9f61235d",
-      "discoveredFingerprint": "99e1f41266bf90ea48e41e1d21ce91942ccc9ce032c85eadbe70277e522e0ec4"
+      "fingerprint": "e31302f5da60d85dd9e727906d1acf2b2091081e1ca3a2abc6440ce8415393b4",
+      "discoveredFingerprint": "c51bafbd1653feaca8ba6f014ed49d008d65e194839ae69fd5dbf2bd2f5e202b"
     },
     {
       "car": "dusthawk_rally",
       "course": "pacific-canyon",
-      "fingerprint": "60d9bab65978d2afc837a7345b44be62a98efebaa186ec00d18fd3b72f5157a6",
-      "discoveredFingerprint": "e1f88573ec57ac2d8199aa3c7898e5e5aaa395cded3ff3e559f4b3abcad87e44"
+      "fingerprint": "72f8c0563b8c34cd4348c432c05c424cda26fda154a9a28d4416fac95f06f6eb",
+      "discoveredFingerprint": "5ab69cda8c0803ac6833fc984294fbd8aa48a7de46dda8a4ffd007ffcd6e8c58"
     },
     {
       "car": "banshee_muscle",
       "course": "pacific-canyon",
-      "fingerprint": "286f29ae647a4b2cb18d3fd87abdaf31a1ee099d603b7ed65397ca77beadd141",
-      "discoveredFingerprint": "ea60fd447c6eaf7d7cc82b2b896d470102f3a15230cd4f1a6d6677d64577fac4"
+      "fingerprint": "c0f570e8a368f1b957e2c32b5e5b2985063b8b9c2255158a7217bf791d090eb7",
+      "discoveredFingerprint": "e945e937cb1770c28f0e6b96b5464ed2f56fcc445dbda56f8a32ce703a97fdcc"
     },
     {
       "car": "viper_proto",
       "course": "pacific-canyon",
-      "fingerprint": "88ce6796f6bb38c46dece2de5d07b42056dc3128a5e67aa73b272c2809e097f4",
-      "discoveredFingerprint": "990f39360989658d034f03cdd14e8773dc4eb04c4ea3ffd1dd35cefe81eef9a0"
+      "fingerprint": "e5940fbb1b1eaa21284869c647cc078e44903db1436a3cc2b779c70e7a4d6df7",
+      "discoveredFingerprint": "a421ace237a206174aadf292337b2926368b113782d4e56aa0bed018c1c5cc7e"
     },
     {
       "car": "titan_monster",
       "course": "pacific-canyon",
-      "fingerprint": "9fb20d620e27ea60aba918725704fc3de265d5375b28cd523986203b56cf1b14",
-      "discoveredFingerprint": "d8be9b745ec99e3d8d0cdd1e624f3b8806e6a405e84374518cbd40e0c9d8d14f"
+      "fingerprint": "d792a0f5686ac1efc8148eae7e7b7db3210e0c6861f6458ee77bc7d2c255f127",
+      "discoveredFingerprint": "fc9dce234892023752fea527d5a316b77a427fb417e1acdf8d5ea51a97b86ab0"
     },
     {
       "car": "koenigsegg_jesko",
       "course": "pacific-canyon",
-      "fingerprint": "3817edb340d181a9f4d5277860af016ed6c11acaefe5ce3634d712422f5209a9",
-      "discoveredFingerprint": "da3272440673f57950a836c1c0d54b1d8be1fa16dbb0728d14c25ffa2c7839b6"
+      "fingerprint": "fe342370c0cd5b79b3f01acd6d122eed35df0f7ba6395d0b774ed9742c6b93e7",
+      "discoveredFingerprint": "547dcceed4b3644a5d373345c8163bc470f57a0c37e2d32bac7edf73e3807289"
     },
     {
       "car": "titan_monster",
       "course": "high-country",
-      "fingerprint": "f6fc5cacb3805cf2a857505a5e2be314a248bec81d5e27927404259dc1fc03c6",
-      "discoveredFingerprint": "653070a4f1b12d61372addb42b4bf07f5759d763aaebb30d76284d006e254ef2"
+      "fingerprint": "a40e2019fa986422b0125253bac4c3a9f699f6e813332cbe0ec9d17fba2ee348",
+      "discoveredFingerprint": "64c4a542364347776afe72b188e3bea846fe5208d34cc0180c017ef7c4f4afce"
     }
   ],
   "discoveredBaseline": "Identical discovered inputs on integration and BALANCE-W2-OFF-RETIRE; original fingerprints retained."

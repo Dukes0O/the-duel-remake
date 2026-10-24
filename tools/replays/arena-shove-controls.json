@@ -35,52 +35,52 @@
     {
       "car": "falcone_f42",
       "course": "pacific-canyon",
-      "fingerprint": "ac6f4e924db3969177a3a874175f782cbeec5dcd88cc0f40a616fde6a69f495e"
+      "fingerprint": "db1e0b05878647683947cbe6c523feb8b1772c9e0a63acfef8b243fe31e17fd8"
     },
     {
       "car": "stuttgart_959s",
       "course": "pacific-canyon",
-      "fingerprint": "e4969adc2ba4814d3d021dacd2ee52dff819015a7b9191c87970448eb9291725"
+      "fingerprint": "62d840f0852af5d4ba1d6e5ca2da0a29d8c07aee97877a1e15bfb72cbe449b9f"
     },
     {
       "car": "falcone_heritage",
       "course": "pacific-canyon",
-      "fingerprint": "551aa377fa913999ea0de12a012696c06f2d2d286f57d601ada9f7f4fa9dab26"
+      "fingerprint": "76efe7fecf9fc4cf66da5e30dedba405d516ec8f8764eea9535bac9e09cf2add"
     },
     {
       "car": "aurora_gt",
       "course": "pacific-canyon",
-      "fingerprint": "4f0293d20bbd7ede209dde59f98866fa47b344246ae92589965d337c9f61235d"
+      "fingerprint": "e31302f5da60d85dd9e727906d1acf2b2091081e1ca3a2abc6440ce8415393b4"
     },
     {
       "car": "dusthawk_rally",
       "course": "pacific-canyon",
-      "fingerprint": "60d9bab65978d2afc837a7345b44be62a98efebaa186ec00d18fd3b72f5157a6"
+      "fingerprint": "72f8c0563b8c34cd4348c432c05c424cda26fda154a9a28d4416fac95f06f6eb"
     },
     {
       "car": "banshee_muscle",
       "course": "pacific-canyon",
-      "fingerprint": "286f29ae647a4b2cb18d3fd87abdaf31a1ee099d603b7ed65397ca77beadd141"
+      "fingerprint": "c0f570e8a368f1b957e2c32b5e5b2985063b8b9c2255158a7217bf791d090eb7"
     },
     {
       "car": "viper_proto",
       "course": "pacific-canyon",
-      "fingerprint": "88ce6796f6bb38c46dece2de5d07b42056dc3128a5e67aa73b272c2809e097f4"
+      "fingerprint": "e5940fbb1b1eaa21284869c647cc078e44903db1436a3cc2b779c70e7a4d6df7"
     },
     {
       "car": "titan_monster",
       "course": "pacific-canyon",
-      "fingerprint": "9fb20d620e27ea60aba918725704fc3de265d5375b28cd523986203b56cf1b14"
+      "fingerprint": "d792a0f5686ac1efc8148eae7e7b7db3210e0c6861f6458ee77bc7d2c255f127"
     },
     {
       "car": "koenigsegg_jesko",
       "course": "pacific-canyon",
-      "fingerprint": "3817edb340d181a9f4d5277860af016ed6c11acaefe5ce3634d712422f5209a9"
+      "fingerprint": "fe342370c0cd5b79b3f01acd6d122eed35df0f7ba6395d0b774ed9742c6b93e7"
     },
     {
       "car": "titan_monster",
       "course": "high-country",
-      "fingerprint": "f6fc5cacb3805cf2a857505a5e2be314a248bec81d5e27927404259dc1fc03c6"
+      "fingerprint": "a40e2019fa986422b0125253bac4c3a9f699f6e813332cbe0ec9d17fba2ee348"
     }
   ]
 }
