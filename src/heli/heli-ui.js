@@ -237,7 +237,9 @@ export function pumpLabel(fuelKg, {credits = 0, refuels = 0} = {}) {
 const PUMP_LABEL = /<span class="heli-pump-label">[^<]*<\/span>/;
 
 // The instructor's board on the home pad, or the lesson running now.
-export function lessonsMarkup(view, board, {opening = false} = {}) {
+// driving (DRIVE-LESSON-HELIPAD): {rows, notes} from the app, the same Driving rows the menu's
+// board shows; left out, the board is exactly the helicopter's own.
+export function lessonsMarkup(view, board, {opening = false, driving = null} = {}) {
   if (!view?.heli) return '';
   if (view.lesson) {
     const rules = LESSON_RULES[view.lesson.id], text = LESSON_TEXT[view.lesson.id];
@@ -249,7 +251,9 @@ export function lessonsMarkup(view, board, {opening = false} = {}) {
   }
   if (!atHomePad(view) || !board?.length) return '';
   const rows = board.map(item => ({group: 'Helicopter', id: item.id, name: LESSON_TEXT[item.id].name, open: item.open, done: item.done}));
-  return `<div class="heli-lessons" role="group" aria-label="Instructor"><span>INSTRUCTOR</span>${lessonBoardMarkup(rows, {action: 'data-heli-lesson'})}${
+  const drivingRows = driving?.rows?.length ? driving.rows : [];
+  const notes = drivingRows.length ? (driving.notes ?? []).map(note => `<p class="heli-lesson-note">${escape(note)}</p>`).join('') : '';
+  return `<div class="heli-lessons" role="group" aria-label="Instructor"><span>INSTRUCTOR</span>${lessonBoardMarkup([...rows, ...drivingRows], {action: 'data-heli-lesson'})}${notes}${
     opening ? '<button type="button" class="heli-skip" data-heli-lesson="skip">Skip the opening (marks lessons 1 and 2 done)</button>' : ''}</div>`;
 }
 
@@ -276,10 +280,12 @@ export function createHeliUi({host, app}) {
   const lessonAction = action => {
     const session = app.heliSession;
     if (!session) return;
-    const result = action === 'stop' ? session.stopLesson() : action === 'skip' ? session.skipOpening()
+    // A Driving row starts the driving lesson, from the pad, through the app (the helicopter visit ends).
+    const driving = action.startsWith('start:') ? app.heliDrivingBoard?.()?.rows.find(row => row.id === action.slice(6)) : null;
+    const result = driving ? app.heliStartDriving(driving.id) : action === 'stop' ? session.stopLesson() : action === 'skip' ? session.skipOpening()
       : action.startsWith('start:') ? session.startLesson(action.slice(6)) : null;
     if (result && result.ok === false && result.reason) shown.push({text: result.reason, until: performance.now() / 1000 + NOTICE_SECONDS});
-    app._heliEvents?.(session.takeEvents());
+    if (app.heliSession === session) app._heliEvents?.(session.takeEvents());
   };
   const click = event => {
     const lessonButton = event.target.closest('[data-heli-lesson]');
@@ -334,7 +340,8 @@ export function createHeliUi({host, app}) {
       } else lastControls = set(controls, controlsHtml, lastControls);
       lastNotices = set(notices, shown.map(item => `<p>${escape(item.text)}</p>`).join(''), lastNotices);
       const lessonBoard = app.heliSession?.lessonBoard?.() ?? [];
-      lastLessons = set(lessonsHost, lessonsMarkup(view, lessonBoard, {opening: lessonBoard.length > 0 && lessonBoard.every(item => !item.done)}), lastLessons);
+      lastLessons = set(lessonsHost, lessonsMarkup(view, lessonBoard, {opening: lessonBoard.length > 0 && lessonBoard.every(item => !item.done),
+        driving: !view.lesson && atHomePad(view) ? app.heliDrivingBoard?.() ?? null : null}), lastLessons);
       const bar = lessonsHost.querySelector('.heli-lesson-hold span');
       if (bar) { const width = `${(holdShare(view) * 100).toFixed(0)}%`; if (bar.style.width !== width) bar.style.width = width; }
       // The dispatch board opens with lesson 3 and hides while a lesson runs.
