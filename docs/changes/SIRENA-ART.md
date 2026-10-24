@@ -31,17 +31,17 @@ Claude judges each look round (at most three).
 
 ## What was built
 
-- `src/sirena-vehicle.js`: `createSirenaVehicle`, 1.96 x 4.45 x 1.06 m, 37,604
-  triangles and 47 draws (budget 73,600 and 66), the standard contract (driver,
+- `src/sirena-vehicle.js`: `createSirenaVehicle`, 1.96 x 4.45 x 1.06 m, 42,300
+  triangles and 49 draws (budget 73,600 and 66), the standard contract (driver,
   steering, four wheels, front axle steers, brake lights, two boost flames,
   paint, directional damage and glass cracks, crush, exact reset).
 - `public/assets/models/sirena/`: `wreck`, `badge`, `steering-wheel`, `wheel`,
   `bonnet`, `door`, `lift-bag`, `abalone` (`.glb`) and `manifest.json`;
-  806,476 bytes together (limit 1.5 MB).
+  884,776 bytes together (limit 1.5 MB).
 - `tools/art/sirena-props.mjs`, `tools/art/sirena-sheet.py`,
   `tools/blender/sirena-review.py`; credits note in
   `public/assets/models/CREDITS.md`.
-- `tools/test-sirena-vehicle.mjs` (484 checks): the contract and shape, size
+- `tools/test-sirena-vehicle.mjs` (502 checks): the contract and shape, size
   budget, tire grounding, damage, crush and reset, tumbling, and the eight models
   (manifest bytes, one mesh each, real sizes, rebuild byte for byte).
 - `tools/test-blender-output.mjs`: one added entry for `sirena-review.py`
@@ -50,7 +50,15 @@ Claude judges each look round (at most three).
 
 ## Tests and gates
 
-Recorded when the card is ready (lane tier, build, look verdict).
+- Look: accepted by Claude, round 2 of 3 (`docs/board/looks/sirena/round-2.jpg`
+  and `round-2-review.md`); round 1's sheet was removed when round 2 was committed.
+- `node tools/test-sirena-vehicle.mjs`: 502 checks pass (car 42,300 triangles and
+  49 draws; eight models 884,776 bytes, rebuilt byte for byte).
+- Lane tier from PowerShell (`node tools/run-tests.mjs --tier lane --changed
+  --jobs 4 --keep-going`): 39 passed, 0 failed, 0 not run. `npm run build` passes.
+- No frame check (rule 9), no sound, no locks. Nothing is registered in the game:
+  SIRENA-CAR adds the `falcone_sirena` config and router entry, DEEP-SIRENA-VIEW
+  draws the wreck and parts and does the in-game look.
 
 ## Removed
 
