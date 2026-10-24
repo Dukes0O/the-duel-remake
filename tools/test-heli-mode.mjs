@@ -377,6 +377,8 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     // LAB-RULES: the Lab reads the helicopter's own numbers and lessons.
     'src/lab/lab-heli.js': name => /^heli\/heli-(?:flight|bucket|cable)\.js$/.test(name),
     'src/lab/lab-lessons.js': name => name === 'heli/heli-save.js',
+    // LAB-HELI-CHALLENGES: the challenges run the fire rules, the thrust tank and the clear-ground search of the helicopter.
+    'src/lab/lab-challenges.js': name => /^heli\/heli-(?:flight|fire|search)\.js$/.test(name),
   };
   // LAB-BENCHES: each bench runs the helicopter's own rules (never its drawing files).
   const labBench = name => !drawingFile.test(name);

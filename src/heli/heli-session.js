@@ -14,7 +14,8 @@ import {isCourseUnlocked} from '../course-access.js';
 import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson} from './heli-lessons.js';
 import {CRATE} from './heli-cable.js';
 import {BUCKET, RETARDANT_LITRES, createBucket, stepBucket, setBucketWater, bucketHit, bucketWords, bucketHolds, aimPoint, aimLocked, aimRingRadius, bucketReading} from './heli-bucket.js';
-import {heliUpgrades, heliUpgradesOf, ownedLabUpgrades, chooseLabLine} from '../lab/lab-heli.js';
+import {heliUpgrades, heliUpgradesOf, ownedLabUpgrades, chooseLabLine, CHALLENGE_IDS, CHALLENGE_RULES, challengeSpots, createChallenge, stepChallenge,
+  challengeProps, challengeBriefing, passLabChallenge, labChallengeOpen, labChallengesDone} from '../lab/lab-heli.js';
 import {bucketDamageOf, damageBucket as damageBucketSave, repairBucket as repairBucketSave, FIRE_MONEY, missionsOf, setMissions} from './heli-save.js';
 import {createFireRun, fireWorld} from './heli-fire-run.js';
 import {callOf, rescueOf, rescueConditions, isRescueKind, tickRescue, finishRescue, failRescue, clockLeft, duskOf, rescueLimit,
@@ -195,6 +196,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   let jobCache = {key: '', job: null};
   // The lesson running now, and the events it has not read yet.
   let lesson = null, lessonEvents = [], retryAfterCrash = null;
+  // The Lab's helicopter challenge in hand (docs/LAB.md 4.1), the events and drops it has not read yet.
+  let challenge = null, challengeEvents = [], challengePatches = [];
   const autopilot = createAutopilot();
   const fallen = new Set();
   const pending = [];
@@ -255,7 +258,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     }
     return result;
   };
-  const emit = event => { pending.push(event); if (lesson) lessonEvents.push(event); return event; };
+  const emit = event => { pending.push(event); if (lesson) lessonEvents.push(event); if (challenge) challengeEvents.push(event); return event; };
   // H2 Fire (docs/HELI_FIRE.md): only with the forest-fire switch on. Each
   // course's fire grid is built once from its own course model at the
   // helicopter's seed (loadFireCourse), never from the course being flown,
@@ -375,6 +378,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     offer = null;
     layCrates();
     if (lesson) endLesson();
+    // Leaving the course ends a Lab challenge, except Air and altitude, which is the flight to Summit Run with its crate.
+    if (challenge && !(challenge.id === 'altitude' && kept?.labLoad)) endChallenge('left');
     if (autopilot.engaged) setAutopilotTarget(autopilot, destination === courseId ? zoneTarget() : null);
     // A job car on the cable that has come back to its pick-up heads for its drop-off.
     if (kept?.job && job?.id === kept.job && courseId === job.from) aim(job.to);
@@ -571,6 +576,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     hookHeld = false; hookReeled = false;
     storeFuel();
     settleDirt();
+    // A crash ends a Lab challenge try; the usual repair is all it costs.
+    if (challenge) endChallenge('crashed');
     // A crash in a lesson means try again: it starts over on the pad.
     if (lesson) {
       retryAfterCrash = lesson.id;
@@ -686,6 +693,56 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         loads = loads.filter(car => !car.crate);
         loads.push(crateLoad());
       }
+    }
+  }
+  // ---- the Lab's helicopter challenges (docs/LAB.md 4.1, src/lab/lab-challenges.js) ----
+  // A try starts on the home pad with the helicopter on the ground. The loads it uses are `labLoad`s, removed with it.
+  const labLoads = () => loads.filter(car => car.labLoad);
+  function layLabLoad(id, spot) {
+    const car = id === 'altitude'
+      ? Object.assign(createLoad({id: 'lab-crate', massKg: CHALLENGE_RULES.altitude.crateKg, x: spot.x, z: spot.z, heading: 0, ground: world.ground}), {crate: true})
+      : createLoad({id: CHALLENGE_RULES[id].carId, massKg: carMassKg(CHALLENGE_RULES[id].carId), x: spot.x, z: spot.z, heading: site.parking.heading ?? 0, ground: world.ground});
+    car.own = false; car.job = null; car.labLoad = true;
+    return car;
+  }
+  function endChallenge(why) {
+    if (!challenge) return false;
+    const id = challenge.id;
+    loads = loads.filter(car => !car.labLoad);
+    challenge = null; challengeEvents = []; challengePatches = [];
+    if (why) emit({type: 'challengeStopped', challenge: id, why});
+    return true;
+  }
+  function beginChallenge(id) {
+    const spots = challengeSpots(id, world, site);
+    if (!spots) return {ok: false, reason: 'This challenge has no room here.'};
+    challenge = createChallenge(id, spots);
+    challengeEvents = []; challengePatches = [];
+    if (id === 'lift' || id === 'pendulum' || id === 'altitude') loads.push(layLabLoad(id, spots.load));
+    // No arrow and no autopilot for the heading flight.
+    if (id === 'headings') { autopilot.engaged = false; aim(null); }
+    emit({type: 'challengeStarted', challenge: id});
+    return {ok: true};
+  }
+  function stepChallengeNow(dt) {
+    const held = loads.find(car => car.labLoad && car.hooked) ?? null;
+    const events = challengeEvents.splice(0), patches = challengePatches.splice(0);
+    const loadHeight = held ? Math.max(0, held.y - (held.restHeight ?? CABLE.restHeight) - world.ground.height(held.x, held.z)) : null;
+    const view = {courseId: site.courseId, heli: {x: heli.x, y: heli.y, z: heli.z, groundY: heli.groundY, onGround: heli.onGround, fuelKg: heli.fuelKg},
+      load: held, loadHeight, patches, events, ringIndex: labNow()?.ringIndex ?? 0};
+    const id = challenge.id, result = stepChallenge(challenge, view, dt);
+    if (result.cue) emit({type: 'cue', id: result.cue});
+    for (const event of result.events) emit(event);
+    if (result.result === 'passed') {
+      commit(passLabChallenge(save, id, result.ring ?? undefined));
+      endChallenge(null);
+      emit({type: 'challengePassed', challenge: id});
+    } else if (result.result === 'retry') {
+      emit({type: 'challengeRetry', challenge: id, reason: result.reason});
+      // Start over on the pad: new loads, a fresh fire, the same buoys.
+      loads = loads.filter(car => !car.labLoad);
+      challenge = null; challengeEvents = []; challengePatches = [];
+      if (id !== 'altitude' || site.courseId === HOME_COURSE) beginChallenge(id);
     }
   }
   // The pump opens with lesson 3 (the first tank is always free, and a
@@ -1227,7 +1284,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
             fire?.bucketEvent(event);
           }
           // A drop reaches the fire as a whole, once all its water has landed.
-          dropWater.push(...poured.patches);
+          if (challenge) challengePatches.push(...poured.patches); else dropWater.push(...poured.patches);
           if (dropWater.length && !car.pouring && !car.parcels.length) { waterOnFire(dropWater); dropWater = []; }
           aimStep(car);
         }
@@ -1246,6 +1303,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (surveyRun) surveyStepNow(dt, gear);
       fire?.step({dt, engine: heli.engine === true, aboveGround: heli.y - world.ground.height(heli.x, heli.z), lesson: !!lesson});
       if (lesson) stepLessonNow(dt);
+      if (challenge) stepChallengeNow(dt);
       if (strandedOnGround()) {
         storeFuel();
         const truck = commit(fuelTruck(save, flag));
@@ -1355,6 +1413,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // P: the autopilot on or off. It flies toward the chosen destination.
     pressAutopilot() {
       if (phase !== 'flying') return false;
+      if (challenge?.id === 'headings') return false;
       const on = toggleAutopilot(autopilot, heli);
       if (on) setAutopilotTarget(autopilot, autopilotGoal());
       emit({type: on ? 'autopilotOn' : 'autopilotOff', reason: 'pilot'});
@@ -1363,6 +1422,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // Only while flying: a cruise leg in progress keeps its destination.
     setDestination(courseId) {
       if (phase !== 'flying' || courseId !== null && !isDestination(courseId, dflag)) return false;
+      if (challenge?.id === 'headings') return false;
       aim(courseId);
       return true;
     },
@@ -1468,6 +1528,25 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     raceHereOffer() {
       return phase === 'flying' && offer && site?.courseId === offer.courseId ? {...offer} : null;
     },
+    // The Lab's challenges (docs/LAB.md 4.1): the rows for the board, and start or end the try in hand.
+    challengeBoard() {
+      return Object.freeze(CHALLENGE_IDS.map(id => Object.freeze({id, open: labEnabled === true && labChallengeOpen(save, id).open,
+        active: challenge?.id === id, done: labEnabled === true && labChallengesDone(save)[id] === true})));
+    },
+    startChallenge(id) {
+      if (labEnabled !== true) return {ok: false, reason: 'The Lab is not available yet.'};
+      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'Challenges start on the home pad.'};
+      if (!CHALLENGE_IDS.includes(id)) return {ok: false, reason: 'That is not a challenge.'};
+      const open = labChallengeOpen(save, id);
+      if (!open.open) return {ok: false, reason: open.note};
+      if (lesson) return {ok: false, reason: 'Finish the lesson first.'};
+      if (loads.some(car => car.hooked)) return {ok: false, reason: 'Set the load down first.'};
+      if (id === 'lift' && heli.fuelKg < CHALLENGE_RULES.lift.fullTankKg) return {ok: false, reason: 'Fill the tank first.'};
+      if (id === 'altitude' && !places[CHALLENGE_RULES.altitude.courseId]) return {ok: false, reason: 'Summit Run is not open yet.'};
+      endChallenge(null);
+      return beginChallenge(id);
+    },
+    stopChallenge() { return endChallenge('stopped'); },
     // The instructor's board: every lesson, open, done or running.
     lessonBoard() {
       const done = lessonsDone();
@@ -1480,6 +1559,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const done = lessonsDone();
       if (!LESSON_ORDER.includes(id) || !(lessonOpen(done, id) || done[id])) return {ok: false, reason: 'That lesson is not open yet.'};
       if (lesson) endLesson();
+      if (challenge) endChallenge('stopped');
       if (id === 'carry' && loads.some(car => car.hooked)) return {ok: false, reason: 'Set the load down first.'};
       lesson = createLesson(id, {spot: {x: site.zone.x, z: site.zone.z}, target: site.carryTarget});
       lessonEvents = [];
@@ -1696,6 +1776,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     leave() {
       // Leaving with a rescue in hand is a failure (section 3.4).
       failRescueNow('left');
+      endChallenge(null);
       hookHeld = false; hookReeled = false;
       if (dropWater.length && site) { waterOnFire(dropWater); dropWater = []; }
       fire?.flush();
@@ -1721,7 +1802,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     view() {
       const fireInfo = fire?.view(heli) ?? null;
       return Object.freeze({
-        phase, courseId: site?.courseId ?? null, destination, cruiseOffered, autopilot: autopilot.engaged,
+        phase, courseId: site?.courseId ?? null, destination: challenge?.id === 'headings' ? null : destination, cruiseOffered, autopilot: autopilot.engaged,
         heli: heli ? Object.freeze({...heli}) : null,
         // load: the car on the cable, else the player's own car, else any
         // other car here. loads: every car on this course.
@@ -1734,6 +1815,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         ...(wildOn ? {survey: surveyView()} : {}),
         job: jobInHand(),
         lesson: lesson ? Object.freeze({id: lesson.id, held: lesson.held, spot: lesson.spot, target: lesson.target}) : null,
+        ...(challenge ? {challenge: Object.freeze({id: challenge.id, elapsed: challenge.elapsed, briefing: challengeBriefing(challenge), props: challengeProps(challenge)})} : {}),
         crate: site?.crate ?? null,
         readout: heli ? heliReadout(heli, {loadKg: loads.find(car => car.hooked)?.massKg ?? 0}) : null,
         zone: site?.zone ?? null, parking: site?.parking ?? null, area: site?.area ?? null,
