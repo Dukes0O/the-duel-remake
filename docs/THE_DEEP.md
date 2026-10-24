@@ -187,8 +187,9 @@ your first part is raised.
 1. **First dive.** Ana calls: she asks for help with the survey (the log) and
    tells the Sirena story in two lines.
 2. **The badge.** A few metres from the bottom of the ramp, something glints
-   in the sand: Falcone's enamel badge. Drive up and stop beside it. Ana
-   recognises it and fits the **sonar** to your dive kit (section 6.3).
+   in the sand: Falcone's enamel badge. Drive up and stop beside it (within
+   4 m, under 3 km/h, for a second): the badge comes up with no key and no
+   bag. Ana recognises it and fits the **sonar** to your dive kit (section 6.3).
 3. **Four parts with the sonar.** The steering wheel and a front wheel in the
    Kelp Forest (the wheel is tangled in a kelp holdfast), the bonnet at the
    forest's edge, and a door with the number 7 on the Drop-off lip. Each one
@@ -263,7 +264,8 @@ A fourth stock voice from the voice service the game already uses, a warm
 woman's voice not yet used by any crew member or radio (Matilda if it is
 offered), recorded clean and played through the radio chain plus a slow
 warble, because the phone works by sound through water. Lines never name
-prices; cards show numbers. Ids are `deep.ana.<step>`.
+prices; cards show numbers. Ids are `deep.ana.<step>`. Recorded with Bella:
+Matilda is already Odessa on the crew.
 
 | Id | Line |
 | --- | --- |

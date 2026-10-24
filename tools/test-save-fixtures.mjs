@@ -7,7 +7,7 @@ import { loadGhosts, saveGhosts, GHOST_KEY } from '../src/ghost.js';
 
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
 const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWith('.json')).sort();
-assert.equal(files.length, 17, 'review the historical save-shape fixture roster');
+assert.equal(files.length, 18, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
   const values = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));
@@ -65,6 +65,9 @@ function preserveProfile(raw, loaded, label) {
   }
   if (Object.hasOwn(raw, 'drivingLessons')) equal(loaded.drivingLessons, raw.drivingLessons, `${label}: driving lesson progress`);
   else equal(Object.hasOwn(loaded, 'drivingLessons'), false, `${label}: no lesson field added to old saves`);
+  // The Deep field is optional: kept exactly when saved (the Sirena's sonar, raised and coastCup included), never added to an older save.
+  if (Object.hasOwn(raw, 'deep')) equal(loaded.deep, raw.deep, `${label}: Deep progress`);
+  else equal(Object.hasOwn(loaded, 'deep'), false, `${label}: no Deep field added to old saves`);
   // The Lab field is optional too: kept exactly when saved (unknown keys included), never added to an older save.
   if (Object.hasOwn(raw, 'lab')) equal(loaded.lab, raw.lab, `${label}: Lab progress`);
   else equal(Object.hasOwn(loaded, 'lab'), false, `${label}: no Lab field added to old saves`);
