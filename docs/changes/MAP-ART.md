@@ -36,4 +36,8 @@ Nothing replaced.
 
 ## Gates
 
-Pending.
+24 October 2026, once, on the final commit (integration already merged): `node tools/test-blender-output.mjs`
+(77 checks, includes the new recipe's path plan), `node tools/test-repo-hygiene.mjs` passed, `node
+tools/run-tests.mjs --tier lane --changed --jobs 4`: 34 passed, 0 failed (344 s; a first run stopped
+on `test-review-evidence` because each look sheet needs its own review note, which was added),
+`npm run build`: pass. No browser or frame check: nothing loads these models yet (rule 9).
