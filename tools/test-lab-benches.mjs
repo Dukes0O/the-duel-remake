@@ -365,6 +365,8 @@ test('the explanations in docs/LAB.md section 4 quote numbers the benches produc
   quoted('Aluminium weighs about a third as much as steel');
   // Braking: four times the road from 100 as from 50.
   quoted('from 100 mph a car needs four times the road it needs from 50');
+  quoted('shows that weight shift at a gentle 1 g stop; the stopping distances use the car\'s full braking');
+  near(frontLoadShare(), 0.5 + 0.5 / 2.6, 1e-12, 'the weight shift at 1 g');
   // Fuel: three quarters of a kilo a litre, 52 kg in 70 litres.
   quoted('about three quarters of a kilo a litre'); quoted('a 70-litre tank holds about 52 kg');
   // G-force: twice the speed, four times the push; half the radius, twice the push; the game's 2.5 g.

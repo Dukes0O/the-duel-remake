@@ -27,9 +27,9 @@ Sound cues named per bench (not made here; LAB-RADIO): `lab.clunk` (lift, fuel),
 
 The wind tunnel uses the game's rule where there is one: Grip is the tyre-slip rule (full grip up to slip 1, which is 4.3 degrees of slide, then less, squeal from `tyreSlipRawSound`), Braking is the car's real braking (`DRIVE.brakeAccel x car.braking`, stops from 100 mph in four times the road of 50), Fuel uses the helicopter table's car masses and the car's launch acceleration. Downforce, spring rates and brake balance have no game rule yet (LAB-TUNE makes them), so those are plain physics with the constants written at the top of `tunnel.js`. Strength uses standard material values because the game has no material rules. The wax glide uses only the ski rules' two frictions; which wax suits which snow is the lesson's.
 
-## Explanations that changed (needs Claude's review; also in `docs/board/questions/LAB-BENCHES.md`)
+## Explanations that changed (approved by Claude, 24 October; see "Claude answers" on the card)
 
-Three sentences in `docs/LAB.md` 4.4 said things the model does not support, so they were corrected to what the bench shows (the old and new text are in the question file): Suspension (the tyre stays down about as well on stiff and soft springs; stiff shakes the body 17% harder and leans 2.2 degrees against 6.5), Grip (the game's tyre keeps all its grip up to 4.3 degrees, it has no rising part) and G-force (the game allows 2.5 to 3.5 g, not "about 2.5 g"). `tools/test-lab-benches.mjs` checks that docs/LAB.md still quotes the numbers the benches produce.
+Three sentences in `docs/LAB.md` 4.4 said things the model does not support, so they were corrected to what the bench shows: Suspension (the tyre stays down about as well on stiff and soft springs; stiff shakes the body 17% harder and leans 2.2 degrees against 6.5), Grip (the game's tyre keeps all its grip up to 4.3 degrees, it has no rising part) and G-force (the game allows 2.5 to 3.5 g, not "about 2.5 g"). The Braking explanation also now says plainly that the weight shift is shown at a gentle 1 g stop while the stopping distances use the car's full braking (Claude's request). `tools/test-lab-benches.mjs` checks that docs/LAB.md still quotes the numbers the benches produce.
 
 ## Tests
 
