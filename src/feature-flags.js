@@ -35,6 +35,10 @@ export const FEATURE_STATES = Object.freeze({
   // H3 Skins (docs/HELI_WILDLIFE.md): mission skins, gear, dirt and the wash. Off in the game; works only with the helicopter on.
   // Named heli-skins, not heliSkins as the packet says: switch names are lower case with hyphens.
   'heli-skins': 'dev',
+  // The Lab (docs/LAB.md): lessons, upgrades and their save field. Off in the game.
+  lab: 'dev',
+  // Lab tuning (docs/LAB.md 5): the Tune page and its physics, a separate switch so the race feel is judged alone.
+  'lab-tuning': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
