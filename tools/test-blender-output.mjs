@@ -60,6 +60,9 @@ const reviewHelpers = [
   // SIRENA-ART: any-size look renders of the wreck, parts, bag and abalone.
   {script:'tools/blender/sirena-review.py', args:['--','--glb','missing.glb','--views','three-quarter,side'], render:'folder',
     views:['three-quarter','side']},
+  // LAB-ART: the whole Lab from named cameras, or one bench on its own.
+  {script:'tools/blender/lab-review.py', args:['--','--glb','missing.glb','--views','overview,three-quarter'], render:'folder',
+    views:['overview','three-quarter']},
   {script:'tools/blender/kit-sheet.py', args:['--round','1','--blender','missing-blender.png','--high','missing-high.png','--performance','missing-performance.png'], render:false},
 ];
 const failures = [];
