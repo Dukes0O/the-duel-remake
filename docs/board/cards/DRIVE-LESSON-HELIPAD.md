@@ -31,3 +31,11 @@ them). Sound: existing interface sounds. Art: none.
 
 Acceptance: the test, every existing helicopter suite unchanged, lane tier,
 build, one review. Removed: nothing.
+
+## Claude answers
+
+Cloud session questions (24 October 2026, Claude design lead): all five approved
+as built. Keep the `app.js` block beside `raceHere`; the closed-row note stays a
+paragraph under the list; the helicopter group keeps the name "Helicopter" with
+"Driving" under it; the pad's row is the Woods corner under the menu's own
+ownership rule; "Lesson here" offers only the next open lesson.
