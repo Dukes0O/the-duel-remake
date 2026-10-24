@@ -34,6 +34,19 @@ title for the returning forest stretch, deep water beyond the lip left to the
 look) were approved by Claude; the answers are on the DEEP-TRAIL card, and
 DEEP-SIRENA-VIEW now says the seaward side of the lip must read as a real drop.
 
+## Changed assertions (for Claude's written review, AGENTS rule 18)
+
+Both follow from the card's own hooks; neither loosens what the test checks.
+
+- `tools/test-career-backup.mjs`: finds the app construction with
+  `new App(` instead of `new App()`, because `src/main.js` now passes
+  `{deepProviders:[kelpCoastProvider]}`. The check is still that the browser entry
+  backs up raw and imported careers before `App` can migrate.
+- `tools/test-deep-look.mjs`: the approved-import list gains four exact
+  entries (`src/main.js` importing `./deep/zones/kelp-coast.js`, and the new
+  test importing `deep-ramp.js`, `deep-zone.js` and `zones/kelp-coast.js`). Every
+  other `src/deep` import is still refused.
+
 ## Checks (Linux cloud)
 
 - `tools/test-deep-kelp-coast.mjs` (new, 8 tests): the zone loads on all three
@@ -46,7 +59,14 @@ DEEP-SIRENA-VIEW now says the seaward side of the lip must read as a real drop.
   no provider; a real dive on each route, a Node drive of the whole loop on the
   sea-floor surface at 40 mph without leaving the trail, then up the ramp and out.
 - `tools/test-deep-zone-format.mjs`: 2 new `finds` cases (11 existing unchanged).
-- Lane tier and build: results at the end of this note.
+- Lane tier `--changed --jobs 8 --keep-going`: 26 of 29 suites pass, including the
+  replay, world-signature and Deep suites (`test-deep-zone`, `-ramp`, `-save`,
+  `-look`, `-audio`). The three failures are Windows-only and unrelated:
+  `test-earned-cars-ui`, `test-medals` and `test-course-kit` ("test cleanup
+  requires the Recycle Bin"). `npm run build` passes. The two changed assertions
+  above were found by the lane tier and fixed.
+- Not run here: those three suites, the full tier, and every browser scenario
+  (none was needed or added by this card).
 
 ## Removed
 
