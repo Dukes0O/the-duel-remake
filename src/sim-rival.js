@@ -298,7 +298,7 @@ export function _rival(dt, opponent = this.state.rival) {
   target = Math.max(0, target);
   if (r.braking) r.speedMph = Math.max(target, r.speedMph - yieldPlan.braking * dt);
   else {
-    const acceleration = car.accel * DRIVE.accelScale * .85 +
+    const acceleration = car.accel * DRIVE.accelScale * (skill.launch ?? 1) * .85 +
       (r.boosting ? BOOST.accelMphPerSec * (1 + r.upgrades.nitro * .15) *
         (car.nitroAcceleration || 1) : 0);
     r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt,

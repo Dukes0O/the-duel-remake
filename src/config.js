@@ -104,10 +104,12 @@ export const DIFFICULTY = {
   casual: { name: 'Casual', autoShift: true, engineBlow: false, rivalSkill: 0.78, trafficDensity: 0.7 },
   pro:    { name: 'Pro',    autoShift: false, engineBlow: true, rivalSkill: 0.92, trafficDensity: 1.0 },
 };
+// launch: the CPU's pull-away strength as a multiple of the player's DRIVE.accelScale. FIX-LAUNCH
+// slowed the player's launch; Medium and Hard are acceleration-limited and fell behind, so they keep more.
 export const CPU_DIFFICULTY = {
-  easy:{name:'Easy',skill:.73,cornerSkill:.78,winReward:600},
-  medium:{name:'Medium',skill:.88,cornerSkill:.91,winReward:1000},
-  hard:{name:'Hard',skill:1.02,cornerSkill:1,winReward:1500},
+  easy:{name:'Easy',skill:.73,cornerSkill:.78,winReward:600,launch:1},
+  medium:{name:'Medium',skill:.88,cornerSkill:.91,winReward:1000,launch:1.3},
+  hard:{name:'Hard',skill:1.02,cornerSkill:1,winReward:1500,launch:1.6},
 };
 export const DEFAULT_CPU_DIFFICULTY='easy';
 export const DEFAULT_DIFFICULTY = 'casual';

@@ -56,7 +56,7 @@ export class NpcRoutePlanner {
       p.speedMph = Math.min(this.car.topSpeed * pace.skill, p.speedLimit, corner * pace.cornerSkill);
     }
     const brake = DRIVE.brakeAccel * this.car.braking * DRIVE.mphToWorld;
-    const accel = this.car.accel * DRIVE.accelScale * .85 * DRIVE.mphToWorld;
+    const accel = this.car.accel * DRIVE.accelScale * (pace.launch ?? 1) * .85 * DRIVE.mphToWorld;
     for (let i = count - 1; i >= 0; i--) {
       const next = samples[i + 1];
       samples[i].speedMph = Math.min(samples[i].speedMph, Math.sqrt((next.speedMph * DRIVE.mphToWorld) ** 2 + 2 * brake * next.distance) / DRIVE.mphToWorld);
