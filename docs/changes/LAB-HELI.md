@@ -12,7 +12,7 @@ The Lab's upgrades take effect in the helicopter (docs/LAB.md 4.1 and 4.2). Swit
 - `heli-autopilot.js`: its hover ceiling reads the upgrades (one line).
 - `heli-session.js`: option `labEnabled`; reads the upgrades from the save (through `src/lab/lab-heli.js` only: `heliUpgradesOf`, `ownedLabUpgrades`, `chooseLabLine` are new there), passes them to the flight state, the hook (limit and line) and the bucket (litres, line), draws the aim ring from the saved tier, and adds `session.loadBucket('water'|'retardant')`, `session.chooseLine(15|25)` and `session.lab` for the pad menu. A helicopter on the ground takes bought upgrades at once; one in the air keeps its own.
 
-## Decisions (also in `docs/board/questions/LAB-HELI.md`)
+## Decisions (approved by Claude, 24 October; see "Claude answers" on the card)
 
 1. The saved fire record gains an optional `retardant` list; without it the treated cells would be forgotten at the next save.
 2. `heli-autopilot.js` reads the upgrades (outside the five named files).
