@@ -139,3 +139,77 @@ test('all omits manual frame while explicit selection preserves its original qui
     assert.equal(f.maximum,1);assert.equal(f.calls.at(-1),'cleanup');
   }
 });
+
+
+test('wrapper-only audio recipe is visible but never executed or counted as a browser pass', async () => {
+  assert.ok(!(await suite.namedScenarios()).includes('audio-crash-peak'), 'wrapper-only recipe is not a directly executable browser name');
+  assert.ok(!(await suite.namedScenarios({includeManual:true})).includes('audio-crash-peak'));
+  assert.equal(suite.WRAPPER_ONLY_SCENARIOS['audio-crash-peak'], 'tools/test-audio-crash-peak.mjs');
+  for (const explicit of [false, true]) {
+    const f = fixture(['audio-crash-peak']);
+    const args = explicit ? ['--scenarios', 'audio-crash-peak'] : ['--all'];
+    assert.equal(await suite.main([...args, '--output-dir', archive], f.operations), 0);
+    assert.deepEqual(f.rows, [], 'the incompatible direct scenario is never launched');
+    assert.ok(!f.calls.includes('build'), 'delegation alone needs no QA bundle');
+    assert.ok(!f.calls.includes('cleanup'));
+    assert.deepEqual([f.summary.count, f.summary.executed, f.summary.passed, f.summary.failed, f.summary.delegated], [0, 0, 0, 0, 1]);
+    assert.deepEqual(f.summary.delegations[0], {name: 'audio-crash-peak', passed: null,
+      status: 'run by its wrapper', wrapper: 'tools/test-audio-crash-peak.mjs',
+      exitCode: null, evidenceDir: null, reportPath: null, screenshots: [], warnings: null, issues: null, error: null});
+  }
+});
+
+test('wrapper delegation preserves actual warnings, failures and caller row order', async () => {
+  const f = fixture(['one', 'audio-crash-peak', 'warnings', 'last']);
+  const run = f.operations.scenario;
+  f.operations.scenario = async (...args) => {
+    const result = await run(...args);
+    if (args[0] === 'warnings') f.reports.get(result.reportPath).warnings.push('real warning');
+    return result;
+  };
+  assert.equal(await suite.main(['--all', '--jobs', '4', '--output-dir', archive], f.operations), 1);
+  assert.deepEqual(f.summary.rows.map(row => row.name), ['one', 'warnings', 'last']);
+  assert.deepEqual([f.summary.count, f.summary.executed, f.summary.passed, f.summary.failed, f.summary.delegated], [3, 3, 2, 1, 1]);
+  assert.equal(f.summary.rows[1].passed, false, 'zero-warning acceptance is unchanged');
+  assert.ok(!f.rows.includes('audio-crash-peak'));
+  assert.equal(f.summary.delegations[0].name, 'audio-crash-peak');
+  assert.equal(f.calls.filter(call => call === 'build').length, 1);
+  assert.equal(f.calls.at(-1), 'cleanup');
+});
+
+
+test('named timing mode is explicit, headed and restricted to the existing frame recipes', async () => {
+  const options = suite.parseSuiteArguments(['--scenarios', 'frame-pacing,tremblant-snow,tremblant-views', '--timing-only', '--headed', '--jobs', '1']);
+  assert.equal(options.timingOnly, true); assert.equal(options.headed, true);
+  for (const args of [['--all','--timing-only'],['--scenarios','menu','--timing-only'],
+    ['--scenarios','tremblant-snow','--timing-only','--timing-only']]) assert.throws(() => suite.parseSuiteArguments(args));
+  const f = fixture(['frame-pacing','tremblant-snow','tremblant-views']);
+  const run = f.operations.scenario, modes = [];
+  f.operations.scenario = async (...args) => { modes.push(args[3]); return run(...args); };
+  assert.equal(await suite.main(['--scenarios','tremblant-snow,tremblant-views','--timing-only','--headed','--jobs','1','--output-dir',archive],f.operations),0);
+  assert.equal(f.maximum,1); assert.equal(f.summary.timingMode,'timing-only');
+  assert.ok(f.summary.rows.every(row=>row.timing==='timing-only'));
+  assert.deepEqual(modes,[{timingOnly:true,headed:true},{timingOnly:true,headed:true}]);
+});
+
+test('ordinary Tremblant views run concurrently with explicit semantic mode and no timing-pass claim', async () => {
+  assert.ok(!suite.QUIET_SCENARIOS.includes('tremblant-snow'));
+  assert.ok(!suite.QUIET_SCENARIOS.includes('tremblant-views'));
+  const f = fixture(['tremblant-snow','tremblant-views']); const run = f.operations.scenario;
+  f.operations.scenario = async (...args) => { assert.deepEqual(args[3],{timingOnly:false,headed:false});return run(...args); };
+  assert.equal(await suite.main(['--all','--jobs','4','--output-dir',archive],f.operations),0);
+  assert.equal(f.maximum,2);assert.equal(f.summary.timingMode,undefined);
+  assert.ok(f.summary.rows.every(row=>row.timing==='run in the frame step'));
+});
+
+
+test('named Snow timing rejects the legacy Woods course override without removing direct comparison mode', async () => {
+  const keys=['DUEL_TREMBLANT_QA_MODE','TREMBLANT_SNOW_COURSE','TREMBLANT_SNOW_PACING'];
+  const old=keys.map(key=>process.env[key]);
+  try {
+    Object.assign(process.env,{DUEL_TREMBLANT_QA_MODE:'timing',TREMBLANT_SNOW_COURSE:'tremblant-woods',TREMBLANT_SNOW_PACING:'1'});
+    await assert.rejects(import('./scenarios/tremblant-snow.mjs?timing-course-guard'),/actual Tremblant Snow/);
+    process.env.DUEL_TREMBLANT_QA_MODE='combined';
+    assert.equal(typeof (await import('./scenarios/tremblant-snow.mjs?legacy-course-guard')).run,'function');
+  } finally {keys.forEach((key,i)=>{if(old[i]===undefined)delete process.env[key];else process.env[key]=old[i];});}
+});

@@ -12,19 +12,33 @@ const courses=COURSE.map(def=>new Course(def,1989));
 for(const course of courses){
   const map=buildRouteMapGeometry(course),route=map.route;
   check(map.sections.length===course.sections.length,`${course.def.name} includes every section`);
-  check(near(route[0],route.at(-2))&&near(route[1],route.at(-1)),`${course.def.name} circuit closes on its finish`);
+  if(course.closed)check(near(route[0],route.at(-2))&&near(route[1],route.at(-1)),`${course.def.name} circuit closes on its finish`);
+  else{
+    const start=projectRoutePoint(map,course.worldAt(0)),finish=projectRoutePoint(map,course.worldAt(course.length));
+    check(near(route[0],start.x)&&near(route[1],start.y)&&near(route.at(-2),finish.x)&&near(route.at(-1),finish.y),`${course.def.name} open map preserves actual start and finish`);
+    check(Math.hypot(start.x-finish.x,start.y-finish.y)>1,`${course.def.name} open route has distinct endpoints`);
+  }
   for(const path of [route,...map.branches.map(branch=>branch.points)])check(path.every((value,index)=>Number.isFinite(value)&&value>=27.99&&value<=(index%2?map.height:map.width)-27.99),`${course.def.name} route and branches fit the inset`);
   const first=routeActorPose(course,map,{s:120,lateral:3,headingError:.2}),second=routeActorPose(course,map,{s:course.length+120,lateral:3,headingError:.2});
-  check(near(first.x,second.x)&&near(first.y,second.y)&&near(first.heading,second.heading),`${course.def.name} player heading/position matches on second lap`);
+  if(course.closed)check(near(first.x,second.x)&&near(first.y,second.y)&&near(first.heading,second.heading),`${course.def.name} player heading/position matches on second lap`);
+  else{
+    const start=routeActorPose(course,map,{s:0,lateral:3,headingError:.2}),before=routeActorPose(course,map,{s:-120,lateral:3,headingError:.2}),finish=routeActorPose(course,map,{s:course.length,lateral:3,headingError:.2});
+    check(near(before.x,start.x)&&near(before.y,start.y)&&near(before.heading,start.heading),`${course.def.name} actor clamps before open start`);
+    check(near(second.x,finish.x)&&near(second.y,finish.y)&&near(second.heading,finish.heading),`${course.def.name} actor clamps beyond open finish`);
+    check(Math.hypot(first.x-second.x,first.y-second.y)>1,`${course.def.name} later distance does not wrap onto an imaginary second lap`);
+  }
   const center=projectRoutePoint(map,{x:0,z:0}),north=projectRoutePoint(map,{x:0,z:10});check(north.y<center.y,`${course.def.name} positive world Z points up on map`);
   if(course.def.practice)check(map.finish===null&&map.finishHeading===null,`${course.def.name} has no finish marker`);
-  else check(near(map.finish.x,route[0])&&near(map.finish.y,route[1]),`${course.def.name} finish stays at circuit start`);
+  else if(course.closed)check(near(map.finish.x,route[0])&&near(map.finish.y,route[1]),`${course.def.name} finish stays at circuit start`);
+  else check(near(map.finish.x,route.at(-2))&&near(map.finish.y,route.at(-1)),`${course.def.name} open finish stays at the actual route end`);
   for(let i=0;i<map.branches.length;i++){
     const branch=map.branches[i],start=projectRoutePoint(map,course.worldAt(branch.start)),end=projectRoutePoint(map,course.worldAt(branch.end)),points=branch.points;
     check(near(points[0],start.x)&&near(points[1],start.y)&&near(points.at(-2),end.x)&&near(points.at(-1),end.y),`${course.def.name} shortcut ${branch.label} joins the actual road at both ends`);
     const cut=course.features.shortcuts[i];let maxSeparation=0;
     for(let n=0;n<=100;n++){const s=cut.start+(cut.end-cut.start)*n/100,main=course.worldAt(s),off=course.worldAt(s,course.shortcutOffset(cut,s));maxSeparation=Math.max(maxSeparation,Math.hypot(main.x-off.x,main.z-off.z));}
-    check(maxSeparation>20,`${course.def.name} shortcut ${branch.label} has a distinct branch path`);
+    const authored=course.def.roadBranches?.find(row=>row.id===cut.id);
+    if(authored)check(Math.abs(maxSeparation-Math.abs(authored.offset))<.001,`${course.def.name} branch ${branch.label} preserves its authored separation`);
+    else check(maxSeparation>20,`${course.def.name} shortcut ${branch.label} has a distinct branch path`);
     check(Number.isFinite(branch.marker.x)&&Number.isFinite(branch.marker.y),`${course.def.name} branch label follows the greatest path separation`);
   }
   if(map.branches.length>=2)check(map.branches[0].color!==map.branches[1].color,`${course.def.name} shortcut branches have distinct colors`);

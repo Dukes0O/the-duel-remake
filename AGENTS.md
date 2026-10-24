@@ -18,6 +18,20 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
   If a card cannot meet its acceptance with the tools we have (free services,
   this laptop, SPEC 0.11's three-round art cap), stop, write why in the change
   note and ask Kyle. Never ship a placeholder or stub as the finished thing.
+- Cloud sessions (Kyle, 24 October 2026): `integration/wasteland` is GitHub's
+  front branch, so a cloud session starts from it. Cards with
+  `owner: claude-cloud` are built there. A cloud session works only on its
+  card's `cloud/<card>` branch, pushes that branch and opens a pull request
+  into `integration/wasteland`; it never merges, never pushes `integration`
+  or `master`, and never touches the live game. It runs the lane tier and
+  `npm run build` and lists in the change note any suite it could not run
+  there. The laptop merges after its own lane tier, build and any look check.
+- Questions from a cloud session: nobody reads its chat. Never stop to ask in
+  chat. Write the question to `docs/board/questions/<CARD>.md` on your branch
+  (what you need decided, the options, your recommended pick), commit and push
+  at once. Carry on with your recommended pick if the work can continue, and
+  say so in the file; stop only if it truly cannot. Claude answers by message
+  to the session and deletes the file when the card merges.
 
 ## Never
 
@@ -50,8 +64,8 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
 This is a game for two people on one laptop. These rules win over any older
 text in the playbook, SPEC or cards that asks for more checking or recording.
 
-1. Keep the lane tier and build before every merge, and the full tier on the
-   exact commit before every release. They protect the live game and saves.
+1. Keep the lane tier and build before every merge, and a full-tier pass that
+   covers every release (rule 19). They protect the live game and saves.
 2. Run the full tier inside the full check (rule 13) and, alone (no other
    gates, browser checks or builds at the same time), before every release,
    not on a merge count or clock. Always with `--jobs 4`.
@@ -79,6 +93,7 @@ team's merges back for hours):
    small now), each with `--jobs 4` or fewer. A frame measurement waits until
    no gate, build, balance run or browser check is going, and nobody starts
    one while it runs. The full tier on a release commit still runs alone (rule 1).
+   Every chat takes a turn the same way: `docs/FACTORY.md` section 8.
 8. A frame check is simple: one run per quality (Performance and High) at the
    track's busiest view with eight cars, passing at delivered p95 at most
    18.5 ms and the world build under 1 s (the full first-race load in a fresh
@@ -132,8 +147,9 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     and STATUS on integration are committed at once, never left uncommitted in
     the integration folder: an uncommitted shared file blocks every other
     merge.
-15. Kyle sets direction and says "go live". Claude makes art and sound picks
-    within the three-round cap; nothing waits on Kyle except a release.
+15. Kyle sets direction. Claude makes art and sound picks within the
+    three-round cap and decides go-live under rule 18; nothing waits on Kyle
+    except rule 18's short list.
 16. Claude answers a card's question in that card's own file
     (`docs/board/cards/<id>.md`, section "Claude answers") and clears its
     `waiting_on` in `docs/board/board.yaml` in the same commit. The inbox
@@ -155,6 +171,38 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     found a real fault; wording and style fixes land at once. Line length and
     style notes never hold a merge.
 
+## Ship when green (Kyle, 15 October 2026)
+
+Kyle: "many things are being held up because they need my explicit approval to
+merge or go live after tests pass... it's a bottle neck when I'm not around,
+and it's a bottle neck when I am around... I trust yours and Codex' ability to
+run these builds together. I don't need much involvement during the building
+phase." These two rules win over rules 1, 2 and 15, the Gates section below,
+and any card, playbook or SPEC text that asks for Kyle's word or a repeated run.
+
+18. **Standing approval.** Kyle no longer approves merges, test changes or
+    releases one by one. A green change merges. A finished, green feature or
+    course goes live: Claude (Director) decides, and Claude or Codex acts as
+    Release Manager (one at a time, announced in the inbox). A test whose
+    assertions change needs Claude's written review on its card (why it
+    changes, that nothing is loosened); that review is the approval. "Never
+    weaken a test" still stands. Kyle hears about each release afterwards in
+    the release note. Kyle still decides, and only these wait for him:
+    - direction: what to build next and what the game is;
+    - anything he asked to try first (a preview), until he has tried it;
+    - anything that wipes or hides a player's saved progress, records,
+      credits or cars;
+    - money, accounts and keys;
+    - the story for the helicopter, the Deep and the Lab (with Gratian).
+19. **Never redo a passing check.** A full-tier pass counts for a later commit
+    when the changes since it are only docs, board, notes, art sheets or files
+    no test reads. When code changed since the pass, run the lane tier for
+    those changes on the later commit, not the whole tier again. The whole
+    tier reruns only when shared core files, the save shape or the physics
+    changed since the last pass, and in the daily full check. A frame-check
+    pass counts while the scene and its code are unchanged. The release note
+    names the passed commit and what changed since.
+
 ## Gates (SPEC 0.5)
 
 - Before **every** merge into integration, including docs-only, tuning-only
@@ -165,8 +213,9 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
 - Full tier: `node tools/run-tests.mjs --tier full --jobs 4 --keep-going`,
   inside the full check (rule 13), and alone before every release. A real failure stops feature merges until a fix lands; an
   unreliable check follows rule 3 above.
-- Release: full tier must pass on the exact final integration commit before
-  every release, including small and tuning-only changes. Keep the full
+- Release: a full-tier pass that covers the release commit under rule 19 (on
+  that commit, or on an earlier one with only rule 19's allowed changes
+  since). Keep the full
   release evidence: build, combat balance (`combat-balance.mjs --check`, current rules),
   browser scenarios, frame pacing, art and save budget checks as applicable.
   Card-specific visual, audio, gameplay and save checks still apply.
@@ -188,8 +237,9 @@ Old best practices assumed code was expensive to write, so everything was kept
 in case it had to be rolled back. Here, redoing is cheap and storage, speed and
 small context matter. These rules win over habit:
 
-1. **Fix forward.** A mistake is a failing test, a fix and a pass. Rollback
-   exists only for the live game (the previous build, kept for one release).
+1. **Fix forward, including live releases (Kyle, 15 October 2026).** A mistake
+   is a failing test, a fix and a pass. Do not retain rollback builds or revert
+   a release to undo an added course. Correct faults in the next release.
 2. **Keep the recipe, not the output.** Commit scripts, prompts and settings.
    Rebuild models, renders, textures, reports and screenshots from them. Commit
    generated output only when the game loads it.

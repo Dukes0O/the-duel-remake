@@ -177,7 +177,7 @@ function placeRamp(duel, progress) {
   state.s = near.s; state.lateral = near.lateral; state.groundHeight = point.y;
   state.headingError = wrap(point.heading - runtime.raceCourse.at(state.s).heading);
   state.airborne = false; state.airHeight = state.prevAirHeight = 0; state._jumpY = null;
-  state.speedMph = 0; state.yawVelocity = state.pushVelocity = state.slipAngle = 0;
+  state.speedMph = 0; state.yawVelocity = state.pushVelocity = state.slipAngle = 0; if (Object.hasOwn(state, 'tyreSlip')) state.tyreSlip = 0;
   state.deepJourney.progress = progress;
 }
 function exit(duel) {

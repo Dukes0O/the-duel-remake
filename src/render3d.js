@@ -54,7 +54,10 @@ import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createTankerModel} from './arena/tanker-model.js';
-import {trackSnapshotPose, SNAPSHOT_FOV} from './track-analysis.js';
+import {trackSnapshotPose, SNAPSHOT_FOV, buildTrackDossier} from './track-analysis.js';
+import {referenceLap} from './reference-laps.js';
+import {telemetryRoute} from './lap-telemetry.js';
+import {coachAllowed,coachRaceContext,buildCoachMarkers} from './coach-markers.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -160,6 +163,33 @@ export function attachRenderer(host, app) {
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label', 'The Duel three-dimensional racing scene');
   const scene = new THREE.Scene();
+  const coachView = new THREE.Group();coachView.name = 'Coach braking and apex guides';
+  scene.add(coachView);
+  let coachCourse = null, coachReference = null;
+  function updateCoach(next, state) {
+    const context = coachRaceContext(app,next,state);
+    coachView.visible = !!next && next.closed !== false && coachAllowed(context);
+    if (!coachView.visible) return;
+    const route = telemetryRoute(next.def.id, state.seed), reference = referenceLap(next.def.id, route);
+    if (coachCourse === next && coachReference === reference) return;
+    for (const child of [...coachView.children]) {coachView.remove(child);disposeTree(child);}
+    coachCourse = next;coachReference = reference;
+    if (!reference) {coachView.visible = false;return;}
+    let dossier;
+    try {dossier = buildTrackDossier(next, {route,reference});}
+    catch {coachView.visible = false;return;} // Never display stale reference geometry.
+    for (const marker of buildCoachMarkers(next, dossier, context)) {
+      const brake = new THREE.Mesh(new THREE.RingGeometry(.7,1.1,16),
+        new THREE.MeshBasicMaterial({color:0xffcc66,transparent:true,opacity:.65,depthWrite:false,side:THREE.DoubleSide}));
+      brake.rotation.x = -Math.PI / 2;brake.position.set(marker.brake.x,marker.brake.y,marker.brake.z);
+      brake.name = 'Coach brake: ' + marker.id;
+      const geometry = new THREE.BufferGeometry().setFromPoints(marker.line.map(point => new THREE.Vector3(point.x,point.y,point.z)));
+      const apex = new THREE.Line(geometry,new THREE.LineBasicMaterial({color:0x99d6dc,transparent:true,opacity:.28,depthWrite:false}));
+      apex.name = 'Coach apex: ' + marker.id;coachView.add(brake,apex);
+    }
+    sceneRevision++;
+  }
+
   const arenaMarkers = new THREE.Group();
   arenaMarkers.name = 'Arena floor markers';
   scene.add(arenaMarkers);
@@ -463,6 +493,7 @@ export function attachRenderer(host, app) {
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
     const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.deepRuntime?.raceCourse??app.duel.course;
     const moving = (st.status === 'racing'||st.status==='exploring') && !st.paused&&!st.deepJourney?.controlsLocked;
+    updateCoach(next,st);
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}

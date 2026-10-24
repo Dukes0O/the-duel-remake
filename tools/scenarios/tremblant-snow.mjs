@@ -10,10 +10,17 @@ import { join } from 'node:path';
 
 const entry = '/tools/menu-check.html?flags=tremblant-woods,tremblant-snow,grand-prix';
 // TREMBLANT_SNOW_COURSE=tremblant-woods measures the autumn circuit the same way, for comparison.
+const QA_MODE = process.env.DUEL_TREMBLANT_QA_MODE || 'combined';
+if (!['combined','views','timing'].includes(QA_MODE)) throw Error('Unknown Tremblant QA mode');
+const PICTURES = QA_MODE !== 'timing';
 const COURSE_ID = process.env.TREMBLANT_SNOW_COURSE || 'tremblant-snow';
+if (QA_MODE === 'timing' && COURSE_ID !== 'tremblant-snow')
+  throw Error('Named timing requires actual Tremblant Snow');
 // Card limit (Claude, 11 October): delivered 95th percentile frame at most 18.5 ms with eight cars on the grid.
 const P95_LIMIT_MS = 18.5;
-const PACING = process.env.TREMBLANT_SNOW_PACING !== '0';
+if (QA_MODE === 'timing' && process.env.TREMBLANT_SNOW_PACING === '0')
+  throw Error('Timing-only mode cannot disable its measurements');
+const PACING = QA_MODE !== 'views' && process.env.TREMBLANT_SNOW_PACING !== '0';
 
 async function prepare(context, quality) {
   await context.navigate(entry);
@@ -59,7 +66,7 @@ async function startRace(context, mode) {
   await context.waitFor('window.__views.ready()', 'race scene', 120_000);
 }
 
-async function measure(context, quality, label) {
+async function measure(context, quality, label, cars) {
   const before = await context.evaluate(`(document.querySelector('#performance-results')?.textContent.match(/"frames": 120/g) || []).length`);
   await context.evaluate(`(() => {
     const button = [...document.querySelectorAll('button')].find(node => node.textContent === 'Measure frame pacing');
@@ -71,7 +78,8 @@ async function measure(context, quality, label) {
   const report = await context.evaluate(`JSON.parse(document.querySelector('#performance-results').textContent).at(-1)`);
   if (!Number.isFinite(report.p95) || report.p95 <= 0 || report.frames !== 120) throw Error(`${quality}: invalid frame measurement ${JSON.stringify(report)}`);
   console.log(`${quality}, ${label}: p50 ${report.p50} ms, p95 ${report.p95} ms, >33ms ${report.over33ms}, draws ${report.drawCalls}, triangles ${report.triangles}`);
-  return { quality, label, ...report };
+  const course = await context.evaluate('window.__qaApp.duel.course.def.id');
+  return { quality, label, cars, ...report, course };
 }
 
 const VIEWS = [
@@ -103,7 +111,7 @@ export async function run(context) {
   for (const quality of ['high', 'performance']) {
     await prepare(context, quality);
     // Landmark views from a free camera (High only; the pictures are for Claude's finishing pass).
-    if (quality === 'high') {
+    if (PICTURES && quality === 'high') {
       await startRace(context, 'duel');
       await context.evaluate(`(() => { const hud = document.querySelector('#race-hud'); if (hud) hud.style.visibility = 'hidden'; document.querySelectorAll('details').forEach(node => { node.open = false; node.style.display = 'none'; }); })()`);
       for (const [name, from, to] of VIEWS) {
@@ -112,7 +120,7 @@ export async function run(context) {
         if (false) console.log('PROBE', await context.evaluate(`(() => { const out = []; window.__render.scene.traverse(o => { if (o.name === 'Lake' || o.name === 'Chimney smoke' ) { const p = o.getWorldPosition(new o.position.constructor()); out.push([o.name, o.visible, o.material.opacity, o.material.transparent, o.renderOrder, p.x|0, p.y|0, p.z|0, o.parent?.visible]); } }); const c = window.__render.camera.position; return JSON.stringify({out: out.slice(0,5), n: out.length, cam: [c.x|0,c.y|0,c.z|0]}); })()`));
       }
       await context.evaluate('window.__views.clear()');
-      if (!PACING) return;
+      if (!PACING && QA_MODE === 'combined') return;
       await prepare(context, quality);
     }
     // Eight cars on the grid with the five lamps lit.
@@ -125,10 +133,11 @@ export async function run(context) {
     if (lamps.cars !== 8 || (COURSE_ID === 'tremblant-snow' && lamps.tyre !== 'winter')) throw Error(`${quality}: the grid is wrong ${JSON.stringify(lamps)}`);
     // Hold the lights on while measuring: a sample is cancelled if the race changes state under it.
     await context.evaluate(`(() => { const s = window.__qaApp.duel.state; s.field.hold = 1e6; s.countdown = 1e6; })()`);
-    await context.screenshot(`tremblant-snow-grid-lamps-${quality}`);
-    reports.push(await measure(context, quality, '8 cars on the grid'));
+    if (PICTURES) await context.screenshot(`tremblant-snow-grid-lamps-${quality}`);
+    if (PACING) reports.push(await measure(context, quality, '8 cars on the grid', lamps.cars));
   }
+  if (QA_MODE === 'views') console.log('Frame timing: run in the frame step');
   const misses = reports.filter(r => r.p95 > P95_LIMIT_MS);
-  await writeFile(join(context.outputDir, 'tremblant-snow-frame-pacing.json'), JSON.stringify({ reports, misses: misses.length }, null, 2) + '\n');
+  await writeFile(join(context.outputDir, 'tremblant-snow-frame-pacing.json'), JSON.stringify({ mode: QA_MODE, timing: QA_MODE === 'views' ? 'run in the frame step' : 'measured', reports, misses: QA_MODE === 'views' ? null : misses.length }, null, 2) + '\n');
   if (misses.length) throw Error('Frame limit missed: ' + misses.map(r => `${r.quality} ${r.label} p95 ${r.p95} ms`).join('; '));
 }

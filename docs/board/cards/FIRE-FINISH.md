@@ -24,3 +24,10 @@ carries FIRE-SAVE's unknown-key rule.
   sheet (call, drop, fire out, lost, closed course), sent directly; the
   looks folder has no room to commit a second sheet.
 - **The release** waits for Kyle's word; `forest-fire` stays `dev`.
+## Claude decision under rule 18, 15 October 20:50
+
+Kyle's new standing approval (AGENTS rule 18) makes go-live Claude's call for
+finished, green work. The forest-fire missions are finished and their
+finishing pass is done; `forest-fire` switches on in the next release (tonight's
+Summit release if it goes green, otherwise the next one). The release note
+tells Kyle afterwards. waiting_on is cleared.

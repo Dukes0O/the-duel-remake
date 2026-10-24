@@ -165,7 +165,7 @@ New features remain dev until their accepted design and applicable checks are
 complete. Claude makes art and sound picks; nothing waits on Kyle except a
 release. Kyle can overrule a pick and must say “go live” before live installation.
 The Release Manager follows OPERATIONS: exact release full, master fast-forward,
-staged build, one dist-previous, hashed assets before index/manifest, and no
+staged build, no retained rollback build, hashed assets before index/manifest, and no
 forced reload of an open race. Push or history changes require their applicable
 authorization; this integrator performs neither.
 

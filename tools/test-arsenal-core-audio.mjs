@@ -193,11 +193,14 @@ function nativeEvents() {
   return {duel, events};
 }
 check('existing sound-bank entries and all other exports stay exact', () => {
+  assert.equal(hash(bank.CAR_VOICES.mclaren_f1),
+    '1c9f009e1c81b1a75b9804fd7d004dbcc5a79167693424b232e250b01af43699',
+    'F1 uses its own existing-sample voice while historical exports remain pinned');
   assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !BANK_ADDITIONS.has(id)).map(oldFlagShape))),
     'cc6d14d4b734baeff5104526ef4e3841fa24c6cc3051e59c37f488f5734afeb9');
   assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => key !== 'SOUND_BANK').map(([key, value]) =>
-    // The medal cars' engine voices (EARN-CAR-1 and 3) are new entries; every released voice stays exact.
-    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['ferrari_enzo', 'bugatti_bolide'].includes(id))) : value]))),
+    // The medal cars' engine voices (EARN-CAR-1, 2 and 3) are new entries; every released voice stays exact.
+    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide'].includes(id))) : value]))),
     '8bed9e05cbd48321670c377483bc87c841b01eac228a6237889b8ce5602a2b38');
 });
 check('existing catalog records and metadata stay exact', () => {

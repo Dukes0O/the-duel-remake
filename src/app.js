@@ -1,3 +1,5 @@
+import {racingLineFor,buildSpeedProfile} from './race-lines.js';
+import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
 import {settleCup} from './progression.js';
 import {isSummitAttack} from './summit-attack.js';
@@ -7,6 +9,7 @@ import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
+import * as wildlifeRules from './wildlife.js';
 import {fireOnNewDay, fireWorld} from './heli/heli-fire-run.js';
 import {notePlayDay, buyBack as buyBackSave, fireOf} from './heli/heli-save.js';
 import {courseClosed, closureCard, burnStage, burnSmoke, scarLooks} from './course-closures.js';
@@ -46,13 +49,14 @@ import {warlordEnabled} from './warlords/index.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
-import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority } from './config.js';
+import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority, steerForYaw, TYRE_SLIP, tyreSlipSteering } from './config.js';
 import { EngineAudio } from './audio.js';
 import { loadPlayers, savePlayers, PLAYERS_KEY, playerName, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
 import {LapTelemetryRecorder,LapTelemetryStore,telemetryRoute} from './lap-telemetry.js';
 import {courseFingerprint} from './track-analysis.js';
-import {loadGhosts,saveGhosts,findGhost,ghostKey,mergeGhostStores,storeGhost,GhostRecorder,GrandPrixLapRecorder,sampleGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
+import {referenceLap} from './reference-laps.js';
+import {loadGhosts,saveGhosts,findGhost,ghostKey,mergeGhostStores,storeGhost,GhostRecorder,GrandPrixLapRecorder,sampleGhost,createTeamGhost,sampleTeamGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
 import {getPaintAppearance,purchasePaint as buyPaint,applyPaint as equipPaint} from './paint-presets.js';
 import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForSeed,supportsRouteVariants} from './route-variants.js';
 import {normalizeLightingMood} from './lighting-moods.js';
@@ -197,6 +201,7 @@ export class App {
       if(event.qualifyingFlyingStart)this.lapTelemetryRecorder?.armQualifying(state);
       // The native final qualifying finish must be captured before stage reload.
       if(event.qualifyingLap)this._updateLapTelemetry(state);
+      if(event.lapCompleted)this._recordIntelLap(event,state);
       if(event.lapCompleted && state.mode==='grandprix' && this._switches().enabled('grand-prix-career')===true){
         const lap=this.grandPrixLapRecorder?.complete(state,event,this.player);
         if(lap){
@@ -582,8 +587,58 @@ export class App {
       {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});
     if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});}return result;
   }
-  setGhostEnabled(enabled){
-    this._refreshPlayer();this.ghostEnabled=!!enabled;this._rememberRaceSettings({ghostEnabled:this.ghostEnabled});saveGhostEnabled(this.ghostEnabled);this._updateGhost(this.duel.state);this.duel.emit({ghostChanged:true});return this.ghostEnabled;
+  getTeamGhostRecord(options = {}) {
+    if (this._switches().enabled('grand-prix') !== true) return null;
+    const state = this.duel.state, stageIndex = options.startStage ?? options.stageIndex ?? this.menuStage;
+    const stage = COURSE[stageIndex], mode = options.mode ?? state.mode;
+    if (!stage || stage.practice || stage.closed === false || mode !== 'timetrial' || this.getIntelLevel(stage.id) < 4) return null;
+    const active = state.status !== 'menu' && state.stageIndex === stageIndex;
+    const seed = options.seed ?? (active ? state.seed : this.getMenuSeed(stageIndex));
+    const route = telemetryRoute(stage.id, seed), reference = referenceLap(stage.id, route);
+    if (!reference?.poseSamples) return null;
+    const course = active ? this.duel.course : this.getMenuCourse(stageIndex);
+    const laps = options.laps ?? (active ? state.lapsTotal : this.getLapChoice(stageIndex, 'timetrial'));
+    const cached = this._teamGhostView;
+    if (cached?.course === course && cached.reference === reference && cached.laps === laps) return cached.record;
+    const record = createTeamGhost(reference, {eventId:stage.id,route,length:course.length,
+      courseFingerprint:courseFingerprint(course,{route}),laps});
+    this._teamGhostView = {course,reference,laps,record};return record;
+  }
+  getGhostChoices(options = {}) {
+    return this.getTeamGhostRecord(options) ? ['off','my-best','team'] : ['off','my-best'];
+  }
+  getGhostChoice(options = {}) {
+    if (this._switches().enabled('grand-prix') !== true) return this.ghostEnabled ? 'my-best' : 'off';
+    const choice = this.profile.intel?.version === 1 ? this.profile.intel.ghostChoice : null;
+    return choice === 'off' ? 'off' : choice === 'team' && this.getTeamGhostRecord(options) ? 'team' :
+      choice === 'my-best' || choice === 'team' ? 'my-best' : this._raceSettings.ghostEnabled === false ? 'off' : 'my-best';
+  }
+  setGhostChoice(choice, options = {}) {
+    if (this.duel.state.status !== 'menu' || this._switches().enabled('grand-prix') !== true)
+      return {ok:false,reason:'Return to the menu before choosing a ghost.'};
+    this._refreshPlayer();
+    if (this.profile.intel?.version > 1 || !this.getGhostChoices(options).includes(choice))
+      return {ok:false,reason:'This ghost is unavailable.'};
+    const intel = this.profile.intel ?? {version:1,events:{}};
+    this.profile = {...this.profile,intel:{...intel,ghostChoice:choice}};
+    this.ghostEnabled = choice !== 'off';
+    this._rememberRaceSettings({ghostEnabled:this.ghostEnabled});
+    const saved = this._saveProfile();
+    this.duel.emit({ghostChanged:true});return {ok:true,choice,saved};
+  }
+  cycleGhostChoice(options = {}) {
+    const choices = this.getGhostChoices(options), current = this.getGhostChoice(options);
+    return this.setGhostChoice(choices[(choices.indexOf(current)+1)%choices.length],options);
+  }
+  setGhostEnabled(enabled) {
+    this._refreshPlayer();this.ghostEnabled = !!enabled;
+    if (this._switches().enabled('grand-prix') === true && this.profile.intel?.version === 1 && Object.hasOwn(this.profile.intel,'ghostChoice')) {
+      const intel = this.profile.intel ?? {version:1,events:{}};
+      this.profile = {...this.profile,intel:{...intel,ghostChoice:enabled?'my-best':'off'}};
+      this._saveProfile();
+    }
+    this._rememberRaceSettings({ghostEnabled:this.ghostEnabled});saveGhostEnabled(this.ghostEnabled);
+    this._updateGhost(this.duel.state);this.duel.emit({ghostChanged:true});return this.ghostEnabled;
   }
   getLapTelemetry({eventId=COURSE[this.menuStage]?.id,route,courseFingerprint:fingerprint}={}){
     if(!this._switches().enabled('grand-prix'))return {lap:null,status:'off',message:''};
@@ -626,8 +681,10 @@ export class App {
     if(this.ghostSaved!==false)this.ghosts=mergeGhostStores(this.ghosts,loadGhosts());
     const context={playerId:this.player.id,seed:state.seed,stageIndex:state.stageIndex,laps:state.lapsTotal,car:state.car,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty,upgrades:{...state.upgrades}};
     context.driverId=state.driverId;
-    this.ghostRecord=this.getGhostRecord(context);
-    if(this.ghostRecord){this.ghostRecord.lastUsedAt=Date.now();this.ghostSaved=saveGhosts(this.ghosts);}
+    const choice=this.getGhostChoice(context);
+    if(this._switches().enabled('grand-prix')===true)this.ghostEnabled=choice!=='off';
+    this.ghostRecord=choice==='team'?this.getTeamGhostRecord(context):this.getGhostRecord(context);
+    if(this.ghostRecord&&!this.ghostRecord.teamReference){this.ghostRecord.lastUsedAt=Date.now();this.ghostSaved=saveGhosts(this.ghosts);}
     this.ghostRecorder=new GhostRecorder(context);this._updateGhost(state);
   }
   _updateGhost(state){
@@ -636,7 +693,7 @@ export class App {
     if(COURSE[state.stageIndex]?.practice||state.mode!=='timetrial'||state.playerId!==this.player.id||!['countdown','racing','ticket'].includes(state.status)){this.ghostStatus='none';return;}
     this.ghostRecorder?.observe(state);
     this.ghostStatus=this.ghostRecord?(this.ghostEnabled?'playing':'off'):'recording';
-    if(this.ghostRecord&&this.ghostEnabled){this.ghostPose=sampleGhost(this.ghostRecord,state.stageTimeSec+(state.racePenaltySec||0),this._ghostPoseBuffer);if(!this.ghostPose)this.ghostStatus='finished';}
+    if(this.ghostRecord&&this.ghostEnabled){this.ghostPose=(this.ghostRecord.teamReference?sampleTeamGhost:sampleGhost)(this.ghostRecord,state.stageTimeSec+(state.racePenaltySec||0),this._ghostPoseBuffer);if(!this.ghostPose)this.ghostStatus='finished';}
   }
   _finishGhost(payload,state,awarded,result){
     // The wallet's comparable car best is authoritative, including valid losses.
@@ -702,6 +759,36 @@ export class App {
     }
   }
   purchaseDriver(id){return this._driverOperation(id,true);}
+  getIntelLevel(eventId) {
+    return this._switches().enabled('grand-prix')===true
+      ?intelLevel(this.profile,eventId,{owned:isCourseUnlocked(this.profile,eventId)}):0;
+  }
+  buyIntel(eventId,level) {
+    if(this.duel.state.status!=='menu'||this._switches().enabled('grand-prix')!==true)
+      return {ok:false,cost:0,reason:'Return to the menu before buying track intel.'};
+    this._refreshPlayer();
+    const stage=COURSE.find(course=>course.id===eventId);
+    const result=purchaseIntel(this.profile,eventId,level,
+      {owned:!!stage&&!stage.practice&&!stage.arena&&stage.closed!==false&&isCourseUnlocked(this.profile,stage)});
+    if(result.changed){this.profile=result.profile;result.saved=this._saveProfile();this.duel.emit({intelPurchased:eventId,level});}
+    return result;
+  }
+  _recordIntelLap(event,state) {
+    const lap=event?.lapCompleted, stage=COURSE[state?.stageIndex];
+    if(this._switches().enabled('grand-prix')!==true||state!==this.duel.state||state.status!=='racing'||
+      !this.runId||!this.player||this._runPlayerId!==this.player.id||state.playerId!==this.player.id||
+      !stage||stage.practice||stage.arena||this.duel.course.closed===false||
+      !Number.isSafeInteger(lap)||lap<1||lap!==state.completedLaps||event.assisted!==false||
+      state.assistedLaps?.[lap-1]!==false||!Number.isFinite(event.lapTimeSec)||event.lapTimeSec<=0||
+      state.lapTimes?.[lap-1]!==event.lapTimeSec)return false;
+    this._refreshPlayer();
+    if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
+    const runId=event.qualifyingLap?this.runId+':qualifying':this.runId;
+    const next=recordIntelLap(this.profile,stage.id,{runId,lap,valid:true},
+      {owned:isCourseUnlocked(this.profile,stage)});
+    if(next===this.profile)return false;
+    this.profile=next;this._saveProfile();return true;
+  }
   purchaseCourse(id){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the menu before unlocking courses.',cost:0};
     this._refreshPlayer();const result=buyCourse(this.profile,id);
@@ -811,6 +898,8 @@ export class App {
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
       deepEnabled:this._switches().enabled('the-deep')===true,
       earnedCarsEnabled:this._switches().enabled('earned-cars')===true,
+      ...(state.tyreSlipRules===true&&state.difficulty==='pro'&&COURSE[state.stageIndex]?.kind==='drift'?{tyreSlipRules:true}:{}),
+      intelEnabled:this._switches().enabled('grand-prix')===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(COURSE[state.stageIndex],state.mode)){
       payload.lapChoiceEnabled=true;
@@ -1287,6 +1376,14 @@ export class App {
   _fireOn() {
     return this._switches().enabled('helicopter') === true && this._switches().enabled('forest-fire') === true;
   }
+  // Where an animal of the wildlife count may stand on a course: off the road,
+  // out of lakes and walls, anywhere in the square (not only near the road).
+  _surveyStand(courseId, world) {
+    this._standCheckers ??= new Map();
+    if (!this._standCheckers.has(courseId)) this._standCheckers.set(courseId, wildlifeRules.createPlacementChecker(world.course));
+    const checker = this._standCheckers.get(courseId);
+    return (x, z) => !!checker.inspect(x, z, {maxEdge: Infinity});
+  }
   // A course model at the helicopter's seed, built once, for fire grids; it
   // never touches the course being raced or flown.
   _fireCourse(courseId) {
@@ -1368,7 +1465,9 @@ export class App {
     const fireOn = this._fireOn();
     if (fireOn) this.heliAudio.preloadFire?.();
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
-      fireEnabled: fireOn, playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
+      fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true,
+      skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
+      wildlife: wildlifeRules, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       persist: profile => {
         // Credits the session charged since its last save move the app's
@@ -1384,7 +1483,7 @@ export class App {
   }
   _heliEvents(events) {
     for (const event of events) {
-      if (event.type === 'cue') this.heliAudio.play(event.id);
+      if (event.type === 'cue') { if (event.pitch > 0) this.heliAudio.play(event.id, {rate: event.pitch / 1000}); else this.heliAudio.play(event.id); }
       else if (event.type === 'fireHiss') this.heliAudio.play('heli.fire.hiss', {scale: Math.min(1, .3 + event.litres / 150)});
       else if (event.type === 'radio') this.heliAudio.say(event.line);
       else this.heliAudio.event(event);
@@ -1715,11 +1814,11 @@ export class App {
     else if (action.startsWith('gear:')) this.duel.selectFootGear(Number(action.slice(5)));
     else if (action === 'shift-up') this.duel.setInput({ shiftUp: true });
     else if (action === 'shift-down') this.duel.setInput({ shiftDown: true });
-    else if (action === 'heli-hook') this._heliPress(session => session.pressHook());
+    else if (action === 'heli-hook') this._heliPress(session => session.hookKey());
     else if (action === 'heli-autopilot') this._heliPress(session => session.pressAutopilot());
     else if (action === 'heli-cruise') this._heliPress(session => session.acceptCruise());
     else if (action === 'heli-radio') this._heliPress(session => session.pressRadio());
-    else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % 4; this.duel.emit({heli: true}); }
+    else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % (this.heliSession?.cameraCount ?? 4); this.duel.emit({heli: true}); }
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
   }
@@ -1760,7 +1859,10 @@ export class App {
     const arena=this.duel.course?.def.venue===true&&this.duel.course?.def.arena===true;
     if(this._keyboardArena!==arena){this._resetKeyboardInput();this._keyboardArena=arena;}
     const steering=arena?this._arenaKeyboardSteering:this._keyboardSteering;
-    const keyboardSteer = steering.update(keyboardSteeringDirection(k),dt,st.speedMph);
+    const tyreKeyboard = st.tyreSlipRules === true && !st.airborne && st.speedMph >= 0
+      ? {tyreSlip: true, car: this.duel.car, grip: this.duel.car.grip,
+        traction: this.duel._drivingSurface(st.s,st.lateral).traction, course: this.duel.course} : undefined;
+    const keyboardSteer = steering.update(keyboardSteeringDirection(k),dt,st.speedMph,tyreKeyboard);
     const pressedThrottle=heldInput(context,'throttle',k);
     const keyboardThrottle=arena?(pressedThrottle?1:0):this._keyboardThrottle.update(pressedThrottle,dt);
     this.duel.setInput({
@@ -1805,9 +1907,20 @@ export class App {
       d.setInput({ shiftUp: st.revs > .95, shiftDown: st.revs < .48 && st.gear > 0 });
     }
 
+    if (st.tyreSlipRules === true && d.course.def.kind === 'drift' && !st.airborne && st.speedMph >= 0) {
+      this._driveSlipDrift();
+      return;
+    }
+
     // Visit the shoulder once to exercise reduced grip and recovery steering.
     if (!this._scriptedCrashDone && !st.objective && st.s > 250) {
-      d.setInput({ throttle: 1, brake: 0, steer: 1 }); // swerve off the road
+      let swerve = 1;
+      if (st.tyreSlipRules && !st.airborne && st.speedMph >= 0) {
+        const traction = d._drivingSurface(st.s,st.lateral).traction;
+        swerve = steerForYaw(-steeringYawAuthority(st.speedMph,d.car.grip,traction,d.car),
+          {speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake:0,tyreSlip:true});
+      }
+      d.setInput({ throttle: 1, brake: 0, steer: swerve }); // swerve off the road
       if (st.offRoad && Math.abs(st.lateral) > (d.course.roadHalfWidthAt?.(st.s)??DRIVE.roadHalfWidth) + 2) this._scriptedCrashDone = true;
       else return;
     }
@@ -1840,17 +1953,52 @@ export class App {
     const look = d.course.at(st.s + metresPerSec * .18);
     const desiredYaw = look.curvature * metresPerSec + (headingTarget - st.headingError) * 6;
     const drivingSurface=d._drivingSurface(st.s,st.lateral),traction=drivingSurface.traction;
-    const authority = Math.max(.05, steeringYawAuthority(st.speedMph, d.car.grip, traction, d.car));
-    const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     const bend = Math.max(Math.abs(frame.curvature), Math.abs(d.course.at(st.s + 100).curvature), Math.abs(d.course.at(st.s + 220).curvature));
     // Winter corners use the same actual traction as steering. Other surfaces
     // retain the old plan, including winter tyres on dry asphalt.
     const cornerGrip = ['snow', 'deep-snow', 'ice'].includes(drivingSurface.gripKind) ? traction : 1;
-    const cornerSpeed = Math.min(d.car.topSpeed * .94, .85 * Math.sqrt(DRIVE.maxLateralAccel * d.car.grip * cornerGrip / Math.max(.0001, bend)) / DRIVE.mphToWorld);
+    const cornerFactor = .85;
+    const cornerSpeed = Math.min(d.car.topSpeed * .94, cornerFactor * Math.sqrt(DRIVE.maxLateralAccel * d.car.grip * cornerGrip / Math.max(.0001, bend)) / DRIVE.mphToWorld);
     const targetSpeed = Math.min(drivingSurface.speedLimit,transit?.speedMph ?? cornerSpeed);
     const throttle = st.speedMph < targetSpeed ? 1 : 0;
     const brake = st.speedMph > targetSpeed + 4 ? Math.min(1, (st.speedMph - targetSpeed) / 20) : 0;
+    let steer = steerForYaw(desiredYaw,{speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake,
+      tyreSlip:st.tyreSlipRules === true && !st.airborne && st.speedMph >= 0});
     d.setInput({ throttle, brake, steer, boost: false });
+  }
+
+  _driveSlipDrift() {
+    const d=this.duel, st=d.state, course=d.course;
+    let route=this._driftLine;
+    if (!route || route.course!==course || route.car!==d.car) {
+      const line=racingLineFor(course);
+      this._driftLine=route={course,car:d.car,line,profile:buildSpeedProfile(line,d.car)};
+    }
+    const v=st.speedMph*DRIVE.mphToWorld;
+    const targetLat=route.line.offsetAt(st.s+Math.max(12,v*.45));
+    const error=targetLat-st.lateral;
+    const heading=Math.atan(error*2.5/Math.max(15,v));
+    const look=course.at(st.s+v*.18);
+    const desiredYaw=look.curvature*v+(heading-st.headingError)*6;
+    const surface=d._drivingSurface(st.s,st.lateral);
+    const targetSpeed=Math.min(surface.speedLimit,d.car.topSpeed*.97,
+      route.profile.at(st.s)*TYRE_SLIP.driftLineSkill*Math.sqrt(surface.traction||1));
+    const brake=st.speedMph>targetSpeed+3?Math.min(1,(st.speedMph-targetSpeed)/14):0;
+    let throttle=st.speedMph<targetSpeed?1:0;
+    let steer=steerForYaw(desiredYaw,{speedMph:st.speedMph,grip:d.car.grip,
+      traction:surface.traction,car:d.car,brake,tyreSlip:true});
+    if (st.speedMph>=TYRE_SLIP.driftMinMph) {
+      if (Math.abs(error)<=TYRE_SLIP.driftRecoveryMeters && Math.abs(look.curvature)>.0001) {
+        const {peakYaw,steerGain}=tyreSlipSteering({speedMph:st.speedMph,grip:d.car.grip,
+          traction:surface.traction,car:d.car,brake});
+        const ask=Math.abs(steer)*steerGain/Math.max(.000001,peakYaw);
+        if (ask<TYRE_SLIP.driftAskLow || ask>TYRE_SLIP.driftAsk) {
+          steer=-Math.sign(look.curvature)*Math.min(1,TYRE_SLIP.driftAsk*peakYaw/Math.max(.05,steerGain));
+        }
+      }
+      if (st.tyreSlip>TYRE_SLIP.driftLiftSlip) throttle=0;
+    }
+    d.setInput({throttle,brake,steer,boost:false});
   }
 
   _bindKeys() {
@@ -1914,6 +2062,7 @@ export class App {
     },{signal});
     window.addEventListener('blur', () => {
       this.keys = {};
+      this.heliSession?.cancelHook();
       this._footPointer.fire=this._footPointer.aim=false;
       this._resetKeyboardInput();
       if (!this.duel.state.paused && ['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) this.togglePause();

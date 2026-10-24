@@ -8,7 +8,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseNightArguments, nightPlan, validateFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy } from './full-check.mjs';
+import { parseNightArguments, nightPlan, validateFramePacket, validateTremblantFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy } from './full-check.mjs';
 
 const date = '2026-10-12', head = 'a'.repeat(40), previous = 'b'.repeat(40), merge = 'c'.repeat(40);
 const root = 'C:/qa/the-duel-remake';
@@ -18,7 +18,7 @@ const frames = () => ({schema:1, mode:'night-simple', reports:[report('High'),re
 const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed:2,
   failures:[],notRun:0,total:2,results:[{label:'a',passed:true,exitCode:0},{label:'b',passed:true,exitCode:0}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
-function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText}={}) {
+function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,timingPatch={},timingMissing=false}={}) {
   const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [], copies = [], messages = [];
   const copyRoot=root+'-copy/source',reportName='docs/board/checks/full-tier.json';
   const sourceReport='original copied report\n';
@@ -91,6 +91,15 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
           assert.match(messages.at(-1),/laptop panel off.*Second screen only/);
           const packet=frames();Object.assign(packet.reports[0],framePatch);
           files.set(stage.packet,frameText??JSON.stringify(packet));
+          files.set(stage.suitePacket,JSON.stringify({schema:1,count:3,passed:3,failed:0,timingMode:'timing-only',
+            rows:['frame-pacing','tremblant-snow','tremblant-views'].map(name=>({name,passed:true}))}));
+          if(!timingMissing)for(const recipe of stage.timingPackets) {
+            const labels=recipe.name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
+            const reports=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,course:recipe.name==='tremblant-snow'?'tremblant-snow':'tremblant-woods',cars:8,frames:120,
+              p95:recipe.name==='tremblant-snow'?18.5:33.5,over33ms:12})));
+            Object.assign(reports[0],timingPatch);
+            files.set(recipe.packet,JSON.stringify({mode:'timing',reports,misses:0}));
+          }
         }
         if(stage.id==='browser'&&missing!==stage.id)files.set(stage.packet,JSON.stringify(browser()));
         if(stage.id==='combat')text=JSON.stringify({flags:[],policyRuns:51,baselineRaces:90,
@@ -515,12 +524,21 @@ test('foreign heavy work appearing only during frames discards the actual timing
   f.deps.framePollMs=1;
   f.deps.processes=async()=>{if(during){observed=true;return [{pid:91,command:'node vite/bin/vite.js build'}];}return [];};
   f.deps.spawnImpl=(exe,args,options)=>{
-    if(!args.includes('frame-pacing'))return spawn(exe,args,options);
+    if(!args.includes('--timing-only'))return spawn(exe,args,options);
     const child=new EventEmitter();child.stdout=new PassThrough();child.stderr=new PassThrough();
     during=true;
     setTimeout(()=>{
       const leaf=[...f.files.keys()].find(name=>name.endsWith('/full.log')).split('/').at(-2);
-      f.files.set(root+'-copy/source/.evidence/'+date+'/FAC-03/'+leaf+'/frames/frame-pacing.json',JSON.stringify(frames()));
+      const stage=nightPlan({root:root+'-copy/source',date,evidence:root+'-copy/source/.evidence/'+date+'/FAC-03/'+leaf})[1];
+      f.files.set(stage.packet,JSON.stringify(frames()));
+      f.files.set(stage.suitePacket,JSON.stringify({schema:1,count:3,passed:3,failed:0,timingMode:'timing-only',
+        rows:['frame-pacing','tremblant-snow','tremblant-views'].map(name=>({name,passed:true}))}));
+      for(const recipe of stage.timingPackets) {
+        const labels=recipe.name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
+        const reports=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,course:recipe.name==='tremblant-snow'?'tremblant-snow':'tremblant-woods',cars:8,frames:120,
+          p95:recipe.name==='tremblant-snow'?18.5:33.5,over33ms:12})));
+        f.files.set(recipe.packet,JSON.stringify({mode:'timing',reports,misses:0}));
+      }
       during=false;child.stdout.end();child.stderr.end();child.emit('close',0,null);
     },25);
     return child;
@@ -609,4 +627,40 @@ test('consecutive frame qualities buy courses for distinct memory-only native pl
       for(const[name,descriptor]of globals)if(descriptor)Object.defineProperty(globalThis,name,descriptor);else delete globalThis[name];
     }
   }
+});
+
+test('existing frame step owns all three timing recipes in one headed serial suite', () => {
+  const plan = nightPlan({root,date}), stage = plan[1];
+  assert.equal(plan.length,4,'no extra full-check stage');
+  assert.deepEqual(stage.args.slice(0,4),['tools/run-browser-scenarios.mjs','--scenarios','frame-pacing,tremblant-snow,tremblant-views','--timing-only']);
+  assert.ok(stage.args.includes('--headed'));
+  assert.equal(stage.args[stage.args.indexOf('--jobs')+1],'1');
+  assert.equal(plan[3].env.DUEL_NIGHT_FRAME_PACKET,stage.packet,'ordinary frame reuse still reads the actual Harbour packet');
+});
+
+test('Tremblant timing acceptance rejects missing qualities, unrun timing and every original boundary failure', () => {
+  assert.equal(typeof validateTremblantFramePacket,'function');
+  for (const name of ['tremblant-snow','tremblant-views']) {
+    const labels = name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
+    const packet = {mode:'timing',reports:['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,course:name==='tremblant-snow'?'tremblant-snow':'tremblant-woods',cars:8,frames:120,p95:name==='tremblant-snow'?18.5:33.5,over33ms:12}))),misses:0};
+    assert.doesNotThrow(()=>validateTremblantFramePacket(packet,name));
+    for(const patch of [{frames:119},{cars:7},{course:name==='tremblant-snow'?'tremblant-woods':'tremblant-snow'},{p95:Infinity},{p95:0},{p95:name==='tremblant-snow'?18.501:33.501},...(name==='tremblant-views'?[{over33ms:13}]:[])]) {
+      const bad=structuredClone(packet);Object.assign(bad.reports[0],patch);assert.throws(()=>validateTremblantFramePacket(bad,name));
+    }
+    const missing=structuredClone(packet);missing.reports.pop();assert.throws(()=>validateTremblantFramePacket(missing,name));
+    assert.throws(()=>validateTremblantFramePacket({...packet,mode:'views'},name));
+  }
+});
+
+
+test('full-check cannot count successful pictures as completed Tremblant timing', async () => {
+  for(const options of [{timingMissing:true},{timingPatch:{frames:119}},{timingPatch:{cars:7}}]) {
+    const f=fixture(options),packet=await runNight(opts(),f.deps);
+    assert.equal(packet.status,'failed');
+    assert.equal(packet.stages.find(row=>row.id==='frames').passed,false);
+    assert.equal(packet.stages.find(row=>row.id==='browser').passed,true,'ordinary semantic success does not waive timing');
+  }
+  const f=fixture(),packet=await runNight(opts(),f.deps),stage=packet.stages.find(row=>row.id==='frames');
+  assert.equal(stage.tremblantReports.length,6,'all original measurement points retained');
+  assert.equal(stage.passed,true);assert.equal(packet.status,'passed');
 });

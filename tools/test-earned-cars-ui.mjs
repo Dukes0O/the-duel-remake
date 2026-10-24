@@ -102,35 +102,36 @@ test('switch off: the same race adds no sheet, no medal and no cue', () => {
   });
 });
 
-// The medal cars in the game (the Enzo and the Bolide) appear nowhere with the
-// switch off, so every list is exactly the nine cars of the released game.
-test('the medal cars (Enzo, Bolide): hidden everywhere while the switch is off, shown while on', () => {
-  const medalCarIds = ['ferrari_enzo', 'bugatti_bolide'];
-  const today = Object.keys(CARS).filter(id => !medalCarIds.includes(id));
-  assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCarIds.includes(id)));
+// Every real medal car stay hidden behind earned-cars, including owned cars.
+test('the Enzo, F1 and Bolide stay hidden everywhere while the switch is off, shown while on', () => {
+  const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide'];
+  const today = Object.keys(CARS).filter(id => !medalCars.includes(id));
+  assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCars.includes(id)));
   assert.deepEqual(shownCars(true), Object.entries(CARS));
   assert.deepEqual(shownCarIds(false), today);
-  assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCarIds]);
-  for (const id of medalCarIds) assert.equal(JOB_CARS.includes(id), false, id + ' is never a customer car');
+  assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars]);
+  assert.ok(medalCars.every(id => !JOB_CARS.includes(id)), 'no earned car is a customer car');
   const markup = on => screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 'easy', difficulty: 'casual', startStage: 0},
     arrow: '', sound: true, escapeHTML: String, earnedCars: on});
-  for (const id of medalCarIds) assert.equal(markup(false).includes(id), false, 'the menu car picker hides ' + id);
-  assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the earnable count is today\'s');
-  for (const id of medalCarIds) assert.ok(markup(true).includes(`<option value="${id}">`));
-  assert.ok(markup(true).includes(' 9 EARNABLE CARS'));
+  for (const id of medalCars) {
+    assert.equal(markup(false).includes(id), false, 'the menu car picker hides ' + id);
+    assert.ok(markup(true).includes('<option value="' + id + '">'));
+  }
+  assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the switch-off earnable count stays unchanged');
+  assert.ok(markup(true).includes(' 10 EARNABLE CARS'));
   const flags = {};
   const app = {_switches: () => ({enabled: name => flags[name] === true}), player: {name: 'Tester'}, profileSaved: true, duel: {state: {}}};
-  const saved = {...createProfile(), unlockedCars: [...createProfile().unlockedCars, ...medalCarIds]};
+  const saved = {...createProfile(), unlockedCars: [...createProfile().unlockedCars, ...medalCars]};
   const garage = createGarageScreen({app, profile: () => saved, credits: String, escapeHTML: String,
     getGarageCar: () => 'falcone_f42', getGarageMessage: () => '', arrow: '', action: (label, verb) => '<button data-action="' + verb + '">' + label + '</button>',
     clamp: value => Math.max(0, Math.min(1, value))});
-  for (const id of medalCarIds) assert.equal(garage().includes(id), false, 'the garage list hides ' + id + ', even for a save that owns it');
+  for (const id of medalCars) assert.equal(garage().includes(id), false, 'the garage hides an owned ' + id);
   flags['earned-cars'] = true;
-  for (const id of medalCarIds) assert.ok(garage().includes(`data-garage-car="${id}"`), 'and shows ' + id + ' while on');
-  assert.ok(garage().includes('Ferrari Enzo'));
+  for (const id of medalCars) assert.ok(garage().includes('data-garage-car="' + id + '"'), 'the garage shows ' + id + ' while on');
+  assert.ok(garage().includes('Ferrari Enzo') && garage().includes('McLaren F1') && garage().includes('Bugatti Bolide'));
 });
 
-// The other two rungs do not exist yet, so the screens are also checked on a
+// The final rung does not exist yet, so the screens are also checked on a
 // scratch copy of the code with three test cars. Nothing is added to src/.
 test('medal cars: hidden while off; labels, locked pages, rewards and air-only while on', async () => {
   await mkdir(join(root, '.qa-dist'), {recursive: true});
@@ -157,7 +158,7 @@ import {shownCars, shownCarIds, medalResultLines} from './src/earned-cars-ui.js'
 import {screenMarkup, createMenuScreen} from './src/screen-menu.js';
 import {createGarageScreen} from './src/screen-garage.js';
 import {AIR_ONLY_CARS, JOB_CARS} from './src/heli/heli-jobs.js';
-const medalCars = ['ferrari_enzo', 'bugatti_bolide', 'medal_test_a', 'medal_test_b', 'medal_test_c'];
+const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'medal_test_a', 'medal_test_b', 'medal_test_c'];
 const today = Object.keys(CARS).filter(id => !medalCars.includes(id));
 // Lists: off is today's, on adds the medal cars.
 assert.deepEqual(shownCarIds(false), today);

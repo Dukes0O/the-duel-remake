@@ -177,9 +177,10 @@ for (const fps of [30, 60, 144]) for (const kind of fixture.sittingStates) {
 }
 
 // The nine cars of the released game, before the first medal car (the Enzo),
-// and the ten with the Enzo, before the Bolide.
-const RELEASED_CARS = CARS_IN_GAME.filter(car => car !== 'ferrari_enzo' && car !== 'bugatti_bolide');
-const WITH_ENZO = CARS_IN_GAME.filter(car => car !== 'bugatti_bolide');
+// the ten with the Enzo, and the eleven with the F1, before the Bolide.
+const RELEASED_CARS = CARS_IN_GAME.filter(car => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide'].includes(car));
+const ENZO_ERA_CARS = CARS_IN_GAME.filter(car => !['mclaren_f1', 'bugatti_bolide'].includes(car));
+const F1_ERA_CARS = CARS_IN_GAME.filter(car => car !== 'bugatti_bolide');
 export function solverControl(cars = CARS_IN_GAME) {
   const results = [];
   for (const attackingCar of cars) for (const targetCar of cars) {
@@ -199,7 +200,8 @@ export function solverControl(cars = CARS_IN_GAME) {
 
 test('released solver all-mass rear/side/corner fingerprint stays unchanged', () => {
   eq(solverControl(RELEASED_CARS), fixture.solverFingerprint, 'global released rigid-body solver cannot change for an arena fix');
-  eq(solverControl(WITH_ENZO), fixture.solverFingerprintWithEnzo, 'the same solver with the Enzo added to every mass pair');
+  eq(solverControl(ENZO_ERA_CARS), fixture.solverFingerprintWithEnzo, 'the same solver with the Enzo added to every mass pair');
+  eq(solverControl(F1_ERA_CARS), fixture.solverFingerprintWithF1, 'the F1 joins every mass pair without changing historical solver pins');
   eq(solverControl(), fixture.solverFingerprintWithBolide, 'the same solver with the Bolide added to every mass pair');
 });
 
