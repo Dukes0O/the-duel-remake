@@ -237,6 +237,11 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'tools/test-deep-kelp-coast.mjs|../src/deep/deep-ramp.js',
     'tools/test-deep-kelp-coast.mjs|../src/deep/deep-zone.js',
     'tools/test-deep-kelp-coast.mjs|../src/deep/zones/kelp-coast.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-ramp.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-zone.js',
+    'tools/test-deep-sirena.mjs|../src/deep/zones/kelp-coast.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-discovery.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-sirena.js',
   ]);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))
