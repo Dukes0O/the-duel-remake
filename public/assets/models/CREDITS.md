@@ -171,3 +171,12 @@ effects and its lighting go; the sprites for those are credited with the helicop
 MAP-ART-2: the mesa uses the game's own `red-sandstone.png` (original generated art, see
 `docs/IMAGE_PROMPTS.md`), scaled to 1024 and embedded in `table-mesa.glb` by the recipe; the plane
 wreck carries one picture baked from procedural dust, rust and edge wear (no outside image).
+
+## The skiers and the ski course pieces (SKI-ART)
+
+The skier, the guide and the four guests in `ski/` start from the **Quaternius** [Universal Base
+Characters, Standard](https://quaternius.com), CC0, as the rescue people do (see above): the recipe
+`tools/blender/ski.py` poses the rigged bodies with the same kit (`tools/blender/rescue-people.py`), thins
+them and adds original one-piece suits, helmets, goggles, boots, gloves, skis and poles; no Quaternius
+texture is shipped. The slalom poles, giant-slalom gates, timing arches, pad flags, kicker and safety
+netting are original project geometry with flat colours; no outside model, texture or photograph.
