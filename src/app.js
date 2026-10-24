@@ -1639,7 +1639,10 @@ export class App {
     if (events.length) this.duel.emit({heli: true});
   }
   heliView() {
-    return this.heliSession?.view() ?? null;
+    const session = this.heliSession, view = session?.view() ?? null;
+    // The hook's ground ring is drawn from the view; it joins it here (drawing only).
+    const hookGuide = view && session.hookGuide?.();
+    return hookGuide ? Object.freeze({...view, hookGuide}) : view;
   }
   heliBuyFuel(kg = Infinity) {
     const result = this.heliSession?.buyFuel(kg) ?? {ok: false};

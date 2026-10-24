@@ -112,6 +112,9 @@ export const HELI_EVENT_CUES = Object.freeze({
   lowRotor: () => [['heli.rotor.low']],
   crash: () => [['heli.setdown.thud', {scale: 1}]],
   hooked: () => [['heli.hook.release', {scale: .8, rate: .85}]],
+  // H that does not take (FIX-HELI-HOOK): the hook's own click, quieter and
+  // much lower, a dull "not yet" under the panel's one-line hint.
+  hookRefused: () => [['heli.hook.release', {scale: .4, rate: .55}]],
   releasedHigh: () => [['heli.hook.release']],
   released: () => [['heli.hook.release']],
   setDown: () => [['heli.setdown.thud', {scale: .6}]],
