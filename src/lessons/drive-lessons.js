@@ -197,6 +197,7 @@ export function stepDriveLesson(lesson, view, events = {}, dt = 0) {
 // where the instructor's tyre speed plan starts braking for the corner.
 export const LESSON_LINE = Object.freeze({
   outsideM: 1.5, insideM: 1.0, step: 1,
+  accelShare: .75, // the plan counts on this share of the helper's acceleration, which the car does not quite reach at speed
   yawMargin: .96,  // the plan asks for this share of the tyre's yaw, so feedback never tips it past grip
   mainBrake: .8,   // share of full braking the plan uses in the corner's braking zone
   lightBrake: .45, // a lift for an earlier bend stays under the 50% brake rule
@@ -285,7 +286,7 @@ export function buildLessonPlan(line, {car, pace, rollingMph, tractionAt, speedL
   mph[0] = Math.min(mph[0], rollingMph);
   for (let i = 1; i < count; i++) {
     const v = mph[i - 1] * toWorld;
-    mph[i] = Math.min(mph[i], Math.sqrt(v * v + 2 * accelAt(car, mph[i - 1]) * toWorld * step) / toWorld);
+    mph[i] = Math.min(mph[i], Math.sqrt(v * v + 2 * LESSON_LINE.accelShare * accelAt(car, mph[i - 1]) * toWorld * step) / toWorld);
   }
   // The corner's braking point: where the plan starts falling toward turn-in.
   let brake = turnIn;
