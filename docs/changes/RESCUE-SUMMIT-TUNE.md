@@ -87,7 +87,12 @@ are unchanged and pass.
 
 ## Changed assertions
 
-None.
+`tools/test-heli-missions.mjs`, "out of time: the clock stops at its limit and says so":
+the limit for each kind was `RESCUE_CLOCKS[kind]`; the test's supply call is at Summit
+Run (`rescueConditions({summitRun: true})`), whose row is now its own, so the limit is
+`rescueLimit(kind, null, <the call's course>)`. It still checks, for every kind, that
+one second short is not expired and that the clock stops at the limit and stays
+expired. `RESCUE_CLOCKS` itself is still asserted equal in the clocks check.
 
 ## Removed
 
