@@ -183,11 +183,11 @@ function finishAttempt(lesson, reason, cones) {
     // Lesson 2's first try (the middle of the road) always gets its line; the card shows the numbers.
     if (kind === 'line') return answer(radioFor(lesson, 'middle.result'), cones);
     const early = attempt.firstBrakeS !== null && attempt.firstBrakeS < lesson.instructor.redBoardS;
-    // On these tyres a late entry costs screech, not time, so the old "look at the
-    // time you lost" line (late.result) would be untrue. The existing screech
-    // coaching line fits; with no screech there is nothing to say.
-    const screeched = attempt.screechSeconds >= .5;
-    return answer(early ? line('late.early') : screeched ? line('coach.screech') : null, cones);
+    // On these tyres a late entry costs screech, not time, so there is no "time you lost" line. A late try
+    // that ends at a wall or off the road says where a slide takes you (late.off); one that finishes after at
+    // least half a second of screech says what the screech was (late.slid); with neither there is nothing to say.
+    const screeched = attempt.screechSeconds >= .5, ranOut = reason === 'wall' || reason === 'offroad';
+    return answer(early ? line('late.early') : ranOut ? line('late.off') : screeched ? line('late.slid') : null, cones);
   }
   if (lesson.stage === 'right') {
     if (lesson.lastAttempt.passed) return answer(radioFor(lesson, 'right.pass'), cones);

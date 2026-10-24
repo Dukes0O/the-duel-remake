@@ -1,5 +1,5 @@
-// DRIVE-LESSON-LINES: the driving instructor's sixteen radio lines and the cone
-// sound (docs/DRIVING_LESSONS.md section 6).
+// DRIVE-LESSON-LINES and DRIVE-LESSONS-LINES-2: the driving instructor's radio lines
+// (docs/DRIVING_LESSONS.md section 6 and 12.7), the cone sound and the shift-light ticks.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync, existsSync} from 'node:fs';
@@ -19,7 +19,12 @@ const catalog = JSON.parse(read('tools/audio/catalog.json'));
 // Every line in the design has a take, with the design's exact words.
 const design = String(read('docs/DRIVING_LESSONS.md'));
 const table = Object.fromEntries([...design.matchAll(/^\| `(drive\.radio\.[a-z.]+)` \| (.+?) \|$/gm)].map(m => [m[1], m[2]]));
-same(Object.keys(table).length, 16, 'the design lists sixteen lines');
+same(Object.keys(table).length, 15, 'section 6 lists fifteen lines');
+// 12.7 lists the ids without the "drive.radio." prefix: thirty more for lessons 2 to 4, two for the true late try.
+const more = design.slice(design.indexOf('### 12.7'), design.indexOf('### 12.8'));
+for (const m of more.matchAll(/^\| `([a-z.]+)` \| (.+?) \|$/gm)) table['drive.radio.' + m[1]] = m[2];
+same(Object.keys(table).length, 47, 'the design lists forty-seven lines');
+ok(!('drive.radio.corner.late.result' in DRIVE_RADIO_LINES) && !catalog.sounds.some(row => row.cue === 'drive.radio.corner.late.result'), 'the untrue time-lost line is gone');
 same(Object.fromEntries(Object.entries(DRIVE_RADIO_LINES).map(([id, line]) => [id, line.text])), table, 'the lines match the design word for word');
 ok(Object.values(DRIVE_RADIO_LINES).every(line => !/\d|credit|second/i.test(line.text)), 'no line names a time or a price');
 ok(DRIVE_RADIO_VOICE === HELI_RADIO_VOICE, 'the driving instructor is the same Brian');
@@ -39,8 +44,8 @@ for (const [id, line] of Object.entries(DRIVE_RADIO_LINES)) {
   ok(existsSync(new URL(runtime, root)) && sha(read(runtime)) === record.sha256, `${id}: the runtime file is the kept take, unchanged`);
   creditsUsed += record.creditsUsed; runtimeBytes += take.length;
 }
-ok(creditsUsed > 0 && creditsUsed <= 1500, `voice credits within the card's 1,500 budget (${creditsUsed})`);
-ok(runtimeBytes < 1.5e6, `the sixteen lines stay small (${runtimeBytes} bytes)`);
+ok(creditsUsed > 0 && creditsUsed <= 6000, `voice credits within the two cards' budget (${creditsUsed})`);
+ok(runtimeBytes < 4.0e6, `the forty-seven lines stay small (${runtimeBytes} bytes)`);
 
 // The cone: one CC0 library recipe, credited, built by the card's script.
 {
@@ -53,8 +58,8 @@ ok(runtimeBytes < 1.5e6, `the sixteen lines stay small (${runtimeBytes} bytes)`)
   ok(cone.runtime.truePeakDbtp <= -1, 'the cone keeps its peak under -1 dB');
 }
 
-// The bank: seventeen cues behind the driving-lessons switch, the lines on the voice bus like the helicopter's radio.
-same(Object.keys(DRIVE_LESSON_CUES).length, 17, 'sixteen lines and the cone');
+// The bank: fifty-one cues behind the driving-lessons switch, the lines on the voice bus like the helicopter's radio.
+same(Object.keys(DRIVE_LESSON_CUES).length, 51, 'forty-seven lines, the cone and three shift-light ticks');
 for (const [id, cue] of Object.entries(DRIVE_LESSON_CUES)) {
   ok(SOUND_BANK[id] === cue, `${id}: in the sound bank`);
   ok(cue.flag === 'driving-lessons' && BUS_NAMES.includes(cue.bus), `${id}: behind its switch on a real bus`);
@@ -63,6 +68,14 @@ for (const id of Object.keys(DRIVE_RADIO_LINES)) {
   const cue = DRIVE_LESSON_CUES[id], heli = SOUND_BANK['heli.radio.liftoff.hold'];
   same({bus: cue.bus, priority: cue.priority, limit: cue.limit, duck: cue.duck}, {bus: heli.bus, priority: heli.priority, limit: heli.limit, duck: heli.duck},
     `${id}: plays like the helicopter's radio lines`);
+}
+// The shift light: three rising ticks (the engine has no pitch option per play), tone recipes, no file to load.
+{
+  const ticks = ['lesson.shift-light', 'lesson.shift-light.2', 'lesson.shift-light.3'].map(id => DRIVE_LESSON_CUES[id]);
+  ok(ticks.every(Boolean), 'the shift light has its three ticks');
+  const pitch = cue => cue.layers[0].frequency;
+  ok(pitch(ticks[0]) < pitch(ticks[1]) && pitch(ticks[1]) < pitch(ticks[2]), 'the three ticks rise');
+  ok(ticks.every(cue => !cue.file && cue.layers.every(layer => layer.duration <= .1 && layer.volume <= .06)), 'each tick is short and soft, made from a recipe');
 }
 ok(typeof createRadioChain === 'function', 'the radio chain the lines play through is shared');
 
