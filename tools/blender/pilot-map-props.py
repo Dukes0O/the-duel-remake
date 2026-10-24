@@ -17,14 +17,19 @@
 #                           roof and a lit window in the roof facing up; origin at
 #                           the gallery floor centre; empty window_light on the pane
 #   table-mesa              the mesa; origin at the middle of the flat top (y = 0),
-#                           the cliff drops 110 m and the apron meets the desert
-#                           at the empty ground_level (y = -145); empties
-#                           lookout_spot, wreck_spot, strip_a, strip_b on the top
+#                           the cliff drops 110 m and the rubble apron meets the desert
+#                           at the empty ground_level (y = -165); empties
+#                           lookout_spot, wreck_spot, strip_a, strip_b on the top;
+#                           UVs and the game's own red-sandstone picture (public/assets/
+#                           textures/red-sandstone.png, scaled to 1024 and embedded as a
+#                           JPEG), tinted per vertex; three spires and a fin stand off it
 #   table-lookout           steel fire lookout tower; origin at the ground under it;
 #                           empty logbook_spot on the table in the cab
 #   table-plane-wreck       1950s bush plane on its belly; origin on the ground
 #                           under the fuselage centre; nose toward -Z; the tail
-#                           number N4471K is on the fin and the rear fuselage
+#                           number N4471K is on the fin and the rear fuselage; one baked
+#                           2048 picture (dust and rust in seams and low surfaces, bare
+#                           metal on edges), glass and the number stay flat
 #   table-strip             190 m dirt strip along Z, 12 m wide, with cairns and a
 #                           windsock; origin at its middle, on the ground
 #   table-logbook           the bush pilot's logbook open on its last page; origin
@@ -207,6 +212,67 @@ def weather(ob, base_name, alts, scale=0.6, lo=0.0, seed=0.0):
         n = noise.noise(Vector((c.x * scale + seed, c.y * scale, c.z * scale)))
         if n > lo: pl.material_index = ids[min(len(ids) - 1, int((n - lo) * len(ids) / (1.0 - lo)))]
 
+STONE_TILE = 22.0   # metres of rock per repeat of the sandstone picture
+
+def sandstone_material(name='mesa_sandstone', size=1024):
+    """The game's own weathered sandstone picture (public/assets/textures/red-sandstone.png), scaled down and
+    stored as a JPEG inside the GLB, multiplied by a per-vertex tint so the strata read in different shades."""
+    BLEND.mkdir(parents=True, exist_ok=True)
+    src = bpy.data.images.load(str(root / 'public/assets/textures/red-sandstone.png'))
+    src.scale(size, size)
+    scene = bpy.context.scene
+    scene.render.image_settings.file_format = 'JPEG'; scene.render.image_settings.quality = 82
+    small = BLEND / 'red-sandstone-1024.jpg'
+    src.save_render(str(small), scene=scene)
+    bpy.data.images.remove(src)
+    img = bpy.data.images.load(str(small)); img.name = 'red_sandstone'; img.colorspace_settings.name = 'sRGB'
+    mat = bpy.data.materials.new(name); mat.use_nodes = True
+    nt = mat.node_tree; bsdf = nt.nodes['Principled BSDF']
+    tex = nt.nodes.new('ShaderNodeTexImage'); tex.image = img; tex.extension = 'REPEAT'
+    tint = nt.nodes.new('ShaderNodeVertexColor'); tint.layer_name = 'tint'
+    mix = nt.nodes.new('ShaderNodeMixRGB'); mix.blend_type = 'MULTIPLY'; mix.inputs['Fac'].default_value = 1.0
+    nt.links.new(tex.outputs['Color'], mix.inputs['Color1']); nt.links.new(tint.outputs['Color'], mix.inputs['Color2'])
+    nt.links.new(mix.outputs['Color'], bsdf.inputs['Base Color'])
+    bsdf.inputs['Roughness'].default_value = 0.97; bsdf.inputs['Metallic'].default_value = 0.0
+    return mat
+
+def triplanar_uv(ob, tile=STONE_TILE):
+    """UVs by the face's main axis from world positions (the object's transform applied first)."""
+    me = ob.data
+    if not me.uv_layers: me.uv_layers.new(name='UVMap')
+    uv = me.uv_layers.active.data
+    for pl in me.polygons:
+        n = pl.normal; ax = max(range(3), key=lambda i: abs(n[i]))
+        for li in pl.loop_indices:
+            v = me.vertices[me.loops[li].vertex_index].co
+            uv[li].uv = ((v.x, v.y) if ax == 2 else (v.x, v.z) if ax == 1 else (v.y, v.z))
+            uv[li].uv = (uv[li].uv[0] / tile, uv[li].uv[1] / tile)
+
+def set_tint(ob, fn):
+    """Per-corner colour tint: fn(polygon_centre) -> (r, g, b)."""
+    me = ob.data
+    layer = me.color_attributes.new('tint', 'BYTE_COLOR', 'CORNER')
+    for pl in me.polygons:
+        r, g, b = fn(pl.center)
+        for li in pl.loop_indices: layer.data[li].color = (r, g, b, 1.0)
+
+def apply_object(ob):
+    bpy.ops.object.select_all(action='DESELECT'); ob.select_set(True); bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+def angular_block(name, mat, loc, size, rng):
+    """A fallen block: a box with its corners pushed about and its edges chipped."""
+    bpy.ops.mesh.primitive_cube_add(size=1, location=loc)
+    ob = bpy.context.active_object; ob.name = name
+    bpy.ops.object.transform_apply(scale=True)
+    for v in ob.data.vertices:
+        v.co = Vector((v.co.x * size[0] * (0.7 + rng.random() * 0.5), v.co.y * size[1] * (0.7 + rng.random() * 0.5), v.co.z * size[2] * (0.7 + rng.random() * 0.5)))
+    ob.rotation_euler = (rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), rng.uniform(0, 3.14))
+    ob.data.materials.append(mat)
+    mod = ob.modifiers.new('bevel', 'BEVEL'); mod.width = max(size) * 0.05; mod.segments = 1; mod.limit_method = 'ANGLE'
+    bpy.ops.object.modifier_apply(modifier='bevel')
+    return ob
+
 def grid_surface(name, mat, sx, sy, nx, ny, height, z0=0.0):
     """A flat patch sx by sy (X by Y) with a height function height(x, y)."""
     verts = [(-sx / 2 + sx * i / nx, -sy / 2 + sy * j / ny, 0.0) for j in range(ny + 1) for i in range(nx + 1)]
@@ -373,42 +439,38 @@ def build_lighthouse_window(m):
 
 MESA_TOP_R = (215.0, 178.0)    # radii of the flat top along X and Y (the top is about 400 m across)
 MESA_H = 110.0                 # sheer sides
-MESA_APRON = 35.0              # the talus slope below them
+MESA_APRON = 55.0              # the talus slope below them
 STRATA = ['rock_cap', 'rock_red', 'rock_orange', 'rock_ochre', 'rock_buff', 'rock_red', 'rock_orange']
 
 def build_mesa(m):
     rng = random.Random(41)
-    seg = 176; wall_rows = 38; talus_rows = 9; top_rings = 12
-    # Seven strata, each in three shades chosen by a slow noise so the cliff streaks instead of banding evenly.
-    shades = (0.80, 1.0, 1.16)
-    bases = [(0.10, 0.05, 0.04), (0.30, 0.095, 0.055), (0.40, 0.15, 0.07), (0.45, 0.25, 0.12), (0.50, 0.36, 0.24), (0.31, 0.105, 0.06), (0.38, 0.15, 0.075)]
-    pal = []
-    for bi, c in enumerate(bases):
-        for si, k in enumerate(shades):
-            pal.append(material(f'mesa_band{bi}_{si}', (min(1, c[0] * k), min(1, c[1] * k), min(1, c[2] * k)), 0.0, 0.97))
-    varnish = len(pal); pal.append(material('desert_varnish', (0.09, 0.05, 0.04), 0.0, 0.9))
-    talus_i = len(pal); pal += [material(f'mesa_scree{si}', (0.36 * k, 0.19 * k, 0.115 * k), 0.0, 0.98) for si, k in enumerate(shades)]
-    top_i = len(pal); pal.append(material('mesa_top_soil', (0.34, 0.18, 0.105), 0.0, 0.98))
-    bounds = [0.0, 0.07, 0.20, 0.31, 0.47, 0.60, 0.79, 1.0]          # uneven strata
-    push = [4.5, -4.0, 5.5, -8.0, 6.5, -5.0, 3.5]                     # hard layers stand out, soft ones recess
+    seg = 192; wall_rows = 44; talus_rows = 12; top_rings = 12; NU = 56   # NU: repeats of the picture round the butte
+    sand = sandstone_material()
+    # Strata of unequal thickness. Each band has a tint (the picture is multiplied by it) and a ledge amount: hard
+    # layers stand out, soft ones recess, the caprock overhangs.
+    bounds = [0.0, 0.06, 0.19, 0.28, 0.46, 0.57, 0.80, 1.0]
+    push = [1.4, -1.0, 1.8, -2.4, 2.0, -1.4, 1.0]
+    tints = [(0.40, 0.35, 0.33), (0.80, 0.58, 0.52), (1.00, 0.82, 0.70), (1.00, 0.95, 0.86), (0.96, 0.80, 0.66), (0.70, 0.50, 0.45), (0.86, 0.66, 0.56)]
     def periodic(t, f, z, s0=0.0): return noise.noise(Vector((math.cos(t) * f + s0, math.sin(t) * f + s0, z)))
-    def edge(t): return 1.0 + 0.10 * periodic(t, 0.9, 0.3) + 0.075 * periodic(t, 2.1, 1.7) + 0.03 * periodic(t, 4.2, 2.9)
+    def edge(t): return 1.0 + 0.16 * periodic(t, 0.9, 0.3) + 0.12 * periodic(t, 2.1, 1.7) + 0.06 * periodic(t, 4.2, 2.9)
     def band_of(y):
         d = min(0.999, -y / MESA_H)
         for i in range(7):
             if bounds[i] <= d < bounds[i + 1]: return i
         return 6
-    def blend_push(y):    # smooth the ledge amounts between strata
-        d = min(0.999, -y / MESA_H); i = band_of(y); f = (d - bounds[i]) / (bounds[i + 1] - bounds[i])
-        j = min(6, i + 1)
-        return push[i] + (push[j] - push[i]) * max(0.0, (f - 0.8) * 5.0)
-    verts = []; faces = []; fmat = []
+    def ledge(y):
+        d = min(0.999, -y / MESA_H); i = band_of(y); f = (d - bounds[i]) / (bounds[i + 1] - bounds[i]); j = min(6, i + 1)
+        return push[i] + (push[j] - push[i]) * max(0.0, (f - 0.82) * 5.5)
+    def gully(t, y):
+        g = periodic(t, 15.0, y * 0.006, 5.0)
+        return -17.0 * max(0.0, g) ** 1.2 * (0.25 + 0.75 * min(1.0, -y / MESA_H))
+    def joints(t, y):     # vertical joints break the hard layers into blocks that stand out or have fallen away
+        n = periodic(t, 30.0, y * 0.004, 2.0)      # continuous in height, so the joints run down through every layer
+        return math.tanh(n * 2.0) * 3.0
     def ring_point(t, r_off, y, scale=1.0):
         e = edge(t)
         return (math.cos(t) * (MESA_TOP_R[0] * e * scale + r_off), math.sin(t) * (MESA_TOP_R[1] * e * scale + r_off), y)
-    def gully(t, y):      # vertical chutes cut into the cliff, deeper low down
-        g = periodic(t, 15.0, y * 0.006, 5.0)
-        return -9.0 * max(0.0, g) ** 1.4 * (0.35 + 0.65 * min(1.0, -y / MESA_H))
+    verts = []; faces = []; kind = []     # kind: 0 top, 1 wall, 2 scree
     top_rows = []
     for i in range(top_rings + 1):
         f = 1.0 - i / top_rings
@@ -416,65 +478,130 @@ def build_mesa(m):
         for k in range(seg):
             t = 2 * math.pi * k / seg
             x, y, _ = ring_point(t, 0.0, 0.0, f if f > 0.001 else 0.001)
-            z = noise.noise(Vector((x * 0.03, y * 0.03, 5.0))) * 0.6 - 1.6 * (f ** 14)
+            rim = -2.2 * (f ** 10) - 2.5 * (f ** 24) * (0.5 + 0.5 * periodic(t, 20.0, 0.4))   # a broken, rounded lip
+            z = noise.noise(Vector((x * 0.03, y * 0.03, 5.0))) * 0.7 + rim
             row.append(len(verts)); verts.append((x, y, z))
         top_rows.append(row)
     for i in range(top_rings):
         for k in range(seg):
             a_ = top_rows[i][k]; b_ = top_rows[i][(k + 1) % seg]; c_ = top_rows[i + 1][(k + 1) % seg]; d_ = top_rows[i + 1][k]
-            faces.append((a_, d_, c_, b_)); fmat.append(top_i)
+            faces.append((a_, d_, c_, b_)); kind.append(0)
     wall = [top_rows[0]]
     for j in range(1, wall_rows + 1):
         y = -MESA_H * j / wall_rows
         row = []
         for k in range(seg):
             t = 2 * math.pi * k / seg
-            off = blend_push(y) + gully(t, y) + periodic(t, 7.0, y * 0.045) * 3.5 + periodic(t, 1.8, y * 0.012, 3.0) * 11.0 * (j / wall_rows)                 + periodic(t, 23.0, y * 0.11, 8.0) * 1.1
+            notch = max(0.0, periodic(t, 6.0, 1.3, 7.0) - 0.25) * 38.0 * max(0.0, 1.0 - j / 10.0)   # a slab has sheared off the rim
+            off = ledge(y) + gully(t, y) + joints(t, y) + periodic(t, 7.0, y * 0.045) * 3.5 - notch \
+                + periodic(t, 3.2, y * 0.01, 3.0) * 28.0 * (0.3 + 0.7 * j / wall_rows) + periodic(t, 1.8, y * 0.012, 3.0) * 11.0 * (j / wall_rows) \
+                + periodic(t, 23.0, y * 0.11, 8.0) * 1.3
             x, yy, _ = ring_point(t, off, y)
             row.append(len(verts)); verts.append((x, yy, y))
         wall.append(row)
     for j in range(wall_rows):
-        ym = -MESA_H * (j + 0.5) / wall_rows; bi = band_of(ym)
         for k in range(seg):
-            t = 2 * math.pi * (k + 0.5) / seg
             a_ = wall[j][k]; b_ = wall[j][(k + 1) % seg]; c_ = wall[j + 1][(k + 1) % seg]; d_ = wall[j + 1][k]
-            faces.append((a_, d_, c_, b_))
-            if gully(t, ym) < -4.0 and rng.random() < 0.65: fmat.append(varnish)
-            else:
-                sh = noise.noise(Vector((math.cos(t) * 5.0, math.sin(t) * 5.0, ym * 0.004 + bi))); fmat.append(bi * 3 + (0 if sh < -0.2 else 2 if sh > 0.25 else 1))
+            faces.append((a_, d_, c_, b_)); kind.append(1)
     prev = wall[-1]
     for q in range(1, talus_rows + 1):
         y = -MESA_H - MESA_APRON * q / talus_rows
         row = []
         for k in range(seg):
             t = 2 * math.pi * k / seg
-            chute = max(0.0, periodic(t, 15.0, 0.5, 5.0)) * 14.0 * (q / talus_rows)
-            off = periodic(t, 7.0, y * 0.045) * 4.5 + periodic(t, 1.8, 0.7, 3.0) * 11.0 + q * (13.0 + periodic(t, 3.0, q * 0.4) * 5.0) + chute
+            chute = max(0.0, periodic(t, 15.0, 0.5, 5.0)) * 15.0 * (q / talus_rows)
+            off = periodic(t, 7.0, y * 0.045) * 4.5 + periodic(t, 1.8, 0.7, 3.0) * 11.0 + q * (8.0 + periodic(t, 3.0, q * 0.4) * 5.0) + chute \
+                + (rng.random() - 0.5) * 9.0 + periodic(t, 3.2, 0.2, 3.0) * 22.0 + periodic(t, 18.0, q * 0.7, 4.0) * 9.0 * (q / talus_rows)
             x, yy, _ = ring_point(t, off, y)
-            row.append(len(verts)); verts.append((x, yy, y))
+            row.append(len(verts)); verts.append((x, yy, y + (rng.random() - 0.5) * 5.0))
         for k in range(seg):
             a_ = prev[k]; b_ = prev[(k + 1) % seg]; c_ = row[(k + 1) % seg]; d_ = row[k]
-            faces.append((a_, d_, c_, b_)); fmat.append(talus_i + rng.choice((0, 1, 1, 2)))
+            faces.append((a_, d_, c_, b_)); kind.append(2)
         prev = row
-    mesa = mesh_obj('mesa', pal, verts, faces)
-    for pl, mi in zip(mesa.data.polygons, fmat): pl.material_index = mi
+    mesa = mesh_obj('mesa', sand, verts, faces)
     smooth(mesa, 58)
+    # UVs: the wall and apron wrap round the butte (NU repeats, seam handled per corner), the top is planar.
+    me = mesa.data; me.uv_layers.new(name='UVMap'); uv = me.uv_layers.active.data
+    for pl, kd in zip(me.polygons, kind):
+        for li in pl.loop_indices:
+            v = me.vertices[me.loops[li].vertex_index].co
+            if kd == 0: uv[li].uv = (v.x / STONE_TILE, v.y / STONE_TILE)
+            else:
+                ang = math.atan2(v.y / MESA_TOP_R[1], v.x / MESA_TOP_R[0]) / (2 * math.pi)
+                uv[li].uv = (ang * NU, v.z / STONE_TILE)
+        if kd:
+            ref = uv[pl.loop_indices[0]].uv[0]
+            for li in pl.loop_indices:
+                u, w = uv[li].uv
+                while u - ref > NU / 2: u -= NU
+                while u - ref < -NU / 2: u += NU
+                uv[li].uv = (u, w)
+    # Tints: the band's, with slow streaks and dark varnish where the chutes run.
+    def tint_mesa(c, kd):
+        if kd == 0: return (0.62, 0.50, 0.42)
+        if kd == 2:
+            sh = 0.62 + 0.25 * (noise.noise(Vector((c.x * 0.03, c.y * 0.03, 1.0))) * 0.5 + 0.5)
+            return (sh, sh * 0.82, sh * 0.72)
+        bi = band_of(c.z); r, g, b_ = tints[bi]
+        t = math.atan2(c.y, c.x)
+        n = noise.noise(Vector((math.cos(t) * 5.0, math.sin(t) * 5.0, c.z * 0.004 + bi)))
+        k = 0.86 + 0.16 * n
+        if gully(t, c.z) < -5.0: k *= 0.55; g *= 0.9
+        return (min(1.0, r * k), min(1.0, g * k), min(1.0, b_ * k))
+    layer = me.color_attributes.new('tint', 'BYTE_COLOR', 'CORNER')
+    for pl, kd in zip(me.polygons, kind):
+        col = tint_mesa(pl.center, kd)
+        for li in pl.loop_indices: layer.data[li].color = (*col, 1.0)
     parts = [mesa]
-    scree = [pal[talus_i + i] for i in range(3)]
-    for n in range(70):
+    def finish(ob, tint, uvs=True):
+        apply_object(ob)
+        if uvs: triplanar_uv(ob)
+        set_tint(ob, lambda c, tint=tint: tint)
+        return ob
+    # Fallen blocks round the foot (angular, some as big as a house) and scree in several sizes.
+    for n in range(110):
         t = rng.uniform(0, 2 * math.pi); r = rng.uniform(1.03, 1.55)
         x = math.cos(t) * MESA_TOP_R[0] * edge(t) * r; y = math.sin(t) * MESA_TOP_R[1] * edge(t) * r
-        sz = rng.uniform(2.5, 11.0)
-        parts.append(rock(f'block{n}', rng.choice(scree + [pal[3 * 1 + 1], pal[3 * 2 + 1]]), (x, y, -MESA_H - MESA_APRON * min(1.0, (r - 1.0) * 2.0) + sz * 0.25), (sz, sz * 0.9, sz), rng, 0.7, 1))
+        sz = rng.uniform(3.0, 14.0) * (1.0 if n % 9 else 1.4)
+        sh = rng.uniform(0.55, 0.95)
+        parts.append(finish(angular_block(f'block{n}', sand, (x, y, -MESA_H - MESA_APRON * min(1.0, (r - 1.0) * 2.0) + sz * 0.3), (sz, sz * 0.85, sz * 0.7), rng), (sh, sh * 0.82, sh * 0.72)))
+    for n in range(110):
+        t = rng.uniform(0, 2 * math.pi); r = rng.uniform(1.0, 1.9)
+        x = math.cos(t) * MESA_TOP_R[0] * edge(t) * r; y = math.sin(t) * MESA_TOP_R[1] * edge(t) * r
+        zz = -MESA_H - MESA_APRON * min(1.0, (r - 1.0) * 1.6)
+        sz = rng.uniform(0.6, 3.2); sh = rng.uniform(0.5, 0.95)
+        parts.append(finish(rock(f'scree{n}', sand, (x, y, zz + sz * 0.15), (sz, sz, sz), rng, 0.6, 1), (sh, sh * 0.8, sh * 0.7)))
+    # Rocks and dry scrub on the top.
     for n in range(80):
         t = rng.uniform(0, 2 * math.pi); r = math.sqrt(rng.random()) * 0.93
         x = math.cos(t) * MESA_TOP_R[0] * edge(t) * r; y = math.sin(t) * MESA_TOP_R[1] * edge(t) * r
-        sz = rng.uniform(0.4, 1.8)
-        parts.append(rock(f'stone{n}', rng.choice(scree), (x, y, 0.0), (sz, sz, sz), rng, 0.55, 1))
-    for n in range(60):
+        sz = rng.uniform(0.4, 1.8); sh = rng.uniform(0.55, 0.9)
+        parts.append(finish(rock(f'stone{n}', sand, (x, y, 0.0), (sz, sz, sz), rng, 0.55, 1), (sh, sh * 0.8, sh * 0.7)))
+    for n in range(50):
         t = rng.uniform(0, 2 * math.pi); r = math.sqrt(rng.random()) * 0.9
         x = math.cos(t) * MESA_TOP_R[0] * edge(t) * r; y = math.sin(t) * MESA_TOP_R[1] * edge(t) * r
-        parts.append(rock(f'scrub{n}', m['scrub'], (x, y, 0.1), (0.8, 0.8, 0.5), rng, 1.0, 1))
+        parts.append(finish(rock(f'scrub{n}', m['scrub'], (x, y, 0.1), (0.8, 0.8, 0.5), rng, 1.0, 1), (1.0, 1.0, 1.0), uvs=False))
+    # Detached spires and a fin, the way a butte sheds them: stacked blocks that taper, each a little off the last.
+    def spire(name, cx, cy, height, r0, lean, fin=False):
+        """One tapering column, fluted and fractured: rings of an eight-sided shape, a little off the last."""
+        rows = 16; ring = 10; base = -MESA_H - MESA_APRON; vs = []; fs = []
+        for q in range(rows + 1):
+            f = q / rows
+            r = r0 * (1.0 - 0.5 * f ** 1.2) * (1.0 + 0.10 * noise.noise(Vector((f * 6.0, cx, 4.0)))) * (1.0 + 0.5 * max(0.0, 0.12 - f) / 0.12)
+            ox = cx + lean * f * 12.0 + noise.noise(Vector((f * 4.0, cx, 1.0))) * 3.0; oy = cy + noise.noise(Vector((f * 4.0, cy, 2.0))) * 3.0
+            for k in range(ring):
+                a_ = 2 * math.pi * k / ring; kk = 0.78 + 0.34 * (noise.noise(Vector((math.cos(a_) * 2.0 + cx, math.sin(a_) * 2.0, f * 5.0))) * 0.5 + 0.5)
+                vs.append((ox + math.cos(a_) * r * kk * (2.2 if fin else 1.0), oy + math.sin(a_) * r * kk, base + height * f))
+        for q in range(rows):
+            for k in range(ring):
+                a2 = q * ring + k; b2 = q * ring + (k + 1) % ring
+                fs.append((a2, b2, b2 + ring, a2 + ring))
+        fs.append(tuple(range(ring - 1, -1, -1))); fs.append(tuple(rows * ring + k for k in range(ring)))
+        ob = mesh_obj(name, sand, vs, fs); smooth(ob, 60)
+        return [finish(ob, (0.78, 0.58, 0.5))]
+    parts += spire('spire_a', -330.0, -250.0, 95.0, 19.0, 0.5)
+    parts += spire('spire_b', -295.0, -305.0, 60.0, 12.0, -0.4)
+    parts += spire('fin_c', 370.0, 110.0, 78.0, 13.0, 0.3, fin=True)
     mesh = join('table-mesa', parts)
     smooth(mesh, 58)
     empty('top_centre', (0, 0, 0))
@@ -577,6 +704,84 @@ def build_lookout(m):
     weather(tower, 'grey_timber', [m['wood_dark']], 1.5, 0.0, 2.0)
     return tower
 
+def wear_nodes(nt, bsdf, base, bare):
+    """Dust that gathers in crevices, panel seams and low surfaces, rust in the crevices, bare metal on the
+    edges: a colour network feeding Base Color, to be baked into a picture."""
+    nodes, links = nt.nodes, nt.links
+    def node(kind, **values):
+        nd = nodes.new(kind)
+        for k, v in values.items(): setattr(nd, k, v)
+        return nd
+    def val(nd, name, v): nd.inputs[name].default_value = v
+    def math_(op, a, b=None, clamp=False):
+        nd = node('ShaderNodeMath', operation=op, use_clamp=clamp)
+        for i, x in enumerate((a, b)):
+            if x is None: continue
+            if isinstance(x, (int, float)): nd.inputs[i].default_value = x
+            else: links.new(x, nd.inputs[i])
+        return nd.outputs[0]
+    tc = node('ShaderNodeTexCoord'); sep = node('ShaderNodeSeparateXYZ'); links.new(tc.outputs['Object'], sep.inputs[0])
+    ao = node('ShaderNodeAmbientOcclusion', samples=12); val(ao, 'Distance', 0.5)
+    n1 = node('ShaderNodeTexNoise'); val(n1, 'Scale', 5.0); val(n1, 'Detail', 8.0); links.new(tc.outputs['Object'], n1.inputs['Vector'])
+    n2 = node('ShaderNodeTexNoise'); val(n2, 'Scale', 13.0); val(n2, 'Detail', 6.0); links.new(tc.outputs['Object'], n2.inputs['Vector'])
+    brick = node('ShaderNodeTexBrick'); links.new(tc.outputs['Object'], brick.inputs['Vector'])
+    val(brick, 'Scale', 2.2); val(brick, 'Mortar Size', 0.03); val(brick, 'Mortar Smooth', 0.4)
+    val(brick, 'Color1', (0, 0, 0, 1)); val(brick, 'Color2', (0, 0, 0, 1)); val(brick, 'Mortar', (1, 1, 1, 1))
+    mortar = node('ShaderNodeRGBToBW'); links.new(brick.outputs['Color'], mortar.inputs[0])
+    geo = node('ShaderNodeNewGeometry')
+    crev = math_('SUBTRACT', 1.0, ao.outputs['AO'])
+    low = math_('MULTIPLY', math_('SUBTRACT', 1.7, sep.outputs['Z']), 0.6, True)
+    tail = math_('MULTIPLY', math_('MULTIPLY', math_('SUBTRACT', sep.outputs['Y'], 3.0), 2.0, True), math_('MULTIPLY', math_('SUBTRACT', sep.outputs['Z'], 1.2), 3.3, True))
+    dust = math_('ADD', math_('MULTIPLY', crev, 1.5), math_('MULTIPLY', low, 0.35))
+    dust = math_('ADD', dust, math_('MULTIPLY', mortar.outputs[0], 0.5))
+    dust = math_('ADD', dust, math_('MULTIPLY', math_('SUBTRACT', n1.outputs['Fac'], 0.5), 0.6))
+    dust = math_('MULTIPLY', dust, math_('SUBTRACT', 1.0, math_('MULTIPLY', tail, 0.75)), True)
+    rust = math_('MULTIPLY', math_('MULTIPLY', math_('SUBTRACT', math_('MULTIPLY', crev, n2.outputs['Fac']), 0.12), 3.5, True), 0.85)
+    edge = math_('MULTIPLY', math_('SUBTRACT', geo.outputs['Pointiness'], 0.52), 9.0, True)
+    def mix(a, b, fac, strength):
+        nd = node('ShaderNodeMixRGB', blend_type='MIX')
+        links.new(fac if not strength else math_('MULTIPLY', fac, strength), nd.inputs['Fac'])
+        if isinstance(a, tuple): nd.inputs['Color1'].default_value = (*a, 1)
+        else: links.new(a, nd.inputs['Color1'])
+        nd.inputs['Color2'].default_value = (*b, 1)
+        return nd.outputs['Color']
+    col = mix(base, (0.40, 0.32, 0.22), dust, 0.85)
+    col = mix(col, (0.30, 0.12, 0.05), rust, 0.8)
+    if bare: col = mix(col, (0.55, 0.56, 0.57), edge, 0.75)
+    links.new(col, bsdf.inputs['Base Color'])
+
+def bake_plane(ob, m, size=2048):
+    """Smart-unwrap the airframe, bake the wear network of every material into one picture, then keep one
+    baked material (plus the glass and the tail number, which stay flat so they stay clean)."""
+    scene = bpy.context.scene
+    scene.render.engine = 'CYCLES'; scene.cycles.device = 'CPU'; scene.cycles.samples = 16; scene.cycles.use_denoising = False
+    names = [mm.name for mm in ob.data.materials]
+    flat = ('dusty_glass', 'tail_number_paint')
+    bpy.ops.object.select_all(action='DESELECT'); ob.select_set(True); bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.004, scale_to_bounds=True)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    img = bpy.data.images.new('plane_bake', size, size, alpha=False)
+    for mat in ob.data.materials:
+        nt = mat.node_tree; bsdf = nt.nodes['Principled BSDF']; base = tuple(bsdf.inputs['Base Color'].default_value)[:3]
+        if mat.name not in flat: wear_nodes(nt, bsdf, base, mat.name in ('faded_cream_skin', 'faded_orange_trim'))
+        tex = nt.nodes.new('ShaderNodeTexImage'); tex.image = img; nt.nodes.active = tex
+    bpy.ops.object.bake(type='DIFFUSE', pass_filter={'COLOR'}, margin=8, use_clear=True)
+    BLEND.mkdir(parents=True, exist_ok=True)
+    scene.render.image_settings.file_format = 'JPEG'; scene.render.image_settings.quality = 86
+    path = BLEND / 'plane-wear.jpg'; img.save_render(str(path), scene=scene)
+    bpy.data.images.remove(img)
+    img = bpy.data.images.load(str(path)); img.name = 'plane_wear'; img.colorspace_settings.name = 'sRGB'
+    baked = bpy.data.materials.new('plane_baked'); baked.use_nodes = True
+    nt = baked.node_tree; bsdf = nt.nodes['Principled BSDF']
+    tex = nt.nodes.new('ShaderNodeTexImage'); tex.image = img; nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+    bsdf.inputs['Roughness'].default_value = 0.82; bsdf.inputs['Metallic'].default_value = 0.08
+    glass_i = names.index('dusty_glass'); number_i = names.index('tail_number_paint')
+    number = ob.data.materials[number_i]; glass = ob.data.materials[glass_i]
+    kind = [1 if pl.material_index == glass_i else 2 if pl.material_index == number_i else 0 for pl in ob.data.polygons]
+    ob.data.materials.clear(); ob.data.materials.append(baked); ob.data.materials.append(glass); ob.data.materials.append(number)
+    for pl, k in zip(ob.data.polygons, kind): pl.material_index = k
+
 def build_plane_wreck(m):
     rng = random.Random(23)
     parts = []
@@ -593,13 +798,15 @@ def build_plane_wreck(m):
             v.co.x += (rng.random() - 0.5) * 0.14; v.co.z += (rng.random() - 0.5) * 0.12 - 0.05
         if v.co.y < -3.0:
             v.co.z -= 0.14 * (1 + (v.co.y + 3.0) / 0.6)
+            v.co.x += noise.noise(Vector((v.co.z * 5, v.co.y * 5, 1.0))) * 0.09
+        if -3.0 <= v.co.y < -2.0:
+            v.co.x *= 1.0 - 0.08 * math.sin((v.co.y + 3.0) * 3.0)
         v.co.x += math.sin(v.co.y * 0.5) * 0.02
     # Trim stripe: faces low on the sides take the orange; the stripe also runs under the windows.
-    fus.data.materials.append(m['trim']); fus.data.materials.append(m['bare'])
+    fus.data.materials.append(m['trim'])
     for p in fus.data.polygons:
         c = p.center
-        if abs(c.x) > 0.35 and 0.42 < c.z + belly * 0 < 0.62 and -1.8 < c.y < 3.6: p.material_index = 1
-        elif c.z < 0.28 and c.y > -2.9 and rng.random() < 0.34: p.material_index = 2
+        if abs(c.x) > 0.30 and 0.46 < c.z < 0.62 and -2.3 < c.y < 4.2: p.material_index = 1
     parts.append(fus)
     # Windows, windscreen and the door; one pane missing.
     for side in (-1, 1):
@@ -649,9 +856,10 @@ def build_plane_wreck(m):
     # Struts, the folded gear and the wheels.
     parts.append(tube('strut_l', m['steel_grey'], [(-0.5, -0.5, 0.35), (-3.3, -0.55, 1.88)], 0.032))
     parts.append(tube('strut_r', m['steel_grey'], [(0.5, -0.5, 0.35), (2.7, -0.5, 1.84)], 0.032))
-    parts.append(cyl('wheel_l', m['rubber'], 0.34, 0.2, (-1.35, -1.4, 0.34), (0, math.radians(90), 0), verts=16))
+    parts.append(cyl('wheel_l', m['rubber'], 0.34, 0.2, (-1.95, -0.95, 0.16), (math.radians(80), math.radians(15), 0), verts=16))
     parts.append(cyl('wheel_r', m['rubber'], 0.34, 0.2, (1.9, -1.8, 0.2), (math.radians(70), math.radians(70), 0), verts=16))
-    parts.append(tube('gear_l', m['steel_grey'], [(-0.5, -1.2, 0.5), (-1.3, -1.4, 0.34)], 0.04))
+    parts.append(tube('gear_l', m['steel_grey'], [(-0.45, -1.1, 0.55), (-0.85, -1.25, 0.28), (-1.5, -1.05, 0.12)], 0.045))
+    parts.append(tube('gear_l_brace', m['steel_grey'], [(-0.6, -0.8, 0.5), (-1.1, -1.0, 0.16)], 0.025))
     parts.append(cyl('tailwheel', m['rubber'], 0.11, 0.07, (0, 3.1, 0.28), (0, math.radians(90), 0), verts=10))
     # The tail: a tailplane with one half bent down, the fin and rudder.
     tp_l = box('tailplane_l', m['skin'], (1.55, 0.7, 0.07), (-0.95, 3.7, 1.14), (0, math.radians(-4), math.radians(-3)), bevel=0.02)
@@ -662,17 +870,18 @@ def build_plane_wreck(m):
     # The tail number, N4471K, on both sides of the fin and the rear fuselage; letters dark and a little worn.
     for side in (-1, 1):
         rot = (math.radians(90), 0, math.radians(90 * side)) if side == 1 else (math.radians(90), 0, math.radians(-90))
-        parts.append(text(f'number_fin{side}', 'N4471K', 0.50, (side * 0.062, 3.88, 2.18), rot, m['number']))
-        parts.append(text(f'number_body{side}', 'N4471K', 0.55, (side * (0.50 if side == 1 else -0.50), 2.0, 0.98), rot, m['number']))
+        parts.append(text(f'number_fin{side}', 'N4471K', 0.19, (side * 0.066, 3.78, 2.05), rot, m['number']))
+    for side in (-1, 1):
+        rot = (math.radians(90), 0, math.radians(90 * side))
+        parts.append(text(f'number_body{side}', 'N4471K', 0.34, (side * 0.37, 2.15, 0.95), rot, m['number']))
     # Scrapes, torn skin ribs showing through the belly, a dead pilot's door ajar.
     for k in range(5):
         parts.append(tube(f'rib{k}', m['steel_grey'], [(-0.34, 1.4 + k * 0.24, 0.18), (0.34, 1.4 + k * 0.24, 0.18)], 0.016))
     parts.append(box('door_open', m['skin'], (0.04, 0.8, 0.8), (0.9, -0.8, 0.9), (0, 0, math.radians(60))))
     joined = join('table-plane-wreck', parts)
-    weather(joined, 'faded_cream_skin', [m['skin_dirt'], m['skin_dirt'], m['skin_burn']], 2.4, 0.05, 4.0)
-    weather(joined, 'faded_orange_trim', [m['skin_dirt'], m['rust_dark']], 1.4, 0.1, 6.0)
+    bake_plane(joined, m)
     # Lay it nose-down and settle the lowest point on the ground.
-    joined.rotation_euler = (tilt, 0, math.radians(-8))
+    joined.rotation_euler = (tilt, math.radians(6), math.radians(-8))
     bpy.ops.object.select_all(action='DESELECT'); joined.select_set(True); bpy.context.view_layer.objects.active = joined
     bpy.ops.object.transform_apply(rotation=True)
     low = min(v.co.z for v in joined.data.vertices)
@@ -732,7 +941,7 @@ def build_logbook(m):
 BUILDERS = {'sign-logging-arrows': build_logging_arrows, 'sign-start-grid': build_start_grid, 'sign-fire-pits': build_fire_pits,
             'sign-chalk-line': build_chalk_line, 'sign-lighthouse-window': build_lighthouse_window, 'table-mesa': build_mesa,
             'table-lookout': build_lookout, 'table-plane-wreck': build_plane_wreck, 'table-strip': build_strip, 'table-logbook': build_logbook}
-LIMITS = {'table-mesa': 34000, 'table-lookout': 9000, 'table-plane-wreck': 6000, 'table-strip': 12000, 'sign-start-grid': 12000,
+LIMITS = {'table-mesa': 46000, 'table-lookout': 9000, 'table-plane-wreck': 9000, 'table-strip': 12000, 'sign-start-grid': 12000,
           'sign-logging-arrows': 12000, 'sign-chalk-line': 12000, 'sign-fire-pits': 14000, 'sign-lighthouse-window': 6000, 'table-logbook': 1500}
 
 def triangles():
@@ -764,9 +973,9 @@ if options.render:
         'sign-fire-pits': [('air', (0, 26, 44), (0, 0, 0), 35), ('car', (4.0, 34, 1.25), (0, 0, 0), 35)],
         'sign-chalk-line': [('air', (0, 22, 44), (0, 0, 0), 35), ('car', (2.0, 24, 1.25), (0, 0, 0), 35)],
         'sign-lighthouse-window': [('air', (0, 8, 40), (0, -0.6, 1.6), 35), ('car', (3.0, 25, 1.4), (0, 0, 1.6), 35)],
-        'table-mesa': [('far', (560, -470, 120), (0, 0, -60), 40), ('top', (-60, -300, 30), (-40, 40, -30), 30)],
+        'table-mesa': [('far', (560, -470, 120), (0, 0, -60), 40), ('butte', (950, -420, -110), (0, 0, -50), 35), ('cliff', (130, -330, -95), (30, -190, -70), 35), ('foot', (-430, -330, -105), (-250, -190, -125), 35)],
         'table-lookout': [('three-quarter', (14, -17, 9), (0, 0, 6.5), 40), ('cab', (1.4, 1.5, 11.6), (-0.7, -0.9, 10.95), 28)],
-        'table-plane-wreck': [('three-quarter', (-9, -11, 5), (0, 0, 1), 40), ('tail', (7.0, 4.6, 2.3), (0, 3.9, 2.0), 45)],
+        'table-plane-wreck': [('three-quarter', (-9, -11, 5), (0, 0, 1), 40), ('side', (11, 0.5, 2.4), (0, 0.5, 1.2), 40), ('tail', (7.0, 5.0, 3.0), (0, 3.9, 2.3), 45), ('gear', (-4.4, -5.0, 1.7), (-1.2, -1.0, 0.4), 40)],
         'table-strip': [('along', (0, -108, 6), (0, 20, 0), 35), ('windsock', (-2.5, 62, 3.0), (7.5, 70, 3.0), 45)],
         'table-logbook': [('open', (0.1, -0.33, 0.28), (0.0, 0.0, 0.0), 40)],
     }
@@ -782,7 +991,7 @@ if options.render:
                 gm.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (*ground_colour[name], 1)
                 gm.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 0.97; g.data.materials.append(gm)
             else:
-                bpy.ops.mesh.primitive_plane_add(size=6000, location=(0, 0, -145.05))
+                bpy.ops.mesh.primitive_plane_add(size=6000, location=(0, 0, -165.05))
                 g = bpy.context.active_object; gm = bpy.data.materials.new('ground'); gm.use_nodes = True
                 gm.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (0.36, 0.22, 0.12, 1)
                 gm.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 0.97; g.data.materials.append(gm)
@@ -792,6 +1001,7 @@ if options.render:
             sun = bpy.data.lights.new('sun', 'SUN'); sun.energy = 4.0
             s = bpy.data.objects.new('sun', sun); scene.collection.objects.link(s)
             s.rotation_euler = (math.radians(52), math.radians(8), math.radians(-38))
+            scene.render.image_settings.file_format = 'PNG'
             scene.render.engine = 'CYCLES'; scene.cycles.samples = 40; scene.cycles.device = 'CPU'; scene.cycles.use_denoising = True
             scene.render.threads_mode = 'FIXED'; scene.render.threads = 4
             scene.render.resolution_x, scene.render.resolution_y = 640, 400; scene.view_settings.view_transform = 'AgX'

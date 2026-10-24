@@ -1,9 +1,13 @@
-# MAP-ART, round 2 (24 October 2026)
+# MAP-ART-2, round 2 (24 October 2026)
 
-Sheet: `round-2.jpg`. The signs became paint, chalk and embers only (the game's own ground carries
-them); strata in three shades with gullies and varnish streaks; rust and dust wear on the lookout
-and plane; bigger arrows and tail numbers.
+Sheet: `round-2.jpg`. The apron is lumpier and steeper with ridges between the chutes; the silhouette
+is less round; more fallen blocks; the tail number N4471K is sized to fit the fin (and repeated on the
+rear fuselage) so every letter shows.
 
-Still open: the mesa reads as a smooth layered cake; the plane's wear follows large flat faces and
-looks like camouflage; the chalk line is faint from the air. Next round: darker strata with vertical
-streaking, a finer plane skin, heavier chalk.
+## Verdict (Builder; Claude judges)
+
+- **Pick:** the mesa as a rocky butte (strata, joints, broken rim, rubble, spires: not Monument Valley
+  but real rock) and the plane wreck (faded paint, dust and rust in seams and low surfaces, collapsed
+  gear leg, readable N4471K on the fin and rear fuselage).
+- Known limits: the apron's texture still wraps radially at the very edge; the spires are clay-pillar
+  smooth; the baked plane picture is 2048 squared, so very close views look soft.
