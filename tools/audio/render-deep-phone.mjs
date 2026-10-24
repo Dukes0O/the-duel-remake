@@ -1,6 +1,6 @@
 // DEEP-RADIO: a Node render of a take through the phone chain, for loudness checks
 // (docs/THE_DEEP.md section 6.7). It follows the Web Audio graph in
-// src/deep/deep-phone.js and src/lessons/radio-voice.js node for node:
+// deep-phone.js (in the Deep folder) and src/lessons/radio-voice.js node for node:
 //   warble delay -> high-pass -> low-pass -> soft clip -> output gain 1.3,
 // with the bubble bed joining before the filters. The radio's key clicks and hiss
 // are left out (the hiss is -34 dB under the voice and the clicks last 14 ms).

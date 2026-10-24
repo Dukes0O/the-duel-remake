@@ -118,6 +118,17 @@ master compressor and ceiling, which are not modelled).
 - `tools/test-deep-audio.mjs`: it counted every catalogue row starting
   `deep.` (expected 8 recipes). Ana's voice takes are `deep.ana.*` rows, so
   the filter now leaves them out. The eight-recipe checks are unchanged.
+- `tools/test-p4-audio.mjs`: the two pinned hashes (the pre-P4 sound bank and
+  the pre-P4 catalogue) leave out the `deep.ana.*` ids and rows, as they
+  already leave out the eight Deep recipes, the helicopter's and the driving
+  lessons'. The pinned hashes themselves are unchanged.
+- `tools/test-fight-voices.mjs`: the crew-voice records leave out
+  `deep.ana.*` rows, as they leave out `heli.` and the driving lessons'
+  (Ana's lines are behind `the-deep`, not `fight-voices`). All pinned hashes
+  and the nine kept takes are unchanged.
+- `tools/test-deep-look.mjs`: five approved import pairs added for the new
+  files (the sound bank, the build step, the render tool and the new test).
+  The guard still fails any other import of the Deep folder.
 
 ## Removed
 
