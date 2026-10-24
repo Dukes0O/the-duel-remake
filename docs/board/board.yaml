@@ -523,6 +523,171 @@ tasks:
     flag: "lab"
     details: "docs/board/cards/LAB-FINISH.md"
 
+  - id: SKI-RULES
+    title: "Heli-skiing: the ski simulation, gates, scoring and the guide's run"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "heli-skiing"
+    details: "docs/board/cards/SKI-RULES.md"
+
+  - id: SKI-RUNS
+    title: "Heli-skiing: the five Summit Run ski zones as recipes and data"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [SKI-RULES]
+    locks: []
+    flag: "heli-skiing"
+    details: "docs/board/cards/SKI-RUNS.md"
+
+  - id: SKI-SAVE
+    title: "Heli-skiing save: best runs, medals, stashes and their pay"
+    owner: "claude-cloud"
+    lane: "SAVE"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [save-shape]
+    flag: "heli-skiing"
+    details: "docs/board/cards/SKI-SAVE.md"
+
+  - id: SKI-HELI
+    title: "Heli-skiing in the helicopter: pads, drop, pickup, group job, thin air"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [SKI-RUNS, SKI-SAVE]
+    locks: []
+    flag: "heli-skiing"
+    details: "docs/board/cards/SKI-HELI.md"
+
+  - id: SKI-ART
+    title: "Heli-skiing art: skier, guide and guests, gates, kicker, pads"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "heli-skiing"
+    details: "docs/board/cards/SKI-ART.md"
+
+  - id: SKI-AUDIO
+    title: "Heli-skiing sounds and radio lines"
+    owner: "codex"
+    lane: "AUDIO"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [sound-bank]
+    flag: "heli-skiing"
+    details: "docs/board/cards/SKI-AUDIO.md"
+
+  - id: SKI-VIEW
+    title: "Heli-skiing in the game: drawing, camera, HUD, score cards"
+    owner: "codex"
+    lane: "VIS"
+    size: "M"
+    status: "ready"
+    needs: [SKI-HELI, SKI-ART, SKI-AUDIO]
+    locks: [busy-game-files]
+    flag: "heli-skiing"
+    details: "docs/board/cards/SKI-VIEW.md"
+
+  - id: LAB-SNOW
+    title: "The Lab's launch-angle and ski-wax lessons on the ski rules"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: [SKI-RULES, LAB-BENCHES]
+    locks: []
+    flag: "lab"
+    details: "docs/board/cards/LAB-SNOW.md"
+
+  - id: SKI-FINISH
+    title: "Claude's finishing pass: heli-skiing"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "backlog"
+    needs: [SKI-VIEW, LAB-SNOW]
+    locks: []
+    flag: "heli-skiing"
+    details: "docs/board/cards/SKI-FINISH.md"
+
+  - id: MAP-DATA
+    title: "Pilot's map: the place table, regions, fuel pads, leg rule, traced outlines"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "pilot-map"
+    details: "docs/board/cards/MAP-DATA.md"
+
+  - id: MAP-DESTINATIONS
+    title: "Pilot's map: every course a destination, new legs, fuel pads, over the sea"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [MAP-DATA]
+    locks: []
+    flag: "pilot-map"
+    details: "docs/board/cards/MAP-DESTINATIONS.md"
+
+  - id: MAP-SECRETS
+    title: "Pilot's map: five secret courses spotted from the air, the Table, the save"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [MAP-DESTINATIONS]
+    locks: [save-shape]
+    flag: "pilot-map"
+    details: "docs/board/cards/MAP-SECRETS.md"
+
+  - id: MAP-ART
+    title: "Pilot's map art: the five signs, the Table mesa, lookout and plane wreck"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "pilot-map"
+    details: "docs/board/cards/MAP-ART.md"
+
+  - id: MAP-VIEW
+    title: "The pilot's map screen, scouting names, signs and the Table in the game"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: [MAP-DATA, MAP-DESTINATIONS, MAP-SECRETS, MAP-ART]
+    locks: [busy-game-files]
+    flag: "pilot-map"
+    details: "docs/board/cards/MAP-VIEW.md"
+
+  - id: MAP-FINISH
+    title: "Claude's finishing pass: the pilot's map"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "backlog"
+    needs: [MAP-VIEW]
+    locks: []
+    flag: "pilot-map"
+    details: "docs/board/cards/MAP-FINISH.md"
+
   - id: FIX-LIVE-EDGES
     title: "Live course edges: floating walls, road gaps, early collision, snow run-wide"
     owner: "codex"
