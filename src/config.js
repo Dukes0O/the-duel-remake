@@ -96,6 +96,18 @@ export const CARS = {
     color:0xb8bdc2,accent:0x202329,offRoadGrip:.63,offRoadSpeed:60,offRoadScrub:.54,mass:1140,
     collision:{halfWidth:1,halfLength:2.14},height:1.14,kind:'hypercar',
   },
+  // Earned car 3 (EARN-CAR-3, docs/EARNED_CARS.md section 4): a medal car,
+  // never bought, earned at 24 medals with 6 gold. Base figures; the factory
+  // tuning applies on top, so the tuned top speed is 278 x 1.105, about 307
+  // mph, below the Jesko's. Height is the body's; the wing stands above it.
+  bugatti_bolide: {
+    name:'Bugatti Bolide',homage:'Bolide-inspired track hypercar',gearbox:'manual',
+    unlockRequirement:{kind:'medals',medals:24,gold:6},factoryMaxed:true,
+    topSpeed:278,accel:10.5,grip:1.15,braking:1.45,gears:[67,110,154,191,225,255,278],
+    color:0x1f4fa8,accent:0x111316,offRoadGrip:.58,offRoadSpeed:50,offRoadScrub:.64,mass:1450,
+    collision:{halfWidth:1.05,halfLength:2.5},height:1.05,kind:'hypercar',
+    boostCapacity:1.35,nitroAcceleration:1.35,nitroSpeedBonus:.025,
+  },
 };
 export const DEFAULT_CAR = 'falcone_f42';
 

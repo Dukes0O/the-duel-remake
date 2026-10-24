@@ -280,7 +280,7 @@ check('the stock paint has no gear and gives the base kit exactly', () => {
   assert.deepEqual(gearStats(make(), on), {...BASE_GEAR});
   assert.deepEqual(BASE_GEAR, {litreGauge: false, dropSight: false, lineMin: 15, lineMax: 15, reelSpeed: 0,
     bumpHurtAbove: null, bumpTwoStepsAbove: null, hoistPayBonus: 0, searchNightMinutes: 0, heatRange: 0, heatBuriedRange: 0,
-    heatAnimals: false, scareDistance: 100, countReach: 60, crates: 1, hookReach: 3, hookLimitKg: 1500, noseCamera: false});
+    heatAnimals: false, scareDistance: 100, countReach: 60, crates: 1, hookReach: 4, hookLimitKg: 1500, noseCamera: false});
 });
 
 // What each skin's gear must set, from section 5.3.
@@ -289,7 +289,7 @@ const GEAR_EXPECTED = {
   medevac: {lineMin: 5, lineMax: 40, reelSpeed: 1.5, bumpHurtAbove: 8, bumpTwoStepsAbove: 14, hoistPayBonus: 200},
   rescue: {searchNightMinutes: 8, heatRange: 150, heatBuriedRange: 30, heatAnimals: true},
   wildlife: {scareDistance: 50, countReach: 100},
-  supply: {crates: 2, hookReach: 5},
+  supply: {crates: 2, hookReach: 6.7},
   tv: {noseCamera: true},
 };
 const wearing = kind => make({skins: {owned: [kind], worn: kind, fresh: []}});
@@ -326,7 +326,7 @@ check('the gear numbers match the packet one by one', () => {
   assert.equal(worn('wildlife').scareDistance, 50);
   assert.equal(worn('wildlife').countReach, 100);
   assert.equal(worn('supply').crates, 2);
-  assert.equal(worn('supply').hookReach, 5);
+  assert.equal(worn('supply').hookReach, 6.7);
   assert.equal(worn('supply').hookLimitKg, 1500, 'the hook limit stays 1,500 kg');
   assert.equal(worn('tv').noseCamera, true);
 });

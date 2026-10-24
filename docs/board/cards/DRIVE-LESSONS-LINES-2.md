@@ -33,3 +33,7 @@ run, `src/sound-bank.js`. Locks: `sound-bank`. Art: none.
 Acceptance: a Node render check of every new line and the cue (peaks at
 most -1 dBTP, speech about -18 LUFS); Claude listens to one packet (at most
 three rounds); lane tier, build. Removed: `drive.radio.corner.late.result`.
+
+- Asked by DRIVE-LESSON-2 (Claude, 24 October): an exit-specific racing-line line,
+  for the right try that misses the exit cone's outside half (today it reuses
+  `drive.radio.corner.coach.exit`). Suggested id `drive.radio.line.coach.exit`.
