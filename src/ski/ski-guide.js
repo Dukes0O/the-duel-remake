@@ -58,11 +58,13 @@ function project(line, cumulative, from, x, z) {
 }
 
 // line: the planned points [{x, z}] from the drop to the finish; world: as
-// for the skier. Returns {time, bestTime, pace, length, maxSide, ghost,
+// for the skier; sampleEvery is the ghost's step in fixed steps (12 is 10 a
+// second); lookAhead replaces {lookAheadMin, lookAheadMax, lookAheadPerSpeed}
+// for a line that needs another reach (the moguls). Returns {time, bestTime, pace, length, maxSide, ghost,
 // landings, tumbles}: ghost samples {t, x, y, z, heading, speed} run at 10 per
 // second; landings are the skiLand events of the best run (every jump it
 // took) and tumbles how many of them were not safe.
-export function guideRun({line, world, wax = null}) {
+export function guideRun({line, world, wax = null, sampleEvery = GUIDE.sampleEvery, lookAhead = GUIDE}) {
   if (!Array.isArray(line) || line.length < 2) throw new Error('A guide run needs a line of at least two points');
   const cumulative = measure(line), length = cumulative[cumulative.length - 1];
   const first = line[0], next = line[1];
@@ -77,12 +79,14 @@ export function guideRun({line, world, wax = null}) {
     if (steps++ > maxSteps) throw new Error('The guide did not finish the line');
     const here = project(line, cumulative, progress, skier.x, skier.z);
     progress = here.distance; maxSide = Math.max(maxSide, here.side);
-    const ahead = pointAt(line, cumulative, progress + clamp(GUIDE.lookAheadMin + GUIDE.lookAheadPerSpeed * skier.speed, GUIDE.lookAheadMin, GUIDE.lookAheadMax));
+    const ahead = pointAt(line, cumulative, progress + clamp(lookAhead.lookAheadMin + lookAhead.lookAheadPerSpeed * skier.speed, lookAhead.lookAheadMin, lookAhead.lookAheadMax));
     const error = wrap(Math.atan2(ahead.x - skier.x, ahead.z - skier.z) - skier.heading);
-    for (const event of stepSkier(skier, {turn: clamp(-error / GUIDE.turnFullAt, -1, 1), tuck: Math.abs(error) < GUIDE.tuckBelow, skate: true}, world)) {
+    // In the air a turn key would spin the skier, so the guide holds still there.
+    const turn = skier.grounded ? clamp(-error / GUIDE.turnFullAt, -1, 1) : 0;
+    for (const event of stepSkier(skier, {turn, tuck: Math.abs(error) < GUIDE.tuckBelow, skate: true}, world)) {
       if (event.type === 'skiLand') landings.push(event);
     }
-    if (steps % GUIDE.sampleEvery === 0) sample();
+    if (steps % sampleEvery === 0) sample();
   }
   sample();
   const bestTime = steps * SKI_STEP;
