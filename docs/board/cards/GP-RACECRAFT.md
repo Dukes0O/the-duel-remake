@@ -270,3 +270,22 @@ pile-ups than today on every track. So split them:
    stop; Claude takes the table to Kyle.
 4. The wide start becomes its own later card (GP-WIDE-START), designed after
    Kyle has driven the racing part.
+
+
+## Racing-only batch FAILED, 24 October 2026 (cloud session)
+
+Following the 16 October 13:10 direction, `cpu-racecraft` no longer holds grid lanes or gives inside priority; grid lanes relax to the racing line exactly as with the switch off. Real-pace pass decisions, the extra pass types and CPU nitro (0.5 strength, 0.5 refill) are unchanged, with no other tuning. The field suite passes (1,296 checks) and the off-switch hashes are unchanged: the off baselines match the earlier batches exactly (passes 1.65, 9.95, 3.55; mean crashes 12.55 on Panorama). One 20-seed, three-course, normal/slow/nitro, off/on batch (360 races, `racecraft-rate.mjs --races 20 --jobs 4 --check`) ran on commit 3b69ceb7. Every race finished the player and all seven CPUs. No retune or rerun followed.
+
+| Guard, off -> on | Panorama Ridge | Tremblant Woods | Pacific Canyon |
+| --- | --- | --- | --- |
+| CPU passes per race and required factor | 1.65 -> 6.40; 2x PASS | 9.95 -> 12.00; 1.5x FAIL (needs 14.9) | 3.55 -> 6.50; 2x FAIL (needs 7.1) |
+| Races with 8 or more crashes, on <= off | 16 -> 20 FAIL | 4 -> 14 FAIL | 0 -> 1 FAIL |
+| Mean crashes, on <= off x 1.1 | 12.55 -> 15.85 FAIL | 3.75 -> 9.25 FAIL | 0.10 -> 2.50 FAIL |
+| Early pile-ups, on <= off + 1 | 2 -> 6 FAIL | 1 -> 14 FAIL | 0 -> 2 FAIL |
+| Slower player passed, required 20/20 | 13 FAIL | 18 FAIL | 14 FAIL |
+| Nitro leader at end of lap 1, at most 5/20 (off) | 0 PASS (19) | 0 PASS (2) | 18 FAIL (20) |
+| Maximum paired CPU race time change, at most 2% | 2.71% FAIL | 1.38% PASS | 2.67% FAIL |
+
+Start measures (report-only): side-by-side pair successes 0/20, 1/20, 0/20; leading-six spread of 3 m or more in 10/20, 0/20, 1/20 races (off-switch mean spread 3.30 m, 1.21 m, 1.60 m).
+
+In plain words: with the start formation removed, the racing part still brings more crashes and pile-ups than today on every course, and Tremblant Woods is the worst (14 early pile-ups against 1). The slower player is passed in only 13, 18 and 14 of 20 races, and the nitro leader on Pacific Canyon wins lap one in 18 of 20 (off: 20). Only the Panorama passing factor and the Panorama and Woods nitro numbers pass. The earlier runs with start lanes held got 17 to 20 passes of the slower player and 0 nitro leaders; this run does not reproduce that, so those gains came with the lane-hold rather than from the racing changes alone. No cause is proved by these counts. Parked here; Claude takes this table to Kyle. Pull request opened as a draft; not merged, no preview flag added.
