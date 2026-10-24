@@ -42,6 +42,10 @@ A fresh reviewer ran the benches against the game's sources. It found six real f
 - Brian says paint keeps rust out, but the rust bench has four jars and no paint jar. Fuel: "brakes and turns a little better" and Suspension: "quick to turn" are not shown by those benches (they show 0 to 60 time, body shake and lean). Fuel's mass effect on acceleration is a bench-only rule until LAB-TUNE adds it to the game.
 - The projectile bench shows the stone and the water side by side; Brian's 5, 20 and 45 m falls are the stone's, the water's are 4.2, 12.4 and 21.3 m.
 
+## Lane tier and build
+
+Run once on the branch after merging current `origin/integration/wasteland` (24 October): `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`: 21 passed, 3 failed (24 suites selected by what changed). The three fail identically on an untouched integration checkout and are laptop-only suites: `test-course-kit`, `test-earned-cars-ui`, `test-medals`. `npm run build` passes. Card checks, passing: `tools/test-lab-benches.mjs` (19 tests), `tools/test-heli-mode.mjs` (its approved-importer list gained the bench files and `tools/test-lab-benches.mjs`, because the benches deliberately call the helicopter's own functions). Not run in the cloud: browser scenarios and the full tier.
+
 ## Removed
 
 Nothing.
