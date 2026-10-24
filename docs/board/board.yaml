@@ -609,10 +609,12 @@ tasks:
 
   - id: MAP-ART
     title: "Pilot's map art: the five signs, the Table mesa, lookout and plane wreck"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-24
+    branch: claude/map-art
     needs: []
     locks: []
     flag: "pilot-map"
