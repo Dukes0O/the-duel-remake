@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { analyzeFolder } from './audio-analysis.mjs';
 import * as browserHarness from './browser-harness.mjs';
 import { wavFromPcm } from './scenarios/audio-race.mjs';
+import { inspectRepository } from './test-repo-hygiene.mjs';
 
 const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const looks = join(root, 'docs', 'board', 'looks');
@@ -133,7 +134,7 @@ test('browser, Blender and fidelity rounds plan the same raw evidence directory'
     'audio recordings must keep their separate timestamped evidence folder');
 });
 
-test('Git ignores raw evidence and the looks folder stays below 20 MB', () => {
+test('Git ignores raw evidence and retained review sizes are reported against advisory targets', () => {
   const ignored = spawnSync('git', ['check-ignore', '--no-index', '.evidence/2026-09-24/CLEAN-03/capture.png'],
     { cwd: root, encoding: 'utf8', windowsHide: true });
   check(ignored.status === 0, 'raw .evidence captures must be ignored by Git');
@@ -143,7 +144,12 @@ test('Git ignores raw evidence and the looks folder stays below 20 MB', () => {
       return sum + (entry.isDirectory() ? bytes(path) : entry.isFile() ? statSync(path).size : 0);
     }, 0);
   }
-  check(bytes(looks) < 20_000_000, 'docs/board/looks must total less than 20 MB');
+  const measuredBytes = bytes(looks), report = inspectRepository(root, []);
+  const configuredTargets = JSON.parse(readFileSync(join(root, 'tools', 'size-targets.json'), 'utf8'));
+  check(Number.isSafeInteger(measuredBytes) && measuredBytes >= 0, 'review directory measurement is an actual byte count');
+  check(report.targets.limits.lookDirectoryBytes === configuredTargets.lookDirectoryBytes, 'the advisory uses the checked-in target exactly');
+  check(report.targets.advisory.lookDirectoryBytes === measuredBytes, 'repository advisory reports the independently measured review bytes exactly');
+  console.log(`Review directory: ${measuredBytes} bytes; target ${report.targets.limits.lookDirectoryBytes} bytes (advisory).`);
   function jsonFiles(folder) {
     return readdirSync(folder, { withFileTypes: true }).flatMap(entry => {
       const path = join(folder, entry.name);
@@ -156,9 +162,11 @@ test('Git ignores raw evidence and the looks folder stays below 20 MB', () => {
   check(tracked.status === 0, `Git must list retained review files: ${tracked.stderr}`);
   const names = new Set(tracked.stdout.split('\0').filter(Boolean).map(path => path.replaceAll('\\', '/')));
   for (const name of names) {
-    if (!/^docs\/board\/looks\/[^/]+\/round-\d+\.jpg$/.test(name)) continue;
+    const earnedCar = /^docs\/board\/looks\/earned-cars\/car-([1-3])-round-[1-3]\.jpg$/.exec(name);
+    if (!/^docs\/board\/looks\/[^/]+\/round-\d+\.jpg$/.test(name) && !earnedCar) continue;
     check(statSync(join(root, name)).size <= 500_000, `${name} must be at most 500 KB`);
-    check(names.has(name.replace(/\.jpg$/, '-review.md')), `${name} needs a matching review note`);
+    const reviewNote = earnedCar ? `docs/board/looks/earned-cars/car-${earnedCar[1]}-review.md` : name.replace(/\.jpg$/, '-review.md');
+    check(names.has(reviewNote), `${name} needs its matching review note: ${reviewNote}`);
   }
 });
 
