@@ -98,10 +98,34 @@ thin-air numbers match the helicopter's own thrust rule.
 None new: the zones use the ski rules' events (`skiCarve`, `skiSkid`,
 `skiGate`, `skiPop`, `skiLand`, `skiTumble`). Art: none.
 
+## Changed assertions
+
+None is loosened; the one guard change only adds a permission.
+
+- `tools/test-heli-mode.mjs`, the "no unapproved src/heli imports" guard: four
+  entries added to its allow-list for `tools/test-ski-runs.mjs` (`heli-ground`,
+  `heli-search`, `heli-flight`, `heli-jobs`). The zone test reads the Summit
+  Run world's ground and clear-circle test for the pads, and the thrust rule and
+  base altitude for the thin-air numbers. Without them the guard (correctly)
+  fails on the new test. **Needs Claude's written review on the card (rule 18).**
+- `tools/test-ski-physics.mjs`: two checks added (the landing window); no
+  existing assertion changed.
+
 ## Checks
 
-See the pull request (lane tier and build, run once on the branch merged with
-the current `integration/wasteland`).
+Run once in the cloud (Linux, no graphics), on the branch merged with the
+current `integration/wasteland`:
+
+- `npm run build`: passes.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 411
+  passed, 9 failed. Eight need the laptop (Windows only or Blender) and none
+  touches the ski code: `test-course-kit`, `test-earned-cars-ui`,
+  `test-full-check`, `test-drive-through`, `test-medals` (each asserts `win32`
+  or runs `pwsh`), `test-salt-flats`, `test-salt-flats-art` (read
+  `C:\\Users\\kyleb\\dev\\art-library`) and `test-vesper-art` (needs a local
+  Blender). The ninth, `test-heli-mode`, was the import guard above; fixed, and
+  rerun on its own: 176 checks pass.
+- Not run: browser scenarios and frame checks (nothing is drawn yet).
 
 ## Removed
 
