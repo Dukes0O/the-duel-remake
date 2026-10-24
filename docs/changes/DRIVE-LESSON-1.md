@@ -226,3 +226,91 @@ speed from old lateral acceleration/feasibility and does not read tyre-slip
 rules. Whether that is the cause here is unproved. Ask Claude for the next
 bounded controller/speed-plan approach within this owned module, or park.
 Failure facts were extracted once; no repeated diagnosis/status-only commit.
+
+## Cones from the corner, instructor drives through them (Claude's 16 October 13:10 answer)
+
+One bounded attempt, built in `src/lessons/drive-lessons.js` only (plus its
+test file). Result: **the instructor now drives all four cases cleanly and
+counts all three cones, but the late-try acceptance fails on every case, so
+this stays a draft and I stopped as the card says.** The red board was not
+moved and no threshold, gate or assertion was loosened.
+
+What changed. The cones come from the corner itself: cone 1 at the braking
+point 1.5 m in from the outside road edge, cone 2 at the apex 1.0 m in from the
+inside edge, cone 3 at the exit point 1.5 m in from the outside edge. The apex
+is the track script's own apex share of the turn; the exit is as far past the
+turn's end as the apex is before it; the braking point is where the
+instructor's speed plan starts slowing for the corner. The red board is 25 m
+after cone 1 and never past turn-in. The 2 m check now applies to the cone
+points. The instructor steers a smooth line through the three points with the
+existing `steerForYaw`. Its speed plan comes from the existing tyre helper
+(`tyreSlipSteering`) at 92% (Casual) and 97% (Pro): the fastest speed at which
+the line's bend stays inside the tyre's yaw limit, with 4% held back for
+steering feedback, corner speed held from turn-in to the exit cone, straight-line
+braking before the corner (80% of full braking), and a light brake (under the
+50% rule) for an earlier bend such as Beaver Kink. Gates, clean limits and
+the late-try and right-try rules are unchanged.
+
+Per-corner cone points (distance along the road in metres / lateral in metres,
+positive lateral is the right of the road):
+
+- The Cutting, Casual: cone 1 at 1589.0 / -6.00, cone 2 at 1727.9 / +5.52,
+  cone 3 at 1785.1 / -5.00; red board 1614.0; start gate 1513.0, turn-in
+  1693.0, finish 1845.1.
+- The Cutting, Pro: cone 1 at 1586.0 / -6.00 (cones 2 and 3 as above); red
+  board 1611.0.
+- Beaver Hairpin, Casual and Pro: cone 1 at 1754.2 / +5.50, cone 2 at
+  1858.7 / -6.00, cone 3 at 1940.2 / +5.50; red board 1779.2; start gate
+  1498.2, turn-in 1809.0, finish 2000.2.
+
+The instructor's result (same each time and at 30, 60 and 144 FPS; all three
+cones counted; never above 1.0 tyre slip, so no screech):
+
+- The Cutting Casual: 10.55 s, peak slip 0.90, lowest speed 42 mph.
+- The Cutting Pro: 10.20 s, peak slip 0.94, lowest speed 44 mph.
+- Beaver Hairpin Casual: 16.00 s, peak slip 0.95, lowest speed 48 mph.
+- Beaver Hairpin Pro: 15.41 s, peak slip 1.000 (touches the limit, never over).
+
+What fails. The scripted late try (flat out from cone 1, brakes at the board,
+steers with up to full steering) screeches enough on all four (0.58 to 0.99 s,
+needs 0.5 s) but **finishes faster than the instructor** instead of losing
+0.25 s: The Cutting Casual 0.36 s faster, Pro 0.32 s faster; Beaver Hairpin
+Casual 0.44 s faster, Pro 0.40 s faster; none hit a wall. The instructor is
+cautious (corner speed held to the exit cone, 4% margin), so late braking costs
+a late driver nothing in this corner. By the card's stop clause I did not move
+the board or tune the instructor to fit. Claude to decide: slow the late try's
+advantage by a different pace/hold rule, or a different red board rule.
+
+With the late-loss assertion switched off in a scratch copy (not committed),
+the rest went as follows. The Cutting, both paces, 30/60/144 FPS: the right try
+passes all four rules, two full-pace tries beat the instructor, a slow try
+resets the streak and three in a row pass. Beaver Hairpin: the right try
+misses cone 2 on Casual (rules: brake yes, inside cone no) and on Pro misses
+cone 2 and the wide exit and ends off-road; I did not investigate further. I
+think the full-brake student arrives below the instructor's corner speed and
+cannot reach the inside cone, but that is not proved.
+
+Tests changed (for Claude's review, per rule 18). Removed the three trace-based
+`placeCones` tests (widest-point-within-120 m, less-than-2 m movement, and the
+relative placement with edge limits): they tested behaviour this change removes.
+Their replacements test cone points for both directions, the 2 m check, the
+board limits and the line itself. The `instructorControls` tests only gained a
+`curvatureAt` on the fake line and one new case (light brake before the
+corner's braking point). The native student helper now builds its plan with
+`lessonPlanFor` instead of the racing line, and the scripted late/right drivers
+follow the instructor's plan up to cone 1 (needed so they survive Beaver Kink);
+no assertion value or tolerance changed.
+
+Checks run here (Linux cloud): `tools/test-drive-lessons.mjs` 32 pass, 4 fail
+(the four native student cases, on the late-try loss only); lane tier
+`--changed --jobs 8`: that suite plus `tools/test-earned-cars-ui.mjs` and
+`tools/test-course-kit.mjs` failed, the other suites passed (combat, progression,
+race integrity, build status, `src/test.js` and the rest). The latter two
+fail only on "test cleanup requires the Recycle Bin" (Windows-only), unrelated to
+this change. `npm run build` passes. The "native" instructor and student cases
+did run here (about 10 s); the laptop should run the same suite and the two
+Recycle Bin suites. No browser or frame check was run.
+
+Removed: the instructor's use of the planned racing line and `buildSpeedProfile`,
+the trace-based `placeCones` (widest-point search) and the old exit-search
+observation window in `buildInstructorRun`, and the three tests above.

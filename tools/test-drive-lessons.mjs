@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DRIVE_LESSON_CORNERS,createDriveLesson,stepDriveLesson,placeCones,instructorControls,buildInstructorRun,finishInstructorTrace} from '../src/lessons/drive-lessons.js';
+import {DRIVE_LESSON_CORNERS,createDriveLesson,stepDriveLesson,placeCones,cornerPoints,buildLessonLine,instructorControls,buildInstructorRun,finishInstructorTrace,lessonPlanFor} from '../src/lessons/drive-lessons.js';
 
 // Plain car-view tests only. These do not simulate a car or prove instructor physics.
 const corner={id:'test-corner',startS:80,finishS:200,dir:1};
@@ -164,27 +164,40 @@ test('challenge summary ignores cone rules just like the streak does',()=>{
 
 
 const straightCourse={roadHalfWidthAt:()=>6,groundAt:(s,lateral)=>({x:s,y:0,z:lateral})};
-test('approved relative cone placement uses the native line with fixed edge and board limits',()=>{
+test('cones sit on the corner points, 1.5m from the outside edge and 1.0m from the inside edge',()=>{
   for (const dir of [-1,1]) {
-    const poses=[{s:80,lateral:-2*dir,brake:0},{s:100,lateral:-2*dir,brake:.2},
-      {s:120,lateral:0,brake:0},{s:130,lateral:2*dir,brake:0},
-      {s:160,lateral:-2*dir,brake:0},{s:180,lateral:0,brake:0}];
-    const before=JSON.stringify(poses);
-    const plan=placeCones(poses,{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:180,dir});
-    assert.deepEqual(plan.cones.map(c=>[c.id,c.s,c.lateral]),[[1,100,-3*dir],[2,130,3*dir],[3,160,-3*dir]]);
-    assert.equal(plan.redBoardS,110);assert.equal(plan.finishS,220);
-    assert.equal(JSON.stringify(poses),before);
-    assert.throws(()=>placeCones(poses.map(p=>({...p,brake:0})),{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:180,dir}));
-    const edges=placeCones(poses.map(p=>({...p,lateral:p.lateral*2.5})),
-      {course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:180,dir});
-    assert.deepEqual(edges.cones.map(c=>c.lateral),[-5.5*dir,5.5*dir,-5.5*dir]);
+    const options={brakeS:100,turnInS:110,apexS:130,exitS:160,dir};
+    const plan=placeCones(straightCourse,options);
+    assert.deepEqual(plan.cones.map(c=>[c.id,c.s,c.lateral]),[[1,100,-4.5*dir],[2,130,5*dir],[3,160,-4.5*dir]]);
+    assert.deepEqual(plan.cones.map(c=>[c.x,c.z]),[[100,-4.5*dir],[130,5*dir],[160,-4.5*dir]]);
+    assert.equal(plan.redBoardS,110,'never past turn-in');assert.equal(plan.finishS,220);
+    assert.equal(placeCones(straightCourse,{...options,brakeS:60}).redBoardS,85);
   }
+});
+test('cone placement rejects a corner narrower than the 2m sanity check and bad points',()=>{
+  const options={brakeS:100,turnInS:110,apexS:130,exitS:160,dir:1};
+  assert.throws(()=>placeCones({...straightCourse,roadHalfWidthAt:()=>1.5},options),/valid road edge/);
+  assert.throws(()=>placeCones({...straightCourse,roadHalfWidthAt:()=>2.2},options),/2m inward/);
+  assert.doesNotThrow(()=>placeCones({...straightCourse,roadHalfWidthAt:()=>2.25},options));
+  assert.throws(()=>placeCones(straightCourse,{...options,apexS:105}),/Invalid corner points/);
+  assert.throws(()=>placeCones(straightCourse,{...options,dir:0}),/Invalid corner points/);
+});
+test('the lesson line runs outside to the apex cone and back out to the exit cone',()=>{
+  for (const dir of [-1,1]) {
+    const points=cornerPoints({turnInS:110,turnOutS:150,dir,apexShare:.5});
+    assert.deepEqual([points.turnInS,points.apexS,points.exitS],[110,130,170]);
+    const line=buildLessonLine({...straightCourse,at:s=>({heading:0})},points,{startS:50,endS:230});
+    assert.equal(line.offsetAt(100),-4.5*dir);assert.equal(line.offsetAt(130),5*dir);assert.equal(line.offsetAt(170),-4.5*dir);
+    assert.ok(dir*line.offsetAt(120)>-4.5&&dir*line.offsetAt(120)<5,'smooth between the points');
+    assert.ok(dir*line.curvatureAt(120)<0||dir*line.curvatureAt(120)>0);
+  }
+  assert.throws(()=>cornerPoints({turnInS:150,turnOutS:110,dir:1,apexShare:.5}),/Invalid corner geometry/);
 });
 
 test('instructor controls retain settled pace and use the tyre yaw helper with braking',()=>{
   const calls=[],steerForYaw=(yaw,options)=>{calls.push({yaw,options});return .123;};
   const plan={course:straightCourse,car:{topSpeed:200,grip:1,gears:[80,120,200]},
-    line:{offsetAt:()=>0},profile:{at:()=>100},drive:{mphToWorld:.44704},steerForYaw,
+    line:{offsetAt:()=>0,curvatureAt:()=>0},profile:{at:()=>100},drive:{mphToWorld:.44704},steerForYaw,
     turnInS:150,turnOutS:200,difficulty:'casual'};
   const state={s:100,lateral:0,speedMph:100,headingError:0,revs:.8,gear:1,tyreSlipRules:true};
   straightCourse.at=()=>({curvature:0});
@@ -200,7 +213,7 @@ test('instructor controls retain settled pace and use the tyre yaw helper with b
 test('instructor cancels retained steering before the full-brake grip limit drops',()=>{
   const state={s:100,lateral:0,speedMph:100,headingError:0,revs:.8,gear:1};
   const plan={course:{at:()=>({curvature:0})},car:{grip:1,gears:[80,120,200]},
-    line:{offsetAt:()=>0},profile:{at:()=>50},drive:{mphToWorld:.44704,steerResponse:24},
+    line:{offsetAt:()=>0,curvatureAt:()=>0},profile:{at:()=>50},drive:{mphToWorld:.44704,steerResponse:24},
     difficulty:'casual'};
   const alpha=1-Math.exp(-plan.drive.steerResponse/120);
   for(const sign of [-1,1]){
@@ -215,33 +228,23 @@ test('instructor cancels retained steering before the full-brake grip limit drop
   }
 });
 
+test('before the corner braking point an earlier bend gets only a light brake, under the 50% rule',()=>{
+  const course={...straightCourse,at:()=>({curvature:.02})};
+  const plan={course,car:{grip:1,gears:[100]},line:{offsetAt:()=>0,curvatureAt:()=>0},profile:{at:()=>50},
+    drive:{mphToWorld:.44704},steerForYaw:()=>0,difficulty:'casual',brakeS:200};
+  const state={s:100,lateral:0,speedMph:80,headingError:0,revs:.8,gear:0};
+  const early=instructorControls(state,{speedLimit:300,traction:1},plan);
+  assert.ok(early.brake>0&&early.brake<.5);
+  assert.equal(instructorControls({...state,s:250},{speedLimit:300,traction:1},plan).brake,0,'no braking in the bend itself');
+});
 test('instructor does not brake on a curved approach before the named corner',()=>{
   const course={...straightCourse,at:()=>({curvature:.02})};
-  const plan={course,car:{grip:1,gears:[100]},line:{offsetAt:()=>0},profile:{at:()=>50},
+  const plan={course,car:{grip:1,gears:[100]},line:{offsetAt:()=>0,curvatureAt:()=>0},profile:{at:()=>50},
     drive:{mphToWorld:.44704},steerForYaw:()=>0,difficulty:'casual',turnInS:150,turnOutS:200};
   const controls=instructorControls({s:100,lateral:0,speedMph:80,headingError:0,revs:.8,gear:0},
     {speedLimit:300,traction:1},plan);
   assert.equal(controls.brake,0);assert.equal(controls.throttle,0);
 });
-test('approved relative cone placement selects the widest trace point within 120m of the apex',()=>{
-  const poses=[{s:80,lateral:-2,brake:0},{s:100,lateral:-2,brake:.2},
-    {s:120,lateral:0,brake:0},{s:130,lateral:2,brake:0},
-    {s:160,lateral:-2,brake:0},{s:180,lateral:0,brake:0},
-    {s:250,lateral:-3,brake:0},{s:250.001,lateral:-5,brake:0},{s:270,lateral:0,brake:0}];
-  const plan=placeCones(poses,{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:270,dir:1});
-  assert.equal(plan.cones[2].s,250);assert.equal(plan.cones[2].lateral,-4);assert.equal(plan.finishS,310);
-  assert.throws(()=>placeCones(poses.slice(0,6),{course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:270,dir:1}),/not covered/);
-});
-
-test('approved relative cone placement rejects less than 2m actual inward or outward line movement',()=>{
-  const options={course:straightCourse,turnInS:110,turnOutS:150,exitSearchEndS:270,dir:1};
-  const trace=(brake,inside,outside)=>[{s:100,lateral:brake,brake:.2},{s:130,lateral:inside,brake:0},
-    {s:220,lateral:outside,brake:0},{s:250,lateral:outside,brake:0}];
-  assert.doesNotThrow(()=>placeCones(trace(0,2,0),options));
-  assert.throws(()=>placeCones(trace(.001,2,0),options),/inward.*outward/);
-  assert.throws(()=>placeCones(trace(0,2,.001),options),/inward.*outward/);
-});
-
 test('finish trace ignores only wholly post-finish faults and keeps straddling ticks closed',()=>{
   const poses=[{t:0,s:0,lateral:0,heading:0},{t:1,s:9,lateral:1,heading:.1},
     {t:2,s:11,lateral:3,heading:.3},{t:3,s:15,lateral:8,heading:.5}];
@@ -283,15 +286,17 @@ for (const courseId of ['panorama-ridge','tremblant-woods']) {
 // Prepared native student acceptance. These runs are heavy, just like the
 // instructor cases above: no execution until Root admits the existing suite.
 async function nativeStudentAttempt(baseline, lesson, mode, fps) {
-  const [{Duel}, {COURSE, DRIVE, steerForYaw, tyreSlipSteering}, {racingLineFor, buildSpeedProfile}] = await Promise.all([
-    import('../src/game.js'), import('../src/config.js'), import('../src/race-lines.js'),
+  const [{Duel}, {COURSE, DRIVE, steerForYaw, tyreSlipSteering}] = await Promise.all([
+    import('../src/game.js'), import('../src/config.js'),
   ]);
   const {corner,instructor,courseId,car,upgrades,difficulty,seed}=baseline;
   const duel=new Duel({seed,featureFlags:{enabled:name=>name==='tyre-slip'}});
   duel.startCampaign({seed,car,upgrades:{...upgrades},difficulty,driverId:'club',
     mode:'timetrial',opponentCount:0,startStage:COURSE.findIndex(row=>row.id===courseId)});
   const state=duel.state,course=duel.course,spec=duel.car;
-  const line=racingLineFor(course),profile=buildSpeedProfile(line,spec);
+  const pace=difficulty==='casual'?.92:.97;
+  const lessonPlan=await lessonPlanFor(duel,DRIVE_LESSON_CORNERS.find(row=>row.courseId===courseId),pace);
+  const {line}=lessonPlan,profile=lessonPlan.profile;
   const start=instructor.poses[0];
   state.tyreSlipRules=true;state.tyreSlip=0;
   state.status='racing';state.countdown=0;state.s=corner.startS;
@@ -303,12 +308,11 @@ async function nativeStudentAttempt(baseline, lesson, mode, fps) {
   state.yawVelocity=line.curvatureAt(state.s)*state.speedMph*DRIVE.mphToWorld;
   state.traffic=[];state.opponents=[];
   state.nextLapGate=duel._lapGates.filter(s=>s<=state.s).length;
-  const pace=difficulty==='casual'?.92:.97;
   // instructorControls multiplies its profile by pace. Divide once to ask
   // for the actual 100% line speed, not 100% of the slower instructor.
   const speedScale=mode==='fast'?1:mode==='slow'?pace*.8:pace;
   const plan={course,car:spec,line,profile:{at:s=>profile.at(s)*speedScale/pace},
-    drive:DRIVE,steerForYaw,difficulty,turnInS:corner.turnInS,turnOutS:corner.turnOutS};
+    drive:DRIVE,steerForYaw,difficulty,turnInS:corner.turnInS,turnOutS:corner.turnOutS,brakeS:profile.brakeS};
   const cornerSpeed=Math.min(...instructor.poses.filter(p=>p.s>=corner.turnInS&&p.s<=corner.turnOutS).map(p=>p.mph));
   assert.ok(Number.isFinite(cornerSpeed)&&cornerSpeed>0,'actual instructor corner speed exists');
   let wallHit=false,brakingDone=false,ticks=0,frames=0,answer;
@@ -329,7 +333,12 @@ async function nativeStudentAttempt(baseline, lesson, mode, fps) {
           const brakeS=mode==='late'?instructor.redBoardS:instructor.cones[0].s;
           if(state.s>=brakeS&&state.speedMph<=cornerSpeed)brakingDone=true;
           const brake=state.s>=brakeS&&!brakingDone?1:0;
-          controls={...controls,brake,throttle:mode==='late'&&state.s<brakeS?1:brake?0:controls.throttle};
+          // Up to cone 1 both drivers follow the instructor's own plan, including
+          // its light brake (under the 50% rule) for an earlier bend. The late
+          // driver then holds full throttle until the board.
+          const early=state.s<instructor.cones[0].s;
+          const flatOut=mode==='late'&&!early&&state.s<brakeS;
+          controls=early?controls:{...controls,brake:flatOut?0:brake,throttle:flatOut?1:brake?0:controls.throttle};
           if(mode==='late'){
             // Use the real tyre steering gain but do not clip desired yaw
             // to its grip peak: the late driver can ask for full steering.
