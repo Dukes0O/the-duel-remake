@@ -167,3 +167,7 @@ made up. The editable recipe is `tools/blender/pilot-map-props.py`; rebuild with
 `blender -b --factory-startup --python tools/blender/pilot-map-props.py -- --root .`. The signs
 carry empties (`flame_n`, `smoke_n`, `window_light`) where the game's existing fire and smoke
 effects and its lighting go; the sprites for those are credited with the helicopter fire effects above.
+
+MAP-ART-2: the mesa uses the game's own `red-sandstone.png` (original generated art, see
+`docs/IMAGE_PROMPTS.md`), scaled to 1024 and embedded in `table-mesa.glb` by the recipe; the plane
+wreck carries one picture baked from procedural dust, rust and edge wear (no outside image).

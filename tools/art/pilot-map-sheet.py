@@ -1,4 +1,5 @@
-"""One comparison sheet (JPG) for a MAP-ART look round.
+"""One comparison sheet (JPG) for a MAP-ART look round. The first set of tiles (the five signs, lookout, strip, windsock, logbook) was accepted
+in MAP-ART; MAP-ART-2 shows the mesa and the plane wreck.
 
 Usage:
   python tools/art/pilot-map-sheet.py <render folder> <out.jpg> "<title>" [max bytes]
@@ -15,25 +16,14 @@ from PIL import Image, ImageDraw, ImageFont
 
 TILE = (480, 300)
 TILES = [
-    ('sign-logging-arrows/air.png', 'Sign 1 from the air: logging track arrows'),
-    ('sign-logging-arrows/car.png', 'Sign 1 from a car'),
-    ('sign-start-grid/air.png', 'Sign 2 from the air: start grid'),
-    ('sign-start-grid/car.png', 'Sign 2 from a car'),
-    ('sign-fire-pits/air.png', 'Sign 3 from the air: camp-fire pits'),
-    ('sign-fire-pits/car.png', 'Sign 3 from a car'),
-    ('sign-chalk-line/air.png', 'Sign 4 from the air: chalk line on the wall'),
-    ('sign-chalk-line/car.png', 'Sign 4 from a car'),
-    ('sign-lighthouse-window/air.png', 'Sign 5 from the air: lit lighthouse window'),
-    ('sign-lighthouse-window/car.png', 'Sign 5 from a car'),
     ('table-mesa/far.png', 'The Table from afar'),
-    ('table-mesa/top.png', 'The Table: the top'),
-    ('table-lookout/three-quarter.png', 'Fire lookout'),
-    ('table-lookout/cab.png', 'Lookout cab and table'),
+    ('table-mesa/butte.png', 'The Table: the butte on the horizon'),
+    ('table-mesa/cliff.png', 'Cliff: strata, joints, broken rim'),
+    ('table-mesa/foot.png', 'Foot: fallen blocks, scree, a spire'),
     ('table-plane-wreck/three-quarter.png', 'Bush plane wreck'),
-    ('table-plane-wreck/tail.png', 'Tail number'),
-    ('table-strip/along.png', 'Dirt strip'),
-    ('table-strip/windsock.png', 'Windsock'),
-    ('table-logbook/open.png', 'The logbook'),
+    ('table-plane-wreck/side.png', 'Dented airframe, torn wing'),
+    ('table-plane-wreck/tail.png', 'Tail number N4471K on the fin'),
+    ('table-plane-wreck/gear.png', 'Collapsed gear leg, dust and rust in the seams'),
 ]
 
 def main():
