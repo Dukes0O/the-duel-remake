@@ -40,6 +40,10 @@ save, no way into the helicopter. Built on `cloud/ski-rules` from
   review of those two assertion changes goes on the card (rule 18).** Nothing
   is loosened.
 - `tools/test-ski-physics.mjs` (110 checks), written alongside the rules.
+- `start-preview.bat`: `heli-skiing` added to the preview's flag list
+  (outside the card's named files, but `test-preview-launcher.mjs` requires
+  every dev switch to be requested there, so the new switch fails the lane
+  tier without it). No test changed.
 
 ## Settled in writing (the packet leaves these open)
 
@@ -97,7 +101,15 @@ frames a second matches exactly; gates, medals, moguls and aerials have worked
 scoring examples; the guide matches the hand-skied tucked line within 2% and
 follows bendy lines within 1 m.
 
-Lane tier and build: see the pull request.
+Run in the cloud (Linux, no graphics): `npm run build` passes. Lane tier
+(`--changed --jobs 8 --keep-going`, run on the branch before the preview
+launcher line was added): 404 passed, 9 failed. Eight need the laptop and none
+touches the ski code: `test-course-kit`, `test-earned-cars-ui`,
+`test-full-check`, `test-drive-through`, `test-medals` (each asserts `win32`
+or runs `pwsh`), `test-salt-flats`, `test-salt-flats-art` (read
+`C:\\Users\\kyleb\\dev\\art-library`) and `test-vesper-art` (needs a real
+local Blender). The ninth, `test-preview-launcher`, was the new switch missing
+from `start-preview.bat`; fixed above and it passes.
 
 ## Removed
 
