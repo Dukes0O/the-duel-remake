@@ -97,7 +97,22 @@ unchanged.
 
 ## Independent review of the `buyFuel` change
 
-REVIEW_PLACEHOLDER
+One fresh reviewer, given only the `heli-save.js` diff and its tests (not my
+reasoning), as the design lead asked. **Verdict: no faults found.** The reviewer
+compared `buyFuel` against an independent reference over about 1,500 wallets
+(0 up, plus 10,000 to the 1e9 cap) crossed with four starting fuels and seven
+requests including Infinity. The old path (option absent, NaN, 0, -1, 'x',
+Infinity, null, '1.5') gave 0 differences in result, cost, kg or partial, and the
+float change from `wallet * 20 / 3` to `wallet * 100 / rate` is the same division
+(both numerators are exact integers, so both give the same double). The new path
+matched exact BigInt arithmetic at 1.5, 1.8, 2.0 and 2.2: no cost above the wallet,
+no negative or fractional balance, no zero or negative amount, every partial
+purchase maximal. Minor observations, all taken: a price snaps to a tenth of a credit
+(1.55 reads as 1.6) and a non-number is 1.5 (now stated in the code comment and
+pinned in the test); and the tests gained the cases it named missing: exact charges
+and maximal partial purchases for every wallet 0 to 400 at every price, exact
+partial results at 1.8 and 2.2, a nearly full tank, a huge wallet with Infinity kg,
+0.19 kg and zero, NaN and negative requests at a dear price.
 
 ## Checks
 

@@ -252,6 +252,26 @@ const placeIds = PLACES.filter(place => !place.air).map(place => place.courses[0
     const r = buyFuel(withHeli(0, 2, wallet), Infinity, {...on, pricePerKg: price});
     if (r.ok) { assert.ok(r.cost <= wallet && r.profile.credits === wallet - r.cost && r.profile.credits >= 0, `wallet ${wallet} at ${price}`); checks++; }
   }
+  // The reviewer's gaps: exact charges and maximal partial purchases against whole-number arithmetic, at every price.
+  for (const price of [1.5, 1.8, 2.0, 2.2]) {
+    const rate = Math.round(price * 10);
+    for (let wallet = 0; wallet <= 400; wallet++) {
+      const r = buyFuel(withHeli(0, 2, wallet), Infinity, {...on, pricePerKg: price});
+      const full = Math.ceil(4000 * rate / 100);
+      if (wallet >= full) { if (!r.ok || r.kg !== 400 || r.cost !== full || r.partial) assert.fail(`${price} full tank with ${wallet}`); continue; }
+      const tenths = Math.floor(wallet * 100 / rate);
+      if (tenths < 1) { if (r.ok) assert.fail(`${price} with ${wallet} bought something`); continue; }
+      if (!r.ok || r.kg !== tenths / 10 || r.cost !== Math.ceil(tenths * rate / 100) || r.cost > wallet || !r.partial || Math.ceil((tenths + 1) * rate / 100) <= wallet && (tenths + 1) * rate / 100 <= wallet)
+        assert.fail(`${price} with ${wallet} credits: ${JSON.stringify([r.ok, r.kg, r.cost, r.partial])}`);
+    }
+    checks++;
+  }
+  same([1.8, 2.2].map(price => { const r = buyFuel(withHeli(0, 1, 100), Infinity, {...on, pricePerKg: price}); return [r.kg, r.cost, r.partial]; }), [[55.5, 100, true], [45.4, 100, true]], 'with 100 credits: 55.5 kg at 1.8, 45.4 kg at 2.2, and never over');
+  same(buyFuel(withHeli(399.4, 1, 1000), 50, {...on, pricePerKg: 2.2}).kg, 0.6, 'a nearly full tank takes only what fits, at a dear price');
+  same(buyFuel(withHeli(0, 1, 1e9), Infinity, {...on, pricePerKg: 2.2}).cost, 880, 'a huge wallet and Infinity kg: the full tank, 880 credits');
+  same(buyFuel(withHeli(0, 1, 1000), 0.19, {...on, pricePerKg: 2.2}).kg, 0.1, 'asking 0.19 kg buys 0.1 at a dear price too');
+  for (const bad of [0, NaN, -5]) same(buyFuel(withHeli(0, 1, 1000), bad, {...on, pricePerKg: 2.2}).ok, false, `${bad} kg buys nothing at a dear price`);
+  same(buyFuel(withHeli(0, 1, 1000), 100, {...on, pricePerKg: 1.55}).cost, 160, 'a price is kept to a tenth of a credit: 1.55 reads as 1.6');
   same(buyFuel(withHeli(0, 0, 0), 100, {...on, pricePerKg: 2.2}).cost, 0, 'the first tank is free at any price');
   same(buyFuel(withHeli(0, 1, 0), 100, {...on, pricePerKg: 2.2}).ok, false, 'no credits, no fuel');
   same(buyFuel(withHeli(0, 1, 1000), 100, {enabled: false, pricePerKg: 2.2}).ok, false, 'the helicopter switch still decides');

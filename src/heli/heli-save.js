@@ -82,6 +82,7 @@ const withHeli = (profile, heli) => ({...profile, heli});
 // kg may be Infinity, which means fill up. The first tank is free. pricePerKg is
 // the pump's price in credits a kilogram where it is not the home pump's 1.5 (the
 // pilot's map has dearer pads, docs/PILOT_MAP.md section 4); left out, nothing changes.
+// A price is kept to a tenth of a credit (1.55 reads as 1.6); one that is not a positive number is 1.5.
 export function buyFuel(profile, kg, {enabled, pricePerKg} = {}) {
   if (enabled !== true) return off(profile);
   const rate = Number.isFinite(pricePerKg) && pricePerKg > 0 ? Math.max(1, Math.round(pricePerKg * 10)) : 15;
