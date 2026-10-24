@@ -48,7 +48,13 @@ Claude judged each look round (two of three used).
 
 ## Tests and gates
 
-PLACEHOLDER
+After merging current `integration/wasteland` (clean, no conflicts), once, from PowerShell:
+
+- `node tools/test-lab-art.mjs`: 329 checks pass (14 models, 4,579,740 bytes; rebuilt
+  byte for byte).
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 35 passed,
+  0 failed, 0 not run. `npm run build` passes.
+- Look: accepted by Claude, round 2 of 3. No frame check (rule 9), no sound, no locks.
 
 ## Removed
 
