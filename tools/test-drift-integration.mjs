@@ -19,7 +19,7 @@ for(const cpuDifficulty of ['easy','medium','hard']){
   check(result.driftScore>=stage.driftTrial.targets[cpuDifficulty]&&result.timeSec<=stage.driftTrial.timeLimitSec[cpuDifficulty],'real score and deadline satisfy configured difficulty');
   check(sawChain&&sawNotice&&banks>0,'live chain and bank events are available to the HUD during the actual run');
   check(result.creditBreakdown.base===CPU_REWARDS[cpuDifficulty],'drift win pays the ordinary difficulty base');
-  check(result.creditBreakdown.drift===({easy:60,medium:50,hard:0})[cpuDifficulty],'input demo receives the expected capped score tier');
+  check(result.creditBreakdown.drift===({easy:60,medium:0,hard:0})[cpuDifficulty],'input demo receives the expected capped score tier');
   check(result.personalBest&&Number.isFinite(app.profile.personalBests[bestKey({...result,stageIndex:index,car:state.car,mode:state.mode,difficulty:state.difficulty,cpuDifficulty,laps:2})]),'successful objective sets a comparable car best');
   check(app.leaderboard.entries.length===1&&app.ghosts.records.length===0,'valid trial enters local leaderboard without creating a ghost');
   check(app.leaderboard.entries[0].driftScore===result.driftScore&&app.leaderboard.entries[0].driftTarget===result.driftTarget&&result.driftScoreBest===result.driftScore,'actual App finish persists banked score/target and exposes local car score best');

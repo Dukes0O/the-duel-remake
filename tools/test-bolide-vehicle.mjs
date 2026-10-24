@@ -28,7 +28,8 @@ const near = (a, b, tolerance, label) => ok(Math.abs(a - b) <= tolerance, `${lab
 // 1. The settled numbers (docs/board/cards/EARN-CAR-3.md, "Claude answers (15 October): numbers approved").
 const spec = CARS.bugatti_bolide;
 equal(spec.name, 'Bugatti Bolide', 'The real car\'s name');
-equal([spec.topSpeed, spec.accel, spec.grip, spec.braking], [278, 10.5, 1.15, 1.45], 'Settled speed, acceleration, grip and braking');
+// FIX-LAUNCH: accel 10.5 to 9.5 so the fastest car's 0 to 60 stays in 2.4 to 2.8 s (Claude approved, card FIX-LAUNCH).
+equal([spec.topSpeed, spec.accel, spec.grip, spec.braking], [278, 9.5, 1.15, 1.45], 'Settled speed, acceleration, grip and braking');
 equal(spec.gears, [67, 110, 154, 191, 225, 255, 278], 'Seven-speed gearbox');
 equal([spec.offRoadGrip, spec.offRoadSpeed, spec.offRoadScrub], [0.58, 50, 0.64], 'A track car, poor off the road');
 equal([spec.mass, spec.height, spec.kind, spec.gearbox], [1450, 1.05, 'hypercar', 'manual'], 'Mass, body height and kind');

@@ -34,6 +34,26 @@ tasks:
     locks: []
     details: "docs/board/cards/FIX-LAUNCH.md"
 
+  - id: DEMO-DRIVER-UNSTUCK
+    title: "Demo driver: when boxed in off the road, back out and follow the wall back to the road"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "S"
+    status: "backlog"
+    needs: [FIX-LAUNCH]
+    locks: []
+    details: "docs/board/cards/DEMO-DRIVER-UNSTUCK.md"
+
+  - id: TYRE-SLIP-DRIFT-RETUNE
+    title: "Retune the dev tyre-slip rules for the gentler launch (Neon Drift Trial Pro: score 142 instead of 4828)"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "S"
+    status: "backlog"
+    needs: [FIX-LAUNCH]
+    locks: []
+    details: "docs/board/cards/TYRE-SLIP-DRIFT-RETUNE.md"
+
   - id: QA-ARSENAL-AUDIO-READINESS
     title: "Locate the native Arsenal audio readiness and evaluation timeouts"
     owner: "codex"
