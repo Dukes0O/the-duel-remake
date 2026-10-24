@@ -61,12 +61,12 @@ Sections 4 and 5 are written for the builder.
 - Lesson 1, on a sharp hairpin of a course you own: three cones (where to
   brake, the inside of the corner, where to finish on the outside). First
   try: brake late; the tyres screech, the car slides wide, and the
-  instructor shows the time you lost. Second try: brake at the first cone,
+  instructor shows the screech. Second try: brake at the first cone,
   turn in, touch the inside cone, accelerate out wide past the third.
   Challenge: beat the instructor's time through the corner three times in a
   row. That unlocks the next lesson and a brake upgrade.
 - Sliding costs grip like real tyres (TYRE-SLIP), so a long screech means
-  lost time.
+  the tyres are past their grip.
 - One keyboard; players take turns.
 
 ## 2. One instructor, one board, one voice (what is reused from H1)
@@ -217,10 +217,13 @@ without braking runs wide; on the keyboard it does not slide by itself,
 because a held key never steers harder than today (TYRE-SLIP amendment 5),
 so the screech in the late try comes from braking into the turn. The
 lesson's own test (section 10) requires the late try to screech at least
-0.5 s and either lose at least 0.25 s or end against the wall or off the road,
-on both corners; TYRE-SLIP's test 8
-checks a similar late entry. Without TYRE-SLIP the lesson would show a
-screech that costs nothing, which is why lesson 1 waits for it.
+0.5 s on both corners and its radio line to play; TYRE-SLIP's test 8 checks a
+similar late entry. Without TYRE-SLIP there would be no screech at all, which
+is why lesson 1 waits for it. Sliding throws away grip; brake at the board
+and the car turns in clean. Measured (24 October 2026): on these tyres a late
+entry costs screech, not time (the late try finishes 0.4 to 0.6 s *faster*
+than the instructor until it hits the wall), so the lesson never promises a
+time loss; the result card shows the actual numbers.
 
 ## 4. Lesson rules (for the builder: `src/lessons/drive-lessons.js`)
 
@@ -274,7 +277,7 @@ use the App autopilot.
 | --- | --- |
 | `drive.radio.corner.intro` | Welcome to the track. Today is the most important corner skill there is: braking. Forget the course boards today and watch my cones. |
 | `drive.radio.corner.late.start` | Let us see what happens when you leave it late. Keep your foot down and brake at the red board. |
-| `drive.radio.corner.late.result` | Hear that screech? That was your tyres sliding, and sliding is slow. Look at the time you lost. |
+| `drive.radio.corner.late.result` (not played since 24 October 2026: it promises lost time; DRIVE-LESSON-LATE-LINE records a replacement, and until then the late try plays `drive.radio.corner.coach.screech`) | Hear that screech? That was your tyres sliding, and sliding is slow. Look at the time you lost. |
 | `drive.radio.corner.late.early` | You braked early. Good instinct, but this time I wanted you to feel it. That one still counts. |
 | `drive.radio.corner.right.start` | Now the right way. Brake hard at the first cone while the car is straight, turn in, touch the inside cone, and accelerate out wide past the third. |
 | `drive.radio.corner.coach.brake` | Brake at the first cone. Not before, not after. |
@@ -375,9 +378,10 @@ for TYRE-SLIP.
   144 FPS, and it counts all three cones; a scripted late try (brakes at the
   red board and keeps braking until it is down to the instructor's corner
   speed, steering for the line with up to full steering, not held to the
-  tyre's best grip) screeches at least 0.5 s and either finishes at least
-  0.25 s slower than the instructor or ends against the wall or off the
-  road (a late try that does not finish counts as losing time); a scripted right try passes
+  tyre's best grip) screeches at least 0.5 s and its radio line plays
+  (Claude's reviewed change, 24 October 2026: the old "0.25 s slower or ends
+  against the wall" clause is gone, since late braking costs no time on these
+  tyres); a scripted right try passes
   all four rules; a scripted driver at 100% of the line's speed beats the
   instructor; the streak resets on a slow attempt; nothing in a lesson run
   pays, records or damages.

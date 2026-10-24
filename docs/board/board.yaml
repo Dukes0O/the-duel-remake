@@ -456,6 +456,17 @@ tasks:
     flag: "driving-lessons"
     details: "docs/board/cards/DRIVE-LESSON-HOOKS.md"
 
+  - id: DRIVE-LESSON-LATE-LINE
+    title: "Record the late-try result line (the old one promises lost time)"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "backlog"
+    needs: [DRIVE-LESSON-HOOKS]
+    locks: [sound-bank]
+    flag: "driving-lessons"
+    details: "docs/changes/DRIVE-LESSON-HOOKS.md"
+
   - id: DRIVE-LESSON-FINISH
     title: "Claude's finishing pass: driving lesson 1"
     owner: "claude"

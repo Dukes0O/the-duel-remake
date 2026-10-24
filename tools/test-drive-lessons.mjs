@@ -36,6 +36,15 @@ test('late try counts a real contact, records screech and advances only at the n
   assert.equal(lesson.lastAttempt.endReason,'wall');assert.equal(lesson.lastAttempt.screechSeconds,.6);
   assert.equal(answer.radio,'drive.radio.corner.late.early');begin(lesson);assert.equal(lesson.stage,'right');
 });
+test('late try radio: early braking, screech, or nothing; never the time-lost line',()=>{
+  const late=(brakeS,screech)=>{const lesson=create();begin(lesson);
+    stepDriveLesson(lesson,view(brakeS,-4,{brake:.7}),{},.1);
+    stepDriveLesson(lesson,view(150,-4,{tyreSlip:screech?1.2:0}),{},screech||.1);
+    return stepDriveLesson(lesson,view(200),{},.1).radio;};
+  assert.equal(late(110,0),'drive.radio.corner.late.early');
+  assert.equal(late(130,.5),'drive.radio.corner.coach.screech');
+  assert.equal(late(130,.49),null);
+});
 test('the four right-try rules pass and cones tip only once per attempt',()=>{
   const lesson=create();reachRight(lesson);const answer=right(lesson);
   assert.equal(answer.result,'running');assert.equal(answer.radio,'drive.radio.corner.right.pass');
@@ -372,8 +381,8 @@ for(const courseId of ['panorama-ridge','tremblant-woods']){
         assert.ok(late.attempt.screechSeconds>=.5,'late entry must produce at least half a second of real screech');
         // Claude's review (card, 'Claude answers', late-try acceptance): the tyre model punishes
         // a late entry with screech, not with time, so the time-loss clause is replaced by the
-        // instructor's late-try radio line playing.
-        assert.ok(['drive.radio.corner.late.early','drive.radio.corner.late.result'].includes(late.answer.radio),'late try plays its radio line');
+        // late-try radio line playing (the existing screech line).
+        assert.equal(late.answer.radio,'drive.radio.corner.coach.screech','late try plays the screech line (not the untrue time-lost line)');
         const right=await nativeStudentAttempt(baseline,lesson,'right',fps);results.push(right);
         assert.equal(lesson.stage,'right');assert.equal(right.attempt.endReason,'finish');
         assert.deepEqual(right.attempt.rules,[true,true,true,true],'native right try passes every settled rule');

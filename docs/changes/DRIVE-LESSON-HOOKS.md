@@ -52,6 +52,17 @@ and combat balance are unchanged.
   follows Claude's reviewed change on the DRIVE-LESSON-1 card (screech of at
   least 0.5 s and the late-try radio line; the 0.25 s time-loss clause is gone,
   since braking late costs no time on these tyres).
+- The late-try result line: the old `drive.radio.corner.late.result` ("Look at
+  the time you lost") would be untrue, since the late try finishes faster. The
+  late try now plays the existing `drive.radio.corner.coach.screech` ("I heard
+  the tyres. Brake a little earlier and keep it smooth.") when it screeched at
+  least 0.5 s, `late.early` if it braked before the board, and no line otherwise;
+  the result card carries the numbers. `late.result` stays in the catalog,
+  unused, until backlog card DRIVE-LESSON-LATE-LINE (owner claude) records a
+  replacement. New pure test for the three cases.
+- `docs/DRIVING_LESSONS.md` sections 1, 3.8, 6 and 10 now say the late try is
+  judged by at least 0.5 s of screech and its radio line, with Claude's wording
+  (sliding throws away grip; brake at the board and the car turns in clean).
 - The attempt reset starts the car with the yaw the instructor started with
   (`yawVelocity` is now recorded on its first pose), so the right try is the
   instructor's run exactly. This removes `game.js`'s import of the racing line.
@@ -79,11 +90,10 @@ and combat balance are unchanged.
 
 Race physics, replays, world signatures, combat balance, course registry,
 saves (the lesson save API already merged with DRIVE-LESSON-SAVE). The helipad's
-board is a later card (DRIVE-LESSONS-NEXT). `docs/DRIVING_LESSONS.md` sections
-3.8 and 10 still describe the 0.25 s time-loss clause; see the question file.
+board is a later card (DRIVE-LESSONS-NEXT).
 
 ## Removed
 
 The racing-line speed plan in the native student test; `game.js`'s import of
 `racing-lines` for the lesson reset (replaced by the instructor's recorded yaw);
-the old change-note history (superseded by this note).
+the old change-note history (superseded by this note); the time-lost claims in the design document.
