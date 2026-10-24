@@ -51,11 +51,15 @@ export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
   };
   const sections=course.detailSections||course.sections,total=sections.reduce((n,s)=>n+s.end-s.start,0),fraction=total/course.length;
   const sampleS=()=>{let pick=rng.range(0,total);for(const sec of sections){if(pick<=sec.end-sec.start)return sec.start+pick;pick-=sec.end-sec.start;}return sections.at(-1).end-1;};
-  const foliagePoint=(s,off)=>{const side=Math.sign(off)||1;for(let i=0;i<5&&(course.surfaceAt(s,off).road||course.tunnelAt(s)&&Math.abs(off)<35);i++)off+=side*9;return point(s,off);};
+  // Grass, tufts and grit stand on the triangles that are drawn, not on the height formula,
+  // which differs over basin rims, stream cuts and where another stretch of road overlaps.
+  const drawnY=(p,s,off)=>renderedGroundHeight(course,{x:p.x,z:p.z,s,off});
+  const foliagePoint=(s,off)=>{const side=Math.sign(off)||1;for(let i=0;i<5&&(course.surfaceAt(s,off).road||course.tunnelAt(s)&&Math.abs(off)<35);i++)off+=side*9;
+    const p=point(s,off);if(!course.def.ridgeLandform)p.y=drawnY(p,s,off);return p;};
   function instances(geometry,material,count,place,palette='plants',options={}){
     const mesh=new THREE.InstancedMesh(geometry,material,count),omitted=new Set();let relocated=0;
     for(let i=0;i<count;i++){o.position.set(0,0,0);o.rotation.set(0,0,0);o.scale.setScalar(1);place(i,o);
-      if(cityPlacement&&(options.kind==='foliage'||options.kind==='grit')){const point=cityPlacement.relocate(o.position,i);if(!point)omitted.add(i);else if(point!==o.position){o.position.set(point.x,point.y+(options.kind==='grit'?.04:0),point.z);relocated++;}}
+      if(cityPlacement&&(options.kind==='foliage'||options.kind==='grit')){const point=cityPlacement.relocate(o.position,i);if(!point)omitted.add(i);else if(point!==o.position){const at=course.nearest(point.x,point.z);o.position.set(point.x,drawnY(point,at.s,at.lateral)+(options.kind==='grit'?.04:0),point.z);relocated++;}}
       o.updateMatrix();mesh.setMatrixAt(i,o.matrix);
       if(palette==='meadow')color.setHSL(.14,.06,.75+rng.float()*.2);
       else if(palette==='stone')color.setHSL(desert?.1:.53,desert?.12:.025,.6+rng.float()*.3);

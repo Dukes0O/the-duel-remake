@@ -18,18 +18,19 @@ const kinds=['foliage','grit','boulders','posts','reflectors','outcrops'];
 // Source-order geometry, transform and colour snapshots, refreshed for the
 // deliberately revised version-4 natural routes. Legal scenery placement can
 // change rock counts with a new curve; batching must still retain every source
-// instance and all of its buffer values exactly.
+// instance and all of its buffer values exactly. Hashes refreshed for FIX-GRASS-GROUND:
+// grass, tufts and grit now stand on the drawn ground, so their heights moved; counts did not.
 const baseline={
-  'pacific-canyon/desert':[[1820,780,94,138,138],'c11746854ec721d7cce6b8003c5a14430bd06ffcb50c71cb1111ff4d8ffb00bd'],
-  'pacific-canyon/coast':[[6720,720,81,128,128],'7dca3188eb53604601614972fe94280ce97f2b14f73c3633b8efb5f8cf69975e'],
-  'high-country/desert':[[910,390,49,84,84],'b662c79323bd9d543f6d8b99d63145ccb13c17df96edb101c32b1827003d6767'],
-  'high-country/alpine':[[6720,720,80,144,144],'7be5512e4c9f0e4fbcc2c5b6c8d7364e50d8e8479030a637df3a86fa3c89306a'],
-  'high-country/coast':[[3640,390,37,84,84],'6deee0b90cd4481348c4b252b31a1a330b57df6dab7e6a6f850d4b8d793e9c2b'],
+  'pacific-canyon/desert':[[1820,780,94,138,138],'8c8d1a5bef7c9ec360039d0364db4dc8ce8572f88a4149c1aefc854d570dbbdd'],
+  'pacific-canyon/coast':[[6720,720,81,128,128],'306397c3244f520b98cc4e46c3d51a2e27df7ca39da5c84c1ffcbe3cdcfc40d1'],
+  'high-country/desert':[[910,390,49,84,84],'19b164fe2b72059b29cba07173b8763d2721cfa9ceba5c729eea26895c5ae903'],
+  'high-country/alpine':[[6720,720,80,144,144],'8572d111aeeb4c85a736094a3bb6e06d02eb3c7ca3444010be1d5bc241f0b8f3'],
+  'high-country/coast':[[3640,390,37,84,84],'839c1c40bd0b812392603b4ccc013ef158362656416c84f0affeaf093a10e68a'],
   'harbor-highlands/city':[[408,510,48,100,100],'f03a4c3f26e9ebcae8b5940ab340be2eb6c7f7d37a3e1cceb13f099528df00a4'],
-  'harbor-highlands/alpine':[[5040,540,66,96,96],'269e645c2fd9b13202dc18acc5a401c3d19b0d24b1f96d6a7eccebf2dd28e15d'],
-  'harbor-highlands/coast':[[4200,450,61,88,88],'388aa5e5a8f5f70bb8e7d2a5c1c7099013e153b7968bfc4f9ff7d251796eaed0'],
-  'ridge-rally/desert':[[1470,630,68,98,98],'756a77f9131796a01054ed60c12aa2c7e9d3dff1d8dffec00b4e874e61ef3ef4'],
-  'ridge-rally/alpine':[[8120,870,103,126,126],'fb82fa44aa60522a86eaa9b7e5e02615e56e75c8b0390d6baefbfff92e945024'],
+  'harbor-highlands/alpine':[[5040,540,66,96,96],'790f140706c1ce73ee27c1310e90b102a2264d1aad068a076b9fec8ecd687a77'],
+  'harbor-highlands/coast':[[4200,450,61,88,88],'a1f13bb0cfbba54fef78d91b2150ba13a5eadce09b84cf1eca103b33f8f9daad'],
+  'ridge-rally/desert':[[1470,630,68,98,98],'e73079e2bc725f565c5f26b42ca2308801cd35a2c602ec7e97a9d8da495444c8'],
+  'ridge-rally/alpine':[[8120,870,103,126,126],'500399bf90cd6920bb63fac775ab6ae8398421a01a3958d5b9f70e02fd927c64'],
 };
 
 function auditAndReconstruct(meshes){
