@@ -64,6 +64,26 @@ time.** Each is a row in one table, `PASS_TYPES` in
 
 No pass of any type starts in the first 10 s of a race, as today.
 
+**The nitro start (added 24 October, after the nitro-and-pace batch).** With
+CPU nitro at half strength and real-pace passing, a player who nitros off the
+line still leads after lap 1 in 17 of 20 races on Panorama Ridge and 19 of 20
+on Pacific Canyon (today 19 and 20). The fix is a start rule, not more
+passing, so it adds no side-by-side moves:
+
+- **Step A, nitro arms after the first corner.** Every car's nitro, the
+  player's and the computer's, stays locked from the start until that car
+  has passed the apex of the first braking zone on lap 1; the HUD shows
+  "NITRO ARMED" then. True to real racing: Formula 1 keeps its overtaking aid
+  (DRS) switched off for the first two laps after a start, so the start is
+  decided by driving. Tested first, on its own, before pass type 1.
+- **Step B, only if step A leaves the nitro leader above 5 of 20 on a course:**
+  on lap 1 a computer car defends with nitro on a straight when the player is
+  within 1 s behind (today's defend rule uses 0.5 s), still at half strength.
+- **Gates:** the nitro player leads after lap 1 in at most 5 of 20 races on
+  every course, with crashes, 8-or-more-crash races and early pile-ups no
+  worse than the nitro-and-pace build, and race time within 2% of it. If both
+  steps fail, record the table and carry on with the pass types.
+
 **How to build it:** one bounded attempt per type, in the order above, each
 30 minutes of building and one 20-race batch on the three courses
 (`racecraft-rate.mjs --races 20 --jobs 4 --check`). Gating per course, as in
