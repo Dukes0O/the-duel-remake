@@ -36,3 +36,9 @@ Sound: none (passing and buying use the existing sounds). Art: none.
 
 Acceptance: the test, the save checker with the fixture, lane tier, build,
 one save review. Removed: nothing.
+
+## Claude answers
+
+Settled 24 October: (1) an optional `ringBest` (0..3) sits beside `ring`; old saves
+read 0 and `ring` is never above it (LAB.md section 9 updated). (2) All four
+helicopter lessons open the Flying group.

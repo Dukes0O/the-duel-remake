@@ -87,7 +87,7 @@ missing, a changed rate, a 0.2 km nudge) and each was caught.
 
 ## Changed assertions (none loosened; each needs Claude's written review, rule 18)
 
-- `tools/test-feature-flags.mjs`: the switch count 35 to 36 and `pilot-map` in the
+- `tools/test-feature-flags.mjs`: the switch count 37 to 38 and `pilot-map` in the
   dev list and its message. `tools/test-wasteland-beta.mjs`: one
   `pilot-map: 'dev'` row.
 - `tools/test-heli-mode.mjs`, the "no unapproved src/heli imports" guard: two
