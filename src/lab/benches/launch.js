@@ -1,0 +1,52 @@
+// Launch angles (docs/LAB.md 4.3): a small launcher with an angle, a speed and a tape measure. With no air it is the
+// textbook throw (45 degrees goes furthest on flat ground); with air the skier flies through the ski rules' own air
+// (ski-physics.js: SKI.massKg, SKI.standingArea and airDensity, force = 0.5 x density x area x speed squared).
+// The landing can be level with the launch or 10 m lower.
+import {SKI, SKI_STEP, GRAVITY, airDensity} from '../../ski/ski-physics.js';
+import {control, choice, makeBench} from './bench-core.js';
+
+export const TARGET = Object.freeze({rangeM: 30, withinM: 2});
+const LOWER_M = 10;
+const controls = [
+  control('angleDeg', 'Angle', 'degrees', 15, 75, 1, 45), control('speedMs', 'Speed', 'm/s', 5, 40, 1, 20),
+  choice('air', 'Air', ['no air', 'air'], 'no air'), choice('landing', 'Landing', ['level', '10 m lower'], 'level'),
+];
+
+export function rangeOf(angleDeg, speedMs, {air = false, lower = false} = {}) {
+  const a = angleDeg * Math.PI / 180, drop = lower ? LOWER_M : 0, up = speedMs * Math.sin(a), along = speedMs * Math.cos(a);
+  if (!air) {
+    const seconds = (up + Math.sqrt(up * up + 2 * GRAVITY * drop)) / GRAVITY;
+    return {rangeM: along * seconds, seconds};
+  }
+  // Fixed-step flight under gravity and the skier's air drag, until the height reaches the landing.
+  const k = 0.5 * airDensity(0) * SKI.standingArea / SKI.massKg;
+  let x = 0, y = drop, vx = along, vy = up, t = 0;
+  while (t < 60) {
+    const speed = Math.hypot(vx, vy), lastX = x, lastY = y;
+    vx -= k * speed * vx * SKI_STEP; vy -= (GRAVITY + k * speed * vy) * SKI_STEP;
+    x += vx * SKI_STEP; y += vy * SKI_STEP; t += SKI_STEP;
+    // The step that crosses the landing height: place the landing on that step by interpolation.
+    if (y <= 0 && vy < 0) { const share = lastY / (lastY - y); return {rangeM: lastX + (x - lastX) * share, seconds: t - SKI_STEP * (1 - share)}; }
+  }
+  return {rangeM: x, seconds: t};
+}
+// The angle that goes furthest, in tenths of a degree from 15 to 75.
+export function bestAngle(speedMs, options) {
+  let best = 15;
+  for (let step = 0; step <= 600; step++) {
+    const angle = 15 + step / 10;
+    if (rangeOf(angle, speedMs, options).rangeM > rangeOf(best, speedMs, options).rangeM) best = angle;
+  }
+  return best;
+}
+
+export const launchBench = makeBench({
+  id: 'launch', controls, cues: [],
+  run({angleDeg, speedMs, air, landing}) {
+    const hit = rangeOf(angleDeg, speedMs, {air: air === 'air', lower: landing === '10 m lower'});
+    return {...hit, target: TARGET, hit: Math.abs(hit.rangeM - TARGET.rangeM) <= TARGET.withinM};
+  },
+  goalMet: history => history.some(({result}) => result.hit),
+  facts: () => ({speedMs: 30, flatNoAir: bestAngle(30, {}), withAir: bestAngle(30, {air: true}), lowerNoAir: bestAngle(30, {lower: true}),
+    lowerWithAir: bestAngle(30, {air: true, lower: true})}),
+});

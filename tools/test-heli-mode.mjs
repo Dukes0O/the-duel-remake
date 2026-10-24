@@ -378,6 +378,8 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     'src/lab/lab-heli.js': name => /^heli\/heli-(?:flight|bucket|cable)\.js$/.test(name),
     'src/lab/lab-lessons.js': name => name === 'heli/heli-save.js',
   };
+  // LAB-BENCHES: each bench runs the helicopter's own rules (never its drawing files).
+  const labBench = name => !drawingFile.test(name);
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
   for (const path of walk(join(root, 'src')).concat(pages)) {
@@ -385,7 +387,7 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     if (file.startsWith('src/heli/')) continue;
     const source = readFileSync(path, 'utf8');
     for (const match of source.matchAll(/heli\/heli-[a-z-]+\.(?:js|css)/g))
-      if (!hooks[file]?.(match[0])) offenders.push(`${file} -> ${match[0]}`);
+      if (!(hooks[file] ?? (file.startsWith('src/lab/benches/') ? labBench : null))?.(match[0])) offenders.push(`${file} -> ${match[0]}`);
   }
   assert.deepEqual(offenders, [], 'no unapproved src/heli imports'); checks++;
   // Every helicopter file except the drawing, page and sound ones is game rules.
