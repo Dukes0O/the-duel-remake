@@ -49,6 +49,16 @@ tasks:
     locks: []
     details: "docs/board/cards/FIX-LAUNCH.md"
 
+  - id: TYRE-SLIP-DRIFT-RETUNE
+    title: "Retune the dev tyre-slip rules for the gentler launch (Neon Drift Trial Pro: score 142 instead of 4828)"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "S"
+    status: "backlog"
+    needs: [FIX-LAUNCH]
+    locks: []
+    details: "docs/board/cards/TYRE-SLIP-DRIFT-RETUNE.md"
+
   - id: FIX-HELI-HOOK
     title: "Helicopter hook: wider window and a message saying what to fix"
     owner: "claude-cloud"

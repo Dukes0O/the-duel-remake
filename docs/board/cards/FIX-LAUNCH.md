@@ -39,3 +39,12 @@ curve change and no other per-car edits. One scale cannot meet both ends (the
 959-S is 1.81 times slower than the Jesko, the targets allow 1.75), and a curve
 change would reorder Titan, Dusthawk and Viper. Re-record what moves, keep every
 balance target unchanged.
+
+Second round, Claude, 24 October: approved (1) arena-only launch (arenas keep
+5.2 and 42, `DRIVE.arenaAccelScale`, `BOOST.arenaAccelMphPerSec`); (2) Checkpoint
+Rush Easy gate extension 10 to 12 s, because Easy must stay winnable after a
+crash; (3) race-field "Easy field is the slower half" relaxed to within 1 percent,
+because its reference car (F42) is now the slowest road car, intent unchanged:
+the Easy field is no faster than the slowest road car; (4) lap sanity bound 150
+to 165 s; (5) the dev tyre-slip drift fixture is not tuned here: card
+TYRE-SLIP-DRIFT-RETUNE holds it (142 against 4828 points).
