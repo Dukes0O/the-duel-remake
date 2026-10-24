@@ -445,12 +445,12 @@ tasks:
 
   - id: DRIVE-LESSON-HOOKS
     title: "Driving lessons in the game: Instructor button, lesson run, cones, ghost, panel"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "UI"
     size: "M"
-    status: "blocked"
-    claimed_by: codex-parallel-resume-01a12e4f
-    branch: codex/drive-lesson-hooks
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
+    branch: cloud/drive-lesson-hooks
     needs: [DRIVE-LESSON-1, DRIVE-LESSON-SAVE, DRIVE-LESSON-LINES]
     locks: []
     flag: "driving-lessons"
