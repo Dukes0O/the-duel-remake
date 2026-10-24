@@ -241,33 +241,34 @@ tasks:
     details: "docs/board/cards/P4-AZURE-GP-COMPARISON.md"
 
   - id: DEEP-ART-FINAL
-    title: "The Deep: finished creature art, after the storyboard (Kyle picks)"
+    title: "The Deep: finished creature art (Claude picks within three rounds)"
     owner: "claude"
     lane: "ART"
-    size: "M"
+    size: "S"
     status: "backlog"
-    needs: [DEEP-ART-SRC]
+    needs: []
     flag: "the-deep"
-    details: "docs/board/cards/DEEP-ART-SRC.md"
+    details: "docs/board/cards/DEEP-ART-FINAL.md"
 
   - id: DEEP-AUDIO
-    title: "The Deep sounds"
+    title: "The Deep sounds: the real Kelp Coast mix and four story cues"
     owner: "codex"
     lane: "AUDIO"
     size: "M"
-    status: "blocked"
+    status: "ready"
     needs: [DEEP-TRAIL]
-    locks: []
+    locks: [sound-bank]
     flag: "the-deep"
     details: "docs/board/cards/DEEP-AUDIO.md"
 
   - id: DEEP-TRAIL
-    title: "The Kelp Coast loop"
-    owner: "claude"
+    title: "The Kelp Coast loop as zone data, with the Sirena's finds"
+    owner: "claude-cloud"
     lane: "DEEP"
-    size: "L"
-    status: "backlog"
-    needs: [DEEP-ZONE]
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
     flag: "the-deep"
     details: "docs/board/cards/DEEP-TRAIL.md"
 
@@ -276,30 +277,85 @@ tasks:
     owner: "codex"
     lane: "VIS"
     size: "L"
-    status: "backlog"
-    needs: [DEEP-ART-SRC, DEEP-TRAIL]
+    status: "ready"
+    needs: [DEEP-TRAIL]
     flag: "the-deep"
     details: "docs/board/cards/DEEP-LIFE.md"
 
   - id: DEEP-LOG
-    title: "Sea-life log and pearls"
+    title: "Sea-life log with true facts, pearls and their pay"
     owner: "codex"
     lane: "UI"
     size: "M"
-    status: "backlog"
-    needs: [DEEP-SAVE, DEEP-TRAIL]
+    status: "ready"
+    needs: [DEEP-TRAIL]
     flag: "the-deep"
     details: "docs/board/cards/DEEP-LOG.md"
 
   - id: FINISH-DEEP
-    title: "Claude's finishing pass: the Kelp Coast"
+    title: "Claude's finishing pass: the Kelp Coast story"
     owner: "claude"
     lane: "DEEP"
     size: "M"
     status: "backlog"
-    needs: [DEEP-ZONE, DEEP-SURFACE, DEEP-WATER, DEEP-TRAIL, DEEP-LIFE, DEEP-LOG, DEEP-AUDIO]
+    needs: [DEEP-LIFE, DEEP-LOG, DEEP-AUDIO, DEEP-SIRENA-VIEW]
     flag: "the-deep"
     details: "docs/board/cards/FINISH-DEEP.md"
+
+  - id: DEEP-SIRENA
+    title: "The Sirena story rules: sonar, lift bags, finds, rewards and save"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [DEEP-TRAIL]
+    locks: [save-shape]
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-SIRENA.md"
+
+  - id: DEEP-RADIO
+    title: "Ana on the through-water phone: 16 lines and the phone sound"
+    owner: "codex"
+    lane: "AUDIO"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [sound-bank]
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-RADIO.md"
+
+  - id: SIRENA-ART
+    title: "The Falcone Sirena: car, wreck, five parts, lift bag and abalone"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "the-deep"
+    details: "docs/board/cards/SIRENA-ART.md"
+
+  - id: SIRENA-CAR
+    title: "The Sirena as a car: restored state, Pacific Canyon start, the Coast Cup"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: [DEEP-SIRENA, SIRENA-ART]
+    locks: []
+    flag: "the-deep"
+    details: "docs/board/cards/SIRENA-CAR.md"
+
+  - id: DEEP-SIRENA-VIEW
+    title: "The Sirena story in the game: keys, drawing, sonar ring, Ana, garage"
+    owner: "codex"
+    lane: "VIS"
+    size: "M"
+    status: "ready"
+    needs: [DEEP-SIRENA, SIRENA-ART, DEEP-RADIO, SIRENA-CAR]
+    locks: [busy-game-files]
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-SIRENA-VIEW.md"
 
   - id: FIX-LIVE-EDGES
     title: "Live course edges: floating walls, road gaps, early collision, snow run-wide"
@@ -311,7 +367,6 @@ tasks:
     locks: []
     priority: "high"
     details: "docs/board/cards/FIX-LIVE-EDGES.md"
-
 
   - id: YETI-FUR-TINT
     title: "Yeti fur reads dark grey-green against snow at night"
@@ -360,7 +415,6 @@ tasks:
     needs: [EARN-CAR-1, EARN-CAR-2, EARN-CAR-3]
     flag: "earned-cars"
     details: "docs/board/cards/EARN-FINISH.md"
-
 
   - id: RESCUE-FINISH
     title: "Claude's finishing pass on H4 Rescue"
@@ -474,6 +528,7 @@ tasks:
     needs: []
     locks: [busy-game-files]
     details: "docs/board/cards/QA-SUMMIT-WARMUP-EXCEPTION.md"
+
   - id: QA-HARBOUR-PERFORMANCE-PACING
     title: "Harbour Performance fails its one authorized quiet reread"
     owner: "codex"
@@ -483,6 +538,7 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-HARBOUR-PERFORMANCE-PACING.md"
+
   - id: PERF-HARBOUR-AO-HALF
     title: "Daylight follow-up for the retained Harbour AO half-resolution candidate"
     owner: "codex"
@@ -493,6 +549,7 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/PERF-HARBOUR-AO-HALF.md"
+
   - id: QA-YARD-HOME-AIR-ONLY
     title: "Yard fixture respects Jesko air-only admission"
     owner: "codex"
@@ -504,6 +561,7 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-YARD-HOME-AIR-ONLY.md"
+
   - id: QA-YETI-THREE
     title: "Reuse the Yeti QA page Three instance"
     owner: "codex"
@@ -544,4 +602,3 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-REVIEW-RUNUP-START.md"
-
