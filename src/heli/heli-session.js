@@ -1330,6 +1330,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       }
       if (gear?.reelSpeed > 0) hooked.lineLength = winch.length;
       else if (labLine() !== CABLE.length) hooked.lineLength = labLine();
+      // Back to the plain line: a car that was last hung at the long one must not keep it.
+      else if (labEnabled === true) delete hooked.lineLength;
       if (hooked.job) result.event.job = hooked.job;
       emit(result.event);
       if (hooked.own) offer = null;
@@ -1584,13 +1586,15 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (bucket.pouring || bucket.parcels.length) return {ok: false, reason: 'Wait for the water to land.'};
       if (kind === 'retardant') {
         if (ownedLabUpgrades(save).retardant !== true) return {ok: false, reason: 'Buy the Retardant tank in the Lab first.'};
+        if (!(bucketHolds(bucket) > 0)) return {ok: false, reason: 'The bucket is ruined; repair it first.'};
         bucket.contents = 'retardant';
         setBucketWater(bucket, Math.min(RETARDANT_LITRES, bucketHolds(bucket)));
         emit({type: 'bucketLoaded', kind});
         return {ok: true, litres: bucket.water};
       }
       if (kind !== 'water') return {ok: false, reason: 'Load water or retardant.'};
-      if (bucket.contents === 'retardant') { delete bucket.contents; setBucketWater(bucket, 0); }
+      if (bucket.contents !== 'retardant') return {ok: true, litres: bucket.water, already: true};
+      delete bucket.contents; setBucketWater(bucket, 0);
       emit({type: 'bucketLoaded', kind});
       return {ok: true, litres: bucket.water};
     },

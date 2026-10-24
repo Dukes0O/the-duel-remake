@@ -288,6 +288,49 @@ test('the chosen line is the length the car hangs at', () => {
   owner.leave();
 });
 
+test('saved retardant keeps its fully treated cells when there are too many to keep', () => {
+  const grid = gridOf(9, 3);
+  const partial = Array.from({length: 90}, (_, k) => [cellId(10 + k % 30, 100 + Math.floor(k / 30)), 40]);
+  const treated = [[cellId(60, 200), 200], [cellId(61, 200), 150], [cellId(62, 200), 300]];
+  const profile = normalizeProfile({...createProfile(), heli: {version: 1, fuelKg: 0, lessons: TRAINED}});
+  const saved = fireOf(setFire(profile, fireOn([[cellId(0, 1), 100]], {retardant: [...partial, ...treated].sort((a, b) => a[0] - b[0])}), on).profile);
+  assert.equal(saved.retardant.length, 80);
+  assert.deepEqual(treatedCells(saved), new Set(treated.map(([cell]) => cell)), 'every treated cell survives the cap');
+  assert.deepEqual(saved.retardant, [...saved.retardant].sort((a, b) => a[0] - b[0]), 'and the list stays in order');
+  assert.ok(grid);
+});
+
+test('a car last hung at 25 m hangs at 15 m again once 15 m is chosen', () => {
+  const profile = readyProfile({labField: {version: 1, owned: {'long-cable': true}, cable: 25}});
+  const session = sessionOf(profile, {labEnabled: true});
+  session.start();
+  const job = dayJobs(heliOf(session.profile).playDay.count)[0];
+  session.takeJob(job.id); session.takeEvents();
+  run(session, 4, () => ({}));
+  const car = () => session.view().loads.find(load => load.own);
+  const hookAt = line => {
+    const goal = {x: car().x, z: car().z, y: car().y + line + 0.3};
+    run(session, 90, v => pilot(v, goal, {speed: 6, sink: 3}), v => Math.hypot(v.heli.x - goal.x, v.heli.z - goal.z) < 1 && Math.abs(v.heli.y - goal.y) < 0.4 && Math.hypot(v.heli.vx, v.heli.vz, v.heli.vy) < 0.5);
+    session.pressHook(); session.takeEvents();
+    run(session, 6, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: car().y + line + 3}, {speed: 3}));
+    return session.view().heli.y - car().y;
+  };
+  near(hookAt(25), 25.05, 0.03, 'hung at 25 m');
+  // Down onto the ground, let go, land on the pad, and choose the short line while the car is not on the hook.
+  const down = {x: session.view().heli.x, z: session.view().heli.z, y: car().y + 26};
+  run(session, 30, v => pilot(v, down, {speed: 2, sink: 2}), v => v.heli.y - down.y < 0.5 && Math.abs(v.heli.vy) < 0.3);
+  session.pressHook(); session.takeEvents();
+  run(session, 5, () => ({}));
+  assert.equal(car().hooked, false);
+  const zone = session.view().zone;
+  run(session, 60, v => pilot(v, {x: zone.x, z: zone.z, y: zone.y - 1}, {speed: 4, sink: 1.5}), v => v.heli.onGround);
+  assert.equal(session.view().heli.onGround, true, 'landed');
+  const chosen = session.chooseLine(15);
+  assert.equal(chosen.ok, true, JSON.stringify(chosen));
+  near(hookAt(15), 15.05, 0.03, 'hung at 15 m after choosing 15');
+  session.leave();
+});
+
 test('upgrades bought in the save act in the session: engine, frame, tune, hook limit', () => {
   const stock = sessionOf(readyProfile(), {labEnabled: true}); stock.start();
   const tuned = sessionOf(readyProfile({labField: {version: 1, owned: {'engine-1': true, 'engine-2': true, 'light-frame': true, 'altitude-tune': true}}}), {labEnabled: true}); tuned.start();

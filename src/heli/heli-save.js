@@ -252,6 +252,7 @@ export const MAX_SCARS = 4;
 export const MAX_FIRE_CELLS = 80;
 const MAX_DAMP_STEPS = 2;
 const MAX_RETARDANT_LITRES = 1000;
+const TREATED_LITRES = 150;
 const FIRE_OFF = 'Forest fires are not available yet.';
 // A cell is (i + 512) x 1024 + (j + 512) for grid column i and row j.
 const MAX_CELL = 1024 * 1024 - 1;
@@ -348,8 +349,11 @@ function normalizeFire(value) {
   const damp = cellPairs(value.damp, steps => Number.isSafeInteger(steps) ? Math.max(1, Math.min(MAX_DAMP_STEPS, steps)) : 1)
     .filter(([cell]) => !lit.has(cell)).slice(0, MAX_FIRE_CELLS);
   // The Lab's retardant (heli-fire.js applyRetardant): litres on each forest cell, kept only once some has landed.
-  const retardant = cellPairs(value.retardant, litres => tenth(litres, MAX_RETARDANT_LITRES))
-    .filter(([cell, litres]) => litres > 0 && !lit.has(cell)).slice(0, MAX_FIRE_CELLS);
+  // Cells that are fully treated (150 litres, heli-fire.js RETARDANT) are kept before partly coated ones, so the cap
+  // never turns a treated cell back into one that can burn.
+  const coated = cellPairs(value.retardant, litres => tenth(litres, MAX_RETARDANT_LITRES)).filter(([cell, litres]) => litres > 0 && !lit.has(cell));
+  const retardant = [...coated.filter(([, litres]) => litres >= TREATED_LITRES), ...coated.filter(([, litres]) => litres < TREATED_LITRES)]
+    .slice(0, MAX_FIRE_CELLS).sort((a, b) => a[0] - b[0]);
   return {id: value.id, courseId: value.courseId, seed: seed32(value.seed), startDay: count(value.startDay),
     steps: count(value.steps), engineSeconds: tenth(value.engineSeconds, MAX_COUNT), burning, burnt, damp,
     ...(retardant.length ? {retardant} : {})};
