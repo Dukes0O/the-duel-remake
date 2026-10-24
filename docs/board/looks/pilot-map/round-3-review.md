@@ -1,7 +1,7 @@
-# MAP-ART, rounds 1 to 3 (24 October 2026)
+# MAP-ART, round 3 (24 October 2026), with the verdict of all three
 
-Sheets: `round-1.jpg`, `round-2.jpg`, `round-3.jpg` (each: the five signs from the air and from
-a car's height, then the Table's mesa, lookout, plane wreck, strip, windsock and logbook).
+Sheet: `round-3.jpg` (the five signs from the air and from a car's height, then the Table's mesa,
+lookout, plane wreck, strip, windsock and logbook; earlier rounds in `round-1.jpg`, `round-2.jpg`).
 Recipe: `tools/blender/pilot-map-props.py`; ten GLBs in `public/assets/models/pilot-map/`
 (2.5 MB in all; the mesa is 25,000 triangles, the rest 400 to 8,500).
 
