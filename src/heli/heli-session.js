@@ -197,7 +197,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // The lesson running now, and the events it has not read yet.
   let lesson = null, lessonEvents = [], retryAfterCrash = null;
   // The Lab's helicopter challenge in hand (docs/LAB.md 4.1), the events and drops it has not read yet.
-  let challenge = null, challengeEvents = [], challengePatches = [];
+  let challenge = null, challengeEvents = [], challengePatches = [], challengeDestination = null;
   const autopilot = createAutopilot();
   const fallen = new Set();
   const pending = [];
@@ -447,6 +447,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     aim(pickUp !== site.courseId ? pickUp : job.to);
   }
   function aim(courseId) {
+    // Any later change of destination (a job taken or dropped) is the pilot's own: the heading flight keeps nothing to give back.
+    challengeDestination = null;
     destination = courseId;
     cruiseOffered = false;
     if (autopilot.engaged) setAutopilotTarget(autopilot, autopilotGoal());
@@ -697,7 +699,6 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   }
   // ---- the Lab's helicopter challenges (docs/LAB.md 4.1, src/lab/lab-challenges.js) ----
   // A try starts on the home pad with the helicopter on the ground. The loads it uses are `labLoad`s, removed with it.
-  let challengeDestination = null;
   const WATER_CHALLENGES = ['projectile', 'fire'];
   function layLabLoad(id, spot) {
     const car = id === 'altitude'
@@ -706,14 +707,18 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     car.own = false; car.job = null; car.labLoad = true;
     return car;
   }
+  // The heading flight hides the pilot's arrow; it comes back as it was unless the pilot changed it meanwhile.
+  function giveBackArrow(id) {
+    const kept = challengeDestination;
+    challengeDestination = null;
+    if (id === 'headings' && destination === null && kept !== null) aim(kept);
+  }
   function endChallenge(why) {
     if (!challenge) return false;
     const id = challenge.id;
     loads = loads.filter(car => !car.labLoad);
     challenge = null; challengeEvents = []; challengePatches = [];
-    // The heading flight hides the pilot's arrow; it comes back as it was.
-    if (id === 'headings' && destination === null && challengeDestination !== null) aim(challengeDestination);
-    challengeDestination = null;
+    giveBackArrow(id);
     if (why) emit({type: 'challengeStopped', challenge: id, why});
     return true;
   }
@@ -724,7 +729,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     challengeEvents = []; challengePatches = [];
     if (id === 'lift' || id === 'pendulum' || id === 'altitude') loads.push(layLabLoad(id, spots.load));
     // No arrow and no autopilot for the heading flight.
-    if (id === 'headings') { autopilot.engaged = false; challengeDestination = destination; aim(null); }
+    if (id === 'headings') { autopilot.engaged = false; const kept = destination; aim(null); challengeDestination = kept; }
     emit({type: 'challengeStarted', challenge: id});
     return {ok: true};
   }
@@ -746,7 +751,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       // Start over on the pad: new loads, a fresh fire, the same buoys.
       loads = loads.filter(car => !car.labLoad);
       challenge = null; challengeEvents = []; challengePatches = [];
-      if (id === 'headings') { if (destination === null && challengeDestination !== null) aim(challengeDestination); challengeDestination = null; }
+      giveBackArrow(id);
       if (id !== 'altitude' || site.courseId === HOME_COURSE) beginChallenge(id);
     }
   }
@@ -1537,7 +1542,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     },
     // The Lab's challenges (docs/LAB.md 4.1): the rows for the board, and start or end the try in hand.
     challengeBoard() {
-      return Object.freeze(CHALLENGE_IDS.map(id => Object.freeze({id, open: labEnabled === true && labChallengeOpen(save, id).open,
+      return Object.freeze(CHALLENGE_IDS.map(id => Object.freeze({id, open: labEnabled === true && labChallengeOpen(save, id).open && (!WATER_CHALLENGES.includes(id) || !!fire),
         active: challenge?.id === id, done: labEnabled === true && labChallengesDone(save)[id] === true})));
     },
     startChallenge(id) {

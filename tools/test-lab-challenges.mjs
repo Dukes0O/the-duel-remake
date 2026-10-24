@@ -562,3 +562,21 @@ test('fire, flown: water from the lake on the practice fire passes and is saved;
   assert.equal(idle.events.find(event => event.type === 'challengeRetry')?.reason, 'The fire reached the road.');
   idle.session.leave();
 });
+
+test('the heading flight gives back the arrow only if the pilot has not changed it meanwhile; the board shuts the water challenges without forest fires', () => {
+  const session = sessionOf(readyProfile(), {labEnabled: true});
+  session.start();
+  const job = session.boardJobs().jobs?.find(item => item.id !== 'own') ?? session.boardJobs().find?.(item => item.id !== 'own');
+  assert.equal(session.takeJob(job.id).ok, true);
+  const arrow = session.view().destination;
+  assert.ok(arrow, 'the job points the arrow somewhere');
+  assert.equal(session.startChallenge('headings').ok, true);
+  assert.equal(session.dropJob().ok, true);
+  session.stopChallenge();
+  assert.equal(session.view().destination, null, 'a dropped job leaves no arrow behind');
+  session.leave();
+  const noFire = sessionOf(readyProfile(), {labEnabled: true, fireEnabled: false});
+  noFire.start();
+  assert.deepEqual(noFire.challengeBoard().filter(row => !row.open).map(row => row.id), ['projectile', 'fire']);
+  noFire.leave();
+});
