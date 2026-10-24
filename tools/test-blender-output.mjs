@@ -57,6 +57,9 @@ const reviewHelpers = [
   // EARN-CAR-3: four review renders of a code-built car into one evidence folder.
   {script:'tools/blender/car-review.py', args:['--','--glb','missing.glb'], render:'folder',
     views:['front-three-quarter','side','rear-three-quarter','front-close']},
+  // SIRENA-ART: any-size look renders of the wreck, parts, bag and abalone.
+  {script:'tools/blender/sirena-review.py', args:['--','--glb','missing.glb','--views','three-quarter,side'], render:'folder',
+    views:['three-quarter','side']},
   {script:'tools/blender/kit-sheet.py', args:['--round','1','--blender','missing-blender.png','--high','missing-high.png','--performance','missing-performance.png'], render:false},
 ];
 const failures = [];
