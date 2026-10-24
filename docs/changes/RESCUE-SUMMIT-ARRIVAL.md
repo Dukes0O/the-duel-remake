@@ -57,4 +57,8 @@ Nothing replaced.
 
 ## Gates
 
-Owned suite: `test-heli-summit-arrival` (28). Lane tier and build: see below.
+Owned suite: `test-heli-summit-arrival` (28). 24 October 2026, once, on the final commit after
+merging current `integration/wasteland` (clean): the card's test passes; `node tools/run-tests.mjs
+--tier lane --changed --jobs 4`: 145 passed, 0 failed (727 s), including
+`test-heli-autopilot-rescue` (169), `test-heli-summit-rescues` (113), `test-heli-summit-tune`
+(105) and the rescue session suites; `npm run build`: pass.
