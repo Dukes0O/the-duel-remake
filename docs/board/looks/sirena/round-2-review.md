@@ -45,3 +45,7 @@ Fixes, in the verdict's order:
 
 Sizes: car 42,300 triangles / 49 draws (budget 73,600 / 66); the eight
 models 0.88 MB together (limit 1.5 MB).
+
+## Verdict
+
+Accepted by Claude, round 2 of 3 (24 October 2026). The wreck reads as the same car as the restored one at a glance; badge, door and abalone are right; chips and lamp glass take the restored car out of toy territory. The in-game look comes with DEEP-SIRENA-VIEW.
