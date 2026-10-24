@@ -7,6 +7,7 @@ import {wastelandRulesActive} from './wasteland-access.js';
 import {fieldHudMarkup, presentField} from './screen-field.js';
 import {gripReadout} from './race-surfaces.js';
 import {pitView} from './pit-lane.js';
+import {nitroLocked} from './race-field.js';
 const escapeText = value => String(value).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 export function hudMarkup() {
   return `  <section id="race-hud" class="hud" aria-label="Race information" hidden>
@@ -59,7 +60,7 @@ export function hudMarkup() {
     </div>
     <div class="rpm-labels"><span>0</span><span>RPM × 1000</span><span id="rpm-value">8</span>
     </div>
-    <div class="boost-readout"><span class="field-label">NITRO</span>
+    <div class="boost-readout"><span class="field-label" id="boost-label">NITRO</span>
     <div class="boost-track"><i id="boost-fill"></i>
     </div><kbd>SPACE</kbd>
     </div>
@@ -143,6 +144,9 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     ui['rpm-fill'].classList.toggle('redline',s.revs>DRIVE.redlineWarnFrac);
     ui['boost-fill'].style.transform=`scaleX(${clamp(s.boost??1)})`;
     ui.stage.classList.toggle('is-boosting',!!s.boosting);
+    // GP-PASSING-2: nitro is locked on lap 1 until the first braking zone's apex.
+    const armS=s.field?.nitroArmS,sinceArm=s.s-armS;
+    text('boost-label',armS===undefined?'NITRO':nitroLocked(s,s.field)?'NITRO LOCKED':!s.completedLaps&&sinceArm<150?'NITRO ARMED':'NITRO');
     text('camera-label',`${(app.cameraMode||'chase').toUpperCase()} CAM`);
     // Tyre icon on a snow or ice circuit; the surface name when grip drops below 0.8.
     const pit=pitView(app.duel);ui['pit-readout'].hidden=!pit;text('pit-readout',pit?.text??'');

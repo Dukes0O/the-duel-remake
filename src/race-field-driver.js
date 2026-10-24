@@ -11,7 +11,7 @@ import {observeSummitRoute,isAvalancheKnock} from './summit-avalanche.js';
 import {NpcRoutePlanner} from './npc-route.js';
 import { racingLineFor, buildSpeedProfile, nextCorner, accelAt } from './race-lines.js';
 import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget,pitSpeedLimitAt} from './pit-lane.js';
-import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex } from './race-field.js';
+import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex, nitroLocked } from './race-field.js';
 
 export const CPU_NITRO = Object.freeze({strength:.5, refill:.5});
 export const cpuNitroExtraMph=(r,spec)=>spec.topSpeed*(BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(spec.nitroSpeedBonus??0))*CPU_NITRO.strength;
@@ -488,7 +488,7 @@ export function stepFieldRacer(duel, r, dt) {
     const straight=onStraight && Math.abs(line.curvatureAt(look))<1/300 && !(zone && zone.toEntry>-10 && zone.toEntry<80);
     const attack=!!f.pass || near.some(c=>c.ds>0 && c.gap<Math.max(12,mps) && !c.o.finished);
     const defend=near.some(c=>c.ds<=0 && -c.ds<Math.max(run.halfLength+c.hl, mps*.5));
-    stepCpuNitro(r,run,dt,{straight,attack,defend,pit:!!r.pit || surface.boostAllowed===false});
+    stepCpuNitro(r,run,dt,{straight,attack,defend,pit:!!r.pit || surface.boostAllowed===false || nitroLocked(r,s.field)});
     if(r.boosting){
       target+=cpuNitroExtraMph(r,run.spec);
     }

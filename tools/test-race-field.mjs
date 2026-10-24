@@ -89,6 +89,28 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
   close(pace/profile.at(s.s),.85,.001,'player pace uses comparable two-second road sectors');
 }
 {
+  // GP-PASSING-2 step A: nitro stays locked for every car until the first braking zone's apex on lap 1.
+  const off=start(), on=start({racecraft:true});
+  equal(off.state.field.nitroArmS, undefined, 'switch off keeps the field state without a nitro lock');
+  const armS=on.state.field.nitroArmS;
+  check(armS>on.state.s+50, 'the first apex lies ahead of the grid');
+  racing(on); on.state.boost=1; on.setInput({throttle:1,steer:0,boost:true});
+  let boostedEarly=false, cpuBoostedEarly=false;
+  for(let i=0;i<60*40 && on.state.s<armS-20;i++){
+    on.step(STEP);
+    if(on.state.boosting) boostedEarly=true;
+    if(on.state.opponents.some(r=>r.boosting && r.s<armS)) cpuBoostedEarly=true;
+  }
+  check(!boostedEarly, 'the player cannot nitro before the first apex');
+  check(!cpuBoostedEarly, 'no computer car uses nitro before the first apex');
+  check(on.state.s<armS+1, 'the locked-phase test stopped before the apex');
+  on.state.s=armS+5; on.state.lateral=racingLineFor(on.course).offsetAt(armS+5); on.state.headingError=0; on.state.speedMph=100;
+  on.step(STEP);
+  check(on.state.boosting, 'the player can nitro once past the first apex');
+  const offBoost=racing(start()); offBoost.state.boost=1; offBoost.state.speedMph=100; offBoost.setInput({throttle:1,steer:0,boost:true}); offBoost.step(STEP);
+  check(offBoost.state.boosting, 'switch off: nitro works from the start as before');
+}
+{
   const a=start({racecraft:true}),b=start({racecraft:true});
   for(const d of [a,b]){racing(d);d.setInput({throttle:1,steer:0});run(d,18);}
   equal(JSON.stringify(a.state),JSON.stringify(b.state),'enabled racecraft repeats from seed and inputs');

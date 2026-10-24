@@ -189,6 +189,22 @@ export function gridPose(slot) {
     lateral: (right ? 1 : -1) * FIELD.gridLateral };
 }
 
+// GP-PASSING-2 step A: with `cpu-racecraft` every car's nitro stays locked until
+// it has passed the apex of the first braking zone on lap 1 (F1 keeps its
+// overtaking aid off at the start too). Station of that apex, from the front grid slot.
+function firstApexStation(duel) {
+  const s = duel.state, front = Math.max(s.s, ...s.opponents.map(r => r.s));
+  const profile = buildSpeedProfile(racingLineFor(duel.course), duel.car);
+  const phase = duel.course.phase(front), length = duel.course.length;
+  const ahead = profile.corners.map(corner => ({corner, distance: (corner.entryS - phase + length) % length}))
+    .filter(row => row.distance > 1).sort((a, b) => a.distance - b.distance)[0];
+  return ahead ? front + ahead.distance + (ahead.corner.apexS - ahead.corner.entryS + length) % length : front;
+}
+
+export function nitroLocked(actor, field) {
+  return field?.nitroArmS !== undefined && !actor.completedLaps && actor.s < field.nitroArmS;
+}
+
 // ---- building the field --------------------------------------------------
 
 export function initializeField(duel) {
@@ -254,6 +270,7 @@ export function initializeField(duel) {
     stats: { passes: 0, passesAfterStart: 0, passTimes: [], crashes: [], playerCrashes: 0, recoveries: 0, finishTimes: {} },
     pairs: {}, lastPosition: size, pace: tuning.pace,
     deferFinish: false,
+    ...(racecraft ? {nitroArmS: firstApexStation(duel)} : {}),
   };
   s.countdown = FIELD.lights * FIELD.lightSec + hold;
   s.lapsTotal = duel.course.def.laps || FIELD.laps;
