@@ -68,7 +68,9 @@ for (const id of ['falcone_f42', 'stuttgart_959s', 'falcone_heritage', 'aurora_g
   heli.y = load.y + CABLE.length; heli.onGround = false;
   ok(canHook(heli, load), 'hook right above the car');
   heli.x = 4;
-  ok(!canHook(heli, load), 'not from 4 m to the side');
+  ok(canHook(heli, load), '4 m to the side is within the hook\'s reach');
+  heli.x = 4.5;
+  ok(!canHook(heli, load), 'not from 4.5 m to the side');
   heli.x = 0; heli.vx = 3;
   ok(!canHook(heli, load), 'not while moving at 3 m/s');
   heli.vx = 0; heli.y += 4;

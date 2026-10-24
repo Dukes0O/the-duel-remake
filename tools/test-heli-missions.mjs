@@ -519,7 +519,8 @@ check('getting cold: an unhurt casualty is hurt at two thirds of the clock, once
 
 check('out of time: the clock stops at its limit and says so', () => {
   for (const kind of RESCUE_KINDS) {
-    const start = beginRescue(answeredCall(kind), RESCUE_ON), limit = RESCUE_CLOCKS[kind];
+    // The limit is the row of the course the call is at (Summit Run has its own rows, RESCUE-SUMMIT-TUNE).
+    const start = beginRescue(answeredCall(kind), RESCUE_ON), limit = rescueLimit(kind, null, ALL[kind][0]);
     assert.equal(tickRescue(start, limit - 1, RESCUE_ON).expired, false, kind);
     const done = tickRescue(start, limit + 100, RESCUE_ON);
     assert.deepEqual([done.expired, done.missions.rescue.clockSeconds, clockLeft(done.missions.rescue)], [true, limit, 0], kind);
