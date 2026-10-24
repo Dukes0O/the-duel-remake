@@ -24,6 +24,23 @@ export const PILOT_MAP = Object.freeze({
 });
 
 const at = (x, z) => Object.freeze({x, z});
+
+// The height above the sea at the start of each course, metres: the thin-air rule's
+// base altitude (heli-jobs reads it for the places the helicopter did not already
+// know). Authored from the setting each place is described in (section 2); the
+// four original destinations keep the numbers heli-jobs gives them, and nothing is
+// higher than Summit Run (2,860 m), which stays the high peak.
+export const PLACE_ALTITUDES = Object.freeze({
+  'ardennes-forest': 400, 'eifel-crown': 600, 'alpine-serpent': 1700, 'cloudbreak-skyway': 2100,
+  'ridge-rally': 700, 'timberline-rush': 1400, 'high-country': 900, 'red-mesa': 1200,
+  'pacific-canyon': 40, 'harbour-lights': 5, 'harbor-highlands': 30, 'neon-docks': 5,
+  'neon-drift-trial': 5, 'midnight-chase': 5, 'titan-stadium': 20, 'azure-riviera': 15,
+  'the-table': 1100,
+});
+
+// Places the landing-zone search finds no clear, level 12 m circle for. They are
+// left off the destinations and named in the change note (card MAP-DESTINATIONS).
+export const LEFT_OFF = Object.freeze(['ardennes-forest']);
 const place = (id, name, courses, table, region, extra = {}) => Object.freeze({
   id, name, courses: Object.freeze(courses), at: table, drawAt: extra.drawAt ?? table, region, air: false, ...extra,
 });
