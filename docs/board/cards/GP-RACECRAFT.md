@@ -289,3 +289,11 @@ Following the 16 October 13:10 direction, `cpu-racecraft` no longer holds grid l
 Start measures (report-only): side-by-side pair successes 0/20, 1/20, 0/20; leading-six spread of 3 m or more in 10/20, 0/20, 1/20 races (off-switch mean spread 3.30 m, 1.21 m, 1.60 m).
 
 In plain words: with the start formation removed, the racing part still brings more crashes and pile-ups than today on every course, and Tremblant Woods is the worst (14 early pile-ups against 1). The slower player is passed in only 13, 18 and 14 of 20 races, and the nitro leader on Pacific Canyon wins lap one in 18 of 20 (off: 20). Only the Panorama passing factor and the Panorama and Woods nitro numbers pass. The earlier runs with start lanes held got 17 to 20 passes of the slower player and 0 nitro leaders; this run does not reproduce that, so those gains came with the lane-hold rather than from the racing changes alone. No cause is proved by these counts. Parked here; Claude takes this table to Kyle. Pull request opened as a draft; not merged, no preview flag added.
+
+## Claude answers - split the pass types from nitro and pace, 24 October (after PR 2's table)
+
+The extra pass types (pulling alongside a car on the racing line, outbraking dives, exit passes, the 1.5 s gap window) are what bring the crashes and pile-ups. Split them out:
+1. Under `cpu-racecraft` keep only (a) CPU nitro at 0.5 strength and 0.5 refill, used on straights to attack or defend as designed, and (b) the player judged by real pace (best recent sector pace) in pass decisions. The extra pass types go off: CPU cars pass using today's rules only. No other tuning.
+2. One 20-race batch on the three courses. Gating: crashes, 8-or-more-crash races and early pile-ups no worse than today per course (same rules as before), and race time within 2%. Report-only (numbers written, not pass or fail): CPU passes, slower player passed, nitro leader after lap 1.
+3. Pass: lane tier, build, add `cpu-racecraft` to the desktop preview (`tools/preview-flags.mjs`, `start-preview.bat`), mark PR 2 ready for review. Fail: append the table and stop; PR 2 stays a draft.
+4. Backlog card GP-PASSING-2 (owner claude) for the extra pass types with crash safety, designed later.
