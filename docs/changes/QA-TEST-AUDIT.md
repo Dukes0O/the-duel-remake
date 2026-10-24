@@ -90,7 +90,9 @@ night and before every release.
 - `test-heli-mode`: the list of 36 approved file pairs (12 edits in 30 days) became a rule. In the
   game, only `app.js` (the hooks), `progression.js` (`heli-save` only),
   `sound-bank.js` (`heli-audio` only), `screen-readiness.js` (`heli-jobs`
-  only), and `render3d.js` and `screen-router.js` (drawing files only) may
+  only), `src/lab/lab-heli.js` (flight, bucket and cable numbers) and
+  `src/lab/lab-lessons.js` (`heli-save`) from LAB-RULES, and `render3d.js` and
+  `screen-router.js` (drawing files only) may
   name a helicopter file; pages may not. Tools, tests and browser scenarios
   are no longer scanned: they are not the game. Loosened on purpose: a new
   hook in `app.js` or a new tool reading a helicopter file no longer needs an
@@ -160,6 +162,13 @@ the cue sets: 72 and 75 of `test-p4-audio`'s 125).
   `test-build-status` and `test-test-runner` ran again: 6 passed (with
   `test-build-update`), 0 failed.
 - `npm run build`: built (the usual large-chunk notice).
+- Integration merged in a second time (LAB-RULES, MAP-ART, DRIVE-LESSON-4):
+  the conflicts were exactly the pins this card removes (save roster 15 to 16
+  in `test-career-backup` and `test-arena-settlement`, two new switches in
+  `test-wasteland-beta`, new Lab entries in the `test-heli-mode` list, which
+  became two hook lines in the rule). All 25 suites this card edits, plus the
+  replay guards, ran on the merged tree: 25 passed, 1 failed
+  (`test-salt-flats`, art library on `C:`, laptop only). Build passed again.
 - Not run here: browser scenarios, frame checks and the 20 laptop-only suites
   above.
 
