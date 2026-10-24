@@ -68,7 +68,12 @@ three in a row pass.
 ## Checks (Linux cloud)
 
 - `tools/test-drive-lesson-2.mjs`: 15 of 15. `tools/test-drive-lessons.mjs` (lesson 1): 37 of 37, unchanged.
-- Lane tier and build: see the end of this note.
+- Lane tier `--changed --jobs 8 --keep-going`: 230 of 236 suites pass, including the
+  lesson 1, lesson 2, lesson-run and lines suites and every replay and world-signature
+  guard. The six failures are Windows-only and unrelated: `test-course-kit`,
+  `test-earned-cars-ui`, `test-medals` ("test cleanup requires the Recycle Bin"),
+  `test-full-check` (needs `pwsh`), `test-salt-flats` (a `C:\` art path) and
+  `test-salt-flats-art` (needs Blender); the laptop should run them. `npm run build` passes.
 - Not run here: anything needing a browser or the Windows-only suites (none is touched by this card).
 
 ## Removed
