@@ -167,10 +167,12 @@ test('off, undiscovered, ordinary, countdown and paused events remain silent', a
   }
 });
 
-test('voice event presentation preserves the existing ordinary race replay fingerprints', () => {
+// The exact ordinary race fingerprints are checked once, in test-warlord-format.
+// Here the switch must make no difference to the same race and say nothing.
+test('voice event presentation leaves ordinary races exactly as with the switch off', () => {
   const controls = JSON.parse(readFileSync(new URL('./replays/warlord-format-ordinary.json', import.meta.url), 'utf8'));
-  for (const spec of controls.cases) {
-    const duel = new Duel({seed: spec.seed, featureFlags: {'fight-voices': true}}), f = fixture();
+  const race = (spec, on) => {
+    const duel = new Duel({seed: spec.seed, featureFlags: {'fight-voices': on}}), f = fixture();
     duel.onChange((s, event) => f.emit(event, s));
     duel.startCampaign({seed: spec.seed, mode: spec.mode, car: 'falcone_f42',
       startStage: COURSE.findIndex(c => c.id === spec.course), difficulty: 'casual', cpuDifficulty: 'medium'});
@@ -183,8 +185,13 @@ test('voice event presentation preserves the existing ordinary race replay finge
         laps: duel.state.completedLaps, score: duel.state.score,
         rivals: duel.state.opponents.map(actor => [actor.s, actor.lateral, actor.speedMph]), result: duel.state.results});
     }
-    equal(hash(JSON.stringify(samples)), spec.fingerprint, `${spec.mode}/${spec.course}: the committed ordinary fingerprint stays exact`);
-    equal(voiceCalls(f), [], 'ordinary replay emits no kept fight speech');
+    return {trace: hash(JSON.stringify(samples)), voices: voiceCalls(f), moved: samples.at(-1).s > samples[0].s};
+  };
+  for (const spec of controls.cases) {
+    const on = race(spec, true), off = race(spec, false);
+    equal(on.trace, off.trace, `${spec.mode}/${spec.course}: the switch leaves the ordinary race exact`);
+    equal(on.moved, true, `${spec.mode}/${spec.course}: the ordinary race really runs`);
+    equal(on.voices, [], 'ordinary replay emits no kept fight speech');
   }
 });
 

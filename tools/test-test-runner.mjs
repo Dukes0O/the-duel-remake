@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {EventEmitter} from 'node:events';
 import {join,relative,sep} from 'node:path';
-import {CORE_SUITE,LEGACY_SUITE_ORDER,PROJECT_ROOT,CAMPAIGN_SUITE,CAMPAIGN_SHARDS,LANE_GUARDS,parseArguments,discoverSuites,selectSuites,selectPlan,localDependencies,suitesForChanges,changedFiles,runSuites,runSuitesConcurrent,main} from './run-tests.mjs';
+import {CORE_SUITE,LEGACY_SUITE_ORDER,PROJECT_ROOT,CAMPAIGN_SUITE,CAMPAIGN_SHARDS,LANE_GUARDS,SHARED_FILES,parseArguments,discoverSuites,selectSuites,selectPlan,localDependencies,suitesForChanges,changedFiles,runSuites,runSuitesConcurrent,main} from './run-tests.mjs';
 
 let checks=0;const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;},check=(value,label)=>{assert.ok(value,label);checks++;};
 same(LEGACY_SUITE_ORDER.length,80,'all 80 original package.json commands are retained');
@@ -171,9 +171,21 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   check(suitesForChanges(actual,['tools/test-test-runner.mjs']).includes('tools/test-test-runner.mjs'),
     'changed test files select themselves');
   // FACTORY rule 11: an unmapped game file is named for the night run instead of selecting everything.
-  const computedRead=suitesForChanges(actual,['tools/unmapped-source-reader.js','src/game.js']);
-  check(computedRead.length<actual.length&&computedRead.includes('tools/test-race-integrity.mjs'),
+  const computedRead=suitesForChanges(actual,['tools/unmapped-source-reader.js','src/screen-menu.js']);
+  check(computedRead.length<actual.length&&computedRead.includes('tools/test-course-eligibility.mjs'),
     'an unmapped source no longer widens a lane, and importers of the mapped source still run');
+  // QA-TEST-AUDIT: shared files and hubs do not pull in every suite that builds a game.
+  const shared=suitesForChanges(actual,['src/game.js']);
+  check(shared.length<40&&!shared.includes('tools/test-race-field.mjs')&&!shared.unmapped.includes('src/game.js'),
+    'a shared file selects only its owners and text readers; the smoke set and guards drive it');
+  const sharedPlan=selectPlan(actual,{tier:'lane',affected:shared});
+  check(LANE_GUARDS.every(guard=>sharedPlan.some(task=>task.suite===guard))&&sharedPlan.some(task=>task.suite===CORE_SUITE),
+    'a shared-file lane still runs the replay guards and the core suite');
+  check(Object.entries(SHARED_FILES).every(([path,owners])=>owners.every(owner=>suitesForChanges(actual,[path]).includes(owner))),
+    'a shared file selects the suites that own it');
+  const lesson=suitesForChanges(actual,['src/lessons/drive-lessons.js']);
+  check(lesson.includes('tools/test-drive-lessons.mjs')&&lesson.length<40,
+    'a feature module selects its own suites, not every suite that reaches it through game.js');
   check(localDependencies('tools/test-qa-storage.mjs').has('tools/menu-check.js'),
     'the finite existing computed bootstrap reader is an explicit dependency');
   const pine=suitesForChanges(actual,['public/assets/textures/pine-bough.png']);
@@ -263,6 +275,8 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(suitesForChanges(pathSuites,['public/assets/sfx/hit.ogg'],graphOptions),['tools/test-runtime.mjs'],'a runtime assets/ string maps into public/');
   same(suitesForChanges(pathSuites,['src/b.js'],graphOptions),['tools/test-deep.mjs'],'a file two steps away is in reach');
   same([...suitesForChanges(pathSuites,['src/c.js'],graphOptions)],[],'a file three steps away waits for the night run');
+  same([...suitesForChanges(pathSuites,['src/b.js'],{...graphOptions,hubImports:1})],[],'a hub passes no change through it');
+  same(suitesForChanges(pathSuites,['src/a.js'],{...graphOptions,hubImports:1}),['tools/test-deep.mjs'],'a hub that changes selects its importers');
   same(suitesForChanges(pathSuites,['src/c.js'],{...graphOptions,reach:3}),['tools/test-deep.mjs'],'reach is adjustable');
 
 

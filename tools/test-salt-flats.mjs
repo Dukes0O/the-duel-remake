@@ -428,8 +428,7 @@ function scrapdomeControls(){
         speed:actor.speedMph,heading:actor.headingError,armor:actor.armor,airborne:actor.airborne})),
       participants:duel.state.arena.participants.map(row=>({id:row.id,wrecks:row.wrecks,wrecked:row.wrecked}))});
   }
-  return {physicalSha256,traceSha256:hash(JSON.stringify(trace)),
-    ordinaryReplayFileSha256:hash(readFileSync(join(root,'tools/replays/expected-fingerprints.json')))};
+  return {physicalSha256,traceSha256:hash(JSON.stringify(trace))};
 }
 const controlsPath=join(root,'tools/replays/salt-flats-controls.json');
 
@@ -474,11 +473,8 @@ check('source','changed fit cannot export genuine unpicked SchoolBus geometry un
 check('source','changed fit cannot bind the Bus label to another selected pack and its genuine sedan',()=>
   rejectChangedPick({name:'changed-fit-bus-catalog-validation',catalogId:'kenney-car-kit',
     path:'unpacked/Models/GLB format/sedan.glb',triangles:2032,validateOnly:true}));
-check('control','existing Scrapdome physical geometry and real seeded driving/rule trace stay exact',()=>{
-  assert.ok(existsSync(controlsPath),'independently captured current Scrapdome control fixture');
-  const expected=JSON.parse(readFileSync(controlsPath,'utf8'));
-  assert.deepEqual(scrapdomeControls(),expected.scrapdome,'new venue cannot alter the current venue or ordinary replay pins');
-});
+// The Scrapdome geometry and seeded trace in salt-flats-controls.json are checked once,
+// in test-arena-pit (which runs on every machine); ordinary race fingerprints in test-replays.
 check('control','all current runtime art, old assertions/replay pins and licensed originals remain unchanged',()=>{
   assert.deepEqual(protectedPaths.map(path=>hash(readFileSync(join(root,path)))),initialHashes);
   assert.deepEqual(sourceFiles.map(path=>hash(readFileSync(path))),initialSourceHashes);

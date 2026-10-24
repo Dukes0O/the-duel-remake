@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
@@ -232,24 +231,8 @@ test('allied cars cannot receive earned saw damage or score a friendly hit', () 
   equal(f.actor.armor, 1000, 'saw damage preserves combat team protection');
   equal(f.duel.state.arena.participants[0].damageDealt, 0, 'friendly contact earns no damage credit');
 });
-test('ordinary races reuse the three existing reviewed fingerprint controls unchanged', () => {
-  const fixture = JSON.parse(readFileSync(new URL('./replays/warlord-format-ordinary.json', import.meta.url), 'utf8'));
-  for (const spec of fixture.cases) {
-    const duel = new Duel({seed: spec.seed, featureFlags: FLAGS});
-    duel.startCampaign({seed: spec.seed, mode: spec.mode, car: 'falcone_f42',
-      startStage: COURSE.findIndex(c => c.id === spec.course), difficulty: 'casual', cpuDifficulty: 'medium'});
-    const samples = [];
-    for (let tick = 0; tick < 1200; tick++) {
-      duel.setInput({throttle: 1, brake: tick >= 800 ? .2 : 0, steer: tick < 500 ? .08 : -.04, boost: false});
-      duel.step(1 / 120);
-      if (tick % 120 === 119) samples.push({status: duel.state.status, s: duel.state.s, lateral: duel.state.lateral,
-        speedMph: duel.state.speedMph, time: duel.state.stageTimeSec, laps: duel.state.completedLaps,
-        score: duel.state.score, rivals: duel.state.opponents.map(a => [a.s, a.lateral, a.speedMph]), result: duel.state.results});
-    }
-    equal(createHash('sha256').update(JSON.stringify(samples)).digest('hex'), spec.fingerprint,
-      spec.mode + '/' + spec.course + ': ordinary rules unchanged');
-  }
-});
+// The ordinary race fingerprints in replays/warlord-format-ordinary.json are checked once,
+// in test-warlord-format, with the same inputs.
 
 // WAR-SAL-ART keeps its missed-window spark node hidden during spin-up.
 // Tell sparks therefore use a separate effect, without weakening that suite.

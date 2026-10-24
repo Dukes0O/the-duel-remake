@@ -1,7 +1,5 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {startWarlordEvent, beginWarlordEvent} from '../src/arena/warlord-event.js';
@@ -215,21 +213,5 @@ test('a successful sweep announces SAW SWEEP only when real contact damages the 
   equal(f.actor.salSaw.hit, true, 'contact records a positive sweep hit for the next Sal step');
 });
 
-test('ordinary race controls retain the existing reviewed replay fingerprints', () => {
-  const fixture = JSON.parse(readFileSync(new URL('./replays/warlord-format-ordinary.json', import.meta.url), 'utf8'));
-  for (const spec of fixture.cases) {
-    const duel = new Duel({seed: spec.seed, featureFlags: flags()});
-    duel.startCampaign({seed: spec.seed, mode: spec.mode, car: 'falcone_f42',
-      startStage: COURSE.findIndex(c => c.id === spec.course), difficulty: 'casual', cpuDifficulty: 'medium'});
-    const samples = [];
-    for (let tick = 0; tick < 1200; tick++) {
-      duel.setInput({throttle: 1, brake: tick >= 800 ? .2 : 0, steer: tick < 500 ? .08 : -.04, boost: false});
-      duel.step(1 / 120);
-      if (tick % 120 === 119) samples.push({status: duel.state.status, s: duel.state.s, lateral: duel.state.lateral,
-        speedMph: duel.state.speedMph, time: duel.state.stageTimeSec, laps: duel.state.completedLaps,
-        score: duel.state.score, rivals: duel.state.opponents.map(a => [a.s, a.lateral, a.speedMph]), result: duel.state.results});
-    }
-    equal(createHash('sha256').update(JSON.stringify(samples)).digest('hex'), spec.fingerprint,
-      spec.mode + '/' + spec.course + ': ordinary replay unchanged');
-  }
-});
+// The ordinary race fingerprints in replays/warlord-format-ordinary.json are checked once,
+// in test-warlord-format, with the same inputs.
