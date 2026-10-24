@@ -170,9 +170,14 @@ export function insideArea(area, x, y, z, ground = null) {
 // as wildlife`; the helicopter rules may not import it) and surveyStand(courseId,
 // world) gives the count's `canStand(x, z)` for a course, or null. With both
 // switches off, or left out, every result is what it was.
+// drivingLessonAt(courseId, carId) (DRIVE-LESSON-HELIPAD, docs/DRIVING_LESSONS.md
+// 12.6): the app's answer to "which driving lesson is next on this course for
+// this car", {id, name} or null; left out (the driving-lessons switch off),
+// "Lesson here" is never offered.
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
   mode = 'assisted', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
-  summitRunEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false} = {}) {
+  summitRunEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false,
+  drivingLessonAt = null} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
   if (typeof loadCourse !== 'function') throw new Error('createHeliSession needs loadCourse(courseId)');
   const flag = {enabled: true};
@@ -1467,6 +1472,14 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // and car for the app's raceHere. Hooking the car again takes it back.
     raceHereOffer() {
       return phase === 'flying' && offer && site?.courseId === offer.courseId ? {...offer} : null;
+    },
+    // Beside Race here: the next open driving lesson on the course the car was set
+    // down on. It lives and dies with the Race here offer (hooking the car again, or
+    // leaving, withdraws both).
+    lessonHereOffer() {
+      const here = typeof drivingLessonAt === 'function' ? api.raceHereOffer() : null;
+      const lesson = here && drivingLessonAt(here.courseId, here.carId);
+      return lesson ? {...here, lessonId: lesson.id, name: lesson.name} : null;
     },
     // The instructor's board: every lesson, open, done or running.
     lessonBoard() {

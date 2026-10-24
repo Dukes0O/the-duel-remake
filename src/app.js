@@ -2,7 +2,7 @@ import {DRIVE_LESSON_CORNERS,buildInstructorRun} from './lessons/drive-lessons.j
 import {finishDriveLesson} from './lessons/drive-lesson-save.js';
 import {DRIVE_RADIO_LINES} from './lessons/drive-radio-lines.js';
 import {createRadioChain} from './lessons/radio-voice.js';
-import {mountDriveLessonUi,driveLessonCompletion,settleDriveLessonPreparation,driveLessonGhostPose} from './lessons/drive-lesson-ui.js';
+import {mountDriveLessonUi,driveLessonCompletion,settleDriveLessonPreparation,driveLessonGhostPose,driveLessonBoardModel} from './lessons/drive-lesson-ui.js';
 import {racingLineFor,buildSpeedProfile} from './race-lines.js';
 import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
@@ -30,7 +30,7 @@ function fireSounds(view) {
 }
 // H2 Fire: today's date as the play day note reads it.
 const todayString = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-import {isAirOnlyCar} from './heli/heli-jobs.js';
+import {isAirOnlyCar,HOME_COURSE,HELI_DESTINATIONS} from './heli/heli-jobs.js';
 import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hints.js';
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
@@ -1598,7 +1598,7 @@ export class App {
     const car = this.menuCar, driverId = getEquippedDriverId(this.profile);
     this.runId = this._runPlayerId = this._markedRaceKey = null;
     this.ghostRecorder = this.ghostRecord = this.ghostPose = this.grandPrixLapRecorder = null; this.lapTelemetryRecorder = null; this.ghostStatus = 'none';
-    this._stepAccumulator = 0; this.heliLog = []; this.heliCamera = 0;
+    this._stepAccumulator = 0; this.heliLog = []; this.heliCamera = 0; this._heliCar = car;
     this.audio.unlock(); this.audio.setPaused(false);
     const loadCourse = courseId => {
       if (!this.duel.startHeliVisit({courseId, playerId: this.player.id, car, driverId,
@@ -1612,6 +1612,7 @@ export class App {
     if (fireOn) this.heliAudio.preloadFire?.();
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
       fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true,
+      drivingLessonAt: this.drivingLessonsAvailable() ? (courseId, carId) => this._heliLessonAt(courseId, carId) : null,
       skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
       wildlife: wildlifeRules, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
@@ -1663,6 +1664,57 @@ export class App {
     this.menuStage = stageIndex;
     if (carId && isCarUnlocked(this.profile, carId)) this.menuCar = carId;
     return this.startCampaign({startStage: stageIndex, car: this.menuCar});
+  }
+  // ---- driving lessons from the helipad (docs/DRIVING_LESSONS.md 12.6) ---------------
+  // The next driving lesson on a course for a car that is open and not yet done,
+  // or null: the same rows and rules the menu's board uses, for that course and car.
+  _heliLessonAt(courseId, carId) {
+    if (!this.drivingLessonsAvailable() || !this.player?.id) return null;
+    const model = driveLessonBoardModel({...this.driveLessonProps(), courseId, carId});
+    if (model.selected?.id !== courseId || !model.start || this._airOnlyBlocked(carId, courseId) ||
+        courseClosed(this.profile, courseId, undefined, {enabled: this._fireOn()})) return null;
+    const next = model.rows.find(row => row.open && !row.done);
+    return next ? {id: next.id, name: next.name} : null;
+  }
+  // The air-only rule without its side effect (no message): an air-only car drives only where it was set down.
+  _airOnlyBlocked(car, courseId) {
+    return this._switches().enabled('helicopter') === true && isAirOnlyCar(car) && carAt(this.profile, car) !== courseId;
+  }
+  // The pad's Driving rows: the menu's own rows for the home course and the car at the pad. An air-only car
+  // away from the pad takes no lesson here and the row says where it is. Null when driving lessons are off.
+  heliDrivingBoard() {
+    if (!this.heliSession || !this.drivingLessonsAvailable() || !this.player?.id) return null;
+    const model = driveLessonBoardModel({...this.driveLessonProps(), courseId: HOME_COURSE, carId: this._heliCar});
+    const carId = model.car?.id;
+    if (carId && this._airOnlyBlocked(carId, HOME_COURSE)) {
+      const where = carAt(this.profile, carId), name = HELI_DESTINATIONS[where]?.name ?? COURSE.find(course => course.id === where)?.name ?? where;
+      return {rows: model.rows.map(row => ({...row, open: false, done: false})), notes: [`Your ${CARS[carId].name} is at ${name}.`], request: null};
+    }
+    return {rows: model.rows, notes: model.reason ? [model.reason] : [], request: model.start};
+  }
+  // Start a driving lesson from the pad: the helicopter visit ends and the menu's startLesson runs.
+  heliStartDriving(lessonId) {
+    const board = this.heliDrivingBoard(), row = board?.rows.find(item => item.id === lessonId);
+    if (!board) return {ok: false, reason: 'Driving lessons are not available.'};
+    if (!row || !(row.open || row.done) || !board.request) return {ok: false, reason: board.notes[0] ?? 'That driving lesson is not open yet.'};
+    return this._driveFromHeli({...board.request, lessonId});
+  }
+  // Lesson here: the lesson offered beside Race here, on the course the car was set down on.
+  lessonHere({courseId, carId, lessonId}) {
+    if (!this.heliSession || !this.drivingLessonsAvailable() || this._airOnlyBlocked(carId, courseId)) return false;
+    const model = driveLessonBoardModel({...this.driveLessonProps(), courseId, carId});
+    if (model.selected?.id !== courseId || !model.start) return false;
+    return this._driveFromHeli({...model.start, lessonId}).ok;
+  }
+  _driveFromHeli(request) {
+    const stageIndex = COURSE.findIndex(stage => stage.id === request.courseId);
+    if (stageIndex < 0 || this._airOnlyRefused(request.carId, request.courseId) || this._fireClosedRefused(COURSE[stageIndex])) return {ok: false, reason: this.courseAccessMessage || 'That course is not available.'};
+    this.returnToMenu();
+    this.menuStage = stageIndex; this.menuCar = request.carId; this.driveLessonCourse = request.courseId;
+    if (!this.openDrivingLessons()) return {ok: false, reason: 'Driving lessons are not available.'};
+    // The menu's own start call names the car `car`; its board's request names it `carId`.
+    this._heliLessonPromise = this.startLesson({...request, car: request.carId});
+    return {ok: true};
   }
   returnToYard() {
     if (!this.duel.state.arena) return false;
