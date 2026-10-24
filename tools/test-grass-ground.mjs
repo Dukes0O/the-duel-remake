@@ -3,13 +3,16 @@ import * as THREE from 'three';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {addLandscapeDetail} from '../src/landscape-detail.js';
-import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
+import {terrainGeometry,farTerrainGeometry,strip} from '../src/world-surfaces.js';
 import {indexTriangles,drawnHeight} from './course-ground-checks.mjs';
 
 // FIX-GRASS-GROUND: every grass card, tuft and grit piece stands on the ground
 // that is drawn, read from the terrain triangles themselves rather than from
 // the height formula. A base more than 5 cm from the drawn ground floats or sinks.
-const LIMIT=.05;
+// And none stands on a road: the drawn road strip of every stretch of the course,
+// widened by half a metre each side, must hold no base (a different stretch can pass
+// under the spot a piece was placed from, as at a hairpin).
+const LIMIT=.05,ROAD_MARGIN=.5;
 const oldLoad=THREE.TextureLoader.prototype.load,oldDocument=globalThis.document;
 THREE.TextureLoader.prototype.load=function(url){const texture=new THREE.Texture();texture.image={src:url};return texture;};
 globalThis.document={createElement(){
@@ -35,13 +38,15 @@ try{
       addLandscapeDetail(world,view,theme==='alpine');
     }
     const near=indexTriangles(terrainGeometry(course)),far=indexTriangles(farTerrainGeometry(course));
+    const roads=indexTriangles(strip(course,s=>-(course.roadHalfWidthAt(s)+ROAD_MARGIN),s=>course.roadHalfWidthAt(s)+ROAD_MARGIN,.035));
     const matrix=new THREE.Matrix4(),position=new THREE.Vector3();
-    let worst=0,where=null,pieces=0,unseen=0;
+    let worst=0,where=null,pieces=0,unseen=0,onRoad=0,onRoadAt=null;
     world.traverse(mesh=>{
       const kind=mesh.userData.landscapeCell?.kind;
       if(kind!=='foliage'&&kind!=='grit')return;
       for(let i=0;i<mesh.count;i++){
         mesh.getMatrixAt(i,matrix);position.setFromMatrixPosition(matrix);
+        if(drawnHeight(roads,position.x,position.z)!==null){onRoad++;onRoadAt??={kind,x:+position.x.toFixed(1),z:+position.z.toFixed(1)};}
         const a=drawnHeight(near,position.x,position.z),b=drawnHeight(far,position.x,position.z);
         if(a===null&&b===null){unseen++;continue;}
         const ground=Math.max(a??-Infinity,b??-Infinity),gap=position.y-lift(mesh)-ground;pieces++;
@@ -49,11 +54,13 @@ try{
       }
     });
     world.traverse(object=>object.geometry?.dispose());
-    results.push({id:def.id,pieces,unseen,worst:+worst.toFixed(3),where});
+    const avoid=world.userData.landscapeRoadAvoid??{placed:0,moved:0,dropped:0};
+    results.push({id:def.id,pieces,unseen,worst:+worst.toFixed(3),onRoad,moved:avoid.moved,dropped:avoid.dropped,placed:avoid.placed});
+    if(onRoad)failures.push(`${def.id}: ${onRoad} bases on a road, first at ${JSON.stringify(onRoadAt)}`);
     if(!(Math.abs(worst)<=LIMIT))failures.push(`${def.id}: ${worst.toFixed(3)} m at ${JSON.stringify(where)}`);
     checks++;
   }
 }finally{THREE.TextureLoader.prototype.load=oldLoad;if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;}
 if(process.argv.includes('--report'))console.table(results);
-assert.deepEqual(failures,[],'grass, tufts and grit sit on the drawn ground within 5 cm');
-console.log(`Grass ground: ${checks} courses, every grass, tuft and grit base within ${LIMIT} m of the drawn ground.`);
+assert.deepEqual(failures,[],'grass, tufts and grit sit on the drawn ground within 5 cm and never on a road');
+console.log(`Grass ground: ${checks} courses, every grass, tuft and grit base within ${LIMIT} m of the drawn ground and clear of every road.`);

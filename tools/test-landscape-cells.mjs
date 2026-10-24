@@ -19,18 +19,18 @@ const kinds=['foliage','grit','boulders','posts','reflectors','outcrops'];
 // deliberately revised version-4 natural routes. Legal scenery placement can
 // change rock counts with a new curve; batching must still retain every source
 // instance and all of its buffer values exactly. Hashes refreshed for FIX-GRASS-GROUND:
-// grass, tufts and grit now stand on the drawn ground, so their heights moved; counts did not.
+// grass, tufts and grit now stand on the drawn ground and off every road, so heights and a few positions moved.
 const baseline={
-  'pacific-canyon/desert':[[1820,780,94,138,138],'8c8d1a5bef7c9ec360039d0364db4dc8ce8572f88a4149c1aefc854d570dbbdd'],
-  'pacific-canyon/coast':[[6720,720,81,128,128],'306397c3244f520b98cc4e46c3d51a2e27df7ca39da5c84c1ffcbe3cdcfc40d1'],
-  'high-country/desert':[[910,390,49,84,84],'19b164fe2b72059b29cba07173b8763d2721cfa9ceba5c729eea26895c5ae903'],
-  'high-country/alpine':[[6720,720,80,144,144],'8572d111aeeb4c85a736094a3bb6e06d02eb3c7ca3444010be1d5bc241f0b8f3'],
-  'high-country/coast':[[3640,390,37,84,84],'839c1c40bd0b812392603b4ccc013ef158362656416c84f0affeaf093a10e68a'],
+  'pacific-canyon/desert':[[1820,780,94,138,138],'770c437039a939e21343325e7faecc2c495dda38f52a874a64dbcb4fc16cffa2'],
+  'pacific-canyon/coast':[[6720,720,81,128,128],'c29595e0249bee30e8c1b9bc4f2b2de2861e7935bf41afe214c192ea7140ac1c'],
+  'high-country/desert':[[910,390,49,84,84],'e0cde697d56ed7372add72a2185fd1fbd9f14aacc45cc81a840413cba18d5d0f'],
+  'high-country/alpine':[[6720,720,80,144,144],'abc10f7772a8dd895fa94bc807fe20c2a9730d636e20d182f91fe11fc3fbd239'],
+  'high-country/coast':[[3640,390,37,84,84],'5af288278a1980f937c45970908975d8f4f883356ee9a506d4bd90898a457c24'],
   'harbor-highlands/city':[[408,510,48,100,100],'f03a4c3f26e9ebcae8b5940ab340be2eb6c7f7d37a3e1cceb13f099528df00a4'],
-  'harbor-highlands/alpine':[[5040,540,66,96,96],'790f140706c1ce73ee27c1310e90b102a2264d1aad068a076b9fec8ecd687a77'],
-  'harbor-highlands/coast':[[4200,450,61,88,88],'a1f13bb0cfbba54fef78d91b2150ba13a5eadce09b84cf1eca103b33f8f9daad'],
-  'ridge-rally/desert':[[1470,630,68,98,98],'e73079e2bc725f565c5f26b42ca2308801cd35a2c602ec7e97a9d8da495444c8'],
-  'ridge-rally/alpine':[[8120,870,103,126,126],'500399bf90cd6920bb63fac775ab6ae8398421a01a3958d5b9f70e02fd927c64'],
+  'harbor-highlands/alpine':[[5040,540,66,96,96],'ea4100675c8adf4a2ef3f99c70857397b46edc171aa06432c88fe284dd5df379'],
+  'harbor-highlands/coast':[[4200,450,61,88,88],'0b32cfc7c42861811b3ac39300488e6810f1ab7cb54c7f1ff85c44c62e006e4f'],
+  'ridge-rally/desert':[[1470,630,68,98,98],'2a9fcf5974d36190461dbd7369a5c6f5feb658e506999c6fb2726aa40d8712db'],
+  'ridge-rally/alpine':[[8120,870,103,126,126],'2f502f58aeda0536e59da03bc5e98984a84d42c5b26994d6e8acd4d9a8fe00c3'],
 };
 
 function auditAndReconstruct(meshes){
@@ -150,7 +150,12 @@ try{
       else assert.deepEqual(after.get(key),row,'every non-pit transform and color retains its original source index');
     }
     assert.equal(after.size,before.size-expectedRemoved);
-    if(id==='ardennes-forest')assert.equal(expectedRemoved,5,'actual pictured five roots, including the main-road apron overlap');
+    // FIX-GRASS-GROUND: the five roots that stood on the main-road apron are now moved off the road by the
+    // road-avoidance rule before this pit filter looks, so none is left to remove. The filter still holds:
+    // no plant root of the real scene stands on pit pavement.
+    if(id==='ardennes-forest')assert.equal(expectedRemoved,0,'road avoidance already moved the five apron roots off the pit pavement');
+    for(const [key,row] of after){const n=course.nearest(row.matrix[12],row.matrix[14]);
+      assert.ok(!(row.kind==='foliage'&&pitQueries.pitRoadAt(course,n.s,n.lateral)),'no plant root of the real scene stands on pit pavement: '+id+'/'+key);}
     console.log(JSON.stringify({pitPlants:id,removed:expectedRemoved,retained:after.size}));
   }
 }finally{THREE.TextureLoader.prototype.load=originalLoad;}
