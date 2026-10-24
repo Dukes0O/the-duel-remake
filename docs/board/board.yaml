@@ -404,10 +404,12 @@ tasks:
 
   - id: LAB-ART
     title: "The Lab hangar and its benches (Blender recipe, three rounds)"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-24
+    branch: claude/lab-art
     needs: []
     locks: []
     flag: "lab"
