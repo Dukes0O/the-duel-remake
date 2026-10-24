@@ -41,4 +41,7 @@ the mesa's and plane's old flat-colour band materials and random per-face wear.
 
 ## Gates
 
-Pending.
+24 October 2026, once, after merging current `integration/wasteland` (clean): `node tools/test-blender-output.mjs`
+(77 checks), `node tools/test-review-evidence.mjs` (9 passed), `node tools/test-repo-hygiene.mjs` passed,
+`node tools/run-tests.mjs --tier lane --changed --jobs 4`: 34 passed, 0 failed (356 s), `npm run build`: pass.
+No browser or frame check: nothing loads these models yet (rule 9).
