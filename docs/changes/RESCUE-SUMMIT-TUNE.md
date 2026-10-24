@@ -4,12 +4,12 @@ Card: RESCUE-SUMMIT-TUNE (Claude, SIM lane). Design: `docs/HELI_RESCUE.md` secti
 5.4 and 5.5; settled points in `docs/board/cards/RESCUE-SUMMIT-TUNE.md`. Everything is
 behind the `rescue` and `summit-run` switches. Files: `src/heli/heli-missions.js`,
 `src/heli/heli-autopilot.js`, `src/heli/heli-session.js`; new test
-`tools/test-heli-summit-tune.mjs` (92 checks, about 3 minutes).
+`tools/test-heli-summit-tune.mjs` (105 checks, about 6 minutes).
 
 ## What changed
 
 1. **Clocks.** `SUMMIT_CLOCKS` (`heli-missions.js`) gives Summit Run its own rows:
-   avalanche 2,670 s, supply 2,520 s. `rescueLimit(kind, gear, courseId)` and
+   avalanche 2,250 s, supply 2,670 s. `rescueLimit(kind, gear, courseId)` and
    `clockLeft` pick the row by the rescue record's course; `RESCUE_CLOCKS` is
    untouched (hiker 900, avalanche 720, hoist 720, supply 1500 everywhere else) and
    hiker and hoist have no Summit row. The casualty's cold point follows the
@@ -23,9 +23,13 @@ behind the `rescue` and `summit-run` switches. Files: `src/heli/heli-missions.js
    Worked out twice a second. `autopilotStep` takes a new `ceiling(x, z)` option
    and the session passes `ceilingAt`. From the Summit start area the autopilot now
    flies an avalanche slide hover without a crash (before: into the ridge).
-3. **The truck always sells fuel** (`heli-session.js`). Away from the home pad a
-   pilot with no purchases yet pays for the tank; the pad's free first tank is kept
-   for the pad (the purchase does not count as the first refuel).
+3. **Fuel trucks, always paid.** The lodge's fuel truck, which stood only at the supply
+   pickup, now stands at two places for any Summit Run rescue (supply run or avalanche,
+   decided by Claude on the first pass of this card): inside the Summit start area's
+   landing circle and at the pickup. Each sells fuel at the pump's price to a helicopter
+   on the ground in its circle, and always for pay: the pad's free first tank is kept for
+   the pad (a first purchase at a truck does not count as the first refuel). The view
+   shows `sites.zoneTruck` (and, for the avalanche, `pickup`, `truck`, `atTruck`).
 4. **A stored Summit call with the Summit switch off** is dropped quietly at session
    start (`dropSummitCall`, `heli-missions.js`): no call, no record, no pay, no
    charge, the count left where it was so the next call rings as usual. With both
@@ -47,33 +51,37 @@ behind the `rescue` and `summit-run` switches. Files: `src/heli/heli-missions.js
 
 ## Measured times and the rows
 
-Steady scripted pilot (`tools/test-heli-summit-tune.mjs`): the cruise leg from the home
-pad reads 383 s on arrival (lift-off, the autopilot to the edge, the leg); the whole
-supply run from Summit Run's start area 1,238 s; the avalanche flight up to the slope
-496 s. From the home pad: supply 383 + 1,238 = 1,622 s; avalanche 383 + 496 + 744
-(the way down at the line's speed, 1.5 times the way up) + 90 (set-down, dig, clip) =
-1,714 s. Times 1.55, rounded up to 30 s: 2,520 s and 2,670 s. The test keeps at least
-35% of the clock in hand (36% and 36%).
+Both rescues flown end to end from the home pad by the steady scripted pilot (the test):
+answer, fit the line (avalanche), lift off, the autopilot to the edge, the cruise leg (the
+clock reads 383 s on arrival), down inside the start area circle, a fill at its truck, then
+the rescue. Supply (the proven script: three crates from the pickup to the hut yard) 1,720 s,
+paid 1,000. Avalanche 1,450 s, paid 1,200, the casualty unhurt: autopilot from the start
+area up to the slide (about 6 km, 400 kg to 85 kg), landed at the pickup truck 460 m on,
+refilled, lowered and clipped on beside the beacon, and the autopilot carried the pair
+back down to the landing circle (22 kg left); nobody stranded, no crash. Times 1.55,
+rounded up to 30 s: 2,670 s and 2,250 s. The test keeps at least 35% of the clock in hand.
 
-## Open for Claude: the avalanche at Summit Run cannot be flown from the home pad
+## Why two trucks
 
-The rescue line is fitted only at the home pad, so the avalanche has to start there.
-A full tank cannot do it: the lift-off and cruise leg leave 175 to 240 kg; the climb to
-a slope 4.3 to 5.6 km out burns about 0.55 kg a second (more than 300 kg for the round
-trip) and nothing at Summit Run sells fuel during an avalanche (the truck is only at the
-supply pickup, and only for the supply run). So the avalanche part of the rows (the way
-down and the set-down) is worked out from the measured way up, not flown end to end, and
-the test says so. The only way out today is landing, running dry and the stranded
-pilot's fuel truck (900 credits, more than the 1,200 pay's half). Options: a fuel truck
-at the Summit zone for any Summit rescue (the same `buyFuel` rule), the avalanche only
-flown from the pad with a smaller `legFuelKg`, or no avalanche at Summit. I changed
-nothing here; the clock row will not matter until this is settled.
+Without a truck in the start area the pickup truck was out of reach: the cruise leg leaves
+about 179 kg and the 6 km to the pickup takes about 250 kg (every pilot style ran dry and
+was left to the stranded pilot's 900-credit truck). One truck at the start area is not
+enough either: the climb to the slope and the carry back would need more than a tank.
+With a truck at each end the avalanche works with a 330 and a 360 kg fill.
 
-Also seen: the scripted pilot cannot cross the ridge beside the road with the 300 m over
-the ground ceiling; it has to follow the road (the autopilot's straight line gets over by
-its new rule). The supply pickup is 5.5 km from the zone, and a first fill at the pad
-gives about 175 kg on arrival, so the supply run from the pad also wants a refuel on the
-way; the test flies it from the start area, as before.
+## Open for Claude
+
+- **The autopilot cannot cross the cliff from the cruise leg's arrival point.** It flies
+  a straight line from 1.5 km out of the start area toward the slide and meets a wall
+  (the ground rises about 280 m within metres at about x 2,080, z 1,565) that the 300 m
+  over the ground ceiling will not let it clear: it holds at the ceiling and the rotor
+  strikes the rock. From the start area the same line clears. The scripted pilot
+  therefore lands at the start area truck first (also for fuel) and flies from there.
+  A player who engages the autopilot straight after the cruise leg would crash; not
+  widened into this card.
+- The scripted pilot cannot cross the ridge beside the road with the ceiling rule either; it
+  follows the road to the pickup and slope (the supply run goes straight from the start area
+  and works).
 
 ## Switch-off proof
 
@@ -100,7 +108,7 @@ Nothing replaced.
 
 ## Gates
 
-Owned suite: `test-heli-summit-tune` (92). 24 October 2026, from PowerShell in the lane
+Owned suite: `test-heli-summit-tune` (105). 24 October 2026, from PowerShell in the lane
 folder: `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 148 passed, 0 failed
 (867 s), including `test-heli-summit-tune`, `test-heli-summit-rescues` (113),
 `test-heli-missions` (45 groups), the rescue session and autopilot rescue suites;

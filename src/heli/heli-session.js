@@ -17,7 +17,7 @@ import {BUCKET, createBucket, stepBucket, bucketHit, bucketWords, bucketHolds, a
 import {bucketDamageOf, damageBucket as damageBucketSave, repairBucket as repairBucketSave, FIRE_MONEY, missionsOf, setMissions} from './heli-save.js';
 import {createFireRun, fireWorld} from './heli-fire-run.js';
 import {callOf, rescueOf, rescueConditions, isRescueKind, tickRescue, finishRescue, failRescue, clockLeft, duskOf, rescueLimit,
-  peoplePay, dropSummitCall, DUSK_SECONDS} from './heli-missions.js';
+  peoplePay, dropSummitCall, SUMMIT_COURSE, DUSK_SECONDS} from './heli-missions.js';
 import {RESCUE, CONDITIONS, createRescueLine, setLineWho, peopleOnLine, hNothing, canFitLine, holdFraction, stepRescue, rescueHit, cabinHurt,
   handoverOutcome, createSupplyCrate, noteCrateRelease, crateResult, cratePay, supplyPay, hoistBonus, hookCrates, carryNet, spillNet} from './heli-rescue.js';
 import {hikerSpots, pickHiker, hikerSpotted, hikerWalk, slideSpots, pickSlide, beaconSignal, hoistSpots, pickHoist, supplyYard, supplyPickup,
@@ -503,11 +503,24 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) <= site.zone.radius;
   }
 
-  // Summit Run's supply run: the lodge's fuel truck stands at the pickup, and sells
-  // fuel at the pump's price to a helicopter on the ground in the pickup's circle.
+  // Summit Run's rescues: the lodge's fuel trucks stand inside the start area's landing circle and at the
+  // pickup, for the supply run and the avalanche alike (a crew stages fuel near the scene). Each sells
+  // fuel at the pump's price to a helicopter on the ground inside its circle, and always for pay.
+  const standCache = new Map();
+  const standAt = (circle, ground) => {
+    const x = circle.x + circle.radius * 0.75;
+    return Object.freeze({circle, truck: Object.freeze({x, z: circle.z, y: ground.height(x, circle.z)})});
+  };
+  function summitStands() {
+    if (!live || (live.kind !== 'supply' && live.kind !== 'avalanche') || live.courseId !== SUMMIT_COURSE || site?.courseId !== live.courseId) return [];
+    if (!standCache.has(site.courseId)) {
+      const pickup = supplyPickup(world.course, world.ground);
+      standCache.set(site.courseId, Object.freeze([standAt(site.zone, world.ground), ...(pickup ? [standAt(pickup, world.ground)] : [])]));
+    }
+    return standCache.get(site.courseId);
+  }
   function atTruck() {
-    return !!live && live.kind === 'supply' && !!rsite?.pickup && site?.courseId === live.courseId && !!heli?.onGround &&
-      Math.hypot(heli.x - rsite.pickup.x, heli.z - rsite.pickup.z) <= rsite.pickup.radius;
+    return !!heli?.onGround && summitStands().some(({circle}) => Math.hypot(heli.x - circle.x, heli.z - circle.z) <= circle.radius);
   }
   const pumpHere = () => onHome() || atTruck();
 
@@ -909,7 +922,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
             flareLeft: rsite.spotted ? Math.max(0, SEARCH.flareSeconds - rsite.since) : 0, aboard: rsite.aboard});
         } else if (r.kind === 'avalanche' && here) {
           target = bearingTo(rsite.slide.x, rsite.slide.z);
-          sites = Object.freeze({slide: rsite.slide, beacon: rsite.beacon});
+          const stands = summitStands();
+          sites = Object.freeze(stands.length ? {slide: rsite.slide, beacon: rsite.beacon, pickup: stands[1]?.circle ?? null, truck: stands[1]?.truck ?? null,
+            zoneTruck: stands[0].truck, atTruck: atTruck()} : {slide: rsite.slide, beacon: rsite.beacon});
         } else if (r.kind === 'hoist' && here) {
           target = bearingTo(rsite.driver.x, rsite.driver.z);
           sites = Object.freeze({driver: rsite.driver, car: rsite.car});
@@ -917,7 +932,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           const crateAt = rsite.pickup ? (here ? rsite.pickup : null) : (site?.courseId === HOME_COURSE ? rsite.spots[0] : null);
           const goal = r.crates.includes(1) ? (here ? rsite.yard : null) : crateAt;
           target = goal ? bearingTo(goal.x, goal.z) : null;
-          if (here) sites = Object.freeze(rsite.pickup ? {yard: rsite.yard, pickup: rsite.pickup, truck: rsite.truck, spots: rsite.spots, atTruck: atTruck()} : {yard: rsite.yard});
+          if (here) sites = Object.freeze(rsite.pickup ? {yard: rsite.yard, pickup: rsite.pickup, truck: rsite.truck, zoneTruck: summitStands()[0]?.truck ?? null, spots: rsite.spots, atTruck: atTruck()} : {yard: rsite.yard});
           else if (site?.courseId === HOME_COURSE) sites = Object.freeze({spots: rsite.spots});
         }
       }

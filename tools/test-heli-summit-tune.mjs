@@ -106,7 +106,7 @@ function roadPoints(world, from, to) {
   for (let s = a; dir > 0 ? s < b : s > b; s += dir * 150) { const q = course.at(s); points.push({x: q.x, z: q.z}); }
   return points;
 }
-function flyRoad(session, world, goal, finalY) {
+function flyRoad(session, world, goal, finalY, {cap = 24, slow = 0.5} = {}) {
   const points = roadPoints(world, session.view().heli, goal);
   let index = 0;
   return run(session, 1500, v => {
@@ -116,7 +116,7 @@ function flyRoad(session, world, goal, finalY) {
     let y = -Infinity;
     for (let ahead = 0; ahead <= Math.min(d + 150, 300); ahead += 10) y = Math.max(y, world.ground.highest(v.heli.x + ux * ahead, v.heli.z + uz * ahead, 12));
     const target = last && d < 100 ? finalY : y + 45;
-    return pilot(v, {x: next.x, z: next.z, y: target}, {speed: last && d < 100 ? 4 : v.heli.y < target - 25 ? 0.5 : v.heli.y < target - 10 ? 8 : 24, sink: 6});
+    return pilot(v, {x: next.x, z: next.z, y: target}, {speed: last && d < 100 ? 4 : v.heli.y < target - 25 ? slow : v.heli.y < target - 10 ? 8 : cap, sink: 6});
   }, (v, got) => has(got, 'crash') || index >= points.length && dist(v.heli, goal) < 10 && Math.abs(v.heli.y - finalY) < 3 && speedOf(v) < 1);
 }
 function landAt(session, world, spot) {
@@ -174,7 +174,7 @@ function autopilotFingerprint(extra = {}) {
 // Worked out from the autopilot as it stood before this card.
 const AUTOPILOT_PIN = 4100670798;
 if (want('pin')) {
-  for (const extra of (process.env.TUNE_EXTRAS ? JSON.parse(process.env.TUNE_EXTRAS) : [{}, {summitRunEnabled: false}, {summitRunEnabled: true}]))
+  for (const extra of [{}, {summitRunEnabled: false}, {summitRunEnabled: true}])
     same(autopilotFingerprint(extra), AUTOPILOT_PIN, `autopilot flights on today's courses are what they were (${JSON.stringify(extra)})`);
   console.log('PASS the autopilot is exact where the straight line already clears the ground');
 }
@@ -208,20 +208,29 @@ if (want('clocks')) {
 }
 
 // ---- The scripted pilot finishes with 35% left, from the home pad --------------------------------
-// Steady-pilot times, measured here: the cruise leg from the home pad (lift-off, the autopilot to
-// the edge, the leg), the whole supply run from Summit Run's start area (the proven script of
-// test-heli-summit-rescues), and the avalanche flight up to the slope from the start area. The
-// pair's way back down is the same road at the line's 20 m/s limit (16 flown) and the set-down,
-// dig and clip are a minute and a half: both worked out from the outbound time, because the
-// rescuer's line is fitted only at the home pad and a full tank cannot fly the avalanche there
-// and back (see the change note), so no run of the whole thing from the pad can be flown.
+// Both rescues flown end to end by the steady test pilot from the home pad: answer the call, fit
+// the line (avalanche), lift off, the autopilot to the edge, the cruise leg, down inside the start
+// area's landing circle to fill the tank at the lodge's truck, then the rescue itself (the supply run
+// by the proven script of test-heli-summit-rescues, the avalanche with the autopilot up the mountain
+// and down again and a second truck at the pickup beside the slope). The clock row is that time
+// times 1.55, rounded up to 30 s; the test keeps 35% of the clock in hand.
 const KEEP = 0.35, SAFETY = 1.55;
 const rowFor = seconds => Math.ceil(seconds * SAFETY / ROUND) * ROUND;
-function flySupplyFromStart() {
+function flySupply({fromHome = true} = {}) {
   const session = newSession(callProfile('supply', 'summit-run', {count: 30, credits: 3000}), BOTH);
-  const log = [...session.start('summit-run')];
-  ok(session.pressRadio(), 'supply: R answers at Summit Run');
+  const log = [...session.start(fromHome ? undefined : 'summit-run')];
+  ok(session.pressRadio(), 'supply: R answers the call');
   log.push(...session.takeEvents());
+  if (fromHome) {
+    log.push(...cruiseToSummit(session));
+    // Down inside the start area's landing circle, and a full tank at the lodge's truck.
+    const zone = session.view().zone;
+    log.push(...flyRoad(session, summit, zone, zone.y + 30));
+    log.push(...landAt(session, summit, zone));
+    ok(session.view().rescue.active.sites.atTruck, 'supply: landed inside the start area circle, beside its truck');
+    ok(session.buyFuel(400 - session.view().heli.fuelKg).ok, 'supply: the start area truck fills the tank');
+    log.push(...session.takeEvents());
+  }
   const names = ['food', 'medicine', 'fuel'];
   for (let i = 0; i < 3; i++) {
     log.push(...climbTo(session, summit, pickup, pickup.y + 30));
@@ -247,38 +256,75 @@ function flySupplyFromStart() {
   }
   return {session, log, done: log.find(event => event.type === 'rescueDone'), failed: log.find(event => event.type === 'rescueFailed')};
 }
-function flyAvalancheOut() {
-  const session = newSession(callProfile('avalanche', 'summit-run', {count: 30}), BOTH);
-  const log = [...session.start('summit-run')];
-  ok(session.pressRadio(), 'avalanche: R answers at Summit Run');
+// The whole avalanche rescue from the home pad, with a fill at each of the two trucks on the way.
+function flyAvalanche({refuelTo = [330, 360]} = {}) {
+  const session = newSession(callProfile('avalanche', 'summit-run', {count: 30, credits: 3000}), BOTH);
+  const log = [...session.start()];
+  ok(session.pressRadio(), 'avalanche: R answers at the home pad');
+  same(session.fitRescueLine(), {ok: true}, 'avalanche: the rescue line is fitted at the pad');
+  log.push(...session.takeEvents());
+  log.push(...cruiseToSummit(session));
   const r = missionsOf(session.profile).rescue, pick = pickSlide(slideSpots(summit.course, summit.ground), r.seed, summit.ground);
-  log.push(...flyRoad(session, summit, pick.slide, summit.ground.highest(pick.slide.x, pick.slide.z, 12) + 40));
-  return {session, log, pick, crashed: has(log, 'crash'), reached: clockOf(session)};
+  // The first truck: down inside the start area's landing circle (1.5 km on from where the cruise leg
+  // arrives), fill the tank, and up again.
+  const zone = session.view().zone, beacon = pick.beacon, gy = summit.ground.height(beacon.x, beacon.z);
+  const fill = (kg, label) => {
+    const have = session.view().heli.fuelKg;
+    if (kg - have >= 1) { const bought = session.buyFuel(kg - have); ok(bought.ok && bought.cost > 0, `avalanche: the ${label} truck sells fuel`); log.push(...session.takeEvents()); }
+  };
+  log.push(...flyRoad(session, summit, zone, zone.y + 30));
+  log.push(...landAt(session, summit, zone));
+  ok(session.view().rescue.active.sites.atTruck, 'avalanche: landed inside the start area circle, beside its truck');
+  fill(refuelTo[0], 'start area');
+  // Up the mountain by autopilot (its rule for a mountain) to a hover over the slide.
+  log.push(...run(session, 90, v => pilot(v, {x: zone.x, z: zone.z, y: zone.y + 60}, {speed: 1, sink: 3}), v => v.heli.y > zone.y + 55));
+  ok(session.pressAutopilot(), 'avalanche: P takes the way to the slide');
+  log.push(...run(session, 1500, () => ({}), (v, got) => has(got, 'autopilotArrived') || has(got, 'crash') || has(got, 'rescueFailed')));
+  ok(!has(log, 'crash') && has(log, 'autopilotArrived'), 'avalanche: up the mountain without a crash');
+  if (session.autopilotOn) session.pressAutopilot();
+  // The second truck at the pickup, a few hundred metres on.
+  log.push(...flyRoad(session, summit, pickup, pickup.y + 30));
+  log.push(...landAt(session, summit, pickup));
+  ok(session.view().rescue.active.sites.atTruck, 'avalanche: landed beside the pickup truck');
+  fill(refuelTo[1], 'pickup');
+  // Back to the slope and a hover 40 m over the obstacles.
+  log.push(...flyRoad(session, summit, beacon, gy + 40));
+  log.push(...run(session, 20, v => pilot(v, {x: beacon.x, z: beacon.z, y: gy + 40}, {speed: 1}), v => speedOf(v) < 0.3));
+  const onSpot = (v, y, sink) => { const l = v.rescue.line; return pilot(v, {x: beacon.x - (l.x - v.heli.x), z: beacon.z - (l.z - v.heli.z), y}, {speed: 3, sink}); };
+  const height = v => v.rescue.line.y - summit.ground.height(v.rescue.line.x, v.rescue.line.z);
+  log.push(...run(session, 120, v => onSpot(v, v.heli.y - 3, height(v) > 5 ? 3 : 0.7), (v, got) => has(got, 'holdStarted')));
+  // Hold still with a little slack in the line.
+  log.push(...run(session, 90, v => onSpot(v, v.heli.y - 1.5, 0.3), (v, got) => has(got, 'clipped')));
+  ok(has(log, 'clipped'), 'avalanche: clipped on at the slope');
+  // The pair up, then the autopilot carries them down the mountain at the line's pace.
+  const base = session.view().heli.y;
+  log.push(...run(session, 60, v => pilot(v, {x: v.rescue.line.x, z: v.rescue.line.z, y: base + 35}, {speed: 1, sink: 2.5}), v => v.heli.y > base + 30));
+  ok(session.pressAutopilot(), 'avalanche: P takes the pair to the landing circle');
+  log.push(...run(session, 1500, () => ({}), (v, got) => has(got, 'autopilotArrived') || has(got, 'crash') || has(got, 'rescueFailed')));
+  if (session.autopilotOn) session.pressAutopilot();
+  log.push(...run(session, 10, v => pilot(v, {x: zone.x, z: zone.z, y: v.heli.y}, {speed: 1}), v => speedOf(v) < 0.3));
+  const above = v => v.rescue.line.y - summit.ground.height(v.rescue.line.x, v.rescue.line.z);
+  log.push(...run(session, 120, v => pilot(v, {x: zone.x, z: zone.z, y: v.heli.y - 3}, {speed: 2, sink: above(v) > 6 ? 3 : 0.5}),
+    (v, got) => has(got, 'rescueDone') || has(got, 'rescueFailed')));
+  return {session, log, pick, done: log.find(e => e.type === 'rescueDone'), failed: log.find(e => e.type === 'rescueFailed')};
 }
-function cruiseArrival() {
-  const session = newSession(callProfile('avalanche', 'summit-run', {count: 30}), BOTH);
-  session.start(); session.pressRadio(); session.fitRescueLine();
-  cruiseToSummit(session);
-  return {session, clock: clockOf(session), fuel: session.view().heli.fuelKg};
-}
-let measured = null;
+const SCRIPTED = {};
 if (want('scripted')) {
-  const cruise = cruiseArrival();
-  ok(cruise.session.view().courseId === 'summit-run' && cruise.clock > 300 && cruise.clock < 500, `the cruise leg from the home pad is on the clock (${cruise.clock.toFixed(0)} s)`);
-  const supply = flySupplyFromStart();
-  ok(supply.done && !supply.failed, 'supply: flown by script, paid, no failure');
-  same([supply.done.paid, missionsOf(supply.session.profile).supplies], [1000, 1], 'supply: 1,000 credits and one supply run');
-  const out = flyAvalancheOut();
-  ok(!out.crashed && out.reached > 0 && dist(out.session.view().heli, out.pick.slide) < 15, `avalanche: up the road to the slope (${out.reached.toFixed(0)} s)`);
-  const supplyTotal = cruise.clock + supply.done.clockSeconds;
-  const avalancheTotal = cruise.clock + out.reached + out.reached * 1.5 + 90;
-  measured = {cruise: cruise.clock, supply: supply.done.clockSeconds, out: out.reached, supplyTotal, avalancheTotal};
-  console.log(`  scripted times: cruise ${cruise.clock.toFixed(0)} s, supply from the start area ${supply.done.clockSeconds.toFixed(0)} s, avalanche up ${out.reached.toFixed(0)} s;`
-    + ` from the home pad supply ${supplyTotal.toFixed(0)} s, avalanche ${avalancheTotal.toFixed(0)} s; rows would be ${rowFor(supplyTotal)} and ${rowFor(avalancheTotal)}`);
-  ok(supplyTotal <= SUMMIT_CLOCKS.supply * (1 - KEEP), `supply: from the home pad ${supplyTotal.toFixed(0)} s of ${SUMMIT_CLOCKS.supply} s leaves ${Math.round((1 - supplyTotal / SUMMIT_CLOCKS.supply) * 100)}% (at least 35%)`);
-  ok(avalancheTotal <= SUMMIT_CLOCKS.avalanche * (1 - KEEP), `avalanche: from the home pad ${avalancheTotal.toFixed(0)} s of ${SUMMIT_CLOCKS.avalanche} s leaves ${Math.round((1 - avalancheTotal / SUMMIT_CLOCKS.avalanche) * 100)}% (at least 35%)`);
+  const supply = flySupply({fromHome: true});
+  ok(supply.done && !supply.failed, 'supply: flown by script from the home pad, paid, no failure');
+  same([supply.done.paid, missionsOf(supply.session.profile).supplies, supply.log.some(e => e.type === 'charged' && e.kind === 'fuelTruck')], [1000, 1, false],
+    'supply: 1,000 credits, one supply run, nobody stranded');
+  const avalanche = flyAvalanche();
+  ok(avalanche.done && !avalanche.failed, 'avalanche: flown by script from the home pad, paid, no failure');
+  same([avalanche.done.paid, avalanche.done.condition, missionsOf(avalanche.session.profile).rescued, avalanche.log.some(e => e.type === 'charged' && e.kind === 'fuelTruck'),
+    has(avalanche.log, 'crash')], [1200, 0, 1, false, false], 'avalanche: 1,200 credits, unhurt, one person, nobody stranded, no crash');
+  const supplyTotal = supply.done.clockSeconds, avalancheTotal = avalanche.done.clockSeconds;
+  SCRIPTED.times = {supplyTotal, avalancheTotal};
+  console.log(`  scripted times from the home pad: supply ${supplyTotal.toFixed(0)} s, avalanche ${avalancheTotal.toFixed(0)} s; rows would be ${rowFor(supplyTotal)} and ${rowFor(avalancheTotal)}`);
+  ok(supplyTotal <= SUMMIT_CLOCKS.supply * (1 - KEEP), `supply: ${supplyTotal.toFixed(0)} s of ${SUMMIT_CLOCKS.supply} s leaves ${Math.round((1 - supplyTotal / SUMMIT_CLOCKS.supply) * 100)}% (at least 35%)`);
+  ok(avalancheTotal <= SUMMIT_CLOCKS.avalanche * (1 - KEEP), `avalanche: ${avalancheTotal.toFixed(0)} s of ${SUMMIT_CLOCKS.avalanche} s leaves ${Math.round((1 - avalancheTotal / SUMMIT_CLOCKS.avalanche) * 100)}% (at least 35%)`);
   ok(SUMMIT_CLOCKS.supply <= rowFor(supplyTotal) + 2 * ROUND && SUMMIT_CLOCKS.avalanche <= rowFor(avalancheTotal) + 2 * ROUND, 'and the rows are not much longer than the scripted time times 1.55');
-  console.log('PASS a steady pilot finishes Summit rescues with at least 35% of the clock left');
+  console.log('PASS a steady pilot finishes Summit rescues from the home pad with at least 35% of the clock left');
 }
 
 // ---- The truck: fuel is always paid for there; the free first tank is the home pad's -------------
@@ -294,6 +340,22 @@ if (want('fuel')) {
   const bought = session.buyFuel(kg);
   ok(bought.ok && bought.kg > 0 && bought.cost > 0, `fuel: the first tank at the truck is paid for (${bought.kg} kg for ${bought.cost} credits)`);
   same([session.profile.credits, heliOf(session.profile).refuels], [before - bought.cost, 0], 'fuel: the wallet pays, and the pad\'s free first tank is not used up');
+  // The start area has a truck too, for the avalanche as much as the supply run.
+  for (const kind of ['avalanche', 'supply']) {
+    const stand = newSession(callProfile(kind, 'summit-run', {count: 30, credits: 3000, heli: {refuels: 0, fuelKg: 300}}), BOTH);
+    stand.start('summit-run');
+    ok(stand.buyFuel(50).ok === false, `fuel (${kind}): before the call is answered the start area sells nothing`);
+    stand.pressRadio();
+    const sites = stand.view().rescue.active.sites;
+    ok(stand.view().heli.onGround && sites.atTruck && sites.zoneTruck, `fuel (${kind}): at Summit Run's start area the truck stands in the landing circle`);
+    const credits = stand.profile.credits, zoneBought = stand.buyFuel(50);
+    ok(zoneBought.ok && zoneBought.cost > 0, `fuel (${kind}): the start area truck sells fuel, paid (${zoneBought.kg} kg for ${zoneBought.cost} credits)`);
+    same([stand.profile.credits, heliOf(stand.profile).refuels], [credits - zoneBought.cost, 0], `fuel (${kind}): the wallet pays and the pad's free tank is kept`);
+  }
+  // No rescue in hand: no truck at Summit Run, as before.
+  const bare = newSession(readyProfile({count: 0, heli: {refuels: 3, fuelKg: 300}}), BOTH);
+  bare.start('summit-run');
+  same([bare.buyFuel(50).ok, bare.buyFuel(50).reason], [false, 'The pump is at the home pad.'], 'fuel: with no rescue the pump is at the home pad only');
   // Back at the home pad that free first tank is still there.
   const home = newSession(readyProfile({count: 0, credits: 100, heli: {refuels: 0, fuelKg: 200}}), BOTH);
   home.start();

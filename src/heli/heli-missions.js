@@ -208,10 +208,11 @@ export const RESCUE_CLOCKS = Object.freeze({hiker: 900, avalanche: 720, hoist: 7
 // the mountain and a cruise leg from the home pad comes first. Only the kinds
 // that can be set there have a row; every other course keeps the rows above.
 export const SUMMIT_COURSE = 'summit-run';
-// Each is the steady scripted pilot's time from the home pad (cruise leg included) times
-// 1.55, rounded up to 30 s: avalanche 1,714 s -> 2,670 s, supply 1,622 s -> 2,520 s
-// (tools/test-heli-summit-tune.mjs measures them and keeps 35% of the clock in hand).
-export const SUMMIT_CLOCKS = Object.freeze({avalanche: 2670, supply: 2520});
+// Each is the steady scripted pilot's time flown end to end from the home pad (cruise leg
+// included, a fill at the lodge's truck on the way) times 1.55, rounded up to 30 s: supply
+// 1,720 s -> 2,670 s, avalanche 1,450 s -> 2,250 s (tools/test-heli-summit-tune.mjs flies
+// them and keeps 35% of the clock in hand).
+export const SUMMIT_CLOCKS = Object.freeze({avalanche: 2250, supply: 2670});
 export const clockBase = (kind, courseId) => courseId === SUMMIT_COURSE && Object.hasOwn(SUMMIT_CLOCKS, kind) ? SUMMIT_CLOCKS[kind] : RESCUE_CLOCKS[kind] ?? 0;
 // A call or rescue stored at Summit Run, met with rescues on and the Summit
 // switch off (a dev case), is dropped quietly: no call, no pay, no charge, and
