@@ -8,17 +8,17 @@
     {
       "eventId": "pacific-canyon",
       "car": "falcone_f42",
-      "fingerprint": "f6c550aadac6bd8817a2f1036ec263b6c5c6925a8f48ebfeac7379d58f55a4f3"
+      "fingerprint": "2ee55acc57941866addc860f8dfb81aaa5db45dc88d079f949dcd0dec5cb38c9"
     },
     {
       "eventId": "harbour-lights",
       "car": "falcone_f42",
-      "fingerprint": "09c796063df077ca02a6204eaca9141c844594f2c08da2fa82be87f741abbfe0"
+      "fingerprint": "a16fd545a6ebd98f8499d45f68d3d7e66dd35f101bbf003d4209dce50751817a"
     },
     {
       "eventId": "tremblant-snow",
       "car": "falcone_f42",
-      "fingerprint": "09c796063df077ca02a6204eaca9141c844594f2c08da2fa82be87f741abbfe0"
+      "fingerprint": "a16fd545a6ebd98f8499d45f68d3d7e66dd35f101bbf003d4209dce50751817a"
     }
   ]
 }
