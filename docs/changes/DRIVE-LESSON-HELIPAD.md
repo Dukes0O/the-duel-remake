@@ -39,6 +39,15 @@ helipad is exactly as before: the same markup byte for byte, no new offer, no ne
 - Every existing helicopter suite is unchanged. Lane tier and build: see the end of this note.
 - Not run here: a browser look at the board (the card has none; the rows are the shared list).
 
+## Lane tier and build
+
+Run once on the final code with current `integration/wasteland` (132c46f5) merged: lane tier `--changed --jobs 8
+--keep-going`: 40 of 44 suites pass, including this card's test, every helicopter suite
+(`test-heli-mode`, `-jobs`, `-view`, `-lessons`, `-lesson-core`, `-hook-window`, `-fire`, `-fire-session`,
+`-rescue-session`, `-skin-session` and the rest), `test-drive-lesson-run` and the replay guards. The four
+failures are laptop-only suites: `test-course-kit`, `test-earned-cars-ui`, `test-drive-through`, `test-medals`.
+`npm run build` passes. Not run here: browser scenarios and Windows-only suites.
+
 ## Review
 
 One independent code review (rule 17). It found one blocker and two small faults, all fixed and tested:
