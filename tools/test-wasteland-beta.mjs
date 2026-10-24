@@ -43,6 +43,8 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     wildlife: 'dev', // H3 Wildlife (SKIN-SAVE): animals and the wildlife count, off in the game
     'heli-skins': 'dev', // H3 Skins (SKIN-SAVE): skin, dirt and survey save fields, off in the game
     'heli-skiing': 'dev', // H5 Heli-skiing (SKI-RULES): the ski rules, off in the game
+    lab: 'dev', // The Lab (LAB-RULES): lessons, upgrades and their save field, off in the game
+    'lab-tuning': 'dev', // Lab tuning (LAB-RULES): the Tune page and its physics, off in the game
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);
