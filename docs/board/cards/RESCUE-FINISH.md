@@ -19,3 +19,10 @@ holds `release` only then.
 ## Part 1 merged (Claude, 16 October 16:00)
 
 Debris model removed, pose, car and yard crates done; look accepted at round 3 (the cap). Left for part 2: Claude flies each rescue after SUMMIT-HELI-RESCUES, the frame check over the avalanche (both qualities, laptop screen off) before the `rescue` switch goes on, and the release note.
+
+## Carried from RESCUE-SUMMIT-ARRIVAL (Claude, 24 October)
+
+At Summit the cruise leg leaves about 179 kg of fuel, so a pilot must land at
+the start-area truck before the avalanche slide. Decide in the finishing pass
+whether the radio or the target arrow should point the pilot to the truck
+first; no autopilot routing through trucks unless play shows it is needed.

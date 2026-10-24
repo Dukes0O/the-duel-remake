@@ -33,6 +33,11 @@
 .drive-lesson-host[hidden] { display: none; }
 .drive-lesson-host-running { align-content: start; justify-items: start; inset: 90px auto auto 18px; padding: 0; max-width: min(560px, calc(100% - 36px)); background: none; pointer-events: none; }
 .drive-lesson-host-running .drive-lesson-panel, .drive-lesson-host-running .drive-lesson-result { pointer-events: auto; }
+.drive-lesson-host-running:not(.drive-lesson-host-result) .drive-lesson-message, .drive-lesson-host-running:not(.drive-lesson-host-result) .drive-lesson-radio { position: fixed; top: 128px; right: 35px; width: min(380px, calc(35vw - 50px)); max-width: none; pointer-events: none; }
+@media (max-width: 900px) {
+  .drive-lesson-host-running:not(.drive-lesson-host-result) { inset: 150px auto auto 18px; }
+  .drive-lesson-host-running:not(.drive-lesson-host-result) .drive-lesson-message, .drive-lesson-host-running:not(.drive-lesson-host-result) .drive-lesson-radio { top: 64px; left: 18px; right: 18px; width: auto; }
+}
 .drive-lesson-host-result { inset: 85px 18px 18px; align-content: center; justify-items: center; max-width: none; background: #10161bd9; pointer-events: auto; padding: 12px; }
 .drive-lesson-host-result .drive-lesson-panel { display: none; }
 .drive-lesson-message, .drive-lesson-radio { margin: 0; padding: 10px 14px; max-width: 560px; color: #f3eddf; background: #172027f5; border-radius: 5px; }

@@ -4,7 +4,7 @@
 // when another car is alongside through a corner, and makes small seeded
 // mistakes unless the difficulty forbids them. All choices come from the
 // state of the race and the racer's own seeded random stream.
-import { DRIVE, steeringYawAuthority } from './config.js';
+import { DRIVE, BOOST, steeringYawAuthority } from './config.js';
 import { clamp } from './sim-common.js';
 import { stepKnock } from './vehicle-knock.js';
 import {observeSummitRoute,isAvalancheKnock} from './summit-avalanche.js';
@@ -13,8 +13,71 @@ import { racingLineFor, buildSpeedProfile, nextCorner, accelAt } from './race-li
 import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget,pitSpeedLimitAt} from './pit-lane.js';
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex } from './race-field.js';
 
+export const CPU_NITRO = Object.freeze({strength:.5, refill:.5});
+export const cpuNitroExtraMph=(r,spec)=>spec.topSpeed*(BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(spec.nitroSpeedBonus??0))*CPU_NITRO.strength;
+export const cpuNitroAcceleration=(r,spec)=>BOOST.accelMphPerSec*(1+(r.upgrades.nitro||0)*.15)*(spec.nitroAcceleration??1)*CPU_NITRO.strength;
+
+// The same tank and upgrade drain as the player, with Kyle's weaker CPU boost.
+export function stepCpuNitro(r, run, dt, {straight=false, attack=false, defend=false, pit=false}={}) {
+  const nitro=r.upgrades.nitro || 0;
+  const drain=BOOST.drainPerSec/((1+nitro*.14)*run.spec.boostCapacity);
+  const reserve=r.boosting ? 0 : .25+.25*(1-r.field.traits.aggression);
+  r.boosting=!pit && straight && (attack||defend) && r.speedMph>=BOOST.minSpeedMph && r.boost>reserve && !r.knock && !(r.contactCooldown>0);
+  r.field.nitroAvailable=r.boosting ? Math.min(1,r.boost/(drain*dt)) : 0;
+  r.boost=r.boosting ? Math.max(0,r.boost-drain*dt) : Math.min(1,r.boost+BOOST.refillPerSec*CPU_NITRO.refill*dt);
+}
+
 const MPH = DRIVE.mphToWorld;
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
+
+// Normalize measured progress against the road, so braking for a corner does
+// not suddenly make a player look slower. Samples are private per race.
+const playerPaces=new WeakMap();
+export function playerPaceMph(duel){
+  const s=duel.state, field=s.field, line=racingLineFor(duel.course);
+  let p=playerPaces.get(field);
+  if(!p){
+    const profile=buildSpeedProfile(line,duel.car);
+    p={profile,time:s.stageTimeSec,s:s.s,elapsed:0,distance:0,expected:0,sectors:[]};
+    playerPaces.set(field,p);
+  }
+  const dt=s.stageTimeSec-p.time, distance=s.s-p.s;
+  if(dt>0){
+    if(distance>=0 && distance<duel.car.topSpeed*MPH*1.5*dt+1){
+      p.elapsed+=dt;p.distance+=distance;p.expected+=p.profile.at(p.s)*MPH*dt;
+      if(p.elapsed>=2){
+        p.sectors.push({time:s.stageTimeSec,start:s.stageTimeSec-p.elapsed,ratio:p.distance/Math.max(1,p.expected)});
+        p.elapsed=0;p.distance=0;p.expected=0;
+      }
+    }else{p.elapsed=0;p.distance=0;p.expected=0;}
+    p.time=s.stageTimeSec;p.s=s.s;
+    p.sectors=p.sectors.filter(row=>row.start>=s.stageTimeSec-10);
+  }
+  let ratio=p.sectors.length ? Math.max(...p.sectors.map(row=>row.ratio)) : FIELD_TUNING[s.cpuDifficulty].pace;
+  if(s.lapTimes.length){
+    if(p.laps!==s.lapTimes.length){
+      let reference=0;
+      for(let i=0;i<p.profile.count;i++)reference+=p.profile.line.length/p.profile.count/(Math.max(1,p.profile.mph[i])*MPH);
+      p.lapRatio=reference/(Math.min(...s.lapTimes)/1000);p.laps=s.lapTimes.length;
+    }
+    ratio=p.lapRatio;
+  }
+  return p.profile.at(s.s)*Math.max(.05,ratio);
+}
+
+// Award a real close pass once per rival/lap; contact earns no recharge.
+export function closePassRefill(r,run,near,now){
+  const seen=r.field.nitroPassed??={},history=r.field.nitroNear??={};
+  for(const c of near){
+    const previous=history[c.index];history[c.index]={ds:c.ds,time:now};
+    if(previous && now-previous.time<=.1 && previous.ds>0 && c.ds<=0 && seen[c.index]!==r.completedLaps &&
+        Math.abs(c.dl)>=run.halfWidth+c.hw+.15 && Math.abs(c.dl)<6.4 &&
+        r.speedMph>=65 && !(r.contactCooldown>0)){
+      seen[c.index]=r.completedLaps;
+      r.boost=Math.min(1,r.boost+BOOST.nearMissRefill*CPU_NITRO.refill);
+    }
+  }
+}
 
 // Each racer's seeded random stream lives in plain numbers on its state.
 function rand(f) {
@@ -123,7 +186,8 @@ function move(duel, r, run, dt, target, intent, surface, look, route = null) {
     r.speedMph = Math.max(target, speed - braking * dt);
     r.braking = speed - target > 1.5;
   } else {
-    const push = accelAt(spec, speed) * (1 + FIELD.towAccel * f.tow) * (r.contactCooldown > 0 ? .8 : 1);
+    const nitro=f.racecraft && r.boosting ? cpuNitroAcceleration(r,spec)*f.nitroAvailable : 0;
+    const push = accelAt(spec, speed) * (1 + FIELD.towAccel * f.tow) * (r.contactCooldown > 0 ? .8 : 1) + nitro;
     r.speedMph = Math.min(target, speed + push * dt);
   }
   if (r.offRoad) r.speedMph *= Math.exp(-surface.scrub * dt * (surface.preparedGravel ? .25 : 1));
@@ -146,6 +210,7 @@ function move(duel, r, run, dt, target, intent, surface, look, route = null) {
 
 export function stepFieldRacer(duel, r, dt) {
   const s = duel.state, f = r.field, run = runtimeOf(duel, r);
+  if(f.racecraft && (r.finished || r.knock || r.pit || pitTransitTarget(duel.course,r,r.s))) stepCpuNitro(r,run,dt,{pit:true});
   if(r.pit?.phase==='servicing'&&stepPitService(duel,r,dt)){f.stuck=0;f.offSec=0;return;}
   if (r.knock) {
     // A knocked car is a free body until its tyres bite; the shared rules apply.
@@ -236,6 +301,7 @@ export function stepFieldRacer(duel, r, dt) {
   const t = f.traits, now = s.stageTimeSec;
   const halfRoad = surface.roadHalfWidth;
   const near = sense(duel, r, run);
+  if(f.racecraft){playerPaceMph(duel);closePassRefill(r,run,near,s.stageTimeSec);}
   const zone = nextCorner(profile, r.s);
   const lineOffset = line.offsetAt(look);
 
@@ -324,7 +390,7 @@ export function stepFieldRacer(duel, r, dt) {
   }
   if (!f.pass && blocker && blocker.gap > -1 && now >= (f.passCool || 0) && now > 10) {
     // Quicker than the car ahead in its own right, not just for a moment (the player's pace is its speed).
-    const theirs = blocker.index >= 0 ? runtimeOf(duel, blocker.o).profile.at(blocker.o.s) * (1 + paceForm(blocker.o.field, now)) : blocker.speed;
+    const theirs = blocker.index >= 0 ? runtimeOf(duel, blocker.o).profile.at(blocker.o.s) * (1 + paceForm(blocker.o.field, now)) : (f.racecraft ? playerPaceMph(duel) : blocker.speed);
     const closing = profile.at(r.s + blocker.ds) * (1 + formNow) - theirs;
     const gapTime = Math.max(0, blocker.gap) / Math.max(12, mps);
     const straight = Math.abs(line.curvatureAt(look)) < 1 / 300 && Math.abs(line.curvatureAt(look + 70)) < 1 / 260 &&
@@ -417,6 +483,15 @@ export function stepFieldRacer(duel, r, dt) {
   if (tuning.catchUp > 0) {
     const lead = (duel.relativeS(r.s, s.s) - s.s) / Math.max(25, s.speedMph * MPH);
     target *= catchUpFactor(tuning, lead);
+  }
+  if(f.racecraft){
+    const straight=onStraight && Math.abs(line.curvatureAt(look))<1/300 && !(zone && zone.toEntry>-10 && zone.toEntry<80);
+    const attack=!!f.pass || near.some(c=>c.ds>0 && c.gap<Math.max(12,mps) && !c.o.finished);
+    const defend=near.some(c=>c.ds<=0 && -c.ds<Math.max(run.halfLength+c.hl, mps*.5));
+    stepCpuNitro(r,run,dt,{straight,attack,defend,pit:!!r.pit || surface.boostAllowed===false});
+    if(r.boosting){
+      target+=cpuNitroExtraMph(r,run.spec);
+    }
   }
   // The paved shoulder is forgiving; beyond it the car slows hard.
   if (r.offRoad) target = Math.abs(r.lateral) > surface.roadHalfWidth + 1.25 ? Math.min(target * .7, surface.speedLimit) : target * .92;

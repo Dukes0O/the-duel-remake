@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { terrainStyleAt } from './terrain-style.js';
 import { createPolylineIndex } from './polyline-index.js';
 import { ribbonGroundAt } from './ribbon-ground.js';
+import { seedGroundRow } from './rendered-ground.js';
 import { freestyleTerrainGeometry, freestyleFarGeometry } from './freestyle-scene.js';
 
 // Pure sampled surfaces and shared source textures. Course owns all route and
@@ -133,12 +134,14 @@ export function terrainGeometry(course) {
       if(course.def.offroad){const segments=Math.ceil(cut.halfWidth*2);for(let i=0;i<=segments;i++)offsets.push(center-cut.halfWidth+cut.halfWidth*2*i/segments);}}
     offsets.sort((a,b)=>a-b);
     const style=terrainStyleAt(course,s);base.copy(style.color);const indices=groups[TERRAIN_THEMES.indexOf(course.themeAt(Math.max(0,s-terrainStep)))];
+    const rowPoints=[];
     offsets.forEach((off, j) => {
-      const p = ribbonGroundAt(course,s,off),wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
+      const p = ribbonGroundAt(course,s,off);rowPoints.push({x:Math.fround(p.x),y:Math.fround(p.y),z:Math.fround(p.z)});const wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
       v.push(p.x,p.y,p.z); uv.push(p.x/22,p.z/22);weights.push(...style.weights);
       col.copy(base).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(s * .025)); const trap = gravelWeights(course, s, off); fallenLeaves(course, col, s, off, trap ? 1 - trap.trap - trap.meadow * .7 : 1); woodland(course, col, s, off); gravelTrap(course, col, trap); colors.push(col.r, col.g, col.b);
       if (row && j) { const a = row * offsets.length + j; indices.push(a - offsets.length - 1, a - 1, a - offsets.length, a - offsets.length, a - 1, a); }
     });
+    seedGroundRow(course,s,offsets,rowPoints);
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); fitMuddyHollowGround(g,course,0); g.computeVertexNormals(); return g;

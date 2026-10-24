@@ -76,6 +76,19 @@ export async function run(context){
     return{ownerId:r.ownerId,courseId:r.plan.courseId,car:s.car,difficulty:s.difficulty,
       instructorSeconds:r.plan.instructor.timeSec,cones:cones.map(node=>node.userData.coneId),
       panel:document.querySelector('.drive-lesson-panel').textContent};})()`);
+  // DRIVE-LESSON-HUD: no Time Trial banner, lap count or style points, and the
+  // instructor's caption, the lesson panel and the minimap never overlap.
+  report.hud=await context.evaluate(`(()=>{
+    const shown=selector=>{const node=document.querySelector(selector);return !!node&&getComputedStyle(node).display!=='none'&&!!node.getClientRects().length;};
+    const hidden=['.race-position','.lap-readout','#route-lap','#style-score-panel'].filter(shown);
+    if(hidden.length)throw Error('Lesson still shows Time Trial chrome: '+hidden.join(', '));
+    if(!shown('#speed-value')||!shown('#gear-value')||!shown('.route-hud'))throw Error('Lesson lost speed, gear or the minimap');
+    const box=selector=>{const node=document.querySelector(selector);if(!node)throw Error('Missing '+selector);const b=node.getBoundingClientRect();return{x:b.x,y:b.y,w:b.width,h:b.height};};
+    const overlap=(a,b)=>!(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y);
+    const caption=box('.drive-lesson-radio'),map=box('.route-hud'),panel=box('.drive-lesson-panel');
+    if(overlap(caption,map))throw Error('The instructor caption covers the minimap');
+    if(overlap(caption,panel))throw Error('The instructor caption covers the lesson panel');
+    return{caption,map,panel,chromeHidden:true};})()`);
   report.captures.push(await context.screenshot('driving-lesson-cones-panel'));
   // Hold a real driving input. A native wall/off-road/stop result is valid
   // UI evidence; it is never relabelled a passing right/challenge attempt.

@@ -252,6 +252,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     routeMap.update(app.duel.course,s);
     const practice=!!app.duel.stageDef.practice;
     ui.stage.classList.toggle('is-practice',practice);
+    // A driving lesson is a private Time Trial: its ghost banner, lap and style readouts do not apply.
+    ui.stage.classList.toggle('is-lesson',!!app.duel.drivingLesson);
     text('race-time-label',practice?'NO TIMER · NO REWARDS':'RACE TIME');
     if(practice){
       text('race-time','FREE PRACTICE');
