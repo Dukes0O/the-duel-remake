@@ -96,15 +96,17 @@ Run in the cloud container (Linux, no browser window or graphics):
 
 - All 24 `tools/test-heli-*.mjs` suites pass, including lesson 4
   (`test-heli-lessons.mjs`, unchanged) and the new `test-heli-hook-window.mjs`.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`:
-  193 passed, 6 failed. The six need the laptop (Windows only) and none
-  touches the helicopter: `test-course-kit`, `test-earned-cars-ui`,
-  `test-full-check`, `test-drive-through`, `test-medals` (each asserts
-  `win32` or runs `pwsh`) and `test-salt-flats` (reads
-  `C:\Users\kyleb\dev\art-library`). The laptop's lane run covers them.
-  Two history-reading suites (`test-arsenal-runtime`, `test-deep-save`) first
-  failed only because the cloud clone was shallow; they pass once the history
-  is fetched.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`, on
+  the branch merged with the latest `integration/wasteland` (one conflict in
+  the import lines of `heli-session.js`, kept both): 398 passed, 8 failed.
+  All eight need the laptop and none touches the helicopter:
+  `test-course-kit`, `test-earned-cars-ui`, `test-full-check`,
+  `test-drive-through`, `test-medals` (each asserts `win32` or runs `pwsh`),
+  `test-salt-flats` and `test-salt-flats-art` (read
+  `C:\Users\kyleb\dev\art-library`) and `test-vesper-art` (needs a real
+  local Blender). Two history-reading suites (`test-arsenal-runtime`,
+  `test-deep-save`) first failed only because the cloud clone was shallow;
+  they pass once the history is fetched.
 - `npm run build`: passes.
 - Not run here: browser scenarios and any frame check (no browser or
   graphics). The ring and the hook size are judged by eye on the laptop
