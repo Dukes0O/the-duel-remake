@@ -3,11 +3,12 @@ completed: [RESCUE-SUMMIT-TUNE, EARN-CAR-1, EARN-CAR-3, DEEP-TRAIL, DRIVE-LESSON
 tasks:
   - id: RESCUE-SUMMIT-ARRIVAL
     title: "Summit cruise leg ends over the start area, so the autopilot misses the cliff"
-    owner: "claude-cloud"
+    owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "ready"
-    branch: cloud/rescue-summit-arrival
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-24
+    branch: claude/rescue-summit-arrival
     needs: []
     locks: []
     flag: "rescue"

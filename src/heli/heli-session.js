@@ -301,14 +301,19 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const info = places[courseId];
     const fuel = heli ? heli.fuelKg : heliOf(save).fuelKg;
     if (arriveFrom) {
-      const toward = bearing(courseId, arriveFrom, dflag), start = arrivalPoint(site.zone, toward);
-      const heading = Math.atan2(site.zone.x - start.x, site.zone.z - start.z);
+      const toward = bearing(courseId, arriveFrom, dflag);
+      // Summit Run with rescues on: the leg ends over the start area's landing circle, hovering, so an
+      // autopilot started on arrival clears the cliff the usual arrival point sits behind (RESCUE-SUMMIT-ARRIVAL).
+      const overZone = courseId === SUMMIT_COURSE && siteFlag.summitRescue === true;
+      const start = overZone ? {x: site.zone.x, z: site.zone.z} : arrivalPoint(site.zone, toward);
+      const heading = overZone ? Math.atan2(-toward.x, -toward.z) : Math.atan2(site.zone.x - start.x, site.zone.z - start.z);
+      const arriveSpeed = overZone ? 0 : HELI_SESSION.arrivalSpeed;
       heli = createHeliState({x: start.x, z: start.z, heading, fuelKg: fuel, mode, altitudeOffset: info.baseAltitude - site.startY,
         ground: world.ground});
       heli.y = site.zone.y + HELI_SESSION.arrivalHeight;
       heli.onGround = false;
-      heli.vx = Math.sin(heading) * HELI_SESSION.arrivalSpeed;
-      heli.vz = Math.cos(heading) * HELI_SESSION.arrivalSpeed;
+      heli.vx = Math.sin(heading) * arriveSpeed;
+      heli.vz = Math.cos(heading) * arriveSpeed;
       if (carried) {
         // Hanging at its resting stretch (about 5 cm for a car).
         Object.assign(carried, {x: heli.x, y: heli.y - (carried.lineLength ?? CABLE.length) - 0.05, z: heli.z, vx: heli.vx, vy: 0, vz: heli.vz,
