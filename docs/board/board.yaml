@@ -196,6 +196,16 @@ tasks:
     flag: "cpu-racecraft"
     details: "docs/board/cards/GP-RACECRAFT.md"
 
+  - id: GP-WIDE-START
+    title: "Grand Prix wide start: the field reaches the first corner side by side (switch cpu-racecraft)"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "M"
+    status: "backlog"
+    needs: [GP-RACECRAFT]
+    locks: []
+    details: "docs/board/cards/GP-WIDE-START.md"
+
   - id: SUMMIT-BUILD-TIME
     title: "Bring Summit's world build back under 1 s (1.5 s at release; keep the snow)"
     owner: "codex"
