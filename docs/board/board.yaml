@@ -357,6 +357,160 @@ tasks:
     flag: "the-deep"
     details: "docs/board/cards/DEEP-SIRENA-VIEW.md"
 
+  - id: LAB-RULES
+    title: "The Lab: lessons, opening order, shop, prices, save and switches"
+    owner: "claude-cloud"
+    lane: "SAVE"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: [save-shape]
+    flag: "lab"
+    details: "docs/board/cards/LAB-RULES.md"
+
+  - id: LAB-BENCHES
+    title: "The Lab's benches as pure models on the game's own rules"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [LAB-RULES]
+    locks: []
+    flag: "lab"
+    details: "docs/board/cards/LAB-BENCHES.md"
+
+  - id: LAB-HELI
+    title: "Lab upgrades in the helicopter: engine, frame, hook, cable, bucket, ring, retardant, altitude"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [LAB-RULES]
+    locks: []
+    flag: "lab"
+    details: "docs/board/cards/LAB-HELI.md"
+
+  - id: LAB-HELI-CHALLENGES
+    title: "The Lab's six helicopter challenges"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [LAB-HELI]
+    locks: []
+    flag: "lab"
+    details: "docs/board/cards/LAB-HELI-CHALLENGES.md"
+
+  - id: LAB-TUNE
+    title: "Tuning: settings, wing and brake-balance hooks, fuel, stock laps, tuned-lap bonus"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [LAB-RULES]
+    locks: [busy-game-files]
+    flag: "lab-tuning"
+    details: "docs/board/cards/LAB-TUNE.md"
+
+  - id: LAB-ART
+    title: "The Lab hangar and its benches (Blender recipe, three rounds)"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "lab"
+    details: "docs/board/cards/LAB-ART.md"
+
+  - id: LAB-RADIO
+    title: "Brian's Lab lines and the Lab's sound cues"
+    owner: "codex"
+    lane: "AUDIO"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: [sound-bank]
+    flag: "lab"
+    details: "docs/board/cards/LAB-RADIO.md"
+
+  - id: LAB-VIEW
+    title: "The Lab screen: tab, door, board, benches, workshop challenges, shop"
+    owner: "codex"
+    lane: "UI"
+    size: "L"
+    status: "ready"
+    needs: [LAB-RULES, LAB-BENCHES, LAB-ART, LAB-RADIO]
+    locks: [busy-game-files]
+    flag: "lab"
+    details: "docs/board/cards/LAB-VIEW.md"
+
+  - id: LAB-TUNE-VIEW
+    title: "The Tune page and the tuned-lap result line"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: [LAB-TUNE]
+    locks: []
+    flag: "lab-tuning"
+    details: "docs/board/cards/LAB-TUNE-VIEW.md"
+
+  - id: LAB-FAN-ART
+    title: "The McMurtry Speirling model (Blender recipe, three rounds)"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "lab"
+    details: "docs/board/cards/LAB-FAN-ART.md"
+
+  - id: LAB-FAN
+    title: "The Speirling: the car, fan grip, the secret's rules, the build"
+    owner: "claude-cloud"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: [LAB-TUNE, LAB-FAN-ART]
+    locks: [busy-game-files]
+    flag: "lab"
+    details: "docs/board/cards/LAB-FAN.md"
+
+  - id: LAB-FAN-VIEW
+    title: "The secret REVERSE switch, the Project Fan blueprint, the build bench"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: [LAB-VIEW, LAB-FAN]
+    locks: []
+    flag: "lab"
+    details: "docs/board/cards/LAB-FAN-VIEW.md"
+
+  - id: LAB-RESTORE
+    title: "Restore the Sirena on the rust bench"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: [LAB-VIEW, SIRENA-CAR]
+    locks: []
+    flag: "lab"
+    details: "docs/board/cards/LAB-RESTORE.md"
+
+  - id: LAB-FINISH
+    title: "Claude's finishing pass: the Lab"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-VIEW, LAB-HELI-CHALLENGES, LAB-TUNE-VIEW, LAB-FAN-VIEW]
+    locks: []
+    flag: "lab"
+    details: "docs/board/cards/LAB-FINISH.md"
+
   - id: FIX-LIVE-EDGES
     title: "Live course edges: floating walls, road gaps, early collision, snow run-wide"
     owner: "codex"
