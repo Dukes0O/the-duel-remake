@@ -35,6 +35,8 @@ export const FEATURE_STATES = Object.freeze({
   // H3 Skins (docs/HELI_WILDLIFE.md): mission skins, gear, dirt and the wash. Off in the game; works only with the helicopter on.
   // Named heli-skins, not heliSkins as the packet says: switch names are lower case with hyphens.
   'heli-skins': 'dev',
+  // H5 Heli-skiing (docs/HELI_SKIING.md): the ski rules, runs and drops. Off in the game; works only with the helicopter on and Summit Run owned.
+  'heli-skiing': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
