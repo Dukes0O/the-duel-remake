@@ -14,7 +14,7 @@ import {raceFeatureFlags} from '../src/wasteland-access.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {createHeliSession} from '../src/heli/heli-session.js';
 import {dispatchBoardMarkup, handleBoardAction} from '../src/heli/heli-board.js';
-import {lessonsMarkup} from '../src/heli/heli-ui.js';
+import {lessonsMarkup, createHeliUi} from '../src/heli/heli-ui.js';
 import {HOME_COURSE, AIR_ONLY_CARS} from '../src/heli/heli-jobs.js';
 import {driveLessonBoardModel} from '../src/lessons/drive-lesson-ui.js';
 import {lessonBoardMarkup} from '../src/lessons/lesson-board.js';
@@ -245,33 +245,53 @@ try {
     eq(app._heliLessonAt('tremblant-woods', jesko), null, 'anywhere else it is not');
     app.returnToMenu();
   }
-  // Starting from the pad leaves the visit and runs the menu's startLesson.
+  // Starting from the pad leaves the visit and runs the menu's real startLesson, through the real helicopter UI.
   {
     const app = ownedApp(ON);
-    const calls = [];
     app.visitHeli();
-    app.startLesson = request => { calls.push({...request, boardOpen: app.driveLessonBoardOpen, status: app.duel.state.status}); return Promise.resolve(true); };
-    const result = app.heliStartDriving('corner');
-    ok(result.ok, 'the lesson starts');
+    const nodes = {};
+    const node = name => nodes[name] = {name, innerHTML: '', hidden: false, dataset: {}, textContent: '', handlers: {},
+      style: {setProperty() {}, removeProperty() {}}, kids: {},
+      querySelector(selector) { return this.kids[selector] ?? null; },
+      addEventListener(type, fn) { this.handlers[type] = fn; }, removeEventListener() {}, append() {}, remove() {}, setAttribute() {}};
+    const section = node('section');
+    for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio'])
+      section.kids[selector] = node(selector);
+    const ui = createHeliUi({host: {ownerDocument: {createElement: () => section}, append() {}}, app});
+    ui.update();
+    const lessons = section.kids['.heli-lessons-host'].innerHTML;
+    ok(lessons.includes('<li class="lesson-board-group">Helicopter</li>') && lessons.includes('<li class="lesson-board-group">Driving</li>') &&
+      lessons.includes('data-heli-lesson="start:corner"'), 'the pad\'s board lists the Driving lesson under the helicopter\'s');
+    const click = section.handlers.click;
+    ok(typeof click === 'function', 'the panel listens for clicks');
+    const real = app.startLesson.bind(app), calls = [];
+    app.startLesson = request => { calls.push({...request, boardOpen: app.driveLessonBoardOpen, status: app.duel.state.status, course: app.driveLessonCourse}); return real(request); };
+    click({target: {closest: selector => selector === '[data-heli-lesson]' ? {dataset: {heliLesson: 'start:corner'}, blur() {}} : null}});
     eq(app.heliSession, null, 'the helicopter visit has ended');
-    eq(app.duel.state.status, 'menu', 'back at the menu');
-    same(calls.map(call => [call.lessonId, call.courseId, call.carId, call.boardOpen, call.status]), [['corner', HOME_COURSE, app.menuCar, true, 'menu']],
+    same(calls.map(call => [call.lessonId, call.courseId, call.car, call.boardOpen, call.status, call.course]),
+      [['corner', HOME_COURSE, app.menuCar, true, 'menu', HOME_COURSE]],
       'the menu\'s startLesson ran once, for the pad\'s course and car, on the open lesson board');
-    eq(app.heliStartDriving('corner').ok, false, 'and with no visit there is nothing to start from');
-    // Lesson here: same path, on the course the car was set down on.
+    eq(await app._heliLessonPromise, true, 'and it really starts (the real startLesson accepts the request)');
+    ok(app.duel.drivingLesson?.ownerId === app.player.id && app.duel.state.status !== 'menu', 'the lesson is running for this player');
+    eq(app.duel.state.stageIndex, COURSE.findIndex(course => course.id === HOME_COURSE), 'on the pad\'s course');
+    eq(app.heliStartDriving('corner').ok, false, 'with no visit there is nothing to start from');
+    app.returnToMenu();
+    ui.dispose();
+    // Lesson here: same path, on the course the car was set down on, with the real startLesson.
     const owned = ownedApp(ON, ['tremblant-woods', 'panorama-ridge']);
     owned.visitHeli();
-    const lessonCalls = [];
-    owned.startLesson = request => { lessonCalls.push(request); return Promise.resolve(true); };
     eq(owned._heliLessonAt('panorama-ridge', owned.menuCar)?.id, 'corner', 'the next open lesson at Panorama Ridge is lesson 1');
     eq(owned._heliLessonAt('tremblant-snow', owned.menuCar), null, 'Tremblant Snow has no lesson row');
     owned.profile = {...owned.profile, drivingLessons: {version: 1, done: {corner: true}, best: {corner: .4}, rewarded: {corner: true}}};
     eq(owned._heliLessonAt('panorama-ridge', owned.menuCar), null, 'with lesson 1 done there is no next lesson to offer');
     owned.profile = {...owned.profile, drivingLessons: null};
     ok(owned.lessonHere({courseId: 'panorama-ridge', carId: owned.menuCar, lessonId: 'corner'}), 'Lesson here starts the lesson');
-    same(lessonCalls.map(call => [call.lessonId, call.courseId]), [['corner', 'panorama-ridge']], 'on the course where the car stands');
     eq(owned.heliSession, null, 'and ends the visit');
+    eq(owned.driveLessonCourse, 'panorama-ridge', 'the lesson board shows the course the lesson uses');
+    eq(await owned._heliLessonPromise, true, 'the real startLesson accepts it');
+    eq(owned.duel.state.stageIndex, COURSE.findIndex(course => course.id === 'panorama-ridge'), 'on the course where the car stands');
     eq(owned.lessonHere({courseId: 'panorama-ridge', carId: owned.menuCar, lessonId: 'corner'}), false, 'no Lesson here without a visit');
+    owned.returnToMenu();
   }
   // Off: nothing at the pad changes.
   for (const overrides of [{helicopter: true}, {helicopter: true, 'driving-lessons': true}, {helicopter: true, 'tyre-slip': true}]) {

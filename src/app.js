@@ -1671,7 +1671,8 @@ export class App {
   _heliLessonAt(courseId, carId) {
     if (!this.drivingLessonsAvailable() || !this.player?.id) return null;
     const model = driveLessonBoardModel({...this.driveLessonProps(), courseId, carId});
-    if (model.selected?.id !== courseId || !model.start || this._airOnlyBlocked(carId, courseId)) return null;
+    if (model.selected?.id !== courseId || !model.start || this._airOnlyBlocked(carId, courseId) ||
+        courseClosed(this.profile, courseId, undefined, {enabled: this._fireOn()})) return null;
     const next = model.rows.find(row => row.open && !row.done);
     return next ? {id: next.id, name: next.name} : null;
   }
@@ -1709,9 +1710,10 @@ export class App {
     const stageIndex = COURSE.findIndex(stage => stage.id === request.courseId);
     if (stageIndex < 0 || this._airOnlyRefused(request.carId, request.courseId) || this._fireClosedRefused(COURSE[stageIndex])) return {ok: false, reason: this.courseAccessMessage || 'That course is not available.'};
     this.returnToMenu();
-    this.menuStage = stageIndex; this.menuCar = request.carId;
+    this.menuStage = stageIndex; this.menuCar = request.carId; this.driveLessonCourse = request.courseId;
     if (!this.openDrivingLessons()) return {ok: false, reason: 'Driving lessons are not available.'};
-    void this.startLesson(request);
+    // The menu's own start call names the car `car`; its board's request names it `carId`.
+    this._heliLessonPromise = this.startLesson({...request, car: request.carId});
     return {ok: true};
   }
   returnToYard() {

@@ -34,8 +34,21 @@ helipad is exactly as before: the same markup byte for byte, no new offer, no ne
   keeps the visit. Starting leaves the visit and calls `startLesson` once with the pad's course and car; Lesson
   here does the same on the offered course. Each of the three switch combinations that leaves driving lessons
   off changes nothing.
-- Every existing helicopter suite is unchanged. Lane tier and build: see below.
+- The tests that start a lesson run the real `startLesson` through the real helicopter UI (a small fake page
+  element catches the click), not a stub.
+- Every existing helicopter suite is unchanged. Lane tier and build: see the end of this note.
 - Not run here: a browser look at the board (the card has none; the rows are the shared list).
+
+## Review
+
+One independent code review (rule 17). It found one blocker and two small faults, all fixed and tested:
+(1) the pad passed the car as `carId` but `startLesson` reads `car`, so in the real app the lesson never started
+(the menu's UI renames it); the test's stub hid it, and the tests now run the real `startLesson`; (2) the lesson board's selected
+course was not set, so a failed preparation would land on a board showing another course; (3) "Lesson here" was
+offered on a course closed by fire and then refused; it is now withheld. It confirmed: switches off change nothing
+(same markup byte for byte, no offers), double clicks and the ended visit are safe, the air-only rule cannot be
+bypassed and does not refuse wrongly, the shown car and course are the ones used, escaping, and the heli import
+rule holds. Left as it is: a closed air-only row shows a finished lesson as "Opens later" (the note says why).
 
 ## Removed
 
