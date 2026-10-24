@@ -36,3 +36,11 @@ None.
 Nothing replaced.
 
 ## Gates
+
+24 October 2026, once, after merging current `integration/wasteland` (clean):
+`node tools/run-browser-scenarios.mjs --scenarios ardennes-views`: PASS, 32 screenshots, 0 warnings,
+0 errors, 97 s. The scenarios sharing the bundle, `p4-panorama` (26 screenshots), `stavelot-stone` (4)
+and `grand-prix-existing` (36): PASS, 0 warnings, 0 errors. `node tools/run-tests.mjs --tier lane
+--changed --jobs 4`: 21 passed, 0 failed (170 s). `npm run build`: pass. Frame (timing) checks were
+not run and are not claimed: this fix is about the pictures and the field run; Ardennes' frame check
+can now be attempted by its own recipe.
