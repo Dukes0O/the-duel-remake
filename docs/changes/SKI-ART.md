@@ -18,7 +18,9 @@ Card: SKI-ART (Claude, ART lane; built by a helper). Design: `docs/HELI_SKIING.m
   with a panel), start and finish timing arches (a truss with a board, timing eyes; a checkered strip on
   the finish), drop (orange) and pickup (green) pad flags, a snow kicker 8 m wide with a wooden lip, and
   12 m of orange safety netting on posts.
-- `tools/art/ski-sheet.py` makes the review sheet; rounds and notes are in `docs/board/looks/ski/`.
+- `tools/art/ski-sheet.py` makes the review sheet; three rounds and their notes are in `docs/board/looks/ski/`
+  (round 1 built everything; round 2 reshaped the goggles, bands and air pose; round 3 the collar and the
+  netting's top tape). The 22 GLBs total 2.8 MB (budget about 4 MB).
 - `tools/test-blender-output.mjs` lists the recipe; `public/assets/models/CREDITS.md` has its row (the
   Quaternius credit as for the rescue people).
 

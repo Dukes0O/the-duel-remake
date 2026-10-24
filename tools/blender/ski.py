@@ -76,15 +76,17 @@ def gear_ski_suit(parts, rig, spec):
     bvh = helmet(parts, rig, 'helmet_shell', hc, hr)
     gb = parts.new('goggle-strap', 'goggle_strap', 'Head')
     band(gb, rig, (hc.x, hc.y, hc.z + 0.012), (0, 0, 1), 0.045, off=0.006, n=18)
-    lb = parts.new('goggle-lens', 'goggle_lens', 'Head')
     front = rig.cast((hc.x, hc.y, hc.z + 0.012), (0, -1, 0))[0]
     if front is not None:
-        add_box(lb, (0.135, 0.032, 0.058), (hc.x, front.y - 0.003, hc.z + 0.012), (0, 0, 0), bevel=0.014)
-    collar(parts, rig, 'suit_secondary', z=1.56, width=0.06, off=0.02)
+        fb = parts.new('goggle-frame', 'goggle_strap', 'Head', smooth=True)
+        add_sphere(fb, (0.074, 0.026, 0.040), (hc.x, front.y + 0.002, hc.z + 0.012), u=18, v=10)
+        lb = parts.new('goggle-lens', 'goggle_lens', 'Head', smooth=True)
+        add_sphere(lb, (0.066, 0.026, 0.033), (hc.x, front.y - 0.010, hc.z + 0.012), u=18, v=10)
+    collar(parts, rig, 'suit_secondary', z=1.60, width=0.045, off=0.01)
     cuffs(parts, rig, 'ski_glove', width=0.055, wrist_off=0.01)
-    waist_band(parts, rig, 'suit_secondary', z=1.05, width=0.11, off=0.02)
+    waist_band(parts, rig, 'suit_secondary', z=1.05, width=0.09, off=0.016)
     b = parts.new('chest-band', 'suit_secondary', 'spine_03')
-    band(b, rig, (0, 0.03, 1.36), (0, 0, 1), 0.04, off=0.018, n=16, reach=0.4)
+    band(b, rig, (0, 0.03, 1.36), (0, 0, 1), 0.028, off=0.012, n=16, reach=0.4)
     for side in ('l', 'r'):
         b = parts.new('boot-shell', 'ski_boot', f'calf_{side}', smooth=False)
         c = on_bone(rig, 'calf_' + side, 0.8)
@@ -206,12 +208,12 @@ def pose_ski_tuck():
     return pose
 
 def pose_ski_air():
-    pose = dict(pelvis_off=(0, 0.05, -0.12), lean=(16, 0, 0), head=(-10, 0, 0),
+    pose = dict(pelvis_off=(0, 0.08, -0.22), lean=(18, 0, 0), head=(-12, 0, 0),
                 arm_l=dict(hand=(0.56, -0.12, 1.14), pole=(1.0, 0.7, -0.1), curl=0.7, shoulder=0.2),
                 arm_r=dict(hand=(-0.56, -0.12, 1.14), pole=(-1.0, 0.7, -0.1), curl=0.7, shoulder=0.2))
-    pose['leg_l'] = dict(ankle=(0.15, 0.0, 0.34), pole=(0.1, -1, 0), foot=(0.05, -1, 0.25), ball=(0.05, -1, 0.2))
-    pose['leg_r'] = dict(ankle=(-0.15, -0.02, 0.30), pole=(-0.1, -1, 0), foot=(-0.05, -1, 0.25), ball=(-0.05, -1, 0.2))
-    pose['ski'] = {'l': ((0.07, -1, 0.17), 3.0), 'r': ((-0.07, -1, 0.15), -3.0)}
+    pose['leg_l'] = dict(ankle=(0.15, 0.12, 0.46), pole=(0.1, -1, 0), foot=(0.05, -1, 0.3), ball=(0.05, -1, 0.25))
+    pose['leg_r'] = dict(ankle=(-0.15, 0.10, 0.42), pole=(-0.1, -1, 0), foot=(-0.05, -1, 0.3), ball=(-0.05, -1, 0.25))
+    pose['ski'] = {'l': ((0.07, -1, 0.26), 3.0), 'r': ((-0.07, -1, 0.24), -3.0)}
     pose['poles'] = {'l': (0.35, 0.85, -0.3), 'r': (-0.35, 0.85, -0.3)}
     return pose
 
@@ -429,6 +431,13 @@ def build_kicker():
     ramp = bpy.data.meshes.new('ramp'); ramp.from_pydata(verts, [], faces); ramp.update()
     ob = bpy.data.objects.new('ramp', ramp); bpy.context.scene.collection.objects.link(ob); ob.data.materials.append(mat('snow'))
     parts = [ob]
+    # two ski tracks down the ramp, shallow grooves in a slightly bluer snow
+    for tx in (-0.55, 0.55):
+        for j in range(0, nz, 2):
+            u0 = j / nz; u1 = (j + 2) / nz; z0 = -2.5 + 5.0 * u0; z1 = -2.5 + 5.0 * u1
+            h0 = profile(u0) + 0.006; h1 = profile(u1) + 0.006
+            ang = math.atan2(h1 - h0, z1 - z0)
+            parts.append(box('track', 'snow_blue', (0.11, (z1 - z0) * 1.02, 0.004), (tx, -(z0 + z1) / 2, (h0 + h1) / 2), (-ang, 0, 0)))
     # the steep face under the lip, and the fill of each bank down to the snow
     face_v = []; face_f = []
     for i in range(nx + 1):
@@ -474,6 +483,9 @@ def build_netting():
     top = [(x, 0, height - sag(x)) for x in xs]
     parts.append(tube('top_rope', 'net_orange', top, 0.012))
     parts.append(tube('bottom_rope', 'net_orange', [(x, 0, 0.1) for x in xs], 0.012))
+    for k in range(len(xs) - 1):
+        x0, x1 = xs[k], xs[k + 1]; z0, z1 = height - sag(x0) - 0.08, height - sag(x1) - 0.08
+        parts.append(box('tape', 'net_orange', (x1 - x0 + 0.002, 0.012, 0.16), ((x0 + x1) / 2, 0, (z0 + z1) / 2 - 0.0), (0, -math.atan2(z1 - z0, x1 - x0), 0)))
     for k, x in enumerate(xs):
         parts.append(box('vertical', 'net_orange', (0.014, 0.014, height - 0.1 - sag(x)), (x, 0, 0.1 + (height - 0.1 - sag(x)) / 2)))
     for z in [0.1 + 0.2 * k for k in range(1, 11)]:
