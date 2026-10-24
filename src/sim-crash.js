@@ -270,6 +270,7 @@ export function _impact(dt) {
     this._safeReset(s,s.crashSite||{s:s.s,lateral:s.lateral,headingError:0}); s.crashSite=null; s.crashSpin = 0;
     completeCombatRecovery(this, s, {alreadyReset: true});
     s.speedMph = 12; s.gear = 0; s.revs = s.speedMph / this.car.gears[0];
+    s.crashLaunchSec = DRIVE.crashLaunchSec; // quick pull-away until 60 mph or this many seconds (FIX-LAUNCH)
     s.offRoad = !this._surface(s.s,s.lateral).road; s.offRoadTime = 0; s.roughness = 0;
     s.input.shiftUp = false; s.input.shiftDown = false;
     this._callout('RECOVERED AT CRASH SITE / KEEP DRIVING', 2);

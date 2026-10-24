@@ -178,6 +178,7 @@ export const POLICE = {
   trapWindowU: 40,        // trap measures speed within this span past it
   pursuitCatchU: 14,      // pursuer within this distance = caught/ticket
   pursuitSpeedMph: 150,   // pursuer cruise speed
+  chasePaceBase: .34,     // chase pursuer cruise = top speed x (this + .15 x CPU skill); was .42 before FIX-LAUNCH slowed the player's laps by about a fifth
   pursuitStartGapU: 120,  // player's head start when the pursuit begins
   escapeAheadU: 1200,     // open this gap to shake the pursuer
   ticketBaseFine: 150,
@@ -218,6 +219,8 @@ export const DRIVE = {
   offRoadScrub: 0.48,
   accelScale: 2.5,        // gentler launch (FIX-LAUNCH); falls off near redline
   arenaAccelScale: 5.2,   // arenas keep the old quick launch: their jumps, shoves and balance were tuned on it
+  recoveryAccelScale: 5.2, // after a crash recovery the car pulls away with the old launch (crashLaunchSec or 60 mph)
+  crashLaunchSec: 3,      // how long that quick pull-away may last
   gearCeilFrac: 1.04,     // throttle stops adding speed past gearMax * this
   redlineWarnFrac: 0.92,  // tach shows red from this rev fraction
   overRevFrac: 1.02,      // sustained revs above this can blow the engine (Pro)
@@ -309,7 +312,8 @@ export function steerForYaw(desiredYaw, {speedMph, grip = 1, traction = 1, car =
 }
 
 // Launch strength for the course being driven: arenas keep their old value.
-export const launchScale = course => course?.def?.arena === true ? DRIVE.arenaAccelScale : DRIVE.accelScale;
+export const launchScale = (course, recovering = false) => course?.def?.arena === true ? DRIVE.arenaAccelScale
+  : recovering ? DRIVE.recoveryAccelScale : DRIVE.accelScale;
 export const boostLaunch = course => course?.def?.arena === true ? BOOST.arenaAccelMphPerSec : BOOST.accelMphPerSec;
 
 export const BOOST = {

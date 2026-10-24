@@ -132,6 +132,9 @@ export function _drive(dt) {
   }
   s.input.shiftUp = s.input.shiftDown = false;
 
+  // After a crash recovery the car pulls away with the old launch until 60 mph or crashLaunchSec seconds,
+  // so a crash costs what it did; everyday starts keep the gentle launch (FIX-LAUNCH).
+  if (s.crashLaunchSec > 0) { s.crashLaunchSec -= dt; if (s.crashLaunchSec <= 0 || s.speedMph >= 60) delete s.crashLaunchSec; }
   // acceleration limited by the current gear's max speed
   const gearMax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear] * nitroSpeedShare;
   const accelFactor = Math.max(0.15, 1 - Math.max(0, s.revs - 0.5)); // falls off near redline
@@ -146,7 +149,7 @@ export function _drive(dt) {
   } else {
     if (s.input.throttle > 0) {
       const ceil = Math.min(car.topSpeed * nitroSpeedShare * road.topShare, gearMax * DRIVE.gearCeilFrac, road.topSpeedMph ?? Infinity);
-      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * launchScale(this.course) * accelerationShare;
+      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * launchScale(this.course, s.crashLaunchSec > 0) * accelerationShare;
     }
     if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * road.grip * dt;
     s.speedMph = Math.max(0, s.speedMph - DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1));

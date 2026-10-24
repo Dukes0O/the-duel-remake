@@ -56,3 +56,37 @@ test('acceleration order is unchanged and top speeds stay as built', () => {
 
 if (process.argv.includes('--print')) for (const id of ids)
   console.log(id.padEnd(20), runs[id].seconds.toFixed(3), runs[id].car.accel.toFixed(2));
+
+// Claude's 24 October answer (card FIX-LAUNCH): after a crash recovery the car pulls away with the old
+// launch until it is back to 60 mph or 3 s have passed, so a crash costs what it did. A standing start
+// with no crash keeps the gentle launch.
+function recovered(id = 'banshee_muscle') {
+  const duel = new Duel({ seed: 1989, car: id });
+  duel.startCampaign({ car: id, opponentCount: 0, difficulty: 'casual' });
+  duel.course = new Course(def);
+  Object.assign(duel.state, { status: 'racing', s: 300, prevS: 300, lateral: 0, countdown: 0, traffic: [], speedMph: 90, gear: 2 });
+  duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false });
+  duel._crash('head_on');
+  for (let i = 0; i < 120 * 6 && !duel.state.impactTimer === false; i++) duel._impact(DT);
+  return duel;
+}
+function climb(duel, seconds) {
+  duel.setInput({ throttle: 1, brake: 0, steer: 0, boost: false });
+  const start = duel.state.speedMph;
+  for (let i = 0; i < seconds * 120; i++) duel._drive(DT);
+  return duel.state.speedMph - start;
+}
+test('a crash recovery pulls away with the old launch for up to 3 s or 60 mph; a standing start stays gentle', () => {
+  const crashed = recovered(), fresh = new Duel({ seed: 1989, car: 'banshee_muscle' });
+  assert.equal(crashed.state.speedMph, 12, 'recovery restarts at 12 mph');
+  fresh.startCampaign({ car: 'banshee_muscle', opponentCount: 0, difficulty: 'casual' });
+  fresh.course = new Course(def);
+  Object.assign(fresh.state, { status: 'racing', s: 300, prevS: 300, lateral: 0, countdown: 0, traffic: [], speedMph: 12, gear: 0 });
+  const quick = climb(crashed, 1), gentle = climb(fresh, 1);
+  assert.ok(quick > gentle * 1.6, `recovery gains ${quick.toFixed(1)} mph in 1 s, a standing start ${gentle.toFixed(1)}`);
+  assert.equal(Object.hasOwn(fresh.state, 'crashLaunchSec'), false, 'no crash, no quick window');
+  // The window ends by 3 s: later seconds gain the gentle amount.
+  climb(crashed, 2.5);
+  const late = crashed.state.speedMph;
+  assert.ok(late >= 60 || Object.hasOwn(crashed.state, 'crashLaunchSec') === false, 'window is over by 3 s or 60 mph');
+});

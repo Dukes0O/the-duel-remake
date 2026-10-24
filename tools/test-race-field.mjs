@@ -38,8 +38,8 @@ const fingerprint = duel => JSON.stringify([duel.state.stageTimeSec.toFixed(3), 
 
 // GP-RACECRAFT: protect the released simulation before testing opt-in behavior.
 check(FEATURE_STATES['cpu-racecraft'] === 'dev', 'racecraft is preview-only');
-for (const [seed, hash] of [[1989, 'b75e713ab4e369278cfd9e0a17d9e353df6f6d9d86bbf2f7928978fb77b267dd'],
-  [42, '70733cc0ac82ab2be4bbfdbdb9a635aa51414a252857d4027230543b8ea8e964'],
+for (const [seed, hash] of [[1989, 'f29bc060b703448a4432042cb792d66b5cadc24da833fae2950ca7143c7a4b7c'],
+  [42, '74b5262ff450d87f6203a8959b72ea15c632fd65db8d327c729089e19cfad234'],
   [17, '453ce3934758f1ff1a546264e9ea57ab0c88c26c6359fed341e10ea5d28efc5b']]) {
   const d = racing(start({seed})); d.setInput({throttle: 1, steer: 0}); run(d, 30);
   const s = d.state;

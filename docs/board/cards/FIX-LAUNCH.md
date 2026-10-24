@@ -56,3 +56,14 @@ known demo-driver limit: merge with it written plainly in the change note and th
 pull request, card DEMO-DRIVER-UNSTUCK (needs FIX-LAUNCH) fixes it, do not drop
 seeds or change the measure, and the next release waits for that card; (4) staggered
 CPU attack gaps 520/540/560.
+
+Fourth round, Claude, 24 October: the Hard Midnight Muscle Chase: option (a). After a
+crash recovery the car pulls away with the old launch until it is back to 60 mph or
+3 s, whichever first (`DRIVE.recoveryAccelScale` 5.2, `DRIVE.crashLaunchSec` 3, field
+`crashLaunchSec` set at the crash site and removed when it ends); everyday starts stay
+gentle. Built, with the chase checks unchanged, plus a check in `test-launch.mjs`.
+That alone was not enough: the whole chase lap is a fifth slower, so the fixed-pace
+police pursuer gained on the player and caught them two to four times. The chase
+pursuer's cruise share `POLICE.chasePaceBase` .42 to .34 (the same ratio as the
+slower laps, 99.6 s to 123.5 s) restores it: Hard chase with three crashes wins at
+145.1 s (base 145.8 s) with no catches and a 24 s penalty.

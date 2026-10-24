@@ -27,6 +27,15 @@ the order unchanged).
   player launch (`sim-rival.js`, `npc-route.js`). Without it Medium and Hard fall
   behind at the gentler launch and miss their win-rate bands. The CPU launch stays
   well below the old one.
+- **Crash recovery keeps the quick pull-away** (Claude's answer on the card): after the
+  car recovers at the crash site it launches with the old scale (`DRIVE.recoveryAccelScale`
+  5.2) until it is back to 60 mph or `DRIVE.crashLaunchSec` (3 s). The state field
+  `crashLaunchSec` exists only during that window. Everyday starts stay gentle; a new
+  check in `test-launch.mjs` proves both.
+- **Chase police pace**: `POLICE.chasePaceBase` .42 to **.34** (`_policePace`). The Midnight
+  Muscle Chase lap is about a fifth slower (99.6 to 123.5 s, no crash), and the pursuer
+  was fixed, so it caught the player two to four times. Same ratio as the slower lap.
+  Only the chase pursuer; speed-trap pursuits (`pursuitSpeedMph`) are unchanged.
 - Checkpoint Rush (Timberline) Easy gate extension 10 to **12 s**: at 10 s the Easy
   crash-recovery run times out at gate 4; 11 s still fails, 12 s wins with 42 s spare
   (Claude approved: Easy must stay winnable after a crash). Shortcut presets
@@ -147,7 +156,7 @@ builds it on demand).
   its range that misses exactly one gate; none in 1989-2029 does now; 2049 then 2064
   after the CPU launch moved).
 - `test-circuit-layouts.mjs`: lap sanity bound 150 s to 165 s (Ardennes now 2:36 to 2:41).
-- `test-race-field.mjs`: "Easy field is the slower half" to within 1 percent of the
+- `test-race-field.mjs`: three more racecraft-off state hashes re-recorded after the police pace change; "Easy field is the slower half" to within 1 percent of the
   player (the F42 is now the slowest road car; intent unchanged: the Easy field is no
   faster than the slowest road car); launch check 3 s to 5 s run; CPU nitro push
   38.22 to 18.382 (same formula, BOOST scaled); three racecraft-off state hashes.
@@ -174,15 +183,17 @@ Run once on this branch after merging `origin/integration/wasteland`
 (0310e507 onward), in a Linux cloud container:
 
 - `node tools/test-launch.mjs`: 3/3 (fails on the old numbers).
-- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`): 423
-  suites, 401 passed, 22 failed. Of the 22: 8 fail on the untouched base too, so are not
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`), last full
+  run after the crash window and police pace: 423 suites, 411 passed, 12 failed (8 of them on the
+  untouched base, 1 the known drift fixture, 3 re-recorded and rerun green: replays, race-field,
+  tyre-slip). Before that, a run with 401 passed, 22 failed. Of the 22: 8 fail on the untouched base too, so are not
   from this change (course-kit, earned-cars-ui, full-check, drive-through, medals,
   salt-flats-art, salt-flats; vesper-art needs a real Blender). The rest were re-recorded or fixed afterwards, and the affected suites
   were run again by name, 37/37 passing (replays, combat replays, arena pit, steering,
   shove, titan handling, tyre-slip, on-foot hints, crash switch, shortcut presets,
   board, hygiene, core, cpu-combat, race-field, checkpoint recovery, and the fingerprint
   suites). Not rerun as a whole tier (docs and re-records only since).
-- Two lane failures remain by design and are listed below.
+- The known failures below remain.
 - `npm run build`: passes.
 - Combat balance `node tools/combat-balance.mjs --check`, targets unchanged:
   player win rate Easy 90, Medium about 57 to 63, Hard 37 percent (bands 80-95,
@@ -191,6 +202,8 @@ Run once on this branch after merging `origin/integration/wasteland`
 - Not run here (needs a real browser or GPU): browser scenarios, frame check, look checks.
 
 ## Known failures (decisions in the card file; cards raised)
+
+The Hard Midnight Chase checks (`test-campaigns.mjs` shard 8/8) now pass unchanged.
 
 1. **Combat balance `--check` exits 1: one Hard race (seed 1993) does not complete.**
    At about 189 mph the scripted demo driver rear-ends a rival raiders had just
@@ -203,12 +216,6 @@ Run once on this branch after merging `origin/integration/wasteland`
 2. **`tools/test-drift-trial.mjs`, dev `tyre-slip` Pro recovery fixture:** the drift
    score collapses (142 against 4828) and the run times out. Released rules pass
    (152 checks). Not tuned here; card **TYRE-SLIP-DRIFT-RETUNE**.
-3. **`tools/test-campaigns.mjs` shard 8/8, Hard Midnight Chase:** "remains winnable after
-   three recoverable major crashes" and "within the recovery budget". Base wins at
-   145.8 s against the 150 s limit with one police catch. At the gentler launch each
-   crash recovers more slowly: three police catches and the limit is missed even at
-   180 s (200 s wins). A design call (chase limit and catch budget), not a number I
-   should slip in; see `docs/board/questions/FIX-LAUNCH.md`.
 
 ## Removed
 
