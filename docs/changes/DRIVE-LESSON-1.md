@@ -306,8 +306,14 @@ fake line and one new case (light brake before the corner's braking point). The
 native student helper now builds its plan with `lessonPlanFor`; the late driver
 follows the instructor's plan up to cone 1 (needed to survive Beaver Kink).
 
-Checks run here (Linux cloud): see the end of this section for the final
-lane-tier and build results. The "native" instructor and student cases ran here
+Checks run here (Linux cloud): `tools/test-drive-lessons.mjs` 36 of 36 pass;
+lane tier `--changed --jobs 8`: every suite passes except
+`tools/test-earned-cars-ui.mjs` and `tools/test-course-kit.mjs`, which fail only
+on "test cleanup requires the Recycle Bin" (Windows-only, unrelated; the laptop
+should run them). `npm run build` passes. FIX-LAUNCH had not landed on
+`integration/wasteland` when this was written: merge it, rerun this suite and
+report any number that moved (instructor times, cone points and the late-try
+screech depend on how the car accelerates). The "native" instructor and student cases ran here
 (about 15 s). No browser or frame check was run.
 
 Removed: the instructor's use of the planned racing line and `buildSpeedProfile`,
