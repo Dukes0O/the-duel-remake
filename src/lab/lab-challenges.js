@@ -23,8 +23,9 @@ export const CHALLENGE_RULES = Object.freeze({
   lift: Object.freeze({carId: 'dusthawk_rally', radius: 6, low: 2, high: 5, holdSeconds: 10, fullTankKg: KESTREL.tankKg - 1}),
   // Three buoys on the home lake, each hit by a drop within 5 m.
   projectile: Object.freeze({buoys: 3, hitRadius: 5, scoopKeepOut: 80, apart: 80}),
-  // A practice fire of 9 x 5 cells lit at one end; it must not reach the far column (the "road") in three minutes.
-  fire: Object.freeze({seconds: 180, spreadEvery: 20, columns: 9, rows: 5, seed: FIRE.courseSeed, gap: 40}),
+  // A practice fire of 6 x 3 cells on the lake shore, lit at one end, spreading one step every 30 s; it must not reach the far column
+  // (the "road") in three minutes. Left alone it gets there in 150 s; the lake is a short hop away, so a pilot can keep it back.
+  fire: Object.freeze({seconds: 180, spreadEvery: 30, columns: 6, rows: 3, seed: FIRE.courseSeed, shoreGap: 140}),
   // A car carried across Tremblant Woods, set down within 25 m of the target with its swing under 1 m.
   pendulum: Object.freeze({carId: 'falcone_f42', distance: 500, targetRadius: 25, swingMetres: 1}),
   // A 300 kg crate to Summit Run, set down in its landing zone, with at least 30% of the tank left.
@@ -37,6 +38,20 @@ const horizontal = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const compass = deg => ({x: Math.sin(deg * Math.PI / 180), z: Math.cos(deg * Math.PI / 180)});
 
 // ---- where things are ---------------------------------------------------------------------------------------
+// Open water, nearest the pad first, with room to scoop (20 m of water each way).
+function lakePoints(ground, zone) {
+  const water = (x, z) => ground.water?.(x, z) != null, lake = [];
+  for (let radius = 60; radius <= 1200; radius += 20) {
+    for (let k = 0; k < 36; k++) {
+      const a = k * Math.PI / 18, x = Math.round(zone.x + Math.cos(a) * radius), z = Math.round(zone.z + Math.sin(a) * radius);
+      if (water(x, z) && water(x + 20, z) && water(x - 20, z) && water(x, z + 20) && water(x, z - 20)) lake.push({x, z, y: ground.water(x, z)});
+    }
+    if (lake.length >= 80) break;
+  }
+  return lake;
+}
+const unit = v => { const length = Math.hypot(v.x, v.z) || 1; return {x: v.x / length, z: v.z / length}; };
+
 // world: {course, ground}; site: the helicopter session's courseSite for this course. Returns the spots a challenge
 // needs, or null when this course cannot host it. Everything is worked out from the course alone, so it is the same
 // every time.
@@ -64,24 +79,23 @@ export function challengeSpots(id, world, site) {
     return Object.freeze({marker: Object.freeze({x, z, y: ground.height(x, z)}), headingDeg: rule.headingDeg, distanceM: rule.distanceM, zone});
   }
   if (id === 'fire') {
-    // Beside the pad, on the side away from the road: the block's near edge is `gap` metres past the pad's edge.
-    const heading = site.parking.heading, side = Math.sign(zone.lateral) || 1;
-    const out = {x: Math.cos(heading) * side, z: -Math.sin(heading) * side}, along = {x: Math.sin(heading), z: Math.cos(heading)};
-    const rule = CHALLENGE_RULES.fire, reach = zone.radius + rule.gap;
-    const cornerX = zone.x + out.x * reach - along.x * (rule.rows * FIRE.cell) / 2, cornerZ = zone.z + out.z * reach - along.z * (rule.rows * FIRE.cell) / 2;
-    return Object.freeze({fire: Object.freeze({i0: Math.floor(cornerX / FIRE.cell), j0: Math.floor(cornerZ / FIRE.cell), y: zone.y}), zone});
+    // On the home lake's shore, on the pad's side of it: the water is a short hop away, so a bucket's trips can keep up with the
+    // fire. The block's near end is lit; its far end is "the road". It never lies in the water.
+    const lake = lakePoints(ground, zone);
+    if (!lake.length) return null;
+    const rule = CHALLENGE_RULES.fire, scoop = lake[0], span = {x: rule.columns * FIRE.cell, z: rule.rows * FIRE.cell};
+    const toward = unit({x: zone.x - scoop.x, z: zone.z - scoop.z});
+    for (let back = rule.shoreGap; back <= rule.shoreGap + 300; back += 20) {
+      const centre = {x: scoop.x + toward.x * back, z: scoop.z + toward.z * back};
+      const i0 = Math.floor((centre.x - span.x / 2) / FIRE.cell), j0 = Math.floor((centre.z - span.z / 2) / FIRE.cell);
+      let dry = true;
+      for (let i = 0; i < rule.columns && dry; i++) for (let j = 0; j < rule.rows && dry; j++) dry = ground.water?.((i0 + i + 0.5) * FIRE.cell, (j0 + j + 0.5) * FIRE.cell) == null;
+      if (dry) return Object.freeze({fire: Object.freeze({i0, j0, y: ground.height(centre.x, centre.z)}), scoop: Object.freeze(scoop), zone});
+    }
+    return null;
   }
   if (id === 'projectile') {
-    const rule = CHALLENGE_RULES.projectile, water = (x, z) => ground.water?.(x, z) != null;
-    const lake = [];
-    for (let radius = 60; radius <= 1200; radius += 20) {
-      for (let k = 0; k < 36; k++) {
-        const a = k * Math.PI / 18, x = Math.round(zone.x + Math.cos(a) * radius), z = Math.round(zone.z + Math.sin(a) * radius);
-        if (water(x, z) && water(x + 20, z) && water(x - 20, z) && water(x, z + 20) && water(x, z - 20)) lake.push({x, z, y: ground.water(x, z)});
-      }
-      if (lake.length >= 80) break;
-    }
-    if (!lake.length) return null;
+    const rule = CHALLENGE_RULES.projectile, lake = lakePoints(ground, zone);
     // The scoop area is round the water nearest the pad; the buoys keep clear of it and of each other.
     const scoop = lake[0], buoys = [];
     for (const p of lake.slice().sort((a, b) => horizontal(b, scoop) - horizontal(a, scoop) || a.x - b.x || a.z - b.z)) {
@@ -153,8 +167,11 @@ export function stepChallenge(ch, view, dt = 1 / 120) {
     const rule = CHALLENGE_RULES.pendulum, load = view.load;
     // The swing is how far the car hangs to one side of the helicopter; the last reading before let-go counts, with
     // where the car was (the hook lets go between steps, so the release is read on the next one).
+    // Only a car that was on the hook (the Lab's own car, which is all this view ever holds) counts as let go.
+    const wasHooked = ch.hookedBefore === true;
+    ch.hookedBefore = load?.hooked === true;
     if (load?.hooked) { ch.lastSwing = horizontal(load, heli); ch.lastAt = {x: load.x, z: load.z}; }
-    const released = events.find(event => (event.type === 'released' || event.type === 'releasedHigh') && event.id === rule.carId);
+    const released = wasHooked && events.find(event => (event.type === 'released' || event.type === 'releasedHigh') && event.id === rule.carId);
     if (released) {
       if (released.type === 'releasedHigh') return retry('Set the car down, do not drop it.');
       if (!ch.lastAt || horizontal(ch.lastAt, ch.spots.target) > rule.targetRadius) return retry('That is not the place: carry it across the woods.');
@@ -164,6 +181,9 @@ export function stepChallenge(ch, view, dt = 1 / 120) {
     }
   } else if (ch.id === 'altitude') {
     const rule = CHALLENGE_RULES.altitude;
+    if (view.load?.hooked) ch.took = true;
+    // Fuel from the truck or the pump after the crate was lifted would hide how much the flight burned.
+    if (ch.took && events.some(event => event.type === 'refuelled')) return retry('Refuelling does not count: carry the crate on one tank.');
     if (view.courseId === rule.courseId && events.some(event => event.type === 'setDown' && event.id === 'lab-crate')) ch.setDown = true;
     if (ch.setDown && heli.onGround) {
       if (heli.fuelKg >= KESTREL.tankKg * rule.fuelShare) return pass();

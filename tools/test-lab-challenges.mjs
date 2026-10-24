@@ -66,7 +66,12 @@ test('where things are: buoys on the lake clear of the scoop area, a clear targe
   near((Math.atan2(dx, dz) * 180 / Math.PI + 360) % 360, 70, 1e-9, 'the marker\'s heading from the pad');
   near(Math.hypot(dx, dz), 550, 1e-9, 'and its distance');
   assert.equal(headings.headingDeg, 70); assert.equal(headings.distanceM, 550);
-  // The practice fire is beside the pad and away from the road, and the same every time.
+  // The practice fire is on dry ground on the lake shore, a short hop from the water, and the same every time.
+  const fireSpots = spotsOf('fire'), rule = CHALLENGE_RULES.fire;
+  for (let i = 0; i < rule.columns; i++) for (let j = 0; j < rule.rows; j++)
+    assert.equal(woods.ground.water((fireSpots.fire.i0 + i + 0.5) * FIRE.cell, (fireSpots.fire.j0 + j + 0.5) * FIRE.cell) == null, true, 'no cell in the water');
+  const fireMiddle = {x: (fireSpots.fire.i0 + rule.columns / 2) * FIRE.cell, z: (fireSpots.fire.j0 + rule.rows / 2) * FIRE.cell};
+  assert.ok(Math.hypot(fireMiddle.x - fireSpots.scoop.x, fireMiddle.z - fireSpots.scoop.z) <= 260, 'within a short hop of the scoop spot');
     assert.deepEqual(spotsOf('fire'), spotsOf('fire'));
   for (const id of CHALLENGE_IDS) assert.deepEqual(spotsOf(id), spotsOf(id), `${id}: the same spots every time`);
 });
@@ -444,4 +449,116 @@ test('projectile, flown: water scooped from the lake and dropped with the ring o
   assert.equal(has(blind.events, 'challengePassed'), false);
   assert.equal(labOf(blind.session.profile).done?.projectile, undefined);
   blind.session.leave();
+});
+
+// ---- Review fixes -----------------------------------------------------------------------------------------
+test('a bucket on the hook does not stop the water challenges or the heading flight, but does stop the ones that carry a load', () => {
+  const session = sessionOf(readyProfile(), {labEnabled: true});
+  session.start();
+  assert.equal(session.fitBucket().ok, true);
+  for (const id of ['projectile', 'fire', 'headings']) assert.equal(session.startChallenge(id).ok, true, `${id} starts with the bucket fitted`);
+  session.stopChallenge();
+  for (const id of ['lift', 'pendulum']) assert.deepEqual(session.startChallenge(id), {ok: false, reason: 'Take the bucket off first.'}, id);
+  session.leave();
+  // Without forest fires there is no bucket, so the two water challenges are not offered a try that cannot be passed.
+  const noFire = sessionOf(readyProfile(), {labEnabled: true, fireEnabled: false});
+  noFire.start();
+  for (const id of ['projectile', 'fire']) assert.equal(noFire.startChallenge(id).ok, false, `${id} needs the bucket`);
+  assert.equal(noFire.startChallenge('headings').ok, true);
+  noFire.leave();
+});
+
+test('altitude: fuel from the truck or the pump after the crate was lifted ends the try; before it, it does not', () => {
+  const summit = {courseId: 'summit-run', heli: heliAt(0, 0, {onGround: true, fuelKg: 300}), events: [{type: 'setDown', id: 'lab-crate'}, {type: 'refuelled'}]};
+  const ch = () => createChallenge('altitude', {zone: site.zone});
+  const hooked = {id: 'lab-crate', hooked: true, x: 0, z: 0};
+  const first = ch();
+  stepChallenge(first, quiet({load: hooked}), 0.1);
+  const result = stepChallenge(first, quiet(summit), 0.1);
+  assert.equal(result.result, 'retry');
+  assert.match(result.reason, /Refuelling/);
+  assert.equal(stepChallenge(ch(), quiet(summit), 0.1).result, 'passed', 'a tank filled before the crate was lifted is simply a full start');
+});
+
+test('pendulum: a car let go that was never the Lab\'s car on the hook is not the try\'s release', () => {
+  const target = spotsOf('pendulum').target, ch = createChallenge('pendulum', {...spotsOf('pendulum')});
+  const result = stepChallenge(ch, quiet({events: [{type: 'releasedHigh', id: 'falcone_f42', heightM: 12}]}), 0.1);
+  assert.equal(result.result, 'running');
+  const hooked = quiet({load: {id: 'falcone_f42', hooked: true, x: target.x, z: target.z}, heli: heliAt(target.x, target.z)});
+  stepChallenge(ch, hooked, 0.1);
+  assert.equal(stepChallenge(ch, quiet({events: [{type: 'releasedHigh', id: 'falcone_f42', heightM: 12}]}), 0.1).result, 'retry', 'the Lab\'s own car dropped high still ends the try');
+});
+
+test('a challenge that does not use the bucket leaves its drops to the real fire, and the heading flight gives back the arrow', () => {
+  const dropped = id => {
+    const session = sessionOf(readyProfile(), {labEnabled: true});
+    session.start();
+    assert.equal(session.fitBucket().ok, true);
+    assert.equal(session.startChallenge(id).ok, true);
+    const events = [], high = 60;
+    events.push(...run(session, 120, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: high}, {speed: 1}), v => v.heli.y > high - 3));
+    events.push(...run(session, 120, v => pilot(v, {x: v.heli.x + 3, z: v.heli.z, y: high}, {speed: 1}), (v, got) => has(got, 'fireCall')));
+    session.pressRadio(); events.push(...session.takeEvents());
+    const lake = spotsOf('projectile'), surface = woods.ground.water(lake.scoop.x, lake.scoop.z);
+    events.push(...run(session, 120, v => pilot(v, {x: lake.scoop.x, z: lake.scoop.z, y: high}, {speed: 20, sink: 6}), v => Math.hypot(v.heli.x - lake.scoop.x, v.heli.z - lake.scoop.z) < 8));
+    events.push(...run(session, 90, v => pilot(v, {x: lake.scoop.x, z: lake.scoop.z, y: surface + 17.6}, {speed: 2, sink: 3}), v => v.bucket?.words === 'full'));
+    const target = session.view().fire?.target;
+    assert.ok(target, 'a fire to drop on');
+    const goal = v => { const aim = v.bucket.aim, lead = aim ? {x: aim.x - v.bucket.x, z: aim.z - v.bucket.z} : {x: 0, z: 0};
+      return {x: target.x - lead.x, z: target.z - lead.z, y: woods.ground.height(target.x, target.z) + 60}; };
+    events.push(...run(session, 300, v => pilot(v, goal(v), {speed: 15, sink: 6}), v => { const aim = v.bucket.aim; return aim && Math.hypot(aim.x - target.x, aim.z - target.z) < 3 && Math.hypot(v.heli.vx, v.heli.vz) < 0.5; }));
+    events.push(...run(session, 8, v => ({...pilot(v, goal(v), {speed: 2, sink: 3}), pour: true}), v => (v.bucket?.water ?? 0) <= 0.5));
+    events.push(...run(session, 8, v => pilot(v, goal(v), {speed: 2, sink: 3})));
+    session.leave();
+    return events;
+  };
+  assert.equal(has(dropped('headings'), 'fireHiss'), true, 'with the heading flight under way the water still goes on the real fire');
+  // The heading flight hides the arrow and gives it back.
+  const session = sessionOf(readyProfile(), {labEnabled: true, summitRunEnabled: true});
+  session.start();
+  assert.equal(session.setDestination('summit-run'), true);
+  const before = session.view().destination;
+  assert.ok(before, 'a destination is set');
+  session.startChallenge('headings');
+  assert.equal(session.view().destination, null);
+  session.stopChallenge();
+  assert.deepEqual(session.view().destination, before);
+  session.leave();
+});
+
+// ---- The fire, flown: scoop from the lake, drop on the practice fire --------------------------------------------
+function fireFlight({drop = true} = {}) {
+  const session = sessionOf(readyProfile(), {labEnabled: true});
+  session.start();
+  assert.equal(session.fitBucket().ok, true);
+  assert.equal(session.startChallenge('fire').ok, true);
+  const lake = spotsOf('projectile').scoop, surface = woods.ground.water(lake.x, lake.z), high = 50, events = [];
+  const done = () => has(events, 'challengePassed') || has(events, 'challengeRetry') || has(events, 'crashed');
+  const burning = v => v.challenge?.props.filter(prop => prop.kind === 'fire' && prop.percent > 0) ?? [];
+  const centre = v => { const cells = burning(v); if (!cells.length) return null; const front = Math.max(...cells.map(c => c.x)), edge = cells.filter(c => c.x === front); return {x: front, z: edge.reduce((s, c) => s + c.z, 0) / edge.length}; };
+  const go = (seconds, controls, until) => { events.push(...run(session, seconds, controls, (v, got) => done() || until(v, got))); };
+  go(60, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: high}, {speed: 1}), v => v.heli.y > v.heli.groundY + 22);
+  if (drop) for (let trip = 0; trip < 3 && !done(); trip++) {
+    go(90, v => pilot(v, {x: lake.x, z: lake.z, y: high}, {speed: 20, sink: 6}), v => Math.hypot(v.heli.x - lake.x, v.heli.z - lake.z) < 8);
+    go(60, v => pilot(v, {x: lake.x, z: lake.z, y: surface + 17.6}, {speed: 2, sink: 8}), v => v.bucket?.words === 'full');
+    const goal = v => { const c = centre(v) ?? {x: v.heli.x, z: v.heli.z}, aim = v.bucket.aim, lead = aim ? {x: aim.x - v.bucket.x, z: aim.z - v.bucket.z} : {x: 0, z: 0};
+      const near = Math.hypot(v.heli.x - c.x, v.heli.z - c.z) < 90;
+      return {x: c.x - lead.x, z: c.z - lead.z, y: woods.ground.height(c.x, c.z) + 55}; };
+    go(120, v => pilot(v, goal(v), {speed: 25, sink: 6}), v => { const c = centre(v), aim = v.bucket.aim; return !c || aim && Math.hypot(aim.x - c.x, aim.z - c.z) < 4 && Math.hypot(v.heli.vx, v.heli.vz) < 1; });
+    go(6, v => ({...pilot(v, goal(v), {speed: 2, sink: 3}), pour: true}), v => (v.bucket?.water ?? 0) <= 0.5);
+    go(6, v => pilot(v, goal(v), {speed: 2, sink: 3}), () => false);
+  }
+  else go(240, () => ({lift: 0.1}), () => false);
+  return {session, events};
+}
+test('fire, flown: water from the lake on the practice fire passes and is saved; leaving it alone sends the pilot back', () => {
+  const good = fireFlight();
+  assert.equal(has(good.events, 'crashed'), false);
+  assert.equal(has(good.events, 'challengePassed'), true, `passed (${good.events.filter(event => event.type === 'challengeRetry').map(event => event.reason)})`);
+  assert.equal(labOf(good.session.profile).done.fire, true);
+  good.session.leave();
+  const idle = fireFlight({drop: false});
+  assert.equal(has(idle.events, 'challengePassed'), false);
+  assert.equal(idle.events.find(event => event.type === 'challengeRetry')?.reason, 'The fire reached the road.');
+  idle.session.leave();
 });
