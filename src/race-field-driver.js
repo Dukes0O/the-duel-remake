@@ -361,12 +361,10 @@ export function stepFieldRacer(duel, r, dt) {
 
   // ---- passing: pull out beside a slower car, finish the move once alongside ----
   // How close behind a slower car this racer waits before pulling out; keener racers go sooner.
-  const window = Math.min(f.racecraft ? 1.5 : 1.2, .5 + (f.racecraft ? 1 : .7) * t.aggression * tuning.aggression * (r.completedLaps === 0 ? 1 + t.firstLap : 1));
+  const window = Math.min(1.2, .5 + .7 * t.aggression * tuning.aggression * (r.completedLaps === 0 ? 1 + t.firstLap : 1));
   // The lane beside a car on `side`: clear of the car and of the racing line where it is running.
   const passLane = (side, other, otherHalfWidth, ds) => {
-    const clear = run.halfWidth + otherHalfWidth + .3;
-    if(f.racecraft) return other.lateral+side*clear;
-    const onLine = line.offsetAt(r.s + ds);
+    const clear = run.halfWidth + otherHalfWidth + .3, onLine = line.offsetAt(r.s + ds);
     return side > 0 ? Math.max(onLine + clear + .1, other.lateral + clear) : Math.min(onLine - clear - .1, other.lateral - clear);
   };
   const cp = f.pass && (f.pass.index < 0 ? s : s.opponents[f.pass.index]);
@@ -390,26 +388,24 @@ export function stepFieldRacer(duel, r, dt) {
       else passIntent = lane;
     }
   }
-  if (!f.pass && blocker && blocker.gap > -1 && now >= (f.passCool || 0) && now > (f.racecraft ? 0 : 10)) {
+  if (!f.pass && blocker && blocker.gap > -1 && now >= (f.passCool || 0) && now > 10) {
     // Quicker than the car ahead in its own right, not just for a moment (the player's pace is its speed).
     const theirs = blocker.index >= 0 ? runtimeOf(duel, blocker.o).profile.at(blocker.o.s) * (1 + paceForm(blocker.o.field, now)) : (f.racecraft ? playerPaceMph(duel) : blocker.speed);
-    const boostReady=f.racecraft && onStraight && r.speedMph>=BOOST.minSpeedMph && surface.boostAllowed!==false &&
-      r.boost>(r.boosting ? 0 : .25+.25*(1-t.aggression)) && !(r.contactCooldown>0);
-    const closing = profile.at(r.s + blocker.ds) * (1 + formNow) + (boostReady ? cpuNitroExtraMph(r,run.spec) : 0) - theirs;
+    const closing = profile.at(r.s + blocker.ds) * (1 + formNow) - theirs;
     const gapTime = Math.max(0, blocker.gap) / Math.max(12, mps);
     const straight = Math.abs(line.curvatureAt(look)) < 1 / 300 && Math.abs(line.curvatureAt(look + 70)) < 1 / 260 &&
       !(zone && zone.toEntry > -10 && zone.toEntry < 40);
     // Is there road enough before the next braking zone to finish the move?
     const roadAhead = zone && zone.toEntry > -10 ? zone.toEntry : Infinity;
     const needed = mps * (blocker.gap + 8) / Math.max(1, closing * MPH) + 30;
-    if (closing > Math.max(2, r.speedMph * .008) && gapTime < window && straight && roadAhead > (f.racecraft && now<10 ? Math.min(needed,mps+5) : needed)) {
+    if (closing > Math.max(2, r.speedMph * .008) && gapTime < window && straight && roadAhead > needed) {
       const inside = zone && zone.toApex < 320 ? zone.corner.dir : 0;
       const roomed = side => roadLimit - Math.abs(passLane(side, blocker.o, blocker.hw, blocker.ds));
       const sides = (inside || (roomed(1) >= roomed(-1) ? 1 : -1)) > 0 ? [1, -1] : [-1, 1];
       for (const side of sides) {
         const lane = passLane(side, blocker.o, blocker.hw, blocker.ds);
         if (Math.abs(lane) > roadLimit - .6) continue;
-        const crowded = near.some(c => c !== blocker && c.ds > -(run.halfLength + c.hl + 4) && c.ds < (f.racecraft ? Math.max(run.halfLength+c.hl, mps) : blocker.ds+30) &&
+        const crowded = near.some(c => c !== blocker && c.ds > -(run.halfLength + c.hl + 4) && c.ds < blocker.ds + 30 &&
           Math.abs(c.o.lateral - lane) < run.halfWidth + c.hw + .3);
         if (crowded) continue;
         f.pass = { index: blocker.index, side, since: now, bestGap: blocker.gap, bestAt: now };

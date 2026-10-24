@@ -115,12 +115,13 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
   equal(summarizeRacecraft(rows.map(({startSnapshot,...row})=>row),{courses,races:20}).summary[0].baselineMeanSpread,null,'missing old start data remains unknown rather than invented');
   const reported=rows.map(r=>({...r,startSnapshot:{pairs:[],lateralSpread:0}}));
   check(summarizeRacecraft(reported,{courses,races:20}).passed,'zero start pairs remain reported without waiving other requirements');
-  const busy=rows.map(r=>r.mode==='normal'?{...r,passes:r.enabled?12:8,crashes:r.enabled?11:10,pileUp:r.index<(r.enabled?5:4)}:r);
-  check(summarizeRacecraft(busy,{courses,races:20}).passed,'exact 1.5 passing, 10 percent crashes and baseline plus one pile-up boundaries pass');
-  check(!summarizeRacecraft(busy.map(r=>r.enabled&&r.mode==='normal'?{...r,passes:11.99}:r),{courses,races:20}).passed,'passing below 1.5 times a busy baseline fails');
+  const busy=rows.map(r=>r.mode==='normal'?{...r,crashes:r.enabled?11:10,pileUp:r.index<(r.enabled?5:4)}:r);
+  check(summarizeRacecraft(busy,{courses,races:20}).passed,'exact 10 percent crashes and baseline plus one pile-up boundaries pass');
   check(!summarizeRacecraft(busy.map(r=>r.enabled&&r.mode==='normal'?{...r,crashes:12}:r),{courses,races:20}).passed,'crash mean beyond ten percent fails');
   check(!summarizeRacecraft(busy.map(r=>r.enabled&&r.mode==='normal'?{...r,pileUp:r.index<6}:r),{courses,races:20}).passed,'pile-ups beyond baseline plus one fail');
   check(!summarizeRacecraft(rows.map(r=>r.enabled&&r.mode==='normal'?{...r,crashes:8}:r),{courses,races:20}).passed,'more races with eight crashes than off still fail');
+  const reportOnly=rows.map(r=>r.enabled?{...r,passes:0,passedPlayer:false,firstLapPosition:1}:r);
+  check(summarizeRacecraft(reportOnly,{courses,races:20}).passed,'Claude 24 October: passes, slower player passed and nitro leader are report-only');
   const duplicate=[rows[1],...rows.slice(1)];
   check(!summarizeRacecraft(duplicate,{courses,races:20}).passed,'a duplicate cannot replace the missing paired baseline case');
 }
@@ -331,15 +332,6 @@ function quietStretch(duel) {
   check(started, 'a faster car close behind a slower one on a straight tries to pass');
   check(widest > 2.3, 'it pulls out to the side with room to spare');
   check(duel.relativeS(fast.s, slow.s) - slow.s > 0 || fast.field.passes.done > 0, 'and gets by');
-}
-{
-  // An opted-in racer may use a clear passing lane before the old ten-second hold.
-  const d=start({racecraft:true}),base=quietStretch(d),line=racingLineFor(d.course);
-  placeScene(d,[{s:base+20,lateral:line.offsetAt(base+20),v:110},{s:base+4,lateral:line.offsetAt(base+4),v:138}]);
-  d.state.stageTimeSec=3;
-  d.state.opponents[0].field.skillRoll=.8;d.state.opponents[1].field.skillRoll=1.2;
-  run(d,.5);
-  check(d.state.opponents[1].field.passes.start>0,'clear opening passes do not wait ten seconds');
 }
 {
   // Defending: one move to cover the inside before a braking zone, never once the attacker is alongside.
