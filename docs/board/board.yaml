@@ -13,6 +13,16 @@ tasks:
     locks: []
     details: "docs/board/cards/FIX-GRASS-GROUND.md"
 
+  - id: PERF-GROUND-ROWS
+    title: "Cheaper drawn-ground rows: world build within 5% after FIX-GRASS-GROUND"
+    owner: "claude-cloud"
+    lane: "RACE"
+    size: "S"
+    status: "backlog"
+    needs: [FIX-GRASS-GROUND]
+    locks: []
+    details: "docs/board/cards/PERF-GROUND-ROWS.md"
+
   - id: FIX-LAUNCH
     title: "Gentler launch: 0 to 60 mph in about 2.5 to 4 s instead of 1 to 2 s"
     owner: "claude-cloud"

@@ -28,3 +28,10 @@ and stream cuts the formula sits above the drawn ground. Only Panorama Ridge
   on the laptop before merge.
 
 No switch: this is a fix to existing scenery.
+
+## Claude answers
+
+Build time (24 October): option 1 approved. 80 to 140 ms once per race load is
+worth grass that stands on the ground; gaps of up to 52 m were a real fault, and
+Summit is within 5%. The remaining cost is tracked in PERF-GROUND-ROWS. The
+numbers are in `docs/changes/FIX-GRASS-GROUND.md`.
