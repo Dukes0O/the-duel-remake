@@ -1,3 +1,8 @@
+import {DRIVE_LESSON_CORNERS,buildInstructorRun} from './lessons/drive-lessons.js';
+import {finishDriveLesson} from './lessons/drive-lesson-save.js';
+import {DRIVE_RADIO_LINES} from './lessons/drive-radio-lines.js';
+import {createRadioChain} from './lessons/radio-voice.js';
+import {mountDriveLessonUi,driveLessonCompletion,settleDriveLessonPreparation,driveLessonGhostPose} from './lessons/drive-lesson-ui.js';
 import {racingLineFor,buildSpeedProfile} from './race-lines.js';
 import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
@@ -176,6 +181,7 @@ export class App {
     this.duel.onChange((state, event) => {
       this._syncHiddenRoadDiscovery();
       this.audio.event(event,state,this.duel.course);
+      if(this.duel.drivingLesson){this._driveLessonEvent(state,event);return;}
       this.deepAudio.event(event,state);
       if(event.deepPhase&&state.deepJourney?.controlsLocked)this._clearHiddenRoadInput();
       if(event.deepCommitted)this._settleDeepDeparture(event.deepCommitted,state);
@@ -300,6 +306,7 @@ export class App {
     return !gate||gate.ready&&gate.state===this.duel.state&&gate.course===this.duel.course;
   }
   dispose(){
+    this._clearDriveLesson();this._driveLessonUi?.dispose();
     this._leaveHeli();this.deepAudio.dispose();this.heliAudio.dispose();
     this.duel.clearDeep();
     this.duel.state.hiddenRoadJourney = null;
@@ -384,6 +391,11 @@ export class App {
   }
 
   _simulate(seconds) {
+    if(typeof document!=='undefined'){
+      const host=document.querySelector('#stage');
+      if(host&&!this._driveLessonUi)this._driveLessonUi=mountDriveLessonUi(this,host);
+      this._driveLessonUi?.update();
+    }
     this._syncHiddenRoadDiscovery();
     if(!this.visualReady){this._stepAccumulator=0;this._resetKeyboardInput();return;}
     this._stepAccumulator += seconds;
@@ -399,11 +411,137 @@ export class App {
       this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
       this._updateGhost(this.duel.state);this._updateLapTelemetry(this.duel.state);
+      this._driveLessonUi?.update();
       this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);
     }
   }
 
+  drivingLessonsAvailable(){
+    return this._switches().enabled('driving-lessons')===true&&this._switches().enabled('tyre-slip')===true;
+  }
+  driveLessonProps(){
+    const run=this.duel.drivingLesson,choices=this.getRaceChoices();
+    return {corners:DRIVE_LESSON_CORNERS,courses:COURSE,cars:Object.entries(CARS).map(([id,car])=>({id,name:car.name})),
+      ownedCourseIds:COURSE.filter(course=>isCourseUnlocked(this.profile,course)).map(course=>course.id),
+      ownedCarIds:this.profile.unlockedCars,playerId:this.player?.id,progress:this.profile.drivingLessons,
+      courseId:this.driveLessonCourse,carId:choices.car,difficulty:choices.difficulty,
+      runPlayerId:run?.ownerId,lesson:run?.ownerId===this.player?.id?run.lesson:null,lessonSaveFailed:run?.rewarded===true&&run.saved===false};
+  }
+  openDrivingLessons(){
+    if(!this.drivingLessonsAvailable()||this.duel.state.status!=='menu'||!this.player?.id)return false;
+    this.driveLessonBoardOpen=true;this.driveLessonMessage='';this._driveLessonUi?.update();return true;
+  }
+  async startLesson({courseId,lessonId='corner',car,difficulty}={}){
+    this._refreshPlayer();
+    const stageIndex=COURSE.findIndex(row=>row.id===courseId);
+    if(this._driveLessonPreparing||!this.drivingLessonsAvailable()||this.duel.state.status!=='menu'||!this.driveLessonBoardOpen||
+      lessonId!=='corner'||!this.player?.id||!DRIVE_LESSON_CORNERS.some(row=>row.courseId===courseId)||
+      !isCourseUnlocked(this.profile,courseId)||!isCarUnlocked(this.profile,car)||!['casual','pro'].includes(difficulty))return false;
+    if(this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex]))return false;
+    const ownerId=this.player.id,driverId=getEquippedDriverId(this.profile),upgrades=getUpgradeLevels(this.profile,car);
+    if(this.profile.drivingLessons!=null&&this.profile.drivingLessons.version!==1)return false;
+    const token={};this._driveLessonPreparing=token;this.driveLessonMessage='Instructor is driving the corner…';this._driveLessonUi?.update();
+    let baseline;
+    try{baseline=await buildInstructorRun({courseId,car,upgrades,difficulty,driverId,seed:1989});}
+    catch(error){if(this._driveLessonPreparing===token){this._driveLessonPreparing=null;this.driveLessonMessage='The instructor could not complete a clean run. '+error.message;this._driveLessonUi?.update();}return false;}
+    this._refreshPlayer();
+    if(this._driveLessonPreparing!==token||!this.drivingLessonsAvailable()||!this.driveLessonBoardOpen||
+      this.duel.state.status!=='menu'||this.player?.id!==ownerId||!isCourseUnlocked(this.profile,courseId)||
+      !isCarUnlocked(this.profile,car)||getEquippedDriverId(this.profile)!==driverId||
+      JSON.stringify(getUpgradeLevels(this.profile,car))!==JSON.stringify(upgrades)||
+      this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex])){
+      settleDriveLessonPreparation(this,token,'Lesson setup changed. Choose the corner again.');
+      this._driveLessonUi?.update();return false;
+    }
+    this._driveLessonPreparing=null;this.driveLessonBoardOpen=false;this.driveLessonMessage='';
+    this._runPlayerId=ownerId;this.runId=null;this._cupRace=null;
+    this.ghostRecorder=this.ghostRecord=this.ghostPose=this.grandPrixLapRecorder=this.lapTelemetryRecorder=null;
+    this.ghostStatus='none';this.autopilot=false;this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
+    const plan={...baseline,driverId,ownerId};
+    this.audio.unlock();this.audio.setPaused(false);
+    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});this._racePaintCar=car;
+    this._sayDriveLesson(this.profile.drivingLessons?.done?.corner?'drive.radio.retake':'drive.radio.corner.intro');
+    this.duel.startCampaign({seed:1989,mode:'timetrial',car,difficulty,driverId,playerId:ownerId,
+      startStage:stageIndex,upgrades,opponentCount:0,lesson:plan});
+    this._driveLessonUi?.update();return true;
+  }
+  nextLessonAttempt(){
+    const run=this.duel.drivingLesson;
+    if(!run||!this.drivingLessonsAvailable()||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||
+      this.duel.state.playerId!==run.ownerId||run.lesson.done||run.lesson.phase==='driving')return false;
+    this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;this.audio.setPaused(false);
+    const started=this.duel.resetDriveLessonAttempt();this._driveLessonUi?.update();return started;
+  }
+  leaveLesson(){
+    if(this.duel.drivingLesson){this._clearDriveLesson();this.returnToMenu();}
+    else{this._driveLessonPreparing=null;this.driveLessonBoardOpen=false;this.driveLessonMessage='';}
+    this._driveLessonUi?.update();return true;
+  }
+  _clearDriveLesson(){
+    this._driveLessonPreparing=null;this.driveLessonBoardOpen=false;this.driveLessonMessage='';
+    this.driveLessonRadioText='';this._driveLessonRadioEpoch=(this._driveLessonRadioEpoch||0)+1;
+    this._driveLessonVoice?.stop();this._driveLessonVoice=null;this._driveLessonRadioChain?.dispose();this._driveLessonRadioChain=null;
+    this._driveLessonRadioQueue=Promise.resolve();delete this.duel.drivingLesson;this.ghostPose=null;
+  }
+  _driveLessonEvent(state,event){
+    const run=this.duel.drivingLesson;
+    if(!run||state!==this.duel.state||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||state.playerId!==run.ownerId)return;
+    const response=event.driveLessonAnswer;
+    if(!response)return;
+    if(response.radio&&response.result!=='passed')this._sayDriveLesson(response.radio);
+    if(this.audio.context&&!this.audio.muted)for(const cone of response.cones||[])this.audio._playCue?.(cone.cue);
+    const completion=response.result==='passed'?driveLessonCompletion(run,state,this.player.id):null;
+    if(completion&&!run.rewarded){
+      this._refreshPlayer();
+      if(!driveLessonCompletion(run,state,this.player.id))return;
+      const result=finishDriveLesson(this.profile,completion.id,completion.marginSeconds,completion.carId);
+      if(result.ok){
+        this.profile=result.profile;run.saved=this._saveProfile();run.rewarded=true;run.reward=result.reward;
+        this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
+          'Lesson passed for this session. Progress and reward could not be saved. Keep the game open and retry saving; your last saved progress is unchanged.';
+        if(run.saved&&response.radio)this._sayDriveLesson(response.radio);
+      }
+      else this.driveLessonMessage=result.reason;
+      if(this.audio.context&&!this.audio.muted)this.audio._playCue?.('interface.win');
+    }
+    this._driveLessonUi?.update();
+  }
+  retryLessonSave(){
+    const run=this.duel.drivingLesson,state=this.duel.state;
+    if(!run?.rewarded||run.saved!==false||this._runPlayerId!==this.player?.id||
+      !driveLessonCompletion(run,state,this.player?.id))return false;
+    run.saved=this._saveProfile();
+    this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
+      'Still unable to save. Progress and reward are available only in this session. Keep the game open and retry saving.';
+    if(run.saved)this._sayDriveLesson('drive.radio.corner.pass');
+    this._driveLessonUi?.update();return run.saved;
+  }
+  _sayDriveLesson(id){
+    if(!DRIVE_RADIO_LINES[id])return;
+    this.driveLessonRadioText=DRIVE_RADIO_LINES[id].text;
+    const epoch=this._driveLessonRadioEpoch||0;
+    this._driveLessonRadioQueue=(this._driveLessonRadioQueue||Promise.resolve()).then(async()=>{
+      await this.audio._loadCueBuffers?.();
+      if(epoch!==(this._driveLessonRadioEpoch||0)||!this.duel.drivingLesson||!this.audio.context||this.audio.muted||this.audio.paused)return;
+      this.audio._syncMixer?.();
+      const target=this.audio.mixer?.output(id)||this.audio.buses?.voice||this.audio.master;
+      const chain=this._driveLessonRadioChain??=createRadioChain(this.audio.context,target);
+      chain.keyOn();
+      await new Promise(resolve=>{
+        this._driveLessonVoice=this.audio._playCue(id,{destination:chain.input,onEnd:()=>{chain.keyOff();resolve();}});
+        if(!this._driveLessonVoice){chain.keyOff();resolve();}
+      });
+    }).catch(()=>{});
+  }
+  getDriveLessonGhost(){
+    const run=this.duel.drivingLesson;
+    if(!run||run.ownerId!==this.player?.id||this.duel.state.playerId!==run.ownerId||
+      run.lesson.stage!=='challenge'||run.lesson.phase!=='driving')return null;
+    return driveLessonGhostPose(run.plan.instructor.poses,run.lesson.attempt.elapsedSeconds,this.duel.state.car,this.duel.course);
+  }
+
   startCampaign(options = {}) {
+    if(this.duel.drivingLesson)this._clearDriveLesson();
     this._refreshPlayer();
     const stageIndex=Math.max(0,Math.min(COURSE.length-1,Math.floor(options.startStage??this.menuStage))),stage=COURSE[stageIndex];
     if(!isCourseUnlocked(this.profile,stage)){this.courseAccessMessage='Unlock this course with credits before starting.';return false;}
@@ -516,6 +654,7 @@ export class App {
     this._applyRaceSettings(settings,customSeed);this.duel.emit({raceSettingsChanged:true});return this.getRaceChoices();
   }
   restart() {
+    if(this.duel.drivingLesson)return this.nextLessonAttempt();
     // A helicopter visit has no run to restart; the pause menu leaves it.
     if (this.duel.state.status === 'heli') return false;
     if (this.duel.state.arena?.mode === 'warlord')
@@ -653,6 +792,7 @@ export class App {
     return this.lapTelemetry.best({playerId:this.player.id,eventId,route:selectedRoute,courseFingerprint:fingerprint});
   }
   _startLapTelemetry(state){
+    if(this.duel.drivingLesson)return;
     this.lapTelemetryRecorder=null;
     if(!this._switches().enabled('grand-prix')||!this.runId||!this.player||
       this._runPlayerId!==this.player.id||state.playerId!==this.player.id||COURSE[state.stageIndex]?.practice||
@@ -663,12 +803,14 @@ export class App {
       upgrades:{...state.upgrades},tyre:state.tyre});
   }
   _updateLapTelemetry(state){
+    if(this.duel.drivingLesson)return;
     if(!this._switches().enabled('grand-prix')){this.lapTelemetryRecorder=null;return;}
     const record=this.lapTelemetryRecorder?.observe(state);
     if(record)this.lapTelemetry.record(record);
     if(['stage_result','gameover','complete','menu'].includes(state.status))this.lapTelemetryRecorder=null;
   }
   _startGhostStage(state){
+    if(this.duel.drivingLesson)return;
     this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';
     this.grandPrixLapRecorder=null;
     if(this._switches().enabled('grand-prix-career')===true&&state.mode==='grandprix'&&state.qualifying?.phase!=='driving'&&this._runPlayerId===this.player.id&&state.playerId===this.player.id){
@@ -688,6 +830,7 @@ export class App {
     this.ghostRecorder=new GhostRecorder(context);this._updateGhost(state);
   }
   _updateGhost(state){
+    if(this.duel.drivingLesson)return;
     this.ghostPose=null;
     this.grandPrixLapRecorder?.observe(state);
     if(COURSE[state.stageIndex]?.practice||state.mode!=='timetrial'||state.playerId!==this.player.id||!['countdown','racing','ticket'].includes(state.status)){this.ghostStatus='none';return;}
@@ -749,6 +892,7 @@ export class App {
     this.profile={...interrupted.profile,activeRace:null};this.interruptedRaceCharge=interrupted.charge||0;this._saveProfile();
   }
   _settlePoliceTicket(ticket,state){
+    if(this.duel.drivingLesson)return;
     if(!this.runId||this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId||state!==this.duel.state||ticket!==state.police.ticket)return;
     this._refreshPlayer();
     const settled=settlePoliceFine(this.profile,{runId:this.runId,stageIndex:state.stageIndex,ticketIndex:ticket.ticketIndex});
@@ -774,6 +918,7 @@ export class App {
     return result;
   }
   _recordIntelLap(event,state) {
+    if(this.duel.drivingLesson)return;
     const lap=event?.lapCompleted, stage=COURSE[state?.stageIndex];
     if(this._switches().enabled('grand-prix')!==true||state!==this.duel.state||state.status!=='racing'||
       !this.runId||!this.player||this._runPlayerId!==this.player.id||state.playerId!==this.player.id||
@@ -869,6 +1014,7 @@ export class App {
     this._saveProfile();
   }
   _settleResult(result,state){
+    if(this.duel.drivingLesson)return;
     // Scrapdome events settle through their own result, never as races.
     if(state.arena)return;
     const yetiFinish=state===this.duel.state && result===state.results && !state.qualifying &&
@@ -1493,7 +1639,10 @@ export class App {
     if (events.length) this.duel.emit({heli: true});
   }
   heliView() {
-    return this.heliSession?.view() ?? null;
+    const session = this.heliSession, view = session?.view() ?? null;
+    // The hook's ground ring is drawn from the view; it joins it here (drawing only).
+    const hookGuide = view && session.hookGuide?.();
+    return hookGuide ? Object.freeze({...view, hookGuide}) : view;
   }
   heliBuyFuel(kg = Infinity) {
     const result = this.heliSession?.buyFuel(kg) ?? {ok: false};
@@ -1556,6 +1705,7 @@ export class App {
     return true;
   }
   _markActiveRace(state){
+    if(this.duel.drivingLesson)return;
     const yetiInput=(COURSE[state.stageIndex]?.id==='summit-run'||isSummitAttack(COURSE[state.stageIndex]))&&validYetiSeed(state.yetiSeed)&&
       this._switches().enabled('summit-run')&&this._switches().enabled('yeti');
     if(state.arena||state.mode==='grandprix'&&!yetiInput)return;
@@ -1717,6 +1867,7 @@ export class App {
   }
   resume() { if (this.duel.state.paused) this.togglePause(); }
   returnToMenu() {
+    if(this.duel.drivingLesson||this.driveLessonBoardOpen)this._clearDriveLesson();
     this.helpVisible = false;
     this._settleAbandoned();
     this._footPointer.lookX = this._footPointer.lookY = 0;
@@ -2009,6 +2160,9 @@ export class App {
       if(e.code==='Escape' && this.duel.state.onFoot){
         if(document.pointerLockElement){document.exitPointerLock();e.preventDefault();return;}
         if(performance.now()-this._footPointerReleasedAt<250){e.preventDefault();return;}
+      }
+      if(e.code==='Enter'&&this.duel.drivingLesson&&!e.repeat&&!(e.target instanceof Element&&e.target.closest('button'))){
+        if(this.nextLessonAttempt())e.preventDefault();return;
       }
       this.audio.unlock();
       if (!e.repeat) this._inputAction(keyboardAction(this.activeInputContext(), e.code));

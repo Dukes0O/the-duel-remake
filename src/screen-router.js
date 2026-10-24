@@ -1,3 +1,4 @@
+import './lessons/drive-lesson-ui.css';
 import {createDeepUi} from './deep/deep-ui.js';
 import {shownCars} from './earned-cars-ui.js';
 import './deep/deep-ui.css';

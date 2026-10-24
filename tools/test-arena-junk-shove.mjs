@@ -308,10 +308,13 @@ for (const fps of [30, 60, 144]) check('production App junk ram repeats at ' + f
   assert.equal(actual.ticks, MEASURE_TICKS, 'actual App accumulator executes the same 120 Hz tick count');
   assert.equal(actual.trace, expected.trace, 'production input and frame adapter preserve seeded full state and junk poses');
 });
-// The nine cars of the released game, before the first medal car (the Enzo).
+// The nine cars of the released game, before the first medal car (the Enzo);
+// then with the Enzo; then with the Bolide.
 const solverPins = [
-  ['', Object.keys(CARS).filter(car => car !== 'ferrari_enzo'), controls.solverFingerprint],
-  [' with the Enzo', Object.keys(CARS), controls.solverFingerprintWithEnzo],
+  ['', Object.keys(CARS).filter(car => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide'].includes(car)), controls.solverFingerprint],
+  [' with the Enzo', Object.keys(CARS).filter(car => !['mclaren_f1', 'bugatti_bolide'].includes(car)), controls.solverFingerprintWithEnzo],
+  [' with the F1', Object.keys(CARS).filter(car => car !== 'bugatti_bolide'), controls.solverFingerprintWithF1],
+  [' with the Bolide', Object.keys(CARS), controls.solverFingerprintWithBolide],
 ];
 for (const [suffix, cars, pin] of solverPins) check('released rigid-body solver fingerprint remains unchanged for every playable mass pair' + suffix, () => {
   const results = [];

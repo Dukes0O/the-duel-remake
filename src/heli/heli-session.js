@@ -5,10 +5,11 @@
 // the same profile give the same flight.
 import {HELI_STEP, KESTREL, createHeliState, stepHeli, heliReadout, refuelHeli, heliFingerprint} from './heli-flight.js';
 import {AUTOPILOT, createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, wantsControl} from './heli-autopilot.js';
-import {CABLE, createLoad, liftCheck, carMassKg, canHook, hook, release, stepCable, createWinch, reelWinch, lineLengthOf} from './heli-cable.js';
+import {CABLE, createLoad, liftCheck, carMassKg, canHook, hookRefusal, hook, release, stepCable, createWinch, reelWinch, lineLengthOf} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
   DIRT_KINDS, placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave} from './heli-save.js';
-import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle, recoveryJob, recoveryJobOf, recoveryTitle, finishRecovery} from './heli-jobs.js';
+import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle, recoveryJob, recoveryJobOf, recoveryTitle, finishRecovery,
+  wreckFor} from './heli-jobs.js';
 import {isCourseUnlocked} from '../course-access.js';
 import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson} from './heli-lessons.js';
 import {CRATE} from './heli-cable.js';
@@ -16,10 +17,10 @@ import {BUCKET, createBucket, stepBucket, bucketHit, bucketWords, bucketHolds, a
 import {bucketDamageOf, damageBucket as damageBucketSave, repairBucket as repairBucketSave, FIRE_MONEY, missionsOf, setMissions} from './heli-save.js';
 import {createFireRun, fireWorld} from './heli-fire-run.js';
 import {callOf, rescueOf, rescueConditions, isRescueKind, tickRescue, finishRescue, failRescue, clockLeft, duskOf, rescueLimit,
-  peoplePay, DUSK_SECONDS} from './heli-missions.js';
+  peoplePay, dropSummitCall, SUMMIT_COURSE, DUSK_SECONDS} from './heli-missions.js';
 import {RESCUE, CONDITIONS, createRescueLine, setLineWho, peopleOnLine, hNothing, canFitLine, holdFraction, stepRescue, rescueHit, cabinHurt,
-  handoverOutcome, createSupplyCrate, noteCrateRelease, crateResult, cratePay, supplyPay, hoistBonus, hookCrates, carryNet, spillNet} from './heli-rescue.js';
-import {hikerSpots, pickHiker, hikerSpotted, hikerWalk, slideSpots, pickSlide, beaconSignal, hoistSpots, pickHoist, supplyYard,
+  handoverOutcome, createSupplyCrate, noteCrateRelease, crateResult, cratePay, supplyPay, hoistBonus, hookCrates, carryNet, spillNet, NET_REACH} from './heli-rescue.js';
+import {hikerSpots, pickHiker, hikerSpotted, hikerWalk, slideSpots, pickSlide, beaconSignal, hoistSpots, pickHoist, supplyYard, supplyPickup,
   crateSpots, SEARCH, searchNight, heatContacts} from './heli-search.js';
 import {SKINS, skinsOf, skinRows, skinOffer, earnSkins, buySkin, wearSkin, washHelicopter, gearStats, grimeOf, WASH, addDirt, settleFlightDirt,
   createFlightDirt, addFlightTime, addLanding, addDip, addDrop} from './heli-skins.js';
@@ -71,8 +72,11 @@ function clearCircle(course, ground, x, z, radius, flatness) {
 // The landing zone beside the start line, the home pad's parking spot for
 // the car, and the flying area. Chosen the same way every time. summitRun:
 // the Summit Run switch, which adds that destination's arrival point to the
-// area (and lets Summit Run itself be a course here).
-export function courseSite(course, ground, courseId, {summitRun = false} = {}) {
+// area (and lets Summit Run itself be a course here). summitRescue: Summit Run's
+// switch together with the rescue switch; Summit Run's ceiling is then 300 m above
+// the ground under the helicopter (never lower than the usual one), so the pickup
+// and the summit hut can be reached (see ceilingAt).
+export function courseSite(course, ground, courseId, {summitRun = false, summitRescue = false} = {}) {
   const radius = HELI_SESSION.zoneRadius;
   let zone = null;
   search: for (const s of [0, 20, -20, 40, -40, 60, -60, 90, -90, 120, -120, 160, -160, 200, -200]) {
@@ -128,7 +132,8 @@ export function courseSite(course, ground, courseId, {summitRun = false} = {}) {
   const m = HELI_SESSION.areaMargin;
   const startY = course.at(0).y;
   const area = {minX: Math.min(...xs) - m, maxX: Math.max(...xs) + m, minZ: Math.min(...zs) - m, maxZ: Math.max(...zs) + m,
-    ceiling: startY + HELI_SESSION.ceilingAbove};
+    ceiling: startY + HELI_SESSION.ceilingAbove,
+    ...(summitRescue === true && courseId === 'summit-run' ? {aboveGround: HELI_SESSION.ceilingAbove} : {})};
   return Object.freeze({courseId, zone: Object.freeze(zone), parking: Object.freeze(parking), spare: Object.freeze(spare), area: Object.freeze(area), startY,
     crate: crate && Object.freeze(crate), carryTarget: target && Object.freeze(target)});
 }
@@ -138,8 +143,16 @@ function arrivalPoint(zone, toward) {
   return {x: zone.x + toward.x * HELI_SESSION.arrivalDistance, z: zone.z + toward.z * HELI_SESSION.arrivalDistance};
 }
 
-export function insideArea(area, x, y, z) {
-  return x >= area.minX && x <= area.maxX && z >= area.minZ && z <= area.maxZ && y <= area.ceiling;
+// The top of the flying area over a spot: the flat ceiling, or, where the area
+// carries `aboveGround` (Summit Run with rescues on), that many metres over the
+// ground there when that is higher. H1's thin-air thrust rule still decides how
+// high the helicopter can actually climb.
+export function ceilingAt(area, x, z, ground = null) {
+  return area.aboveGround && ground ? Math.max(area.ceiling, ground.height(x, z) + area.aboveGround) : area.ceiling;
+}
+
+export function insideArea(area, x, y, z, ground = null) {
+  return x >= area.minX && x <= area.maxX && z >= area.minZ && z <= area.maxZ && y <= ceilingAt(area, x, z, ground);
 }
 
 // options: profile, enabled (the helicopter switch), loadCourse(id) ->
@@ -212,18 +225,25 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   if (fireEnabled === true && typeof loadFireCourse !== 'function') throw new Error('Forest fires need loadFireCourse(courseId)');
   const fireWorlds = new Map();
   const fireWorldOf = id => {
-    if (!fireWorlds.has(id)) { const loaded = loadFireCourse(id); fireWorlds.set(id, fireWorld(loaded, courseSite(loaded.course, loaded.ground, id, dflag))); }
+    if (!fireWorlds.has(id)) { const loaded = loadFireCourse(id); fireWorlds.set(id, fireWorld(loaded, courseSite(loaded.course, loaded.ground, id, siteFlag))); }
     return fireWorlds.get(id);
   };
   // H4 Rescue: each course's site facts (no fire grid needed), worked out once.
   const rescueOn = rescueEnabled === true && fireEnabled === true;
   const rflag = {rescue: rescueOn};
+  // Summit Run's rescues (SUMMIT-HELI-RESCUES) need both switches: only then does its ceiling follow the ground.
+  const siteFlag = {summitRun: summitOn, summitRescue: summitOn && rescueOn};
+  // A call or rescue stored at Summit Run, met with the Summit switch off, is dropped quietly (RESCUE-SUMMIT-TUNE).
+  {
+    const stored = missionsOf(save), kept = dropSummitCall(stored, {rescue: rescueOn, summitRun: summitOn});
+    if (kept !== stored) commit(setMissions(save, kept, flag));
+  }
   const siteWorlds = new Map();
   const siteWorldOf = id => {
     if (fireWorlds.has(id)) return fireWorlds.get(id);
     if (!siteWorlds.has(id)) {
       const loaded = loadFireCourse(id);
-      siteWorlds.set(id, {course: loaded.course, ground: loaded.ground, site: courseSite(loaded.course, loaded.ground, id, dflag)});
+      siteWorlds.set(id, {course: loaded.course, ground: loaded.ground, site: courseSite(loaded.course, loaded.ground, id, siteFlag)});
     }
     return siteWorlds.get(id);
   };
@@ -235,12 +255,14 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     avalanche: id => { const w = siteWorldOf(id); return slideSpots(w.course, w.ground).length > 0; },
     hoist: id => { const w = siteWorldOf(id); return hoistSpots(w.course, w.ground).length > 0; },
     supply: id => {
-      const w = siteWorldOf(id), home = siteWorldOf(HOME_COURSE);
+      const w = siteWorldOf(id), home = siteWorldOf(HOME_COURSE), pickup = supplyPickup(w.course, w.ground);
+      // Summit Run's crates wait at its own pickup; Tremblant Snow's wait at the home pad.
+      if (pickup) return !!supplyYard(w.course, w.ground) && crateSpots(w.course, w.ground, pickup).length >= 3;
       return !!supplyYard(w.course, w.ground) && crateSpots(home.course, home.ground, home.site.zone).length >= 3;
     },
   };
   const rescueCourses = () => {
-    if (!rescueRows) rescueRows = Object.fromEntries(Object.entries(rescueConditions()).map(([kind, ids]) =>
+    if (!rescueRows) rescueRows = Object.fromEntries(Object.entries(rescueConditions({summitRun: summitOn})).map(([kind, ids]) =>
       [kind, ids.filter(id => isDestination(id, dflag) && READY[kind](id))]));
     return rescueRows;
   };
@@ -275,7 +297,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const carried = heldLoad();
     rememberLoads();
     world = loadCourse(courseId);
-    site = courseSite(world.course, world.ground, courseId, dflag);
+    site = courseSite(world.course, world.ground, courseId, siteFlag);
     const info = places[courseId];
     const fuel = heli ? heli.fuelKg : heliOf(save).fuelKg;
     if (arriveFrom) {
@@ -441,7 +463,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // usual way to the landing zone.
   function recoveryGoal() {
     const job = rescueOn && heli ? jobInHand() : null;
-    if (job?.kind !== 'recovery' || site.courseId !== job.from || (destination && destination !== site.courseId)) return null;
+    if (job?.kind !== 'recovery' || live || site.courseId !== job.from || (destination && destination !== site.courseId)) return null;
     const car = loads.find(item => item.job === job.id);
     return car && !car.hooked ? hoverAbove(car.x, car.z, 12) : null;
   }
@@ -471,7 +493,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // at once. The first tank there is free.
   function strandedOnGround() {
     if (!heli.onGround || heli.engine || heli.fuelKg > 0) return false;
-    if (!onHome()) return true;
+    if (!pumpHere()) return true;
     const tank = heliOf(save);
     return tank.refuels > 0 && save.credits < Math.ceil(KESTREL.tankKg * KESTREL.lowFuelShare * HELI_MONEY.creditsPerKg);
   }
@@ -480,6 +502,27 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     return site?.courseId === HOME_COURSE && heli?.onGround &&
       Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) <= site.zone.radius;
   }
+
+  // Summit Run's rescues: the lodge's fuel trucks stand inside the start area's landing circle and at the
+  // pickup, for the supply run and the avalanche alike (a crew stages fuel near the scene). Each sells
+  // fuel at the pump's price to a helicopter on the ground inside its circle, and always for pay.
+  const standCache = new Map();
+  const standAt = (circle, ground) => {
+    const x = circle.x + circle.radius * 0.75;
+    return Object.freeze({circle, truck: Object.freeze({x, z: circle.z, y: ground.height(x, circle.z)})});
+  };
+  function summitStands() {
+    if (!live || (live.kind !== 'supply' && live.kind !== 'avalanche') || live.courseId !== SUMMIT_COURSE || site?.courseId !== live.courseId) return [];
+    if (!standCache.has(site.courseId)) {
+      const pickup = supplyPickup(world.course, world.ground);
+      standCache.set(site.courseId, Object.freeze([standAt(site.zone, world.ground), ...(pickup ? [standAt(pickup, world.ground)] : [])]));
+    }
+    return standCache.get(site.courseId);
+  }
+  function atTruck() {
+    return !!heli?.onGround && summitStands().some(({circle}) => Math.hypot(heli.x - circle.x, heli.z - circle.z) <= circle.radius);
+  }
+  const pumpHere = () => onHome() || atTruck();
 
   function crashed(cause) {
     hookHeld = false; hookReeled = false;
@@ -638,19 +681,27 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     }
     if (r.kind === 'hoist') {
       const picked = pickHoist(hoistSpots(w.course, w.ground), r.seed, w.ground);
-      return picked && {driver: picked.driver, car: picked.car};
+      // The car carries the id the recovery job later offers (the same seeded pick).
+      return picked && {driver: picked.driver, car: Object.freeze({...picked.car, carId: wreckFor({seed: r.seed, courseId: r.courseId, x: 0, z: 0, day: 0}).carId})};
     }
-    const home = siteWorldOf(HOME_COURSE), yard = supplyYard(w.course, w.ground), spots = crateSpots(home.course, home.ground, home.site.zone);
+    const yard = supplyYard(w.course, w.ground), pickup = supplyPickup(w.course, w.ground);
+    // Summit Run: the crates and the lodge's fuel truck wait at the pickup on its road (docs/HELI_RESCUE.md 5.4).
+    if (pickup) {
+      const spots = crateSpots(w.course, w.ground, pickup);
+      const truck = Object.freeze({x: pickup.x + pickup.radius * 0.75, z: pickup.z, y: w.ground.height(pickup.x + pickup.radius * 0.75, pickup.z)});
+      return yard && spots.length >= 3 ? {yard, pickup, truck, spots, results: [null, null, null]} : null;
+    }
+    const home = siteWorldOf(HOME_COURSE), spots = crateSpots(home.course, home.ground, home.site.zone);
     return yard && spots.length >= 3 ? {yard, spots, results: [null, null, null]} : null;
   }
 
-  // The crates wait at the home pad's spots until they are down in the yard.
+  // The crates wait at the home pad's spots (or, at Summit Run, at its pickup) until they are down in the yard.
   function layCrates() {
-    if (!live || live.kind !== 'supply' || !rsite || site.courseId !== HOME_COURSE) return;
+    if (!live || live.kind !== 'supply' || !rsite || site.courseId !== (rsite.pickup ? live.courseId : HOME_COURSE)) return;
     CRATE_IDS.forEach((id, i) => {
       if (live.crates[i] === 2 || loads.some(car => car.supply && car.id === id)) return;
       // Like the lesson crate, not a car and not a job's: the hook code reads both.
-      loads.push(Object.assign(createSupplyCrate({id, set: 'tremblantSnow', x: rsite.spots[i].x, z: rsite.spots[i].z, heading: 0, ground: world.ground}),
+      loads.push(Object.assign(createSupplyCrate({id, set: rsite.pickup ? 'summitRun' : 'tremblantSnow', x: rsite.spots[i].x, z: rsite.spots[i].z, heading: 0, ground: world.ground}),
         {own: false, job: null}));
     });
   }
@@ -871,14 +922,17 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
             flareLeft: rsite.spotted ? Math.max(0, SEARCH.flareSeconds - rsite.since) : 0, aboard: rsite.aboard});
         } else if (r.kind === 'avalanche' && here) {
           target = bearingTo(rsite.slide.x, rsite.slide.z);
-          sites = Object.freeze({slide: rsite.slide, beacon: rsite.beacon});
+          const stands = summitStands();
+          sites = Object.freeze(stands.length ? {slide: rsite.slide, beacon: rsite.beacon, pickup: stands[1]?.circle ?? null, truck: stands[1]?.truck ?? null,
+            zoneTruck: stands[0].truck, atTruck: atTruck()} : {slide: rsite.slide, beacon: rsite.beacon});
         } else if (r.kind === 'hoist' && here) {
           target = bearingTo(rsite.driver.x, rsite.driver.z);
           sites = Object.freeze({driver: rsite.driver, car: rsite.car});
         } else if (r.kind === 'supply') {
-          const goal = r.crates.includes(1) ? (here ? rsite.yard : null) : (site?.courseId === HOME_COURSE ? rsite.spots[0] : null);
+          const crateAt = rsite.pickup ? (here ? rsite.pickup : null) : (site?.courseId === HOME_COURSE ? rsite.spots[0] : null);
+          const goal = r.crates.includes(1) ? (here ? rsite.yard : null) : crateAt;
           target = goal ? bearingTo(goal.x, goal.z) : null;
-          if (here) sites = Object.freeze({yard: rsite.yard});
+          if (here) sites = Object.freeze(rsite.pickup ? {yard: rsite.yard, pickup: rsite.pickup, truck: rsite.truck, zoneTruck: summitStands()[0]?.truck ?? null, spots: rsite.spots, atTruck: atTruck()} : {yard: rsite.yard});
           else if (site?.courseId === HOME_COURSE) sites = Object.freeze({spots: rsite.spots});
         }
       }
@@ -889,7 +943,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         target = site && (site.courseId === HOME_COURSE || here) ? bearingTo(site.zone.x, site.zone.z) : null;
       active = Object.freeze({kind: r.kind, id: r.id, courseId: r.courseId, courseName: places[r.courseId]?.name ?? null,
         stage: r.stage, condition: r.condition, conditionName: CONDITIONS[r.condition], here,
-        clockSeconds: r.clockSeconds, limit: rescueLimit(r.kind, gear), left, orange: left <= 60, dusk: duskOf(r),
+        clockSeconds: r.clockSeconds, limit: rescueLimit(r.kind, gear, r.courseId), left, orange: left <= 60, dusk: duskOf(r),
         crates: Object.freeze([...r.crates]), cratesDown: r.crates.filter(c => c === 2).length, target, signal, sites});
     }
     return Object.freeze({
@@ -1114,7 +1168,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       refreshFireGoal();
       // With people on the line the autopilot holds the line speed limit too (section 7).
       if (rescueOn && autopilot.engaged && Number.isFinite(autopilot.speed) && autopilot.speed > RESCUE.speedLimit && hNothing(loads)) autopilot.speed = RESCUE.speedLimit;
-      const ap = autopilotStep(autopilot, heli, flightControls, {ground: world.ground, hang, load: held, dt});
+      const ap = autopilotStep(autopilot, heli, flightControls, {ground: world.ground, hang, load: held, dt,
+        ceiling: (x, z) => ceilingAt(site.area, x, z, world.ground)});
       handle(ap.events);
       // Every car steps; only the one on the cable pulls on the helicopter.
       let pull;
@@ -1159,7 +1214,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       // The flying area: a destination elsewhere offers the cruise leg;
       // with none the edge holds the helicopter in.
       const a = site.area;
-      if (!insideArea(a, heli.x, heli.y, heli.z)) {
+      if (!insideArea(a, heli.x, heli.y, heli.z, world.ground)) {
         if (destination && destination !== site.courseId) {
           if (!cruiseOffered) {
             cruiseOffered = true;
@@ -1167,10 +1222,12 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
             emit({type: 'radio', line: 'heli.radio.cruise.ready'});
           }
         } else {
-          heli.x = clamp(heli.x, a.minX, a.maxX); heli.z = clamp(heli.z, a.minZ, a.maxZ); heli.y = Math.min(heli.y, a.ceiling);
+          heli.x = clamp(heli.x, a.minX, a.maxX); heli.z = clamp(heli.z, a.minZ, a.maxZ);
+          const top = ceilingAt(a, heli.x, heli.z, world.ground);
+          heli.y = Math.min(heli.y, top);
           if (heli.x === a.minX || heli.x === a.maxX) heli.vx = 0;
           if (heli.z === a.minZ || heli.z === a.maxZ) heli.vz = 0;
-          if (heli.y === a.ceiling) heli.vy = Math.min(0, heli.vy);
+          if (heli.y === top) heli.vy = Math.min(0, heli.vy);
         }
       } else if (cruiseOffered) cruiseOffered = false;
       return api.takeEvents();
@@ -1179,9 +1236,12 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // landing zone delivers the car there: the player's own car is saved
     // there, and a customer's car at its drop-off finishes the job.
     pressHook() {
-      if (phase !== 'flying' || !loads.length || bucketLoad()) return null;
+      if (phase !== 'flying' || !loads.length) return null;
+      // A fitted bucket or rescue line keeps the hook busy; H says so when a
+      // load is near enough to be meant (H with the bucket also pours).
+      if (bucketLoad()) return refuseHook('bucket');
       // H does nothing while people are on the line (section 4).
-      if (rescueOn && hNothing(loads)) return null;
+      if (rescueOn && hNothing(loads)) return refuseHook('rescueLine');
       const held = heldLoad();
       if (held) {
         const result = release(held, world.ground);
@@ -1218,10 +1278,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       let result, hooked = load;
       if (load.supply && gear?.crates >= 2) {
         const netted = hookCrates(heli, crateLoads(), gear);
-        if (!netted.ok) return null;
+        if (!netted.ok) return refuseHook();
         result = netted; hooked = netted.carrier;
       } else {
-        if (!canHook(heli, load, gear)) return null;
+        if (!canHook(heli, load, gear)) return refuseHook();
         result = hook(heli, load, gear);
         if (!result.ok) return null;
       }
@@ -1284,10 +1344,15 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // Fuel from the pump: only on the home pad, with the engine idling on
     // the ground. Infinity fills the tank (the free first tank).
     buyFuel(kg = Infinity) {
-      if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The pump is at the home pad.'};
+      if (phase !== 'flying' || !pumpHere()) return {ok: false, reason: 'The pump is at the home pad.'};
       if (!pumpOpen()) return {ok: false, reason: 'Finish lesson 3, landing, to use the pump.'};
       storeFuel();
-      const result = commit(buyFuel(save, kg, flag));
+      // The free first tank is the home pad's: at the Summit truck fuel is always paid, and
+      // the pilot's free tank at the pad is left for the pad.
+      const freeTank = heliOf(save).refuels === 0 && !onHome();
+      let bought = freeTank ? buyFuel({...save, heli: {...heliOf(save), refuels: 1}}, kg, flag) : buyFuel(save, kg, flag);
+      if (freeTank && bought.ok) bought = {...bought, profile: {...bought.profile, heli: {...heliOf(bought.profile), refuels: 0}}};
+      const result = commit(bought);
       if (result.ok) {
         refuelHeli(heli, heliOf(save).fuelKg);
         emit({type: 'fuelBought', kg: result.kg, cost: result.cost});
@@ -1594,6 +1659,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         ...(summitOn ? {destinations: Object.freeze(Object.keys(places))} : {}),
       });
     },
+    // The ring under the load the hook is near (FIX-HELI-HOOK). Kept out of
+    // view() so the view's shape, and the fingerprints made of it, stay as they were;
+    // the app adds it for the drawing.
+    hookGuide: hookGuideView,
     fingerprint() {
       const spot = car => `${car.x.toFixed(6)}|${car.y.toFixed(6)}|${car.z.toFixed(6)}|${car.hooked}`;
       return `${phase}|${site?.courseId}|${heli ? heliFingerprint(heli) : '-'}|` +
@@ -1601,6 +1670,46 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         loads.slice(1).map(car => `|${car.id}|${spot(car)}`).join('');
     },
   };
+  // What H would do to the nearest load now, without doing it (FIX-HELI-HOOK):
+  // the load nearest the hook within CABLE.guideReach sideways, the gear's
+  // numbers H would hook it with, why H would not hook it (null when it
+  // would) and ready (H hooks it now). Null with no load that near.
+  function hookAim() {
+    if (phase !== 'flying' || !heli) return null;
+    const gear = hookGear(), net = gear?.crates >= 2;
+    const hookAt = {x: heli.x, z: heli.z};
+    const reach = car => Math.hypot(hookAt.x - car.x, hookAt.z - car.z);
+    let load = null;
+    for (const car of loads) {
+      if (car.bucket || car.rescue || car.hooked || car.netted || car.falling) continue;
+      if (!load || reach(car) < reach(load)) load = car;
+    }
+    if (!load || reach(load) > CABLE.guideReach) return null;
+    const opts = net && load.supply ? {...gear, hookReach: NET_REACH} : gear;
+    const refusal = hookRefusal(heli, load, opts);
+    const limitKg = Number.isFinite(gear?.hookLimitKg) ? gear.hookLimitKg : KESTREL.hookLimitKg;
+    const barred = !!bucketLoad() || rescueOn && hNothing(loads) || !(load.massKg <= limitKg) ||
+      !load.crate && !load.supply && (!liftCheck(load.id).ok || !lessonsDone().carry);
+    return {load, refusal, ready: !refusal && !barred};
+  }
+  // A failed H press: the reason given (the bucket or the line), else what
+  // the hook still needs, as a hookRefused event the panel words and sounds.
+  // Quiet (null) when no load is near enough to be meant.
+  function refuseHook(reason = null) {
+    const aim = hookAim();
+    const why = reason ? {reason} : aim?.refusal;
+    if (!aim || !why || why.reason === 'hooked') return null;
+    const event = {type: 'hookRefused', reason: why.reason, id: aim.load.id, ...(why.metres ? {metres: why.metres} : {})};
+    emit(event);
+    return event;
+  }
+  // The ring on the ground under the load the hook is near: green when H hooks it now.
+  function hookGuideView() {
+    const aim = hookAim();
+    if (!aim) return null;
+    return Object.freeze({id: aim.load.id, x: aim.load.x, z: aim.load.z, y: world.ground.height(aim.load.x, aim.load.z), ready: aim.ready});
+  }
+
   function bucketView() {
     const bucket = bucketLoad();
     if (!bucket) return null;

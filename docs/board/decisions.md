@@ -4,6 +4,16 @@ Standing decisions D1-D7 are approved in [SPEC.md](../../SPEC.md), section 15.
 This log is for choices the spec does not settle. Record the choice, reason,
 and how to reverse it before continuing.
 
+## Keep these: fun that looks like a bug (Kyle, 24 October 2026)
+
+Never "fix" these. A card that would change one must say so and ask Claude first.
+
+- **Summit Run hillside:** fly off the edge and you can drive along the side of
+  the mountain and jump back up onto the course. Keep it driveable.
+- **Monster truck big air:** the Titan launches off cars it drives over
+  (restored by FUN-TITAN-LAUNCH).
+
+
 ## 2026-09-22 PDT — FND-10/FND-11 order
 
 - Decision: Use FND-10's integrated seven historical fixtures as the

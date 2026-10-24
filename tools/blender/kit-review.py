@@ -8,7 +8,7 @@ TARGET_LENGTHS = {'falcone_f42':4.80,'stuttgart_959s':4.80,
                   'falcone_heritage':4.80,'aurora_gt':4.80,
                   'dusthawk_rally':4.20,'banshee_muscle':5.10,
                   'viper_proto':4.90,'titan_monster':5.20,
-                  'koenigsegg_jesko':4.95,'ferrari_enzo':4.70}
+                  'koenigsegg_jesko':4.95,'ferrari_enzo':4.70,'mclaren_f1':4.28,'bugatti_bolide':4.82}
 
 def arguments():
     parser = argparse.ArgumentParser()

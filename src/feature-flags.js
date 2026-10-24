@@ -14,8 +14,9 @@ export const FEATURE_STATES = Object.freeze({
   'crew-gear': 'on', 'fight-voices': 'on', 'cpu-crews': 'on', 'ambush-alley': 'on', gunn: 'on',
   // Phase 4 (docs/CIRCUITS.md): racing a full field in a Grand Prix.
   'tyre-slip': 'dev',
+  'driving-lessons': 'dev',
   'lap-choice': 'on', 'snowmen': 'on', yeti: 'on', 'rival-voices': 'dev',
-  'grand-prix': 'on', 'grand-prix-career': 'dev', 'snow-world': 'dev',
+  'grand-prix': 'on', 'cpu-racecraft': 'dev', 'grand-prix-career': 'dev', 'snow-world': 'dev',
   // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.
   ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
   // The Deep (docs/THE_DEEP.md): the hidden underwater world. Off; nothing reaches it yet.
@@ -34,6 +35,8 @@ export const FEATURE_STATES = Object.freeze({
   // H3 Skins (docs/HELI_WILDLIFE.md): mission skins, gear, dirt and the wash. Off in the game; works only with the helicopter on.
   // Named heli-skins, not heliSkins as the packet says: switch names are lower case with hyphens.
   'heli-skins': 'dev',
+  // H5 Heli-skiing (docs/HELI_SKIING.md): the ski rules, runs and drops. Off in the game; works only with the helicopter on and Summit Run owned.
+  'heli-skiing': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

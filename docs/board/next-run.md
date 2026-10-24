@@ -40,7 +40,7 @@ its remaining presentation hook does not hold the next core/save cards.
    step, 04:00 to about 04:40. Laptop screen off, Dells on.
 7. **Holds:** read the top of docs/playtest-inbox.md before every heavy job;
    start nothing heavy while a FULL TIER FOR RELEASE STARTING or FRAME CHECK
-   STARTING has no later DONE. At most three heavy jobs across all chats.
+   STARTING has no later DONE. At most two heavy jobs across all chats (Kyle, 24 October).
 
 **Build while checks wait (Kyle, 15 October evening).** A frozen card waiting
 only for a heavy slot does not stop source work. Release core/save locks it
@@ -120,7 +120,7 @@ first.
 ## Limits
 
 At most six build lanes across all teams, no more than three course lanes.
-At most three heavy jobs at once, each `--jobs 4` or fewer. Check node.exe
+At most two heavy jobs at once (Kyle, 24 October), each `--jobs 4` or fewer. Check node.exe
 command lines first.
 
 Merge as soon as one lane tier and a build are green, with one review where
