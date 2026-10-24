@@ -185,3 +185,25 @@ export function stepBucket(bucket, {ground = null, wind = null, pour = false} = 
   bucket.parcels = still;
   return {events, patches};
 }
+
+// ---- gear: the fire service skin (docs/HELI_WILDLIFE.md section 5.3) --------
+// gear is the worn gear's numbers (heli-skins.js gearStats); with the base kit,
+// or none, the panel keeps its words and there is no sight dot.
+
+// What the panel says about the water aboard. Always the words; with the water
+// gauge worn (gear.litreGauge) also the litres, and the text is the litres
+// instead of the words. capacity is what this bucket can hold now.
+export function bucketReading(bucket, gear) {
+  const words = bucketWords(bucket), capacity = bucketHolds(bucket);
+  if (gear?.litreGauge !== true) return {words, litres: null, capacity, text: words};
+  const litres = Math.round(bucket.water);
+  return {words, litres, capacity, text: `${litres} L`};
+}
+
+// The drop sight (gear.dropSight): a dot at the exact centre of the aim ring,
+// {x, z}, or null when the sight is not worn or there is no water to drop.
+export function dropSightDot(bucket, gear, env = {}) {
+  if (gear?.dropSight !== true || !(bucket.water > 0)) return null;
+  const point = aimPoint(bucket, env);
+  return point ? {x: point.x, z: point.z} : null;
+}

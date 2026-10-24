@@ -265,7 +265,8 @@ export async function buildReferenceRecord(target, {maxSeconds = 720, AppClass, 
 
 // Load the production registry only after its supported QA flags are active.
 // A separate process avoids cached imports and gives it no real save storage.
-export async function runReferenceWorker({targets = referenceTargets(), catalogOnly = false, retainPoses = false} = {}) {
+export async function runReferenceWorker({targets = referenceTargets(), catalogOnly = false, retainPoses = false, flags = []} = {}) {
+  if(!Array.isArray(flags)||flags.some(flag=>flag!=='tyre-slip')) throw Error('Unsupported reference flags.');
   const script = `
     const request = JSON.parse(process.argv[1]), rows = new Map();
     globalThis.__DUEL_QA__ = true;
@@ -281,7 +282,7 @@ export async function runReferenceWorker({targets = referenceTargets(), catalogO
       : await recipe.buildReferenceSet({targets:request.targets,retainPoses:request.retainPoses});
     process.stdout.write(JSON.stringify(result));
   `;
-  const request = {targets, catalogOnly, retainPoses, flags: ALL_CIRCUITS.map(circuit => circuit.flag),
+  const request = {targets, catalogOnly, retainPoses, flags: [...new Set([...ALL_CIRCUITS.map(circuit => circuit.flag), ...flags])],
     recipe: import.meta.url, config: new URL('../src/config.js', import.meta.url).href,
     switches: new URL('../src/feature-flags.js', import.meta.url).href};
   try {
@@ -294,13 +295,13 @@ export async function runReferenceWorker({targets = referenceTargets(), catalogO
   }
 }
 
-export async function buildReferenceSet({targets = referenceTargets(), run = buildReferenceRecord, onRecord = () => {}, retainPoses = false} = {}) {
-  if (run === buildReferenceRecord && targets.some(target => !COURSE.some(definition => definition.id === target.eventId))) {
+export async function buildReferenceSet({targets = referenceTargets(), run = buildReferenceRecord, onRecord = () => {}, retainPoses = false, flags = []} = {}) {
+  if (run === buildReferenceRecord && (flags.length || targets.some(target => !COURSE.some(definition => definition.id === target.eventId)))) {
     // Reject typos here rather than recursively starting another worker.
     const known = new Set(referenceTargets().map(target => target.eventId));
     const missing = targets.find(target => !known.has(target.eventId));
     if (missing) throw Error(`Unknown reference event: ${missing.eventId}`);
-    const records = await runReferenceWorker({targets,retainPoses});
+    const records = await runReferenceWorker({targets,retainPoses,flags});
     for (const target of targets) onRecord(target, records[target.key]);
     return records;
   }
@@ -338,10 +339,12 @@ async function main() {
   const args = process.argv.slice(2), event = args.find(arg => arg.startsWith('--event='))?.slice(8);
   const route = args.find(arg => arg.startsWith('--route='))?.slice(8), probe = args.includes('--probe');
   const posesOnly = args.includes('--poses-only');
+  const flags=args.find(arg=>arg.startsWith('--flags='))?.slice(8).split(',') ?? [];
+  if(flags.length&&!probe) throw Error('Switch-on references need --probe; existing published laps must stay unchanged.');
   if (route && !probe) throw Error('A filtered reference run needs --probe; partial data cannot be published.');
   const targets = referenceTargets().filter(target => (!event || target.eventId === event) && (!route || target.route === route));
   if (!targets.length) throw Error('No reference target matched.');
-  const records = await buildReferenceSet({targets,retainPoses:posesOnly,
+  const records = await buildReferenceSet({targets,retainPoses:posesOnly,flags,
     onRecord: (target, record) => console.log(`${target.key}: ${record.lapMs} ms, ${record.trace.length} samples, ${record.courseFingerprint}`)});
   if (probe) return;
   if (posesOnly) {

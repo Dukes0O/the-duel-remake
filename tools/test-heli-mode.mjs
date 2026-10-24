@@ -13,6 +13,10 @@ import {FEATURE_STATES} from '../src/feature-flags.js';
 import {INPUT_CONTEXTS, heliControls, keyboardAction} from '../src/input-contexts.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {canHook} from '../src/heli/heli-cable.js';
+import {createHeliState, stepHeli, HELI_STEP, GRAVITY, KESTREL} from '../src/heli/heli-flight.js';
+import {flatGround} from '../src/heli/heli-ground.js';
+import {supplyPickup} from '../src/heli/heli-search.js';
+import {SUPPLY_CRATES} from '../src/heli/heli-rescue.js';
 import {heliOf, carAt} from '../src/heli/heli-save.js';
 import {HOME_COURSE, HELI_DESTINATIONS, legFuelKg, bearing} from '../src/heli/heli-jobs.js';
 import {createHeliSession, courseSite, insideArea, HELI_SESSION} from '../src/heli/heli-session.js';
@@ -101,6 +105,43 @@ for (const id of Object.keys(HELI_DESTINATIONS)) {
     ok(insideArea(site.area, p.x, start.y + 150, p.z), `${id}: the arrival point from ${other} is inside the area`);
   }
   assert.deepEqual(courseSite(course, ground, id), site, `${id}: the same zone every time`); checks++;
+}
+
+// Summit Run (docs/HELI_RESCUE.md sections 5.5 and 12), a fourth place only with
+// its switch on: its landing zone and flying area, and the thin-air supply run.
+{
+  const {course, ground} = loadCourse('summit-run');
+  const options = {summitRun: true};
+  const site = courseSite(course, ground, 'summit-run', options);
+  const start = course.at(0);
+  ok(Math.hypot(site.zone.x - start.x, site.zone.z - start.z) < 220, 'summit-run: the zone is beside the start');
+  ok(ground.near(site.zone.x, site.zone.z, site.zone.radius).every(o => o.top <= site.zone.y + 0.5), 'summit-run: nothing tall in the zone');
+  ok(Math.hypot(site.parking.x - site.zone.x, site.parking.z - site.zone.z) > site.zone.radius, 'summit-run: the parking spot is off the pad');
+  ok(insideArea(site.area, start.x, start.y + 50, start.z) && !insideArea(site.area, start.x, site.area.ceiling + 1, start.z), 'summit-run: the start is inside the flying area, under its ceiling');
+  for (const other of ['tremblant-woods', 'tremblant-snow', 'panorama-ridge']) {
+    const toward = bearing('summit-run', other, options);
+    ok(insideArea(site.area, site.zone.x + toward.x * 1500, start.y + 150, site.zone.z + toward.z * 1500), `summit-run: the arrival point from ${other} is inside the area`);
+    // And the other courses' areas take in the arrival point from Summit Run.
+    const here = loadCourse(other), there = courseSite(here.course, here.ground, other, options), back = bearing(other, 'summit-run', options);
+    ok(insideArea(there.area, there.zone.x + back.x * 1500, here.course.at(0).y + 150, there.zone.z + back.z * 1500), `${other}: the arrival point from summit-run is inside the area`);
+    // With the switch off the area is what it was.
+    assert.deepEqual(courseSite(here.course, here.ground, other), courseSite(here.course, here.ground, other, {summitRun: false})); checks++;
+  }
+  assert.deepEqual(courseSite(course, ground, 'summit-run', options), site, 'summit-run: the same zone every time'); checks++;
+  // Thin air: the pickup is on the open road about 3,430 m up. The heaviest crate with a full tank does not climb out of it; half a tank does.
+  const startY = course.at(0).y, altitude = y => 2860 + y - startY, pickup = supplyPickup(course, ground);
+  near(altitude(pickup.y), 3430, 20, 'summit-run: the supply pickup is about 3,430 m up');
+  const flat = flatGround(0);
+  const climbIn60 = (metres, fuelKg, cargoKg) => {
+    const h = createHeliState({x: 0, z: 0, heading: 0, fuelKg, mode: 'assisted', altitudeOffset: metres, ground: flat});
+    Object.assign(h, {y: 40, onGround: false, engine: true, rotorPct: 100});
+    for (let n = 0; n < 60 * 120; n++) stepHeli(h, {lift: 1}, {ground: flat, external: {x: 0, y: -cargoKg * GRAVITY, z: 0}}, HELI_STEP);
+    return h.y - 40;
+  };
+  const heaviest = Math.max(...SUPPLY_CRATES.summitRun.map(crate => crate.massKg));
+  ok(climbIn60(altitude(pickup.y), KESTREL.tankKg, heaviest) < 0, `summit-run: a full tank and the ${heaviest} kg crate do not leave the pickup`);
+  ok(climbIn60(altitude(pickup.y), KESTREL.tankKg / 2, heaviest) > 30, 'summit-run: half a tank does');
+  ok(climbIn60(0, KESTREL.tankKg, heaviest) > 30, 'at sea level the same load climbs easily: it is the thin air');
 }
 
 // Fuel at the pump: the first tank is free, then 1.5 credits a kg; only at home.
@@ -342,6 +383,8 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js',
     // FIRE-VIEW's browser check grows its fire by the game's own rules.
     ...['heli-ground', 'heli-session', 'heli-fire', 'heli-missions', 'heli-save'].map(name => `tools/scenarios/fire-view.mjs|heli/${name}.js`),
+    // RESCUE-VIEW's look check picks the hiker with the game's own search and arms the engine in its saves.
+    ...['heli-ground', 'heli-session', 'heli-missions', 'heli-save', 'heli-search'].map(name => `tools/scenarios/rescue-view.mjs|heli/${name}.js`),
     // FIRE-FINISH's play-through arms the mission engine in its saves.
     ...['heli-missions', 'heli-save'].map(name => `tools/scenarios/fire-finish.mjs|heli/${name}.js`),
     // And its node test reads the drawing files it checks.
@@ -359,7 +402,7 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
   }
   assert.deepEqual(offenders, [], 'no unapproved src/heli imports'); checks++;
   // Every helicopter file except the drawing, page and sound ones is game rules.
-  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js', 'heli-fire-view.js']);
+  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js', 'heli-fire-view.js', 'heli-rescue-view.js']);
   const sim = readdirSync(join(root, 'src/heli')).filter(name => name.endsWith('.js') && !drawing.has(name));
   ok(sim.length >= 7, `the rules files are checked (${sim.join(', ')})`);
   for (const name of sim) {

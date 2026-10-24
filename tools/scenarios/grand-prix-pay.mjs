@@ -1,6 +1,6 @@
 // One real result layout for P4-CAREER-PAY, using the existing private harness.
 import {installTestDriver, LINE_SKILL} from '../race-field-balance.mjs';
-import {DRIVE, steeringYawAuthority} from '../../src/config.js';
+import {DRIVE, steeringYawAuthority, TYRE_SLIP, steeringGrip, tyreClamp, tyreSlipSteering, steerForYaw} from '../../src/config.js';
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {
@@ -20,6 +20,9 @@ export async function run(context) {
     if(app.duel.course.script)throw Error('This recipe owns unscripted Pacific only');
     const DRIVE=${JSON.stringify(DRIVE)},LINE_SKILL=${LINE_SKILL};
     const steeringYawAuthority=${steeringYawAuthority.toString()};
+    const TYRE_SLIP=${JSON.stringify(TYRE_SLIP)};
+    const steeringGrip=${steeringGrip.toString()},tyreClamp=${tyreClamp.toString()};
+    const tyreSlipSteering=${tyreSlipSteering.toString()},steerForYaw=${steerForYaw.toString()};
     const clampTo=(value,limit)=>Math.max(-limit,Math.min(limit,value));
     (${installTestDriver.toString()})(app);
     window.__gpPayWallet=app.profile.credits;

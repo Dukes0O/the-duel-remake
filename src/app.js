@@ -1,3 +1,4 @@
+import {racingLineFor,buildSpeedProfile} from './race-lines.js';
 import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
 import {settleCup} from './progression.js';
@@ -8,6 +9,7 @@ import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
+import * as wildlifeRules from './wildlife.js';
 import {fireOnNewDay, fireWorld} from './heli/heli-fire-run.js';
 import {notePlayDay, buyBack as buyBackSave, fireOf} from './heli/heli-save.js';
 import {courseClosed, closureCard, burnStage, burnSmoke, scarLooks} from './course-closures.js';
@@ -47,7 +49,7 @@ import {warlordEnabled} from './warlords/index.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
-import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority } from './config.js';
+import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority, steerForYaw, TYRE_SLIP, tyreSlipSteering } from './config.js';
 import { EngineAudio } from './audio.js';
 import { loadPlayers, savePlayers, PLAYERS_KEY, playerName, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
@@ -896,6 +898,7 @@ export class App {
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
       deepEnabled:this._switches().enabled('the-deep')===true,
       earnedCarsEnabled:this._switches().enabled('earned-cars')===true,
+      ...(state.tyreSlipRules===true&&state.difficulty==='pro'&&COURSE[state.stageIndex]?.kind==='drift'?{tyreSlipRules:true}:{}),
       intelEnabled:this._switches().enabled('grand-prix')===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(COURSE[state.stageIndex],state.mode)){
@@ -1373,6 +1376,14 @@ export class App {
   _fireOn() {
     return this._switches().enabled('helicopter') === true && this._switches().enabled('forest-fire') === true;
   }
+  // Where an animal of the wildlife count may stand on a course: off the road,
+  // out of lakes and walls, anywhere in the square (not only near the road).
+  _surveyStand(courseId, world) {
+    this._standCheckers ??= new Map();
+    if (!this._standCheckers.has(courseId)) this._standCheckers.set(courseId, wildlifeRules.createPlacementChecker(world.course));
+    const checker = this._standCheckers.get(courseId);
+    return (x, z) => !!checker.inspect(x, z, {maxEdge: Infinity});
+  }
   // A course model at the helicopter's seed, built once, for fire grids; it
   // never touches the course being raced or flown.
   _fireCourse(courseId) {
@@ -1454,7 +1465,9 @@ export class App {
     const fireOn = this._fireOn();
     if (fireOn) this.heliAudio.preloadFire?.();
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
-      fireEnabled: fireOn, playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
+      fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true,
+      skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
+      wildlife: wildlifeRules, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       persist: profile => {
         // Credits the session charged since its last save move the app's
@@ -1470,7 +1483,7 @@ export class App {
   }
   _heliEvents(events) {
     for (const event of events) {
-      if (event.type === 'cue') this.heliAudio.play(event.id);
+      if (event.type === 'cue') { if (event.pitch > 0) this.heliAudio.play(event.id, {rate: event.pitch / 1000}); else this.heliAudio.play(event.id); }
       else if (event.type === 'fireHiss') this.heliAudio.play('heli.fire.hiss', {scale: Math.min(1, .3 + event.litres / 150)});
       else if (event.type === 'radio') this.heliAudio.say(event.line);
       else this.heliAudio.event(event);
@@ -1801,11 +1814,11 @@ export class App {
     else if (action.startsWith('gear:')) this.duel.selectFootGear(Number(action.slice(5)));
     else if (action === 'shift-up') this.duel.setInput({ shiftUp: true });
     else if (action === 'shift-down') this.duel.setInput({ shiftDown: true });
-    else if (action === 'heli-hook') this._heliPress(session => session.pressHook());
+    else if (action === 'heli-hook') this._heliPress(session => session.hookKey());
     else if (action === 'heli-autopilot') this._heliPress(session => session.pressAutopilot());
     else if (action === 'heli-cruise') this._heliPress(session => session.acceptCruise());
     else if (action === 'heli-radio') this._heliPress(session => session.pressRadio());
-    else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % 4; this.duel.emit({heli: true}); }
+    else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % (this.heliSession?.cameraCount ?? 4); this.duel.emit({heli: true}); }
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
   }
@@ -1846,7 +1859,10 @@ export class App {
     const arena=this.duel.course?.def.venue===true&&this.duel.course?.def.arena===true;
     if(this._keyboardArena!==arena){this._resetKeyboardInput();this._keyboardArena=arena;}
     const steering=arena?this._arenaKeyboardSteering:this._keyboardSteering;
-    const keyboardSteer = steering.update(keyboardSteeringDirection(k),dt,st.speedMph);
+    const tyreKeyboard = st.tyreSlipRules === true && !st.airborne && st.speedMph >= 0
+      ? {tyreSlip: true, car: this.duel.car, grip: this.duel.car.grip,
+        traction: this.duel._drivingSurface(st.s,st.lateral).traction, course: this.duel.course} : undefined;
+    const keyboardSteer = steering.update(keyboardSteeringDirection(k),dt,st.speedMph,tyreKeyboard);
     const pressedThrottle=heldInput(context,'throttle',k);
     const keyboardThrottle=arena?(pressedThrottle?1:0):this._keyboardThrottle.update(pressedThrottle,dt);
     this.duel.setInput({
@@ -1891,9 +1907,20 @@ export class App {
       d.setInput({ shiftUp: st.revs > .95, shiftDown: st.revs < .48 && st.gear > 0 });
     }
 
+    if (st.tyreSlipRules === true && d.course.def.kind === 'drift' && !st.airborne && st.speedMph >= 0) {
+      this._driveSlipDrift();
+      return;
+    }
+
     // Visit the shoulder once to exercise reduced grip and recovery steering.
     if (!this._scriptedCrashDone && !st.objective && st.s > 250) {
-      d.setInput({ throttle: 1, brake: 0, steer: 1 }); // swerve off the road
+      let swerve = 1;
+      if (st.tyreSlipRules && !st.airborne && st.speedMph >= 0) {
+        const traction = d._drivingSurface(st.s,st.lateral).traction;
+        swerve = steerForYaw(-steeringYawAuthority(st.speedMph,d.car.grip,traction,d.car),
+          {speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake:0,tyreSlip:true});
+      }
+      d.setInput({ throttle: 1, brake: 0, steer: swerve }); // swerve off the road
       if (st.offRoad && Math.abs(st.lateral) > (d.course.roadHalfWidthAt?.(st.s)??DRIVE.roadHalfWidth) + 2) this._scriptedCrashDone = true;
       else return;
     }
@@ -1926,17 +1953,52 @@ export class App {
     const look = d.course.at(st.s + metresPerSec * .18);
     const desiredYaw = look.curvature * metresPerSec + (headingTarget - st.headingError) * 6;
     const drivingSurface=d._drivingSurface(st.s,st.lateral),traction=drivingSurface.traction;
-    const authority = Math.max(.05, steeringYawAuthority(st.speedMph, d.car.grip, traction, d.car));
-    const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     const bend = Math.max(Math.abs(frame.curvature), Math.abs(d.course.at(st.s + 100).curvature), Math.abs(d.course.at(st.s + 220).curvature));
     // Winter corners use the same actual traction as steering. Other surfaces
     // retain the old plan, including winter tyres on dry asphalt.
     const cornerGrip = ['snow', 'deep-snow', 'ice'].includes(drivingSurface.gripKind) ? traction : 1;
-    const cornerSpeed = Math.min(d.car.topSpeed * .94, .85 * Math.sqrt(DRIVE.maxLateralAccel * d.car.grip * cornerGrip / Math.max(.0001, bend)) / DRIVE.mphToWorld);
+    const cornerFactor = .85;
+    const cornerSpeed = Math.min(d.car.topSpeed * .94, cornerFactor * Math.sqrt(DRIVE.maxLateralAccel * d.car.grip * cornerGrip / Math.max(.0001, bend)) / DRIVE.mphToWorld);
     const targetSpeed = Math.min(drivingSurface.speedLimit,transit?.speedMph ?? cornerSpeed);
     const throttle = st.speedMph < targetSpeed ? 1 : 0;
     const brake = st.speedMph > targetSpeed + 4 ? Math.min(1, (st.speedMph - targetSpeed) / 20) : 0;
+    let steer = steerForYaw(desiredYaw,{speedMph:st.speedMph,grip:d.car.grip,traction,car:d.car,brake,
+      tyreSlip:st.tyreSlipRules === true && !st.airborne && st.speedMph >= 0});
     d.setInput({ throttle, brake, steer, boost: false });
+  }
+
+  _driveSlipDrift() {
+    const d=this.duel, st=d.state, course=d.course;
+    let route=this._driftLine;
+    if (!route || route.course!==course || route.car!==d.car) {
+      const line=racingLineFor(course);
+      this._driftLine=route={course,car:d.car,line,profile:buildSpeedProfile(line,d.car)};
+    }
+    const v=st.speedMph*DRIVE.mphToWorld;
+    const targetLat=route.line.offsetAt(st.s+Math.max(12,v*.45));
+    const error=targetLat-st.lateral;
+    const heading=Math.atan(error*2.5/Math.max(15,v));
+    const look=course.at(st.s+v*.18);
+    const desiredYaw=look.curvature*v+(heading-st.headingError)*6;
+    const surface=d._drivingSurface(st.s,st.lateral);
+    const targetSpeed=Math.min(surface.speedLimit,d.car.topSpeed*.97,
+      route.profile.at(st.s)*TYRE_SLIP.driftLineSkill*Math.sqrt(surface.traction||1));
+    const brake=st.speedMph>targetSpeed+3?Math.min(1,(st.speedMph-targetSpeed)/14):0;
+    let throttle=st.speedMph<targetSpeed?1:0;
+    let steer=steerForYaw(desiredYaw,{speedMph:st.speedMph,grip:d.car.grip,
+      traction:surface.traction,car:d.car,brake,tyreSlip:true});
+    if (st.speedMph>=TYRE_SLIP.driftMinMph) {
+      if (Math.abs(error)<=TYRE_SLIP.driftRecoveryMeters && Math.abs(look.curvature)>.0001) {
+        const {peakYaw,steerGain}=tyreSlipSteering({speedMph:st.speedMph,grip:d.car.grip,
+          traction:surface.traction,car:d.car,brake});
+        const ask=Math.abs(steer)*steerGain/Math.max(.000001,peakYaw);
+        if (ask<TYRE_SLIP.driftAskLow || ask>TYRE_SLIP.driftAsk) {
+          steer=-Math.sign(look.curvature)*Math.min(1,TYRE_SLIP.driftAsk*peakYaw/Math.max(.05,steerGain));
+        }
+      }
+      if (st.tyreSlip>TYRE_SLIP.driftLiftSlip) throttle=0;
+    }
+    d.setInput({throttle,brake,steer,boost:false});
   }
 
   _bindKeys() {
@@ -2000,6 +2062,7 @@ export class App {
     },{signal});
     window.addEventListener('blur', () => {
       this.keys = {};
+      this.heliSession?.cancelHook();
       this._footPointer.fire=this._footPointer.aim=false;
       this._resetKeyboardInput();
       if (!this.duel.state.paused && ['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) this.togglePause();

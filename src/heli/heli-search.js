@@ -267,3 +267,46 @@ export function crateSpots(course, ground, zone) {
 // The most Kestrel One holds in the air at an altitude (H1: thrust times
 // e to the minus altitude over 8,500 m), in kg of everything flying.
 export const liftAt = altitudeM => KESTREL.maxThrust * airFactor(altitudeM) / GRAVITY;
+
+// ---- gear: the search and rescue skin (docs/HELI_WILDLIFE.md section 5.3) -----
+// gear is the worn gear's numbers (heli-skins.js gearStats). With the base kit,
+// or none, the search ends at dark and the panel shows the flare and the
+// beacon only.
+
+// The hiker search clock limit in seconds: the searchlight (gear.searchNightMinutes)
+// adds its minutes on into the night. Only the hiker search; every other kind,
+// and the base kit, keep the limit they have.
+export function searchLimit(baseSeconds, kind, gear) {
+  const minutes = kind === 'hiker' && Number.isFinite(gear?.searchNightMinutes) ? Math.max(0, gear.searchNightMinutes) : 0;
+  return baseSeconds + minutes * 60;
+}
+
+// Where the hiker search is in the light: baseSeconds is the clock limit with
+// no searchlight (dark falls there). Returns {dark, nightSeconds, lightOn}:
+// whether dark has fallen, how long it has been dark, and whether the
+// searchlight is lighting the night (worn, and dark).
+export function searchNight(clockSeconds, baseSeconds, gear) {
+  const nightSeconds = Math.max(0, clockSeconds - baseSeconds);
+  return {dark: clockSeconds >= baseSeconds, nightSeconds, lightOn: nightSeconds > 0 && searchLimit(baseSeconds, 'hiker', gear) > baseSeconds};
+}
+
+// The heat camera (gear.heatRange): the warm people it shows, nearest first.
+// heli is {x, y, z}; targets are the people of the rescue in hand, each
+// {x, z, y?} or null: hiker (shown within the heat range, trees do not hide
+// them), driver (the same, in a hoist rescue) and skier (the buried beacon,
+// shown only within gear.heatBuriedRange). Distance is measured in a straight
+// line, height included. Returns [{kind, x, z, distance}]; empty when the
+// camera is not worn. It shows; it never finds, counts or pays.
+export function heatContacts(heli, targets, gear) {
+  const range = Number.isFinite(gear?.heatRange) ? gear.heatRange : 0;
+  if (!(range > 0)) return [];
+  const buried = Number.isFinite(gear?.heatBuriedRange) ? gear.heatBuriedRange : 0;
+  const out = [];
+  for (const [kind, limit] of [['hiker', range], ['driver', range], ['skier', buried]]) {
+    const target = targets?.[kind];
+    if (!target || !(limit > 0)) continue;
+    const distance = Math.hypot(heli.x - target.x, (heli.y ?? 0) - (target.y ?? 0), heli.z - target.z);
+    if (distance <= limit) out.push({kind, x: target.x, z: target.z, distance});
+  }
+  return out.sort((a, b) => a.distance - b.distance || (a.kind < b.kind ? -1 : 1));
+}
