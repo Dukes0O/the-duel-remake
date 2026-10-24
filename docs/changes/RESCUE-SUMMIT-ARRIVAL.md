@@ -44,7 +44,12 @@ Snow, Panorama Ridge, the home pad, and Summit Run with rescues off.
 
 ## Changed assertions
 
-None.
+`tools/test-heli-autopilot-rescue.mjs`, "The flight itself" (home pad to Summit Run, both
+switches on): `near(dist(arrived.heli, arrived.zone), 1500, 40, 'arrived 1.5 km from the
+zone')` now asserts the helicopter is inside the landing circle (`dist <= zone.radius`),
+because the arrival point is the thing this card moves. The fuel (160 kg), the 2,860 m
+altitude base, the thin-air check and the autopilot's hover over the zone 20 m up that
+follow are unchanged and pass.
 
 ## Removed
 
