@@ -35,3 +35,15 @@ Locks: none. Sound: lines `drive.radio.line.*` (DRIVE-LESSONS-LINES-2),
 
 Acceptance: the test, lesson 1's tests unchanged, lane tier, build, one
 review. Removed: nothing.
+
+## Claude answers - the builder's three picks, 24 October
+
+(2) The esses' plan changes (15% of grip held back, corner speed held while the
+line curves) and (3) the radio ids are approved; DRIVE-LESSONS-LINES-2 is asked
+for an exit-specific racing-line line. (1) Keep the instructor's own speed at the
+gate, but at that speed the player must have at least 3 seconds of road between
+the gate and the first braking point (Fir Esses at 145 mph needs about 195 m); if
+the gate is closer, move it back along the road. A boy of eleven should not have to
+brake the moment the lesson starts. Built: the gate search in `linePlanFor`, and a
+test of the 3 seconds on both corners and both paces. Fir Esses moves to 585 m
+(Casual) and 580 m (Pro); Old Town keeps its gate.

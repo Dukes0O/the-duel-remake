@@ -49,3 +49,11 @@ with the ramp unused and with the switch off (lane guards); `test-deep-zone`
 unchanged apart from new `finds` cases; lane tier and build. List in the
 change note any suite the cloud could not run. Removed: nothing (the
 test-only `test-kelp` zone stays in its test, which checks the format).
+
+## Claude answers - the builder's four picks, 24 October
+
+All four approved. (1) The trail is 6 m wide at the ramp's end and 14 to 20 m
+elsewhere. (2) Keep the 55 degree V at the foot of the ramp. (3) The returning
+forest stretch has no title card. (4) Leave the drop beyond the lip to the look,
+and DEEP-SIRENA-VIEW now says the seaward side of the lip must read as a real
+drop into dark water, because the Sirena rests on a ledge just below it.

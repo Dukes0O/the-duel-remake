@@ -152,7 +152,7 @@ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 const preflight=main.indexOf('await backupBeforeMigration(undefined,backupStore)');
 const budgetGate=main.indexOf('budgetStorage=await prepareCareerBudget(');
 const virtualPreflight=main.indexOf('await backupBeforeMigration(budgetStorage.storage,backupStore)');
-const appConstruction=main.indexOf('export const app = new App()');
+const appConstruction=main.indexOf('export const app = new App(');
 assert.ok(preflight>=0&&budgetGate>preflight&&virtualPreflight>budgetGate&&appConstruction>virtualPreflight,
   'browser entry backs up both raw and imported older careers before App can migrate');
 await assert.rejects(importCareer(file,{storage:current,backupStore:{save:async()=>{throw new Error('IDB failed');}}}),/IDB failed/);

@@ -1,6 +1,8 @@
 # EARN-CAR-1 Ferrari Enzo, round 5: in the game (15 October 2026)
 
-Sheet: `round-5.jpg`, from the `enzo-look` browser scenario (private port,
+Sheet: removed 15 October 2026 once this verdict was recorded (Kyle has it;
+the looks folder has a 20 MB budget). Rebuild it with
+`tools/art/enzo-look-sheet.py` from the `enzo-look` browser scenario (private port,
 memory-only saves loaded from `tools/fixtures/saves/12-medals.json`, so the
 Enzo is owned; `earned-cars` on; 1280 x 720, High). The helicopter is live,
 so the scenario also records that Kestrel One set the Enzo down at Panorama

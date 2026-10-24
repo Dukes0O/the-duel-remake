@@ -22,10 +22,10 @@ function glbJson(bytes) {
   return JSON.parse(bytes.subarray(20, 20 + length).toString('utf8'));
 }
 
-test('all eleven cars have distinct local fitted kits with UVs and stable tier parts', async () => {
+test('all twelve cars have distinct local fitted kits with UVs and stable tier parts', async () => {
   const hashes = new Set();
   const cars = Object.keys(CARS);
-  assert.equal(cars.length, 11);
+  assert.equal(cars.length, 12);
   for (const car of cars) {
     const bytes = await readFile(join(root, 'public/assets/models/wasteland/kits', `${car}.glb`));
     hashes.add(createHash('sha256').update(bytes).digest('hex'));

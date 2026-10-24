@@ -247,9 +247,9 @@ function flySupply() {
     'supply: at the pickup\'s crate spots, not at the home pad');
   same(begin.loads.map(load => load.id), [], 'supply: never drawn as cars');
   ok(begin.rescue.active.courseId === 'summit-run' && begin.rescue.active.here && begin.rescue.active.sites.yard && begin.rescue.active.sites.pickup, 'supply: the panel names the pickup and the yard');
-  same([begin.rescue.active.sites.pickup.x, begin.rescue.active.sites.pickup.z, begin.rescue.active.sites.atTruck], [pickup.x, pickup.z, false], 'supply: and the truck is not here yet');
+  same([begin.rescue.active.sites.pickup.x, begin.rescue.active.sites.pickup.z, begin.rescue.active.sites.atTruck], [pickup.x, pickup.z, true], 'supply: and the start area has its own truck (RESCUE-SUMMIT-TUNE), standing in the landing circle');
   near(begin.rescue.active.target.distance, dist(begin.heli, pickup), 1, 'supply: the first target is the pickup');
-  ok(session.buyFuel(50).ok === false, 'supply: no fuel for sale at the start area (the pump is at the home pad)');
+  same(session.buyFuel(50).reason, 'The tank is full.', 'supply: the start area truck is here, and the tank is full (RESCUE-SUMMIT-TUNE)');
   // To the pickup (over the shoulder of the mountain), landing in its circle.
   log.push(...climbTo(session, summit, {x: pickup.x, z: pickup.z}, pickup.y + 30));
   ok(session.buyFuel(50).ok === false && session.view().rescue.active.sites.atTruck === false, 'supply: in the air the truck sells nothing');

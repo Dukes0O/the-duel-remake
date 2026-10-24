@@ -30,6 +30,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     yeti: 'on',
     'rival-voices': 'dev',
     'grand-prix-career': 'dev',
+    'cpu-racecraft': 'dev',
     'grand-prix': 'on', // Phase 4 (P4-FIELD): released 11 October 2026
     'snow-world': 'dev', // Phase 4: development switch
     'the-deep': 'dev', // The Deep (D0 DEEP-LOOK): the hidden underwater world, off, nothing reaches it yet
@@ -41,6 +42,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     rescue: 'dev', // H4 Rescue (RESCUE-SAVE): rescue save fields, off in the game
     wildlife: 'dev', // H3 Wildlife (SKIN-SAVE): animals and the wildlife count, off in the game
     'heli-skins': 'dev', // H3 Skins (SKIN-SAVE): skin, dirt and survey save fields, off in the game
+    'heli-skiing': 'dev', // H5 Heli-skiing (SKI-RULES): the ski rules, off in the game
     lab: 'dev', // The Lab (LAB-RULES): lessons, upgrades and their save field, off in the game
     'lab-tuning': 'dev', // Lab tuning (LAB-RULES): the Tune page and its physics, off in the game
   });

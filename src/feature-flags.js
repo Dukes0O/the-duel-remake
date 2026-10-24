@@ -16,7 +16,7 @@ export const FEATURE_STATES = Object.freeze({
   'tyre-slip': 'dev',
   'driving-lessons': 'dev',
   'lap-choice': 'on', 'snowmen': 'on', yeti: 'on', 'rival-voices': 'dev',
-  'grand-prix': 'on', 'grand-prix-career': 'dev', 'snow-world': 'dev',
+  'grand-prix': 'on', 'cpu-racecraft': 'dev', 'grand-prix-career': 'dev', 'snow-world': 'dev',
   // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.
   ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
   // The Deep (docs/THE_DEEP.md): the hidden underwater world. Off; nothing reaches it yet.
@@ -35,6 +35,8 @@ export const FEATURE_STATES = Object.freeze({
   // H3 Skins (docs/HELI_WILDLIFE.md): mission skins, gear, dirt and the wash. Off in the game; works only with the helicopter on.
   // Named heli-skins, not heliSkins as the packet says: switch names are lower case with hyphens.
   'heli-skins': 'dev',
+  // H5 Heli-skiing (docs/HELI_SKIING.md): the ski rules, runs and drops. Off in the game; works only with the helicopter on and Summit Run owned.
+  'heli-skiing': 'dev',
   // The Lab (docs/LAB.md): lessons, upgrades and their save field. Off in the game.
   lab: 'dev',
   // Lab tuning (docs/LAB.md 5): the Tune page and its physics, a separate switch so the race feel is judged alone.
