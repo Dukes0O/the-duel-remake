@@ -206,6 +206,16 @@ tasks:
     locks: []
     details: "docs/board/cards/GP-WIDE-START.md"
 
+  - id: GP-PASSING-2
+    title: "Grand Prix extra pass types with crash safety (switch cpu-racecraft)"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "M"
+    status: "backlog"
+    needs: [GP-RACECRAFT]
+    locks: []
+    details: "docs/board/cards/GP-PASSING-2.md"
+
   - id: SUMMIT-BUILD-TIME
     title: "Bring Summit's world build back under 1 s (1.5 s at release; keep the snow)"
     owner: "codex"
