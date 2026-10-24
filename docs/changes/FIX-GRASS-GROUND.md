@@ -108,7 +108,7 @@ Unchanged: titan-arena, titan-stunt-trial, titan-freestyle. (panorama-ridge chan
 
 ## Tests
 
-Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`): 114 passed, 6 failed. All six fail identically on an untouched checkout of `integration/wasteland`, so none comes from this change: `test-earned-cars-ui` (subtest 5), `test-medals` (10), `test-course-kit` (8), `test-drive-through` (3), and `test-salt-flats` and `test-salt-flats-art`, which open the Windows art library `C:\Users\kyleb\dev\art-library\kenney-car-kit` and cannot run in the cloud. The new `tools/test-grass-ground.mjs`, `test-world-composition.mjs` (47 checks) and `test-landscape-cells.mjs` pass. `npm run build` passes. Not run here: browser scenarios and look checks (the laptop does these) and the full tier.
+Run once on the branch after merging current `origin/integration/wasteland` (24 October): `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`: 122 passed, 6 failed. The six fail the same way on an untouched checkout of `integration/wasteland` and need Windows or the art library, so none comes from this change: `test-earned-cars-ui` (subtest 5), `test-medals` (10), `test-course-kit` (8), `test-drive-through` (3), and `test-salt-flats` and `test-salt-flats-art` (they open `C:\Users\kyleb\dev\art-library\kenney-car-kit`). The laptop's own lane run before the road fix was 124/124. `npm run build` passes after the merge. Passing in that run: the new `tools/test-grass-ground.mjs`, `test-world-composition.mjs` (47 checks), `test-landscape-cells.mjs`, `test-terrain.mjs`. Not run in the cloud: browser scenarios and look checks (the laptop reruns the `tremblant-views` pictures) and the full tier.
 
 ## Removed
 
