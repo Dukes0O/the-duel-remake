@@ -6827,6 +6827,342 @@
       "sha256": "eeeed2edaa4a9822b4b5a2936a8b64c6c7514c70b2d0dbe654c0d7c61816ef9e",
       "bytes": 72350,
       "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.hello",
+      "cue": "deep.ana.hello",
+      "text": "Hello? You found the old ramp! I'm Ana, at the field station. If you're staying down, could you help me count what lives here? Drive up slow and close, and the log does the rest.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 178,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-hello.mp3",
+      "sha256": "77d89dada079ca1a24017dc1564d9ddf2b40e7664f95ec7a159ae3e71c8042ab",
+      "bytes": 171824,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.legend",
+      "cue": "deep.ana.legend",
+      "text": "And keep your eyes open. In 1966 my grandmother's race car went over the side out here in a storm. Nobody has ever found it.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 124,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-legend.mp3",
+      "sha256": "29bf14ad6ec7237c7c80bfec553641475818d66d4ef9f2c4c50094ba4fb2325f",
+      "bytes": 124594,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.badge",
+      "cue": "deep.ana.badge",
+      "text": "Is that a Falcone badge? It is! Hold on, I'm sending you a sonar.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 65,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-badge.mp3",
+      "sha256": "7aa241021e1206dfade7a13ce7627ec649766e4b2cb60e074de51b638064818e",
+      "bytes": 69424,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.sonar",
+      "cue": "deep.ana.sonar",
+      "text": "Press R to ping. Sound runs through water at fifteen hundred metres a second, and the sonar times the echo. The blip shows where something solid is.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 148,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-sonar.mp3",
+      "sha256": "8f4c0d005e596e7f8580f45c85758588e69438d31d759ab3788ebda174becfea",
+      "bytes": 164718,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.bag",
+      "cue": "deep.ana.bag",
+      "text": "Stop right beside it and press F. One litre of air lifts about one kilo down there, so one bag will carry that.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 111,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-bag.mp3",
+      "sha256": "4c5c52efa51f48209fd3d6b61a2cc90f18a95161cdbef946c776eb745a1eae41",
+      "bytes": 111220,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.part",
+      "cue": "deep.ana.part",
+      "text": "Got it. My boat's got it. That's a real piece of the Sirena.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 60,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-part.mp3",
+      "sha256": "613c4a0db9e7559b4b66cab6b13eb8e064df664c2f0790145591e9f75ddac791",
+      "bytes": 58975,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.norseman",
+      "cue": "deep.ana.norseman",
+      "text": "You know, this isn't the only car on the sea floor. A Chrysler show car went down with a big liner in 1956, and it's still there today.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 135,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-norseman.mp3",
+      "sha256": "08eaf0f0cd95414dbd061d160298c752e6840d42575c1360d52b7572e517277a",
+      "bytes": 136297,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.deep",
+      "cue": "deep.ana.deep",
+      "text": "Five pieces, all light ones. The heavy part must have gone straight down. Try the edge of the drop-off.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 103,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-deep.mp3",
+      "sha256": "525d672ce17f6f9a44eea7ed9076445cf71b14ce305394062e5432cd671dc87a",
+      "bytes": 97845,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.car",
+      "cue": "deep.ana.car",
+      "text": "That's her. That's the Sirena. She's heavy, so it'll take four bags.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 68,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-car.mp3",
+      "sha256": "75676e7fcd1be3f57729ccb631104594f0b2dbc3240067b23065efe7b4f39b1f",
+      "bytes": 71514,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.raised",
+      "cue": "deep.ana.raised",
+      "text": "She's coming up! Look at that. Sixty years in the dark.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 55,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-raised.mp3",
+      "sha256": "cde18515874f411d9598814ebc01b9be5865ca83091e08f46b4bc7cad3a7c948",
+      "bytes": 55213,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.lab",
+      "cue": "deep.ana.lab",
+      "text": "She'll need a lot of work. Salt gets into the metal. Take her to the Lab.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 73,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-lab.mp3",
+      "sha256": "b2066f5f962f6b05badbf4bbdc4d1cfb613581212031057e09ba85c8df708cce",
+      "bytes": 68588,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.cup",
+      "cue": "deep.ana.cup",
+      "text": "Grandma Rosa watched you race. She says thank you. The Sirena finally ran the Coast Cup.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 88,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-cup.mp3",
+      "sha256": "2b0d3cc20be3b153917615dd679dafa1ab80336e99cfe69de4f2233a05d07a97",
+      "bytes": 95337,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.log",
+      "cue": "deep.ana.log",
+      "text": "That's one for the survey. Thank you.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 37,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-log.mp3",
+      "sha256": "f177a730a10df1c34f82b1352460e238e234c9b96ed47e61b1e921e91329d431",
+      "bytes": 38077,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.page",
+      "cue": "deep.ana.page",
+      "text": "That's every animal on the Kelp Coast. That page is done.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 57,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-page.mp3",
+      "sha256": "e28b8f79ef84bbfe8dcad9e86c49cbbac5eadf5a0c56599fa6275254a69c98ac",
+      "bytes": 53123,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.pearl",
+      "cue": "deep.ana.pearl",
+      "text": "A pearl! Abalone hardly ever make them. Keep it safe.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 53,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-pearl.mp3",
+      "sha256": "20767654f987c9249023957025c71c3ff897c4cdcbd401445b0ab445b2febec1",
+      "bytes": 58975,
+      "generated": "2026-10-24"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.otter",
+      "cue": "deep.ana.otter",
+      "text": "See the otters? They eat the sea urchins. No otters, no kelp forest.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 68,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-otter.mp3",
+      "sha256": "94ee61f610ec5f9989fe20926e8d4d88c743d79f814d84ce53541a88813d7c39",
+      "bytes": 75275,
+      "generated": "2026-10-24"
     }
   ]
 }
