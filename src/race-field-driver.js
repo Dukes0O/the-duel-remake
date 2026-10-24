@@ -13,18 +13,6 @@ import { racingLineFor, buildSpeedProfile, nextCorner, accelAt } from './race-li
 import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget,pitSpeedLimitAt} from './pit-lane.js';
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex } from './race-field.js';
 
-// Hold the absolute grid lane until braking; normal steering then merges safely.
-export function startLaneTarget(field, station, lineOffset) {
-  return station < field.gridStartS + field.startMergeFrom ? field.startLateral : lineOffset;
-}
-
-// At the first corner an overlapping inside car has priority, unless we are
-// clearly ahead by more than half our own length. Distances are real body spans.
-export function insideCornerPriority(r, run, near, direction) {
-  return near.find(c => direction * c.dl > 0 &&
-    Math.abs(c.ds) < run.halfLength + c.hl && c.ds >= -run.halfLength) ?? null;
-}
-
 export const CPU_NITRO = Object.freeze({strength:.5, refill:.5});
 export const cpuNitroExtraMph=(r,spec)=>spec.topSpeed*(BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(spec.nitroSpeedBonus??0))*CPU_NITRO.strength;
 export const cpuNitroAcceleration=(r,spec)=>BOOST.accelMphPerSec*(1+(r.upgrades.nitro||0)*.15)*(spec.nitroAcceleration??1)*CPU_NITRO.strength;
@@ -347,21 +335,6 @@ export function stepFieldRacer(duel, r, dt) {
     if (!blocker || c.gap < blocker.gap) blocker = c;
   }
   let speedCap = Infinity, desired = lineOffset;
-  let formation = false, yieldTo = null;
-  if(f.racecraft && r.completedLaps===0){
-    if (f.startMergeFrom === undefined) {
-      const first = nextCorner(profile, f.gridStartS);
-      f.startMergeFrom = Math.max(0, first?.toEntry ?? 0);
-      f.startCorner = first?.corner.id ?? null;
-    }
-    formation = r.s < f.gridStartS + f.startMergeFrom;
-    desired = startLaneTarget(f, r.s, lineOffset);
-    if (!formation && zone?.corner.id === f.startCorner && zone.toApex >= -4)
-      yieldTo = insideCornerPriority(r, run, near, zone.corner.dir);
-    if (formation || yieldTo) { f.pass = null; f.defendSide = 0; }
-    if (yieldTo) speedCap = Math.min(speedCap,
-      followLimitMph(run, {...yieldTo, gap: yieldTo.ds - run.halfLength - yieldTo.hl}, follow));
-  }
   // Between walls a racer keeps further off them (`wallRoom`, metres), as a car at speed overshoots a lane.
   const roadLimit = Math.max(0, halfRoad - run.halfWidth - .5 - (follow.wallRoom ?? 0));
   let lo = -roadLimit, hi = roadLimit;
@@ -417,7 +390,7 @@ export function stepFieldRacer(duel, r, dt) {
       else passIntent = lane;
     }
   }
-  if (!formation && !yieldTo && !f.pass && blocker && blocker.gap > -1 && now >= (f.passCool || 0) && now > (f.racecraft ? 0 : 10)) {
+  if (!f.pass && blocker && blocker.gap > -1 && now >= (f.passCool || 0) && now > (f.racecraft ? 0 : 10)) {
     // Quicker than the car ahead in its own right, not just for a moment (the player's pace is its speed).
     const theirs = blocker.index >= 0 ? runtimeOf(duel, blocker.o).profile.at(blocker.o.s) * (1 + paceForm(blocker.o.field, now)) : (f.racecraft ? playerPaceMph(duel) : blocker.speed);
     const boostReady=f.racecraft && onStraight && r.speedMph>=BOOST.minSpeedMph && surface.boostAllowed!==false &&
@@ -447,7 +420,7 @@ export function stepFieldRacer(duel, r, dt) {
     }
   }
   // A dive: pull alongside on the inside as the braking zone starts and brake later.
-  if (!formation && !yieldTo && !f.pass && blocker && zone && now >= (f.passCool || 0) && f.diveKey !== f.zoneKey && zone.toEntry > 8 && zone.toEntry < 110 &&
+  if (!f.pass && blocker && zone && now >= (f.passCool || 0) && f.diveKey !== f.zoneKey && zone.toEntry > 8 && zone.toEntry < 110 &&
       zone.corner.entryMph - zone.corner.speedMph > 25 && blocker.gap > -1 &&
       Math.max(0, blocker.gap) / Math.max(12, mps) < window + .15) {
     f.diveKey = f.zoneKey;
@@ -473,7 +446,7 @@ export function stepFieldRacer(duel, r, dt) {
   }
 
   // ---- defending: one move to cover the inside before a braking zone ----
-  if (!formation && !yieldTo && !f.pass && zone && zone.toEntry > 15 && zone.toEntry < 200 && f.defendKey !== f.zoneKey && zone.corner.entryMph - zone.corner.speedMph > 25) {
+  if (!f.pass && zone && zone.toEntry > 15 && zone.toEntry < 200 && f.defendKey !== f.zoneKey && zone.corner.entryMph - zone.corner.speedMph > 25) {
     const chaser = near.find(c => c.ds < 0 && c.gap > 1.2 && c.gap < 1 * Math.max(12, mps) && Math.abs(c.dl) < 4.5 && c.speed >= r.speedMph - 4);
     const alongside = near.some(c => Math.abs(c.ds) < run.halfLength + c.hl + .5 && Math.abs(c.dl) < 5);
     if (chaser && !alongside) {
@@ -488,7 +461,6 @@ export function stepFieldRacer(duel, r, dt) {
 
   // ---- a missed apex ----
   if (f.mistake?.kind === 'wide') desired += f.mistake.side * 2.2;
-  if (formation) desired = f.startLateral;
 
   // ---- sharing the road ----
   if (lo > hi) {
@@ -497,8 +469,7 @@ export function stepFieldRacer(duel, r, dt) {
   } else desired = clamp(desired, lo, hi);
   const bias = desired - lineOffset;
   const rate = f.pass ? 3.2 : f.defendSide && f.defendKey === f.zoneKey ? 3 : 3.6;
-  if (formation) f.bias = bias;
-  else f.bias += clamp(bias - f.bias, -rate * dt, rate * dt);
+  f.bias += clamp(bias - f.bias, -rate * dt, rate * dt);
   f.intent = lo > hi ? (lo + hi) / 2 : clamp(lineOffset + f.bias, lo, hi);
 
   // ---- speed ----

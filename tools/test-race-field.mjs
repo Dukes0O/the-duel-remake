@@ -1,4 +1,3 @@
-import {startLaneTarget,insideCornerPriority} from '../src/race-field-driver.js';
 // Racing a full field (docs/CIRCUITS.md 3.2, card P4-FIELD): grid, start
 // lights, no jump starts, passing and defending, corner sharing, slipstream,
 // catch-up and repeatability. Every race here is headless and seeded.
@@ -51,7 +50,7 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
   const d = new Duel({seed:1989, featureFlags:{'grand-prix':true, 'cpu-racecraft':true}});
   d.startCampaign({mode:'grandprix', startStage:0, car:'falcone_f42',seed:1989,fieldSeed:4242,fieldSize:7,cpuDifficulty:'medium'});
   for(const r of d.state.opponents) {
-    close(r.field.bias, r.lateral-racingLineFor(d.course).offsetAt(r.s), 1e-10, 'grid bias starts at the actual slot');
+    equal(r.field.bias, 0, 'Claude 16 October: grid lanes relax to the racing line exactly as today');
     check(r.field.racecraft === true, 'only opted-in racers have racecraft state');
   }
 }
@@ -508,31 +507,6 @@ function oneLapApp(deferFinish) {
     check(r.field.every(row => row.name && row.carName), 'with names and cars');
     equal(r.creditReward, 0, 'no pay yet, that comes with the career card');
   } finally { restore(); }
-}
-
-// The start lane is absolute road lateral, not an offset from a moving line.
-{
-  const f = {startLateral: 2.6, gridStartS: -40, startMergeFrom: 500};
-  for (const line of [-4, 0, 4]) {
-    close(startLaneTarget(f, 410, line), 2.6, 1e-12, 'hold the grid lane before the first braking point');
-    close(startLaneTarget(f, 960, line), line, 1e-12, 'merge onto the current line afterwards');
-    close(startLaneTarget(f, 460, line), line, 1e-12, 'release the lane exactly at first braking, with normal steering smoothing');
-  }
-  const later = {...f, startMergeFrom: 800};
-  close(startLaneTarget(later, 700, -4), 2.6, 1e-12, 'a distant first corner delays the merge');
-}
-
-
-// Claude's first-corner priority uses actual overlap and the half-length boundary.
-{
-  const r={lateral:-2},run={halfLength:2};
-  const inside={ds:0,dl:4,hl:2,speed:90};
-  equal(insideCornerPriority(r,run,[inside],1),inside,'outside yields to overlapping inside car');
-  equal(insideCornerPriority(r,run,[{...inside,dl:-4}],1),null,'inside car does not yield to outside');
-  equal(insideCornerPriority(r,run,[{...inside,ds:-2.01}],1),null,'clearly ahead by more than half a car keeps priority');
-  check(insideCornerPriority(r,run,[{...inside,ds:-2}],1)!==null,'exact half length still yields');
-  equal(insideCornerPriority(r,run,[{...inside,ds:4}],1),null,'separate bodies are not an overlapping pair');
-  check(insideCornerPriority(r,run,[{...inside,dl:-4}],-1)!==null,'left-hand corners mirror priority');
 }
 
 // ---- what the screens show ----
