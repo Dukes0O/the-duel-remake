@@ -339,10 +339,12 @@ tasks:
 
   - id: SIRENA-ART
     title: "The Falcone Sirena: car, wreck, five parts, lift bag and abalone"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-24
+    branch: claude/sirena-art
     needs: []
     locks: []
     flag: "the-deep"
