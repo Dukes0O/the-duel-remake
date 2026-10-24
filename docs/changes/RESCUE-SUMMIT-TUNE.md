@@ -102,6 +102,13 @@ Run (`rescueConditions({summitRun: true})`), whose row is now its own, so the li
 one second short is not expired and that the clock stops at the limit and stays
 expired. `RESCUE_CLOCKS` itself is still asserted equal in the clocks check.
 
+`tools/test-heli-summit-rescues.mjs` (SUMMIT-HELI-RESCUES), the supply run flown from Summit
+Run's start area: two assertions said the truck is not at the start area ("the truck is not
+here yet", `atTruck` false there; "no fuel for sale at the start area", `buyFuel(50).ok`
+false). The two-truck decision makes the start area a truck stop, so they now say
+`atTruck` is true there and that a full tank is refused with "The tank is full." The rest
+of the file, including both switch-off pins, is unchanged.
+
 ## Removed
 
 Nothing replaced.
