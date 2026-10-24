@@ -748,7 +748,8 @@ tasks:
     owner: "claude-cloud"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
     needs: [DRIVE-LESSON-HOOKS]
     locks: []
     flag: "driving-lessons"
