@@ -28,7 +28,9 @@ for(const definition of cityEvents)for(const actorKind of['player','rival','poli
 const outcomes=[];
 for(const definition of cityEvents)for(const cpuDifficulty of['easy','medium','hard']){
   const app=new App();app.autopilot=true;app._scriptedCrashDone=true;
-  app.duel.startCampaign({startStage:definition.stage,cpuDifficulty,seed:1989});let frames=0;
+  // FIX-LAUNCH: drive each event with the car it requires (the Neon Drift Trial is a Banshee event);
+  // the default Falcone no longer makes Hard's 110 s limit at the gentler launch.
+  app.duel.startCampaign({startStage:definition.stage,cpuDifficulty,seed:1989,...(definition.requiredCar?{car:definition.requiredCar}:{})});let frames=0;
   while(!['stage_result','gameover'].includes(app.duel.state.status)&&frames++<120*220)app.advance(1/120);
   const state=app.duel.state,result=state.results;
   check(result?.completed&&result.won&&state.completedLaps===2,`${definition.id}/${cpuDifficulty}: normal driving inputs still finish the event's actual objectives`);

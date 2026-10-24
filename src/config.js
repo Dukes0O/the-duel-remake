@@ -148,7 +148,7 @@ export const COURSE = [
   {id:'ridge-rally',layout:'ridge',layoutVersion:4,theme:'alpine',stage:5,name:'Ridge Rally',lengthU:3520,closed:true,laps:2,kind:'rally',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:true,speedLimitMph:100,sections:[{theme:'desert',name:'Dry Creek Trail',share:.42},{theme:'alpine',name:'Timberline Ridge',share:.58}]},
   {id:'titan-stunt-trial',layoutVersion:1,theme:'arena',stage:6,name:'Titan Stunt Trial',lengthU:1120,closed:true,laps:2,kind:'arena',arena:true,requiredCar:'titan_monster',hasRadar:false,hasRival:false,speedLimitMph:100,stuntTrial:{jumps:4,crushes:4,timeLimitSec:{easy:95,medium:75,hard:62}},sections:[{theme:'arena',name:'Titan Stunt Trial',share:1}]},
   {id:'neon-drift-trial',layout:'city',layoutVersion:1,timeOfDay:'night',theme:'city',stage:7,name:'Neon Drift Trial',lengthU:2880,closed:true,laps:2,kind:'drift',requiredCar:'banshee_muscle',persistentVehicle:true,crashPenaltySec:8,hasRadar:false,hasRival:false,speedLimitMph:65,driftTrial:{targets:{easy:3500,medium:5000,hard:6000},timeLimitSec:{easy:150,medium:125,hard:110}},sections:[{theme:'city',name:'Neon District',share:.5},{theme:'city',name:'Harbor Slide',share:.5}]},
-  {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:10,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
+  {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:12,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
   ...EXPANSION_COURSES,
   FREESTYLE_COURSE,
   // Authored circuits (src/circuits/) are appended, never inserted, so saved
@@ -203,6 +203,7 @@ export const DRIVE = {
   offRoadGrip: 0.74,     // enough steering authority to return from the shoulder
   offRoadScrub: 0.48,
   accelScale: 2.5,        // gentler launch (FIX-LAUNCH); falls off near redline
+  arenaAccelScale: 5.2,   // arenas keep the old quick launch: their jumps, shoves and balance were tuned on it
   gearCeilFrac: 1.04,     // throttle stops adding speed past gearMax * this
   redlineWarnFrac: 0.92,  // tach shows red from this rev fraction
   overRevFrac: 1.02,      // sustained revs above this can blow the engine (Pro)
@@ -293,11 +294,16 @@ export function steerForYaw(desiredYaw, {speedMph, grip = 1, traction = 1, car =
   return tyreClamp(-tyreClamp(desiredYaw, -peakYaw, peakYaw) / Math.max(.05, steerGain), -1, 1);
 }
 
+// Launch strength for the course being driven: arenas keep their old value.
+export const launchScale = course => course?.def?.arena === true ? DRIVE.arenaAccelScale : DRIVE.accelScale;
+export const boostLaunch = course => course?.def?.arena === true ? BOOST.arenaAccelMphPerSec : BOOST.accelMphPerSec;
+
 export const BOOST = {
   drainPerSec: 0.19,
   refillPerSec: 0.028,
   nearMissRefill: 0.22,
   accelMphPerSec: 20.2,
+  arenaAccelMphPerSec: 42, // nitro push on an arena floor, the old value
   topSpeedMult: 1.12,
   minSpeedMph: 25,
 };

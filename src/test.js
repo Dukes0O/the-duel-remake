@@ -874,7 +874,8 @@ function crossGate(duel, actor, gate, lateral = 0) {
   for(const level of Object.keys(CPU_DIFFICULTY)){
     const d=contactCourse();d.state.cpuDifficulty=level;d.state.s=900;
     d.state.rival={s:100,lateral:-3.4,speedMph:0,headingError:0,pushVelocity:0,completedLaps:0,nextLapGate:0,lapTimes:[],lapStartedAt:0};
-    for(let i=0;i<1200;i++)d._rival(1/120);
+    // FIX-LAUNCH: 20 seconds, not 10; the gentler launch keeps every level acceleration-limited for the first 10.
+    for(let i=0;i<2400;i++)d._rival(1/120);
     distances.push(d.state.rival.s);
   }
   ok(distances[0]<distances[1]&&distances[1]<distances[2],'higher CPU levels make progressively more race progress');

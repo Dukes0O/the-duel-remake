@@ -170,7 +170,8 @@ function appInputRun(difficulty,fps,controller){
     app.advance(seconds,1/fps);snapshots.push([s.s,s.speedMph,s.gear,s.headingError,s.reverseHoldSec]);
   };
   control(null,3.1);same(s.status,'racing','real countdown finishes before driving');
-  control('forward',1);check(s.speedMph>20&&s.s>1000,'forward pedal actually accelerates the car');
+  // FIX-LAUNCH: two seconds, not one; the gentler launch needs that long to pass 20 mph.
+  control('forward',2);check(s.speedMph>20&&s.s>1000,'forward pedal actually accelerates the car');
   const forwardSpeed=s.speedMph;control('backward',.1);check(s.speedMph>0&&s.speedMph<forwardSpeed,'S/Down/LT first brakes a moving forward car');
   control('backward',3);same([s.speedMph,s.gear],[-22,-1],'continued brake input selects R and reaches its cap');
   control(null,.25);check(s.speedMph<0&&s.speedMph>-22,'release coasts in reverse');

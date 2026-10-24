@@ -99,13 +99,14 @@ function rampInput(d){
   const yaw=look.curvature*mps+(heading-s.headingError)*6;
   d.setInput({throttle:1,brake:0,steer:steerForYaw(yaw,{speedMph:s.speedMph,grip:d.car.grip,traction:surface.traction,brake:0,tyreSlip:s.tyreSlipRules===true&&!s.airborne&&s.speedMph>=0}),boost:false});
 }
+// FIX-LAUNCH: 1700 steps, not 1560; the gentler launch lands the Titan 1.8 s later, so the 2 s display hold needs the extra time to expire.
 function rampRun(fps,withReadout){
   const d=new Duel({seed:1989});d.startCampaign({startStage:stageIndex,car:'titan_monster',cpuDifficulty:'hard',difficulty:'casual'});
   const r=withReadout?createJumpHeightReadout():null,physics=createHash('sha256'),presentation=createHash('sha256');
   let accumulator=0,steps=0,wasAirborne=false,launchAt=null,landedAt=null,peak=0,paused=false,last=HIDDEN;
-  while(steps<1560){
+  while(steps<1700){
     accumulator+=1/fps;
-    while(accumulator>=1/120-1e-10&&steps<1560){
+    while(accumulator>=1/120-1e-10&&steps<1700){
       rampInput(d);d.step(1/120);accumulator-=1/120;steps++;
       const s=d.state;if(s.airborne){if(launchAt===null)launchAt=s.stageTimeSec;peak=Math.max(peak,s.airHeight);}
       if(wasAirborne&&!s.airborne&&landedAt===null)landedAt=s.stageTimeSec;

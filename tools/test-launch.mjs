@@ -41,7 +41,7 @@ test('0 to 60 mph: fastest car 2.4 to 2.8 s, slowest stock car 3.6 to 4.2 s', ()
 });
 
 // The order of 0 to 60 before FIX-LAUNCH (fastest first); ties are the same car.
-const ORDER = ['koenigsegg_jesko', 'ferrari_enzo', 'banshee_muscle', 'viper_proto', 'dusthawk_rally',
+const ORDER = ['koenigsegg_jesko', 'ferrari_enzo', 'mclaren_f1', 'banshee_muscle', 'viper_proto', 'dusthawk_rally',
   'aurora_gt', 'titan_monster', 'falcone_f42', 'stuttgart_959s'];
 test('acceleration order is unchanged and top speeds stay as built', () => {
   for (let i = 1; i < ORDER.length; i++)
