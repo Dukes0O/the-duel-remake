@@ -116,7 +116,23 @@ partial results at 1.8 and 2.2, a nearly full tank, a huge wallet with Infinity 
 
 ## Checks
 
-CHECKS_PLACEHOLDER
+Run once in the cloud (Linux, no graphics), on the branch merged with the current
+`integration/wasteland` (clean merge):
+
+- `npm run build`: passes.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 446 passed,
+  11 failed. All eleven need the laptop (or its art library) and none touches the
+  helicopter or the map. `test-course-kit`, `test-earned-cars-ui`, `test-drive-through`,
+  `test-full-check`, `test-medals` (each asserts `win32` or runs `pwsh`);
+  `test-salt-flats`, `test-salt-flats-art`, `test-p4-kits` and `test-tanker-valve-source`
+  (read `C:/Users/kyleb/dev/art-library`); `test-vesper-art` (needs a local Blender);
+  and `test-compact-binaries` (this cloud clone's history has GitHub-signed commit
+  headers the compaction tool refuses). I ran `test-p4-kits`, `test-tanker-valve-source`
+  and `test-compact-binaries` on a clean checkout of `origin/integration/wasteland`
+  and they fail the same way there.
+- Every `tools/test-heli-*.mjs` suite passes unchanged, and `test-map-destinations`
+  (499 checks), `test-pilot-map` (300) and `test-feature-flags` pass.
+- Not run: browser scenarios and frame checks (nothing is drawn yet).
 
 ## Removed
 
