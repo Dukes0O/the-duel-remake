@@ -4,6 +4,7 @@ import {DRIVE_RADIO_LINES} from './lessons/drive-radio-lines.js';
 import {createRadioChain} from './lessons/radio-voice.js';
 import {mountDriveLessonUi,driveLessonCompletion,settleDriveLessonPreparation,driveLessonGhostPose,driveLessonBoardModel} from './lessons/drive-lesson-ui.js';
 import {racingLineFor,buildSpeedProfile} from './race-lines.js';
+import {unstuckInput} from './demo-unstuck.js';
 import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
 import {settleCup} from './progression.js';
@@ -2111,6 +2112,10 @@ export class App {
     if (!d.diff.autoShift) {
       d.setInput({ shiftUp: st.revs > .95, shiftDown: st.revs < .48 && st.gear > 0 });
     }
+
+    // Boxed in off the road: back out and go round the wall (null unless stuck for a few seconds).
+    const rescue = unstuckInput(this, d);
+    if (rescue) { d.setInput({ ...rescue, boost: false }); return; }
 
     if (st.tyreSlipRules === true && d.course.def.kind === 'drift' && !st.airborne && st.speedMph >= 0) {
       this._driveSlipDrift();
