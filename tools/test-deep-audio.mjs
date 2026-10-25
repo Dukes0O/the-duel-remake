@@ -87,6 +87,7 @@ function context() {
 let flag = true;
 const ctx = context(), tracked = [], requests = [];
 const audio = {flags: {enabled: () => flag}, context: ctx, muted: false, paused: false,
+  noiseBuffer: ctx.createBuffer(1, 48000, 48000),
   mixer: {output: id => SOUND_BANK[id].bus, disconnect: node => node.disconnect(), track: (id, voice) => {tracked.push({id, voice}); return () => {}; }},
   _connect: (node, output) => node.connect(output), _disconnect: node => node.disconnect()};
 globalThis.fetch = async url => { requests.push(url); return {ok: !url.includes('sand-land'), arrayBuffer: async () => new ArrayBuffer(2)}; };
@@ -125,6 +126,40 @@ adapter.update(state, {deepDepth: 30});
 assert(tracked.filter(row => row.id === 'deep.cave').every(row => !row.voice.active), 'leaving cave stops its bed');
 adapter.event({deepPlace: {place: {id: 'drop', sound: 'deep.whale'}}}, state);
 assert.equal(tracked.filter(row => row.id === 'deep.whale').length, 1, 'whale cooldown');
+
+const storyCues = ['deep.sonar', 'deep.liftbag', 'deep.lift-cancel', 'deep.raised'];
+for (const id of storyCues) {
+  assert.equal(SOUND_BANK[id].flag, 'the-deep');
+  assert.equal(SOUND_BANK[id].file, undefined, 'story cues need no asset or fetch');
+  assert(SOUND_BANK[id].volume <= .26, 'quiet under the master mix');
+}
+assert(SOUND_BANK['deep.sonar'].layers[1].delay > 0, 'soft delayed echo');
+assert(SOUND_BANK['deep.liftbag'].layers[0].attack > 2, 'air rises during the fill');
+const ping = {deepSonar: {blip: null}}, fill = {deepLift: {find: 'sirena-wheel', seconds: 3}};
+adapter.event(ping, state); adapter.event(ping, state);
+adapter.event(fill, state); adapter.event(fill, state);
+assert.equal(tracked.filter(row => row.id === 'deep.sonar').length, 1, 'one cue per ping event');
+assert.equal(tracked.filter(row => row.id === 'deep.liftbag').length, 1, 'one hiss per fill');
+const hiss = tracked.at(-1).voice;
+assert.equal(hiss.active, true);
+adapter.event({deepLiftCancel: {find: 'sirena-wheel'}}, state);
+assert.equal(hiss.active, false, 'cancel cuts off the filling hiss');
+assert.equal(tracked.at(-1).id, 'deep.lift-cancel');
+adapter.event({deepLift: {find: 'sirena-car', seconds: 12}}, state);
+const longHiss = tracked.at(-1).voice;
+adapter.event({deepRaised: {find: 'sirena-car'}}, state);
+assert.equal(longHiss.active, false, 'raising stops the filling hiss');
+assert.equal(tracked.at(-1).id, 'deep.raised');
+const beforeMuted = tracked.length;
+audio.muted = true;
+for (const event of [ping, fill, {deepLiftCancel: {}}, {deepRaised: {}}]) adapter.event({...event}, state);
+audio.muted = false;
+assert.equal(tracked.length, beforeMuted, 'muted story cues never start');
+flag = false;
+for (const event of [ping, fill, {deepLiftCancel: {}}, {deepRaised: {}}]) adapter.event({...event}, state);
+assert.equal(tracked.length, beforeMuted, 'switch off starts no story cues');
+flag = true;
+adapter.event({deepEntered: {zoneId: 'kelp-coast'}}, state);
 audio.paused = true;
 adapter.update(state, {deepDepth: 8});
 assert(tracked.every(row => !row.voice.active), 'pause stops all Deep voices');

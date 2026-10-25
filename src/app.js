@@ -201,7 +201,7 @@ export class App {
       this.deepAudio.event(event,state);
       if(event.deepPhase&&state.deepJourney?.controlsLocked)this._clearHiddenRoadInput();
       if(event.deepCommitted)this._settleDeepDeparture(event.deepCommitted,state);
-      if(event.deepRaised||event.deepLogged||event.deepPearl)this._settleDeepStory(event,state); // DEEP-SIRENA-VIEW
+      if(event.deepRaised||event.deepLogged||event.deepPearl||event.deepPlace?.title)this._settleDeepStory(event,state); // DEEP-SIRENA-VIEW, DEEP-GO-LIVE
       if(event.deepReturn)this.returnToMenu();
       if (event.hiddenRoadPhase) this._discoverHiddenRoadGate(event.hiddenRoadPhase, state);
       if (event.hiddenRoadCommitted) this._settleHiddenRoadDeparture(event.hiddenRoadCommitted, state);
@@ -1371,6 +1371,13 @@ export class App {
     if(!this.runId||state!==this.duel.state||!journey?.committed||state.playerId!==this._runPlayerId||this._runPlayerId!==this.player?.id||
       !this._switches().enabled('the-deep'))return false;
     this._refreshPlayer();
+    if(event.deepPlace?.title){
+      const place=this.duel.deepRuntime?.zone.places.find(row=>row.id===event.deepPlace.place?.id);
+      if(state.status!=='exploring'||journey.phase!=='underwater'||!place)return false;
+      const profile=rememberDeep(this.profile,'places',place.id,{enabled:true});
+      if(profile!==this.profile){this.profile=profile;this._saveProfile();}
+      return true;
+    }
     const on={enabled:true},result=event.deepRaised?raiseFind(this.profile,event.deepRaised.find,on):
       event.deepLogged?recordLogged(this.profile,event.deepLogged.creature,on):recordPearl(this.profile,event.deepPearl.pearl,on);
     if(result.profile!==this.profile){this.profile=result.profile;this._saveProfile();}
