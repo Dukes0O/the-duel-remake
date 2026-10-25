@@ -160,6 +160,7 @@ test('memory-only App pays and saves each raise, log and pearl once, and passes 
     const lines = [];
     app.duel.onChange((state, event) => { if (event.deepPhone) lines.push(event.deepPhone.line); });
     dive(app.duel); hold(app.duel, DT);
+    assert.deepEqual(app.profile.deep.places, ['ramp-shallows'], 'first place saved on entry');
     const bank = app.profile.credits;
     const badge = findAt(app.duel, 'sirena-badge');
     park(app.duel, badge.x, badge.z); hold(app.duel, 1.2);
@@ -169,6 +170,7 @@ test('memory-only App pays and saves each raise, log and pearl once, and passes 
     assert.equal(app.profile.credits, bank + 100, 'standing there pays nothing more');
     const spot = app.duel.deepStory.log.spots.find(row => row.creature === 'otter');
     park(app.duel, spot.x, spot.z); hold(app.duel, 1.1);
+    assert.ok(app.profile.deep.places.includes('kelp-forest'), 'forest saved separately');
     assert.equal(app.profile.credits, bank + 150); assert.deepEqual(app.profile.deep.logged, ['otter']);
     assert.ok(lines.includes('deep.ana.otter'), 'the App passes the otter line to the phone');
     const saved = JSON.parse([...values.values()].find(text => text.includes('sirena-badge')));
@@ -178,6 +180,63 @@ test('memory-only App pays and saves each raise, log and pearl once, and passes 
     if (savedStorage) Object.defineProperty(globalThis, 'localStorage', savedStorage); else delete globalThis.localStorage;
     if (savedCancel) Object.defineProperty(globalThis, 'cancelAnimationFrame', savedCancel); else delete globalThis.cancelAnimationFrame;
   }
+});
+
+test('place titles: first entry only, wrapped range, paused and saved visits', () => {
+  const duel = race(ROUTE_VARIANTS[0]), events = [];
+  duel.onChange((state, event) => { if (event.deepPlace) events.push(event.deepPlace); });
+  dive(duel);
+  const zone = duel.deepRuntime.zone;
+  assert.equal(events[0].place.id, 'ramp-shallows');
+  assert.equal(events[0].title, true, 'shallows range wraps through index zero');
+  for (const place of zone.places) {
+    const point = zone.trail[place.fromIndex];
+    park(duel, point.x, point.z); hold(duel, DT);
+  }
+  const titled = events.filter(event => event.title).map(event => event.place.id);
+  assert.deepEqual(titled, zone.places.map(place => place.id));
+  const point = zone.trail[0];
+  park(duel, point.x, point.z); hold(duel, .2);
+  assert.equal(events.at(-1).title, false, 'returning has no title');
+  assert.equal(events.filter(event => event.title).length, 3, 'standing still never repeats');
+  const saved = race(ROUTE_VARIANTS[0], {deepSave: {places: titled}}), revisits = [];
+  saved.onChange((state, event) => { if (event.deepPlace) revisits.push(event.deepPlace); });
+  dive(saved);
+  for (const place of saved.deepRuntime.zone.places) {
+    const point = saved.deepRuntime.zone.trail[place.fromIndex];
+    park(saved, point.x, point.z); hold(saved, DT);
+  }
+  assert.ok(revisits.length > 0 && revisits.every(event => !event.title), 'saved places never titled again');
+  saved.state.paused = true;
+  const count = revisits.length;
+  park(saved, point.x, point.z); saved.step(DT);
+  assert.equal(revisits.length, count, 'no place event while paused');
+});
+
+test('place HUD shows the authored name for three seconds and holds captions', async () => {
+  const {createSirenaHud} = await import('../src/deep/sirena-view.js');
+  const elements = new Map();
+  const element = () => ({hidden: true, textContent: '', append() {}, remove() {},
+    querySelector(selector) { if (!elements.has(selector)) elements.set(selector, element()); return elements.get(selector); }});
+  const host = element(); host.ownerDocument = {createElement: element};
+  let listener, clock = 1, blocked, on = true;
+  const hud = createSirenaHud({host, now: () => clock,
+    app: {getDeepDiscovery: () => ({enabled: on}), duel: {onChange(fn) {listener = fn;}}},
+    phone: {say() {}, clear() {}, dispose() {}, update(options) {blocked = options.blocked; return {text: 'Ana'};}}});
+  listener({}, {deepPlace: {place: {id: 'kelp-forest', name: 'The Kelp Forest'}, title: true}});
+  hud.update();
+  assert.equal(elements.get('h2').textContent, 'The Kelp Forest');
+  assert.equal(elements.get('.sirena-title').hidden, false);
+  assert.equal(blocked, true); assert.equal(elements.get('.sirena-caption').hidden, true);
+  clock = 3.99; hud.update(); assert.equal(blocked, true);
+  clock = 4; hud.update(); assert.equal(elements.get('.sirena-title').hidden, true);
+  assert.equal(blocked, false); assert.equal(elements.get('.sirena-caption').hidden, false);
+  listener({}, {deepPlace: {place: {name: 'Saved'}, title: false}});
+  hud.update(); assert.equal(elements.get('.sirena-title').hidden, true);
+  on = false;
+  listener({}, {deepPlace: {place: {name: 'Off'}, title: true}});
+  hud.update(); assert.equal(elements.get('.sirena-title').hidden, true);
+  hud.dispose();
 });
 
 test("Ana's phone: one line at a time in order, a caption even without sound, and none over a title card", async () => {

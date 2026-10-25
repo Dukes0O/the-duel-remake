@@ -55,6 +55,16 @@ export const SOUND_BANK = {
   'deep.pearl': cue('interface', {flag: 'the-deep', file: 'deep/pearl.ogg', volume: .75, priority: 65, limit: 1}),
   'deep.whale': cue('ambience', {flag: 'the-deep', file: 'deep/whale.ogg', volume: .45, priority: 35, limit: 1}),
   'deep.cave': cue('ambience', {flag: 'the-deep', file: 'deep/cave.ogg', volume: .4, loop: true, priority: 30, limit: 1}),
+  // DEEP-GO-LIVE: quiet story sounds, synthesized by the Deep adapter.
+  'deep.sonar': cue('vehicle', {flag: 'the-deep', volume: .22, limit: 1,
+    layers: [tone(960, .4, .6), tone(960, .55, .18, 'sine', .28)]}),
+  'deep.liftbag': cue('vehicle', {flag: 'the-deep', volume: .22, limit: 1,
+    layers: [{...noise(1100, 3, .6), endFrequency: 2600, attack: 2.6}]}),
+  'deep.lift-cancel': cue('vehicle', {flag: 'the-deep', volume: .16, limit: 1,
+    layers: [{...noise(1400, .18, .4), endFrequency: 450, attack: .01}]}),
+  'deep.raised': cue('vehicle', {flag: 'the-deep', volume: .26, limit: 1,
+    layers: [{...noise(320, 1.8, .7, 'lowpass'), endFrequency: 90, attack: .3},
+      tone(72, 1.5, .22, 'sine', 0, 42)]}),
   // P4 assets remain dormant until their owning race events land.
   'race.start.light': cue('interface', {flag: 'grand-prix', file: 'p4/race-start-light.ogg',
     volume: 1, priority: 80, limit: 2}),

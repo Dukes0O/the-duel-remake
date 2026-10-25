@@ -15,6 +15,7 @@ export function createDeepAudio({audio}) {
   let zoneId = null, context = null, loading = null, disposed = false;
   let whaleAfter = 0, placeSound = null, seen = new WeakSet();
   let pendingEntry = null, latestState = {};
+  let liftVoice = null;
   const buffers = new Map(), loops = new Map(), voices = new Set();
   const enabled = () => !disposed && audio.flags.enabled('the-deep');
   const audible = state => enabled() && !audio.muted && !audio.paused && !state?.paused &&
@@ -25,6 +26,7 @@ export function createDeepAudio({audio}) {
     for (const voice of voices) voice.stop();
     voices.clear();
     loops.clear();
+    liftVoice = null;
   }
   function stop() {
     stopVoices();
@@ -50,9 +52,60 @@ export function createDeepAudio({audio}) {
     }));
     return loading;
   }
-  function play(id, {loop = false, scale = 1} = {}) {
+  // Like the helicopter's synthesized cues, each layer owns a source and gain.
+  // Noise reuses the host's noise buffer; all layers join the existing mixer.
+  function playLayers(id, seconds) {
+    const ctx = audio.context, def = SOUND_BANK[id], bus = ctx.createGain(), nodes = [], sources = [];
+    bus.gain.value = def.volume;
+    audio._connect(bus, audio.mixer.output(id));
+    for (const layer of def.layers) {
+      const duration = seconds ?? layer.duration, at = ctx.currentTime + (layer.delay || 0);
+      const end = at + duration, gain = ctx.createGain();
+      const source = layer.kind === 'tone' ? ctx.createOscillator() : ctx.createBufferSource();
+      let filter;
+      if (layer.kind === 'tone') {
+        source.type = layer.type;
+        source.frequency.setValueAtTime(layer.frequency, at);
+        if (layer.endFrequency) source.frequency.linearRampToValueAtTime(layer.endFrequency, end);
+        source.connect(gain);
+      } else {
+        source.buffer = audio.noiseBuffer; source.loop = true;
+        filter = ctx.createBiquadFilter(); filter.type = layer.type;
+        filter.frequency.setValueAtTime(layer.frequency, at);
+        filter.frequency.linearRampToValueAtTime(layer.endFrequency || layer.frequency, end);
+        source.connect(filter); filter.connect(gain); nodes.push(filter);
+      }
+      gain.gain.setValueAtTime(0, at);
+      const attack = layer.attack ? duration * layer.attack / layer.duration : .01;
+      gain.gain.linearRampToValueAtTime(layer.volume, at + attack);
+      gain.gain.linearRampToValueAtTime(0, end);
+      gain.connect(bus); nodes.push(gain); sources.push(source);
+      source.start(at); source.stop(end + .02);
+    }
+    let active = true, pending = sources.length;
+    const voice = {get active() { return active; }, stop() {
+      if (!active) return;
+      active = false;
+      bus.gain.cancelScheduledValues(ctx.currentTime);
+      bus.gain.setTargetAtTime(0, ctx.currentTime, .008);
+      for (const source of sources) try { source.stop(ctx.currentTime + .04); } catch { /* ended */ }
+    }};
+    voices.add(voice);
+    const release = audio.mixer.track(id, voice);
+    for (const source of sources) source.onended = () => {
+      source.disconnect();
+      if (--pending) return;
+      active = false; release?.(); voices.delete(voice);
+      for (const node of nodes) node.disconnect();
+      audio.mixer.disconnect(bus); bus.disconnect();
+    };
+    return voice;
+  }
+  function play(id, {loop = false, scale = 1, seconds} = {}) {
     const buffer = buffers.get(id), ctx = audio.context;
-    if (!buffer || ctx !== context || !audible()) return null;
+    if (ctx !== context || !audible()) return null;
+    if (SOUND_BANK[id]?.layers) return playLayers(id, seconds);
+    if (!buffer) return null;
     const def = SOUND_BANK[id], source = ctx.createBufferSource(), gain = ctx.createGain();
     const mixer = audio.mixer;
     source.buffer = buffer;
@@ -139,6 +192,14 @@ export function createDeepAudio({audio}) {
       placeSound = sound === 'deep.cave' || sound === 'deep.whale' ? sound : null;
     }
     if (!audible(state)) return;
+    if (ev.deepSonar) play('deep.sonar');
+    if (ev.deepLift) {
+      liftVoice?.stop();
+      liftVoice = play('deep.liftbag', {seconds: ev.deepLift.seconds});
+    }
+    if (ev.deepLiftCancel || ev.deepRaised) { liftVoice?.stop(); liftVoice = null; }
+    if (ev.deepLiftCancel) play('deep.lift-cancel');
+    if (ev.deepRaised) play('deep.raised');
     if (ev.deepLanded) play('deep.sand-land');
     if (ev.deepLogged) play('deep.logged');
     if (ev.deepPearl) play('deep.pearl');

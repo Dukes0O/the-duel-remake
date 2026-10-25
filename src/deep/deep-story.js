@@ -20,7 +20,14 @@ const enabled = duel => duel.featureFlags.enabled('the-deep') === true;
 function begin(duel) {
   const zone = duel.deepRuntime.zone, save = normalizeDeep(duel._deepSave), on = {enabled: enabled(duel)};
   const sirena = createSirena(zone, save, on);
+  let distance = 0;
+  const segments = zone.trail.map((point, i) => {
+    const start = distance, next = zone.trail[(i + 1) % zone.trail.length];
+    distance += Math.hypot(next.x - point.x, next.z - point.z);
+    return start;
+  });
   return {journeyId: duel.state.deepJourney.id, zoneId: zone.id, sirena, log: createLog(zone, save, on), seconds: 0,
+    segments, places: new Set(save.places || []), placeId: null,
     partsAtStart: sirena.raised.filter(id => PARTS.includes(id)).length,
     pinged: false, saidBag: false, saidCar: false, saidNorseman: false};
 }
@@ -62,6 +69,17 @@ export function stepDeepStory(duel, dt) {
   const story = duel.deepStory, car = deepWorldPose(duel);
   if (!car || !Number.isFinite(dt) || dt < 0) return;
   story.seconds += dt;
+  const zone = duel.deepRuntime.zone, along = duel.course.phase(duel.state.s);
+  const index = story.segments.findLastIndex(start => start <= along);
+  const place = zone.places.find(row => row.fromIndex <= row.toIndex
+    ? index >= row.fromIndex && index <= row.toIndex
+    : index >= row.fromIndex || index <= row.toIndex);
+  if ((place?.id ?? null) !== story.placeId) {
+    story.placeId = place?.id ?? null;
+    const title = !!place && !story.places.has(place.id);
+    if (title) story.places.add(place.id);
+    duel.emit({deepPlace: {place: place ?? null, title}});
+  }
   const events = [...stepLift(story.sirena, car, {lift: duel._deepLift === true}, dt),
     ...stepLog(story.log, car, dt)];
   for (const event of events) {

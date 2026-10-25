@@ -291,13 +291,23 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
     }
     if (event.deepLogged) { log.innerHTML = logCardMarkup(event.deepLogged.creature); log.hidden = false; logUntil = t + 6; }
     if (event.deepPhone) phone.say(event.deepPhone.line);
-    if (event.deepCoastCup) { title.hidden = false; titleUntil = t + 5; phone.say('deep.ana.cup'); }
+    if (event.deepPlace?.title && app.getDeepDiscovery()?.enabled === true) {
+      title.querySelector('p').textContent = 'KELP COAST';
+      title.querySelector('h2').textContent = event.deepPlace.place.name;
+      title.hidden = false; titleUntil = t + 3;
+      caption.hidden = true;
+    }
+    if (event.deepCoastCup) {
+      title.querySelector('p').textContent = 'COAST CUP';
+      title.querySelector('h2').textContent = '1966 to 2026: finished';
+      title.hidden = false; titleUntil = t + 5; phone.say('deep.ana.cup');
+    }
     // Driving back up the ramp ends the dive and returns to the menu: Ana finishes what she
     // has to say (the Norseman story comes on the way up). Quitting a dive to the menu, or a
     // new race, stops her after the line she is saying.
-    if (event.deepExited) { sonar.hidden = log.hidden = true; surfaced = true; }
-    else if (event.menu) { if (!surfaced) phone.clear({keepCurrent: true}); surfaced = false; }
-    else if (event.stageLoaded != null) { sonar.hidden = log.hidden = true; surfaced = false; phone.clear({keepCurrent: true}); }
+    if (event.deepExited) { title.hidden = sonar.hidden = log.hidden = true; surfaced = true; }
+    else if (event.menu) { title.hidden = true; if (!surfaced) phone.clear({keepCurrent: true}); surfaced = false; }
+    else if (event.stageLoaded != null) { title.hidden = sonar.hidden = log.hidden = true; surfaced = false; phone.clear({keepCurrent: true}); }
   });
   return {
     update() {
@@ -305,9 +315,9 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
       const t = now();
       if (t > sonarUntil) sonar.hidden = true;
       if (t > logUntil) log.hidden = true;
-      if (t > titleUntil) title.hidden = true;
+      if (t >= titleUntil || app.getDeepDiscovery()?.enabled !== true) title.hidden = true;
       const line = phone.update({blocked: !title.hidden});
-      caption.hidden = !line;
+      caption.hidden = !line || !title.hidden;
       if (line) caption.querySelector('span').textContent = line.text;
     },
     dispose() { if (disposed) return; disposed = true; stop?.(); phone.dispose(); root.remove(); },
