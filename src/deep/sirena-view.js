@@ -17,6 +17,8 @@ export const SIRENA_MODEL = Object.freeze({'sirena-badge': 'badge', 'sirena-stee
 const MODEL_URL = id => `/assets/models/sirena/${id}.glb`;
 const defaultLoad = id => new GLTFLoader().loadAsync(MODEL_URL(id));
 export const RISE_SPEED = Object.freeze({part: 2.4, car: 1.1});   // metres a second, to the surface
+// The bag is drawn larger than the model so it reads from the chase camera (Claude, look round 1).
+export const BAG_DRAW_SCALE = 1.8;
 const SURFACE = -0.4;                                             // a raised piece is gone here (sea level is 0)
 
 // Where each find rests: its spot, on the floor, `below` metres under it for the
@@ -122,8 +124,8 @@ export function createSirenaScene({scene, zone, deep, rampHeading = 0, load = de
     bags.forEach((bag, i) => {
       bag.visible = i < count;
       if (i >= count) return;
-      const angle = count > 1 ? i / count * Math.PI * 2 + .6 : 0, spread = count > 1 ? 1.6 : 0;
-      const grown = .25 + .75 * Math.min(1, fill);
+      const angle = count > 1 ? i / count * Math.PI * 2 + .6 : 0, spread = count > 1 ? 2.2 : 0;
+      const grown = (.25 + .75 * Math.min(1, fill)) * BAG_DRAW_SCALE;
       bag.scale.set(grown, grown, grown);
       bag.position.set(around.x + Math.sin(angle) * spread, around.y + .3, around.z + Math.cos(angle) * spread);
     });
@@ -146,7 +148,8 @@ export function createSirenaScene({scene, zone, deep, rampHeading = 0, load = de
         const count = id === 'sirena-car' ? 4 : id === 'sirena-badge' ? 0 : 1;
         const lift = [];
         for (let i = 0; i < count && bagSource; i++) {
-          const bag = wear(bagSource.clone(true)), angle = count > 1 ? i / count * Math.PI * 2 + .6 : 0, spread = count > 1 ? 1.6 : 0;
+          const bag = wear(bagSource.clone(true)), angle = count > 1 ? i / count * Math.PI * 2 + .6 : 0, spread = count > 1 ? 2.2 : 0;
+          bag.scale.setScalar(BAG_DRAW_SCALE);
           bag.position.set(Math.sin(angle) * spread, .3 + (count > 1 ? .8 : .45), Math.cos(angle) * spread);
           lift.push(bag);
         }

@@ -26,4 +26,6 @@ For Claude:
 - Is the drop dark enough, or too dark?
 - Should the bag be larger from the chase camera?
 
-Frame timing is the laptop's (rule 9): this machine's numbers mean nothing.
+No frame timing yet (rule 9): the laptop measures the forest view when FINISH-DEEP turns the-deep on.
+
+Claude: pass; bag drawn 1.8x larger from the chase camera.

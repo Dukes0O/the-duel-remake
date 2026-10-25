@@ -120,12 +120,16 @@ seven design questions are on the card.
   `docs/board/looks/deep-sirena-view/round-1.jpg`, with its note, for
   Claude. In the cloud, Chromium needs a `--no-sandbox` wrapper (the
   container runs as root); there is no repository change for that.
-- **Frame time: not measured here.** This machine has only a software
-  graphics device (about two frames a second), so the laptop measures the
-  delivered frame time at the thickest part of the Kelp Forest (rule 8,
-  Claude's answer 7).
-- **Laptop to run:** the 4 suites above, the frame check, and a look at the
-  scenario in the real browser.
+- **Frame time: not now.** Rule 9: no frame checks on what players cannot
+  reach yet. The laptop measures the delivered frame time at the thickest
+  part of the Kelp Forest when FINISH-DEEP turns `the-deep` on (Claude,
+  25 October 2026). This cloud machine has only a software graphics device
+  in any case.
+- **Laptop to run:** the 4 suites above and the `deep-sirena` scenario in
+  the real browser.
+- **Look:** Claude's verdict on round 1 is a pass, with the bag drawn 1.8
+  times larger from the chase camera (`BAG_DRAW_SCALE` in the view). The
+  rules, timings and the 3 s fill are unchanged.
 
 ## Review
 
