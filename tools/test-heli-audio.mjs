@@ -121,7 +121,7 @@ assert.deepEqual([...WILDLIFE_CUE_IDS].sort(), Object.keys(HELI_LIBRARY_CUES).fi
 assert.equal(WILDLIFE_CUE_IDS.length, 11);
 assert.deepEqual(Object.keys(HELI_TONE_CUES).sort(), [
   'heli.fuel.low', 'heli.radio.click', 'heli.radio.hiss', 'heli.rotor.low',
-  'heli.fire.alert', 'heli.aim.lock', 'heli.badge', 'heli.beacon.beep', 'heli.clock.tick'].sort());
+  'heli.fire.alert', 'heli.aim.lock', 'heli.badge', 'heli.beacon.beep', 'heli.clock.tick', 'heli.buoy-hit', 'heli.retardant'].sort());
 assert.equal(HELI_CUES['heli.fire.crackle'].volume, .5, 'the crackle sits under the rotor');
 // The alert stays no louder than the low-fuel chime: the click cue it was first
 // matched to is never played (the radio chain makes its own click).
