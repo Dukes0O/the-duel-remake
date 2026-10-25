@@ -163,8 +163,7 @@ tasks:
     owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "building"
-    claimed_by: claude-cloud-2026-10-25
+    status: "ready"
     needs: [GP-PASSING-2]
     locks: [busy-game-files]
     details: "docs/board/cards/GP-WIDE-START.md"
@@ -358,10 +357,11 @@ tasks:
 
   - id: MAP-VIEW
     title: "The pilot's map screen, scouting names, signs and the Table in the game"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-25
     needs: [MAP-DATA, MAP-DESTINATIONS, MAP-SECRETS, MAP-ART]
     locks: [busy-game-files]
     flag: "pilot-map"
