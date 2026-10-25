@@ -25,8 +25,8 @@ clear error if the import line ever changes). The helper bundle fell from
 
 ## Checks
 
-- `yeti` scenario (private port): passed, 5 screenshots written, 0 warnings, 0 errors;
-  five views, 13,265 sampled rows, the audio capture and the packet written.
+- `yeti` scenario (private port): passed, 0 warnings, 0 errors;
+  five view pictures, 13,265 sampled rows, the audio capture and the packet written.
   The page's own Three classes are used and checked against the renderer.
 - Lane tier `--changed --jobs 4 --keep-going`: 20 passed, 0 failed (includes
   `test-yeti`, `test-p4-kits`, `test-track-script`, `test-browser-harness`).
