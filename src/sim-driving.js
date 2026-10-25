@@ -154,7 +154,7 @@ export function _drive(dt) {
       if (s.speedMph < ceil) {
         const launch = launchScale(this.course, s.crashLaunchSec > 0, s.tyreSlipRules === true);
         // ENGINE-CURVE (dev switch, latched per race): the pull is the engine's at these revs times the gear's multiplication.
-        if (s.engineCurve === true) s.speedMph += enginePull({ a0: car.accel * launch, ...engineFitFor(s.car), gears: car.gears, gear: s.gear, revs: s.revs }) * s.input.throttle * dt * accelerationShare;
+        if (s.engineCurve === true) s.speedMph += enginePull({ a0: car.accel * launch, ...engineFitFor(s.car, car.factoryMaxed ? 0 : s.upgrades?.engine | 0), gears: car.gears, gear: s.gear, revs: s.revs }) * s.input.throttle * dt * accelerationShare;
         else s.speedMph += car.accel * accelFactor * s.input.throttle * dt * launch * accelerationShare;
       }
     }

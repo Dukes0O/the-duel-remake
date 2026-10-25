@@ -11,8 +11,9 @@ import {Course} from '../src/course.js';
 import {Duel} from '../src/game.js';
 import {App} from '../src/app.js';
 import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
-import {ENGINE_CURVE, ENGINE_FIT, enginePullShare, gearMultiplication, enginePull, autoShiftGear} from '../src/engine-curve.js';
+import {ENGINE_CURVE, ENGINE_FIT, engineFitFor, enginePullShare, gearMultiplication, enginePull, autoShiftGear} from '../src/engine-curve.js';
 import {bestKey} from '../src/progression.js';
+import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
 
 const DT = 1 / 120;
 const def = {id: 'test-engine-curve', name: 'Test only', kind: 'circuit', closed: true, airborne: false, theme: 'alpine',
@@ -24,10 +25,11 @@ const IDS = Object.keys(CARS);
 const topOf = id => CARS[id].topSpeed * (CARS[id].factoryMaxed ? 1.105 : 1);
 
 // A full-throttle run on a flat straight, in one gear box: the seconds to reach each speed in `marks`.
-function secondsTo(id, marks, {curve, difficulty = 'casual', from = 0, gear = 0, shiftAt = null, hold = false} = {}) {
+function secondsTo(id, marks, {curve, difficulty = 'casual', from = 0, gear = 0, shiftAt = null, hold = false, engineLevel = 0} = {}) {
   const duel = new Duel({seed: 1989, car: id, featureFlags: flags(curve)});
   duel.startCampaign({car: id, opponentCount: 0, difficulty});
   duel.course = new Course(def);
+  if (engineLevel) duel.state.upgrades = {...duel.state.upgrades, engine: engineLevel};
   Object.assign(duel.state, {status: 'racing', s: 300, prevS: 300, lateral: 0, countdown: 0, traffic: [], speedMph: from, gear});
   assert.equal(duel.state.engineCurve === true, curve === true, 'the race latches the switch');
   const out = new Map();
@@ -38,7 +40,8 @@ function secondsTo(id, marks, {curve, difficulty = 'casual', from = 0, gear = 0,
     duel._drive(DT);
     for (const mark of marks) if (!out.has(mark) && duel.state.speedMph >= mark) out.set(mark, (tick + 1) * DT);
   }
-  return marks.map(mark => out.get(mark) ?? Infinity);
+  assert.equal(out.size, marks.length, `${id} reached every mark (${marks.join(', ')} mph)`);
+  return marks.map(mark => out.get(mark));
 }
 
 // ---- the shape ---------------------------------------------------------------------------------
@@ -75,6 +78,17 @@ test('the automatic box changes up above 96% revs and down below 55%, never into
   assert.equal(at(1, .54), 1, 'down to first would be 93% revs: stays');
   assert.equal(at(1, .5), 0);
   assert.ok(ENGINE_CURVE.autoDownMaxRevs === .9);
+});
+
+test('a bought engine level has its own fit; a factory-maxed car uses its one scale', () => {
+  assert.deepEqual(engineFitFor('falcone_f42', 0), ENGINE_FIT.falcone_f42);
+  assert.equal(engineFitFor('falcone_f42', 1).scale, ENGINE_FIT.falcone_f42.upgraded[0]);
+  assert.equal(engineFitFor('falcone_f42', 3).power, ENGINE_FIT.falcone_f42.upgraded[2].power, 'a level may carry its own power');
+  assert.equal(engineFitFor('falcone_f42', 9).scale, engineFitFor('falcone_f42', 3).scale, 'levels stop at 3');
+  assert.deepEqual(engineFitFor('koenigsegg_jesko', 3), ENGINE_FIT.koenigsegg_jesko, 'no levels to buy on a factory-maxed car');
+  assert.deepEqual(engineFitFor('no_such_car', 2), {scale: 1});
+  for (const [id, fit] of Object.entries(ENGINE_FIT)) assert.equal(fit.upgraded?.length ?? 3, 3, `${id}: one entry for each of levels 1 to 3`);
+  for (const id of IDS) assert.equal(Boolean(ENGINE_FIT[id].upgraded), !CARS[id].factoryMaxed, `${id}: levels fitted exactly when they can be bought`);
 });
 
 test('every car has its own fitted scale', () => {
@@ -140,18 +154,19 @@ test('the switch is latched per race and recorded: on, a flagged race keeps its 
 
 // ---- the automatic box stays within 2% of today -----------------------------------------------
 
-test('automatic box: every car within 2% of today on 0 to 60, 0 to 100 mph and on the way up to near top speed', () => {
-  const worst = [];
-  for (const id of IDS) {
-    const marks = [60, 100, 140, 170, 190].filter(mark => mark < topOf(id) * .93);
-    const today = secondsTo(id, marks, {curve: false}), now = secondsTo(id, marks, {curve: true});
+test('automatic box: every car within 2% of today on 0 to 60, 0 to 100 mph and on the way up to near top speed, at every engine level', () => {
+  let checked = 0;
+  for (const id of IDS) for (const engineLevel of CARS[id].factoryMaxed ? [0] : [0, 1, 2, 3]) {
+    const top = topOf(id) * (1 + .035 * engineLevel);
+    const marks = [60, 100, 140, 170, 190].filter(mark => mark < top * .93);
+    const today = secondsTo(id, marks, {curve: false, engineLevel}), now = secondsTo(id, marks, {curve: true, engineLevel});
     marks.forEach((mark, i) => {
       const error = now[i] / today[i] - 1;
-      worst.push([id, mark, error]);
-      assert.ok(Math.abs(error) <= .02, `${id} 0 to ${mark} mph: ${today[i].toFixed(3)} s today, ${now[i].toFixed(3)} s now (${(error * 100).toFixed(2)}%)`);
+      assert.ok(Math.abs(error) <= .02, `${id} engine level ${engineLevel}, 0 to ${mark} mph: ${today[i].toFixed(3)} s today, ${now[i].toFixed(3)} s now (${(error * 100).toFixed(2)}%)`);
+      checked++;
     });
   }
-  assert.ok(worst.length >= IDS.length * 2);
+  assert.ok(checked >= 100, `${checked} marks checked`);
 });
 
 test('automatic box: a lap of three circuits, two cars, within 2% of today', () => {
@@ -215,4 +230,30 @@ test('the switch off leaves top gear at 30 mph as strong as it ever was', () => 
   const auto = secondsTo('falcone_f42', [60], {curve: false, from: 30})[0];
   const held = secondsTo('falcone_f42', [60], {curve: false, difficulty: 'pro', from: 30, gear: 4, hold: true})[0];
   assert.ok(held < auto * 1.5, `today a gear only caps speed: ${auto.toFixed(2)} s against ${held.toFixed(2)} s`);
+});
+
+// ---- decisions.md "Keep these" ---------------------------------------------------------------------
+
+test('Summit Run hillside: driving off the road edge ends the same way with the switch on or off', () => {
+  const original = COURSE[0];
+  try {
+    COURSE[0] = SUMMIT_RUN;
+    for (const at of [1500, 3000, 8000]) {
+      const ends = [false, true].map(curve => {
+        const duel = new Duel({seed: 1989, featureFlags: {'grand-prix': true, 'summit-run': true, 'engine-curve': curve}});
+        duel.startCampaign({startStage: 0, mode: 'timetrial', car: 'falcone_f42', difficulty: 'casual'});
+        const state = duel.state;
+        Object.assign(state, {s: at, prevS: at, speedMph: 70, status: 'racing', countdown: 0, lateral: duel.course.roadHalfWidthAt(at) + 3});
+        state.prevLateral = state.lateral;
+        duel.setInput({throttle: 1, steer: 0, brake: 0, boost: false});
+        for (let tick = 0; tick < 120 * 10; tick++) duel.step(DT);
+        assert.equal(state.engineCurve === true, curve);
+        return {s: state.s, lateral: state.lateral, speed: state.speedMph, status: state.status, tumble: state.tumble?.reason ?? null};
+      });
+      assert.equal(ends[1].status, ends[0].status);
+      assert.equal(ends[1].tumble, ends[0].tumble);
+      assert.ok(Math.abs(ends[1].lateral - ends[0].lateral) < 1, `at ${at} m the car ends on the same part of the hill`);
+      assert.ok(Math.abs(ends[1].s - ends[0].s) <= 3 + Math.abs(ends[0].s - at) * .02, `at ${at} m: ${ends[0].s.toFixed(1)} m against ${ends[1].s.toFixed(1)} m`);
+    }
+  } finally { COURSE[0] = original; }
 });

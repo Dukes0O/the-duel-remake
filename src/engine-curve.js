@@ -60,25 +60,33 @@ export function autoShiftGear({gears, gear, revs}) {
   return gear;
 }
 
-// One scale per car (and, for the few cars whose gearbox needs it, its own multiplication power), fitted by
+// One scale per car, and one for each bought engine level (`upgraded`, levels 1 to 3, each a scale or {scale, power}; and, for the few cars whose gearbox needs it, its own multiplication power), fitted by
 // tools/fit-engine-curve.mjs with the car at the engine level it races at. A car not listed (one added later)
 // uses scale 1 until it is fitted; test-engine-curve fails until every car has its own.
 export const ENGINE_FIT = Object.freeze({
-  falcone_f42: Object.freeze({scale: 0.606}),
-  stuttgart_959s: Object.freeze({scale: 0.601}),
-  falcone_heritage: Object.freeze({scale: 0.606}),
-  aurora_gt: Object.freeze({scale: 0.595}),
-  dusthawk_rally: Object.freeze({scale: 0.6}),
-  banshee_muscle: Object.freeze({scale: 0.62, power: 0.284}),
-  viper_proto: Object.freeze({scale: 0.588}),
-  titan_monster: Object.freeze({scale: 0.618}),
+  falcone_f42: Object.freeze({scale: 0.606, upgraded: [0.602, 0.601, {scale: 0.63, power: 0.254}]}),
+  stuttgart_959s: Object.freeze({scale: 0.601, upgraded: [0.6, 0.597, 0.593]}),
+  falcone_heritage: Object.freeze({scale: 0.606, upgraded: [0.602, 0.601, {scale: 0.63, power: 0.254}]}),
+  aurora_gt: Object.freeze({scale: 0.595, upgraded: [0.593, {scale: 0.608, power: 0.275}, {scale: 0.62, power: 0.256}]}),
+  dusthawk_rally: Object.freeze({scale: 0.6, upgraded: [0.6, 0.6, 0.598]}),
+  banshee_muscle: Object.freeze({scale: 0.62, power: 0.284, upgraded: [0.619, {scale: 0.641, power: 0.25}, {scale: 0.631, power: 0.274}]}),
+  viper_proto: Object.freeze({scale: 0.588, upgraded: [{scale: 0.619, power: 0.257}, {scale: 0.612, power: 0.273}, 0.591]}),
+  titan_monster: Object.freeze({scale: 0.618, upgraded: [0.618, 0.621, 0.622]}),
   koenigsegg_jesko: Object.freeze({scale: 0.549}),
   ferrari_enzo: Object.freeze({scale: 0.609}),
   mclaren_f1: Object.freeze({scale: 0.587}),
   bugatti_bolide: Object.freeze({scale: 0.513, power: 0.41}),
-  falcone_sirena: Object.freeze({scale: 0.594}),
+  falcone_sirena: Object.freeze({scale: 0.594, upgraded: [0.591, 0.59, {scale: 0.609, power: 0.27}]}),
 });
 // Tooling only (the fitter tries values before they are written down); the game never calls it.
 const trial = new Map();
 export function trialEngineFit(id, fit) { if (fit === null) trial.delete(id); else trial.set(id, fit); }
-export const engineFitFor = id => trial.get(id) ?? ENGINE_FIT[id] ?? {scale: 1};
+// The fit for a car at an engine upgrade level (0 to 3; a factory-maxed car passes 0, its one scale is its level 3).
+export function engineFitFor(id, level = 0) {
+  if (trial.has(id)) return trial.get(id);
+  const fit = ENGINE_FIT[id];
+  if (!fit) return {scale: 1};
+  const own = level > 0 ? fit.upgraded?.[Math.min(3, level) - 1] : undefined;
+  if (own === undefined) return fit;
+  return typeof own === 'number' ? {...fit, scale: own} : {...fit, ...own};
+}
