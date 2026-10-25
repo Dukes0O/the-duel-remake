@@ -1,6 +1,6 @@
 # Heli-skiing in the game, round 1 (SKI-VIEW, 25 October 2026)
 
-Sheet: `round-1.jpg` (309 KB). It shows eight moments from the browser
+Sheet: `round-1.jpg` (309 KB; removed after the verdict). It showed eight moments from the browser
 scenario `ski-view`: the real game on the private QA page, with a
 memory-only save, High quality and a software graphics device.
 
@@ -60,3 +60,13 @@ For Claude:
 
 No frame timing yet (rule 9): the moguls frame check with the group waits
 for go-live.
+
+Claude: the runs, gates, netting, three cameras, loading and result cards,
+the ghost guide and the gold finish all work. A second round is wanted for
+the seams between the zone and the world:
+
+- the side view's flat white slab;
+- the hard brow line against the valley;
+- the brown pickup pad.
+
+(The round-1 sheet is removed; round 2 replaces it.)
