@@ -210,6 +210,15 @@ and any card, playbook or SPEC text that asks for Kyle's word or a repeated run.
     changed since the last pass, and in the daily full check. A frame-check
     pass counts while the scene and its code are unchanged. The release note
     names the passed commit and what changed since.
+20. Kyle follows the build in Cockpit, project "The Duel"
+    (`pers-the-duel`), one task per piece of work grouped by lane. Each
+    task's notes name its board cards, and `tools/cockpit-sync.py` sets each
+    task's status from the board, so nobody updates Cockpit by hand. Run it
+    after every merge batch and at session end, through
+    `C:\Users\kyleb\dev\command-center\scripts\run_command_center_postgres.ps1`
+    with the script's full path; it never blocks a merge. When it lists a
+    card with no task, name the card in a task's notes or add a task
+    (Kyle, 12 October 2026; merged 25 October).
 
 ## Gates (SPEC 0.5)
 

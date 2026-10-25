@@ -29,6 +29,8 @@ export function createDeepView({renderer,createUnderwaterScene,createWaterline,c
   return {
     get revision(){return revision;},
     reset,
+    // deepRaised: the sea life may react (the whale passes when the Sirena comes up). Read only.
+    raised(find){visit?.look.raised(find);},
     render({duel,car,camera,seconds,high,width,height}) {
       if(disposed)return false;
       const journey=duel.state.deepJourney,runtime=duel.deepRuntime;

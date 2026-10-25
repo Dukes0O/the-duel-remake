@@ -37,8 +37,14 @@ export const chooseLabLine = (profile, metres, flags) => setCable(profile, metre
 
 // The Lab's helicopter challenges (docs/LAB.md 4.1 and 4.2): the session starts, steps and ends them through this file.
 export {CHALLENGE_IDS, CHALLENGE_RULES, challengeSpots, createChallenge, stepChallenge, challengeProps, challengeBriefing} from './lab-challenges.js';
-const challengeFlags = Object.freeze({enabled: name => name === 'lab' || name === 'helicopter'});
+// The Snow lessons (the wax challenge, flown by the ski session) also need the skiing switch.
+const challengeFlags = Object.freeze({enabled: name => name === 'lab' || name === 'helicopter' || name === 'heli-skiing'});
 // Passing a challenge passes its Lab lesson (and, for Projectile motion, moves the drop ring on); false when it is not open.
 export const passLabChallenge = (profile, id, ring) => passLesson(profile, id, {flags: challengeFlags, ring});
 export const labChallengesDone = profile => labOf(profile).done;
 export const labChallengeOpen = (profile, id) => lessonOpenState(profile, id, challengeFlags);
+
+// What heli-skiing asks of the Lab (docs/LAB.md 4.3, docs/HELI_SKIING.md section 7): the day's snow and the wax rules, the
+// Wax kit's pick, the Aerials reward and the wax challenge. `flags` are the switches in force: {enabled(name)}.
+export {snowOfDay, WAXES, waxSetting, waxRunResult, waxRunSilverS} from './benches/wax.js';
+export {aerialsOpen, waxKitOwned, skiWaxFor} from './lab-shop.js';
