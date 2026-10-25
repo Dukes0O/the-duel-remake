@@ -3,7 +3,7 @@
 Switch `lab` (dev); nothing here is registered in the roster or the game yet
 (LAB-FAN adds `mcmurtry_speirling` to the config and the router, LAB-FAN-VIEW places
 the blueprint and the REVERSE switch). Built by the local Sonnet session on
-`claude/lab-fan-art`; Claude judged each look round (three of three used).
+`claude/lab-fan-art`; Claude judged each look round (round 4 pending: Kyle lifted the three-round cap).
 
 ## Design questions settled in writing, before code
 
@@ -27,7 +27,7 @@ the blueprint and the REVERSE switch). Built by the local Sonnet session on
 
 ## What was built
 
-- `src/speirling-vehicle.js`: 1.45 x 3.36 x 1.21 m, 48,162 triangles and 56 draws
+- `src/speirling-vehicle.js`: 1.45 x 3.37 x 1.2 m, 49,016 triangles and 56 draws
   (cap 50,000 triangles; Jesko's 73,600 / 66 for the other cars).
 - `public/assets/models/speirling/project-fan.glb` and `manifest.json` (361 KB).
 - `tools/art/speirling-blueprint.mjs`, `tools/art/speirling-sheet.py`;

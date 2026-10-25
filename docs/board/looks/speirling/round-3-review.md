@@ -44,8 +44,15 @@ Claude asked for exactly four changes.
 Size: 48,162 triangles and 56 draws (cap this round: 50,000 triangles).
 Still true: this session could not open photographs.
 
-## Verdict
+## After the sheet
 
-Claude: accepted at round 3; stray dark side patches removed.
+Claude first called round 3 accepted and asked for the dark side patches to go; they
+were the side windows, so they are back: the canopy's glass continues down the cabin
+sides in the shape of a door's glass (the carbon intake panel on the rear flank stays
+out). Then Kyle looked: round 3 is closer to the real car than round 1 but not there
+yet, and his word lifts the three-round cap. Round 4 will be built from real
+photographs, which Claude is gathering.
 
-After the verdict the dark rectangular patches beside the canopy and on the rear flanks (the side-glass overlays and a carbon intake panel) were removed, and the canopy opening was limited to the roof's centre, so the body is one clean charcoal surface; the side glass-crack zones now land on the canopy glass's edge. The width is declared at 1.45 m (measured).
+Size now: 49,016 triangles and 56 draws (cap 50,000); declared 1.45 x 3.37 x 1.2 m.
+Browser note: this session's browser tool still failed its policy check when tried
+again, so no photograph was looked at here.
