@@ -11,6 +11,8 @@ import {DEEP_PHONE_LINES} from './deep-phone-lines.js';
 import {createDeepPhoneChain} from './deep-phone.js';
 import {logCardMarkup} from './deep-log.js';
 import {SOUND_BANK} from '../sound-bank.js';
+import {deepWorldPose} from './deep-journey.js';
+import {deepMapGeometry, deepMapData, drawDeepMap} from './deep-map.js';
 
 export const SIRENA_MODEL = Object.freeze({'sirena-badge': 'badge', 'sirena-steering-wheel': 'steering-wheel',
   'sirena-wheel': 'wheel', 'sirena-bonnet': 'bonnet', 'sirena-door': 'door', 'sirena-car': 'wreck'});
@@ -272,10 +274,20 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
   root.className = 'sirena-hud';
   root.innerHTML = '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip"></b><span></span></div>' +
     '<div class="sirena-log" hidden></div><p class="sirena-caption" aria-live="polite" hidden><small>ANA · FIELD STATION</small><span></span></p>' +
-    '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>';
+    '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>' +
+    '<aside class="deep-map" hidden><header><b>KELP COAST</b><button type="button" class="deep-map-toggle">Hide map</button></header>' +
+    '<canvas width="400" height="250" role="img" aria-label="Dive map: loop, discovered places, ramp and your heading"></canvas>' +
+    '<button type="button" class="deep-map-home">Return bearing</button><span class="deep-map-bearing" hidden><i>↑</i><b></b></span></aside>';
   host.append(root);
   const sonar = root.querySelector('.sirena-sonar'), blip = root.querySelector('.sirena-blip'), distance = sonar.querySelector('span');
   const log = root.querySelector('.sirena-log'), caption = root.querySelector('.sirena-caption'), title = root.querySelector('.sirena-title');
+  const map = root.querySelector('.deep-map'), canvas = map.querySelector('canvas'), ctx = canvas.getContext('2d');
+  const toggle = map.querySelector('.deep-map-toggle'), home = map.querySelector('.deep-map-home');
+  const bearing = map.querySelector('.deep-map-bearing');
+  let mapVisit = null, geometry = null, showMap = true, requested = false, mapDrawAt = -Infinity;
+  const toggleMap = () => { showMap = !showMap; canvas.hidden = !showMap; toggle.textContent = showMap ? 'Hide map' : 'Show map'; };
+  const requestHome = () => { requested = true; };
+  toggle.addEventListener('click', toggleMap); home.addEventListener('click', requestHome);
   let sonarUntil = 0, logUntil = 0, titleUntil = 0, disposed = false, surfaced = false;
   const stop = app?.duel?.onChange?.((state, event) => {
     if (disposed) return;
@@ -313,6 +325,26 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
     update() {
       if (disposed) return;
       const t = now();
+      const d = app.duel, journey = d.state.deepJourney, discovery = app.getDeepDiscovery();
+      const active = discovery?.enabled === true && journey?.phase === 'underwater' && !!d.deepRuntime;
+      map.hidden = !active;
+      if (!active) mapVisit = null;
+      else {
+        if (mapVisit !== journey) {
+          mapVisit = journey; geometry = deepMapGeometry(d.deepRuntime.zone);
+          showMap = true; requested = false; canvas.hidden = false;
+          toggle.textContent = 'Hide map'; mapDrawAt = -Infinity;
+        }
+        if (t >= mapDrawAt) {
+          mapDrawAt = t + .1;
+          const data = deepMapData(geometry, d.deepRuntime.zone, deepWorldPose(d), {
+            places: discovery.places, elapsedSec: journey.elapsedSec, requested });
+          if (showMap) drawDeepMap(ctx, data);
+          bearing.hidden = !data.home.visible; home.hidden = data.home.visible;
+          bearing.querySelector('i').style.transform = `rotate(${-data.home.relative}rad)`;
+          bearing.querySelector('b').textContent = `Ramp · ${Math.round(data.home.distance)} m`;
+        }
+      }
       if (t > sonarUntil) sonar.hidden = true;
       if (t > logUntil) log.hidden = true;
       if (t >= titleUntil || app.getDeepDiscovery()?.enabled !== true) title.hidden = true;
@@ -320,6 +352,6 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
       caption.hidden = !line || !title.hidden;
       if (line) caption.querySelector('span').textContent = line.text;
     },
-    dispose() { if (disposed) return; disposed = true; stop?.(); phone.dispose(); root.remove(); },
+    dispose() { if (disposed) return; disposed = true; stop?.(); phone.dispose(); toggle.removeEventListener('click', toggleMap); home.removeEventListener('click', requestHome); root.remove(); },
   };
 }

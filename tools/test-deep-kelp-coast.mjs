@@ -202,6 +202,37 @@ function dive(duel) {
   return ramp;
 }
 
+test('the steepest forest bump at full underwater speed stays a small hop', () => {
+  for (const route of ROUTE_VARIANTS) {
+    const duel = race(route);
+    dive(duel);
+    const { zone, floor } = duel.deepRuntime, forest = zone.places.find(p => p.id === 'kelp-forest');
+    let worst = { rise: -Infinity };
+    for (let i = forest.fromIndex; i < forest.toIndex; i++) {
+      const a = zone.trail[i], b = zone.trail[i + 1];
+      const rise = (a.depth - b.depth) / length(a, b);
+      if (rise > worst.rise) worst = { rise, s: floor.sample(a.x, a.z).along };
+    }
+    assert.ok(worst.rise > .2, 'exercise the real steep gully exit');
+    const st = duel.state, start = worst.s - 15;
+    Object.assign(st, { s: start, prevS: start, lateral: 0, prevLateral: 0,
+      speedMph: duel.car.topSpeed * .7, _jumpY: null, airborne: false, airHeight: 0 });
+    let peak = 0, upward = 0, landed = false;
+    duel.onChange((state, event) => { if (event.deepLanded) landed = true; });
+    // Advance the real trail at the speed ceiling through the native jump step.
+    for (let i = 0; i < 120 * 6; i++) {
+      st.prevS = st.s;
+      st.s += st.speedMph * DRIVE.mphToWorld * DT;
+      duel._jump(st, DT, i * DT);
+      peak = Math.max(peak, st.airHeight);
+      upward = Math.max(upward, st._verticalSpeed);
+    }
+    assert.ok(peak > .01 && peak <= 1.5, `${route.id}: peak ${peak} m`);
+    assert.ok(upward <= 2.4, `${route.id}: launch ${upward} m/s`);
+    assert.ok(landed, 'the hop settles with the normal soft landing');
+  }
+});
+
 test('the journey dives into kelp-coast, drives the whole loop on the sea floor and climbs back up the ramp', () => {
   for (const route of ROUTE_VARIANTS) {
     const duel = race(route), events = [];
