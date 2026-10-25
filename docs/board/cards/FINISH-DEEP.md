@@ -14,3 +14,5 @@ the facts read true. Send Kyle the postcard sheet (kelp, a turtle, the
 Sirena rising, the Coast Cup card). Drive-through check; the frame check at
 the kelp forest with a full school (rule 8). Then Claude decides go live
 (rule 18) and tells Kyle in the release note.
+
+- Place title cards (section 4): the first time a player drives into each place, a short title card with its name (`deepPlace`, save field `places`). No card built them; DEEP-SIRENA-VIEW keeps Ana quiet while any title card shows (Claude, 25 October 2026).
