@@ -3,6 +3,8 @@
 // (ski-physics.js: SKI.massKg, SKI.standingArea and airDensity, force = 0.5 x density x area x speed squared).
 // The landing can be level with the launch or 10 m lower.
 import {SKI, SKI_STEP, GRAVITY, airDensity} from '../../ski/ski-physics.js';
+import {SCORE} from '../../ski/ski-score.js';
+import {skiZone} from '../../ski/runs/summit-zones.js';
 import {control, choice, makeBench} from './bench-core.js';
 
 export const TARGET = Object.freeze({rangeM: 30, withinM: 2});
@@ -41,7 +43,7 @@ export function bestAngle(speedMs, options) {
 }
 
 export const launchBench = makeBench({
-  id: 'launch', controls, cues: [],
+  id: 'launch', controls, cues: ['lab.splash'],
   run({angleDeg, speedMs, air, landing}) {
     const hit = rangeOf(angleDeg, speedMs, {air: air === 'air', lower: landing === '10 m lower'});
     return {...hit, target: TARGET, hit: Math.abs(hit.rangeM - TARGET.rangeM) <= TARGET.withinM};
@@ -50,3 +52,17 @@ export const launchBench = makeBench({
   facts: () => ({speedMs: 30, flatNoAir: bestAngle(30, {}), withAir: bestAngle(30, {air: true}), lowerNoAir: bestAngle(30, {lower: true}),
     lowerWithAir: bestAngle(30, {air: true, lower: true})}),
 });
+
+// The aerials tips the free Aerials reward opens: the judges' rules for the kicker run, from the ski rules' own numbers.
+export function aerialsTips() {
+  const zone = skiZone('aerials'), aim = zone.scoring, share = SCORE.aerials, percent = value => `${Math.round(value * 100)}%`;
+  const axis = aim.axis === 'flip' ? 'flip' : 'spin', other = axis === 'flip' ? 'spin' : 'flip';
+  return Object.freeze([
+    `The judges give ${percent(share.air)} for the air, ${percent(share.form)} for form and ${percent(share.landing)} for the landing.`,
+    `Air counts the height against ${aim.height} m and the distance against ${aim.distance} m, half each; a jump that reaches both gets full marks.`,
+    `Form is half for finishing the ${axis} (${aim.rotations} whole turn) and half for staying steady on the ${other}.`,
+    `Both the spin and the flip must be back within ${Math.round(SKI.safeRotation * 180 / Math.PI)} degrees of a whole turn when you land, or you tumble.`,
+    `The landing hill takes a path up to ${zone.safePathAngle} degrees off the snow; a flat or crooked landing tumbles and scores nothing for landing.`,
+    `A steeper take-off gives more height and less distance: the launch bench shows how the angle trades one for the other.`,
+  ]);
+}
