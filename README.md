@@ -27,7 +27,7 @@ The automatic checks for the helicopter yard, Yeti, course views and race
 sound have also been repaired. The demonstration driver can turn out of a
 pocket of scenery when stuck.
 
-**Switched on in this release: (Claude fills in)**
+**Switched on in this release:** The Deep (`the-deep`): drive down the old ramp at Pacific Canyon into the Kelp Coast, meet Ana, log the sea life, find pearls, raise the lost Falcone Sirena with sonar and lift bags, and race the Coast Cup. Also the Koenigsegg Jesko races on every course and in every mode again (Kyle, for Gratian). CPU racecraft and the wide start wait for the next release (an Ardennes crash to fix first).
 
 ### Built but switched off
 
