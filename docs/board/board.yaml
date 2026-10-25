@@ -6,7 +6,8 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-cli-2026-10-25
     needs: []
     locks: []
     flag: "the-deep"
