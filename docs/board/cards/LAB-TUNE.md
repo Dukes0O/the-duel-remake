@@ -60,3 +60,17 @@ Settled 25 October 2026 (answers to `questions/LAB-TUNE.md`, now deleted).
    them (loads untouched) and a forged or out-of-range tune (clamped or refused); never wipe or reset existing records.
 7. **Independent review before the PR** (the 400-credit bonus is pay, the change is saves): a separate reviewer probing paying
    twice, the 1% rule edges, NaN or forged values, the switch off, an old save; list what it probed and fixed in the PR.
+
+## Claude's review at merge (25 October 2026)
+
+- Changed assertion in `tools/test-save-fixtures.mjs`, approved: the
+  historical roster goes from 20 to 21 for the new honest fixture
+  `21-lab-tune.json`; forged saves move to `tools/fixtures/saves-forged/`,
+  and only that folder may name `labExpected`. Every honest fixture still
+  round-trips byte for byte. Nothing loosened.
+- Tuned Time Trial laps are not written to the leaderboard: agreed (records
+  carry no tune). LAB-TUNE-VIEW's result line says so.
+- The stock lap is not keyed by upgrades or driver: accepted; the bonus is
+  400 credits once per course at most.
+- Merge note: LAB-TUNE and LAB-RESTORE each added `import {labOf}` to
+  `app.js`; the second was removed after the merge (fix-forward commit).

@@ -24,3 +24,5 @@ Room passed from the scenario pictures. Before the `lab` switch goes on:
 tighten each bench camera so the bench fills the frame (on the lift bench
 the floor grate takes the lower third), and check no pillar stands close in
 the foreground of any bench view.
+- Tuned laps have no board of their own (LAB-TUNE keeps them off the
+  leaderboard). Decide at finishing whether a tuned-lap board is worth adding.
