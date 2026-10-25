@@ -5,6 +5,13 @@ import { freestyleSurfaceHeightAt } from './freestyle-course.js';
 // render mesh. Null means that quad is omitted beneath the near-road ribbon.
 // Shared by scenery grounding; test-terrain checks against the actual buffers.
 const surfaceCache = new WeakMap();
+// The far-terrain geometry computes every grid corner anyway, with these same formulas. It hands the grid over here
+// (seedFarTerrain), so a lookup reads the corner it needs instead of working it out again. Corners outside the
+// grid, or lookups made before the geometry exists, are worked out as before.
+const seededGrid = new WeakMap();
+export function seedFarTerrain(course, grid, firstColumn, firstRow, columns, rows, heights, distances) {
+  seededGrid.set(course.samples, { grid, firstColumn, firstRow, columns, rows, heights, distances });
+}
 const FAR_KEY = 1048576;
 export function farTerrainHeightSampler(course) {
   if(surfaceCache.has(course.samples))return surfaceCache.get(course.samples);
@@ -14,7 +21,15 @@ export function farTerrainHeightSampler(course) {
   const routeIndex=createPolylineIndex(route);
   const vertex=(i,j)=>{
     const key=i*FAR_KEY+j;if(vertices.has(key))return vertices.get(key);
-    const x=i*grid,z=j*grid,{index,t,distanceSq:best}=routeIndex.query(x,z);
+    const seeded=seededGrid.get(course.samples);
+    if(seeded&&seeded.grid===grid){
+      const column=i-seeded.firstColumn,row=j-seeded.firstRow;
+      if(column>=0&&row>=0&&column<seeded.columns&&row<seeded.rows){
+        const k=row*seeded.columns+column,result={distance:seeded.distances[k],height:seeded.heights[k],heightAt(){return this.height;}};
+        vertices.set(key,result);return result;
+      }
+    }
+    const x=i*grid,z=j*grid,{index,t,distanceSq:best}=routeIndex.lookup(x,z);
     const a=route[index-1],b=route[index],dx=b.x-a.x,dz=b.z-a.z,px=x-a.x-t*dx,pz=z-a.z-t*dz;
     const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
     // The height is the costly part and a quad too near the road is skipped
@@ -25,6 +40,16 @@ export function farTerrainHeightSampler(course) {
   };
   const sample=(x,z)=>{
     const i=Math.floor(x/grid),j=Math.floor(z/grid),u=x/grid-i,v=z/grid-j;
+    // Inside the geometry's own grid the four corners are plain array reads (the same numbers, no objects).
+    const seeded=seededGrid.get(course.samples);
+    if(seeded&&seeded.grid===grid){
+      const column=i-seeded.firstColumn,row=j-seeded.firstRow;
+      if(column>=0&&row>=0&&column+1<seeded.columns&&row+1<seeded.rows){
+        const k=row*seeded.columns+column,n=k+seeded.columns,distances=seeded.distances,heights=seeded.heights;
+        if(distances[k]<=threshold||distances[k+1]<=threshold||distances[n]<=threshold||distances[n+1]<=threshold)return null;
+        return u+v<=1?heights[k]*(1-u-v)+heights[k+1]*u+heights[n]*v:heights[k+1]*(1-v)+heights[n]*(1-u)+heights[n+1]*(u+v-1);
+      }
+    }
     const a=vertex(i,j),b=vertex(i+1,j),c=vertex(i,j+1),d=vertex(i+1,j+1);
     if(a.distance<=threshold||b.distance<=threshold||c.distance<=threshold||d.distance<=threshold)return null;
     return u+v<=1?a.heightAt()*(1-u-v)+b.heightAt()*u+c.heightAt()*v:b.heightAt()*(1-v)+c.heightAt()*(1-u)+d.heightAt()*(u+v-1);

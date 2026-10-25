@@ -58,7 +58,8 @@ function updateMenuCar() {
 }
 function updateEntryReward(){
   const tyreSlipRules=COURSE[choices.startStage]?.kind==='drift'&&choices.difficulty==='pro'&&app._switches?.().enabled('tyre-slip')===true;
-  const driverId=getEquippedDriverId(profile()),base=CPU_REWARDS[choices.cpuDifficulty],best=profile().personalBests[bestKey({stageIndex:choices.startStage,seed:app.getMenuSeed(choices.startStage),laps:choices.laps??COURSE[choices.startStage]?.laps??2,...choices,driverId,...(tyreSlipRules?{tyreSlipRules:true}:{})})];
+  const engineCurve=COURSE[choices.startStage]?.arena!==true&&app._switches?.().enabled('engine-curve')===true;
+  const driverId=getEquippedDriverId(profile()),base=CPU_REWARDS[choices.cpuDifficulty],best=profile().personalBests[bestKey({stageIndex:choices.startStage,seed:app.getMenuSeed(choices.startStage),laps:choices.laps??COURSE[choices.startStage]?.laps??2,...choices,driverId,...(tyreSlipRules?{tyreSlipRules:true}:{}),...(engineCurve?{engineCurve:true}:{})})];
   const scoreBest=COURSE[choices.startStage].kind==='drift'?getLeaderboard(app.leaderboard,{event:eventKey({stageIndex:choices.startStage,seed:app.getMenuSeed(),laps:2}),car:choices.car,playerId:app.player.id,driverId,tyreSlipRules})[0]?.driftScore:null;
   const finishingPay=distanceFinishingPay(base,COURSE[choices.startStage],choices.laps??COURSE[choices.startStage].laps,choices.mode,app._switches?.().enabled('lap-choice')===true);
   const manual=choices.difficulty==='pro',settings=`${choices.cpuDifficulty.toUpperCase()} / ${manual?'MANUAL':'AUTO'}`;
