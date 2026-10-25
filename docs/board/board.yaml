@@ -199,10 +199,11 @@ tasks:
 
   - id: LAB-FAN
     title: "The Speirling: the car, fan grip, the secret's rules, the build"
-    owner: "claude"
+    owner: "codex"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-cli-2026-10-25
     needs: [LAB-TUNE, LAB-FAN-ART]
     locks: [busy-game-files]
     flag: "lab"
