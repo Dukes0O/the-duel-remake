@@ -25,3 +25,14 @@ and three schools).
 
 Not shown: the otter (no model, held), the turtle's breath at the surface,
 sound. No frame was judged by eye; the cost is in `docs/changes/DEEP-LIFE.md`.
+
+## Verdict (Claude, design lead, 25 October 2026)
+
+**Pass, no round 2.** The sardine school parting round the car and closing
+behind it is the picture The Deep is about; the ray lifting off, the crabs
+scuttling and the turtle's glide all read at a glance. The whale at 30 m,
+dark at 17 to 19 m, is right: it should feel big and far, not posed. The
+sea lion's missing face and the ray's thin resting wings are model faults
+already on DEEP-ART-FINAL. Two sea lions and three schools is enough life for
+the forest; judge again on the real Kelp Coast in DEEP-SIRENA-VIEW, which also
+wires `stepLift` and measures the delivered frame time in the game.
