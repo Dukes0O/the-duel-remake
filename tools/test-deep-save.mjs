@@ -182,3 +182,17 @@ check('Native App Duel/TT settlements count once; switches, named players and fa
   }
 });
 console.log(`Deep save: ${checks} memory-only acceptance groups passed.`);
+
+// Kyle, 25 October 2026: the results screen says the dive kit is new in the garage.
+{
+  const {deepGarageNotice} = await import('../src/screen-results.js');
+  const appFor = (deep, enabled = true) => ({getDeepDiscovery: () => deepDiscoverySnapshot({deep}, 'qa', enabled)});
+  check('Results screen points to the dive kit until the garage tip is seen', () => {
+    assert.equal(deepGarageNotice(appFor({pacificFinishes: 2})), '');
+    assert.match(deepGarageNotice(appFor({pacificFinishes: 3})), /NEW IN THE GARAGE · THE DIVE KIT/);
+    assert.equal(deepGarageNotice(appFor({pacificFinishes: 3, hintsShown: [DEEP_HINT_IDS[0]]})), '');
+    assert.equal(deepGarageNotice(appFor({pacificFinishes: 7, kit: true})), '');
+    assert.equal(deepGarageNotice(appFor({pacificFinishes: 7}, false)), '');
+    assert.equal(deepGarageNotice({}), '');
+  });
+}

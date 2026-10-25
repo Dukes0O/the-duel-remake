@@ -30,7 +30,7 @@ function roofPanel(saved,car){
 function diveKitPanel(saved) {
   const hints = deepHints(app.getDeepDiscovery?.());
   if (!hints.kitAvailable) return '';
-  return `<section class="paint-panel" aria-label="Dive kit"><h3>DIVE KIT</h3><p>One kit fits every car. Explore below the old boat ramp.</p><button data-deep-kit="buy" ${hints.kitOwned || saved.credits < hints.kitCost ? 'disabled' : ''}>${hints.kitOwned ? 'INSTALLED · ALL CARS' : `BUY DIVE KIT · ${credits(hints.kitCost)} CR`}</button></section>`;
+  return `<section class="paint-panel" aria-label="Dive kit"><h3>DIVE KIT</h3><p>One kit fits every car. Explore below the old boat ramp.</p><button class="secondary-button" data-deep-kit="buy" ${hints.kitOwned || saved.credits < hints.kitCost ? 'disabled' : ''}>${hints.kitOwned ? 'INSTALLED · ALL CARS' : `BUY DIVE KIT · ${credits(hints.kitCost)} CR`}</button></section>`;
 }
 // The sea-life log (THE_DEEP 6.4): one row per coast already found, picture cards
 // with the true facts, grey shapes for the creatures still to find, and the pearls.
