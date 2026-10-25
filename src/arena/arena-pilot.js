@@ -1,7 +1,7 @@
 import {arsenalEnabled} from '../combat-weapons.js';
 import {carEffect,carGrip,carTopSpeed,carAcceleration,setCarSteering,carAlongPush,dampCarAlongPush} from '../arsenal/car-effects.js';
 import {oilThreat} from '../arsenal/oil.js';
-import {CARS, DRIVE, BOOST, steeringYawAuthority} from '../config.js';
+import {CARS, DRIVE, BOOST, launchScale, boostLaunch, steeringYawAuthority} from '../config.js';
 import {wrapHeading} from '../offroad-physics.js';
 import {upgradedCar} from '../progression.js';
 import {applyDriverModifiers} from '../drivers.js';
@@ -171,7 +171,7 @@ export function pilotStep(duel, actor, goal, dt) {
   if (next < target) {
     const revs = Math.max(0, next) / Math.max(1, spec.topSpeed);
     const factor = Math.max(.15, 1 - Math.max(0, revs - .5));
-    next = Math.min(target, next + (reversing ? DRIVE.reverseAccel : spec.accel * factor * DRIVE.accelScale * accelerationShare) * dt);
+    next = Math.min(target, next + (reversing ? DRIVE.reverseAccel : spec.accel * factor * launchScale(duel.course) * accelerationShare) * dt);
   } else {
     next = Math.max(target, next - DRIVE.brakeAccel * (spec.braking || 1) * dt);
   }
@@ -179,7 +179,7 @@ export function pilotStep(duel, actor, goal, dt) {
   actor.boosting = !reversing && boostWanted && actor.boost > 0 && next > BOOST.minSpeedMph;
   if (actor.boosting) {
     actor.boost = Math.max(0, actor.boost - BOOST.drainPerSec / Math.max(.1, spec.boostCapacity ?? 1) * dt);
-    next = Math.min(floorTop * BOOST.topSpeedMult, next + BOOST.accelMphPerSec * dt * accelerationShare);
+    next = Math.min(floorTop * BOOST.topSpeedMult, next + boostLaunch(duel.course) * dt * accelerationShare);
   } else if (!goal.boost) {
     actor.boost = Math.min(1, actor.boost + BOOST.refillPerSec * dt);
   }

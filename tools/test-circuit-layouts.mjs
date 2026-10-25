@@ -187,7 +187,7 @@ for (const circuit of ALL_CIRCUITS.filter(def=>def.closed!==false)) {
       // At least 90% of laps without touching a wall (centre kept on the road).
       const clean = run.lapEdge.slice(0, circuit.laps).filter(edge => edge < -.02).length;
       assert.ok(clean / circuit.laps >= .9, `${label} clean laps ${clean}/${circuit.laps}`);
-      assert.ok(run.lapTimes.slice(1).every(time => time > 55 && time < 150), label);
+      assert.ok(run.lapTimes.slice(1).every(time => time > 55 && time < 165), label);
     }
   });
 }

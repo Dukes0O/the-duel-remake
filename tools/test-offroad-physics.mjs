@@ -110,9 +110,10 @@ for (const car of ['titan_monster', 'dusthawk_rally']) {
   same(d.state.stageCrashes, 0, 'a small rock is support, not a hidden solid crash');
 }
 {
-  const d = straight(); rock(d, 4.8); drive(d, 2);
+  // FIX-LAUNCH: three seconds to reach the rock, not two, at the gentler launch.
+  const d = straight(); rock(d, 4.8); drive(d, 3);
   same(d.state.rollovers, 1, 'oversized rock can tip Titan');
-  const ordinary = straight('falcone_f42'); rock(ordinary, .65); drive(ordinary, 2);
+  const ordinary = straight('falcone_f42'); rock(ordinary, .65); drive(ordinary, 3);
   check(ordinary.state.stageCrashes > 0, 'ordinary car still hits the same small rock');
 }
 // Visible boulders use a unit DodecahedronGeometry. The conservative tire

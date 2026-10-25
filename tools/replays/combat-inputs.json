@@ -49,14 +49,14 @@
       "eventId": "pacific-canyon",
       "car": "falcone_f42",
       "playerS": 500,
-      "opponents": [540, 565, 590],
+      "opponents": [520, 540, 560],
       "opponentLateral": [-3, 0, 3],
       "cpuAttacks": true,
       "durationTicks": 750,
       "actions": [
         {"atTick": 0, "kind": "input", "throttle": 1}
       ],
-      "expect": {"hits": 1, "wrecks": 0, "pickups": 0, "ramHits": 0,
+      "expect": {"hits": 2, "wrecks": 0, "pickups": 0, "ramHits": 0,
         "cpuShots": 3, "shooterOrder": [0, 1, 2]}
     }
   ]

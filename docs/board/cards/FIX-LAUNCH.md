@@ -30,3 +30,40 @@ two to three times a real supercar.
 
 No switch: a tuning change to every race. Decide with Kyle at release whether
 Pro tyre grip (`tyre-slip`, dev) ships at the same time.
+
+## Claude answers
+
+Claude, 24 October: option 3 approved as built. `DRIVE.accelScale` 5.2 to 2.5,
+`BOOST.accelMphPerSec` 42 to 20.2 (same factor), Jesko `accel` 10.8 to 9.9. No
+curve change and no other per-car edits. One scale cannot meet both ends (the
+959-S is 1.81 times slower than the Jesko, the targets allow 1.75), and a curve
+change would reorder Titan, Dusthawk and Viper. Re-record what moves, keep every
+balance target unchanged.
+
+Second round, Claude, 24 October: approved (1) arena-only launch (arenas keep
+5.2 and 42, `DRIVE.arenaAccelScale`, `BOOST.arenaAccelMphPerSec`); (2) Checkpoint
+Rush Easy gate extension 10 to 12 s, because Easy must stay winnable after a
+crash; (3) race-field "Easy field is the slower half" relaxed to within 1 percent,
+because its reference car (F42) is now the slowest road car, intent unchanged:
+the Easy field is no faster than the slowest road car; (4) lap sanity bound 150
+to 165 s; (5) the dev tyre-slip drift fixture is not tuned here: card
+TYRE-SLIP-DRIFT-RETUNE holds it (142 against 4828 points).
+
+Third round, Claude, 24 October: approved (1) Bolide base accel 10.5 to 9.5 (2.44 s,
+order kept, Jesko stays 9.9); (2) CPU launch per level, 1, 1.3 and 1.6 times the
+player launch, every band holds; (3) the one failing balance seed (Hard 1993) is a
+known demo-driver limit: merge with it written plainly in the change note and the
+pull request, card DEMO-DRIVER-UNSTUCK (needs FIX-LAUNCH) fixes it, do not drop
+seeds or change the measure, and the next release waits for that card; (4) staggered
+CPU attack gaps 520/540/560.
+
+Fourth round, Claude, 24 October: the Hard Midnight Muscle Chase: option (a). After a
+crash recovery the car pulls away with the old launch until it is back to 60 mph or
+3 s, whichever first (`DRIVE.recoveryAccelScale` 5.2, `DRIVE.crashLaunchSec` 3, field
+`crashLaunchSec` set at the crash site and removed when it ends); everyday starts stay
+gentle. Built, with the chase checks unchanged, plus a check in `test-launch.mjs`.
+That alone was not enough: the whole chase lap is a fifth slower, so the fixed-pace
+police pursuer gained on the player and caught them two to four times. The chase
+pursuer's cruise share `POLICE.chasePaceBase` .42 to .34 (the same ratio as the
+slower laps, 99.6 s to 123.5 s) restores it: Hard chase with three crashes wins at
+145.1 s (base 145.8 s) with no catches and a 24 s penalty.
