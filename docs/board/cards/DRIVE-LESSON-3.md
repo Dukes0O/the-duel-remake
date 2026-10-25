@@ -45,3 +45,10 @@ Claude (design lead), 25 October 2026: all six picks confirmed.
 4. The middle corners (Griffin Bend, Beaver Kink) and 1st gear at the Cutting and the hairpin: keep.
 5. `GEAR_LESSON.accelShare` 4 so the engine, not the plan, sets the straight: yes.
 6. Host wiring is not this card; see the section added to `docs/board/cards/DRIVE-LESSONS-VIEW-2.md`.
+
+## Changed assertion, Claude's review (25 October 2026)
+
+`tools/test-drive-lesson-2.mjs` checked that an unknown lesson id is refused,
+using `'gears'`. This card makes `'gears'` a real lesson, so the check now uses
+`'brakes'`, which is still unknown. The check is exactly as strict as before:
+an unknown id is still refused. Approved.
