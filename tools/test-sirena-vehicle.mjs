@@ -161,8 +161,8 @@ disposeTree(vehicle); disposeTree(sibling);
 // 7. The underwater models: committed bytes match the manifest and rebuild exactly from the recipe.
 const modelDir = join(root, 'public/assets/models/sirena');
 const manifest = JSON.parse(readFileSync(join(modelDir, 'manifest.json'), 'utf8'));
-const IDS = ['wreck', 'badge', 'steering-wheel', 'wheel', 'bonnet', 'door', 'lift-bag', 'abalone'];
-equal(manifest.models.map(model => model.id), IDS, 'The wreck, five loose parts, lift bag and abalone');
+const IDS = ['wreck', 'wreck-hull', 'badge', 'steering-wheel', 'wheel', 'bonnet', 'door', 'lift-bag', 'abalone'];
+equal(manifest.models.map(model => model.id), IDS, 'The wreck, its hull alone for the Lab\'s tank, five loose parts, lift bag and abalone');
 let total = 0;
 for (const model of manifest.models) {
   const bytes = readFileSync(join(modelDir, `${model.id}.glb`));
@@ -180,12 +180,15 @@ for (const model of manifest.models) {
   const g = meshes[0].geometry;
   ok(g.attributes.color && g.attributes.position.array.every(Number.isFinite), `${model.id}: finite vertices with colours`);
   const box = new THREE.Box3().setFromBufferAttribute(g.attributes.position);
-  near(box.min.y, model.id === 'wreck' ? box.min.y : 0, 1e-4, `${model.id}: rests on the floor`);
+  near(box.min.y, ['wreck', 'wreck-hull'].includes(model.id) ? box.min.y : 0, 1e-4, `${model.id}: rests on the floor`);
   box.getSize(size3); loaded[model.id] = size3.clone();
   equal(g.index.count / 3, model.triangles, `${model.id}: triangle count matches the manifest`);
 }
 // Real-world sizes in metres.
 ok(loaded.wreck.x > 3 && loaded.wreck.z > 4.5 && loaded.wreck.y > 1.0 && loaded.wreck.y < 1.4, 'The wreck is car-sized with its sand and stands about a metre out of it');
+// LAB-RESTORE: the hull alone is the same wreck cut from its sand, so the tank holds a car and no sandbank.
+ok(loaded['wreck-hull'].x < 2.3 && loaded['wreck-hull'].x > 1.8 && loaded['wreck-hull'].z > 4.0 && loaded['wreck-hull'].z < 5.0, 'The hull is car-sized (about 2 m wide, 4 m and more long) with no sand mound around it');
+ok(loaded['wreck-hull'].x < loaded.wreck.x - 1 && manifest.models.find(m => m.id === 'wreck-hull').triangles < manifest.models.find(m => m.id === 'wreck').triangles, 'The hull is the wreck without its sand');
 near(loaded.badge.x, .124, .02, 'The badge is about 12 cm across');
 near(loaded['steering-wheel'].x, .40, .06, 'The steering wheel is about 40 cm');
 near(loaded.wheel.y, .25, .06, 'The wheel lies on its side, about 25 cm thick');
@@ -202,4 +205,4 @@ try {
   equal(readFileSync(join(scratch, 'manifest.json'), 'utf8'), readFileSync(join(modelDir, 'manifest.json'), 'utf8'), 'The manifest rebuilds too');
 } finally { rmSync(scratch, { recursive: true, force: true }); }
 ok(!existsSync(scratch), 'The scratch folder is gone');
-console.log(`Sirena: ${checks} checks; car ${triangles.toLocaleString()} triangles (limit ${MAX_TRIANGLES.toLocaleString()}) / ${draws} draws (limit ${MAX_DRAWS}); eight underwater models ${total.toLocaleString()} bytes (limit ${PROPS_BYTES.toLocaleString()}), rebuilt byte for byte.`);
+console.log(`Sirena: ${checks} checks; car ${triangles.toLocaleString()} triangles (limit ${MAX_TRIANGLES.toLocaleString()}) / ${draws} draws (limit ${MAX_DRAWS}); nine underwater models ${total.toLocaleString()} bytes (limit ${PROPS_BYTES.toLocaleString()}), rebuilt byte for byte.`);

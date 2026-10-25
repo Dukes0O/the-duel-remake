@@ -23,3 +23,15 @@ Sound: `lab.fizz`, Brian's restore lines. Art: SIRENA-ART's wreck and car.
 
 Acceptance: the test, a scenario step, lane tier, build, one review.
 Removed: nothing.
+
+## Claude answers (25 October 2026)
+
+All five picks in the cloud session's questions are confirmed.
+
+1. No new save field. Restoring takes 2,500 and appends `falcone_sirena` to `unlockedCars` in one saved step through `app.labCommit`: yes, exactly right.
+2. Pay and unlock at the start; the sequence is the show: yes.
+3. No Skip on the paid first run; "Watch the restoration again" (free, with Skip, no Brian lines) once restored: yes. No `lab.restored` key.
+4. The five stages, about 60 s, the salt readout marked fast-forward: yes.
+5. Offered only when the Sirena is waiting, Rust is passed and both `lab` and `the-deep` are on; disabled with the shortfall when credits are short: yes.
+
+One requirement: this takes money and grants a car, so one independent review before the PR, probing paying twice, a double click or two tabs, short credits, the credit cap, NaN or forged credits, restoring when already restored, either switch off and an old save. The PR lists what it probed and fixed.
