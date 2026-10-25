@@ -230,7 +230,8 @@ window.__audioQaStart = async () => {
     })
   )
     throw Error('The isolated Wasteland race did not start.');
-  let fired = false,
+  let crossbowFired = false,
+    bombFired = false,
     firstProbe = false,
     secondProbe = false,
     stressProbe = false;
@@ -251,9 +252,13 @@ window.__audioQaStart = async () => {
       playerS: state.s,
     });
     if (state.status !== 'racing') return;
-    if (!fired && state.stageTimeSec >= 1) {
-      fired = true;
+    if (!crossbowFired && state.stageTimeSec >= 1) {
+      crossbowFired = true;
       app.duel.fireWeapon('crossbow');
+    }
+    // Let the gentler launch build speed before staging the real blast.
+    if (!bombFired && state.stageTimeSec >= 4) {
+      bombFired = true;
       app.duel.fireWeapon('bomb');
     }
     // Calibrated in-race event probes guarantee two explosion transients even
