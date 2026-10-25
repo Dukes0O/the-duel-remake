@@ -42,3 +42,10 @@ review. Removed: nothing.
 ## Also wire the sea-life log (Claude, 25 October, from DEEP-LOG)
 
 At the same dive step as the Sirena: call DEEP-LOG's `stepLog` each underwater frame, `recordLogged` and `recordPearl` to pay and save, `phoneLineFor` for Ana's line, and show its slide-in card. A few lines beside the Sirena's.
+
+## From DEEP-LIFE (Claude, 25 October 2026)
+
+Call the sea life's `stepLift` from the dive loop (only the proximity start
+fires in the game today), judge the life again on the real Kelp Coast rather
+than the look page's sample loop, and measure the delivered frame time in the
+game at the thickest part of the forest.
