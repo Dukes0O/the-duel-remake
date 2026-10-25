@@ -1548,3 +1548,6 @@ Day/Night and Dossier remain waiting on that shared renderer dependency.
 - Racecraft preview: the acceleration and nitro changes are right. The field
   still files into one lane off the start, which Kyle expected fixed:
   GP-WIDE-START goes ahead now on its 24 October design.
+- The Koenigsegg Jesko races on every course and in every mode again (Kyle,
+  25 October 2026: Gratian could no longer use it). It leaves the air-only
+  list; the medal cars and the restored Sirena keep the fly-it-there rule.
