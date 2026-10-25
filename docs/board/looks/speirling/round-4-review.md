@@ -23,7 +23,7 @@ hover-kart and was rebuilt. Round 2: much closer; the teardrop, the cut-off tail
 two round exits and the red lamp, the charcoal and the thin green line were kept.
 Claude asked for exactly four changes.
 
-## Round 3
+## Round 3 (sheet removed when round 4 was committed)
 
 1. **Fenders:** the flat half-moon pods are now rounded fenders that grow out of the
    body: a lathe-swept shell round each axle, curved in plan and in section, its outer
@@ -44,15 +44,19 @@ Claude asked for exactly four changes.
 Size: 48,162 triangles and 56 draws (cap this round: 50,000 triangles).
 Still true: this session could not open photographs.
 
-## After the sheet
+## Round 4 (final: Kyle lifted the cap for one last pass)
 
-Claude first called round 3 accepted and asked for the dark side patches to go; they
-were the side windows, so they are back: the canopy's glass continues down the cabin
-sides in the shape of a door's glass (the carbon intake panel on the rear flank stays
-out). Then Kyle looked: round 3 is closer to the real car than round 1 but not there
-yet, and his word lifts the three-round cap. Round 4 will be built from real
-photographs, which Claude is gathering.
+Claude's instruction after Kyle's look: round 3 is "not all that bad"; one pass only.
+1. **Side windows:** back, as dark-tinted glass continuing the canopy down the cabin
+   sides in the shape of a door's glass.
+2. **Photographs:** step 2 asked for a look at public photos of the real car (front
+   three-quarter, side and rear) to correct the cabin position, the nose and its
+   intake, the wheel arches and the tail. The browser tool navigated to Wikipedia's
+   page but failed its policy check ("Policy check temporarily unavailable") on every
+   screenshot and page read, three separate times in this session, so no photograph
+   was looked at and no proportions were changed from pictures. Views used: none.
+3. **Kept:** the teardrop, the dark canopy, the rounded fenders, the tucked skirt,
+   the two round tail exits, charcoal with the green line.
 
-Size now: 49,016 triangles and 56 draws (cap 50,000); declared 1.45 x 3.37 x 1.2 m.
-Browser note: this session's browser tool still failed its policy check when tried
-again, so no photograph was looked at here.
+Size: 49,016 triangles and 56 draws (cap 50,000); declared 1.45 x 3.37 x 1.2 m. The
+sheet has the same six tiles.

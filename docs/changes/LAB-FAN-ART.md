@@ -3,7 +3,7 @@
 Switch `lab` (dev); nothing here is registered in the roster or the game yet
 (LAB-FAN adds `mcmurtry_speirling` to the config and the router, LAB-FAN-VIEW places
 the blueprint and the REVERSE switch). Built by the local Sonnet session on
-`claude/lab-fan-art`; Claude judged each look round (round 4 pending: Kyle lifted the three-round cap).
+`claude/lab-fan-art`; Claude judged each look round (four rounds: Kyle lifted the three-round cap for the last one).
 
 ## Design questions settled in writing, before code
 
@@ -20,8 +20,8 @@ the blueprint and the REVERSE switch). Built by the local Sonnet session on
    curling 1.2 x 0.85 m blueprint on four pins with the Chaparral 2J (1970), the
    Brabham BT46B (1978) and the Speirling (2022) as line drawings and the
    Speirling in side and plan view with the air's path. Hung from its top edge.
-4. **Likeness.** This session could not open photographs (the browser tool was
-   unavailable), so the shape follows Claude's round 1 description: a closed teardrop
+4. **Likeness.** This session could not open photographs (the browser tool failed its
+   policy check every time, round 4 included), so the shape follows Claude's round 1 description: a closed teardrop
    coupe, a jet-fighter canopy, two round exits on a cut-off tail, a black floor skirt,
    black wheels with fenders over their top halves, matte charcoal with a thin green line.
 
@@ -38,7 +38,7 @@ the blueprint and the REVERSE switch). Built by the local Sonnet session on
   cockpit and not behind it; fenders over the wheels; two dark round exits on the tail
   face; skirt near the road), size budget, tire grounding, damage, crush and reset,
   tumbling, and the blueprint's bytes, size and byte-for-byte rebuild.
-- Look rounds: `docs/board/looks/speirling/round-3.jpg` with `round-3-review.md`
+- Look rounds: `docs/board/looks/speirling/round-4.jpg` with `round-4-review.md`
   (earlier sheets removed as each round was committed).
 
 ## Tests and gates
