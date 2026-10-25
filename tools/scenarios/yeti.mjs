@@ -18,12 +18,21 @@ async function browserHelper() {
   const result = await build({root, configFile:false, logLevel:'silent',
     define:{__DUEL_QA__:'true'}, plugins:[{name:'yeti-native-inspection',
       resolveId(id) { if(id.replaceAll('\\','/')===entry)return '\0yeti'; },
+      // The line driver's file also holds a headless-run helper that imports the whole game
+      // (its top-level waits then never finish in a second copy); the page already runs the game.
+      transform(code,id) {
+        if(!id.replaceAll('\\','/').endsWith('/tools/track-script-drive.mjs'))return;
+        const marker="import { App } from '../src/app.js';";
+        if(!code.includes(marker))throw Error('Line driver no longer imports the game as expected');
+        return code.replace(marker,'class App {}');
+      },
       load(id) {
         if(id!=='\0yeti')return;
-        return 'import * as THREE from '+source('node_modules/three/build/three.module.js')+
-          ';import {useRacingLine} from '+source('tools/track-script-drive.mjs')+
+        return 'import {useRacingLine} from '+source('tools/track-script-drive.mjs')+
           ';import {renderedGroundHeight} from '+source('src/rendered-ground.js')+
           ';import {hash32} from '+source('src/yeti.js')+
+          ';const THREE=window.P4KitsQa;'+
+          'if(!THREE||typeof THREE.Box3!=="function"||THREE.Vector3!==window.__render?.camera.position.constructor)throw Error("Yeti inspection requires the renderer\'s own Three classes");'+
           ';window.__yetiQa={THREE,useRacingLine,renderedGroundHeight,hash32};';
       }}], build:{write:false, emptyOutDir:false, minify:false,
       lib:{entry,formats:['es']}, rolldownOptions:{output:{codeSplitting:false}}}});
@@ -42,7 +51,7 @@ export async function run(context) {
     packet.sourceHashes[path]=createHash('sha256').update(await readFile(join(root,path))).digest('hex');
   let started=false;
   try {
-    await context.navigate('/tools/menu-check.html?flags=summit-run,yeti,snow-world');
+    await context.navigate('/tools/menu-check.html?flags=summit-run,yeti,snow-world&p4-kits-native=1');
     await context.waitFor("!!window.__qaApp&&!!window.__render&&document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'",'real memory-only Yeti menu',90000);
     await context.evaluate(await browserHelper());
     packet.start=await context.evaluate(`(async()=>{

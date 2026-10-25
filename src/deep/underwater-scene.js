@@ -6,6 +6,7 @@
 //   const deep = createUnderwaterScene({ zone, quality, renderer, scene });
 //   deep.attachCar(carObject);              // the player's car looks wet and lit
 //   each frame: deep.update({ car, camera, seconds });
+//   deepRaised: deep.raised(findId);           // sea life may react (the whale, on 'sirena-car')
 //   on the way back up: deep.dispose();
 //
 // `car` is read-only { x, y, z, heading, speed }. Nothing here touches race
@@ -18,6 +19,7 @@ import { createHeadlights } from './headlights.js';
 import { createContactShadow } from './contact-shadow.js';
 import { lookQuality } from './look-quality.js';
 import { createZoneFloor, zoneSeed } from './zone-floor.js';
+import { createSeaLife } from './sea-life.js';
 
 // The look test's crops were sized for about 200 m of forest and 300 m of
 // ground; a zone gets the same thickness per metre of trail that asks for them.
@@ -27,7 +29,7 @@ const scaled = (base, metres) => Math.round(base * Math.min(6, Math.max(0.15, me
 // Headlights come on where daylight fails: the drop-off, caves, wrecks.
 export const HEADLIGHT_DEPTH = 16;
 
-export function createUnderwaterScene({ zone, quality = 'high', renderer, scene }) {
+export function createUnderwaterScene({ zone, quality = 'high', renderer, scene, loadSeaLife }) {
   if (!renderer || !scene) throw new Error('createUnderwaterScene needs the renderer and the scene.');
   const profile = lookQuality(quality);
   const shape = createZoneFloor(zone);
@@ -44,7 +46,10 @@ export function createUnderwaterScene({ zone, quality = 'high', renderer, scene 
   const seagrass = createSeagrass(look.uniforms, { seed, placements: shape.seagrassPlacements(seed, scaled(profile.seagrassTufts, grassMetres)) });
   const rocks = createRocks(look.uniforms, { seed, detail: 1, placements: shape.rockPlacements(seed, scaled(profile.rocks, shape.length * 0.65)) });
   const pebbles = createPebbles(look.uniforms, { seed, placements: shape.pebblePlacements(seed, scaled(profile.pebbles, shape.length * 0.65)) });
-  group.add(floor.group, kelp.group, seagrass.group, rocks.group, pebbles.group);
+  // The zone's creatures (its `spots`): none for a zone without any. Models load
+  // as they arrive; one that fails is skipped and the dive goes on.
+  const sea = createSeaLife({ zone, shape, uniforms: look.uniforms, quality, fishBudget: profile.fish, ...(loadSeaLife ? { load: loadSeaLife } : {}) });
+  group.add(floor.group, kelp.group, seagrass.group, rocks.group, pebbles.group, sea.group);
   scene.add(group);
 
   // Build the ground around the start of the trail before the first frame.
@@ -56,9 +61,11 @@ export function createUnderwaterScene({ zone, quality = 'high', renderer, scene 
   let disposed = false;
 
   return {
-    group, shape, look,
+    group, shape, look, sea,
     counts: { kelp: kelp.count, seagrass: seagrass.count, rocks: rocks.count, pebbles: pebbles.count, floorTiles: floor.tileCount },
     get builtTiles() { return floor.builtCount; },
+    // A find was raised (the duel's deepRaised event): the whale may pass.
+    raised(findId) { return sea.raised(findId); },
     // A car under water: caustics on the paint, a soft shadow under it, and
     // headlights that switch on in the dark. The car wears copies of its own
     // materials while it is down here; dispose gives it back its originals and
@@ -97,6 +104,7 @@ export function createUnderwaterScene({ zone, quality = 'high', renderer, scene 
       floor.update(camera);
       kelp.update(camera);
       seagrass.update(camera);
+      sea.update({ car, camera, seconds });
       const dark = -cy > HEADLIGHT_DEPTH;
       for (const c of cars) c.lights.setOn(dark);
     },
@@ -113,6 +121,7 @@ export function createUnderwaterScene({ zone, quality = 'high', renderer, scene 
         }
       }
       cars.length = 0;
+      sea.dispose();
       floor.dispose(); kelp.dispose(); seagrass.dispose?.(); rocks.dispose?.(); pebbles.dispose?.();
       scene.remove(group);
       look.dispose();

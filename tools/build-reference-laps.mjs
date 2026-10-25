@@ -14,6 +14,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
+import {heliOf} from '../src/heli/heli-save.js';
 
 export const REFERENCE_POLICY = Object.freeze({
   car: 'stuttgart_959s', driver: 'club', cpu: 'medium', fixtureVersion: 1,
@@ -211,7 +212,9 @@ export function startReferenceApp(app, target) {
   const unlock = CIRCUIT_MANIFESTS.find(row => row.id === target.eventId)?.unlock;
   app.profile = {...app.profile, courses: {version: 1, unlocked: COURSE.map(course => course.id)},
     ...(unlock?.kind === 'default-gp-podium' ? {grandPrixPodiums:
-      [...new Set([...(app.profile.grandPrixPodiums ?? []), unlock.defaultEventId])]} : {})};
+      [...new Set([...(app.profile.grandPrixPodiums ?? []), unlock.defaultEventId])]} : {}),
+    // A variant found from the air enters through the pilot's map record, as a player's save would hold it.
+    ...(unlock?.kind === 'spotted-from-air' ? {heli: {...heliOf(app.profile), map: {version: 1, seen: [], found: [target.eventId], table: false}}} : {})};
   app._saveProfile();
   const options = {startStage, seed: target.seed, mode: 'duel', car: driver.car,
     driverId: driver.driverId, cpuDifficulty: REFERENCE_POLICY.cpu,

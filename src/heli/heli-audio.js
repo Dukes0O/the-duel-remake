@@ -82,6 +82,9 @@ export const HELI_TONE_CUES = Object.freeze({
   // rescue clock's last minute, under the rotor.
   'heli.beacon.beep': cue('interface', {priority: 75, limit: 2, volume: .7, layers: [tone(1000, .07, .16, 'sine', 0)]}),
   'heli.clock.tick': cue('interface', {priority: 30, limit: 1, volume: .35, layers: [tone(2200, .025, .08, 'triangle', 0)]}),
+  // The pilot's map (docs/PILOT_MAP.md section 5): a secret found from the air, three rising tones, softer than the badge.
+  'heli.found': cue('interface', {priority: 80, limit: 1, volume: .6, layers: [
+    tone(659, .22, .1, 'sine', 0), tone(880, .22, .1, 'sine', .16), tone(1319, .6, .1, 'sine', .32)]}),
   'heli.badge': cue('interface', {priority: 85, limit: 1, volume: .7, layers: [
     tone(784, .3, .12, 'sine', 0), tone(988, .3, .12, 'sine', .14), tone(1175, .3, .12, 'sine', .28),
     tone(1568, .7, .12, 'sine', .42)]}),
@@ -128,6 +131,8 @@ export const HELI_EVENT_CUES = Object.freeze({
   cargoHit: () => [['heli.cable.creak', {scale: .8}], ['heli.setdown.thud', {scale: .55}]],
   // Retardant is thicker than water: the bucket's pourStart carries `retardant: true` (heli-bucket.js).
   pourStart: event => event.retardant === true ? [['heli.retardant']] : [],
+  secretFound: () => [['heli.found']],
+  tableFound: () => [['heli.found']],
 });
 // The instructor reacts to the same events (the session may also ask for them;
 // a line already queued, playing or just played is not repeated).
