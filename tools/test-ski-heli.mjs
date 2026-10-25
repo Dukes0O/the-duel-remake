@@ -75,9 +75,9 @@ function flyToPad(session, pad, {speed = 18, clear = 110, maxSec = 900} = {}) {
 }
 // A skier steering for the planned line and then the pickup, standing still there (what a player does: skid to a stop).
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a)), clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-function skierDriver(runId) {
+function skierDriver(runId, via = null) {
   const zone = skiZone(runId), line = zone.line?.length >= 2 ? zone.line : [{x: 0, z: 0}, zone.pickup];
-  const waypoints = runId === 'powder' ? [...zone.stashes, zone.pickup] : null, cum = [0];
+  const waypoints = via ?? (runId === 'powder' ? [...zone.stashes, zone.pickup] : null), cum = [0];
   for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + Math.hypot(line[i].x - line[i - 1].x, line[i].z - line[i - 1].z));
   let progress = 0, waypoint = 0;
   const pointAt = d => { d = clamp(d, 0, cum[cum.length - 1]); let i = 1; while (i < cum.length - 1 && cum[i] < d) i++; const span = cum[i] - cum[i - 1] || 1, k = (d - cum[i - 1]) / span;
@@ -107,6 +107,22 @@ function skierDriver(runId) {
 function skiOut(session, runId, seconds = 400) {
   const drive = skierDriver(runId);
   return run(session, seconds, v => drive(v.ski.run.skier), v => v.phase !== 'skiing');
+}
+
+// From the pickup pad home. A trip over the mountain leaves less than the 160 kg the cruise needs, so the helicopter sits until the engine
+// runs dry and the existing fuel truck fills the tank for pay; then out of the area, the cruise, and down onto the home pad.
+function flyHome(session) {
+  const dry = run(session, 900, () => ({}), (v, got) => got.some(e => e.type === 'charged' && e.kind === 'fuelTruck'));
+  assert.ok(dry.some(e => e.type === 'charged' && e.kind === 'fuelTruck'), 'the truck came');
+  assert.equal(session.setDestination('tremblant-woods'), true);
+  const out = run(session, 120, f => pilot(f, {x: f.heli.x - 600, z: f.heli.z, y: f.heli.y < 100 ? 100 : f.heli.y}, {speed: 20, sink: 6}), f => f.cruiseOffered);
+  assert.ok(session.view().cruiseOffered, 'out of the area, the cruise home is offered');
+  assert.equal(session.acceptCruise(), true);
+  run(session, 5, () => ({lift: 0}));
+  const zone = session.view().zone;
+  const home = run(session, 240, f => pilot(f, {x: zone.x, z: zone.z, y: zone.y + 40}, {speed: 25, sink: 6}), f => Math.hypot(f.heli.x - zone.x, f.heli.z - zone.z) < 3 && Math.hypot(f.heli.vx, f.heli.vz) < 0.6);
+  home.push(...run(session, 90, f => pilot(f, {x: zone.x, z: zone.z, y: zone.y - 2}, {speed: 2, sink: 2.5}), (f, got) => has(got, 'skiGroupDone') || has(got, 'skiDropDone') || f.heli.onGround));
+  return {events: [...dry, ...out, ...home], dry, home};
 }
 
 // ---- the thin air: the corrected doc's numbers, from the helicopter's own rules -----------------------------------
@@ -272,14 +288,17 @@ test('the Lab\'s wax challenge: the right wax for the day\'s snow and a slalom i
   assert.equal(noLab.skiOffers().challenge, null); assert.equal(noLab.skiStepOut('slalom', {challenge: 'wax', wax: right}).ok, false);
   // The wrong wax: even a fast run does not pass it.
   const bad = slalomSession(profile, {labEnabled: true});
-  assert.deepEqual(bad.skiStepOut('slalom', {challenge: 'wax', wax: wrong}), {ok: true}); assert.equal(bad.view().ski.run.wax, 'wrong');
+  assert.deepEqual(bad.skiStepOut('slalom', {challenge: 'wax', wax: wrong}), {ok: true}); assert.equal(bad.view().ski.run.pick, wrong);
+  assert.equal(Object.hasOwn(bad.view().ski.run, 'wax'), false, 'the view shows the pick, never the verdict');
+  const stepped = bad.takeEvents().find(e => e.type === 'skiStepOut');
+  assert.equal(stepped.pick, wrong); assert.equal(Object.hasOwn(stepped, 'wax'), false, 'and so does the event');
   const failed = skiOut(bad, 'slalom');
   assert.ok(has(failed, 'waxChallengeFailed') && !has(failed, 'waxChallengePassed'));
   assert.match(failed.find(e => e.type === 'waxChallengeFailed').reason, /does not suit/); assert.equal(labOf(bad.profile).done.wax, undefined);
   // The right wax: passes, and the kit can then be bought.
   const good = slalomSession(profile, {labEnabled: true});
   const before = good.profile.credits;
-  assert.deepEqual(good.skiStepOut('slalom', {challenge: 'wax', wax: right}), {ok: true}); assert.equal(good.view().ski.run.wax, 'right');
+  assert.deepEqual(good.skiStepOut('slalom', {challenge: 'wax', wax: right}), {ok: true}); assert.equal(good.view().ski.run.pick, right);
   const passed = skiOut(good, 'slalom');
   const result = passed.find(e => e.type === 'skiResult');
   assert.ok(result.time > 0 && result.medal >= 1, JSON.stringify(result));
@@ -300,13 +319,13 @@ test('the Wax kit: a pick before the run is judged against the day\'s snow; no p
   const offers = s.skiOffers();
   assert.equal(offers.kit, true); assert.deepEqual([...offers.waxes], [...WAXES]);
   assert.equal(s.skiStepOut('slalom', {wax: 'banana'}).ok, false);
-  assert.equal(s.skiStepOut('slalom', {wax: right}).ok, true); assert.equal(s.view().ski.run.wax, 'right');
+  assert.equal(s.skiStepOut('slalom', {wax: right}).ok, true); assert.equal(s.view().ski.run.pick, right);
   const events = skiOut(s, 'slalom');
   assert.ok(has(events, 'skiResult')); assert.equal(has(events, 'waxChallengePassed') || has(events, 'waxChallengeFailed'), false, 'a pick is not the challenge');
   // No pick: the plain snow.
   const plain = slalomSession(owned, {labEnabled: true});
-  assert.equal(plain.skiStepOut('slalom').ok, true); assert.equal(plain.view().ski.run.wax, null);
-  plain.restartSkiRun(); assert.equal(plain.view().ski.run.wax, null);
+  assert.equal(plain.skiStepOut('slalom').ok, true); assert.equal(plain.view().ski.run.pick, null);
+  plain.restartSkiRun(); assert.equal(plain.view().ski.run.pick, null);
   // The aerials run, at the pickup pad, waits for the free Aerials reward when the Lab is on.
   const gate = sessionOf(profileOf({count: day}), {labEnabled: true});
   gate.start(); gate.takeSkiDrop(); toSummit(gate); flyToPad(gate, SKI_PADS.pickup);
@@ -348,28 +367,15 @@ test('the group job: aboard at the home pad with 475 kg, skied from the pickup p
   assert.equal(empty(), KESTREL.emptyKg + 475);
   // Not paid until they are home.
   assert.equal(heliOf(s.profile).jobs.taken, `ski${day}`);
-  // A full group trip leaves less than the 160 kg the cruise home needs (the cruise there took 160 of the 400, and the heavy
-  // flying over the mountain the rest): the helicopter sits at the pickup until the engine runs dry and the fuel truck fills it
-  // (the existing rule: nobody is stranded, and the truck is paid for).
+  // A full group trip leaves less than the 160 kg the cruise home needs; flyHome sits at the pickup until the fuel truck fills the tank.
   assert.ok(v.heli.fuelKg < 160, `fuel left ${v.heli.fuelKg.toFixed(0)} kg`);
-  const wallet = s.profile.credits;
-  const dry = run(s, 900, () => ({}), (f, got) => got.some(e => e.type === 'charged' && e.kind === 'fuelTruck'));
-  assert.ok(dry.some(e => e.type === 'charged' && e.kind === 'fuelTruck'), 'the truck came');
-  assert.ok(s.profile.credits < wallet && s.view().heli.fuelKg === 400, 'and filled the tank, for pay');
-  assert.equal(empty(), KESTREL.emptyKg + 475, 'the group is still aboard');
-  const afterTruck = s.profile.credits;
-  assert.equal(s.setDestination('tremblant-woods'), true);
-  const out = run(s, 120, f => pilot(f, {x: f.heli.x - 600, z: f.heli.z, y: f.heli.y < 100 ? 100 : f.heli.y}, {speed: 20, sink: 6}), f => f.cruiseOffered);
-  assert.ok(has(out, 'cruiseOffered') || s.view().cruiseOffered, 'out of the area, the cruise home is offered');
-  assert.equal(s.acceptCruise(), true);
-  run(s, 5, () => ({lift: 0}));
-  const zone = s.view().zone;
-  const home = run(s, 240, f => pilot(f, {x: zone.x, z: zone.z, y: zone.y + 40}, {speed: 25, sink: 6}), f => Math.hypot(f.heli.x - zone.x, f.heli.z - zone.z) < 3 && Math.hypot(f.heli.vx, f.heli.vz) < 0.6);
-  home.push(...run(s, 90, f => pilot(f, {x: zone.x, z: zone.z, y: zone.y - 2}, {speed: 2, sink: 2.5}), (f, got) => has(got, 'skiGroupDone')));
+  const wallet = s.profile.credits, homeFlight = flyHome(s), home = homeFlight.home;
+  assert.ok(homeFlight.dry.some(e => e.type === 'charged' && e.kind === 'fuelTruck') && wallet > 0, 'the truck filled the tank, for pay');
   assert.ok(has(home, 'skiGroupDone'), 'paid at the home pad');
   const pay = home.find(e => e.type === 'skiGroupDone').pay;
   assert.equal(pay, 1200);
-  assert.equal(s.profile.credits, afterTruck + 1200 - home.filter(e => e.type === 'charged').reduce((sum, e) => sum + e.charged, 0), 'the pay is in');
+  const charged = homeFlight.events.filter(e => e.type === 'charged').reduce((sum, e) => sum + e.charged, 0);
+  assert.equal(s.profile.credits, wallet + 1200 - charged, 'the pay is in, less the truck and any repair');
   assert.ok(heliOf(s.profile).jobs.done.includes(`ski${day}`)); assert.equal(heliOf(s.profile).jobs.taken, null);
   assert.equal(s.view().ski.group, false); assert.equal(empty(), KESTREL.emptyKg, 'the weight is off again'); assert.equal(s.view().ski.flight, null);
   assert.equal(s.skiBoard().group.done, true); assert.equal(s.takeSkiGroup().ok, false, 'once a day');
@@ -391,6 +397,89 @@ test('a group job still taken in the save finds its group waiting at the home pa
   const tomorrow = sessionOf(profileOf({count: day + 1, extra: {heli: {version: 1, fuelKg: 400, lessons: TRAINED, refuels: 3, playDay: {last: DAY, count: day + 1}, jobs: {day, taken: `ski${day}`, done: []}}}}));
   tomorrow.start();
   assert.equal(tomorrow.view().ski.group, false);
+});
+
+// ---- the review's faults ------------------------------------------------------------------------------------------
+function hookOwnCar(session) {
+  const car = () => session.view().loads.find(load => load.own);
+  const over = {x: car().x, z: car().z, y: car().y + 15.3};
+  run(session, 90, v => pilot(v, over, {speed: 10, sink: 4}), v => Math.hypot(v.heli.x - over.x, v.heli.z - over.z) < 1 && Math.abs(v.heli.y - over.y) < 0.4 && Math.hypot(v.heli.vx, v.heli.vz, v.heli.vy) < 0.5);
+  session.pressHook(); session.takeEvents();
+  assert.equal(car().hooked, true);
+  // Back down on the pad with the car still on the hook (it lies on the ground, slack).
+  const zone = session.view().zone;
+  run(session, 120, v => pilot(v, {x: zone.x, z: zone.z, y: zone.y + 17}, {speed: 3, sink: 3}), v => Math.hypot(v.heli.x - zone.x, v.heli.z - zone.z) < 2 && Math.hypot(v.heli.vx, v.heli.vz) < 0.5);
+  run(session, 60, v => pilot(v, {x: zone.x, z: zone.z, y: zone.y - 2}, {speed: 1, sink: 1.5}), v => v.heli.onGround);
+  assert.equal(session.view().heli.onGround, true); assert.equal(car().hooked, true);
+}
+test('what is in hand stops a ski flight: a hooked load, a lesson, a Lab challenge, a group aboard; a stale job from another day does not', () => {
+  const s = sessionOf(profileOf());
+  s.start();
+  hookOwnCar(s);
+  assert.equal(s.takeSkiDrop().ok, false); assert.equal(s.takeSkiGroup().ok, false);
+  const lessoned = sessionOf(profileOf());
+  lessoned.start();
+  assert.equal(lessoned.startLesson('hover').ok, true);
+  assert.equal(lessoned.takeSkiDrop().ok, false); assert.equal(lessoned.takeSkiGroup().ok, false);
+  // A group aboard keeps lessons and challenges off the pad; the drop and the group are one thing at a time.
+  const day = groupDay(), grouped = sessionOf(profileOf({count: day}), {labEnabled: true});
+  grouped.start(); assert.equal(grouped.takeSkiGroup().ok, true);
+  assert.equal(grouped.startLesson('hover').ok, false); assert.equal(grouped.startChallenge('headings').ok, false);
+  assert.deepEqual(grouped.takeSkiDrop().ok, false); assert.match(grouped.takeSkiDrop().reason, /group job/);
+  // A job left taken on an earlier play day is out of date: nothing shows it, and it does not stop the drop.
+  const stale = sessionOf(profileOf({count: 6, extra: {heli: {version: 1, fuelKg: 400, lessons: TRAINED, refuels: 3, playDay: {last: DAY, count: 6}, jobs: {day: 5, taken: 'd5-1', done: []}}}}));
+  stale.start();
+  assert.equal(stale.job, null); assert.equal(stale.takeSkiDrop().ok, true);
+  // And a normal job in hand today does.
+  const jobbed = sessionOf(profileOf());
+  jobbed.start();
+  assert.equal(jobbed.takeJob(jobbed.boardJobs()[1].id).ok, true); assert.equal(jobbed.takeSkiDrop().ok, false);
+  // Null options are no options.
+  assert.doesNotThrow(() => stale.skiStepOut('slalom', null));
+});
+
+test('the group is paid only for a run with a result: leaving it, or reaching the pickup past the gates, is no run', { timeout: 600000 }, () => {
+  const day = groupDay(), s = sessionOf(profileOf({count: day}));
+  s.start(); s.takeSkiGroup(); toSummit(s);
+  assert.equal(has(flyToPad(s, SKI_PADS.pickup), 'crashed'), false);
+  // Leave at once: the group is aboard again but the job is not done.
+  assert.equal(s.skiStepOut('aerials').ok, true); run(s, 1, () => ({skate: true}));
+  assert.equal(s.leaveSkiRun().ok, true);
+  assert.equal(s.view().ski.flight.skied, false); assert.equal(s.view().ski.group, true);
+  assert.equal(s.view().destination, 'tremblant-woods', 'the way home is set');
+  // The pure run: skirting the start and finish gates to the pickup ends the run with no result.
+  const zone = skiZone('aerials'), around = createSkiRun({runId: 'aerials'}), drive = skierDriver('aerials', [{x: 24, z: zone.pickup.z - 40}, zone.pickup]);
+  let steps = 0;
+  while (!around.ended && steps++ < 120 * 120) stepSkiRun(around, drive(skiRunView(around).skier));
+  assert.equal(around.ended, true); assert.equal(around.finished, false); assert.equal(around.result, null);
+  // Through the session: the same run, then a real one that counts.
+  assert.equal(s.skiStepOut('aerials').ok, true);
+  const skirt = skierDriver('aerials', [{x: 24, z: zone.pickup.z - 40}, zone.pickup]);
+  const skirted = run(s, 120, v => skirt(v.ski.run.skier), v => v.phase !== 'skiing');
+  assert.equal(has(skirted, 'skiPickup'), true); assert.equal(has(skirted, 'skiResult'), false);
+  assert.equal(s.view().ski.flight.skied, false, 'no result, not skied'); assert.equal(skirted.filter(e => e.type === 'skiPickup' && !e.fetched).length, 1, 'one pickup event');
+  assert.equal(s.skiStepOut('aerials').ok, true);
+  const real = skiOut(s, 'aerials');
+  assert.equal(has(real, 'skiResult'), true); assert.equal(s.view().ski.flight.skied, true);
+  s.leave();
+});
+
+test('stepping out takes the autopilot off; a free drop is done when the helicopter is home again', { timeout: 600000 }, () => {
+  const s = sessionOf(profileOf());
+  s.start(); s.takeSkiDrop(); toSummit(s);
+  assert.equal(has(flyToPad(s, SKI_PADS.pickup), 'crashed'), false);
+  assert.equal(s.pressAutopilot(), true); assert.equal(s.autopilotOn, true);
+  assert.equal(s.skiStepOut('aerials').ok, true); assert.equal(s.autopilotOn, false, 'the new helicopter does not take off by itself');
+  const ski = skiOut(s, 'aerials');
+  assert.equal(ski.filter(e => e.type === 'skiPickup').length, 1, 'one pickup event for one pickup');
+  assert.equal(s.view().ski.flight.skied, true); assert.equal(s.view().destination, 'tremblant-woods');
+  assert.equal(s.autopilotOn, false);
+  const flight = flyHome(s);
+  assert.ok(has(flight.events, 'skiDropDone'), 'home again: the free drop is done');
+  assert.equal(s.view().ski.flight, null); assert.equal(s.view().destination, null);
+  // The Summit ceiling is the flat one again (nothing in hand).
+  assert.equal(s.takeSkiDrop().ok, true, 'and a new one can be taken');
+  s.leave();
 });
 
 test('the thin-air line plays once, only when the collective is at its top and the helicopter still sinks high on the mountain', { timeout: 600000 }, () => {

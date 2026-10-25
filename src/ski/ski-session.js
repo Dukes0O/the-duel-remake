@@ -64,10 +64,11 @@ export function stepSkiRun(run, controls, dt = SKI_STEP) {
   // The zone is walled in: leaving its edge puts the skier back on it, with no speed into the wall.
   const b = zone.bounds, x = clamp(skier.x, b.minX, b.maxX), z = clamp(skier.z, b.minZ, b.maxZ);
   if (x !== skier.x || z !== skier.z) {
+    const hitX = x !== skier.x, hitZ = z !== skier.z;
     skier.x = x; skier.z = z;
     if (skier.grounded) skier.y = zone.ground(x, z);
-    if (x !== from.x) skier.vx = 0;
-    if (z !== from.z) skier.vz = 0;
+    if (hitX) skier.vx = 0;
+    if (hitZ) skier.vz = 0;
     if (!run.out) { run.out = true; events.push({type: 'skiOut'}); }
   } else run.out = false;
   events.push(...stepped);

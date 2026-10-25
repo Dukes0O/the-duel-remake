@@ -18,12 +18,13 @@ Heli-skiing in the helicopter (docs/HELI_SKIING.md sections 3 and 6): the pads, 
 
 ## Tests
 
-`tools/test-ski-heli.mjs` (12 tests, about 90 s), flown through the real session with scripted pilots and skiers:
+`tools/test-ski-heli.mjs` (15 tests, about 2 minutes), flown through the real session with scripted pilots and skiers:
 
 - Thin air: the corrected doc's numbers from the helicopter's own rules at each pad (most thrust 2,407, 2,309 and 2,217 kg; spare with the full group and a full tank 302, 204 and 112 kg; half a tank 502, 404 and 312; the altitude tune 257 kg at the summit pad), the full group's weight 2,105 kg, hovering stops at 4,027 m, and the flight model climbs at the summit pad's air with the group and sinks with 200 kg more.
 - Switch off exact: absent, off and on-with-nothing-taken give the same session, and none of the ski calls does anything; a session of 60 s at home and at Summit Run gives the same hash (`76b81e7710d1e856`) on untouched `origin/integration/wasteland` and on this branch with the option absent, off and on.
 - The board: the group day is one in three, repeatable, Real pays 1,500, nothing without the landing lesson or Summit Run.
 - A drop to the pickup pad (cruise, ceiling, landing on the pad, aerials, result, pay, no fuel burnt, restart and leave free, a second run pays only the difference); the Lab's wax challenge (right wax passes the lesson, wrong wax does not, the right wax is faster, the kit can then be bought); the Wax kit's pick and the Aerials gate; the group job end to end (aboard at the pad, cruise, pickup, a run, aboard again, home, paid once, the weight on and off); a saved group job found again and handed back; the thin-air line; the powder stashes at the summit pad; the group not taking powder; and the pure run (every run starts, finishes and ends at the pickup, repeatable, junk controls safe, walled in).
+- The review's faults, each with a test that fails without the fix: what is in hand stops a ski flight (a hooked load, a lesson, a Lab challenge, a group aboard; a stale job from another play day does not); the group is paid only for a run with a result (leaving a run, or reaching the pickup past the gates, is no run); stepping out takes the autopilot off; a free drop is done when the helicopter is home again; one pickup event for one pickup.
 - Existing helicopter, Lab, ski and save suites pass unchanged.
 
 ## Observations for Claude
@@ -33,11 +34,11 @@ Heli-skiing in the helicopter (docs/HELI_SKIING.md sections 3 and 6): the pads, 
 
 ## Independent review
 
-REVIEW
+A fresh reviewer read the diff against the key requirement and found it held: a differential harness over eight scenarios (home and Summit, with and without the Lab's upgrades, rescues and a job in hand) gave byte-identical events, fingerprints, views (apart from the `ski` key), saves and key lists on untouched integration and on this branch with the option absent, off and on with nothing taken. It also found no way to pay more than designed through a medal, a stash or the group job's once-a-day record, and the group's weight right with and without the Lab's light frame, engine and altitude tune. It found four real faults, all fixed and tested: (1) the group job paid 1,200 without a run (leaving a run at once, or skiing round the start and finish gates to the pickup, still marked the group as skied; now only a run with a result does); (2) a job left taken on an earlier play day blocked `takeSkiDrop` for good (the stale day is now ignored, as everywhere else); (3) `takeSkiDrop` and `skiStepOut` ignored a hooked load (now refused); (4) the autopilot stayed engaged through a run and the new helicopter took off by itself (stepping out switches it off). Smaller points fixed: a natural pickup gave two `skiPickup` events; a free drop never ended (it is done when the helicopter sets down on the home pad after a run, and the way home is set at the pickup); the drop and the group job did not check a lesson, a Lab challenge, a rescue or a survey in hand, and a group aboard did not stop a lesson or a Lab challenge; the thin-air line was not gated on a ski flight in hand; the view and the step-out event gave the wax verdict at once (they show the pick; whether it suited the day's snow is told by the result); a stale run survived `leave()` then `start()`; `skiStepOut(id, null)` threw; the wall zeroed the wrong speed. Left as they are: the rescue, fire and Lab clocks stand still while the pilot skis (the helicopter's step is not run); the Lab's wax challenge stays offered after a pass (retaking is fine and pays nothing).
 
 ## Lane tier and build
 
-LANE
+Run once on the branch after merging current `origin/integration/wasteland` (25 October): `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`: 42 passed, 3 failed (before the review fixes, which touch `heli-session.js`, `ski-session.js` and `tools/test-ski-heli.mjs`; every `test-heli-*`, `test-lab-*` and `test-ski-*` suite and `test-save-fixtures` were rerun after them and pass, and the switch-off hash is unchanged). The three fail identically on an untouched integration checkout and are laptop-only suites: `test-earned-cars-ui`, `test-course-kit`, `test-medals`. `npm run build` passes. Not run in the cloud: browser scenarios and the full tier.
 
 ## Removed
 
