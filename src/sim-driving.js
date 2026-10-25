@@ -438,6 +438,13 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
     this.emit({ deepLanded: { speed: Math.abs(actor.speedMph), cue: road.landingCue } });
     return;
   }
+  if (origin?.carRamp && actor === this.state) {
+    // Landing off a car: the existing landing cue and a callout, no score (only authored arena ramps score).
+    const landing = this.course.worldAt(actor.s, actor.lateral), metres = Math.hypot(landing.x - origin.world.x, landing.z - origin.world.z);
+    this._callout(`BIG AIR  /  ${Math.round(metres)} m`, 2);
+    this.emit({ jumpLanded: { rampId: 'car', lap: origin.lap, distance: +metres.toFixed(1), points: 0 } });
+    return;
+  }
   if (!arena || actor !== this.state || !origin || origin.lap !== actor.completedLaps + 1 || origin.s < actor.completedLaps * this.course.length) return;
   const key = `${origin.rampId}:lap-${origin.lap}`;
   if (actor.collectedJumps.includes(key)) return;

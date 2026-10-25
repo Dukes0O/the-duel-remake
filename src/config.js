@@ -231,6 +231,9 @@ export const DRIVE = {
   arenaAccelScale: 5.2,   // arenas keep the old quick launch: their jumps, shoves and balance were tuned on it
   recoveryAccelScale: 5.2, // after a crash recovery the car pulls away with the old launch (crashLaunchSec or 60 mph)
   crashLaunchSec: 3,      // how long that quick pull-away may last
+  // FUN-TITAN-LAUNCH: the Titan drives up onto a car it flattens and the car is a ramp. Launch speed in m/s is
+  // mph x climbMps, capped; the game's jump gravity is 18 m/s2, so 30 mph gives about 3.2 m and 1.2 s of air.
+  titanCarRamp: Object.freeze({ minMph: 15, climbMps: .36, maxMps: 16 }),
   gearCeilFrac: 1.04,     // throttle stops adding speed past gearMax * this
   redlineWarnFrac: 0.92,  // tach shows red from this rev fraction
   overRevFrac: 1.02,      // sustained revs above this can blow the engine (Pro)

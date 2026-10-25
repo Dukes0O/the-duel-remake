@@ -12,7 +12,7 @@ const near=(a,b,t=1e-12)=>assert.ok(Math.abs(a-b)<=t, a+' differs from '+b);
 
 test('released driving constants and authority function remain byte-identical',()=>{
   const hash=s=>createHash('sha256').update(s).digest('hex');
-  assert.equal(hash(JSON.stringify(DRIVE)), '926b2aa9393e19f746135408eb7ed2691c03ee916d65e4cdcd333d3d743a7ee8');
+  assert.equal(hash(JSON.stringify(DRIVE)), '60eb15e463eb528173c20cfcc1e307b500d48e498046709ca8bd3426d095692b');
   assert.equal(hash(steeringYawAuthority.toString()), '36e5d75c64cc15c08a9b280880a43804b6162d4fcb7cd0b954fc552830fcafa9');
 });
 
