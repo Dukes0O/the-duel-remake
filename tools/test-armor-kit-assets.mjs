@@ -24,17 +24,13 @@ function glbJson(bytes) {
 }
 
 // The car roster count is pinned once, in test-vehicle-assets; every car is checked here.
-// Cars whose fitted kit is built on the laptop with Blender (tools/blender/armor-kits.py needs it, the cloud has none).
-// Such a car is skipped only while its kit file is absent; once the file is there it gets every check below.
-// SIRENA-CAR: the Falcone Sirena, which nobody can own before the Lab restores it (SIRENA-KIT builds its kit).
-const LAPTOP_KITS = Object.freeze(['falcone_sirena']);
 const kitPath = car => join(root, 'public/assets/models/wasteland/kits', `${car}.glb`);
-const kitCars = () => Object.keys(CARS).filter(car => !LAPTOP_KITS.includes(car) || existsSync(kitPath(car)));
+const kitCars = () => Object.keys(CARS);
 test('every car has a distinct local fitted kit with UVs and stable tier parts', async () => {
   const hashes = new Set();
   const cars = kitCars();
-  assert.ok(cars.length >= 12, 'no car is skipped');
-  assert.ok(Object.keys(CARS).filter(car => !cars.includes(car)).every(car => LAPTOP_KITS.includes(car)), 'only the laptop-built kits wait');
+  assert.ok(cars.length >= 13, 'no car is skipped');
+  for (const car of cars) assert.ok(existsSync(kitPath(car)), `${car}: has a built kit`);
   for (const car of cars) {
     const bytes = await readFile(join(root, 'public/assets/models/wasteland/kits', `${car}.glb`));
     hashes.add(createHash('sha256').update(bytes).digest('hex'));
