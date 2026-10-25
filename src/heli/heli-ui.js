@@ -10,6 +10,7 @@ import {LESSON_RULES} from './heli-lessons.js';
 import {createDispatchBoard, atHomePad} from './heli-board.js';
 import {lessonBoardMarkup} from '../lessons/lesson-board.js';
 import {isRescueKind} from './heli-missions.js';
+import {createSkiHud, skiBoardMarkup, skiMenuMarkup} from '../ski/ski-view.js'; // SKI-VIEW: the run HUD, the ski box and the run menu
 
 export const LESSON_TEXT = Object.freeze({
   liftoff: Object.freeze({name: '1 Lift-off', goal: 'Rise to 3 m and hold her there for 5 seconds.'}),
@@ -110,6 +111,14 @@ export function noticeText(event) {
     case 'crateDown': return `Crate down: ${event.pay} credits`;
     case 'rescueDone': return `Rescue done: ${event.paid.toLocaleString('en-US')} credits${event.firstBadge ? ' and the rescue badge' : ''}`;
     case 'rescueFailed': return `Rescue failed, ${FAIL_WORDS[event.reason] ?? 'it is over'}${event.charged ? `: ${event.charged} credits` : ''}`;
+    // SKI-VIEW: heli-skiing.
+    case 'skiDropTaken': return 'Ski drop taken: fly to a drop pad at Summit Run';
+    case 'skiGroupTaken': return `The group is aboard: ${event.pay.toLocaleString('en-US')} credits when they are home`;
+    case 'skiGroupDone': return `Group home: ${event.pay.toLocaleString('en-US')} credits`;
+    case 'skiFlightDropped': return 'Ski flight handed back';
+    case 'skiStashPaid': return event.found ? `Untouched powder: ${event.paid} credits` : null;
+    case 'waxChallengePassed': return 'Lab: the wax run is passed';
+    case 'waxChallengeFailed': return `Lab wax run: ${event.reason}`;
     default: return null;
   }
 }
@@ -271,7 +280,7 @@ export function createHeliUi({host, app}) {
   section.className = 'heli-panel';
   section.hidden = true;
   section.setAttribute('aria-label', 'Kestrel One');
-  section.innerHTML = '<div class="heli-top"></div><div class="heli-side"><div class="heli-controls"></div><div class="heli-lessons-host"></div><div class="heli-board-host" hidden></div></div><div class="heli-notices" aria-live="polite"></div><div class="heli-radio" aria-live="polite" hidden></div>';
+  section.innerHTML = '<div class="heli-top"></div><div class="heli-side"><div class="heli-ski-host"></div><div class="heli-controls"></div><div class="heli-lessons-host"></div><div class="heli-board-host" hidden></div></div><div class="heli-notices" aria-live="polite"></div><div class="heli-radio" aria-live="polite" hidden></div>';
   host.append(section);
   const top = section.querySelector('.heli-top'), controls = section.querySelector('.heli-controls');
   const notices = section.querySelector('.heli-notices'), radio = section.querySelector('.heli-radio');
@@ -280,6 +289,19 @@ export function createHeliUi({host, app}) {
   const boardHost = section.querySelector('.heli-board-host');
   const board = createDispatchBoard({root: boardHost, app});
   let lastLessons = '';
+  // SKI-VIEW: the ski box (home pad) and run menu (drop pads) at the top of the side panel, and the run HUD (made on the
+  // first ski event or frame on skis).
+  const skiHost = section.querySelector('.heli-ski-host');
+  let skiHud = null, skiWax = null, lastSki = '';
+  const hud = () => skiHud ??= createSkiHud({host, app});
+  const skiAction = button => {
+    const {skiBoard: boardAction, skiRun, skiWax: wax, skiChallenge} = button.dataset;
+    if (wax) { skiWax = skiWax === wax ? null : wax; return null; }
+    if (boardAction) return app.heliSki?.(boardAction === 'drop' ? 'drop' : boardAction === 'group' ? 'group' : 'handBack');
+    if (skiRun) return app.heliSki?.('stepOut', skiRun, {wax: skiWax});
+    if (skiChallenge) return app.heliSki?.('stepOut', 'slalom', {wax: skiWax, challenge: skiChallenge});
+    return null;
+  };
   const lessonAction = action => {
     const session = app.heliSession;
     if (!session) return;
@@ -291,6 +313,13 @@ export function createHeliUi({host, app}) {
     if (app.heliSession === session) app._heliEvents?.(session.takeEvents());
   };
   const click = event => {
+    const skiButton = event.target.closest('[data-ski-board],[data-ski-run],[data-ski-wax],[data-ski-challenge]');
+    if (skiButton) {
+      const result = skiAction(skiButton);
+      if (result && result.ok === false && result.reason) shown.push({text: result.reason, until: performance.now() / 1000 + NOTICE_SECONDS});
+      skiButton.blur();
+      return;
+    }
     const lessonButton = event.target.closest('[data-heli-lesson]');
     if (lessonButton) { lessonAction(lessonButton.dataset.heliLesson); lessonButton.blur(); return; }
     const place = event.target.closest('[data-heli-destination]');
@@ -310,13 +339,14 @@ export function createHeliUi({host, app}) {
       if (disposed) return null;
       const view = app.duel?.state?.status === 'heli' ? app.heliView?.() : null;
       section.hidden = !view;
-      if (!view) { shown = []; radioLine = null; seenLog = null; return null; }
+      if (!view) { shown = []; radioLine = null; seenLog = null; skiHud?.update(null, now); return null; }
       // New events since the last frame become notices and radio subtitles.
       const log = app.heliLog || [];
       if (log !== seenLog) {
         const seen = new Set(seenLog || []);
         for (const event of log.filter(e => !seen.has(e))) {
           const text = noticeText(event);
+          if (event.type.startsWith('ski')) hud().event(event);
           if (text && event.type === 'hookRefused') {
             shown = shown.filter(item => !item.hint);
             shown.push({text, until: now + HOOK_HINT_SECONDS, hint: true});
@@ -332,6 +362,16 @@ export function createHeliUi({host, app}) {
       const dusk = duskShare(view);
       if (dusk > 0) { section.dataset.dusk = 'on'; section.style.setProperty('--heli-dusk', dusk.toFixed(3)); }
       else if (section.dataset.dusk) { delete section.dataset.dusk; section.style.removeProperty('--heli-dusk'); }
+      // SKI-VIEW: on skis the instruments, routes, lessons and board give way to the run HUD.
+      const skiing = view.phase === 'skiing';
+      (skiing ? hud() : skiHud)?.update(view, now);
+      top.hidden = skiing; controls.hidden = skiing; lessonsHost.hidden = skiing;
+      const offers = !skiing ? app.heliSession?.skiOffers?.() ?? null : null;
+      if (offers) hud().snow = offers.snow;
+      const skiBox = skiing ? '' : offers ? skiMenuMarkup(offers, {wax: skiWax})
+        : !view.lesson && atHomePad(view) ? skiBoardMarkup(app.heliSession?.skiBoard?.() ?? null, view.ski?.flight ?? null) : '';
+      if (skiBox) hud(); // its stylesheet styles the box too
+      if (skiHost) lastSki = set(skiHost, skiBox, lastSki);
       lastTop = set(top, instrumentsMarkup(view, {cameraIndex: app.heliCamera || 0}), lastTop);
       const controlsHtml = controlsMarkup(view, {credits: app.profile?.credits ?? 0, refuels: tank?.refuels ?? 0});
       if (controlsHtml.replace(PUMP_LABEL, '') === lastControls.replace(PUMP_LABEL, '')) {
@@ -348,7 +388,7 @@ export function createHeliUi({host, app}) {
       const bar = lessonsHost.querySelector('.heli-lesson-hold span');
       if (bar) { const width = `${(holdShare(view) * 100).toFixed(0)}%`; if (bar.style.width !== width) bar.style.width = width; }
       // The dispatch board opens with lesson 3 and hides while a lesson runs.
-      if (!view.lesson && app.profile?.heli?.lessons?.landing) board.render(); else boardHost.hidden = true;
+      if (!view.lesson && !skiing && app.profile?.heli?.lessons?.landing) board.render(); else boardHost.hidden = true;
       const speaking = radioLine && radioLine.until > now;
       radio.hidden = !speaking;
       if (speaking && radio.dataset.text !== radioLine.text) { radio.dataset.text = radioLine.text; radio.innerHTML = `<b>RADIO</b> ${escape(radioLine.text)}`; }
@@ -359,6 +399,7 @@ export function createHeliUi({host, app}) {
       disposed = true;
       section.removeEventListener('click', click);
       board.dispose();
+      skiHud?.dispose();
       section.remove();
     },
   };

@@ -30,6 +30,14 @@ export function controlsHelp(duel) {
   return {title: 'CONTROLS', rows};
 }
 
+// SKI-VIEW: the ski keys (docs/HELI_SKIING.md section 4), shown by the ski HUD while skiing (H, since the hook means
+// nothing on skis). The third column is the short word on the HUD's key strip (null: help only).
+export function skiControlsHelp() {
+  return [['A D / LEFT RIGHT', 'Turn (in the air: spin)', 'turn'], ['S / DOWN', 'Skid to slow down (in the air: flip back)', 'skid'],
+    ['SHIFT', 'Tuck (no hard turns)', 'tuck'], ['W / UP', 'Skate on the flat (in the air: flip forward)', 'skate'],
+    ['SPACE', 'Pop', 'pop'], ['C', 'Change camera', 'camera'], ['ESC', 'Pause', null], ['M', 'Mute', null], ['H', 'Show or hide this help', 'help']];
+}
+
 export function controlsHelpMarkup(duel) {
   const {title, rows} = controlsHelp(duel);
   return `<h3>${title}</h3><dl>${rows.map(([keys, what]) =>
