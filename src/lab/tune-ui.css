@@ -1,0 +1,31 @@
+/* The Tune page in the garage (docs/LAB.md 5.1) and the tuned-lap line on the Time Trial result (card LAB-TUNE-VIEW). */
+.tune-panel{margin:0 0 24px;border-block:1px solid #c4c9af30;padding:12px 0;pointer-events:auto}
+.tune-panel>summary{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;font-size:9px;letter-spacing:.8px;list-style:none}
+.tune-panel>summary::-webkit-details-marker{display:none}
+.tune-panel>summary>b{font-size:10px;letter-spacing:0;color:#d6bc90;margin-left:auto}
+.tune-panel>summary:after{content:'+';font-size:18px;line-height:1;color:#d2b78a}
+.tune-panel[open]>summary:after{content:'\2212'}
+.tune-panel>summary:focus-visible{outline:2px solid #e9a26d;outline-offset:3px}
+.tune-intro{font-size:11px;line-height:1.6;color:#aebbab;max-width:780px;margin:12px 0 4px}
+.tune-rows{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px}
+.tune-row{padding:14px 0;border-top:1px solid #c3cfaf1c;min-width:0}
+.tune-row.shut{opacity:.7}
+.tune-name{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tune-name b{font-size:12px;font-weight:650}
+.tune-name em{font-style:normal;font-size:9px;color:#d6bc90;line-height:1.4}
+.tune-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:10px 0 0}
+.tune-step{padding:9px 0;font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--ink,#f3eddf);background:#d0d4b60b;border:1px solid #d6dbb940;cursor:pointer}
+.tune-step:hover:not(:disabled){border-color:#e8a977;background:#dc9b6610}
+.tune-step.on{border-color:#abc9a77a;background:#bed0a31f;color:#b8d3ab}
+.tune-step:disabled{cursor:default;opacity:.5}
+.tune-step.on:disabled{opacity:.85}
+.tune-step:focus-visible,.tune-foot button:focus-visible{outline:2px solid #e9a26d;outline-offset:2px}
+.tune-ends{grid-column:1 / -1;display:flex;justify-content:space-between;gap:12px}
+.tune-ends small{font-size:9px;letter-spacing:.4px;color:#afbe9f}
+.tune-trade{margin:8px 0 0;font-size:10px;line-height:1.55;color:#a8b6a5}
+.tune-note{margin:6px 0 0;font-size:10px;color:#e4bd82}
+.tune-foot{display:flex;align-items:center;gap:16px;padding-top:14px;border-top:1px solid #c3cfaf1c;grid-column:1 / -1}
+.tune-foot button{padding:10px 16px;font-size:9px;letter-spacing:.7px}
+.tune-foot button:disabled{opacity:.5;cursor:default}
+.tune-message{margin:0;font-size:11px;color:#f3bd77;min-height:1.4em}
+.result-bonuses.tuned-lap{color:#b8d3ab;font-size:12px;line-height:1.5}
