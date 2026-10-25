@@ -140,7 +140,7 @@ lines, resolved by keeping both sides):
 - `tools/test-lab-tune.mjs`: 215 checks, about 3 minutes of CPU. After the fixture fix I reran `test-save-fixtures` (21 + 1),
   the three suites above, `test-arena-settlement`, `test-repo-hygiene`, `test-board`, `test-lab-rules`, `test-heli-mode`
   and `test-feature-flags`: all pass.
-- Combat balance: not run (nothing in the combat rules changed; a car with no tune is the same object).
+- `node tools/combat-balance.mjs --check`: exit 0 (current rules).
 - Windows-only or laptop-only, not run here: `test-course-kit`, `test-earned-cars-ui`, `test-medals`, `test-drive-through`,
   `test-full-check`, `test-salt-flats`, `test-salt-flats-art`; browser scenarios and frame checks (nothing is drawn yet).
 
