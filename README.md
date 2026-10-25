@@ -2,6 +2,50 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Fixes and work in progress, 25 October 2026
+
+### What players get now
+
+Grass, tufts and grit sit on the ground you see and stay off every road,
+including hairpins and shortcuts. Road cars accelerate more gently, taking
+about 2.4 to 4.2 seconds to reach 60 mph. After a crash you still get a quick
+pull-away. Arenas keep their lively starts. Chase police have been adjusted
+to the slower pace, and Easy Checkpoint Rush gives more time after each gate.
+
+The helicopter hook catches cargo more easily. A ring under a nearby load
+turns green when it is ready, and a missed H press tells you to move closer,
+change height or slow down. The Titan monster truck takes big air off cars
+again, with a BIG AIR callout when it lands.
+
+Summit's world builds in about 0.85 to 0.89 seconds, down from about 1.45,
+with the same scenery. The first load can still take longer while files
+arrive. The Yeti's pale fur is easier to see against snow at night. Team Room
+passing-zone flags on Harbour Lights and Panorama Ridge now have written
+driving notes.
+
+The automatic checks for the helicopter yard, Yeti, course views and race
+sound have also been repaired. The demonstration driver can turn out of a
+pocket of scenery when stuck.
+
+**Switched on in this release: (Claude fills in)**
+
+### Built but switched off
+
+These features remain behind development switches. They are not available
+in the normal game yet, and some still need finishing checks.
+
+- The Lab: experiments, helicopter challenges and upgrades, Sirena restoration, tuning and its lap bonus; the fan car model and blueprint are built, but the car still needs adding to the game.
+- The Deep: the Kelp Coast dive, sea life, pearls, Ana's radio, sonar and lift bags, the lost Sirena and its Coast Cup.
+- Heli-skiing: five Summit runs, drops and pickups, changing snow, medals, saved bests and group jobs.
+- The pilot's map: click-to-fly travel, scouting, five secret course versions, the Table and notes for the reverse routes.
+- Driving lessons: braking, racing lines, gears and snow, with an instructor, cones, radio and saved progress.
+- Sliding tyres: grip loss, tyre sound and steering feel, with the Drift Trial's quick launch kept.
+- Engine curve: engine pull follows revs and gears, with separate best laps for these rules.
+- Racecraft: computer rivals use nitro and defend on the first lap; the four new passing moves remain disabled.
+- Earned cars: the McLaren F1 and Bugatti Bolide, unlocked by medals.
+- Helicopter rescues: hikers, avalanches, hoists and supplies, including Summit flights, fuel stops and car recovery.
+- Helicopter wildlife and skins: counting jobs, earned or bought paint, special gear, dirt and washing.
+
 ## Summit Run – 16 October 2026
 
 A new Grand Prix course: one long climb from the desert to a snowy summit, about
