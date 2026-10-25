@@ -12,7 +12,7 @@ const near=(a,b,t=1e-12)=>assert.ok(Math.abs(a-b)<=t, a+' differs from '+b);
 
 test('released driving constants and authority function remain byte-identical',()=>{
   const hash=s=>createHash('sha256').update(s).digest('hex');
-  assert.equal(hash(JSON.stringify(DRIVE)), '89f3e6debda3ad1c5400b9a2807fc695b062df55169b0d55ca2c5170e35bdc5c');
+  assert.equal(hash(JSON.stringify(DRIVE)), '926b2aa9393e19f746135408eb7ed2691c03ee916d65e4cdcd333d3d743a7ee8');
   assert.equal(hash(steeringYawAuthority.toString()), '36e5d75c64cc15c08a9b280880a43804b6162d4fcb7cd0b954fc552830fcafa9');
 });
 
@@ -122,7 +122,7 @@ test('actual released fixed-step driving retains its pre-edit named-state finger
     d.setInput({throttle:1,brake:i>1800?.4:0,steer:i<500?0:i<1200?.06:-.04,boost:false});d.step(1/120);
     const s=d.state;h.update(JSON.stringify(['status','s','lateral','speedMph','headingError','yawVelocity','slipAngle','drifting','airborne','airHeight','lives','crashes'].map(k=>s[k])));
   }
-  assert.equal(h.digest('hex'),'542b283978817357bbc84f7887691509227c4f72d705ad400b1033f66a4c9f7b');
+  assert.equal(h.digest('hex'),'5eca83968e3c438d82182da26a9c416a74d09289e15c6b2c1bc76502ac35c2ca');
 });
 
 test('rules latch once at race start and all arena definitions refuse the new rules',()=>{

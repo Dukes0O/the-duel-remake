@@ -1,5 +1,5 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
-import { DRIVE, BOOST, steeringYawAuthority, TYRE_SLIP, tyreSlipSteering, stepTyreSlip, tyreSlipGrip, tyreSlipScrub, tyreSlipAngle } from './config.js';
+import { DRIVE, BOOST, launchScale, boostLaunch, steeringYawAuthority, TYRE_SLIP, tyreSlipSteering, stepTyreSlip, tyreSlipGrip, tyreSlipScrub, tyreSlipAngle } from './config.js';
 import { stepDrift, breakDrift } from './drift-scoring.js';
 import { offroadCapability, wrapHeading, limitClimb, slopeSpeedDelta, terrainAttitude } from './offroad-physics.js';
 import { clamp } from './sim-common.js';
@@ -132,6 +132,9 @@ export function _drive(dt) {
   }
   s.input.shiftUp = s.input.shiftDown = false;
 
+  // After a crash recovery the car pulls away with the old launch until 60 mph or crashLaunchSec seconds,
+  // so a crash costs what it did; everyday starts keep the gentle launch (FIX-LAUNCH).
+  if (s.crashLaunchSec > 0) { s.crashLaunchSec -= dt; if (s.crashLaunchSec <= 0 || s.speedMph >= 60) delete s.crashLaunchSec; }
   // acceleration limited by the current gear's max speed
   const gearMax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear] * nitroSpeedShare;
   const accelFactor = Math.max(0.15, 1 - Math.max(0, s.revs - 0.5)); // falls off near redline
@@ -146,7 +149,7 @@ export function _drive(dt) {
   } else {
     if (s.input.throttle > 0) {
       const ceil = Math.min(car.topSpeed * nitroSpeedShare * road.topShare, gearMax * DRIVE.gearCeilFrac, road.topSpeedMph ?? Infinity);
-      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * DRIVE.accelScale * accelerationShare;
+      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * launchScale(this.course, s.crashLaunchSec > 0) * accelerationShare;
     }
     if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * road.grip * dt;
     s.speedMph = Math.max(0, s.speedMph - DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1));
@@ -183,7 +186,7 @@ export function _drive(dt) {
     const available = Math.min(1, s.boost / (boostDrain * dt));
     s.boost = s.practice?1:Math.max(0, s.boost - boostDrain * dt);
     const boostCeiling = d.autoShift ? car.topSpeed * boostTopSpeed * nitroSpeedShare : Math.min(car.topSpeed * boostTopSpeed * nitroSpeedShare, gearMax * DRIVE.gearCeilFrac);
-    s.speedMph += Math.max(0, Math.min(boostCeiling - s.speedMph, BOOST.accelMphPerSec * (1 + nitro * .15) * (car.nitroAcceleration ?? 1) * dt * available * accelerationShare));
+    s.speedMph += Math.max(0, Math.min(boostCeiling - s.speedMph, boostLaunch(this.course) * (1 + nitro * .15) * (car.nitroAcceleration ?? 1) * dt * available * accelerationShare));
   } else if (!s.input.boost) {
     s.boost = Math.min(1, s.boost + BOOST.refillPerSec * dt);
   }
