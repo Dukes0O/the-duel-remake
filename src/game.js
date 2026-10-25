@@ -1,4 +1,7 @@
-import {createDriveLesson,stepDriveLesson,DRIVE_LESSON_CORNERS} from './lessons/drive-lessons.js';
+import {createDriveLesson,stepDriveLesson,DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,DRIVE_GEAR_ROWS,DRIVE_SNOW_ROWS} from './lessons/drive-lessons.js';
+// DRIVE-LESSONS-VIEW-2: each lesson's course rows, the box the gearbox lesson forces, and the winter-tyre run's tyre.
+const DRIVE_LESSON_ROWS=Object.freeze({corner:DRIVE_LESSON_CORNERS,line:DRIVE_LINE_ROWS,gears:DRIVE_GEAR_ROWS,snow:DRIVE_SNOW_ROWS});
+const LESSON_MANUAL_BOX=new WeakMap(); // difficulty setting -> the same setting with the manual box and no engine damage
 import {isSummitAttack} from './summit-attack.js';
 import {copyDeepProviders,clearDeepJourney,initializeDeepJourney,deepProtected,checkDeepDeparture,stepDeepJourney,queueDeepChoice,deepEnvironment} from './deep/deep-journey.js';
 // DEEP-SIRENA-VIEW: the Sirena story and the sea-life log, stepped in a dive.
@@ -168,7 +171,14 @@ export class Duel {
     const modified = applyDriverModifiers(value, driverId, this.state.car);
     this._carCache = { key, value: modified }; return modified;
   }
-  get diff() { return DIFFICULTY[this.state.difficulty]; }
+  get diff() {
+    const setting = DIFFICULTY[this.state.difficulty];
+    // DRIVE-LESSONS-VIEW-2: the gearbox lesson is always manual, whatever the player's setting, and the limiter cannot
+    // blow the engine. The setting itself is untouched, so the automatic box is back as soon as the lesson ends.
+    if (this.drivingLesson?.lesson.id !== 'gears') return setting;
+    if (!LESSON_MANUAL_BOX.has(setting)) LESSON_MANUAL_BOX.set(setting, Object.freeze({ ...setting, autoShift: false, engineBlow: false }));
+    return LESSON_MANUAL_BOX.get(setting);
+  }
   get scoreMultiplier() { return this.state.difficulty === 'pro' ? SCORING.manualMultiplier : 1; }
   get stageDef() { return this.state.arena ? this.course.def : COURSE[this.state.stageIndex]; }
   get raceLength() { return this.course?.raceLength || this.course?.length || 0; }
@@ -191,7 +201,9 @@ export class Duel {
     if(lesson){
       if(!this.featureFlags.enabled('driving-lessons')||!this.featureFlags.enabled('tyre-slip')||
         !playerId||lesson.ownerId!==playerId||lesson.courseId!==COURSE[resolvedStage]?.id||
-        !DRIVE_LESSON_CORNERS.some(row=>row.courseId===lesson.courseId)||lesson.car!==car||
+        // DRIVE-LESSONS-VIEW-2: lessons 2 to 4 (the plan names its lesson; lesson 1's does not); the gearbox needs the engine curve.
+        !Object.hasOwn(DRIVE_LESSON_ROWS,lesson.lessonId??'corner')||!DRIVE_LESSON_ROWS[lesson.lessonId??'corner'].some(row=>row.courseId===lesson.courseId)||
+        (lesson.lessonId==='gears'&&!this.featureFlags.enabled('engine-curve'))||lesson.car!==car||
         lesson.difficulty!==difficulty||lesson.driverId!==normalizeDriverId(driverId)||
         lesson.seed!==(seed>>>0)||JSON.stringify(lesson.upgrades)!==JSON.stringify(upgrades))
         throw new TypeError('Driving lesson setup does not belong to this race');
@@ -199,7 +211,7 @@ export class Duel {
       if(!first||!last||first.s!==lesson.corner?.startS||last.s!==lesson.corner?.finishS||
         last.t!==lesson.instructor.timeSec||!['mph','heading','lateral','yawVelocity'].every(key=>Number.isFinite(first[key]))||first.mph<=0)
         throw new TypeError('Driving lesson needs its recorded native rolling pose');
-      const scoring=createDriveLesson('corner',lesson);
+      const scoring=createDriveLesson(lesson.lessonId??'corner',lesson); // DRIVE-LESSONS-VIEW-2
       this.drivingLesson={state:this.state,ownerId:playerId,plan:structuredClone(lesson),lesson:scoring,wallHit:false};
       mode='timetrial';opponentCount=0;qualifying=false;rival=null;laps=1;
     }else delete this.drivingLesson;
@@ -223,6 +235,8 @@ export class Duel {
     this._tyreSlipRaceEnabled = !!this.drivingLesson || this.featureFlags.enabled('tyre-slip') === true && this.state.difficulty !== 'casual';
     // Engines that pull like real ones (ENGINE-CURVE): latched once per race, like the tyre rules, so old replays play under their own.
     this._engineCurveRaceEnabled = this.featureFlags.enabled('engine-curve') === true;
+    // DRIVE-LESSONS-VIEW-2: only the gearbox lesson runs on the engine curve; the other instructors drove without it, so the player's car must too.
+    if (this.drivingLesson) this._engineCurveRaceEnabled = this.drivingLesson.lesson.id === 'gears';
     this.state.cpuDifficulty = CPU_DIFFICULTY[cpuDifficulty] ? cpuDifficulty : DEFAULT_CPU_DIFFICULTY;
     this.state.playerId = typeof playerId === 'string' ? playerId : null;
     this.state.driverId = normalizeDriverId(driverId);
@@ -417,11 +431,15 @@ export class Duel {
     this._resetStageDriving();
     s.tyreSlipRules=true;s.tyreSlip=0;s.status='racing';s.countdown=0;
     s.lives=LIVES.start;s.majorCrashes=0;s.penaltySec=0;s.catastrophic=false;
-    const first=run.plan.instructor.poses[0],spec=this.car;
+    // DRIVE-LESSONS-VIEW-2: lesson 4's last run (the one after the third win) is on winter tyres, from the winter instructor's pose.
+    const lesson=run.lesson,winter=lesson.id==='snow'&&lesson.phase==='result'&&lesson.stage==='challenge'&&lesson.streak===3&&!!run.plan.instructor.winter;
+    if(lesson.id==='snow'){if(winter)s.tyre='winter';else delete s.tyre;}
+    const first=(winter?run.plan.instructor.winter:run.plan.instructor).poses[0],spec=this.car;
     s.s=run.plan.corner.startS;s.lateral=first.lateral;
     s.headingError=first.heading-this.course.at(s.s).heading;s.speedMph=first.mph;
     const gear=spec.gears.findIndex(top=>top*DRIVE.gearCeilFrac>=s.speedMph);
-    s.gear=gear<0?spec.gears.length-1:gear;s.revs=s.speedMph/spec.gears[s.gear];
+    // The gearbox lesson starts in the gear the instructor started in (2nd at 30 mph).
+    s.gear=Number.isInteger(first.gear)?first.gear:gear<0?spec.gears.length-1:gear;s.revs=s.speedMph/spec.gears[s.gear];
     s.yawVelocity=first.yawVelocity;
     s.opponents=[];s.traffic=[];s.combat=null;s.raiders=[];
     s.police={beep:0,triggered:false,pursuit:null,ticket:null,ticketCount:0,pendingFines:0};
@@ -435,7 +453,7 @@ export class Duel {
     const s=this.state;
     return {s:s.s,lateral:s.lateral,world:this.course.groundAt(s.s,s.lateral),speedMph:s.speedMph,
       brake:s.input.brake,throttle:s.input.throttle,tyreSlip:s.tyreSlip||0,
-      offRoad:s.offRoad===true,status:'racing',paused:s.paused};
+      offRoad:s.offRoad===true,status:'racing',paused:s.paused,gear:s.gear,revs:s.revs}; // gear and revs: the gearbox lesson reads them (DRIVE-LESSONS-VIEW-2)
   }
   _stepDriveLesson(dt){
     const run=this.drivingLesson,s=this.state;

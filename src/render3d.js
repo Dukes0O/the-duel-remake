@@ -23,6 +23,7 @@ import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.j
 import { CARS, DRIVE } from './config.js';
 import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage, combatVehicleWear } from './vehicles.js';
 import { buildEnvironment, worldAtExtended, disposeTree } from './world.js';
+import { addSign } from './world-props.js'; // DRIVE-LESSONS-VIEW-2: the ice sign is the road's own sign board
 import { createDrivingEffects } from './effects.js';
 import { createExplosion } from './explosion.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -189,19 +190,47 @@ export function attachRenderer(host, app) {
       for(const cone of run.plan.instructor.cones){
         const group=new THREE.Group();group.name='Lesson cone '+cone.id;group.userData.coneId=cone.id;
         const base=new THREE.Mesh(new THREE.BoxGeometry(.8,.08,.8),new THREE.MeshStandardMaterial({color:0x292525,roughness:.9}));base.position.y=.04;
-        const body=new THREE.Mesh(new THREE.ConeGeometry(.29,.8,12),new THREE.MeshStandardMaterial({color:0xf68d32,roughness:.8}));body.position.y=.46;
+        // DRIVE-LESSONS-VIEW-2: the snow lesson's first cone is the snow cone, drawn pale blue so it is not mistaken for the red dry board.
+        const body=new THREE.Mesh(new THREE.ConeGeometry(.29,.8,12),new THREE.MeshStandardMaterial({color:run.lesson.id==='snow'&&cone.id===1?0x8fd0f0:0xf68d32,roughness:.8}));body.position.y=.46;
         const stripe=new THREE.Mesh(new THREE.CylinderGeometry(.13,.18,.13,12),new THREE.MeshStandardMaterial({color:0xfff0d9,roughness:.8}));stripe.position.y=.48;
         group.add(base,body,stripe);group.position.set(cone.x,ground(cone),cone.z);driveLessonView.add(group);
       }
-      const s=run.plan.instructor.redBoardS,dir=run.plan.corner.dir;
+      // The red board is lesson 1's late-braking board and lesson 4's dry board; lessons 2 and 3 have none (DRIVE-LESSONS-VIEW-2).
+      const dir=run.plan.corner.dir,s=run.plan.instructor.redBoardS;
+      if(Number.isFinite(s)&&['corner','snow'].includes(run.lesson.id)){
       const lateral=-dir*(next.roadHalfWidthAt(s)+1.2),point={...next.groundAt(s,lateral),s,lateral};
-      const board=new THREE.Group();board.name='Lesson late-braking red board';board.userData.redBoard=true;
+      const board=new THREE.Group();board.name=run.lesson.id==='snow'?'Lesson dry-road red board':'Lesson late-braking red board';board.userData.redBoard=true;
       const post=new THREE.Mesh(new THREE.BoxGeometry(.1,1.8,.1),new THREE.MeshStandardMaterial({color:0xddddcc}));post.position.y=.9;
       const face=new THREE.Mesh(new THREE.BoxGeometry(1.4,.65,.1),new THREE.MeshStandardMaterial({color:0xc42c29,roughness:.7}));face.position.y=1.45;
-      board.add(post,face);board.position.set(point.x,ground(point),point.z);board.rotation.y=next.at(s).heading;driveLessonView.add(board);sceneRevision++;
+      board.add(post,face);board.position.set(point.x,ground(point),point.z);board.rotation.y=next.at(s).heading;driveLessonView.add(board);
+      }
+      // DRIVE-LESSONS-VIEW-2, lesson 2: small markers down the middle of the road for the first try; the car knocks them over.
+      if(run.lesson.id==='line'){
+        const geometry=new THREE.ConeGeometry(.17,.42,10),paint=new THREE.MeshStandardMaterial({color:0xf2e6a0,roughness:.8});
+        (run.plan.instructor.markers||[]).forEach((marker,index)=>{
+          const group=new THREE.Group();group.name='Lesson marker '+index;group.userData.markerIndex=index;
+          const body=new THREE.Mesh(geometry,paint);body.position.y=.21;group.add(body);
+          group.position.set(marker.x,ground({...marker,lateral:marker.lateral}),marker.z);driveLessonView.add(group);
+        });
+      }
+      // Lesson 4: a plain road sign on the outside of the road (where the boards stand) before the ice, small and faint, on the stretch where the braking stops.
+      const ice=run.lesson.id==='snow'?run.plan.instructor.ice?.[0]:null;
+      if(ice){
+        const at=ice.s0-30,side=-(Math.sign(dir)||1),lateral=side*(next.roadHalfWidthAt(at)+1.6),here=next.groundAt(at,lateral),ahead=next.groundAt(at+2,lateral); // the board's face looks back down the road, at the driver
+        const sign=addSign(driveLessonView,{top:'WATCH FOR',bottom:'ICE',bg:'#25433d',x:here.x,y:ground({...here,s:at,lateral}),z:here.z,
+          heading:Math.atan2(here.x-ahead.x,here.z-ahead.z),posts:[-1.8,1.8].map(localX=>({halfX:.065,halfZ:.08,localX,y:ground({...here,s:at,lateral})-.05,height:4.3}))});
+        sign.name='Lesson ice sign';sign.userData.iceSign=true;sign.scale.setScalar(.7);
+        sign.traverse(node=>{if(node.material&&node.material.map){node.material.transparent=true;node.material.opacity=.82;}});
+      }
+      sceneRevision++;
     }
     for(const child of driveLessonView.children){
       if(child.userData.redBoard)child.visible=run.lesson.stage==='late';
+      else if(child.userData.iceSign)continue;
+      else if(child.userData.markerIndex!==undefined){
+        child.visible=run.lesson.stage==='late'; // the middle markers belong to the first try only
+        child.rotation.z=app.driveLessonMarkers?.tipped.has(child.userData.markerIndex)?Math.PI*.5:0;
+      }
       else child.rotation.z=run.lesson.attempt?.tipped.includes(child.userData.coneId)?Math.PI*.5:0;
     }
   }
