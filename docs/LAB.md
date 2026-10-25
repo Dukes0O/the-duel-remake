@@ -205,6 +205,14 @@ strip, rebuild, paint) of about a minute, skippable after the first time.
 The Sirena becomes yours, and the Lab's crew trucks it to Pacific Canyon for
 the Coast Cup.
 
+**Changed (Kyle, 25 October 2026; THE_DEEP 6.9):** the restore is now two
+steps. **Get her running** (1,000, the Rust bench: soak, current, strip of
+the mechanicals) adds the Sirena to the garage in her **Sea wreck** finish,
+crust and all; her body is **not** restored. The **Restored 1966** finish
+(1,500) is then bought in the garage and plays the rebuild and paint part of
+the show; the Sea wreck finish stays selectable for good. LAB-RESTORE's single
+2,500 restore is replaced by these two (card LAB-RESTORE-2).
+
 ## 8. Sounds, voice and art
 
 - **Brian in the Lab:** about 55 lines (an intro, the explanation and a pass
