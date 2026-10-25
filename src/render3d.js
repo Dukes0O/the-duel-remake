@@ -1,3 +1,4 @@
+import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
@@ -804,6 +805,13 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(deepPose){camTarget.set(deepPose.camera.position.x,deepPose.camera.position.y,deepPose.camera.position.z);lookTarget.set(deepPose.camera.target.x,deepPose.camera.target.y,deepPose.camera.target.z);player.visible=true;firstPersonView=false;}
+    // DEEP-RAMP-2: override only while on the ramp; leave the dive camera intact below it.
+    const rampCamera=!menu?rampChaseCamera(app.duel):null;
+    if(rampCamera){const p=rampCamera,b=p.blend;
+      camTarget.lerp(new THREE.Vector3(p.position.x,p.position.y,p.position.z),b);
+      lookTarget.lerp(new THREE.Vector3(p.target.x,p.target.y,p.target.z),b);
+      camera.fov=THREE.MathUtils.lerp(camera.fov,p.fov,b);player.visible=true;firstPersonView=false;
+    }
     if(heliPose?.camera){camTarget.set(heliPose.camera.position.x,heliPose.camera.position.y,heliPose.camera.position.z);lookTarget.set(heliPose.camera.target.x,heliPose.camera.target.y,heliPose.camera.target.z);camera.fov=heliPose.camera.fov;firstPersonView=false;}
     const yardHomePose=yardPresentation?.homeCamera?.();
     if(yardHomePose){
@@ -814,21 +822,21 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
-    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose) camera.position.copy(camTarget);
+    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose || rampCamera) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
       // Follow longitudinal motion immediately: world-space damping otherwise
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
+    if(!menu&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
-    if(!menu&&!deepPose&&!heliPose)constrainMountainCamera(course,camera.position,distance);
-    if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
+    if(!menu&&!deepPose&&!heliPose&&!rampCamera)constrainMountainCamera(course,camera.position,distance);
+    if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
       camera.position.copy(clearCameraSightline(course,camera.position,
         {x:player.position.x,y:player.position.y+(tall?1.65:1.05),z:player.position.z},distance));
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
-    if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&
+    if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
         !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){
       camera.updateMatrixWorld();
       cameraBodyTarget.copy(player.position);cameraBodyTarget.y+=tall?1.65:1.05;

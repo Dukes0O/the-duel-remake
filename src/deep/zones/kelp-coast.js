@@ -155,7 +155,8 @@ function widthAt(index, marks) {
 // ---- the provider ---------------------------------------------------------------
 
 export function kelpCoastProvider(ramp) {
-  const end = ramp.points.at(-1), heading = ramp.heading, mirror = ramp.side === 'right' ? -1 : 1;
+  // DEEP-RAMP-2: the new road fall line must not rotate the established offshore loop into land.
+  const end = ramp.points.at(-1), heading = ramp.diveHeading ?? ramp.heading, mirror = ramp.side === 'right' ? -1 : 1;
   const fx = Math.sin(heading), fz = Math.cos(heading), lx = Math.cos(heading) * mirror, lz = -Math.sin(heading) * mirror;
   const world = p => ({ x: end.x + fx * p.f + lx * p.l, z: end.z + fz * p.f + lz * p.l });
   const path = sample(CORNERS), base = depthProfile(path), marks = stretches(path, base);

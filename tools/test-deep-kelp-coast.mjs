@@ -22,8 +22,9 @@ function race(route, { providers = [kelpCoastProvider], enabled = true } = {}) {
   return duel;
 }
 function zoneFor(route) {
-  const duel = race(route, { providers: [] });
-  const ramp = buildDeepRamp(duel.course);
+  // DEEP-RAMP-2: audit the installed cutting as well as natural terrain beyond it.
+  const duel = race(route);
+  const ramp = duel.course.deepRamp;
   assert.ok(ramp, `${route.id} has a Deep ramp`);
   return { duel, ramp, zone: defineZone(kelpCoastProvider(ramp)) };
 }

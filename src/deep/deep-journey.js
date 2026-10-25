@@ -1,6 +1,6 @@
 // Journey architecture only. Real content providers are installed by DEEP-TRAIL.
 import { SEA_LEVEL } from '../coastal-water.js';
-import { buildDeepRamp } from './deep-ramp.js';
+import { buildDeepRamp, rampGrade, rampOpening, rampClearsScenery } from './deep-ramp.js';
 import { defineZone } from './deep-zone.js';
 import { createZoneFloor, ZONE_SPAN } from './zone-floor.js';
 
@@ -33,19 +33,28 @@ export function installDeepCourse(course, { providers = [], enabled = false, kit
           zone.ramp.endDepth !== 8 || Math.hypot(first.x - end.x, first.z - end.z) > 1e-6 || first.depth !== 8)
         throw new Error('Deep provider must match the resolved ramp and its bottom in this route frame.');
       if (mode === 'grandprix' && !found.includes(zone.id)) continue;
-      const original={surfaceAt:course.surfaceAt,groundAt:course.groundAt,gripKindAt:course.gripKindAt};
+      const original={obstaclesNear:course.obstaclesNear,surfaceAt:course.surfaceAt,groundAt:course.groundAt,gripKindAt:course.gripKindAt};
       Object.defineProperties(course, {
+        // DEEP-RAMP-2: the drawn opening and collision opening share one predicate.
+        obstaclesNear:{configurable:true,value:function(...args){
+          return original.obstaclesNear.apply(this,args).filter(obstacle => !rampOpening(this,obstacle) && !(['tree','rock'].includes(obstacle.kind) && rampClearsScenery(this,obstacle)));
+        }},
         surfaceAt:{configurable:true,value:function(distance,lateral=0){
           const rampPoint=deepRampGround(this,distance,lateral);
           return rampPoint?{road:true,mainRoad:false,shortcutId:'deep-ramp',roadHalfWidth:this.roadHalfWidthAt(distance),deepRamp:true}:original.surfaceAt.call(this,distance,lateral);
         }},
         groundAt:{configurable:true,value:function(distance,lateral=0){
-          return deepRampGround(this,distance,lateral)??original.groundAt.call(this,distance,lateral);
+          // DEEP-RAMP-2: grade the apron as well as the full deck.
+          const point = original.groundAt.call(this, distance, lateral);
+          return { ...point, y: rampGrade(this.deepRamp, point, point.y) };
         }},
         gripKindAt:{configurable:true,value:function(distance,lateral=0){
           const rampPoint=deepRampGround(this,distance,lateral);
           return rampPoint&&rampPoint.progress>=this.deepRamp.shoreline.center.progress?'sea-floor':original.gripKindAt.call(this,distance,lateral);
         }},
+        // DEEP-RAMP-2: render source planes before grading, so outside triangles stay exact.
+        deepNaturalGroundAt: { value: original.groundAt, configurable: true },
+        deepNaturalSurfaceAt: { value: original.surfaceAt, configurable: true },
         deepRamp: { value: ramp, configurable: true },
         deepZone: { value: Object.freeze({ zone, floor: createZoneFloor(zone) }), configurable: true },
       });
@@ -175,9 +184,14 @@ function placeRamp(duel, progress) {
   const near = runtime.raceCourse.nearest(point.x, point.z, state.s);
   state.prevS = state.s; state.prevLateral = state.lateral;
   state.s = near.s; state.lateral = near.lateral; state.groundHeight = point.y;
-  state.headingError = wrap(point.heading - runtime.raceCourse.at(state.s).heading);
+  // DEEP-RAMP-2: ease from the straight deck into the preserved offshore trail direction during the locked dive.
+  const turn = clamp((progress - runtime.ramp.shoreline.center.progress) /
+    (runtime.ramp.length - runtime.ramp.shoreline.center.progress), 0, 1);
+  const heading = point.heading + wrap((runtime.ramp.diveHeading ?? point.heading) - point.heading) * turn * turn * (3 - 2 * turn);
+  state.headingError = wrap(heading - runtime.raceCourse.at(state.s).heading);
   state.airborne = false; state.airHeight = state.prevAirHeight = 0; state._jumpY = null;
   state.speedMph = 0; state.yawVelocity = state.pushVelocity = state.slipAngle = 0; if (Object.hasOwn(state, 'tyreSlip')) state.tyreSlip = 0;
+  state.terrainPitch = state.terrainRoll = null; duel._terrainPose(); // DEEP-RAMP-2
   state.deepJourney.progress = progress;
 }
 function exit(duel) {
@@ -207,7 +221,7 @@ export function stepDeepJourney(duel, dt) {
     if (journey.diveElapsed < 2) return true;
     runtime.zoneCourse = zoneCourse(runtime); duel.course = runtime.zoneCourse;
     Object.assign(duel.state, { s: 0, prevS: 0, lateral: 0, prevLateral: 0,
-      headingError: wrap(runtime.ramp.heading - duel.course.at(0).heading), groundHeight: SEA_LEVEL - 8 });
+      headingError: 0, groundHeight: SEA_LEVEL - 8 });
     changePhase(duel, 'underwater');
     return true;
   }
@@ -227,7 +241,7 @@ export function stepDeepJourney(duel, dt) {
     const top=rampNear(runtime.ramp,duel.course.worldAt(duel.state.s,duel.state.lateral));
     if(top&&top.progress<=1){exit(duel);return true;}
   }
-  duel._drive(dt);
+  if (!stepRampDriving(duel, dt)) duel._drive(dt); // DEEP-RAMP-2
   duel.state.groundHeight=duel._supportAt(duel.state.s,duel.state.lateral).y;
   duel._jump(duel.state, dt, journey.elapsedSec);
   const point = duel.course.worldAt(duel.state.s, duel.state.lateral);
@@ -252,4 +266,56 @@ export function deepEnvironment(duel) {
   if(!deepProtected(duel))return {};
   const point=duel.course.groundAt(duel.state.s,duel.state.lateral);
   return {deepDepth:Math.max(0,SEA_LEVEL-point.y)};
+}
+
+// DEEP-RAMP-2: constrained driving on the deck only. Underwater driving is unchanged.
+export function stepRampDriving(duel, dt) {
+  if (!admitted(duel) || duel.course !== duel.deepRuntime.raceCourse ||
+      duel.state.impactTimer > 0 || duel.state.tumble || duel.state.onFoot) return false;
+  const s = duel.state, ramp = duel.deepRuntime.ramp;
+  const at = rampNear(ramp, duel.course.worldAt(s.s, s.lateral));
+  if (!at) return false;
+  const facing = Math.cos(duel.course.at(s.s).heading + s.headingError - ramp.heading) >= 0 ? 1 : -1;
+  s.prevS = s.s; s.prevLateral = s.lateral; s.prevGroundHeight = s.groundHeight;
+  if (s.speedMph === 0 && s.input.brake > .1 && !s.input.throttle) {
+    s.reverseHoldSec += dt;
+    if (s.reverseHoldSec >= .35) s.gear = -1;
+  } else s.reverseHoldSec = 0;
+  let speed = s.speedMph;
+  if (s.gear < 0) speed = s.input.throttle ? Math.min(0, speed + 45 * dt) : speed - s.input.brake * 12 * dt;
+  else speed = s.input.brake ? Math.max(0, speed - s.input.brake * 45 * dt) : speed + s.input.throttle * 12 * dt;
+  if (!s.input.throttle && !s.input.brake) speed *= Math.exp(-.3 * dt);
+  speed = clamp(speed, -18, 18);
+  if (s.gear < 0 && speed === 0 && s.input.throttle) s.gear = 0;
+  const travel = speed * .44704 * dt;
+  const progress = at.progress + travel * facing;
+  const side = clamp(at.lateral - s.input.steer * travel * .3, -ramp.width / 2 + 2, ramp.width / 2 - 2);
+  const point = rampAt(ramp, progress, side);
+  // Extend a small step beyond the top so Turn back can rejoin the road.
+  if (progress < 0) { point.x += Math.sin(ramp.heading) * progress; point.z += Math.cos(ramp.heading) * progress; }
+  const near = duel.course.nearest(point.x, point.z, s.s);
+  s.s = near.s; s.lateral = near.lateral; s.groundHeight = point.y;
+  const target = ramp.heading + (facing < 0 ? Math.PI : 0);
+  const heading = duel.course.at(s.prevS).heading + s.headingError;
+  s.headingError = wrap(heading + wrap(target - heading) * (1 - Math.exp(-6 * dt)) - duel.course.at(s.s).heading);
+  s.speedMph = speed; s.boosting = false; s.revs = Math.abs(speed) / 25;
+  s.yawVelocity = s.pushVelocity = s.slipAngle = s.roughness = 0;
+  if (Object.hasOwn(s, 'tyreSlip')) s.tyreSlip = 0;
+  s.airborne = false; s.airHeight = s.prevAirHeight = 0; s._jumpY = null;
+  s.steerVisual = s.input.steer * .3;
+  s.terrainPitch = s.terrainRoll = null; duel._terrainPose(); // DEEP-RAMP-2: replace any prior hillside attitude.
+  return true;
+}
+
+// DEEP-RAMP-2: a read-only high chase along the cutting, easing at both ends.
+export function rampChaseCamera(duel) {
+  const runtime = duel.deepRuntime;
+  if (!runtime || duel.course !== runtime.raceCourse || !admitted(duel)) return null;
+  const ramp = runtime.ramp, point = duel.course.worldAt(duel.state.s, duel.state.lateral), at = rampNear(ramp, point);
+  if (!at) return null;
+  const smooth = t => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+  const blend = smooth(at.progress / 10) * smooth((at.y - SEA_LEVEL + 6) / 6);
+  const behind = rampAt(ramp, at.progress - 12), ahead = rampAt(ramp, at.progress + 20);
+  return { blend, position: { x: behind.x, y: behind.y + 8, z: behind.z },
+    target: { x: ahead.x, y: ahead.y + 1, z: ahead.z }, fov: 58 };
 }
