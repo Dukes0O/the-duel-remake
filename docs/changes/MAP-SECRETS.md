@@ -237,3 +237,14 @@ map record, strands an air-only car there until it is back: accepted while the s
 ## Removed
 
 - The part-one refusal `carNotKept` (event, panel text, test) and the filter that dropped a later game's names.
+
+## Checks (part two)
+
+Run once in the cloud on the branch restarted from the merged `integration/wasteland` (fast-forward, no conflict):
+`npm run build` passes. `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` (468 suites): the only
+failures are the laptop-only or already-failing ones: `test-course-kit` (asserts `win32`), `test-earned-cars-ui`,
+`test-drive-through`, `test-full-check`, `test-medals`, `test-salt-flats`, `test-salt-flats-art`, `test-p4-kits`,
+`test-tanker-valve-source`, `test-vesper-art`, `test-compact-binaries` and `test-lab-radio` (same on a clean
+`integration/wasteland`). After the last small change (a full list takes no name) I reran `test-map-secrets` (282),
+`test-save-fixtures` (20 shapes, 912 checks), `test-heli-save`, `test-heli-mode`, `test-progression` and
+`test-map-destinations`: all pass. Not run here: browser scenarios and the full tier.
