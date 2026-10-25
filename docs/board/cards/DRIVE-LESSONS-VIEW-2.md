@@ -26,3 +26,14 @@ and board; the ice sign is a plain road sign from the existing set.
 
 Acceptance: the scenario; drawing and screens never change race state;
 replays unchanged; lane tier, build, one review. Removed: nothing.
+
+## For lesson 3 (from DRIVE-LESSON-3)
+
+The gearbox lesson's rules and instructor are built (`'gears'` in `src/lessons/drive-lessons.js`). The host needs two lesson flags that do not exist in the game yet,
+and the view must feed the lesson two more numbers:
+
+- **Always manual:** the lesson run uses the manual box whatever the player's setting, and Casual goes back to the automatic box afterwards. In Node the scratch Duel overrides
+  `diff` with `autoShift: false`.
+- **No engine damage from the limiter:** `engineBlow` is off for the lesson run (same override).
+- **The lesson view passes `gear` and `revs`** (`state.gear`, `state.revs`) every step; the lesson reads a change up from `gear` rising and takes the revs it came at from the step before.
+- The lesson runs on the engine curve: show "Opens later" while `engine-curve` is off. The green mark is at `GEAR_LESSON.greenMarkRevs` (50%) and the shift lights come on from `GEAR_LESSON.lightsRevs` (90%).
