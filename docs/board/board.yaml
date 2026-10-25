@@ -267,10 +267,11 @@ tasks:
 
   - id: LAB-RESTORE
     title: "Restore the Sirena on the rust bench"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-25
     needs: [LAB-VIEW, SIRENA-CAR]
     locks: []
     flag: "lab"
