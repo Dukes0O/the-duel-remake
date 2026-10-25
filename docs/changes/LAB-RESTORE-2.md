@@ -116,3 +116,7 @@ was read or written. Lane commit only; no merge or push.
 ## Removed
 
 Replace the single 2,500 purchase and full-show first run with the two steps.
+
+## Claude review (25 October 2026)
+
+Look passed: the Sirena races as found, the Lab gets her running with the crust intact, Restored 1966 is optional and both finishes stay. Changed assertions approved: prices follow THE_DEEP 6.9, catalog 6 to 8 for the two Sirena finishes, fixture roster 22 to 23; nothing loosened.
