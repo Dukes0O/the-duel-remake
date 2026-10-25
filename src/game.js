@@ -733,6 +733,7 @@ export class Duel {
   _scrape(...args) { return simContacts._scrape.apply(this, args); }
 
   _crushVehicle(...args) { return simContacts._crushVehicle.apply(this, args); }
+  _titanCarRamp(...args) { return simContacts._titanCarRamp.apply(this, args); }
 
   _dentVehicle(...args) { return simContacts._dentVehicle.apply(this, args); }
 

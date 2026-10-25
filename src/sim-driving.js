@@ -149,7 +149,7 @@ export function _drive(dt) {
   } else {
     if (s.input.throttle > 0) {
       const ceil = Math.min(car.topSpeed * nitroSpeedShare * road.topShare, gearMax * DRIVE.gearCeilFrac, road.topSpeedMph ?? Infinity);
-      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * launchScale(this.course, s.crashLaunchSec > 0) * accelerationShare;
+      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * launchScale(this.course, s.crashLaunchSec > 0, s.tyreSlipRules === true) * accelerationShare;
     }
     if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * road.grip * dt;
     s.speedMph = Math.max(0, s.speedMph - DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1));
@@ -436,6 +436,13 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   const origin = actor._jumpOrigin; actor._jumpOrigin = null;
   if (seaFloor) {
     this.emit({ deepLanded: { speed: Math.abs(actor.speedMph), cue: road.landingCue } });
+    return;
+  }
+  if (origin?.carRamp && actor === this.state) {
+    // Landing off a car: the existing landing cue and a callout, no score (only authored arena ramps score).
+    const landing = this.course.worldAt(actor.s, actor.lateral), metres = Math.hypot(landing.x - origin.world.x, landing.z - origin.world.z);
+    this._callout(`BIG AIR  /  ${Math.round(metres)} m`, 2);
+    this.emit({ jumpLanded: { rampId: 'car', lap: origin.lap, distance: +metres.toFixed(1), points: 0 } });
     return;
   }
   if (!arena || actor !== this.state || !origin || origin.lap !== actor.completedLaps + 1 || origin.s < actor.completedLaps * this.course.length) return;
