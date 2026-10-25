@@ -106,10 +106,11 @@ seven design questions are on the card.
 - `tools/test-deep-look.mjs`: the `src/deep` allow-list gains this card's
   hooks and test (changed assertion, below). It passes, 5287 checks.
 - Lane tier (`--changed --jobs 4 --keep-going`, current integration merged
-  in): 67 suites, 63 passed, 4 failed. All 4 need the laptop and the Windows
-  Recycle Bin: `test-course-kit`, `test-earned-cars-ui`, `test-medals`,
-  `test-drive-through`. The replay and world guards pass, so Pacific Canyon
-  replays stay exact with the switch off.
+  in, after the review fixes): 69 suites, 65 passed, 4 failed. All 4 need the
+  laptop and the Windows Recycle Bin: `test-course-kit`,
+  `test-earned-cars-ui`, `test-medals`, `test-drive-through`. The replay and
+  world guards pass, so Pacific Canyon replays stay exact with the switch
+  off.
 - `npm run build`: built.
 - **Browser scenario** `tools/scenarios/deep-sirena.mjs` (private port,
   memory-only storage): passed with 0 console errors and 6 screenshots, also
