@@ -4,7 +4,8 @@
 // save goes through app.labCommit, and nothing here touches a race or a flight except the one call that starts a flight.
 import {boardRows, openBench, setControl, runBench, goalMet, readoutRows, challengeState, passIn, buyIn, ringIn, cableIn,
   shopRows, choiceRows, lessonName, lineId, lineText, CHALLENGE_KIND} from './lab-model.js';
-import {headerMarkup, boardMarkup, benchMarkup, shopMarkup, captionMarkup, gforceStripMarkup} from './lab-markup.js';
+import {headerMarkup, boardMarkup, benchMarkup, shopMarkup, captionMarkup, gforceStripMarkup, restoreOfferMarkup, restoreRunMarkup, restoreSaltText, restoreWeeksText} from './lab-markup.js';
+import {restoreOffer, restoreSirena, stageAt, RESTORE_SECONDS} from './restore.js';
 import {checkProtections} from './lab-workshop.js';
 import {labOf} from './lab-save.js';
 import {LAB_LINES} from './lab-lines.js';
@@ -70,7 +71,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   let shown = false, disposed = false;
   let ui = freshState(), caption = null, lastTop = '', lastSide = '', lastCaption = '', lastStrip = '';
 
-  function freshState() { return {tab: 'lessons', bench: null, message: '', protect: null, explained: false}; }
+  function freshState() { return {tab: 'lessons', bench: null, message: '', protect: null, explained: false, restore: null}; }
   const flags = () => app._switches();
   const profile = () => app.profile ?? {};
   const now = () => (win?.performance ?? performance).now() / 1000;
@@ -99,7 +100,13 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     const bench = ui.bench;
     return challengeState(bench.lessonId, {profile: profile(), flags: flags(), met: goalMet(bench), helicopterOn: flags().enabled('helicopter') === true && app.heliAvailable?.() === true});
   };
+  // LAB-RESTORE: the sequence in hand, as the stage object the room and the panel are drawn from.
+  const restoreView = () => {
+    const run = ui.restore, seconds = Math.min(RESTORE_SECONDS, Math.max(0, now() - run.startedAt));
+    return {...stageAt(seconds), first: run.first, skippable: !run.first};
+  };
   function sideMarkup() {
+    if (ui.restore) return restoreRunMarkup(restoreView());
     if (ui.tab === 'shop') {
       return shopMarkup({rows: shopRows(profile(), flags()), choices: choiceRows(profile()), wallet: profile().credits, message: ui.message});
     }
@@ -107,7 +114,8 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       const bench = ui.bench;
       return benchMarkup({lessonId: bench.lessonId, name: lessonName(bench.lessonId), controls: bench.bench.controls, settings: bench.settings,
         readout: bench.result ? readoutRows(bench.lessonId, bench.result) : [], challenge: challengeFor(),
-        protect: ui.protect, hasRun: bench.result !== null, explained: ui.explained, message: ui.message});
+        protect: ui.protect, hasRun: bench.result !== null, explained: ui.explained, message: ui.message,
+        restore: bench.lessonId === 'rust' ? restoreOfferMarkup(restoreOffer(profile(), flags())) : ''});
     }
     return boardMarkup({rows: boardRows(profile(), flags()), message: ui.message});
   }
@@ -122,6 +130,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       restoreFocus(key);
     }
     keeper.scene?.show(ui.tab === 'lessons' && ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null);
+    keeper.scene?.restore(ui.restore ? restoreView() : null);
   }
   const focusKey = () => {
     const el = doc.activeElement;
@@ -141,6 +150,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     render();
   }
   function backToBoard() {
+    if (ui.restore) endRestore();
     ui = {...ui, bench: null, message: '', protect: null};
     voice.stop(); caption = null; paintCaption();
     render();
@@ -191,6 +201,45 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       render();
     }
   }
+  // ---- the Sirena's restoration (LAB-RESTORE) ----
+  // The 2,500 and the car go in one saved step at the start, so closing the Lab mid-sequence loses neither.
+  function startRestore() {
+    const result = app.labCommit((p, f) => restoreSirena(p, {flags: f}));
+    if (!result.ok) { ui.message = result.reason; render(); return; }
+    ui = {...ui, message: '', restore: {first: true, startedAt: now(), done: false, index: 0}};
+    bing('lab.fizz');
+    say('restore', 'start');
+    render();
+  }
+  function watchAgain() {
+    if (restoreOffer(profile(), flags()).state !== 'again') return;
+    ui = {...ui, message: '', restore: {first: false, startedAt: now(), done: false, index: 0}};
+    bing('lab.fizz');
+    render();
+  }
+  function endRestore() {
+    ui = {...ui, restore: null};
+    keeper.scene?.restore(null);
+    render();
+  }
+  function tickRestore() {
+    const run = ui.restore;
+    if (!run) return;
+    const view = restoreView();
+    keeper.scene?.restore(view);
+    if (view.done && !run.done) {
+      run.done = true;
+      if (run.first) say('restore', 'done');
+      lastSide = ''; render();
+      return;
+    }
+    if (view.index !== run.index) { run.index = view.index; if (view.stage === 'current') bing('lab.fizz'); lastSide = ''; render(); return; }
+    // The readouts change in place, so a press on a button is never lost to a rebuild.
+    const set = (id, text) => { const el = side.querySelector(id); if (el && el.textContent !== text) el.textContent = text; };
+    set('#lab-restore-salt', restoreSaltText(view)); set('#lab-restore-weeks', restoreWeeksText(view));
+    const bar = side.querySelector('#lab-restore-bar');
+    if (bar) bar.style.width = `${Math.round(view.overall * 100)}%`;
+  }
   function checkProtect() {
     if (!ui.protect) return;
     const verdict = checkProtections(ui.protect.picks);
@@ -213,7 +262,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     const target = event.target.closest?.('[data-lab],[data-lab-tab],[data-lab-lesson],[data-lab-buy],[data-lab-ring],[data-lab-cable]');
     if (!target || !section.contains(target)) return;
     const d = target.dataset;
-    if (d.labTab) { ui = {...ui, tab: d.labTab, message: ''}; if (d.labTab === 'lessons' && ui.bench === null) caption = null; render(); return; }
+    if (d.labTab) { if (ui.restore) endRestore(); ui = {...ui, tab: d.labTab, message: ''}; if (d.labTab === 'lessons' && ui.bench === null) caption = null; render(); return; }
     if (d.labLesson) { openLesson(d.labLesson.replace(/^start:/, '')); return; }
     if (d.labBuy) { buy(d.labBuy); return; }
     if (d.labRing !== undefined) {
@@ -231,6 +280,10 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       case 'again': if (ui.bench) { ui.explained = true; say(ui.bench.lessonId, 'explain'); render(); } break;
       case 'challenge': takeChallenge(); break;
       case 'protect-check': checkProtect(); break;
+      case 'restore': startRestore(); break;
+      case 'restore-again': watchAgain(); break;
+      case 'restore-skip': if (ui.restore && !ui.restore.first) ui.restore.startedAt = now() - RESTORE_SECONDS; break;
+      case 'restore-close': endRestore(); break;
       default: break;
     }
   }
@@ -266,6 +319,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     }
     if (event.code !== 'Escape') return;
     event.preventDefault();
+    if (ui.restore) { endRestore(); return; } // nothing is lost: the car was made the player's when the sequence began
     if (ui.bench) backToBoard(); else app.closeLab();
   }
   section.addEventListener('click', onClick);
@@ -277,7 +331,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
 
   // ---- the room ----
   const keeper = createSceneKeeper({stage, loadManifest, sceneFactory,
-    onRoom: room => room.show(ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null),
+    onRoom: room => { room.show(ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null); room.restore(ui.restore ? restoreView() : null); },
     // No 3D room (no graphics, or the models did not load): the board and benches still work.
     onPlain: () => stage.classList.add('lab-stage-plain')});
   const startScene = () => keeper.start();
@@ -324,6 +378,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
         const wallet = headerMarkup({credits: profile().credits, tab: ui.tab});
         if (wallet !== lastTop) { top.innerHTML = wallet; lastTop = wallet; }
         paintCaption();
+        tickRestore();
       }
       updateStrip();
       return open ? {open: true} : null;

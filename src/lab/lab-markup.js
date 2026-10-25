@@ -52,7 +52,7 @@ function protectMarkup(protect) {
     `<button type="button" data-lab="protect-check">Check my choices</button></div>`;
 }
 
-export function benchMarkup({lessonId, name, controls, settings, readout, challenge, protect = null, hasRun, explained, message = ''}) {
+export function benchMarkup({lessonId, name, controls, settings, readout, challenge, protect = null, hasRun, explained, message = '', restore = ''}) {
   const dials = controls.map(row => controlMarkup(row, settings[row.id])).join('');
   const readoutHtml = readout.length
     ? `<dl class="lab-readout" aria-label="Result">${readout.map(item => `<div class="${item.tone ?? ''}"><dt>${escape(item.label)}</dt><dd>${escape(item.value)}</dd></div>`).join('')}</dl>`
@@ -65,7 +65,7 @@ export function benchMarkup({lessonId, name, controls, settings, readout, challe
   return `<section class="lab-bench" data-lesson="${escape(lessonId)}" aria-label="${escape(name)} bench"><button type="button" class="lab-back" data-lab="back">← All lessons</button>` +
     `<h3>${escape(name.toUpperCase())} ${passed}</h3><div class="lab-controls">${dials}</div>` +
     `<div class="lab-actions"><button type="button" class="lab-run" data-lab="run">Run</button>${brian}</div>${readoutHtml}` +
-    `<div class="lab-challenge lab-challenge-${challenge.state}">${challenge.note ? `<p>${escape(challenge.note)}</p>` : ''}${button}${ready ? protectMarkup(protect) : ''}</div>` +
+    `<div class="lab-challenge lab-challenge-${challenge.state}">${challenge.note ? `<p>${escape(challenge.note)}</p>` : ''}${button}${ready ? protectMarkup(protect) : ''}</div>${restore}` +
     `${message ? `<p class="lab-message" role="status">${escape(message)}</p>` : ''}</section>`;
 }
 
@@ -98,3 +98,30 @@ export function gforceStripMarkup(view) {
     between: 'Next corner', passed: view.saveNote ? `Passed, but not saved: ${view.saveNote}` : 'G-force lap passed'}[view.state] ?? '';
   return `<div class="lab-gforce" role="status"><b>${view.g.toFixed(1)} g</b><span>CORNERS ${view.count}/${view.need}</span><em>${escape(words)}</em></div>`;
 }
+
+// LAB-RESTORE: the Rust bench's offer (restore.js restoreOffer): the Restore button with its price, the lesson note, or the free replay.
+export function restoreOfferMarkup(offer) {
+  if (!offer || offer.state === 'hidden') return '';
+  const price = `${Math.floor(offer.price).toLocaleString('en-US')} CR`;
+  if (offer.state === 'locked') return `<div class="lab-restore"><p>${escape(offer.note)}</p></div>`;
+  if (offer.state === 'again')
+    return '<div class="lab-restore"><p>The Sirena is restored and waits in your garage.</p><button type="button" data-lab="restore-again">Watch the restoration again</button></div>';
+  return `<div class="lab-restore"><p>The Sirena is raised and waits in your garage under a sheet.</p>` +
+    `<button type="button" class="lab-restore-button" data-lab="restore"${offer.canBuy ? '' : ' disabled'}>Restore the Sirena: ${price}</button>` +
+    `${offer.note ? `<em>${escape(offer.note)}</em>` : ''}</div>`;
+}
+
+// The side panel while the sequence runs. view: stageAt(seconds) plus {first, skippable}. The readout elements carry ids so the
+// screen can change their words in place without rebuilding the panel.
+export function restoreRunMarkup(view) {
+  const stages = ['soak', 'current', 'strip', 'rebuild', 'paint'];
+  const steps = stages.map((id, i) => `<li class="${i < view.index ? 'done' : i === view.index && !view.done ? 'now' : ''}">${escape(['Soak', 'Current', 'Strip', 'Rebuild', 'Paint'][i])}</li>`).join('');
+  const end = view.done
+    ? `<p class="lab-message">The Sirena is yours. She waits at Pacific Canyon: race the Coast Cup in her.</p><button type="button" data-lab="restore-close">Back to the bench</button>`
+    : view.skippable ? '<button type="button" data-lab="restore-skip">Skip</button>' : '';
+  return `<section class="lab-restore-run" aria-label="Restoring the Sirena"><h3>RESTORING THE SIRENA</h3><ol class="lab-restore-steps">${steps}</ol>` +
+    `<p class="lab-restore-label" id="lab-restore-label">${escape(view.label)}</p><div class="lab-restore-bar"><i id="lab-restore-bar" style="width:${Math.round(view.overall * 100)}%"></i></div>` +
+    `<dl class="lab-readout"><div><dt>Salt in the metal</dt><dd id="lab-restore-salt">${restoreSaltText(view)}</dd></div><div><dt>Soaking</dt><dd id="lab-restore-weeks">${restoreWeeksText(view)}</dd></div></dl>${end}</section>`;
+}
+export const restoreSaltText = view => `${Math.max(0, Math.round(view.saltShare * 100))}%`;
+export const restoreWeeksText = view => `week ${Math.round(view.weeks)} of 26 (fast-forward)`;
