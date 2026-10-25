@@ -85,11 +85,11 @@ check('Deep-off settlement preserves all pre-card fields and only adds the prosp
     }
   } finally { Date.now = now; }
 });
-check('Hints appear at five and ten, stop after finding, stay hidden while off or without a player', () => {
+check('Hints appear at three and six, stop after finding, stay hidden while off or without a player', () => {
   for (let count = 0; count <= 10; count++) {
     const snapshot = deepDiscoverySnapshot({deep: {pacificFinishes: count}}, 'qa', true), hints = deepHints(snapshot);
-    assert.equal(hints.hintIds.length, count < 5 ? 0 : count < 10 ? 1 : 2);
-    assert.equal(hints.bubbles, count >= 10); assert.equal(hints.kitAvailable, count >= 5);
+    assert.equal(hints.hintIds.length, count < 3 ? 0 : count < 6 ? 1 : 2);
+    assert.equal(hints.bubbles, count >= 6); assert.equal(hints.kitAvailable, count >= 3);
     for (const off of [{...snapshot, enabled: false}, {...snapshot, playerId: ''}, {...snapshot, found: ['kelp-coast']}]) {
       assert.equal(deepHints(off).garageTip, null); assert.equal(deepHints(off).bubbles, false);
     }

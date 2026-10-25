@@ -52,12 +52,12 @@ underwater place (section 4).
   (below). One kit fits all cars, so Kyle and Gratian can each dive in their
   favourite.
 - **Hints, never on the main menu:**
-  1. After five finishes on Pacific Canyon, a garage tip: "Fishermen at the
+  1. After three finishes on Pacific Canyon (five until 25 October 2026), a garage tip: "Fishermen at the
      cove say the old boat ramp goes further than the beach." Once the Kelp
      Coast is found, the other two ramps get their own tips after a few
      finishes on their circuits.
   2. The dive kit then appears in the garage.
-  3. After ten finishes without diving, a second tip, and a few bubbles
+  3. After six finishes without diving (ten until 25 October 2026), a second tip, and a few bubbles
      rise off the water at the ramp's end during races.
 - **Going in:** works in an ordinary Duel race or Time Trial on that
   circuit (not Mad Max races; the Wasteland owns those). Past the water's
