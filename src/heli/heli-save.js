@@ -438,25 +438,36 @@ const hundredth = value => Math.round(value * 100) / 100;
 const tenthOf = value => Math.round(value * 10) / 10;
 const SKI_BEST_MAX = 1_000_000;
 
+// A version this game cannot read because it is later than 1 (a later game's number, even a text or fractional one).
+const laterVersion = version => ['number', 'string', 'bigint'].includes(typeof version) && Number(version) > SKI_SAVE_VERSION;
+
 // A newer game's record is returned exactly as it was (and never written over); null when there is none to keep.
+// The names this game knows are never cut to make room for a later game's: only the unknown ones are capped.
 function normalizeSki(value) {
   if (!isObject(value)) return null;
-  if (Number.isSafeInteger(value.version) && value.version > SKI_SAVE_VERSION) {
-    try { return structuredClone(value); } catch { return null; }
+  if (laterVersion(value.version)) {
+    try { return structuredClone(value); } catch { return value; }
   }
   if (value.version !== SKI_SAVE_VERSION) return null;
   const ski = {version: SKI_SAVE_VERSION, best: {}, medal: {}, paid: {}, stashes: []};
   const skiName = name => validId(name) && name !== '__proto__';
-  const names = map => (isObject(map) ? Object.entries(map) : []).filter(([name]) => skiName(name)).slice(0, MAX_SKI_NAMES);
-  for (const [run, number] of names(value.best))
-    if (typeof number === 'number' && Number.isFinite(number) && number > 0 && number <= SKI_BEST_MAX)
-      ski.best[run] = SKI_JUDGED.includes(run) ? tenthOf(number) : hundredth(number);
+  const known = new Set([...SKI_RUNS, ...SKI_STASHES]);
+  const capped = (list, nameOf) => {
+    const usable = list.filter(item => skiName(nameOf(item)));
+    return [...usable.filter(item => known.has(nameOf(item))), ...usable.filter(item => !known.has(nameOf(item))).slice(0, MAX_SKI_NAMES)];
+  };
+  const names = map => capped(isObject(map) ? Object.entries(map) : [], ([name]) => name);
+  for (const [run, number] of names(value.best)) {
+    if (typeof number !== 'number' || !Number.isFinite(number) || !(number > 0) || number > SKI_BEST_MAX) continue;
+    const kept = SKI_JUDGED.includes(run) ? tenthOf(number) : hundredth(number);
+    if (kept > 0) ski.best[run] = kept;
+  }
   const whole = number => Number.isSafeInteger(number) && number >= 1 && number <= 3 ? number : 0;
   for (const [run, number] of names(value.paid)) if (whole(number)) ski.paid[run] = whole(number);
   for (const [run, number] of names(value.medal)) if (whole(number)) ski.medal[run] = whole(number);
   // A medal that was paid for was earned.
   for (const [run, number] of Object.entries(ski.paid)) if (!(ski.medal[run] >= number)) ski.medal[run] = number;
-  ski.stashes = [...new Set((Array.isArray(value.stashes) ? value.stashes : []).filter(skiName))].slice(0, MAX_SKI_NAMES);
+  ski.stashes = capped([...new Set(Array.isArray(value.stashes) ? value.stashes : [])], id => id);
   for (const key of Object.keys(value)) {
     if (SKI_KEYS.has(key) || key === '__proto__' || value[key] === undefined) continue;
     try { ski[key] = structuredClone(value[key]); } catch { /* not plain data: dropped */ }
@@ -475,7 +486,7 @@ const skiOff = profile => ({ok: false, reason: NOT_SKIING, profile});
 // Writing is refused over a record this game cannot read: a later game's ski record, or a later game's helicopter.
 function skiBlocked(profile) {
   const stored = isObject(profile) && isObject(profile.heli) ? profile.heli : null;
-  if (stored && Number.isSafeInteger(stored.version) && stored.version > HELI_SAVE_VERSION) return SKI_NEWER;
+  if (stored && laterVersion(stored.version)) return SKI_NEWER;
   const ski = heliOf(profile).ski;
   return ski && ski.version !== SKI_SAVE_VERSION ? SKI_NEWER : null;
 }
