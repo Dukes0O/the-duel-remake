@@ -24,3 +24,8 @@ Owns: takes, runtime files, catalogue rows, `src/ski/ski-lines.js`,
 Acceptance: a Node render check (peaks at most -1 dBTP; speech about
 -18 LUFS); Claude listens to one packet (at most three rounds); lane tier,
 build. Removed: nothing.
+
+## Also record in this voice run (Claude, 24 October)
+
+- Roger, id `heli.radio.table.spotted`: "Kestrel One, odd thing back there. Flat-topped mesa off your left, looked like a tower on top." (MAP-SECRETS emits the text; add one `HELI_RADIO_LINES` entry once recorded.)
+- This voice run waits for Kyle: about 12,600 voice credits were left after LAB-RADIO on 24 October.
