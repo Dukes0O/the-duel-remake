@@ -38,3 +38,7 @@ integration. The lab switch stays dev.
 The recipe and capture/sheet arrangement are in
 [the change note](../../../changes/SPEIRLING-KIT.md#picture-recipe).
 Raw pictures were recycled after this verdict; keep the recipe and sheet.
+
+## Claude (25 October 2026)
+
+Look passed at round 1: three tiers building up to a rust-plated Warlord, clear of wheels, fans and canopy, gritty. Assertions approved: only additions (fit check against glass, fans and wheels; manifest row).
