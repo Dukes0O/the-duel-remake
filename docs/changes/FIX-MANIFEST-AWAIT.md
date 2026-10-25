@@ -43,7 +43,22 @@ and the line driver (the whole game plus the driver). Before the change the sour
 
 ## Unchanged
 
-Replays, world signatures and combat balance: see "Checks". No test assertion changed; no test was loosened.
+Replays, world signatures and combat balance. No test assertion changed; no test was loosened.
+
+## Checks
+
+Run once in the cloud (Linux, no graphics) on the branch from the current `integration/wasteland`:
+
+- `npm run build`: passes.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: the replay and world-signature guards
+  (`test-replays`, `test-combat-replays` and the rest of the smoke set) pass with the fingerprints unchanged; the only
+  failures are the laptop-only or already-failing suites: `test-course-kit` (asserts `win32`; its other seven tests pass,
+  and they exercise the course registry this change touched), `test-earned-cars-ui`, `test-drive-through`,
+  `test-full-check`, `test-medals`, `test-salt-flats`, `test-salt-flats-art`, `test-p4-kits`, `test-tanker-valve-source`,
+  `test-vesper-art`, `test-compact-binaries` and `test-lab-radio` (same on a clean `integration/wasteland`).
+- `node tools/combat-balance.mjs --check`: exit 0 (current rules).
+- `test-manifest-await`: 446 checks.
+- Not run: the Ardennes-sister and yeti browser scenarios, frame checks, the full tier.
 
 ## Not done here
 
