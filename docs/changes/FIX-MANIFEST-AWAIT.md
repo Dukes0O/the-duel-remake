@@ -16,11 +16,12 @@ order. Nothing a player sees or plays changes.
 
 ## What changed
 
-- `src/circuit-manifests.js`: `modulesFromFiles()` is synchronous. The game's build still finds the course files at build
-  time (`import.meta.glob`, eager); Node (tests and tools) reads `src/circuits/` with `readdirSync` and loads each file at
-  once with `createRequire` (an ES module required synchronously: Node 22.12 or later, which `README.md` already asks for;
-  `process.getBuiltinModule` gives the built-ins without an import, so the game's bundle holds no Node import). Same files,
-  same sorted order, same registry.
+- `src/circuit-manifests.js`: the list is built from `import.meta.glob` (eager) when the game's build runs, so it is ready
+  when the module is evaluated and a bundle holds no top-level `await` there: Vite replaces `import.meta.env` with a
+  constant and the Node branch (a dynamic `import()` of each course file, awaited) is dropped from the bundle. Node (tests
+  and tools) keeps that waiting branch, as before. A first version of this fix read the folder and `require`d each file
+  so Node would not wait either; Node 22.14 (the laptop) refuses that for a course file that is already part of the
+  importing graph (`ERR_REQUIRE_CYCLE_MODULE`, as `test-course-kit` does), so it was dropped (the laptop found it).
 - `src/reference-laps.js`: the same pattern and the same cause (a second top-level `await` over the bundled lap files, in a
   module `track-analysis.js` pulls into most of the game): `recordsFromFiles()` is synchronous the same way.
 - `src/combat-actors.js` (new): `point`, `aimPoint`, `velocity`, `predictedPoint` and `burst`, moved out of
@@ -32,11 +33,11 @@ order. Nothing a player sees or plays changes.
 
 ## Test first
 
-`tools/test-manifest-await.mjs` (446 checks) builds single-chunk bundles with Vite exactly as the scenarios' helpers do, runs
+`tools/test-manifest-await.mjs` (491 checks) builds single-chunk bundles with Vite exactly as the scenarios' helpers do, runs
 each in Node under a 30 s limit, and also checks by reading the source that no file under `src/` has a top-level `await`
-(`src/main.js`, the page's entry that nothing imports, is the one exception) and that no file under `src/arsenal/` imports
+(`src/main.js`, the page's entry that nothing imports, and `src/circuit-manifests.js`, whose wait is in its Node-only branch, are named; no bundle holds that branch, checked) and that no file under `src/arsenal/` imports
 `combat-weapons.js`. Bundles: the whole game (`src/game.js`), `config.js` + `combat-weapons.js` + `arsenal/oil.js`, oil first,
-and the line driver (the whole game plus the driver). Before the change the source check failed on
+and the line driver (the whole game plus the driver). Each of the 13 course files is also loaded first in a fresh Node process, alone, after `course.js` and before it (the order that crashed `test-course-kit` on Node 22.14). Before the change the source check failed on
 `src/circuit-manifests.js` and the `src/game.js` bundle hung (15 s timeout in a scratch run; the revert of
 `circuit-manifests.js` alone brings the hang back, the revert of `reference-laps.js` alone does not hang in Node, but its
 `await` is the same fault and the source check catches it).
@@ -57,7 +58,7 @@ Run once in the cloud (Linux, no graphics) on the branch from the current `integ
   `test-full-check`, `test-medals`, `test-salt-flats`, `test-salt-flats-art`, `test-p4-kits`, `test-tanker-valve-source`,
   `test-vesper-art`, `test-compact-binaries` and `test-lab-radio` (same on a clean `integration/wasteland`).
 - `node tools/combat-balance.mjs --check`: exit 0 (current rules).
-- `test-manifest-await`: 446 checks.
+- `test-manifest-await`: 491 checks; also run with Node 22.14.0 (the laptop's version, installed in a scratch folder), where it fails on the first version of this fix and passes on this one; `test-course-kit` under Node 22.14.0 passes except its `win32` assertion.
 - Not run: the Ardennes-sister and yeti browser scenarios, frame checks, the full tier.
 
 ## Not done here
