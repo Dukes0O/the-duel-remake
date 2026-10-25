@@ -29,7 +29,9 @@ for(const model of models){
   const wheelNodes=new Set();for(const wheel of v.userData.wheels)wheel.traverse(n=>wheelNodes.add(n));
   let bodyFloor=Infinity;const vertex=new THREE.Vector3();
   v.traverse(n=>{if(!n.isMesh||wheelNodes.has(n)||n===v.userData.contactShadow||!n.visible)return;const a=n.geometry.attributes.position;for(let i=0;i<a.count;i++){vertex.fromBufferAttribute(a,i).applyMatrix4(n.matrixWorld);bodyFloor=Math.min(bodyFloor,vertex.y);}});
-  ok(bodyFloor-meta.contactY>.05,`${model.key} whole body remains above the tire plane`);
+  // LAB-FAN-ART accepted a low floor skirt (test-speirling-vehicle); all earlier cars keep their 5 cm floor.
+  const minimumClearance = model.key === 'mcmurtry_speirling' ? 0 : .05;
+  ok(bodyFloor-meta.contactY>minimumClearance,`${model.key} whole body remains above the tire plane`);
   // Both road types are truly flat in this fixture, with the production surface
   // lifts and source terrain depression retained. The geometry is a real plane.
   for(const offroad of[false,true]){

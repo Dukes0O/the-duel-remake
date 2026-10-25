@@ -115,7 +115,7 @@ export function bearing(from, to, options = {}) {
 // down, starting at the home pad. The cars earned with medals
 // (docs/EARNED_CARS.md) are special cars too.
 // The restored Falcone Sirena (SIRENA-CAR) is one too, first placed at Pacific Canyon (heli-save FIRST_PLACE).
-export const AIR_ONLY_CARS = Object.freeze(['koenigsegg_jesko', ...MEDAL_CARS, 'falcone_sirena']);
+export const AIR_ONLY_CARS = Object.freeze(['koenigsegg_jesko', ...MEDAL_CARS, 'falcone_sirena', 'mcmurtry_speirling']);
 
 export function isAirOnlyCar(carId) {
   return AIR_ONLY_CARS.includes(carId);

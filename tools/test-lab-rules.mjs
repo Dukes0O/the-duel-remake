@@ -213,7 +213,8 @@ test('the secret appears only after all five wind-tunnel lessons', () => {
   const built = buyUpgrade({...marked.profile, credits: 15_000}, 'speirling', {flags: ON});
   assert.equal(built.ok, true);
   assert.equal(built.profile.credits, 0);
-  assert.equal(built.profile.lab.owned.speirling, true);
+  assert.ok(built.profile.unlockedCars.includes('mcmurtry_speirling'));
+  assert.equal(buyUpgrade(built.profile, 'speirling', {flags: ON}).profile, built.profile);
 });
 
 test('the save: every key optional, unknown keys kept, a newer version left alone', () => {

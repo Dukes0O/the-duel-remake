@@ -7,19 +7,32 @@ import { createMclarenF1Vehicle, MCLAREN_F1_VEHICLE_DIMENSIONS } from './mclaren
 import { createBolideVehicle, BOLIDE_VEHICLE_DIMENSIONS } from './bolide-vehicle.js';
 import { createSirenaVehicle, SIRENA_VEHICLE_DIMENSIONS } from './sirena-vehicle.js';
 import { loadHeroVehicle } from './hero-vehicle.js';
+import { loadSpeirlingVehicle } from './speirling-vehicle.js';
 
 // One source of model selection for the player, rival and personal-best ghost.
 // Nine original models are ready synchronously. Heritage and Aurora share the
 // licensed GLB, with the former F42 sport trim and the separate GT package.
 // A pending or failed import never substitutes an earlier coupe silhouette.
-export function createVehicleAssets({ loadHero = loadHeroVehicle } = {}) {
+export function createVehicleAssets({ loadHero = loadHeroVehicle, loadSpeirling = loadSpeirlingVehicle } = {}) {
   let hero, pending, failed = false;
+  let speirling, fanPending, fanFailed = false;
   const earnedFactories = { ferrari_enzo: createEnzoVehicle, mclaren_f1: createMclarenF1Vehicle, bugatti_bolide: createBolideVehicle, falcone_sirena: createSirenaVehicle };
   const earnedDimensions = { ...ENZO_VEHICLE_DIMENSIONS, ...MCLAREN_F1_VEHICLE_DIMENSIONS, ...BOLIDE_VEHICLE_DIMENSIONS, ...SIRENA_VEHICLE_DIMENSIONS };
   const licensedKinds = { falcone_heritage: 'sport', aurora_gt: 'gt' };
-  const source = key => Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(KOENIGSEGG_VEHICLE_DIMENSIONS,key) ? 'ultimate' : Object.hasOwn(earnedDimensions,key) ? 'earned' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
-  const status = key => source(key) === 'licensed' ? hero ? 'ready' : failed ? 'error' : pending ? 'loading' : 'idle' : source(key) ? 'ready' : 'error';
+  const source = key => key === 'mcmurtry_speirling' ? 'speirling' : Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(KOENIGSEGG_VEHICLE_DIMENSIONS,key) ? 'ultimate' : Object.hasOwn(earnedDimensions,key) ? 'earned' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
+  const status = key => source(key) === 'speirling' ? speirling ? 'ready' : fanFailed ? 'error' : fanPending ? 'loading' : 'idle' : source(key) === 'licensed' ? hero ? 'ready' : failed ? 'error' : pending ? 'loading' : 'idle' : source(key) ? 'ready' : 'error';
   function load(key, { retry = false } = {}) {
+    if (source(key) === 'speirling') {
+      if (speirling) return Promise.resolve(true);
+      if (fanPending) return fanPending;
+      if (fanFailed && !retry) return Promise.resolve(false);
+      fanFailed = false;
+      fanPending = Promise.resolve().then(loadSpeirling).then(factory => {
+        if (typeof factory !== 'function') throw new TypeError('Speirling asset did not return a model factory.');
+        speirling = factory; return true;
+      }).catch(() => { fanFailed = true; return false; }).finally(() => { fanPending = null; });
+      return fanPending;
+    }
     if (source(key) !== 'licensed') return Promise.resolve(status(key) === 'ready');
     if (hero) return Promise.resolve(true);
     if (pending) return pending;
@@ -34,7 +47,7 @@ export function createVehicleAssets({ loadHero = loadHeroVehicle } = {}) {
   function create(key, options = {}) {
     if (status(key) !== 'ready') return null;
     const appearance = { color: CARS[key].color, accent: CARS[key].accent, ...options, key };
-    const vehicle = source(key) === 'classic' ? createClassicVehicle(appearance) : source(key) === 'unlock' ? createUnlockedVehicle(appearance) : source(key) === 'ultimate' ? createKoenigseggVehicle(appearance) : source(key) === 'earned' ? earnedFactories[key](appearance) : hero({ ...appearance, kind: licensedKinds[key] });
+    const vehicle = source(key) === 'speirling' ? speirling(appearance) : source(key) === 'classic' ? createClassicVehicle(appearance) : source(key) === 'unlock' ? createUnlockedVehicle(appearance) : source(key) === 'ultimate' ? createKoenigseggVehicle(appearance) : source(key) === 'earned' ? earnedFactories[key](appearance) : hero({ ...appearance, kind: licensedKinds[key] });
     vehicle.userData.vehicleKey = key;
     vehicle.userData.vehicleSource = source(key);
     return vehicle;

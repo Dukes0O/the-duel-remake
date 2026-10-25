@@ -156,7 +156,7 @@ export function _drive(dt) {
       if (s.speedMph < ceil) {
         const launch = launchScale(this.course, s.crashLaunchSec > 0, s.tyreSlipRules === true);
         // ENGINE-CURVE (dev switch, latched per race): the pull is the engine's at these revs times the gear's multiplication.
-        if (s.engineCurve === true) s.speedMph += enginePull({ a0: car.accel * launch, ...engineFitFor(s.car, car.factoryMaxed ? 0 : s.upgrades?.engine | 0), gears: car.gears, gear: s.gear, revs: s.revs }) * s.input.throttle * dt * accelerationShare;
+        if (s.engineCurve === true && car.electric !== true) s.speedMph += enginePull({ a0: car.accel * launch, ...engineFitFor(s.car, car.factoryMaxed ? 0 : s.upgrades?.engine | 0), gears: car.gears, gear: s.gear, revs: s.revs }) * s.input.throttle * dt * accelerationShare;
         else s.speedMph += car.accel * accelFactor * s.input.throttle * dt * launch * accelerationShare;
       }
     }
@@ -225,7 +225,8 @@ export function _drive(dt) {
   s.roughness += (roughTarget - s.roughness) * (1 - Math.exp(-8 * dt));
   const traction = surface.traction;
   s.steerVisual += (s.input.steer - s.steerVisual) * (1 - Math.exp(-DRIVE.steerResponse * dt));
-  const gripNow = car.tune ? tunedGrip(car, s.speedMph, s.input.brake) : car.grip; // LAB-TUNE: wing push and brake-balance cost
+  const fan = car.fanGrip && this.featureFlags?.enabled('lab') === true;
+  const gripNow = car.tune || fan ? tunedGrip(car, s.speedMph, s.input.brake, {fan: !!fan}) : car.grip;
   let targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), gripNow * (hazardsActive(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
   const tyreRules = s.tyreSlipRules === true && this.course.def.arena !== true && !s.onFoot;
   if (tyreRules) {
