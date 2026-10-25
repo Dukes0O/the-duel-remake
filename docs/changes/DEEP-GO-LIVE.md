@@ -81,3 +81,7 @@ three `deep.places` ids; no fixture or roster-count change is needed.
 No old code, assets or tests replaced. No new runtime assets or dependencies.
 The lane's generated build, QA bundle and browser evidence are recycled
 after their results are recorded; no screenshots or gate logs are committed.
+
+## Claude review (25 October 2026)
+
+Approved: the four new switch-gated story cues join the existing Deep exclusion in `tools/test-p4-audio.mjs`; both historical hashes unchanged, every old cue still checked.
