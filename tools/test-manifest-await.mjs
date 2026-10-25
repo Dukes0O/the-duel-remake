@@ -5,7 +5,8 @@
 import assert from 'node:assert/strict';
 import {mkdirSync, readdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 import {build} from 'vite';
 
 const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
@@ -14,12 +15,15 @@ const LIMIT_MS = 30_000;
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
 
-// No module the game loads may have a top-level await: the file that had one, and the rule for all of them.
+// No module the game loads may have a top-level await. Two files are named: src/main.js is the page's entry and nothing
+// imports it; src/circuit-manifests.js waits only on its Node branch (tests and tools), which a bundle drops (checked
+// below: no bundle holds the Node import, and every bundle finishes loading).
 const sourceFiles = dir => readdirSync(join(root, dir), {withFileTypes: true}).flatMap(entry =>
-  entry.isDirectory() ? sourceFiles(join(dir, entry.name)) : entry.name.endsWith('.js') ? [join(dir, entry.name)] : []);
+  entry.isDirectory() ? sourceFiles(join(dir, entry.name)) : entry.name.endsWith('.js') ? [join(dir, entry.name).replaceAll('\\', '/')] : []);
+const WAITS = ['src/main.js', 'src/circuit-manifests.js'];
 for (const file of sourceFiles('src')) {
   const lines = readFileSync(join(root, file), 'utf8').split('\n');
-  const bad = file === 'src/main.js' ? -1 : lines.findIndex(line => /^(export\s+)?(const|let|var)\s.*=\s*.*\bawait\b/.test(line) || /^await\b/.test(line) || /^for await\b/.test(line));
+  const bad = WAITS.includes(file) ? -1 : lines.findIndex(line => /^(export\s+)?(const|let|var)\s.*=\s*.*\bawait\b/.test(line) || /^await\b/.test(line) || /^for await\b/.test(line));
   ok(bad < 0, `${file}:${bad + 1} has a top-level await`);
 }
 
@@ -54,6 +58,24 @@ for (const [name, modules] of Object.entries(ENTRIES)) {
   ]);
   clearTimeout(timer);
   ok(finished && globalThis.__bundleLoaded === true, `${name}: the bundle finishes loading (it waited ${LIMIT_MS / 1000} s)`);
+  ok(!chunk.code.includes('node:fs'), `${name}: the bundle holds no Node-only course reader`);
+}
+
+// Node loads in any order: a graph that imports a course file as well as the game (a test does) loads, whichever comes
+// first, and each course file loads first on its own. Each in a fresh process: a module graph is decided once.
+const circuitFiles = readdirSync(join(root, 'src/circuits')).filter(name => name.endsWith('.js')).sort();
+const url = file => pathToFileURL(join(root, file)).href;
+const loads = (name, source) => {
+  const file = join(scratch, `manifest-await.order.${name}.mjs`);
+  writeFileSync(file, source);
+  const run = spawnSync(process.execPath, [file], {encoding: 'utf8', timeout: LIMIT_MS});
+  ok(run.status === 0, `${name}: loads in a fresh process (${(run.stderr || '').split('\n').find(line => /Error/.test(line)) ?? run.error ?? 'no output'})`);
+};
+for (const name of circuitFiles) {
+  const circuit = url('src/circuits/' + name);
+  loads(`${name}.alone`, `await import(${JSON.stringify(circuit)});`);
+  loads(`${name}.after-course`, `import ${JSON.stringify(url('src/course.js'))};import ${JSON.stringify(circuit)};`);
+  loads(`${name}.before-course`, `import ${JSON.stringify(circuit)};import ${JSON.stringify(url('src/course.js'))};`);
 }
 console.log(`Manifest await: ${checks} checks passed.`);
 process.exit(0);
