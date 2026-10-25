@@ -1,4 +1,4 @@
-import {point} from '../combat-weapons.js';
+import {point} from '../combat-actors.js';
 import {arenaTargetOf, arenaTargetOutOfPlay, arenaParticipant, hostile, outOfPlay} from '../combat-teams.js';
 import {segmentCircle} from '../collision.js';
 import {hazardsFor} from './hazards.js';

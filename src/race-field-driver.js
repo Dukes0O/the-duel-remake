@@ -11,7 +11,10 @@ import {observeSummitRoute,isAvalancheKnock} from './summit-avalanche.js';
 import {NpcRoutePlanner} from './npc-route.js';
 import { racingLineFor, buildSpeedProfile, nextCorner, accelAt } from './race-lines.js';
 import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget,pitSpeedLimitAt} from './pit-lane.js';
-import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex } from './race-field.js';
+import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex, nitroLocked } from './race-field.js';
+
+// GP-PASSING-2: pass types that `cpu-racecraft` turns on, one row each; a type that fails its batch stays false.
+export const PASS_TYPES = Object.freeze({alongside: false, exitTow: false, dive: false, window: false});
 
 export const CPU_NITRO = Object.freeze({strength:.5, refill:.5});
 export const cpuNitroExtraMph=(r,spec)=>spec.topSpeed*(BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(spec.nitroSpeedBonus??0))*CPU_NITRO.strength;
@@ -153,19 +156,26 @@ export function followLimitMph(run, blocker, follow = run.follow ?? FOLLOW) {
   return v / MPH;
 }
 
+// Which pass type, if any, a crashing car was in during the 3 s before contact (switch on only).
+function crashPassType(duel, f) {
+  if (!f.racecraft) return {};
+  const mark = f.passMark, now = duel.state.stageTimeSec;
+  return {passType: mark && now - mark.t <= 3 ? mark.type : null};
+}
+
 // Note a spin-out or a hard knock for the race statistics.
 function noteIncidents(duel, r) {
   const f = r.field, stats = duel.state.field.stats;
   if (r.knock && !isAvalancheKnock(duel,r) && !f.knocked) {
     f.knocked = true; f.crashes++;
-    stats.crashes.push({ index: r.field.index, t: +duel.state.stageTimeSec.toFixed(2) });
+    stats.crashes.push({ index: r.field.index, t: +duel.state.stageTimeSec.toFixed(2), ...crashPassType(duel, f) });
     duel.emit({ fieldCrash: { index: f.index, t: duel.state.stageTimeSec } });
   } else if (!r.knock) f.knocked = false;
   // A hard hit on a wall or post shows as a sudden loss of speed and a new cooldown.
   if (r.contactCooldown > 1.1 && f.cooldownSeen <= 1.1 && !r.knock) {
     f.hits++;
     if (f.moveSpeed - r.speedMph >= 15) {
-      stats.crashes.push({ index: f.index, t: +duel.state.stageTimeSec.toFixed(2) });
+      stats.crashes.push({ index: f.index, t: +duel.state.stageTimeSec.toFixed(2), ...crashPassType(duel, f) });
       f.crashes++;
     }
   }
@@ -361,12 +371,18 @@ export function stepFieldRacer(duel, r, dt) {
 
   // ---- passing: pull out beside a slower car, finish the move once alongside ----
   // How close behind a slower car this racer waits before pulling out; keener racers go sooner.
-  const window = Math.min(1.2, .5 + .7 * t.aggression * tuning.aggression * (r.completedLaps === 0 ? 1 + t.firstLap : 1));
+  // Pass type 4: aggressive drivers wait up to 1.5 s behind, never on lap 1 before the first braking zone is passed.
+  const wideWindow = f.racecraft && PASS_TYPES.window && (r.completedLaps > 0 || r.s >= s.field.nitroArmS);
+  const window = Math.min(wideWindow ? 1.5 : 1.2, .5 + (wideWindow ? 1 : .7) * t.aggression * tuning.aggression * (r.completedLaps === 0 ? 1 + t.firstLap : 1));
   // The lane beside a car on `side`: clear of the car and of the racing line where it is running.
-  const passLane = (side, other, otherHalfWidth, ds) => {
+  const lineLane = (side, other, otherHalfWidth, ds) => {
     const clear = run.halfWidth + otherHalfWidth + .3, onLine = line.offsetAt(r.s + ds);
     return side > 0 ? Math.max(onLine + clear + .1, other.lateral + clear) : Math.min(onLine - clear - .1, other.lateral - clear);
   };
+  // Pass type 1: with the switch on the lane is measured from the car itself, so a car on the racing line can be passed.
+  const alongsideOn = f.racecraft && PASS_TYPES.alongside;
+  const passLane = (side, other, otherHalfWidth, ds, dive = false) =>
+    alongsideOn && !dive ? other.lateral + side * (run.halfWidth + otherHalfWidth + .3) : lineLane(side, other, otherHalfWidth, ds);
   const cp = f.pass && (f.pass.index < 0 ? s : s.opponents[f.pass.index]);
   if (f.pass) {
     const shell = cp ? duel._vehicleSpec(cp) : null;
@@ -376,6 +392,18 @@ export function stepFieldRacer(duel, r, dt) {
     if (cp && gap < f.pass.bestGap - .5) { f.pass.bestGap = gap; f.pass.bestAt = now; }
     if (!cp || cp === r || cp.knock || now - f.pass.since > 30) { f.pass = null; f.passCool = now + 2; f.passes.timeout++; }
     else if (ds < -(run.halfLength + shell.halfLength + 3.5)) { f.pass = null; f.passCool = now + 1; f.passes.done++; }
+    // Commit point: a side-by-side pass must be at least half alongside 60 m before the braking zone, or it backs out.
+    // A dive that is not half alongside 20 m before the turn-in point gives up and brakes to follow.
+    else if (f.racecraft && PASS_TYPES.dive && f.pass.dive && zone && zone.toApex > -10 && zone.toApex < 45 &&
+        run.halfLength + shell.halfLength - Math.abs(ds) < Math.min(run.halfLength, shell.halfLength)) {
+      f.passes.backedOut = (f.passes.backedOut || 0) + 1;
+      f.pass = null; f.passCool = now + 4;
+    }
+    else if ((f.pass.type === 'alongside' || f.pass.type === 'exit') && zone && zone.toEntry > -10 && zone.toEntry < 60 &&
+        run.halfLength + shell.halfLength - Math.abs(ds) < Math.min(run.halfLength, shell.halfLength)) {
+      f.passes.backedOut = (f.passes.backedOut || 0) + 1;
+      f.pass = null; f.passCool = now + 4;
+    }
     else if (gap > 1 && (f.pass.dive ? zone && zone.toApex < -10 :
         (now - f.pass.bestAt > 6) ||
         (zone && zone.toEntry > -10 && zone.toEntry < 25 && gap > 6))) {
@@ -383,7 +411,7 @@ export function stepFieldRacer(duel, r, dt) {
       f.passes[why] = (f.passes[why] || 0) + 1;
       f.pass = null; f.passCool = now + 4; f.passes.stalled++;
     } else {
-      const lane = passLane(f.pass.side, cp, shell.halfWidth, ds);
+      const lane = passLane(f.pass.side, cp, shell.halfWidth, ds, f.pass.dive);
       if (Math.abs(lane) > roadLimit - .6) { f.pass = null; f.passCool = now + 3; f.passes.edge++; }
       else passIntent = lane;
     }
@@ -391,10 +419,15 @@ export function stepFieldRacer(duel, r, dt) {
   if (!f.pass && blocker && blocker.gap > -1 && now >= (f.passCool || 0) && now > 10) {
     // Quicker than the car ahead in its own right, not just for a moment (the player's pace is its speed).
     const theirs = blocker.index >= 0 ? runtimeOf(duel, blocker.o).profile.at(blocker.o.s) * (1 + paceForm(blocker.o.field, now)) : (f.racecraft ? playerPaceMph(duel) : blocker.speed);
-    const closing = profile.at(r.s + blocker.ds) * (1 + formNow) - theirs;
+    const closingPace = profile.at(r.s + blocker.ds) * (1 + formNow) - theirs;
     const gapTime = Math.max(0, blocker.gap) / Math.max(12, mps);
     const straight = Math.abs(line.curvatureAt(look)) < 1 / 300 && Math.abs(line.curvatureAt(look + 70)) < 1 / 260 &&
       !(zone && zone.toEntry > -10 && zone.toEntry < 40);
+    // Pass type 2: on the straight after a corner, a car that left it at least 3 mph faster counts its tow.
+    const exitBonus = f.racecraft && PASS_TYPES.exitTow && straight && !onStraight && f.tow > 0 && r.speedMph - blocker.speed >= 3
+      ? FIELD.towTopSpeed * f.tow * target0 : 0;
+    const closing = closingPace + exitBonus;
+    const exitUsed = exitBonus > 0 && !(closingPace > Math.max(2, r.speedMph * .008));
     // Is there road enough before the next braking zone to finish the move?
     const roadAhead = zone && zone.toEntry > -10 ? zone.toEntry : Infinity;
     const needed = mps * (blocker.gap + 8) / Math.max(1, closing * MPH) + 30;
@@ -405,10 +438,13 @@ export function stepFieldRacer(duel, r, dt) {
       for (const side of sides) {
         const lane = passLane(side, blocker.o, blocker.hw, blocker.ds);
         if (Math.abs(lane) > roadLimit - .6) continue;
-        const crowded = near.some(c => c !== blocker && c.ds > -(run.halfLength + c.hl + 4) && c.ds < blocker.ds + 30 &&
+        // Mirror check: a car closing from behind within 2 s counts as in the lane.
+        const mirror = c => alongsideOn || exitUsed ? Math.max(0, c.speed - r.speedMph) * MPH * 2 : 0;
+        const crowded = near.some(c => c !== blocker && c.ds > -(run.halfLength + c.hl + 4 + mirror(c)) && c.ds < blocker.ds + 30 &&
           Math.abs(c.o.lateral - lane) < run.halfWidth + c.hw + .3);
         if (crowded) continue;
-        f.pass = { index: blocker.index, side, since: now, bestGap: blocker.gap, bestAt: now };
+        const type = exitUsed ? 'exit' : alongsideOn && Math.abs(lane - lineLane(side, blocker.o, blocker.hw, blocker.ds)) > .05 ? 'alongside' : 'line';
+        f.pass = { index: blocker.index, side, since: now, bestGap: blocker.gap, bestAt: now, ...(f.racecraft ? {type} : {}) };
         f.passes.start++;
         passIntent = lane;
         break;
@@ -422,18 +458,24 @@ export function stepFieldRacer(duel, r, dt) {
     f.diveKey = f.zoneKey;
     f.passes.diveTry = (f.passes.diveTry || 0) + 1;
     if (rand(f) < Math.min(.95, t.aggression * tuning.aggression * 1.1)) {
-      const side = zone.corner.dir, lane = passLane(side, blocker.o, blocker.hw, blocker.ds);
+      const side = zone.corner.dir, lane = passLane(side, blocker.o, blocker.hw, blocker.ds, true);
       const crowded = near.some(c => c !== blocker && c.ds > -(run.halfLength + c.hl + 4) && c.ds < blocker.ds + 30 &&
         Math.abs(c.o.lateral - lane) < run.halfWidth + c.hw + .3);
       if (crowded) f.passes.diveCrowded = (f.passes.diveCrowded || 0) + 1;
       if (Math.abs(lane) > roadLimit - .6) f.passes.diveEdge = (f.passes.diveEdge || 0) + 1;
-      if (Math.abs(lane) <= roadLimit - .6 && !crowded) {
-        f.pass = { index: blocker.index, side, since: now, bestGap: blocker.gap, bestAt: now, dive: true };
+      // Pass type 3: dive only if, at the closing rate, the diver will be half alongside by the other car's turn-in point.
+      const turnInSec = Math.max(0, zone.toApex - 25) / Math.max(12, mps);
+      const predictedGap = blocker.gap - Math.max(0, r.speedMph - blocker.speed) * MPH * turnInSec;
+      const unsafe = f.racecraft && PASS_TYPES.dive && predictedGap > -Math.min(run.halfLength, blocker.hl);
+      if (unsafe) f.passes.diveUnsafe = (f.passes.diveUnsafe || 0) + 1;
+      if (Math.abs(lane) <= roadLimit - .6 && !crowded && !unsafe) {
+        f.pass = { index: blocker.index, side, since: now, bestGap: blocker.gap, bestAt: now, dive: true, ...(f.racecraft ? {type: 'dive'} : {}) };
         f.passes.start++; f.passes.dives++;
         passIntent = lane;
       }
     }
   }
+  if (f.racecraft && f.pass) f.passMark = {type: f.pass.type, t: now};
   if (passIntent != null) desired = passIntent;
 
   // Following when there is no safe way past.
@@ -471,7 +513,7 @@ export function stepFieldRacer(duel, r, dt) {
   // ---- speed ----
   let target = target0;
   if (f.pass && zone && zone.toEntry < 70 && zone.toEntry > -40) {
-    f.lateBrake = Math.min(.12, .02 + .07 * t.aggression);
+    f.lateBrake = Math.min(f.racecraft && PASS_TYPES.dive && f.pass.dive ? .03 : .12, .02 + .07 * t.aggression);
     target *= 1 + f.lateBrake;
   } else f.lateBrake = 0;
   if (f.tow > 0 && onStraight) target *= 1 + FIELD.towTopSpeed * f.tow;
@@ -487,8 +529,9 @@ export function stepFieldRacer(duel, r, dt) {
   if(f.racecraft){
     const straight=onStraight && Math.abs(line.curvatureAt(look))<1/300 && !(zone && zone.toEntry>-10 && zone.toEntry<80);
     const attack=!!f.pass || near.some(c=>c.ds>0 && c.gap<Math.max(12,mps) && !c.o.finished);
-    const defend=near.some(c=>c.ds<=0 && -c.ds<Math.max(run.halfLength+c.hl, mps*.5));
-    stepCpuNitro(r,run,dt,{straight,attack,defend,pit:!!r.pit || surface.boostAllowed===false});
+    // GP-PASSING-2 step B: on lap 1 a car also defends against the player (index -1) from 1 s behind.
+    const defend=near.some(c=>c.ds<=0 && -c.ds<Math.max(run.halfLength+c.hl, mps*(r.completedLaps===0 && c.index<0 ? 1 : .5)));
+    stepCpuNitro(r,run,dt,{straight,attack,defend,pit:!!r.pit || surface.boostAllowed===false || nitroLocked(r,s.field)});
     if(r.boosting){
       target+=cpuNitroExtraMph(r,run.spec);
     }

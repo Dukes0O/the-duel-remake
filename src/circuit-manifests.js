@@ -57,18 +57,21 @@ export function registerCircuits(modules) {
   return Object.freeze(entries.sort((a, b) => a.manifest.releaseOrder - b.manifest.releaseOrder));
 }
 
-async function modulesFromFiles() {
-  if (import.meta.env) {
-    const modules = import.meta.glob(['./circuits/*.js', '!./circuits/index.js'], {eager: true});
-    return Object.values(modules);
-  }
+// The course files. The game's build finds them at build time (`import.meta.glob`, eager), so the list is ready the
+// moment this module is evaluated and a bundle holds no top-level await here: Vite replaces `import.meta.env` with a
+// constant, the Node branch is dropped, and a single-chunk bundle (with the import cycles a game has) never waits on
+// this module. Node (tests and tools) reads the folder and loads each file with a dynamic import; it waits there, which
+// also lets a test that imports a course file itself, before or after this module, load in any order.
+async function modulesFromFolder() {
   const {readdir} = await import(/* @vite-ignore */ 'node:fs/promises');
   const files = (await readdir(new URL('./circuits/', import.meta.url)))
     .filter(name => NAME.test(name.slice(0, -3)) && name.endsWith('.js') && name !== 'index.js').sort();
   return Promise.all(files.map(name => import(new URL('./circuits/' + name, import.meta.url).href)));
 }
 
-export const CIRCUIT_ENTRIES = registerCircuits(await modulesFromFiles());
+export const CIRCUIT_ENTRIES = registerCircuits(import.meta.env
+  ? Object.values(import.meta.glob(['./circuits/*.js', '!./circuits/index.js'], {eager: true}))
+  : await modulesFromFolder());
 export const CIRCUIT_MANIFESTS = Object.freeze(CIRCUIT_ENTRIES.map(row => row.manifest));
 export function circuitDefinitions(flags, entries = CIRCUIT_ENTRIES) {
   return Object.freeze(entries.filter(row => !flags || flags.enabled(row.manifest.flag)).map(row => row.definition));
