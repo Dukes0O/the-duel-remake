@@ -215,12 +215,57 @@ function noteIncidents(duel, r) {
 
 // ---- the driving model ---------------------------------------------------------
 
+// GP-RACECRAFT-ARDENNES: an alongside car owns its side until it clears.
+export function alongsideLaneGuard(r, run, near, intent, heading = null) {
+  const lateralSpeed = Math.sin(r.headingError || 0) * r.speedMph * MPH + (r.pushVelocity || 0);
+  const other = near.find(c => {
+    const side = Math.sign(c.dl), toward = (intent - r.lateral) * side;
+    const halfLength = Math.min(run.halfLength, c.hl);
+    const steering = heading === null ? 0 : Math.sin(heading) * r.speedMph * MPH * side * .5;
+    if (Math.abs(c.ds) > run.halfLength + c.hl + halfLength || Math.abs(c.dl) <= .1 || (toward < 0 && steering <= 0)) return false;
+    // Leave room to arrest a converging heading; a separate road/pit lane
+    // outside the swept target and stopping room does not block steering.
+    const closing = Math.max(0, (lateralSpeed - (c.vLateral || 0)) * side);
+    const reach = run.halfWidth + c.hw + .3 + Math.max(halfLength, toward, steering, closing * .5);
+    return Math.abs(c.dl) <= reach;
+  });
+  return {intent: other ? r.lateral : intent, held: !!other};
+}
+
+function heldLaneSpeedMph(duel, r, run, surface) {
+  const grip = run.spec.grip * surface.traction;
+  const brake = DRIVE.brakeAccel * run.spec.braking * r.field.traits.brake * MPH;
+  let limit = Infinity;
+  for (const distance of [0, 20, 40, 80, 120]) {
+    const curvature = duel.course.at(r.s + distance).curvature;
+    const bend = Math.abs(curvature / Math.max(.25, 1 - curvature * r.lateral));
+    if (bend < 1e-5) continue;
+    // A held lane cannot use the racing line's early turn-in. Leave yaw
+    // authority to straighten the car as well as follow the road's bend.
+    const speed = .8 * Math.min(Math.sqrt(DRIVE.maxLateralAccel * grip / bend), DRIVE.yawRate * grip / bend);
+    limit = Math.min(limit, Math.sqrt(speed * speed + 2 * brake * distance) / MPH);
+  }
+  return limit;
+}
+// GP-RACECRAFT-ARDENNES end.
+
 // Steer toward `intent` (a lateral position) along the racing line, hold the
 // target speed with the car's own braking and acceleration, and move. This is
 // the same yaw, grip and road-frame model the other computer cars use.
 function move(duel, r, run, dt, target, intent, surface, look, route = null) {
   const { spec, line } = run;
   const f = r.field;
+  // GP-RACECRAFT-ARDENNES: all lateral controllers share this last guard.
+  const steeringHeading = f.racecraft ? route?.headingTarget ?? line.relHeadingAt(look) +
+    Math.atan((intent - r.lateral) * 2.4 / Math.max(15, Math.max(0, r.speedMph) * MPH)) : 0;
+  const laneGuard = f.racecraft && !r.finished ? alongsideLaneGuard(r, run, sense(duel, r, run), intent, steeringHeading) : null;
+  if (laneGuard?.held) {
+    intent = laneGuard.intent;
+    f.intent = intent;
+    f.bias = intent - line.offsetAt(look);
+    if (!route) target = Math.min(target, heldLaneSpeedMph(duel, r, run, surface));
+  }
+  // GP-RACECRAFT-ARDENNES end.
   const speed = r.speedMph, mps = Math.max(0, speed) * MPH;
   const braking = DRIVE.brakeAccel * spec.braking * f.traits.brake;
   if (speed > target) {
@@ -234,9 +279,13 @@ function move(duel, r, run, dt, target, intent, surface, look, route = null) {
   if (r.offRoad) r.speedMph *= Math.exp(-surface.scrub * dt * (surface.preparedGravel ? .25 : 1));
   const frame = duel.course.at(r.s);
   const authority = steeringYawAuthority(r.speedMph, spec.grip, surface.traction, spec);
-  const wanted = route?.headingTarget ?? line.relHeadingAt(look) + Math.atan((intent - r.lateral) * 2.4 / Math.max(15, mps));
+  // GP-RACECRAFT-ARDENNES: holding a lane must also stop racing-line drift.
+  const wanted = laneGuard?.held ? 0 : route?.headingTarget ?? line.relHeadingAt(look) + Math.atan((intent - r.lateral) * 2.4 / Math.max(15, mps));
   const error = wrap(clamp(wanted, -1.2, 1.2) - r.headingError);
-  const yaw = clamp((route?.curvature ?? line.curvatureAt(look)) * mps + error * 6, -authority, authority);
+  const curvature = laneGuard?.held ? frame.curvature / Math.max(.25, 1 - frame.curvature * r.lateral) : route?.curvature ?? line.curvatureAt(look);
+  const turnSpeed = laneGuard?.held ? Math.cos(r.headingError) * Math.max(0, r.speedMph) * MPH : mps;
+  const yaw = clamp(curvature * turnSpeed + error * 6, -authority, authority);
+  // GP-RACECRAFT-ARDENNES end.
   const travel = Math.max(0, r.speedMph) * MPH;
   const progress = Math.cos(r.headingError) * travel / Math.max(.25, 1 - frame.curvature * r.lateral);
   r.headingError += (yaw - frame.curvature * progress) * dt;

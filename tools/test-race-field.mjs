@@ -16,7 +16,7 @@ import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { FIELD, FIELD_TUNING, CATCH_UP_GAP_SEC, gridPose, chooseRacers, performanceIndex, racerSpec, catchUpFactor,
   classify } from '../src/race-field.js';
 import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro, playerPaceMph, closePassRefill, cpuNitroExtraMph, cpuNitroAcceleration,
-  startLaneTarget, startMergeClear, insideCornerPriority } from '../src/race-field-driver.js';
+  startLaneTarget, startMergeClear, insideCornerPriority, stepFieldRacer, alongsideLaneGuard } from '../src/race-field-driver.js';
 import { shortRacerName, runningOrderRows, fieldResultsTable, fieldResultsText } from '../src/screen-field.js';
 import { installTestDriver } from './race-field-balance.mjs';
 import { App } from '../src/app.js';
@@ -84,6 +84,39 @@ const fingerprint = duel => JSON.stringify([duel.state.stageTimeSec.toFixed(3), 
       if (enabled) equal(r.field.startLateral, r.lateral, 'formation remembers its own grid lane');
     }
   }
+}
+
+// GP-RACECRAFT-ARDENNES: an established defence must respect an alongside player.
+for (const side of [-1, 1]) {
+  const d = racing(start({racecraft: true})), s = d.state, r = s.opponents[0];
+  for (const other of s.opponents.slice(1)) other.contactExempt = true;
+  const runtime = runtimeOf(d, r), corner = runtime.profile.corners.find(c => c.entryS > 300);
+  r.s = d.course.length + corner.entryS - 80;
+  r.completedLaps = 1; r.lateral = 0; r.headingError = 0; r.pushVelocity = 0; r.speedMph = 100;
+  r.field.zoneKey = r.field.defendKey = r.field.rolledKey = `${corner.id}:1`;
+  r.field.defendSide = side; r.field.pass = null; r.field.passCool = Infinity;
+  r.field.mistake = null; r.field.bias = 0; r.field.intent = 0;
+  s.completedLaps = 1; s.lateral = side * 3; s.speedMph = 100; s.headingError = 0; s.pushVelocity = 0;
+  for (let frame = 0; frame < 60; frame++) {
+    s.s = r.s - runtime.halfLength * .5;
+    s.stageTimeSec += STEP;
+    stepFieldRacer(d, r, STEP);
+    check(side * r.field.intent <= .001, 'defending CPU holds its target away from the alongside player');
+    check(Math.abs(s.lateral - r.lateral) >= 2.99, 'defending CPU does not close the lateral body gap');
+  }
+  const near = [{ds: 0, dl: side * 3, hl: runtime.halfLength, hw: runtime.halfWidth}];
+  equal(alongsideLaneGuard(r, runtime, near, r.lateral - side * 2).held, false, 'CPU may steer away from an alongside car');
+  near[0].ds = runtime.halfLength * 3 + .01;
+  equal(alongsideLaneGuard(r, runtime, near, r.lateral + side * 2).held, false, 'CPU may resume its lane change once the car clears');
+}
+{
+  const r = {lateral: -18, speedMph: 100, headingError: 0}, shell = {halfLength: 2, halfWidth: 1};
+  const near = [{ds: 0, dl: 18, hl: 2, hw: 1, vLateral: 0}];
+  equal(alongsideLaneGuard(r, shell, near, -17).held, false, 'distant gallery car cannot block a separate Summit branch');
+  equal(alongsideLaneGuard(r, shell, near, 1).held, true, 'a target sweeping across that car is still blocked');
+  near[0].dl = 3;
+  equal(alongsideLaneGuard(r, shell, near, -19, .1).held, true,
+    'racing-line heading toward a neighbour is guarded even if the nominal target points away');
 }
 
 // GP-RACECRAFT: protect the released simulation before testing opt-in behavior.
