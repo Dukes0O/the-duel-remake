@@ -2,6 +2,23 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Racecraft and The Deep's explorer, 25 October 2026 (evening)
+
+### What players get now
+
+- **Grand Prix racecraft is on.** Computer cars pass when they are quicker,
+  use nitro and defend on the first lap, and nitro stays locked until the
+  first corner for everyone. The field now starts wide, holding its grid lanes
+  for the first 200 m, and a computer car never steers into a car alongside it.
+- **The Deep, from Kyle and Gratian's first dive:** a 12 m concrete boat ramp
+  cut into the hill with a signed turn-off and a guided, straight descent; a
+  better camera on the ramp; seabed bumps no longer launch the car; a Surface
+  button (U) from anywhere; solid rocks; the cartographer's chart that fills in
+  as you explore and is saved; finds pinned where you found them; Ana's list of
+  goals with ticks and hints; creatures log when you hold close to the animal
+  itself, with a logging ring; the dive kit after 3 Pacific Canyon finishes and
+  a "New in the garage" note when it arrives.
+
 ## Fixes and work in progress, 25 October 2026
 
 ### What players get now

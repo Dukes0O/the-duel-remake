@@ -1349,3 +1349,14 @@ Browser scenarios convoy-raid, gunn, blackiron, arena-ambush-alley, cpu-crews,
 arsenal-wave3, new-warlords, fight-voices and frame-pacing all passed with
 memory-only saves, no warnings and no issues. Release evidence is recorded in
 docs/board/run-log.md.
+
+## Release, 25 October 2026 evening (Claude, Release Manager)
+
+Release commit `7516eedf` plus these notes: `cpu-racecraft` switched on with
+the wide start and the lane-holding fix (GP-RACECRAFT-ARDENNES), and The
+Deep's DEEP-PLAYTEST-1, DEEP-RAMP-2 and DEEP-EXPLORER. Full tier on 7516eedf:
+511 passed, 0 failed, 0 not run (1,436 s). Frame checks run alone with the
+graphics card idle: deep-frames (kelp forest, High and Performance) and the
+eight-car grand-prix recipe both pass their 18.5 ms limits. Racecraft batch
+(360 races): Panorama 8+-crash races 12 to 5, mean crashes down on all three
+courses, Pacific race time up to 3.10% (accepted).
