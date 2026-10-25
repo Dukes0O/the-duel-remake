@@ -171,8 +171,8 @@ test('the garage page: a row per coast found, grey shapes with no fact until fou
   const known = logCardMarkup('turtle', {found: true}), unknown = logCardMarkup('turtle', {found: false});
   assert.ok(known.includes('Green turtle') && known.includes(DEEP_CREATURES.turtle.fact) && known.includes('/assets/deep/log/turtle.webp'));
   assert.ok(!unknown.includes('Green turtle') && !unknown.includes('seagrass') && unknown.includes('deep-log-unknown'), 'a grey shape tells nothing');
-  assert.equal(logPicture('otter'), null, 'the otter has no accepted model yet');
-  for (const id of Object.keys(DEEP_CREATURES).filter(id => id !== 'otter'))
+  assert.equal(logPicture('otter'), '/assets/deep/log/otter.webp', 'the otter has its model and picture');
+  for (const id of Object.keys(DEEP_CREATURES))
     assert.ok(readFileSync(new URL('../public' + logPicture(id), import.meta.url)).length > 500, id + ' has its picture');
 });
 

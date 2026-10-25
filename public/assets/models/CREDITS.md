@@ -78,31 +78,28 @@ and hazard markings. The kept donor choices and checksums are in
 
 ## The Deep — working art only
 
-`deep/` contains thirteen creature models and four set pieces, for building
+`deep/` contains fourteen creature models and four set pieces, for building
 and testing behind `the-deep` dev only. Kyle has accepted none as finished
 art; The Deep cannot go live with these models. The three-round cap ended
 this source pass. DEEP-ART-FINAL follows the storyboard with Gratian. The exact
 source URLs, authors, licenses, original checksums, fitting changes and
 runtime hashes are in the `deep-*` rows of `tools/art/catalog.json` and the
 runtime manifest. These exports are working sources, not a release,
-placement, gameplay or frame pass. The held otter has no runtime export or
-catalogue row; its original licensed donor remains in the external library.
-Rebuild with `tools/blender/deep-art-fit.py` from the retained external
-licensed originals. No raw donor, scan, Blend, render or source texture is
+placement, gameplay or frame pass. The sardine, sea lion, sea otter and gray
+whale are original geometry (DEEP-ART-FINAL), with no donor. Rebuild with
+`tools/blender/deep-art-fit.py` (the others from the retained external
+licensed originals). No raw donor, scan, Blend, render or source texture is
 shipped in `public/`.
 
 - **Quaternius**, [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/):
-  [Fish Mackerel](https://poly.pizza/m/uassUTYYae),
   [Manta ray](https://poly.pizza/m/yzD8b7ZHZm),
-  [Shark](https://poly.pizza/m/AyHTK3zUSG),
-  [Whale](https://poly.pizza/m/JGFwp6xWgk) and
+  [Shark](https://poly.pizza/m/AyHTK3zUSG) and
   [Anchor](https://poly.pizza/m/ejWQny9Gcz).
-  Metric fitting and muted paints; manta/whale Swim clips retained; shark
+  Metric fitting and muted paints; manta Swim clip retained; shark
   has black fin tips; anchor has rusted metal.
 - **Poly by Google**, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/):
   [Fish](https://poly.pizza/m/aEyLrUMMoUK) for reef-fish and its grouper refit,
   [Turtle](https://poly.pizza/m/fklSEvGm1Q8),
-  [Sea lion](https://poly.pizza/m/45HRvXYpvUG),
   [Crab](https://poly.pizza/m/2DgM36qZW2u),
   [Jellyfish](https://poly.pizza/m/dA5osnS0Rzj) and
   [Octopus](https://poly.pizza/m/9-b6-yqrwEe).
@@ -118,6 +115,9 @@ shipped in `public/`.
   `ship-cargo-a.glb` and `boat-fishing-small.glb` shape donors. Containers
   removed; open cargo hold, hull/deck breaches, hold frames and broken rails
   fitted; bright source colours replaced by rust, steel and algae.
+- **Original scripted geometry for The Duel (DEEP-ART-FINAL):** sardine, sea
+  lion, sea otter and gray whale, built from nothing in the recipe, with fixed
+  vertex-colour recipes and no reference mesh.
 - **Original scripted geometry for The Duel:** moray and giant clam,
   expressly approved by Claude. No third-party scan mesh was downloaded or
   copied. Brown/olive reference colours and scallop direction come from

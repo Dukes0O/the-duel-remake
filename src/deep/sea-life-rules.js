@@ -13,20 +13,18 @@ import { zoneSeed } from './zone-floor.js';
 // Hard cap of animals drawn per type for a whole scene. Sardines are counted in
 // fish (the cap is fish-rules.js's), the rest in animals.
 export const SEA_LIFE_CAPS = Object.freeze({
-  'silver-school': FISH_HARD_CAP, turtle: 6, ray: 4, 'sea-lion': 4, crab: 12, whale: 1,
+  'silver-school': FISH_HARD_CAP, turtle: 6, ray: 4, 'sea-lion': 4, otter: 2, crab: 12, whale: 1,
 });
-// The Kelp Coast creature with no model yet: DEEP-ART-SRC holds the role (its
-// manifest says so). Nothing is drawn for it and nothing stands in for it.
-export const HELD_CREATURES = Object.freeze(['otter']);
 
 export const SURFACE_Y = 0;          // the sea surface in the scene's own frame
-export const SURFACE_MARGIN = 1.2;   // animals stay this far below it
+export const SURFACE_MARGIN = 1.2;   // animals stay this far below it (the otter floats in it)
 export const FLOOR_MARGIN = 0.12;    // a crab's belly or a resting ray above the ground
 
 export const REACH = Object.freeze({
   turtle: Object.freeze({ near: 5, far: 16, push: 6 }),
   ray: Object.freeze({ near: 4, far: 11, push: 7, lift: 2.4 }),
   crab: Object.freeze({ near: 2.5, far: 7, push: 3.5 }),
+  otter: Object.freeze({ near: 5, far: 14, push: 4 }),
   seaLion: Object.freeze({ keep: 3.5, pullNear: 30, pullFar: 70, pull: 0.5 }),
 });
 
@@ -78,10 +76,10 @@ function hashText(text) {
 
 // The animals of a zone, from its `spots` (creature, trailIndex, count) and
 // nothing else: the same zone always gives the same plan. Returns
-// { turtle: [...], ray: [...], crab: [...], 'sea-lion': [...], 'silver-school': [...], whale: {...} | null,
-//   held: [ids with no model], total: {id: count} }. Counts are capped per type.
+// { turtle: [...], ray: [...], crab: [...], 'sea-lion': [...], otter: [...], 'silver-school': [...], whale: {...} | null,
+//   total: {id: count} }. Counts are capped per type.
 export function planSeaLife(zone, { fishBudget = FISH_HARD_CAP } = {}) {
-  const seed = zoneSeed(zone.id), plan = { turtle: [], ray: [], crab: [], 'sea-lion': [], 'silver-school': [], whale: null, held: [] };
+  const seed = zoneSeed(zone.id), plan = { turtle: [], ray: [], crab: [], 'sea-lion': [], otter: [], 'silver-school': [], whale: null };
   const trail = zone.trail ?? [];
   const spread = (rng, spot, near, far) => {
     const a = rng.float() * TAU, d = rng.range(near, far);
@@ -90,7 +88,6 @@ export function planSeaLife(zone, { fishBudget = FISH_HARD_CAP } = {}) {
   (zone.spots ?? []).forEach((row, spotIndex) => {
     const spot = trail[row.trailIndex];
     if (!spot) return;
-    if (HELD_CREATURES.includes(row.creature)) { if (!plan.held.includes(row.creature)) plan.held.push(row.creature); return; }
     if (!Object.hasOwn(SEA_LIFE_CAPS, row.creature)) return;      // another coast's creature
     const rng = makeRng((seed ^ hashText(row.creature) ^ Math.imul(spotIndex + 1, 0x9E3779B1)) >>> 0);
     if (row.creature === 'whale') {
@@ -109,6 +106,9 @@ export function planSeaLife(zone, { fishBudget = FISH_HARD_CAP } = {}) {
       } else if (row.creature === 'crab') {
         const home = spread(rng, spot, 0.5, 6);
         list.push({ kind: 'crab', ...home, yaw: rng.float() * TAU, phase, size: rng.range(0.85, 1.25) });
+      } else if (row.creature === 'otter') {
+        const home = spread(rng, spot, 1.5, 4);
+        list.push({ kind: 'otter', ...home, radius: rng.range(2.5, 5), dir: rng.chance(0.5) ? 1 : -1, speed: rng.range(0.12, 0.2), phase, size: rng.range(0.95, 1.1) });
       } else if (row.creature === 'sea-lion') {
         list.push({ kind: 'sea-lion', x: spot.x, z: spot.z, depth: spot.depth, radius: rng.range(18, 26), speed: rng.range(4.5, 6), phase, dir: i % 2 ? -1 : 1, size: rng.range(0.95, 1.1) });
       } else {
@@ -128,7 +128,7 @@ export function planSeaLife(zone, { fishBudget = FISH_HARD_CAP } = {}) {
   const each = schools.length ? Math.floor(budget / schools.length) : 0;
   schools.forEach(school => { school.count = each; });
   plan.total = { 'silver-school': each * schools.length, turtle: plan.turtle.length, ray: plan.ray.length, crab: plan.crab.length,
-    'sea-lion': plan['sea-lion'].length, whale: plan.whale ? 1 : 0 };
+    'sea-lion': plan['sea-lion'].length, otter: plan.otter.length, whale: plan.whale ? 1 : 0 };
   return plan;
 }
 
@@ -233,12 +233,27 @@ function stepSeaLion(a, t, dt, car, ctx) {
   a.anim += dt * (0.8 + 0.25 * clamp(a.speed, 0, 8));
 }
 
+// Sea otters float on their backs at the surface, turning slowly on the spot, and
+// drift away from the car without ever diving.
+function stepOtter(a, t, dt, car) {
+  const s = a.spec, r = REACH.otter, ang = s.phase + s.dir * (s.speed / s.radius) * t;
+  const px = s.x + Math.cos(ang) * s.radius, pz = s.z + Math.sin(ang) * s.radius;
+  const py = SURFACE_Y - 0.02 + 0.03 * Math.sin(0.8 * t + s.phase);
+  const d = carDistance(px, py, pz, car), p = 1 - smooth(r.near, r.far, d), away = awayFrom(px, pz, car);
+  easeToward(a.off, { x: away.x * p * r.push, y: 0, z: away.z * p * r.push }, dt, { tau: 1.2, maxSpeed: 1.5 });
+  setPoseFromMotion(a, px + a.off.x, py, pz + a.off.z, dt, 0.6);
+  a.pitch = 0;
+  a.roll = 0.05 * Math.sin(0.9 * t + s.phase);
+  a.anim = t * 0.8 + s.phase;
+}
+
 export function stepAnimal(a, t, dt, car, ctx) {
   switch (a.spec.kind) {
     case 'turtle': stepTurtle(a, t, dt, car, ctx); break;
     case 'ray': stepRay(a, t, dt, car, ctx); break;
     case 'crab': stepCrab(a, t, dt, car, ctx); break;
     case 'sea-lion': stepSeaLion(a, t, dt, car, ctx); break;
+    case 'otter': stepOtter(a, t, dt, car); break;
     default: throw new Error(`No motion rules for ${a.spec.kind}`);
   }
   return a;

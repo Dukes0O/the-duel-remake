@@ -49,9 +49,7 @@ export const DEEP_LOG_PAGES = Object.freeze([
 ].map(page => Object.freeze({...page, creatures: Object.freeze(page.creatures), pearls: Object.freeze(page.pearls)})));
 export const DEEP_PEARLS = Object.freeze(DEEP_LOG_PAGES.flatMap(page => page.pearls));
 
-// The creature with no accepted picture yet (DEEP-ART-SRC holds the otter's role).
-const NO_PICTURE = new Set(['otter']);
-export const logPicture = id => Object.hasOwn(DEEP_CREATURES, id) && !NO_PICTURE.has(id) ? `/assets/deep/log/${id}.webp` : null;
+export const logPicture = id => Object.hasOwn(DEEP_CREATURES, id) ? `/assets/deep/log/${id}.webp` : null;
 
 const finite = value => Number.isFinite(value);
 const validCar = car => car && finite(car.x) && finite(car.z) && finite(car.speed);
