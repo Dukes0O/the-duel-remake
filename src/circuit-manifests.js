@@ -27,7 +27,7 @@ export function registerCircuits(modules) {
       const value=m.unlock;
       if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==2||
           !Object.keys(value).every(key=>key==='kind'||key==='defaultEventId')||
-          !['default-gp-podium','owned-course'].includes(value.kind)||typeof value.defaultEventId!=='string'||!NAME.test(value.defaultEventId))
+          !['default-gp-podium','owned-course','spotted-from-air'].includes(value.kind)||typeof value.defaultEventId!=='string'||!NAME.test(value.defaultEventId))
         throw Error('Invalid circuit unlock descriptor.');
       if(m.price!==0)throw Error('A circuit unlock requires zero price, not a purchase.');
       if(value.kind==='owned-course'&&(m.id!==SUMMIT_ATTACK_ID||value.defaultEventId!=='summit-run'||m.grandPrix!==false))

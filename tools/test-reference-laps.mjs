@@ -160,20 +160,20 @@ equal(duel.course.features.radarTraps, [{s: 30}], 'Physical course data is not d
 fixture.dispose();
 check(duel._police.toString().includes('must not run police'), 'Disposal restores the native instance methods');
 
-// Every new variant must enter through the actual parent-podium rule.
-for (const definition of ALL_CIRCUITS.filter(d => CIRCUIT_MANIFESTS.find(m => m.id === d.id)?.unlock?.kind === 'default-gp-podium')) {
+// Every new variant must enter through its actual unlock rule: found from the air (the pilot's map record).
+for (const definition of ALL_CIRCUITS.filter(d => CIRCUIT_MANIFESTS.find(m => m.id === d.id)?.unlock?.kind === 'spotted-from-air')) {
   const previousLength = COURSE.length;
   if (!COURSE.includes(definition)) COURSE.push(definition);
   try {
     await withReferenceApp(async app => {
       const parentId = CIRCUIT_MANIFESTS.find(m => m.id === definition.id).unlock.defaultEventId;
       const target = {eventId: definition.id, key: definition.id + '|fixed', route: 'fixed', seed: 1989};
-      app.profile = {...app.profile, grandPrixPodiums: ['tremblant-woods'],
+      app.profile = {...app.profile, grandPrixPodiums: ['tremblant-woods'], heli: undefined,
         courses: {version: 1, unlocked: [parentId]}};
       const {fixture: eligible} = startReferenceApp(app, target);
       try {
         equal(app.duel.course.def.id, definition.id, 'Actual production variant admission succeeds with earned parent fixture');
-        check(app.profile.grandPrixPodiums.includes(parentId), 'Fixture has the required real parent podium');
+        check(app.profile.heli.map.found.includes(definition.id), 'Fixture has the variant in the pilot\'s found list');
         check(app.profile.grandPrixPodiums.includes('tremblant-woods'), 'Existing profile results are preserved');
       } finally {eligible.dispose();}
     });

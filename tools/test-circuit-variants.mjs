@@ -22,7 +22,7 @@ import {createProfile} from '../src/progression.js';
 const lighting = [[PANORAMA_RIDGE_NIGHT, nightManifest, PANORAMA_RIDGE, 'night', 7],
   [HARBOUR_LIGHTS_DUSK, duskManifest, HARBOUR_LIGHTS, 'dusk', 8]];
 
-test('lighting variants append as separate dev events with native parent-podium access', () => {
+test('lighting variants append as separate dev events with access found from the air', () => {
   const off = createFeatureFlags({storage: null, qa: false, search: ''});
   const on = createFeatureFlags({storage: null, qa: false, search: '', overrides: Object.fromEntries(lighting.map(([d]) => [d.flag, true]))});
   const defaultIds = circuitDefinitions(off).map(d => d.id);
@@ -31,15 +31,17 @@ test('lighting variants append as separate dev events with native parent-podium 
     assert.equal(manifest.state, 'dev');assert.equal(manifest.price, 0);
     assert.equal(manifest.releaseOrder, order);assert.equal(definition.flag, definition.id);
     assert.equal(definition.stage, parent.stage, 'same physical generation identity');
-    assert.deepEqual(manifest.unlock, {kind: 'default-gp-podium', defaultEventId: parent.id});
+    assert.deepEqual(manifest.unlock, {kind: 'spotted-from-air', defaultEventId: parent.id});
     assert.ok(!defaultIds.includes(definition.id));assert.ok(qaIds.includes(definition.id));
     assert.equal(CIRCUIT_ENTRIES.find(e => e.manifest.id === definition.id).definition, definition);
     const added = !COURSE.includes(definition);if (added) COURSE.push(definition);
     try {
       const profile = {...createProfile(), courses: {version: 1, unlocked: [parent.id]}};
       assert.equal(isCourseUnlocked(profile, definition), false);
-      assert.equal(isCourseUnlocked({...profile, grandPrixPodiums: [parent.id]}, definition), true);
-      assert.equal(isCourseUnlocked({...profile, courses: {version: 1, unlocked: []}, grandPrixPodiums: [parent.id]}, definition), false);
+      const found = {heli: {version: 1, map: {version: 1, seen: [], found: [definition.id], table: false}}};
+      assert.equal(isCourseUnlocked({...profile, grandPrixPodiums: [parent.id]}, definition), false, 'a podium no longer opens it');
+      assert.equal(isCourseUnlocked({...profile, ...found}, definition), true);
+      assert.equal(isCourseUnlocked({...profile, courses: {version: 1, unlocked: []}, ...found}, definition), false);
     } finally {if (added) COURSE.splice(COURSE.indexOf(definition), 1);}
   }
 });
@@ -86,7 +88,7 @@ test('reverse roads and terrain follow the physical donor, with rebuilt boards, 
   reverses.forEach((module, n) => {
     const d = module.definition, parent = parents[n], before = JSON.stringify(parent);
     assert.equal(module.manifest.state, 'dev');assert.equal(module.manifest.releaseOrder, 9 + n);
-    assert.deepEqual(module.manifest.unlock, {kind: 'default-gp-podium', defaultEventId: parent.id});
+    assert.deepEqual(module.manifest.unlock, {kind: 'spotted-from-air', defaultEventId: parent.id});
     for (const seed of [1989, 42, 17]) {
       const c = new Course(d, seed), donor = new Course(parent, seed), offset = d.terrainDonor.offset;
       const anchor = donor.worldAt(offset);

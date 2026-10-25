@@ -25,6 +25,18 @@ SIZES = {
     'mclaren_f1': (2.00, 4.28, 1.14),
     # The body's height; the Bolide's wing stands above the kit.
     'bugatti_bolide': (2.06, 4.82, 1.05),
+    # The 1966 Sirena (SIRENA-KIT): its model is built in code (src/sirena-vehicle.js), so the shell comes from the
+    # runtime body export, like the Enzo's and the F1's. Keep it last: a car's place in this list shapes its plates.
+    'falcone_sirena': (1.96, 4.45, 1.06),
+}
+
+# Where the general placement rules would put a plate on a wheel, a car gets its own numbers. The Sirena's wheels stand
+# proud of its flanks: its four quarter plates ride the fender crowns (y band, sampled by audit-armor-kit-fit.mjs as
+# `fenderGrid`; the front one stops where the hood drops away from the fender), its exhaust stacks stand behind the rear
+# wheels and its Raider door sheets stop short of them.
+CAR_RULES = {
+    'falcone_sirena': {'quarter': (.70, .78), 'quarter_reach': [(.57, .30), (.57, .57)], 'stack_z': -1.74,
+                       'raider_doors': [(-.80, -.30), (-.10, .85)]},
 }
 
 if '--paths-only' in sys.argv:
@@ -392,6 +404,15 @@ def body_skin_from_source(car, root_path, parent, material, target_length, fit):
     return obj
 
 
+def fender_fit(fit):
+    """The fit rows with the sides sampled on the fender crowns (a car's `fenderGrid`) in place of the flank rows."""
+    rows = fit['fenderGrid']
+    mid = rows[len(rows)//2]
+    return {**fit, 'bodyGrid': rows,
+            'bodySide': [{'z': row['z'], 'y': mid['y'], 'right': row['right'], 'left': row['left']}
+                         for row in mid['samples']]}
+
+
 def build(car, width, length, height, material, sal_material, mark_material,
           spark_core_material, spark_tip_material, index, fit, root_path):
     front = length / 2 + .035
@@ -415,13 +436,17 @@ def build(car, width, length, height, material, sal_material, mark_material,
     for x in [-width*.34, width*.34]:
         rod('bull-bar-brace', bar, material, (x, .26, front+.02),
             (x, .56, front-.085), .045)
+    stack_z = CAR_RULES.get(car, {}).get('stack_z', -length*.31)
     for j, x in enumerate([-width*.39, width*.39]):
         stack = empty(f'kit-stack-{j}', scrapper)
-        rod('stack-pipe', stack, material, (x, roof*.57, -length*.31),
-            (x, roof*.57 + min(.7, height*.32), -length*.31), .095)
-        rod('stack-cap', stack, material, (x-.11, roof*.57 + min(.7, height*.32), -length*.31),
-            (x+.11, roof*.57 + min(.7, height*.32), -length*.31), .06)
+        rod('stack-pipe', stack, material, (x, roof*.57, stack_z),
+            (x, roof*.57 + min(.7, height*.32), stack_z), .095)
+        rod('stack-cap', stack, material, (x-.11, roof*.57 + min(.7, height*.32), stack_z),
+            (x+.11, roof*.57 + min(.7, height*.32), stack_z), .06)
     flank_y = fit['bodySide'][0]['y']
+    rules = CAR_RULES.get(car, {})
+    quarter_lo, quarter_hi = rules.get('quarter', (flank_y-.13, flank_y+.15))
+    quarter_fit = fender_fit(fit) if 'quarter' in rules else fit
     for j in range(4):
         sign = 1 if j < 2 else -1
         part = empty(f'kit-plate-{j}', scrapper)
@@ -429,16 +454,17 @@ def build(car, width, length, height, material, sal_material, mark_material,
         # Wheel-area armor belongs to the metal body band above each wheel,
         # never the wheel's outer plane. Tall trucks and low prototypes use
         # their own sampled band height and contact x.
-        start=max(-length*.42, axle['z']-.57)
-        end=min(length*.42, axle['z']+.57)
-        conforming_sheet('fitted-quarter-skin',part,material,fit,sign,
-                         start,end,flank_y-.13,flank_y+.15,width)
+        behind, ahead = rules.get('quarter_reach', [(.57, .57)]*2)[j%2]
+        start=max(-length*.42, axle['z']-behind)
+        end=min(length*.42, axle['z']+ahead)
+        conforming_sheet('fitted-quarter-skin',part,material,quarter_fit,sign,
+                         start,end,quarter_lo,quarter_hi,width)
         for bolt in [-.18, .18]:
             z=axle['z']+bolt
-            x=body_x(fit,sign,z,width/2)+sign*.04
+            x=body_x(quarter_fit,sign,z,width/2)+sign*.04
             rod('sheet-rivet', part, material,
-                (x, flank_y+.12, z),
-                (x+sign*.02, flank_y+.12, z), .025, 6)
+                (x, quarter_hi-.03, z),
+                (x+sign*.02, quarter_hi-.03, z), .025, 6)
     for sign in [-1,1]:
         # Split the door armor into overlapping contact sheets. Thin panels
         # preserve glass and wheel openings instead of filling the silhouette.
@@ -454,7 +480,7 @@ def build(car, width, length, height, material, sal_material, mark_material,
     for sign in [-1,1]:
         # Raider's lower overlapping band is separate from Scrapper's four
         # breakable quarters and stays below the window line.
-        for z0,z1 in [(-length*.27,-length*.06),(-length*.025,length*.19)]:
+        for z0,z1 in CAR_RULES.get(car, {}).get('raider_doors', [(-length*.27,-length*.06),(-length*.025,length*.19)]):
             conforming_sheet('raider-overlap-door',raider,material,fit,sign,
                              z0,z1,flank_y-.25,flank_y-.025,width)
             for z in [z0+.07,z1-.07]:

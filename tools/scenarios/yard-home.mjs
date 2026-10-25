@@ -1,8 +1,14 @@
 // Click the production yard UI in a private browser tab with memory-only saves.
+import {writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
 import {CARS} from '../../src/config.js';
 import {territoryPanel} from '../../src/screen-territory.js';
 
-const CAR_KEYS=Object.keys(CARS);
+// The historical road-car framing scope approved on QA-YARD-HOME-AIR-ONLY.
+const CAR_KEYS=Object.freeze([
+  'falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt',
+  'dusthawk_rally','banshee_muscle','viper_proto','titan_monster',
+]);
 const LADDER_HTML=territoryPanel({wasteland:{version:1,discoveredGate:true,
   territories:{
     sal:{hold:75,claimed:false},
@@ -81,8 +87,52 @@ async function framedCar(context,car){
   return result;
 }
 
+async function refusedJesko(context){
+  const refusal=await context.evaluate(`(() => {
+    const app=window.__qaApp;
+    const memoryOnly=!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&
+      window.name.startsWith('__duel_qa_tab_v2:');
+    if(!memoryOnly)throw Error('Jesko refusal needs the disposable memory-only tab');
+    app.setRaceSettings({car:'koenigsegg_jesko'});
+    const storage=()=>JSON.stringify(Array.from({length:localStorage.length},(_,index)=>{
+      const key=localStorage.key(index);return [key,localStorage.getItem(key)];
+    }).sort((a,b)=>a[0].localeCompare(b[0])));
+    const helicopterOn=app._switches().enabled('helicopter')===true;
+    const unlocked=app.profile.unlockedCars.includes('koenigsegg_jesko');
+    const untransported=!Object.hasOwn(app.profile.heli?.carsAt||{},'koenigsegg_jesko')&&
+      (app.profile.heli?.flights||0)===0;
+    if(!helicopterOn||!unlocked||!untransported||app.menuCar!=='koenigsegg_jesko')
+      throw Error('Jesko refusal requires helicopter enabled and the selected car unlocked but untransported');
+    const before={owner:app.player.id,state:app.duel.state,course:app.duel.course,
+      stateValue:JSON.stringify(app.duel.state),features:JSON.stringify(app.duel.course?.features),
+      run:app.runId,profile:JSON.stringify(app.profile),heli:JSON.stringify(app.profile.heli),
+      storage:storage()};
+    const admitted=app.visitWasteland();
+    return {car:app.menuCar,admitted,message:app.courseAccessMessage,memoryOnly,
+      helicopterOn,unlocked,untransported,status:app.duel.state.status,
+      visit:!!app.duel.state.hiddenRoadVisit,journey:!!app.duel.state.hiddenRoadJourney,
+      sameOwner:app.player.id===before.owner,sameState:app.duel.state===before.state,
+      sameCourse:app.duel.course===before.course,sameRun:app.runId===before.run,
+      unchangedState:JSON.stringify(app.duel.state)===before.stateValue,
+      unchangedFeatures:JSON.stringify(app.duel.course?.features)===before.features,
+      unchangedProfile:JSON.stringify(app.profile)===before.profile,
+      unchangedHeli:JSON.stringify(app.profile.heli)===before.heli,
+      unchangedStorage:storage()===before.storage};
+  })()`);
+  if(refusal.car!=='koenigsegg_jesko'||refusal.admitted!==false||
+    refusal.message!==`The ${CARS.koenigsegg_jesko.name} travels only by air. Fly it here from the helipad first.`||
+    !refusal.memoryOnly||!refusal.helicopterOn||!refusal.unlocked||!refusal.untransported||
+    refusal.status!=='menu'||refusal.visit||refusal.journey||!refusal.sameOwner||
+    !refusal.sameState||!refusal.unchangedState||!refusal.sameCourse||!refusal.unchangedFeatures||
+    !refusal.sameRun||!refusal.unchangedProfile||
+    !refusal.unchangedHeli||!refusal.unchangedStorage)
+    throw Error('Production Jesko yard refusal or isolation failed: '+JSON.stringify(refusal));
+  return refusal;
+}
+
 export async function run(context) {
-  if(CAR_KEYS.length!==9)throw Error(`Expected nine production cars; found ${CAR_KEYS.length}`);
+  for(const car of [...CAR_KEYS,'koenigsegg_jesko'])
+    if(!Object.hasOwn(CARS,car))throw Error(`Historical yard car missing: ${car}`);
   await context.navigate('/tools/menu-check.html?flags=hidden-road');
   await context.waitFor("!!window.__qaApp && !!window.__render && document.querySelector('#stage.in-menu') && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value", 'isolated yard menu', 60000);
   await context.waitFor('window.__qaApp.visualReady === true', 'renderer ready for arrival', 60000);
@@ -91,13 +141,14 @@ export async function run(context) {
   const before=await context.evaluate(`(() => {
     const app=window.__qaApp;app.stop();
     app.addPlayer('Yard QA');
-    app.profile={...app.profile,credits:700,unlockedCars:[...Object.keys(app.profile.upgrades),...${JSON.stringify(CAR_KEYS)}],wasteland:{...app.profile.wasteland,
+    app.profile={...app.profile,credits:700,unlockedCars:${JSON.stringify([...CAR_KEYS,'koenigsegg_jesko'])},wasteland:{...app.profile.wasteland,
       discoveredGate:true,scrap:3000,xp:2000}};
     if(!app._saveProfile())throw Error('memory-only setup save failed');
     const before={credits:app.profile.credits,scrap:app.profile.wasteland.scrap,
       history:app.profile.history.length,settled:app.profile.settledResults.length};
     return before;
   })()`);
+  const airOnlyRefusal=await refusedJesko(context);
   const framing=[],framingErrors=[];
   for(const car of CAR_KEYS){
     const start=await context.evaluate(`(() => {
@@ -124,7 +175,7 @@ export async function run(context) {
       end.scrap!==before.scrap||end.history!==before.history||end.settled!==before.settled||end.activeRace)
       throw Error(`${car} yard visit contaminated save or journey: ${JSON.stringify(end)}`);
   }
-  if(framingErrors.length)throw Error(`Yard framing failed ${framingErrors.length}/9 views:\n${framingErrors.join('\n')}`);
+  if(framingErrors.length)throw Error(`Yard framing failed ${framingErrors.length}/8 views:\n${framingErrors.join('\n')}`);
   await context.evaluate("window.__qaApp.setRaceSettings({car:'falcone_f42'})");
   await context.evaluate("if(!window.__qaApp.visitWasteland())throw Error('safe visit failed')");
   await context.waitFor('window.__qaApp.visualReady === true', 'visit vehicle ready', 60000);
@@ -263,4 +314,6 @@ export async function run(context) {
   if(exit.status!=='menu'||exit.credits!==before.credits||exit.scrap!==1850||
     exit.history!==before.history||exit.settled!==before.settled)
     throw Error('Yard exit granted a reward or lost a purchase: '+JSON.stringify(exit));
+  await writeFile(join(context.outputDir,'yard-home-browser.json'),
+    JSON.stringify({roadCars:CAR_KEYS,framing,airOnlyRefusal},null,2)+'\n');
 }

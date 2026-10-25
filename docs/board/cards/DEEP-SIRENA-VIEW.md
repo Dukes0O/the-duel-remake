@@ -38,3 +38,7 @@ Acceptance: a player can go from the first dive to the Coast Cup with the
 scenario's memory save; the renderer and screens never change race state;
 Pacific Canyon replays exact with the switch off; lane tier, build, one
 review. Removed: nothing.
+
+## Also wire the sea-life log (Claude, 25 October, from DEEP-LOG)
+
+At the same dive step as the Sirena: call DEEP-LOG's `stepLog` each underwater frame, `recordLogged` and `recordPearl` to pay and save, `phoneLineFor` for Ana's line, and show its slide-in card. A few lines beside the Sirena's.

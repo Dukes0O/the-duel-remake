@@ -329,7 +329,9 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
-  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets);scene.add(yetiView.group);
+  // A neutral multiplier on the fur alone (the accepted white factor would darken below 1): at night the yeti reads dark
+  // grey-green against the snow, and 2.6 lifts it to a pale grey-white while the texture and vertex-colour detail stay.
+  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets,{furTint:new THREE.Color(2.6,2.6,2.6)});scene.add(yetiView.group);
   const roadRoof=createRoadRoofOwner(vehicleAttachments,{yetiAssets});
   const combatScene=createCombatScene(vehicleAttachments, {
     loadFlameTexture: path => new THREE.TextureLoader().load(path),
