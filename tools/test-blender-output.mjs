@@ -9,7 +9,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const generators = [
   { script: 'tools/blender/deep-art-fit.py', args: [],
     evidence: '.evidence/2026-10-12/DEEP-ART-SRC/round-2-native',
-    glb: ['silver-school','reef-fish','turtle','ray','manta','sea-lion','crab',
+    glb: ['silver-school','reef-fish','turtle','ray','manta','sea-lion','otter','crab',
       'moray','grouper','reef-shark','jellyfish','whale','octopus','wreck-hull','giant-clam','anchor','sunken-boat']
       .map(name => `public/assets/models/deep/${name}.glb`),
     json: ['public/assets/models/deep/manifest.json'] },

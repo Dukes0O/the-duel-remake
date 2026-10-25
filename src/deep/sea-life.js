@@ -8,8 +8,8 @@
 //   deepRaised: life.raised('sirena-car');                // the whale's second way to pass
 //   on the way back up: life.dispose();
 //
-// Every type is one InstancedMesh of the DEEP-ART-SRC model (turtle, sea lion
-// and crab swim with a morph target played per animal, the ray flaps its wings
+// Every type is one InstancedMesh of the Deep's model (turtle, sea lion, otter
+// and crab move with a morph target played per animal, the ray flaps its wings
 // in the shader), capped per type. The sardines are the existing fish schools
 // with the sardine model. The gray whale is a single skinned mesh with its own
 // swim clip, drawn only while it passes. Nothing here changes race state or
@@ -19,7 +19,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { patchWaterMaterial } from './water-shader.js';
 import { createFishSchool, fishGeometryFromModel } from './fish-school.js';
 import {
-  HELD_CREATURES, SEA_LIFE_CAPS, WHALE, createWhale, makeAnimal, planSeaLife, startWhalePass, stepAnimal, stepWhale,
+  SEA_LIFE_CAPS, WHALE, createWhale, makeAnimal, planSeaLife, startWhalePass, stepAnimal, stepWhale,
 } from './sea-life-rules.js';
 
 export const SEA_LIFE_URL = id => `/assets/models/deep/${id}.glb`;
@@ -56,7 +56,7 @@ export function createSeaLife({ zone, shape, uniforms, quality = 'high', fishBud
   const types = new Map();          // id -> { mesh, animals, track, ... } once its model has loaded
   const schools = [];
   const whale = createWhale(plan.whale);
-  const status = {};                // id -> 'loading' | 'ready' | 'failed' | 'held'
+  const status = {};                // id -> 'loading' | 'ready' | 'failed'
   const failures = [];
   const lastCar = { x: 0, y: 0, z: 0 };
   let lastSeconds = null, pendingRaise = false, whaleModel = null, disposed = false;
@@ -133,10 +133,9 @@ export function createSeaLife({ zone, shape, uniforms, quality = 'high', fishBud
 
   // Load each type's model. A model that fails is skipped (and reported); the dive goes on.
   const wanted = [];
-  for (const id of ['turtle', 'ray', 'crab', 'sea-lion']) if (plan[id].length) wanted.push(id);
+  for (const id of ['turtle', 'ray', 'crab', 'sea-lion', 'otter']) if (plan[id].length) wanted.push(id);
   if (plan['silver-school'].length && plan['silver-school'][0].count > 0) wanted.push('silver-school');
   if (plan.whale) wanted.push('whale');
-  for (const id of plan.held) status[id] = 'held';
   for (const id of wanted) status[id] = 'loading';
   const ready = Promise.all(wanted.map(async id => {
     try {
@@ -238,4 +237,4 @@ export function createSeaLife({ zone, shape, uniforms, quality = 'high', fishBud
   };
 }
 
-export { HELD_CREATURES, SEA_LIFE_CAPS };
+export { SEA_LIFE_CAPS };

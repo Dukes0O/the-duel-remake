@@ -19,7 +19,7 @@ import { createWaterUniforms } from '../src/deep/water-shader.js';
 import { FISH_HARD_CAP } from '../src/deep/fish-rules.js';
 import { fishGeometryFromModel } from '../src/deep/fish-school.js';
 import {
-  HELD_CREATURES, REACH, SEA_LIFE_CAPS, SURFACE_MARGIN, SURFACE_Y, WHALE, carDistance, createWhale, easeToward, makeAnimal,
+  REACH, SEA_LIFE_CAPS, SURFACE_MARGIN, SURFACE_Y, WHALE, carDistance, createWhale, easeToward, makeAnimal,
   planSeaLife, smooth, startWhalePass, stepAnimal, stepWhale, turnToward,
 } from '../src/deep/sea-life-rules.js';
 import { createSeaLife } from '../src/deep/sea-life.js';
@@ -50,7 +50,7 @@ const loadReal = id => realModel(id);
 
 // ---- the plan from the real zone ----------------------------------------------------
 
-test('the plan follows the Kelp Coast spots on all three routes, capped, repeatable and held for the otter', () => {
+test('the plan follows the Kelp Coast spots on all three routes, capped and repeatable', () => {
   for (const { route, zone } of zones) {
     const plan = planSeaLife(zone), again = planSeaLife(zone);
     assert.deepEqual(plan, again, `${route.id}: the same zone always gives the same plan`);
@@ -60,12 +60,11 @@ test('the plan follows the Kelp Coast spots on all three routes, capped, repeata
     assert.equal(plan['sea-lion'].length, 2);
     assert.equal(plan['silver-school'].length, 3);
     assert.ok(plan.whale && plan.whale.trailIndex === zone.spots.find(s => s.creature === 'whale').trailIndex);
-    assert.deepEqual(plan.held, ['otter'], 'the otter has no model yet: held, nothing stands in for it');
-    assert.deepEqual(HELD_CREATURES, ['otter']);
+    assert.equal(plan.otter.length, 1, 'the Kelp Coast has one sea otter');
     assert.ok(plan.total['silver-school'] > 0 && plan.total['silver-school'] <= FISH_HARD_CAP);
     for (const [id, cap] of Object.entries(SEA_LIFE_CAPS)) assert.ok((plan.total[id] ?? 0) <= cap, `${route.id}: ${id} within its cap`);
     const shape = createZoneFloor(zone);
-    for (const animal of [...plan.turtle, ...plan.ray, ...plan.crab, ...plan['sea-lion'], ...plan['silver-school']]) {
+    for (const animal of [...plan.turtle, ...plan.ray, ...plan.crab, ...plan['sea-lion'], ...plan.otter, ...plan['silver-school']]) {
       const at = shape.sample(animal.x, animal.z);
       assert.ok(at && at.distance < 40, `${route.id}: ${animal.kind} is on the sea floor near the trail`);
     }
@@ -80,7 +79,7 @@ test('the three routes give three different layouts from the same spots; one rou
 test('every type is capped, whatever a zone asks for', () => {
   const { zone } = zones[0];
   const heap = creature => ({ ...zone, spots: [{ creature, trailIndex: 3, count: 500 }, ...Array.from({ length: 4 }, () => ({ creature, trailIndex: 5, count: 500 }))] });
-  for (const id of ['turtle', 'ray', 'crab', 'sea-lion']) assert.equal(planSeaLife(heap(id))[id].length, SEA_LIFE_CAPS[id], id);
+  for (const id of ['turtle', 'ray', 'crab', 'sea-lion', 'otter']) assert.equal(planSeaLife(heap(id))[id].length, SEA_LIFE_CAPS[id], id);
   assert.equal(planSeaLife(heap('silver-school'), { fishBudget: 100000 }).total['silver-school'] <= FISH_HARD_CAP, true);
   assert.equal(planSeaLife(heap('silver-school'), { fishBudget: 0 }).total['silver-school'], 0);
   assert.equal(planSeaLife(heap('silver-school'), { fishBudget: -5 }).total['silver-school'], 0);
@@ -106,12 +105,13 @@ const turtleSpec = { kind: 'turtle', x: 0, z: 0, radius: 12, dir: 1, speed: 0.85
 const raySpec = { kind: 'ray', x: 10, z: 10, yaw: 0.3, phase: 1, size: 1 };
 const crabSpec = { kind: 'crab', x: -5, z: 4, yaw: 0, phase: 0, size: 1 };
 const lionSpec = { kind: 'sea-lion', x: 0, z: 0, depth: 14, radius: 22, speed: 5, phase: 0, dir: 1, size: 1 };
+const otterSpec = { kind: 'otter', x: 3, z: -2, radius: 3.5, dir: 1, speed: 0.15, phase: 0.5, size: 1 };
 const FAR = { x: 400, y: -10, z: 400 };
 
 test('nothing jumps: every animal moves smoothly, in every situation', () => {
   const rush = t => ({ x: -60 + t * 12, y: -11, z: 2 });         // a car driving straight through
-  const limits = { turtle: 3.5, ray: 4.5, crab: 2.6, 'sea-lion': 9 };
-  for (const spec of [turtleSpec, raySpec, crabSpec, lionSpec]) {
+  const limits = { turtle: 3.5, ray: 4.5, crab: 2.6, 'sea-lion': 9, otter: 2 };
+  for (const spec of [turtleSpec, raySpec, crabSpec, lionSpec, otterSpec]) {
     for (const car of [FAR, rush, { x: spec.x + 1, y: -11, z: spec.z + 1 }]) {
       const { trace } = run(spec, 40, car);
       for (let i = 1; i < trace.length; i++) {
@@ -133,6 +133,18 @@ test('animals stay under the surface and above the ground', () => {
       assert.ok(row.y >= floor + 0.1 - 1e-6, `${spec.kind} stays above the ground (${row.y.toFixed(2)} vs ${floor.toFixed(2)})`);
     }
   }
+});
+
+test('the otter floats on its back at the surface, drifts off from the car without diving, and comes back', () => {
+  const rest = run(otterSpec, 40, FAR).a, near = { x: otterSpec.x + 3.5, y: -1, z: otterSpec.z - 2 };
+  for (const row of run(otterSpec, 60, t => (t < 30 ? near : FAR)).trace)
+    assert.ok(Math.abs(row.y - SURFACE_Y) < 0.1 && row.pitch === 0, 'it floats level at the surface');
+  const driven = run(otterSpec, 30, near).a, gap = Math.hypot(driven.x - near.x, driven.z - near.z);
+  const unbothered = run(otterSpec, 30, FAR).a;
+  assert.ok(gap > Math.hypot(unbothered.x - near.x, unbothered.z - near.z) + 0.5, 'further from a close car than if it were alone');
+  const back = run(otterSpec, 120, t => (t < 30 ? near : FAR)).a, alone = run(otterSpec, 120, FAR).a;
+  assert.ok(Math.hypot(back.x - alone.x, back.z - alone.z) < 0.3, 'back on its own drift after the car leaves');
+  assert.ok(rest.anim > 0, 'its float cycle runs');
 });
 
 test('the turtle turns away from the car, and comes back when it leaves', () => {
@@ -187,7 +199,7 @@ test('sea lions never come within the keep-clear gap of the car, and come toward
 
 test('everything is repeatable from the clock and the car alone', () => {
   const car = t => ({ x: 5 * Math.sin(t), y: -9, z: 3 * Math.cos(t) });
-  for (const spec of [turtleSpec, raySpec, crabSpec, lionSpec]) assert.deepEqual(run(spec, 30, car).trace, run(spec, 30, car).trace, spec.kind);
+  for (const spec of [turtleSpec, raySpec, crabSpec, lionSpec, otterSpec]) assert.deepEqual(run(spec, 30, car).trace, run(spec, 30, car).trace, spec.kind);
 });
 
 test('the rules only read the car, never use Math.random, and import nothing from the race', async () => {
@@ -195,7 +207,7 @@ test('the rules only read the car, never use Math.random, and import nothing fro
   Math.random = () => { throw new Error('Math.random is not for sea life'); };
   try {
     const plan = planSeaLife(zones[0].zone);
-    for (const spec of [...plan.turtle, ...plan.ray, ...plan.crab, ...plan['sea-lion']]) run(spec, 5, readOnlyCar(1, -9, 1));
+    for (const spec of [...plan.turtle, ...plan.ray, ...plan.crab, ...plan['sea-lion'], ...plan.otter]) run(spec, 5, readOnlyCar(1, -9, 1));
   } finally { Math.random = random; }
   for (const file of ['sea-life-rules.js', 'sea-life.js']) {
     const text = await readFile(join(root, 'src', 'deep', file), 'utf8');
@@ -265,8 +277,8 @@ test('the whale swims at the stated speed and against the way the trail runs', (
 
 // ---- the drawing, with the real models --------------------------------------------------------
 
-test('the real DEEP-ART-SRC models fit the drawing code', async () => {
-  for (const id of ['turtle', 'sea-lion', 'crab']) {
+test('the real Deep models fit the drawing code', async () => {
+  for (const id of ['turtle', 'sea-lion', 'otter', 'crab']) {
     const g = await realModel(id);
     let mesh = null; g.scene.traverse(o => { if (o.isMesh && !mesh) mesh = o; });
     assert.ok(mesh.geometry.morphAttributes.position?.length === 1, `${id}: one morph target`);
@@ -275,8 +287,10 @@ test('the real DEEP-ART-SRC models fit the drawing code', async () => {
   }
   const ray = await realModel('ray'); let rm = null; ray.scene.traverse(o => { if (o.isMesh && !rm) rm = o; });
   assert.equal(Object.keys(rm.geometry.morphAttributes).length, 0);
-  const whale = await realModel('whale'); let skinned = 0; whale.scene.traverse(o => { if (o.isSkinnedMesh) skinned++; });
-  assert.ok(skinned >= 1 && whale.animations[0].duration > 2);
+  // The gray whale is one mesh whose tail pumps by a morph target (DEEP-ART-FINAL), not a skinned rig.
+  const whale = await realModel('whale'); let whaleMesh = null; whale.scene.traverse(o => { if (o.isMesh && !whaleMesh) whaleMesh = o; });
+  assert.ok(whaleMesh.geometry.morphAttributes.position?.length === 1 && whale.animations[0].duration > 2);
+  assert.ok(whale.animations[0].tracks.some(t => t.name.endsWith('morphTargetInfluences')), 'the whale clip drives the morph');
   const sardine = await realModel('silver-school'); let sm = null; sardine.scene.traverse(o => { if (o.isMesh && !sm) sm = o; });
   const g = fishGeometryFromModel(sm.geometry); g.computeBoundingBox();
   assert.ok(Math.abs(g.boundingBox.max.z - g.boundingBox.min.z - 1) < 1e-4, 'one unit long');
@@ -289,21 +303,20 @@ function lifeFor(zone, load = loadReal, fishBudget = 480) {
   return { shape, life: createSeaLife({ zone, shape, uniforms, fishBudget, load }) };
 }
 
-test('the Kelp Coast comes to life: instanced and capped per type, the otter absent, nothing written to the car', async () => {
+test('the Kelp Coast comes to life: instanced and capped per type, nothing written to the car', async () => {
   const { zone } = zones[0];
   const { shape, life } = lifeFor(zone);
   await life.ready;
   assert.deepEqual(life.failures, []);
-  assert.equal(life.status.otter, 'held');
-  for (const id of ['turtle', 'ray', 'crab', 'sea-lion', 'silver-school', 'whale']) assert.equal(life.status[id], 'ready', id);
+  for (const id of ['turtle', 'ray', 'crab', 'sea-lion', 'otter', 'silver-school', 'whale']) assert.equal(life.status[id], 'ready', id);
   const counts = life.counts();
-  assert.deepEqual({ turtle: counts.turtle, ray: counts.ray, crab: counts.crab, 'sea-lion': counts['sea-lion'] }, { turtle: 2, ray: 1, crab: 4, 'sea-lion': 2 });
+  assert.deepEqual({ turtle: counts.turtle, ray: counts.ray, crab: counts.crab, 'sea-lion': counts['sea-lion'], otter: counts.otter }, { turtle: 2, ray: 1, crab: 4, 'sea-lion': 2, otter: 1 });
   assert.ok(counts['silver-school'] > 0 && counts['silver-school'] <= FISH_HARD_CAP);
   // One draw call per type: instanced meshes, not an object per animal.
   const meshes = []; life.group.traverse(o => { if (o.isMesh) meshes.push(o); });
-  assert.equal(meshes.filter(o => o.isInstancedMesh).length, 4 + 3, 'four animal types and three schools are instanced');
+  assert.equal(meshes.filter(o => o.isInstancedMesh).length, 5 + 3, 'five animal types and three schools are instanced');
   assert.ok(meshes.every(o => !o.name.startsWith('Sea life:') || o.isInstancedMesh));
-  assert.equal(life.group.children.length, 4 + 3 + 1, 'four instanced types, three schools and the whale');
+  assert.equal(life.group.children.length, 5 + 3 + 1, 'five instanced types, three schools and the whale');
   // Run two minutes beside the Drop-off with the car read only.
   const spot = life.plan.whale, car = readOnlyCar(spot.x, -spot.depth + 1, spot.z), camera = new THREE.PerspectiveCamera();
   camera.position.set(spot.x, -spot.depth + 3, spot.z - 10);
@@ -410,6 +423,6 @@ test('a frame of sea life is cheap, and the whole scene stays within its limits'
   assert.ok(ms < 4, `${ms.toFixed(2)} ms a frame`);
   // A hard ceiling on what a scene can draw, however many spots a zone has.
   const total = Object.entries(SEA_LIFE_CAPS).reduce((n, [, cap]) => n + cap, 0);
-  assert.ok(total <= FISH_HARD_CAP + 6 + 4 + 4 + 12 + 1);
+  assert.ok(total <= FISH_HARD_CAP + 6 + 4 + 4 + 2 + 12 + 1);
   life.dispose();
 });

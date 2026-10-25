@@ -1,9 +1,10 @@
-// DEEP-LOG picture recipe (THE_DEEP 6.4): renders each working creature model
-// (DEEP-ART-SRC, public/assets/models/deep/) with the look page's own Three
+// DEEP-LOG picture recipe (THE_DEEP 6.4): renders each creature model
+// (public/assets/models/deep/) with the look page's own Three
 // module on a transparent background, so the garage darkens the same picture
 // into a grey shape. Pictures and a comparison sheet go to the evidence folder;
 // with DUEL_DEEP_LOG_INSTALL=1 the pictures also replace public/assets/deep/log/.
 //   DUEL_DEEP_LOG_INSTALL=1 node tools/browser-harness.mjs scenario deep-log-pictures
+// The sardine card is a school: thirty-four of the one-fish model in a fixed loose cigar.
 // Photography only: no race, no save (the look page's memory storage), no timing.
 import {mkdir, writeFile} from 'node:fs/promises';
 import {join, resolve} from 'node:path';
@@ -13,8 +14,8 @@ import {DEEP_CREATURES, logPicture} from '../../src/deep/deep-log.js';
 const root = resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const WIDTH = 480, HEIGHT = 360;
 // Each creature's view: azimuth round it (degrees from its +z side) and height above (degrees).
-const VIEW = {default: [55, 18], 'silver-school': [35, 15], ray: [35, 62], manta: [30, 55], jellyfish: [30, 8],
-  crab: [30, 35], octopus: [35, 30], whale: [60, 12]};
+const VIEW = {default: [55, 18], 'silver-school': [30, 16], ray: [35, 62], manta: [30, 55], jellyfish: [30, 8],
+  crab: [30, 35], octopus: [35, 30], whale: [60, 12], otter: [50, 30]};
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1200, height: 760, deviceScaleFactor: 1, mobile: false});
@@ -30,7 +31,18 @@ export async function run(context) {
       scene.add(new THREE.HemisphereLight(0xcfeaf2,0x1d3a44,1.6));
       const sun=new THREE.DirectionalLight(0xfff4e0,2.2);sun.position.set(2,5,3);scene.add(sun);
       const gltf=await new GLTFLoader().loadAsync('/assets/models/deep/'+id+'.glb');
-      const model=gltf.scene;
+      let model=gltf.scene;
+      if(id==='silver-school'){
+        // One sardine is not the card's picture: a school, the same fixed fish and layout every run.
+        let seed=7;const next=()=>(seed=seed*16807%2147483647)/2147483647;
+        model=new THREE.Group();
+        for(let i=0;i<34;i++){
+          const fish=gltf.scene.clone(true);
+          fish.position.set((next()+next()-1)*.62,(next()+next()-1)*.34,(next()+next()-1)*.42);
+          fish.rotation.set((next()-.5)*.14,Math.PI/2+(next()-.5)*.42,(next()-.5)*.5,'YXZ');
+          fish.scale.setScalar(.88+next()*.24);model.add(fish);
+        }
+      }
       if(gltf.animations.length){const mixer=new THREE.AnimationMixer(model);for(const clip of gltf.animations)mixer.clipAction(clip).play();mixer.setTime(.67);}
       scene.add(model);model.updateMatrixWorld(true);
       const box=new THREE.Box3().setFromObject(model),centre=box.getCenter(new THREE.Vector3());
