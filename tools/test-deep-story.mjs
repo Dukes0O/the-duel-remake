@@ -217,11 +217,12 @@ test('place HUD shows the authored name for three seconds and holds captions', a
   const {createSirenaHud} = await import('../src/deep/sirena-view.js');
   const elements = new Map();
   const element = () => ({hidden: true, textContent: '', append() {}, remove() {},
+    getContext() { return {}; }, addEventListener() {}, removeEventListener() {},
     querySelector(selector) { if (!elements.has(selector)) elements.set(selector, element()); return elements.get(selector); }});
   const host = element(); host.ownerDocument = {createElement: element};
   let listener, clock = 1, blocked, on = true;
   const hud = createSirenaHud({host, now: () => clock,
-    app: {getDeepDiscovery: () => ({enabled: on}), duel: {onChange(fn) {listener = fn;}}},
+    app: {getDeepDiscovery: () => ({enabled: on}), duel: {state: {}, onChange(fn) {listener = fn;}}},
     phone: {say() {}, clear() {}, dispose() {}, update(options) {blocked = options.blocked; return {text: 'Ana'};}}});
   listener({}, {deepPlace: {place: {id: 'kelp-forest', name: 'The Kelp Forest'}, title: true}});
   hud.update();

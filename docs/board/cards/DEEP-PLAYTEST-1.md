@@ -25,3 +25,23 @@ Acceptance: tests for the jump cap and the map's data; `deep-sirena`,
 18.5 ms p95; one picture of the map for Claude's look check (JPG under
 `docs/board/looks/deep-playtest-1/`); lane tier and build. Switch
 `the-deep` is on in the live game, so every change ships in the next release.
+
+## Test inventory for Claude's written review
+
+The Deep import guard retains its empty-unapproved-import assertion. Add only
+`tools/test-deep-map.mjs|../src/deep/deep-map.js`,
+`tools/test-deep-map.mjs|../src/deep/zones/kelp-coast.js`, and
+`src/screen-results.js|./deep/deep-hints.js`. The first two exercise this card;
+the last is the existing released dive-kit notice from 2d0e281e. No blanket
+exception, numeric limit or fingerprint changes. Independent code review is
+clear; Claude's written assertion/inventory approval and map look remain for
+the integration handoff. No merge or push in this lane.
+
+## Lane handoff
+
+Jump caps, read-only map, required lane suites, build and deep-sirena/deep-life
+are verified; details in `docs/changes/DEEP-PLAYTEST-1.md`. Frame measurement
+waits for the existing live Duel Chrome window to stop using most of the GPU,
+as AGENTS rule 8 requires. No p95 or completed acceptance claimed. Run the
+card's deep-frames command alone when quiet. Picture:
+`docs/board/looks/deep-playtest-1/round-1.jpg`.

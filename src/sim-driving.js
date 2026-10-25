@@ -388,6 +388,7 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   const road = actor === this.state && this.featureFlags?.enabled('the-deep') === true
     ? this._roadGrip(actor.s, actor.lateral) : null;
   const seaFloor = road?.kind === 'sea-floor';
+  const diveHop = seaFloor && actor.deepJourney?.phase === 'underwater';
   const allTerrain = actor === this.state && offroadCapability(this.car) && (actor.airborne || !this._surface(actor.s, actor.lateral).road);
   if (actor.tumble || (!arena && this.course.def.airborne !== true && !allTerrain && !seaFloor) || !Number.isFinite(dt) || dt <= 0) {
     // On the prepared road or a shortcut the all-terrain rules sleep. Forget
@@ -405,14 +406,15 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   // 30 September 2026: 600 to 2,200 m flights). Straight jumps stay exact.
   const rise = (ground - previousGround) / dt, limit = arena
     ? Math.hypot(groundPoint.x - previousPoint.x, groundPoint.z - previousPoint.z) / dt * rampLaunchGrade(this.course) : Infinity;
-  const groundVelocity = Math.max(-limit, Math.min(limit, rise));
+  const groundVelocity = Math.max(-limit, Math.min(diveHop ? 2.4 : limit, rise));
   if (actor._jumpY == null) { actor._jumpY = previousGround; actor._verticalSpeed = arena ? 0 : groundVelocity; }
   // Consecutive terrain velocities are interval averages. Their midpoint
   // estimates the tangent velocity at the start of this step. Extrapolating
   // only the older average would detach at half gravity and create repeated
   // tiny hops on ordinary rolling crests. Keep authored arena timing exact.
   const verticalSpeed = !arena && !actor.airborne ? (actor._verticalSpeed + groundVelocity) * .5 : actor._verticalSpeed;
-  const gravity = seaFloor ? 18 * road.gravityShare : 18, predicted = actor._jumpY + verticalSpeed * dt - gravity * dt * dt * .5;
+  const gravity = seaFloor ? 18 * road.gravityShare : 18;
+  let predicted = actor._jumpY + verticalSpeed * dt - gravity * dt * dt * .5;
   if (!actor.airborne) {
     // A descending convex crest can leave the road too: the car keeps its
     // signed tangent velocity while the road falls away faster. The arena
@@ -432,6 +434,12 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
       actor._verticalSpeed = groundVelocity;
       actor._jumpY = ground; actor.airHeight = 0; return;
     }
+  }
+  // A reef lip must stay a small hop even when the seabed drops away below it.
+  // This ceiling ends upward motion, then leaves the slow fall and landing alone.
+  if (diveHop && predicted > ground + 1.5) {
+    predicted = ground + 1.5;
+    actor._verticalSpeed = Math.min(0, actor._verticalSpeed);
   }
   actor._jumpY = predicted;
   actor._verticalSpeed -= gravity * dt;

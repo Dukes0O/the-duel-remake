@@ -278,6 +278,10 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'tools/test-deep-life.mjs|../src/deep/fish-school.js',
     'tools/test-deep-life.mjs|../src/deep/sea-life-rules.js',
     'tools/test-deep-life.mjs|../src/deep/sea-life.js',
+    // DEEP-PLAYTEST-1: read-only map test and the released dive-kit results notice.
+    'tools/test-deep-map.mjs|../src/deep/deep-map.js',
+    'tools/test-deep-map.mjs|../src/deep/zones/kelp-coast.js',
+    'src/screen-results.js|./deep/deep-hints.js',
   ]);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))

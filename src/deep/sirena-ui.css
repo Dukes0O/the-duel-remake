@@ -16,3 +16,11 @@
 .sirena-title{position:absolute;left:50%;top:30%;transform:translateX(-50%);text-align:center;padding:1.4rem 2.6rem;background:#050d10e6;border-top:2px solid #c9a14a;border-bottom:2px solid #c9a14a}
 .sirena-title p{margin:0;font-size:11px;letter-spacing:4px;color:#e6c27a}
 .sirena-title h2{margin:.4rem 0 0;font-size:30px;font-style:italic;letter-spacing:-.5px}
+.deep-map{position:absolute;left:35px;bottom:139px;width:40vh;box-sizing:border-box;padding:10px;background:#071e25df;border:1px solid #87ada25c;border-radius:3px;pointer-events:auto}
+.deep-map header{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid #87ada240;padding-bottom:6px}
+.deep-map header b{font-size:10px;letter-spacing:1.4px}
+.deep-map button{font:11px 'Segoe UI',sans-serif;color:#d2e8df;background:#18373d;border:1px solid #87ada25c;border-radius:3px;padding:4px 7px;cursor:pointer}
+.deep-map canvas{display:block;width:100%;height:auto}
+.deep-map-home{margin-top:6px}
+.deep-map-bearing{display:flex;align-items:center;gap:8px;margin-top:6px;color:#e5be78;font-size:12px}
+.deep-map-bearing i{display:inline-block;font-style:normal;font-size:23px;line-height:24px}
