@@ -7,6 +7,10 @@ import { loadGhosts, saveGhosts, GHOST_KEY } from '../src/ghost.js';
 
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
 const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWith('.json')).sort();
+// Saves that are not honest round trips on purpose (a Lab record missing keys, forged values): the other suites read only
+// the honest fixtures above, whose normalized bytes must stay exact; these load and are checked against what they should read as.
+const forgedDir = new URL('./fixtures/saves-forged/', import.meta.url);
+const forgedFiles = readdirSync(fileURLToPath(forgedDir)).filter(name => name.endsWith('.json')).sort();
 assert.equal(files.length, 21, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
@@ -116,8 +120,8 @@ function preserveRows(rawRows, loadedRows, identity, label) {
   }
 }
 
-for (const file of files) {
-  const fixture = JSON.parse(readFileSync(new URL(file, fixtureDir), 'utf8'));
+for (const url of [...files.map(name => new URL(name, fixtureDir)), ...forgedFiles.map(name => new URL(name, forgedDir))]) {
+  const fixture = JSON.parse(readFileSync(url, 'utf8'));
   const storage = memoryStorage(fixture.storage);
   const players = loadPlayers(storage);
   const leaderboard = loadLeaderboard(storage);
@@ -165,4 +169,4 @@ for (const file of files) {
   equal(loadLeaderboard(storage), leaderboard, `${fixture.shape}: records changed after reload`);
   equal(loadGhosts(storage), ghosts, `${fixture.shape}: ghosts changed after reload`);
 }
-console.log(`Save fixtures: ${files.length} historical shapes and ${checks} first-load/round-trip checks passed using memory storage.`);
+console.log(`Save fixtures: ${files.length} historical shapes, ${forgedFiles.length} forged and ${checks} first-load/round-trip checks passed using memory storage.`);

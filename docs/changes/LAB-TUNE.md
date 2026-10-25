@@ -82,15 +82,17 @@ a flood cut, a later game's rule names kept, an old Lab reading as no tune). Bre
 reverted): about 30 across the rules, the hooks, the pit, the settle and the save; the lab-tuning check inside
 `settleTunedLap` is a second guard behind `recordStockLap`'s, so removing it alone changes nothing.
 
-`tools/fixtures/saves/21-lab-tune.json` and `tools/test-save-fixtures.mjs` (roster 20 to 21, and a fixture may name what a
-Lab record should read as when keys are missing or forged: `labExpected`; whole, honest records still come back exactly):
-a full tune with stock laps under three rule sets and a later game's rule name; an old Lab without a tune or stock laps; a
-forged tune and forged stock laps. Nothing existing is wiped or reset.
+Save fixtures: `tools/fixtures/saves/21-lab-tune.json` (a full tune with stock laps under three rule sets and a later game's
+rule name; honest, so it comes back byte for byte like the other twenty and the suites that read every historical fixture,
+`test-career-backup`, `test-deep-save`, `test-grand-prix-podiums`, still pass). The old Lab without a tune or stock laps and the
+forged tune and stock laps are not honest round trips, so they live in `tools/fixtures/saves-forged/lab-tune.json`, which only
+`tools/test-save-fixtures.mjs` reads (roster 20 to 21 honest plus 1 forged; a fixture there names what its Lab record should read
+as: `labExpected`). Nothing existing is wiped or reset.
 
 ## Changed assertions
 
-None changed. `tools/test-save-fixtures.mjs`: the roster count 20 to 21 (a new fixture) and the Lab equality now accepts
-the fixture's named expectation for the two new records; the 20 older fixtures are compared exactly as before.
+None changed. `tools/test-save-fixtures.mjs`: the roster count 20 to 21 (a new fixture), a second folder of forged saves, and the Lab equality
+accepts a forged fixture's named expectation; the 20 older fixtures are compared exactly as before.
 
 ## Independent review (pay and saves, as DEEP-LOG)
 
@@ -123,7 +125,24 @@ stock lap, and the stock laps could never be trusted. If you want tuned records,
 
 ## Checks
 
-See "Checks run" below.
+Run once in the cloud (Linux, no graphics) on the branch merged with current `integration/wasteland` (ENGINE-CURVE,
+DEEP-SIRENA-VIEW and PERF-GROUND-ROWS were in it; two merge conflicts in `game.js` and `app.js`, both signature or argument
+lines, resolved by keeping both sides):
+
+- `npm run build`: passes.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` (476 suites): the lane run found three suites my
+  first fixture broke (`test-career-backup`, `test-deep-save`, `test-grand-prix-podiums` read every historical fixture and need
+  exact bytes: fixed above, all three pass now). The rest of the failures are the usual laptop-only or already-failing suites:
+  `test-course-kit` (asserts `win32`), `test-earned-cars-ui`, `test-drive-through`, `test-full-check`, `test-medals`,
+  `test-salt-flats`, `test-salt-flats-art`, `test-p4-kits`, `test-tanker-valve-source`, `test-vesper-art`,
+  `test-compact-binaries` and `test-lab-radio` (same on a clean `integration/wasteland`). The replay and world-signature
+  guards pass with fingerprints unchanged.
+- `tools/test-lab-tune.mjs`: 215 checks, about 3 minutes of CPU. After the fixture fix I reran `test-save-fixtures` (21 + 1),
+  the three suites above, `test-arena-settlement`, `test-repo-hygiene`, `test-board`, `test-lab-rules`, `test-heli-mode`
+  and `test-feature-flags`: all pass.
+- Combat balance: not run (nothing in the combat rules changed; a car with no tune is the same object).
+- Windows-only or laptop-only, not run here: `test-course-kit`, `test-earned-cars-ui`, `test-medals`, `test-drive-through`,
+  `test-full-check`, `test-salt-flats`, `test-salt-flats-art`; browser scenarios and frame checks (nothing is drawn yet).
 
 ## Not done here
 
