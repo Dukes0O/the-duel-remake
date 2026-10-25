@@ -133,6 +133,34 @@ it idles on the pad while the pilot skis.
     - the backdrop's three valley angles are the real Summit ground's
       steepest mean fall from each pad;
     - Start again and Leave the run go through the session.
+- **Lane tier** (`--changed --jobs 4 --keep-going`). This was the final
+  commit, with current integration (LAB-VIEW, DRIVE-LESSON-3) merged in:
+  79 suites, 75 passed, 4 failed. All 4 need the laptop's Windows Recycle
+  Bin (`'linux' !== 'win32'`): `test-course-kit`, `test-earned-cars-ui`,
+  `test-medals`, `test-drive-through`. The replay and world guards pass.
+  - An earlier lane run caught the frame-timing change this card had made to
+    `render3d.js`: `test-frame-metrics` and `test-scene-presentation` pin
+    those lines. The change was taken back, and no test was changed.
+- **`npm run build`:** built. `ski-ui.css` is emitted as an asset
+  (`dist/assets/ski-ui-*.css`), and the HUD loads it.
+- **Browser scenario** `tools/scenarios/ski-view.mjs` (private port,
+  memory-only storage): passed with 0 issues on the final drawing code. A
+  run while the lane tier ran timed out on its first screenshot (a busy
+  machine); the run alone passed.
+  - The drop was taken on the panel's ski box.
+  - A scripted pilot flew to Devils Playground, and the slalom was chosen
+    on the run menu.
+  - A scripted skier ran 0:19.23 with every gate clean: gold, 500 credits
+    and a new best.
+  - The helicopter picked the skier up.
+- **Look:** two rounds, sheet
+  `docs/board/looks/ski-view/round-2.jpg` with its notes. Claude passed
+  round 2. The pickup pad's place (Summit Run's desert start) moves to
+  SKI-FINISH.
+- **Frame time: not now** (rule 9). The moguls run with the group waits
+  for go-live. The backdrop's capture frame is one frame a run.
+- **Laptop to run:** the 4 suites above and the `ski-view` scenario in the
+  real browser.
 - Existing suites rerun: `test-heli-mode`, `test-deep-look`,
   `test-heli-hooks`, `test-fire-view`, `test-heli-hook-window`,
   `test-heli-lesson-core`, `test-drive-lesson-helipad`, `test-deep-story`,
@@ -196,6 +224,16 @@ Left as is:
 
 None. `tools/test-ski-view.mjs` is new.
 
+## Look round 2 (Claude's verdict on round 1)
+
+- Past the run's bounds plus 40 m the drawn snow falls away (distance
+  squared over 30), so the zone shows no edge from any camera. The test
+  checks this on every run, and checks that the run itself is drawn as the
+  rules have it.
+- A haze band in the fog's colour lies round the camera, clear above +4
+  degrees and 80% at -12 degrees. The brow meets a hazy valley.
+
 ## Removed
 
-Nothing.
+- `docs/board/looks/ski-view/round-1.jpg` (replaced by round 2).
+- `docs/board/questions/SKI-VIEW.md` (answered on the card).
