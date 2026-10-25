@@ -200,9 +200,12 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
     ctx.fillStyle = 'rgba(160,50,30,.9)'; ctx.font = '10px Georgia, serif'; ctx.textAlign = 'center';
     ctx.fillText(`${job.pay} cr`, (ax + bx) / 2, (ay + by) / 2 - 3);
   }
-  // Places: names, pump signs, special cars, found secrets, the "?".
+  // Places: names, pump signs, special cars, found secrets, the "?". Names are placed north to south, and one that would
+  // run into a name already written moves down a line (or up) until it is clear.
   ctx.textAlign = 'center';
-  model.places.forEach(place => {
+  const written = [];
+  const clear = (x, y, w) => !written.some(box => Math.abs(box.x - x) < (box.w + w) / 2 && Math.abs(box.y - y) < 11);
+  [...model.places].sort((a, b) => b.z - a.z).forEach(place => {
     const [px, py] = project(place.x, place.z);
     if (place.air) {
       ctx.fillStyle = INK; ctx.font = `bold ${place.name === '?' ? 22 : 12}px Georgia, serif`; ctx.fillText(place.name, px, py + 6);
@@ -211,7 +214,11 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
     }
     ctx.font = `${place.state === 'owned' ? 'bold ' : ''}11px Georgia, serif`;
     ctx.fillStyle = place.state === 'grey' ? GREY : INK;
-    ctx.fillText(place.name, px, py + k * 0.9 + 12);
+    const width = ctx.measureText(place.name).width;
+    let y = py + k * 0.9 + 12;
+    for (let tries = 0; tries < 6 && !clear(px, y, width); tries++) y += 11;
+    written.push({x: px, y, w: width});
+    ctx.fillText(place.name, px, y);
     if (place.pad) {
       ctx.fillStyle = INK; ctx.fillRect(px + 10, py - 20, 7, 11); ctx.fillRect(px + 17, py - 17, 4, 2);
       ctx.font = 'bold 10px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillText(place.pad.price.toFixed(1), px + 22, py - 11); ctx.textAlign = 'center';

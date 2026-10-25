@@ -12,6 +12,7 @@ import {lessonBoardMarkup} from '../lessons/lesson-board.js';
 import {isRescueKind} from './heli-missions.js';
 // MAP-VIEW: the pilot's map screen.
 import {createPilotMapUi, MAP_KEY} from './pilot-map-view.js';
+import {placeOfCourse, placeById} from './pilot-map-data.js';
 
 export const LESSON_TEXT = Object.freeze({
   liftoff: Object.freeze({name: '1 Lift-off', goal: 'Rise to 3 m and hold her there for 5 seconds.'}),
@@ -68,7 +69,8 @@ export function instrumentReadings(readout) {
 
 // What a session event says on screen, if anything.
 export function noticeText(event) {
-  const course = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? id;
+  // MAP-VIEW: the map's places (Pacific Canyon, the Table...) have names too.
+  const course = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? placeOfCourse(id)?.name ?? placeById(id)?.name ?? id;
   switch (event?.type) {
     case 'charged': {
       const what = {hardLanding: 'Hard landing', crash: 'Crash', drop: 'Dropped load', cargoLight: 'Cargo knock',

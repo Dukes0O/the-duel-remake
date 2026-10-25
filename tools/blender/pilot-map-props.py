@@ -30,8 +30,6 @@
 #                           number N4471K is on the fin and the rear fuselage; one baked
 #                           2048 picture (dust and rust in seams and low surfaces, bare
 #                           metal on edges), glass and the number stay flat
-#   table-strip             190 m dirt strip along Z, 12 m wide, with cairns and a
-#                           windsock; origin at its middle, on the ground
 #   table-logbook           the bush pilot's logbook open on its last page; origin
 #                           at the middle of its underside; empty page_centre
 # Run: blender -b --factory-startup --python tools/blender/pilot-map-props.py -- --root . [--only NAMES] [--render DIR]
@@ -46,7 +44,7 @@ parser.add_argument('--render', default='')
 options = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(options.root).resolve()
 NAMES = ['sign-logging-arrows', 'sign-start-grid', 'sign-fire-pits', 'sign-chalk-line', 'sign-lighthouse-window',
-         'table-mesa', 'table-lookout', 'table-plane-wreck', 'table-strip', 'table-logbook']
+         'table-mesa', 'table-lookout', 'table-plane-wreck', 'table-logbook']
 OUT = root / 'public/assets/models/pilot-map'
 BLEND = root / 'art-build/pilot-map'
 if options.paths_only:
@@ -72,7 +70,6 @@ def mats():
     return {
         # ground and stone
         'dirt': material('track_dirt', (0.23, 0.15, 0.09), 0.0, 0.97),
-        'dirt_dry': material('strip_dirt', (0.43, 0.27, 0.16), 0.0, 0.97),
         'rut': material('wheel_rut', (0.15, 0.10, 0.065), 0.0, 0.98),
         'asphalt': material('old_asphalt', (0.085, 0.085, 0.09), 0.0, 0.92),
         'asphalt_pale': material('sunbleached_asphalt', (0.17, 0.165, 0.16), 0.0, 0.92),
@@ -80,7 +77,6 @@ def mats():
         'concrete_stain': material('wet_stain', (0.13, 0.135, 0.13), 0.0, 0.8),
         'stone': material('weathered_stone', (0.34, 0.31, 0.27), 0.0, 0.95),
         'stone_dark': material('burnt_stone', (0.11, 0.10, 0.095), 0.0, 0.95),
-        'whitewash': material('whitewashed_stone', (0.66, 0.64, 0.58), 0.0, 0.95),
         'ash': material('ash', (0.30, 0.29, 0.28), 0.0, 1.0),
         'char': material('charred_wood', (0.025, 0.02, 0.018), 0.0, 0.95),
         'coal': material('glowing_coal', (0.30, 0.05, 0.01), 0.0, 0.6, emit=(1.0, 0.32, 0.04), strength=6.0),
@@ -117,7 +113,6 @@ def mats():
         'bare': material('bare_aluminium', (0.55, 0.56, 0.57), 0.9, 0.38),
         'rubber': material('perished_rubber', (0.035, 0.035, 0.035), 0.0, 0.9),
         'number': material('tail_number_paint', (0.09, 0.075, 0.07), 0.0, 0.8),
-        'sock': material('faded_windsock', (0.60, 0.26, 0.07), 0.0, 0.9),
         # the logbook
         'leather': material('worn_leather', (0.15, 0.075, 0.045), 0.0, 0.7),
         'page': material('aged_page', (0.52, 0.44, 0.28), 0.0, 0.92),
@@ -888,35 +883,6 @@ def build_plane_wreck(m):
     for v in joined.data.vertices: v.co.z -= low - 0.02
     return joined
 
-def build_strip(m):
-    rng = random.Random(31)
-    def height(x, y):
-        rut = -0.05 * (math.exp(-((abs(x) - 1.5) / 0.3) ** 2))
-        return rut + noise.noise(Vector((x * 0.22, y * 0.05, 8.0))) * 0.05 + noise.noise(Vector((x * 1.6, y * 0.8, 2.0))) * 0.012
-    ground = grid_surface('strip', m['dirt_dry'], 12.0, 190.0, 12, 190, height)
-    ruts = paint_cells('ruts', m['rut'], lambda x, y: abs(abs(x) - 1.5) < 0.28, -2.2, 2.2, -94.0, 94.0, 0.5, 0.012, 0.35, 12, base=height)
-    parts = [ground, ruts]
-    # Whitewashed cairns every 24 m along both edges, and threshold bars at each end.
-    for i in range(-4, 5):
-        for side in (-1, 1):
-            parts.append(rock(f'cairn{i}{side}', m['whitewash'], (side * 6.3, i * 22.0, 0.15), (0.45, 0.45, 0.4), rng, 0.8, 1))
-    for end in (-1, 1):
-        for k in range(-3, 4):
-            parts.append(box(f'bar{end}{k}', m['whitewash'], (0.35, 3.5, 0.03), (k * 1.2, end * 92.0, 0.02 + height(k * 1.2, end * 92.0))))
-    for n in range(70):
-        sx = rng.choice((-1, 1)) * rng.uniform(2.6, 7.5); sy = rng.uniform(-90, 90)
-        parts.append(rock(f'gravel{n}', m['rust_dark'] if n % 5 == 0 else m['stone'], (sx, sy, 0.05 + height(sx, sy)), (0.16, 0.14, 0.12), rng, 0.7, 1))
-    for n in range(40):
-        sx = rng.choice((-1, 1)) * rng.uniform(5.0, 8.5); sy = rng.uniform(-92, 92)
-        parts.append(rock(f'tuft{n}', m['scrub'], (sx, sy, 0.1), (0.45, 0.45, 0.3), rng, 1.0, 1))
-    # A windsock on a pole at the north end: faded orange cone hanging limp, a tyre at its foot.
-    px, py = 7.5, 70.0
-    parts.append(tube('pole', m['steel_grey'], [(px, py, 0), (px, py, 5.2)], 0.045))
-    parts.append(cyl('sock', m['sock'], 0.32, 1.9, (px + 0.4, py, 4.1), (math.radians(15), math.radians(8), 0), verts=10, r2=0.14))
-    parts.append(tube('sock_ring', m['steel_grey'], [(px, py, 5.1), (px + 0.1, py, 4.95)], 0.03))
-    parts.append(cyl('tyre', m['rubber'], 0.42, 0.28, (px, py, 0.14), verts=12))
-    return join('table-strip', parts)
-
 def build_logbook(m):
     rng = random.Random(2)
     parts = []
@@ -940,8 +906,8 @@ def build_logbook(m):
 
 BUILDERS = {'sign-logging-arrows': build_logging_arrows, 'sign-start-grid': build_start_grid, 'sign-fire-pits': build_fire_pits,
             'sign-chalk-line': build_chalk_line, 'sign-lighthouse-window': build_lighthouse_window, 'table-mesa': build_mesa,
-            'table-lookout': build_lookout, 'table-plane-wreck': build_plane_wreck, 'table-strip': build_strip, 'table-logbook': build_logbook}
-LIMITS = {'table-mesa': 46000, 'table-lookout': 9000, 'table-plane-wreck': 9000, 'table-strip': 12000, 'sign-start-grid': 12000,
+            'table-lookout': build_lookout, 'table-plane-wreck': build_plane_wreck, 'table-logbook': build_logbook}
+LIMITS = {'table-mesa': 46000, 'table-lookout': 9000, 'table-plane-wreck': 9000, 'sign-start-grid': 12000,
           'sign-logging-arrows': 12000, 'sign-chalk-line': 12000, 'sign-fire-pits': 14000, 'sign-lighthouse-window': 6000, 'table-logbook': 1500}
 
 def triangles():
@@ -964,7 +930,7 @@ if options.render:
     folder = (root / options.render).resolve(); folder.mkdir(parents=True, exist_ok=True)
     ground_colour = {'sign-logging-arrows': (0.14, 0.10, 0.065), 'sign-start-grid': (0.075, 0.075, 0.08), 'sign-fire-pits': (0.13, 0.095, 0.05),
                      'sign-chalk-line': (0.17, 0.165, 0.155), 'sign-lighthouse-window': (0.03, 0.06, 0.09), 'table-mesa': (0.40, 0.24, 0.13),
-                     'table-lookout': (0.40, 0.24, 0.13), 'table-plane-wreck': (0.40, 0.24, 0.13), 'table-strip': (0.40, 0.24, 0.13),
+                     'table-lookout': (0.40, 0.24, 0.13), 'table-plane-wreck': (0.40, 0.24, 0.13),
                      'table-logbook': (0.12, 0.08, 0.05)}
     # name: [(view, camera location, look-at, lens)]
     shots = {
@@ -976,14 +942,13 @@ if options.render:
         'table-mesa': [('far', (560, -470, 120), (0, 0, -60), 40), ('butte', (950, -420, -110), (0, 0, -50), 35), ('cliff', (130, -330, -95), (30, -190, -70), 35), ('foot', (-430, -330, -105), (-250, -190, -125), 35)],
         'table-lookout': [('three-quarter', (14, -17, 9), (0, 0, 6.5), 40), ('cab', (1.4, 1.5, 11.6), (-0.7, -0.9, 10.95), 28)],
         'table-plane-wreck': [('three-quarter', (-9, -11, 5), (0, 0, 1), 40), ('side', (11, 0.5, 2.4), (0, 0.5, 1.2), 40), ('tail', (7.0, 5.0, 3.0), (0, 3.9, 2.3), 45), ('gear', (-4.4, -5.0, 1.7), (-1.2, -1.0, 0.4), 40)],
-        'table-strip': [('along', (0, -108, 6), (0, 20, 0), 35), ('windsock', (-2.5, 62, 3.0), (7.5, 70, 3.0), 45)],
         'table-logbook': [('open', (0.1, -0.33, 0.28), (0.0, 0.0, 0.0), 40)],
     }
     for name in selected:
         for (view, loc, target, lens) in shots[name]:
             bpy.ops.wm.open_mainfile(filepath=str(BLEND / f'{name}.blend'))
             scene = bpy.context.scene
-            size = 1500 if name == 'table-mesa' else 160 if name.startswith('sign') or name == 'table-strip' else 40
+            size = 1500 if name == 'table-mesa' else 160 if name.startswith('sign') else 40
             if name not in ('table-mesa',):
                 floor_z = {'table-mesa': -145}.get(name, 0.0)
                 bpy.ops.mesh.primitive_plane_add(size=size, location=(0, 0, floor_z - 0.03 if name != 'table-logbook' else -0.002))

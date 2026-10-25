@@ -1,7 +1,7 @@
 // MAP-VIEW (docs/PILOT_MAP.md section 3), private and memory-only: from the menu's HELIPAD button, open the
 // pilot's map from the dispatch board's Map button, set a destination with a real click, close it with N,
 // open it from the FLY TO panel and close it with Esc,
-// cruise there, see the corner names of an owned course, and fly to the Table (seen in the save). The
+// cruise there, see the corner names of an owned course, and (on a second visit) fly to the Table (seen in the save). The
 // flight is advanced by the fixed-step sim so the wait is not the browser's frame rate. Run:
 //   node tools/browser-harness.mjs scenario map-view
 import {chartFrame} from '../../src/heli/pilot-map-view.js';
@@ -37,6 +37,18 @@ async function advanceUntil(context, condition, seconds, label) {
     for (let i = 0; i < ${Math.round(seconds * 60)}; i++) { if (${condition}) return true; app.advance(1 / 60, 1 / 60); }
     return ${condition}; })()`);
   if (!done) throw Error(`Timed out: ${label}`);
+}
+
+// Fly toward the landing zone by hand (yaw to face it, nose down, hold about 120 m up) until within `metres` of it.
+async function approachZone(context, metres, label) {
+  await advanceUntil(context, `(() => {
+    const v = app.heliView(), h = v.heli, dx = v.zone.x - h.x, dz = v.zone.z - h.z;
+    if (Math.hypot(dx, dz) < ${metres}) { app.keys = {}; return true; }
+    let error = Math.atan2(dx, dz) - h.heading; error = Math.atan2(Math.sin(error), Math.cos(error));
+    const up = h.y - v.zone.y;
+    app.keys = {...(error > .12 ? {KeyD: true} : error < -.12 ? {KeyA: true} : {ArrowUp: Math.abs(error) < .5}),
+      ...(up < 110 ? {KeyW: true} : up > 135 ? {KeyS: true} : {})};
+    return false; })()`, 400, label);
 }
 
 async function cruiseTo(context, place, label) {
@@ -92,6 +104,7 @@ export async function run(context) {
   await cruiseTo(context, 'panorama-ridge', 'Panorama Ridge');
   await advanceUntil(context, `(app.heliView().scout?.corners.length ?? 0) > 0`, 5, 'the corner names of an owned course');
   await context.waitFor(`window.__qaApp.visualReady`, 'Panorama Ridge scene', 120_000);
+  await approachZone(context, 450, 'toward the Panorama Ridge pad');
   await pause(1500);
   await context.screenshot('scouting-panorama');
   await pressKey(context, 'KeyN', 'n');
@@ -100,15 +113,24 @@ export async function run(context) {
   await context.screenshot('map-at-panorama');
   await pressKey(context, 'KeyN', 'n');
 
-  // The Table: seen in the save, so it is a destination; the course last loaded steps aside.
+  // A second visit with a full tank (memory-only save). The Table: seen in the save, so it is a destination, and the
+  // course last loaded steps aside while the helicopter is there.
+  await context.evaluate(`window.__qaApp.returnToMenu()`);
+  await context.waitFor(`window.__qaApp.duel.state.status==='menu' && window.__qaApp.heliSession===null && !window.__qaApp.heliMapOpen`, 'back to the menu', 30_000);
+  await context.evaluate(`(() => { const app = window.__qaApp; app.profile = {...app.profile, heli: {...app.profile.heli, fuelKg: 400}};
+    app._saveProfile(); document.querySelector('#heli-visit').click(); })()`);
+  await context.waitFor(`window.__qaApp.duel.state.status==='heli' && window.__qaApp.visualReady`, 'helipad scene again', 120_000);
   await context.evaluate(`window.__qaApp.keys = {KeyW: true}`);
   await advanceUntil(context, `(() => { const v = app.heliView(); return v.heli.y - v.zone.y > 120; })()`, 120, 'climb to 120 m');
   await context.evaluate(`window.__qaApp.keys = {}`);
   await cruiseTo(context, 'the-table', 'the Table');
-  await context.waitFor(`window.__qaApp.heliView().courseId === 'the-table'`, 'at the Table', 30_000);
-  await pause(2500);
+  await context.waitFor(`window.__qaApp.heliView().courseId === 'the-table' && window.__qaApp.visualReady`, 'at the Table', 30_000);
+  await pause(1500);
   await context.screenshot('table-from-the-air');
-  const table = await context.evaluate(`(() => { const v = window.__qaApp.heliView(); return {course: v.courseId, zone: !!v.zone, secrets: !!v.secrets}; })()`);
+  await approachZone(context, 380, 'toward the Table');
+  await pause(1500);
+  await context.screenshot('table-close');
+  const table = await context.evaluate(`(() => { const v = window.__qaApp.heliView(); return {course: v.courseId, zone: !!v.zone, secrets: !!v.secrets, notice: document.querySelector('.heli-notices')?.textContent ?? ''}; })()`);
   if (table.course !== 'the-table' || !table.zone) throw Error(`The Table should be a place the helicopter can land ${JSON.stringify(table)}`);
   await context.evaluate(`window.__qaApp.returnToMenu()`);
   await context.waitFor(`window.__qaApp.duel.state.status==='menu' && window.__qaApp.heliSession===null && !window.__qaApp.heliMapOpen`, 'back to the menu', 30_000);

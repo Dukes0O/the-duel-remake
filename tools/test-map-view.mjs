@@ -10,7 +10,7 @@ import {createFeatureFlags} from '../src/feature-flags.js';
 import {raceFeatureFlags} from '../src/wasteland-access.js';
 import {keyboardAction, INPUT_CONTEXTS} from '../src/input-contexts.js';
 import {controlsHelp} from '../src/controls-help.js';
-import {instrumentsMarkup, controlsMarkup} from '../src/heli/heli-ui.js';
+import {instrumentsMarkup, controlsMarkup, noticeText} from '../src/heli/heli-ui.js';
 import {dispatchBoardMarkup, handleBoardAction, atAnyPad} from '../src/heli/heli-board.js';
 import {PLACES, FUEL_PADS, PILOT_MAP, placeById} from '../src/heli/pilot-map-data.js';
 import {HELI_CUES} from '../src/heli/heli-audio.js';
@@ -53,6 +53,11 @@ try {
     app._saveProfile();
   };
   const fly = (app, seconds, keys = {}) => { app.keys = keys; for (let i = 0; i < Math.round(seconds * 60); i++) app._simulate(1 / 60); };
+
+  // The notices name the map's places, not their ids.
+  equal(noticeText({type: 'entered', courseId: 'the-table', arrived: true}), 'The Table: the landing zone is ahead', 'the Table is named on arrival');
+  equal(noticeText({type: 'delivered', courseId: 'pacific-canyon'}), 'Delivered to Pacific Canyon Circuit', 'a map place is named in a notice');
+  equal(noticeText({type: 'entered', courseId: 'tremblant-snow'}), 'Tremblant Snow', 'and the old names are unchanged');
 
   // ---- the keys, the help and the cues -------------------------------------------------------------------
   equal(keyboardAction('heli', 'KeyN'), 'heli-map', 'N is the map key in the helicopter');
