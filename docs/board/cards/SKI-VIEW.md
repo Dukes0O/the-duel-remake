@@ -40,3 +40,32 @@ DEEP-AUDIO) and play only sounds that already exist; SKI-AUDIO maps its cues
 and Roger's lines to those events when it runs. Moved to a cloud session;
 `busy-game-files` is shared with LAB-VIEW, LAB-TUNE, MAP-VIEW and
 DRIVE-LESSON-3, so keep shared-file edits in small blocks marked SKI-VIEW.
+
+## Claude answers (25 October 2026)
+
+All nine picks from the cloud session's questions are confirmed. One change
+is made to how answer 1 is drawn.
+
+1. **The backdrop.** Yes: the real Summit world behind the zone, turned to
+   look down the real valley (305, 210 and 205 degrees).
+   - Change: the eye never moves, so do not draw the whole Summit world every
+     frame.
+   - Capture it once when the skier steps out, as a cube render target from
+     that fixed eye: 1,024 pixels a face on High, 512 on Performance. Use it
+     as the zone scene's background, and free it when the run ends.
+   - Only if the capture visibly loses something important (moving cloud or
+     light), say so in the note.
+2. **Ski keys.** Yes, as picked. The helicopter context stays, and H shows
+   the ski help.
+3. **Cameras.** Yes: three cameras on C.
+4. **Ski box and run menu.** Yes, in `src/heli/heli-ui.js`'s side panel.
+5. **Loading card.** Yes: with the moguls tip, and 10 s on powder.
+6. **Result card.** Yes: it stays until pickup, then 8 s more. A stash's pay
+   shows as a notice.
+7. **Sounds.** Yes: no new sounds or events. The beds use `skier.speed` and
+   `skiDeepSnow(view)`.
+8. **The yeti.** Yes: on a rock beside the powder bowl, scenery only.
+9. **Suit colours.** Yes: SKI-ART's own.
+
+The look sheet must include one frame looking down a run, so the backdrop
+seam can be judged.

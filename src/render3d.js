@@ -6,6 +6,7 @@ import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
 // MAP-VIEW: signs, corner names and the Table (drawing only).
 import {createMapWorldView} from './heli/pilot-map-world.js';
+import {createSkiView} from './ski/ski-view.js'; // SKI-VIEW: the ski zone, drawn in a scene of its own
 import {createBurntLook} from './burnt-look.js';
 import {createTrackKits,trackKitsOf} from './track-kits.js';
 import {snowmenEnabled,snowmanPlacements} from './snowmen.js';
@@ -338,6 +339,7 @@ export function attachRenderer(host, app) {
   // A neutral multiplier on the fur alone (the accepted white factor would darken below 1): at night the yeti reads dark
   // grey-green against the snow, and 2.6 lifts it to a pale grey-white while the texture and vertex-colour detail stay.
   const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets,{furTint:new THREE.Color(2.6,2.6,2.6)});scene.add(yetiView.group);
+  const skiView=createSkiView({renderer,yetiAssets}); // SKI-VIEW: shares the yeti's loader
   const roadRoof=createRoadRoofOwner(vehicleAttachments,{yetiAssets});
   const combatScene=createCombatScene(vehicleAttachments, {
     loadFlameTexture: path => new THREE.TextureLoader().load(path),
@@ -639,10 +641,14 @@ export function attachRenderer(host, app) {
     }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const deepPose=!menu?deepPresentation(app.duel):null;
-    const heliPose=st.status==='heli'&&app.heliSession?heliView.update(app.heliView(),{cameraIndex:app.heliCamera,dt}):(heliView.hide(),null);
+    const heliNow=st.status==='heli'&&app.heliSession?app.heliView():null; // SKI-VIEW: one view a frame, for both
+    const heliPose=heliNow?heliView.update(heliNow,{cameraIndex:app.heliCamera,dt}):(heliView.hide(),null);
     // MAP-VIEW: the Table is not on the course last loaded, so that course steps aside while the helicopter is there.
-    const mapDraw=st.status==='heli'&&app.heliSession?mapWorld.update(app.heliView()):(mapWorld.hide(),{hideCourse:false});
+    const mapDraw=heliNow?mapWorld.update(heliNow):(mapWorld.hide(),{hideCourse:false});
     if(world)world.visible=!mapDraw.hideCourse;
+    // SKI-VIEW: on skis the zone's own camera; the Summit world here is captured once as its backdrop.
+    const skiPose=heliPose?skiView.pose(heliNow,{cameraMode:app.skiCamera,dt}):(skiView.reset(),null);
+    host.dataset.skiModels=skiView.status;
     burntLook.apply({course,look:app.fireLookFor?.(course.def.id)??null});burntLook.update(dt);heliView.fire.setQuality(app.ambientOcclusionEnabled!==false?'high':'performance');host.dataset.burntLook=burntLook.statusFor(course.def.id);
     const physicalCourse=deepPose?app.duel.course:course;
     const pp = vehicleGroundPoint(physicalCourse,distance,lateral);
@@ -995,7 +1001,11 @@ export function attachRenderer(host, app) {
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged;
     let submittedCpuMs;
-    if(deepPose&&st.deepJourney.committed&&st.deepJourney.phase!=='ascending'){
+    if(skiPose){
+      const skiRenderStarted=performance.now();
+      skiView.render({view:heliNow,pose:skiPose,mainScene:scene,aspect:camera.aspect,high,seconds:presentationSeconds,dt});
+      rearView.hide();submittedCpuMs=performance.now()-skiRenderStarted;
+    } else if(deepPose&&st.deepJourney.committed&&st.deepJourney.phase!=='ascending'){
       const privateRenderStarted=performance.now();
       deepView.render({duel:app.duel,car:player,camera,seconds:presentationSeconds,high,width:host.clientWidth,height:host.clientHeight});
       if(deepRevision!==deepView.revision){deepRevision=deepView.revision;ambientShading.refresh();sceneRevision++;}
@@ -1087,7 +1097,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();mapWorld.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();mapWorld.dispose();skiView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
