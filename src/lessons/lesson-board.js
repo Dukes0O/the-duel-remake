@@ -1,6 +1,6 @@
 // The instructor's list (docs/DRIVING_LESSONS.md section 2), shared by the
 // helipad and the driving Instructor screen. Plain rows in, the list out:
-// each row is {group, id, name, open, done}. When the rows hold more than
+// each row is {group, id, name, open, done, note}; a shut row says its note (LAB-VIEW) or "Opens later". When the rows hold more than
 // one group, each group gets a heading. Drawing only; the caller owns the
 // panel around it and what its buttons do (`action` names their data
 // attribute, its value is `start:<id>`).
@@ -10,7 +10,7 @@ const row = (item, action) => {
   const state = item.done ? 'done' : item.open ? 'open' : 'locked';
   const button = item.open || item.done
     ? `<button type="button" ${action}="start:${escape(item.id)}">${item.done ? 'Retake' : 'Start'}</button>`
-    : '<small>Opens later</small>';
+    : `<small>${escape(item.note || 'Opens later')}</small>`;
   return `<li class="lesson-board-${state}"><span>${item.done ? '✓ ' : ''}${escape(item.name)}</span>${button}</li>`;
 };
 

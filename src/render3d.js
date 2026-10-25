@@ -518,6 +518,7 @@ export function attachRenderer(host, app) {
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
     if(disposed)return;
+    if(app.labOpen===true){frameMetrics.suspend();previousT=now;return;} // LAB-VIEW: the Lab draws its own room, so this view rests
     if (trackSnapshot) {
       if (['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) {drawTrackSnapshot(now);return;}
       clearTrackSnapshot();
