@@ -44,3 +44,7 @@ On top of steps A and B. The pass lane is measured from the car itself; a lane i
 | Max race time change vs off, 2% | 1.97% PASS | 1.34% PASS | 0.88% PASS |
 
 Report-only: CPU passes 2.2, 11.0, 4.0; slower player passed 12, 20, 11 of 20; nitro leader 13, 0, 0 of 20. Crashes by pass type (in the pass or within 3 s of it): Panorama dive 14 of 229; Woods dive 26, alongside 4, line 2 of 95; Pacific Canyon line 5, alongside 1 of 13. Pacific Canyon went from 1 crash (steps A+B) to 13 in 20 races. The type is off (`PASS_TYPES.alongside = false`); its mirror check and commit point stay in the code and are reused for the types that follow.
+
+## Pass type 2: exit pass with the tow (fa65369b), no effect, switched off
+
+On the straight after a corner a car that left it at least 3 mph faster counts its tow in the closing rate, with the mirror check and commit point. Against the switch-off figures the result matches steps A and B almost exactly (Panorama 15 8+-crash races, mean 11.30, 1 pile-up, nitro leader 12/20; Woods 2, 4.30, 3 pile-ups, 0/20; Pacific Canyon 0, 0.05, 0, 0/20; max race time change 1.97%, 1.14%, 1.38%), so by the gates alone it passes; but no pass or crash was ever tagged `exit` and CPU passes moved only 1.9 -> 1.9, 10.7 -> 10.8, 3.8 -> 3.8, so the condition (straight, still accelerating, tow, 3 mph faster) almost never holds together with the rest of the pass rule. A type with no effect is not a finished feature, so it is off (`PASS_TYPES.exitTow = false`); no retune within its bounded attempt.

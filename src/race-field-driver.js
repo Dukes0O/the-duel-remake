@@ -14,7 +14,7 @@ import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex, nitroLocked } from './race-field.js';
 
 // GP-PASSING-2: pass types that `cpu-racecraft` turns on, one row each; a type that fails its batch stays false.
-export const PASS_TYPES = Object.freeze({alongside: false, exitTow: true});
+export const PASS_TYPES = Object.freeze({alongside: false, exitTow: false, dive: true});
 
 export const CPU_NITRO = Object.freeze({strength:.5, refill:.5});
 export const cpuNitroExtraMph=(r,spec)=>spec.topSpeed*(BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(spec.nitroSpeedBonus??0))*CPU_NITRO.strength;
@@ -391,6 +391,12 @@ export function stepFieldRacer(duel, r, dt) {
     if (!cp || cp === r || cp.knock || now - f.pass.since > 30) { f.pass = null; f.passCool = now + 2; f.passes.timeout++; }
     else if (ds < -(run.halfLength + shell.halfLength + 3.5)) { f.pass = null; f.passCool = now + 1; f.passes.done++; }
     // Commit point: a side-by-side pass must be at least half alongside 60 m before the braking zone, or it backs out.
+    // A dive that is not half alongside 20 m before the turn-in point gives up and brakes to follow.
+    else if (f.racecraft && PASS_TYPES.dive && f.pass.dive && zone && zone.toApex > -10 && zone.toApex < 45 &&
+        run.halfLength + shell.halfLength - Math.abs(ds) < Math.min(run.halfLength, shell.halfLength)) {
+      f.passes.backedOut = (f.passes.backedOut || 0) + 1;
+      f.pass = null; f.passCool = now + 4;
+    }
     else if ((f.pass.type === 'alongside' || f.pass.type === 'exit') && zone && zone.toEntry > -10 && zone.toEntry < 60 &&
         run.halfLength + shell.halfLength - Math.abs(ds) < Math.min(run.halfLength, shell.halfLength)) {
       f.passes.backedOut = (f.passes.backedOut || 0) + 1;
@@ -455,7 +461,12 @@ export function stepFieldRacer(duel, r, dt) {
         Math.abs(c.o.lateral - lane) < run.halfWidth + c.hw + .3);
       if (crowded) f.passes.diveCrowded = (f.passes.diveCrowded || 0) + 1;
       if (Math.abs(lane) > roadLimit - .6) f.passes.diveEdge = (f.passes.diveEdge || 0) + 1;
-      if (Math.abs(lane) <= roadLimit - .6 && !crowded) {
+      // Pass type 3: dive only if, at the closing rate, the diver will be half alongside by the other car's turn-in point.
+      const turnInSec = Math.max(0, zone.toApex - 25) / Math.max(12, mps);
+      const predictedGap = blocker.gap - Math.max(0, r.speedMph - blocker.speed) * MPH * turnInSec;
+      const unsafe = f.racecraft && PASS_TYPES.dive && predictedGap > -Math.min(run.halfLength, blocker.hl);
+      if (unsafe) f.passes.diveUnsafe = (f.passes.diveUnsafe || 0) + 1;
+      if (Math.abs(lane) <= roadLimit - .6 && !crowded && !unsafe) {
         f.pass = { index: blocker.index, side, since: now, bestGap: blocker.gap, bestAt: now, dive: true, ...(f.racecraft ? {type: 'dive'} : {}) };
         f.passes.start++; f.passes.dives++;
         passIntent = lane;
@@ -500,7 +511,7 @@ export function stepFieldRacer(duel, r, dt) {
   // ---- speed ----
   let target = target0;
   if (f.pass && zone && zone.toEntry < 70 && zone.toEntry > -40) {
-    f.lateBrake = Math.min(.12, .02 + .07 * t.aggression);
+    f.lateBrake = Math.min(f.racecraft && PASS_TYPES.dive && f.pass.dive ? .03 : .12, .02 + .07 * t.aggression);
     target *= 1 + f.lateBrake;
   } else f.lateBrake = 0;
   if (f.tow > 0 && onStraight) target *= 1 + FIELD.towTopSpeed * f.tow;
