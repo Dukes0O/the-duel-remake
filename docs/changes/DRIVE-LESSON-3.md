@@ -25,7 +25,7 @@ shows "Opens later" while that switch is off. Lessons 1, 2 and 4 tests are uncha
 
 ## The proof (Casual and Pro, both rows, 60 FPS; seconds against the instructor)
 
-- Changing up at the green mark: Panorama +2.69 (Casual), +2.70 (Pro); Tremblant +1.44, +1.37. Card: at least 0.3.
+- Changing up at the green mark (changing down like the instructor): Panorama +2.61 (Casual), +2.63 (Pro); Tremblant +1.31, +1.28. Card: at least 0.3.
 - One gear too high at the corner: +0.08, +0.03, +0.10, +0.05 (slower, as the card asks; small, since the run ends 60 m past the exit cone).
 - Never changing down: +0.37, +0.30, +0.44, +0.37, 4th or 5th gear at the apex on Panorama, 3rd on Tremblant.
 - The right try repeats the instructor within 0.05 s and passes every rule; a full-pace driver beats him three times; scoring repeats at 30, 60 and 144 FPS.
@@ -34,7 +34,12 @@ shows "Opens later" while that switch is off. Lessons 1, 2 and 4 tests are uncha
 ## Checks (Linux cloud)
 
 - `tools/test-drive-lesson-3.mjs`: 20 of 20 (pure rules, all four instructors and the proof natively).
-- Lessons 1, 2, 4, the helipad, lines and save tests unchanged; lane tier and build: see below.
+- - **One changed assertion, needs Claude's written review on the card:** `tools/test-drive-lesson-2.mjs` asserted that `buildInstructorRun({lessonId: 'gears'})` rejects
+  with `Unknown driving lesson`. Lesson 3 makes `'gears'` a known lesson, so the test now asks for `'brakes'`, which is still unknown. The assertion checks that an unknown lesson id is rejected; it is exactly as strict.
+  Everything else in lessons 1, 2, 4, the helipad, lines and save tests is unchanged.
+- Independent review (one, rule 17): found that changed assertion, a coach line that blamed a crash on "too high a gear" (now silent when the car never reached the cones), a try with no change
+  up passing rule 1 (now needs at least one), a fractional gear accepted (now a TypeError), the early-shift proof driver not changing down (now it does), and test gaps (exact cone landings). All fixed.
+  Left as is: the lesson is stepped on every 120 Hz tick in the native tests (the host steps per frame, with margin: the rule reads 90% against the instructor's 96%), and the apex rule asks 1st gear on the F42.
 
 ## Removed
 

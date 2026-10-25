@@ -79,7 +79,10 @@ export function createDriveLesson(id, {corner, instructor} = {}) {
 
 function checkView(view, dt, lesson) {
   for (const key of ['s', 'lateral', 'speedMph', 'brake', 'throttle', 'tyreSlip']) finite(view[key], key);
-  if (lesson?.id === 'gears') for (const key of ['gear', 'revs']) finite(view[key], key);
+  if (lesson?.id === 'gears') {
+    finite(view.revs, 'revs');
+    if (!Number.isInteger(view.gear) || view.gear < 0) throw new TypeError('Invalid gear');
+  }
   finite(view.world?.x, 'world x');
   finite(view.world?.z, 'world z');
   finite(dt, 'step time');
@@ -165,9 +168,9 @@ function finishAttempt(lesson, reason, cones) {
   // Lesson 1: brake at cone 1, touch the inside cone, power out wide, no long screech.
   // Lesson 2: touch every apex cone, pass the exit cone on the outside half, no long screech.
   const gearsRules = kind === 'gears' ? [
-    // Change up on the lights (90% revs or more), keep off the limiter, leave the corner in no higher a gear than the instructor
+    // Change up (at least once) on the lights (90% revs or more), keep off the limiter, leave the corner in no higher a gear than the instructor
     // (his gear or lower at the apex cone; at the exit cone his gear, or the next one up if the car has changed up since), no long screech.
-    attempt.earlyUpshifts === 0,
+    attempt.upshifts > 0 && attempt.earlyUpshifts === 0,
     attempt.limiterSeconds < .5,
     attempt.apexGear !== null && attempt.apexGear <= lesson.instructor.apexGear && attempt.exitGear !== null && attempt.exitGear <= lesson.instructor.exitGear + 1,
     attempt.screechSeconds < .3,
@@ -233,9 +236,10 @@ function finishAttempt(lesson, reason, cones) {
     const failedRule = rules.findIndex(value => !value);
     const ranOut = reason === 'wall' || reason === 'offroad';
     if (kind === 'gears') {
-      // Early upshifts get the lesson's own instruction again; the gear rule only fails for a gear too high, so "too high" is true.
+      // Early upshifts (or none) get the lesson's own instruction again. The gear rule fails for a gear too high, or for a try that ended before
+      // the cones (nothing true to say then), so "too high" is only said when the car reached both cones.
       const gearsLine = [radioFor(lesson, 'right.start'), radioFor(lesson, 'coach.limiter'),
-        radioFor(lesson, 'coach.down'), line('coach.screech')][failedRule];
+        attempt.apexGear !== null && attempt.exitGear !== null ? radioFor(lesson, 'coach.down') : null, line('coach.screech')][failedRule];
       const radio = gearsLine && coachDue(lesson) ? gearsLine : null;
       if (radio) coachSaid(lesson);
       return {...retry(lesson, radio), cones};
@@ -293,8 +297,8 @@ export function stepDriveLesson(lesson, view, events = {}, dt = 0) {
   const exitS = lesson.instructor.cones.at(-1).s;
   if (inside && view.throttle >= .8 && view.s < exitS) attempt.throttleBeforeExit = true;
   if (inside && lesson.id === 'gears') {
-    // A change up is a higher gear than the step before. The revs it came at are the revs on the dial the step before:
-    // the car's revs are worked out again in the new gear by the end of the step the change happens in.
+    // A change up is a higher gear than the step before. The revs it came at are the revs on the dial the step before (what the
+    // player saw as the key went down): the car's revs are worked out again in the new gear by the end of the step the change happens in.
     if (view.gear > previous.gear) {
       attempt.upshifts++; attempt.upshiftRevs.push(rounded(previous.revs));
       if (previous.revs < GEAR_LESSON.lightsRevs) attempt.earlyUpshifts++;

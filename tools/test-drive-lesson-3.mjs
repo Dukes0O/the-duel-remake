@@ -49,6 +49,7 @@ test('the gearbox lesson needs three cones and the instructor\'s gears, and no b
   const lesson = create(); start(lesson);
   assert.throws(() => stepDriveLesson(lesson, {...view(110), gear: undefined}, {}, .1), TypeError, 'the host reports the gear and the revs');
   assert.throws(() => stepDriveLesson(lesson, {...view(110), revs: NaN}, {}, .1), TypeError);
+  assert.throws(() => stepDriveLesson(lesson, {...view(110), gear: 1.5}, {}, .1), TypeError, 'a gear is a whole number');
 });
 
 test('gearFor puts a speed nearest 75% revs without passing 92%', () => {
@@ -94,10 +95,18 @@ test('try 2 has four rules: changes up on the lights, off the limiter, no higher
     assert.equal(result.result, 'retry', JSON.stringify(options)); assert.equal(result.radio, radio, JSON.stringify(options));
   }
   // The edges: 90% revs counts as the lights, and the limiter has to stay under half a second in all.
-  for (const options of [{upRevs: [.9]}, {upRevs: []}, {limiter: .49}, {screech: .299}, {apexGear: 0, exitGear: 0}, {apexGear: 1, exitGear: 2}])
+  for (const options of [{upRevs: [.9]}, {limiter: .49}, {screech: .299}, {apexGear: 0, exitGear: 0}, {apexGear: 1, exitGear: 2}])
     assert.equal(drive(ready('right'), options).result, 'running', JSON.stringify(options) + ' is still a pass');
-  const twice = ready('right'); drive(twice, {limiter: .3}); // .3 s here ...
-  assert.equal(twice.lastAttempt.limiterSeconds, .3);
+  const brief = ready('right'); drive(brief, {limiter: .3});
+  assert.equal(brief.lastAttempt.limiterSeconds, .3);
+  // No change up at all is not the lesson: rule 1 fails and the lesson says the right way again.
+  const stuck = ready('right'), result = drive(stuck, {upRevs: []});
+  assert.equal(stuck.lastAttempt.rules[0], false); assert.equal(result.radio, 'drive.radio.gears.right.start');
+  // A try that ends before the cones says nothing about the gear it was in.
+  const crashed = ready('right'); start(crashed);
+  shiftUp(crashed, 120, .96);
+  const ended = stepDriveLesson(crashed, view(220), {wallHit: true}, .1);
+  assert.equal(crashed.lastAttempt.rules[2], false); assert.equal(ended.result, 'retry'); assert.equal(ended.radio, null, 'no "too high a gear" for a crash');
 });
 
 test('the limiter is counted across the whole try, and only with the throttle down', () => {
@@ -124,7 +133,12 @@ test('the gears are read as the car crosses the apex cone and the exit cone', ()
   stepDriveLesson(lesson, view(344, {gear: 2}), {}, .1);
   stepDriveLesson(lesson, view(346, {gear: 3}), {}, .1);
   assert.equal(lesson.attempt.apexGear, 2); assert.equal(lesson.attempt.exitGear, 3);
-  assert.equal(create().attempt, null);
+  // Landing exactly on a cone reads the gear once, there; the next step does not read it again.
+  const exact = ready('right'); start(exact);
+  stepDriveLesson(exact, view(300, {gear: 2}), {}, .1);
+  stepDriveLesson(exact, view(345, {gear: 3}), {}, .1);
+  stepDriveLesson(exact, view(380, {gear: 4}), {}, .1);
+  assert.equal(exact.attempt.apexGear, 2); assert.equal(exact.attempt.exitGear, 3);
 });
 
 test('the challenge is three in a row against the instructor\'s time and passes the lesson', () => {
@@ -164,7 +178,7 @@ async function nativeSetup(baseline) {
 }
 
 // A scripted driver in the player's car. 'right' is the instructor's own hands; 'fast' the same at full pace;
-// 'early' changes up as soon as the needle passes the green mark and never changes down; 'high' leaves the
+// 'early' changes up as soon as the needle passes the green mark (and changes down like the instructor); 'high' leaves the
 // corner a gear too high; 'lug' never changes down but changes up on the lights.
 async function nativeAttempt(baseline, lesson, mode, fps) {
   const {duel, pace, made, DRIVE, steerForYaw} = await nativeSetup(baseline);
@@ -192,12 +206,18 @@ async function nativeAttempt(baseline, lesson, mode, fps) {
       while (ticks < frameTicks && lesson.phase === 'driving' && ticks < 120 * 120) {
         const surface = duel._drivingSurface(state.s, state.lateral);
         let controls;
-        if (mode === 'early' || mode === 'lug') {
-          // The instructor's pedals and wheel, with this student's own hands on the gearbox.
+        if (mode === 'early') {
+          // The instructor's hands, except that this student changes up as soon as the needle passes the green mark.
+          const cooling = plan.shifts.cool > 1 / 120;
+          const hands = gearsControls(state, surface, plan);
+          const up = !cooling && !hands.shiftDown && hands.brake === 0 && state.revs >= GEAR_LESSON.greenMarkRevs && state.gear < spec.gears.length - 1;
+          if (up) plan.shifts.cool = GEAR_LESSON.shiftEverySec;
+          controls = {...hands, shiftUp: up};
+        } else if (mode === 'lug') {
+          // The instructor's pedals and wheel, changing up on the lights and never changing down.
           controls = instructorControls(state, surface, {...plan, brakeS: -Infinity, brakeInTurns: true});
           plan.shifts.cool = Math.max(0, plan.shifts.cool - 1 / 120);
-          const at = mode === 'early' ? GEAR_LESSON.greenMarkRevs : GEAR_LESSON.instructorUpRevs;
-          const up = plan.shifts.cool === 0 && controls.brake === 0 && state.revs >= at && state.gear < spec.gears.length - 1;
+          const up = plan.shifts.cool === 0 && controls.brake === 0 && state.revs >= GEAR_LESSON.instructorUpRevs && state.gear < spec.gears.length - 1;
           if (up) plan.shifts.cool = GEAR_LESSON.shiftEverySec;
           controls = {...controls, shiftUp: up, shiftDown: false};
         } else controls = gearsControls(state, surface, plan);
