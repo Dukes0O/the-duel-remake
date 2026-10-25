@@ -20,7 +20,7 @@ const sirena = CARS.falcone_sirena, viper = CARS.viper_proto;
 const ON = {enabled: true};
 
 // The roster as it was on the commit before this card, for "every other car is unchanged".
-const before = execFileSync('git', ['show', '69ab7b6a:src/config.js'], {encoding: 'utf8'})
+const before = execFileSync('git', ['show', 'dfb420c1:src/config.js'], {encoding: 'utf8'})
   .replace(/(from\s+['"])(\.[^'"]+)(['"])/g, (_, from, path, quote) => from + new URL(path, new URL('../src/config.js', import.meta.url)).href + quote);
 const OTHER_CARS = Object.keys(CARS).filter(id => id !== SIRENA_CAR);
 

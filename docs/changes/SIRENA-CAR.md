@@ -43,7 +43,7 @@ Each is a roster or pin that named every car; the Sirena joins as the new last c
 ## Checks (Linux cloud)
 
 - `tools/test-sirena-car.mjs` (9 tests): the numbers against the Viper; every other car, price and list unchanged (the roster
-  of the commit before is compared field by field); the four states; the cup pays 1,000 once and only for a counted finish on
+  of the integration commit this branch was merged with, `dfb420c1`, is compared field by field); the four states; the cup pays 1,000 once and only for a counted finish on
   Pacific Canyon in the Sirena (other car, course, mode, qualifying, abandoned, switch off, not owned, never raised); through the real
   `settleRace`; helicopter air-only, first place and lift; medals and upgrades; the model builds and the car drives slower than the Viper.
 - **Full tier** (`node tools/run-tests.mjs --tier full --jobs 4 --keep-going`, 481 suites) with current `integration/wasteland`
@@ -55,7 +55,12 @@ Each is a roster or pin that named every car; the Sirena joins as the new last c
   `test-p4-kits`, `test-rook-p2-candidate`, `test-rustwall-atlas-isolation`/`-p2`/`-p2-relief`, `test-salt-flats`, `test-salt-flats-art`,
   `test-tanker-valve-source`, `test-vesper-art` (Windows paths, `blender.exe`, the art library), and the Windows-only subtests of
   `test-earned-cars-ui` and `test-medals` (every other subtest passes).
-- `npm run build` and the lane tier: see the end of this note.
+- Lane tier `--changed --jobs 8 --keep-going` on the branch merged with `integration/wasteland` (dfb420c1): 226 of 236 suites pass,
+  including this card's test and the replay and world-signature guards. Ten fail: the laptop-only `test-course-kit`, `test-earned-cars-ui`,
+  `test-full-check`, `test-drive-through`, `test-medals`, `test-salt-flats`, `test-vesper-art`; and `test-drift-trial` and `test-lab-radio`,
+  which fail identically on an untouched checkout of that integration commit (not from this card). `npm run build` passes.
+  `test-sirena-car` failed once there only because its "roster of the commit before" pin pointed at an older commit than the
+  Jesko's re-recorded acceleration; it now names the merged integration commit.
 
 ## Removed
 
