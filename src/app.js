@@ -605,12 +605,8 @@ export class App {
       crewId:this.wastelandUnlocked()?selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')}):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
-<<<<<<< HEAD
-      deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),
-      tune:this._labTuneOf(car), // LAB-TUNE
-=======
       deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),deepSave:this.profile.deep??null,
->>>>>>> origin/integration/wasteland
+      tune:this._labTuneOf(car), // LAB-TUNE
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     this._cupRace=cupRound&&this.duel.state.mode==='grandprix'&&this.duel.state.field?.size===8
       ?{seriesId:cupRun.id,ownerId:this.player.id,runId:this.runId,state:this.duel.state}:null;

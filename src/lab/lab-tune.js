@@ -85,10 +85,10 @@ export function fuelPlan(tune, raceMetres, {grandPrix = false, pitLane = false, 
 // ---- Stock laps and the tuned-lap bonus (section 5.3) -------------------------------------------------------------------
 // The rules a race was latched with, as the stock-lap key names them: the names joined by `+`, in alphabetical order,
 // or '' for none. A state or a record counts as having a rule when it carries that rule's own marker (tyre-slip's
-// `tyreSlipRules`, engine-curve's `engineCurveRules`). A lap is judged only against a stock lap under the same rules.
+// `tyreSlipRules`, engine-curve's `engineCurve`). A lap is judged only against a stock lap under the same rules.
 export function ruleSetOf(source) {
   const names = [];
-  if (source?.engineCurveRules === true) names.push('engine-curve');
+  if (source?.engineCurve === true) names.push('engine-curve');
   if (source?.tyreSlipRules === true) names.push('tyre-slip');
   return names.join('+');
 }

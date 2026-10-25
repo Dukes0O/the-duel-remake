@@ -322,7 +322,7 @@ const POOL = ['tremblant-woods', 'harbour-lights', 'panorama-ridge', 'pacific-ca
   same(otherCar.tuned, {percent: 0, bonus: 0}, 'a car with no stock lap on the course pays nothing');
 
   // Rule sets: a stock lap and a tuned lap are only compared under the same rules.
-  same([ruleSetOf({}), ruleSetOf({tyreSlipRules: true}), ruleSetOf({engineCurveRules: true}), ruleSetOf({tyreSlipRules: true, engineCurveRules: true}), ruleSetOf(null)],
+  same([ruleSetOf({}), ruleSetOf({tyreSlipRules: true}), ruleSetOf({engineCurve: true}), ruleSetOf({tyreSlipRules: true, engineCurve: true}), ruleSetOf(null)],
     ['', 'tyre-slip', 'engine-curve', 'engine-curve+tyre-slip', ''], 'the rule set names');
   const slip = settleTunedLap(stocked, lapOf([80], {}, 'tyre-slip'), {flags: TUNING});
   same(labOf(slip.profile).stockLaps, {[`${CAR}|tremblant-woods`]: 89.9, [stockKey(CAR, 'tremblant-woods', 'tyre-slip')]: 80}, 'a stock lap under tyre-slip is kept apart');
@@ -342,7 +342,7 @@ const POOL = ['tremblant-woods', 'harbour-lights', 'panorama-ridge', 'pacific-ca
     {playerId: 'p1', mode: 'timetrial', car: CAR, eventId: 'nowhere', lapTimes: [60]},
     {playerId: 'p1', mode: 'timetrial', car: CAR, eventId: 'harbour-lights', lapTimes: []},
     {playerId: 'p1', mode: 'timetrial', car: 'no-such-car', eventId: 'harbour-lights', lapTimes: [60]},
-    {playerId: 'p1', mode: 'timetrial', car: CAR, eventId: 'harbour-lights', engineCurveRules: true, lapTimes: [75]},
+    {playerId: 'p1', mode: 'timetrial', car: CAR, eventId: 'harbour-lights', engineCurve: true, lapTimes: [75]},
   ];
   const seeded = seedStockLaps(profile, rows, 'p1', {flags: TUNING});
   same(labOf(seeded).stockLaps, {[`${CAR}|tremblant-woods`]: 90, [stockKey(CAR, 'tremblant-woods', 'tyre-slip')]: 88, [stockKey(CAR, 'harbour-lights', 'engine-curve')]: 75},
