@@ -42,7 +42,6 @@ import {isAirOnlyCar,HOME_COURSE,HELI_DESTINATIONS} from './heli/heli-jobs.js';
 // MAP-VIEW: the pilot's map.
 import {SECRET_IDS} from './heli/map-secrets.js';
 import {CIRCUIT_MANIFESTS} from './circuit-manifests.js';
-import {labOf} from './lab/lab-save.js';
 import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hints.js';
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
