@@ -104,7 +104,8 @@ it idles on the pad while the pilot skis.
 
 ## Checks
 
-- `tools/test-ski-view.mjs` (new), 5 tests, all pass:
+- `tools/test-ski-view.mjs` (new), 5 tests, all pass, after the review fixes and the merge of current
+  integration (LAB-VIEW):
   - the ski keys, keyboard and pad, and the help listing every key of
     section 4;
   - the cameras never under the snow, and the backdrop's eye over each pad
@@ -116,7 +117,8 @@ it idles on the pad while the pilot skis.
     with the same controls, once drawn every tenth of a second. The two runs
     end with the same fingerprint. The skier is drawn where it is, every
     gate and stash is there, and the group and ghost show only when they
-    should;
+    should. The moguls kickers' lips and every piece of netting (both ends
+    and the middle) sit within 0.35 m of the snow;
   - in a memory-only App:
     - the switch reaches the session, and the drop is taken through
       `heliSki`;
@@ -125,8 +127,70 @@ it idles on the pad while the pilot skis.
     - C and H change only the camera and the help, and the session's
       fingerprint is unchanged;
     - W pushes off and D tips the skis right;
+    - the zone scene, the run HUD and the helicopter panel, all drawn from
+      the App's own view for 30 frames, leave the session's fingerprint
+      unchanged;
+    - the backdrop's three valley angles are the real Summit ground's
+      steepest mean fall from each pad;
     - Start again and Leave the run go through the session.
 - Existing suites rerun: `test-heli-mode`, `test-deep-look`,
   `test-heli-hooks`, `test-fire-view`, `test-heli-hook-window`,
   `test-heli-lesson-core`, `test-drive-lesson-helipad`, `test-deep-story`,
   `test-board` and `test-repo-hygiene` all pass.
+
+## Review
+
+One independent review (code). It confirmed four things:
+
+- nothing in the view, the HUD or the panel changes the run, flight or save
+  except through `app.heliSki`;
+- the text is escaped;
+- C and H are caught on skis, and P, Enter, R and the pad's buttons are
+  refused by the session;
+- the existing fake-page test still passes.
+
+It found seven faults, all fixed here:
+
+- **A powder run freed the yeti's shared model.** Its clone shares
+  render3d's roadside yeti resources. These are now kept, not freed with
+  the zone.
+- **Every run leaked its sun's 2048 shadow map.** The light is now disposed
+  when the run ends.
+- **The moguls kickers' timber lips hung about 1.4 m above the snow.** Each
+  kicker is now pitched to the slope and sized by the lip's rise above it.
+- **The netting floated at one end and was buried at the other.** Each
+  piece now runs straight between two snow points and is stretched to the
+  slope. It is shorter where the snow bends (the aerials kicker).
+- **The Lab's wax-run button showed at pads where it can't start.** It now
+  shows only where the slalom starts.
+- **A wax picked without the Wax kit made every normal run refuse.** A wax
+  now goes with a normal run only with the kit, and the pick clears when
+  the menu goes.
+- **In the air, D spun the figure left.** It now spins right, as D turns on
+  the snow.
+
+Taken from its smaller points:
+
+- keys still held at the pickup wait to be let go before they reach the
+  helicopter (W would lift);
+- the capture frame is left out of the frame timing;
+- the zone takes the world's environment light;
+- one helicopter view a frame;
+- C does nothing while paused;
+- `host.dataset.skiModels` reports the models' loading;
+- an unused import removed.
+
+It also found that two checks proved little: the drawing check never used
+the App's own view, and the valley check repeated its own formula. Both now
+test the real thing (above).
+
+Left as is: the narrow seam check on the backdrop (Claude judges the look
+sheet).
+
+## Changed assertions
+
+None. `tools/test-ski-view.mjs` is new.
+
+## Removed
+
+Nothing.
