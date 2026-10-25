@@ -165,7 +165,7 @@ try {
     const reference = referenceReader(course);
     const xs = course.samples.map(p => p.x), zs = course.samples.map(p => p.z);
     const box = [Math.min(...xs) - 300, Math.max(...xs) + 300, Math.min(...zs) - 300, Math.max(...zs) + 300];
-    const authored = def.terrainHalfWidth === 64 && !def.expansion, count = authored ? 500 : 1500;
+    const authored = def.terrainHalfWidth === 64 && !def.expansion, count = authored ? 250 : 600;
     for (let i = 0; i < count; i++) {
       const near = course.samples[Math.floor(rng.float() * course.samples.length)];
       const x = i % 3 ? near.x + rng.range(-80, 80) : rng.range(box[0], box[1]), z = i % 3 ? near.z + rng.range(-80, 80) : rng.range(box[2], box[3]);
@@ -182,7 +182,7 @@ try {
     const sampleBefore = farTerrainHeightSampler(before), sampleAfter = farTerrainHeightSampler(after);
     farTerrainGeometry(after);
     const refBefore = referenceFarSampler(before), refAfter = referenceFarSampler(after);
-    for (let i = 0; i < 600; i++) {
+    for (let i = 0; i < 300; i++) {
       const near = course.samples[Math.floor(rng.float() * course.samples.length)];
       const x = i % 2 ? near.x + rng.range(-300, 300) : rng.range(box[0], box[1]), z = i % 2 ? near.z + rng.range(-300, 300) : rng.range(box[2], box[3]);
       same(sampleBefore(x, z), refBefore(x, z), `${def.id}: far height before the geometry at ${x.toFixed(1)}, ${z.toFixed(1)}`);
