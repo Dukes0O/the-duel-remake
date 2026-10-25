@@ -115,9 +115,12 @@ export function restoreOfferMarkup(offer) {
 // screen can change their words in place without rebuilding the panel.
 export function restoreRunMarkup(view) {
   const stages = ['soak', 'current', 'strip', 'rebuild', 'paint'];
-  const steps = stages.map((id, i) => `<li class="${i < view.index ? 'done' : i === view.index && !view.done ? 'now' : ''}">${escape(['Soak', 'Current', 'Strip', 'Rebuild', 'Paint'][i])}</li>`).join('');
+  const steps = stages.map((id, i) => {
+    const state = i < view.index || view.done ? 'done' : i === view.index ? 'now' : '';
+    return `<li class="${state}"${state === 'now' ? ' aria-current="step"' : ''}>${state === 'done' ? '✓ ' : ''}${escape(['Soak', 'Current', 'Strip', 'Rebuild', 'Paint'][i])}</li>`;
+  }).join('');
   const end = view.done
-    ? `<p class="lab-message">The Sirena is yours. She waits at Pacific Canyon: race the Coast Cup in her.</p><button type="button" data-lab="restore-close">Back to the bench</button>`
+    ? `<p class="lab-message">The Sirena is yours. She waits at Pacific Canyon: race the Coast Cup in her.</p>${view.unsaved ? '<p class="lab-message">This session could not save: the Sirena is yours until the game is closed.</p>' : ''}<button type="button" data-lab="restore-close">Back to the bench</button>`
     : view.skippable ? '<button type="button" data-lab="restore-skip">Skip</button>' : '';
   return `<section class="lab-restore-run" aria-label="Restoring the Sirena"><h3>RESTORING THE SIRENA</h3><ol class="lab-restore-steps">${steps}</ol>` +
     `<p class="lab-restore-label" id="lab-restore-label">${escape(view.label)}</p><div class="lab-restore-bar"><i id="lab-restore-bar" style="width:${Math.round(view.overall * 100)}%"></i></div>` +

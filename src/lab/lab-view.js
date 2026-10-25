@@ -103,7 +103,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   // LAB-RESTORE: the sequence in hand, as the stage object the room and the panel are drawn from.
   const restoreView = () => {
     const run = ui.restore, seconds = Math.min(RESTORE_SECONDS, Math.max(0, now() - run.startedAt));
-    return {...stageAt(seconds), first: run.first, skippable: !run.first};
+    return {...stageAt(seconds), first: run.first, skippable: !run.first, unsaved: app.profileSaved === false};
   };
   function sideMarkup() {
     if (ui.restore) return restoreRunMarkup(restoreView());
@@ -204,6 +204,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   // ---- the Sirena's restoration (LAB-RESTORE) ----
   // The 2,500 and the car go in one saved step at the start, so closing the Lab mid-sequence loses neither.
   function startRestore() {
+    if (ui.restore) return;   // a second press while the sequence runs does nothing (and charges nothing)
     const result = app.labCommit((p, f) => restoreSirena(p, {flags: f}));
     if (!result.ok) { ui.message = result.reason; render(); return; }
     ui = {...ui, message: '', restore: {first: true, startedAt: now(), done: false, index: 0}};

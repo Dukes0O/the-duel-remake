@@ -205,7 +205,9 @@ const isBonnet = (c, n) => Math.abs(c.x) < .50 && c.z > .62 && c.z < 2.02 && c.y
 const isDoor = (c, n) => Math.abs(c.x) > .62 && c.y > .20 && c.y < .78 && c.z > -.82 && c.z < .15 && n.y > -.25 && Math.abs(n.x) > .30;
 const isTub = (c) => Math.abs(c.x) < .60 && c.y > .45 && c.z > -.98 && c.z < .50;
 
-function wreck() {
+// The wreck without its sand: the hull, its weed and its barnacles. Built the same way every time (every seed is fixed), so the
+// wreck below and the hull the Lab's tank holds (LAB-RESTORE) are cut from identical geometry.
+function wreckHull() {
   const shell = sirenaBodyGeometry();
   // The Sirena's own shell, bonnet and doors gone, the tub open to the water.
   const [bonnetSkin, afterBonnet] = subset(shell, isBonnet);
@@ -251,10 +253,22 @@ function wreck() {
   const anchors = [[.30, 1.02, -.52], [-.35, 1.0, -.30], [0, .76, -1.62], [.70, .74, 1.0], [-.68, .72, 1.12], [.40, .50, 2.0], [-.45, .72, -1.2]];
   anchors.forEach(([x, y, z], i) => growth.push(weed(new THREE.Vector3(x, y - .26, z), new THREE.Vector3((i % 2 ? 1 : -1) * .8, .5, .2), .32 + (i % 3) * .12, 60 + i, .06)));
   const crown = barnacles(wreckBody, 71, 300, { minUp: .45, size: .75 });
+  return { wreckBody, growth, crown };
+}
+function wreck() {
+  const { wreckBody, growth, crown } = wreckHull();
   const sand = prepare(sandMound(1.30, 4.0, 81));
   paint(sand, (q, n) => lerpColor(PALETTE.sand, C(0x6b5c42), fbm(q, 4, 83) * .9 + (1 - Math.max(0, n.y)) * .5));
   const merged = combine([wreckBody, ...growth, ...crown, sand]);
   merged.name = 'sirena-wreck';
+  merged.computeBoundingBox();
+  return merged;
+}
+// The hull alone, for the Lab's freshwater tank: no sand, so a restored car does not stand on a sandbank.
+function hullOnly() {
+  const { wreckBody, growth, crown } = wreckHull();
+  const merged = combine([wreckBody, ...growth, ...crown]);
+  merged.name = 'sirena-wreck-hull';
   merged.computeBoundingBox();
   return merged;
 }
@@ -450,7 +464,7 @@ function abalone() {
 // ---------- write ----------
 const material = new THREE.MeshStandardMaterial({ name: 'Sirena crust', vertexColors: true, roughness: .93, metalness: .05 });
 const models = {
-  wreck: wreck, badge, 'steering-wheel': steeringWheel, wheel: wheelPart, bonnet, door, 'lift-bag': liftBag, abalone,
+  wreck: wreck, 'wreck-hull': hullOnly, badge, 'steering-wheel': steeringWheel, wheel: wheelPart, bonnet, door, 'lift-bag': liftBag, abalone,
 };
 const manifest = { formatVersion: 1, source: 'tools/art/sirena-props.mjs', coordinates: 'metres; glTF Y up, +Z forward on the wreck; each loose part rests with its lowest point at y = 0', models: [] };
 let totalBytes = 0;

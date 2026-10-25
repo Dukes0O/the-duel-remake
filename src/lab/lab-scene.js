@@ -48,7 +48,7 @@ export const benchPose = (layout, size) => benchPoses(layout, size)[0];
 // LAB-RESTORE: the freshwater tank for the Sirena stands on the open floor by the hangar door; the camera comes to it.
 export const RESTORE_STAGE = Object.freeze({x: 0, z: 9.4, yaw: Math.PI / 2, tank: Object.freeze([6.2, 1.7, 2.9]),
   camera: Object.freeze({position: [3.2, 3.1, 4.6], target: [0, 0.7, 9.4]})});
-const PRIMER = 0x8d9296, RED = 0x9c1217;
+const PRIMER = 0x8d9296, RED = 0x9c1217, FLOOR = .2;
 export const OVERVIEW = Object.freeze({position: [0, 5.2, 13.5], target: [0, 1.6, -1]});
 
 export function createLabScene({host, manifest, createRenderer = defaultRenderer, load = defaultLoad, createCar = createSirenaVehicle, quality = 'high'}) {
@@ -115,7 +115,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
   })();
 
   // ---- the Sirena's restoration (LAB-RESTORE): tank, wreck, car and bubbles, all driven by one stage object ----
-  const restore = {group: new THREE.Group(), built: false, wreck: null, car: null, livery: [], paint: null, bubbles: [], water: null, state: null};
+  const restore = {group: new THREE.Group(), built: false, wreck: null, hull: null, car: null, livery: [], paint: null, bubbles: [], water: null, state: null, shown: -1};
   restore.group.visible = false;
   scene.add(restore.group);
   function buildRestore() {
@@ -154,7 +154,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
     // The car, in primer to start with; the paint and the white livery are animated on it.
     const car = createCar({color: PRIMER});
     if (car) {
-      car.position.y = .45;
+      car.position.y = FLOOR;   // the car's wheels rest on the tank floor
       car.visible = false;
       restore.car = car;
       restore.paint = car.userData.paint;
@@ -162,10 +162,17 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
       for (const node of restore.livery) { node.material = node.material.clone(); node.material.transparent = true; }
       restore.group.add(car);
     }
-    load('/assets/models/sirena/wreck.glb').then(model => {
+    // The hull alone, with no sand (SIRENA-ART's recipe cuts it from the same wreck): the tank holds a car, not a sandbank.
+    load('/assets/models/sirena/wreck-hull.glb').then(model => {
       if (disposed) { release(model); return; }
-      model.position.y = .2;
-      model.traverse(node => { if (node.isMesh) { node.material = node.material.clone(); node.material.transparent = true; } });
+      model.traverse(node => {
+        if (!node.isMesh) return;
+        node.material = node.material.clone();
+        node.material.transparent = true;
+        const colour = node.geometry.attributes.color;
+        if (colour) restore.hull = {colour, original: Float32Array.from(colour.array), size: colour.itemSize};
+      });
+      model.position.y = FLOOR - new THREE.Box3().setFromObject(model).min.y;
       restore.wreck = model;
       restore.group.add(model);
     }).catch(() => { /* the wreck model missing leaves the tank with the car only */ });
@@ -176,13 +183,29 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
     if (!st) return;
     if (restore.wreck) {
       restore.wreck.visible = st.wreck > .01;
-      restore.wreck.traverse(node => {
-        if (!node.isMesh) return;
-        node.material.opacity = st.wreck;
-        // Rust fades to bare metal as the crust comes off.
-        const bare = 1 - st.rust;
-        node.material.color.setRGB(1 - .22 * bare, 1 - .12 * bare, 1 - .02 * bare);
-      });
+      restore.wreck.traverse(node => { if (node.isMesh) node.material.opacity = st.wreck; });
+      // The crust and the rust colour fade to bare grey metal as the metal is stripped (the vertex colours are lerped, 0 = bare).
+      // (Shown with a square root: the colour is gone from the eye by the half-way point if it fades in a straight line.)
+      const crust = Math.sqrt(st.rust);
+      if (restore.hull && Math.abs(crust - restore.shown) > .004) {
+        restore.shown = crust;
+        const {colour, original, size} = restore.hull, array = colour.array;
+        for (let i = 0; i < colour.count; i++) {
+          const r = original[i * size], g = original[i * size + 1], b = original[i * size + 2];
+          const light = .75 + .5 * (.3 * r + .59 * g + .11 * b);
+          array[i * size] = .60 * light + (r - .60 * light) * crust;
+          array[i * size + 1] = .63 * light + (g - .63 * light) * crust;
+          array[i * size + 2] = .65 * light + (b - .65 * light) * crust;
+        }
+        colour.needsUpdate = true;
+      }
+    }
+    // The water drains once the metal is bare, so the rebuilt car stands on a dry floor.
+    if (restore.water) {
+      const [, height] = RESTORE_STAGE.tank, depth = height - .2, level = Math.max(.001, st.water);
+      restore.water.visible = st.water > .01;
+      restore.water.scale.y = level;
+      restore.water.position.y = FLOOR + depth * level / 2;
     }
     if (restore.car) {
       restore.car.visible = st.car > .01;
@@ -191,7 +214,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
       for (const node of restore.livery) node.material.opacity = st.stripe;
     }
     restore.bubbles.forEach((mesh, i) => {
-      mesh.visible = st.bubbles > 0 && i / restore.bubbles.length < st.bubbles;
+      mesh.visible = st.bubbles > 0 && st.water > .3 && i / restore.bubbles.length < st.bubbles;
       if (!mesh.visible) return;
       const [length, height, width] = RESTORE_STAGE.tank;
       const rise = ((seconds * .45 + i * .137) % 1) * (height - .3);
@@ -297,7 +320,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
       renderer.forceContextLoss?.();
       canvas.remove();
       parts.clear(); models.clear();
-      restore.bubbles.length = 0;
+      restore.bubbles.length = 0; restore.hull = null;
     },
   };
 }

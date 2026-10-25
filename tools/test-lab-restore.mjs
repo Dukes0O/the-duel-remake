@@ -2,7 +2,7 @@
 // sequence as a function of time, and its room (tank, wreck, car, bubbles) released when the Lab closes.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {Group, Object3D, Mesh, BoxGeometry, MeshStandardMaterial} from 'three';
+import {Group, Mesh, BoxGeometry, MeshStandardMaterial, BufferAttribute} from 'three';
 import {RESTORE_PRICE, RESTORE_SECONDS, RESTORE_STAGES, SALT_LEFT, SOAK_WEEKS, restoreOffer, restoreSirena, stageAt} from '../src/lab/restore.js';
 import {createProfile, normalizeProfile, isCarUnlocked, getUpgradeLevels} from '../src/progression.js';
 import {sirenaState, SIRENA_CAR, settleCoastCup} from '../src/deep/sirena-car.js';
@@ -27,6 +27,15 @@ test('the offer shows only for a raised Sirena with the Rust lesson passed and b
   assert.equal(restoreOffer(withDeep(createProfile()), BOTH).state, 'locked', 'waiting, but the Rust lesson is not passed');
   assert.match(restoreOffer(withDeep(createProfile()), BOTH).note, /Rust/);
   assert.equal(restoreOffer(null, BOTH).state, 'hidden');
+  // Review: a Lab field from a newer game is not read (and so never makes the offer throw or pay); a cup without the car is no replay.
+  for (const lab of [{version: 2}, {version: 2, done: {rust: true}}, {version: 1, done: null}, null, 'junk']) {
+    const profile = {...withDeep(createProfile()), credits: 5000, lab};
+    assert.doesNotThrow(() => restoreOffer(profile, BOTH), JSON.stringify(lab));
+    assert.notEqual(restoreOffer(profile, BOTH).state, 'offered', JSON.stringify(lab));
+    assert.equal(restoreSirena(profile, {flags: BOTH}).ok, false);
+    assert.equal(restoreSirena(profile, {flags: BOTH}).profile, profile);
+  }
+  assert.equal(restoreOffer({...waiting(), deep: {version: 1, raised: ['sirena-car'], coastCup: true}}, BOTH).state, 'hidden', 'a won cup with no car on the list offers no replay');
   assert.equal(restoreOffer('x', BOTH).state, 'hidden');
 });
 
@@ -102,19 +111,27 @@ test('the sequence is about a minute in five stages and every reading moves the 
   const first = stageAt(0), last = stageAt(RESTORE_SECONDS);
   assert.equal(first.stage, 'soak'); assert.equal(first.saltShare, 1); assert.equal(first.weeks, 0); assert.equal(first.rust, 1);
   assert.equal(first.wreck, 1); assert.equal(first.car, 0);
+  assert.equal(first.water, 1); assert.equal(last.water, 0);
   assert.equal(last.done, true); assert.equal(last.red, 1); assert.equal(last.stripe, 1); assert.equal(last.car, 1); assert.equal(last.wreck, 0); assert.equal(last.rust, 0);
   assert.ok(Math.abs(last.saltShare - SALT_LEFT) < 1e-9 && last.weeks === SOAK_WEEKS);
   let previous = stageAt(0);
   for (let t = 0.5; t <= RESTORE_SECONDS; t += 0.5) {
     const now = stageAt(t);
     assert.ok(now.overall >= previous.overall && now.weeks >= previous.weeks && now.saltShare <= previous.saltShare + 1e-12, `at ${t}: time, weeks and salt run one way`);
+    assert.ok(now.water <= previous.water + 1e-12, `at ${t}: the tank only drains`);
     assert.ok(now.rust <= previous.rust + 1e-12 && now.car >= previous.car && now.red >= previous.red && now.stripe >= previous.stripe, `at ${t}: rust goes, the car comes`);
-    for (const key of ['overall', 'saltShare', 'rust', 'wreck', 'car', 'red', 'stripe', 'bubbles', 'into']) assert.ok(now[key] >= 0 && now[key] <= 1, `${key} at ${t}`);
+    for (const key of ['overall', 'saltShare', 'rust', 'wreck', 'car', 'red', 'stripe', 'bubbles', 'into', 'water']) assert.ok(now[key] >= 0 && now[key] <= 1, `${key} at ${t}`);
     previous = now;
   }
   assert.equal(stageAt(30).bubbles, 1, 'the current fizzes');
   assert.equal(stageAt(5).bubbles, 0);
   assert.equal(stageAt(57).stripe, 0, 'the red goes on before the white stripe');
+  // The strip must read without its label: the crust is clearly gone between the current's frame and the strip's.
+  assert.ok(stageAt(29).rust - stageAt(40).rust > 0.25, 'the rust colour fades visibly from the current to the strip');
+  assert.ok(stageAt(40).rust < 0.3 && stageAt(44).rust < 0.1, 'the metal is bare by the end of the strip');
+  // The tank drains before the car stands in it, and the red car is never under water.
+  assert.equal(stageAt(44).water, 1); assert.equal(stageAt(50).water, 0);
+  for (let t = 0; t <= RESTORE_SECONDS; t += 0.25) if (stageAt(t).red > 0 || stageAt(t).car > .5) assert.equal(stageAt(t).water, 0, `no car in the water at ${t}`);
   assert.ok(stageAt(57).red > 0.9);
 });
 
@@ -129,6 +146,11 @@ test('the sequence function takes any time: junk, negative or huge', () => {
 test('the run panel names the five steps, the readouts and, for a replay, a Skip', () => {
   const html = restoreRunMarkup({...stageAt(12), first: true, skippable: false});
   for (const word of ['Soak', 'Current', 'Strip', 'Rebuild', 'Paint', 'Salt in the metal', 'week 13 of 26 (fast-forward)', '20%']) assert.ok(html.includes(word), word);
+  assert.ok(html.includes('<li class="now" aria-current="step">Soak</li>'), 'the running step is marked');
+  const later = restoreRunMarkup({...stageAt(40), first: true, skippable: false});
+  assert.ok(later.includes('✓ Soak') && later.includes('✓ Current') && later.includes('class="now" aria-current="step">Strip') && !later.includes('✓ Strip'), 'the finished steps are ticked');
+  assert.ok(restoreRunMarkup({...stageAt(61), first: true, skippable: false}).includes('✓ Paint'), 'all five are ticked at the end');
+  assert.ok(restoreRunMarkup({...stageAt(61), first: true, skippable: false, unsaved: true}).includes('could not save'));
   assert.ok(!html.includes('restore-skip'), 'the first run has no Skip');
   assert.ok(restoreRunMarkup({...stageAt(12), first: false, skippable: true}).includes('data-lab="restore-skip"'));
   const done = restoreRunMarkup({...stageAt(61), first: true, skippable: false});
@@ -187,7 +209,7 @@ test('the tank, wreck, car and bubbles follow the sequence and are all released 
   await scene.ready;
   scene.restore(stageAt(5));
   await new Promise(resolve => setTimeout(resolve, 10));
-  assert.ok(loaded.includes('/assets/models/sirena/wreck.glb'), 'the wreck model is the one SIRENA-ART made');
+  assert.ok(loaded.includes('/assets/models/sirena/wreck-hull.glb') && !loaded.includes('/assets/models/sirena/wreck.glb'), 'the tank holds the hull alone, never the sand mound');
   scene.renderOnce(1000);
   const toward = scene.camera();
   assert.ok(Math.abs(toward.goal[2] - RESTORE_STAGE.camera.position[2]) < 1e-9, 'the camera comes to the tank');
@@ -198,4 +220,32 @@ test('the tank, wreck, car and bubbles follow the sequence and are all released 
   scene.dispose();
   assert.equal(labSceneStats().live, 0);
   assert.equal(win.listeners.size, 0); assert.equal(win.frames.size, 0); assert.equal(host.children.size, 0);
+});
+
+test('the hull\'s rust colour fades to bare grey as it is stripped, and comes back if the sequence is watched again', async () => {
+  const win = fakeWindow(), host = fakeHost(win);
+  const renderer = {setPixelRatio() {}, setSize() {}, render() {}, dispose() {}, forceContextLoss() {}};
+  const hull = new Group(), geometry = new BoxGeometry(1, 1, 1), count = geometry.attributes.position.count;
+  const rusty = new Float32Array(count * 3).map((_, i) => [.55, .22, .12][i % 3]);
+  geometry.setAttribute('color', new BufferAttribute(rusty.slice(), 3));
+  hull.add(new Mesh(geometry, new MeshStandardMaterial({vertexColors: true})));
+  const scene = createLabScene({host, manifest: {models: [], layout: {}}, createRenderer: () => renderer, createCar: fakeCar,
+    load: async path => path.includes('wreck-hull') ? hull : new Group()});
+  await scene.ready;
+  scene.restore(stageAt(1));
+  await new Promise(resolve => setTimeout(resolve, 10));
+  const spread = () => { const c = geometry.attributes.color.array; return Math.abs(c[0] - c[2]); };   // red minus blue: rust is red, bare metal is not
+  scene.renderOnce(10);
+  const rustySpread = spread();
+  scene.restore(stageAt(29)); scene.renderOnce(20);
+  const midSpread = spread();
+  scene.restore(stageAt(40)); scene.renderOnce(30);
+  const stripSpread = spread();
+  scene.restore(stageAt(46)); scene.renderOnce(40);
+  const bareSpread = spread();
+  assert.ok(rustySpread > .35 && midSpread < rustySpread && stripSpread < midSpread && bareSpread < .08, `${rustySpread} > ${midSpread} > ${stripSpread} > ${bareSpread}`);
+  assert.ok(midSpread - stripSpread > .1, 'the strip\'s frame differs from the current\'s without its label');
+  scene.restore(stageAt(1)); scene.renderOnce(50);
+  assert.ok(Math.abs(spread() - rustySpread) < .02, 'a second watch starts rusty again');
+  scene.dispose();
 });

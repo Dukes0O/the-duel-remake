@@ -29,15 +29,23 @@ confirmed all five design picks in writing (on the card, "Claude answers").
   Once restored, the Rust bench offers "Watch the restoration again": free, with Skip, no Brian lines. Escape or the tabs end the view
   at any time; nothing is lost because the car is already the player's.
 - **The room** (`lab-scene.js`): a freshwater tank (steel posts, glass panes, water) on the open floor by the hangar door;
-  SIRENA-ART's `wreck.glb` and `createSirenaVehicle` inside; 70 pooled bubbles on a deterministic path; the camera comes to the tank.
-  Everything is released on dispose with the rest of the room.
+  the wreck's hull alone (`wreck-hull.glb`, below) and `createSirenaVehicle` inside; 70 pooled bubbles on a deterministic path; the
+  camera comes to the tank. The hull's colours fade from crust to bare grey metal over the current and the strip; the water drains
+  in the first half of the rebuild so the car stands dry; the livery fades in after the red. Everything is released on dispose
+  with the rest of the room.
+- **The art recipe** (`tools/art/sirena-props.mjs`, look round 2): the wreck's hull is now built by its own function and the
+  recipe writes a ninth model, `wreck-hull.glb` (the wreck without its sand, 1,299,728 bytes together, limit 1.5 MB).
+  `wreck.glb` is byte for byte unchanged (compared before and after), so the Deep's scene is untouched. Changed assertions in
+  `tools/test-sirena-vehicle.mjs`: the model list gains `wreck-hull` (and "nine" for "eight"), the hull rests anywhere like the
+  wreck, and two new checks (the hull is car-sized with no sand, and is the wreck without its sand). Nothing is loosened. In
+  `tools/test-deep-look.mjs` the import allow-list gains the two new files that read `sirena-car.js` (as the earlier cards did).
 - **Hook**: `src/lab/lab-view.js` and the markup (`lab-markup.js`); `lab-ui.css` for the panel.
 
 ## Tests and gates
 
 After merging current `integration/wasteland` (clean), once:
 
-- `node tools/test-lab-restore.mjs`: 11 tests. Offered only in that state (each switch, not raised, Rust not passed, junk
+- `node tools/test-lab-restore.mjs`: 12 tests. Offered only in that state (each switch, not raised, Rust not passed, junk
   profiles); disabled with the shortfall; **paid once and the car owned after, every other field exactly as it was** (the profile it
   was given is not changed, the cars the player had stay in order, the saved shape reads back through `normalizeProfile`); every
   refusal returns the very same profile; the stale-upgrade rule; the Coast Cup still settles and the replay stays on offer after
@@ -49,8 +57,29 @@ After merging current `integration/wasteland` (clean), once:
   takes exactly 2,500 and puts the car in the garage once at the start; the run has no Skip; Brian's first line shows as a
   caption; the salt readout falls (82% to 12% to 4%); the sequence takes 60 s; Brian's second line; the garage now reads "Restored.
   Race the Coast Cup at Pacific Canyon"; the replay is offered with Skip and charges nothing. 0 errors, 0 warnings.
-- Look sheet: `docs/board/looks/lab-restore/round-1.jpg` (158 KB) and `round-1-review.md`.
+- Look sheet: `docs/board/looks/lab-restore/round-2.jpg` (about 160 KB) and `round-2-review.md` (round 1 was judged "close" with three changes, all made; its sheet was removed).
 - Lane tier `--changed`, `npm run build`: see the end of this note.
+
+## Independent review (one reviewer, money and save; no edits by them)
+
+Probed and held up: paying twice (a double click, `labCommit` twice, two apps on one saved profile, where the stale one re-reads
+storage and is refused, and a tab that earned money elsewhere is charged against its fresh balance); credits of 2,499, 2,499.9,
+exactly 2,500 and 2,500.5, NaN, Infinity, a string, negative, and above the cap (clamped to 1,000,000,000 before the price); a
+refusal always returns the very same profile object; `unlockedCars` not an array or with duplicates; `upgrades` missing or malformed
+(the stale Sirena record is cleared as for any bought car); `deep` malformed; either switch off; an old save with no `lab` or `deep`;
+restoring when already restored or after the Coast Cup is won; a newer-version `lab`, unknown `deep` fields and unknown top-level
+fields survive a save byte for byte (only `credits` and `unlockedCars` change); the garage's `unlockCar` cannot buy the Sirena (no
+second path to a free car); the view (Escape mid-run, Skip, replay, closing the Lab mid-run, the done line once, the clock jumping);
+the room's disposal, including a wreck model that arrives after dispose.
+
+Four low findings, all taken:
+
+- A Lab field from a newer game (no `done`) made `restoreOffer` and `restoreSirena` throw instead of refuse (and the offer showed
+  where every other Lab write refuses). The offer now reads only a version 1 Lab field and guards `done`; tested with five forged
+  shapes (none throws, none is offered, none pays, the profile comes back the same object).
+- An unsaved purchase showed full success. The finished panel now says "This session could not save" when `app.profileSaved` is false.
+- A won Coast Cup with no car on the list (a forged save only) offered a replay that could not run: now nothing shows (tested).
+- A second Restore press while the sequence runs left a stale message: it now does nothing at all.
 
 ## Removed
 
