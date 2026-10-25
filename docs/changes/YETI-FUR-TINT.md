@@ -28,7 +28,7 @@ roughness, lights and emissive values are unchanged.
   race state and profile did not change. `tools/run-browser-scenarios.mjs` keeps it
   out of the daily run (`yeti-fur-tint` beside `rustwall-frame`), with its
   exclusion cases in `tools/test-browser-scenarios.mjs`.
-- `docs/board/looks/yeti/fur-tint-round-1.jpg`: the sheet (66 KB).
+- `docs/board/looks/yeti/round-1.jpg`: the sheet (66 KB).
 
 ## The picture
 

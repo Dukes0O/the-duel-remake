@@ -138,8 +138,8 @@ export async function run(context) {
     })()`);
     const bytes=Buffer.from(sheet,'base64');if(bytes.length>500000)throw Error('Comparison sheet exceeds500KB');
     const directory=join(root,'docs/board/looks/yeti');await mkdir(directory,{recursive:true});
-    const target=join(directory,'fur-tint-round-1.jpg');await writeFile(target,bytes,{flag:'wx'});
-    packet.sheet={file:'docs/board/looks/yeti/fur-tint-round-1.jpg',bytes:bytes.length,sha256:digest(bytes)};
+    const target=join(directory,'round-1.jpg');await writeFile(target,bytes,{flag:'wx'});
+    packet.sheet={file:'docs/board/looks/yeti/round-1.jpg',bytes:bytes.length,sha256:digest(bytes)};
     packet.complete=true;
   } catch(error){packet.error=error.message;throw error;}
   finally {
