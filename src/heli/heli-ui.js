@@ -78,6 +78,10 @@ export function noticeText(event) {
     case 'cannotLift': return event.reason;
     case 'delivered': return `Delivered to ${course(event.courseId)}`;
     case 'hooked': return 'Hooked on';
+    case 'carNotKept': return event.reason;
+    // The pilot's map secrets (MAP-SECRETS): a sign found from the air, Roger's call about the Table, the logbook.
+    case 'secretFound': case 'tableSpotted': return event.text;
+    case 'tableFound': return `${event.text} (${event.pay} credits)`;
     case 'hookRefused': return hookHintText(event);
     case 'entered': return event.arrived ? `${course(event.courseId)}: the landing zone is ahead` : course(event.courseId);
     case 'autopilotOff': return event.reason === 'pilot' ? 'Autopilot off: you have control' : null;
