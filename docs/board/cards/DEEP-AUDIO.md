@@ -94,3 +94,9 @@ real echo time in the `deepSonar` payload), `deep.liftbag` (air rushing into
 a bag for 3 s, then bubbles rising away) and `deep.raised` (a low, slow swell
 of about 4 s as the car breaks free of the sand). Built from recipes like the
 first eight; one listening packet to Claude, at most three rounds.
+
+## Done (Claude, 25 October 2026)
+
+Kyle waived listening passes ("voice isn't something we're really working
+much on, so we'll just release"). The eight cues merged in b635b88b with
+measured loudness and peaks inside the card's limits; the card is done.

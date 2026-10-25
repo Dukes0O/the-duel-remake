@@ -9,6 +9,7 @@ import {formatSpeed} from './speed-format.js';
 import {arenaPauseScreen, arenaResultsScreen, warlordIntroScreen} from './screen-arena.js';
 import {fieldResultsTable, fieldResultsText} from './screen-field.js';
 import {tunedLapLines} from './lab/tune-view.js'; // LAB-TUNE-VIEW
+import {deepHints, DEEP_HINT_IDS} from './deep/deep-hints.js';
 
 export const screenMetric = (label,value,accent=false) => `<div class="result-metric${accent?' accent':''}"><span class="field-label">${label}</span><b>${value}</b></div>`;
 export const screenAction = (label,verb,primary=false,arrow='') => `<button class="${primary?'start-button':'secondary-button'}" data-action="${verb}"><span>${label}</span>${primary?arrow:''}</button>`;
@@ -167,7 +168,18 @@ function modalScreen(s) {
     if (message) grandPrixGhostNotice =
       `<p class="result-bonuses ghost-saved" role="status">${message}</p>`;
   }
-  return `<section class="result-panel${r.grandPrix?' grand-prix-results':''}" role="dialog" aria-modal="true" aria-labelledby="result-title"><p class="eyebrow"><i></i>${eyebrow}</p><h2 id="result-title">${title}</h2><p class="result-description">${description}</p><div class="result-metrics${combatMetrics?' combat-result-summary':''}">${metrics}</div>${combatMetrics}${arenaExtra}${wantedPosterScreen(s,escapeHTML,{warlordCardsEnabled:app._switches?.().enabled('warlord-cards')===true,paint:app._racePaint})}${r.creditCharge?`<p class="result-bonuses">LOSS CHARGE −${credits(r.creditCharge)} CR</p>`:''}${r.policeFineCharge?`<p class="result-bonuses">POLICE FINE FROM RACE EARNINGS −${credits(r.policeFineCharge)} CR</p>`:''}${bonus?`<p class="result-bonuses">${bonus}</p>`:''}${repairs}${tunedLapHtml}${r.milestoneAwards?.length?`<p class="result-bonuses milestone-earned" role="status">${r.milestoneAwards.map(award=>`${escapeHTML(award.name).toUpperCase()} +${credits(award.reward)} CR`).join(" · ")}</p>`:''}${medalResultLines(r,{helicopter:app._switches?.().enabled('helicopter')===true}).map(line=>`<p class="result-bonuses medal-earned" role="status">${escapeHTML(line)}</p>`).join('')}${grandPrixGhostNotice}${r.ghostRecorded?`<p class="result-bonuses ghost-saved">BEST GHOST SAVED${app.ghostSaved===false?' · THIS SESSION ONLY':''}</p>`:''}<div class="result-actions">${actions}</div>${s.paused?'<p class="pause-help">ARROWS TO DRIVE · SPACE TO BOOST · C TO CHANGE CAMERA · H FOR ALL CONTROLS<br>Restarting or leaving forfeits unbanked race earnings. Saved credits are safe.</p>':''}</section>`;
+  return `<section class="result-panel${r.grandPrix?' grand-prix-results':''}" role="dialog" aria-modal="true" aria-labelledby="result-title"><p class="eyebrow"><i></i>${eyebrow}</p><h2 id="result-title">${title}</h2><p class="result-description">${description}</p><div class="result-metrics${combatMetrics?' combat-result-summary':''}">${metrics}</div>${combatMetrics}${arenaExtra}${wantedPosterScreen(s,escapeHTML,{warlordCardsEnabled:app._switches?.().enabled('warlord-cards')===true,paint:app._racePaint})}${r.creditCharge?`<p class="result-bonuses">LOSS CHARGE −${credits(r.creditCharge)} CR</p>`:''}${r.policeFineCharge?`<p class="result-bonuses">POLICE FINE FROM RACE EARNINGS −${credits(r.policeFineCharge)} CR</p>`:''}${bonus?`<p class="result-bonuses">${bonus}</p>`:''}${repairs}${tunedLapHtml}${r.milestoneAwards?.length?`<p class="result-bonuses milestone-earned" role="status">${r.milestoneAwards.map(award=>`${escapeHTML(award.name).toUpperCase()} +${credits(award.reward)} CR`).join(" · ")}</p>`:''}${medalResultLines(r,{helicopter:app._switches?.().enabled('helicopter')===true}).map(line=>`<p class="result-bonuses medal-earned" role="status">${escapeHTML(line)}</p>`).join('')}${deepGarageNotice(app)}${grandPrixGhostNotice}${r.ghostRecorded?`<p class="result-bonuses ghost-saved">BEST GHOST SAVED${app.ghostSaved===false?' · THIS SESSION ONLY':''}</p>`:''}<div class="result-actions">${actions}</div>${s.paused?'<p class="pause-help">ARROWS TO DRIVE · SPACE TO BOOST · C TO CHANGE CAMERA · H FOR ALL CONTROLS<br>Restarting or leaving forfeits unbanked race earnings. Saved credits are safe.</p>':''}</section>`;
 }
   return modalScreen;
+}
+
+// The dive kit appears in the garage after enough Pacific Canyon finishes; the
+// results screen says so until the player has seen the garage tip (Kyle,
+// 25 October 2026: the unlock was not obvious). Reads only; saves nothing.
+export function deepGarageNotice(app) {
+  const snapshot = app.getDeepDiscovery?.();
+  if (!snapshot) return '';
+  const hints = deepHints(snapshot);
+  if (!hints.kitAvailable || hints.kitOwned || snapshot.hintsShown?.includes(DEEP_HINT_IDS[0])) return '';
+  return '<p class="result-bonuses deep-unlock" role="status">NEW IN THE GARAGE · THE DIVE KIT. Open the garage to explore below the old boat ramp.</p>';
 }

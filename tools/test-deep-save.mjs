@@ -28,8 +28,8 @@ for (const file of readdirSync(fixtureDir).filter(name => name.endsWith('.json')
     const storage = storageFor(fixture.storage), before = Object.fromEntries(Object.keys(fixture.storage).map(key => [key, storage.getItem(key)]));
     const players = loadPlayers(storage);
     for (const [key, value] of Object.entries(before)) assert.equal(storage.getItem(key), value);
-    // 09 and 16 are the fixtures that carry a Deep field (16: the Sirena story, DEEP-SIRENA); every other shape must gain none.
-    if (!['09-deep.json', '16-deep-sirena.json'].includes(file)) {
+    // DEEP-EXPLORER: 09, 16 and 22 are the fixtures that carry a Deep field (16: the Sirena story, DEEP-SIRENA); every other shape must gain none.
+    if (!['09-deep.json', '16-deep-sirena.json', '22-deep-chart.json', 'lab-restore-2.json'].includes(file)) {
       assert.equal(JSON.stringify(players), JSON.stringify(previous.loadPlayers(storageFor(fixture.storage))), 'legacy normalized bytes unchanged');
       assert(players.players.every(player => !Object.hasOwn(player.profile, 'deep')));
     } else {
@@ -85,11 +85,11 @@ check('Deep-off settlement preserves all pre-card fields and only adds the prosp
     }
   } finally { Date.now = now; }
 });
-check('Hints appear at five and ten, stop after finding, stay hidden while off or without a player', () => {
+check('Hints appear at three and six, stop after finding, stay hidden while off or without a player', () => {
   for (let count = 0; count <= 10; count++) {
     const snapshot = deepDiscoverySnapshot({deep: {pacificFinishes: count}}, 'qa', true), hints = deepHints(snapshot);
-    assert.equal(hints.hintIds.length, count < 5 ? 0 : count < 10 ? 1 : 2);
-    assert.equal(hints.bubbles, count >= 10); assert.equal(hints.kitAvailable, count >= 5);
+    assert.equal(hints.hintIds.length, count < 3 ? 0 : count < 6 ? 1 : 2);
+    assert.equal(hints.bubbles, count >= 6); assert.equal(hints.kitAvailable, count >= 3);
     for (const off of [{...snapshot, enabled: false}, {...snapshot, playerId: ''}, {...snapshot, found: ['kelp-coast']}]) {
       assert.equal(deepHints(off).garageTip, null); assert.equal(deepHints(off).bubbles, false);
     }
@@ -182,3 +182,17 @@ check('Native App Duel/TT settlements count once; switches, named players and fa
   }
 });
 console.log(`Deep save: ${checks} memory-only acceptance groups passed.`);
+
+// Kyle, 25 October 2026: the results screen says the dive kit is new in the garage.
+{
+  const {deepGarageNotice} = await import('../src/screen-results.js');
+  const appFor = (deep, enabled = true) => ({getDeepDiscovery: () => deepDiscoverySnapshot({deep}, 'qa', enabled)});
+  check('Results screen points to the dive kit until the garage tip is seen', () => {
+    assert.equal(deepGarageNotice(appFor({pacificFinishes: 2})), '');
+    assert.match(deepGarageNotice(appFor({pacificFinishes: 3})), /NEW IN THE GARAGE · THE DIVE KIT/);
+    assert.equal(deepGarageNotice(appFor({pacificFinishes: 3, hintsShown: [DEEP_HINT_IDS[0]]})), '');
+    assert.equal(deepGarageNotice(appFor({pacificFinishes: 7, kit: true})), '');
+    assert.equal(deepGarageNotice(appFor({pacificFinishes: 7}, false)), '');
+    assert.equal(deepGarageNotice({}), '');
+  });
+}

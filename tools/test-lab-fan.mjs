@@ -5,9 +5,10 @@ import {readFile} from 'node:fs/promises';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {CARS} from '../src/config.js';
 import {Duel} from '../src/game.js';
+import {App} from '../src/app.js';
 import {Course} from '../src/course.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
-import {createProfile, normalizeProfile, CAR_PRICES} from '../src/progression.js';
+import {createProfile, normalizeProfile, CAR_PRICES, createPlayerRegistry, loadPlayers, savePlayers, activePlayer} from '../src/progression.js';
 import {createLab, labOf, setTune} from '../src/lab/lab-save.js';
 import {TUNNEL_LESSONS} from '../src/lab/lab-lessons.js';
 import {FAN_CAR, FAN_PRICE, secretOpen, markReverse, buildFan} from '../src/lab/lab-fan.js';
@@ -31,6 +32,8 @@ for (let mask = 0; mask < 32; mask++) {
   const p = {...ready(), lab};
   assert.equal(markReverse(p, ON).ok, mask === 31);
   assert.equal(buildFan(p, ON).ok, false, 'REVERSE must be found first');
+  assert.equal(buildFan({...p, lab: {...lab, secret: {reverse: true}}}, ON).ok, mask === 31,
+    `a saved REVERSE marker cannot bypass missing lessons: subset ${mask}`);
 }
 assert.equal(secretOpen(undefined), false);
 const source = markReverse(ready(), ON).profile;
@@ -44,11 +47,14 @@ assert.equal(buildFan(built.profile, ON).profile, built.profile, 'no second debi
 assert.equal(buyUpgrade(built.profile, 'speirling', ON).profile, built.profile, 'shop cannot charge again');
 assert.deepEqual(buyUpgrade(source, 'speirling', ON).profile, built.profile, 'shop uses the atomic build');
 assert.equal(carAt(built.profile, FAN_CAR), 'tremblant-woods', 'first placed at the home pad');
-for (const credits of [0, 14999, NaN, Infinity, -1, 15000.5, '20000']) {
+for (const credits of [0, 14999, NaN, Infinity, -Infinity, -1, 15000.5, '20000',
+  1_000_000_001, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER + 1]) {
   const p = {...source, credits};
   assert.equal(buildFan(p, ON).profile, p, `invalid/short wallet ${credits}`);
 }
 assert.equal(buildFan({...source, credits: 15000}, ON).profile.credits, 0);
+assert.equal(buildFan({...source, credits: 1_000_000_000}, ON).profile.credits, 999_985_000,
+  'the credit cap is a valid wallet and pays exactly once');
 for (const p of [source, built.profile, createProfile(), {...source, lab: {...source.lab, version: 99}}]) {
   assert.equal(buildFan(p, OFF).profile, p);
   assert.equal(markReverse(p, OFF).profile, p);
@@ -62,6 +68,48 @@ assert.ok(!Object.hasOwn(old, 'lab'));
 assert.ok(normalizeProfile(built.profile).unlockedCars.includes(FAN_CAR), 'owned car survives save normalization');
 assert.ok(!Object.hasOwn(CAR_PRICES, FAN_CAR));
 assert.ok(AIR_ONLY_CARS.includes(FAN_CAR) && !JOB_CARS.includes(FAN_CAR));
+
+// Two menu instances share only this synthetic save, never browser/player storage.
+const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+const memory = new Map();
+Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
+  getItem: key => memory.get(key) ?? null,
+  setItem: (key, value) => memory.set(key, value),
+}});
+try {
+  assert.equal(savePlayers(createPlayerRegistry(source)), true);
+  const tab = () => {
+    const app = Object.create(App.prototype);
+    app.players = loadPlayers(); app.player = activePlayer(app.players); app.profile = app.player.profile;
+    app._switches = () => ON.flags;
+    app.duel = {state: {status: 'menu'}, emit() {}};
+    app._syncHiddenRoadDiscovery = () => {};
+    return app;
+  };
+  const a = tab(), b = tab();
+  const buy = app => app.labCommit((profile, flags) => buyUpgrade(profile, 'speirling', {flags}));
+  assert.equal(buy(a).ok, true);
+  assert.equal(buy(a).ok, false, 'a double call cannot charge twice');
+  assert.equal(buy(b).ok, false, 'the stale second tab refreshes ownership before buying');
+  const saved = activePlayer(loadPlayers()).profile;
+  assert.equal(saved.credits, source.credits - FAN_PRICE);
+  assert.equal(saved.unlockedCars.filter(id => id === FAN_CAR).length, 1);
+  assert.equal(tab().profile.credits, saved.credits, 'reload preserves the single debit');
+  assert.equal(savePlayers(createPlayerRegistry({...source, credits: 14999})), true);
+  assert.equal(buy(b).ok, false, 'a stale tab refreshes a now-short wallet');
+  assert.equal(activePlayer(loadPlayers()).profile.credits, 14999);
+} finally {
+  if (previousStorage) Object.defineProperty(globalThis, 'localStorage', previousStorage);
+  else delete globalThis.localStorage;
+}
+
+for (const enabled of [[], ['lab-tuning'], ['lab'], ['lab', 'lab-tuning']]) {
+  const switches = {enabled: name => enabled.includes(name)};
+  assert.equal(buildFan(source, {flags: switches}).ok, enabled.includes('lab'),
+    'building depends on lab; lab-tuning only controls the optional settings');
+  assert.equal(tuneRows(source, FAN_CAR, switches).length, enabled.length === 2 ? 3 : 0,
+    'tuning settings require both switches');
+}
 
 const fan = CARS[FAN_CAR];
 assert.equal(fan.unlockRequirement, 'lab-built');

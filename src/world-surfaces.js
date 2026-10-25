@@ -1,3 +1,4 @@
+import { rampCoordinates, rampGrade } from './deep/deep-ramp.js'; // DEEP-RAMP-2
 import { computeNormalsFast } from './fast-normals.js';
 import * as THREE from 'three';
 import { terrainStyleAt } from './terrain-style.js';
@@ -118,6 +119,8 @@ function gravelTrap(course, colour, weights) {
 
 export function terrainGeometry(course) {
   if(course.def.practice)return freestyleTerrainGeometry(course);
+  // DEEP-RAMP-2: fit from the untouched source surface, not pre-graded vertices.
+  const naturalCourse = naturalRampTerrain(course);
   const v = [], colors = [], uv = [], weights = [], groups = TERRAIN_THEMES.map(()=>[]);
   // Keep the road extrusion narrower than the tightest bend radius. Wider
   // strips fold back across the road; the outer landscape uses a world grid.
@@ -138,7 +141,7 @@ export function terrainGeometry(course) {
     const style=terrainStyleAt(course,s);base.copy(style.color);const indices=groups[TERRAIN_THEMES.indexOf(course.themeAt(Math.max(0,s-terrainStep)))];
     const rowPoints=new Float32Array(offsets.length*3);
     offsets.forEach((off, j) => {
-      const p = ribbonGroundAt(course,s,off);rowPoints[3*j]=p.x;rowPoints[3*j+1]=p.y;rowPoints[3*j+2]=p.z;const wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
+      const p = ribbonGroundAt(naturalCourse,s,off);rowPoints[3*j]=p.x;rowPoints[3*j+1]=p.y;rowPoints[3*j+2]=p.z;const wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
       v.push(p.x,p.y,p.z); uv.push(p.x/22,p.z/22);weights.push(...style.weights);
       col.copy(base).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(s * .025)); const trap = gravelWeights(course, s, off); fallenLeaves(course, col, s, off, trap ? 1 - trap.trap - trap.meadow * .7 : 1); woodland(course, col, s, off); gravelTrap(course, col, trap); colors.push(col.r, col.g, col.b);
       if (row && j) { const a = row * offsets.length + j; indices.push(a - offsets.length - 1, a - 1, a - offsets.length, a - offsets.length, a - 1, a); }
@@ -146,11 +149,12 @@ export function terrainGeometry(course) {
     seedGroundRow(course,s,offsets,rowPoints);
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); fitMuddyHollowGround(g,course,0); computeNormalsFast(g); return g;
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); fitMuddyHollowGround(g,course,0); fitDeepRampGround(g,course); computeNormalsFast(g); return g;
 }
 
 export function farTerrainGeometry(course) {
   if(course.def.practice)return freestyleFarGeometry(course);
+  const naturalCourse = naturalRampTerrain(course); // DEEP-RAMP-2
   const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion||course.def.terrainHalfWidth===64?16:32;
   const route=course.samples.filter((_,i)=>i%4===0),last=course.samples.at(-1);
   if(route.at(-1)!==last)route.push(last);
@@ -168,14 +172,14 @@ export function farTerrainGeometry(course) {
     const a=route[index-1],b=route[index],dx=b.x-a.x,dz=b.z-a.z,px=x-a.x-t*dx,pz=z-a.z-t*dz;
     const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
     const wave=Math.sin(roadS*.012+off*.017)*Math.cos(roadS*.004-off*.031);
-    const cornerY=(course.farGroundY?course.farGroundY(x,z,roadS,off):course.groundAt(roadS,off).y)-.15;heights[j*columns+i]=cornerY;v.push(x,cornerY,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
+    const cornerY=(course.farGroundY?course.farGroundY(x,z,roadS,off):naturalCourse.groundAt(roadS,off).y)-.15;heights[j*columns+i]=cornerY;v.push(x,cornerY,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
     const style=terrainStyleAt(course,roadS);weights.push(style.weights[0],style.weights[1],style.weights[2]);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));const trap=gravelWeights(course,roadS,off);fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);woodland(course,col,roadS,off);gravelTrap(course,col,trap);colors.push(col.r,col.g,col.b);
     if(i&&j){const a=j*columns+i,k0=a-columns-1,k1=a-1,k2=a-columns;
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
       if(distances[k0]>gap&&distances[k1]>gap&&distances[k2]>gap&&distances[a]>gap)groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(k0,k1,k2,k2,k1,a);
     }
   }
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);computeNormalsFast(g);seedFarTerrain(course,grid,Math.round(minX/grid),Math.round(minZ/grid),columns,rows,heights,distances);return g;
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);fitDeepRampGround(g,course);computeNormalsFast(g);seedFarTerrain(course,grid,Math.round(minX/grid),Math.round(minZ/grid),columns,rows,heights,distances);return g;
 }
 
 // Coarse radial/grid triangles bridge across a narrow wash. Replace only
@@ -399,4 +403,68 @@ export function addTrailShoulder(group,course,side,trailMaterial){
   const alpha=new THREE.DataTexture(pixels,64,1);alpha.channel=1;alpha.needsUpdate=true;alpha.magFilter=alpha.minFilter=THREE.LinearFilter;
   const mat=trailMaterial.clone();mat.transparent=true;mat.depthWrite=false;mat.alphaMap=alpha;
   const mesh=new THREE.Mesh(geo,mat);mesh.receiveShadow=true;group.add(mesh);
+}
+
+// DEEP-RAMP-2: split overlapping triangles at the cutting boundaries, then grade.
+// Vertices outside the cutting retain their source plane and all source attributes.
+function fitDeepRampGround(geometry, course) {
+  const ramp = course.deepRamp;
+  if (!ramp) return;
+  const attributes = Object.entries(geometry.attributes);
+  const arrays = Object.fromEntries(attributes.map(([name, a]) => [name, Array.from(a.array)]));
+  const position = geometry.attributes.position, end = ramp.points.at(-1).horizontal + 6;
+  const source = geometry.index.array, indices = [], groups = [];
+  const vertex = index => ({ index, ...rampCoordinates(ramp, { x: position.getX(index), z: position.getZ(index) }) });
+  const mix = (a, b, t) => {
+    const index = arrays.position.length / 3;
+    for (const [name, attribute] of attributes) for (let k = 0; k < attribute.itemSize; k++) {
+      const values = arrays[name], left = values[a.index * attribute.itemSize + k], right = values[b.index * attribute.itemSize + k];
+      values.push(left + (right - left) * t);
+    }
+    return { index, along: a.along + (b.along - a.along) * t, side: a.side + (b.side - a.side) * t };
+  };
+  const split = (polygon, axis, boundary) => {
+    const halves = [[], []];
+    for (let i = 0; i < polygon.length; i++) {
+      const a = polygon[i], b = polygon[(i + 1) % polygon.length];
+      const da = a[axis] - boundary, db = b[axis] - boundary;
+      if (da <= 0) halves[0].push(a);
+      if (da >= 0) halves[1].push(a);
+      if (da * db < 0) { const crossing = mix(a, b, da / (da - db)); halves[0].push(crossing); halves[1].push(crossing); }
+    }
+    return halves.filter(part => part.length >= 3);
+  };
+  const fitted = new Set();
+  for (const group of geometry.groups) {
+    const start = indices.length;
+    for (let i = group.start; i < group.start + group.count; i += 3) {
+      const triangle = [vertex(source[i]), vertex(source[i+1]), vertex(source[i+2])];
+      if (Math.max(...triangle.map(v => v.along)) < 0 || Math.min(...triangle.map(v => v.along)) > end ||
+          Math.max(...triangle.map(v => v.side)) < -14 || Math.min(...triangle.map(v => v.side)) > 14) {
+        indices.push(...triangle.map(v => v.index)); continue;
+      }
+      let polygons = [triangle];
+      for (const [axis, boundary] of [['along',0],['along',end-6],['along',end],['side',-14],['side',-9],['side',9],['side',14]])
+        polygons = polygons.flatMap(polygon => split(polygon, axis, boundary));
+      for (const polygon of polygons) {
+        for (const v of polygon) fitted.add(v.index);
+        for (let k = 1; k < polygon.length - 1; k++) indices.push(polygon[0].index, polygon[k].index, polygon[k+1].index);
+      }
+    }
+    groups.push({ start, count: indices.length - start, materialIndex: group.materialIndex });
+  }
+  for (const index of fitted) {
+    const a = arrays.position, point = { x: a[index*3], z: a[index*3+2] };
+    a[index*3+1] = rampGrade(ramp, point, a[index*3+1]);
+  }
+  for (const [name, attribute] of attributes) geometry.setAttribute(name,
+    new THREE.BufferAttribute(new attribute.array.constructor(arrays[name]), attribute.itemSize, attribute.normalized));
+  geometry.setIndex(indices); geometry.clearGroups();
+  for (const group of groups) geometry.addGroup(group.start, group.count, group.materialIndex);
+}
+
+// DEEP-RAMP-2: a read-only sampling view; course feature placement and RNG stay owned by Course.
+function naturalRampTerrain(course) {
+  if (!course.deepNaturalGroundAt) return course;
+  return Object.create(course, { groundAt: { value: course.deepNaturalGroundAt } });
 }

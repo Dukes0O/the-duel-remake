@@ -1,3 +1,4 @@
+import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
@@ -333,11 +334,11 @@ export function attachRenderer(host, app) {
     app.holdVisualReadiness?.(readinessOwner);return false;
   }
   const vehicleAssets=createVehicleAssets();
-  function prepareVehicle(key,{retry=false}={}) {
+  function prepareVehicle(key,{retry=false,finish}={}) {
     if(disposed)return false;
-    let status=vehicleAssets.status(key);
-    if(status==='idle'||status==='error'&&retry){vehicleAssets.load(key,{retry});status=vehicleAssets.status(key);}
-    host.dataset.vehicleKey=key;host.dataset.vehicleAsset=status;host.dataset.heroAsset=status;
+    let status=vehicleAssets.status(key,{finish});
+    if(status==='idle'||status==='error'&&retry){vehicleAssets.load(key,{retry,finish});status=vehicleAssets.status(key,{finish});}
+    host.dataset.vehicleKey=key;host.dataset.vehicleFinish=finish??'factory';host.dataset.vehicleAsset=status;host.dataset.heroAsset=status;
     host.dataset.vehicleSource=vehicleAssets.source(key)||'unknown';
     if(status!=='ready'){
       // Hide the previous selection; a loading model must not show an old body.
@@ -573,7 +574,9 @@ export function attachRenderer(host, app) {
     updateCoach(next,st);updateDriveLesson(next,st);
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
-    if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    const selectedFinish=app.getPaintPreset?.(carKey,{menu})?.id;
+    const modelFinish=carKey==='falcone_sirena'&&app._switches?.().enabled('lab')===true&&selectedFinish==='sea-wreck'?'sea-wreck':null;
+    if(!prepareVehicle(carKey,{finish:modelFinish})){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!prepareKitWorld(next)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedRoof=app.getRoofLook?.(carKey,{menu})??null;
     const needsYeti=((next.def.id==='summit-run'||isSummitAttack(next.def))&&(app._switches?.()??app.duel.featureFlags).enabled('yeti')&&
@@ -596,13 +599,13 @@ export function attachRenderer(host, app) {
       ready = false;
     }
     if (menu !== lastMenu) { ready = false; lastMenu = menu; }
-    if (carKey !== loadedCar) {
+    if (carKey !== loadedCar || player?.userData.finish !== (modelFinish ?? undefined)) {
       if(ghost){const style=ghostStyle;retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;}
       if (player) {roadRoof.detachVehicle(player);retireObject(player);}
       if(rival){retireObject(rival);rival=null;}
       for(const entry of extraOpponents)retireObject(entry.mesh, () => entry.droneStyle?.restore());
       extraOpponents.length=0;
-      player = vehicleAssets.create(carKey);
+      player = vehicleAssets.create(carKey,{finish:modelFinish});
       scene.add(player); loadedCar = carKey;sceneRevision++;
       ambientShading.refresh();
     }
@@ -804,6 +807,13 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(deepPose){camTarget.set(deepPose.camera.position.x,deepPose.camera.position.y,deepPose.camera.position.z);lookTarget.set(deepPose.camera.target.x,deepPose.camera.target.y,deepPose.camera.target.z);player.visible=true;firstPersonView=false;}
+    // DEEP-RAMP-2: override only while on the ramp; leave the dive camera intact below it.
+    const rampCamera=!menu?rampChaseCamera(app.duel):null;
+    if(rampCamera){const p=rampCamera,b=p.blend;
+      camTarget.lerp(new THREE.Vector3(p.position.x,p.position.y,p.position.z),b);
+      lookTarget.lerp(new THREE.Vector3(p.target.x,p.target.y,p.target.z),b);
+      camera.fov=THREE.MathUtils.lerp(camera.fov,p.fov,b);player.visible=true;firstPersonView=false;
+    }
     if(heliPose?.camera){camTarget.set(heliPose.camera.position.x,heliPose.camera.position.y,heliPose.camera.position.z);lookTarget.set(heliPose.camera.target.x,heliPose.camera.target.y,heliPose.camera.target.z);camera.fov=heliPose.camera.fov;firstPersonView=false;}
     const yardHomePose=yardPresentation?.homeCamera?.();
     if(yardHomePose){
@@ -814,21 +824,21 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
-    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose) camera.position.copy(camTarget);
+    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose || rampCamera) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
       // Follow longitudinal motion immediately: world-space damping otherwise
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
+    if(!menu&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
-    if(!menu&&!deepPose&&!heliPose)constrainMountainCamera(course,camera.position,distance);
-    if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
+    if(!menu&&!deepPose&&!heliPose&&!rampCamera)constrainMountainCamera(course,camera.position,distance);
+    if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
       camera.position.copy(clearCameraSightline(course,camera.position,
         {x:player.position.x,y:player.position.y+(tall?1.65:1.05),z:player.position.z},distance));
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
-    if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&
+    if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
         !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){
       camera.updateMatrixWorld();
       cameraBodyTarget.copy(player.position);cameraBodyTarget.y+=tall?1.65:1.05;
@@ -1111,7 +1121,7 @@ export function attachRenderer(host, app) {
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
   return { prepareVehicle, captureTrackSnapshot, clearTrackSnapshot,
-    retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); },
+    retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true,finish:app._switches?.().enabled('lab')===true?app.getPaintPreset?.(host.dataset.vehicleKey)?.id:null}); },
     retryTrackKits() {const next=app.duel.state.status==='menu'?app.getMenuCourse(app.menuStage||0):app.duel.course;return prepareKitWorld(next,{retry:true});},
     projectFootAim() {
       const state=app.duel.state;

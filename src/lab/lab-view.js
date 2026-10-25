@@ -5,7 +5,8 @@
 import {boardRows, openBench, setControl, runBench, goalMet, readoutRows, challengeState, passIn, buyIn, ringIn, cableIn,
   shopRows, choiceRows, lessonName, lineId, lineText, CHALLENGE_KIND, challengeKindOf} from './lab-model.js';
 import {headerMarkup, boardMarkup, benchMarkup, shopMarkup, captionMarkup, gforceStripMarkup, restoreOfferMarkup, restoreRunMarkup, restoreSaltText, restoreWeeksText} from './lab-markup.js';
-import {restoreOffer, restoreSirena, stageAt, RESTORE_SECONDS} from './restore.js';
+import {restoreOffer, restoreSirena, restoreStageAt, RUNNING_SECONDS, BODY_SECONDS} from './restore.js';
+import {getPaintState} from '../paint-presets.js';
 import {checkProtections} from './lab-workshop.js';
 import {labOf} from './lab-save.js';
 import {LAB_LINES} from './lab-lines.js';
@@ -102,8 +103,8 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   };
   // LAB-RESTORE: the sequence in hand, as the stage object the room and the panel are drawn from.
   const restoreView = () => {
-    const run = ui.restore, seconds = Math.min(RESTORE_SECONDS, Math.max(0, now() - run.startedAt));
-    return {...stageAt(seconds), first: run.first, skippable: !run.first, unsaved: app.profileSaved === false};
+    const run = ui.restore, seconds = Math.min(run.kind === 'body' ? BODY_SECONDS : RUNNING_SECONDS, Math.max(0, now() - run.startedAt));
+    return {...restoreStageAt(seconds, run.kind), first: run.first, skippable: !run.first, unsaved: app.profileSaved === false};
   };
   function sideMarkup() {
     if (ui.restore) return restoreRunMarkup(restoreView());
@@ -204,19 +205,20 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     }
   }
   // ---- the Sirena's restoration (LAB-RESTORE) ----
-  // The 2,500 and the car go in one saved step at the start, so closing the Lab mid-sequence loses neither.
+  // The 1,000 and the car go in one saved step at the start, so closing the Lab mid-sequence loses neither.
   function startRestore() {
     if (ui.restore) return;   // a second press while the sequence runs does nothing (and charges nothing)
     const result = app.labCommit((p, f) => restoreSirena(p, {flags: f}));
     if (!result.ok) { ui.message = result.reason; render(); return; }
-    ui = {...ui, message: '', restore: {first: true, startedAt: now(), done: false, index: 0}};
+    ui = {...ui, message: '', restore: {kind: 'running', first: true, startedAt: now(), done: false, index: 0}};
     bing('lab.fizz');
     say('restore', 'start');
     render();
   }
   function watchAgain() {
     if (restoreOffer(profile(), flags()).state !== 'again') return;
-    ui = {...ui, message: '', restore: {first: false, startedAt: now(), done: false, index: 0}};
+    const kind = getPaintState(profile(), 'falcone_sirena', {labEnabled:true, deepEnabled:true}).selected === 'restored-1966' ? 'body' : 'running';
+    ui = {...ui, message: '', restore: {kind, first: false, startedAt: now(), done: false, index: kind === 'body' ? 3 : 0}};
     bing('lab.fizz');
     render();
   }
@@ -232,7 +234,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     keeper.scene?.restore(view);
     if (view.done && !run.done) {
       run.done = true;
-      if (run.first) say('restore', 'done');
+      if (run.first && run.kind === 'body') say('restore', 'done');
       lastSide = ''; render();
       return;
     }
@@ -285,7 +287,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       case 'protect-check': checkProtect(); break;
       case 'restore': startRestore(); break;
       case 'restore-again': watchAgain(); break;
-      case 'restore-skip': if (ui.restore && !ui.restore.first) ui.restore.startedAt = now() - RESTORE_SECONDS; break;
+      case 'restore-skip': if (ui.restore && !ui.restore.first) ui.restore.startedAt = now() - (ui.restore.kind === 'body' ? BODY_SECONDS : RUNNING_SECONDS); break;
       case 'restore-close': endRestore(); break;
       default: break;
     }
@@ -344,7 +346,12 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   }
 
   function onOpen() {
-    ui = freshState(); caption = null; lastSide = lastTop = lastCaption = '';
+    ui = freshState();
+    if (app._labRestoreBody === true) {
+      app._labRestoreBody = false;
+      ui.restore = {kind: 'body', first: true, startedAt: now(), done: false, index: 3};
+    }
+    caption = null; lastSide = lastTop = lastCaption = '';
     doc.addEventListener('keydown', onKey);
     render();
     startScene();

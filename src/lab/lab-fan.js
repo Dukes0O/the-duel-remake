@@ -17,7 +17,7 @@ export function buildFan(profile, {flags} = {}) {
   if (!secretOpen(lab) || lab.secret.reverse !== true) return refuse('There is nothing to build yet.');
   const cars = Array.isArray(profile.unlockedCars) ? profile.unlockedCars : [];
   if (cars.includes(FAN_CAR)) return refuse('The Spéirling is already yours.');
-  if (!Number.isSafeInteger(profile.credits) || profile.credits < FAN_PRICE)
+  if (!Number.isSafeInteger(profile.credits) || profile.credits < FAN_PRICE || profile.credits > 1_000_000_000)
     return refuse('You need 15,000 credits to build the Spéirling.');
   return {ok: true, reason: '', price: FAN_PRICE, profile: {...profile,
     credits: profile.credits - FAN_PRICE,

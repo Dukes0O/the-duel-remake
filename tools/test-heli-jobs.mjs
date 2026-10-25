@@ -11,7 +11,7 @@ import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {liftCheck} from '../src/heli/heli-cable.js';
 import {heliOf, carAt, heliHash, notePlayDay, missionsOf, normalizeHeli, createHeli, createMissions, WRECK_DAYS} from '../src/heli/heli-save.js';
 import {HELI_RADIO_LINES} from '../src/heli/heli-radio-lines.js';
-import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, dayJobs, jobPay, jobTitle,
+import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, isAirOnlyCar, airOnlyNote, dayJobs, jobPay, jobTitle,
   SUMMIT_RUN, HELI_DESTINATIONS_WITH_SUMMIT, destinationsFor, legFuelKg, bearing, isDestination,
   RECOVERY, wreckFor, recoveryJob, recoveryTitle, recoveryJobOf, finishRecovery} from '../src/heli/heli-jobs.js';
 import {createHeliSession} from '../src/heli/heli-session.js';
@@ -94,6 +94,8 @@ function newSession({profile = profileWith(), carId = 'falcone_f42', mode = 'ass
   ok(JOB_CARS.length >= 3 && JOB_CARS.every(id => liftCheck(id).ok), 'customers ask only for cars the helicopter can lift');
   ok(!JOB_CARS.some(id => AIR_ONLY_CARS.includes(id)), 'a customer\'s car is never a special car');
   ok(!JOB_CARS.includes('koenigsegg_jesko') && !JOB_CARS.includes('banshee_muscle') && !JOB_CARS.includes('titan_monster'), 'not the Jesko, Banshee or Titan');
+  ok(!isAirOnlyCar('koenigsegg_jesko'), 'the Jesko is no longer air-only');
+  same(airOnlyNote({enabled: true, profile: {heli: {version: 1, carsAt: {koenigsegg_jesko: 'panorama-ridge'}}}, carId: 'koenigsegg_jesko', courseId: 'tremblant-snow'}), null, 'old saved Jesko positions do not close START');
   same(dayJobs(7), dayJobs(7), 'same day, same jobs');
   const seen = new Set();
   for (let day = 0; day < 60; day++) {

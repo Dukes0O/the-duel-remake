@@ -5,6 +5,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { CARS } from '../src/config.js';
 import { createVehicleAssets } from '../src/vehicle-assets.js';
 import { loadHeroVehicle } from '../src/hero-vehicle.js';
+import {createSirenaWreck} from '../src/sirena-wreck-vehicle.js';
+import {updateVehicleDamage} from '../src/vehicles.js';
 import { App } from '../src/app.js';
 import { disposeTree } from '../src/world.js';
 
@@ -91,3 +93,45 @@ same(shown.size,0,'Pending showroom selection hides its previous body');same(rev
 showroomWait.resolve(true);await Promise.all([showOld,showMiddle,showCurrent]);
 same(shown.size,1,'Only the latest showroom selection is installed');same(review.vehicle.key,'falcone_heritage');same(showroomCreates,2,'Stale requests do not construct duplicate models');
 console.log(`Vehicle asset routing: ${checks} synchronous model, shared import, no-placeholder, retry and loading-clock checks passed.`);
+
+// Read the runtime GLB geometry and hierarchy, omitting only image decoding
+// in this graphics-free check. The scenario checks its embedded textures.
+const wreckBytes = await readFile(new URL('../public/assets/models/sirena/sea-wreck.glb',import.meta.url));
+const jsonLength = wreckBytes.readUInt32LE(12);
+const gltf = JSON.parse(wreckBytes.subarray(20,20+jsonLength));
+const binStart = 20+jsonLength+8;
+gltf.buffers[0].uri = 'data:application/octet-stream;base64,'+wreckBytes.subarray(binStart).toString('base64');
+function omitImages(value) {
+  if(!value||typeof value!=='object')return;
+  for(const key of Object.keys(value)) {
+    if(key.endsWith('Texture'))delete value[key];else omitImages(value[key]);
+  }
+}
+omitImages(gltf); delete gltf.images; delete gltf.textures;
+globalThis.ProgressEvent ??= class {constructor(type,values){Object.assign(this,{type},values);}};
+const wreckSource = (await new GLTFLoader().parseAsync(JSON.stringify(gltf),'')).scene;
+const wreckAssets = createVehicleAssets({loadWreck:async()=>()=>createSirenaWreck(wreckSource)});
+const wreckOptions={finish:'sea-wreck'};
+same(wreckAssets.status('falcone_sirena',wreckOptions),'idle');
+same(wreckAssets.create('falcone_sirena',wreckOptions),null,'no clean placeholder while crust loads');
+check(await wreckAssets.load('falcone_sirena',wreckOptions),'authored wreck loads');
+const crust=wreckAssets.create('falcone_sirena',wreckOptions),crust2=wreckAssets.create('falcone_sirena',wreckOptions);
+same(crust.userData.finish,'sea-wreck');same(crust.userData.wheels.length,4);same(crust.userData.wheelPivots.length,4);
+check(crust.userData.driver?.isGroup,'ordinary animated driver attached');
+check(crust.userData.steeringPivot?.isObject3D,'steering wheel animation reference restored');
+check(crust.userData.boostFlames.length===2&&crust.userData.brakeLights.length>0,'nitro and brake-light hooks restored');
+check(crust.userData.damageMeshes.length>0&&crust.userData.damagePrepared,'damage contract restored');
+check(crust.userData.paint!==crust2.userData.paint,'wreck instances have independent paint');
+for(let i=0;i<4;i++) {
+  const spin=crust.userData.wheels[i],pivot=crust.userData.wheelPivots[i];
+  same(spin.parent,pivot,'spin remains inside its steer group');
+  check(pivot.userData.restPosition.isVector3&&pivot.userData.radius>0,'wheel has runtime rest/radius');
+  spin.rotation.x+=1; if(pivot.userData.front)pivot.rotation.y=.2;
+  same(spin.rotation.x,1,'the authored wheel spins');
+}
+const original=crust.userData.damageMeshes[0].mesh.geometry.attributes.position.array.slice();
+updateVehicleDamage(crust,2,false,0,{front:2,rear:0,left:0,right:0});
+updateVehicleDamage(crust,0,false,0,{front:0,rear:0,left:0,right:0});
+same(crust.userData.damageMeshes[0].mesh.geometry.attributes.position.array,original,'repair restores geometry without removing crust');
+for(const vehicle of [crust,crust2,wreckSource])disposeTree(vehicle);
+console.log(`Sea wreck: runtime GLB wheel, driver, lamps, damage and independent instance checks passed (${checks} total).`);

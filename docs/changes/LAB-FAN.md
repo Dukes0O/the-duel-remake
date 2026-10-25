@@ -48,3 +48,9 @@ Claude still needs to write the assertion review on LAB-FAN. Eight-car frames wa
 ## Removed
 
 Replaced the shop-only fan ownership path with the atomic credit-and-car transition. No asset or earlier behavior removed. No replay fingerprints regenerated.
+
+## Integration refresh (25 October 2026)
+
+Fetched and merged origin/integration/wasteland at 864373c6 into this lane. Resolved heli-jobs and both earned-car inventories with the Jesko free and the Speirling air-only. The vehicle router keeps both async GLB paths: the accepted Speirling and the newer Sirena sea-wreck finish. No code-built Speirling body is restored. STATUS will be regenerated at session end.
+
+Preserved additional acceptance coverage supplied in the lane during this refresh: synthetic two-tab App.labCommit calls, all four lab/lab-tuning switch combinations, forged REVERSE with missing lessons, and wallet limits. The build rule now refuses wallets above the existing one-billion credit cap rather than accepting forged extra credits. No valid wallet is clamped or lost. Repeated builds return the same profile. Fresh checks and a separate independent review follow below.

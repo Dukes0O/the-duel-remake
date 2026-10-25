@@ -1540,3 +1540,14 @@ and policy into CIRCUITS section 7b. Use that layout once it lands.
 
 Renderer changes wait for Track Script, then Day/Night, then Dossier.
 Day/Night and Dossier remain waiting on that shared renderer dependency.
+
+## Kyle, 25 October 2026
+
+- Voice lines ship without Kyle listening first. Voice is not a focus; a
+  green release does not wait on a listening pass.
+- Racecraft preview: the acceleration and nitro changes are right. The field
+  still files into one lane off the start, which Kyle expected fixed:
+  GP-WIDE-START goes ahead now on its 24 October design.
+- The Koenigsegg Jesko races on every course and in every mode again (Kyle,
+  25 October 2026: Gratian could no longer use it). It leaves the air-only
+  list; the medal cars and the restored Sirena keep the fly-it-there rule.

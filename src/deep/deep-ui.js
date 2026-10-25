@@ -52,14 +52,14 @@ export function createDeepView({renderer,createUnderwaterScene,createWaterline,c
         look.attachCar(car);scene.add(car);
         const ambient=createAmbientShading(scene,viewCamera),pipeline=createPipeline(scene,viewCamera,ambient,high);
         // DEEP-SIRENA-VIEW: what the story adds to the dive (the wreck, parts, bags and the drop).
-        const extras=createExtras?.({scene,zone:runtime.zone,deep:look,rampHeading:runtime.ramp.heading})??null;
+        const extras=createExtras?.({scene,zone:runtime.zone,deep:look,rampHeading:runtime.ramp.diveHeading??runtime.ramp.heading /* DEEP-RAMP-2: preserve the offshore drop-off orientation */})??null;
         ambient.refresh();visit={runtime,car,high,scene,camera:viewCamera,look,ambient,pipeline,parent,position,quaternion,scale,visible,extras,seconds};revision++;
       }
       const pose=surfaceLocalPoint(deepWorldPose(duel));
       visit.camera.copy(local);visit.camera.updateMatrixWorld(true);
       const visual=surfaceLocalPoint(car.position);
       car.position.set(visual.x,visual.y,visual.z);
-      visit.look.update({car:pose,camera:visit.camera,seconds});
+      visit.look.update({car:pose,camera:visit.camera,seconds,lifeState:duel.deepStory?.life}); // DEEP-EXPLORER
       visit.extras?.update({duel,seconds,dt:Math.max(0,Math.min(.1,seconds-visit.seconds))});visit.seconds=seconds;
       visit.ambient.enabled=high;
       const ratio=renderer.getPixelRatio?.()??1;

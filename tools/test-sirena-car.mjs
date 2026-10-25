@@ -70,7 +70,7 @@ test('lists, the shop, the medal ladder and the day\'s jobs are exactly what the
   }
   assert.ok(!MEDAL_CARS.includes(SIRENA_CAR), 'not a medal car');
   assert.ok(!JOB_CARS.includes(SIRENA_CAR), 'never a customer\'s car, so the day\'s jobs are the same');
-  assert.deepEqual(JOB_CARS, OTHER_CARS.filter(id => liftCheck(id).ok && !isAirOnlyCar(id)));
+  assert.deepEqual(JOB_CARS, OTHER_CARS.filter(id => liftCheck(id).ok && !isAirOnlyCar(id) && id !== 'koenigsegg_jesko'));
   assert.equal(isCarUnlocked(createProfile(), SIRENA_CAR), false, 'nobody owns it at the start');
   assert.equal(normalizeProfile({...createProfile(), unlockedCars: ['falcone_f42', SIRENA_CAR]}).unlockedCars.includes(SIRENA_CAR), true, 'and a save that has it keeps it');
 });
@@ -136,7 +136,9 @@ test('helicopter: the Sirena is air-only, first set down at Pacific Canyon, and 
   assert.deepEqual(FIRST_PLACE, {falcone_sirena: 'pacific-canyon'});
   const profile = restored();
   assert.equal(carAt(profile, SIRENA_CAR), 'pacific-canyon', 'before the helicopter has moved it, it stands at Pacific Canyon');
-  assert.equal(carAt(profile, 'koenigsegg_jesko'), 'tremblant-woods', 'every other car still starts at the home pad');
+  assert.equal(carAt(profile, 'koenigsegg_jesko'), 'tremblant-woods', 'the Jesko keeps its default helicopter position');
+  assert.equal(isAirOnlyCar('koenigsegg_jesko'), false);
+  assert.equal(airOnlyNote({enabled: true, profile, carId: 'koenigsegg_jesko', courseId: 'pacific-canyon'}), null, 'the Jesko races away from its helicopter position');
   assert.equal(airOnlyNote({enabled: true, profile, carId: SIRENA_CAR, courseId: 'pacific-canyon'}), null, 'it races at Pacific Canyon');
   assert.match(airOnlyNote({enabled: true, profile, carId: SIRENA_CAR, courseId: 'tremblant-woods', carName: 'The Sirena'}), /only by air/, 'and nowhere else yet');
   assert.equal(airOnlyNote({enabled: false, profile, carId: SIRENA_CAR, courseId: 'tremblant-woods'}), null, 'with the helicopter off it is an ordinary car');

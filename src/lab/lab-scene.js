@@ -115,7 +115,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
   })();
 
   // ---- the Sirena's restoration (LAB-RESTORE): tank, wreck, car and bubbles, all driven by one stage object ----
-  const restore = {group: new THREE.Group(), built: false, wreck: null, hull: null, car: null, livery: [], paint: null, bubbles: [], water: null, state: null, shown: -1};
+  const restore = {group: new THREE.Group(), built: false, wreck: null, hull: null, car: null, livery: [], paint: null, bubbles: [], water: null, state: null, shown: -1, wreckKind: null, loadTicket: 0};
   restore.group.visible = false;
   scene.add(restore.group);
   function buildRestore() {
@@ -162,15 +162,22 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
       for (const node of restore.livery) { node.material = node.material.clone(); node.material.transparent = true; }
       restore.group.add(car);
     }
-    // The hull alone, with no sand (SIRENA-ART's recipe cuts it from the same wreck): the tank holds a car, not a sandbank.
-    load('/assets/models/sirena/wreck-hull.glb').then(model => {
-      if (disposed) { release(model); return; }
+    loadRestoreWreck(restore.state?.kind);
+  }
+  function loadRestoreWreck(kind) {
+    if (restore.wreckKind === kind && restore.loadTicket > 0) return;
+    restore.wreckKind = kind;
+    const ticket = ++restore.loadTicket;
+    if (restore.wreck) { restore.wreck.removeFromParent(); release(restore.wreck); }
+    restore.wreck = restore.hull = null; restore.shown = -1;
+    load(kind === 'running' ? '/assets/models/sirena/sea-wreck.glb' : '/assets/models/sirena/wreck-hull.glb').then(model => {
+      if (disposed || ticket !== restore.loadTicket) { release(model); return; }
       model.traverse(node => {
         if (!node.isMesh) return;
         node.material = node.material.clone();
         node.material.transparent = true;
         const colour = node.geometry.attributes.color;
-        if (colour) restore.hull = {colour, original: Float32Array.from(colour.array), size: colour.itemSize};
+        if (colour && kind !== 'running') restore.hull = {colour, original: Float32Array.from(colour.array), size: colour.itemSize};
       });
       model.position.y = FLOOR - new THREE.Box3().setFromObject(model).min.y;
       restore.wreck = model;
@@ -302,7 +309,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
     restore(state) {
       const was = restore.state !== null;
       restore.state = state ?? null;
-      if (state) buildRestore();
+      if (state) { buildRestore(); loadRestoreWreck(state.kind); }
       if ((state !== null) !== was) aim(focus);
     },
     // For tests: the camera's goal and where it is.

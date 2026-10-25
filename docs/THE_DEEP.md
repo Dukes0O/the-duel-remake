@@ -52,12 +52,12 @@ underwater place (section 4).
   (below). One kit fits all cars, so Kyle and Gratian can each dive in their
   favourite.
 - **Hints, never on the main menu:**
-  1. After five finishes on Pacific Canyon, a garage tip: "Fishermen at the
+  1. After three finishes on Pacific Canyon (five until 25 October 2026), a garage tip: "Fishermen at the
      cove say the old boat ramp goes further than the beach." Once the Kelp
      Coast is found, the other two ramps get their own tips after a few
      finishes on their circuits.
   2. The dive kit then appears in the garage.
-  3. After ten finishes without diving, a second tip, and a few bubbles
+  3. After six finishes without diving (ten until 25 October 2026), a second tip, and a few bubbles
      rise off the water at the ramp's end during races.
 - **Going in:** works in an ordinary Duel race or Time Trial on that
   circuit (not Mad Max races; the Wasteland owns those). Past the water's
@@ -322,6 +322,39 @@ gullies (DEEP-TRAIL).
   shows the shapes on the bottom, and a car-shaped shadow by the Drop-off
   marks the Sirena on the sonar before your first dive there. Kyle's
   submarine idea (the helicopter lowers a small submarine) stays for later.
+
+### 6.9 Racing the wreck (Kyle, 25 October 2026)
+
+Raising the Sirena is not the end: she is a classic 1966 endurance racer
+(a Falcone of the era of the great Le Mans prototypes), and the player should
+get to drive her, first exactly as she came out of the sea.
+
+1. **Raised.** The fifth part and the car come up (6.2). Trophy: **Raised
+   from the Deep**. She waits in the garage under her sheet: "Needs the Lab".
+2. **Get her running (the Lab, Rust bench).** The Lab soaks the salt out of
+   the engine, frees the seized parts and makes her mechanically sound
+   (1,000 credits; the soak, current and strip steps of LAB.md 7, mechanical
+   only). She joins the garage **as found**: the **Sea wreck** finish, crusted
+   with barnacles, small shells, strands of dried seaweed, rust bloom and sea
+   grime over her faded red, stripe and roundel number 7 just showing
+   through. The crust cannot be washed or repaired off; it is her finish.
+   Trophy: **She runs again**.
+3. **Race the wreck.** She races like the real thing (her SIRENA-CAR numbers)
+   in any race, the crust and all. Trophy: **Wreck racer** for finishing any
+   race in the Sea wreck finish, and **Coast Cup, as found** for winning the
+   Coast Cup in it.
+4. **Restore her body (optional).** In the garage, the **Restored 1966**
+   finish (1,500 credits, LAB.md 7's rebuild and paint steps, played as the
+   restoration show) gives her the factory red with the white stripe and
+   roundels. Buying it never removes the Sea wreck finish: both stay in her
+   paint list for good, so a player can switch back and race the wreck any
+   time. Trophy: **Restored**.
+5. **The Coast Cup** (6.8) is open in either finish; winning it in each
+   finish is its own trophy.
+
+Trophies live on a small **Achievements** shelf in the garage beside the cup
+trophy case: each shows when and how it was earned, and unearned ones show
+only their name and a hint ("Something lies beyond the old boat ramp").
 
 ## 7. Boats: the second route (separate stage, after the Deep)
 

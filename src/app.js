@@ -17,7 +17,7 @@ import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {labOf} from './lab/lab-save.js'; // LAB-TUNE
 import {seedStockLaps, settleTunedLap, ruleSetOf} from './lab/lab-tune.js'; // LAB-TUNE
 import {usableTune} from './lab/tune-view.js'; // LAB-TUNE-VIEW
-import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
+import {deepDiscoverySnapshot,rememberDeep,rememberChart} from './deep/deep-discovery.js'; // DEEP-EXPLORER: chart save hook
 // DEEP-SIRENA-VIEW: the story's finds, logs and pearls are paid and saved here.
 import {raiseFind} from './deep/deep-sirena.js';
 import {recordLogged,recordPearl,phoneLineFor} from './deep/deep-log.js';
@@ -201,7 +201,8 @@ export class App {
       this.deepAudio.event(event,state);
       if(event.deepPhase&&state.deepJourney?.controlsLocked)this._clearHiddenRoadInput();
       if(event.deepCommitted)this._settleDeepDeparture(event.deepCommitted,state);
-      if(event.deepRaised||event.deepLogged||event.deepPearl)this._settleDeepStory(event,state); // DEEP-SIRENA-VIEW
+      if(event.deepCharted)this._settleDeepChart(event,state); // DEEP-EXPLORER
+      if(event.deepRaised||event.deepLogged||event.deepPearl||event.deepPlace?.title)this._settleDeepStory(event,state); // DEEP-SIRENA-VIEW, DEEP-GO-LIVE
       if(event.deepReturn)this.returnToMenu();
       if (event.hiddenRoadPhase) this._discoverHiddenRoadGate(event.hiddenRoadPhase, state);
       if (event.hiddenRoadCommitted) this._settleHiddenRoadDeparture(event.hiddenRoadCommitted, state);
@@ -495,7 +496,7 @@ export class App {
     this.ghostStatus='none';this.autopilot=false;this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
     const plan={...baseline,driverId,ownerId};
     this.audio.unlock();this.audio.setPaused(false);
-    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});this._racePaintCar=car;
+    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')});this._racePaintCar=car;
     this._sayDriveLesson(this.profile.drivingLessons?.done?.[lessonId]?'drive.radio.retake':DRIVE_LESSON_VIEW[lessonId].intro);
     this.duel.startCampaign({seed:1989,mode:'timetrial',car,difficulty,driverId,playerId:ownerId,
       startStage:stageIndex,upgrades,opponentCount:0,lesson:plan});
@@ -593,13 +594,14 @@ export class App {
     const car=isCarUnlocked(this.profile,selectedCar)?selectedCar:'falcone_f42';
     if(this._airOnlyRefused(car,stage.id))return false;
     if(this._fireClosedRefused(stage))return false;
+    this.duel.clearDeep(); // DEEP-EXPLORER: flush the old owner's chart before replacing runId/snapshot
     const driverId=isDriverUnlocked(this.profile,options.driverId)?normalizeDriverId(options.driverId):getEquippedDriverId(this.profile);
     const explicitSeed=Number.isSafeInteger(options.seed)?options.seed>>>0:null;
     // Keep legacy headless callers that set duel.seed before their first start.
     const legacySeed=this.duel.state.status==='menu'&&this.duel.seed!==this.seed?this.duel.seed>>>0:null;
     const selectedSeed=isRouteVariant(options.routeVariant)?getRouteVariant(options.routeVariant).seed:explicitSeed??legacySeed??this.getMenuSeed(stageIndex);
     this.seed=supportsRouteVariants(stage)?selectedSeed:1989;
-    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});this._racePaintCar=car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
+    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')});this._racePaintCar=car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.runId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._settledMuddyHollowDeparture = null;
     this._stageStartCrashes=0;
@@ -746,7 +748,7 @@ export class App {
   }
   getPaintPreset(car,{menu=false}={}){
     if(menu||this.duel.state.status==='menu')return getPaintAppearance(this.profile,car,
-      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')});
     return car===this._racePaintCar?this._racePaint:null;
   }
   getRoofLook(car,{menu=false}={}){
@@ -765,8 +767,10 @@ export class App {
   _paintOperation(car,id,buy){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before changing paint.',cost:0};
     this._refreshPlayer();const result=(buy?buyPaint:equipPaint)(this.profile,car,id,
-      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});
-    if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});}return result;
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')});
+    if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});
+      if(result.purchased&&car==='falcone_sirena'&&id==='restored-1966'){this._labRestoreBody=true;this.openLab();}
+    }return result;
   }
   getTeamGhostRecord(options = {}) {
     if (this._switches().enabled('grand-prix') !== true) return null;
@@ -1371,11 +1375,29 @@ export class App {
     if(!this.runId||state!==this.duel.state||!journey?.committed||state.playerId!==this._runPlayerId||this._runPlayerId!==this.player?.id||
       !this._switches().enabled('the-deep'))return false;
     this._refreshPlayer();
+    if(event.deepPlace?.title){
+      const place=this.duel.deepRuntime?.zone.places.find(row=>row.id===event.deepPlace.place?.id);
+      if(state.status!=='exploring'||journey.phase!=='underwater'||!place)return false;
+      const profile=rememberDeep(this.profile,'places',place.id,{enabled:true});
+      if(profile!==this.profile){this.profile=profile;this._saveProfile();}
+      return true;
+    }
     const on={enabled:true},result=event.deepRaised?raiseFind(this.profile,event.deepRaised.find,on):
       event.deepLogged?recordLogged(this.profile,event.deepLogged.creature,on):recordPearl(this.profile,event.deepPearl.pearl,on);
     if(result.profile!==this.profile){this.profile=result.profile;this._saveProfile();}
     if(!event.deepRaised)for(const line of phoneLineFor(event,result))this.duel.emit({deepPhone:{line}});
     return result.ok;
+  }
+  // DEEP-EXPLORER: chart packets belong only to the named player who dived.
+  _settleDeepChart(event,state) {
+    const packet=event.deepCharted, journey=state?.deepJourney;
+    if(!this.runId||state!==this.duel.state||!journey?.committed||
+      state.playerId!==this._runPlayerId||this._runPlayerId!==this.player?.id||
+      !this._switches().enabled('the-deep')||packet?.zoneId!==journey.zoneId)return false;
+    this._refreshPlayer();
+    const profile=rememberChart(this.profile,packet.zoneId,packet.bits,{enabled:true});
+    if(profile!==this.profile){this.profile=profile;this._saveProfile();}
+    return true;
   }
   chooseDeep(choice) {
     const state=this.duel.state;
@@ -1557,7 +1579,7 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
-      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock(); this.audio.setPaused(false);
     const options = {mode, venueId, car, driverId: getEquippedDriverId(this.profile),
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
@@ -1846,7 +1868,7 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
-      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock(); this.audio.setPaused(false);
     return this.duel.startHiddenRoadVisit({playerId: this.player.id, car, driverId,
       upgrades: getUpgradeLevels(this.profile, car), seed: this.getMenuSeed(0),
@@ -2169,6 +2191,7 @@ export class App {
     else if (action === 'heli-radio') this._heliPress(session => session.pressRadio());
     else if (action === 'heli-map') { if (this.heliSession && !this.duel.state.paused) this.setHeliMap(!this.heliMapOpen); } // MAP-VIEW
     else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % (this.heliSession?.cameraCount ?? 4); this.duel.emit({heli: true}); }
+    else if (action === 'deep-surface') this.duel.deepSurface(); // DEEP-EXPLORER
     else if (action === 'deep-ping') this.duel.deepPing(); // DEEP-SIRENA-VIEW: R under water
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');

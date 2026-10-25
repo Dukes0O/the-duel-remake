@@ -243,9 +243,11 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     ui['crash-flash'].hidden=!crash;
     const dirtCourse=!!app.duel.stageDef.offroad||!!app.duel.stageDef.arena;
     const trafficWreckCrash=crash&&s.combat&&s.calloutTimer>0&&s.callout?.startsWith('TRAFFIC WRECKED / IMPACT');
-    const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
+    // DEEP-RAMP-2: the concrete ramp has its own calm guidance, not a loose-surface warning.
+    const boatRamp=!!app.duel.course.deepRamp&&!!app.duel.course.surfaceAt(s.s,s.lateral).deepRamp;
+    const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:boatRamp?'BOAT RAMP':s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
     ui['race-callout'].hidden=!callout||!!s.paused;
-    text('callout-kicker',s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
+    text('callout-kicker',s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':boatRamp?'SLOW ROLL. STEER TO THE WATER. BRAKE TO BACK UP.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
     text('callout-text',callout);
     ui['race-callout'].classList.toggle('crash-callout',crash);
     ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);

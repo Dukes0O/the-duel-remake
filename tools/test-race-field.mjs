@@ -15,7 +15,8 @@ import { testCourseAccess } from './career-fixture.mjs';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { FIELD, FIELD_TUNING, CATCH_UP_GAP_SEC, gridPose, chooseRacers, performanceIndex, racerSpec, catchUpFactor,
   classify } from '../src/race-field.js';
-import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro, playerPaceMph, closePassRefill, cpuNitroExtraMph, cpuNitroAcceleration } from '../src/race-field-driver.js';
+import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro, playerPaceMph, closePassRefill, cpuNitroExtraMph, cpuNitroAcceleration,
+  startLaneTarget, startMergeClear, insideCornerPriority, stepFieldRacer, alongsideLaneGuard } from '../src/race-field-driver.js';
 import { shortRacerName, runningOrderRows, fieldResultsTable, fieldResultsText } from '../src/screen-field.js';
 import { installTestDriver } from './race-field-balance.mjs';
 import { App } from '../src/app.js';
@@ -38,8 +39,88 @@ const run = (duel, seconds) => { for (let i = 0; i < seconds * 60 && duel.state.
 const fingerprint = duel => JSON.stringify([duel.state.stageTimeSec.toFixed(3), duel.state.s.toFixed(3), duel.state.speedMph.toFixed(3),
   ...duel.state.opponents.map(r => [r.s.toFixed(3), r.lateral.toFixed(3), r.speedMph.toFixed(3), r.completedLaps, !!r.knock])]);
 
+// GP-WIDE-START step 2: release after 200 m only when clear; inside priority stays.
+{
+  const field = {gridStartS: -20, startMerged: true, startLateral: -3};
+  equal(startLaneTarget(field, 179, 4), -3, 'formation holds its grid lane for 200 m');
+  equal(startLaneTarget(field, 180, 4), 4, 'clear formation releases after 200 m');
+  equal(startLaneTarget({...field, startMerged: false}, 300, 4), -3, 'blocked merge keeps the grid lane');
+  const merging = {...field, startMerged: false};
+  equal(startLaneTarget(merging, 180, 4, true, -3), 4, 'clear corridor starts the drift');
+  equal(merging.startMerged, false, 'starting a merge does not complete it');
+  equal(startLaneTarget(merging, 190, 4, false, -1), -1, 'closing corridor pauses at the current lane');
+  equal(startLaneTarget(merging, 200, 4, true, -1), 4, 'clear corridor lets the drift resume');
+  equal(startLaneTarget(merging, 210, 4, true, 3.9), 4, 'merge completes on reaching the line');
+  equal(merging.startMerged, true, 'only a completed merge releases the start controller');
+  const car = {s: 100, lateral: -3, speedMph: 100};
+  const other = {s: 100, lateral: 0, speedMph: 100};
+  const shell = {halfLength: 2, halfWidth: 1};
+  const d = {state: {...other, opponents: [car]}, relativeS: s => s, _vehicleSpec: () => shell};
+  equal(startMergeClear(d, car, shell, 3), false, 'car in the swept corridor blocks a merge');
+  d.state.s = car.s + 4 + 100 * DRIVE.mphToWorld - .1;
+  equal(startMergeClear(d, car, shell, 3), false, 'one-second gap ahead must be clear');
+  d.state.s = car.s - 4 - 100 * DRIVE.mphToWorld + .1;
+  equal(startMergeClear(d, car, shell, 3), false, 'one-second gap behind must be clear');
+  d.state.s -= .2;
+  equal(startMergeClear(d, car, shell, 3), true, 'car beyond the rear safety gap allows merging');
+  d.state.s = car.s; d.state.lateral = 6;
+  equal(startMergeClear(d, car, shell, 3), true, 'car outside the swept widths allows merging');
+  d.state.headingError = -.1;
+  equal(startMergeClear(d, car, shell, 3), false, 'car drifting into the corridor blocks a merge');
+  const run = {halfLength: 2};
+  const inside = {ds: 0, dl: 3, hl: 2};
+  equal(insideCornerPriority({}, run, [inside], 1), inside, 'level inside car owns right corner');
+  equal(insideCornerPriority({}, run, [inside], -1), null, 'outside car cannot claim priority');
+  equal(insideCornerPriority({}, run, [{...inside, ds: -2.01}], 1), null,
+    'outside car more than half its own length ahead keeps priority');
+  equal(insideCornerPriority({}, run, [{...inside, ds: -2}], 1)?.ds, -2,
+    'exactly half a length ahead still yields');
+  equal(insideCornerPriority({}, run, [{...inside, ds: 4}], 1), null,
+    'non-overlapping car uses normal following');
+  for (const enabled of [false, true]) {
+    const d = start({racecraft: enabled});
+    for (const r of d.state.opponents) {
+      equal(Object.hasOwn(r.field, 'gridStartS'), enabled, 'grid formation state is switch-only');
+      if (enabled) equal(r.field.startLateral, r.lateral, 'formation remembers its own grid lane');
+    }
+  }
+}
+
+// GP-RACECRAFT-ARDENNES: an established defence must respect an alongside player.
+for (const side of [-1, 1]) {
+  const d = racing(start({racecraft: true})), s = d.state, r = s.opponents[0];
+  for (const other of s.opponents.slice(1)) other.contactExempt = true;
+  const runtime = runtimeOf(d, r), corner = runtime.profile.corners.find(c => c.entryS > 300);
+  r.s = d.course.length + corner.entryS - 80;
+  r.completedLaps = 1; r.lateral = 0; r.headingError = 0; r.pushVelocity = 0; r.speedMph = 100;
+  r.field.zoneKey = r.field.defendKey = r.field.rolledKey = `${corner.id}:1`;
+  r.field.defendSide = side; r.field.pass = null; r.field.passCool = Infinity;
+  r.field.mistake = null; r.field.bias = 0; r.field.intent = 0;
+  s.completedLaps = 1; s.lateral = side * 3; s.speedMph = 100; s.headingError = 0; s.pushVelocity = 0;
+  for (let frame = 0; frame < 60; frame++) {
+    s.s = r.s - runtime.halfLength * .5;
+    s.stageTimeSec += STEP;
+    stepFieldRacer(d, r, STEP);
+    check(side * r.field.intent <= .001, 'defending CPU holds its target away from the alongside player');
+    check(Math.abs(s.lateral - r.lateral) >= 2.99, 'defending CPU does not close the lateral body gap');
+  }
+  const near = [{ds: 0, dl: side * 3, hl: runtime.halfLength, hw: runtime.halfWidth}];
+  equal(alongsideLaneGuard(r, runtime, near, r.lateral - side * 2).held, false, 'CPU may steer away from an alongside car');
+  near[0].ds = runtime.halfLength * 3 + .01;
+  equal(alongsideLaneGuard(r, runtime, near, r.lateral + side * 2).held, false, 'CPU may resume its lane change once the car clears');
+}
+{
+  const r = {lateral: -18, speedMph: 100, headingError: 0}, shell = {halfLength: 2, halfWidth: 1};
+  const near = [{ds: 0, dl: 18, hl: 2, hw: 1, vLateral: 0}];
+  equal(alongsideLaneGuard(r, shell, near, -17).held, false, 'distant gallery car cannot block a separate Summit branch');
+  equal(alongsideLaneGuard(r, shell, near, 1).held, true, 'a target sweeping across that car is still blocked');
+  near[0].dl = 3;
+  equal(alongsideLaneGuard(r, shell, near, -19, .1).held, true,
+    'racing-line heading toward a neighbour is guarded even if the nominal target points away');
+}
+
 // GP-RACECRAFT: protect the released simulation before testing opt-in behavior.
-check(FEATURE_STATES['cpu-racecraft'] === 'dev', 'racecraft is preview-only');
+check(FEATURE_STATES['cpu-racecraft'] === 'on', 'racecraft is released (25 October 2026)');
 for (const [seed, hash] of [[1989, 'f29bc060b703448a4432042cb792d66b5cadc24da833fae2950ca7143c7a4b7c'],
   [42, '74b5262ff450d87f6203a8959b72ea15c632fd65db8d327c729089e19cfad234'],
   [17, '453ce3934758f1ff1a546264e9ea57ab0c88c26c6359fed341e10ea5d28efc5b']]) {

@@ -7,7 +7,7 @@
 // seeded from the zone and the creature), and keeps its own state. Nothing
 // here touches race state, saves or the race's random streams.
 import { makeRng } from '../rng.js';
-import { FISH_HARD_CAP } from './fish-rules.js';
+import { schoolCentre, FISH_HARD_CAP } from './fish-rules.js';
 import { zoneSeed } from './zone-floor.js';
 
 // Hard cap of animals drawn per type for a whole scene. Sardines are counted in
@@ -300,4 +300,30 @@ export function stepWhale(w, t, shape) {
   w.roll = 0.05 * Math.sin(0.27 * t);
   w.anim = t * 0.7;
   return w;
+}
+
+// DEEP-EXPLORER: the dive owns moving animals. Graphics only read these poses.
+export function createSeaLifeState(zone) {
+  const plan = planSeaLife(zone);
+  return {plan, animals: Object.fromEntries(['turtle', 'ray', 'crab', 'sea-lion', 'otter']
+    .map(id => [id, plan[id].map(makeAnimal)])), whale: createWhale(plan.whale), seconds: 0, positions: []};
+}
+export function stepSeaLifeState(state, seconds, dt, car, shape, raised = false) {
+  state.seconds = seconds;
+  const ctx = {floorAt: (x, z) => shape.floorHeight(x, z)}, positions = [];
+  for (const [creature, animals] of Object.entries(state.animals)) for (const animal of animals) {
+    stepAnimal(animal, seconds, dt, car, ctx);
+    positions.push({creature, x: animal.x, y: animal.y, z: animal.z});
+  }
+  for (const spec of state.plan['silver-school']) {
+    const anchor = {x: spec.x, y: ctx.floorAt(spec.x, spec.z) + Math.max(3, spec.depth * .45), z: spec.z};
+    positions.push({creature: 'silver-school', ...schoolCentre(seconds, {anchor, phase: spec.phase})});
+  }
+  const whale = state.whale, home = state.plan.whale;
+  if (home && whale.state === 'waiting' && (raised || Math.hypot(car.x-home.x, car.z-home.z) < WHALE.triggerRange))
+    startWhalePass(whale, seconds, shape, raised ? car : home);
+  stepWhale(whale, seconds, shape);
+  if (whale.state === 'passing') positions.push({creature: 'whale', x: whale.x, y: whale.y, z: whale.z});
+  state.positions = positions;
+  return positions;
 }

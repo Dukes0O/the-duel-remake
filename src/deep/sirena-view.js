@@ -6,11 +6,15 @@
 // deepStoryView(duel), and never writes race state, saves or random streams.
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {loggingProgress} from './deep-log.js'; // DEEP-EXPLORER
 import {deepStoryView} from './deep-story.js';
 import {DEEP_PHONE_LINES} from './deep-phone-lines.js';
 import {createDeepPhoneChain} from './deep-phone.js';
 import {logCardMarkup} from './deep-log.js';
 import {SOUND_BANK} from '../sound-bank.js';
+import {deepWorldPose} from './deep-journey.js';
+import {deepMapGeometry, deepMapData, drawDeepMap} from './deep-map.js';
+import {deepObjectives} from './deep-objectives.js'; // DEEP-EXPLORER
 
 export const SIRENA_MODEL = Object.freeze({'sirena-badge': 'badge', 'sirena-steering-wheel': 'steering-wheel',
   'sirena-wheel': 'wheel', 'sirena-bonnet': 'bonnet', 'sirena-door': 'door', 'sirena-car': 'wreck'});
@@ -270,12 +274,36 @@ export function sonarText(event) {
 export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.audio}), now = () => performance.now() / 1000}) {
   const doc = host.ownerDocument, root = doc.createElement('section');
   root.className = 'sirena-hud';
-  root.innerHTML = '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip"></b><span></span></div>' +
+  root.innerHTML = '<div class="deep-logging" hidden><i></i><span></span></div>' + // DEEP-EXPLORER
+    '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip"></b><span></span></div>' +
     '<div class="sirena-log" hidden></div><p class="sirena-caption" aria-live="polite" hidden><small>ANA · FIELD STATION</small><span></span></p>' +
-    '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>';
+    '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>' +
+    '<aside class="deep-map" hidden><header><b>KELP COAST</b><button type="button" class="deep-map-toggle">Hide map</button></header>' +
+    '<canvas width="400" height="250" role="img" aria-label="Sea chart: explored seabed, saved finds, discovered places, ramp and your heading"></canvas>' +
+    '<button type="button" class="deep-map-home">Return bearing</button><span class="deep-map-bearing" hidden><i>↑</i><b></b></span>' +
+    // DEEP-EXPLORER: Surface stays visible even when the map is closed.
+    '<button type="button" class="deep-surface">Surface · U</button>' +
+    '<section class="deep-objectives"><h3>Ana’s list <span class="deep-chart-percent"></span></h3><ol></ol>' +
+    '<p class="deep-chart-key">◆ Sea life · ● Pearl · ★ Badge · ⚑ Salvage<br>Sand · Kelp · Rock · Blue depths</p></section></aside>' +
+    '<p class="deep-objective-tick" aria-live="polite" hidden></p>';
   host.append(root);
   const sonar = root.querySelector('.sirena-sonar'), blip = root.querySelector('.sirena-blip'), distance = sonar.querySelector('span');
   const log = root.querySelector('.sirena-log'), caption = root.querySelector('.sirena-caption'), title = root.querySelector('.sirena-title');
+  const map = root.querySelector('.deep-map'), canvas = map.querySelector('canvas'), ctx = canvas.getContext('2d');
+  const toggle = map.querySelector('.deep-map-toggle'), home = map.querySelector('.deep-map-home');
+  const bearing = map.querySelector('.deep-map-bearing');
+  // DEEP-EXPLORER: checklist and completion notices are presentation only.
+  const objectives = map.querySelector('.deep-objectives'), list = objectives.querySelector('ol');
+  const logging = root.querySelector('.deep-logging'); // DEEP-EXPLORER
+  const survey = objectives.querySelector('.deep-chart-percent'), tick = root.querySelector('.deep-objective-tick');
+  const surface = map.querySelector('.deep-surface'), surfaceNow = () => app.duel.deepSurface();
+  surface.addEventListener('click', surfaceNow);
+  let previousObjectives = null, listMarkup = '', tickUntil = 0;
+  const ticks = [];
+  let mapVisit = null, geometry = null, showMap = true, requested = false, mapDrawAt = -Infinity;
+  const toggleMap = () => { showMap = !showMap; canvas.hidden = objectives.hidden = !showMap; toggle.textContent = showMap ? 'Hide map' : 'Show map'; };
+  const requestHome = () => { requested = true; };
+  toggle.addEventListener('click', toggleMap); home.addEventListener('click', requestHome);
   let sonarUntil = 0, logUntil = 0, titleUntil = 0, disposed = false, surfaced = false;
   const stop = app?.duel?.onChange?.((state, event) => {
     if (disposed) return;
@@ -291,25 +319,77 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
     }
     if (event.deepLogged) { log.innerHTML = logCardMarkup(event.deepLogged.creature); log.hidden = false; logUntil = t + 6; }
     if (event.deepPhone) phone.say(event.deepPhone.line);
-    if (event.deepCoastCup) { title.hidden = false; titleUntil = t + 5; phone.say('deep.ana.cup'); }
+    if (event.deepPlace?.title && app.getDeepDiscovery()?.enabled === true) {
+      title.querySelector('p').textContent = 'KELP COAST';
+      title.querySelector('h2').textContent = event.deepPlace.place.name;
+      title.hidden = false; titleUntil = t + 3;
+      caption.hidden = true;
+    }
+    if (event.deepCoastCup) {
+      title.querySelector('p').textContent = 'COAST CUP';
+      title.querySelector('h2').textContent = '1966 to 2026: finished';
+      title.hidden = false; titleUntil = t + 5; phone.say('deep.ana.cup');
+    }
     // Driving back up the ramp ends the dive and returns to the menu: Ana finishes what she
     // has to say (the Norseman story comes on the way up). Quitting a dive to the menu, or a
     // new race, stops her after the line she is saying.
-    if (event.deepExited) { sonar.hidden = log.hidden = true; surfaced = true; }
-    else if (event.menu) { if (!surfaced) phone.clear({keepCurrent: true}); surfaced = false; }
-    else if (event.stageLoaded != null) { sonar.hidden = log.hidden = true; surfaced = false; phone.clear({keepCurrent: true}); }
+    if (event.deepExited) { title.hidden = sonar.hidden = log.hidden = true; surfaced = true; }
+    else if (event.menu) { title.hidden = true; if (!surfaced) phone.clear({keepCurrent: true}); surfaced = false; }
+    else if (event.stageLoaded != null) { title.hidden = sonar.hidden = log.hidden = true; surfaced = false; phone.clear({keepCurrent: true}); }
   });
   return {
     update() {
       if (disposed) return;
       const t = now();
+      const d = app.duel, journey = d.state.deepJourney, discovery = app.getDeepDiscovery();
+      const active = discovery?.enabled === true && journey?.phase === 'underwater' && !!d.deepRuntime;
+      map.hidden = !active;
+      // DEEP-EXPLORER: draw only the rules' current hold; never advance it here.
+      const progress = active ? loggingProgress(d.deepStory?.log) : null;
+      logging.hidden = !progress;
+      if (progress) {
+        logging.querySelector('span').textContent = `Logging: ${progress.name}`;
+        logging.querySelector('i').style.background = `conic-gradient(#e9d7a0 ${progress.fraction*360}deg,#365764 0deg)`;
+      }
+      if (!active) { mapVisit = null; previousObjectives = null; ticks.length = 0; tick.hidden = true; }
+      else {
+        if (mapVisit !== journey) {
+          mapVisit = journey; geometry = deepMapGeometry(d.deepRuntime.zone);
+          showMap = true; requested = false; canvas.hidden = objectives.hidden = false;
+          toggle.textContent = 'Hide map'; mapDrawAt = -Infinity;
+        }
+        if (t >= mapDrawAt) {
+          mapDrawAt = t + .1;
+          const data = deepMapData(geometry, d.deepRuntime.zone, deepWorldPose(d), {
+            places: discovery.places, elapsedSec: journey.elapsedSec, requested,
+            save: discovery, charted: d.deepStory?.charted ?? discovery.charted?.[d.deepRuntime.zone.id] }); // DEEP-EXPLORER
+          if (showMap) drawDeepMap(ctx, data);
+          // DEEP-EXPLORER: saved goals, with live survey progress before its next save.
+          const rows = deepObjectives(discovery, data.percent, app.profile?.unlockedCars?.includes('falcone_sirena'));
+          if (previousObjectives) for (const row of rows)
+            if (row.done && !previousObjectives.find(old => old.id === row.id)?.done) ticks.push(row.tick);
+          previousObjectives = rows;
+          const markup = rows.map(row => `<li class="${row.done ? 'done' : ''}"><b>${row.done ? '✓ ' : ''}${row.text}</b>${row.done ? '' : `<small>${row.hint}</small>`}</li>`).join('');
+          if (markup !== listMarkup) { list.innerHTML = markup; listMarkup = markup; }
+          survey.textContent = `${data.percent}% charted`;
+          bearing.hidden = !data.home.visible; home.hidden = data.home.visible;
+          bearing.querySelector('i').style.transform = `rotate(${-data.home.relative}rad)`;
+          bearing.querySelector('b').textContent = `Ramp · ${Math.round(data.home.distance)} m`;
+        }
+      }
       if (t > sonarUntil) sonar.hidden = true;
       if (t > logUntil) log.hidden = true;
-      if (t > titleUntil) title.hidden = true;
+      if (t >= titleUntil || app.getDeepDiscovery()?.enabled !== true) title.hidden = true;
+      // DEEP-EXPLORER: no tick or sound interrupts a place title or a log card.
+      if (t >= tickUntil || !title.hidden || !log.hidden) tick.hidden = true;
+      if (active && title.hidden && log.hidden && t >= tickUntil && ticks.length) {
+        tick.textContent = ticks.shift(); tick.hidden = false; tickUntil = t + 3;
+        app.deepAudio?.event({deepObjective: true}, d.state);
+      }
       const line = phone.update({blocked: !title.hidden});
-      caption.hidden = !line;
+      caption.hidden = !line || !title.hidden;
       if (line) caption.querySelector('span').textContent = line.text;
     },
-    dispose() { if (disposed) return; disposed = true; stop?.(); phone.dispose(); root.remove(); },
+    dispose() { if (disposed) return; disposed = true; stop?.(); phone.dispose(); toggle.removeEventListener('click', toggleMap); home.removeEventListener('click', requestHome); surface.removeEventListener('click', surfaceNow); root.remove(); },
   };
 }

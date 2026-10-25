@@ -2,6 +2,67 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Racecraft and The Deep's explorer, 25 October 2026 (evening)
+
+### What players get now
+
+- **Grand Prix racecraft is on.** Computer cars pass when they are quicker,
+  use nitro and defend on the first lap, and nitro stays locked until the
+  first corner for everyone. The field now starts wide, holding its grid lanes
+  for the first 200 m, and a computer car never steers into a car alongside it.
+- **The Deep, from Kyle and Gratian's first dive:** a 12 m concrete boat ramp
+  cut into the hill with a signed turn-off and a guided, straight descent; a
+  better camera on the ramp; seabed bumps no longer launch the car; a Surface
+  button (U) from anywhere; solid rocks; the cartographer's chart that fills in
+  as you explore and is saved; finds pinned where you found them; Ana's list of
+  goals with ticks and hints; creatures log when you hold close to the animal
+  itself, with a logging ring; the dive kit after 3 Pacific Canyon finishes and
+  a "New in the garage" note when it arrives.
+
+## Fixes and work in progress, 25 October 2026
+
+### What players get now
+
+Grass, tufts and grit sit on the ground you see and stay off every road,
+including hairpins and shortcuts. Road cars accelerate more gently, taking
+about 2.4 to 4.2 seconds to reach 60 mph. After a crash you still get a quick
+pull-away. Arenas keep their lively starts. Chase police have been adjusted
+to the slower pace, and Easy Checkpoint Rush gives more time after each gate.
+
+The helicopter hook catches cargo more easily. A ring under a nearby load
+turns green when it is ready, and a missed H press tells you to move closer,
+change height or slow down. The Titan monster truck takes big air off cars
+again, with a BIG AIR callout when it lands.
+
+Summit's world builds in about 0.85 to 0.89 seconds, down from about 1.45,
+with the same scenery. The first load can still take longer while files
+arrive. The Yeti's pale fur is easier to see against snow at night. Team Room
+passing-zone flags on Harbour Lights and Panorama Ridge now have written
+driving notes.
+
+The automatic checks for the helicopter yard, Yeti, course views and race
+sound have also been repaired. The demonstration driver can turn out of a
+pocket of scenery when stuck.
+
+**Switched on in this release:** The Deep (`the-deep`): drive down the old ramp at Pacific Canyon into the Kelp Coast, meet Ana, log the sea life, find pearls, raise the lost Falcone Sirena with sonar and lift bags, and race the Coast Cup. Also the Koenigsegg Jesko races on every course and in every mode again (Kyle, for Gratian). CPU racecraft and the wide start wait for the next release (an Ardennes crash to fix first).
+
+### Built but switched off
+
+These features remain behind development switches. They are not available
+in the normal game yet, and some still need finishing checks.
+
+- The Lab: experiments, helicopter challenges and upgrades, Sirena restoration, tuning and its lap bonus; the fan car model and blueprint are built, but the car still needs adding to the game.
+- The Deep: the Kelp Coast dive, sea life, pearls, Ana's radio, sonar and lift bags, the lost Sirena and its Coast Cup.
+- Heli-skiing: five Summit runs, drops and pickups, changing snow, medals, saved bests and group jobs.
+- The pilot's map: click-to-fly travel, scouting, five secret course versions, the Table and notes for the reverse routes.
+- Driving lessons: braking, racing lines, gears and snow, with an instructor, cones, radio and saved progress.
+- Sliding tyres: grip loss, tyre sound and steering feel, with the Drift Trial's quick launch kept.
+- Engine curve: engine pull follows revs and gears, with separate best laps for these rules.
+- Racecraft: computer rivals use nitro and defend on the first lap; the four new passing moves remain disabled.
+- Earned cars: the McLaren F1 and Bugatti Bolide, unlocked by medals.
+- Helicopter rescues: hikers, avalanches, hoists and supplies, including Summit flights, fuel stops and car recovery.
+- Helicopter wildlife and skins: counting jobs, earned or bought paint, special gear, dirt and washing.
+
 ## Summit Run – 16 October 2026
 
 A new Grand Prix course: one long climb from the desert to a snowy summit, about
