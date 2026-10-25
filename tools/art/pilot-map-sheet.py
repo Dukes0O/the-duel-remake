@@ -1,4 +1,4 @@
-"""One comparison sheet (JPG) for a MAP-ART look round. The first set of tiles (the five signs, lookout, strip, windsock, logbook) was accepted
+"""One comparison sheet (JPG) for a MAP-ART look round. The first set of tiles (the five signs, lookout, logbook) was accepted
 in MAP-ART; MAP-ART-2 shows the mesa and the plane wreck.
 
 Usage:

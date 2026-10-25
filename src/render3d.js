@@ -4,6 +4,8 @@ import {createUnderwaterScene} from './deep/underwater-scene.js';
 import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
+// MAP-VIEW: signs, corner names and the Table (drawing only).
+import {createMapWorldView} from './heli/pilot-map-world.js';
 import {createBurntLook} from './burnt-look.js';
 import {createTrackKits,trackKitsOf} from './track-kits.js';
 import {snowmenEnabled,snowmanPlacements} from './snowmen.js';
@@ -255,6 +257,9 @@ export function attachRenderer(host, app) {
   // The helicopter's group joins the scene before the lighting roots are
   // taken, so a world rebuild never removes it.
   const heliView=createHeliView({THREE,scene});
+  // MAP-VIEW: the pilot's map in the world; its ground heights come from the course last loaded.
+  const mapWorld=createMapWorldView({THREE,scene,groundHeight:(x,z)=>app.heliGroundHeight(x,z),
+    roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});
   // H2 Fire: a burnt course's look (docs/HELI_FIRE.md 8.4), drawing only.
   const burntLook=createBurntLook({THREE,scene});
   const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
@@ -635,6 +640,9 @@ export function attachRenderer(host, app) {
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const deepPose=!menu?deepPresentation(app.duel):null;
     const heliPose=st.status==='heli'&&app.heliSession?heliView.update(app.heliView(),{cameraIndex:app.heliCamera,dt}):(heliView.hide(),null);
+    // MAP-VIEW: the Table is not on the course last loaded, so that course steps aside while the helicopter is there.
+    const mapDraw=st.status==='heli'&&app.heliSession?mapWorld.update(app.heliView()):(mapWorld.hide(),{hideCourse:false});
+    if(world)world.visible=!mapDraw.hideCourse;
     burntLook.apply({course,look:app.fireLookFor?.(course.def.id)??null});burntLook.update(dt);heliView.fire.setQuality(app.ambientOcclusionEnabled!==false?'high':'performance');host.dataset.burntLook=burntLook.statusFor(course.def.id);
     const physicalCourse=deepPose?app.duel.course:course;
     const pp = vehicleGroundPoint(physicalCourse,distance,lateral);
@@ -1079,7 +1087,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();mapWorld.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);

@@ -10,6 +10,9 @@ import {LESSON_RULES} from './heli-lessons.js';
 import {createDispatchBoard, atHomePad} from './heli-board.js';
 import {lessonBoardMarkup} from '../lessons/lesson-board.js';
 import {isRescueKind} from './heli-missions.js';
+// MAP-VIEW: the pilot's map screen.
+import {createPilotMapUi, MAP_KEY} from './pilot-map-view.js';
+import {placeOfCourse, placeById} from './pilot-map-data.js';
 import {CHALLENGE_RULES} from '../lab/lab-challenges.js'; // LAB-VIEW: the numbers the challenge line quotes
 import {CARS} from '../config.js';
 
@@ -68,7 +71,8 @@ export function instrumentReadings(readout) {
 
 // What a session event says on screen, if anything.
 export function noticeText(event) {
-  const course = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? id;
+  // MAP-VIEW: the map's places (Pacific Canyon, the Table...) have names too.
+  const course = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? placeOfCourse(id)?.name ?? placeById(id)?.name ?? id;
   switch (event?.type) {
     case 'charged': {
       const what = {hardLanding: 'Hard landing', crash: 'Crash', drop: 'Dropped load', cargoLight: 'Cargo knock',
@@ -226,7 +230,7 @@ export function instrumentsMarkup(view, {cameraIndex = 0} = {}) {
   <div class="heli-status">
     <span>${view.autopilot ? 'AUTOPILOT ON' : 'AUTOPILOT OFF'} <kbd>P</kbd></span>
     <span>VIEW ${HELI_CAMERA_VIEWS[((cameraIndex % 4) + 4) % 4].toUpperCase()} <kbd>C</kbd></span>
-    <span>${view.bucket ? 'POUR (hold)' : 'HOOK'} <kbd>H</kbd></span>
+    <span>${view.bucket ? 'POUR (hold)' : 'HOOK'} <kbd>H</kbd></span>${view.secrets !== undefined ? `<span>MAP <kbd>${MAP_KEY}</kbd></span>` : ''}
   </div>${fireLineMarkup(view)}${rescueLineMarkup(view)}`;
 }
 
@@ -248,7 +252,9 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   const label = pumpLabel(view.heli.fuelKg, {credits, refuels});
   const pump = onPad ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
   const destination = view.destination ? HELI_DESTINATIONS_WITH_SUMMIT[view.destination]?.name : null;
-  return `<div class="heli-route" role="group" aria-label="Fly to"><span>FLY TO</span>${buttons}${pump}</div>
+  // MAP-VIEW: with the pilot's map on, the route panel also opens it (the view carries `secrets` only then).
+  const mapButton = view.secrets !== undefined ? `<button type="button" class="heli-map-open" data-heli-map="open">PILOT'S MAP <kbd>${MAP_KEY}</kbd></button>` : '';
+  return `<div class="heli-route" role="group" aria-label="Fly to"><span>FLY TO</span>${buttons}${mapButton}${pump}</div>
     ${view.cruiseOffered ? `<div class="heli-prompt" role="status">Clear of the area. Press <kbd>ENTER</kbd> to cruise to ${escape(destination)}.</div>` : ''}${challengeMarkup(view)}`;
 }
 
@@ -310,6 +316,7 @@ export function createHeliUi({host, app}) {
   const lessonsHost = section.querySelector('.heli-lessons-host');
   const boardHost = section.querySelector('.heli-board-host');
   const board = createDispatchBoard({root: boardHost, app});
+  let pilotMap = null; // MAP-VIEW: made the first time the view carries the pilot's map (never with the switch off)
   let lastLessons = '';
   const lessonAction = action => {
     const session = app.heliSession;
@@ -324,6 +331,7 @@ export function createHeliUi({host, app}) {
   const click = event => {
     const lessonButton = event.target.closest('[data-heli-lesson]');
     if (lessonButton) { lessonAction(lessonButton.dataset.heliLesson); lessonButton.blur(); return; }
+    if (event.target.closest('[data-heli-map]')) { app.setHeliMap?.(true); event.target.closest('[data-heli-map]').blur(); return; } // MAP-VIEW
     const place = event.target.closest('[data-heli-destination]');
     if (place) { app.heliSetDestination?.(place.dataset.heliDestination); place.blur(); return; }
     // LAB-VIEW: the Lab door leaves the helipad for the Lab; the challenge line's Stop button ends a challenge.
@@ -345,6 +353,7 @@ export function createHeliUi({host, app}) {
     update(now = performance.now() / 1000) {
       if (disposed) return null;
       const view = app.duel?.state?.status === 'heli' ? app.heliView?.() : null;
+      if (view?.secrets !== undefined) (pilotMap ??= createPilotMapUi({host, app})).update(view); else pilotMap?.update(view); // MAP-VIEW
       section.hidden = !view;
       if (!view) { shown = []; radioLine = null; seenLog = null; return null; }
       // New events since the last frame become notices and radio subtitles.
@@ -395,6 +404,7 @@ export function createHeliUi({host, app}) {
       disposed = true;
       section.removeEventListener('click', click);
       board.dispose();
+      pilotMap?.dispose(); // MAP-VIEW
       section.remove();
     },
   };

@@ -160,7 +160,7 @@ The Ardennes-only summer beech has an original trunk and limbs (authored in `too
 ## The pilot's map art (MAP-ART)
 
 The five secret-course signs (`sign-*.glb`) and The Table (`table-mesa`, `table-lookout`,
-`table-plane-wreck`, `table-strip`, `table-logbook`) in `pilot-map/` are original project geometry
+`table-plane-wreck`, `table-logbook`) in `pilot-map/` are original project geometry
 with flat colours. They use no external model, texture or photograph. The bush plane is a generic
 high-wing aircraft of the 1950s style, not a model of a real type, and its tail number N4471K is
 made up. The editable recipe is `tools/blender/pilot-map-props.py`; rebuild with
