@@ -1,19 +1,18 @@
 // The sea-life log and the pearls (docs/THE_DEEP.md 5, 6.4 to 6.6 and 10.1):
 // which creature is logged where, what each log and pearl pays, and the cards.
 // Pure and headless like deep-sirena.js: it reads the car's plain picture
-// {x, z, speed (mph)}, measures against the zone's fixed spots and pearls (never
-// the moving creatures, so the log does not depend on the renderer), uses no
-// clock or randomness, and never touches race state. Events are plain objects in
-// the duel.emit style ({deepLogged: {creature}}); the view and sound read them.
+// {x, z, speed (mph)} and moving poses supplied by the headless sea-life rules.
+// DEEP-EXPLORER: never read rendered objects, model loading or a wall clock.
 import {normalizeDeep} from './deep-discovery.js';
 
 const KMH_PER_MPH = 1.609344;
 const CREDIT_CAP = 1_000_000_000;
 
 export const DEEP_LOG = Object.freeze({
-  logRange: 6,        // metres (horizontal) from a creature's spot
+  logRange: 8,        // metres (horizontal) from a creature or its spot
   pearlRange: 3,      // metres from a pearl
-  speedKmh: 15,       // under this, in km/h
+  speedKmh: 20,
+  pearlSpeedKmh: 15, // pearls retain their existing slow approach rule       // under this, in km/h
   holdSeconds: 1,     // for this long, without a break
 });
 export const DEEP_LOG_PAY = Object.freeze({creature: 50, page: 250, pearl: 150});
@@ -53,7 +52,7 @@ export const logPicture = id => Object.hasOwn(DEEP_CREATURES, id) ? `/assets/dee
 
 const finite = value => Number.isFinite(value);
 const validCar = car => car && finite(car.x) && finite(car.z) && finite(car.speed);
-const slow = car => Math.abs(car.speed) * KMH_PER_MPH < DEEP_LOG.speedKmh;
+const slow = (car, limit) => Math.abs(car.speed) * KMH_PER_MPH < limit;
 const away = (point, car) => Math.hypot(point.x - car.x, point.z - car.z);
 
 // A trail point plus `offset` sideways, positive to the left (heading +z, left +x:
@@ -95,25 +94,39 @@ function hold(holds, points, car, range, key, skip, dt) {
   return done[0]?.[1] ?? null;
 }
 
-// Each underwater frame. Within 6 m of a creature's spot (3 m of a pearl), under
-// 15 km/h, for a second without a break, a creature not yet logged is logged and
-// a pearl not yet found is found. A creature or pearl already in the save gives
-// nothing. Events: deepLogged {creature}, deepPearl {pearl}.
-export function stepLog(state, car, dt) {
+// DEEP-EXPLORER: either a moving creature or its authored spot holds the same
+// timer. Crossing between them cannot double count; a fast or distant car resets.
+export function stepLog(state, car, dt, moving = []) {
   if (!state?.active || !finite(dt) || dt < 0) return [];
   const events = [];
-  if (!validCar(car) || !slow(car)) { state.creatureHolds.clear(); state.pearlHolds.clear(); return events; }
-  const creature = hold(state.creatureHolds, state.spots, car, DEEP_LOG.logRange, 'creature', id => state.logged.has(id), dt);
-  if (creature) {
-    state.logged.add(creature); state.creatureHolds.delete(creature);
-    events.push({deepLogged: {creature}});
+  if (!validCar(car)) { state.creatureHolds.clear(); state.pearlHolds.clear(); return events; }
+  if (!slow(car, DEEP_LOG.speedKmh)) state.creatureHolds.clear();
+  else {
+    const points = [...state.spots, ...moving.filter(p => state.spots.some(s => s.creature === p.creature)
+      && finite(p.x) && finite(p.z))];
+    const creature = hold(state.creatureHolds, points, car, DEEP_LOG.logRange, 'creature', id => state.logged.has(id), dt);
+    if (creature) {
+      state.logged.add(creature); state.creatureHolds.delete(creature);
+      events.push({deepLogged: {creature}});
+    }
   }
-  const pearl = hold(state.pearlHolds, state.pearls, car, DEEP_LOG.pearlRange, 'pearl', id => state.found.has(id), dt);
-  if (pearl) {
-    state.found.add(pearl); state.pearlHolds.delete(pearl);
-    events.push({deepPearl: {pearl}});
+  if (!slow(car, DEEP_LOG.pearlSpeedKmh)) state.pearlHolds.clear();
+  else {
+    const pearl = hold(state.pearlHolds, state.pearls, car, DEEP_LOG.pearlRange, 'pearl', id => state.found.has(id), dt);
+    if (pearl) {
+      state.found.add(pearl); state.pearlHolds.delete(pearl);
+      events.push({deepPearl: {pearl}});
+    }
   }
   return events;
+}
+// Read-only progress for the HUD: no timers, finds or rewards advance here.
+export function loggingProgress(state) {
+  if (!state?.active) return null;
+  const holds = [...state.creatureHolds].map(([id, seconds]) => ({name: DEEP_CREATURES[id].name, seconds}));
+  holds.push(...[...state.pearlHolds].map(([, seconds]) => ({name: 'Pearl', seconds})));
+  holds.sort((a, b) => b.seconds - a.seconds);
+  return holds[0] ? {...holds[0], fraction: Math.min(1, holds[0].seconds / DEEP_LOG.holdSeconds)} : null;
 }
 
 // ---- the save: what is recorded, and what it pays, exactly once ---------------------

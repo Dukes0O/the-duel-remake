@@ -291,7 +291,7 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'src/screen-results.js|./deep/deep-hints.js',
   ]);
   // DEEP-EXPLORER: exact imports for this card's headless acceptance suite.
-  for (const name of ['zones/kelp-coast','deep-journey','deep-chart','deep-discovery','deep-objectives','deep-map','deep-rocks','deep-sirena','deep-log','sirena-view'])
+  for (const name of ['zones/kelp-coast','deep-journey','deep-chart','deep-discovery','deep-objectives','deep-map','deep-rocks','deep-sirena','deep-log','sirena-view','sea-life-rules','deep-story'])
     approvedImports.add(`tools/test-deep-explorer.mjs|../src/deep/${name}.js`);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))

@@ -50,10 +50,10 @@ fix and found no further save or objective faults: clear.
 - Deep-save fixture routing adds only `22-deep-chart.json` to the Deep-bearing
   fixtures; its fields are compared exactly, and all older fixtures keep their
   prior checks.
-- Deep import guard adds only the ten exact imports used by this card's new
+- Deep import guard adds only the twelve exact imports used by this card's new
   acceptance suite. The empty-unapproved-import assertion remains unchanged.
 - New acceptance tests and browser recipe; no replay fingerprints, world
-  signatures, timing tolerances or existing numeric gameplay checks changed.
+  signatures, timing tolerances changed. The authorized creature logging thresholds change as recorded below.
 
 ## Checks and pictures
 
@@ -77,7 +77,7 @@ fix and found no further save or objective faults: clear.
   capture passed again on the final HUD code. All use private memory saves.
 - Picture: `docs/board/looks/deep-explorer/round-1.jpg`, 224,573 bytes, inspected by the builder. Left: 15% surveyed and real badge/turtle/pearl finds.
   Right: completed synthetic save, 100%, all pins and Ana's list. Its matching
-  note records the builder inspection; Claude's look verdict remains pending.
+  note records the builder inspection. Claude subsequently passed the functionality; round 2 addresses his chart look feedback.
 - Board: 199 checks and repository placement passed after the metadata and
   sheet updates. STATUS refreshed; protected Cockpit board sync succeeded.
   Repository audit found no unused new modules; existing uncertain candidates were left in place. The chart sheet
@@ -92,7 +92,7 @@ window. The next quiet run remains:
 
 Original and corrected check logs remain in the ignored
 `.evidence/2026-10-25/DEEP-EXPLORER/checks/` for integration handoff. Passing
-unrelated suites were not repeated. No merge, release or push.
+unrelated suites were not repeated. Round 1 made no merge, release or push.
 
 ## Removed
 
@@ -101,3 +101,93 @@ Recycled this run's generated build, named test fixtures and raw captures
 (about 465 MB), preserving the requested sheet and handoff proof. The scratch
 folder itself stayed in place. No runtime assets, real player saves,
 other lanes' output, originals or ramp geometry removed.
+
+## Round 2: moving creatures and ink chart
+
+Fetched origin, then merged `origin/integration/wasteland` at `6a35e8f6`
+into this lane (`b91cbac4`) before coding. Resolved only two shared hooks:
+retain DEEP-RAMP-2's ramp driving, wrapping underwater driving with Explorer's
+rock sweep, and retain both imports. No ramp geometry or camera edits.
+
+The dive now advances `createSeaLifeState` using simulation time, car inputs
+and the zone floor. It reuses the existing sea-life motion rules, including
+the sardine school centre and whale trigger/pass. Native graphics draw these
+same poses without advancing them; loading, frame rate and quality cannot
+decide logs. Standalone art views retain their existing rules-driven preview.
+
+Creature holds accept a matching moving pose OR the authored spot, within
+8 m horizontally, under 20 km/h, continuously for 1 s. Either location adds
+to the same timer once per step. Leaving or speeding clears it. Pearls keep
+3 m, under 15 km/h, 1 s. Saved IDs still prevent repeat rewards. The HUD reads
+those timers to fill a small ring with "Logging: Green turtle" or the other
+creature name / Pearl. Completion uses the existing cue, log card and Ana line.
+No save shape, chart cap, objective or payment changes in round 2.
+
+The chart blends circular survey samples into paper-coloured washes and kelp
+pen strokes, then feathers their union and draws a thin ink contour. No square
+tiles show. The dashed loop clips to that reveal. Rendering caches by survey
+and geometry. The left panel widens from 340 to 510 px; the list below scrolls.
+The saved bitmap and reveal rules are unchanged.
+
+Independent reviewer: no faults in moving logging/ring, renderer authority,
+save ownership, reward deduplication or objectives. Confirmed the requested
+threshold assertions match the card. No further code fixes requested.
+
+### Round 2 changed assertions
+
+- Existing `test-deep-log` creature boundaries change 6.2/5.9 m to 8.2/7.9 m
+  and 15.5/14.5 km/h to 20.5/19.5 km/h, matching Claude's written card items
+  6/7 and Kyle's explicit request. They still test just outside/inside the
+  boundary, interruption, full duration and no repeat card. Pearl checks stay.
+- The save-already-logged test's obsolete "never a creature" title is corrected;
+  its assertions are unchanged.
+- Two exact import contracts are added for the new headless acceptance checks
+  (`sea-life-rules`, `deep-story`); the no-unapproved-import assertion stays.
+- New acceptance: native moving turtle outside its fixed spot, fast pass,
+  half-filled/reset ring, fresh full second; all seven creatures at their spots
+  and moving poses on all three routes; identical poses for identical inputs;
+  explicit unchanged pearl range/speed. Browser recipe adds a real ring frame.
+- No replay, signature, timing tolerance, save-fixture or reward assertion changes.
+
+### Round 2 checks and picture
+
+- Lane tier `--changed --jobs 4`: 187 passed, one inherited evidence-pairing
+  failure, 32 not run (614.8 s). The incoming ramp sheet had `review.md` but
+  lacked the required `round-1-review.md`. Added a short reference to its
+  original review, without changing that review or any assertion. Reran only
+  that failed suite plus the 32 unrun suites: 33/33 passed, none unrun (304.3 s).
+  Combined coverage: all 220 lane suites passed. Original failure and continuation
+  receipts remain separate in ignored `checks/round-2-lane.json` and
+  `checks/round-2-remaining.json`; no passing suite was repeated.
+- Explorer 9/9; log 12/12; sea life 23/23; story 9/9; ramp 11/11;
+  Deep save 30 groups; save fixtures 993 checks / 22 historical shapes plus
+  one forged. Replay 225 checks / 25 cases; combat replay 12 / 4;
+  world composition 47 exact checks. Fingerprints and signatures unchanged.
+- Production build passed: 535 modules, 1.13 s, existing chunk and ineffective
+  dynamic-import warnings. No runtime dependencies or assets added.
+- Deep-explorer, deep-sirena and deep-life passed (jobs 1), zero warnings/errors,
+  private memory-only players. The final ring frame runs unpaused.
+- Independent final delta review confirmed route-aware chart caching and the
+  stronger moving-turtle boundary assertions; clear.
+- `deep-frames`: SKIPPED. At 13:48 PT, GPU samples were idle (NVIDIA 0%, Windows
+  engines 0%), but a foreign full tier PID 21840 was active, started 13:45:55
+  by Claude's separate session. AGENTS requires frame timing alone; no frame
+  job started and no p95 claim is made. The three displays and live game were
+  left alone. This is a competing-full-tier skip, not a claim of GPU load.
+  The quiet command remains `node tools/run-browser-scenarios.mjs --scenarios
+  deep-frames --timing-only --headed --jobs 1`.
+- Status and protected Cockpit board sync refreshed at session end.
+
+New picture: `docs/board/looks/deep-explorer/round-2.jpg` (278,530 bytes),
+partial survey, full saved fixture, live logging ring. Builder inspected.
+
+### Round 2 removed
+
+Replaced the fixed-spot-only logging path for creatures and the visible square
+chart tiles. Native sea-life no longer advances in the renderer. No old save,
+player progress, runtime asset, ramp geometry or other lane's work removed.
+Recycled 671,548,836 bytes of generated Vite/QA output, both generated salt-test
+fixtures and raw pictures; kept the two round sheets and handoff check reports.
+Cleanup approval first required stronger ownership proof: private non-linked
+roots, exact test receipts and 711 byte-identical runtime copies were verified
+before recycling. The scratch root remains; no cleanup is blocked.

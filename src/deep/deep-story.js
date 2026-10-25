@@ -5,11 +5,12 @@
 // picture and the save snapshot handed to startCampaign, never changes race
 // state, and uses no randomness. Events go out through duel.emit; the App pays
 // and saves them (raiseFind, recordLogged, recordPearl) and the view draws them.
-import {deepWorldPose} from './deep-journey.js';
+import {deepWorldPose, surfaceLocalPoint} from './deep-journey.js';
 import {createSirena, pingSonar, stepLift, SIRENA_FINDS} from './deep-sirena.js';
 import {createLog, stepLog} from './deep-log.js';
 import {normalizeDeep} from './deep-discovery.js';
 // DEEP-EXPLORER
+import {createSeaLifeState, stepSeaLifeState} from './sea-life-rules.js'; // DEEP-EXPLORER
 import {chartCells, revealChart} from './deep-chart.js';
 
 export const ANA_NEAR = 10;   // metres: close enough for Ana's "bag" and "car" lines
@@ -33,6 +34,7 @@ function begin(duel) {
     partsAtStart: sirena.raised.filter(id => PARTS.includes(id)).length,
     // DEEP-EXPLORER: survey rules own exploration; the map only reads it.
     chartCells: chartCells(zone, duel.deepRuntime.floor), charted: save.charted?.[zone.id] || '',
+    life: createSeaLifeState(zone),
     chartPoint: null, chartDirty: false, chartSaveAt: 0,
     pinged: false, saidBag: false, saidCar: false, saidNorseman: false};
 }
@@ -99,8 +101,12 @@ export function stepDeepStory(duel, dt) {
     if (title) story.places.add(place.id);
     duel.emit({deepPlace: {place: place ?? null, title}});
   }
-  const events = [...stepLift(story.sirena, car, {lift: duel._deepLift === true}, dt),
-    ...stepLog(story.log, car, dt)];
+  // DEEP-EXPLORER: use simulation time and the car, independent of display or model loading.
+  const liftEvents = stepLift(story.sirena, car, {lift: duel._deepLift === true}, dt);
+  const moving = stepSeaLifeState(story.life, story.seconds, dt, surfaceLocalPoint(car), duel.deepRuntime.floor,
+    liftEvents.some(event => event.deepRaised?.find === CAR));
+  const events = [...liftEvents,
+    ...stepLog(story.log, car, dt, moving)];
   for (const event of events) {
     duel.emit(event);
     if (event.deepRaised) for (const line of raisedLines(story, event.deepRaised.find)) duel.emit(line);

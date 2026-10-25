@@ -13,7 +13,10 @@ import {deepObjectives} from '../src/deep/deep-objectives.js';
 import {deepMapGeometry, deepMapData} from '../src/deep/deep-map.js';
 import {rockContact, stopAtDeepRock} from '../src/deep/deep-rocks.js';
 import {SIRENA_FINDS} from '../src/deep/deep-sirena.js';
-import {DEEP_LOG_PAGES} from '../src/deep/deep-log.js';
+import {createSeaLifeState, stepSeaLifeState} from '../src/deep/sea-life-rules.js';
+import {stepDeepStory} from '../src/deep/deep-story.js';
+import {surfaceLocalPoint, deepWorldPose} from '../src/deep/deep-journey.js';
+import {createLog, stepLog, loggingProgress, DEEP_LOG_PAGES} from '../src/deep/deep-log.js';
 import {keyboardAction} from '../src/input-contexts.js';
 import {controlsHelp} from '../src/controls-help.js';
 import {createSirenaHud} from '../src/deep/sirena-view.js';
@@ -206,5 +209,63 @@ test('Restart flushes the final survey cells for the old run before taking the n
     app?.dispose();
     if(storageDescriptor)Object.defineProperty(globalThis,'localStorage',storageDescriptor);else delete globalThis.localStorage;
     if(cancelDescriptor)Object.defineProperty(globalThis,'cancelAnimationFrame',cancelDescriptor);else delete globalThis.cancelAnimationFrame;
+  }
+});
+
+// DEEP-EXPLORER: creatures move under the exact rules the renderer reads.
+test('slowly following a moving turtle logs in the actual dive; a fast pass and interrupted holds do not', () => {
+  const d=race();dive(d);const q=d.deepStory, zone=d.deepRuntime.zone, spot=q.log.spots.find(p=>p.creature==='turtle');
+  // Advance the rule clock until a turtle is well outside its fixed spot.
+  let turtle;
+  for(let t=20;t<100;t++) {
+    stepSeaLifeState(q.life,t,DT,{x:0,y:0,z:0},d.deepRuntime.floor);
+    turtle=q.life.positions.find(p=>p.creature==='turtle'&&Math.hypot(p.x-spot.x,p.z-spot.z)>12);
+    if(turtle){q.seconds=t;break;}
+  }
+  assert.ok(turtle,'test really follows a moving animal beyond the spot');
+  const turtleIndex=q.life.positions.filter(p=>p.creature==='turtle').indexOf(turtle);
+  const follow=()=>{
+    const pose=q.life.positions.filter(p=>p.creature==='turtle')[turtleIndex];
+    assert.ok(Math.hypot(pose.x-spot.x,pose.z-spot.z)>8,'fixed spot cannot satisfy this hold');
+    park(d,pose);
+  };
+  const events=[];d.onChange((s,e)=>{if(e.deepLogged?.creature==='turtle')events.push(e);});
+  for(let i=0;i<150;i++) {
+    follow();d.state.speedMph=25;
+    stepDeepStory(d,DT);
+  }
+  assert.equal(events.length,0);assert.equal(loggingProgress(q.log),null);
+  for(let i=0;i<60;i++) {follow();stepDeepStory(d,DT);}
+  assert.ok(loggingProgress(q.log).fraction>=.49&&loggingProgress(q.log).fraction<.51);
+  park(d,zone.trail[0]);stepDeepStory(d,DT);
+  assert.equal(loggingProgress(q.log),null,'leaving empties ring');
+  for(let i=0;i<119;i++) {follow();stepDeepStory(d,DT);}
+  assert.equal(events.length,0,'a fresh full second is required');
+  follow();stepDeepStory(d,DT);
+  assert.equal(events.length,1);assert.equal(q.log.logged.has('turtle'),true);
+});
+
+test('every Kelp Coast creature logs at its spot and moving pose on every route; sea-life state repeats from inputs', () => {
+  for(const {seed} of ROUTE_VARIANTS) {
+    const d=race(seed), {zone,floor}=d.course.deepZone;
+    for(const id of DEEP_LOG_PAGES[0].creatures) {
+      const log=createLog(zone,{}, {enabled:true}), spot=log.spots.find(p=>p.creature===id);
+      for(let i=0;i<120;i++)stepLog(log,{...spot,speed:19/1.609344},DT);
+      assert.ok(log.logged.has(id),`${seed}: ${id} spot`);
+      const movingLog=createLog(zone,{}, {enabled:true}), a=createSeaLifeState(zone), b=createSeaLifeState(zone);
+      let car={...spot,y:floor.floorHeight(spot.x,spot.z)+1,speed:0}, seen=false;
+      for(let i=0;i<400;i++) {
+        const t=i*DT;
+        const poses=stepSeaLifeState(a,t,DT,car,floor);stepSeaLifeState(b,t,DT,car,floor);
+        assert.deepEqual(a.positions,b.positions,'same time and inputs give identical poses');
+        const animal=poses.find(p=>p.creature===id);
+        if(animal) { seen=true;car={...animal,speed:4/1.609344};stepLog(movingLog,car,DT,poses); }
+      }
+      assert.ok(seen,`${seed}: ${id} rule pose exists`);
+      assert.ok(movingLog.logged.has(id),`${seed}: ${id} moving pose`);
+    }
+    const log=createLog(zone,{}, {enabled:true}), pearl=log.pearls[0];
+    stepLog(log,{...pearl,x:pearl.x+3.1,speed:0},2);assert.equal(log.found.size,0,'pearls retain 3m');
+    stepLog(log,{...pearl,speed:16/1.609344},2);assert.equal(log.found.size,0,'pearls retain 15km/h');
   }
 });

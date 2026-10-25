@@ -14,7 +14,7 @@ export function deepMapGeometry(zone) {
   // DEEP-EXPLORER: cache survey cells and their ink polygons once per dive.
   const frame = chartFrame(zone), cells = chartCells(zone, createZoneFloor(zone)).map(cell => {
     const local = frame.local(cell), half = CHART_CELL / 2;
-    return {...cell, polygon: [[-half,-half],[half,-half],[half,half],[-half,half]]
+    return {...cell, centre: project(cell), radius: CHART_CELL * scale, polygon: [[-half,-half],[half,-half],[half,half],[-half,half]]
       .map(([x,z]) => project(frame.world(local.x+x,local.z+z)))};
   });
   return { cells, project, loop: points.map(project), ramp: project(points[0]),
@@ -33,7 +33,7 @@ export function deepMapData(geometry, zone, car, { places = [], elapsedSec = 0, 
     ...log.pearls.filter(p => log.found.has(p.pearl)).map(p => ({...p, kind:'pearl', label:p.pearl})),
     ...sirena.finds.filter(p => sirena.raised.includes(p.id)).map(p => ({...p, kind:p.id==='sirena-badge'?'badge':'part', label:p.id})),
   ].map(p => ({...p, ...geometry.project(p)}));
-  return { pins, percent:chartPercent(charted, geometry.cells),
+  return { pins, charted, chartGeometry: geometry, percent:chartPercent(charted, geometry.cells),
     cells:geometry.cells.filter(c => chartHas(charted,c.id)), loop: geometry.loop, ramp: geometry.ramp,
     places: geometry.places.filter(p => places.includes(p.id)),
     car: { ...geometry.project(car), heading: -car.heading },
@@ -41,23 +41,56 @@ export function deepMapData(geometry, zone, car, { places = [], elapsedSec = 0, 
       visible: requested || elapsedSec >= 60 } };
 }
 
+// DEEP-EXPLORER: blend survey samples into ink washes, then feather the
+// revealed boundary. The saved grid never appears as visible square tiles.
+const chartLayers = new WeakMap();
+function chartWash(ctx, data) {
+  const canvas = ctx.canvas, doc = canvas?.ownerDocument;
+  if (!doc?.createElement) return; // headless HUD doubles have no drawing surface
+  let cached = chartLayers.get(canvas);
+  if (cached?.bits === data.charted && cached.geometry === data.chartGeometry) { ctx.drawImage(cached.image, 0, 0); return; }
+  const make = () => { const c = doc.createElement('canvas'); c.width=400; c.height=250; return c; };
+  const mask = make(), ink = make(), m = mask.getContext('2d'), g = ink.getContext('2d');
+  m.filter = 'blur(2px)'; m.fillStyle = '#fff';
+  for (const cell of data.cells) {
+    m.beginPath(); m.arc(cell.centre.x, cell.centre.y, cell.radius * .78, 0, Math.PI*2); m.fill();
+  }
+  // A soft contour around the union of samples, including holes and islands.
+  const pixels = m.getImageData(0,0,400,250), a = pixels.data;
+  for (let i=0;i<a.length;i+=4) a[i+3]=Math.max(0,Math.min(255,(a[i+3]-95)*4));
+  m.putImageData(pixels,0,0);
+  g.fillStyle='#e0d2ac'; g.fillRect(0,0,400,250);
+  g.filter='blur(5px)';
+  for (const cell of data.cells) {
+    const p=cell.centre;
+    g.fillStyle=cell.rock>.5?'#92978e':cell.kelp>.5?'#a9b18a':cell.depth>18?'#7c9ba9':cell.depth>12?'#bac8bd':'#e0d2ac';
+    g.beginPath();g.arc(p.x,p.y,cell.radius*.9,0,Math.PI*2);g.fill();
+  }
+  g.filter='none'; g.lineWidth=.55; g.strokeStyle='#52664988';
+  for (const cell of data.cells) if (cell.kelp>.5) {
+    const {x,y}=cell.centre;
+    // Fine curved pen strokes rather than a flat green block.
+    for (let k=-2;k<=2;k+=2) { g.beginPath();g.moveTo(x+k-2,y+3);g.quadraticCurveTo(x+k+2,y,x+k,y-3);g.stroke(); }
+  }
+  g.beginPath();data.loop.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();
+  g.strokeStyle='#384f54';g.lineWidth=1.2;g.setLineDash([4,3]);g.stroke();g.setLineDash([]);
+  g.globalCompositeOperation='destination-in';g.drawImage(mask,0,0);g.globalCompositeOperation='source-over';
+  // Thin ink coastline follows the smooth reveal contour, never cell edges.
+  const coast=make(), c=coast.getContext('2d'), edge=c.createImageData(400,250), e=edge.data;
+  for(let y=1;y<249;y++)for(let x=1;x<399;x++) {
+    const i=(y*400+x)*4, alpha=a[i+3];
+    if(alpha>100 && [i-4,i+4,i-1600,i+1600].some(n=>a[n+3]<=100)) {
+      e[i]=52;e[i+1]=72;e[i+2]=75;e[i+3]=210;
+    }
+  }
+  c.putImageData(edge,0,0);g.drawImage(coast,0,0);
+  chartLayers.set(canvas,{bits:data.charted,geometry:data.chartGeometry,image:ink});ctx.drawImage(ink,0,0);
+}
 export function drawDeepMap(ctx, data) {
   ctx.clearRect(0, 0, 400, 250);
-  // DEEP-EXPLORER: parchment is earned as the survey leaves the dark water.
-  ctx.fillStyle = '#091b23'; ctx.fillRect(0,0,400,250);
-  const polygon = points => { points.forEach((p,i) => i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y)); ctx.closePath(); };
-  for (const cell of data.cells) {
-    ctx.beginPath(); polygon(cell.polygon);
-    ctx.fillStyle = cell.rock > .5 ? '#83918a' : cell.kelp > .5 ? '#8caa82' : cell.depth > 18 ? '#7a9ca3' : '#c6c2a0';
-    ctx.fill();
-  }
-  ctx.save(); ctx.beginPath();
-  for (const cell of data.cells) polygon(cell.polygon);
-  ctx.clip();
-  ctx.beginPath();
-  data.loop.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
-  ctx.closePath(); ctx.strokeStyle = '#354e51'; ctx.lineWidth = 2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.restore();
-  ctx.font = '14px Segoe UI, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff0c7';
+  ctx.fillStyle = '#102a35'; ctx.fillRect(0,0,400,250);
+  chartWash(ctx,data);
+  ctx.font = 'italic 13px Georgia, serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff0c7';
   for (const p of data.places) ctx.fillText(p.name, p.x, p.y - 12);
   ctx.fillStyle = '#e5be78'; ctx.fillRect(data.ramp.x - 5, data.ramp.y - 5, 10, 10);
   ctx.fillText('RAMP', data.ramp.x, data.ramp.y + 23);

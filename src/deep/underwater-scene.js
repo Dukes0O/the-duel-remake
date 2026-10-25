@@ -93,7 +93,7 @@ export function createUnderwaterScene({ zone, quality = 'high', renderer, scene,
       const lights = createHeadlights(object, look.uniforms, { direct: profile.pipeline === 'direct' });
       cars.push({ object, shadow, lights, restore });
     },
-    update({ car = null, camera, seconds }) {
+    update({ car = null, camera, seconds, lifeState }) {
       // Under the kelp the water takes an olive-green cast; in open water none.
       const shade = shape.forestShade(camera.position.x, camera.position.z);
       tint[0] = 1 - 0.18 * shade; tint[1] = 1 - 0.02 * shade; tint[2] = 1 - 0.38 * shade;
@@ -106,7 +106,7 @@ export function createUnderwaterScene({ zone, quality = 'high', renderer, scene,
       floor.update(camera);
       kelp.update(camera);
       seagrass.update(camera);
-      sea.update({ car, camera, seconds });
+      sea.update({ car, camera, seconds, lifeState }); // DEEP-EXPLORER
       const dark = -cy > HEADLIGHT_DEPTH;
       for (const c of cars) c.lights.setOn(dark);
     },

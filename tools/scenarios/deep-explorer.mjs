@@ -25,6 +25,16 @@ export async function run(context) {
   })()`);
   await context.waitFor(`window.__qaApp.duel.state.deepJourney?.phase==='underwater'&&!!window.__qaApp.duel.deepStory`,'native dive',60000);
   await context.waitFor(`document.querySelector('.deep-objectives ol')?.children.length===7`,'Ana checklist',10000);
+  // DEEP-EXPLORER round 2: a real half-second rule hold photographed while the dive runs.
+  await context.waitFor(`document.querySelector('.sirena-title').hidden`,'title clear for logging',15000);
+  await context.evaluate(`(()=>{const d=window.__qaApp.duel;
+    const turtle=d.deepStory.life.positions.find(p=>p.creature==='turtle');
+    if(!turtle||d.deepStory.log.logged.has('turtle'))throw Error('Unlogged moving turtle required');
+    window.__surveyPark(turtle);
+    for(let i=0;i<60;i++)d.step(1/120);
+  })()`);
+  await context.waitFor(`!document.querySelector('.deep-logging').hidden&&document.querySelector('.deep-logging span').textContent==='Logging: Green turtle'`,'real logging ring',10000);
+  const ring=await context.screenshot('logging-green-turtle');
   // Earn the partial chart and pins through the real log/raise rules.
   await context.evaluate(`(()=>{const d=window.__qaApp.duel,q=d.deepStory;
     for(const p of [q.sirena.finds.find(f=>f.id==='sirena-badge'),q.log.spots.find(s=>s.creature==='turtle'),q.log.pearls[0]]){
@@ -51,13 +61,13 @@ export async function run(context) {
   })()`);
   await context.waitFor(`document.querySelector('.deep-chart-percent').textContent==='100% charted'`,'complete saved chart',10000);
   const full=await context.screenshot('chart-fully-explored');
-  const images=[partial,full].map(path=>'data:image/png;base64,'+readFileSync(path).toString('base64'));
-  const sheet=await context.evaluate(`(async()=>{const canvas=document.createElement('canvas');canvas.width=2560;canvas.height=764;
-    const g=canvas.getContext('2d');g.fillStyle='#081d24';g.fillRect(0,0,2560,764);
-    for(let i=0;i<2;i++){const image=new Image();image.src=${JSON.stringify(images)}[i];await image.decode();
+  const images=[partial,full,ring].map(path=>'data:image/png;base64,'+readFileSync(path).toString('base64'));
+  const sheet=await context.evaluate(`(async()=>{const canvas=document.createElement('canvas');canvas.width=3840;canvas.height=764;
+    const g=canvas.getContext('2d');g.fillStyle='#081d24';g.fillRect(0,0,3840,764);
+    for(let i=0;i<3;i++){const image=new Image();image.src=${JSON.stringify(images)}[i];await image.decode();
       g.drawImage(image,i*1280,38,1280,720);g.fillStyle='#e7d4a0';g.font='18px Georgia';
-      g.fillText(i?'Saved chart: fully explored, all find pins':'Explored path: badge, turtle and pearl',i*1280+16,26);}
-    return canvas.toDataURL('image/jpeg',.88);})()`);
+      g.fillText(['Explored path: badge, turtle and pearl','Saved chart: fully explored, all find pins','Moving turtle: real one-second logging ring'][i],i*1280+16,26);}
+    return canvas.toDataURL('image/jpeg',.84);})()`);
   const sheetPath=join(context.outputDir,'chart-sheet.jpg');
   writeFileSync(sheetPath,Buffer.from(sheet.split(',')[1],'base64'));context.screenshots.push(sheetPath);
   // Surface is reachable with the chart folded, through its button and U key.

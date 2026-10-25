@@ -6,6 +6,7 @@
 // deepStoryView(duel), and never writes race state, saves or random streams.
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {loggingProgress} from './deep-log.js'; // DEEP-EXPLORER
 import {deepStoryView} from './deep-story.js';
 import {DEEP_PHONE_LINES} from './deep-phone-lines.js';
 import {createDeepPhoneChain} from './deep-phone.js';
@@ -273,7 +274,8 @@ export function sonarText(event) {
 export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.audio}), now = () => performance.now() / 1000}) {
   const doc = host.ownerDocument, root = doc.createElement('section');
   root.className = 'sirena-hud';
-  root.innerHTML = '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip"></b><span></span></div>' +
+  root.innerHTML = '<div class="deep-logging" hidden><i></i><span></span></div>' + // DEEP-EXPLORER
+    '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip"></b><span></span></div>' +
     '<div class="sirena-log" hidden></div><p class="sirena-caption" aria-live="polite" hidden><small>ANA · FIELD STATION</small><span></span></p>' +
     '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>' +
     '<aside class="deep-map" hidden><header><b>KELP COAST</b><button type="button" class="deep-map-toggle">Hide map</button></header>' +
@@ -292,6 +294,7 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
   const bearing = map.querySelector('.deep-map-bearing');
   // DEEP-EXPLORER: checklist and completion notices are presentation only.
   const objectives = map.querySelector('.deep-objectives'), list = objectives.querySelector('ol');
+  const logging = root.querySelector('.deep-logging'); // DEEP-EXPLORER
   const survey = objectives.querySelector('.deep-chart-percent'), tick = root.querySelector('.deep-objective-tick');
   const surface = map.querySelector('.deep-surface'), surfaceNow = () => app.duel.deepSurface();
   surface.addEventListener('click', surfaceNow);
@@ -341,6 +344,13 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
       const d = app.duel, journey = d.state.deepJourney, discovery = app.getDeepDiscovery();
       const active = discovery?.enabled === true && journey?.phase === 'underwater' && !!d.deepRuntime;
       map.hidden = !active;
+      // DEEP-EXPLORER: draw only the rules' current hold; never advance it here.
+      const progress = active ? loggingProgress(d.deepStory?.log) : null;
+      logging.hidden = !progress;
+      if (progress) {
+        logging.querySelector('span').textContent = `Logging: ${progress.name}`;
+        logging.querySelector('i').style.background = `conic-gradient(#e9d7a0 ${progress.fraction*360}deg,#365764 0deg)`;
+      }
       if (!active) { mapVisit = null; previousObjectives = null; ticks.length = 0; tick.hidden = true; }
       else {
         if (mapVisit !== journey) {

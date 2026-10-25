@@ -55,7 +55,7 @@ export function createSeaLife({ zone, shape, uniforms, quality = 'high', fishBud
   const ctx = { floorAt: (x, z) => shape.floorHeight(x, z) };
   const types = new Map();          // id -> { mesh, animals, track, ... } once its model has loaded
   const schools = [];
-  const whale = createWhale(plan.whale);
+  let whale = createWhale(plan.whale), externalLife = false; // DEEP-EXPLORER
   const status = {};                // id -> 'loading' | 'ready' | 'failed'
   const failures = [];
   const lastCar = { x: 0, y: 0, z: 0 };
@@ -151,7 +151,7 @@ export function createSeaLife({ zone, shape, uniforms, quality = 'high', fishBud
   }));
 
   function raised(findId) {
-    if (findId !== 'sirena-car' || !plan.whale || whale.passed || whale.state === 'passing') return false;
+    if (externalLife || findId !== 'sirena-car' || !plan.whale || whale.passed || whale.state === 'passing') return false;
     if (!whaleModel) { pendingRaise = true; return false; }
     return startWhalePass(whale, lastSeconds ?? 0, shape, lastCar);
   }
@@ -168,7 +168,7 @@ export function createSeaLife({ zone, shape, uniforms, quality = 'high', fishBud
 
   const camPos = new THREE.Vector3();
   return {
-    group, plan, status, failures, ready, whale,
+    group, plan, status, failures, ready, get whale() { return whale; },
     get loaded() { return Object.keys(status).filter(id => status[id] === 'ready'); },
     // Counts actually drawn, by type (sardines in fish).
     counts() {
@@ -186,15 +186,19 @@ export function createSeaLife({ zone, shape, uniforms, quality = 'high', fishBud
       return out;
     },
     raised,
-    update({ car, camera, seconds }) {
+    update({ car, camera, seconds, lifeState }) {
+      // DEEP-EXPLORER: native dives draw the exact poses used for logging.
+      externalLife = !!lifeState;
+      if (lifeState) { seconds = lifeState.seconds; whale = lifeState.whale; }
       if (disposed || !car) return;
       const dt = lastSeconds == null ? 0 : Math.min(0.1, Math.max(0, seconds - lastSeconds));
       lastSeconds = seconds;
       lastCar.x = car.x; lastCar.y = car.y; lastCar.z = car.z;
       camera?.getWorldPosition?.(camPos);
       for (const entry of types.values()) {
+        if (lifeState) entry.animals = lifeState.animals[entry.id];
         entry.animals.forEach((animal, i) => {
-          stepAnimal(animal, seconds, dt, lastCar, ctx);
+          if (!lifeState) stepAnimal(animal, seconds, dt, lastCar, ctx);
           write(entry, i, animal, animal.spec.size ?? 1, seconds);
         });
         entry.mesh.instanceMatrix.needsUpdate = true;
@@ -210,12 +214,12 @@ export function createSeaLife({ zone, shape, uniforms, quality = 'high', fishBud
       }
       if (plan.whale && whaleModel) {
         // The Sirena came up before the whale's model had loaded: it passes now, where the car is.
-        if (pendingRaise) { pendingRaise = false; raised('sirena-car'); }
-        if (whale.state === 'waiting' && !whale.passed) {
+        if (!lifeState && pendingRaise) { pendingRaise = false; raised('sirena-car'); }
+        if (!lifeState && whale.state === 'waiting' && !whale.passed) {
           const d = Math.hypot(car.x - plan.whale.x, car.z - plan.whale.z);
           if (d < WHALE.triggerRange) startWhalePass(whale, seconds, shape, plan.whale);
         }
-        stepWhale(whale, seconds, shape);
+        if (!lifeState) stepWhale(whale, seconds, shape);
         const on = whale.state === 'passing';
         whaleModel.root.visible = on;
         if (on) {

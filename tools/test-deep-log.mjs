@@ -53,15 +53,15 @@ test('pages follow section 5 and 6.4: the Kelp Coast has its seven, every creatu
   assert.ok(DEEP_LOG_PAGES.every(page => page.pearls.length === 3));
 });
 
-test('a creature is logged within 6 m of its spot, under 15 km/h, for a second without a break', () => {
+test('a creature is logged within 8 m of its spot, under 20 km/h, for a second without a break', () => {
   const state = createLog(straight(), {}, ON);
   assert.equal(state.active, true);
-  assert.deepEqual(hold(state, car(6.2, 50), 2), [], 'just beyond 6 m logs nothing');
-  assert.deepEqual(hold(state, car(5.9, 50, 15.5 * KMH), 2), [], 'at 15.5 km/h logs nothing');
-  assert.deepEqual(hold(state, car(5.9, 50, 14.5 * KMH), 0.95), [], 'not yet a second');
+  assert.deepEqual(hold(state, car(8.2, 50), 2), [], 'just beyond 8 m logs nothing');
+  assert.deepEqual(hold(state, car(7.9, 50, 20.5 * KMH), 2), [], 'at 20.5 km/h logs nothing');
+  assert.deepEqual(hold(state, car(7.9, 50, 19.5 * KMH), 0.95), [], 'not yet a second');
   hold(state, car(30, 50), 1 / 120);
-  assert.deepEqual(hold(state, car(5.9, 50, 14.5 * KMH), 0.95), [], 'a break starts the second again');
-  assert.deepEqual(hold(state, car(5.9, 50, 14.5 * KMH), 0.1), [{deepLogged: {creature: 'turtle'}}]);
+  assert.deepEqual(hold(state, car(7.9, 50, 19.5 * KMH), 0.95), [], 'a break starts the second again');
+  assert.deepEqual(hold(state, car(7.9, 50, 19.5 * KMH), 0.1), [{deepLogged: {creature: 'turtle'}}]);
   assert.deepEqual(hold(state, car(0, 50), 3), [], 'a logged creature gives no second card');
   assert.deepEqual(hold(state, car(0, 200), 1.01), [{deepLogged: {creature: 'crab'}}]);
 });
@@ -75,7 +75,7 @@ test('two spots close together each keep their own second, so wobbling between t
   assert.equal(logCardMarkup(null), '', 'no card for nothing');
 });
 
-test('logging measures the fixed spot, never a creature; a save already holding it logs nothing', () => {
+test('a saved creature is never logged again; a save already holding it logs nothing', () => {
   const state = createLog(straight(), {logged: ['turtle']}, ON);
   assert.deepEqual(hold(state, car(0, 50), 2), [], 'already in the save');
   const off = createLog(straight(), {}, {enabled: false});
