@@ -173,7 +173,6 @@ Taken from its smaller points:
 
 - keys still held at the pickup wait to be let go before they reach the
   helicopter (W would lift);
-- the capture frame is left out of the frame timing;
 - the zone takes the world's environment light;
 - one helicopter view a frame;
 - C does nothing while paused;
@@ -184,8 +183,14 @@ It also found that two checks proved little: the drawing check never used
 the App's own view, and the valley check repeated its own formula. Both now
 test the real thing (above).
 
-Left as is: the narrow seam check on the backdrop (Claude judges the look
-sheet).
+Left as is:
+
+- **The backdrop's seam.** Claude judges it from the look sheet.
+- **The capture frame is timed like any other.** Leaving it out would mean
+  changing `render3d.js` lines that `test-frame-metrics` and
+  `test-scene-presentation` pin. One capture per run moves the frame
+  check's max and jank count, not its p95. `render()` returns `'captured'`
+  on that frame, should the timing ever want it.
 
 ## Changed assertions
 

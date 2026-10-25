@@ -992,10 +992,10 @@ export function attachRenderer(host, app) {
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged;
-    let submittedCpuMs,skiCaptureFrame=false;
+    let submittedCpuMs;
     if(skiPose){
       const skiRenderStarted=performance.now();
-      skiCaptureFrame=skiView.render({view:heliNow,pose:skiPose,mainScene:scene,aspect:camera.aspect,high,seconds:presentationSeconds,dt})==='captured';
+      skiView.render({view:heliNow,pose:skiPose,mainScene:scene,aspect:camera.aspect,high,seconds:presentationSeconds,dt});
       rearView.hide();submittedCpuMs=performance.now()-skiRenderStarted;
     } else if(deepPose&&st.deepJourney.committed&&st.deepJourney.phase!=='ascending'){
       const privateRenderStarted=performance.now();
@@ -1034,7 +1034,7 @@ export function attachRenderer(host, app) {
     if(readinessClaimed&&!app.visualReady)app.presentVisualFrame?.(readinessOwner,st,app.duel.course);
     // Only consecutive, presented RAF frames count. Debug draws, compilation,
     // loading and hidden-tab intervals cannot dilute or inflate these samples.
-    if(capture&&!loadingFrame&&!skiCaptureFrame)frameMetrics.record(now,cpuRenderMs);else frameMetrics.suspend(); // SKI-VIEW: not the backdrop's capture
+    if(capture&&!loadingFrame)frameMetrics.record(now,cpuRenderMs);else frameMetrics.suspend();
     // Learn only from visible, presented driving frames. Loading, pauses,
     // menus and debug draws must not lower quality. Apply changes next frame.
     adaptiveResolution.sample(now,capture&&!loadingFrame&&!high&&moving);
