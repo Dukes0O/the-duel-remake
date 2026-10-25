@@ -9,6 +9,13 @@ export const TUNE_SETTINGS = Object.freeze(['pressure', 'wing', 'brakes', 'sprin
 export const TUNED_BONUS = 400;
 const MAX_CREDITS = 1_000_000_000;
 const ID_PATTERN = /^[a-z0-9-]{1,40}$/;
+// A stock lap is only judged against laps under the same rules (tyre-slip, engine-curve): its key is `car|course`, or
+// `car|course|rules` for a race latched with rules, the rule names joined by `+` in alphabetical order. Names this
+// game does not know (a later game's rules) are kept as they are and mean nothing here.
+const RULES_PATTERN = /^[A-Za-z0-9_-]{1,24}(\+[A-Za-z0-9_-]{1,24}){0,7}$/;
+// The most stock laps a save keeps: every car on every course under every rule set fits many times over.
+const MAX_STOCK_LAPS = 4096;
+export const stockKey = (carId, courseId, rules = '') => rules ? `${carId}|${courseId}|${rules}` : `${carId}|${courseId}`;
 
 const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const whole = (value, low, high, fallback) => Number.isSafeInteger(value) ? Math.max(low, Math.min(high, value)) : fallback;
@@ -47,8 +54,9 @@ export function normalizeLab(value) {
   }
   if (isObject(value.stockLaps)) {
     for (const [key, seconds] of Object.entries(value.stockLaps)) {
-      const [car, course, extra] = key.split('|');
-      if (extra === undefined && validCar(car) && validCourse(course) && Number.isFinite(seconds) && seconds > 0) lab.stockLaps[key] = seconds;
+      const [car, course, rules, extra] = key.split('|');
+      if (extra === undefined && (rules === undefined || RULES_PATTERN.test(rules)) && validCar(car) && validCourse(course) &&
+          Number.isFinite(seconds) && seconds > 0 && Object.keys(lab.stockLaps).length < MAX_STOCK_LAPS) lab.stockLaps[key] = seconds;
     }
   }
   lab.tunedBonus = [...new Set((Array.isArray(value.tunedBonus) ? value.tunedBonus : []).filter(validCourse))];
@@ -126,14 +134,16 @@ export function setTune(profile, carId, setting, step, {flags} = {}) {
   return {ok: true, reason: '', profile: withLab(profile, {...lab, tune: {...lab.tune, [carId]: row}})};
 }
 
-// Keeps the best (lowest) stock Time Trial lap for a car on a course.
-export function recordStockLap(profile, carId, courseId, seconds, {flags} = {}) {
+// Keeps the best (lowest) stock Time Trial lap for a car on a course, under the rules the race was latched with ('' for none).
+export function recordStockLap(profile, carId, courseId, seconds, {flags, rules = ''} = {}) {
   const {lab, refusal} = labReady(profile, flags, {tuning: true});
   if (refusal) return refusal;
   if (!validCar(carId) || !validCourse(courseId)) return failure(profile, 'Choose a car and a course.');
   if (!Number.isFinite(seconds) || seconds <= 0) return failure(profile, 'A lap needs a time above zero.');
-  const key = `${carId}|${courseId}`, best = lab.stockLaps[key];
+  if (rules !== '' && (typeof rules !== 'string' || !RULES_PATTERN.test(rules))) return failure(profile, 'Those rules are not known.');
+  const key = stockKey(carId, courseId, rules), best = lab.stockLaps[key];
   if (best !== undefined && best <= seconds) return {ok: true, reason: '', profile};
+  if (best === undefined && Object.keys(lab.stockLaps).length >= MAX_STOCK_LAPS) return failure(profile, 'There is no more room for stock laps.');
   return {ok: true, reason: '', profile: withLab(profile, {...lab, stockLaps: {...lab.stockLaps, [key]: seconds}})};
 }
 

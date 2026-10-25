@@ -141,6 +141,32 @@ the shape of each trade stays.
   "Tuned lap: 1.4% faster than your stock lap. Bonus 400."
 - With twenty courses that is at most 8,000 credits, earned by learning.
 
+**Settled by LAB-TUNE (25 October 2026).**
+
+- **Where it acts.** `src/lab/lab-tune.js` turns a tune into the car's numbers after upgrades (`tunedCar`): pressure, springs
+  and fuel are plain multipliers; the wing's grip depends on speed and the brake balance's cornering cost on the brake, so
+  the driving code asks `tunedGrip(car, speed, brake)` for the grip the steering sees. A stock tune (all settings 0, or
+  fuel at or below 0) is the very same car object and the same grip value, so a race replays exactly as without the switch.
+  The tune is part of the race setup (`state.tune`, present only when something is set, `lab-tuning` is on and it is not a
+  lesson run) like upgrades; computer cars are never tuned.
+- **Fuel.** Steps -2 to 0 are the full tank (a full tank lasts 110% of the race and never runs dry). +1 is a three-quarter
+  tank and +2 a half tank; each step above 0 gives +1.5% acceleration and braking. The tank is a distance that runs down with
+  the metres driven in a Grand Prix on a course with a pit lane; empty means 40% of the acceleration until the pit stop, which
+  takes 5 s longer (4 s becomes 9 s) and refills the tank. Petrol cars only (a car marked `electric` has no tank).
+- **Brake balance's cornering cost** is applied in the tuning's own hook whatever the tyre-slip switch says: while the brake is
+  held the cornering grip is multiplied by `1 + (-0.02 x step / 0.8) x brake` (a step rearward leaves 78% of the 80%, a step
+  forward 82%). At step 0 nothing is multiplied.
+- **Stock laps** are kept by rule set: `car|course` for a plain race, `car|course|rules` for one latched with tyre-slip or
+  engine-curve (names joined by `+`, alphabetical). A tuned lap is judged only against the stock lap of the same rules, and a
+  record from another rule set never seeds or judges it. They are seeded once, from the player's own Time Trial records in the
+  leaderboard, the first time a Time Trial settles with tuning on and no stock laps saved; existing records are never
+  replaced. The bonus (1% faster, once per course, 400) settles before the run is written to the records.
+- **No free lunch** is shown by the test driver in Node with first laps on six courses and by number: the wing trades
+  top speed for grip in fast corners (faster on the authored circuits, slower on the older courses with long straights),
+  pressure the other way; brake balance and springs trade two numbers against each other by construction, and the springs'
+  other half is proved on rough ground, because a lap on the road never leaves the road. Braking strength alone hardly
+  moves a lap (a step is about 0.01%), so no lap claim is made for the brakes. See `docs/changes/LAB-TUNE.md` for the table.
+
 ## 6. The secret: the McMurtry Spéirling
 
 Nobody mentions it. When all five wind-tunnel lessons are passed, a switch
