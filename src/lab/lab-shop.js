@@ -1,6 +1,7 @@
 // What the Lab sells (docs/LAB.md section 4) and the rule for buying it. Pure: no screen, no clock.
 import {LAB_LESSONS} from './lab-lessons.js';
 import {labReady, withLab} from './lab-save.js';
+import {waxSetting} from './benches/wax.js';
 
 const MAX_CREDITS = 1_000_000_000;
 // lesson: the lesson that opens it (null: the secret). needs: an upgrade that must be owned first.
@@ -42,3 +43,19 @@ export function buyUpgrade(profile, id, {flags} = {}) {
   return {ok: true, reason: '', price: row.price,
     profile: withLab(profile, {...lab, owned: {...lab.owned, [id]: true}}, {credits: wallet - row.price})};
 }
+
+// What the Snow lessons' rewards do for skiing (docs/LAB.md 4.3). With the Lab off nothing is gated and no wax is chosen,
+// so the ski runs are exactly the ski rules'.
+// The Aerials run: offered like any other run with the Lab off; with it on, once the free Aerials reward is owned.
+export function aerialsOpen(profile, flags) {
+  if (flags?.enabled?.('lab') !== true) return true;
+  const {lab, refusal} = labReady(profile, flags);
+  return !refusal && lab.owned.aerials === true;
+}
+export function waxKitOwned(profile, flags) {
+  const {lab, refusal} = labReady(profile, flags);
+  return !refusal && lab.owned['wax-kit'] === true;
+}
+// The wax for createSkier({wax}) on a day: the pick judged against the day's snow with the Wax kit, otherwise nothing
+// (the plain snow's friction).
+export const skiWaxFor = (profile, flags, day, pick) => waxKitOwned(profile, flags) ? waxSetting(pick, day) : null;
