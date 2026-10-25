@@ -1,12 +1,14 @@
 // Restoring the Falcone Sirena on the Rust bench (docs/LAB.md section 7, docs/THE_DEEP.md 6.2). Pure rules: who is offered the
 // restoration, what it costs and does to a save, and the minute-long sequence as a function of time. Nothing here draws,
-// plays a sound or reads a clock. The save change is small on purpose: 2,500 credits go and `falcone_sirena` joins
+// plays a sound or reads a clock. The save change is small on purpose: 1,000 credits go and `falcone_sirena` joins
 // `unlockedCars` in one step, and nothing the player has is removed (the garage's own states read that list).
 import {labOf, LAB_SAVE_VERSION} from './lab-save.js';
 import {isCarUnlocked, getUpgradeLevels} from '../progression.js';
 import {sirenaState, SIRENA_CAR} from '../deep/sirena-car.js';
 
-export const RESTORE_PRICE = 2500;
+export const RESTORE_PRICE = 1000;
+export const RUNNING_SECONDS = 46;
+export const BODY_SECONDS = 14;
 const MAX_CREDITS = 1_000_000_000;
 
 // The sequence, in order, with its length in seconds (about a minute). `weeks` is the fast-forwarded soak.
@@ -55,7 +57,8 @@ export function restoreSirena(profile, {flags} = {}) {
   // As buying any car does: an unowned car carries no upgrades into the garage.
   const upgrades = Object.hasOwn(profile.upgrades || {}, SIRENA_CAR) ? {...profile.upgrades, [SIRENA_CAR]: getUpgradeLevels(null, SIRENA_CAR)} : profile.upgrades;
   return {ok: true, reason: '', price: RESTORE_PRICE, profile: {...profile, credits: wallet - RESTORE_PRICE,
-    unlockedCars: [...(Array.isArray(profile.unlockedCars) ? profile.unlockedCars : []), SIRENA_CAR], upgrades}};
+    unlockedCars: [...(Array.isArray(profile.unlockedCars) ? profile.unlockedCars : []), SIRENA_CAR], upgrades,
+    cosmetics: {...profile.cosmetics, [SIRENA_CAR]: {owned: ['factory', 'sea-wreck'], selected: 'sea-wreck'}}}};
 }
 
 const ease = t => t * t * (3 - 2 * t);
@@ -85,4 +88,14 @@ export function stageAt(seconds) {
   return Object.freeze({stage: stage.id, label: stage.label, index, into, done, overall: clamp01(t / RESTORE_SECONDS),
     weeks, saltShare, rust, wreck: 1 - swap, car: swap, water: 1 - drain, red,
     stripe: done ? 1 : index === 4 ? ease(clamp01((into - 0.6) / 0.4)) : 0, bubbles: index === 1 ? 1 : index === 2 ? 0.4 : 0});
+}
+
+// Split the existing show without changing its rebuild/paint choreography.
+// The mechanical work never strips or repaints the body.
+export function restoreStageAt(seconds, kind = 'running') {
+  const duration = kind === 'body' ? BODY_SECONDS : RUNNING_SECONDS;
+  const elapsed = Math.max(0, Math.min(duration, Number.isFinite(seconds) ? seconds : 0));
+  const view = stageAt(kind === 'body' ? RUNNING_SECONDS + elapsed : elapsed);
+  return {...view, ...(kind === 'running' && view.stage === 'strip' ? {label:'Freeing the seized mechanical parts'} : {}), ...(kind === 'running' && elapsed === duration ? {stage:'strip',index:2,label:'Mechanically sound. Body as found.'} : {}), kind, done: elapsed >= duration, overall: elapsed / duration,
+    ...(kind === 'running' ? {rust: 1, wreck: 1, car: 0, red: 0, stripe: 0} : {})};
 }

@@ -1,0 +1,122 @@
+{
+  "shape": "lab-restore-2-legacy-sirena",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2,
+      "activePlayerId": "sirena-qa",
+      "players": [
+        {
+          "id": "sirena-qa",
+          "name": "Sirena QA",
+          "profile": {
+            "version": 2,
+            "credits": 3200,
+            "unlockedCars": [
+              "falcone_f42",
+              "stuttgart_959s",
+              "falcone_sirena"
+            ],
+            "cosmetics": {},
+            "deep": {
+              "version": 1,
+              "raised": [
+                "sirena-car"
+              ]
+            },
+            "lab": {
+              "version": 1,
+              "done": {
+                "rust": true
+              },
+              "owned": {},
+              "ring": 0,
+              "ringBest": 0,
+              "cable": 15,
+              "tune": {},
+              "stockLaps": {},
+              "tunedBonus": [],
+              "secret": {}
+            },
+            "futureNote": {
+              "keep": "unchanged"
+            }
+          }
+        },
+        {
+          "id": "wreck-qa",
+          "name": "Wreck QA",
+          "profile": {
+            "version": 2,
+            "credits": 1700,
+            "unlockedCars": [
+              "falcone_f42",
+              "stuttgart_959s",
+              "falcone_sirena"
+            ],
+            "cosmetics": {
+              "falcone_sirena": {
+                "owned": [
+                  "factory",
+                  "sea-wreck",
+                  "restored-1966"
+                ],
+                "selected": "sea-wreck"
+              }
+            },
+            "deep": {
+              "version": 1,
+              "raised": [
+                "sirena-car"
+              ]
+            },
+            "lab": {
+              "version": 1,
+              "done": {
+                "rust": true
+              },
+              "owned": {},
+              "ring": 0,
+              "ringBest": 0,
+              "cable": 15,
+              "tune": {},
+              "stockLaps": {},
+              "tunedBonus": [],
+              "secret": {}
+            },
+            "futureNote": {
+              "keep": "unchanged"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "assertions": [
+    {
+      "path": "players.0.profile.credits",
+      "equals": 3200
+    },
+    {
+      "path": "players.0.profile.cosmetics",
+      "equals": {}
+    },
+    {
+      "path": "players.0.profile.futureNote",
+      "equals": {
+        "keep": "unchanged"
+      }
+    },
+    {
+      "path": "players.1.profile.cosmetics.falcone_sirena.selected",
+      "equals": "sea-wreck"
+    },
+    {
+      "path": "players.1.profile.cosmetics.falcone_sirena.owned",
+      "equals": [
+        "factory",
+        "sea-wreck",
+        "restored-1966"
+      ]
+    }
+  ]
+}

@@ -334,11 +334,11 @@ export function attachRenderer(host, app) {
     app.holdVisualReadiness?.(readinessOwner);return false;
   }
   const vehicleAssets=createVehicleAssets();
-  function prepareVehicle(key,{retry=false}={}) {
+  function prepareVehicle(key,{retry=false,finish}={}) {
     if(disposed)return false;
-    let status=vehicleAssets.status(key);
-    if(status==='idle'||status==='error'&&retry){vehicleAssets.load(key,{retry});status=vehicleAssets.status(key);}
-    host.dataset.vehicleKey=key;host.dataset.vehicleAsset=status;host.dataset.heroAsset=status;
+    let status=vehicleAssets.status(key,{finish});
+    if(status==='idle'||status==='error'&&retry){vehicleAssets.load(key,{retry,finish});status=vehicleAssets.status(key,{finish});}
+    host.dataset.vehicleKey=key;host.dataset.vehicleFinish=finish??'factory';host.dataset.vehicleAsset=status;host.dataset.heroAsset=status;
     host.dataset.vehicleSource=vehicleAssets.source(key)||'unknown';
     if(status!=='ready'){
       // Hide the previous selection; a loading model must not show an old body.
@@ -574,7 +574,9 @@ export function attachRenderer(host, app) {
     updateCoach(next,st);updateDriveLesson(next,st);
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
-    if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    const selectedFinish=app.getPaintPreset?.(carKey,{menu})?.id;
+    const modelFinish=carKey==='falcone_sirena'&&app._switches?.().enabled('lab')===true&&selectedFinish==='sea-wreck'?'sea-wreck':null;
+    if(!prepareVehicle(carKey,{finish:modelFinish})){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!prepareKitWorld(next)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedRoof=app.getRoofLook?.(carKey,{menu})??null;
     const needsYeti=((next.def.id==='summit-run'||isSummitAttack(next.def))&&(app._switches?.()??app.duel.featureFlags).enabled('yeti')&&
@@ -597,13 +599,13 @@ export function attachRenderer(host, app) {
       ready = false;
     }
     if (menu !== lastMenu) { ready = false; lastMenu = menu; }
-    if (carKey !== loadedCar) {
+    if (carKey !== loadedCar || player?.userData.finish !== (modelFinish ?? undefined)) {
       if(ghost){const style=ghostStyle;retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;}
       if (player) {roadRoof.detachVehicle(player);retireObject(player);}
       if(rival){retireObject(rival);rival=null;}
       for(const entry of extraOpponents)retireObject(entry.mesh, () => entry.droneStyle?.restore());
       extraOpponents.length=0;
-      player = vehicleAssets.create(carKey);
+      player = vehicleAssets.create(carKey,{finish:modelFinish});
       scene.add(player); loadedCar = carKey;sceneRevision++;
       ambientShading.refresh();
     }
@@ -1119,7 +1121,7 @@ export function attachRenderer(host, app) {
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
   return { prepareVehicle, captureTrackSnapshot, clearTrackSnapshot,
-    retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); },
+    retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true,finish:app._switches?.().enabled('lab')===true?app.getPaintPreset?.(host.dataset.vehicleKey)?.id:null}); },
     retryTrackKits() {const next=app.duel.state.status==='menu'?app.getMenuCourse(app.menuStage||0):app.duel.course;return prepareKitWorld(next,{retry:true});},
     projectFootAim() {
       const state=app.duel.state;

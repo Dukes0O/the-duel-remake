@@ -105,9 +105,9 @@ export function restoreOfferMarkup(offer) {
   const price = `${Math.floor(offer.price).toLocaleString('en-US')} CR`;
   if (offer.state === 'locked') return `<div class="lab-restore"><p>${escape(offer.note)}</p></div>`;
   if (offer.state === 'again')
-    return '<div class="lab-restore"><p>The Sirena is restored and waits in your garage.</p><button type="button" data-lab="restore-again">Watch the restoration again</button></div>';
+    return '<div class="lab-restore"><p>The Sirena runs again and waits in your garage.</p><button type="button" data-lab="restore-again">Watch the restoration again</button></div>';
   return `<div class="lab-restore"><p>The Sirena is raised and waits in your garage under a sheet.</p>` +
-    `<button type="button" class="lab-restore-button" data-lab="restore"${offer.canBuy ? '' : ' disabled'}>Restore the Sirena: ${price}</button>` +
+    `<button type="button" class="lab-restore-button" data-lab="restore"${offer.canBuy ? '' : ' disabled'}>Get her running: ${price}</button>` +
     `${offer.note ? `<em>${escape(offer.note)}</em>` : ''}</div>`;
 }
 
@@ -115,16 +115,18 @@ export function restoreOfferMarkup(offer) {
 // screen can change their words in place without rebuilding the panel.
 export function restoreRunMarkup(view) {
   const stages = ['soak', 'current', 'strip', 'rebuild', 'paint'];
-  const steps = stages.map((id, i) => {
+  const shown = view.kind === 'running' ? stages.slice(0,3) : view.kind === 'body' ? stages.slice(3) : stages;
+  const steps = shown.map(id => {
+    const i = stages.indexOf(id);
     const state = i < view.index || view.done ? 'done' : i === view.index ? 'now' : '';
     return `<li class="${state}"${state === 'now' ? ' aria-current="step"' : ''}>${state === 'done' ? '✓ ' : ''}${escape(['Soak', 'Current', 'Strip', 'Rebuild', 'Paint'][i])}</li>`;
   }).join('');
   const end = view.done
     ? `<p class="lab-message">The Sirena is yours. She waits at Pacific Canyon: race the Coast Cup in her.</p>${view.unsaved ? '<p class="lab-message">This session could not save: the Sirena is yours until the game is closed.</p>' : ''}<button type="button" data-lab="restore-close">Back to the bench</button>`
     : view.skippable ? '<button type="button" data-lab="restore-skip">Skip</button>' : '';
-  return `<section class="lab-restore-run" aria-label="Restoring the Sirena"><h3>RESTORING THE SIRENA</h3><ol class="lab-restore-steps">${steps}</ol>` +
+  return `<section class="lab-restore-run" aria-label="Restoring the Sirena"><h3>${view.kind === 'running' ? 'GET HER RUNNING' : 'RESTORING THE SIRENA'}</h3><ol class="lab-restore-steps">${steps}</ol>` +
     `<p class="lab-restore-label" id="lab-restore-label">${escape(view.label)}</p><div class="lab-restore-bar"><i id="lab-restore-bar" style="width:${Math.round(view.overall * 100)}%"></i></div>` +
-    `<dl class="lab-readout"><div><dt>Salt in the metal</dt><dd id="lab-restore-salt">${restoreSaltText(view)}</dd></div><div><dt>Soaking</dt><dd id="lab-restore-weeks">${restoreWeeksText(view)}</dd></div></dl>${end}</section>`;
+    `${view.kind === 'body' ? '' : `<dl class="lab-readout"><div><dt>Salt in the metal</dt><dd id="lab-restore-salt">${restoreSaltText(view)}</dd></div><div><dt>Soaking</dt><dd id="lab-restore-weeks">${restoreWeeksText(view)}</dd></div></dl>`}${end}</section>`;
 }
 export const restoreSaltText = view => `${Math.max(0, Math.round(view.saltShare * 100))}%`;
 export const restoreWeeksText = view => `week ${Math.round(view.weeks)} of 26 (fast-forward)`;

@@ -11,7 +11,7 @@ const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWit
 // the honest fixtures above, whose normalized bytes must stay exact; these load and are checked against what they should read as.
 const forgedDir = new URL('./fixtures/saves-forged/', import.meta.url);
 const forgedFiles = readdirSync(fileURLToPath(forgedDir)).filter(name => name.endsWith('.json')).sort();
-assert.equal(files.length, 22, 'review the historical save-shape fixture roster');
+assert.equal(files.length, 23, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
   const values = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));

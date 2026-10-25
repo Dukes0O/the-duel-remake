@@ -7,6 +7,8 @@ import {hasAllPearls} from './deep/deep-log.js';
 // material instead of guessing a shared finish for seven different vehicles.
 export const PAINT_PRESETS=Object.freeze({
   frost:Object.freeze({id:'frost',name:'Frost',finish:'Frosted reward',price:0,reward:'yeti',appearance:Object.freeze({id:'frost',name:'Frost',color:0xdce8f0,metalness:.1,roughness:.55})}),
+  'sea-wreck':Object.freeze({id:'sea-wreck',name:'Sea wreck',finish:'As raised from the sea',price:0,car:'falcone_sirena',appearance:Object.freeze({id:'sea-wreck',name:'Sea wreck',color:0xffffff,metalness:.035,roughness:.94,clearcoat:0,clearcoatRoughness:.14})}),
+  'restored-1966':Object.freeze({id:'restored-1966',name:'Restored 1966',finish:'Rebuild and factory red paint',price:1500,car:'falcone_sirena',appearance:Object.freeze({id:'restored-1966',name:'Restored 1966',color:0x9c1217,metalness:.22,roughness:.27,clearcoat:.85,clearcoatRoughness:.14})}),
   factory:Object.freeze({id:'factory',name:'Factory',finish:'Original finish',price:0,appearance:null}),
   copper_metallic:Object.freeze({id:'copper_metallic',name:'Copper Metallic',finish:'Warm metallic gloss',price:250,appearance:Object.freeze({id:'copper_metallic',name:'Copper Metallic',color:0xb97046,metalness:.65,roughness:.24,clearcoat:1,clearcoatRoughness:.10})}),
   glacier_satin:Object.freeze({id:'glacier_satin',name:'Glacier Satin',finish:'Pale blue-grey satin',price:400,appearance:Object.freeze({id:'glacier_satin',name:'Glacier Satin',color:0xb9d0d2,metalness:.22,roughness:.48,clearcoat:.35,clearcoatRoughness:.28})}),
@@ -16,7 +18,7 @@ export const PAINT_PRESETS=Object.freeze({
   pearl_white:Object.freeze({id:'pearl_white',name:'Pearl White',finish:'Pearl sheen reward',price:0,reward:'deep',appearance:Object.freeze({id:'pearl_white',name:'Pearl White',color:0xf1ede4,metalness:.25,roughness:.28,clearcoat:1,clearcoatRoughness:.12})}),
 });
 const factory=Object.freeze({owned:Object.freeze(['factory']),selected:'factory'});
-const ordinaryIds=Object.freeze(Object.values(PAINT_PRESETS).filter(item=>!item.reward).map(item=>item.id));
+const ordinaryIds=Object.freeze(Object.values(PAINT_PRESETS).filter(item=>!item.reward&&!item.car).map(item=>item.id));
 const knownCar=car=>Object.hasOwn(CARS,car);
 const ownsCar=(profile,car)=>knownCar(car)&&(!(CARS[car].price>0)&&!CARS[car].unlockRequirement||profile?.unlockedCars?.includes(car));
 const makeState=(owned,selected)=>Object.freeze({owned:Object.freeze(owned),selected});
@@ -32,7 +34,12 @@ function rewardIds(profile,car,{muddyHollowEnabled=false,yetiEnabled=false,inclu
   return [...muddy,...(ownsCar(profile,car)&&yetiRewards(profile).frost&&(yetiEnabled===true||includeInactiveRewards)?['frost']:[]),
     ...(ownsCar(profile,car)&&hasAllPearls(profile)?['pearl_white']:[])];
 }
-function allowedIds(profile,car,options){return [...ordinaryIds,...rewardIds(profile,car,options)];}
+const sirenaIds=['sea-wreck','restored-1966'];
+const sirenaOn=options=>options?.labEnabled===true&&options?.deepEnabled===true;
+function allowedIds(profile,car,options){
+  if(car==='falcone_sirena'&&sirenaOn(options))return sirenaIds;
+  return [...ordinaryIds,...rewardIds(profile,car,options)];
+}
 export function normalizePaintState(value,allowed=ordinaryIds){
   const source=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
   const rewards=allowed.filter(id=>PAINT_PRESETS[id]?.reward);
@@ -42,9 +49,18 @@ export function normalizePaintState(value,allowed=ordinaryIds){
 }
 export function normalizeCosmetics(value,profile){
   if(!value||typeof value!=='object'||Array.isArray(value))return Object.freeze({});
-  return Object.freeze(Object.fromEntries(Object.entries(value).filter(([car])=>knownCar(car)).map(([car,state])=>[car,normalizePaintState(state,allowedIds(profile,car,{includeInactiveRewards:true}))])));
+  return Object.freeze(Object.fromEntries(Object.entries(value).filter(([car])=>knownCar(car)).map(([car,state])=>[car,normalizePaintState(state,[...allowedIds(profile,car,{includeInactiveRewards:true}),...(car==='falcone_sirena'?sirenaIds:[])])])));
 }
-export function getPaintState(profile,car,options){return ownsCar(profile,car)?normalizePaintState(profile?.cosmetics?.[car],allowedIds(profile,car,options)):factory;}
+export function getPaintState(profile,car,options){
+  if(!ownsCar(profile,car))return factory;
+  const saved=profile?.cosmetics?.[car];
+  // The old dev-only 2,500 restore had no finish marker. Read it without
+  // changing the save; the next explicit Lab/paint action persists both.
+  if(car==='falcone_sirena'&&sirenaOn(options)&&!saved?.owned?.includes('sea-wreck'))
+    return makeState([...new Set(['factory',...(Array.isArray(saved?.owned)?saved.owned:[]).filter(id=>ordinaryIds.includes(id)),...sirenaIds])],
+      saved?.selected&&saved.selected!=='factory'&&ordinaryIds.includes(saved.selected)?saved.selected:'restored-1966');
+  return normalizePaintState(saved,allowedIds(profile,car,options));
+}
 export function getEquippedPaintId(profile,car,options){return getPaintState(profile,car,options).selected;}
 export function getPaintAppearance(profile,car,options){return PAINT_PRESETS[getEquippedPaintId(profile,car,options)].appearance;}
 export function paintPresetsFor(profile,car,options){return allowedIds(profile,car,options).map(id=>PAINT_PRESETS[id]);}
@@ -57,10 +73,11 @@ function operation(profile,car,id,buy,options){
   if(!allowedIds(profile,car,options).includes(id))return fail('Earn this paint finish before applying it.');
   const state=getPaintState(profile,car,options),owned=state.owned.includes(id),preset=PAINT_PRESETS[id];
   if(!owned&&!buy)return fail('Buy this finish for this car before applying it.');
-  const cost=owned?0:preset.price,credits=Number.isFinite(profile?.credits)?Math.max(0,Math.floor(profile.credits)):0;
+  if(id==='sea-wreck'&&!owned)return fail('Get her running at the Rust bench first.');
+  const cost=owned?0:preset.price,credits=Number.isFinite(profile?.credits)?Math.min(1_000_000_000,Math.max(0,Math.floor(profile.credits))):0;
   if(cost>credits)return fail(`You need ${cost-credits} more credits.`);
   if(owned&&state.selected===id)return {profile,ok:true,reason:'',cost:0,purchased:false,changed:false};
-  const cosmetics=Object.freeze({...normalizeCosmetics(profile.cosmetics,profile),[car]:makeState(owned?[...state.owned]:[...state.owned,id],id)});
+  const cosmetics=Object.freeze({...normalizeCosmetics(profile.cosmetics,profile),[car]:makeState([...new Set([...(normalizeCosmetics(profile.cosmetics,profile)[car]?.owned??[]),...state.owned,...(owned?[]:[id])])],id)});
   return {profile:{...profile,credits:cost?credits-cost:profile.credits,cosmetics},ok:true,reason:'',cost,purchased:!owned,changed:true};
 }
 // Purchases equip the finish immediately. Reapplying an owned finish is free,

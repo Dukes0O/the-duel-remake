@@ -40,7 +40,7 @@ for(const status of ['racing','exploring','menu','countdown','ticket','stage_res
     ['racing','exploring'].includes(status)&&!paused,`${status}, paused=${paused}: only active driving trains presentation`);
 assert.match(source,/const capture=measure&&!document\.hidden/);
 assert.match(source,/if \(!next\).*adaptiveResolution\.reset\(\);return;/);
-assert.match(source,/if\(!prepareVehicle\(carKey\)\).*adaptiveResolution\.reset\(\);return;/);
+assert.match(source,/if\(!prepareVehicle\(carKey,\{finish:modelFinish\}\)\).*adaptiveResolution\.reset\(\);return;/);
 assert.match(source,/if\(!warmup\.canDraw\(warmupKey\)\).*adaptiveResolution\.reset\(\);return;/);
 assert.match(source,/const resize = .*adaptiveResolution\.reset\(\)/);
 assert.match(source,/const visibility = .*adaptiveResolution\.reset\(\)/);
