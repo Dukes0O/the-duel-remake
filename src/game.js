@@ -539,6 +539,7 @@ export class Duel {
     s.stageIndex = Math.max(0, COURSE.findIndex(course => course.id === 'titan-arena'));
     this.course = new Course(venue, this.seed);
     delete s.tyreSlipRules; delete s.tyreSlip; delete s.engineCurve;
+    delete s.tune; delete s.fuel; // LAB-TUNE: an arena event is never tuned, and never inherits a tank
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     this._lapGates = [];
     this._resetStageDriving();

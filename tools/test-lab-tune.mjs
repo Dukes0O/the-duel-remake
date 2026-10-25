@@ -7,7 +7,7 @@ import '../src/circuits/index.js';
 import {Duel} from '../src/game.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {createProfile} from '../src/progression.js';
-import {TUNE_SETTINGS, labOf, setTune, stockKey, createLab, normalizeLab, withLab, TUNED_BONUS} from '../src/lab/lab-save.js';
+import {TUNE_SETTINGS, labOf, setTune, stockKey, createLab, normalizeLab, withLab, recordStockLap, TUNED_BONUS} from '../src/lab/lab-save.js';
 import {passLesson} from '../src/lab/lab-save.js';
 import {
   LAB_TUNE, normalizeTune, isStockTune, raceTune, tunedCar, tunedGrip, fuelPlan, bestLap, ruleSetOf, seedStockLaps, settleTunedLap,
@@ -132,6 +132,17 @@ const base = {...CARS[CAR], roughnessScale: 1, offRoadGrip: DRIVE.offRoadGrip};
   gp.state.speedMph = 50; gp._drive(1 / 120);
   ok(gp.state.fuel.dry === true, 'and runs dry at zero');
   ok(!prepared({fuel: 2}, {}, 'summit-run', 'duel').state.fuel && !prepared({fuel: 2}).state.fuel, 'a race that is not a Grand Prix with a pit lane has no tank');
+}
+
+// ---- An arena event is never tuned ---------------------------------------------------------------------------------------------------
+{
+  const duel = new Duel({featureFlags: flagsOf('hidden-road', 'lab-tuning')});
+  duel.startCampaign({mode: 'timetrial', car: CAR, startStage: COURSE.findIndex(item => item.id === 'tremblant-woods'), seed: 1989, opponentCount: 0, tune: {wing: 2}});
+  duel.state.wastelandGateDiscovered = true;
+  duel.state.fuel = {tankM: 100, leftM: 0, dry: true};
+  ok(duel.state.tune && duel.car.tune, 'a tuned race, with a tank left behind');
+  ok(duel.startArenaEvent({car: 'banshee_muscle', seed: 1989, opponents: [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}]}), 'an arena event starts on the same Duel');
+  ok(!('tune' in duel.state) && !('fuel' in duel.state) && !duel.car.tune, 'and carries neither the tune nor the tank');
 }
 
 // ---- Fuel plan ------------------------------------------------------------------------------------------------------------
@@ -300,7 +311,7 @@ const POOL = ['tremblant-woods', 'harbour-lights', 'panorama-ridge', 'pacific-ca
   same(edge.tuned.bonus, TUNED_BONUS, 'exactly 1% faster pays');
   const nearMiss = settleTunedLap(stocked, lapOf([89.9 * 0.9901], tuned), {flags: TUNING});
   same([nearMiss.tuned.bonus, nearMiss.profile === stocked], [0, true], 'just under 1% faster pays nothing and changes nothing');
-  same(nearMiss.tuned.percent, 1, 'the result still says how much faster (0.99 of the lap)');
+  same(nearMiss.tuned.percent, 0.9, 'the result says how much faster, rounded down, so 0.99% never reads as 1% beside no bonus');
   const slow = settleTunedLap(stocked, lapOf([91], tuned), {flags: TUNING});
   same([slow.tuned.bonus, slow.tuned.percent], [0, 0], 'a slower tuned lap says 0 and pays nothing');
   const paid = settleTunedLap(stocked, lapOf([88.5, 89], tuned), {flags: TUNING});
@@ -320,6 +331,17 @@ const POOL = ['tremblant-woods', 'harbour-lights', 'panorama-ridge', 'pacific-ca
   // Another car has its own stock lap.
   const otherCar = settleTunedLap(stocked, {carId: 'aurora_gt', courseId: 'tremblant-woods', lapTimes: [10], tune: tuned}, {flags: TUNING});
   same(otherCar.tuned, {percent: 0, bonus: 0}, 'a car with no stock lap on the course pays nothing');
+
+  // The 1% edge in whole milliseconds: exactly 1% faster pays whatever the floating point says, one millisecond short does not.
+  let edges = 0;
+  for (let k = 700; k <= 1300; k += 7) {
+    const stockLap = k / 10, exact = k * 99 / 1000;   // k / 10 s is a whole number of hundred-millisecond steps, so 1% faster is whole milliseconds
+    const got = settleTunedLap(withLab(profile, {...createLab(), stockLaps: {[stockKey(CAR, 'tremblant-woods')]: stockLap}}), lapOf([exact], tuned), {flags: TUNING});
+    const miss = settleTunedLap(withLab(profile, {...createLab(), stockLaps: {[stockKey(CAR, 'tremblant-woods')]: stockLap}}), lapOf([exact + 0.001], tuned), {flags: TUNING});
+    if (got.tuned.bonus !== TUNED_BONUS || miss.tuned.bonus !== 0) assert.fail(`stock ${stockLap}: exactly 1% faster (${exact}) paid ${got.tuned.bonus}, a millisecond short paid ${miss.tuned.bonus}`);
+    edges++;
+  }
+  ok(edges > 80, 'a laps scan: exactly 1% faster always pays and a millisecond short never does (' + edges + ' stock laps)');
 
   // Rule sets: a stock lap and a tuned lap are only compared under the same rules.
   same([ruleSetOf({}), ruleSetOf({tyreSlipRules: true}), ruleSetOf({engineCurve: true}), ruleSetOf({tyreSlipRules: true, engineCurve: true}), ruleSetOf(null)],
@@ -349,9 +371,20 @@ const POOL = ['tremblant-woods', 'harbour-lights', 'panorama-ridge', 'pacific-ca
     'only the player\'s own Time Trial laps seed, each under its own rules');
   ok(seedStockLaps(seeded, rows, 'p1', {flags: TUNING}) === seeded, 'seeding again changes nothing');
   const keeps = seedStockLaps(stocked, rows, 'p1', {flags: TUNING});
-  ok(keeps === stocked, 'a player who already has stock laps is never reseeded (nothing is wiped or replaced)');
+  same(labOf(keeps).stockLaps[`${CAR}|tremblant-woods`], 89.9, 'a record slower than the stock lap never replaces it (nothing is wiped or raised)');
+  same(Object.keys(labOf(keeps).stockLaps).length, 3, 'but the laps that are missing are filled in from the records, one for each car, course and rule set');
+  const lowered = seedStockLaps(stocked, [{playerId: 'p1', mode: 'timetrial', car: CAR, eventId: 'tremblant-woods', lapTimes: [85]}], 'p1', {flags: TUNING});
+  same(labOf(lowered).stockLaps[`${CAR}|tremblant-woods`], 85, 'and a record that beats the stock lap lowers it (a faster stock lap is the stock lap)');
   ok(seedStockLaps(profile, rows, 'p1', {flags: flagsOf('lab')}) === profile, 'the switch off seeds nothing');
   ok(seedStockLaps(profile, null, 'p1', {flags: TUNING}) === profile && seedStockLaps(profile, [null, 7, {}], 'p1', {flags: TUNING}) === profile, 'junk records seed nothing');
+
+  // A Lab record from a later game is never read for stock laps and never made to throw.
+  for (const lab of [{version: 2}, {version: 2, stockLaps: 5}, {version: 99, tune: {}}]) {
+    const futureProfile = {...profile, lab};
+    const settledFuture = settleTunedLap(futureProfile, lapOf([80], tuned), {flags: TUNING}), stockFuture = settleTunedLap(futureProfile, lapOf([80], {}), {flags: TUNING});
+    ok(settledFuture.profile === futureProfile && settledFuture.tuned === null && stockFuture.profile === futureProfile, `a Lab at version ${lab.version} is left alone by a finished lap`);
+    ok(seedStockLaps(futureProfile, rows, 'p1', {flags: TUNING}) === futureProfile, `and is not seeded (version ${lab.version})`);
+  }
 }
 
 // ---- The save --------------------------------------------------------------------------------------------------------------------------
@@ -365,6 +398,12 @@ const POOL = ['tremblant-woods', 'harbour-lights', 'panorama-ridge', 'pacific-ca
   same(normalizeLab(JSON.parse(JSON.stringify(record))), record, 'a tune and stock laps come back exactly through a save and a load');
   const old = normalizeLab({version: 1, done: {grip: true}});
   same([old.tune, old.stockLaps, old.tunedBonus], [{}, {}, []], 'an old Lab without them reads as no tune and no stock laps');
+  // The stock laps are capped, and a rule name from a later game's shape is kept.
+  const crowd = {}; for (let n = 0; n < 5000; n++) crowd[`${CAR}|tremblant-woods|rule${n}`] = 90 + n / 1000;
+  ok(Object.keys(normalizeLab({version: 1, stockLaps: crowd}).stockLaps).length === 4096, 'a flood of stock-lap keys is cut at 4,096');
+  same(Object.keys(normalizeLab({version: 1, stockLaps: {[`${CAR}|tremblant-woods|Tyre_Slip+engine-curve+x1`]: 90}}).stockLaps).length, 1, 'a later game\'s rule names (capitals, underscores) are kept');
+  const full = withLab(createProfile(), {...createLab(), stockLaps: Object.fromEntries(Array.from({length: 4096}, (_, n) => [`${CAR}|tremblant-woods|r${n}`, 90]))});
+  ok(!recordStockLap(full, CAR, 'panorama-ridge', 80, {flags: TUNING}).ok && recordStockLap(full, CAR, 'tremblant-woods', 80, {flags: TUNING, rules: 'r5'}).ok, 'a full record takes no new key but still lowers one it has');
   // A newer game's Lab is never written over.
   const later = {version: 2, tune: {[CAR]: {pressure: 1}}};
   ok(normalizeLab(later) === later, 'a later game\'s Lab is returned as it was');

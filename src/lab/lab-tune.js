@@ -3,7 +3,7 @@
 // car and a tuned grip; with every setting at 0 (or the `lab-tuning` switch off) it gets the car it gave, as the
 // very same object, so a stock car drives exactly as before.
 import {DRIVE} from '../config.js';
-import {TUNE_SETTINGS, labOf, recordStockLap, payTunedBonus, stockKey, TUNED_BONUS} from './lab-save.js';
+import {TUNE_SETTINGS, LAB_SAVE_VERSION, labOf, recordStockLap, payTunedBonus, stockKey, TUNED_BONUS} from './lab-save.js';
 
 // Every number of section 5.1, in one place. Steps run from -2 to +2; "per step" is per step of the setting.
 export const LAB_TUNE = Object.freeze({
@@ -99,10 +99,17 @@ export function bestLap(lapTimes) {
   return laps.length ? Math.min(...laps) : null;
 }
 
-// Stock laps from the player's existing Time Trial records, once: only while the saved stock laps are empty. A lap from
-// before tuning existed counts as stock. entries are the leaderboard's rows.
+// The saved stock laps, or null when this game cannot read the Lab record (a later game's version has no stock laps to read).
+const stockLapsOf = profile => {
+  const lab = labOf(profile);
+  return lab.version === LAB_SAVE_VERSION && lab.stockLaps !== null && typeof lab.stockLaps === 'object' ? lab.stockLaps : null;
+};
+
+// Stock laps from the player's own Time Trial records (the leaderboard's rows, which only stock runs write), each under
+// its own rules: it fills a stock lap that is missing and lowers one a record beats, never replaces one with a slower lap.
+// A lap from before tuning existed counts as stock.
 export function seedStockLaps(profile, entries, playerId, {flags} = {}) {
-  if (Object.keys(labOf(profile).stockLaps).length) return profile;
+  if (stockLapsOf(profile) === null) return profile;
   let next = profile;
   for (const row of Array.isArray(entries) ? entries : []) {
     if (row?.playerId !== playerId || row.mode !== 'timetrial') continue;
@@ -114,21 +121,30 @@ export function seedStockLaps(profile, entries, playerId, {flags} = {}) {
   return next;
 }
 
+// Is this lap at least 1% faster than the stock lap? Compared in whole milliseconds, so a lap exactly 1% faster is never
+// refused by rounding.
+const ms = seconds => Math.round(seconds * 1000);
+const onePercentFaster = (lap, stock) => ms(lap) * 100 <= ms(stock) * 99;
+
 // A finished Time Trial. A stock run keeps its best lap as the stock lap; a tuned run that is at least 1% faster than
-// the stock lap of that car on that course pays the bonus, once for the course. Returns {profile, tuned} where tuned is
-// null for a stock run and {percent, bonus} for a tuned one (bonus 0 when it did not pay).
+// the stock lap of that car on that course (under the same rules) pays the bonus, once for the course. Returns {profile, tuned}
+// where tuned is null for a stock run and {percent, bonus} for a tuned one (bonus 0 when it did not pay).
 export function settleTunedLap(profile, {carId, courseId, lapTimes, tune, rules = ''}, {flags} = {}) {
   if (flags?.enabled?.('lab-tuning') !== true) return {profile, tuned: null};
+  const stockLaps = stockLapsOf(profile);
+  if (stockLaps === null) return {profile, tuned: null};
   const lap = bestLap(lapTimes);
   if (lap === null) return {profile, tuned: null};
   if (isStockTune(tune)) {
     const recorded = recordStockLap(profile, carId, courseId, lap, {flags, rules});
     return {profile: recorded.ok ? recorded.profile : profile, tuned: null};
   }
-  const stock = labOf(profile).stockLaps[stockKey(carId, courseId, rules)];
-  if (!(stock > 0)) return {profile, tuned: {percent: 0, bonus: 0}};
-  const percent = Math.round((1 - lap / stock) * 1000) / 10;
-  if (lap > stock * 0.99) return {profile, tuned: {percent: Math.max(0, percent), bonus: 0}};
+  const stock = stockLaps[stockKey(carId, courseId, rules)];
+  if (!(stock > 0) || !Number.isFinite(stock)) return {profile, tuned: {percent: 0, bonus: 0}};
+  const faster = Math.max(0, (1 - ms(lap) / ms(stock)) * 100);   // percent, as exact as the milliseconds allow
+  // Short of 1% the card says what it was rounded down, so 0.99% never reads as "1%" beside no bonus.
+  if (!onePercentFaster(lap, stock)) return {profile, tuned: {percent: Math.floor(faster * 10) / 10, bonus: 0}};
+  const percent = Math.round(faster * 10) / 10;
   const paid = payTunedBonus(profile, courseId, {flags});
   return paid.ok ? {profile: paid.profile, tuned: {percent, bonus: paid.bonus ?? TUNED_BONUS}} : {profile, tuned: {percent, bonus: 0}};
 }

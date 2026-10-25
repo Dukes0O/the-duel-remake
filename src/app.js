@@ -949,8 +949,10 @@ export class App {
   _settleTunedLap(result,state){
     const flags=this._switches();
     if(state.mode!=='timetrial'||result.completed!==true||this.duel.drivingLesson||flags.enabled('lab')!==true||flags.enabled('lab-tuning')!==true)return;
-    const seeded=seedStockLaps(this.profile,mergeLeaderboards(this.leaderboard,loadLeaderboard()).entries,this.player.id,{flags});
-    const settled=settleTunedLap(seeded,{carId:state.car,courseId:COURSE[state.stageIndex].id,lapTimes:state.lapTimes,tune:state.tune,rules:ruleSetOf(state)},{flags});
+    // Only a stock run reads the records (they hold stock laps alone: a tuned run is not written to them), and an assisted lap counts for nothing.
+    const seeded=state.tune?this.profile:seedStockLaps(this.profile,mergeLeaderboards(this.leaderboard,loadLeaderboard()).entries,this.player.id,{flags});
+    const laps=(state.lapTimes||[]).filter((seconds,index)=>state.assistedLaps?.[index]!==true);
+    const settled=settleTunedLap(seeded,{carId:state.car,courseId:COURSE[state.stageIndex].id,lapTimes:laps,tune:state.tune,rules:ruleSetOf(state)},{flags});
     if(settled.profile!==this.profile){this.profile=settled.profile;this._saveProfile();}
     if(settled.tuned)result.tunedLap=settled.tuned;
   }
@@ -1089,7 +1091,8 @@ export class App {
       this._settleTunedLap(result,state); // LAB-TUNE
       this._recordCupResult(result,state);
       if(state.mode==='grandprix')result.creditPositionReward=Math.min(Math.max(0,awarded.reward),Math.max(0,awarded.breakdown.base));
-      const recorded=recordFinish(mergeLeaderboards(this.leaderboard,loadLeaderboard()),payload,this.player);this.leaderboard=recorded.board;
+      // LAB-TUNE: the records hold stock runs; a tuned run is not written to them (it would replace a stock record and be read back as a stock lap).
+      const recorded=state.tune?{board:this.leaderboard,recorded:false}:recordFinish(mergeLeaderboards(this.leaderboard,loadLeaderboard()),payload,this.player);this.leaderboard=recorded.board;
       if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);
       if(recorded.scoreBest!=null){result.driftScoreBest=recorded.scoreBest;result.driftScoreImproved=recorded.scoreImproved;}
       Object.assign(result,{creditReward:awarded.reward,creditCharge:awarded.charge,policeFineCharge:awarded.policeFineCharge||0,creditBreakdown:awarded.breakdown,personalBest:awarded.personalBest,personalBestStatus:awarded.personalBestStatus,previousBest:awarded.previousBest,best:awarded.best,winStreak:awarded.winStreak,milestoneAwards:awarded.milestones});

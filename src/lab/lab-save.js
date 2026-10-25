@@ -12,7 +12,9 @@ const ID_PATTERN = /^[a-z0-9-]{1,40}$/;
 // A stock lap is only judged against laps under the same rules (tyre-slip, engine-curve): its key is `car|course`, or
 // `car|course|rules` for a race latched with rules, the rule names joined by `+` in alphabetical order. Names this
 // game does not know (a later game's rules) are kept as they are and mean nothing here.
-const RULES_PATTERN = /^[a-z0-9-]{1,24}(\+[a-z0-9-]{1,24}){0,3}$/;
+const RULES_PATTERN = /^[A-Za-z0-9_-]{1,24}(\+[A-Za-z0-9_-]{1,24}){0,7}$/;
+// The most stock laps a save keeps: every car on every course under every rule set fits many times over.
+const MAX_STOCK_LAPS = 4096;
 export const stockKey = (carId, courseId, rules = '') => rules ? `${carId}|${courseId}|${rules}` : `${carId}|${courseId}`;
 
 const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -54,7 +56,7 @@ export function normalizeLab(value) {
     for (const [key, seconds] of Object.entries(value.stockLaps)) {
       const [car, course, rules, extra] = key.split('|');
       if (extra === undefined && (rules === undefined || RULES_PATTERN.test(rules)) && validCar(car) && validCourse(course) &&
-          Number.isFinite(seconds) && seconds > 0) lab.stockLaps[key] = seconds;
+          Number.isFinite(seconds) && seconds > 0 && Object.keys(lab.stockLaps).length < MAX_STOCK_LAPS) lab.stockLaps[key] = seconds;
     }
   }
   lab.tunedBonus = [...new Set((Array.isArray(value.tunedBonus) ? value.tunedBonus : []).filter(validCourse))];
@@ -141,6 +143,7 @@ export function recordStockLap(profile, carId, courseId, seconds, {flags, rules 
   if (rules !== '' && (typeof rules !== 'string' || !RULES_PATTERN.test(rules))) return failure(profile, 'Those rules are not known.');
   const key = stockKey(carId, courseId, rules), best = lab.stockLaps[key];
   if (best !== undefined && best <= seconds) return {ok: true, reason: '', profile};
+  if (best === undefined && Object.keys(lab.stockLaps).length >= MAX_STOCK_LAPS) return failure(profile, 'There is no more room for stock laps.');
   return {ok: true, reason: '', profile: withLab(profile, {...lab, stockLaps: {...lab.stockLaps, [key]: seconds}})};
 }
 
