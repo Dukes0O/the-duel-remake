@@ -4,6 +4,7 @@ import { terrainStyleAt } from './terrain-style.js';
 import { createPolylineIndex } from './polyline-index.js';
 import { ribbonGroundAt } from './ribbon-ground.js';
 import { seedGroundRow } from './rendered-ground.js';
+import { seedFarTerrain } from './far-terrain-surface.js';
 import { freestyleTerrainGeometry, freestyleFarGeometry } from './freestyle-scene.js';
 
 // Pure sampled surfaces and shared source textures. Course owns all route and
@@ -135,9 +136,9 @@ export function terrainGeometry(course) {
       if(course.def.offroad){const segments=Math.ceil(cut.halfWidth*2);for(let i=0;i<=segments;i++)offsets.push(center-cut.halfWidth+cut.halfWidth*2*i/segments);}}
     offsets.sort((a,b)=>a-b);
     const style=terrainStyleAt(course,s);base.copy(style.color);const indices=groups[TERRAIN_THEMES.indexOf(course.themeAt(Math.max(0,s-terrainStep)))];
-    const rowPoints=[];
+    const rowPoints=new Float32Array(offsets.length*3);
     offsets.forEach((off, j) => {
-      const p = ribbonGroundAt(course,s,off);rowPoints.push({x:Math.fround(p.x),y:Math.fround(p.y),z:Math.fround(p.z)});const wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
+      const p = ribbonGroundAt(course,s,off);rowPoints[3*j]=p.x;rowPoints[3*j+1]=p.y;rowPoints[3*j+2]=p.z;const wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
       v.push(p.x,p.y,p.z); uv.push(p.x/22,p.z/22);weights.push(...style.weights);
       col.copy(base).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(s * .025)); const trap = gravelWeights(course, s, off); fallenLeaves(course, col, s, off, trap ? 1 - trap.trap - trap.meadow * .7 : 1); woodland(course, col, s, off); gravelTrap(course, col, trap); colors.push(col.r, col.g, col.b);
       if (row && j) { const a = row * offsets.length + j; indices.push(a - offsets.length - 1, a - 1, a - offsets.length, a - offsets.length, a - 1, a); }
@@ -159,20 +160,22 @@ export function farTerrainGeometry(course) {
   const minZ=Math.floor((Math.min(...route.map(p=>p.z))-extent)/grid)*grid,maxZ=Math.max(...route.map(p=>p.z))+extent;
   const columns=Math.ceil((maxX-minX)/grid)+1,rows=Math.ceil((maxZ-minZ)/grid)+1;
   const v=[],uv=[],colors=[],weights=[],distances=[],groups=TERRAIN_THEMES.map(()=>[]),base=new THREE.Color(groundTint(course)),col=new THREE.Color();
+  // The corners as computed, before the hidden-road cut and the muddy-hollow fit move any of them: the height reader wants these.
+  const heights=new Float32Array(columns*rows);
   const gap=course.def.arena?18:(course.def.expansion||course.def.terrainHalfWidth===64)?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80;
   for(let j=0;j<rows;j++)for(let i=0;i<columns;i++){
     const x=minX+i*grid,z=minZ+j*grid,{index,t,distanceSq:best}=routeIndex.lookup(x,z);
     const a=route[index-1],b=route[index],dx=b.x-a.x,dz=b.z-a.z,px=x-a.x-t*dx,pz=z-a.z-t*dz;
     const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
     const wave=Math.sin(roadS*.012+off*.017)*Math.cos(roadS*.004-off*.031);
-    v.push(x,(course.farGroundY?course.farGroundY(x,z,roadS,off):course.groundAt(roadS,off).y)-.15,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
+    const cornerY=(course.farGroundY?course.farGroundY(x,z,roadS,off):course.groundAt(roadS,off).y)-.15;heights[j*columns+i]=cornerY;v.push(x,cornerY,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
     const style=terrainStyleAt(course,roadS);weights.push(style.weights[0],style.weights[1],style.weights[2]);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));const trap=gravelWeights(course,roadS,off);fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);woodland(course,col,roadS,off);gravelTrap(course,col,trap);colors.push(col.r,col.g,col.b);
     if(i&&j){const a=j*columns+i,k0=a-columns-1,k1=a-1,k2=a-columns;
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
       if(distances[k0]>gap&&distances[k1]>gap&&distances[k2]>gap&&distances[a]>gap)groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(k0,k1,k2,k2,k1,a);
     }
   }
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);computeNormalsFast(g);return g;
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);computeNormalsFast(g);seedFarTerrain(course,grid,Math.round(minX/grid),Math.round(minZ/grid),columns,rows,heights,distances);return g;
 }
 
 // Coarse radial/grid triangles bridge across a narrow wash. Replace only
