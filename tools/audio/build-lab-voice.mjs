@@ -18,7 +18,7 @@ export function copyLabVoices({root = ROOT} = {}) {
   let bytes = 0;
   for (const [id, line] of Object.entries(LAB_LINES)) {
     const record = catalog.sounds.find(row => row.cue === id);
-    if (!record || record.text !== line.text || record.file !== `audio-src/voices/${line.file}`)
+    if (!record || record.text !== (line.spokenText ?? line.text) || record.file !== `audio-src/voices/${line.file}`)
       throw Error(`Kept voice catalog mismatch: ${id}`);
     const take = readFileSync(join(root, record.file));
     if (sha256(take) !== record.sha256) throw Error(`Kept voice hash mismatch: ${id}`);

@@ -18,3 +18,13 @@ From LAB-FINISH (Claude, 25 October 2026), the building parts before the
    two minutes) and whether each challenge passes with simple play. Flag any
    that need a threshold change; do not change thresholds here.
 Lane tier, build, lab scenarios.
+
+## Assertion review for Claude
+
+LAB-POLISH changes only the wax caption while keeping its recorded voice,
+as requested above. `test-lab-radio` now compares that caption to the revised
+LAB.md text and separately pins the original spoken text and recording hash.
+Only this line may carry `spokenText`; all other lines still match their
+recordings word for word. No audio hash, tolerance, count or budget is relaxed.
+The voice-copy recipe reads the explicit spoken text for this kept take.
+Written review pending before integration; Kyle requested commit only.

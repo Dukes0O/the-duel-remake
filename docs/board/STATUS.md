@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-25T22:46:44.904Z
+Observed at: 2026-10-25T23:10:49.920Z
 
-Observation commit: 7a4bf4f446d2d831793225036327cb441de4a720
+Observation commit: d2cbf7b6afce09c410dff978cccba1dd9b797ac0
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 7a4bf4f446d2d831793225036327cb441de4a720
+Integration HEAD: d2cbf7b6afce09c410dff978cccba1dd9b797ac0
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -29,7 +29,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/lab-fan-view | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-fan-view |
+| codex/lab-polish | 0 | false | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-polish |
 | codex/perf-high-night | 10 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/wild-art-src | 10 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
@@ -53,10 +53,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 22,587,345 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 514,969 B | +0 B | 5,000,000 B |
+| Review `looks/` | 23,236,514 B | -2,890 B | 20,000,000 B |
+| Added bytes in last merge | 722,127 B | +0 B | 5,000,000 B |
 | All `public/` | 334,916,079 B | +0 B | unavailable |
-| Git objects | 749,066,240 B | +0 B | unavailable |
+| Git objects | 751,325,184 B | +1,604,608 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -65,7 +65,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: b83f4cdab027a229f48dba94e4293dc6f43dc6e8
 - Local main: missing
-- Local integration/wasteland: 82941c9adcb3c688ff5fbef4295433058b6dd8c4
+- Local integration/wasteland: 46e15a5605d0797395705b57903420c962c4b640
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -73,7 +73,7 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit b83f4cdab027a229f48dba94e4293dc6f43dc6e8.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 82941c9adcb3c688ff5fbef4295433058b6dd8c4.
+- Remote origin/integration/wasteland: matches local; cached commit 46e15a5605d0797395705b57903420c962c4b640.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
 Issue: codex/perf-high-night: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night
