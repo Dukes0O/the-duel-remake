@@ -28,7 +28,7 @@ import {referenceLap} from './reference-laps.js';
 import {Course} from './course.js';
 import './screen-team-room.css';
 import {createResultsScreen, screenAction} from './screen-results.js';
-import {createHudScreen, presentJumpHeight} from './screen-hud.js';
+import {createHudScreen, presentJumpHeight, nitroHudLabel} from './screen-hud.js';
 import {createCombatHud, combatHudEnabled} from './combat-hud.js';
 import {createHiddenRoadUi} from './hidden-road-ui.js';
 import './hidden-road-ui.css';
@@ -384,7 +384,7 @@ function renderState(s) {
     if(weaponStatus.textContent!==status)weaponStatus.textContent=status;
   }
   root.querySelector('#stage').classList.toggle('combat-mode',choices.mode==='wasteland'||s.mode==='wasteland'&&s.status!=='menu');
-  text('nitro-label',s.practice?'NITRO ∞':'NITRO');
+  text('nitro-label',s.practice?'NITRO ∞':nitroHudLabel(s));
   syncRendererReadiness(s);
   ui.overlay.dataset.credits = String(profile().credits);ui.overlay.dataset.ghostStatus=app.ghostStatus;ui.overlay.dataset.ghostRecords=String(app.ghosts.records.length);ui.overlay.dataset.routeVariant=getRouteVariantForSeed(s.status==='menu'?app.getMenuSeed():s.seed)?.id||'custom';
   ui.overlay.dataset.playerId=app.player.id;ui.overlay.dataset.playerName=app.player.name;ui.overlay.dataset.cpuDifficulty=s.cpuDifficulty||choices.cpuDifficulty;ui.overlay.dataset.lap=String(s.currentLap||s.lap||1);

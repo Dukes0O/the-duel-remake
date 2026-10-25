@@ -111,7 +111,7 @@ export function measureRace({course,index=0,enabled=false,mode='normal',maxSec=n
     }
     const times=s.opponents.map(r=>r.finished?r.lapStartedAt:null),stats=s.field.stats;
     return {course,index,seed,fieldSeed,enabled,mode,wide,entry,apex,entryInstantWide,entryCars,startSnapshot,startZoneComplete:apex!==null&&[s,...s.opponents].every(r=>r.s>apex),passedPlayer,firstLapPosition,
-      passes:stats.passes,crashes:stats.crashes.length,playerCrashes:s.stageCrashes,
+      passes:stats.passes,crashes:stats.crashes.length,crashTypes:stats.crashes.reduce((m,c)=>{const k=c.passType??'none';m[k]=(m[k]||0)+1;return m;},{}),playerCrashes:s.stageCrashes,
       pileUp:new Set(stats.crashes.filter(c=>c.t<=30).map(c=>c.index)).size>=3,
       finished:times.filter(v=>v!==null).length,playerFinished:s.completedLaps>=s.lapsTotal,
       meanCpuTime:times.every(v=>v!==null)?average(times):null,boostFrames,simSec:s.stageTimeSec};
@@ -151,7 +151,7 @@ export function summarizeRacecraft(rows,{courses,races}){
     if(timeChanges.some(v=>v===null||v>.02))flags.push('race time changed over 2 percent');
     if(rows.filter(r=>r.course===course).some(r=>r.finished!==7||!r.playerFinished))flags.push('unfinished races');
     findings.push(...flags.map(flag=>course+': '+flag));
-    return {course,races,wide,paired,spread,baselinePaired,baselineMeanSpread:baselineSpread.every(Number.isFinite)?average(baselineSpread):null,passesOn,passesOff,passingFactor,crashRacesOn,crashRacesOff,meanCrashesOn,meanCrashesOff,pileUpsOn,pileUpsOff,startMeasuresReportOnly:true,passingReportOnly:true,slowPlayerPassed:slow.filter(r=>r.passedPlayer).length,
+    return {course,races,wide,paired,spread,baselinePaired,baselineMeanSpread:baselineSpread.every(Number.isFinite)?average(baselineSpread):null,passesOn,passesOff,passingFactor,crashRacesOn,crashRacesOff,meanCrashesOn,meanCrashesOff,pileUpsOn,pileUpsOff,crashesByPassType:on.reduce((m,r)=>{for(const [k,v] of Object.entries(r.crashTypes||{}))m[k]=(m[k]||0)+v;return m;},{}),startMeasuresReportOnly:true,passingReportOnly:true,slowPlayerPassed:slow.filter(r=>r.passedPlayer).length,
       nitroFirstAtLapOne:nitro.filter(r=>r.firstLapPosition===1).length,baselineNitroFirstAtLapOne:rows.filter(r=>r.course===course&&r.mode==='nitro'&&!r.enabled&&r.firstLapPosition===1).length,
       maxTimeChange:timeChanges.includes(null)?null:Math.max(...timeChanges),flags};
   });
