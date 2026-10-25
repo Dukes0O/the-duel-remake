@@ -67,7 +67,7 @@ export async function namedScenarios({includeManual = false} = {}) {
   return (await readdir(scenarioDir))
     .filter(file => /^[a-z][a-z0-9-]*\.mjs$/.test(file) && !['smoke.mjs', 'review-sheet.mjs'].includes(file))
     .filter(file => !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, file.slice(0, -4)))
-    .filter(file => includeManual || !['rustwall-frame.mjs', 'yeti-fur-tint.mjs'].includes(file))
+    .filter(file => includeManual || !['rustwall-frame.mjs', 'yeti-fur-tint.mjs', 'deep-art-final-sheet.mjs'].includes(file))
     .map(file => file.slice(0, -4))
     .sort();
 }
