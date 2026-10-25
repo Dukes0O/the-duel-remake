@@ -12,7 +12,12 @@ export async function run(context) {
   await context.evaluate(`(() => { const app = window.__qaApp; app.audio.setMuted?.(true);
     app.profile = {...app.profile, credits: 6000, deep: {...(app.profile.deep ?? {}), version: 1, raised: ['sirena-car']},
       lab: {...(app.profile.lab ?? {}), version: 1, done: {rust: true}, owned: {}, ring: 0, ringBest: 0, cable: 15, tune: {}, stockLaps: {}, tunedBonus: [], secret: {}}};
-    app._saveProfile(); app.openLab(); })()`);
+    app._saveProfile(); })()`);
+  // Before: the garage shows the Sirena under a sheet, "Needs the Lab", and the Lab tab leads there.
+  await context.evaluate(`document.querySelector('#garage-open').click()`);
+  await context.waitFor(`document.querySelector('[data-sirena="waiting"]')?.textContent.includes('Needs the Lab')`, 'the Sirena under a sheet in the garage', 20_000);
+  await context.screenshot('restore-garage-before');
+  await context.evaluate(`document.querySelector('.lab-tab').click()`);
   await context.waitFor(`!!document.querySelector('.lab-canvas')`, 'the Lab opens with its room', 30_000);
   await context.evaluate(`document.querySelector('[data-lab-lesson="start:rust"]').click()`);
   await context.waitFor(`!!document.querySelector('[data-lab="restore"]:not(:disabled)')`, 'the Restore button on the Rust bench', 10_000);
@@ -47,9 +52,7 @@ export async function run(context) {
   await context.evaluate(`document.querySelector('[data-lab="restore-close"]').click(); document.querySelector('[data-lab="close"]').click()`);
   await context.waitFor(`window.__qaApp.labOpen === false`, 'back to the menu', 10_000);
   await context.evaluate(`document.querySelector('#garage-open').click()`);
-  await context.waitFor(`!!document.querySelector('[data-garage-car="falcone_sirena"]')`, 'the Sirena in the garage', 20_000);
-  await context.evaluate(`document.querySelector('[data-garage-car="falcone_sirena"]').click()`);
-  await context.waitFor(`document.querySelector('.garage-panel')?.textContent.includes('Race the Coast Cup at Pacific Canyon')`, 'the garage panel reads Restored', 10_000);
+  await context.waitFor(`document.querySelector('[data-sirena="restored"]')?.textContent.includes('Race the Coast Cup at Pacific Canyon')`, 'the garage panel reads Restored', 20_000);
   await context.screenshot('restore-garage');
 
   // The replay is free and can be skipped; nothing more is charged.
