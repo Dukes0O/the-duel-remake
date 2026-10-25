@@ -117,6 +117,10 @@ The five variants change from "top three in the parent Grand Prix" to "found fro
   definitions" now use the new kind; the same five ids, price 0 and release order are asserted.
 - `tools/test-reference-laps.mjs`: the loop over variants takes the `spotted-from-air` ones
   and checks the fixture put them in the pilot's found list (before: the parent podium).
+- `tools/test-circuit-variants.mjs` (the same test, found by the lane tier): a podium on the parent
+  no longer opens a variant (asserted), and a found record does (and not without owning the parent).
+- `tools/test-heli-mode.mjs`: the import allow-list for `heli-session.js` gains `./map-secrets.js`
+  (a pure-rules helicopter file), as MAP-DESTINATIONS added `./pilot-map-data.js`.
 - `tools/test-heli-audio.mjs`: the exact list of tone cues gains `heli.found`, and the bus
   table gains its entry (a pure addition).
 - `tools/test-course-kit.mjs` needed **no change**: the registry still accepts the podium
@@ -136,7 +140,22 @@ read as empty and rewritten as version 1 (no other version exists; the save part
 
 ## Checks
 
-See "Checks run" below.
+Run once in the cloud (Linux, no graphics), on the branch merged with the current
+`integration/wasteland` (clean merge):
+
+- `npm run build`: passes.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` (465 suites):
+  the two that my change moved (`test-circuit-variants`, `test-heli-mode`) failed and are
+  fixed above, and pass; `test-map-secrets` (235), `test-map-destinations`, `test-pilot-map`,
+  `test-heli-audio`, `test-course-access` and `test-reference-laps` (408) pass. The rest of
+  the failures are not mine: `test-course-kit` (asserts `win32`; its other seven tests pass),
+  `test-earned-cars-ui`, `test-drive-through`, `test-full-check`, `test-medals`,
+  `test-salt-flats`, `test-salt-flats-art`, `test-p4-kits`, `test-tanker-valve-source`,
+  `test-vesper-art` (laptop, art library or Blender) and `test-compact-binaries` (this cloud
+  clone's signed commit headers); `test-lab-radio` and `test-drift-trial` fail the same way on
+  a clean checkout of `origin/integration/wasteland`.
+- Not run: browser scenarios (the Team Room scenarios were edited, not run), frame checks
+  (nothing is drawn yet).
 
 ## Not done here
 

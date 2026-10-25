@@ -38,8 +38,10 @@ test('lighting variants append as separate dev events with access found from the
     try {
       const profile = {...createProfile(), courses: {version: 1, unlocked: [parent.id]}};
       assert.equal(isCourseUnlocked(profile, definition), false);
-      assert.equal(isCourseUnlocked({...profile, grandPrixPodiums: [parent.id]}, definition), true);
-      assert.equal(isCourseUnlocked({...profile, courses: {version: 1, unlocked: []}, grandPrixPodiums: [parent.id]}, definition), false);
+      const found = {heli: {version: 1, map: {version: 1, seen: [], found: [definition.id], table: false}}};
+      assert.equal(isCourseUnlocked({...profile, grandPrixPodiums: [parent.id]}, definition), false, 'a podium no longer opens it');
+      assert.equal(isCourseUnlocked({...profile, ...found}, definition), true);
+      assert.equal(isCourseUnlocked({...profile, courses: {version: 1, unlocked: []}, ...found}, definition), false);
     } finally {if (added) COURSE.splice(COURSE.indexOf(definition), 1);}
   }
 });
