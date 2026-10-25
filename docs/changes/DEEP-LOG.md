@@ -87,11 +87,12 @@ recorded (DEEP-RADIO); `phoneLineFor` names them for the wiring card.
   - the garage page rows and grey shapes, and every picture present;
   - on the real Kelp Coast, on every route, all seven creatures and three
     pearls can be logged by driving to them.
-- Lane tier (`--changed --jobs 4 --keep-going`, integration merged in): 56
-  suites, 52 passed, 4 failed. Three need the laptop (`test-course-kit`,
-  `test-earned-cars-ui`, `test-medals`: the Windows Recycle Bin). The fourth,
-  `test-deep-look`, was this card's own new imports into `src/deep`. It now
-  passes, 5287 checks, after the allow-list change below.
+- Lane tier (`--changed --jobs 4 --keep-going`, current integration merged
+  in, after the review fixes): 56 suites, 53 passed, 3 failed. All three need
+  the laptop (`test-course-kit`, `test-earned-cars-ui`, `test-medals`: the
+  Windows Recycle Bin). An earlier run also failed `test-deep-look` on this
+  card's own new `src/deep` imports; it passes (5287 checks) after the
+  allow-list change below.
 - `npm run build`: built.
 - Picture recipe:
   `node tools/browser-harness.mjs scenario deep-log-pictures` passed with 0
