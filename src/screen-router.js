@@ -9,6 +9,7 @@ import {createHeliUi} from './heli/heli-ui.js';
 import './heli/heli-ui.css';
 import {createLabUi} from './lab/lab-view.js'; // LAB-VIEW
 import './lab/lab-ui.css';
+import './lab/tune-ui.css'; // LAB-TUNE-VIEW
 import './lessons/lesson-board.css';
 import {createWarlordCardArt} from './warlord-card-art.js';
 import './screen-card-wall.css';
@@ -17,7 +18,7 @@ import {createRendererReadiness} from './screen-readiness.js';
 import {screenMarkup, createMenuScreen, updateBuildNotice} from './screen-menu.js';
 import {createPlayerScreen} from './screen-players.js';
 import {createLeaderboardScreen} from './screen-leaderboard.js';
-import {createGarageScreen, handleDriverAction, handleGarageUpgrade} from './screen-garage.js';
+import {createGarageScreen, handleDriverAction, handleGarageUpgrade, handleTuneAction} from './screen-garage.js';
 import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
 import {arenaYardPanel} from './screen-arena.js';
@@ -241,6 +242,7 @@ root.addEventListener('click',e => {
   if(button.dataset.paint){const result=app.purchasePaint(garageCar,button.dataset.paint);refreshGarage(result.ok?`${PAINT_PRESETS[button.dataset.paint].name} applied to ${CARS[garageCar].name}.${result.purchased?` Purchased for ${credits(result.cost)} credits.`:''}`:result.reason);return;}
   if(handleDriverAction(button,{app,refreshGarage,root,garageCar,credits}))return;
   if(handleGarageUpgrade(button,{app,garageCar,refreshGarage,profile,credits}))return;
+  if(handleTuneAction(button,{app,garageCar,refreshGarage,root}))return; // LAB-TUNE-VIEW
   if (button.dataset.car && !isCarUnlocked(profile(), button.dataset.car)) { openGarage(button.dataset.car); return; }
   if(button.dataset.laps){const laps=Number(button.dataset.laps);app.setLapChoice(laps);updateMenuScene();root.querySelector(`[data-laps="${laps}"]`)?.focus({preventScroll:true});return;}
   for (const key of ['car','difficulty','mode','cpuDifficulty','tyre']) if (button.dataset[key]) { choices[key] = button.dataset[key];updateMenuScene();return; }

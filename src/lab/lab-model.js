@@ -33,6 +33,11 @@ export const CHALLENGE_KIND = Object.freeze({
   grip: 'tuning', downforce: 'tuning', braking: 'tuning', suspension: 'tuning', fuel: 'tuning',
 });
 
+// LAB-TUNE-VIEW: with the tuning switch on, a wind-tunnel lesson is passed on its bench like Launch angles and Strength (the
+// setting it opens is what the Tune page then offers); with the switch off the five keep reading "Opens with tuning".
+export const challengeKindOf = (lessonId, flags) =>
+  CHALLENGE_KIND[lessonId] === 'tuning' && flags?.enabled?.('lab-tuning') === true ? 'bench' : CHALLENGE_KIND[lessonId];
+
 export const lessonName = id => LAB_LESSONS.find(item => item.id === id)?.name ?? id;
 
 // The board's rows, with the reason a shut lesson is shut in the row's own words (the shared board prints `note`).
@@ -116,7 +121,7 @@ export const goalMet = state => state.bench.goalMet(state.history);
 // ---- the challenge button under a bench ----
 // {kind, state: 'locked'|'waiting'|'ready'|'passed', label, note}: waiting until the bench's goal is met.
 export function challengeState(lessonId, {profile, flags, met, helicopterOn = false}) {
-  const kind = CHALLENGE_KIND[lessonId] ?? 'bench';
+  const kind = challengeKindOf(lessonId, flags) ?? 'bench'; // LAB-TUNE-VIEW
   const open = lessonOpenState(profile, lessonId, flags);
   const passed = labOf(profile).done[lessonId] === true;
   if (!open.open) return {kind, state: 'locked', label: '', note: open.note};

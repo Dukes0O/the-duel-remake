@@ -3,7 +3,7 @@
 // Drawing and buttons only. The rules are src/lab/lab-model.js, lab-save.js and lab-shop.js; every change to the player's
 // save goes through app.labCommit, and nothing here touches a race or a flight except the one call that starts a flight.
 import {boardRows, openBench, setControl, runBench, goalMet, readoutRows, challengeState, passIn, buyIn, ringIn, cableIn,
-  shopRows, choiceRows, lessonName, lineId, lineText, CHALLENGE_KIND} from './lab-model.js';
+  shopRows, choiceRows, lessonName, lineId, lineText, CHALLENGE_KIND, challengeKindOf} from './lab-model.js';
 import {headerMarkup, boardMarkup, benchMarkup, shopMarkup, captionMarkup, gforceStripMarkup, restoreOfferMarkup, restoreRunMarkup, restoreSaltText, restoreWeeksText} from './lab-markup.js';
 import {restoreOffer, restoreSirena, stageAt, RESTORE_SECONDS} from './restore.js';
 import {checkProtections} from './lab-workshop.js';
@@ -168,13 +168,15 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   // A bench challenge passes the moment its goal is met (launch and strength); the others wait for their button.
   function maybePass() {
     const id = ui.bench.lessonId;
-    if (CHALLENGE_KIND[id] !== 'bench' || !goalMet(ui.bench) || labOf(profile()).done[id] === true) return;
+    if (challengeKindOf(id, flags()) !== 'bench' || !goalMet(ui.bench) || labOf(profile()).done[id] === true) return;
     commitPass(id);
   }
   function commitPass(id) {
     const result = app.labCommit((p, f) => passIn(p, id, f));
     if (result.ok) {
-      ui.message = `${lessonName(id)} passed. Check the shop for what it opens.`;
+      // LAB-TUNE-VIEW: a wind-tunnel lesson opens a tuning setting, not a shop item.
+      ui.message = CHALLENGE_KIND[id] === 'tuning' ? `${lessonName(id)} passed. Its setting is open on the Tune page in the garage.`
+        : `${lessonName(id)} passed. Check the shop for what it opens.`;
       bing('interface.bonus');
       say(id, 'pass');
     } else ui.message = result.reason;
@@ -182,7 +184,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   }
   function takeChallenge() {
     if (!ui.bench) return;
-    const id = ui.bench.lessonId, kind = CHALLENGE_KIND[id], state = challengeFor();
+    const id = ui.bench.lessonId, kind = challengeKindOf(id, flags()), state = challengeFor();
     if (state.state !== 'ready') return;
     if (kind === 'protect') {
       ui.protect = ui.protect ?? {picks: {underbody: 'bare', exhaust: 'bare', armour: 'bare'}, result: null};

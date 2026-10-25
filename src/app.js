@@ -14,6 +14,7 @@ import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {labOf} from './lab/lab-save.js'; // LAB-TUNE
 import {seedStockLaps, settleTunedLap, ruleSetOf} from './lab/lab-tune.js'; // LAB-TUNE
+import {usableTune} from './lab/tune-view.js'; // LAB-TUNE-VIEW
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 // DEEP-SIRENA-VIEW: the story's finds, logs and pearls are paid and saved here.
 import {raiseFind} from './deep/deep-sirena.js';
@@ -952,7 +953,7 @@ export class App {
     this.profile=next;this._saveProfile();return true;
   }
   // LAB-TUNE: the Lab's saved tune for a car, only with the Lab and tuning switches on (never on a lesson run: the game ignores it there).
-  _labTuneOf(car){return this._switches().enabled('lab')===true&&this._switches().enabled('lab-tuning')===true?labOf(this.profile).tune?.[car]:undefined;}
+  _labTuneOf(car){return this._switches().enabled('lab')===true&&this._switches().enabled('lab-tuning')===true?usableTune(this.profile,car):undefined;} // LAB-TUNE-VIEW: only settings the Lab has opened
   // LAB-TUNE: a finished Time Trial keeps its best lap as the stock lap, or pays the tuned-lap bonus once for the course
   // (docs/LAB.md 5.3). Runs before the run is written to the records, so stock laps are seeded from the records before it.
   _settleTunedLap(result,state){
