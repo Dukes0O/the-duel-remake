@@ -1,8 +1,10 @@
-import {DRIVE_LESSON_CORNERS,buildInstructorRun} from './lessons/drive-lessons.js';
-import {finishDriveLesson} from './lessons/drive-lesson-save.js';
+import {DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,DRIVE_GEAR_ROWS,DRIVE_SNOW_ROWS,buildInstructorRun} from './lessons/drive-lessons.js';
+import {finishDriveLesson,driveLessonAccess} from './lessons/drive-lesson-save.js';
 import {DRIVE_RADIO_LINES} from './lessons/drive-radio-lines.js';
 import {createRadioChain} from './lessons/radio-voice.js';
-import {mountDriveLessonUi,driveLessonCompletion,settleDriveLessonPreparation,driveLessonGhostPose,driveLessonBoardModel} from './lessons/drive-lesson-ui.js';
+import {mountDriveLessonUi,driveLessonCompletion,settleDriveLessonPreparation,driveLessonGhostPose,driveLessonBoardModel,DRIVE_LESSON_VIEW} from './lessons/drive-lesson-ui.js';
+// DRIVE-LESSONS-VIEW-2: each lesson's course rows (lesson 1's are DRIVE_LESSON_CORNERS).
+const DRIVE_LESSON_TABLES=Object.freeze({corner:DRIVE_LESSON_CORNERS,line:DRIVE_LINE_ROWS,gears:DRIVE_GEAR_ROWS,snow:DRIVE_SNOW_ROWS});
 import {racingLineFor,buildSpeedProfile} from './race-lines.js';
 import {unstuckInput} from './demo-unstuck.js';
 import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
@@ -450,6 +452,13 @@ export class App {
       courseId:this.driveLessonCourse,carId:choices.car,difficulty:choices.difficulty,
       runPlayerId:run?.ownerId,lesson:run?.ownerId===this.player?.id?run.lesson:null,lessonSaveFailed:run?.rewarded===true&&run.saved===false};
   }
+  // DRIVE-LESSONS-VIEW-2: the instructor board's props: the above plus lessons 2 to 4 (their rows, which course each is set to, and
+  // whether each is open). The helipad's rows are lesson 1 alone and keep using driveLessonProps (a later card brings lessons 2 to 4 to the pad).
+  driveLessonBoardProps(){
+    const engineCurve=this._switches().enabled('engine-curve')===true;
+    return {...this.driveLessonProps(),lessonRows:{line:DRIVE_LINE_ROWS,gears:DRIVE_GEAR_ROWS,snow:DRIVE_SNOW_ROWS},courseIds:this.driveLessonCourses,engineCurve,
+      lessonAccess:Object.fromEntries(['line','gears','snow'].map(id=>[id,driveLessonAccess(this.profile.drivingLessons,id,{engineCurve})]))};
+  }
   openDrivingLessons(){
     if(!this.drivingLessonsAvailable()||this.duel.state.status!=='menu'||!this.player?.id)return false;
     this.driveLessonBoardOpen=true;this.driveLessonMessage='';this._driveLessonUi?.update();return true;
@@ -458,21 +467,25 @@ export class App {
     this._refreshPlayer();
     const stageIndex=COURSE.findIndex(row=>row.id===courseId);
     if(this._driveLessonPreparing||!this.drivingLessonsAvailable()||this.duel.state.status!=='menu'||!this.driveLessonBoardOpen||
-      lessonId!=='corner'||!this.player?.id||!DRIVE_LESSON_CORNERS.some(row=>row.courseId===courseId)||
+      !Object.hasOwn(DRIVE_LESSON_TABLES,lessonId)||!DRIVE_LESSON_TABLES[lessonId].some(row=>row.courseId===courseId)||!this.player?.id||
       !isCourseUnlocked(this.profile,courseId)||!isCarUnlocked(this.profile,car)||!['casual','pro'].includes(difficulty))return false;
     if(this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex]))return false;
     const ownerId=this.player.id,driverId=getEquippedDriverId(this.profile),upgrades=getUpgradeLevels(this.profile,car);
     if(this.profile.drivingLessons!=null&&this.profile.drivingLessons.version!==1)return false;
-    const token={};this._driveLessonPreparing=token;this.driveLessonMessage='Instructor is driving the corner…';this._driveLessonUi?.update();
+    // DRIVE-LESSONS-VIEW-2: a later lesson must be open (the gearbox needs the engine curve); a lesson already done can be retaken.
+    const engineCurve=this._switches().enabled('engine-curve')===true;
+    if(lessonId!=='corner'&&(lessonId==='gears'&&!engineCurve||!driveLessonAccess(this.profile.drivingLessons,lessonId,{engineCurve}).open&&this.profile.drivingLessons?.done?.[lessonId]!==true))return false;
+    const token={};this._driveLessonPreparing=token;this.driveLessonMessage=`Instructor is driving the ${{corner:'corner',line:'esses',gears:'stretch',snow:'snow corner'}[lessonId]}…`;this._driveLessonUi?.update();
     let baseline;
-    try{baseline=await buildInstructorRun({courseId,car,upgrades,difficulty,driverId,seed:1989});}
+    try{baseline=await buildInstructorRun({courseId,car,upgrades,difficulty,driverId,seed:1989,lessonId});}
     catch(error){if(this._driveLessonPreparing===token){this._driveLessonPreparing=null;this.driveLessonMessage='The instructor could not complete a clean run. '+error.message;this._driveLessonUi?.update();}return false;}
     this._refreshPlayer();
     if(this._driveLessonPreparing!==token||!this.drivingLessonsAvailable()||!this.driveLessonBoardOpen||
       this.duel.state.status!=='menu'||this.player?.id!==ownerId||!isCourseUnlocked(this.profile,courseId)||
       !isCarUnlocked(this.profile,car)||getEquippedDriverId(this.profile)!==driverId||
       JSON.stringify(getUpgradeLevels(this.profile,car))!==JSON.stringify(upgrades)||
-      this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex])){
+      this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex])||
+      lessonId==='gears'&&this._switches().enabled('engine-curve')!==true){
       settleDriveLessonPreparation(this,token,'Lesson setup changed. Choose the corner again.');
       this._driveLessonUi?.update();return false;
     }
@@ -483,7 +496,7 @@ export class App {
     const plan={...baseline,driverId,ownerId};
     this.audio.unlock();this.audio.setPaused(false);
     this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});this._racePaintCar=car;
-    this._sayDriveLesson(this.profile.drivingLessons?.done?.corner?'drive.radio.retake':'drive.radio.corner.intro');
+    this._sayDriveLesson(this.profile.drivingLessons?.done?.[lessonId]?'drive.radio.retake':DRIVE_LESSON_VIEW[lessonId].intro);
     this.duel.startCampaign({seed:1989,mode:'timetrial',car,difficulty,driverId,playerId:ownerId,
       startStage:stageIndex,upgrades,opponentCount:0,lesson:plan});
     this._driveLessonUi?.update();return true;
@@ -504,7 +517,9 @@ export class App {
     this._driveLessonPreparing=null;this.driveLessonBoardOpen=false;this.driveLessonMessage='';
     this.driveLessonRadioText='';this._driveLessonRadioEpoch=(this._driveLessonRadioEpoch||0)+1;
     this._driveLessonVoice?.stop();this._driveLessonVoice=null;this._driveLessonRadioChain?.dispose();this._driveLessonRadioChain=null;
-    this._driveLessonRadioQueue=Promise.resolve();delete this.duel.drivingLesson;this.ghostPose=null;
+    this._driveLessonRadioQueue=Promise.resolve();
+    if(this.duel.drivingLesson?.lesson.id==='snow')delete this.duel.state.tyre; // the winter run's tyres do not outlast the lesson
+    delete this.duel.drivingLesson;this.ghostPose=null;this.driveLessonMarkers=null;
   }
   _driveLessonEvent(state,event){
     const run=this.duel.drivingLesson;
@@ -517,12 +532,12 @@ export class App {
     if(completion&&!run.rewarded){
       this._refreshPlayer();
       if(!driveLessonCompletion(run,state,this.player.id))return;
-      const result=finishDriveLesson(this.profile,completion.id,completion.marginSeconds,completion.carId);
+      const result=finishDriveLesson(this.profile,completion.id,completion.marginSeconds,completion.carId,{engineCurve:completion.id==='gears'}); // a gearbox lesson can only have run on the engine curve
       if(result.ok){
         this.profile=result.profile;run.saved=this._saveProfile();run.rewarded=true;run.reward=result.reward;
         this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
           'Lesson passed for this session. Progress and reward could not be saved. Keep the game open and retry saving; your last saved progress is unchanged.';
-        if(run.saved&&response.radio)this._sayDriveLesson(response.radio);
+        if(run.saved)for(const id of [response.radio,...(response.queued||[])])if(id)this._sayDriveLesson(id); // the snow lesson's pass line follows the winter explanation
       }
       else this.driveLessonMessage=result.reason;
       if(this.audio.context&&!this.audio.muted)this.audio._playCue?.('interface.win');
@@ -536,7 +551,7 @@ export class App {
     run.saved=this._saveProfile();
     this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
       'Still unable to save. Progress and reward are available only in this session. Keep the game open and retry saving.';
-    if(run.saved)this._sayDriveLesson('drive.radio.corner.pass');
+    if(run.saved)for(const id of run.lesson.id==='snow'?['drive.radio.snow.winter.result','drive.radio.snow.pass']:['drive.radio.'+run.lesson.id+'.pass'])this._sayDriveLesson(id);
     this._driveLessonUi?.update();return run.saved;
   }
   _sayDriveLesson(id){
@@ -556,11 +571,14 @@ export class App {
       });
     }).catch(()=>{});
   }
+  // DRIVE-LESSONS-VIEW-2: the lesson's own cues (the cone's knock, the shift lights' ticks).
+  playDriveLessonCue(id){if(this.audio.context&&!this.audio.muted)this.audio._playCue?.(id);}
   getDriveLessonGhost(){
     const run=this.duel.drivingLesson;
+    const winter=run?.lesson.id==='snow'&&run.lesson.stage==='winter'; // the winter-tyre run drives against the winter instructor
     if(!run||run.ownerId!==this.player?.id||this.duel.state.playerId!==run.ownerId||
-      run.lesson.stage!=='challenge'||run.lesson.phase!=='driving')return null;
-    return driveLessonGhostPose(run.plan.instructor.poses,run.lesson.attempt.elapsedSeconds,this.duel.state.car,this.duel.course);
+      run.lesson.stage!=='challenge'&&!winter||run.lesson.phase!=='driving')return null;
+    return driveLessonGhostPose((winter?run.plan.instructor.winter:run.plan.instructor).poses,run.lesson.attempt.elapsedSeconds,this.duel.state.car,this.duel.course);
   }
 
   startCampaign(options = {}) {
