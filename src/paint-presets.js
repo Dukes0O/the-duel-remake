@@ -1,6 +1,7 @@
 import {CARS} from './config.js';
 import {yetiRewards} from './yeti.js';
 import {MUDDY_HOLLOW_HUBCAP_IDS, normalizeMuddyHollow} from './wasteland-progress.js';
+import {hasAllPearls} from './deep/deep-log.js';
 
 // Appearance values only. Factory restores the renderer's exact original
 // material instead of guessing a shared finish for seven different vehicles.
@@ -10,6 +11,9 @@ export const PAINT_PRESETS=Object.freeze({
   copper_metallic:Object.freeze({id:'copper_metallic',name:'Copper Metallic',finish:'Warm metallic gloss',price:250,appearance:Object.freeze({id:'copper_metallic',name:'Copper Metallic',color:0xb97046,metalness:.65,roughness:.24,clearcoat:1,clearcoatRoughness:.10})}),
   glacier_satin:Object.freeze({id:'glacier_satin',name:'Glacier Satin',finish:'Pale blue-grey satin',price:400,appearance:Object.freeze({id:'glacier_satin',name:'Glacier Satin',color:0xb9d0d2,metalness:.22,roughness:.48,clearcoat:.35,clearcoatRoughness:.28})}),
   titan_gold:Object.freeze({id:'titan_gold',name:'Hollow Gold',finish:'Gold metallic reward',price:0,reward:'muddy-hollow',car:'titan_monster',appearance:Object.freeze({id:'titan_gold',name:'Hollow Gold',color:0xd8a72e,metalness:.82,roughness:.2,clearcoat:1,clearcoatRoughness:.08})}),
+  // The Deep (THE_DEEP 6.5): all nine pearls, for every car the player owns. Earned
+  // from the save itself and never taken away, so it needs no switch argument.
+  pearl_white:Object.freeze({id:'pearl_white',name:'Pearl White',finish:'Pearl sheen reward',price:0,reward:'deep',appearance:Object.freeze({id:'pearl_white',name:'Pearl White',color:0xf1ede4,metalness:.25,roughness:.28,clearcoat:1,clearcoatRoughness:.12})}),
 });
 const factory=Object.freeze({owned:Object.freeze(['factory']),selected:'factory'});
 const ordinaryIds=Object.freeze(Object.values(PAINT_PRESETS).filter(item=>!item.reward).map(item=>item.id));
@@ -25,7 +29,8 @@ function rewardEarned(profile,car){
 }
 function rewardIds(profile,car,{muddyHollowEnabled=false,yetiEnabled=false,includeInactiveRewards=false}={}){
   const muddy=rewardEarned(profile,car)&&(muddyHollowEnabled===true||includeInactiveRewards)?['titan_gold']:[];
-  return [...muddy,...(ownsCar(profile,car)&&yetiRewards(profile).frost&&(yetiEnabled===true||includeInactiveRewards)?['frost']:[])];
+  return [...muddy,...(ownsCar(profile,car)&&yetiRewards(profile).frost&&(yetiEnabled===true||includeInactiveRewards)?['frost']:[]),
+    ...(ownsCar(profile,car)&&hasAllPearls(profile)?['pearl_white']:[])];
 }
 function allowedIds(profile,car,options){return [...ordinaryIds,...rewardIds(profile,car,options)];}
 export function normalizePaintState(value,allowed=ordinaryIds){
