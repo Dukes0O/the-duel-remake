@@ -3,7 +3,7 @@
 // car and a tuned grip; with every setting at 0 (or the `lab-tuning` switch off) it gets the car it gave, as the
 // very same object, so a stock car drives exactly as before.
 import {DRIVE} from '../config.js';
-import {TUNE_SETTINGS, labOf, recordStockLap, payTunedBonus, TUNED_BONUS} from './lab-save.js';
+import {TUNE_SETTINGS, labOf, recordStockLap, payTunedBonus, stockKey, TUNED_BONUS} from './lab-save.js';
 
 // Every number of section 5.1, in one place. Steps run from -2 to +2; "per step" is per step of the setting.
 export const LAB_TUNE = Object.freeze({
@@ -78,6 +78,16 @@ export function fuelPlan(tune, raceMetres, {grandPrix = false, pitLane = false, 
 }
 
 // ---- Stock laps and the tuned-lap bonus (section 5.3) -------------------------------------------------------------------
+// The rules a race was latched with, as the stock-lap key names them: the names joined by `+`, in alphabetical order,
+// or '' for none. A state or a record counts as having a rule when it carries that rule's own marker (tyre-slip's
+// `tyreSlipRules`, engine-curve's `engineCurveRules`). A lap is judged only against a stock lap under the same rules.
+export function ruleSetOf(source) {
+  const names = [];
+  if (source?.engineCurveRules === true) names.push('engine-curve');
+  if (source?.tyreSlipRules === true) names.push('tyre-slip');
+  return names.join('+');
+}
+
 // The best lap in a list of lap times, or null.
 export function bestLap(lapTimes) {
   const laps = (Array.isArray(lapTimes) ? lapTimes : []).filter(seconds => Number.isFinite(seconds) && seconds > 0);
@@ -93,7 +103,7 @@ export function seedStockLaps(profile, entries, playerId, {flags} = {}) {
     if (row?.playerId !== playerId || row.mode !== 'timetrial') continue;
     const lap = bestLap(row.lapTimes);
     if (lap === null) continue;
-    const recorded = recordStockLap(next, row.car, row.eventId, lap, {flags});
+    const recorded = recordStockLap(next, row.car, row.eventId, lap, {flags, rules: ruleSetOf(row)});
     if (recorded.ok) next = recorded.profile;
   }
   return next;
@@ -102,15 +112,15 @@ export function seedStockLaps(profile, entries, playerId, {flags} = {}) {
 // A finished Time Trial. A stock run keeps its best lap as the stock lap; a tuned run that is at least 1% faster than
 // the stock lap of that car on that course pays the bonus, once for the course. Returns {profile, tuned} where tuned is
 // null for a stock run and {percent, bonus} for a tuned one (bonus 0 when it did not pay).
-export function settleTunedLap(profile, {carId, courseId, lapTimes, tune}, {flags} = {}) {
+export function settleTunedLap(profile, {carId, courseId, lapTimes, tune, rules = ''}, {flags} = {}) {
   if (flags?.enabled?.('lab-tuning') !== true) return {profile, tuned: null};
   const lap = bestLap(lapTimes);
   if (lap === null) return {profile, tuned: null};
   if (isStockTune(tune)) {
-    const recorded = recordStockLap(profile, carId, courseId, lap, {flags});
+    const recorded = recordStockLap(profile, carId, courseId, lap, {flags, rules});
     return {profile: recorded.ok ? recorded.profile : profile, tuned: null};
   }
-  const stock = labOf(profile).stockLaps[`${carId}|${courseId}`];
+  const stock = labOf(profile).stockLaps[stockKey(carId, courseId, rules)];
   if (!(stock > 0)) return {profile, tuned: {percent: 0, bonus: 0}};
   const percent = Math.round((1 - lap / stock) * 1000) / 10;
   if (lap > stock * 0.99) return {profile, tuned: {percent: Math.max(0, percent), bonus: 0}};

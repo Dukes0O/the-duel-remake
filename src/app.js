@@ -13,7 +13,7 @@ import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {labOf} from './lab/lab-save.js'; // LAB-TUNE
-import {seedStockLaps, settleTunedLap} from './lab/lab-tune.js'; // LAB-TUNE
+import {seedStockLaps, settleTunedLap, ruleSetOf} from './lab/lab-tune.js'; // LAB-TUNE
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
@@ -946,7 +946,7 @@ export class App {
     const flags=this._switches();
     if(state.mode!=='timetrial'||result.completed!==true||this.duel.drivingLesson||flags.enabled('lab')!==true||flags.enabled('lab-tuning')!==true)return;
     const seeded=seedStockLaps(this.profile,mergeLeaderboards(this.leaderboard,loadLeaderboard()).entries,this.player.id,{flags});
-    const settled=settleTunedLap(seeded,{carId:state.car,courseId:COURSE[state.stageIndex].id,lapTimes:state.lapTimes,tune:state.tune},{flags});
+    const settled=settleTunedLap(seeded,{carId:state.car,courseId:COURSE[state.stageIndex].id,lapTimes:state.lapTimes,tune:state.tune,rules:ruleSetOf(state)},{flags});
     if(settled.profile!==this.profile){this.profile=settled.profile;this._saveProfile();}
     if(settled.tuned)result.tunedLap=settled.tuned;
   }
