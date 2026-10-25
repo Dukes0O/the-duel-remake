@@ -14,7 +14,7 @@ import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex, nitroLocked } from './race-field.js';
 
 // GP-PASSING-2: pass types that `cpu-racecraft` turns on, one row each; a type that fails its batch stays false.
-export const PASS_TYPES = Object.freeze({alongside: false, exitTow: false, dive: true});
+export const PASS_TYPES = Object.freeze({alongside: false, exitTow: false, dive: false, window: true});
 
 export const CPU_NITRO = Object.freeze({strength:.5, refill:.5});
 export const cpuNitroExtraMph=(r,spec)=>spec.topSpeed*(BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(spec.nitroSpeedBonus??0))*CPU_NITRO.strength;
@@ -371,7 +371,9 @@ export function stepFieldRacer(duel, r, dt) {
 
   // ---- passing: pull out beside a slower car, finish the move once alongside ----
   // How close behind a slower car this racer waits before pulling out; keener racers go sooner.
-  const window = Math.min(1.2, .5 + .7 * t.aggression * tuning.aggression * (r.completedLaps === 0 ? 1 + t.firstLap : 1));
+  // Pass type 4: aggressive drivers wait up to 1.5 s behind, never on lap 1 before the first braking zone is passed.
+  const wideWindow = f.racecraft && PASS_TYPES.window && (r.completedLaps > 0 || r.s >= s.field.nitroArmS);
+  const window = Math.min(wideWindow ? 1.5 : 1.2, .5 + (wideWindow ? 1 : .7) * t.aggression * tuning.aggression * (r.completedLaps === 0 ? 1 + t.firstLap : 1));
   // The lane beside a car on `side`: clear of the car and of the racing line where it is running.
   const lineLane = (side, other, otherHalfWidth, ds) => {
     const clear = run.halfWidth + otherHalfWidth + .3, onLine = line.offsetAt(r.s + ds);

@@ -48,3 +48,17 @@ Report-only: CPU passes 2.2, 11.0, 4.0; slower player passed 12, 20, 11 of 20; n
 ## Pass type 2: exit pass with the tow (fa65369b), no effect, switched off
 
 On the straight after a corner a car that left it at least 3 mph faster counts its tow in the closing rate, with the mirror check and commit point. Against the switch-off figures the result matches steps A and B almost exactly (Panorama 15 8+-crash races, mean 11.30, 1 pile-up, nitro leader 12/20; Woods 2, 4.30, 3 pile-ups, 0/20; Pacific Canyon 0, 0.05, 0, 0/20; max race time change 1.97%, 1.14%, 1.38%), so by the gates alone it passes; but no pass or crash was ever tagged `exit` and CPU passes moved only 1.9 -> 1.9, 10.7 -> 10.8, 3.8 -> 3.8, so the condition (straight, still accelerating, tow, 3 mph faster) almost never holds together with the rest of the pass rule. A type with no effect is not a finished feature, so it is off (`PASS_TYPES.exitTow = false`); no retune within its bounded attempt.
+
+## Pass type 3: safe outbraking dive (8c7c17b3), FAILED two gates, switched off (recommended for Claude to review)
+
+A dive starts only if, at the closing rate, the diver will be at least half alongside before the other car's turn-in point (25 m before the apex); it gives up and brakes to follow if not half alongside 20 m before turn-in; its late-braking gain is capped at 3% (was up to 12%). Against the switch-off figures:
+
+| Gate | Panorama Ridge | Tremblant Woods | Pacific Canyon |
+| --- | --- | --- | --- |
+| 8+-crash races, on <= off (16, 4, 0) | 14 PASS | 2 PASS | 0 PASS |
+| Mean crashes <= off x 1.1 (12.55, 3.75, 0.10) | 10.75 PASS | 3.40 PASS | 0.05 PASS |
+| Early pile-ups <= off + 1 (2, 1, 0) | 1 PASS | 3 FAIL | 0 PASS |
+| Max race time change vs off, 2% | 4.04% FAIL | 1.15% PASS | 1.38% PASS |
+| Nitro player leads after lap 1, at most 5/20 | 8 FAIL | 0 PASS | 0 PASS |
+
+Report-only: CPU passes 1.65 -> 1.85, 9.95 -> 4.15, 3.55 -> 3.80; slower player passed 10, 17, 13 of 20. No dive-tagged crash remains (Panorama 213 untagged, 2 in a pass; Woods 54 untagged, 14 in a pass; Pacific Canyon 1), so the rule removes the dive crashes the earlier batches showed (Woods 26, Panorama 14), at the price of about half of Woods' passes. It fails the Panorama race-time gate (4.04%, the paired maximum over 20 races; steps A+B were 1.97%) and Woods' 3 pile-ups (the same count Claude accepted for steps A and B). It is off per the card (`PASS_TYPES.dive = false`); turning it on is a one-line change if Claude judges the crash result worth the Panorama time and passing change.
