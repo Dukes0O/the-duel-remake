@@ -1,0 +1,174 @@
+{
+  "shape": "heli-ski-additive-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2,
+      "activePlayerId": "ski-qa",
+      "players": [
+        {
+          "id": "ski-qa",
+          "name": "Ski QA",
+          "profile": {
+            "version": 2,
+            "credits": 4850,
+            "heli": {
+              "version": 1,
+              "fuelKg": 220,
+              "lessons": {
+                "liftoff": true,
+                "hover": true,
+                "landing": true,
+                "carry": true
+              },
+              "playDay": {
+                "last": "2026-10-24",
+                "count": 9
+              },
+              "jobs": {
+                "day": 9,
+                "taken": null,
+                "done": []
+              },
+              "carsAt": {},
+              "refuels": 4,
+              "flights": 9,
+              "ski": {
+                "version": 1,
+                "best": {
+                  "slalom": 24.31,
+                  "gs": 71.5,
+                  "aerials": 78.5,
+                  "tremblant-slalom": 19.25
+                },
+                "medal": {
+                  "slalom": 2,
+                  "gs": 1,
+                  "aerials": 2,
+                  "tremblant-slalom": 1
+                },
+                "paid": {
+                  "slalom": 2,
+                  "gs": 1,
+                  "aerials": 2,
+                  "tremblant-slalom": 1
+                },
+                "stashes": [
+                  "north-shelf",
+                  "lower-meadow",
+                  "tremblant-bowl"
+                ],
+                "futureField": {
+                  "note": "kept by an older game",
+                  "list": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "ski-old-qa",
+          "name": "Old Heli QA",
+          "profile": {
+            "version": 2,
+            "credits": 900,
+            "heli": {
+              "version": 1,
+              "fuelKg": 150,
+              "lessons": {
+                "liftoff": true,
+                "hover": true,
+                "landing": true,
+                "carry": true
+              },
+              "playDay": {
+                "last": "2026-10-20",
+                "count": 5
+              },
+              "jobs": {
+                "day": 5,
+                "taken": null,
+                "done": []
+              },
+              "carsAt": {},
+              "refuels": 4,
+              "flights": 9
+            }
+          }
+        },
+        {
+          "id": "ski-newer-qa",
+          "name": "Newer Ski QA",
+          "profile": {
+            "version": 2,
+            "credits": 1200,
+            "heli": {
+              "version": 1,
+              "fuelKg": 80,
+              "lessons": {
+                "liftoff": true,
+                "hover": true,
+                "landing": true,
+                "carry": true
+              },
+              "playDay": {
+                "last": "2026-10-22",
+                "count": 6
+              },
+              "jobs": {
+                "day": 6,
+                "taken": null,
+                "done": []
+              },
+              "carsAt": {},
+              "refuels": 4,
+              "flights": 9,
+              "ski": {
+                "version": 2,
+                "runs": {
+                  "slalom": {
+                    "bestMs": 24310,
+                    "medal": "silver"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "assertions": [
+    {
+      "path": "players.0.profile.heli.ski.best.slalom",
+      "equals": 24.31
+    },
+    {
+      "path": "players.0.profile.heli.ski.medal.aerials",
+      "equals": 2
+    },
+    {
+      "path": "players.0.profile.heli.ski.stashes",
+      "includes": "north-shelf"
+    },
+    {
+      "path": "players.0.profile.heli.ski.stashes",
+      "includes": "tremblant-bowl"
+    },
+    {
+      "path": "players.0.profile.heli.ski.futureField.list.2",
+      "equals": 3
+    },
+    {
+      "path": "players.2.profile.heli.ski.version",
+      "equals": 2
+    },
+    {
+      "path": "players.2.profile.heli.ski.runs.slalom.medal",
+      "equals": "silver"
+    }
+  ]
+}
