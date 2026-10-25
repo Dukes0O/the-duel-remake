@@ -213,4 +213,9 @@ Nothing.
 
 ## Tests
 
-(Filled in at the end of the card.)
+- `node tools/test-lab-radio.mjs`: 735 checks passed. `test-p4-audio`,
+  `test-fight-voices`, `test-heli-audio`, `test-lab-benches`, `test-heli-mode`,
+  `test-repo-hygiene`, `test-drive-lesson-lines` and `test-deep-phone` pass.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 80
+  passed, 0 failed, 0 not run (after merging current `integration/wasteland`).
+- `npm run build`: built.
