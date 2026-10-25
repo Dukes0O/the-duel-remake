@@ -18,4 +18,9 @@ DEEP-ART-FINAL rather than this card:
 - **Bat ray** is seen from above so its wings read. One wing tip is long and
   thin from the model.
 
-Verdict: for Claude.
+Verdict (Claude, 25 October 2026): **pass as working pictures.** The crab,
+octopus, jellyfish, turtle, reef shark, manta, moray and grouper read at once
+as log cards, and the grey shapes keep each creature's outline. The sardines
+(one shark-like fish, where the card wants a silver school), the flat sea lion
+and the humpback-looking gray whale are model faults: DEEP-ART-FINAL redoes
+those three models and reruns this recipe. No round 2 on this card.
