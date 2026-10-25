@@ -6,7 +6,8 @@ tasks:
     owner: "claude-cloud"
     lane: "RACE"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
     needs: [FIX-GRASS-GROUND]
     locks: []
     details: "docs/board/cards/PERF-GROUND-ROWS.md"
@@ -367,7 +368,8 @@ tasks:
     owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
     needs: [SKI-RUNS, SKI-SAVE]
     locks: []
     flag: "heli-skiing"
@@ -557,7 +559,8 @@ tasks:
     owner: "claude-cloud"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
     needs: [FIX-LAUNCH]
     locks: [busy-game-files]
     flag: "engine-curve"
