@@ -51,7 +51,7 @@ export const DEEP_PEARLS = Object.freeze(DEEP_LOG_PAGES.flatMap(page => page.pea
 
 // The creature with no accepted picture yet (DEEP-ART-SRC holds the otter's role).
 const NO_PICTURE = new Set(['otter']);
-export const logPicture = id => Object.hasOwn(DEEP_CREATURES, id) && !NO_PICTURE.has(id) ? `assets/deep/log/${id}.webp` : null;
+export const logPicture = id => Object.hasOwn(DEEP_CREATURES, id) && !NO_PICTURE.has(id) ? `/assets/deep/log/${id}.webp` : null;
 
 const finite = value => Number.isFinite(value);
 const validCar = car => car && finite(car.x) && finite(car.z) && finite(car.speed);
@@ -77,22 +77,24 @@ export function createLog(zone, deepSave, {enabled = false} = {}) {
   const pearls = trail.length ? (zone.pearls ?? []).filter(pearl => DEEP_PEARLS.includes(pearl.id))
     .map(pearl => ({pearl: pearl.id, ...place(trail, pearl.trailIndex, pearl.offset)})) : [];
   return {zoneId: zone?.id ?? null, active: enabled === true && trail.length > 0, spots, pearls,
-    logged: new Set(saved.logged ?? []), found: new Set(saved.pearls ?? []), creatureHold: null, pearlHold: null};
+    logged: new Set(saved.logged ?? []), found: new Set(saved.pearls ?? []), creatureHolds: new Map(), pearlHolds: new Map()};
 }
 
-// Holds `key` while `target` stays in reach; a different target or a break starts again.
-function hold(previous, target, key, dt) {
-  if (!target) return null;
-  const elapsed = previous?.[key] === target[key] ? previous.elapsed + dt : dt;
-  return {[key]: target[key], elapsed};
-}
-function nearest(points, car, range, skip) {
-  let best = null, bestAway = Infinity;
+// Each spot or pearl in reach keeps its own second; leaving reach (or going too
+// fast) starts that one again, so two spots close together never cancel each other.
+// The first to reach the second is logged; one creature and one pearl a frame at most.
+function hold(holds, points, car, range, key, skip, dt) {
+  const near = new Set(), done = [];
   for (const point of points) {
-    const metres = away(point, car);
-    if (metres <= range + 1e-9 && !skip(point) && metres < bestAway) { best = point; bestAway = metres; }
+    if (skip(point[key]) || away(point, car) > range + 1e-9 || near.has(point[key])) continue;
+    near.add(point[key]);
+    const elapsed = (holds.get(point[key]) ?? 0) + dt;
+    holds.set(point[key], elapsed);
+    if (elapsed >= DEEP_LOG.holdSeconds - 1e-9) done.push([elapsed, point[key]]);
   }
-  return best;
+  for (const id of [...holds.keys()]) if (!near.has(id)) holds.delete(id);
+  done.sort((a, b) => b[0] - a[0]);
+  return done[0]?.[1] ?? null;
 }
 
 // Each underwater frame. Within 6 m of a creature's spot (3 m of a pearl), under
@@ -101,20 +103,17 @@ function nearest(points, car, range, skip) {
 // nothing. Events: deepLogged {creature}, deepPearl {pearl}.
 export function stepLog(state, car, dt) {
   if (!state?.active || !finite(dt) || dt < 0) return [];
-  const events = [], ready = validCar(car) && slow(car);
-  const spot = ready ? nearest(state.spots, car, DEEP_LOG.logRange, point => state.logged.has(point.creature)) : null;
-  state.creatureHold = hold(state.creatureHold, spot, 'creature', dt);
-  if (state.creatureHold && state.creatureHold.elapsed >= DEEP_LOG.holdSeconds - 1e-9) {
-    state.logged.add(state.creatureHold.creature);
-    events.push({deepLogged: {creature: state.creatureHold.creature}});
-    state.creatureHold = null;
+  const events = [];
+  if (!validCar(car) || !slow(car)) { state.creatureHolds.clear(); state.pearlHolds.clear(); return events; }
+  const creature = hold(state.creatureHolds, state.spots, car, DEEP_LOG.logRange, 'creature', id => state.logged.has(id), dt);
+  if (creature) {
+    state.logged.add(creature); state.creatureHolds.delete(creature);
+    events.push({deepLogged: {creature}});
   }
-  const pearl = ready ? nearest(state.pearls, car, DEEP_LOG.pearlRange, point => state.found.has(point.pearl)) : null;
-  state.pearlHold = hold(state.pearlHold, pearl, 'pearl', dt);
-  if (state.pearlHold && state.pearlHold.elapsed >= DEEP_LOG.holdSeconds - 1e-9) {
-    state.found.add(state.pearlHold.pearl);
-    events.push({deepPearl: {pearl: state.pearlHold.pearl}});
-    state.pearlHold = null;
+  const pearl = hold(state.pearlHolds, state.pearls, car, DEEP_LOG.pearlRange, 'pearl', id => state.found.has(id), dt);
+  if (pearl) {
+    state.found.add(pearl); state.pearlHolds.delete(pearl);
+    events.push({deepPearl: {pearl}});
   }
   return events;
 }
@@ -141,29 +140,29 @@ const pageDone = (page, logged) => page.creatures.every(id => logged.includes(id
 // Records a creature in profile.deep.logged and pays 50 the first time; when that
 // completes a coast's page, 250 more for each page it completes. Refused (profile
 // unchanged, ok false) with the switch off or an unknown id; a creature already
-// logged is ok with nothing paid. `pages` lists the coasts whose page this completed.
+// logged is ok, not recorded, with nothing paid. `pages` lists the coasts whose page this completed.
 export function recordLogged(profile, creature, {enabled = false} = {}) {
-  const same = ok => ({profile, ok, paid: 0, pages: []});
+  const same = ok => ({profile, ok, recorded: false, paid: 0, pages: []});
   if (enabled !== true || !isCreature(creature)) return same(false);
   const deep = normalizeDeep(profile?.deep), before = deep.logged ?? [];
   if (before.includes(creature)) return same(true);
   const logged = add(before, creature, isCreature);
   const pages = DEEP_LOG_PAGES.filter(page => page.creatures.includes(creature) && pageDone(page, logged)).map(page => page.coast);
   const {credits, paid} = payTo(profile, DEEP_LOG_PAY.creature + DEEP_LOG_PAY.page * pages.length);
-  return {profile: {...profile, credits, deep: {...deep, logged}}, ok: true, paid, pages};
+  return {profile: {...profile, credits, deep: {...deep, logged}}, ok: true, recorded: true, paid, pages};
 }
 
 // Records a pearl in profile.deep.pearls and pays 150 the first time. `pearlWhite`
 // is true when this was the ninth: the pearl-white finish (src/paint-presets.js)
 // is earned from the save itself.
 export function recordPearl(profile, pearl, {enabled = false} = {}) {
-  const same = ok => ({profile, ok, paid: 0, pearlWhite: false});
+  const same = ok => ({profile, ok, recorded: false, paid: 0, pearlWhite: false});
   if (enabled !== true || !DEEP_PEARLS.includes(pearl)) return same(false);
   const deep = normalizeDeep(profile?.deep), before = deep.pearls ?? [];
   if (before.includes(pearl)) return same(true);
   const pearls = add(before, pearl, id => DEEP_PEARLS.includes(id));
   const {credits, paid} = payTo(profile, DEEP_LOG_PAY.pearl);
-  return {profile: {...profile, credits, deep: {...deep, pearls}}, ok: true, paid,
+  return {profile: {...profile, credits, deep: {...deep, pearls}}, ok: true, recorded: true, paid,
     pearlWhite: DEEP_PEARLS.every(id => pearls.includes(id))};
 }
 export const hasAllPearls = profile => DEEP_PEARLS.every(id => (normalizeDeep(profile?.deep).pearls ?? []).includes(id));
@@ -173,7 +172,8 @@ export const hasAllPearls = profile => DEEP_PEARLS.every(id => (normalizeDeep(pr
 // others, then the page line when the Kelp Coast page completes (it names that
 // coast). The pearl line speaks of abalone, so it is for Kelp Coast pearls.
 export function phoneLineFor(event, result) {
-  if (!result?.ok || !(result.paid > 0)) return [];
+  // `recorded`, not `paid`: a wallet at the credit cap is paid nothing but Ana still speaks.
+  if (result?.recorded !== true) return [];
   if (event?.deepLogged) {
     const lines = [event.deepLogged.creature === 'otter' ? 'deep.ana.otter' : 'deep.ana.log'];
     if (result.pages?.includes('kelp-coast')) lines.push('deep.ana.page');
@@ -197,8 +197,9 @@ export function logPage(profile) {
 // One picture card, for the garage page and for the card that slides in during a
 // dive. A creature not yet found is a grey shape with no name or fact.
 export function logCardMarkup(creature, {found = true, escape = text => text} = {}) {
-  if (!Object.hasOwn(DEEP_CREATURES, creature.id ?? creature)) return '';
-  const item = DEEP_CREATURES[creature.id ?? creature], picture = logPicture(item.id);
+  const id = typeof creature === 'string' ? creature : creature?.id;
+  if (!Object.hasOwn(DEEP_CREATURES, id)) return '';
+  const item = DEEP_CREATURES[id], picture = logPicture(item.id);
   const image = picture ? `<img src="${picture}" alt="${found ? escape(item.name) : 'Not found yet'}" loading="lazy">` : '<span class="deep-log-blank"></span>';
   return found
     ? `<article class="deep-log-card" data-creature="${item.id}">${image}<h4>${escape(item.name)}</h4><p>${escape(item.fact)}</p></article>`

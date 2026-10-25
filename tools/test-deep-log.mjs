@@ -66,6 +66,15 @@ test('a creature is logged within 6 m of its spot, under 15 km/h, for a second w
   assert.deepEqual(hold(state, car(0, 200), 1.01), [{deepLogged: {creature: 'crab'}}]);
 });
 
+test('two spots close together each keep their own second, so wobbling between them still logs', () => {
+  const zone = straight();
+  zone.spots = [{creature: 'turtle', trailIndex: 5, count: 1}, {creature: 'ray', trailIndex: 6, count: 1}];
+  const state = createLog(zone, {}, ON), events = [];
+  for (let i = 0; i < 240; i++) events.push(...stepLog(state, car(0, i % 2 ? 54.9 : 55.1), 1 / 120));
+  assert.deepEqual(events.map(e => e.deepLogged.creature).sort(), ['ray', 'turtle']);
+  assert.equal(logCardMarkup(null), '', 'no card for nothing');
+});
+
 test('logging measures the fixed spot, never a creature; a save already holding it logs nothing', () => {
   const state = createLog(straight(), {logged: ['turtle']}, ON);
   assert.deepEqual(hold(state, car(0, 50), 2), [], 'already in the save');
@@ -139,13 +148,17 @@ test('each pearl pays 150 once; the ninth earns pearl white for every owned car,
 
 test("Ana's lines: the otter line the first time, the log line for the others, the page line for the Kelp Coast", () => {
   const log = id => ({deepLogged: {creature: id}});
-  assert.deepEqual(phoneLineFor(log('ray'), {ok: true, paid: 50, pages: []}), ['deep.ana.log']);
-  assert.deepEqual(phoneLineFor(log('otter'), {ok: true, paid: 50, pages: []}), ['deep.ana.otter']);
-  assert.deepEqual(phoneLineFor(log('whale'), {ok: true, paid: 300, pages: ['kelp-coast']}), ['deep.ana.log', 'deep.ana.page']);
-  assert.deepEqual(phoneLineFor(log('turtle'), {ok: true, paid: 300, pages: ['wreck-reef']}), ['deep.ana.log'], 'the page line names the Kelp Coast');
-  assert.deepEqual(phoneLineFor(log('ray'), {ok: true, paid: 0, pages: []}), [], 'nothing for a repeat');
-  assert.deepEqual(phoneLineFor({deepPearl: {pearl: 'kelp-2'}}, {ok: true, paid: 150}), ['deep.ana.pearl']);
-  assert.deepEqual(phoneLineFor({deepPearl: {pearl: 'reef-1'}}, {ok: true, paid: 150}), [], 'the pearl line speaks of abalone');
+  const first = (paid, pages = []) => ({ok: true, recorded: true, paid, pages});
+  assert.deepEqual(phoneLineFor(log('ray'), first(50)), ['deep.ana.log']);
+  assert.deepEqual(phoneLineFor(log('otter'), first(50)), ['deep.ana.otter']);
+  assert.deepEqual(phoneLineFor(log('whale'), first(300, ['kelp-coast'])), ['deep.ana.log', 'deep.ana.page']);
+  assert.deepEqual(phoneLineFor(log('turtle'), first(300, ['wreck-reef'])), ['deep.ana.log'], 'the page line names the Kelp Coast');
+  assert.deepEqual(phoneLineFor(log('ray'), recordLogged(recordLogged(withMoney(), 'ray', ON).profile, 'ray', ON)), [], 'nothing for a repeat');
+  const capped = recordPearl({...withMoney(), credits: 1e9}, 'kelp-1', ON);
+  assert.equal(capped.paid, 0);
+  assert.deepEqual(phoneLineFor({deepPearl: {pearl: 'kelp-1'}}, capped), ['deep.ana.pearl'], 'a wallet at the cap is paid nothing but Ana still speaks');
+  assert.deepEqual(phoneLineFor({deepPearl: {pearl: 'kelp-2'}}, first(150)), ['deep.ana.pearl']);
+  assert.deepEqual(phoneLineFor({deepPearl: {pearl: 'reef-1'}}, first(150)), [], 'the pearl line speaks of abalone');
   for (const id of ['deep.ana.log', 'deep.ana.otter', 'deep.ana.page', 'deep.ana.pearl']) assert.ok(DEEP_PHONE_LINES[id], id + ' is recorded');
 });
 
@@ -156,11 +169,11 @@ test('the garage page: a row per coast found, grey shapes with no fact until fou
   assert.deepEqual(page.rows[0].creatures.filter(item => item.found).map(item => item.id), ['turtle', 'otter']);
   assert.equal(page.rows[0].pearls, 1); assert.equal(page.pearls, 2); assert.equal(page.pearlTotal, 9);
   const known = logCardMarkup('turtle', {found: true}), unknown = logCardMarkup('turtle', {found: false});
-  assert.ok(known.includes('Green turtle') && known.includes(DEEP_CREATURES.turtle.fact) && known.includes('assets/deep/log/turtle.webp'));
+  assert.ok(known.includes('Green turtle') && known.includes(DEEP_CREATURES.turtle.fact) && known.includes('/assets/deep/log/turtle.webp'));
   assert.ok(!unknown.includes('Green turtle') && !unknown.includes('seagrass') && unknown.includes('deep-log-unknown'), 'a grey shape tells nothing');
   assert.equal(logPicture('otter'), null, 'the otter has no accepted model yet');
   for (const id of Object.keys(DEEP_CREATURES).filter(id => id !== 'otter'))
-    assert.ok(readFileSync(new URL('../public/' + logPicture(id), import.meta.url)).length > 500, id + ' has its picture');
+    assert.ok(readFileSync(new URL('../public' + logPicture(id), import.meta.url)).length > 500, id + ' has its picture');
 });
 
 test('the real Kelp Coast: its seven creatures and three pearls can all be logged by driving to them, on every route', () => {

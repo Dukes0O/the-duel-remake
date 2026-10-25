@@ -35,8 +35,9 @@ function diveKitPanel(saved) {
 function seaLifeLogPanel(saved) {
   const snapshot = app.getDeepDiscovery?.();
   if (snapshot?.enabled !== true || (snapshot.kit !== true && !(snapshot.found?.length > 0))) return '';
-  const page = logPage(saved), logged = page.rows.reduce((sum, row) => sum + row.creatures.filter(item => item.found).length, 0);
-  const total = page.rows.reduce((sum, row) => sum + row.creatures.length, 0);
+  // The turtle and the crab are on two pages; the summary counts each creature once.
+  const page = logPage(saved), creatures = new Map(page.rows.flatMap(row => row.creatures.map(item => [item.id, item.found])));
+  const logged = [...creatures.values()].filter(Boolean).length, total = creatures.size;
   const rows = page.rows.map(row => `<section class="deep-log-row${row.complete ? ' complete' : ''}" data-coast="${row.coast}"><div class="deep-log-heading"><h4>${escapeHTML(row.name)}</h4><span>${row.creatures.filter(item => item.found).length} / ${row.creatures.length} LOGGED${row.complete ? ' · PAGE COMPLETE' : ''} · PEARLS ${row.pearls} / ${row.pearlTotal}</span></div><div class="deep-log-cards">${row.creatures.map(item => logCardMarkup(item, {found: item.found, escape: escapeHTML})).join('')}</div></section>`).join('');
   return `<details class="milestone-panel deep-log-panel"><summary><span>SEA-LIFE LOG</span><b>${page.rows.length ? `${logged} / ${total} LOGGED · ` : ''}PEARLS ${page.pearls} / ${page.pearlTotal}</b></summary>${rows || '<p>Nothing logged yet. Under water, drive up slow and close to a creature and the log does the rest.</p>'}</details>`;
 }

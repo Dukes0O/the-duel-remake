@@ -70,12 +70,12 @@ recorded (DEEP-RADIO); `phoneLineFor` names them for the wiring card.
 
 ## Checks
 
-- `tools/test-deep-log.mjs` (new): 11 tests, all pass:
+- `tools/test-deep-log.mjs` (new): 12 tests, all pass, after the review fixes:
   - every one of the 14 facts and names matches section 5 of
     `docs/THE_DEEP.md`, read from the file;
   - the pages and pearls;
   - the 6 m and 15 km/h edges, the one-second hold and a break restarting
-    it;
+    it, and two nearby spots each keeping their own second;
   - fixed spots, the switch off and a broken car picture;
   - the 3 m pearl edge and its offset to the left;
   - pay once, a page completing (the whole Kelp Coast pays 600) and never
@@ -114,7 +114,23 @@ recorded (DEEP-RADIO); `phoneLineFor` names them for the wiring card.
 
 ## Review
 
-One independent review, because this is money code: see the pull request.
+One independent review, because this is money code. Verdict **CLEAR**. It
+probed paying twice, the 128-id limit, bad and capped credits, the hold rules
+in mph, pearl white on a reload and with forged saves, HTML injection, the
+facts, and the switch off. Two small faults it found are fixed here, and
+neither can happen on the Kelp Coast:
+
+- At the 1,000,000,000 credit cap a first log pays 0, and Ana stayed quiet.
+  The results now carry `recorded`, and `phoneLineFor` uses that.
+- Two different creatures' spots less than 12 m apart reset each other's
+  second, so a car between them logged neither. Each spot now keeps its own
+  second. New test for both cases.
+
+Style notes, also done: picture paths start with `/assets/` like the rest of
+`src`; `logCardMarkup(null)` returns nothing instead of throwing; and the
+garage summary counts the turtle and the crab once, not once per page.
+Remaining note: the coast ids `wreck-reef` and `night-harbour` must match the
+zone ids DEEP-REEF and DEEP-NIGHT choose.
 
 ## Removed
 
