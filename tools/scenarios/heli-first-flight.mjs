@@ -10,15 +10,17 @@ export async function run(context) {
   await context.waitFor(`document.readyState==='complete' && !!window.__qaApp &&
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' && !document.querySelector('#start-engine')?.disabled`,
   'menu ready', 90_000);
-  // A Jesko owner on a course the Jesko has not been flown to: START is
+  // An Enzo owner on a course the Enzo has not been flown to: START is
   // closed and the note says why (special cars travel only by air).
   await context.evaluate(`(() => { const app = window.__qaApp;
-    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'koenigsegg_jesko'])]};
-    app._saveProfile(); app.menuCar = 'koenigsegg_jesko'; })()`);
+    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'ferrari_enzo'])]};
+    app._saveProfile(); app.menuCar = 'ferrari_enzo'; })()`);
   await context.waitFor(`document.querySelector('.start-note')?.textContent.includes('travels only by air') && document.querySelector('#start-engine').disabled`,
     'the air-only note on the menu', 30_000);
   await context.screenshot('menu-air-only-note');
-  await context.evaluate(`(() => { window.__qaApp.menuCar = 'falcone_f42'; })()`);
+  await context.evaluate(`(() => { const app = window.__qaApp;
+    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'koenigsegg_jesko'])]};
+    app._saveProfile(); app.menuCar = 'koenigsegg_jesko'; })()`);
   await context.waitFor(`!document.querySelector('.start-note')?.textContent.includes('travels only by air') && !document.querySelector('#start-engine').disabled`,
     'the note goes with another car', 60_000);
   const button = await context.evaluate(`(() => { const b = document.querySelector('#heli-visit'); return b && !b.hidden; })()`);

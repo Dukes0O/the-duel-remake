@@ -99,8 +99,7 @@ try {
     ok(!app.raceHere({courseId: 'tremblant-woods'}), 'no Race here without a helicopter visit');
   }
 
-  // Special cars travel only by air: the Jesko races where it was last set
-  // down (home until flown); with the switch off nothing changes.
+  // The Jesko races anywhere, including with an old saved helicopter position.
   {
     const setUp = app => {
       app.profile = {...app.profile, credits: 1_000_000, unlockedCars: [...new Set([...app.profile.unlockedCars, 'koenigsegg_jesko'])],
@@ -109,15 +108,18 @@ try {
     };
     const stage = id => COURSE.findIndex(item => item.id === id);
     const on = makeApp(true); setUp(on);
-    ok(!on.startCampaign({startStage: stage('panorama-ridge'), car: 'koenigsegg_jesko'}) && /only by air/.test(on.courseAccessMessage),
-      'on: the Jesko cannot race at Panorama Ridge before it is flown there');
+    ok(on.startCampaign({startStage: stage('panorama-ridge'), car: 'koenigsegg_jesko'}),
+      'on: the Jesko races at Panorama Ridge without being flown there');
+    on.returnToMenu();
     ok(on.startCampaign({startStage: stage('tremblant-woods'), car: 'koenigsegg_jesko'}), 'on: it races at Tremblant Woods, the home pad');
     on.returnToMenu();
     on.profile = {...on.profile, heli: {...(on.profile.heli || {version: 1}), version: 1, carsAt: {koenigsegg_jesko: 'panorama-ridge'}}};
     on._saveProfile();
     ok(on.startCampaign({startStage: stage('panorama-ridge'), car: 'koenigsegg_jesko'}), 'on: once set down at Panorama Ridge it races there');
     on.returnToMenu();
-    ok(!on.startCampaign({startStage: stage('tremblant-woods'), car: 'koenigsegg_jesko'}), 'on: and no longer at home');
+    ok(on.startCampaign({startStage: stage('tremblant-woods'), car: 'koenigsegg_jesko'}), 'on: it still races at home despite its saved position');
+    on.returnToMenu();
+    assert.equal(heliOf(on.profile).carsAt.koenigsegg_jesko, 'panorama-ridge', 'old position is preserved');
     ok(on.startCampaign({startStage: stage('tremblant-woods'), car: 'falcone_f42'}), 'on: other cars race anywhere');
     on.returnToMenu();
     const off = makeApp(false); setUp(off);
@@ -127,8 +129,7 @@ try {
 
   // Review cases: no helicopter sound loads with the switch off; restart is
   // refused while flying; leaving keeps changes made outside the session;
-  // the pad resumes a paused flight; the Jesko cannot drive into the
-  // Wasteland; Race here refuses the Jesko away from where it was set down.
+  // the pad resumes a paused flight; the Jesko can enter the Wasteland and arenas.
   {
     const off = makeApp(false);
     const loads = [];
@@ -161,8 +162,8 @@ try {
     app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'koenigsegg_jesko'])]};
     app._saveProfile();
     app.menuCar = 'koenigsegg_jesko';
-    ok(app._airOnlyRefused('koenigsegg_jesko', 'pacific-canyon') && app._airOnlyRefused('koenigsegg_jesko', 'scrapdome'),
-      'the Jesko cannot drive into the Wasteland or an arena');
+    ok(!app._airOnlyRefused('koenigsegg_jesko', 'pacific-canyon') && !app._airOnlyRefused('koenigsegg_jesko', 'scrapdome'),
+      'the Jesko can drive into the Wasteland and arenas');
     ok(!app._airOnlyRefused('falcone_f42', 'scrapdome'), 'other cars can');
   }
 
@@ -170,17 +171,17 @@ try {
   {
     const {airOnlyNote} = await import('../src/heli/heli-jobs.js');
     const app = makeApp(true);
-    app.profile = {...app.profile, credits: 1_000_000, unlockedCars: [...new Set([...app.profile.unlockedCars, 'koenigsegg_jesko'])],
+    app.profile = {...app.profile, credits: 1_000_000, unlockedCars: [...new Set([...app.profile.unlockedCars, 'ferrari_enzo'])],
       courses: {...app.profile.courses, unlocked: [...new Set([...(app.profile.courses?.unlocked || []), 'tremblant-woods', 'panorama-ridge'])]},
       heli: {version: 1, carsAt: {}}};
     app._saveProfile();
     const stage = id => COURSE.findIndex(item => item.id === id);
-    const note = airOnlyNote({enabled: true, profile: app.profile, carId: 'koenigsegg_jesko', courseId: 'panorama-ridge', carName: 'Koenigsegg Jesko Absolut'});
-    const started = app.startCampaign({startStage: stage('panorama-ridge'), car: 'koenigsegg_jesko'});
+    const note = airOnlyNote({enabled: true, profile: app.profile, carId: 'ferrari_enzo', courseId: 'panorama-ridge', carName: 'Ferrari Enzo'});
+    const started = app.startCampaign({startStage: stage('panorama-ridge'), car: 'ferrari_enzo'});
     ok(!started && app.courseAccessMessage === note, 'the menu note and the refusal say the same thing');
-    ok(airOnlyNote({enabled: true, profile: app.profile, carId: 'koenigsegg_jesko', courseId: 'tremblant-woods'}) === null, 'no note where the car is');
+    ok(airOnlyNote({enabled: true, profile: app.profile, carId: 'ferrari_enzo', courseId: 'tremblant-woods'}) === null, 'no note where the car is');
     ok(airOnlyNote({enabled: true, profile: app.profile, carId: 'falcone_f42', courseId: 'panorama-ridge'}) === null, 'no note for other cars');
-    ok(airOnlyNote({enabled: false, profile: app.profile, carId: 'koenigsegg_jesko', courseId: 'panorama-ridge'}) === null, 'no note with the switch off');
+    ok(airOnlyNote({enabled: false, profile: app.profile, carId: 'ferrari_enzo', courseId: 'panorama-ridge'}) === null, 'no note with the switch off');
   }
 
   // The menu line under START: the note replaces it, and when the note goes
@@ -188,7 +189,7 @@ try {
   {
     const {createRendererReadiness} = await import('../src/screen-readiness.js');
     const app = makeApp(true);
-    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'koenigsegg_jesko'])],
+    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'ferrari_enzo'])],
       courses: {...app.profile.courses, unlocked: [...new Set([...(app.profile.courses?.unlocked || []), 'tremblant-woods', 'panorama-ridge'])]},
       heli: {version: 1, carsAt: {}}};
     app._saveProfile();
@@ -197,8 +198,8 @@ try {
     const ui = {view3d: {dataset: {}, classList: {add() {}}}, 'renderer-loading': {hidden: false, lastChild: {textContent: ''}},
       'renderer-error': {hidden: true, querySelector: () => ({textContent: ''})},
       'start-engine': {disabled: false, parentElement: {querySelector: () => line}}};
-    const choices = {car: 'koenigsegg_jesko', startStage: stage('panorama-ridge')};
-    app.menuCar = 'koenigsegg_jesko';
+    const choices = {car: 'ferrari_enzo', startStage: stage('panorama-ridge')};
+    app.menuCar = 'ferrari_enzo';
     const ready = createRendererReadiness({app, ui, choices, profile: () => app.profile, isDisposed: () => false,
       importRenderer: async () => ({attachRenderer: () => ({prepareVehicle(key) { ui.view3d.dataset.vehicleKey = key; ui.view3d.dataset.vehicleAsset = 'ready'; }, dispose() {}})})});
     await ready.ensureRenderer();
@@ -207,7 +208,7 @@ try {
     ready.syncRendererReadiness(app.duel.state);
     ok(line.textContent === 'WOODS LINE', 'a newer menu line stays when the note goes');
     choices.startStage = stage('panorama-ridge'); ready.syncRendererReadiness(app.duel.state);
-    app.menuCar = choices.car = 'falcone_f42'; ready.syncRendererReadiness(app.duel.state);
+    app.menuCar = choices.car = 'koenigsegg_jesko'; ready.syncRendererReadiness(app.duel.state);
     ok(line.textContent === 'WOODS LINE', 'the saved line comes back when only the car changed');
   }
 

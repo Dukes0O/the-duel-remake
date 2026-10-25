@@ -27,11 +27,12 @@ cards are in section 9; Kyle's answers are in section 10.
   difficulty, but not the mode, so an old Grand Prix win cannot be told from
   a Duel win. The Grand Prix podium set (P4-CAREER) counts only from the day
   it shipped for the same reason.
-- **Special cars travel only by air** (Kyle, 14 October 2026;
-  `docs/HELICOPTER.md` section 5). `AIR_ONLY_CARS` in
-  `src/heli/heli-jobs.js` holds the Jesko. With the `helicopter` switch on, a
-  special car races only where it was last set down, starting at Tremblant
-  Woods. Kestrel One lifts at most 1,500 kg.
+- **Medal cars travel only by air** (`docs/HELICOPTER.md` section 5).
+  `AIR_ONLY_CARS` in `src/heli/heli-jobs.js` holds medal cars and the restored
+  Sirena. With the helicopter on, they race only where last set down. Medal
+  cars start at Tremblant Woods; the Sirena starts at Pacific Canyon.
+  Kyle, 25 October 2026: the Jesko races everywhere again, in every mode.
+  Kestrel One lifts at most 1,500 kg.
 - **A Grand Prix in a car outside the road class** (the Jesko, the Titan)
   fills the field with copies of the player's own car (`chooseCars` in
   `src/race-field.js`), so an earned car's model is drawn eight times.
@@ -40,8 +41,8 @@ cards are in section 9; Kyle's answers are in section 10.
 
 - T-013: "Earned cars: medal sheets (wins, difficulty levels, Duel and Grand
   Prix)". Builds on how the Koenigsegg unlocks. Touches saves.
-- 14 October: special cars travel only by air, starting with the Jesko;
-  earned cars from the medal sheets join that list.
+- 25 October: the Jesko leaves the air-only list. Medal cars and the restored
+  Sirena keep the fly-it-there rule. This replaces the 14 October Jesko rule.
 - Keep it small and fun for a parent and a child taking turns on one
   keyboard. Existing saves never lose a car or credits.
 - 14 October, on this packet: the three cars are confirmed (Ferrari Enzo,

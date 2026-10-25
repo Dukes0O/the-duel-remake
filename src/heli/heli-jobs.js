@@ -110,12 +110,11 @@ export function bearing(from, to, options = {}) {
   return length > 0 ? {x: dx / length, z: dz / length} : null;
 }
 
-// Special cars travel only by air (Kyle, 14 October 2026): with the
-// helicopter switch on, one races only on the course where it was last set
-// down, starting at the home pad. The cars earned with medals
-// (docs/EARNED_CARS.md) are special cars too.
-// The restored Falcone Sirena (SIRENA-CAR) is one too, first placed at Pacific Canyon (heli-save FIRST_PLACE).
-export const AIR_ONLY_CARS = Object.freeze(['koenigsegg_jesko', ...MEDAL_CARS, 'falcone_sirena']);
+// Medal cars and the restored Falcone Sirena travel only by air: with the
+// helicopter on, they race only where last set down. Medal cars start at the
+// home pad; the Sirena starts at Pacific Canyon (heli-save FIRST_PLACE).
+// Kyle, 25 October 2026: the Jesko races anywhere again, regardless of carsAt.
+export const AIR_ONLY_CARS = Object.freeze([...MEDAL_CARS, 'falcone_sirena']);
 
 export function isAirOnlyCar(carId) {
   return AIR_ONLY_CARS.includes(carId);
@@ -144,8 +143,9 @@ export const REAL_PAY_BONUS = 1.25;
 export const JOBS_PER_DAY = 3;
 
 // The customers' cars: every car Kestrel One can lift in H1, except the
-// special cars that travel only by air, so a customer's car is never one.
-export const JOB_CARS = Object.freeze(Object.keys(CARS).filter(id => liftCheck(id).ok && !isAirOnlyCar(id)));
+// medal cars, Sirena and garage-completion reward. The Jesko's racing freedom
+// does not change the existing customer pool or seeded dispatch jobs.
+export const JOB_CARS = Object.freeze(Object.keys(CARS).filter(id => liftCheck(id).ok && !isAirOnlyCar(id) && id !== 'koenigsegg_jesko'));
 
 const JOB_SEED = 0x4b455354;
 

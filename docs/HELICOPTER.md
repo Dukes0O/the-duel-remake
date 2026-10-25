@@ -198,12 +198,11 @@ damped pendulum (no new library; it borrows the tether ideas in
 - **Paying.** A repair takes credits at once. If it costs more than you
   have, it takes what you have and forgives the rest. A save never goes
   below zero.
-- **Special cars travel only by air** (Kyle). In H1 the special car is the
-  Koenigsegg Jesko Absolut and, since EARN-CAR-1 and EARN-CAR-3, the Ferrari
-  Enzo and the Bugatti Bolide; every earned car from the medal sheets
-  (`docs/EARNED_CARS.md`, each 1,500 kg or less) joins the list as it lands. With the switch on, a special car races only
-  on the course where it was last set down, and it starts at the home pad.
-  Existing saves keep the car; it simply starts at Tremblant Woods.
+- **Medal cars and the restored Sirena travel only by air.** With the
+  helicopter switch on, they race only where last set down. Medal cars start
+  at Tremblant Woods; the Sirena starts at Pacific Canyon. Kyle, 25 October
+  2026: the Jesko races on every course and in every mode again. Flying it
+  is optional, and its old saved helicopter position remains untouched.
 
 **Settled while building HELI-CABLE (14 October 2026).** Checked in
 `tools/test-heli-cable.mjs`:

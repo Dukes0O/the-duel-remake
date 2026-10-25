@@ -156,8 +156,8 @@ function flyOwnCarTo(courseId, drivingLessonAt) {
   ok(withDriving.includes(lessonBoardMarkup(menu.rows, {action: 'data-heli-lesson'}).match(/<li class="lesson-board-open">.*<\/li>/)[0]),
     'the Driving row is the menu\'s row, drawn by the same list');
   ok(withDriving.includes('data-heli-lesson="start:corner"'), 'its Start button names the driving lesson');
-  const noted = lessonsMarkup(view, board, {driving: {rows: [{...menu.rows[0], open: false, done: false}], notes: ['Your <Jesko> is at Panorama Ridge.']}});
-  ok(noted.includes('Opens later') && noted.includes('Your &lt;Jesko&gt; is at Panorama Ridge.'), 'a closed row says why, escaped');
+  const noted = lessonsMarkup(view, board, {driving: {rows: [{...menu.rows[0], open: false, done: false}], notes: ['Your <Enzo> is at Panorama Ridge.']}});
+  ok(noted.includes('Opens later') && noted.includes('Your &lt;Enzo&gt; is at Panorama Ridge.'), 'a closed row says why, escaped');
 }
 
 // ---- the click: Lesson here goes through the app -----------------------------------
@@ -228,21 +228,21 @@ try {
   // The air-only rule.
   {
     const app = ownedApp(ON, ['tremblant-woods', 'panorama-ridge']);
-    const jesko = AIR_ONLY_CARS[0];
-    ok(CARS[jesko], 'an air-only car exists');
-    app.profile = normalizeProfile({...app.profile, unlockedCars: [...app.profile.unlockedCars, jesko],
-      heli: {version: 1, fuelKg: 100, lessons: TRAINED, carsAt: {[jesko]: 'panorama-ridge'}}});
+    const airOnlyCar = AIR_ONLY_CARS[0];
+    ok(CARS[airOnlyCar], 'an air-only car exists');
+    app.profile = normalizeProfile({...app.profile, unlockedCars: [...app.profile.unlockedCars, airOnlyCar],
+      heli: {version: 1, fuelKg: 100, lessons: TRAINED, carsAt: {[airOnlyCar]: 'panorama-ridge'}}});
     app._saveProfile();
-    app.menuCar = jesko;
+    app.menuCar = airOnlyCar;
     ok(app.visitHeli(), 'visit with the air-only car away at Panorama Ridge');
     const board = app.heliDrivingBoard();
     same(board.rows.map(row => [row.open, row.done]), [[false, false]], 'its row is closed at the pad');
-    same(board.notes, [`Your ${CARS[jesko].name} is at Panorama Ridge.`], 'and says where the car is');
+    same(board.notes, [`Your ${CARS[airOnlyCar].name} is at Panorama Ridge.`], 'and says where the car is');
     const refused = app.heliStartDriving('corner');
     eq(refused.ok, false, 'starting is refused'); eq(refused.reason, board.notes[0], 'with the same words');
     ok(app.heliSession && app.duel.state.status === 'heli', 'the visit goes on');
-    eq(app._heliLessonAt('panorama-ridge', jesko)?.id, 'corner', 'where it was set down, Lesson here is allowed');
-    eq(app._heliLessonAt('tremblant-woods', jesko), null, 'anywhere else it is not');
+    eq(app._heliLessonAt('panorama-ridge', airOnlyCar)?.id, 'corner', 'where it was set down, Lesson here is allowed');
+    eq(app._heliLessonAt('tremblant-woods', airOnlyCar), null, 'anywhere else it is not');
     app.returnToMenu();
   }
   // Starting from the pad leaves the visit and runs the menu's real startLesson, through the real helicopter UI.

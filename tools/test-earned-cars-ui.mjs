@@ -111,7 +111,7 @@ test('the Enzo, F1 and Bolide stay hidden everywhere while the switch is off, sh
   assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCars.includes(id) && id !== sirena));
   assert.deepEqual(shownCars(true), Object.entries(CARS).filter(([id]) => id !== sirena));
   assert.deepEqual(shownCarIds(false), today);
-  assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars, sirena]);
+  assert.deepEqual(AIR_ONLY_CARS, [...medalCars, sirena]);
   assert.ok(medalCars.every(id => !JOB_CARS.includes(id)), 'no earned car is a customer car');
   const markup = on => screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 'easy', difficulty: 'casual', startStage: 0},
     arrow: '', sound: true, escapeHTML: String, earnedCars: on});
@@ -172,7 +172,7 @@ assert.ok(markup(true).includes('<option value="medal_test_a">'));
 assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the earnable count is today\\'s while off');
 assert.ok(markup(true).includes(' 13 EARNABLE CARS'));
 // Air only, never a customer's car.
-assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars, 'falcone_sirena']);
+assert.deepEqual(AIR_ONLY_CARS, [...medalCars, 'falcone_sirena']);
 assert.ok(medalCars.every(id => !JOB_CARS.includes(id)));
 // The garage, with the real renderer.
 const flags = {};
