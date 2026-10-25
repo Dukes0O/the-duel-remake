@@ -23,7 +23,7 @@ export const SIGN_MODELS = Object.freeze({
 // Table's rules: its flat top as wide as TABLE.topRadius and its foot at the floor, TABLE.topY below it.
 export const MESA_FIT = Object.freeze({artTopRadius: 200, artDrop: 165,
   scaleXZ: TABLE.topRadius / 200, scaleY: (TABLE.topY - TABLE.floorY) / 165});
-const SCOUT_HEIGHT = 7;
+const SCOUT_HEIGHT = 10;
 
 const loadModel = file => new GLTFLoader().loadAsync(`${MAP_MODEL_DIR}${file}.glb`).then(gltf => gltf.scene);
 
@@ -76,7 +76,7 @@ export function createMapWorldView({THREE, scene, load = loadModel, groundHeight
       }
     }
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: texture, transparent: true, depthWrite: false, depthTest: false}));
-    sprite.scale.set(32, 8, 1);
+    sprite.scale.set(56, 14, 1);
     sprite.renderOrder = 20;
     return sprite;
   }

@@ -256,6 +256,16 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'src/paint-presets.js|./deep/deep-log.js',
     ...['deep-ramp', 'deep-zone', 'zones/kelp-coast', 'deep-phone-lines', 'deep-log'].map(name => `tools/test-deep-log.mjs|../src/deep/${name}.js`),
     'tools/scenarios/deep-log-pictures.mjs|../../src/deep/deep-log.js',
+    // DEEP-SIRENA-VIEW: the one wiring card for the story (its named hooks) and its test.
+    'src/game.js|./deep/deep-story.js',
+    'src/app.js|./deep/deep-sirena.js',
+    'src/app.js|./deep/deep-log.js',
+    'src/render3d.js|./deep/sirena-view.js',
+    'src/screen-router.js|./deep/sirena-view.js',
+    'src/screen-router.js|./deep/sirena-ui.css',
+    'src/screen-garage.js|./deep/sirena-car.js',
+    ...['zones/kelp-coast', 'deep-sirena', 'deep-phone-lines', 'deep-story', 'sirena-view', 'deep-discovery']
+      .map(name => `tools/test-deep-story.mjs|../src/deep/${name}.js`),
     // DEEP-LIFE: the sea life's checks run its rules and drawing code in Node on the real Kelp Coast.
     'tools/test-deep-life.mjs|../src/deep/deep-ramp.js',
     'tools/test-deep-life.mjs|../src/deep/deep-zone.js',

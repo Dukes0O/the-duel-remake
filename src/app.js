@@ -13,8 +13,13 @@ import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
+// DEEP-SIRENA-VIEW: the story's finds, logs and pearls are paid and saved here.
+import {raiseFind} from './deep/deep-sirena.js';
+import {recordLogged,recordPearl,phoneLineFor} from './deep/deep-log.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
+import {createLabLap} from './lab/lab-lap.js'; // LAB-VIEW
+import {passLesson as labPassLesson} from './lab/lab-save.js'; // LAB-VIEW
 import * as wildlifeRules from './wildlife.js';
 import {fireOnNewDay, fireWorld} from './heli/heli-fire-run.js';
 import {notePlayDay, buyBack as buyBackSave, fireOf} from './heli/heli-save.js';
@@ -190,6 +195,7 @@ export class App {
       this.deepAudio.event(event,state);
       if(event.deepPhase&&state.deepJourney?.controlsLocked)this._clearHiddenRoadInput();
       if(event.deepCommitted)this._settleDeepDeparture(event.deepCommitted,state);
+      if(event.deepRaised||event.deepLogged||event.deepPearl)this._settleDeepStory(event,state); // DEEP-SIRENA-VIEW
       if(event.deepReturn)this.returnToMenu();
       if (event.hiddenRoadPhase) this._discoverHiddenRoadGate(event.hiddenRoadPhase, state);
       if (event.hiddenRoadCommitted) this._settleHiddenRoadDeparture(event.hiddenRoadCommitted, state);
@@ -253,6 +259,9 @@ export class App {
     this.raf = 0;
     this.lastT = null;
     this.running = false;
+    // LAB-VIEW: the Lab screen's open flag, and the G-force lap that reads the race (its pass is saved through labCommit).
+    this._labOpen = false;
+    this.labLap = createLabLap({onPass: () => this.labCommit((profile, flags) => labPassLesson(profile, 'gforce', {flags}), {anytime: true})});
     this._scriptedCrashDone = false;
     this._syncHiddenRoadDiscovery();
     this._bindKeys();
@@ -415,6 +424,7 @@ export class App {
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
       this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
+      this.labLap.step(this.duel.state,this.duel.course); // LAB-VIEW: reads the race, never writes it
       this._updateGhost(this.duel.state);this._updateLapTelemetry(this.duel.state);
       this._driveLessonUi?.update();
       this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);
@@ -603,7 +613,7 @@ export class App {
       crewId:this.wastelandUnlocked()?selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')}):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
-      deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),
+      deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),deepSave:this.profile.deep??null,
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     this._cupRace=cupRound&&this.duel.state.mode==='grandprix'&&this.duel.state.field?.size===8
       ?{seriesId:cupRun.id,ownerId:this.player.id,runId:this.runId,state:this.duel.state}:null;
@@ -1050,6 +1060,7 @@ export class App {
       deepEnabled:this._switches().enabled('the-deep')===true,
       earnedCarsEnabled:this._switches().enabled('earned-cars')===true,
       ...(state.tyreSlipRules===true&&state.difficulty==='pro'&&COURSE[state.stageIndex]?.kind==='drift'?{tyreSlipRules:true}:{}),
+      ...(state.engineCurve===true?{engineCurve:true}:{}),
       intelEnabled:this._switches().enabled('grand-prix')===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(COURSE[state.stageIndex],state.mode)){
@@ -1310,6 +1321,19 @@ export class App {
     this.ghostPose=null;this.driftNotice=this.checkpointNotice=null;
     return true;
   }
+  // DEEP-SIRENA-VIEW: pay and save a raised find, a logged creature or a pearl, once, for the
+  // player who dived (the same checks as the dive's own settlement), then Ana's log lines.
+  _settleDeepStory(event,state) {
+    const journey=state?.deepJourney;
+    if(!this.runId||state!==this.duel.state||!journey?.committed||state.playerId!==this._runPlayerId||this._runPlayerId!==this.player?.id||
+      !this._switches().enabled('the-deep'))return false;
+    this._refreshPlayer();
+    const on={enabled:true},result=event.deepRaised?raiseFind(this.profile,event.deepRaised.find,on):
+      event.deepLogged?recordLogged(this.profile,event.deepLogged.creature,on):recordPearl(this.profile,event.deepPearl.pearl,on);
+    if(result.profile!==this.profile){this.profile=result.profile;this._saveProfile();}
+    if(!event.deepRaised)for(const line of phoneLineFor(event,result))this.duel.emit({deepPhone:{line}});
+    return result.ok;
+  }
   chooseDeep(choice) {
     const state=this.duel.state;
     if(!this.runId||state.playerId!==this._runPlayerId||this._runPlayerId!==this.player.id||
@@ -1520,7 +1544,7 @@ export class App {
     this.heliSession = null; this.heliMapOpen = false; // MAP-VIEW
     const left = session.leave();
     const spent = left.credits - (this._heliCreditsAtStart ?? left.credits);
-    this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(left.heli ? {heli: left.heli} : {})};
+    this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(left.heli ? {heli: left.heli} : {}), ...(left.lab ? {lab: left.lab} : {})};
     this._saveProfile();
     this.heliAudio.stop();
   }
@@ -1622,6 +1646,7 @@ export class App {
       drivingLessonAt: this.drivingLessonsAvailable() ? (courseId, carId) => this._heliLessonAt(courseId, carId) : null,
       // MAP-VIEW: the pilot's map switch and the secret courses whose own switches are on.
       pilotMapEnabled: this._switches().enabled('pilot-map') === true, secretCourses: this._secretCoursesOn(),
+      labEnabled: this._switches().enabled('lab') === true, // LAB-VIEW
       skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
       wildlife: wildlifeRules, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
@@ -1630,7 +1655,7 @@ export class App {
         // credits by the same amount; its heli field is its own.
         const spent = profile.credits - (this._heliCreditsAtStart ?? profile.credits);
         this._heliCreditsAtStart = profile.credits;
-        this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(profile.heli ? {heli: profile.heli} : {})};
+        this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(profile.heli ? {heli: profile.heli} : {}), ...(profile.lab ? {lab: profile.lab} : {})};
         this._saveProfile();
       }});
     this.setInputContext(null);
@@ -1920,6 +1945,33 @@ export class App {
     const result=purchaseUpgrade(this.profile,car,type);
     if(result.ok){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}return result;
   }
+  // ---- LAB-VIEW (docs/LAB.md): whether the Lab is open and the one place the Lab's own save calls land. The screen is
+  // src/lab/lab-view.js; the rules are src/lab/lab-save.js and lab-shop.js. Nothing here touches a race or a flight.
+  // Open means open on the menu: starting a race or a flight closes it, and it never reopens by itself.
+  get labOpen(){if(this._labOpen===true&&this.duel.state.status!=='menu')this._labOpen=false;return this._labOpen===true;}
+  set labOpen(value){this._labOpen=value===true;}
+  labAvailable(){return !!this.player&&this._switches().enabled('lab')===true;}
+  openLab(){
+    if(this.duel.state.status!=='menu'||!this.labAvailable()||this.labOpen===true)return false;
+    this.labOpen=true;this.audio.unlock();this.duel.emit({lab:true});return true;
+  }
+  closeLab(){
+    if(this.labOpen!==true)return false;
+    this.labOpen=false;this.duel.emit({lab:true});return true;
+  }
+  // The helipad's Lab door: the visit ends, as Race here does, and the Lab opens.
+  labFromHeli(){
+    if(!this.heliSession||!this.labAvailable())return false;
+    this.returnToMenu();return this.openLab();
+  }
+  // make(profile, switches) -> {ok, reason, profile}; saved when it worked. Menu only, except a G-force lap passed in a race.
+  labCommit(make,{anytime=false}={}){
+    if(!this.labAvailable()||(!anytime&&this.duel.state.status!=='menu'))return {ok:false,reason:'The Lab is not available now.',profile:this.profile};
+    this._refreshPlayer();
+    const result=make(this.profile,this._switches());
+    if(result?.ok&&result.profile&&result.profile!==this.profile){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}
+    return result;
+  }
   unlockCar(car){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before unlocking cars.'};
     this._refreshPlayer();
@@ -2066,6 +2118,7 @@ export class App {
     else if (action === 'heli-radio') this._heliPress(session => session.pressRadio());
     else if (action === 'heli-map') { if (this.heliSession && !this.duel.state.paused) this.setHeliMap(!this.heliMapOpen); } // MAP-VIEW
     else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % (this.heliSession?.cameraCount ?? 4); this.duel.emit({heli: true}); }
+    else if (action === 'deep-ping') this.duel.deepPing(); // DEEP-SIRENA-VIEW: R under water
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
   }

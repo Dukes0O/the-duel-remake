@@ -132,6 +132,33 @@ function paintShopBox(shop) {
   return `<div class="heli-board-paint"><h3 class="heli-board-title">Paint shop</h3>${note}<ul class="heli-board-list">${rows}</ul>${wash}</div>`;
 }
 
+// LAB-VIEW (docs/LAB.md 4.1): the Lab's pad menu. The bucket's water or retardant, the 15 or 25 m line, and the Lab's
+// challenges with their Start buttons. lab is the session's lab getter plus its challengeBoard() and the last refusal.
+const CHALLENGE_NAMES = Object.freeze({lift: 'Lift and weight', projectile: 'Projectile motion', fire: 'Fire triangle', pendulum: 'Pendulums',
+  altitude: 'Air and altitude', headings: 'Headings and maps'});
+function labBox(view, lab) {
+  if (!lab?.on || !atHomePad(view)) return '';
+  const parts = [];
+  if (view.bucket) {
+    const pick = (kind, name, disabled) => `<button type="button" class="heli-board-button${lab.contents === kind ? ' heli-board-chosen' : ''}" data-heli-board="bucket-load:${kind}"` +
+      `${disabled ? ' disabled' : ''} aria-pressed="${lab.contents === kind}">${name}</button>`;
+    parts.push(`<div class="heli-board-lab-row"><span class="heli-board-text">Bucket holds</span>${pick('water', 'Water', false)}${lab.retardant ? pick('retardant', 'Retardant', false) : ''}</div>`);
+  }
+  if (lab.lines.length > 1)
+    parts.push(`<div class="heli-board-lab-row"><span class="heli-board-text">Cable</span>${lab.lines.map(metres =>
+      `<button type="button" class="heli-board-button${lab.line === metres ? ' heli-board-chosen' : ''}" data-heli-board="line:${metres}" aria-pressed="${lab.line === metres}">${metres} m</button>`).join('')}</div>`);
+  const rows = (lab.challenges ?? []).map(item => {
+    const name = esc(CHALLENGE_NAMES[item.id] ?? item.id);
+    const button = item.active ? `<button type="button" class="heli-board-button heli-board-drop" data-heli-board="challenge-stop">Stop</button>`
+      : item.open ? `<button type="button" class="heli-board-button" data-heli-board="challenge:${esc(item.id)}">${item.done ? 'Again' : 'Start'}</button>`
+        : `<span class="heli-board-note">Opens later</span>`;
+    return `<li class="heli-board-job heli-board-${item.done ? 'done' : item.open ? 'open' : 'shut'}" data-challenge="${esc(item.id)}"><span class="heli-board-text">${item.done ? '&#10003; ' : ''}${name}</span>${button}</li>`;
+  }).join('');
+  if (rows) parts.push(`<h3 class="heli-board-title">Lab challenges</h3><ul class="heli-board-list">${rows}</ul>`);
+  if (lab.note) parts.push(`<span class="heli-board-text heli-board-lab-note" role="status">${esc(lab.note)}</span>`);
+  return parts.length ? `<div class="heli-board-lab"><h3 class="heli-board-title">Lab</h3>${parts.join('')}</div>` : '';
+}
+
 // The dispatch season (docs/HELI_FIRE.md section 3.6), and the first
 // snow's note when it put a fire out on this visit.
 const SEASON_NAMES = Object.freeze({summer: 'Summer', autumn: 'Autumn', winter: 'Winter', spring: 'Spring'});
@@ -146,7 +173,7 @@ function seasonBox(season) {
 // skins: with the heli-skins switch on, session.paintShop() (the paint shop,
 // the wash and the fit buttons' coat offers). Returns '' when there is nothing to show.
 // lessonOffer: session.lessonHereOffer(), shown beside Race here.
-export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assisted', fire = null, skins = null, lessonOffer = null} = {}) {
+export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assisted', fire = null, skins = null, lessonOffer = null, lab = null} = {}) {
   const parts = [];
   if (fire) {
     const season = seasonBox(view?.season);
@@ -162,6 +189,8 @@ export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assi
   // MAP-VIEW: at any pad the board offers the pilot's map (the view carries `secrets` only with the map on).
   if (view?.secrets !== undefined && atAnyPad(view))
     parts.push('<div class="heli-board-map"><button type="button" class="heli-board-button" data-heli-board="map">Pilot\'s map</button></div>');
+  const labPanel = labBox(view, lab);
+  if (labPanel) parts.push(labPanel);
   if (jobs.length && atHomePad(view))
     parts.push(`<div class="heli-board-jobs"><h3 class="heli-board-title">Dispatch board</h3><ul class="heli-board-list">` +
       `${jobs.map(job => jobRow(job, mode, {survey: view?.survey ?? null, skins})).join('')}</ul></div>`);
@@ -197,6 +226,11 @@ export function handleBoardAction(action, app) {
   if (action.startsWith('paint-buy:')) return settle(session.buyPaint?.(action.slice(10)) ?? {ok: false});
   if (action.startsWith('paint-wear:')) return settle(session.wearPaint?.(action.slice(11)) ?? {ok: false});
   if (action === 'wash') return settle(session.washHelicopter?.() ?? {ok: false});
+  // LAB-VIEW: the Lab's pad menu.
+  if (action.startsWith('bucket-load:')) return settle(session.loadBucket?.(action.slice(12)) ?? {ok: false});
+  if (action.startsWith('line:')) return settle(session.chooseLine?.(Number(action.slice(5))) ?? {ok: false});
+  if (action.startsWith('challenge:')) return settle(session.startChallenge?.(action.slice(10)) ?? {ok: false});
+  if (action === 'challenge-stop') return settle(session.stopChallenge?.() ?? false);
   if (action === 'bucket-off') return settle(session.takeOffBucket());
   if (action === 'bucket-repair') return settle(session.repairBucket());
   if (action === 'race-here') {
@@ -214,13 +248,19 @@ export function handleBoardAction(action, app) {
 // view and handles its buttons. Call render() as often as the view changes;
 // the root's markup is replaced only when it differs.
 export function createDispatchBoard({root, app}) {
-  let last = null;
+  let last = null, labNote = '', noteKey = '';
   const render = () => {
     const session = app.heliSession, view = app.heliView?.() ?? null;
     const fire = app.forestFireEnabled?.() === true && session?.bucketRepairCost ? {repairCost: session.bucketRepairCost()} : null;
     const skins = session?.paintShop?.() ?? null;
+    // LAB-VIEW: the Lab's menu, with the reason the last Lab button was refused (the Lab's own "Try the challenge" leaves one here).
+    // The note is dropped when the fuel or the challenge in hand has changed since it was made (the tank was filled, a challenge began).
+    const key = `${Math.round(view?.heli?.fuelKg ?? 0)}|${view?.challenge?.id ?? ''}|${view?.bucket ? 1 : 0}`;
+    if (app.heliChallengeNote) { labNote = app.heliChallengeNote; app.heliChallengeNote = null; noteKey = key; }
+    else if (labNote && key !== noteKey) labNote = '';
+    const lab = session?.lab?.on === true ? {...session.lab, challenges: session.challengeBoard?.() ?? [], note: labNote} : null;
     const markup = session && view ? dispatchBoardMarkup(view, {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode, fire, skins,
-      lessonOffer: session.lessonHereOffer?.() ?? null}) : '';
+      lessonOffer: session.lessonHereOffer?.() ?? null, lab}) : '';
     if (markup !== last) { root.innerHTML = markup; last = markup; }
     if ('hidden' in root) root.hidden = markup === '';
     return markup;
@@ -228,7 +268,10 @@ export function createDispatchBoard({root, app}) {
   const onClick = event => {
     const button = event.target?.closest?.('[data-heli-board]');
     if (!button || button.dataset.heliBoard === undefined) return;
-    handleBoardAction(button.dataset.heliBoard, app);
+    const result = handleBoardAction(button.dataset.heliBoard, app);
+    // LAB-VIEW: a refused Lab button says why; any other button clears it.
+    labNote = /^(?:bucket-load|line|challenge)/.test(button.dataset.heliBoard) && result && result.ok === false ? String(result.reason ?? '') : '';
+    noteKey = `${Math.round(app.heliView?.()?.heli?.fuelKg ?? 0)}|${app.heliView?.()?.challenge?.id ?? ''}|${app.heliView?.()?.bucket ? 1 : 0}`;
     render();
   };
   root.addEventListener('click', onClick);

@@ -82,3 +82,12 @@
 /* Dusk over the hiker's last 3 minutes: the world dims and cools behind the instruments. */
 .heli-panel[data-dusk]::before{content:'';position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(ellipse at 50% 45%,rgba(24,30,64,.55) 0%,rgba(10,14,36,.85) 100%);opacity:calc(var(--heli-dusk,0) * .85)}
+/* LAB-VIEW: the Lab door on the instructor's board, the Lab challenge's line, and the pad's Lab menu. */
+.heli-lab-door{margin-top:8px;width:100%;border-color:#ffcf3f88!important;color:#ffcf3f!important}
+.heli-challenge{width:300px;padding:10px;background:#0f1614d9;border:1px solid #ffcf3f66;border-radius:6px}
+.heli-challenge>span{font-size:9px;letter-spacing:2.5px;font-weight:750;color:#ffcf3f}
+.heli-challenge p{margin:6px 0;font-size:13px;line-height:1.4}
+.heli-challenge button{padding:5px 9px;font:600 12px/1.2 inherit;color:var(--ink,#f3eddf);background:#ffffff14;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
+.heli-board-lab-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 0}
+.heli-board-chosen{border-color:#ffcf3f!important;color:#ffcf3f!important}
+.heli-board-lab-note{display:block;margin-top:6px;color:#f3bd77}

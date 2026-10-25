@@ -29,6 +29,8 @@ export function controlsHelp(duel) {
   const rows = [['W / UP', 'Throttle'], ['S / DOWN', 'Brake, hold to reverse'],
     ['LEFT / RIGHT', 'Steer'], ['SPACE', 'Boost'], ['Q / E', 'Shift (manual gearbox)']];
   if (state?.mode === 'wasteland' && state.combat) rows.push(['1  2  3  4', 'Weapons']);
+  // DEEP-SIRENA-VIEW: the sonar and the lift bags, listed only under water.
+  if (state?.deepJourney?.phase === 'underwater') rows.push(['R', 'Sonar ping'], ['F', 'Lift bag (stop beside a part)']);
   rows.push(['C', 'Change camera']);
   if (duel && canLeaveCar(duel)) rows.push(['HOLD F',
     'Step out or bail out']);

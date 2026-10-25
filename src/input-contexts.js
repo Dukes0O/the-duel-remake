@@ -5,10 +5,12 @@ const carKeyboard = Object.freeze({
   Escape: 'pause', KeyP: 'pause', ...cameras,
   Digit1: 'weapon:ufo', Digit2: 'weapon:bomb', Digit3: 'weapon:crossbow', Digit4: 'weapon:star',
   KeyM: 'mute', KeyE: 'shift-up', KeyQ: 'shift-down', KeyH: 'help',
+  KeyR: 'deep-ping', // DEEP-SIRENA-VIEW: the sonar; nothing happens unless the car is under water
 });
 const carGamepad = Object.freeze([
   [9, 'pause'], [8, 'help'], [3, 'camera-cycle'], [5, 'shift-up'], [4, 'shift-down'],
   [12, 'weapon:ufo'], [15, 'weapon:bomb'], [13, 'weapon:crossbow'], [14, 'weapon:star'],
+  [1, 'deep-ping'],
 ]);
 const carHeld = Object.freeze({
   throttle: Object.freeze(['ArrowUp', 'KeyW']),

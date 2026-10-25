@@ -257,7 +257,7 @@ try {
     world.update({...base, scout});
     const names = world.group.children.find(child => child.name === 'Corner names panorama-ridge');
     ok(names && names.children.length === 2 && names.visible, 'every corner of an owned course gets a name');
-    ok(Math.abs(names.children[0].position.y - (100 + 50 / 100 + 7)) < 1e-9, 'hovering just over its corner');
+    ok(Math.abs(names.children[0].position.y - (100 + 50 / 100 + 10)) < 1e-9, 'hovering just over its corner');
     world.update({...base, scout});
     equal(world.group.children.filter(child => child.name === 'Corner names panorama-ridge').length, 1, 'made once for the course');
     world.update(base);
