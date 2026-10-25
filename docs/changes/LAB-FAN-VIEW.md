@@ -165,3 +165,7 @@ merge, per AGENTS 18. This branch makes no merge or push.
 
 Removed in this follow-up: the fixture's assumption that 1.1 mph always
 covers a CPU brake tick. No runtime path, asset or test case was removed.
+
+## Claude review (25 October 2026)
+
+Look passed (REVERSE, Project Fan and its true story, the scales demo, the build). Arena fixture change approved: the run-up margin now covers each car's own brake step (other cars keep 1.1 mph), the 20 mph contact and 1.5 m displacement thresholds are unchanged, and a new full-roster pin includes the Speirling. Merge conflict in `screen-garage.js` resolved by Claude: kept the achievements shelf, added the Lab-built note with the correct separator.
