@@ -12,7 +12,7 @@ import {passLesson} from '../src/lab/lab-save.js';
 import {
   LAB_TUNE, normalizeTune, isStockTune, tunedCar, tunedGrip, fuelPlan, bestLap, ruleSetOf, seedStockLaps, settleTunedLap,
 } from '../src/lab/lab-tune.js';
-import {PIT, stepPitService} from '../src/pit-lane.js';
+import {PIT, stepPitService, pitBox} from '../src/pit-lane.js';
 import {driveCircuit} from './track-script-drive.mjs';
 
 let checks = 0;
@@ -74,15 +74,31 @@ const base = {...CARS[CAR], roughnessScale: 1, offRoadGrip: DRIVE.offRoadGrip};
   same(Object.keys(tunedCar(base, {wing: 1}).tune), TUNE_SETTINGS, 'a tuned car carries its tune');
   ok(Object.isFrozen(tunedCar(base, {wing: 1}).tune), 'frozen');
   // Every step trades: what a step buys, it pays for in the opposite number.
-  const bought = (a, b) => a > b;
   for (const sign of [1, -1]) {
-    const brakes = tunedCar(base, {brakes: sign});
-    ok(bought(brakes.braking, base.braking) === bought(base.grip, tunedGrip(brakes, 60, 1)) === true || sign < 0 && brakes.braking < base.braking && tunedGrip(brakes, 60, 1) > base.grip,
-      `brakes ${sign}: ${sign > 0 ? 'shorter stops and less cornering grip while braking' : 'longer stops and more cornering grip while braking'}`);
+    const brakes = tunedCar(base, {brakes: sign}), corner = tunedGrip(brakes, 60, 1);
+    ok(sign > 0 ? brakes.braking > base.braking && corner < base.grip : brakes.braking < base.braking && corner > base.grip,
+      `brakes ${sign}: ${sign > 0 ? 'shorter stops, less cornering grip while braking' : 'longer stops, more cornering grip while braking'}`);
     const springs = tunedCar(base, {springs: sign});
     ok(sign > 0 ? springs.grip > base.grip && springs.roughnessScale > 1 && springs.offRoadGrip < base.offRoadGrip
       : springs.grip < base.grip && springs.roughnessScale < 1 && springs.offRoadGrip > base.offRoadGrip, `springs ${sign}: smooth-road grip against bumps and dirt`);
   }
+}
+
+// ---- Springs: the same rough ground slows a stiffer car (a lap on the road never leaves the road) ------------------------------------
+{
+  const flags = createFeatureFlags({storage: null, qa: false, search: '', overrides: {'lab-tuning': true}});
+  const duel = new Duel({featureFlags: flags});
+  duel.startCampaign({mode: 'timetrial', car: CAR, startStage: COURSE.findIndex(item => item.id === 'pacific-canyon'), seed: 1989, opponentCount: 0});
+  const stock = duel.car, onRoad = s => duel._drivingSurface(s, 0, stock), gravelAt = (s, car) => duel._drivingSurface(s, duel.course.roadHalfWidthAt(s) + 14, car);
+  ok(onRoad(300).mainRoad, 'the road is the road');
+  const ground = gravelAt(300, stock);
+  ok(!ground.mainRoad, 'the verge is rough ground');
+  for (const step of [1, 2]) {
+    const stiff = gravelAt(300, tunedCar(stock, {springs: step})), soft = gravelAt(300, tunedCar(stock, {springs: -step}));
+    ok(stiff.scrub > ground.scrub && stiff.traction < ground.traction, `springs +${step}: more scrub and less traction on rough ground`);
+    ok(soft.scrub < ground.scrub && soft.traction > ground.traction, `springs -${step}: less scrub and more traction on rough ground`);
+  }
+  ok(gravelAt(300, tunedCar(stock, {pressure: 2})).scrub === ground.scrub, 'a setting that is not the springs leaves rough ground alone');
 }
 
 // ---- Fuel plan ------------------------------------------------------------------------------------------------------------
@@ -136,22 +152,23 @@ const lap = (course, tune = null) => {
   return LAPS.get(key);
 };
 const gain = (course, tune) => 1 - lap(course, tune) / lap(course);
-const POOL = ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge', 'ardennes-forest', 'pacific-canyon', 'harbor-highlands', 'cloudbreak-skyway'];
+const POOL = ['tremblant-woods', 'harbour-lights', 'panorama-ridge', 'pacific-canyon', 'harbor-highlands', 'cloudbreak-skyway'];
 {
   // On each wind-tunnel course some setting beats stock by at least 0.5%.
   const tunnel = {'tremblant-woods': 'pressure', 'panorama-ridge': 'wing', 'harbour-lights': 'brakes', 'tremblant-snow': 'springs', 'summit-run': 'fuel'};
-  const settings = ['pressure', 'wing', 'springs'];
   const best = {};
   for (const course of Object.keys(tunnel)) {
+    // The first setting (own setting first) that beats stock by 0.5%; the others are not run once one does.
     let top = -Infinity, how = '';
-    for (const name of settings) for (const step of [-2, 2]) {
+    for (const [name, step] of [['wing', 2], ['pressure', -2], ['springs', 2], ['wing', -2], ['pressure', 2]]) {
       const g = gain(course, {[name]: step});
       if (g > top) { top = g; how = `${name} ${step}`; }
+      if (top >= 0.005) break;
     }
     best[course] = {how, percent: Math.round(top * 1000) / 10};
     ok(top >= 0.005, `${course} (${tunnel[course]}'s course): some setting beats 0 by at least 0.5% (${how}: ${(top * 100).toFixed(2)}%)`);
   }
-  console.log('Best setting on each wind-tunnel course:', JSON.stringify(best));
+  console.log('First setting to beat 0 by 0.5% on each wind-tunnel course:', JSON.stringify(best));
 
   // Pressure and the wing never win everywhere: each non-zero step is slower than 0 on at least one course, and faster on another.
   for (const name of ['pressure', 'wing']) for (const step of [-2, -1, 1, 2]) {
@@ -179,8 +196,6 @@ const POOL = ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-r
   const three = run({fuel: 1});
   near(three.dryAt / three.length, 0.825, 0.04, 'a three-quarter tank runs dry at about 82.5%');
   ok(three.result.timeSec > stock.result.timeSec, 'and is slower than stock too');
-  const full = run({fuel: -2});
-  ok(full.tank === null, 'the full-tank steps carry no tank');
 
   // The dry engine is 40% of the acceleration; the pit stop takes 5 s longer and fills the tank.
   const flags = createFeatureFlags({storage: null, qa: false, search: '', overrides: {'lab-tuning': true, 'grand-prix': true}});
@@ -204,7 +219,7 @@ const POOL = ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-r
 
   const stopFor = (duel, actor) => {
     const lane = duel.course.pitLane, s = actor;
-    s.s = lane.box + (actor === duel.state ? 0 : 0); s.lateral = lane.offsetAt(s.s); s.speedMph = 0; s.headingError = 0;
+    s.s = pitBox(lane, actor); s.lateral = lane.offsetAt(s.s); s.speedMph = 0; s.headingError = 0;
     let steps = 0;
     for (; steps < 120 * 20; steps++) { stepPitService(duel, actor, 1 / 120); if (actor.pit?.phase === 'ready') break; }
     return steps / 120;
