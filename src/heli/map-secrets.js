@@ -66,6 +66,7 @@ export function stepSpotter(spotter, heli, ground, signs, dt) {
 // reads as nothing found. The save keeps the record (heli-save.js: names a later game wrote are kept and mean nothing
 // here, a later version is left exactly as it was and every write over it is refused).
 export const MAP_VERSION = MAP_SAVE_VERSION;
+const MAP_FULL = 'The map record is full.';
 export const createMap = () => ({version: MAP_VERSION, seen: [], found: [], table: false});
 
 // The record this game can read, for any profile. A table landed on is also seen.
@@ -87,7 +88,10 @@ export function noteFound(profile, id) {
   if (blocked) return {ok: false, reason: blocked, profile};
   const stored = mapRecordOf(profile);
   if (stored.found.includes(id)) return {ok: true, already: true, profile};
-  return {...writeMapRecord(profile, {...stored, found: [...stored.found, id]}), already: false};
+  const written = writeMapRecord(profile, {...stored, found: [...stored.found, id]});
+  // A list already at the save's limit cannot take another name: nothing is found.
+  if (written.ok && !written.profile.heli.map.found.includes(id)) return {ok: false, reason: MAP_FULL, profile};
+  return {...written, already: false};
 }
 
 // The profile with a place seen. Same answers as noteFound.
@@ -97,7 +101,9 @@ export function noteSeen(profile, id) {
   if (blocked) return {ok: false, reason: blocked, profile};
   const stored = mapRecordOf(profile);
   if (stored.seen.includes(id)) return {ok: true, already: true, profile};
-  return {...writeMapRecord(profile, {...stored, seen: [...stored.seen, id]}), already: false};
+  const written = writeMapRecord(profile, {...stored, seen: [...stored.seen, id]});
+  if (written.ok && !written.profile.heli.map.seen.includes(id)) return {ok: false, reason: MAP_FULL, profile};
+  return {...written, already: false};
 }
 
 // ---- The Table (section 5.2) ----------------------------------------------------------------------------------
@@ -135,6 +141,7 @@ export function claimTable(profile) {
   const total = Math.min(1_000_000_000, wallet + TABLE_PAY);
   const seen = stored.seen.includes(TABLE_ID) ? stored.seen : [...stored.seen, TABLE_ID];
   const written = writeMapRecord(profile, {...stored, seen, table: true}, {credits: total});
+  if (written.ok && !written.profile.heli.map.seen.includes(TABLE_ID)) return {ok: false, already: false, paid: 0, reason: MAP_FULL, profile};
   return {ok: written.ok, already: false, paid: total - wallet, profile: written.profile};
 }
 

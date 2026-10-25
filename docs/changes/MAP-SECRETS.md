@@ -204,7 +204,7 @@ Run once in the cloud (Linux, no graphics), on the branch merged with the curren
 
 ## Tests
 
-`tools/test-map-secrets.mjs` is now 278 checks. New: a saved record comes back exactly twice over; an older save gains
+`tools/test-map-secrets.mjs` is now 282 checks. New: a saved record comes back exactly twice over; an older save gains
 none; a car at the Table survives save and load; a scar on the Table is dropped; a car at a made-up place is dropped;
 1,000 names cut to 128; `__proto__` names and keys; a record at version 2, `"2"`, 2.5 and 1e30 kept exactly and every
 write over it refused (find, sighting, logbook, the logbook pays 0); a later helicopter refused; a hover over such a
@@ -218,7 +218,16 @@ delivered instead of refused.
 
 ## Independent save review
 
-See "Review" below.
+A fresh reviewer attacked the record as a hostile save editor (versions 2, "2", 2.5, 1e30, Infinity, NaN, null and the rest;
+a frozen profile; wallets of every bad kind; `__proto__`, `constructor` and nested keys; aliasing; idempotence through JSON and
+`normalizeProfile`; every other reader of `carsAt`). It found no way to pay twice or to write over a later record, and no leak of
+`the-table` beyond a car's place. Its notes: (1) a full list (128 names) silently took no new name while the session still
+announced the find: fixed, `noteFound`, `noteSeen` and `claimTable` now return `ok: false` ("The map record is full.") and
+nothing is announced or paid (tested); (2) `src/app.js:1693` words a car's place from a table that lacks the Table, so the home
+board would say "is at the-table": cosmetic, left for MAP-VIEW (busy-game-files lock); (3) a car left on the Table can be fetched
+only while the Table is a destination (the pilot-map switch on and the Table seen), so turning the switch off, or a later game's
+map record, strands an air-only car there until it is back: accepted while the switch is a dev switch, and worth a rule before
+`pilot-map` goes on for everyone; (4) pre-existing and not changed: a wallet of 1e30 is cut to the cap.
 
 ## Not done here
 

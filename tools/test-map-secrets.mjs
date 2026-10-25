@@ -454,6 +454,12 @@ const cruiseLeg = (session, to) => {
   ok(messy.x === undefined && Object.getPrototypeOf(messy) === Object.prototype, 'and a key of that name does not reach the record');
   same(heliOf({heli: heliOf({heli: {version: 1, map: mess}})}).map, messy, 'reading a record twice gives the same record');
 
+  // A record already at the limit takes no new name, and nothing is announced or paid for it.
+  const crowded = {...createProfile(), credits: 10, heli: {version: 1, map: {version: 1, found: flood, seen: flood, table: false}}};
+  for (const result of [noteFound(crowded, SECRET_IDS[0]), noteSeen(crowded, TABLE_ID), claimTable(crowded)])
+    ok(!result.ok && result.profile === crowded && /full/.test(result.reason), 'a full list takes no new name, and the logbook pays nothing then');
+  same(claimTable(crowded).paid, 0, 'paying nothing is stated');
+
   // A later game's record is kept exactly and never written over; so is a later game's helicopter.
   const base = {...createProfile(), credits: 100};
   for (const version of [2, '2', 2.5, 1e30]) {
