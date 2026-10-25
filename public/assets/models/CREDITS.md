@@ -37,6 +37,16 @@ part's pivot. Kestrel One, the cars and the fire and smoke effects are the
 game's existing models and effects; they are not copied here. Rebuild byte for
 byte with `node tools/art/lab-props.mjs`.
 
+## The McMurtry Speirling and the Project Fan blueprint (LAB-FAN-ART)
+
+All original, with no third-party source. The car is built in code in
+`src/speirling-vehicle.js` with the shared car helpers, from what is publicly known
+of the real car as a viewing reference only; there is no downloaded model, texture,
+badge or maker graphic (the maker's name appears only in the config, as for the other
+real cars). `speirling/project-fan.glb` is the pinned blueprint sheet, a vertex-coloured
+model written by `tools/art/speirling-blueprint.mjs`; rebuild it byte for byte with
+that command.
+
 ## Original Blender course landmarks
 
 `course-landmarks.blend` contains six original, editable scenery collections:
