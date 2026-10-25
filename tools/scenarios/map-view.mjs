@@ -23,7 +23,7 @@ async function clickSelector(context, selector) {
   await clickAt(context, point);
 }
 async function pressKey(context, code, key) {
-  for (const type of ['keyDown', 'keyUp']) await context.command('Input.dispatchKeyEvent', {type, code, key, text: type === 'keyDown' ? key : undefined});
+  for (const type of ['keyDown', 'keyUp']) await context.command('Input.dispatchKeyEvent', {type, code, key, text: type === 'keyDown' && key.length === 1 ? key : undefined});
 }
 async function clickPlace(context, id) {
   const rect = await context.evaluate(`(() => { const r = document.querySelector('.pilot-map-canvas').getBoundingClientRect(); return {x: r.x, y: r.y, w: r.width, h: r.height}; })()`);
