@@ -47,7 +47,16 @@ the blueprint and the REVERSE switch). Built by the local Sonnet session on
 
 ## Tests and gates
 
-PLACEHOLDER
+After merging current `integration/wasteland` (nothing new to merge at the end), once,
+from PowerShell:
+
+- `node tools/test-speirling-vehicle.mjs`: 437 checks pass (49,099 triangles / 57 draws;
+  the blueprint rebuilds byte for byte).
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 41 passed, 0
+  failed, 0 not run. `npm run build` passes.
+- Look: round 4 (final; Kyle lifted the three-round cap for it) built to the photographs
+  Kyle sent to Claude, rear corrected from the rear-view photos. No frame check (rule 9),
+  no sound, no locks.
 
 ## Removed
 
