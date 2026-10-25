@@ -10,19 +10,6 @@ export async function nativeBundle() {
   const result = await build({
     root, configFile: false, logLevel: 'silent', define: {__DUEL_QA__: 'true'},
     plugins: [{
-      // src/circuit-manifests.js ends in a top-level await. In this single-chunk helper bundle that makes
-      // config.js and combat-weapons.js wait for it, and combat-weapons.js and arsenal/oil.js import each
-      // other, so each waits for the other and the bundle never finishes loading ("Runtime.evaluate timed
-      // out"). Vite resolves the course files at build time here, so read them without the await.
-      name: 'panorama-synchronous-circuits',
-      enforce: 'pre',
-      transform(code, id) {
-        if (!id.replaceAll('\\', '/').endsWith('/src/circuit-manifests.js')) return null;
-        const wait = 'export const CIRCUIT_ENTRIES = registerCircuits(await modulesFromFiles());';
-        if (!code.includes(wait)) throw Error('Native helper bundle: circuit-manifests.js changed; update the synchronous course read.');
-        return {code: code.replace(wait, "export const CIRCUIT_ENTRIES = registerCircuits(Object.values(import.meta.glob(['./circuits/*.js', '!./circuits/index.js'], {eager: true})));"), map: null};
-      },
-    }, {
       name: 'panorama-private',
       resolveId(id) {
         if (id.replaceAll('\\', '/') === entry) return '\0panorama';

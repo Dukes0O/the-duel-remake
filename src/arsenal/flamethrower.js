@@ -1,4 +1,4 @@
-import {point} from '../combat-weapons.js';
+import {point} from '../combat-actors.js';
 import {applyArmorDamage, armorDamageFor, combatShielded} from '../combat-armor.js';
 import {combatOwnerId, hostile, outOfPlay} from '../combat-teams.js';
 import {targetFor, targetIdentity, actorForTarget} from './targeting.js';

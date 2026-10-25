@@ -1,4 +1,4 @@
-import {point, predictedPoint, burst} from '../combat-weapons.js';
+import {point, predictedPoint, burst} from '../combat-actors.js';
 import {hostile, outOfPlay, combatOwnerId} from '../combat-teams.js';
 import {applyArmorDamage} from '../combat-armor.js';
 import {COMBAT_TUNING} from '../wasteland-tuning.js';

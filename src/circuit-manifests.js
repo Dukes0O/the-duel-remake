@@ -57,18 +57,26 @@ export function registerCircuits(modules) {
   return Object.freeze(entries.sort((a, b) => a.manifest.releaseOrder - b.manifest.releaseOrder));
 }
 
-async function modulesFromFiles() {
+// The course files, read without waiting: a top-level await here made every module that needs the manifest list
+// (config.js and the rest of the game) wait, and a bundle with an import cycle among them never finished loading.
+// The game's own build finds the files at build time; Node (tests and tools) reads the folder and loads each file
+// at once (require of an ES module, Node 22.12 and later).
+function modulesFromFiles() {
   if (import.meta.env) {
     const modules = import.meta.glob(['./circuits/*.js', '!./circuits/index.js'], {eager: true});
     return Object.values(modules);
   }
-  const {readdir} = await import(/* @vite-ignore */ 'node:fs/promises');
-  const files = (await readdir(new URL('./circuits/', import.meta.url)))
-    .filter(name => NAME.test(name.slice(0, -3)) && name.endsWith('.js') && name !== 'index.js').sort();
-  return Promise.all(files.map(name => import(new URL('./circuits/' + name, import.meta.url).href)));
+  const {readdirSync} = process.getBuiltinModule('node:fs');
+  const {createRequire} = process.getBuiltinModule('node:module');
+  const {fileURLToPath} = process.getBuiltinModule('node:url');
+  const load = createRequire(import.meta.url);
+  const folder = new URL('./circuits/', import.meta.url);
+  return readdirSync(folder)
+    .filter(name => NAME.test(name.slice(0, -3)) && name.endsWith('.js') && name !== 'index.js').sort()
+    .map(name => load(fileURLToPath(new URL(name, folder))));
 }
 
-export const CIRCUIT_ENTRIES = registerCircuits(await modulesFromFiles());
+export const CIRCUIT_ENTRIES = registerCircuits(modulesFromFiles());
 export const CIRCUIT_MANIFESTS = Object.freeze(CIRCUIT_ENTRIES.map(row => row.manifest));
 export function circuitDefinitions(flags, entries = CIRCUIT_ENTRIES) {
   return Object.freeze(entries.filter(row => !flags || flags.enabled(row.manifest.flag)).map(row => row.definition));

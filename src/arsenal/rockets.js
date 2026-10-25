@@ -1,4 +1,4 @@
-import {point, velocity} from '../combat-weapons.js';
+import {point, velocity} from '../combat-actors.js';
 import {sweepObstacle} from '../collision.js';
 import {COMBAT_TUNING} from '../wasteland-tuning.js';
 import {applyArmorDamage, armorDamageFor, combatShielded} from '../combat-armor.js';

@@ -1,4 +1,4 @@
-import {point, burst} from '../combat-weapons.js';
+import {point, burst} from '../combat-actors.js';
 import {outOfPlay, hostile, arenaParticipant, arenaActor} from '../combat-teams.js';
 import {actorForTarget, targetIdentity} from './targeting.js';
 
