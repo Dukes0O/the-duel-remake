@@ -113,9 +113,19 @@ timer; the Gallery corner fit is 5 ms. Neither grew the build.
   scene and was not touched.) `test-world-composition` (the reviewed
   signatures) is in the lane run below.
 
-## Changed assertions
+## Changed assertions (reviewed)
 
-None. Added: the lookup and history cases in `test-polyline-index.mjs`.
+- `tools/test-shortcut-presets.mjs` pins a fingerprint of the `course.js` code
+  the shortcut solver reaches (`at`, `nearest`, `phase`, `worldAt`, `_relief`
+  are among it). That code was edited, so I regenerated the saved presets as
+  the test says (`node tools/generate-shortcut-presets.mjs`, then
+  `node tools/test-shortcut-presets.mjs --verify-solvers`: 15 fresh solver
+  comparisons passed). **All 15 saved layouts came out identical**; only the
+  stored `sourceFingerprint` in `src/generated-shortcut-presets.js` changed.
+- `tools/test-polyline-terrain-integration.mjs`: its full-scan stand-in for the
+  route index answered only `query`; the scene now reads `lookup` (the same
+  answer), so the stand-in answers both. Nothing it compares changed.
+- Added: the lookup and history cases in `test-polyline-index.mjs`.
 
 ## Removed
 
@@ -141,4 +151,11 @@ Nothing.
 
 ## Lane tier and build
 
-(Filled in at the end of the card.)
+Run once after merging current `integration/wasteland` (25 October):
+`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 170
+passed, 3 failed on the first run. The three: `test-shortcut-presets` and
+`test-polyline-terrain-integration` (both fixed above), and
+`test-drift-trial`, which **fails the same way on the untouched integration
+tip** ("easy: a real earned chain precedes the crash, then both laps
+complete"); it is not caused by this change and I left it. The two fixed
+suites pass. `npm run build`: built.
