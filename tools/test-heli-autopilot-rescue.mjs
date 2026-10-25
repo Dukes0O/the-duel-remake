@@ -349,7 +349,7 @@ console.log('PASS a supply run gets no rescue goal');
   log.push(...run(session, 2, () => ({})));
   const arrived = session.view();
   ok(session.courseId === 'summit-run' && log.some(e => e.type === 'entered' && e.courseId === 'summit-run' && e.arrived), 'arrived at Summit Run');
-  near(dist(arrived.heli, arrived.zone), 1500, 40, 'arrived 1.5 km from the zone');
+  ok(dist(arrived.heli, arrived.zone) <= arrived.zone.radius, 'arrived over the start area landing circle (RESCUE-SUMMIT-ARRIVAL; it was 1.5 km from the zone)');
   near(arrived.readout.altitudeM, 2860 + (arrived.heli.y - summitStartY()), 0.01, 'the altitude reads from the 2,860 m base');
   const sea = newSession(readyProfile({count: 0}), {summit: true});
   sea.start();

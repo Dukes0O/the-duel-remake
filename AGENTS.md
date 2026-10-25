@@ -124,10 +124,14 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
 
 11. Test by what changed. The lane tier runs the smoke set, the replay and
     world-signature guards, and the suites that import a changed file or
-    name its path within two steps. Deeper effects are the full check's job.
-12. Merge as soon as it is green: one lane tier, a build and one review where
-    rule 17 asks for one. A merge with no conflict does not run the lane tier
-    again; a conflict fix runs it once more. Two clean lanes never wait for
+    name its path within two steps, never through a hub (a module that
+    imports 20 or more game files) and never for importing a shared file
+    (`docs/CODEX_PLAYBOOK.md` section 7). Deeper effects are the full
+    check's job.
+12. Merge as soon as it is green: the builder's one lane tier and build, and
+    one review where rule 17 asks for one. A merge with no conflict in code
+    does not run the lane tier again; a code conflict fixed at merge reruns
+    only the suites for those files ("Gates"). Two clean lanes never wait for
     each other.
 13. Heavy checks run as one batch, the full check: full tier, frame check
     (rule 8), combat balance on current rules (`combat-balance.mjs --check`),

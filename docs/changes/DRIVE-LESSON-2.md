@@ -76,12 +76,13 @@ three in a row pass.
 ## Checks (Linux cloud)
 
 - `tools/test-drive-lesson-2.mjs`: 16 of 16 (adds the 3 s of road checks on both rows and both paces, and the gate-move check). `tools/test-drive-lessons.mjs` (lesson 1): 37 of 37, unchanged.
-- Lane tier `--changed --jobs 8 --keep-going`: 230 of 236 suites pass, including the
+- Run once on this branch after merging current `integration/wasteland` (04770cec),
+  lane tier `--changed --jobs 8 --keep-going`: 230 of 236 suites pass, including the
   lesson 1, lesson 2, lesson-run and lines suites and every replay and world-signature
-  guard. The six failures are Windows-only and unrelated: `test-course-kit`,
+  guard. The six failures are the laptop-only suites: `test-course-kit`,
   `test-earned-cars-ui`, `test-medals` ("test cleanup requires the Recycle Bin"),
   `test-full-check` (needs `pwsh`), `test-salt-flats` (a `C:\` art path) and
-  `test-salt-flats-art` (needs Blender); the laptop should run them. `npm run build` passes.
+  `test-salt-flats-art` (needs Blender). `npm run build` passes.
 - Not run here: anything needing a browser or the Windows-only suites (none is touched by this card).
 
 ## Removed

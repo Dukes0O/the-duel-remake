@@ -36,3 +36,13 @@ snow surface cues. Art: the red board and cones from lesson 1.
 
 Acceptance: the test, lesson 1's tests unchanged, lane tier, build, one
 review. Removed: nothing.
+
+## Claude answers
+
+Cloud session questions (24 October 2026, Claude design lead): the 40 mph
+approach, the dry board from a dry-road plan, the `queued` radio field and the
+`winter` stage were approved as built. The hairpin: the instructor must never
+look like it clips a cone. It takes a slightly wider line so every cone is
+cleared by at least 0.5 m (slowing as needed; a slow, clean instructor on summer
+tyres in snow is the lesson), and that 0.5 m clearance is checked for every
+instructor run in lessons 1, 2 and 4.

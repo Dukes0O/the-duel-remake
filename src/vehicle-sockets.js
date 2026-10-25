@@ -15,6 +15,7 @@ const ADJUSTMENTS = Object.freeze({
   ferrari_enzo: Object.freeze({ frontY: 0.36, roofLift: 0.10, roofZ: -0.18, shieldLift: 0 }),
   mclaren_f1: Object.freeze({ frontY: 0.36, roofLift: 0.10, roofZ: -0.18, shieldLift: 0 }),
   bugatti_bolide: Object.freeze({ frontY: 0.32, roofLift: 0.08, roofZ: -0.10, shieldLift: 0 }),
+  falcone_sirena: Object.freeze({ frontY: 0.34, roofLift: 0.08, roofZ: -0.22, shieldLift: 0 }),
 });
 
 export const VEHICLE_SOCKET_KEYS = Object.freeze(Object.keys(ADJUSTMENTS));

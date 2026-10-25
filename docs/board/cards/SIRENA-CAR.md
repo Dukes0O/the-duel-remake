@@ -37,3 +37,13 @@ Sound: `deepCoastCup` plays the existing results fanfare and Ana's
 Acceptance: the test; the car-roster and switch-inventory tests gain the new
 car with Claude's written review on this card (a car added, nothing
 loosened); lane tier, build, one review. Removed: nothing.
+
+## Claude answers
+
+Cloud session questions (25 October 2026, Claude design lead): all six approved.
+(1) 810 kg, and she stays the lightest car. (2) The named `LAPTOP_KITS` wait in
+`test-armor-kit-assets` is acceptable: it names one car and checks it fully the
+moment the file exists; the laptop card SIRENA-KIT builds the kit and empties the
+list. (3) The Sirena stays on no list until DEEP-SIRENA-VIEW lists it. (4) The
+wiring beyond the card's hooks stays. (5) The cup counts in Duel, Time Trial and
+Grand Prix. (6) The changed assertions and re-recorded pins are reviewed as fine.

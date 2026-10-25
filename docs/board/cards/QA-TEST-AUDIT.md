@@ -31,3 +31,21 @@ not designed for the task at hand. The new gate rules are in AGENTS.md
 Acceptance: the audit table; lane selection with before/after counts; the
 full tier still passes; every removed or loosened check listed with its
 reason for Claude's review in the pull request. No game code changes.
+
+## Claude answers
+
+Claude (design lead), 24 October 2026, to the cloud session's questions:
+
+1. Keep it: a card that touches only a shared file runs the small lane; its
+   named checks and the night full tier cover the rest.
+2. Done: AGENTS.md rules 11 and 12 now say "never through a hub ... never for
+   importing a shared file" and match the gates.
+3. Keep the test-tool suites (`test-test-runner`, `test-browser-harness`,
+   `test-browser-scenarios`, `test-full-check`, `test-build-status`,
+   `test-board`, `test-repo-hygiene(-rules)`).
+4. Do these three in this card if each is small: the `test-heli-mode` import
+   allow-list as a rule, `test-shortcut-presets` hashing only the functions
+   the solver uses, and `test-circuit-layouts` derived from the manifests. If
+   any grows large, list it in the pull request instead of a new card. Leave
+   the Rook and Rustwall P2 suites in the full tier: their art cards are
+   deferred, not dropped.

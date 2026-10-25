@@ -14,7 +14,7 @@ const generators = [
       .map(name => `public/assets/models/deep/${name}.glb`),
     json: ['public/assets/models/deep/manifest.json'] },
   { script: 'tools/blender/rook-p2.py', args: ['--stage', 'neutral'], glb: [] },
-  { script: 'tools/blender/armor-kits.py', args: [], glb: ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt','dusthawk_rally','banshee_muscle','viper_proto','titan_monster','koenigsegg_jesko','ferrari_enzo','mclaren_f1','bugatti_bolide'].map(name => `public/assets/models/wasteland/kits/${name}.glb`) },
+  { script: 'tools/blender/armor-kits.py', args: [], glb: ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt','dusthawk_rally','banshee_muscle','viper_proto','titan_monster','koenigsegg_jesko','ferrari_enzo','mclaren_f1','bugatti_bolide','falcone_sirena'].map(name => `public/assets/models/wasteland/kits/${name}.glb`) },
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },
@@ -33,6 +33,8 @@ const generators = [
   { script: 'tools/blender/rescue-props.py', args: [], glb: ['public/assets/heli/rescue/winch.glb', 'public/assets/heli/rescue/stretcher.glb', 'public/assets/heli/rescue/searchlight.glb', 'public/assets/heli/rescue/beacon.glb', 'public/assets/heli/rescue/crate-food.glb', 'public/assets/heli/rescue/crate-medicine.glb', 'public/assets/heli/rescue/crate-fuel.glb'] },
   { script: 'tools/blender/rescue-people.py', args: [], glb: ['public/assets/heli/people/rescuer-hanging.glb', 'public/assets/heli/people/rescuer-casualty-hanging.glb', 'public/assets/heli/people/hiker-standing.glb', 'public/assets/heli/people/skier-standing.glb', 'public/assets/heli/people/driver-standing.glb', 'public/assets/heli/people/hiker-sitting.glb', 'public/assets/heli/people/skier-sitting.glb', 'public/assets/heli/people/driver-lying.glb', 'public/assets/heli/people/hiker-walking.glb', 'public/assets/heli/people/paramedic-1-walking.glb', 'public/assets/heli/people/paramedic-2-walking.glb'] },
   { script: 'tools/blender/fire-bucket.py', args: [], glb: ['public/assets/heli/fire-bucket.glb'] },
+  { script: 'tools/blender/ski.py', args: [], glb: ['skier-stand', 'skier-crouch', 'skier-lean-left', 'skier-lean-right', 'skier-tuck', 'skier-air', 'skier-tumble', 'guide', 'guest-1', 'guest-2', 'guest-3', 'guest-4', 'pole-red', 'pole-blue', 'gate-red', 'gate-blue', 'arch-start', 'arch-finish', 'flag-drop', 'flag-pickup', 'kicker', 'netting'].map(name => `public/assets/models/ski/${name}.glb`) },
+  { script: 'tools/blender/pilot-map-props.py', args: [], glb: ['sign-logging-arrows', 'sign-start-grid', 'sign-fire-pits', 'sign-chalk-line', 'sign-lighthouse-window', 'table-mesa', 'table-lookout', 'table-plane-wreck', 'table-strip', 'table-logbook'].map(name => `public/assets/models/pilot-map/${name}.glb`) },
   { script: 'tools/blender/burnt-forest.py', args: [], glb: ['public/assets/burnt/tremblant-woods/burnt-props.glb'] },
 ];
 // Private fitted candidates have no editable Blend or runtime installation.
@@ -60,6 +62,9 @@ const reviewHelpers = [
   // SIRENA-ART: any-size look renders of the wreck, parts, bag and abalone.
   {script:'tools/blender/sirena-review.py', args:['--','--glb','missing.glb','--views','three-quarter,side'], render:'folder',
     views:['three-quarter','side']},
+  // LAB-ART: the whole Lab from named cameras, or one bench on its own.
+  {script:'tools/blender/lab-review.py', args:['--','--glb','missing.glb','--views','overview,three-quarter'], render:'folder',
+    views:['overview','three-quarter']},
   {script:'tools/blender/kit-sheet.py', args:['--round','1','--blender','missing-blender.png','--high','missing-high.png','--performance','missing-performance.png'], render:false},
 ];
 const failures = [];

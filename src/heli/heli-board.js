@@ -139,7 +139,8 @@ function seasonBox(season) {
 // session.raceHereOffer(). fire: with the fire switch on, {repairCost}.
 // skins: with the heli-skins switch on, session.paintShop() (the paint shop,
 // the wash and the fit buttons' coat offers). Returns '' when there is nothing to show.
-export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assisted', fire = null, skins = null} = {}) {
+// lessonOffer: session.lessonHereOffer(), shown beside Race here.
+export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assisted', fire = null, skins = null, lessonOffer = null} = {}) {
   const parts = [];
   if (fire) {
     const season = seasonBox(view?.season);
@@ -158,7 +159,9 @@ export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assi
   if (offer) {
     const course = HELI_DESTINATIONS[offer.courseId]?.name ?? offer.courseId;
     parts.push(`<div class="heli-board-race"><span class="heli-board-text">${esc(CARS[offer.carId]?.name ?? 'Your car')} is set down at ${esc(course)}.</span>` +
-      `<button type="button" class="heli-board-button heli-board-race-here" data-heli-board="race-here">Race here</button></div>`);
+      `<button type="button" class="heli-board-button heli-board-race-here" data-heli-board="race-here">Race here</button>` +
+      (lessonOffer ? `<button type="button" class="heli-board-button heli-board-lesson-here" data-heli-board="lesson-here">Lesson here: ${esc(lessonOffer.name)}</button>` : '') +
+      `</div>`);
   }
   return parts.length ? `<section class="heli-board" data-heli-board-panel>${parts.join('')}</section>` : '';
 }
@@ -189,6 +192,10 @@ export function handleBoardAction(action, app) {
     const offer = session.raceHereOffer();
     return offer ? app.raceHere(offer) : false;
   }
+  if (action === 'lesson-here') {
+    const offer = session.lessonHereOffer?.();
+    return offer ? app.lessonHere(offer) : false;
+  }
   return {ok: false, reason: 'Unknown board action.'};
 }
 
@@ -201,7 +208,8 @@ export function createDispatchBoard({root, app}) {
     const session = app.heliSession, view = app.heliView?.() ?? null;
     const fire = app.forestFireEnabled?.() === true && session?.bucketRepairCost ? {repairCost: session.bucketRepairCost()} : null;
     const skins = session?.paintShop?.() ?? null;
-    const markup = session && view ? dispatchBoardMarkup(view, {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode, fire, skins}) : '';
+    const markup = session && view ? dispatchBoardMarkup(view, {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode, fire, skins,
+      lessonOffer: session.lessonHereOffer?.() ?? null}) : '';
     if (markup !== last) { root.innerHTML = markup; last = markup; }
     if ('hidden' in root) root.hidden = markup === '';
     return markup;

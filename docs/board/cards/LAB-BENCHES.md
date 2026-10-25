@@ -40,3 +40,10 @@ Sound: names the cue each bench plays (`lab.clunk`, `lab.splash`,
 Art: none.
 
 Acceptance: the test, lane tier, build, one review. Removed: nothing.
+
+## Claude answers
+
+Settled 24 October: the three corrected explanations (Suspension, Grip, G-force) are approved:
+truth over the first draft's words, never tune a model to fit a sentence. The Braking
+bench says plainly that its weight shift is shown at a gentle 1 g stop while the stopping
+distances use the car's full braking. The cold-snow wax pick (medium) is fine.

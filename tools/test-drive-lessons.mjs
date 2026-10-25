@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DRIVE_LESSON_CORNERS,createDriveLesson,stepDriveLesson,placeCones,cornerPoints,buildLessonLine,instructorControls,buildInstructorRun,finishInstructorTrace,lessonPlanFor} from '../src/lessons/drive-lessons.js';
+import {DRIVE_LESSON_CORNERS,createDriveLesson,stepDriveLesson,placeCones,cornerPoints,buildLessonLine,instructorControls,buildInstructorRun,finishInstructorTrace,lessonPlanFor,instructorConeDistances,TIP_DISTANCE_M,LESSON_LINE} from '../src/lessons/drive-lessons.js';
 
 // Plain car-view tests only. These do not simulate a car or prove instructor physics.
 const corner={id:'test-corner',startS:80,finishS:200,dir:1};
@@ -36,14 +36,19 @@ test('late try counts a real contact, records screech and advances only at the n
   assert.equal(lesson.lastAttempt.endReason,'wall');assert.equal(lesson.lastAttempt.screechSeconds,.6);
   assert.equal(answer.radio,'drive.radio.corner.late.early');begin(lesson);assert.equal(lesson.stage,'right');
 });
-test('late try radio: early braking, screech, or nothing; never the time-lost line',()=>{
-  const late=(brakeS,screech)=>{const lesson=create();begin(lesson);
+test('late try radio: early braking, a slide after screech, a wall, or nothing; never the time-lost line',()=>{
+  // contacts: what ends the try (a finish by default, or a wall)
+  const late=(brakeS,screech,contacts={})=>{const lesson=create();begin(lesson);
     stepDriveLesson(lesson,view(brakeS,-4,{brake:.7}),{},.1);
     stepDriveLesson(lesson,view(150,-4,{tyreSlip:screech?1.2:0}),{},screech||.1);
-    return stepDriveLesson(lesson,view(200),{},.1).radio;};
+    return stepDriveLesson(lesson,view(contacts.wallHit?160:200),contacts,.1).radio;};
   assert.equal(late(110,0),'drive.radio.corner.late.early');
-  assert.equal(late(130,.5),'drive.radio.corner.coach.screech');
+  // DRIVE-LESSONS-LINES-2: the true lines replace the old time-lost line (late.result is gone).
+  assert.equal(late(130,.5),'drive.radio.corner.late.slid');
   assert.equal(late(130,.49),null);
+  assert.equal(late(130,.7,{wallHit:true}),'drive.radio.corner.late.off','a try that ends at a wall says where a slide takes you');
+  assert.equal(late(130,0,{wallHit:true}),'drive.radio.corner.late.off','even with no screech');
+  assert.equal(late(110,.7,{wallHit:true}),'drive.radio.corner.late.early','braking early still wins');
 });
 test('the four right-try rules pass and cones tip only once per attempt',()=>{
   const lesson=create();reachRight(lesson);const answer=right(lesson);
@@ -287,6 +292,8 @@ for (const courseId of ['panorama-ridge','tremblant-woods']) {
       assert.equal(instructor.poses.at(-1).s,corner.finishS);
       assert.equal(instructor.poses.at(-1).t,instructor.timeSec);
       assert.ok(instructor.poses.every(pose=>Number.isFinite(pose.x)&&Number.isFinite(pose.z)&&pose.tyreSlip<=1));
+      // The instructor never looks like it clips a cone: at least 0.5 m clear of the tip distance, still inside the 2.5 m that counts it.
+      for (const distance of instructorConeDistances(instructor.poses,instructor.cones)) assert.ok(distance>=TIP_DISTANCE_M+LESSON_LINE.minClearM&&distance<=2.5,`cone clearance ${distance}`);
     });
   }
 }
@@ -381,8 +388,9 @@ for(const courseId of ['panorama-ridge','tremblant-woods']){
         assert.ok(late.attempt.screechSeconds>=.5,'late entry must produce at least half a second of real screech');
         // Claude's review (card, 'Claude answers', late-try acceptance): the tyre model punishes
         // a late entry with screech, not with time, so the time-loss clause is replaced by the
-        // late-try radio line playing (the existing screech line).
-        assert.equal(late.answer.radio,'drive.radio.corner.coach.screech','late try plays the screech line (not the untrue time-lost line)');
+        // late-try radio line playing. DRIVE-LESSONS-LINES-2: that is now the true screech line
+        // (late.slid) or, at a wall, late.off; never the untrue time-lost line.
+        assert.ok(['drive.radio.corner.late.slid','drive.radio.corner.late.off'].includes(late.answer.radio),'late try plays a true late line (not the untrue time-lost line)');
         const right=await nativeStudentAttempt(baseline,lesson,'right',fps);results.push(right);
         assert.equal(lesson.stage,'right');assert.equal(right.attempt.endReason,'finish');
         assert.deepEqual(right.attempt.rules,[true,true,true,true],'native right try passes every settled rule');

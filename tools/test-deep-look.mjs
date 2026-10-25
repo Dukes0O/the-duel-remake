@@ -234,9 +234,23 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'tools/test-deep-zone-format.mjs|../src/deep/zone-floor.js',
     'tools/test-deep-ramp.mjs|../src/deep/deep-ramp.js',
     'src/main.js|./deep/zones/kelp-coast.js',
+    // DEEP-RADIO: Ana's phone lines join the sound bank; the phone chain is rendered and tested in Node.
+    'src/sound-bank.js|./deep/deep-phone-lines.js',
+    'tools/audio/build-deep-phone.mjs|../../src/deep/deep-phone-lines.js',
+    'tools/audio/render-deep-phone.mjs|../../src/deep/deep-phone.js',
+    'tools/test-deep-phone.mjs|../src/deep/deep-phone-lines.js',
+    'tools/test-deep-phone.mjs|../src/deep/deep-phone.js',
     'tools/test-deep-kelp-coast.mjs|../src/deep/deep-ramp.js',
     'tools/test-deep-kelp-coast.mjs|../src/deep/deep-zone.js',
     'tools/test-deep-kelp-coast.mjs|../src/deep/zones/kelp-coast.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-ramp.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-zone.js',
+    'tools/test-deep-sirena.mjs|../src/deep/zones/kelp-coast.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-discovery.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-sirena.js',
+    'src/progression.js|./deep/sirena-car.js',
+    'tools/test-sirena-car.mjs|../src/deep/sirena-car.js',
+    'tools/test-sirena-car.mjs|../src/deep/deep-sirena.js',
   ]);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))

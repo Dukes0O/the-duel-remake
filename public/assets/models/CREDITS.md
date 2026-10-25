@@ -27,6 +27,16 @@ cars were looked at as a viewing reference; there is no downloaded model,
 texture, badge or logo, and Falcone is the game's own fictional maker. Rebuild
 byte for byte with `node tools/art/sirena-props.mjs`.
 
+## The Lab hangar and its benches (LAB-ART)
+
+All original, with no third-party source. `lab/` holds fourteen vertex-coloured
+GLBs written by `tools/art/lab-props.mjs` (recipes in `lab-hangar.mjs`,
+`lab-benches.mjs`, `lab-benches2.mjs`): the hangar beside the home helipad and
+thirteen bench models, with a manifest of where each stands and each movable
+part's pivot. Kestrel One, the cars and the fire and smoke effects are the
+game's existing models and effects; they are not copied here. Rebuild byte for
+byte with `node tools/art/lab-props.mjs`.
+
 ## Original Blender course landmarks
 
 `course-landmarks.blend` contains six original, editable scenery collections:
@@ -146,3 +156,27 @@ The stone stream bridge, forest footbridge and forest timing tower are original 
 
 
 The Ardennes-only summer beech has an original trunk and limbs (authored in `tools/blender/ardennes-beech.py`) and a crown of crossed leaf cards. The leaves are real beech-leaf photographs from the **ambientCG** [Leaf Set 024](https://ambientcg.com/a/LeafSet024) (asset id `LeafSet024`, file `LeafSet024_1K-JPG.zip`), released under **CC0 1.0** (https://docs.ambientcg.com/license/). `tools/art/ardennes-leaf-sprite.py` cuts the nine leaves out of the set's colour and opacity maps and scatters them into one small spray tile; the Blender recipe puts that tile on the cards (alpha test, no blending) and embeds it in the two GLBs. Only the two small tiles ship, inside the GLBs; the downloaded set is not kept. High/LOD measurements, the set's file hashes and the tile hashes are written to `tools/art/ardennes-beech.json` by the export recipe.
+
+## The pilot's map art (MAP-ART)
+
+The five secret-course signs (`sign-*.glb`) and The Table (`table-mesa`, `table-lookout`,
+`table-plane-wreck`, `table-strip`, `table-logbook`) in `pilot-map/` are original project geometry
+with flat colours. They use no external model, texture or photograph. The bush plane is a generic
+high-wing aircraft of the 1950s style, not a model of a real type, and its tail number N4471K is
+made up. The editable recipe is `tools/blender/pilot-map-props.py`; rebuild with
+`blender -b --factory-startup --python tools/blender/pilot-map-props.py -- --root .`. The signs
+carry empties (`flame_n`, `smoke_n`, `window_light`) where the game's existing fire and smoke
+effects and its lighting go; the sprites for those are credited with the helicopter fire effects above.
+
+MAP-ART-2: the mesa uses the game's own `red-sandstone.png` (original generated art, see
+`docs/IMAGE_PROMPTS.md`), scaled to 1024 and embedded in `table-mesa.glb` by the recipe; the plane
+wreck carries one picture baked from procedural dust, rust and edge wear (no outside image).
+
+## The skiers and the ski course pieces (SKI-ART)
+
+The skier, the guide and the four guests in `ski/` start from the **Quaternius** [Universal Base
+Characters, Standard](https://quaternius.com), CC0, as the rescue people do (see above): the recipe
+`tools/blender/ski.py` poses the rigged bodies with the same kit (`tools/blender/rescue-people.py`), thins
+them and adds original one-piece suits, helmets, goggles, boots, gloves, skis and poles; no Quaternius
+texture is shipped. The slalom poles, giant-slalom gates, timing arches, pad flags, kicker and safety
+netting are original project geometry with flat colours; no outside model, texture or photograph.

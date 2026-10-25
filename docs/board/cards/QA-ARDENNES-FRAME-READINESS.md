@@ -30,3 +30,7 @@ Quiet admission deferred after the variants merge: no Duel heavy roots remain, b
 ## Kyle: skip the frame check, 15 October afternoon
 
 Kyle said to skip this timing work because his multiple Codex and Claude Code sessions will remain active, and to record that decision and progress. No further quiet reservation, GPU polling or timing attempt for this work period. The frame check is SKIPPED at Kyle's direction, not a pass; no p95/world/load result exists and the old setup timeout cause remains unknown. Ardennes stays dev. The already green Long Left test-driver fix may proceed on its42/42 nearby/build/independent review evidence; switch-on remains written preparation, with no release/live install or flag flip.
+
+## Seen 24 October (Claude)
+
+The `ardennes-views` browser scenario times out ("Runtime.evaluate timed out", no pictures) on plain integration 7c468aeb, alone on the laptop. It is not caused by FIX-GRASS-GROUND.

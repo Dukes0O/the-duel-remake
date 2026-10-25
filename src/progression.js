@@ -3,7 +3,9 @@ import {CUPS, normalizeCups, cupStandings, cupBonus} from './grand-prix-cups.js'
 import {normalizeDrivingLessons} from './lessons/drive-lesson-save.js';
 import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
+import {settleCoastCup} from './deep/sirena-car.js';
 import {normalizeHeli} from './heli/heli-save.js';
+import {normalizeLab} from './lab/lab-save.js';
 import {normalizeYeti,countYetiFinish,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay,
   normalizeGrandPrixPodiums, recordGrandPrixPodium} from './grand-prix-career.js';
@@ -170,6 +172,7 @@ export function normalizeProfile(value) {
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
   if (Object.hasOwn(value, 'heli')) profile.heli = normalizeHeli(value.heli);
   if (Object.hasOwn(value, 'drivingLessons')) profile.drivingLessons = normalizeDrivingLessons(value.drivingLessons);
+  if (Object.hasOwn(value, 'lab')) profile.lab = normalizeLab(value.lab);
   if (Object.hasOwn(value, 'intel')) profile.intel = normalizeIntel(value.intel);
   if (Object.hasOwn(value, 'cups')) profile.cups = normalizeCups(value.cups);
   if (Object.hasOwn(value, 'grandPrixPodiums'))
@@ -848,6 +851,11 @@ export function settleRace(profile, result = {}) {
     updated=recordIntelFinish(updated,stageEventId(result.stageIndex),result,
       {owned:isCourseUnlocked(updated,result.stageIndex),validated:true});
   }
+  // The Coast Cup (SIRENA-CAR): a counted finish on Pacific Canyon in the restored Falcone Sirena pays once.
+  const coastCup = settleCoastCup(updated, {enabled: result.deepEnabled === true,
+    valid: recordEligible && result.qualifying !== true && result.practice !== true,
+    eventId: stageEventId(result.stageIndex), car: result.car, mode: result.mode});
+  updated = coastCup.profile;
   const owned = updated.unlockedCars;
   if (medalWin && medalWin.profile !== profile)
     updated = grantCompletionCars({ ...updated, medals: medalWin.profile.medals });
@@ -857,6 +865,7 @@ export function settleRace(profile, result = {}) {
     // The medal reports what was paid: nothing in the separate Wasteland career.
     ...(medalsOn ? { medal: newMedal && { ...newMedal, bonus: breakdown.medal }, earnedCars } : {}),
     ...yetiAward,
+    ...(coastCup.paid ? {coastCup: {paid: coastCup.paid, events: coastCup.events}} : {}),
     reward,
     ...(separateCareer ? {scrapEarned: career.scrapEarned} : {}),
     charge,

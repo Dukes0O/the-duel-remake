@@ -63,7 +63,8 @@ const assets=createVehicleAssets({loadHero:()=>hero});
 await Promise.all(Object.keys(CARS).map(key=>assets.load(key)));
 const fixtures = [];
 for (const key of Object.keys(CARS)) fixtures.push([key, () => assets.create(key)]);
-equal(fixtures.length,12,'Paint fixtures cover every current runtime car, including the Jesko, Enzo, F1 and Bolide rewards');
+// The car roster count is pinned once, in test-vehicle-assets.
+ok(fixtures.length>=12,'Paint fixtures cover every current runtime car, including the reward cars');
 
 for (const [label, make] of fixtures) {
   const vehicle = make(), other = make(), data = vehicle.userData, paint = data.paint;

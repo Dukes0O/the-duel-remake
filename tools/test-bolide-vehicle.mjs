@@ -28,7 +28,8 @@ const near = (a, b, tolerance, label) => ok(Math.abs(a - b) <= tolerance, `${lab
 // 1. The settled numbers (docs/board/cards/EARN-CAR-3.md, "Claude answers (15 October): numbers approved").
 const spec = CARS.bugatti_bolide;
 equal(spec.name, 'Bugatti Bolide', 'The real car\'s name');
-equal([spec.topSpeed, spec.accel, spec.grip, spec.braking], [278, 10.5, 1.15, 1.45], 'Settled speed, acceleration, grip and braking');
+// FIX-LAUNCH: accel 10.5 to 9.5 so the fastest car's 0 to 60 stays in 2.4 to 2.8 s (Claude approved, card FIX-LAUNCH).
+equal([spec.topSpeed, spec.accel, spec.grip, spec.braking], [278, 9.5, 1.15, 1.45], 'Settled speed, acceleration, grip and braking');
 equal(spec.gears, [67, 110, 154, 191, 225, 255, 278], 'Seven-speed gearbox');
 equal([spec.offRoadGrip, spec.offRoadSpeed, spec.offRoadScrub], [0.58, 50, 0.64], 'A track car, poor off the road');
 equal([spec.mass, spec.height, spec.kind, spec.gearbox], [1450, 1.05, 'hypercar', 'manual'], 'Mass, body height and kind');
@@ -39,7 +40,7 @@ equal(medalRequirement('bugatti_bolide'), { kind: 'medals', medals: 24, gold: 6 
 ok(MEDAL_CARS.includes('bugatti_bolide'), 'It is a medal car');
 equal(spec.factoryMaxed, true, 'Arrives fully tuned');
 ok(!Object.hasOwn(CAR_PRICES, 'bugatti_bolide') && !Object.hasOwn(spec, 'price'), 'No price, no Buy button');
-equal(Object.keys(CARS).at(-1), 'bugatti_bolide', 'Appended after the cars already there, last of the medal cars');
+equal(MEDAL_CARS.at(-1), 'bugatti_bolide', 'Appended after the cars already there, last of the medal cars (the Lab-restored Sirena comes after it in the roster)');
 const full = Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, 3]));
 const tuned = upgradedCar(spec, full), jesko = upgradedCar(CARS.koenigsegg_jesko, full);
 near(tuned.topSpeed, 307.19, 0.01, 'Fully tuned top speed is about 307 mph');
