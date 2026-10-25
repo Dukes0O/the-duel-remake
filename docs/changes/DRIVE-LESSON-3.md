@@ -41,6 +41,10 @@ shows "Opens later" while that switch is off. Lessons 1, 2 and 4 tests are uncha
   up passing rule 1 (now needs at least one), a fractional gear accepted (now a TypeError), the early-shift proof driver not changing down (now it does), and test gaps (exact cone landings). All fixed.
   Left as is: the lesson is stepped on every 120 Hz tick in the native tests (the host steps per frame, with margin: the rule reads 90% against the instructor's 96%), and the apex rule asks 1st gear on the F42.
 
+- Lane tier `--changed --jobs 6 --keep-going` with current `integration/wasteland` merged: 374 of 382 suites pass, including every lesson suite. The eight failures are the seven laptop-only suites
+  (`test-course-kit`, `test-earned-cars-ui`, `test-drive-through`, `test-full-check`, `test-medals`, `test-salt-flats`, `test-salt-flats-art`) and `test-lab-radio`, which fails the same way on the untouched
+  integration commit. `npm run build` passes. Not run here: the laptop-only and Windows-only suites, browser scenarios.
+
 ## Removed
 
 Nothing.
