@@ -7,7 +7,7 @@ import { loadGhosts, saveGhosts, GHOST_KEY } from '../src/ghost.js';
 
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
 const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWith('.json')).sort();
-assert.equal(files.length, 18, 'review the historical save-shape fixture roster');
+assert.equal(files.length, 19, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
   const values = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));
@@ -56,6 +56,9 @@ function preserveProfile(raw, loaded, label) {
     // The Lab's retardant (LAB-HELI) rides in the saved fire record: kept exactly when saved, never added to an older fire.
     if (raw.heli.fire && Object.hasOwn(raw.heli.fire, 'retardant')) equal(loaded.heli.fire.retardant, raw.heli.fire.retardant, `${label}: fire retardant`);
     else if (raw.heli.fire) equal(Object.hasOwn(loaded.heli.fire, 'retardant'), false, `${label}: no retardant added to an older fire`);
+    // Heli-skiing (SKI-SAVE) rides in the helicopter field: kept exactly when saved (a later game's names and record included), never added to an older save.
+    if (Object.hasOwn(raw.heli, 'ski')) equal(loaded.heli.ski, raw.heli.ski, `${label}: heli ski record`);
+    else equal(Object.hasOwn(loaded.heli, 'ski'), false, `${label}: no ski record added to an older helicopter`);
     for (const field of ['missions', 'fire', 'burnt', 'scars', 'bucket']) {
       if (Object.hasOwn(raw.heli, field)) equal(loaded.heli?.[field], raw.heli[field], `${label}: heli ${field}`);
       else equal(Object.hasOwn(loaded.heli ?? {}, field), false, `${label}: no heli ${field} appears`);

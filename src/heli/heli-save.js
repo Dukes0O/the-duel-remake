@@ -37,7 +37,7 @@ export function createHeli() {
 }
 
 // Every field this game knows, so only a newer game's fields are copied as they are.
-const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey']);
+const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey', 'ski']);
 
 export function normalizeHeli(value) {
   if (!isObject(value) || value.version !== HELI_SAVE_VERSION) return createHeli();
@@ -59,6 +59,7 @@ export function normalizeHeli(value) {
   heli.flights = count(value.flights);
   normalizeFireFields(value, heli);
   normalizeSkinFields(value, heli);
+  if (Object.hasOwn(value, 'ski')) { const ski = normalizeSki(value.ski); if (ski) heli.ski = ski; }
   // Keys from a newer game are kept as they are (a copy), so going back one
   // release loses nothing (docs/HELI_FIRE.md section 12). A known field that
   // failed its checks is dropped, never copied.
@@ -415,6 +416,119 @@ function normalizeSkinFields(value, heli) {
 }
 
 const fireOff = profile => ({ok: false, reason: FIRE_OFF, profile});
+
+// ---- Heli-skiing (docs/HELI_SKIING.md sections 7 and 9) ------------------------------------------------------------
+// profile.heli.ski = {version: 1, best: {<run>: number}, medal: {<run>: 1..3}, paid: {<run>: 1..3}, stashes: [<id>]},
+// optional: an older save has none and never gains one until something is skied. `best` is the best time (seconds, less is
+// better) on a timed run or the best score (points, more is better) on a judged one; `medal` the best medal (1 bronze,
+// 2 silver, 3 gold); `paid` the highest medal already paid for. Zero entries are not stored. Names this game does not
+// know (a later game's runs and stashes) are kept as they are and never paid.
+export const SKI_RUNS = Object.freeze(['slalom', 'gs', 'moguls', 'aerials', 'powder']);
+const SKI_TIMED = Object.freeze(['slalom', 'gs']);
+const SKI_JUDGED = Object.freeze(['moguls', 'aerials']);
+export const SKI_STASHES = Object.freeze(['north-shelf', 'ridge-pocket', 'lower-meadow']);
+// What the medals pay in all, by medal (none, bronze, silver, gold): 150, then 150 more, then 200 more. A stash pays 100, once.
+export const SKI_MONEY = Object.freeze({medalTotal: Object.freeze([0, 150, 300, 500]), stash: 100});
+const SKI_SAVE_VERSION = 1;
+const MAX_SKI_NAMES = 64;
+const NOT_SKIING = 'Heli-skiing is not available yet.';
+const SKI_NEWER = 'This skiing progress belongs to another version.';
+const SKI_KEYS = new Set(['version', 'best', 'medal', 'paid', 'stashes']);
+const hundredth = value => Math.round(value * 100) / 100;
+const tenthOf = value => Math.round(value * 10) / 10;
+const SKI_BEST_MAX = 1_000_000;
+
+// A version this game cannot read because it is later than 1 (a later game's number, even a text or fractional one).
+const laterVersion = version => ['number', 'string', 'bigint'].includes(typeof version) && Number(version) > SKI_SAVE_VERSION;
+
+// A newer game's record is returned exactly as it was (and never written over); null when there is none to keep.
+// The names this game knows are never cut to make room for a later game's: only the unknown ones are capped.
+function normalizeSki(value) {
+  if (!isObject(value)) return null;
+  if (laterVersion(value.version)) {
+    try { return structuredClone(value); } catch { return value; }
+  }
+  if (value.version !== SKI_SAVE_VERSION) return null;
+  const ski = {version: SKI_SAVE_VERSION, best: {}, medal: {}, paid: {}, stashes: []};
+  const skiName = name => validId(name) && name !== '__proto__';
+  const known = new Set([...SKI_RUNS, ...SKI_STASHES]);
+  const capped = (list, nameOf) => {
+    const usable = list.filter(item => skiName(nameOf(item)));
+    return [...usable.filter(item => known.has(nameOf(item))), ...usable.filter(item => !known.has(nameOf(item))).slice(0, MAX_SKI_NAMES)];
+  };
+  const names = map => capped(isObject(map) ? Object.entries(map) : [], ([name]) => name);
+  for (const [run, number] of names(value.best)) {
+    if (typeof number !== 'number' || !Number.isFinite(number) || !(number > 0) || number > SKI_BEST_MAX) continue;
+    const kept = SKI_JUDGED.includes(run) ? tenthOf(number) : hundredth(number);
+    if (kept > 0) ski.best[run] = kept;
+  }
+  const whole = number => Number.isSafeInteger(number) && number >= 1 && number <= 3 ? number : 0;
+  for (const [run, number] of names(value.paid)) if (whole(number)) ski.paid[run] = whole(number);
+  for (const [run, number] of names(value.medal)) if (whole(number)) ski.medal[run] = whole(number);
+  // A medal that was paid for was earned.
+  for (const [run, number] of Object.entries(ski.paid)) if (!(ski.medal[run] >= number)) ski.medal[run] = number;
+  ski.stashes = capped([...new Set(Array.isArray(value.stashes) ? value.stashes : [])], id => id);
+  for (const key of Object.keys(value)) {
+    if (SKI_KEYS.has(key) || key === '__proto__' || value[key] === undefined) continue;
+    try { ski[key] = structuredClone(value[key]); } catch { /* not plain data: dropped */ }
+  }
+  return ski;
+}
+
+const createSki = () => ({version: SKI_SAVE_VERSION, best: {}, medal: {}, paid: {}, stashes: []});
+// What has been skied (an empty record for a save with none, or with a newer game's record that this game cannot read).
+export function skiOf(profile) {
+  const ski = heliOf(profile).ski;
+  return ski && ski.version === SKI_SAVE_VERSION ? ski : createSki();
+}
+
+const skiOff = profile => ({ok: false, reason: NOT_SKIING, profile});
+// Writing is refused over a record this game cannot read: a later game's ski record, or a later game's helicopter.
+function skiBlocked(profile) {
+  const stored = isObject(profile) && isObject(profile.heli) ? profile.heli : null;
+  if (stored && laterVersion(stored.version)) return SKI_NEWER;
+  const ski = heliOf(profile).ski;
+  return ski && ski.version !== SKI_SAVE_VERSION ? SKI_NEWER : null;
+}
+function paidProfile(profile, heli, ski, pay) {
+  const wallet = credits(profile);
+  return {...profile, credits: Math.min(MAX_CREDITS, wallet + pay), heli: {...heli, ski}};
+}
+
+// A finished run: result is {time, medal} for the timed runs (slalom, gs) and {points, medal} for the judged ones (moguls,
+// aerials), the medal being the ski rules' own (ski-score.js timedMedal and judgedMedal, 0 to 3). Keeps the best time or
+// score, raises the medal, and pays the difference up to that medal once (150, 300, 500 in all). Powder has no result.
+// Returns {ok, profile, paid, improved, raised, medal}.
+export function recordRun(profile, run, result, {enabled} = {}) {
+  if (enabled !== true) return skiOff(profile);
+  const blocked = skiBlocked(profile);
+  if (blocked) return failure(profile, blocked);
+  const timed = SKI_TIMED.includes(run), judged = SKI_JUDGED.includes(run);
+  if (!timed && !judged) return failure(profile, run === 'powder' ? 'The powder run has no time or score.' : 'That is not a run.');
+  const value = isObject(result) ? result[timed ? 'time' : 'points'] : undefined, medal = isObject(result) ? result.medal : undefined;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > SKI_BEST_MAX || (timed && value === 0) ||
+      !Number.isSafeInteger(medal) || medal < 0 || medal > 3) return failure(profile, 'That is not a result.');
+  const heli = heliOf(profile), ski = skiOf(profile), kept = timed ? hundredth(value) : tenthOf(value);
+  const before = ski.best[run], improved = before === undefined || (timed ? kept < before : kept > before);
+  const next = {...ski, best: {...ski.best}, medal: {...ski.medal}, paid: {...ski.paid}};
+  if (improved && kept > 0) next.best[run] = kept;
+  const oldMedal = ski.medal[run] ?? 0, newMedal = Math.max(oldMedal, medal);
+  if (newMedal > 0) next.medal[run] = newMedal;
+  const owed = Math.max(0, SKI_MONEY.medalTotal[newMedal] - SKI_MONEY.medalTotal[ski.paid[run] ?? 0]);
+  if (owed > 0) next.paid[run] = newMedal;
+  return {ok: true, profile: paidProfile(profile, heli, next, owed), paid: owed, improved: improved && kept > 0, raised: newMedal > oldMedal, medal: newMedal};
+}
+
+// A powder stash found: 100 credits, once for each of the three.
+export function findStash(profile, id, {enabled} = {}) {
+  if (enabled !== true) return skiOff(profile);
+  const blocked = skiBlocked(profile);
+  if (blocked) return failure(profile, blocked);
+  if (!SKI_STASHES.includes(id)) return failure(profile, 'That is not a stash.');
+  const heli = heliOf(profile), ski = skiOf(profile);
+  if (ski.stashes.includes(id)) return {ok: true, profile, paid: 0, found: false};
+  return {ok: true, profile: paidProfile(profile, heli, {...ski, stashes: [...ski.stashes, id]}, SKI_MONEY.stash), paid: SKI_MONEY.stash, found: true};
+}
 
 export const missionsOf = profile => heliOf(profile).missions ?? createMissions();
 export const fireOf = profile => heliOf(profile).fire ?? null;

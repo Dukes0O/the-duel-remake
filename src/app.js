@@ -55,7 +55,7 @@ import {warlordEnabled} from './warlords/index.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
-import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority, steerForYaw, TYRE_SLIP, tyreSlipSteering } from './config.js';
+import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority, steerForYaw, TYRE_SLIP, tyreSlipSteering, launchScale } from './config.js';
 import { EngineAudio } from './audio.js';
 import { loadPlayers, savePlayers, PLAYERS_KEY, playerName, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
@@ -2182,7 +2182,8 @@ export class App {
     let route=this._driftLine;
     if (!route || route.course!==course || route.car!==d.car) {
       const line=racingLineFor(course);
-      this._driftLine=route={course,car:d.car,line,profile:buildSpeedProfile(line,d.car)};
+      // The profile assumes the launch the car really has here (the quick one under the sliding-tyre rules).
+      this._driftLine=route={course,car:d.car,line,profile:buildSpeedProfile(line,d.car,{accelFactor:launchScale(course,false,true)/DRIVE.accelScale})};
     }
     const v=st.speedMph*DRIVE.mphToWorld;
     const targetLat=route.line.offsetAt(st.s+Math.max(12,v*.45));

@@ -231,6 +231,9 @@ export const DRIVE = {
   arenaAccelScale: 5.2,   // arenas keep the old quick launch: their jumps, shoves and balance were tuned on it
   recoveryAccelScale: 5.2, // after a crash recovery the car pulls away with the old launch (crashLaunchSec or 60 mph)
   crashLaunchSec: 3,      // how long that quick pull-away may last
+  // FUN-TITAN-LAUNCH: the Titan drives up onto a car it flattens and the car is a ramp. Launch speed in m/s is
+  // mph x climbMps, capped; the game's jump gravity is 18 m/s2, so 30 mph gives about 3.2 m and 1.2 s of air.
+  titanCarRamp: Object.freeze({ minMph: 15, climbMps: .36, maxMps: 16 }),
   gearCeilFrac: 1.04,     // throttle stops adding speed past gearMax * this
   redlineWarnFrac: 0.92,  // tach shows red from this rev fraction
   overRevFrac: 1.02,      // sustained revs above this can blow the engine (Pro)
@@ -270,6 +273,9 @@ export const TYRE_SLIP = Object.freeze({
   driftAskLow: 1.10,
   driftLiftSlip: 1.20,
   driftRecoveryMeters: 2,
+  // The Neon Drift Trial under the sliding-tyre rules keeps the old quick launch, as arenas do (TYRE-SLIP-DRIFT-RETUNE):
+  // the drift line, scrub and chain thresholds above were tuned on it. It lives here, not in DRIVE, so DRIVE stays byte for byte.
+  driftTrialAccelScale: 5.2,
   headroom: 1.25, width: .25, brakeUse: .6, riseRate: 12, fallRate: 8,
   minSpeedMph: 15, minWorldSpeed: 8, quietSlip: .9, soundWidth: .35,
   angleAtQuiet: .045, angleAtPeak: .075,
@@ -322,7 +328,8 @@ export function steerForYaw(desiredYaw, {speedMph, grip = 1, traction = 1, car =
 }
 
 // Launch strength for the course being driven: arenas keep their old value.
-export const launchScale = (course, recovering = false) => course?.def?.arena === true ? DRIVE.arenaAccelScale
+export const launchScale = (course, recovering = false, slipRules = false) => course?.def?.arena === true ? DRIVE.arenaAccelScale
+  : slipRules === true && course?.def?.kind === 'drift' ? TYRE_SLIP.driftTrialAccelScale
   : recovering ? DRIVE.recoveryAccelScale : DRIVE.accelScale;
 export const boostLaunch = course => course?.def?.arena === true ? BOOST.arenaAccelMphPerSec : BOOST.accelMphPerSec;
 
