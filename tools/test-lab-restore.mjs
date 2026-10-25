@@ -1,5 +1,8 @@
 // LAB-RESTORE: restoring the Falcone Sirena on the Rust bench (docs/LAB.md section 7). The offer, the one saved step, the
 // sequence as a function of time, and its room (tank, wreck, car, bubbles) released when the Lab closes.
+import {readFileSync} from 'node:fs';
+import {getPaintState, paintPresetsFor, purchasePaint, applyPaint} from '../src/paint-presets.js';
+import {restoreStageAt, RUNNING_SECONDS, BODY_SECONDS} from '../src/lab/restore.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {Group, Mesh, BoxGeometry, MeshStandardMaterial, BufferAttribute} from 'three';
@@ -40,28 +43,30 @@ test('the offer shows only for a raised Sirena with the Rust lesson passed and b
 });
 
 test('short of credits the button is disabled and says how many more', () => {
-  const offer = restoreOffer(waiting(2000), BOTH);
+  const offer = restoreOffer(waiting(500), BOTH);
   assert.equal(offer.state, 'offered');
   assert.equal(offer.canBuy, false);
   assert.equal(offer.note, '500 more credits');
   assert.ok(restoreOfferMarkup(offer).includes('disabled') && restoreOfferMarkup(offer).includes('500 more credits'));
-  assert.ok(restoreOfferMarkup(restoreOffer(waiting(2500), BOTH)).includes('Restore the Sirena: 2,500 CR'));
+  assert.ok(restoreOfferMarkup(restoreOffer(waiting(2500), BOTH)).includes('Get her running: 1,000 CR'));
   assert.ok(!restoreOfferMarkup(restoreOffer(waiting(2500), BOTH)).includes('disabled'), 'exactly the price is enough');
 });
 
-test('restoring takes 2,500 once, makes the car the player\'s and takes nothing else away', () => {
+test('getting her running takes 1,000 once, makes the car the player\'s and takes nothing else away', () => {
   const before = waiting(5000);
   assert.equal(sirenaState(before), 'waiting');
   const result = restoreSirena(before, {flags: BOTH});
   assert.equal(result.ok, true);
   assert.equal(result.price, RESTORE_PRICE);
   const after = result.profile;
-  assert.equal(after.credits, 2500);
+  assert.equal(after.credits, 4000);
   assert.ok(isCarUnlocked(after, SIRENA_CAR));
   assert.equal(sirenaState(after), 'restored', 'the garage reads the car from the list: no new state');
   // Every other field is exactly what it was; the cars the player had are all still there, in order.
-  const {credits: c1, unlockedCars: u1, upgrades: g1, ...rest1} = before, {credits: c2, unlockedCars: u2, upgrades: g2, ...rest2} = after;
+  const {credits: c1, unlockedCars: u1, upgrades: g1, cosmetics: paint1, ...rest1} = before, {credits: c2, unlockedCars: u2, upgrades: g2, cosmetics: paint2, ...rest2} = after;
   assert.deepEqual(rest2, rest1);
+  assert.deepEqual(paint2[SIRENA_CAR], {owned:['factory','sea-wreck'],selected:'sea-wreck'});
+  assert.deepEqual(normalizeProfile(after).cosmetics[SIRENA_CAR], paint2[SIRENA_CAR]);
   assert.deepEqual(u2.slice(0, u1.length), u1);
   assert.equal(u2.length, u1.length + 1);
   assert.deepEqual(g2, g1);
@@ -71,13 +76,13 @@ test('restoring takes 2,500 once, makes the car the player\'s and takes nothing 
   const again = restoreSirena(after, {flags: BOTH});
   assert.equal(again.ok, false);
   assert.equal(again.profile, after, 'the very same profile comes back on a refusal');
-  assert.equal(after.credits, 2500);
+  assert.equal(after.credits, 4000);
   assert.equal(restoreOffer(after, BOTH).state, 'again');
 });
 
 test('every refusal returns the same profile and takes nothing', () => {
   for (const [profile, flags, why] of [
-    [waiting(2499), BOTH, /500|1 more|more credits/], [withDeep(createProfile()), BOTH, /Rust/], [createProfile(), BOTH, /nothing to restore/],
+    [waiting(999), BOTH, /500|1 more|more credits/], [withDeep(createProfile()), BOTH, /Rust/], [createProfile(), BOTH, /nothing to restore/],
     [waiting(), on(['lab']), /not available/], [waiting(), on(['the-deep']), /not available/], [waiting(), null, /not available/]]) {
     const result = restoreSirena(profile, {flags});
     assert.equal(result.ok, false);
@@ -166,10 +171,10 @@ test('through the app: restoring is saved once, the garage state follows, and wi
   assert.equal(sirenaState(app.profile), 'waiting');
   const result = app.labCommit((profile, flags) => restoreSirena(profile, {flags}));
   assert.equal(result.ok, true);
-  assert.equal(app.profile.credits, 1500);
+  assert.equal(app.profile.credits, 3000);
   assert.equal(sirenaState(app.profile), 'restored');
   assert.equal(app.labCommit((profile, flags) => restoreSirena(profile, {flags})).ok, false);
-  assert.equal(app.profile.credits, 1500, 'not charged twice');
+  assert.equal(app.profile.credits, 3000, 'not charged twice');
   const off = new App();
   off._switches = () => ({enabled: name => name === 'lab'});
   off.profile = {...off.profile, ...waiting(4000), unlockedCars: off.profile.unlockedCars, upgrades: off.profile.upgrades};
@@ -248,4 +253,82 @@ test('the hull\'s rust colour fades to bare grey as it is stripped, and comes ba
   scene.restore(stageAt(1)); scene.renderOnce(50);
   assert.ok(Math.abs(spread() - rustySpread) < .02, 'a second watch starts rusty again');
   scene.dispose();
+});
+
+const PAINT_ON = {labEnabled:true, deepEnabled:true};
+test('both payments, free reapplication, and Coast Cup in either finish', () => {
+  const running = restoreSirena(waiting(2500), {flags:BOTH}).profile;
+  assert.equal(running.credits,1500);
+  assert.deepEqual(paintPresetsFor(running,SIRENA_CAR,PAINT_ON).map(p=>p.id),['sea-wreck','restored-1966']);
+  assert.equal(applyPaint(running,SIRENA_CAR,'factory',PAINT_ON).ok,false,'factory cannot bypass restoration');
+  assert.equal(applyPaint(running,SIRENA_CAR,'restored-1966',PAINT_ON).ok,false);
+  const body = purchasePaint(running,SIRENA_CAR,'restored-1966',PAINT_ON);
+  assert.equal(body.cost,1500); assert.equal(body.profile.credits,0);
+  assert.equal(body.purchased,true);
+  assert.deepEqual(body.profile.cosmetics[SIRENA_CAR],{owned:['factory','sea-wreck','restored-1966'],selected:'restored-1966'});
+  assert.equal(purchasePaint(body.profile,SIRENA_CAR,'restored-1966',PAINT_ON).cost,0);
+  const wreck = applyPaint(body.profile,SIRENA_CAR,'sea-wreck',PAINT_ON);
+  assert.equal(wreck.cost,0); assert.equal(wreck.profile.cosmetics[SIRENA_CAR].selected,'sea-wreck');
+  for (const profile of [running,body.profile,wreck.profile]) {
+    assert.ok(settleCoastCup(profile,{enabled:true,valid:true,eventId:'pacific-canyon',car:SIRENA_CAR,mode:'duel'}).paid>0);
+    assert.deepEqual(normalizeProfile(profile).cosmetics,profile.cosmetics);
+  }
+});
+test('forged and short wallets cannot pay, and special finishes are Sirena-only and dev-only', () => {
+  for (const credits of [999,999.9,NaN,Infinity,'5000',-1,null]) {
+    const profile=waiting(credits),result=restoreSirena(profile,{flags:BOTH});
+    assert.equal(result.ok,false); assert.equal(result.profile,profile);
+  }
+  for (const credits of [1499,1499.9,NaN,Infinity,'5000',-1,null]) {
+    const profile={...restoreSirena(waiting(),{flags:BOTH}).profile,credits};
+    const result=purchasePaint(profile,SIRENA_CAR,'restored-1966',PAINT_ON);
+    assert.equal(result.ok,false); assert.equal(result.profile,profile);
+  }
+  const profile=restoreSirena(waiting(),{flags:BOTH}).profile;
+  for(const options of [{},{labEnabled:true},{deepEnabled:true}]) {
+    for(const id of ['sea-wreck','restored-1966']) assert.equal(purchasePaint(profile,SIRENA_CAR,id,options).ok,false);
+    assert.ok(!paintPresetsFor(profile,SIRENA_CAR,options).some(p=>p.id==='restored-1966'));
+  }
+  for(const car of ['falcone_f42','constructor','no-car'])
+    assert.equal(purchasePaint(profile,car,'restored-1966',PAINT_ON).ok,false);
+});
+test('old restored fixture gets both only in the dev view; normalization and lab-off leave old saves alone', () => {
+  const fixture=JSON.parse(readFileSync(new URL('./fixtures/saves/lab-restore-2.json',import.meta.url),'utf8')).storage['the-duel-players-v2'].players[0].profile;
+  const before=JSON.stringify(fixture),profile=normalizeProfile(fixture);
+  assert.deepEqual(profile.cosmetics,{}); assert.equal(JSON.stringify(fixture),before);
+  assert.deepEqual(getPaintState(profile,SIRENA_CAR).owned,['factory']);
+  const state=getPaintState(profile,SIRENA_CAR,PAINT_ON);
+  assert.ok(state.owned.includes('sea-wreck')&&state.owned.includes('restored-1966'));
+  assert.equal(state.selected,'restored-1966');
+  const result=purchasePaint(profile,SIRENA_CAR,'sea-wreck',PAINT_ON);
+  assert.equal(result.cost,0); assert.equal(result.profile.credits,fixture.credits);
+  assert.deepEqual(result.profile.futureNote,fixture.futureNote);
+  assert.deepEqual(normalizeProfile(result.profile).cosmetics,result.profile.cosmetics);
+  const liveApply=applyPaint(result.profile,SIRENA_CAR,'factory');
+  assert.ok(liveApply.profile.cosmetics[SIRENA_CAR].owned.includes('sea-wreck'),'inactive finishes survive ordinary paint writes');
+  for(const p of [createProfile(),{version:1,credits:100,unlockedCars:['falcone_f42']}])
+    assert.ok(!Object.hasOwn(normalizeProfile(p).cosmetics,SIRENA_CAR));
+});
+test('two sequential stale tabs reread a shared memory save for each payment', () => {
+  let saved=waiting(4000),writes=0;
+  const makeApp=()=>{const app=new App();app._switches=()=>BOTH;app.profile=saved;
+    app._refreshPlayer=()=>{app.profile=saved;};app._saveProfile=()=>{saved=normalizeProfile(app.profile);writes++;return true;};return app;};
+  const a=makeApp(),b=makeApp();
+  assert.equal(a.labCommit((p,flags)=>restoreSirena(p,{flags})).ok,true);
+  assert.equal(b.labCommit((p,flags)=>restoreSirena(p,{flags})).ok,false);
+  assert.equal(saved.credits,3000); assert.equal(writes,1);
+  assert.equal(a.purchasePaint(SIRENA_CAR,'restored-1966').cost,1500);
+  assert.equal(b.purchasePaint(SIRENA_CAR,'restored-1966').cost,0);
+  assert.equal(saved.credits,1500); assert.equal(writes,2);
+});
+test('mechanical and body shows are disjoint and mechanical work leaves the body crust intact', () => {
+  assert.equal(RUNNING_SECONDS+BODY_SECONDS,RESTORE_SECONDS);
+  for(let t=0;t<=RUNNING_SECONDS;t+=.5){const v=restoreStageAt(t);
+    assert.ok(['soak','current','strip'].includes(v.stage)); assert.equal(v.rust,1);assert.equal(v.car,0);assert.equal(v.red,0);}
+  const done=restoreStageAt(RUNNING_SECONDS);assert.equal(done.done,true);
+  assert.equal(restoreStageAt(0,'body').stage,'rebuild');
+  assert.equal(restoreStageAt(BODY_SECONDS,'body').red,1);
+  assert.equal(restoreStageAt(BODY_SECONDS,'body').done,true);
+  assert.ok(!restoreRunMarkup(restoreStageAt(12)).includes('>Paint</li>'));
+  assert.ok(!restoreRunMarkup(restoreStageAt(0,'body')).includes('>Soak</li>'));
 });

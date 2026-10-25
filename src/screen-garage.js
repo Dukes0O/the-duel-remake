@@ -17,7 +17,7 @@ import {tuneRows, tunePanel, stepIn, resetTuneIn} from './lab/tune-view.js'; // 
 
 export function createGarageScreen({app, profile, credits, escapeHTML, getGarageCar, getGarageMessage, arrow, action, clamp}) {
 function paintPanel(saved,carKey){
-  const options={muddyHollowEnabled:true,yetiEnabled:app._switches?.().enabled('yeti')===true};
+  const options={muddyHollowEnabled:true,yetiEnabled:app._switches?.().enabled('yeti')===true,labEnabled:app._switches?.().enabled('lab')===true,deepEnabled:app._switches?.().enabled('the-deep')===true};
   const state=getPaintState(saved,carKey,options),unlocked=isCarUnlocked(saved,carKey);
   return `<section class="paint-panel" aria-label="Paint finishes"><div class="paint-heading"><h3>PAINT FINISH</h3><span>Appearance only · per car</span></div><div class="paint-options">${paintPresetsFor(saved,carKey,options).map(preset=>{const owned=state.owned.includes(preset.id),selected=state.selected===preset.id,color=preset.appearance?.color??CARS[carKey].color,disabled=!unlocked||selected||(!owned&&saved.credits<preset.price);return `<button class="paint-choice ${selected?'selected':''} ${preset.id}" data-paint="${preset.id}" ${disabled?'disabled':''} aria-pressed="${selected}" aria-label="${selected?`${preset.name} applied`:owned?`Apply ${preset.name} for free`:`Buy and apply ${preset.name} for ${preset.price} credits`}"><i aria-hidden="true" style="--paint-color:#${color.toString(16).padStart(6,'0')}"></i><span><b>${preset.name}</b><small>${preset.finish}</small></span><strong>${!unlocked?'LOCKED':selected?'APPLIED':owned?'APPLY':`BUY & APPLY · ${credits(preset.price)} CR`}</strong></button>`;}).join('')}</div></section>`;
 }
@@ -52,7 +52,7 @@ function sirenaPanel(saved) {
   if (state === 'wreck') return '';
   const body = state === 'waiting'
     ? `${SIRENA_SHEET}<p><b>Under a sheet.</b> Needs the Lab: salt has got into the metal.</p>`
-    : state === 'restored' ? '<p><b>Restored.</b> Race the Coast Cup at Pacific Canyon, any race, in the Sirena.</p>'
+    : state === 'restored' ? `<p><b>${app._switches?.().enabled('lab')===true?'She runs again.':'Restored.'}</b> Race the Coast Cup at Pacific Canyon, any race, in the Sirena.</p>`
     : '<p class="sirena-plaque">COAST CUP · 1966 to 2026: finished<br><small>Raised from the Kelp Coast · for Rosa Reyes</small></p>';
   return `<section class="paint-panel sirena-garage" data-sirena="${state}" aria-label="Falcone Sirena"><h3>FALCONE SIRENA · 1966</h3>${body}</section>`;
 }
@@ -71,6 +71,7 @@ function garageScreen() {
   const saved = profile(), owned = isCarUnlocked(saved, garageCar), car = CARS[garageCar];
   // Earned cars (docs/EARNED_CARS.md): hidden everywhere while the switch is off.
   const earnedOn = app._switches?.().enabled('earned-cars') === true, listed = shownCars(earnedOn);
+  if(app._switches?.().enabled('lab')===true && app._switches?.().enabled('the-deep')===true && isCarUnlocked(saved,'falcone_sirena')) listed.push(['falcone_sirena',CARS.falcone_sirena]);
   const muddyHollowTip=garageCar==='titan_monster'?
     app.getMuddyHollowProgress?.().garageTip:null;
   const levels = getUpgradeLevels(saved, garageCar), tuned = applyDriverModifiers(upgradedCar(car, levels),getEquippedDriverId(saved),garageCar);
