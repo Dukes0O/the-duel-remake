@@ -63,7 +63,7 @@ export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
   const segments=course._nearestIndex,plainRoad=!course.def.pit&&!course.def.saltFlats&&!!segments;
   const onAnyRoad=p=>{
     if(!plainRoad)return onRoadNear(course.nearest(p.x,p.z));
-    const hit=segments.query(p.x,p.z),s=hit.index<0?0:course.samples[hit.index-1].s+hit.t*course.step;
+    const hit=segments.lookup(p.x,p.z),s=hit.index<0?0:course.samples[hit.index-1].s+hit.t*course.step;
     if(Math.sqrt(hit.distanceSq)<=course.roadHalfWidthAt(s)+roadMargin)return true;
     return course.features.shortcuts.some(cut=>s>=cut.start-12&&s<=cut.end+12)&&onRoadNear(course.nearest(p.x,p.z));
   };
@@ -75,9 +75,9 @@ export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
   // A piece found on a road moves outward by 9 m, as the own-stretch rule does, up to five times;
   // if it still lies on a road it is dropped (the seeded sequence is untouched: nothing here uses the rng).
   const foliagePoint=(s,off)=>{const side=Math.sign(off)||1;for(let i=0;i<5&&(course.surfaceAt(s,off).road||course.tunnelAt(s)&&Math.abs(off)<35);i++)off+=side*9;
-    let p=point(s,off),moves=0;
-    while(moves<5&&onAnyRoad(p)){off+=side*9;p=point(s,off);moves++;}
-    blocked=onAnyRoad(p);roadAvoid.placed++;if(blocked)roadAvoid.dropped++;else if(moves)roadAvoid.moved++;
+    let p=point(s,off),moves=0,onRoad=onAnyRoad(p);
+    while(moves<5&&onRoad){off+=side*9;p=point(s,off);moves++;onRoad=onAnyRoad(p);}
+    blocked=onRoad;roadAvoid.placed++;if(blocked)roadAvoid.dropped++;else if(moves)roadAvoid.moved++;
     if(!course.def.ridgeLandform)p.y=drawnY(p,s,off);return p;};
   function instances(geometry,material,count,place,palette='plants',options={}){
     const mesh=new THREE.InstancedMesh(geometry,material,count),omitted=new Set();let relocated=0;
