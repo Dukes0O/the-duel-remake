@@ -6,8 +6,9 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
-    needs: [DEEP-EXPLORER]
+    status: "building"
+    claimed_by: codex-cli-2026-10-25
+    needs: []
     locks: [save-shape]
     flag: "lab"
     details: "docs/board/cards/LAB-RESTORE-2.md"
