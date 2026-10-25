@@ -3,6 +3,9 @@ import { SEA_LEVEL } from '../coastal-water.js';
 import { buildDeepRamp } from './deep-ramp.js';
 import { defineZone } from './deep-zone.js';
 import { createZoneFloor, ZONE_SPAN } from './zone-floor.js';
+// DEEP-EXPLORER
+import {deepRocks, stopAtDeepRock} from './deep-rocks.js';
+import {flushDeepChart} from './deep-story.js';
 
 const NEUTRAL = Object.freeze({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false, interact: false });
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
@@ -134,6 +137,7 @@ function zoneCourse(runtime) {
   };
 }
 export function clearDeepJourney(duel) {
+  flushDeepChart(duel); // DEEP-EXPLORER: keep the last stretch when leaving by menu
   if (duel.deepRuntime && duel.course === duel.deepRuntime.zoneCourse) duel.course = duel.deepRuntime.raceCourse;
   delete duel.state.deepJourney;
   duel.deepRuntime = null;
@@ -142,6 +146,7 @@ export function initializeDeepJourney(duel) {
   const resolved = duel.course.deepZone;
   if (!resolved) { duel.deepRuntime = null; return; }
   duel.deepRuntime = { ...resolved, ramp: duel.course.deepRamp, raceCourse: duel.course, zoneCourse: null };
+  duel.deepRuntime.rocks = deepRocks(resolved.zone, resolved.floor); // DEEP-EXPLORER
 }
 function changePhase(duel, phase) {
   const journey = duel.state.deepJourney;
@@ -181,10 +186,22 @@ function placeRamp(duel, progress) {
   state.deepJourney.progress = progress;
 }
 function exit(duel) {
+  flushDeepChart(duel); // DEEP-EXPLORER
   const journey = duel.state.deepJourney;
   duel.emit({ deepExited: { zoneId: journey.zoneId }, deepReturn: { journeyId: journey.id } });
   clearDeepJourney(duel);
   duel.state.status = 'menu'; duel.state.paused = false; duel.setInput(NEUTRAL);
+}
+// DEEP-EXPLORER: always available in a committed dive, wherever the car is.
+// Uses the existing top-of-ramp placement and the same return as driving up.
+export function surfaceDeep(duel) {
+  const journey = duel.state.deepJourney;
+  if (!admitted(duel) || !journey?.committed || duel.state.paused ||
+      !['underwater', 'ascending'].includes(journey.phase)) return false;
+  duel.course = duel.deepRuntime.raceCourse;
+  placeRamp(duel, 0);
+  exit(duel);
+  return true;
 }
 export function stepDeepJourney(duel, dt) {
   const journey = duel.state.deepJourney, runtime = duel.deepRuntime;
@@ -227,7 +244,9 @@ export function stepDeepJourney(duel, dt) {
     const top=rampNear(runtime.ramp,duel.course.worldAt(duel.state.s,duel.state.lateral));
     if(top&&top.progress<=1){exit(duel);return true;}
   }
+  const explorerStart = journey.phase === 'underwater' ? duel.course.worldAt(duel.state.s, duel.state.lateral) : null; // DEEP-EXPLORER
   duel._drive(dt);
+  if (explorerStart) stopAtDeepRock(duel, explorerStart); // DEEP-EXPLORER
   duel.state.groundHeight=duel._supportAt(duel.state.s,duel.state.lateral).y;
   duel._jump(duel.state, dt, journey.elapsedSec);
   const point = duel.course.worldAt(duel.state.s, duel.state.lateral);

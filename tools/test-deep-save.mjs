@@ -28,8 +28,8 @@ for (const file of readdirSync(fixtureDir).filter(name => name.endsWith('.json')
     const storage = storageFor(fixture.storage), before = Object.fromEntries(Object.keys(fixture.storage).map(key => [key, storage.getItem(key)]));
     const players = loadPlayers(storage);
     for (const [key, value] of Object.entries(before)) assert.equal(storage.getItem(key), value);
-    // 09 and 16 are the fixtures that carry a Deep field (16: the Sirena story, DEEP-SIRENA); every other shape must gain none.
-    if (!['09-deep.json', '16-deep-sirena.json'].includes(file)) {
+    // DEEP-EXPLORER: 09, 16 and 22 are the fixtures that carry a Deep field (16: the Sirena story, DEEP-SIRENA); every other shape must gain none.
+    if (!['09-deep.json', '16-deep-sirena.json', '22-deep-chart.json'].includes(file)) {
       assert.equal(JSON.stringify(players), JSON.stringify(previous.loadPlayers(storageFor(fixture.storage))), 'legacy normalized bytes unchanged');
       assert(players.players.every(player => !Object.hasOwn(player.profile, 'deep')));
     } else {

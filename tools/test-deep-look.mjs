@@ -283,6 +283,9 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'tools/test-deep-map.mjs|../src/deep/zones/kelp-coast.js',
     'src/screen-results.js|./deep/deep-hints.js',
   ]);
+  // DEEP-EXPLORER: exact imports for this card's headless acceptance suite.
+  for (const name of ['zones/kelp-coast','deep-journey','deep-chart','deep-discovery','deep-objectives','deep-map','deep-rocks','deep-sirena','deep-log','sirena-view'])
+    approvedImports.add(`tools/test-deep-explorer.mjs|../src/deep/${name}.js`);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))
     .filter(path => {

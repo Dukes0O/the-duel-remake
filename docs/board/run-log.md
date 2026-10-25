@@ -1,5 +1,7 @@
 # Wasteland run log
 
+25 October, DEEP-EXPLORER janitor: recycled about 465 MB of own build, test fixtures and raw captures; kept the 225 KB chart sheet and handoff check proof. Audit found no unused new modules; runtime assets unchanged, existing uncertain candidates retained.
+
 ## Claude session, 26 September 2026 (afternoon)
 
 Kyle reviewed the overnight build and asked Claude to fix what the review found.

@@ -5,6 +5,7 @@ const carKeyboard = Object.freeze({
   Escape: 'pause', KeyP: 'pause', ...cameras,
   Digit1: 'weapon:ufo', Digit2: 'weapon:bomb', Digit3: 'weapon:crossbow', Digit4: 'weapon:star',
   KeyM: 'mute', KeyE: 'shift-up', KeyQ: 'shift-down', KeyH: 'help',
+  KeyU: 'deep-surface', // DEEP-EXPLORER: surface from anywhere in the dive
   KeyR: 'deep-ping', // DEEP-SIRENA-VIEW: the sonar; nothing happens unless the car is under water
 });
 const carGamepad = Object.freeze([

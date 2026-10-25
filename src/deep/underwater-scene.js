@@ -20,6 +20,7 @@ import { createContactShadow } from './contact-shadow.js';
 import { lookQuality } from './look-quality.js';
 import { createZoneFloor, zoneSeed } from './zone-floor.js';
 import { createSeaLife } from './sea-life.js';
+import {deepRocks} from './deep-rocks.js'; // DEEP-EXPLORER
 
 // The look test's crops were sized for about 200 m of forest and 300 m of
 // ground; a zone gets the same thickness per metre of trail that asks for them.
@@ -44,7 +45,8 @@ export function createUnderwaterScene({ zone, quality = 'high', renderer, scene,
     placements: shape.kelpPlacements(seed, scaled(profile.kelpStems, kelpMetres)),
     blades: profile.kelpBlades, distance: profile.kelpDistance, castShadow: profile.shadowKelp });
   const seagrass = createSeagrass(look.uniforms, { seed, placements: shape.seagrassPlacements(seed, scaled(profile.seagrassTufts, grassMetres)) });
-  const rocks = createRocks(look.uniforms, { seed, detail: 1, placements: shape.rockPlacements(seed, scaled(profile.rocks, shape.length * 0.65)) });
+  // DEEP-EXPLORER: visible solids must agree with simulation on both qualities.
+  const rocks = createRocks(look.uniforms, { seed, detail: 1, placements: deepRocks(zone, shape) });
   const pebbles = createPebbles(look.uniforms, { seed, placements: shape.pebblePlacements(seed, scaled(profile.pebbles, shape.length * 0.65)) });
   // The zone's creatures (its `spots`): none for a zone without any. Models load
   // as they arrive; one that fails is skipped and the dive goes on.

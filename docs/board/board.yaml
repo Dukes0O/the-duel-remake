@@ -6,7 +6,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "review"
     claimed_by: codex-cli-2026-10-25
     needs: []
     locks: [busy-game-files, save-shape]

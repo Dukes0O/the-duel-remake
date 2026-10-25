@@ -13,6 +13,7 @@ import {logCardMarkup} from './deep-log.js';
 import {SOUND_BANK} from '../sound-bank.js';
 import {deepWorldPose} from './deep-journey.js';
 import {deepMapGeometry, deepMapData, drawDeepMap} from './deep-map.js';
+import {deepObjectives} from './deep-objectives.js'; // DEEP-EXPLORER
 
 export const SIRENA_MODEL = Object.freeze({'sirena-badge': 'badge', 'sirena-steering-wheel': 'steering-wheel',
   'sirena-wheel': 'wheel', 'sirena-bonnet': 'bonnet', 'sirena-door': 'door', 'sirena-car': 'wreck'});
@@ -276,16 +277,28 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
     '<div class="sirena-log" hidden></div><p class="sirena-caption" aria-live="polite" hidden><small>ANA · FIELD STATION</small><span></span></p>' +
     '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>' +
     '<aside class="deep-map" hidden><header><b>KELP COAST</b><button type="button" class="deep-map-toggle">Hide map</button></header>' +
-    '<canvas width="400" height="250" role="img" aria-label="Dive map: loop, discovered places, ramp and your heading"></canvas>' +
-    '<button type="button" class="deep-map-home">Return bearing</button><span class="deep-map-bearing" hidden><i>↑</i><b></b></span></aside>';
+    '<canvas width="400" height="250" role="img" aria-label="Sea chart: explored seabed, saved finds, discovered places, ramp and your heading"></canvas>' +
+    '<button type="button" class="deep-map-home">Return bearing</button><span class="deep-map-bearing" hidden><i>↑</i><b></b></span>' +
+    // DEEP-EXPLORER: Surface stays visible even when the map is closed.
+    '<button type="button" class="deep-surface">Surface · U</button>' +
+    '<section class="deep-objectives"><h3>Ana’s list <span class="deep-chart-percent"></span></h3><ol></ol>' +
+    '<p class="deep-chart-key">◆ Sea life · ● Pearl · ★ Badge · ⚑ Salvage<br>Sand · Kelp · Rock · Blue depths</p></section></aside>' +
+    '<p class="deep-objective-tick" aria-live="polite" hidden></p>';
   host.append(root);
   const sonar = root.querySelector('.sirena-sonar'), blip = root.querySelector('.sirena-blip'), distance = sonar.querySelector('span');
   const log = root.querySelector('.sirena-log'), caption = root.querySelector('.sirena-caption'), title = root.querySelector('.sirena-title');
   const map = root.querySelector('.deep-map'), canvas = map.querySelector('canvas'), ctx = canvas.getContext('2d');
   const toggle = map.querySelector('.deep-map-toggle'), home = map.querySelector('.deep-map-home');
   const bearing = map.querySelector('.deep-map-bearing');
+  // DEEP-EXPLORER: checklist and completion notices are presentation only.
+  const objectives = map.querySelector('.deep-objectives'), list = objectives.querySelector('ol');
+  const survey = objectives.querySelector('.deep-chart-percent'), tick = root.querySelector('.deep-objective-tick');
+  const surface = map.querySelector('.deep-surface'), surfaceNow = () => app.duel.deepSurface();
+  surface.addEventListener('click', surfaceNow);
+  let previousObjectives = null, listMarkup = '', tickUntil = 0;
+  const ticks = [];
   let mapVisit = null, geometry = null, showMap = true, requested = false, mapDrawAt = -Infinity;
-  const toggleMap = () => { showMap = !showMap; canvas.hidden = !showMap; toggle.textContent = showMap ? 'Hide map' : 'Show map'; };
+  const toggleMap = () => { showMap = !showMap; canvas.hidden = objectives.hidden = !showMap; toggle.textContent = showMap ? 'Hide map' : 'Show map'; };
   const requestHome = () => { requested = true; };
   toggle.addEventListener('click', toggleMap); home.addEventListener('click', requestHome);
   let sonarUntil = 0, logUntil = 0, titleUntil = 0, disposed = false, surfaced = false;
@@ -328,18 +341,27 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
       const d = app.duel, journey = d.state.deepJourney, discovery = app.getDeepDiscovery();
       const active = discovery?.enabled === true && journey?.phase === 'underwater' && !!d.deepRuntime;
       map.hidden = !active;
-      if (!active) mapVisit = null;
+      if (!active) { mapVisit = null; previousObjectives = null; ticks.length = 0; tick.hidden = true; }
       else {
         if (mapVisit !== journey) {
           mapVisit = journey; geometry = deepMapGeometry(d.deepRuntime.zone);
-          showMap = true; requested = false; canvas.hidden = false;
+          showMap = true; requested = false; canvas.hidden = objectives.hidden = false;
           toggle.textContent = 'Hide map'; mapDrawAt = -Infinity;
         }
         if (t >= mapDrawAt) {
           mapDrawAt = t + .1;
           const data = deepMapData(geometry, d.deepRuntime.zone, deepWorldPose(d), {
-            places: discovery.places, elapsedSec: journey.elapsedSec, requested });
+            places: discovery.places, elapsedSec: journey.elapsedSec, requested,
+            save: discovery, charted: d.deepStory?.charted ?? discovery.charted?.[d.deepRuntime.zone.id] }); // DEEP-EXPLORER
           if (showMap) drawDeepMap(ctx, data);
+          // DEEP-EXPLORER: saved goals, with live survey progress before its next save.
+          const rows = deepObjectives(discovery, data.percent, app.profile?.unlockedCars?.includes('falcone_sirena'));
+          if (previousObjectives) for (const row of rows)
+            if (row.done && !previousObjectives.find(old => old.id === row.id)?.done) ticks.push(row.tick);
+          previousObjectives = rows;
+          const markup = rows.map(row => `<li class="${row.done ? 'done' : ''}"><b>${row.done ? '✓ ' : ''}${row.text}</b>${row.done ? '' : `<small>${row.hint}</small>`}</li>`).join('');
+          if (markup !== listMarkup) { list.innerHTML = markup; listMarkup = markup; }
+          survey.textContent = `${data.percent}% charted`;
           bearing.hidden = !data.home.visible; home.hidden = data.home.visible;
           bearing.querySelector('i').style.transform = `rotate(${-data.home.relative}rad)`;
           bearing.querySelector('b').textContent = `Ramp · ${Math.round(data.home.distance)} m`;
@@ -348,10 +370,16 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
       if (t > sonarUntil) sonar.hidden = true;
       if (t > logUntil) log.hidden = true;
       if (t >= titleUntil || app.getDeepDiscovery()?.enabled !== true) title.hidden = true;
+      // DEEP-EXPLORER: no tick or sound interrupts a place title or a log card.
+      if (t >= tickUntil || !title.hidden || !log.hidden) tick.hidden = true;
+      if (active && title.hidden && log.hidden && t >= tickUntil && ticks.length) {
+        tick.textContent = ticks.shift(); tick.hidden = false; tickUntil = t + 3;
+        app.deepAudio?.event({deepObjective: true}, d.state);
+      }
       const line = phone.update({blocked: !title.hidden});
       caption.hidden = !line || !title.hidden;
       if (line) caption.querySelector('span').textContent = line.text;
     },
-    dispose() { if (disposed) return; disposed = true; stop?.(); phone.dispose(); toggle.removeEventListener('click', toggleMap); home.removeEventListener('click', requestHome); root.remove(); },
+    dispose() { if (disposed) return; disposed = true; stop?.(); phone.dispose(); toggle.removeEventListener('click', toggleMap); home.removeEventListener('click', requestHome); surface.removeEventListener('click', surfaceNow); root.remove(); },
   };
 }
