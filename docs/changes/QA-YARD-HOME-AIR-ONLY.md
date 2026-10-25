@@ -50,3 +50,24 @@ private scenario, nearby checks, lane/jobs4 and build remain required before mer
 Removed the obsolete assumption that every configured car can enter the yard
 without transport and that the configuration must contain exactly nine cars.
 No runtime code, framing guard, later assertion or original evidence removed.
+
+## Landed on current integration (Claude, 25 October 2026)
+
+The branch of 15 October was merged with today's `integration/wasteland` (the generated
+status page took integration's version). Not superseded: integration's yard-home still
+frames `Object.keys(CARS)` and demands nine cars, and the roster is now thirteen.
+
+One more fixture assumption had gone stale: the Jesko refusal check read
+`app.duel.course.features`, but the menu now has no course loaded yet there, so the
+scenario threw before anything was tested. It reads `app.duel.course?.features`
+(undefined before and after, so "same course, same features" still holds). Same owned
+file; no other assertion changed.
+
+Ran: `test-yard-home`, `test-browser-harness`, `test-browser-scenarios` (pass), and the
+real `yard-home` scenario headless on a private memory-only game: passed, zero issues,
+zero warnings (eight road-car framings, the Jesko production refusal, and every later
+yard UI, wallet, journey and save-isolation check). Lane tier and build below.
+
+## Lane tier and build
+
+(Filled in below.)

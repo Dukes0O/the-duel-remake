@@ -104,7 +104,7 @@ async function refusedJesko(context){
     if(!helicopterOn||!unlocked||!untransported||app.menuCar!=='koenigsegg_jesko')
       throw Error('Jesko refusal requires helicopter enabled and the selected car unlocked but untransported');
     const before={owner:app.player.id,state:app.duel.state,course:app.duel.course,
-      stateValue:JSON.stringify(app.duel.state),features:JSON.stringify(app.duel.course.features),
+      stateValue:JSON.stringify(app.duel.state),features:JSON.stringify(app.duel.course?.features),
       run:app.runId,profile:JSON.stringify(app.profile),heli:JSON.stringify(app.profile.heli),
       storage:storage()};
     const admitted=app.visitWasteland();
@@ -114,7 +114,7 @@ async function refusedJesko(context){
       sameOwner:app.player.id===before.owner,sameState:app.duel.state===before.state,
       sameCourse:app.duel.course===before.course,sameRun:app.runId===before.run,
       unchangedState:JSON.stringify(app.duel.state)===before.stateValue,
-      unchangedFeatures:JSON.stringify(app.duel.course.features)===before.features,
+      unchangedFeatures:JSON.stringify(app.duel.course?.features)===before.features,
       unchangedProfile:JSON.stringify(app.profile)===before.profile,
       unchangedHeli:JSON.stringify(app.profile.heli)===before.heli,
       unchangedStorage:storage()===before.storage};
