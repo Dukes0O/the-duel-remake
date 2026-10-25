@@ -272,7 +272,7 @@ export class EngineAudio {
       Object.entries(SOUND_BANK)
         .filter(
           ([id, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome &&
-            cue.flag !== 'the-deep' && cue.flag !== 'helicopter' && cue.flag !== 'driving-lessons' &&
+            cue.flag !== 'the-deep' && cue.flag !== 'helicopter' && cue.flag !== 'driving-lessons' && cue.flag !== 'lab' &&
             (!pending || cue.flag === 'grand-prix') &&
             (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
             (cue.flag !== 'grand-prix' || grandPrix || id==='snowman.burst' && addSnowmen || ['avalanche.rumble','avalanche.slide'].includes(id) && addAvalanche || id==='yeti.roar' && addYeti || id==='race.finish.flag' && addSummitAttack),

@@ -17,7 +17,7 @@ const DRIVE_BANK_CUES = new Set(Object.keys(DRIVE_LESSON_CUES));
 const hash = value => createHash('sha256').update(value).digest('hex');
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
 // DEEP-RADIO: Ana's phone lines (deep.ana.*) are the Deep's, behind the-deep, and are left out too.
-const records = catalog.sounds.filter(row => row.source === 'elevenlabs' && !row.cue.startsWith('heli.') && !row.cue.startsWith('deep.ana.') && !DRIVE_BANK_CUES.has(row.cue));
+const records = catalog.sounds.filter(row => row.source === 'elevenlabs' && !row.cue.startsWith('heli.') && !row.cue.startsWith('deep.ana.') && !row.cue.startsWith('lab.brian.') && !DRIVE_BANK_CUES.has(row.cue));
 const KEPT = records.filter(row => row.key !== 'gatekeeper.welcome');
 let checks = 0;
 const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual, expected, message); };
