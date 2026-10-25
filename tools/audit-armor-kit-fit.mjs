@@ -14,7 +14,7 @@ for(const {key,vehicle,wheels} of models){
   const paintedPoint=new THREE.Vector3();
   let paintRearZ=Infinity;
   vehicle.traverse(mesh=>{
-    if(!mesh.isMesh||!/^(Lacquered body|Paint 1 Carmine|Jesko pearl body|Enzo red body|F1 silver body|Bolide blue body)/.test(mesh.material?.name||''))return;
+    if(!mesh.isMesh||!/^(Speirling blue-grey body|Lacquered body|Paint 1 Carmine|Jesko pearl body|Enzo red body|F1 silver body|Bolide blue body)/.test(mesh.material?.name||''))return;
     const transform=toLocal.clone().multiply(mesh.matrixWorld);
     const position=mesh.geometry.attributes.position;
     for(let i=0;i<position.count;i++){
@@ -151,7 +151,7 @@ if (exportCar) {
   const point=new THREE.Vector3();
   const selected=[];
   source.vehicle.traverse(mesh=>{
-    if (!mesh.isMesh || !/^(Paint 1 Carmine|Lacquered body|Jesko pearl body|Enzo red body|F1 silver body|Bolide blue body)/.test(mesh.material?.name||'')) return;
+    if (!mesh.isMesh || !/^(Speirling blue-grey body|Paint 1 Carmine|Lacquered body|Jesko pearl body|Enzo red body|F1 silver body|Bolide blue body)/.test(mesh.material?.name||'')) return;
     const transform=inverse.clone().multiply(mesh.matrixWorld);
     const geometry=mesh.geometry;
     const positions=[];

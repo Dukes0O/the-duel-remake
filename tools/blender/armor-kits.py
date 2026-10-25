@@ -28,6 +28,7 @@ SIZES = {
     # The 1966 Sirena (SIRENA-KIT): its model is built in code (src/sirena-vehicle.js), so the shell comes from the
     # runtime body export, like the Enzo's and the F1's. Keep it last: a car's place in this list shapes its plates.
     'falcone_sirena': (1.96, 4.45, 1.06),
+    'mcmurtry_speirling': (1.610, 3.204, 1.142),
 }
 
 # Where the general placement rules would put a plate on a wheel, a car gets its own numbers. The Sirena's wheels stand
@@ -347,6 +348,8 @@ def body_skin_from_runtime(car, root_path, parent, material):
 
 def body_skin_from_source(car, root_path, parent, material, target_length, fit):
     """Retopologized rusty shell from the real metal body, not a size box."""
+    if car == 'mcmurtry_speirling':
+        return body_skin_from_runtime(car, root_path, parent, material)
     source=root_path/'public/assets/models/classics'/f'{car}.glb'
     if not source.exists():
         source=root_path/'public/assets/models/unlocks'/f'{car}.glb'
@@ -413,8 +416,93 @@ def fender_fit(fit):
                          for row in mid['samples']]}
 
 
+def build_speirling(material, fit, root_path):
+    """Short fan car: keep the fan mouths and bubble canopy completely open."""
+    root = empty('kit-local-frame')
+    root.rotation_euler.x = math.pi / 2
+    scrapper = empty('kit-scrapper', root)
+    raider = empty('kit-raider', root)
+    warlord = empty('kit-warlord', root)
+    bar = empty('kit-bull-bar', scrapper)
+    for y in [.20, .36]:
+        rod('nose-bar', bar, material, (-.60, y, 1.64), (.60, y, 1.64), .035)
+    for side in [-1, 1]:
+        rod('nose-brace', bar, material, (side*.56, .18, 1.56),
+            (side*.56, .40, 1.64), .03)
+        # These are external cage stanchions, not combustion exhausts.
+        stack = empty(f'kit-stack-{0 if side < 0 else 1}', scrapper)
+        rod('rear-stanchion', stack, material, (side*.63, .48, -.51),
+            (side*.63, .82, -.51), .035)
+        conforming_sheet('sill-sheet', scrapper, material, fit, side,
+                         -.48, .45, .23, .40, 1.61)
+        for axle_index, axle in enumerate(fit['axles']):
+            part = empty(f'kit-plate-{axle_index + (0 if side > 0 else 2)}', scrapper)
+            # Wheel crown is .584 m. The plate's bottom and rivets sit above it.
+            z = axle['z']
+            panel = plate('fender-crown', part, material, (side*.72, .65, z),
+                          .035, .12, .52, 0, .012)
+            paint_shell_uv(panel.data)
+            for dz in [-.17, .17]:
+                rod('fender-rivet', part, material, (side*.74, .67, z+dz),
+                    (side*.76, .67, z+dz), .018, 6)
+        conforming_sheet('raider-sill', raider, material, fit, side,
+                         -.44, .42, .16, .27, 1.61, .06)
+        saw = empty('kit-saw-0' if side > 0 else 'kit-saw-1', raider)
+        saw_disc('sill-saw', saw, material, (side*.75, .33, -.05), .13)
+    cage = empty('kit-cage', raider)
+    # Rails outside the .255 m canopy half-width; no bar crosses the glass.
+    for side in [-1, 1]:
+        rod('canopy-rail', cage, material, (side*.34, 1.04, -.88),
+            (side*.34, 1.04, .87), .028)
+        for z in [-.88, .87]:
+            rod('cage-leg', cage, material, (side*.59, .65, z),
+                (side*.34, 1.04, z), .028)
+    turret = empty('kit-turret-mount', raider)
+    bpy.ops.mesh.primitive_torus_add(major_segments=16, minor_segments=6,
+        major_radius=.16, minor_radius=.025, location=(0, 1.04, -.96))
+    bpy.context.object.rotation_euler.x = math.pi/2
+    finish(bpy.context.object, 'rear-mount-ring', turret, material)
+    rod('rear-mount-beam', turret, material, (-.34, 1.04, -.96),
+        (.34, 1.04, -.96), .03)
+    full = empty('kit-full-plating', warlord)
+    shell = body_skin_from_runtime('mcmurtry_speirling', root_path, full, material)
+    # Painted rear panels surround the stock grilles. Cut real openings after
+    # decimation so a long shell triangle cannot bridge either fan mouth.
+    bm = bmesh.new()
+    bm.from_mesh(shell.data)
+    for axis, values in [(0, [-.55, -.28, -.19, .19, .28, .55]),
+                         (1, [.135, .34, .495]), (2, [-1.28, -.86, .90])]:
+        for value in values:
+            origin, normal = Vector((0, 0, 0)), Vector((0, 0, 0))
+            origin[axis], normal[axis] = value, 1
+            bmesh.ops.bisect_plane(bm, geom=list(bm.verts)+list(bm.edges)+list(bm.faces),
+                                  plane_co=origin, plane_no=normal, dist=.00001)
+    blocked = []
+    for face in bm.faces:
+        p = face.calc_center_median()
+        fan = p.z < -1.28 and .135 < p.y < .495 and .19 < abs(p.x) < .55
+        canopy = abs(p.x) < .28 and -.86 < p.z < .90 and p.y > .34
+        if fan or canopy:
+            blocked.append(face)
+    bmesh.ops.delete(bm, geom=blocked, context='FACES')
+    bm.to_mesh(shell.data)
+    bm.free()
+    paint_shell_uv(shell.data)
+    crown = empty('kit-crown', warlord)
+    for side in [-1, 1]:
+        for z in [-.6, -.25, .1]:
+            tapered_tooth('rail-tooth', crown, material, (side*.34, 1.04, z),
+                          (side*.38, 1.22, z-.06), .035)
+    mount = empty('kit-warlord-mount', warlord)
+    rod('rear-crossbar', mount, material, (-.38, 1.10, -.96),
+        (.38, 1.10, -.96), .035)
+    return [scrapper, raider, warlord]
+
+
 def build(car, width, length, height, material, sal_material, mark_material,
           spark_core_material, spark_tip_material, index, fit, root_path):
+    if car == 'mcmurtry_speirling':
+        return build_speirling(material, fit, root_path)
     front = length / 2 + .035
     roof = fit['roofSkin'] + .045
     side = width / 2 + .055
