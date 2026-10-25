@@ -20,6 +20,7 @@ import {raiseFind} from './deep/deep-sirena.js';
 import {recordLogged,recordPearl,phoneLineFor} from './deep/deep-log.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
+import {skiKeys, SKI_CAMERA_VIEWS} from './ski/ski-view.js'; // SKI-VIEW: the ski keys and cameras
 import {createLabLap} from './lab/lab-lap.js'; // LAB-VIEW
 import {passLesson as labPassLesson} from './lab/lab-save.js'; // LAB-VIEW
 import * as wildlifeRules from './wildlife.js';
@@ -187,6 +188,7 @@ export class App {
     // only while a helicopter visit runs. The session's radio events are the
     // one source of instructor lines.
     this.heliSession = null; this.heliLog = []; this.heliCamera = 0; this.heliMapOpen = false; // MAP-VIEW: whether the pilot's map is open
+    this.skiCamera = 0; this.skiHelp = false; // SKI-VIEW: the ski camera (C) and the ski help (H)
     this.heliAudio = createHeliAudio({audio: this.audio, autoRadio: false,
       enabled: () => this._switches().enabled('helicopter') === true});
     this.duel.onChange((state, event) => {
@@ -419,7 +421,11 @@ export class App {
       if(this.heliSession&&this.duel.state.status==='heli'){
         // The pad is read even while paused, so its Start button can resume.
         const pad=this._readGamepad(SIMULATION_STEP).pad;
-        if(this.heliSession&&!this.duel.state.paused)this._heliEvents(this.heliSession.step(heliControls(this.keys,pad)));
+        // SKI-VIEW: on skis the same keys are the ski keys; keys still held when the pilot climbs back in wait to be let go
+        // (W would lift the collective).
+        const skiing=this.heliSession?.phase==='skiing';
+        if(skiing)this._skiKeysHeld=true;else if(this._skiKeysHeld&&!Object.values(this.keys).some(Boolean))this._skiKeysHeld=false;
+        if(this.heliSession&&!this.duel.state.paused)this._heliEvents(this.heliSession.step(skiing?skiKeys(this.keys,pad):this._skiKeysHeld?{}:heliControls(this.keys,pad)));
         this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);continue;
       }
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
@@ -1647,7 +1653,7 @@ export class App {
     const car = this.menuCar, driverId = getEquippedDriverId(this.profile);
     this.runId = this._runPlayerId = this._markedRaceKey = null;
     this.ghostRecorder = this.ghostRecord = this.ghostPose = this.grandPrixLapRecorder = null; this.lapTelemetryRecorder = null; this.ghostStatus = 'none';
-    this._stepAccumulator = 0; this.heliLog = []; this.heliCamera = 0; this._heliCar = car;
+    this._stepAccumulator = 0; this.heliLog = []; this.heliCamera = 0; this.skiCamera = 0; this.skiHelp = false; this._heliCar = car;
     this.audio.unlock(); this.audio.setPaused(false);
     const loadCourse = courseId => {
       if (!this.duel.startHeliVisit({courseId, playerId: this.player.id, car, driverId,
@@ -1666,6 +1672,8 @@ export class App {
       pilotMapEnabled: this._switches().enabled('pilot-map') === true, secretCourses: this._secretCoursesOn(),
       labEnabled: this._switches().enabled('lab') === true, // LAB-VIEW
       skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
+      // SKI-VIEW: heli-skiing needs Summit Run (the session checks that too).
+      heliSkiingEnabled: this._switches().enabled('heli-skiing') === true,
       wildlife: wildlifeRules, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       persist: profile => {
@@ -2130,6 +2138,12 @@ export class App {
     else if (action.startsWith('gear:')) this.duel.selectFootGear(Number(action.slice(5)));
     else if (action === 'shift-up') this.duel.setInput({ shiftUp: true });
     else if (action === 'shift-down') this.duel.setInput({ shiftDown: true });
+    // SKI-VIEW: on skis C changes the ski camera and H shows the ski keys (the hook means nothing there).
+    else if (this.heliSession?.phase === 'skiing' && (action === 'heli-camera' || action === 'heli-hook')) {
+      if (this.duel.state.paused) return;
+      if (action === 'heli-camera') this.skiCamera = (this.skiCamera + 1) % SKI_CAMERA_VIEWS.length; else this.skiHelp = !this.skiHelp;
+      this.duel.emit({heli: true});
+    }
     else if (action === 'heli-hook') this._heliPress(session => session.hookKey());
     else if (action === 'heli-autopilot') this._heliPress(session => session.pressAutopilot());
     else if (action === 'heli-cruise') this._heliPress(session => session.acceptCruise());
@@ -2139,6 +2153,16 @@ export class App {
     else if (action === 'deep-ping') this.duel.deepPing(); // DEEP-SIRENA-VIEW: R under water
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
+  }
+  // SKI-VIEW: the ski box, the run menu and the run's buttons ask here; the session decides and its events play out.
+  heliSki(action, ...args) {
+    const session = this.heliSession, call = {drop: 'takeSkiDrop', group: 'takeSkiGroup', handBack: 'dropSkiFlight', stepOut: 'skiStepOut',
+      restart: 'restartSkiRun', leave: 'leaveSkiRun'}[action];
+    if (!session || !call || typeof session[call] !== 'function' || this.duel.state.paused) return {ok: false};
+    const result = session[call](...args);
+    if (action === 'stepOut' && result?.ok) { this.skiCamera = 0; this.skiHelp = false; }
+    this._heliEvents(session.takeEvents());
+    return result;
   }
   _heliPress(press) {
     if (!this.heliSession || this.duel.state.paused) return;

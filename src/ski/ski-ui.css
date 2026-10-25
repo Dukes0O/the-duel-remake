@@ -1,0 +1,54 @@
+/* SKI-VIEW: the run HUD over the ski zone (the top line, speed, medal targets, the loading and result cards, the key
+   strip, the help and the run's two buttons) and the ski box and run menu in the helicopter's side panel. */
+.ski-hud{position:absolute;inset:0;z-index:7;pointer-events:none;color:var(--ink,#f3eddf);font-family:inherit;text-shadow:0 2px 10px #0009}
+.ski-hud[hidden],.ski-hud [hidden]{display:none!important}
+.ski-line{position:absolute;top:22px;left:24px;display:flex;gap:16px;align-items:baseline;padding:8px 14px;background:#0f1614cc;border:1px solid #ffffff1f;border-radius:6px;font-size:13px;font-weight:650;letter-spacing:1px}
+.ski-line b{font-size:11px;letter-spacing:2.5px;color:#9fd8ff}
+.ski-line .ski-clock{font-size:26px;font-weight:750;letter-spacing:0;font-variant-numeric:tabular-nums}
+.ski-line .ski-missed{color:#ff8a6a}
+.ski-speed{position:absolute;left:24px;bottom:26px;display:flex;flex-direction:column;align-items:flex-start;padding:6px 14px;background:#0f1614cc;border:1px solid #ffffff1f;border-radius:6px}
+.ski-speed b{font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.ski-speed small{font-size:9px;letter-spacing:2.5px;color:var(--muted,#b6b1a5)}
+.ski-targets-host{position:absolute;top:84px;left:24px}
+.ski-targets{list-style:none;margin:0;padding:6px 12px;display:flex;flex-direction:column;gap:2px;background:#0f1614b3;border:1px solid #ffffff1a;border-radius:6px;font-size:12px;font-variant-numeric:tabular-nums}
+.ski-targets b{display:inline-block;width:58px;font-size:9px;letter-spacing:2px}
+.ski-gold b{color:#ffd45a}.ski-silver b{color:#d8dde6}.ski-bronze b{color:#e2a06a}
+.ski-buttons{position:absolute;top:84px;right:24px;display:flex;gap:8px;align-items:center;pointer-events:auto}
+.ski-buttons button{padding:6px 10px;font:600 12px/1.2 inherit;color:var(--ink,#f3eddf);background:#0f1614cc;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
+.ski-buttons button:hover{background:#26302dcc}
+.ski-view-name{padding:6px 9px;font-size:10px;letter-spacing:2px;color:var(--ink,#f3eddf);background:#0f1614cc;border-radius:4px}
+.ski-keys{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);margin:0;padding:6px 12px;font-size:11px;letter-spacing:1px;background:#0f1614b3;border-radius:4px;white-space:nowrap}
+.ski-help{position:absolute;right:24px;bottom:70px;width:330px;padding:12px 14px;background:#0f1614e6;border:1px solid #ffffff26;border-radius:6px}
+.ski-help h3{margin:0 0 6px;font-size:11px;letter-spacing:2.5px}
+.ski-help dl{margin:0;display:flex;flex-direction:column;gap:4px;font-size:12px}
+.ski-help div{display:grid;grid-template-columns:120px 1fr;gap:8px}
+.ski-help dt{font-weight:750;color:#9fd8ff}.ski-help dd{margin:0}
+.ski-card-host{position:absolute;top:14%;left:50%;transform:translateX(-50%);width:min(30rem,calc(100% - 2rem))}
+.ski-card{padding:14px 18px;background:#0b1418e6;border-top:2px solid #9fd8ff;border-radius:4px;box-shadow:0 .6rem 2rem #000a}
+.ski-card small{display:block;font-size:10px;letter-spacing:2.5px;color:#9fd8ff;margin-bottom:6px}
+.ski-card p{margin:6px 0;font-size:14px;line-height:1.4}
+.ski-card .ski-targets{flex-direction:row;gap:16px;background:none;border:0;padding:4px 0}
+.ski-tips{margin:8px 0;padding-left:18px;font-size:13px;line-height:1.45}
+.ski-tips li+li{margin-top:4px}
+.ski-go{color:var(--muted,#b6b1a5);font-size:12px!important}
+.ski-big{font-size:36px!important;font-weight:750;margin:2px 0!important;font-variant-numeric:tabular-nums}
+.ski-medal{font-size:12px!important;letter-spacing:3px;font-weight:750}
+.ski-medal-3{border-top-color:#ffd45a}.ski-medal-3 .ski-medal{color:#ffd45a}
+.ski-medal-2{border-top-color:#d8dde6}.ski-medal-2 .ski-medal{color:#d8dde6}
+.ski-medal-1{border-top-color:#e2a06a}.ski-medal-1 .ski-medal{color:#e2a06a}
+.ski-paid{font-weight:700}
+.ski-next{color:var(--muted,#b6b1a5);font-size:12px!important}
+.ski-score{margin:8px 0;display:flex;flex-direction:column;gap:6px}
+.ski-score div{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center}
+.ski-score dt{font-size:12px;font-weight:700}.ski-score dt small{display:inline;font-size:10px;letter-spacing:0;color:var(--muted,#b6b1a5)}
+.ski-score dd{position:relative;margin:0;height:16px;background:#ffffff14;border-radius:3px;overflow:hidden}
+.ski-score dd i{position:absolute;inset:0 auto 0 0;background:#9fd8ff80}
+.ski-score dd b{position:absolute;right:6px;top:0;font-size:11px;line-height:16px}
+/* In the helicopter's side panel. */
+.ski-menu-snow{margin:6px 0;font-size:12px}
+.ski-wax{display:flex;gap:5px;margin:4px 0 6px}
+.ski-wax button{flex:1}
+.ski-wax button.on{border-color:#9fd8ff;background:#9fd8ff26}
+.heli-board button:disabled{opacity:.5;cursor:default}
+/* On skis the helicopter's instruments and routes give way (their own rules set a display). */
+.heli-panel .heli-top[hidden],.heli-panel .heli-controls[hidden],.heli-panel .heli-lessons-host[hidden]{display:none}
