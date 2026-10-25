@@ -7,7 +7,15 @@ import {wastelandRulesActive} from './wasteland-access.js';
 import {fieldHudMarkup, presentField} from './screen-field.js';
 import {gripReadout} from './race-surfaces.js';
 import {pitView} from './pit-lane.js';
+import {nitroLocked} from './race-field.js';
 const escapeText = value => String(value).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
+// GP-PASSING-2: the nitro label. Nitro is locked on lap 1 until the first braking zone's apex.
+// The router renames the label to `nitro-label` at startup and writes it through this function.
+export function nitroHudLabel(s) {
+  const armS = s.field?.nitroArmS;
+  if (armS === undefined) return 'NITRO';
+  return nitroLocked(s, s.field) ? 'NITRO LOCKED' : !s.completedLaps && s.s - armS < 150 ? 'NITRO ARMED' : 'NITRO';
+}
 export function hudMarkup() {
   return `  <section id="race-hud" class="hud" aria-label="Race information" hidden>
     <div class="race-progress"><i id="progress-fill"></i>
