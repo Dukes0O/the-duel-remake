@@ -251,6 +251,11 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'src/progression.js|./deep/sirena-car.js',
     'tools/test-sirena-car.mjs|../src/deep/sirena-car.js',
     'tools/test-sirena-car.mjs|../src/deep/deep-sirena.js',
+    // DEEP-LOG: the garage log page and pearl white (its named hooks), its test and its picture recipe.
+    'src/screen-garage.js|./deep/deep-log.js',
+    'src/paint-presets.js|./deep/deep-log.js',
+    ...['deep-ramp', 'deep-zone', 'zones/kelp-coast', 'deep-phone-lines', 'deep-log'].map(name => `tools/test-deep-log.mjs|../src/deep/${name}.js`),
+    'tools/scenarios/deep-log-pictures.mjs|../../src/deep/deep-log.js',
   ]);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))
