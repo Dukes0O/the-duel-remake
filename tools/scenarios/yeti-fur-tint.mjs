@@ -87,7 +87,7 @@ export async function run(context) {
       const materials=new Set();actor.traverse(node=>{for(const material of Array.isArray(node.material)?node.material:node.material?[node.material]:[])if(material.name===${JSON.stringify(furName)})materials.add(material);});
       if(!materials.size)throw Error('Actual cloned fur materials missing');
       const originals=[...materials].map(material=>[material,material.color.toArray()]);
-      if(originals.some(([,colour])=>colour.some(value=>Math.abs(value-1.8)>1e-10)))throw Error('Renderer candidate no longer matches reviewed1.8');
+      if(originals.some(([,colour])=>colour.some(value=>Math.abs(value-2.6)>1e-10)))throw Error('Renderer fur tint no longer matches the reviewed 2.6');
       const camera=draw.camera,savedPosition=camera.position.clone(),savedRotation=camera.quaternion.clone();
       const box=new qa.Box3().setFromObject(actor,true),centre=box.getCenter(new qa.Vector3());
       const geometry=node=>node.geometry?{uuid:node.geometry.uuid,index:node.geometry.index?Array.from(node.geometry.index.array):null,
@@ -104,7 +104,7 @@ export async function run(context) {
         camera.position.set(centre.x+7,box.min.y+3,centre.z+8);camera.lookAt(centre);camera.updateMatrixWorld(true);
         invariant=snapshot();
         // All three renders are synchronous: no RAF, App step or pose update can run between them.
-        for(const factor of [1,1.4,1.8]){
+        for(const factor of [1,2.6,3.6]){
           for(const material of materials)material.color.setRGB(factor,factor,factor);
           draw.composer.render();
           const night=requireNativeNight();
