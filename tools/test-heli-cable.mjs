@@ -48,6 +48,7 @@ const table = {
   stuttgart_959s: [1450, true], banshee_muscle: [1810, false], titan_monster: [4700, false],
   ferrari_enzo: [1365, true], mclaren_f1: [1140, true],
   bugatti_bolide: [1450, true],
+  falcone_sirena: [810, true],
 };
 for (const [id, [mass, lifts]] of Object.entries(table)) {
   assert.equal(carMassKg(id), mass, `${id} mass`); checks++;

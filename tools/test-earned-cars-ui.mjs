@@ -105,11 +105,13 @@ test('switch off: the same race adds no sheet, no medal and no cue', () => {
 // Every real medal car stay hidden behind earned-cars, including owned cars.
 test('the Enzo, F1 and Bolide stay hidden everywhere while the switch is off, shown while on', () => {
   const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide'];
-  const today = Object.keys(CARS).filter(id => !medalCars.includes(id));
-  assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCars.includes(id)));
-  assert.deepEqual(shownCars(true), Object.entries(CARS));
+  // The Falcone Sirena (SIRENA-CAR) is on no list until DEEP-SIRENA-VIEW lists it once the Lab restores it.
+  const sirena = 'falcone_sirena';
+  const today = Object.keys(CARS).filter(id => !medalCars.includes(id) && id !== sirena);
+  assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCars.includes(id) && id !== sirena));
+  assert.deepEqual(shownCars(true), Object.entries(CARS).filter(([id]) => id !== sirena));
   assert.deepEqual(shownCarIds(false), today);
-  assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars]);
+  assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars, sirena]);
   assert.ok(medalCars.every(id => !JOB_CARS.includes(id)), 'no earned car is a customer car');
   const markup = on => screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 'easy', difficulty: 'casual', startStage: 0},
     arrow: '', sound: true, escapeHTML: String, earnedCars: on});

@@ -37,9 +37,12 @@ try{
   const fullSheet={duel:[1,1,1],grandprix:[1,1,1]};
   const medalProfile=normalizeProfile({...app.profile,medals:{version:1,cars:{falcone_f42:fullSheet,stuttgart_959s:fullSheet,falcone_heritage:fullSheet,aurora_gt:fullSheet}}});
   Object.assign(app.profile,{medals:medalProfile.medals,unlockedCars:medalProfile.unlockedCars,upgrades:medalProfile.upgrades});app._saveProfile();
-  check(Object.keys(CARS).every(car=>isCarUnlocked(app.profile,car)),'maxing the ordinary fleet earns the completion car, and the medals the Enzo, the F1 and the Bolide, before eligibility checks');
+  // The Falcone Sirena is owned only once the Lab restores it (SIRENA-CAR), so maxing the fleet never earns it.
+  const OWNABLE_CARS=Object.keys(CARS).filter(car=>car!=='falcone_sirena');
+  check(!isCarUnlocked(app.profile,'falcone_sirena'),'maxing the fleet does not earn the Sirena: only the Lab restores it');
+  check(OWNABLE_CARS.every(car=>isCarUnlocked(app.profile,car)),'maxing the ordinary fleet earns the completion car, and the medals the Enzo, the F1 and the Bolide, before eligibility checks');
   const bank=app.profile.credits;let airOnlyRefusals=0;
-  for(const car of Object.keys(CARS))for(const [startStage,event]of COURSE.entries()){
+  for(const car of OWNABLE_CARS)for(const [startStage,event]of COURSE.entries()){
     app.setRaceSettings({car,startStage,mode:'timetrial'});same(app.getRaceChoices().car,car,'all course changes preserve every owned car');same(app.getRaceChoices().startStage,startStage,'all vehicle changes preserve the course');
     same(new App().getRaceChoices(),app.getRaceChoices(),'per-player setup persists any owned vehicle/course pairing');
     // With the helicopter on, an air-only car (the Jesko) races only where it
@@ -56,7 +59,7 @@ try{
   }
   same(airOnlyRefusals,4*(COURSE.length-1),'the Jesko, the Enzo, the F1 and the Bolide each start on exactly one course, where they sit');
   same(app.profile.credits,bank,'course/vehicle selection and restart cannot spend or gift credits');same(app.profile.history.length,0,'countdown-only eligibility checks create no race settlements');
-  for(const [stageIndex,event]of COURSE.entries())for(const car of Object.keys(CARS)){
+  for(const [stageIndex,event]of COURSE.entries())for(const car of OWNABLE_CARS){
     const cpuDifficulty='medium',required=event.checkpointRush?.gatesPerLap*(event.laps||2),result={runId:'eligibility',stageIndex,car,driverId:'club',completed:true,won:true,targetsMet:true,laps:event.laps||2,timeSec:10,cpuDifficulty,
       jumps:event.stuntTrial?.jumps,crushCount:event.stuntTrial?.crushes,driftScore:event.driftTrial?.targets[cpuDifficulty],checkpointsPassed:required,checkpointsRequired:required,checkpointMisses:0};
     same(isValidFinish(result),!event.practice,'every competitive car with complete objective evidence is eligible, while practice has no records');check(!isValidFinish({...result,completed:false}),'open eligibility still rejects incomplete races');

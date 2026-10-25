@@ -305,6 +305,17 @@ tasks:
     flag: "the-deep"
     details: "docs/board/cards/SIRENA-CAR.md"
 
+  - id: SIRENA-KIT
+    title: "The Sirena's armor kit: three tiers, built and fitted like the other cars"
+    owner: "claude"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: [SIRENA-CAR]
+    locks: []
+    flag: "the-deep"
+    details: "docs/board/cards/SIRENA-KIT.md"
+
   - id: DEEP-SIRENA-VIEW
     title: "The Sirena story in the game: keys, drawing, sonar ring, Ana, garage"
     owner: "codex"

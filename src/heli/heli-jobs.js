@@ -110,7 +110,8 @@ export function bearing(from, to, options = {}) {
 // helicopter switch on, one races only on the course where it was last set
 // down, starting at the home pad. The cars earned with medals
 // (docs/EARNED_CARS.md) are special cars too.
-export const AIR_ONLY_CARS = Object.freeze(['koenigsegg_jesko', ...MEDAL_CARS]);
+// The restored Falcone Sirena (SIRENA-CAR) is one too, first placed at Pacific Canyon (heli-save FIRST_PLACE).
+export const AIR_ONLY_CARS = Object.freeze(['koenigsegg_jesko', ...MEDAL_CARS, 'falcone_sirena']);
 
 export function isAirOnlyCar(carId) {
   return AIR_ONLY_CARS.includes(carId);
