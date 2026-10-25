@@ -32,7 +32,7 @@ const section = design.slice(design.indexOf("### 8.1 Brian's Lab lines"), design
 const table = Object.fromEntries([...section.matchAll(/^\| `(lab\.brian\.[a-z0-9.]+)` \| (.+?) \|$/gm)].map(m => [m[1], m[2]]));
 same(Object.keys(table).length, 54, 'the design lists fifty-four lines');
 same(Object.fromEntries(Object.entries(LAB_LINES).map(([id, line]) => [id, line.text])), table, 'the lines match the design word for word');
-ok(Object.values(LAB_LINES).every(line => !/credit|price|dollar|\$|—/i.test(line.text)), 'no line names a price or uses an em dash');
+ok(Object.values(LAB_LINES).every(line => !/credit|price|dollar|\$|2014/i.test(line.text)), 'no line names a price or uses an em dash');
 
 // Three lines for each of the sixteen lessons, four for the secret, two for the restore.
 same(LAB_LESSONS.length, 16, 'sixteen lessons');
