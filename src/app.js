@@ -32,6 +32,10 @@ function fireSounds(view) {
 // H2 Fire: today's date as the play day note reads it.
 const todayString = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 import {isAirOnlyCar,HOME_COURSE,HELI_DESTINATIONS} from './heli/heli-jobs.js';
+// MAP-VIEW: the pilot's map.
+import {SECRET_IDS} from './heli/map-secrets.js';
+import {CIRCUIT_MANIFESTS} from './circuit-manifests.js';
+import {labOf} from './lab/lab-save.js';
 import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hints.js';
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
@@ -176,7 +180,7 @@ export class App {
     // The helicopter (docs/HELICOPTER.md): its own session and sound, used
     // only while a helicopter visit runs. The session's radio events are the
     // one source of instructor lines.
-    this.heliSession = null; this.heliLog = []; this.heliCamera = 0;
+    this.heliSession = null; this.heliLog = []; this.heliCamera = 0; this.heliMapOpen = false; // MAP-VIEW: whether the pilot's map is open
     this.heliAudio = createHeliAudio({audio: this.audio, autoRadio: false,
       enabled: () => this._switches().enabled('helicopter') === true});
     this.duel.onChange((state, event) => {
@@ -1513,7 +1517,7 @@ export class App {
   _leaveHeli() {
     const session = this.heliSession;
     if (!session) return;
-    this.heliSession = null;
+    this.heliSession = null; this.heliMapOpen = false; // MAP-VIEW
     const left = session.leave();
     const spent = left.credits - (this._heliCreditsAtStart ?? left.credits);
     this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(left.heli ? {heli: left.heli} : {})};
@@ -1616,6 +1620,8 @@ export class App {
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
       fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true,
       drivingLessonAt: this.drivingLessonsAvailable() ? (courseId, carId) => this._heliLessonAt(courseId, carId) : null,
+      // MAP-VIEW: the pilot's map switch and the secret courses whose own switches are on.
+      pilotMapEnabled: this._switches().enabled('pilot-map') === true, secretCourses: this._secretCoursesOn(),
       skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
       wildlife: wildlifeRules, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
@@ -1655,6 +1661,38 @@ export class App {
   }
   heliSetDestination(courseId) {
     return this.heliSession?.setDestination(courseId) ?? false;
+  }
+  // MAP-VIEW: the pilot's map screen (docs/PILOT_MAP.md section 3). The map only draws; the one thing it
+  // does is set the destination through the session, as the dispatch board does. It never pauses or moves the helicopter.
+  heliMapAvailable() {
+    return !!this.heliSession && this._switches().enabled('pilot-map') === true;
+  }
+  setHeliMap(open) {
+    const next = open === true && this.heliMapAvailable();
+    if (next === this.heliMapOpen) return next;
+    this.heliMapOpen = next;
+    this.heliAudio.play(next ? 'map.open' : 'map.close');
+    this.duel.emit({heli: true});
+    return next;
+  }
+  heliMapPick(courseId) {
+    const set = this.heliSetDestination(courseId);
+    if (set) { this.heliAudio.play('map.pin'); this.duel.emit({heli: true}); }
+    return set;
+  }
+  // The ground's height on the course last loaded (the renderer paints signs and corner names on it); read only.
+  heliGroundHeight(x, z) {
+    const course = this.duel.course;
+    if (this._mapGroundCourse !== course) { this._mapGround = groundFromCourse(course); this._mapGroundCourse = course; }
+    return this._mapGround.height(x, z);
+  }
+  // The Lab's moving-map upgrade (docs/LAB.md 4.2) adds the grid and bearings.
+  heliMovingMap() {
+    return labOf(this.profile).owned?.['moving-map'] === true;
+  }
+  // The five secret variants whose own switches are on (their signs are drawn only then).
+  _secretCoursesOn() {
+    return SECRET_IDS.filter(id => { const flag = CIRCUIT_MANIFESTS.find(manifest => manifest.id === id)?.flag; return flag && this._switches().enabled(flag) === true; });
   }
   // Race here: leave the helicopter and start the normal race on this course
   // with this car. Flying never changes how the race runs.
@@ -2007,7 +2045,9 @@ export class App {
   }
   _inputAction(action) {
     if (!action) return;
-    if (action === 'pause') this.togglePause();
+    // MAP-VIEW: Esc closes the pilot's map before it pauses.
+    if (action === 'pause' && this.heliMapOpen) this.setHeliMap(false);
+    else if (action === 'pause') this.togglePause();
     else if (action === 'help') this.toggleHelp();
     else if (action === 'foot-camera-cycle') this.cycleFootCamera();
     else if (action === 'camera-cycle') this.cycleCamera();
@@ -2024,6 +2064,7 @@ export class App {
     else if (action === 'heli-autopilot') this._heliPress(session => session.pressAutopilot());
     else if (action === 'heli-cruise') this._heliPress(session => session.acceptCruise());
     else if (action === 'heli-radio') this._heliPress(session => session.pressRadio());
+    else if (action === 'heli-map') { if (this.heliSession && !this.duel.state.paused) this.setHeliMap(!this.heliMapOpen); } // MAP-VIEW
     else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % (this.heliSession?.cameraCount ?? 4); this.duel.emit({heli: true}); }
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');

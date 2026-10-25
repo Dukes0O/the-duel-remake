@@ -85,6 +85,14 @@ export const HELI_TONE_CUES = Object.freeze({
   // The pilot's map (docs/PILOT_MAP.md section 5): a secret found from the air, three rising tones, softer than the badge.
   'heli.found': cue('interface', {priority: 80, limit: 1, volume: .6, layers: [
     tone(659, .22, .1, 'sine', 0), tone(880, .22, .1, 'sine', .16), tone(1319, .6, .1, 'sine', .32)]}),
+  // The pilot's map screen (MAP-VIEW, docs/PILOT_MAP.md section 6): paper unfolding and folding, and a pin pushed in when a
+  // destination is set. Made here from noise and tones; the laptop may render library versions from the same cue ids later.
+  'map.open': cue('interface', {priority: 40, limit: 1, volume: .5, layers: [
+    noise(2600, .22, .18, 'bandpass'), noise(1400, .45, .14, 'bandpass'), tone(180, .3, .05, 'triangle', 0, 120)]}),
+  'map.close': cue('interface', {priority: 40, limit: 1, volume: .5, layers: [
+    noise(1500, .3, .15, 'bandpass'), noise(3000, .18, .12, 'bandpass'), tone(150, .2, .05, 'triangle', 0, 220)]}),
+  'map.pin': cue('interface', {priority: 70, limit: 1, volume: .6, layers: [
+    tone(1800, .04, .2, 'triangle', 0), tone(900, .09, .12, 'sine', .03, 600), noise(4000, .03, .1, 'highpass')]}),
   'heli.badge': cue('interface', {priority: 85, limit: 1, volume: .7, layers: [
     tone(784, .3, .12, 'sine', 0), tone(988, .3, .12, 'sine', .14), tone(1175, .3, .12, 'sine', .28),
     tone(1568, .7, .12, 'sine', .42)]}),

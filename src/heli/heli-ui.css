@@ -1,3 +1,5 @@
+/* MAP-VIEW: the pilot's map screen's own sheet. */
+@import './pilot-map.css';
 /* Kestrel One's instruments (docs/HELICOPTER.md section 8). While flying the
    race HUD steps aside; the panel sits along the bottom like a cockpit. */
 .heli-active #race-hud,.heli-active .weapon-hud,.heli-active .combat-upgraded-hud,.heli-active .rear-view-frame{display:none}

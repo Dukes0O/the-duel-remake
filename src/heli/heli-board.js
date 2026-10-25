@@ -13,6 +13,12 @@ export function atHomePad(view) {
   return Math.hypot(view.heli.x - view.zone.x, view.heli.z - view.zone.z) <= view.zone.radius;
 }
 
+// MAP-VIEW: on the ground inside the landing circle of whatever course this is.
+export function atAnyPad(view) {
+  if (!view || view.phase !== 'flying' || !view.heli?.onGround || !view.zone) return false;
+  return Math.hypot(view.heli.x - view.zone.x, view.heli.z - view.zone.z) <= view.zone.radius;
+}
+
 // The wildlife count (docs/HELI_WILDLIFE.md section 4) pays the same in
 // Assisted and Real, from 200 to 600 credits by how near the estimate is.
 function jobRow(job, mode, {survey = null, skins = null} = {}) {
@@ -153,6 +159,9 @@ export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assi
     if (line) parts.push(line);
   }
   if (skins && atHomePad(view)) parts.push(paintShopBox(skins));
+  // MAP-VIEW: at any pad the board offers the pilot's map (the view carries `secrets` only with the map on).
+  if (view?.secrets !== undefined && atAnyPad(view))
+    parts.push('<div class="heli-board-map"><button type="button" class="heli-board-button" data-heli-board="map">Pilot\'s map</button></div>');
   if (jobs.length && atHomePad(view))
     parts.push(`<div class="heli-board-jobs"><h3 class="heli-board-title">Dispatch board</h3><ul class="heli-board-list">` +
       `${jobs.map(job => jobRow(job, mode, {survey: view?.survey ?? null, skins})).join('')}</ul></div>`);
@@ -174,6 +183,8 @@ export function handleBoardAction(action, app) {
   const settle = result => { app._heliEvents?.(session.takeEvents()); return result; };
   if (action.startsWith('take:')) return settle(session.takeJob(action.slice(5)));
   if (action === 'drop') return settle(session.dropJob());
+  // MAP-VIEW: open the pilot's map (the app owns whether it is open).
+  if (action === 'map') return app.setHeliMap?.(true) ?? {ok: false};
   if (action === 'radio-answer') return settle(session.pressRadio());
   if (action === 'radio-later') return settle(session.declineCall?.() ?? false);
   if (action === 'rescue-fit') return settle(session.fitRescueLine?.() ?? {ok: false});

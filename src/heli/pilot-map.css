@@ -1,0 +1,24 @@
+/* The pilot's map screen (docs/PILOT_MAP.md section 3, MAP-VIEW): a chart on paper over the flight view. */
+.pilot-map{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px;
+  background:#0b1210cc;color:#2b2118;pointer-events:auto;text-shadow:none}
+.pilot-map[hidden]{display:none}
+.pilot-map header{display:flex;align-items:center;gap:18px;width:min(86vh,94vw);color:#f3eddf}
+.pilot-map header b{font-size:12px;letter-spacing:3px}
+.pilot-map-hint{flex:1;font-size:12px;color:#d8d2c2}
+.pilot-map kbd{display:inline-block;padding:0 5px;border:1px solid #ffffff55;border-radius:3px;font:inherit;color:inherit}
+.pilot-map-close{padding:5px 12px;font:600 12px/1.2 inherit;color:#f3eddf;background:#ffffff1a;border:1px solid #ffffff44;border-radius:4px;cursor:pointer}
+.pilot-map-close:hover{background:#ffffff33}
+.pilot-map-canvas{width:min(78vh,94vw);height:min(78vh,94vw);background:#efe6cf;border:3px solid #5a4630;border-radius:3px;box-shadow:0 12px 40px #000a;cursor:crosshair}
+.pilot-map-info{min-height:1.4em;margin:0;width:min(86vh,94vw);text-align:center;font-size:14px;color:#f3eddf}
+.pilot-map-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;margin:0;padding:0;list-style:none;font-size:11px;color:#d8d2c2}
+.pilot-map-legend i{display:inline-block;width:18px;height:0;margin-right:5px;vertical-align:middle;border-top:2px solid #2b2118}
+.pilot-map-legend i.grey{border-top-color:#8d8a80}
+.pilot-map-legend i.burnt{border-top:4px solid #000}
+.pilot-map-legend i.pump{width:7px;height:10px;border:0;background:#2b2118}
+.pilot-map-legend i.reach{border-top:2px dashed #b03c28}
+.pilot-map-legend i.job{border-top:2px dotted #b03c28}
+.pilot-map-logbook{position:absolute;left:50%;top:84px;z-index:8;width:min(440px,86vw);transform:translateX(-50%);padding:14px 18px;background:#efe6cf;color:#2b2118;
+  border:1px solid #5a4630;border-radius:3px;box-shadow:0 6px 24px #0009;font-family:Georgia,serif;pointer-events:none}
+.pilot-map-logbook[hidden]{display:none}
+.pilot-map-logbook b{font-size:11px;letter-spacing:2px}
+.pilot-map-logbook p{margin:8px 0 0;font-size:17px;line-height:1.4;font-style:italic}

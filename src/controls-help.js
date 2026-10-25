@@ -18,6 +18,14 @@ export function controlsHelp(duel) {
       ['HOLD F', 'Get back in your car'],
       ['C', 'Change camera'], ['ESC / P', 'Pause'], ['H', 'Hide this help']]};
   }
+  // MAP-VIEW: Kestrel One's keys, with the pilot's map when it is on (the helicopter view carries `secrets` only then).
+  if (state?.status === 'heli') {
+    const heliRows = [['W / S', 'Collective, up and down'], ['ARROWS', 'Cyclic, tilt and bank'], ['A / D', 'Pedals, turn'],
+      ['H', 'Hook (hold to pour the bucket)'], ['P', 'Autopilot'], ['ENTER', 'Cruise to the destination'], ['R', 'Answer the radio'], ['C', 'Change camera']];
+    if (duel?.featureFlags?.enabled?.('pilot-map') === true) heliRows.push(['N', "The pilot's map: click a place to fly there"]);
+    heliRows.push(['ESC', 'Pause'], ['M', 'Mute']);
+    return {title: 'KESTREL ONE', rows: heliRows};
+  }
   const rows = [['W / UP', 'Throttle'], ['S / DOWN', 'Brake, hold to reverse'],
     ['LEFT / RIGHT', 'Steer'], ['SPACE', 'Boost'], ['Q / E', 'Shift (manual gearbox)']];
   if (state?.mode === 'wasteland' && state.combat) rows.push(['1  2  3  4', 'Weapons']);
