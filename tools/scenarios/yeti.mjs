@@ -18,6 +18,14 @@ async function browserHelper() {
   const result = await build({root, configFile:false, logLevel:'silent',
     define:{__DUEL_QA__:'true'}, plugins:[{name:'yeti-native-inspection',
       resolveId(id) { if(id.replaceAll('\\','/')===entry)return '\0yeti'; },
+      // The line driver's file also holds a headless-run helper that imports the whole game
+      // (its top-level waits then never finish in a second copy); the page already runs the game.
+      transform(code,id) {
+        if(!id.replaceAll('\\','/').endsWith('/tools/track-script-drive.mjs'))return;
+        const marker="import { App } from '../src/app.js';";
+        if(!code.includes(marker))throw Error('Line driver no longer imports the game as expected');
+        return code.replace(marker,'class App {}');
+      },
       load(id) {
         if(id!=='\0yeti')return;
         return 'import {useRacingLine} from '+source('tools/track-script-drive.mjs')+
