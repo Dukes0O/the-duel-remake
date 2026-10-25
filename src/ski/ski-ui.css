@@ -13,7 +13,7 @@
 .ski-targets{list-style:none;margin:0;padding:6px 12px;display:flex;flex-direction:column;gap:2px;background:#0f1614b3;border:1px solid #ffffff1a;border-radius:6px;font-size:12px;font-variant-numeric:tabular-nums}
 .ski-targets b{display:inline-block;width:58px;font-size:9px;letter-spacing:2px}
 .ski-gold b{color:#ffd45a}.ski-silver b{color:#d8dde6}.ski-bronze b{color:#e2a06a}
-.ski-buttons{position:absolute;top:22px;right:24px;display:flex;gap:8px;align-items:center;pointer-events:auto}
+.ski-buttons{position:absolute;top:84px;right:24px;display:flex;gap:8px;align-items:center;pointer-events:auto}
 .ski-buttons button{padding:6px 10px;font:600 12px/1.2 inherit;color:var(--ink,#f3eddf);background:#0f1614cc;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
 .ski-buttons button:hover{background:#26302dcc}
 .ski-view-name{font-size:10px;letter-spacing:2px;color:var(--muted,#b6b1a5)}

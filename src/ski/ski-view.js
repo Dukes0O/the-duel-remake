@@ -131,7 +131,7 @@ export function loadingCardMarkup(run, {snow = null} = {}) {
   const snowLine = snow ? `<p class="ski-snow">Today's snow: ${escape(snow.name)}, ${Math.round(snow.celsius)} °C${run.pick ? ` · wax ${escape(run.pick)}` : ''}</p>` : '';
   return `<section class="ski-card ski-loading" aria-label="${escape(run.name)}"><small>HELI-SKIING · ${escape(run.name.toUpperCase())}</small>
     ${snowLine}${targetsMarkup(run.limits)}<ul class="ski-tips">${tips.map(tip => `<li>${escape(tip)}</li>`).join('')}</ul>
-    <p class="ski-go">${run.kind === 'free' ? 'Push off with W' : 'Push off with W and cross the start line'}</p></section>`;
+    <p class="ski-go">${run.kind === 'free' ? 'Any way down to the green circle' : 'The clock starts at the start line'}</p></section>`;
 }
 
 const pct = value => `${Math.round(value)}`;
@@ -380,12 +380,25 @@ function placeFigure(object, f, base, ground) {
   object.rotation.set(Math.atan2(behind - ahead, 1.6), f.heading, 0, 'YXZ');
 }
 
+// A soft round flake (a radial fade), so the spray reads as powder rather than squares.
+function flakeTexture() {
+  const size = 32, data = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const d = Math.hypot(x + 0.5 - size / 2, y + 0.5 - size / 2) / (size / 2), a = Math.max(0, 1 - d) ** 1.6;
+    data.set([255, 255, 255, Math.round(a * 255)], (y * size + x) * 4);
+  }
+  const texture = new THREE.DataTexture(data, size, size);
+  texture.needsUpdate = true;
+  return texture;
+}
+
 // Snow thrown off the edges in a carve or a skid: a small pool of flakes, drawn only.
 function createSpray() {
   const count = 260, position = new Float32Array(count * 3).fill(-1e4), velocity = new Float32Array(count * 3), life = new Float32Array(count);
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(position, 3));
-  const points = new THREE.Points(geometry, new THREE.PointsMaterial({color: 0xffffff, size: 0.16, transparent: true, opacity: 0.85, depthWrite: false}));
+  const points = new THREE.Points(geometry, new THREE.PointsMaterial({color: 0xffffff, map: flakeTexture(), size: 0.22, transparent: true, opacity: 0.9,
+    alphaTest: 0.05, depthWrite: false}));
   points.name = 'Snow spray';
   points.frustumCulled = false;
   const random = drawingStream(77);
@@ -415,7 +428,7 @@ function createSpray() {
       }
       geometry.attributes.position.needsUpdate = true;
     },
-    dispose() { geometry.dispose(); points.material.dispose(); },
+    dispose() { geometry.dispose(); points.material.map.dispose(); points.material.dispose(); },
   };
 }
 
