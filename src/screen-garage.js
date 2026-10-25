@@ -124,12 +124,13 @@ export function handleTuneAction(button, {app, garageCar, refreshGarage, root}) 
   const reset = button.hasAttribute('data-tune-reset');
   if (!reset && !button.dataset.tune) return false;
   if (app.duel.state.status !== 'menu') return true;
+  if (!reset && button.getAttribute('aria-pressed') === 'true') return true;   // the step already set
   let message;
   if (reset) {
     const result = app.labCommit((p, f) => resetTuneIn(p, garageCar, f));
     message = result.ok ? 'Every setting is back to 0.' : result.reason;
   } else {
-    const [setting, text] = button.dataset.tune.split(':'), step = Number(text);
+    const [setting, text] = button.dataset.tune.split(':'), step = text?.trim() ? Number(text) : NaN;
     const result = app.labCommit((p, f) => stepIn(p, garageCar, setting, step, f));
     message = result.ok ? '' : result.reason;
   }

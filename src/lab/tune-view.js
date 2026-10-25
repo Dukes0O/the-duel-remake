@@ -39,7 +39,7 @@ export function effectLine(setting, step) {
     case 'pressure': return `Grip ${signedPercent(T.pressure.gripPerStep * step)}, top speed ${signedPercent(T.pressure.topSpeedPerStep * step)}.`;
     case 'wing': return `Grip at 100 mph ${signedPercent(T.wing.gripAtReference * step)}, more at higher speed; top speed ${signedPercent(T.wing.topSpeedPerStep * step)}.`;
     case 'brakes': return `Braking ${signedPercent(T.brakes.brakingPerStep * step)}; cornering grip while braking ${signedPercent(T.brakes.cornerLeftPerStep * step)}.`;
-    case 'springs': return `Grip ${signedPercent(T.springs.gripPerStep * step)}; off-road grip ${signedPercent(T.springs.offRoadGripPerStep * step)}, bumps ${signedPercent(-T.springs.bumpsPerStep * step)}.`;
+    case 'springs': return `Grip ${signedPercent(T.springs.gripPerStep * step)}; off-road grip ${signedPercent(T.springs.offRoadGripPerStep * step)}, bumps ${signedPercent(T.springs.bumpsPerStep * step)}.`;
     case 'fuel': return `${step === 1 ? 'Three-quarter' : 'Half'} tank. Acceleration and braking ${signedPercent(T.fuel.accelPerStep * step)}; the tank lasts ${percent(T.fuel.fullTankRaceShare * (1 - T.fuel.loadPerStep * step))} of a Grand Prix.`;
     default: return '';
   }
@@ -57,8 +57,9 @@ export function tuneRows(profile, carId, flags) {
     const lesson = lessonOf(row.setting), open = lab.done[lesson] === true;
     const tankless = row.setting === 'fuel' && CARS[carId].electric === true;
     const note = tankless ? 'This car has no petrol tank.' : !open ? `Opens with ${lessonName(lesson)} in the Lab.` : '';
-    // A forged value on a shut setting is shown as it is saved but the race ignores it (see usableTune).
-    return {...row, lesson, open: open && !tankless, locked: !open, tankless, current: tune[row.setting], effect: effectLine(row.setting, tune[row.setting]), note};
+    // A shut setting reads 0: the race ignores a value saved on it (see usableTune).
+    const current = open && !tankless ? tune[row.setting] : 0;
+    return {...row, lesson, open: open && !tankless, locked: !open, tankless, current, effect: effectLine(row.setting, current), note};
   });
 }
 
@@ -85,7 +86,9 @@ export function resetTuneIn(profile, carId, flags) {
   const zero = Object.fromEntries(TUNE_SETTINGS.map(name => [name, 0]));
   return {ok: true, reason: '', profile: withLab(profile, {...lab, tune: {...lab.tune, [carId]: zero}})};
 }
-export const stepIn = (profile, carId, setting, step, flags) => setTune(profile, carId, setting, step, {flags});
+// One step. Fuel has no step below a full tank, so the page and this call never save one.
+export const stepIn = (profile, carId, setting, step, flags) =>
+  setting === 'fuel' && !(step >= 0) ? {ok: false, reason: 'A full tank is as low as fuel goes: 0.', profile} : setTune(profile, carId, setting, step, {flags});
 
 // ---- the page ----
 export function tunePanel({rows, carName, message = ''}) {
@@ -118,11 +121,13 @@ const stockLapOf = (profile, car, courseId, rules) => {
 // (result.tunedLap = {percent, bonus} from settleTunedLap); time: the results screen's own time formatter.
 export function tunedLapLines({profile, flags, state, result, courseId, time}) {
   if (!tuningOn(flags) || state?.mode !== 'timetrial' || result?.completed !== true || state.lesson || state.drivingLesson) return [];
+  const lab = labOf(profile);
+  if (lab.version !== LAB_SAVE_VERSION) return [];   // a later game's Lab has no stock laps this game can read
   const rules = ruleSetOf(state);
   const stock = stockLapOf(profile, state.car, courseId, rules);
   const laps = (state.lapTimes ?? []).filter((seconds, index) => state.assistedLaps?.[index] !== true);
   const lap = bestLap(laps);
-  const anyOpen = TUNE_SETTINGS.some(name => labOf(profile).done[lessonOf(name)] === true);
+  const anyOpen = TUNE_SETTINGS.some(name => lab.done[lessonOf(name)] === true);
   if (!state.tune) {
     // A stock run: the stock lap it sets or keeps, for the player who has a setting open to be judged against.
     if (!anyOpen || stock === null) return [];

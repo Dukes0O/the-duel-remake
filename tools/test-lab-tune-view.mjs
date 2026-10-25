@@ -59,6 +59,8 @@ test('a step is saved through the Lab and refused when out of range, shut or wit
   assert.equal(stepIn(profile, CAR, 'brakes', 1, TUNING).ok, false, 'Braking has not been passed');
   assert.equal(stepIn(profile, CAR, 'wing', 1, LAB_ONLY).ok, false, 'tuning switch off');
   assert.equal(stepIn(profile, CAR, 'wing', 1, OFF).ok, false);
+  assert.equal(stepIn(withDone(profile, 'fuel'), CAR, 'fuel', -2, TUNING).ok, false, 'fuel has no step below a full tank');
+  assert.equal(stepIn(withDone(profile, 'fuel'), CAR, 'fuel', 2, TUNING).ok, true);
   assert.equal(stepIn(profile, CAR, 'wing__proto__', 1, TUNING).ok, false);
   assert.equal(stepIn(profile, '__proto__', 'wing', 1, TUNING).ok, false);
   assert.equal(stepIn(profile, 'no-such-car', 'wing', 1, TUNING).ok, false);
@@ -109,7 +111,8 @@ test('step effects quote the table, and a step of 0 is the standard car', () => 
   assert.match(effectLine('wing', 2), /Grip at 100 mph \+6%.*top speed -2%/);
   assert.match(effectLine('pressure', -2), /Grip \+2%.*top speed -1%/);
   assert.match(effectLine('brakes', 1), /Braking \+1%.*-2%/);
-  assert.match(effectLine('springs', -1), /off-road grip \+2%.*bumps \+8%/);
+  assert.match(effectLine('springs', -1), /off-road grip \+2%, bumps -8%/, 'softer: more off-road grip and smaller bumps');
+  assert.match(effectLine('springs', 1), /off-road grip -2%, bumps \+8%/);
   assert.match(effectLine('fuel', 2), /Half tank.*3%.*55%/);
   assert.equal(effectLine('nonsense', 1), '');
 });
@@ -218,4 +221,21 @@ test('meeting a bench goal passes its lesson and opens exactly that setting on t
     assert.equal(stepIn(profile, CAR, setting, setting === 'fuel' ? 2 : -1, TUNING).ok, true);
   }
   assert.deepEqual(tuneRows(profile, CAR, TUNING).map(row => row.open), [true, true, true, true, true]);
+});
+
+test('a later game Lab, or one with odd fields, never stops a result card from being built', () => {
+  const state = finished({tune: {wing: 1}}), stock = finished();
+  for (const lab of [{version: 2}, {version: 9, stockLaps: 5}, {version: 2, done: null}, {version: 2, done: 7, tune: 3}]) {
+    const profile = {...driven(), lab};
+    assert.deepEqual(tunedLapLines({profile, flags: TUNING, state, result: {completed: true, tunedLap: {percent: 1, bonus: 400}}, courseId: COURSE_ID, time}), []);
+    assert.deepEqual(tunedLapLines({profile, flags: TUNING, state: stock, result: {completed: true}, courseId: COURSE_ID, time}), []);
+  }
+});
+
+test('a value forged on a shut setting reads as 0 on the page and in the header', () => {
+  const profile = withLab(withDone(driven(), 'downforce'), {tune: {[CAR]: {pressure: 2, wing: 1, brakes: 0, springs: 0, fuel: 0}}});
+  const rows = tuneRows(profile, CAR, TUNING);
+  assert.deepEqual(rows.map(row => row.current), [0, 1, 0, 0, 0]);
+  assert.ok(tunePanel({rows, carName: 'Test'}).includes('TUNED'));
+  assert.ok(tunePanel({rows: tuneRows(withLab(driven(), {tune: {[CAR]: {pressure: 2, wing: 0, brakes: 0, springs: 0, fuel: 0}}}), CAR, TUNING), carName: 'Test'}).includes('STANDARD'));
 });

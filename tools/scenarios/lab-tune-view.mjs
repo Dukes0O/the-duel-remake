@@ -101,10 +101,7 @@ export async function run(context) {
     app.profile = {...app.profile, lab: {...app.profile.lab, tune: {...app.profile.lab.tune, [car]: {pressure: 0, wing: 0, brakes: 0, springs: 0, fuel: 0}}}}; app._saveProfile(); })()`);
   await race(context);
   const stock = await context.evaluate(`[...document.querySelectorAll('.tuned-lap')].map(p => p.textContent)`);
-  if (stock.length !== 0) {
-    // The first stock run has no earlier stock lap to quote until it is kept; either nothing or the stock lap line.
-    if (!/^Stock lap: /.test(stock[0])) throw Error(`A stock run should only name its stock lap: ${JSON.stringify(stock)}`);
-  }
+  if (stock.length !== 1 || !/^Stock lap: /.test(stock[0])) throw Error(`A stock run should name its stock lap: ${JSON.stringify(stock)}`);
   const kept = await context.evaluate(`Object.entries(window.__qaApp.profile.lab.stockLaps)`);
   if (kept.length !== 1) throw Error(`The stock lap should be kept: ${JSON.stringify(kept)}`);
   await context.screenshot('result-stock-lap');
