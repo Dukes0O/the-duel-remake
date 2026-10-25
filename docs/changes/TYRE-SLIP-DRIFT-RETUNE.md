@@ -27,7 +27,9 @@ result was chaotic (nearby values scored 4,684 and 3,041).
   in 97.6 s, exactly as recorded, and the released-rules replays (152 checks) are unchanged.
 - `tools/test-tyre-slip.mjs`: one new test (30 of 30): `launchScale` for the trial with and without the rules, any other course, arenas and
   recovery; and the trial reaches 55 mph in first gear clearly sooner with the rules on than off. Setting the new constant back to 2.5 makes it fail.
-- Lane tier and build: see the end of this note.
+- Lane tier `--changed --jobs 8 --keep-going` with current `integration/wasteland` merged: 32 of 36 suites pass, including `test-drift-trial`,
+  `test-tyre-slip` and the replay and world-signature guards. The four failures are the laptop-only suites `test-earned-cars-ui`, `test-course-kit`,
+  `test-medals` and `test-drive-through`. `npm run build` passes. Not run here: browser scenarios and the Windows-only suites.
 
 ## Removed
 
