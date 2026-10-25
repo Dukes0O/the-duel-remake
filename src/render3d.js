@@ -329,7 +329,8 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
-  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets);scene.add(yetiView.group);
+  // Neutral fur-only lift preserves the accepted texture/vertex-colour detail.
+  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets,{furTint:new THREE.Color(1.8,1.8,1.8)});scene.add(yetiView.group);
   const roadRoof=createRoadRoofOwner(vehicleAttachments,{yetiAssets});
   const combatScene=createCombatScene(vehicleAttachments, {
     loadFlameTexture: path => new THREE.TextureLoader().load(path),
