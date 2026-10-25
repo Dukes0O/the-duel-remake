@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { createSpeirlingVehicle, SPEIRLING_VEHICLE_DIMENSIONS } from '../src/speirling-vehicle.js';
+import { createSpeirlingVehicle as createUnloadedSpeirlingVehicle, loadSpeirlingVehicle, SPEIRLING_MODEL_URL, SPEIRLING_VEHICLE_DIMENSIONS } from '../src/speirling-vehicle.js';
 import { createClassicVehicle } from '../src/classic-vehicles.js';
 import { createBolideVehicle } from '../src/bolide-vehicle.js';
 import { createUnlockedVehicle } from '../src/unlock-vehicles.js';
@@ -27,6 +27,36 @@ let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
 const equal = (value, expected, label) => { assert.deepEqual(value, expected, label); checks++; };
 const near = (a, b, tolerance, label) => ok(Math.abs(a - b) <= tolerance, `${label}: ${a} vs ${b}`);
+
+// Load the actual committed GLB through the production loader contract.
+const carBytes = readFileSync(join(root, 'public', SPEIRLING_MODEL_URL));
+const carAsset = await new GLTFLoader().parseAsync(carBytes.buffer.slice(carBytes.byteOffset, carBytes.byteOffset + carBytes.byteLength), '');
+let requested;
+const createSpeirlingVehicle = await loadSpeirlingVehicle({ loadAsset: async path => { requested = path; return carAsset; } });
+equal(requested, '/assets/models/unlocks/mcmurtry_speirling.glb', 'Load the accepted runtime asset');
+equal(createUnloadedSpeirlingVehicle(), null, 'No substitute before an asset is loaded');
+await assert.rejects(loadSpeirlingVehicle({ loadAsset: async () => { throw Error('offline'); } }), /offline/);
+await assert.rejects(loadSpeirlingVehicle({ loadAsset: async () => ({ scene: new THREE.Group() }) }), /missing wheel_fl/);
+carAsset.scene.updateMatrixWorld(true);
+const assetMaterials = new Set(); let assetTriangles = 0;
+const assetBodyBounds = new THREE.Box3();
+carAsset.scene.traverse(node => {
+  if (!node.isMesh) return;
+  assetTriangles += (node.geometry.index?.count ?? node.geometry.attributes.position.count) / 3;
+  assetMaterials.add(node.material.name);
+  let parent = node, wheel = false;
+  while (parent) { wheel ||= /^wheel_[fr][lr]$/.test(parent.name); parent = parent.parent; }
+  if (!wheel) assetBodyBounds.union(new THREE.Box3().setFromObject(node));
+});
+ok(assetTriangles <= MAX_TRIANGLES, 'The GLB itself stays below 50,000 triangles');
+equal([...assetMaterials].sort(), ['metallic_blue_grey', 'satin_carbon', 'brown_tinted_clear_glass', 'red_tail_lamps', 'white_daylights', 'dark_machined_alloy', 'slick_rubber'].sort(), 'Exactly seven accepted asset materials');
+for (const name of ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr']) {
+  const wheel = carAsset.scene.getObjectByName(name);
+  ok(wheel, `${name}: named imported wheel`);
+  const hub = wheel.getWorldPosition(new THREE.Vector3());
+  near(hub.y, .292, .001, `${name}: wheel-centred origin`);
+  ok(name.startsWith('wheel_f') ? hub.z > 0 : hub.z < 0, `${name}: +Z forward`);
+}
 
 // 1. The contract.
 const vehicle = createSpeirlingVehicle(), d = vehicle.userData;
@@ -74,7 +104,8 @@ vehicle.traverseVisible(mesh => {
   const p = mesh.geometry.attributes.position;
   for (let i = 0; i < p.count; i++) bodyFloor = Math.min(bodyFloor, vertex.fromBufferAttribute(p, i).applyMatrix4(mesh.matrixWorld).y);
 });
-ok(bodyFloor > .02 && bodyFloor < .06, 'The skirt runs almost touching the road (a few cm), never through it');
+near(bodyFloor, assetBodyBounds.min.y, .000001, 'Imported floor retains the accepted GLB clearance');
+ok(bodyFloor > 0 && bodyFloor < .06, 'The accepted diffuser and skirt stay above the road');
 placeGroundedVehicle(vehicle, { x: 2, y: 5, z: 7, heading: 1.2 }, 0, 1);
 near(vehicle.position.y + meta.contactY, 5 + TIRE_CLEARANCE, .0001, 'Flat-surface grounding');
 for (const wheel of d.wheels) near(wheel.rotation.x, 1 / d.size.wheelRadius, .001, 'Travel-based wheel animation');
@@ -92,30 +123,35 @@ ok(helmet.max.y < canopyTop - .05, 'The driver sits inside the bubble, under its
 const glassBox = new THREE.Box3(); for (const mesh of glass) glassBox.union(new THREE.Box3().setFromBufferAttribute(mesh.geometry.attributes.position).applyMatrix4(mesh.matrixWorld));
 ok(glassBox.max.x - glassBox.min.x < .62 && glassBox.max.x - glassBox.min.x > .4, 'A narrow central bubble');
 ok(glassBox.min.y < .5, 'Its sides run down to the tub sill line');
-ok(d.damageMeshes.some(item => item.mesh.material.name === 'Rubber skirt'), 'A rubber skirt tucked in at the floor edge');
-for (const side of [-1, 1]) ok((heightAt(skins, side * .60, 1.06) ?? 0) > .80, `A tall front fender over the ${side > 0 ? 'left' : 'right'} wheel, higher than the nose`);
-ok((heightAt(skins, 0, 1.55) ?? 9) < .45, 'A low flat nose between the fenders');
-ok((heightAt(skins, .36, .10) ?? 0) > .40 && (heightAt(skins, .36, .10) ?? 0) < .56, 'The tub beside the cockpit is low and the canopy sits down in it');
+ok(d.damageMeshes.some(item => item.mesh.material.name === 'Black bodywork'), 'The GLB black lower body and skirt are retained');
+for (const side of [-1, 1]) ok((heightAt(skins, side * .60, .94) ?? 0) > heightAt(skins, 0, 1.45) + .30, `A tall front fender over the ${side > 0 ? 'left' : 'right'} wheel, higher than the nose`);
+ok((heightAt(skins, 0, 1.45) ?? 9) < .45, 'A low flat nose between the fenders');
+ok((heightAt(skins, .36, .10) ?? 0) > .25 && heightAt(skins, .36, .10) < canopyTop - .40, 'The GLB cabin channel is deep beside the low bubble');
 for (const side of [-1, 1]) ok((heightAt(skins, side * .60, -1.06) ?? 0) > .70, 'A wide rear haunch over each rear wheel');
 ok(bounds.max.y > .66 + .3 && bounds.max.y - 0 > heightAt(skins, 0, -1.5) + .3, 'A large wing standing well above the tail');
 const wing = d.damageMeshes.filter(item => item.mesh.material.name === 'Black bodywork');
 ok(wing.length > 0, 'Black bodywork: the lower body, intake, diffuser and wing');
 // The rear: two large rectangular black mesh grilles either side of a tall dark central spine,
 // red ring lights on the haunches, a diffuser; no round exits.
-const darkParts = d.damageMeshes.filter(item => item.mesh.material.name === 'Dark machined metal');
+const darkParts = d.damageMeshes.filter(item => item.mesh.material.name === 'Black bodywork');
 ok(darkParts.length > 0, 'Dark mesh grilles on the tail');
-for (const x of [-.27, .27]) { ray.set(new THREE.Vector3(x, .37, -3), new THREE.Vector3(0, 0, 1)); const hit = ray.intersectObjects(darkParts.map(item => item.mesh), false)[0]; ok(hit && hit.point.z < -1.6, `A black mesh grille at x ${x} on the tail face`); }
+for (const x of [-.37, .37]) { ray.set(new THREE.Vector3(x, .315, -3), new THREE.Vector3(0, 0, 1)); const hit = ray.intersectObjects(darkParts.map(item => item.mesh), false)[0]; ok(hit && hit.point.z < -1.4, `A black mesh grille at x ${x} on the tail face`); }
 const blackParts = d.damageMeshes.filter(item => item.mesh.material.name === 'Black bodywork').map(item => item.mesh);
-ray.set(new THREE.Vector3(0, .5, -3), new THREE.Vector3(0, 0, 1)); const spineHit = ray.intersectObjects(blackParts, false)[0];
-ok(spineHit && spineHit.point.z < -1.1, 'A tall dark spine down the middle of the tail');
+ray.set(new THREE.Vector3(0, .5, -3), new THREE.Vector3(0, 0, 1)); const spineHit = ray.intersectObjects(skins, false)[0];
+ok(spineHit && spineHit.point.z < -1.1, 'The accepted painted spine down the middle of the tail');
 ray.set(new THREE.Vector3(0, 3, -.9), down); const spineTop = ray.intersectObjects(blackParts, false)[0];
 ok(spineTop && spineTop.point.y > .7, 'The spine and its fin stand tall behind the cabin');
-for (const side of [-1, 1]) { ray.set(new THREE.Vector3(side * .60 + .042, .50, -3), new THREE.Vector3(0, 0, 1)); const brake = ray.intersectObjects(d.brakeLights, false)[0]; ok(brake && brake.point.z < -1.5, `A round red ring light on the ${side > 0 ? 'left' : 'right'} haunch's rear face`); }
-ray.set(new THREE.Vector3(0, .33, -3), new THREE.Vector3(0, 0, 1)); const diamond = ray.intersectObjects(d.brakeLights, false)[0];
-ok(diamond && diamond.point.z < -1.65, 'A red diamond light low at the spine point');
+for (const side of [-1, 1]) { ray.set(new THREE.Vector3(side * .665 + .023, .546, -3), new THREE.Vector3(0, 0, 1)); const brake = ray.intersectObjects(d.brakeLights, false)[0]; ok(brake && brake.point.z < -1.5, `A round red ring light on the ${side > 0 ? 'left' : 'right'} haunch's rear face`); }
+ray.set(new THREE.Vector3(.042, .326, -3), new THREE.Vector3(0, 0, 1)); const diamond = ray.intersectObjects(d.brakeLights, false)[0];
+ok(diamond && diamond.point.z < -1.5, 'A red diamond light low at the spine point');
 // The nose: a wide black intake spanning the front between the fenders.
 ray.set(new THREE.Vector3(0, .17, 5), new THREE.Vector3(0, 0, -1)); const noseHit = ray.intersectObjects(wing.map(item => item.mesh), false)[0];
-ok(noseHit && noseHit.point.z > 1.6, 'A black intake across the nose');
+ok(noseHit && noseHit.point.z > 1.5, 'A black intake across the nose');
+// Imported surfaces must match the accepted asset exactly, not the retired builder.
+const sourceSkins = []; carAsset.scene.traverse(node => { if (node.isMesh && node.material.name === 'metallic_blue_grey') sourceSkins.push(node); });
+for (const [x, z] of [[-.6, .94], [.6, .94], [0, 1.45], [.36, .1], [-.6, -1.06], [.6, -1.06], [0, -1.06]]) {
+  near(heightAt(skins, x, z), heightAt(sourceSkins, x, z), .000001, `Accepted surface retained at ${x}, ${z}`);
+}
 ok(d.fractures.length === 4 && d.fractures.every(f => f.rest.length >= 60), 'Four glazing damage zones, all lying on real glass');
 for (const steer of [-1, -.5, 0, .5, 1]) { updateDriver(d.driver, steer, .14); for (const arm of d.driver.userData.arms) ok(arm.hand.position.toArray().every(Number.isFinite), 'Finite driver steering pose'); }
 updateDriver(d.driver, 0);

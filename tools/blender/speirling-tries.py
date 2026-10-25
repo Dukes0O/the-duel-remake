@@ -13,6 +13,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--root', default='.')
 parser.add_argument('--sheet', action='store_true')
+parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--views', nargs='+', help='optional camera subset, for framing corrections')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(args.root).resolve()
@@ -21,6 +22,12 @@ runtime = root / 'public/assets/models/unlocks/mcmurtry_speirling.glb'
 looks = root / 'docs/board/looks/speirling'
 views = ('front-three-quarter', 'side', 'rear', 'rear-three-quarter', 'above')
 studies = ('mcmurtry_speirling',)
+
+if args.paths_only:
+    print(json.dumps({'blend': [], 'glb': [str(runtime)], 'json': [],
+                      'evidence': [str(out / studies[0] / (view + '.png')) for view in views],
+                      'summary': [str(out / 'summary.json'), str(looks / 'round-5.jpg')]}))
+    raise SystemExit(0)
 
 if args.sheet:
     from PIL import Image, ImageDraw, ImageFont
@@ -44,7 +51,7 @@ if args.sheet:
             label = f'{name} | {report[row]["triangles"]:,} tris' if col == 0 else name
             draw.text((x + 12, y + cell_h - 29), label, font=small, fill='white')
     looks.mkdir(parents=True, exist_ok=True)
-    target = looks / 'blender-final.jpg'
+    target = looks / 'round-5.jpg'
     for quality in (88, 82, 76, 70, 64, 58):
         sheet.save(target, quality=quality, optimize=True)
         if target.stat().st_size <= 500000:

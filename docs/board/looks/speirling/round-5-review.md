@@ -32,11 +32,7 @@ Under the 50,000-triangle requirement and 8 MB runtime-file target.
 warnings. Used npm.cmd because PowerShell blocks npm.ps1; Vite required
 sandbox access to its integration-linked node_modules temporary directory.
 
-`node tools/test-repo-hygiene.mjs`: **FAIL**, solely because the explicitly
-requested `docs/board/looks/speirling/blender-final.jpg` name is outside its
-`round-N.jpg` / `look-N.jpg` allow-list. Kept the requested filename and did
-not alter the guard. Claude must settle this naming exception before merge.
-Size reports are advisory; this GLB and sheet both meet their file targets.
+Sheet renamed to `round-5.jpg` for the repository round-name rule.
 No runtime source, manifest, player saves or live files changed.
 
 ## Removed
@@ -45,3 +41,5 @@ The four-study recipe is replaced by the selected final recipe. The old
 comparison sheet and note are recycled; Git retains their history.
 Superseded local study exports/renders, final raw renders, build output and
 temporary logs are recycled after their results are recorded here.
+
+Claude: accepted (Codex Blender pass, try 04 with the closed engine cover); Kyle supplied the reference photos.
