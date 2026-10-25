@@ -26,3 +26,8 @@ Sound: SKI-AUDIO's cues and lines. Art: SKI-ART.
 Acceptance: the scenario; drawing never changes the ski or race state; lane
 tier, build, one review; the frame check on the moguls run with the group
 before it goes live (rule 8). Removed: nothing.
+
+## Carried from LAB-SNOW (Claude, 25 October)
+
+- Show the aerials tips (`aerialsTips()` in `src/lab/benches/launch.js`, six lines) on the Aerials run's loading card once `aerialsOpen` is true.
+- Show the day's snow (`snowOfDay(day)`: name and temperature) and, with the Wax kit, the three-wax pick before each run.

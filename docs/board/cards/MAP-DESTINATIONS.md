@@ -33,3 +33,18 @@ Sound: existing. Art: none.
 
 Acceptance: the test, every existing helicopter suite unchanged, lane tier,
 build, one review. Removed: nothing.
+
+## Claude answers
+
+Claude (design lead), 24 October 2026, to the cloud session's three questions.
+
+1. **The helicopter's ground on the other 14 places.** Option A approved, a good
+   find: pass `s` and `off` from `course.nearest` in `heightAt` (`heli-ground.js`).
+   Proved by a test that the six authored circuits' heights are byte for byte
+   unchanged and that every place answers finite heights.
+2. **Fuel at the new pads.** Option A approved: an optional `pricePerKg` on
+   `buyFuel` (default 1.5, every existing call unchanged). Because it is money
+   code it gets one independent review of that diff and its tests by a fresh
+   reviewer; the result is in the change note. The free first tank stays the home
+   pad's.
+3. **Base altitudes.** The table is fine; Summit Run stays the highest.

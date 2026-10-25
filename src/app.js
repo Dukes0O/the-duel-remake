@@ -4,6 +4,7 @@ import {DRIVE_RADIO_LINES} from './lessons/drive-radio-lines.js';
 import {createRadioChain} from './lessons/radio-voice.js';
 import {mountDriveLessonUi,driveLessonCompletion,settleDriveLessonPreparation,driveLessonGhostPose,driveLessonBoardModel} from './lessons/drive-lesson-ui.js';
 import {racingLineFor,buildSpeedProfile} from './race-lines.js';
+import {unstuckInput} from './demo-unstuck.js';
 import {intelLevel,recordIntelLap,purchaseIntel} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, beginCup, recordCupRace, abandonCup} from './grand-prix-cups.js';
 import {settleCup} from './progression.js';
@@ -1071,6 +1072,8 @@ export class App {
       if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);
       if(recorded.scoreBest!=null){result.driftScoreBest=recorded.scoreBest;result.driftScoreImproved=recorded.scoreImproved;}
       Object.assign(result,{creditReward:awarded.reward,creditCharge:awarded.charge,policeFineCharge:awarded.policeFineCharge||0,creditBreakdown:awarded.breakdown,personalBest:awarded.personalBest,personalBestStatus:awarded.personalBestStatus,previousBest:awarded.previousBest,best:awarded.best,winStreak:awarded.winStreak,milestoneAwards:awarded.milestones});
+      // The Coast Cup finished in the Sirena (docs/THE_DEEP.md 6.2): the view and sound read the event.
+      if(awarded.coastCup){result.coastCup=awarded.coastCup.paid;for(const event of awarded.coastCup.events)this.duel.emit(event);}
       // Earned cars (docs/EARNED_CARS.md): the new medal and any car it earned, with one bonus cue.
       if(awarded.medal||awarded.earnedCars?.length){
         Object.assign(result,{medal:awarded.medal,earnedCars:awarded.earnedCars||[]});
@@ -2109,6 +2112,10 @@ export class App {
     if (!d.diff.autoShift) {
       d.setInput({ shiftUp: st.revs > .95, shiftDown: st.revs < .48 && st.gear > 0 });
     }
+
+    // Boxed in off the road: back out and go round the wall (null unless stuck for a few seconds).
+    const rescue = unstuckInput(this, d);
+    if (rescue) { d.setInput({ ...rescue, boost: false }); return; }
 
     if (st.tyreSlipRules === true && d.course.def.kind === 'drift' && !st.airborne && st.speedMph >= 0) {
       this._driveSlipDrift();

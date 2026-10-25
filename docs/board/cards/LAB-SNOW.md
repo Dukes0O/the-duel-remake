@@ -25,3 +25,11 @@ Sound: `lab.splash` reused for the launcher's landing; Brian's lines from
 LAB-RADIO. Art: LAB-ART's launcher and snow trays.
 
 Acceptance: the test, lane tier, build, one review. Removed: nothing.
+
+## Claude answers
+
+Settled 25 October: all four answers in the question file are approved as built. (1) The Wax kit line in `docs/LAB.md` 4.3
+now says the right wax glides about 3% faster than the wrong one on a slalom run and about 1% faster than no wax, and
+`tools/test-lab-snow.mjs` checks the sentence against the ski rules' numbers. (2) The Aerials reward opens the run (with the
+Lab on) and the tips, both built from the ski rules' own numbers; the lines are on SKI-HELI and SKI-VIEW. (3) The day's
+snow comes from the seeded play day and the wax pick is not saved. (4) The launcher's landing uses `lab.splash`.

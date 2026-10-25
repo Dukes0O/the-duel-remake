@@ -40,7 +40,7 @@ equal(medalRequirement('bugatti_bolide'), { kind: 'medals', medals: 24, gold: 6 
 ok(MEDAL_CARS.includes('bugatti_bolide'), 'It is a medal car');
 equal(spec.factoryMaxed, true, 'Arrives fully tuned');
 ok(!Object.hasOwn(CAR_PRICES, 'bugatti_bolide') && !Object.hasOwn(spec, 'price'), 'No price, no Buy button');
-equal(Object.keys(CARS).at(-1), 'bugatti_bolide', 'Appended after the cars already there, last of the medal cars');
+equal(MEDAL_CARS.at(-1), 'bugatti_bolide', 'Appended after the cars already there, last of the medal cars (the Lab-restored Sirena comes after it in the roster)');
 const full = Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, 3]));
 const tuned = upgradedCar(spec, full), jesko = upgradedCar(CARS.koenigsegg_jesko, full);
 near(tuned.topSpeed, 307.19, 0.01, 'Fully tuned top speed is about 307 mph');

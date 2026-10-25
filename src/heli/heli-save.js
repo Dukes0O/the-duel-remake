@@ -26,7 +26,8 @@ const validCourse = value => typeof value === 'string' && COURSE.some(stage => s
 const validCar = value => typeof value === 'string' && Object.hasOwn(CARS, value);
 const tenthsOf = kg => Math.max(0, Math.min(TANK_TENTHS, Math.round(Number(kg) * 10)));
 // 1.5 credits per kilogram is 0.15 credits per tenth, rounded up to a whole credit.
-const priceOfTenths = tenths => Math.ceil(tenths * 15 / 100);
+// `rate` is the price in tenths of a credit per kilogram (15 for the home pump).
+const priceOfTenths = (tenths, rate = 15) => Math.ceil(tenths * rate / 100);
 
 export function createHeli() {
   return {version: HELI_SAVE_VERSION, fuelKg: 0,
@@ -78,22 +79,26 @@ const off = profile => ({ok: false, reason: NOT_AVAILABLE, profile});
 const failure = (profile, reason) => ({ok: false, reason, profile});
 const withHeli = (profile, heli) => ({...profile, heli});
 
-// kg may be Infinity, which means fill up. The first tank is free.
-export function buyFuel(profile, kg, {enabled} = {}) {
+// kg may be Infinity, which means fill up. The first tank is free. pricePerKg is
+// the pump's price in credits a kilogram where it is not the home pump's 1.5 (the
+// pilot's map has dearer pads, docs/PILOT_MAP.md section 4); left out, nothing changes.
+// A price is kept to a tenth of a credit (1.55 reads as 1.6); one that is not a positive number is 1.5.
+export function buyFuel(profile, kg, {enabled, pricePerKg} = {}) {
   if (enabled !== true) return off(profile);
+  const rate = Number.isFinite(pricePerKg) && pricePerKg > 0 ? Math.max(1, Math.round(pricePerKg * 10)) : 15;
   const heli = heliOf(profile), have = tenthsOf(heli.fuelKg), space = TANK_TENTHS - have;
   if (space <= 0) return failure(profile, 'The tank is full.');
   // Round down to a whole tenth, so asking for 0.19 kg buys 0.1 kg and never more than was asked.
   const asked = Number(kg) > 0 ? Math.floor(Math.min(Number(kg), HELI_MONEY.tankKg) * 10 + 1e-9) : 0;
   const wanted = Math.min(space, asked);
   if (wanted < 1) return failure(profile, 'Choose how much fuel to buy.');
-  let tenths = wanted, cost = heli.refuels === 0 ? 0 : priceOfTenths(tenths);
+  let tenths = wanted, cost = heli.refuels === 0 ? 0 : priceOfTenths(tenths, rate);
   const wallet = credits(profile);
   if (cost > wallet) {
     // Buy only what the credits pay for.
-    tenths = Math.floor(wallet * 20 / 3);
+    tenths = Math.floor(wallet * 100 / rate);
     if (tenths <= 0) return failure(profile, 'You need 1 more credit.');
-    cost = priceOfTenths(tenths);
+    cost = priceOfTenths(tenths, rate);
   }
   const bought = {...heli, fuelKg: (have + tenths) / 10, refuels: Math.min(MAX_COUNT, heli.refuels + 1)};
   return {ok: true, profile: {...withHeli(profile, bought), credits: wallet - cost}, kg: tenths / 10, cost,
@@ -167,7 +172,10 @@ export function placeCar(profile, carId, courseId, {enabled} = {}) {
   return {ok: true, profile: withHeli(profile, {...heli, carsAt: {...heli.carsAt, [carId]: courseId}})};
 }
 
-export function carAt(profile, carId, fallback = 'tremblant-woods') {
+// Where a car stands before the helicopter has ever moved it: the home pad's course, except for the
+// Sirena, which the Lab trucks to Pacific Canyon for the Coast Cup (docs/THE_DEEP.md 6.2).
+export const FIRST_PLACE = Object.freeze({falcone_sirena: 'pacific-canyon'});
+export function carAt(profile, carId, fallback = FIRST_PLACE[carId] ?? 'tremblant-woods') {
   const heli = heliOf(profile);
   return validCar(carId) && Object.hasOwn(heli.carsAt, carId) ? heli.carsAt[carId] : fallback;
 }
