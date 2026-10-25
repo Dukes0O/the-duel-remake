@@ -141,7 +141,10 @@ loader reads the same ids.
 
 ## Changed assertions
 
-None. Existing checks pass as they were.
+- `tools/test-deep-look.mjs`: the list of approved imports of Deep modules
+  gains nine rows, all for the new `tools/test-deep-life.mjs` (the Deep's
+  isolation rule asks every file outside `src/deep/` that imports a Deep
+  module to be listed). Nothing about the rule or its other rows changed.
 
 ## Not done
 
@@ -157,4 +160,12 @@ None. Existing checks pass as they were.
 
 ## Tests
 
-(Filled in at the end of the card.)
+- `node --test tools/test-deep-life.mjs`: 22 checks pass (about 3 s).
+- Lane tier `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`
+  on the merged tip: 39 passed, 0 failed (it first failed once on the import
+  list above; fixed, rerun clean). `npm run build`: built.
+- Browser: `scenario deep-life` (High) passed with 0 warnings and 0 errors, every
+  model loaded, eight pictures and the cost table above; the Performance
+  setting ran the same scenario clean.
+- Race fingerprints: not touched (no race code, no race stream; the checks
+  assert it).

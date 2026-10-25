@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -196,8 +197,8 @@ test('the rules only read the car, never use Math.random, and import nothing fro
     const plan = planSeaLife(zones[0].zone);
     for (const spec of [...plan.turtle, ...plan.ray, ...plan.crab, ...plan['sea-lion']]) run(spec, 5, readOnlyCar(1, -9, 1));
   } finally { Math.random = random; }
-  for (const file of ['src/deep/sea-life-rules.js', 'src/deep/sea-life.js']) {
-    const text = await readFile(`${root}${file}`, 'utf8');
+  for (const file of ['sea-life-rules.js', 'sea-life.js']) {
+    const text = await readFile(join(root, 'src', 'deep', file), 'utf8');
     assert.ok(!/Math\.random|performance\.now|Date\.now/.test(text), `${file}: no clock or random of its own`);
     const imports = [...text.matchAll(/from '([^']+)'/g)].map(m => m[1]);
     for (const path of imports) assert.ok(!/game|duel|race|combat|course|progression|save/i.test(path), `${file}: imports ${path}`);

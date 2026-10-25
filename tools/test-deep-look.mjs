@@ -251,6 +251,16 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'src/progression.js|./deep/sirena-car.js',
     'tools/test-sirena-car.mjs|../src/deep/sirena-car.js',
     'tools/test-sirena-car.mjs|../src/deep/deep-sirena.js',
+    // DEEP-LIFE: the sea life's checks run its rules and drawing code in Node on the real Kelp Coast.
+    'tools/test-deep-life.mjs|../src/deep/deep-ramp.js',
+    'tools/test-deep-life.mjs|../src/deep/deep-zone.js',
+    'tools/test-deep-life.mjs|../src/deep/zones/kelp-coast.js',
+    'tools/test-deep-life.mjs|../src/deep/zone-floor.js',
+    'tools/test-deep-life.mjs|../src/deep/water-shader.js',
+    'tools/test-deep-life.mjs|../src/deep/fish-rules.js',
+    'tools/test-deep-life.mjs|../src/deep/fish-school.js',
+    'tools/test-deep-life.mjs|../src/deep/sea-life-rules.js',
+    'tools/test-deep-life.mjs|../src/deep/sea-life.js',
   ]);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))
