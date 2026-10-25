@@ -210,7 +210,8 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-cli-2026-10-25
     needs: [LAB-VIEW, LAB-FAN]
     locks: []
     flag: "lab"
