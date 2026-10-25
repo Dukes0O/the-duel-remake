@@ -132,11 +132,11 @@ function clearCove(course, cove) {
   }
   return true;
 }
-function blocked(first, last, obstacles, heading, halfLength = 0) {
+function blocked(first, last, obstacles, heading, halfLength = 0, halfWidth = WIDTH / 2) {
   // Measured modelMinY/modelMaxY are retained explicitly. Omitting
   // vertical vehicle dimensions deliberately excludes the whole horizontal bound.
   return obstacles.some(obstacle => sweepObstacle({ x: first.x, z: first.z },
-    { x: last.x, z: last.z }, obstacle, heading, { halfWidth: WIDTH / 2, halfLength }));
+    { x: last.x, z: last.z }, obstacle, heading, { halfWidth, halfLength }));
 }
 function freeze(value) {
   for (const child of Object.values(value)) if (child && typeof child === 'object') freeze(child);
@@ -173,12 +173,72 @@ export function buildDeepRamp(course, options = {}) {
       const center = ramp.pointAt(horizontal / 2);
       const footprint = center && rectangle(course, center, ramp.heading, WIDTH / 2, horizontal / 2);
       if (!footprint) continue;
-      return freeze({ courseId: course.def.id, atDistance, side: 'left', width: WIDTH,
+      const rebuilt = rebuildRamp(course, { courseId: course.def.id, atDistance, side: 'left', width: WIDTH,
         length: ramp.length, endDepth: SEA_LEVEL - last.y, heading: ramp.heading,
         points: ramp.points, footprint, cove, shoreline: { center: ramp.shoreline, edges },
         clearance: { claim: 'generated obstacle bounds and sea-stack footprints',
           obstacles: obstacles.length, seaStacks: stacks.length } });
+      // DEEP-RAMP-2: clearance must cover the new fall-line footprint, not the old sheet.
+      const rampBounds = bounds.filter(obstacle => !rampOpening({deepRamp:rebuilt},obstacle) &&
+        !['tree','rock'].includes(obstacle.kind));
+      if (blocked(rebuilt.points[0], rebuilt.points.at(-1), rampBounds, rebuilt.heading, 0, 6) ||
+          blocked(rebuilt.cove.center, rebuilt.cove.center, bounds, rebuilt.heading, 6, 6) ||
+          !clearOffshore(course, rebuilt.cove.center.x, rebuilt.cove.center.z, Math.hypot(6,6)) || !clearCove(course, rebuilt.cove)) continue;
+      return rebuilt;
     }
   }
   return null;
+}
+
+// DEEP-RAMP-2: retain the turn-off, replace the diagonal sheet with a graded fall-line ramp.
+function rebuildRamp(course, legacy) {
+  const heading = course.at(legacy.atDistance).heading + Math.PI / 2;
+  const start = course.worldAt(legacy.atDistance, course.roadHalfWidthAt(legacy.atDistance) + .2);
+  const horizontal = Math.sqrt(LENGTH ** 2 - (start.y - TARGET) ** 2);
+  const points = Array.from({ length: 121 }, (_, progress) => ({
+    x: start.x + Math.sin(heading) * horizontal * progress / LENGTH,
+    z: start.z + Math.cos(heading) * horizontal * progress / LENGTH,
+    y: start.y + (TARGET - start.y) * progress / LENGTH,
+    horizontal: horizontal * progress / LENGTH, progress,
+  }));
+  const shoreProgress = LENGTH * (SEA_LEVEL - start.y) / (TARGET - start.y);
+  const shore = { x: start.x + Math.sin(heading) * horizontal * shoreProgress / LENGTH,
+    z: start.z + Math.cos(heading) * horizontal * shoreProgress / LENGTH,
+    y: SEA_LEVEL, progress: shoreProgress, horizontal: horizontal * shoreProgress / LENGTH };
+  const last = points.at(-1);
+  return freeze({ ...legacy, heading, diveHeading: legacy.heading, width: 12, length: LENGTH, points,
+    footprint: rectangle(course, points[60], heading, 6, horizontal / 2),
+    cove: rectangle(course, last, heading, 6, 6),
+    shoreline: { center: shore, edges: [-6, 6].map(offset => ({ ...shore, offset,
+      x: shore.x + Math.cos(heading) * offset, z: shore.z - Math.sin(heading) * offset })) } });
+}
+
+// DEEP-RAMP-2: shared local frame for terrain, guidance and camera; no course mutation.
+export function rampCoordinates(ramp, point) {
+  const first = ramp.points[0], dx = point.x - first.x, dz = point.z - first.z;
+  return { along: dx * Math.sin(ramp.heading) + dz * Math.cos(ramp.heading),
+    side: dx * Math.cos(ramp.heading) - dz * Math.sin(ramp.heading) };
+}
+export function rampGrade(ramp, point, naturalY) {
+  const { along, side } = rampCoordinates(ramp, point), end = ramp.points.at(-1);
+  if (along < -1e-6 || along > end.horizontal + 6 + 1e-6 || Math.abs(side) >= 14) return naturalY;
+  const y = ramp.points[0].y + (end.y - ramp.points[0].y) * Math.min(along, end.horizontal) / end.horizontal;
+  const blend = Math.max(0, Math.min(1, (Math.abs(side) - 9) / 5));
+  return y + (naturalY - y) * blend;
+}
+
+// DEEP-RAMP-2: only the road-side rail sections crossing the turn-off are omitted.
+export function rampOpening(course, obstacle) {
+  if (!course.deepRamp || !obstacle.barrier) return false;
+  const { along, side } = rampCoordinates(course.deepRamp, obstacle);
+  return Math.abs(side) < 11 && Math.abs(along) < 6;
+}
+
+// DEEP-RAMP-2: clear generated trees and loose rocks only inside the earthworks.
+export function rampClearsScenery(course, point) {
+  if (!course.deepRamp) return false;
+  const world = Number.isFinite(point.x) && Number.isFinite(point.z) ? point : course.worldAt(point.s, point.off);
+  const { along, side } = rampCoordinates(course.deepRamp, world);
+  const radius = Math.max(point.halfX || point.radiusX || 0, point.halfZ || point.radiusZ || 0, (point.scale || 0) * 2 || 0);
+  return along >= -radius && along <= course.deepRamp.points.at(-1).horizontal + 6 + radius && Math.abs(side) < 14 + radius;
 }

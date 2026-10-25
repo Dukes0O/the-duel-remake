@@ -3,7 +3,7 @@ import {createDriveLesson,stepDriveLesson,DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,D
 const DRIVE_LESSON_ROWS=Object.freeze({corner:DRIVE_LESSON_CORNERS,line:DRIVE_LINE_ROWS,gears:DRIVE_GEAR_ROWS,snow:DRIVE_SNOW_ROWS});
 const LESSON_MANUAL_BOX=new WeakMap(); // difficulty setting -> the same setting with the manual box and no engine damage
 import {isSummitAttack} from './summit-attack.js';
-import {copyDeepProviders,clearDeepJourney,initializeDeepJourney,deepProtected,checkDeepDeparture,stepDeepJourney,queueDeepChoice,deepEnvironment,surfaceDeep} from './deep/deep-journey.js'; // DEEP-EXPLORER: Surface hook
+import {copyDeepProviders,clearDeepJourney,initializeDeepJourney,deepProtected,checkDeepDeparture,stepDeepJourney,queueDeepChoice,deepEnvironment,stepRampDriving,surfaceDeep} from './deep/deep-journey.js'; // DEEP-EXPLORER: Surface hook
 // DEEP-SIRENA-VIEW: the Sirena story and the sea-life log, stepped in a dive.
 import {stepDeepStory,pingDeepStory} from './deep/deep-story.js';
 import * as simDriving from './sim-driving.js';
@@ -659,7 +659,10 @@ export class Duel {
     // Within the actual spur, motion decides departure before race outcomes.
     // Ordinary and flag-off racing retain their established call order.
     const droveDeep = this._deepProtected();
-    if(droveDeep){this._drive(dt);if(checkDeepDeparture(this)||s.status!=='racing')return;}
+    if (droveDeep) { // DEEP-RAMP-2: the ramp owns its guided driving step.
+      if (!stepRampDriving(this, dt)) this._drive(dt);
+      if (checkDeepDeparture(this) || s.status !== 'racing') return;
+    }
     const droveSpur = !!s.hiddenRoadJourney && !s.onFoot && s.impactTimer <= 0 && onHiddenRoad(this.course, s);
     const droveHollowApproach = nearMuddyHollowDeparture(this);
     if (droveSpur) {

@@ -1,3 +1,4 @@
+import { rampClearsScenery } from './deep/deep-ramp.js'; // DEEP-RAMP-2
 import {addCircuitLandmarks,finishRidgeKitMaterials} from './circuit-landmarks.js';
 import {createTrackKits,bindTrackKits} from './track-kits.js';
 import {applySnowTerrain,winterTerrainMaterial,snowPineIds,snowRockFeatures,winterWeight,createSnowWorld,bindSnowWorld,winterSurfaceMaterial} from './snow-world.js';
@@ -326,7 +327,7 @@ function addHiddenRoad(group, course) {
 
 function addLandscape(group,course,trackKits){
   addMountainLandscape(group,course);
-  const trees=course.features.trees;
+  const trees=course.features.trees.filter(tree=>!rampClearsScenery(course,tree)); // DEEP-RAMP-2
   const pine=course.def.theme!=='desert';
   if(pine)return course.def.id==='ardennes-forest'&&course.def.beech
     ?addPineTrees(group,trees,course,{kits:trackKits}):addPineTrees(group,trees,course);

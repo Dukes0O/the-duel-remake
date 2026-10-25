@@ -1,3 +1,4 @@
+import { rampClearsScenery } from './deep/deep-ramp.js'; // DEEP-RAMP-2
 import {pitRoadAt} from './pit-lane.js';
 import * as THREE from 'three';
 import { registerSceneSystem } from './scene-systems.js';
@@ -44,7 +45,7 @@ export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
   const city=course.def.theme==='city',cityPlacement=city?createCityDecorationPlacement(course):null;
   const color=new THREE.Color();
   const point=(s,off)=>{
-    const p=course.groundAt(s,off);
+    const p=(course.deepNaturalGroundAt??course.groundAt).call(course,s,off); // DEEP-RAMP-2: preserve placement before omission.
     if(course.def.ridgeLandform)p.y=renderedGroundHeight(course,{...p,s,off},{requireSurface:true});
     if(!Number.isFinite(p.y))throw Error('Circuit scenery has no rendered ground.');
     return p;
@@ -74,7 +75,7 @@ export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
   let blocked=false;
   // A piece found on a road moves outward by 9 m, as the own-stretch rule does, up to five times;
   // if it still lies on a road it is dropped (the seeded sequence is untouched: nothing here uses the rng).
-  const foliagePoint=(s,off)=>{const side=Math.sign(off)||1;for(let i=0;i<5&&(course.surfaceAt(s,off).road||course.tunnelAt(s)&&Math.abs(off)<35);i++)off+=side*9;
+  const foliagePoint=(s,off)=>{const side=Math.sign(off)||1;for(let i=0;i<5&&((course.deepNaturalSurfaceAt??course.surfaceAt).call(course,s,off).road||course.tunnelAt(s)&&Math.abs(off)<35);i++)off+=side*9;
     let p=point(s,off),moves=0,onRoad=onAnyRoad(p);
     while(moves<5&&onRoad){off+=side*9;p=point(s,off);moves++;onRoad=onAnyRoad(p);}
     blocked=onRoad;roadAvoid.placed++;if(blocked)roadAvoid.dropped++;else if(moves)roadAvoid.moved++;
@@ -94,6 +95,9 @@ export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
         if(pitRoadAt(course,nearest.s,nearest.lateral))omitted.add(i);
       }
       if(options.kind==='foliage'&&omitFoliageAt?.(o.position.x,o.position.z))omitted.add(i);
+      // DEEP-RAMP-2: omit after every placement/colour RNG call, keeping all other instances exact.
+      if (course.deepRamp && ['foliage','grit','boulders'].includes(options.kind) &&
+          rampClearsScenery(course,{x:o.position.x,z:o.position.z,radiusX:options.kind==='boulders'?boulders[i].radiusX:0,radiusZ:options.kind==='boulders'?boulders[i].radiusZ:0})) omitted.add(i);
       if(onRoad)omitted.add(i);}
     if(cityPlacement&&(options.kind==='foliage'||options.kind==='grit'))(group.userData.cityDecorations??=[]).push({kind:options.kind,count,relocated,omitted:omitted.size});
     mesh.receiveShadow=true;mesh.castShadow=!!options.castShadow;

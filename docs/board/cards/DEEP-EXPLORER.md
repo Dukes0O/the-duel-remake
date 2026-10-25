@@ -54,3 +54,20 @@ size cap, pins only for real finds, the objective list against the save;
 a picture sheet of the chart part-explored and fully explored with pins and
 Ana's list for Claude's look check; deep scenarios and deep-frames (laptop
 quiet) at most 18.5 ms p95; lane tier and build.
+
+## Added (Kyle, 25 October 2026): logging the creatures you can see
+
+Kyle found a turtle and it did not log. DEEP-LOG logs a creature only at its
+fixed spot (within 6 m, under 15 km/h, 1 s), but the creatures move, so
+driving up to the animal itself often does not count, and nothing shows it.
+
+6. **Log what you see.** A creature logs when the car holds within about 8 m
+   of the creature itself (its position from the sea-life rules, which must
+   stay repeatable from time and inputs, never the renderer) or of its fixed
+   spot, under about 20 km/h, for 1 s. Pearls keep their 3 m rule.
+7. **Show the logging.** While a loggable creature or pearl is in range and
+   the car is slow enough, a small ring fills over 1 s with the creature's
+   name ("Logging: Green turtle"); leaving range or speeding up empties it.
+   When it completes, the existing logged cue, the log card and Ana's line.
+Tests: a moving turtle followed slowly logs; a fast pass does not; the spot
+still works; every creature in the Kelp Coast can be logged on every route.
