@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as THREE from 'three';
 import {skiKeys, skiCameraPose, backdropEye, skierPose, skiDeepSnow, loadingCardMarkup, resultCardMarkup, skiMenuMarkup,
-  skiBoardMarkup, createSkiView, SKI_BACKDROP, SKI_CAMERA_VIEWS, zoneGrid} from '../src/ski/ski-view.js';
+  skiBoardMarkup, createSkiView, SKI_BACKDROP, SKI_CAMERA_VIEWS, zoneGrid, drawnGround, hazeAt} from '../src/ski/ski-view.js';
 import {skiControlsHelp} from '../src/controls-help.js';
 import {createSkiRun, stepSkiRun, skiRunView, skiRunFingerprint, SKI_RUN_IDS} from '../src/ski/ski-session.js';
 import {skiZone} from '../src/ski/runs/summit-zones.js';
@@ -43,6 +43,7 @@ test('the cameras stay above the snow; the backdrop eye is over the pad and turn
     const valley = SKI_BACKDROP.valley[zone.world.pad] * DEG;
     assert.ok(Math.abs(look.x - Math.sin(valley)) < 1e-9 && Math.abs(look.z - Math.cos(valley)) < 1e-9, `${id}: turned to the valley`);
   }
+  assert.ok(hazeAt(10) === 0 && hazeAt(-30) === 0.8 && hazeAt(-4) > 0.3 && hazeAt(-4) < 0.6, 'clear sky above, haze thickening below the horizon');
   assert.equal(skierPose({tumbling: true}), 'skier-tumble');
   assert.equal(skierPose({grounded: false}), 'skier-air');
   assert.equal(skierPose({grounded: true, edge: 30}), 'skier-lean-right');
@@ -120,7 +121,15 @@ test('drawing a run never changes it: the same controls give the same run with a
     };
     if (id === 'moguls') onSnow('Kickers', [new THREE.Vector3(0, 1.69, 2.5)], 'kicker lip');
     onSnow('Safety netting', [new THREE.Vector3(-6, 0, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(6, 0, 0)], 'netting');
-    const grid = zoneGrid(zone);
+    // No edge of the zone can show: the drawn snow's outer edge is below the lowest snow of the run, so it lies under
+    // every camera's eye line; and the haze thickens below the horizon.
+    const edgeGround = drawnGround(zone), b = zone.bounds;
+    let lowest = Infinity;
+    for (let x = b.minX; x <= b.maxX; x += 5) for (let z = b.minZ; z <= b.maxZ; z += 5) lowest = Math.min(lowest, zone.ground(x, z));
+    const grid = zoneGrid(zone), ring = [...grid.xs.flatMap(x => [[x, grid.zs[0]], [x, grid.zs.at(-1)]]), ...grid.zs.flatMap(z => [[grid.xs[0], z], [grid.xs.at(-1), z]])];
+    assert.ok(Math.max(...ring.map(([x, z]) => edgeGround(x, z))) < lowest, `${id}: the zone's outer edge is below all of its run`);
+    for (let x = b.minX; x <= b.maxX; x += 7) for (let z = b.minZ; z <= b.maxZ; z += 7) assert.equal(edgeGround(x, z), zone.ground(x, z), 'the run itself is drawn as the rules have it');
+
     assert.ok(grid.xs[0] < zone.bounds.minX - 300 && grid.zs.at(-1) > zone.bounds.maxZ + 500, `${id}: the snow runs on past the zone`);
     view.dispose();
   }

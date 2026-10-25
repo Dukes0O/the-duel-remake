@@ -231,20 +231,37 @@ function drawingStream(seed) {
   return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
 
+// Past the run's box (its bounds and a margin) the drawn snow falls away ever faster, so from every camera the zone
+// ends in a slope dropping out of sight, never in an edge (Claude, look round 1). Drawing only: the skier never leaves
+// the bounds, and everything drawn on the snow (gates, flags, stashes, figures) stands inside them.
+export const SKI_SKIRT = Object.freeze({margin: 40, fall: 1 / 30});
+export function drawnGround(zone) {
+  const b = zone.bounds, m = SKI_SKIRT.margin;
+  return (x, z) => {
+    const dx = Math.max(0, b.minX - m - x, x - b.maxX - m), dz = Math.max(0, b.minZ - m - z, z - b.maxZ - m);
+    return zone.ground(x, z) - (dx * dx + dz * dz) * SKI_SKIRT.fall;
+  };
+}
+// The haze low in the sky round the camera, by elevation (degrees): the captured world fades into the fog's colour from
+// `top` down to `full`, at most `most`, so where the zone's snow meets the world it reads as a ridge falling into haze.
+export const SKI_HAZE = Object.freeze({top: 4, full: -12, most: 0.8, radius: 2600});
+export const hazeAt = elevation => SKI_HAZE.most * clamp((SKI_HAZE.top - elevation) / (SKI_HAZE.top - SKI_HAZE.full), 0, 1);
+
 function snowGeometry(zone, base) {
-  const {xs, zs} = zoneGrid(zone), nx = xs.length, nz = zs.length;
+  const {xs, zs} = zoneGrid(zone), nx = xs.length, nz = zs.length, ground = drawnGround(zone), b = zone.bounds;
   const position = new Float32Array(nx * nz * 3), normal = new Float32Array(nx * nz * 3), uv = new Float32Array(nx * nz * 2), colour = new Float32Array(nx * nz * 3);
   const packed = zone.extraFriction ? (x, z) => 1 - clamp(zone.extraFriction(x, z) / 0.07, 0, 1) : () => 0;
   const random = drawingStream(nx * 7919 + nz);
   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
-    const x = xs[i], z = zs[j], k = j * nx + i, y = zone.ground(x, z) - base, e = 0.3;
+    const x = xs[i], z = zs[j], k = j * nx + i, y = ground(x, z) - base, e = 0.3;
     position.set([x, y, z], k * 3);
-    const gx = (zone.ground(x + e, z) - zone.ground(x - e, z)) / (2 * e), gz = (zone.ground(x, z + e) - zone.ground(x, z - e)) / (2 * e);
+    const gx = (ground(x + e, z) - ground(x - e, z)) / (2 * e), gz = (ground(x, z + e) - ground(x, z - e)) / (2 * e);
     const n = Math.hypot(gx, 1, gz);
     normal.set([-gx / n, 1 / n, -gz / n], k * 3);
     uv.set([x / 6, z / 6], k * 2);
     // The snow: blue-white, a touch greyer where it is packed, and a faint speckle so the slope reads at speed.
-    const p = packed(x, z), speckle = (random() - 0.5) * 0.035;
+    // (No speckle on the coarse cells outside the run, where it would streak.)
+    const inside = x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ, p = packed(x, z), speckle = inside ? (random() - 0.5) * 0.035 : 0;
     colour.set([0.93 - p * 0.05 + speckle, 0.96 - p * 0.04 + speckle, 1 - p * 0.02 + speckle], k * 3);
   }
   const index = new Uint32Array((nx - 1) * (nz - 1) * 6);
@@ -270,6 +287,18 @@ function snowTexture() {
   texture.needsUpdate = true;
   return texture;
 }
+// The haze band: an inside-out sphere round the camera, drawn behind everything (only the backdrop shows through it).
+function hazeDome() {
+  const geometry = new THREE.SphereGeometry(SKI_HAZE.radius, 48, 24), p = geometry.attributes.position, colour = new Float32Array(p.count * 4);
+  for (let i = 0; i < p.count; i++) colour.set([1, 1, 1, hazeAt(Math.asin(clamp(p.getY(i) / SKI_HAZE.radius, -1, 1)) / DEG)], i * 4);
+  geometry.setAttribute('color', new THREE.BufferAttribute(colour, 4));
+  const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({vertexColors: true, transparent: true, side: THREE.BackSide, depthWrite: false, fog: false}));
+  mesh.name = 'Haze';
+  mesh.frustumCulled = false;
+  mesh.renderOrder = -1;
+  return mesh;
+}
+
 // A flat shape (a disc or a ring) laid on the snow, a few centimetres up.
 function drape(geometry, zone, base, cx, cz, lift = 0.04) {
   geometry.rotateX(-Math.PI / 2);
@@ -507,10 +536,10 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
     Object.assign(sun.shadow.camera, {left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 140});
     sun.shadow.bias = -0.0004;
     scene.add(hemi, sun, sun.target);
-    const stashes = stashFields(zone, base), spray = createSpray();
-    scene.add(stashes, spray.points);
+    const stashes = stashFields(zone, base), spray = createSpray(), haze = hazeDome();
+    scene.add(stashes, spray.points, haze);
     visit = {run: run.run, zone, base, scene, sun, stashes, spray, camera: new THREE.PerspectiveCamera(58, 1, 0.15, 3200),
-      dressed: false, figures: null, yeti: null, mixer: null, backdrop: null, fog: null};
+      haze, dressed: false, figures: null, yeti: null, mixer: null, backdrop: null, fog: null};
   }
   // The models arrive once; each zone is dressed with them on the first frame they are there.
   function dress() {
@@ -613,12 +642,16 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
       // The sun keeps its angle and follows the skier, so the shadow under the skis stays sharp.
       sun.position.set(s.x + 30, s.y - base + 60, s.z - 25);
       sun.target.position.set(s.x, s.y - base, s.z);
-      if (!visit.fog) visit.fog = scene.fog = new THREE.Fog(mainScene?.fog?.color?.clone() ?? new THREE.Color(0xdfe8f2), 260, 1700);
+      if (!visit.fog) {
+        visit.fog = scene.fog = new THREE.Fog(mainScene?.fog?.color?.clone() ?? new THREE.Color(0xdfe8f2), 260, 1700);
+        visit.haze.material.color.copy(visit.fog.color);
+      }
       camera.fov = pose.camera.fov;
       camera.aspect = aspect;
       camera.position.set(pose.camera.position.x, pose.camera.position.y - base, pose.camera.position.z);
       camera.lookAt(pose.camera.target.x, pose.camera.target.y - base, pose.camera.target.z);
       camera.updateProjectionMatrix();
+      visit.haze.position.copy(camera.position);
       if (!renderer) return true;
       // The capture is a one-off cost: the frame that makes it says so, so the frame timing can leave it out.
       const captured = !visit.backdrop && !!mainScene;
