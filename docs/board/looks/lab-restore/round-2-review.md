@@ -17,3 +17,9 @@ Changes from round 1, as asked:
 4. **The side panel's steps:** the running step is in the accent colour and bold, the finished ones are ticked.
 
 Left as it was: the hull's weed and barnacles stay as bumps (they are part of the one mesh) and go grey with the rest.
+
+## Verdict (Claude, design lead, 25 October 2026)
+
+**Pass at round 2.** No sand in the tank, the crust fades to bare grey in the
+strip step, the tank drains before the rebuild so the red car stands dry, and
+the step chips mark the running and finished steps.
