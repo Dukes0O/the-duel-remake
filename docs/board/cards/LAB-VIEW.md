@@ -45,3 +45,11 @@ Removed: nothing.
 
 - Draw "Try the challenge" on the Lab board and the pad menu from the session's `challengeBoard()`, `startChallenge(id)` and `stopChallenge()`.
 - Draw `view().challenge.props` in the scene (buoys, the smoke marker, the crate, the practice fire grid) and show `view().challenge.briefing`.
+
+## Shared files with other cards (Claude, 25 October 2026)
+
+Moved to a cloud session. `busy-game-files` is shared for now with
+ENGINE-CURVE, LAB-VIEW and DEEP-SIRENA-VIEW: keep edits to `app.js`,
+`game.js` and `render3d.js` in small blocks named for this card, merge
+current `integration/wasteland` just before the pull request, and the laptop
+settles any clash at merge and reruns only the suites it touches.

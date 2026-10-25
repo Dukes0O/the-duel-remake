@@ -244,10 +244,11 @@ tasks:
 
   - id: DEEP-SIRENA-VIEW
     title: "The Sirena story in the game: keys, drawing, sonar ring, Ana, garage"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "VIS"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-25
     needs: [DEEP-SIRENA, SIRENA-ART, DEEP-RADIO, SIRENA-CAR]
     locks: [busy-game-files]
     flag: "the-deep"
@@ -266,10 +267,11 @@ tasks:
 
   - id: LAB-VIEW
     title: "The Lab screen: tab, door, board, benches, workshop challenges, shop"
-    owner: "codex"
+    owner: "claude-cloud"
     lane: "UI"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-25
     needs: [LAB-RULES, LAB-BENCHES, LAB-ART, LAB-RADIO]
     locks: [busy-game-files]
     flag: "lab"

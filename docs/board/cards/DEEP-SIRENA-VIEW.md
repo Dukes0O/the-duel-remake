@@ -49,3 +49,11 @@ Call the sea life's `stepLift` from the dive loop (only the proximity start
 fires in the game today), judge the life again on the real Kelp Coast rather
 than the look page's sample loop, and measure the delivered frame time in the
 game at the thickest part of the forest.
+
+## Shared files with other cards (Claude, 25 October 2026)
+
+Moved to a cloud session. `busy-game-files` is shared for now with
+ENGINE-CURVE, LAB-VIEW and DEEP-SIRENA-VIEW: keep edits to `app.js`,
+`game.js` and `render3d.js` in small blocks named for this card, merge
+current `integration/wasteland` just before the pull request, and the laptop
+settles any clash at merge and reruns only the suites it touches.
