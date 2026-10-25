@@ -39,7 +39,7 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
       assert.deepEqual([circuit.defaultMode, circuit.laps, circuit.grandPrixLaps, circuit.fieldSize, circuit.hasRival, circuit.noCombat],
         ['timetrial', 1, 1, 1, false, true]);
       assert.equal(GRAND_PRIX_COURSES.includes(circuit.id), false);
-    } else if (manifest.unlock?.kind === 'default-gp-podium') {
+    } else if (manifest.unlock?.kind === 'spotted-from-air') {
       const expected = {
         'panorama-ridge-night': ['panorama-ridge'],
         'harbour-lights-dusk': ['harbour-lights'],
@@ -47,8 +47,8 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
         'harbour-lights-reverse': ['harbour-lights'],
         'tremblant-woods-reverse': ['tremblant-woods'],
       }[circuit.id];
-      assert.ok(expected,'only the five approved children use free podium access');
-      assert.deepEqual(manifest.unlock,{kind:'default-gp-podium',defaultEventId:expected[0]});
+      assert.ok(expected,'only the five approved children are found from the air');
+      assert.deepEqual(manifest.unlock,{kind:'spotted-from-air',defaultEventId:expected[0]});
       assert.deepEqual([manifest.price,COURSE_PRICES[circuit.id],manifest.grandPrix],[0,0,true]);
       assert.ok(manifest.releaseOrder > CIRCUIT_MANIFESTS.find(row => row.id === expected[0]).releaseOrder,
         'a child is released after its parent');
@@ -71,7 +71,7 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id)), [], 'the sixteen earlier events are unchanged and in place');
   assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), released, 'enabled courses append in declared order');
   const originalDefinitions = ALL_CIRCUITS.filter(circuit => circuit.id !== 'summit-time-attack' &&
-    CIRCUIT_MANIFESTS.find(row=>row.id===circuit.id).unlock?.kind !== 'default-gp-podium');
+    CIRCUIT_MANIFESTS.find(row=>row.id===circuit.id).unlock?.kind !== 'spotted-from-air');
   assert.equal(new Set(originalDefinitions.map(circuit => circuit.stage)).size, originalDefinitions.length,
     'all non-Attack courses retain unique authored generation identities');
   assert.equal(ALL_CIRCUITS.find(circuit => circuit.id === 'summit-time-attack').stage,

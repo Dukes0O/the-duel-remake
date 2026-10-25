@@ -165,6 +165,40 @@ You can also carry a car up and set it down: the old dirt strip on top is a
 short, bumpy place to drive around, with nothing timed. The highest car park
 in the game.
 
+**Settled by MAP-SECRETS (25 October 2026).**
+
+- The five variants are found from the air **only**: their unlock kind is
+  `spotted-from-air` (price 0, parent still the default Grand Prix event). The old
+  "top three in the parent Grand Prix" route to them is gone; the registry still
+  accepts that kind for future variants. A found variant is open once the parent is
+  owned and the pilot's map record (`profile.heli.map.found`) lists it.
+- A sign is **found by a steady hover**: within 25 m of it sideways, between 2 and
+  60 m above its ground, at most 6 m/s, 3 s in a row (leaving starts the count
+  again). The signs stand beside the road (a road half width and 6 m off it), out
+  of the water, with no scenery within 8 m; flat ground is not needed, since it is
+  paint. Positions: Tremblant Woods Reverse by the lake, 26 m off the road at 605 m
+  along; Panorama Ridge Reverse 16 m off at 1,430 m; Panorama Ridge Night 20 m off
+  at 2,358 m (the summit lookout); Harbour Lights Reverse 22 m off at 3,510 m (the
+  harbour wall); Harbour Lights Dusk 130 m off at 270 m (the breakwater).
+- The session takes `secretCourses`, the ids of the variants whose own switches are
+  on; without the pilot's map there is no sign and no Table. `view().secrets` gives
+  the art the signs still to be found (id, name, x, z), the hover so far
+  (`spotting`) and what is found.
+- **The Table.** Seen by Roger's call on arrival after a leg whose straight line (by
+  the table positions) passes within 4 km (16 of the 190 legs between course places,
+  Pacific Canyon being on most of them); the call is the event `tableSpotted` with
+  the words, and a `radio` event for `heli.radio.table.spotted`, which has no
+  recording yet (SKI-AUDIO records it; until then the screen shows the words). Seen,
+  it is a destination, 1,100 m up, and the leg to it follows the map's leg rule. The
+  Table is not a registry course: its world is hand-made in `map-secrets.js` (a
+  mesa 90 m over the desert with 130 m of flat top, cliffs, an oval dirt strip 8 m
+  across, the lookout tower and the wreck as obstacles) and loaded by the session.
+- First landing in the circle: `tableFound`, 500 credits once, `map.table` true (the
+  Deep's log page reads that flag). A car **cannot be left on the Table yet**: the
+  save does not accept it as a place until part two of the card, so releasing one
+  there gives `carNotKept` and the car stays where the save has it.
+- Sounds: `heli.found` (three rising tones) for `secretFound` and `tableFound`.
+
 ## 6. Sounds, art and save
 
 - **Cues:** `map.open` and `map.close` (paper unfolding), `map.pin` (a pin
@@ -189,7 +223,7 @@ Switch `pilot-map` (dev), only with the helicopter on.
 | --- | --- | --- | --- |
 | MAP-DATA | claude-cloud | now | The place table, regions, fuel pads, the leg rule, the outline tool and its generated file |
 | MAP-DESTINATIONS | claude-cloud | after DATA | Landing zones for every course, the new legs, fuel pads, flying over the sea |
-| MAP-SECRETS | claude-cloud | after DESTINATIONS | The five signs and the spotting rule, the Table, the logbook, the unlock kind for found variants, the save (lock `save-shape`) |
+| MAP-SECRETS | claude-cloud | after DESTINATIONS | The five signs and the spotting rule, the Table, the logbook, the unlock kind for found variants; the save part (lock `save-shape`) is a second pull request |
 | MAP-ART | codex | now | The signs, the mesa, lookout, plane wreck and logbook (three rounds) |
 | MAP-VIEW | codex | after DATA, DESTINATIONS, SECRETS, ART | The map screen, the cockpit key, scouting names, the Table scene (lock `busy-game-files`) |
 | MAP-FINISH | Claude | after VIEW | Fly the map as a player; find every secret without being told |

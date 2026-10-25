@@ -10,7 +10,7 @@ import {liftCheck} from './heli-cable.js';
 import {MEDAL_CARS} from '../medals.js';
 // pilot-map-data.js imports legFuelKg from this file too; each only calls the other's
 // functions after both have loaded, so the pair is safe in either order.
-import {PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, mapDistanceKm, placeOfCourse} from './pilot-map-data.js';
+import {PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, mapDistanceKm, placeOfCourse, placeById} from './pilot-map-data.js';
 
 import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS} from './heli-save.js';
 import {surveyJob, surveyName, reportSurvey, isSurveyRun, SURVEY_NOT_A_RUN} from './heli-survey.js';
@@ -37,16 +37,16 @@ export const SUMMIT_RUN = Object.freeze({id: 'summit-run', name: 'Summit Run', b
 export const HELI_DESTINATIONS_WITH_SUMMIT = Object.freeze({...HELI_DESTINATIONS, [SUMMIT_RUN.id]: SUMMIT_RUN});
 
 // The pilot's map (docs/PILOT_MAP.md): with the `pilot-map` switch on, every place
-// on the map is a destination (the Table, which is air only, comes with MAP-SECRETS)
-// except those the landing-zone search finds no circle for (LEFT_OFF in
+// on the map is a destination (the Table, which is air only, joins once the pilot has seen it:
+// the `table` option, MAP-SECRETS) except those the landing-zone search finds no circle for (LEFT_OFF in
 // pilot-map-data.js). A place faces its neighbours by where it is drawn (the Neon districts share
 // one table point). The four original destinations keep their records, so their
 // answers are the same objects as before; Summit Run still needs its own switch.
 // Built when first asked for, since pilot-map-data.js loads this file too.
 let pilotTables = null;
-function pilotDestinations(summitRun) {
+function pilotDestinations(summitRun, withTable = false) {
   pilotTables ??= {};
-  const key = summitRun ? 'withSummit' : 'without';
+  const key = `${summitRun ? 'withSummit' : 'without'}${withTable ? '+table' : ''}`;
   if (pilotTables[key]) return pilotTables[key];
   const known = summitRun ? HELI_DESTINATIONS_WITH_SUMMIT : HELI_DESTINATIONS;
   const table = {};
@@ -57,17 +57,21 @@ function pilotDestinations(summitRun) {
     if (id === SUMMIT_RUN.id && !summitRun) continue;
     table[id] = known[id] ?? Object.freeze({id, name: place.name, baseAltitude: PLACE_ALTITUDES[place.id], mapKm: place.drawAt, home: false});
   }
+  if (withTable) {
+    const mesa = placeById('the-table');
+    table['the-table'] = Object.freeze({id: 'the-table', name: mesa.name, baseAltitude: PLACE_ALTITUDES['the-table'], mapKm: mesa.drawAt, home: false});
+  }
   return (pilotTables[key] = Object.freeze(table));
 }
 // Every name the game can show for a destination, whatever is switched on (titles of jobs already taken).
-const nameOf = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? placeOfCourse(id)?.name ?? id;
+const nameOf = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? placeOfCourse(id)?.name ?? placeById(id)?.name ?? id;
 // The map's place for a destination (its course id), for the map's distances and legs.
 const placeKey = courseId => placeOfCourse(courseId)?.id ?? courseId;
 
 // The destinations to use: pass the summit-run switch as {summitRun} and the
 // pilot-map switch as {pilotMap}.
-export const destinationsFor = ({summitRun = false, pilotMap = false} = {}) =>
-  pilotMap === true ? pilotDestinations(summitRun === true) : summitRun === true ? HELI_DESTINATIONS_WITH_SUMMIT : HELI_DESTINATIONS;
+export const destinationsFor = ({summitRun = false, pilotMap = false, table = false} = {}) =>
+  pilotMap === true ? pilotDestinations(summitRun === true, table === true) : summitRun === true ? HELI_DESTINATIONS_WITH_SUMMIT : HELI_DESTINATIONS;
 
 // Fuel for each cruise leg, either way.
 const LEG_FUEL = Object.freeze({
@@ -87,11 +91,11 @@ export function legKey(from, to) {
   return [from, to].sort().join('|');
 }
 
-export function legFuelKg(from, to, {summitRun = false, pilotMap = false} = {}) {
+export function legFuelKg(from, to, {summitRun = false, pilotMap = false, table = false} = {}) {
   if (from === to) return null;
   // With the pilot's map on, a leg between two destinations is the map's: the old table
   // legs keep their numbers and every other pair is 12 kg a km plus 5 (pilot-map-data.js).
-  if (pilotMap === true && Object.hasOwn(pilotDestinations(summitRun === true), from) && Object.hasOwn(pilotDestinations(summitRun === true), to)) return legFuelKgMap(placeKey(from), placeKey(to));
+  if (pilotMap === true && Object.hasOwn(pilotDestinations(summitRun === true, table === true), from) && Object.hasOwn(pilotDestinations(summitRun === true, table === true), to)) return legFuelKgMap(placeKey(from), placeKey(to));
   const key = legKey(from, to);
   return LEG_FUEL[key] ?? (summitRun === true ? SUMMIT_LEG_FUEL[key] : undefined) ?? null;
 }

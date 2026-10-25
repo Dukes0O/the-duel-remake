@@ -22,7 +22,7 @@ export function courseUnlockRequirement(course){
   const unlock=requirementOf(idOf(course));
   if(!unlock)return null;
   const name=CIRCUIT_ENTRIES.find(row=>row.manifest.id===unlock.defaultEventId).definition.name;
-  return {...unlock,condition:unlock.kind==='owned-course'?`Own ${name} to enter this solo challenge for free.`:`Finish top three in the ${name} Grand Prix.`};
+  return {...unlock,condition:unlock.kind==='owned-course'?`Own ${name} to enter this solo challenge for free.`:unlock.kind==='spotted-from-air'?`Found from the air: look for its sign from the helicopter over ${name}.`:`Finish top three in the ${name} Grand Prix.`};
 }
 
 export function normalizeCourseAccess(value,legacyProfile){
@@ -46,11 +46,13 @@ export function normalizeCourseAccess(value,legacyProfile){
   }
   return {version:1,unlocked:COURSE.filter(course=>unlocked.has(course.id)).map(course=>course.id)};
 }
+// The pilot's map record (src/heli/map-secrets.js) lists the variants found from the helicopter; read here without importing it.
+const foundFromAir=(profile,id)=>Array.isArray(profile?.heli?.map?.found)&&profile.heli.map.found.includes(id);
 export function isCourseUnlocked(profile,course){
   const id=idOf(course);
   if(!known(id))return false;
   const unlock=requirementOf(id);
-  if(unlock)return isCourseUnlocked(profile,unlock.defaultEventId)&&(unlock.kind==='owned-course'||getGrandPrixPodiums(profile).includes(unlock.defaultEventId));
+  if(unlock)return isCourseUnlocked(profile,unlock.defaultEventId)&&(unlock.kind==='owned-course'||(unlock.kind==='spotted-from-air'?foundFromAir(profile,id):getGrandPrixPodiums(profile).includes(unlock.defaultEventId)));
   return COURSE_PRICES[id]===0||profile?.courses?.version===1&&Array.isArray(profile.courses.unlocked)&&profile.courses.unlocked.includes(id);
 }
 export function purchaseCourse(profile,course){
