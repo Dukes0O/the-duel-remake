@@ -237,7 +237,8 @@ export function createAnaPhone({audio = null, now = () => performance.now() / 10
     update({blocked = false} = {}) {
       if (disposed) return null;
       const t = now();
-      if (current && t >= current.until && !current.source) { current = null; nextAt = t + PHONE_GAP; }
+      // A line ends at its caption time, or a second after its sound should have ended (a context that closed mid-line).
+      if (current && t >= current.until + (current.source ? 1 : 0)) { if (current.source) chain?.keyOff(); current = null; nextAt = t + PHONE_GAP; }
       if (!current && !blocked && queue.length && t >= nextAt) {
         const id = queue.shift();
         current = {id, until: t + captionSeconds(DEEP_PHONE_LINES[id].text), source: null};
@@ -245,8 +246,10 @@ export function createAnaPhone({audio = null, now = () => performance.now() / 10
       }
       return current ? {id: current.id, text: DEEP_PHONE_LINES[current.id].text} : null;
     },
-    clear() {
+    // Lines not yet started are dropped; `keepCurrent` lets the one being said finish.
+    clear({keepCurrent = false} = {}) {
       queue.length = 0;
+      if (keepCurrent) return;
       try { current?.source?.stop(); } catch { /* ended */ }
       current = null;
       chain?.keyOff();
@@ -264,14 +267,13 @@ export function sonarText(event) {
 export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.audio}), now = () => performance.now() / 1000}) {
   const doc = host.ownerDocument, root = doc.createElement('section');
   root.className = 'sirena-hud';
-  root.setAttribute('aria-live', 'polite');
   root.innerHTML = '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip"></b><span></span></div>' +
-    '<div class="sirena-log" hidden></div><p class="sirena-caption" hidden><small>ANA · FIELD STATION</small><span></span></p>' +
+    '<div class="sirena-log" hidden></div><p class="sirena-caption" aria-live="polite" hidden><small>ANA · FIELD STATION</small><span></span></p>' +
     '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>';
   host.append(root);
   const sonar = root.querySelector('.sirena-sonar'), blip = root.querySelector('.sirena-blip'), distance = sonar.querySelector('span');
   const log = root.querySelector('.sirena-log'), caption = root.querySelector('.sirena-caption'), title = root.querySelector('.sirena-title');
-  let sonarUntil = 0, logUntil = 0, titleUntil = 0, disposed = false;
+  let sonarUntil = 0, logUntil = 0, titleUntil = 0, disposed = false, surfaced = false;
   const stop = app?.duel?.onChange?.((state, event) => {
     if (disposed) return;
     const t = now();
@@ -287,7 +289,12 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
     if (event.deepLogged) { log.innerHTML = logCardMarkup(event.deepLogged.creature); log.hidden = false; logUntil = t + 6; }
     if (event.deepPhone) phone.say(event.deepPhone.line);
     if (event.deepCoastCup) { title.hidden = false; titleUntil = t + 5; phone.say('deep.ana.cup'); }
-    if (event.deepExited || event.menu || event.stageLoaded != null) { sonar.hidden = log.hidden = true; if (!event.menu) phone.clear(); }
+    // Driving back up the ramp ends the dive and returns to the menu: Ana finishes what she
+    // has to say (the Norseman story comes on the way up). Quitting a dive to the menu, or a
+    // new race, stops her after the line she is saying.
+    if (event.deepExited) { sonar.hidden = log.hidden = true; surfaced = true; }
+    else if (event.menu) { if (!surfaced) phone.clear({keepCurrent: true}); surfaced = false; }
+    else if (event.stageLoaded != null) { sonar.hidden = log.hidden = true; surfaced = false; phone.clear({keepCurrent: true}); }
   });
   return {
     update() {

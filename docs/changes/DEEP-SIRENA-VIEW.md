@@ -89,8 +89,8 @@ seven design questions are on the card.
 
 ## Checks
 
-- `tools/test-deep-story.mjs` (new), 7 tests, all pass. They play the whole
-  story headless in a real Kelp Coast dive:
+- `tools/test-deep-story.mjs` (new), 7 tests, all pass, after the review
+  fixes. They play the whole story headless in a real Kelp Coast dive:
   - Ana's lines in order, from first dive to the Sirena raised;
   - the Norseman line on the way back up;
   - the log and pearls in the dive;
@@ -100,7 +100,8 @@ seven design questions are on the card.
     once, standing still pays nothing more, and the otter line reaches the
     phone;
   - the phone queue: one line at a time, in order, a caption without sound,
-    none over a title card;
+    none over a title card, and a quit that lets the current line finish but
+    drops the rest;
   - the garage panel in each Sirena state, and gone with the switch off.
 - `tools/test-deep-look.mjs`: the `src/deep` allow-list gains this card's
   hooks and test (changed assertion, below). It passes, 5287 checks.
@@ -111,7 +112,8 @@ seven design questions are on the card.
   replays stay exact with the switch off.
 - `npm run build`: built.
 - **Browser scenario** `tools/scenarios/deep-sirena.mjs` (private port,
-  memory-only storage): passed with 0 console errors and 6 screenshots. It
+  memory-only storage): passed with 0 console errors and 6 screenshots, also
+  after the review fixes. It
   covers the dive, the badge raised and paid, the sonar ("40 m"), the bonnet
   bagged and paid, the Drop-off lip, and the garage sheet. The look sheet is
   `docs/board/looks/deep-sirena-view/round-1.jpg`, with its note, for
@@ -123,6 +125,33 @@ seven design questions are on the card.
   Claude's answer 7).
 - **Laptop to run:** the 4 suites above, the frame check, and a look at the
   scenario in the real browser.
+
+## Review
+
+One independent review (this card touches pay and saves). It checked pay,
+saves, race state, replays, keys and GPU disposal, and they are clear. It
+found two faults in Ana's phone, both fixed here and covered by the test:
+
+- **The Norseman line was cut on the way up and lost for good.** The line
+  starts on the first frame of the ascent, but the dive ended about 6 s
+  later and the phone stopped. The take is about 8.5 s, and the line is
+  never offered again. Now a normal exit up the ramp lets Ana finish what
+  she has queued over the menu.
+- **Quitting a dive to the menu left Ana talking** through every queued
+  line. Now a quit or a new race stops her after the line she is saying.
+
+Hardening taken from the review:
+- a line whose sound never reports its end (a closed context) times out;
+- `_settleDeepStory` also needs a race run;
+- `aria-live` is on the caption only, not the sonar distance.
+
+A design note for Claude: Ana's `sonar` line ("Press R to ping...") plays on
+the first ping, as 6.3 says, and the badge line does not name R. A child who
+never opens the help may not find R. Moving the `sonar` line to just after
+the badge would fix it.
+
+The Coast Cup title card (on `deepCoastCup`) is covered by neither the node
+test nor the scenario; the laptop sees it after that race.
 
 ## Changed assertions (for Claude's review)
 

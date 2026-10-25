@@ -1314,7 +1314,7 @@ export class App {
   // player who dived (the same checks as the dive's own settlement), then Ana's log lines.
   _settleDeepStory(event,state) {
     const journey=state?.deepJourney;
-    if(state!==this.duel.state||!journey?.committed||state.playerId!==this._runPlayerId||this._runPlayerId!==this.player?.id||
+    if(!this.runId||state!==this.duel.state||!journey?.committed||state.playerId!==this._runPlayerId||this._runPlayerId!==this.player?.id||
       !this._switches().enabled('the-deep'))return false;
     this._refreshPlayer();
     const on={enabled:true},result=event.deepRaised?raiseFind(this.profile,event.deepRaised.find,on):

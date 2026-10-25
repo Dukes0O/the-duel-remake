@@ -193,6 +193,12 @@ test("Ana's phone: one line at a time in order, a caption even without sound, an
   clock = 30; assert.equal(phone.update(), null, 'a short breath between lines');
   clock = 31; assert.equal(phone.update().id, 'deep.ana.legend');
   assert.ok(phone.update().text.includes('1966'), 'the caption is the line');
+  phone.say('deep.ana.part'); phone.say('deep.ana.deep');
+  clock = 60; phone.update(); clock = 61; assert.equal(phone.update().id, 'deep.ana.part');
+  phone.clear({keepCurrent: true});
+  assert.equal(phone.update().id, 'deep.ana.part', 'a quit lets the line being said finish');
+  clock = 90; phone.update(); clock = 91;
+  assert.equal(phone.update(), null, 'the lines not yet started are dropped');
   assert.equal(sonarText({deepSonar: {blip: {distance: 41.6}}}), '42 m');
   assert.equal(sonarText({deepSonar: {blip: null}}), 'No echo');
 });
