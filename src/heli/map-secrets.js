@@ -3,7 +3,7 @@
 // only: no graphics, no clock, no randomness. The session (heli-session.js)
 // calls these; the screen draws what they report.
 import {createHeliGround} from './heli-ground.js';
-import {heliOf} from './heli-save.js';
+import {MAP_SAVE_VERSION, mapRecordOf, mapBlocked, writeMapRecord} from './heli-save.js';
 import {placeById} from './pilot-map-data.js';
 
 // ---- The five secret courses (section 5.1) --------------------------------------
@@ -61,43 +61,43 @@ export function stepSpotter(spotter, heli, ground, signs, dt) {
   return null;
 }
 
-// ---- The map record (section 6) ---------------------------------------------------------------------
-// profile.heli.map = {version: 1, seen: [<place>], found: [<secret>], table: <true once landed>}.
-// Optional: old saves read as nothing found. The record checks itself, so it is safe to read from
-// any save (a malformed one reads as empty), and heli-save keeps it as it keeps every key it does not know.
-export const MAP_VERSION = 1;
+// ---- The map record (section 6) ---------------------------------------------------------------------------------------
+// profile.heli.map = {version: 1, seen: [<place>], found: [<secret>], table: <true once landed>}. Optional: an old save
+// reads as nothing found. The save keeps the record (heli-save.js: names a later game wrote are kept and mean nothing
+// here, a later version is left exactly as it was and every write over it is refused).
+export const MAP_VERSION = MAP_SAVE_VERSION;
 export const createMap = () => ({version: MAP_VERSION, seen: [], found: [], table: false});
 
-export function normalizeMap(value) {
-  const map = createMap();
-  if (!value || typeof value !== 'object' || Array.isArray(value) || value.version !== MAP_VERSION) return map;
-  map.found = [...new Set((Array.isArray(value.found) ? value.found : []).filter(id => SECRET_IDS.includes(id)))].sort((a, b) => SECRET_IDS.indexOf(a) - SECRET_IDS.indexOf(b));
-  map.seen = [...new Set((Array.isArray(value.seen) ? value.seen : []).filter(id => typeof id === 'string' && placeById(id)))];
-  map.table = value.table === true;
-  // The Table is seen once it is landed on.
+// The record this game can read, for any profile. A table landed on is also seen.
+export function mapOf(profile) {
+  const stored = mapRecordOf(profile);
+  const map = {...stored, seen: [...stored.seen], found: [...stored.found]};
   if (map.table && !map.seen.includes(TABLE_ID)) map.seen.push(TABLE_ID);
   return map;
 }
-export const mapOf = profile => normalizeMap(heliOf(profile).map);
-const withMap = (profile, map) => ({...profile, heli: {...heliOf(profile), map}});
 
 export const hasFound = (profile, id) => mapOf(profile).found.includes(id);
 export const hasSeen = (profile, id) => mapOf(profile).seen.includes(id);
 
-// The profile with a secret found. {ok, already, profile}.
+// The profile with a secret found. {ok, already, profile}, or {ok: false, reason, profile} for a name that is no secret or a
+// record this game must not write over.
 export function noteFound(profile, id) {
   if (!SECRET_IDS.includes(id)) return {ok: false, reason: 'Not a secret course.', profile};
-  const map = mapOf(profile);
-  if (map.found.includes(id)) return {ok: true, already: true, profile};
-  return {ok: true, already: false, profile: withMap(profile, normalizeMap({...map, found: [...map.found, id]}))};
+  const blocked = mapBlocked(profile);
+  if (blocked) return {ok: false, reason: blocked, profile};
+  const stored = mapRecordOf(profile);
+  if (stored.found.includes(id)) return {ok: true, already: true, profile};
+  return {...writeMapRecord(profile, {...stored, found: [...stored.found, id]}), already: false};
 }
 
-// The profile with a place seen. {ok, already, profile}.
+// The profile with a place seen. Same answers as noteFound.
 export function noteSeen(profile, id) {
   if (!placeById(id)) return {ok: false, reason: 'Not a place on the map.', profile};
-  const map = mapOf(profile);
-  if (map.seen.includes(id)) return {ok: true, already: true, profile};
-  return {ok: true, already: false, profile: withMap(profile, normalizeMap({...map, seen: [...map.seen, id]}))};
+  const blocked = mapBlocked(profile);
+  if (blocked) return {ok: false, reason: blocked, profile};
+  const stored = mapRecordOf(profile);
+  if (stored.seen.includes(id)) return {ok: true, already: true, profile};
+  return {...writeMapRecord(profile, {...stored, seen: [...stored.seen, id]}), already: false};
 }
 
 // ---- The Table (section 5.2) ----------------------------------------------------------------------------------
@@ -125,14 +125,17 @@ export function legPassesTable(from, to) {
 }
 
 // First landing on top: 500 credits, once; the map's last blank corner is filled in (table: true).
-// {ok, already, paid, profile}.
+// {ok, already, paid, profile}, or {ok: false, reason, profile} over a record this game must not write over.
 export function claimTable(profile) {
-  const map = mapOf(profile);
-  if (map.table) return {ok: true, already: true, paid: 0, profile};
+  const blocked = mapBlocked(profile);
+  if (blocked) return {ok: false, already: false, paid: 0, reason: blocked, profile};
+  const stored = mapRecordOf(profile);
+  if (stored.table) return {ok: true, already: true, paid: 0, profile};
   const wallet = Number.isFinite(profile?.credits) ? Math.max(0, Math.floor(profile.credits)) : 0;
   const total = Math.min(1_000_000_000, wallet + TABLE_PAY);
-  const next = withMap({...profile, credits: total}, normalizeMap({...map, table: true}));
-  return {ok: true, already: false, paid: total - wallet, profile: next};
+  const seen = stored.seen.includes(TABLE_ID) ? stored.seen : [...stored.seen, TABLE_ID];
+  const written = writeMapRecord(profile, {...stored, seen, table: true}, {credits: total});
+  return {ok: written.ok, already: false, paid: total - wallet, profile: written.profile};
 }
 
 // The mesa, in its own frame (the middle of the top is the origin; north is +z). A flat top 90 m over the desert,
