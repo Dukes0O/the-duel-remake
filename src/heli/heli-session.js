@@ -1747,6 +1747,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // pick-up (or, from the pick-up, its drop-off) is set.
     takeJob(id, options = {}) {
       if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The dispatch board is at the home pad.'};
+      // One thing at a time: a ski drop or the group job in hand keeps the board's other jobs off (and their arrows).
+      if (skiFlight) return {ok: false, reason: 'Finish or drop the ski flight first.'};
       const count = wildOn ? surveyJobOf(save, wildFlag) : null;
       if (count && id === count.id) return takeSurvey(count, options);
       if (id === 'own') { dropSurvey('other'); aim(null); return {ok: true, own: true}; }

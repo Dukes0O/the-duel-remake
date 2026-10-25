@@ -434,6 +434,12 @@ test('what is in hand stops a ski flight: a hooked load, a lesson, a Lab challen
   const jobbed = sessionOf(profileOf());
   jobbed.start();
   assert.equal(jobbed.takeJob(jobbed.boardJobs()[1].id).ok, true); assert.equal(jobbed.takeSkiDrop().ok, false);
+  // And the other way: a ski drop or the group in hand keeps the board's other jobs (and their arrows) off.
+  const dropped = sessionOf(profileOf());
+  dropped.start(); assert.equal(dropped.takeSkiDrop().ok, true);
+  assert.equal(dropped.takeJob(dropped.boardJobs()[1].id).ok, false); assert.equal(dropped.takeJob('own').ok, false); assert.equal(dropped.view().destination, 'summit-run');
+  assert.equal(dropped.dropSkiFlight().dropped, true); assert.equal(dropped.takeJob(dropped.boardJobs()[1].id).ok, true);
+  assert.equal(grouped.takeJob(grouped.boardJobs()[1].id).ok, false);
   // Null options are no options.
   assert.doesNotThrow(() => stale.skiStepOut('slalom', null));
 });
