@@ -61,7 +61,7 @@ controller only on reaching the line, with focused cases for pause and resume.
 No gate changed. Step 1's new release tests were replaced by step 2's 200 m
 release tests because step 1 was removed; all pre-card assertions remain intact.
 
-## Step 2: hold for 200 m, then merge when clear (failed)
+## Step 2: hold for 200 m, then merge when clear (kept by Claude)
 
 One complete corrected 360-race batch, exit 1. All players and all seven CPUs
 finished. No tuning or second complete batch followed this result.
@@ -80,22 +80,31 @@ finished. No tuning or second complete batch followed this result.
 | Slower player passed (report-only, enabled) | 11 /20 | 20 /20 | 19 /20 |
 | Nitro player leads after lap 1 (report-only, off -> on) | 0 -> 0 /20 | 0 -> 0 /20 | 16 -> 0 /20 |
 
-## Step 3: parked
+## Claude's decision (25 October 2026)
 
-Neither step passes all three courses. Keep the start as today, exactly as
-the card directs. Both formation implementations and their new tests are
-removed; the two game modules and `test-race-field.mjs` match ab7f423b byte for
-byte. GP-PASSING-2's nitro/real-pace development preview remains unchanged.
-No gate numbers, pre-card assertions, replay pins or world signatures changed.
+Step 2 is kept under `cpu-racecraft` (dev), following Claude's decision on the
+card. Claude accepts Woods' one extra 8+-crash race and Pacific's 3.14% time
+change for the wider start and lower crashes overall. Gate numbers and the
+table's FAIL labels stay unchanged. Step 1 is removed.
+
+The first commit, c3bb4fe0, recorded the parked result but contained no trial
+source. Restored the exact corrected step-2 patches retained in this session,
+including the continuous-clearance fix and its focused tests. No tuning,
+passing, nitro, grid, contact or RNG changes; no repeated 360-race batch.
+
+Independent restoration review: clear. Restored Git blob IDs match the final
+corrected batch source reviewed earlier: `race-field-driver.js` `2f21115b`,
+`race-field.js` `fed5c97b`, and `test-race-field.mjs` `8a57386f` (1,349 checks).
+All pre-card assertions and the batch tool are unchanged.
 
 All 180 off-switch result rows are byte-identical between the two complete
 batches. SHA-256 of their sorted JSON array:
 `d539d34efa3d8fd6ea145df276241fa8ecb0d44610a2cf158f0ec2f30157ad00`.
 Focused field checks passed on step 1 (1,336), first step-2 draft (1,343),
 and corrected step 2 (1,349), including all three original full field/RNG
-state hashes. The final parked build restores those original source files.
+state hashes. These are the original batch and focused-check results.
 
-## Final checks and review
+## Original parked-build checks and review (c3bb4fe0)
 
 - Independent code/numbers review: clear after fixing the step-2 merge-marker
   fault. Both full tables, derived start means, off-row fingerprint and final
@@ -120,9 +129,27 @@ state hashes. The final parked build restores those original source files.
   --jobs 1`: passed, 1/1 scenario, nine courses in High and Performance,
   36 screenshots, zero warnings/errors, memory-only saves and a private port.
 
+## Restored step 2 checks and review
+
+- Independent restoration review: clear; source/test blob IDs match the
+  corrected batch exactly. No gate or pre-card assertion changes.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 54 passed,
+  zero failures, zero not run, 261.55 s. Native-process permission enabled
+  from the start; no interrupted run or suite rerun. Field suite: 1,349
+  checks, including unchanged full-state/RNG pins. Replay fingerprints:
+  225 checks; world signatures: 47 checks, unchanged.
+- `npm.cmd run build`: passed, 531 modules, Vite 834 ms. Existing chunk-size
+  and dynamic-import warnings remain. Used npm.cmd for this shell's script policy.
+- `node tools/test-board.mjs`: 192 checks passed.
+- `node tools/run-browser-scenarios.mjs --scenarios grand-prix-existing --jobs 1`:
+  passed, 1/1 scenario, nine courses in High and Performance, 36 screenshots,
+  zero warnings/errors, memory-only saves and a private port.
+- Session status refreshed; protected Cockpit sync completed, zero task changes.
+- No repeated racecraft batch. Existing step-2 table remains the accepted evidence.
+
 ## Removed
 
-Removed both failed start implementations, their formation-only state and new
-test cases. No disabled stub or unused helper remains. Temporary batch reports
-and generated verification output are recycled after review; the tables and
-verdict stay here.
+Removed the step 1 formation. Step 2 and its formation state/tests are kept;
+the faulty draft merge-complete marker is replaced by continuous checks until
+the car reaches the racing line. Temporary reports and generated verification
+output are recycled after review; the tables and verdict stay here.
