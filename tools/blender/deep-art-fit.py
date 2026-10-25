@@ -386,9 +386,11 @@ def build_otter():
     for sign in (-1,1):
         parts.append(ball('otter / eye',(sign*.052,-.512,.137),(.012,.013,.012),mat,(.008,.006,.006),8,5))
         parts.append(ball('otter / ear',(sign*.104,-.350,.130),(.021,.018,.018),mat,(.22,.17,.11),8,5))
-        arm=pipe('otter / forearm',[Vector((sign*.150,-.04,.100)),Vector((sign*.120,-.09,.125)),Vector((sign*.090,-.135,.142))],[.034,.031,.027],mat,8)
-        paint(arm,lambda i,p:tuple(v*(.8+.4*value_noise(p,60)) for v in (.24,.16,.10)));parts.append(arm)
-        parts.append(ball('otter / paw',(sign*.078,-.150,.148),(.030,.032,.021),mat,(.13,.085,.055),8,5))
+        # Short furry arms: overlapping rounded blobs from the shoulder to a mitten-like paw on the chest.
+        fur=lambda i,p:tuple(v*(.8+.4*value_noise(p,60)) for v in (.24,.16,.10))
+        for at,size in [((sign*.150,-.030,.098),(.040,.050,.036)),((sign*.116,-.085,.122),(.036,.048,.034)),((sign*.088,-.130,.140),(.034,.044,.032))]:
+            blob=sphere('otter / arm',at,size,mat,12,8);paint(blob,fur);parts.append(blob)
+        parts.append(ball('otter / paw',(sign*.076,-.158,.146),(.032,.036,.024),mat,(.13,.085,.055),12,8))
         for j,(sx,sy) in enumerate([(.10,.0),(.095,.05),(.085,.10)]):
             parts.append(whisker('otter / whisker',Vector((sign*.032,-.575+j*.02,.100)),Vector((sign*(.032+sx),-.62+sy,.092-j*.02)),Vector((0,-.02,.015)),mat,(.80,.74,.62)))
     flip=[(-.10,.040,.026),(0,.054,.024),(.22,.080,.017),(.46,.098,.013),(.70,.094,.010),(.88,.066,.007),(1.0,.024,.004)]

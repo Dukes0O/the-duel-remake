@@ -19,9 +19,11 @@ mottling, no toy shapes.
 3. **Sea otter** (no model before). Floating on its back, pale head, frosted dark fur,
    paws on the chest, hind flippers up, kelp wound over its belly. *Look at:* from below
    in the water it is a dark shape against the surface, which is true to life; the card
-   shows its detail. The forearms read a little blocky.
+   shows its detail. The arms are now rounded and furry (Claude's one fix after round 1).
 4. **Gray whale.** Mottled slate with pale scars and cream barnacle patches, short
    paddle flippers, a low hump and seven knuckles down the tail with no dorsal fin,
    notched flukes. In the water at the Drop-off it reads as a gray whale, dark and far.
 
 Not judged here: sound, behaviour numbers, frame time.
+
+Claude: pass at round 1; otter forearms rounded.

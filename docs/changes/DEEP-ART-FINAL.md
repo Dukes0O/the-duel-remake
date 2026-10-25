@@ -23,8 +23,8 @@ Sheet and notes: `docs/board/looks/deep-art-final/round-1.jpg` and `round-1-revi
   - `sea-lion`: 2.3 m, deep chest, thick neck, sloped forehead with a tan crest, ears,
     dark eyes, whiskers, long foreflippers, two hind flippers. 2,100 triangles, 95 KB,
     body-wave clip.
-  - `otter` (new): 1.3 m, floating on its back, pale head, frosted dark fur, paws on
-    the chest, wrapped in kelp. 1,836 triangles, 91 KB, float clip.
+  - `otter` (new): 1.3 m, floating on its back, pale head, frosted dark fur, rounded furry arms and paws on
+    the chest, wrapped in kelp. 2,964 triangles, 149 KB, float clip.
   - `whale`: 14 m gray whale, mottled slate with pale scars and barnacle patches,
     short paddle flippers, a low hump and seven knuckles down the tail instead of a
     dorsal fin, throat grooves, notched flukes. 3,820 triangles, 160 KB, tail-pump
@@ -59,9 +59,9 @@ All follow from the otter now being drawn or a model being replaced; none is loo
   hashes of the catalogue (all rows but their own) changed because the Deep rows did.
   Proof: all 50 other rows are equal to `HEAD` in order; only `deep-silver-school`,
   `deep-sea-lion`, `deep-whale` changed and `deep-otter` was added. P4: `c781ab75…`
-  becomes `2f86e1fb84b1fa222e0459fafd7050512771514681c88fd77143c6237f7027ff`.
+  becomes `c75abff9d24ae7becbf8411c0222ff9b1a6aa30b003ec951672e56a63af05808`.
   Tanker: `262e8fe0…` becomes
-  `5430dfb0311a0336597bc6203b5469225b03fd8b000dbdf3b2dfea3e444f2886`.
+  `6df6a61ed4f40b06c9dd7f4d4dd0e4e0286625af03d35ca5eebdb0e5574f8bea`.
 - `tools/scenarios/deep-art.mjs`: eighteen roles (the otter is back).
 
 ## Checks

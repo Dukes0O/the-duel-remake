@@ -174,9 +174,9 @@
     {
       "id": "otter",
       "path": "assets/models/deep/otter.glb",
-      "sha256": "afb473b6f6e7ca4da795927f36e952b3e3431f76ff93d2d411ca8fe51693ccc9",
-      "bytes": 90624,
-      "triangles": 1836,
+      "sha256": "fe3093462dde188eb2504f20e72232e462df04517069c8ea73a882c41fc6e176",
+      "bytes": 149396,
+      "triangles": 2964,
       "boundsBlender": {
         "min": [
           -0.405349999666214,
