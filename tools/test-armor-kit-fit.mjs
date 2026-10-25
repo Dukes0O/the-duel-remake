@@ -5,8 +5,8 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {models} from './audit-vehicle-grounding.mjs';
 
-async function loadGeometryOnly() {
-  const bytes=await readFile(new URL('../public/assets/models/wasteland/kits/falcone_f42.glb',import.meta.url));
+async function loadGeometryOnly(car = 'falcone_f42') {
+  const bytes=await readFile(new URL(`../public/assets/models/wasteland/kits/${car}.glb`,import.meta.url));
   const length=bytes.readUInt32LE(12), json=JSON.parse(bytes.toString('utf8',20,20+length));
   const strip=value=>{if(!value||typeof value!=='object')return;
     for(const key of Object.keys(value))if(/Texture$/.test(key))delete value[key];else strip(value[key]);};
@@ -40,4 +40,50 @@ test('Falcone rear armor lies outside the actual painted body rather than inside
         `rear x=${x}: armor clearance ${(clearance*1000).toFixed(1)}mm; needs visible exterior fit`);
     }
   } finally {kit.removeFromParent();}
+});
+
+
+test('Speirling tiers leave wheels, canopy and fan outlets clear', async () => {
+  const model=models.find(row=>row.key==='mcmurtry_speirling');
+  const kit=await loadGeometryOnly(model.key);
+  kit.updateMatrixWorld(true);
+  const point=new THREE.Vector3(), closest=new THREE.Vector3();
+  const glass=[];
+  model.vehicle.traverse(mesh=>{
+    if(!mesh.isMesh || mesh.material.name!=='Glass')return;
+    const p=mesh.geometry.attributes.position, index=mesh.geometry.index;
+    for(let i=0;i<(index?.count??p.count);i+=3) {
+      const vertices=[0,1,2].map(j=>new THREE.Vector3()
+        .fromBufferAttribute(p,index?index.getX(i+j):i+j).applyMatrix4(mesh.matrixWorld));
+      glass.push(new THREE.Triangle(...vertices));
+    }
+  });
+  assert.ok(glass.length,'real production canopy');
+  for(const tier of ['kit-scrapper','kit-raider','kit-warlord']) {
+    let count=0;
+    kit.getObjectByName(tier).traverse(mesh=>{
+      if(!mesh.isMesh)return;
+      const positions=mesh.geometry.attributes.position;
+      for(let i=0;i<positions.count;i++) {
+        point.fromBufferAttribute(positions,i).applyMatrix4(mesh.matrixWorld);
+        count++;
+        for(const triangle of glass) {
+          triangle.closestPointToPoint(point,closest);
+          assert.ok(point.distanceToSquared(closest)>.012**2,`${tier}/${mesh.name}: canopy clearance`);
+        }
+        for(const side of [-1,1]) {
+          // The mouths and the space behind the spinning fan discs stay open.
+          const inOutlet=Math.hypot(point.x-side*.37,point.y-.315)<.16 && point.z< -1.30;
+          assert.ok(!inOutlet,`${tier}/${mesh.name}: fan outlet at ${point.toArray()}`);
+        }
+        if(tier==='kit-warlord')continue; // Shell retains the body's own wheel arches.
+        for(const wheel of model.wheels) {
+          const inDisc=Math.hypot(point.y-wheel.center.y,point.z-wheel.center.z)<wheel.radius+.012;
+          const atTyre=Math.abs(point.x-wheel.center.x)<.17;
+          assert.ok(!(inDisc&&atTyre),`${tier}/${mesh.name}: wheel clearance`);
+        }
+      }
+    });
+    assert.ok(count>100,`${tier}: checked actual fitted geometry`);
+  }
 });

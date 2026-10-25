@@ -14,7 +14,7 @@ const generators = [
       .map(name => `public/assets/models/deep/${name}.glb`),
     json: ['public/assets/models/deep/manifest.json'] },
   { script: 'tools/blender/rook-p2.py', args: ['--stage', 'neutral'], glb: [] },
-  { script: 'tools/blender/armor-kits.py', args: [], glb: ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt','dusthawk_rally','banshee_muscle','viper_proto','titan_monster','koenigsegg_jesko','ferrari_enzo','mclaren_f1','bugatti_bolide','falcone_sirena'].map(name => `public/assets/models/wasteland/kits/${name}.glb`) },
+  { script: 'tools/blender/armor-kits.py', args: [], glb: ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt','dusthawk_rally','banshee_muscle','viper_proto','titan_monster','koenigsegg_jesko','ferrari_enzo','mclaren_f1','bugatti_bolide','falcone_sirena','mcmurtry_speirling'].map(name => `public/assets/models/wasteland/kits/${name}.glb`) },
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },
