@@ -53,3 +53,7 @@ Independent reviewer found the stale arena-steering Jesko refusal. Fixed it with
 ## Removed
 
 Jesko membership in the air-only list and tests that require flying it before racing. No saved positions or progress removed.
+
+## Claude review (25 October 2026)
+
+Approved: every refusal check moves from the Jesko to the Enzo with the same expectations, new checks prove the Jesko starts everywhere and saved positions stay untouched; the customer pool is unchanged. Nothing loosened for the cars that stay air-only.
