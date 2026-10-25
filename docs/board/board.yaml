@@ -218,7 +218,7 @@ tasks:
     size: "S"
     status: "building"
     claimed_by: claude-local-sonnet-2026-10-24
-        branch: claude/summit-build-time
+    branch: claude/summit-build-time
     locks: []
     needs: []
     details: "docs/board/cards/SUMMIT-BUILD-TIME.md"
