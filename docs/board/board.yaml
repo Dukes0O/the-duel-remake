@@ -233,10 +233,12 @@ tasks:
 
   - id: DEEP-LIFE
     title: "Kelp Coast sea life"
-    owner: "codex"
+    owner: "claude"
     lane: "VIS"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-25
+    branch: claude/deep-life
     needs: [DEEP-TRAIL]
     flag: "the-deep"
     details: "docs/board/cards/DEEP-LIFE.md"
