@@ -449,7 +449,7 @@ tasks:
     locks: []
     status: "building"
     claimed_by: claude-local-sonnet-2026-10-24
-        branch: claude/yeti-fur-tint
+    branch: claude/yeti-fur-tint
     needs: []
     details: "docs/board/cards/YETI-FUR-TINT.md"
 
