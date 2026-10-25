@@ -120,7 +120,7 @@ for (const side of [-1, 1]) {
 }
 
 // GP-RACECRAFT: protect the released simulation before testing opt-in behavior.
-check(FEATURE_STATES['cpu-racecraft'] === 'dev', 'racecraft is preview-only');
+check(FEATURE_STATES['cpu-racecraft'] === 'on', 'racecraft is released (25 October 2026)');
 for (const [seed, hash] of [[1989, 'f29bc060b703448a4432042cb792d66b5cadc24da833fae2950ca7143c7a4b7c'],
   [42, '74b5262ff450d87f6203a8959b72ea15c632fd65db8d327c729089e19cfad234'],
   [17, '453ce3934758f1ff1a546264e9ea57ab0c88c26c6359fed341e10ea5d28efc5b']]) {

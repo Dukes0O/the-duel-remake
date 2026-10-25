@@ -18,7 +18,7 @@ export const FEATURE_STATES = Object.freeze({
   'engine-curve': 'dev',
   'driving-lessons': 'dev',
   'lap-choice': 'on', 'snowmen': 'on', yeti: 'on', 'rival-voices': 'dev',
-  'grand-prix': 'on', 'cpu-racecraft': 'dev', 'grand-prix-career': 'dev', 'snow-world': 'dev',
+  'grand-prix': 'on', 'cpu-racecraft': 'on', 'grand-prix-career': 'dev', 'snow-world': 'dev',
   // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.
   ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
   // The Deep (docs/THE_DEEP.md): the hidden underwater world. Released 25 October 2026.
