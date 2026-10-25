@@ -70,4 +70,4 @@ yard UI, wallet, journey and save-isolation check). Lane tier and build below.
 
 ## Lane tier and build
 
-(Filled in below.)
+Run once (25 October): `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 20 passed, 0 failed. `npm run build`: built.
