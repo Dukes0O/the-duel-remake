@@ -1,5 +1,6 @@
 import {CARS, COURSE} from './config.js';
 import {airOnlyNote} from './heli/heli-jobs.js';
+import {closureCard} from './course-closures.js';
 import {isCourseUnlocked} from './course-access.js';
 
 export function createRendererReadiness({app, ui, choices, profile, isDisposed, importRenderer=()=>import('./render3d.js'), reportError=console.error}) {
@@ -34,8 +35,10 @@ function syncRendererReadiness(s) {
     ui['renderer-loading'].lastChild.textContent=kitLoading?' LOADING TRACK SCENERY':preparing?' PREPARING THE ROAD':` LOADING ${CARS[ui.view3d.dataset.vehicleKey]?.name.toUpperCase()||'VEHICLE'}`;
     // Special cars travel only by air (docs/HELICOPTER.md section 5): say why
     // START is closed instead of letting it do nothing.
-    const menuCar=app.menuCar||choices.car,airOnly=s.status==='menu'?airOnlyNote({enabled:app._switches?.().enabled('helicopter')===true,
-      profile:profile(),carId:menuCar,courseId:COURSE[choices.startStage]?.id,carName:CARS[menuCar]?.name}):null;
+    // A course closed after a forest fire (docs/HELI_FIRE.md section 8.1) says so the same way.
+    const menuCar=app.menuCar||choices.car,menuCourse=COURSE[choices.startStage],airOnly=s.status==='menu'?(airOnlyNote({enabled:app._switches?.().enabled('helicopter')===true,
+      profile:profile(),carId:menuCar,courseId:menuCourse?.id,carName:CARS[menuCar]?.name})||
+      (app._fireOn?.()===true&&menuCourse?closureCard(profile(),menuCourse.id,undefined,{enabled:true,name:menuCourse.name})?.startNote:null)||null):null;
     ui['start-engine'].disabled=failed||kitLoading||asset!=='ready'||!app.visualReady||!isCourseUnlocked(profile(),choices.startStage)||!!airOnly;
     const note=ui['start-engine'].parentElement?.querySelector?.('.start-note');
     if(note){if(airOnly){if(note.textContent!==airOnly){note.dataset.before=note.textContent;note.textContent=airOnly;}note.dataset.airOnly='1';note.dataset.airOnlyText=airOnly;}

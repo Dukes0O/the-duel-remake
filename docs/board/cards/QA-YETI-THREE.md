@@ -23,3 +23,9 @@ module (the same import the running App already loaded) instead of importing
 a second copy into the inspection helper. If the page does not expose it
 without a host hook, stop and name the hook for a re-slice. warning===0 stays
 strict.
+
+## Director continuation: existing page route, 15 October
+
+The read-only route review found an existing exposure in tools/menu-check.js: the p4-kits-native=1 query publishes Box3 and Vector3 from the same page module graph as the renderer. No host hook or runtime change is needed. Ready the answered card for an isolated source lane, within the current factory limit. Own only tools/scenarios/yeti.mjs and docs/changes/QA-YETI-THREE.md. Add that existing query, reuse its classes, and require Vector3 constructor identity with the real renderer camera before inspection. Preserve all fixture, asset/source pins, poses, cameras, audio, memory-only guards and zero-warning requirements. Existing tests named before code: test-yeti, test-p4-kits, test-track-script and test-browser-harness, then the actual private yeti scenario and canonical lane/jobs4/build with independent review. Source work may proceed during the Ardennes release hold; no test, build or browser launch until it ends. No acceptance claim for the earlier packet.
+
+The new lane is C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-yeti-three, branch codex/qa-yeti-three, created from a788a6dfe7a1f7e3a42895c554a6b7f2bd5038d1. Its owning-run receipt is .evidence/2026-10-15/QA-YETI-THREE/creation-receipt.json. Source work only under the release hold; the old native packet remains failed.

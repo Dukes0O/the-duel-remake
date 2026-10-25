@@ -2,6 +2,7 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {referenceTargets} from '../build-reference-laps.mjs';
 import {ALL_CIRCUITS} from '../../src/circuits/index.js';
+import {CIRCUIT_MANIFESTS} from '../../src/circuit-manifests.js';
 import {SNAPSHOT_CHASE} from '../../src/track-analysis.js';
 
 const entry = '/tools/menu-check.html?flags=' + ['grand-prix', ...ALL_CIRCUITS.map(circuit => circuit.flag)].join(',');
@@ -25,10 +26,57 @@ async function setup(context, quality) {
     if(!owned || owned.disabled || !locked)throw Error('Owned and locked Team Room entry states are missing.');
     locked.click();
     if(!document.querySelector('.team-room-layer').hidden)throw Error('Locked track opened Team Room.');
+    owned.click();
+    const intelPanel=document.querySelector('.team-room-layer');
+    if(!intelPanel.textContent.includes('Drive 3 laps') ||
+       !intelPanel.querySelector('[data-team-buy="3"]')?.textContent.includes('400 credits') ||
+       !intelPanel.querySelector('[data-team-buy="4"]')?.textContent.includes('800 credits'))
+      throw Error('Locked intel does not show its requirement and exact price.');
+    const creditsBefore=app.profile.credits;
+    if(creditsBefore<400) {
+      intelPanel.querySelector('[data-team-buy="3"]').click();
+      if(!document.querySelector('[data-team-intel-message]')?.textContent.includes('Not enough credits.') ||
+         app.profile.credits!==creditsBefore || app.getIntelLevel('pacific-canyon')!==1)
+        throw Error('Failed intel purchase changed the profile or hid its reason.');
+    }
+    document.querySelector('[data-team-close]').click();
     document.querySelector('[data-action="courses-close"]').click();
     const events=[...document.querySelector('#scene-select').options].map(option=>Number(option.value));
     for(const index of events){const course=app.getMenuCourse(index);if(course)app.profile.courses={version:1,unlocked:[...new Set([...(app.profile.courses?.unlocked||[]),course.def.id])]};}
     app._saveProfile();
+    // Disposable, memory-only purchase fixture; every picture uses earned access.
+    // Variant ownership also needs its actual manifest's parent GP podium.
+    app.profile={...app.profile,credits:50000,grandPrixPodiums:[...new Set([...(app.profile.grandPrixPodiums??[]),
+      ...${JSON.stringify(CIRCUIT_MANIFESTS.filter(row=>row.unlock?.kind==='default-gp-podium').map(row=>row.unlock.defaultEventId))}])],
+      heli:{...(app.profile.heli??{version:1}),map:{version:1,seen:[],found:${JSON.stringify(CIRCUIT_MANIFESTS.filter(row=>row.unlock?.kind==='spotted-from-air').map(row=>row.id))},table:false}}};app._saveProfile();
+    for(const index of [...document.querySelector('#scene-select').options].map(option=>Number(option.value))){
+      const course=app.getMenuCourse(index);
+      if(course && !course.def.practice && !course.def.arena && course.closed!==false) {
+        const result=app.buyIntel(course.def.id,4);
+        if(!result.ok)throw Error('Fixture intel purchase refused: '+course.def.id);
+      }
+    }
+
+
+    const previousMode=app.duel.state.mode;
+    const trial=document.querySelector('[data-mode="timetrial"]');
+    if(!trial)throw Error('Time Trial setup control is missing.');
+    trial.click();
+    const options={startStage:app.menuStage,mode:'timetrial'},choices=app.getGhostChoices(options);
+    let source=app.getGhostChoice(options);
+    const expectedLabel=value=>value==='off'?'OFF':value==='team'?'TEAM':'MY BEST';
+    if(!document.querySelector('#ghost-record-label').textContent.includes(expectedLabel(source)))
+      throw Error('Ghost source label is absent before changing it.');
+    for(let count=0;count<choices.length;count++){
+      const expected=choices[(choices.indexOf(source)+1)%choices.length];
+      document.querySelector('#ghost-toggle').click();
+      source=app.getGhostChoice(options);
+      if(source!==expected || document.querySelector('#ghost-toggle').checked!==(source!=='off') ||
+         !document.querySelector('#ghost-record-label').textContent.includes(expectedLabel(source)))
+        throw Error('Bound ghost change left a stale checkbox or source label.');
+    }
+    document.querySelector('[data-mode="'+previousMode+'"]')?.click();
+
     window.__teamRoomReadOnly=()=>JSON.stringify({state:app.duel.state,profile:app.profile,
       stage:app.menuStage,route:app.menuRouteId,settings:app.getRaceChoices(),storage:Array.from({length:localStorage.length},(_,index)=>localStorage.key(index)).sort().map(key=>[key,localStorage.getItem(key)])});
   })()`);

@@ -1,3 +1,4 @@
+import {tyreSlipRawSound} from './config.js';
 import {isSummitAttack} from './summit-attack.js';
 // Audio rendering reads simulation state; all authored cues live in the bank.
 import {
@@ -106,6 +107,7 @@ export class EngineAudio {
     this._ambiencePromise = null;
     this.smoothedLoad = 0;
     this.smoothedSlip = 0;
+    this.tyreSlipSmoothed = 0;
     this.lastThrottle = 0;
     this.lastUpdateTime = 0;
     this.nextThrottle = 0;
@@ -270,7 +272,7 @@ export class EngineAudio {
       Object.entries(SOUND_BANK)
         .filter(
           ([id, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome &&
-            cue.flag !== 'the-deep' && cue.flag !== 'helicopter' && cue.flag !== 'driving-lessons' &&
+            cue.flag !== 'the-deep' && cue.flag !== 'helicopter' && cue.flag !== 'driving-lessons' && cue.flag !== 'lab' &&
             (!pending || cue.flag === 'grand-prix') &&
             (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
             (cue.flag !== 'grand-prix' || grandPrix || id==='snowman.burst' && addSnowmen || ['avalanche.rumble','avalanche.slide'].includes(id) && addAvalanche || id==='yeti.roar' && addYeti || id==='race.finish.flag' && addSummitAttack),
@@ -1323,8 +1325,14 @@ export class EngineAudio {
     this.smoothedSlip +=
       (rawSlip - this.smoothedSlip) *
       (1 - Math.exp(-dt / (rawSlip > this.smoothedSlip ? 0.045 : 0.12)));
+    const tyreInput = st.tyreSlipRules === true && !st.onFoot && !st.knock && grounded
+      ? tyreSlipRawSound(st.tyreSlip || 0) : 0;
+    const previousTyreSlip = this.tyreSlipSmoothed || 0;
+    this.tyreSlipSmoothed = previousTyreSlip + (tyreInput - previousTyreSlip) *
+      (1 - Math.exp(-dt / (tyreInput > previousTyreSlip ? 0.045 : 0.12)));
     const slip = this.smoothedSlip,
-      recordedSlip = clamp((slip - 0.08) / 0.92, 0, 1),
+      tyreLoopSlip = st.tyreSlipRules === true ? (st.onFoot || st.knock ? 0 : this.tyreSlipSmoothed) : slip,
+      recordedSlip = clamp((tyreLoopSlip - 0.08) / 0.92, 0, 1),
       squeal = recordedSlip * recordedSlip * (3 - 2 * recordedSlip);
     for (let i = 0; i < ENGINE_BANDS.length; i++) {
       const band = ENGINE_BANDS[i],

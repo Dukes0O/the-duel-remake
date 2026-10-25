@@ -41,7 +41,8 @@ function geometryHash(geometry){
   const hash=createHash('sha256');for(const[name,attribute]of Object.entries(geometry.attributes).sort(([a],[b])=>a.localeCompare(b))){hash.update(name);hash.update(Buffer.from(attribute.array.buffer));}
   hash.update(Buffer.from(geometry.index.array.buffer));hash.update(JSON.stringify(geometry.groups));return hash.digest('hex');
 }
-function legacyIndex(points){return{query(x,z){
+// The production scene reads `lookup` (the same answer without a new object per query); the full scan answers both the same way.
+function legacyIndex(points){const index={query(x,z){
   let index=-1,t=0,distanceSq=Infinity;
   for(let i=1;i<points.length;i++){
     const a=points[i-1],b=points[i],dx=b.x-a.x,dz=b.z-a.z,projection=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz)));
@@ -49,7 +50,7 @@ function legacyIndex(points){return{query(x,z){
     if(d<distanceSq){index=i;t=projection;distanceSq=d;}
   }
   return{index,t,distanceSq};
-}};}
+}};index.lookup=index.query;return index;}
 // Run production samplers with an independent legacy full-scan query. This
 // does not add a test hook or a dependency override to the shipped scene API.
 const dataUrl=source=>'data:text/javascript;base64,'+Buffer.from(source).toString('base64');

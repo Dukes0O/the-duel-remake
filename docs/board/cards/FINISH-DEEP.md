@@ -1,17 +1,16 @@
 # FINISH-DEEP
 
 The short board entry controls current state, ownership, dependencies and locks.
-These are the card's detailed design, acceptance and recorded decisions.
+The design is `docs/THE_DEEP.md`; this card names the slice, files and acceptance.
 
-```yaml
-  - id: FINISH-DEEP
-    title: "Claude's finishing pass: the Kelp Coast"
-    owner: claude
-    lane: DEEP
-    size: M
-    needs: [DEEP-ZONE, DEEP-SURFACE, DEEP-WATER, DEEP-TRAIL, DEEP-LIFE, DEEP-LOG, DEEP-AUDIO]
-    status: backlog
-    flag: the-deep
-    acceptance:
-      - "Postcard sheet; drive-through check; night-shift frame check at the kelp forest with a full school. Then Kyle says go live."
-```
+Claude. THE_DEEP sections 6 and 10. Needs DEEP-LIFE, DEEP-LOG, DEEP-AUDIO
+and DEEP-SIRENA-VIEW (and with them DEEP-TRAIL, DEEP-SIRENA, DEEP-RADIO,
+SIRENA-ART and SIRENA-CAR).
+
+Play the whole Kelp Coast story on the keyboard as a player, Casual and Pro,
+from the first dive to the Coast Cup: the goals are findable without a
+guide, nothing feels like a chore, Ana's lines land at the right moments and
+the facts read true. Send Kyle the postcard sheet (kelp, a turtle, the
+Sirena rising, the Coast Cup card). Drive-through check; the frame check at
+the kelp forest with a full school (rule 8). Then Claude decides go live
+(rule 18) and tells Kyle in the release note.

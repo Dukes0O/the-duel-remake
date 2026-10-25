@@ -20,6 +20,7 @@ import {addCircuitEffects} from '../src/circuit-effects.js';
 import {syncScene} from '../src/scene-systems.js';
 import {disposeTree} from '../src/world.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
+import {TREMBLANT_WOODS} from '../src/circuits/tremblant-woods.js';
 import {terrainGeometry, farTerrainGeometry} from '../src/world-surfaces.js';
 import {createTrackKits, normalizeKitPlacements} from '../src/track-kits.js';
 import {addCircuitLandmarks} from '../src/circuit-landmarks.js';
@@ -189,13 +190,16 @@ test('the forest and safety kit leave the original run-off and native pit road o
     if (row.lateral < 0 && row.s <= piece('Pit Straight').s1 + 15)
       assert.fail('no safety piece may close the pit entrance or exit');
   }
-  // Finishing-pass braking boards: beyond the run-off, inside the fence, on straight road, never solid.
+  // Finishing-pass braking boards follow the script's own board rule: 2.4 m beyond the road edge on the
+  // outside, on straight road, never solid.
   const boards = rows.filter(row => /^braking-board-/.test(row.id));
   assert.ok(boards.length >= 15);
   for (const row of boards) {
     const edge = Math.abs(row.lateral) - course.roadHalfWidthAt(row.s);
-    assert.ok(edge >= 12.5 && edge < 14.3, 'board stands beyond the 12 m run-off and inside the catch fence');
+    assert.ok(Math.abs(edge - 2.4) < 1e-9, 'board stands 2.4 m from the road edge, like the script boards');
     assert.equal(course.script.pieceAt(row.s).kind, 'straight');
+    const corner = course.script.pieces.find(piece => piece.kind === 'turn' && piece.s0 > row.s && piece.s0 - row.s <= 151);
+    assert.equal(Math.sign(row.lateral), -corner.dir, 'board stands on the outside of the corner it announces');
     assert.notEqual(row.solid, true);
   }
   assert.deepEqual(ARDENNES_FOREST.pitLane, {straight: 'Pit Straight', side: 'right'});
@@ -209,6 +213,64 @@ test('the forest and safety kit leave the original run-off and native pit road o
     assert.ok(nearest.distance >= course.roadHalfWidthAt(nearest.s) + 12, 'trees stay outside every road run-off');
   }
   assert.deepEqual(new Course(ARDENNES_FOREST, 1989).features.trees, course.features.trees, 'same seed gives the same forest');
+});
+
+
+// ARDENNES-FAR-FOREST (finishing pass F5): a second, far band of firs on the bald hills. Taken out of the
+// Ardennes course on 16 October (its +2,182 trees missed the High frame limit at Pit Straight); the band code
+// stays, tested here on the same course with the accepted band added back, until a lighter far forest returns.
+const FAR_BAND = Object.freeze({from: 60, to: 220, spacing: 9, rows: 5, thin: .5,
+  scale: Object.freeze([1.4, 2.6]), jitter: .8, clumps: Object.freeze({cut: .5, size: .3})});
+const ARDENNES_WITH_FAR = Object.freeze({...ARDENNES_FOREST, scenery: Object.freeze({...ARDENNES_FOREST.scenery, farForest: FAR_BAND})});
+
+test('Ardennes ships without the far band', () => {
+  assert.equal(ARDENNES_FOREST.scenery.farForest, undefined);
+  const course = new Course(ARDENNES_FOREST, 1989);
+  assert.equal(course.features.trees.length, 9131);
+  assert.equal(course.features.trees.some(tree => tree.farForest || tree.id.startsWith('far-forest-')), false);
+});
+
+test('the far forest band leaves the first band and the beeches exactly as they were', () => {
+  const withFar = new Course(ARDENNES_WITH_FAR, 1989);
+  const without = new Course(ARDENNES_FOREST, 1989);
+  const far = withFar.features.trees.filter(tree => tree.farForest);
+  const first = withFar.features.trees.filter(tree => !tree.farForest);
+  assert.deepEqual(first, without.features.trees, 'every earlier tree keeps its name, place, scale and tint');
+  assert.equal(without.features.trees.length, 9131);
+  assert.deepEqual(beechTreePlacements(withFar), beechTreePlacements(without), 'the accepted beech set is unchanged');
+  assert.equal(beechTreePlacements(withFar).length, 191);
+  assert.deepEqual(withFar.features.trees.slice(0, first.length), first, 'the far band is planted after every earlier tree');
+  assert.ok(far.length > 1500 && far.length <= .25 * first.length, `far band adds at most a quarter (${far.length})`);
+  assert.ok(far.every((tree, i) => tree.id === `far-forest-${i}`));
+  assert.deepEqual(new Course(ARDENNES_WITH_FAR, 1989).features.trees, withFar.features.trees, 'same seed, same far band');
+});
+
+test('far forest trees keep every keep-clear rule and stand on the drawn ground', () => {
+  const course = new Course(ARDENNES_WITH_FAR, 1989), band = FAR_BAND;
+  const zones = ARDENNES_FOREST.scenery.clear, corners = course.script.pieces.filter(piece => piece.kind === 'turn');
+  for (const tree of course.features.trees.filter(tree => tree.farForest)) {
+    // Measured from the nearest road, which for a band reaching 220 m can be another stretch of the circuit.
+    const nearest = course.nearest(tree.x, tree.z), edge = nearest.distance - course.roadHalfWidthAt(nearest.s);
+    assert.ok(edge >= band.from - 1e-6, `at least ${band.from} m from every road edge (${tree.id}: ${edge.toFixed(1)} m)`);
+    const depth = Math.abs(tree.off) - course.roadHalfWidthAt(tree.s);
+    assert.ok(depth >= band.from - 1e-9 && depth <= band.to + 1e-9, 'inside its band');
+    const r = 2.5 * tree.scale;
+    for (const [phase, off] of [[course.phase(tree.s), tree.off], [course.phase(nearest.s), nearest.lateral]])
+      assert.ok(!zones.some(zone => phase >= zone.s0 - r && phase <= zone.s1 + r && off >= zone.from - r && off <= zone.to + r),
+        `outside the course clear stretches (the paddock, The Wall, Stavelot village): ${tree.id}`);
+    const piece = course.script.pieceAt(nearest.s);
+    assert.ok(!(piece.kind === 'turn' && Math.sign(nearest.lateral) === piece.dir && nearest.distance < course.roadHalfWidthAt(nearest.s) + 30),
+      'never on the inside of a corner');
+    assert.ok(Math.abs(renderedGroundHeight(course, tree) - tree.y) < 1e-6, 'stands on the drawn ground, not the course ground');
+    assert.ok(course.features.obstacles.includes(tree), 'a solid scenery tree like the first band');
+  }
+  assert.ok(corners.length > 10);
+});
+
+test('a course without a far band has none and is unchanged', () => {
+  const course = new Course(TREMBLANT_WOODS, 1989);
+  assert.equal(course.features.trees.some(tree => tree.farForest || tree.id.startsWith('far-forest-')), false);
+  assert.equal(TREMBLANT_WOODS.scenery?.farForest, undefined);
 });
 
 
@@ -470,7 +532,9 @@ test('the current Stavelot village authors two frozen nonempty streets and a gro
   assert.equal(town?.type, 'town'); assert.equal(church?.type, 'church');
   assert.ok(Object.isFrozen(town) && Object.isFrozen(town.houses) && town.houses.length > 0);
   assert.ok(town.houses.every(Object.isFrozen));
-  assert.deepEqual(town.roofColours, [0x414a50, 0x5a352c, 0x50545a]);
+  // ARDENNES-STAVELOT-STONE: Ardennes stone houses under dark slate.
+  assert.equal(town.houseStyle, 'ardennes-stone');
+  assert.deepEqual(town.roofColours, [0x2c3034, 0x363a3e, 0x303236]);
   assert.ok(Object.isFrozen(town.roofColours));
   const streets = new Set(town.houses.map(house => {
     assert.ok([house.s, house.lateral, house.heading, house.width, house.depth].every(Number.isFinite));
@@ -531,7 +595,7 @@ test('the two current village corridors have real frozen four-metre gravel stree
   } finally {disposeTree(world); for (const mesh of terrain) mesh.geometry.dispose(); material.dispose();}
 });
 
-test('every actual current town foundation and veranda has drawn-terrain support without mutation or leaked owners', () => {
+test('every actual current town foundation has drawn-terrain support without mutation or leaked owners', () => {
   const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
   const before = JSON.stringify({definition: ARDENNES_FOREST, features: course.features});
   const spec = ARDENNES_FOREST.circuitLandmarks.find(row => row.id === 'stavelot-valley-town');
@@ -546,10 +610,12 @@ test('every actual current town foundation and veranda has drawn-terrain support
       houses = town.getObjectByName('town houses'), roofs = town.getObjectByName('town roofs'),
       verandas = town.getObjectByName('town verandas'), doors = town.getObjectByName('town doors'),
       posts = town.getObjectByName('town veranda posts');
-    for (const mesh of [footings, houses, roofs, verandas]) {
+    // ARDENNES-STAVELOT-STONE: stone houses have no veranda, deck or posts; one door each, stone gables.
+    for (const mesh of [footings, houses, roofs, town.getObjectByName('town stone gables')]) {
       assert.ok(mesh?.isInstancedMesh); assert.equal(mesh.count, spec.houses.length);
     }
-    assert.equal(posts.count, spec.houses.length * 3); assert.equal(doors.count, spec.houses.length * 2);
+    assert.equal(verandas, undefined); assert.equal(posts, undefined); assert.equal(doors.count, spec.houses.length);
+    const steps = town.getObjectByName('town door steps'); assert.ok(steps?.isInstancedMesh); assert.equal(steps.count, spec.houses.length);
     const matrixAt = (mesh, index) => {
       const matrix = new THREE.Matrix4(); mesh.getMatrixAt(index, matrix); return mesh.matrixWorld.clone().multiply(matrix);
     };
@@ -565,7 +631,7 @@ test('every actual current town foundation and veranda has drawn-terrain support
       assert.ok(Number.isFinite(ground), label + ': actual drawn terrain support is finite'); return ground;
     };
     for (let index = 0; index < spec.houses.length; index++) {
-      const footing = matrixAt(footings, index), house = matrixAt(houses, index), deck = matrixAt(doors, index * 2);
+      const footing = matrixAt(footings, index), house = matrixAt(houses, index);
       const floor = new THREE.Vector3(0, -.5, 0).applyMatrix4(house).y;
       const expectedColours = spec.roofColours.map(value => new THREE.Color(value).toArray().map(Math.fround));
       assert.ok(expectedColours.some(value => JSON.stringify(value) === JSON.stringify(Array.from(roofs.instanceColor.array.slice(index * 3, index * 3 + 3)))));
@@ -581,19 +647,12 @@ test('every actual current town foundation and veranda has drawn-terrain support
       for (const u of [-.5, 0, .5]) for (const v of [-.5, 0, .5]) checkFooting(u, v, true);
       const nx = Math.ceil(Math.hypot(...footing.elements.slice(0, 3)) / .5), nz = Math.ceil(Math.hypot(...footing.elements.slice(8, 11)) / .5);
       for (let x = 0; x <= nx; x++) for (let z = 0; z <= nz; z++) checkFooting(-.5 + x / nx, -.5 + z / nz);
-      const dx = Math.ceil(Math.hypot(...deck.elements.slice(0, 3)) / .5), dz = Math.ceil(Math.hypot(...deck.elements.slice(8, 11)) / .5);
-      for (let x = 0; x <= dx; x++) for (let z = 0; z <= dz; z++) {
-        const point = new THREE.Vector3(-.5 + x / dx, .5, -.5 + z / dz).applyMatrix4(deck);
-        assert.ok(point.y >= support(point.x, point.z, 'house ' + index + ' veranda'), 'actual veranda deck clears its whole sampled ground footprint');
-      }
-      for (let post = 0; post < 3; post++) {
-        const matrix = matrixAt(posts, index * 3 + post), vertices = posts.geometry.getAttribute('position');
-        const bottom = posts.geometry.boundingBox ?? (posts.geometry.computeBoundingBox(), posts.geometry.boundingBox);
-        for (let vertex = 0; vertex < vertices.count; vertex++) if (vertices.getY(vertex) === bottom.min.y) {
-          const point = new THREE.Vector3().fromBufferAttribute(vertices, vertex).applyMatrix4(matrix), ground = support(point.x, point.z, 'house ' + index + ' veranda post');
-          assert.ok(point.y <= ground, 'actual veranda post base reaches drawn ground');
-          assert.ok(new THREE.Vector3(0, .5, 0).applyMatrix4(matrix).y >= ground, 'actual veranda post spans support');
-        }
+      // The door step runs from the drawn ground in front of the door up to the floor: no door hangs in the air.
+      const step = matrixAt(steps, index);
+      assert.ok(new THREE.Vector3(0, .5, 0).applyMatrix4(step).y >= floor - 1e-3, 'house ' + index + ': the door step reaches the floor (within the 32-bit instance matrix)');
+      for (const u of [-.5, 0, .5]) for (const v of [-.5, 0, .5]) {
+        const bottom = new THREE.Vector3(u, -.5, v).applyMatrix4(step);
+        assert.ok(bottom.y <= support(bottom.x, bottom.z, 'house ' + index + ' door step'), 'house ' + index + ': the door step reaches the drawn ground');
       }
       measurements.push({index, s: spec.houses[index].s, lateral: spec.houses[index].lateral, samples, maximumBottom, minimumFloor});
     }

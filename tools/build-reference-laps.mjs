@@ -1,3 +1,5 @@
+import {MAX_GHOST_SAMPLES} from '../src/ghost.js';
+import {referenceLap} from '../src/reference-laps.js';
 import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
 // Deterministic Team Room references, built with the production App driver.
 // All storage and completion overrides belong to a disposable Node fixture.
@@ -12,6 +14,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
+import {heliOf} from '../src/heli/heli-save.js';
 
 export const REFERENCE_POLICY = Object.freeze({
   car: 'stuttgart_959s', driver: 'club', cpu: 'medium', fixtureVersion: 1,
@@ -51,6 +54,63 @@ export function selectReferenceLap(run) {
   // native observations between them retain their actual elapsed times.
   rows[0].t = 0; rows.at(-1).t = lapTimes[lap];
   return {lap, length, lapMs: Math.round(lapTimes[lap] * 1000), trace: rows};
+}
+
+
+// Keep observed native poses from the chosen flying lap. Only its two line
+// crossings interpolate neighbouring observations, as the timing trace does.
+export function referencePoseSamples(lap, nativeTrace) {
+  const fields = ['lateral', 'heading', 'airHeight', 'mph'];
+  const optional = ['groundHeight','terrainPitch','terrainRoll'];
+  const startS = lap.lap * lap.length;
+  const poseAt = distance => {
+    let index = nativeTrace.findIndex(row => row.s >= distance);
+    if (index < 0) throw Error('Missing native pose at the lap line.');
+    const b = nativeTrace[index], a = Math.abs(b.s - distance) < 1e-6 ? b : nativeTrace[index - 1];
+    if (!a || !fields.every(key => Number.isFinite(a[key]) && Number.isFinite(b[key])))
+      throw Error('Reference needs complete native pose fields.');
+    const blend = a === b ? 0 : (distance - a.s) / (b.s - a.s);
+    if (!(blend >= 0 && blend <= 1)) throw Error('Invalid native pose crossing.');
+    const pose = Object.fromEntries(fields.map(key => [key, a[key] + (b[key] - a[key]) * blend]));
+    for (const key of optional) {
+      if ([a[key],b[key]].some(value => value != null && !Number.isFinite(value)))
+        throw Error('Invalid optional native pose field.');
+      pose[key] = Number.isFinite(a[key]) && Number.isFinite(b[key]) ?
+        a[key] + (b[key]-a[key])*blend : null;
+    }
+    pose.heading = a.heading + Math.atan2(Math.sin(b.heading - a.heading), Math.cos(b.heading - a.heading)) * blend;
+    pose.tumble = !!a.tumble;
+    return pose;
+  };
+  const rows = [], interval = Math.max(.2, lap.lapMs / 1000 / (MAX_GHOST_SAMPLES - 2));
+  let next = 0;
+  for (let index = 0; index < lap.trace.length; index++) {
+    const row = lap.trace[index], final = index === lap.trace.length - 1;
+    if (!final && rows.length && row.t < next) continue;
+    const pose = poseAt(startS + row.s);
+    const packed = [Math.round(row.t * 1000), Math.round(row.s * 100), Math.round(pose.lateral * 100),
+      Math.round(pose.heading * 10000), Math.round(Math.max(0, pose.airHeight) * 100),
+      Math.round(Math.max(0, pose.mph) * 10), 0];
+    const flags = (pose.groundHeight != null ? 1 : 0) | (pose.terrainPitch != null ? 2 : 0) |
+      (pose.terrainRoll != null ? 4 : 0) | (pose.tumble ? 8 : 0);
+    if (flags) packed.push(Math.round((pose.groundHeight ?? 0)*100),
+      Math.round((pose.terrainPitch ?? 0)*10000),Math.round((pose.terrainRoll ?? 0)*10000),flags);
+    if (rows.length && (packed[0] <= rows.at(-1)[0] || packed[1] < rows.at(-1)[1]))
+      throw Error('Native reference pose clock or distance is not increasing.');
+    rows.push(packed);next = row.t + interval;
+  }
+  return rows;
+}
+
+export function retainReferencePoses(stored, rebuilt) {
+  const unchanged = ['eventId', 'route', 'seed', 'car', 'driver', 'cpu', 'fixtureVersion',
+    'courseFingerprint', 'lapMs', 'sectorMs', 'trace', 'corners'];
+  const difference = unchanged.find(key => JSON.stringify(stored?.[key]) !== JSON.stringify(rebuilt?.[key]));
+  const samples = rebuilt?.poseSamples;
+  if (difference || !Array.isArray(samples) || samples.length < 12 ||
+      samples.some(row => !Array.isArray(row) || ![7,11].includes(row.length) || !row.every(Number.isFinite)))
+    return {record:stored,attached:false,reason:difference || 'missing native poses'};
+  return {record:{...stored,poseSamples:samples},attached:true};
 }
 
 export function referenceTrace(lap) {
@@ -152,7 +212,9 @@ export function startReferenceApp(app, target) {
   const unlock = CIRCUIT_MANIFESTS.find(row => row.id === target.eventId)?.unlock;
   app.profile = {...app.profile, courses: {version: 1, unlocked: COURSE.map(course => course.id)},
     ...(unlock?.kind === 'default-gp-podium' ? {grandPrixPodiums:
-      [...new Set([...(app.profile.grandPrixPodiums ?? []), unlock.defaultEventId])]} : {})};
+      [...new Set([...(app.profile.grandPrixPodiums ?? []), unlock.defaultEventId])]} : {}),
+    // A variant found from the air enters through the pilot's map record, as a player's save would hold it.
+    ...(unlock?.kind === 'spotted-from-air' ? {heli: {...heliOf(app.profile), map: {version: 1, seen: [], found: [target.eventId], table: false}}} : {})};
   app._saveProfile();
   const options = {startStage, seed: target.seed, mode: 'duel', car: driver.car,
     driverId: driver.driverId, cpuDifficulty: REFERENCE_POLICY.cpu,
@@ -176,14 +238,16 @@ export function startReferenceApp(app, target) {
   return {options, fixture: installReferenceFixture(app, target)};
 }
 
-export async function buildReferenceRecord(target, {maxSeconds = 720, AppClass} = {}) {
+export async function buildReferenceRecord(target, {maxSeconds = 720, AppClass, retainPoses = false} = {}) {
   return withReferenceApp(async app => {
     const {fixture} = startReferenceApp(app, target);
     try {
       const {state, course} = app.duel, trace = [];
       const observe = () => trace.push({s: state.s, t: state.stageTimeSec + state.racePenaltySec,
         mph: Math.max(0, state.speedMph), gear: state.gear,
-        throttle: state.input.throttle, brake: state.input.brake, lateral: state.lateral});
+        throttle: state.input.throttle, brake: state.input.brake, lateral: state.lateral,
+        heading: state.headingError + (state.slipAngle || 0) + (state.crashSpin || 0), airHeight: state.airHeight,
+        groundHeight: state.groundHeight, terrainPitch: state.terrainPitch, terrainRoll: state.terrainRoll, tumble: !!state.tumble});
       observe();
       for (let frame = 0; frame < maxSeconds * 30 && state.completedLaps < 3; frame++) {
         if (!['countdown', 'racing'].includes(state.status)) break;
@@ -195,7 +259,7 @@ export async function buildReferenceRecord(target, {maxSeconds = 720, AppClass} 
       const metrics = analyseLap(course, {trace: lap.trace, lapMs: lap.lapMs, route: target.route});
       return {eventId: target.eventId, route: target.route, seed: target.seed,
         car: referenceDriver(target).car, driver: referenceDriver(target).driverId, cpu: REFERENCE_POLICY.cpu,
-        fixtureVersion: REFERENCE_POLICY.fixtureVersion, ...metrics};
+        fixtureVersion: REFERENCE_POLICY.fixtureVersion, ...metrics, ...(retainPoses ? {poseSamples: referencePoseSamples(lap, trace)} : {})};
     } catch (error) {
       throw Error(`${target.key}: ${error.message} (native laps ${app.duel.state.completedLaps}/3, status ${app.duel.state.status})`, {cause: error});
     } finally { fixture.dispose(); }
@@ -204,7 +268,8 @@ export async function buildReferenceRecord(target, {maxSeconds = 720, AppClass} 
 
 // Load the production registry only after its supported QA flags are active.
 // A separate process avoids cached imports and gives it no real save storage.
-export async function runReferenceWorker({targets = referenceTargets(), catalogOnly = false} = {}) {
+export async function runReferenceWorker({targets = referenceTargets(), catalogOnly = false, retainPoses = false, flags = []} = {}) {
+  if(!Array.isArray(flags)||flags.some(flag=>flag!=='tyre-slip')) throw Error('Unsupported reference flags.');
   const script = `
     const request = JSON.parse(process.argv[1]), rows = new Map();
     globalThis.__DUEL_QA__ = true;
@@ -217,10 +282,10 @@ export async function runReferenceWorker({targets = referenceTargets(), catalogO
     const {featureFlags} = await import(request.switches);
     const result = request.catalogOnly ? {events:COURSE.map(row=>row.id), storageLength:localStorage.length,
       flags:request.flags.map(name=>({name,state:featureFlags.state(name),enabled:featureFlags.enabled(name)}))}
-      : await recipe.buildReferenceSet({targets:request.targets});
+      : await recipe.buildReferenceSet({targets:request.targets,retainPoses:request.retainPoses});
     process.stdout.write(JSON.stringify(result));
   `;
-  const request = {targets, catalogOnly, flags: ALL_CIRCUITS.map(circuit => circuit.flag),
+  const request = {targets, catalogOnly, retainPoses, flags: [...new Set([...ALL_CIRCUITS.map(circuit => circuit.flag), ...flags])],
     recipe: import.meta.url, config: new URL('../src/config.js', import.meta.url).href,
     switches: new URL('../src/feature-flags.js', import.meta.url).href};
   try {
@@ -233,19 +298,19 @@ export async function runReferenceWorker({targets = referenceTargets(), catalogO
   }
 }
 
-export async function buildReferenceSet({targets = referenceTargets(), run = buildReferenceRecord, onRecord = () => {}} = {}) {
-  if (run === buildReferenceRecord && targets.some(target => !COURSE.some(definition => definition.id === target.eventId))) {
+export async function buildReferenceSet({targets = referenceTargets(), run = buildReferenceRecord, onRecord = () => {}, retainPoses = false, flags = []} = {}) {
+  if (run === buildReferenceRecord && (flags.length || targets.some(target => !COURSE.some(definition => definition.id === target.eventId)))) {
     // Reject typos here rather than recursively starting another worker.
     const known = new Set(referenceTargets().map(target => target.eventId));
     const missing = targets.find(target => !known.has(target.eventId));
     if (missing) throw Error(`Unknown reference event: ${missing.eventId}`);
-    const records = await runReferenceWorker({targets});
+    const records = await runReferenceWorker({targets,retainPoses,flags});
     for (const target of targets) onRecord(target, records[target.key]);
     return records;
   }
   const records = {};
   for (const target of targets) {
-    records[target.key] = await run(target);
+    records[target.key] = await run(target,{retainPoses});
     onRecord(target, records[target.key]);
   }
   return records;
@@ -276,14 +341,31 @@ export function publishReferenceSet(records, {output= new URL('../src/generated/
 async function main() {
   const args = process.argv.slice(2), event = args.find(arg => arg.startsWith('--event='))?.slice(8);
   const route = args.find(arg => arg.startsWith('--route='))?.slice(8), probe = args.includes('--probe');
+  const posesOnly = args.includes('--poses-only');
+  const flags=args.find(arg=>arg.startsWith('--flags='))?.slice(8).split(',') ?? [];
+  if(flags.length&&!probe) throw Error('Switch-on references need --probe; existing published laps must stay unchanged.');
   if (route && !probe) throw Error('A filtered reference run needs --probe; partial data cannot be published.');
   const targets = referenceTargets().filter(target => (!event || target.eventId === event) && (!route || target.route === route));
   if (!targets.length) throw Error('No reference target matched.');
-  const records = await buildReferenceSet({targets,
+  const records = await buildReferenceSet({targets,retainPoses:posesOnly,flags,
     onRecord: (target, record) => console.log(`${target.key}: ${record.lapMs} ms, ${record.trace.length} samples, ${record.courseFingerprint}`)});
   if (probe) return;
-  publishReferenceSet(records);
-  console.log(`Built ${targets.length} complete reference records.`);
+  if (posesOnly) {
+    const retained = {}, changedEvents = new Set();
+    for (const target of targets) {
+      const result = retainReferencePoses(referenceLap(target.eventId, target.route), records[target.key]);
+      if (!result.record) throw Error('Stored reference missing: ' + target.key);
+      retained[target.key] = result.record;
+      if (result.attached) changedEvents.add(target.eventId);
+      console.log(target.key + ': ' + (result.attached ? 'native team poses retained' : 'no team ghost (' + result.reason + ')'));
+    }
+    const changed = Object.fromEntries(Object.entries(retained).filter(([,row]) => changedEvents.has(row.eventId)));
+    if (changedEvents.size) publishReferenceSet(changed);
+    console.log('Updated native pose data for ' + changedEvents.size + ' events; stored reference timings unchanged.');
+  } else {
+    publishReferenceSet(records);
+    console.log(`Built ${targets.length} complete reference records.`);
+  }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))

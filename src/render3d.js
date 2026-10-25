@@ -54,7 +54,10 @@ import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createTankerModel} from './arena/tanker-model.js';
-import {trackSnapshotPose, SNAPSHOT_FOV} from './track-analysis.js';
+import {trackSnapshotPose, SNAPSHOT_FOV, buildTrackDossier} from './track-analysis.js';
+import {referenceLap} from './reference-laps.js';
+import {telemetryRoute} from './lap-telemetry.js';
+import {coachAllowed,coachRaceContext,buildCoachMarkers} from './coach-markers.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -160,6 +163,70 @@ export function attachRenderer(host, app) {
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label', 'The Duel three-dimensional racing scene');
   const scene = new THREE.Scene();
+  const coachView = new THREE.Group();coachView.name = 'Coach braking and apex guides';
+  scene.add(coachView);
+  const driveLessonView=new THREE.Group();driveLessonView.name='Driving lesson cones and red board';scene.add(driveLessonView);
+  let driveLessonPlan=null;
+  function updateDriveLesson(next,state){
+    const run=app.duel.drivingLesson;
+    const visible=!!next&&!!run&&run.ownerId===app.player?.id&&state.playerId===run.ownerId&&run.state===state&&
+      app.drivingLessonsAvailable?.()===true;
+    driveLessonView.visible=visible;
+    if(!visible){
+      if(driveLessonPlan){for(const child of [...driveLessonView.children]){driveLessonView.remove(child);disposeTree(child);}driveLessonPlan=null;sceneRevision++;}
+      return;
+    }
+    if(driveLessonPlan!==run.plan){
+      for(const child of [...driveLessonView.children]){driveLessonView.remove(child);disposeTree(child);}
+      driveLessonPlan=run.plan;
+      const ground=point=>{
+        const actual=next.groundAt(point.s,point.lateral);
+        return Math.max(actual.y,renderedGroundHeight(next,{x:point.x,z:point.z,s:point.s,off:point.lateral},{requireSurface:true})??actual.y)+.025;
+      };
+      for(const cone of run.plan.instructor.cones){
+        const group=new THREE.Group();group.name='Lesson cone '+cone.id;group.userData.coneId=cone.id;
+        const base=new THREE.Mesh(new THREE.BoxGeometry(.8,.08,.8),new THREE.MeshStandardMaterial({color:0x292525,roughness:.9}));base.position.y=.04;
+        const body=new THREE.Mesh(new THREE.ConeGeometry(.29,.8,12),new THREE.MeshStandardMaterial({color:0xf68d32,roughness:.8}));body.position.y=.46;
+        const stripe=new THREE.Mesh(new THREE.CylinderGeometry(.13,.18,.13,12),new THREE.MeshStandardMaterial({color:0xfff0d9,roughness:.8}));stripe.position.y=.48;
+        group.add(base,body,stripe);group.position.set(cone.x,ground(cone),cone.z);driveLessonView.add(group);
+      }
+      const s=run.plan.instructor.redBoardS,dir=run.plan.corner.dir;
+      const lateral=-dir*(next.roadHalfWidthAt(s)+1.2),point={...next.groundAt(s,lateral),s,lateral};
+      const board=new THREE.Group();board.name='Lesson late-braking red board';board.userData.redBoard=true;
+      const post=new THREE.Mesh(new THREE.BoxGeometry(.1,1.8,.1),new THREE.MeshStandardMaterial({color:0xddddcc}));post.position.y=.9;
+      const face=new THREE.Mesh(new THREE.BoxGeometry(1.4,.65,.1),new THREE.MeshStandardMaterial({color:0xc42c29,roughness:.7}));face.position.y=1.45;
+      board.add(post,face);board.position.set(point.x,ground(point),point.z);board.rotation.y=next.at(s).heading;driveLessonView.add(board);sceneRevision++;
+    }
+    for(const child of driveLessonView.children){
+      if(child.userData.redBoard)child.visible=run.lesson.stage==='late';
+      else child.rotation.z=run.lesson.attempt?.tipped.includes(child.userData.coneId)?Math.PI*.5:0;
+    }
+  }
+  let coachCourse = null, coachReference = null;
+  function updateCoach(next, state) {
+    const context = coachRaceContext(app,next,state);
+    coachView.visible = !!next && next.closed !== false && coachAllowed(context);
+    if (!coachView.visible) return;
+    const route = telemetryRoute(next.def.id, state.seed), reference = referenceLap(next.def.id, route);
+    if (coachCourse === next && coachReference === reference) return;
+    for (const child of [...coachView.children]) {coachView.remove(child);disposeTree(child);}
+    coachCourse = next;coachReference = reference;
+    if (!reference) {coachView.visible = false;return;}
+    let dossier;
+    try {dossier = buildTrackDossier(next, {route,reference});}
+    catch {coachView.visible = false;return;} // Never display stale reference geometry.
+    for (const marker of buildCoachMarkers(next, dossier, context)) {
+      const brake = new THREE.Mesh(new THREE.RingGeometry(.7,1.1,16),
+        new THREE.MeshBasicMaterial({color:0xffcc66,transparent:true,opacity:.65,depthWrite:false,side:THREE.DoubleSide}));
+      brake.rotation.x = -Math.PI / 2;brake.position.set(marker.brake.x,marker.brake.y,marker.brake.z);
+      brake.name = 'Coach brake: ' + marker.id;
+      const geometry = new THREE.BufferGeometry().setFromPoints(marker.line.map(point => new THREE.Vector3(point.x,point.y,point.z)));
+      const apex = new THREE.Line(geometry,new THREE.LineBasicMaterial({color:0x99d6dc,transparent:true,opacity:.28,depthWrite:false}));
+      apex.name = 'Coach apex: ' + marker.id;coachView.add(brake,apex);
+    }
+    sceneRevision++;
+  }
+
   const arenaMarkers = new THREE.Group();
   arenaMarkers.name = 'Arena floor markers';
   scene.add(arenaMarkers);
@@ -262,7 +329,9 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
-  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets);scene.add(yetiView.group);
+  // A neutral multiplier on the fur alone (the accepted white factor would darken below 1): at night the yeti reads dark
+  // grey-green against the snow, and 2.6 lifts it to a pale grey-white while the texture and vertex-colour detail stay.
+  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets,{furTint:new THREE.Color(2.6,2.6,2.6)});scene.add(yetiView.group);
   const roadRoof=createRoadRoofOwner(vehicleAttachments,{yetiAssets});
   const combatScene=createCombatScene(vehicleAttachments, {
     loadFlameTexture: path => new THREE.TextureLoader().load(path),
@@ -463,6 +532,7 @@ export function attachRenderer(host, app) {
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
     const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.deepRuntime?.raceCourse??app.duel.course;
     const moving = (st.status === 'racing'||st.status==='exploring') && !st.paused&&!st.deepJourney?.controlsLocked;
+    updateCoach(next,st);updateDriveLesson(next,st);
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
@@ -725,7 +795,8 @@ export function attachRenderer(host, app) {
     }
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
-    const ghostPose=!menu&&app.ghostPose?.car===carKey?app.ghostPose:null;
+    const lessonGhost=app.getDriveLessonGhost?.();
+    const ghostPose=!menu?(lessonGhost??(app.ghostPose?.car===carKey?app.ghostPose:null)):null;
     if(!ghostPose&&ghost){
       const style=ghostStyle;
       retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;

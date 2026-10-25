@@ -127,9 +127,9 @@ function safety() {
 }
 
 // Braking boards (150, 100, 50 m) before the slow corners the track script leaves without them (its own
-// boards stand only before turns tighter than 40 m). Finishing pass, Claude, 15 October. Like Tremblant's,
-// they stand on the outside on straight road and face the oncoming cars, but here they stand just beyond
-// the open 12 m run-off (13 m from the road edge, inside the 14.3 m catch fence) and are not solid.
+// boards stand only before turns tighter than 40 m). Finishing pass, Claude, 15 October. Like the script's
+// own boards and Tremblant's, they stand on the outside on straight road, 2.4 m from the road edge, and face
+// the oncoming cars. They are not solid. (Round 2 stood them 13 m out, beyond the run-off: too small to read.)
 const BOARD_CORNERS = Object.freeze(['Les Combes', 'Malmedy', 'Woodland Left', 'Fagnes', 'Campus', 'Stavelot']);
 function brakingBoards() {
   const out = [];
@@ -138,7 +138,7 @@ function brakingBoards() {
     for (const distance of [150, 100, 50]) {
       const s = corner.s0 - distance;
       if (road.pieceAt(wrap(s)).kind !== 'straight') continue;
-      out.push(row(`braking-board-${distance}`, s, side * (road.halfWidthAt(s) + 13), {heading: Math.PI}));
+      out.push(row(`braking-board-${distance}`, s, side * (road.halfWidthAt(s) + 2.4), {heading: Math.PI}));
     }
   }
   return out;
@@ -241,8 +241,9 @@ export const ARDENNES_FOREST = Object.freeze({
   runoffBands: LONG_LEFT_RUNOFF,
   circuitLandmarks: Object.freeze([
     Object.freeze({id: 'stavelot-valley-town', type: 'town', ...VILLAGE, height: 12,
-      // Original deterministic town selection, restricted to the answered slate/red palette.
-      roofColours: Object.freeze([0x414a50, 0x5a352c, 0x50545a]), ...valleyTown()}),
+      // Ardennes stone houses under steep dark slate (ARDENNES-STAVELOT-STONE, Kyle: "if Belgian, then
+      // Belgian look"); the same houses, footprints and positions as before.
+      houseStyle: 'ardennes-stone', roofColours: Object.freeze([0x2c3034, 0x363a3e, 0x303236]), ...valleyTown()}),
     Object.freeze({id: 'stavelot-church', type: 'church', ...VILLAGE, height: 22, churchStyle: 'stone', grounding: 'footprint'}),
   ]),
   lightPath: Object.freeze({axis: 'distance', wrap: false, palette: 'forest-morning', keyframes: Object.freeze([

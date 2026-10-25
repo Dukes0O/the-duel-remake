@@ -20,7 +20,8 @@ for(const course of COURSE){
   same(isCourseUnlocked(fresh,course),course===free,'new career cannot bypass a priced course');
   same(isCourseUnlocked(fresh,course.stage),isCourseUnlocked(fresh,course.id),'stable IDs and indices resolve the same ownership');
 }
-same(COURSE.filter(course=>COURSE_PRICES[course.id]===0).length,1,'one free course guarantees an earning path');
+same(COURSE.filter(course=>COURSE_PRICES[course.id]===0).map(course=>course.id),['pacific-canyon','summit-time-attack'],'Pacific remains the included earning path; only the parent-owned solo child also has zero price');
+same(COURSE.filter(course=>isCourseUnlocked(fresh,course)).map(course=>course.id),['pacific-canyon'],'zero price never grants the solo child to a new career');
 same(normalizeCourseAccess({version:1,unlocked:[free.id,free.id,'bad',paid.id]}),{version:1,unlocked:[free.id,paid.id]},'normalization removes unknown and duplicate unlocks');
 same(normalizeCourseAccess(null,{history:{bad:1},unlockedCars:5,circuitWins:true}),fresh.courses,'malformed legacy evidence is harmless');
 const legacy={...createProfile(),credits:7654,unlockedCars:Object.keys(CARS),raceSettings:{eventId:'cloudbreak-skyway',car:'stuttgart_959s'},history:[{key:'old:1',eventId:paid.id,completed:true,won:false,reward:-300}],personalBests:{[bestKey({stageIndex:2,car:'falcone_f42'})]:120},circuitWins:[]};

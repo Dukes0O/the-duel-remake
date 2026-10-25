@@ -91,6 +91,15 @@ try {
     ['raw video in tools', 'tools/captures/race.webm', 'RAW VIDEO'],
     ['raw JPG in tools', 'tools/captures/race.jpg', 'RAW JPG'],
     ['raw WebP in checks', 'docs/board/checks/race.webp', 'RAW WEBP'],
+    ['earned-car raw PNG', 'docs/board/looks/earned-cars/car-2-round-2.png', 'RAW PNG'],
+    ['earned-car unapproved JPEG extension', 'docs/board/looks/earned-cars/car-2-round-2.jpeg', 'RAW JPEG'],
+    ['earned-car index zero', 'docs/board/looks/earned-cars/car-0-round-1.jpg', 'MISNAMED'],
+    ['earned-car index beyond card range', 'docs/board/looks/earned-cars/car-4-round-1.jpg', 'MISNAMED'],
+    ['earned-car round zero', 'docs/board/looks/earned-cars/car-2-round-0.jpg', 'MISNAMED'],
+    ['earned-car round beyond cap', 'docs/board/looks/earned-cars/car-2-round-4.jpg', 'MISNAMED'],
+    ['earned-car raw view suffix', 'docs/board/looks/earned-cars/car-2-round-2-front.jpg', 'RAW VIEW'],
+    ['earned-car name in another family', 'docs/board/looks/crew/car-2-round-2.jpg', 'WRONG FAMILY'],
+    ['earned-car nested raw directory', 'docs/board/looks/earned-cars/car-2/round-2.jpg', 'WRONG DIRECTORY'],
     ['unexpected root file', 'stray-output.bin', 'scratch'],
   ]) test(`${label} fails placement`, () => {
     const root = fixture(label.replaceAll(' ', '-').toLowerCase());
@@ -137,6 +146,32 @@ try {
     const { status, report } = run(hygieneTool, root);
     same(status, 0, 'a look-test sheet and its note pass placement');
     same(report.failures, [], 'look-N.jpg is a review sheet, not a raw capture');
+  });
+
+  test('the three earned-car cards have exact bounded review sheet names', () => {
+    const root = fixture('earned-car-sheets');
+    for (const car of [1, 2, 3]) {
+      put(root, `docs/board/looks/earned-cars/car-${car}-review.md`, '# Current car review\n');
+      for (const round of [1, 2, 3])
+        put(root, `docs/board/looks/earned-cars/car-${car}-round-${round}.jpg`, 'compressed car sheet');
+    }
+    const { status, report } = run(hygieneTool, root);
+    same(status, 0, 'all nine exact card-prescribed car/round paths pass placement');
+    same(report.failures, [], 'only the explicit earned-cars names join the existing round/look names');
+  });
+
+  test('aggregate review size above its unchanged target is reported without blocking placement', () => {
+    const root = fixture('large-look-directory'), sheetBytes = 490_000, sheetCount = 41;
+    for (let round = 1; round <= sheetCount; round++)
+      put(root, `docs/board/looks/crew/round-${round}.jpg`, Buffer.alloc(sheetBytes, 1));
+    const { status, report } = run(hygieneTool, root);
+    same(status, 0, 'correctly placed bounded sheets do not fail solely for aggregate size');
+    same(report.failures, [], 'size targets remain advisory under current AGENTS');
+    same(report.targets.limits.lookDirectoryBytes, 20_000_000, 'the literal aggregate target stays unchanged');
+    same(report.targets.advisory.lookDirectoryBytes, sheetBytes * sheetCount, 'aggregate byte reporting is exact');
+    check(report.targets.advisory.lookDirectoryBytes > report.targets.limits.lookDirectoryBytes,
+      'fixture actually exceeds the target');
+    same(report.targets.advisory.oversizedLookSheets, [], 'each fixture sheet remains within the 500 KB publication limit');
   });
 
   test('audit reports cleanup candidates without changing files', () => {

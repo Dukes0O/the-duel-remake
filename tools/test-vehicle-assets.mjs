@@ -15,7 +15,7 @@ const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve
 let loadCalls=0,importOptions=[];
 const waiting=deferred(),assets=createVehicleAssets({loadHero:()=>{loadCalls++;return waiting.promise;}});
 const licensedKinds={aurora_gt:'gt',falcone_heritage:'sport'};
-same(Object.keys(CARS).length,10,'Ten playable cars retain the six earlier bodies, two licensed trims, the distinct Jesko and the Enzo');
+same(Object.keys(CARS).length,13,'Thirteen playable cars retain the six earlier bodies, two licensed trims, the distinct Jesko, the Enzo, the F1, the Bolide and the Sirena');
 for(const key of Object.keys(CARS).filter(key=>!Object.hasOwn(licensedKinds,key))){
   same(assets.status(key),'ready',`${key}: original body needs no async import`);
   same(await assets.load(key),true);

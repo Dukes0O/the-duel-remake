@@ -35,7 +35,9 @@ try {
     view.detailSections = course.sections.filter(section => section.theme === 'desert');
     const terrain = new THREE.Mesh(terrainGeometry(course, false), material), group = new THREE.Group();
     const terrainSurfaces = [terrain];
-    if(definition.expansion)terrainSurfaces.push(new THREE.Mesh(farTerrainGeometry(course),material));
+    // Runtime draws near and far surfaces for the authored 64 m ribbon too.
+    // Keep the existing actual-ray root/burial checks against both drawn meshes.
+    if(definition.expansion||definition.terrainHalfWidth===64)terrainSurfaces.push(new THREE.Mesh(farTerrainGeometry(course),material));
     addDesertCacti(group, view);
     check(group.children.length <= vegetationCells(view.features.trees).length * 3, 'maximum three instanced cactus draws per spatial cell');
     check(group.children.reduce((sum, mesh) => sum + mesh.count, 0) === view.features.trees.length, 'spatial cells preserve every cactus exactly once');

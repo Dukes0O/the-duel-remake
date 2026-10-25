@@ -4,6 +4,7 @@ import {COURSE} from '../src/config.js';
 import {Duel} from '../src/game.js';
 import {COURSE_PRICES,isCourseUnlocked} from '../src/course-access.js';
 import {formatSpeed} from '../src/speed-format.js';
+import {isSummitAttack} from '../src/summit-attack.js';
 
 let checks=0;const check=(ok,message)=>{assert.ok(ok,message);checks++;};
 const app={runId:'ui-test',menuStage:0},wallet={credits:12300,courses:{version:1,unlocked:COURSE.map(course=>course.id)}};
@@ -13,6 +14,26 @@ const expected={chase:'CITY<br>ESCAPED.',rally:'TRAIL<br>CONQUERED.',drift:'DRIF
 
 for(const [stageIndex,stage]of COURSE.entries()){
   if(!stage.kind||stage.practice)continue;
+  if(isSummitAttack(stage)){
+    const duel=new Duel({seed:1989});duel.startCampaign({startStage:stageIndex,car:stage.requiredCar});
+    const s=duel.state;s.status='stage_result';s.completedLaps=s.lapsTotal;s.stageTimeSec=99.68;s.totalTimeSec=99.68;
+    s.results={won:true,completed:true,medal:'gold',timeSec:99.68,creditReward:0};
+    const snapshot=JSON.stringify(s),balance=JSON.stringify(wallet),initial=render(s);
+    check(JSON.stringify(s)===snapshot&&JSON.stringify(wallet)===balance,'solo Attack result is a pure view');
+    check(initial.includes('SUMMIT TIME ATTACK')&&initial.includes('FINISHED.')&&initial.includes('GOLD')&&initial.includes('99.68'), 'solo Attack shows its valid time and earned medal');
+    duel.nextStage();check(s.status==='complete'&&s.results.won===undefined,'solo Attack reaches the real generic final summary');
+    const before=JSON.stringify(s),html=render(s);
+    check(html.includes('FINISHED.')&&html.includes('GOLD medal earned')&&html.includes('99.68'),'solo Attack preserves its settled medal and exact time after final navigation');
+    check(!html.includes('your rival')&&!html.includes('LAPS COMPLETE')&&!html.includes('CREDITS')&&!html.includes('ALL STAGES COMPLETE'),'solo Attack makes no rival, lap campaign or credit claim');
+    check(html.includes('RUN IT AGAIN')&&html.includes('MAIN MENU'),'solo Attack keeps its standalone actions');
+    check(JSON.stringify(s)===before&&JSON.stringify(wallet)===balance,'solo Attack completion changes neither simulation nor wallet');
+    s.status='stage_result';s.results={won:false,completed:true,medal:null,timeSec:stage.attackTimes.bronze+1,creditReward:0};render(s);duel.nextStage();
+    const noMedal=render(s);
+    check(noMedal.includes('FINISHED.')&&noMedal.includes('Finish within the bronze target to earn a medal.')&&!noMedal.includes('medal earned')&&!noMedal.includes('CREDITS'),'valid no-medal Attack finish keeps its actual outcome without a charge');
+    app.runId+='-next';const stale=render(s);
+    check(stale.includes('RUN<br>INCOMPLETE.')&&!stale.includes('Your valid time is recorded'),'an earlier Attack cannot supply the new run outcome');
+    continue;
+  }
   const duel=new Duel({seed:1989});duel.startCampaign({startStage:stageIndex,car:stage.requiredCar});
   const s=duel.state;s.status='stage_result';s.completedLaps=s.lapsTotal;s.stageTimeSec=99.68;s.totalTimeSec=99.68;
   s.results={won:true,completed:true,timeSec:99.68,creditReward:2300,driftScore:6000,driftTarget:3500,checkpointsPassed:12,checkpointsRequired:12,jumps:4,crushCount:4,...(stage.stuntTrial?{objective:'stuntTrial'}:{})};

@@ -116,7 +116,10 @@ export function groundFromCourse(course) {
     return course.groundAt(near.s, near.lateral).y;
   };
   const heightAt = (x, z) => {
-    const drawn = renderedGroundHeight(course, {x, z}, {requireSurface: true});
+    // The drawn ground of a course that is not an authored circuit is found by the
+    // point's own road coordinates, so they are given (an authored circuit never reads them).
+    const near = course.nearest(x, z);
+    const drawn = renderedGroundHeight(course, {x, z, s: near.s, off: near.lateral}, {requireSurface: true});
     return Number.isFinite(drawn) ? drawn : fallback(x, z);
   };
   return createHeliGround({heightAt, obstacles: courseObstacles(course), water: courseWater(course)});

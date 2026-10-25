@@ -1383,6 +1383,48 @@ check(
     forwardedCombat.course === app.duel.course,
   'App forwards the current race state and course for real spatial combat audio',
 );
+// TYRE-SLIP uses the existing graph fixture; every old PCM/automation assertion above stays.
+{
+  const slipVoice=await makeAudio();
+  for(const [slip,expected] of [[0,0],[.9,0],[.928,0],[1,.051],[1.1,.221],[1.25,.4]]){
+    slipVoice.audio.tyreSlipSmoothed=0;
+    for(let i=0;i<120;i++){
+      slipVoice.context.currentTime+=1/60;
+      slipVoice.audio.update(state({speedMph:100,tyreSlipRules:true,tyreSlip:slip,
+        slipAngle:.31,steerVisual:1,input:{throttle:0,brake:1}}));
+    }
+    check(Math.abs(slipVoice.audio.samples.squeal.gain.gain.value-expected)<.001,
+      'Actual tyre loop follows reviewed slide gain at '+slip);
+    check(slipVoice.audio.smoothedSlip>.99,'legacy scrub state is independent of new tyre-loop input');
+  }
+  for(let i=0;i<120;i++){
+    slipVoice.context.currentTime+=1/60;
+    slipVoice.audio.update(state({speedMph:100,tyreSlipRules:true,tyreSlip:0,slipAngle:0,
+      steerVisual:0,input:{throttle:0,brake:1}}));
+  }
+  check(slipVoice.audio.samples.squeal.gain.gain.value===0,'Straight-line full braking has no tyre squeal under new rules');
+  for (const looseSurface of [false,true]) {
+    const oldVoice=await makeAudio(),newVoice=await makeAudio();
+    for(let i=0;i<120;i++) {
+      for (const [voice,enabled] of [[oldVoice,false],[newVoice,true]]) {
+        voice.context.currentTime+=1/60;
+        voice.audio.update(state({speedMph:100,tyreSlipRules:enabled,tyreSlip:0,
+          slipAngle:.31,steerVisual:1,input:{throttle:0,brake:1}}),{looseSurface});
+      }
+    }
+    for (const [label,read] of [
+      ['road gain',a=>a.tires.gain.gain.value],
+      ['road filter',a=>a.tires.filter.frequency.value],
+      ['gravel gain',a=>a.gravel.gain.gain.value],
+      ['gravel filter',a=>a.gravel.filter.frequency.value],
+    ]) check(read(newVoice.audio)===read(oldVoice.audio),
+      'Actual '+label+' retains legacy slip on '+(looseSurface?'gravel':'road'));
+    check(newVoice.audio.samples.squeal.gain.gain.value===0,
+      'Quiet real slip stays independent of legacy surface noise');
+  }
+
+}
+
 console.log(seamRows.join('\n'));
 console.log(
   `Six-second PCM mixes at three band transitions and full speed across all ${Object.keys(CARS).length} cars: maximum 100ms envelope swing ${maximumBlendSwing.toFixed(2)}dB.`,

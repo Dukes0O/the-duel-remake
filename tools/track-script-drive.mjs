@@ -1,8 +1,9 @@
 // Drives an authored circuit headless with the built-in test driver (the demo
 // autopilot in src/app.js) through the real Duel rules, memory-only saves.
 // Used by the track script tests and each circuit's own test.
+import {createFeatureFlags} from '../src/feature-flags.js';
 import { App } from '../src/app.js';
-import { COURSE, DEFAULT_CPU_DIFFICULTY, DRIVE, steeringYawAuthority } from '../src/config.js';
+import { COURSE, DEFAULT_CPU_DIFFICULTY, DRIVE, steerForYaw } from '../src/config.js';
 import { DEFAULT_DRIVER } from '../src/drivers.js';
 import {pitTransitTarget} from '../src/pit-lane.js';
 
@@ -32,12 +33,12 @@ export function useRacingLine(app, skill = .95) {
     const look = course.at(st.s + v * .18);
     const desiredYaw = look.curvature * v + (headingTarget - st.headingError) * 6;
     const surface = d._drivingSurface(st.s, st.lateral);
-    const authority = Math.max(.05, steeringYawAuthority(st.speedMph, d.car.grip, surface.traction, d.car));
-    const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     // The profile is for a car of grip 1; speed in a corner goes with the square root of grip.
     const target = Math.min(surface.speedLimit, d.car.topSpeed * .97,
       transit?.speedMph ?? line.speedAt(st.s) * skill * Math.sqrt(d.car.grip / .82 * (surface.traction || 1)) / DRIVE.mphToWorld);
-    d.setInput({ throttle: st.speedMph < target ? 1 : 0, brake: st.speedMph > target + 3 ? Math.min(1, (st.speedMph - target) / 14) : 0, steer, boost: false });
+    const brake = st.speedMph > target + 3 ? Math.min(1, (st.speedMph - target) / 14) : 0;
+    const steer = steerForYaw(desiredYaw, {speedMph:st.speedMph,grip:d.car.grip,traction:surface.traction,car:d.car,brake:brake,tyreSlip:st.tyreSlipRules===true&&!st.airborne&&st.speedMph>=0});
+    d.setInput({ throttle: st.speedMph < target ? 1 : 0, brake, steer, boost: false });
   };
 }
 const clampTo = (value, limit) => Math.max(-limit, Math.min(limit, value));
@@ -51,13 +52,15 @@ export const passingLateral = (playerLateral, rivalLateral, halfWidth) =>
 // `def` may be an event already in COURSE (found by id) or a definition that is
 // added to COURSE for the length of the run only (tests, never the game).
 export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', cpuDifficulty = DEFAULT_CPU_DIFFICULTY,
-  fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, onTick } = {}) {
+  fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, flags = [], onTick } = {}) {
+  if(!Array.isArray(flags)||flags.some(flag=>flag!=='tyre-slip')) throw Error('Unsupported driver flags.');
   const added = !COURSE.includes(def) && !COURSE.some(item => item.id === def.id);
   if (added) COURSE.push(def);
   try {
     const memory = new Map();
     globalThis.localStorage = { getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)), removeItem: key => memory.delete(key) };
     const app = new App();
+    if(flags.length) app.duel.featureFlags=createFeatureFlags({storage:null,qa:false,search:'',overrides:Object.fromEntries(flags.map(flag=>[flag,true]))});
     const stageIndex = COURSE.findIndex(item => item.id === def.id);
     // The Duel is started directly: a new circuit has no shop price yet, and
     // the course access rules have their own suites.

@@ -3,6 +3,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { inspectNightProcesses, validateFramePacket } from '../full-check.mjs';
+import { UPGRADE_TYPES } from '../../src/progression.js';
 
 const entry = '/tools/menu-check.html';
 
@@ -35,6 +36,46 @@ export function validateArdennesFramePacket(packet) {
   }
   return packet;
 }
+export function earnCar2FrameSelection(env = process.env) {
+  return env.EARN_CAR_2_FRAMES_ONLY === '1'
+    ? {courseId: 'panorama-ridge', car: 'mclaren_f1', flags: 'panorama-ridge,earned-cars,grand-prix'} : null;
+}
+export function assertEarnCar2FrameContext(context, env = process.env, busy = []) {
+  if (context?.headed !== true || context.launchMode !== 'headed' ||
+      env.EARN_CAR_2_FRAMES_ONLY !== '1' || env.DUEL_FRAME_IDLE_AWAKE !== '1')
+    throw Error('F1 frames require headed mode and declared idle, awake context.');
+  if (busy.length) throw Error('F1 frames refused: another heavy job is active.');
+}
+export function validateEarnCar2FramePacket(packet, {warn = () => {}} = {}) {
+  if (packet?.schema !== 1 || packet.mode !== 'earn-car-2-simple' || packet.reports?.length !== 2)
+    throw Error('Missing complete F1 frame packet.');
+  for (const [index, quality] of ['High', 'Performance'].entries()) {
+    const row = packet.reports[index];
+    if (row?.quality === quality && Number.isFinite(row.constructionMs) && row.constructionMs > 5000)
+      warn(`${quality}: full first-race load ${row.constructionMs} ms exceeds 5000 ms (warning only).`);
+    if (row?.quality !== quality || row.course !== 'panorama-ridge' || row.sourceCar !== 'mclaren_f1' ||
+        !Array.isArray(row.roster) || row.roster.length !== 8 || !row.roster.every(car => car === 'mclaren_f1') ||
+        row.cars !== 8 || row.frames !== 120 || row.headed !== true || row.visible !== true ||
+        row.memoryOnlySaves !== true || row.appRunning !== true || row.rearView !== 'ready' ||
+        !Number.isFinite(row.countdownBefore) || !Number.isFinite(row.countdownAfter) ||
+        row.countdownAfter <= row.countdownBefore || !Number.isFinite(row.p95) || row.p95 <= 0 || row.p95 > 18.5 ||
+        !Number.isFinite(row.worldBuildMs) || row.worldBuildMs < 0 || row.worldBuildMs >= 1000 ||
+        !Number.isFinite(row.constructionMs) || row.constructionMs < 0)
+      throw Error(quality + ': invalid or failed real Panorama eight-F1 grid frames.');
+  }
+  return packet;
+}
+export function prepareEarnCar2FramePlayer(app, quality, upgradeTypes) {
+  app.returnToMenu();
+  if (!app.addPlayer('F1 Frame QA ' + quality).ok)
+    throw Error('Memory-only native F1 temporary player creation failed.');
+  app.profile = {...app.profile, credits: 50000,
+    unlockedCars: [...app.profile.unlockedCars, 'mclaren_f1'],
+    upgrades: {...app.profile.upgrades, mclaren_f1: Object.fromEntries(Object.keys(upgradeTypes).map(type => [type, 3]))},
+    heli: {...app.profile.heli, version: 1, carsAt: {...app.profile.heli?.carsAt, mclaren_f1: 'panorama-ridge'}}};
+  if (!app._saveProfile() || !app.purchaseCourse('panorama-ridge').ok)
+    throw Error('Memory-only native F1 course purchase failed.');
+}
 export function summarizeNightFrames(values) {
   if (values.length !== 120 || values.some(value => !Number.isFinite(value) || value <= 0))
     throw Error('Expected 120 real positive delivered RAF intervals.');
@@ -49,11 +90,13 @@ export function prepareNightPlayer(app, quality, courseId = 'harbour-lights') {
   if (!app._saveProfile() || !app.purchaseCourse(courseId).ok)
     throw Error('Memory-only native course purchase failed.');
 }
-async function measureNight(context, quality, courseId = 'harbour-lights') {
+async function measureNight(context, quality, courseId = 'harbour-lights', carId = 'falcone_f42') {
   const ardennes = courseId === 'ardennes-forest';
-  const assertContext = ardennes ? assertArdennesFrameContext : assertNightFrameContext;
+  const earnedF1 = courseId === 'panorama-ridge' && carId === 'mclaren_f1';
+  const assertContext = earnedF1 ? assertEarnCar2FrameContext : ardennes ? assertArdennesFrameContext : assertNightFrameContext;
   assertContext(context, process.env, inspectNightProcesses());
-  await context.navigate(ardennes ? `${entry}?flags=ardennes-forest&frame-pacing=ardennes-${quality}` :
+  await context.navigate(earnedF1 ? `${entry}?flags=${earnCar2FrameSelection().flags}&frame-pacing=earn-car-2-${quality}` :
+    ardennes ? `${entry}?flags=ardennes-forest&frame-pacing=ardennes-${quality}` :
     `${entry}?frame-pacing=night-${quality}`);
   await context.waitFor(`document.readyState==='complete' && !!window.__qaApp &&
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' &&
@@ -68,18 +111,21 @@ async function measureNight(context, quality, courseId = 'harbour-lights') {
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'`, `${quality} normal renderer`, 60_000);
   const observed = await context.evaluate(`(async () => {
     const app = window.__qaApp, view = document.querySelector('#view3d');
-    const requestedCourse = ${JSON.stringify(courseId)};
+    const requestedCourse = ${JSON.stringify(courseId)}, requestedCar = ${JSON.stringify(carId)};
     if (document.hidden || document.visibilityState !== 'visible') throw Error('Night tab is hidden.');
     if ((requestedCourse === 'harbour-lights' ? app._switches().state(requestedCourse) !== 'on' : !app._switches().enabled(requestedCourse)) || app._switches().state('grand-prix') !== 'on')
       throw Error('Night frames require released Harbour Lights and Grand Prix.');
     const stage = [...document.querySelector('#scene-select').options].map(option => Number(option.value))
       .find(index => app.getMenuCourse(index).def.id === requestedCourse);
-    if (!Number.isInteger(stage)) throw Error('Released Harbour Lights is absent from the real menu.');
-    (${prepareNightPlayer.toString()})(app, ${JSON.stringify(quality)}, requestedCourse);
+    if (!Number.isInteger(stage)) throw Error('Requested frame course is absent from the real menu.');
+    if (${earnedF1}) {
+      if (!app._switches().enabled('earned-cars')) throw Error('F1 frames require the earned-cars switch.');
+      (${prepareEarnCar2FramePlayer.toString()})(app, ${JSON.stringify(quality)}, ${JSON.stringify(Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, true])))});
+    } else (${prepareNightPlayer.toString()})(app, ${JSON.stringify(quality)}, requestedCourse);
     app.setLightingMood('clear');
     const previousBuild = view.dataset.worldBuilds, started = performance.now();
     if (!app.startCampaign({startStage: stage, seed: 1989, fieldSeed: 12, fieldSize: 7,
-      mode: 'grandprix', car: 'falcone_f42', difficulty: 'casual', cpuDifficulty: 'medium'}))
+      mode: 'grandprix', car: requestedCar, difficulty: 'casual', cpuDifficulty: 'medium'}))
       throw Error('Native night grid did not start.');
     app.start();
     const state = app.duel.state, course = app.duel.course;
@@ -87,6 +133,7 @@ async function measureNight(context, quality, courseId = 'harbour-lights') {
       !course.def.lightPath?.keyframes?.length || course.def.lightPath.keyframes.some(key => key.look !== 'night'))) ||
       (requestedCourse === 'ardennes-forest' && course.script.pieceAt(state.s).name !== 'Pit Straight') ||
       state.mode !== 'grandprix' || state.opponents.length + 1 !== 8 || state.traffic.length ||
+      (${earnedF1} && (state.car !== requestedCar || state.opponents.some(actor => actor.car !== requestedCar))) ||
       state.qualifying || app.autopilot || app.inspectionCamera || state.paused)
       throw Error('Native grid, night lighting or normal gameplay context is wrong.');
     let constructionMs;
@@ -111,6 +158,7 @@ async function measureNight(context, quality, courseId = 'harbour-lights') {
         if (document.hidden || document.visibilityState !== 'visible' || !app.running || !app.visualReady ||
           state !== app.duel.state || course !== app.duel.course || state.status !== 'countdown' || state.paused ||
           state.opponents.length + 1 !== 8 || app.autopilot || app.inspectionCamera ||
+          (${earnedF1} && (state.car !== requestedCar || state.opponents.some(actor => actor.car !== requestedCar))) ||
           view.dataset.rearView !== 'ready' || view.dataset.vehicleAsset !== 'ready' ||
           view.dataset.trackKitAsset !== 'ready' || (app.ambientOcclusionEnabled !== false ? 'high' : 'performance') !== ${JSON.stringify(quality)})
           return reject(Error('Visible native eight-car countdown or quality changed during timing.'));
@@ -125,7 +173,8 @@ async function measureNight(context, quality, courseId = 'harbour-lights') {
     const worldBuildText = view.dataset.worldBuildMs, worldBuildMs = Number(worldBuildText);
     if (typeof worldBuildText !== 'string' || !worldBuildText.trim() || !Number.isFinite(worldBuildMs))
       throw Error('Missing or malformed actual world-build measurement.');
-    return {course: course.def.id, cars: state.opponents.length + 1, night: course.def.timeOfDay === 'night', gridPiece: course.script?.pieceAt(state.s)?.name ?? null, intervals,
+    return {${earnedF1 ? "sourceCar: state.car, roster: [state.car, ...state.opponents.map(actor => actor.car)]," : ''}
+      course: course.def.id, cars: state.opponents.length + 1, night: course.def.timeOfDay === 'night', gridPiece: course.script?.pieceAt(state.s)?.name ?? null, intervals,
       constructionMs, worldBuildMs, worldReadyMs: Number(view.dataset.worldReadyMs),
       appRunning: app.running, countdownBefore: before, countdownAfter: state.field.start.elapsed,
       rearView: view.dataset.rearView, renderPipeline: view.dataset.renderPipeline,
@@ -136,7 +185,7 @@ async function measureNight(context, quality, courseId = 'harbour-lights') {
   const {intervals, ...details} = observed;
   const report = {quality: quality === 'high' ? 'High' : 'Performance', ...details,
     ...summarizeNightFrames(intervals), headed: context.headed};
-  await context.screenshot(`${ardennes ? 'ardennes-simple' : 'night-simple'}-${quality}`);
+  await context.screenshot(`${earnedF1 ? 'earn-car-2-simple' : ardennes ? 'ardennes-simple' : 'night-simple'}-${quality}`);
   return report;
 }
 export async function reuseNightFrames(context,{packetPath,priorPassed,
@@ -218,6 +267,36 @@ export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {
     width: 1280, height: 720, deviceScaleFactor: 1, mobile: false,
   });
+  const earnedF1 = earnCar2FrameSelection();
+  if (earnedF1) {
+    const reports = [], warnings = [];
+    try {
+      for (const quality of ['high', 'performance'])
+        reports.push(await measureNight(context, quality, earnedF1.courseId, earnedF1.car));
+      const packet = {schema: 1, mode: 'earn-car-2-simple', reports, warnings};
+      try {validateEarnCar2FramePacket(packet, {warn: message => warnings.push(message)});}
+      finally {await writeFile(join(context.outputDir, 'frame-pacing.json'), JSON.stringify(packet, null, 2) + '\n');}
+      for (const message of warnings) console.log('WARNING ' + message);
+      return packet;
+    } catch (error) {
+      let readiness;
+      try {
+        readiness = await context.evaluate(`(() => {
+          const app = window.__qaApp, state = app?.duel?.state;
+          return {course: app?.duel?.course?.def?.id, status: state?.status,
+            sourceCar: state?.car, roster: state ? [state.car, ...state.opponents.map(actor => actor.car)] : [],
+            running: app?.running, visualReady: app?.visualReady, countdown: state?.field?.start?.elapsed,
+            cars: state?.opponents?.length + 1, visibility: document.visibilityState,
+            memoryOnlySaves: !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value,
+            view: {...document.querySelector('#view3d')?.dataset}};
+        })()`);
+      } catch (captureError) {readiness = {captureError: captureError.message};}
+      await writeFile(join(context.outputDir, 'frame-readiness.json'), JSON.stringify(readiness, null, 2) + '\n');
+      await writeFile(join(context.outputDir, 'frame-pacing.json'), JSON.stringify({schema: 1,
+        mode: 'earn-car-2-simple', reports, warnings, error: error.message}, null, 2) + '\n');
+      throw error;
+    }
+  }
   if (process.env.ARDENNES_FRAMES_ONLY === '1') {
     const reports = [];
     try {

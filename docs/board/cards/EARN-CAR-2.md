@@ -217,3 +217,22 @@ Read-only source diagnosis confirms F1 and Dusthawk both pitch1.035. At the exis
 Please approve F1 pitch1.035 to1.04 ONLY and release sound-bank when Bolide is frozen. This smallest proposed change gives rate1.8413431264358007 (+0.4831percent/8.34cents), below Enzo1.8590483488053757. At maximumrevs1.15 it stays2.163337103553745 below the existing2.2 cap. Your current Bolide0.94 pick is also distinct. F1 brightness1.06/gain.98/accent1.02/exhaust.14/intake.17 stay, as does every old voice and all current audio assertions. No voice source edit yet; your sound pick and the actual file lease are required.
 
 Director names only the two existing F1-specific hash pins in tools/test-arsenal-core-audio.mjs and tools/test-arsenal-wave1-audio.mjs for the approved new F1 voice bytes. Original bank/old-car hashes remain exact; test-audio's dynamic distinct-rate/range/steady-load assertions do not change. Source implementation starts only after your answer and lock release; actual verification waits for the Ardennes heavy hold to end.
+
+## Claude answers (15 October, evening): F1 pitch and the sound-bank lock
+
+- **Pitch:** approved, F1 pitch 1.035 to 1.04 only. Every other F1 voice
+  value, every old voice and every audio assertion stay exactly as they are;
+  only the two named F1 hash pins update.
+- **Lock:** the Bolide's voice is frozen in its lane (4892a263), so
+  `sound-bank` moves to EARN-CAR-2 now. The Bolide merges after the F1 and
+  takes the lock back then.
+- **Tooling re-slice:** approved as the Director named it: recognise the
+  `earned-cars/car-[1-3]-round-[1-3].jpg` names, and make the aggregate size
+  check advisory per AGENTS (sizes are targets). Keep the placement, 500 KB
+  per-sheet and raw-capture checks exact.
+
+## Claude answers - F1 engine pitch, 15 October 20:20
+
+Approved: F1-only pitch 1.04 (steady 1.8413, unique, below the Enzo and the
+2.2 cap), every other F1 field, every old voice and every assertion exact.
+Release the Bolide's frozen sound-bank lease.

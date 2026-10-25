@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {createJumpHeightReadout} from '../src/jump-height.js';
 import {Duel} from '../src/game.js';
-import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
+import {COURSE,DRIVE,steerForYaw} from '../src/config.js';
 let checks=0;const check=(value,label)=>{assert.ok(value,label);checks++;};
 const course={groundAt(){throw Error('HUD must not sample terrain');}},r=createJumpHeightReadout();
 const base={status:'racing',stageTimeSec:1,airborne:true,airHeight:2,airDistance:12.345,airTime:.65,stageCrashes:0,boundaryResets:0,impactTimer:0,_jumpY:2};
@@ -22,8 +22,8 @@ function run(fps){
   const hud=createJumpHeightReadout();let accumulator=0,steps=0,landed=null,previous=false,origin=null,peak=0;
   while(steps<1800&&!landed){accumulator+=1/fps;while(accumulator>=1/120-1e-10&&steps<1800&&!landed){
     const s=duel.state,mps=s.speedMph*DRIVE.mphToWorld,surface=duel._drivingSurface(s.s,s.lateral),heading=Math.atan(-s.lateral*2.5/Math.max(15,mps)),look=duel.course.at(s.s+mps*.18);
-    const yaw=look.curvature*mps+(heading-s.headingError)*6,authority=Math.max(.05,steeringYawAuthority(s.speedMph,duel.car.grip,surface.traction));
-    duel.setInput({throttle:1,steer:Math.max(-1,Math.min(1,-yaw/authority))});duel.step(1/120);accumulator-=1/120;steps++;
+    const yaw=look.curvature*mps+(heading-s.headingError)*6;
+    duel.setInput({throttle:1,steer:steerForYaw(yaw,{speedMph:s.speedMph,grip:duel.car.grip,traction:surface.traction,brake:0,tyreSlip:s.tyreSlipRules===true&&!s.airborne&&s.speedMph>=0})});duel.step(1/120);accumulator-=1/120;steps++;
     if(s.airborne){origin??={...s._airOrigin};peak=Math.max(peak,s.airHeight);check(s.airDistance>=0&&s.airTime>=0,'physics measurements finite and nonnegative');}
     if(previous&&!s.airborne){const p=duel.course.worldAt(s.s,s.lateral);landed={distance:s.airDistance,duration:s.airTime,expected:Math.hypot(p.x-origin.x,p.z-origin.z),peak,steps};}
     previous=s.airborne;

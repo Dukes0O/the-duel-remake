@@ -1,0 +1,44 @@
+.drive-lesson-board, .drive-lesson-panel, .drive-lesson-result {
+  color: var(--ink, #f3eddf); background: #172027f5; border: 1px solid #b6b1a550;
+  border-radius: 8px; padding: 18px; font: 400 15px/1.45 system-ui, sans-serif;
+  max-width: 560px; box-sizing: border-box; overflow-wrap: anywhere;
+}
+.drive-lesson-board h2, .drive-lesson-panel h2, .drive-lesson-result h2 { margin: 0 0 8px; font-size: 20px; }
+.drive-lesson-board p, .drive-lesson-panel p, .drive-lesson-result p { margin: 8px 0; }
+.drive-lesson-board fieldset { border: 1px solid #b6b1a550; border-radius: 5px; padding: 10px; margin: 12px 0; }
+.drive-lesson-board legend { padding: 0 5px; font-weight: 650; }
+.drive-lesson-course { display: flex; align-items: start; gap: 9px; margin: 8px 0; cursor: pointer; }
+.drive-lesson-course input { margin-top: 5px; accent-color: #edb65f; flex-shrink: 0; }
+.drive-lesson-notice { color: #edc489; }
+.drive-lesson-setup { color: #d5d3cd; }
+.drive-lesson-panel { width: min(100%, 350px); }
+.drive-lesson-rules { margin: 10px 0; padding-left: 22px; }
+.drive-lesson-rules li { margin: 5px 0; }
+.drive-lesson-rules span { font-weight: 650; }
+.drive-lesson-streak strong { color: #edc489; }
+.drive-lesson-board button, .drive-lesson-panel button, .drive-lesson-result button {
+  min-height: 36px; margin: 8px 8px 0 0; padding: 7px 12px; border: 1px solid #cfc9bb70;
+  border-radius: 4px; background: #ffffff16; color: inherit; font-family: inherit; font-size: 14px; font-weight: 650; line-height: 1.25; cursor: pointer;
+}
+.drive-lesson-board button:hover, .drive-lesson-panel button:hover, .drive-lesson-result button:hover { background: #ffffff28; }
+.drive-lesson-board :focus-visible, .drive-lesson-panel :focus-visible, .drive-lesson-result :focus-visible {
+  outline: 3px solid #edc489; outline-offset: 3px;
+}
+.drive-lesson-result small { display: block; margin-top: 6px; color: #d5d3cd; }
+@media (max-width: 560px) {
+  .drive-lesson-board, .drive-lesson-panel, .drive-lesson-result { padding: 12px; width: 100%; max-width: 100%; }
+}
+
+.drive-lesson-host { position: absolute; inset: 0; z-index: 80; display: grid; align-content: center; justify-items: center; gap: 10px; padding: 20px; background: #10161bd9; overflow: auto; }
+.drive-lesson-host[hidden] { display: none; }
+.drive-lesson-host-running { align-content: start; justify-items: start; inset: 90px auto auto 18px; padding: 0; max-width: min(560px, calc(100% - 36px)); background: none; pointer-events: none; }
+.drive-lesson-host-running .drive-lesson-panel, .drive-lesson-host-running .drive-lesson-result { pointer-events: auto; }
+.drive-lesson-host-running:not(.drive-lesson-host-result) .drive-lesson-message, .drive-lesson-host-running:not(.drive-lesson-host-result) .drive-lesson-radio { position: fixed; top: 128px; right: 35px; width: min(380px, calc(35vw - 50px)); max-width: none; pointer-events: none; }
+@media (max-width: 900px) {
+  .drive-lesson-host-running:not(.drive-lesson-host-result) { inset: 150px auto auto 18px; }
+  .drive-lesson-host-running:not(.drive-lesson-host-result) .drive-lesson-message, .drive-lesson-host-running:not(.drive-lesson-host-result) .drive-lesson-radio { top: 64px; left: 18px; right: 18px; width: auto; }
+}
+.drive-lesson-host-result { inset: 85px 18px 18px; align-content: center; justify-items: center; max-width: none; background: #10161bd9; pointer-events: auto; padding: 12px; }
+.drive-lesson-host-result .drive-lesson-panel { display: none; }
+.drive-lesson-message, .drive-lesson-radio { margin: 0; padding: 10px 14px; max-width: 560px; color: #f3eddf; background: #172027f5; border-radius: 5px; }
+.drive-lesson-radio { border-left: 3px solid #edb65f; }

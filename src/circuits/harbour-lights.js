@@ -180,6 +180,7 @@ const BASE = defineScriptedCourse({
       { id: 'reservoir-sweep', kind: 'corner', s: 3074, title: 'Reservoir Sweep' },
     ],
     notes: {
+      'casino': { line: 'Stay in the slipstream down the Seafront, pull out before the 100 board and take the inside for Casino Corner.', note: 'The best place to pass on the lap. Commit before the board or stay behind.' },
       'lantern-kink': { line: 'Flat out. A touch left, stay off the wall.', note: 'Only scary the first time. Keep your foot down.' },
       'casino-corner': { brakeBoard: 100, line: 'Brake straight, turn late, aim for the inside barrier.', note: 'The best place to pass. If you miss your braking point, take the escape road; do not try to make the turn.' },
       'temple-hill': { line: 'Middle of the road up the hill.', note: 'Walls on both sides from here. Neat beats brave.' },

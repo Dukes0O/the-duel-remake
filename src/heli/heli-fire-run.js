@@ -5,7 +5,8 @@
 // Every save change goes through heli-save.js; the fire and mission records
 // stay the save's own shape, so a reload carries on where it stopped.
 import {armed, armMissions, noteRefuel, runEngine, callDue, callTime, openCall, answerCall, endMission, inQuietSpell,
-  createCallClock, tickCallClock, MISSION_RULES, seasonOf} from './heli-missions.js';
+  createCallClock, tickCallClock, MISSION_RULES, seasonOf, callOf, rescueOf, isRescueKind, noteCallFlight, takeCall,
+  beginRescue} from './heli-missions.js';
 import {FIRE, BURNT_LOOKS, fireGrid, courseBurnCheck, startCells, startFire, dayWind, applyWater, fireOut, shareOut,
   hottestEdge, cellIJ, runFireEngine, fireNewDay, cruiseSeconds} from './heli-fire.js';
 import {heliOf, missionsOf, fireOf, setMissions, setFire, putOutFire, loseFire, hearBurnNews, BURN_NEWS, addScar,
@@ -60,8 +61,14 @@ function snowOut(profile, fire, {enabled}) {
 // Roger's season lines, at the first lift-off of a visit in a season's first
 // two play days. Winter's speaks of avalanches, so it waits for that kind.
 const SEASON_LINES = Object.freeze({summer: 'heli.radio.season.summer', winter: 'heli.radio.season.winter'});
-const seasonLine = season => season.day <= 2 && (season.name !== 'winter' || MISSION_KINDS.includes('avalanche'))
+const seasonLine = (season, rescue = false) => season.day <= 2 && (season.name !== 'winter' || rescue || MISSION_KINDS.includes('avalanche'))
   ? SEASON_LINES[season.name] ?? null : null;
+
+// Roger's and Sarah's words for a rescue call and for taking it (HELI_RESCUE section 8).
+const CALL_LINES = Object.freeze({hiker: 'heli.radio.hiker.call', avalanche: 'heli.radio.avalanche.call',
+  hoist: 'heli.radio.hoist.call', supply: 'heli.radio.supply.call'});
+const ANSWER_LINES = Object.freeze({hiker: 'heli.radio.hiker.answer', avalanche: 'heli.radio.rescue.answer',
+  hoist: 'heli.radio.rescue.answer', supply: 'heli.radio.supply.answer'});
 
 function finishLost(profile, fireId, {enabled}) {
   const lost = loseFire(profile, fireId, {enabled});
@@ -74,9 +81,14 @@ const WIND_LINES = Object.freeze({calm: 'heli.radio.wind.calm', breeze: 'heli.ra
 
 // options: getSave() -> profile, commit(result) -> result, emit(event),
 // world(courseId) -> {course, ground, site, grid}, playerName, today,
-// owns(courseId).
-export function createFireRun({getSave, commit, emit, world, playerName = 'Player', today = null, owns = () => true}) {
+// owns(courseId). H4 Rescue (docs/HELI_RESCUE.md section 3): with `rescue`
+// true the same engine also rings the rescue kinds, from the courses
+// rescueCourses() gives; with it false nothing here reads or offers a rescue
+// kind, and a stored rescue call never blocks a fire call (callOf).
+export function createFireRun({getSave, commit, emit, world, playerName = 'Player', today = null, owns = () => true,
+  rescue = false, rescueCourses = null}) {
   const flag = {enabled: true};
+  const rescueFlag = {rescue: rescue === true && typeof rescueCourses === 'function'};
   let clock = null, answerLeft = 0, engineBank = 0, halfSaid = null, lastFireDay = null, fullSaid = false, firstFill = true;
   let seasonSaid = false;
   { const burning = fireOf(getSave()); if (burning && shareOut(burning) >= 50) halfSaid = burning.id; }
@@ -89,7 +101,9 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
   const cue = id => emit({type: 'cue', id});
   // Saved only when the record really changed.
   const saveMissions = (next, before = missions()) => next === before ? {ok: true, profile: getSave()} : commit(setMissions(getSave(), next, flag));
-  const conditions = () => ({fire: burnableCourses(getSave(), world, {enabled: true, owns})});
+  // Every read of the call goes through the engine's callOf (the switch decides what is seen).
+  const callNow = () => callOf(missions(), rescueFlag);
+  const conditions = () => ({fire: burnableCourses(getSave(), world, {enabled: true, owns}), ...(rescueFlag.rescue ? rescueCourses() : {})});
   const windToday = () => dayWind(missions().seed, day());
 
   // The engine arms once lesson 4 (carry and set down) is done.
@@ -121,8 +135,17 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
   }
 
   function ring() {
-    const opened = openCall(missions(), {playDay: day(), conditions: conditions(), fireOpen: !!fire()});
+    const opened = openCall(missions(), {playDay: day(), conditions: conditions(), fireOpen: !!fire(), ...rescueFlag});
     if (!opened.call) return;
+    if (isRescueKind(opened.call.kind)) {
+      // A rescue call: no fire to start; the call waits for R (or goes to another crew).
+      saveMissions(opened.missions);
+      answerLeft = MISSION_RULES.answerSeconds;
+      cue('heli.fire.alert');
+      radio(CALL_LINES[opened.call.kind]);
+      emit({type: 'rescueCall', kind: opened.call.kind, courseId: opened.call.courseId, answerSeconds: answerLeft});
+      return;
+    }
     const place = world(opened.call.courseId);
     const started = startFire({id: opened.call.id, courseId: opened.call.courseId, grid: place.grid, seed: opened.seed,
       startDay: day(), candidates: startCells(place.course, place.ground, place.grid, heliOf(getSave()).scars ?? [])});
@@ -150,10 +173,34 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
     }
   }
 
+  // A waiting rescue call another crew has taken (section 3.3): Roger says so.
+  function handOn() {
+    if (!rescueFlag.rescue) return;
+    const result = takeCall(missions(), {playDay: day(), ...rescueFlag});
+    if (!result.taken) return;
+    saveMissions(result.missions);
+    clock = null; answerLeft = 0;
+    radio(result.line);
+    emit({type: 'rescueTaken', kind: result.taken});
+  }
+
+  // "Later": not answered in time (or said so). A fire waits and grows; a rescue goes to another crew.
+  // Roger says it once for each rescue call, however often Later is pressed (RESCUE-VIEW).
+  let laterFor = null;
+  function later(call) {
+    if (isRescueKind(call.kind)) {
+      if (laterFor === call.id) return false;
+      laterFor = call.id;
+      radio('heli.radio.rescue.later'); emit({type: 'rescueLater', kind: call.kind});
+    } else { radio('heli.radio.fire.later'); emit({type: 'fireLater'}); }
+    return true;
+  }
+
   const api = {
     // A visit starts: arm, and on a new play day run the fire's day steps.
     start({newDay = false} = {}) {
       arm();
+      handOn();
       const burning = fire();
       if (newDay && burning) {
         const result = fireOnNewDay(getSave(), {enabled: true, world: world(burning.courseId)});
@@ -167,12 +214,18 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
     // Each lift-off: a due call gets its clock; the first lift-off of a play
     // day with a fire burning hears the wind (or, unanswered, a reminder).
     liftoff({lesson = false} = {}) {
-      const line = lesson || seasonSaid ? null : seasonLine(seasonOf(day()));
+      const line = lesson || seasonSaid ? null : seasonLine(seasonOf(day()), rescueFlag.rescue);
       if (line) { seasonSaid = true; radio(line); }
+      if (!lesson && rescueFlag.rescue) {
+        // One more flight since a rescue call came; two, and another crew has it.
+        const waiting = callNow();
+        if (waiting && !waiting.answered && isRescueKind(waiting.kind)) saveMissions(noteCallFlight(missions(), rescueFlag));
+        handOn();
+      }
       const m = missions();
-      const could = armed(m) && !m.call && !fire() && m.count >= m.need && !inQuietSpell(m, day());
-      if (!lesson && could && callDue(m, {playDay: day(), conditions: conditions(), fireOpen: false})) clock = createCallClock(callTime(m));
-      const call = missions().call;
+      const could = armed(m) && !callNow() && !rescueOf(m, rescueFlag) && !fire() && m.count >= m.need && !inQuietSpell(m, day());
+      if (!lesson && could && callDue(m, {playDay: day(), conditions: conditions(), fireOpen: false, ...rescueFlag})) clock = createCallClock(callTime(m));
+      const call = callNow();
       if (fire() && call && lastFireDay !== day()) {
         lastFireDay = day();
         radio(call.answered ? WIND_LINES[windToday().kind] : 'heli.radio.fire.reminder');
@@ -186,17 +239,27 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
         if (engineBank >= FLUSH_SECONDS) flush();
       }
       if (clock && tickCallClock(clock, {dt, aboveGround, lesson, opening, fading})) { clock = null; ring(); }
-      if (answerLeft > 0 && missions().call && !missions().call.answered) {
+      const waiting = answerLeft > 0 ? callNow() : null;
+      if (waiting && !waiting.answered) {
         answerLeft -= dt;
-        if (answerLeft <= 0) { radio('heli.radio.fire.later'); emit({type: 'fireLater'}); }
+        if (answerLeft <= 0) later(waiting);
       }
     },
     cruise(fuelKg) { engineBank += cruiseSeconds(fuelKg); flush(); },
-    refuel() { const before = missions(); saveMissions(noteRefuel(before, {fireOpen: !!fire(), playDay: day()}), before); },
+    refuel() { const before = missions(); saveMissions(noteRefuel(before, {fireOpen: !!fire(), playDay: day(), ...rescueFlag}), before); },
     // R: answer the call, now or later, in the air or on the ground.
     pressRadio() {
-      const call = missions().call;
+      const call = callNow();
       if (!call || call.answered) return false;
+      if (isRescueKind(call.kind)) {
+        // A rescue: the call is answered and the rescue begins with its clock at 0.
+        saveMissions(answerCall(missions(), rescueFlag));
+        saveMissions(beginRescue(missions(), rescueFlag));
+        answerLeft = 0;
+        radio(ANSWER_LINES[call.kind]);
+        emit({type: 'rescueAnswered', kind: call.kind, courseId: call.courseId});
+        return true;
+      }
       saveMissions(answerCall(missions()));
       answerLeft = 0;
       radio('heli.radio.fire.answer');
@@ -204,6 +267,13 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
       lastFireDay = day();
       emit({type: 'fireAnswered', courseId: call.courseId});
       return true;
+    },
+    // "Later" on a waiting rescue call, said at once instead of after the 20 s.
+    declineCall() {
+      const call = callNow();
+      if (!call || call.answered || !isRescueKind(call.kind)) return false;
+      answerLeft = 0;
+      return later(call);
     },
     // Water from the bucket on this course.
     water(courseId, patches) {
@@ -251,7 +321,7 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
     windNow() { return windToday(); },
     // For the board and instruments: the call, the fire in hand and the wind.
     view(heli = null) {
-      const call = missions().call, burning = fire();
+      const call = callNow(), burning = fire();
       if (!call && !burning) return null;
       const wind = windToday();
       const info = {call: call ? Object.freeze({...call}) : null, answerLeft: Math.max(0, answerLeft),

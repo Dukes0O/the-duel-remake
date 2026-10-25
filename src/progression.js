@@ -1,8 +1,11 @@
+import {normalizeIntel,recordIntelFinish} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, cupBonus} from './grand-prix-cups.js';
 import {normalizeDrivingLessons} from './lessons/drive-lesson-save.js';
 import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
+import {settleCoastCup} from './deep/sirena-car.js';
 import {normalizeHeli} from './heli/heli-save.js';
+import {normalizeLab} from './lab/lab-save.js';
 import {normalizeYeti,countYetiFinish,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay,
   normalizeGrandPrixPodiums, recordGrandPrixPodium} from './grand-prix-career.js';
@@ -18,7 +21,7 @@ import {
   normalizeDriverId,
   driverModifierSignature
 } from './drivers.js';
-import { normalizeCourseAccess } from './course-access.js';
+import { normalizeCourseAccess,isCourseUnlocked } from './course-access.js';
 import { rivalSignature } from './rival-settings.js';
 import { COMBAT_TUNING } from './wasteland-tuning.js';
 import { normalizeWasteland } from './wasteland-progress.js';
@@ -169,6 +172,8 @@ export function normalizeProfile(value) {
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
   if (Object.hasOwn(value, 'heli')) profile.heli = normalizeHeli(value.heli);
   if (Object.hasOwn(value, 'drivingLessons')) profile.drivingLessons = normalizeDrivingLessons(value.drivingLessons);
+  if (Object.hasOwn(value, 'lab')) profile.lab = normalizeLab(value.lab);
+  if (Object.hasOwn(value, 'intel')) profile.intel = normalizeIntel(value.intel);
   if (Object.hasOwn(value, 'cups')) profile.cups = normalizeCups(value.cups);
   if (Object.hasOwn(value, 'grandPrixPodiums'))
     profile.grandPrixPodiums = normalizeGrandPrixPodiums(value.grandPrixPodiums);
@@ -409,6 +414,7 @@ export function bestKey(
     result.mode || 'duel',
     result.difficulty || 'casual',
     result.cpuDifficulty || 'easy',
+    ...(COURSE[result.stageIndex]?.kind==='drift'&&result.tyreSlipRules===true?['tyre-slip:1']:[]),
     ...(signature ? [`driver:${signature}`] : []),
     ...(rival ? [`rival:${rival}`] : []),
     ...(weaponSignature(result) ? [`weapons:${weaponSignature(result)}`] : [])
@@ -433,6 +439,7 @@ function isCompletedRace(result) {
 export function isValidFinish(result) {
   if (!isCompletedRace(result)) return false;
   const stage = COURSE[result.stageIndex];
+  if(result.tyreSlipRules===true&&(stage.kind!=='drift'||result.difficulty!=='pro'))return false;
   if (!stage.stuntTrial && !['drift', 'checkpoint'].includes(stage.kind)) return true;
   const cpu = Object.hasOwn(CPU_REWARDS, result.cpuDifficulty) ? result.cpuDifficulty : 'easy';
   if (stage.stuntTrial) {
@@ -840,6 +847,15 @@ export function settleRace(profile, result = {}) {
       }
     ].slice(-60)
   };
+  if (result.intelEnabled === true && recordEligible && result.qualifying !== true) {
+    updated=recordIntelFinish(updated,stageEventId(result.stageIndex),result,
+      {owned:isCourseUnlocked(updated,result.stageIndex),validated:true});
+  }
+  // The Coast Cup (SIRENA-CAR): a counted finish on Pacific Canyon in the restored Falcone Sirena pays once.
+  const coastCup = settleCoastCup(updated, {enabled: result.deepEnabled === true,
+    valid: recordEligible && result.qualifying !== true && result.practice !== true,
+    eventId: stageEventId(result.stageIndex), car: result.car, mode: result.mode});
+  updated = coastCup.profile;
   const owned = updated.unlockedCars;
   if (medalWin && medalWin.profile !== profile)
     updated = grantCompletionCars({ ...updated, medals: medalWin.profile.medals });
@@ -849,6 +865,7 @@ export function settleRace(profile, result = {}) {
     // The medal reports what was paid: nothing in the separate Wasteland career.
     ...(medalsOn ? { medal: newMedal && { ...newMedal, bonus: breakdown.medal }, earnedCars } : {}),
     ...yetiAward,
+    ...(coastCup.paid ? {coastCup: {paid: coastCup.paid, events: coastCup.events}} : {}),
     reward,
     ...(separateCareer ? {scrapEarned: career.scrapEarned} : {}),
     charge,

@@ -27,13 +27,23 @@ ok(!/ferrari|porsche/i.test(JSON.stringify(Object.fromEntries(Object.entries(CAR
 
 // --- Mixed-biome circuits close cleanly and keep the driving lanes clear ---
 eq(COURSE.filter(course => !course.kind).length, 3, 'three mixed circuits in the campaign');
-eq(COURSE.filter(course => course.kind === 'circuit' && course.expansion).length, 6, 'six standalone expansion circuits');
-eq(new Set(COURSE.filter(course => course.kind === 'circuit' && course.expansion).map(course => course.id)).size, 6, 'expansion circuits have unique stable identities');
+eq(COURSE.filter(course => course.kind === 'circuit' && course.expansion && course.closed !== false).length, 6, 'six standalone expansion circuits');
+eq(new Set(COURSE.filter(course => course.kind === 'circuit' && course.expansion && course.closed !== false).map(course => course.id)).size, 6, 'expansion circuits have unique stable identities');
 ok(COURSE.some(course => course.kind === 'arena'), 'the monster arena is a separate event');
+const openEvents = COURSE.filter(course => course.closed === false);
+ok(openEvents.length === 2 && openEvents.some(course => course.id === 'summit-run') && openEvents.some(course => course.id === 'summit-time-attack'), 'Summit and its solo Attack are two distinct open-route events');
 for (const definition of COURSE) {
   const course = new Course(definition, 611);
   const start = course.at(0), finish = course.at(course.length), before = course.at(course.length - .01), after = course.at(.01);
-  ok(Math.hypot(start.x - finish.x, start.z - finish.z) < .001 && Math.hypot(before.x - after.x, before.z - after.z) < .04, `${definition.name}: the circuit closes without a position jump`);
+  if (course.closed) {
+    ok(Math.hypot(start.x - finish.x, start.z - finish.z) < .001 && Math.hypot(before.x - after.x, before.z - after.z) < .04, `${definition.name}: the circuit closes without a position jump`);
+  } else {
+    ok(Math.hypot(start.x - finish.x, start.z - finish.z) > 100, `${definition.name}: start and finish are distinct`);
+    for (const [s, endpoint] of [[-25, start], [course.length + 25, finish]]) {
+      const frame = course.at(s);
+      ok(frame.x === endpoint.x && frame.z === endpoint.z && frame.y === endpoint.y, `${definition.name}: open route clamps outside distance ${s}`);
+    }
+  }
   eq(course.raceLength, course.length * (definition.laps || 2), `${definition.name}: a complete event covers its ${definition.laps || 2} laps`);
   if (!['arena', 'chase', 'drift', 'circuit'].includes(definition.kind)) ok(new Set(course.sections.map(section => section.theme)).size >= 2, `${definition.name}: several landscapes appear within one lap`);
   if (definition.kind === 'circuit') ok(course.sections.length >= 3 && course.sections.every(section => typeof section.name === 'string' && section.name.trim()), `${definition.name}: standalone circuit has named driving sections without requiring mixed biomes`);
@@ -41,12 +51,22 @@ for (const definition of COURSE) {
   for (let s = 8; s < course.length; s += 32) {
     for (const lateral of [-DRIVE.laneOffset, DRIVE.laneOffset]) {
       const point = course.groundAt(s, lateral);
-      if (course.obstaclesNear(s).some(obstacle => sweepObstacle(point, point, obstacle, point.heading))) clear = false;
+      if (course.obstaclesNear(s).some(obstacle => sweepObstacle(point, point, obstacle, point.heading, obstacle.verticalClearance ? {height: 1.35, useModelBounds: false} : {}))) clear = false;
     }
   }
   ok(clear, `${definition.name}: scenery leaves both driving lanes clear`);
-  const world = course.groundAt(course.length + 900, 40), recovered = course.nearest(world.x, world.z, course.length + 900);
-  ok(Math.abs(recovered.s - course.length - 900) < .04 && Math.abs(recovered.lateral - 40) < .04, `${definition.name}: world contacts preserve the absolute lap phase`);
+  if (course.closed) {
+    const world = course.groundAt(course.length + 900, 40), recovered = course.nearest(world.x, world.z, course.length + 900);
+    ok(Math.abs(recovered.s - course.length - 900) < .04 && Math.abs(recovered.lateral - 40) < .04, `${definition.name}: world contacts preserve the absolute lap phase`);
+  } else {
+    for (const s of [0, 450, course.length / 2, course.length]) for (const lateral of [-4, 0, 4]) {
+      const world = course.worldAt(s, lateral);
+      for (const hint of [-course.length, s, course.length * 3]) {
+        const recovered = course.nearest(world.x, world.z, hint);
+        ok(Math.abs(recovered.s - s) < .04 && Math.abs(recovered.lateral - lateral) < .04, `${definition.name}: open world inverse stays at its real distance for hint ${hint}`);
+      }
+    }
+  }
   ok(course.features.turns.every(turn => turn.signS < turn.s - 80), `${definition.name}: hard-turn signs give advance warning`);
   // An authored Grand Prix circuit (definition.script) is a pure race: no roadside chicken bonuses.
   if (definition.script) eq(course.features.flocks.length, 0, `${definition.name}: a pure-race circuit has no chicken flock bonuses`);
@@ -854,7 +874,8 @@ function crossGate(duel, actor, gate, lateral = 0) {
   for(const level of Object.keys(CPU_DIFFICULTY)){
     const d=contactCourse();d.state.cpuDifficulty=level;d.state.s=900;
     d.state.rival={s:100,lateral:-3.4,speedMph:0,headingError:0,pushVelocity:0,completedLaps:0,nextLapGate:0,lapTimes:[],lapStartedAt:0};
-    for(let i=0;i<1200;i++)d._rival(1/120);
+    // FIX-LAUNCH: 20 seconds, not 10; the gentler launch keeps every level acceleration-limited for the first 10.
+    for(let i=0;i<2400;i++)d._rival(1/120);
     distances.push(d.state.rival.s);
   }
   ok(distances[0]<distances[1]&&distances[1]<distances[2],'higher CPU levels make progressively more race progress');

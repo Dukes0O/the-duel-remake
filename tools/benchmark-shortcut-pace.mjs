@@ -1,5 +1,5 @@
 import { Duel } from '../src/game.js';
-import { COURSE, DRIVE, steeringYawAuthority } from '../src/config.js';
+import { COURSE, DRIVE, steerForYaw } from '../src/config.js';
 
 // Audit only: one common run-up is cloned at the branch entrance. Thereafter,
 // every position comes from ordinary steering/throttle inputs and Duel.step.
@@ -25,11 +25,12 @@ function drive(d,route,boost=false){
   const st=d.state,car=d.car,frame=d.course.at(st.s),mps=st.speedMph*DRIVE.mphToWorld;
   const target=angle(route.heading(st.s),frame.heading)+Math.atan((route.offset(st.s)-st.lateral)*2.5/Math.max(15,mps));
   const yaw=route.curvature(st.s+mps*.18)*mps+angle(target,st.headingError)*6;
-  const surface=d._drivingSurface(st.s,st.lateral),traction=surface.traction,authority=Math.max(.05,steeringYawAuthority(st.speedMph,car.grip,traction));
+  const surface=d._drivingSurface(st.s,st.lateral),traction=surface.traction;
   const bend=Math.max(...[0,100,220].map(a=>Math.abs(route.curvature(st.s+a))));
   const corner=Math.min(car.topSpeed*.94,.85*Math.sqrt(DRIVE.maxLateralAccel*car.grip*traction/Math.max(.0001,bend))/DRIVE.mphToWorld);
   const speed=Math.min(surface.speedLimit,corner);
-  d.setInput({throttle:st.speedMph<speed?1:0,brake:st.speedMph>speed+4?Math.min(1,(st.speedMph-speed)/20):0,steer:clamp(-yaw/authority,-1,1),boost});
+  const brake=st.speedMph>speed+4?Math.min(1,(st.speedMph-speed)/20):0;
+  d.setInput({throttle:st.speedMph<speed?1:0,brake,steer:steerForYaw(yaw,{speedMph:st.speedMph,grip:car.grip,traction:traction,brake:brake,tyreSlip:st.tyreSlipRules===true&&!st.airborne&&st.speedMph>=0}),boost});
 }
 function run(d,route,end,cutEnd){
   let time=0,split=null,error=0,minSpeed=Infinity,maxSpeed=0,offSurface=0,boostSeconds=0,previous=d.state.s;

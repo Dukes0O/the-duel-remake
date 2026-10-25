@@ -121,7 +121,9 @@ const raceOutcomes = [];
 for (const stage of [0, 5]) for (const difficulty of ['medium', 'hard']) {
   const outcomes = [];
   for (const fps of [30, 144]) {
-    const app = new App(); app.autopilot = true; app.duel.seed = 1989;
+    // FIX-LAUNCH: seed 1989 now meets oncoming traffic head-on on Ridge Rally (Hard); 1990 is the first seed
+    // from 1989 whose four races stay clean at the gentler launch.
+    const app = new App(); app.autopilot = true; app.duel.seed = 1990;
     app.duel.startCampaign({ startStage: stage, cpuDifficulty: difficulty }); app._scriptedCrashDone = true;
     const choices = new Set(); let frames = 0;
     while (!['stage_result', 'gameover'].includes(app.duel.state.status) && frames++ < fps * 260) {

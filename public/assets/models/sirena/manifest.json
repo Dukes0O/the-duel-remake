@@ -1,0 +1,112 @@
+{
+  "formatVersion": 1,
+  "source": "tools/art/sirena-props.mjs",
+  "coordinates": "metres; glTF Y up, +Z forward on the wreck; each loose part rests with its lowest point at y = 0",
+  "models": [
+    {
+      "id": "wreck",
+      "path": "assets/models/sirena/wreck.glb",
+      "bytes": 453144,
+      "sha256": "114424a37efb28c8abe04e5ff1aba1469fbd65657415a85362e1aebb8d854ba4",
+      "triangles": 12107,
+      "vertices": 10529,
+      "dimensionsMetres": [
+        3.7,
+        1.182,
+        5.4
+      ]
+    },
+    {
+      "id": "badge",
+      "path": "assets/models/sirena/badge.glb",
+      "bytes": 45392,
+      "sha256": "cfedfaa892d2597264ba36f947a9b6bc94988443319375d2bed158f58d9706ec",
+      "triangles": 1068,
+      "vertices": 1045,
+      "dimensionsMetres": [
+        0.128,
+        0.017,
+        0.128
+      ]
+    },
+    {
+      "id": "steering-wheel",
+      "path": "assets/models/sirena/steering-wheel.glb",
+      "bytes": 33076,
+      "sha256": "061c6207899a044dc9ebd7b2ceac09fa1353bf95c1e9b7101a8deaa44583688b",
+      "triangles": 791,
+      "vertices": 749,
+      "dimensionsMetres": [
+        0.414,
+        0.066,
+        0.414
+      ]
+    },
+    {
+      "id": "wheel",
+      "path": "assets/models/sirena/wheel.glb",
+      "bytes": 72456,
+      "sha256": "2ee2b1c9cf1fb10ff6b27c0f401f4d0bb2fcb55e9b95c113d948fe9a62474fc7",
+      "triangles": 1481,
+      "vertices": 1727,
+      "dimensionsMetres": [
+        0.699,
+        0.274,
+        0.69
+      ]
+    },
+    {
+      "id": "bonnet",
+      "path": "assets/models/sirena/bonnet.glb",
+      "bytes": 62052,
+      "sha256": "ad54d14a2821b7f4ffae8d3bcc34f840eaac381591c9e305fcb5b2ccbba3d2f3",
+      "triangles": 984,
+      "vertices": 1520,
+      "dimensionsMetres": [
+        1.174,
+        0.33,
+        1.45
+      ]
+    },
+    {
+      "id": "door",
+      "path": "assets/models/sirena/door.glb",
+      "bytes": 75836,
+      "sha256": "9529bcfc11f0c3f4d3644d575a273e8fa432cb3e72b93f0bdc25e33f4c5a5d11",
+      "triangles": 1499,
+      "vertices": 1817,
+      "dimensionsMetres": [
+        0.631,
+        0.615,
+        1.024
+      ]
+    },
+    {
+      "id": "lift-bag",
+      "path": "assets/models/sirena/lift-bag.glb",
+      "bytes": 53012,
+      "sha256": "dbd3ae0b2d029a278e6d0ab4ed4f2df7c0f540df408d9d9e1b4f84d47f77b17b",
+      "triangles": 1780,
+      "vertices": 1138,
+      "dimensionsMetres": [
+        0.747,
+        1.573,
+        0.7
+      ]
+    },
+    {
+      "id": "abalone",
+      "path": "assets/models/sirena/abalone.glb",
+      "bytes": 89808,
+      "sha256": "c22541874f2a68cc5736f4270c3dd4a4201c34e741907322cbc4de4aefb227b5",
+      "triangles": 3088,
+      "vertices": 1941,
+      "dimensionsMetres": [
+        0.252,
+        0.115,
+        0.227
+      ]
+    }
+  ],
+  "totalBytes": 884776
+}

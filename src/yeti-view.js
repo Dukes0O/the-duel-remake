@@ -42,7 +42,25 @@ export function createYetiRoof(assets){
   scene.position.y-=bounds.min.y*.45/height;group.add(scene);
   let disposed=false;return {group,dispose(){if(disposed)return;disposed=true;group.removeFromParent();disposeSkeletons(scene);}};
 }
-function makeActor(assets,quality){
+function cloneFurMaterials(scene,furTint){
+  if(furTint==null)return [];
+  const owned=new Map();
+  const tinted=material=>{
+    if(material?.name!=='round-two-yeti-matted-ivory')return material;
+    if(!owned.has(material)){
+      const clone=material.clone();clone.color.set(furTint);owned.set(material,clone);
+    }
+    return owned.get(material);
+  };
+  scene.traverse(node=>{
+    if(Array.isArray(node.material)){
+      const next=node.material.map(tinted);
+      if(next.some((material,index)=>material!==node.material[index]))node.material=next;
+    }else if(node.material)node.material=tinted(node.material);
+  });
+  return [...owned.values()];
+}
+function makeActor(assets,quality,furTint){
   const asset=assets.clone(quality),group=new THREE.Group();group.add(asset.scene);
   const mixer=new THREE.AnimationMixer(asset.scene),feet=[];
   asset.scene.traverse(mesh=>{
@@ -59,9 +77,9 @@ function makeActor(assets,quality){
     }
   });
   if(!['FootL','FootR'].every(name=>feet.some(data=>data.mesh.skeleton.bones[data.joint].name===name)))throw Error('Accepted Yeti foot vertices are missing.');
-  return {group,scene:asset.scene,mixer,clips:asset.animations,feet,clip:null};
+  return {group,scene:asset.scene,mixer,clips:asset.animations,feet,clip:null,materials:cloneFurMaterials(asset.scene,furTint)};
 }
-export function createYetiView(assets){
+export function createYetiView(assets,{furTint}={}){
   const group=new THREE.Group();group.name='The yeti';let actors,retired=false;
   const vertex=new THREE.Vector3(),foot=new THREE.Vector3();
   return {group,
@@ -69,7 +87,7 @@ export function createYetiView(assets){
       if(retired)return;const yeti=state?.yeti;
       group.visible=!!yeti?.appears && course?.def.id==='summit-run' && state.status!=='menu';
       if(!group.visible)return;
-      if(!actors){actors=[makeActor(assets,'high'),makeActor(assets,'low')];for(const actor of actors)group.add(actor.group);}
+      if(!actors){actors=[makeActor(assets,'high',furTint),makeActor(assets,'low',furTint)];for(const actor of actors)group.add(actor.group);}
       const age=yeti.seen?Math.max(0,state.stageTimeSec-yeti.seenAt):0;
       const phases=[['roar',0,1.7],['chest-beat',1.7,3.5],['lope',3.5,6],['walk-off',6,12]];
       const phase=yeti.seen?phases.find(row=>age>=row[1]&&age<row[2]):['idle',0,Infinity];
@@ -97,6 +115,6 @@ export function createYetiView(assets){
       }
     },
     reset(){group.visible=false;},
-    dispose(){if(retired)return;retired=true;for(const actor of actors??[]){actor.mixer.stopAllAction();actor.mixer.uncacheRoot(actor.scene);disposeSkeletons(actor.scene);}group.removeFromParent();group.clear();}
+    dispose(){if(retired)return;retired=true;for(const actor of actors??[]){actor.mixer.stopAllAction();actor.mixer.uncacheRoot(actor.scene);disposeSkeletons(actor.scene);for(const material of actor.materials)material.dispose();}group.removeFromParent();group.clear();}
   };
 }

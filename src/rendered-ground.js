@@ -8,6 +8,7 @@ import { ribbonGroundAt } from './ribbon-ground.js';
 const terrainRows=new WeakMap();
 const authoredBounds=new WeakMap();
 const authoredRibbon=new WeakMap();
+const BUCKET=8;
 function insideAuthoredFarGrid(course,point){
   let bounds=authoredBounds.get(course.samples);
   if(!bounds){
@@ -23,6 +24,29 @@ function insideAuthoredFarGrid(course,point){
   }
   return point.x>=bounds.minX&&point.x<bounds.maxX&&point.z>=bounds.minZ&&point.z<bounds.maxZ;
 }
+// The columns of one ribbon row, shared by the reader below and by terrainGeometry,
+// which seeds the rows it has already computed instead of having them built twice.
+function rowOffsets(course,s){
+  const authored64=course.def.terrainHalfWidth===64&&!course.def.expansion;
+  const offsets=course.def.expansion||authored64?[-64,-56,-48,-40,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,40,48,56,64]:[-140,-120,-100,-80,-72,-64,-56,-48,-40,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,40,48,56,64,72,80,100,120,140];
+  if(course.def.offroad){const width=course.roadHalfWidthAt(s),segments=Math.ceil(width*2);for(let i=0;i<=segments;i++)offsets.push(-width+width*2*i/segments);}
+  for(const cut of course.features.shortcuts){
+    const center=course.shortcutOffset(cut,s);
+    for(const off of[-cut.halfWidth-9,-cut.halfWidth-3,0,cut.halfWidth+3,cut.halfWidth+9])offsets.push(center+off);
+    if(course.def.offroad){const segments=Math.ceil(cut.halfWidth*2);for(let i=0;i<=segments;i++)offsets.push(center-cut.halfWidth+cut.halfWidth*2*i/segments);}
+  }
+  offsets.sort((a,b)=>a-b);
+  return offsets;
+}
+// `points` are the row's drawn Float32 positions as {x,y,z}, one per offset.
+export function seedGroundRow(course,s,offsets,points){
+  let rows=terrainRows.get(course.samples);
+  if(!rows){rows=new Map();terrainRows.set(course.samples,rows);}
+  if(rows.has(s))return;
+  const own=rowOffsets(course,s);
+  if(own.length!==offsets.length||own.some((off,i)=>off!==offsets[i]))return;
+  points.offsets=offsets;rows.set(s,points);
+}
 export function renderedGroundHeight(course,point,{requireSurface=false}={}){
   const authored64=course.def.terrainHalfWidth===64&&!course.def.expansion;
   const farHeight=course.def.expansion||(authored64&&insideAuthoredFarGrid(course,point))
@@ -33,16 +57,9 @@ export function renderedGroundHeight(course,point,{requireSurface=false}={}){
   const step=course.def.offroad?2:4;
   const row=s=>{
     if(rows.has(s))return rows.get(s);
-    const offsets=course.def.expansion||authored64?[-64,-56,-48,-40,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,40,48,56,64]:[-140,-120,-100,-80,-72,-64,-56,-48,-40,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,40,48,56,64,72,80,100,120,140];
-    if(course.def.offroad){const width=course.roadHalfWidthAt(s),segments=Math.ceil(width*2);for(let i=0;i<=segments;i++)offsets.push(-width+width*2*i/segments);}
-    for(const cut of course.features.shortcuts){
-      const center=course.shortcutOffset(cut,s);
-      for(const off of[-cut.halfWidth-9,-cut.halfWidth-3,0,cut.halfWidth+3,cut.halfWidth+9])offsets.push(center+off);
-      if(course.def.offroad){const segments=Math.ceil(cut.halfWidth*2);for(let i=0;i<=segments;i++)offsets.push(center-cut.halfWidth+cut.halfWidth*2*i/segments);}
-    }
-    offsets.sort((a,b)=>a-b);
+    const offsets=rowOffsets(course,s);
     const points=offsets.map(off=>{const p=ribbonGroundAt(course,s,off);return{x:Math.fround(p.x),y:Math.fround(p.y),z:Math.fround(p.z)};});
-    rows.set(s,points);return points;
+    points.offsets=offsets;rows.set(s,points);return points;
   };
   const height=(a,b,c)=>{
     const dx=b.x-a.x,dz=b.z-a.z,ex=c.x-a.x,ez=c.z-a.z,px=point.x-a.x,pz=point.z-a.z,det=dx*ez-dz*ex;
@@ -59,22 +76,30 @@ export function renderedGroundHeight(course,point,{requireSurface=false}={}){
       for(let s=0;s<course.length;s+=step){
         const end=Math.min(s+step,course.length);
         if(end<s+step&&!course.def.ridgeLandform&&course.def.completeTerrainRibbon!==true)break;
-        const previous=row(s),next=row(end),points=[...previous,...next];
-        cells.push({previous,next,minX:Math.min(...points.map(p=>p.x)),
-          maxX:Math.max(...points.map(p=>p.x)),minZ:Math.min(...points.map(p=>p.z)),
-          maxZ:Math.max(...points.map(p=>p.z))});
+        cells.push({previous:row(s),next:row(end)});
       }
+      // Index each drawn quad by world position, so a lookup tests only the quads
+      // near the point instead of every cell along the route. The result is a
+      // maximum over the same triangles, so visit order cannot change it.
+      const buckets=new Map();
+      for(const {previous,next} of cells)for(let i=1;i<next.length;i++){
+        const a=previous[i-1],b=next[i-1],c=previous[i],d=next[i];
+        const quad={a,b,c,d,minX:Math.min(a.x,b.x,c.x,d.x),maxX:Math.max(a.x,b.x,c.x,d.x),
+          minZ:Math.min(a.z,b.z,c.z,d.z),maxZ:Math.max(a.z,b.z,c.z,d.z)};
+        const x1=Math.floor(quad.maxX/BUCKET),z1=Math.floor(quad.maxZ/BUCKET);
+        for(let bx=Math.floor(quad.minX/BUCKET);bx<=x1;bx++)for(let bz=Math.floor(quad.minZ/BUCKET);bz<=z1;bz++){
+          const key=bx*65536+bz;if(!buckets.has(key))buckets.set(key,[]);buckets.get(key).push(quad);
+        }
+      }
+      cells.buckets=buckets;
       authoredRibbon.set(course.samples,cells);
     }
     let result=farHeight;
-    for(const cell of cells){
-      if(point.x<cell.minX||point.x>cell.maxX||point.z<cell.minZ||point.z>cell.maxZ)continue;
-      const {previous,next}=cell;
-      for(let i=1;i<next.length;i++){
-        for(const value of [height(previous[i-1],next[i-1],previous[i]),
-          height(previous[i],next[i-1],next[i])])
-          if(value!==null)result=result===null?value:Math.max(result,value);
-      }
+    for(const q of cells.buckets.get(Math.floor(point.x/BUCKET)*65536+Math.floor(point.z/BUCKET))??[]){
+      if(point.x<q.minX||point.x>q.maxX||point.z<q.minZ||point.z>q.maxZ)continue;
+      const first=height(q.a,q.b,q.c),second=height(q.c,q.b,q.d);
+      if(first!==null)result=result===null?first:Math.max(result,first);
+      if(second!==null)result=result===null?second:Math.max(result,second);
     }
     return result??(requireSurface?null:course.groundAt(point.s,point.off).y);
   }
@@ -82,6 +107,18 @@ export function renderedGroundHeight(course,point,{requireSurface=false}={}){
   for(const s of[start,start-step,start+step]){
     if(s<0||s+step>course.length)continue;
     const previous=row(s),next=row(s+step);
+    // The column holding the point's own lateral offset almost always holds the
+    // point; looking there first finds the same triangle without the full scan.
+    if(Number.isFinite(point.off)){
+      const {offsets}=previous;let low=0,high=offsets.length;
+      while(low<high){const mid=(low+high)>>1;if(offsets[mid]<point.off)low=mid+1;else high=mid;}
+      for(let i=Math.max(1,low-1);i<=Math.min(next.length-1,low+1);i++){
+        const first=height(previous[i-1],next[i-1],previous[i]);
+        if(first!==null)return visibleHeight(first);
+        const second=height(previous[i],next[i-1],next[i]);
+        if(second!==null)return visibleHeight(second);
+      }
+    }
     for(let i=1;i<next.length;i++){
       const first=height(previous[i-1],next[i-1],previous[i]);
       if(first!==null)return visibleHeight(first);

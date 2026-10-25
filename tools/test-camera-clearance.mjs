@@ -7,10 +7,11 @@ import * as clearance from '../src/camera-clearance.js';
 import {sweepObstacle} from '../src/collision.js';
 import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
 import {TREMBLANT_SNOW} from '../src/circuits/tremblant-snow.js';
+import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
 let checks=0;
 for(const def of COURSE)for(const seed of[1989,42]){
  const course=new Course(def,seed);
- for(const tunnel of course.features.tunnels)for(const s of[tunnel.start+.1,(tunnel.start+tunnel.end)/2,tunnel.end-.1])for(const off of[-7.45,0,7.45]){
+ for(const tunnel of course.features.tunnels)for(const s of[tunnel.start+.1,(tunnel.start+tunnel.end)/2,tunnel.end-.1])for(const off of(tunnel.flatRoof?[-4,-2,0,2,4]:[-7.45,0,7.45])){
   const position=course.worldAt(s,off);position.y+=12;
   const target={...position};constrainTunnelCamera(course,target,s);
   position.y+=(target.y-position.y)*(1-Math.exp(-14/60));
@@ -19,12 +20,35 @@ for(const def of COURSE)for(const seed of[1989,42]){
   const x=Math.abs(off)/tunnel.width,u=(x-Math.sin(a))/(Math.sin(b)-Math.sin(a));
   const chord=Math.cos(a)+(Math.cos(b)-Math.cos(a))*u,roof=course.at(s).y+3.6+(tunnel.height-3.6)*chord;
   assert.ok(position.y<roof-.25,'Camera stays below the actual segmented roof with near-plane clearance');checks++;
+  if(tunnel.flatRoof){
+    const flatRoof=course.groundAt(s,0).y+tunnel.height;
+    assert.ok(Number.isFinite(roof)&&position.y<=flatRoof-.45,'Gallery camera stays under its flat roof too');checks++;
+  }
   const low=course.worldAt(s,off);low.y+=1.4;const y=low.y;
   constrainTunnelCamera(course,low,s);assert.equal(low.y,y,'Hood camera is unaffected');checks++;
  }
  const outdoor=course.worldAt(0,0);outdoor.y+=12;const y=outdoor.y;constrainTunnelCamera(course,outdoor,0);assert.equal(outdoor.y,y,'Outdoor camera is unaffected');checks++;
 }
 console.log(`Camera clearance: ${checks} portal, roof and damping checks passed.`);
+
+// Positive Gallery witnesses use actual placed kit roofs, including the outer
+// 4 m position where the old flat-only clamp crossed the accepted lining.
+{
+ const course=new Course(SUMMIT_RUN,1989),tunnel=course.features.tunnels.find(row=>row.id==='summit-gallery');
+ const roofs=course.features.obstacles.filter(row=>row.sourceBounds==='gallery-heavy-concrete-roof');
+ assert.ok(tunnel?.flatRoof&&roofs.length>0,'Gallery has its accepted flat kit roofs and lining');checks++;
+ for(const roof of roofs)for(const off of[0,2,4]){
+  const position=course.worldAt(roof.kitS,off);position.y+=12;
+  assert.ok(constrainTunnelCamera(course,position,roof.kitS),'Gallery camera is clamped beneath both accepted roofs');checks++;
+  const projected=course.nearest(position.x,position.z,roof.kitS),actualTunnel=course.tunnelAt(projected.s,projected.lateral);
+  const road=course.at(projected.s).y,r=Math.min(.995,Math.abs(projected.lateral)/actualTunnel.width);
+  const arch=road+3.6+(actualTunnel.height-3.6)*Math.sqrt(1-r*r);
+  const flat=course.groundAt(projected.s,0).y+actualTunnel.height;
+  assert.ok(position.y<=arch-.45&&position.y<=flat-.45,'Gallery clamp respects both analytic ceilings at the actual projected frame');checks++;
+  assert.ok(sweepObstacle(position,position,roof,0,{halfWidth:0,halfLength:0}),'Gallery witness lies beneath the actual placed roof footprint');checks++;
+  assert.ok(position.y<=roof.minY-.45,'Gallery camera clears the actual placed kit roof underside');checks++;
+ }
+}
 
 // Actual target-aware positions: no renderer, race or input mutation.
 {

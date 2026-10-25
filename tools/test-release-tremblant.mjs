@@ -64,6 +64,7 @@ equal(COURSE.slice(EARLIER_EVENTS.length, panorama + 1).map(row => row.id), pano
 const panoramaRelease = circuitsEnabled({enabled: flag => panoramaReleaseIds.includes(flag)}).map(row => row.id);
 equal(panoramaRelease, panoramaReleaseIds, 'the historical Panorama release catalog retains its exact order');
 equal(EARLIER_EVENTS.length + panoramaRelease.indexOf('panorama-ridge'), EARLIER_EVENTS.length + panoramaRelease.length - 1, 'Panorama is last in its historical release catalog');
+equal(COURSE.filter(event => ['summit-run', 'ardennes-forest', 'summit-time-attack'].includes(event.id)).map(event => event.id), ['summit-run', 'ardennes-forest', 'summit-time-attack'], 'the approved Summit parent and solo child retain their declared positions around released Ardennes');
 const liveBeforePanorama = new Set(['tremblant-woods', 'tremblant-snow', 'harbour-lights']);
 equal(circuitsEnabled({ enabled: name => liveBeforePanorama.has(name) }).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights'],
   "with the switches that were live before Panorama Ridge the course list is identical to the live build's");
@@ -74,7 +75,8 @@ ok(COURSE.every((event, index) => index === panorama || !eventKey({ stageIndex: 
 equal(stageEventId(panorama), 'panorama-ridge', 'position 19 saves as panorama-ridge');
 
 // 3. Every enabled paid course has isolated access. Literal prices and named UI checks belong to each course suite.
-for (const id of released) {
+const paidReleased = released.filter(id => COURSE_PRICES[id] > 0);
+for (const id of paidReleased) {
   const fresh = createProfile(), price = COURSE_PRICES[id];
   ok(!isCourseUnlocked(fresh, id), 'a new profile has the paid course locked');
   const poor = purchaseCourse({...fresh, credits: price - 1}, id);
@@ -83,7 +85,8 @@ for (const id of released) {
   ok(bought.ok && bought.cost === price && bought.profile.credits === 400, 'buying charges exactly the registered price');
   equal(bought.profile.courses.unlocked, [...fresh.courses.unlocked, id].filter(value => COURSE.some(event => event.id === value)), 'only the bought course is added');
   ok(isCourseUnlocked(bought.profile, 'pacific-canyon'), 'buying keeps the free course');
-  for (const other of released.filter(value => value !== id)) ok(!isCourseUnlocked(bought.profile, other), 'buying never grants another paid course');
+  for (const other of paidReleased.filter(value => value !== id)) ok(!isCourseUnlocked(bought.profile, other), 'buying never grants another paid course');
+  equal(isCourseUnlocked(bought.profile, 'summit-time-attack'), id === 'summit-run', 'only buying the Summit parent grants its no-pay solo child');
 }
 
 // 3b. Panorama Ridge in particular: a paid unlock at exactly 1,600 credits, shown on the course screen.
@@ -123,7 +126,7 @@ for (const file of files) {
   for (const rawPlayer of rawPlayers) {
     const loaded = players.players.find(player => player.id === rawPlayer.id).profile;
     for (const id of released) {
-      equal(isCourseUnlocked(loaded, id), !!rawPlayer.profile.courses?.unlocked?.includes(id), `${fixture.shape}/${rawPlayer.id}: a save owns ${id} only if it saved it`);
+      equal(isCourseUnlocked(loaded, id), !!rawPlayer.profile.courses?.unlocked?.includes(id === 'summit-time-attack' ? 'summit-run' : id), `${fixture.shape}/${rawPlayer.id}: a save owns ${id} only by its saved entitlement or the solo child's saved parent`);
     }
     if (rawPlayer.profile.courses) {
       equal(loaded.courses.unlocked, COURSE.map(event => event.id).filter(id => rawPlayer.profile.courses.unlocked.includes(id)),
@@ -149,7 +152,7 @@ for (const definition of ALL_CIRCUITS) {
     equal([definition.flag, definition.defaultMode, definition.laps, definition.grandPrixLaps, definition.fieldSize, definition.hasRival, definition.noTraffic],
       ['summit-run', 'timetrial', 1, 1, 1, false, true], 'Attack is the exact solo Time Trial exception');
     equal([manifest.state, manifest.price, manifest.releaseOrder, manifest.grandPrix, manifest.unlock],
-      ['dev', 0, 6, false, {kind: 'owned-course', defaultEventId: 'summit-run'}], 'Attack shares only parent ownership and dev admission');
+      ['on', 0, 6, false, {kind: 'owned-course', defaultEventId: 'summit-run'}], 'Attack shares only parent ownership and released admission');
     ok(!GRAND_PRIX_COURSES.includes(definition.id), 'Attack is never a Grand Prix event');
   } else ok(definition.hasRival, 'every other registered circuit retains its rival');
 }

@@ -13,17 +13,32 @@ export function atHomePad(view) {
   return Math.hypot(view.heli.x - view.zone.x, view.heli.z - view.zone.z) <= view.zone.radius;
 }
 
-function jobRow(job, mode) {
-  const own = job.own === true;
+// The wildlife count (docs/HELI_WILDLIFE.md section 4) pays the same in
+// Assisted and Real, from 200 to 600 credits by how near the estimate is.
+function jobRow(job, mode, {survey = null, skins = null} = {}) {
+  const own = job.own === true, count = job.survey === true;
   const state = job.done ? 'done' : job.taken ? 'taken' : 'open';
-  const pay = own ? 'No pay' : `${job.payNow ?? job.pay} credits${mode === 'real' ? ' (+25% in Real)' : ''}`;
-  const pickUp = !own && job.from !== HOME_COURSE ? `Pick up at ${HELI_DESTINATIONS[job.from]?.name ?? job.from}` : '';
-  const title = own ? `Fly my car${job.carId && CARS[job.carId] ? ` (${CARS[job.carId].name})` : ''}` : jobTitle(job);
+  const pay = own ? 'No pay' : count ? `up to ${job.payNow ?? job.pay} credits` : `${job.payNow ?? job.pay} credits${mode === 'real' ? ' (+25% in Real)' : ''}`;
+  const pickUp = !own && !count && job.from !== HOME_COURSE ? `Pick up at ${HELI_DESTINATIONS[job.from]?.name ?? job.from}` : '';
+  const title = own ? `Fly my car${job.carId && CARS[job.carId] ? ` (${CARS[job.carId].name})` : ''}` : job.recovery || count ? job.title : jobTitle(job);
   let button = '';
+  // The recovery job (section 5.3) is taken and dropped like the day's jobs.
+  const note = job.recovery && !job.taken ? `<span class="heli-board-note">Hook the car on the slope</span>` : '';
   if (own) button = `<button type="button" class="heli-board-button" data-heli-board="take:own">Fly my car</button>`;
   else if (job.done) button = `<span class="heli-board-note">Done today</span>`;
   else if (job.taken) button = `<button type="button" class="heli-board-button heli-board-drop" data-heli-board="drop">Drop job</button>`;
-  else button = `<button type="button" class="heli-board-button" data-heli-board="take:${esc(job.id)}">Take job</button>`;
+  else {
+    button = `<button type="button" class="heli-board-button" data-heli-board="take:${esc(job.id)}">Take job</button>`;
+    // With the matching coat owned, the same click can wear it (section 5.2).
+    const wear = count ? skins?.offers?.survey : null;
+    if (wear) button += `<button type="button" class="heli-board-button heli-board-wear" data-heli-board="survey-wear:${esc(job.id)}">Take job and wear ${esc(skinName(skins, wear))}</button>`;
+  }
+  // A count in hand: what the panel shows, and the report to Sarah once a quarter is covered.
+  if (count && job.taken && survey?.active) {
+    button = `<span class="heli-board-note">${esc(String(survey.name).toUpperCase())} ${survey.count} &middot; ${survey.percent}% covered</span>` +
+      (survey.canReport ? `<button type="button" class="heli-board-button heli-board-report" data-heli-board="survey-report">Report</button>` : '') + button;
+  }
+  button = note + button;
   return `<li class="heli-board-job heli-board-${state}${own ? ' heli-board-own' : ''}" data-job="${esc(job.id)}">` +
     `<span class="heli-board-text">${esc(title)}</span>` +
     `<span class="heli-board-pay">${esc(pay)}</span>` +
@@ -36,7 +51,28 @@ function jobRow(job, mode) {
 // hand. With the fire switch on, the bucket's buttons sit with the board on
 // the home pad's ground.
 const COMPASS_WORDS = Object.freeze({N: 'north', NE: 'north-east', E: 'east', SE: 'south-east', S: 'south', SW: 'south-west', W: 'west', NW: 'north-west'});
-function radioBox(fire) {
+// H4 Rescue (docs/HELI_RESCUE.md section 7): a waiting rescue with its Answer
+// and Later buttons, or the one in hand with its clock. The panel names the
+// place; Roger's words do not.
+const RESCUE_WORDS = Object.freeze({hiker: 'Lost hiker at', avalanche: 'Avalanche at', hoist: 'Driver stranded at', supply: 'Supply run to'});
+const clockWords = seconds => { const whole = Math.max(0, Math.ceil(seconds)); return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`; };
+function rescueRadio(rescue) {
+  if (rescue.active) {
+    const a = rescue.active, place = esc(a.courseName ?? 'the mountain');
+    const crates = a.kind === 'supply' ? ` &middot; crates ${a.cratesDown}/3` : '';
+    return `<div class="heli-board-radio heli-board-rescue-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">` +
+      `${RESCUE_WORDS[a.kind]} ${place}${crates} &middot; ${clockWords(a.left)} left</span></div>`;
+  }
+  if (!rescue.call) return '';
+  const c = rescue.call;
+  return `<div class="heli-board-radio heli-board-rescue-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">` +
+    `${RESCUE_WORDS[c.kind]} ${esc(c.courseName ?? 'the mountain')}.</span>` +
+    `<button type="button" class="heli-board-button" data-heli-board="radio-answer">Answer</button>` +
+    `<button type="button" class="heli-board-button" data-heli-board="radio-later">Later</button></div>`;
+}
+function radioBox(fire, rescue = null) {
+  const rescueBox = rescue ? rescueRadio(rescue) : '';
+  if (rescueBox) return rescueBox;
   if (!fire?.call) return '';
   const course = esc(fire.courseName ?? 'the forest');
   if (!fire.call.answered)
@@ -45,14 +81,49 @@ function radioBox(fire) {
   const wind = fire.wind.speed < 1 ? 'wind light' : `wind ${COMPASS_WORDS[fire.wind.name] ?? fire.wind.name} ${Math.round(fire.wind.speed)} m/s`;
   return `<div class="heli-board-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">Fire at ${course}: ${fire.shareOut}% out, ${esc(wind)}</span></div>`;
 }
-function bucketBox(view, {repairCost = 0}) {
+function bucketBox(view, {repairCost = 0}, skins = null) {
   if (!atHomePad(view)) return '';
-  const bucket = view.bucket, words = bucket?.words ?? null;
+  // The fire service coat's water gauge shows litres instead of words.
+  const bucket = view.bucket, words = bucket?.reading?.text ?? bucket?.words ?? null;
+  const wear = !bucket && skins?.offers?.bucket;
   const fit = bucket ? `<button type="button" class="heli-board-button" data-heli-board="bucket-off">Take off the bucket</button>`
-    : `<button type="button" class="heli-board-button" data-heli-board="bucket-fit"${view.load?.hooked ? ' disabled' : ''}>Fit the bucket</button>`;
+    : `<button type="button" class="heli-board-button" data-heli-board="bucket-fit"${view.load?.hooked ? ' disabled' : ''}>Fit the bucket</button>` +
+      (wear ? `<button type="button" class="heli-board-button heli-board-wear" data-heli-board="bucket-fit-wear"${view.load?.hooked ? ' disabled' : ''}>Fit the bucket and wear ${esc(skinName(skins, wear))}</button>` : '');
   const repair = repairCost > 0 ? `<button type="button" class="heli-board-button" data-heli-board="bucket-repair">Repair the bucket: ${repairCost} credits</button>` : '';
   const state = bucket ? `<span class="heli-board-text">Bucket: ${esc(words)}</span>` : '';
   return `<div class="heli-board-bucket"><h3 class="heli-board-title">Bucket</h3>${state}${fit}${repair}</div>`;
+}
+
+// The rescue line is fitted and taken off at the pad, like the bucket.
+function lineBox(view, skins = null) {
+  if (!view?.rescue || !atHomePad(view)) return '';
+  const line = view.rescue.line;
+  const wear = !line && skins?.offers?.line;
+  const fit = line ? `<button type="button" class="heli-board-button" data-heli-board="rescue-off"${line.who === 'pair' && !line.done ? ' disabled' : ''}>Take off the rescue line</button>`
+    : `<button type="button" class="heli-board-button" data-heli-board="rescue-fit"${view.load?.hooked || view.bucket ? ' disabled' : ''}>Fit the rescue line</button>` +
+      (wear ? `<button type="button" class="heli-board-button heli-board-wear" data-heli-board="rescue-fit-wear"${view.load?.hooked || view.bucket ? ' disabled' : ''}>Fit the rescue line and wear ${esc(skinName(skins, wear))}</button>` : '');
+  const state = line ? `<span class="heli-board-text">Rescue line: ${line.who === 'pair' ? 'two on the line' : 'rescuer aboard'}</span>` : '';
+  return `<div class="heli-board-line"><h3 class="heli-board-title">Rescue line</h3>${state}${fit}</div>`;
+}
+
+// H3 skins (docs/HELI_WILDLIFE.md sections 5 to 7). shop is session.paintShop():
+// a coat's name for a kind, and the paint shop panel with the wash.
+const skinName = (shop, kind) => shop?.rows?.find(row => row.kind === kind)?.name ?? kind;
+function paintShopBox(shop) {
+  const rows = shop.rows.map(row => {
+    const tally = row.owned ? '' : row.need !== null ? `${row.tally}/${row.need}` : 'bought only';
+    let button = '';
+    if (row.worn) button = `<span class="heli-board-note">Wearing</span>`;
+    else if (row.owned) button = `<button type="button" class="heli-board-button" data-heli-board="paint-wear:${esc(row.kind)}">Wear${row.fresh ? ' (fresh coat)' : ''}</button>`;
+    else if (row.buy) button = `<button type="button" class="heli-board-button" data-heli-board="paint-buy:${esc(row.kind)}"${row.canAfford ? '' : ' disabled'}>Buy: ${row.price.toLocaleString('en-US')} credits</button>`;
+    return `<li class="heli-board-coat heli-board-${row.worn ? 'worn' : row.owned ? 'owned' : 'open'}" data-skin="${esc(row.kind)}">` +
+      `<span class="heli-board-text">${esc(row.name)}${tally ? ` ${esc(tally)}` : ''}</span>${button}</li>`;
+  }).join('');
+  const note = shop.note ? `<span class="heli-board-text heli-board-skin-note">${esc(shop.note)}</span>` : '';
+  const grime = shop.wash.grime > 0 ? `Grime ${shop.wash.grime}%${shop.wash.hint ? '. She is filthy' : ''}` : 'She is clean';
+  const wash = `<span class="heli-board-text">${esc(grime)}</span>` +
+    `<button type="button" class="heli-board-button" data-heli-board="wash"${shop.wash.can ? '' : ' disabled'}>Wash: ${shop.wash.cost} credits</button>`;
+  return `<div class="heli-board-paint"><h3 class="heli-board-title">Paint shop</h3>${note}<ul class="heli-board-list">${rows}</ul>${wash}</div>`;
 }
 
 // The dispatch season (docs/HELI_FIRE.md section 3.6), and the first
@@ -66,24 +137,31 @@ function seasonBox(season) {
 
 // view: the session's view. jobs: session.boardJobs(). offer:
 // session.raceHereOffer(). fire: with the fire switch on, {repairCost}.
-// Returns '' when there is nothing to show.
-export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assisted', fire = null} = {}) {
+// skins: with the heli-skins switch on, session.paintShop() (the paint shop,
+// the wash and the fit buttons' coat offers). Returns '' when there is nothing to show.
+// lessonOffer: session.lessonHereOffer(), shown beside Race here.
+export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assisted', fire = null, skins = null, lessonOffer = null} = {}) {
   const parts = [];
   if (fire) {
     const season = seasonBox(view?.season);
     if (season) parts.push(season);
-    const radio = radioBox(view?.fire);
+    const radio = radioBox(view?.fire, view?.rescue ?? null);
     if (radio) parts.push(radio);
-    const bucket = bucketBox(view, fire);
+    const bucket = bucketBox(view, fire, skins);
     if (bucket) parts.push(bucket);
+    const line = lineBox(view, skins);
+    if (line) parts.push(line);
   }
+  if (skins && atHomePad(view)) parts.push(paintShopBox(skins));
   if (jobs.length && atHomePad(view))
     parts.push(`<div class="heli-board-jobs"><h3 class="heli-board-title">Dispatch board</h3><ul class="heli-board-list">` +
-      `${jobs.map(job => jobRow(job, mode)).join('')}</ul></div>`);
+      `${jobs.map(job => jobRow(job, mode, {survey: view?.survey ?? null, skins})).join('')}</ul></div>`);
   if (offer) {
     const course = HELI_DESTINATIONS[offer.courseId]?.name ?? offer.courseId;
     parts.push(`<div class="heli-board-race"><span class="heli-board-text">${esc(CARS[offer.carId]?.name ?? 'Your car')} is set down at ${esc(course)}.</span>` +
-      `<button type="button" class="heli-board-button heli-board-race-here" data-heli-board="race-here">Race here</button></div>`);
+      `<button type="button" class="heli-board-button heli-board-race-here" data-heli-board="race-here">Race here</button>` +
+      (lessonOffer ? `<button type="button" class="heli-board-button heli-board-lesson-here" data-heli-board="lesson-here">Lesson here: ${esc(lessonOffer.name)}</button>` : '') +
+      `</div>`);
   }
   return parts.length ? `<section class="heli-board" data-heli-board-panel>${parts.join('')}</section>` : '';
 }
@@ -97,12 +175,26 @@ export function handleBoardAction(action, app) {
   if (action.startsWith('take:')) return settle(session.takeJob(action.slice(5)));
   if (action === 'drop') return settle(session.dropJob());
   if (action === 'radio-answer') return settle(session.pressRadio());
+  if (action === 'radio-later') return settle(session.declineCall?.() ?? false);
+  if (action === 'rescue-fit') return settle(session.fitRescueLine?.() ?? {ok: false});
+  if (action === 'rescue-off') return settle(session.takeOffRescueLine?.() ?? {ok: false});
   if (action === 'bucket-fit') return settle(session.fitBucket());
+  if (action === 'bucket-fit-wear') return settle(session.fitBucket({wear: true}));
+  if (action === 'rescue-fit-wear') return settle(session.fitRescueLine?.({wear: true}) ?? {ok: false});
+  if (action.startsWith('survey-wear:')) return settle(session.takeJob(action.slice(12), {wear: true}));
+  if (action === 'survey-report') return settle(session.reportCount?.() ?? {ok: false});
+  if (action.startsWith('paint-buy:')) return settle(session.buyPaint?.(action.slice(10)) ?? {ok: false});
+  if (action.startsWith('paint-wear:')) return settle(session.wearPaint?.(action.slice(11)) ?? {ok: false});
+  if (action === 'wash') return settle(session.washHelicopter?.() ?? {ok: false});
   if (action === 'bucket-off') return settle(session.takeOffBucket());
   if (action === 'bucket-repair') return settle(session.repairBucket());
   if (action === 'race-here') {
     const offer = session.raceHereOffer();
     return offer ? app.raceHere(offer) : false;
+  }
+  if (action === 'lesson-here') {
+    const offer = session.lessonHereOffer?.();
+    return offer ? app.lessonHere(offer) : false;
   }
   return {ok: false, reason: 'Unknown board action.'};
 }
@@ -115,7 +207,9 @@ export function createDispatchBoard({root, app}) {
   const render = () => {
     const session = app.heliSession, view = app.heliView?.() ?? null;
     const fire = app.forestFireEnabled?.() === true && session?.bucketRepairCost ? {repairCost: session.bucketRepairCost()} : null;
-    const markup = session && view ? dispatchBoardMarkup(view, {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode, fire}) : '';
+    const skins = session?.paintShop?.() ?? null;
+    const markup = session && view ? dispatchBoardMarkup(view, {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode, fire, skins,
+      lessonOffer: session.lessonHereOffer?.() ?? null}) : '';
     if (markup !== last) { root.innerHTML = markup; last = markup; }
     if ('hidden' in root) root.hidden = markup === '';
     return markup;

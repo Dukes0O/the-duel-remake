@@ -17,7 +17,7 @@ export function lightVariant(parent, parentManifest, {id, name, look, releaseOrd
     timeOfDay: look === 'night' ? 'night' : undefined, lightPath});
   const manifest = Object.freeze({id, flag: id, state: 'dev', price: 0, grandPrix: true, releaseOrder,
     driver: parentManifest.driver,
-    unlock: Object.freeze({kind: 'default-gp-podium', defaultEventId: parent.id})});
+    unlock: Object.freeze({kind: 'spotted-from-air', defaultEventId: parent.id})});
   return Object.freeze({definition, manifest});
 }
 
@@ -92,6 +92,6 @@ export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, 
   }};
   definition = Object.freeze(Object.defineProperties({}, descriptors));
   const manifest = Object.freeze({id, flag: id, state: 'dev', price: 0, grandPrix: true, releaseOrder,
-    driver: parentManifest.driver, unlock: Object.freeze({kind: 'default-gp-podium', defaultEventId: parent.id})});
+    driver: parentManifest.driver, unlock: Object.freeze({kind: 'spotted-from-air', defaultEventId: parent.id})});
   return Object.freeze({definition, manifest});
 }

@@ -90,6 +90,15 @@ export function basinGround(basin, du, dv, roadGap = Infinity) {
   return { weight: (1 - smooth((reach - 1) / fade)) * spare, height: (reach - 1) * room * (basin.bank ?? .1) };
 }
 
+// True when a point is certainly past the basin's fade, so basinGround would give it weight 0 and height 0. Reach is the
+// distance over a shore factor that is never above 1.17 (shoreFactor), so a point whose distance is beyond 1.2 times the
+// fade distance has reach past the fade; asking this first saves the angle and sine work for the many points far from any shore.
+export function basinOutOfReach(basin, du, dv) {
+  const fade = (basin.blend ?? 30) / Math.min(basin.along, basin.across), limit = (1 + fade) * 1.2;
+  const x = du / basin.along;
+  return x >= limit || -x >= limit || Math.hypot(x, dv / basin.across) >= limit;
+}
+
 // Digs a course's basins into its ground. The course keeps its own relief; this
 // wraps it, so a course without basins never reaches this code.
 export function installBasins(course) {
@@ -98,6 +107,7 @@ export function installBasins(course) {
     let height = natural(s, off);
     const phase = course.phase(s);
     for (const basin of course.def.basins) {
+      if (basinOutOfReach(basin, phase - basin.s, off - basin.lateral)) continue;
       const ground = basinGround(basin, phase - basin.s, off - basin.lateral, Math.abs(off) - course.roadHalfWidthAt(phase));
       if (ground.weight > 0) height += (course._height(basin.s) + basin.surface + ground.height - course.worldAt(s, off).y - height) * ground.weight;
     }

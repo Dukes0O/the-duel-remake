@@ -8,8 +8,6 @@
 #   searchlight  belly light; origin at its mount; empty `beam` points down
 #                and forward
 #   beacon       avalanche transceiver; origin at its centre
-#   debris       six rough snow blocks `block_1` .. `block_6` for instancing,
-#                each origin at its base
 #   crate-food, crate-medicine, crate-fuel  origin at the top centre (like the
 #                H1 crate); the medicine cross is green (the red cross emblem is
 #                protected)
@@ -23,7 +21,7 @@ parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--render', default='')
 options = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(options.root).resolve()
-NAMES = ['winch', 'stretcher', 'searchlight', 'beacon', 'debris', 'crate-food', 'crate-medicine', 'crate-fuel']
+NAMES = ['winch', 'stretcher', 'searchlight', 'beacon', 'crate-food', 'crate-medicine', 'crate-fuel']
 OUT = root / 'public/assets/heli/rescue'
 BLEND = root / 'art-build/heli/rescue'
 if options.paths_only:
@@ -56,8 +54,6 @@ def mats():
         'strap': material('strap_black', (0.02, 0.02, 0.02), 0.0, 0.8),
         'red_strap': material('strap_red', (0.45, 0.03, 0.02), 0.0, 0.7),
         'glass': material('lens', (0.85, 0.85, 0.8), 0.0, 0.05, emit=(1.0, 0.95, 0.8)),
-        'snow': material('packed_snow', (0.78, 0.80, 0.84), 0.0, 0.75),
-        'ice': material('snow_shadow', (0.58, 0.63, 0.72), 0.0, 0.6),
         'wood': material('crate_wood', (0.33, 0.21, 0.11), 0.0, 0.85),
         'wood_dark': material('crate_wood_dark', (0.18, 0.11, 0.06), 0.0, 0.9),
         'white': material('medical_white', (0.82, 0.83, 0.82), 0.0, 0.5),
@@ -189,27 +185,6 @@ def build_beacon(m):
     body = join('beacon', [case, screen, antenna, strap] + buttons); smooth(body)
     return body
 
-def build_debris(m):
-    rng = random.Random(7); blocks = []
-    for k in range(6):
-        bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
-        bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=2, use_grid_fill=True)
-        sx, sy, sz = rng.uniform(0.6, 1.4), rng.uniform(0.5, 1.2), rng.uniform(0.35, 0.8)
-        for v in bm.verts:
-            n = noise.noise(v.co * 2.2 + Vector((k, k * 2, 0)))
-            v.co = Vector((v.co.x * sx, v.co.y * sy, v.co.z * sz)) * (1 + 0.18 * n)
-        zmin = min(v.co.z for v in bm.verts)
-        for v in bm.verts: v.co.z -= zmin
-        for f in bm.faces: f.material_index = 1 if f.normal.z < -0.2 or (f.normal.z < 0.3 and noise.noise(f.calc_center_median() * 3) > 0.2) else 0
-        me = bpy.data.meshes.new(f'block_{k + 1}'); bm.to_mesh(me); bm.free()
-        ob = bpy.data.objects.new(f'block_{k + 1}', me); bpy.context.scene.collection.objects.link(ob)
-        me.materials.append(m['snow']); me.materials.append(m['ice'])
-        ob.location = ((k % 3) * 1.8 - 1.8, (k // 3) * 1.8 - 0.9, 0); ob.rotation_euler = (0, 0, rng.uniform(0, 6.28))
-        smooth(ob, 30); blocks.append(ob)
-    root_e = empty('debris', (0, 0, 0))
-    for b in blocks: b.parent = root_e
-    return root_e
-
 def build_crate(kind, m):
     W, D, H = (1.0, 0.8, 0.7) if kind != 'fuel' else (1.2, 1.0, 0.0)
     parts = []
@@ -249,9 +224,9 @@ def build_crate(kind, m):
     return body
 
 BUILDERS = {'winch': build_winch, 'stretcher': build_stretcher, 'searchlight': build_searchlight, 'beacon': build_beacon,
-            'debris': build_debris, 'crate-food': lambda m: build_crate('food', m),
+            'crate-food': lambda m: build_crate('food', m),
             'crate-medicine': lambda m: build_crate('medicine', m), 'crate-fuel': lambda m: build_crate('fuel', m)}
-LIMITS = {'debris': 3000, 'crate-food': 1500, 'crate-medicine': 1500, 'crate-fuel': 1500}
+LIMITS = {'crate-food': 1500, 'crate-medicine': 1500, 'crate-fuel': 1500}
 
 def triangles():
     return sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in bpy.context.scene.objects if o.type == 'MESH')
@@ -271,7 +246,7 @@ if options.render:
     # One review sheet: every prop on a plain floor, rendered one at a time.
     folder = (root / options.render).resolve(); folder.mkdir(parents=True, exist_ok=True)
     framing = {'winch': (2.2, 0.4), 'stretcher': (4.5, -0.7), 'searchlight': (1.3, -0.2), 'beacon': (0.45, 0.0),
-               'debris': (8.0, 0.3), 'crate-food': (2.6, -0.3), 'crate-medicine': (2.6, -0.3), 'crate-fuel': (3.2, -0.5)}
+               'crate-food': (2.6, -0.3), 'crate-medicine': (2.6, -0.3), 'crate-fuel': (3.2, -0.5)}
     for name in NAMES:
         bpy.ops.wm.open_mainfile(filepath=str(BLEND / f'{name}.blend'))
         scene = bpy.context.scene

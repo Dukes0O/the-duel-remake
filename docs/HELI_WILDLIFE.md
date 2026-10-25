@@ -293,7 +293,7 @@ survey: {day, done}
 ## 11. Files, switches, locks and hooks
 
 - **Switches:** `wildlife: 'dev'` (animals in races, and the wildlife count
-  when the helicopter is on) and `heliSkins: 'dev'` (skins, gear, dirt, the
+  when the helicopter is on) and `'heli-skins': 'dev'` (skins, gear, dirt, the
   wash), effective only with `helicopter` on. The count in
   `tools/test-feature-flags.mjs` rises by two.
 

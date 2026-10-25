@@ -8,7 +8,7 @@ rem its own folder, emptied on every build, so test runs never touch it and
 rem old builds never pile up.
 set "PREVIEW_PORT=5195"
 set "PREVIEW_DIR=.preview-dist"
-set "PREVIEW_FLAGS=seeker-rockets,warlords,fuel-run,arsenal,arsenal-wave3,salt-flats,bounty-hunt,crew-gear,fight-voices,cpu-crews,ambush-alley,convoy-raid,gunn,tollkeeper,blackiron,warlord-cards,grand-prix,grand-prix-career,snow-world,the-deep,lap-choice,snowmen,yeti,rival-voices,helicopter,forest-fire,earned-cars"
+set "PREVIEW_FLAGS=seeker-rockets,warlords,fuel-run,arsenal,arsenal-wave3,salt-flats,bounty-hunt,crew-gear,fight-voices,cpu-crews,ambush-alley,convoy-raid,gunn,tollkeeper,blackiron,warlord-cards,grand-prix,grand-prix-career,snow-world,the-deep,lap-choice,snowmen,yeti,rival-voices,helicopter,forest-fire,earned-cars,rescue,wildlife,heli-skins,heli-skiing,pilot-map,tyre-slip,driving-lessons,cpu-racecraft,lab,lab-tuning"
 set "COURSE_FLAGS="
 for /f "delims=" %%f in ('node tools\preview-flags.mjs') do set "COURSE_FLAGS=%%f"
 if not defined COURSE_FLAGS (
