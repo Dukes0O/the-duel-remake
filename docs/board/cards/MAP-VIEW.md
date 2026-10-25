@@ -38,3 +38,17 @@ Removed: nothing.
 2. **The key and the help:** `MAP N` in the cockpit key line, the FLY TO button, and a Kestrel One page in `controlsHelp()`: yes.
 3. **The Table's art against its rules:** mesa scaled to the rules (0.65 across, 0.545 tall): keep for now; Claude judges the look from the picture sheet, which must show the Table from the air so the squash can be seen. `table-strip.glb` is unused, so it and its recipe lines (`tools/blender`, `test-blender-output`) are removed in this change and listed under Removed.
 4. **Fire pits:** they should burn. If the game's existing fire and smoke sprites can be placed at the model's empties within about 30 minutes, do it here; if not, one line on MAP-FINISH and move on. (Not done here: `spriteLayer` is private to the fire view and the pits could not be reached to check how they look; see MAP-FINISH.)
+
+## Look and changed assertions, Claude's review (25 October 2026)
+
+Look round 1 passed: the chart, the click-to-fly destination, corner names
+over owned courses and the Table from the air (the mesa at 0.65 by 0.545 reads
+as a mesa). Name crowding round the home pad and a zoom go to MAP-FINISH.
+
+Changed assertions, approved, nothing loosened: `tools/test-heli-audio.mjs`
+adds the three `map.*` cues to its cue list and bus table (new sounds, every
+old row still checked); `tools/test-heli-mode.mjs` adds `pilot-map-view.js`
+and `pilot-map-world.js` to the drawing files the rules-purity check skips,
+which is what they are; every rules file is still checked. The laptop fixed
+one scenario fault: the key helper sent "Escape" as typed text, which the
+real harness refuses.
