@@ -1,0 +1,186 @@
+{
+  "shape": "lab-tune-additive-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2,
+      "activePlayerId": "tune-qa",
+      "players": [
+        {
+          "id": "tune-qa",
+          "name": "Tune QA",
+          "profile": {
+            "version": 2,
+            "credits": 3200,
+            "lab": {
+              "version": 1,
+              "done": {
+                "grip": true,
+                "downforce": true
+              },
+              "owned": {},
+              "ring": 0,
+              "ringBest": 0,
+              "cable": 15,
+              "tune": {
+                "falcone_f42": {
+                  "pressure": -2,
+                  "wing": 1,
+                  "brakes": 0,
+                  "springs": 2,
+                  "fuel": 1
+                }
+              },
+              "stockLaps": {
+                "falcone_f42|tremblant-woods": 88.4,
+                "falcone_f42|tremblant-woods|tyre-slip": 91.2,
+                "falcone_f42|harbour-lights|a-later-rule": 90.1
+              },
+              "tunedBonus": [
+                "tremblant-woods"
+              ],
+              "secret": {}
+            }
+          }
+        },
+        {
+          "id": "tune-old-qa",
+          "name": "Tune Old QA",
+          "profile": {
+            "version": 2,
+            "credits": 3200,
+            "lab": {
+              "version": 1,
+              "done": {
+                "grip": true,
+                "downforce": true
+              },
+              "owned": {},
+              "ring": 0,
+              "ringBest": 0,
+              "cable": 15,
+              "secret": {}
+            }
+          }
+        },
+        {
+          "id": "tune-forged-qa",
+          "name": "Tune Forged QA",
+          "profile": {
+            "version": 2,
+            "credits": 3200,
+            "lab": {
+              "version": 1,
+              "done": {
+                "grip": true,
+                "downforce": true
+              },
+              "owned": {},
+              "ring": 0,
+              "ringBest": 0,
+              "cable": 15,
+              "tune": {
+                "falcone_f42": {
+                  "pressure": 9,
+                  "wing": 1.5,
+                  "brakes": "2",
+                  "springs": null,
+                  "fuel": -7
+                },
+                "no-such-car": {
+                  "pressure": 1
+                }
+              },
+              "stockLaps": {
+                "falcone_f42|tremblant-woods": -3,
+                "falcone_f42|tremblant-woods|BAD KEY": 5,
+                "falcone_f42|nowhere": 7,
+                "x|tremblant-woods": 6,
+                "falcone_f42|panorama-ridge|tyre-slip": 80.5
+              },
+              "tunedBonus": [
+                "tremblant-woods",
+                "tremblant-woods",
+                "nowhere"
+              ],
+              "secret": {}
+            }
+          }
+        }
+      ]
+    }
+  },
+  "assertions": [
+    {
+      "path": "players.0.profile.lab.tune.falcone_f42.pressure",
+      "equals": -2
+    },
+    {
+      "path": "players.0.profile.lab.stockLaps.falcone_f42|tremblant-woods|tyre-slip",
+      "equals": 91.2
+    },
+    {
+      "path": "players.0.profile.lab.stockLaps.falcone_f42|harbour-lights|a-later-rule",
+      "equals": 90.1
+    },
+    {
+      "path": "players.0.profile.lab.tunedBonus",
+      "includes": "tremblant-woods"
+    },
+    {
+      "path": "players.1.profile.lab.tune",
+      "equals": {}
+    },
+    {
+      "path": "players.2.profile.lab.tune.falcone_f42.pressure",
+      "equals": 0
+    },
+    {
+      "path": "players.2.profile.lab.stockLaps.falcone_f42|panorama-ridge|tyre-slip",
+      "equals": 80.5
+    }
+  ],
+  "labExpected": {
+    "tune-old-qa": {
+      "version": 1,
+      "done": {
+        "grip": true,
+        "downforce": true
+      },
+      "owned": {},
+      "ring": 0,
+      "ringBest": 0,
+      "cable": 15,
+      "tune": {},
+      "stockLaps": {},
+      "tunedBonus": [],
+      "secret": {}
+    },
+    "tune-forged-qa": {
+      "version": 1,
+      "done": {
+        "grip": true,
+        "downforce": true
+      },
+      "owned": {},
+      "ring": 0,
+      "ringBest": 0,
+      "cable": 15,
+      "tune": {
+        "falcone_f42": {
+          "pressure": 0,
+          "wing": 0,
+          "brakes": 0,
+          "springs": 0,
+          "fuel": 0
+        }
+      },
+      "stockLaps": {
+        "falcone_f42|panorama-ridge|tyre-slip": 80.5
+      },
+      "tunedBonus": [
+        "tremblant-woods"
+      ],
+      "secret": {}
+    }
+  }
+}

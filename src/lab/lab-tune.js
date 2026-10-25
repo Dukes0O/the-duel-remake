@@ -23,9 +23,10 @@ export const LAB_TUNE = Object.freeze({
 });
 
 const STEP = 2;
-const clampStep = value => Number.isSafeInteger(value) ? Math.max(-STEP, Math.min(STEP, value)) : 0;
+// A step outside -2 to +2, or not a whole number, is refused (reads as 0), as the save does.
+const clampStep = value => Number.isSafeInteger(value) && Math.abs(value) <= STEP ? value : 0;
 
-// A tune as five whole steps. Anything else reads as 0; fuel below 0 is the same as 0 (a full tank).
+// A tune as five whole steps from -2 to +2. Anything else reads as 0; fuel below 0 is the same as 0 (a full tank).
 export function normalizeTune(value) {
   const tune = {};
   for (const name of TUNE_SETTINGS) tune[name] = clampStep(value?.[name]);

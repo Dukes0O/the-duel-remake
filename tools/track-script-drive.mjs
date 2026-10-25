@@ -56,7 +56,7 @@ export const passingLateral = (playerLateral, rivalLateral, halfWidth) =>
 // added to COURSE for the length of the run only (tests, never the game).
 export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', cpuDifficulty = DEFAULT_CPU_DIFFICULTY,
   fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, flags = [], onTick, tune = null, mode = 'duel', stopAfterLaps = 0 } = {}) {
-  if(!Array.isArray(flags)||flags.some(flag=>!['tyre-slip','lab-tuning'].includes(flag))) throw Error('Unsupported driver flags.');
+  if(!Array.isArray(flags)||flags.some(flag=>!['tyre-slip','lab-tuning','grand-prix'].includes(flag))) throw Error('Unsupported driver flags.');
   const added = !COURSE.includes(def) && !COURSE.some(item => item.id === def.id);
   if (added) COURSE.push(def);
   try {

@@ -7,7 +7,7 @@ import { loadGhosts, saveGhosts, GHOST_KEY } from '../src/ghost.js';
 
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
 const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWith('.json')).sort();
-assert.equal(files.length, 20, 'review the historical save-shape fixture roster');
+assert.equal(files.length, 21, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
   const values = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));
@@ -35,7 +35,9 @@ function includes(actual, expected, label) {
   checks++;
 }
 
-function preserveProfile(raw, loaded, label) {
+// expectedLab: a fixture may name what a Lab record should read as when it is missing keys or holds forged ones
+// (`labExpected` in the fixture, by player); a record that is whole and honest comes back exactly.
+function preserveProfile(raw, loaded, label, expectedLab) {
   equal(loaded.credits, raw.credits, `${label}: credits`);
   for (const car of raw.unlockedCars ?? []) includes(loaded.unlockedCars, car, `${label}: unlocked car ${car}`);
   for (const [car, levels] of Object.entries(raw.upgrades ?? {})) {
@@ -75,7 +77,7 @@ function preserveProfile(raw, loaded, label) {
   if (Object.hasOwn(raw, 'deep')) equal(loaded.deep, raw.deep, `${label}: Deep progress`);
   else equal(Object.hasOwn(loaded, 'deep'), false, `${label}: no Deep field added to old saves`);
   // The Lab field is optional too: kept exactly when saved (unknown keys included), never added to an older save.
-  if (Object.hasOwn(raw, 'lab')) equal(loaded.lab, raw.lab, `${label}: Lab progress`);
+  if (Object.hasOwn(raw, 'lab')) equal(loaded.lab, expectedLab ?? raw.lab, `${label}: Lab progress`);
   else equal(Object.hasOwn(loaded, 'lab'), false, `${label}: no Lab field added to old saves`);
   if (raw.awardedWins) equal(loaded.settledResults, raw.awardedWins, `${label}: awardedWins migration`);
   if (raw.history) equal(loaded.history, raw.history, `${label}: complete race history`);
@@ -131,7 +133,7 @@ for (const file of files) {
     assert.ok(loaded, `${fixture.shape}: missing player ${rawPlayer.id}`);
     checks++;
     equal(loaded.name, rawPlayer.name, `${fixture.shape}: player name`);
-    preserveProfile(rawPlayer.profile, loaded.profile, `${fixture.shape}/${rawPlayer.id}`);
+    preserveProfile(rawPlayer.profile, loaded.profile, `${fixture.shape}/${rawPlayer.id}`, fixture.labExpected?.[rawPlayer.id]);
   }
   for (const assertion of fixture.assertions) {
     // Historical fixture paths name the old root field. Check the same owned
