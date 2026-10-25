@@ -181,7 +181,8 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-25
     needs: []
     flag: "the-deep"
     details: "docs/board/cards/DEEP-ART-FINAL.md"
@@ -221,10 +222,11 @@ tasks:
 
   - id: LAB-TUNE-VIEW
     title: "The Tune page and the tuned-lap result line"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-25
     needs: [LAB-TUNE]
     locks: []
     flag: "lab-tuning"
@@ -423,10 +425,11 @@ tasks:
 
   - id: DRIVE-LESSONS-VIEW-2
     title: "Lessons 2 to 4 in the game: markers, shift lights, snow boards, board rows"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-local-sonnet-2026-10-25
     needs: [DRIVE-LESSON-2, DRIVE-LESSON-3, DRIVE-LESSON-4, DRIVE-LESSONS-SAVE-2, DRIVE-LESSONS-LINES-2]
     locks: [busy-game-files]
     flag: "driving-lessons"
