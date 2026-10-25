@@ -31,12 +31,19 @@ function release(root) {
   for (const resource of resources) resource.dispose?.();
 }
 
-// The camera pose for a bench: toward the middle of the hall from the bench, a little above, looking at its middle.
-export function benchPose(layout, size) {
+// The camera poses to try for a bench, best first: from the middle of the hall side, a little round to one side and above,
+// looking at its middle, then further round and further back. The scene takes the first with a clear view.
+export function benchPoses(layout, size) {
   const {x, z} = layout, length = Math.hypot(x, z) || 1;
-  const distance = 3.6 + Math.max(size[0], size[2]) * 0.62;
-  return {position: [x - x / length * distance, 2.5, z - z / length * distance], target: [x, Math.min(1.6, size[1] * 0.45), z]};
+  const ux = -x / length, uz = -z / length, base = 4.5 + Math.max(size[0], size[2]) * 0.7;
+  const target = [x, Math.min(1.5, size[1] * 0.45), z], poses = [];
+  for (const scale of [1, 1.35]) for (const turn of [0.35, -0.35, 0.8, -0.8, 1.3, -1.3, 0]) {
+    const dx = ux * Math.cos(turn) - uz * Math.sin(turn), dz = ux * Math.sin(turn) + uz * Math.cos(turn);
+    poses.push({position: [x + dx * base * scale, 3.4, z + dz * base * scale], target});
+  }
+  return poses;
 }
+export const benchPose = (layout, size) => benchPoses(layout, size)[0];
 export const OVERVIEW = Object.freeze({position: [0, 5.2, 13.5], target: [0, 1.6, -1]});
 
 export function createLabScene({host, manifest, createRenderer = defaultRenderer, load = defaultLoad, quality = 'high'}) {
@@ -103,11 +110,25 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
 
   const part = (model, name) => parts.get(model)?.get(name) ?? null;
 
+  // The first pose whose line to the bench is not blocked by a pillar, a wall or another bench.
+  const caster = new THREE.Raycaster(), from = new THREE.Vector3(), to = new THREE.Vector3();
+  function clearPose(id, poses) {
+    const others = [...models].filter(([key]) => key !== id).map(([, root]) => root);
+    for (const pose of poses) {
+      from.set(...pose.position); to.set(...pose.target);
+      const distance = from.distanceTo(to);
+      caster.set(from, to.clone().sub(from).normalize());
+      caster.far = distance;
+      const hit = caster.intersectObjects(others, true)[0];
+      if (!hit || hit.distance > distance - 1.5) return pose;
+    }
+    return poses[0];
+  }
   function aim(next) {
     const id = next ? MODEL_OF_LESSON[next] : null;
     const at = id ? manifest.layout[id] : null;
     if (!at) { goal.position.set(...OVERVIEW.position); goal.target.set(...OVERVIEW.target); return; }
-    const view = benchPose(at, sizeOf(id));
+    const view = clearPose(id, benchPoses(at, sizeOf(id)));
     goal.position.set(...view.position); goal.target.set(...view.target);
   }
 
