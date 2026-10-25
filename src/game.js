@@ -3,7 +3,7 @@ import {createDriveLesson,stepDriveLesson,DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,D
 const DRIVE_LESSON_ROWS=Object.freeze({corner:DRIVE_LESSON_CORNERS,line:DRIVE_LINE_ROWS,gears:DRIVE_GEAR_ROWS,snow:DRIVE_SNOW_ROWS});
 const LESSON_MANUAL_BOX=new WeakMap(); // difficulty setting -> the same setting with the manual box and no engine damage
 import {isSummitAttack} from './summit-attack.js';
-import {copyDeepProviders,clearDeepJourney,initializeDeepJourney,deepProtected,checkDeepDeparture,stepDeepJourney,queueDeepChoice,deepEnvironment,stepRampDriving} from './deep/deep-journey.js';
+import {copyDeepProviders,clearDeepJourney,initializeDeepJourney,deepProtected,checkDeepDeparture,stepDeepJourney,queueDeepChoice,deepEnvironment,stepRampDriving,surfaceDeep} from './deep/deep-journey.js'; // DEEP-EXPLORER: Surface hook
 // DEEP-SIRENA-VIEW: the Sirena story and the sea-life log, stepped in a dive.
 import {stepDeepStory,pingDeepStory} from './deep/deep-story.js';
 import * as simDriving from './sim-driving.js';
@@ -614,6 +614,7 @@ export class Duel {
   clearDeep() { clearDeepJourney(this); }
   _deepProtected() { return deepProtected(this); }
   chooseDeep(choice) { return queueDeepChoice(this,choice); }
+  deepSurface() { return surfaceDeep(this); } // DEEP-EXPLORER
   deepPing() { return pingDeepStory(this); } // DEEP-SIRENA-VIEW: R under water
   chooseHiddenRoad(choice) { return queueHiddenRoadChoice(this, choice); }
 

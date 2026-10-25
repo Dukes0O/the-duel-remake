@@ -17,7 +17,7 @@ import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {labOf} from './lab/lab-save.js'; // LAB-TUNE
 import {seedStockLaps, settleTunedLap, ruleSetOf} from './lab/lab-tune.js'; // LAB-TUNE
 import {usableTune} from './lab/tune-view.js'; // LAB-TUNE-VIEW
-import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
+import {deepDiscoverySnapshot,rememberDeep,rememberChart} from './deep/deep-discovery.js'; // DEEP-EXPLORER: chart save hook
 // DEEP-SIRENA-VIEW: the story's finds, logs and pearls are paid and saved here.
 import {raiseFind} from './deep/deep-sirena.js';
 import {recordLogged,recordPearl,phoneLineFor} from './deep/deep-log.js';
@@ -201,6 +201,7 @@ export class App {
       this.deepAudio.event(event,state);
       if(event.deepPhase&&state.deepJourney?.controlsLocked)this._clearHiddenRoadInput();
       if(event.deepCommitted)this._settleDeepDeparture(event.deepCommitted,state);
+      if(event.deepCharted)this._settleDeepChart(event,state); // DEEP-EXPLORER
       if(event.deepRaised||event.deepLogged||event.deepPearl||event.deepPlace?.title)this._settleDeepStory(event,state); // DEEP-SIRENA-VIEW, DEEP-GO-LIVE
       if(event.deepReturn)this.returnToMenu();
       if (event.hiddenRoadPhase) this._discoverHiddenRoadGate(event.hiddenRoadPhase, state);
@@ -593,6 +594,7 @@ export class App {
     const car=isCarUnlocked(this.profile,selectedCar)?selectedCar:'falcone_f42';
     if(this._airOnlyRefused(car,stage.id))return false;
     if(this._fireClosedRefused(stage))return false;
+    this.duel.clearDeep(); // DEEP-EXPLORER: flush the old owner's chart before replacing runId/snapshot
     const driverId=isDriverUnlocked(this.profile,options.driverId)?normalizeDriverId(options.driverId):getEquippedDriverId(this.profile);
     const explicitSeed=Number.isSafeInteger(options.seed)?options.seed>>>0:null;
     // Keep legacy headless callers that set duel.seed before their first start.
@@ -1383,6 +1385,17 @@ export class App {
     if(result.profile!==this.profile){this.profile=result.profile;this._saveProfile();}
     if(!event.deepRaised)for(const line of phoneLineFor(event,result))this.duel.emit({deepPhone:{line}});
     return result.ok;
+  }
+  // DEEP-EXPLORER: chart packets belong only to the named player who dived.
+  _settleDeepChart(event,state) {
+    const packet=event.deepCharted, journey=state?.deepJourney;
+    if(!this.runId||state!==this.duel.state||!journey?.committed||
+      state.playerId!==this._runPlayerId||this._runPlayerId!==this.player?.id||
+      !this._switches().enabled('the-deep')||packet?.zoneId!==journey.zoneId)return false;
+    this._refreshPlayer();
+    const profile=rememberChart(this.profile,packet.zoneId,packet.bits,{enabled:true});
+    if(profile!==this.profile){this.profile=profile;this._saveProfile();}
+    return true;
   }
   chooseDeep(choice) {
     const state=this.duel.state;
@@ -2176,6 +2189,7 @@ export class App {
     else if (action === 'heli-radio') this._heliPress(session => session.pressRadio());
     else if (action === 'heli-map') { if (this.heliSession && !this.duel.state.paused) this.setHeliMap(!this.heliMapOpen); } // MAP-VIEW
     else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % (this.heliSession?.cameraCount ?? 4); this.duel.emit({heli: true}); }
+    else if (action === 'deep-surface') this.duel.deepSurface(); // DEEP-EXPLORER
     else if (action === 'deep-ping') this.duel.deepPing(); // DEEP-SIRENA-VIEW: R under water
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');

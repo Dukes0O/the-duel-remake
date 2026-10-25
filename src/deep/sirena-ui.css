@@ -24,3 +24,20 @@
 .deep-map-home{margin-top:6px}
 .deep-map-bearing{display:flex;align-items:center;gap:8px;margin-top:6px;color:#e5be78;font-size:12px}
 .deep-map-bearing i{display:inline-block;font-style:normal;font-size:23px;line-height:24px}
+/* DEEP-EXPLORER: the survey chart and Ana's checklist share one folding panel. */
+.deep-map{width:510px;max-width:42vw;bottom:125px;max-height:calc(100vh - 145px);overflow:hidden;background:#0b242bef;color:#ece5c8}
+.deep-objectives{max-height:155px;overflow-y:auto;border-top:1px solid #bdb68b66;margin-top:8px;padding-top:7px}
+.deep-objectives h3{margin:0 0 7px;font:italic 16px Georgia,serif;color:#ede0b4}
+.deep-chart-percent{float:right;font:11px 'Segoe UI',sans-serif;color:#b8cebe}
+.deep-objectives ol{margin:0;padding:0;list-style:none}
+.deep-objectives li{margin:0 0 6px;border-left:2px solid #bdb68b55;padding-left:7px;font:11px 'Segoe UI',sans-serif}
+.deep-objectives li b{font-weight:600}.deep-objectives li small{display:block;font-size:10px;line-height:1.35;color:#aec3b8;margin-top:2px}
+.deep-objectives li.done{color:#b6d8a3;border-color:#87b783}
+.deep-chart-key{font:10px/1.5 'Segoe UI',sans-serif;color:#cebe91;margin:7px 0 0}
+.deep-map .deep-surface{float:right;background:#dbc18b;color:#182d31;font-weight:700}
+.deep-objective-tick{position:absolute;top:22%;left:50%;transform:translateX(-50%);padding:9px 18px;background:#102c30e8;border:1px solid #d3c28c;color:#f0e1b3;font:16px Georgia,serif}
+
+/* DEEP-EXPLORER: one-second logging ring sits beside, clear of the driving view. */
+.deep-logging{position:absolute;right:4%;top:43%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:#102a35e8;border:1px solid #abbead88;border-radius:4px;font:14px Georgia,serif;color:#f0e1b3}
+.deep-logging>i{display:block;width:34px;height:34px;border-radius:50%;position:relative}
+.deep-logging>i:after{content:'';position:absolute;inset:4px;border-radius:50%;background:#102a35}

@@ -59,7 +59,7 @@ export function createDeepView({renderer,createUnderwaterScene,createWaterline,c
       visit.camera.copy(local);visit.camera.updateMatrixWorld(true);
       const visual=surfaceLocalPoint(car.position);
       car.position.set(visual.x,visual.y,visual.z);
-      visit.look.update({car:pose,camera:visit.camera,seconds});
+      visit.look.update({car:pose,camera:visit.camera,seconds,lifeState:duel.deepStory?.life}); // DEEP-EXPLORER
       visit.extras?.update({duel,seconds,dt:Math.max(0,Math.min(.1,seconds-visit.seconds))});visit.seconds=seconds;
       visit.ambient.enabled=high;
       const ratio=renderer.getPixelRatio?.()??1;

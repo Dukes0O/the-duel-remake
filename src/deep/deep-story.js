@@ -5,10 +5,13 @@
 // picture and the save snapshot handed to startCampaign, never changes race
 // state, and uses no randomness. Events go out through duel.emit; the App pays
 // and saves them (raiseFind, recordLogged, recordPearl) and the view draws them.
-import {deepWorldPose} from './deep-journey.js';
+import {deepWorldPose, surfaceLocalPoint} from './deep-journey.js';
 import {createSirena, pingSonar, stepLift, SIRENA_FINDS} from './deep-sirena.js';
 import {createLog, stepLog} from './deep-log.js';
 import {normalizeDeep} from './deep-discovery.js';
+// DEEP-EXPLORER
+import {createSeaLifeState, stepSeaLifeState} from './sea-life-rules.js'; // DEEP-EXPLORER
+import {chartCells, revealChart} from './deep-chart.js';
 
 export const ANA_NEAR = 10;   // metres: close enough for Ana's "bag" and "car" lines
 const BADGE = 'sirena-badge', CAR = 'sirena-car';
@@ -29,7 +32,18 @@ function begin(duel) {
   return {journeyId: duel.state.deepJourney.id, zoneId: zone.id, sirena, log: createLog(zone, save, on), seconds: 0,
     segments, places: new Set(save.places || []), placeId: null,
     partsAtStart: sirena.raised.filter(id => PARTS.includes(id)).length,
+    // DEEP-EXPLORER: survey rules own exploration; the map only reads it.
+    chartCells: chartCells(zone, duel.deepRuntime.floor), charted: save.charted?.[zone.id] || '',
+    life: createSeaLifeState(zone),
+    chartPoint: null, chartDirty: false, chartSaveAt: 0,
     pinged: false, saidBag: false, saidCar: false, saidNorseman: false};
+}
+// DEEP-EXPLORER: persist at most every two seconds, plus the final exit flush.
+export function flushDeepChart(duel) {
+  const story = duel.deepStory;
+  if (!story?.chartDirty) return;
+  story.chartDirty = false; story.chartSaveAt = story.seconds + 2;
+  duel.emit({deepCharted: {zoneId: story.zoneId, bits: story.charted}});
 }
 const parts = story => story.sirena.raised.filter(id => PARTS.includes(id)).length;
 const available = (story, id) => {
@@ -69,6 +83,13 @@ export function stepDeepStory(duel, dt) {
   const story = duel.deepStory, car = deepWorldPose(duel);
   if (!car || !Number.isFinite(dt) || dt < 0) return;
   story.seconds += dt;
+  // DEEP-EXPLORER
+  if (!story.chartPoint || Math.hypot(car.x - story.chartPoint.x, car.z - story.chartPoint.z) >= 2) {
+    const bits = revealChart(story.charted, story.chartCells, story.chartPoint || car, car);
+    if (bits !== story.charted) { story.charted = bits; story.chartDirty = true; }
+    story.chartPoint = {x: car.x, z: car.z};
+  }
+  if (story.seconds >= story.chartSaveAt) flushDeepChart(duel);
   const zone = duel.deepRuntime.zone, along = duel.course.phase(duel.state.s);
   const index = story.segments.findLastIndex(start => start <= along);
   const place = zone.places.find(row => row.fromIndex <= row.toIndex
@@ -80,8 +101,12 @@ export function stepDeepStory(duel, dt) {
     if (title) story.places.add(place.id);
     duel.emit({deepPlace: {place: place ?? null, title}});
   }
-  const events = [...stepLift(story.sirena, car, {lift: duel._deepLift === true}, dt),
-    ...stepLog(story.log, car, dt)];
+  // DEEP-EXPLORER: use simulation time and the car, independent of display or model loading.
+  const liftEvents = stepLift(story.sirena, car, {lift: duel._deepLift === true}, dt);
+  const moving = stepSeaLifeState(story.life, story.seconds, dt, surfaceLocalPoint(car), duel.deepRuntime.floor,
+    liftEvents.some(event => event.deepRaised?.find === CAR));
+  const events = [...liftEvents,
+    ...stepLog(story.log, car, dt, moving)];
   for (const event of events) {
     duel.emit(event);
     if (event.deepRaised) for (const line of raisedLines(story, event.deepRaised.find)) duel.emit(line);

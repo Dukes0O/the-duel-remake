@@ -1,0 +1,271 @@
+// DEEP-EXPLORER acceptance, using only memory and synthetic players.
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {Duel} from '../src/game.js';
+import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {ROUTE_VARIANTS} from '../src/route-variants.js';
+import {kelpCoastProvider} from '../src/deep/zones/kelp-coast.js';
+import {rampAt} from '../src/deep/deep-journey.js';
+import {chartCells, revealChart, chartHas, chartPercent, CHART_HEX, chartFrame} from '../src/deep/deep-chart.js';
+import {normalizeDeep, rememberChart} from '../src/deep/deep-discovery.js';
+import {deepObjectives} from '../src/deep/deep-objectives.js';
+import {deepMapGeometry, deepMapData} from '../src/deep/deep-map.js';
+import {rockContact, stopAtDeepRock} from '../src/deep/deep-rocks.js';
+import {SIRENA_FINDS} from '../src/deep/deep-sirena.js';
+import {createSeaLifeState, stepSeaLifeState} from '../src/deep/sea-life-rules.js';
+import {stepDeepStory} from '../src/deep/deep-story.js';
+import {surfaceLocalPoint, deepWorldPose} from '../src/deep/deep-journey.js';
+import {createLog, stepLog, loggingProgress, DEEP_LOG_PAGES} from '../src/deep/deep-log.js';
+import {keyboardAction} from '../src/input-contexts.js';
+import {controlsHelp} from '../src/controls-help.js';
+import {createSirenaHud} from '../src/deep/sirena-view.js';
+
+const DT = 1 / 120;
+function race(seed = 1989, save = {}) {
+  const duel = new Duel({seed, deepProviders:[kelpCoastProvider], featureFlags:{'the-deep':true}});
+  duel.startCampaign({seed, deepKit:true, deepSave:save, playerId:'survey-qa', opponentCount:1});
+  return duel;
+}
+function park(d, p, heading = 0) {
+  const near = d.course.nearest(p.x,p.z,d.state.s);
+  Object.assign(d.state, {s:near.s,prevS:near.s,lateral:near.lateral,prevLateral:near.lateral,
+    speedMph:0,headingError:heading-d.course.at(near.s).heading,airborne:false,airHeight:0,
+    yawVelocity:0,pushVelocity:0,impactTimer:0,_jumpY:null});
+}
+function dive(d) {
+  const ramp = d.course.deepRamp;
+  park(d,rampAt(ramp,ramp.shoreline.center.progress-.04),ramp.heading);
+  Object.assign(d.state,{status:'racing',countdown:0,speedMph:35}); d.step(DT);
+  assert.equal(d.chooseDeep('dive'),true);
+  for(let i=0;i<260;i++)d.step(DT);
+  assert.equal(d.state.deepJourney.phase,'underwater');
+}
+
+test('Surface works from every place on all three routes; inactive and paused calls do nothing', () => {
+  for(const {seed} of ROUTE_VARIANTS) for(let index=0;index<3;index++) {
+    const d=race(seed); assert.equal(d.deepSurface(),false); dive(d);
+    const runtime=d.deepRuntime, place=runtime.zone.places[index];
+    park(d,runtime.zone.trail[place.fromIndex]); d.step(DT);
+    d.state.paused=true; assert.equal(d.deepSurface(),false); d.state.paused=false;
+    const packets=[]; d.onChange((s,e)=>packets.push(e));
+    assert.equal(d.deepSurface(),true);
+    assert.equal(d.state.status,'menu'); assert.equal(d.state.deepJourney,undefined);
+    assert.equal(d.course,runtime.raceCourse);
+    const top=d.course.worldAt(d.state.s,d.state.lateral), expected=runtime.ramp.points[0];
+    assert.ok(Math.hypot(top.x-expected.x,top.z-expected.z)<.1);
+    assert.ok(packets.some(e=>e.deepReturn));
+    assert.ok(packets.some(e=>e.deepCharted),'last chart stretch flushed');
+    assert.equal(d.deepSurface(),false);
+  }
+  assert.equal(keyboardAction('car','KeyU'),'deep-surface');
+  assert.ok(JSON.stringify(controlsHelp({state:{mode:'duel',deepJourney:{phase:'underwater'}}})).includes('Surface'));
+});
+
+test('every placed rock is solid: forward, reverse, tunnelling and overlap; contacts cannot damage the car', () => {
+  for(const {seed} of ROUTE_VARIANTS) {
+    const d=race(seed); dive(d); const runtime=d.deepRuntime;
+    assert.equal(runtime.rocks.length,420);
+    for(const rock of runtime.rocks) {
+      const a={x:rock.x,z:rock.z-12}, b={x:rock.x,z:rock.z+12};
+      assert.ok(rockContact([rock],a,b)); assert.ok(rockContact([rock],b,a,Math.PI));
+      assert.ok(rockContact([rock],rock,rock));
+      const mock={state:{s:b.x,lateral:b.z,headingError:0,speedMph:60,health:100,status:'exploring'},
+        deepRuntime:runtime,course:{worldAt:(s,lateral)=>({x:s,z:lateral}),at:()=>({heading:0}),
+          nearest:(x,z)=>({s:x,lateral:z})}};
+      stopAtDeepRock(mock,a);
+      assert.equal(mock.state.speedMph,0); assert.equal(mock.state.health,100);
+      assert.notEqual(mock.state.status,'wrecked');
+    }
+    assert.equal(rockContact([],runtime.zone.trail[10],runtime.zone.trail[11]),null,'kelp has no solids');
+    // One native drive per route proves the journey actually calls the sweep.
+    const rock=runtime.rocks.find(r=>{
+      const at=runtime.floor.sample(r.x,r.z), p=d.course.worldAt(at.along,at.lateral);
+      return at.along>50 && Math.hypot(p.x-r.x,p.z-r.z)<.01;
+    });
+    const at=runtime.floor.sample(rock.x,rock.z), start=at.along-12;
+    Object.assign(d.state,{s:start,prevS:start,lateral:at.lateral,prevLateral:at.lateral,
+      headingError:0,speedMph:60,airHeight:0,airborne:false,_jumpY:null});
+    const damage=JSON.stringify(d.state.damageZones);
+    d.setInput({throttle:0,brake:0,steer:0});
+    for(let i=0;i<120;i++)d.step(DT);
+    assert.ok(d.state.s<at.along,'native drive stops before rock centre');
+    assert.equal(d.state.speedMph,0);assert.equal(JSON.stringify(d.state.damageZones),damage);
+  }
+});
+
+test('objective notices wait for the title, sound once and never replay saved completions', () => {
+  const d=race();dive(d);let discovery={enabled:true}, clock=1, sounds=0, raceNotices=0;
+  const before=JSON.stringify(d.state);
+  d.onChange((state,event)=>{if(event.deepObjective)raceNotices++;});
+  const elements=new Map(), context=new Proxy({}, {get:()=>()=>{}});
+  const element=()=>({hidden:true,textContent:'',style:{},append(){},remove(){},
+    addEventListener(){},removeEventListener(){},getContext:()=>context,
+    querySelector(selector){if(!elements.has(selector))elements.set(selector,element());return elements.get(selector);}});
+  const host=element();host.ownerDocument={createElement:element};
+  const audio={event(event){if(event.deepObjective)sounds++;}};
+  const hud=createSirenaHud({host,app:{duel:d,deepAudio:audio,getDeepDiscovery:()=>discovery},now:()=>clock,
+    phone:{say(){},update(){return null;},dispose(){}}});
+  hud.update();
+  d.emit({deepPlace:{title:true,place:d.deepRuntime.zone.places[1]}});
+  discovery={enabled:true,raised:['sirena-badge']};clock=1.2;hud.update();
+  assert.equal(sounds,0);assert.equal(elements.get('.deep-objective-tick').hidden,true);
+  clock=4.2;hud.update();
+  assert.equal(sounds,1);assert.equal(elements.get('.deep-objective-tick').textContent,'Badge found');
+  clock=8;hud.update();assert.equal(sounds,1);
+  hud.dispose();
+  const revisit=createSirenaHud({host,app:{duel:d,deepAudio:audio,getDeepDiscovery:()=>discovery},now:()=>clock,
+    phone:{say(){},update(){return null;},dispose(){}}});
+  revisit.update();assert.equal(sounds,1);revisit.dispose();
+  assert.equal(raceNotices,0,'presentation notices stay off the race event bus');
+  assert.equal(JSON.stringify(d.state),before,'the HUD never changes race state');
+});
+
+test('chart reveals a 25 m swath along the path, persists within 2.4 KB, unions safely and leaves old saves alone', () => {
+  const cells=[{id:0,x:0,z:0},{id:1,x:50,z:24},{id:2,x:50,z:26},{id:3,x:100,z:0}];
+  const bits=revealChart('',cells,{x:0,z:0},{x:100,z:0});
+  assert.equal(chartHas(bits,0),true); assert.equal(chartHas(bits,1),true);
+  assert.equal(chartHas(bits,2),false); assert.equal(chartHas(bits,3),true);
+  assert.equal(chartPercent(bits,cells),75); assert.equal(bits.length,CHART_HEX);
+  const old={kit:true,raised:['sirena-badge'],future:{keep:true}};
+  assert.deepEqual(normalizeDeep(old),old); assert.equal(Object.hasOwn(normalizeDeep(old),'charted'),false);
+  const a={deep:old,credits:300}, b=rememberChart(a,'kelp-coast',bits,{enabled:true});
+  assert.deepEqual(a.deep,old); assert.equal(b.credits,300);
+  assert.ok(Buffer.byteLength(JSON.stringify(b.deep.charted))<2400);
+  assert.deepEqual(normalizeDeep(b.deep).charted,b.deep.charted);
+  assert.equal(rememberChart(b,'kelp-coast','0',{enabled:true}),b,'stale snapshots cannot erase cells');
+  assert.equal(rememberChart(a,'kelp-coast',bits),a,'switch off is inert');
+  assert.deepEqual(normalizeDeep({charted:{'kelp-coast':'f'.repeat(CHART_HEX+1),evil:'ffff'}}).charted,{});
+  assert.deepEqual(normalizeDeep({charted:{'kelp-coast':'__proto__'}}).charted,{});
+  let reference;
+  for(const {seed} of ROUTE_VARIANTS) {
+    const d=race(seed), {zone,floor}=d.course.deepZone, frame=chartFrame(zone), survey=chartCells(zone,floor);
+    const ids=survey.map(c=>c.id);
+    if(reference)assert.deepEqual(ids,reference,'bitmap coordinates survive route changes');
+    reference=ids;
+    let full=''; for(const cell of survey)full=revealChart(full,survey,cell);
+    assert.equal(chartPercent(full,survey),100);
+    const p=frame.world(100,300), local=frame.local(p);
+    assert.ok(Math.abs(local.x-100)<1e-8&&Math.abs(local.z-300)<1e-8);
+  }
+});
+
+test('chart pins only saved finds, at their fixed spots; Ana counts real goals without duplicates or other coasts', () => {
+  const d=race(), zone=d.course.deepZone.zone, geometry=deepMapGeometry(zone), car={...zone.trail[0],heading:0};
+  assert.equal(deepMapData(geometry,zone,car).pins.length,0);
+  const save={raised:['sirena-badge','sirena-wheel'],logged:['turtle','fake','turtle'],pearls:['kelp-1','reef-1']};
+  const before=JSON.stringify(save), data=deepMapData(geometry,zone,car,{save});
+  assert.equal(data.pins.length,4);
+  assert.deepEqual(data.pins.map(p=>p.kind).sort(),['badge','life','part','pearl']);
+  const pearl=data.pins.find(p=>p.kind==='pearl');
+  assert.ok(Math.hypot(pearl.x-geometry.loop[zone.pearls[0].trailIndex].x,pearl.y-geometry.loop[zone.pearls[0].trailIndex].y)>0,'offset preserved');
+  const rows=deepObjectives(save,42);
+  assert.equal(rows[0].done,true); assert.match(rows[1].text,/2 of 5/);
+  assert.match(rows[3].text,/1 of 7/); assert.match(rows[4].text,/1 of 3/);
+  assert.match(rows[5].text,/42%/); assert.ok(rows.every(r=>r.hint&&r.tick));
+  assert.ok(deepObjectives({raised:SIRENA_FINDS,logged:DEEP_LOG_PAGES[0].creatures,
+    pearls:DEEP_LOG_PAGES[0].pearls,coastCup:true},100).every(r=>r.done));
+  assert.match(deepObjectives({},0,true).at(-1).hint,/Finish a Pacific Canyon race/);
+  assert.equal(JSON.stringify(save),before,'view never changes progress');
+});
+
+test('App rejects chart writes for the wrong player, zone, journey or disabled feature', () => {
+  const profile={deep:{kit:true}}, state={playerId:'a',deepJourney:{committed:true,zoneId:'kelp-coast'}};
+  let writes=0;
+  const app={runId:'qa',profile,player:{id:'a'},_runPlayerId:'a',duel:{state},
+    _switches:()=>createFeatureFlags({storage:null,overrides:{'the-deep':true}}),
+    _refreshPlayer(){},_saveProfile(){writes++;}};
+  const settle=event=>App.prototype._settleDeepChart.call(app,event,state);
+  assert.equal(settle({deepCharted:{zoneId:'kelp-coast',bits:'f'}}),true);
+  assert.equal(writes,1);
+  app.player.id='b';assert.equal(settle({deepCharted:{zoneId:'kelp-coast',bits:'ff'}}),false);
+  app.player.id='a';assert.equal(settle({deepCharted:{zoneId:'wreck-reef',bits:'ff'}}),false);
+  state.deepJourney.committed=false;assert.equal(settle({deepCharted:{zoneId:'kelp-coast',bits:'ff'}}),false);
+  state.deepJourney.committed=true;app._switches=()=>({enabled:()=>false});
+  assert.equal(settle({deepCharted:{zoneId:'kelp-coast',bits:'ff'}}),false);assert.equal(writes,1);
+});
+
+test('Restart flushes the final survey cells for the old run before taking the new dive snapshot', () => {
+  const storageDescriptor=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
+  const cancelDescriptor=Object.getOwnPropertyDescriptor(globalThis,'cancelAnimationFrame');
+  const values=new Map(); let app;
+  Object.defineProperty(globalThis,'localStorage',{configurable:true,value:{getItem:k=>values.get(k)??null,
+    setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)}});
+  Object.defineProperty(globalThis,'cancelAnimationFrame',{configurable:true,value:()=>{}});
+  try {
+    app=new App({deepProviders:[kelpCoastProvider]});
+    app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'the-deep':true}});
+    app.profile={...app.profile,deep:{kit:true}}; app._saveProfile();
+    app.startCampaign({seed:1989,mode:'duel',opponentCount:1}); dive(app.duel);
+    const story=app.duel.deepStory, before=app.profile.deep.charted['kelp-coast'];
+    park(app.duel,app.duel.deepRuntime.zone.trail[40]);app.duel.step(DT);
+    assert.equal(story.chartDirty,true); assert.notEqual(story.charted,before);
+    const expected=story.charted;
+    app.restart();
+    assert.equal(app.profile.deep.charted['kelp-coast'],expected);
+    assert.equal(app.duel._deepSave.charted['kelp-coast'],expected,'new campaign reads final chart');
+    assert.ok([...values.values()].some(text=>text.includes(expected)),'written to memory storage');
+  } finally {
+    app?.dispose();
+    if(storageDescriptor)Object.defineProperty(globalThis,'localStorage',storageDescriptor);else delete globalThis.localStorage;
+    if(cancelDescriptor)Object.defineProperty(globalThis,'cancelAnimationFrame',cancelDescriptor);else delete globalThis.cancelAnimationFrame;
+  }
+});
+
+// DEEP-EXPLORER: creatures move under the exact rules the renderer reads.
+test('slowly following a moving turtle logs in the actual dive; a fast pass and interrupted holds do not', () => {
+  const d=race();dive(d);const q=d.deepStory, zone=d.deepRuntime.zone, spot=q.log.spots.find(p=>p.creature==='turtle');
+  // Advance the rule clock until a turtle is well outside its fixed spot.
+  let turtle;
+  for(let t=20;t<100;t++) {
+    stepSeaLifeState(q.life,t,DT,{x:0,y:0,z:0},d.deepRuntime.floor);
+    turtle=q.life.positions.find(p=>p.creature==='turtle'&&Math.hypot(p.x-spot.x,p.z-spot.z)>12);
+    if(turtle){q.seconds=t;break;}
+  }
+  assert.ok(turtle,'test really follows a moving animal beyond the spot');
+  const turtleIndex=q.life.positions.filter(p=>p.creature==='turtle').indexOf(turtle);
+  const follow=()=>{
+    const pose=q.life.positions.filter(p=>p.creature==='turtle')[turtleIndex];
+    assert.ok(Math.hypot(pose.x-spot.x,pose.z-spot.z)>8,'fixed spot cannot satisfy this hold');
+    park(d,pose);
+  };
+  const events=[];d.onChange((s,e)=>{if(e.deepLogged?.creature==='turtle')events.push(e);});
+  for(let i=0;i<150;i++) {
+    follow();d.state.speedMph=25;
+    stepDeepStory(d,DT);
+  }
+  assert.equal(events.length,0);assert.equal(loggingProgress(q.log),null);
+  for(let i=0;i<60;i++) {follow();stepDeepStory(d,DT);}
+  assert.ok(loggingProgress(q.log).fraction>=.49&&loggingProgress(q.log).fraction<.51);
+  park(d,zone.trail[0]);stepDeepStory(d,DT);
+  assert.equal(loggingProgress(q.log),null,'leaving empties ring');
+  for(let i=0;i<119;i++) {follow();stepDeepStory(d,DT);}
+  assert.equal(events.length,0,'a fresh full second is required');
+  follow();stepDeepStory(d,DT);
+  assert.equal(events.length,1);assert.equal(q.log.logged.has('turtle'),true);
+});
+
+test('every Kelp Coast creature logs at its spot and moving pose on every route; sea-life state repeats from inputs', () => {
+  for(const {seed} of ROUTE_VARIANTS) {
+    const d=race(seed), {zone,floor}=d.course.deepZone;
+    for(const id of DEEP_LOG_PAGES[0].creatures) {
+      const log=createLog(zone,{}, {enabled:true}), spot=log.spots.find(p=>p.creature===id);
+      for(let i=0;i<120;i++)stepLog(log,{...spot,speed:19/1.609344},DT);
+      assert.ok(log.logged.has(id),`${seed}: ${id} spot`);
+      const movingLog=createLog(zone,{}, {enabled:true}), a=createSeaLifeState(zone), b=createSeaLifeState(zone);
+      let car={...spot,y:floor.floorHeight(spot.x,spot.z)+1,speed:0}, seen=false;
+      for(let i=0;i<400;i++) {
+        const t=i*DT;
+        const poses=stepSeaLifeState(a,t,DT,car,floor);stepSeaLifeState(b,t,DT,car,floor);
+        assert.deepEqual(a.positions,b.positions,'same time and inputs give identical poses');
+        const animal=poses.find(p=>p.creature===id);
+        if(animal) { seen=true;car={...animal,speed:4/1.609344};stepLog(movingLog,car,DT,poses); }
+      }
+      assert.ok(seen,`${seed}: ${id} rule pose exists`);
+      assert.ok(movingLog.logged.has(id),`${seed}: ${id} moving pose`);
+    }
+    const log=createLog(zone,{}, {enabled:true}), pearl=log.pearls[0];
+    stepLog(log,{...pearl,x:pearl.x+3.1,speed:0},2);assert.equal(log.found.size,0,'pearls retain 3m');
+    stepLog(log,{...pearl,speed:16/1.609344},2);assert.equal(log.found.size,0,'pearls retain 15km/h');
+  }
+});

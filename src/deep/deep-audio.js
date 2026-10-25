@@ -201,7 +201,7 @@ export function createDeepAudio({audio}) {
     if (ev.deepLiftCancel) play('deep.lift-cancel');
     if (ev.deepRaised) play('deep.raised');
     if (ev.deepLanded) play('deep.sand-land');
-    if (ev.deepLogged) play('deep.logged');
+    if (ev.deepLogged || ev.deepObjective) play('deep.logged'); // DEEP-EXPLORER: checklist tick
     if (ev.deepPearl) play('deep.pearl');
     if (ev.deepPlace && placeSound === 'deep.whale') whale();
   }

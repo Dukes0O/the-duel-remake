@@ -1,5 +1,9 @@
 # Wasteland run log
 
+25 October, DEEP-EXPLORER round 2: merged incoming 6a35e8f6 only; moving-creature logging/ring and smooth wider chart built, lane 220 covered, build and three Deep scenarios pass, independent review clear. Frames skipped for foreign full tier. Recycled own generated output and raw captures; sheets and check receipts kept. No merge back or push.
+
+25 October, DEEP-EXPLORER janitor: recycled about 465 MB of own build, test fixtures and raw captures; kept the 225 KB chart sheet and handoff check proof. Audit found no unused new modules; runtime assets unchanged, existing uncertain candidates retained.
+
 ## Claude session, 26 September 2026 (afternoon)
 
 Kyle reviewed the overnight build and asked Claude to fix what the review found.
