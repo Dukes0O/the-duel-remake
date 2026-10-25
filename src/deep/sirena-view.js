@@ -277,7 +277,7 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
     const t = now();
     if (event.deepSonar) {
       const relative = event.deepSonar.blip?.relative;
-      sonar.hidden = false; sonarUntil = t + 2.4;
+      sonar.hidden = false; sonarUntil = t + 6;
       sonar.classList.remove('ping'); void sonar.offsetWidth; sonar.classList.add('ping');
       distance.textContent = sonarText(event);
       blip.hidden = !event.deepSonar.blip;
