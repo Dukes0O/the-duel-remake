@@ -118,6 +118,15 @@ export const CARS = {
     color:0x9c1217,accent:0xf1ede2,offRoadGrip:.6,offRoadSpeed:52,offRoadScrub:.62,mass:810,
     collision:{halfWidth:1.1,halfLength:2.45},height:1.06,kind:'prototype',
   },
+  // LAB-FAN: built on the fan bench, never bought from the garage.
+  mcmurtry_speirling: {
+    name: 'McMurtry Spéirling', homage: 'Electric fan car', gearbox: 'single', electric: true,
+    unlockRequirement: 'lab-built', factoryMaxed: true,
+    topSpeed: 190, accel: 9, grip: 1, fanGrip: 1, braking: 2.2, gears: [190],
+    color: 0x527080, accent: 0xf1f3f5, mass: 1000,
+    offRoadGrip: .6, offRoadSpeed: 52, offRoadScrub: .62,
+    collision: {halfWidth: .805, halfLength: 1.602}, height: 1.142, kind: 'prototype',
+  },
 };
 export const DEFAULT_CAR = 'falcone_f42';
 

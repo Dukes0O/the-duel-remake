@@ -12,7 +12,7 @@ const escape = value => String(value).replace(/[&<>"']/g, character =>
 // With the switch off the medal cars appear nowhere; every list is today's.
 // The Falcone Sirena (SIRENA-CAR) is on no list yet: it exists only once the Lab restores it, and its garage sheet and
 // place in the lists belong to DEEP-SIRENA-VIEW. Every list stays exactly what it was.
-export const isShownCar = (id, enabled) => Object.hasOwn(CARS, id) && id !== 'falcone_sirena' && (enabled === true || !medalRequirement(id));
+export const isShownCar = (id, enabled) => Object.hasOwn(CARS, id) && id !== 'falcone_sirena' && id !== 'mcmurtry_speirling' && (enabled === true || !medalRequirement(id));
 export const shownCarIds = enabled => Object.keys(CARS).filter(id => isShownCar(id, enabled));
 export const shownCars = enabled => Object.entries(CARS).filter(([id]) => isShownCar(id, enabled));
 

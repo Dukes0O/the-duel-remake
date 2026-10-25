@@ -126,6 +126,8 @@ export function setTune(profile, carId, setting, step, {flags} = {}) {
   const {lab, refusal} = labReady(profile, flags, {tuning: true});
   if (refusal) return refusal;
   if (!validCar(carId)) return failure(profile, 'Choose a car.');
+  if (CARS[carId].electric === true && setting === 'fuel' || CARS[carId].fanGrip && setting === 'wing')
+    return failure(profile, 'This car has no setting for that.');
   const lessonId = TUNNEL_LESSONS.find(name => TUNE_SETTING_OF[name] === setting);
   if (!lessonId) return failure(profile, 'That is not a tuning setting.');
   if (!Number.isSafeInteger(step) || Math.abs(step) > 2) return failure(profile, 'A setting has five steps, -2 to +2.');

@@ -17,8 +17,8 @@ const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve
 let loadCalls=0,importOptions=[];
 const waiting=deferred(),assets=createVehicleAssets({loadHero:()=>{loadCalls++;return waiting.promise;}});
 const licensedKinds={aurora_gt:'gt',falcone_heritage:'sport'};
-same(Object.keys(CARS).length,13,'Thirteen playable cars retain the six earlier bodies, two licensed trims, the distinct Jesko, the Enzo, the F1, the Bolide and the Sirena');
-for(const key of Object.keys(CARS).filter(key=>!Object.hasOwn(licensedKinds,key))){
+same(Object.keys(CARS).length,14,'Fourteen playable cars retain the six earlier bodies, two licensed trims, the distinct Jesko, the Enzo, the F1, the Bolide and the Sirena');
+for(const key of Object.keys(CARS).filter(key=>!Object.hasOwn(licensedKinds,key)&&key!=='mcmurtry_speirling')){
   same(assets.status(key),'ready',`${key}: original body needs no async import`);
   same(await assets.load(key),true);
   const player=assets.create(key),rival=assets.create(key,{color:0xbfcace,accent:0x142a36}),ghost=assets.create(key);
@@ -51,7 +51,7 @@ const retry=createVehicleAssets({loadHero:()=>{attempts++;if(attempts===1)throw 
 same(await retry.load('falcone_heritage'),false);
 for(const key of Object.keys(licensedKinds)){same(retry.status(key),'error');same(retry.create(key),null,`${key}: failed shared import cannot substitute another model`);same(await retry.load(key),false);}
 same(attempts,1,'render polling does not spam failed shared-source requests');
-for(const key of Object.keys(CARS).filter(key=>!Object.hasOwn(licensedKinds,key))){const model=retry.create(key);check(model.isGroup,`${key}: redesigned originals remain usable after licensed-source failure`);disposeTree(model);}
+for(const key of Object.keys(CARS).filter(key=>!Object.hasOwn(licensedKinds,key)&&key!=='mcmurtry_speirling')){const model=retry.create(key);check(model.isGroup,`${key}: redesigned originals remain usable after licensed-source failure`);disposeTree(model);}
 same(await retry.load('aurora_gt',{retry:true}),true);same(attempts,2);
 for(const key of Object.keys(licensedKinds))same(retry.status(key),'ready',`${key}: retry makes the shared source available`);
 

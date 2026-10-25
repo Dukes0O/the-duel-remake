@@ -43,6 +43,8 @@ export const tuneKey = tune => TUNE_SETTINGS.map(name => normalizeTune(tune)[nam
 // The car with the settings applied after upgrades. Stock gives back the same car object.
 export function tunedCar(car, tune) {
   const t = normalizeTune(tune);
+  if (car.electric === true) t.fuel = 0;
+  if (car.fanGrip) t.wing = 0;
   if (isStockTune(t)) return car;
   const T = LAB_TUNE, fuel = t.fuel;
   const top = (1 + T.pressure.topSpeedPerStep * t.pressure) * (1 + T.wing.topSpeedPerStep * t.wing);
@@ -62,15 +64,16 @@ export function tunedCar(car, tune) {
 
 // The grip the steering sees at this moment: the tuned car's grip with the wing's push at this speed and the
 // cornering grip given up (or kept) by the brake balance while the brake is held. An untuned car gives its own grip.
-export function tunedGrip(car, speedMph, brake = 0) {
+export function tunedGrip(car, speedMph, brake = 0, {fan = true} = {}) {
   const t = car.tune;
-  if (!t) return car.grip;
+  const grip = fan && car.fanGrip ? car.grip + car.fanGrip : car.grip;
+  if (!t) return grip;
   const T = LAB_TUNE;
   const ratio = Math.abs(speedMph) / T.wing.referenceMph;
   const wing = 1 + t.wing * T.wing.gripAtReference * ratio * ratio;
   const held = Math.max(0, Math.min(1, brake));
   const corner = 1 + (T.brakes.cornerLeftPerStep * t.brakes / T.brakes.cornerLeft) * held;
-  return car.grip * wing * corner;
+  return grip * wing * corner;
 }
 
 // The petrol tank in metres of race, or null when the settings or the race do not call for one. Only a

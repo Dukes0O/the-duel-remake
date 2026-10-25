@@ -2,6 +2,7 @@
 import {LAB_LESSONS} from './lab-lessons.js';
 import {labReady, withLab} from './lab-save.js';
 import {waxSetting} from './benches/wax.js';
+import {buildFan} from './lab-fan.js';
 
 const MAX_CREDITS = 1_000_000_000;
 // lesson: the lesson that opens it (null: the secret). needs: an upgrade that must be owned first.
@@ -27,6 +28,7 @@ export const LAB_UPGRADES = Object.freeze([
 
 // Takes the price once, after the lesson that opens the upgrade. Owned means owned: a second buy takes nothing.
 export function buyUpgrade(profile, id, {flags} = {}) {
+  if (id === 'speirling') return buildFan(profile, {flags});
   const {lab, refusal} = labReady(profile, flags);
   if (refusal) return refusal;
   const row = LAB_UPGRADES.find(item => item.id === id);

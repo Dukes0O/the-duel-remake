@@ -93,6 +93,7 @@ test('all eleven car masses and both clamps set the exact base maximum armor', a
     ferrari_enzo: 97.02470357310182,
     mclaren_f1: 88.66830868758714,
     bugatti_bolide: 100,
+    mcmurtry_speirling: 83.04547985373998,
     falcone_sirena: 80, // the Sirena (810 kg), a new car: the same mass rule, nothing else moved
   };
   assert.deepEqual(Object.keys(CARS).sort(), Object.keys(expected).sort(),

@@ -38,7 +38,7 @@ try{
   const medalProfile=normalizeProfile({...app.profile,medals:{version:1,cars:{falcone_f42:fullSheet,stuttgart_959s:fullSheet,falcone_heritage:fullSheet,aurora_gt:fullSheet}}});
   Object.assign(app.profile,{medals:medalProfile.medals,unlockedCars:medalProfile.unlockedCars,upgrades:medalProfile.upgrades});app._saveProfile();
   // The Falcone Sirena is owned only once the Lab restores it (SIRENA-CAR), so maxing the fleet never earns it.
-  const OWNABLE_CARS=Object.keys(CARS).filter(car=>car!=='falcone_sirena');
+  const OWNABLE_CARS=Object.keys(CARS).filter(car=>car!=='falcone_sirena'&&car!=='mcmurtry_speirling');
   check(!isCarUnlocked(app.profile,'falcone_sirena'),'maxing the fleet does not earn the Sirena: only the Lab restores it');
   check(OWNABLE_CARS.every(car=>isCarUnlocked(app.profile,car)),'maxing the ordinary fleet earns the completion car, and the medals the Enzo, the F1 and the Bolide, before eligibility checks');
   const bank=app.profile.credits;let airOnlyRefusals=0;

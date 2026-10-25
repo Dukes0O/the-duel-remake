@@ -53,7 +53,8 @@ export function tuneRows(profile, carId, flags) {
   const lab = labOf(profile);
   if (lab.version !== LAB_SAVE_VERSION) return [];
   const tune = normalizeTune(lab.tune?.[carId]);
-  return TUNE_ROWS.map(row => {
+  return TUNE_ROWS.filter(row => !(CARS[carId].fanGrip && row.setting === 'wing') &&
+    !(CARS[carId].electric === true && row.setting === 'fuel')).map(row => {
     const lesson = lessonOf(row.setting), open = lab.done[lesson] === true;
     const tankless = row.setting === 'fuel' && CARS[carId].electric === true;
     const note = tankless ? 'This car has no petrol tank.' : !open ? `Opens with ${lessonName(lesson)} in the Lab.` : '';
@@ -73,7 +74,8 @@ export function usableTune(profile, carId) {
   const tune = normalizeTune(saved);
   const usable = {};
   for (const name of TUNE_SETTINGS) {
-    usable[name] = lab.done[lessonOf(name)] === true && !(name === 'fuel' && CARS[carId].electric === true) ? tune[name] : 0;
+    usable[name] = lab.done[lessonOf(name)] === true && !(name === 'fuel' && CARS[carId].electric === true) &&
+      !(name === 'wing' && CARS[carId].fanGrip) ? tune[name] : 0;
   }
   return usable;
 }

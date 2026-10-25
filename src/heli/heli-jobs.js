@@ -110,11 +110,11 @@ export function bearing(from, to, options = {}) {
   return length > 0 ? {x: dx / length, z: dz / length} : null;
 }
 
-// Medal cars and the restored Falcone Sirena travel only by air: with the
+// Medal cars, the Lab-built Speirling and the restored Sirena travel only by air: with the
 // helicopter on, they race only where last set down. Medal cars start at the
 // home pad; the Sirena starts at Pacific Canyon (heli-save FIRST_PLACE).
 // Kyle, 25 October 2026: the Jesko races anywhere again, regardless of carsAt.
-export const AIR_ONLY_CARS = Object.freeze([...MEDAL_CARS, 'falcone_sirena']);
+export const AIR_ONLY_CARS = Object.freeze([...MEDAL_CARS, 'falcone_sirena', 'mcmurtry_speirling']);
 
 export function isAirOnlyCar(carId) {
   return AIR_ONLY_CARS.includes(carId);

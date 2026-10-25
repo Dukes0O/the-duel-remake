@@ -7,6 +7,7 @@ import {Course} from '../src/course.js';
 import {strip} from '../src/world.js';
 import {loadHeroVehicle} from '../src/hero-vehicle.js';
 import {createVehicleAssets} from '../src/vehicle-assets.js';
+import {loadSpeirlingVehicle} from '../src/speirling-vehicle.js';
 import {placeGroundedVehicle as place,vehicleGroundSlope as groundSlope,vehicleGroundPoint,prepareVehicleGrounding} from '../src/vehicle-grounding.js';
 
 // Preserve every original mesh, physical factor and transform. Only texture
@@ -22,7 +23,10 @@ const sourceBounds=new THREE.Box3().setFromObject(parsed.scene),sourceScale=4.8/
 parsed.scene.traverse(mesh=>{if(mesh.isMesh){const bounds=new THREE.Box3().setFromObject(mesh);sourceLowest.push({name:mesh.name,material:mesh.material.name,normalizedBottomM:+((bounds.min.y-sourceBounds.min.y)*sourceScale).toFixed(5)});}});
 sourceLowest.sort((a,b)=>a.normalizedBottomM-b.normalizedBottomM);
 let hero;try{GLTFLoader.prototype.loadAsync=async()=>parsed;hero=await loadHeroVehicle();}finally{GLTFLoader.prototype.loadAsync=oldLoad;}
-const assets=createVehicleAssets({loadHero:()=>hero});await Promise.all(Object.keys(CARS).map(key=>assets.load(key)));
+const fanBytes = await readFile(new URL('../public/assets/models/unlocks/mcmurtry_speirling.glb', import.meta.url));
+const fanAsset = await new GLTFLoader().parseAsync(fanBytes.buffer.slice(fanBytes.byteOffset, fanBytes.byteOffset + fanBytes.byteLength), '');
+const fanFactory = await loadSpeirlingVehicle({loadAsset: async () => fanAsset});
+const assets=createVehicleAssets({loadHero:()=>hero, loadSpeirling:()=>fanFactory});await Promise.all(Object.keys(CARS).map(key=>assets.load(key)));
 const point=new THREE.Vector3(),center=new THREE.Vector3(),plane=new THREE.Plane(),normal=new THREE.Vector3(),inverse=new THREE.Matrix4(),ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);
 export const models=Object.keys(CARS).map(key=>{
   const vehicle=assets.create(key);

@@ -21,7 +21,7 @@ const def = {id: 'test-engine-curve', name: 'Test only', kind: 'circuit', closed
   script: [['straight', 6000], ['turn', 'L', 90, 100], ['straight', 500], ['turn', 'L', 90, 100],
     ['straight', 6000], ['turn', 'L', 90, 100], ['straight', 500], ['turn', 'L', 90, 100]]};
 const flags = on => createFeatureFlags({storage: null, overrides: on === null ? {} : {'engine-curve': on}});
-const IDS = Object.keys(CARS);
+const IDS = Object.keys(CARS).filter(id => CARS[id].electric !== true); // Electric single-gear cars have no piston engine or shift trade.
 const topOf = id => CARS[id].topSpeed * (CARS[id].factoryMaxed ? 1.105 : 1);
 
 // A full-throttle run on a flat straight, in one gear box: the seconds to reach each speed in `marks`.
