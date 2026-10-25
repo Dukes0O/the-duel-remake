@@ -161,7 +161,7 @@ import {screenMarkup, createMenuScreen} from './src/screen-menu.js';
 import {createGarageScreen} from './src/screen-garage.js';
 import {AIR_ONLY_CARS, JOB_CARS} from './src/heli/heli-jobs.js';
 const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'medal_test_a', 'medal_test_b', 'medal_test_c'];
-const today = Object.keys(CARS).filter(id => !medalCars.includes(id));
+const today = Object.keys(CARS).filter(id => !medalCars.includes(id) && id !== 'falcone_sirena'); // the Sirena is on no list until DEEP-SIRENA-VIEW
 // Lists: off is today's, on adds the medal cars.
 assert.deepEqual(shownCarIds(false), today);
 assert.deepEqual(shownCarIds(true), [...today, ...medalCars]);
@@ -172,7 +172,7 @@ assert.ok(markup(true).includes('<option value="medal_test_a">'));
 assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the earnable count is today\\'s while off');
 assert.ok(markup(true).includes(' 13 EARNABLE CARS'));
 // Air only, never a customer's car.
-assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars]);
+assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars, 'falcone_sirena']);
 assert.ok(medalCars.every(id => !JOB_CARS.includes(id)));
 // The garage, with the real renderer.
 const flags = {};
