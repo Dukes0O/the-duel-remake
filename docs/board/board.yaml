@@ -27,7 +27,8 @@ tasks:
     owner: "claude-cloud"
     lane: "SIM"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: claude-cloud-2026-10-24
     needs: [FIX-LAUNCH]
     locks: []
     details: "docs/board/cards/DEMO-DRIVER-UNSTUCK.md"
