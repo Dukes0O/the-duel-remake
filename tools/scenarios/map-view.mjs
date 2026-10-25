@@ -39,16 +39,18 @@ async function advanceUntil(context, condition, seconds, label) {
   if (!done) throw Error(`Timed out: ${label}`);
 }
 
-// Fly toward the landing zone by hand (yaw to face it, nose down, hold about 120 m up) until within `metres` of it.
+// Fly toward the landing zone by hand (yaw to face it, nose down, hold 90 to 130 m above the ground under the helicopter) until within `metres` of it.
 async function approachZone(context, metres, label) {
   await advanceUntil(context, `(() => {
     const v = app.heliView(), h = v.heli, dx = v.zone.x - h.x, dz = v.zone.z - h.z;
     if (Math.hypot(dx, dz) < ${metres}) { app.keys = {}; return true; }
     let error = Math.atan2(dx, dz) - h.heading; error = Math.atan2(Math.sin(error), Math.cos(error));
-    const up = h.y - v.zone.y;
+    const up = h.y - h.groundY;
     app.keys = {...(error > .12 ? {KeyD: true} : error < -.12 ? {KeyA: true} : {ArrowUp: Math.abs(error) < .5}),
-      ...(up < 110 ? {KeyW: true} : up > 135 ? {KeyS: true} : {})};
+      ...(up < 90 ? {KeyW: true} : up > 130 ? {KeyS: true} : {})};
     return false; })()`, 400, label);
+  const crashed = await context.evaluate(`window.__qaApp.heliLog.some(event => event.type === 'crashed') || window.__qaApp.heliView().phase !== 'flying'`);
+  if (crashed) throw Error(`The scripted approach crashed ${label}`);
 }
 
 async function cruiseTo(context, place, label) {
