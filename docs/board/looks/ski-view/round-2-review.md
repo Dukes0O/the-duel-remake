@@ -47,3 +47,5 @@ pad's ski box; 8 the pickup pad, with the result card over the helicopter
 panel.
 
 No frame timing yet (rule 9).
+
+Claude: pass at round 2; pickup placement moved to SKI-FINISH.
