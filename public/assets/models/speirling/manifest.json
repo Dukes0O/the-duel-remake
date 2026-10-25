@@ -1,0 +1,19 @@
+{
+  "formatVersion": 1,
+  "source": "tools/art/speirling-blueprint.mjs",
+  "coordinates": "metres; the sheet faces +Z with its top-centre edge at the origin, so a viewer pins it to a wall at that point",
+  "models": [
+    {
+      "id": "project-fan",
+      "path": "assets/models/speirling/project-fan.glb",
+      "bytes": 360952,
+      "sha256": "58d6971b0cf54b0babe0ca2e283c61842c0a1124654153252a95fb5a52aed125",
+      "triangles": 11978,
+      "dimensionsMetres": [
+        1.2,
+        0.85,
+        0.036
+      ]
+    }
+  ]
+}

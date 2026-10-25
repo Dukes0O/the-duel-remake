@@ -33,6 +33,7 @@ SINGLE_VIEWS = {
     'left': ((-1.0, 0.0, 0.25), 1.0),
     'inlet': ((-0.8, 0.5, 0.3), 1.0),
     'top': ((0.05, 0.3, 1.0), 0.95),
+    'wall': ((0.0, 0.0, 1.0), 0.75),
 }
 
 parser = argparse.ArgumentParser()
