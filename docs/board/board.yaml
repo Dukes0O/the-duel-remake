@@ -6,8 +6,9 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "S"
-    status: "ready"
-    needs: [LAB-RESTORE-2]
+    status: "building"
+    claimed_by: codex-cli-2026-10-25
+    needs: []
     locks: [save-shape]
     flag: "the-deep"
     details: "docs/board/cards/DEEP-ACHIEVEMENTS.md"
