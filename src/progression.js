@@ -1,4 +1,4 @@
-import {normalizeAchievements, recordRaceAchievements} from './deep/achievements.js';
+import {normalizeAchievements, recordRaceAchievements} from './achievements.js';
 import {normalizeIntel,recordIntelFinish} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, cupBonus} from './grand-prix-cups.js';
 import {normalizeDrivingLessons} from './lessons/drive-lesson-save.js';

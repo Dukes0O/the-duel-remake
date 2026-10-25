@@ -1,4 +1,4 @@
-import {getPaintState} from '../paint-presets.js';
+import {getPaintState} from './paint-presets.js';
 
 const SIRENA = 'falcone_sirena';
 const resultIds = ['wreck-racer', 'coast-cup-as-found', 'coast-cup-restored'];

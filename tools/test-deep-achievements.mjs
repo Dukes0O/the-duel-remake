@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createProfile, normalizeProfile, settleRace} from '../src/progression.js';
 import {COURSE} from '../src/config.js';
-import {achievementShelf, normalizeAchievements} from '../src/deep/achievements.js';
+import {achievementShelf, normalizeAchievements} from '../src/achievements.js';
 import {achievementsPanel} from '../src/screen-trophies.js';
 import {readFileSync, readdirSync} from 'node:fs';
 import {App} from '../src/app.js';
@@ -105,6 +105,7 @@ test('App records the race-start finish through the no-pay GP path and reloads i
       [car]: {owned: ['factory', 'sea-wreck', 'restored-1966'], selected: 'restored-1966'}}};
     app._saveProfile();
     const state = app.duel.state;
+    state.qualifying = {phase: 'complete'};
     state.results = {completed: true, won: true, position: 1, fieldSize: 8, timeSec: 190, laps: state.lapsTotal};
     app._settleResult(state.results, state);
     assert.deepEqual(app.profile.achievements.map(r => r.id), ['wreck-racer', 'coast-cup-as-found']);

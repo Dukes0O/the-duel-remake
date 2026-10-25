@@ -1,4 +1,4 @@
-import {achievementShelf} from './deep/achievements.js';
+import {achievementShelf} from './achievements.js';
 import {CUPS, normalizeCups, cupStandings, cupAvailability, cupBonus} from './grand-prix-cups.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const difficulty=cpu=>({easy:'Easy',medium:'Medium',hard:'Hard'}[cpu]||'');

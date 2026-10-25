@@ -1081,7 +1081,7 @@ export class App {
       result.yetiEnabled===true && result.yetiSeen===true && state.yeti?.seen===true &&
       (this.duel.course?.def.id==='summit-run'||isSummitAttack(this.duel.course?.def)) && this._switches().enabled('yeti') && this._switches().enabled('summit-run');
     const gpWithoutPay=state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving');
-    const achievementFinish=state===this.duel.state&&result===state.results&&!state.qualifying&&
+    const achievementFinish=state===this.duel.state&&result===state.results&&state.qualifying?.phase!=='driving'&&
       state.car==='falcone_sirena'&&this._switches().enabled('the-deep')&&this._switches().enabled('lab');
     if(gpWithoutPay&&!yetiFinish&&!achievementFinish){
       if(isYetiGrandPrixInput(this.profile.activeRace)&&state===this.duel.state&&(result===state.results||result.abandoned===true)&&
