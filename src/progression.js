@@ -1,3 +1,4 @@
+import {normalizeAchievements, recordRaceAchievements} from './deep/achievements.js';
 import {normalizeIntel,recordIntelFinish} from './intel-levels.js';
 import {CUPS, normalizeCups, cupStandings, cupBonus} from './grand-prix-cups.js';
 import {normalizeDrivingLessons} from './lessons/drive-lesson-save.js';
@@ -169,6 +170,7 @@ export function normalizeProfile(value) {
   // Medal sheets are optional: normalized only when saved, never added to an older save.
   if (Object.hasOwn(value, 'medals')) profile.medals = normalizeMedals(value.medals);
   profile = grantCompletionCars(profile);
+  if (Object.hasOwn(value, 'achievements')) profile.achievements = normalizeAchievements(value.achievements);
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
   if (Object.hasOwn(value, 'heli')) profile.heli = normalizeHeli(value.heli);
   if (Object.hasOwn(value, 'drivingLessons')) profile.drivingLessons = normalizeDrivingLessons(value.drivingLessons);
@@ -588,7 +590,15 @@ export function settleRace(profile, result = {}) {
       result.abandoned !== true && (!isValidFinish(result) || !validGrandPrixPosition(result)))){
     if(valid&&isYetiGrandPrixInput(profile.activeRace)&&profile.activeRace.key===key&&COURSE[result.stageIndex]?.id==='summit-run')
       profile={...profile,activeRace:null};
-    return {profile, reward: 0, awarded: false, personalBest: false, breakdown: {},...yetiAward};
+    const achievements = recordRaceAchievements(profile, result, {
+      valid: valid && !COURSE[result.stageIndex].practice && result.practice !== true &&
+        result.qualifying !== true && result.abandoned !== true && isValidFinish(result) &&
+        validGrandPrixPosition(result) && !profile.settledResults.includes(key) &&
+        !profile.wasteland?.settledResults?.includes(key),
+      eventId: valid ? stageEventId(result.stageIndex) : null, at: Date.now()
+    });
+    return {profile: achievements, reward: 0, awarded: false, personalBest: false, breakdown: {},
+      ...yetiAward, ...(achievements !== profile ? {achievementsAwarded: true} : {})};
   }
   if (!valid || COURSE[result.stageIndex]?.practice ||
     profile.settledResults.includes(key) ||
@@ -630,7 +640,10 @@ export function settleRace(profile, result = {}) {
           reward: 0, charge: 0, policeFineCharge: 0, breakdown, milestones: [], at: Date.now()
         }].slice(-60)
       };
-    return {profile: updated, reward: 0, charge: 0, policeFineCharge: 0, ...yetiAward,
+    const achievements = recordRaceAchievements(updated, result, {
+      valid: finished, eventId: stageEventId(result.stageIndex), at: updated.history.at(-1).at
+    });
+    return {profile: achievements, reward: 0, charge: 0, policeFineCharge: 0, ...yetiAward,
       awarded: true, personalBest, personalBestStatus, previousBest: previous ?? null,
       best: finished ? updated.personalBests[comparison] ?? null : null,
       breakdown, winStreak: updated.winStreak, milestones: []};
@@ -857,7 +870,10 @@ export function settleRace(profile, result = {}) {
   const coastCup = settleCoastCup(updated, {enabled: result.deepEnabled === true,
     valid: recordEligible && result.qualifying !== true && result.practice !== true,
     eventId: stageEventId(result.stageIndex), car: result.car, mode: result.mode});
-  updated = coastCup.profile;
+  updated = recordRaceAchievements(coastCup.profile, result, {
+    valid: recordEligible && result.qualifying !== true && result.practice !== true,
+    eventId: stageEventId(result.stageIndex), at: updated.history.at(-1).at
+  });
   const owned = updated.unlockedCars;
   if (medalWin && medalWin.profile !== profile)
     updated = grantCompletionCars({ ...updated, medals: medalWin.profile.medals });

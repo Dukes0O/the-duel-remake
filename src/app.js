@@ -1081,7 +1081,9 @@ export class App {
       result.yetiEnabled===true && result.yetiSeen===true && state.yeti?.seen===true &&
       (this.duel.course?.def.id==='summit-run'||isSummitAttack(this.duel.course?.def)) && this._switches().enabled('yeti') && this._switches().enabled('summit-run');
     const gpWithoutPay=state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving');
-    if(gpWithoutPay&&!yetiFinish){
+    const achievementFinish=state===this.duel.state&&result===state.results&&!state.qualifying&&
+      state.car==='falcone_sirena'&&this._switches().enabled('the-deep')&&this._switches().enabled('lab');
+    if(gpWithoutPay&&!yetiFinish&&!achievementFinish){
       if(isYetiGrandPrixInput(this.profile.activeRace)&&state===this.duel.state&&(result===state.results||result.abandoned===true)&&
         this._runPlayerId===this.player.id&&state.playerId===this._runPlayerId){
         this._refreshPlayer();const pending=this.profile.activeRace;
@@ -1103,6 +1105,8 @@ export class App {
       combatRewardsEnabled:state.mode==='wasteland'&&wastelandRulesActive(state),
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
       deepEnabled:this._switches().enabled('the-deep')===true,
+      labEnabled:this._switches().enabled('lab')===true,
+      raceFinish:this._racePaintCar===state.car?this._racePaint?.id:null,
       earnedCarsEnabled:this._switches().enabled('earned-cars')===true,
       ...(state.tyreSlipRules===true&&state.difficulty==='pro'&&COURSE[state.stageIndex]?.kind==='drift'?{tyreSlipRules:true}:{}),
       ...(state.engineCurve===true?{engineCurve:true}:{}),
@@ -1116,6 +1120,7 @@ export class App {
     if(yetiFinish)Object.assign(payload,{ownerPlayerId:this._runPlayerId,playerId:state.playerId,
       yetiEnabled:true,yetiSeen:true});
     const awarded=settleRace(this.profile,payload);
+    if(awarded.achievementsAwarded&&!awarded.awarded){this.profile=awarded.profile;this._saveProfile();}
     if(awarded.yetiAwarded){
       if(!awarded.awarded){this.profile=awarded.profile;this._saveProfile();}
       result.yetiSightings=awarded.yetiSightings;
