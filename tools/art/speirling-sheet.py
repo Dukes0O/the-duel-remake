@@ -6,7 +6,6 @@ Usage:
 The render folder holds what the round's commands wrote (all under .evidence/):
   car/<view>.png        tools/blender/car-review.py on the Spéirling (four views)
   car2/<view>.png       tools/blender/lab-review.py on the same GLB (top, left)
-  blueprint/wall.png    tools/blender/lab-review.py on project-fan.glb
 Resizes only; no picture is edited. Stays at or under the byte limit (default
 500,000) by lowering JPEG quality.
 """
@@ -16,10 +15,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 TILE = (480, 300)
 TILES = [
-    ('car/front-three-quarter.png', 'Spirling: front three-quarter'), ('car/side.png', 'Side'),
-    ('car/rear-three-quarter.png', 'Rear three-quarter: the twin fans'), ('car/front-close.png', 'Front close-up'),
-    ('car2/top.png', 'From above'), ('car2/left.png', 'From the other side'),
-    ('blueprint/wall.png', 'Project Fan, the pinned blueprint'), ('blueprint/side.png', 'Blueprint, from the side (the curl)'),
+    ('car/front-three-quarter.png', 'Speirling: front three-quarter'), ('car/side.png', 'Side'),
+    ('car/rear-three-quarter.png', 'Rear three-quarter: the two round exits'), ('car2/top.png', 'From above'),
+    ('car2/left.png', 'From the other side'), ('car/front-close.png', 'Nose and canopy close-up'),
 ]
 
 

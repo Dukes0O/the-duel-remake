@@ -3,56 +3,65 @@ import { originalVehicleParts } from './unlock-vehicles.js';
 import { prepareVehicleDamage } from './vehicles.js';
 
 // The McMurtry Spéirling (LAB-FAN-ART, docs/LAB.md section 6): original editable
-// geometry built from what is publicly visible of the real car. No imported
-// model, texture, badge or maker graphic is embedded (the maker's name lives in
-// the config, as for the other real cars). Metres; +Z forward. A tiny single-seat
-// electric fan car, about 3.2 m long and very wide for it: a short body with a
-// raised nose and a small front wing, a closed glass canopy over one central
-// seat with a roll hoop behind it, a skirt all round the floor edge that seals
-// the low pressure under the car, and two big round fan housings at the rear
-// that suck the air out from under the floor. Slick tyres on open wheels.
+// geometry built from what is publicly known of the real car. No imported model,
+// texture, badge or maker graphic is embedded (the maker's name lives in the
+// config, as for the other real cars). Metres; +Z forward. A tiny closed
+// single-seat coupe: a smooth teardrop in side view with a low short nose and a
+// small splitter, a dark tinted canopy blended into the body like a fighter jet's
+// (the roof peaks over the driver's head), and a cut-off vertical tail whose face
+// holds two round fan exits side by side. The fans themselves are hidden inside.
+// A black skirt runs all round the floor, almost touching the ground, which is
+// what lets the fans pull the car down. Black wheels on slick tyres, their top
+// halves covered by pods on the body, no exposed suspension. Matte charcoal with a
+// thin green line along the side.
 export const SPEIRLING_VEHICLE_DIMENSIONS = Object.freeze({
-  mcmurtry_speirling: Object.freeze({ width: 2.08, length: 3.34, height: 1.05, wheelRadius: .33 }),
+  mcmurtry_speirling: Object.freeze({ width: 1.48, length: 3.36, height: 1.21, wheelRadius: .33 }),
 });
-const { materials, batch, sculpt, cockpit, wheels, fitSurfacePatch } = originalVehicleParts;
-const AXLES = Object.freeze([1.08, -1.10]);
-const FAN_X = .46, FAN_Y = .66, FAN_Z = -1.30;                  // the two fan housings' axes
+const { materials, batch, body, cockpit, wheels, fitSurfacePatch } = originalVehicleParts;
+const AXLES = Object.freeze([1.02, -1.04]);
+const TRACK = .54, WHEEL_WIDTH = .27;
+const EXIT_X = .245, EXIT_Y = .38, TAIL_Z = -1.60;               // the two round fan exits on the tail's face
 
-export function createSpeirlingVehicle({ key = 'mcmurtry_speirling', color = 0xe6e4dc, accent = 0xe2631c } = {}) {
+// Stations: [z, half width, floor, shoulder, crown, crown half width]. A teardrop:
+// the roof peaks over the driver's head at z = .1 and sweeps down to the tail.
+export const SPEIRLING_SECTIONS = [
+  [-1.60, .50, .17, .56, .70, .36], [-1.40, .53, .15, .58, .78, .38],
+  [-.95, .52, .13, .56, .94, .40], [-.40, .54, .12, .54, 1.10, .38],
+  [.10, .53, .12, .52, 1.19, .34], [.55, .52, .12, .50, 1.04, .32],
+  [1.00, .48, .12, .46, .78, .32], [1.40, .44, .13, .40, .56, .30],
+  [1.62, .30, .15, .34, .46, .22],
+];
+
+export function createSpeirlingVehicle({ key = 'mcmurtry_speirling', color = 0x3d4144, accent = 0x35c46a } = {}) {
   if (!Object.hasOwn(SPEIRLING_VEHICLE_DIMENSIONS, key)) return null;
   const vehicle = new THREE.Group(); vehicle.name = key;
   const m = materials(color, accent), data = vehicle.userData, b = batch(vehicle);
-  m.paint.name = 'Speirling pearl body'; m.paint.roughness = .32; m.paint.metalness = .18; m.paint.clearcoat = .7;
-  m.accent.name = 'Speirling orange trim'; m.glass.color.setHex(0x1a2226); m.glass.opacity = .55;
-  m.carbon.name = 'Bare carbon'; m.carbon.color.setHex(0x14171a); m.carbon.roughness = .4; m.carbon.metalness = .28;
-  m.skirt = new THREE.MeshStandardMaterial({ name: 'Rubber skirt', color: 0x0e1011, roughness: .95 });
+  // Matte charcoal, a thin green accent, black wheels, a nearly opaque dark canopy.
+  m.paint.name = 'Speirling charcoal body'; m.paint.roughness = .74; m.paint.metalness = .08; m.paint.clearcoat = 0;
+  m.accent.name = 'Speirling green line'; m.accent.roughness = .5; m.accent.clearcoat = 0;
+  m.glass.color.setHex(0x0b1115); m.glass.opacity = .86; m.glass.roughness = .08; m.glass.side = THREE.FrontSide;
+  m.carbon.name = 'Bare carbon'; m.carbon.color.setHex(0x121417); m.carbon.roughness = .5; m.carbon.metalness = .22;
+  m.alloy.color.setHex(0x1c1e20); m.alloy.metalness = .5; m.alloy.roughness = .5;
+  m.darkAlloy.color.setHex(0x111214);
+  m.skirt = new THREE.MeshStandardMaterial({ name: 'Rubber skirt', color: 0x0a0b0c, roughness: .96 });
+  m.grime = m.skirt;                                                    // road grime shares the skirt's rubber (one draw less)
   Object.assign(data, {
     paint: m.paint, originalColor: m.paint.color.clone(), wheels: [], wheelPivots: [],
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...SPEIRLING_VEHICLE_DIMENSIONS[key] },
     ultimateKey: key, fans: [],
-    designFeatures: Object.freeze(['closed-canopy', 'roll-hoop', 'twin-rear-fans', 'floor-skirt', 'raised-nose', 'front-wing', 'slick-tyres']),
-    damageSpace: { scale: [.90, .60, 1.0], offset: [0, 0, 0], frontGlassZ: .72, rearGlassZ: -.50 },
+    designFeatures: Object.freeze(['teardrop-coupe', 'jet-canopy', 'twin-round-fan-exits', 'floor-skirt', 'wheel-pods', 'low-nose', 'cut-off-tail']),
+    damageSpace: { scale: [.9, .80, 1.0], offset: [0, 0, 0], frontGlassZ: .50, rearGlassZ: -.18 },
   });
 
-  // Stations: [z, half width, floor, shoulder, crown, crown half width]. Short
-  // and wide: the nose lifts clear of the splitter, the cockpit sits low between
-  // the wheels, and the deck swells over the fans at the back.
-  sculpt(b, m.paint, [
-    [-1.52, .70, .22, .56, .62, .46], [-1.34, .84, .20, .66, .72, .56],
-    [-.95, .94, .17, .66, .70, .52], [-.40, .93, .15, .56, .58, .44],
-    [.20, .91, .15, .52, .52, .40], [.70, .92, .15, .54, .54, .40],
-    [1.08, .93, .16, .62, .60, .44], [1.34, .84, .19, .64, .64, .42],
-    [1.52, .66, .23, .56, .62, .32], [1.66, .44, .28, .46, .56, .20],
-  ], AXLES, .33, .33, { width: .46, y: .44, back: -.60, front: .98 });
-  b.box(m.carbon, [1.30, .05, 2.5], [0, .13, -.02], [0, 0, 0], .012);          // the flat floor between the skirts
-  canopy(b, m);
+  teardrop(b, m);
   skirt(b, m);
-  rearFans(vehicle, b, m);
+  tail(vehicle, b, m);
+  for (const z of AXLES) for (const side of [-1, 1]) pod(b, m, side * TRACK, z);
   frontEnd(b, m);
 
-  // The driver sits low and central under the canopy.
-  cockpit(vehicle, b, m, [0, -.10, .08], .74, false);
-  wheels(vehicle, m, { radius: .33, width: .34, track: .87, axles: AXLES, spokes: 10, roadSmooth: true });
+  // The driver sits low and central under the canopy, barely visible through the tint.
+  cockpit(vehicle, b, m, [0, .02, .10], .76, false);
+  wheels(vehicle, m, { radius: .33, width: WHEEL_WIDTH, track: TRACK, axles: AXLES, spokes: 8, roadSmooth: true, broadSpokes: true });
   b.finish(data);
   fittedDetails(vehicle, m);
   prepareVehicleDamage(vehicle);
@@ -60,116 +69,101 @@ export function createSpeirlingVehicle({ key = 'mcmurtry_speirling', color = 0xe
   return vehicle;
 }
 
-// The canopy: a closed glass bubble over the seat, a painted roof strip, slim sills.
-// [z, half width, base, top].
-const canopySections = [
-  [-.62, .26, .58, .76], [-.34, .40, .55, .93], [.06, .46, .53, 1.00],
-  [.44, .44, .53, .95], [.74, .36, .53, .80], [.96, .24, .55, .64],
-];
-function canopyPoint(z, angle, lift = 0) {
-  const last = canopySections.length - 1;
-  let i = canopySections.findIndex(p => p[0] >= z); if (i <= 0) i = 1; if (z >= canopySections[last][0]) i = last;
-  const a = canopySections[i - 1], c = canopySections[i], t = THREE.MathUtils.clamp((z - a[0]) / (c[0] - a[0]), 0, 1);
-  const smooth = t * t * (3 - 2 * t), width = THREE.MathUtils.lerp(a[1], c[1], smooth), base = THREE.MathUtils.lerp(a[2], c[2], t), top = THREE.MathUtils.lerp(a[3], c[3], smooth);
-  return [Math.cos(angle) * (width + lift), base + Math.sin(angle) * (top - base + lift), z];
-}
-function canopySheet(b, material, start, end, minAngle, maxAngle, lift = 0) {
-  const positions = [], indices = [], rows = 28, columns = 22;
-  for (let i = 0; i <= rows; i++) for (let j = 0; j <= columns; j++)
-    positions.push(...canopyPoint(THREE.MathUtils.lerp(start, end, i / rows), THREE.MathUtils.lerp(minAngle, maxAngle, j / columns), lift));
-  for (let i = 0; i < rows; i++) for (let j = 0; j < columns; j++) { const a = i * (columns + 1) + j, c = a + columns + 1; indices.push(a, c + 1, c, a, a + 1, c + 1); }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.setIndex(indices); g.computeVertexNormals(); b.add(g, material); g.dispose();
-}
-function canopy(b, m) {
-  canopySheet(b, m.glass, -.62, .96, 0, Math.PI);
-  canopySheet(b, m.paint, -.52, .02, Math.PI * .30, Math.PI * .70, .008);           // the roof strip
-  for (const angle of [0, Math.PI]) {
-    const sill = []; for (let i = 0; i <= 22; i++) sill.push(canopyPoint(-.62 + 1.58 * i / 22, angle, .012));
-    b.tube(m.carbon, sill, .018, 22);
+// The shell, with a conservative opening under the canopy (every triangle whose
+// three corners lie inside it is dropped), and the canopy itself: dark glass fitted
+// over the same surface, clipped to a jet-fighter outline, so glass and body are
+// one smooth shape and the driver shows only faintly through the tint.
+const opening = (y, z) => z > -.40 && z < .92 && y > .76 + .55 * Math.pow((z - .25) / .75, 2);
+const CANOPY_TOP = [[0, .98], [.15, .88], [.26, .62], [.31, .2], [.29, -.15], [.2, -.36], [0, -.43], [-.2, -.36], [-.29, -.15], [-.31, .2], [-.26, .62], [-.15, .88]];
+const CANOPY_SIDE = [[.74, .78], [.72, .3], [.72, -.1], [.78, -.32], [.98, -.4], [1.1, -.3], [1.17, -.1], [1.15, .3], [1.0, .62], [.86, .84]];
+function teardrop(b, m) {
+  const shell = body(SPEIRLING_SECTIONS, AXLES, .12, .12), p = shell.attributes.position, index = shell.index, kept = [];
+  for (let i = 0; i < index.count; i += 3) {
+    const ids = [index.getX(i), index.getX(i + 1), index.getX(i + 2)];
+    if (ids.every(k => opening(p.getY(k), p.getZ(k)))) continue;
+    kept.push(...ids);
   }
-  for (const z of [-.52, .80]) {                                                 // the frame hoops
-    const hoop = []; for (let i = 0; i <= 20; i++) hoop.push(canopyPoint(z, Math.PI * i / 20, .01));
-    b.tube(m.carbon, hoop, .009, 20);
-  }
-  // The roll hoop: two tubes up from the deck behind the driver, meeting over the seat's back.
-  for (const side of [-1, 1]) b.tube(m.carbon, [[side * .30, .60, -.64], [side * .27, .86, -.70], [side * .12, 1.00, -.78], [0, 1.03, -.82]], .016, 12);
-  b.box(m.accent, [.10, .03, .30], [0, 1.02, -.88], [-.08, 0, 0], .01);               // the airbox behind the hoop
+  const paint = new THREE.BufferGeometry(); paint.setAttribute('position', p.clone()); paint.setIndex(kept); paint.computeVertexNormals();
+  b.add(paint, m.paint); paint.dispose();
+  const surface = [{ geometry: shell }];
+  fitSurfacePatch(surface, b, m.glass, CANOPY_TOP, 'top', 1, .0, .006);
+  for (const side of [-1, 1]) fitSurfacePatch(surface, b, m.glass, CANOPY_SIDE, 'side', side, .0, .006);
+  b.box(m.carbon, [.74, .04, 1.4], [0, .14, .2], [0, 0, 0], 0);       // a dark liner so the tub reads as a cockpit
+  shell.dispose();
 }
 
-// The skirt: a flexible rubber curtain round the whole floor edge, a little proud
-// of the sills, with a fringe of tabs, and the straight ends across nose and tail.
+// A flexible black skirt all round the floor edge, almost touching the road.
 function skirt(b, m) {
   for (const side of [-1, 1]) {
-    b.box(m.skirt, [.035, .085, 2.82], [side * .955, .105, -.02], [0, 0, 0], 0);
-    b.box(m.carbon, [.06, .035, 2.7], [side * .93, .16, -.02], [0, 0, 0], 0);
+    b.box(m.skirt, [.03, .095, 3.0], [side * .60, .08, -.02], [0, 0, 0], 0);
+    b.box(m.carbon, [.05, .03, 2.9], [side * .575, .135, -.02], [0, 0, 0], 0);
   }
-  b.box(m.skirt, [1.82, .08, .035], [0, .105, 1.42], [0, 0, 0], 0);
-  b.box(m.skirt, [1.58, .08, .035], [0, .10, -1.50], [0, 0, 0], 0);
+  b.box(m.skirt, [1.2, .095, .03], [0, .08, 1.50], [0, 0, 0], 0);
+  b.box(m.skirt, [1.2, .095, .03], [0, .08, -1.50], [0, 0, 0], 0);
 }
 
-// Two big round fan housings at the rear: a tapered shroud, a round outlet ring, and
-// the fan itself (a hub with ten blades) in its own group so a viewer can spin it.
-function rearFans(vehicle, b, m) {
+// The tail: a vertical face under a small rear lip with two round fan exits side by
+// side (0.4 m each), dark with fine grilles; the fans sit inside, behind them. A
+// brake light bar across the face and a plate low down. The fans are nodes of their
+// own so a viewer can spin them; each exit also gets a nitro plume.
+function tail(vehicle, b, m) {
+  b.box(m.paint, [1.0, .03, .09], [0, .715, TAIL_Z - .03], [0, 0, 0], 0);                // the rear lip
+  b.box(m.carbon, [.92, .012, .04], [0, .70, TAIL_Z - .065], [-.15, 0, 0], 0);
   for (const side of [-1, 1]) {
-    const x = side * FAN_X;
-    const shroud = new THREE.CylinderGeometry(.31, .35, .58, 28, 1, true).rotateX(Math.PI / 2);
-    b.add(shroud, m.paint, [x, FAN_Y, FAN_Z - .02]); shroud.dispose();
-    const inner = new THREE.CylinderGeometry(.285, .325, .56, 28, 1, true).rotateX(Math.PI / 2).scale(-1, 1, 1);
-    b.add(inner, m.carbon, [x, FAN_Y, FAN_Z - .02]); inner.dispose();
-    const lip = new THREE.TorusGeometry(.31, .026, 8, 32);
-    b.add(lip, m.accent, [x, FAN_Y, -1.585]); lip.dispose();                                  // the orange outlet ring
-    const intake = new THREE.TorusGeometry(.35, .024, 8, 32);
-    b.add(intake, m.carbon, [x, FAN_Y, -1.02]); intake.dispose();
-    for (let i = 0; i < 8; i++) {                                                                // the guard grille behind the blades
-      const a = i * Math.PI / 4; b.box(m.carbon, [.010, .60, .010], [x, FAN_Y, -1.575], [0, 0, a], 0);
-    }
-    // The fan: ten blades and a hub, a group of its own at the housing's axis.
-    const fan = new THREE.Group(); fan.name = `Fan ${side > 0 ? 'left' : 'right'}`; fan.position.set(x, FAN_Y, FAN_Z);
+    const x = side * EXIT_X;
+    const ring = new THREE.TorusGeometry(.205, .016, 8, 32); b.add(ring, m.carbon, [x, EXIT_Y, TAIL_Z - .003]); ring.dispose();
+    const dark = new THREE.CircleGeometry(.20, 32); b.add(dark, m.darkAlloy, [x, EXIT_Y, TAIL_Z - .004], [0, Math.PI, 0]); dark.dispose();
+    for (const r of [.07, .13, .19]) { const g = new THREE.TorusGeometry(r, .0035, 4, 28); b.add(g, m.carbon, [x, EXIT_Y, TAIL_Z - .012]); g.dispose(); }
+    for (let i = 0; i < 8; i++) b.box(m.carbon, [.006, .38, .008], [x, EXIT_Y, TAIL_Z - .012], [0, 0, i * Math.PI / 8], 0);
+    // The fan, inside the body behind its exit: ten blades and a hub (a node of its own).
+    const fan = new THREE.Group(); fan.name = `Fan ${side > 0 ? 'left' : 'right'}`; fan.position.set(x, EXIT_Y, TAIL_Z + .16);
     const fb = batch(fan);
-    for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5; fb.box(m.carbon, [.10, .24, .012], [Math.sin(a) * .17, Math.cos(a) * .17, 0], [0, 0, -a], 0); }
-    fb.box(m.alloy, [.10, .10, .08], [0, 0, 0], [0, 0, 0], .02);
+    for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5; fb.box(m.carbon, [.07, .15, .01], [Math.sin(a) * .11, Math.cos(a) * .11, 0], [0, 0, -a], 0); }
+    fb.box(m.carbon, [.08, .08, .06], [0, 0, 0], [0, 0, 0], 0);
     fb.finish();
     vehicle.add(fan); vehicle.userData.fans.push(fan);
-    // The nitro flame: a cool blue plume from each outlet.
     const material = new THREE.MeshBasicMaterial({ name: 'Nitro flame', color: 0x82d9ff, transparent: true, opacity: .72, blending: THREE.AdditiveBlending, depthWrite: false });
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(.16, .8, 14).rotateX(-Math.PI / 2).translate(0, 0, -.4), material);
-    flame.name = 'Nitro exhaust flame'; flame.position.set(x, FAN_Y, -1.60); flame.visible = false;
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(.14, .8, 14).rotateX(-Math.PI / 2).translate(0, 0, -.4), material);
+    flame.name = 'Nitro exhaust flame'; flame.position.set(x, EXIT_Y, TAIL_Z - .02); flame.visible = false;
     vehicle.add(flame); vehicle.userData.boostFlames.push(flame);
   }
-  // Tail: a dark panel between the fan outlets with the brake light bar and the plate.
-  b.box(m.carbon, [.34, .30, .04], [0, .55, -1.55], [0, 0, 0], .02);
-  b.box(m.brake, [.28, .03, .02], [0, .62, -1.575], [0, 0, 0], .01);
-  b.box(m.brake, [.28, .03, .02], [0, .50, -1.575], [0, 0, 0], .01);
-  b.box(m.plate, [.30, .08, .01], [0, .40, -1.572], [0, 0, 0], .004);
-  for (let i = -3; i <= 3; i++) b.box(m.carbon, [.02, .14, .30], [i * .17, .24, -1.38], [.14, 0, 0], 0);   // the diffuser strakes
+  b.box(m.brake, [.84, .028, .014], [0, .63, TAIL_Z - .016], [0, 0, 0], 0);                  // the brake light bar
+  b.box(m.plate, [.28, .07, .008], [0, .21, TAIL_Z - .006], [0, 0, 0], 0);
+  b.box(m.carbon, [.9, .04, .05], [0, .19, TAIL_Z - .03], [0, 0, 0], 0);                     // a thin diffuser edge
 }
 
-// The short high nose: a front wing with end plates, a splitter, slim lamp slits.
+// A pod over the top half of a wheel: a half-cylinder with a half-disc on the outside,
+// the wheel's lower half showing below it. No suspension is visible.
+function pod(b, m, x, z) {
+  const R = .372, length = WHEEL_WIDTH + .07, side = Math.sign(x);
+  const shell = new THREE.CylinderGeometry(R, R, length, 28, 1, true, Math.PI, Math.PI).rotateZ(-Math.PI / 2);
+  b.add(shell, m.paint, [x + side * .015, .33, z]); shell.dispose();
+  const cap = new THREE.CircleGeometry(R, 28, 0, Math.PI).rotateY(side * Math.PI / 2);
+  b.add(cap, m.paint, [x + side * (length / 2 + .015), .33, z]); cap.dispose();
+  const lip = new THREE.TorusGeometry(R, .01, 5, 28, Math.PI).rotateY(side * Math.PI / 2);
+  b.add(lip, m.carbon, [x + side * (length / 2 + .016), .33, z]); lip.dispose();
+}
+
+// A low short nose with a small splitter and slim lamp slits.
 function frontEnd(b, m) {
-  b.box(m.carbon, [1.74, .04, .34], [0, .19, 1.53], [0, 0, 0], .02);
-  b.box(m.accent, [1.74, .018, .12], [0, .215, 1.64], [-.06, 0, 0], .008);
-  for (const side of [-1, 1]) {
-    b.box(m.carbon, [.025, .20, .46], [side * .88, .26, 1.50], [0, 0, 0], .01);
-    b.box(m.headlight, [.20, .02, .02], [side * .36, .52, 1.57], [0, side * .35, 0], .006);
-    b.tube(m.carbon, [[side * .45, .60, .86], [side * .56, .66, .84], [side * .62, .68, .80]], .01, 8);
-    b.box(m.paint, [.08, .045, .10], [side * .64, .68, .78], [0, side * -.12, 0], .02);
-  }
+  b.box(m.carbon, [1.0, .03, .22], [0, .125, 1.56], [0, 0, 0], 0);
+  b.box(m.accent, [1.0, .012, .03], [0, .142, 1.66], [0, 0, 0], 0);
+  for (const side of [-1, 1]) b.box(m.plate, [.20, .016, .012], [side * .20, .40, 1.585], [0, side * .45, 0], 0);
 }
 
 function fittedDetails(vehicle, m) {
   vehicle.updateMatrixWorld(true);
   const skins = vehicle.userData.damageMeshes.filter(({ mesh }) => mesh.material === m.paint).map(({ mesh }) => mesh), b = batch(vehicle);
-  const patch = (corners, axis, side = 1, material = m.carbon, lift = .004, minSide = .6) => fitSurfacePatch(skins, b, material, corners, axis, side, minSide, lift);
+  const patch = (corners, axis, side = 1, material = m.carbon, lift = .004, minSide = .4) => fitSurfacePatch(skins, b, material, corners, axis, side, minSide, lift);
   for (const side of [-1, 1]) {
-    // A dark carbon band down the lower flank, and the orange stripe above it.
-    patch([[.17, 1.58], [.17, -1.55], [.30, -1.55], [.32, -1.0], [.29, 1.0], [.31, 1.58]], 'side', side, m.carbon, .005, .5);
-    patch([[.40, 1.0], [.40, -.95], [.43, -.95], [.43, 1.0]], 'side', side, m.accent, .006, .5);
-    // Side intakes for the cooling, behind each front wheel.
-    patch([[.30, -.30], [.46, -.30], [.46, -.72], [.30, -.72]], 'side', side, m.carbon, .008, .5);
+    // The thin green line along each flank, a little above the floor, and a dark intake behind the canopy.
+    patch([[.43, 1.45], [.43, -1.5], [.452, -1.5], [.452, 1.45]], 'side', side, m.accent, .004);
+    patch([[.60, -.55], [.74, -.55], [.74, -.95], [.60, -.95]], 'side', side, m.carbon, .006);
+    // Road grime low on the flanks: a ragged band and a few splashes.
+    patch([[.17, 1.55], [.17, -1.55], [.26, -1.55], [.30, -1.2], [.25, -.8], [.30, -.3], [.24, .2], [.29, .7], [.24, 1.2], [.28, 1.55]], 'side', side, m.grime, .007);
+    for (const [y, z, r] of [[.36, -.9, .05], [.34, -.2, .04], [.39, .5, .045], [.33, 1.0, .05]]) patch(Array.from({ length: 8 }, (_, i) => [y + Math.sin(i * .785) * r, z + Math.cos(i * .785) * r * 1.6]), 'side', side, m.grime, .008);
   }
-  // A long orange centre stripe over the nose and cowl.
-  patch([[-.05, 1.55], [.05, 1.55], [.05, .90], [-.05, .90]], 'top', 1, m.accent, .005);
-  // Vents over the fan intakes and a dark panel on the deck between them.
-  patch([[-.28, -.62], [.28, -.62], [.28, -.95], [-.28, -.95]], 'top', 1, m.carbon, .006);
+  // Grime splashed up the nose.
+  patch([[-.45, .15], [.45, .15], [.4, .26], [.15, .30], [-.1, .25], [-.4, .29]], 'front', 1, m.grime, .006, 0);
   b.finish(vehicle.userData);
 }
