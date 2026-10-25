@@ -14,7 +14,7 @@ import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex, nitroLocked } from './race-field.js';
 
 // GP-PASSING-2: pass types that `cpu-racecraft` turns on, one row each; a type that fails its batch stays false.
-export const PASS_TYPES = Object.freeze({alongside: false, exitTow: false, dive: false, window: true});
+export const PASS_TYPES = Object.freeze({alongside: false, exitTow: false, dive: false, window: false});
 
 export const CPU_NITRO = Object.freeze({strength:.5, refill:.5});
 export const cpuNitroExtraMph=(r,spec)=>spec.topSpeed*(BOOST.topSpeedMult-1+(r.upgrades.nitro||0)*.025+(spec.nitroSpeedBonus??0))*CPU_NITRO.strength;

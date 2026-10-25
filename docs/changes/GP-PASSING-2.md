@@ -62,3 +62,15 @@ A dive starts only if, at the closing rate, the diver will be at least half alon
 | Nitro player leads after lap 1, at most 5/20 | 8 FAIL | 0 PASS | 0 PASS |
 
 Report-only: CPU passes 1.65 -> 1.85, 9.95 -> 4.15, 3.55 -> 3.80; slower player passed 10, 17, 13 of 20. No dive-tagged crash remains (Panorama 213 untagged, 2 in a pass; Woods 54 untagged, 14 in a pass; Pacific Canyon 1), so the rule removes the dive crashes the earlier batches showed (Woods 26, Panorama 14), at the price of about half of Woods' passes. It fails the Panorama race-time gate (4.04%, the paired maximum over 20 races; steps A+B were 1.97%) and Woods' 3 pile-ups (the same count Claude accepted for steps A and B). It is off per the card (`PASS_TYPES.dive = false`); turning it on is a one-line change if Claude judges the crash result worth the Panorama time and passing change.
+
+## Pass type 4: wider window (f56407fe), FAILED, switched off
+
+Aggressive drivers wait up to 1.5 s behind a slower car, never on lap 1 before the first braking zone is passed. Against the switch-off figures: 8+-crash races 14, 1, 0 (off 16, 4, 0) PASS; mean crashes 11.35 PASS, 4.60 FAIL (limit 4.125), 0.25 FAIL (limit 0.11); early pile-ups 1, 3 (FAIL, limit 2), 0; max race time change 2.37% FAIL (Panorama), 1.22%, 1.00%; nitro leader 13, 0, 0 of 20. Report-only: CPU passes 1.65 -> 2.90, 9.95 -> 10.35, 3.55 -> 3.75; slower player passed 10, 20, 12 of 20. Off (`PASS_TYPES.window = false`).
+
+## Pass types: summary
+
+No type passes and stays on: type 1 (racing-line pass) fails the crash gates, type 2 (exit pass) never triggers, type 3 (safe dive) removes the dive crashes but fails Panorama race time and halves Woods passing, type 4 (wider window) fails the crash and time gates. The `PASS_TYPES` table holds all four, all false, so each can be turned on alone. Steps A and B stay on (Claude's decision).
+
+## Step C: every car starts with half a nitro tank
+
+Panorama stayed above 5 of 20 (12/20 with steps A and B), so Claude's step C: under `cpu-racecraft` the player and every computer car start a Grand Prix with half a nitro tank (`FIELD.startBoost = .5`), refill unchanged. New cases in `test-race-field.mjs` (half tanks with the switch on, full with it off). Measured alone on the final build (steps A, B, C; all four pass types off).
