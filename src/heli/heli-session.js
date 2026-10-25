@@ -658,7 +658,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function spotterStep(dt) {
     const found = stepSpotter(spotter, heli, world.ground, signsHere(), dt);
     if (!found) return;
-    commit(noteFound(save, found.id));
+    const noted = noteFound(save, found.id);
+    if (!noted.ok) return;   // a record this game must not write over: nothing is found
+    commit(noted);
     emit({type: 'secretFound', id: found.id, name: found.name, text: isCourseUnlocked(save, found.course)
       ? `Found from the air: ${found.name}. It is in your course list now.`
       : `Found from the air: ${found.name}. It joins your course list once you own ${placesNow()[found.course]?.name ?? found.course}.`});
@@ -667,7 +669,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function tableCall(from, to) {
     if (!pilotOn || mapNow().seen.includes(TABLE_ID)) return;
     if (!legPassesTable(placeOfCourse(from)?.id ?? from, placeOfCourse(to)?.id ?? to)) return;
-    commit(noteSeen(save, TABLE_ID));
+    const noted = noteSeen(save, TABLE_ID);
+    if (!noted.ok) return;
+    commit(noted);
     emit({type: 'tableSpotted', line: TABLE_CALL.line, text: TABLE_CALL.text});
     emit({type: 'radio', line: TABLE_CALL.line});
   }
@@ -676,7 +680,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     if (!pilotOn || site?.courseId !== TABLE_ID || event.result === 'crash') return;
     if (Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) > site.zone.radius) return;
     const claim = claimTable(save);
-    if (claim.already) return;
+    if (!claim.ok || claim.already) return;
     commit(claim);
     emit({type: 'tableFound', pay: claim.paid, text: TABLE_FOUND_TEXT});
   }
@@ -1606,9 +1610,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         emit(result.event);
         const inZone = Math.hypot(held.x - site.zone.x, held.z - site.zone.z) <= site.zone.radius;
         if (held.own && inZone) {
-          // A car can be left only where the save can keep it: the Table's strip waits for the save (MAP-SECRETS part two).
-          const placed = commit(placeCar(save, carId, site.courseId, flag));
-          if (!placed.ok) { emit({type: 'carNotKept', reason: 'A car cannot be left on the Table yet. Carry it down.'}); return result.event; }
+          commit(placeCar(save, carId, site.courseId, flag));
           emit({type: 'delivered', carId, courseId: site.courseId, dropped: result.event.type === 'releasedHigh'});
           offer = isCourseUnlocked(save, site.courseId) && !courseClosed(save, site.courseId, undefined, fireFlag) ? {courseId: site.courseId, carId} : null;
         } else if (held.job && inZone) deliverJob(held, result.event);

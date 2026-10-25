@@ -1,0 +1,169 @@
+{
+  "shape": "heli-pilot-map-additive-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2,
+      "activePlayerId": "map-qa",
+      "players": [
+        {
+          "id": "map-qa",
+          "name": "Map QA",
+          "profile": {
+            "version": 2,
+            "credits": 5350,
+            "heli": {
+              "version": 1,
+              "fuelKg": 220,
+              "lessons": {
+                "liftoff": true,
+                "hover": true,
+                "landing": true,
+                "carry": true
+              },
+              "playDay": {
+                "last": "2026-10-25",
+                "count": 7
+              },
+              "jobs": {
+                "day": 7,
+                "taken": null,
+                "done": []
+              },
+              "carsAt": {
+                "falcone_f42": "the-table"
+              },
+              "refuels": 4,
+              "flights": 9,
+              "map": {
+                "version": 1,
+                "seen": [
+                  "the-table",
+                  "harbour-lights"
+                ],
+                "found": [
+                  "panorama-ridge-night",
+                  "harbour-lights-dusk",
+                  "a-later-secret"
+                ],
+                "table": true,
+                "futureField": {
+                  "note": "kept by an older game",
+                  "list": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "map-old-qa",
+          "name": "Map Old QA",
+          "profile": {
+            "version": 2,
+            "credits": 900,
+            "heli": {
+              "version": 1,
+              "fuelKg": 150,
+              "lessons": {
+                "liftoff": true,
+                "hover": true,
+                "landing": true,
+                "carry": true
+              },
+              "playDay": {
+                "last": "2026-10-25",
+                "count": 7
+              },
+              "jobs": {
+                "day": 7,
+                "taken": null,
+                "done": []
+              },
+              "carsAt": {},
+              "refuels": 4,
+              "flights": 9
+            }
+          }
+        },
+        {
+          "id": "map-newer-qa",
+          "name": "Map Newer QA",
+          "profile": {
+            "version": 2,
+            "credits": 1200,
+            "heli": {
+              "version": 1,
+              "fuelKg": 80,
+              "lessons": {
+                "liftoff": true,
+                "hover": true,
+                "landing": true,
+                "carry": true
+              },
+              "playDay": {
+                "last": "2026-10-25",
+                "count": 7
+              },
+              "jobs": {
+                "day": 7,
+                "taken": null,
+                "done": []
+              },
+              "carsAt": {},
+              "refuels": 4,
+              "flights": 9,
+              "map": {
+                "version": 2,
+                "places": {
+                  "the-table": {
+                    "landed": true
+                  }
+                },
+                "secrets": [
+                  "panorama-ridge-night"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "assertions": [
+    {
+      "path": "players.0.profile.heli.map.found",
+      "includes": "panorama-ridge-night"
+    },
+    {
+      "path": "players.0.profile.heli.map.found",
+      "includes": "a-later-secret"
+    },
+    {
+      "path": "players.0.profile.heli.map.seen",
+      "includes": "the-table"
+    },
+    {
+      "path": "players.0.profile.heli.map.table",
+      "equals": true
+    },
+    {
+      "path": "players.0.profile.heli.map.futureField.list.2",
+      "equals": 3
+    },
+    {
+      "path": "players.0.profile.heli.carsAt.falcone_f42",
+      "equals": "the-table"
+    },
+    {
+      "path": "players.2.profile.heli.map.version",
+      "equals": 2
+    },
+    {
+      "path": "players.2.profile.heli.map.places.the-table.landed",
+      "equals": true
+    }
+  ]
+}
