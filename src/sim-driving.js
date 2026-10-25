@@ -10,7 +10,7 @@ import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
 import { gripFor, normalizeTyre } from './race-surfaces.js';
 import { LAB_TUNE, tunedGrip } from './lab/lab-tune.js'; // LAB-TUNE
 import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongPush,carMortarHop,setCarMortarHop} from './arsenal/car-effects.js';
-import {FIELD} from './race-field.js';
+import {FIELD, nitroLocked} from './race-field.js';
 import {avalancheDriftAt} from './summit-avalanche.js';
 import {stepPitService,limitPitSpeed} from './pit-lane.js';
 
@@ -183,7 +183,7 @@ export function _drive(dt) {
   const nitro = s.upgrades.nitro, boostDrain = BOOST.drainPerSec / ((1 + nitro * .14) * car.boostCapacity);
   const boostTopSpeed = BOOST.topSpeedMult + nitro * .025 + (car.nitroSpeedBonus ?? 0);
   if(s.practice)s.boost=1;
-  s.boosting = !(hazardsActive(this) && carEffect(s, 'disabled')) && !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && s.input.brake === 0;
+  s.boosting = !(hazardsActive(this) && carEffect(s, 'disabled')) && !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && s.input.brake === 0 && !nitroLocked(s, s.field);
   if (s.boosting) {
     const available = Math.min(1, s.boost / (boostDrain * dt));
     s.boost = s.practice?1:Math.max(0, s.boost - boostDrain * dt);

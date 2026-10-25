@@ -3,6 +3,8 @@
 // catch-up and repeatability. Every race here is headless and seeded.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {nitroHudLabel,hudMarkup} from '../src/screen-hud.js';
 import { Duel } from '../src/game.js';
 import { COURSE, CARS, DRIVE } from '../src/config.js';
 import { Course } from '../src/course.js';
@@ -88,6 +90,39 @@ for (const [seed, hash] of [[1989, 'f29bc060b703448a4432042cb792d66b5cadc24da833
   const pace=playerPaceMph(d);s.speedMph=0;
   equal(playerPaceMph(d),pace,'instant braking cannot erase measured road pace');
   close(pace/profile.at(s.s),.85,.001,'player pace uses comparable two-second road sectors');
+}
+{
+  // GP-PASSING-2 step A: nitro stays locked for every car until the first braking zone's apex on lap 1.
+  const off=start(), on=start({racecraft:true});
+  equal(off.state.field.nitroArmS, undefined, 'switch off keeps the field state without a nitro lock');
+  const armS=on.state.field.nitroArmS;
+  check(armS>on.state.s+50, 'the first apex lies ahead of the grid');
+  racing(on); on.state.boost=1; on.setInput({throttle:1,steer:0,boost:true});
+  let boostedEarly=false, cpuBoostedEarly=false;
+  for(let i=0;i<60*40 && on.state.s<armS-20;i++){
+    on.step(STEP);
+    if(on.state.boosting) boostedEarly=true;
+    if(on.state.opponents.some(r=>r.boosting && r.s<armS)) cpuBoostedEarly=true;
+  }
+  check(!boostedEarly, 'the player cannot nitro before the first apex');
+  check(!cpuBoostedEarly, 'no computer car uses nitro before the first apex');
+  check(on.state.s<armS+1, 'the locked-phase test stopped before the apex');
+  on.state.s=armS+5; on.state.lateral=racingLineFor(on.course).offsetAt(armS+5); on.state.headingError=0; on.state.speedMph=100;
+  on.step(STEP);
+  check(on.state.boosting, 'the player can nitro once past the first apex');
+  // The HUD label: locked, then armed for 150 m, then plain. The router renames the label to
+  // nitro-label at startup, so it must be written through that id (a missing id threw every frame in the browser).
+  equal(nitroHudLabel({s:100,completedLaps:0,field:{nitroArmS:256}}),'NITRO LOCKED','HUD: locked before the first apex');
+  equal(nitroHudLabel({s:300,completedLaps:0,field:{nitroArmS:256}}),'NITRO ARMED','HUD: armed just after it');
+  equal(nitroHudLabel({s:500,completedLaps:0,field:{nitroArmS:256}}),'NITRO','HUD: plain label later on lap 1');
+  equal(nitroHudLabel({s:100,completedLaps:0,field:{}}),'NITRO','HUD: unchanged with the switch off');
+  const router=readFileSync(new URL('../src/screen-router.js',import.meta.url),'utf8');
+  check(router.includes(".id='nitro-label'") && router.includes("text('nitro-label',s.practice?'NITRO ∞':nitroHudLabel(s))"),
+    'HUD: the nitro label is written through the id the router gives it');
+  check(!hudMarkup().includes('boost-label') && !readFileSync(new URL('../src/screen-hud.js',import.meta.url),'utf8').includes("text('boost-label'"),
+    'HUD: no write to an id the router renames away');
+  const offBoost=racing(start()); offBoost.state.boost=1; offBoost.state.speedMph=100; offBoost.setInput({throttle:1,steer:0,boost:true}); offBoost.step(STEP);
+  check(offBoost.state.boosting, 'switch off: nitro works from the start as before');
 }
 {
   const a=start({racecraft:true}),b=start({racecraft:true});

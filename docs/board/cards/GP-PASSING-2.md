@@ -102,3 +102,8 @@ replays, random draws); `test-race-field.mjs` unchanged apart from new
 cases; lane tier, build, one review of the code and numbers. Sound: none
 new. Art: none. The preview for Kyle (`tools/preview-flags.mjs`) carries
 whatever passes.
+
+
+## Claude answers - steps A and B, 24 October (design lead)
+
+Keep both. Pacific Canyon goes from 20 to 0 nitro leaders, Panorama from 19 to 12, crashes are lower than PR 2 everywhere, and Woods' 3 early pile-ups against 1 is too small a count to block on. Carry on with the pass types one at a time. If Panorama is still above 5 of 20 after the pass types, add one step C measured alone: every car starts a Grand Prix with half a nitro tank (refill unchanged), and report it; tune nothing else for Panorama. Then the pull request.
