@@ -22,7 +22,7 @@ import { prepareVehicleGrounding, placeGroundedVehicle, applyVehicleTerrainPose,
 import { disposeTree } from '../src/world.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const MAX_TRIANGLES = 73600, MAX_DRAWS = 66;           // the Jesko's size, the budget for the car models
+const MAX_TRIANGLES = 50000, MAX_DRAWS = 66;           // under the Jesko's size: this card's own cap of 50k triangles
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
 const equal = (value, expected, label) => { assert.deepEqual(value, expected, label); checks++; };
