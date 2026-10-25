@@ -59,7 +59,7 @@ export function stageOf(courseId) {
 }
 
 export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = null, fieldSize = 7, startStage = 0, course = null, flags = [], onStep = null } = {}) {
-  if(!Array.isArray(flags)||flags.some(flag=>flag!=='tyre-slip')) throw Error('Unsupported field flags.');
+  if(!Array.isArray(flags)||flags.some(flag=>!['tyre-slip','engine-curve'].includes(flag))) throw Error('Unsupported field flags.');
   const { seed, fieldSeed } = raceSeeds(index);
   if (course) startStage = stageOf(course);
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
@@ -273,7 +273,7 @@ function parse(args) {
     else throw Error(`Unknown option ${a}`);
   }
   if (!Number.isInteger(options.races) || options.races < 1 || !Number.isInteger(options.jobs) || options.jobs < 1 ||
-      options.difficulties.some(d => !DIFFICULTIES.includes(d)) || options.flags.some(flag=>flag!=='tyre-slip')) throw Error('Invalid options.');
+      options.difficulties.some(d => !DIFFICULTIES.includes(d)) || options.flags.some(flag=>!['tyre-slip','engine-curve'].includes(flag))) throw Error('Invalid options.');
   return options;
 }
 

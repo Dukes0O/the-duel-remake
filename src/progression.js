@@ -415,6 +415,8 @@ export function bestKey(
     result.difficulty || 'casual',
     result.cpuDifficulty || 'easy',
     ...(COURSE[result.stageIndex]?.kind==='drift'&&result.tyreSlipRules===true?['tyre-slip:1']:[]),
+    // Races run with engines that pull like real ones are their own comparison (ENGINE-CURVE).
+    ...(result.engineCurve===true?['engine-curve:1']:[]),
     ...(signature ? [`driver:${signature}`] : []),
     ...(rival ? [`rival:${rival}`] : []),
     ...(weaponSignature(result) ? [`weapons:${weaponSignature(result)}`] : [])

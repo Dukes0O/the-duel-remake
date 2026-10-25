@@ -217,6 +217,8 @@ export class Duel {
     if (DIFFICULTY[difficulty]) this.state.difficulty = difficulty;
     // Kyle: Casual keeps released tyres; latch only after resolving difficulty.
     this._tyreSlipRaceEnabled = !!this.drivingLesson || this.featureFlags.enabled('tyre-slip') === true && this.state.difficulty !== 'casual';
+    // Engines that pull like real ones (ENGINE-CURVE): latched once per race, like the tyre rules, so old replays play under their own.
+    this._engineCurveRaceEnabled = this.featureFlags.enabled('engine-curve') === true;
     this.state.cpuDifficulty = CPU_DIFFICULTY[cpuDifficulty] ? cpuDifficulty : DEFAULT_CPU_DIFFICULTY;
     this.state.playerId = typeof playerId === 'string' ? playerId : null;
     this.state.driverId = normalizeDriverId(driverId);
@@ -305,6 +307,8 @@ export class Duel {
     });
     if (this._tyreSlipRaceEnabled === true && this.course.def.arena !== true) s.tyreSlipRules = true;
     else { delete s.tyreSlipRules; delete s.tyreSlip; }
+    if (this._engineCurveRaceEnabled === true && this.course.def.arena !== true) s.engineCurve = true;
+    else delete s.engineCurve;
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
     this._lapGates = [...new Set(rawGates.filter(distance => distance > 0 && distance < this.course.length))].sort((a, b) => a - b);
@@ -521,7 +525,7 @@ export class Duel {
     // itself always reads `this.course` and `state.arena`.
     s.stageIndex = Math.max(0, COURSE.findIndex(course => course.id === 'titan-arena'));
     this.course = new Course(venue, this.seed);
-    delete s.tyreSlipRules; delete s.tyreSlip;
+    delete s.tyreSlipRules; delete s.tyreSlip; delete s.engineCurve;
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     this._lapGates = [];
     this._resetStageDriving();
