@@ -1,4 +1,4 @@
-"""One pass, four Speirling studies. No runtime files or reference copies.
+"""Final selected Speirling, based on study 04. Recipe is the source.
 
 blender -b -t 4 -P tools/blender/speirling-tries.py -- --root .
 Then: python tools/blender/speirling-tries.py --root . --sheet
@@ -16,21 +16,22 @@ parser.add_argument('--sheet', action='store_true')
 parser.add_argument('--views', nargs='+', help='optional camera subset, for framing corrections')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(args.root).resolve()
-out = root / '.qa-dist/speirling-tries'
+out = root / '.qa-dist/speirling-final'
+runtime = root / 'public/assets/models/unlocks/mcmurtry_speirling.glb'
 looks = root / 'docs/board/looks/speirling'
 views = ('front-three-quarter', 'side', 'rear', 'rear-three-quarter', 'above')
-studies = ('01-loft', '02-subdivision', '03-front-sculpt', '04-rear-tunnels')
+studies = ('mcmurtry_speirling',)
 
 if args.sheet:
     from PIL import Image, ImageDraw, ImageFont
     # Only synthetic renders enter the committed sheet. References stay local.
     cell_w, cell_h = 420, 284
-    sheet = Image.new('RGB', (cell_w * 5, 4 * cell_h + 76), '#19212a')
+    sheet = Image.new('RGB', (cell_w * 5, cell_h + 76), '#19212a')
     draw = ImageDraw.Draw(sheet)
     font_path = 'C:/Windows/Fonts/arial.ttf'
     font = ImageFont.truetype(font_path, 19)
     small = ImageFont.truetype(font_path, 16)
-    draw.text((18, 10), 'McMurtry Speirling | four independent Blender studies | one pass', font=font, fill='white')
+    draw.text((18, 10), 'McMurtry Speirling | final 04 | closed engine cover and corrected nose', font=font, fill='white')
     report = json.loads((out / 'summary.json').read_text())
     for col, view in enumerate(views):
         draw.text((col * cell_w + 14, 44), view.replace('-', ' ').title(), font=small, fill='#bccbd9')
@@ -43,7 +44,7 @@ if args.sheet:
             label = f'{name} | {report[row]["triangles"]:,} tris' if col == 0 else name
             draw.text((x + 12, y + cell_h - 29), label, font=small, fill='white')
     looks.mkdir(parents=True, exist_ok=True)
-    target = looks / 'blender-tries.jpg'
+    target = looks / 'blender-final.jpg'
     for quality in (88, 82, 76, 70, 64, 58):
         sheet.save(target, quality=quality, optimize=True)
         if target.stat().st_size <= 500000:
@@ -68,7 +69,7 @@ def material(name, color, metallic=0, roughness=.35, emission=0, alpha=1):
         p.inputs['Emission Strength'].default_value = emission
     if alpha < 1:
         p.inputs['Alpha'].default_value = alpha
-        p.inputs['Transmission Weight'].default_value = .35
+        p.inputs['Transmission Weight'].default_value = 0
         m.surface_render_method = 'DITHERED'
     return m
 
@@ -151,14 +152,10 @@ def ring(name, x, y, z, radius, thickness, mat, axis='X'):
     return tube(name, pts, thickness, mat)
 
 
-def make_car(index):
-    # A single open-ended shell across the width, with actual cut wheel arches.
-    # Study 2 starts with a low-resolution control cage and subdivides it.
-    coarse = index == 1
-    nx, ny = (20, 22) if coarse else (48, 48)
-    fender = (.32, .30, .38, .34)[index]
-    channel = (.045, .060, .035, .020)[index]
-    rear_gain = (.02, .0, -.025, .075)[index]
+def make_car():
+    # Selected study 04: sealed loft and side-only wheel-arch openings.
+    nx, ny = 48, 48
+    fender, channel, rear_gain = .34, .020, .075
     verts, faces = [], []
     for j in range(ny + 1):
         y = -1.59 + 3.08 * j / ny
@@ -196,15 +193,10 @@ def make_car(index):
         faces.append((a, bottom[k], bottom[n], perimeter[n]))
     faces.append(tuple(reversed(bottom)))
     body = mesh('continuous_sculpted_body', verts, faces, paint)
-    if coarse:
-        mod = body.modifiers.new('subdivision cage', 'SUBSURF')
-        mod.levels = 1
-        bpy.context.view_layer.objects.active = body
-        bpy.ops.object.modifier_apply(modifier=mod.name)
     for side in (-1, 1):
         for y in (-.94, .98):
-            bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=.306, depth=.60,
-                                               location=(side * .72, y, .296), rotation=(0, math.pi / 2, 0))
+            bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=.306, depth=.40,
+                                               location=(side * .80, y, .296), rotation=(0, math.pi / 2, 0))
             cutter = bpy.context.object
             bpy.context.view_layer.objects.active = body
             mod = body.modifiers.new('open wheel arch', 'BOOLEAN')
@@ -258,9 +250,31 @@ def make_car(index):
                         (.025, 1.527, .73), (.025, 1.525, .69)], .003, silver)
     tube('diamond_tail_light', [(0, 1.552, .24), (-.042, 1.552, .33), (0, 1.552, .39),
                               (.042, 1.552, .33), (0, 1.552, .24)], .009, red)
-    # Vertical aerodynamic fin from canopy crown to rear wing.
-    mesh('dorsal_fin', [(0, .18, 1.0), (0, 1.31, 1.035), (0, 1.36, .63), (0, .65, .58)],
-         [(0, 1, 2, 3)], carbon, False)
+    # Closed painted engine cover, smoothly tapering into the narrow rear spine.
+    # Its outboard edges leave the two deep rear channels open.
+    cover_sections = ((.37, .22, .43, .89), (.53, .25, .43, .87),
+                      (.75, .255, .44, .84), (.98, .23, .45, .81),
+                      (1.24, .19, .46, .79), (1.50, .145, .49, .79))
+    cv, cf = [], []
+    for y, width, base, top in cover_sections:
+        for i in range(17):
+            a = math.pi * i / 16
+            cv.append((width * math.cos(a), y, base + (top - base) * math.sin(a)))
+    for j in range(len(cover_sections) - 1):
+        for i in range(16):
+            a = j * 17 + i
+            cf.append((a, a + 1, a + 18, a + 17))
+        cf.append((j * 17, (j + 1) * 17, (j + 1) * 17 + 16, j * 17 + 16))
+    cf.extend((tuple(reversed(range(17))), tuple(range(85, 102))))
+    cover = mesh('closed_painted_engine_cover', cv, cf, paint)
+    mod = cover.modifiers.new('smooth engine cover', 'SUBSURF')
+    mod.levels = 2
+    # Thin solid fin: only the strip above the painted engine cover is exposed.
+    fin_outline = [(0, .18, 1.0), (0, .64, .95), (0, 1.31, 1.035),
+                   (0, 1.36, .79), (0, .75, .84), (0, .37, .89)]
+    fin = mesh('thin_dorsal_fin', fin_outline, [tuple(range(6))], carbon, False)
+    mod = fin.modifiers.new('four millimetre fin', 'SOLIDIFY')
+    mod.thickness = .004
     for side in (-1, 1):
         # Hollow dark rectangular tunnel with a recessed radiator, no solid pod.
         box('rear_tunnel_inner_wall', (side * .19, 1.22, .49), (.025, .55, .30), carbon)
@@ -311,16 +325,16 @@ for index, study in enumerate(studies):
     scene.unit_settings.system = 'METRIC'
     paint = material('metallic_blue_grey', (.16, .245, .29), .78, .25)
     carbon = material('satin_carbon', (.012, .016, .020), .25, .32)
-    black = material('intake_black', (.003, .005, .007), .05, .5)
+    black = carbon
     rubber = material('slick_rubber', (.012, .013, .015), 0, .70)
     glass = material('brown_tinted_clear_glass', (.13, .105, .082), .1, .09, alpha=.70)
     silver = material('dark_machined_alloy', (.28, .31, .32), .85, .28)
-    meshmetal = material('radiator_and_spokes', (.07, .085, .09), .7, .4)
+    meshmetal = carbon
     red = material('red_tail_lamps', (1, .008, .015), .1, .2, 3)
     white = material('white_daylights', (.9, .96, 1), .1, .2, 2)
-    grime = material('lower_track_grime', (.07, .065, .055), .15, .9)
-    plate = material('plate_panel', (.20, .22, .23), .3, .5)
-    make_car(index)
+    grime = carbon
+    plate = silver
+    make_car()
     car = [o for o in scene.objects if o.type == 'MESH']
     # Apply modifiers once for triangle count and identical export/render geometry.
     for obj in car:
@@ -338,11 +352,25 @@ for index, study in enumerate(studies):
     assert 1.55 < dimensions[0] < 1.7 and 3.1 < dimensions[1] < 3.3 and .95 < dimensions[2] < 1.2, dimensions
     for name in ('wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr'):
         assert bpy.data.objects[name].type == 'MESH'
+    # Ground-centre origin and batch static geometry, retaining wheel pivots.
+    lo = [min(p[i] for p in corners) for i in range(3)]
+    hi = [max(p[i] for p in corners) for i in range(3)]
+    offset = Vector(((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, lo[2]))
+    for obj in car:
+        obj.location -= offset
+    static = [o for o in car if not o.name.startswith('wheel_')]
+    for mat in (paint, carbon, glass, red, white, silver):
+        parts = [o for o in static if o.data.materials[0] == mat]
+        if parts:
+            static = [o for o in static if o not in parts]
+            join_wheel(parts, 'body_' + mat.name, (0, 0, 0))
     dest = out / study
     dest.mkdir(parents=True, exist_ok=True)
+    runtime.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.export_scene.gltf(filepath=str(dest / (study + '.glb')), export_format='GLB',
+    bpy.ops.export_scene.gltf(filepath=str(runtime), export_format='GLB',
                              use_selection=True, export_yup=True, export_cameras=False, export_lights=False)
+    assert runtime.stat().st_size < 8000000
     summary.append({'name': study, 'triangles': triangles, 'dimensions_xyz_m': dimensions,
                     'wheels': {name: list(bpy.data.objects[name].location) for name in ('wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr')}})
     # Neutral studio; common fixed cameras, not auto-framed per candidate.
@@ -381,4 +409,4 @@ for index, study in enumerate(studies):
         scene.render.filepath = str(dest / (view + '.png'))
         bpy.ops.render.render(write_still=True)
     (out / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
-print('SPEIRLING_STUDIES', json.dumps(summary))
+print('SPEIRLING_FINAL', json.dumps(summary))
