@@ -33,3 +33,11 @@ Acceptance: the test, the car-roster and switch-inventory tests gain the car
 with Claude's written review on this card, replay guards unchanged, lane
 tier, build, one review; the frame check with eight Spéirlings on a busy
 view before it goes live (rule 8). Removed: nothing.
+
+## Claude's review (25 October 2026)
+
+Changed assertions approved: each adds the Lab-built Speirling to a roster,
+inventory or per-car check (roster 13 to 14, cable lift, armour, paint,
+grounding with its accepted low skirt) while every earlier car stays exactly
+as before; the Lab ownership check moves from a shop marker to the real
+`unlockedCars` entry. Nothing loosened. Independent review clear.
