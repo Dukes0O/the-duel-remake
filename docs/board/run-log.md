@@ -1305,3 +1305,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-25 YETI-FUR-TINT merged (Claude accepted round 1): the yeti's fur tinted pale grey-white (2.6) on cloned fur materials only; the yeti now reads against snow at night.
 - 2026-10-25 QA-YARD-HOME-AIR-ONLY merged (finished 15 Oct, landed by a local Sonnet session): yard-home scenario passes with the Jesko's air-only refusal.
 - 2026-10-25 QA-YETI-THREE merged (finished 15 Oct, landed by a local Sonnet session): the yeti scenario passes again; second scenario hung by the circuit-manifests top-level await and the combat-weapons/oil import cycle, so the root cause is carded as FIX-MANIFEST-AWAIT.
+- 2026-10-25 MAP-SECRETS part two merged from cloud PR 30 (Claude): the map record in the save and the Table as a place to leave a car, with a save review. Laptop: map-secrets, save fixtures, career backup, progression, heli-save, heli-mode, pilot-map, build. save-shape free.
