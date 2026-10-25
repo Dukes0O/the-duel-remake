@@ -32,6 +32,8 @@ Nothing is exposed meanwhile: nobody can own the Sirena before the Lab restores 
   gains a `fenderGrid` (the side sampled just above its wheels). No other car's row
   changes. (These two are hooks outside the card's owned list, the same two the
   earlier cars' kits touched.)
+- `tools/test-blender-output.mjs`: the kit script's list of runtime GLBs gains
+  `falcone_sirena` (a new output of the same script, as for the Bolide).
 - `tools/test-armor-kit-assets.mjs`: the `LAPTOP_KITS` wait and its comment are
   gone; every car in the roster is checked, and the test now also asserts every car
   has its kit file (the roster floor is 13).
@@ -62,4 +64,7 @@ the comment explaining it).
 
 ## Lane tier and build
 
-(Filled in at the end of the card.)
+Run once after merging current `integration/wasteland` (25 October):
+`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 42 passed,
+1 failed on the first run: `test-blender-output` (the kit script's output list lacked
+the Sirena; fixed above, and the suite passes). `npm run build`: built.
