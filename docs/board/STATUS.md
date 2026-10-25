@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-25T22:22:26.995Z
+Observed at: 2026-10-25T22:34:39.738Z
 
-Observation commit: e486aaaa91da46be315b0f9ec6016479a098127c
+Observation commit: e5023533fc6970b5534ee1da701e72ec35b7269b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e486aaaa91da46be315b0f9ec6016479a098127c
+Integration HEAD: e5023533fc6970b5534ee1da701e72ec35b7269b
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -30,7 +30,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-achievements | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-achievements |
-| codex/lab-fan-view | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-fan-view |
+| codex/lab-fan-view | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-fan-view |
 | codex/perf-high-night | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/wild-art-src | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
@@ -40,7 +40,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/lab-fan-view | unknown | 2026-10-25T15:16:04-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/LAB-FAN.md, docs/board/run-log.md, docs/changes/LAB-FAN.md |
+| codex/lab-fan-view | unknown | 2026-10-25T15:32:28-07:00 | 0 | last commit 2026-10-25T15:32:28-07:00 | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/LAB-FAN.md, docs/board/looks/lab-fan-view/round-1-review.md, docs/board/looks/lab-fan-view/round-1.jpg |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 10 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 10 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
@@ -55,10 +55,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 22,199,281 B | +92,935 B | 20,000,000 B |
+| Review `looks/` | 22,291,398 B | +92,117 B | 20,000,000 B |
 | Added bytes in last merge | 695,286 B | +0 B | 5,000,000 B |
 | All `public/` | 334,916,079 B | +0 B | unavailable |
-| Git objects | 810,340,352 B | +251,904 B | unavailable |
+| Git objects | 748,872,704 B | -61,467,648 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups

@@ -44,9 +44,10 @@ export function cupResultPanel(result,{enabled=false}={}){
 export function achievementsPanel(profile, options = {}) {
   const rows = achievementShelf(profile, options);
   if (!rows.length) return '';
-  return '<section class="paint-panel" aria-label="Achievements"><h3>ACHIEVEMENTS</h3><ul>' + rows.map(row =>
-    '<li data-achievement="' + row.id + '"><strong>' + escape(row.name) + '</strong><p>' +
-    (row.earned ? 'EARNED &middot; ' + (row.at ? '<time datetime="' + new Date(row.at).toISOString() + '">' +
-      new Date(row.at).toISOString().slice(0, 10) + '</time>' : 'Date not recorded') + ' &middot; ' + escape(row.how) : escape(row.hint)) +
-    '</p></li>').join('') + '</ul></section>';
+  return '<section class="paint-panel achievement-shelf" aria-label="Achievements"><div class="paint-heading"><h3>ACHIEVEMENTS</h3></div><ul class="achievement-tiles">' + rows.map(row =>
+    '<li class="achievement-tile' + (row.earned ? ' earned' : '') + '" data-achievement="' + row.id + '">' +
+    '<span class="achievement-medallion" aria-hidden="true"></span><div><h4>' + escape(row.name) + '</h4><p>' +
+    (row.earned ? 'EARNED' + (row.at ? ' &middot; <time datetime="' + new Date(row.at).toISOString() + '">' +
+      new Date(row.at).toISOString().slice(0, 10) + '</time>' : '') : '<em>' + escape(row.hint) + '</em>') +
+    '</p></div></li>').join('') + '</ul></section>';
 }

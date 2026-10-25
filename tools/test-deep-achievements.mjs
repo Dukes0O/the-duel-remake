@@ -25,7 +25,7 @@ test('shelf gates and derived progress are read-only, including legacy restored 
   const rows = achievementShelf(p, on);
   assert.deepEqual(rows.filter(r => r.earned).map(r => r.id), ['raised-from-the-deep', 'she-runs-again']);
   assert.ok(rows.every(r => r.at === null));
-  assert.match(achievementsPanel(p, on), /Date not recorded/);
+  assert.doesNotMatch(achievementsPanel(p, on), /Date not recorded/);
   assert.match(achievementsPanel(p, on), /An old racer still has a finish line/);
   assert.equal(JSON.stringify(p), before);
   delete p.cosmetics;

@@ -83,3 +83,33 @@ Move the pure shared achievement registry out of the isolated Deep scene
 folder to `src/achievements.js`, beside its trophy presentation and save hooks.
 The Deep import guard and its approved import list remain unchanged.
 No replaced asset or save migration.
+
+## Round 2: look-only polish (Claude verdict, Kyle request)
+
+Replace browser-default bullets with compact garage tiles: three columns on
+desktop, two below 900 px. Use the garage's dark panel gradient, border,
+Segoe UI type and warm gold. CSS medallions are gold when earned and dim
+outlines when hinted. One line below the name shows EARNED and a UTC date
+only when known, or the hint in italics. No rule, save or award code changes.
+
+Changed assertions: per Kyle's explicit wording request following Claude's
+look verdict, the existing presentation assertion and scenario now reject
+"Date not recorded" instead of requiring it. No save or race assertion changes.
+The scenario also checks three/two columns, three earned icons and three
+italic hints. All six achievement tests pass. Production build passes
+(1.26 seconds, existing chunk/dynamic-import warnings only). Browser scenario
+passes at 1280 and 800 px, three screenshots, zero warnings/errors. The live
+switch view still has only Raised from the Deep. Lane tier --changed, jobs 4:
+200 suites, 199 initially passed, none unrun (521.79 seconds). The remaining
+review-evidence failure required the standard `round-N-review.md` note names;
+renamed the shelf's two review notes, staged them for its tracked-file check,
+and reran only that suite: nine tests / 379 checks pass. Latest results across
+all 200 selected suites are green. No further source changes or weakened checks.
+
+Picture: `docs/board/looks/deep-achievements/round-2.jpg`.
+Independent UI review: clear, including the actual round-2 picture. Icons
+are decorative and hidden from screen readers; earned state also has text;
+dates use semantic time elements and hints stay escaped. No faults found.
+Removed: plain bulleted shelf markup and the unknown-date label. Renamed
+review notes in place; kept no duplicate copies. Generated build/QA output
+and consumed raw evidence recycled. Cockpit sync: zero tasks changed.
