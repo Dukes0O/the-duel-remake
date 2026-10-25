@@ -21,3 +21,7 @@ Leaderboard rows carry no engine-curve marker, so a lap under the new engine
 pull and a lap under the old one would share a board. Personal bests already
 key on `engine-curve:1`; give leaderboard rows the same marker (or a separate
 board) before the switch is turned on.
+- Lesson 4's WATCH FOR ICE sign is drawn faint (see-through) and in the look
+  sheet a course sign reading 100 stands in front of it. Make it opaque and
+  move it clear of the course's own signs (Claude, from DRIVE-LESSONS-VIEW-2's
+  look, 25 October 2026).
