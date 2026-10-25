@@ -91,8 +91,6 @@ globalThis.localStorage=storage;memory.clear();let app=new App();
 app.profile=nearComplete();app._saveProfile();const appOwner=app.player.id;
 const final=app.purchaseUpgrade(prerequisites.at(-1),'tank');ok(final.ok,'Real garage can buy the last prerequisite upgrade');same(final.earnedCars,[reward],'Real garage receives the unlock notification');
 app=new App();ok(isCarUnlocked(app.profile,reward),'Real App reload retains the earned reward');same(app.profile.credits,4050,'Real App charged the final upgrade only');
-// The Jesko travels only by air: record it as flown to the first course.
-app.profile={...app.profile,heli:{version:1,carsAt:{[reward]:COURSE[0].id}}};app._saveProfile();
 ok(app.startCampaign({startStage:0,car:reward}),'Earned reward can enter an owned course');same(app.duel.state.car,reward,'Simulation starts with the reward rather than falling back');same(app.duel.state.upgrades,max,'Physics gets all seven max levels');same(app.duel.car.topSpeed,tuned.topSpeed,'Physics gets exactly one fully upgraded engine build');
 app.returnToMenu();ok(app.addPlayer('Fresh Racer').ok,'Actual player switch creates a separate career');ok(!isCarUnlocked(app.profile,reward),'Actual new career cannot drive the reward');
 ok(app.startCampaign({startStage:0,car:reward}),'New career can still start with its owned fallback');same(app.duel.state.car,DEFAULT_CAR,'Actual App blocks a locked reward selection');app.returnToMenu();

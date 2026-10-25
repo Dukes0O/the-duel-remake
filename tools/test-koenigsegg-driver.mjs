@@ -177,8 +177,6 @@ try{
   check(app.selectPlayer(owner),'Switching back finds the earning player');
   same(getEquippedDriverId(app.profile),driverId,'Switching back restores that player’s selected reward driver');
   const options={startStage:0,car,mode:'timetrial',difficulty:'casual',cpuDifficulty:'medium',routeVariant:'route_a'};
-  // The Jesko travels only by air: record it as flown to the first course.
-  app.profile={...app.profile,heli:{version:1,carsAt:{[car]:COURSE[0].id}}};app._saveProfile();
   app.setRaceSettings(options);app.autopilot=true;check(app.startCampaign(),'The earned setup starts from normal persisted menu settings');
   app._scriptedCrashDone=true;const state=app.duel.state;
   same(state.driverId,driverId,'The selected driver is snapshotted into the actual race');

@@ -45,19 +45,26 @@ try{
   for(const car of OWNABLE_CARS)for(const [startStage,event]of COURSE.entries()){
     app.setRaceSettings({car,startStage,mode:'timetrial'});same(app.getRaceChoices().car,car,'all course changes preserve every owned car');same(app.getRaceChoices().startStage,startStage,'all vehicle changes preserve the course');
     same(new App().getRaceChoices(),app.getRaceChoices(),'per-player setup persists any owned vehicle/course pairing');
-    // With the helicopter on, an air-only car (the Jesko) races only where it
-    // was last set down; everywhere else START is refused with the reason.
-    // Named here, not asked of the game: only the Jesko and the medal cars
-    // are air-only, and a fresh save has them at Tremblant Woods.
-    const expectRefused=['koenigsegg_jesko','ferrari_enzo','mclaren_f1','bugatti_bolide'].includes(car)&&event.id!=='tremblant-woods';
-    same(app._airOnlyRefused(car,event.id),expectRefused,`${car} at ${event.id}: air-only refusal only for the Jesko and the medal cars away from Tremblant Woods`);
+    // Medal cars still start only at Tremblant Woods. The Jesko needs no flight.
+    const expectRefused=['ferrari_enzo','mclaren_f1','bugatti_bolide'].includes(car)&&event.id!=='tremblant-woods';
+    same(app._airOnlyRefused(car,event.id),expectRefused,`${car} at ${event.id}: air-only refusal only for the medal cars away from Tremblant Woods`);
     if(expectRefused){airOnlyRefusals++;check(!app.startCampaign(),'an air-only car is refused away from where it sits');
       check(app.courseAccessMessage.includes('travels only by air'),'the refusal says why');same(app.duel.state.status,'menu','a refused start stays on the menu');continue;}
     check(app.startCampaign(),'saved pairing starts');same(app.duel.state.car,car,'raw simulation receives the chosen owned car');same(app.duel.state.stageIndex,startStage,'raw simulation receives the chosen course');
     same(app.duel.state.mode,event.practice||event.stuntTrial||['chase','drift','checkpoint'].includes(event.kind)?'duel':'timetrial','objective-only modes remain enforced without vehicle forcing');
     app.restart();same(app.duel.state.car,car,'restart preserves any chosen vehicle');same(app.duel.state.stageIndex,startStage,'restart preserves the course');app.returnToMenu();
   }
-  same(airOnlyRefusals,4*(COURSE.length-1),'the Jesko, the Enzo, the F1 and the Bolide each start on exactly one course, where they sit');
+  same(airOnlyRefusals,3*(COURSE.length-1),'the Enzo, the F1 and the Bolide each start on exactly one course, where they sit');
+  // An old helicopter position must not restrict any Jesko mode on any course.
+  app.profile={...app.profile,heli:{version:1,carsAt:{koenigsegg_jesko:'panorama-ridge'}}};app._saveProfile();
+  check(app._switches().enabled('helicopter'),'the helicopter is on for the Jesko regression');
+  for(const [startStage,event]of COURSE.entries())for(const mode of ['duel','timetrial','grandprix','wasteland']){
+    check(app.startCampaign({car:'koenigsegg_jesko',startStage,mode}),`Jesko starts ${mode} at ${event.id} without transport`);
+    same(app.duel.state.car,'koenigsegg_jesko','no mode substitutes another car');
+    same(app.duel.state.stageIndex,startStage,'no mode redirects to its helicopter position');
+    app.returnToMenu();
+  }
+  same(app.profile.heli.carsAt,{koenigsegg_jesko:'panorama-ridge'},'racing preserves the old saved position');
   same(app.profile.credits,bank,'course/vehicle selection and restart cannot spend or gift credits');same(app.profile.history.length,0,'countdown-only eligibility checks create no race settlements');
   for(const [stageIndex,event]of COURSE.entries())for(const car of OWNABLE_CARS){
     const cpuDifficulty='medium',required=event.checkpointRush?.gatesPerLap*(event.laps||2),result={runId:'eligibility',stageIndex,car,driverId:'club',completed:true,won:true,targetsMet:true,laps:event.laps||2,timeSec:10,cpuDifficulty,

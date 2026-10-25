@@ -99,8 +99,6 @@ try{
   for(const car of Object.keys(CAR_PRICES))check(buyer.unlockCar(car).ok,'test wallet buys an ordinary catalog car');
   for(const [car,spec]of Object.entries(CARS).filter(([,spec])=>!spec.unlockRequirement))for(const type of Object.keys(UPGRADE_TYPES))for(let level=0;level<3;level++)check(buyer.purchaseUpgrade(car,type).ok,'normal garage API builds the qualifying fleet');
   check(isCarUnlocked(buyer.profile,key),'the final upgrade earns the reward');same(getUpgradeLevels(buyer.profile,key),levels,'the earned reward comes fully upgraded');
-  // The Jesko travels only by air: record it as flown to the first course.
-  buyer.profile={...buyer.profile,heli:{version:1,carsAt:{[key]:COURSE[0].id}}};buyer._saveProfile();
   const options={startStage:0,car:key,mode:'timetrial',difficulty:'casual',cpuDifficulty:'medium',routeVariant:'route_a'},runs=[];
   for(const fps of [30,144]){
     const app=new App();app.autopilot=true;app._scriptedCrashDone=true;
@@ -117,7 +115,6 @@ try{
   console.log(`Jesko input-only Pacific race: ${runs[0].time}s, ${runs[0].steps} fixed steps, ${runs[0].crashes} crashes, exact 30/144 FPS trajectory.`);
   for(const [startStage,event]of COURSE.entries())if(event.expansion){
     const app=new App();check(app.purchaseCourse(event.id).ok,`${event.id}: normal credits unlock this course`);
-    app.profile={...app.profile,heli:{version:1,carsAt:{[key]:event.id}}};app._saveProfile();// flown here
     check(app.startCampaign({...options,startStage,mode:'duel',cpuDifficulty:'easy'}),`${event.id}: the owned reward enters this owned course`);
     app.autopilot=true;app._scriptedCrashDone=true;const s=app.duel.state;
     let missedGates=0;app.duel.onChange((_,change)=>{if(change.checkpointReset)missedGates++;});
