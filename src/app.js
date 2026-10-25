@@ -476,7 +476,8 @@ export class App {
       this.duel.state.status!=='menu'||this.player?.id!==ownerId||!isCourseUnlocked(this.profile,courseId)||
       !isCarUnlocked(this.profile,car)||getEquippedDriverId(this.profile)!==driverId||
       JSON.stringify(getUpgradeLevels(this.profile,car))!==JSON.stringify(upgrades)||
-      this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex])){
+      this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex])||
+      lessonId==='gears'&&this._switches().enabled('engine-curve')!==true){
       settleDriveLessonPreparation(this,token,'Lesson setup changed. Choose the corner again.');
       this._driveLessonUi?.update();return false;
     }
@@ -508,7 +509,9 @@ export class App {
     this._driveLessonPreparing=null;this.driveLessonBoardOpen=false;this.driveLessonMessage='';
     this.driveLessonRadioText='';this._driveLessonRadioEpoch=(this._driveLessonRadioEpoch||0)+1;
     this._driveLessonVoice?.stop();this._driveLessonVoice=null;this._driveLessonRadioChain?.dispose();this._driveLessonRadioChain=null;
-    this._driveLessonRadioQueue=Promise.resolve();delete this.duel.drivingLesson;this.ghostPose=null;this.driveLessonMarkers=null;
+    this._driveLessonRadioQueue=Promise.resolve();
+    if(this.duel.drivingLesson?.lesson.id==='snow')delete this.duel.state.tyre; // the winter run's tyres do not outlast the lesson
+    delete this.duel.drivingLesson;this.ghostPose=null;this.driveLessonMarkers=null;
   }
   _driveLessonEvent(state,event){
     const run=this.duel.drivingLesson;
@@ -540,7 +543,7 @@ export class App {
     run.saved=this._saveProfile();
     this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
       'Still unable to save. Progress and reward are available only in this session. Keep the game open and retry saving.';
-    if(run.saved)this._sayDriveLesson('drive.radio.'+run.lesson.id+'.pass');
+    if(run.saved)for(const id of run.lesson.id==='snow'?['drive.radio.snow.winter.result','drive.radio.snow.pass']:['drive.radio.'+run.lesson.id+'.pass'])this._sayDriveLesson(id);
     this._driveLessonUi?.update();return run.saved;
   }
   _sayDriveLesson(id){

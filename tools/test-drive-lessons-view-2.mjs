@@ -319,3 +319,46 @@ test('lesson 4: the last run is on winter tyres from the winter pose, the ghost 
     playerId: 'kyle', startStage: COURSE.findIndex(item => item.id === 'tremblant-woods'), upgrades: {}, opponentCount: 0,
     lesson: {...gearsPlan, driverId: 'club', ownerId: 'kyle'}}), /does not belong/);
 });
+
+// Pro is the setting where the override matters: its limiter can blow the engine, and in a gearbox lesson it must not.
+test('lesson 3 on Pro: the limiter cannot blow the engine in the lesson, and Pro keeps its own rules afterwards', async () => {
+  const savedGlobals = new Map(['__DUEL_QA__', 'location'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  Object.defineProperty(globalThis, '__DUEL_QA__', {configurable: true, value: true});
+  Object.defineProperty(globalThis, 'location', {configurable: true, value: {search: '?flags=driving-lessons,tyre-slip,engine-curve'}});
+  try {
+    const [{withReferenceApp}, {finishDriveLesson}, {DIFFICULTY, DRIVE}] = await Promise.all([
+      import('./build-reference-laps.mjs'), import('../src/lessons/drive-lesson-save.js'), import('../src/config.js'),
+    ]);
+    await withReferenceApp(async app => {
+      assert.equal(app.addPlayer('Lesson view pro').ok, true);
+      app.profile = {...app.profile, credits: 50000};
+      assert.equal(app._saveProfile(), true);
+      assert.equal(app.purchaseCourse('tremblant-woods').ok, true);
+      for (const id of ['corner', 'line']) {
+        const done = finishDriveLesson(app.profile, id, .5, 'falcone_f42', {engineCurve: true});
+        assert.equal(done.ok, true, done.reason); app.profile = done.profile;
+      }
+      assert.equal(app._saveProfile(), true);
+      app.setRaceSettings({eventId: 'tremblant-woods', car: 'falcone_f42', difficulty: 'pro'});
+      assert.equal(DIFFICULTY.pro.engineBlow, true); assert.equal(DIFFICULTY.pro.autoShift, false);
+      assert.equal(app.openDrivingLessons(), true);
+      assert.equal(await app.startLesson({courseId: 'tremblant-woods', lessonId: 'gears', car: 'falcone_f42', difficulty: 'pro'}), true, app.driveLessonMessage);
+      const duel = app.duel, state = duel.state;
+      assert.equal(duel.diff.engineBlow, false); assert.equal(duel.diff.autoShift, false);
+      // Hold the throttle in 2nd, never changing up, well past the over-rev time that blows an engine on Pro.
+      let over = 0;
+      for (let tick = 0; tick < 120 * 12 && state.status === 'racing' && duel.drivingLesson.lesson.phase === 'driving'; tick++) {
+        duel.setInput({throttle: 1, brake: 0, steer: 0}); duel.step(1 / 120);
+        if (state.revs > DRIVE.overRevFrac) over += 1 / 120;
+      }
+      assert.equal(over > DRIVE.overRevBlowSec + 1, true, 'the revs really stayed over the line for longer than blows an engine');
+      assert.equal(state.catastrophic, false); assert.equal(state.overrevSec, 0);
+      app.leaveLesson();
+      assert.equal(duel.diff, DIFFICULTY.pro); assert.equal(DIFFICULTY.pro.engineBlow, true);
+    });
+  } finally {
+    for (const [key, descriptor] of savedGlobals) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key];
+    }
+  }
+});

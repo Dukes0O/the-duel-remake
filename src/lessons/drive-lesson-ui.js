@@ -159,7 +159,7 @@ export function driveLessonBoardMarkup(props = {}) {
 }
 
 function currentLesson(props) {
-  const lesson = props?.lesson, info = DRIVE_LESSON_VIEW[lesson?.id];
+  const lesson = props?.lesson, info = Object.hasOwn(DRIVE_LESSON_VIEW, lesson?.id) ? DRIVE_LESSON_VIEW[lesson.id] : null;
   if (!textId(props?.playerId) || props.playerId !== props.runPlayerId || !info
       || !Object.hasOwn(info.stages, lesson.stage) || !['ready', 'driving', 'result'].includes(lesson.phase)) return null;
   return lesson;
@@ -350,9 +350,10 @@ export function mountDriveLessonUi(app,host){
   // Lesson 2's first-try markers: knocked over (drawn so) when the car drives into one, with the cone's knock.
   function syncMarkers(run){
     const lesson=run?.lesson,state=app.duel.state;
-    if(!run||lesson.id!=='line'||lesson.stage!=='late'||lesson.phase!=='driving'||!lesson.attempt){app.driveLessonMarkers=null;return;}
+    if(!run||lesson.id!=='line'||lesson.stage!=='late'||!lesson.attempt){app.driveLessonMarkers=null;return;}
     let view=app.driveLessonMarkers;
     if(!view||view.attempt!==lesson.attempt)view=app.driveLessonMarkers={attempt:lesson.attempt,tipped:new Set(),prev:null};
+    if(lesson.phase!=='driving')return; // the knocked markers stay down while the result card shows
     const here=app.duel.course.groundAt(state.s,state.lateral);
     if(view.prev){
       for(const index of markersKnocked(run.plan.instructor.markers,view.prev,here,view.tipped)){
@@ -365,7 +366,7 @@ export function mountDriveLessonUi(app,host){
     const available=app.drivingLessonsAvailable();
     const button=host.querySelector('[data-drive-open]');
     if(button)button.hidden=!available||app.duel.state.status!=='menu';
-    const props=boardProps(),run=!!props.lesson;
+    const props=app.driveLessonBoardOpen&&!app.duel.drivingLesson?boardProps():app.driveLessonProps(),run=!!props.lesson; // the extra rows are only needed on the board
     syncGauge(available&&run&&props.lesson.id==='gears',app.duel.state.revs);
     syncMarkers(available&&run?app.duel.drivingLesson:null);
     root.hidden=!available||!run&&!app.driveLessonBoardOpen;
@@ -395,7 +396,7 @@ export function driveLessonCompletion(run,state,playerId){
   const last=lesson?.id==='snow'?'winter':'challenge';
   if(!playerId||run?.ownerId!==playerId||run.state!==state||state?.playerId!==playerId||
     run.plan?.car!==state.car||run.plan?.difficulty!==state.difficulty||
-    run.plan?.driverId!==state.driverId||!lesson||!DRIVE_LESSON_VIEW[lesson.id]||
+    run.plan?.driverId!==state.driverId||!lesson||!Object.hasOwn(DRIVE_LESSON_VIEW,lesson.id)||
     lesson.stage!==last||lesson.phase!=='result'||!lesson.done||lesson.streak!==3||
     lesson.lastAttempt?.passed!==true||(last==='challenge'&&lesson.lastAttempt?.finished!==true)||
     !Number.isFinite(lesson.bestMargin)||lesson.bestMargin<=0)return null;
