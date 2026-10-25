@@ -82,3 +82,17 @@ Removed: step C (half-tank start) code and its test cases. Steps A and B are kep
 ## Final state and checks
 
 Final build: steps A and B on; all four pass types off; step C removed. Final 20-race batch, lane tier and build below (cloud Linux session, after merging current `origin/integration/wasteland`).
+
+Merged `origin/integration/wasteland` (af9787e8; it had moved since the step batches, and the switch-off baseline moved with it, so the figures below are not comparable with the step tables above). Final 20-race batch on af9787e8, against the new switch-off figures (off -> on):
+
+| Gate | Panorama Ridge | Tremblant Woods | Pacific Canyon |
+| --- | --- | --- | --- |
+| Nitro player leads after lap 1 (off -> on), at most 5/20 | 0 -> 0 PASS | 0 -> 0 PASS | 16 -> 0 PASS |
+| 8+-crash races, on <= off | 12 -> 11 PASS | 0 -> 1 FAIL | 0 -> 0 PASS |
+| Mean crashes <= off x 1.1 | 9.10 -> 9.35 PASS | 2.40 -> 3.00 FAIL (limit 2.64) | 0.30 -> 0.40 FAIL (limit 0.33) |
+| Early pile-ups <= off + 1 | 4 -> 4 PASS | 0 -> 0 PASS | 0 -> 0 PASS |
+| Max race time change, 2% | 1.31% PASS | 1.33% PASS | 1.98% PASS |
+
+Report-only: CPU passes 7.75 -> 8.35, 8.65 -> 9.90, 3.50 -> 3.30; slower player passed 20, 20, 15 of 20. Every race finished the player and all seven CPUs. The Woods and Pacific Canyon crash overages are one extra 8+-crash race and a handful of extra crashes on small counts; the nitro result (Panorama and Pacific Canyon no longer decided by a nitro start) is the intended effect.
+
+Checks (cloud Linux session): `node tools/test-race-field.mjs` 1,302 checks pass (off-switch field and RNG pins unchanged; new cases for the nitro lock and unlock); `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` 55 of 58 suites pass, the three failures being laptop-only (`test-course-kit`, `test-earned-cars-ui`, `test-medals`: Windows Recycle Bin cleanup); `npm run build` passes. The preview already carries `cpu-racecraft`.
