@@ -114,7 +114,7 @@ After merging current `integration/wasteland` (nothing new since the branch poin
   goes, twice. It also counts draw calls: **the game's own canvas draws nothing while the Lab is open** and the Lab's canvas does
   (negative control: with the one render3d line removed the scenario fails, 527 calls). Run here with Chromium and
   `--no-sandbox` (a wrapper script), 0 errors, 0 warnings.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`: 61 passed, 4 failed (after the review fixes and a second merge of integration). The four are the laptop-only suites
+- `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going`: 62 passed, 4 failed (after the review fixes and a third merge of integration; its code conflict in `screen-garage.js` and `screen-router.js` was settled by keeping both sides). The four are the laptop-only suites
   that cannot run in this cloud environment: `test-drive-through` (needs Windows: its cleanup asserts `win32`),
   `test-course-kit`, `test-earned-cars-ui` and `test-medals` (the same three that failed on the earlier cloud cards before any of
   this branch's files existed). None names a file this card changed. `test-heli-mode` (the import guard) passes **unchanged**:
