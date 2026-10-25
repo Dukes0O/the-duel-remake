@@ -56,6 +56,30 @@ The helicopter session's `persist` and `leave()` copied only `heli` and credits 
 in a flight (the cable, a bucket load) and a challenge pass would have been lost. Both now also carry `lab`
 (`test-lab-view.mjs` "the helicopter's Lab choices reach the saved profile" fails without it; checked by removing the line).
 
+## Review (one independent reviewer, no edits by them) and what changed
+
+Seven findings, all taken; each fixed with a test that fails without it unless noted:
+
+- **`labOpen` outlived the menu.** Opening the Lab and then starting a race by keyboard (Shift+Tab reached the menu behind) left
+  `labOpen` true: the game's renderer rested for the whole race and the Lab popped open again afterwards. `labOpen` is now open
+  only while the status is the menu (starting a race or a flight closes it for good), and the Lab traps Tab inside its panel.
+- **The G-force lap could never pass on the three off-road courses**: the race's `offRoad` flag is true all the time there. The
+  lap now measures the road (`|lateral|` against the road's half width, and the flag).
+- **Brian's caption was hidden behind the room's canvas** (same stacking level, canvas later). Fixed; the scenario now checks the
+  caption is the top element at its own middle.
+- **Scene leaks on failure paths**: a late failed start could orphan a newer room, and a machine with no 3D left a blank canvas
+  each open. The room's life is now one small keeper (`createSceneKeeper`) that drops a late start and builds the renderer before
+  adding the canvas; both are tested.
+- **The fire bar** changed for a damaged bucket with the switch off; it divides by the larger of 600 and `holds`, so a smaller
+  bucket reads as before and only a bigger one fills the bar. (Not tested: a drawing detail.)
+- **A spin read as cornering, and a refused pass looked saved.** The monitor ignores the push while the car is turned more than
+  0.6 rad from the road; if the Lab refuses the pass, the strip says "Passed, but not saved: why".
+- **A stale "Fill the tank first"** on the pad menu is dropped once the fuel, the bucket or the challenge in hand changes.
+
+The reviewer also checked and found fine: credit and ownership rules, a newer-version `lab` field refused and never
+overwritten, `profile.lab` through a visit, HTML escaping, and the race fingerprint with a mid-race pass (identical over 5,400
+steps).
+
 ## Settled in writing
 
 The card's questions and the design lead's answers are on the card (`docs/board/cards/LAB-VIEW.md`, "Claude answers"). One
@@ -73,7 +97,7 @@ the REVERSE sounds are not used here: the fan bench's hum and the secret belong 
 
 After merging current `integration/wasteland` (nothing new since the branch point), once:
 
-- `node tools/test-lab-view.mjs`: 24 tests. Highlights: the G-force monitor (3 corners pass, off-road spoils, a corner across
+- `node tools/test-lab-view.mjs`: 29 tests. Highlights: the G-force monitor (3 corners pass, off-road spoils, a corner across
   the start line, no double count); **a race's fingerprint (5,400 steps of an autopilot race, hashed every step) is identical with
   the lap armed and not armed**, with the monitor shown to be watching (peak g above 0.3); the rust answer comes from the bench's
   jars; every lesson has a bench, a challenge kind, three Brian lines and a bench in the room; every bench reads out with no

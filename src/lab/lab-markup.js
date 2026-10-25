@@ -94,6 +94,6 @@ export function captionMarkup(text) {
 export function gforceStripMarkup(view) {
   if (!view) return '';
   const words = {building: 'Take a corner hard', counting: 'Hold the road to the end of the corner', 'off the road': 'Off the road: that corner does not count',
-    between: 'Next corner', passed: 'G-force lap passed'}[view.state] ?? '';
+    between: 'Next corner', passed: view.saveNote ? `Passed, but not saved: ${view.saveNote}` : 'G-force lap passed'}[view.state] ?? '';
   return `<div class="lab-gforce" role="status"><b>${view.g.toFixed(1)} g</b><span>CORNERS ${view.count}/${view.need}</span><em>${escape(words)}</em></div>`;
 }

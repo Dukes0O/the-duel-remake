@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createHash} from 'node:crypto';
 import {createGforceMonitor, stepGforceMonitor, gforceView, lateralGOf, GFORCE_LAP} from '../src/lab/lab-gforce.js';
-import {createLabLap} from '../src/lab/lab-lap.js';
+import {createLabLap, leftRoad} from '../src/lab/lab-lap.js';
 import {RUST_PARTS, PROTECTIONS, rustOf, rightProtection, checkProtections, RUST_OK} from '../src/lab/lab-workshop.js';
 import {BENCH_OF, CHALLENGE_KIND, readoutRows, openBench, setControl, runBench, goalMet, challengeState, shopRows, choiceRows, boardRows,
   lineId, lineText, lineIdsOf, passIn, buyIn} from '../src/lab/lab-model.js';
@@ -16,7 +16,7 @@ import {labOf} from '../src/lab/lab-save.js';
 import {createProfile} from '../src/progression.js';
 import {lightestArm} from '../src/lab/benches/strength.js';
 import {boardMarkup, benchMarkup, shopMarkup, headerMarkup, gforceStripMarkup, optionLabel} from '../src/lab/lab-markup.js';
-import {createLabScene, labSceneStats, benchPoses, MODEL_OF_LESSON} from '../src/lab/lab-scene.js';
+import {createLabScene, createSceneKeeper, labSceneStats, benchPoses, MODEL_OF_LESSON} from '../src/lab/lab-scene.js';
 import {dispatchBoardMarkup, handleBoardAction} from '../src/heli/heli-board.js';
 import {lessonsMarkup, challengeMarkup, challengeGoal, noticeText} from '../src/heli/heli-ui.js';
 import {App} from '../src/app.js';
@@ -405,4 +405,99 @@ test('every bench has a camera pose, and the first pose looks at the bench from 
   const [pose] = benchPoses({x: 10, z: 2}, [8, 3, 7]);
   assert.ok(Math.hypot(pose.position[0] - 10, pose.position[2] - 2) > 8, 'far enough back to see the bench');
   assert.ok(pose.position[0] < 10 + 1, 'on the middle-of-the-hall side');
+});
+
+// ---- faults found in review ----
+
+test('the Lab is open only on the menu: starting a race or a flight closes it for good', () => {
+  const app = labApp();
+  assert.equal(app.openLab(), true);
+  app.startCampaign({car: 'falcone_f42', difficulty: 'casual'});
+  assert.equal(app.labOpen, false, 'a race is not the menu');
+  app.returnToMenu();
+  assert.equal(app.labOpen, false, 'and the Lab does not pop open again');
+  assert.equal(app.openLab(), true);
+  app.closeLab();
+  assert.equal(app.visitHeli(), true);
+  assert.equal(app.labOpen, false);
+  app.returnToMenu();
+});
+
+test('on the off-road courses the lap measures the road, not the race\'s always-on off-road flag', () => {
+  const course = {roadHalfWidthAt: () => 9};
+  assert.equal(leftRoad({offRoad: true, lateral: 2, s: 10}, course), false, 'in the middle of the road');
+  assert.equal(leftRoad({offRoad: true, lateral: -12, s: 10}, course), true, 'past the edge');
+  assert.equal(leftRoad({offRoad: false, lateral: 30, s: 10}, course), false, 'the race says it is on the road');
+  const lap = createLabLap();
+  lap.arm();
+  const state = {status: 'racing', paused: false, s: 0, speedMph: 90, yawVelocity: 0.9, offRoad: true, lateral: 1, headingError: 0};
+  const flat = {length: 1000, roadHalfWidthAt: () => 9, at: s => ({x: s * Math.cos(s / 80), z: s * Math.sin(s / 80), heading: s / 80}), groundAt: () => ({y: 0})};
+  const states = [];
+  for (let s = 0; s < 1000; s += 2) { state.s = s; lap.step(state, flat); states.push(lap.view()?.state); }
+  assert.ok(!states.includes('off the road'), 'a car in the middle of an off-road course is never off the road');
+});
+
+test('a spin does not count as a corner, and a refused save is shown, not hidden', () => {
+  const m = createGforceMonitor({corners, length: 1000});
+  for (let s = 90; s <= 260; s += 2) stepGforceMonitor(m, {s, speedMph: 90, yawVelocity: 2.6 * 9.81 / (90 * 0.44704), offRoad: false, sliding: true});
+  assert.equal(gforceView(m).count, 0, 'a sliding car\'s yaw spike is not cornering');
+  // A course with three bends of 100 m radius, driven at 2.4 g; the save is refused.
+  const heading = s => [[200, 300], [500, 600], [800, 900]].reduce((sum, [from, to]) => sum + Math.max(0, Math.min(1, (s - from) / (to - from))), 0) * 1.1;
+  const path = [];
+  for (let i = 0, x = 0, z = 0; i <= 1000; i++) { path.push({x, z, heading: heading(i)}); x += Math.sin(heading(i)); z += Math.cos(heading(i)); }
+  const course = {length: 1000, roadHalfWidthAt: () => 9, at: s => path[Math.max(0, Math.min(1000, Math.round(s)))], groundAt: () => ({y: 0})};
+  let asked = 0;
+  const lap = createLabLap({onPass: () => { asked++; return {ok: false, reason: 'Opens after driving lesson 1'}; }});
+  lap.arm();
+  const race = {status: 'racing', paused: false, s: 0, speedMph: 90, yawVelocity: 2.4 * 9.81 / (90 * 0.44704), offRoad: false, lateral: 0, headingError: 0};
+  let view = null;
+  for (let step = 0; step < 1000; step++) { race.s = step; lap.step(race, course); view = lap.view() ?? view; }
+  assert.equal(asked, 1, 'the pass was asked for once');
+  assert.equal(view.state, 'passed');
+  assert.equal(view.saveNote, 'Opens after driving lesson 1');
+  assert.ok(gforceStripMarkup(view).includes('not saved'));
+});
+
+test('the room keeper: a late or failed start never leaves a room, a canvas or a stale plain screen', async () => {
+  const stage = fakeHost(fakeWindow());
+  const made = [];
+  const factory = ({host}) => { const room = {disposed: 0, dispose() { this.disposed++; }, show() {}}; made.push(room); return room; };
+  const manifest = {models: [], layout: {}};
+  // Closed while the manifest loads: nothing is built.
+  let release;
+  const slow = new Promise(resolve => { release = resolve; });
+  let keeper = createSceneKeeper({stage, loadManifest: () => slow, sceneFactory: factory});
+  const started = keeper.start();
+  keeper.stop();
+  release(manifest);
+  await started;
+  assert.equal(made.length, 0);
+  // Open, close and open again with the first load failing late: the second room survives.
+  let rejectFirst, plain = 0;
+  const first = new Promise((_, reject) => { rejectFirst = reject; });
+  let calls = 0;
+  keeper = createSceneKeeper({stage, loadManifest: () => (calls++ === 0 ? first : Promise.resolve(manifest)), sceneFactory: factory, onPlain: () => { plain++; }});
+  const one = keeper.start();
+  keeper.stop();
+  const two = keeper.start();
+  await two;
+  assert.equal(made.length, 1);
+  rejectFirst(new Error('late'));
+  await one;
+  assert.equal(plain, 0, 'the old start\'s failure is ignored');
+  assert.ok(keeper.scene, 'the second room is still the room');
+  keeper.stop();
+  assert.equal(made[0].disposed, 1);
+  assert.equal(keeper.scene, null);
+  // A factory that throws (no 3D) leaves the screen plain.
+  keeper = createSceneKeeper({stage, loadManifest: async () => manifest, sceneFactory: () => { throw new Error('no webgl'); }, onPlain: () => { plain++; }});
+  await keeper.start();
+  assert.equal(plain, 1);
+});
+
+test('a machine with no 3D leaves no canvas behind', () => {
+  const win = fakeWindow(), host = fakeHost(win);
+  assert.throws(() => createLabScene({host, manifest: {models: [], layout: {}}, createRenderer: () => { throw new Error('no webgl'); }}), /no webgl/);
+  assert.equal(host.children.size, 0);
+  assert.equal(win.listeners.size, 0);
 });

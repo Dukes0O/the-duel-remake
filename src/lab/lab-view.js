@@ -8,7 +8,7 @@ import {headerMarkup, boardMarkup, benchMarkup, shopMarkup, captionMarkup, gforc
 import {checkProtections} from './lab-workshop.js';
 import {labOf} from './lab-save.js';
 import {LAB_LINES} from './lab-lines.js';
-import {createLabScene} from './lab-scene.js';
+import {createSceneKeeper, createLabScene} from './lab-scene.js';
 
 const CAPTION_MIN_SECONDS = 4;
 const defaultManifest = () => fetch('/assets/models/lab/manifest.json').then(response => {
@@ -67,7 +67,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   const captionEl = section.querySelector('.lab-caption'), side = section.querySelector('.lab-side');
   const voice = createLineVoice(app);
 
-  let shown = false, disposed = false, scene = null, sceneToken = 0;
+  let shown = false, disposed = false;
   let ui = freshState(), caption = null, lastTop = '', lastSide = '', lastCaption = '', lastStrip = '';
 
   function freshState() { return {tab: 'lessons', bench: null, message: '', protect: null, explained: false}; }
@@ -121,7 +121,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       lastSide = sideHtml;
       restoreFocus(key);
     }
-    scene?.show(ui.tab === 'lessons' && ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null);
+    keeper.scene?.show(ui.tab === 'lessons' && ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null);
   }
   const focusKey = () => {
     const el = doc.activeElement;
@@ -253,7 +253,18 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     ui.bench = setControl(ui.bench, el.dataset.labControl, el.value);
   }
   function onKey(event) {
-    if (event.code !== 'Escape' || !shown) return;
+    if (!shown) return;
+    // The menu behind the Lab is not reachable by Tab: focus wraps inside the panel.
+    if (event.code === 'Tab') {
+      const items = [...section.querySelectorAll('button:not(:disabled),select,input')];
+      const first = items[0], last = items.at(-1);
+      if (!first) return;
+      if (!section.contains(doc.activeElement)) { event.preventDefault(); first.focus(); }
+      else if (event.shiftKey && doc.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && doc.activeElement === last) { event.preventDefault(); first.focus(); }
+      return;
+    }
+    if (event.code !== 'Escape') return;
     event.preventDefault();
     if (ui.bench) backToBoard(); else app.closeLab();
   }
@@ -265,23 +276,13 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   });
 
   // ---- the room ----
-  async function startScene() {
-    const token = ++sceneToken;
-    try {
-      const manifest = await loadManifest();
-      if (token !== sceneToken || !shown || disposed) return;
-      scene = sceneFactory({host: stage, manifest, quality: 'high'});
-      scene.show(ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null);
-    } catch {
-      // No 3D room (no graphics, or the models did not load): the board and benches still work.
-      scene = null;
-      stage.classList.add('lab-stage-plain');
-    }
-  }
+  const keeper = createSceneKeeper({stage, loadManifest, sceneFactory,
+    onRoom: room => room.show(ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null),
+    // No 3D room (no graphics, or the models did not load): the board and benches still work.
+    onPlain: () => stage.classList.add('lab-stage-plain')});
+  const startScene = () => keeper.start();
   function stopScene() {
-    sceneToken++;
-    scene?.dispose();
-    scene = null;
+    keeper.stop();
     stage.classList.remove('lab-stage-plain');
   }
 
@@ -328,7 +329,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       return open ? {open: true} : null;
     },
     // For tests.
-    state: () => ({tab: ui.tab, lesson: ui.bench?.lessonId ?? null, message: ui.message, scene: scene !== null}),
+    state: () => ({tab: ui.tab, lesson: ui.bench?.lessonId ?? null, message: ui.message, scene: keeper.scene !== null}),
     dispose() {
       if (disposed) return;
       if (shown) { shown = false; onClose(); }

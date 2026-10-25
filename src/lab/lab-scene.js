@@ -50,8 +50,9 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
   const doc = host.ownerDocument, win = doc.defaultView;
   const canvas = doc.createElement('canvas');
   canvas.className = 'lab-canvas';
-  host.append(canvas);
+  // The renderer is made before the canvas joins the page, so a machine with no 3D leaves nothing behind.
   const renderer = createRenderer(canvas);
+  host.append(canvas);
   renderer.setPixelRatio?.(Math.min(2, quality === 'high' ? (win?.devicePixelRatio || 1) : 1));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -198,6 +199,33 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
       renderer.forceContextLoss?.();
       canvas.remove();
       parts.clear(); models.clear();
+    },
+  };
+}
+
+// The room's life inside the screen: start it when the Lab opens, stop it when the Lab closes. A start that finishes after a stop
+// (or after a newer start) is dropped, and a room that cannot be made leaves the screen plain. Everything started is stopped.
+export function createSceneKeeper({stage, loadManifest, sceneFactory = createLabScene, onPlain = () => {}, onRoom = () => {}}) {
+  let ticket = 0, scene = null;
+  return {
+    get scene() { return scene; },
+    async start(wanted) {
+      const mine = ++ticket;
+      try {
+        const manifest = await loadManifest();
+        if (mine !== ticket) return;
+        const made = sceneFactory({host: stage, manifest, quality: 'high'});
+        if (mine !== ticket) { made.dispose(); return; }
+        scene = made;
+        onRoom(made, wanted);
+      } catch {
+        if (mine === ticket) { scene = null; onPlain(); }
+      }
+    },
+    stop() {
+      ticket++;
+      scene?.dispose();
+      scene = null;
     },
   };
 }

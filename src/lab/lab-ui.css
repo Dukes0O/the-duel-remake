@@ -16,7 +16,7 @@
 .lab-stage{position:relative;flex:1;min-width:0;background:linear-gradient(#1b2224,#101516)}
 .lab-stage .lab-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .lab-stage-plain::after{content:'Brian\2019s workshop';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 28px 'Segoe UI',sans-serif;color:#ffffff33}
-.lab-caption{position:absolute;left:24px;right:24px;bottom:24px;padding:12px 16px;background:#0b0f10e6;border-left:3px solid #ffcf3f;font-size:16px;line-height:1.5;text-shadow:none}
+.lab-caption{z-index:2;position:absolute;left:24px;right:24px;bottom:24px;padding:12px 16px;background:#0b0f10e6;border-left:3px solid #ffcf3f;font-size:16px;line-height:1.5;text-shadow:none}
 .lab-caption[hidden]{display:none}
 .lab-caption-text{margin:0}
 .lab-caption-text b{margin-right:8px;font-size:11px;letter-spacing:2px;color:#ffcf3f}

@@ -237,13 +237,16 @@ export function handleBoardAction(action, app) {
 // view and handles its buttons. Call render() as often as the view changes;
 // the root's markup is replaced only when it differs.
 export function createDispatchBoard({root, app}) {
-  let last = null, labNote = '';
+  let last = null, labNote = '', noteKey = '';
   const render = () => {
     const session = app.heliSession, view = app.heliView?.() ?? null;
     const fire = app.forestFireEnabled?.() === true && session?.bucketRepairCost ? {repairCost: session.bucketRepairCost()} : null;
     const skins = session?.paintShop?.() ?? null;
     // LAB-VIEW: the Lab's menu, with the reason the last Lab button was refused (the Lab's own "Try the challenge" leaves one here).
-    if (app.heliChallengeNote) { labNote = app.heliChallengeNote; app.heliChallengeNote = null; }
+    // The note is dropped when the fuel or the challenge in hand has changed since it was made (the tank was filled, a challenge began).
+    const key = `${Math.round(view?.heli?.fuelKg ?? 0)}|${view?.challenge?.id ?? ''}|${view?.bucket ? 1 : 0}`;
+    if (app.heliChallengeNote) { labNote = app.heliChallengeNote; app.heliChallengeNote = null; noteKey = key; }
+    else if (labNote && key !== noteKey) labNote = '';
     const lab = session?.lab?.on === true ? {...session.lab, challenges: session.challengeBoard?.() ?? [], note: labNote} : null;
     const markup = session && view ? dispatchBoardMarkup(view, {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode, fire, skins,
       lessonOffer: session.lessonHereOffer?.() ?? null, lab}) : '';
@@ -257,6 +260,7 @@ export function createDispatchBoard({root, app}) {
     const result = handleBoardAction(button.dataset.heliBoard, app);
     // LAB-VIEW: a refused Lab button says why; any other button clears it.
     labNote = /^(?:bucket-load|line|challenge)/.test(button.dataset.heliBoard) && result && result.ok === false ? String(result.reason ?? '') : '';
+    noteKey = `${Math.round(app.heliView?.()?.heli?.fuelKg ?? 0)}|${app.heliView?.()?.challenge?.id ?? ''}|${app.heliView?.()?.bucket ? 1 : 0}`;
     render();
   };
   root.addEventListener('click', onClick);

@@ -198,7 +198,7 @@ export function createFireView({THREE, scene, load = defaultLoad, quality = 'hig
       bucket.root.rotation.set(0, b.heading || 0, 0);
       bucket.body.visible = b.damage === 0;
       bucket.dented.visible = b.damage > 0;
-      const fill = b.holds > 0 ? Math.min(1, b.water / b.holds) : 0; // LAB-VIEW: the bucket's own size, so the bigger bucket fills the bar
+      const fill = b.holds > 0 ? Math.min(1, b.water / Math.max(600, b.holds)) : 0; // LAB-VIEW: a bigger bucket fills the bar; a smaller one reads as before
       bucket.water.visible = fill > .02;
       bucket.water.position.y = bucket.waterY - BODY * (1 - fill);
     }

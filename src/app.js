@@ -252,7 +252,7 @@ export class App {
     this.lastT = null;
     this.running = false;
     // LAB-VIEW: the Lab screen's open flag, and the G-force lap that reads the race (its pass is saved through labCommit).
-    this.labOpen = false;
+    this._labOpen = false;
     this.labLap = createLabLap({onPass: () => this.labCommit((profile, flags) => labPassLesson(profile, 'gforce', {flags}), {anytime: true})});
     this._scriptedCrashDone = false;
     this._syncHiddenRoadDiscovery();
@@ -1891,6 +1891,9 @@ export class App {
   }
   // ---- LAB-VIEW (docs/LAB.md): whether the Lab is open and the one place the Lab's own save calls land. The screen is
   // src/lab/lab-view.js; the rules are src/lab/lab-save.js and lab-shop.js. Nothing here touches a race or a flight.
+  // Open means open on the menu: starting a race or a flight closes it, and it never reopens by itself.
+  get labOpen(){if(this._labOpen===true&&this.duel.state.status!=='menu')this._labOpen=false;return this._labOpen===true;}
+  set labOpen(value){this._labOpen=value===true;}
   labAvailable(){return !!this.player&&this._switches().enabled('lab')===true;}
   openLab(){
     if(this.duel.state.status!=='menu'||!this.labAvailable()||this.labOpen===true)return false;

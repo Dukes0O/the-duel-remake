@@ -49,7 +49,7 @@ export function stepGforceMonitor(monitor, sample) {
   }
   if (number !== null && !monitor.done) {
     if (sample?.offRoad === true) { monitor.clean = false; monitor.peak = 0; }
-    else if (monitor.clean) monitor.peak = Math.max(monitor.peak, g);
+    else if (monitor.clean && sample?.sliding !== true) monitor.peak = Math.max(monitor.peak, g);
   }
   monitor.best = Math.max(monitor.best, sample?.offRoad === true ? 0 : g);
   return events;

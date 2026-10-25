@@ -45,6 +45,9 @@ export async function run(context) {
   await context.evaluate(`document.querySelector('[data-lab-lesson="start:lift"]').click()`);
   await context.waitFor(`!!document.querySelector('.lab-bench') && document.querySelector('.lab-caption-text')?.textContent.includes('weighing pad')`,
     'the lift bench with Brian’s intro caption', 20_000);
+  // The caption is on top of the room, not hidden behind its canvas.
+  await context.waitFor(`(() => { const box = document.querySelector('.lab-caption').getBoundingClientRect(); const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2); return !!top && !!top.closest('.lab-caption'); })()`,
+    'Brian\u2019s caption shows above the canvas', 10_000);
   await context.evaluate(`(() => { const set = (id, value) => { const el = document.querySelector('[data-lab-control="' + id + '"]'); el.value = value; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); };
     set('cargoKg', 3000); set('collective', 1); document.querySelector('[data-lab="run"]').click(); })()`);
   await context.waitFor(`document.querySelector('.lab-readout')?.textContent.includes('She stays on the pad')`, 'the lift readout', 10_000);
