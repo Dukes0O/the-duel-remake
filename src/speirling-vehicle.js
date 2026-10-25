@@ -11,24 +11,26 @@ import { prepareVehicleDamage } from './vehicles.js';
 // tub between two tall sculpted front fenders (a deep channel on each side of the
 // canopy, a small light on each fender tip), a wide flat black nose intake with a
 // bat-wing top edge and a white light strip at each outer corner, big muscular
-// rear haunches with a dark intake behind each door, mirrors on thin stalks, a
-// large black wing on two swan-neck mounts over a black diffuser with the two
-// round fan exits low in the tail face, big dark multi-spoke slicks with their
-// lower halves showing, and a black skirt tucked inside the floor edge.
+// rear haunches with a dark intake behind each door and, between them, a tall dark
+// central spine with a mesh grille either side of it (the fans hide behind), mirrors
+// on thin stalks, a large black wing on two swan-neck mounts over a black diffuser,
+// big dark multi-spoke slicks with their lower halves showing, and a black skirt
+// tucked inside the floor edge.
 // Metallic blue-grey over a black lower body, with a little track grime low down.
 export const SPEIRLING_VEHICLE_DIMENSIONS = Object.freeze({
-  mcmurtry_speirling: Object.freeze({ width: 1.64, length: 3.42, height: 1.15, wheelRadius: .33 }),
+  mcmurtry_speirling: Object.freeze({ width: 1.64, length: 3.47, height: 1.24, wheelRadius: .33 }),
 });
-const { materials, batch, cockpit, wheels, fitSurfacePatch } = originalVehicleParts;
+const { materials, batch, panel, cockpit, wheels, fitSurfacePatch } = originalVehicleParts;
 const AXLES = Object.freeze([1.04, -1.06]);
 const TRACK = .58, WHEEL_WIDTH = .27, AXLE_Y = .33;
-const EXIT_X = .245, EXIT_Y = .33, TAIL_Z = -1.65;               // the two round fan exits low in the tail face
+const GRILLE_X = .27, GRILLE_Y = .37, GRILLE_W = .24, GRILLE_H = .26, TAIL_Z = -1.65;   // the two mesh grilles either side of the spine
+const HAUNCH = { sx: .20, sy: .62, sz: .60 };                                        // the rear haunches
 
 // The central tub. Stations: [z, half width, floor, shoulder, rim height, rim half width].
 // Low and narrow between the fenders; the nose is a wide flat low front; the tail swells.
 export const SPEIRLING_SECTIONS = [
-  [-1.65, .50, .17, .46, .62, .38], [-1.35, .54, .15, .50, .66, .40],
-  [-.85, .46, .13, .48, .60, .36], [-.25, .40, .12, .46, .54, .32],
+  [-1.65, .42, .17, .36, .44, .30], [-1.35, .44, .15, .38, .46, .32],
+  [-.85, .42, .13, .42, .50, .32], [-.25, .40, .12, .46, .54, .32],
   [.30, .38, .12, .44, .50, .30], [.85, .42, .12, .40, .46, .32],
   [1.25, .48, .12, .34, .40, .36], [1.52, .52, .13, .30, .35, .40],
   [1.65, .50, .14, .27, .31, .40],
@@ -50,7 +52,7 @@ export function createSpeirlingVehicle({ key = 'mcmurtry_speirling', color = 0x5
     paint: m.paint, originalColor: m.paint.color.clone(), wheels: [], wheelPivots: [],
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...SPEIRLING_VEHICLE_DIMENSIONS[key] },
     ultimateKey: key, fans: [],
-    designFeatures: Object.freeze(['low-wide-stance', 'bubble-canopy', 'tall-front-fenders', 'bat-wing-intake', 'rear-haunch-intakes', 'swan-neck-wing', 'twin-round-fan-exits', 'floor-skirt']),
+    designFeatures: Object.freeze(['low-wide-stance', 'bubble-canopy', 'tall-front-fenders', 'bat-wing-intake', 'rear-haunch-intakes', 'central-spine', 'rear-mesh-grilles', 'swan-neck-wing', 'floor-skirt']),
     damageSpace: { scale: [.9, .66, 1.0], offset: [0, 0, 0], frontGlassZ: .55, rearGlassZ: -.18 },
   });
 
@@ -58,7 +60,7 @@ export function createSpeirlingVehicle({ key = 'mcmurtry_speirling', color = 0x5
   canopy(b, m);
   for (const side of [-1, 1]) {
     pod(b, m, side * (TRACK + .02), AXLES[0], { sx: .19, sy: .57, sz: .62, zc: AXLES[0] + .02 });      // the tall front fenders
-    pod(b, m, side * (TRACK + .02), AXLES[1], { sx: .20, sy: .49, sz: .60, zc: AXLES[1] });       // the muscular rear haunches
+    pod(b, m, side * (TRACK + .02), AXLES[1], { ...HAUNCH, zc: AXLES[1] });       // the muscular rear haunches
   }
   frontEnd(b, m);
   rearEnd(vehicle, b, m);
@@ -175,36 +177,63 @@ function frontEnd(b, m) {
   }
 }
 
-// The tail: a vertical face with two round fan exits low down, dark with fine grilles; the fans
-// sit inside (nodes of their own so a viewer can spin them); a thin red light across the face
-// over a black diffuser; a large black wing on two swan-neck mounts standing well above the tail.
+// The rear: behind the cabin the body splits into two tall rounded haunches over the wheels
+// with deep tunnels either side of a narrow central spine. The spine is a tall dark pod
+// down the middle of the tail, tapering to a point with a red diamond light low at its tip,
+// a small blank panel near its top, and a thin fin running back to the wing. Either side
+// of it a large rectangular black mesh grille (the fan and radiator exhaust), set deep, with
+// the fans behind it (nodes of their own so a viewer can spin them). Two round red ring lights
+// one above the other on each haunch's rear face; under it all a black diffuser with vertical
+// strakes and a small plate panel; a wide black wing on two swan-neck mounts from the
+// haunch tops, standing above the tail.
+const SPINE_SECTIONS = [
+  [-1.66, .03, .30, .38, .50, .02], [-1.56, .09, .28, .42, .58, .05], [-1.25, .15, .26, .46, .70, .09],
+  [-.85, .16, .26, .50, .74, .10], [-.50, .11, .30, .52, .70, .07],
+];
 function rearEnd(vehicle, b, m) {
+  // The spine.
+  const shell = smoothShell(SPINE_SECTIONS, .08, 20);
+  b.add(shell, m.carbon); shell.dispose();
+  b.box(m.plate, [.085, .045, .012], [0, .64, -1.20], [-.42, 0, 0], 0);                          // a small blank panel near the top
+  const diamond = new THREE.BoxGeometry(.075, .075, .014); b.add(diamond, m.brake, [0, .33, -1.675], [0, 0, Math.PI / 4]); diamond.dispose();   // the red diamond at the point
+  // The thin central fin from the canopy's top back to the wing.
+  const fin = [[-.40, .76], [-.9, .88], [-1.3, 1.0], [-1.55, 1.08]], base = [[-.40, .72], [-.9, .76], [-1.3, .66], [-1.55, .58]];
+  for (let k = 0; k < fin.length - 1; k++) {
+    const quad = [[0, base[k][1], fin[k][0]], [0, base[k + 1][1], fin[k + 1][0]], [0, fin[k + 1][1], fin[k + 1][0]], [0, fin[k][1], fin[k][0]]];
+    panel(b, m.carbon, quad); panel(b, m.carbon, [...quad].reverse());
+  }
   for (const side of [-1, 1]) {
-    const x = side * EXIT_X;
-    const ring = new THREE.TorusGeometry(.205, .016, 8, 32); b.add(ring, m.carbon, [x, EXIT_Y, TAIL_Z - .003]); ring.dispose();
-    const dark = new THREE.CircleGeometry(.20, 32); b.add(dark, m.darkAlloy, [x, EXIT_Y, TAIL_Z - .004], [0, Math.PI, 0]); dark.dispose();
-    for (const r of [.07, .13, .19]) { const g = new THREE.TorusGeometry(r, .0035, 4, 28); b.add(g, m.carbon, [x, EXIT_Y, TAIL_Z - .012]); g.dispose(); }
-    for (let i = 0; i < 8; i++) b.box(m.carbon, [.006, .38, .008], [x, EXIT_Y, TAIL_Z - .012], [0, 0, i * Math.PI / 8], 0);
-    const fan = new THREE.Group(); fan.name = `Fan ${side > 0 ? 'left' : 'right'}`; fan.position.set(x, EXIT_Y, TAIL_Z + .16);
+    const x = side * GRILLE_X;
+    // The grille: a black frame round a recessed dark mesh with fine horizontal and vertical bars.
+    for (const [w, h, dx, dy] of [[GRILLE_W + .03, .018, 0, GRILLE_H / 2], [GRILLE_W + .03, .018, 0, -GRILLE_H / 2], [.018, GRILLE_H, GRILLE_W / 2, 0], [.018, GRILLE_H, -GRILLE_W / 2, 0]]) b.box(m.carbon, [w, h, .04], [x + dx, GRILLE_Y + dy, TAIL_Z - .012], [0, 0, 0], 0);
+    b.box(m.darkAlloy, [GRILLE_W, GRILLE_H, .01], [x, GRILLE_Y, TAIL_Z - .002], [0, 0, 0], 0);
+    for (let i = 1; i < 6; i++) b.box(m.carbon, [GRILLE_W, .006, .008], [x, GRILLE_Y - GRILLE_H / 2 + i * GRILLE_H / 6, TAIL_Z - .008], [0, 0, 0], 0);
+    for (let i = 1; i < 5; i++) b.box(m.carbon, [.006, GRILLE_H, .008], [x - GRILLE_W / 2 + i * GRILLE_W / 5, GRILLE_Y, TAIL_Z - .008], [0, 0, 0], 0);
+    // The fan, inside the tail behind its grille , and a nitro plume through the grille.
+    const fan = new THREE.Group(); fan.name = `Fan ${side > 0 ? 'left' : 'right'}`; fan.position.set(x, GRILLE_Y, TAIL_Z + .16);
     const fb = batch(fan);
-    for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5; fb.box(m.carbon, [.07, .15, .01], [Math.sin(a) * .11, Math.cos(a) * .11, 0], [0, 0, -a], 0); }
-    fb.box(m.carbon, [.08, .08, .06], [0, 0, 0], [0, 0, 0], 0);
+    for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5; fb.box(m.carbon, [.06, .13, .01], [Math.sin(a) * .09, Math.cos(a) * .09, 0], [0, 0, -a], 0); }
+    fb.box(m.carbon, [.07, .07, .05], [0, 0, 0], [0, 0, 0], 0);
     fb.finish();
     vehicle.add(fan); vehicle.userData.fans.push(fan);
     const material = new THREE.MeshBasicMaterial({ name: 'Nitro flame', color: 0x82d9ff, transparent: true, opacity: .72, blending: THREE.AdditiveBlending, depthWrite: false });
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(.14, .8, 14).rotateX(-Math.PI / 2).translate(0, 0, -.4), material);
-    flame.name = 'Nitro exhaust flame'; flame.position.set(x, EXIT_Y, TAIL_Z - .02); flame.visible = false;
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(.12, .8, 14).rotateX(-Math.PI / 2).translate(0, 0, -.4), material);
+    flame.name = 'Nitro exhaust flame'; flame.position.set(x, GRILLE_Y, TAIL_Z - .02); flame.visible = false;
     vehicle.add(flame); vehicle.userData.boostFlames.push(flame);
-    // A swan-neck mount: up from the deck, over and down to hang the wing from above; and an end plate.
-    b.tube(m.carbon, [[side * .30, .62, -1.32], [side * .30, .86, -1.40], [side * .30, 1.08, -1.50], [side * .30, 1.11, -1.60]], .022, 12);
-    b.box(m.carbon, [.02, .17, .36], [side * .72, 1.04, -1.56], [0, 0, 0], 0);
+    // Two round red ring lights, one above the other, on the haunch's rear face (tilted with the surface).
+    for (const [y, tilt] of [[.50, .28], [.74, .70]]) {
+      const hx = side * (TRACK + .02), dz = (y - AXLE_Y) / HAUNCH.sy, zc = AXLES[1] - HAUNCH.sz * Math.sqrt(Math.max(0, 1 - dz * dz));
+      const ring = new THREE.TorusGeometry(.042, .012, 8, 22); b.add(ring, m.brake, [hx, y, zc - .004], [-tilt, 0, 0]); ring.dispose();
+    }
+    // A swan-neck mount from the haunch top up and over, and an end plate.
+    b.tube(m.carbon, [[side * (TRACK + .02), .93, -1.06], [side * (TRACK + .02), 1.06, -1.30], [side * (TRACK + .02), 1.19, -1.52], [side * (TRACK + .02), 1.19, -1.62]], .022, 12);
+    b.box(m.carbon, [.02, .17, .34], [side * .76, 1.13, -1.60], [0, 0, 0], 0);
   }
-  b.box(m.carbon, [1.44, .028, .32], [0, 1.085, -1.57], [-.07, 0, 0], 0);                        // the wing
-  b.box(m.carbon, [1.44, .02, .1], [0, 1.115, -1.67], [-.5, 0, 0], 0);                           // its flap
-  b.box(m.brake, [.80, .022, .014], [0, .55, TAIL_Z - .016], [0, 0, 0], 0);                      // the thin red light
-  b.box(m.carbon, [1.0, .20, .05], [0, .22, TAIL_Z + .02], [0, 0, 0], 0);                        // the diffuser face
-  for (let i = -4; i <= 4; i++) b.box(m.carbon, [.02, .15, .30], [i * .115, .21, TAIL_Z + .16], [.14, 0, 0], 0);   // its strakes
-  b.box(m.plate, [.22, .05, .008], [0, .12, TAIL_Z - .006], [0, 0, 0], 0);
+  b.box(m.carbon, [1.52, .028, .32], [0, 1.18, -1.60], [-.07, 0, 0], 0);                        // the wide black wing
+  b.box(m.carbon, [1.52, .02, .1], [0, 1.21, -1.74], [-.5, 0, 0], 0);                           // its flap
+  b.box(m.carbon, [1.0, .20, .05], [0, .22, TAIL_Z + .02], [0, 0, 0], 0);                       // the diffuser face
+  for (let i = -4; i <= 4; i++) b.box(m.carbon, [.02, .15, .30], [i * .115, .21, TAIL_Z + .16], [.14, 0, 0], 0);   // its vertical strakes
+  b.box(m.plate, [.22, .05, .008], [0, .12, TAIL_Z - .006], [0, 0, 0], 0);                      // the plate panel at the bottom centre
 }
 
 // A black skirt along the floor edge, tucked inside the outline, almost touching the road.

@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, ImageFont
 TILE = (480, 300)
 TILES = [
     ('car/front-three-quarter.png', 'Speirling: front three-quarter'), ('car/side.png', 'Side'),
-    ('car/rear-three-quarter.png', 'Rear three-quarter: the two round exits'), ('car2/top.png', 'From above'),
+    ('car/rear-three-quarter.png', 'Rear three-quarter: spine, grilles, wing'), ('car2/top.png', 'From above'),
     ('car2/left.png', 'From the other side'), ('car/front-close.png', 'Nose and canopy close-up'),
 ]
 

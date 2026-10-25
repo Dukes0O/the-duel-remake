@@ -52,8 +52,8 @@ to Claude's reading of those photographs (this session saw no photograph itself:
 browser tool failed the policy check every time; the views used are Claude's, which are
 not committed):
 
-1. **Stance:** very low and wide like a small Le Mans prototype, 1.64 m wide, 3.42 m
-   long, about a metre to the canopy top (1.15 m to the wing).
+1. **Stance:** very low and wide like a small Le Mans prototype, 1.64 m wide, 3.47 m
+   long, about a metre to the canopy top (1.24 m to the wing).
 2. **Cabin:** a narrow central bubble of clear brown-tinted glass with a thin dark
    frame, so the seat and driver show; set down in a low tub between the fenders, its
    sides running down to the tub's sill line.
@@ -64,11 +64,18 @@ not committed):
    corner.
 5. **Sides:** a large dark intake in each rear haunch behind the door; mirrors on thin
    stalks from the fender tops; wide muscular rear haunches over the rear wheels.
-6. **Rear:** a large black wing on two swan-neck mounts well above the tail; under it
-   a black diffuser with the two round fan exits low in the tail face and a thin red
-   light. The fans stay hidden inside (nodes of their own).
+6. **Rear (corrected from Kyle's rear-view photographs):** no round fan exits. Behind
+   the cabin the body splits into two tall rounded haunches over the wheels with deep
+   tunnels either side of a narrow central spine: a tall dark pod down the middle of the
+   tail tapering to a point, a small blank panel near its top, a red diamond light low at
+   its point, and a thin central fin from the canopy's top back to the wing. Either side
+   of the spine a large rectangular black mesh grille (the fan and radiator exhaust), set
+   deep, with the fans still hidden behind it (nodes of their own). Two round red ring
+   lights, one above the other, on each haunch's rear face. Under it all a black diffuser
+   with vertical strakes and a small plate panel at the bottom centre. A wide black wing on
+   two swan-neck mounts from the haunch tops.
 7. **Wheels:** big dark multi-spoke slicks, the lower half showing.
 8. **Paint:** metallic blue-grey, a black lower body, intake and diffuser, a light
    dusting of track grime low down; the green line is dropped.
 
-Size: 49,315 triangles and 57 draws (cap 50,000).
+Size: 49,099 triangles and 57 draws (cap 50,000); 1.64 x 3.47 x 1.24 m with the wing.

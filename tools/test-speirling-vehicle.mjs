@@ -34,7 +34,7 @@ equal(createSpeirlingVehicle({ key: 'bugatti_bolide' }), null, 'Unsupported keys
 equal(createSpeirlingVehicle({ key: '__proto__' }), null, 'Prototype keys cannot select a car');
 equal(vehicle.name, 'mcmurtry_speirling', 'Stable semantic mesh key');
 equal(d.size, SPEIRLING_VEHICLE_DIMENSIONS.mcmurtry_speirling, 'Metadata matches the physical model contract');
-equal(d.designFeatures, ['low-wide-stance', 'bubble-canopy', 'tall-front-fenders', 'bat-wing-intake', 'rear-haunch-intakes', 'swan-neck-wing', 'twin-round-fan-exits', 'floor-skirt'], 'Distinct silhouette features');
+equal(d.designFeatures, ['low-wide-stance', 'bubble-canopy', 'tall-front-fenders', 'bat-wing-intake', 'rear-haunch-intakes', 'central-spine', 'rear-mesh-grilles', 'swan-neck-wing', 'floor-skirt'], 'Distinct silhouette features');
 equal(d.wheels.length, 4, 'Four animated wheels');
 equal(d.wheelPivots.filter(p => p.userData.front).length, 2, 'Only the front axle steers');
 ok(d.driver && d.steeringPivot && d.brakeLights.length >= 1, 'Production driver, steering and brake hooks');
@@ -59,7 +59,7 @@ near(size.z, d.size.length, .025, 'Trim stays within 2.5cm of the declared lengt
 near(size.y, d.size.height, .025, 'Declared height is the whole car');
 ok(size.z > 3.0 && size.z < 3.6, 'About 3.3 m long: tiny');
 ok(size.x > 1.5 && size.x < 1.7, 'About 1.6 m wide');
-ok(size.y > 1.05 && size.y < 1.25, 'About a metre to the canopy, a little more to the wing');
+ok(size.y > 1.1 && size.y < 1.3, 'About a metre to the canopy, a little more to the wing');
 ok(triangles <= MAX_TRIANGLES && draws <= MAX_DRAWS, `Size budget: ${triangles} triangles (at most ${MAX_TRIANGLES}) and ${draws} draws (at most ${MAX_DRAWS})`);
 
 // 3. Tires and the ground.
@@ -100,10 +100,19 @@ for (const side of [-1, 1]) ok((heightAt(skins, side * .60, -1.06) ?? 0) > .70, 
 ok(bounds.max.y > .66 + .3 && bounds.max.y - 0 > heightAt(skins, 0, -1.5) + .3, 'A large wing standing well above the tail');
 const wing = d.damageMeshes.filter(item => item.mesh.material.name === 'Black bodywork');
 ok(wing.length > 0, 'Black bodywork: the lower body, intake, diffuser and wing');
-// The tail face: two round dark exits side by side, low down, seen from behind.
-const exits = d.damageMeshes.filter(item => item.mesh.material.name === 'Dark machined metal');
-ok(exits.length > 0, 'Dark fan exits on the tail');
-for (const x of [-.245, .245]) { ray.set(new THREE.Vector3(x, .33, -3), new THREE.Vector3(0, 0, 1)); const hit = ray.intersectObjects(exits.map(item => item.mesh), false)[0]; ok(hit && hit.point.z < -1.6, `A dark round exit at x ${x} on the tail face`); }
+// The rear: two large rectangular black mesh grilles either side of a tall dark central spine,
+// red ring lights on the haunches, a diffuser; no round exits.
+const darkParts = d.damageMeshes.filter(item => item.mesh.material.name === 'Dark machined metal');
+ok(darkParts.length > 0, 'Dark mesh grilles on the tail');
+for (const x of [-.27, .27]) { ray.set(new THREE.Vector3(x, .37, -3), new THREE.Vector3(0, 0, 1)); const hit = ray.intersectObjects(darkParts.map(item => item.mesh), false)[0]; ok(hit && hit.point.z < -1.6, `A black mesh grille at x ${x} on the tail face`); }
+const blackParts = d.damageMeshes.filter(item => item.mesh.material.name === 'Black bodywork').map(item => item.mesh);
+ray.set(new THREE.Vector3(0, .5, -3), new THREE.Vector3(0, 0, 1)); const spineHit = ray.intersectObjects(blackParts, false)[0];
+ok(spineHit && spineHit.point.z < -1.1, 'A tall dark spine down the middle of the tail');
+ray.set(new THREE.Vector3(0, 3, -.9), down); const spineTop = ray.intersectObjects(blackParts, false)[0];
+ok(spineTop && spineTop.point.y > .7, 'The spine and its fin stand tall behind the cabin');
+for (const side of [-1, 1]) { ray.set(new THREE.Vector3(side * .60 + .042, .50, -3), new THREE.Vector3(0, 0, 1)); const brake = ray.intersectObjects(d.brakeLights, false)[0]; ok(brake && brake.point.z < -1.5, `A round red ring light on the ${side > 0 ? 'left' : 'right'} haunch's rear face`); }
+ray.set(new THREE.Vector3(0, .33, -3), new THREE.Vector3(0, 0, 1)); const diamond = ray.intersectObjects(d.brakeLights, false)[0];
+ok(diamond && diamond.point.z < -1.65, 'A red diamond light low at the spine point');
 // The nose: a wide black intake spanning the front between the fenders.
 ray.set(new THREE.Vector3(0, .17, 5), new THREE.Vector3(0, 0, -1)); const noseHit = ray.intersectObjects(wing.map(item => item.mesh), false)[0];
 ok(noseHit && noseHit.point.z > 1.6, 'A black intake across the nose');
