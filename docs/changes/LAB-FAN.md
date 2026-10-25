@@ -45,6 +45,16 @@ These additions need Claude's written review on the card before merge. No earlie
 
 Claude still needs to write the assertion review on LAB-FAN. Eight-car frames wait until player access is wired. The full tier was not run. A known separate asset gap must be closed first: `public/assets/models/wasteland/kits/mcmurtry_speirling.glb` does not exist. `armor-kit-meshes.js` requests it, and the full-only `test-armor-kit-assets` expects a fitted kit for every car. Independent review classified this as a Director-owned pre-release follow-up, outside LAB-FAN's owned files. Its test is unchanged; no substitute asset was made.
 
+## Independent branch review (25 October 2026)
+
+Reviewed `integration/wasteland...41be59e6` for LAB-FAN. Required fault fixed in `src/lab/lab-fan.js`: safe integers above the game's 1,000,000,000-credit cap could buy the car and return an invalid wallet. Reject those wallets without changing the input; the exact cap still pays 15,000. Added a regression that failed on 1,000,000,001 before the fix, plus safe/unsafe integer boundaries. No existing assertion or tolerance was loosened.
+
+Expanded `test-lab-fan` probes: all 32 lesson subsets with a forged saved REVERSE marker; repeated build/shop calls; two stale App instances using the real `labCommit`, refresh and save methods against one memory-only registry; reload; a wallet reduced below the price in the other instance; zero, short, exact-price, cap, negative, fractional, numeric-string, NaN and infinite credits; each combination of Lab and tuning switches; old and future Lab saves. Building requires Lab, while the optional tuning settings require both switches. The two-instance probe covers successive purchases, not simultaneous operating-system processes.
+
+The expanded fan suite passed, including unchanged data for all 13 earlier cars, seeded Lab-on/off race equality, native launch/braking and constant grip, model load/retry, and save normalization. Inverting the secret guard failed on lesson subset 0. Disabling the ownership guard failed the repeated App purchase with a 40,000-credit starting wallet (enough to pay twice); both mutations were restored. This strengthens the test so a short wallet cannot hide a broken ownership check.
+
+Another session merged current integration into this checkout during review and included the wallet fix and expanded suite in `881f7571`; the reviewer did not initiate or finish that merge. The expanded suite passed again on that result, and `npm.cmd run build` passed (Vite temporary-config access needed sandbox escalation; existing chunk/import notices only). That session's lane gate was still running when the reviewer finished; it is not claimed as passed here. The reviewer made no merge or push and accessed no real saves. The missing fitted armor asset and pending Claude assertion review remain pre-release requirements above.
+
 ## Removed
 
 Replaced the shop-only fan ownership path with the atomic credit-and-car transition. No asset or earlier behavior removed. No replay fingerprints regenerated.

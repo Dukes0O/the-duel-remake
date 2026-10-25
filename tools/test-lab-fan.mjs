@@ -77,7 +77,7 @@ Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
   setItem: (key, value) => memory.set(key, value),
 }});
 try {
-  assert.equal(savePlayers(createPlayerRegistry(source)), true);
+  assert.equal(savePlayers(createPlayerRegistry({...source, credits: 40000})), true);
   const tab = () => {
     const app = Object.create(App.prototype);
     app.players = loadPlayers(); app.player = activePlayer(app.players); app.profile = app.player.profile;
@@ -92,7 +92,7 @@ try {
   assert.equal(buy(a).ok, false, 'a double call cannot charge twice');
   assert.equal(buy(b).ok, false, 'the stale second tab refreshes ownership before buying');
   const saved = activePlayer(loadPlayers()).profile;
-  assert.equal(saved.credits, source.credits - FAN_PRICE);
+  assert.equal(saved.credits, 40000 - FAN_PRICE, 'ownership prevents another debit even with enough credits to pay again');
   assert.equal(saved.unlockedCars.filter(id => id === FAN_CAR).length, 1);
   assert.equal(tab().profile.credits, saved.credits, 'reload preserves the single debit');
   assert.equal(savePlayers(createPlayerRegistry({...source, credits: 14999})), true);
