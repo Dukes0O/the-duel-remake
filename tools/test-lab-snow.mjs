@@ -221,6 +221,7 @@ test('the aerials tips quote the ski rules\' own numbers, and what they say abou
   near(aerialsScore({...base, height: 6, distance: 14}).air, 100, 1e-9, 'both targets: full marks');
   near(aerialsScore({...base, height: 12, distance: 0}).air, 100, 1e-9, 'one target doubled does the same: they add up');
   near(aerialsScore({...base, height: 6, distance: 0}).air, 50, 1e-9, 'half each');
+  near(aerialsScore(base).form, 100, 1e-9, 'a whole turn and a steady flip: full form');
   near(aerialsScore({...base, spin: 180}).form, 25 + 50, 1e-9, 'half a turn earns half of the done part');
   near(aerialsScore({...base, flip: 90}).form, 50, 1e-9, 'a flip of 90 degrees earns none of the steady part');
   near(aerialsScore({...base, angle: 20}).landing, 60, 1e-9, '60 of 100 at 20 degrees');
