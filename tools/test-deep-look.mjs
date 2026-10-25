@@ -1,6 +1,6 @@
 // D0 DEEP-LOOK: the pure parts of the underwater look, with no graphics.
 // Depth colour curve, fish parting rule, hard caps, trail shape, and the proof
-// that nothing in the game reaches the new code yet.
+// that only approved adapters reach the Deep code.
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -197,9 +197,9 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   assert.deepEqual([...kelpStemGeometry().attributes.position.array], [...stem.attributes.position.array]); checks++;
 }
 
-// ---- only approved development adapters reach it -----------------------
+// ---- only approved adapters reach it -----------------------
 {
-  check(FEATURE_STATES['the-deep'] === 'dev', 'the-deep is a development switch (off in the game)');
+  check(FEATURE_STATES['the-deep'] === 'on', 'the-deep is released (on in the game)');
   const root = fileURLToPath(new URL('../', import.meta.url));
   const walk = (dir, out = []) => {
     for (const name of readdirSync(dir)) {
@@ -294,7 +294,7 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     });
   assert.deepEqual(importers, [], `no unapproved src/deep imports: ${importers.join(', ')}`); checks++;
   const flags = readFileSync(join(root, 'src/feature-flags.js'), 'utf8');
-  check(/'the-deep':\s*'dev'/.test(flags), 'the switch is declared in src/feature-flags.js');
+  check(/'the-deep':\s*'on'/.test(flags), 'the switch is declared in src/feature-flags.js');
 }
 
 console.log(`D0 DEEP-LOOK: ${checks} checks passed.`);

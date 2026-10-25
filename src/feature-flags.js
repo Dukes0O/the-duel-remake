@@ -21,8 +21,8 @@ export const FEATURE_STATES = Object.freeze({
   'grand-prix': 'on', 'cpu-racecraft': 'dev', 'grand-prix-career': 'dev', 'snow-world': 'dev',
   // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.
   ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
-  // The Deep (docs/THE_DEEP.md): the hidden underwater world. Off; nothing reaches it yet.
-  'the-deep': 'dev',
+  // The Deep (docs/THE_DEEP.md): the hidden underwater world. Released 25 October 2026.
+  'the-deep': 'on',
   // The helicopter (docs/HELICOPTER.md): Kestrel One, H1 First flight. Released 14 October 2026.
   helicopter: 'on',
   // H2 Fire (docs/HELI_FIRE.md): forest fires, the bucket and burnt courses. Works only with the helicopter on.
