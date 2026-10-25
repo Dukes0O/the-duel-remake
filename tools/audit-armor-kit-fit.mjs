@@ -50,7 +50,14 @@ for(const {key,vehicle,wheels} of models){
       left:sideProbe(-1,y,fraction*size.length),
     })),
   }));
-  rows.push({car:key,width:+(bounds.max.x-bounds.min.x).toFixed(2),
+  // The Sirena's wheels stand proud of its flanks, so a plate beside a wheel would lie in the tyre. Its quarter plates ride
+  // the fender crowns instead (SIRENA-KIT, tools/blender/armor-kits.py CAR_RULES): sample the side just above the wheels.
+  const fenderGrid=key==='falcone_sirena'?[.70,.74,.78].map(y=>({y,samples:[-.45,-.38,-.2,0,.2,.38,.45].map(fraction=>({
+    z:+(fraction*size.length).toFixed(3),
+    right:sideProbe(1,y,fraction*size.length),
+    left:sideProbe(-1,y,fraction*size.length),
+  }))})):null;
+  rows.push({car:key,...(fenderGrid?{fenderGrid}:{}),width:+(bounds.max.x-bounds.min.x).toFixed(2),
     length:+(bounds.max.z-bounds.min.z).toFixed(2),
     height:+(bounds.max.y-bounds.min.y).toFixed(2),
     size,sizeRoof:+size.height.toFixed(2),roofSocket:+roof.y.toFixed(2),
@@ -144,7 +151,7 @@ if (exportCar) {
   const point=new THREE.Vector3();
   const selected=[];
   source.vehicle.traverse(mesh=>{
-    if (!mesh.isMesh || !/^(Paint 1 Carmine|Jesko pearl body|Enzo red body|F1 silver body|Bolide blue body)/.test(mesh.material?.name||'')) return;
+    if (!mesh.isMesh || !/^(Paint 1 Carmine|Lacquered body|Jesko pearl body|Enzo red body|F1 silver body|Bolide blue body)/.test(mesh.material?.name||'')) return;
     const transform=inverse.clone().multiply(mesh.matrixWorld);
     const geometry=mesh.geometry;
     const positions=[];
