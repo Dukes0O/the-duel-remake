@@ -3,8 +3,7 @@
 Lesson 3 of `docs/DRIVING_LESSONS.md` section 12.3, in `src/lessons/drive-lessons.js` beside lessons 1, 2 and 4, with its own test
 `tools/test-drive-lesson-3.mjs`. Rules and instructors only: the board, panel, shift lights, drawing, save and radio recordings are later cards
 (DRIVE-LESSONS-VIEW-2), and nothing in the game starts this lesson yet. It runs on the engine curve (ENGINE-CURVE, switch `engine-curve`); the host
-shows "Opens later" while that switch is off. Lessons 1, 2 and 4 tests are unchanged and pass. The questions I settled with my own pick are in
-`docs/board/questions/DRIVE-LESSON-3.md`.
+shows "Opens later" while that switch is off. Lessons 1, 2 and 4 tests are unchanged and pass. My six picks were confirmed (see the card's "Claude answers").
 
 ## What was built
 
