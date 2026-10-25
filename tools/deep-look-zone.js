@@ -46,6 +46,16 @@ if (profile.pipeline === 'composite') {
 
 const built = performance.now();
 const zone = sampleZone();
+// ?life=1: the Kelp Coast's creatures along the sample loop (DEEP-LIFE pictures). The sample loop
+// is not the Kelp Coast, so the spots sit where its shallows, forest and deep lip are.
+if (query.get('life')) {
+  zone.spots = [
+    { creature: 'crab', trailIndex: 5, count: 4 }, { creature: 'ray', trailIndex: 9, count: 1 },
+    { creature: 'turtle', trailIndex: 13, count: 2 }, { creature: 'silver-school', trailIndex: 40, count: 3 },
+    { creature: 'sea-lion', trailIndex: 62, count: 2 }, { creature: 'otter', trailIndex: 80, count: 1 },
+    { creature: 'whale', trailIndex: 118, count: 1 },
+  ];
+}
 const deep = createUnderwaterScene({ zone, quality: qualityName, renderer, scene });
 const buildMs = performance.now() - built;
 const { shape } = deep;
@@ -68,6 +78,16 @@ function placeCar(share, lateral = 0) {
 }
 // A point relative to the car: forward, left and up in metres.
 const rel = (at, forward, left, up) => [at.p.x + at.f.tx * forward + at.f.tz * left, at.y + up, at.p.z + at.f.tz * forward - at.f.tx * left];
+
+// The car anywhere, facing a heading, for tools that frame their own pictures.
+function placeCarAt(x, z, heading = 0) {
+  const y = shape.floorHeight(x, z) - 0.05;
+  car.position.set(x, y, z);
+  car.rotation.set(0, heading, 0, 'YXZ');
+  car.updateMatrixWorld(true);
+  Object.assign(carState, { x, y: y + 0.7, z, heading, speed: 0 });
+  return carState;
+}
 
 const VIEWS = [
   { name: 'Ramp shallows, seagrass in sun', share: 0.03, time: 3.2, fov: 62,
@@ -128,7 +148,7 @@ window.__deepLook = {
     for (let i = 0; i < Math.max(frames, 20); i++) renderFrame(t + i / 60);
     return current.view.name;
   },
-  debug: { scene, camera, renderer, deep, car, renderFrame: seconds => renderFrame(seconds), setView },
+  debug: { scene, camera, renderer, deep, car, carState, placeCarAt, renderFrame: seconds => renderFrame(seconds), setView },
 };
 
 setView(Number(query.get('view')) || 1, { time: query.get('time') ? Number(query.get('time')) : undefined });
