@@ -7,7 +7,7 @@ import { loadGhosts, saveGhosts, GHOST_KEY } from '../src/ghost.js';
 
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
 const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWith('.json')).sort();
-assert.equal(files.length, 19, 'review the historical save-shape fixture roster');
+assert.equal(files.length, 20, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
   const values = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));
@@ -59,6 +59,9 @@ function preserveProfile(raw, loaded, label) {
     // Heli-skiing (SKI-SAVE) rides in the helicopter field: kept exactly when saved (a later game's names and record included), never added to an older save.
     if (Object.hasOwn(raw.heli, 'ski')) equal(loaded.heli.ski, raw.heli.ski, `${label}: heli ski record`);
     else equal(Object.hasOwn(loaded.heli, 'ski'), false, `${label}: no ski record added to an older helicopter`);
+    // The pilot's map (MAP-SECRETS) rides in the helicopter field too: kept exactly when saved (a later game's names and a later version included), never added to an older save.
+    if (Object.hasOwn(raw.heli, 'map')) equal(loaded.heli.map, raw.heli.map, `${label}: heli map record`);
+    else equal(Object.hasOwn(loaded.heli, 'map'), false, `${label}: no map record added to an older helicopter`);
     for (const field of ['missions', 'fire', 'burnt', 'scars', 'bucket']) {
       if (Object.hasOwn(raw.heli, field)) equal(loaded.heli?.[field], raw.heli[field], `${label}: heli ${field}`);
       else equal(Object.hasOwn(loaded.heli ?? {}, field), false, `${label}: no heli ${field} appears`);

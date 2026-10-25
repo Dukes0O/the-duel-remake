@@ -10,14 +10,14 @@ import {CIRCUIT_MANIFESTS, registerCircuits} from '../src/circuit-manifests.js';
 import {isCourseUnlocked, courseUnlockRequirement, purchaseCourse} from '../src/course-access.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
-import {heliOf, carAt} from '../src/heli/heli-save.js';
+import {heliOf, carAt, normalizeHeli, placeCar, MAP_SAVE_VERSION} from '../src/heli/heli-save.js';
 import {createHeliSession} from '../src/heli/heli-session.js';
 import {destinationsFor, legFuelKg, isDestination} from '../src/heli/heli-jobs.js';
 import {PLACES, placeById} from '../src/heli/pilot-map-data.js';
 import {noticeText} from '../src/heli/heli-ui.js';
 import {HELI_EVENT_CUES} from '../src/heli/heli-audio.js';
 import {
-  SECRET_SIGNS, SECRET_IDS, SPOT, TABLE, TABLE_ID, TABLE_PAY, TABLE_PASS_KM, createMap, normalizeMap, mapOf, hasFound, hasSeen,
+  SECRET_SIGNS, SECRET_IDS, SPOT, TABLE, TABLE_ID, TABLE_PAY, TABLE_PASS_KM, createMap, mapOf, hasFound, hasSeen,
   noteFound, noteSeen, claimTable, legPassesTable, signClear, createSpotter, stepSpotter, createTableWorld, tableHeight,
 } from '../src/heli/map-secrets.js';
 
@@ -125,11 +125,15 @@ const sessionAt = (courseId, {profile = profileWith(), secrets = ALL_SECRETS, pi
   const old = createProfile();
   same(mapOf(old), createMap(), 'an old save (no map record) reads as nothing found');
   ok(!('map' in heliOf(old)), 'and reading it does not write one');
-  for (const bad of [null, 7, 'x', [], {}, {version: 2, found: ['panorama-ridge-night']}, {version: 1, found: 'panorama-ridge-night', seen: 4, table: 'yes'}])
-    same(normalizeMap(bad), createMap(), `a malformed record reads as nothing found: ${JSON.stringify(bad)}`);
-  same(normalizeMap({version: 1, found: ['harbour-lights-dusk', 'nope', 'harbour-lights-dusk', 'tremblant-woods-reverse'], seen: ['pacific-canyon', 'nope', 'pacific-canyon'], table: true}),
-    {version: 1, found: ['tremblant-woods-reverse', 'harbour-lights-dusk'], seen: ['pacific-canyon', TABLE_ID], table: true},
-    'unknown or repeated names go; the Table landed on is also seen; found keeps the listed order');
+  const withMap = map => ({...createProfile(), heli: {version: 1, map}});
+  for (const bad of [null, 7, 'x', [], {}, {version: 0, found: ['panorama-ridge-night']}, {found: ['panorama-ridge-night']}])
+    same(mapOf(withMap(bad)), createMap(), `a record this game cannot read reads as nothing found: ${JSON.stringify(bad)}`);
+  same(mapOf(withMap({version: 1, found: 'panorama-ridge-night', seen: 4, table: 'yes'})), createMap(), 'wrong shapes inside a version 1 record read as nothing');
+  same(mapOf(withMap({version: 1, found: ['harbour-lights-dusk', 'harbour-lights-dusk', 'tremblant-woods-reverse', 7, '', 'bad name!'], seen: ['pacific-canyon', 'pacific-canyon'], table: true})),
+    {version: 1, found: ['harbour-lights-dusk', 'tremblant-woods-reverse'], seen: ['pacific-canyon', TABLE_ID], table: true},
+    'repeated and unusable names go; the Table landed on is also seen; the listed order is kept');
+  same(heliOf(withMap({version: 1, found: ['a-later-secret'], seen: ['a-later-place'], table: false, extra: {x: 1}})).map,
+    {version: 1, found: ['a-later-secret'], seen: ['a-later-place'], table: false, extra: {x: 1}}, 'a later game\'s names and keys inside a version 1 record are kept as they are');
 
   const first = noteFound(old, 'panorama-ridge-night');
   ok(first.ok && !first.already && hasFound(first.profile, 'panorama-ridge-night'), 'a find is noted');
@@ -418,10 +422,66 @@ const cruiseLeg = (session, to) => {
   const released = session.pressHook();
   const after = session.takeEvents();
   ok(released?.type === 'released' || released?.type === 'setDown', `H lets the car go (${released?.type})`);
-  const refusal = after.filter(e => e.type === 'carNotKept');
-  same(refusal.length, 1, 'the pilot is told the car cannot be left');
-  same(noticeText(refusal[0]), refusal[0].reason, 'in words on the flight panel');
-  ok(!after.some(e => e.type === 'delivered'), 'and it is not delivered');
-  same(carAt(session.profile, 'falcone_f42'), 'pacific-canyon', 'the car is still where the save has it');
+  same(after.filter(e => e.type === 'delivered').map(e => e.courseId), [TABLE_ID], 'the car is delivered to the Table');
+  same(carAt(session.profile, 'falcone_f42'), TABLE_ID, 'and the save has it there');
+  same(carAt(normalizeProfile(JSON.parse(JSON.stringify(session.profile))), 'falcone_f42'), TABLE_ID, 'through a save and a load');
+  same(session.raceHereOffer(), null, 'no race is offered on a mesa with no road');
+}
+
+// ---- The save (part two of the card) --------------------------------------------------------------------------------------
+{
+  const record = {version: 1, seen: ['harbour-lights', TABLE_ID], found: ['panorama-ridge-night', 'a-later-secret'], table: true, laterKey: {note: 'kept'}};
+  const stored = JSON.parse(JSON.stringify({...createProfile(), credits: 700, heli: {version: 1, carsAt: {falcone_f42: TABLE_ID}, map: record}}));
+  const loaded = normalizeProfile(stored);
+  same(loaded.heli.map, record, 'a saved record comes back exactly, a later game\'s names and key included');
+  same(loaded.heli.carsAt, {falcone_f42: TABLE_ID}, 'a car at the Table comes back at the Table');
+  same(normalizeProfile(JSON.parse(JSON.stringify(loaded))).heli.map, record, 'and a second save and load changes nothing');
+  same(Object.hasOwn(heliOf(normalizeProfile(createProfile())), 'map'), false, 'an older save gains no record by being read');
+  same(Object.hasOwn(normalizeProfile({...createProfile(), heli: {version: 1}}).heli, 'map'), false, 'a helicopter with none gains none');
+  // Only a car may stand on the Table: calls, scars and the rest still name registry courses.
+  same(normalizeHeli({version: 1, scars: [{courseId: TABLE_ID, day: 3}, {courseId: 'tremblant-woods', day: 3}]}).scars.map(scar => scar.courseId), ['tremblant-woods'],
+    'a scar on the Table is dropped, as a scar anywhere that is no course');
+  ok(placeCar(createProfile(), 'falcone_f42', TABLE_ID, {enabled: true}).ok && !placeCar(createProfile(), 'falcone_f42', 'nowhere', {enabled: true}).ok, 'a car may be set down on the Table, and not on a made-up place');
+  same(normalizeHeli({version: 1, carsAt: {falcone_f42: 'nowhere', aurora_gt: TABLE_ID}}).carsAt, {aurora_gt: TABLE_ID}, 'a car at a made-up place is dropped');
+
+  // A flood of names is cut; a record is the same read twice; the odd keys are plain data.
+  const flood = Array.from({length: 1000}, (_, n) => 'name-' + n);
+  const floodMap = heliOf({heli: {version: 1, map: {version: 1, found: flood, seen: flood, table: false}}}).map;
+  same([floodMap.found.length, floodMap.seen.length], [128, 128], 'a thousand names are cut to 128');
+  const mess = JSON.parse('{"version":1,"found":["__proto__","panorama-ridge-night"],"seen":[],"table":false,"__proto__":{"x":1}}');
+  const messy = heliOf({heli: {version: 1, map: mess}}).map;
+  same(messy.found, ['panorama-ridge-night'], 'a name that is a prototype key is dropped');
+  ok(messy.x === undefined && Object.getPrototypeOf(messy) === Object.prototype, 'and a key of that name does not reach the record');
+  same(heliOf({heli: heliOf({heli: {version: 1, map: mess}})}).map, messy, 'reading a record twice gives the same record');
+
+  // A record already at the limit takes no new name, and nothing is announced or paid for it.
+  const crowded = {...createProfile(), credits: 10, heli: {version: 1, map: {version: 1, found: flood, seen: flood, table: false}}};
+  for (const result of [noteFound(crowded, SECRET_IDS[0]), noteSeen(crowded, TABLE_ID), claimTable(crowded)])
+    ok(!result.ok && result.profile === crowded && /full/.test(result.reason), 'a full list takes no new name, and the logbook pays nothing then');
+  same(claimTable(crowded).paid, 0, 'paying nothing is stated');
+
+  // A later game's record is kept exactly and never written over; so is a later game's helicopter.
+  const base = {...createProfile(), credits: 100};
+  for (const version of [2, '2', 2.5, 1e30]) {
+    const later = {version, found: ['panorama-ridge-night'], seen: [], table: true, shapes: {a: [1, 2]}};
+    const profile = {...base, heli: {version: 1, fuelKg: 50, map: later}};
+    same(normalizeProfile(JSON.parse(JSON.stringify(profile))).heli.map, JSON.parse(JSON.stringify(later)), `a record at version ${JSON.stringify(version)} is kept exactly`);
+    same(mapOf(profile), createMap(), `and reads as nothing found (${JSON.stringify(version)})`);
+    for (const [label, result] of [['find', noteFound(profile, 'panorama-ridge-night')], ['sight', noteSeen(profile, TABLE_ID)], ['logbook', claimTable(profile)]]) {
+      ok(!result.ok && result.profile === profile && /another version/.test(result.reason), `a ${label} over a record at version ${JSON.stringify(version)} is refused and changes nothing`);
+    }
+    same(claimTable(profile).paid, 0, 'and the logbook pays nothing over it');
+  }
+  const laterHeli = {...base, heli: {version: 2, map: {version: 1, found: [], seen: [], table: false}}};
+  for (const result of [noteFound(laterHeli, 'panorama-ridge-night'), noteSeen(laterHeli, TABLE_ID), claimTable(laterHeli)])
+    ok(!result.ok && result.profile === laterHeli, 'a write over a later game\'s helicopter is refused');
+
+  // Played over such a record the session finds and pays nothing, and says nothing.
+  const sign = SECRET_SIGNS.find(item => item.id === 'panorama-ridge-night');
+  const laterRecord = profileWith({owned: ['panorama-ridge'], heli: {map: {version: 2, found: [], seen: [], table: false}}});
+  const blocked = sessionAt('panorama-ridge', {profile: laterRecord, secrets: [sign.id]});
+  const tried = flyTo(blocked, sign, {height: 25, speed: 25, seconds: 40});
+  same(secretEvents(tried).length, 0, 'over a later game\'s record a hover finds nothing, silently');
+  same(blocked.profile.heli.map, {version: 2, found: [], seen: [], table: false}, 'and the record is left as it was');
 }
 console.log(`Map secrets: ${checks} checks passed.`);
