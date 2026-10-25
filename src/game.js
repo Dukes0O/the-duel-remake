@@ -10,7 +10,7 @@ import {chosenRaceLaps, supportsLapChoice} from './lap-choice.js';
 import * as simCrash from './sim-crash.js';
 import * as simResults from './sim-results.js';
 import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
-import {tunedCar, normalizeTune, isStockTune, tuneKey, fuelPlan} from './lab/lab-tune.js'; // LAB-TUNE
+import {tunedCar, raceTune, tuneKey, fuelPlan} from './lab/lab-tune.js'; // LAB-TUNE
 import {normalizeCarLoadout} from './car-loadout.js';
 import {WEAPONS,createCombat,fireWeapon,stepCombat,supportsCombat,clearArsenalState,initializeArsenalCombat} from './combat.js';
 import {arsenalEnabled, arsenalWaveThreeEnabled} from './combat-weapons.js';
@@ -235,8 +235,8 @@ export class Duel {
     if (tyre === 'winter') this.state.tyre = 'winter'; else delete this.state.tyre;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     // LAB-TUNE: the player's tuning travels with the race like upgrades; never on a lesson run, never with the switch off.
-    if (!lesson && this.featureFlags.enabled('lab-tuning') === true && !isStockTune(tune)) this.state.tune = normalizeTune(tune);
-    else delete this.state.tune;
+    const raceTuned = raceTune(tune, {lesson: !!lesson, enabled: this.featureFlags.enabled('lab-tuning') === true});
+    if (raceTuned) this.state.tune = raceTuned; else delete this.state.tune;
     this.state.mode = grandPrix ? 'grandprix' : mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
     if (arsenalEnabled(this)) this.state.arsenalRank = arsenalRank;
     else delete this.state.arsenalRank;

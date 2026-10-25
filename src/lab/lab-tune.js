@@ -34,6 +34,10 @@ export function normalizeTune(value) {
   return tune;
 }
 export const isStockTune = tune => TUNE_SETTINGS.every(name => !normalizeTune(tune)[name]);
+// The tune a race is set up with, or null: only with the tuning switch on, never on a driving-lesson run, and only when
+// something is set (a stock tune leaves the race exactly as it was).
+export const raceTune = (tune, {lesson = false, enabled = false} = {}) =>
+  enabled === true && !lesson && !isStockTune(tune) ? normalizeTune(tune) : null;
 export const tuneKey = tune => TUNE_SETTINGS.map(name => normalizeTune(tune)[name]).join(':');
 
 // The car with the settings applied after upgrades. Stock gives back the same car object.

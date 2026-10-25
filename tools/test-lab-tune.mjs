@@ -10,7 +10,7 @@ import {createProfile} from '../src/progression.js';
 import {TUNE_SETTINGS, labOf, setTune, stockKey, createLab, normalizeLab, withLab, TUNED_BONUS} from '../src/lab/lab-save.js';
 import {passLesson} from '../src/lab/lab-save.js';
 import {
-  LAB_TUNE, normalizeTune, isStockTune, tunedCar, tunedGrip, fuelPlan, bestLap, ruleSetOf, seedStockLaps, settleTunedLap,
+  LAB_TUNE, normalizeTune, isStockTune, raceTune, tunedCar, tunedGrip, fuelPlan, bestLap, ruleSetOf, seedStockLaps, settleTunedLap,
 } from '../src/lab/lab-tune.js';
 import {PIT, stepPitService, pitBox} from '../src/pit-lane.js';
 import {driveCircuit} from './track-script-drive.mjs';
@@ -101,6 +101,39 @@ const base = {...CARS[CAR], roughnessScale: 1, offRoadGrip: DRIVE.offRoadGrip};
   ok(gravelAt(300, tunedCar(stock, {pressure: 2})).scrub === ground.scrub, 'a setting that is not the springs leaves rough ground alone');
 }
 
+// ---- The driving code uses the tuned grip, and the tank burns with the metres driven ----------------------------------------------------
+{
+  const flags = createFeatureFlags({storage: null, qa: false, search: '', overrides: {'lab-tuning': true, 'grand-prix': true}});
+  const prepared = (tune, input = {}, stage = 'tremblant-woods', mode = 'timetrial') => {
+    const duel = new Duel({featureFlags: flags});
+    duel.startCampaign({mode, car: CAR, startStage: COURSE.findIndex(item => item.id === stage), seed: 1989, fieldSeed: 7, opponentCount: 0, playerId: 'p', upgrades: {}, ...(tune ? {tune} : {})});
+    const s = duel.state;
+    s.status = 'racing'; s.speedMph = 100; s.gear = 3; s.s = 400; s.lateral = 0; s.steerVisual = 1; s.yawVelocity = 0;
+    s.input = {throttle: 0, brake: 0, steer: 1, boost: false, shiftUp: false, shiftDown: false, ...input};
+    return duel;
+  };
+  const turn = (tune, input) => { const duel = prepared(tune, input); duel._drive(1 / 120); return Math.abs(duel.state.yawVelocity); };
+  const stock = turn(null, {});
+  near(turn({wing: 2}, {}) / stock, 1.06, 0.005, 'at 100 mph the wing at +2 turns the car 6% harder');
+  near(turn({wing: -1}, {}) / stock, 0.97, 0.005, 'and at -1, 3% less');
+  near(turn({pressure: 2}, {}) / stock, 0.98, 0.005, 'pressure +2 turns it 2% less');
+  near(turn({springs: 2}, {}) / stock, 1.02, 0.005, 'springs +2, 2% more');
+  const braked = turn(null, {brake: 0.5});
+  near(turn({brakes: 2}, {brake: 0.5}) / braked, 1 - 0.04 / 0.8 * 0.5, 0.005, 'brake balance +2 at half brake takes 2.5% off the turn');
+  near(turn({brakes: -2}, {brake: 0.5}) / braked, 1 + 0.04 / 0.8 * 0.5, 0.005, 'and -2 gives 2.5% back');
+  near(turn({brakes: 2}, {}) / stock, 1, 1e-9, 'with the brake off, brake balance changes nothing');
+  ok(turn({fuel: 2}, {}) === stock, 'fuel does not touch the turn');
+  // The tank burns with the metres driven (here 50 mph for 2 s), only in a Grand Prix with a pit lane.
+  const gp = prepared({fuel: 2}, {}, 'summit-run', 'grandprix'), tank = gp.state.fuel.tankM;
+  gp.state.speedMph = 50;
+  for (let i = 0; i < 240; i++) { gp.state.speedMph = 50; gp._drive(1 / 120); }
+  near(tank - gp.state.fuel.leftM, 50 * DRIVE.mphToWorld * 2, 0.5, 'the tank burns with the metres driven');
+  gp.state.fuel.leftM = 0.01;
+  gp.state.speedMph = 50; gp._drive(1 / 120);
+  ok(gp.state.fuel.dry === true, 'and runs dry at zero');
+  ok(!prepared({fuel: 2}, {}, 'summit-run', 'duel').state.fuel && !prepared({fuel: 2}).state.fuel, 'a race that is not a Grand Prix with a pit lane has no tank');
+}
+
 // ---- Fuel plan ------------------------------------------------------------------------------------------------------------
 {
   const race = {grandPrix: true, pitLane: true, petrol: true};
@@ -129,7 +162,10 @@ const rest = (course, options) => {
   same(rest('tremblant-woods', {mode: 'timetrial', tune: {pressure: -2, wing: 2, brakes: 2, springs: 2, fuel: 2}}), plain,
     'with the switch off, any tune: the race is the same, byte for byte');
   ok(rest('tremblant-woods', {mode: 'timetrial', flags: ['lab-tuning'], tune: {wing: 2}}) !== plain, 'with the switch on, a tune changes the race');
-  // A lesson run never takes the tune.
+  // A lesson run never takes the tune, and neither does a race with the switch off.
+  same(raceTune({wing: 2}, {enabled: true}), {pressure: 0, wing: 2, brakes: 0, springs: 0, fuel: 0}, 'the race is set up with the tune');
+  ok(raceTune({wing: 2}, {enabled: true, lesson: true}) === null && raceTune({wing: 2}, {enabled: false}) === null && raceTune({wing: 2}) === null, 'not on a lesson run, not with the switch off');
+  ok(raceTune({}, {enabled: true}) === null && raceTune(null, {enabled: true}) === null, 'and nothing when nothing is set');
   const duel = new Duel({featureFlags: createFeatureFlags({storage: null, qa: false, search: '', overrides: {'lab-tuning': true}})});
   duel.startCampaign({mode: 'timetrial', car: CAR, startStage: COURSE.findIndex(item => item.id === 'tremblant-woods'), seed: 1989, opponentCount: 0, tune: {wing: 2}});
   same(duel.state.tune, {pressure: 0, wing: 2, brakes: 0, springs: 0, fuel: 0}, 'the race setup carries the tune');
