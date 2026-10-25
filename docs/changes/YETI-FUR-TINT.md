@@ -53,4 +53,8 @@ Nothing.
 
 ## Lane tier and build
 
-(Filled in at the end of the card.)
+Run once (25 October, integration already merged):
+`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 44 passed, 1
+failed on the first run: `test-repo-hygiene` (the placement rule wants a review sheet
+named `round-N.jpg`; renamed, with its review note, and the suite passes).
+`test-yeti` and `test-browser-scenarios` pass after the rename. `npm run build`: built.
