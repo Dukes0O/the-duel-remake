@@ -40,6 +40,7 @@ the helicopter on. With `pilot-map` off nothing changes: the session is created 
   on the rules' oval, the lookout and the wreck where the rules put their obstacles, and the logbook in the lookout's cab. The
   **logbook's last page** (1966, "Red car on the bottom off the Pacific cove...") shows as a card while the helicopter is on the Table
   once the Table is found.
+- **The notices name the map's places** (`noticeText`): "The Table: the landing zone is ahead", not `the-table` (the map's destinations are not in the helicopter's old name table).
 - **Wiring** (`src/app.js`): `pilotMapEnabled` and `secretCourses` (the secret variants whose own switches are on) are passed to the session;
   `heliMapOpen`, `setHeliMap`, `heliMapPick`, `heliMapAvailable`, `heliMovingMap`, `heliGroundHeight`; the map closes when the visit ends.
 - **Sounds** `map.open`, `map.close`, `map.pin` (`heli-audio.js`, sound bank behind the helicopter switch) and the existing `heli.found`. See question 1:
@@ -53,7 +54,7 @@ the helicopter on. With `pilot-map` off nothing changes: the session is created 
 
 `src/heli/pilot-map-world.js` (new: the world drawing, a second file beside `pilot-map-view.js` so the renderer hook stays small),
 `src/heli/heli-board.js` (the board's Map button and its action), `src/input-contexts.js` (the key), `src/heli/heli-audio.js` (three cues),
-`src/heli/heli-ui.css` (one `@import`). The board's button is the card's own words ("the dispatch board's Map button").
+`src/heli/heli-ui.css` (one `@import`), `src/controls-help.js` (a Kestrel One page), and the Blender recipe, its test and the credits (the strip's removal). The board's button is the card's own words ("the dispatch board's Map button").
 
 ## Tests
 
@@ -79,8 +80,25 @@ rules' top and floor, the lookout where the rules put it, the logbook in its cab
 
 Run once in the cloud (Linux), on the branch merged with the current `integration/wasteland`:
 
-CHECKS_PLACEHOLDER
+- `node tools/test-map-view.mjs`: 140 checks pass.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` on the merged branch: 100 passed, 6 failed. Five of the six are
+  not the map's: `test-course-kit`, `test-earned-cars-ui`, `test-medals`, `test-drive-through` (laptop: they assert `win32` or need the
+  Windows Recycle Bin) and `test-lab-radio` (it rebuilds a Lab sound from its recipe byte for byte, which needs the laptop's audio
+  tools; MAP-SECRETS' note found the same failure on a clean integration checkout). The sixth, `test-drive-lesson-helipad`, was mine:
+  `createHeliUi` built the map panel eagerly, and that test's stand-in page has no canvas. The panel is now built only the first time the
+  view carries the pilot's map (never with the switch off), and `test-map-view` pins that the page gains only the helicopter's own panel with
+  the switch off; `test-drive-lesson-helipad` passes (108 checks). I reran the heli, map, controls-help, input-contexts and blender-output
+  suites after that fix and they pass.
+- `npm run build`: passes.
+- **Browser scenario `map-view` run here** (headless Chromium, software rendering, through the repository's scenario file with a small
+  Playwright stand-in for the harness's context, since the harness's own screenshot call times out without a GPU): passes, no page
+  errors, 7 frames. The harness itself (`node tools/browser-harness.mjs scenario map-view`) was not run: it needs the laptop's Chrome.
+  The scripted approach fails the scenario if the helicopter crashes. Picture sheet: `docs/board/looks/map-view/round-1.jpg` (214 KB) and its review note.
+- Not run: frame checks (rule 9: not a timing change; the chart is a 2D canvas redrawn only while open).
 
 ## Removed
 
-Nothing.
+- `public/assets/models/pilot-map/table-strip.glb` (a straight 190 m strip nothing loads: the Table's strip is laid over the oval the
+  helicopter's rules use), its builder, budget, review shots and now-unused materials in `tools/blender/pilot-map-props.py`, its
+  name in `tools/test-blender-output.mjs` and its words in `public/assets/models/CREDITS.md` and `tools/art/pilot-map-sheet.py` (Claude's answer 3).
+- `docs/board/questions/MAP-VIEW.md` (answered on the card).
