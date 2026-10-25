@@ -26,8 +26,4 @@ the floor grate takes the lower third), and check no pillar stands close in
 the foreground of any bench view.
 - Tuned laps have no board of their own (LAB-TUNE keeps them off the
   leaderboard). Decide at finishing whether a tuned-lap board is worth adding.
-- The Speirling (LAB-FAN-ART) was accepted at round 4 from a written
-  description because no browser could show photos that night. Before the
-  `lab` switch goes on, one proportions pass against 2 or 3 public photos of
-  the real McMurtry Speirling (cabin position, nose and intake, arches, tail),
-  if Kyle still wants it closer.
+- The Speirling (LAB-FAN-ART) was rebuilt by Codex in Blender from Kyle's photos and accepted (round 5); no further likeness pass is planned.
