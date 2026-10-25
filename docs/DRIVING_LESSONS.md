@@ -488,6 +488,11 @@ or damage.
 - **Proof before it ships:** in Node, with ENGINE-CURVE on, the early-shift
   try is at least 0.3 s slower than the instructor on both rows, and a run in
   too high a gear out of the corner is slower than the instructor's gear.
+- **As built (DRIVE-LESSON-3):** the rules, instructor and tests are in `src/lessons/drive-lessons.js` and
+  `tools/test-drive-lesson-3.mjs`. The run is Lesson 1's line from the new gate. Both stretches have a bend in
+  the middle (Griffin Bend, Beaver Kink). The gear rule is measured at the apex cone (no higher than the
+  instructor) as well as at the exit cone (his gear or the next one up); see `docs/changes/DRIVE-LESSON-3.md`
+  for the proof numbers.
 
 ### 12.4 Lesson 4, snow
 

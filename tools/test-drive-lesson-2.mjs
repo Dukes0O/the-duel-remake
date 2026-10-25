@@ -267,5 +267,5 @@ test('points for a row come from the course pieces and the lesson never touches 
     assert.equal(found.dir, found.apexes.at(-1).dir);
     assert.throws(() => linePointsFor(duel.course, {...row, cornerNames: ['No Such Corner']}, .55), /missing/);
   }
-  await assert.rejects(buildInstructorRun({courseId: 'tremblant-woods', car: 'falcone_f42', lessonId: 'gears'}), /Unknown driving lesson/);
+  await assert.rejects(buildInstructorRun({courseId: 'tremblant-woods', car: 'falcone_f42', lessonId: 'brakes'}), /Unknown driving lesson/);
 });
