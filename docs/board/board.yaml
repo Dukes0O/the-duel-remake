@@ -149,7 +149,7 @@ tasks:
 
   - id: GP-WIDE-START
     title: "Grand Prix wide start: the field reaches the first corner side by side (switch cpu-racecraft)"
-    owner: "claude-cloud"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -245,7 +245,7 @@ tasks:
 
   - id: LAB-FAN
     title: "The Speirling: the car, fan grip, the secret's rules, the build"
-    owner: "claude-cloud"
+    owner: "claude"
     lane: "SIM"
     size: "S"
     status: "ready"
