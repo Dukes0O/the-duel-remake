@@ -40,19 +40,25 @@ export function createMenuScreen(ctx) {
   let previousSetupCourse;
 function updateMenuCar() {
   const earnedOn = app._switches?.().enabled('earned-cars') === true;
+  // LAB-FAN-VIEW: only this player's owned fan car enters the player list.
+  const fanOn = app._switches?.().enabled('lab')===true && isCarUnlocked(profile(),'mcmurtry_speirling');
+  const fanOption = [...ui['car-select'].options].find(option=>option.value==='mcmurtry_speirling');
+  if(fanOn && !fanOption) {
+    const option = root.ownerDocument.createElement('option'); option.value='mcmurtry_speirling'; option.textContent=CARS.mcmurtry_speirling.name; ui['car-select'].append(option);
+  } else if(!fanOn) fanOption?.remove?.();
   const sirenaOn = app._switches?.().enabled('lab')===true && app._switches?.().enabled('the-deep')===true && isCarUnlocked(profile(),'falcone_sirena');
   const sirenaOption = [...ui['car-select'].options].find(option=>option.value==='falcone_sirena');
   if(sirenaOn && !sirenaOption) {
     const option = root.ownerDocument.createElement('option'); option.value='falcone_sirena'; option.textContent=CARS.falcone_sirena.name; ui['car-select'].append(option);
   } else if(!sirenaOn) sirenaOption?.remove?.();
   // A car hidden by the earned-cars switch is never the menu car or the rival's car.
-  if (!isCarUnlocked(profile(), choices.car) || !(isShownCar(choices.car, earnedOn) || sirenaOn && choices.car==='falcone_sirena')) choices.car = 'falcone_f42';
+  if (!isCarUnlocked(profile(), choices.car) || !(isShownCar(choices.car, earnedOn) || sirenaOn && choices.car==='falcone_sirena' || fanOn && choices.car==='mcmurtry_speirling')) choices.car = 'falcone_f42';
   if (choices.rival?.car && choices.rival.car !== 'match' && !isShownCar(choices.rival.car, earnedOn)) choices.rival = {...choices.rival, car: 'match'};
   const car = applyDriverModifiers(upgradedCar(CARS[choices.car], getUpgradeLevels(profile(), choices.car)),getEquippedDriverId(profile()),choices.car);
   app.duel.state.car = choices.car; app.menuCar = choices.car;
   text('car-speed', speedKph(car.topSpeed)); text('car-gears', String(car.gears.length).padStart(2,'0'));
   text('car-character', car.grip >= .9 ? 'PLANTED' : 'UNTAMED');
-  const carIds = [...shownCarIds(earnedOn), ...(sirenaOn?['falcone_sirena']:[])];
+  const carIds = [...shownCarIds(earnedOn), ...(sirenaOn?['falcone_sirena']:[]), ...(fanOn?['mcmurtry_speirling']:[])];
   text('garage-count', `${String(carIds.indexOf(choices.car)+1).padStart(2,'0')} / ${String(carIds.length).padStart(2,'0')}`);
   text('menu-credits', `${credits(profile().credits)} CR`);
   for(const option of ui['car-select'].options){const key=option.value,progress=completionCarProgress(profile(),key),locked=medalProgressLabel(profile(),key)??(progress.total?`MAX OTHER CARS ${progress.maxed}/${progress.total}`:`${credits(CAR_PRICES[key])} CR`);option.textContent=isCarUnlocked(profile(),key)?CARS[key].name:`${CARS[key].name} · LOCKED · ${locked}`;}

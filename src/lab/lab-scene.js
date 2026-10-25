@@ -4,6 +4,8 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createSirenaVehicle} from '../sirena-vehicle.js';
+// LAB-FAN-VIEW: drawing-only extension, with the room owning its resources.
+import {createFanRoom} from './fan-view.js';
 
 // Which bench model a lesson uses (the five wind-tunnel lessons share the tunnel).
 export const MODEL_OF_LESSON = Object.freeze({
@@ -229,6 +231,8 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
     });
   }
   const part = (model, name) => parts.get(model)?.get(name) ?? null;
+  // LAB-FAN-VIEW
+  const fanRoom = createFanRoom({scene, part, load, release, alive: () => !disposed, manifest, host, camera});
 
   // The first pose whose line to the bench is not blocked by a pillar, a wall or another bench.
   const caster = new THREE.Raycaster(), from = new THREE.Vector3(), to = new THREE.Vector3();
@@ -246,6 +250,8 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
   }
   function aim(next) {
     if (restore.state) { goal.position.set(...RESTORE_STAGE.camera.position); goal.target.set(...RESTORE_STAGE.camera.target); return; }
+    const fanPose = fanRoom.pose(); // LAB-FAN-VIEW
+    if (fanPose) { goal.position.set(...fanPose.position); goal.target.set(...fanPose.target); return; }
     const id = next ? MODEL_OF_LESSON[next] : null;
     const at = id ? manifest.layout[id] : null;
     if (!at) { goal.position.set(...OVERVIEW.position); goal.target.set(...OVERVIEW.target); return; }
@@ -293,6 +299,9 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
     camera.position.copy(pose.position);
     camera.lookAt(pose.target);
     animate(now / 1000);
+    const fanAssets = fanRoom.frame(now / 1000); // LAB-FAN-VIEW
+    if (canvas.dataset.fanCar !== fanAssets.car) canvas.dataset.fanCar = fanAssets.car;
+    if (canvas.dataset.fanBlueprint !== fanAssets.blueprint) canvas.dataset.fanBlueprint = fanAssets.blueprint;
     drawRestore(now / 1000);
     renderer.render(scene, camera);
     raf = win ? win.requestAnimationFrame(frame) : 0;
@@ -305,6 +314,8 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
     // lessonId: the bench to move to (null: the overview); last: that bench's last result (or null).
     show(lessonId, last = null) { lesson = lessonId; result = last; if (focus !== lessonId) { focus = lessonId; aim(lessonId); } },
     setResult(last) { result = last; },
+    // LAB-FAN-VIEW: no profile or game state enters the renderer.
+    fan(view) { const before = fanRoom.pose(); fanRoom.update(view); if (JSON.stringify(before) !== JSON.stringify(fanRoom.pose())) aim(focus); },
     // LAB-RESTORE: the sequence's stage object (from restore.js stageAt), or null to take the tank away.
     restore(state) {
       const was = restore.state !== null;
@@ -321,6 +332,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
       stats.disposed++; stats.listeners--;
       if (raf && win) win.cancelAnimationFrame(raf);
       win?.removeEventListener('resize', resize);
+      fanRoom.dispose(); // LAB-FAN-VIEW
       release(scene);
       scene.clear();
       renderer.dispose?.();
