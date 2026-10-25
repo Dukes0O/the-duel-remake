@@ -1,3 +1,4 @@
+import { computeNormalsFast } from './fast-normals.js';
 import * as THREE from 'three';
 import { terrainStyleAt } from './terrain-style.js';
 import { createPolylineIndex } from './polyline-index.js';
@@ -41,7 +42,7 @@ export function strip(course, left, right, y, start=0, end=course.length, ground
       if(n&&j){const a=n*columns+j;indices.push(a-columns-1,a-1,a-columns,a-columns,a-1,a);}}
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(indices); g.computeVertexNormals(); return g;
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(indices); computeNormalsFast(g); return g;
 }
 
 
@@ -144,7 +145,7 @@ export function terrainGeometry(course) {
     seedGroundRow(course,s,offsets,rowPoints);
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); fitMuddyHollowGround(g,course,0); g.computeVertexNormals(); return g;
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); fitMuddyHollowGround(g,course,0); computeNormalsFast(g); return g;
 }
 
 export function farTerrainGeometry(course) {
@@ -158,19 +159,20 @@ export function farTerrainGeometry(course) {
   const minZ=Math.floor((Math.min(...route.map(p=>p.z))-extent)/grid)*grid,maxZ=Math.max(...route.map(p=>p.z))+extent;
   const columns=Math.ceil((maxX-minX)/grid)+1,rows=Math.ceil((maxZ-minZ)/grid)+1;
   const v=[],uv=[],colors=[],weights=[],distances=[],groups=TERRAIN_THEMES.map(()=>[]),base=new THREE.Color(groundTint(course)),col=new THREE.Color();
+  const gap=course.def.arena?18:(course.def.expansion||course.def.terrainHalfWidth===64)?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80;
   for(let j=0;j<rows;j++)for(let i=0;i<columns;i++){
-    const x=minX+i*grid,z=minZ+j*grid,{index,t,distanceSq:best}=routeIndex.query(x,z);
+    const x=minX+i*grid,z=minZ+j*grid,{index,t,distanceSq:best}=routeIndex.lookup(x,z);
     const a=route[index-1],b=route[index],dx=b.x-a.x,dz=b.z-a.z,px=x-a.x-t*dx,pz=z-a.z-t*dz;
     const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
     const wave=Math.sin(roadS*.012+off*.017)*Math.cos(roadS*.004-off*.031);
     v.push(x,(course.farGroundY?course.farGroundY(x,z,roadS,off):course.groundAt(roadS,off).y)-.15,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
-    const style=terrainStyleAt(course,roadS);weights.push(...style.weights);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));const trap=gravelWeights(course,roadS,off);fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);woodland(course,col,roadS,off);gravelTrap(course,col,trap);colors.push(col.r,col.g,col.b);
-    if(i&&j){const a=j*columns+i,quad=[a-columns-1,a-1,a-columns,a];
+    const style=terrainStyleAt(course,roadS);weights.push(style.weights[0],style.weights[1],style.weights[2]);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));const trap=gravelWeights(course,roadS,off);fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);woodland(course,col,roadS,off);gravelTrap(course,col,trap);colors.push(col.r,col.g,col.b);
+    if(i&&j){const a=j*columns+i,k0=a-columns-1,k1=a-1,k2=a-columns;
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
-      if(quad.every(k=>distances[k]>(course.def.arena?18:(course.def.expansion||course.def.terrainHalfWidth===64)?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80)))groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(quad[0],quad[1],quad[2],quad[2],quad[1],quad[3]);
+      if(distances[k0]>gap&&distances[k1]>gap&&distances[k2]>gap&&distances[a]>gap)groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(k0,k1,k2,k2,k1,a);
     }
   }
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);g.computeVertexNormals();return g;
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);computeNormalsFast(g);return g;
 }
 
 // Coarse radial/grid triangles bridge across a narrow wash. Replace only

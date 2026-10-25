@@ -28,6 +28,10 @@ export function ribbonGroundAt(course, s, off) {
   if (!course.script) return point;
   const own = Math.abs(off);
   if (own <= course.roadHalfWidthAt(s) + 2) return point;
+  // The refined nearest point lies on the route, so it is never nearer than the route's nearest segment: when even that
+  // is farther than the limit (with a hair to spare), the full answer below would return the point as well.
+  if (course._nearestIndex && !course.def.pit && !course.def.saltFlats &&
+      Math.sqrt(course._nearestIndex.lookup(point.x, point.z).distanceSq) > own - 1 + 1e-6) return point;
   const near = course.nearest(point.x, point.z);
   // As near its own road as any: nothing reaches across.
   if (near.distance >= own - 1) return point;
