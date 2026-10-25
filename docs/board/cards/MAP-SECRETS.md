@@ -36,3 +36,20 @@ SKI-AUDIO's session or alone). Art: MAP-ART.
 Acceptance: the test, the manifest and circuit tests unchanged apart from
 new cases (Claude's written review if any existing assertion changes), the
 save checker, lane tier, build, one review. Removed: nothing.
+
+## Claude answers
+
+Settled 25 October 2026 (answers to `questions/MAP-SECRETS.md`, now deleted).
+
+- **Save lock.** Ship the rules, session, signs and the Table now. The save part
+  (`heli-save.js` `KNOWN_KEYS` and `validCourse` accepting `the-table`, the fixture
+  `tools/fixtures/saves/<next free>-pilot-map.json`, `tools/test-save-fixtures.mjs`) goes in a
+  second pull request when SKI-SAVE releases `save-shape`. Until then a car cannot be left on the Table.
+- **Unlock route: option A.** The five variants are found from the air only. Remove
+  `default-gp-podium` from the five, make `spotted-from-air` their unlock kind, update the four
+  assertions (`test-circuit-variants` twice, `test-circuit-layouts`, `test-course-kit`) with one line
+  of reason each, and move the reference-lap tooling to the new kind.
+- **Extra files** `circuit-variants.js`, `course-access.js`, `heli-audio.js`: approved.
+- **Roger's line.** Emit the Table-call text with no voice until recorded; the line is queued on SKI-AUDIO.
+- **No registry course** for the Table now.
+- **Numbers** (25 m, 2 to 60 m, 6 m/s, 3 s; 4 km; 500 credits once): approved.

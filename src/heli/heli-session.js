@@ -31,6 +31,8 @@ import {surveyJobOf, surveyTitle, finishSurvey} from './heli-jobs.js';
 import {cameraViewsFor} from './heli-camera.js';
 import {cruiseSeconds} from './heli-fire.js';
 import {fuelPadAt, placeOfCourse} from './pilot-map-data.js';
+import {SECRET_SIGNS, SPOT, TABLE_ID, TABLE_CALL, TABLE_FOUND_TEXT, createSpotter, stepSpotter, noteFound, noteSeen, legPassesTable, claimTable,
+  createTableWorld, mapOf} from './map-secrets.js';
 import {sampleCourse, detectCorners, nameFeatures, namedPieces} from '../track-analysis.js';
 import {courseClosed} from '../course-closures.js';
 
@@ -83,7 +85,7 @@ function clearCircle(course, ground, x, z, radius, flatness) {
 // The ocean's surface, metres (the same level as src/coastal-water.js; a test keeps them equal).
 export const SEA_LEVEL = -15;
 
-export function courseSite(course, ground, courseId, {summitRun = false, summitRescue = false, pilotMap = false} = {}) {
+export function courseSite(course, ground, courseId, {summitRun = false, summitRescue = false, pilotMap = false, table = false} = {}) {
   const radius = HELI_SESSION.zoneRadius;
   let zone = null;
   search: for (const s of [0, 20, -20, 40, -40, 60, -60, 90, -90, 120, -120, 160, -160, 200, -200]) {
@@ -131,9 +133,9 @@ export function courseSite(course, ground, courseId, {summitRun = false, summitR
   if (courseId === HOME_COURSE && (!crate || !target)) throw new Error('No room for the carrying lesson at the home pad');
   // The area covers the course, the pad and every arrival point, with a margin.
   const xs = course.samples.map(p => p.x), zs = course.samples.map(p => p.z);
-  for (const other of Object.keys(destinationsFor({summitRun, pilotMap}))) {
+  for (const other of Object.keys(destinationsFor({summitRun, pilotMap, table}))) {
     if (other === courseId) continue;
-    const point = arrivalPoint(zone, bearing(courseId, other, {summitRun, pilotMap}));
+    const point = arrivalPoint(zone, bearing(courseId, other, {summitRun, pilotMap, table}));
     xs.push(point.x); zs.push(point.z);
   }
   const m = HELI_SESSION.areaMargin;
@@ -172,7 +174,9 @@ export function insideArea(area, x, y, z, ground = null) {
 // switch (paint shop, gear, dirt, the wash) and wildlifeEnabled the wildlife
 // switch (the count on the board). labEnabled is the lab switch (docs/LAB.md 4.1): the Lab's bought upgrades then
 // act in flight, at the hook, in the bucket and on the aim ring; with it off, or nothing bought, every result is
-// what it was. wildlife is src/wildlife.js (pass `import *
+// what it was. secretCourses (MAP-SECRETS, docs/PILOT_MAP.md section 5): the ids of the secret courses whose own switches are on;
+// only with the pilot's map on, a sign for each is on its course to be found from the air, and the Table appears on the map after
+// the leg that passes it. wildlife is src/wildlife.js (pass `import *
 // as wildlife`; the helicopter rules may not import it) and surveyStand(courseId,
 // world) gives the count's `canStand(x, z)` for a course, or null. With both
 // switches off, or left out, every result is what it was.
@@ -183,7 +187,7 @@ export function insideArea(area, x, y, z, ground = null) {
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
   mode = 'assisted', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
   summitRunEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false,
-  drivingLessonAt = null, pilotMapEnabled = false} = {}) {
+  drivingLessonAt = null, pilotMapEnabled = false, secretCourses = []} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
   if (typeof loadCourse !== 'function') throw new Error('createHeliSession needs loadCourse(courseId)');
   const flag = {enabled: true};
@@ -191,11 +195,19 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // The pilot's map (docs/PILOT_MAP.md): every place a destination, the map's legs, dearer fuel pads, jobs between
   // owned destinations and scouting. With it off, left out, every answer is what it was.
   const pilotOn = pilotMapEnabled === true;
-  const dflag = pilotOn ? {summitRun: summitOn, pilotMap: true} : {summitRun: summitOn};
+  // The Table joins the destinations once the pilot has seen it (a getter, since the save changes).
+  const dflag = pilotOn ? {summitRun: summitOn, pilotMap: true, get table() { return tableKnown(); }} : {summitRun: summitOn};
   const skinOn = skinsEnabled === true, sflag = {enabled: skinOn};
   const wildOn = wildlifeEnabled === true, wildFlag = {enabled: wildOn, summitRun: summitOn};
-  const places = destinationsFor(dflag);
+  const placesNow = () => destinationsFor(dflag);
   let save = profile;
+  // The pilot's map record, read again only when the save changes.
+  let mapMemo = {save: null, map: null};
+  const mapNow = () => { if (mapMemo.save !== save) mapMemo = {save, map: mapOf(save)}; return mapMemo.map; };
+  const tableKnown = () => pilotOn && mapNow().seen.includes(TABLE_ID);
+  const secretIds = pilotOn && Array.isArray(secretCourses) ? SECRET_SIGNS.filter(sign => secretCourses.includes(sign.id)).map(sign => sign.id) : [];
+  const spotter = createSpotter();
+  let tableWorld = null;
   let site = null, world = null, heli = null, phase = 'idle', timer = 0;
   let destination = null, cruiseOffered = false, cruiseTo = null;
   // The cars on this course: the player's own and a customer's. A load is
@@ -287,6 +299,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   const rflag = {rescue: rescueOn};
   // Summit Run's rescues (SUMMIT-HELI-RESCUES) need both switches: only then does its ceiling follow the ground.
   const siteFlag = pilotOn ? {summitRun: summitOn, summitRescue: summitOn && rescueOn, pilotMap: true} : {summitRun: summitOn, summitRescue: summitOn && rescueOn};
+  // The Table's own area has the arrival point toward every place, itself being on the map by then.
+  const siteFlagOf = courseId => courseId === TABLE_ID ? {...siteFlag, table: true} : siteFlag;
   // A call or rescue stored at Summit Run, met with the Summit switch off, is dropped quietly (RESCUE-SUMMIT-TUNE).
   {
     const stored = missionsOf(save), kept = dropSummitCall(stored, {rescue: rescueOn, summitRun: summitOn});
@@ -349,8 +363,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // the pilot's map on; otherwise the course is exactly what the loader gave.
   let seaGround = null;
   function loadWorld(courseId) {
-    const loaded = loadCourse(courseId);
     seaGround = null;
+    if (courseId === TABLE_ID) return (tableWorld ??= createTableWorld());
+    const loaded = loadCourse(courseId);
     if (!pilotOn || !loaded.course.sections?.some(section => section.theme === 'coast')) return loaded;
     seaGround = loaded.ground;
     return {...loaded, ground: Object.freeze({...loaded.ground, height: (x, z) => Math.max(loaded.ground.height(x, z), SEA_LEVEL)})};
@@ -364,8 +379,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const carried = heldLoad();
     rememberLoads();
     world = loadWorld(courseId);
-    site = courseSite(world.course, world.ground, courseId, siteFlag);
-    const info = places[courseId];
+    site = courseSite(world.course, world.ground, courseId, siteFlagOf(courseId));
+    const info = placesNow()[courseId];
     const fuel = heli ? heli.fuelKg : heliOf(save).fuelKg;
     if (arriveFrom) {
       const toward = bearing(courseId, arriveFrom, dflag);
@@ -618,6 +633,43 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   }
   const pumpHere = () => onHome() || atTruck() || padPrice() !== null;
 
+  // The pilot's map secrets (docs/PILOT_MAP.md section 5; rules in map-secrets.js).
+  // The signs that can be found here now: on this course, their switch on, not found yet.
+  const signsHere = () => !pilotOn || !site ? [] : SECRET_SIGNS.filter(sign =>
+    sign.course === site.courseId && secretIds.includes(sign.id) && !mapNow().found.includes(sign.id));
+  function spotterStep(dt) {
+    const found = stepSpotter(spotter, heli, world.ground, signsHere(), dt);
+    if (!found) return;
+    commit(noteFound(save, found.id));
+    emit({type: 'secretFound', id: found.id, name: found.name, text: isCourseUnlocked(save, found.course)
+      ? `Found from the air: ${found.name}. It is in your course list now.`
+      : `Found from the air: ${found.name}. It joins your course list once you own ${placesNow()[found.course]?.name ?? found.course}.`});
+  }
+  // The leg that passes the Table brings Roger's call on arrival, once; the Table can then be chosen like any destination.
+  function tableCall(from, to) {
+    if (!pilotOn || mapNow().seen.includes(TABLE_ID)) return;
+    if (!legPassesTable(placeOfCourse(from)?.id ?? from, placeOfCourse(to)?.id ?? to)) return;
+    commit(noteSeen(save, TABLE_ID));
+    emit({type: 'tableSpotted', line: TABLE_CALL.line, text: TABLE_CALL.text});
+    emit({type: 'radio', line: TABLE_CALL.line});
+  }
+  // The first landing in the Table's circle: the logbook, 500 credits, once.
+  function tableLanded(event) {
+    if (!pilotOn || site?.courseId !== TABLE_ID || event.result === 'crash') return;
+    if (Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) > site.zone.radius) return;
+    const claim = claimTable(save);
+    if (claim.already) return;
+    commit(claim);
+    emit({type: 'tableFound', pay: claim.paid, text: TABLE_FOUND_TEXT});
+  }
+  // What the screen needs of the secrets: the signs on this course still to be found (for the art to draw) and the hover so far.
+  function secretsView() {
+    const signs = signsHere();
+    return Object.freeze({signs: Object.freeze(signs.map(sign => Object.freeze({id: sign.id, name: sign.name, x: sign.x, z: sign.z}))),
+      spotting: spotter.id === null ? null : Object.freeze({id: spotter.id, fraction: Math.min(1, spotter.seconds / SPOT.seconds)}),
+      found: Object.freeze([...mapNow().found]), table: mapNow().table});
+  }
+
   function crashed(cause) {
     hookHeld = false; hookReeled = false;
     storeFuel();
@@ -643,6 +695,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       emit(event);
       if (event.type === 'liftoff') { fire?.liftoff({lesson: !!lesson}); rescueLifted(); }
       if (event.type === 'touchdown') {
+        tableLanded(event);
         fire?.landed();
         rescueTouched(event);
         storeFuel();
@@ -1064,7 +1117,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function rescueView(fireInfo) {
     const line = lineLoad(), call = callOf(missionsOf(save), rflag);
     const waiting = call && isRescueKind(call.kind) && !call.answered ? Object.freeze({kind: call.kind, courseId: call.courseId,
-      courseName: places[call.courseId]?.name ?? null, answerLeft: fireInfo?.answerLeft ?? 0}) : null;
+      courseName: placesNow()[call.courseId]?.name ?? null, answerLeft: fireInfo?.answerLeft ?? 0}) : null;
     let active = null;
     if (live) {
       const r = live, here = !!rsite && site?.courseId === r.courseId, gear = gearNow(), left = clockLeft(r, gear);
@@ -1095,7 +1148,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       // Carrying people: the way to a handover circle (the pad here, or the rescue course's own).
       if (rsite && heli && r.kind !== 'supply' && r.stage === 'carry')
         target = site && (site.courseId === HOME_COURSE || here) ? bearingTo(site.zone.x, site.zone.z) : null;
-      active = Object.freeze({kind: r.kind, id: r.id, courseId: r.courseId, courseName: places[r.courseId]?.name ?? null,
+      active = Object.freeze({kind: r.kind, id: r.id, courseId: r.courseId, courseName: placesNow()[r.courseId]?.name ?? null,
         stage: r.stage, condition: r.condition, conditionName: CONDITIONS[r.condition], here,
         clockSeconds: r.clockSeconds, limit: rescueLimit(r.kind, gear, r.courseId), left, orange: left <= 60, dusk: duskOf(r),
         crates: Object.freeze([...r.crates]), cratesDown: r.crates.filter(c => c === 2).length, target, signal, sites});
@@ -1278,6 +1331,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           storeFuel();
           commit(countFlight(save, flag));
           emit({type: 'radio', line: 'heli.radio.arrived'});
+          tableCall(from, site.courseId);
         }
         return api.takeEvents();
       }
@@ -1356,6 +1410,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         ? [...flown.filter(event => event.type !== 'touchdown' && event.type !== 'crash'), {type: 'crash', cause: 'sea'}] : flown);
       if (phase !== 'flying') return api.takeEvents();
       rescueStep(dt);
+      if (pilotOn) spotterStep(dt);
       if (skinOn) skinStep(dt);
       if (surveyRun) surveyStepNow(dt, gear);
       fire?.step({dt, engine: heli.engine === true, aboveGround: heli.y - world.ground.height(heli.x, heli.z), lesson: !!lesson});
@@ -1409,7 +1464,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         emit(result.event);
         const inZone = Math.hypot(held.x - site.zone.x, held.z - site.zone.z) <= site.zone.radius;
         if (held.own && inZone) {
-          commit(placeCar(save, carId, site.courseId, flag));
+          // A car can be left only where the save can keep it: the Table's strip waits for the save (MAP-SECRETS part two).
+          const placed = commit(placeCar(save, carId, site.courseId, flag));
+          if (!placed.ok) { emit({type: 'carNotKept', reason: 'A car cannot be left on the Table yet. Carry it down.'}); return result.event; }
           emit({type: 'delivered', carId, courseId: site.courseId, dropped: result.event.type === 'releasedHigh'});
           offer = isCourseUnlocked(save, site.courseId) && !courseClosed(save, site.courseId, undefined, fireFlag) ? {courseId: site.courseId, carId} : null;
         } else if (held.job && inZone) deliverJob(held, result.event);
@@ -1605,7 +1662,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (!free) return {ok: false, reason: loads.some(car => car.hooked && car.bucket) ? 'Take the bucket off first.' : 'Set the load down first.'};
       if (WATER_CHALLENGES.includes(id) && !fire) return {ok: false, reason: 'Forest fires are not available yet.'};
       if (id === 'lift' && heli.fuelKg < CHALLENGE_RULES.lift.fullTankKg) return {ok: false, reason: 'Fill the tank first.'};
-      if (id === 'altitude' && !places[CHALLENGE_RULES.altitude.courseId]) return {ok: false, reason: 'Summit Run is not open yet.'};
+      if (id === 'altitude' && !placesNow()[CHALLENGE_RULES.altitude.courseId]) return {ok: false, reason: 'Summit Run is not open yet.'};
       endChallenge(null);
       return beginChallenge(id);
     },
@@ -1894,8 +1951,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         fallen: Object.freeze([...fallen]),
         ...(rescueOn ? {rescue: rescueView(fireInfo)} : {}),
         // The places the player can fly to; named only with Summit Run on, which adds the fourth.
-        ...(summitOn || pilotOn ? {destinations: Object.freeze(Object.keys(places))} : {}),
-        ...(pilotOn ? {scout: scoutView()} : {}),
+        ...(summitOn || pilotOn ? {destinations: Object.freeze(Object.keys(placesNow()))} : {}),
+        ...(pilotOn ? {scout: scoutView(), secrets: secretsView()} : {}),
       });
     },
     // The ring under the load the hook is near (FIX-HELI-HOOK). Kept out of
