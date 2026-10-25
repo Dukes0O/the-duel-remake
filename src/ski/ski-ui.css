@@ -16,7 +16,7 @@
 .ski-buttons{position:absolute;top:84px;right:24px;display:flex;gap:8px;align-items:center;pointer-events:auto}
 .ski-buttons button{padding:6px 10px;font:600 12px/1.2 inherit;color:var(--ink,#f3eddf);background:#0f1614cc;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
 .ski-buttons button:hover{background:#26302dcc}
-.ski-view-name{font-size:10px;letter-spacing:2px;color:var(--muted,#b6b1a5)}
+.ski-view-name{padding:6px 9px;font-size:10px;letter-spacing:2px;color:var(--ink,#f3eddf);background:#0f1614cc;border-radius:4px}
 .ski-keys{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);margin:0;padding:6px 12px;font-size:11px;letter-spacing:1px;background:#0f1614b3;border-radius:4px;white-space:nowrap}
 .ski-help{position:absolute;right:24px;bottom:70px;width:330px;padding:12px 14px;background:#0f1614e6;border:1px solid #ffffff26;border-radius:6px}
 .ski-help h3{margin:0 0 6px;font-size:11px;letter-spacing:2.5px}
