@@ -1,4 +1,4 @@
-import {point} from '../combat-weapons.js';
+import {point} from '../combat-actors.js';
 import {DRIVE} from '../config.js';
 import {arenaActor, hostile, outOfPlay} from '../combat-teams.js';
 import {addHazard} from './hazards.js';

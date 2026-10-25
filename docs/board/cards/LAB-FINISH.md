@@ -13,3 +13,16 @@ the trades are felt, none is free. Find the secret without being told where.
 Send Kyle a sheet of the Lab, two benches and the Spéirling. Tune only
 prices, challenge thresholds and setting step sizes, with the reason in the
 change note. Then Claude decides go live (rule 18).
+
+## Carried from LAB-SNOW (Claude, 25 October)
+
+- Brian's recorded wax line (`lab.brian.wax.explain`, `docs/LAB.md` 4.3) says "Cold snow has hard, sharp crystals, so it needs a hard wax." The three samples are dry powder (-15 C, hard wax), cool snow (-5 C, medium wax) and wet snow (0 C, soft wax); the line is true of the powder. Consider re-recording it as "Very cold, dry snow has hard, sharp crystals..." and adding that medium snow wants a medium wax. The game only checks that the wax is the right one for the day's snow.
+
+## From LAB-VIEW's look (Claude, 25 October 2026)
+
+Room passed from the scenario pictures. Before the `lab` switch goes on:
+tighten each bench camera so the bench fills the frame (on the lift bench
+the floor grate takes the lower third), and check no pillar stands close in
+the foreground of any bench view.
+- Tuned laps have no board of their own (LAB-TUNE keeps them off the
+  leaderboard). Decide at finishing whether a tuned-lap board is worth adding.

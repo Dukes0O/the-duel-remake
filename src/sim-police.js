@@ -38,7 +38,7 @@ export function _newPursuit(gap) {
 }
 
 export function _policePace() {
-  return this.course.def.kind === 'chase' ? CARS[this.state.car].topSpeed * (.42 + .15 * CPU_DIFFICULTY[this.state.cpuDifficulty].skill) : POLICE.pursuitSpeedMph;
+  return this.course.def.kind === 'chase' ? CARS[this.state.car].topSpeed * (POLICE.chasePaceBase + .15 * CPU_DIFFICULTY[this.state.cpuDifficulty].skill) : POLICE.pursuitSpeedMph;
 }
 
 export function _movePolice(cruiser, dt) {

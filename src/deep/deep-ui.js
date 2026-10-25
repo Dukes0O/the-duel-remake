@@ -14,12 +14,12 @@ export function deepPresentation(duel) {
       target:{x:car.x+Math.sin(car.heading)*26,y:car.y+1.05,z:car.z+Math.cos(car.heading)*26}}};
 }
 // Views own translated copies and resources. They never write the Duel packet.
-export function createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,createPipeline}) {
+export function createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,createPipeline,createExtras=null}) {
   let visit=null,overlay=null,disposed=false,revision=0;
   function clearVisit() {
     if(!visit)return;
     const current=visit;visit=null;
-    current.look.dispose();current.ambient.dispose();current.pipeline.dispose();
+    current.extras?.dispose();current.look.dispose();current.ambient.dispose();current.pipeline.dispose();
     current.scene.remove(current.car);
     if(current.parent)current.parent.add(current.car);
     current.car.position.copy(current.position);current.car.quaternion.copy(current.quaternion);
@@ -29,6 +29,8 @@ export function createDeepView({renderer,createUnderwaterScene,createWaterline,c
   return {
     get revision(){return revision;},
     reset,
+    // deepRaised: the sea life may react (the whale passes when the Sirena comes up). Read only.
+    raised(find){visit?.look.raised(find);},
     render({duel,car,camera,seconds,high,width,height}) {
       if(disposed)return false;
       const journey=duel.state.deepJourney,runtime=duel.deepRuntime;
@@ -49,13 +51,16 @@ export function createDeepView({renderer,createUnderwaterScene,createWaterline,c
         const look=createUnderwaterScene({zone:runtime.zone,quality:high?'high':'performance',renderer,scene});
         look.attachCar(car);scene.add(car);
         const ambient=createAmbientShading(scene,viewCamera),pipeline=createPipeline(scene,viewCamera,ambient,high);
-        ambient.refresh();visit={runtime,car,high,scene,camera:viewCamera,look,ambient,pipeline,parent,position,quaternion,scale,visible};revision++;
+        // DEEP-SIRENA-VIEW: what the story adds to the dive (the wreck, parts, bags and the drop).
+        const extras=createExtras?.({scene,zone:runtime.zone,deep:look,rampHeading:runtime.ramp.heading})??null;
+        ambient.refresh();visit={runtime,car,high,scene,camera:viewCamera,look,ambient,pipeline,parent,position,quaternion,scale,visible,extras,seconds};revision++;
       }
       const pose=surfaceLocalPoint(deepWorldPose(duel));
       visit.camera.copy(local);visit.camera.updateMatrixWorld(true);
       const visual=surfaceLocalPoint(car.position);
       car.position.set(visual.x,visual.y,visual.z);
       visit.look.update({car:pose,camera:visit.camera,seconds});
+      visit.extras?.update({duel,seconds,dt:Math.max(0,Math.min(.1,seconds-visit.seconds))});visit.seconds=seconds;
       visit.ambient.enabled=high;
       const ratio=renderer.getPixelRatio?.()??1;
       if(visit.width!==width||visit.height!==height||visit.ratio!==ratio){visit.pipeline.setSize(width,height);visit.width=width;visit.height=height;visit.ratio=ratio;}

@@ -261,7 +261,7 @@ use the App autopilot.
 
 ## 6. Sounds and radio lines
 
-- **Radio** (Brian, through `src/lessons/radio-voice.js`): 16 lines, below.
+- **Radio** (Brian, through `src/lessons/radio-voice.js`): 15 lines, below. Lessons 2 to 4 and the true late-try lines add 32 more (12.7).
   Each kept take is recorded with the same voice and settings as the
   helicopter's lines, kept in `audio-src/voices/`, recorded as one entry in
   `tools/audio/catalog.json` (text, file and hash), and copied to
@@ -277,7 +277,6 @@ use the App autopilot.
 | --- | --- |
 | `drive.radio.corner.intro` | Welcome to the track. Today is the most important corner skill there is: braking. Forget the course boards today and watch my cones. |
 | `drive.radio.corner.late.start` | Let us see what happens when you leave it late. Keep your foot down and brake at the red board. |
-| `drive.radio.corner.late.result` | Hear that screech? That was your tyres sliding, and sliding is slow. Look at the time you lost. |
 | `drive.radio.corner.late.early` | You braked early. Good instinct, but this time I wanted you to feel it. That one still counts. |
 | `drive.radio.corner.right.start` | Now the right way. Brake hard at the first cone while the car is straight, turn in, touch the inside cone, and accelerate out wide past the third. |
 | `drive.radio.corner.coach.brake` | Brake at the first cone. Not before, not after. |
@@ -292,10 +291,11 @@ use the App autopilot.
 | `drive.radio.corner.pass` | Three in a row. You have earned better brakes, and the next lesson is open. |
 | `drive.radio.retake` | Back for more? Good. Practice is how the fast drivers got fast. |
 
-`drive.radio.corner.late.result` is not played since 24 October 2026: it promises lost time,
-which the tyres do not cost. Until DRIVE-LESSON-LATE-LINE records a replacement, the
-late try plays `drive.radio.corner.coach.screech` after a screech of at least 0.5 s
-(`late.early` if it braked early), and nothing otherwise.
+The late try plays `drive.radio.corner.late.slid` after a screech of at least 0.5 s,
+`drive.radio.corner.late.off` when it ends against a wall or off the road, and
+`drive.radio.corner.late.early` if it braked early (12.7). The old
+`drive.radio.corner.late.result` promised lost time, which the tyres do not
+cost; it is removed.
 
 ## 7. The save (`save-shape`)
 
@@ -488,6 +488,11 @@ or damage.
 - **Proof before it ships:** in Node, with ENGINE-CURVE on, the early-shift
   try is at least 0.3 s slower than the instructor on both rows, and a run in
   too high a gear out of the corner is slower than the instructor's gear.
+- **As built (DRIVE-LESSON-3):** the rules, instructor and tests are in `src/lessons/drive-lessons.js` and
+  `tools/test-drive-lesson-3.mjs`. The run is Lesson 1's line from the new gate. Both stretches have a bend in
+  the middle (Griffin Bend, Beaver Kink). The gear rule is measured at the apex cone (no higher than the
+  instructor) as well as at the exit cone (his gear or the next one up); see `docs/changes/DRIVE-LESSON-3.md`
+  for the proof numbers.
 
 ### 12.4 Lesson 4, snow
 

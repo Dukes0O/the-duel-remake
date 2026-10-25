@@ -60,13 +60,15 @@ const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
 const approach = (value, target, maxStep) => value + clamp(target - value, -maxStep, maxStep);
 const finite = (v, fallback = 0) => Number.isFinite(v) ? v : fallback;
 
+// The Lab's upgrades (docs/LAB.md 4.1, src/lab/lab-heli.js) ride on the state as `state.upgrades`:
+// {thrustFactor, emptyMassKg, altitudeScaleM}. A state without them is the helicopter as it always was.
 export function heliMass(state) {
-  return KESTREL.emptyKg + KESTREL.pilotKg + Math.max(0, state.fuelKg);
+  return (state.upgrades?.emptyMassKg ?? KESTREL.emptyKg) + KESTREL.pilotKg + Math.max(0, state.fuelKg);
 }
 
 // Thin air: thrust falls with real altitude above sea level.
-export function airFactor(altitudeM) {
-  return Math.exp(-Math.max(0, altitudeM) / KESTREL.airScaleHeight);
+export function airFactor(altitudeM, scaleM = KESTREL.airScaleHeight) {
+  return Math.exp(-Math.max(0, altitudeM) / scaleM);
 }
 
 // Up to 15% more thrust with the skids on the ground, none at one rotor
@@ -88,11 +90,13 @@ export function dragCoefficient(airspeed) {
   return HORIZONTAL_DRAG * (1 + KESTREL.stallDragRise * over);
 }
 
+// upgrades: the Lab's {thrustFactor, emptyMassKg, altitudeScaleM}, or null/left out for the plain helicopter,
+// which gets no `upgrades` field at all.
 export function createHeliState({x = 0, y = 0, z = 0, heading = 0, fuelKg = KESTREL.tankKg,
-  mode = 'assisted', altitudeOffset = 0, ground = null} = {}) {
+  mode = 'assisted', altitudeOffset = 0, ground = null, upgrades = null} = {}) {
   const groundY = ground ? ground.height(x, z) : 0;
   const startY = Math.max(finite(y), groundY);
-  return {
+  const state = {
     t: 0, x, y: startY, z, vx: 0, vy: 0, vz: 0,
     heading, pitch: 0, roll: 0, yawRate: 0,
     collective: 0, rotor: fuelKg > 0 ? 1 : 0, rotorEnergy: 1,
@@ -103,6 +107,8 @@ export function createHeliState({x = 0, y = 0, z = 0, heading = 0, fuelKg = KEST
     crashed: false, lowFuelWarned: fuelKg <= KESTREL.tankKg * KESTREL.lowFuelShare,
     lowRotorWarned: false, burnedKg: 0,
   };
+  if (upgrades) state.upgrades = Object.freeze({thrustFactor: upgrades.thrustFactor, emptyMassKg: upgrades.emptyMassKg, altitudeScaleM: upgrades.altitudeScaleM});
+  return state;
 }
 
 export function horizontalSpeed(state) {
@@ -115,7 +121,7 @@ export function tiltOf(state) {
 
 // Thrust the rotor could give now at full collective, before tilt.
 export function availableThrust(state, heightAboveGround) {
-  return KESTREL.maxThrust * airFactor(state.y + state.altitudeOffset) *
+  return KESTREL.maxThrust * (state.upgrades?.thrustFactor ?? 1) * airFactor(state.y + state.altitudeOffset, state.upgrades?.altitudeScaleM) *
     groundEffectFactor(heightAboveGround) * speedLiftFactor(horizontalSpeed(state));
 }
 
@@ -346,7 +352,7 @@ export function heliReadout(state, {loadKg = 0} = {}) {
     fuelKg: state.fuelKg,
     fuelMinutes: burn > 0 ? state.fuelKg / burn / 60 : Infinity,
     weightKg: mass,
-    maxLiftKg: KESTREL.maxThrust * airFactor(altitude) / GRAVITY,
+    maxLiftKg: KESTREL.maxThrust * (state.upgrades?.thrustFactor ?? 1) * airFactor(altitude, state.upgrades?.altitudeScaleM) / GRAVITY,
     headingDeg: compass,
     pitchDeg: state.pitch / DEG,
     rollDeg: state.roll / DEG,

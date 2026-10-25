@@ -1,8 +1,11 @@
 import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
+import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
+// MAP-VIEW: signs, corner names and the Table (drawing only).
+import {createMapWorldView} from './heli/pilot-map-world.js';
 import {createBurntLook} from './burnt-look.js';
 import {createTrackKits,trackKitsOf} from './track-kits.js';
 import {snowmenEnabled,snowmanPlacements} from './snowmen.js';
@@ -237,7 +240,7 @@ export function attachRenderer(host, app) {
   const bloom=new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9);
   bloom.name='Bloom';composer.addPass(bloom);composer.addPass(Object.assign(new OutputPass(),{name:'Tone and colour'}));
   const lighting=createSceneLighting({scene,renderer,bloom,host});
-  const deepView=createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,
+  const deepView=createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,createExtras:createSirenaScene,
     createPipeline(privateScene,privateCamera,ambient,high){
       const privateComposer=new EffectComposer(renderer);
       privateComposer.addPass(new RenderPass(privateScene,privateCamera));
@@ -248,12 +251,15 @@ export function attachRenderer(host, app) {
         render:()=>renderMainView(renderer,privateComposer,high),
         dispose(){privateComposer.passes.forEach(pass=>{if(pass!==ambient)pass.dispose?.();});privateComposer.dispose();}};
     }});
-  const stopDeepEvents=app.duel.onChange((_state,event)=>{if(event.menu||event.stageLoaded!=null||event.arenaLoaded!=null||event.deepExited)deepView.reset();});
+  const stopDeepEvents=app.duel.onChange((_state,event)=>{if(event.menu||event.stageLoaded!=null||event.arenaLoaded!=null||event.deepExited)deepView.reset();if(event.deepRaised)deepView.raised(event.deepRaised.find);});
   let deepRevision=deepView.revision;
 
   // The helicopter's group joins the scene before the lighting roots are
   // taken, so a world rebuild never removes it.
   const heliView=createHeliView({THREE,scene});
+  // MAP-VIEW: the pilot's map in the world; its ground heights come from the course last loaded.
+  const mapWorld=createMapWorldView({THREE,scene,groundHeight:(x,z)=>app.heliGroundHeight(x,z),
+    roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});
   // H2 Fire: a burnt course's look (docs/HELI_FIRE.md 8.4), drawing only.
   const burntLook=createBurntLook({THREE,scene});
   const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
@@ -329,7 +335,9 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
-  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets);scene.add(yetiView.group);
+  // A neutral multiplier on the fur alone (the accepted white factor would darken below 1): at night the yeti reads dark
+  // grey-green against the snow, and 2.6 lifts it to a pale grey-white while the texture and vertex-colour detail stay.
+  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets,{furTint:new THREE.Color(2.6,2.6,2.6)});scene.add(yetiView.group);
   const roadRoof=createRoadRoofOwner(vehicleAttachments,{yetiAssets});
   const combatScene=createCombatScene(vehicleAttachments, {
     loadFlameTexture: path => new THREE.TextureLoader().load(path),
@@ -515,6 +523,7 @@ export function attachRenderer(host, app) {
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
     if(disposed)return;
+    if(app.labOpen===true){frameMetrics.suspend();previousT=now;return;} // LAB-VIEW: the Lab draws its own room, so this view rests
     if (trackSnapshot) {
       if (['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) {drawTrackSnapshot(now);return;}
       clearTrackSnapshot();
@@ -631,6 +640,9 @@ export function attachRenderer(host, app) {
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const deepPose=!menu?deepPresentation(app.duel):null;
     const heliPose=st.status==='heli'&&app.heliSession?heliView.update(app.heliView(),{cameraIndex:app.heliCamera,dt}):(heliView.hide(),null);
+    // MAP-VIEW: the Table is not on the course last loaded, so that course steps aside while the helicopter is there.
+    const mapDraw=st.status==='heli'&&app.heliSession?mapWorld.update(app.heliView()):(mapWorld.hide(),{hideCourse:false});
+    if(world)world.visible=!mapDraw.hideCourse;
     burntLook.apply({course,look:app.fireLookFor?.(course.def.id)??null});burntLook.update(dt);heliView.fire.setQuality(app.ambientOcclusionEnabled!==false?'high':'performance');host.dataset.burntLook=burntLook.statusFor(course.def.id);
     const physicalCourse=deepPose?app.duel.course:course;
     const pp = vehicleGroundPoint(physicalCourse,distance,lateral);
@@ -1075,7 +1087,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();mapWorld.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);

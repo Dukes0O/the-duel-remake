@@ -82,9 +82,26 @@ export const HELI_TONE_CUES = Object.freeze({
   // rescue clock's last minute, under the rotor.
   'heli.beacon.beep': cue('interface', {priority: 75, limit: 2, volume: .7, layers: [tone(1000, .07, .16, 'sine', 0)]}),
   'heli.clock.tick': cue('interface', {priority: 30, limit: 1, volume: .35, layers: [tone(2200, .025, .08, 'triangle', 0)]}),
+  // The pilot's map (docs/PILOT_MAP.md section 5): a secret found from the air, three rising tones, softer than the badge.
+  'heli.found': cue('interface', {priority: 80, limit: 1, volume: .6, layers: [
+    tone(659, .22, .1, 'sine', 0), tone(880, .22, .1, 'sine', .16), tone(1319, .6, .1, 'sine', .32)]}),
+  // The pilot's map screen (MAP-VIEW, docs/PILOT_MAP.md section 6): paper unfolding and folding, and a pin pushed in when a
+  // destination is set. Made here from noise and tones; the laptop may render library versions from the same cue ids later.
+  'map.open': cue('interface', {priority: 40, limit: 1, volume: .5, layers: [
+    noise(2600, .22, .18, 'bandpass'), noise(1400, .45, .14, 'bandpass'), tone(180, .3, .05, 'triangle', 0, 120)]}),
+  'map.close': cue('interface', {priority: 40, limit: 1, volume: .5, layers: [
+    noise(1500, .3, .15, 'bandpass'), noise(3000, .18, .12, 'bandpass'), tone(150, .2, .05, 'triangle', 0, 220)]}),
+  'map.pin': cue('interface', {priority: 70, limit: 1, volume: .6, layers: [
+    tone(1800, .04, .2, 'triangle', 0), tone(900, .09, .12, 'sine', .03, 600), noise(4000, .03, .1, 'highpass')]}),
   'heli.badge': cue('interface', {priority: 85, limit: 1, volume: .7, layers: [
     tone(784, .3, .12, 'sine', 0), tone(988, .3, .12, 'sine', .14), tone(1175, .3, .12, 'sine', .28),
     tone(1568, .7, .12, 'sine', .42)]}),
+  // The Lab (docs/LAB.md 4.1): water on a buoy, a soft bell, for the projectile challenge; and fire retardant
+  // letting go, a slow heavy whump and a thick slurry rush, played on the bucket's pourStart when it carries retardant.
+  'heli.buoy-hit': cue('impacts', {priority: 60, limit: 3, volume: .8, layers: [
+    noise(1300, .25, .45, 'bandpass'), tone(880, 1.2, .26, 'sine'), tone(1760, .8, .1, 'sine'), tone(2349, .5, .05, 'sine')]}),
+  'heli.retardant': cue('vehicle', {priority: 62, limit: 1, volume: .9, layers: [
+    tone(70, .7, .45, 'sine', 0, 40), noise(500, 1.4, .5, 'lowpass'), noise(1500, .8, .22, 'bandpass')]}),
 });
 
 export const HELI_RADIO_CUES = Object.freeze(Object.fromEntries(Object.entries(HELI_RADIO_LINES).map(
@@ -120,6 +137,10 @@ export const HELI_EVENT_CUES = Object.freeze({
   setDown: () => [['heli.setdown.thud', {scale: .6}]],
   drop: () => [['heli.setdown.thud', {scale: 1}]],
   cargoHit: () => [['heli.cable.creak', {scale: .8}], ['heli.setdown.thud', {scale: .55}]],
+  // Retardant is thicker than water: the bucket's pourStart carries `retardant: true` (heli-bucket.js).
+  pourStart: event => event.retardant === true ? [['heli.retardant']] : [],
+  secretFound: () => [['heli.found']],
+  tableFound: () => [['heli.found']],
 });
 // The instructor reacts to the same events (the session may also ask for them;
 // a line already queued, playing or just played is not repeated).
@@ -463,11 +484,13 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
 
   // H2 Fire's loops, each 0 to 1, called every frame with update: the
   // crackle (louder with more burning and nearer, heard within 400 m), the
-  // scoop (with the fill rate) and the pour (while H pours).
-  function fireBeds({crackle = 0, scoop = 0, pour = 0} = {}) {
+  // scoop (with the fill rate) and the pour (while H pours). Retardant pours through the same recording, slower
+  // and duller: a thicker liquid than water.
+  function fireBeds({crackle = 0, scoop = 0, pour = 0, retardant = false} = {}) {
     if (disposed || !isEnabled() || !audio.context || !audible() || crashHold) return;
     for (const [id, level] of [['heli.fire.crackle', crackle], ['heli.bucket.scoop', scoop], ['heli.bucket.pour', pour]]) {
-      const voice = {gain: clamp(level, 0, 1), rate: 1, lowpass: 9000};
+      const thick = id === 'heli.bucket.pour' && retardant === true;
+      const voice = {gain: clamp(level, 0, 1), rate: thick ? .8 : 1, lowpass: thick ? 2400 : 9000};
       steer(bed(id, voice.gain > .01, voice), voice, cues[id]);
     }
   }

@@ -1,5 +1,6 @@
 // Optional additive progress: loading a profile never creates Deep fields.
-const fields = ['found', 'places', 'logged', 'pearls', 'hintsShown'];
+// `raised` (the Sirena's finds) and `sonar`, `coastCup` are DEEP-SIRENA's story fields: optional, never added to a save that lacks them.
+const fields = ['found', 'places', 'logged', 'pearls', 'hintsShown', 'raised'];
 const idList = value => [...new Set((Array.isArray(value) ? value : [])
   .filter(id => typeof id === 'string' && /^[a-z0-9][a-z0-9-]{0,79}$/.test(id)))].slice(0, 128);
 export function normalizeDeep(value) {
@@ -7,6 +8,8 @@ export function normalizeDeep(value) {
   const deep = {...value};
   for (const field of fields) if (Object.hasOwn(value, field)) deep[field] = idList(value[field]);
   if (Object.hasOwn(value, 'kit')) deep.kit = value.kit === true;
+  if (Object.hasOwn(value, 'sonar')) deep.sonar = value.sonar === true;
+  if (Object.hasOwn(value, 'coastCup')) deep.coastCup = value.coastCup === true;
   if (Object.hasOwn(value, 'pacificFinishes')) deep.pacificFinishes =
     Number.isSafeInteger(value.pacificFinishes) ? Math.max(0, Math.min(10, value.pacificFinishes)) : 0;
   return deep;

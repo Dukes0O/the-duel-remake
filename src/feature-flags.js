@@ -14,6 +14,8 @@ export const FEATURE_STATES = Object.freeze({
   'crew-gear': 'on', 'fight-voices': 'on', 'cpu-crews': 'on', 'ambush-alley': 'on', gunn: 'on',
   // Phase 4 (docs/CIRCUITS.md): racing a full field in a Grand Prix.
   'tyre-slip': 'dev',
+  // Engines that pull like real ones (docs/DRIVING_LESSONS.md 12.5): the pull follows revs and the gear. Off in the game.
+  'engine-curve': 'dev',
   'driving-lessons': 'dev',
   'lap-choice': 'on', 'snowmen': 'on', yeti: 'on', 'rival-voices': 'dev',
   'grand-prix': 'on', 'cpu-racecraft': 'dev', 'grand-prix-career': 'dev', 'snow-world': 'dev',
@@ -37,6 +39,12 @@ export const FEATURE_STATES = Object.freeze({
   'heli-skins': 'dev',
   // H5 Heli-skiing (docs/HELI_SKIING.md): the ski rules, runs and drops. Off in the game; works only with the helicopter on and Summit Run owned.
   'heli-skiing': 'dev',
+  // The Lab (docs/LAB.md): lessons, upgrades and their save field. Off in the game.
+  lab: 'dev',
+  // Lab tuning (docs/LAB.md 5): the Tune page and its physics, a separate switch so the race feel is judged alone.
+  'lab-tuning': 'dev',
+  // The pilot's map (docs/PILOT_MAP.md): the place table, regions, fuel pads and the new cruise legs. Off in the game; works only with the helicopter on.
+  'pilot-map': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

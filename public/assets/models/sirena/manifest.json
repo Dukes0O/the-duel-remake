@@ -17,6 +17,19 @@
       ]
     },
     {
+      "id": "wreck-hull",
+      "path": "assets/models/sirena/wreck-hull.glb",
+      "bytes": 414952,
+      "sha256": "ce8255ead7a3e3cb07f77a903467cba772d65d89f2eac611256d7fc66e3f1f44",
+      "triangles": 10547,
+      "vertices": 9728,
+      "dimensionsMetres": [
+        2.045,
+        1.182,
+        4.34
+      ]
+    },
+    {
       "id": "badge",
       "path": "assets/models/sirena/badge.glb",
       "bytes": 45392,
@@ -108,5 +121,5 @@
       ]
     }
   ],
-  "totalBytes": 884776
+  "totalBytes": 1299728
 }

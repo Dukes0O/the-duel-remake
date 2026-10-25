@@ -154,6 +154,16 @@ log (section 6.4) carries the one true fact in the last column.
 | Gray whale (`whale`) | The Drop-off | One slow pass below per visit, with song | Gray whales swim 16,000 to 20,000 km a year, from Alaska to Mexico and back. |
 | Octopus (`octopus`) | Glow Bay | Shifts colour on the rocks | An octopus has three hearts and can change colour in under a second. |
 
+### 5.1 How it is built (DEEP-LIFE, 25 October 2026)
+
+The Kelp Coast's creatures come from the zone's `spots` and are drawn by
+`src/deep/sea-life.js` from rules in `src/deep/sea-life-rules.js`: instanced
+per type with a hard cap each, reacting to the car's position only and never
+touching race state or its random streams. The otter has no model yet and is
+not drawn. The whale passes once per dive, when the car nears the Drop-off or
+when the Sirena is raised (`deepRaised`). Details and numbers:
+`docs/changes/DEEP-LIFE.md`.
+
 ## 6. The story and goals (Claude, 24 October 2026)
 
 The Deep stays a place to play around in: nothing is timed, nothing can hurt
@@ -187,8 +197,9 @@ your first part is raised.
 1. **First dive.** Ana calls: she asks for help with the survey (the log) and
    tells the Sirena story in two lines.
 2. **The badge.** A few metres from the bottom of the ramp, something glints
-   in the sand: Falcone's enamel badge. Drive up and stop beside it. Ana
-   recognises it and fits the **sonar** to your dive kit (section 6.3).
+   in the sand: Falcone's enamel badge. Drive up and stop beside it (within
+   4 m, under 3 km/h, for a second): the badge comes up with no key and no
+   bag. Ana recognises it and fits the **sonar** to your dive kit (section 6.3).
 3. **Four parts with the sonar.** The steering wheel and a front wheel in the
    Kelp Forest (the wheel is tangled in a kelp holdfast), the bonnet at the
    forest's edge, and a door with the number 7 on the Drop-off lip. Each one
@@ -263,7 +274,8 @@ A fourth stock voice from the voice service the game already uses, a warm
 woman's voice not yet used by any crew member or radio (Matilda if it is
 offered), recorded clean and played through the radio chain plus a slow
 warble, because the phone works by sound through water. Lines never name
-prices; cards show numbers. Ids are `deep.ana.<step>`.
+prices; cards show numbers. Ids are `deep.ana.<step>`. Recorded with Bella:
+Matilda is already Odessa on the crew.
 
 | Id | Line |
 | --- | --- |

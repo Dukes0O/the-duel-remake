@@ -1,4 +1,4 @@
-import {point} from '../combat-weapons.js';
+import {point} from '../combat-actors.js';
 import {outOfPlay} from '../combat-teams.js';
 
 const MAX_HAZARDS = 24;

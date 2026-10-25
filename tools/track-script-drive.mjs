@@ -6,6 +6,7 @@ import { App } from '../src/app.js';
 import { COURSE, DEFAULT_CPU_DIFFICULTY, DRIVE, steerForYaw } from '../src/config.js';
 import { DEFAULT_DRIVER } from '../src/drivers.js';
 import {pitTransitTarget} from '../src/pit-lane.js';
+import {tunedGrip} from '../src/lab/lab-tune.js';
 
 // The stock demo driver (src/app.js) judges a corner from three points ahead
 // of the car, which is not enough to brake for a hairpin at the end of a long
@@ -33,11 +34,13 @@ export function useRacingLine(app, skill = .95) {
     const look = course.at(st.s + v * .18);
     const desiredYaw = look.curvature * v + (headingTarget - st.headingError) * 6;
     const surface = d._drivingSurface(st.s, st.lateral);
-    // The profile is for a car of grip 1; speed in a corner goes with the square root of grip.
+    // The profile is for a car of grip 1; speed in a corner goes with the square root of grip. A tuned car's grip
+    // depends on speed (the wing), so the driver takes the grip it has at the speed the line asks for.
+    const lineMph = line.speedAt(st.s) * skill / DRIVE.mphToWorld, grip = d.car.tune ? tunedGrip(d.car, lineMph, 0) : d.car.grip;
     const target = Math.min(surface.speedLimit, d.car.topSpeed * .97,
-      transit?.speedMph ?? line.speedAt(st.s) * skill * Math.sqrt(d.car.grip / .82 * (surface.traction || 1)) / DRIVE.mphToWorld);
+      transit?.speedMph ?? line.speedAt(st.s) * skill * Math.sqrt(grip / .82 * (surface.traction || 1)) / DRIVE.mphToWorld);
     const brake = st.speedMph > target + 3 ? Math.min(1, (st.speedMph - target) / 14) : 0;
-    const steer = steerForYaw(desiredYaw, {speedMph:st.speedMph,grip:d.car.grip,traction:surface.traction,car:d.car,brake:brake,tyreSlip:st.tyreSlipRules===true&&!st.airborne&&st.speedMph>=0});
+    const steer = steerForYaw(desiredYaw, {speedMph:st.speedMph,grip:d.car.tune ? tunedGrip(d.car, st.speedMph, brake) : d.car.grip,traction:surface.traction,car:d.car,brake:brake,tyreSlip:st.tyreSlipRules===true&&!st.airborne&&st.speedMph>=0});
     d.setInput({ throttle: st.speedMph < target ? 1 : 0, brake, steer, boost: false });
   };
 }
@@ -52,8 +55,8 @@ export const passingLateral = (playerLateral, rivalLateral, halfWidth) =>
 // `def` may be an event already in COURSE (found by id) or a definition that is
 // added to COURSE for the length of the run only (tests, never the game).
 export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', cpuDifficulty = DEFAULT_CPU_DIFFICULTY,
-  fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, flags = [], onTick } = {}) {
-  if(!Array.isArray(flags)||flags.some(flag=>flag!=='tyre-slip')) throw Error('Unsupported driver flags.');
+  fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, flags = [], onTick, tune = null, mode = 'duel', stopAfterLaps = 0 } = {}) {
+  if(!Array.isArray(flags)||flags.some(flag=>!['tyre-slip','lab-tuning','grand-prix'].includes(flag))) throw Error('Unsupported driver flags.');
   const added = !COURSE.includes(def) && !COURSE.some(item => item.id === def.id);
   if (added) COURSE.push(def);
   try {
@@ -66,8 +69,8 @@ export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', 
     // the course access rules have their own suites.
     app._refreshPlayer();
     app.seed = seed; app.cpuDifficulty = cpuDifficulty;
-    app.duel.startCampaign({ mode: 'duel', car, difficulty, cpuDifficulty, driverId: DEFAULT_DRIVER, startStage: stageIndex, seed,
-      opponentCount, playerId: app.player.id, upgrades: {}, ...(tyre ? { tyre } : {}) });
+    app.duel.startCampaign({ mode, car, difficulty, cpuDifficulty, driverId: DEFAULT_DRIVER, startStage: stageIndex, seed,
+      opponentCount, playerId: app.player.id, upgrades: {}, ...(tyre ? { tyre } : {}), ...(tune ? { tune } : {}) });
     app.autopilot = true;
     app._scriptedCrashDone = true; // skip the demo's deliberate shoulder visit
     if (driver === 'line' && app.duel.course.racingLine) useRacingLine(app, skill);
@@ -97,7 +100,7 @@ export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', 
       facts.lapMinMph[lap] = Math.min(facts.lapMinMph[lap] ?? Infinity, s.speedMph);
       onTick?.(s, d);
     };
-    while (!['stage_result', 'gameover', 'complete'].includes(d.state.status) && frames++ < fps * maxSeconds) app.advance(1 / fps, 1 / fps);
+    while (!['stage_result', 'gameover', 'complete'].includes(d.state.status) && frames++ < fps * maxSeconds && !(stopAfterLaps && d.state.completedLaps >= stopAfterLaps)) app.advance(1 / fps, 1 / fps);
     const s = d.state;
     return { ...facts, status: s.status, completed: s.results?.completed === true, won: s.results?.won === true,
       laps: s.completedLaps, lapTimes: [...(s.lapTimes || [])], timeSec: s.results?.timeSec ?? s.stageTimeSec,

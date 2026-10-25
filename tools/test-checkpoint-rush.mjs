@@ -13,7 +13,7 @@ function trial(cpuDifficulty='hard',seed=1989){const d=new Duel({seed});d.startC
 function cross(d,gateIndex,lateral=0){const s=d.state,gate=d.course.features.rushGates[gateIndex%6],lap=Math.floor(gateIndex/6),distance=gate.s+lap*d.course.length;
   Object.assign(s,{status:'racing',prevS:distance-.2,s:distance+.2,prevLateral:lateral,lateral,speedMph:120,completedLaps:lap});d._advanceRushGates(1/120);}
 
-for(const [level,initial,extension]of[['easy',40,10],['medium',34,8],['hard',30,7]]){
+for(const [level,initial,extension]of[['easy',40,12],['medium',34,8],['hard',30,7]]){
   const d=trial(level),s=d.state;
   check(s.car==='dusthawk_rally'&&s.mode==='duel'&&s.lapsTotal===2,'the intended Dusthawk checkpoint fixture retains the chosen car, objective mode and two laps');
   check(!s.rival&&!s.traffic.length&&!s.police.pursuit&&!d.course.features.radarTraps.length,'the rally challenge has no traffic, rival or police');

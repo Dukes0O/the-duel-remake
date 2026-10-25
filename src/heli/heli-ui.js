@@ -10,6 +10,11 @@ import {LESSON_RULES} from './heli-lessons.js';
 import {createDispatchBoard, atHomePad} from './heli-board.js';
 import {lessonBoardMarkup} from '../lessons/lesson-board.js';
 import {isRescueKind} from './heli-missions.js';
+// MAP-VIEW: the pilot's map screen.
+import {createPilotMapUi, MAP_KEY} from './pilot-map-view.js';
+import {placeOfCourse, placeById} from './pilot-map-data.js';
+import {CHALLENGE_RULES} from '../lab/lab-challenges.js'; // LAB-VIEW: the numbers the challenge line quotes
+import {CARS} from '../config.js';
 
 export const LESSON_TEXT = Object.freeze({
   liftoff: Object.freeze({name: '1 Lift-off', goal: 'Rise to 3 m and hold her there for 5 seconds.'}),
@@ -66,7 +71,8 @@ export function instrumentReadings(readout) {
 
 // What a session event says on screen, if anything.
 export function noticeText(event) {
-  const course = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? id;
+  // MAP-VIEW: the map's places (Pacific Canyon, the Table...) have names too.
+  const course = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? placeOfCourse(id)?.name ?? placeById(id)?.name ?? id;
   switch (event?.type) {
     case 'charged': {
       const what = {hardLanding: 'Hard landing', crash: 'Crash', drop: 'Dropped load', cargoLight: 'Cargo knock',
@@ -78,6 +84,9 @@ export function noticeText(event) {
     case 'cannotLift': return event.reason;
     case 'delivered': return `Delivered to ${course(event.courseId)}`;
     case 'hooked': return 'Hooked on';
+    // The pilot's map secrets (MAP-SECRETS): a sign found from the air, Roger's call about the Table, the logbook.
+    case 'secretFound': case 'tableSpotted': return event.text;
+    case 'tableFound': return `${event.text} (${event.pay} credits)`;
     case 'hookRefused': return hookHintText(event);
     case 'entered': return event.arrived ? `${course(event.courseId)}: the landing zone is ahead` : course(event.courseId);
     case 'autopilotOff': return event.reason === 'pilot' ? 'Autopilot off: you have control' : null;
@@ -107,8 +116,36 @@ export function noticeText(event) {
     case 'crateDown': return `Crate down: ${event.pay} credits`;
     case 'rescueDone': return `Rescue done: ${event.paid.toLocaleString('en-US')} credits${event.firstBadge ? ' and the rescue badge' : ''}`;
     case 'rescueFailed': return `Rescue failed, ${FAIL_WORDS[event.reason] ?? 'it is over'}${event.charged ? `: ${event.charged} credits` : ''}`;
+    // LAB-VIEW: the Lab's challenges (docs/LAB.md 4.1).
+    case 'challengeStarted': return `Challenge started: ${CHALLENGE_NAMES[event.challenge] ?? event.challenge}`;
+    case 'challengePassed': return `Challenge passed: ${CHALLENGE_NAMES[event.challenge] ?? event.challenge}. See the Lab shop.`;
+    case 'challengeRetry': return `Not yet: ${event.reason ?? 'try again'}`;
+    case 'challengeStopped': return 'Challenge stopped';
+    case 'buoyHit': return 'Buoy hit';
     default: return null;
   }
+}
+
+// LAB-VIEW: the Lab challenges' names, and the line shown while one is on (what to do, and how it is going).
+const CHALLENGE_NAMES = Object.freeze({lift: 'Lift and weight', projectile: 'Projectile motion', fire: 'Fire triangle', pendulum: 'Pendulums',
+  altitude: 'Air and altitude', headings: 'Headings and maps'});
+export function challengeGoal(challenge) {
+  const id = challenge?.id, rule = CHALLENGE_RULES[id];
+  if (!rule) return '';
+  switch (id) {
+    case 'lift': return `Hover with the ${CARS[rule.carId]?.name ?? 'car'} on the hook for ${rule.holdSeconds} s, ${rule.low} to ${rule.high} m up, over the pad.`;
+    case 'projectile': return `Hit the ${rule.buoys} buoys on the lake with water drops (within ${rule.hitRadius} m): ${(challenge.props ?? []).filter(p => p.hit).length}/${rule.buoys}.`;
+    case 'fire': return `Keep the practice fire off the road for ${rule.seconds} s: ${Math.max(0, Math.ceil(rule.seconds - challenge.elapsed))} s to go.`;
+    case 'pendulum': return `Carry the ${CARS[rule.carId]?.name ?? 'car'} ${rule.distance} m to the target. Set it down within ${rule.targetRadius} m, swinging under ${rule.swingMetres} m.`;
+    case 'altitude': return `Fly the ${rule.crateKg} kg crate to Summit Run and land with ${Math.round(rule.fuelShare * 100)}% of the fuel left.`;
+    case 'headings': return `Fly heading ${String(Math.round(challenge.briefing?.headingDeg ?? rule.headingDeg)).padStart(3, '0')} for ${Math.round(challenge.briefing?.distanceM ?? rule.distanceM)} m to the smoke. No arrow, no autopilot.`;
+    default: return '';
+  }
+}
+export function challengeMarkup(view) {
+  if (!view?.challenge) return '';
+  return `<div class="heli-challenge" role="group" aria-label="Lab challenge"><span>${escape((CHALLENGE_NAMES[view.challenge.id] ?? 'Challenge').toUpperCase())}</span>` +
+    `<p>${escape(challengeGoal(view.challenge))}</p><button type="button" data-heli-challenge="stop">Stop the challenge</button></div>`;
 }
 
 function horizon(pitch, roll) {
@@ -193,7 +230,7 @@ export function instrumentsMarkup(view, {cameraIndex = 0} = {}) {
   <div class="heli-status">
     <span>${view.autopilot ? 'AUTOPILOT ON' : 'AUTOPILOT OFF'} <kbd>P</kbd></span>
     <span>VIEW ${HELI_CAMERA_VIEWS[((cameraIndex % 4) + 4) % 4].toUpperCase()} <kbd>C</kbd></span>
-    <span>${view.bucket ? 'POUR (hold)' : 'HOOK'} <kbd>H</kbd></span>
+    <span>${view.bucket ? 'POUR (hold)' : 'HOOK'} <kbd>H</kbd></span>${view.secrets !== undefined ? `<span>MAP <kbd>${MAP_KEY}</kbd></span>` : ''}
   </div>${fireLineMarkup(view)}${rescueLineMarkup(view)}`;
 }
 
@@ -215,8 +252,10 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   const label = pumpLabel(view.heli.fuelKg, {credits, refuels});
   const pump = onPad ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
   const destination = view.destination ? HELI_DESTINATIONS_WITH_SUMMIT[view.destination]?.name : null;
-  return `<div class="heli-route" role="group" aria-label="Fly to"><span>FLY TO</span>${buttons}${pump}</div>
-    ${view.cruiseOffered ? `<div class="heli-prompt" role="status">Clear of the area. Press <kbd>ENTER</kbd> to cruise to ${escape(destination)}.</div>` : ''}`;
+  // MAP-VIEW: with the pilot's map on, the route panel also opens it (the view carries `secrets` only then).
+  const mapButton = view.secrets !== undefined ? `<button type="button" class="heli-map-open" data-heli-map="open">PILOT'S MAP <kbd>${MAP_KEY}</kbd></button>` : '';
+  return `<div class="heli-route" role="group" aria-label="Fly to"><span>FLY TO</span>${buttons}${mapButton}${pump}</div>
+    ${view.cruiseOffered ? `<div class="heli-prompt" role="status">Clear of the area. Press <kbd>ENTER</kbd> to cruise to ${escape(destination)}.</div>` : ''}${challengeMarkup(view)}`;
 }
 
 // What the pump offers, matching heli-save's buyFuel: the first tank is
@@ -237,7 +276,9 @@ export function pumpLabel(fuelKg, {credits = 0, refuels = 0} = {}) {
 const PUMP_LABEL = /<span class="heli-pump-label">[^<]*<\/span>/;
 
 // The instructor's board on the home pad, or the lesson running now.
-export function lessonsMarkup(view, board, {opening = false} = {}) {
+// driving (DRIVE-LESSON-HELIPAD): {rows, notes} from the app, the same Driving rows the menu's
+// board shows; left out, the board is exactly the helicopter's own.
+export function lessonsMarkup(view, board, {opening = false, driving = null, lab = false} = {}) {
   if (!view?.heli) return '';
   if (view.lesson) {
     const rules = LESSON_RULES[view.lesson.id], text = LESSON_TEXT[view.lesson.id];
@@ -249,8 +290,11 @@ export function lessonsMarkup(view, board, {opening = false} = {}) {
   }
   if (!atHomePad(view) || !board?.length) return '';
   const rows = board.map(item => ({group: 'Helicopter', id: item.id, name: LESSON_TEXT[item.id].name, open: item.open, done: item.done}));
-  return `<div class="heli-lessons" role="group" aria-label="Instructor"><span>INSTRUCTOR</span>${lessonBoardMarkup(rows, {action: 'data-heli-lesson'})}${
-    opening ? '<button type="button" class="heli-skip" data-heli-lesson="skip">Skip the opening (marks lessons 1 and 2 done)</button>' : ''}</div>`;
+  const drivingRows = driving?.rows?.length ? driving.rows : [];
+  const notes = drivingRows.length ? (driving.notes ?? []).map(note => `<p class="heli-lesson-note">${escape(note)}</p>`).join('') : '';
+  return `<div class="heli-lessons" role="group" aria-label="Instructor"><span>INSTRUCTOR</span>${lessonBoardMarkup([...rows, ...drivingRows], {action: 'data-heli-lesson'})}${notes}${
+    opening ? '<button type="button" class="heli-skip" data-heli-lesson="skip">Skip the opening (marks lessons 1 and 2 done)</button>' : ''}${
+    lab ? '<button type="button" class="heli-lab-door" data-heli-lab="door">The Lab: benches, challenges and the shop →</button>' : ''}</div>`; // LAB-VIEW: the Lab door
 }
 
 // How far through a lesson's hold the pilot is, 0 to 1.
@@ -272,20 +316,29 @@ export function createHeliUi({host, app}) {
   const lessonsHost = section.querySelector('.heli-lessons-host');
   const boardHost = section.querySelector('.heli-board-host');
   const board = createDispatchBoard({root: boardHost, app});
+  let pilotMap = null; // MAP-VIEW: made the first time the view carries the pilot's map (never with the switch off)
   let lastLessons = '';
   const lessonAction = action => {
     const session = app.heliSession;
     if (!session) return;
-    const result = action === 'stop' ? session.stopLesson() : action === 'skip' ? session.skipOpening()
+    // A Driving row starts the driving lesson, from the pad, through the app (the helicopter visit ends).
+    const driving = action.startsWith('start:') ? app.heliDrivingBoard?.()?.rows.find(row => row.id === action.slice(6)) : null;
+    const result = driving ? app.heliStartDriving(driving.id) : action === 'stop' ? session.stopLesson() : action === 'skip' ? session.skipOpening()
       : action.startsWith('start:') ? session.startLesson(action.slice(6)) : null;
     if (result && result.ok === false && result.reason) shown.push({text: result.reason, until: performance.now() / 1000 + NOTICE_SECONDS});
-    app._heliEvents?.(session.takeEvents());
+    if (app.heliSession === session) app._heliEvents?.(session.takeEvents());
   };
   const click = event => {
     const lessonButton = event.target.closest('[data-heli-lesson]');
     if (lessonButton) { lessonAction(lessonButton.dataset.heliLesson); lessonButton.blur(); return; }
+    if (event.target.closest('[data-heli-map]')) { app.setHeliMap?.(true); event.target.closest('[data-heli-map]').blur(); return; } // MAP-VIEW
     const place = event.target.closest('[data-heli-destination]');
     if (place) { app.heliSetDestination?.(place.dataset.heliDestination); place.blur(); return; }
+    // LAB-VIEW: the Lab door leaves the helipad for the Lab; the challenge line's Stop button ends a challenge.
+    const door = event.target.closest('[data-heli-lab]');
+    if (door) { app.labFromHeli?.(); return; }
+    const stopChallenge = event.target.closest('[data-heli-challenge]');
+    if (stopChallenge) { app.heliSession?.stopChallenge?.(); app._heliEvents?.(app.heliSession?.takeEvents?.() ?? []); return; }
     const pump = event.target.closest('[data-heli-fuel]');
     if (pump) {
       const result = app.heliBuyFuel?.();
@@ -300,6 +353,7 @@ export function createHeliUi({host, app}) {
     update(now = performance.now() / 1000) {
       if (disposed) return null;
       const view = app.duel?.state?.status === 'heli' ? app.heliView?.() : null;
+      if (view?.secrets !== undefined) (pilotMap ??= createPilotMapUi({host, app})).update(view); else pilotMap?.update(view); // MAP-VIEW
       section.hidden = !view;
       if (!view) { shown = []; radioLine = null; seenLog = null; return null; }
       // New events since the last frame become notices and radio subtitles.
@@ -334,7 +388,8 @@ export function createHeliUi({host, app}) {
       } else lastControls = set(controls, controlsHtml, lastControls);
       lastNotices = set(notices, shown.map(item => `<p>${escape(item.text)}</p>`).join(''), lastNotices);
       const lessonBoard = app.heliSession?.lessonBoard?.() ?? [];
-      lastLessons = set(lessonsHost, lessonsMarkup(view, lessonBoard, {opening: lessonBoard.length > 0 && lessonBoard.every(item => !item.done)}), lastLessons);
+      lastLessons = set(lessonsHost, lessonsMarkup(view, lessonBoard, {opening: lessonBoard.length > 0 && lessonBoard.every(item => !item.done),
+        driving: !view.lesson && atHomePad(view) ? app.heliDrivingBoard?.() ?? null : null, lab: app.labAvailable?.() === true}), lastLessons);
       const bar = lessonsHost.querySelector('.heli-lesson-hold span');
       if (bar) { const width = `${(holdShare(view) * 100).toFixed(0)}%`; if (bar.style.width !== width) bar.style.width = width; }
       // The dispatch board opens with lesson 3 and hides while a lesson runs.
@@ -349,6 +404,7 @@ export function createHeliUi({host, app}) {
       disposed = true;
       section.removeEventListener('click', click);
       board.dispose();
+      pilotMap?.dispose(); // MAP-VIEW
       section.remove();
     },
   };

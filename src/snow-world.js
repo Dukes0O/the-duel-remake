@@ -1,4 +1,5 @@
 // Winter presentation reads authored surfaces; it never adds simulation state.
+import { computeNormalsFast } from './fast-normals.js';
 import * as THREE from 'three';
 import {makeRng} from './rng.js';
 import {winterRanges} from './race-surfaces.js';
@@ -124,8 +125,7 @@ export function applySnowTerrain(geometry,course){
   const position=geometry.attributes.position,weights=new Float32Array(position.count);
   weights.fill(course.def.snowWorld?1:0);
   if(course.def.snowWorld?.mixed)for(let index=0;index<position.count;index++){
-    const near=course.nearest(position.getX(index),position.getZ(index));
-    weights[index]=winterWeight(course,near.s);
+    weights[index]=winterWeight(course,course.nearestS(position.getX(index),position.getZ(index)));
   }
   geometry.setAttribute('winterWeight',new THREE.BufferAttribute(weights,1));return geometry;
 }
@@ -247,7 +247,7 @@ export function softBankGeometry(course){
   const geometry=new THREE.BufferGeometry();
   geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
   geometry.setAttribute('color',new THREE.Float32BufferAttribute(colours,3));
-  geometry.setIndex(indices);geometry.computeVertexNormals();geometry.computeBoundingSphere();
+  geometry.setIndex(indices);computeNormalsFast(geometry);geometry.computeBoundingSphere();
   return geometry;
 }
 function addSoftBanks(group,course){

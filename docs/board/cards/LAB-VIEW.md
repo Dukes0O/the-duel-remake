@@ -34,3 +34,34 @@ Art: LAB-ART.
 Acceptance: the scenario; screens never change race or helicopter state
 except through the Lab's own save calls; lane tier, build, one review.
 Removed: nothing.
+
+## Carried from LAB-HELI (Claude, 24 October)
+
+- Pass `labEnabled: flags.enabled('lab')` to `createHeliSession` in `src/app.js` so the Lab upgrades act in the game.
+- The fire view's litre bar divides by a fixed 600 (`heli-fire-view.js`); use the bucket's own `holds` so the bigger bucket fills the bar.
+- Draw the pad actions the session offers (`loadBucket('water'|'retardant')`, `chooseLine(15|25)`).
+
+## Carried from LAB-HELI-CHALLENGES (Claude, 24 October)
+
+- Draw "Try the challenge" on the Lab board and the pad menu from the session's `challengeBoard()`, `startChallenge(id)` and `stopChallenge()`.
+- Draw `view().challenge.props` in the scene (buoys, the smoke marker, the crate, the practice fire grid) and show `view().challenge.briefing`.
+
+## Shared files with other cards (Claude, 25 October 2026)
+
+Moved to a cloud session. `busy-game-files` is shared for now with
+ENGINE-CURVE, LAB-VIEW and DEEP-SIRENA-VIEW: keep edits to `app.js`,
+`game.js` and `render3d.js` in small blocks named for this card, merge
+current `integration/wasteland` just before the pull request, and the laptop
+settles any clash at merge and reruns only the suites it touches.
+
+## Claude answers (25 October 2026)
+
+All seven picks in the cloud session's questions are confirmed.
+
+1. Own overlay and own canvas: yes. Condition: the Lab's renderer, scene and textures are fully disposed when the Lab closes (a test opens and closes it twice and checks that no WebGL context or listener is left), and the main game renderer does no 3D work while the Lab is open, so two 3D views never run at once on the laptop.
+2. The Lab is a menu screen and the helipad door ends the visit: yes.
+3. Where lessons pass: yes. "Opens with tuning" for the wind-tunnel five is right; LAB-TUNE-VIEW turns them on.
+4. Brian's lines: yes, one at a time, caption always shown.
+5. The G-force lap: yes. The monitor only reads race numbers and never changes the race result or replay; a test shows a race's fingerprint is identical with the monitor armed and not armed.
+6. Challenge props in `heli-scene.js` and the pad menu: yes, as a small block marked LAB-VIEW.
+7. Out of scope list: yes.

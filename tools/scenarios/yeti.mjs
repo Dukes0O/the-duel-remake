@@ -20,10 +20,11 @@ async function browserHelper() {
       resolveId(id) { if(id.replaceAll('\\','/')===entry)return '\0yeti'; },
       load(id) {
         if(id!=='\0yeti')return;
-        return 'import * as THREE from '+source('node_modules/three/build/three.module.js')+
-          ';import {useRacingLine} from '+source('tools/track-script-drive.mjs')+
+        return 'import {useRacingLine} from '+source('tools/track-script-drive.mjs')+
           ';import {renderedGroundHeight} from '+source('src/rendered-ground.js')+
           ';import {hash32} from '+source('src/yeti.js')+
+          ';const THREE=window.P4KitsQa;'+
+          'if(!THREE||typeof THREE.Box3!=="function"||THREE.Vector3!==window.__render?.camera.position.constructor)throw Error("Yeti inspection requires the renderer\'s own Three classes");'+
           ';window.__yetiQa={THREE,useRacingLine,renderedGroundHeight,hash32};';
       }}], build:{write:false, emptyOutDir:false, minify:false,
       lib:{entry,formats:['es']}, rolldownOptions:{output:{codeSplitting:false}}}});
@@ -42,7 +43,7 @@ export async function run(context) {
     packet.sourceHashes[path]=createHash('sha256').update(await readFile(join(root,path))).digest('hex');
   let started=false;
   try {
-    await context.navigate('/tools/menu-check.html?flags=summit-run,yeti,snow-world');
+    await context.navigate('/tools/menu-check.html?flags=summit-run,yeti,snow-world&p4-kits-native=1');
     await context.waitFor("!!window.__qaApp&&!!window.__render&&document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'",'real memory-only Yeti menu',90000);
     await context.evaluate(await browserHelper());
     packet.start=await context.evaluate(`(async()=>{

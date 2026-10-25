@@ -93,6 +93,34 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   const guideRing = ring(THREE, 2.2, GUIDE_WAIT);
   guideRing.visible = false;
   group.add(cable, hookMesh, zoneRing, padMark, hoverRing, targetRing, guideRing);
+  // LAB-VIEW: the Lab challenge's props (view.challenge.props): the buoys, the smoke marker and the practice fire's cells.
+  // Pooled meshes made on demand; drawing only.
+  const labProps = new THREE.Group();
+  labProps.name = 'Lab challenge';
+  group.add(labProps);
+  const labPool = [];
+  const labMake = kind => kind === 'buoy' ? new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 8), new THREE.MeshStandardMaterial({color: 0xffcf3f, roughness: .5}))
+    : kind === 'smoke' ? new THREE.Mesh(new THREE.CylinderGeometry(1.5, 4, 40, 10), new THREE.MeshBasicMaterial({color: 0xcfcac0, transparent: true, opacity: .5, depthWrite: false}))
+    : new THREE.Mesh(new THREE.BoxGeometry(18, .6, 18), new THREE.MeshBasicMaterial({color: 0x2f6b32, transparent: true, opacity: .55, depthWrite: false}));
+  function labDraw(props) {
+    const list = props ?? [];
+    list.forEach((prop, index) => {
+      let mesh = labPool[index];
+      if (!mesh || mesh.userData.kind !== prop.kind) {
+        if (mesh) { labProps.remove(mesh); mesh.geometry.dispose(); mesh.material.dispose(); }
+        mesh = labMake(prop.kind);
+        mesh.userData.kind = prop.kind;
+        labPool[index] = mesh;
+        labProps.add(mesh);
+      }
+      mesh.visible = true;
+      const lift = prop.kind === 'smoke' ? 20 : prop.kind === 'fire' ? .4 : 0;
+      mesh.position.set(prop.x, (prop.y ?? 0) + lift, prop.z);
+      if (prop.kind === 'buoy') mesh.material.color.setHex(prop.hit ? 0x4fd16a : 0xffcf3f);
+      else if (prop.kind === 'fire') mesh.material.color.setHex(prop.burnt ? 0x1b1b1b : prop.percent > 0 ? 0xff6a1a : prop.road ? 0xb59d70 : 0x2f6b32);
+    });
+    for (let index = list.length; index < labPool.length; index++) labPool[index].visible = false;
+  }
   // Cars and crates other than the player's own car (the race renderer
   // draws that one): the game's own car models, made on demand.
   const others = new Map();
@@ -178,6 +206,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
         padMark.position.set(view.zone.x, view.zone.y + .1, view.zone.z);
         padMark.visible = view.courseId === 'tremblant-woods';
       }
+      labDraw(view.challenge?.props); // LAB-VIEW
       fire.update(view, {dt});
       if (view.rescue) rescue ??= createRescueView({THREE, scene, quality, vehicleAssets, ...(rescueLoad ? {load: rescueLoad} : {})});
       rescue?.update(view, {dt});

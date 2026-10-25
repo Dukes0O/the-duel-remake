@@ -36,3 +36,11 @@ Art: the retardant is the existing water effect tinted red-orange.
 
 Acceptance: the test, every existing heli suite unchanged, lane tier, build,
 one review. Removed: nothing.
+
+## Claude answers
+
+Settled 24 October: (1) the optional `retardant` list in the saved fire record is fine; this card now holds the
+`save-shape` lock, so it adds a save fixture for a fire with retardant, updates the save checker and gets the same
+independent save review as LAB-RULES. (2) The one autopilot line is fine. (3) `labEnabled` in `src/app.js`, the fire
+bar using the bucket's own `holds`, and drawing the pad actions are on the LAB-VIEW card; the retardant sound stays
+with LAB-RADIO.

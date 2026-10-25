@@ -14,3 +14,10 @@ pictures of the esses cones, the shift lights and the snow cone. Tune only
 the instructor's 92% and 97%, rolling speeds and cone offsets, with the
 reason in the change note. Then Claude decides go live (rule 18), with or
 after ENGINE-CURVE for lesson 3.
+
+## Before `engine-curve` goes on (Claude, 25 October 2026, from LAB-TUNE's review)
+
+Leaderboard rows carry no engine-curve marker, so a lap under the new engine
+pull and a lap under the old one would share a board. Personal bests already
+key on `engine-curve:1`; give leaderboard rows the same marker (or a separate
+board) before the switch is turned on.
