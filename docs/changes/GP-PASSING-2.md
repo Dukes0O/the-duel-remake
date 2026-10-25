@@ -74,3 +74,11 @@ No type passes and stays on: type 1 (racing-line pass) fails the crash gates, ty
 ## Step C: every car starts with half a nitro tank
 
 Panorama stayed above 5 of 20 (12/20 with steps A and B), so Claude's step C: under `cpu-racecraft` the player and every computer car start a Grand Prix with half a nitro tank (`FIELD.startBoost = .5`), refill unchanged. New cases in `test-race-field.mjs` (half tanks with the switch on, full with it off). Measured alone on the final build (steps A, B, C; all four pass types off).
+
+Step C result (ebb76636), against the switch-off figures: nitro leader 10/20 on Panorama (from 12 with A+B; still fails), 0, 0; 8+-crash races 15, 3, 0 PASS; mean crashes 11.35 PASS, 5.20 FAIL (Woods, limit 4.125), 0.50 FAIL (Pacific Canyon, limit 0.11); early pile-ups 1, 3 (FAIL), 1; max race time change 1.97%, 2.28% FAIL (Woods), 1.55%. Report-only: CPU passes 1.75, 11.55, 4.25; slower player passed 9, 20, 11 of 20. Half a tank moved Panorama by two races and made Woods and Pacific Canyon crash more, so it is removed (code and tests; the commit stays in history) and Panorama's nitro leader stays at 12 of 20 for Claude and Kyle to judge.
+
+Removed: step C (half-tank start) code and its test cases. Steps A and B are kept; the four pass types are in `PASS_TYPES`, all off.
+
+## Final state and checks
+
+Final build: steps A and B on; all four pass types off; step C removed. Final 20-race batch, lane tier and build below (cloud Linux session, after merging current `origin/integration/wasteland`).

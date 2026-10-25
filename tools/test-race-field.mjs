@@ -107,9 +107,6 @@ for (const [seed, hash] of [[1989, 'eb0598fddce54a07f23f36de3675e8ff2ed97d506402
   on.state.s=armS+5; on.state.lateral=racingLineFor(on.course).offsetAt(armS+5); on.state.headingError=0; on.state.speedMph=100;
   on.step(STEP);
   check(on.state.boosting, 'the player can nitro once past the first apex');
-  close(on.state.field.nitroArmS>0?start({racecraft:true}).state.boost:-1, .5, 1e-12, 'step C: the player starts with half a nitro tank');
-  check(start({racecraft:true}).state.opponents.every(r=>r.boost===.5), 'step C: every computer car starts with half a tank');
-  check(start().state.boost===1 && start().state.opponents.every(r=>r.boost===1), 'switch off: full tanks at the start');
   const offBoost=racing(start()); offBoost.state.boost=1; offBoost.state.speedMph=100; offBoost.setInput({throttle:1,steer:0,boost:true}); offBoost.step(STEP);
   check(offBoost.state.boosting, 'switch off: nitro works from the start as before');
 }

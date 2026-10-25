@@ -30,7 +30,6 @@ export const FIELD = Object.freeze({
   carWindow: .1,       // computer cars are within 10% of your performance index
   towRange: 30,        // metres behind another car
   towSide: 2.5,        // metres to the side
-  startBoost: .5,      // nitro tank each car starts with under cpu-racecraft
   towTopSpeed: .05,    // +5% top speed at full tow
   towAccel: .12,       // and a little more push
   carPaceShare: 1,      // how much of a car's edge over or under yours shows in its racer's pace
@@ -273,8 +272,6 @@ export function initializeField(duel) {
     deferFinish: false,
     ...(racecraft ? {nitroArmS: firstApexStation(duel)} : {}),
   };
-  // GP-PASSING-2 step C: with `cpu-racecraft` every car starts a Grand Prix with half a nitro tank (refill unchanged).
-  if (racecraft) { s.boost = FIELD.startBoost; for (const r of s.opponents) r.boost = FIELD.startBoost; }
   s.countdown = FIELD.lights * FIELD.lightSec + hold;
   s.lapsTotal = duel.course.def.laps || FIELD.laps;
   s.traffic = [];
