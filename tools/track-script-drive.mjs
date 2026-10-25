@@ -52,8 +52,8 @@ export const passingLateral = (playerLateral, rivalLateral, halfWidth) =>
 // `def` may be an event already in COURSE (found by id) or a definition that is
 // added to COURSE for the length of the run only (tests, never the game).
 export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', cpuDifficulty = DEFAULT_CPU_DIFFICULTY,
-  fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, flags = [], onTick } = {}) {
-  if(!Array.isArray(flags)||flags.some(flag=>flag!=='tyre-slip')) throw Error('Unsupported driver flags.');
+  fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, flags = [], onTick, tune = null, mode = 'duel' } = {}) {
+  if(!Array.isArray(flags)||flags.some(flag=>!['tyre-slip','lab-tuning'].includes(flag))) throw Error('Unsupported driver flags.');
   const added = !COURSE.includes(def) && !COURSE.some(item => item.id === def.id);
   if (added) COURSE.push(def);
   try {
@@ -66,8 +66,8 @@ export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', 
     // the course access rules have their own suites.
     app._refreshPlayer();
     app.seed = seed; app.cpuDifficulty = cpuDifficulty;
-    app.duel.startCampaign({ mode: 'duel', car, difficulty, cpuDifficulty, driverId: DEFAULT_DRIVER, startStage: stageIndex, seed,
-      opponentCount, playerId: app.player.id, upgrades: {}, ...(tyre ? { tyre } : {}) });
+    app.duel.startCampaign({ mode, car, difficulty, cpuDifficulty, driverId: DEFAULT_DRIVER, startStage: stageIndex, seed,
+      opponentCount, playerId: app.player.id, upgrades: {}, ...(tyre ? { tyre } : {}), ...(tune ? { tune } : {}) });
     app.autopilot = true;
     app._scriptedCrashDone = true; // skip the demo's deliberate shoulder visit
     if (driver === 'line' && app.duel.course.racingLine) useRacingLine(app, skill);

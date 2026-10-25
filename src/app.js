@@ -12,6 +12,8 @@ import {isSummitAttack} from './summit-attack.js';
 import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
+import {labOf} from './lab/lab-save.js'; // LAB-TUNE
+import {seedStockLaps, settleTunedLap} from './lab/lab-tune.js'; // LAB-TUNE
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
@@ -600,6 +602,7 @@ export class App {
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
       deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),
+      tune:this._labTuneOf(car), // LAB-TUNE
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     this._cupRace=cupRound&&this.duel.state.mode==='grandprix'&&this.duel.state.field?.size===8
       ?{seriesId:cupRun.id,ownerId:this.player.id,runId:this.runId,state:this.duel.state}:null;
@@ -935,6 +938,18 @@ export class App {
     if(next===this.profile)return false;
     this.profile=next;this._saveProfile();return true;
   }
+  // LAB-TUNE: the Lab's saved tune for a car, only with the Lab and tuning switches on (never on a lesson run: the game ignores it there).
+  _labTuneOf(car){return this._switches().enabled('lab')===true&&this._switches().enabled('lab-tuning')===true?labOf(this.profile).tune?.[car]:undefined;}
+  // LAB-TUNE: a finished Time Trial keeps its best lap as the stock lap, or pays the tuned-lap bonus once for the course
+  // (docs/LAB.md 5.3). Runs before the run is written to the records, so stock laps are seeded from the records before it.
+  _settleTunedLap(result,state){
+    const flags=this._switches();
+    if(state.mode!=='timetrial'||result.completed!==true||this.duel.drivingLesson||flags.enabled('lab')!==true||flags.enabled('lab-tuning')!==true)return;
+    const seeded=seedStockLaps(this.profile,mergeLeaderboards(this.leaderboard,loadLeaderboard()).entries,this.player.id,{flags});
+    const settled=settleTunedLap(seeded,{carId:state.car,courseId:COURSE[state.stageIndex].id,lapTimes:state.lapTimes,tune:state.tune},{flags});
+    if(settled.profile!==this.profile){this.profile=settled.profile;this._saveProfile();}
+    if(settled.tuned)result.tunedLap=settled.tuned;
+  }
   purchaseCourse(id){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the menu before unlocking courses.',cost:0};
     this._refreshPlayer();const result=buyCourse(this.profile,id);
@@ -1066,6 +1081,7 @@ export class App {
     }
     if(awarded.awarded){
       this.profile=awarded.profile;this._saveProfile();
+      this._settleTunedLap(result,state); // LAB-TUNE
       this._recordCupResult(result,state);
       if(state.mode==='grandprix')result.creditPositionReward=Math.min(Math.max(0,awarded.reward),Math.max(0,awarded.breakdown.base));
       const recorded=recordFinish(mergeLeaderboards(this.leaderboard,loadLeaderboard()),payload,this.player);this.leaderboard=recorded.board;

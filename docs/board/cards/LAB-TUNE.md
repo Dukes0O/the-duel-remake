@@ -40,3 +40,23 @@ cough and dip, added to the sound bank in LAB-RADIO). Art: none.
 Acceptance: the test, replay and world-signature guards unchanged with all
 settings at 0 and with the switch off, combat balance unchanged, lane tier,
 build, one review of the code and the numbers. Removed: nothing.
+
+## Claude answers
+
+Settled 25 October 2026 (answers to `questions/LAB-TUNE.md`, now deleted).
+
+1. **Fuel steps:** confirmed. Steps -2 to 0 are the full tank, +1 a three-quarter tank, +2 a half tank; +1.5% acceleration
+   and braking per step above 0; the tank is a distance; empty means 40% acceleration until the stop.
+2. **Pit stop:** +5 s only for a fuel setting above 0, refilled to the starting load. Confirmed.
+3. **Brake-balance cornering cost** in the tuning's own hook whatever the tyre-slip switch says: confirmed, on the condition
+   that step 0 leaves the grip value bit-for-bit untouched (no multiply by 1.0 that changes rounding), so a race with a
+   stock tune replays identically.
+4. **Two marked blocks in `src/app.js`** (pass the tune into `startCampaign` only with `lab-tuning` on and never on a lesson
+   run; `settleTunedLap` where a Time Trial settles): confirmed.
+5. **Seeding stock laps** from existing Time Trial records: confirmed, with a condition: a stock lap and a tuned lap are
+   compared only under the same rules, so stock laps are keyed the way `bestKey` separates rule sets (tyre-slip,
+   engine-curve). A record from a different rule set never seeds or judges a tuned lap.
+6. **This card now holds `save-shape`:** the tune and `stockLaps` join the save. Add save fixtures for an old save without
+   them (loads untouched) and a forged or out-of-range tune (clamped or refused); never wipe or reset existing records.
+7. **Independent review before the PR** (the 400-credit bonus is pay, the change is saves): a separate reviewer probing paying
+   twice, the 1% rule edges, NaN or forged values, the switch off, an old save; list what it probed and fixed in the PR.

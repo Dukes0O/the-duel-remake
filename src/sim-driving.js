@@ -8,6 +8,7 @@ import { arenaFloorSpeed } from './arena/venues.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
 import { gripFor, normalizeTyre } from './race-surfaces.js';
+import { LAB_TUNE, tunedGrip } from './lab/lab-tune.js'; // LAB-TUNE
 import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongPush,carMortarHop,setCarMortarHop} from './arsenal/car-effects.js';
 import {FIELD} from './race-field.js';
 import {avalancheDriftAt} from './summit-avalanche.js';
@@ -88,6 +89,7 @@ export function _drive(dt) {
   // A Grand Prix slipstream lifts top speed and push; it is exactly 1 elsewhere.
   const towTop = s.field ? 1 + FIELD.towTopSpeed * s.field.tow : 1, towPush = s.field ? 1 + FIELD.towAccel * s.field.tow : 1;
   let accelerationShare = (arsenalEnabled(this) ? carAcceleration(s) : 1) * towPush;
+  if (s.fuel?.dry) accelerationShare *= LAB_TUNE.fuel.dryPower; // LAB-TUNE: an empty tank is 40% power until the pit stop
   const nitroSpeedShare = (arsenalEnabled(this) ? carEffect(s, 'nitro')?.topSpeed || 1 : 1) * towTop;
   // A crash that knocked the car loose: it slides and spins until the tyres
   // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
@@ -216,11 +218,12 @@ export function _drive(dt) {
   s.roughness += (roughTarget - s.roughness) * (1 - Math.exp(-8 * dt));
   const traction = surface.traction;
   s.steerVisual += (s.input.steer - s.steerVisual) * (1 - Math.exp(-DRIVE.steerResponse * dt));
-  let targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), car.grip * (hazardsActive(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
+  const gripNow = car.tune ? tunedGrip(car, s.speedMph, s.input.brake) : car.grip; // LAB-TUNE: wing push and brake-balance cost
+  let targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), gripNow * (hazardsActive(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
   const tyreRules = s.tyreSlipRules === true && this.course.def.arena !== true && !s.onFoot;
   if (tyreRules) {
     const {peakYaw, steerGain} = tyreSlipSteering({speedMph: Math.abs(s.speedMph),
-      grip: car.grip * (hazardsActive(this) ? carGrip(s) : 1), traction, car, brake: s.input.brake});
+      grip: gripNow * (hazardsActive(this) ? carGrip(s) : 1), traction, car, brake: s.input.brake});
     const demand = Math.abs(s.steerVisual) * steerGain;
     s.tyreSlip = stepTyreSlip(s.tyreSlip, peakYaw > 0 ? demand / peakYaw : 0, dt,
       {reversing, airborne: s.airborne, knock: !!s.knock, speedMph: s.speedMph});
@@ -284,6 +287,7 @@ export function _drive(dt) {
     s.lateral += (Math.sin(s.headingError) * metresPerSec + s.pushVelocity) * dt;
     s.s += progress;
   }
+  if (s.fuel) { s.fuel.leftM = Math.max(0, s.fuel.leftM - Math.abs(metresPerSec) * dt); s.fuel.dry = s.fuel.leftM <= 0; } // LAB-TUNE: the petrol burns with the metres driven
   limitPitSpeed(this.course,s);
   s.pushVelocity *= Math.exp(-2.4 * dt);
   dampCarAlongPush(s, Math.exp(-2.4 * dt));

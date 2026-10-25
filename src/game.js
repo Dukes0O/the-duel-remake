@@ -10,6 +10,7 @@ import {chosenRaceLaps, supportsLapChoice} from './lap-choice.js';
 import * as simCrash from './sim-crash.js';
 import * as simResults from './sim-results.js';
 import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
+import {tunedCar, normalizeTune, isStockTune, tuneKey, fuelPlan} from './lab/lab-tune.js'; // LAB-TUNE
 import {normalizeCarLoadout} from './car-loadout.js';
 import {WEAPONS,createCombat,fireWeapon,stepCombat,supportsCombat,clearArsenalState,initializeArsenalCombat} from './combat.js';
 import {arsenalEnabled, arsenalWaveThreeEnabled} from './combat-weapons.js';
@@ -155,7 +156,7 @@ export class Duel {
   get car() {
     const base = CARS[this.state.car], upgrades = base.factoryMaxed ? FACTORY_MAX_UPGRADES : this.state.upgrades;
     const driverId = normalizeDriverId(this.state.driverId);
-    const key = `${this.state.car}|${driverId}|${UPGRADE_KEYS.map(name => upgrades[name] || 0).join(':')}`;
+    const key = `${this.state.car}|${driverId}|${UPGRADE_KEYS.map(name => upgrades[name] || 0).join(':')}${this.state.tune ? '|' + tuneKey(this.state.tune) : ''}`; // LAB-TUNE
     if (this._carCache?.key === key) return this._carCache.value;
     const engine = 1 + upgrades.engine * .035;
     const value = { ...base, topSpeed: base.topSpeed * engine, gears: base.gears.map(gear => gear * engine),
@@ -164,7 +165,8 @@ export class Duel {
       offRoadGrip: Math.min(1.15, (base.offRoadGrip ?? DRIVE.offRoadGrip) + (upgrades.suspension || 0) * .04 + upgrades.tires * .02),
       roughnessScale: 1 / (1 + (upgrades.suspension || 0) * .18), boostCapacity: (base.boostCapacity ?? 1) * (1 + (upgrades.tank || 0) * .25) };
     const modified = applyDriverModifiers(value, driverId, this.state.car);
-    this._carCache = { key, value: modified }; return modified;
+    const tuned = this.state.tune ? tunedCar(modified, this.state.tune) : modified; // LAB-TUNE
+    this._carCache = { key, value: tuned }; return tuned;
   }
   get diff() { return DIFFICULTY[this.state.difficulty]; }
   get scoreMultiplier() { return this.state.difficulty === 'pro' ? SCORING.manualMultiplier : 1; }
@@ -182,7 +184,7 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], _hiddenRoadVisit = false, lesson = null } = {}) {
+  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], _hiddenRoadVisit = false, lesson = null, tune = null } = {}) {
     const resolvedStage=Number.isFinite(startStage)?clamp(Math.floor(startStage),0,COURSE.length-1):0;
     // A lesson is a private Time Trial with the actual instructor plan. Its
     // state is outside the ordinary race snapshot: flag-off hashes stay exact.
@@ -232,6 +234,9 @@ export class Duel {
     // Winter tyres only on request; summer is the unmarked default (src/race-surfaces.js).
     if (tyre === 'winter') this.state.tyre = 'winter'; else delete this.state.tyre;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
+    // LAB-TUNE: the player's tuning travels with the race like upgrades; never on a lesson run, never with the switch off.
+    if (!lesson && this.featureFlags.enabled('lab-tuning') === true && !isStockTune(tune)) this.state.tune = normalizeTune(tune);
+    else delete this.state.tune;
     this.state.mode = grandPrix ? 'grandprix' : mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
     if (arsenalEnabled(this)) this.state.arsenalRank = arsenalRank;
     else delete this.state.arsenalRank;
@@ -312,6 +317,10 @@ export class Duel {
     initializeSnowmen(this);
     s.racePenaltySec = 0; s.lap = s.currentLap = 1; s.completedLaps = 0; s.lapsTotal = this.course.def.laps || 1;
     s.lapTimeSec = 0; s.lapTimes = []; s.lapStartedAt = 0; s.nextLapGate = 0; s.assistedLaps = []; s.assistedLap = false;
+    // LAB-TUNE: the fuel setting, a Grand Prix on a course with a pit lane: the tank runs down with the metres driven.
+    delete s.fuel;
+    const tank = s.tune ? fuelPlan(s.tune, this.course.raceLength, {grandPrix: s.mode === 'grandprix', pitLane: !!this.course.pitLane, petrol: CARS[s.car].electric !== true}) : null;
+    if (tank) s.fuel = {tankM: tank.tankM, leftM: tank.tankM, dry: false};
     const stunt = this.course.def.stuntTrial, drift = this.course.def.driftTrial, rush = this.course.def.checkpointRush;
     s.timeLimitSec = rush?.initialTimeSec[s.cpuDifficulty] || drift?.timeLimitSec[s.cpuDifficulty] || stunt?.timeLimitSec[s.cpuDifficulty] || this.course.def.chaseTimeLimit?.[s.cpuDifficulty] || null;
     s.timeRemaining = s.timeLimitSec;
