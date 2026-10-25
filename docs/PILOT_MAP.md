@@ -94,6 +94,32 @@ dark ink with its name, fuel pads as a small pump sign with the price.
   into the sea is a crash (the same repair); the Deep's coves show from the
   air (`docs/THE_DEEP.md` 6.9).
 
+**Settled by MAP-DESTINATIONS (24 October 2026).**
+
+- A destination is named by its course id (the Titan stadium is `titan-arena`).
+  Every course place is one while the switch is on, except **Ardennes Forest**:
+  the landing-zone search finds no clear, level 12 m circle beside its start, so
+  it is left off. Summit Run still needs its own switch.
+- A place faces its neighbours by where it is **drawn** (the Neon districts share
+  one table point), and a leg is measured between the table points.
+- New destinations take the setting's height for the thin-air rule: Alpine
+  Serpent 1,700 m, Cloudbreak Skyway 2,100 m, Timberline 1,400 m, Red Mesa 1,200 m,
+  High Country 900 m, Ridge Rally 700 m, Eifel Crown 600 m, Ardennes 400 m, the
+  harbour and coast 5 to 40 m. Summit Run (2,860 m) stays the highest.
+- **Fuel pads** sell to a helicopter on the ground inside the landing circle at
+  Harbour Lights (1.8), Pacific Canyon (2.0) and Alpine Serpent (2.2) a kg; the
+  free first tank is still the home pad's.
+- **The sea.** On a course that draws an ocean the ground is never below its
+  surface (-15 m), and touching it, however gently, is a crash with the usual repair.
+- **Jobs.** With the map on, the board's three jobs are drawn from the original
+  three routes (their pays stay) and every other pair of owned destinations whose
+  legs each fit a tank, paid by straight-line distance: 300 under 5 km, 450 from 5
+  to under 12, 600 from 12 to under 20, 800 beyond. Owning nothing gives the old
+  board. A course bought in the menu while a job is in hand can change the board.
+- **Scouting.** Over a course you own the view carries a list of its corners (the
+  names on the course's own boards where it has them, else their numbers) and
+  where they are; the map view draws it.
+
 ## 5. Secrets
 
 ### 5.1 Secret courses (the five variants)

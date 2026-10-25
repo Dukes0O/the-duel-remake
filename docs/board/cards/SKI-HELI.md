@@ -36,3 +36,9 @@ Sound: `ski.step-out`; Roger's and Brian's lines (SKI-AUDIO). Art: none.
 
 Acceptance: the test, every existing helicopter suite unchanged, lane tier,
 build, one review. Removed: nothing.
+
+## Carried from LAB-SNOW (Claude, 25 October)
+
+- Offer the Aerials run only when `aerialsOpen(profile, flags)` (`src/lab/lab-shop.js`) is true: with the Lab off it is always true.
+- With the Wax kit, let the player pick hard, medium or soft before each run (not saved) and start the skier with `createSkier({wax: skiWaxFor(profile, flags, day, pick)})`, `day` being the play day; with no kit or no pick it is `null`, today's plain snow. The day's snow is `snowOfDay(day)` (`src/lab/benches/wax.js`).
+- The wax run (`docs/LAB.md` 4.3): on a finished slalom run call `waxRunResult({day, pick, time})` (time with the missed-gate penalty); `pass` is true for the right wax and a time inside the silver time. Pass the Lab lesson with `passLesson(profile, 'wax', {flags})`. Launch angles is passed on the Lab bench.

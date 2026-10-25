@@ -203,7 +203,7 @@ check('released sound-bank entries and other exports stay exact', () => {
   // snapshot did. This suite keeps the other bank exports and the F1 voice.
   assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => key !== 'SOUND_BANK').map(([key, value]) =>
     // The medal cars' engine voices (EARN-CAR-1, 2 and 3) are new entries; every released voice stays exact.
-    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide'].includes(id))) : value]))),
+    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena'].includes(id))) : value]))),
     '8bed9e05cbd48321670c377483bc87c841b01eac228a6237889b8ce5602a2b38',
     'existing sound-bank exports remain exact');
 });
