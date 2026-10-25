@@ -75,3 +75,10 @@ of the leading six), beside today's figures.
 recorded; switch off byte-identical; lane tier, build, one review. Sound:
 none new. Art: none. Kyle drives the preview before `cpu-racecraft` goes
 live (he asked to try it first).
+
+## Kyle's verdict (25 October 2026)
+
+Kyle drove the racecraft preview: acceleration and nitro are right, but the
+cars still patiently form one lane off the start, which he expected fixed.
+Build steps 1 to 3 above now. Moved to Codex (CLI) since the cloud credit is
+used up.

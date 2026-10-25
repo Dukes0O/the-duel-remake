@@ -149,10 +149,11 @@ tasks:
 
   - id: GP-WIDE-START
     title: "Grand Prix wide start: the field reaches the first corner side by side (switch cpu-racecraft)"
-    owner: "claude"
+    owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-cli-2026-10-25
     needs: [GP-PASSING-2]
     locks: [busy-game-files]
     details: "docs/board/cards/GP-WIDE-START.md"
