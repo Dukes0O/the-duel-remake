@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {SKI, SKI_STEP, createSkier, stepSkier, airDensity} from '../src/ski/ski-physics.js';
 import {guideRun} from '../src/ski/ski-guide.js';
 import {skiZone, zoneGuide} from '../src/ski/runs/summit-zones.js';
-import {medalTimes, SCORE} from '../src/ski/ski-score.js';
+import {medalTimes, SCORE, createJudgedRun, stepJudgedRun, finishJudgedRun} from '../src/ski/ski-score.js';
 import {launchBench, rangeOf, bestAngle, TARGET, aerialsTips} from '../src/lab/benches/launch.js';
 import {waxBench, SNOWS, WAXES, SNOW_DAYS, glideSeconds, snowOfDay, waxSetting, waxRunResult, waxRunSilverS, waxRunFacts} from '../src/lab/benches/wax.js';
 import {LAB_UPGRADES, buyUpgrade, aerialsOpen, waxKitOwned, skiWaxFor} from '../src/lab/lab-shop.js';
@@ -158,12 +158,18 @@ test('the wax run: the right wax for the day\'s snow and a time inside the slalo
   assert.equal(waxRunResult({day, pick: undefined, time: 20}).pass, false);
   assert.equal(waxRunResult({day, pick: today.wax, time: NaN}).pass, false);
   assert.equal(waxRunResult({day, pick: today.wax, time: 0}).pass, false);
-  // Can it be won? The guide's best line on the day's right wax is well inside silver, for every snow.
-  const zone = skiZone('slalom');
-  for (const snow of Object.keys(SNOWS)) {
-    const time = guideRun({line: zone.line, world: zone, wax: 'right', ...(zone.guide ? {lookAhead: zone.guide} : {})}).time;
-    assert.ok(time <= silver, `${snow}: a guide-pace run (${time.toFixed(1)} s) beats silver (${silver.toFixed(1)} s)`);
+  // Can it be won? A guide-pace run on the day's right wax is well inside silver, on a day of each snow.
+  const zone = skiZone('slalom'), time = guideRun({line: zone.line, world: zone, wax: 'right', ...(zone.guide ? {lookAhead: zone.guide} : {})}).time;
+  assert.ok(time <= silver, `a guide-pace run (${time.toFixed(1)} s) beats silver (${silver.toFixed(1)} s)`);
+  const seen = new Set();
+  for (let index = 0; index < 60; index++) {
+    const date = `2026-11-${index}`, snow = snowOfDay(date);
+    seen.add(snow.snow);
+    assert.equal(waxRunResult({day: date, pick: snow.wax, time}).pass, true, `${snow.snow}: the day's right wax and a guide-pace run pass`);
+    assert.equal(waxRunResult({day: date, pick: WAXES.find(wax => wax !== snow.wax), time}).pass, false, `${snow.snow}: another wax does not`);
   }
+  assert.equal(seen.size, 3, 'on days of all three snows');
+  assert.doesNotThrow(() => waxRunResult(), 'no argument is a run that did not finish');
   // Passing the lesson is saved through the Lab's own call, and opens the kit to buy.
   const profile = passed(rich(), 'wax');
   assert.equal(labOf(profile).done.wax, true);
@@ -179,17 +185,60 @@ test('the Aerials reward: free with Launch angles; with the Lab on the run waits
   assert.equal(labOf(launched).owned.aerials, true);
 });
 
-test('the aerials tips quote the ski rules\' own numbers', () => {
-  const tips = aerialsTips().join('\n'), zone = skiZone('aerials');
-  assert.equal(aerialsTips().length, 6);
+// A skier let go in the air at a given path (over flat snow), with the landing the rules report.
+function landingOf(vx, vy, {spin = 0} = {}) {
+  const world = {ground: () => 0, safePathAngle: 40}, skier = createSkier({x: 0, z: 0, world});
+  Object.assign(skier, {grounded: false, y: 0.2, vx: 0, vy, vz: vx, air: {startX: 0, startZ: 0, time: 0, peak: 0, spin, flip: 0, spinMax: Math.abs(spin), flipMax: 0}});
+  for (let step = 0; step < 120 * 30; step++) {
+    const land = stepSkier(skier, {}, world).find(event => event.type === 'skiLand');
+    if (land) return land;
+  }
+  throw new Error('the skier never landed');
+}
+const aerialsScore = landing => {
+  const run = createJudgedRun('aerials', {height: 6, distance: 14, rotations: 1, axis: 'spin'});
+  stepJudgedRun(run, {}, [landing], 0.01);
+  return finishJudgedRun(run);
+};
+
+test('the aerials tips quote the ski rules\' own numbers, and what they say about landings is what the rules do', () => {
+  const lines = aerialsTips(), tips = lines.join('\n'), zone = skiZone('aerials');
+  assert.equal(lines.length, 6);
   for (const [name, share] of [['air', SCORE.aerials.air], ['form', SCORE.aerials.form], ['landing', SCORE.aerials.landing]])
     assert.ok(tips.includes(`${Math.round(share * 100)}% for ${name === 'air' ? 'the air' : name === 'form' ? 'form' : 'the landing'}`), `the ${name} share`);
-  assert.ok(tips.includes(`${zone.scoring.height} m`) && tips.includes(`${zone.scoring.distance} m`), 'the height and distance targets');
-  assert.ok(tips.includes(`${zone.safePathAngle} degrees off the snow`), 'the landing hill\'s window');
-  assert.ok(tips.includes(`${Math.round(SKI.safeRotation * 180 / Math.PI)} degrees of a whole turn`), 'the finish of a spin or flip');
-  // Each claim is the ski rules': a clean spin and flip at a gentle angle score, a flat one tumbles. (SKI-RULES tests the scoring itself.)
+  assert.ok(tips.includes(`against ${zone.scoring.height} m`) && tips.includes(`against ${zone.scoring.distance} m`), 'the height and distance targets');
+  assert.ok(tips.includes(`no more than ${zone.safePathAngle} degrees`), 'the landing hill\'s window');
+  assert.ok(tips.includes(`within ${Math.round(SKI.safeRotation * 180 / Math.PI)} degrees of a whole turn`), 'the finish of a spin or flip');
+  assert.ok(!/flat|crooked/.test(tips), 'a flat landing is the safe one, so the tips never call it a fault');
   assert.equal(zone.safePathAngle, 40);
+  // Safe or tumble is the angle between the path and the snow (not how flat it is), and a finished rotation.
+  const shallow = landingOf(10, -3), steep = landingOf(10, -12), spinning = landingOf(10, -3, {spin: Math.PI});
+  assert.ok(shallow.angle < 40 && shallow.safe, `a shallow landing (${shallow.angle.toFixed(0)} degrees) is safe`);
+  assert.ok(steep.angle > 40 && !steep.safe, `a steep one (${steep.angle.toFixed(0)} degrees) tumbles`);
+  assert.equal(spinning.safe, false, 'half a turn left over tumbles');
+  // Air adds up height and distance; form is proportional; the landing is softened by steepness; a tumble scores 0 for landing.
+  const base = {type: 'skiLand', safe: true, angle: 0, height: 0, distance: 0, spin: 360, flip: 0, spinMax: 360, flipMax: 0};
+  near(aerialsScore({...base, height: 6, distance: 14}).air, 100, 1e-9, 'both targets: full marks');
+  near(aerialsScore({...base, height: 12, distance: 0}).air, 100, 1e-9, 'one target doubled does the same: they add up');
+  near(aerialsScore({...base, height: 6, distance: 0}).air, 50, 1e-9, 'half each');
+  near(aerialsScore({...base, spin: 180}).form, 25 + 50, 1e-9, 'half a turn earns half of the done part');
+  near(aerialsScore({...base, flip: 90}).form, 50, 1e-9, 'a flip of 90 degrees earns none of the steady part');
+  near(aerialsScore({...base, angle: 20}).landing, 60, 1e-9, '60 of 100 at 20 degrees');
+  near(aerialsScore({...base, angle: 35}).landing, 60, 1e-9, 'and no worse above that');
+  near(aerialsScore({...base, angle: 0}).landing, 100, 1e-9, 'up to 100 for a gentle one');
+  assert.equal(aerialsScore({...base, safe: false}).landing, 0, 'a tumble scores nothing for landing');
+  assert.ok(tips.includes(`${Math.round((1 - SCORE.softLanding) * 100)} of 100 at 20 degrees or steeper`));
   assert.deepEqual(aerialsTips(), aerialsTips(), 'repeatable');
+});
+
+test('the launch tip is true past the best angle on the bench: steeper means higher and shorter', () => {
+  const best = bestAngle(30, {air: true});
+  const heightOf = angle => Math.pow(30 * Math.sin(angle * Math.PI / 180), 2) / (2 * 9.81);
+  for (const angle of [Math.ceil(best) + 5, Math.ceil(best) + 15]) {
+    assert.ok(rangeOf(angle, 30, {air: true}).rangeM < rangeOf(angle - 5, 30, {air: true}).rangeM, `${angle} degrees goes shorter than ${angle - 5}`);
+    assert.ok(heightOf(angle) > heightOf(angle - 5), `and higher`);
+  }
+  assert.ok(aerialsTips()[5].includes(`about ${Math.round(best)} degrees`));
 });
 
 test('docs/LAB.md says what the numbers show', () => {

@@ -1,6 +1,7 @@
 // Ski wax (docs/LAB.md 4.3): skis on three snow samples with three waxes, timed down a glide. The friction numbers
 // are the ski rules' own (ski-physics.js SKI.wax: 0.045 for the right wax, 0.06 for the wrong one). The game knows
-// only "right" and "wrong"; which wax is right for which snow is the lesson (hard for cold, soft for wet).
+// only "right" and "wrong"; which wax is right for which snow is the lesson: hard for the dry powder at -15 C,
+// medium for the cool snow at -5 C, soft for the wet snow at 0 C (the colder the snow, the harder the wax).
 import {SKI, GRAVITY} from '../../ski/ski-physics.js';
 import {skiZone, zoneGuide} from '../../ski/runs/summit-zones.js';
 import {guideRun} from '../../ski/ski-guide.js';
@@ -10,7 +11,7 @@ import {heliHash} from '../../heli/heli-save.js';
 import {choice, makeBench} from './bench-core.js';
 
 export const SNOWS = Object.freeze({powder: Object.freeze({name: 'Dry powder', celsius: -15, wax: 'hard'}),
-  cold: Object.freeze({name: 'Cold snow', celsius: -5, wax: 'medium'}), wet: Object.freeze({name: 'Wet snow', celsius: 0, wax: 'soft'})});
+  cold: Object.freeze({name: 'Cool snow', celsius: -5, wax: 'medium'}), wet: Object.freeze({name: 'Wet snow', celsius: 0, wax: 'soft'})});
 export const WAXES = Object.freeze(['hard', 'medium', 'soft']);
 // A 10 degree slope, 100 m of glide, from rest, ignoring the air (the same on every sample).
 export const GLIDE = Object.freeze({slopeDeg: 10, distanceM: 100});
@@ -54,7 +55,8 @@ export function waxSetting(pick, day) {
 export const WAX_RUN = Object.freeze({run: 'slalom', beat: 'silver'});
 export const waxRunSilverS = () => medalTimes(zoneGuide(WAX_RUN.run).time).silver;
 
-export function waxRunResult({day, pick, time}) {
+// `time` must be a run skied with that pick (skiWaxFor(...) as the skier's wax), with the missed-gate penalty added.
+export function waxRunResult({day, pick, time} = {}) {
   const today = snowOfDay(day), silverS = waxRunSilverS();
   const base = {snow: today.snow, rightWax: today.wax, silverS};
   if (!WAXES.includes(pick)) return {...base, pass: false, reason: 'Pick a wax first.'};
