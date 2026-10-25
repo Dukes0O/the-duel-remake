@@ -48,7 +48,7 @@ shows, nothing is saved and a race is exactly what it was. Local Sonnet 5.5 sess
 
 ## Tests and checks
 
-- `tools/test-lab-tune-view.mjs` (12 checks): rows by switch and lesson, the markup, steps refused (3, -3, 1.5, NaN, '1', null,
+- `tools/test-lab-tune-view.mjs` (14 checks): rows by switch and lesson, the markup, steps refused (3, -3, 1.5, NaN, '1', null,
   Infinity, shut setting, switch off, forged names), Reset incl. forged and later-version Labs, `usableTune` (forged, out of range, old
   save, later game), the app's `_labTuneOf`, every step's numbers, the result-line cases, the pit board, the five lessons passing on
   real benches and opening exactly their settings.
@@ -56,7 +56,29 @@ shows, nothing is saved and a race is exactly what it was. Local Sonnet 5.5 sess
   with the race state unchanged; a shut setting refused; Reset; a stock Time Trial lap (the stock lap kept), a tuned lap (wing +2,
   line "0.3% slower" with the demo driver), a tuned lap beating a stock lap by 1.6% (Bonus 400 paid, once), and the same again (already paid).
 - Picture sheet `docs/board/looks/lab-tune-view/round-1.jpg` with `round-1-review.md`.
-- Lane tier `node tools/run-tests.mjs --tier lane --changed --jobs 4` and `npm run build`: see the result lines in the final report.
+- Lane tier `node tools/run-tests.mjs --tier lane --changed --jobs 4` on the final commit: 91 suites passed, 0 failed (the replay and
+  world-signature guards unchanged; `test-lab-tune`, `test-lab-view`, `test-lab-rules` pass untouched). `npm run build`: passes.
+
+## Independent review (saves: the page changes the saved tune)
+
+A separate reviewer probed forged and out-of-range values (99, -99, 1.5, NaN, '2', null, Infinity, arrays, huge strings, `__proto__` and
+`constructor` as car, setting and key names), a tune on a shut setting, the switches off, old saves and a later game's Lab, the result
+line against what `settleTunedLap` pays (a brute-force of the 1% edge over stock laps from 20 to 400 s, no disagreement), HTML
+injection, the pit board and the other lessons. Clean except these, all fixed with tests:
+
+- the Springs line had the bumps sign backwards ("softer: bumps +8%"); it now reads softer = bumps -8%;
+- a Time Trial result for a Lab saved by a later game threw while the result card was built (`labOf(...).done` missing): the lines now
+  return nothing unless the Lab is version 1;
+- `stepIn` accepted a negative fuel step: it now refuses it (the page never offered one);
+- a hand-edited `data-tune="wing:"` read as step 0: an empty step is refused;
+- a forged value on a shut setting showed a pressed step and "TUNED": a shut setting now reads 0 (the race already ignored it);
+- clicking the step already set no longer saves again.
+
+Noted, left: a tuned Time Trial still goes through `settleRace` and the ghost saver, so it can pay the CAR BEST bonus and replace the
+saved best ghost, which sits beside the line "Tuned laps are not on the leaderboard" (that is LAB-TUNE's decision, not this card's; if
+tuned runs should not touch the car-best bonus or the ghost, that is a change in `app.js`); `LAB.md` 4.4 still says the wind-tunnel
+challenge is a tuned lap by 0.5%, which pick 1 above replaces; `usableTune` and `fuelBoardText` live in the view file, which `app.js`
+and `pit-lane.js` import (no DOM in it, so headless races are unaffected); the approach to the pit lane has no fuel hint, only the lane line.
 
 ## Changed assertions
 
