@@ -85,7 +85,7 @@ export function applyArenaArmor(duel) {
 export function placeActor(duel, actor, pose, speedMph = 0) {
   actor.s = actor.prevS = pose.s; actor.lateral = actor.prevLateral = pose.lateral;
   actor.headingError = pose.headingError || 0;
-  actor.speedMph = speedMph; actor.yawVelocity = 0; actor.pushVelocity = 0; actor.slipAngle = 0;
+  actor.speedMph = speedMph; actor.yawVelocity = 0; actor.pushVelocity = 0; actor.slipAngle = 0; if(Object.hasOwn(actor,'tyreSlip'))actor.tyreSlip = 0;
   actor.steerVisual = 0; actor.drifting = false; actor.boosting = false;
   actor.airborne = false; actor.airHeight = 0; actor.prevAirHeight = 0; actor._jumpY = null;
   actor._verticalSpeed = 0; actor._jumpOrigin = null; actor._ramVerticalSpeed = 0;

@@ -24,7 +24,8 @@ const loopHeaders = {'deep.bubbles': 'OggS', 'deep.cave': 'OggS'};
 assert.equal(DEEP_RECIPES.find(spec => spec.id === 'deep.pearl').duration, 2,
   'the revised rare-reward shimmer is authored for two seconds');
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url)));
-const rows = catalog.sounds.filter(row => row.cue?.startsWith('deep.'));
+// DEEP-RADIO: Ana's voice takes (deep.ana.*) are not recipes.
+const rows = catalog.sounds.filter(row => row.cue?.startsWith('deep.') && !row.cue.startsWith('deep.ana.'));
 assert.equal(rows.length, 8);
 assert.deepEqual(readdirSync(new URL('../public/assets/audio/deep/', import.meta.url)).sort(),
   expected.map(id => SOUND_BANK[id].file.split('/').at(-1)).sort());

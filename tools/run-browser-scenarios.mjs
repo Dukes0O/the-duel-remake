@@ -19,7 +19,7 @@ export const QUIET_SCENARIOS = Object.freeze([
   'grand-prix', 'gunn', 'harbour-night', 'hidden-road-discovery',
   'onfoot-camera-choice', 'p4-daynight', 'p4-snow', 'polish-arena', 'polish-flame',
   'rustwall', 'rustwall-frame', 'sal-art', 'salt-flats', 'scrapdome',
-  'scrapdome-review', 'track-kits', 'tremblant-snow', 'tremblant-views',
+  'scrapdome-review', 'track-kits',
   'vesper-art', 'wasteland-beta',
 ]);
 
@@ -28,10 +28,12 @@ export function parseSuiteArguments(args) {
   const seen = new Set();
   for (let index = 0; index < args.length; index++) {
     const flag = args[index];
-    if (!['--all', '--scenarios', '--jobs', '--output-dir'].includes(flag) || seen.has(flag))
+    if (!['--all', '--scenarios', '--jobs', '--output-dir', '--timing-only', '--headed'].includes(flag) || seen.has(flag))
       throw Error('Unknown or repeated browser suite option: ' + flag);
     seen.add(flag);
     if (flag === '--all') {options.all = true; continue;}
+    if (flag === '--timing-only') {options.timingOnly = true; continue;}
+    if (flag === '--headed') {options.headed = true; continue;}
     const value = args[++index];
     if (!value || value.startsWith('--')) throw Error(flag + ' needs a value.');
     if (flag === '--jobs') {
@@ -47,22 +49,35 @@ export function parseSuiteArguments(args) {
   }
   if (options.all === !!options.names)
     throw Error('Usage: node tools/run-browser-scenarios.mjs --all|--scenarios NAMES [--jobs 1..4] [--output-dir .evidence/PATH]');
+  if (options.timingOnly) {
+    if (!options.names || options.names.some(name => !['frame-pacing','tremblant-snow','tremblant-views'].includes(name)))
+      throw Error('--timing-only requires explicit existing frame recipe names.');
+    options.headed = true;
+  }
   return options;
 }
+
+// The full tier already runs this specialized native wrapper once. Discovery
+// retains its row, but the shared QA bundle cannot prepare its recorder page.
+export const WRAPPER_ONLY_SCENARIOS = Object.freeze({
+  'audio-crash-peak': 'tools/test-audio-crash-peak.mjs',
+});
 
 export async function namedScenarios({includeManual = false} = {}) {
   return (await readdir(scenarioDir))
     .filter(file => /^[a-z][a-z0-9-]*\.mjs$/.test(file) && !['smoke.mjs', 'review-sheet.mjs'].includes(file))
-    .filter(file => includeManual || file !== 'rustwall-frame.mjs')
+    .filter(file => !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, file.slice(0, -4)))
+    .filter(file => includeManual || !['rustwall-frame.mjs', 'yeti-fur-tint.mjs'].includes(file))
     .map(file => file.slice(0, -4))
     .sort();
 }
 
-async function runScenario(name, outputDir, qaBundle) {
+async function runScenario(name, outputDir, qaBundle, options) {
   const child = spawn(process.execPath, [harness, 'scenario', name, '--output-dir', outputDir,
-    '--qa-bundle', qaBundle], {
+    '--qa-bundle', qaBundle, ...(options.headed ? ['--headed'] : [])], {
     cwd: PROJECT_ROOT, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, DUEL_PUBLISH_REVIEW: '0' },
+    env: { ...process.env, DUEL_PUBLISH_REVIEW: '0',
+      DUEL_TREMBLANT_QA_MODE: options.timingOnly ? 'timing' : 'views' },
   });
   let output = '';
   for (const stream of [child.stdout, child.stderr])
@@ -83,20 +98,28 @@ export async function main(args = process.argv.slice(2), {
 } = {}) {
   const options = parseSuiteArguments(args);
   const discovered = await discover({includeManual: !!options.names});
-  const names = options.names ?? discovered;
-  if (!names.length) throw Error('No named browser scenarios were found.');
-  for (const name of names) if (!discovered.includes(name)) throw Error('Unknown scenario: ' + name);
+  const selected = options.names ?? discovered;
+  for (const name of selected) if (!discovered.includes(name) && !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name))
+    throw Error('Unknown scenario: ' + name);
+  const names = selected.filter(name => !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name));
+  const delegatedNames = options.names ? selected.filter(name => Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name))
+    : Object.keys(WRAPPER_ONLY_SCENARIOS);
+  if (!names.length && !delegatedNames.length) throw Error('No named browser scenarios were found.');
+  const delegations = delegatedNames.map(name => ({name, passed: null, status: 'run by its wrapper',
+    wrapper: WRAPPER_ONLY_SCENARIOS[name], exitCode: null, evidenceDir: null, reportPath: null,
+    screenshots: [], warnings: null, issues: null, error: null}));
   const archive = options.outputDir ? resolveEvidenceDir(options.outputDir) : evidenceOutputDir('browser-suite');
   await makeDirectory(archive, {recursive: true});
   let bundle;
   const rows = new Array(names.length);
   try {
-    bundle = await build();
+    for (const row of delegations) log(`${row.name}: run by its wrapper (${row.wrapper}); not executed here`);
+    if (names.length) bundle = await build();
     async function checkScenario(index) {
       const name = names[index], outputDir = join(archive, name);
       let run, report = null, evidenceDir = null, error = null;
       try {
-        run = await scenario(name, outputDir, bundle);
+        run = await scenario(name, outputDir, bundle, {timingOnly: !!options.timingOnly, headed: !!options.headed});
         if (!run.reportPath) throw Error('The browser harness did not write a report path.');
         report = JSON.parse(await read(run.reportPath, 'utf8'));
         evidenceDir = outputDir;
@@ -109,14 +132,17 @@ export async function main(args = process.argv.slice(2), {
       rows[index] = {name, passed, exitCode: run?.exitCode ?? 1, evidenceDir,
         reportPath: evidenceDir ? join(evidenceDir, 'report.json') : null, screenshots,
         warnings, issues, error: error ?? report?.error ?? null};
-      log(`${passed ? 'PASS' : 'FAIL'} ${name}: ${screenshots.length} screenshots, ${warnings} warnings, ${issues} errors`);
+      if (['tremblant-snow','tremblant-views'].includes(name))
+        rows[index].timing = options.timingOnly ? 'timing-only' : 'run in the frame step';
+      log(`${passed ? 'PASS' : 'FAIL'} ${name}: ${screenshots.length} screenshots, ${warnings} warnings, ${issues} errors${rows[index].timing ? '; timing: ' + rows[index].timing : ''}`);
       if (!passed) logError(error ?? report?.error ?? run?.output.slice(-1000));
     }
+    const quiet = name => options.timingOnly || QUIET_SCENARIOS.includes(name);
     // Drain each contiguous non-timing group before its next quiet recipe.
     for (let start = 0; start < names.length;) {
-      if (QUIET_SCENARIOS.includes(names[start])) {await checkScenario(start++); continue;}
+      if (quiet(names[start])) {await checkScenario(start++); continue;}
       let end = start;
-      while (end < names.length && !QUIET_SCENARIOS.includes(names[end])) end++;
+      while (end < names.length && !quiet(names[end])) end++;
       let next = start;
       async function worker() {
         while (next < end) {const index = next++; await checkScenario(index);}
@@ -124,11 +150,14 @@ export async function main(args = process.argv.slice(2), {
       await Promise.all(Array.from({length: Math.min(options.jobs, end - start)}, worker));
       start = end;
     }
-    const summary = {schema: 1, count: rows.length, passed: rows.filter(row => row.passed).length,
-      failed: rows.filter(row => !row.passed).length, archive, rows};
+    const delegated = delegations.length;
+    const summary = {schema: 1, count: rows.length, executed: rows.length, delegated, delegations,
+      passed: rows.filter(row => row.passed === true).length,
+      failed: rows.filter(row => row.passed === false).length, archive, rows};
+    if (options.timingOnly) summary.timingMode = 'timing-only';
     const summaryPath = join(archive, 'summary.json');
     await write(summaryPath, JSON.stringify(summary, null, 2) + '\n');
-    log(`Browser scenarios: ${summary.passed}/${summary.count} passed. Evidence: ${summaryPath}`);
+    log(`Browser scenarios: ${summary.passed}/${summary.executed} executed passed; ${delegated} run by its wrapper. Evidence: ${summaryPath}`);
     return summary.failed ? 1 : 0;
   } finally {
     if (bundle) await cleanup(bundle);

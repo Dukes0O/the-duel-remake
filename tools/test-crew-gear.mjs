@@ -239,9 +239,11 @@ check('Wren throws two grenades within 20 m; native smoke is 5 m across and last
 });
 check('Tusk cannon carries 2 shells, reloads in 4 s and deals 20 armor through an equivalent native solver shove',()=>{
   const duel=race('tusk');signature(duel);assert.equal(duel.state.footGear.ammo,2);const car=target(duel,12);aim(duel,car);
-  const before=actorBody(duel,car),armor=car.armor;fire(duel);
+  let before=actorBody(duel,car);const armor=car.armor;fire(duel);
   near(duel.state.footWeapons.nextFireAt-duel.state.footWeapons.lastFireAt,4,'native Cannon reload');
-  for(let i=0;i<240&&car.armor===armor;i++) ticks(duel);
+  // FIX-LAUNCH: the target moves under CPU control while the shell flies; compare against its body on the
+  // tick before the hit, not its standing start (the old launch happened to cancel the difference).
+  for(let i=0;i<240&&car.armor===armor;i++){before=actorBody(duel,car);ticks(duel);}
   near(armor-car.armor,20,'native Cannon car-hit armor');assert.equal(duel.state.footGear.ammo,1);
   assert.ok(car.knock,'real cannon hit enters the released car crash motion');
   const f=duel.state.fighter,heading=Math.atan2(before.x-f.x,before.z-f.z),hl=duel._vehicleSpec(duel.state).halfLength,hw=duel._vehicleSpec(duel.state).halfWidth;

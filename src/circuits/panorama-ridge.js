@@ -69,6 +69,8 @@ const PANORAMA_ROAD = defineScriptedCourse({
       { id: 'forrest-elbow', kind: 'corner', s: 2940, title: 'Forrest Elbow' },
     ],
     notes: {
+      'conrod': { line: 'Stay in the slipstream down Conrod and pull out as The Chase comes into view.', note: 'The longest run on the lap. Get alongside here, then finish the move into Murray.' },
+      'murray': { line: 'Take the inside on the way in and out-brake them at the 100 board.', note: 'Last chance to pass. If you are ahead, hold the inside.' },
       'hell-gate': { brakeBoard: 100, line: 'Stay right on the way in, clip the inside kerb, let it run out to the left.', note: 'Lap one is a scramble: brake early and stay out of trouble. After that, brake at the 100 board.' },
       'griffin-bend': { line: 'Hold the inside and keep your foot in.', note: 'Fast and uphill. A lift is all it needs.' },
       'the-cutting': { brakeBoard: 100, line: 'Wide on entry, late apex, straight up the hill.', note: 'The slowest corner on the climb. Get the exit right: the next 200 m are steep.' },

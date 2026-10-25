@@ -323,6 +323,35 @@ function check(name, fn) { fn(); console.log('PASS ' + name); }
     ok(offApp.startCampaign({startStage: stage, car: 'falcone_f42'}) !== false, 'switch off: nothing is closed');
     offApp.returnToMenu();
     same(offApp.buyBackCourse('tremblant-woods').ok, false, 'and there is nothing to buy back');
+    // The main menu says why START is closed on a burnt course, instead of a dead button.
+    {
+      const {createRendererReadiness} = await import('../src/screen-readiness.js');
+      const menu = makeApp(true);
+      burnt(menu);
+      const line = {textContent: 'COURSE LINE', dataset: {}};
+      const ui = {view3d: {dataset: {}, classList: {add() {}}}, 'renderer-loading': {hidden: false, lastChild: {textContent: ''}},
+        'renderer-error': {hidden: true, querySelector: () => ({textContent: ''})},
+        'start-engine': {disabled: false, parentElement: {querySelector: () => line}}};
+      const choices = {car: 'falcone_f42', startStage: stage};
+      menu.menuCar = 'falcone_f42';
+      const ready = createRendererReadiness({app: menu, ui, choices, profile: () => menu.profile, isDisposed: () => false,
+        importRenderer: async () => ({attachRenderer: () => ({prepareVehicle(key) { ui.view3d.dataset.vehicleKey = key; ui.view3d.dataset.vehicleAsset = 'ready'; }, dispose() {}})})});
+      await ready.ensureRenderer();
+      same(line.textContent, 'Tremblant Woods is closed after a forest fire. It reopens in 7 play days, or buy it back in Your Courses.',
+        'the line under START says the course is closed, for how long, and where to buy it back');
+      ok(ui['start-engine'].disabled, 'and START is closed');
+      menu.buyBackCourse('tremblant-woods');
+      ready.syncRendererReadiness(menu.duel.state);
+      ok(line.textContent === 'COURSE LINE' && !ui['start-engine'].disabled, 'bought back: the line comes back and START opens');
+      const off = makeApp(false);
+      burnt(off);
+      const offLine = {textContent: 'COURSE LINE', dataset: {}};
+      ui['start-engine'] = {disabled: false, parentElement: {querySelector: () => offLine}};
+      const offReady = createRendererReadiness({app: off, ui, choices, profile: () => off.profile, isDisposed: () => false,
+        importRenderer: async () => ({attachRenderer: () => ({prepareVehicle(key) { ui.view3d.dataset.vehicleKey = key; ui.view3d.dataset.vehicleAsset = 'ready'; }, dispose() {}})})});
+      await offReady.ensureRenderer();
+      ok(offLine.textContent === 'COURSE LINE', 'switch off: no closed note');
+    }
     // A new date counts a play day when a flying player becomes active.
     const day = makeApp(true);
     burnt(day);

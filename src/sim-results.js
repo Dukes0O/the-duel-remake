@@ -20,6 +20,7 @@ export function _objectiveResult() {
     checkpointMisses:s.checkpointRush.missed,targetsMet:s.checkpointRush.passed===s.checkpointRush.total,objectiveMissed:s.checkpointRush.passed!==s.checkpointRush.total,
     timeLimitSec:s.timeLimitSec,challengeLimitSec:s.timeLimitSec};
   if (objective.kind === 'driftTrial') return { objective: 'driftTrial', driftTrial: true,
+    ...(s.tyreSlipRules===true&&s.difficulty==='pro'?{tyreSlipRules:true}:{}),
     driftScore: Math.round(s.drift.bankedScore), driftTarget: objective.targetScore, driftBestChain: Math.round(s.drift.bestChain),
     driftMeters: +s.drift.driftMeters.toFixed(1), targetsMet: Math.round(s.drift.bankedScore) >= objective.targetScore,
     objectiveMissed: Math.round(s.drift.bankedScore) < objective.targetScore, timeLimitSec: s.timeLimitSec, challengeLimitSec: s.timeLimitSec };

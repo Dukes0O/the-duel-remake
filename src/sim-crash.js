@@ -180,7 +180,7 @@ export function _safeReset(car, crashSite = null) {
   }
   car.s = car.prevS = chosen.s; car.lateral = car.prevLateral = chosen.lateral;
   car.speedMph = Math.max(0, Math.min(28, car.speedMph * .4));
-  car.headingError = local ? chosen.headingError : 0; car.yawVelocity = 0; car.pushVelocity = 0; car.slipAngle = 0; car.drifting = false;
+  car.headingError = local ? chosen.headingError : 0; car.yawVelocity = 0; car.pushVelocity = 0; car.slipAngle = 0; if(Object.hasOwn(car,'tyreSlip'))car.tyreSlip = 0; car.drifting = false;
   clearCarAlongPush(car);
   car.offRoad = false; car.offRoadTime = 0; car.roughness = 0; car.boosting = false;
   car.steerVisual = 0;
@@ -232,7 +232,7 @@ export function _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMp
   if (s.catastrophic) { s.impactDuration = DRIVE.catastrophicDuration; s.impactStrength = 1; }
   s.impactTimer = s.impactDuration;
   s.crashSpin = 0;
-  s.slipAngle = 0; s.drifting = false;
+  s.slipAngle = 0; if (Object.hasOwn(s, 'tyreSlip')) s.tyreSlip = 0; s.drifting = false;
   s.invulnerableSec = s.impactDuration + DRIVE.recoverySec;
   s.speedMph = clamp(s.speedMph * .3, -DRIVE.crashSpeedCapMph, DRIVE.crashSpeedCapMph);
   s.gear = s.speedMph < 0 ? -1 : Math.max(0, s.gear); s.reverseHoldSec = 0;
@@ -270,6 +270,7 @@ export function _impact(dt) {
     this._safeReset(s,s.crashSite||{s:s.s,lateral:s.lateral,headingError:0}); s.crashSite=null; s.crashSpin = 0;
     completeCombatRecovery(this, s, {alreadyReset: true});
     s.speedMph = 12; s.gear = 0; s.revs = s.speedMph / this.car.gears[0];
+    s.crashLaunchSec = DRIVE.crashLaunchSec; // quick pull-away until 60 mph or this many seconds (FIX-LAUNCH)
     s.offRoad = !this._surface(s.s,s.lateral).road; s.offRoadTime = 0; s.roughness = 0;
     s.input.shiftUp = false; s.input.shiftDown = false;
     this._callout('RECOVERED AT CRASH SITE / KEEP DRIVING', 2);

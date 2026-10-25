@@ -4,7 +4,7 @@ import { createFeatureFlags } from '../src/feature-flags.js';
 import { App } from '../src/app.js';
 import { Duel } from '../src/game.js';
 import { stepCombat, supportsCombat } from '../src/combat.js';
-import { COURSE, DRIVE, steeringYawAuthority } from '../src/config.js';
+import { COURSE, DRIVE, steerForYaw } from '../src/config.js';
 import { DEFAULT_DRIVER } from '../src/drivers.js';
 import {createProfile, createPlayerRegistry, savePlayers} from '../src/progression.js';
 import {normalizeWasteland} from '../src/wasteland-progress.js';
@@ -25,12 +25,12 @@ const repeatSeeds = baselineSeeds.slice(0, 6);
 // bands (easy 0-3, medium 2-6, hard 4-10) came from one race; the live game
 // itself averages 7.3 on Medium over thirty (CRASH-RELEASE).
 export const CPU_HIT_BANDS = Object.freeze({ easy: [1, 4], medium: [4, 9], hard: [4, 10] });
-const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3,cpu-crews,seeker-rockets] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only | --seeker-pair';
-const BALANCE_FLAGS = ['arsenal', 'arsenal-wave3', 'cpu-crews', 'seeker-rockets'];
+const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3,cpu-crews,seeker-rockets,tyre-slip] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only | --seeker-pair';
+const BALANCE_FLAGS = ['arsenal', 'arsenal-wave3', 'cpu-crews', 'seeker-rockets', 'tyre-slip'];
 
 function selectedFlags(flags = []) {
   if (!Array.isArray(flags) || flags.some(flag => !BALANCE_FLAGS.includes(flag)))
-    throw Error('Unsupported flags; expected arsenal, arsenal-wave3, cpu-crews or seeker-rockets.');
+    throw Error('Unsupported flags; expected arsenal, arsenal-wave3, cpu-crews, seeker-rockets or tyre-slip.');
   return [...new Set(flags)];
 }
 
@@ -382,6 +382,7 @@ function driveRearDefense(app, goalGap = 18, shadowSec = Infinity) {
     const speed = forwardSpeedMph(duel, state);
     // Keep App's passing line while the CPU is behind. Shadow only a car
     // genuinely ahead; aim through our own forward course lookahead.
+    const brake = speed > targetSpeed + 3 ? .45 : 0;
     let steer = state.input.steer;
     if (gap >= Math.min(8, goalGap) && gap <= 120) {
       const metresPerSec = Math.max(0, state.speedMph) * DRIVE.mphToWorld;
@@ -389,11 +390,10 @@ function driveRearDefense(app, goalGap = 18, shadowSec = Infinity) {
       const look = duel.course.at(state.s + metresPerSec * .18);
       const desiredYaw = look.curvature * metresPerSec + (headingTarget - state.headingError) * 6;
       const surface = duel._drivingSurface(state.s, state.lateral);
-      const authority = Math.max(.05, steeringYawAuthority(state.speedMph, duel.car.grip, surface.traction, duel.car));
-      steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
+      steer = steerForYaw(desiredYaw, {speedMph:state.speedMph,grip:duel.car.grip,traction:surface.traction,car:duel.car,brake:brake,tyreSlip:state.tyreSlipRules===true&&!state.airborne&&state.speedMph>=0});
     }
     duel.setInput({throttle: speed < targetSpeed ? 1 : 0,
-      brake: speed > targetSpeed + 3 ? .45 : 0, steer, boost: false});
+      brake, steer, boost: false});
   };
 }
 

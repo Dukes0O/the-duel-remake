@@ -252,3 +252,30 @@ The announced brief physical turn is consumed and its manual STARTING notice cle
 
 
 Actual physical scene inspection on the same clean ecee3e81 passed19views/zeroissueswarnings/private10393/memory-only in60.398seconds;377208-byte ignored sheet. Root viewed it and the accepted original SUMMIT-FINAL sheet: no broad appearance change is visible; the submillimetre seam correction and specific far rock removal are not claimed as visually resolved by these broad views. Strict physical tests provide their direct evidence. Claude c150e044 already authorized bounded affected-row recapture; actual capture/strict foreign-row comparison remain pending the new Ardennes release hold. No scene signature was regenerated. Kyle's eleven-file v2 patch remains unapplied.
+
+## Kyle approved the test patch, 15 October 20:20 PT
+
+Kyle, in the Claude Director chat, answering "Summit's switch-on needs your
+word on its test changes (I've reviewed them; nothing is loosened). Approve,
+so Codex can apply them tonight?": **"Approve."** This is Kyle's explicit
+approval of proposed-state-test-corrections-v2.patch (SHA256 d3bd711d...a2e9)
+as Claude reviewed it. Apply it as written, with the approved rock filter and
+Gallery seam fixes, run the lane tier and build, and merge. waiting_on is
+cleared.
+
+## Overnight continuation after Kyle approval
+
+Root resumes the existing clean ecee3e81 lane under Kyle's overnight instruction. The original card-answer chat left it ready; Root now holds busy-game-files, circuit-registry and world-signatures for this switch-on. Claude remains RELEASE-SUMMIT Release Manager. Apply the exact approved v2 artifact first, then sync integration. Preserve the newer reviewed Ardennes historical-prefix and dynamic manifest-order assertions when resolving their overlapping test hunks; add Summit's precise on/parent-owned expectations without replacing those assertions with stale lists. One independent review covers that union. Existing physical checks and 19-view inspection remain valid; do not repeat them. Only Summit/Attack scene rows may change after actual capture, with all foreign rows exact. No live install, release waiver or completed gate is implied.
+## Approved patch applied; independent union review clear
+
+Root applied the exact Kyle-approved v2 artifact in cd96cb33, then merged integration8529c466 into the retained lane as6ba450ab. Four overlapping test hunks keep the newer reviewed Ardennes admission cases, historical catalogs, Panorama index19 and dynamic manifest order. Paid-course isolation includes every actual released positive-price course, including Ardennes; free Attack remains strictly parent-owned. Existing independent reviewer returned CLEAR on6ba450ab, with old prices/wallet/save/access guards unchanged. No extra runtime change was made in this continuation.
+
+Actual affected-scene capture, final canonical lane/jobs4 and build remain UNRUN on this union. Original failed packets and the ecee physical/19-view passes remain exact and are not repeated. Root has launched no heavy job: fresh shared inventory remains at or above3 outermost jobs despite the20:52 reserved next turn. Honor FACTORY8; start the existing --capture only below3/no hold, recheck after one minute, compare every foreign scene exactly, then update only Summit/Attack rows. Do not treat a pending capture, review or metadata head as a gate pass. Team Room remains Claude-owned; its already-running b7 canonical must not be duplicated. Claude retains Summit release checks/install/push.
+## Current repaired scene receipt and final review
+
+Actual6ba450ab capture finished65.8896s/exit0, all23enabled scenes once and21foreign signatures exact. Only Summit/Attack now share7a5a6a1c4dd0aecd2b6afd10a9b887541e6fb936471cb5dc9b02d093ebff9132 (666nodes/641meshes/21121instances; other counts exact). Source/fixtures committed clean92f80264; independent final delta reviewCLEAR. Wrapper37440/exec93020 drained. Final canonical lane/jobs4 and production build are still pending capacity; no second physical/photo/capture run or full tier is authorized by this note. busy-game-files remains released; only current named registry/signature ownership remains. Kyle explicitly directs other ready code work while checks wait.
+## Actual final canonical green
+
+Final92f80264 canonical finished2026-10-16T04:58:08.487Z:343/343/jobs4/exit0/zero failures or notRun, duration1666743.7509ms; source unchanged and clean. This includes the required test-circuits execution; do not repeat it manually. Actual lane receipt is .evidence/2026-10-15/SUMMIT-SWITCH-ON/final-92f80264/lane-receipt.json in the retained lane. Wrapper13692/exec78758 drained. One production build remains before green merge; required independent source/fixture review is already CLEAR. Later Stavelot integration changes are foreign source and must be preserved by the merge. Claude retains RELEASE-SUMMIT; no release or current frame pass is claimed.
+
+Production build on exact clean92f80264 also passed1329.043ms (final-92f80264/build-receipt.json and build.log). Source/fixtures review CLEAR. Root now hands this green lane to integration; no repeat physical/native/signature/canonical check, release or timing waiver. The subsequent release remains Claude-owned and needs its applicable green checks.

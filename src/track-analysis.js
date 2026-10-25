@@ -454,6 +454,27 @@ function engineerNote(corner, measured, written = {}) {
   };
 }
 
+// A generated crest flag is dropped when it only repeats something nearby: a corner whose apex is up to
+// CREST_FOLD_BEFORE_M after it or CREST_FOLD_AFTER_M before it (that corner's note covers the crest), or
+// the signature view standing on the same crest. Crests on open road, and every written flag, stay.
+export const CREST_FOLD_BEFORE_M = 150;
+export const CREST_FOLD_AFTER_M = 60;
+export const CREST_FOLD_SIGNATURE_M = 15;
+function foldCrestFlags(flags, analysis, length) {
+  const apexes = new Map(analysis.corners.map(corner => [cornerId(corner), corner.apexS]));
+  const corners = [...flags.values()].filter(flag => flag.kind === 'corner').map(flag => apexes.get(flag.id) ?? flag.s);
+  const signatures = [...flags.values()].filter(flag => flag.kind === 'signature').map(flag => flag.s);
+  for (const [id, flag] of [...flags]) {
+    if (flag.kind !== 'crest' || !flag.generated) continue;
+    const beforeCorner = corners.some(apex => {
+      const gap = angleDistance(apex, flag.s, length);
+      return gap >= -CREST_FOLD_AFTER_M && gap <= CREST_FOLD_BEFORE_M;
+    });
+    const onSignature = signatures.some(s => Math.abs(angleDistance(s, flag.s, length)) < CREST_FOLD_SIGNATURE_M);
+    if (beforeCorner || onSignature) flags.delete(id);
+  }
+}
+
 export function buildTrackDossier(course, {route = 'fixed', reference, authored} = {}) {
   if (!reference || reference.eventId !== course.def.id || reference.route !== route)
     throw Error('Matching event and route reference missing. Run node tools/build-reference-laps.mjs.');
@@ -506,10 +527,15 @@ export function buildTrackDossier(course, {route = 'fixed', reference, authored}
     .map(flag => [flag.id, flag]));
   for (const written of authoredFlags) {
     const previous = flags.get(written.id);
+    // A corner flag shows its corner's note. Any other written flag (a passing zone, the signature view)
+    // shows the note written under its own id, over whatever the shared analysis would have said.
+    const authoredNote = notes.has(written.id) ? null : intel.notes[written.id];
     flags.set(written.id, {...previous, ...written, generated: false,
       camera: {...previous?.camera, ...written.camera},
-      engineer: previous?.engineer ?? notes.get(written.id) ?? {note: written.title}});
+      engineer: authoredNote ? {...previous?.engineer, ...authoredNote}
+        : previous?.engineer ?? notes.get(written.id) ?? {note: written.title}});
   }
+  foldCrestFlags(flags, analysis, course.length);
   const list = [...flags.values()].map(flag => {
     if (!flag.id || !['corner', 'crest', 'signature', 'overtaking'].includes(flag.kind) || !Number.isFinite(flag.s))
       throw Error('Authored flag needs an id, known kind and finite lap position.');

@@ -703,6 +703,7 @@ export function _crushVehicle(actor, reason, impactMph) {
   const spec = this._vehicleSpec(actor);
   (this._crushedVehicles ??= []).push({ x: point.x, y: point.y, z: point.z, heading: point.heading + (actor.headingError || 0),
     halfWidth: spec.halfWidth, halfLength: spec.halfLength, height: 1.55 - .76 * actor.crushDamage });
+  this._titanCarRamp(actor);
   s.speedMph *= .84;
   const burst = { id: `vehicle-${reason}-${s.stageTimeSec}`, byPlayer: true, x: point.x, y: point.y, z: point.z,
     s: actor.s, off: actor.lateral, strength: actor.crushDamage, serial: (s.crushBurst?.serial || 0) + 1 };
@@ -711,6 +712,23 @@ export function _crushVehicle(actor, reason, impactMph) {
   // authored stunt objective. Keep the wreck visible for this whole stage.
   this._callout('VEHICLE CRUSHED', 1.8);
   this.emit({ vehicleCrushed: { ...burst, actor, reason } });
+}
+
+// The Titan drives up onto a car it flattens: the car is a ramp (FUN-TITAN-LAUNCH; docs/board/decisions.md
+// "Keep these"). Only the player's Titan, only at speed, only from the ground; the flight and landing are the
+// ordinary jump rules in _jump, so it lands on its wheels like any other jump.
+export function _titanCarRamp(wreck) {
+  const s = this.state, ramp = DRIVE.titanCarRamp;
+  if (this.car.kind !== 'monster' || s.airborne || s.tumble || s.onFoot || wreck === s) return;
+  const speed = Math.max(0, s.speedMph);
+  if (speed < ramp.minMph) return;
+  const ground = this._supportAt(s.s, s.lateral, s);
+  // The arc leaves from the flattened roof, or a fast truck would meet the wreck's rising edge in one step and land.
+  const roof = this.course.groundAt(s.s, s.lateral).y + (this._crushedVehicles?.at(-1)?.height || 0);
+  s.airborne = true; s._jumpY = Math.max(ground.y, roof); s._verticalSpeed = Math.min(ramp.maxMps, speed * ramp.climbMps);
+  s._airOrigin = { x: ground.x, z: ground.z, time: s.stageTimeSec };
+  s.airDistance = 0; s.airTime = 0; s.airHeight = 0;
+  s._jumpOrigin = { carRamp: true, world: ground, s: s.s, lap: s.completedLaps + 1 };
 }
 
 export function _dentVehicle(actor, zone, impactMph) {

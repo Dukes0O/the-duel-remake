@@ -8,9 +8,13 @@
 # person faces glTF +Z, origin on the ground at the middle of the feet. Every file holds
 # an empty `harness`: the clip point, the centre of the chest harness ring (about 1.15 m
 # up on an adult standing or hanging), which follows the body in every pose.
-#   rescuer-hanging            rescuer in a harness, hands on the sling
-#   rescuer-casualty-hanging   rescuer and casualty clipped together (meshes
-#                              `rescuer` and `casualty`)
+#   rescuer-hanging            rescuer in a harness on the short line: arms reaching out to the
+#                              casualty, legs hanging, chest ring with a carabiner, two shoulder
+#                              straps to the hook above his head (the cable's end)
+#   rescuer-casualty-hanging   rescuer and casualty clipped together, face to face, on one hook
+#                              (meshes `rescuer` and `casualty`), the rescuer's arms round him
+#   The two hanging files are centred under the hook (the line), not under the feet; their lowest
+#   point is at 0.
 #   hiker-standing, skier-standing, driver-standing   standing and waving
 #   hiker-sitting, skier-sitting                      sitting on a slope
 #   driver-lying               lying on his back under a foil blanket, sized to lie in the
@@ -85,7 +89,7 @@ COLOURS = {
     # driver
     'jumper': ((0.13, 0.17, 0.12), 0.95), 'jeans': ((0.045, 0.08, 0.17), 0.9), 'trainer': ((0.5, 0.5, 0.47), 0.7),
     'hair_brown': ((0.07, 0.04, 0.025), 0.95), 'foil': ((0.55, 0.45, 0.12), 0.25, 0.9), 'sole': ((0.6, 0.6, 0.58), 0.8),
-    'litter': ((0.55, 0.12, 0.02), 0.6), 'litter_strap': ((0.02, 0.02, 0.02), 0.85),
+    'litter': ((0.55, 0.12, 0.02), 0.6), 'litter_strap': ((0.02, 0.02, 0.02), 0.85), 'strop': ((0.62, 0.22, 0.01), 0.7),
     # paramedics
     'para_green': ((0.035, 0.17, 0.085), 0.8), 'para_trouser': ((0.03, 0.12, 0.06), 0.85), 'hivis': ((0.45, 0.48, 0.02), 0.5),
     'nitrile': ((0.08, 0.22, 0.38), 0.5), 'hair_black': ((0.02, 0.016, 0.016), 0.95), 'bag_orange': ((0.45, 0.17, 0.02), 0.75),
@@ -458,7 +462,7 @@ def build_person(spec, pose, gear=None, tri_scale=1.0):
     bone = arm.data.bones['spine_01']
     person.harness = P.pb('spine_01').matrix @ bone.matrix_local.inverted() @ rest_ring
     person.ankles = [P.head_of('foot_l'), P.head_of('foot_r')]
-    person.points = {n: P.head_of(n) for n in ('hand_l', 'hand_r', 'Head')}
+    person.points = {n: P.head_of(n) for n in ('hand_l', 'hand_r', 'Head', 'upperarm_l', 'upperarm_r')}
     return person
 
 # ---------------------------------------------------------------------------
@@ -784,21 +788,23 @@ def pose_stand_tired(side='l'):
 
 def pose_hanging(rescuer=True, pair=False):
     if rescuer:
-        pose = dict(lean=(-5, 0, 0), head=(-3, 0, 0))
-        # right hand grips the line above the head, left hand rests on the harness strap at the hip
-        pose['arm_r'] = dict(hand=(-0.08, -0.17, 1.9), pole=(-1.0, 0.3, -0.2), curl=0.95, shoulder=0.35, hand_dir=(0, 0, 1))
-        pose['arm_l'] = dict(hand=(0.2, -0.1, 1.04), pole=(1.0, 0.6, 0.0), curl=0.55, shoulder=-0.1)
+        pose = dict(lean=(-4, 0, 0), head=(-6, 0, 0))
         if pair:
-            pose['leg_l'] = dict(ankle=(0.11, -0.06, 0.11), pole=(0.1, -1, 0.2), foot=(0, -0.25, -1), ball=(0, -0.45, -0.9))
-            pose['leg_r'] = dict(ankle=(-0.10, 0.02, 0.13), pole=(-0.1, -1, 0.2), foot=(0, -0.25, -1), ball=(0, -0.45, -0.9))
+            # both arms round the casualty, hands gripping his strop at the sides of his chest
+            pose['arm_l'] = dict(hand=(0.20, -0.47, 1.36), pole=(1.0, 0.1, -0.2), curl=0.8, shoulder=0.05, hand_dir=(-0.3, -1, -0.2))
+            pose['arm_r'] = dict(hand=(-0.20, -0.47, 1.36), pole=(-1.0, 0.1, -0.2), curl=0.8, shoulder=0.05, hand_dir=(0.3, -1, -0.2))
         else:
-            pose['leg_l'] = dict(ankle=(0.11, -0.06, 0.11), pole=(0.1, -1, 0.2), foot=(0, -0.25, -1), ball=(0, -0.45, -0.9))
-            pose['leg_r'] = dict(ankle=(-0.10, -0.15, 0.15), pole=(-0.1, -1, 0.2), foot=(0, -0.25, -1), ball=(0, -0.45, -0.9))
+            # reaching out to the casualty: arms forward and a little apart, hands open
+            pose['arm_l'] = dict(hand=(0.24, -0.50, 1.38), pole=(1.0, 0.3, -0.5), curl=0.12, shoulder=0.05, hand_dir=(0.15, -1, -0.15))
+            pose['arm_r'] = dict(hand=(-0.20, -0.52, 1.42), pole=(-1.0, 0.3, -0.5), curl=0.12, shoulder=0.05, hand_dir=(-0.1, -1, -0.1))
+        # legs hang loose, one knee a little bent
+        pose['leg_l'] = dict(ankle=(0.11, -0.06, 0.11), pole=(0.1, -1, 0.2), foot=(0, -0.25, -1), ball=(0, -0.45, -0.9))
+        pose['leg_r'] = dict(ankle=(-0.10, 0.04, 0.15), pole=(-0.1, -1, 0.2), foot=(0, -0.25, -1), ball=(0, -0.45, -0.9))
         return pose
-    # the casualty hangs limp in the strop, arms lifted by it, head dropped
-    pose = dict(lean=(8, 0, 0), neck=(10, 0, 0), head=(22, 0, 0))
-    pose['arm_l'] = dict(hand=(0.36, -0.1, 1.6), pole=(1.0, 0.3, -0.5), curl=0.2, shoulder=0.2)
-    pose['arm_r'] = dict(hand=(-0.36, -0.1, 1.55), pole=(-1.0, 0.3, -0.5), curl=0.2, shoulder=0.2)
+    # the casualty hangs limp in the strop: arms draped forward over the rescuer's, head fallen to one side
+    pose = dict(lean=(6, 0, 0), neck=(8, 4, 0), head=(14, 14, 0))
+    pose['arm_l'] = dict(hand=(0.30, -0.30, 1.20), pole=(1.0, 0.3, -0.6), curl=0.35, shoulder=-0.05)
+    pose['arm_r'] = dict(hand=(-0.27, -0.24, 1.10), pole=(-1.0, 0.3, -0.6), curl=0.35, shoulder=-0.05)
     pose['leg_l'] = dict(ankle=(0.10, -0.08, 0.12), pole=(0.1, -1, 0.2), foot=(0, -0.2, -1), ball=(0, -0.3, -0.95))
     pose['leg_r'] = dict(ankle=(-0.12, 0.06, 0.13), pole=(-0.1, -1, 0.2), foot=(0, -0.1, -1), ball=(0, -0.2, -0.95))
     return pose
@@ -920,13 +926,129 @@ def post_skis_on_ground(person):
             add_box(bm, (0.095, 0.16, 0.014), (sx, -0.36, 0.02), (14, 0, 0), bevel=0.004)
     add_static(person, 'skis', 'ski_white', skis)
 
-def finish_pair(name, rescuer, casualty, scale_r, scale_c):
-    transform_person(rescuer, scale_r, 0.0)
-    transform_person(casualty, scale_c, None)
+def add_link(bm, a, b, w, t):
+    """A flat strap of width w and thickness t from point a to point b (final coordinates)."""
+    a, b = Vector(a), Vector(b); d = b - a
+    z = d.normalized(); x = z.cross(Vector((0, 1, 0)))
+    x = x.normalized() if x.length > 1e-4 else Vector((1, 0, 0))
+    y = z.cross(x)
+    M = Matrix((x, y, z)).transposed().to_4x4(); M.translation = (a + b) / 2
+    r = bmesh.ops.create_cube(bm, size=1.0)
+    bmesh.ops.transform(bm, matrix=M @ Matrix.Diagonal((w, t, d.length, 1)), verts=r['verts'])
+
+def shoulder_tops(person):
+    """Where a strap leaves the top of each shoulder (final coordinates)."""
+    out = []
+    for side in ('l', 'r'):
+        h = person.points['upperarm_' + side]
+        out.append(Vector((h.x * 0.62, h.y, h.z + 0.085)))
+    return out
+
+def hook_height(people):
+    """The hook's centre: a hand's breadth above the highest helmet or hair."""
+    top = max(v.co.z for person in people for me, _, _ in person.pieces for v in me.vertices)
+    return top + 0.30
+
+def build_hook(bm, hx, hy, hz):
+    """The line's hook: a steel link under a swivel and an eye; the eye's top is the cable's end."""
+    add_ring3d(bm, (hx, hy, hz), (0, 1, 0), 0.052, 0.0095, segs=14, tsegs=6, squash=0.62)
+    add_cyl(bm, 0.017, 0.017, 0.07, (hx, hy, hz + 0.085), segs=10)
+    add_cyl(bm, 0.026, 0.026, 0.022, (hx, hy, hz + 0.052), segs=10)
+    add_ring3d(bm, (hx, hy, hz + 0.155), (1, 0, 0), 0.028, 0.0075, segs=12, tsegs=5)
+
+def add_carabiner(person, face):
+    """A steel carabiner clipped through the chest ring. face is +1 where the person faces +y, -1 for -y."""
+    c = person.harness
+    def build(bm):
+        add_ring3d(bm, (c.x, c.y + face * 0.04, c.z - 0.012), (1, 0, 0), 0.052, 0.0075, segs=14, tsegs=5, squash=0.55)
+        add_box(bm, (0.016, 0.018, 0.03), (c.x, c.y + face * 0.04, c.z + 0.052), bevel=0.003)
+    add_static(person, 'carabiner', 'steel', build, smooth=True)
+
+def lift_straps(person, starts, hook, matkey, width=0.04):
+    """Two flat straps from the person's shoulders (or strop) to the bottom of the hook link."""
+    low = Vector((hook.x, hook.y, hook.z - 0.052))
+    def build(bm):
+        for st in starts:
+            add_link(bm, st, low, width, 0.012)
+    add_static(person, 'lift-straps', matkey, build)
+
+def recentre(people, hook):
+    """Move everything so the hook is over the origin; the line then hangs from the middle of the file."""
+    M = Matrix.Translation(Vector((-hook.x, -hook.y, 0)))
+    for person in people:
+        for me, _, _ in person.pieces: me.transform(M)
+        person.harness = M @ person.harness
+        person.points = {k: M @ v for k, v in person.points.items()}
+    return M @ hook
+
+def casualty_strop(person, face):
+    """The rescue strop on the casualty, in final coordinates: an orange band round the chest under the
+    arms, with a steel chest ring on its front. face is +1 where he faces +y. Returns the points where
+    the two straps rise from the band (either side of his chest, in front)."""
+    h = person.harness
+    top = h.z + 0.15
+    centre = Vector((h.x, h.y - face * 0.125, top))
+    rx, ry = 0.168, 0.128
+    def band(bm):
+        pts = []
+        n = 20
+        for i in range(n):
+            a = 2 * math.pi * i / n
+            nrm = Vector((math.cos(a) / rx, math.sin(a) / ry, 0)).normalized()
+            pts.append((centre + Vector((math.cos(a) * rx, math.sin(a) * ry, 0)), nrm))
+        add_ribbon(bm, pts, 0.085, closed=True, side_axis=Vector((0, 0, 1)))
+    add_static(person, 'strop', 'strop', band)
+    def ring(bm):
+        add_ring3d(bm, (h.x, centre.y + face * (ry + 0.02), top - 0.012), (0, 1, 0), 0.03, 0.0065, segs=12, tsegs=5)
+    add_static(person, 'strop-ring', 'steel', ring, smooth=True)
+    return [Vector((centre.x + sx * 0.10, centre.y + face * (ry - 0.012), top + 0.03)) for sx in (1, -1)]
+
+def finish_hanging(name, person, scale):
+    """The rescuer alone on the line."""
+    transform_person(person, scale, 0.0, center=False)
+    hz = hook_height([person])
+    starts = shoulder_tops(person)
+    hook = Vector((0, sum(v.y for v in starts) / 2, hz))
+    add_carabiner(person, -1)
+    lift_straps(person, starts, hook, 'webbing', width=0.045)
+    add_static(person, 'hook', 'steel', lambda bm: build_hook(bm, hook.x, hook.y, hook.z), smooth=True)
+    hook = recentre([person], hook)
+    clear_scene()
+    merge_pieces(name, person.pieces)
+    add_empty('harness', person.harness)
+    tri = triangles()
+    print(f'rescue-people: {name} {tri} triangles')
+    assert tri <= TRI_LIMIT, f'{name} over budget: {tri}'
+    export_scene(name)
+    return tri
+
+def finish_pair(name, rescuer, casualty, scale_r, scale_c, gap=0.31):
+    """The rescuer and the casualty face to face, both clipped to one hook: the casualty (turned about) hangs
+    chest to chest in front of the rescuer, a little lower, in an orange strop."""
+    transform_person(rescuer, scale_r, 0.0, center=False)
+    transform_person(casualty, scale_c, None, center=False)
+    turn = Matrix.Rotation(math.pi, 4, 'Z')
+    for me, _, _ in casualty.pieces: me.transform(turn)
+    casualty.harness = turn @ casualty.harness
+    casualty.points = {k: turn @ v for k, v in casualty.points.items()}
     dz = rescuer.harness.z - casualty.harness.z - 0.09
-    shift = Vector((0, -0.25, dz))
+    shift = Vector((rescuer.harness.x - casualty.harness.x, rescuer.harness.y - gap - casualty.harness.y, dz))
     for me, _, _ in casualty.pieces: me.transform(Matrix.Translation(shift))
     casualty.harness += shift
+    casualty.points = {k: v + shift for k, v in casualty.points.items()}
+    hz = hook_height([rescuer, casualty])
+    r_starts = shoulder_tops(rescuer)
+    c_starts = casualty_strop(casualty, +1)
+    hook = Vector((0, (rescuer.harness.y + casualty.harness.y) / 2, hz))
+    add_carabiner(rescuer, -1)
+    lift_straps(rescuer, r_starts, hook, 'webbing', width=0.045)
+    lift_straps(casualty, c_starts, hook, 'strop', width=0.04)
+    # a short strap links the two chest rings through the carabiner
+    def link(bm):
+        add_link(bm, rescuer.harness + Vector((0, -0.04, 0)), casualty.harness + Vector((0, 0.03, 0.15)), 0.03, 0.01)
+    add_static(rescuer, 'chest-link', 'strop', link)
+    add_static(rescuer, 'hook', 'steel', lambda bm: build_hook(bm, hook.x, hook.y, hook.z), smooth=True)
+    hook = recentre([rescuer, casualty], hook)
     clear_scene()
     merge_pieces('rescuer', rescuer.pieces)
     merge_pieces('casualty', casualty.pieces)
@@ -954,11 +1076,11 @@ def make(name):
     reset(); MATS.clear()
     if name == 'rescuer-hanging':
         sp = SPECS['rescuer']; p = build_person(sp, pose_hanging(True), sp['gear'])
-        return finish_single(name, p, sp['scale'])
+        return finish_hanging(name, p, sp['scale'])
     if name == 'rescuer-casualty-hanging':
         sr, sc = SPECS['rescuer'], SPECS['driver']
-        pr = build_person(sr, pose_hanging(True, pair=True), sr['gear'], tri_scale=0.8)
-        pc = build_person(sc, pose_hanging(False), sc['gear'], tri_scale=0.8)
+        pr = build_person(sr, pose_hanging(True, pair=True), sr['gear'], tri_scale=0.7)
+        pc = build_person(sc, pose_hanging(False), sc['gear'], tri_scale=0.7)
         return finish_pair(name, pr, pc, sr['scale'], sc['scale'])
     if name == 'hiker-standing':
         sp = SPECS['hiker']; p = build_person(sp, pose_stand_wave('l'), sp['gear'])
@@ -1013,7 +1135,7 @@ def render_glb(name, folder):
     scene.render.resolution_x, scene.render.resolution_y = 600, 450; scene.view_settings.view_transform = 'AgX'
     cd = bpy.data.cameras.new('cam'); cam = bpy.data.objects.new('cam', cd); scene.collection.objects.link(cam); scene.camera = cam
     cd.lens = 50
-    views = {'': (-0.55, -1.0), 'back': (0.75, 0.85)}  # front three-quarter, then back three-quarter
+    views = {'': (-0.55, -1.0), 'back': (0.75, 0.85), 'side': (-1.0, 0.05)}  # front three-quarter, back three-quarter, side
     for suffix, (vx, vy) in views.items():
         direction = Vector((vx, vy, 0.28)).normalized()
         cam.location = centre + direction * size * 2.15

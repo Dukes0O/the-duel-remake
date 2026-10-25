@@ -42,3 +42,11 @@ racing speed. The grey bridge is still blocky but was accepted at round 3.
 Round 3's sheet is removed with this verdict (its note stays). Ardennes stays
 dev; next are the Long Left player exception, the frame check at the busiest
 view and Claude's finishing pass.
+
+## Earlier rounds, folded in (P4-FINISH-ARDENNES, 15 October 2026)
+
+- Round 1 (14 October): changes required. Village a scatter of box houses on a bare slope with a floating spire; open meadows instead of forest; round lollipop beeches; blue, glassy damp road; white monument-like bridge; no footbridge view from the car.
+- Round 2: changes required. Village/church 3, forest 3, road 4, bridges 3, overall 3. Accepted the neutral damp road, dense firs and the footbridge from the car; asked for the bridge over visible water, a distinct broadleaf beech grove and readable village streets.
+- Round 3: changes required (third of the original three). Village/church 4, forest 2, road 4, bridges 3, cohesion 3. Streets, roofs and church passed; beech crowns read as faceted plastic and the stream as a matte path. Kyle held the course for a new art plan, which round 4 delivered.
+
+The round 1 to 3 notes and this round's sheet (`round-4.jpg`, 316,397 bytes) were removed as consumed evidence; the verdicts above and the accepted round 4 verdict are what remains.

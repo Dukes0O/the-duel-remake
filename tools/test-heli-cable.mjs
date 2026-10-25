@@ -46,7 +46,9 @@ const table = {
   viper_proto: [940, true], falcone_heritage: [1150, true], falcone_f42: [1250, true],
   dusthawk_rally: [1280, true], aurora_gt: [1350, true], koenigsegg_jesko: [1390, true],
   stuttgart_959s: [1450, true], banshee_muscle: [1810, false], titan_monster: [4700, false],
-  ferrari_enzo: [1365, true],
+  ferrari_enzo: [1365, true], mclaren_f1: [1140, true],
+  bugatti_bolide: [1450, true],
+  falcone_sirena: [810, true],
 };
 for (const [id, [mass, lifts]] of Object.entries(table)) {
   assert.equal(carMassKg(id), mass, `${id} mass`); checks++;
@@ -67,7 +69,9 @@ for (const id of ['falcone_f42', 'stuttgart_959s', 'falcone_heritage', 'aurora_g
   heli.y = load.y + CABLE.length; heli.onGround = false;
   ok(canHook(heli, load), 'hook right above the car');
   heli.x = 4;
-  ok(!canHook(heli, load), 'not from 4 m to the side');
+  ok(canHook(heli, load), '4 m to the side is within the hook\'s reach');
+  heli.x = 4.5;
+  ok(!canHook(heli, load), 'not from 4.5 m to the side');
   heli.x = 0; heli.vx = 3;
   ok(!canHook(heli, load), 'not while moving at 3 m/s');
   heli.vx = 0; heli.y += 4;
@@ -85,6 +89,17 @@ for (const id of ['falcone_f42', 'stuttgart_959s', 'falcone_heritage', 'aurora_g
   const pull = stepCable(load, heli, {ground}).force.y;
   near(pull, -1300 * GRAVITY, 300, 'the cable pulls the helicopter down by the car\'s weight');
   near(heli.vy, 0, 0.05, 'Assisted holds height with the car on');
+}
+
+// The F1's actual configured 1,140 kg load lifts and holds steady on the cable.
+{
+  const {heli, load} = hookedOver(carMassKg('mclaren_f1'));
+  const events = fly(heli, load, 15, {lift: 0.5});
+  fly(heli, load, 10);
+  ok(events.some(event => event.type === 'loadLifted'), 'the actual F1 load leaves the ground');
+  ok(!load.onGround && load.y > 2, 'the F1 stays safely above the ground');
+  near(heli.y - load.y, CABLE.length, 0.1, 'the F1 hangs at cable length');
+  near(heli.vy, 0, 0.05, 'Assisted holds height with the F1 aboard');
 }
 
 // The pendulum: about 7.8 s a swing on 15 m, and it dies away.

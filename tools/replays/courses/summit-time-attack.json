@@ -1,0 +1,19 @@
+{
+  "eventId": "summit-time-attack",
+  "cases": [
+    {
+      "id": "summit-time-attack-solo",
+      "eventId": "summit-time-attack",
+      "category": "solo time trial",
+      "mode": "timetrial",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "summit-time-attack-solo": {
+      "30": "651215310c8db4bdb0e8c224294e62c86cd91f14e603d66c91706cefe2d14ade",
+      "60": "651215310c8db4bdb0e8c224294e62c86cd91f14e603d66c91706cefe2d14ade",
+      "144": "651215310c8db4bdb0e8c224294e62c86cd91f14e603d66c91706cefe2d14ade"
+    }
+  }
+}

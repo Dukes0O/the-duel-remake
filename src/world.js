@@ -65,7 +65,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   const group = new THREE.Group(), alpine = course.def.theme === 'alpine', night=course.def.theme==='city';
   const winter=snow&&!!course.def.snowWorld;
   if(winter&&trackKits?.status!=='ready')throw Error('Winter world needs its prepared approved track kits.');
-  const omitFoliageAt=winter?(course.def.snowWorld.mixed?(x,z)=>winterWeight(course,course.nearest(x,z).s)>0:()=>true):undefined;
+  const omitFoliageAt=winter?(course.def.snowWorld.mixed?(x,z)=>winterWeight(course,course.nearestS(x,z))>0:()=>true):undefined;
   const winterTrees=winter?snowPineIds(course):null,winterRocks=winter?snowRockFeatures(course):null;
   const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night,wet:!!course.def.wetRoad,
     ...(course.def.dampRoad !== undefined ? {dampRoad:course.def.dampRoad,courseLength:course.length,mistBanks:course.def.effects?.valleyMist} : {})});

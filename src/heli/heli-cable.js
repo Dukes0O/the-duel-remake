@@ -17,9 +17,14 @@ export const CABLE = Object.freeze({
   swingDamping: 0.12,
   // The load point sits this far above the ground when the car rests on it.
   restHeight: 0.7,
-  hookReach: 3,
-  hookHeightSlack: 2,
-  hookSpeed: 1.5,
+  // The hook takes a load within 4 m sideways, 3.5 m up or down and 2.5 m/s
+  // (FIX-HELI-HOOK, 24 October 2026: the old 3 m, 2 m and 1.5 m/s asked for
+  // a near-perfect hover nobody could hold).
+  hookReach: 4,
+  hookHeightSlack: 3.5,
+  hookSpeed: 2.5,
+  // The ground ring under a load shows within this far sideways of the hook.
+  guideReach: 10,
   groundFriction: 0.7,
   loadRadius: 1.2,
   setDownSpeed: 1,
@@ -45,11 +50,12 @@ export function carMassKg(carId) {
 }
 
 // Can Kestrel One lift this car in H1?
-export function liftCheck(carId) {
+// hookLimitKg: the Lab's Heavy hook (2,000 kg) when owned; left out, the base 1,500 kg.
+export function liftCheck(carId, hookLimitKg = KESTREL.hookLimitKg) {
   const massKg = carMassKg(carId);
   if (massKg === null) return {ok: false, massKg, reason: 'Unknown car.'};
   if (carId === 'titan_monster') return {ok: false, massKg, reason: 'Too heavy for any helicopter here.'};
-  if (massKg > KESTREL.hookLimitKg) return {ok: false, massKg, reason: "Needs the Lab's lift upgrade."};
+  if (massKg > hookLimitKg) return {ok: false, massKg, reason: "Needs the Lab's lift upgrade."};
   return {ok: true, massKg, reason: null};
 }
 
@@ -68,22 +74,64 @@ export function createLoad({id, massKg, x = 0, z = 0, heading = 0, ground = null
 
 // The hook hangs at the end of the cable, straight below the helicopter
 // while nothing is on it.
-export function hookPoint(heli) {
-  return {x: heli.x, y: heli.y - CABLE.length, z: heli.z};
+// With the medevac skin's winch the line is the length the winch has reeled
+// to (opts.lineLength); every other helicopter has the fixed 15 m.
+export function hookPoint(heli, opts) {
+  return {x: heli.x, y: heli.y - lineLengthOf(opts), z: heli.z};
+}
+
+// ---- gear (docs/HELI_WILDLIFE.md section 5.3) ------------------------------
+// The optional `opts` argument of hookPoint, canHook and hook is the worn gear's
+// numbers (heli-skins.js gearStats) plus the winch's lineLength. Left out, or
+// holding the base kit, every answer is the one H1 always gave. The numbers
+// are read from opts and never written here.
+export const lineLengthOf = opts => Number.isFinite(opts?.lineLength) ? opts.lineLength : CABLE.length;
+const reachOf = opts => Number.isFinite(opts?.hookReach) ? opts.hookReach : CABLE.hookReach;
+const limitOf = opts => Number.isFinite(opts?.hookLimitKg) ? opts.hookLimitKg : KESTREL.hookLimitKg;
+
+// A winch is just the length it has reeled to. Fixed at 15 m unless the worn
+// gear can reel (gear.reelSpeed above 0): command is -1 to reel in (shorter),
+// +1 to pay out, 0 to hold, for dt seconds at the gear's speed within its
+// shortest and longest line. A load given has its line length set to match;
+// without a winch the load's line is the plain 15 m again.
+export function createWinch() { return {length: CABLE.length}; }
+export function reelWinch(winch, gear, command = 0, dt = HELI_STEP, load = null) {
+  if (!(gear?.reelSpeed > 0)) {
+    winch.length = CABLE.length;
+    if (load) delete load.lineLength;
+    return winch.length;
+  }
+  const lo = gear.lineMin, hi = gear.lineMax;
+  const move = command > 0 ? 1 : command < 0 ? -1 : 0;
+  winch.length = clamp(clamp(winch.length, lo, hi) + move * gear.reelSpeed * (Number.isFinite(dt) ? Math.max(0, dt) : 0), lo, hi);
+  if (load) load.lineLength = winch.length;
+  return winch.length;
+}
+
+// Why H would not hook this load now, or null when it would. The reasons
+// come in the order a pilot fixes them: 'slowDown' (relative speed), then
+// 'lower' or 'higher' (metres: how far to bring the hook level with the
+// load), then 'closer' (sideways). A load already on the hook gives 'hooked'.
+export function hookRefusal(heli, load, opts) {
+  if (load.hooked) return {reason: 'hooked'};
+  const hook = hookPoint(heli, opts);
+  const relSpeed = Math.hypot(heli.vx - load.vx, heli.vy - load.vy, heli.vz - load.vz);
+  if (relSpeed > CABLE.hookSpeed) return {reason: 'slowDown'};
+  const rise = hook.y - load.y;
+  if (Math.abs(rise) > CABLE.hookHeightSlack)
+    return {reason: rise > 0 ? 'lower' : 'higher', metres: Math.max(1, Math.round(Math.abs(rise)))};
+  if (Math.hypot(hook.x - load.x, hook.z - load.z) > reachOf(opts)) return {reason: 'closer'};
+  return null;
 }
 
 // Is the hook close enough, and the helicopter slow enough, to hook this
 // load with H?
-export function canHook(heli, load) {
-  if (load.hooked) return false;
-  const hook = hookPoint(heli);
-  const relSpeed = Math.hypot(heli.vx - load.vx, heli.vy - load.vy, heli.vz - load.vz);
-  return Math.hypot(hook.x - load.x, hook.z - load.z) <= CABLE.hookReach &&
-    Math.abs(hook.y - load.y) <= CABLE.hookHeightSlack && relSpeed <= CABLE.hookSpeed;
+export function canHook(heli, load, opts) {
+  return hookRefusal(heli, load, opts) === null;
 }
 
-export function hook(heli, load) {
-  if (!canHook(heli, load) || !(load.massKg <= KESTREL.hookLimitKg)) return {ok: false};
+export function hook(heli, load, opts) {
+  if (!canHook(heli, load, opts) || !(load.massKg <= limitOf(opts))) return {ok: false};
   load.hooked = true;
   load.falling = false;
   load.setDownDone = false;
@@ -122,6 +170,7 @@ export function stepCable(load, heli, {ground = null, zone = null, fallen = null
   let fx = 0, fy = -m * GRAVITY, fz = 0;
 
   if (load.hooked) {
+    const length = load.lineLength ?? CABLE.length;
     const dx = heli.x - load.x, dy = heli.y - load.y, dz = heli.z - load.z;
     const distance = Math.hypot(dx, dy, dz) || 1e-9;
     const ux = dx / distance, uy = dy / distance, uz = dz / distance;
@@ -131,8 +180,8 @@ export function stepCable(load, heli, {ground = null, zone = null, fallen = null
     // can never fling the load.
     // The damping is capped by the load's mass, so a light load (an empty
     // bucket, 50 kg) does not shake at the step rate; every H1 load is heavier.
-    const tension = distance > CABLE.length ? Math.min(CABLE.maxTension,
-      Math.max(0, CABLE.stiffness * (distance - CABLE.length) - Math.min(CABLE.damping, m / dt) * stretchRate)) : 0;
+    const tension = distance > length ? Math.min(CABLE.maxTension,
+      Math.max(0, CABLE.stiffness * (distance - length) - Math.min(CABLE.damping, m / dt) * stretchRate)) : 0;
     fx += tension * ux; fy += tension * uy; fz += tension * uz;
     force.x -= tension * ux; force.y -= tension * uy; force.z -= tension * uz;
     // Swing damping: slows motion across the cable relative to the hook.

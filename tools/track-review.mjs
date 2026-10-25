@@ -19,6 +19,7 @@ import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { heliOf } from '../src/heli/heli-save.js';
 
 export const PROJECT_ROOT = resolve(fileURLToPath(new URL('../', import.meta.url)));
 export const FRAME_COUNT = 16;
@@ -166,7 +167,8 @@ export async function runHeadlessLaps(options) {
     const unlock = CIRCUIT_MANIFESTS.find(row => row.id === options.courseId)?.unlock;
     app.profile = { ...app.profile, courses: { version: 1, unlocked: COURSE.map(c => c.id) },
       ...(unlock?.kind === 'default-gp-podium' ? {grandPrixPodiums:
-        [...new Set([...(app.profile.grandPrixPodiums ?? []), unlock.defaultEventId])]} : {}) };
+        [...new Set([...(app.profile.grandPrixPodiums ?? []), unlock.defaultEventId])]} : {}),
+      ...(unlock?.kind === 'spotted-from-air' ? { heli: { ...heliOf(app.profile), map: { version: 1, seen: [], found: [options.courseId], table: false } } } : {}) };
     app._saveProfile();
     // A course with snow or ice is reviewed on winter tyres, as a player would set up.
     const { courseHasWinterSurfaces } = await import('../src/race-surfaces.js');

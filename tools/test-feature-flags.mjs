@@ -20,12 +20,12 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 28 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
-    && ['snow-world', 'the-deep', 'grand-prix-career', 'yeti', 'rival-voices', 'earned-cars'].every(name => FEATURE_STATES[name] === 'dev')
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 38 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
+    && ['snow-world', 'the-deep', 'grand-prix-career', 'rival-voices', 'earned-cars', 'rescue', 'wildlife', 'heli-skins', 'heli-skiing', 'pilot-map', 'tyre-slip', 'driving-lessons', 'cpu-racecraft', 'lab', 'lab-tuning'].every(name => FEATURE_STATES[name] === 'dev')
     && ['lap-choice', 'snowmen'].every(name => FEATURE_STATES[name] === 'on')
-    && FEATURE_STATES['grand-prix'] === 'on'
+    && FEATURE_STATES['grand-prix'] === 'on' && FEATURE_STATES.yeti === 'on'
     && CIRCUIT_MANIFESTS.every(manifest => FEATURE_STATES[manifest.flag] === manifest.state),
-  'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix is released; lap choice and snowmen are released (on, 13 October 2026); career backup, Snow, The Deep, the yeti, rival voices, Grand Prix career and earned cars stay dev; registered course switches follow their manifests; retired switches stay absent');
+  'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix is released; lap choice and snowmen are released (on, 13 October 2026); career backup, Snow, The Deep, rival voices, Grand Prix career, earned cars, rescue, wildlife, helicopter skins, heli-skiing, the pilot map, tyre slip, driving lessons, CPU racecraft and the Lab stay dev; the accepted Yeti is on; registered course switches follow their manifests; retired switches stay absent');
 const sharedCourseFlags = [...new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag))]
   .map(flag => CIRCUIT_MANIFESTS.filter(manifest => manifest.flag === flag))
   .filter(group => group.length > 1);

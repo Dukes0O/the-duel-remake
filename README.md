@@ -2,6 +2,53 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Summit Run – 16 October 2026
+
+A new Grand Prix course: one long climb from the desert to a snowy summit, about
+14 km and 720 m up, in a single run rather than laps. Buy it for 2,600 credits
+in Your Courses. The road winds through pine switchbacks, over the tree line
+and across the snowfields, with six hairpins, two jumps, a gravel stretch and
+ice. Day turns to dusk on the way up and it is night by the Avalanche Gallery.
+After 10 km an avalanche can come down (listen for the rumble): at the Gallery
+Split take the covered Gallery, or the Open Road to the left, which is a little
+faster when clear but drifts deep after a slide. The pit lane is on Tree Line
+Pit Straight. A run takes about five minutes.
+
+Summit Time Attack comes free once you own Summit Run: one solo timed run, no
+rivals, no traffic and no pay, with your best time, a ghost and medals (gold
+274.6 s, silver 288.0 s, bronze 306.6 s).
+
+Watch the ridge near Devil's Staircase and the summit for the Yeti. Spot it on a
+finished Summit race and it roars and walks off; three sightings unlock a Yeti
+roof ornament and five unlock Frost paint, fitted in the Garage.
+
+Also in this release: the Team Room has intel levels (corner notes after three
+laps, telemetry and a team reference ghost from good finishes or credits), and
+the sixteen older courses have engineer notes for each corner. A new Coach
+option in race setup (off by default) shows amber braking rings and a faint
+apex line on courses where you have corner notes. Ardennes has braking boards
+before its main corners and Belgian stone houses at Stavelot.
+
+The first Summit race takes a moment longer to load than other courses; a fix
+is on the way.
+
+## Forest fires – 15 October 2026
+
+Fight forest fires with Kestrel One. Once you have passed the four lessons
+and filled up at the pump a few times, the radio may call mid-flight: smoke
+at Tremblant Woods. Press R to answer. Land on the pad, choose Fit the bucket on the
+board, take it to the lake (the autopilot knows the way), hover low and slow
+until it is full, then fly to the fire and hold H over the flames. The ring
+under the bucket turns orange when the water will land on fire. Put it out
+for 1,500 credits and the firefighter badge. Leave a fire burning and it
+grows, faster in wind; if the woods are lost, Tremblant Woods closes for 10
+play days (you can buy it back early) and grows back in stages, from black
+trunks to green shoots to pink fireweed, with the park ranger telling you
+on the radio. While it is closed, the main menu says so under START and
+how many play days are left. Fires come in summer most and spring and
+autumn less; there are none in winter, and the first snow puts a burning
+fire out.
+
 ## Ardennes Forest
 
 A fast, hilly two-lap circuit through an autumn forest, with the village, church, bridges and stream from the accepted art. Buy it for 2,000 credits in Your Courses. The road climbs Red Water and The Wall, passes the grandstands and paddock, and drops into the mist at Riverside. Braking boards mark the main approaches.

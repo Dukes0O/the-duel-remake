@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // Model-local metres. Every car uses its authored size, then a small adjustment
-// for its nose, roof and body center. +Z is forward on all ten vehicle models.
+// for its nose, roof and body center. +Z is forward on all eleven vehicle models.
 const ADJUSTMENTS = Object.freeze({
   falcone_f42: Object.freeze({ frontY: 0.48, roofLift: 0.10, roofZ: -0.24, shieldLift: 0 }),
   stuttgart_959s: Object.freeze({ frontY: 0.50, roofLift: 0.09, roofZ: -0.36, shieldLift: 0 }),
@@ -13,6 +13,9 @@ const ADJUSTMENTS = Object.freeze({
   titan_monster: Object.freeze({ frontY: 1.81, roofLift: 0.14, roofZ: -0.25, shieldLift: 0.22 }),
   koenigsegg_jesko: Object.freeze({ frontY: 0.34, roofLift: 0.10, roofZ: -0.20, shieldLift: 0 }),
   ferrari_enzo: Object.freeze({ frontY: 0.36, roofLift: 0.10, roofZ: -0.18, shieldLift: 0 }),
+  mclaren_f1: Object.freeze({ frontY: 0.36, roofLift: 0.10, roofZ: -0.18, shieldLift: 0 }),
+  bugatti_bolide: Object.freeze({ frontY: 0.32, roofLift: 0.08, roofZ: -0.10, shieldLift: 0 }),
+  falcone_sirena: Object.freeze({ frontY: 0.34, roofLift: 0.08, roofZ: -0.22, shieldLift: 0 }),
 });
 
 export const VEHICLE_SOCKET_KEYS = Object.freeze(Object.keys(ADJUSTMENTS));

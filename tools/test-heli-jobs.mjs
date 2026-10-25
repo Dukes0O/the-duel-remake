@@ -9,9 +9,11 @@ import {CARS} from '../src/config.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {liftCheck} from '../src/heli/heli-cable.js';
-import {heliOf, carAt} from '../src/heli/heli-save.js';
+import {heliOf, carAt, heliHash, notePlayDay, missionsOf, normalizeHeli, createHeli, createMissions, WRECK_DAYS} from '../src/heli/heli-save.js';
 import {HELI_RADIO_LINES} from '../src/heli/heli-radio-lines.js';
-import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, dayJobs, jobPay, jobTitle} from '../src/heli/heli-jobs.js';
+import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, dayJobs, jobPay, jobTitle,
+  SUMMIT_RUN, HELI_DESTINATIONS_WITH_SUMMIT, destinationsFor, legFuelKg, bearing, isDestination,
+  RECOVERY, wreckFor, recoveryJob, recoveryTitle, recoveryJobOf, finishRecovery} from '../src/heli/heli-jobs.js';
 import {createHeliSession} from '../src/heli/heli-session.js';
 import {dispatchBoardMarkup, handleBoardAction, createDispatchBoard, atHomePad} from '../src/heli/heli-board.js';
 
@@ -469,6 +471,103 @@ function flyOwnCar({owned}) {
   const before = JSON.stringify({...session.profile, heli: undefined, credits: undefined});
   dispatchBoardMarkup(session.view(), {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode});
   assert.equal(JSON.stringify({...session.profile, heli: undefined, credits: undefined}), before); checks++;
+}
+
+// ---- H4 Rescue: Summit Run as a destination (docs/HELI_RESCUE.md section 5.5) ----
+{
+  // What the tables gave before Summit Run joined: the 60 boards, the legs
+  // and the answers about Summit Run with its switch off, from the code as it
+  // stood at RESCUE-SAVE's merge.
+  const before = [];
+  for (let day = 0; day < 60; day++) before.push(dayJobs(day));
+  before.push([legFuelKg('tremblant-woods', 'tremblant-snow'), legFuelKg('panorama-ridge', 'tremblant-woods'),
+    legFuelKg('tremblant-snow', 'panorama-ridge'), legFuelKg('tremblant-woods', 'summit-run'), legFuelKg('summit-run', 'panorama-ridge')]);
+  before.push(HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, isDestination('summit-run'), bearing('tremblant-woods', 'summit-run'),
+    bearing('tremblant-woods', 'panorama-ridge'));
+  assert.equal(heliHash(JSON.stringify(before)), 3257734403, 'with the switch off the boards, legs and destinations are unchanged'); checks++;
+  same(Object.keys(HELI_DESTINATIONS), ['tremblant-woods', 'tremblant-snow', 'panorama-ridge'], 'H1\'s three destinations, in order');
+  ok(destinationsFor() === HELI_DESTINATIONS && destinationsFor({summitRun: false}) === HELI_DESTINATIONS && destinationsFor({}) === HELI_DESTINATIONS, 'switch off: the H1 table');
+  ok(!isDestination('summit-run') && !isDestination('summit-run', {summitRun: false}), 'switch off: not a destination');
+  same([legFuelKg('tremblant-woods', 'summit-run'), legFuelKg('summit-run', 'panorama-ridge'), legFuelKg('summit-run', 'summit-run')], [null, null, null], 'switch off: no legs');
+  same(bearing('tremblant-woods', 'summit-run'), null, 'switch off: no bearing');
+
+  // Switch on.
+  same(Object.keys(HELI_DESTINATIONS_WITH_SUMMIT), ['tremblant-woods', 'tremblant-snow', 'panorama-ridge', 'summit-run'], 'four destinations');
+  ok(destinationsFor({summitRun: true}) === HELI_DESTINATIONS_WITH_SUMMIT && Object.isFrozen(HELI_DESTINATIONS_WITH_SUMMIT) && Object.isFrozen(SUMMIT_RUN), 'switch on: the four-place table, frozen');
+  same({id: SUMMIT_RUN.id, name: SUMMIT_RUN.name, baseAltitude: SUMMIT_RUN.baseAltitude, home: SUMMIT_RUN.home},
+    {id: 'summit-run', name: 'Summit Run', baseAltitude: 2860, home: false}, 'the real start of the Pikes Peak road');
+  ok(isDestination('summit-run', {summitRun: true}) && isDestination('panorama-ridge', {summitRun: true}) && !isDestination('titan-arena', {summitRun: true}), 'switch on: Summit Run is a destination');
+  const on = {summitRun: true};
+  same([legFuelKg('tremblant-woods', 'summit-run', on), legFuelKg('summit-run', 'tremblant-woods', on)], [160, 160], 'Woods and Summit Run, both ways');
+  same([legFuelKg('tremblant-snow', 'summit-run', on), legFuelKg('summit-run', 'tremblant-snow', on)], [150, 150], 'Tremblant Snow and Summit Run, both ways');
+  same([legFuelKg('panorama-ridge', 'summit-run', on), legFuelKg('summit-run', 'panorama-ridge', on)], [90, 90], 'Panorama Ridge and Summit Run, both ways');
+  same([legFuelKg('tremblant-woods', 'tremblant-snow', on), legFuelKg('panorama-ridge', 'tremblant-woods', on), legFuelKg('tremblant-snow', 'panorama-ridge', on)], [25, 120, 110], 'H1\'s legs are the same');
+  ok([160, 150, 90].every(kg => kg < 400), 'every leg can be flown on one tank');
+  const toSummit = bearing('panorama-ridge', 'summit-run', on);
+  ok(toSummit.x < 0 && toSummit.z > 0, 'north-west of Panorama Ridge on the small map (north is +z)');
+  near(Math.hypot(toSummit.x, toSummit.z), 1, 1e-9, 'a unit vector');
+  const back = bearing('summit-run', 'panorama-ridge', on);
+  near(back.x, -toSummit.x, 1e-9, 'the way back faces the other way'); near(back.z, -toSummit.z, 1e-9, 'the way back faces the other way');
+  same(bearing('tremblant-woods', 'panorama-ridge', on), bearing('tremblant-woods', 'panorama-ridge'), 'H1 bearings unchanged');
+  ok(bearing('tremblant-woods', 'summit-run') === null && bearing('summit-run', 'summit-run', on) === null, 'no bearing to itself');
+
+  // The board's everyday jobs stay on H1's three routes, either way.
+  ok([...JOB_ROUTES].every(r => r.from !== 'summit-run' && r.to !== 'summit-run'), 'no everyday route to Summit Run');
+  ok(Array.from({length: 60}, (_, day) => dayJobs(day)).flat().every(j => j.from !== 'summit-run' && j.to !== 'summit-run'), 'no board job goes to Summit Run');
+}
+
+// ---- H4 Rescue: the car recovery job (docs/HELI_RESCUE.md section 5.3) ----
+{
+  same({...RECOVERY}, {pay: 500, days: 3}, 'it pays 500 and stays 3 play days');
+  assert.equal(RECOVERY.days, WRECK_DAYS); checks++;
+  const wreck = wreckFor({seed: 12345, courseId: 'panorama-ridge', x: -120.5, z: 880, day: 20});
+  same({...wreck, carId: undefined}, {courseId: 'panorama-ridge', carId: undefined, x: -120.5, z: 880, day: 20}, 'the wreck is where the rescue left it');
+  ok(JOB_CARS.includes(wreck.carId) && !AIR_ONLY_CARS.includes(wreck.carId) && liftCheck(wreck.carId).ok, 'a customer car Kestrel One can lift');
+  same(wreckFor({seed: 12345, courseId: 'panorama-ridge', x: -120.5, z: 880, day: 20}), wreck, 'same seed, same car');
+  const cars = new Set(Array.from({length: 60}, (_, k) => wreckFor({seed: k * 104729, courseId: 'panorama-ridge', x: 0, z: 0, day: 1}).carId));
+  ok(cars.size >= 4 && [...cars].every(id => JOB_CARS.includes(id)), `different seeds leave different cars (${cars.size})`);
+
+  // On the board from the day after the rescue, for 3 play days.
+  same([19, 20].map(day => recoveryJob(wreck, day)), [null, null], 'not on the day of the rescue or before');
+  same([21, 22, 23].map(day => recoveryJob(wreck, day) !== null), [true, true, true], 'the next three play days');
+  same([24, 25, 99].map(day => recoveryJob(wreck, day)), [null, null, null], 'then it leaves');
+  same(recoveryJob(null, 21), null, 'no wreck, no job');
+  same(recoveryJob(wreck, NaN), null, 'a damaged day gives no job');
+  const job = recoveryJob(wreck, 21);
+  same({...job}, {id: `w20-${wreck.carId}`, kind: 'recovery', carId: wreck.carId, from: 'panorama-ridge', to: 'panorama-ridge', pay: 500, x: -120.5, z: 880}, 'the job');
+  ok(Object.isFrozen(job) && /^[a-z0-9:_-]+$/.test(job.id), 'frozen, with a save-safe id');
+  assert.equal(recoveryTitle(job), `Recover the ${CARS[wreck.carId].name} from Panorama Ridge`); checks++;
+  same([jobPay(job, 'assisted'), jobPay(job, 'real')], [500, 625], 'paid as a dispatch job: Real pays a quarter more');
+
+  // Through the save: appears the next play day, pays once, leaves after 3 play days.
+  const day = n => `2026-11-${String(n).padStart(2, '0')}`;
+  const base = count => ({credits: 100, heli: normalizeHeli({...createHeli(), playDay: {last: day(count), count}, missions: {...createMissions(), wreck}})});
+  const rescued = base(20);
+  same(recoveryJobOf(rescued, {enabled: true}), null, 'not on the day of the rescue');
+  same(recoveryJobOf(base(22)), null, 'switch off: no job');
+  let profile = rescued;
+  const seen = [];
+  for (let count = 21; count <= 25; count++) {
+    profile = notePlayDay(profile, day(count), {enabled: true}).profile;
+    assert.equal(heliOf(profile).playDay.count, count); checks++;
+    seen.push(recoveryJobOf(profile, {enabled: true}) !== null);
+  }
+  same(seen, [true, true, true, false, false], 'the job is there on play days 21 to 23 and gone on 24');
+  same(missionsOf(profile).wreck, null, 'the save removed the wreck when it was more than 3 days old');
+  assert.equal(finishRecovery(base(22), {enabled: false}).ok, false, 'switch off: no recovery'); checks++;
+  assert.equal(finishRecovery(base(22), {enabled: false}).profile.credits, 100, 'switch off: no pay'); checks++;
+
+  const paid = finishRecovery(base(22), {enabled: true});
+  ok(paid.ok && paid.paid === 500 && paid.profile.credits === 600 && paid.job.id === job.id, 'it pays 500');
+  same(missionsOf(paid.profile).wreck, null, 'the wreck leaves the save');
+  assert.equal(finishRecovery(paid.profile, {enabled: true}).ok, false, 'never twice'); checks++;
+  assert.equal(finishRecovery(base(22), {enabled: true, mode: 'real'}).paid, 625); checks++;
+  assert.equal(finishRecovery(base(20), {enabled: true}).ok, false, 'not on the day of the rescue'); checks++;
+  assert.equal(finishRecovery(base(24), {enabled: true}).ok, false, 'not after it has left the board'); checks++;
+  assert.equal(finishRecovery({credits: 999_999_900, heli: base(22).heli}, {enabled: true}).profile.credits, 1_000_000_000, 'capped like every credit change'); checks++;
+  assert.equal(finishRecovery({credits: 5, heli: createHeli()}, {enabled: true}).ok, false, 'no wreck, no job'); checks++;
+  // It sits beside the day's three jobs; they do not move.
+  same(dayJobs(22).map(j => j.id), ['d22-1', 'd22-2', 'd22-3'], 'the board\'s three jobs do not move');
 }
 
 console.log(`test-heli-jobs: ${checks} checks passed`);

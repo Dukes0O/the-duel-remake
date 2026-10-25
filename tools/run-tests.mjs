@@ -210,7 +210,13 @@ export const NIGHT_ONLY_SUITES=Object.freeze([
   'tools/test-rustwall-p2-relief.mjs',
   'tools/test-rook-p2-candidate.mjs',
   'tools/test-rustwall-p2.mjs',
-  'tools/test-rustwall-atlas-isolation.mjs'
+  'tools/test-rustwall-atlas-isolation.mjs',
+  // QA-TEST-AUDIT (24 October 2026): 90 s or more each and no real fault caught in
+  // the 30 days before; docs/board/checks/test-audit.md has their numbers. A card
+  // whose claim needs one names it as its check and runs it with --filter.
+  'tools/test-campaigns.mjs','tools/test-expansion-driving.mjs','tools/test-opponents.mjs',
+  'tools/test-crossbow-aim.mjs','tools/test-circuit-layouts.mjs','tools/test-course-eligibility.mjs',
+  'tools/test-ufo-landing.mjs','tools/test-terrain.mjs','tools/test-grand-prix-existing.mjs'
 ]);
 const normalized=path=>path.replaceAll('\\','/').replace(/^\.\//,'');
 const relativeName=(root,path)=>normalized(relative(root,path));
@@ -332,11 +338,22 @@ const fullScope=path=>{
     /^(?:package(?:-lock)?\.json|.*\.lock|.*(?:^|[.-])lock(?:file)?\.[^.]+|tsconfig.*\.json)$/.test(name);
 };
 
+// A hub gathers many of the game's own modules (game.js, app.js, render3d.js).
+// A suite that imports a hub runs when the hub itself changes, but a lane does not
+// follow the hub's own imports: otherwise every suite that builds a Duel would run
+// for any file the game touches. The night full tier covers those deeper paths.
+export const HUB_IMPORTS=20;
+const localImportCount=(parsed,file,hasFile)=>parsed.references.filter(({specifier,kind})=>{
+  if(kind!=='import'||!specifier.startsWith('.'))return false;
+  const base=resolve(dirname(file),specifier.split(/[?#]/,1)[0]);
+  return [base,base+'.js',base+'.mjs',join(base,'index.js')].some(path=>/\.m?js$/.test(path)&&hasFile(path));
+}).length;
+
 export function localDependencies(entry,{projectRoot=PROJECT_ROOT,readSource=readFileSync,hasFile=isFile,
-  dependencyCache=new Map()}={}){
+  dependencyCache=new Map(),hubImports=Infinity}={}){
   let complete=true,possibleReader=false,computedImports=false;
   // Breadth-first so each file keeps its shortest import distance from the suite.
-  const reads=new Map(),found=new Set(),depths=new Map(),queue=[[resolve(projectRoot,entry),0]];
+  const reads=new Map(),found=new Set(),depths=new Map(),hubs=new Set(),queue=[[resolve(projectRoot,entry),0]];
   const enqueue=(file,depth)=>{const name=relativeName(projectRoot,file);if(!found.has(name)&&hasFile(file)){found.add(name);depths.set(name,depth);queue.push([file,depth]);}};
   found.add(relativeName(projectRoot,queue[0][0]));depths.set(relativeName(projectRoot,queue[0][0]),0);
   if(!hasFile(queue[0][0]))queue.length=0;
@@ -350,6 +367,9 @@ export function localDependencies(entry,{projectRoot=PROJECT_ROOT,readSource=rea
       dependencyCache.set(file,parsed);
     }
     if(!parsed.complete)complete=false;
+    // A hub's own reads still count; its imports are not followed past it.
+    const hub=depth>0&&localImportCount(parsed,file,hasFile)>=hubImports;
+    if(hub)hubs.add(name);
     possibleReader ||= parsed.possibleReader;computedImports ||= parsed.computedImports;
     for(const {path,exact,base} of parsed.reads??[]){
       const target=relativeName(projectRoot,base==='file'?resolve(dirname(file),path):resolve(projectRoot,path));
@@ -358,6 +378,7 @@ export function localDependencies(entry,{projectRoot=PROJECT_ROOT,readSource=rea
       const read=(exact?'=':'^')+target+(path.endsWith('/')&&!target.endsWith('/')?'/':'');
       if(!reads.has(read)||reads.get(read)>depth)reads.set(read,depth);
     }
+    if(hub)continue;
     for(const readerPath of EXPLICIT_READS[name]??[]){
       if(hasFile(resolve(projectRoot,readerPath)))enqueue(resolve(projectRoot,readerPath),depth+1);
       else {found.add(readerPath);depths.set(readerPath,depth+1);complete=false;}
@@ -377,7 +398,7 @@ export function localDependencies(entry,{projectRoot=PROJECT_ROOT,readSource=rea
     }
   }
   Object.defineProperties(found,{complete:{value:complete},possibleReader:{value:possibleReader},
-    computedImports:{value:computedImports},reads:{value:reads},depths:{value:depths}});
+    computedImports:{value:computedImports},reads:{value:reads},depths:{value:depths},hubs:{value:hubs}});
   return found;
 }
 // Exact reads also cover a directory's contents; prefix reads cover anything they start.
@@ -389,11 +410,20 @@ export function readsPath(reads,path,within=Infinity){
   }
   return false;
 }
-// A suite runs for a file it imports, or a file one step further, or a path those name.
-// Deeper chains through shared modules (config.js reaches every course) wait for the
-// night full tier; replay fingerprints run in every lane and guard race rules.
+// A suite runs for a file it imports, or a file one step further through a module
+// that is not a hub, or a path those name. Deeper chains wait for the night full
+// tier; replay fingerprints run in every lane and guard race rules.
 export const LANE_REACH=2;
-export function suitesForChanges(suites,paths,{reach=LANE_REACH,...options}={}){
+// Shared files most suites import: the busy-game-files lock (FACTORY section 2) and
+// the two shared tables. Importing one does not select a suite; the smoke set and
+// replay guards drive them in every lane, the card's other files select their own
+// suites, a suite that reads one as text still runs, and the night full tier runs
+// every importer. Each lists the suites that own it.
+export const SHARED_FILES=Object.freeze({
+  'src/game.js':[],'src/main.js':[],'src/render3d.js':[],'src/app.js':[],'src/config.js':[],
+  'src/feature-flags.js':['tools/test-feature-flags.mjs','tools/test-preview-launcher.mjs']
+});
+export function suitesForChanges(suites,paths,{reach=LANE_REACH,hubImports=HUB_IMPORTS,...options}={}){
   const changed=new Set(paths.map(normalized));
   if(!changed.size)return [];
   if([...changed].some(fullScope))return [...suites];
@@ -407,17 +437,19 @@ export function suitesForChanges(suites,paths,{reach=LANE_REACH,...options}={}){
     gameChange=[...changed].some(path=>/^(?:src|public|tools)\//.test(path)||path.endsWith('.css'));
   for(const suite of suites){
     mapped.add(suite);
-    const dependencies=localDependencies(suite,{...options,dependencyCache});
+    const dependencies=localDependencies(suite,{...options,dependencyCache,hubImports});
     if(!dependencies.complete)return [...suites];
     for(const path of dependencies)mapped.add(path);
-    const near=path=>(dependencies.depths.get(path)??Infinity)<=reach;
+    const near=path=>!Object.hasOwn(SHARED_FILES,path)&&(dependencies.depths.get(path)??Infinity)<=reach;
     [...changed].filter(path=>readsPath(dependencies.reads,path)).forEach(path=>mapped.add(path));
     const reading=[...changed].filter(path=>near(path)||readsPath(dependencies.reads,path,reach-1));
     // A file reader that names no bounded path could read anything it is handed.
     const unbounded=(dependencies.possibleReader||dependencies.computedImports)&&!dependencies.reads.size;
     const readsPresentation=[...requiredReaders].some(reader=>dependencies.has(reader)),
       readsChange=reading.length>0;
-    if(changed.has(suite)||readsPresentation||readsChange||(gameChange&&unbounded)){
+    const ownsShared=[...changed].filter(path=>SHARED_FILES[path]?.includes(suite));
+    reading.push(...ownsShared);
+    if(changed.has(suite)||readsPresentation||readsChange||ownsShared.length||(gameChange&&unbounded)){
       affected.push(suite);
       reading.forEach(path=>covered.add(path));
       if(changed.has(suite))covered.add(suite);
@@ -428,7 +460,7 @@ export function suitesForChanges(suites,paths,{reach=LANE_REACH,...options}={}){
   // A changed game file no selected suite reaches is named, not a reason to run everything.
   // The night full tier and the release full tier still cover it.
   const unmapped=[...changed].filter(path=>!path.startsWith('docs/')&&!path.endsWith('.md')&&
-    !covered.has(path)&&!presentation.has(path));
+    !covered.has(path)&&!presentation.has(path)&&!Object.hasOwn(SHARED_FILES,path));
   return Object.defineProperty(affected,'unmapped',{value:unmapped});
 }
 

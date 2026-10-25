@@ -11,6 +11,7 @@ import {copyFile, writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {referenceTargets} from '../build-reference-laps.mjs';
 import {ALL_CIRCUITS} from '../../src/circuits/index.js';
+import {CIRCUIT_MANIFESTS} from '../../src/circuit-manifests.js';
 
 const entry = '/tools/menu-check.html?flags=' + ['grand-prix', ...ALL_CIRCUITS.map(circuit => circuit.flag)].join(',');
 const ready = `document.readyState==='complete' && window.__qaApp && window.__render &&
@@ -36,6 +37,19 @@ async function setup(context) {
       const course=app.getMenuCourse(index);
       if(course)app.profile.courses={version:1,unlocked:[...new Set([...(app.profile.courses?.unlocked||[]),course.def.id])]};}
     app._saveProfile();
+    // Disposable, memory-only purchase fixture; every picture uses earned access.
+    // Variant ownership also needs its actual manifest's parent GP podium.
+    app.profile={...app.profile,credits:50000,grandPrixPodiums:[...new Set([...(app.profile.grandPrixPodiums??[]),
+      ...${JSON.stringify(CIRCUIT_MANIFESTS.filter(row=>row.unlock?.kind==='default-gp-podium').map(row=>row.unlock.defaultEventId))}])],
+      heli:{...(app.profile.heli??{version:1}),map:{version:1,seen:[],found:${JSON.stringify(CIRCUIT_MANIFESTS.filter(row=>row.unlock?.kind==='spotted-from-air').map(row=>row.id))},table:false}}};app._saveProfile();
+    for(const index of [...document.querySelector('#scene-select').options].map(option=>Number(option.value))){
+      const course=app.getMenuCourse(index);
+      if(course && !course.def.practice && !course.def.arena && course.closed!==false) {
+        const result=app.buyIntel(course.def.id,4);
+        if(!result.ok)throw Error('Fixture intel purchase refused: '+course.def.id);
+      }
+    }
+
   })()`);
 }
 

@@ -7,7 +7,7 @@ import { loadGhosts, saveGhosts, GHOST_KEY } from '../src/ghost.js';
 
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
 const files = readdirSync(fileURLToPath(fixtureDir)).filter(name => name.endsWith('.json')).sort();
-assert.equal(files.length, 13, 'review the historical save-shape fixture roster');
+assert.equal(files.length, 19, 'review the historical save-shape fixture roster');
 
 function memoryStorage(initial) {
   const values = new Map(Object.entries(initial).map(([key, value]) => [key, JSON.stringify(value)]));
@@ -53,6 +53,12 @@ function preserveProfile(raw, loaded, label) {
       equal(loaded.heli?.[field], raw.heli[field], `${label}: heli ${field}`);
     }
     // H2 Fire fields are optional too: kept exactly when saved.
+    // The Lab's retardant (LAB-HELI) rides in the saved fire record: kept exactly when saved, never added to an older fire.
+    if (raw.heli.fire && Object.hasOwn(raw.heli.fire, 'retardant')) equal(loaded.heli.fire.retardant, raw.heli.fire.retardant, `${label}: fire retardant`);
+    else if (raw.heli.fire) equal(Object.hasOwn(loaded.heli.fire, 'retardant'), false, `${label}: no retardant added to an older fire`);
+    // Heli-skiing (SKI-SAVE) rides in the helicopter field: kept exactly when saved (a later game's names and record included), never added to an older save.
+    if (Object.hasOwn(raw.heli, 'ski')) equal(loaded.heli.ski, raw.heli.ski, `${label}: heli ski record`);
+    else equal(Object.hasOwn(loaded.heli, 'ski'), false, `${label}: no ski record added to an older helicopter`);
     for (const field of ['missions', 'fire', 'burnt', 'scars', 'bucket']) {
       if (Object.hasOwn(raw.heli, field)) equal(loaded.heli?.[field], raw.heli[field], `${label}: heli ${field}`);
       else equal(Object.hasOwn(loaded.heli ?? {}, field), false, `${label}: no heli ${field} appears`);
@@ -62,6 +68,12 @@ function preserveProfile(raw, loaded, label) {
   }
   if (Object.hasOwn(raw, 'drivingLessons')) equal(loaded.drivingLessons, raw.drivingLessons, `${label}: driving lesson progress`);
   else equal(Object.hasOwn(loaded, 'drivingLessons'), false, `${label}: no lesson field added to old saves`);
+  // The Deep field is optional: kept exactly when saved (the Sirena's sonar, raised and coastCup included), never added to an older save.
+  if (Object.hasOwn(raw, 'deep')) equal(loaded.deep, raw.deep, `${label}: Deep progress`);
+  else equal(Object.hasOwn(loaded, 'deep'), false, `${label}: no Deep field added to old saves`);
+  // The Lab field is optional too: kept exactly when saved (unknown keys included), never added to an older save.
+  if (Object.hasOwn(raw, 'lab')) equal(loaded.lab, raw.lab, `${label}: Lab progress`);
+  else equal(Object.hasOwn(loaded, 'lab'), false, `${label}: no Lab field added to old saves`);
   if (raw.awardedWins) equal(loaded.settledResults, raw.awardedWins, `${label}: awardedWins migration`);
   if (raw.history) equal(loaded.history, raw.history, `${label}: complete race history`);
   if (raw.winStreak != null) equal(loaded.winStreak, raw.winStreak, `${label}: win streak`);

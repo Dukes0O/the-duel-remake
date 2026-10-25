@@ -39,6 +39,8 @@ export function beechTreePlacements(course) {
     throw Error('Ardennes beech setback must be a finite distance beyond the road edge.');
   const rows=[];
   for (const tree of course.features.trees) {
+    // Far-band trees (ARDENNES-FAR-FOREST) are never beeches: the beech set stays the accepted one.
+    if (tree.farForest) continue;
     if (!spec.groves.some(grove=>Math.abs(tree.s-grove.s)<=grove.reach) ||
         Math.abs(tree.off)<course.roadHalfWidthAt(tree.s)+Math.max(course.def.scenery.forest.from,spec.setback??0)) continue;
     let hash=2166136261;

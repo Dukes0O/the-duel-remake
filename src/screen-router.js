@@ -1,3 +1,4 @@
+import './lessons/drive-lesson-ui.css';
 import {createDeepUi} from './deep/deep-ui.js';
 import {shownCars} from './earned-cars-ui.js';
 import './deep/deep-ui.css';
@@ -147,7 +148,7 @@ const teamRoom = createTeamRoom({host: root,
   getDossier(eventId) {
     if (!app._switches().enabled('grand-prix') || !['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) return null;
     const definition = COURSE.find(course => course.id === eventId);
-    if (!definition || definition.closed === false || courseUnlockRequirement(definition) || !isCourseUnlocked(profile(), definition)) return null;
+    if (!definition || definition.closed === false || courseUnlockRequirement(definition)?.kind === 'owned-course' || !isCourseUnlocked(profile(), definition)) return null;
     const selectedRoute = app.duel.state.status === 'menu' ? app.menuRouteId
       : getRouteVariantForSeed(app.duel.state.seed)?.id ?? app.menuRouteId;
     const route = supportsRouteVariants(definition) ? selectedRoute : 'fixed';
@@ -155,6 +156,7 @@ const teamRoom = createTeamRoom({host: root,
     const course = new Course(definition, reference?.seed ?? 1989);
     teamRoomPlayerId = app.player.id;
     return {...buildTrackDossier(course, {route, reference}), course,
+      intelLevel: app.getIntelLevel(eventId), canBuyIntel: app.duel.state.status === 'menu',
       telemetry: app.getLapTelemetry?.({eventId, route, courseFingerprint: reference.courseFingerprint})};
   },
   async capture(dossier, flag, {signal}) {
@@ -164,6 +166,8 @@ const teamRoom = createTeamRoom({host: root,
     return readiness.handle.captureTrackSnapshot({course: dossier.course, flag});
   },
   clearCapture: () => readiness.handle?.clearTrackSnapshot(),
+  buyIntel: (eventId,level) => app.player.id === teamRoomPlayerId ? app.buyIntel(eventId,level) :
+    {ok:false,reason:'Reopen the Team Room for the current player.'},
 });
 const courseActions = createCourseActions({app, choices,
   careerEnabled: () => app._switches().enabled('grand-prix-career'),
@@ -172,7 +176,10 @@ const courseActions = createCourseActions({app, choices,
 function refreshRaceSetup(){
   delete choices.rival;Object.assign(choices,app.getRaceChoices());garageCar=choices.car;updatePlayers();updateMenuScene();lastScreen=null;renderState(app.duel.state);
 }
-ui['ghost-toggle'].addEventListener('change',event=>app.setGhostEnabled(event.target.checked));
+ui['ghost-toggle'].addEventListener('change',event=>{
+  if(app._switches().enabled('grand-prix'))app.cycleGhostChoice(choices);else app.setGhostEnabled(event.target.checked);
+  if(app.duel.state.status==='menu')updateMenuCar();
+});
 for(const id of ['rival-car','rival-driver','rival-upgrades'])ui[id].addEventListener('change',()=>{
   choices.rival={car:ui['rival-car'].value,driverId:ui['rival-driver'].value,upgradeLevel:Number(ui['rival-upgrades'].value)};
   updateMenuScene();

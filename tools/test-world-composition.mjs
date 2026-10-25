@@ -90,6 +90,8 @@ function sceneSignature(world){
   return {hash,nodes,meshes,instances,geometries:geometries.size,materials:materials.size,textures:textures.size};
 }
 try{
+  // Explicit capture records real newly enabled scenes before their first baseline exists.
+  if(!process.argv.includes('--capture'))
   equal(COURSE.length,Object.keys(baseline).filter(id=>COURSE.some(def=>def.id===id)).length,'every enabled event scene has its reviewed baseline');
   for(const def of [...COURSE,...captureNew]){
     const course=new Course(def,1989),before=JSON.stringify(course.features);

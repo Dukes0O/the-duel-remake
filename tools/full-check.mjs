@@ -32,11 +32,15 @@ export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evide
   const frameDir=path(evidence,'frames'),browserDir=path(evidence,'browser');
   return [
     {id:'full',args:['tools/run-tests.mjs','--tier','full','--jobs','4','--keep-going','--json']},
-    {id:'frames',args:['tools/browser-harness.mjs','scenario','frame-pacing','--headed','--output-dir',frameDir],
-      env:{DUEL_NIGHT_FRAMES:'1',DUEL_NIGHT_IDLE_AWAKE:'1'},packet:path(frameDir,'frame-pacing.json')},
+    {id:'frames',args:['tools/run-browser-scenarios.mjs','--scenarios','frame-pacing,tremblant-snow,tremblant-views',
+      '--timing-only','--headed','--jobs','1','--output-dir',frameDir],
+      env:{DUEL_NIGHT_FRAMES:'1',DUEL_NIGHT_IDLE_AWAKE:'1'},packet:path(frameDir,'frame-pacing','frame-pacing.json'),
+      suitePacket:path(frameDir,'summary.json'),timingPackets:[
+        {name:'tremblant-snow',packet:path(frameDir,'tremblant-snow','tremblant-snow-frame-pacing.json')},
+        {name:'tremblant-views',packet:path(frameDir,'tremblant-views','tremblant-frame-pacing.json')}]},
     {id:'combat',args:['tools/combat-balance.mjs','--check']},
     {id:'browser',args:['tools/run-browser-scenarios.mjs','--all','--jobs','4','--output-dir',browserDir],
-      env:{DUEL_NIGHT_FRAME_REUSE:'1',DUEL_NIGHT_FRAME_PACKET:path(frameDir,'frame-pacing.json')},
+      env:{DUEL_NIGHT_FRAME_REUSE:'1',DUEL_NIGHT_FRAME_PACKET:path(frameDir,'frame-pacing','frame-pacing.json')},
       packet:path(browserDir,'summary.json')}
   ].map(row=>({...row,log:path(evidence,row.id+'.log')}));
 }
@@ -217,6 +221,22 @@ function validateBrowser(packet,names) {
   if(packet?.schema!==1||packet.count!==names.length||packet.count<1||packet.passed!==packet.count||
     packet.failed!==0||packet.rows?.length!==packet.count||packet.rows.some(row=>row.passed!==true)||
     packet.rows.map(row=>row.name).join('|')!==names.join('|'))throw Error('Browser acceptance has failures or missing named scenarios.');
+}
+export function validateTremblantFramePacket(packet,name) {
+  if(!['tremblant-snow','tremblant-views'].includes(name))throw Error('Unknown Tremblant frame recipe.');
+  const labels=name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
+  const expected=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label})));
+  if(packet?.mode!=='timing'||packet.misses!==0||packet.reports?.length!==expected.length)
+    throw Error(name+': missing completed timing-only packet.');
+  for(const [index,at]of expected.entries()) {
+    const row=packet.reports[index];
+    if(row.quality!==at.quality||row.label!==at.label||row.course!==(name==='tremblant-snow'?'tremblant-snow':'tremblant-woods')||
+      row.cars!==8||row.frames!==120||
+      !Number.isFinite(row.p95)||row.p95<=0||row.p95>(name==='tremblant-snow'?18.5:33.5)||
+      (name==='tremblant-views'&&(!Number.isInteger(row.over33ms)||row.over33ms<0||row.over33ms>12)))
+      throw Error(name+': timing requires both qualities, eight cars,120frames and the unchanged frame limits.');
+  }
+  return packet;
 }
 function validateCombat(packet) {
   // The installed --check owns every original band and gameplay assertion.
@@ -419,6 +439,14 @@ export async function runNight(options,overrides={}) {
                 Number.isFinite(report.constructionMs)&&report.constructionMs>=0
                   ?[{quality:report.quality,p95:report.p95,worldBuildMs:report.worldBuildMs,constructionMs:report.constructionMs}]:[]);
             validateFramePacket(frames,{warn:message=>row.warnings.push(message)});
+            const timing=json(await dependencies.readText(stage.suitePacket));
+            if(timing.timingMode!=='timing-only')throw Error('Frame suite did not run timing-only mode.');
+            validateBrowser(timing,['frame-pacing','tremblant-snow','tremblant-views']);
+            row.tremblantReports=[];
+            for(const recipe of stage.timingPackets) {
+              const actual=validateTremblantFramePacket(json(await dependencies.readText(recipe.packet)),recipe.name);
+              row.tremblantReports.push(...actual.reports.map(report=>({scenario:recipe.name,...report})));
+            }
           }catch(error){frameError=error;row.reportError=error.message;}
         }
         if(stage.id==='full')row.generatedReport=await consumeFullReport(dependencies,copy,source,originalFullReport,result,packet.evidence);
@@ -440,6 +468,7 @@ export async function runNight(options,overrides={}) {
     ...packet.stages.map(row=>`${row.passed?'PASS':'FAIL'} ${row.id}: ${row.log}`),
     ...packet.stages.filter(row=>row.id==='frames').flatMap(row=>[
       ...(row.reports||[]).map(report=>`${report.quality}: p95 ${report.p95} ms, world build ${report.worldBuildMs} ms, full first-race load ${report.constructionMs} ms.`),
+      ...(row.tremblantReports||[]).map(report=>`${report.scenario} ${report.quality} ${report.label}: p95 ${report.p95} ms, ${report.over33ms} slow frames.`),
       ...(row.warnings||[]).map(message=>'WARNING '+message)]),
     'First merge after last green: '+(firstMerge||attribution),
     'Compaction and push disabled; separate Kyle authorization is pending.',

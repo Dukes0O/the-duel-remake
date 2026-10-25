@@ -117,7 +117,7 @@ test('Summit Attack is a narrow shared-switch child with parent-only free access
   assert.equal(JSON.stringify([parent,child]),before);
   assert.equal(attackManifest.releaseOrder,6);
   assert.deepEqual(attackManifest.unlock,{kind:'owned-course',defaultEventId:'summit-run'});
-  for(const patch of [{price:1},{grandPrix:true},{state:'on'},{flag:'another-switch'},
+  for(const patch of [{price:1},{grandPrix:true},{state:'dev'},{flag:'another-switch'},
     {unlock:{kind:'owned-course',defaultEventId:'missing'}},
     {unlock:{kind:'owned-course',defaultEventId:SUMMIT_ATTACK_ID}}]){
     const m={...attackManifest,...patch},circuit={...SUMMIT_TIME_ATTACK,flag:m.flag};
@@ -296,13 +296,16 @@ assert.equal(requirement.defaultEventId,parent.id);assert.ok(requirement.conditi
 const card=profile=>courseAccessPanel(profile,variantIndex,'',{teamRoomEnabled:true}).split('<article').find(row=>row.includes('<h3>'+variant.name+'</h3>')).split('</article>')[0];
 const lockedCard=card(owned),openCard=card(settled.profile);
 assert.ok(lockedCard.includes(requirement.condition));assert.ok(!lockedCard.includes('data-course-unlock')&&!lockedCard.includes(' CR'));
-assert.ok(openCard.includes('data-course-select="'+variant.id+'"'));assert.ok(!lockedCard.includes('data-team-room')&&!openCard.includes('data-team-room'));
+assert.ok(openCard.includes('data-course-select="'+variant.id+'"'));assert.match(lockedCard,new RegExp('data-team-room="'+variant.id+'"[^>]*disabled'),'a locked variant shows its Team Room entry disabled');
+assert.match(openCard,new RegExp('data-team-room="'+variant.id+'"[^>]*aria-label="Study [^"]*" >TEAM ROOM'),'an owned variant opens its Team Room');
 // Execute the actual existing router admission body; a missed guard reaches an unavailable dependency and fails.
 const router=readFileSync('./src/screen-router.js','utf8');
 const newline=String.fromCharCode(10);
 const dossierBody=router.split('getDossier(eventId) {')[1].split(newline+'  },'+newline+'  async capture')[0];
 const getDossier=new Function('app','COURSE','isCourseUnlocked','courseUnlockRequirement','profile','eventId',dossierBody);
-assert.equal(getDossier({duel:{state:{status:'menu'}},_switches:()=>({enabled:()=>true})},COURSE,isCourseUnlocked,courseUnlockRequirement,()=>settled.profile,variant.id),null);
+const menuApp={duel:{state:{status:'menu'}},_switches:()=>({enabled:()=>true})};
+assert.equal(getDossier(menuApp,COURSE,isCourseUnlocked,courseUnlockRequirement,()=>owned,variant.id),null,'a locked variant cannot open the Team Room');
+assert.throws(()=>getDossier(menuApp,COURSE,isCourseUnlocked,courseUnlockRequirement,()=>settled.profile,variant.id),ReferenceError,'an owned variant passes every Team Room admission guard');
 const app=new App();app.profile=owned;app._saveProfile();
 assert.equal(app.selectCourse(variant.id),false);assert.equal(app.startCampaign({startStage:variantIndex}),false);
 app.profile=settled.profile;app._saveProfile();

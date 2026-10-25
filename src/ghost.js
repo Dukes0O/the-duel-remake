@@ -1,3 +1,4 @@
+import {validReferencePoses} from './reference-laps.js';
 import {CARS,COURSE,DRIVE} from './config.js';
 import {bestKey,isValidFinish,playerName,getUpgradeLevels,stageEventId} from './progression.js';
 import {normalizeDriverId,driverModifierSignature,driverRecordMetadata,isCurrentDriverRecord} from './drivers.js';
@@ -122,7 +123,11 @@ export class GhostRecorder {
   }
 }
 export function sampleGhost(record,timeSec,out={}){
-  if(!record||!currentRecord(record)||!Number.isFinite(timeSec)||timeSec<0||timeSec>record.timeSec)return null;
+  if(!record||!currentRecord(record))return null;
+  return sampleGhostRows(record,timeSec,out);
+}
+function sampleGhostRows(record,timeSec,out={}){
+  if(!record||!Number.isFinite(timeSec)||timeSec<0||timeSec>record.timeSec)return null;
   const rows=record.samples,t=timeSec*1000;let lo=0,hi=rows.length-1;
   while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(rows[mid][0]<=t)lo=mid;else hi=mid-1;}
   const a=rows[lo],b=rows[Math.min(rows.length-1,lo+1)],blend=b[6]||b[0]===a[0]?0:Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0]))),mix=index=>a[index]+(b[index]-a[index])*blend;
@@ -199,4 +204,24 @@ export class GrandPrixLapRecorder {
     this.previous = crossing;
     return record;
   }
+}
+
+const teamRecords = new WeakSet();
+export function createTeamGhost(reference, context) {
+  if (!validReferencePoses(reference, context) || !CARS[reference.car] ||
+      !Number.isSafeInteger(context.laps) || context.laps < 1 || context.laps > 6) return null;
+  const record = Object.freeze({teamReference:true,eventId:context.eventId,route:context.route,
+    courseFingerprint:context.courseFingerprint,courseLength:context.length,laps:context.laps,
+    timeSec:reference.lapMs/1000,samples:reference.poseSamples,car:reference.car,
+    playerId:'team-reference',upgrades:Object.freeze({})});
+  teamRecords.add(record);return record;
+}
+export function sampleTeamGhost(record, timeSec, out = {}) {
+  if (!teamRecords.has(record) || !Number.isFinite(timeSec) || timeSec < 0 ||
+      timeSec > record.timeSec * record.laps) return null;
+  const lap = Math.min(record.laps-1, Math.floor(timeSec / record.timeSec));
+  const pose = sampleGhostRows(record, timeSec - lap * record.timeSec, out);
+  if (!pose) return null;
+  pose.s += lap * record.courseLength;pose.timeSec = timeSec;
+  pose.recordTimeSec = record.timeSec * record.laps;return pose;
 }

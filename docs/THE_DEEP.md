@@ -9,8 +9,9 @@ race." Then: "how about planning out the underwater world too. maybe we can
 start on that in parallel."
 
 Status: approved by Kyle on 11 October 2026 ("this all looks good"),
-with Kyle's answers in section 11. Section 10 is the build graph (12
-October 2026): its six first cards start in free lanes alongside Phase 4.
+with Kyle's answers in section 11. The story and goals (section 6) were
+written by Claude on 24 October 2026, when Kyle handed the Deep's story to
+Claude. Section 10 is the build graph for what is left.
 
 ## 1. The feeling
 
@@ -71,7 +72,7 @@ underwater place (section 4).
   fitted. The main menu stays exactly as it is (Kyle's standing rule); no
   new button.
 - **Remembered:** the save records that the Deep was found, the creatures
-  logged and the pearls collected (section 6). A save without these fields
+  logged, the pearls collected and the Sirena's parts raised (section 6). A save without these fields
   loads exactly as before.
 
 ## 3. Driving underwater
@@ -133,58 +134,191 @@ except for your headlights and glowing creatures.
 All sea life is scenery: it never changes the car or the race, so it costs
 nothing in fairness and can be as lively as the frame budget allows. It does
 react to the car (fish scatter and re-form, turtles turn away, a ray lifts
-off the sand), using the car's position only.
+off the sand), using the car's position only. Each creature's card in the
+log (section 6.4) carries the one true fact in the last column.
 
-| Creature | Where | Behaviour |
-| --- | --- | --- |
-| Schools of small silver fish (several hundred) | Kelp Coast | Swim together, turn as one, part around the car and close behind it |
-| Reef fish (mixed colours, small groups) | Wreck Reef | Hover near the coral, dart into cover |
-| Green turtles (4 to 6) | Ramp Shallows, Coral Garden | Glide slowly with flipper strokes, surface for air |
-| Stingrays and manta rays | Ramp Shallows, Manta Point | Rays rest on the sand and lift off; mantas glide in wide loops |
-| Sea lions, one otter | The Kelp Forest | Fast twisting passes; the otter floats at the surface on its back |
-| Crabs | Sand, the harbour wall | Scuttle sideways out of the way |
-| Moray, grouper | Coral Garden, the Wreck | Moray in a crack, grouper hanging in the hold |
-| Reef sharks (2) | Coral Garden | Cruise slowly; never chase |
-| Jellyfish (dozens) | Jellyfish Cave | Pulse and drift, glowing softly |
-| Whale | The Drop-off | One slow pass below per visit, with song |
-| Octopus, glowing plankton | Glow Bay | The octopus shifts colour on the rocks; the plankton lights up around the car |
+| Creature (id) | Where | Behaviour | Fact on its log card |
+| --- | --- | --- | --- |
+| Sardines (`silver-school`, several hundred) | Kelp Coast | Swim together, turn as one, part around the car and close behind it | Sardines swim in schools of thousands. Turning together makes it hard for a hunter to pick out one fish. |
+| Reef fish (`reef-fish`, small groups) | Wreck Reef | Hover near the coral, dart into cover | Bright colours help reef fish find their own kind among hundreds of others. |
+| Green turtle (`turtle`, 4 to 6) | Ramp Shallows, Coral Garden | Glide slowly with flipper strokes, surface for air | Green turtles are named for the green fat under their shell, which comes from the seagrass they eat. They do live off Southern California. |
+| Bat ray (`ray`) | Ramp Shallows | Rests on the sand and lifts off | Bat rays dig clams out of the sand by flapping their wings over it. |
+| Manta (`manta`) | Manta Point | Glides in wide loops | The biggest mantas are 7 m across, wider than a car is long, yet they eat only tiny plankton. |
+| California sea lion (`sea-lion`) | The Kelp Forest | Fast twisting passes | Sea lions can turn their back flippers forward and walk on land. Seals cannot. |
+| Sea otter (`otter`) | The Kelp Forest, at the surface | Floats on its back, wrapped in kelp | Otters eat sea urchins. Without otters, urchins eat the kelp and the forest disappears. |
+| Kelp crab (`crab`) | Sand, rocks, the harbour wall | Scuttles sideways out of the way | A crab's legs bend outward, so sideways is its fastest way to move. |
+| Moray (`moray`) | Coral Garden | Watches from a crack | A moray has a second set of jaws in its throat that pulls food down. |
+| Grouper (`grouper`) | The Wreck | Hangs in the hold | A big grouper opens its mouth so fast that water rushes in and carries a fish with it. |
+| Reef shark (`reef-shark`, 2) | Coral Garden | Cruises slowly, never chases | Sharks have no bones: their skeleton is cartilage, like the end of your nose. |
+| Jellyfish (`jellyfish`, dozens) | Jellyfish Cave | Pulses and drifts, glowing softly | Jellyfish have no brain, no heart and no bones, and are about 95% water. |
+| Gray whale (`whale`) | The Drop-off | One slow pass below per visit, with song | Gray whales swim 16,000 to 20,000 km a year, from Alaska to Mexico and back. |
+| Octopus (`octopus`) | Glow Bay | Shifts colour on the rocks | An octopus has three hearts and can change colour in under a second. |
 
-## 6. Things to do (no missions yet)
+## 6. The story and goals (Claude, 24 October 2026)
 
-Kyle asked for no missions yet. Two light, optional things give a reason to
-look around, both reusing what the Titan's playground already does:
+The Deep stays a place to play around in: nothing is timed, nothing can hurt
+you, and you can ignore every goal and just drive with the turtles. The goals
+give a reason to dive, a reason to come back, and an ending you drive
+yourself.
 
-- **Sea-life log:** drive close and slow near a creature to log it (a small
-  picture card slides in). Fourteen creatures across the three places. The log is a
-  page in the garage, with blank silhouettes for ones not yet found, so
-  Gratian has a list to complete.
-- **Pearls:** nine pearls in giant clams, three in each place (for example
-  at the far end of the kelp, on a ledge at the drop-off, in the wreck's
-  hold, under a coral arch, deep in the jellyfish cave). All nine earn the
-  dive kit a pearl-white paint finish for any car.
+### 6.1 Why you dive: the Falcone Sirena
 
-Missions come later, if Kyle wants them (a treasure hunt, a timed reef run,
-a photo safari).
+In 1966 Falcone, the maker of the F42 in your garage, built one car to race
+the Coast Cup on the Pacific Canyon coast road: the **Sirena**, a low red
+sports-racing car with the number 7 on its doors. Rosa Reyes was going to
+drive it. The car went up the coast lashed to the deck of a small freighter,
+the *Marguerite*. A storm came up in the night off the cove, the lashings
+broke, and the Sirena went over the side near the edge of the drop-off. The
+crew got home safe. The car never raced, and fishermen at the cove still
+snag the odd piece of it in their nets.
+
+Today Rosa's granddaughter **Ana Reyes** is a marine biologist at the Kelp
+Coast field station, counting sea life for a survey. The first time you
+drive under, she calls you on the through-water phone. (True: ordinary radio
+waves fade out within a few metres of sea water, so divers talk with sound.)
+
+This could really happen. In 1956 a one-off Chrysler show car, the
+Norseman, sank with the liner *Andrea Doria* off Nantucket. It is still down
+there, about 70 m deep. Ana tells that story once, on the drive back up after
+your first part is raised.
+
+### 6.2 One Kelp Coast story, from first dive to the finish line
+
+1. **First dive.** Ana calls: she asks for help with the survey (the log) and
+   tells the Sirena story in two lines.
+2. **The badge.** A few metres from the bottom of the ramp, something glints
+   in the sand: Falcone's enamel badge. Drive up and stop beside it (within
+   4 m, under 3 km/h, for a second): the badge comes up with no key and no
+   bag. Ana recognises it and fits the **sonar** to your dive kit (section 6.3).
+3. **Four parts with the sonar.** The steering wheel and a front wheel in the
+   Kelp Forest (the wheel is tangled in a kelp holdfast), the bonnet at the
+   forest's edge, and a door with the number 7 on the Drop-off lip. Each one
+   goes up on a lift bag.
+4. **The car.** With five pieces up, Ana works it out: the heavy part sank
+   straight down. The sonar now finds the Sirena itself, on a ledge just
+   below the Drop-off lip. Four lift bags, and it rises slowly through the
+   kelp into the sunlight. If the whale has not passed this visit, it passes
+   now.
+5. **The Lab.** The Sirena waits in your garage under a sheet until the Lab
+   restores it (`docs/LAB.md`, the rust lesson). Restoring it costs 2,500
+   credits and makes it your car.
+6. **The Coast Cup.** Finish any race on Pacific Canyon in the Sirena. A title
+   card reads "Coast Cup, 1966 to 2026: finished", Ana passes on her
+   grandmother's thanks, and a plaque goes on the Sirena's garage page.
+
+Every step can be done on any dive, in any order the sonar allows, and both
+players keep their own progress (each named player has a save).
+
+### 6.3 The sonar and the lift bags
+
+- **Sonar (R).** Press R to ping. Sound runs through sea water at about
+  1,500 m a second, more than four times faster than through air; the sonar
+  times the echo and shows the distance. A ring spreads on the screen; the
+  nearest part not yet raised within 150 m shows as a blip with its
+  direction and its distance in metres. Nothing in range: "No echo". One
+  ping every 1.5 s. Ana says the 1,500 m figure on the first ping.
+- **Lift bag (F).** Stop within 4 m of a part (under 3 km/h) and press F. A
+  yellow bag fills with air from the car's tank in 3 s and floats the part
+  to the surface, where Ana's boat picks it up. Each litre of air lifts
+  about one kilogram in sea water, so one 200-litre bag lifts a door or a
+  wheel. The Sirena weighs about 700 kg in water and takes four bags. True
+  to life: salvage divers raise wrecks this way.
+- R and F are free under water today (the builder checks the key map); the
+  controls help lists both while diving.
+
+### 6.4 The sea-life log
+
+Drive close and slow to log a creature (within 6 m of its zone spot under
+15 km/h for 1 s). A picture card slides in with its name and the true fact
+from section 5. The log is a page in the garage, one row per place, with
+grey shapes for creatures not yet found. The Kelp Coast has seven: sardines,
+green turtle, bat ray, sea lion, sea otter, kelp crab and gray whale.
+
+### 6.5 Pearls
+
+Three pearls per place, nine in all. Drive within 3 m of one under
+15 km/h for 1 s to collect it. On the Kelp Coast they come from red
+abalone on the reef rocks (true: abalone very rarely make pearls, in blues
+and greens); Wreck Reef's come from giant clams and the Night Harbour's
+from oysters. All nine give the pearl-white paint finish for any car (as
+settled with Kyle on 11 October).
+
+### 6.6 Rewards (once per player)
+
+| Goal | Pays |
+| --- | --- |
+| Each creature logged for the first time | 50 credits |
+| A place's log page complete | 250 credits |
+| Each pearl | 150 credits |
+| Each Sirena part raised (five) | 100 credits |
+| The Sirena raised | 500 credits |
+| The Coast Cup finished in the Sirena | 1,000 credits and the plaque |
+
+The whole Kelp Coast pays about 3,000 credits, a little more than two Hard
+wins, and the Sirena costs 2,500 to restore: the reward is the car and the
+story, not money.
+
+### 6.7 Ana on the phone
+
+A fourth stock voice from the voice service the game already uses, a warm
+woman's voice not yet used by any crew member or radio (Matilda if it is
+offered), recorded clean and played through the radio chain plus a slow
+warble, because the phone works by sound through water. Lines never name
+prices; cards show numbers. Ids are `deep.ana.<step>`. Recorded with Bella:
+Matilda is already Odessa on the crew.
+
+| Id | Line |
+| --- | --- |
+| `deep.ana.hello` | Hello? You found the old ramp! I'm Ana, at the field station. If you're staying down, could you help me count what lives here? Drive up slow and close, and the log does the rest. |
+| `deep.ana.legend` | And keep your eyes open. In 1966 my grandmother's race car went over the side out here in a storm. Nobody has ever found it. |
+| `deep.ana.badge` | Is that a Falcone badge? It is! Hold on, I'm sending you a sonar. |
+| `deep.ana.sonar` | Press R to ping. Sound runs through water at fifteen hundred metres a second, and the sonar times the echo. The blip shows where something solid is. |
+| `deep.ana.bag` | Stop right beside it and press F. One litre of air lifts about one kilo down there, so one bag will carry that. |
+| `deep.ana.part` | Got it. My boat's got it. That's a real piece of the Sirena. |
+| `deep.ana.norseman` | You know, this isn't the only car on the sea floor. A Chrysler show car went down with a big liner in 1956, and it's still there today. |
+| `deep.ana.deep` | Five pieces, all light ones. The heavy part must have gone straight down. Try the edge of the drop-off. |
+| `deep.ana.car` | That's her. That's the Sirena. She's heavy, so it'll take four bags. |
+| `deep.ana.raised` | She's coming up! Look at that. Sixty years in the dark. |
+| `deep.ana.lab` | She'll need a lot of work. Salt gets into the metal. Take her to the Lab. |
+| `deep.ana.cup` | Grandma Rosa watched you race. She says thank you. The Sirena finally ran the Coast Cup. |
+| `deep.ana.log` | That's one for the survey. Thank you. |
+| `deep.ana.page` | That's every animal on the Kelp Coast. That page is done. |
+| `deep.ana.pearl` | A pearl! Abalone hardly ever make them. Keep it safe. |
+| `deep.ana.otter` | See the otters? They eat the sea urchins. No otters, no kelp forest. |
+
+The otter line plays once, the first time an otter is logged; `deep.ana.log`
+plays for the others. `deep.ana.norseman` plays once on the way back up the
+ramp after the first part is raised.
+
+### 6.8 Toys along the loop
+
+Nothing here is a goal; it is there to drive through. Two sand gullies with
+a low lip on each side, where the slow fall (section 3) turns a jump into a
+long float; kelp that bends around the car and closes behind it; a school
+of sardines that splits and re-forms; the whale. The trail data marks the
+gullies (DEEP-TRAIL).
+
+### 6.9 Later chapters (after Kyle plays the Kelp Coast)
+
+- **Wreck Reef: the *Marguerite*.** The freighter sank off the High Country
+  coast later the same night. In its hold is the Falcone team's crate: the
+  Sirena's 1966 paint (red with a white nose stripe and the 7) and its spare
+  engine, which becomes an engine upgrade for the Sirena.
+- **Night Harbour: the Cup.** The Coast Cup trophy went down with a harbour
+  launch in the same storm. It lies at the end of the Jellyfish Cave. Raised,
+  it goes on the Sirena's garage page beside the plaque.
+- **The helicopter.** Once a coast is a helicopter destination (the pilot's
+  map), the cove can be seen from the air: from straight above, clear water
+  shows the shapes on the bottom, and a car-shaped shadow by the Drop-off
+  marks the Sirena on the sonar before your first dive there. Kyle's
+  submarine idea (the helicopter lowers a small submarine) stays for later.
 
 ## 7. Boats: the second route (separate stage, after the Deep)
 
-A completely different kind of driving, so it is its own stage with its own
-plan before any build. The idea, to be settled with Kyle:
-
-- **The marina:** a boathouse at the Pacific Canyon cove (the found Deep makes it
-  appear), where boats are bought and raced.
-- **Speedboat races:** buoy courses along the coast, 4 to 6 boats. Boats
-  plane (bow up, faster as they lift), slide wide in turns, hop off wakes and
-  waves, and have no brakes: you lift off and turn. Spray, wakes and chop.
-- **Sailing races:** a regatta round marks with a wind arrow. Speed depends
-  on the angle to the wind: you can't sail straight into it, fastest is
-  across it, so the race is about tacking and picking a line. Slower and
-  more thoughtful; a good contrast.
-- **Learning:** three short lessons at the boathouse (throttle and turns,
-  waves and wakes, sailing to the wind), each a minute or two.
-- **Fit:** courses are a line of buoys the same way a track is a line of
-  road, so the existing race, ghost and Grand Prix field code can be reused
-  with a new water handling model.
+Kept as Kyle's 11 October idea, with no change: a marina at the Pacific
+Canyon cove, speedboat races round buoys and a sailing regatta that teaches
+sailing across the wind, each with a short lesson. It gets its own plan after
+FINISH-DEEP, switch `boats`.
 
 ## 8. Rules for the build (for Codex and the Claude agents)
 
@@ -245,49 +379,49 @@ plan before any build. The idea, to be settled with Kyle:
 - **Never:** cartoon fish, neon colours, a flat blue tint over everything,
   or a hard fog wall.
 
-## 10. The build as a graph (Claude packet, 12 October 2026)
+## 10. The build as a graph (updated 24 October 2026 for the story)
 
-The Deep is the first job on the world line in `docs/FACTORY.md`. The first
-plan put almost every card behind one large ramp card. This packet splits the
-work by the files each part owns and settles every shared name and number
-below, so six lanes start at once and nobody stops to ask. The contracts in
-10.1 are the agreement between lanes: build against them, never around them.
+Built and merged: DEEP-ZONE (format, Pacific ramp, dive and return),
+DEEP-SURFACE, DEEP-SAVE (fields, hints, the 150-credit kit), DEEP-WATER (the
+look), DEEP-ART-SRC (creatures and sets) and DEEP-AUDIO's eight cues. The
+game has no playable zone yet: `main.js` passes no Deep provider, so a dive
+has nowhere to go until DEEP-TRAIL. What is left:
 
 ```mermaid
 flowchart LR
-  P[C: this packet] --> Z[X: DEEP-ZONE]
-  P --> SF[X: DEEP-SURFACE]
-  P --> SV[X: DEEP-SAVE]
-  P --> AS[X: DEEP-ART-SRC]
-  P --> AU[X: DEEP-AUDIO]
-  P --> W[C: DEEP-WATER]
-  Z --> T[C: DEEP-TRAIL]
-  AS --> L[X: DEEP-LIFE]
-  T --> L
-  SV --> LG[X: DEEP-LOG]
-  T --> LG
-  Z & SF & W & T & L & LG & AU --> F[C: FINISH-DEEP]
-  F --> N[T: night shift: frames]
-  N --> R[Kyle: go live, Kelp Coast]
-  R --> RF[C: DEEP-REEF] --> NH[C: DEEP-NIGHT]
+  T[cloud: DEEP-TRAIL] --> S[cloud: DEEP-SIRENA]
+  T --> L[X: DEEP-LIFE]
+  T --> LG[X: DEEP-LOG]
+  T --> AU[X: DEEP-AUDIO mix + 4 cues]
+  R[X: DEEP-RADIO]
+  A[X: SIRENA-ART]
+  S & A --> C[cloud: SIRENA-CAR]
+  S & A & R & C --> V[X: DEEP-SIRENA-VIEW]
+  L & LG & AU & V --> F[C: FINISH-DEEP]
+  F --> GO[Claude: go live, Kelp Coast]
 ```
 
 | Card | Owner | Starts | Owns (and locks) | Done when |
 | --- | --- | --- | --- | --- |
-| DEEP-ZONE | Codex SIM | now | `src/deep/deep-zone.js`, `src/deep/deep-journey.js`, `src/deep/deep-ui.js`, `src/deep/deep-ui.css`, `tools/test-deep-zone.mjs`; hooks in `src/app.js`, `src/game.js` and the one scene call in `src/render3d.js` (lock `busy-game-files`) | The zone format of 10.1 loads; the Pacific Canyon ramp is installed in the Pacific Coast cove; past the water's edge the race pauses, the Dive / Turn back choice works, driving back up the ramp resumes; a test zone (in the test only) drives end to end; Pacific Canyon fingerprints exact with the ramp unused and with the switch off |
-| DEEP-SURFACE | Codex SIM | now | `sea-floor` entry in `src/race-surfaces.js`, its reader in the driving code, `tools/test-deep-surface.mjs` | The numbers in 10.1 hold in Node: speed cap, slow fall, soft landing, no damage, every car scaled from its own handling; every other surface and fingerprint exact |
-| DEEP-SAVE | Codex SAVE | now | `src/deep/deep-discovery.js`, `src/deep/deep-hints.js`, the dive kit in `src/screen-garage.js`, save fixture `tools/fixtures/saves/09-deep.json` (lock `save-shape`, save checker) | Save fields of 10.1 round-trip; old saves load byte for byte; hints appear at the counts in 10.1; the kit appears after the first hint and costs 150 credits |
-| DEEP-ART-SRC | Codex ART | now | `public/assets/models/deep/`, `tools/art/catalog.json` rows, credits, `docs/board/looks/deep-art/` | The 14 creatures of 10.1 and the set pieces (wreck hull, clam, anchor, sunken boat) sourced CC0 first, round sheets judged by Claude, at most three rounds |
-| DEEP-AUDIO | Codex AUDIO | now | `public/assets/audio/deep/`, catalog rows, `src/deep/deep-audio.js`; hooks `src/sound-bank.js` and the engine filter in `src/audio.js` (lock `sound-bank`) | The eight cue ids of 10.1 exist, built from recipes, louder than nothing and quieter than the race mix (about -20 LUFS ambience, -1 dBTP peaks); no change to the master mix |
-| DEEP-WATER | Claude | now | `src/deep/underwater-scene.js` and the existing look modules (sea floor, kelp, light, surface, colour, snow), `tools/deep-look.*` | The approved look test works for any zone of the 10.1 format, at any depth, on Performance and High |
-| DEEP-TRAIL | Claude | after DEEP-ZONE | `src/deep/zones/kelp-coast.js` | The Kelp Coast loop (section 4) as zone data: Ramp Shallows, Kelp Forest, the Drop-off lip, pearl and creature spots |
-| DEEP-LIFE | Codex VIS | after ART-SRC, TRAIL | extends the existing `src/deep/fish-school.js` and `fish-rules.js`, `tools/test-deep-life.mjs` | Section 5 creatures for the Kelp Coast, instanced, reacting to the car's position read-only, capped per type |
-| DEEP-LOG | Codex UI | after SAVE, TRAIL | `src/deep/deep-log.js`, the log page in the garage, the pearl-white finish in `src/paint-presets.js`, `tools/test-deep-log.mjs` | Logging by driving close and slow (within 6 m under 15 km/h for 1 s), pearls, the pearl-white finish after nine |
-| FINISH-DEEP | Claude | after all of the above | finishing fixes in owned files | Postcard sheet; drive-through check passes; night-shift frame check passes |
+| DEEP-TRAIL | claude-cloud | now | `src/deep/zones/kelp-coast.js`, the provider line in `src/main.js`, the optional `finds` field in `src/deep/deep-zone.js`, `tools/test-deep-kelp-coast.mjs` | The Kelp Coast loop of sections 4, 6 and 10.1 is zone data the game dives into |
+| DEEP-SIRENA | claude-cloud | after TRAIL | `src/deep/deep-sirena.js`, `tools/test-deep-sirena.mjs`, three fields in `normalizeDeep`, fixture `tools/fixtures/saves/16-deep-sirena.json` (lock `save-shape`) | Sonar, lift bags, the order of finds, rewards and save, all in Node |
+| DEEP-RADIO | codex | now | `src/deep/deep-phone.js`, `src/deep/deep-phone-lines.js`, takes in `audio-src/voices/`, catalogue rows, runtime files (lock `sound-bank`) | Ana's 16 lines recorded and played through the phone chain |
+| SIRENA-ART | codex | now | `tools/blender/sirena.py` or a builder in `src/classic-vehicles.js`, `public/assets/models/sirena/`, credits, `docs/board/looks/sirena/` | The car, its wreck, five loose parts and the lift bag, at most three rounds |
+| SIRENA-CAR | claude-cloud | after SIRENA, ART | the `falcone_sirena` entry in `src/config.js`, `src/deep/sirena-car.js`, `tools/test-sirena-car.mjs` | The car exists once restored, starts at Pacific Canyon, and the Coast Cup pays once |
+| DEEP-LOG | codex | after TRAIL | as before, plus the facts and the pay | Section 6.4 to 6.6 |
+| DEEP-LIFE | codex | after TRAIL | as before | Section 5 creatures on the Kelp Coast |
+| DEEP-AUDIO | codex | after TRAIL | as before, plus four cues | The real Kelp Coast mix and the cues of 10.1 |
+| DEEP-SIRENA-VIEW | codex | after SIRENA, ART, RADIO, CAR | keys, drawing, sonar ring, phone captions, garage sheet and plaque (lock `busy-game-files`) | A player can do section 6.2 from first dive to the Coast Cup |
+| DEEP-ART-FINAL | Claude | any time | creature art picks | Finished creatures, within three rounds |
+| FINISH-DEEP | Claude | after all | finishing fixes | Postcard sheet, drive-through, frame check, then go live |
 
-Wreck Reef (DEEP-REEF) and Night Harbour (DEEP-NIGHT) are later course-line
-runs that reuse every part above with new zone data, after Kyle has played
-the Kelp Coast. Boats (B0) stay a separate plan after FINISH-DEEP.
+The Lab's restore button (`docs/LAB.md`, LAB-RESTORE) needs SIRENA-CAR.
+Without the Lab the raised Sirena waits under its sheet, which is a finished
+state, not a placeholder: the story says the car needs the Lab.
+
+Wreck Reef (DEEP-REEF) and Night Harbour (DEEP-NIGHT) reuse every part with
+new zone data and the later chapters of 6.9, after Kyle has played the Kelp
+Coast. Boats (B0) stay a separate plan.
 
 ### 10.1 Contracts between lanes
 
@@ -367,8 +501,42 @@ down.
 never against the moving creatures, so the log does not depend on the
 renderer.
 
-Release: Kyle says "go live" for the Kelp Coast after FINISH-DEEP and a
-passing night shift, then each later place on its own.
+**Story additions (24 October 2026).**
+
+- **Finds** (optional zone field, read by DEEP-SIRENA): `finds: [{id,
+  trailIndex, offset, below}]`. `offset` is sideways as for pearls; `below`
+  (metres, default 0) puts a find under the trail's floor, as the Sirena on
+  its ledge under the Drop-off lip. A zone without `finds` loads exactly as
+  before. Kelp Coast ids, in story order: `sirena-badge` (Ramp Shallows),
+  `sirena-steering-wheel`, `sirena-wheel`, `sirena-bonnet` (Kelp Forest),
+  `sirena-door` (Drop-off lip), `sirena-car` (the ledge, `below` 3).
+- **Gullies** are made from the trail's own `depth` numbers (a short
+  stretch 3 m deeper with a lip either side); no new field.
+- **Save fields** under `deep` (all optional): `sonar` (true once given),
+  `raised` (find ids), `coastCup` (true once finished). Old saves load
+  unchanged.
+- **Rules** (`src/deep/deep-sirena.js`, pure): the sonar is given when
+  `sirena-badge` is raised; the badge needs no sonar. The sonar shows the
+  nearest find not yet raised within 150 m, except that `sirena-car` shows
+  only when the other five are raised. A lift starts when the car is within
+  4 m of a find (horizontal distance; `below` ignored) under 3 km/h and F is
+  pressed; it takes 3 s (12 s for `sirena-car`, four bags) and the car may
+  not drive off during it (driving off cancels it). Ping cooldown 1.5 s,
+  range 150 m.
+- **Rewards** (section 6.6) are paid once, at the moment the save first
+  records the thing; credits stop at the save's 1,000,000,000 cap.
+- **Events:** `deepSonar {blip}` where `blip` is `{find, distance,
+  bearing}` or `null`; `deepLift {find, seconds}`; `deepRaised {find}`;
+  `deepCoastCup {}`.
+- **Sound cues** (four more): `deep.sonar` (the ping), `deep.echo` (the
+  return tick, played after the real echo time, 2 × distance / 1,500 s),
+  `deep.liftbag` (air rushing into the bag and its rise), `deep.raised` (a
+  low swell as the Sirena breaks free of the sand).
+- **The Sirena:** car id `falcone_sirena`; it lives at Pacific Canyon when
+  restored (section 6.2 and SIRENA-CAR).
+
+Release: Claude decides go live for the Kelp Coast after FINISH-DEEP and a
+passing full check (AGENTS rule 18), then each later place on its own.
 
 ## 11. Settled with Kyle (11 October 2026)
 
@@ -377,3 +545,15 @@ passing night shift, then each later place on its own.
    at night to the Night Harbour.
 2. **Which cars:** every car, with the dive kit ("whatever's easiest").
 3. **Sharks:** two harmless reef sharks stay; they never chase.
+
+## 12. Picked for Kyle (24 October 2026)
+
+- The lost car is a Falcone, the game's own make, so the story belongs to
+  the game and needs no real maker's badge.
+- Rewards stay small (about 3,000 credits for the whole Kelp Coast) so
+  diving never beats racing for money.
+- Ana is a new voice (a fourth stock voice), so Gratian does not hear a park
+  ranger playing the scientist.
+- The restored Sirena starts at Pacific Canyon, so the Coast Cup can be
+  raced before the coast is on the pilot's map; with the helicopter on it
+  then travels like any special car, only by air.

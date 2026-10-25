@@ -12,7 +12,17 @@ export function terrainStyleAt(course,s){
   const blend=smooth((phase-section.start)/100),weights=[0,0,0];
   weights[LAYERS[previous.theme]??0]+=1-blend;
   weights[LAYERS[section.theme]??0]+=blend;
-  return{weights,color:new THREE.Color(TINTS[previous.theme]||TINTS.desert).lerp(new THREE.Color(TINTS[section.theme]||TINTS.desert),blend)};
+  return{weights,color:tint(TINTS[previous.theme]||TINTS.desert).clone().lerp(tint(TINTS[section.theme]||TINTS.desert),blend)};
+}
+// A tint parsed once: the terrain asks for one colour per drawn vertex, and parsing the same few hex strings
+// that many times was a measurable part of a world build. The colour management mode is part of the key, since
+// it changes the parsed values.
+const managedTints=new Map(),rawTints=new Map();
+function tint(hex){
+  const tints=THREE.ColorManagement.enabled?managedTints:rawTints;
+  let color=tints.get(hex);
+  if(!color){color=new THREE.Color(hex);tints.set(hex,color);}
+  return color;
 }
 
 // `mud` (optional) adds a wet mud layer weighted by a per-vertex `terrainWet`

@@ -1,3 +1,5 @@
+import {steeringYawAuthority, tyreSlipSteering} from './config.js';
+
 // Keys supply the exact average of their ramp during each simulation step.
 // Arenas keep their sharp controls; road input is gentler. Kyle, 14 October 2026:
 // the 13 October road curve (30% start, 450 ms rise, 40% less at speed) steered
@@ -29,7 +31,7 @@ export function createKeyboardSteering({arena = false} = {}) {
     ? time * time / (2 * rise) : time - rise / 2);
   return {
     reset,
-    update(next, dt, speed = 0) {
+    update(next, dt, speed = 0, rules = {}) {
       next = Number.isFinite(next) ? Math.sign(next) : 0;
       if (!next) {
         reset();
@@ -41,13 +43,25 @@ export function createKeyboardSteering({arena = false} = {}) {
         held = 0;
       }
       const limit = arena ? 1 : keyboardSteeringLimit(speed);
-      if (held >= rise) return direction * limit;
+      if (held >= rise) return mapTyreSteering(direction * limit, speed, arena, rules);
       const end = held + dt;
       const average = (area(end) - area(held)) / dt;
       held = Math.min(rise, end);
-      return direction * Math.min(1, Math.max(start, average)) * limit;
+      return mapTyreSteering(direction * Math.min(1, Math.max(start, average)) * limit, speed, arena, rules);
     },
   };
+}
+
+// Apply the approved speed ceiling after averaging the unchanged ramp.
+// The race passes its latched rules; merely enabling an experimental switch
+// elsewhere cannot change a running adapter. Throttle is a separate path.
+function mapTyreSteering(value, speed, arena, rules) {
+  const mph = Math.abs(Number.isFinite(speed) ? speed : 0);
+  if (rules.tyreSlip !== true || arena || rules.course?.def?.arena === true || mph < 40) return value;
+  const {grip = 1, traction = 1, car = null} = rules;
+  const old = steeringYawAuthority(mph, grip, traction, car);
+  const {steerGain} = tyreSlipSteering({speedMph: mph, grip, traction, car});
+  return steerGain > 0 ? value * old / steerGain : 0;
 }
 
 export function createKeyboardThrottle() {

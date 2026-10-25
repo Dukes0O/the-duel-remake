@@ -1,10 +1,73 @@
 # Remake verification
 
-## Ardennes release candidate, 15 October 2026
+## Summit Run installed, 16 October 2026
 
-Kyle requested switch-on and installation while away. The accepted course and finishing corrections passed 217/217 lane suites, jobs 4, a production build and independent code review on 55d2b7de. Claude accepted the actual finishing views in d807c0e2. The native eight-car packet has zero player crashes/resets and all seven CPUs finish; the last pit correction has separate valid grid/hairpin pictures. Only Ardennes' actual scene baseline changed; foreign baselines and old replays are exact.
+Release Manager: Claude, under AGENTS rule 18 (Kyle: "Follow rule 18 and
+release Summit"). Live master is 9279efa4 (fast-forward from 42dcb5b6; code
+equals 3abe9e00); production build 20261016154751-da048a9de7b2, built in the
+live folder's dist-next. All 537 staged files matched over HTTP on private
+port 5188; assets went into dist first and index.html and build-version.json
+last, then a mirror left dist holding exactly the new build (four old files
+gone). All 537 live files match over HTTP on localhost:5174. The live server
+was not running after the overnight restart, so it was started hidden on 5174
+with no browser opened. No tab refreshed, no save read or written, no rollback
+build kept.
 
-Kyle explicitly SKIPPED frame timing because other sessions stay active. No p95 or world-build pass is claimed. Exact release full-tier validation and staged installation are still pending on RELEASE-ARDENNES. The original 1c0cb3d0 night browser aggregate remains 119/129, failed; no old failure is relabelled green. Live still serves the Helicopter build below.
+What changed for players: `summit-run` on (Summit Run, 2,600 credits, and the
+free Summit Time Attack), `yeti` on; Team Room intel levels, reference ghosts
+and engineer notes; the optional Coach; Ardennes braking boards and Stavelot
+stone houses. The Ardennes far forest band is not in this release.
+
+Evidence (details in docs/changes/RELEASE-SUMMIT.md): full tier 455/455 alone
+on 7f108454 (rule 19 covers 3abe9e00); combat balance flags []; frames headed,
+eight cars, panel off: Summit p95 16.8 ms both qualities with world build
+about 1.5 s shipped as a warning (Director decision, SUMMIT-BUILD-TIME to fix),
+Ardennes 16.8 ms both qualities without the far band. Browser scenarios were
+still running at install and do not hold the release; results follow in the
+inbox.
+
+## Forest fires installed, 15 October 2026
+
+Kyle asked for this release under AGENTS rule 18 ("Follow rule 18: release H2
+Fire"); Claude was Release Manager. Live master is
+42dcb5b6b14c334c75158e96f73bda2683274b3d (fast-forward from 7d430cd0);
+production build 20261016043241-239fa3b298d2, built in the live folder's
+dist-next. All 537 staged files matched over HTTP on private port 5188; the
+assets went into dist first and index.html and build-version.json last, then
+a mirror left dist holding exactly the new build; all 537 live files match
+over HTTP on localhost:5174. No browser tab was opened or refreshed, no player
+save was read or written, and no rollback build is kept (fix forward). The
+live server was not running, so it was started hidden on 5174 with no
+browser opened.
+
+What changed for players: the `forest-fire` switch is on (H2 Fire: fire
+calls, the bucket, drops, fire out pays 1,500 credits and the firefighter
+badge, a lost fire closes Tremblant Woods for 10 play days with a buyback and
+regrowth, seasons with no fires in winter), the main menu says why START is
+closed on a burnt course (release review fix), and Ardennes' braking boards
+sit 2.4 m from the road edge (bf358e5a).
+
+Checks (rule 19): the full tier on ac8fd6c3, which already carried every H2
+card, ran 452/453 alone with four jobs, its one fixture gap fixed and passing
+in its own reviewed lane; combat balance passed on ac8fd6c3 (51 policy runs,
+90 baseline races, no flags) and nothing combat-related changed since. The
+release lane tier covered the switch and every suite that reads it: 267/267,
+jobs 4, 2015 s; build passed. One independent release review: fit to ship,
+with the silent START fixed before release. H2's browser checks on the same
+code: FIRE-VIEW's look and frame check (p95 18.2 ms on High and Performance
+over a 43-cell fire and racing on the burnt course) and FIRE-FINISH's
+play-through (a fire flown out and paid in 2 drops; a fire left to burn,
+lost overnight, the course closed with its buyback). No push to GitHub.
+
+## Ardennes installed, 15 October 2026
+
+Kyle requested installation and explicitly directed no duplicate full run after the sole test fixture correction. Live master is 7d430cd011de0145f404b7b24500e26ac011d881; production build20261016030307-f35c5308abb7. All537 staged files matched private HTTP, all537 installed files match their hashes, and live5174 entry/manifest matched. Ardennes Forest is on at2000credits. Reload from the menu when ready; no open tab was refreshed and no real saves were read or written. Summit and other development switches remain off.
+
+The accepted implementation55d2b7de passed217/217lane/jobs4/build1.84s and independent review; Claude final art acceptance d807c0e2. Native eight-car packet: zero player crashes/resets, all7CPUs finish. Exact originalac8 full ran alone/jobs4:452/453, zero unrun,1368.216s. Its sole grounding suite omitted the real beech owner and threw before checking a root. Fixture-only89a4a26c preserved every old assertion/tolerance, prepared the unchanged original High/LOD GLBs, and added unique binding/tree conservation/exactXZ/actual-terrain1mm checks. It passed17/17lane/jobs4/197.996s, corrected suite72584checks/3709roots/806far-only, build1.504s and independent review. No game/assets/combat/native inputs changed. All453 suites have passing evidence cumulatively; the original full remains failed and no exact7d full pass is claimed. Kyle explicitly said: “there's no need for more testing, so let's install.” This is a release-specific exception, not a general rule change.
+
+Current-rules combat on unchangedac8 passed51policyRuns/90baselineRaces/flags[]. Only Ardennes' actual scene baseline changed:7e3fd47fd52db506a6e076e33d530868c4b2d9b0be20e2dbbbc73c40f76481a6; foreign baselines/replays exact. Kyle SKIPPED frame timing; no p95/world-build pass. Original1c0 night browser aggregate remains failed119/129; unknown audio causes unchanged.
+
+The install initially retained one Helicopter rollback build20261015161329-187a6c9406c6 (487files/305223013bytes). Kyle then clarified that live releases also fix forward with no rollback builds. That exact owned copy was sent to the Recycle Bin; retained rollback builds now0. The current Ardennes build remains unchanged. Four old hashed assets remain temporarily in live dist to preserve any open old race; current537files verified, no exact537-total claim. Superseded rollback, owned dist-next, both release-copy containers, merged fixture branch and current scratch were normally recycled; dependency/evidence junctions were unlinked without touching shared targets. No foreign cleanup or ACL change. Full original/result, correction gate, reuse proof, Kyle direction and actual install receipt remain under integration .evidence/2026-10-15/RELEASE-ARDENNES. Integration full-tier ledger untouched. No push/history rewrite.
 
 ## Helicopter installed, 15 October 2026
 

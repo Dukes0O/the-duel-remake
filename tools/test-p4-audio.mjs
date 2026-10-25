@@ -13,6 +13,8 @@ const HELI_BANK_CUES = new Set(Object.keys(HELI_CUES));
 // DRIVE-LESSON-LINES: the driving instructor's cues joined the bank behind their switch; exactly that list is left out.
 import {DRIVE_LESSON_CUES} from '../src/lessons/drive-radio-lines.js';
 const DRIVE_BANK_CUES = new Set(Object.keys(DRIVE_LESSON_CUES));
+// LAB-RADIO: the Lab's voice and sound cues joined the bank behind the lab switch: every lab.* id and the two Lab cars' sounds.
+const LAB_BANK_CUES = {has: id => id.startsWith('lab.') || id === 'car.sputter' || id === 'car.speirling'};
 
 const CUES = [
   'race.start.light', 'race.start.go', 'race.position.gain', 'race.lap.final',
@@ -29,10 +31,10 @@ const hash = data => createHash('sha256').update(data).digest('hex');
 const hashObject = value => hash(JSON.stringify(value));
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url)));
 // Full pre-P4 objects are pinned; no old record or credit can silently change.
-assert.equal(hashObject(Object.fromEntries(Object.entries(SOUND_BANK).filter(([id]) => !added.has(id) && !DEEP_CUES.includes(id) && !HELI_BANK_CUES.has(id) && !DRIVE_BANK_CUES.has(id) &&
+assert.equal(hashObject(Object.fromEntries(Object.entries(SOUND_BANK).filter(([id]) => !added.has(id) && !DEEP_CUES.includes(id) && !HELI_BANK_CUES.has(id) && !DRIVE_BANK_CUES.has(id) && !id.startsWith('deep.ana.') && !LAB_BANK_CUES.has(id) &&
   id !== 'vehicle.rival-engine' && id !== 'vehicle.traffic-engine'))),
   'df5cf72de6db8a8f50273c78ae0e6dd349b6ed0ae32ff1ad37627ddbc8a725ba', 'pre-P4 sound bank changed');
-assert.equal(hashObject({...catalog, sounds: catalog.sounds.filter(row => !added.has(row.cue) && !DEEP_CUES.includes(row.cue) && !String(row.cue).startsWith('heli.') && !DRIVE_BANK_CUES.has(row.cue))}),
+assert.equal(hashObject({...catalog, sounds: catalog.sounds.filter(row => !added.has(row.cue) && !DEEP_CUES.includes(row.cue) && !String(row.cue).startsWith('heli.') && !String(row.cue).startsWith('deep.ana.') && !String(row.cue).startsWith('lab.brian.') && !DRIVE_BANK_CUES.has(row.cue))}),
   '772989c2d66e55d6c7c6f795b85cbf3395c30abe4edc8a6cc3a526421a06e8f0', 'pre-P4 catalog changed');
 
 // Real FIELD emits feed the production event handler. Only the audio sink is
