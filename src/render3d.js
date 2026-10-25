@@ -248,7 +248,7 @@ export function attachRenderer(host, app) {
         render:()=>renderMainView(renderer,privateComposer,high),
         dispose(){privateComposer.passes.forEach(pass=>{if(pass!==ambient)pass.dispose?.();});privateComposer.dispose();}};
     }});
-  const stopDeepEvents=app.duel.onChange((_state,event)=>{if(event.menu||event.stageLoaded!=null||event.arenaLoaded!=null||event.deepExited)deepView.reset();});
+  const stopDeepEvents=app.duel.onChange((_state,event)=>{if(event.menu||event.stageLoaded!=null||event.arenaLoaded!=null||event.deepExited)deepView.reset();if(event.deepRaised)deepView.raised(event.deepRaised.find);});
   let deepRevision=deepView.revision;
 
   // The helicopter's group joins the scene before the lighting roots are

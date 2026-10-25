@@ -154,6 +154,16 @@ log (section 6.4) carries the one true fact in the last column.
 | Gray whale (`whale`) | The Drop-off | One slow pass below per visit, with song | Gray whales swim 16,000 to 20,000 km a year, from Alaska to Mexico and back. |
 | Octopus (`octopus`) | Glow Bay | Shifts colour on the rocks | An octopus has three hearts and can change colour in under a second. |
 
+### 5.1 How it is built (DEEP-LIFE, 25 October 2026)
+
+The Kelp Coast's creatures come from the zone's `spots` and are drawn by
+`src/deep/sea-life.js` from rules in `src/deep/sea-life-rules.js`: instanced
+per type with a hard cap each, reacting to the car's position only and never
+touching race state or its random streams. The otter has no model yet and is
+not drawn. The whale passes once per dive, when the car nears the Drop-off or
+when the Sirena is raised (`deepRaised`). Details and numbers:
+`docs/changes/DEEP-LIFE.md`.
+
 ## 6. The story and goals (Claude, 24 October 2026)
 
 The Deep stays a place to play around in: nothing is timed, nothing can hurt

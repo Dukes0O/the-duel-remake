@@ -92,16 +92,37 @@ export function fishGeometry() {
   return g;
 }
 
+// The DEEP-ART-SRC sardine (silver-school.glb) as a school fish: the same shape
+// as fishGeometry (one unit long, nose at +z, `aTail` growing toward the tail
+// root) so the same shader sways it. The model is scaled by its length; its
+// own vertex colours are kept.
+export function fishGeometryFromModel(source) {
+  const g = source.clone();
+  g.computeBoundingBox();
+  const box = g.boundingBox, length = box.max.z - box.min.z;
+  if (!(length > 0)) throw new Error('The sardine model has no length.');
+  const centre = (box.max.z + box.min.z) / 2, k = 1 / length;
+  const p = g.attributes.position, tails = new Float32Array(p.count);
+  for (let i = 0; i < p.count; i++) {
+    const z = (p.getZ(i) - centre) * k;
+    p.setXYZ(i, p.getX(i) * k, (p.getY(i) - (box.max.y + box.min.y) / 2) * k, z);
+    tails[i] = Math.max(0, (0.5 - z - 0.25) / 0.75);     // 0 at the nose .. 1 at the tail tip
+  }
+  g.setAttribute('aTail', new THREE.Float32BufferAttribute(tails, 1));
+  g.computeVertexNormals();
+  return g;
+}
+
 const UP = new THREE.Vector3(0, 1, 0);
 
 export function createFishSchool(uniforms, {
   count = 450, seed = 5, length = 0.30, anchor = { x: 0, y: -6, z: 0 }, path = {}, floorAt = null, cloud = {},
-  avoidInner = 2.7, avoidOuter = 6.5,
+  avoidInner = 2.7, avoidOuter = 6.5, geometry: given = null,
 } = {}) {
   const rng = makeRng(seed);
   const shape = schoolShape(count, rng, cloud);
   const n = shape.count;
-  const geometry = fishGeometry();
+  const geometry = given ?? fishGeometry();
   const fish = new Float32Array(n * 2);
   for (let i = 0; i < n; i++) { fish[i * 2] = shape.traits[i * 4 + 1]; fish[i * 2 + 1] = shape.traits[i * 4 + 2]; }
   geometry.setAttribute('aFish', new THREE.InstancedBufferAttribute(fish, 2));
