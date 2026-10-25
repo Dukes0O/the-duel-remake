@@ -13,6 +13,15 @@ export const MODEL_OF_LESSON = Object.freeze({
   strength: 'bending-rig', rust: 'nail-jars', gforce: 'turning-arm', headings: 'map-table', launch: 'launcher-ramp', wax: 'snow-trays',
   grip: 'wind-tunnel', downforce: 'wind-tunnel', braking: 'wind-tunnel', suspension: 'wind-tunnel', fuel: 'wind-tunnel',
 });
+// Player views, below the roof chords and inside the hall's columns. The
+// tunnel's working side is viewed across its length, not down the fan barrel.
+const BENCH_VIEWS = {
+  'weighing-pad': {position:[-3.2,2.2,8.7],target:[-3.75,1.7,6.25]},
+  'drop-tower': {position:[-4.7,3.6,2.5],target:[-11.4,3,-1.2]},
+  'pendulum-frame': {position:[-3.4,3.3,4.9],target:[-5.4,2.9,-3.4]},
+  'wind-tunnel': {position:[6,3.7,1.7],target:[8.6,1.5,-6.3]},
+  'launcher-ramp': {position:[.4,3,-2.3],target:[1.7,1.4,-7]},
+};
 const BENCH_MODELS = Object.freeze([...new Set(Object.values(MODEL_OF_LESSON)), 'weights-and-cans']);
 
 // Counts, for the test that opens and closes the Lab twice: every scene made is released.
@@ -38,11 +47,11 @@ function release(root) {
 // looking at its middle, then further round and further back. The scene takes the first with a clear view.
 export function benchPoses(layout, size) {
   const {x, z} = layout, length = Math.hypot(x, z) || 1;
-  const ux = -x / length, uz = -z / length, base = 4.5 + Math.max(size[0], size[2]) * 0.7;
-  const target = [x, Math.min(1.5, size[1] * 0.45), z], poses = [];
+  const ux = -x / length, uz = -z / length, base = Math.max(3.2, Math.max(size[0], size[2]) * 1.05, size[1] * 1.5);
+  const target = [x, size[1] * 0.5, z], poses = [];
   for (const scale of [1, 1.35]) for (const turn of [0.35, -0.35, 0.8, -0.8, 1.3, -1.3, 0]) {
     const dx = ux * Math.cos(turn) - uz * Math.sin(turn), dz = ux * Math.sin(turn) + uz * Math.cos(turn);
-    poses.push({position: [x + dx * base * scale, 3.4, z + dz * base * scale], target});
+    poses.push({position: [x + dx * base * scale, target[1] + base * scale * 0.35, z + dz * base * scale], target});
   }
   return poses;
 }
@@ -241,10 +250,16 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
     for (const pose of poses) {
       from.set(...pose.position); to.set(...pose.target);
       const distance = from.distanceTo(to);
-      caster.set(from, to.clone().sub(from).normalize());
-      caster.far = distance;
-      const hit = caster.intersectObjects(others, true)[0];
-      if (!hit || hit.distance > distance - 1.5) return pose;
+      // Sample a band around the sightline too: a pillar beside the centre
+      // ray can still dominate the foreground. Nothing in the room is hidden.
+      const side = to.clone().sub(from).cross(camera.up).normalize();
+      const clear = [-1.2, 0, 1.2].every(offset => {
+        const end = to.clone().addScaledVector(side, offset);
+        caster.set(from, end.sub(from).normalize());
+        caster.far = distance - 1.5;
+        return !caster.intersectObjects(others, true).length;
+      });
+      if (clear) return pose;
     }
     return poses[0];
   }
@@ -255,7 +270,9 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
     const id = next ? MODEL_OF_LESSON[next] : null;
     const at = id ? manifest.layout[id] : null;
     if (!at) { goal.position.set(...OVERVIEW.position); goal.target.set(...OVERVIEW.target); return; }
-    const view = clearPose(id, benchPoses(at, sizeOf(id)));
+    // The lift instruments stand at the door edge of a broad, flat pad.
+    const poses = BENCH_VIEWS[id] ? [BENCH_VIEWS[id], ...benchPoses(at, sizeOf(id))] : benchPoses(at, sizeOf(id));
+    const view = clearPose(id, poses);
     goal.position.set(...view.position); goal.target.set(...view.target);
   }
 

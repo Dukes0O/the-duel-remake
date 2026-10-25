@@ -62,7 +62,8 @@ export const LAB_LINES = Object.freeze(Object.fromEntries(Object.entries({
   'lab.brian.launch.explain': {file: 'lab-brian-launch-explain.mp3', volume: 2.1, text: 'On flat ground with no air, forty five degrees goes furthest. Air drag, and landing lower than you took off, both make the best angle lower than forty five.'},
   'lab.brian.launch.pass': {file: 'lab-brian-launch-pass.mp3', volume: 2.3, text: 'Right on target. That\'s how you plan a jump.'},
   'lab.brian.wax.intro': {file: 'lab-brian-wax-intro.mp3', volume: 2.29, text: 'Skis on three kinds of snow, with three waxes. We\'ll time every glide.'},
-  'lab.brian.wax.explain': {file: 'lab-brian-wax-explain.mp3', volume: 2.12, text: 'Cold snow has hard, sharp crystals, so it needs a hard wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out.'},
+  // LAB-POLISH: the caption is clarified; this one kept take still says its original words.
+  'lab.brian.wax.explain': {spokenText: "Cold snow has hard, sharp crystals, so it needs a hard wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out.", file: 'lab-brian-wax-explain.mp3', volume: 2.12, text: 'Very cold, dry snow has hard, sharp crystals, so it needs a hard wax. Medium snow wants a medium wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out.'},
   'lab.brian.wax.pass': {file: 'lab-brian-wax-pass.mp3', volume: 2.35, text: 'Right wax for the snow. That\'s free speed.'},
   'lab.brian.secret.reverse': {file: 'lab-brian-secret-reverse.mp3', volume: 1.94, text: 'Huh. A fan that sucks the car onto the road, even standing still. Someone really built that.'},
   'lab.brian.secret.1970': {file: 'lab-brian-secret-1970.mp3', volume: 1.95, text: 'In 1970 the Chaparral 2J raced with two fans sucking it to the ground.'},

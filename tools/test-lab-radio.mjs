@@ -45,13 +45,22 @@ same(Object.keys(LAB_LINES).length, 54, 'fifty-four lines in all');
 ok(LAB_VOICE === HELI_RADIO_VOICE, 'the Lab is the same Brian');
 
 // One kept take per line: catalog record, hash, runtime copy, the same voice and settings as the helicopter and the lessons.
+same(Object.entries(LAB_LINES).filter(([, line]) => line.spokenText !== undefined).map(([id]) => id),
+  ['lab.brian.wax.explain'], 'only the approved wax caption differs from its recording');
 const heliSettings = catalog.sounds.find(row => row.cue === 'heli.radio.liftoff.hold').settings;
 let creditsUsed = 0, runtimeBytes = 0;
 for (const [id, line] of Object.entries(LAB_LINES)) {
   const records = catalog.sounds.filter(row => row.cue === id);
   same(records.length, 1, `${id}: one catalog record`);
   const [record] = records;
-  ok(record.source === 'elevenlabs' && record.text === line.text && record.file === `audio-src/voices/${line.file}`, `${id}: text and file recorded`);
+  // LAB-POLISH explicitly changes only this caption; keep checking the
+  // original spoken text and the original recording hash, rather than
+  // pretending the old take contains the new words.
+  const spokenText = id === 'lab.brian.wax.explain'
+    ? 'Cold snow has hard, sharp crystals, so it needs a hard wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out.'
+    : line.text;
+  same(line.spokenText ?? line.text, spokenText, `${id}: the expected spoken words`);
+  ok(record.source === 'elevenlabs' && record.text === spokenText && record.file === `audio-src/voices/${line.file}`, `${id}: text and file recorded`);
   ok(record.voiceId === HELI_RADIO_VOICE.voiceId && record.model === 'eleven_multilingual_v2', `${id}: Brian, same model`);
   same(record.settings, heliSettings, `${id}: the helicopter lines' settings`);
   const take = read(record.file), runtime = `public/assets/audio/voices/${line.file}`;

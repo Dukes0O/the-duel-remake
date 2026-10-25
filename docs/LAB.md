@@ -84,7 +84,7 @@ lesson can be taken in any order.
 | Lesson | The bench | What Brian explains (true) | Challenge | Opens (credits) |
 | --- | --- | --- | --- | --- |
 | **Launch angles** | A small launcher: angle 15 to 75 degrees, speed, a tape measure | On flat ground with no air, 45 degrees goes furthest. Air drag, and landing lower than you took off, both make the best angle lower than 45 | Hit a target distance with one launch | **Aerials** (free): the aerials kicker run in heli-skiing |
-| **Ski wax** | Skis on three snow samples (-15 C dry powder, -5 C, 0 C wet) with three waxes; time each glide | Cold snow has hard, sharp crystals, so it needs a hard wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out | On a slalom run, beat the target time with the right wax for the day's snow | **Wax kit** (400): choose a wax before each run; the right one glides about 3% faster than the wrong one on a slalom run, and about 1% faster than no wax |
+| **Ski wax** | Skis on three snow samples (-15 C dry powder, -5 C, 0 C wet) with three waxes; time each glide | Very cold, dry snow has hard, sharp crystals, so it needs a hard wax. Medium snow wants a medium wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out | On a slalom run, beat the target time with the right wax for the day's snow | **Wax kit** (400): choose a wax before each run; the right one glides about 3% faster than the wrong one on a slalom run, and about 1% faster than no wax |
 
 ### 4.4 The wind tunnel (cars and tuning)
 
@@ -288,7 +288,7 @@ than the world it says so. Lines never name credits or prices.
 | `lab.brian.launch.explain` | On flat ground with no air, forty five degrees goes furthest. Air drag, and landing lower than you took off, both make the best angle lower than forty five. |
 | `lab.brian.launch.pass` | Right on target. That's how you plan a jump. |
 | `lab.brian.wax.intro` | Skis on three kinds of snow, with three waxes. We'll time every glide. |
-| `lab.brian.wax.explain` | Cold snow has hard, sharp crystals, so it needs a hard wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out. |
+| `lab.brian.wax.explain` | Very cold, dry snow has hard, sharp crystals, so it needs a hard wax. Medium snow wants a medium wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out. |
 | `lab.brian.wax.pass` | Right wax for the snow. That's free speed. |
 | `lab.brian.secret.reverse` | Huh. A fan that sucks the car onto the road, even standing still. Someone really built that. |
 | `lab.brian.secret.1970` | In 1970 the Chaparral 2J raced with two fans sucking it to the ground. |
