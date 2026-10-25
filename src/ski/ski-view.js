@@ -137,14 +137,14 @@ export function loadingCardMarkup(run, {snow = null} = {}) {
 const pct = value => `${Math.round(value)}`;
 // The run's result: the time and gates missed, or the score card's three parts and the points, the medal, and once the
 // save has it, the pay and whether it is a new best.
-export function resultCardMarkup(result, recorded = null) {
+export function resultCardMarkup(result, recorded = null, {waiting = true} = {}) {
   if (!result) return '';
   const rows = result.kind === 'time'
     ? `<p class="ski-big">${clockText(result.time)}</p><p>${result.missed ? `${result.missed} gate${result.missed > 1 ? 's' : ''} missed (+${result.missed * 5} s) · skied ${clockText(result.raw)}` : 'Every gate clean'}</p>`
     : `<p class="ski-big">${(Math.round(result.points * 10) / 10).toFixed(1)} pts</p>${scoreCardMarkup(result)}`;
   const paid = recorded ? `<p class="ski-paid">${recorded.paid ? `${recorded.paid.toLocaleString('en-US')} credits` : 'No new pay'}${recorded.improved ? ' · new best' : ''}</p>` : '';
   return `<section class="ski-card ski-result ski-medal-${result.medal}" aria-label="Result"><small>RESULT</small>${rows}
-    <p class="ski-medal">${medalName(result.medal).toUpperCase()}</p>${paid}<p class="ski-next">Stop in the green circle at the bottom for the helicopter.</p></section>`;
+    <p class="ski-medal">${medalName(result.medal).toUpperCase()}</p>${paid}${waiting ? '<p class="ski-next">Stop in the green circle at the bottom for the helicopter.</p>' : ''}</section>`;
 }
 // The judges' three parts (HELI_SKIING section 5): moguls turns, air and speed; aerials air, form and landing.
 export function scoreCardMarkup(result) {
@@ -675,7 +675,7 @@ export function createSkiHud({host, app}) {
       buttons.hidden = !run;
       line.hidden = !run; root.querySelector('.ski-speed').hidden = !run; targets.hidden = !run; keys.hidden = !run;
       const loading = run && !run.started && !run.finished && (run.kind !== 'free' || run.t < POWDER_CARD_SECONDS);
-      set(cards, result ? resultCardMarkup(result, recorded) : loading ? loadingCardMarkup(run, {snow}) : '');
+      set(cards, result ? resultCardMarkup(result, recorded, {waiting: !!run}) : loading ? loadingCardMarkup(run, {snow}) : '');
       help.hidden = !(run && app.skiHelp === true);
       return true;
     },
