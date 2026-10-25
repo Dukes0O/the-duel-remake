@@ -1,6 +1,8 @@
 import {createDriveLesson,stepDriveLesson,DRIVE_LESSON_CORNERS} from './lessons/drive-lessons.js';
 import {isSummitAttack} from './summit-attack.js';
 import {copyDeepProviders,clearDeepJourney,initializeDeepJourney,deepProtected,checkDeepDeparture,stepDeepJourney,queueDeepChoice,deepEnvironment} from './deep/deep-journey.js';
+// DEEP-SIRENA-VIEW: the Sirena story and the sea-life log, stepped in a dive.
+import {stepDeepStory,pingDeepStory} from './deep/deep-story.js';
 import * as simDriving from './sim-driving.js';
 import * as simContacts from './sim-contacts.js';
 import * as simRival from './sim-rival.js';
@@ -182,7 +184,7 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], _hiddenRoadVisit = false, lesson = null } = {}) {
+  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], deepSave = null, _hiddenRoadVisit = false, lesson = null } = {}) {
     const resolvedStage=Number.isFinite(startStage)?clamp(Math.floor(startStage),0,COURSE.length-1):0;
     // A lesson is a private Time Trial with the actual instructor plan. Its
     // state is outside the ordinary race snapshot: flag-off hashes stay exact.
@@ -206,6 +208,8 @@ export class Duel {
     this.state.seed = this.seed;
     this._deepKit = deepKit === true;
     this._deepFound = Object.freeze(Array.isArray(deepFound) ? deepFound.filter(id=>typeof id==='string') : []);
+    // DEEP-SIRENA-VIEW: what the save already holds, read by the dive's story; deepLift is F held under water.
+    this._deepSave = deepSave && typeof deepSave === 'object' ? structuredClone(deepSave) : null; this._deepLift = false; this.deepStory = null;
     this._requestedLaps = laps;
     this.state.arena = null;
     this._hiddenRoadAutomaticEntry = discoveredGate === true;
@@ -217,6 +221,8 @@ export class Duel {
     if (DIFFICULTY[difficulty]) this.state.difficulty = difficulty;
     // Kyle: Casual keeps released tyres; latch only after resolving difficulty.
     this._tyreSlipRaceEnabled = !!this.drivingLesson || this.featureFlags.enabled('tyre-slip') === true && this.state.difficulty !== 'casual';
+    // Engines that pull like real ones (ENGINE-CURVE): latched once per race, like the tyre rules, so old replays play under their own.
+    this._engineCurveRaceEnabled = this.featureFlags.enabled('engine-curve') === true;
     this.state.cpuDifficulty = CPU_DIFFICULTY[cpuDifficulty] ? cpuDifficulty : DEFAULT_CPU_DIFFICULTY;
     this.state.playerId = typeof playerId === 'string' ? playerId : null;
     this.state.driverId = normalizeDriverId(driverId);
@@ -305,6 +311,8 @@ export class Duel {
     });
     if (this._tyreSlipRaceEnabled === true && this.course.def.arena !== true) s.tyreSlipRules = true;
     else { delete s.tyreSlipRules; delete s.tyreSlip; }
+    if (this._engineCurveRaceEnabled === true && this.course.def.arena !== true) s.engineCurve = true;
+    else delete s.engineCurve;
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
     this._lapGates = [...new Set(rawGates.filter(distance => distance > 0 && distance < this.course.length))].sort((a, b) => a - b);
@@ -521,7 +529,7 @@ export class Duel {
     // itself always reads `this.course` and `state.arena`.
     s.stageIndex = Math.max(0, COURSE.findIndex(course => course.id === 'titan-arena'));
     this.course = new Course(venue, this.seed);
-    delete s.tyreSlipRules; delete s.tyreSlip;
+    delete s.tyreSlipRules; delete s.tyreSlip; delete s.engineCurve;
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     this._lapGates = [];
     this._resetStageDriving();
@@ -578,6 +586,7 @@ export class Duel {
   clearDeep() { clearDeepJourney(this); }
   _deepProtected() { return deepProtected(this); }
   chooseDeep(choice) { return queueDeepChoice(this,choice); }
+  deepPing() { return pingDeepStory(this); } // DEEP-SIRENA-VIEW: R under water
   chooseHiddenRoad(choice) { return queueHiddenRoadChoice(this, choice); }
 
   step(dt) {
@@ -606,7 +615,7 @@ export class Duel {
       }
       return;
     }
-    if (stepDeepJourney(this,dt) || checkDeepDeparture(this)) return;
+    if (stepDeepJourney(this,dt) || checkDeepDeparture(this)) { stepDeepStory(this,dt); return; } // DEEP-SIRENA-VIEW: the story steps after the dive
     if (checkMuddyHollowDeparture(this) || checkHiddenRoadDeparture(this) ||
         s.status === 'exploring') {
       s.calloutTimer = Math.max(0, s.calloutTimer - dt);
@@ -802,6 +811,7 @@ export class Duel {
     for (const key of ['boost', 'shiftUp', 'shiftDown']) if (partial[key] != null) input[key] = !!partial[key];
     if (partial.interact != null && this.state.footTransition)
       input.interact = !!partial.interact;
+    if (partial.interact != null) this._deepLift = !!partial.interact && this.state.deepJourney?.phase === 'underwater'; // DEEP-SIRENA-VIEW: F lifts
   }
 
   // FOOT-03 supplies walking controls here; the car still owns race progress.

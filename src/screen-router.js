@@ -2,6 +2,9 @@ import './lessons/drive-lesson-ui.css';
 import {createDeepUi} from './deep/deep-ui.js';
 import {shownCars} from './earned-cars-ui.js';
 import './deep/deep-ui.css';
+// DEEP-SIRENA-VIEW: the dive's sonar ring, Ana's caption, the log card and the Coast Cup card.
+import {createSirenaHud} from './deep/sirena-view.js';
+import './deep/sirena-ui.css';
 import {createHeliUi} from './heli/heli-ui.js';
 import './heli/heli-ui.css';
 import {createLabUi} from './lab/lab-view.js'; // LAB-VIEW
@@ -80,6 +83,7 @@ root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML, earnedCars: ap
 const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
 const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
+const sirenaHud=createSirenaHud({host:root.querySelector('#stage'),app}); // DEEP-SIRENA-VIEW
 const heliUi=createHeliUi({host:root.querySelector('#stage'),app});
 const labUi=createLabUi({host:root.querySelector('#stage'),app}); // LAB-VIEW: the Lab screen
 // Presentation-only QA switch, absent from normal production builds.
@@ -112,7 +116,7 @@ const buildUpdates=createBuildUpdateChecker({
 const routeMap=new RouteMap(ui['route-map'],{getDiscovery:()=>app.getHiddenRoadDiscovery?.()});
 let menuDiscoveryKey=null;
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
-if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();deepUi.dispose();heliUi.dispose();labUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
+if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();deepUi.dispose();sirenaHud.dispose();heliUi.dispose();labUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
@@ -442,7 +446,7 @@ function renderState(s) {
   combatHud.update(s);
   const journeyView=hiddenRoadUiQa?.skipUpdate?lastHiddenRoadView:hiddenRoadUi.update(s,app.duel.course,yardActive);
   lastHiddenRoadView=journeyView;
-  const deepView=deepUi.update(app.duel);
+  const deepView=deepUi.update(app.duel);sirenaHud.update(); // DEEP-SIRENA-VIEW
   ui.stage.classList.toggle('heli-active',!!heliUi.update());
   ui.stage.classList.toggle('lab-active',!!labUi.update()); // LAB-VIEW
   ui.stage.classList.toggle('deep-active',!!deepView);

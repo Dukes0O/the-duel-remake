@@ -13,6 +13,9 @@ import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
+// DEEP-SIRENA-VIEW: the story's finds, logs and pearls are paid and saved here.
+import {raiseFind} from './deep/deep-sirena.js';
+import {recordLogged,recordPearl,phoneLineFor} from './deep/deep-log.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
 import {createLabLap} from './lab/lab-lap.js'; // LAB-VIEW
@@ -188,6 +191,7 @@ export class App {
       this.deepAudio.event(event,state);
       if(event.deepPhase&&state.deepJourney?.controlsLocked)this._clearHiddenRoadInput();
       if(event.deepCommitted)this._settleDeepDeparture(event.deepCommitted,state);
+      if(event.deepRaised||event.deepLogged||event.deepPearl)this._settleDeepStory(event,state); // DEEP-SIRENA-VIEW
       if(event.deepReturn)this.returnToMenu();
       if (event.hiddenRoadPhase) this._discoverHiddenRoadGate(event.hiddenRoadPhase, state);
       if (event.hiddenRoadCommitted) this._settleHiddenRoadDeparture(event.hiddenRoadCommitted, state);
@@ -605,7 +609,7 @@ export class App {
       crewId:this.wastelandUnlocked()?selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')}):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
-      deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),
+      deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),deepSave:this.profile.deep??null,
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     this._cupRace=cupRound&&this.duel.state.mode==='grandprix'&&this.duel.state.field?.size===8
       ?{seriesId:cupRun.id,ownerId:this.player.id,runId:this.runId,state:this.duel.state}:null;
@@ -1052,6 +1056,7 @@ export class App {
       deepEnabled:this._switches().enabled('the-deep')===true,
       earnedCarsEnabled:this._switches().enabled('earned-cars')===true,
       ...(state.tyreSlipRules===true&&state.difficulty==='pro'&&COURSE[state.stageIndex]?.kind==='drift'?{tyreSlipRules:true}:{}),
+      ...(state.engineCurve===true?{engineCurve:true}:{}),
       intelEnabled:this._switches().enabled('grand-prix')===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(COURSE[state.stageIndex],state.mode)){
@@ -1311,6 +1316,19 @@ export class App {
     this.ghostRecorder=this.grandPrixLapRecorder=this.lapTelemetryRecorder=null;
     this.ghostPose=null;this.driftNotice=this.checkpointNotice=null;
     return true;
+  }
+  // DEEP-SIRENA-VIEW: pay and save a raised find, a logged creature or a pearl, once, for the
+  // player who dived (the same checks as the dive's own settlement), then Ana's log lines.
+  _settleDeepStory(event,state) {
+    const journey=state?.deepJourney;
+    if(!this.runId||state!==this.duel.state||!journey?.committed||state.playerId!==this._runPlayerId||this._runPlayerId!==this.player?.id||
+      !this._switches().enabled('the-deep'))return false;
+    this._refreshPlayer();
+    const on={enabled:true},result=event.deepRaised?raiseFind(this.profile,event.deepRaised.find,on):
+      event.deepLogged?recordLogged(this.profile,event.deepLogged.creature,on):recordPearl(this.profile,event.deepPearl.pearl,on);
+    if(result.profile!==this.profile){this.profile=result.profile;this._saveProfile();}
+    if(!event.deepRaised)for(const line of phoneLineFor(event,result))this.duel.emit({deepPhone:{line}});
+    return result.ok;
   }
   chooseDeep(choice) {
     const state=this.duel.state;
@@ -2059,6 +2077,7 @@ export class App {
     else if (action === 'heli-cruise') this._heliPress(session => session.acceptCruise());
     else if (action === 'heli-radio') this._heliPress(session => session.pressRadio());
     else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % (this.heliSession?.cameraCount ?? 4); this.duel.emit({heli: true}); }
+    else if (action === 'deep-ping') this.duel.deepPing(); // DEEP-SIRENA-VIEW: R under water
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
   }

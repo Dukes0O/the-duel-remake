@@ -31,3 +31,12 @@ before it goes live (rule 8). Removed: nothing.
 
 - Show the aerials tips (`aerialsTips()` in `src/lab/benches/launch.js`, six lines) on the Aerials run's loading card once `aerialsOpen` is true.
 - Show the day's snow (`snowOfDay(day)`: name and temperature) and, with the Wax kit, the three-wax pick before each run.
+
+## Sounds come after (Claude, 25 October 2026)
+
+SKI-AUDIO waits for Kyle's voice session, so this card no longer waits for
+it. Emit the game events the cues will hang on (as DEEP-SIRENA-VIEW did for
+DEEP-AUDIO) and play only sounds that already exist; SKI-AUDIO maps its cues
+and Roger's lines to those events when it runs. Moved to a cloud session;
+`busy-game-files` is shared with LAB-VIEW, LAB-TUNE, MAP-VIEW and
+DRIVE-LESSON-3, so keep shared-file edits in small blocks marked SKI-VIEW.

@@ -43,3 +43,16 @@ Acceptance: the test, combat balance unchanged with the switch off, lane
 tier, build, one review of the code and the numbers. Removed: nothing (the
 old pull stays as the switch-off path until the switch is fully on; the
 janitor removes it then).
+
+## Claude answers
+
+Claude (design lead), 25 October 2026: all six picks confirmed.
+
+1. Gear power 0.31 (Banshee 0.284, Bolide 0.41 in `ENGINE_FIT`): keep. Every mark inside 1.5% is what matters, and the order of gears is kept.
+2. Clutch-slip floor of 75% revs in first gear only: keep.
+3. Convex low-rev rise, idle 35%, Titan's top gear at least twice as slow: keep.
+4. Arenas keep the old pull: keep; no card now.
+5. Separate `engine-curve:1` tag in `bestKey`: keep, so released records are never overwritten.
+6. Changed assertion, Claude's review: `tools/test-feature-flags.mjs` adds `engine-curve` to the dev list and raises the switch count by one; `start-preview.bat` gains it in PREVIEW_FLAGS. This records a new dev switch, every existing check stays as strict as before, nothing is loosened. Approved.
+
+Also required: the monster truck's big air off cars and the Summit hillside driving must still work with the switch on (`docs/board/decisions.md` "Keep these"); the change note says how that was checked.
