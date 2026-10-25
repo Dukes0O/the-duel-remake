@@ -21,11 +21,11 @@ export const CHALLENGE_IDS = Object.freeze(['lift', 'projectile', 'fire', 'pendu
 export const CHALLENGE_RULES = Object.freeze({
   // The Dusthawk (1,280 kg) on the hook, full tank, hover 10 s with it 2 to 5 m off the ground over the home pad.
   lift: Object.freeze({carId: 'dusthawk_rally', radius: 6, low: 2, high: 5, holdSeconds: 10, fullTankKg: KESTREL.tankKg - 1}),
-  // Three buoys on the home lake, each hit by a drop within 5 m.
-  projectile: Object.freeze({buoys: 3, hitRadius: 5, scoopKeepOut: 80, apart: 80}),
-  // A practice fire of 6 x 3 cells on the lake shore, lit at one end, spreading one step every 30 s; it must not reach the far column
-  // (the "road") in three minutes. Left alone it gets there in 150 s; the lake is a short hop away, so a pilot can keep it back.
-  fire: Object.freeze({seconds: 180, spreadEvery: 30, columns: 6, rows: 3, seed: FIRE.courseSeed, shoreGap: 140}),
+  // Three buoys with generous hit circles and short-lived feedback at actual landings.
+  projectile: Object.freeze({buoys: 3, hitRadius: 10, splashSeconds: 5, scoopKeepOut: 80, apart: 80}),
+  // A practice fire of 6 x 3 cells on the lake shore. A steady pilot needs two scoop trips;
+  // spread every 70 s gives them time to put it out, with a minute spare before the road (350 s).
+  fire: Object.freeze({seconds: 420, spreadEvery: 70, columns: 6, rows: 3, seed: FIRE.courseSeed, shoreGap: 140}),
   // A car carried across Tremblant Woods, set down within 25 m of the target with its swing under 1 m.
   pendulum: Object.freeze({carId: 'falcone_f42', distance: 500, targetRadius: 25, swingMetres: 1}),
   // A 300 kg crate to Summit Run, set down in its landing zone, with at least 30% of the tank left.
@@ -113,7 +113,7 @@ export function createChallenge(id, spots) {
   if (!CHALLENGE_IDS.includes(id)) throw new Error(`Unknown challenge ${id}`);
   const base = {id, spots, elapsed: 0, done: false};
   if (id === 'lift') return {...base, held: 0};
-  if (id === 'projectile') return {...base, hit: spots.buoys.map(() => false)};
+  if (id === 'projectile') return {...base, hit: spots.buoys.map(() => false), splash: null};
   if (id === 'pendulum') return {...base, swing: null, lastSwing: null, lastAt: null};
   if (id === 'altitude') return {...base, setDown: false};
   if (id === 'headings') return {...base};
@@ -145,8 +145,10 @@ export function stepChallenge(ch, view, dt = 1 / 120) {
     if (ch.held >= rule.holdSeconds) return pass();
   } else if (ch.id === 'projectile') {
     const rule = CHALLENGE_RULES.projectile;
+    if (ch.splash && ch.elapsed >= ch.splash.until) ch.splash = null;
     for (const patch of view.patches ?? []) {
       if (!(patch.litres > 0)) continue;
+      ch.splash = {kind: 'splash', x: patch.x, z: patch.z, y: patch.y ?? ch.spots.buoys[0].y, until: ch.elapsed + rule.splashSeconds};
       ch.spots.buoys.forEach((buoy, index) => {
         if (ch.hit[index] || horizontal(patch, buoy) > rule.hitRadius) return;
         ch.hit[index] = true;
@@ -198,7 +200,10 @@ export function stepChallenge(ch, view, dt = 1 / 120) {
 
 // What the screen draws for the challenge in hand: buoys with their hits, the smoke marker, the practice fire's cells.
 export function challengeProps(ch) {
-  if (ch.id === 'projectile') return Object.freeze(ch.spots.buoys.map((buoy, index) => Object.freeze({kind: 'buoy', x: buoy.x, z: buoy.z, y: buoy.y, hit: ch.hit[index]})));
+  if (ch.id === 'projectile') return Object.freeze([
+    ...ch.spots.buoys.map((buoy, index) => Object.freeze({kind: 'buoy', x: buoy.x, z: buoy.z, y: buoy.y, radius: CHALLENGE_RULES.projectile.hitRadius, hit: ch.hit[index]})),
+    ...(ch.splash ? [Object.freeze({...ch.splash})] : []),
+  ]);
   if (ch.id === 'headings') return Object.freeze([Object.freeze({kind: 'smoke', ...ch.spots.marker})]);
   if (ch.id === 'fire') {
     const burning = new Map(ch.fire.burning), burnt = new Set(ch.fire.burnt);

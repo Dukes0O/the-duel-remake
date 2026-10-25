@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-25T23:08:13.285Z
+Observed at: 2026-10-25T23:46:33.566Z
 
-Observation commit: 2a455485aa7ced160b056a2f71f188d1efe4c399
+Observation commit: 23521c3e06967a5b0bb71c1e18d306744f6d262a
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2a455485aa7ced160b056a2f71f188d1efe4c399
+Integration HEAD: 23521c3e06967a5b0bb71c1e18d306744f6d262a
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,9 +29,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/lab-polish | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-polish |
+| codex/lab-challenge-ease | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-ease |
 | codex/perf-high-night | 10 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
-| codex/speirling-kit | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/speirling-kit |
 | codex/wild-art-src | 10 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
 ## Unmerged branches for idle review
@@ -40,7 +39,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/lab-polish | unknown | 2026-10-25T16:04:23-07:00 | 0 | last commit 2026-10-25T16:04:23-07:00 | docs/LAB.md, docs/board/STATUS.md, docs/board/cards/LAB-POLISH.md, docs/board/looks/lab-polish/benches.jpg, docs/changes/LAB-POLISH.md |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 10 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 10 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
@@ -55,10 +53,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 23,255,836 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 722,127 B | +0 B | 5,000,000 B |
+| Review `looks/` | 23,720,193 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 574,904 B | +0 B | 5,000,000 B |
 | All `public/` | 335,681,495 B | +0 B | unavailable |
-| Git objects | 750,256,128 B | +0 B | unavailable |
+| Git objects | 751,475,712 B | +0 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -67,7 +65,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: b83f4cdab027a229f48dba94e4293dc6f43dc6e8
 - Local main: missing
-- Local integration/wasteland: 2a455485aa7ced160b056a2f71f188d1efe4c399
+- Local integration/wasteland: 23521c3e06967a5b0bb71c1e18d306744f6d262a
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -75,9 +73,8 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit b83f4cdab027a229f48dba94e4293dc6f43dc6e8.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 2a455485aa7ced160b056a2f71f188d1efe4c399.
+- Remote origin/integration/wasteland: matches local; cached commit 23521c3e06967a5b0bb71c1e18d306744f6d262a.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
-Issue: codex/lab-polish: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-polish' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-polish/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-polish
 Issue: codex/perf-high-night: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night
 Issue: codex/wild-art-src: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src

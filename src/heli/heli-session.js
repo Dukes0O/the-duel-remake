@@ -856,6 +856,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function stepChallengeNow(dt) {
     const held = loads.find(car => car.labLoad && car.hooked) ?? null;
     const events = challengeEvents.splice(0), patches = challengePatches.splice(0);
+    if (challenge.id === 'projectile') for (const patch of patches) patch.y = world.ground.highest(patch.x, patch.z, 0);
     const loadHeight = held ? Math.max(0, held.y - (held.restHeight ?? CABLE.restHeight) - world.ground.height(held.x, held.z)) : null;
     const view = {courseId: site.courseId, heli: {x: heli.x, y: heli.y, z: heli.z, groundY: heli.groundY, onGround: heli.onGround, fuelKg: heli.fuelKg},
       load: held, loadHeight, patches, events, ringIndex: labNow()?.ringIndex ?? 0};
@@ -948,7 +949,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function settleSkiResult(result) {
     const done = commit(recordSkiRun(save, result.run, result.kind === 'time' ? {time: result.time, medal: result.medal} : {points: result.points, medal: result.medal}, flag));
     if (done.ok) emit({type: 'skiRecorded', run: result.run, medal: result.medal, paid: done.paid, improved: done.improved, raised: done.raised});
-    // The Lab's wax challenge: the right wax for the day's snow and a slalom time inside the silver time.
+    // The Lab's wax challenge: finish the slalom with the right wax for the day's snow.
     if (skiMeta?.challenge === 'wax' && result.kind === 'time') {
       const outcome = waxRunResult({day: skiMeta.day, pick: skiMeta.pick, time: result.time});
       if (outcome.pass) { commit(passLabChallenge(save, 'wax')); emit({type: 'waxChallengePassed'}); }

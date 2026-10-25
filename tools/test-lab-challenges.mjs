@@ -43,8 +43,8 @@ const lastOf = (challenge, script) => fly(challenge, script).last;
 test('the six challenges are the ones in the design, with its numbers', () => {
   assert.deepEqual(CHALLENGE_IDS, ['lift', 'projectile', 'fire', 'pendulum', 'altitude', 'headings']);
   assert.deepEqual(CHALLENGE_RULES.lift, {carId: 'dusthawk_rally', radius: 6, low: 2, high: 5, holdSeconds: 10, fullTankKg: KESTREL.tankKg - 1});
-  assert.equal(CHALLENGE_RULES.projectile.buoys, 3); assert.equal(CHALLENGE_RULES.projectile.hitRadius, 5);
-  assert.equal(CHALLENGE_RULES.fire.seconds, 180);
+  assert.equal(CHALLENGE_RULES.projectile.buoys, 3); assert.equal(CHALLENGE_RULES.projectile.hitRadius, 10);
+  assert.equal(CHALLENGE_RULES.fire.seconds, 420);
   assert.equal(CHALLENGE_RULES.pendulum.swingMetres, 1);
   assert.equal(CHALLENGE_RULES.altitude.crateKg, 300); assert.equal(CHALLENGE_RULES.altitude.fuelShare, 0.3);
   assert.equal(CHALLENGE_RULES.headings.radius, 30); assert.equal(CHALLENGE_RULES.headings.height, 20);
@@ -96,16 +96,16 @@ test('lift: a steady hover with the Dusthawk passes; every way of not holding it
   assert.equal(lastOf(createChallenge('lift', spotsOf('lift')), [[6, holding()], [0.5, holding({loadHeight: 6})], [10.5, holding()]]).result, 'passed');
 });
 
-// ---- Projectile motion: three buoys, each hit within 5 m -------------------------------------------------------
-test('projectile: all three buoys hit within 5 m passes with the ring in use; a miss, a dry drop or two buoys does not', () => {
+// ---- Projectile motion: three buoys, each hit within 10 m -------------------------------------------------------
+test('projectile: all three buoys hit within 10 m passes with the ring in use; a miss, a dry drop or two buoys does not', () => {
   const spots = spotsOf('projectile'), patchAt = (buoy, off, litres = 25) => ({x: buoy.x + off, z: buoy.z, litres, radius: 4});
   const ch = createChallenge('projectile', spots);
-  const first = stepChallenge(ch, quiet({patches: [patchAt(spots.buoys[0], 4.9)]}), 0.1);
+  const first = stepChallenge(ch, quiet({patches: [patchAt(spots.buoys[0], 9.9)]}), 0.1);
   assert.equal(first.result, 'running'); assert.equal(first.cue, 'heli.buoy-hit'); assert.deepEqual(first.events, [{type: 'buoyHit', index: 0}]);
-  assert.deepEqual(challengeProps(ch).map(prop => prop.hit), [true, false, false]);
-  // A drop that misses by 5.1 m, and one with no water in it, count for nothing.
-  assert.equal(stepChallenge(ch, quiet({patches: [patchAt(spots.buoys[1], 5.1), patchAt(spots.buoys[1], 0, 0)]}), 0.1).cue, null);
-  assert.deepEqual(challengeProps(ch).map(prop => prop.hit), [true, false, false]);
+  assert.deepEqual(challengeProps(ch).filter(prop => prop.kind === 'buoy').map(prop => prop.hit), [true, false, false]);
+  // A drop that misses by 10.1 m, and one with no water in it, count for nothing.
+  assert.equal(stepChallenge(ch, quiet({patches: [patchAt(spots.buoys[1], 10.1), patchAt(spots.buoys[1], 0, 0)]}), 0.1).cue, null);
+  assert.deepEqual(challengeProps(ch).filter(prop => prop.kind === 'buoy').map(prop => prop.hit), [true, false, false]);
   stepChallenge(ch, quiet({patches: [patchAt(spots.buoys[1], -3)]}), 0.1);
   const done = stepChallenge(ch, quiet({patches: [patchAt(spots.buoys[2], 0)], ringIndex: 2}), 0.1);
   assert.equal(done.result, 'passed'); assert.equal(done.ring, 2, 'it passes with the ring in use');
@@ -116,19 +116,36 @@ test('projectile: all three buoys hit within 5 m passes with the ring in use; a 
   assert.equal(stepChallenge(again, quiet({patches: [patchAt(spots.buoys[0], 0)]}), 0.1).cue, null, 'the same buoy cannot score twice');
 });
 
-// ---- Fire triangle: the practice fire must not reach the road in three minutes -------------------------------
+test('projectile splash feedback marks real wet landings for five seconds, including misses', () => {
+  const spots = spotsOf('projectile'), ch = createChallenge('projectile', spots);
+  const patch = {x: spots.buoys[0].x + 11, z: spots.buoys[0].z, litres: 25, radius: 4};
+  stepChallenge(ch, quiet({patches: [patch]}), .1);
+  assert.equal(ch.hit.some(Boolean), false, 'a splash is feedback, not a free hit');
+  const marker = challengeProps(ch).find(p => p.kind === 'splash');
+  assert.equal(marker.x, patch.x); assert.equal(marker.z, patch.z);
+  stepChallenge(ch, quiet(), 4.9);
+  assert.ok(challengeProps(ch).some(p => p.kind === 'splash'));
+  stepChallenge(ch, quiet(), .2);
+  assert.ok(!challengeProps(ch).some(p => p.kind === 'splash'));
+  assert.ok(challengeProps(ch).every(p => p.radius === 10));
+  const shore = {x: site.zone.x, z: site.zone.z, y: woods.ground.highest(site.zone.x, site.zone.z, 0), litres: 25};
+  stepChallenge(ch, quiet({patches: [shore]}), .1);
+  assert.equal(challengeProps(ch).find(p => p.kind === 'splash').y, shore.y, 'shore misses stay above the shore');
+});
+
+// ---- Fire triangle: the practice fire must not reach the road in seven minutes -------------------------------
 // The bucket's drops, scripted: water on every burning cell every 20 s, or a line of retardant across the fire's path.
 function firePatches(ch, {litres = 600, radius = 8, retardant = false} = {}) {
   return ch.fire.burning.map(([cell]) => { const [i, j] = cellIJ(cell); return {x: (i + 0.5) * FIRE.cell, z: (j + 0.5) * FIRE.cell, litres, radius, ...(retardant ? {retardant: true} : {})}; });
 }
-test('fire: left alone it reaches the road; water on the flames or a line of retardant in its path holds it for three minutes', () => {
-  const neglected = fly(createChallenge('fire', spotsOf('fire')), [[400, quiet()]]);
+test('fire: left alone it reaches the road; water on the flames or a line of retardant in its path holds it for seven minutes', () => {
+  const neglected = fly(createChallenge('fire', spotsOf('fire')), [[800, quiet()]]);
   assert.equal(neglected.last.result, 'retry'); assert.equal(neglected.last.reason, 'The fire reached the road.');
-  assert.ok(neglected.answers.length * 0.1 < CHALLENGE_RULES.fire.seconds, 'and it does so inside the three minutes');
+  assert.ok(neglected.answers.length * 0.1 < CHALLENGE_RULES.fire.seconds, 'and it does so inside the seven minutes');
   // Water: a drop on every flame, every 20 s, from the first seconds on.
   const watered = createChallenge('fire', spotsOf('fire')), wet = [];
   let result = null;
-  for (let t = 0; t < 200 && !result; t += 0.1) {
+  for (let t = 0; t < 440 && !result; t += 0.1) {
     const patches = Math.round(t * 10) % 200 === 50 ? firePatches(watered) : [];
     const answer = stepChallenge(watered, quiet({patches}), 0.1);
     if (answer.result !== 'running') result = answer;
@@ -138,10 +155,10 @@ test('fire: left alone it reaches the road; water on the flames or a line of ret
   // Retardant: treat the fourth column right away, then wait.
   const strip = createChallenge('fire', spotsOf('fire'));
   const column = [...strip.grid.cells.values()].filter(cell => cell.i === strip.grid.cells.values().next().value.i + 4).map(cell => ({x: cell.x, z: cell.z, litres: 4000, radius: 4, retardant: true}));
-  const treated = lastOf(strip, [[0.1, quiet({patches: column})], [190, quiet()]]);
+  const treated = lastOf(strip, [[0.1, quiet({patches: column})], [430, quiet()]]);
   assert.equal(treated.result, 'passed', 'a treated line stops the spread');
   // The same inputs, the same answer.
-  const a = fly(createChallenge('fire', spotsOf('fire')), [[400, quiet()]]), b = fly(createChallenge('fire', spotsOf('fire')), [[400, quiet()]]);
+  const a = fly(createChallenge('fire', spotsOf('fire')), [[800, quiet()]]), b = fly(createChallenge('fire', spotsOf('fire')), [[800, quiet()]]);
   assert.deepEqual(a.last, b.last); assert.equal(a.answers.length, b.answers.length);
   // The props show the cells, the flames and the road column.
   const props = challengeProps(createChallenge('fire', spotsOf('fire')));
@@ -532,23 +549,37 @@ function fireFlight({drop = true} = {}) {
   session.start();
   assert.equal(session.fitBucket().ok, true);
   assert.equal(session.startChallenge('fire').ok, true);
-  const lake = spotsOf('projectile').scoop, surface = woods.ground.water(lake.x, lake.z), high = 50, events = [];
+  const lake = spotsOf('fire').scoop, surface = lake.y, events = [];
   const done = () => has(events, 'challengePassed') || has(events, 'challengeRetry') || has(events, 'crashed');
-  const burning = v => v.challenge?.props.filter(prop => prop.kind === 'fire' && prop.percent > 0) ?? [];
-  const centre = v => { const cells = burning(v); if (!cells.length) return null; const front = Math.max(...cells.map(c => c.x)), edge = cells.filter(c => c.x === front); return {x: front, z: edge.reduce((s, c) => s + c.z, 0) / edge.length}; };
-  const go = (seconds, controls, until) => { events.push(...run(session, seconds, controls, (v, got) => done() || until(v, got))); };
-  go(60, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: high}, {speed: 1}), v => v.heli.y > v.heli.groundY + 22);
-  if (drop) for (let trip = 0; trip < 3 && !done(); trip++) {
-    go(90, v => pilot(v, {x: lake.x, z: lake.z, y: high}, {speed: 20, sink: 6}), v => Math.hypot(v.heli.x - lake.x, v.heli.z - lake.z) < 8);
-    go(60, v => pilot(v, {x: lake.x, z: lake.z, y: surface + 17.6}, {speed: 2, sink: 8}), v => v.bucket?.words === 'full');
-    const goal = v => { const c = centre(v) ?? {x: v.heli.x, z: v.heli.z}, aim = v.bucket.aim, lead = aim ? {x: aim.x - v.bucket.x, z: aim.z - v.bucket.z} : {x: 0, z: 0};
-      const near = Math.hypot(v.heli.x - c.x, v.heli.z - c.z) < 90;
-      return {x: c.x - lead.x, z: c.z - lead.z, y: woods.ground.height(c.x, c.z) + 55}; };
-    go(120, v => pilot(v, goal(v), {speed: 25, sink: 6}), v => { const c = centre(v), aim = v.bucket.aim; return !c || aim && Math.hypot(aim.x - c.x, aim.z - c.z) < 4 && Math.hypot(v.heli.vx, v.heli.vz) < 1; });
-    go(6, v => ({...pilot(v, goal(v), {speed: 2, sink: 3}), pour: true}), v => (v.bucket?.water ?? 0) <= 0.5);
-    go(6, v => pilot(v, goal(v), {speed: 2, sink: 3}), () => false);
-  }
-  else go(240, () => ({lift: 0.1}), () => false);
+  const go = (seconds, controls, until = () => false) => { events.push(...run(session, seconds, controls, (v, got) => done() || until(v, got))); };
+  let step=0, stick={};
+  const steer=(v,target,options)=>{
+    if(step++%30===0) stick=Object.fromEntries(Object.entries(pilot(v,target,options)).map(([k,value])=>[k,Math.round(value*10)/10]));
+    return stick;
+  };
+  const move=(target,limit=90,speed=14)=>go(limit,v=>steer(v,target,{speed,sink:4}),
+    v=>Math.hypot(v.heli.x-target.x,v.heli.z-target.z)<3 && Math.abs(v.heli.y-target.y)<2 && Math.hypot(v.heli.vx,v.heli.vz)<2);
+  const settle = (target, limit = 90, speed = 14) => go(limit, v=>steer(v,target,{speed,sink:4}),
+    v=>Math.hypot(v.heli.x-target.x,v.heli.z-target.z)<1.5 && Math.abs(v.heli.y-target.y)<.6 && Math.hypot(v.heli.vx,v.heli.vy,v.heli.vz)<.7);
+  if (drop) {
+    const v=session.view();
+    move({x:v.heli.x,z:v.heli.z,y:v.zone.y+70},60,3);
+    for(let trip=0;trip<4 && !done();trip++) {
+      move({x:lake.x,z:lake.z,y:surface+70},120,20);
+      go(60,v=>steer(v,{x:lake.x,z:lake.z,y:surface+14.8},{speed:3,sink:4}),v=>v.bucket.water>=v.bucket.holds-5);
+      move({x:lake.x,z:lake.z,y:surface+40},45,6);
+      while(session.view().bucket.water>25 && !done()) {
+        const target=session.view().challenge.props.find(p=>p.kind==='fire' && p.percent>0);
+        if(!target) break;
+        let aim={x:target.x,z:target.z,y:target.y+40};
+        settle(aim);
+        const ring=session.view().bucket.aim;
+        if(ring) { aim={...aim,x:aim.x+Math.round(target.x-ring.x),z:aim.z+Math.round(target.z-ring.z)}; settle(aim,20,3); }
+        go(.5,v=>({...steer(v,aim,{speed:3,sink:4}),pour:true}));
+        go(5,v=>steer(v,aim,{speed:3,sink:4}));
+      }
+    }
+  } else go(400,()=>({lift:.1}));
   return {session, events};
 }
 test('fire, flown: water from the lake on the practice fire passes and is saved; leaving it alone sends the pilot back', () => {
