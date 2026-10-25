@@ -82,3 +82,33 @@ Kyle drove the racecraft preview: acceleration and nitro are right, but the
 cars still patiently form one lane off the start, which he expected fixed.
 Build steps 1 to 3 above now. Moved to Codex (CLI) since the cloud credit is
 used up.
+
+## Claude's decision (25 October 2026)
+
+Claude's decision as design lead (Kyle asked for the wide start and will hear
+about it in the release note): ship step 2. Its table shows the start is wider
+(side-by-side pairs and the spread of the leading six roughly double) and
+safer overall (Panorama mean crashes 9.10 to 6.55, early pile-ups 4 to 0;
+Pacific crashes 0.30 to 0.10). The two misses are accepted: Tremblant's single
+extra 8+-crash race in 20 is a small count, and Pacific's 3.14% race-time change
+is the price of the field running wide into the first corner.
+
+| Gate (today off -> step 2) | Panorama Ridge | Tremblant Woods | Pacific Canyon |
+| --- | --- | --- | --- |
+| 8+-crash races, on <= off | 12 -> 10 PASS | 0 -> 1 FAIL | 0 -> 0 PASS |
+| Mean crashes, on <= off x 1.1 | 9.10 -> 6.55 PASS | 2.40 -> 2.50 PASS | 0.30 -> 0.10 PASS |
+| Early pile-ups, on <= off + 1 | 4 -> 0 PASS | 0 -> 0 PASS | 0 -> 0 PASS |
+| Max paired CPU-time change, <= 2% | 1.64% PASS | 1.64% PASS | 3.14% FAIL |
+| Races with >= 2 distinct side-by-side pairs (report-only) | 0 -> 0 /20 | 0 -> 4 /20 | 0 -> 2 /20 |
+| Races with leading-six lateral spread >= 3 m (report-only) | 0 -> 15 /20 | 0 -> 0 /20 | 0 -> 0 /20 |
+| Mean distinct pairs at first braking (report-only) | 0.15 -> 0.25 | 0.20 -> 0.70 | 0.10 -> 0.35 |
+| Mean leading-six lateral spread, m (report-only) | 2.409 -> 3.118 | 1.245 -> 2.592 | 1.763 -> 2.561 |
+| CPU passes per normal race (report-only) | 7.75 -> 3.80 | 8.65 -> 10.50 | 3.50 -> 7.20 |
+| Slower player passed (report-only, enabled) | 11 /20 | 20 /20 | 19 /20 |
+| Nitro player leads after lap 1 (report-only, off -> on) | 0 -> 0 /20 | 0 -> 0 /20 | 16 -> 0 /20 |
+
+The FAIL labels preserve the measured gate results; the two exceptions above
+are accepted. Restore the corrected step 2 under the existing development
+switch, with continuous clearance checks until merging completes. Step 1 is
+removed. Do not rerun the 360-race batch. Run the lane tier, production build
+and `grand-prix-existing` browser scenario; commit only on this lane.

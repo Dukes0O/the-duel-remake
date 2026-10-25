@@ -15,7 +15,8 @@ import { testCourseAccess } from './career-fixture.mjs';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { FIELD, FIELD_TUNING, CATCH_UP_GAP_SEC, gridPose, chooseRacers, performanceIndex, racerSpec, catchUpFactor,
   classify } from '../src/race-field.js';
-import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro, playerPaceMph, closePassRefill, cpuNitroExtraMph, cpuNitroAcceleration } from '../src/race-field-driver.js';
+import { runtimeOf, followLimitMph, CPU_NITRO, stepCpuNitro, playerPaceMph, closePassRefill, cpuNitroExtraMph, cpuNitroAcceleration,
+  startLaneTarget, startMergeClear, insideCornerPriority } from '../src/race-field-driver.js';
 import { shortRacerName, runningOrderRows, fieldResultsTable, fieldResultsText } from '../src/screen-field.js';
 import { installTestDriver } from './race-field-balance.mjs';
 import { App } from '../src/app.js';
@@ -37,6 +38,53 @@ const racing = duel => { while (duel.state.status === 'countdown') duel.step(STE
 const run = (duel, seconds) => { for (let i = 0; i < seconds * 60 && duel.state.status === 'racing'; i++) duel.step(STEP); return duel; };
 const fingerprint = duel => JSON.stringify([duel.state.stageTimeSec.toFixed(3), duel.state.s.toFixed(3), duel.state.speedMph.toFixed(3),
   ...duel.state.opponents.map(r => [r.s.toFixed(3), r.lateral.toFixed(3), r.speedMph.toFixed(3), r.completedLaps, !!r.knock])]);
+
+// GP-WIDE-START step 2: release after 200 m only when clear; inside priority stays.
+{
+  const field = {gridStartS: -20, startMerged: true, startLateral: -3};
+  equal(startLaneTarget(field, 179, 4), -3, 'formation holds its grid lane for 200 m');
+  equal(startLaneTarget(field, 180, 4), 4, 'clear formation releases after 200 m');
+  equal(startLaneTarget({...field, startMerged: false}, 300, 4), -3, 'blocked merge keeps the grid lane');
+  const merging = {...field, startMerged: false};
+  equal(startLaneTarget(merging, 180, 4, true, -3), 4, 'clear corridor starts the drift');
+  equal(merging.startMerged, false, 'starting a merge does not complete it');
+  equal(startLaneTarget(merging, 190, 4, false, -1), -1, 'closing corridor pauses at the current lane');
+  equal(startLaneTarget(merging, 200, 4, true, -1), 4, 'clear corridor lets the drift resume');
+  equal(startLaneTarget(merging, 210, 4, true, 3.9), 4, 'merge completes on reaching the line');
+  equal(merging.startMerged, true, 'only a completed merge releases the start controller');
+  const car = {s: 100, lateral: -3, speedMph: 100};
+  const other = {s: 100, lateral: 0, speedMph: 100};
+  const shell = {halfLength: 2, halfWidth: 1};
+  const d = {state: {...other, opponents: [car]}, relativeS: s => s, _vehicleSpec: () => shell};
+  equal(startMergeClear(d, car, shell, 3), false, 'car in the swept corridor blocks a merge');
+  d.state.s = car.s + 4 + 100 * DRIVE.mphToWorld - .1;
+  equal(startMergeClear(d, car, shell, 3), false, 'one-second gap ahead must be clear');
+  d.state.s = car.s - 4 - 100 * DRIVE.mphToWorld + .1;
+  equal(startMergeClear(d, car, shell, 3), false, 'one-second gap behind must be clear');
+  d.state.s -= .2;
+  equal(startMergeClear(d, car, shell, 3), true, 'car beyond the rear safety gap allows merging');
+  d.state.s = car.s; d.state.lateral = 6;
+  equal(startMergeClear(d, car, shell, 3), true, 'car outside the swept widths allows merging');
+  d.state.headingError = -.1;
+  equal(startMergeClear(d, car, shell, 3), false, 'car drifting into the corridor blocks a merge');
+  const run = {halfLength: 2};
+  const inside = {ds: 0, dl: 3, hl: 2};
+  equal(insideCornerPriority({}, run, [inside], 1), inside, 'level inside car owns right corner');
+  equal(insideCornerPriority({}, run, [inside], -1), null, 'outside car cannot claim priority');
+  equal(insideCornerPriority({}, run, [{...inside, ds: -2.01}], 1), null,
+    'outside car more than half its own length ahead keeps priority');
+  equal(insideCornerPriority({}, run, [{...inside, ds: -2}], 1)?.ds, -2,
+    'exactly half a length ahead still yields');
+  equal(insideCornerPriority({}, run, [{...inside, ds: 4}], 1), null,
+    'non-overlapping car uses normal following');
+  for (const enabled of [false, true]) {
+    const d = start({racecraft: enabled});
+    for (const r of d.state.opponents) {
+      equal(Object.hasOwn(r.field, 'gridStartS'), enabled, 'grid formation state is switch-only');
+      if (enabled) equal(r.field.startLateral, r.lateral, 'formation remembers its own grid lane');
+    }
+  }
+}
 
 // GP-RACECRAFT: protect the released simulation before testing opt-in behavior.
 check(FEATURE_STATES['cpu-racecraft'] === 'dev', 'racecraft is preview-only');

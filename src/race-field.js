@@ -252,7 +252,10 @@ export function initializeField(duel) {
       field: {
         index, slot: slotOf[index], skillRoll: 1 + jitter, reaction, rng: (rng.float() * 4294967296) >>> 0,
         formAmp: tuning.form * (course.def.fieldForm ?? 1), formPeriod: 25 + rng.float() * 30, formPhase: rng.float() * Math.PI * 2,
-        traits: { ...racer.traits }, ...(racecraft ? {racecraft:true} : {}), bias: 0, intent: pose.lateral, pass: null, passCool: 0, passes: { start: 0, done: 0, timeout: 0, stalled: 0, edge: 0, dives: 0 }, diveKey: null, tow: 0, mistake: null,
+        // GP-WIDE-START: formation state exists only with the development switch.
+        traits: { ...racer.traits }, ...(racecraft ? {racecraft:true,
+          gridStartS:pose.s+gridSetback+gridStart, startLateral:pose.lateral} : {}),
+        bias: 0, intent: pose.lateral, pass: null, passCool: 0, passes: { start: 0, done: 0, timeout: 0, stalled: 0, edge: 0, dives: 0 }, diveKey: null, tow: 0, mistake: null,
         zoneKey: null, rolledKey: null, defendKey: null, defendSide: 0, lateBrake: 0, stuck: 0, offSec: 0,
         recoveries: 0, crashes: 0, knocked: false, cooldownSeen: 0, hits: 0, moveSpeed: 0,
       },
