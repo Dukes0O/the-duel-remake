@@ -1,0 +1,80 @@
+/* The Lab screen (docs/LAB.md): the room on the left, the board, bench or shop on the right. */
+.lab-panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;background:#101516;color:var(--ink,#f3eddf);pointer-events:auto}
+.lab-panel[hidden]{display:none}
+.lab-top{flex:none;display:flex;align-items:center;gap:24px;padding:18px 32px;border-bottom:1px solid #ffffff1f;background:#121a1bf2}
+.lab-head{display:contents}
+.lab-head h2{margin:8px 0 0;font:italic 900 30px/1 'Arial Black','Segoe UI',sans-serif;letter-spacing:-1.2px}
+.lab-tabs{display:flex;gap:6px;margin-left:24px}
+.lab-tabs button{padding:10px 18px;background:none;border:0;border-bottom:2px solid transparent;font-size:13px;font-weight:700;letter-spacing:1px;color:#b4b4a6}
+.lab-tabs button.on{border-bottom-color:#ff7246;color:#f8f0dd;background:#f4dec40a}
+.lab-wallet{margin-left:auto;display:flex;flex-direction:column;gap:4px;text-align:right}
+.lab-wallet span{font-size:10px;font-weight:750;letter-spacing:2px;color:#afa990}
+.lab-wallet b{font-size:26px;font-variant-numeric:tabular-nums;color:#eac78e;font-weight:650}
+.lab-wallet small{font-size:11px;letter-spacing:1px;font-weight:500}
+.lab-close{width:36px;height:36px;border:1px solid #ded4b744;background:transparent;font-size:24px;line-height:1}
+.lab-main{flex:1;min-height:0;display:flex}
+.lab-stage{position:relative;flex:1;min-width:0;background:linear-gradient(#1b2224,#101516)}
+.lab-stage .lab-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.lab-stage-plain::after{content:'Brian\2019s workshop';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 28px 'Segoe UI',sans-serif;color:#ffffff33}
+.lab-caption{position:absolute;left:24px;right:24px;bottom:24px;padding:12px 16px;background:#0b0f10e6;border-left:3px solid #ffcf3f;font-size:16px;line-height:1.5;text-shadow:none}
+.lab-caption[hidden]{display:none}
+.lab-caption-text{margin:0}
+.lab-caption-text b{margin-right:8px;font-size:11px;letter-spacing:2px;color:#ffcf3f}
+.lab-side{flex:none;width:min(460px,46%);overflow-y:auto;padding:22px 26px;background:#121a1bf2;border-left:1px solid #ffffff1f}
+.lab-side button,.lab-panel select{padding:8px 14px;font:600 13px/1.2 inherit;color:var(--ink,#f3eddf);background:#ffffff14;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
+.lab-side button:hover:not(:disabled){background:#ffffff26}
+.lab-side button:disabled{opacity:.45;cursor:default}
+.lab-hint{margin:0 0 14px;font-size:13px;line-height:1.5;color:var(--muted,#b6b1a5)}
+.lab-empty{font-size:15px}
+.lab-message{margin:14px 0 0;color:#f3bd77;font-size:14px;line-height:1.5}
+.lab-board .lesson-board{display:flex;flex-direction:column;gap:6px}
+.lab-board .lesson-board-group{margin-top:12px;font-size:11px;font-weight:750;letter-spacing:2.5px;color:var(--muted,#b6b1a5)}
+.lab-board .lesson-board li:not(.lesson-board-group){display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #ffffff14;font-size:15px}
+.lab-board .lesson-board small{color:var(--muted,#b6b1a5);font-size:12px;text-align:right}
+.lab-board .lesson-board-done span{color:#9ee0a8}
+.lab-bench h3{margin:12px 0 14px;font-size:20px;letter-spacing:1px}
+.lab-passed{margin-left:8px;font-size:12px;color:#9ee0a8;letter-spacing:1px}
+.lab-back{margin-bottom:4px}
+.lab-controls{display:flex;flex-direction:column;gap:12px}
+.lab-control{display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:10px;font-size:14px}
+.lab-control>span{color:var(--muted,#b6b1a5)}
+.lab-control input[type=range]{width:100%;accent-color:#ff7246}
+.lab-control output{min-width:70px;text-align:right;font-variant-numeric:tabular-nums}
+.lab-control select{grid-column:2 / span 2}
+.lab-actions{display:flex;gap:10px;margin:18px 0}
+.lab-run{background:#ff5429!important;border-color:#ff5429!important;color:#111816!important;font-weight:850!important;letter-spacing:1.5px}
+.lab-readout{margin:0;display:flex;flex-direction:column}
+.lab-readout div{display:flex;justify-content:space-between;gap:16px;padding:6px 0;border-top:1px solid #ffffff14;font-size:14px}
+.lab-readout dt{color:var(--muted,#b6b1a5)}
+.lab-readout dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.lab-readout .good dd{color:#9ee0a8}
+.lab-readout .bad dd{color:#ff9a75}
+.lab-challenge{margin-top:20px;padding:14px;border:1px solid #ffffff1f;border-radius:6px;background:#ffffff08}
+.lab-challenge p{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--muted,#b6b1a5)}
+.lab-challenge-ready{border-color:#ffcf3f66}
+.lab-challenge-button{width:100%}
+.lab-protect ul{list-style:none;margin:10px 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.lab-protect li{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;font-size:14px}
+.lab-protect small{display:block;color:var(--muted,#b6b1a5);font-size:12px}
+.lab-protect em{grid-column:1 / span 2;font-style:normal;font-size:12px}
+.lab-protect em.good{color:#9ee0a8}
+.lab-protect em.bad{color:#ff9a75}
+.lab-shop-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.lab-shop-list li{display:grid;grid-template-columns:1fr auto auto;gap:2px 14px;align-items:center;padding:10px 0;border-top:1px solid #ffffff14;font-size:15px}
+.lab-shop-list small{display:block;color:var(--muted,#b6b1a5);font-size:12px}
+.lab-shop-list em{grid-column:1 / span 3;font-style:normal;font-size:12px;color:#d6b68a}
+.lab-price{font-variant-numeric:tabular-nums;color:#eac78e}
+.lab-owned{color:#9ee0a8;font-size:13px}
+.lab-shop-shut b{opacity:.7}
+.lab-choice{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px}
+.lab-choice>span{font-size:12px;letter-spacing:2px;color:var(--muted,#b6b1a5);margin-right:6px}
+.lab-choice button.on{border-color:#ffcf3f;color:#ffcf3f}
+/* The garage tab and the G-force lap's strip. */
+.lab-tab{margin-left:12px;padding:9px 16px;border:1px solid #ffcf3f88;background:#ffcf3f14;font-size:11px;font-weight:800;letter-spacing:1.5px;color:#ffcf3f;white-space:nowrap}
+.lab-gforce-strip{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:8;pointer-events:none}
+.lab-gforce-strip button{pointer-events:auto}
+.lab-gforce{display:flex;align-items:center;gap:16px;padding:10px 18px;background:#0f1614e0;border:1px solid #ffcf3f66;border-radius:6px;font-size:14px;color:var(--ink,#f3eddf)}
+.lab-gforce b{font-size:22px;font-variant-numeric:tabular-nums;min-width:70px}
+.lab-gforce span{font-size:11px;font-weight:750;letter-spacing:2px;color:#ffcf3f}
+.lab-gforce em{font-style:normal;color:var(--muted,#b6b1a5)}
+@media (max-width:900px){.lab-main{flex-direction:column}.lab-side{width:100%;border-left:0;border-top:1px solid #ffffff1f;flex:none;max-height:55%}}

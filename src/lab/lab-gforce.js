@@ -1,14 +1,18 @@
 // The G-force lap (docs/LAB.md 4.2): drive a lap of any owned course and reach 2 g in three different corners without
 // leaving the road. A pure monitor: the race's own numbers go in each step (distance along the course, speed, yaw rate and
 // whether the car is off the road) and a read-only view comes out. It never touches the race; the caller feeds it.
-import {GRAVITY} from '../heli/heli-flight.js';
 import {DRIVE} from '../config.js';
+import {lateralG} from './benches/gforce.js';
 
 export const GFORCE_LAP = Object.freeze({targetG: 2, corners: 3});
 
 const finite = value => Number.isFinite(value) ? value : 0;
-// The push the driver feels: speed times how fast the car is turning, in g (the same v squared over r the bench uses).
-export const lateralGOf = ({speedMph, yawVelocity}) => Math.abs(finite(speedMph) * DRIVE.mphToWorld * finite(yawVelocity)) / GRAVITY;
+// The push the driver feels, in g, by the bench's own formula (v squared over r): the car turns at its yaw rate, so the
+// circle it is following has the radius speed / yaw rate.
+export function lateralGOf({speedMph, yawVelocity}) {
+  const speed = finite(speedMph) * DRIVE.mphToWorld, turning = Math.abs(finite(yawVelocity));
+  return speed > 0 && turning > 0 ? lateralG(speedMph, speed / turning) : 0;
+}
 
 // corners: detectCorners() of the course ({number, entryS, exitS}); length: the course length in metres. A corner may run
 // across the start line (its exit is before its entry).
@@ -18,9 +22,9 @@ export function createGforceMonitor({corners = [], length = 0} = {}) {
   return {corners: list, length: finite(length), current: null, peak: 0, clean: true, g: 0, best: 0, reached: [], done: false};
 }
 
-const inside = (corner, s, length) => {
+const inside = (corner, s) => {
   if (corner.entryS <= corner.exitS) return s >= corner.entryS && s <= corner.exitS;
-  return s >= corner.entryS || s <= corner.exitS || (length > 0 && s > length);
+  return s >= corner.entryS || s <= corner.exitS;
 };
 
 // One race step. Returns the events: {type: 'gforceCorner', number, count} when a corner counts (reached 2 g and left it on
@@ -28,9 +32,10 @@ const inside = (corner, s, length) => {
 export function stepGforceMonitor(monitor, sample) {
   if (monitor.done) return [];
   const events = [];
-  const s = finite(sample?.s), g = lateralGOf(sample ?? {});
+  const along = finite(sample?.s), s = monitor.length > 0 ? ((along % monitor.length) + monitor.length) % monitor.length : along;
+  const g = lateralGOf(sample ?? {});
   monitor.g = g;
-  const corner = monitor.corners.find(item => inside(item, s, monitor.length)) ?? null;
+  const corner = monitor.corners.find(item => inside(item, s)) ?? null;
   const number = corner ? corner.number : null;
   if (number !== monitor.current) {
     // Leaving a corner: it counts if 2 g was reached in it and the car never left the road there.

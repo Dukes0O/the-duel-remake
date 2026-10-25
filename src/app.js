@@ -15,6 +15,8 @@ import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
+import {createLabLap} from './lab/lab-lap.js'; // LAB-VIEW
+import {passLesson as labPassLesson} from './lab/lab-save.js'; // LAB-VIEW
 import * as wildlifeRules from './wildlife.js';
 import {fireOnNewDay, fireWorld} from './heli/heli-fire-run.js';
 import {notePlayDay, buyBack as buyBackSave, fireOf} from './heli/heli-save.js';
@@ -249,6 +251,9 @@ export class App {
     this.raf = 0;
     this.lastT = null;
     this.running = false;
+    // LAB-VIEW: the Lab screen's open flag, and the G-force lap that reads the race (its pass is saved through labCommit).
+    this.labOpen = false;
+    this.labLap = createLabLap({onPass: () => this.labCommit((profile, flags) => labPassLesson(profile, 'gforce', {flags}), {anytime: true})});
     this._scriptedCrashDone = false;
     this._syncHiddenRoadDiscovery();
     this._bindKeys();
@@ -411,6 +416,7 @@ export class App {
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
       this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
+      this.labLap.step(this.duel.state,this.duel.course); // LAB-VIEW: reads the race, never writes it
       this._updateGhost(this.duel.state);this._updateLapTelemetry(this.duel.state);
       this._driveLessonUi?.update();
       this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);
@@ -1516,7 +1522,7 @@ export class App {
     this.heliSession = null;
     const left = session.leave();
     const spent = left.credits - (this._heliCreditsAtStart ?? left.credits);
-    this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(left.heli ? {heli: left.heli} : {})};
+    this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(left.heli ? {heli: left.heli} : {}), ...(left.lab ? {lab: left.lab} : {})};
     this._saveProfile();
     this.heliAudio.stop();
   }
@@ -1616,6 +1622,7 @@ export class App {
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
       fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true,
       drivingLessonAt: this.drivingLessonsAvailable() ? (courseId, carId) => this._heliLessonAt(courseId, carId) : null,
+      labEnabled: this._switches().enabled('lab') === true, // LAB-VIEW
       skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
       wildlife: wildlifeRules, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
@@ -1624,7 +1631,7 @@ export class App {
         // credits by the same amount; its heli field is its own.
         const spent = profile.credits - (this._heliCreditsAtStart ?? profile.credits);
         this._heliCreditsAtStart = profile.credits;
-        this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(profile.heli ? {heli: profile.heli} : {})};
+        this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(profile.heli ? {heli: profile.heli} : {}), ...(profile.lab ? {lab: profile.lab} : {})};
         this._saveProfile();
       }});
     this.setInputContext(null);
@@ -1881,6 +1888,30 @@ export class App {
     this._refreshPlayer();
     const result=purchaseUpgrade(this.profile,car,type);
     if(result.ok){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}return result;
+  }
+  // ---- LAB-VIEW (docs/LAB.md): whether the Lab is open and the one place the Lab's own save calls land. The screen is
+  // src/lab/lab-view.js; the rules are src/lab/lab-save.js and lab-shop.js. Nothing here touches a race or a flight.
+  labAvailable(){return !!this.player&&this._switches().enabled('lab')===true;}
+  openLab(){
+    if(this.duel.state.status!=='menu'||!this.labAvailable()||this.labOpen===true)return false;
+    this.labOpen=true;this.audio.unlock();this.duel.emit({lab:true});return true;
+  }
+  closeLab(){
+    if(this.labOpen!==true)return false;
+    this.labOpen=false;this.duel.emit({lab:true});return true;
+  }
+  // The helipad's Lab door: the visit ends, as Race here does, and the Lab opens.
+  labFromHeli(){
+    if(!this.heliSession||!this.labAvailable())return false;
+    this.returnToMenu();return this.openLab();
+  }
+  // make(profile, switches) -> {ok, reason, profile}; saved when it worked. Menu only, except a G-force lap passed in a race.
+  labCommit(make,{anytime=false}={}){
+    if(!this.labAvailable()||(!anytime&&this.duel.state.status!=='menu'))return {ok:false,reason:'The Lab is not available now.',profile:this.profile};
+    this._refreshPlayer();
+    const result=make(this.profile,this._switches());
+    if(result?.ok&&result.profile&&result.profile!==this.profile){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}
+    return result;
   }
   unlockCar(car){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before unlocking cars.'};
