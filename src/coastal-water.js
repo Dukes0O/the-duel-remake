@@ -79,15 +79,50 @@ export function addCoastalWater(group,course){
   // testing so the terrain and solid sea stacks still occlude the surf.
   if(showcase){water.renderOrder=-2;foam.renderOrder=-1;}
   if(course.deepRamp){
-    const ramp=course.deepRamp,positions=[],indices=[];
-    for(const point of ramp.points)for(const side of [-1,1])positions.push(
+    // DEEP-RAMP-2: a full-width worn concrete deck, kerbs and visible turn-off.
+    const ramp=course.deepRamp,positions=[],indices=[],uv=[];
+    for(const point of ramp.points)for(const side of [-1,1]){uv.push(side<0?0:1,point.progress/4);positions.push(
       point.x+Math.cos(ramp.heading)*ramp.width/2*side,point.y+.035,
-      point.z-Math.sin(ramp.heading)*ramp.width/2*side);
+      point.z-Math.sin(ramp.heading)*ramp.width/2*side);}
     for(let row=1;row<ramp.points.length;row++){const a=(row-1)*2,b=row*2;indices.push(a,b,a+1,a+1,b,b+1);}
     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+    geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
     geometry.setIndex(indices);geometry.computeVertexNormals();
     const boatRamp=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:0x92988b,roughness:.96,side:THREE.DoubleSide}));
     boatRamp.name='Pacific Deep boat ramp';boatRamp.receiveShadow=true;group.add(boatRamp);
+    const material=boatRamp.material;
+    material.onBeforeCompile=shader=>{
+      shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vRampUv;').replace('#include <begin_vertex>','#include <begin_vertex>\nvRampUv=uv;');
+      shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vRampUv;').replace('#include <color_fragment>',`#include <color_fragment>
+        float grain=sin(vRampUv.x*873.0+sin(vRampUv.y*741.0))*sin(vRampUv.y*937.0);
+        float groove=smoothstep(.85,.98,cos(vRampUv.y*25.13));
+        float tracks=exp(-pow((abs(vRampUv.x-.5)-.12)*24.0,2.0));
+        diffuseColor.rgb*=.92+grain*.045-groove*.16-tracks*.10;`);
+    };
+    material.customProgramCacheKey=()=> 'deep-ramp-2-concrete';
+    const kerbMaterial=new THREE.MeshStandardMaterial({color:0xaaa999,roughness:1});
+    const first=ramp.points[0],last=ramp.points.at(-1),pitch=Math.atan2(first.y-last.y,last.horizontal);
+    for(const side of [-1,1]){
+      const kerb=new THREE.Mesh(new THREE.BoxGeometry(.24,.22,ramp.length),kerbMaterial);
+      kerb.name='Boat ramp low kerb';kerb.position.set((first.x+last.x)/2+Math.cos(ramp.heading)*side*6,
+        (first.y+last.y)/2+.12,(first.z+last.z)/2-Math.sin(ramp.heading)*side*6);
+      kerb.rotation.set(0,ramp.heading,0);kerb.rotateX(pitch);kerb.receiveShadow=true;group.add(kerb);
+      const post=new THREE.Mesh(new THREE.BoxGeometry(.3,1.2,.3),kerbMaterial);
+      post.name='Boat ramp entrance post';post.position.set(first.x+Math.cos(ramp.heading)*side*6.6,first.y+.6,
+        first.z-Math.sin(ramp.heading)*side*6.6);group.add(post);
+    }
+    const canvas=document.createElement('canvas');canvas.width=512;canvas.height=160;
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#65776a';ctx.fillRect(0,0,512,160);
+    ctx.strokeStyle='#c0bda3';ctx.lineWidth=6;ctx.strokeRect(8,8,496,144);
+    ctx.fillStyle='#ded8b9';ctx.font='bold 57px sans-serif';ctx.textAlign='center';ctx.fillText('BOAT RAMP',256,99);
+    const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+    const sign=new THREE.Group();sign.name='Faded BOAT RAMP sign';
+    const signMaterial=new THREE.MeshStandardMaterial({map:texture,roughness:1});
+    for(const facing of [0,Math.PI]){const face=new THREE.Mesh(new THREE.PlaneGeometry(2.8,.9),signMaterial);
+      face.rotation.y=facing;face.position.z=facing===0?.04:-.04;sign.add(face);}
+    const stem=new THREE.Mesh(new THREE.BoxGeometry(.12,2.1,.12),kerbMaterial);stem.position.y=-.8;sign.add(stem);
+    sign.position.set(first.x+Math.cos(ramp.heading)*7.6,first.y+2,first.z-Math.sin(ramp.heading)*7.6);
+    sign.rotation.y=ramp.heading-Math.PI/2;group.add(sign);
   }
 
   registerSceneSystem(group, { animate: t => { time.value = t; } });

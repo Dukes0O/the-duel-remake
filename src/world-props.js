@@ -1,3 +1,4 @@
+import { rampOpening } from './deep/deep-ramp.js'; // DEEP-RAMP-2
 import * as THREE from 'three';
 import { vegetationCells } from './vegetation.js';
 import { hasDetailedCityFacade } from './city-chase-detail.js';
@@ -21,7 +22,8 @@ export function addFurniture(group,course,metal){
     }else if(i&&p.s-data[i-1].s<130){const previous=data[i-1];for(let j=0;j<12;j++)for(const t of[j/12,(j+1)/12])wires.push(THREE.MathUtils.lerp(previous.x,p.x,t),THREE.MathUtils.lerp(previous.y,p.y,t)+10.7-Math.sin(t*Math.PI)*1.3,THREE.MathUtils.lerp(previous.z,p.z,t));}
   });poles.castShadow=true;group.add(poles);
   if(wires.length){const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.Float32BufferAttribute(wires,3));group.add(new THREE.LineSegments(wg,new THREE.LineBasicMaterial({color:0x353d3c,transparent:true,opacity:.55})));}
-  const barriers=course.features.barriers,rails=new THREE.InstancedMesh(new THREE.BoxGeometry(.28,.38,8),metal,barriers.length),posts=new THREE.InstancedMesh(new THREE.BoxGeometry(.16,1.1,.17),metal,barriers.length*2);
+  const barriers=course.features.barriers.filter(p=>!rampOpening(course,p)), // DEEP-RAMP-2
+    rails=new THREE.InstancedMesh(new THREE.BoxGeometry(.28,.38,8),metal,barriers.length),posts=new THREE.InstancedMesh(new THREE.BoxGeometry(.16,1.1,.17),metal,barriers.length*2);
   barriers.forEach((p,i)=>{o.position.set(p.x,p.y+.82,p.z);o.rotation.set(0,p.heading,0);o.updateMatrix();rails.setMatrixAt(i,o.matrix);
     for(let side=0;side<2;side++){const dz=side?3.6:-3.6;o.position.set(p.x+Math.sin(p.heading)*dz,p.y+.5,p.z+Math.cos(p.heading)*dz);o.updateMatrix();posts.setMatrixAt(i*2+side,o.matrix);}
   });rails.castShadow=rails.receiveShadow=true;posts.castShadow=true;group.add(rails,posts);

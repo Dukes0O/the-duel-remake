@@ -210,6 +210,13 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   };
   // Director-granted contracts; every other Deep module/specifier stays isolated.
   const approvedImports = new Set([
+    // DEEP-RAMP-2: exact terrain cutting, turn-off, camera and acceptance hooks. No wildcard access.
+    ...['world.js','world-surfaces.js','world-props.js','landscape-detail.js'].map(name => `src/${name}|./deep/deep-ramp.js`),
+    'src/render3d.js|./deep/deep-journey.js',
+    'tools/test-deep-ramp.mjs|../src/deep/deep-journey.js',
+    'tools/test-deep-ramp.mjs|../src/deep/zones/kelp-coast.js',
+    // Existing released results-screen hint wiring was missing from this list.
+    'src/screen-results.js|./deep/deep-hints.js',
     'src/deep/deep-ramp.js|../pacific-coast-layout.js',
     'tools/test-deep-zone.mjs|../src/deep/deep-ui.js',
     'tools/test-deep-zone.mjs|../src/deep/deep-zone.js',

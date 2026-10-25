@@ -190,7 +190,9 @@ test('place titles: first entry only, wrapped range, paused and saved visits', (
   assert.equal(events[0].place.id, 'ramp-shallows');
   assert.equal(events[0].title, true, 'shallows range wraps through index zero');
   for (const place of zone.places) {
-    const point = zone.trail[place.fromIndex];
+    // DEEP-RAMP-2: sample inside the entry segment; the new world frame can round an exact vertex just before the boundary.
+    const a=zone.trail[place.fromIndex], b=zone.trail[(place.fromIndex+1)%zone.trail.length];
+    const point={x:(a.x+b.x)/2,z:(a.z+b.z)/2};
     park(duel, point.x, point.z); hold(duel, DT);
   }
   const titled = events.filter(event => event.title).map(event => event.place.id);
@@ -203,7 +205,9 @@ test('place titles: first entry only, wrapped range, paused and saved visits', (
   saved.onChange((state, event) => { if (event.deepPlace) revisits.push(event.deepPlace); });
   dive(saved);
   for (const place of saved.deepRuntime.zone.places) {
-    const point = saved.deepRuntime.zone.trail[place.fromIndex];
+    // DEEP-RAMP-2: the same interior-entry fixture for saved revisits.
+    const trail=saved.deepRuntime.zone.trail,a=trail[place.fromIndex],b=trail[(place.fromIndex+1)%trail.length];
+    const point={x:(a.x+b.x)/2,z:(a.z+b.z)/2};
     park(saved, point.x, point.z); hold(saved, DT);
   }
   assert.ok(revisits.length > 0 && revisits.every(event => !event.title), 'saved places never titled again');
