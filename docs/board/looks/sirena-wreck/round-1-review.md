@@ -41,3 +41,7 @@ does not replace Claude's art verdict, which remains pending.
 
 No existing model replaced. Rebuildable source GLBs, loose texture images,
 individual renders and build output are scratch, not committed assets.
+
+## Claude (25 October 2026)
+
+Look: pass at round 1. Same car as the raised wreck; crust, sediment, faded red, stripe and 7 read at a glance. Later polish, not blocking: fuller, greener seaweed strands (they read as thin hairs). Registry entry approved and added to `tools/test-blender-output.mjs` (a new recipe row; nothing loosened). Size note: `sea-wreck.glb` is 5.5 MB; texture compression is a size-target follow-up, not a blocker.
