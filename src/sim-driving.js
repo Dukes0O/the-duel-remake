@@ -1,6 +1,7 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { DRIVE, BOOST, launchScale, boostLaunch, steeringYawAuthority, TYRE_SLIP, tyreSlipSteering, stepTyreSlip, tyreSlipGrip, tyreSlipScrub, tyreSlipAngle } from './config.js';
 import { stepDrift, breakDrift } from './drift-scoring.js';
+import { enginePull, engineFitFor, autoShiftGear } from './engine-curve.js';
 import { offroadCapability, wrapHeading, limitClimb, slopeSpeedDelta, terrainAttitude } from './offroad-physics.js';
 import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
@@ -124,7 +125,8 @@ export function _drive(dt) {
   const gmax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear] * nitroSpeedShare;
   s.revs = gmax ? Math.abs(s.speedMph) / gmax : 0;
   if (!reversing && d.autoShift) {
-    if (s.revs > 0.96 && s.gear < car.gears.length - 1) s.gear++;
+    if (s.engineCurve === true) s.gear = autoShiftGear({ gears: car.gears, gear: s.gear, revs: s.revs });
+    else if (s.revs > 0.96 && s.gear < car.gears.length - 1) s.gear++;
     else if (s.revs < 0.55 && s.gear > 0) s.gear--;
   } else if (!reversing) {
     if (s.input.shiftUp && s.gear < car.gears.length - 1) s.gear++;
@@ -149,7 +151,12 @@ export function _drive(dt) {
   } else {
     if (s.input.throttle > 0) {
       const ceil = Math.min(car.topSpeed * nitroSpeedShare * road.topShare, gearMax * DRIVE.gearCeilFrac, road.topSpeedMph ?? Infinity);
-      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * launchScale(this.course, s.crashLaunchSec > 0, s.tyreSlipRules === true) * accelerationShare;
+      if (s.speedMph < ceil) {
+        const launch = launchScale(this.course, s.crashLaunchSec > 0, s.tyreSlipRules === true);
+        // ENGINE-CURVE (dev switch, latched per race): the pull is the engine's at these revs times the gear's multiplication.
+        if (s.engineCurve === true) s.speedMph += enginePull({ a0: car.accel * launch, ...engineFitFor(s.car), gears: car.gears, gear: s.gear, revs: s.revs }) * s.input.throttle * dt * accelerationShare;
+        else s.speedMph += car.accel * accelFactor * s.input.throttle * dt * launch * accelerationShare;
+      }
     }
     if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * road.grip * dt;
     s.speedMph = Math.max(0, s.speedMph - DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1));
