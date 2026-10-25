@@ -76,7 +76,7 @@ matter: the paint is not a landing (Panorama Ridge has no flat circle clear of i
 
 ## Tests
 
-`tools/test-map-secrets.mjs` (231 checks):
+`tools/test-map-secrets.mjs` (235 checks):
 
 - the five signs: each is a registered variant with the new unlock kind, price 0, dev; each
   stands clear (`signClear`) and off the road; none of two on one course is within one hover;
@@ -121,6 +121,18 @@ The five variants change from "top three in the parent Grand Prix" to "found fro
   table gains its entry (a pure addition).
 - `tools/test-course-kit.mjs` needed **no change**: the registry still accepts the podium
   kind, which its fixtures use.
+
+## Independent review (rule 17: money and saved progress)
+
+A fresh reviewer given only the diff and tests found no defect in the 500-credit payment
+(once, only on a non-crash touchdown inside the circle), the unlock (one find opens only its
+own course, the parent must be owned), the hover rule (any frame rate, cannot fire twice) or
+the lazy `table` flag. Its low-severity notes were taken: the course list reads the record only
+at `version: 1` like the session does; a find over a course the player does not own says the
+course joins the list once the parent is owned (tested); the Team Room browser scenarios
+(`tools/scenarios/team-room.mjs`, `team-room-photos.mjs`, laptop only, not run here) now also
+put the found variants in the fixture profile. Not taken: a map record of another version is
+read as empty and rewritten as version 1 (no other version exists; the save part decides).
 
 ## Checks
 

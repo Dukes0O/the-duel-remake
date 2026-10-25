@@ -47,7 +47,7 @@ export function normalizeCourseAccess(value,legacyProfile){
   return {version:1,unlocked:COURSE.filter(course=>unlocked.has(course.id)).map(course=>course.id)};
 }
 // The pilot's map record (src/heli/map-secrets.js) lists the variants found from the helicopter; read here without importing it.
-const foundFromAir=(profile,id)=>Array.isArray(profile?.heli?.map?.found)&&profile.heli.map.found.includes(id);
+const foundFromAir=(profile,id)=>profile?.heli?.map?.version===1&&Array.isArray(profile.heli.map.found)&&profile.heli.map.found.includes(id);
 export function isCourseUnlocked(profile,course){
   const id=idOf(course);
   if(!known(id))return false;

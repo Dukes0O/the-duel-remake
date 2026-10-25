@@ -641,7 +641,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const found = stepSpotter(spotter, heli, world.ground, signsHere(), dt);
     if (!found) return;
     commit(noteFound(save, found.id));
-    emit({type: 'secretFound', id: found.id, name: found.name, text: `Found from the air: ${found.name}. It is in your course list now.`});
+    emit({type: 'secretFound', id: found.id, name: found.name, text: isCourseUnlocked(save, found.course)
+      ? `Found from the air: ${found.name}. It is in your course list now.`
+      : `Found from the air: ${found.name}. It joins your course list once you own ${placesNow()[found.course]?.name ?? found.course}.`});
   }
   // The leg that passes the Table brings Roger's call on arrival, once; the Table can then be chosen like any destination.
   function tableCall(from, to) {

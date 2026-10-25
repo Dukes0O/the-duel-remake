@@ -315,6 +315,18 @@ const withVariants = fn => {
   same(switchOff.profile.heli.map, undefined, 'and writes nothing');
 }
 
+// Found over a course the player does not own: recorded, but the words do not promise a course that is not listed yet.
+{
+  const sign = SECRET_SIGNS.find(item => item.id === 'panorama-ridge-night');
+  const session = sessionAt('panorama-ridge', {secrets: [sign.id]});
+  const events = flyTo(session, sign, {height: 25, speed: 25, seconds: 200, until: (v, got) => secretEvents(got).length > 0});
+  const found = secretEvents(events);
+  same(found.length, 1, 'a sign over an unowned course is still found');
+  ok(/once you own Panorama Ridge/.test(found[0].text) && !/in your course list now/.test(found[0].text), `and the words say what is missing: ${found[0].text}`);
+  withVariants(() => ok(!isCourseUnlocked(session.profile, sign.id), 'the course is not listed until the parent is owned'));
+  withVariants(() => ok(!isCourseUnlocked({...profileWith({owned: ['panorama-ridge']}), heli: {...heliOf(profileWith()), map: {found: [sign.id], seen: [], table: false}}}, sign.id), 'a record with no version opens nothing'));
+}
+
 // ---- In the helicopter: the Table -------------------------------------------------------------------------------------------------
 const cruiseLeg = (session, to) => {
   ok(session.setDestination(to), `${to} can be chosen`);
