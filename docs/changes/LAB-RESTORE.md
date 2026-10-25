@@ -58,7 +58,12 @@ After merging current `integration/wasteland` (clean), once:
   caption; the salt readout falls (82% to 12% to 4%); the sequence takes 60 s; Brian's second line; the garage now reads "Restored.
   Race the Coast Cup at Pacific Canyon"; the replay is offered with Skip and charges nothing. 0 errors, 0 warnings.
 - Look sheet: `docs/board/looks/lab-restore/round-2.jpg` (about 160 KB) and `round-2-review.md` (round 1 was judged "close" with three changes, all made; its sheet was removed).
-- Lane tier `--changed`, `npm run build`: see the end of this note.
+- Lane tier `node tools/run-tests.mjs --tier lane --changed --jobs 8 --keep-going` (current `integration/wasteland` merged, once):
+  41 passed, 3 failed. The three are the laptop-only suites that cannot run in this cloud environment: `test-course-kit`,
+  `test-earned-cars-ui`, `test-medals` (the same ones that failed on the earlier cloud cards, none names a file this card changed).
+  `test-sirena-vehicle` (510 checks, including the nine models rebuilt byte for byte), `test-deep-look`, `test-lab-view`,
+  `test-lab-art` and the replay and world-signature guards pass. `npm run build` passes.
+- Not run here: those three suites and any frame check (rule 9: the Lab is not a race).
 
 ## Independent review (one reviewer, money and save; no edits by them)
 
