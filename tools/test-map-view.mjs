@@ -10,7 +10,7 @@ import {createFeatureFlags} from '../src/feature-flags.js';
 import {raceFeatureFlags} from '../src/wasteland-access.js';
 import {keyboardAction, INPUT_CONTEXTS} from '../src/input-contexts.js';
 import {controlsHelp} from '../src/controls-help.js';
-import {instrumentsMarkup, controlsMarkup, noticeText} from '../src/heli/heli-ui.js';
+import {instrumentsMarkup, controlsMarkup, noticeText, createHeliUi} from '../src/heli/heli-ui.js';
 import {dispatchBoardMarkup, handleBoardAction, atAnyPad} from '../src/heli/heli-board.js';
 import {PLACES, FUEL_PADS, PILOT_MAP, placeById} from '../src/heli/pilot-map-data.js';
 import {HELI_CUES} from '../src/heli/heli-audio.js';
@@ -78,6 +78,15 @@ try {
     ok(!instrumentsMarkup(view).includes('MAP'), 'off: no MAP key in the cockpit line');
     ok(!controlsMarkup(view).includes('data-heli-map'), 'off: no map button in the FLY TO panel');
     ok(!dispatchBoardMarkup(view, {jobs: []}).includes('data-heli-board="map"'), 'off: no Map button on the board');
+    // The helicopter's panel builds no map panel or logbook card with the switch off (the page gains nothing).
+    const appended = [], node = () => ({innerHTML: '', hidden: false, dataset: {}, textContent: '', style: {setProperty() {}, removeProperty() {}}, kids: {},
+      querySelector(selector) { return this.kids[selector] ?? null; }, addEventListener() {}, removeEventListener() {}, append() {}, remove() {}, setAttribute() {}});
+    const section = node();
+    for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio']) section.kids[selector] = node();
+    const ui = createHeliUi({host: {ownerDocument: {createElement: () => section}, append: child => appended.push(child)}, app});
+    ui.update();
+    equal(appended.length, 1, 'off: the page gains only the helicopter panel');
+    ui.dispose();
     app.returnToMenu();
   }
 

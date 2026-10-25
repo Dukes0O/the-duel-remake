@@ -316,7 +316,7 @@ export function createHeliUi({host, app}) {
   const lessonsHost = section.querySelector('.heli-lessons-host');
   const boardHost = section.querySelector('.heli-board-host');
   const board = createDispatchBoard({root: boardHost, app});
-  const pilotMap = createPilotMapUi({host, app}); // MAP-VIEW
+  let pilotMap = null; // MAP-VIEW: made the first time the view carries the pilot's map (never with the switch off)
   let lastLessons = '';
   const lessonAction = action => {
     const session = app.heliSession;
@@ -353,7 +353,7 @@ export function createHeliUi({host, app}) {
     update(now = performance.now() / 1000) {
       if (disposed) return null;
       const view = app.duel?.state?.status === 'heli' ? app.heliView?.() : null;
-      pilotMap.update(view); // MAP-VIEW
+      if (view?.secrets !== undefined) (pilotMap ??= createPilotMapUi({host, app})).update(view); else pilotMap?.update(view); // MAP-VIEW
       section.hidden = !view;
       if (!view) { shown = []; radioLine = null; seenLog = null; return null; }
       // New events since the last frame become notices and radio subtitles.
@@ -404,7 +404,7 @@ export function createHeliUi({host, app}) {
       disposed = true;
       section.removeEventListener('click', click);
       board.dispose();
-      pilotMap.dispose(); // MAP-VIEW
+      pilotMap?.dispose(); // MAP-VIEW
       section.remove();
     },
   };
