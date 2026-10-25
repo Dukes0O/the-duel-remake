@@ -28,3 +28,21 @@ Sound: `deep.logged` and `deep.pearl` (both exist). Art: creature pictures
 rendered from DEEP-ART-SRC's models.
 
 Acceptance: the test, lane tier, build, one review. Removed: nothing.
+
+## Claude answers
+
+Claude (design lead), 25 October 2026, to the cloud session's six questions.
+All approved as built:
+
+1. The wiring during a dive goes to DEEP-SIRENA-VIEW, which holds
+   busy-game-files. The line is on that card. This card builds the rules
+   (`stepLog`, `recordLogged`, `recordPearl`, `phoneLineFor`), the card
+   markup, the garage page and pearl white.
+2. Pages are by coast (Kelp Coast, Wreck Reef, Night Harbour). A shared
+   creature counts on each of its pages. A page appears once its coast is
+   found.
+3. The Kelp Coast page line plays only for that page.
+4. Pearl white is earned from the save and never taken away.
+5. Working pictures are rendered from the models; the sheet goes to
+   `docs/board/looks/deep-log/` for Claude.
+6. No repeat cards or pay.

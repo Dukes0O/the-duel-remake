@@ -9,5 +9,6 @@
 *.png binary
 *.wav binary
 *.webm binary
+*.webp binary
 *.flac binary
 *.ogg binary
