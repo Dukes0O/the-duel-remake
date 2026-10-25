@@ -64,3 +64,27 @@ Replaced the shop-only fan ownership path with the atomic credit-and-car transit
 Fetched and merged origin/integration/wasteland at 864373c6 into this lane. Resolved heli-jobs and both earned-car inventories with the Jesko free and the Speirling air-only. The vehicle router keeps both async GLB paths: the accepted Speirling and the newer Sirena sea-wreck finish. No code-built Speirling body is restored. STATUS will be regenerated at session end.
 
 Preserved additional acceptance coverage supplied in the lane during this refresh: synthetic two-tab App.labCommit calls, all four lab/lab-tuning switch combinations, forged REVERSE with missing lessons, and wallet limits. The build rule now refuses wallets above the existing one-billion credit cap rather than accepting forged extra credits. No valid wallet is clamped or lost. Repeated builds return the same profile. Fresh checks and a separate independent review follow below.
+
+## Fresh checks after the integration merge
+
+Runtime source: 881f7571 (merge of origin/integration/wasteland 864373c6). fe5762ad then strengthens the two-tab test to start with 40,000 credits, enough to pay twice; no runtime code changed. The current lane run executes that strengthened test.
+
+- `npm.cmd run build`: pass, 538 modules, 1.32 s (the Windows shim for `npm run build`). Existing dynamic-import/chunk-size notices only.
+- `node tools/combat-balance.mjs --check`: pass, 472.59 s, 90 baseline races and 51 policy runs. Easy/Medium/Hard wins 27/17/11 of 30; CPU-hit means 3.27/5.97/4.07. Targets unchanged.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: pass, 133/133, zero failures or not run, 513.15 s. Native tools use Windows System32 tar and sandbox access to installed ffmpeg; no tool, assertion or tolerance changes for the environment.
+
+The separate post-check independent review started only after all three requested checks completed. This refresh does not merge into integration, push, access the live game or read real-player storage.
+
+## Independent post-check review of fe5762ad
+
+Separate save-guardian pass, started after the lane, build and balance checks: CLEAR, no further required fixes and no files edited by the reviewer. Builder checks were not repeated.
+
+Probes used memory-only storage and the real App.labCommit, refresh and save methods. Two successive stale instances started with 40,000 credits: one debit, one save write, 25,000 left and one car after reload. These are stale-instance probes, not simultaneous OS processes. A forced failed write left durable bytes unchanged; profileSaved was false, and retry saved credits and car together exactly once.
+
+Wallet probes accepted exact price and the one-billion cap; refused short, negative, fractional, numeric-string, infinite, above-cap and unsafe-integer wallets unchanged. All 32 lesson subsets, also with forged REVERSE markers, kept the secret shut unless all five were complete. Building required lab; tuning required both lab and lab-tuning. Helicopter off removed the air restriction; with it on, the fan stayed special and the Jesko stayed free. An old save gained no Lab field, and 69 damaged/partial inputs normalized without throwing.
+
+The reviewer confirmed both async loader routes (Speirling GLB and Sirena sea wreck). Every other car matched origin config exactly, and all 13 passed a seeded 240-frame Lab-on/off state comparison. Combat win, loss, timeout and abandon probes with eight fines each preserved banked credits across save/reload and duplicate settlement. The first synthetic combat input omitted combatRewardsEnabled:true; correcting that fixture input passed without source changes.
+
+Additional independent checks: 23 historical save fixtures plus 1 forged, 1,029 checks, all pass; career storage budget and failure/recovery boundaries pass (maximum ghost journal 2,500,604 of 4,000,000 bytes); career backup historical fixtures and 14/14 subtests pass, including verified backup before migration and refusal when backup is unavailable or unverified. No real saves, browser windows or live-game files were used.
+
+Removed during this refresh: no runtime assets or code paths. Recycled this run's generated dist and .qa-dist output after verification. Cockpit sync completed with zero task changes. The existing pre-release armor-kit/frame/full-check follow-up above is unchanged.
