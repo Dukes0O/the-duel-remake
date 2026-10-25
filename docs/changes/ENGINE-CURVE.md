@@ -24,6 +24,10 @@ high gear at low revs is weak and shifting early costs time. It unblocks lesson 
   state or best key; the latch per race and arena exclusion; automatic box within 2% of today on 0 to 60, 0 to 100, 140 and 170 mph for all 13 cars at engine levels 0 to 3 where they can be bought (worst fit error 1.2%; the independent review found the first fit, made at level 0 only, up to 3.5% out at level 3, hence `upgraded`); a lap of three circuits for two cars within 2%; a Grand Prix field (player and seven racers) within 2% at 90 s; manual shifts at 97.5% revs
   within 1% of automatic; manual shifts at 50% revs at least 5% slower from 0 to 100; top gear held from 30 to 60 mph at least twice as slow as automatic.
 - `node tools/combat-balance.mjs --check` with the switch off: exit 0.
+- Lane tier `--changed --jobs 8 --keep-going` with current `integration/wasteland` (6881c28b) merged: 337 of 346 suites pass. The nine failures: the seven laptop-only suites
+  (`test-course-kit`, `test-earned-cars-ui`, `test-full-check`, `test-drive-through`, `test-medals`, `test-salt-flats`, `test-salt-flats-art`); `test-lab-radio`, which fails with the same
+  fingerprint mismatch on the untouched integration commit; and `test-deep-life`, a frame-time assertion under load ("4.86 ms a frame") that passes alone (22 of 22). `npm run build` passes.
+  Not run here: browser scenarios, frame check and the Windows-only suites.
 - `tools/test-feature-flags.mjs` counts one more dev switch and lists `engine-curve`; nothing loosened.
 - Keep these (`docs/board/decisions.md`) with the switch on: the Titan's big air off cars, `tools/test-titan-car-launch.mjs` run unchanged with the switch forced on for every race
   (a preload patching the shared switch; 2,520 driving steps confirmed to run on the new pull): 8 of 8 pass. The Summit hillside: `test-engine-curve` drives a Falcone off the Summit Run road
