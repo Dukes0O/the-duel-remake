@@ -1,6 +1,7 @@
 import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
+import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
 import {createBurntLook} from './burnt-look.js';
@@ -237,7 +238,7 @@ export function attachRenderer(host, app) {
   const bloom=new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9);
   bloom.name='Bloom';composer.addPass(bloom);composer.addPass(Object.assign(new OutputPass(),{name:'Tone and colour'}));
   const lighting=createSceneLighting({scene,renderer,bloom,host});
-  const deepView=createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,
+  const deepView=createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,createExtras:createSirenaScene,
     createPipeline(privateScene,privateCamera,ambient,high){
       const privateComposer=new EffectComposer(renderer);
       privateComposer.addPass(new RenderPass(privateScene,privateCamera));

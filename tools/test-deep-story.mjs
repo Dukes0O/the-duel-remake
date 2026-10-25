@@ -179,3 +179,39 @@ test('memory-only App pays and saves each raise, log and pearl once, and passes 
     if (savedCancel) Object.defineProperty(globalThis, 'cancelAnimationFrame', savedCancel); else delete globalThis.cancelAnimationFrame;
   }
 });
+
+test("Ana's phone: one line at a time in order, a caption even without sound, and none over a title card", async () => {
+  const {createAnaPhone, sonarText} = await import('../src/deep/sirena-view.js');
+  let clock = 0;
+  const phone = createAnaPhone({audio: null, now: () => clock});
+  assert.equal(phone.say('deep.ana.hello'), true); assert.equal(phone.say('deep.ana.legend'), true);
+  assert.equal(phone.say('deep.ana.hello'), false, 'a line already waiting is not queued twice');
+  assert.equal(phone.say('deep.ana.nope'), false);
+  assert.equal(phone.update({blocked: true}), null, 'nothing over a title card');
+  assert.equal(phone.update().id, 'deep.ana.hello');
+  clock = 3; assert.equal(phone.update().id, 'deep.ana.hello', 'still speaking');
+  clock = 30; assert.equal(phone.update(), null, 'a short breath between lines');
+  clock = 31; assert.equal(phone.update().id, 'deep.ana.legend');
+  assert.ok(phone.update().text.includes('1966'), 'the caption is the line');
+  assert.equal(sonarText({deepSonar: {blip: {distance: 41.6}}}), '42 m');
+  assert.equal(sonarText({deepSonar: {blip: null}}), 'No echo');
+});
+
+test('the garage: the Sirena under a sheet while waiting, restored, then the plaque; nothing before she is raised', async () => {
+  const {createGarageScreen} = await import('../src/screen-garage.js');
+  const {createProfile} = await import('../src/progression.js');
+  const {deepDiscoverySnapshot} = await import('../src/deep/deep-discovery.js');
+  let profile = createProfile(), enabled = true;
+  const app = {player: {name: 'QA'}, getDeepDiscovery: () => deepDiscoverySnapshot(profile, 'qa', enabled)};
+  const render = createGarageScreen({app, profile: () => profile, credits: String, escapeHTML: String,
+    getGarageCar: () => 'falcone_f42', getGarageMessage: () => '', arrow: '', action: () => '', clamp: value => value});
+  assert.ok(!render().includes('FALCONE SIRENA'), 'not before she is raised');
+  profile = {...profile, deep: {raised: [...SIRENA_FINDS]}};
+  assert.ok(render().includes('data-sirena="waiting"') && render().includes('Needs the Lab') && render().includes('sirena-sheet'));
+  profile = {...profile, unlockedCars: [...profile.unlockedCars, 'falcone_sirena']};
+  assert.ok(render().includes('data-sirena="restored"'));
+  profile = {...profile, deep: {...profile.deep, coastCup: true}};
+  assert.ok(render().includes('COAST CUP · 1966 to 2026: finished'));
+  enabled = false;
+  assert.ok(!render().includes('FALCONE SIRENA'), 'the switch off hides it');
+});
