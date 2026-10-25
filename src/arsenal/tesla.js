@@ -1,4 +1,4 @@
-import {point} from '../combat-weapons.js';
+import {point} from '../combat-actors.js';
 import {hostile, outOfPlay} from '../combat-teams.js';
 import {actorForTarget, targetIdentity} from './targeting.js';
 import {setCarEffect} from './car-effects.js';

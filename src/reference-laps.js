@@ -1,12 +1,15 @@
-async function recordsFromFiles() {
+// Read without waiting (no top-level await: a module that waits makes every module that needs it wait, and a bundle
+// with an import cycle among them never finishes loading). The game's build finds the files at build time; Node reads
+// the folder at once.
+function recordsFromFiles() {
   let files;
   if (import.meta.env) {
     files = Object.values(import.meta.glob('./generated/reference-laps/*.json', {eager: true, import: 'default'}));
   } else {
-    const {readdir, readFile} = await import(/* @vite-ignore */ 'node:fs/promises');
+    const {readdirSync, readFileSync} = process.getBuiltinModule('node:fs');
     const directory = new URL(/* @vite-ignore */ './generated/reference-laps/', import.meta.url);
-    const names = (await readdir(directory)).filter(name => /^[a-z][a-z0-9-]*\.json$/.test(name)).sort();
-    files = await Promise.all(names.map(async name => JSON.parse(await readFile(new URL(name, directory), 'utf8'))));
+    const names = readdirSync(directory).filter(name => /^[a-z][a-z0-9-]*\.json$/.test(name)).sort();
+    files = names.map(name => JSON.parse(readFileSync(new URL(name, directory), 'utf8')));
   }
   const records = {};
   for (const file of files) for (const [key, record] of Object.entries(file)) {
@@ -15,7 +18,7 @@ async function recordsFromFiles() {
   }
   return records;
 }
-const records = await recordsFromFiles();
+const records = recordsFromFiles();
 
 function freeze(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
