@@ -194,9 +194,16 @@ in the game.
   mesa 90 m over the desert with 130 m of flat top, cliffs, an oval dirt strip 8 m
   across, the lookout tower and the wreck as obstacles) and loaded by the session.
 - First landing in the circle: `tableFound`, 500 credits once, `map.table` true (the
-  Deep's log page reads that flag). A car **cannot be left on the Table yet**: the
-  save does not accept it as a place until part two of the card, so releasing one
-  there gives `carNotKept` and the car stays where the save has it.
+  Deep's log page reads that flag). A car **can be left on the Table**: `the-table` is a
+  valid place for a car in the save (`carsAt`), and only for a car; calls, rescues,
+  jobs and scars still name registry courses. No race is offered there (no road to
+  race on); fly the car off again by the hook.
+- **The save** (`heli-save.js`): `profile.heli.map = {version: 1, seen, found, table}`
+  with its own normalizer. Repeated and unusable names go, a later game's names and
+  keys are kept as they are, at most 128 names a list; a record with a later version
+  is kept exactly as it was and every write over it (or over a later helicopter) is
+  refused, so nothing is found or paid over it. `map-secrets.js` reads and writes it
+  only through `mapRecordOf` and `writeMapRecord`.
 - Sounds: `heli.found` (three rising tones) for `secretFound` and `tableFound`.
 
 ## 6. Sounds, art and save

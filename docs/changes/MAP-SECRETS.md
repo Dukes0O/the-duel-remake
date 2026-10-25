@@ -54,7 +54,7 @@ that pull request, listed under "Not done here".
   (`requirement.kind !== 'owned-course'` instead of `=== 'default-gp-podium'`).
 - Sounds and words: `heli.found` (three rising tones, interface bus) for `secretFound`
   and `tableFound` in `src/heli/heli-audio.js`; `src/heli/heli-ui.js` shows the words of
-  `secretFound`, `tableSpotted`, `tableFound` and `carNotKept` on the flight panel.
+  `secretFound`, `tableSpotted` and `tableFound` on the flight panel.
 - Reference-lap tooling: `tools/build-reference-laps.mjs` and `tools/track-review.mjs`
   put a found variant into the profile's map record (as a player's save would) instead
   of a podium.
@@ -164,7 +164,7 @@ Run once in the cloud (Linux, no graphics), on the branch merged with the curren
   accepts `the-table` so a car set down there is saved; the fixture
   `tools/fixtures/saves/<next free>-pilot-map.json` and its lines in
   `tools/test-save-fixtures.mjs`. Until then the record round-trips as an unknown key
-  (tested) and a car released on the Table is refused with `carNotKept`.
+  (tested); part two (below) made a car at the Table keepable.
 - Nothing is wired into the screens: `src/app.js` passes neither `pilotMapEnabled` nor
   `secretCourses` (MAP-VIEW wires both: `secretCourses` = the secret ids whose switches
   are on), and the renderer does not draw the Table or the signs. MAP-VIEW should draw the
@@ -178,3 +178,73 @@ Run once in the cloud (Linux, no graphics), on the branch merged with the curren
 
 - The "top three in the parent Grand Prix" route to the five variants (their unlock kind
   was `default-gp-podium`); the registry still accepts that kind for future variants.
+
+# Part two: the save (25 October 2026)
+
+`save-shape` came free when SKI-SAVE merged; Claude asked for this on the same card. Branch
+`cloud/map-secrets` restarted from the merged `integration/wasteland` (part one is merged as PR 29).
+
+## What changed
+
+- `src/heli/heli-save.js`: `map` is a known key with its own normalizer (`normalizeMapRecord`): version 1 only,
+  repeated and unusable names dropped, at most 128 names a list, a later game's names and keys kept as they are,
+  `__proto__` never; a record with a later version (a number, text, fraction or huge number above 1) is kept exactly
+  and read as empty. New: `MAP_SAVE_VERSION`, `mapRecordOf`, `mapBlocked`, `writeMapRecord` (refuses a write over a later
+  record or a later helicopter, as the ski record does). `validPlace` (a registry course, or `the-table`) is used for a
+  car's place (`carsAt`, `placeCar`) and nowhere else: calls, rescues, jobs and scars still need registry courses.
+- `src/heli/map-secrets.js` no longer keeps its own copy of the record's rules: `mapOf`, `noteFound`, `noteSeen` and
+  `claimTable` read and write through the save's functions and return `{ok: false, reason, profile}` over a record they
+  must not write over. A later game's names mean nothing here (they are not dropped, as the first part's filter did).
+- `src/heli/heli-session.js`: a find, a sighting or the logbook that cannot be saved is not announced or paid; a car
+  released in the Table's circle is saved there and `delivered` (the part-one refusal `carNotKept` is gone).
+- Fixture `tools/fixtures/saves/20-pilot-map.json` (three players: a full record with a later game's name and key and a
+  car at the Table; an older helicopter with none; a record at version 2) and `tools/test-save-fixtures.mjs`: the
+  roster count 19 to 20 and one check (a saved `map` is kept exactly, an older helicopter gains none). No other assertion
+  changed.
+
+## Tests
+
+`tools/test-map-secrets.mjs` is now 282 checks. New: a saved record comes back exactly twice over; an older save gains
+none; a car at the Table survives save and load; a scar on the Table is dropped; a car at a made-up place is dropped;
+1,000 names cut to 128; `__proto__` names and keys; a record at version 2, `"2"`, 2.5 and 1e30 kept exactly and every
+write over it refused (find, sighting, logbook, the logbook pays 0); a later helicopter refused; a hover over such a
+record finds nothing, silently. The first part's malformed-record tests now go through the profile. Break-the-code checks:
+the `map` line in `normalizeHeli` removed, `validCourse` for cars, the 128 cut removed, later helicopter / later record
+not refused, a later record not kept, `__proto__` allowed: each makes a test fail.
+
+Changed assertion (reviewed reason): `tools/test-map-secrets.mjs` (own test, part one's): a malformed or unknown-named record no
+longer "drops unknown names"; names a later game wrote are kept, as for the ski record. And the car at the Table is now
+delivered instead of refused.
+
+## Independent save review
+
+A fresh reviewer attacked the record as a hostile save editor (versions 2, "2", 2.5, 1e30, Infinity, NaN, null and the rest;
+a frozen profile; wallets of every bad kind; `__proto__`, `constructor` and nested keys; aliasing; idempotence through JSON and
+`normalizeProfile`; every other reader of `carsAt`). It found no way to pay twice or to write over a later record, and no leak of
+`the-table` beyond a car's place. Its notes: (1) a full list (128 names) silently took no new name while the session still
+announced the find: fixed, `noteFound`, `noteSeen` and `claimTable` now return `ok: false` ("The map record is full.") and
+nothing is announced or paid (tested); (2) `src/app.js:1693` words a car's place from a table that lacks the Table, so the home
+board would say "is at the-table": cosmetic, left for MAP-VIEW (busy-game-files lock); (3) a car left on the Table can be fetched
+only while the Table is a destination (the pilot-map switch on and the Table seen), so turning the switch off, or a later game's
+map record, strands an air-only car there until it is back: accepted while the switch is a dev switch, and worth a rule before
+`pilot-map` goes on for everyone; (4) pre-existing and not changed: a wallet of 1e30 is cut to the cap.
+
+## Not done here
+
+- The Deep's log page reading `map.table`, the map screen and the art (MAP-VIEW, MAP-ART). `src/app.js:1693` words a car's
+  place by name and would show the raw id `the-table` for a car left on the Table: MAP-VIEW should name it.
+
+## Removed
+
+- The part-one refusal `carNotKept` (event, panel text, test) and the filter that dropped a later game's names.
+
+## Checks (part two)
+
+Run once in the cloud on the branch restarted from the merged `integration/wasteland` (fast-forward, no conflict):
+`npm run build` passes. `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` (468 suites): the only
+failures are the laptop-only or already-failing ones: `test-course-kit` (asserts `win32`), `test-earned-cars-ui`,
+`test-drive-through`, `test-full-check`, `test-medals`, `test-salt-flats`, `test-salt-flats-art`, `test-p4-kits`,
+`test-tanker-valve-source`, `test-vesper-art`, `test-compact-binaries` and `test-lab-radio` (same on a clean
+`integration/wasteland`). After the last small change (a full list takes no name) I reran `test-map-secrets` (282),
+`test-save-fixtures` (20 shapes, 912 checks), `test-heli-save`, `test-heli-mode`, `test-progression` and
+`test-map-destinations`: all pass. Not run here: browser scenarios and the full tier.

@@ -23,6 +23,9 @@ const isObject = value => value !== null && typeof value === 'object' && !Array.
 const count = value => Number.isSafeInteger(value) ? Math.max(0, Math.min(MAX_COUNT, value)) : 0;
 const validId = value => typeof value === 'string' && value.length >= 1 && value.length <= 80 && ID_PATTERN.test(value);
 const validCourse = value => typeof value === 'string' && COURSE.some(stage => stage.id === value);
+// A car can stand on a course or on the Table, the pilot's air-only mesa, which is no registry course (MAP-SECRETS).
+// Calls, rescues, jobs and scars still name courses only.
+const validPlace = value => validCourse(value) || value === 'the-table';
 const validCar = value => typeof value === 'string' && Object.hasOwn(CARS, value);
 const tenthsOf = kg => Math.max(0, Math.min(TANK_TENTHS, Math.round(Number(kg) * 10)));
 // 1.5 credits per kilogram is 0.15 credits per tenth, rounded up to a whole credit.
@@ -37,7 +40,7 @@ export function createHeli() {
 }
 
 // Every field this game knows, so only a newer game's fields are copied as they are.
-const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey', 'ski']);
+const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey', 'ski', 'map']);
 
 export function normalizeHeli(value) {
   if (!isObject(value) || value.version !== HELI_SAVE_VERSION) return createHeli();
@@ -53,13 +56,14 @@ export function normalizeHeli(value) {
     done: [...new Set((Array.isArray(jobs.done) ? jobs.done : []).filter(validId))].slice(0, 10)};
   if (isObject(value.carsAt)) {
     for (const [car, course] of Object.entries(value.carsAt))
-      if (validCar(car) && validCourse(course)) heli.carsAt[car] = course;
+      if (validCar(car) && validPlace(course)) heli.carsAt[car] = course;
   }
   heli.refuels = count(value.refuels);
   heli.flights = count(value.flights);
   normalizeFireFields(value, heli);
   normalizeSkinFields(value, heli);
   if (Object.hasOwn(value, 'ski')) { const ski = normalizeSki(value.ski); if (ski) heli.ski = ski; }
+  if (Object.hasOwn(value, 'map')) { const map = normalizeMapRecord(value.map); if (map) heli.map = map; }
   // Keys from a newer game are kept as they are (a copy), so going back one
   // release loses nothing (docs/HELI_FIRE.md section 12). A known field that
   // failed its checks is dropped, never copied.
@@ -168,7 +172,7 @@ export function finishLesson(profile, lesson, {enabled} = {}) {
 
 export function placeCar(profile, carId, courseId, {enabled} = {}) {
   if (enabled !== true) return off(profile);
-  if (!validCar(carId) || !validCourse(courseId)) return failure(profile, 'That car or course is not known.');
+  if (!validCar(carId) || !validPlace(courseId)) return failure(profile, 'That car or course is not known.');
   const heli = heliOf(profile);
   return {ok: true, profile: withHeli(profile, {...heli, carsAt: {...heli.carsAt, [carId]: courseId}})};
 }
@@ -473,6 +477,48 @@ function normalizeSki(value) {
     try { ski[key] = structuredClone(value[key]); } catch { /* not plain data: dropped */ }
   }
   return ski;
+}
+
+// ---- The pilot's map (docs/PILOT_MAP.md section 6, MAP-SECRETS) ------------------------------------------------------
+// profile.heli.map = {version: 1, seen: [<place>], found: [<secret>], table: boolean}, optional: an older save has none and
+// never gains one until something is found. Names this game does not know (a later game's places and secrets) are kept
+// as they are and mean nothing. A later version of the record is returned exactly as it was and every write over it is
+// refused, as is a write over a later helicopter (map-secrets.js does the writing and reading; this is the save's shape).
+export const MAP_SAVE_VERSION = 1;
+const MAP_KEYS = new Set(['version', 'seen', 'found', 'table']);
+const MAX_MAP_NAMES = 128;
+const MAP_NEWER = 'This map belongs to another version.';
+function normalizeMapRecord(value) {
+  if (!isObject(value)) return null;
+  if (laterVersion(value.version)) {
+    try { return structuredClone(value); } catch { return value; }
+  }
+  if (value.version !== MAP_SAVE_VERSION) return null;
+  const names = list => [...new Set((Array.isArray(list) ? list : []).filter(id => validId(id) && id !== '__proto__'))].slice(0, MAX_MAP_NAMES);
+  const map = {version: MAP_SAVE_VERSION, seen: names(value.seen), found: names(value.found), table: value.table === true};
+  for (const key of Object.keys(value)) {
+    if (MAP_KEYS.has(key) || key === '__proto__' || value[key] === undefined) continue;
+    try { map[key] = structuredClone(value[key]); } catch { /* not plain data: dropped */ }
+  }
+  return map;
+}
+// The record this game can read: a version 1 record, or an empty one (none stored, or a later game's).
+export function mapRecordOf(profile) {
+  const map = heliOf(profile).map;
+  return map && map.version === MAP_SAVE_VERSION ? map : {version: MAP_SAVE_VERSION, seen: [], found: [], table: false};
+}
+// Why a write over the map record must be refused (a later game's record, or a later game's helicopter), or null.
+export function mapBlocked(profile) {
+  const stored = isObject(profile) && isObject(profile.heli) ? profile.heli : null;
+  if (stored && laterVersion(stored.version)) return MAP_NEWER;
+  const map = heliOf(profile).map;
+  return map && map.version !== MAP_SAVE_VERSION ? MAP_NEWER : null;
+}
+// The profile with this map record in its helicopter, or the same profile with a reason when the write is refused.
+export function writeMapRecord(profile, map, extra = {}) {
+  const reason = mapBlocked(profile);
+  if (reason) return {ok: false, reason, profile};
+  return {ok: true, profile: {...profile, ...extra, heli: {...heliOf(profile), map: normalizeMapRecord({...map, version: MAP_SAVE_VERSION})}}};
 }
 
 const createSki = () => ({version: SKI_SAVE_VERSION, best: {}, medal: {}, paid: {}, stashes: []});
