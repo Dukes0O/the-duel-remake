@@ -270,6 +270,9 @@ export const TYRE_SLIP = Object.freeze({
   driftAskLow: 1.10,
   driftLiftSlip: 1.20,
   driftRecoveryMeters: 2,
+  // The Neon Drift Trial under the sliding-tyre rules keeps the old quick launch, as arenas do (TYRE-SLIP-DRIFT-RETUNE):
+  // the drift line, scrub and chain thresholds above were tuned on it. It lives here, not in DRIVE, so DRIVE stays byte for byte.
+  driftTrialAccelScale: 5.2,
   headroom: 1.25, width: .25, brakeUse: .6, riseRate: 12, fallRate: 8,
   minSpeedMph: 15, minWorldSpeed: 8, quietSlip: .9, soundWidth: .35,
   angleAtQuiet: .045, angleAtPeak: .075,
@@ -322,7 +325,8 @@ export function steerForYaw(desiredYaw, {speedMph, grip = 1, traction = 1, car =
 }
 
 // Launch strength for the course being driven: arenas keep their old value.
-export const launchScale = (course, recovering = false) => course?.def?.arena === true ? DRIVE.arenaAccelScale
+export const launchScale = (course, recovering = false, slipRules = false) => course?.def?.arena === true ? DRIVE.arenaAccelScale
+  : slipRules === true && course?.def?.kind === 'drift' ? TYRE_SLIP.driftTrialAccelScale
   : recovering ? DRIVE.recoveryAccelScale : DRIVE.accelScale;
 export const boostLaunch = course => course?.def?.arena === true ? BOOST.arenaAccelMphPerSec : BOOST.accelMphPerSec;
 

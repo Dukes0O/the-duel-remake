@@ -471,3 +471,31 @@ test('inactive tyre model never adds state fields and clears them after an activ
   assert.equal(d.startArenaEvent({venueId:'scrapdome',car:'falcone_f42',difficulty:'pro',seed:1989,cpuDifficulty:'medium',opponents:[{car:'viper_proto',brain:'rammer'}]}),true);
   absent();
 });
+
+// TYRE-SLIP-DRIFT-RETUNE: the Neon Drift Trial keeps the old quick launch under the sliding-tyre rules only.
+test('the drift trial keeps the quick launch under the sliding-tyre rules, and nothing else changes',async()=>{
+  const {launchScale}=await import('../src/config.js');
+  const drift={def:COURSE.find(event=>event.id==='neon-drift-trial')},arena={def:{arena:true}},road={def:COURSE[0]};
+  assert.equal(drift.def.kind,'drift');
+  assert.equal(TYRE_SLIP.driftTrialAccelScale,5.2);
+  assert.equal(launchScale(drift,false,true),5.2,'the trial under the rules: the old launch');
+  assert.equal(launchScale(drift),DRIVE.accelScale,'the trial with released tyres: today\'s launch');
+  assert.equal(launchScale(drift,false,false),DRIVE.accelScale);
+  assert.equal(launchScale(road,false,true),DRIVE.accelScale,'any other course keeps the gentle launch even with the rules on');
+  assert.equal(launchScale(arena,false,true),DRIVE.arenaAccelScale,'arenas are as they were');
+  assert.equal(launchScale(arena),DRIVE.arenaAccelScale);
+  assert.equal(launchScale(drift,true,false),DRIVE.recoveryAccelScale,'a crash recovery is as it was');
+  assert.equal(launchScale(road,true,true),DRIVE.recoveryAccelScale);
+  // Behaviour: Pro flat out in first gear (no shifting needed), rules on and off: the time to reach 55 mph.
+  const secondsTo=(mph,rules)=>{
+    const d=new Duel({seed:1989,featureFlags:createFeatureFlags({storage:null,overrides:{'tyre-slip':rules}})});
+    d.startCampaign({seed:1989,startStage:COURSE.findIndex(event=>event.id==='neon-drift-trial'),car:'banshee_muscle',difficulty:'pro',cpuDifficulty:'easy'});
+    assert.equal(d.state.tyreSlipRules===true,rules);
+    Object.assign(d.state,{status:'racing',countdown:0});
+    for(let tick=0;tick<120*5;tick++){d.setInput({throttle:1,brake:0,steer:0,boost:false});d.step(1/120);if(d.state.speedMph>=mph)return tick/120;}
+    return Infinity;
+  };
+  const quick=secondsTo(55,true),gentle=secondsTo(55,false);
+  assert.ok(Number.isFinite(quick)&&Number.isFinite(gentle),'both reach 55 mph');
+  assert.ok(quick<gentle*.7,'the rules-on trial launches clearly harder ('+quick+' s against '+gentle+' s)');
+});
