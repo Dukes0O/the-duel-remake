@@ -51,8 +51,8 @@ export function waxSetting(pick, day) {
   return snowOfDay(day).wax === pick ? 'right' : 'wrong';
 }
 
-// The wax run: a slalom run that beats the slalom's silver time with the right wax for the day's snow.
-export const WAX_RUN = Object.freeze({run: 'slalom', beat: 'silver'});
+// The wax run teaches wax choice. Gate penalties still count in the ordinary ski result.
+export const WAX_RUN = Object.freeze({run: 'slalom'});
 export const waxRunSilverS = () => medalTimes(zoneGuide(WAX_RUN.run).time).silver;
 
 // `time` must be a run skied with that pick (skiWaxFor(...) as the skier's wax), with the missed-gate penalty added.
@@ -61,8 +61,7 @@ export function waxRunResult({day, pick, time} = {}) {
   const base = {snow: today.snow, rightWax: today.wax, silverS};
   if (!WAXES.includes(pick)) return {...base, pass: false, reason: 'Pick a wax first.'};
   if (pick !== today.wax) return {...base, pass: false, reason: `That wax does not suit ${today.name.toLowerCase()}.`};
-  if (!(typeof time === 'number' && time > 0)) return {...base, pass: false, reason: 'The run did not finish.'};
-  if (time > silverS) return {...base, pass: false, reason: `Too slow: ${time.toFixed(1)} s against ${silverS.toFixed(1)} s.`};
+  if (!(Number.isFinite(time) && time > 0)) return {...base, pass: false, reason: 'The run did not finish.'};
   return {...base, pass: true, reason: ''};
 }
 

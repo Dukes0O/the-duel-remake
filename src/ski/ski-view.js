@@ -187,7 +187,7 @@ export function skiMenuMarkup(offers, {wax = null} = {}) {
   const best = run => run.best === null ? 'not skied yet' : `best ${run.limits?.kind === 'points' ? `${run.best} pts` : run.limits ? clockText(run.best) : run.best} · ${medalName(run.medal)}`;
   const runs = offers.runs.map(run => `<li><span class="heli-board-text">${escape(run.name)}</span><span class="heli-board-pay">${escape(best(run))}</span>
     <button type="button" class="heli-board-button" data-ski-run="${run.id}">Ski</button></li>`).join('');
-  const challenge = offers.challenge && offers.runs.some(run => run.id === offers.challenge.run) ? `<li><span class="heli-board-text">Lab: the wax run</span><span class="heli-board-pay">Pick the wax for today's snow, then beat silver on the slalom</span>
+  const challenge = offers.challenge && offers.runs.some(run => run.id === offers.challenge.run) ? `<li><span class="heli-board-text">Lab: the wax run</span><span class="heli-board-pay">Pick the wax for today's snow, then finish the slalom. Missed gates add time only</span>
     <button type="button" class="heli-board-button" data-ski-challenge="${offers.challenge.id}"${wax ? '' : ' disabled'}>Ski</button></li>` : '';
   return `<section class="heli-board ski-menu" aria-label="Ski from ${escape(SKI_PAD_NAMES[offers.pad] ?? offers.pad)}"><span>SKI FROM ${escape((SKI_PAD_NAMES[offers.pad] ?? offers.pad).toUpperCase())}</span>
     ${snow}${waxes}<ul>${runs}${challenge}</ul></section>`;

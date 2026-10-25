@@ -149,14 +149,15 @@ test('the Wax kit: with it, a pick is judged against the day\'s snow; without it
   assert.equal(plain.time, zoneGuide('slalom').time);
 });
 
-test('the wax run: the right wax for the day\'s snow and a time inside the slalom\'s silver pass; the wrong wax, no wax or a slow run do not', () => {
+test('the wax run: the right wax for the day\'s snow and a finished run pass; the wrong wax, no wax or an unfinished run do not', () => {
   const day = '2026-10-20', today = snowOfDay(day), silver = waxRunSilverS(), wrong = WAXES.find(wax => wax !== today.wax);
   assert.equal(waxRunResult({day, pick: today.wax, time: silver}).pass, true, 'exactly silver is enough');
-  assert.equal(waxRunResult({day, pick: today.wax, time: silver + 0.01}).pass, false, 'a hundredth over is not');
+  assert.equal(waxRunResult({day, pick: today.wax, time: silver + 100}).pass, true, 'missed-gate time does not fail a correct-wax finish');
   const unsuited = waxRunResult({day, pick: wrong, time: 20});
   assert.equal(unsuited.pass, false); assert.match(unsuited.reason, /does not suit dry powder/i);
   assert.equal(waxRunResult({day, pick: undefined, time: 20}).pass, false);
   assert.equal(waxRunResult({day, pick: today.wax, time: NaN}).pass, false);
+  assert.equal(waxRunResult({day, pick: today.wax, time: Infinity}).pass, false);
   assert.equal(waxRunResult({day, pick: today.wax, time: 0}).pass, false);
   // Can it be won? A guide-pace run on the day's right wax is well inside silver, on a day of each snow.
   const zone = skiZone('slalom'), time = guideRun({line: zone.line, world: zone, wax: 'right', ...(zone.guide ? {lookAhead: zone.guide} : {})}).time;

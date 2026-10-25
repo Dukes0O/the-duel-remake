@@ -49,8 +49,8 @@ export async function run(context) {
     await new Promise(resolve => setTimeout(resolve, 2500));
     await context.screenshot(`bench-${id}`);
     const text = await context.evaluate(`document.querySelector('.lab-challenge').textContent.trim()`);
-    if (id !== 'pendulum' && text.includes('Finish the experiment')) throw Error(id+': experiment did not finish');
-    console.log(JSON.stringify({lesson:id, experimentComplete:!text.includes('Finish the experiment'), issue:id==='pendulum'?'Numeric length select resets to 5 m; UI goal blocked':null, firstReadoutMs:firstReadout, experimentMs:Date.now()-start, challenge:text}));
+    if (text.includes('Finish the experiment')) throw Error(id+': experiment did not finish');
+    console.log(JSON.stringify({lesson:id, experimentComplete:!text.includes('Finish the experiment'), issue:null, firstReadoutMs:firstReadout, experimentMs:Date.now()-start, challenge:text}));
     await context.evaluate(`document.querySelector('[data-lab="back"]').click()`);
   }
   await context.evaluate(`document.querySelector('[data-lab="close"]').click()`);

@@ -100,6 +100,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   group.add(labProps);
   const labPool = [];
   const labMake = kind => kind === 'buoy' ? new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 8), new THREE.MeshStandardMaterial({color: 0xffcf3f, roughness: .5}))
+    : kind === 'splash' ? ring(THREE, 3, 0xefffff)
     : kind === 'smoke' ? new THREE.Mesh(new THREE.CylinderGeometry(1.5, 4, 40, 10), new THREE.MeshBasicMaterial({color: 0xcfcac0, transparent: true, opacity: .5, depthWrite: false}))
     : new THREE.Mesh(new THREE.BoxGeometry(18, .6, 18), new THREE.MeshBasicMaterial({color: 0x2f6b32, transparent: true, opacity: .55, depthWrite: false}));
   function labDraw(props) {
@@ -107,14 +108,15 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     list.forEach((prop, index) => {
       let mesh = labPool[index];
       if (!mesh || mesh.userData.kind !== prop.kind) {
-        if (mesh) { labProps.remove(mesh); mesh.geometry.dispose(); mesh.material.dispose(); }
+        if (mesh) { labProps.remove(mesh); mesh.traverse(child => { child.geometry?.dispose(); child.material?.dispose(); }); }
         mesh = labMake(prop.kind);
+        if (prop.kind === 'buoy') mesh.add(ring(THREE, prop.radius, 0xffcf3f));
         mesh.userData.kind = prop.kind;
         labPool[index] = mesh;
         labProps.add(mesh);
       }
       mesh.visible = true;
-      const lift = prop.kind === 'smoke' ? 20 : prop.kind === 'fire' ? .4 : 0;
+      const lift = prop.kind === 'smoke' ? 20 : prop.kind === 'fire' ? .4 : .2;
       mesh.position.set(prop.x, (prop.y ?? 0) + lift, prop.z);
       if (prop.kind === 'buoy') mesh.material.color.setHex(prop.hit ? 0x4fd16a : 0xffcf3f);
       else if (prop.kind === 'fire') mesh.material.color.setHex(prop.burnt ? 0x1b1b1b : prop.percent > 0 ? 0xff6a1a : prop.road ? 0xb59d70 : 0x2f6b32);

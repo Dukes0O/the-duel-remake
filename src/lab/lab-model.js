@@ -108,7 +108,7 @@ export function openBench(lessonId) {
 export function setControl(state, controlId, value) {
   const control = state.bench.controls.find(c => c.id === controlId);
   if (!control) return state;
-  const wanted = control.options ? value : Number(value);
+  const wanted = control.options ? (control.options.find(option => String(option) === String(value)) ?? value) : Number(value);
   return {...state, settings: {...state.settings, [controlId]: wanted}};
 }
 // Runs the bench once with the settings on the dial. The result's own `settings` (clamped) become the dial.

@@ -28,6 +28,16 @@ const flown = profile => ({...profile, heli: {version: 1, fuelKg: 0, lessons: {l
   playDay: {last: null, count: 0}, jobs: {day: 0, taken: null, done: []}, carsAt: {}, refuels: 0, flights: 0}});
 const richProfile = () => flown({...createProfile(), credits: 20000, drivingLessons: {version: 1, done: {corner: true}}});
 
+test('pendulum records all three lengths from DOM select strings', () => {
+  let state = openBench('pendulum');
+  for (const length of ['5', '15', '25']) {
+    state = runBench(setControl(state, 'lengthM', length));
+    assert.equal(state.result.lengthM, Number(length));
+  }
+  state = runBench(setControl(setControl(state, 'lengthM', '15'), 'weightKg', '200'));
+  assert.equal(goalMet(state), true);
+});
+
 // ---- the G-force lap monitor ----
 
 const corners = [{number: 1, entryS: 100, exitS: 200}, {number: 2, entryS: 400, exitS: 500}, {number: 3, entryS: 700, exitS: 800}, {number: 4, entryS: 900, exitS: 40}];
