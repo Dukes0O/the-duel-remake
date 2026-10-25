@@ -15,7 +15,7 @@ import { prepareVehicleDamage } from './vehicles.js';
 // halves covered by pods on the body, no exposed suspension. Matte charcoal with a
 // thin green line along the side.
 export const SPEIRLING_VEHICLE_DIMENSIONS = Object.freeze({
-  mcmurtry_speirling: Object.freeze({ width: 1.48, length: 3.36, height: 1.21, wheelRadius: .33 }),
+  mcmurtry_speirling: Object.freeze({ width: 1.45, length: 3.36, height: 1.21, wheelRadius: .33 }),
 });
 const { materials, batch, cockpit, wheels, fitSurfacePatch } = originalVehicleParts;
 const AXLES = Object.freeze([1.02, -1.04]);
@@ -51,7 +51,7 @@ export function createSpeirlingVehicle({ key = 'mcmurtry_speirling', color = 0x3
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...SPEIRLING_VEHICLE_DIMENSIONS[key] },
     ultimateKey: key, fans: [],
     designFeatures: Object.freeze(['teardrop-coupe', 'jet-canopy', 'twin-round-fan-exits', 'floor-skirt', 'wheel-pods', 'low-nose', 'cut-off-tail']),
-    damageSpace: { scale: [.9, .80, 1.0], offset: [0, 0, 0], frontGlassZ: .50, rearGlassZ: -.18 },
+    damageSpace: { scale: [.9, .88, 1.0], offset: [0, 0, 0], frontGlassZ: .50, rearGlassZ: -.18 },
   });
 
   teardrop(b, m);
@@ -74,9 +74,8 @@ export function createSpeirlingVehicle({ key = 'mcmurtry_speirling', color = 0x3
 // three corners lie inside it is dropped), and the canopy itself: dark glass fitted
 // over the same surface, clipped to a jet-fighter outline, so glass and body are
 // one smooth shape and the driver shows only faintly through the tint.
-const opening = (y, z) => z > -.40 && z < .92 && y > .76 + .55 * Math.pow((z - .25) / .75, 2);
+const opening = (x, y, z) => Math.abs(x) < .28 && z > -.40 && z < .92 && y > .76 + .55 * Math.pow((z - .25) / .75, 2);
 const CANOPY_TOP = [[0, .98], [.15, .88], [.26, .62], [.31, .2], [.29, -.15], [.2, -.36], [0, -.43], [-.2, -.36], [-.29, -.15], [-.31, .2], [-.26, .62], [-.15, .88]];
-const CANOPY_SIDE = [[.74, .78], [.72, .3], [.72, -.1], [.78, -.32], [.98, -.4], [1.1, -.3], [1.17, -.1], [1.15, .3], [1.0, .62], [.86, .84]];
 // The body shell: a smooth loft through the stations with a 48-point cross-section,
 // rounded at the top and squarer at the floor, widest at the shoulder, so there are
 // no facets where the nose meets the sides or over the roof. Closed at both ends.
@@ -121,14 +120,13 @@ function teardrop(b, m) {
   const shell = smoothShell(SPEIRLING_SECTIONS), p = shell.attributes.position, index = shell.index, kept = [];
   for (let i = 0; i < index.count; i += 3) {
     const ids = [index.getX(i), index.getX(i + 1), index.getX(i + 2)];
-    if (ids.every(k => opening(p.getY(k), p.getZ(k)))) continue;
+    if (ids.every(k => opening(p.getX(k), p.getY(k), p.getZ(k)))) continue;
     kept.push(...ids);
   }
   const paint = new THREE.BufferGeometry(); paint.setAttribute('position', p.clone()); paint.setIndex(kept); paint.computeVertexNormals();
   b.add(paint, m.paint); paint.dispose();
   const surface = [{ geometry: shell }];
   fitSurfacePatch(surface, b, m.glass, CANOPY_TOP, 'top', 1, .0, .006);
-  for (const side of [-1, 1]) fitSurfacePatch(surface, b, m.glass, CANOPY_SIDE, 'side', side, .0, .006);
   b.box(m.carbon, [.74, .04, 1.4], [0, .14, .2], [0, 0, 0], 0);       // a dark liner so the tub reads as a cockpit
   shell.dispose();
 }
@@ -207,9 +205,8 @@ function fittedDetails(vehicle, m) {
   const skins = vehicle.userData.damageMeshes.filter(({ mesh }) => mesh.material === m.paint).map(({ mesh }) => mesh), b = batch(vehicle);
   const patch = (corners, axis, side = 1, material = m.carbon, lift = .004, minSide = .4) => fitSurfacePatch(skins, b, material, corners, axis, side, minSide, lift);
   for (const side of [-1, 1]) {
-    // The thin green line along each flank, a little above the floor, and a dark intake behind the canopy.
+    // The thin green line along each flank, a little above the floor,  (the body stays one clean charcoal surface).
     patch([[.43, .62], [.43, -.62], [.452, -.62], [.452, .62]], 'side', side, m.accent, .004);
-    patch([[.60, -.55], [.74, -.55], [.74, -.95], [.60, -.95]], 'side', side, m.carbon, .006);
     // Road grime low on the flanks: a ragged band and a few splashes.
     patch([[.17, 1.55], [.17, -1.55], [.26, -1.55], [.30, -1.2], [.25, -.8], [.30, -.3], [.24, .2], [.29, .7], [.24, 1.2], [.28, 1.55]], 'side', side, m.grime, .007);
     for (const [y, z, r] of [[.36, -.9, .05], [.34, -.2, .04], [.39, .5, .045], [.33, 1.0, .05]]) patch(Array.from({ length: 8 }, (_, i) => [y + Math.sin(i * .785) * r, z + Math.cos(i * .785) * r * 1.6]), 'side', side, m.grime, .008);

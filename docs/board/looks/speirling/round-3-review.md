@@ -41,5 +41,11 @@ Claude asked for exactly four changes.
 4. **Canopy:** the glass is near-black from every angle (non-reflective), the
    helmet just shows through.
 
-Size: 49,326 triangles and 57 draws (cap this round: 50,000 triangles).
+Size: 48,162 triangles and 56 draws (cap this round: 50,000 triangles).
 Still true: this session could not open photographs.
+
+## Verdict
+
+Claude: accepted at round 3; stray dark side patches removed.
+
+After the verdict the dark rectangular patches beside the canopy and on the rear flanks (the side-glass overlays and a carbon intake panel) were removed, and the canopy opening was limited to the roof's centre, so the body is one clean charcoal surface; the side glass-crack zones now land on the canopy glass's edge. The width is declared at 1.45 m (measured).
