@@ -11,6 +11,9 @@ import {checkProtections} from './lab-workshop.js';
 import {labOf} from './lab-save.js';
 import {LAB_LINES} from './lab-lines.js';
 import {createSceneKeeper, createLabScene} from './lab-scene.js';
+// LAB-FAN-VIEW: secret pages; all saved transitions still go through labCommit.
+import {fanView, fanEntry, fanMarkup, fanLoad, tunnelLesson, createFanSound} from './fan-view.js';
+import {markReverse, buildFan} from './lab-fan.js';
 
 const CAPTION_MIN_SECONDS = 4;
 const defaultManifest = () => fetch('/assets/models/lab/manifest.json').then(response => {
@@ -68,11 +71,13 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   const top = section.querySelector('.lab-top'), stage = section.querySelector('.lab-stage');
   const captionEl = section.querySelector('.lab-caption'), side = section.querySelector('.lab-side');
   const voice = createLineVoice(app);
+  const fanSound = createFanSound(app); // LAB-FAN-VIEW
 
   let shown = false, disposed = false;
   let ui = freshState(), caption = null, lastTop = '', lastSide = '', lastCaption = '', lastStrip = '';
 
-  function freshState() { return {tab: 'lessons', bench: null, message: '', protect: null, explained: false, restore: null}; }
+  function freshState() { return {tab: 'lessons', bench: null, message: '', protect: null, explained: false, restore: null,
+    fanPage: false, fanSetting: 0, fanStarted: null, fanLine: -1}; }
   const flags = () => app._switches();
   const profile = () => app.profile ?? {};
   const now = () => (win?.performance ?? performance).now() / 1000;
@@ -108,6 +113,8 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   };
   function sideMarkup() {
     if (ui.restore) return restoreRunMarkup(restoreView());
+    // LAB-FAN-VIEW
+    if (ui.fanPage) return fanMarkup(fanView(profile(), flags()), ui.fanSetting, ui.message);
     if (ui.tab === 'shop') {
       return shopMarkup({rows: shopRows(profile(), flags()), choices: choiceRows(profile()), wallet: profile().credits, message: ui.message});
     }
@@ -121,9 +128,10 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     return boardMarkup({rows: boardRows(profile(), flags()), message: ui.message});
   }
   function render() {
+    fanSound.bench(ui.fanPage ? ui.fanSetting : null); // LAB-FAN-VIEW
     const topHtml = headerMarkup({credits: profile().credits, tab: ui.tab});
     if (topHtml !== lastTop) { top.innerHTML = topHtml; lastTop = topHtml; }
-    const sideHtml = sideMarkup();
+    const sideHtml = sideMarkup() + (ui.restore || ui.fanPage || ui.tab !== 'lessons' ? '' : fanEntry(fanView(profile(), flags()), ui.bench?.lessonId, ui.fanStarted === null ? null : now() - ui.fanStarted));
     if (sideHtml !== lastSide) {
       const key = focusKey();
       side.innerHTML = sideHtml;
@@ -132,6 +140,9 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     }
     keeper.scene?.show(ui.tab === 'lessons' && ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null);
     keeper.scene?.restore(ui.restore ? restoreView() : null);
+    // LAB-FAN-VIEW: only drawing state enters the room.
+    keeper.scene?.fan?.({...fanView(profile(), flags()), page: ui.fanPage, setting: ui.fanSetting, tunnel: tunnelLesson(ui.bench?.lessonId),
+      elapsed: ui.fanStarted === null ? null : now() - ui.fanStarted});
   }
   const focusKey = () => {
     const el = doc.activeElement;
@@ -146,7 +157,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   function openLesson(id) {
     const bench = openBench(id);
     if (!bench) return;
-    ui = {...ui, tab: 'lessons', bench, message: '', protect: null, explained: false};
+    ui = {...ui, tab: 'lessons', bench, message: '', protect: null, explained: false, fanPage: false};
     say(id, 'intro');
     render();
   }
@@ -262,12 +273,39 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     render();
   }
 
+  // LAB-FAN-VIEW: no purchase arithmetic or save mutation in the screen.
+  function reverseFan() {
+    if (!fanView(profile(), flags()).open || fanView(profile(), flags()).reverse) return;
+    const result = app.labCommit((p, f) => markReverse(p, {flags: f}));
+    ui.message = result.reason;
+    if (result.ok) {
+      voice.stop(); caption = null;
+      ui.fanStarted = now(); ui.fanLine = -1;
+      fanSound.reverse();
+    }
+    render();
+  }
+  function tickFan() {
+    if (ui.fanStarted === null) return;
+    const elapsed = now() - ui.fanStarted;
+    const scales = side.querySelector('[data-lab-reverse-scales]');
+    const scaleText = `${Math.round(1000 + 2000 * Math.max(0, Math.min(1, (elapsed - 1.5) / 1.5))).toLocaleString('en-US')} kg`;
+    if (scales && scales.textContent !== scaleText) scales.textContent = scaleText;
+    keeper.scene?.fan?.({...fanView(profile(), flags()), page: ui.fanPage, setting: ui.fanSetting, tunnel: tunnelLesson(ui.bench?.lessonId), elapsed});
+    if (elapsed < 3 || (caption && caption.until > now())) return;
+    const steps = ['reverse', '1970', '1978', '2022'];
+    ui.fanLine++;
+    if (ui.fanLine === 0) render();
+    if (ui.fanLine < steps.length) say('secret', steps[ui.fanLine]);
+    else ui.fanStarted = null;
+  }
+
   // ---- buttons ----
   function onClick(event) {
     const target = event.target.closest?.('[data-lab],[data-lab-tab],[data-lab-lesson],[data-lab-buy],[data-lab-ring],[data-lab-cable]');
     if (!target || !section.contains(target)) return;
     const d = target.dataset;
-    if (d.labTab) { if (ui.restore) endRestore(); ui = {...ui, tab: d.labTab, message: ''}; if (d.labTab === 'lessons' && ui.bench === null) caption = null; render(); return; }
+    if (d.labTab) { if (ui.restore) endRestore(); ui = {...ui, tab: d.labTab, message: '', fanPage: false}; if (d.labTab === 'lessons' && ui.bench === null) caption = null; render(); return; }
     if (d.labLesson) { openLesson(d.labLesson.replace(/^start:/, '')); return; }
     if (d.labBuy) { buy(d.labBuy); return; }
     if (d.labRing !== undefined) {
@@ -279,6 +317,18 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       ui.message = result.ok ? '' : result.reason; render(); return;
     }
     switch (d.lab) {
+      // LAB-FAN-VIEW
+      case 'fan-reverse': reverseFan(); break;
+      case 'fan-blueprint':
+        if (fanView(profile(), flags()).reverse) { ui.fanPage = true; ui.message = ''; render(); }
+        break;
+      case 'fan-back': ui.fanPage = false; render(); break;
+      case 'fan-build': {
+        const result = app.labCommit((p, f) => buildFan(p, {flags: f}));
+        ui.message = result.ok ? 'The Spéirling is yours.' : result.reason;
+        if (result.ok) bing('interface.bonus');
+        render(); break;
+      }
       case 'close': app.closeLab(); break;
       case 'back': backToBoard(); break;
       case 'run': run(); break;
@@ -295,6 +345,15 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   // Dials: the number beside a slider follows it as it moves; the setting is kept when it is let go.
   function onInput(event) {
     const el = event.target;
+    // LAB-FAN-VIEW: a local demonstration, never saved as a car tune.
+    if (el.hasAttribute('data-lab-fan-setting') && ui.fanPage) {
+      ui.fanSetting = Math.max(0, Math.min(100, Number(el.value) || 0));
+      fanSound.bench(ui.fanSetting);
+      el.parentElement.querySelector('output').textContent = `${ui.fanSetting}%`;
+      side.querySelector('[data-lab-fan-scales]').textContent = `${fanLoad(ui.fanSetting).toLocaleString('en-US')} kg`;
+      keeper.scene?.fan?.({...fanView(profile(), flags()), page: true, setting: ui.fanSetting, elapsed: null});
+      return;
+    }
     if (!ui.bench || el.dataset.labControl === undefined) return;
     ui.bench = setControl(ui.bench, el.dataset.labControl, el.value);
     const out = el.parentElement?.querySelector('output');
@@ -325,6 +384,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     if (event.code !== 'Escape') return;
     event.preventDefault();
     if (ui.restore) { endRestore(); return; } // nothing is lost: the car was made the player's when the sequence began
+    if (ui.fanPage) { ui.fanPage = false; render(); return; } // LAB-FAN-VIEW
     if (ui.bench) backToBoard(); else app.closeLab();
   }
   section.addEventListener('click', onClick);
@@ -336,7 +396,8 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
 
   // ---- the room ----
   const keeper = createSceneKeeper({stage, loadManifest, sceneFactory,
-    onRoom: room => { room.show(ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null); room.restore(ui.restore ? restoreView() : null); },
+    onRoom: room => { room.show(ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null); room.restore(ui.restore ? restoreView() : null);
+      room.fan?.({...fanView(profile(), flags()), page: ui.fanPage, setting: ui.fanSetting, tunnel: tunnelLesson(ui.bench?.lessonId), elapsed: ui.fanStarted === null ? null : now() - ui.fanStarted}); },
     // No 3D room (no graphics, or the models did not load): the board and benches still work.
     onPlain: () => stage.classList.add('lab-stage-plain')});
   const startScene = () => keeper.start();
@@ -358,6 +419,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     section.querySelector('.lab-close')?.focus({preventScroll: true});
   }
   function onClose() {
+    fanSound.stop(); // LAB-FAN-VIEW: late loads and loops cannot outlive the room.
     doc.removeEventListener('keydown', onKey);
     voice.stop();
     stopScene();
@@ -385,10 +447,12 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
         if (open) onOpen(); else onClose();
       }
       if (open) {
+        fanSound.bench(ui.fanPage ? ui.fanSetting : null); // Resume after unmuting; one owned loop.
         const wallet = headerMarkup({credits: profile().credits, tab: ui.tab});
         if (wallet !== lastTop) { top.innerHTML = wallet; lastTop = wallet; }
         paintCaption();
         tickRestore();
+        tickFan(); // LAB-FAN-VIEW
       }
       updateStrip();
       return open ? {open: true} : null;
