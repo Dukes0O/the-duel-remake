@@ -5,9 +5,15 @@
 Prepared for Claude, the Release Manager. This is a record of the work and
 checks since the Summit release at `9279efa4`, through `7ebd219f` on
 integration/wasteland. It covers all 81 change notes named by
-`git log --name-only 9279efa4..HEAD -- docs/changes/`. No installation or
-all-green release result is claimed here. Claude fills in the final release
-commit, build and installation checks after choosing the switches.
+`git log --name-only 9279efa4..HEAD -- docs/changes/`. Release
+(Claude, Release Manager, 25 October 2026): The Deep switched on and the Jesko
+freed; CPU racecraft stays dev (Ardennes full-field player crash, card
+GP-RACECRAFT-ARDENNES). Full tier on release commit `2b4d3926`: 509 passed,
+0 failed, 0 not run (2,313 s). Since then only docs changed. Frame check for
+The Deep at the kelp forest: High and Performance delivered p95 16.8 ms. Night
+browser run 140/147: deep-art-final-sheet now manual-only, audio-race fixed
+(QA-AUDIO-RACE-LAUNCH), lap-telemetry, p4-daynight and track-kits are older
+failures on QA cards. Staged build and installation checks follow below.
 
 ### What players get now
 
