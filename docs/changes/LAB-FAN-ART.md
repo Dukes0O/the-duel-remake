@@ -20,23 +20,27 @@ the blueprint and the REVERSE switch). Built by the local Sonnet session on
    curling 1.2 x 0.85 m blueprint on four pins with the Chaparral 2J (1970), the
    Brabham BT46B (1978) and the Speirling (2022) as line drawings and the
    Speirling in side and plan view with the air's path. Hung from its top edge.
-4. **Likeness.** This session could not open photographs (the browser tool failed its
-   policy check every time, round 4 included), so the shape follows Claude's round 1 description: a closed teardrop
-   coupe, a jet-fighter canopy, two round exits on a cut-off tail, a black floor skirt,
-   black wheels with fenders over their top halves, matte charcoal with a thin green line.
+4. **Likeness.** This session could not open photographs (its browser tool failed the
+   policy check every time). Round 1 followed a written description and was wrong; for
+   the last round Kyle supplied a dozen real photographs to Claude, who described them,
+   and the car was rebuilt to that description: a very low, wide car like a small Le Mans
+   prototype, a narrow central bubble canopy, tall separate front fenders, a wide flat
+   black bat-wing nose, big rear haunches with intakes, a large wing on swan-neck
+   mounts, two round fan exits low in the tail, dark multi-spoke slicks, metallic
+   blue-grey over a black lower body.
 
 ## What was built
 
-- `src/speirling-vehicle.js`: 1.45 x 3.37 x 1.2 m, 49,016 triangles and 56 draws
+- `src/speirling-vehicle.js`: 1.64 x 3.42 x 1.15 m, 49,315 triangles and 57 draws
   (cap 50,000 triangles; Jesko's 73,600 / 66 for the other cars).
 - `public/assets/models/speirling/project-fan.glb` and `manifest.json` (361 KB).
 - `tools/art/speirling-blueprint.mjs`, `tools/art/speirling-sheet.py`;
   `tools/blender/lab-review.py` gained a `wall` view; credits note in
   `public/assets/models/CREDITS.md`.
-- `tools/test-speirling-vehicle.mjs` (434 checks): the contract and shape (about 3.2 m
-  long, 1.5 m wide, 1.2 m tall; roof peak over the driver; low nose; glass over the
-  cockpit and not behind it; fenders over the wheels; two dark round exits on the tail
-  face; skirt near the road), size budget, tire grounding, damage, crush and reset,
+- `tools/test-speirling-vehicle.mjs` (434 checks): the contract and shape (about 3.4 m
+  long, 1.6 m wide, a metre to the canopy; a narrow central bubble inside the tub; tall
+  front fenders higher than the nose; haunches over the rear wheels; a wing well above
+  the tail; two dark round exits on the tail face; skirt near the road), size budget, tire grounding, damage, crush and reset,
   tumbling, and the blueprint's bytes, size and byte-for-byte rebuild.
 - Look rounds: `docs/board/looks/speirling/round-4.jpg` with `round-4-review.md`
   (earlier sheets removed as each round was committed).

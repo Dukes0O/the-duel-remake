@@ -34,7 +34,7 @@ equal(createSpeirlingVehicle({ key: 'bugatti_bolide' }), null, 'Unsupported keys
 equal(createSpeirlingVehicle({ key: '__proto__' }), null, 'Prototype keys cannot select a car');
 equal(vehicle.name, 'mcmurtry_speirling', 'Stable semantic mesh key');
 equal(d.size, SPEIRLING_VEHICLE_DIMENSIONS.mcmurtry_speirling, 'Metadata matches the physical model contract');
-equal(d.designFeatures, ['teardrop-coupe', 'jet-canopy', 'twin-round-fan-exits', 'floor-skirt', 'wheel-pods', 'low-nose', 'cut-off-tail'], 'Distinct silhouette features');
+equal(d.designFeatures, ['low-wide-stance', 'bubble-canopy', 'tall-front-fenders', 'bat-wing-intake', 'rear-haunch-intakes', 'swan-neck-wing', 'twin-round-fan-exits', 'floor-skirt'], 'Distinct silhouette features');
 equal(d.wheels.length, 4, 'Four animated wheels');
 equal(d.wheelPivots.filter(p => p.userData.front).length, 2, 'Only the front axle steers');
 ok(d.driver && d.steeringPivot && d.brakeLights.length >= 1, 'Production driver, steering and brake hooks');
@@ -57,9 +57,9 @@ const size = bounds.getSize(new THREE.Vector3());
 near(size.x, d.size.width, .025, 'Trim stays within 2.5cm of the declared width');
 near(size.z, d.size.length, .025, 'Trim stays within 2.5cm of the declared length');
 near(size.y, d.size.height, .025, 'Declared height is the whole car');
-ok(size.z > 3.0 && size.z < 3.5, 'About 3.2 m long: tiny');
-ok(size.x > 1.4 && size.x < 1.6, 'About 1.5 m wide');
-ok(size.y > 1.15 && size.y < 1.3, 'About 1.2 m tall');
+ok(size.z > 3.0 && size.z < 3.6, 'About 3.3 m long: tiny');
+ok(size.x > 1.5 && size.x < 1.7, 'About 1.6 m wide');
+ok(size.y > 1.05 && size.y < 1.25, 'About a metre to the canopy, a little more to the wing');
 ok(triangles <= MAX_TRIANGLES && draws <= MAX_DRAWS, `Size budget: ${triangles} triangles (at most ${MAX_TRIANGLES}) and ${draws} draws (at most ${MAX_DRAWS})`);
 
 // 3. Tires and the ground.
@@ -86,23 +86,27 @@ const glass = d.damageMeshes.filter(item => /^glass$/i.test(item.mesh.material.n
 const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
 const heightAt = (meshes, x, z) => { ray.set(new THREE.Vector3(x, 3, z), down); return ray.intersectObjects(meshes, false)[0]?.point.y; };
 const helmet = new THREE.Box3(); d.driver.traverse(node => { if (node.isMesh) helmet.union(new THREE.Box3().setFromBufferAttribute(node.geometry.attributes.position).applyMatrix4(node.matrixWorld)); });
-const roofAt = heightAt(glass, d.driver.position.x, d.driver.position.z);
-ok(roofAt > helmet.max.y + .02, 'The helmet sits under the canopy glass');
-for (const z of [-.3, 0, .4, .7]) ok(heightAt(glass, 0, z) > .75, `Glass over the cockpit at z ${z}`);
-ok(heightAt(glass, 0, .98) === undefined || heightAt(glass, 0, 1.2) === undefined, 'The canopy ends short of the nose');
-ok(heightAt(glass, 0, -.8) === undefined, 'and behind the driver: the tail deck is solid body');
-ok(d.damageMeshes.some(item => item.mesh.material.name === 'Rubber skirt'), 'A rubber skirt round the floor edge');
-const peak = heightAt(skins, 0, .1) ?? heightAt(glass, 0, .1);
-ok(peak > 1.12 && peak < 1.3, 'The roof peaks over the driver head');
-ok((heightAt(skins, 0, -1.45) ?? 0) < peak - .35 && (heightAt(skins, 0, -1.45) ?? 0) > .6, 'and sweeps down to a cut-off tail');
-ok((heightAt(skins, 0, 1.5) ?? 9) < .62, 'A low short nose');
-for (const z of [1.04, -1.06]) for (const side of [-1, 1]) ok((heightAt(skins, side * .54, z) ?? 0) > .55, `A pod covers the top of the wheel at z ${z}`);
-// The tail face: two round exits side by side, dark, under a lip, seen from behind.
+const canopyTop = heightAt(glass, 0, .10);
+ok(canopyTop > .95 && canopyTop < 1.06, 'The canopy tops out about a metre up');
+ok(helmet.max.y < canopyTop - .05, 'The driver sits inside the bubble, under its top');
+const glassBox = new THREE.Box3(); for (const mesh of glass) glassBox.union(new THREE.Box3().setFromBufferAttribute(mesh.geometry.attributes.position).applyMatrix4(mesh.matrixWorld));
+ok(glassBox.max.x - glassBox.min.x < .62 && glassBox.max.x - glassBox.min.x > .4, 'A narrow central bubble');
+ok(glassBox.min.y < .5, 'Its sides run down to the tub sill line');
+ok(d.damageMeshes.some(item => item.mesh.material.name === 'Rubber skirt'), 'A rubber skirt tucked in at the floor edge');
+for (const side of [-1, 1]) ok((heightAt(skins, side * .60, 1.06) ?? 0) > .80, `A tall front fender over the ${side > 0 ? 'left' : 'right'} wheel, higher than the nose`);
+ok((heightAt(skins, 0, 1.55) ?? 9) < .45, 'A low flat nose between the fenders');
+ok((heightAt(skins, .36, .10) ?? 0) > .40 && (heightAt(skins, .36, .10) ?? 0) < .56, 'The tub beside the cockpit is low and the canopy sits down in it');
+for (const side of [-1, 1]) ok((heightAt(skins, side * .60, -1.06) ?? 0) > .70, 'A wide rear haunch over each rear wheel');
+ok(bounds.max.y > .66 + .3 && bounds.max.y - 0 > heightAt(skins, 0, -1.5) + .3, 'A large wing standing well above the tail');
+const wing = d.damageMeshes.filter(item => item.mesh.material.name === 'Black bodywork');
+ok(wing.length > 0, 'Black bodywork: the lower body, intake, diffuser and wing');
+// The tail face: two round dark exits side by side, low down, seen from behind.
 const exits = d.damageMeshes.filter(item => item.mesh.material.name === 'Dark machined metal');
 ok(exits.length > 0, 'Dark fan exits on the tail');
-for (const x of [-.245, .245]) { ray.set(new THREE.Vector3(x, .38, -3), new THREE.Vector3(0, 0, 1)); const hit = ray.intersectObjects(exits.map(item => item.mesh), false)[0]; ok(hit && hit.point.z < -1.55, `A dark round exit at x ${x} on the tail face`); }
-const carbon = d.damageMeshes.filter(item => /carbon/i.test(item.mesh.material.name));
-ok(carbon.length > 0, 'Bare carbon panels, the floor and the hoops');
+for (const x of [-.245, .245]) { ray.set(new THREE.Vector3(x, .33, -3), new THREE.Vector3(0, 0, 1)); const hit = ray.intersectObjects(exits.map(item => item.mesh), false)[0]; ok(hit && hit.point.z < -1.6, `A dark round exit at x ${x} on the tail face`); }
+// The nose: a wide black intake spanning the front between the fenders.
+ray.set(new THREE.Vector3(0, .17, 5), new THREE.Vector3(0, 0, -1)); const noseHit = ray.intersectObjects(wing.map(item => item.mesh), false)[0];
+ok(noseHit && noseHit.point.z > 1.6, 'A black intake across the nose');
 ok(d.fractures.length === 4 && d.fractures.every(f => f.rest.length >= 60), 'Four glazing damage zones, all lying on real glass');
 for (const steer of [-1, -.5, 0, .5, 1]) { updateDriver(d.driver, steer, .14); for (const arm of d.driver.userData.arms) ok(arm.hand.position.toArray().every(Number.isFinite), 'Finite driver steering pose'); }
 updateDriver(d.driver, 0);

@@ -46,17 +46,29 @@ Still true: this session could not open photographs.
 
 ## Round 4 (final: Kyle lifted the cap for one last pass)
 
-Claude's instruction after Kyle's look: round 3 is "not all that bad"; one pass only.
-1. **Side windows:** back, as dark-tinted glass continuing the canopy down the cabin
-   sides in the shape of a door's glass.
-2. **Photographs:** step 2 asked for a look at public photos of the real car (front
-   three-quarter, side and rear) to correct the cabin position, the nose and its
-   intake, the wheel arches and the tail. The browser tool navigated to Wikipedia's
-   page but failed its policy check ("Policy check temporarily unavailable") on every
-   screenshot and page read, three separate times in this session, so no photograph
-   was looked at and no proportions were changed from pictures. Views used: none.
-3. **Kept:** the teardrop, the dark canopy, the rounded fenders, the tucked skirt,
-   the two round tail exits, charcoal with the green line.
+Kyle sent a dozen real photographs of the car to Claude, who found that the earlier
+"smooth teardrop" description was wrong. The car was rebuilt (`src/speirling-vehicle.js`)
+to Claude's reading of those photographs (this session saw no photograph itself: its
+browser tool failed the policy check every time; the views used are Claude's, which are
+not committed):
 
-Size: 49,016 triangles and 56 draws (cap 50,000); declared 1.45 x 3.37 x 1.2 m. The
-sheet has the same six tiles.
+1. **Stance:** very low and wide like a small Le Mans prototype, 1.64 m wide, 3.42 m
+   long, about a metre to the canopy top (1.15 m to the wing).
+2. **Cabin:** a narrow central bubble of clear brown-tinted glass with a thin dark
+   frame, so the seat and driver show; set down in a low tub between the fenders, its
+   sides running down to the tub's sill line.
+3. **Front fenders:** two tall separate pods over the front wheels, higher than the
+   nose, with a deep channel on each side of the canopy and a small light on each tip.
+4. **Nose:** a wide flat low black intake across the whole front, its top edge a
+   shallow W, fine vertical slats, a thin vertical white light strip at each outer
+   corner.
+5. **Sides:** a large dark intake in each rear haunch behind the door; mirrors on thin
+   stalks from the fender tops; wide muscular rear haunches over the rear wheels.
+6. **Rear:** a large black wing on two swan-neck mounts well above the tail; under it
+   a black diffuser with the two round fan exits low in the tail face and a thin red
+   light. The fans stay hidden inside (nodes of their own).
+7. **Wheels:** big dark multi-spoke slicks, the lower half showing.
+8. **Paint:** metallic blue-grey, a black lower body, intake and diffuser, a light
+   dusting of track grime low down; the green line is dropped.
+
+Size: 49,315 triangles and 57 draws (cap 50,000).
