@@ -9,6 +9,13 @@ import {gripReadout} from './race-surfaces.js';
 import {pitView} from './pit-lane.js';
 import {nitroLocked} from './race-field.js';
 const escapeText = value => String(value).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
+// GP-PASSING-2: the nitro label. Nitro is locked on lap 1 until the first braking zone's apex.
+// The router renames the label to `nitro-label` at startup and writes it through this function.
+export function nitroHudLabel(s) {
+  const armS = s.field?.nitroArmS;
+  if (armS === undefined) return 'NITRO';
+  return nitroLocked(s, s.field) ? 'NITRO LOCKED' : !s.completedLaps && s.s - armS < 150 ? 'NITRO ARMED' : 'NITRO';
+}
 export function hudMarkup() {
   return `  <section id="race-hud" class="hud" aria-label="Race information" hidden>
     <div class="race-progress"><i id="progress-fill"></i>
@@ -60,7 +67,7 @@ export function hudMarkup() {
     </div>
     <div class="rpm-labels"><span>0</span><span>RPM × 1000</span><span id="rpm-value">8</span>
     </div>
-    <div class="boost-readout"><span class="field-label" id="boost-label">NITRO</span>
+    <div class="boost-readout"><span class="field-label">NITRO</span>
     <div class="boost-track"><i id="boost-fill"></i>
     </div><kbd>SPACE</kbd>
     </div>
@@ -144,9 +151,6 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     ui['rpm-fill'].classList.toggle('redline',s.revs>DRIVE.redlineWarnFrac);
     ui['boost-fill'].style.transform=`scaleX(${clamp(s.boost??1)})`;
     ui.stage.classList.toggle('is-boosting',!!s.boosting);
-    // GP-PASSING-2: nitro is locked on lap 1 until the first braking zone's apex.
-    const armS=s.field?.nitroArmS,sinceArm=s.s-armS;
-    text('boost-label',armS===undefined?'NITRO':nitroLocked(s,s.field)?'NITRO LOCKED':!s.completedLaps&&sinceArm<150?'NITRO ARMED':'NITRO');
     text('camera-label',`${(app.cameraMode||'chase').toUpperCase()} CAM`);
     // Tyre icon on a snow or ice circuit; the surface name when grip drops below 0.8.
     const pit=pitView(app.duel);ui['pit-readout'].hidden=!pit;text('pit-readout',pit?.text??'');
