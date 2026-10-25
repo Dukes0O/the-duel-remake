@@ -411,8 +411,11 @@ export class App {
       if(this.heliSession&&this.duel.state.status==='heli'){
         // The pad is read even while paused, so its Start button can resume.
         const pad=this._readGamepad(SIMULATION_STEP).pad;
-        // SKI-VIEW: on skis the same keys are the ski keys.
-        if(this.heliSession&&!this.duel.state.paused)this._heliEvents(this.heliSession.step(this.heliSession.phase==='skiing'?skiKeys(this.keys,pad):heliControls(this.keys,pad)));
+        // SKI-VIEW: on skis the same keys are the ski keys; keys still held when the pilot climbs back in wait to be let go
+        // (W would lift the collective).
+        const skiing=this.heliSession?.phase==='skiing';
+        if(skiing)this._skiKeysHeld=true;else if(this._skiKeysHeld&&!Object.values(this.keys).some(Boolean))this._skiKeysHeld=false;
+        if(this.heliSession&&!this.duel.state.paused)this._heliEvents(this.heliSession.step(skiing?skiKeys(this.keys,pad):this._skiKeysHeld?{}:heliControls(this.keys,pad)));
         this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);continue;
       }
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
@@ -2045,6 +2048,7 @@ export class App {
     else if (action === 'shift-down') this.duel.setInput({ shiftDown: true });
     // SKI-VIEW: on skis C changes the ski camera and H shows the ski keys (the hook means nothing there).
     else if (this.heliSession?.phase === 'skiing' && (action === 'heli-camera' || action === 'heli-hook')) {
+      if (this.duel.state.paused) return;
       if (action === 'heli-camera') this.skiCamera = (this.skiCamera + 1) % SKI_CAMERA_VIEWS.length; else this.skiHelp = !this.skiHelp;
       this.duel.emit({heli: true});
     }

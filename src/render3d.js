@@ -635,9 +635,11 @@ export function attachRenderer(host, app) {
     }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const deepPose=!menu?deepPresentation(app.duel):null;
-    const heliPose=st.status==='heli'&&app.heliSession?heliView.update(app.heliView(),{cameraIndex:app.heliCamera,dt}):(heliView.hide(),null);
+    const heliNow=st.status==='heli'&&app.heliSession?app.heliView():null; // SKI-VIEW: one view a frame, for both
+    const heliPose=heliNow?heliView.update(heliNow,{cameraIndex:app.heliCamera,dt}):(heliView.hide(),null);
     // SKI-VIEW: on skis the zone's own camera; the Summit world here is captured once as its backdrop.
-    const skiPose=heliPose?skiView.pose(app.heliView(),{cameraMode:app.skiCamera,dt}):(skiView.reset(),null);
+    const skiPose=heliPose?skiView.pose(heliNow,{cameraMode:app.skiCamera,dt}):(skiView.reset(),null);
+    host.dataset.skiModels=skiView.status;
     burntLook.apply({course,look:app.fireLookFor?.(course.def.id)??null});burntLook.update(dt);heliView.fire.setQuality(app.ambientOcclusionEnabled!==false?'high':'performance');host.dataset.burntLook=burntLook.statusFor(course.def.id);
     const physicalCourse=deepPose?app.duel.course:course;
     const pp = vehicleGroundPoint(physicalCourse,distance,lateral);
@@ -989,10 +991,10 @@ export function attachRenderer(host, app) {
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged;
-    let submittedCpuMs;
+    let submittedCpuMs,skiCaptureFrame=false;
     if(skiPose){
       const skiRenderStarted=performance.now();
-      skiView.render({view:app.heliView(),pose:skiPose,mainScene:scene,aspect:camera.aspect,high,seconds:presentationSeconds,dt});
+      skiCaptureFrame=skiView.render({view:heliNow,pose:skiPose,mainScene:scene,aspect:camera.aspect,high,seconds:presentationSeconds,dt})==='captured';
       rearView.hide();submittedCpuMs=performance.now()-skiRenderStarted;
     } else if(deepPose&&st.deepJourney.committed&&st.deepJourney.phase!=='ascending'){
       const privateRenderStarted=performance.now();
@@ -1031,7 +1033,7 @@ export function attachRenderer(host, app) {
     if(readinessClaimed&&!app.visualReady)app.presentVisualFrame?.(readinessOwner,st,app.duel.course);
     // Only consecutive, presented RAF frames count. Debug draws, compilation,
     // loading and hidden-tab intervals cannot dilute or inflate these samples.
-    if(capture&&!loadingFrame)frameMetrics.record(now,cpuRenderMs);else frameMetrics.suspend();
+    if(capture&&!loadingFrame&&!skiCaptureFrame)frameMetrics.record(now,cpuRenderMs);else frameMetrics.suspend(); // SKI-VIEW: not the backdrop's capture
     // Learn only from visible, presented driving frames. Loading, pauses,
     // menus and debug draws must not lower quality. Apply changes next frame.
     adaptiveResolution.sample(now,capture&&!loadingFrame&&!high&&moving);

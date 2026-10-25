@@ -294,11 +294,12 @@ export function createHeliUi({host, app}) {
   const skiHost = section.querySelector('.heli-ski-host');
   let skiHud = null, skiWax = null, lastSki = '';
   const hud = () => skiHud ??= createSkiHud({host, app});
+  // The wax picked here goes with a run only with the Wax kit; the Lab's wax run always takes it.
   const skiAction = button => {
     const {skiBoard: boardAction, skiRun, skiWax: wax, skiChallenge} = button.dataset;
     if (wax) { skiWax = skiWax === wax ? null : wax; return null; }
     if (boardAction) return app.heliSki?.(boardAction === 'drop' ? 'drop' : boardAction === 'group' ? 'group' : 'handBack');
-    if (skiRun) return app.heliSki?.('stepOut', skiRun, {wax: skiWax});
+    if (skiRun) return app.heliSki?.('stepOut', skiRun, {wax: app.heliSession?.skiOffers?.()?.kit ? skiWax : null});
     if (skiChallenge) return app.heliSki?.('stepOut', 'slalom', {wax: skiWax, challenge: skiChallenge});
     return null;
   };
@@ -368,6 +369,7 @@ export function createHeliUi({host, app}) {
       top.hidden = skiing; controls.hidden = skiing; lessonsHost.hidden = skiing;
       const offers = !skiing ? app.heliSession?.skiOffers?.() ?? null : null;
       if (offers) hud().snow = offers.snow;
+      else skiWax = null;
       const skiBox = skiing ? '' : offers ? skiMenuMarkup(offers, {wax: skiWax})
         : !view.lesson && atHomePad(view) ? skiBoardMarkup(app.heliSession?.skiBoard?.() ?? null, view.ski?.flight ?? null) : '';
       if (skiBox) hud(); // its stylesheet styles the box too

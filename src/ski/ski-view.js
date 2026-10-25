@@ -11,7 +11,6 @@
 // slope is the zone, and the far ridges, sky and light are the Summit world's. The cube is freed when the run ends.
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {skiZone} from './runs/summit-zones.js';
 import {aerialsTips} from '../lab/benches/launch.js';
 import {skiControlsHelp} from '../controls-help.js';
@@ -188,7 +187,7 @@ export function skiMenuMarkup(offers, {wax = null} = {}) {
   const best = run => run.best === null ? 'not skied yet' : `best ${run.limits?.kind === 'points' ? `${run.best} pts` : run.limits ? clockText(run.best) : run.best} · ${medalName(run.medal)}`;
   const runs = offers.runs.map(run => `<li><span class="heli-board-text">${escape(run.name)}</span><span class="heli-board-pay">${escape(best(run))}</span>
     <button type="button" class="heli-board-button" data-ski-run="${run.id}">Ski</button></li>`).join('');
-  const challenge = offers.challenge ? `<li><span class="heli-board-text">Lab: the wax run</span><span class="heli-board-pay">Pick the wax for today's snow, then beat silver on the slalom</span>
+  const challenge = offers.challenge && offers.runs.some(run => run.id === offers.challenge.run) ? `<li><span class="heli-board-text">Lab: the wax run</span><span class="heli-board-pay">Pick the wax for today's snow, then beat silver on the slalom</span>
     <button type="button" class="heli-board-button" data-ski-challenge="${offers.challenge.id}"${wax ? '' : ' disabled'}>Ski</button></li>` : '';
   return `<section class="heli-board ski-menu" aria-label="Ski from ${escape(SKI_PAD_NAMES[offers.pad] ?? offers.pad)}"><span>SKI FROM ${escape((SKI_PAD_NAMES[offers.pad] ?? offers.pad).toUpperCase())}</span>
     ${snow}${waxes}<ul>${runs}${challenge}</ul></section>`;
@@ -283,18 +282,20 @@ function drape(geometry, zone, base, cx, cz, lift = 0.04) {
   return geometry;
 }
 
-// Each mesh of a model, once per placement, in as many draws as the model has materials.
+// Each mesh of a model, once per placement, in as many draws as the model has materials. A placement is
+// {x, y, z, yaw?, pitch?, sx?, sy?, sz?}.
 function instances(template, placements, name) {
   const group = new THREE.Group();
   group.name = name;
   if (!placements.length) return group;
   template.updateMatrixWorld(true);
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), tilt = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), across = new THREE.Vector3(1, 0, 0);
   template.traverse(node => {
     if (!node.isMesh) return;
     const mesh = new THREE.InstancedMesh(node.geometry, node.material, placements.length);
     placements.forEach((p, i) => {
-      q.setFromAxisAngle(up, p.yaw ?? 0);
+      // Turned by yaw, then tipped down the run by pitch (about the world's x: positive puts +z lower).
+      q.setFromAxisAngle(up, p.yaw ?? 0).premultiply(tilt.setFromAxisAngle(across, p.pitch ?? 0));
       m.compose(new THREE.Vector3(p.x, p.y, p.z), q, new THREE.Vector3(p.sx ?? 1, p.sy ?? 1, p.sz ?? 1)).multiply(node.matrixWorld);
       mesh.setMatrixAt(i, m);
     });
@@ -323,18 +324,33 @@ function courseGroup(zone, base, models) {
   group.add(instances(models.get('flag-drop'), [at(6.5, 1.5)], 'Drop pad flag'),
     instances(models.get('flag-pickup'), [at(zone.pickup.x + zone.pickup.radius + 0.5, zone.pickup.z)], 'Pickup flag'));
   // The kickers: SKI-ART's ramp fitted over the snow's own kicker, just under its surface, so its timber lip and banks show.
+  // The aerials kicker rises from the trough of its inrun (level there); a moguls kicker sits on the 28 degree slope,
+  // so it is pitched to the snow's line from its foot to where the snow falls back (1.2 m past the lip) and its height
+  // is the lip's rise above that line.
   const kickers = (zone.kickers ?? []).map(k => {
-    const lip = k.z, top = zone.ground(k.x, lip), foot = zone.id === 'aerials' ? 46 : lip - 3.5;
-    const length = lip - foot, height = Math.max(0.3, top - zone.ground(k.x, foot));
-    return {x: k.x, y: zone.ground(k.x, foot) - base - 0.05, z: foot + length / 2, sz: length / ART.kicker.length,
-      sy: height / ART.kicker.height, sx: zone.id === 'aerials' ? 1 : 0.42};
+    const lip = k.z, aerials = zone.id === 'aerials', foot = aerials ? 46 : lip - 3.5, end = aerials ? foot : lip + 1.2;
+    const yFoot = zone.ground(k.x, foot), drop = aerials ? 0 : (yFoot - zone.ground(k.x, end)) / (end - foot);
+    const lineAt = z => yFoot - drop * (z - foot), length = lip - foot, height = Math.max(0.3, zone.ground(k.x, lip) - lineAt(lip));
+    const mid = foot + length / 2;
+    return {x: k.x, y: lineAt(mid) - base - 0.05, z: mid, pitch: Math.atan(drop), sz: length / Math.cos(Math.atan(drop)) / ART.kicker.length,
+      sy: height / ART.kicker.height, sx: aerials ? 1 : 0.42};
   });
   group.add(instances(models.get('kicker'), kickers, 'Kickers'));
   // Netting down both edges of a run with a course (powder is open country).
   if (zone.kind !== 'powder') {
-    const nets = [];
-    for (let z = Math.max(0, zone.bounds.minZ); z + ART.netting <= zone.bounds.maxZ; z += ART.netting)
-      for (const x of [zone.bounds.minX, zone.bounds.maxX]) nets.push(at(x, z, {yaw: -Math.PI / 2}));
+    // Each piece runs straight from z to z + length, tipped to the snow between its ends and stretched to the slope's
+    // length; where the snow bends (the aerials kicker) the pieces are shorter, so the net follows it.
+    const nets = [], straight = (x, z, length) => Math.abs(zone.ground(x, z + length / 2) - (zone.ground(x, z) + zone.ground(x, z + length)) / 2) < 0.15;
+    for (const x of [zone.bounds.minX, zone.bounds.maxX]) {
+      for (let z = Math.max(0, zone.bounds.minZ); ;) {
+        let length = ART.netting;
+        while (length > 1.5 && !straight(x, z, length)) length /= 2;
+        if (z + length > zone.bounds.maxZ) break;
+        const from = zone.ground(x, z), to = zone.ground(x, z + length), pitch = Math.atan2(from - to, length);
+        nets.push({x, y: (from + to) / 2 - base, z: z + length / 2, yaw: -Math.PI / 2, pitch, sx: length / Math.cos(pitch) / ART.netting});
+        z += length;
+      }
+    }
     group.add(instances(models.get('netting'), nets, 'Safety netting'));
   }
   return group;
@@ -470,6 +486,7 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
     if (!visit) return;
     disposeOwned(visit.scene, shared);
     visit.spray.dispose();
+    visit.sun.dispose();
     visit.backdrop?.dispose();
     visit.mixer?.stopAllAction();
     visit = null;
@@ -537,7 +554,13 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
     const line = zone.line.reduce((best, p) => Math.abs(p.z - YETI.z) < Math.abs(best.z - YETI.z) ? p : best);
     yeti.rotation.y = Math.atan2(line.x - YETI.x, line.z - YETI.z);
     yeti.name = 'The yeti, watching';
-    yeti.traverse(node => { if (node.isMesh) node.castShadow = true; });
+    // The clone shares the roadside yeti's geometry, materials and maps: they are render3d's, never freed here.
+    yeti.traverse(node => {
+      if (!node.isMesh) return;
+      node.castShadow = true;
+      shared.add(node.geometry);
+      for (const m of [node.material].flat().filter(Boolean)) shared.add(m);
+    });
     const mixer = new THREE.AnimationMixer(yeti), idle = animations.find(clip => clip.name === 'idle');
     if (idle) mixer.clipAction(idle).play();
     scene.add(rocks, yeti);
@@ -560,7 +583,8 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
       const camera = skiCameraPose({skier: run.skier, mode, yaw, ground: zone.ground});
       return {mode, camera, fov: camera.fov};
     },
-    // Draws the frame: the zone over its backdrop. mainScene: the Summit world, captured on the run's first frame.
+    // Draws the frame: the zone over its backdrop. mainScene: the Summit world, captured on the run's first frame (that
+    // frame returns 'captured'). Returns false when there is nothing to draw.
     render({view, pose, mainScene, aspect = 16 / 9, high = true, seconds = 0, dt = 1 / 60}) {
       if (disposed || !visit || !pose) return false;
       const run = view.ski.run, {zone, base, scene, camera, sun} = visit;
@@ -571,7 +595,8 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
         for (const [name, object] of poses) object.visible = name === id;
         skier.position.set(s.x, s.y - base, s.z);
         if (s.grounded) placeFigure(skier, s, base, zone.ground);
-        else skier.rotation.set(s.flip * DEG, s.heading + s.spin * DEG, 0, 'YXZ');
+        // D spins right in the air as it turns right on the snow: both lower the heading.
+        else skier.rotation.set(s.flip * DEG, s.heading - s.spin * DEG, 0, 'YXZ');
         const timedGhost = run.kind === 'timed' && run.ghost && !run.group;
         ghost.visible = !!timedGhost;
         if (timedGhost) placeFigure(ghost, run.ghost, base, zone.ground);
@@ -595,11 +620,16 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
       camera.lookAt(pose.camera.target.x, pose.camera.target.y - base, pose.camera.target.z);
       camera.updateProjectionMatrix();
       if (!renderer) return true;
-      if (!visit.backdrop && mainScene) visit.backdrop = captureBackdrop(renderer, mainScene, run.world, high);
-      if (visit.backdrop) scene.background = visit.backdrop.texture;
+      // The capture is a one-off cost: the frame that makes it says so, so the frame timing can leave it out.
+      const captured = !visit.backdrop && !!mainScene;
+      if (captured) {
+        visit.backdrop = captureBackdrop(renderer, mainScene, run.world, high);
+        scene.background = visit.backdrop.texture;
+        scene.environment = mainScene.environment ?? null;
+      }
       renderer.setRenderTarget(null);
       renderer.render(scene, camera);
-      return true;
+      return captured ? 'captured' : true;
     },
     dispose() {
       if (disposed) return;

@@ -27,7 +27,7 @@ test('the ski keys: A and D turn (D right), S skids, Shift tucks, W skates, Spac
   for (const key of ['A D', 'S', 'SHIFT', 'W', 'SPACE', 'C', 'ESC', 'H']) assert.ok(keys.includes(key), `help lists ${key}`);
 });
 
-test('the cameras stay above the snow; the backdrop eye is over the pad and turned to its valley', () => {
+test('the cameras stay above the snow; the backdrop eye is over the pad and turned to its valley (the App test checks the valleys)', () => {
   for (const id of SKI_RUN_IDS) {
     const zone = skiZone(id), run = createSkiRun({runId: id});
     for (let i = 0; i < 120 * 6; i++) stepSkiRun(run, {skate: true, tuck: true});
@@ -69,6 +69,7 @@ test('the cards: the loading tips (all six aerials tips), the targets, the resul
   assert.ok(menu.includes('SKI FROM DEVILS PLAYGROUND') && menu.includes('Spring corn</b>, 2 °C') && menu.includes('data-ski-wax="soft" aria-pressed="true"'));
   assert.ok(menu.includes('best 0:41.20 · Gold') && menu.includes('not skied yet') && menu.includes('data-ski-challenge="wax">Ski'), 'runs and the Lab run');
   assert.ok(skiMenuMarkup(offers).includes('data-ski-challenge="wax" disabled'), 'the Lab run waits for a wax');
+  assert.ok(!skiMenuMarkup({...offers, pad: 'pickup', runs: offers.runs.filter(run => run.id !== 'slalom')}).includes('data-ski-challenge'), 'and shows only where the slalom starts');
   assert.ok(!skiMenuMarkup({...offers, waxes: null}).includes('data-ski-wax'), 'no wax pick without the kit');
   const board = skiBoardMarkup({drop: {title: 'Heli-ski drop at Summit Run', taken: false}, group: {title: 'Heli-ski group', guests: 4, payNow: 1200, taken: false, done: false}});
   assert.ok(board.includes('data-ski-board="drop"') && board.includes('data-ski-board="group"') && board.includes('1,200 credits'));
@@ -106,6 +107,19 @@ test('drawing a run never changes it: the same controls give the same run with a
     assert.equal(poles, zone.kind === 'gs' ? zone.gates.length : zone.gates.length * 2, `${id}: every gate drawn`);
     assert.equal(scene.getObjectByName('Powder stashes').children.length, zone.stashes.length, `${id}: the stashes' fresh snow`);
     assert.equal(scene.getObjectByName('The group').visible, id !== 'powder', `${id}: the group skis beside the player`);
+    // The kickers' lips and the netting's ends sit on the snow (a stand-in model's points, through each instance's matrix).
+    const onSnow = (name, local, label) => {
+      const mesh = scene.getObjectByName(name)?.children[0];
+      for (let i = 0; i < (mesh?.count ?? 0); i++) {
+        const m = new THREE.Matrix4(); mesh.getMatrixAt(i, m);
+        for (const point of local) {
+          const p = point.clone().applyMatrix4(m);
+          assert.ok(Math.abs(p.y - (zone.ground(p.x, p.z) - zone.drop.y)) < 0.35, `${id}: ${label} ${i} on the snow (${(p.y - (zone.ground(p.x, p.z) - zone.drop.y)).toFixed(2)} m)`);
+        }
+      }
+    };
+    if (id === 'moguls') onSnow('Kickers', [new THREE.Vector3(0, 1.69, 2.5)], 'kicker lip');
+    onSnow('Safety netting', [new THREE.Vector3(-6, 0, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(6, 0, 0)], 'netting');
     const grid = zoneGrid(zone);
     assert.ok(grid.xs[0] < zone.bounds.minX - 300 && grid.zs.at(-1) > zone.bounds.maxZ + 500, `${id}: the snow runs on past the zone`);
     view.dispose();
@@ -142,6 +156,17 @@ test('in the App: the ski keys drive the run, C and H change only the view, and 
     // Fly to Summit Run and down onto Devils Playground (a scripted pilot, as the session's own tests do).
     flyTo(session, () => groundFromCourse(app.duel.course), 'devils');
     assert.equal(session.view().ski.pad, 'devils', 'on the Devils Playground pad');
+    // The backdrop's valleys are the real Summit ground's: from each pad, the lowest mean height 100 to 600 m out.
+    const summit = groundFromCourse(app.duel.course);
+    for (const [name, pad] of Object.entries(SKI_PADS)) {
+      let best = null;
+      for (let deg = 0; deg < 360; deg += 5) {
+        let sum = 0;
+        for (let d = 100; d <= 600; d += 50) sum += summit.height(pad.x + Math.sin(deg * DEG) * d, pad.z + Math.cos(deg * DEG) * d);
+        if (!best || sum < best.sum) best = {deg, sum};
+      }
+      assert.equal(SKI_BACKDROP.valley[name], best.deg, `${name}: the backdrop looks down the valley at ${best.deg} degrees`);
+    }
     const before = session.fingerprint();
     app._inputAction('heli-camera'); app._inputAction('heli-hook');
     assert.equal(session.fingerprint(), before, 'C and H on the pad still belong to the helicopter, and change nothing in flight here');
@@ -152,6 +177,18 @@ test('in the App: the ski keys drive the run, C and H change only the view, and 
     app._inputAction('heli-camera'); app._inputAction('heli-hook'); app._inputAction('heli-autopilot'); app._inputAction('heli-cruise');
     assert.deepEqual([app.skiCamera, app.skiHelp], [1, true], 'on skis C changes the camera and H shows the ski keys');
     assert.equal(session.fingerprint(), skiing, 'and nothing else happens');
+    // The real drawing paths, fed the App's own view, change nothing: the zone scene, the HUD and the helicopter panel.
+    const {createHeliUi} = await import('../src/heli/heli-ui.js');
+    const host = fakeHost(), ui = createHeliUi({host, app}), zone = createSkiView({loadModel: fakeModels});
+    for (let i = 0; i < 30; i++) {
+      const view = app.heliView(), pose = zone.pose(view, {cameraMode: i, dt: 0.1});
+      zone.render({view, pose, seconds: i / 10, dt: 0.1});
+      ui.update(i / 10);
+      await new Promise(done => setTimeout(done, 0));
+    }
+    assert.equal(session.fingerprint(), skiing, 'drawing the run, its HUD and the panel changes nothing');
+    assert.ok(host.made.some(node => node.className === 'ski-hud' && node.hidden === false), 'the run HUD shows');
+    ui.dispose(); zone.dispose();
     // The keys: W skates off, then D turns right (the heading falls).
     app.keys = {KeyW: true};
     for (let i = 0; i < 60 * 3; i++) app._simulate(1 / 60);
@@ -170,6 +207,22 @@ test('in the App: the ski keys drive the run, C and H change only the view, and 
     if (savedCancel) Object.defineProperty(globalThis, 'cancelAnimationFrame', savedCancel); else delete globalThis.cancelAnimationFrame;
   }
 });
+
+// A page stand-in: every element answers any selector with its own child stand-in.
+function fakeHost() {
+  const made = [];
+  const node = () => {
+    const kids = new Map();
+    const element = {innerHTML: '', textContent: '', hidden: false, className: '', dataset: {}, style: {setProperty() {}, removeProperty() {}},
+      querySelector(selector) { if (!kids.has(selector)) kids.set(selector, node()); return kids.get(selector); },
+      querySelectorAll() { return []; }, addEventListener() {}, removeEventListener() {}, append() {}, prepend() {}, remove() {},
+      setAttribute() {}, blur() {}, closest() { return null; }};
+    made.push(element);
+    return element;
+  };
+  const doc = {createElement: () => node(), getElementById: () => null, head: {append() {}}};
+  return {ownerDocument: doc, append() {}, made};
+}
 
 // ---- a scripted pilot (from tools/test-ski-heli.mjs) ---------------------------------------------------------------
 function pilot(view, target, {speed = 12, sink = 4} = {}) {
