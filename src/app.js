@@ -26,7 +26,7 @@ import {carAt} from './heli/heli-save.js';
 function fireSounds(view) {
   const fire = view.fire, here = fire && fire.courseId === view.courseId && fire.target;
   const crackle = here ? Math.min(1, .25 + fire.cells / 40) * Math.max(0, 1 - fire.target.distance / 400) : 0;
-  return {crackle, scoop: (view.bucket?.filling ?? 0) / 100, pour: view.bucket?.pouring ? 1 : 0};
+  return {crackle, scoop: (view.bucket?.filling ?? 0) / 100, pour: view.bucket?.pouring ? 1 : 0, retardant: view.bucket?.contents === 'retardant'};
 }
 // H2 Fire: today's date as the play day note reads it.
 const todayString = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;

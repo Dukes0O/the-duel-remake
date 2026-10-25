@@ -40,3 +40,8 @@ Removed: nothing.
 - Pass `labEnabled: flags.enabled('lab')` to `createHeliSession` in `src/app.js` so the Lab upgrades act in the game.
 - The fire view's litre bar divides by a fixed 600 (`heli-fire-view.js`); use the bucket's own `holds` so the bigger bucket fills the bar.
 - Draw the pad actions the session offers (`loadBucket('water'|'retardant')`, `chooseLine(15|25)`).
+
+## Carried from LAB-HELI-CHALLENGES (Claude, 24 October)
+
+- Draw "Try the challenge" on the Lab board and the pad menu from the session's `challengeBoard()`, `startChallenge(id)` and `stopChallenge()`.
+- Draw `view().challenge.props` in the scene (buoys, the smoke marker, the crate, the practice fire grid) and show `view().challenge.briefing`.

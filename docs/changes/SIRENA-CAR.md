@@ -37,7 +37,7 @@ Each is a roster or pin that named every car; the Sirena joins as the new last c
 - `test-arena-shove`, `test-arena-junk-shove`: the historical solver pins now filter the Sirena out (so each keeps its old
   pin), and a new pin `solverFingerprintWithSirena` (`8718807985d0375e7dcff07efe816a417ceead733d46aa118907733e22e50b0b`) covers every mass pair with her; new car, new mass pair.
 - `test-arsenal-wave1-audio`: the engine-voice filter in the sound-bank export pin gains her id, as it did for each medal car (no hash moved).
-- `test-titan-handling`: her full-state race fingerprint `04601b5f520224830544686e4a01077934cadf5cd53e8da56f3f581b06fb3700` added to `tools/replays/titan-handling.json`; all the others unchanged.
+- `test-titan-handling`: her full-state race fingerprint `1b2b6507aefe1d28f476b39c375f8ac14337ddadfde58db5cd2ec7058edf74c6` (recorded on the merged integration code, whose own pins for the other cars had just been re-recorded) added to `tools/replays/titan-handling.json`; all the others unchanged.
 - `test-armor-kit-assets`: the named `LAPTOP_KITS` wait above.
 
 ## Checks (Linux cloud)

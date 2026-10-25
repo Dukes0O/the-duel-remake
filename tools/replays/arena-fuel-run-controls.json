@@ -8,21 +8,21 @@
       "seed": 1989,
       "mode": "duel",
       "course": "pacific-canyon",
-      "fingerprint": "cc93330532ebadc03575549ccdb03552b0ea378999c1bdbfb50dd3692dfd05ae"
+      "fingerprint": "b664ee9621fb44613c182462cc4f88a72728082cd89b098503bb37e9a104adee"
     },
     {
       "kind": "road",
       "seed": 42,
       "mode": "timetrial",
       "course": "red-mesa",
-      "fingerprint": "0616b40744d3fdd27f7df283adaf317f67c8511962bfddd6f944ab3f89d0f500"
+      "fingerprint": "754ac4539f82e7dc4a94f9ad036452ba859f54e7e5d5987fcc5248cf10ae48ad"
     },
     {
       "kind": "road",
       "seed": 17,
       "mode": "duel",
       "course": "timberline-rush",
-      "fingerprint": "a0bdaa42703432581339f0275a950ace468aef188f291199b080896adbc83a68"
+      "fingerprint": "9210ea0c5dea9e54d9f3d77f24940495b33ac74ec94375cef49c0f5abea19cce"
     },
     {
       "kind": "last-car-rolling",

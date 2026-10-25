@@ -32,3 +32,7 @@ Art: none.
 Acceptance: a Node render check of every line and cue (peaks at most
 -1 dBTP, speech about -18 LUFS); Claude listens to one packet (at most three
 rounds); lane tier and build. Removed: nothing.
+
+## Carried from LAB-HELI-CHALLENGES (Claude, 24 October)
+
+- Register and make the cue `heli.buoy-hit` (a buoy hit in the Projectile motion challenge); the session already emits it as a `cue` event.

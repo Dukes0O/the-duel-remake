@@ -71,7 +71,7 @@ export const CARS = {
     name:'Koenigsegg Jesko Absolut',homage:'Jesko Absolut-inspired hypercar',gearbox:'manual',
     unlockRequirement:'max-all-other-cars',factoryMaxed:true,
     // Arcade base tuning: the included level-three upgrades apply exactly once.
-    topSpeed:298,accel:10.8,grip:1.12,braking:1.5,
+    topSpeed:298,accel:9.9,grip:1.12,braking:1.5,
     gears:[60,105,150,188,221,247,269,284,298],
     color:0xe7e9e7,accent:0x27c8bb,offRoadGrip:.64,offRoadSpeed:65,offRoadScrub:.48,mass:1390,
     collision:{halfWidth:1.05,halfLength:2.475},height:1.25,kind:'hypercar',
@@ -103,7 +103,7 @@ export const CARS = {
   bugatti_bolide: {
     name:'Bugatti Bolide',homage:'Bolide-inspired track hypercar',gearbox:'manual',
     unlockRequirement:{kind:'medals',medals:24,gold:6},factoryMaxed:true,
-    topSpeed:278,accel:10.5,grip:1.15,braking:1.45,gears:[67,110,154,191,225,255,278],
+    topSpeed:278,accel:9.5,grip:1.15,braking:1.45,gears:[67,110,154,191,225,255,278],
     color:0x1f4fa8,accent:0x111316,offRoadGrip:.58,offRoadSpeed:50,offRoadScrub:.64,mass:1450,
     collision:{halfWidth:1.05,halfLength:2.5},height:1.05,kind:'hypercar',
     boostCapacity:1.35,nitroAcceleration:1.35,nitroSpeedBonus:.025,
@@ -126,10 +126,12 @@ export const DIFFICULTY = {
   casual: { name: 'Casual', autoShift: true, engineBlow: false, rivalSkill: 0.78, trafficDensity: 0.7 },
   pro:    { name: 'Pro',    autoShift: false, engineBlow: true, rivalSkill: 0.92, trafficDensity: 1.0 },
 };
+// launch: the CPU's pull-away strength as a multiple of the player's DRIVE.accelScale. FIX-LAUNCH
+// slowed the player's launch; Medium and Hard are acceleration-limited and fell behind, so they keep more.
 export const CPU_DIFFICULTY = {
-  easy:{name:'Easy',skill:.73,cornerSkill:.78,winReward:600},
-  medium:{name:'Medium',skill:.88,cornerSkill:.91,winReward:1000},
-  hard:{name:'Hard',skill:1.02,cornerSkill:1,winReward:1500},
+  easy:{name:'Easy',skill:.73,cornerSkill:.78,winReward:600,launch:1},
+  medium:{name:'Medium',skill:.88,cornerSkill:.91,winReward:1000,launch:1.3},
+  hard:{name:'Hard',skill:1.02,cornerSkill:1,winReward:1500,launch:1.6},
 };
 export const DEFAULT_CPU_DIFFICULTY='easy';
 export const DEFAULT_DIFFICULTY = 'casual';
@@ -170,7 +172,7 @@ export const COURSE = [
   {id:'ridge-rally',layout:'ridge',layoutVersion:4,theme:'alpine',stage:5,name:'Ridge Rally',lengthU:3520,closed:true,laps:2,kind:'rally',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:true,speedLimitMph:100,sections:[{theme:'desert',name:'Dry Creek Trail',share:.42},{theme:'alpine',name:'Timberline Ridge',share:.58}]},
   {id:'titan-stunt-trial',layoutVersion:1,theme:'arena',stage:6,name:'Titan Stunt Trial',lengthU:1120,closed:true,laps:2,kind:'arena',arena:true,requiredCar:'titan_monster',hasRadar:false,hasRival:false,speedLimitMph:100,stuntTrial:{jumps:4,crushes:4,timeLimitSec:{easy:95,medium:75,hard:62}},sections:[{theme:'arena',name:'Titan Stunt Trial',share:1}]},
   {id:'neon-drift-trial',layout:'city',layoutVersion:1,timeOfDay:'night',theme:'city',stage:7,name:'Neon Drift Trial',lengthU:2880,closed:true,laps:2,kind:'drift',requiredCar:'banshee_muscle',persistentVehicle:true,crashPenaltySec:8,hasRadar:false,hasRival:false,speedLimitMph:65,driftTrial:{targets:{easy:3500,medium:5000,hard:6000},timeLimitSec:{easy:150,medium:125,hard:110}},sections:[{theme:'city',name:'Neon District',share:.5},{theme:'city',name:'Harbor Slide',share:.5}]},
-  {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:10,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
+  {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:12,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
   ...EXPANSION_COURSES,
   FREESTYLE_COURSE,
   // Authored circuits (src/circuits/) are appended, never inserted, so saved
@@ -186,6 +188,7 @@ export const POLICE = {
   trapWindowU: 40,        // trap measures speed within this span past it
   pursuitCatchU: 14,      // pursuer within this distance = caught/ticket
   pursuitSpeedMph: 150,   // pursuer cruise speed
+  chasePaceBase: .34,     // chase pursuer cruise = top speed x (this + .15 x CPU skill); was .42 before FIX-LAUNCH slowed the player's laps by about a fifth
   pursuitStartGapU: 120,  // player's head start when the pursuit begins
   escapeAheadU: 1200,     // open this gap to shake the pursuer
   ticketBaseFine: 150,
@@ -224,7 +227,10 @@ export const DRIVE = {
   dragCoeff: 0.6,         // passive deceleration
   offRoadGrip: 0.74,     // enough steering authority to return from the shoulder
   offRoadScrub: 0.48,
-  accelScale: 5.2,        // immediate arcade launch; falls off near redline
+  accelScale: 2.5,        // gentler launch (FIX-LAUNCH); falls off near redline
+  arenaAccelScale: 5.2,   // arenas keep the old quick launch: their jumps, shoves and balance were tuned on it
+  recoveryAccelScale: 5.2, // after a crash recovery the car pulls away with the old launch (crashLaunchSec or 60 mph)
+  crashLaunchSec: 3,      // how long that quick pull-away may last
   gearCeilFrac: 1.04,     // throttle stops adding speed past gearMax * this
   redlineWarnFrac: 0.92,  // tach shows red from this rev fraction
   overRevFrac: 1.02,      // sustained revs above this can blow the engine (Pro)
@@ -315,11 +321,17 @@ export function steerForYaw(desiredYaw, {speedMph, grip = 1, traction = 1, car =
   return tyreClamp(-tyreClamp(desiredYaw, -peakYaw, peakYaw) / Math.max(.05, steerGain), -1, 1);
 }
 
+// Launch strength for the course being driven: arenas keep their old value.
+export const launchScale = (course, recovering = false) => course?.def?.arena === true ? DRIVE.arenaAccelScale
+  : recovering ? DRIVE.recoveryAccelScale : DRIVE.accelScale;
+export const boostLaunch = course => course?.def?.arena === true ? BOOST.arenaAccelMphPerSec : BOOST.accelMphPerSec;
+
 export const BOOST = {
   drainPerSec: 0.19,
   refillPerSec: 0.028,
   nearMissRefill: 0.22,
-  accelMphPerSec: 42,
+  accelMphPerSec: 20.2,
+  arenaAccelMphPerSec: 42, // nitro push on an arena floor, the old value
   topSpeedMult: 1.12,
   minSpeedMph: 25,
 };
