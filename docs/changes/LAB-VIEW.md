@@ -76,6 +76,10 @@ Seven findings, all taken; each fixed with a test that fails without it unless n
   0.6 rad from the road; if the Lab refuses the pass, the strip says "Passed, but not saved: why".
 - **A stale "Fill the tank first"** on the pad menu is dropped once the fuel, the bucket or the challenge in hand changes.
 
+The reviewer confirmed all seven fixes by running them (ridge-rally now gives corners 1 to 3 and a pass). One more point from the
+confirmation, also taken: titan-freestyle and the arena courses have fewer than three corners, so the lap can never pass there; the
+strip now says "This course has only N corners: choose another course for this lap".
+
 The reviewer also checked and found fine: credit and ownership rules, a newer-version `lab` field refused and never
 overwritten, `profile.lab` through a visit, HTML escaping, and the race fingerprint with a mid-race pass (identical over 5,400
 steps).
@@ -97,7 +101,7 @@ the REVERSE sounds are not used here: the fan bench's hum and the secret belong 
 
 After merging current `integration/wasteland` (nothing new since the branch point), once:
 
-- `node tools/test-lab-view.mjs`: 29 tests. Highlights: the G-force monitor (3 corners pass, off-road spoils, a corner across
+- `node tools/test-lab-view.mjs`: 30 tests. Highlights: the G-force monitor (3 corners pass, off-road spoils, a corner across
   the start line, no double count); **a race's fingerprint (5,400 steps of an autopilot race, hashed every step) is identical with
   the lap armed and not armed**, with the monitor shown to be watching (peak g above 0.3); the rust answer comes from the bench's
   jars; every lesson has a bench, a challenge kind, three Brian lines and a bench in the room; every bench reads out with no

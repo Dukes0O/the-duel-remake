@@ -501,3 +501,11 @@ test('a machine with no 3D leaves no canvas behind', () => {
   assert.equal(host.children.size, 0);
   assert.equal(win.listeners.size, 0);
 });
+
+test('a course with fewer than three corners says so on the strip instead of waiting for a pass that cannot come', () => {
+  const m = createGforceMonitor({corners: corners.slice(0, 1), length: 1000});
+  const view = gforceView(m);
+  assert.equal(view.corners, 1);
+  assert.match(gforceStripMarkup(view), /only 1 corner: choose another course/);
+  assert.ok(!/choose another/.test(gforceStripMarkup(gforceView(createGforceMonitor({corners, length: 1000})))));
+});

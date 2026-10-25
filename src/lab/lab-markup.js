@@ -93,7 +93,8 @@ export function captionMarkup(text) {
 // The strip shown in a race while the G-force lap is armed.
 export function gforceStripMarkup(view) {
   if (!view) return '';
-  const words = {building: 'Take a corner hard', counting: 'Hold the road to the end of the corner', 'off the road': 'Off the road: that corner does not count',
+  const tooFew = !view.done && Number.isFinite(view.corners) && view.corners < view.need;
+  const words = tooFew ? `This course has only ${view.corners} corner${view.corners === 1 ? '' : 's'}: choose another course for this lap` : {building: 'Take a corner hard', counting: 'Hold the road to the end of the corner', 'off the road': 'Off the road: that corner does not count',
     between: 'Next corner', passed: view.saveNote ? `Passed, but not saved: ${view.saveNote}` : 'G-force lap passed'}[view.state] ?? '';
   return `<div class="lab-gforce" role="status"><b>${view.g.toFixed(1)} g</b><span>CORNERS ${view.count}/${view.need}</span><em>${escape(words)}</em></div>`;
 }

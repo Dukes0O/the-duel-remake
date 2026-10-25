@@ -59,6 +59,6 @@ export function stepGforceMonitor(monitor, sample) {
 export function gforceView(monitor) {
   const hand = monitor.current !== null && !monitor.reached.includes(monitor.current);
   const state = monitor.done ? 'passed' : !hand ? 'between' : !monitor.clean ? 'off the road' : monitor.peak >= GFORCE_LAP.targetG ? 'counting' : 'building';
-  return Object.freeze({g: monitor.g, best: monitor.best, count: monitor.reached.length, need: GFORCE_LAP.corners, corner: monitor.current,
+  return Object.freeze({g: monitor.g, best: monitor.best, count: monitor.reached.length, need: GFORCE_LAP.corners, corner: monitor.current, corners: monitor.corners.length,
     state, reached: Object.freeze([...monitor.reached]), done: monitor.done});
 }
