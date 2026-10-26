@@ -17,3 +17,11 @@ Checks: a test that a lesson cannot use a word it has not shown; a test of
 the hint ladder (what happened, plainer hint, Show me); the notebook saved
 and old saves loading. This adds a save field: the independent save review.
 Lane tier and build.
+
+## Codex implementation decision
+
+The design is settled in `docs/changes/LAB-LESSON-FRAME.md` before code.
+The packet contract is in `docs/lab-lesson-authoring.md`. Future lesson
+packets load automatically from `src/lab/lessons/*-lesson.js`; no screen
+changes are needed. Existing unconverted lessons remain until their own
+content cards replace them. The browser example stays in test fixtures.

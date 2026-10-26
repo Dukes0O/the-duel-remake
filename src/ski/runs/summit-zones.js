@@ -14,7 +14,7 @@
 // The zone's `ground`, `gates`, `line`, `stashes` and the rest are in the zone
 // frame; add world.x and world.z to place them in the world.
 //
-// How long and how far: slalom 450 m long, 180 m drop, 50 gates; giant
+// How long and how far: slalom 450 m long, 180 m drop, 33 gates; giant
 // slalom 1,100 m, 350 m, 40 gates; moguls 250 m at 28 degrees; aerials one
 // kicker (a 64 degree face, taking off at about 50 degrees) onto a 37 degree hill; powder the north bowl from
 // the summit, down to the pickup altitude. "Long" is measured along z (horizontally).
@@ -73,14 +73,14 @@ function finish(zone) {
   return freezeDeep(zone);
 }
 
-// ---- Slalom: 450 m, 180 m drop, 50 gates of red and blue poles ----------------
+// ---- Slalom: 450 m, 180 m drop, 33 gates of red and blue poles ----------------
 function slalom() {
   const top = SKI_ALTITUDES.devils;
   const fall = slope([{z: 0, angle: 14}, {z: 30, angle: 14}, {z: 60, angle: 25}, {z: 420, angle: 25}, {z: 450, angle: 18}],
     450, 180, [{z: 480, angle: 6}, {z: 520, angle: 6}], 520);
   const gates = [];
-  for (let i = 0; i < 50; i++) gates.push(gateAt(30 + i * 8.2, i % 2 ? 1.1 : -1.1, 2, i % 2 ? 'blue' : 'red'));
-  const start = gateAt(12, 0, 12, 'start'), end = gateAt(450, 0, 12, 'finish');
+  for (let i = 0; i < 33; i++) gates.push(gateAt(30 + i * 13, i % 2 ? 1.2 : -1.2, 5, i % 2 ? 'blue' : 'red'));
+  const start = gateAt(12, 0, 12, 'start'), end = gateAt(450, 0, 20, 'finish');
   return finish({
     id: 'slalom', kind: 'slalom', name: 'Slalom', pad: 'devils',
     ground: (x, z) => top - fall(z),
@@ -105,7 +105,7 @@ function giantSlalom() {
     start, finish: end, gates,
     line: [{x: 0, z: 0}, {x: 0, z: 15}, ...gates.map(g => ({x: g.centre, z: g.left.z})), {x: 0, z: 1112}],
     stashes: [], bounds: {minX: -60, maxX: 60, minZ: -20, maxZ: 1170},
-    pickup: {x: 0, z: 1140}, scoring: {kind: 'timed'},
+    pickup: {x: 0, z: 1140}, scoring: {kind: 'timed', bronzeSlower: 0.25},
   });
 }
 
@@ -146,13 +146,13 @@ function moguls() {
       for (const b of bumps) if (Math.abs(b.z - z) < MOGUL_LINES.radius && Math.abs(b.x - x) < MOGUL_LINES.radius) h += bump(x, z, b.x, b.z, MOGUL_LINES.radius, MOGUL_LINES.height);
       return h;
     },
-    start: gateAt(8, 0, 12, 'start'), finish: gateAt(250, 0, 12, 'finish'), gates: [],
+    start: gateAt(8, 0, 18, 'start'), finish: gateAt(250, 0, 18, 'finish'), gates: [],
     line, bumps, kickers: MOGUL_KICKERS.map(z => ({x: 0, z})), stashes: [],
-    bounds: {minX: -30, maxX: 30, minZ: -10, maxZ: 320},
+    bounds: {minX: -45, maxX: 45, minZ: -10, maxZ: 320},
     pickup: {x: 0, z: 295},
     // The guide reaches further ahead at the speed of the bumps.
     guide: {lookAheadMin: 5, lookAheadPerSpeed: 0.2, lookAheadMax: 12},
-    scoring: {kind: 'judged', turnsPlanned: 17, jumps: 2},
+    scoring: {kind: 'judged', turnsPlanned: 17, jumps: 2, medals: {bronze: 30, silver: 50, gold: 70}},
   });
 }
 
@@ -231,12 +231,24 @@ export function zoneGuide(id) {
   return guides.get(id);
 }
 
+// SKI-FINISH: measured keyboard times, including the unchanged missed-gate penalties.
+// Casual bronze is steady +10%, gold practice -1%; Pro uses its practised baseline.
+const SLALOM_MEDALS = freezeDeep({
+  casual: {gold: 19.54, silver: 28.71, bronze: 37.88},
+  pro: {gold: 30.29, silver: 31.97, bronze: 33.65},
+});
+
 // What earns a medal on a zone: times for the timed runs, points for the
 // judged ones, nothing for powder.
-export function medalLimits(id) {
+export function medalLimits(id, difficulty = 'pro') {
   const zone = skiZone(id);
-  if (zone.scoring.kind === 'timed') return {kind: 'time', ...medalTimes(zoneGuide(id).time)};
-  if (zone.scoring.kind === 'judged') return {kind: 'points', ...SCORE.judgedMedals};
+  if (id === 'slalom') return {kind: 'time', ...SLALOM_MEDALS[difficulty === 'casual' ? 'casual' : 'pro']};
+  if (zone.scoring.kind === 'timed') {
+    const times = medalTimes(zoneGuide(id).time);
+    if (zone.scoring.bronzeSlower !== undefined) times.bronze = times.gold * (1 + zone.scoring.bronzeSlower);
+    return {kind: 'time', ...times};
+  }
+  if (zone.scoring.kind === 'judged') return {kind: 'points', ...(zone.scoring.medals ?? SCORE.judgedMedals)};
   return null;
 }
 

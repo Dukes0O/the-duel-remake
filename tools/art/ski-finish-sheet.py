@@ -1,6 +1,6 @@
-"""Assemble SKI-FINISH's four unaltered game views; resize and label only.
+"""Assemble SKI-FINISH's eight unaltered game views; resize and label only.
 
-Run after the default, DETAIL=1 and PHOTO=1 ski-finish browser recipes:
+Run after default output assist-casual-checked and DIFFICULTY=pro output assist-pro:
   python tools/art/ski-finish-sheet.py
 No Blender render, image generation or frame measurement is involved.
 """
@@ -11,12 +11,16 @@ ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / '.evidence/2026-10-26/SKI-FINISH'
 OUT = ROOT / 'docs/board/looks/ski-finish/look-1.jpg'
 TILES = [
-    ('keyboard-corrected/slalom-gate.png', 'Slalom: visible poles; keyboard line is difficult'),
-    ('jump-photo/aerials-jump-tuck.png', 'Aerials: tuck for air; straight bronze, whole spin gold'),
-    ('detail/powder-yeti.png', 'Powder: the yeti watches; three stashes, no clock'),
-    ('keyboard-corrected/pickup-snow.png', 'Pickup: alpine snow at 3,233 m; ground gap 0.016 m'),
+    ('assist-casual-checked/slalom-finish-steady.png', 'Casual steady: 34.43 s, two misses, bronze'),
+    ('assist-casual-checked/slalom-finish-practice.png', 'Casual practice: 19.74 s, no misses, silver'),
+    ('assist-pro/slalom-finish-practice.png', 'Pro practice: 30.59 s, two misses, silver'),
+    ('assist-casual-checked/slalom-gate.png', 'Slalom: same layout and next-pole glow'),
+    ('assist-casual-checked/aerials-jump-practice.png', 'Aerials: the tucked jump remains bronze'),
+    ('assist-casual-checked/powder-yeti.png', 'Powder: the yeti watches; no clock'),
+    ('assist-casual-checked/pickup-snow.png', 'Pickup: alpine snow at 3,233 m'),
+    ('assist-casual-checked/group-summit.png', 'Thin air: advice appears as radio text'),
 ]
-sheet = Image.new('RGB', (1280, 830), '#171c20')
+sheet = Image.new('RGB', (1280, 1610), '#171c20')
 draw = ImageDraw.Draw(sheet)
 font = ImageFont.truetype('C:/Windows/Fonts/arial.ttf', 18)
 draw.text((12, 12), 'SKI-FINISH | 26 October 2026 | keyboard evidence for Claude | switch stays dev', fill='white', font=font)

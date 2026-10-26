@@ -23,3 +23,9 @@ Lane tier and build.
 Rook: a calm workshop teacher in a work shirt or overalls, safety glasses
 pushed up on his head, sleeves rolled. A Blender recipe, counted in this
 card's three look rounds.
+
+**From the frame's look (Claude, 26 October):** the picture is the lesson.
+Put the arrows on Kestrel One itself and make them large, show the downwash
+as a clear stream under the rotor, show the graph only in the step that uses
+it, and keep the step panel short so the 3D view stays the centre of the
+screen.

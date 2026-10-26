@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as THREE from 'three';
 import {skiKeys, skiCameraPose, backdropEye, skierPose, skiDeepSnow, loadingCardMarkup, resultCardMarkup, skiMenuMarkup,
-  skiBoardMarkup, createSkiView, SKI_BACKDROP, SKI_CAMERA_VIEWS, zoneGrid, drawnGround, hazeAt} from '../src/ski/ski-view.js';
+  skiBoardMarkup, runLineMarkup, createSkiView, SKI_BACKDROP, SKI_CAMERA_VIEWS, zoneGrid, drawnGround, hazeAt} from '../src/ski/ski-view.js';
 import {skiControlsHelp} from '../src/controls-help.js';
 import {createSkiRun, stepSkiRun, skiRunView, skiRunFingerprint, SKI_RUN_IDS} from '../src/ski/ski-session.js';
 import {skiZone} from '../src/ski/runs/summit-zones.js';
@@ -55,9 +55,14 @@ test('the cards: the loading tips (all six aerials tips), the targets, the resul
   const aerials = loadingCardMarkup(view('aerials'), {snow: {name: 'Packed powder', celsius: -8}});
   for (const tip of aerialsTips()) assert.ok(aerials.includes(tip.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')), 'an aerials tip');
   assert.ok(aerials.includes('Packed powder, -8 °C · wax hard'), 'the day\'s snow and the pick');
+  assert.ok(loadingCardMarkup(view('slalom')).includes('Pro: no line assist'));
+  assert.ok(loadingCardMarkup({...view('slalom'), difficulty: 'casual'}).includes('Casual: line assist on'));
   assert.ok(loadingCardMarkup(view('moguls')).includes('Moguls form by themselves where many skiers turn in the same places'), 'the moguls tip');
   assert.ok(/GOLD<\/b> 0:\d\d\.\d\d/.test(loadingCardMarkup(view('slalom'))), 'timed targets as times');
-  assert.ok(loadingCardMarkup(view('moguls')).includes('<b>GOLD</b> 80 pts'), 'judged targets as points');
+  assert.ok(loadingCardMarkup(view('moguls')).includes('<b>GOLD</b> 70 pts'), 'moguls judged targets as points');
+  assert.ok(aerials.includes('Hold down Shift to tuck on the inrun.'), 'drop tips name the actual tuck key');
+  assert.ok(runLineMarkup(view('aerials')).includes('Hold down Shift to tuck on the inrun'), 'inrun advice is visible at step-out');
+  assert.ok(!runLineMarkup({...view('aerials'), skier: {z: 40}}).includes('Hold down Shift'), 'advice clears at the ramp');
   const timed = resultCardMarkup({kind: 'time', run: 'slalom', time: 47.5, raw: 37.5, missed: 2, medal: 1}, {paid: 150, improved: true});
   assert.ok(timed.includes('0:47.50') && timed.includes('2 gates missed (+10 s)') && timed.includes('BRONZE') && timed.includes('150 credits · new best'));
   const judged = resultCardMarkup({kind: 'points', run: 'aerials', points: 71.24, medal: 2, air: 80, form: 60, landing: 90});
@@ -138,6 +143,17 @@ test('drawing a run never changes it: the same controls give the same run with a
   view.pose(sessionView(solo)); await new Promise(done => setTimeout(done, 0));
   const frame = sessionView(solo); view.render({view: frame, pose: view.pose(frame)});
   assert.equal(view.scene.getObjectByName("The guide's ghost").visible, true, 'the ghost on a timed run');
+  const cue = view.scene.getObjectByName('Next gate poles');
+  assert.ok(cue.visible && cue.children.length === 2, 'only the next pair glows');
+  cue.traverse(node => { if (node.isMesh) assert.ok(node.material.emissiveIntensity > 1, 'the poles emit light'); });
+  const beforeCue = skiRunFingerprint(solo), next = {...frame, ski: {...frame.ski, run: {...frame.ski.run, nextGate: 1}}};
+  view.render({view: next, pose: view.pose(next)});
+  const gate = skiZone('slalom').gates[1];
+  assert.equal(cue.children[0].position.x, gate.left.x);
+  assert.equal(cue.children[1].position.z, gate.right.z);
+  view.render({view: {...next, ski: {...next.ski, run: {...next.ski.run, finished: true}}}, pose: view.pose(next)});
+  assert.equal(cue.visible, false, 'the cue clears at the finish');
+  assert.equal(skiRunFingerprint(solo), beforeCue, 'the gate cue cannot change the run');
   assert.equal(view.pose({phase: 'flying', ski: {run: null}}), null, 'no run: nothing drawn');
   assert.equal(view.scene, null, 'and the zone is freed');
   view.dispose();
@@ -158,6 +174,7 @@ test('in the App: the ski keys drive the run, C and H change only the view, and 
     app.profile = {...app.profile, credits: 2000, courses: {version: 1, unlocked: ['tremblant-woods', 'summit-run']},
       heli: {version: 1, fuelKg: 400, lessons: {liftoff: true, hover: true, landing: true, carry: true}, refuels: 3}};
     app._saveProfile();
+    app.setRaceSettings({difficulty: 'casual'});
     assert.ok(app.visitHeli(), 'the visit starts');
     const session = app.heliSession;
     assert.ok(session.skiBoard(), 'the ski board is open (the switch reaches the session)');
@@ -179,8 +196,12 @@ test('in the App: the ski keys drive the run, C and H change only the view, and 
     const before = session.fingerprint();
     app._inputAction('heli-camera'); app._inputAction('heli-hook');
     assert.equal(session.fingerprint(), before, 'C and H on the pad still belong to the helicopter, and change nothing in flight here');
+    const menuLimits = session.skiOffers().runs.find(run => run.id === 'slalom').limits;
     assert.equal(app.heliSki('stepOut', 'slalom', {wax: null}).ok, true, 'step out onto the slalom');
     assert.equal(session.phase, 'skiing');
+    assert.equal(session.view().ski.run.difficulty, 'casual', 'the selected game difficulty reaches skiing');
+    assert.deepEqual(session.view().ski.run.limits, menuLimits, 'menu and run show the same targets');
+    assert.equal(session.view().ski.run.limits.bronze, 37.88, 'the run uses Casual targets');
     assert.deepEqual([app.skiCamera, app.skiHelp], [0, false], 'a new run starts on the chase camera with the help shut');
     const skiing = session.fingerprint();
     app._inputAction('heli-camera'); app._inputAction('heli-hook'); app._inputAction('heli-autopilot'); app._inputAction('heli-cruise');
@@ -198,6 +219,8 @@ test('in the App: the ski keys drive the run, C and H change only the view, and 
     assert.equal(session.fingerprint(), skiing, 'drawing the run, its HUD and the panel changes nothing');
     assert.ok(host.made.some(node => node.className === 'ski-hud' && node.hidden === false), 'the run HUD shows');
     ui.dispose(); zone.dispose();
+    assert.equal(session.restartSkiRun().ok, true);
+    assert.equal(session.view().ski.run.difficulty, 'casual', 'restart keeps the difficulty');
     // The keys: W skates off, then D turns right (the heading falls).
     app.keys = {KeyW: true};
     for (let i = 0; i < 60 * 3; i++) app._simulate(1 / 60);

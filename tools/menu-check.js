@@ -6,6 +6,12 @@ import archiveFixtureText from './fixtures/saves/07-records-and-ghosts.json?raw'
 installIsolatedStorage();
 window.__qaPhysicalStorage=window.localStorage;
 const qaParams=new URLSearchParams(window.location.search);
+if(qaParams.get('lab-lesson-example')==='1'){
+  const [{registerLesson},{exampleLesson,exampleHooks}]=await Promise.all([
+    import('../src/lab/lesson-frame.js'),import('./fixtures/lab-lesson-example.js'),
+  ]);
+  registerLesson(exampleLesson,exampleHooks);
+}
 if(qaParams.get('memory-backups')==='1'){
   window.__duelQaBackupStore=createMemoryBackupStore(window);
 }

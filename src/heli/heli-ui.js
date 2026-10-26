@@ -5,7 +5,7 @@ import {shelfMarkup} from './heli-logbook-ui.js';
 // changes flight state; its buttons call the app's helicopter actions.
 import {HELI_DESTINATIONS, HELI_DESTINATIONS_WITH_SUMMIT, HOME_COURSE, legFuelKg} from './heli-jobs.js';
 import {HELI_CAMERA_VIEWS} from './heli-camera.js';
-import {HELI_RADIO_LINES} from './heli-radio-lines.js';
+import {HELI_RADIO_LINES, SKI_RADIO_TEXT} from './heli-radio-lines.js';
 import {HELI_MONEY} from './heli-save.js';
 import {LESSON_RULES} from './heli-lessons.js';
 import {createDispatchBoard, atHomePad} from './heli-board.js';
@@ -467,7 +467,10 @@ export function createHeliUi({host, app}) {
             shown = shown.filter(item => !item.hint);
             shown.push({text, until: now + HOOK_HINT_SECONDS, hint: true});
           } else if (text) shown.push({text, until: now + NOTICE_SECONDS});
-          if (event.type === 'radio' && HELI_RADIO_LINES[event.line]) radioLine = {text: HELI_RADIO_LINES[event.line].text, until: now + RADIO_SECONDS};
+          if (event.type === 'radio') {
+            const text = SKI_RADIO_TEXT[event.line] ?? HELI_RADIO_LINES[event.line]?.text;
+            if (text) radioLine = {text, until: now + RADIO_SECONDS};
+          }
           if (event.type === 'crashed') radioLine = {text: HELI_RADIO_LINES['heli.radio.crash'].text, until: now + RADIO_SECONDS};
         }
         seenLog = log;

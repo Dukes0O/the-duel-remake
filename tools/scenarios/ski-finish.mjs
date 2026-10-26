@@ -36,6 +36,7 @@ export function keyboardDriver(zone, {practice = false, explore = false, rotatio
 
 const sleep = ms => new Promise(done=>setTimeout(done,ms));
 export async function run(context) {
+  const difficulty = process.env.DUEL_SKI_FINISH_DIFFICULTY === 'pro' ? 'pro' : 'casual';
   const photo = process.env.DUEL_SKI_FINISH_PHOTO === '1';
   const detail = process.env.DUEL_SKI_FINISH_DETAIL === '1' || photo;
   const report = {scope:'Discrete keyboard events through App._simulate; 150 ms steady / 50 ms practice. Script knows route; no human child trial. Flight uses existing scripted analog pilot. Memory only; no frames or recording.', runs:[]};
@@ -52,18 +53,18 @@ export async function run(context) {
     a.audio.setMuted(true);for(const p of document.querySelectorAll('details'))p.hidden=true;
     a.profile={...a.profile,courses:{version:1,unlocked:['tremblant-woods','summit-run']},lab:{version:1,done:{launch:true},owned:{aerials:true}},
       heli:{version:1,fuelKg:400,lessons:{liftoff:true,hover:true,landing:true,carry:true},refuels:3}};a._saveProfile();
-    if(!a.visitHeli())throw Error('no visit');${helper(skiZone('slalom').line,skiZone('slalom').pickup,SKI_PADS,GUIDE)};})()`);
+    a.setRaceSettings({difficulty:${JSON.stringify(difficulty)}});if(!a.visitHeli())throw Error('no visit');${helper(skiZone('slalom').line,skiZone('slalom').pickup,SKI_PADS,GUIDE)};})()`);
   await context.waitFor(`window.__qaApp.duel.state.status==='heli'&&window.__qaApp.visualReady`,'home',120000);
   await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();const paint=()=>{a.onFrame?.(a.duel.state);window.__finishPaint=requestAnimationFrame(paint);};paint();if(!a.heliSession.takeSkiDrop().ok)throw Error('no drop');window.__skiQa.toSummit();window.__skiQa.toPad('devils');})()`);
   await context.waitFor(`window.__qaApp.visualReady`,'Summit drawn',300000);
   report.drop = await context.evaluate(`window.__qaApp.heliSession.view().ski`);
-  for (const id of photo?['aerials']:detail?['moguls','aerials','powder']:['slalom','gs','moguls','aerials','powder']) {
+  for (const id of difficulty === 'pro' ? ['slalom'] : photo?['aerials']:detail?['moguls','aerials','powder']:['slalom','gs','moguls','aerials','powder']) {
     const zone = skiZone(id);
-    for (const attempt of photo?['tuck']:id==='powder'?['explore']:detail?(id==='moguls'?['straight']:['tuck','spin','tumble']):['steady','practice']) {
+    for (const attempt of difficulty === 'pro' ? ['practice'] : photo?['tuck']:id==='powder'?['explore']:detail?(id==='moguls'?['straight']:['tuck','spin','tumble']):['steady','practice']) {
       const practice = ['practice','tuck','spin','tumble'].includes(attempt);
       const rotation = attempt==='spin'?360:attempt==='tumble'?180:0;
       await context.evaluate(`(()=>{const a=window.__qaApp,s=a.heliSession;if(s.phase==='skiing')s.leaveSkiRun();
-        window.__skiQa.toPad(${JSON.stringify(zone.pad)});const r=s.skiStepOut(${JSON.stringify(id)});if(!r.ok)throw Error(JSON.stringify(r));
+        window.__skiQa.toPad(${JSON.stringify(zone.pad)});const r=s.skiStepOut(${JSON.stringify(id)});if(!r.ok)throw Error(JSON.stringify(r));if(s.view().ski.run.difficulty!==${JSON.stringify(difficulty)})throw Error('Ski difficulty did not reach the live session');
         window.__finishDrive=(${keyboardDriver.toString()})(${JSON.stringify(zone)},{practice:${practice},explore:${id==='powder'},rotation:${rotation},closeYeti:${detail},straight:${attempt==='straight'}});
         window.__finishEvents=[];window.__finishAir=false;window.__finishLastKeys={};window.__finishRecovery=[];
         const original=s.step.bind(s);window.__finishOriginal=original;
@@ -73,7 +74,7 @@ export async function run(context) {
       await sleep(1800);
       // Stop the normal RAF simulation; advance the same App keyboard path at fixed steps.
       // Drawing stays live on its separate renderer loop. No state is positioned or patched.
-      const row = {id,attempt,practice,limits:medalLimits(id)};
+      const row = {id,attempt,practice,difficulty,limits:medalLimits(id, difficulty), startScreen: await context.evaluate('document.body.innerText')};
       for (let batch=0;batch<300;batch++) {
         const state = await context.evaluate(`(()=>{const a=window.__qaApp,s=a.heliSession;for(let i=0;i<120;i++){
           const v=s.view().ski?.run;if(!v||s.phase!=='skiing'||v.result&&!v.skier.tumbling)break;
@@ -86,8 +87,10 @@ export async function run(context) {
         if (!practice && id==='slalom' && batch===8) await context.screenshot('slalom-gate');
         if (id==='aerials' && state.run && state.run.skier.height>3 && !row.jump) {await sleep(150);row.jump=await context.screenshot('aerials-jump-'+attempt);}
         if (id==='powder' && state.run && (detail?Math.hypot(state.run.skier.x+92,state.run.skier.z-600)<28:state.run.skier.z>530) && !row.bowl) {await sleep(150);row.bowl=await context.screenshot('powder-yeti');}
+        if (['slalom', 'moguls'].includes(id) && state.run?.result && !row.finishPicture) row.finishPicture = await context.screenshot(id+'-finish-'+attempt);
         if (state.run?.result&&!state.run.skier.tumbling || state.phase!=='skiing' || batch===299) {Object.assign(row,state);break;}
       }
+      if (row.run && row.run.difficulty !== difficulty) throw Error('Ski difficulty did not reach the live session');
       report.runs.push(row);await save();
       await context.evaluate(`(()=>{const a=window.__qaApp;for(const code of Object.keys(window.__finishLastKeys))window.dispatchEvent(new KeyboardEvent('keyup',{code,bubbles:true}));a.heliSession.step=window.__finishOriginal;})()`);
     }
@@ -95,7 +98,7 @@ export async function run(context) {
   await context.evaluate(`(()=>{const a=window.__qaApp;if(a.heliSession.phase==='skiing')a.heliSession.leaveSkiRun();})()`);
   await sleep(2000);report.pickup=await context.evaluate(`(()=>{const a=window.__qaApp,h=a.heliSession.view().heli,c=a.duel.course,n=c.nearest(h.x,h.z);return {heli:h,theme:c.themeAt(n.s),nearest:n,ground:c.groundAt(n.s,n.lateral).y};})()`);
   await context.screenshot('pickup-snow');await save();
-  if(detail)return;
+  if(detail || difficulty === 'pro')return;
   // Start a fresh disposable visit on a group-offer day. No real progress is used.
   for(let count=1;count<=12;count++) {
     await context.evaluate(`(()=>{const a=window.__qaApp;a.returnToMenu();a.profile={...a.profile,heli:{version:1,fuelKg:400,lessons:{liftoff:true,hover:true,landing:true,carry:true},refuels:3,playDay:{last:new Date().toISOString().slice(0,10),count:${count}}}};a._saveProfile();if(!a.visitHeli())throw Error('no group visit');})()`);
@@ -108,6 +111,7 @@ export async function run(context) {
       return {taken,view:s.view(),radio:window.__finishRadio};})()`);
     await context.waitFor(`window.__qaApp.visualReady`,'group summit drawn',300000);
     await sleep(500);report.group.screen=await context.evaluate(`document.body.innerText`);
+    if (!report.group.radio.some(row => row.event.line === 'ski.radio.thin-air') || !report.group.screen.includes('Lighten up: burn fuel or leave some behind.')) throw Error('Thin-air event must reach the visible radio text');
     await context.screenshot('group-summit');await save();break;
   }
 }

@@ -70,3 +70,22 @@ before rounds 2 or 3. The door kestrels are obscured by the canopy boundary;
 wear and reflective bands need a verdict. The switch stays dev. Please also
 record the required written review of the assertion expansions listed in
 the change note before merge; no limits or tolerances were loosened.
+
+## Claude's verdict, paints round 1 (26 October 2026)
+
+Student (white, orange training stripes) and Mountain (rescue red, white
+reflective bands) are accepted as they are. Round 2 for the other three:
+- **Private, midnight blue:** the silver line must read: a bright silver
+  cheat line along the whole cabin and tail boom, about a hand's width.
+- **Commercial, forest green and cream:** the cream should be a clear band
+  along the cabin side; the kestrel moves from the door (hidden) to the tail
+  boom, large enough to read in the near view.
+- **Chief, Gus's 1964 cream and signal red:** more red, so it reads cream and
+  red at distance: a broad signal-red belly band and a red tail fin; the
+  hand-painted kestrel on the tail boom as above.
+- **Wear, all five:** light and real (exhaust soot behind the engine, scuffed
+  skids), never cartoon, never new-car clean.
+The changed assertions (switch count 41, the five paints in the skin roster,
+the paint recipe in the generator roster and manual scenarios, logbook
+completions in the job scripts) are approved: each adds the new thing and
+nothing is loosened.

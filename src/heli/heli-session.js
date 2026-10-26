@@ -195,7 +195,7 @@ export function insideArea(area, x, y, z, ground = null) {
 // this car", {id, name} or null; left out (the driving-lessons switch off),
 // "Lesson here" is never offered.
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
-  mode = 'assisted', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
+  mode = 'assisted', difficulty = 'pro', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
   summitRunEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false,
   drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false, logbookEnabled = false} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
@@ -204,6 +204,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   const summitOn = summitRunEnabled === true;
   // Heli-skiing needs Summit Run (its pads and runs are there). With it off nothing below runs and every result is what it was.
   const skiOn = heliSkiingEnabled === true && summitOn;
+  const skiDifficulty = difficulty === 'casual' ? 'casual' : 'pro';
   // The pilot's map (docs/PILOT_MAP.md): every place a destination, the map's legs, dearer fuel pads, jobs between
   // owned destinations and scouting. With it off, left out, every answer is what it was.
   const pilotOn = pilotMapEnabled === true;
@@ -996,7 +997,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // Stepping out on a drop pad: the helicopter stays where it is, untouched (no fuel is burnt), and the ski zone takes over.
   function startSkiRun(runId, setting, meta) {
     autopilot.engaged = false;
-    skiRun = createSkiRun({runId, wax: setting, group: skiFlight.kind === 'group'});
+    skiRun = createSkiRun({runId, wax: setting, group: skiFlight.kind === 'group', difficulty: skiDifficulty});
     skiMeta = meta;
     if (groupAboard) { groupAboard = false; refreshUpgrades(); }
     phase = 'skiing';
@@ -1982,8 +1983,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const day = playDay(), ski = skiOf(save), snow = snowOfDay(day), kit = waxKitOwned(save, skiFlags);
       const challenge = labEnabled === true && labChallengeOpen(save, 'wax').open ? Object.freeze({id: 'wax', run: 'slalom'}) : null;
       const runs = SKI_RUN_IDS.filter(id => skiRunPad(id) === pad && (id !== 'aerials' || aerialsOpen(save, skiFlags)) && !(skiFlight.kind === 'group' && id === 'powder'))
-        .map(id => Object.freeze({id, name: skiRunName(id), best: ski.best[id] ?? null, medal: ski.medal[id] ?? 0, limits: skiRunLimits(id)}));
-      return Object.freeze({pad, runs: Object.freeze(runs), snow: Object.freeze({id: snow.snow, name: snow.name, celsius: snow.celsius}),
+        .map(id => Object.freeze({id, name: skiRunName(id), best: ski.best[id] ?? null, medal: ski.medal[id] ?? 0, limits: skiRunLimits(id, skiDifficulty)}));
+      return Object.freeze({pad, difficulty: skiDifficulty, runs: Object.freeze(runs), snow: Object.freeze({id: snow.snow, name: snow.name, celsius: snow.celsius}),
         kit, waxes: kit || challenge ? WAXES : null, challenge, group: skiFlight.kind === 'group'});
     },
     // Step out and ski. wax: hard, medium or soft with the Wax kit; challenge 'wax' (the slalom only) is the Lab's wax run,
@@ -2014,7 +2015,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // Start the run again from the drop (the helicopter fetches the pilot: no fuel, no charge).
     restartSkiRun() {
       if (phase !== 'skiing' || !skiRun) return {ok: false, reason: 'There is no run to restart.'};
-      skiRun = createSkiRun({runId: skiRun.runId, wax: skiRun.wax, group: skiRun.group});
+      skiRun = createSkiRun({runId: skiRun.runId, wax: skiRun.wax, group: skiRun.group, difficulty: skiRun.difficulty});
       emit({type: 'skiRestart', run: skiRun.runId});
       return {ok: true};
     },
