@@ -345,3 +345,41 @@ The browser recipe only adds slalom result pictures; its driver is unchanged.
 Removed: replaced the first layout and 12 m slalom finish with the second
 layout and visible 20 m finish. No old physics, asset or test path is retained
 as a workaround. Final captures/checks are recorded below.
+
+Browser confirmation on private port 38933: all five runs, drop/group,
+thin-air text and snowy pickup completed the same memory-only headless
+recipe; nine pictures, zero warnings/errors. Slalom matches the pure table
+exactly. Existing guide-derived bronze/silver/gold now read
+27.9181 / 25.5522 / 23.6594 s; no calibration is claimed. The new line is
+quicker for the guide, which explains those displayed limits. GS, moguls,
+aerials and powder reproduce the previous results.
+
+The updated eight-view sheet is 379,219 bytes and was visually inspected.
+It replaces the previous six-view sheet; it includes both slalom results,
+the course view, moguls, aerials, powder/yeti, snowy pickup and thin-air text.
+Reproduce with the default recipe output `second-layout`, followed by
+`python tools/art/ski-finish-sheet.py`. No retouching, art round or frame
+measurement. Code/number and changed-assertion review stays with Claude.
+
+Final checks on gameplay/test source `7171815c`: lane 59/59 passed, zero
+failed/not run, jobs4, 300.80 s, using the requested
+`node tools/run-tests.mjs --tier lane --changed --jobs 4`. It includes physics
+112, zones 231, heli 15 and view 5; replay guard 225 checks/25 cases/23
+events/nine categories, combat replay guard 12 checks/four encounters, world
+composition 47 checks/20 events. `npm run build` then passed in 799 ms with
+the existing mixed-import and large-chunk warnings. PowerShell, System32
+first on PATH; fresh under-three admission before each heavy run and the
+one-minute recounts stayed within the cap. No frame or full-tier run.
+
+This pass did not regenerate any signature or fingerprint. Integration
+brought its already-reviewed Summit ground/scene baseline changes through
+the requested conflict-free code merge. Subsequent edits are only evidence
+notes, the STATUS snapshot, picture sheet and its assembly recipe, which no
+test reads. Independent code/numbers, changed-assertion and final look review
+remain with Claude. No merge out of this lane, push, real save or live access.
+
+Cockpit sync: zero task changes; it flagged unrelated new card
+QA-SUMMIT-GLACIER-EDGE as lacking a Cockpit task. Leave that task mapping to
+the Director. Session raw captures, reports, gate/build logs and generated
+QA/production builds were recycled after the verdict and sheet were saved.
+Only current recipe, source, notes and compact picture sheet remain.
