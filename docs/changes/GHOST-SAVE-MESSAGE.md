@@ -49,3 +49,7 @@ requires the visible `BEST GHOST SAVED` line after the real asynchronous write.
 ## Removed
 
 Replace the false pending-save failure messages and stale render cache key.
+
+## Claude review (26 October 2026)
+
+Approved and merged: only new checks. Live with the next release.
