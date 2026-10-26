@@ -79,3 +79,7 @@ pin is loosened. Claude's written assertion review is still needed before merge.
 Lesson-only ownership predicates, ownership metadata and purchase wording.
 No old asset or alternative code path retained. QA bundle and raw captures
 are recycled once their verdict is recorded.
+
+## Claude review (26 October 2026)
+
+Approved and merged: each changed expectation follows the ownership decision on the card; no-pay, no-record, once-only brakes and the other refusals are kept.
