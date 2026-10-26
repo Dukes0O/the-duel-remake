@@ -1,7 +1,32 @@
 # SUMMIT-FINISH-AREA
 
-Status: round 2 ready for Claude; further art stopped. Kind: art.
+Status: round 3 in progress, final art round. Kind: art.
 Flag: existing `summit-run`.
+
+## Round 3 design, before code
+
+Merged integration as `7e1da271`: no code conflicts; retained this lane's
+STATUS and Claude's current card. Make only the five fixes in his round 2
+verdict. The working pad is now explicitly settled: keep it where it is.
+
+1. The at-line context camera sits 5 m before the gantry, at car-eye height,
+   with a wider lens so the beam is overhead and the run-off is ahead. The
+   other four poses stay exact. Record the true camera coordinates.
+2. Reuse the crowd atlas, including its raised-arm figures, with standing
+   leg proportions. Move the fence/people closer to the road without entering
+   it; keep twelve people across the last 200 m.
+3. Use the existing terrain snow shader on the packed parking surface. Add
+   low edge banks, two existing traffic sedans at the sides, and a lamp post;
+   leave the central stopping corridor clear. Do not change the terrace grade.
+4. Double SUMMIT type size and fit its backing board/banner around it.
+5. Replace flat pad paint with a clear dark H circle fitted to the actual
+   rendered snow, ground its existing windsock and add a short marker-post
+   path toward the established pad. Do not move any landing/flight rule.
+
+Checks: actual kit clearance, existing finish-ground check, fresh native
+drive-through, explicit unchanged scene-signature guard (report old/new),
+lane tier and build. Same twenty dusk/night High/Performance pictures.
+No frame timing, baseline regeneration, extra art round or other changes.
 
 ## Round 2 design, before code
 

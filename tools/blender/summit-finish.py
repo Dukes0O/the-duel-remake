@@ -1,4 +1,4 @@
-"""Round 2 Summit finish furniture. Reuses the existing hut/dome separately.
+"""Round 3 Summit finish furniture. Reuses the existing hut/dome separately.
 
 blender -b --python tools/blender/summit-finish.py -- --root .
 Local metres: X left of road, Y backwards, Z up. glTF converts once.
@@ -76,15 +76,15 @@ block('Snow on lintel', (20.3, .72, .12), (0, 0, 7.25), snow, .04)
 for row in range(2):
     for col in range(24):
         block('Chequered fabric', (.72, .055, .4),
-              ((col-11.5)*.72, .39, 5.35+row*.4), ivory if (row+col)%2 else black)
-block('Summit name board', (10.4,.16,1.0), (0,.37,6.5), wood, .035)
-bpy.ops.object.text_add(location=(0,.47,6.5), rotation=(math.pi/2,0,math.pi))
+              ((col-11.5)*.72, .39, 4.85+row*.4), ivory if (row+col)%2 else black)
+block('Summit name board', (10.8,.16,1.8), (0,.37,6.65), wood, .035)
+bpy.ops.object.text_add(location=(0,.47,6.65), rotation=(math.pi/2,0,math.pi))
 letter=bpy.context.object
 letter.name='SUMMIT painted lettering'
 letter.data.body='SUMMIT'
 letter.data.align_x='CENTER'
 letter.data.align_y='CENTER'
-letter.data.size=1.15
+letter.data.size=2.3
 letter.data.extrude=.008
 letter.data.materials.append(ivory)
 bpy.ops.object.convert(target='MESH')
@@ -95,15 +95,37 @@ block('Gantry lamp lens', (.68,.46,.055), (0,.65,6.93), warm)
 for side in [-1, 1]:
     for i in range(49):
         along = 4+i*4
-        block('Snow fence upright', (.12, .14, 1.35), (side*11, along, .675), wood)
+        block('Snow fence upright', (.12, .14, 1.35), (side*8.4, along, .675), wood)
         if i < 48:
             for height in [.5, 1.05]:
-                block('Snow fence rail', (.10, 4.02, .14), (side*11, along+2, height), wood)
+                block('Snow fence rail', (.10, 4.02, .14), (side*8.4, along+2, height), wood)
 
 for side,back in [(1,60),(-1,150)]:
-    beam('Snow fence lamp post',(side*11,back,0),(side*11,back,3.4),.13,iron)
-    block('Snow fence lamp hood',(.7,.7,.16),(side*11,back,3.48),iron,.025)
-    block('Snow fence lamp lens',(.5,.5,.12),(side*11,back,3.35),warm)
+    beam('Snow fence lamp post',(side*8.4,back,0),(side*8.4,back,3.4),.13,iron)
+    block('Snow fence lamp hood',(.7,.7,.16),(side*8.4,back,3.48),iron,.025)
+    block('Snow fence lamp lens',(.5,.5,.12),(side*8.4,back,3.35),warm)
+
+# Low ploughed banks along the parking edges; the middle stays unobstructed.
+for side in [-1,1]:
+    vertices,faces=[],[]
+    for row in range(39):
+        along=4+row*3
+        taper=min(1,row/3,(38-row)/3)
+        for column in range(7):
+            t=column/6
+            height=max(0,taper)*(.64+.11*math.sin(row*.73))*math.sin(math.pi*t)
+            vertices.append((side*(28.5+t*3.2),-along,-.025+height))
+            if row and column:
+                a=row*7+column
+                faces.append((a-1,a,a-7,a-8) if side>0 else (a-8,a-7,a,a-1))
+    mesh=bpy.data.meshes.new('Ploughed snow bank')
+    mesh.from_pydata(vertices,[],faces);mesh.materials.append(snow)
+    obj=bpy.data.objects.new('Low parking snow bank',mesh)
+    bpy.context.collection.objects.link(obj)
+    for polygon in mesh.polygons: polygon.use_smooth=True
+beam('Parking lamp post',(24,-14,0),(24,-14,5.2),.16,iron)
+block('Parking lamp hood',(.9,.8,.18),(24,-14,5.25),iron,.025)
+block('Parking lamp lens',(.7,.6,.09),(24,-14,5.12),warm)
 
 def window(name, size, point, anchor):
     frame=block(name+' timber frame',tuple(v+.14 if v>.1 else v+.025 for v in size),point,wood,.015)
@@ -122,24 +144,26 @@ for x in [14,20]:
 window('Observatory road window',(.10,3.4,1.65),(-9.73,16,2.0),[16,-17])
 window('Observatory approach window',(3.4,.10,1.65),(-17,23.27,2.0),[16,-17])
 
-# The real summit pad, in the final-straight frame (SUMMIT_PADS.summit).
-pad_x, pad_y, pad_z = 80.02651454272215, 239.9632616834, 5.76
-for x in [-2.6, 2.6]:
-    block('Helipad H', (.65, 6, .025), (pad_x+x, pad_y, pad_z), ivory)
-block('Helipad H crossbar', (5.2, .65, .025), (pad_x, pad_y, pad_z), ivory)
-for i in range(48):
-    angle = i*math.tau/48
-    mark = block('Pad perimeter', (.22, 1.58, .025),
-                 (pad_x+12*math.cos(angle), pad_y+12*math.sin(angle), pad_z), ivory)
-    mark.rotation_euler.z = angle
-beam('Windsock mast', (pad_x+15, pad_y, pad_z-.1), (pad_x+15, pad_y, pad_z+6), .12, iron)
+# The working pad stays put. Its ground-fitted H/circle are drawn by the
+# finish view; this recipe keeps the windsock and short marker-post path.
+pad_x, pad_y = 80.02651454272215, 239.9632616834
+mast=beam('Windsock mast', (pad_x+15,pad_y,0), (pad_x+15,pad_y,6), .12, iron)
+mast['groundAnchor']=[pad_y,pad_x+15]
 for i in range(6):
     bpy.ops.mesh.primitive_cone_add(vertices=12, radius1=.46-i*.045,
-        radius2=.415-i*.045, depth=.48, location=(pad_x+15+i*.46, pad_y, pad_z+5.7-i*.08))
+        radius2=.415-i*.045, depth=.48, location=(pad_x+15+i*.46, pad_y, 5.7-i*.08))
     obj=bpy.context.object
     obj.name='Windsock fabric'
     obj.rotation_euler.y=math.pi/2+.17
     obj.data.materials.append(red if i%2==0 else ivory)
+    obj['groundAnchor']=[pad_y,pad_x+15]
+for i in range(6):
+    back=28+i*7
+    across=25+(pad_x-25)*(back-16)/(pad_y-16)
+    for side in [-1,1]:
+        for name,size,z,mat in [('Path marker stake',(.11,.11,.9),.45,wood),('Path marker reflector',(.13,.13,.18),.76,ivory)]:
+            obj=block(name,size,(across+side*1.8,back,z),mat)
+            obj['groundAnchor']=[back,across+side*1.8]
 
 # A single trail behind the observatory; its twelve paired prints are large.
 for i in range(12):
