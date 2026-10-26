@@ -2,6 +2,26 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Fixes and Grand Prix pay, 26 October 2026 (afternoon)
+
+### What players get now
+
+- **Grand Prix pays.** Every finishing place earns credits (a win pays the
+  same as a Duel win on that course; Pro doubles it; no loss charge), and
+  Grand Prix records, ghosts and the cups are on.
+- **Landing somewhere means something.** Set the helicopter down at a place
+  and a panel says where you are and what is there: a car of yours parked
+  there, jobs leaving from there, **Race here** or **Shut down**. The pause
+  screen shows the helicopter keys during a flight.
+- **Return loads.** Every pad away from home has one crate job a day, sent by
+  someone who lives there (the lodge's empty gas bottles, the rangers' sample
+  boxes, Ana's crates), and it always pays more than its fuel.
+- **Summit Run:** the hillside under the upper roads is back (no more
+  floating trees, edge lines or cliff slabs), and you can no longer drive
+  out through the side of the snow shed.
+- **Saved ghosts:** the results screen no longer says a ghost failed to save
+  while it is still saving.
+
 ## Fixes, 26 October 2026 (early morning)
 
 ### What players get now
