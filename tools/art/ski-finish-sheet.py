@@ -1,6 +1,6 @@
 """Assemble SKI-FINISH's eight unaltered game views; resize and label only.
 
-Run after the default ski-finish recipe with output second-layout:
+Run after default output assist-casual-checked and DIFFICULTY=pro output assist-pro:
   python tools/art/ski-finish-sheet.py
 No Blender render, image generation or frame measurement is involved.
 """
@@ -11,14 +11,14 @@ ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / '.evidence/2026-10-26/SKI-FINISH'
 OUT = ROOT / 'docs/board/looks/ski-finish/look-1.jpg'
 TILES = [
-    ('second-layout/slalom-gate.png', 'Slalom: only the next pair of poles glows'),
-    ('second-layout/slalom-finish-steady.png', 'Steady: 69.46 s, nine misses; stop condition'),
-    ('second-layout/slalom-finish-practice.png', 'Practice: 30.59 s, two misses; scored finish'),
-    ('second-layout/moguls-finish-steady.png', 'Moguls: steady weaving remains gold'),
-    ('second-layout/aerials-jump-practice.png', 'Aerials: the tucked jump remains bronze'),
-    ('second-layout/powder-yeti.png', 'Powder: the yeti watches; no clock'),
-    ('second-layout/pickup-snow.png', 'Pickup: alpine snow at 3,233 m'),
-    ('second-layout/group-summit.png', 'Thin air: advice appears as radio text'),
+    ('assist-casual-checked/slalom-finish-steady.png', 'Casual steady: 34.43 s, two misses, bronze'),
+    ('assist-casual-checked/slalom-finish-practice.png', 'Casual practice: 19.74 s, no misses, silver'),
+    ('assist-pro/slalom-finish-practice.png', 'Pro practice: 30.59 s, two misses, silver'),
+    ('assist-casual-checked/slalom-gate.png', 'Slalom: same layout and next-pole glow'),
+    ('assist-casual-checked/aerials-jump-practice.png', 'Aerials: the tucked jump remains bronze'),
+    ('assist-casual-checked/powder-yeti.png', 'Powder: the yeti watches; no clock'),
+    ('assist-casual-checked/pickup-snow.png', 'Pickup: alpine snow at 3,233 m'),
+    ('assist-casual-checked/group-summit.png', 'Thin air: advice appears as radio text'),
 ]
 sheet = Image.new('RGB', (1280, 1610), '#171c20')
 draw = ImageDraw.Draw(sheet)

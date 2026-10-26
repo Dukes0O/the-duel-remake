@@ -450,3 +450,61 @@ Removed: slalom guide-based medal selection is replaced by per-difficulty
 limits. No alternate physics path, old layout, save migration, asset or new
 runtime dependency was added. Shared best/medal records and pay remain on
 the existing save path; only the current run's criteria change.
+
+| Slalom attempt | Before assist: time / misses / medal | After: time / misses / medal |
+| --- | --- | --- |
+| Casual steady, 150 ms | 69.46 s / 9 / none | 34.43 s / 2 / bronze |
+| Casual practised, 50 ms | 30.59 s / 2 / none | 19.74 s / 0 / silver |
+| Pro practised, 50 ms | 30.59 s / 2 / none | 30.59 s / 2 / silver |
+
+Times include the unchanged 5 s per miss. Casual reaches the <=3-miss target.
+Pro's movement is unchanged; only its slalom medal criteria now use the
+requested difficulty calibration. Gold needs another 0.20 s on Casual or
+0.30 s on Pro beyond these practised runs. These are scripted keyboard
+proxies, not an eleven-year-old's trial. Raw times before/after: Casual steady
+24.46/24.43, Casual practice 20.59/19.74, Pro practice 20.59/20.59 s.
+
+Corrected Casual browser completed on private port 53503, nine pictures,
+zero errors/warnings; normal App input and difficulty settings, memory-only.
+All other runs reproduce prior outcomes. Group thin-air text and snowy pickup
+still pass. The first post-resume lane attempt was not started: three other
+heavy jobs occupied the slots, as FACTORY 8 requires. Wait for capacity;
+this is not a failed test or a passing gate.
+
+Pro browser confirmation: private port 12283, two pictures, zero warnings or
+errors, explicit Pro selected through the normal menu settings API. It
+reproduces 30.5917 s / 2 misses, uses the Pro target table and earns silver.
+It skips unrelated group/other-run replay in this comparison. The corrected
+Casual packet remains the all-five-run/drop/group/pickup witness. The final
+eight-view sheet was inspected: 379,358 bytes, with the three actual slalom
+result cards and the current mountain/powder/flight views. Only resized and
+labelled; no art round or frame timing. Rebuild after default output
+`assist-casual-checked` and `DUEL_SKI_FINISH_DIFFICULTY=pro` output `assist-pro`
+using `python tools/art/ski-finish-sheet.py`.
+
+The ski session's diagnostic fingerprint now includes difficulty so the
+same pose on assisted Casual and unassisted Pro cannot be mistaken for the
+same run context. This is not an ordinary-race replay fingerprint update;
+none is regenerated. The underlying Pro step-by-step control outcome and
+raw finish time are preserved. Cockpit sync through the protected runner
+completed with zero task changes.
+
+Final validation on frozen gameplay/test source `619cfca3`: requested lane
+command `node tools/run-tests.mjs --tier lane --changed --jobs 4` passed
+70/70, zero failures/not run, 422.72 s. It covers physics 112 checks, zones
+232, ski lifecycle/assist 17 tests and view 5. Replay guard 225 checks /
+25 cases / 23 events / nine categories, combat replay guard 12 checks / four
+encounters, complete scenes 47 checks / 20 events all pass unchanged.
+`npm run build` then passed in 1.23 s; existing mixed static/dynamic import
+and large-chunk warnings remain. Both ran in PowerShell with System32 first
+on PATH, fresh under-three-job admission, jobs at most four and one-minute
+recounts within the cap. The earlier full-slot admission started no gate.
+No full tier, frame timing, release or child play-test is claimed.
+
+Subsequent edits contain only this evidence note, STATUS, the updated sheet
+and its assembly recipe, which no test reads. The feature remains dev;
+Claude still owns code/numbers and changed-assertion review plus final look
+and the later frame/release decision. No merge out of this lane or push.
+Raw successful/failed browser packets, gate/build logs and generated QA and
+production output from this session were recycled once these findings and
+the compact sheet were recorded. No player data or unrelated work removed.
