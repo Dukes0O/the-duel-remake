@@ -112,6 +112,24 @@ function referenceReader(course) {
 
 // The far-terrain height reader, as it was: every corner worked out on demand from its own polyline query.
 function referenceFarSampler(course) {
+  if(course.def.scenery?.continuousGround){
+    // This intentional scene repair replaces the old omitted cells. Read an
+    // independently built mesh as the reference, including its Float32 corner
+    // heights, without seeding either sampler under test.
+    const geometry=farTerrainGeometry(new Course(course.def,course.seed));
+    const p=geometry.getAttribute('position'),grid=p.getX(1)-p.getX(0);
+    let columns=1;
+    while(columns<p.count&&p.getZ(columns)===p.getZ(0))columns++;
+    return (x,z)=>{
+      const worldColumn=Math.floor(x/grid),worldRow=Math.floor(z/grid);
+      const i=worldColumn-Math.round(p.getX(0)/grid),j=worldRow-Math.round(p.getZ(0)/grid);
+      const u=x/grid-worldColumn,v=z/grid-worldRow;
+      assert.ok(i>=0&&i+1<columns&&j>=0&&(j+1)*columns+i+1<p.count,'reference point lies in the drawn grid');
+      const a=j*columns+i,b=a+1,c=a+columns,d=c+1;
+      return u+v<=1?p.getY(a)*(1-u-v)+p.getY(b)*u+p.getY(c)*v:
+        p.getY(b)*(1-v)+p.getY(c)*(1-u)+p.getY(d)*(u+v-1);
+    };
+  }
   const grid = (course.def.kind === 'chase' || course.def.layout === 'city') ? 8 : course.def.arena || course.def.expansion || course.def.terrainHalfWidth === 64 ? 16 : 32;
   const threshold = course.def.arena ? 18 : (course.def.expansion || course.def.terrainHalfWidth === 64) ? 40 : (course.def.kind === 'chase' || course.def.layout === 'city') ? 50 : 80;
   const route = course.samples.filter((_, i) => i % 4 === 0), last = course.samples.at(-1);
