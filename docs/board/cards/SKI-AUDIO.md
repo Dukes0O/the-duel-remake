@@ -45,3 +45,10 @@ The session emits these as `{type: 'radio', line: <id>}` (and the cue as `{type:
 | `ski.radio.thin-air` | the collective at its top, the helicopter still sinking above 3,500 m | Brian | Thin air up here. Less air for the rotor to push. Lighten up: burn fuel or leave some behind. |
 
 The cue `ski.step-out` (boots on snow, bindings click) is in the cue list above.
+
+## Kyle decided (26 October 2026)
+
+"Hold the ski radio lines for now; on-screen text is fine." The sound
+effects are merged; the `ski.radio.*` lines stay as on-screen text and no
+voice credits are spent. The card is done. Recording them later is a new
+card, only if Kyle asks.

@@ -1551,3 +1551,5 @@ Day/Night and Dossier remain waiting on that shared renderer dependency.
 - The Koenigsegg Jesko races on every course and in every mode again (Kyle,
   25 October 2026: Gratian could no longer use it). It leaves the air-only
   list; the medal cars and the restored Sirena keep the fly-it-there rule.
+- Ski radio lines stay as on-screen text for now; no voice credits spent on
+  them (Kyle, 26 October 2026). Heli-skiing does not wait on voice.
