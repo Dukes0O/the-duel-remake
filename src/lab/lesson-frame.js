@@ -139,7 +139,7 @@ export function createLessonSession(entry) {
         const current = input[id] ?? c.initial ?? c.min;
         const next = Number.isFinite(value) ? value : current + c.step;
         input[id] = !Number.isFinite(value) && next > c.max && c.cycle ? c.min : Math.max(c.min, Math.min(c.max, next));
-      } else input[id] = c.value;
+      } else { for (const other of row().controls) if ((other.setting ?? other.id) === (c.setting ?? c.id)) delete input[other.id]; input[id] = c.value; }
     },
     run() {
       if (stage !== 3 || !selected || running || result) return false;

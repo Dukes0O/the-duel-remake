@@ -158,7 +158,7 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
           (v.input[lever.id] ?? lever.initial ?? lever.min) + ((held.has('ArrowUp') ? 1 : 0) - (held.has('ArrowDown') ? 1 : 0)) * Math.min(dt, .1) * (lever.rate ?? .5));
         if (!lever || hover || notebook) held.clear();
         if (!hover && !notebook) session.tick(dt);
-        const view = session.view();
+        const view = session.view(); entry.hooks.sound?.(view, app.audio);
         if (hover) { view.animation = hover.animation; view.time = (now - hover.startedAt) / 1000; }
         room()?.lesson?.(view, hover ? entryForWord(hover.id) : entry); paint();
       } else if (hover && visible) {

@@ -281,6 +281,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
         // Bind lesson machine controls to the existing bench rules. No teaching
         // evaluator can grant a reward without that bench's real goal passing.
         for (const attempt of lesson.attempts) {
+          for (const c of bench.bench.controls) bench = setControl(bench, c.id, c.value);
           for (const c of attempt.controls) if (Object.hasOwn(attempt.input, c.id)) bench = setControl(bench, c.setting ?? c.id, attempt.input[c.id]);
           bench = runBench(bench);
         }

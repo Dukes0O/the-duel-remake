@@ -123,7 +123,7 @@ export function createLessonPictures({scene, camera, canvas, doc, models, modelO
       ctx.strokeStyle = '#c5cdbc'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(70, 55); ctx.lineTo(70, 290); ctx.lineTo(610, 290); ctx.stroke();
       ctx.font = '26px sans-serif'; ctx.fillStyle = '#f5f0dc'; ctx.fillText(g.yLabel, 80, 35); ctx.fillText(g.xLabel, 290, 337);
       ctx.strokeStyle = '#edc557'; ctx.lineWidth = 5; ctx.beginPath();
-      (g.points ?? []).filter(p => p[0] <= view.time).forEach(([x, y], i) => { const px = 70 + x / g.maxX * 530, py = 290 - y / g.maxY * 225; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); });
+      (g.points ?? []).filter(p => p[0] <= (g.revealX ?? view.time)).forEach(([x, y], i) => { const px = 70 + x / g.maxX * 530, py = 290 - y / g.maxY * 225; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); });
       ctx.stroke(); graphTexture.needsUpdate = true;
     }
   }
