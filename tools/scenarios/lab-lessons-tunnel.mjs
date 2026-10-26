@@ -24,11 +24,11 @@ export async function run(c) {
       if (!control) throw Error(`Missing ${setting}`);
       if (!Number.isFinite(control.min)) { await click(`control:${control.id}`); continue; }
       let current = await c.evaluate(`JSON.parse(${canvas}.dataset.labTunnelResult).settings[${JSON.stringify(setting)}]`), turns = 0;
-      if (current > value && !control.cycle) {
+      if (control.drag) {
         await c.command('Input.dispatchKeyEvent', {type: 'keyDown', code: 'ArrowDown', key: 'ArrowDown'});
-        try { await c.waitFor(`JSON.parse(${canvas}.dataset.labTunnelResult).settings[${JSON.stringify(setting)}] <= ${value}`, 'lower dial'); }
+        try { await c.waitFor(`JSON.parse(${canvas}.dataset.labTunnelResult).settings[${JSON.stringify(setting)}] === ${control.min}`, 'lower dial to its stop'); await new Promise(r => setTimeout(r, 350)); }
         finally { await c.command('Input.dispatchKeyEvent', {type: 'keyUp', code: 'ArrowDown', key: 'ArrowDown'}); }
-        current = await c.evaluate(`JSON.parse(${canvas}.dataset.labTunnelResult).settings[${JSON.stringify(setting)}]`);
+        current = control.min;
       }
       while (current !== value && turns < 40) {
         await click(`control:${control.id}`); current += control.step;
@@ -36,7 +36,8 @@ export async function run(c) {
         turns++;
       }
       if (current !== value) throw Error(`Cannot reach ${setting}=${value}`);
-      await c.waitFor(`JSON.parse(${canvas}.dataset.labTunnelResult).settings[${JSON.stringify(setting)}] === ${JSON.stringify(value)}`, 'machine setting drawn');
+      try { await c.waitFor(`JSON.parse(${canvas}.dataset.labTunnelResult).settings[${JSON.stringify(setting)}] === ${JSON.stringify(value)}`, `machine ${setting} at ${value}`); }
+      catch (error) { await c.screenshot('blocked-machine'); throw Error(error.message + ': ' + await c.evaluate(`${canvas}.dataset.labTunnelResult + ' / ' + ${panel}.textContent`)); }
     }
   }
   for (const id of ids) {
@@ -80,8 +81,8 @@ export async function run(c) {
     await click('challenge');
     await c.waitFor(`${panel}?.textContent.includes('Challenge') && ${canvas}.dataset.labTunnelModel === '${id}'`, 'loaded inline challenge');
     await c.screenshot(`${id}-challenge`);
-    const overlaps = await c.evaluate(`(() => { const card = document.querySelector('.lab-key-idea'); if (!card || card.hidden) return false; const a=card.getBoundingClientRect(); return [...document.querySelectorAll('.lab-teaching button')].some(b=>{const r=b.getBoundingClientRect();return a.left<r.right&&a.right>r.left&&a.top<r.bottom&&a.bottom>r.top;}); })()`);
-    if (overlaps) throw Error('Key idea overlaps a challenge button.');
+    const overlaps = await c.evaluate(`(() => { const card=document.querySelector('.lab-key-idea'); if (!card || card.hidden) return []; const a=card.getBoundingClientRect(); card.hidden=true; try { return [...document.querySelectorAll('button,.lab-teaching,.lab-side')].filter(b=>{const r=b.getBoundingClientRect(); const visible=r.width>0&&r.height>0&&b.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)); return visible&&a.left<r.right&&a.right>r.left&&a.top<r.bottom&&a.bottom>r.top;}).map(b=>b.className+' '+b.textContent.slice(0,80)); } finally {card.hidden=false;} })()`);
+    if (overlaps.length) throw Error('Key idea overlaps visible controls: ' + overlaps.join(', '));
     const wanted = id === 'suspension' ? {spring: 'stiff', road: 'smooth'} : spec.examples[2];
     await setControls(spec, wanted); await click(`answer:${spec.classify(spec.bench.run(wanted))}`); await click('run');
     await c.waitFor(`!!document.querySelector('[data-teach="finish"]')`, 'challenge run');

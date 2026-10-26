@@ -3,7 +3,7 @@ import {createVehicle} from '../../vehicles.js';
 
 // Only this corner uses these parts. Models, labels and ghosts are display-only.
 export function tunnelMount(id) {
-  return ({group, THREE, models, doc, canvas}) => {
+  return ({group, THREE, models, doc, canvas, camera}) => {
     const own = new THREE.Group(); group.add(own);
     const tunnel = models.get('wind-tunnel'), wasVisible = tunnel?.visible;
     if (tunnel) tunnel.visible = false;
@@ -48,7 +48,7 @@ export function tunnelMount(id) {
     new GLTFLoader().loadAsync('/assets/models/lab/tunnel-parts.glb').then(gltf => {
       if (disposed) { release(gltf.scene); return; }
       loaded = gltf.scene;
-      for (const name of ['tyre', 'brake', 'spring', 'wing', 'can', 'scale', 'wing-stand']) {
+      for (const name of ['tyre', 'brake', 'spring', 'wing', 'can', 'scale', 'wing-stand', 'dial']) {
         const part = loaded.getObjectByName(name); part.removeFromParent(); own.add(part); parts.set(name, part);
         const old = part.clone(true);
         old.traverse(n => { if (n.material) { n.material = n.material.clone(); n.material.transparent = true; n.material.opacity = .2; n.material.depthWrite = false; } });
@@ -61,7 +61,7 @@ export function tunnelMount(id) {
       resources.forEach(r => r.dispose()); resources.clear();
     }
     function sign(i) {
-      const surface = doc.createElement('canvas'); surface.width = 768; surface.height = 128;
+      const surface = doc.createElement('canvas'); surface.width = 768; surface.height = 96;
       const texture = new THREE.CanvasTexture(surface); texture.colorSpace = THREE.SRGBColorSpace;
       const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: texture, depthTest: false, toneMapped: false}));
       sprite.scale.set(2.3, .38, 1); sprite.renderOrder = 101; own.add(sprite);
@@ -77,6 +77,7 @@ export function tunnelMount(id) {
           part.visible = true; part.position.set(...row.position); part.rotation.order = row.order ?? 'XYZ'; part.rotation.set(...(row.rotation ?? [0, 0, 0]));
           part.scale.set(...(row.scale ?? [1, 1, 1]));
           const level = part.getObjectByName('fuel-level'); if (level) level.scale.y = Math.max(.001, row.fill ?? 1);
+          const needle = part.getObjectByName('dial-needle'); if (needle) needle.rotation.z = (.75 - 1.5 * (row.dial ?? 0)) * Math.PI;
         }
         cars.forEach((car, i) => {
           const pose = d.cars?.[i]; car.visible = Boolean(pose);
@@ -89,18 +90,23 @@ export function tunnelMount(id) {
           old.visible = true; old.position.set(...pose.position); old.position.x -= 1.2;
           old.rotation.order = pose.order ?? 'XYZ'; old.rotation.set(...(pose.rotation ?? [0, 0, 0])); old.scale.set(...(pose.scale ?? [1, 1, 1]));
           const level = old.getObjectByName('fuel-level'); if (level) level.scale.y = Math.max(.001, pose.fill ?? 1);
+          const needle = old.getObjectByName('dial-needle'); if (needle) needle.rotation.z = (.75 - 1.5 * (pose.dial ?? 0)) * Math.PI;
         }
         labels.forEach(l => { l.sprite.visible = false; });
         // Never more than three signs, and never a corner readout.
         (d.labels ?? []).slice(0, 3).forEach((row, i) => {
-          const l = labels[i] ?? sign(i); l.sprite.visible = true; l.sprite.position.set(...row.position); l.sprite.scale.x = row.width ?? 2.3;
+          const l = labels[i] ?? sign(i); l.sprite.visible = true; l.sprite.position.set(...row.position);
           if (row.text !== l.text) {
             l.text = row.text;
-            const ctx = l.surface.getContext('2d'); ctx.clearRect(0, 0, 768, 128);
-            ctx.fillStyle = '#172327ed'; ctx.fillRect(0, 0, 768, 128);
-            ctx.fillStyle = row.colour ?? '#f5f0dc'; ctx.font = 'bold 47px sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText(row.text, 384, 82, 740); l.texture.needsUpdate = true;
+            const ctx = l.surface.getContext('2d'); ctx.font = 'bold 44px sans-serif';
+            l.surface.width = Math.ceil(ctx.measureText(row.text).width + 48);
+            ctx.fillStyle = '#172327ed'; ctx.fillRect(0, 0, l.surface.width, 96);
+            ctx.fillStyle = row.colour ?? '#f5f0dc'; ctx.font = 'bold 44px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(row.text, l.surface.width / 2, 63); l.texture.needsUpdate = true;
           }
+          const world = group.localToWorld(new THREE.Vector3(...row.position));
+          const height = 2 * camera.position.distanceTo(world) * Math.tan(camera.fov * Math.PI / 360) * 52 / canvas.clientHeight;
+          l.sprite.scale.set(height * l.surface.width / 96, height, 1);
         });
         canvas.dataset.labTunnelResult = JSON.stringify({id, ...d.result});
       },
@@ -130,8 +136,9 @@ export function arrowShafts(d, scale) {
   d.forces.forEach((f, i) => {
     const length = f.newtons * scale;
     const vertical = Math.abs(f.direction[1]) > 0;
+    const thickness = Math.min(.075, length * .12);
     d.objects.push({id: `shaft-${i}`, position: f.origin.map((v, a) => v + f.direction[a] * length / 2),
-      size: vertical ? [.075, Math.max(.001, length - .12), .075] : [Math.max(.001, length - .12), .075, .075],
+      size: vertical ? [thickness, Math.max(.001, length * .8), thickness] : [Math.max(.001, length * .8), thickness, thickness],
       colour: {grip: '#619dff', push: '#56d683', drag: '#f0a148', weight: '#f06464'}[f.kind], inFront: true});
   });
   return d;

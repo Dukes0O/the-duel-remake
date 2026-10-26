@@ -26,8 +26,8 @@ The original rolling road and fan are reused in a cutaway view; the shell is
 hidden temporarily so the enlarged parts are visible.
 
 Controls act on a tyre dial, wing/fan, brake lever, spring/road choice and can.
-Existing lab.clunk and lab.tick cover actions and navigation; lab.fan covers
-the tunnel. No new paid voice or sound is requested.
+Existing lab.clunk and lab.tick cover actions and navigation. Grip reuses the
+existing tyre sample for short grip / long slide squeals. No new sound is added.
 
 ## Checks planned
 
@@ -62,6 +62,23 @@ Shared hooks are one line each: choice exclusivity in the frame, fresh bench
 defaults per challenge attempt, the optional lesson sound callback, graph reveal
 by its own horizontal quantity, and the Blender generator registry. No save,
 race rule, dependency or reward amount changed.
+
+The additional shared CSS line scopes the inline challenge idea card to the
+left of the loaded Lab world, clear of Notebook and teaching controls.
+
+## Browser work and handoff
+
+The first loaded views exposed oversized object signs and machine controls
+behind prediction cards. Signs now keep a readable screen size; real marked
+dials replace invisible-only control locations. Braking's lever is raised clear
+of the cards. The scenario checks a physical 3D action in each lesson and
+checks every visible challenge control for idea-card overlap. It also tests
+wrong answers, hints, real bench goals and memory-only progress.
+
+Work starts from integration e3d1ba32. Automatic approval review rejected a
+refresh merge because Kyle explicitly requested no merge or push. No merge or
+push ran; integration refresh belongs to the handoff. Cockpit task T-063 now
+names this card and receives its status through cockpit-sync.py.
 
 ## Removed
 

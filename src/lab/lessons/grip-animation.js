@@ -29,10 +29,11 @@ export function mountGrip(args) {
 export function gripDrawing(result, time, mode) {
   const d = tunnelDrawing(result), angle = result.settings.slideDeg;
   d.parts = [{name: 'tyre', position: [0, .9, 0], rotation: [Math.PI / 2, -angle * Math.PI / 180, 0]}];
+  d.parts.push({name: 'dial', position: [.95, 1.15, 1], rotation: [0, .3, 0], dial: angle / 12});
   if (mode === 'wonder') d.cars = [0, 1].map(i => ({position: [-1 + Math.sin(time) * .8, .18, -.8 - i], rotation: [0, -Math.PI / 2 + (i ? time * .3 : .15), 0]}));
   d.labels = [{text: `Tyre · ${Math.round(result.grip * 100)}% grip`, position: [0, 1.65, .25], width: 1.8, colour: '#619dff'},
-    {text: `Slide dial · ${angle.toFixed(1)} degrees`, position: [.8, .75, .85], width: 2}];
-  d.objects.push({id: 'tyre-dial', shape: 'sphere', control: 'slideDeg', position: [.95, 1.1, 1], size: [.32, .32, .32], colour: '#c8b665'});
+    {text: `Slide dial · ${angle.toFixed(1)} degrees`, position: [1.35, 1.2, .65], width: 1.5}];
+  d.objects.push({id: 'tyre-dial', shape: 'sphere', control: 'slideDeg', position: [.95, 1.15, 1], size: [.4, .4, .4], opacity: 0});
   d.forces = [arrow('grip', result.grip, [-.7, .45, .85], [1, 0, 0])];
   if (mode === 'watch') d.graph = {position: [-1.8, 1.6, -.35], size: [1.65, .94, 1], xLabel: 'Slide in degrees', yLabel: 'Grip percent', maxX: 12, maxY: 100, revealX: time * 4,
     points: Array.from({length: 25}, (_, i) => [i / 2, gripBench.run({slideDeg: i / 2}).grip * 100])};

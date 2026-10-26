@@ -149,5 +149,21 @@ block('Wing balance foot', (.5, 1.5, .08), (0, 0, .4), steel, stand)
 for y in [-.6, .6]:
     block('Wing balance upright', (.08, .08, 1.18), (0, y, 1.02), steel, stand)
 block('Wing support saddle', (.16, 1.4, .05), (0, 0, 1.62), dark, stand)
+
+dial = group('dial')
+block('Dial pedestal', (.07, .07, .9), (0, 0, -.6), steel, dial)
+block('Dial foot', (.65, .45, .08), (0, 0, -1.04), dark, dial)
+block('Dial case', (.52, .3, .52), (0, 0, 0), dark, dial)
+face = cylinder('Marked dial face', .23, .04, (0, -.18, 0), steel, dial)
+face.rotation_euler.x = math.pi / 2
+for i in range(11):
+    a = -.75 * math.pi + i / 10 * 1.5 * math.pi
+    tick = block('Dial graduation', (.024, .025, .055), (.19*math.sin(a), -.21, .19*math.cos(a)), rubber, dial)
+    tick.rotation_euler.y = a
+hand = group('dial-needle')
+hand.parent = dial
+block('Dial pointer', (.026, .03, .16), (0, -.23, .065), red, hand)
+knob = cylinder('Dial turning handle', .065, .12, (0, -.26, 0), olive, dial)
+knob.rotation_euler.x = math.pi / 2
 target.parent.mkdir(parents=True, exist_ok=True)
 bpy.ops.export_scene.gltf(filepath=str(target), export_format='GLB', export_yup=True)
