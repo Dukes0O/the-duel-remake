@@ -46,3 +46,15 @@ Acceptance: tests for counting, each rank's rule, old saves, the shelf; a
 scripted career reaching each rank; the paint sheet accepted by Claude;
 independent save review; lane tier and build. The submarine job is a later
 card with The Deep.
+
+## Builder checks
+
+- `node tools/test-heli-logbook.mjs`: rank rules, five-rank scripted career,
+  old save fixture, additive save/load, unknown keys and earned paints.
+- `node tools/test-heli-logbook-session.mjs`: actual takeoffs and landings,
+  once-only home-pad ranks, shelf, map clues and switch isolation.
+- `node tools/test-heli-jobs.mjs`: actual car and return-crate completions
+  count once in the logbook.
+
+Lane tier with four jobs and production build. Round 1 paint pictures only;
+Claude's verdict is pending before any further art round. No frame timing.

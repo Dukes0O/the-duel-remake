@@ -1730,6 +1730,7 @@ export class App {
       // MAP-VIEW: the pilot's map switch and the secret courses whose own switches are on.
       pilotMapEnabled: this._switches().enabled('pilot-map') === true, secretCourses: this._secretCoursesOn(),
       labEnabled: this._switches().enabled('lab') === true, // LAB-VIEW
+      logbookEnabled: this._switches().enabled('heli-logbook') === true,
       skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
       // SKI-VIEW: heli-skiing needs Summit Run (the session checks that too).
       heliSkiingEnabled: this._switches().enabled('heli-skiing') === true,
