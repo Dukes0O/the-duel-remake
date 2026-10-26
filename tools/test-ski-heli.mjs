@@ -109,13 +109,16 @@ function skiOut(session, runId, seconds = 400) {
   return run(session, seconds, v => drive(v.ski.run.skier), v => v.phase !== 'skiing');
 }
 
-// From the pickup pad home. A trip over the mountain leaves less than the 160 kg the cruise needs, so the helicopter sits until the engine
-// runs dry and the existing fuel truck fills the tank for pay; then out of the area, the cruise, and down onto the home pad.
+// From the pickup pad home. Idle through the remaining fuel so the existing
+// fuel truck fills the tank for pay; then cruise home and land on the pad.
 function flyHome(session) {
-  const dry = run(session, 900, () => ({}), (v, got) => got.some(e => e.type === 'charged' && e.kind === 'fuelTruck'));
+  const idleSeconds = Math.ceil(session.view().heli.fuelKg / KESTREL.burnIdle) + 5;
+  const dry = run(session, idleSeconds, () => ({}), (v, got) => got.some(e => e.type === 'charged' && e.kind === 'fuelTruck'));
   assert.ok(dry.some(e => e.type === 'charged' && e.kind === 'fuelTruck'), 'the truck came');
   assert.equal(session.setDestination('tremblant-woods'), true);
-  const out = run(session, 120, f => pilot(f, {x: f.heli.x - 600, z: f.heli.z, y: f.heli.y < 100 ? 100 : f.heli.y}, {speed: 20, sink: 6}), f => f.cruiseOffered);
+  const departureY = session.view().heli.y + 60;
+  const outSeconds = Math.ceil((session.view().heli.x - session.view().area.minX + 600) / 20) + 30;
+  const out = run(session, outSeconds, f => pilot(f, {x: f.heli.x - 600, z: f.heli.z, y: departureY}, {speed: 20, sink: 6}), f => f.cruiseOffered);
   assert.ok(session.view().cruiseOffered, 'out of the area, the cruise home is offered');
   assert.equal(session.acceptCruise(), true);
   run(session, 5, () => ({lift: 0}));
@@ -130,7 +133,7 @@ const thrustKg = (altitudeM, scale = KESTREL.airScaleHeight, factor = 1) => KEST
 const weightKg = (fuelKg, extra = 0) => heliMass({fuelKg, upgrades: extra ? {emptyMassKg: KESTREL.emptyKg + extra} : undefined});
 
 test('thin air: the full group on a full tank hovers at every pad, at the summit with 112 kg (5%) to spare, as the design says', () => {
-  const rows = [['pickup', 2407, 302, 502], ['devils', 2309, 204, 404], ['summit', 2217, 112, 312]];
+  const rows = [['pickup', 2311, 206, 406], ['devils', 2309, 204, 404], ['summit', 2217, 112, 312]];
   for (const [pad, thrust, spareFull, spareHalf] of rows) {
     const altitude = SKI_ALTITUDES[pad], most = thrustKg(altitude);
     assert.ok(Math.abs(most - thrust) <= 1, `${pad}: most thrust ${most.toFixed(0)} against ${thrust}`);
@@ -367,8 +370,9 @@ test('the group job: aboard at the home pad with 475 kg, skied from the pickup p
   assert.equal(empty(), KESTREL.emptyKg + 475);
   // Not paid until they are home.
   assert.equal(heliOf(s.profile).jobs.taken, `ski${day}`);
-  // A full group trip leaves less than the 160 kg the cruise home needs; flyHome sits at the pickup until the fuel truck fills the tank.
-  assert.ok(v.heli.fuelKg < 160, `fuel left ${v.heli.fuelKg.toFixed(0)} kg`);
+  // The snowy pickup is reached sooner: enough fuel remains for the cruise.
+  // flyHome still exercises the paid truck by idling the tank dry first.
+  assert.ok(v.heli.fuelKg > 160 && v.heli.fuelKg < KESTREL.tankKg, `fuel left ${v.heli.fuelKg.toFixed(0)} kg`);
   const wallet = s.profile.credits, homeFlight = flyHome(s), home = homeFlight.home;
   assert.ok(homeFlight.dry.some(e => e.type === 'charged' && e.kind === 'fuelTruck') && wallet > 0, 'the truck filled the tank, for pay');
   assert.ok(has(home, 'skiGroupDone'), 'paid at the home pad');

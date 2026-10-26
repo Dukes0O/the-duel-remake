@@ -7,7 +7,8 @@
 //
 // The zone's own frame: the drop pad is the origin (x 0, z 0), the run falls
 // toward +z, +x is the skier's left. drop.y and every height are metres above
-// the sea, at the pads' real altitudes (SKI_ALTITUDES). `world` is where the helicopter lands for it in the Summit Run
+// the sea. Drop pads use SKI_ALTITUDES; run finishes retain their authored
+// altitude independently of the helicopter pickup. `world` is where the helicopter lands for it in the Summit Run
 // world: the clear, level 12 m circle (SUMMIT_PADS), with its ground height
 // there; the zone's top meets it, and a zone is drawn at the pad's x and z.
 // The zone's `ground`, `gates`, `line`, `stashes` and the rest are in the zone
@@ -36,20 +37,24 @@ export const altitudeOf = worldY => SUMMIT_BASE_ALTITUDE + worldY - SUMMIT_START
 
 // Three landing circles in the Summit Run world (course frame, seed 1989):
 // the highest clear level 12 m circle (the summit hut yard), one 348 m lower
-// (the packet's 342 m between the pads, as near as the world has) and one 351 m
-// lower again (the packet's 350 m), beside the start of the road.
+// (the packet's 342 m between the pads, as near as the world has), and the
+// first clear snowy circle below Devils Playground (s 7,320 m, lateral 30 m).
 // tools/test-ski-runs.mjs checks that each is clear, level within 1.5 m and at
 // its ground height.
 export const SUMMIT_PADS = Object.freeze({
   summit: Object.freeze({x: 3104.9, z: 6904, y: 739.7}),
   devils: Object.freeze({x: 2325.3, z: 3256.8, y: 391.5}),
-  pickup: Object.freeze({x: 152, z: 758.9, y: 40}),
+  pickup: Object.freeze({x: 2209.730919995219, z: 3298.7784077971646, y: 387.1064288481216}),
 });
 
 // The altitudes of the three pads, metres above the sea.
 export const SKI_ALTITUDES = Object.freeze({
   summit: altitudeOf(SUMMIT_PADS.summit.y), devils: altitudeOf(SUMMIT_PADS.devils.y), pickup: altitudeOf(SUMMIT_PADS.pickup.y),
 });
+
+// Moving the helicopter pickup must not reshape runs or change medal times.
+// The zones have their own snow frame; retain their original finish altitude.
+export const SKI_RUN_PICKUP_ALTITUDE = 2886;
 
 const PICKUP_RADIUS = 12;
 const worldPad = name => Object.freeze({pad: name, ...SUMMIT_PADS[name]});
@@ -163,7 +168,7 @@ function aerials() {
     {z: lip, angle: a.hill}, {z: hillEnd, angle: a.hill}, {z: hillEnd + a.runOut, angle: 6}, {z: hillEnd + a.runOut + 30, angle: 6}],
   {length: hillEnd + a.runOut + 30});
   const total = fall(hillEnd + a.runOut);
-  const top = SKI_ALTITUDES.pickup + total;
+  const top = SKI_RUN_PICKUP_ALTITUDE + total;
   return finish({
     id: 'aerials', kind: 'aerials', name: 'Aerials', pad: 'pickup',
     ground: (x, z) => top - fall(z),
@@ -177,7 +182,7 @@ function aerials() {
 }
 
 // ---- Powder: the north bowl, no course ------------------------------------------------
-const POWDER = Object.freeze({length: 1300, drop: SKI_ALTITUDES.summit - SKI_ALTITUDES.pickup, bowl: 0.004, bowlLimit: 140, packedFriction: 0.12,
+const POWDER = Object.freeze({length: 1300, drop: SKI_ALTITUDES.summit - SKI_RUN_PICKUP_ALTITUDE, bowl: 0.004, bowlLimit: 140, packedFriction: 0.12,
   stashRadius: 9, packedWidth: 3, packedBlend: 2});
 function powder() {
   const top = SKI_ALTITUDES.summit;
