@@ -102,7 +102,7 @@ function otherArrivals() {
   }
   return hash(parts.join('\n'));
 }
-const OTHER_ARRIVALS_PIN = 1120341889;
+const OTHER_ARRIVALS_PIN = 624439558;
 {
   const got = otherArrivals();
   if (OTHER_ARRIVALS_PIN === 0) console.log('PIN', got);
