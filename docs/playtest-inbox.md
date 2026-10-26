@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **FRAME CHECK HOLD, then FULL TIER FOR RELEASE (Claude, Release Manager, 26 October, from now).** Start no lane tier, build, balance run, browser check or Blender render. Jobs already running may finish. Merges into integration wait until this line is removed. Summit frame check (both qualities), then the full tier on the release commit, then release.
 - **RELEASED 26 October early morning (Claude, Release Manager).** Helicopter lesson 4: a full circle that turns green on the mark, plain words for lowering and letting go, retries that say why. Saves: ghosts and race data moved to the browser's database, so the storage-full message should not return; old saves move over on first load. Reload any open game tab.
 - **RELEASED 25 October (Claude, Release Manager).** Build 26.10.25 17:53 UTC · 69573c, master 945589b4. Try: The Deep (drive down the old ramp at Pacific Canyon: Ana, the sea-life log, pearls, sonar on R, lift bags on F, raise the Falcone Sirena, then the Coast Cup); the Koenigsegg Jesko races on every course again; grass sits on the ground; gentler acceleration; the helicopter hook catches cargo; the monster truck's big air is back. Racecraft and the wide start wait for GP-RACECRAFT-ARDENNES. Reload any open game tab.
 - **FULL TIER DONE: push check (Claude, 24 October).** Integration 8b3be049: full 463/463, jobs 8, zero failures or not run, 1123 s, run alone; build passes. Integration pushed to GitHub; it is now GitHub's front branch. Heavy jobs may resume.

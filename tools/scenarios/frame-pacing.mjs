@@ -286,6 +286,9 @@ export async function run(context) {
   if (process.env.LAB_FAN_FRAMES_ONLY === '1')
     return runNightFrames(context, {measure: (ctx, quality) =>
       measureNight(ctx, quality, 'harbour-lights', 'mcmurtry_speirling')});
+  // Summit release check: the same night recipe and guards on Summit Run.
+  if (process.env.SUMMIT_FRAMES_ONLY === '1')
+    return runNightFrames(context, {measure: (ctx, quality) => measureNight(ctx, quality, 'summit-run')});
   const earnedF1 = earnCar2FrameSelection();
   if (earnedF1) {
     const reports = [], warnings = [];
