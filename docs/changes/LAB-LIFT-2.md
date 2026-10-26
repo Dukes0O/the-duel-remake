@@ -80,6 +80,11 @@ under AGENTS 18; this lane does not merge.
   placement assertions remain intact; the new registry entry extends them.
   The lane continuation reuses passing suites and runs the failed and unrun
   suites only, following the check-once rule.
+- The continuation caught the helicopter import boundary: only benches may
+  read flight-rule files. Moved the unchanged pad calculations into
+  `src/lab/benches/lift-pad.js`; the definition and animation read this bench
+  API. The existing import guard is unchanged. No flight rule or displayed
+  number changed, and no broader import exception was added.
 
 ## Removed
 

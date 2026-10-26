@@ -1,7 +1,6 @@
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createUnlockedVehicle} from '../../unlock-vehicles.js';
-import {KESTREL} from '../../heli/heli-flight.js';
-import {PAD, padForces, padLoad, padOutcome} from './lift-pad.js';
+import {KESTREL, PAD, padForces, padLoad, padOutcome} from '../benches/lift-pad.js';
 
 export const trialInput = (input, index = 0) => ({fuel: KESTREL.tankKg, crates: index === 1 ? 1 : 0, car: 0, collective: 0, ...input});
 export function rotorBlades(rotor) {

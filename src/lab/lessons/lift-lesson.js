@@ -1,5 +1,4 @@
-import {KESTREL} from '../../heli/heli-flight.js';
-import {PAD, padForces, padOutcome, kilogramsToRemove} from './lift-pad.js';
+import {KESTREL, PAD, padForces, padOutcome, kilogramsToRemove} from '../benches/lift-pad.js';
 import {liftDrawing, mountLift, helicopterPicture, trialInput} from './lift-animation.js';
 
 const empty = {fuel: KESTREL.tankKg, crates: 0, car: 0};

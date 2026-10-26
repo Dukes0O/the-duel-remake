@@ -77,7 +77,7 @@ export async function run(c) {
     const l = await c.evaluate(`JSON.parse(${canvas}.dataset.labLiftLoad)`);
     // Runtime values supplied by the same pure module during QA; no hand-kept
     // copy of helicopter numbers in the browser scenario.
-    const {padForces, PAD} = await import('../../src/lab/lessons/lift-pad.js');
+    const {padForces, PAD} = await import('../../src/lab/benches/lift-pad.js');
     const desired = padForces(l, PAD.hoverHeight).hoverCollective;
     const p = await target('collective');
     await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', button: 'left', clickCount: 1, ...p});

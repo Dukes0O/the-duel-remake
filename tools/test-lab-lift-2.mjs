@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {PAD, padForces, padOutcome} from '../src/lab/lessons/lift-pad.js';
+import {PAD, padForces, padOutcome} from '../src/lab/benches/lift-pad.js';
 import {KESTREL, GRAVITY, HELI_STEP, createHeliState, heliMass, availableThrust, stepHeli} from '../src/heli/heli-flight.js';
 import {definition, hooks} from '../src/lab/lessons/lift-lesson.js';
 import {validateLesson, createLessonSession} from '../src/lab/lesson-frame.js';
