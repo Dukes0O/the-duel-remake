@@ -92,8 +92,14 @@ assert.equal(rescue.view().skins.worn, 'supply', 'pending rank keeps live cargo 
 assert.equal(rescue.view().logbook.notice, null, 'award waits until the rescue ends');
 rescue.leave();
 rescue.start();
-run(rescue, 1, () => ({}));
+const deferred = run(rescue, 1, () => ({}));
 assert.equal(rescue.view().logbook.notice.id, 'private', 'deferred rank is not lost');
+assert.ok(deferred.some(event => event.type === 'skinWorn' && event.kind === 'rank-private'), 'automatic rank uses the paint transition');
+rescue.takeEvents();
+assert.equal(rescue.wearLogbookPaint('rank-student').ok, true);
+assert.ok(rescue.takeEvents().some(event => event.type === 'skinWorn' && event.kind === 'rank-student'), 'shelf paints use the existing paint transition');
+rescue.leave();
+assert.equal(rescue.wearLogbookPaint('rank-private').ok, false, 'idle sessions cannot repaint');
 const chiefProfile = fresh();
 chiefProfile.heli.logbook = {flights: 50, jobs: {car: 1, crate: 1, fire: 1, rescue: 1, ski: 1}, visited: LOGBOOK_PLACES, awarded: 4};
 const chief = make(chiefProfile);

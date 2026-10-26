@@ -32,6 +32,10 @@ Save guardian: clear. One reproduced fault fixed: automatic rank repaint now
 waits for an active rescue to end, preserving mission gear. Its actual-session
 regression failed before the fix and passed after it. Safe per-field copying
 also prevents malformed future fields from throwing during normalization.
+The focused follow-up review is also clear: automatic and shelf repaints use
+the existing cable reset, fresh-coat and transition behavior. New regression
+checks failed before that fix and passed afterwards; idle sessions refuse
+repainting.
 
 Review checks passed: 23 historical and one forged fixture (1,029 preservation
 checks), 784 damaged/partial cases, backup, budget/recovery, fines (225), and
@@ -48,7 +52,38 @@ suites pass. Tests use memory storage; no real saves accessed.
 - `test-heli-jobs`: existing fixed-step car and return-crate scripts run with
   the logbook enabled and add assertions for one completion of the right kind.
   Existing payment, delivery and replay assertions are unchanged.
+- `test-heli-mode`: both the drawing-file pattern and drawing-file set gain
+  `heli-rank-paint.js`; the graphics/rules boundary remains enforced.
+- `test-browser-scenarios`: exact manual-only discovery difference gains
+  `heli-logbook-art`; two new assertions require its absence from ordinary
+  runs and presence in manual discovery.
+- `test-blender-output`: exact generator roster gains the paint recipe.
+  Six new checks require standard-library-only planning, successful process
+  status, empty Blend/GLB lists, the exact five PNG homes and no default
+  evidence output. No existing assertion or tolerance is removed or relaxed.
+
+## Gate evidence
+
+Initial lane gate on `0ae051d7` plus the already-present manual-scenario
+exclusion: 10 passed, 1 failed, 91 not run (349.88 s). The failure was the
+unregistered Blender paint generator. Its roster and output planning were
+fixed; the failed suite alone passed 87 checks. The corrected source is
+being checked below; the failed first run is not a passing gate.
+
+## Pictures
+
+[Round 1](../board/looks/heli-logbook/round-1.jpg) is 493,500 bytes. The
+memory-only art scenario passed on private port 33666: 25 pictures, zero
+errors or warnings, High and Performance at near and native distance. The
+shelf shows all four Gus pages. No frame timing ran.
+
+Stop after round 1. The door kestrels are obscured by the canopy boundary;
+wear and reflective-band readability need Claude's verdict. These paints
+are candidates, not accepted art. See the round note for the full findings.
 
 ## Removed
 
-None. This adds the logbook; existing mission skins remain.
+No old game behavior or runtime art replaced; existing mission skins remain.
+Created raw pictures, diagnostic Blender renders, temporary originals and an
+unused runtime-folder credits file were recycled after review. Recipes,
+provenance and one compressed round sheet remain.

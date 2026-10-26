@@ -7,22 +7,32 @@ The current Blender recipe's paint_white/navy/red surfaces share a metre-based
 side projection: u=(glTF z+6.8)/9.5, v=glTF y/3. These are material textures,
 not substitute vehicle pictures. Existing glass, metal and rotor stay intact.
 """
-import argparse, math, shutil, sys
+import argparse, json, math, shutil, sys
 from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--root', required=True)
+parser.add_argument('--originals')
+parser.add_argument('--render', default='')
+parser.add_argument('--paths-only', action='store_true')
+args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
+root = Path(args.root).resolve()
+PAINT_IDS = ['rank-student', 'rank-private', 'rank-commercial', 'rank-mountain', 'rank-chief']
+out = root / 'public/assets/heli/skins'
+if args.paths_only:
+    print(json.dumps({'blend': [], 'glb': [], 'png': [str(out / f'{ident}.png') for ident in PAINT_IDS],
+                     'evidence': [str(root / args.render / f'{ident}-{view}.png')
+                                  for ident in PAINT_IDS for view in ['near', 'side']] if args.render else []}))
+    raise SystemExit(0)
+if not args.originals:
+    parser.error('--originals is required outside --paths-only')
 import bpy
 import numpy as np
 from mathutils import Vector
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--root', required=True)
-parser.add_argument('--originals', required=True)
-parser.add_argument('--render', default='')
-args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
-root = Path(args.root).resolve()
 originals = Path(args.originals).resolve()
 assert not originals.is_relative_to(root), 'Originals must be outside the repository'
 originals.mkdir(parents=True, exist_ok=True)
-out = root / 'public/assets/heli/skins'
 out.mkdir(parents=True, exist_ok=True)
 N = 1024
 u, v = np.meshgrid((np.arange(N) + .5) / N, (np.arange(N) + .5) / N)

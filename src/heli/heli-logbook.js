@@ -1,6 +1,7 @@
 // Kestrel One's career. Pure rules; the session supplies completed events.
 import {heliOf, HELI_LESSONS} from './heli-save.js';
 import {PLACES, LEFT_OFF, placeOfCourse} from './pilot-map-data.js';
+import {wearSkin} from './heli-skins.js';
 
 export const LOGBOOK_JOBS = Object.freeze(['car', 'crate', 'fire', 'rescue', 'ski']);
 export const LOGBOOK_PLACES = Object.freeze(PLACES.filter(p => !LEFT_OFF.includes(p.id)).map(p => p.id));
@@ -69,8 +70,9 @@ export function awardLogbook(profile, {enabled = false} = {}) {
   const heli = heliOf(next), skins = heli.skins ?? {owned: [], worn: 'stock', fresh: []};
   const earned = ranks.map(r => r.skin);
   next = {...next, heli: {...heli, skins: {...skins, owned: [...new Set([...skins.owned, ...earned])],
-    worn: earned.at(-1), fresh: skins.fresh.filter(id => !earned.includes(id))}}};
-  return {profile: next, ranks};
+    fresh: [...new Set([...skins.fresh, ...earned])].filter(id => id !== skins.worn)}}};
+  const worn = wearSkin(next, earned.at(-1), {enabled: true});
+  return {profile: worn.profile, ranks, freshCoat: worn.freshCoat};
 }
 
 export function logbookView(profile) {

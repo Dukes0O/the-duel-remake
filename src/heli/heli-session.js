@@ -317,12 +317,21 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     if (challenge) challengeEvents.push(event);
     return event;
   };
+  function paintChanged(kind, freshCoat) {
+    winch.length = CABLE.length;
+    for (const car of loads) delete car.lineLength;
+    skinNote = null;
+    emit({type: 'skinWorn', kind, freshCoat, fadeSeconds: HELI_SESSION.fadeSeconds});
+  }
   function ranksAtHome() {
     // Repainting changes mission gear. Keep it fitted until a rescue ends,
     // including supply runs that return home for another crate.
     if (!logbookOn || live || rankCheckedSave === save || !onHome()) return;
+    const previous = skinsOf(save).worn;
     const result = awardLogbook(save, {enabled: true});
     if (result.profile !== save) commit({ok: true, profile: result.profile});
+    if (skinOn && result.ranks.length && skinsOf(save).worn !== previous)
+      paintChanged(skinsOf(save).worn, result.freshCoat);
     rankCheckedSave = save;
     rankNotices.push(...result.ranks);
     for (const rank of result.ranks) emit({type: 'pilotRank', rank: rank.id});
@@ -2224,13 +2233,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const result = wearSkin(save, kind, sflag);
       if (!result.ok) return result;
       commit(result);
-      if (!result.already) {
-        // A new coat brings its own gear: the winch starts again at the plain line.
-        winch.length = CABLE.length;
-        for (const car of loads) delete car.lineLength;
-        skinNote = null;
-        emit({type: 'skinWorn', kind, freshCoat: result.freshCoat, fadeSeconds: HELI_SESSION.fadeSeconds});
-      }
+      if (!result.already) paintChanged(kind, result.freshCoat);
       return result;
     },
     // The wash: 100 credits at the home pad, on the ground; all four dirts back to 0.
@@ -2277,8 +2280,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       return save;
     },
     wearLogbookPaint(kind) {
-      if (!logbookOn || !onHome() || live || !RANKS.some(rank => rank.skin === kind))
+      if (!logbookOn || !atPad() || live || !RANKS.some(rank => rank.skin === kind))
         return {ok: false, reason: 'Choose your rank paint at the home pad after finishing the rescue.'};
+      if (skinOn) return api.wearPaint(kind);
       return commit(wearSkin(save, kind, {enabled: true}));
     },
     dismissRank() { rankNotices.shift(); },
