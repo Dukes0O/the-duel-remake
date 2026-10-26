@@ -15,9 +15,10 @@ import {SKI, SKI_STEP, createSkier, stepSkier} from '../src/ski/ski-physics.js';
 import {SCORE, createTimedRun, stepTimedRun, createJudgedRun, stepJudgedRun, finishJudgedRun, timedMedal} from '../src/ski/ski-score.js';
 import {guideRun} from '../src/ski/ski-guide.js';
 import {
-  SKI_RUN_IDS, SKI_ALTITUDES, SUMMIT_PADS, SUMMIT_BASE_ALTITUDE, SUMMIT_START_Y, altitudeOf, MOGUL_SHAPE, AERIALS_SHAPE, POWDER_SHAPE,
+  SKI_RUN_IDS, SKI_ALTITUDES, SKI_RUN_PICKUP_ALTITUDE, SUMMIT_PADS, SUMMIT_BASE_ALTITUDE, SUMMIT_START_Y, altitudeOf, MOGUL_SHAPE, AERIALS_SHAPE, POWDER_SHAPE,
   skiZone, zoneGuide, medalLimits, judgedConfig, stashAt, atPickup,
 } from '../src/ski/runs/summit-zones.js';
+import {winterWeight} from '../src/snow-world.js';
 import {distanceToLine} from '../src/ski/runs/recipe.js';
 
 const DEG = Math.PI / 180;
@@ -63,11 +64,11 @@ for (const id of SKI_RUN_IDS) {
 // The altitudes are the Summit world's: the pads' real heights, read the way the helicopter reads them.
 same([skiZone('slalom').drop.y, skiZone('gs').drop.y, skiZone('moguls').drop.y], [SKI_ALTITUDES.devils, SKI_ALTITUDES.devils, SKI_ALTITUDES.devils], 'slalom, giant slalom and moguls drop from the Devils pad\'s altitude');
 same(skiZone('powder').drop.y, SKI_ALTITUDES.summit, 'powder drops from the summit pad\'s altitude');
-near(skiZone('aerials').pickup.y, SKI_ALTITUDES.pickup, 1e-6, 'aerials ends at the pickup pad\'s altitude');
+near(skiZone('aerials').pickup.y, SKI_RUN_PICKUP_ALTITUDE, 1e-6, 'aerials retains its authored finish altitude');
 near(SKI_ALTITUDES.summit, 3586, 1, 'the summit pad is at 3,586 m');
 same(['slalom', 'gs', 'moguls', 'aerials', 'powder'].map(id => skiZone(id).world.pad), ['devils', 'devils', 'devils', 'pickup', 'summit'], 'each zone launches from its pad');
-near(skiZone('gs').ground(0, 1100), SKI_ALTITUDES.pickup, 5, 'the giant slalom ends about where the pickup pad is');
-near(skiZone('powder').ground(0, POWDER_SHAPE.length), SKI_ALTITUDES.pickup, 0.5, 'and the powder bowl falls to the pickup pad\'s altitude');
+near(skiZone('gs').ground(0, 1100), SKI_RUN_PICKUP_ALTITUDE, 5, 'the giant slalom retains its authored finish altitude');
+near(skiZone('powder').ground(0, POWDER_SHAPE.length), SKI_RUN_PICKUP_ALTITUDE, 0.5, 'and the powder bowl retains its authored finish altitude');
 
 // ---- The pads are real landing circles in the Summit Run world --------------------
 {
@@ -76,6 +77,11 @@ near(skiZone('powder').ground(0, POWDER_SHAPE.length), SKI_ALTITUDES.pickup, 0.5
   for (const [name, pad] of Object.entries(SUMMIT_PADS)) {
     ok(clearCircle(course, ground, pad.x, pad.z, 12, 1.5), `${name} pad: a clear 12 m circle, level within 1.5 m`);
     near(ground.height(pad.x, pad.z), pad.y, 1.5, `${name} pad: its height matches the Summit world`);
+    for (let i = 0; i < 16; i++) {
+      const angle = i * Math.PI / 8;
+      const nearPad = course.nearest(pad.x + 12 * Math.cos(angle), pad.z + 12 * Math.sin(angle));
+      same(winterWeight(course, nearPad.s), 1, `${name} pad: the entire landing circle is on snow (${i})`);
+    }
   }
   for (const id of SKI_RUN_IDS) {
     const world = skiZone(id).world;
@@ -91,7 +97,8 @@ near(skiZone('powder').ground(0, POWDER_SHAPE.length), SKI_ALTITUDES.pickup, 0.5
   }
   near(SUMMIT_PADS.summit.y, highest, 1.5, 'the summit pad is the highest clear circle in the Summit world');
   near(SUMMIT_PADS.summit.y - SUMMIT_PADS.devils.y, 342, 10, 'the Summit world has about the packet\'s 342 m between the pads');
-  near(SUMMIT_PADS.devils.y - SUMMIT_PADS.pickup.y, 350, 10, 'and about its 350 m down to the pickup');
+  ok(SUMMIT_PADS.pickup.y < SUMMIT_PADS.devils.y, 'the pickup is below Devils Playground');
+  same(SKI_RUN_PICKUP_ALTITUDE, 2886, 'existing run geometry retains its original finish altitude');
   // One world: the altitude is read as every Summit flight reads it.
   same([SUMMIT_BASE_ALTITUDE, SUMMIT_START_Y], [SUMMIT_RUN.baseAltitude, course.at(0).y], 'the base altitude and the start height are the Summit world\'s');
   near(altitudeOf(SUMMIT_PADS.summit.y), SUMMIT_RUN.baseAltitude - course.at(0).y + SUMMIT_PADS.summit.y, 1e-9, 'a pad\'s altitude is the course\'s base plus its height above the start');
@@ -242,7 +249,7 @@ ok(zoneGuide('slalom').time < zoneGuide('gs').time && zoneGuide('slalom').time >
 // ---- Powder ---------------------------------------------------------------------------
 {
   const zone = skiZone('powder'), p = POWDER_SHAPE;
-  near(zone.ground(0, 0) - zone.ground(0, p.length), SKI_ALTITUDES.summit - SKI_ALTITUDES.pickup, 0.5, 'powder: the bowl falls from the summit pad to the pickup pad\'s height');
+  near(zone.ground(0, 0) - zone.ground(0, p.length), SKI_ALTITUDES.summit - SKI_RUN_PICKUP_ALTITUDE, 0.5, 'powder: the bowl retains its authored drop');
   ok(zone.ground(100, 700) > zone.ground(0, 700) + 20 && zone.ground(-100, 700) > zone.ground(0, 700) + 20, 'powder: the sides rise: it is a bowl');
   same(zone.stashes.length, 3, 'powder: three stashes');
   ok(new Set(zone.stashes.map(s => s.id)).size === 3, 'powder: each its own');

@@ -21,7 +21,7 @@ export const SKI_CAMERA_VIEWS = Object.freeze(['chase', 'low chase', 'side']);
 // The backdrop's eye: this far above the run's pad, and the compass way (degrees, 0 is +z) the world falls away from
 // each pad, found from the Summit ground (the lowest mean height 100 to 600 m out, in 5 degree steps).
 // The cube's faces are 1,024 pixels on High and 512 on Performance.
-export const SKI_BACKDROP = Object.freeze({eyeAbove: 40, valley: Object.freeze({devils: 305, summit: 210, pickup: 205}),
+export const SKI_BACKDROP = Object.freeze({eyeAbove: 40, valley: Object.freeze({devils: 305, summit: 210, pickup: 265}),
   face: Object.freeze({high: 1024, performance: 512})});
 const CAMERAS = Object.freeze({
   chase: Object.freeze({back: 6, up: 2.4, ahead: 8, aim: 0.6, fov: 58}),
