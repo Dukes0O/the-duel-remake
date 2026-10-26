@@ -112,3 +112,19 @@ fa6b9ba2... to b9d81ca4..., geometries 112 to 192) and Summit's far-ground
 hash in `tools/fixtures/ground-rows-hashes.json` (69a91699... to
 3f03c09d...), both the reviewed finish area and car-park ground. The jump to
 192 geometries is checked in Claude's Summit frame check before release.
+
+## Accepted fixture handoff (Codex, 26 October 2026)
+
+Merged integration as `4880f48e`, including SUMMIT-BUILD-TIME-2. No code
+conflict; retained this lane's STATUS and both card sections. Measured the
+two accepted scene/ground expectations on that merged result. Summit Time
+Attack inherits the same physical Summit Run course and finish kit; its
+duplicate expectations measure identically. Both event keys now use the
+same reviewed values. All changed fields are listed in
+`docs/changes/SUMMIT-FINISH-AREA.md`; strict equality remains unchanged.
+
+Lane coverage: **87/87 passed** (55 unaffected passes carried from the
+first attempt, then all 32 failed/unrun suites passed after the duplicate
+fixture update). Build passes in 825 ms. Replays: 225 checks, unchanged.
+Accepted pictures stand; no further art round or frame timing. Ready for
+integration; Claude's finish frame check remains before release.

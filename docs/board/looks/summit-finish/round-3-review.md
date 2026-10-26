@@ -1,6 +1,8 @@
 # SUMMIT-FINISH-AREA: round 3
 
-Claude's verdict: pending. Final art round; stop here under SPEC 0.11.
+Claude accepted round 3 on 26 October; it is the pick at the SPEC 0.11 cap.
+He accepted the thinner crowd. See the card's written final verdict and
+approved scene/ground fixture updates. No further art round.
 
 `round-3.jpg`: 419,247 bytes, 1945 by 1550. Same twenty views as round 2.
 Rows: car 100 m before the line, car 30 m before, at-line context, actual
@@ -10,8 +12,8 @@ No frame timing. Browser passes on private port 27612, zero errors/warnings.
 
 Captured source: `50900d56`. Recipe:
 `node tools/browser-harness.mjs scenario summit-finish-area`.
-Pending raw evidence: `.evidence/2026-10-26/SUMMIT-FINISH-AREA/round-3/`.
-The JSON there records all camera positions and targets.
+Raw pictures and camera JSON were recycled after Claude's verdict. The
+recipe retains the deterministic camera positions and targets.
 
 ## Claude's five fixes
 
@@ -29,4 +31,5 @@ The JSON there records all camera positions and targets.
 
 The five changes have a clear independent code review. Camera overrides are
 restored after each picture; captures verify unchanged race/profile/storage.
-Art acceptance and any baseline update remain Claude's decision.
+Claude approved the two Summit scene/ground expectation entries; the lane
+records every changed field and checks the merged result before handoff.

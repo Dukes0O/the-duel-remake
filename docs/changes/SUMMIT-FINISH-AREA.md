@@ -1,7 +1,71 @@
 # SUMMIT-FINISH-AREA
 
-Status: round 3 sheet ready; stopped for Claude's final verdict. Kind: art.
+Status: round 3 accepted; fixtures checked and ready for integration. Kind: art.
 Flag: existing `summit-run`.
+
+## Accepted fixture updates
+
+Claude accepted round 3 in the card and approved the two Summit expectation
+entries. Merged current integration as `4880f48e`, including
+SUMMIT-BUILD-TIME-2 in `src/world-surfaces.js`. No code conflicts; retained
+this lane's STATUS and both the handoff and Claude's verdict in the card.
+Fresh measurements on the merged result reproduce both reviewed snapshots.
+Only the two Summit scene/ground expectations change; no generator-wide recording,
+runtime changes, new pictures or frame timing.
+
+Two approved expectation updates, applied to four existing exact-equality
+assertions (scene and ground for each Summit event). Every changed field:
+
+1. `tools/fixtures/world-signatures/summit-run.json`, `summit-run`, and its
+   identical duplicate `summit-time-attack.json`, `summit-time-attack`:
+   hash `fa6b9ba2c655f68845d50ed7ca71691043ba1106704cf958ba5cc76477c04872`
+   -> `b9d81ca4e0f181353bb8a38b555e4f1f2ee951ac17b6159f541b341298875ec5`;
+   nodes 666 -> 772, meshes 641 -> 716, geometries 112 -> 192,
+   materials 61 -> 101, textures 19 -> 20. Instances stay 21,121.
+2. `tools/fixtures/ground-rows-hashes.json`, `summit-run` and the identical
+   `summit-time-attack` entry:
+   far `69a916991e5cde171487997d4a4226cd56859388bf56a40c0065e3e5d6268f9f`
+   -> `3f03c09d0643c936132cd55d157ee6217fe455f840ff7ce17e60f79cbb6d26ca`;
+   scenery `1a05c479e1d732d29dde77608e859bfe57d819bd3d20c464242790e6eb7778f5`
+   -> `28f7b419f2e9a3bbc46296fffc8e2444a5f4dbde5db75ebb40a8778cb0264d0c`.
+   This ground assertion compares one object containing both hashes. Its
+   near-road hash, 392 cells and all road-avoid counts stay exact.
+
+The first lane attempt got past Summit Run and exposed both duplicate Time
+Attack expectations. `src/circuits/summit-time-attack.js` inherits Summit Run's
+entire physical course and finish kit; only event rules differ. A separate
+unchanged scene check confirms every measured Time Attack field matches
+the reviewed Summit Run value exactly. Apply the same two accepted scene
+and ground expectations to both event keys, with no other course changes.
+
+Reason: the accepted finish furniture and car-park ground change the drawn
+scene and the scenery's grounding. All other courses and fixture fields
+remain unchanged. Both assertion expressions stay strict deep equality;
+no tolerance, coverage or rule changes. Claude's frame check remains a
+separate pre-release check, as stated in his verdict.
+
+Final checks on merged `4880f48e` plus these fixture edits:
+
+- Lane coverage **87/87 passed**. The required unfiltered lane command ran
+  with jobs 4: 55 passed, 1 failed, 31 not run in 518.06 s; its failure
+  exposed the Time Attack duplicate. After fixing that identical duplicate,
+  the same lane plan's 32 failed/unrun suites pass in 434.62 s, jobs 4,
+  using the existing `--filter` option. All 55 unaffected passes carry;
+  no passing suite is rerun. No suite remains failed or unrun.
+- Ground rows: 35,076 exact checks. World composition: 47 exact checks
+  across twenty events. Actual High/LOD clearance passes both Summit
+  variants' 38 placements. Replay fingerprints: all 225 checks pass,
+  unchanged across 25 cases, 23 events, three FPS values and three runs.
+- `npm run build`: PASS, 825 ms; existing chunk-size and dynamic-import
+  warnings only. PowerShell, System32 first on PATH for lane and build.
+- Final board/repository-placement checks: 2/2 suites pass (184 board
+  checks). Cockpit sync through the protected runner passes, zero changes.
+- No new pictures, browser or drive run, model change or frame timing.
+  The accepted round 3 sheet and previously recorded Glacier Hairpin
+  result stand. Claude's finish-view frame check remains before release.
+
+Current gate/build logs stay in ignored `.evidence` for integration review.
+Generated build/QA output and the consumed measurement logs are recycled.
 
 ## Round 3 design, before code
 
@@ -57,8 +121,8 @@ Glacier Hairpin off-road guard: s=8565.15 m, lateral=6.002 m. This is
 Ground has zero issues across 106,650 road samples. No driver, assertion,
 tolerance, replay or flight/landing rule is changed.
 
-Raw pictures, camera facts, browser report and check logs remain under
-`.evidence/2026-10-26/SUMMIT-FINISH-AREA/` pending Claude's verdict.
+Raw pictures, camera facts, browser report and round 3 check logs were
+retained until Claude's verdict, then recycled. The compact sheet remains.
 
 Required lane gate on `50900d56`: **12 passed, 1 failed, 73 not run**,
 657.93 s, jobs 4. `test-blender-output` timed out starting Python's
@@ -75,7 +139,7 @@ jobs on the same source, passes **89 checks, 0 failed**. No further gate
 rerun: the original lane remains incomplete, not a claimed green pass.
 Final board check passes 192 checks; repository placement passes after
 moving the sheets into one family folder, with no test changes. Cockpit
-sync records the parent task In Review. Raw round 3 evidence stays for Claude.
+sync recorded the parent task In Review at that handoff.
 
 ## Round 2 design, before code
 
@@ -156,8 +220,10 @@ recycled; Git retains the detailed old note.
 
 `tools/test-track-kits.mjs`: registry count 39 -> 40 and exact appended-ID
 list gains `summit-finish`. Both still require exact equality; the original
-35 IDs/order assertion stays unchanged. Claude's written review is pending.
-No signatures are regenerated.
+35 IDs/order assertion stays unchanged. This round 1 registry expansion
+does not change in the accepted-fixture follow-up.
+No signatures were regenerated in rounds 1 or 2; the accepted fixture
+follow-up is listed in full above.
 `tools/test-blender-output.mjs`: add the new recipe and both output paths
 to the existing exhaustive coverage table. No assertion expression changes.
 
@@ -171,4 +237,5 @@ sheets, recipes and current runtime assets.
 Round 3 replaces seated crowd proportions, the grey parking material,
 old smaller lettering and flat model pad markings. Those old paths are
 removed in the same change. Consumed round 2 raw evidence and generated
-build output are recycled; retain round 3 raw evidence for Claude.
+build output are recycled. Accepted round 3 raw evidence is now recycled too;
+keep the compact sheets, recipes and current fixture-check logs for handoff.
