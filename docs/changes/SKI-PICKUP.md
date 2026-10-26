@@ -71,3 +71,7 @@ pickup must share the ski recipes' finish altitude. No assets or save fields rem
   the passing browser/build; only the test pilot and expected fuel changed.
 - Recycled the owned production build and seven consumed scenario pictures.
   Retain the requested pickup picture and gate/build receipts for handoff.
+
+## Claude review (26 October 2026)
+
+Approved: the moved pad changes altitude-dependent numbers (lift from the flight model at the same tolerance, recipe finish altitude) and the test pilot's time budgets now follow distance and fuel; nothing loosened. Picture: the pickup stands on snow.
