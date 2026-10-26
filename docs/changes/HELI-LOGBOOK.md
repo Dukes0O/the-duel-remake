@@ -70,6 +70,12 @@ unregistered Blender paint generator. Its roster and output planning were
 fixed; the failed suite alone passed 87 checks. The corrected source is
 being checked below; the failed first run is not a passing gate.
 
+Second lane gate on `de2c5dec`: 76 passed, 1 failed, 25 not run (421.61 s).
+The existing Preview test correctly required the new dev switch in the
+launcher's requested flags. Added `heli-logbook` to `start-preview.bat`;
+the unchanged Preview suite then passed all 23 checks. No test assertion
+changed for this fix. No failed or partial gate is reported as green.
+
 ## Pictures
 
 [Round 1](../board/looks/heli-logbook/round-1.jpg) is 493,500 bytes. The
