@@ -1381,3 +1381,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 Release (evening): Summit finish; full tier 525/526 on f514c859 + crash-peak rerun pass (rule 3); Summit frames 16.8/16.8 ms, build warning (SUMMIT-BUILD-TIME-3).
 - 2026-10-26 PREVIEW-HELI-LESSONS dropped: Kyle tests new work in the live game instead of the preview.
 - 2026-10-26 DRIVE-LESSON-ANY-COURSE merged (dev): lessons need no course ownership; lesson suites, replays and build pass.
+- 2026-10-26 RESCUE-FINISH margins merged (dev): every careful rescue ends with >=60 kg; heli suites, replays and build pass. Frame check over the avalanche before switch-on.

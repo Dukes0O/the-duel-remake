@@ -316,3 +316,7 @@ Removed: old 190 kg fuel-drum and unnamed truck instructions replaced in place;
 no duplicate path. Resolved question removed from the card. Owned QA/production
 bundles and superseded picture runs/logs recycled; final pictures/receipts remain
 for Claude's finishing review. STATUS refreshed and included in the source commit.
+
+## Claude review of the margins pass (26 October 2026)
+
+Approved and merged (rescue dev). Changed pins and fixtures approved on the card; Summit refill amounts named; careful flights end with 160, 71, 71.3 and 82.4 kg; snow supply clock 31 minutes. Before switch-on: the frame check over the avalanche (screens on).
