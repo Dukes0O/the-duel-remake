@@ -1370,3 +1370,13 @@ forward in LAB-LIVE-FIX and reviewed. Frame check, eight Speirlings, run
 alone with the graphics card idle: High 18.4 ms, Performance 18.3 ms (limit
 18.5); only a sound recipe and tests changed since. Scripted player pass: all
 16 Lab lessons pass with simple play (LAB-CHALLENGE-EASE).
+
+## Release, 26 October 2026 early morning: live fixes (Claude, Release Manager)
+
+HELI-CARRY-CLEAR (helicopter lesson 4) and SAVE-RECORDS-IDB (ghosts and
+telemetry in IndexedDB, reserve removed, independent save review clear).
+Also merged but behind dev switches: SKI-PICKUP, SKI-AUDIO effects,
+LESSONS-ICE-GATE, driving lesson 1 failure wording. Full tier on release
+commit `591d9245`: 516 passed, 0 failed, 0 not run (1,475 s). No frame check:
+race scenes are unchanged since the 25 October passes (rule 19); lesson 4
+adds one ring to a lesson view, far below the busiest race view.

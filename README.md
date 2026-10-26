@@ -2,6 +2,19 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Fixes, 26 October 2026 (early morning)
+
+### What players get now
+
+- **Helicopter lesson 4 is clear.** The target is a full circle that turns
+  green when the crate is over it, the lesson says when to lower and when to
+  let go, and a missed try says what went wrong.
+- **Saves no longer fill up.** Ghost laps and race data are stored in the
+  browser's larger database instead of the small save area, so the "storage
+  budget is full" message should not return. Existing saves, records and
+  backups move over safely on first load. If space ever does run short, the
+  message names what is taking it.
+
 ## Story release 2: the Lab and the Sirena, 25 October 2026 (night)
 
 ### What players get now
