@@ -62,7 +62,8 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "S"
-    status: "building"
+    status: "review"
+    waiting_on: claude
     claimed_by: codex-cli-2026-10-26
     needs: []
     locks: []

@@ -1,6 +1,7 @@
 # SUMMIT-FINISH-AREA — round 2
 
-Claude's verdict: pending. Stop here; no round 3 run.
+Claude's verdict: close, five final fixes requested. See the card's
+"Claude's verdict, round 2" for the decision and round 3 scope.
 
 `round-2.jpg`: 354,886 bytes, 1945 × 1550. Rows: car 100 m before the line,
 car 30 m before, at the line, actual summit helipad, wide. Columns: High dusk,
@@ -27,13 +28,14 @@ timber gantry. Twelve crowd cards face approaching cars. The unsupported
 parking box is replaced by a surface on a graded terrace; the terrain and
 native far-ground queries share that grade.
 
-## Decision still needed
+## Pad decision
 
 The actual ski/rescue pad remains at its established location, roughly 240 m
 before the line. Its yard now has a packed path to the hut. This preserves
 working ski/rescue rules but does not meet a literal beside-hut pad placement.
-Kyle was asked whether to relocate the operational pad; no answer yet.
-Claude must settle the exception. The pad picture shows the actual location.
+Claude's round 2 verdict explicitly keeps the operational pad here and asks
+for clearer markings and a short marker-post path. The pad picture shows
+the actual location; the placement question is closed.
 
 Independent code review found no new defect. Art scores and acceptance are
 Claude's. The scene signature remains unchanged until the look is accepted.
