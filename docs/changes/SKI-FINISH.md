@@ -235,3 +235,62 @@ flight retain the earlier recipe's limits (including the automatic truck).
 
 Independent code/numbers and changed-assertion review remains with Claude
 before integration. This lane does not merge or release.
+
+### Follow-up verification and pictures
+
+Default browser pass: private port 43264, five pictures, zero warnings/errors.
+Detail pass: private port 34895, six pictures, zero warnings/errors; its
+start-screen text contains the new Shift advice on every aerials attempt.
+Straight moguls still finishes at 25 points with one tumble (5 below new
+bronze). Aerials tuck/spin/half-spin remains 58.2/83.2/52.7 points; medals
+bronze/gold/bronze, unchanged. No keyboard-driver or reaction-interval change.
+
+The first four-suite check caught a real API compatibility fault: adding an
+optional second argument to `judgedMedal` consumed Array.map's index. Fixed
+by retaining the original one-argument public function and using an internal
+threshold helper for configured runs. The unchanged 112 physics assertions
+then passed. Three other suites passed on that first check: helicopter 15,
+view 5, zones 228. A new score-test draft also caught floating-point
+construction of exact boundary inputs; the final tests use actual score
+parts for none/bronze/silver/gold, with no tolerance or old assertion changed.
+Final lane evidence below covers the corrected source and all four suites.
+
+One detail browser startup failed before capture: Vite could not clear its
+output while an open test log lived in .qa-dist. Moved the log into .evidence,
+then the one retry passed. No game/test tolerance was changed for this tool
+problem. Shared capacity was counted before every heavy run and at the
+one-minute checks; no over-cap own run or frame measurement occurred.
+
+Updated `docs/board/looks/ski-finish/look-1.jpg`: 286,478 bytes, six actual
+in-game captures, resized/labelled only. Viewed the assembled sheet: it shows
+slalom poles, the aerials jump, powder/yeti, snow at pickup, the visible
+thin-air radio line and the moguls result. It replaces the earlier four-view
+sheet. Recipe: `python tools/art/ski-finish-sheet.py` after default output
+`tuned-keyboard` and DETAIL=1 output `tuned-detail`. This is evidence assembly,
+not an art round or Claude's look verdict.
+
+Cockpit sync through the protected runner: zero tasks changed. Integration
+advanced independently with LAB-WALK after this lane started; no shared
+runtime changes were pulled into this frozen ski candidate. No merge or push.
+
+Final lane gate on frozen gameplay/test source `37fff5a9`: 58/58 passed,
+zero failed or not run, jobs 4, 457.17 s. Command:
+`node tools/run-tests.mjs --tier lane --changed --jobs 4`. Includes ski
+physics 112 checks, zones 228 checks, heli lifecycle 15 tests, view 5 tests;
+replay guard 225 checks / 25 cases / 23 events / nine categories, combat
+replays 12 checks / four encounters, complete scenes 47 checks / 20 events.
+Fingerprints and signatures are unchanged. `npm run build` then passed in
+1.76 s; existing large-chunk and mixed static/dynamic import warnings remain.
+Both ran in PowerShell with System32 first on PATH and fresh under-three-job
+admission. Later changes are only this note, the status snapshot, the six-view
+sheet and its assembly recipe (no test reads that recipe). No full, frame,
+release or child play-test pass is claimed.
+
+### Removed in this follow-up
+
+Replaced the earlier four-view sheet with the current six-view sheet and its
+recipe. Removed the old slalom 8.2 m/2 m layout, GS +18% bronze rule and
+shared moguls medal thresholds from the zone's active rules. Raw captures,
+reports, gate logs and generated QA/production builds from this session were
+recycled after their measured findings and the compact sheet were recorded.
+No player save, runtime asset, unrelated file or lane was removed.

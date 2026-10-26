@@ -1,6 +1,6 @@
-"""Assemble SKI-FINISH's four unaltered game views; resize and label only.
+"""Assemble SKI-FINISH's six unaltered game views; resize and label only.
 
-Run after the default, DETAIL=1 and PHOTO=1 ski-finish browser recipes:
+Run after the tuned-keyboard default and tuned-detail DETAIL=1 recipes:
   python tools/art/ski-finish-sheet.py
 No Blender render, image generation or frame measurement is involved.
 """
@@ -11,12 +11,14 @@ ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / '.evidence/2026-10-26/SKI-FINISH'
 OUT = ROOT / 'docs/board/looks/ski-finish/look-1.jpg'
 TILES = [
-    ('keyboard-corrected/slalom-gate.png', 'Slalom: visible poles; keyboard line is difficult'),
-    ('jump-photo/aerials-jump-tuck.png', 'Aerials: tuck for air; straight bronze, whole spin gold'),
-    ('detail/powder-yeti.png', 'Powder: the yeti watches; three stashes, no clock'),
-    ('keyboard-corrected/pickup-snow.png', 'Pickup: alpine snow at 3,233 m; ground gap 0.016 m'),
+    ('tuned-keyboard/slalom-gate.png', 'Slalom: wider poles; 17 steady misses remain'),
+    ('tuned-detail/aerials-jump-tuck.png', 'Aerials: Shift advice; tucked bronze, whole spin gold'),
+    ('tuned-detail/powder-yeti.png', 'Powder: the yeti watches; three stashes, no clock'),
+    ('tuned-keyboard/pickup-snow.png', 'Pickup: alpine snow at 3,233 m'),
+    ('tuned-keyboard/group-summit.png', 'Thin air: advice now appears as radio text'),
+    ('tuned-detail/moguls-finish-straight.png', 'Moguls: straight 25 pts; weaving now gold / bronze'),
 ]
-sheet = Image.new('RGB', (1280, 830), '#171c20')
+sheet = Image.new('RGB', (1280, 1220), '#171c20')
 draw = ImageDraw.Draw(sheet)
 font = ImageFont.truetype('C:/Windows/Fonts/arial.ttf', 18)
 draw.text((12, 12), 'SKI-FINISH | 26 October 2026 | keyboard evidence for Claude | switch stays dev', fill='white', font=font)
