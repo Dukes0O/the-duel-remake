@@ -54,3 +54,7 @@ signature pins are unchanged.
 Replaced the flat target ring and the generic carry retry notice. No unused
 runtime assets or alternate implementations were added. Retained one requested
 picture; disposable builds and surplus captures are recycled at session end.
+
+## Claude review (26 October 2026)
+
+Approved. The picture shows a complete circle that turns green on the mark, with plain words for when to lower and when to let go. Only checks were added; nothing was loosened.
