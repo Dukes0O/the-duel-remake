@@ -446,7 +446,7 @@ export class App {
   }
 
   drivingLessonsAvailable(){
-    return this._switches().enabled('driving-lessons')===true&&this._switches().enabled('tyre-slip')===true;
+    return this._switches().enabled('driving-lessons')===true;
   }
   driveLessonProps(){
     const run=this.duel.drivingLesson,choices=this.getRaceChoices();

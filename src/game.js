@@ -201,7 +201,7 @@ export class Duel {
     // A lesson is a private Time Trial with the actual instructor plan. Its
     // state is outside the ordinary race snapshot: flag-off hashes stay exact.
     if(lesson){
-      if(!this.featureFlags.enabled('driving-lessons')||!this.featureFlags.enabled('tyre-slip')||
+      if(!this.featureFlags.enabled('driving-lessons')||
         !playerId||lesson.ownerId!==playerId||lesson.courseId!==COURSE[resolvedStage]?.id||
         // DRIVE-LESSONS-VIEW-2: lessons 2 to 4 (the plan names its lesson; lesson 1's does not); the gearbox needs the engine curve.
         !Object.hasOwn(DRIVE_LESSON_ROWS,lesson.lessonId??'corner')||!DRIVE_LESSON_ROWS[lesson.lessonId??'corner'].some(row=>row.courseId===lesson.courseId)||

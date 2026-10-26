@@ -21,11 +21,11 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
     'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 41 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
-    && ['snow-world', 'rival-voices', 'earned-cars', 'rescue', 'wildlife', 'heli-skins', 'heli-logbook', 'heli-skiing', 'pilot-map', 'tyre-slip', 'driving-lessons', 'engine-curve'].every(name => FEATURE_STATES[name] === 'dev')
-    && ['lap-choice', 'snowmen', 'the-deep', 'cpu-racecraft', 'lab', 'lab-tuning', 'lab-2'].every(name => FEATURE_STATES[name] === 'on')
+    && ['snow-world', 'rival-voices', 'earned-cars', 'wildlife', 'heli-skins', 'pilot-map', 'engine-curve', 'tyre-slip'].every(name => FEATURE_STATES[name] === 'dev')
+    && ['lap-choice', 'snowmen', 'the-deep', 'cpu-racecraft', 'lab', 'lab-tuning', 'lab-2', 'rescue', 'heli-logbook', 'heli-skiing', 'driving-lessons'].every(name => FEATURE_STATES[name] === 'on')
     && FEATURE_STATES['grand-prix-career'] === 'on' && FEATURE_STATES['grand-prix'] === 'on' && FEATURE_STATES.yeti === 'on'
     && CIRCUIT_MANIFESTS.every(manifest => FEATURE_STATES[manifest.flag] === manifest.state),
-  'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix and its career are released; lap choice and snowmen are released (on, 13 October 2026); career backup, Snow, rival voices, earned cars, rescue, wildlife, helicopter skins, heli-skiing, the pilot map, tyre slip, driving lessons, engine curve stay dev; The walking Lab, Lab tuning, The Deep and CPU racecraft are released (25 October 2026); the accepted Yeti is on; registered course switches follow their manifests; retired switches stay absent');
+  'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix and its career are released; lap choice and snowmen are released (on, 13 October 2026); career backup, Snow, rival voices, earned cars, wildlife, helicopter skins, the pilot map, engine curve, tyre slip stay dev; driving lessons, logbook, heli-skiing and rescue are released (26 October 2026); The walking Lab, Lab tuning, The Deep and CPU racecraft are released (25 October 2026); the accepted Yeti is on; registered course switches follow their manifests; retired switches stay absent');
 const sharedCourseFlags = [...new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag))]
   .map(flag => CIRCUIT_MANIFESTS.filter(manifest => manifest.flag === flag))
   .filter(group => group.length > 1);
@@ -40,7 +40,8 @@ const productionFlags = createFeatureFlags({ storage: null, qa: false });
 // and The Deep and CPU racecraft on 25 October. Keep their development-switch
 // isolation checks by pinning each one to dev.
 const RELEASED_FLAGS = ['blackiron', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'arsenal-wave3',
-  'fight-voices', 'convoy-raid', 'warlord-cards', 'seeker-rockets', 'the-deep', 'cpu-racecraft', 'grand-prix-career'];
+  'fight-voices', 'convoy-raid', 'warlord-cards', 'seeker-rockets', 'the-deep', 'cpu-racecraft', 'grand-prix-career',
+  'driving-lessons', 'heli-logbook', 'heli-skiing', 'rescue'];
 check(RELEASED_FLAGS.every(name => productionFlags.enabled(name)), 'production has all newly released features on');
 check(RELEASED_FLAGS.every(name => createFeatureFlags({storage: null, qa: false, search: `?flags=${name}`}).enabled(name)),
   'a released switch stays on whatever the URL says');
@@ -51,6 +52,10 @@ for (const name of RELEASED_FLAGS) {
   check(!devPinned(name, {qa: true}).enabled(name), `unnamed QA keeps a dev ${name} off`);
   check(devPinned(name, {qa: true, search: `?flags=${name}`}).enabled(name), `private QA admits an explicit ${name} request`);
 }
+for (const name of ['driving-lessons', 'heli-logbook', 'heli-skiing', 'rescue']) {
+  check(!createFeatureFlags({storage: null, qa: false, overrides: {[name]: false}}).enabled(name),
+    `an explicit off override still disables released ${name}`);
+}
 check(!devPinned('tollkeeper', {qa: true, search: '?flags=convoy-raid'}).enabled('tollkeeper'),
   'the normal Convoy switch does not admit a dev Warlord fight');
 check(!devPinned('cpu-crews', {qa: true, search: '?flags=crew-gear'}).enabled('cpu-crews'),
@@ -60,6 +65,9 @@ check(!devPinned('ambush-alley', {qa: true, search: '?flags=cpu-crews'}).enabled
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
 check(!productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
   'retired Wasteland rules switch is absent and Hidden Road is released');
+check(!productionFlags.enabled('tyre-slip'), 'ordinary production races keep the tyre-slip switch off');
+check(!createFeatureFlags({storage: null, qa: false, search: '?flags=tyre-slip'}).enabled('tyre-slip'),
+  'production URLs cannot enable the development tyre-slip switch');
 check(!productionFlags.enabled('career-backup'), 'production keeps career backup off');
 check(productionFlags.enabled('fuel-run') && productionFlags.enabled('bounty-hunt') &&
   productionFlags.enabled('arsenal') && productionFlags.enabled('salt-flats') &&
