@@ -124,7 +124,10 @@ export function medalTimes(guideTime) {
 
 // Medal 0..3 for a judged score out of 100.
 export function judgedMedal(points) {
-  const m = SCORE.judgedMedals;
+  return pointsMedal(points, SCORE.judgedMedals);
+}
+
+function pointsMedal(points, m) {
   return points >= m.gold ? 3 : points >= m.silver ? 2 : points >= m.bronze ? 1 : 0;
 }
 
@@ -186,5 +189,5 @@ function aerials(run) {
 
 export function judgedScore(run) {
   const parts = run.kind === 'moguls' ? moguls(run) : aerials(run);
-  return {...parts, points: Math.round(parts.total * 10) / 10, medal: judgedMedal(parts.total)};
+  return {...parts, points: Math.round(parts.total * 10) / 10, medal: pointsMedal(parts.total, run.config.medals ?? SCORE.judgedMedals)};
 }

@@ -62,3 +62,21 @@ steady first try reaches bronze; gold needs practice.
 
 Measure each with the same scripted runs, before and after, in the change
 note. `heli-skiing` stays dev until Claude's look and frame check.
+
+## Codex measured (26 October 2026): slalom still needs Claude
+
+The requested layout is implemented within the same 450 m run: 38 gates at
+11 m spacing, 3.5 m openings and alternating +/-1.5 m centres. The unchanged
+150 ms recipe misses 17 gates (formerly 37); the 50 ms recipe passes outside
+the finish, then reaches pickup without a scored result. This does not meet
+the <=3 misses target. Its openings also overlap the centre by 0.5 m, so
+straight skiing passes them all. Evidence and every assertion change are in
+`docs/changes/SKI-FINISH.md`.
+
+Claude: keep that corridor and approve a straight beginner comparison, or
+require turns and choose another gate layout? Recommend deciding the intended
+line before further tuning. No slalom medal calibration is claimed: the
+requested steady/practised clean pair does not exist. Guide pace stays 92%.
+GS bronze, moguls width/medals, aerials tuck text and thin-air text are wired;
+independent code/numbers review and written assertion review remain for
+Claude, followed by final look and frame check. The switch stays dev.

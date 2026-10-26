@@ -126,7 +126,7 @@ const RUN_TIPS = Object.freeze({
 // tips on the Aerials run, which the session offers only once they are open).
 export function loadingCardMarkup(run, {snow = null} = {}) {
   if (!run) return '';
-  const tips = run.run === 'aerials' ? aerialsTips() : [RUN_TIPS[run.run]].filter(Boolean);
+  const tips = run.run === 'aerials' ? ['Hold down Shift to tuck on the inrun.', ...aerialsTips()] : [RUN_TIPS[run.run]].filter(Boolean);
   const snowLine = snow ? `<p class="ski-snow">Today's snow: ${escape(snow.name)}, ${Math.round(snow.celsius)} °C${run.pick ? ` · wax ${escape(run.pick)}` : ''}</p>` : '';
   return `<section class="ski-card ski-loading" aria-label="${escape(run.name)}"><small>HELI-SKIING · ${escape(run.name.toUpperCase())}</small>
     ${snowLine}${targetsMarkup(run.limits)}<ul class="ski-tips">${tips.map(tip => `<li>${escape(tip)}</li>`).join('')}</ul>
@@ -161,7 +161,7 @@ export function runLineMarkup(run) {
   }
   if (run.kind === 'judged') {
     const parts = run.run === 'moguls' ? 'TURNS 60 · AIR 20 · SPEED 20' : 'AIR 20 · FORM 50 · LANDING 30';
-    return `<span class="ski-clock">${clockText(run.clock)}</span><span>JUDGED · ${parts}</span>`;
+    return `<span class="ski-clock">${clockText(run.clock)}</span><span>JUDGED · ${parts}</span>${run.run === 'aerials' && run.skier.z < 40 ? '<span>Hold down Shift to tuck on the inrun</span>' : ''}`;
   }
   return `<span>STASHES ${run.stashes.length}/${skiZone(run.run).stashes.length}</span>`;
 }

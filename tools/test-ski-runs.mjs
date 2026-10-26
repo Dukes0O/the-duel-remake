@@ -112,8 +112,9 @@ near(skiZone('powder').ground(0, POWDER_SHAPE.length), SKI_RUN_PICKUP_ALTITUDE, 
 }
 
 // ---- Slalom and giant slalom ---------------------------------------------------------
-for (const [id, gates, length, drop, spacing] of [['slalom', 50, 450, 180, [8, 9]], ['gs', 40, 1100, 350, [25, 27]]]) {
+for (const [id, gates, length, drop, spacing] of [['slalom', 38, 450, 180, [11, 11]], ['gs', 40, 1100, 350, [25, 27]]]) {
   const zone = skiZone(id), guide = zoneGuide(id);
+  if (id === 'slalom') ok(zone.gates.every(g => Math.abs(g.centre) === 1.5 && Math.abs(g.right.x - g.left.x) === 3.5), 'slalom: 3.5 m openings at alternating 1.5 m centres');
   same(zone.gates.length, gates, `${id}: ${gates} gates`);
   near(zone.finish.left.z, length, 0.5, `${id}: ${length} m long`);
   near(zone.ground(0, 0) - zone.ground(0, length), drop, 0.5, `${id}: ${drop} m of drop`);
@@ -135,9 +136,9 @@ for (const [id, gates, length, drop, spacing] of [['slalom', 50, 450, 180, [8, 9
   ok(run.clock > 0.9 * full.bestTime - 3 && run.clock < full.bestTime, `${id}: from the start line to the finish line (${run.clock.toFixed(1)} s of ${full.bestTime.toFixed(1)} s)`);
   near(guide.time, full.time, 1e-6, `${id}: the cached guide is the same run`);
   const limits = medalLimits(id);
-  same([limits.kind, limits.gold, limits.silver / limits.gold, limits.bronze / limits.gold], ['time', guide.time, 1.08, 1.18], `${id}: medal times from the guide`);
+  same([limits.kind, limits.gold, limits.silver / limits.gold, limits.bronze / limits.gold], ['time', guide.time, 1.08, id === 'gs' ? 1.25 : 1.18], `${id}: medal times from the guide with GS bronze +25%`);
   same([timedMedal(guide.time, guide.time), timedMedal(guide.time * 1.05, guide.time), timedMedal(guide.time * 1.15, guide.time), timedMedal(guide.time * 1.25, guide.time)], [3, 2, 1, 0], `${id}: gold, silver, bronze, none`);
-  // A skier who ignores the gates and skis straight down the middle misses them all: each opening is to one side.
+  // The wider slalom openings overlap the centre; GS still demands alternating turns.
   const straight = createTimedRun({start: zone.start, finish: zone.finish, gates: zone.gates});
   const skier = createSkier({world: zone, x: 0, z: 0});
   let last = {x: skier.x, z: skier.z};
@@ -146,7 +147,7 @@ for (const [id, gates, length, drop, spacing] of [['slalom', 50, 450, 180, [8, 9
     stepTimedRun(straight, last, skier, SKI_STEP);
     last = {x: skier.x, z: skier.z};
   }
-  same([straight.finished, straight.missed], [true, gates], `${id}: straight down the middle misses every gate`);
+  same([straight.finished, straight.missed], [true, id === 'slalom' ? 0 : gates], `${id}: straight line through the authored openings`);
 }
 ok(zoneGuide('slalom').time < zoneGuide('gs').time && zoneGuide('slalom').time > 10, 'the slalom is quicker than the giant slalom');
 
@@ -186,7 +187,14 @@ ok(zoneGuide('slalom').time < zoneGuide('gs').time && zoneGuide('slalom').time >
   for (let i = 0; i < 2; i++) stepJudgedRun(run, {edge: 0, speed: 10, grounded: true}, [{type: 'skiLand', safe: true, spinMax: 360, flipMax: 0, angle: 5}], 0.1);
   run.clock = config.guideTime;
   near(finishJudgedRun(run).total, 100, 1e-9, 'moguls: all turns, two whole spins, the guide\'s time: 100');
-  same(medalLimits('moguls'), {kind: 'points', ...SCORE.judgedMedals}, 'moguls: judged medals');
+  for (const [turns, jumps, pace, medal] of [[0, 0, 1.5, 0], [0, 2, 1, 1], [0.5, 2, 1, 2], [1, 2, 1.5, 3]]) {
+    const scored = createJudgedRun('moguls', config);
+    scored.turns = turns * config.turnsPlanned;
+    scored.landings = Array.from({length: jumps}, () => ({safe: true, spinMax: 0, flipMax: 0}));
+    scored.clock = config.guideTime * pace;
+    same(finishJudgedRun(scored).medal, medal, `moguls: real score parts earn medal ${medal}`);
+  }
+  same(medalLimits('moguls'), {kind: 'points', bronze: 30, silver: 50, gold: 70}, 'moguls: approved judged medals');
 }
 
 // ---- Aerials --------------------------------------------------------------------------

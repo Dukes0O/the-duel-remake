@@ -5,7 +5,7 @@
 //
 // The zone's own frame (summit-zones.js): the drop pad is the origin, the run falls toward +z, +x is the skier's left.
 import {SKI_STEP, createSkier, stepSkier, skierView, skierFingerprint} from './ski-physics.js';
-import {createTimedRun, stepTimedRun, timedMedal, createJudgedRun, stepJudgedRun, finishJudgedRun, RUN_KINDS} from './ski-score.js';
+import {createTimedRun, stepTimedRun, createJudgedRun, stepJudgedRun, finishJudgedRun, RUN_KINDS} from './ski-score.js';
 import {ghostAt} from './ski-guide.js';
 import {skiZone, zoneGuide, medalLimits, judgedConfig, stashAt, atPickup, SUMMIT_PADS, SKI_RUN_IDS} from './runs/summit-zones.js';
 
@@ -99,8 +99,8 @@ export function stepSkiRun(run, controls, dt = SKI_STEP) {
 }
 
 function timedResult(run, finish) {
-  const time = finish.time;
-  return {kind: 'time', run: run.runId, time, raw: finish.raw, missed: finish.missed, medal: timedMedal(time, run.guide.time)};
+  const time = finish.time, limits = medalLimits(run.runId);
+  return {kind: 'time', run: run.runId, time, raw: finish.raw, missed: finish.missed, medal: time <= limits.gold ? 3 : time <= limits.silver ? 2 : time <= limits.bronze ? 1 : 0};
 }
 function judgedResult(run) {
   const score = finishJudgedRun(run.judged);

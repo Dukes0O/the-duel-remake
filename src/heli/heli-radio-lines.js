@@ -118,3 +118,8 @@ const WILD_LINES = {
 
 export const HELI_RADIO_LINES = Object.freeze(Object.fromEntries(Object.entries({...H1_LINES, ...FIRE_LINES, ...RESCUE_LINES, ...WILD_LINES})
   .map(([id, line]) => [id, Object.freeze({voice: 'brian', ...line})])));
+
+// Ski radio stays on-screen text until its voice pass is approved.
+export const SKI_RADIO_TEXT = Object.freeze({
+  'ski.radio.thin-air': 'There is less air up here for the rotor to push. Lighten up: burn fuel or leave some behind.',
+});

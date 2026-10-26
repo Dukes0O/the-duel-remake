@@ -155,3 +155,83 @@ Text-only ski radio wiring; the slalom keyboard difficulty verdict; a human
 moguls finish and judged medal check; a tuck instruction for aerials; final
 look/go-live decision. Group return-home payment was not exercised by this
 slice. The feature stays dev.
+
+## Claude tuning follow-up (26 October 2026)
+
+Design before code: follow the card's five written decisions. Keep slalom's
+450 m snow and finish: 38 gates fit at z 30..437 in 11 m steps (50 would put
+12 gates beyond the finish). Width is 3.5 m, centres alternate +/-1.5 m.
+Measure steady/practised times before setting this run's own medal targets.
+GS changes only bronze to +25%; guide and silver/gold stay as authored.
+First widen moguls' playable bounds and start/finish opening by 50%, then
+repeat the unchanged keyboard proxy to distinguish lane width from steering.
+Moguls alone uses 30/50/70 points; aerials remains 50/65/80. Tuck advice names
+Shift, the actual tuck key (Down/S is braking). Thin-air advice is text only;
+no voice assets, cue requests or physical lift changes.
+
+Checks: existing ski physics, runs, heli and view suites; same steady/practice
+and detail browser recipes, memory-only, including snowy pickup and thin-air
+text; lane tier jobs 4 and build. No frame timing. Claude keeps final look,
+assertion review and go-live decisions; heli-skiing remains dev.
+
+### Measured result and slalom hold
+
+The unchanged pure-session keyboard replay reproduced every earlier slalom/GS
+number exactly before edits. After the requested layout, the same App browser
+recipe gives slalom steady 110.51 s (25.51 raw, 17 misses), versus 213.51 s
+(28.51 raw, 37 misses). Practice reaches pickup without a scored finish (it
+crosses outside the finish opening), versus 111.19 s and 18 misses before.
+The requested <=3 steady misses is NOT met. There is no clean steady/practised
+pair from which to set honest new slalom medal times. Leave its guide-derived
+margins unchanged pending Claude's decision. Its guide changes naturally with
+the new gate line: targets are 28.88 / 26.43 / 24.47 s (bronze/silver/gold).
+
+The 3.5 m openings at +/-1.5 m overlap by 0.5 m. The existing straight-line
+zone test now passes all gates; the centre-following proxy still oversteers.
+This is a material design result, not proof that the keyboard is impossible.
+Do not tune more values or quietly change the proxy to claim acceptance.
+Claude should choose whether to keep that straight corridor and use a
+beginner straight-line comparison, or require alternating turns and approve
+a further layout change. Keep the card open and the feature dev.
+
+GS has identical times/inputs: steady 64.51 s (one miss) now bronze, practice
+48.90 s (zero misses) still gold. Bronze 62.01 -> 65.69 s; silver 56.76 and
+gold 52.55 s unchanged. Moguls' original narrow bounds clipped lateral flight
+momentum at +/-30 m; the original 12 m finish was missed at x=8.50 / 25.27 m.
+With 90 m bounds and 18 m start/finish openings, neither replay hits a wall;
+both cross at x=0.39 / 0.21 m. Steady 78.0 points is gold; practice 37.6 is
+bronze under 30/50/70. Max |x| is 41.26 / 35.01 m. No physics or steering
+rule changed: free lateral flight is expected, and the lane fix suffices.
+
+Aerials remains 0 steady / 58.2 tucked (bronze); its thresholds and physics
+are unchanged. The loading card and inrun now name Shift explicitly, since
+Down/S brakes and cannot be taught as tuck. Thin-air emits the same event,
+and the actual group summit screen now contains: "There is less air up here
+for the rotor to push. Lighten up: burn fuel or leave some behind." No voice
+cue is added; ski text is separate from the recorded radio catalog. Powder
+still finds all three stashes without a timed result. Snowy pickup and group
+flight retain the earlier recipe's limits (including the automatic truck).
+
+### Assertion changes for Claude's review
+
+- `test-ski-runs`: slalom count 50 -> 38 and spacing 8..9 -> exactly 11 m,
+  to fit the specified spacing inside the unchanged 450 m run. Add exact
+  3.5 m width and +/-1.5 m centre checks; retain start/gates/finish order,
+  guide clean-pass, drop, repeatability and all GS geometry assertions.
+- The straight-line slalom test expects zero missed gates, rather than every
+  gate missed, because Claude's new openings overlap. GS still misses all.
+  This is a changed design claim, requiring Claude's written review; it does
+  not pretend the old alternating-turn property survives.
+- GS displayed bronze ratio 1.18 -> 1.25; silver/gold ratios stay exact.
+  The default `timedMedal` unit checks remain untouched (generic +18%).
+- Moguls displayed targets become bronze 30, silver 50, gold 70 rather than
+  the shared 50/65/80. Add scoring checks for none/bronze/silver/gold using actual turn, air and speed parts.
+- `test-ski-view`: moguls' displayed gold 80 -> 70; add tuck advice checks
+  on the loading card and before z40, and absence at the ramp.
+- Browser recipe: require the real thin-air event and visible text together;
+  add start-screen evidence and moguls result photos. Keyboard controls,
+  reaction intervals and scoring are untouched. No existing tolerance,
+  replay fingerprint or world signature is loosened or regenerated.
+
+Independent code/numbers and changed-assertion review remains with Claude
+before integration. This lane does not merge or release.

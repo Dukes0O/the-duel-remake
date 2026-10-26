@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as THREE from 'three';
 import {skiKeys, skiCameraPose, backdropEye, skierPose, skiDeepSnow, loadingCardMarkup, resultCardMarkup, skiMenuMarkup,
-  skiBoardMarkup, createSkiView, SKI_BACKDROP, SKI_CAMERA_VIEWS, zoneGrid, drawnGround, hazeAt} from '../src/ski/ski-view.js';
+  skiBoardMarkup, runLineMarkup, createSkiView, SKI_BACKDROP, SKI_CAMERA_VIEWS, zoneGrid, drawnGround, hazeAt} from '../src/ski/ski-view.js';
 import {skiControlsHelp} from '../src/controls-help.js';
 import {createSkiRun, stepSkiRun, skiRunView, skiRunFingerprint, SKI_RUN_IDS} from '../src/ski/ski-session.js';
 import {skiZone} from '../src/ski/runs/summit-zones.js';
@@ -57,7 +57,10 @@ test('the cards: the loading tips (all six aerials tips), the targets, the resul
   assert.ok(aerials.includes('Packed powder, -8 °C · wax hard'), 'the day\'s snow and the pick');
   assert.ok(loadingCardMarkup(view('moguls')).includes('Moguls form by themselves where many skiers turn in the same places'), 'the moguls tip');
   assert.ok(/GOLD<\/b> 0:\d\d\.\d\d/.test(loadingCardMarkup(view('slalom'))), 'timed targets as times');
-  assert.ok(loadingCardMarkup(view('moguls')).includes('<b>GOLD</b> 80 pts'), 'judged targets as points');
+  assert.ok(loadingCardMarkup(view('moguls')).includes('<b>GOLD</b> 70 pts'), 'moguls judged targets as points');
+  assert.ok(aerials.includes('Hold down Shift to tuck on the inrun.'), 'drop tips name the actual tuck key');
+  assert.ok(runLineMarkup(view('aerials')).includes('Hold down Shift to tuck on the inrun'), 'inrun advice is visible at step-out');
+  assert.ok(!runLineMarkup({...view('aerials'), skier: {z: 40}}).includes('Hold down Shift'), 'advice clears at the ramp');
   const timed = resultCardMarkup({kind: 'time', run: 'slalom', time: 47.5, raw: 37.5, missed: 2, medal: 1}, {paid: 150, improved: true});
   assert.ok(timed.includes('0:47.50') && timed.includes('2 gates missed (+10 s)') && timed.includes('BRONZE') && timed.includes('150 credits · new best'));
   const judged = resultCardMarkup({kind: 'points', run: 'aerials', points: 71.24, medal: 2, air: 80, form: 60, landing: 90});
