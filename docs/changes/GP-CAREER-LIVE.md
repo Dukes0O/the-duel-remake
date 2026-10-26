@@ -52,3 +52,12 @@ Cockpit sync ran; GP-CAREER-LIVE has no matching task. The Director should add i
 ## Removed
 
 No runtime path, asset, save field or existing assertion removed. No generated evidence is needed in the final change.
+
+## Claude review (26 October 2026)
+
+Approved. Each changed assertion follows the switch decision (dev to on);
+the off path stays tested explicitly; the scenario gained a stricter wait.
+Pay: a Grand Prix win equals a Duel win on the same course and difficulty,
+lower places pay less, and a completed Grand Prix has no loss charge, which
+fairly rewards racing a full field. The false "ghost save failed" message is
+GHOST-SAVE-MESSAGE (live fix).
