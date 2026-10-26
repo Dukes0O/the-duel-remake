@@ -286,7 +286,13 @@ function flyAvalanche({refuelTo = [330, 360]} = {}) {
   log.push(...flyRoad(session, summit, pickup, pickup.y + 30));
   log.push(...landAt(session, summit, pickup));
   ok(session.view().rescue.active.sites.atTruck, 'avalanche: landed beside the pickup truck');
+  const beforePickupFuel = session.view().rescue.active;
+  ok(beforePickupFuel.refuelFirst && beforePickupFuel.refuelStop === 'pickup', 'avalanche: the return legs need the nearby pickup truck');
+  near(beforePickupFuel.target.distance, dist(session.view().heli, pickup), 0.01, 'avalanche: the fuel target is the pickup circle');
   fill(refuelTo[1], 'pickup');
+  const afterPickupFuel = session.view().rescue.active;
+  ok(!afterPickupFuel.refuelFirst, 'avalanche: fuel for the remaining return legs restores the slide target');
+  near(afterPickupFuel.target.distance, dist(session.view().heli, pick.slide), 0.01, 'avalanche: the slide is the target after pickup refuelling');
   // Back to the slope and a hover 40 m over the obstacles.
   log.push(...flyRoad(session, summit, beacon, gy + 40));
   log.push(...run(session, 20, v => pilot(v, {x: beacon.x, z: beacon.z, y: gy + 40}, {speed: 1}), v => speedOf(v) < 0.3));
@@ -318,6 +324,9 @@ if (want('scripted')) {
   ok(avalanche.done && !avalanche.failed, 'avalanche: flown by script from the home pad, paid, no failure');
   same([avalanche.done.paid, avalanche.done.condition, missionsOf(avalanche.session.profile).rescued, avalanche.log.some(e => e.type === 'charged' && e.kind === 'fuelTruck'),
     has(avalanche.log, 'crash')], [1200, 0, 1, false, false], 'avalanche: 1,200 credits, unhurt, one person, nobody stranded, no crash');
+  if (process.env.RESCUE_FINISH_REPORT) for (const [kind, run] of [['supply', supply], ['avalanche', avalanche]])
+    console.log('RESCUE-FINISH', JSON.stringify({course: 'summit-run', kind, completed: !!run.done, seconds: run.done?.clockSeconds,
+      fuelKg: run.session.view().heli.fuelKg, fingerprint: run.session.fingerprint(), resets: run.log.filter(e => e.type === 'holdReset')}));
   const supplyTotal = supply.done.clockSeconds, avalancheTotal = avalanche.done.clockSeconds;
   SCRIPTED.times = {supplyTotal, avalancheTotal};
   console.log(`  scripted times from the home pad: supply ${supplyTotal.toFixed(0)} s, avalanche ${avalancheTotal.toFixed(0)} s; rows would be ${rowFor(supplyTotal)} and ${rowFor(avalancheTotal)}`);

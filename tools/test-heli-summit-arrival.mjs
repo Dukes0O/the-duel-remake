@@ -3,6 +3,8 @@
 // autopilot started at arrival clears the cliff the old arrival point sat behind. Every
 // other arrival is what it was. Headless; memory storage only.
 import assert from 'node:assert/strict';
+import {rescueLineMarkup, controlsMarkup} from '../src/heli/heli-ui.js';
+import {dispatchBoardMarkup} from '../src/heli/heli-board.js';
 import {Course} from '../src/course.js';
 import {ALL_CIRCUITS} from '../src/circuits/index.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
@@ -133,13 +135,25 @@ console.log('PASS the cruise leg to Summit Run ends over the start area');
   session.start();
   ok(session.pressRadio() && session.fitRescueLine().ok, 'the avalanche call is answered and the line fitted');
   cruise(session, 'summit-run');
+  const beforeFuel = session.view();
+  ok(beforeFuel.rescue.active.refuelFirst, 'arrival fuel does not cover the remaining rescue legs');
+  near(beforeFuel.rescue.active.target.distance, dist(beforeFuel.heli, site.zone), 0.01, 'the target points to the start-area truck circle');
+  ok(rescueLineMarkup(beforeFuel).includes('Refuel at the truck first'), 'the instruments explain the fuel diversion');
+  ok(dispatchBoardMarkup(beforeFuel, {fire: {repairCost: 0}}).includes('Refuel at the truck first'), 'the job text explains the fuel diversion');
   // The cruise leg leaves about 179 kg, not enough for the 6 km climb: down into the circle for the
   // lodge's truck (RESCUE-SUMMIT-TUNE), a full tank, and back up to the arrival height.
   const zone = site.zone, gz = zone.y;
   run(session, 120, v => pilot(v, {x: zone.x, z: zone.z, y: gz + 12}, {speed: 3, sink: 3}), v => v.heli.y < gz + 14);
   run(session, 120, v => pilot(v, {x: zone.x, z: zone.z, y: gz - 2}, {speed: 1, sink: 1.1}), v => v.heli.onGround);
   ok(session.view().heli.onGround && session.view().rescue.active.sites.atTruck, 'landed beside the start area truck');
+  ok(controlsMarkup(session.view(), {credits: session.profile.credits, refuels: 3}).includes('data-heli-fuel="fill"'), 'the player can open the pump at the start truck');
+  ok(controlsMarkup(session.view(), {credits: session.profile.credits, refuels: 3}).includes('data-heli-fuel-target'), 'the truck offers a partial tank target for thin-air jobs');
+  ok(session.buyFuel(1).ok && session.view().rescue.active.refuelFirst, 'a partial refill that is still short keeps the truck target');
   ok(session.buyFuel(330 - session.view().heli.fuelKg).ok, 'and filled the tank there');
+  const afterFuel = session.view(), slide = afterFuel.rescue.active.sites.slide;
+  ok(!afterFuel.rescue.active.refuelFirst, 'sufficient fuel switches the guidance back immediately');
+  near(afterFuel.rescue.active.target.distance, dist(afterFuel.heli, slide), 0.01, 'the target now points to the slide');
+  ok(!rescueLineMarkup(afterFuel).includes('Refuel at the truck first') && !dispatchBoardMarkup(afterFuel, {fire: {repairCost: 0}}).includes('Refuel at the truck first'), 'both texts clear the fuel instruction');
   run(session, 120, v => pilot(v, {x: zone.x, z: zone.z, y: gz + HELI_SESSION.arrivalHeight}, {speed: 1, sink: 4}), v => v.heli.y > gz + HELI_SESSION.arrivalHeight - 3);
   const r = missionsOf(session.profile).rescue, pick = pickSlide(slideSpots(summit.course, summit.ground), r.seed, summit.ground);
   ok(session.pressAutopilot(), 'P at arrival takes the way to the slide');

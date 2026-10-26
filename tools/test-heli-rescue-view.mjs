@@ -545,3 +545,18 @@ function stretcherOr(look) { return look === 'stretcher' ? 'stretcher' : 'parame
 }
 
 console.log(`test-rescue-view: ${checks} checks passed`);
+
+for (const [reason, words] of [['lifted', 'lifted off'], ['dragged', 'moving too fast'], ['away', 'too far away']]) {
+  const message = noticeText({type: 'holdReset', reason});
+  ok(message.includes(words) && message.length > 40, `hold reset explains ${reason} and how to retry`);
+}
+
+{
+  const base = {courseId: 'summit-run', heli: {onGround: true, fuelKg: 170}, rescue: {active: {sites: {atTruck: true}}}};
+  const html = controlsMarkup(base, {credits: 1000, refuels: 3});
+  ok(html.includes('data-heli-fuel="fill"') && html.includes('data-heli-fuel="target"'), 'Summit truck offers fill and target buttons');
+  ok(!controlsMarkup(base, {credits: 1000, refuels: 0}).includes('FREE FIRST TANK'), 'the truck never advertises a free first tank');
+  for (const kg of [190, 230, 330, 360, 400]) ok(html.includes(`value="${kg}"`), `truck target includes ${kg} kg`);
+  ok(!controlsMarkup({...base, heli: {...base.heli, onGround: false}}).includes('data-heli-fuel'), 'no truck refuelling in the air');
+  ok(!controlsMarkup({...base, rescue: {active: {sites: {atTruck: false}}}}).includes('data-heli-fuel'), 'no truck refuelling away from its circle');
+}
