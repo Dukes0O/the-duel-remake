@@ -38,3 +38,14 @@ Sheet: `docs/board/looks/lab-2/look-5.jpg` (at most 500 KB): Kyle's angle,
 before and after, plus a 2 m view.
 
 Switch `lab-2` (dev). Lane tier and build.
+
+## 3. Lab 2 goes live (Kyle, 26 October 2026)
+
+Kyle: preview changes "maybe they just need to be pushed into the real
+game." Claude decides (rule 18): when 1 and 2 pass, switch `lab-2` on. The
+walking Lab replaces the old glide camera; Lift and weight uses the new
+five-step lesson; the other fifteen lessons open their current benches from
+their machines until LAB-LESSONS-2 rebuilds them. Remove the old glide-camera
+path in the same change (replace means remove), or name what still needs it.
+Update the switch tests (each changed assertion explained), run the Lab,
+save and hygiene suites and the full Lab browser flow with the switch on.
