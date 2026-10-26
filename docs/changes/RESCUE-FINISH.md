@@ -135,3 +135,129 @@ limitation from part 1 remains. No merge, push or live installation in this lane
 ## Claude review (26 October 2026)
 
 Approved: only checks were added; nothing changed or loosened. Merged with rescue still dev; tuning for a child is on the card.
+
+## Child margins: decision before code (26 October 2026)
+
+Keep fuel burn, loads, controls and rescue dev unchanged. Tighten the hiker's
+last-seen clue to a 180 m search circle with the hiker at most 120 m from its
+centre. The same cautious 120 m rows / 60 m stops cover that smaller circle.
+Keep hoist slope, road clearance and tree checks; use valid sites within
+550 m of the start, so the return with two people is shorter. Raise the Ridge
+hoist clock to 900 s and the Snow supply clock to 1,860 s (24:30.5 x 1.25,
+rounded up to a half minute). Retain other clocks if the cautious flights
+leave at least 25% of their flown time spare. Full-tank flights must finish
+with at least 60 kg, including the staged Summit missions.
+
+Checks: existing six complete flights, plus explicit time/fuel margin checks;
+existing rescue-finish arrival/hoist pictures; lane tier jobs 4, then build.
+No frames. Changed exact expectations will be listed below for Claude review.
+
+## Child margins: results and assertion changes
+
+The 750 m hoist trial still finished with 31.1 kg. Restricting valid slopes
+to 550 m from the start produced the required reserve; no slope, road, tree,
+load, fuel-burn or controller rule was changed. The hiker clue alone changed;
+the hidden hiker and clearing remain the same seeded places.
+
+| Cautious rescue | Before time / fuel | After time / fuel | Clock after | Spare over flown time |
+| --- | --- | --- | --- | --- |
+| Woods hiker, clue-only grid | 14:01.4 / 23.1 kg | 9:18.8 / 159.8 kg | 15:00 | 61.1% |
+| Snow avalanche | 6:55.9 / 184.3 kg | 6:55.9 / 184.3 kg | 12:00 | 73.1% |
+| Ridge hoist | 11:16.6 / 35.3 kg | 10:06.9 / 71.2 kg | 15:00 | 48.3% |
+| Snow supply | 24:30.5 / 201.4 kg | 24:30.5 / 201.4 kg | 31:00 | 26.5% |
+| Summit avalanche | 23:24.9 / 35.3 kg | 23:25.0 / 35.2 kg | 37:30 | 60.1% |
+| Summit supply | 27:56.1 / 48.7 kg | 28:16.2 / 45.9 kg | 44:30 | 57.4% |
+
+Summit still uses the existing partial tank/refill recipe to lift its loads.
+Both missions begin full at home, so these two reserves FAIL the literal
+60 kg acceptance. No exemption is claimed; the card records the open decision.
+No new refuelling was added. The older before numbers predate the current
+integration baseline; the current Summit route code is unchanged by this lane.
+The Ridge driver still becomes cold before handover; the condition rules stay.
+
+Every changed assertion in this follow-up (none loosened):
+- test-heli-missions: exact base clock table hoist 720 -> 900 s, supply
+  1,500 -> 1,860 s. Other entries unchanged.
+- test-heli-search: last-seen radius exactly 300 -> 180 m for both forest
+  courses; the existing offset bound now uses hikerFromPoint 120 rather than
+  250 m. Its label now says 120 m. Added each hoist site's <=550 m start bound.
+- test-heli-rescue-session: initial search radius exactly 300 -> 180 m.
+  The clue-grid recipe covers the new circle with the same row/stop spacing;
+  it now runs unconditionally. Added completion/time >= cautious x 1.25 and
+  final fuel >=60 kg checks to all four normal flights and the clue-grid flight.
+  No cold, damage, payment or timeout assertion changed. Ordinary race and
+  rescue-off fingerprints stay fixed; rescue-on updates are listed below.
+- test-heli-summit-tune: exact non-Summit clock table updated as above;
+  hoist's no-Summit-row fallback 720 -> 900 s; Snow supply countdown/expiry
+  fixture 1,500 -> 1,860 s. Summit clocks and all 35% spare checks unchanged.
+
+Independent code review: clear after correcting stale base-table and hoist
+fallback clock expectations. Claude's written assertion review remains needed
+before merge under AGENTS 18. This lane commits only; no merge or push.
+
+Removed: replaced the old clue radius and clock/site selection in place;
+no duplicate code path, old asset, dependency or new voice. The 750 m trial
+was replaced by the 550 m bound. Temporary builds and test fixtures are recycled
+at session end; pictures remain only for Claude's pending finishing review.
+
+
+Further changed assertions and control fixtures (all exact, no wider tolerance):
+- test-heli-autopilot-rescue: the closer clue now spots this seeded hiker on
+  approach. Hover position/height targets the clearing instead of last-seen,
+  and stage found + spotted replaces fly + not-spotted. The 60/144/240 Hz
+  checks target the same clearing. Original 6 m / 2 m / 2.5 m tolerances stay.
+  The hoist controller now lowers 1.5 m for slack during the same 40 s hold
+  budget, as the existing complete Summit controller does. Clip/8 s checks stay.
+- test-heli-skin-gear: rescue-on search pin 880789153 -> 4001410629 for the
+  closer clue. Cable/bucket/rescue/survey/camera pins and gear equality stay.
+- test-heli-skin-session: rescue-on hiker 4027545282 -> 75325398 for clue;
+  hoist 2433107444 -> 3958087009 for site/clock; supply 1784988904 ->
+  1425980116 for clock. Car/avalanche/fire and skin-off equality stay.
+- test-heli-summit-rescues: rescue-on, Summit-off pin 1293191622 ->
+  2318537187 for base clues/sites/clocks. Rescue-off Summit pin stays.
+  Recovery fixture seed 0x2468ace -> 4 separates its wreck from the new driver
+  site. Added an explicit >20 m separation check; original priority assertions
+  and their tolerances stay. The old fixture accidentally overlapped the driver.
+
+Final verification for the child-margin code:
+- 52/52 selected lane suites covered, jobs <=4, PowerShell/System32 first.
+  Initial 11 pass / 1 course-kit Recycle Bin error / 40 unrun. Retry plus
+  remainder: course-kit passes; 37 pass and four affected expectations fail.
+  Exact rescue pins/targets updated: two pass, two control fixtures fail.
+  Corrected slack and distinct-target fixtures: both pass (169 and 114 checks).
+  No passing suite repeated; all four receipt files are under RESCUE-TUNE.
+- Rescue session 457 checks; Summit tune 118. All six complete flights finish.
+  Cautious clue-grid fuel 159.8 kg, Ridge hoist 71.2 kg, Snow supply 26.5%
+  time spare. The two Summit fuel reserves remain unmet, as recorded above.
+- Race replay, combat replay and world-composition guards pass unchanged.
+- npm run build passes, 1.11 s; existing import/chunk-size warnings only.
+- Existing rescue-view: port 12714, 15 pictures; rescue-finish: port 6628,
+  eight pictures. Both headless, High, memory-only; zero warnings/errors.
+  Reviewed arrival/flare, Ridge approach and Summit hoist pictures. No art
+  changes, new art round, voice or frame timing. Raw pictures remain for Claude
+  under .evidence/2026-10-26/RESCUE-TUNE/{browser,summit}/.
+- New FNV-1a fingerprints: clue-grid hiker 6b3be955; Snow avalanche 869c5607;
+  Ridge hoist b4854b13; Snow supply 716a56b8; Summit avalanche 5a095c26;
+  Summit supply 93455371. Full strings remain in the flight/gate receipts.
+- Cockpit sync ran through its protected runner. It lists unrelated untracked
+  Lab cards; no task was added or edited by hand in this lane.
+
+
+Summit reserve experiment (not the accepted fix): re-used only the existing
+scripted section of test-heli-summit-tune in memory, with avalanche refuelTo
+[330,400] and supply want 230 for every crate, plus a >=60 kg completion check
+for both. All 41 checks passed: avalanche 1,405.158 s / 71.339 kg; supply
+1,698.542 s / 82.429 kg. No burn, mass, controller, site or game code changed.
+The pump already offers these targets. The original card now asks Claude to
+choose this refill plan or a re-sliced site change; the instruction says to
+move sites, so this lane does not silently substitute a refuelling fix.
+
+Final independent review of the pin/control changes: clear. All original
+hold, completion and tolerance requirements remain. The full child-margin
+acceptance is still OPEN for the two original Summit fuel reserves. Rescue
+stays dev. No frame measurement, merge, push or live installation was done.
+
+Final card/change-note/status placement checks pass (board and repo hygiene,
+2/2, jobs 2). Owned QA/production bundles and superseded diagnostic/trial
+logs were sent to the Recycle Bin; final receipts and pending-review pictures
+remain. STATUS regenerated for this lane; no full-tier or frame pass claimed.

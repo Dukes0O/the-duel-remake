@@ -183,16 +183,16 @@ if (want('pin')) {
 const answeredCall = (kind, courseId) => ({...createMissions(), call: {kind, id: kind + '-1', courseId, day: 10, answered: true}});
 const ROUND = 30;
 if (want('clocks')) {
-  same({...RESCUE_CLOCKS}, {hiker: 900, avalanche: 720, hoist: 720, supply: 1500}, 'every other course keeps its clocks');
+  same({...RESCUE_CLOCKS}, {hiker: 900, avalanche: 720, hoist: 900, supply: 1860}, 'non-Summit courses use the child-margin clocks');
   same(Object.keys(SUMMIT_CLOCKS), ['avalanche', 'supply'], 'Summit Run has rows for the two kinds that can be set there');
   ok(Object.values(SUMMIT_CLOCKS).every(seconds => Number.isInteger(seconds / ROUND) && seconds > 1500), 'whole half minutes, longer than any other course');
   for (const kind of ['avalanche', 'supply']) {
     same([rescueLimit(kind, null, 'summit-run'), rescueLimit(kind, null, 'tremblant-snow'), rescueLimit(kind), rescueLimit(kind, null, undefined)],
       [SUMMIT_CLOCKS[kind], RESCUE_CLOCKS[kind], RESCUE_CLOCKS[kind], RESCUE_CLOCKS[kind]], `${kind}: Summit Run's row only at Summit Run`);
   }
-  same([rescueLimit('hiker', null, 'summit-run'), rescueLimit('hoist', null, 'summit-run'), rescueLimit('fire', null, 'summit-run')], [900, 720, 0], 'a kind without a Summit row keeps its own');
+  same([rescueLimit('hiker', null, 'summit-run'), rescueLimit('hoist', null, 'summit-run'), rescueLimit('fire', null, 'summit-run')], [900, 900, 0], 'a kind without a Summit row keeps its own');
   // A rescue record counts down its own course's clock.
-  for (const [kind, courseId, row] of [['avalanche', 'summit-run', SUMMIT_CLOCKS.avalanche], ['avalanche', 'tremblant-snow', 720], ['supply', 'summit-run', SUMMIT_CLOCKS.supply], ['supply', 'tremblant-snow', 1500]]) {
+  for (const [kind, courseId, row] of [['avalanche', 'summit-run', SUMMIT_CLOCKS.avalanche], ['avalanche', 'tremblant-snow', 720], ['supply', 'summit-run', SUMMIT_CLOCKS.supply], ['supply', 'tremblant-snow', 1860]]) {
     const begun = beginRescue(answeredCall(kind, courseId), {rescue: true}), r = begun.rescue;
     same([r.courseId, clockLeft(r)], [courseId, row], `${kind} at ${courseId}: the whole row is left at the start`);
     const quarter = tickRescue(begun, row / 4, {rescue: true});

@@ -58,3 +58,32 @@ before `rescue` goes on:
   least 60 kg, by moving the search area closer or the hiker's clue earlier,
   not by changing the helicopter's fuel burn.
 Then the frame check over the avalanche (Claude, screens on) and the switch.
+
+
+## Codex findings (26 October 2026): Summit reserve decision needed
+
+Child-margin tuning is built and checked in the rescue-tune lane; rescue stays
+**dev**. Woods clue-grid ends with 159.8 kg, Ridge hoist with 71.2 kg, and all
+six clocks exceed cautious time x 1.25. Details and every changed assertion are
+in docs/changes/RESCUE-FINISH.md. Independent code review is clear; Claude's
+written assertion review and finishing/frame verdict remain.
+
+**Unmet acceptance:** the two Summit missions also start with 400 kg at home.
+Their existing partial truck-refill recipe ends with 35.2 kg (avalanche) and
+45.9 kg (supply). Partial refills do not exempt them from the literal 60 kg rule.
+The lane does not claim those two reserves pass.
+
+Decision: may the existing truck refill plan supply the reserve, instead of
+moving accepted sites? Recommended: at the avalanche pickup truck select
+400 kg; on the supply run use 230 kg for all three loads. A one-off reuse of
+test-heli-summit-tune's same scripted flights, changing only those refill
+targets, completed with **71.3 kg / 23:25.2** and **82.4 kg / 28:18.5**.
+Both retained the existing 35% clock checks, all hooking/hoist/landing checks,
+and an added >=60 kg completion check. No game file or committed flight recipe
+was changed by that experiment. These targets already exist in the real pump.
+
+Alternative: keep the smaller refills and re-slice Summit site placement.
+The current supply yard is within 80 m of the hut and pickup stays below the
+blocked road; moving these enough changes the current placement contract.
+Do not enable rescue or call the full child-margin acceptance complete until
+Claude settles this choice and the chosen route is in the retained recipe.
