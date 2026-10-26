@@ -1,5 +1,6 @@
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {run as finishEvidence} from '../drive-lesson-finish.mjs';
 
 // Ordinary private UI acceptance. No placement, invented instructor/result,
 // state mutation, alternate physics, audio capture or frame measurement.
@@ -15,6 +16,7 @@ async function click(context,selector){
     type,button:'left',clickCount:1,...point});
 }
 export async function run(context){
+  if(process.env.DUEL_LESSON_FINISH==='1')return finishEvidence(context);
   const report={scope:'Actual memory-only Instructor board, native plan, drawn cones/panel and native attempt result. Full three-win/reward acceptance remains the native/host gate responsibility.',
     fixtures:[],captures:[]};
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
