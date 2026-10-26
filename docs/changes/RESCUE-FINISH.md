@@ -131,3 +131,7 @@ Final look/feel verdict and frames before switch-on/release. Review the narrow
 margin in the cautious hiker search, Ridge hoist and Snow fallback supply
 clock; this lane changes no timing or balance numbers. The casualty model
 limitation from part 1 remains. No merge, push or live installation in this lane.
+
+## Claude review (26 October 2026)
+
+Approved: only checks were added; nothing changed or loosened. Merged with rescue still dev; tuning for a child is on the card.

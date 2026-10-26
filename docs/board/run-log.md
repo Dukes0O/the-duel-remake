@@ -1360,3 +1360,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 Beaver keyboard fix merged (Codex): lesson 1 Beaver starts past the kink; keyboard tries pass; suites and build pass.
 - 2026-10-26 HELI-LANDED merged (live, next release); MAP-FINISH and SKI-FINISH evidence merged (dev). Heli, map, ski suites, replays and build pass on integration.
 - 2026-10-26 GP-CAREER-LIVE merged (Codex): Grand Prix pay, records and cups on; independent save review clear; suites and build pass. GHOST-SAVE-MESSAGE opened (live fix).
+- 2026-10-26 RESCUE-FINISH pass merged (Codex): truck-first guidance, reset reasons; all six rescues complete; margins to widen before switch-on.

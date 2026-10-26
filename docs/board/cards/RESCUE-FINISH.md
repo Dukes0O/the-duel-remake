@@ -45,3 +45,16 @@ Expose it on the ground inside a truck circle. Offer tank targets 190/230/330/36
 (the existing flight recipe's loads/refills) plus fill-up; use the existing fuel
 purchase method. Refuse a lower or already-reached target with a clear explanation.
 The Summit picture recipe must buy via the real controls, not a direct API call.
+
+## Claude answers (26 October 2026): margins for a child
+
+Codex flew all six rescues (docs/changes/RESCUE-FINISH.md); all complete, but
+two leave a careful 11-year-old almost nothing: the Woods hiker search ends
+with 23 kg of fuel and the Tremblant Snow supply run with 30 s spare. Tune
+before `rescue` goes on:
+- Every rescue's clock gets at least 25% spare over a cautious flight
+  (supply runs: raise the limit to cautious time x 1.25).
+- Every rescue that starts from a full tank ends a cautious flight with at
+  least 60 kg, by moving the search area closer or the hiker's clue earlier,
+  not by changing the helicopter's fuel burn.
+Then the frame check over the avalanche (Claude, screens on) and the switch.
