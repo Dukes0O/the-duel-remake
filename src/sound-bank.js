@@ -861,6 +861,16 @@ export const CAR_VOICES = {
     exhaust: 0.2,
     intake: 0.1,
   },
+  // Electric fan car: a higher motor whine and strong fan intake, without
+  // petrol exhaust or gear-shift accents, using the same engine layers.
+  mcmurtry_speirling: {
+    pitch: 1.16,
+    brightness: 1.12,
+    gain: 0.94,
+    accent: 0,
+    exhaust: 0,
+    intake: 0.24,
+  },
   titan_monster: {
     pitch: 0.83,
     brightness: 0.76,

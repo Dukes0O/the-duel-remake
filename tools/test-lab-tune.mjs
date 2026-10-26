@@ -170,7 +170,7 @@ const rest = (course, options) => {
   const plain = rest('tremblant-woods', {mode: 'timetrial'});
   same(rest('tremblant-woods', {mode: 'timetrial', flags: ['lab-tuning'], tune: {pressure: 0, wing: 0, brakes: 0, springs: 0, fuel: 0}}), plain,
     'with the switch on, a stock tune: the race and every state number are the same, byte for byte');
-  same(rest('tremblant-woods', {mode: 'timetrial', tune: {pressure: -2, wing: 2, brakes: 2, springs: 2, fuel: 2}}), plain,
+  same(rest('tremblant-woods', {mode: 'timetrial', featureFlags: createFeatureFlags({storage: null, qa: false, search: '', overrides: {'lab-tuning': false}}), tune: {pressure: -2, wing: 2, brakes: 2, springs: 2, fuel: 2}}), plain,
     'with the switch off, any tune: the race is the same, byte for byte');
   ok(rest('tremblant-woods', {mode: 'timetrial', flags: ['lab-tuning'], tune: {wing: 2}}) !== plain, 'with the switch on, a tune changes the race');
   // A lesson run never takes the tune, and neither does a race with the switch off.
