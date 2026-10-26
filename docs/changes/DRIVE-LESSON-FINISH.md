@@ -402,3 +402,12 @@ steering does not, even at 55 mph. A child plays on the keyboard, so this is
 the real question. Next step: Kyle or Gratian try lesson 1 at Beaver once
 with the switch on in a preview, or a design change to the hairpin approach
 (a wider cone gap or a longer straight before the brake cone).
+
+## Claude review of the Beaver fix (26 October 2026)
+
+Approved. The only changed assertion is the Beaver row's start gate and
+offset, which is the design change itself; the added check proves the run-in
+to cone 1 is straight. Keyboard right tries now pass on Casual and Pro and
+late tries run wide. Left open for the go-live: one child playtest, and the
+older sustained-screech goal for the late try (the late try now loses by
+running wide, which teaches the same lesson).
