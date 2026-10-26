@@ -1,15 +1,18 @@
 {
   "schema": 1,
-  "commit": "591d924505dc51e82f20e974a4cf564b905d2449",
-  "time": "2026-10-26T04:52:49.204Z",
+  "commit": "de0555b0c7b00120884236c9b1c598ac16b85e73",
+  "time": "2026-10-26T16:31:45.349Z",
   "tier": "full",
-  "passed": true,
+  "passed": false,
   "dirty": false,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "591d924505dc51e82f20e974a4cf564b905d2449",
+  "endCommit": "de0555b0c7b00120884236c9b1c598ac16b85e73",
   "complete": true,
-  "total": 516,
-  "completed": 516,
-  "failures": []
+  "total": 520,
+  "completed": 520,
+  "failures": [
+    "tools/test-terrain.mjs",
+    "tools/test-map-destinations.mjs"
+  ]
 }

@@ -129,3 +129,23 @@ yeti failure was integration's (GP-CAREER-LIVE), fixed separately. The Glacier
 Hairpin drive result (2 mm past the edge, unchanged without this fix) is
 QA-SUMMIT-GLACIER-EDGE. The scene changed, so the Summit frame check runs
 before release.
+
+## Release full tier follow-up (Claude, 26 October 2026)
+
+The release full tier on de0555b0 (518 passed, 2 failed) found two suites the
+lane tier did not select, both expecting the old Summit ground:
+- `test-terrain`: the far-ground check allowed only practice ground to be
+  continuous. Now it also expects continuous ground for a course whose
+  definition sets `scenery.continuousGround` (Summit only); every other road
+  centre must still omit the far quad, exactly as before.
+- `test-map-destinations`: the six circuits' ground hash. Measured before and
+  after this fix on the same code: the other five circuits are identical; in
+  Summit 3 of the sampled heights differ, by at most 0.17 m, under the filled
+  hillside. The pin moves from 4158709750 to 2149277213, with that note.
+Both are the reviewed, intended change; nothing is loosened.
+
+Frame check, Summit, eight cars, headed, alone, GPU idle (rerun once, rule
+3, after the first High sample aborted on a countdown guard): p95 16.8 ms at
+High and Performance (pass); world build 1,051 / 1,013 ms against the 1 s
+limit (was about 850 / 890 ms). Director decision (rule 18): ships, recorded
+as a warning as on 16 October; SUMMIT-BUILD-TIME-2 brings it back under 1 s.
