@@ -55,7 +55,7 @@ export const passingLateral = (playerLateral, rivalLateral, halfWidth) =>
 // `def` may be an event already in COURSE (found by id) or a definition that is
 // added to COURSE for the length of the run only (tests, never the game).
 export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', cpuDifficulty = DEFAULT_CPU_DIFFICULTY,
-  fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, flags = [], onTick, tune = null, mode = 'duel', stopAfterLaps = 0 } = {}) {
+  fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, flags = [], featureFlags = null, onTick, tune = null, mode = 'duel', stopAfterLaps = 0 } = {}) {
   if(!Array.isArray(flags)||flags.some(flag=>!['tyre-slip','lab-tuning','grand-prix'].includes(flag))) throw Error('Unsupported driver flags.');
   const added = !COURSE.includes(def) && !COURSE.some(item => item.id === def.id);
   if (added) COURSE.push(def);
@@ -63,7 +63,8 @@ export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', 
     const memory = new Map();
     globalThis.localStorage = { getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)), removeItem: key => memory.delete(key) };
     const app = new App();
-    if(flags.length) app.duel.featureFlags=createFeatureFlags({storage:null,qa:false,search:'',overrides:Object.fromEntries(flags.map(flag=>[flag,true]))});
+    if(featureFlags) app.duel.featureFlags=featureFlags;
+    else if(flags.length) app.duel.featureFlags=createFeatureFlags({storage:null,qa:false,search:'',overrides:Object.fromEntries(flags.map(flag=>[flag,true]))});
     const stageIndex = COURSE.findIndex(item => item.id === def.id);
     // The Duel is started directly: a new circuit has no shop price yet, and
     // the course access rules have their own suites.

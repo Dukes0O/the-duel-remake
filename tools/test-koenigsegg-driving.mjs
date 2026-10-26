@@ -17,7 +17,8 @@ for(const [other,spec]of Object.entries(CARS).filter(([other])=>other!==key)){
   const max=upgradedCar(spec,levels);
   check(tuned.topSpeed>max.topSpeed,`${other}: the Jesko is faster even than this fully upgraded car`);
   check(tuned.accel>max.accel,`${other}: the Jesko has more engine acceleration`);
-  check(tuned.braking>max.braking,`${other}: the Jesko has stronger brakes`);
+  // LAB-FAN: the electric fan car has the game's strongest brakes.
+  if(other!=='mcmurtry_speirling')check(tuned.braking>max.braking,`${other}: the Jesko has stronger brakes among petrol cars`);
   check(tuned.grip>=max.grip,`${other}: the Jesko has top-tier corner grip`);
   check(tuned.boostCapacity>max.boostCapacity,`${other}: the Jesko carries a larger nitro tank`);
 }
@@ -81,7 +82,7 @@ for(const car of Object.keys(CARS)){
 }
 const reward=benchmark.find(row=>row.car===key);
 for(const row of benchmark.filter(row=>row.car!==key)){
-  check(reward.brakingMeters<row.brakingMeters,`${row.car}: Jesko stops in less distance from 100 mph`);
+  if(row.car!=='mcmurtry_speirling')check(reward.brakingMeters<row.brakingMeters,`${row.car}: Jesko stops in less distance from 100 mph among petrol cars`);
   // A car with its own enlarged boost tank (the Bolide, EARN-CAR-3, 1.35
   // against the Jesko's 1.4) must only be beaten; every other car, the Enzo
   // included, by the same wide margin as before.
