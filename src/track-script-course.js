@@ -415,6 +415,24 @@ export function trackScriptSolids(course) {
   // After the planted scenery, so the trees stand exactly where they did.
   f.kitSolids = kitSolids(course);
   f.obstacles.push(...f.kitSolids);
+  // A snow shed can have open model bays but still needs a continuous driving
+  // boundary. Add these after scenery so seeded placement stays unchanged.
+  // Keep them out of f.walls: the approved gallery model owns the drawing.
+  for (const gallery of course.def.galleries ?? []) {
+    if (!gallery.solidSides) continue;
+    for (let start = gallery.start; start < gallery.end; start += 4) {
+      const end = Math.min(gallery.end, start + 4), s = (start + end) / 2;
+      for (const side of [-1, 1]) {
+        const off = side * (gallery.width + .45), p = course.worldAt(s, off);
+        const heights = [start, s, end].map(at => course.worldAt(at, off).y);
+        const low = Math.min(...heights) - .1, high = Math.max(...heights) + gallery.height;
+        f.obstacles.push({id:`lining-${gallery.id}-${start}-${side}`,kind:'building',shape:'box',
+          tunnelWall:true,trackWall:true,s,off,x:p.x,y:low,z:p.z,heading:p.heading,
+          halfX:.45,halfZ:(end-start)/2+.1,height:high-low,minY:low,maxY:high,
+          theme:course.themeAt(s)});
+      }
+    }
+  }
   if (lane && course.def.pitLane.kitDivider === true) {
     if (!(course.def.kitPlacements ?? []).some(piece => piece.id === 'pit-wall' && piece.solid === true))
       throw new TrackScriptError('An authored pit divider requires solid pit-wall kits.');
