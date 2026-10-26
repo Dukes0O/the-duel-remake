@@ -13,10 +13,10 @@ export const FEATURE_STATES = Object.freeze({
   'fuel-run': 'on', 'bounty-hunt': 'on', arsenal: 'on', 'salt-flats': 'on',
   'crew-gear': 'on', 'fight-voices': 'on', 'cpu-crews': 'on', 'ambush-alley': 'on', gunn: 'on',
   // Phase 4 (docs/CIRCUITS.md): racing a full field in a Grand Prix.
-  'tyre-slip': 'dev',
+  'tyre-slip': 'on',
   // Engines that pull like real ones (docs/DRIVING_LESSONS.md 12.5): the pull follows revs and the gear. Off in the game.
   'engine-curve': 'dev',
-  'driving-lessons': 'dev',
+  'driving-lessons': 'on',
   'lap-choice': 'on', 'snowmen': 'on', yeti: 'on', 'rival-voices': 'dev',
   'grand-prix': 'on', 'cpu-racecraft': 'on', 'grand-prix-career': 'on', 'snow-world': 'dev',
   // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.
@@ -30,16 +30,17 @@ export const FEATURE_STATES = Object.freeze({
   'forest-fire': 'on',
   // Earned cars and medal sheets (docs/EARNED_CARS.md). Off in the game.
   'earned-cars': 'dev',
-  // H4 Rescue (docs/HELI_RESCUE.md): rescues in the mission engine. Off in the game; works only with the helicopter on.
-  rescue: 'dev',
+  // H4 Rescue (docs/HELI_RESCUE.md): rescues in the mission engine. Released 26 October 2026; works only with the helicopter on.
+  rescue: 'on',
   // H3 Wildlife (docs/HELI_WILDLIFE.md): animals beside the road, and the wildlife count when the helicopter is on. Off in the game.
   wildlife: 'dev',
   // H3 Skins (docs/HELI_WILDLIFE.md): mission skins, gear, dirt and the wash. Off in the game; works only with the helicopter on.
   // Named heli-skins, not heliSkins as the packet says: switch names are lower case with hyphens.
   'heli-skins': 'dev',
-  'heli-logbook': 'dev',
-  // H5 Heli-skiing (docs/HELI_SKIING.md): the ski rules, runs and drops. Off in the game; works only with the helicopter on and Summit Run owned.
-  'heli-skiing': 'dev',
+  // Pilot ranks, flight log and rank paints. Released 26 October 2026.
+  'heli-logbook': 'on',
+  // H5 Heli-skiing (docs/HELI_SKIING.md): the ski rules, runs and drops. Released 26 October 2026; works only with the helicopter on and Summit Run owned.
+  'heli-skiing': 'on',
   // The Lab (docs/LAB.md): lessons, upgrades and their save field. Off in the game.
   lab: 'on',
   'lab-2': 'on',
