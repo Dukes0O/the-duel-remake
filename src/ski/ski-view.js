@@ -129,7 +129,7 @@ export function loadingCardMarkup(run, {snow = null} = {}) {
   const tips = run.run === 'aerials' ? ['Hold down Shift to tuck on the inrun.', ...aerialsTips()] : [RUN_TIPS[run.run]].filter(Boolean);
   const snowLine = snow ? `<p class="ski-snow">Today's snow: ${escape(snow.name)}, ${Math.round(snow.celsius)} °C${run.pick ? ` · wax ${escape(run.pick)}` : ''}</p>` : '';
   return `<section class="ski-card ski-loading" aria-label="${escape(run.name)}"><small>HELI-SKIING · ${escape(run.name.toUpperCase())}</small>
-    ${snowLine}${targetsMarkup(run.limits)}<ul class="ski-tips">${tips.map(tip => `<li>${escape(tip)}</li>`).join('')}</ul>
+    ${run.run === 'slalom' ? `<p>${run.difficulty === 'casual' ? 'Casual: line assist on' : 'Pro: no line assist'}</p>` : ''}${snowLine}${targetsMarkup(run.limits)}<ul class="ski-tips">${tips.map(tip => `<li>${escape(tip)}</li>`).join('')}</ul>
     <p class="ski-go">${run.kind === 'free' ? 'Any way down to the green circle' : 'The clock starts at the start line'}</p></section>`;
 }
 

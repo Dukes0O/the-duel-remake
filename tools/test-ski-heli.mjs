@@ -8,8 +8,11 @@ import {armMissions} from '../src/heli/heli-missions.js';
 import {setMissions, createMissions, heliOf, skiOf} from '../src/heli/heli-save.js';
 import {KESTREL, airFactor, heliMass, createHeliState, stepHeli} from '../src/heli/heli-flight.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
-import {createSkiRun, stepSkiRun, skiRunView, SKI_PADS, SKI_RUN_IDS, skiControls} from '../src/ski/ski-session.js';
+import {createSkiRun, stepSkiRun, skiRunView, SKI_PADS, SKI_RUN_IDS, skiControls, skiLineAssist} from '../src/ski/ski-session.js';
 import {skiZone, zoneGuide, SKI_ALTITUDES, altitudeOf} from '../src/ski/runs/summit-zones.js';
+import {SKI, SKI_STEP, createSkier, stepSkier} from '../src/ski/ski-physics.js';
+import {keyboardDriver} from './scenarios/ski-finish.mjs';
+import {skiKeys} from '../src/ski/ski-view.js';
 import {GUIDE} from '../src/ski/ski-guide.js';
 import {snowOfDay, WAXES} from '../src/lab/benches/wax.js';
 import {passLesson, labOf} from '../src/lab/lab-save.js';
@@ -583,4 +586,49 @@ test('a ski run: every run starts, finishes and ends at the pickup; the same con
   assert.deepEqual(Object.keys(slalom.limits).sort(), ['bronze', 'gold', 'kind', 'silver']); assert.ok(slalom.ghost); assert.ok(slalom.group.guests.length === 4);
   assert.equal(skiRunView(createSkiRun({runId: 'powder', group: true})).group, null, 'powder has no guide to follow');
   assert.deepEqual(SKI_RUN_IDS, ['slalom', 'gs', 'moguls', 'aerials', 'powder']);
+});
+
+
+test('Casual slalom assist is bounded, fades against input, and is off in air, tumbles, Pro and other runs', () => {
+  const r = createSkiRun({runId: 'slalom', difficulty: 'casual'});
+  r.skier.x = 10;
+  const full = skiLineAssist(r);
+  assert.ok(full > 0 && full <= 1 / 3);
+  assert.equal(skiLineAssist(r, -1), 0, 'full opposite input wins');
+  assert.equal(skiLineAssist(r, -0.5), full / 2, 'analogue opposition fades linearly');
+  r.skier.grounded = false; assert.equal(skiLineAssist(r), 0);
+  r.skier.grounded = true; r.skier.tumble = 1; assert.equal(skiLineAssist(r), 0);
+  r.skier.tumble = 0; r.difficulty = 'pro'; assert.equal(skiLineAssist(r), 0);
+  r.difficulty = 'casual'; r.crossing.next = r.zone.gates.length; assert.equal(skiLineAssist(r), 0);
+  for (const runId of ['gs', 'moguls', 'aerials', 'powder']) assert.equal(skiLineAssist(createSkiRun({runId, difficulty: 'casual'})), 0);
+  const world = {ground: () => 0};
+  for (const tuck of [false, true]) {
+    const a = createSkier({world, speed: 20}), b = createSkier({world, speed: 20});
+    stepSkier(a, {tuck, lineAssist: 99}, world);
+    stepSkier(b, {tuck}, world);
+    const max = a.speed / (SKI.carveRadius * Math.cos(tuck ? SKI.tuckEdge : SKI.maxEdge)) * SKI_STEP / 3;
+    assert.ok(Math.abs(a.heading - b.heading) <= max + 1e-12, 'at most one third of the current stance full carve');
+    assert.equal(a.speed, b.speed, 'assist chooses no speed');
+    assert.equal(a.edge, b.edge, 'assist does not replace the player edge');
+  }
+});
+
+test('keyboard Casual meets the three-miss target; difficulty limits and repeated inputs agree', () => {
+  const play = (difficulty, practice) => {
+    const r = createSkiRun({runId: 'slalom', difficulty}), drive = keyboardDriver(r.zone, {practice});
+    for (let i = 0; i < 120 * 120 && !r.result; i++) stepSkiRun(r, skiKeys(drive(skiRunView(r), r.t)));
+    return r;
+  };
+  const steady = play('casual', false), practised = play('casual', true), pro = play('pro', true);
+  assert.ok(steady.result && steady.result.missed <= 3, 'steady Casual finishes with at most three misses');
+  assert.equal(steady.result.medal, 1, 'first steady attempt earns bronze');
+  assert.equal(practised.result.missed, 0, 'practised Casual is clean');
+  assert.equal(practised.result.medal, 2, 'gold needs improvement over the practised baseline');
+  assert.equal(pro.result.missed, 2, 'Pro retains its unassisted keyboard outcome');
+  assert.equal(pro.result.medal, 2);
+  for (const [difficulty, practice] of [['casual', false], ['casual', true], ['pro', true]]) {
+    const a = play(difficulty, practice), b = play(difficulty, practice), limits = skiRunView(a).limits;
+    assert.deepEqual(a.result, b.result, 'same difficulty and keys repeat');
+    assert.equal(a.result.medal, a.result.time <= limits.gold ? 3 : a.result.time <= limits.silver ? 2 : a.result.time <= limits.bronze ? 1 : 0);
+  }
 });

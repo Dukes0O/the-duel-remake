@@ -231,10 +231,18 @@ export function zoneGuide(id) {
   return guides.get(id);
 }
 
+// SKI-FINISH: measured keyboard times, including the unchanged missed-gate penalties.
+// Casual bronze is steady +10%, gold practice -1%; Pro uses its practised baseline.
+const SLALOM_MEDALS = freezeDeep({
+  casual: {gold: 19.54, silver: 28.71, bronze: 37.88},
+  pro: {gold: 30.29, silver: 31.97, bronze: 33.65},
+});
+
 // What earns a medal on a zone: times for the timed runs, points for the
 // judged ones, nothing for powder.
-export function medalLimits(id) {
+export function medalLimits(id, difficulty = 'pro') {
   const zone = skiZone(id);
+  if (id === 'slalom') return {kind: 'time', ...SLALOM_MEDALS[difficulty === 'casual' ? 'casual' : 'pro']};
   if (zone.scoring.kind === 'timed') {
     const times = medalTimes(zoneGuide(id).time);
     if (zone.scoring.bronzeSlower !== undefined) times.bronze = times.gold * (1 + zone.scoring.bronzeSlower);

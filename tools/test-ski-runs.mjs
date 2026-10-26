@@ -136,7 +136,10 @@ for (const [id, gates, length, drop, spacing] of [['slalom', 33, 450, 180, [13, 
   ok(run.clock > 0.9 * full.bestTime - 3 && run.clock < full.bestTime, `${id}: from the start line to the finish line (${run.clock.toFixed(1)} s of ${full.bestTime.toFixed(1)} s)`);
   near(guide.time, full.time, 1e-6, `${id}: the cached guide is the same run`);
   const limits = medalLimits(id);
-  same([limits.kind, limits.gold, limits.silver / limits.gold, limits.bronze / limits.gold], ['time', guide.time, 1.08, id === 'gs' ? 1.25 : 1.18], `${id}: medal times from the guide with GS bronze +25%`);
+  if (id === 'slalom') {
+    same(limits, {kind: 'time', gold: 30.29, silver: 31.97, bronze: 33.65}, 'slalom: measured Pro targets');
+    same(medalLimits(id, 'casual'), {kind: 'time', gold: 19.54, silver: 28.71, bronze: 37.88}, 'slalom: measured Casual targets');
+  } else same([limits.kind, limits.gold, limits.silver / limits.gold, limits.bronze / limits.gold], ['time', guide.time, 1.08, 1.25], 'GS: guide targets unchanged');
   same([timedMedal(guide.time, guide.time), timedMedal(guide.time * 1.05, guide.time), timedMedal(guide.time * 1.15, guide.time), timedMedal(guide.time * 1.25, guide.time)], [3, 2, 1, 0], `${id}: gold, silver, bronze, none`);
   // The wider slalom openings overlap the centre; GS still demands alternating turns.
   const straight = createTimedRun({start: zone.start, finish: zone.finish, gates: zone.gates});

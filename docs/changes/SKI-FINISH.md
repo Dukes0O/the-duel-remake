@@ -383,3 +383,70 @@ QA-SUMMIT-GLACIER-EDGE as lacking a Cockpit task. Leave that task mapping to
 the Director. Session raw captures, reports, gate/build logs and generated
 QA/production builds were recycled after the verdict and sheet were saved.
 Only current recipe, source, notes and compact picture sheet remain.
+
+## Casual line assist (Claude, 26 October 2026)
+
+Merged integration first: only STATUS and card text conflicted. Kept ours
+for STATUS and retained both card entries. No code conflict, including the
+automatically merged helicopter UI. Design before code: Casual only, slalom
+only, on snow without a tumble, while the next gate is ahead.
+Ease heading toward its gap, capped at one third of the full carve rate
+available in the current stance. Fade linearly with opposing player turn;
+full opposite input disables it. Never change speed, edge inputs, snow,
+layout, guide pace, penalties or airborne rotations. Pro remains unassisted.
+
+Thread selected game difficulty through App -> helicopter session -> ski
+run, menu limits and restart. It is independent of helicopter assisted/real
+flight mode. Legacy pure callers default Pro so only explicit Casual opts in.
+Measure unchanged 150/50 ms keyboard runs for Casual and Pro; preserve the
+second layout and next-pole glow. Medal calculation awaits measured times;
+Pro bronze's baseline was not stated in Claude's three-attempt recipe, so
+that small choice has been put to Kyle while implementation proceeds.
+
+Checks: bounded/fading/off-air/off-tumble assist, unchanged Pro baseline and
+repeatability; correct menu/restart difficulty and matching result limits;
+same memory-only browser recipe; existing ski suites in lane jobs4, build.
+No frame timing. No save shape, key, runtime dependency or asset change.
+
+The release hold interrupted this draft before its gates. On resume, merged
+the newly released integration first, without any conflict. No draft changes
+were lost. Limit the new assist and medal calibration to the slalom named in
+Claude's answer; GS and the judged/free runs retain their prior rules.
+The assist reaches its one-third cap at a 3-degree heading error and eases
+linearly below that. Initial 25-degree and 5-degree response drafts left
+9 and 4 steady misses; neither was accepted or gated. The cap, opposite-input
+fade and all other physics stayed fixed. Final Casual steady/practice are
+34.4333 s (24.4333 raw, 2 misses) / 19.7417 s (0 misses); Pro practice
+30.5917 s (20.5917 raw, 2 misses), exactly its prior unassisted result.
+
+Medal design settled: Casual bronze = steady penalised time *1.10; gold =
+practice *0.99; silver midpoint. For Pro, the card requests only practice,
+so use that measured Pro practice as its bronze baseline (*1.10), with gold
+*0.99 and silver midpoint. This optional choice was put to Kyle before the
+release interruption; no answer arrived, so continue with the stated
+recommended choice. Round targets to hundredths. Casual bronze/silver/gold:
+37.88 / 28.71 / 19.54 s; Pro: 33.65 / 31.97 / 30.29 s. Medal limits affect
+only the slalom; other run targets and all save keys/record shapes remain as
+before. Existing career bests/medals stay shared; no progress is wiped or
+hidden. The loading card names the difficulty and whether assist is on.
+
+Changed assertions in this assist pass: replace only the slalom's former
+"gold=guide, silver=+8%, bronze=+18%" zone assertion with the measured
+Pro target table and a new Casual table. Retain the GS guide/+8%/+25%
+assertion, all layout/guide clean-pass checks and default `timedMedal` unit
+assertions. New behavioural tests cover cap and fade, no air/tumble/Pro or
+other-run assist, no forced speed or edge, deterministic keyboard runs,
+Casual <=3 misses/bronze, clean practice/silver and unchanged two-miss Pro
+practice/silver. View tests add difficulty labels, App-to-session difficulty,
+menu/run limit agreement and restart retention. No old tolerance or replay
+fingerprint is relaxed. New browser checks verify difficulty immediately at
+step-out, retain the check while a run exists, and use the normal game
+settings API. The first draft wrongly checked for a live run after powder
+had naturally ended; it failed there despite correct slalom measurements.
+Corrected the lifecycle location and reran; do not count that first packet
+as a browser pass. No keyboard controller or interval changed.
+
+Removed: slalom guide-based medal selection is replaced by per-difficulty
+limits. No alternate physics path, old layout, save migration, asset or new
+runtime dependency was added. Shared best/medal records and pay remain on
+the existing save path; only the current run's criteria change.

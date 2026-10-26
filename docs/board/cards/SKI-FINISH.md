@@ -111,3 +111,21 @@ practised runs on Casual (target: steady misses at most 3) and practised on
 Pro, and set the medals per difficulty from those runs (bronze about 10% over
 the steady clean run, gold just under the practised run). Keep the second
 layout and the glowing poles.
+
+
+## Codex Casual assist implementation (26 October 2026)
+
+Casual slalom heading assist caps at one third of the stance's full carve,
+fades against input and is off in air, tumbles, Pro, after the last gate and
+on other runs. The selected game difficulty reaches the menu, run and
+restart independently of helicopter flight mode. Layout, glow, speed keys,
+penalties, guide and save shape stay as before.
+
+Unchanged keyboard proxy: Casual steady 34.43 s, two misses (bronze);
+Casual practice 19.74 s, zero misses (silver); Pro practice 30.59 s, two
+misses (silver). Gold is 1% below the practised time. Casual bronze is steady
++10%; Pro bronze uses the only requested Pro baseline, practice +10%; silver
+is midway. Targets bronze/silver/gold: Casual 37.88/28.71/19.54 s; Pro
+33.65/31.97/30.29 s. The Pro bronze convention and every assertion change
+are explicit in the change note for Claude's review. Feature stays dev;
+no merge out or release is requested by this lane.

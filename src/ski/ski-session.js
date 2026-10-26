@@ -23,8 +23,8 @@ export const SKI_PADS = SUMMIT_PADS;
 export {SKI_RUN_IDS};
 export const skiRunPad = id => skiZone(id).pad;
 export const skiRunName = id => skiZone(id).name;
-export const skiRunLimits = id => medalLimits(id);
-export const skiRunFingerprint = run => `${run.runId}|${run.t.toFixed(4)}|${skierFingerprint(run.skier)}|${run.started}|${run.finished}`;
+export const skiRunLimits = (id, difficulty) => medalLimits(id, difficulty);
+export const skiRunFingerprint = run => `${run.runId}|${run.difficulty}|${run.t.toFixed(4)}|${skierFingerprint(run.skier)}|${run.started}|${run.finished}`;
 
 const isRunId = id => typeof id === 'string' && Object.hasOwn(RUN_KINDS, id);
 const num = value => Number.isFinite(value) ? value : 0;
@@ -39,7 +39,7 @@ export function skiControls(controls) {
 }
 
 // wax: null, 'right' or 'wrong' (the ski rules' three frictions). group: the guide and guests ski beside the player.
-export function createSkiRun({runId, wax = null, group = false} = {}) {
+export function createSkiRun({runId, wax = null, group = false, difficulty = 'pro'} = {}) {
   if (!isRunId(runId)) throw new Error(`Not a ski run: ${runId}`);
   const zone = skiZone(runId), kind = RUN_KINDS[runId], first = zone.line[0], next = zone.line[1];
   const skier = createSkier({x: first.x, z: first.z, heading: Math.atan2(next.x - first.x, next.z - first.z), world: zone,
@@ -48,9 +48,19 @@ export function createSkiRun({runId, wax = null, group = false} = {}) {
   const crossing = kind === 'timed' ? createTimedRun({start: zone.start, finish: zone.finish, gates: zone.gates})
     : kind === 'judged' ? createTimedRun({start: zone.start, finish: zone.finish, gates: []}) : null;
   const guide = kind === 'free' ? null : zoneGuide(runId);
-  return {runId, kind, zone, skier, crossing, guide, judged: kind === 'judged' ? createJudgedRun(runId, judgedConfig(runId)) : null,
+  return {runId, kind, difficulty: difficulty === 'casual' ? 'casual' : 'pro', zone, skier, crossing, guide, judged: kind === 'judged' ? createJudgedRun(runId, judgedConfig(runId)) : null,
     group: group === true && guide !== null, wax: skier.wax, t: 0, started: false, finished: false, result: null, stashes: [],
     still: 0, ended: false, out: false};
+}
+
+// A/D still set the edge; this small heading correction never chooses speed.
+export function skiLineAssist(run, turn = 0) {
+  const s = run.skier, gate = run.zone.gates[run.crossing?.next];
+  if (run.runId !== 'slalom' || run.difficulty !== 'casual' || run.finished || !s.grounded || s.tumble > 0 || !gate || gate.left.z <= s.z) return 0;
+  const aim = Math.atan2(gate.centre - s.x, gate.left.z - s.z);
+  const error = Math.atan2(Math.sin(aim - s.heading), Math.cos(aim - s.heading));
+  const fade = turn * error > 0 ? 1 - Math.abs(turn) : 1;
+  return -clamp(error / (3 * Math.PI / 180), -1, 1) * fade / 3;
 }
 
 // One fixed step (1/120 s). Returns the events: the skier's (skiPop, skiLand, skiTumble, skiCarve, skiSkid) and the run's
@@ -59,7 +69,9 @@ export function stepSkiRun(run, controls, dt = SKI_STEP) {
   if (run.ended) return [];
   const events = [], zone = run.zone, skier = run.skier;
   const from = {x: skier.x, z: skier.z};
-  const stepped = stepSkier(skier, skiControls(controls), zone, dt);
+  const input = skiControls(controls);
+  input.lineAssist = skiLineAssist(run, input.turn);
+  const stepped = stepSkier(skier, input, zone, dt);
   run.t += dt;
   // The zone is walled in: leaving its edge puts the skier back on it, with no speed into the wall.
   const b = zone.bounds, x = clamp(skier.x, b.minX, b.maxX), z = clamp(skier.z, b.minZ, b.maxZ);
@@ -99,7 +111,7 @@ export function stepSkiRun(run, controls, dt = SKI_STEP) {
 }
 
 function timedResult(run, finish) {
-  const time = finish.time, limits = medalLimits(run.runId);
+  const time = finish.time, limits = medalLimits(run.runId, run.difficulty);
   return {kind: 'time', run: run.runId, time, raw: finish.raw, missed: finish.missed, medal: time <= limits.gold ? 3 : time <= limits.silver ? 2 : time <= limits.bronze ? 1 : 0};
 }
 function judgedResult(run) {
@@ -125,9 +137,9 @@ function groupFigures(run) {
 // A read-only picture for the drawing and the cards (nothing here changes the run).
 export function skiRunView(run) {
   const zone = run.zone, skier = run.skier;
-  const limits = medalLimits(run.runId);
+  const limits = medalLimits(run.runId, run.difficulty);
   return Object.freeze({
-    run: run.runId, name: zone.name, kind: run.kind, pad: zone.pad, world: zone.world, bounds: zone.bounds, pickup: zone.pickup,
+    run: run.runId, difficulty: run.difficulty, name: zone.name, kind: run.kind, pad: zone.pad, world: zone.world, bounds: zone.bounds, pickup: zone.pickup,
     t: run.t, started: run.started, finished: run.finished, ended: run.ended, out: run.out,
     clock: run.crossing ? run.crossing.clock : 0, missed: run.crossing ? run.crossing.missed : 0, passed: run.crossing ? run.crossing.passed : 0,
     nextGate: run.crossing ? run.crossing.next : 0, wax: run.wax,

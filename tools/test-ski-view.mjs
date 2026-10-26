@@ -55,6 +55,8 @@ test('the cards: the loading tips (all six aerials tips), the targets, the resul
   const aerials = loadingCardMarkup(view('aerials'), {snow: {name: 'Packed powder', celsius: -8}});
   for (const tip of aerialsTips()) assert.ok(aerials.includes(tip.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')), 'an aerials tip');
   assert.ok(aerials.includes('Packed powder, -8 °C · wax hard'), 'the day\'s snow and the pick');
+  assert.ok(loadingCardMarkup(view('slalom')).includes('Pro: no line assist'));
+  assert.ok(loadingCardMarkup({...view('slalom'), difficulty: 'casual'}).includes('Casual: line assist on'));
   assert.ok(loadingCardMarkup(view('moguls')).includes('Moguls form by themselves where many skiers turn in the same places'), 'the moguls tip');
   assert.ok(/GOLD<\/b> 0:\d\d\.\d\d/.test(loadingCardMarkup(view('slalom'))), 'timed targets as times');
   assert.ok(loadingCardMarkup(view('moguls')).includes('<b>GOLD</b> 70 pts'), 'moguls judged targets as points');
@@ -172,6 +174,7 @@ test('in the App: the ski keys drive the run, C and H change only the view, and 
     app.profile = {...app.profile, credits: 2000, courses: {version: 1, unlocked: ['tremblant-woods', 'summit-run']},
       heli: {version: 1, fuelKg: 400, lessons: {liftoff: true, hover: true, landing: true, carry: true}, refuels: 3}};
     app._saveProfile();
+    app.setRaceSettings({difficulty: 'casual'});
     assert.ok(app.visitHeli(), 'the visit starts');
     const session = app.heliSession;
     assert.ok(session.skiBoard(), 'the ski board is open (the switch reaches the session)');
@@ -193,8 +196,12 @@ test('in the App: the ski keys drive the run, C and H change only the view, and 
     const before = session.fingerprint();
     app._inputAction('heli-camera'); app._inputAction('heli-hook');
     assert.equal(session.fingerprint(), before, 'C and H on the pad still belong to the helicopter, and change nothing in flight here');
+    const menuLimits = session.skiOffers().runs.find(run => run.id === 'slalom').limits;
     assert.equal(app.heliSki('stepOut', 'slalom', {wax: null}).ok, true, 'step out onto the slalom');
     assert.equal(session.phase, 'skiing');
+    assert.equal(session.view().ski.run.difficulty, 'casual', 'the selected game difficulty reaches skiing');
+    assert.deepEqual(session.view().ski.run.limits, menuLimits, 'menu and run show the same targets');
+    assert.equal(session.view().ski.run.limits.bronze, 37.88, 'the run uses Casual targets');
     assert.deepEqual([app.skiCamera, app.skiHelp], [0, false], 'a new run starts on the chase camera with the help shut');
     const skiing = session.fingerprint();
     app._inputAction('heli-camera'); app._inputAction('heli-hook'); app._inputAction('heli-autopilot'); app._inputAction('heli-cruise');
@@ -212,6 +219,8 @@ test('in the App: the ski keys drive the run, C and H change only the view, and 
     assert.equal(session.fingerprint(), skiing, 'drawing the run, its HUD and the panel changes nothing');
     assert.ok(host.made.some(node => node.className === 'ski-hud' && node.hidden === false), 'the run HUD shows');
     ui.dispose(); zone.dispose();
+    assert.equal(session.restartSkiRun().ok, true);
+    assert.equal(session.view().ski.run.difficulty, 'casual', 'restart keeps the difficulty');
     // The keys: W skates off, then D turns right (the heading falls).
     app.keys = {KeyW: true};
     for (let i = 0; i < 60 * 3; i++) app._simulate(1 / 60);

@@ -184,6 +184,10 @@ function stepGround(skier, controls, world, dt, events, popPressed) {
   const ease = Math.min(1, Math.abs(skier.edge) / SKI.edgeEaseUntil);
   let rate = sign * ease * speed / (SKI.carveRadius * Math.cos(skier.edge));
   if (!tumbling && speed < SKI.skateBelow) rate += turn * SKI.skateTurn * (1 - speed / SKI.skateBelow);
+  // Casual gate assist is supplied only by the run, never by the renderer.
+  if (!tumbling && Number.isFinite(controls.lineAssist)) {
+    rate += clamp(controls.lineAssist, -1 / 3, 1 / 3) * speed / (SKI.carveRadius * Math.cos(limit));
+  }
   const half = skier.heading - rate * dt / 2;
   skier.heading -= rate * dt;
 
