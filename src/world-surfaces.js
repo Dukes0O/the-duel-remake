@@ -154,24 +154,28 @@ export function terrainGeometry(course) {
     // Bury the whole lower edge, including between grid diagonals. Sampling
     // only its endpoints can leave air where the backing drops between them.
     const floor=Math.min(...course.samples.map(p=>p.y))-256;
-    for(const side of [-1,1])for(let s=terrainStep;s<course.length;s+=terrainStep){
-      const points=[ribbonGroundAt(course,s-terrainStep,side*64),ribbonGroundAt(course,s,side*64)];
-      // An outer edge can fold across a lower hairpin. Never drop a wall
-      // through that road (or the Gallery's parallel open branch).
-      let crossesRoad=false;
-      for(let t=0;t<=1;t+=.125){
-        const x=points[0].x+(points[1].x-points[0].x)*t,z=points[0].z+(points[1].z-points[0].z)*t;
-        const near=course.nearest(x,z);
-        if(near.distance<course.roadHalfWidthAt(near.s)+8||course.surfaceAt(near.s,near.lateral).road){crossesRoad=true;break;}
+    for(const side of [-1,1]){
+      let previous=ribbonGroundAt(course,0,side*64);
+      for(let s=terrainStep;s<course.length;s+=terrainStep){
+        const next=ribbonGroundAt(course,s,side*64),points=[previous,next];
+        previous=next;
+        // An outer edge can fold across a lower hairpin. Never drop a wall
+        // through that road (or the Gallery's parallel open branch).
+        let crossesRoad=false;
+        for(let t=0;t<=1;t+=.125){
+          const x=points[0].x+(points[1].x-points[0].x)*t,z=points[0].z+(points[1].z-points[0].z)*t;
+          const near=course.nearest(x,z);
+          if(near.distance<course.roadHalfWidthAt(near.s)+8||course.surfaceAt(near.s,near.lateral).road){crossesRoad=true;break;}
+        }
+        if(crossesRoad)continue;
+        const start=v.length/3,style=terrainStyleAt(course,s);
+        for(const p of points)for(const y of [p.y,floor]){
+          v.push(p.x,y,p.z);uv.push(p.x/22,p.z/22);weights.push(...style.weights);colors.push(style.color.r,style.color.g,style.color.b);
+        }
+        const indices=groups[TERRAIN_THEMES.indexOf(course.themeAt(s))];
+        if(side<0)indices.push(start,start+1,start+2,start+2,start+1,start+3);
+        else indices.push(start+2,start+1,start,start+3,start+1,start+2);
       }
-      if(crossesRoad)continue;
-      const start=v.length/3,style=terrainStyleAt(course,s);
-      for(const p of points)for(const y of [p.y,floor]){
-        v.push(p.x,y,p.z);uv.push(p.x/22,p.z/22);weights.push(...style.weights);colors.push(style.color.r,style.color.g,style.color.b);
-      }
-      const indices=groups[TERRAIN_THEMES.indexOf(course.themeAt(s))];
-      if(side<0)indices.push(start,start+1,start+2,start+2,start+1,start+3);
-      else indices.push(start+2,start+1,start,start+3,start+1,start+2);
     }
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
@@ -189,7 +193,13 @@ export function farTerrainGeometry(course) {
   const minX=Math.floor((Math.min(...route.map(p=>p.x))-extent)/grid)*grid,maxX=Math.max(...route.map(p=>p.x))+extent;
   const minZ=Math.floor((Math.min(...route.map(p=>p.z))-extent)/grid)*grid,maxZ=Math.max(...route.map(p=>p.z))+extent;
   const columns=Math.ceil((maxX-minX)/grid)+1,rows=Math.ceil((maxZ-minZ)/grid)+1;
-  const v=[],uv=[],colors=[],weights=[],distances=[],groups=TERRAIN_THEMES.map(()=>[]),base=new THREE.Color(groundTint(course)),col=new THREE.Color();
+  // The rectangular grid's size is known: write the final buffers directly,
+  // rounding each attribute to Float32 exactly as the old final copy did.
+  const count=columns*rows;
+  const v=new Float32Array(count*3),uv=new Float32Array(count*2);
+  const colors=new Float32Array(count*3),weights=new Float32Array(count*3);
+  const distances=new Float64Array(count),groups=TERRAIN_THEMES.map(()=>[]);
+  const base=new THREE.Color(groundTint(course)),col=new THREE.Color();
   // The corners as computed, before the hidden-road cut and the muddy-hollow fit move any of them: the height reader wants these.
   const heights=new Float32Array(columns*rows);
   const gap=course.def.arena?18:(course.def.expansion||course.def.terrainHalfWidth===64)?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80;
@@ -198,14 +208,30 @@ export function farTerrainGeometry(course) {
     const a=route[index-1],b=route[index],dx=b.x-a.x,dz=b.z-a.z,px=x-a.x-t*dx,pz=z-a.z-t*dz;
     const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
     const wave=Math.sin(roadS*.012+off*.017)*Math.cos(roadS*.004-off*.031);
-    const cornerY=farTerrainCornerHeight(naturalCourse,x,z,roadS,off,grid);heights[j*columns+i]=cornerY;v.push(x,cornerY,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
-    const style=terrainStyleAt(course,roadS);weights.push(style.weights[0],style.weights[1],style.weights[2]);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));const trap=gravelWeights(course,roadS,off);fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);woodland(course,col,roadS,off);gravelTrap(course,col,trap);colors.push(col.r,col.g,col.b);
+    const k=j*columns+i,cornerY=farTerrainCornerHeight(naturalCourse,x,z,roadS,off,grid);
+    heights[k]=cornerY;v[k*3]=x;v[k*3+1]=cornerY;v[k*3+2]=z;
+    uv[k*2]=x/22;uv[k*2+1]=z/22;distances[k]=Math.sqrt(best);
+    const style=terrainStyleAt(course,roadS);
+    weights[k*3]=style.weights[0];weights[k*3+1]=style.weights[1];weights[k*3+2]=style.weights[2];
+    base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));
+    const trap=gravelWeights(course,roadS,off);
+    fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);
+    woodland(course,col,roadS,off);gravelTrap(course,col,trap);
+    colors[k*3]=col.r;colors[k*3+1]=col.g;colors[k*3+2]=col.b;
     if(i&&j){const a=j*columns+i,k0=a-columns-1,k1=a-1,k2=a-columns;
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
       if(course.def.scenery?.continuousGround||distances[k0]>gap&&distances[k1]>gap&&distances[k2]>gap&&distances[a]>gap)groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(k0,k1,k2,k2,k1,a);
     }
   }
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);fitDeepRampGround(g,course);computeNormalsFast(g);seedFarTerrain(course,grid,Math.round(minX/grid),Math.round(minZ/grid),columns,rows,heights,distances);return g;
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(v,3));
+  g.setAttribute('uv',new THREE.BufferAttribute(uv,2));
+  g.setAttribute('color',new THREE.BufferAttribute(colors,3));
+  g.setAttribute('biomeWeights',new THREE.BufferAttribute(weights,3));
+  setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);
+  fitMuddyHollowGround(g,course,-.15);fitDeepRampGround(g,course);computeNormalsFast(g);
+  seedFarTerrain(course,grid,Math.round(minX/grid),Math.round(minZ/grid),columns,rows,heights,distances);
+  return g;
 }
 
 // Coarse radial/grid triangles bridge across a narrow wash. Replace only
@@ -396,7 +422,21 @@ export function hiddenRoadGroundGeometry(course) {
   geometry.setIndex(indices); geometry.computeVertexNormals(); return geometry;
 }
 
-function setMaterialGroups(geometry,groups){const indices=[];groups.forEach((group,material)=>{geometry.addGroup(indices.length,group.length,material);for(const index of group)indices.push(index);});geometry.setIndex(indices);}
+function setMaterialGroups(geometry,groups){
+  let count=0,maxIndex=0;
+  for(const group of groups){
+    count+=group.length;
+    for(const index of group)if(index>maxIndex)maxIndex=index;
+  }
+  // Match Three's setIndex(array) choice, including its reserved 65535 value.
+  const indices=maxIndex>=65535?new Uint32Array(count):new Uint16Array(count);
+  let offset=0;
+  groups.forEach((group,material)=>{
+    geometry.addGroup(offset,group.length,material);
+    indices.set(group,offset);offset+=group.length;
+  });
+  geometry.setIndex(new THREE.BufferAttribute(indices,1));
+}
 
 const groundMaps = new Map();
 let meadowMap;
