@@ -101,15 +101,14 @@ tasks:
     details: "docs/board/cards/HELI-RETURN-LOADS.md"
 
   - id: HELI-LOGBOOK
-    title: "Kestrel One's logbook: ranks and Gus's pages (story draft for Kyle and Gratian)"
-    owner: "claude"
-    lane: "DESIGN"
+    title: "Kestrel One's logbook: real pilot ranks, Gus's pages, a paint per rank"
+    owner: "codex"
+    lane: "SIM"
     size: "S"
-    status: "backlog"
-    waiting_on: kyle
-    needs: []
+    status: "ready"
+    needs: [HELI-RETURN-LOADS]
     locks: []
-    flag: "helicopter"
+    flag: "heli-logbook"
     details: "docs/board/cards/HELI-LOGBOOK.md"
 
   - id: QA-DEEP-LIFE-TIMING
