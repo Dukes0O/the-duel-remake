@@ -11,10 +11,87 @@ export const CORNERS = Object.freeze([
   {name: 'Wind tunnel', x: -8, z: 6}, {name: 'Snow', x: 9, z: 6},
 ]);
 export const createWalker = () => ({x: 0, z: 7.8, yaw: 0, pitch: 0, vx: 0, vz: 0});
+export const blocksWalker = b => b.id !== 'weights-and-cans' && (b.maxY == null || b.maxY > .5);
 export function canStand(x, z, bounds, hall) {
   const r = WALK.radius;
   return Math.abs(x) <= hall.halfWidth - r && Math.abs(z) <= hall.halfDepth - r &&
-    !bounds.some(b => x > b.minX - r && x < b.maxX + r && z > b.minZ - r && z < b.maxZ + r);
+    !bounds.some(b => blocksWalker(b) && x > b.minX - r && x < b.maxX + r && z > b.minZ - r && z < b.maxZ + r);
+}
+// Visibility graph: the shortest clear route turns only at expanded box corners.
+// Segment/box slabs also catch very thin obstacles between the endpoints.
+export function clearWalkLine(a, b, bounds, hall) {
+  if (!canStand(...a, bounds, hall) || !canStand(...b, bounds, hall)) return false;
+  return !bounds.filter(blocksWalker).some(box => {
+    let lo = 0, hi = 1;
+    for (const [axis, min, max] of [[0, box.minX - WALK.radius, box.maxX + WALK.radius],
+      [1, box.minZ - WALK.radius, box.maxZ + WALK.radius]]) {
+      const d = b[axis] - a[axis];
+      if (Math.abs(d) < 1e-10) { if (a[axis] <= min || a[axis] >= max) return false; }
+      else {
+        const t1 = (min - a[axis]) / d, t2 = (max - a[axis]) / d;
+        lo = Math.max(lo, Math.min(t1, t2)); hi = Math.min(hi, Math.max(t1, t2));
+        if (lo >= hi) return false;
+      }
+    }
+    return lo < hi;
+  });
+}
+export function walkRoute(state, goals, bounds, hall) {
+  const nodes = [[state.x, state.z], ...goals.filter(p => canStand(...p, bounds, hall))];
+  const goalCount = nodes.length;
+  if (goalCount === 1) return null;
+  const margin = WALK.radius + .12;
+  for (const b of bounds.filter(blocksWalker)) for (const x of [b.minX - margin, b.maxX + margin])
+    for (const z of [b.minZ - margin, b.maxZ + margin]) if (canStand(x, z, bounds, hall)) nodes.push([x, z]);
+  const distances = nodes.map(() => Infinity), previous = [], visited = new Set(); distances[0] = 0;
+  while (visited.size < nodes.length) {
+    let current = -1;
+    for (let i = 0; i < nodes.length; i++) if (!visited.has(i) && (current < 0 || distances[i] < distances[current])) current = i;
+    if (current < 0 || !Number.isFinite(distances[current])) return null;
+    if (current > 0 && current < goalCount) {
+      const route = [];
+      for (let i = current; i !== 0; i = previous[i]) route.unshift(nodes[i]);
+      return route;
+    }
+    visited.add(current);
+    for (let i = 1; i < nodes.length; i++) {
+      if (visited.has(i)) continue;
+      const distance = distances[current] + Math.hypot(nodes[i][0] - nodes[current][0], nodes[i][1] - nodes[current][1]);
+      if (distance < distances[i] && clearWalkLine(nodes[current], nodes[i], bounds, hall)) {
+        distances[i] = distance; previous[i] = current;
+      }
+    }
+  }
+  return null;
+}
+export function stepTravel(state, route, dt, bounds, hall) {
+  if (!route.length) return true;
+  const [x, z] = route[0], dx = x - state.x, dz = z - state.z, distance = Math.hypot(dx, dz);
+  if (distance < .06) {
+    route.shift(); state.vx = state.vz = 0;
+    return route.length === 0;
+  }
+  faceWalker(state, x, z, dt); state.pitch = 0;
+  const speed = Math.min(1, Math.sqrt(distance * WALK.acceleration) / WALK.speed);
+  stepWalker(state, {forward: (-Math.sin(state.yaw) * dx - Math.cos(state.yaw) * dz) / distance * speed,
+    side: (Math.cos(state.yaw) * dx - Math.sin(state.yaw) * dz) / distance * speed}, dt, bounds, hall);
+  return false;
+}
+export function faceWalker(state, x, z, dt) {
+  const yaw = Math.atan2(state.x - x, state.z - z);
+  const difference = Math.atan2(Math.sin(yaw - state.yaw), Math.cos(yaw - state.yaw));
+  const turn = WALK.turn * Math.max(0, Math.min(.1, dt));
+  state.yaw += Math.max(-turn, Math.min(turn, difference));
+  return Math.abs(difference) <= turn;
+}
+export function nearbyWalkGoals(x, z, bounds, hall) {
+  const goals = [];
+  for (let r = 0; r <= 2; r += .4) for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+    const p = [x + r * Math.cos(a), z + r * Math.sin(a)];
+    if (canStand(...p, bounds, hall)) goals.push(p);
+    if (!r) break;
+  }
+  return goals;
 }
 export function machineApproaches(b, bounds, hall) {
   const x = (b.minX + b.maxX) / 2, z = (b.minZ + b.maxZ) / 2, gap = .85;

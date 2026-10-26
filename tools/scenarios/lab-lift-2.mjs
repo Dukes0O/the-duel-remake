@@ -10,7 +10,8 @@ export async function run(c) {
   await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true' && ${canvas}?.dataset.labBrian === 'ready'`, 'room and Brian', 60_000);
   const key = (code, type) => c.command('Input.dispatchKeyEvent', {type, code, key: code === 'KeyE' ? 'e' : code.startsWith('Arrow') ? code : code.slice(3).toLowerCase()});
   async function walk(code, expression) { await key(code, 'keyDown'); try { await c.waitFor(expression, code, 15_000); } finally { await key(code, 'keyUp'); } await new Promise(r => setTimeout(r, 550)); }
-  await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < 3.6`);
+  // Leave room to pass Brian's solid body before stepping toward the pad.
+  await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < 4.4`);
   await walk('KeyA', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] < -7.8`);
   const yaw = await c.evaluate(`(() => { const p = JSON.parse(${canvas}.dataset.labWalkPosition); return Math.atan2(p[0] + 8.008125, p[2] - 2.84); })()`);
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: 720, y: 450, button: 'left', clickCount: 1});

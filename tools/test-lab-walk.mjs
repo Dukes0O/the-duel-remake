@@ -5,6 +5,56 @@ import {lessonRows} from '../src/lab/lab-lessons.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {machineApproaches, brianPosition, WALK_LAYOUT, stationPrompt, walkTarget} from '../src/lab/lab-walk.js';
 import {readFileSync} from 'node:fs';
+import {walkRoute, stepTravel, nearbyWalkGoals, blocksWalker, CORNERS} from '../src/lab/lab-walk.js';
+
+test('click travel reaches every real machine, sign, Brian and board around solid obstacles', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../public/assets/models/lab/manifest.json', import.meta.url)));
+  const bounds = manifest.models.filter(m => WALK_LAYOUT[m.id]).map(m => {
+    const [x, z] = WALK_LAYOUT[m.id], b = m.footprint;
+    return {id: m.id, minX: x + b.minX * WALK.scale, maxX: x + b.maxX * WALK.scale,
+      minZ: z + b.minZ * WALK.scale, maxZ: z + b.maxZ * WALK.scale};
+  });
+  const brian = {id: 'brian', minX: -6.63, maxX: -5.99, minZ: 2.52, maxZ: 3.16};
+  bounds.push(brian);
+  const requests = bounds.filter(b => b.id !== 'weights-and-cans').map(b => ({name: b.id, goals: machineApproaches(b, bounds, hall)}));
+  requests.push({name: 'board', goals: [[1.8, 7.7]]}, ...CORNERS.map(c => ({name: c.name, goals: nearbyWalkGoals(c.x, c.z, bounds, hall)})));
+  const w = createWalker();
+  for (const {name, goals} of requests) {
+    const route = walkRoute(w, goals, bounds, hall);
+    assert.ok(route, name + ': reachable route');
+    let arrived = false;
+    for (let i = 0; i < 6000 && !arrived; i++) {
+      arrived = stepTravel(w, route, 1 / 60, bounds, hall);
+      assert.ok(canStand(w.x, w.z, bounds, hall), name + ': never crosses a solid object');
+    }
+    assert.ok(arrived, name + ': arrival permits opening');
+    assert.ok(goals.some(([x, z]) => Math.hypot(w.x - x, w.z - z) < .06), name + ': really walked to the target');
+  }
+});
+test('knee-height clutter and loose cans do not block; solid walls keep the sideways component', () => {
+  for (const b of [{id: 'crate', maxY: .5}, {id: 'cable', maxY: .03}, {id: 'weights-and-cans', maxY: 1}]) {
+    assert.equal(blocksWalker(b), false);
+    const obstacle = {...b, minX: -2, maxX: 2, minZ: 2, maxZ: 6};
+    const w = createWalker();
+    for (let i = 0; i < 120; i++) stepWalker(w, {forward: 1}, .1, [obstacle], hall);
+    assert.ok(w.z < 2, b.id + ': walked through');
+  }
+  assert.equal(blocksWalker({id: 'machine', maxY: .51}), true);
+  const w = {...createWalker(), x: hall.halfWidth - WALK.radius};
+  for (let i = 0; i < 30; i++) stepWalker(w, {side: 1, forward: 1}, .1, [], hall);
+  assert.ok(w.z < 5, 'slides along the hall wall');
+  assert.ok(canStand(w.x, w.z, [], hall));
+});
+test('late Brian placement avoids a walker already at his preferred standing point', () => {
+  const station = {x: -8, z: 2.84, bound: {minX: -10, maxX: -6, minZ: -3, maxZ: 1.99}};
+  const player = {x: -6.3, z: 2.84};
+  const occupied = {minX: player.x - .32, maxX: player.x + .32, minZ: player.z - .32, maxZ: player.z + .32};
+  const at = brianPosition(station, [station.bound, occupied], hall);
+  assert.ok(at, 'another clear side is available');
+  const body = {minX: at[0] - .32, maxX: at[0] + .32, minZ: at[1] - .32, maxZ: at[1] + .32};
+  assert.ok(canStand(player.x, player.z, [station.bound, body], hall), 'Brian cannot enclose the walker');
+  assert.ok(walkRoute(player, [[0, 7.8]], [station.bound, body], hall), 'walker can still leave');
+});
 
 const hall = {halfWidth: 15, halfDepth: 9};
 test('walking stops at every wall and a thin machine, including diagonal sliding', () => {

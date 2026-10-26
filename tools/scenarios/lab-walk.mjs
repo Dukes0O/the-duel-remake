@@ -43,7 +43,8 @@ export async function run(context) {
   if (board.count !== 16 || !board.text.includes('Opens:') || !board.text.includes('Opens after driving lesson 1')) throw Error('Door board is missing lessons, rewards or lock reasons.');
   await context.screenshot('door');
   await context.evaluate(`document.querySelector('[data-lab="walk-back"]').click()`);
-  await walkUntil('KeyW', `JSON.parse(${position} || '[0,0,99]')[2] < 3.6`, 'walk down the middle aisle');
+  // Stop before Brian's solid body, then take the clear aisle to the pad.
+  await walkUntil('KeyW', `JSON.parse(${position} || '[0,0,99]')[2] < 4.4`, 'walk down the middle aisle');
   await walkUntil('KeyA', `JSON.parse(${position} || '[99]')[0] < -7.8`, 'step to the weighing pad');
   await lookAt(-8.008125, 2.84);
   try { await context.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the Lift and weight bench')`, 'Lift floor prompt', 5000); }
