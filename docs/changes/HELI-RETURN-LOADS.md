@@ -245,3 +245,7 @@ pays below. All pays are credits; pump prices are credits per kg.
 | Titan arenas <-> Azure Riviera | 135 | 1.5 | 270 | 338 |
 | The Table -> Titan arenas | 320 | 1.5 | 600 | 750 |
 | The Table -> Azure Riviera | 315 | 1.5 | 600 | 750 |
+
+## Claude review (26 October 2026)
+
+Approved and merged. Changed assertions: the four away-flight and arrival pins, each proven to differ only by the intended unhooked return crate (reviews on the card). The supply-hook fix keeps the supply assertion unchanged. Independent save and pay reviews clear. Live with the next release.
