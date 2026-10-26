@@ -21,7 +21,7 @@ export const LESSON_TEXT = Object.freeze({
   liftoff: Object.freeze({name: '1 Lift-off', goal: 'Rise to 3 m and hold her there for 5 seconds.'}),
   hover: Object.freeze({name: '2 Hover', goal: 'Stay inside the circle, 2 to 5 m up, for 10 seconds.'}),
   landing: Object.freeze({name: '3 Landing', goal: 'Land on the H, slow and gentle.'}),
-  carry: Object.freeze({name: '4 Carry and set down', goal: 'Hook the crate (H), carry it to the yellow circle, set it down gently and let go (H).'}),
+  carry: Object.freeze({name: '4 Carry and set down', goal: 'Hook the crate (H), carry it to the yellow circle, set it down gently and let go (H). Lower until the crate touches, then H.'}),
 });
 
 // What a rescue call is called, and why a rescue failed (docs/HELI_RESCUE.md section 3).
@@ -93,7 +93,7 @@ export function noticeText(event) {
     case 'autopilotOff': return event.reason === 'pilot' ? 'Autopilot off: you have control' : null;
     case 'autopilotOn': return 'Autopilot on';
     case 'lessonPassed': return `Lesson passed: ${LESSON_TEXT[event.lesson]?.name ?? event.lesson}`;
-    case 'lessonRetry': return 'Not quite: have another go';
+    case 'lessonRetry': return event.reason ?? 'Not quite: have another go';
     case 'openingSkipped': return 'Lessons 1 and 2 marked done';
     case 'jobTaken': return 'Job taken';
     case 'jobDone': return `Job done: ${event.pay} credits`;
@@ -293,9 +293,11 @@ export function lessonsMarkup(view, board, {opening = false, driving = null, lab
     const rules = LESSON_RULES[view.lesson.id], text = LESSON_TEXT[view.lesson.id];
     // The bar's width is set in place each frame (holdShare), so the panel
     // and its Stop button are not rebuilt while the bar moves.
+    const guidance = view.lesson.guidance;
+    const crate = guidance ? `<p class="heli-carry-guidance">${guidance.ready ? 'On the mark. Press H to let go.' : `Crate: ${Math.round(guidance.distance)} m from the centre · ${Math.round(guidance.height)} m up`}</p>` : '';
     const hold = rules?.holdSeconds ? '<div class="heli-lesson-hold"><span></span></div>' : '';
     return `<div class="heli-lessons heli-lesson-on" role="group" aria-label="Lesson"><span>LESSON ${escape(text.name.toUpperCase())}</span>
-      <p>${escape(text.goal)}</p>${hold}<button type="button" data-heli-lesson="stop">Stop the lesson</button></div>`;
+      <p>${escape(text.goal)}</p>${crate}${hold}<button type="button" data-heli-lesson="stop">Stop the lesson</button></div>`;
   }
   if (!atHomePad(view) || !board?.length) return '';
   const rows = board.map(item => ({group: 'Helicopter', id: item.id, name: LESSON_TEXT[item.id].name, open: item.open, done: item.done}));

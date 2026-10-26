@@ -157,6 +157,20 @@ for (const [fuelKg, credits, refuels] of [[300, 1000, 2], [300.64, 1000, 2], [12
   view.update({heli, loads: [], zone: null}, {dt: 1 / 60});
   ok(rotor.rotation.y > spin, 'the rotor keeps turning');
   ok(pose.camera && !scene.getObjectByName('Kestrel One (stand-in)'), 'no stand-in in the scene');
+  const target = {x: 20, y: 2, z: 30, radius: 10,
+    surface: Array.from({length: 130}, (_, i) => Math.cos((i % 65) * Math.PI / 32))};
+  view.update({heli, loads: [], lesson: {id: 'carry', target, guidance: {ready: true}}});
+  const painted = view.group.getObjectByName('Carry target');
+  eq(painted.material.color.getHex(), 0x3ddc5a, 'the ready target turns green');
+  const vertices = painted.geometry.attributes.position;
+  ok(vertices.count === 130 && painted.geometry.parameters.outerRadius === 10, 'a full 64-segment circle uses the 10 m pass radius');
+  painted.updateWorldMatrix(true, false);
+  for (let i = 0; i < vertices.count; i++) {
+    const world = painted.localToWorld(new THREE.Vector3().fromBufferAttribute(vertices, i));
+    ok(Math.abs(world.y - (target.y + .15 + target.surface[i])) < 1e-6, 'paint follows terrain at every world-space vertex');
+  }
+  view.update({heli, loads: [], lesson: {id: 'carry', target, guidance: {ready: false}}});
+  eq(painted.material.color.getHex(), 0xffcf3f, 'target returns to yellow when the crate is not ready');
   const failing = createHeliView({THREE, scene: new THREE.Scene(), vehicleAssets: {status: () => 'error'}, load: () => Promise.reject(new Error('missing file'))});
   const warn = console.warn; console.warn = () => {};
   failing.update({heli, loads: []});

@@ -28,6 +28,14 @@ export function lessonOpen(lessons, id) {
 // Skipping the opening marks lessons 1 and 2 done.
 export const SKIP_MARKS = Object.freeze(['liftoff', 'hover']);
 
+// Read-only guidance uses the same horizontal boundary as the pass check.
+export function carryGuidance(lesson, load, groundY = 0) {
+  if (lesson?.id !== 'carry' || !lesson.target || load?.id !== 'crate' || !load.hooked) return null;
+  const distance = Math.hypot(load.x - lesson.target.x, load.z - lesson.target.z);
+  return Object.freeze({distance, height: load.onGround ? 0 : Math.max(0, load.y - (load.restHeight ?? 0.7) - groundY),
+    ready: distance <= LESSON_RULES.carry.radius && load.onGround === true});
+}
+
 const height = view => view.heli.y - view.heli.groundY;
 const fromPad = (view, spot) => Math.hypot(view.heli.x - spot.x, view.heli.z - spot.z);
 
@@ -82,10 +90,14 @@ export function stepLesson(lesson, view, events = [], dt = 1 / 120) {
     // Only the crate counts: letting go of any other load is not the lesson.
     const released = events.find(e => (e.type === 'released' || e.type === 'releasedHigh') && e.id === 'crate');
     const dropped = events.find(e => e.type === 'drop' && e.id === 'crate');
-    if (dropped) return retry(lesson, out);
-    if (released?.type === 'released' && view.load && lesson.target &&
-        Math.hypot(view.load.x - lesson.target.x, view.load.z - lesson.target.z) <= rules.radius) return pass(lesson);
-    if (released?.type === 'released' && view.load && lesson.target) return retry(lesson, out);
+    const setDown = released?.crateRelease ?? view.load;
+    if (dropped) return retry(lesson, out, 'It dropped: lower it gently first');
+    if (released?.type === 'released' && !setDown?.onGround)
+      return retry(lesson, out, 'Let go only once the crate sits on the ground');
+    if (released?.type === 'released' && setDown && lesson.target &&
+        Math.hypot(setDown.x - lesson.target.x, setDown.z - lesson.target.z) <= rules.radius) return pass(lesson);
+    if (released?.type === 'released' && setDown && lesson.target)
+      return retry(lesson, out, `The crate was ${Math.round(Math.hypot(setDown.x - lesson.target.x, setDown.z - lesson.target.z))} m from the centre: set it down inside the circle`);
   }
   return out;
 }
@@ -94,7 +106,7 @@ function pass(lesson) {
   return passed(lesson, `heli.radio.${lesson.id}.pass`);
 }
 
-function retry(lesson, out) {
+function retry(lesson, out, reason = null) {
   lesson.sawLift = false;
-  return tryAgain(lesson, out.radio ?? 'heli.radio.retry');
+  return {...tryAgain(lesson, out.radio ?? 'heli.radio.retry'), ...(reason ? {reason} : {})};
 }

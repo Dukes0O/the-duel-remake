@@ -8,8 +8,9 @@ import {ALL_CIRCUITS} from '../src/circuits/index.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {heliOf} from '../src/heli/heli-save.js';
-import {LESSON_RULES, lessonOpen, createLesson, stepLesson} from '../src/heli/heli-lessons.js';
+import {LESSON_RULES, lessonOpen, createLesson, stepLesson, carryGuidance} from '../src/heli/heli-lessons.js';
 import {createHeliSession} from '../src/heli/heli-session.js';
+import {lessonsMarkup, noticeText} from '../src/heli/heli-ui.js';
 import {HELI_RADIO_LINES} from '../src/heli/heli-radio-lines.js';
 
 let checks = 0;
@@ -61,6 +62,35 @@ const lessonEvent = (events, type) => events.find(e => e.type === type);
   ok(stepLesson(hard, at(3), [{type: 'touchdown', result: 'hard'}]).result === 'retry', 'a hard landing means try again');
 }
 
+// Carry guidance and each retry tell the pilot what to change.
+{
+  const lesson = () => createLesson('carry', {spot: {x: 0, z: 0}, target: {x: 0, z: 0}});
+  const load = {id: 'crate', x: 13, z: 0, y: 23.7, hooked: true, onGround: false};
+  const guidance = carryGuidance(lesson(), load, 20);
+  ok(guidance.distance === 13 && Math.abs(guidance.height - 3) < 1e-8 && !guidance.ready, 'guidance measures crate clearance over its own ground');
+  const markup = g => lessonsMarkup({heli: {}, lesson: {...lesson(), guidance: g}}, []);
+  ok(markup(guidance).includes('Crate: 13 m from the centre · 3 m up'), 'distance and height appear below the goal');
+  ok(markup(guidance).includes('Lower until the crate touches, then H.'), 'goal explains the release');
+  const grounded = {...load, y: 20.7, onGround: true};
+  const green = carryGuidance(lesson(), {...grounded, x: 10}, 20);
+  ok(green.ready && green.height === 0 && markup(green).includes('On the mark. Press H to let go.'), 'grounded crate at the inclusive 10 m boundary is ready');
+  ok(!carryGuidance(lesson(), {...grounded, x: 10.01}, 20).ready, 'outside the circle is not green');
+  ok(!carryGuidance(lesson(), {...load, x: 0}, 20).ready, 'airborne inside is not green');
+  ok(carryGuidance(lesson(), {...grounded, hooked: false}, 20) === null, 'guidance hides once unhooked');
+  const checkRetry = (crate, type, words) => {
+    const result = stepLesson(lesson(), {heli: {}, load: crate}, [{type, id: 'crate'}]);
+    ok(result.result === 'retry' && result.reason === words, words);
+    ok(noticeText({type: 'lessonRetry', reason: result.reason}) === words, 'retry reaches the on-screen notice');
+  };
+  checkRetry(grounded, 'released', 'The crate was 13 m from the centre: set it down inside the circle');
+  checkRetry({...load, x: 0}, 'released', 'Let go only once the crate sits on the ground');
+  checkRetry(load, 'drop', 'It dropped: lower it gently first');
+  const settledAfterH = stepLesson(lesson(), {heli: {}, load: {...grounded, x: 0}},
+    [{type: 'released', id: 'crate', crateRelease: {x: 0, z: 0, onGround: false}}]);
+  ok(settledAfterH.result === 'retry' && settledAfterH.reason === 'Let go only once the crate sits on the ground', 'touching down after H cannot pass');
+  ok(stepLesson(lesson(), {heli: {}, load: {...grounded, x: 10}}, [{type: 'released', id: 'crate'}]).result === 'passed', 'ready state matches the pass boundary');
+}
+
 // A new pilot: the opening, the free tank, and what is still closed.
 {
   const session = createHeliSession({profile: newPilot(), enabled: true, loadCourse, carId: 'falcone_f42', today: '2026-10-14'});
@@ -108,15 +138,16 @@ const lessonEvent = (events, type) => events.find(e => e.type === type);
   run(session, 60, v => pilot(v, {x: crate.x, z: crate.z, y: crate.y + 15.2}, {speed: 3}),
     v => Math.hypot(v.heli.x - crate.x, v.heli.z - crate.z) < 1 && Math.abs(v.heli.y - crate.y - 15.2) < 0.6 && Math.hypot(v.heli.vx, v.heli.vz) < 0.5);
   ok(session.pressHook()?.type === 'hooked', 'the crate is hooked');
-  run(session, 10, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: v.heli.groundY + 40}));
-  run(session, 120, v => pilot(v, {x: target.x, z: target.z, y: target.y + 40}, {speed: 8}),
-    v => Math.hypot(v.heli.x - target.x, v.heli.z - target.z) < 2 && Math.hypot(v.heli.vx, v.heli.vz) < 0.6);
-  run(session, 60, v => pilot(v, {x: target.x, z: target.z, y: target.y + 0.7 + 14.6}, {speed: 1}),
-    v => v.loads.find(load => load.id === 'crate')?.onGround);
+  const carryEvents = run(session, 10, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: v.heli.groundY + 40}));
+  carryEvents.push(...run(session, 120, v => pilot(v, {x: target.x, z: target.z, y: target.y + 40}, {speed: 8}),
+    v => Math.hypot(v.heli.x - target.x, v.heli.z - target.z) < 2 && Math.hypot(v.heli.vx, v.heli.vz) < 0.6));
+  carryEvents.push(...run(session, 60, v => pilot(v, {x: target.x, z: target.z, y: target.y + 0.7 + 14.6}, {speed: 1}),
+    v => v.loads.find(load => load.id === 'crate')?.onGround));
   run(session, 1, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: v.heli.y}));
   session.pressHook();
-  events = run(session, 1);
+  events = [...carryEvents, ...run(session, 1)];
   ok(lessonEvent(events, 'lessonPassed')?.lesson === 'carry', 'a gentle set-down in the circle passes lesson 4');
+  ok(events.filter(e => e.type === 'lessonRetry').length <= 1, 'the scripted pilot passes within two tries');
   ok(!session.view().loads.some(load => load.id === 'crate'), 'the crate goes with the lesson');
   ok(Object.values(heliOf(session.profile).lessons).every(Boolean), 'all four lessons saved');
 }
