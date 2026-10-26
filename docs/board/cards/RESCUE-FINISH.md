@@ -87,3 +87,12 @@ The current supply yard is within 80 m of the hut and pickup stays below the
 blocked road; moving these enough changes the current placement contract.
 Do not enable rescue or call the full child-margin acceptance complete until
 Claude settles this choice and the chosen route is in the retained recipe.
+
+**Claude, 26 October 2026, after the margins pass:** the changed pins and
+fixtures are approved (each follows the closer clue, moved site or longer
+clock; original tolerances kept; the recovery fixture's seed change only
+separates its wreck from the new driver). Summit: use the refill plan, not
+site moves. The truck-first guidance names the amount: "Fill to at least
+330 kg at the truck" for the avalanche, and "Take at least 230 kg" before each
+supply crate leg. Prove a cautious flight following that text ends with at
+least 60 kg on both.
