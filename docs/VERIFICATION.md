@@ -1394,3 +1394,15 @@ pass; no game code changed after the full tier (rule 19). Frame check,
 Summit, eight cars, headed, alone, GPU idle: p95 16.8 ms High and
 Performance; world build 1,051 / 1,013 ms, over the 1 s limit, shipped as a
 warning by Director decision (SUMMIT-BUILD-TIME-2).
+
+## Release, 26 October 2026 evening: Summit finish (Claude, Release Manager)
+
+SUMMIT-FINISH-AREA (look accepted at round 3) and SUMMIT-BUILD-TIME-2. Also
+merged behind dev switches: HELI-LOGBOOK, ski tuning, LAB-LESSON-FRAME,
+LAB-LIFT-2. Full tier on f514c859: 525 passed, 1 failed
+(`test-audio-crash-peak`, no audio change; its one rerun on the same commit
+passed, rule 3; QA-AUDIO-CRASH-PEAK-AGAIN). Frame check, Summit, eight cars,
+headed, alone, laptop panel off, GPU idle: p95 16.8 ms at both qualities
+(pass); world build High 1,036 ms, Performance 984 ms then 2,589 ms on the
+rerun: a warning, shipped by Director decision as on 16 October; follow-up
+SUMMIT-BUILD-TIME-3.

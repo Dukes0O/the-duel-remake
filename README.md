@@ -2,6 +2,15 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Summit finish, 26 October 2026 (evening)
+
+### What players get now
+
+- **A real finish at the top of Summit Run:** a timber gantry with SUMMIT
+  across it, a red timber hut and a domed observatory with warm windows, a
+  car park past the line to stop in, and the helipad with its H and windsock.
+- Summit loads a little faster before the countdown.
+
 ## Fixes and Grand Prix pay, 26 October 2026 (afternoon)
 
 ### What players get now
