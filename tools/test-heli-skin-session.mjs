@@ -155,7 +155,8 @@ function scenarioHashes(extra = {}) {
 // Taken on 91ab8a10 (RESCUE-AUTOPILOT's merge), before this card changed the
 // session: a car job, the three rescues with the line fitted, a supply hook and
 // a fire day, each with the events, save, view, board and fingerprint hashed.
-const BEFORE = {carJob: 2639427997, hiker: 4027545282, avalanche: 382890534, hoist: 2433107444, supply: 1784988904, fire: 1685599464};
+// RESCUE-FINISH re-records hiker clue, hoist site/clock and supply clock only.
+const BEFORE = {carJob: 2639427997, hiker: 75325398, avalanche: 382890534, hoist: 3958087009, supply: 1425980116, fire: 1685599464};
 {
   same(scenarioHashes(), BEFORE, 'with no skin or wildlife switch the session is exactly what it was');
   same(scenarioHashes({skinsEnabled: false, wildlifeEnabled: false}), BEFORE, 'and with both switches off');

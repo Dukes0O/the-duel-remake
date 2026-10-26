@@ -604,9 +604,11 @@ in section 4. "Try" is what the player handles on the machine itself.
 - Words: *Strength* (how much load before it bends or breaks), *Stiff*
   (bends very little), *Brittle* (snaps instead of bending), *Aluminium*,
   *Steel*, *Carbon fibre*.
-- Watch: three bars of the same weight loaded until they give: steel bends,
-  aluminium bends sooner, carbon fibre stays straight, then snaps. Weights
-  shown on a scale beside each.
+- Watch: three bars of the same weight loaded until they give. The
+  aluminium bar is about three times as thick as the steel one for the same
+  weight, so it outlasts it; carbon fibre stays straight, then snaps. Weights
+  shown on a scale beside each. (Corrected from the game's own `loadBar`
+  rule, 26 October.)
 - Try: pick a material and thickness for a hook arm, hang the Banshee on it;
   predict "holds, bends, snaps".
 - Check: "Which is lightest and still holds 2,000 kg?"

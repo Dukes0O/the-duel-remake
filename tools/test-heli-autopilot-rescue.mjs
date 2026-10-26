@@ -177,7 +177,8 @@ function lowerRescuer(session, world, spot) {
   const height = v => v.rescue.line.y - world.ground.height(v.rescue.line.x, v.rescue.line.z);
   events.push(...run(session, 20, v => pilot(v, {x: spot.x, z: spot.z, y: v.heli.y}, {speed: 1}), v => speedOf(v) < 0.3));
   events.push(...run(session, 120, v => onSpot(v, v.heli.y - 3, height(v) > 5 ? 3 : 0.7), (v, got) => has(got, 'holdStarted')));
-  events.push(...run(session, 40, v => onSpot(v, v.heli.y, 0.3), (v, got) => has(got, 'clipped')));
+  // Keep a little slack on the steep slope, as the complete Summit flight does.
+  events.push(...run(session, 40, v => onSpot(v, v.heli.y - 1.5, 0.3), (v, got) => has(got, 'clipped')));
   return events;
 }
 // The rescue's goal on the panel, as the autopilot flies to it.
@@ -207,13 +208,13 @@ function flyHiker() {
   const r = missionsOf(session.profile).rescue, pick = pickHiker(hikerSpots(home.course, home.ground, homeSite), r.seed);
   ok(session.pressAutopilot(), 'P switches the autopilot on');
   const goal = goalOf(session);
-  near(dist(goal, pick.lastSeen), 0, 1e-6, 'its goal is the centre of the 300 m search area');
+  near(dist(goal, pick.lastSeen), 0, 1e-6, 'its goal is the centre of the 180 m search area');
   log.push(...run(session, 400, () => ({}), (v, got) => has(got, 'autopilotArrived')));
   const v = session.view();
   ok(has(log, 'autopilotArrived') && !has(log, 'crash'), 'it arrives without a crash');
-  near(dist(v.heli, pick.lastSeen), 0, 6, 'in a hover over the centre');
-  near(v.heli.y - home.ground.highest(pick.lastSeen.x, pick.lastSeen.z, 12), 40, 2, 'stopped 40 m above the obstacles');
-  ok(v.rescue.active.stage === 'fly' && !has(log, 'hikerSpotted'), 'searching is still the pilot\'s: the hiker is not found by the autopilot');
+  near(dist(v.heli, pick.clearing), 0, 6, 'the earlier clue spots the hiker en route and retargets the clearing');
+  near(v.heli.y - home.ground.highest(pick.clearing.x, pick.clearing.z, 12), 40, 2, 'stopped 40 m above the obstacles');
+  ok(v.rescue.active.stage === 'found' && has(log, 'hikerSpotted'), 'the closer clue reveals the hiker on the approach; landing is still the pilot\'s');
   ok(speedOf(v) < 1 && session.autopilotOn, 'and it holds the hover');
   // Any stick beyond 30% hands control straight back.
   const hand = session.step({roll: 0.5});
@@ -524,8 +525,8 @@ for (const dt of [1 / 60, 1 / 144, 1 / 240]) {
   let arrived = false;
   for (let i = 0; i < 400 / dt && !arrived; i++) arrived = has(session.step({}, dt), 'autopilotArrived');
   const v = session.view();
-  ok(arrived && dist(v.heli, pick.lastSeen) < 6 && Math.abs(v.heli.y - (home.ground.highest(pick.lastSeen.x, pick.lastSeen.z, 12) + 40)) < 2.5,
-    `at ${Math.round(1 / dt)} steps a second it stops 40 m above the search centre`);
+  ok(arrived && dist(v.heli, pick.clearing) < 6 && Math.abs(v.heli.y - (home.ground.highest(pick.clearing.x, pick.clearing.z, 12) + 40)) < 2.5,
+    `at ${Math.round(1 / dt)} steps a second it stops 40 m above the clearing after early discovery`);
 }
 console.log('PASS the same rescue goal at 60, 144 and 240 steps a second');
 console.log(`test-heli-autopilot-rescue: ${checks} checks passed`);

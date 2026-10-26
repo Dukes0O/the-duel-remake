@@ -157,8 +157,9 @@ export const runScenarios = gear => Object.fromEntries(Object.entries(SCENARIOS)
 
 
 // Taken on f0bd1edb, before any gear existed: `node tools/test-heli-skin-gear.mjs --print`
-// on that commit gave these numbers.
-const BEFORE = {cable: 1196926726, bucket: 2443027711, rescue: 3394331381, search: 880789153, survey: 1445790162, camera: 2660321039};
+// on that commit gave these numbers. RESCUE-FINISH re-records search only
+// for the closer hiker clue; gear-off equality still compares every result.
+const BEFORE = {cable: 1196926726, bucket: 2443027711, rescue: 3394331381, search: 4001410629, survey: 1445790162, camera: 2660321039};
 if (process.argv.includes('--print')) { console.log(JSON.stringify(runScenarios(undefined))); process.exit(0); }
 
 const KINDS = ['stock', 'fire', 'medevac', 'rescue', 'wildlife', 'supply', 'tv'];

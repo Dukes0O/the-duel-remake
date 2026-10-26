@@ -215,8 +215,9 @@ export function rescueLineMarkup(view) {
       ? `${a.refuelFirst ? 'FUEL TRUCK' : 'RESCUE'} ${String(Math.round(a.target.bearing) % 360).padStart(3, '0')}° ${(a.target.distance / 1000).toFixed(1)} km`
       : `RESCUE AT ${escape((a.courseName ?? '').toUpperCase())}`;
     parts.push(`<span class="heli-rescue-line${a.orange ? ' late' : ''}">${where} · ${clockText(a.left)}</span>`);
-    if (a.refuelFirst) parts.push('<span class="heli-rescue-refuel">Refuel at the truck first</span>');
-    else if (a.refuelStop === 'start') parts.push('<span class="heli-rescue-refuel">Refuel again at the pickup truck near the slide before the return flight.</span>');
+    if (a.refuelFirst) parts.push(`<span class="heli-rescue-refuel">Refuel at the truck first. Fill to at least ${a.refuelStop === 'pickup' ? 400 : 330} kg at the truck.</span>`);
+    else if (a.refuelStop === 'start') parts.push('<span class="heli-rescue-refuel">At the pickup truck near the slide, fill to 400 kg before the return flight.</span>');
+    else if (a.refuelStop === 'pickup' && a.sites?.atTruck && view.heli?.fuelKg < 399.9) parts.push('<span class="heli-rescue-refuel">Fill to 400 kg at the pickup truck before the return flight.</span>');
     const instruction = a.refuelFirst ? null
       : a.stage === 'carry' && a.kind !== 'supply' ? 'Carry to the landing circle. Set down at 1 m/s or slower for the paramedics.'
       : (a.kind === 'avalanche' || a.kind === 'hoist') && !rescue.line ? 'Fit the rescue line at the home pad before flying to the casualty.'
@@ -224,7 +225,7 @@ export function rescueLineMarkup(view) {
       : a.kind === 'hiker' ? (a.sites?.hiker ? 'Land in the marked clearing. Wait for the hiker to walk over and board.' : 'Search the circle below 120 m. Fly parallel passes about 120 m apart; watch for an orange flare.')
       : a.kind === 'avalanche' ? 'Follow the faster beacon beeps. Fly down until the rescuer rests within 3 m of the beacon; stop and hold for 12 seconds.'
       : a.kind === 'hoist' ? 'Fly down until the rescuer rests within 3 m of the driver; stop and hold for 8 seconds.'
-      : a.kind === 'supply' ? `${a.courseId === 'summit-run' ? 'Thin air: target 230 kg for food/medicine, 190 kg for fuel drums. ' : ''}H hooks a crate. Lower it onto the marked yard, then press H to let go. Deliver all three.` : null;
+      : a.kind === 'supply' ? `${a.courseId === 'summit-run' ? 'Take at least 230 kg before each supply crate leg. ' : ''}H hooks a crate. Lower it onto the marked yard, then press H to let go. Deliver all three.` : null;
     if (instruction) parts.push(`<span class="heli-rescue-instruction">${instruction}</span>`);
     if (a.kind === 'supply') parts.push(`<span class="heli-rescue-crates">CRATES ${a.cratesDown}/${a.crates.length}</span>`);
     if (a.kind === 'avalanche' && a.here && a.stage !== 'carry') {

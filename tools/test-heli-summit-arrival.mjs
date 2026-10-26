@@ -137,6 +137,8 @@ console.log('PASS the cruise leg to Summit Run ends over the start area');
   cruise(session, 'summit-run');
   const beforeFuel = session.view();
   ok(beforeFuel.rescue.active.refuelFirst, 'arrival fuel does not cover the remaining rescue legs');
+  ok(rescueLineMarkup(beforeFuel).includes('Fill to at least 330 kg at the truck.'), 'arrival instruments name the first truck amount');
+  ok(dispatchBoardMarkup(beforeFuel, {fire: {repairCost: 0}}).includes('Fill to at least 330 kg at the truck.'), 'arrival job text names the first truck amount');
   near(beforeFuel.rescue.active.target.distance, dist(beforeFuel.heli, site.zone), 0.01, 'the target points to the start-area truck circle');
   ok(rescueLineMarkup(beforeFuel).includes('Refuel at the truck first'), 'the instruments explain the fuel diversion');
   ok(dispatchBoardMarkup(beforeFuel, {fire: {repairCost: 0}}).includes('Refuel at the truck first'), 'the job text explains the fuel diversion');

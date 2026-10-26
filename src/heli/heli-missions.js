@@ -203,7 +203,7 @@ export function rescueConditions({summitRun = false} = {}) {
 // The mission clock in seconds of simulated time (section 3.4). It counts
 // from the answer, in the air or on the ground, and a cruise leg adds its
 // flying time. The supply run has no casualty, so nobody gets cold.
-export const RESCUE_CLOCKS = Object.freeze({hiker: 900, avalanche: 720, hoist: 720, supply: 1500});
+export const RESCUE_CLOCKS = Object.freeze({hiker: 900, avalanche: 720, hoist: 900, supply: 1860});
 // Summit Run's own rows (RESCUE-SUMMIT-TUNE): the slopes and the hut are high on
 // the mountain and a cruise leg from the home pad comes first. Only the kinds
 // that can be set there have a row; every other course keeps the rows above.
