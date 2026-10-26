@@ -21,3 +21,18 @@ run "from the pickup" starts there. Before `heli-skiing` goes on, move the
 pickup pad (SKI-RUNS data) to the first alpine stretch below Devils
 Playground so every ski pad stands on snow, and rerun the ski tests and the
 ski-view scenario.
+
+## Evidence slice (Kyle, 26 October 2026)
+
+Codex gathers keyboard evidence in `codex/ski-finish`; Claude keeps the final
+look and go-live decision. Radio stays on-screen text and the switch stays dev.
+Use discrete A/D/S/W/Shift/Space inputs, with a 150 ms reaction interval for
+the steady attempt and a shorter interval for the practised comparison.
+This is a scripted proxy, not a claim that an 11-year-old has play-tested it.
+Keep the current medal margins, gate spacing and guide pace until the measured
+runs show a reason to change them. No other gameplay values may change.
+
+Checks: the existing ski physics, runs, heli and view suites; a private,
+memory-only keyboard browser recipe for all five runs, drop/group flights,
+thin-air text and snowy pickup; then the lane tier (jobs 4) and build.
+Pictures cover slalom, aerials, powder/yeti and pickup. No frame timing.
