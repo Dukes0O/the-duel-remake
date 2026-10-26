@@ -39,7 +39,11 @@ export function validateLesson(def, hooks) {
     if (!answerIds.has(q.correct)) fail('question needs a correct picture');
   };
   moment(def.wonder);
-  for (const w of def.words) { shown.add(w.id); prose(w.meaning, 1); animation(w.animation); }
+  for (const w of def.words) {
+    shown.add(w.id); prose(w.meaning, 1);
+    if (w.caption) prose(`${w.meaning} ${w.caption}`);
+    animation(w.animation);
+  }
   if (!Array.isArray(def.worked) || !def.worked.length) fail('needs named worked steps');
   for (const step of def.worked) { prose(step.name); moment(step); }
   if (!Array.isArray(def.tries) || def.tries.length !== 3) fail('needs guided, prompted and alone tries');
@@ -53,6 +57,7 @@ export function validateLesson(def, hooks) {
   if (!Array.isArray(def.checks) || def.checks.length < 2 || def.checks.length > 3) fail('needs two or three checks');
   def.checks.forEach(pictures);
   prose(def.challenge.text, 1);
+  if (def.challenge.title) prose(def.challenge.title, 1);
   // During an inline challenge the key card uses one of the two sentences.
   const trialText = def.challenge.try ?? def.tries[2];
   for (const text of [trialText.prompt, trialText.success, trialText.prediction.text]) prose(text, 1);
@@ -95,7 +100,7 @@ export function createLessonSession(entry) {
     if (challenging) return false;
     if (stage === 4 && index >= d.checks.length) return false;
     if (stage === 2 && time < duration() || stage === 3 && !result?.passed || stage === 4 && index < d.checks.length && !checkAnswer) return false;
-    if (stage === 3) previous = {input: {...input}, time, animation: row().animation};
+    if (stage === 3) previous = {input: {...input}, time, index, animation: row().animation};
     if (stage === 0) { stage = 1; index = 0; }
     else if (stage === 1 && index + 1 < d.words.length || stage === 2 && index + 1 < d.worked.length || stage === 3 && index < 2 || stage === 4 && index < d.checks.length) index++;
     else { stage++; index = 0; }
@@ -108,7 +113,7 @@ export function createLessonSession(entry) {
     if (!outcome.passed && !d.hints[outcome.failure]) throw Error('Missing failure hint');
     result = {...outcome}; running = false;
     attempts.push({input: {...input}, controls: row().controls.map(c => ({...c}))});
-    if (!result.passed) { failures++; hint = d.hints[result.failure]; }
+    if (!result.passed) { failures++; hint = result.hint ?? d.hints[result.failure]; }
   }
   return {
     next,
@@ -116,7 +121,7 @@ export function createLessonSession(entry) {
       if (stage !== 4 || index !== d.checks.length) return false;
       challenging = true; stage = 3; index = 2; input = {}; result = null; selected = null; running = false; hint = null; reset(); return true;
     },
-    challengeRetry() { if (challenging && result) { previous = {input: {...input}, time, animation: row().animation}; result = null; hint = null; selected = null; reset(); } },
+    challengeRetry() { if (challenging && result) { previous = {input: {...input}, time, index, animation: row().animation}; result = null; hint = null; selected = null; reset(); } },
     tick(dt) {
       if (paused || stage === 3 && !running || stage === 4 && !checkAnswer) return;
       time = Math.min(duration(), time + Math.max(0, Math.min(dt, .1)) * .5);
@@ -126,7 +131,16 @@ export function createLessonSession(entry) {
     step() { paused = true; time = Math.min(duration(), time + .25); if (stage === 3 && running && time >= duration()) finishRun(); },
     replay() { reset(); },
     predict(id) { if (stage === 3 && !running && !result && row().prediction.answers.some(a => a.id === id)) selected = id; },
-    control(id) { if (stage !== 3 || running || result) return; const c = row().controls.find(c => c.id === id); if (c) input[c.id] = c.value; },
+    control(id, value) {
+      if (stage !== 3 || running || result) return;
+      const c = row().controls.find(c => c.id === id);
+      if (!c) return;
+      if (Number.isFinite(c.min) && Number.isFinite(c.max)) {
+        const current = input[id] ?? c.initial ?? c.min;
+        const next = Number.isFinite(value) ? value : current + c.step;
+        input[id] = !Number.isFinite(value) && next > c.max && c.cycle ? c.min : Math.max(c.min, Math.min(c.max, next));
+      } else input[id] = c.value;
+    },
     run() {
       if (stage !== 3 || !selected || running || result) return false;
       if (previous) previous = {...previous};
@@ -134,7 +148,7 @@ export function createLessonSession(entry) {
     },
     retry() {
       if (stage !== 3 || !result || result.passed) return;
-      previous = {input: {...input}, time, animation: row().animation};
+      previous = {input: {...input}, time, index, animation: row().animation};
       result = null; selected = null; hint = null; reset();
     },
     showMe() {
@@ -148,14 +162,14 @@ export function createLessonSession(entry) {
       const question = stage === 3 ? r.prediction : stage === 4 && !challenge ? r : null;
       const correct = checkAnswer && question.answers.find(a => a.id === question.correct);
       const text = showing ? d.hints[result.failure].worked : challenge ? d.challenge.text :
-        stage === 1 ? r.meaning : stage === 4 ? (checkAnswer ? (checkAnswer === question.correct ? 'You saw it.' : 'Watch the highlighted picture.') : r.text) :
+        stage === 1 ? r.meaning + (r.caption ? ` ${r.caption}` : '') : stage === 4 ? (checkAnswer ? (checkAnswer === question.correct ? 'You saw it.' : 'Watch the highlighted picture.') : r.text) :
           stage === 3 ? result ? result.passed ? r.success : failures >= 2 ? hint.plainer : hint.what :
             running ? r.prompt : selected ? (r.support === 'alone' ? 'Your turn.' : r.prompt) : question.text : r.text;
       return {stage, index, title: challenging && !showing ? 'Challenge' : LESSON_STAGES[stage], text, words, time, paused, duration: duration(), showing, challenge, challenging,
         keyIdea: challenging && !showing && !hint ? d.challenge.text : null, attempts: attempts.map(a => ({input: {...a.input}, controls: a.controls.map(c => ({...c}))})),
         name: stage === 2 ? r.name : stage === 1 ? r.word : null,
         animation: correct?.animation ?? r?.animation, question, selected, result, running, input: {...input}, previous,
-        controls: stage === 3 && selected && !running && !result ? r.controls : [], support: stage === 3 ? r.support : null,
+        controls: stage === 3 && !running && !result ? r.controls : [], support: stage === 3 ? r.support : null,
         showMe: stage === 3 && failures >= 3 && result && !result.passed,
         retry: stage === 3 && result && !result.passed, checkAnswer,
         canNext: showing ? time >= duration() : stage === 2 ? time >= duration() : stage === 3 ? result?.passed === true : stage === 4 ? Boolean(checkAnswer) : true};

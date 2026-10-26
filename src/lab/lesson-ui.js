@@ -3,7 +3,9 @@ import {labNotebookOf, learnLabWord} from './lab-save.js';
 import './lesson-ui.css';
 
 // Later lessons add a data packet and animation module; no screen edits needed.
-for (const packet of Object.values(import.meta.glob('./lessons/*-lesson.js', {eager: true}))) registerLesson(packet.definition, packet.hooks);
+for (const packet of Object.values(import.meta.glob('./lessons/*-lesson.js', {eager: true}))) {
+  if (!lessonDefinition(packet.definition.id)) registerLesson(packet.definition, packet.hooks);
+}
 
 const escape = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const button = (action, text, disabled = false) => `<button type="button" data-teach="${action}"${disabled ? ' disabled' : ''}>${escape(text)}</button>`;
@@ -21,6 +23,15 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
   const learned = () => labNotebookOf(app.profile);
   const knownWords = () => registeredWords().filter(w => learned().includes(w.id));
   const lookup = id => knownWords().find(w => w.id === id);
+  const held = new Set();
+  function leverKey(event) {
+    if (!session || hover || notebook || !['ArrowUp', 'ArrowDown'].includes(event.code)) return;
+    if (!session.view().controls.some(c => c.keyboard === 'vertical')) return;
+    event.preventDefault();
+    if (event.type === 'keydown') held.add(event.code); else held.delete(event.code);
+  }
+  const clearHeld = () => held.clear();
+  doc.addEventListener('keydown', leverKey); doc.addEventListener('keyup', leverKey); doc.defaultView.addEventListener('blur', clearHeld);
   function textMarkup(text, words = knownWords(), interactive = true) {
     const sorted = [...words].sort((a, b) => b.word.length - a.word.length);
     if (!sorted.length) return escape(text);
@@ -102,7 +113,7 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
       const d = entry.definition;
       const started = onChallenge(d.id, session.view());
       if (started === 'inline') session.startChallenge();
-      else if (started?.active) { challengeActive = started; card.innerHTML = `<b>Key idea</b><p>${escape(d.challenge.text)}</p>`; close(); }
+      else if (started?.active) { challengeActive = started; card.innerHTML = `<b>${escape(d.challenge.title ?? 'Key idea')}</b><p>${escape(d.challenge.text)}</p>`; close(); }
       else feedback = started?.reason ?? 'The challenge is not open yet.';
     }
     if (kind === 'finish') {
@@ -136,12 +147,16 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
       close(); entry = found; session = createLessonSession(entry); wordVoice = ''; lastTime = performance.now(); paint(); return true;
     },
     active: () => Boolean(session || hover || notebook),
-    control(id) { if (!session || hover || notebook) return; session.control(id); paint(); },
+    control(id, value) { if (!session || hover || notebook) return; if (value === undefined) onCue?.('lab.clunk'); session.control(id, value); paint(); },
     decorate,
     tick(visible) {
       notebookButton.hidden = !visible || !on();
       const now = performance.now(), dt = lastTime ? (now - lastTime) / 1000 : 0; lastTime = now;
       if (session && visible) {
+        const v = session.view(), lever = v.controls.find(c => c.keyboard === 'vertical');
+        if (lever && !hover && !notebook && held.size) session.control(lever.id,
+          (v.input[lever.id] ?? lever.initial ?? lever.min) + ((held.has('ArrowUp') ? 1 : 0) - (held.has('ArrowDown') ? 1 : 0)) * Math.min(dt, .1) * (lever.rate ?? .5));
+        if (!lever || hover || notebook) held.clear();
         if (!hover && !notebook) session.tick(dt);
         const view = session.view();
         if (hover) { view.animation = hover.animation; view.time = (now - hover.startedAt) / 1000; }
@@ -156,6 +171,6 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
       if (challengeActive?.done?.() === true) challengeActive = null;
     },
     close,
-    dispose() { close(); section.removeEventListener('click', click); section.removeEventListener('pointerover', point); section.removeEventListener('focusin', point); panel.remove(); card.remove(); notebookButton.remove(); },
+    dispose() { close(); doc.removeEventListener('keydown', leverKey); doc.removeEventListener('keyup', leverKey); doc.defaultView.removeEventListener('blur', clearHeld); section.removeEventListener('click', click); section.removeEventListener('pointerover', point); section.removeEventListener('focusin', point); panel.remove(); card.remove(); notebookButton.remove(); },
   };
 }

@@ -57,8 +57,8 @@ export function createWalkRoom({scene, camera, host, canvas, manifest, models, m
     canvas.dataset.labBrianPosition = JSON.stringify([at[0], at[1]]);
     brianName.position.set(at[0], 2.25, at[1]); brianName.visible = true;
   }
-  // Reuse the game's existing person; no new character asset is generated.
-  load('/assets/models/wasteland/crew/rook.glb').then(root => {
+  // Brian's workshop figure is rebuilt by tools/blender/lab-brian.py.
+  load('/assets/models/lab/brian.glb').then(root => {
     if (disposed) { release(root); return; }
     brian = root;
     const idle = root.animations?.find(clip => clip.name === 'idle');

@@ -31,6 +31,7 @@ const generators = [
   { script: 'tools/blender/speirling-tries.py', args: [], recipeOnly: true, glb: ['public/assets/models/unlocks/mcmurtry_speirling.glb'] },
   { script: 'tools/blender/sirena-wreck.py', args: [], recipeOnly: true, glb: ['public/assets/models/sirena/sea-wreck.glb'] },
   { script: 'tools/blender/kestrel-one.py', args: [], glb: ['public/assets/heli/kestrel-one.glb'] },
+  { script: 'tools/blender/lab-brian.py', args: [], recipeOnly: true, glb: ['public/assets/models/lab/brian.glb'] },
   { script: 'tools/blender/heli-accessories.py', args: [], recipeOnly: true,
     glb: ['cargo-hook', 'helipad', 'fuel-pump'].map(name => `public/assets/heli/${name}.glb`) },
   { script: 'tools/blender/skin-gear.py', args: [], glb: ['public/assets/heli/gear/drop-sight.glb', 'public/assets/heli/gear/heat-camera.glb', 'public/assets/heli/gear/zoom-camera.glb', 'public/assets/heli/gear/nose-camera.glb', 'public/assets/heli/gear/cargo-net.glb', 'public/assets/heli/gear/main-rotor-quiet.glb'] },
