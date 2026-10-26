@@ -147,7 +147,7 @@ export const SUMMIT_RUN=defineScriptedCourse({
   ],
   roadBranches:[{id:'summit-open-road',start:10100,end:10900,side:-1,offset:18,halfWidth:6,surface:'paved',gripKind:'asphalt'}],
   galleries:[{id:'summit-gallery',cover:false,start:10170,end:10800,width:5,roofWidth:7.8,flatRoof:true,height:galleryRoof.min[1]*1.1,clearance:{width:10,height:galleryRoof.min[1]*1.1},collisions:SUMMIT_GALLERY_BOUNDS}],
-  scenery:{trees:120,rocks:100,mountains:false,
+  scenery:{trees:120,rocks:100,mountains:false,continuousGround:true,
     forest:{from:13,to:56,spacing:5.2,rows:7,thin:.5,jitter:1.7,scale:[.45,2.1],clumps:{cut:.36,size:1.2},
       ranges:[{from:at(13),to:at(27),fadeOut:at(27)-at(26)+200}]}},
   effects:{birches:{seed:0xb1c4,groves:26,depth:[14,36],ranges:[{from:at(13),to:at(27)}]}},
