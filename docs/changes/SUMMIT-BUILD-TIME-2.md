@@ -65,3 +65,7 @@ Removed grow-and-copy far-mesh attribute/index intermediates and repeated
 ribbon edge sampling. Owned timer scratch and the production build output
 were recycled after recording the results. No superseded asset or code path
 is retained.
+
+## Claude review (26 October 2026)
+
+Approved and merged: no assertion changed and Summit signatures stay exact; terrain, map, ground, world and replay suites and the build pass on integration. Official Summit timing comes with the finish area before release.
