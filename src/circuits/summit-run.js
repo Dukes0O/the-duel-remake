@@ -168,8 +168,9 @@ export const SUMMIT_RUN=defineScriptedCourse({
   kitPlacements:[
     ...Array.from({length:35},(_,index)=>({id:'gallery',s:10176+index*18,lateral:0,heading:0,scale:[1.2,1.1,3],
       ...(index===0?{nodeTranslations:galleryEntranceTranslations}:{})})),
-    {id:'summit-hut',s:finish-130,lateral:28,heading:-Math.PI/2,scale:1},
-    {id:'observatory',s:finish-60,lateral:-40,heading:Math.PI/2,scale:1},
+    {id:'summit-hut',s:finish-240,lateral:54,heading:-Math.PI/2,scale:1.6},
+    {id:'observatory',s:finish-60,lateral:-25,heading:Math.PI/2,scale:1},
+    {id:'summit-finish',s:finish-4,lateral:0,heading:0,scale:1},
   ],
 });
 

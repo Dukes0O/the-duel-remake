@@ -49,6 +49,7 @@ import { ROAD_SHOULDER_WIDTH } from './config.js';
 import { trackKitsOf } from './track-kits.js';
 import { hillHeight, hillLocal, hillReach, runWeight, shoreFactor } from './circuit-hills.js';
 import { addStandCrowds } from './stand-crowd.js';
+import { addSummitFinish } from './summit-finish-view.js';
 import { addSkiers, addBirches, addChimneySmoke } from './circuit-winter.js';
 
 const TAU = Math.PI * 2;
@@ -596,4 +597,5 @@ export function addCircuitEffects(group, course) {
   if (effects.skiers) addSkiers(group, skierSpots(course, effects.skiers));
   if (effects.birches) addBirches(group, birchSpots(course, effects.birches));
   addStandCrowds(group, course);
+  addSummitFinish(group, course);
 }
