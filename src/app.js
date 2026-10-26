@@ -472,7 +472,7 @@ export class App {
     const stageIndex=COURSE.findIndex(row=>row.id===courseId);
     if(this._driveLessonPreparing||!this.drivingLessonsAvailable()||this.duel.state.status!=='menu'||!this.driveLessonBoardOpen||
       !Object.hasOwn(DRIVE_LESSON_TABLES,lessonId)||!DRIVE_LESSON_TABLES[lessonId].some(row=>row.courseId===courseId)||!this.player?.id||
-      !isCourseUnlocked(this.profile,courseId)||!isCarUnlocked(this.profile,car)||!['casual','pro'].includes(difficulty))return false;
+      !isCarUnlocked(this.profile,car)||!['casual','pro'].includes(difficulty))return false;
     if(this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex]))return false;
     const ownerId=this.player.id,driverId=getEquippedDriverId(this.profile),upgrades=getUpgradeLevels(this.profile,car);
     if(this.profile.drivingLessons!=null&&this.profile.drivingLessons.version!==1)return false;
@@ -485,7 +485,7 @@ export class App {
     catch(error){if(this._driveLessonPreparing===token){this._driveLessonPreparing=null;this.driveLessonMessage='The instructor could not complete a clean run. '+error.message;this._driveLessonUi?.update();}return false;}
     this._refreshPlayer();
     if(this._driveLessonPreparing!==token||!this.drivingLessonsAvailable()||!this.driveLessonBoardOpen||
-      this.duel.state.status!=='menu'||this.player?.id!==ownerId||!isCourseUnlocked(this.profile,courseId)||
+      this.duel.state.status!=='menu'||this.player?.id!==ownerId||
       !isCarUnlocked(this.profile,car)||getEquippedDriverId(this.profile)!==driverId||
       JSON.stringify(getUpgradeLevels(this.profile,car))!==JSON.stringify(upgrades)||
       this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex])||

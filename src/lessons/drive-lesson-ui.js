@@ -1,7 +1,7 @@
 import {lessonBoardMarkup} from './lesson-board.js';
 import {GEAR_LESSON, TIP_DISTANCE_M} from './drive-lessons.js';
 
-// Presentation only. The host supplies actual catalog/ownership choices and the
+// Presentation only. The host supplies actual catalog/car choices and the
 // current lesson observation; callbacks request actions without performing them.
 const escape = value => String(value ?? '').replace(/[&<>"']/g,
   char => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
@@ -58,12 +58,11 @@ function rowLabel(lessonId, row) {
 }
 
 // corners comes from DRIVE_LESSON_CORNERS; no copy of that source table lives
-// here. Catalog arrays have {id,name}; ownership is supplied separately.
+// here. Catalog arrays have {id,name}; car ownership is supplied separately.
 // DRIVE-LESSONS-VIEW-2: with props.lessonRows ({line, gears, snow}: the host's row tables) the board also lists
 // lessons 2 to 4, each open or shut by props.lessonAccess ({line: {open}, ...}, from driveLessonAccess); without lessonRows
 // the board is lesson 1 alone, exactly as before (the helipad's rows). This file imports nothing that reads the feature catalog.
 export function driveLessonBoardModel(props = {}) {
-  const ownedCourses = new Set(rows(props.ownedCourseIds));
   const catalog = new Map(rows(props.courses).map(course => [course.id, course]));
   const seen = new Set();
   const courses = rows(props.corners).flatMap(corner => {
@@ -71,10 +70,10 @@ export function driveLessonBoardModel(props = {}) {
     if (!course || !textId(course.id) || seen.has(course.id)) return [];
     seen.add(course.id);
     return [{id: course.id, name: course.name, cornerName: corner.cornerName,
-      rollingMph: corner.rollingMph, owned: ownedCourses.has(course.id)}];
+      rollingMph: corner.rollingMph}];
   });
-  const selected = courses.find(course => course.id === props.courseId && course.owned)
-    ?? courses.find(course => course.owned) ?? null;
+  const selected = courses.find(course => course.id === props.courseId)
+    ?? courses[0] ?? null;
   const car = rows(props.cars).find(item => item.id === props.carId);
   const progress = props.progress;
   const compatible = progress == null || progress.version === 1;
@@ -83,7 +82,7 @@ export function driveLessonBoardModel(props = {}) {
   let reason = '';
   if (!textId(props.playerId)) reason = 'Choose a player first.';
   else if (!compatible) reason = 'This lesson progress belongs to another version.';
-  else if (!selected) reason = 'Opens later: buy Panorama Ridge or Tremblant Woods.';
+  else if (!selected) reason = 'No lesson course is available.';
   else if (!car || !rows(props.ownedCarIds).includes(car.id)) reason = 'Choose an unlocked car.';
   else if (!['casual', 'pro'].includes(props.difficulty)) reason = 'Choose Casual or Pro.';
   const start = reason ? null : {lessonId: 'corner', courseId: selected.id, carId: car.id, difficulty: props.difficulty};
@@ -100,20 +99,19 @@ export function driveLessonBoardModel(props = {}) {
     const table = rows(props.lessonRows[id]);
     const lessonCourses = table.flatMap(row => {
       const course = catalog.get(row.courseId);
-      return course && textId(course.id) ? [{id: course.id, name: course.name, cornerName: rowLabel(id, row), owned: ownedCourses.has(course.id)}] : [];
+      return course && textId(course.id) ? [{id: course.id, name: course.name, cornerName: rowLabel(id, row)}] : [];
     }).filter((course, index, all) => all.findIndex(other => other.id === course.id) === index);
-    const choice = lessonCourses.find(course => course.id === props.courseIds?.[id] && course.owned)
-      ?? lessonCourses.find(course => course.owned) ?? null;
+    const choice = lessonCourses.find(course => course.id === props.courseIds?.[id])
+      ?? lessonCourses[0] ?? null;
     const access = props.lessonAccess?.[id] ?? {open: false};
     const done = compatible && progress?.done?.[id] === true;
     const margin = progress?.best?.[id];
     let why = '';
-    const names = lessonCourses.map(course => course.name).join(' or ');
     if (!textId(props.playerId)) why = 'Choose a player first.';
     else if (!compatible) why = 'This lesson progress belongs to another version.';
     else if (id === 'gears' && props.engineCurve !== true) why = 'Opens later: waiting for the new engines.';
     else if (!access.open && !done) why = 'Opens later: finish lesson ' + (id === 'line' ? 1 : id === 'gears' ? 2 : props.engineCurve === true ? 3 : 2) + ' first.';
-    else if (!choice) why = 'Opens later: buy ' + names + '.';
+    else if (!choice) why = 'No lesson course is available.';
     else if (!car || !rows(props.ownedCarIds).includes(car.id)) why = 'Choose an unlocked car.';
     else if (!['casual', 'pro'].includes(props.difficulty)) why = 'Choose Casual or Pro.';
     const go = why ? null : {lessonId: id, courseId: choice.id, carId: car.id, difficulty: props.difficulty};
@@ -133,19 +131,19 @@ export function driveLessonBoardMarkup(props = {}) {
   const model = driveLessonBoardModel(props);
   const choices = model.courses.map(course => `<label class="drive-lesson-course">
     <input type="radio" name="drive-lesson-course" data-drive-course="${escape(course.id)}"
-      ${model.selected?.id === course.id ? 'checked' : ''} ${course.owned ? '' : 'disabled'}>
-    <span>${escape(course.name)} — ${escape(course.cornerName)}${course.owned ? '' : ' (not owned)'}</span></label>`).join('');
+      ${model.selected?.id === course.id ? 'checked' : ''}>
+    <span>${escape(course.name)} — ${escape(course.cornerName)}</span></label>`).join('');
   const best = model.bestMargin == null || model.byId ? '' : `<p>Best: ${seconds(model.bestMargin)} faster</p>`;
   const car = model.car ? escape(model.car.name) : 'Choose an unlocked car';
   const difficulty = props.difficulty === 'pro' ? 'Pro' : props.difficulty === 'casual' ? 'Casual' : 'Choose a setting';
-  // Lessons 2 to 4: a course choice only where a lesson has more than one owned place, and each done lesson's best margin.
+  // Lessons 2 to 4: a course choice only where a lesson has more than one place, and each done lesson's best margin.
   const later = model.byId ? LATER.map(id => {
     const info = model.byId[id];
     const pick = info.courses.length > 1 && info.selected ? `<fieldset class="drive-lesson-more"><legend>Lesson ${DRIVE_LESSON_VIEW[id].n}: choose where</legend>${
       info.courses.map(course => `<label class="drive-lesson-course">
     <input type="radio" name="drive-lesson-course-${id}" data-drive-lesson="${id}" data-drive-course="${escape(course.id)}"
-      ${info.selected?.id === course.id ? 'checked' : ''} ${course.owned ? '' : 'disabled'}>
-    <span>${escape(course.name)} — ${escape(course.cornerName)}${course.owned ? '' : ' (not owned)'}</span></label>`).join('')}</fieldset>` : '';
+      ${info.selected?.id === course.id ? 'checked' : ''}>
+    <span>${escape(course.name)} — ${escape(course.cornerName)}</span></label>`).join('')}</fieldset>` : '';
     return pick;
   }).join('') : '';
   return `<section class="drive-lesson-board" aria-label="Driving instructor">
@@ -154,7 +152,7 @@ export function driveLessonBoardMarkup(props = {}) {
     <p class="drive-lesson-setup">Car: ${car}. Setting: ${difficulty}.</p>
     ${lessonBoardMarkup(model.rows, {action: 'data-drive-action'})}
     ${model.reason ? `<p class="drive-lesson-notice" role="status">${escape(model.reason)}</p>` : ''}
-    ${model.completed && !model.start ? '<p>Lesson completed. Retake when your course and car are available.</p>' : ''}
+    ${model.completed && !model.start ? '<p>Lesson completed. Retake when your car and settings are available.</p>' : ''}
     ${best}<button type="button" data-drive-action="leave">Back</button></section>`;
 }
 
@@ -270,8 +268,8 @@ export function driveLessonResultMarkup(props = {}) {
     ${nextButton(lesson)}${passed(lesson)&&props.lessonSaveFailed?'<button type="button" data-drive-action="retry-save">Retry save</button>':''}<button type="button" data-drive-action="leave">Leave lesson</button></section>`;
 }
 
-// Read props when an event happens. A stale menu cannot start a formerly owned
-// course or act for a player who has since changed. The host remains authoritative.
+// Read props when an event happens. A stale menu cannot use an unavailable
+// car or act for a player who has since changed. The host remains authoritative.
 export function bindDriveLessonUi(root, readProps, callbacks = {}) {
   if (!root?.addEventListener || typeof readProps !== 'function') throw new TypeError('Lesson root and current props reader required');
   const inside = node => !!node && root.contains(node);
@@ -298,7 +296,7 @@ export function bindDriveLessonUi(root, readProps, callbacks = {}) {
     const model = driveLessonBoardModel(readProps());
     const lessonId = input.dataset.driveLesson ?? 'corner';
     const courses = (model.byId?.[lessonId] ?? model).courses;
-    if (courses.some(course => course.id === input.dataset.driveCourse && course.owned))
+    if (courses.some(course => course.id === input.dataset.driveCourse))
       callbacks.onSelectCourse?.(lessonId === 'corner' ? {courseId: input.dataset.driveCourse} : {courseId: input.dataset.driveCourse, lessonId});
   };
   const keydown = event => {

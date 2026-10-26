@@ -58,3 +58,26 @@ before `rescue` goes on:
   least 60 kg, by moving the search area closer or the hiker's clue earlier,
   not by changing the helicopter's fuel burn.
 Then the frame check over the avalanche (Claude, screens on) and the switch.
+
+
+**Claude, 26 October 2026, after the margins pass:** the changed pins and
+fixtures are approved (each follows the closer clue, moved site or longer
+clock; original tolerances kept; the recovery fixture's seed change only
+separates its wreck from the new driver). Summit: use the refill plan, not
+site moves. The truck-first guidance names the amount: "Fill to at least
+330 kg at the truck" for the avalanche, and "Take at least 230 kg" before each
+supply crate leg. Prove a cautious flight following that text ends with at
+least 60 kg on both.
+
+
+## Codex refill verification (26 October 2026)
+
+Guidance names 330 kg at the avalanche start-area truck, 400 kg at the pickup
+truck for the return, and at least 230 kg before every supply crate leg. Both
+instruments and job text name the purchase amounts. The retained complete
+flights verify those texts at the stops, follow them and enforce >=60 kg at
+completion: avalanche **23:25.2 / 71.3 kg**, supply **28:18.5 / 82.4 kg**.
+Both retain the existing >=35% of clock left checks. Lane 58/58, build passed;
+no existing assertion or tolerance changed in this follow-up. Previous pin
+changes remain exactly as approved. Rescue stays dev; Claude owns frames,
+finishing verdict and switch-on. See docs/changes/RESCUE-FINISH.md for receipts.
