@@ -1,3 +1,4 @@
+import {shelfMarkup} from './heli-logbook-ui.js';
 // Kestrel One's instruments and the helicopter's page parts
 // (docs/HELICOPTER.md section 8). Drawn in the page like the speedometer.
 // Drawing only: it reads the app's helicopter view and log and never
@@ -370,14 +371,15 @@ export function createHeliUi({host, app}) {
   section.className = 'heli-panel';
   section.hidden = true;
   section.setAttribute('aria-label', 'Kestrel One');
-  section.innerHTML = '<div class="heli-top"></div><div class="heli-side"><div class="heli-arrival-host"></div><div class="heli-ski-host"></div><div class="heli-controls"></div><div class="heli-lessons-host"></div><div class="heli-board-host" hidden></div></div><div class="heli-notices" aria-live="polite"></div><div class="heli-radio" aria-live="polite" hidden></div>';
+  section.innerHTML = '<div class="heli-top"></div><div class="heli-side"><div class="heli-shelf-host"></div><div class="heli-arrival-host"></div><div class="heli-ski-host"></div><div class="heli-controls"></div><div class="heli-lessons-host"></div><div class="heli-board-host" hidden></div></div><div class="heli-notices" aria-live="polite"></div><div class="heli-radio" aria-live="polite" hidden></div>';
   host.append(section);
   const top = section.querySelector('.heli-top'), controls = section.querySelector('.heli-controls');
   const notices = section.querySelector('.heli-notices'), radio = section.querySelector('.heli-radio');
   let seenLog = null, shown = [], radioLine = null, lastTop = '', lastControls = '', lastNotices = '', disposed = false;
   const lessonsHost = section.querySelector('.heli-lessons-host');
   const arrivalHost = section.querySelector('.heli-arrival-host');
-  let lastArrival = '';
+  let lastArrival = '', lastShelf = '';
+  const shelf = section.querySelector('.heli-shelf-host');
   const boardHost = section.querySelector('.heli-board-host');
   const board = createDispatchBoard({root: boardHost, app});
   let pilotMap = null; // MAP-VIEW: made the first time the view carries the pilot's map (never with the switch off)
@@ -407,6 +409,10 @@ export function createHeliUi({host, app}) {
     if (app.heliSession === session) app._heliEvents?.(session.takeEvents());
   };
   const click = event => {
+    if (event.target.closest('[data-logbook-dismiss]')) { app.heliSession?.dismissRank(); return; }
+    const paint = event.target.closest('[data-logbook-paint]');
+    if (paint) { app.heliSession?.wearLogbookPaint(paint.dataset.logbookPaint); return; }
+
     const arrivalButton = event.target.closest('[data-heli-arrival]');
     if (arrivalButton) { app.heliLanded?.(arrivalButton.dataset.heliArrival); return; }
     const skiButton = event.target.closest('[data-ski-board],[data-ski-run],[data-ski-wax],[data-ski-challenge]');
@@ -470,6 +476,7 @@ export function createHeliUi({host, app}) {
         seenLog = log;
       }
       shown = shown.filter(item => item.until > now).slice(-3);
+      lastShelf = set(shelf, shelfMarkup(view), lastShelf);
       const tank = app.profile?.heli;
       // Dusk over the hiker's last 3 minutes: the panel's dimming layer (CSS), set only when it falls.
       const dusk = duskShare(view);

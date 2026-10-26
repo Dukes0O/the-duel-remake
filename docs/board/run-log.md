@@ -1,5 +1,9 @@
 # Wasteland run log
 
+26 October, HELI-LOGBOOK round 2 janitor: recycled own 347,344,294-byte build and 427,229 bytes of consumed round 1 logs; art helper recycled its raw captures/originals/QA bundle. Kept both compact sheets (round 2: 494,163 bytes) and current handoff logs. Five runtime maps total 5,001,151 bytes, down 86,447. Lane 103/103 and build pass; stopped for Claude's round 2 verdict. No merge back or push.
+
+26 October, HELI-LOGBOOK lane janitor: recycled 694,946,198 bytes of own QA/build output plus consumed art captures/originals; kept the 493,500-byte round 1 sheet and handoff logs. Five runtime maps add 5,087,598 bytes and are proven dynamic loads; existing audit candidates retained. No merge back or push.
+
 25 October, DEEP-EXPLORER round 2: merged incoming 6a35e8f6 only; moving-creature logging/ring and smooth wider chart built, lane 220 covered, build and three Deep scenarios pass, independent review clear. Frames skipped for foreign full tier. Recycled own generated output and raw captures; sheets and check receipts kept. No merge back or push.
 
 25 October, DEEP-EXPLORER janitor: recycled about 465 MB of own build, test fixtures and raw captures; kept the 225 KB chart sheet and handoff check proof. Audit found no unused new modules; runtime assets unchanged, existing uncertain candidates retained.
@@ -1370,3 +1374,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 Release (afternoon): six live fixes on 301e61c0+notes; hold lifted.
 - 2026-10-26 LAB-LESSON-FRAME merged (Codex): five-step lesson frame, notebook save field (save review clear) behind lab-2; Lab and save suites and build pass.
 - 2026-10-26 SKI-FINISH tuning merged (dev): Casual slalom assist, steady keyboard run 2 misses/bronze; suites and build pass.
+- 2026-10-26 SUMMIT-BUILD-TIME-2 merged: signatures exact; official timing with the finish area before release.
+- 2026-10-26 HELI-LOGBOOK merged (dev): ranks, Gus's shelf, five paints (accepted round 2); switch, helicopter, save, replay suites and build pass.

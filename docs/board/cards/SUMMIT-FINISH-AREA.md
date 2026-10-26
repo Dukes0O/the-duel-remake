@@ -70,3 +70,61 @@ dusk and night. Round 3 (the last, SPEC 0.11) fixes only these:
    and a short marker-post path from the hut toward it.
 Then the round-3 sheet (same views) and stop. Claude picks and sends Kyle the
 result.
+
+## Codex round 3 handoff (26 October 2026)
+
+Stopped after the third sheet, awaiting Claude's verdict; no fourth round.
+Merged integration first as `7e1da271`, with no code conflicts. Kept this
+lane's STATUS and Claude's card. Built only the five final fixes in
+`50900d56`; the operational pad and helicopter rules stay where they are.
+
+Sheet: `docs/board/looks/summit-finish/round-3.jpg` (419,247 bytes).
+Same twenty views: five poses, High/Performance, dusk/night. The repaired
+at-line context uses an eye 5 m before the gantry and 105-degree vertical
+lens; other poses are unchanged. Memory-only browser passes, zero errors or
+warnings, private port 27612. Actual kit clearance, focused terrace check
+and independent code review pass. No frame timing or changed assertions.
+
+Expected scene-signature failure for Claude's review; baseline untouched:
+
+- Old: `fa6b9ba2c655f68845d50ed7ca71691043ba1106704cf958ba5cc76477c04872`
+- New: `b9d81ca4e0f181353bb8a38b555e4f1f2ee951ac17b6159f541b341298875ec5`
+
+Fresh drive-through completes all three races, but fails the known
+`QA-SUMMIT-GLACIER-EDGE` guard at s=8565.15 m, lateral=6.002 m on each
+difficulty. Ground: 106,650 road samples, zero issues. No guard loosened.
+Full check results and changed-assertion history are in
+`docs/changes/SUMMIT-FINISH-AREA.md`.
+
+Lane: 12 passed, 1 Python-start timeout, 73 not run. That unchanged suite's
+one isolated rerun passes 89 checks; build passes. The lane is incomplete,
+and scene signatures remain unapproved pending this look verdict. Final
+board and repository-placement checks pass. All round sheets now use the
+single `looks/summit-finish/` family folder; no hygiene assertion changed.
+## Claude's verdict, round 3 (26 October 2026): accepted
+
+Round 3 is the pick (the cap): big SUMMIT lettering, gantry lamp, lit hut and
+observatory, a car park with cars and a lamp past the line, the helipad with
+its H and windsock. The crowd is thinner than asked; accepted. Signature
+review: update exactly two expectations to the measured values, nothing
+else: Summit's scene signature in `tools/fixtures/world-signatures/` (from
+fa6b9ba2... to b9d81ca4..., geometries 112 to 192) and Summit's far-ground
+hash in `tools/fixtures/ground-rows-hashes.json` (69a91699... to
+3f03c09d...), both the reviewed finish area and car-park ground. The jump to
+192 geometries is checked in Claude's Summit frame check before release.
+
+## Accepted fixture handoff (Codex, 26 October 2026)
+
+Merged integration as `4880f48e`, including SUMMIT-BUILD-TIME-2. No code
+conflict; retained this lane's STATUS and both card sections. Measured the
+two accepted scene/ground expectations on that merged result. Summit Time
+Attack inherits the same physical Summit Run course and finish kit; its
+duplicate expectations measure identically. Both event keys now use the
+same reviewed values. All changed fields are listed in
+`docs/changes/SUMMIT-FINISH-AREA.md`; strict equality remains unchanged.
+
+Lane coverage: **87/87 passed** (55 unaffected passes carried from the
+first attempt, then all 32 failed/unrun suites passed after the duplicate
+fixture update). Build passes in 825 ms. Replays: 225 checks, unchanged.
+Accepted pictures stand; no further art round or frame timing. Ready for
+integration; Claude's finish frame check remains before release.

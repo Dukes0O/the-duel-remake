@@ -9,6 +9,7 @@ import {heliCameraPose} from './heli-camera.js';
 import {createVehicleAssets} from '../vehicle-assets.js';
 import {createFireView} from './heli-fire-view.js';
 import {createRescueView} from './heli-rescue-view.js';
+import {createRankPaint} from './heli-rank-paint.js';
 
 const CABLE_LENGTH = 15;
 const GUIDE_WAIT = 0xf4f1e8, GUIDE_READY = 0x3ddc5a;
@@ -53,6 +54,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   group.add(body);
   const parts = {model: null, rotor: null, tail: null, hook: null, status: 'idle', error: ''};
   let disposed = false;
+  const rankPaint = createRankPaint({THREE});
   // The model loads on the first helicopter frame, so a player who never
   // flies (or has the switch off) never downloads it.
   const ensureModel = () => {
@@ -68,6 +70,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     parts.status = parts.rotor && parts.tail && parts.hook ? 'ready' : 'error';
     if (parts.status === 'error') parts.error = 'Kestrel One is missing a named node';
     body.add(model);
+    rankPaint.attach(model);
     }).catch(error => {
       parts.status = 'error'; parts.error = String(error?.message || error);
       console.warn(`Kestrel One did not load: ${parts.error}`);
@@ -167,6 +170,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     update(view, {cameraIndex = 0, dt = 1 / 60} = {}) {
       if (!view?.heli) { group.visible = false; fire.hide(); rescue?.hide(); return null; }
       ensureModel();
+      rankPaint.update(view.logbook?.paint ?? view.skins?.worn);
       // Nothing of the helicopter (cable and rings included) shows until
       // the model is in.
       group.visible = parts.status === 'ready';
@@ -246,6 +250,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     get modelError() { return parts.error; },
     dispose() {
       disposed = true;
+      rankPaint.dispose();
       // Car models share their geometry and materials with the race's own
       // cars, so only the helicopter's own parts are freed.
       for (const mesh of others.values()) if (mesh.userData?.vehicleKey) group.remove(mesh);

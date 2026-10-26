@@ -4,7 +4,7 @@
 // only through a returned profile, so the caller applies a result once and a
 // second call on the old profile can never charge twice. Every helper takes
 // {enabled}, the heli-skins switch (effective only with the helicopter on).
-import {heliOf, missionsOf, SKIN_KINDS, DIRT_KINDS, DIRT_MAX} from './heli-save.js';
+import {heliOf, missionsOf, SKIN_KINDS, DIRT_KINDS, DIRT_MAX, RANK_SKIN_KINDS} from './heli-save.js';
 
 // ---- the tables: every number is written once, here ----------------------
 
@@ -22,6 +22,7 @@ export const WASH = Object.freeze({cost: 100, hintAbove: 80});
 // Each skin: its name, its look (body, lower and tail, stripe), the saved
 // count that earns it (null: bought only) and the gear that comes with it.
 export const SKINS = Object.freeze({
+  ...Object.fromEntries(RANK_SKIN_KINDS.map((id, i) => [id, Object.freeze({name: ['Student pilot', 'Private pilot', 'Commercial pilot', 'Mountain pilot', 'Chief pilot'][i], look: Object.freeze([['white', 'orange', 'white'], ['midnight blue', 'midnight blue', 'silver'], ['forest green', 'cream', 'cream'], ['red', 'white', 'silver'], ['cream', 'signal red', 'cream']][i]), tally: null, gear: Object.freeze([])})])),
   stock: Object.freeze({name: 'Stock', look: Object.freeze(['white', 'navy', 'red']), tally: null, gear: Object.freeze([])}),
   fire: Object.freeze({name: 'Fire service', look: Object.freeze(['red', 'yellow', 'white']), tally: 'firesOut',
     gear: Object.freeze(['water-gauge', 'drop-sight'])}),
@@ -163,7 +164,7 @@ export function buySkin(profile, kind, {enabled} = {}) {
 export function wearSkin(profile, kind, {enabled} = {}) {
   if (enabled !== true) return off(profile);
   const skins = skinsOf(profile);
-  if (kind !== 'stock' && !(validSkin(kind) && skins.owned.includes(kind))) return failure(profile, 'You do not own that skin.');
+  if (kind !== 'stock' && !((validSkin(kind) || RANK_SKIN_KINDS.includes(kind)) && skins.owned.includes(kind))) return failure(profile, 'You do not own that skin.');
   if (skins.worn === kind) return {ok: true, already: true, freshCoat: false, profile};
   const freshCoat = skins.fresh.includes(kind), heli = heliOf(profile);
   const next = {owned: skins.owned, worn: kind, fresh: skins.fresh.filter(other => other !== kind)};

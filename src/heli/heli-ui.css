@@ -94,3 +94,13 @@
 
 .heli-fuel-target{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
 .heli-fuel-target select{color:#f3eddf;background:#25302b;border:1px solid #ffffff40;border-radius:4px;padding:5px}
+
+/* The pad hut's logbook shelf. */
+.heli-shelf,.heli-rank{padding:14px 16px;margin-bottom:10px;border:1px solid #bda88155;background:#1c211fee;color:#ede4d1;line-height:1.5}
+.heli-shelf h3,.heli-rank h3{margin:0 0 8px;letter-spacing:2px;font-size:13px}
+.heli-shelf p,.heli-rank p{font-size:13px;margin:8px 0}
+.heli-shelf details{border-top:1px solid #bda88133;padding:9px 0}
+.heli-shelf summary{cursor:pointer;font-size:13px}
+.heli-gus-page p{font-family:Georgia,serif;font-size:15px;line-height:1.7}
+.heli-shelf button,.heli-rank button{display:block;margin-top:8px;padding:7px 10px;background:#364239;color:#f5eddc;border:1px solid #bda88177;cursor:pointer}
+.heli-shelf button:disabled{opacity:.65;cursor:default}

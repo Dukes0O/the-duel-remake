@@ -1,3 +1,4 @@
+import {recordLogbook, awardLogbook, logbookView, RANKS} from './heli-logbook.js';
 // The helicopter mode controller (docs/HELICOPTER.md sections 2, 6 and 9),
 // like deep-journey.js for The Deep. Pure game rules with no graphics: the
 // app gives it a course loader, the player's car, today's date and a way to
@@ -196,7 +197,7 @@ export function insideArea(area, x, y, z, ground = null) {
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
   mode = 'assisted', difficulty = 'pro', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
   summitRunEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false,
-  drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false} = {}) {
+  drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false, logbookEnabled = false} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
   if (typeof loadCourse !== 'function') throw new Error('createHeliSession needs loadCourse(courseId)');
   const flag = {enabled: true};
@@ -209,6 +210,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   const pilotOn = pilotMapEnabled === true;
   // The Table joins the destinations once the pilot has seen it (a getter, since the save changes).
   const dflag = pilotOn ? {summitRun: summitOn, pilotMap: true, get table() { return tableKnown(); }} : {summitRun: summitOn};
+  const logbookOn = logbookEnabled === true;
+  let logbookAirborne = false, rankCheckedSave = null;
+  const rankNotices = [];
   const skinOn = skinsEnabled === true, sflag = {enabled: skinOn};
   const wildOn = wildlifeEnabled === true, wildFlag = {enabled: wildOn, summitRun: summitOn};
   const placesNow = () => destinationsFor(dflag);
@@ -301,7 +305,38 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     }
     return result;
   };
-  const emit = event => { pending.push(event); if (lesson) lessonEvents.push(event); if (challenge) challengeEvents.push(event); return event; };
+  const emit = event => {
+    // Only successful completion events come through these paths; failures and
+    // repeated delivery attempts produce none of them.
+    const job = event.type === 'jobDone' ? (['crate', 'returnLoad'].includes(event.job?.kind) ? 'crate' : 'car')
+      : event.type === 'fireOut' ? 'fire'
+      : event.type === 'rescueDone' ? (event.kind === 'supply' ? 'crate' : 'rescue')
+      : ['skiDropDone', 'skiGroupDone'].includes(event.type) ? 'ski' : null;
+    if (logbookOn && job) commit({ok: true, profile: recordLogbook(save, {job, enabled: true})});
+    pending.push(event);
+    if (lesson) lessonEvents.push(event);
+    if (challenge) challengeEvents.push(event);
+    return event;
+  };
+  function paintChanged(kind, freshCoat) {
+    winch.length = CABLE.length;
+    for (const car of loads) delete car.lineLength;
+    skinNote = null;
+    emit({type: 'skinWorn', kind, freshCoat, fadeSeconds: HELI_SESSION.fadeSeconds});
+  }
+  function ranksAtHome() {
+    // Repainting changes mission gear. Keep it fitted until a rescue ends,
+    // including supply runs that return home for another crate.
+    if (!logbookOn || live || rankCheckedSave === save || !onHome()) return;
+    const previous = skinsOf(save).worn;
+    const result = awardLogbook(save, {enabled: true});
+    if (result.profile !== save) commit({ok: true, profile: result.profile});
+    if (skinOn && result.ranks.length && skinsOf(save).worn !== previous)
+      paintChanged(skinsOf(save).worn, result.freshCoat);
+    rankCheckedSave = save;
+    rankNotices.push(...result.ranks);
+    for (const rank of result.ranks) emit({type: 'pilotRank', rank: rank.id});
+  }
   // H2 Fire (docs/HELI_FIRE.md): only with the forest-fire switch on. Each
   // course's fire grid is built once from its own course model at the
   // helicopter's seed (loadFireCourse), never from the course being flown,
@@ -718,8 +753,12 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function handle(events) {
     for (const event of events) {
       emit(event);
-      if (event.type === 'liftoff') { fire?.liftoff({lesson: !!lesson}); rescueLifted(); }
+      if (event.type === 'liftoff') { if (logbookOn) logbookAirborne = true; fire?.liftoff({lesson: !!lesson}); rescueLifted(); }
       if (event.type === 'touchdown') {
+        if (logbookOn && logbookAirborne && event.result !== 'crash' && site?.zone &&
+          Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) <= site.zone.radius)
+          commit({ok: true, profile: recordLogbook(save, {flight: site.courseId, enabled: true})});
+        logbookAirborne = false;
         tableLanded(event);
         fire?.landed();
         rescueTouched(event);
@@ -729,7 +768,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           charge('hardLanding', HELI_MONEY.hardLanding);
           emit({type: 'radio', line: 'heli.radio.landing.hard'});
         }
-      } else if (event.type === 'crash') crashed(event.cause);
+      } else if (event.type === 'crash') { logbookAirborne = false; crashed(event.cause); }
       else if (event.type === 'lowFuel') emit({type: 'radio', line: 'heli.radio.fuel.low'});
       else if (event.type === 'engineOut') { storeFuel(); emit({type: 'radio', line: 'heli.radio.fuel.out'}); }
       else if (event.type === 'drop') {
@@ -1487,6 +1526,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
 
   const api = {
     start(courseId = HOME_COURSE) {
+      logbookAirborne = false; rankNotices.length = 0; rankCheckedSave = null;
       hookHeld = false; hookReeled = false;
       skiRun = null; skiMeta = null; thinAirSaid = false; lastSkiPad = null;
       const noted = today ? commit(notePlayDay(save, today, flag)) : null;
@@ -1605,6 +1645,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       fire?.step({dt, engine: heli.engine === true, aboveGround: heli.y - world.ground.height(heli.x, heli.z), lesson: !!lesson});
       if (lesson) stepLessonNow(dt);
       if (challenge) stepChallengeNow(dt);
+      ranksAtHome();
       if (strandedOnGround()) {
         storeFuel();
         const truck = commit(fuelTruck(save, flag));
@@ -2165,7 +2206,11 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         price: null, buy: false, canAfford: false});
       const rows = skinRows(save).map(row => Object.freeze({...row, buy: !row.owned && !(row.need !== null && row.tally >= row.need),
         canAfford: wallet >= row.price}));
-      return Object.freeze({rows: Object.freeze([stock, ...rows]), worn, grime, dirt: dirtLevels(), note: skinNote, offers: fitOffers(),
+      const owned = skinsOf(save).owned;
+      const rankRows = logbookOn ? RANKS.filter(rank => owned.includes(rank.skin)).map(rank => Object.freeze({
+        kind: rank.skin, name: rank.name, owned: true, worn: worn === rank.skin, fresh: false, buy: false, need: null, price: null,
+      })) : [];
+      return Object.freeze({rows: Object.freeze([stock, ...rows, ...rankRows]), worn, grime, dirt: dirtLevels(), note: skinNote, offers: fitOffers(),
         wash: Object.freeze({cost: WASH.cost, grime, can: grime > 0 && wallet >= WASH.cost, hint: grime > WASH.hintAbove})});
     },
     // Buy a coat sooner: the whole price once, or nothing (heli-skins.js buySkin).
@@ -2189,13 +2234,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const result = wearSkin(save, kind, sflag);
       if (!result.ok) return result;
       commit(result);
-      if (!result.already) {
-        // A new coat brings its own gear: the winch starts again at the plain line.
-        winch.length = CABLE.length;
-        for (const car of loads) delete car.lineLength;
-        skinNote = null;
-        emit({type: 'skinWorn', kind, freshCoat: result.freshCoat, fadeSeconds: HELI_SESSION.fadeSeconds});
-      }
+      if (!result.already) paintChanged(kind, result.freshCoat);
       return result;
     },
     // The wash: 100 credits at the home pad, on the ground; all four dirts back to 0.
@@ -2229,6 +2268,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     get lesson() { return lesson ? {id: lesson.id, held: lesson.held, target: lesson.target, spot: lesson.spot} : null; },
     // Leave the mode: the fuel left in the tank is kept.
     leave() {
+      logbookAirborne = false;
       // Leaving with a rescue in hand is a failure (section 3.4).
       failRescueNow('left');
       endChallenge(null);
@@ -2240,6 +2280,13 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       phase = 'idle';
       return save;
     },
+    wearLogbookPaint(kind) {
+      if (!logbookOn || !atPad() || live || !RANKS.some(rank => rank.skin === kind))
+        return {ok: false, reason: 'Choose your rank paint at the home pad after finishing the rescue.'};
+      if (skinOn) return api.wearPaint(kind);
+      return commit(wearSkin(save, kind, {enabled: true}));
+    },
+    dismissRank() { rankNotices.shift(); },
     takeEvents() { return pending.splice(0); },
     get profile() { return save; },
     get phase() { return phase; },
@@ -2267,6 +2314,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         fire: fireInfo,
         season: fire?.season() ?? null,
         ...(skinOn ? {skins: skinsView()} : {}),
+        ...(logbookOn ? {logbook: Object.freeze({...logbookView(save), paint: skinsOf(save).worn, notice: rankNotices[0] ?? null})} : {}),
         ...(wildOn ? {survey: surveyView()} : {}),
         job: jobInHand(),
         ...(site?.courseId !== HOME_COURSE ? {returnLoad: returnBoardView()} : {}),

@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-26T18:04:27.106Z
+Observed at: 2026-10-26T18:05:15.485Z
 
-Observation commit: 091203c435910fb9f9867bd874c23bfd5446ba98
+Observation commit: 4880f48e9bd73f236235895db1e3fa291010b8d6
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 091203c435910fb9f9867bd874c23bfd5446ba98
+Integration HEAD: 4880f48e9bd73f236235895db1e3fa291010b8d6
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -30,9 +30,9 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-finish | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish |
-| codex/lab-lift-2 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-lift |
+| codex/lab-lift-2 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-lift |
 | codex/perf-high-night | 11 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
-| codex/summit-finish-area | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-finish |
+| codex/summit-finish-area | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-finish |
 | codex/wild-art-src | 11 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
 ## Unmerged branches for idle review
@@ -42,8 +42,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-finish | unknown | 2026-10-26T07:49:02-07:00 | 0 | last commit 2026-10-26T07:49:02-07:00 | docs/THE_DEEP.md, docs/board/STATUS.md, docs/board/looks/deep-finish/round-1.jpg, docs/board/looks/deep-finish/round-1.md, docs/changes/DEEP-PLACES.md |
+| codex/lab-lift-2 | unknown | 2026-10-26T10:45:46-07:00 | 0 | last commit 2026-10-26T10:45:46-07:00 | docs/board/cards/LAB-LIFT-2.md, docs/board/looks/lab-2/brian-source.md, docs/board/looks/lab-2/look-3-review.md, docs/board/looks/lab-2/look-3.jpg, docs/changes/LAB-LIFT-2.md |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 11 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
-| codex/summit-finish-area | unknown | 2026-10-26T10:41:37-07:00 | 0 | last commit 2026-10-26T10:41:37-07:00 | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/SUMMIT-FINISH-AREA.md, docs/board/looks/summit-finish/round-1-review.md, docs/board/looks/summit-finish/round-1.jpg |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 11 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
 ## Size targets
@@ -57,10 +57,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 26,930,394 B | +645,428 B | 20,000,000 B |
-| Added bytes in last merge | 2,074,624 B | -1,197,135 B | 5,000,000 B |
-| All `public/` | 336,070,047 B | +183,752 B | unavailable |
-| Git objects | 804,848,640 B | +33,488,896 B | unavailable |
+| Review `looks/` | 27,439,354 B | +474,283 B | 20,000,000 B |
+| Added bytes in last merge | 3,612,982 B | +3,609,008 B | 5,000,000 B |
+| All `public/` | 338,885,751 B | +0 B | unavailable |
+| Git objects | 804,848,640 B | +31,773,696 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -81,6 +81,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
 Issue: codex/deep-finish: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish
+Issue: codex/lab-lift-2: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-lift' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-lift/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-lift
 Issue: codex/perf-high-night: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night
-Issue: codex/summit-finish-area: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-finish' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-finish/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/summit-finish
 Issue: codex/wild-art-src: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src

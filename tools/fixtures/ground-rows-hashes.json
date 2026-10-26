@@ -188,8 +188,8 @@
  },
  "summit-run": {
   "near": "845626385552bc485e8bc20d8c602a88011bc9b1e7ce7845c0d0af8f2dafbeb8",
-  "far": "69a916991e5cde171487997d4a4226cd56859388bf56a40c0065e3e5d6268f9f",
-  "scenery": "1a05c479e1d732d29dde77608e859bfe57d819bd3d20c464242790e6eb7778f5",
+  "far": "3f03c09d0643c936132cd55d157ee6217fe455f840ff7ce17e60f79cbb6d26ca",
+  "scenery": "28f7b419f2e9a3bbc46296fffc8e2444a5f4dbde5db75ebb40a8778cb0264d0c",
   "cells": 392,
   "roadAvoid": {
    "placed": 12690,
@@ -210,8 +210,8 @@
  },
  "summit-time-attack": {
   "near": "845626385552bc485e8bc20d8c602a88011bc9b1e7ce7845c0d0af8f2dafbeb8",
-  "far": "69a916991e5cde171487997d4a4226cd56859388bf56a40c0065e3e5d6268f9f",
-  "scenery": "1a05c479e1d732d29dde77608e859bfe57d819bd3d20c464242790e6eb7778f5",
+  "far": "3f03c09d0643c936132cd55d157ee6217fe455f840ff7ce17e60f79cbb6d26ca",
+  "scenery": "28f7b419f2e9a3bbc46296fffc8e2444a5f4dbde5db75ebb40a8778cb0264d0c",
   "cells": 392,
   "roadAvoid": {
    "placed": 12690,

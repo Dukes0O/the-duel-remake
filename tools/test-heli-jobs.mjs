@@ -85,7 +85,7 @@ function profileWith({credits = 3000, owned = [], heli = null} = {}) {
 const DAY1 = '2026-10-14', DAY2 = '2026-10-15';
 
 function newSession({profile = profileWith(), carId = 'falcone_f42', mode = 'assisted', today = DAY1, saves = null} = {}) {
-  const session = createHeliSession({profile, enabled: true, loadCourse, carId, mode, today, persist: p => saves?.push(p)});
+  const session = createHeliSession({profile, enabled: true, logbookEnabled: true, loadCourse, carId, mode, today, persist: p => saves?.push(p)});
   session.start();
   session.buyFuel();
   session.takeEvents();
@@ -294,6 +294,8 @@ function flyJob({mode = 'assisted', high = false} = {}) {
   assert.equal(released?.type, 'released'); checks++;
   const done = log.find(e => e.type === 'jobDone');
   ok(done && done.job.id === job.id, 'the job is done');
+  same(heliOf(session.profile).logbook.jobs.car, 1, 'logbook counts a delivered car once');
+  same(heliOf(session.profile).logbook.jobs.crate, 0, 'car jobs are not crate jobs');
   ok(log.some(e => e.type === 'radio' && e.line === 'heli.radio.job.done'), 'with the radio line');
   ok(!log.some(e => e.type === 'delivered'), 'the player\'s own car is not involved');
   ok(!log.some(e => e.type === 'charged'), 'a clean set-down costs no repairs');
@@ -626,7 +628,7 @@ function flyOwnCar({owned}) {
 // Actual fixed-step flight: hook at Snow, cruise home, set down and pay once.
 for (const day of [1, 2]) {
   const session = createHeliSession({profile: profileWith({owned: OWNED, heli: {fuelKg: 400,
-    playDay: {last: DAY1, count: day}}}), enabled: true, loadCourse, today: DAY1});
+    playDay: {last: DAY1, count: day}}}), enabled: true, logbookEnabled: true, loadCourse, today: DAY1});
   session.start('tremblant-snow');
   const board = session.view().returnLoad;
   same(board.to, day === 1 ? HOME_COURSE : 'panorama-ridge', 'exercise home and onward routes');
@@ -644,6 +646,8 @@ for (const day of [1, 2]) {
   const before = session.profile.credits;
   same(setDownAndRelease(session, log)?.type, 'released', 'set the crate down cleanly');
   same(session.profile.credits, before + board.payNow, 'scripted return flight paid');
+  same(heliOf(session.profile).logbook.jobs.crate, 1, 'logbook counts a completed return crate once');
+  same(heliOf(session.profile).logbook.jobs.car, 0, 'return loads are not car jobs');
   same(heliOf(session.profile).returnLoads[board.from], board.day, 'completion saved');
   ok(!session.view().loads.some(load => load.returnJob?.id === board.id), 'finished crate removed');
   if (day === 2) {
