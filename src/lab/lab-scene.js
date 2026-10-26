@@ -8,6 +8,7 @@ import {createSirenaVehicle} from '../sirena-vehicle.js';
 import {createFanRoom} from './fan-view.js';
 import {WALK, WALK_LAYOUT} from './lab-walk.js';
 import {createWalkRoom} from './lab-walk-room.js';
+import {createLessonPictures} from './lesson-pictures.js';
 
 // Which bench model a lesson uses (the five wind-tunnel lessons share the tunnel).
 export const MODEL_OF_LESSON = Object.freeze({
@@ -67,7 +68,7 @@ export const RESTORE_STAGE = Object.freeze({x: 0, z: 9.4, yaw: Math.PI / 2, tank
 const PRIMER = 0x8d9296, RED = 0x9c1217, FLOOR = .2;
 export const OVERVIEW = Object.freeze({position: [0, 5.2, 13.5], target: [0, 1.6, -1]});
 
-export function createLabScene({host, manifest, createRenderer = defaultRenderer, load = defaultLoad, createCar = createSirenaVehicle, quality = 'high', walking = false, onUse = () => {}}) {
+export function createLabScene({host, manifest, createRenderer = defaultRenderer, load = defaultLoad, createCar = createSirenaVehicle, quality = 'high', walking = false, onUse = () => {}, onLessonControl = () => {}}) {
   const doc = host.ownerDocument, win = doc.defaultView;
   const canvas = doc.createElement('canvas');
   canvas.className = 'lab-canvas';
@@ -135,6 +136,8 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
   })();
   const walkRoom = walking ? createWalkRoom({scene, camera, host, canvas, manifest, models,
     modelOf: MODEL_OF_LESSON, ready, load, release, onUse}) : null;
+  const teachingPictures = walking ? createLessonPictures({scene, camera, canvas, doc, models, modelOf: MODEL_OF_LESSON, onControl: onLessonControl}) : null;
+  let teaching = null;
 
   // ---- the Sirena's restoration (LAB-RESTORE): tank, wreck, car and bubbles, all driven by one stage object ----
   const restore = {group: new THREE.Group(), built: false, wreck: null, hull: null, car: null, livery: [], paint: null, bubbles: [], water: null, state: null, shown: -1, wreckKind: null, loadTicket: 0};
@@ -334,6 +337,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
     if (canvas.dataset.fanCar !== fanAssets.car) canvas.dataset.fanCar = fanAssets.car;
     if (canvas.dataset.fanBlueprint !== fanAssets.blueprint) canvas.dataset.fanBlueprint = fanAssets.blueprint;
     drawRestore(now / 1000);
+    if (teachingPictures) teachingPictures.draw(teaching?.view, teaching?.entry);
     renderer.render(scene, camera);
     raf = win ? win.requestAnimationFrame(frame) : 0;
   }
@@ -342,6 +346,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
   return {
     ready,
     canvas,
+    lesson(view, entry) { teaching = view ? {view, entry} : null; },
     walk(view) { walkRoom?.update(view); },
     // lessonId: the bench to move to (null: the overview); last: that bench's last result (or null).
     show(lessonId, last = null) { lesson = lessonId; result = last; if (focus !== lessonId) { focus = lessonId; aim(lessonId); } },
@@ -365,6 +370,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
       if (raf && win) win.cancelAnimationFrame(raf);
       win?.removeEventListener('resize', resize);
       walkRoom?.dispose();
+      teachingPictures?.dispose();
       fanRoom.dispose(); // LAB-FAN-VIEW
       release(scene);
       scene.clear();
