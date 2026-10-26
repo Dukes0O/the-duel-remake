@@ -84,3 +84,16 @@ existing lessons as requested. No notebook, lesson rewrite or save change.
 
 Nothing: the old glide camera and panels remain for switch-off. They are
 removed when lab-2 goes live, as section 12 requires.
+
+## Claude review (26 October 2026)
+
+Look accepted at round 1: corner signs, floor prompts, the door board and
+the controls line read clearly. The test change only counts the new switch
+and lists `lab-2` as dev; nothing is loosened. At merge, integration had
+switched `grand-prix-career` on (GP-CAREER-LIVE), so the resolved line keeps
+both: 40 switches, `grand-prix-career` out of the dev list, `lab-2` in it.
+`test-feature-flags` and `test-lab-walk` pass on the merged result.
+
+Follow-up: Brian reuses Rook, a Wasteland fighter in camouflage and a
+bandana, which is wrong for a calm workshop teacher. LAB-LIFT-2 gives Brian
+his own figure (work shirt or overalls, safety glasses on his head).
