@@ -1,3 +1,4 @@
+import {landedArrival} from './heli/heli-ui.js';
 import {DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,DRIVE_GEAR_ROWS,DRIVE_SNOW_ROWS,buildInstructorRun} from './lessons/drive-lessons.js';
 import {finishDriveLesson,driveLessonAccess} from './lessons/drive-lesson-save.js';
 import {DRIVE_RADIO_LINES} from './lessons/drive-radio-lines.js';
@@ -1762,6 +1763,16 @@ export class App {
     // The hook's ground ring is drawn from the view; it joins it here (drawing only).
     const hookGuide = view && session.hookGuide?.();
     return hookGuide ? Object.freeze({...view, hookGuide}) : view;
+  }
+  // HELI-LANDED: both exits use the ordinary menu path so the fuel is kept.
+  heliLanded(action) {
+    const arrival = landedArrival(this.heliView(), this.profile);
+    if (!arrival || !['race', 'shutdown'].includes(action)) return false;
+    if (action === 'race' && (!COURSE.some(course => course.id === arrival.courseId) || !isCourseUnlocked(this.profile, arrival.courseId))) return false;
+    this.returnToMenu();
+    if (action === 'race') this.setRaceSettings({eventId: arrival.courseId,
+      ...(arrival.carId && isCarUnlocked(this.profile, arrival.carId) ? {car: arrival.carId} : {})});
+    return true;
   }
   heliBuyFuel(kg = Infinity) {
     const result = this.heliSession?.buyFuel(kg) ?? {ok: false};
