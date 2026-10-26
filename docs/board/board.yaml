@@ -26,7 +26,8 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-cli-2026-10-26
     needs: []
     locks: [save-shape]
     details: "docs/board/cards/SAVE-RECORDS-IDB.md"
