@@ -40,9 +40,9 @@ async function road(context, goal, finalY) {
   }
   await flyTo(context,{x:goal.x,z:goal.z,y:finalY,speed:3,sink:3},'site hover',{within:4,tall:3,seconds:180});
 }
-// The complete Summit regression uses this terrain-following controller for cargo.
+// Reuse the complete Summit flight's terrain-following route for staging and cargo.
 // It steers with ordinary controls; no position or outcome is set.
-async function cargoTo(context, goal, finalY) {
+async function terrainTo(context, goal, finalY, {requireCargo = true} = {}) {
   await context.evaluate(`window.__pilot = v => {
     const goal=${JSON.stringify(goal)}, h=v.heli, d=Math.hypot(goal.x-h.x,goal.z-h.z);
     const ux=d>1?(goal.x-h.x)/d:0, uz=d>1?(goal.z-h.z)/d:0;
@@ -52,7 +52,7 @@ async function cargoTo(context, goal, finalY) {
     return {x:goal.x,z:goal.z,y,speed:d<100?4:h.y<y-30?4:h.y<y-12?12:24,sink:6};
   }`);
   const done=await sim(context,1500,`v => v.courseId !== 'summit-run' || Math.hypot(v.heli.x-${goal.x},v.heli.z-${goal.z})<10 && Math.abs(v.heli.y-${finalY})<3 && Math.hypot(v.heli.vx,v.heli.vz)<1`);
-  if (!done || !await view(context,"v.courseId === 'summit-run' && v.rescue.crates.some(c=>c.hooked)"))
+  if (!done || !await view(context, requireCargo ? "v.courseId === 'summit-run' && v.rescue.crates.some(c=>c.hooked)" : "v.courseId === 'summit-run'"))
     throw Error('Cargo approach failed: '+await context.evaluate(`JSON.stringify(${app}.heliLog.slice(-20))`));
 }
 export async function run(context) {
@@ -61,6 +61,7 @@ export async function run(context) {
   await menu(context,callHeli('avalanche','summit-run'));
   await answer(context); await fitLine(context); await cruiseTo(context,'summit-run');
   const zone=await view(context,'v.zone');
+  await context.waitFor(`document.body.textContent.includes('Fill to at least 330 kg at the truck.')`, 'named start truck guidance', 10000);
   await shoot(context,'summit-arrival-truck','Summit arrival: refuel at the start-area truck first');
   await land(context,zone); await fill(context,330);
   await context.evaluate(`document.querySelector('[data-heli-fuel-target]').value='190'; document.querySelector('[data-heli-fuel="target"]').click()`);
@@ -75,7 +76,9 @@ export async function run(context) {
   await context.evaluate(`if (${app}.heliSession.autopilotOn) ${app}.heliSession.pressAutopilot()`);
   await shoot(context,'summit-avalanche-arrival','Summit avalanche: arrival over the slide');
   await road(context,sites.pickup,sites.pickup.y+30);
-  await land(context,sites.pickup); await fill(context,360);
+  await land(context,sites.pickup);
+  await context.waitFor(`/Fill to (?:at least )?400 kg at the (?:pickup )?truck/.test(document.body.textContent)`, 'named pickup truck guidance', 10000);
+  await fill(context,400);
   const b=sites.beacon,gy=await groundAt(context,b.x,b.z);
   await road(context,b,gy+40);
   await setDown(context,b,gy); await lowerOver(context,b,gy,10.5);
@@ -87,12 +90,14 @@ export async function run(context) {
   }
   // Supply pickup at the same staging area: a separate answered call from home.
   await menu(context,callHeli('supply','summit-run')); await answer(context); await cruiseTo(context,'summit-run');
-  const z=await view(context,'v.zone');await land(context,z);await fill(context,330);
+  const z=await view(context,'v.zone');await land(context,z);await fill(context,400);
   const pickup=await view(context,'v.rescue.active.sites.pickup');
-  await road(context,pickup,pickup.y+40);
+  await terrainTo(context,pickup,pickup.y+40,{requireCargo:false});
+  if (await context.evaluate(`${app}.heliLog.some(e => e.type === 'charged' && e.kind === 'fuelTruck')`)) throw Error('Supply picture flight needed an unplanned fuel truck');
   if (!yardOnly) await shoot(context,'summit-supply-arrival','Summit supply: arrival at the truck and three crates');
   const food=await view(context,'v.rescue.crates.find(c => c.id === "food")');
   await land(context,pickup);
+  await context.waitFor(`document.body.textContent.includes('Take at least 230 kg before each supply crate leg.')`, 'named supply fuel guidance', 10000);
   await fill(context,230);
   await flyTo(context,{x:food.x,z:food.z,y:food.y+15.4,speed:3,sink:1},'over food crate',{within:1,tall:.5});
   const hooked=await context.evaluate(`${app}.heliSession.pressHook()`);
@@ -100,7 +105,7 @@ export async function run(context) {
   await context.evaluate(`${app}.heliCamera=3`);
   if (!yardOnly) await shoot(context,'summit-supply-hook','Summit supply: hooking the first crate');
   const yard=await view(context,'v.rescue.active.sites.yard');
-  await cargoTo(context,yard,ground.height(yard.x,yard.z)+45);
+  await terrainTo(context,yard,ground.height(yard.x,yard.z)+45);
   await look(context,yard,{back:80,up:60,speed:10,within:5});
   await context.evaluate(`${app}.heliCamera=0`);
   await shoot(context,'summit-supply-yard-arrival','Summit supply: arrival at the summit hut yard');

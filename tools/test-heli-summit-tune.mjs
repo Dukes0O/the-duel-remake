@@ -12,6 +12,8 @@ import {heliOf, missionsOf, setMissions, createMissions} from '../src/heli/heli-
 import {slideSpots, pickSlide, supplyPickup, supplyYard, crateSpots} from '../src/heli/heli-search.js';
 import {createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, FOLLOW} from '../src/heli/heli-autopilot.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
+import {rescueLineMarkup} from '../src/heli/heli-ui.js';
+import {dispatchBoardMarkup} from '../src/heli/heli-board.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -236,7 +238,9 @@ function flySupply({fromHome = true} = {}) {
     log.push(...climbTo(session, summit, pickup, pickup.y + 30));
     log.push(...landAt(session, summit, pickup));
     ok(session.view().rescue.active.sites.atTruck, `supply: at the truck for crate ${i + 1}`);
-    const want = i === 2 ? 190 : 230, have = session.view().heli.fuelKg;
+    ok(rescueLineMarkup(session.view()).includes('Take at least 230 kg before each supply crate leg.'), `supply: the instruments name 230 kg for crate ${i + 1}`);
+    ok(dispatchBoardMarkup(session.view(), {fire: {repairCost: 0}}).includes('Take at least 230 kg before each supply crate leg.'), `supply: the job text names 230 kg for crate ${i + 1}`);
+    const want = 230, have = session.view().heli.fuelKg;
     if (want - have >= 1) { ok(session.buyFuel(want - have).ok, 'supply: the truck sells fuel'); log.push(...session.takeEvents()); }
     const spot = spots[i], hy = summit.ground.height(spot.x, spot.z) + 0.7 + 15.3;
     log.push(...climbTo(session, summit, spot, hy));
@@ -257,7 +261,7 @@ function flySupply({fromHome = true} = {}) {
   return {session, log, done: log.find(event => event.type === 'rescueDone'), failed: log.find(event => event.type === 'rescueFailed')};
 }
 // The whole avalanche rescue from the home pad, with a fill at each of the two trucks on the way.
-function flyAvalanche({refuelTo = [330, 360]} = {}) {
+function flyAvalanche({refuelTo = [330, 400]} = {}) {
   const session = newSession(callProfile('avalanche', 'summit-run', {count: 30, credits: 3000}), BOTH);
   const log = [...session.start()];
   ok(session.pressRadio(), 'avalanche: R answers at the home pad');
@@ -269,6 +273,9 @@ function flyAvalanche({refuelTo = [330, 360]} = {}) {
   // arrives), fill the tank, and up again.
   const zone = session.view().zone, beacon = pick.beacon, gy = summit.ground.height(beacon.x, beacon.z);
   const fill = (kg, label) => {
+    const text = `Fill to at least ${kg} kg at the truck.`;
+    ok(rescueLineMarkup(session.view()).includes(text), `avalanche: instruments name ${kg} kg at ${label}`);
+    ok(dispatchBoardMarkup(session.view(), {fire: {repairCost: 0}}).includes(text), `avalanche: job text names ${kg} kg at ${label}`);
     const have = session.view().heli.fuelKg;
     if (kg - have >= 1) { const bought = session.buyFuel(kg - have); ok(bought.ok && bought.cost > 0, `avalanche: the ${label} truck sells fuel`); log.push(...session.takeEvents()); }
   };
@@ -289,7 +296,18 @@ function flyAvalanche({refuelTo = [330, 360]} = {}) {
   const beforePickupFuel = session.view().rescue.active;
   ok(beforePickupFuel.refuelFirst && beforePickupFuel.refuelStop === 'pickup', 'avalanche: the return legs need the nearby pickup truck');
   near(beforePickupFuel.target.distance, dist(session.view().heli, pickup), 0.01, 'avalanche: the fuel target is the pickup circle');
+  // A refill above the route minimum still needs the child-margin target.
+  const atPickup = session.view();
+  const partial = {...atPickup, heli: {...atPickup.heli, fuelKg: 360}, rescue: {...atPickup.rescue,
+    active: {...beforePickupFuel, refuelFirst: false}}};
+  for (const markup of [rescueLineMarkup(partial), dispatchBoardMarkup(partial, {fire: {repairCost: 0}})])
+    ok(markup.includes('Fill to 400 kg at the pickup truck'), 'both text surfaces keep the target after a partial refill');
   fill(refuelTo[1], 'pickup');
+  const filled = session.view();
+  const departed = {...filled, heli: {...filled.heli, fuelKg: 399}, rescue: {...filled.rescue,
+    active: {...filled.rescue.active, sites: {...filled.rescue.active.sites, atTruck: false}}}};
+  for (const markup of [rescueLineMarkup(departed), dispatchBoardMarkup(departed, {fire: {repairCost: 0}})])
+    ok(!/Fill to (?:at least )?400 kg/.test(markup), 'the pickup top-up reminder stays cleared after departure');
   const afterPickupFuel = session.view().rescue.active;
   ok(!afterPickupFuel.refuelFirst, 'avalanche: fuel for the remaining return legs restores the slide target');
   near(afterPickupFuel.target.distance, dist(session.view().heli, pick.slide), 0.01, 'avalanche: the slide is the target after pickup refuelling');
@@ -327,6 +345,8 @@ if (want('scripted')) {
   if (process.env.RESCUE_FINISH_REPORT) for (const [kind, run] of [['supply', supply], ['avalanche', avalanche]])
     console.log('RESCUE-FINISH', JSON.stringify({course: 'summit-run', kind, completed: !!run.done, seconds: run.done?.clockSeconds,
       fuelKg: run.session.view().heli.fuelKg, fingerprint: run.session.fingerprint(), resets: run.log.filter(e => e.type === 'holdReset')}));
+  ok(supply.session.view().heli.fuelKg >= 60, 'supply: following 230 kg guidance finishes with at least 60 kg');
+  ok(avalanche.session.view().heli.fuelKg >= 60, 'avalanche: following 330/400 kg guidance finishes with at least 60 kg');
   const supplyTotal = supply.done.clockSeconds, avalancheTotal = avalanche.done.clockSeconds;
   SCRIPTED.times = {supplyTotal, avalancheTotal};
   console.log(`  scripted times from the home pad: supply ${supplyTotal.toFixed(0)} s, avalanche ${avalancheTotal.toFixed(0)} s; rows would be ${rowFor(supplyTotal)} and ${rowFor(avalancheTotal)}`);

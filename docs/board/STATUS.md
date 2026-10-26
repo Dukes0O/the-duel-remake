@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-26T22:11:26.380Z
+Observed at: 2026-10-26T22:31:35.616Z
 
-Observation commit: 2763fe8a5c7a2fd85990511716e88a3bcefe6a6e
+Observation commit: 785f4ddb360b4ee2fce613b12c2cb0500d15168f
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2763fe8a5c7a2fd85990511716e88a3bcefe6a6e
+Integration HEAD: 785f4ddb360b4ee2fce613b12c2cb0500d15168f
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -44,7 +44,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-finish | unknown | 2026-10-26T07:49:02-07:00 | 0 | last commit 2026-10-26T07:49:02-07:00 | docs/THE_DEEP.md, docs/board/STATUS.md, docs/board/looks/deep-finish/round-1.jpg, docs/board/looks/deep-finish/round-1.md, docs/changes/DEEP-PLACES.md |
-| codex/lab-brian-fix | unknown | 2026-10-26T14:39:55-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/LAB-BRIAN-FIX.md, src/lab/lab-walk-room.js, src/lab/lab-walk.js, tools/scenarios/lab-walk.mjs, tools/test-lab-walk.mjs |
+| codex/lab-brian-fix | unknown | 2026-10-26T15:29:55-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/STATUS.md, docs/board/looks/lab-2/look-5.jpg, docs/board/looks/lab-2/look-5.md, docs/changes/LAB-BRIAN-FIX.md, public/assets/models/lab/brian.glb |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 11 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 11 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
@@ -60,9 +60,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 29,383,096 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 301,298 B | -1,535,873 B | 5,000,000 B |
+| Added bytes in last merge | 9,634 B | -291,664 B | 5,000,000 B |
 | All `public/` | 344,148,818 B | +0 B | unavailable |
-| Git objects | 806,987,776 B | +267,264 B | unavailable |
+| Git objects | 807,686,144 B | +698,368 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -71,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 12b5629f27c44e428d85a9618f7044e832d259e1
 - Local main: missing
-- Local integration/wasteland: 2763fe8a5c7a2fd85990511716e88a3bcefe6a6e
+- Local integration/wasteland: 06a885f2619e91fad8d354383d9d31f6fe3b5b8b
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -79,6 +79,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 12b5629f27c44e428d85a9618f7044e832d259e1.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 2763fe8a5c7a2fd85990511716e88a3bcefe6a6e.
+- Remote origin/integration/wasteland: matches local; cached commit 06a885f2619e91fad8d354383d9d31f6fe3b5b8b.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.

@@ -261,3 +261,58 @@ Final card/change-note/status placement checks pass (board and repo hygiene,
 2/2, jobs 2). Owned QA/production bundles and superseded diagnostic/trial
 logs were sent to the Recycle Bin; final receipts and pending-review pictures
 remain. STATUS regenerated for this lane; no full-tier or frame pass claimed.
+
+
+## Named Summit refills (Claude's decision, follow-up)
+
+Both retained complete flights now meet the 60 kg reserve: avalanche
+**23:25.2 / 71.3 kg**, supply **28:18.5 / 82.4 kg**. Both retain the existing
+>=35% clock-left checks. This closes the earlier Summit reserve question.
+Rescue stays dev; Claude retains frames, finishing verdict and switch-on.
+
+Decision before code: follow Claude's approved refill plan. Name 330 kg at
+the avalanche start-area truck, then 400 kg at its pickup truck for return;
+name at least 230 kg before every supply crate leg, including fuel drums.
+Both instruments and job text name the amounts. The pickup top-up reminder
+survives a partial refill that clears the route minimum, but clears on leaving
+the truck. No fuel-burn, mass, site, save, voice, autopilot or switch change.
+
+Integration merged first (785f4ddb): documentation conflict only, retaining
+Claude's answer and lane findings; lane STATUS kept. No code conflict.
+Previous changed pins remain exactly as Claude approved.
+
+Changed assertions in this follow-up: none; existing tolerances stay.
+Added 18 checks: two arrival amounts, six per-crate text checks, four avalanche
+stop text checks, four partial-fill/departure checks on both surfaces, and two
+>=60 kg completion checks. Controller inputs change avalanche pickup 360 ->
+400 kg and final supply crate 190 -> 230 kg. Final fingerprints (FNV-1a):
+avalanche 106ecf16; supply 547c4673. Full strings are in the lane receipt.
+
+The browser checks the actual named text and buys through the real controls.
+Its new 400 kg predicate accepts both actual wording forms, still requiring
+that exact amount at the truck. Picture inspection exposed the old stopping
+road route's unplanned supply fuel truck. Align staging fuel 330 -> 400 kg
+with the complete flight and reuse the existing terrain controller for the
+unloaded climb. Cargo legs retain their hooked-cargo guard and arrival limits;
+the added no-unplanned-truck check rejects the old route. Final recipe passed.
+Independent runtime and final camera-recipe reviews are clear.
+
+Verification (PowerShell, System32 first; holds/count checked before each run):
+- Lane 58/58, zero failed/unrun, jobs 4, 389.73 s; Summit suite 134 checks.
+- Then npm run build passed, 1.07 s; existing import/chunk-size warnings only.
+- Final browser: private port 45928, eight pictures, headless High quality,
+  memory-only; zero warnings/errors or unplanned supply fuel trucks. Named
+  arrival/supply text inspected in the pictures. No frames or art round.
+- Final board/placement checks 2/2, jobs 2, after card/notes/STATUS updates.
+  Ordinary race, combat, rescue-off and world-signature guards stay unchanged.
+
+Runtime source was frozen for the lane/build. The later browser-only recipe
+correction is covered by its final browser run; no passing lane/build repeated.
+Receipts: .evidence/2026-10-26/RESCUE-REFILLS/{lane.json,build.log,docs.json,
+browser-verified.log,browser-verified/report.json}. Cockpit sync: zero changes.
+No merge back to integration, push or live change; own heavy jobs drained.
+
+Removed: old 190 kg fuel-drum and unnamed truck instructions replaced in place;
+no duplicate path. Resolved question removed from the card. Owned QA/production
+bundles and superseded picture runs/logs recycled; final pictures/receipts remain
+for Claude's finishing review. STATUS refreshed and included in the source commit.
