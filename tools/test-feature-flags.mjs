@@ -21,11 +21,11 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
     'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 39 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
-    && ['snow-world', 'grand-prix-career', 'rival-voices', 'earned-cars', 'rescue', 'wildlife', 'heli-skins', 'heli-skiing', 'pilot-map', 'tyre-slip', 'driving-lessons', 'engine-curve'].every(name => FEATURE_STATES[name] === 'dev')
+    && ['snow-world', 'rival-voices', 'earned-cars', 'rescue', 'wildlife', 'heli-skins', 'heli-skiing', 'pilot-map', 'tyre-slip', 'driving-lessons', 'engine-curve'].every(name => FEATURE_STATES[name] === 'dev')
     && ['lap-choice', 'snowmen', 'the-deep', 'cpu-racecraft', 'lab', 'lab-tuning'].every(name => FEATURE_STATES[name] === 'on')
-    && FEATURE_STATES['grand-prix'] === 'on' && FEATURE_STATES.yeti === 'on'
+    && FEATURE_STATES['grand-prix-career'] === 'on' && FEATURE_STATES['grand-prix'] === 'on' && FEATURE_STATES.yeti === 'on'
     && CIRCUIT_MANIFESTS.every(manifest => FEATURE_STATES[manifest.flag] === manifest.state),
-  'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix is released; lap choice and snowmen are released (on, 13 October 2026); career backup, Snow, rival voices, Grand Prix career, earned cars, rescue, wildlife, helicopter skins, heli-skiing, the pilot map, tyre slip, driving lessons, engine curve stay dev; The Lab, Lab tuning, The Deep and CPU racecraft are released (25 October 2026); the accepted Yeti is on; registered course switches follow their manifests; retired switches stay absent');
+  'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix and its career are released; lap choice and snowmen are released (on, 13 October 2026); career backup, Snow, rival voices, earned cars, rescue, wildlife, helicopter skins, heli-skiing, the pilot map, tyre slip, driving lessons, engine curve stay dev; The Lab, Lab tuning, The Deep and CPU racecraft are released (25 October 2026); the accepted Yeti is on; registered course switches follow their manifests; retired switches stay absent');
 const sharedCourseFlags = [...new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag))]
   .map(flag => CIRCUIT_MANIFESTS.filter(manifest => manifest.flag === flag))
   .filter(group => group.length > 1);
@@ -40,7 +40,7 @@ const productionFlags = createFeatureFlags({ storage: null, qa: false });
 // and The Deep and CPU racecraft on 25 October. Keep their development-switch
 // isolation checks by pinning each one to dev.
 const RELEASED_FLAGS = ['blackiron', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'arsenal-wave3',
-  'fight-voices', 'convoy-raid', 'warlord-cards', 'seeker-rockets', 'the-deep', 'cpu-racecraft'];
+  'fight-voices', 'convoy-raid', 'warlord-cards', 'seeker-rockets', 'the-deep', 'cpu-racecraft', 'grand-prix-career'];
 check(RELEASED_FLAGS.every(name => productionFlags.enabled(name)), 'production has all newly released features on');
 check(RELEASED_FLAGS.every(name => createFeatureFlags({storage: null, qa: false, search: `?flags=${name}`}).enabled(name)),
   'a released switch stays on whatever the URL says');

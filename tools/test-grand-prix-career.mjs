@@ -77,10 +77,11 @@ const snowmanScreen = createResultsScreen({app: {_switches: () => ({enabled: key
 assert.ok(snowmanScreen.includes('SNOWMEN</span><b>12</b>'), 'result shows the actual hit count');
 assert.ok(snowmanScreen.includes('SNOWMEN +250'), 'paid snowmen display their named capped bonus');
 assert.ok(!snowmanScreen.includes('undefined'), 'every paid bonus has a visible label'); checks += 3;
-assert.equal(FEATURE_STATES['grand-prix-career'], 'dev', 'the new pay slice stays off in production');
-assert.equal(createFeatureFlags({storage: null, qa: false, search: '?flags=grand-prix-career'}).enabled('grand-prix-career'), false);
+assert.equal(FEATURE_STATES['grand-prix-career'], 'on', 'Grand Prix career is released');
+assert.equal(createFeatureFlags({storage: null, qa: false}).enabled('grand-prix-career'), true, 'production pays without URL flags');
+assert.equal(createFeatureFlags({storage: null, qa: false, search: '?flags=grand-prix-career'}).enabled('grand-prix-career'), true);
 assert.equal(createFeatureFlags({storage: null, qa: true, search: '?flags=grand-prix-career'}).enabled('grand-prix-career'), true);
-checks += 3;
+checks += 4;
 // New GP admission cannot spend the budget by deleting existing Time Trial ghosts.
 const storagePlayer = {id: 'storage-fixture', name: 'Storage Driver'};
 const storageContext = {playerId: storagePlayer.id, stageIndex: 0, seed: 1989, laps: 2,
