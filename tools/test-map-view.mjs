@@ -43,9 +43,9 @@ function recordingContext() {
 }
 
 try {
-  const makeApp = ({helicopter = true, pilotMap = true} = {}) => {
+  const makeApp = ({helicopter = true, pilotMap = true, rescue = true} = {}) => {
     const app = new App();
-    app.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides: {helicopter, 'pilot-map': pilotMap}, qa: true}), () => app.duel.state);
+    app.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides: {helicopter, 'pilot-map': pilotMap, rescue}, qa: true}), () => app.duel.state);
     return app;
   };
   const own = (app, courses, credits = 5000) => {
@@ -66,9 +66,9 @@ try {
   ok(new Set(heliKeys).size === heliKeys.length && !held.includes('KeyN'), 'N is free in the helicopter (no other action or held key uses it)');
   for (const id of ['map.open', 'map.close', 'map.pin']) ok(SOUND_BANK[id] === HELI_CUES[id] && HELI_CUES[id].flag === 'helicopter', `${id} is in the sound bank behind the helicopter switch`);
 
-  // ---- switch off: nothing of the map exists -------------------------------------------------------------
+  // ---- map and Summit rescue off: nothing of the map exists -------------------------------------------------------------
   {
-    const app = makeApp({pilotMap: false});
+    const app = makeApp({pilotMap: false, rescue: false});
     app.profile.credits = 2000; app._saveProfile();
     ok(app.visitHeli() && !app.heliMapAvailable(), 'off: the helicopter flies and the map is not available');
     const view = app.heliView();
@@ -82,7 +82,8 @@ try {
     const appended = [], node = () => ({innerHTML: '', hidden: false, dataset: {}, textContent: '', style: {setProperty() {}, removeProperty() {}}, kids: {},
       querySelector(selector) { return this.kids[selector] ?? null; }, addEventListener() {}, removeEventListener() {}, append() {}, remove() {}, setAttribute() {}});
     const section = node();
-    for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio']) section.kids[selector] = node();
+    for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio',
+      '.heli-shelf-host', '.heli-arrival-host', '.heli-ski-host']) section.kids[selector] = node();
     const ui = createHeliUi({host: {ownerDocument: {createElement: () => section}, append: child => appended.push(child)}, app});
     ui.update();
     equal(appended.length, 1, 'off: the page gains only the helicopter panel');

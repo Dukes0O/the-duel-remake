@@ -256,7 +256,8 @@ try {
       querySelector(selector) { return this.kids[selector] ?? null; },
       addEventListener(type, fn) { this.handlers[type] = fn; }, removeEventListener() {}, append() {}, remove() {}, setAttribute() {}};
     const section = node('section');
-    for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio'])
+    for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio',
+      '.heli-shelf-host', '.heli-arrival-host', '.heli-ski-host'])
       section.kids[selector] = node(selector);
     const ui = createHeliUi({host: {ownerDocument: {createElement: () => section}, append() {}}, app});
     ui.update();
@@ -295,7 +296,11 @@ try {
     owned.returnToMenu();
   }
   // Off: nothing at the pad changes.
-  for (const overrides of [{helicopter: true}, {helicopter: true, 'driving-lessons': true}, {helicopter: true, 'tyre-slip': true}]) {
+  for (const overrides of [
+    {helicopter: true, 'driving-lessons': false, 'tyre-slip': false},
+    {helicopter: true, 'driving-lessons': true, 'tyre-slip': false},
+    {helicopter: true, 'driving-lessons': false, 'tyre-slip': true},
+  ]) {
     const app = ownedApp(overrides);
     ok(app.visitHeli(), 'the visit works without driving lessons');
     eq(app.heliDrivingBoard(), null, `${JSON.stringify(overrides)}: no Driving board`);

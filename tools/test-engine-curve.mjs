@@ -102,11 +102,11 @@ test('every car has its own fitted scale', () => {
 
 // ---- the switch off: byte for byte -----------------------------------------------------------
 
-// A fingerprint of the released driving step: three cars, both gearboxes, 15 s of full throttle with shifts, no switch named.
+// A fingerprint of the released driving step: three cars, both gearboxes, 15 s of full throttle with shifts, historical tyre-slip off.
 function releasedFingerprint() {
   const rows = [];
   for (const id of ['falcone_f42', 'banshee_muscle', 'titan_monster']) for (const difficulty of ['casual', 'pro']) {
-    const duel = new Duel({seed: 1989, car: id, featureFlags: flags(null)});
+    const duel = new Duel({seed: 1989, car: id, featureFlags: createFeatureFlags({storage: null, overrides: {'tyre-slip': false}})});
     duel.startCampaign({car: id, opponentCount: 0, difficulty});
     duel.course = new Course(def);
     Object.assign(duel.state, {status: 'racing', s: 300, prevS: 300, lateral: 0, countdown: 0, traffic: [], speedMph: 0, gear: 0});
