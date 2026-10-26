@@ -40,7 +40,11 @@ export function createLessonPictures({scene, camera, canvas, doc, models, modelO
       mesh.visible = true; mesh.position.set(...row.position); mesh.scale.set(...(row.size ?? [1, 1, 1]));
       mesh.material.transparent = row.opacity !== undefined || ghost;
       mesh.material.opacity = row.opacity ?? (ghost ? .25 : 1);
-      mesh.material.depthWrite = !ghost && row.opacity !== 0;
+      mesh.material.depthWrite = !ghost && row.opacity !== 0 && !row.inFront;
+      mesh.material.color.set(row.colour ?? '#edc557');
+      mesh.material.depthTest = !row.inFront;
+      mesh.material.toneMapped = !row.inFront;
+      mesh.renderOrder = row.inFront ? 100 : 0;
       mesh.rotation.set(...(row.rotation ?? [0, 0, 0]));
       mesh.userData.teachControl = ghost ? null : row.control;
     }
@@ -53,7 +57,7 @@ export function createLessonPictures({scene, camera, canvas, doc, models, modelO
       mounted?.dispose?.();
       for (const mesh of [...objects.values(), ...ghosts.values()]) disposeNode(mesh);
       objects.clear(); ghosts.clear(); entry = definition;
-      mounted = entry.hooks.mount?.({group: root, THREE, models, doc, canvas});
+      mounted = entry.hooks.mount?.({group: root, THREE, models, doc, canvas, camera});
     }
     const model = models.get(modelOf[entry.definition.id]);
     if (!model) return;
@@ -84,13 +88,14 @@ export function createLessonPictures({scene, camera, canvas, doc, models, modelO
       if (!item) { const arrow = new THREE.ArrowHelper(); arrow.line.material.toneMapped = arrow.cone.material.toneMapped = false; root.add(arrow); item = {arrow, label: label()}; arrows.push(item); }
       const direction = new THREE.Vector3(...f.direction).normalize();
       item.arrow.visible = force.length > 0; item.arrow.position.set(...f.origin); item.arrow.setDirection(direction);
-      item.arrow.setColor(force.colour); item.arrow.setLength(Math.max(.001, force.length), Math.min(.3, force.length * .25), Math.min(.16, force.length * .13));
-      item.label.sprite.visible = view.stage !== 0;
+      item.arrow.setColor(force.colour); item.arrow.setLength(Math.max(.001, force.length), Math.min(f.headLength ?? .3, force.length * .3), Math.min(f.headWidth ?? .16, force.length * .3));
+      for (const child of [item.arrow.line, item.arrow.cone]) { child.material.depthTest = !f.inFront; child.renderOrder = f.inFront ? 100 : 0; }
+      item.label.sprite.visible = view.stage !== 0 && !drawing.hideLabels;
       item.label.sprite.position.copy(item.arrow.position).addScaledVector(direction, force.length * .5);
       if (f.labelPosition) item.label.sprite.position.set(...f.labelPosition);
       else item.label.sprite.position.y += .5;
       const introduced = view.words?.some(w => w.word.toLowerCase() === f.kind);
-      const number = `${Math.round(f.newtons).toLocaleString('en')} N`;
+      const number = `${Math.round(f.displayValue ?? f.newtons).toLocaleString('en')} ${f.displayUnit ?? 'N'}`;
       write(item.label, introduced ? `${f.kind} ${number}` : number, force.colour);
     });
     for (const s of streams) s.visible = false;
@@ -101,6 +106,7 @@ export function createLessonPictures({scene, camera, canvas, doc, models, modelO
         let line = streams[n];
         if (!line) { line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial()); root.add(line); streams[n] = line; }
         line.visible = speed > 0; line.material.color.set(s.medium === 'water' ? '#71c9ff' : '#d4eee3');
+        line.material.transparent = true; line.material.opacity = s.opacity ?? 1;
         const at = new THREE.Vector3(...s.origin).add(new THREE.Vector3(Math.sin(j * 13) * (s.radius ?? .5), 0, Math.cos(j * 7) * (s.radius ?? .5)));
         at.addScaledVector(direction, ((view.time * speed + j * .173) % (s.length ?? 3)));
         const tail = at.clone().addScaledVector(direction, -speed * .09);

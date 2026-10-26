@@ -27,8 +27,8 @@ export const definition = {
   wonder: {text: "She can't get this load off the ground. Why?", animation: 'wonder', seconds: 3},
   words: [
     {id: 'lift-rotor', word: 'Rotor', meaning: 'The rotor is the big wings on top that spin.', animation: 'rotor'},
-    {id: 'lift-lift', word: 'Lift', meaning: 'Lift is the push up made by the rotor throwing air down.', animation: 'lift'},
     {id: 'lift-weight', word: 'Weight', meaning: 'Weight is how hard the Earth pulls the helicopter and its load down.', animation: 'weight'},
+    {id: 'lift-lift', word: 'Lift', meaning: 'Lift is the push up made by the rotor throwing air down.', caption: "We measure the rotor's push in kilograms, like weight, so you can compare them.", animation: 'lift'},
     {id: 'lift-collective', word: 'Collective', meaning: 'The collective is the lever by your left hand that tilts every blade steeper together to make more lift.', animation: 'collective'},
     {id: 'lift-hover', word: 'Hover', meaning: 'To hover is to stay still in the air, with lift matching weight.', animation: 'hover'},
   ],

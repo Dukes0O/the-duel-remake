@@ -39,7 +39,11 @@ export function validateLesson(def, hooks) {
     if (!answerIds.has(q.correct)) fail('question needs a correct picture');
   };
   moment(def.wonder);
-  for (const w of def.words) { shown.add(w.id); prose(w.meaning, 1); animation(w.animation); }
+  for (const w of def.words) {
+    shown.add(w.id); prose(w.meaning, 1);
+    if (w.caption) prose(`${w.meaning} ${w.caption}`);
+    animation(w.animation);
+  }
   if (!Array.isArray(def.worked) || !def.worked.length) fail('needs named worked steps');
   for (const step of def.worked) { prose(step.name); moment(step); }
   if (!Array.isArray(def.tries) || def.tries.length !== 3) fail('needs guided, prompted and alone tries');
@@ -158,7 +162,7 @@ export function createLessonSession(entry) {
       const question = stage === 3 ? r.prediction : stage === 4 && !challenge ? r : null;
       const correct = checkAnswer && question.answers.find(a => a.id === question.correct);
       const text = showing ? d.hints[result.failure].worked : challenge ? d.challenge.text :
-        stage === 1 ? r.meaning : stage === 4 ? (checkAnswer ? (checkAnswer === question.correct ? 'You saw it.' : 'Watch the highlighted picture.') : r.text) :
+        stage === 1 ? r.meaning + (r.caption ? ` ${r.caption}` : '') : stage === 4 ? (checkAnswer ? (checkAnswer === question.correct ? 'You saw it.' : 'Watch the highlighted picture.') : r.text) :
           stage === 3 ? result ? result.passed ? r.success : failures >= 2 ? hint.plainer : hint.what :
             running ? r.prompt : selected ? (r.support === 'alone' ? 'Your turn.' : r.prompt) : question.text : r.text;
       return {stage, index, title: challenging && !showing ? 'Challenge' : LESSON_STAGES[stage], text, words, time, paused, duration: duration(), showing, challenge, challenging,

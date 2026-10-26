@@ -12,6 +12,9 @@ example is `tools/fixtures/lab-lesson-example.js`; it is test content only.
 - `wonder`: `{text, animation, seconds, voice?}`. No new technical words yet.
 - `words`: ordered `{id, word, meaning, animation, voice?}` rows. Stable ids
   go into the notebook. Meanings have one sentence; other prose has at most two.
+  Optional `caption` adds one explanation to the first word step only;
+  meaning plus caption must still fit two sentences. Notebook replays use
+  the meaning alone.
 - `worked`: `{name, text, animation, seconds, voice?}` steps. Each step waits
   for the player; pause, step and replay share one slow-motion clock.
 - `tries`: exactly three `{support, prompt, success, seconds, animation,
@@ -71,7 +74,7 @@ For lesson-specific models, optional `hooks.mount({group, THREE, models})`
 returns `{draw(drawing, clock), dispose()}`. The room owns shared teaching
 objects; mount owns its extra resources and releases them in dispose.
 Keep the real machine visible beside its teaching model.
-The mount also receives `doc` and `canvas` for model labels. `clock.previous`
+The mount also receives `doc`, `canvas` and `camera` for model labels. `clock.previous`
 contains the preceding run's `input`, `time`, `index` and `animation`, so a
 custom model can draw the right previous load as a ghost.
 

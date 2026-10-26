@@ -6,6 +6,7 @@ import {definition, hooks} from '../src/lab/lessons/lift-lesson.js';
 import {validateLesson, createLessonSession} from '../src/lab/lesson-frame.js';
 import {rotorBlades, pitchBlades, trialInput} from '../src/lab/lessons/lift-animation.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {PerspectiveCamera, Vector3} from 'three';
 import {readFileSync} from 'node:fs';
 
 test('every offered pad load reads the helicopter rules, including ground effect', () => {
@@ -46,7 +47,7 @@ test('the real packet teaches its words in order, accepts an analog lever and fi
   const s = createLessonSession({definition, hooks});
   const finish = () => { for (let i = 0; i < 110; i++) s.tick(.1); };
   assert.equal(s.view().stage, 0); s.next();
-  for (const name of ['Rotor', 'Lift', 'Weight', 'Collective', 'Hover']) {
+  for (const name of ['Rotor', 'Weight', 'Lift', 'Collective', 'Hover']) {
     assert.equal(s.view().name, name); s.next();
   }
   for (const step of definition.worked) { assert.equal(s.view().name, step.name); finish(); s.next(); }
@@ -113,4 +114,59 @@ test('pulling the collective raises its handle, speeds the air and grows lift to
   assert.ok(high.streams[0].speed > low.streams[0].speed);
   assert.ok(high.forces.find(f => f.kind === 'lift').newtons > low.forces.find(f => f.kind === 'lift').newtons);
   assert.equal(high.graph, null);
+});
+
+test('force captions and the one graph compare kilograms derived from the same flight forces', () => {
+  assert.equal(definition.words.find(w => w.word === 'Lift').caption,
+    "We measure the rotor's push in kilograms, like weight, so you can compare them.");
+  for (const animation of Object.values(hooks.animations)) {
+    const d = animation({time: 3, input: {}, index: 0});
+    for (const f of d.forces) {
+      assert.equal(f.displayUnit, 'kg');
+      assert.equal(f.displayValue, f.newtons / GRAVITY);
+      assert.equal(f.origin[0], 0, 'both arrows start on the centre line');
+    }
+    if (d.graph) {
+      assert.equal(d.graph.yLabel, 'Lift in kg');
+      assert.equal(d.graph.maxY, padForces(d.load).maximumN / GRAVITY);
+    }
+  }
+});
+
+test('the kg introduction adds one caption without replacing the notebook meaning or relaxing prose limits', () => {
+  const s = createLessonSession({definition, hooks}); s.next(); s.next(); s.next();
+  assert.equal(s.view().name, 'Lift');
+  assert.equal(s.view().text, definition.words[2].meaning + ' ' + definition.words[2].caption);
+  assert.match(definition.words[2].meaning, /push up/);
+  const invalid = structuredClone(definition);
+  invalid.words[2].caption += ' A third sentence is too much.';
+  assert.throws(() => validateLesson(invalid, hooks), /one or two short sentences/);
+});
+
+test('the view preserves the lift-to-weight length comparison on the helicopter centre line', () => {
+  const d = hooks.animations.heavy({time: 0});
+  const camera = new PerspectiveCamera(50, 1440 / 809, .1, 80);
+  camera.position.set(...d.camera.position); camera.lookAt(...d.camera.target); camera.updateMatrixWorld();
+  const lengths = d.forces.map(f => {
+    const a = new Vector3(...f.origin), b = a.clone().addScaledVector(new Vector3(...f.direction), f.newtons * d.metresPerNewton);
+    return Math.abs(a.project(camera).y - b.project(camera).y);
+  });
+  assert.ok(lengths[1] > lengths[0], 'the overloaded weight arrow must look longer');
+  assert.ok(Math.abs(lengths[0] / lengths[1] - d.forces[0].newtons / d.forces[1].newtons) < 1e-10);
+  for (const name of ['car', 'up']) {
+    const climbing = hooks.animations[name]({time: 6});
+    camera.position.set(...climbing.camera.position); camera.lookAt(...climbing.camera.target); camera.updateMatrixWorld();
+    for (const f of climbing.forces) {
+      const tip = new Vector3(...f.origin).addScaledVector(new Vector3(...f.direction), f.newtons * climbing.metresPerNewton).project(camera);
+      assert.ok(tip.y > -1 && tip.y < 1, `${name}: a climbing arrow must stay inside the view`);
+    }
+  }
+  const ramp = hooks.animations.ramp({time: 4});
+  camera.position.set(...ramp.camera.position); camera.lookAt(...ramp.camera.target); camera.updateMatrixWorld();
+  const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+  for (const x of [-1, 1]) for (const y of [-1, 1]) {
+    const corner = new Vector3(...ramp.graph.position).addScaledVector(right, x * ramp.graph.size[0] / 2);
+    corner.y += y * ramp.graph.size[1] / 2; corner.project(camera);
+    assert.ok(Math.abs(corner.x) < 1 && Math.abs(corner.y) < 1, 'the graph and its kg axis title must fit inside the view');
+  }
 });

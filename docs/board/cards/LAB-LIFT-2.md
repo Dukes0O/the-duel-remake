@@ -35,7 +35,8 @@ screen.
 The Dusthawk alone lifts under the game's rules, so the worked example
 shows that success before adding three labelled crates for the overload.
 All helicopter numbers still come from `heli-flight.js`; cargo masses come
-from `heli-cable.js`. Please confirm this truthful lesson adjustment.
+from `heli-cable.js`. Claude confirmed this example in the round-1 verdict
+relayed by Kyle on 26 October.
 
 Round 1 is `docs/board/looks/lab-2/look-3.jpg`; the comparison and code review
 are recorded in `docs/changes/LAB-LIFT-2.md`. `lab-2` stays dev, for Kyle and
@@ -46,4 +47,20 @@ Claude's written test review before merge (AGENTS 18):
 expecting `public/assets/models/lab/brian.glb` and no editable Blend file.
 No assertion code or tolerance changes. This extends generator coverage
 and applies the existing planning, placement and reproducibility checks;
-89 checks pass. Please record the review here when accepting the lane.
+89 checks pass. Claude approved this table addition in the same verdict;
+the existing checks remain unchanged.
+
+## Round 2 · Claude's requested changes
+
+Kg comparison captions, a closer low view, thick centre-line arrows,
+visible downwash, a tidy load gauge, clean prediction cards, the collective
+cockpit inset and Brian's face/workwear update. Sheet: `look-4.jpg` in the
+same look folder. This is the second of at most three art rounds.
+
+Changed assertion for review: the exact word sequence now puts Weight before
+Lift, so the requested kg comparison line cannot use Weight before teaching
+it. The sequence check still requires every word in its exact order. The
+browser recipe follows this same order and checks that prediction labels
+are hidden. Added kg-equivalence and caption-limit checks; no tolerance or
+existing frame assertion was relaxed. Claude's round-2 verdict will review
+this deliberate order change under AGENTS 18.

@@ -1,6 +1,9 @@
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createUnlockedVehicle} from '../../unlock-vehicles.js';
-import {KESTREL, PAD, padForces, padLoad, padOutcome} from '../benches/lift-pad.js';
+import {KESTREL, GRAVITY, PAD, padForces, padLoad, padOutcome} from '../benches/lift-pad.js';
+import {createCollectiveInset} from './collective-inset.js';
+
+const WAITING_CRATE = [-1.25, .12, .55];
 
 export const trialInput = (input, index = 0) => ({fuel: KESTREL.tankKg, crates: index === 1 ? 1 : 0, car: 0, collective: 0, ...input});
 export function rotorBlades(rotor) {
@@ -36,60 +39,67 @@ export function liftDrawing(input, time, mode = 'try', support = null) {
   const baseY = .12 + rise;
   const showLift = !['rotor', 'weight', 'wonder'].includes(mode), showWeight = !['rotor', 'lift', 'collective', 'wonder'].includes(mode);
   const showAir = !['weight', 'rotor'].includes(mode);
-  const scale = .000034;
+  const scale = .000028;
   const forceN = mode === 'hover' || outcome === 'hover' && rise > 0 ? h.weightN : f.liftN;
   const forces = [];
-  if (showLift) forces.push({kind: 'lift', newtons: forceN, origin: [-.5, 1.4 + rise, .85], direction: [0, 1, 0], labelPosition: [-1.35, 2.8, 1]});
-  if (showWeight) forces.push({kind: 'weight', newtons: f.weightN, origin: [.5, 1.65 + rise, .85], direction: [0, -1, 0], labelPosition: [1.35, 2.8, 1]});
+  if (showLift) forces.push({kind: 'lift', newtons: forceN, origin: [0, baseY + 1.35, 0], direction: [0, 1, 0]});
+  if (showWeight) forces.push({kind: 'weight', newtons: f.weightN, origin: [0, baseY + .55, 0], direction: [0, -1, 0]});
+  for (const force of forces) Object.assign(force, {displayValue: force.newtons / GRAVITY, displayUnit: 'kg', headWidth: .36, headLength: .36, inFront: true});
   const angle = (1 - load.collective) * 1.05;
   const objects = [{id: 'collective-shaft', position: [.45, baseY + .3 + Math.cos(angle) * .24, .52 - Math.sin(angle) * .24], size: [.045, .48, .045], rotation: [-angle, 0, 0], colour: '#8f9791'},
     {id: 'collective-handle', shape: 'sphere', control: 'collective', position: [.45, baseY + .3 + Math.cos(angle) * .48, .52 - Math.sin(angle) * .48], size: [.16, .16, .16], colour: '#edc557'}];
   objects.push({id: 'fuel-target', control: 'fuel', position: [-1.65, .5, 1.5], size: [1, .9, .8], opacity: 0},
     {id: 'car-target', control: 'car', position: [load.car ? 1.15 : 2.6, .5, -.45], size: [.8, .8, 1.6], opacity: 0},
-    {id: 'crate-target', control: 'crates', position: [1.5, .4, 1.3], size: [.7, .7, .7], opacity: 0});
+    {id: 'crate-target', control: 'crates', position: [WAITING_CRATE[0], .4, WAITING_CRATE[2]], size: [.7, .7, .7], opacity: 0});
   // Solid coloured shafts stay legible against the steel hangar.
-  forces.forEach((a, i) => objects.push({id: `force-shaft-${i}`, position: [a.origin[0], a.origin[1] + a.direction[1] * a.newtons * scale / 2, a.origin[2]], size: [.075, Math.max(.001, a.newtons * scale - .12), .075], colour: a.kind === 'lift' ? '#56d683' : '#f06464'}));
+  forces.forEach(a => objects.push({id: `force-shaft-${a.kind}`, position: [a.origin[0], a.origin[1] + a.direction[1] * a.newtons * scale / 2, a.origin[2]], size: [.16, Math.max(.001, a.newtons * scale - .18), .16], colour: a.kind === 'lift' ? '#56d683' : '#f06464', inFront: true}));
   if (support === 'guided') objects.push({id: 'guide', position: [.45, 1.65, .7], size: [.05, .35, .05], colour: '#edc557'});
   // Click targets lie on real load models; their wire-free invisible skin is
   // supplied by the mount, using the same object's control id.
-  return {load, baseY, rise, mode, forces, objects, metresPerNewton: scale,
-    streams: showAir ? [-.85, 0, .85].map(x => ({medium: 'air', origin: [x, baseY + 1.4, 0], direction: [0, -1, 0], speed: load.fuel ? load.collective * 8 : 0, radius: .45, length: 1.5})) : [],
-    camera: {position: [3.7, 3.1, 5.5], target: [0, .65, 0]},
-    graph: mode === 'ramp' ? {position: [2.3, 2.6, -.4], size: [2, 1.125, 1], xLabel: 'Time in seconds', yLabel: 'Lift in newtons', maxX: 4, maxY: f.maximumN,
-      points: Array.from({length: 41}, (_, i) => [i / 10, Math.min(1, i / 40) * f.weightN])} : null};
+  return {load, baseY, rise, mode, forces, objects, metresPerNewton: scale, hideLabels: true,
+    streams: showAir ? [-.85, 0, .85].map(x => ({medium: 'air', origin: [x, baseY + 1.4, 0], direction: [0, -1, 0], speed: load.fuel ? load.collective * 5 : 0, opacity: .2 + load.collective * .7, radius: .45, length: 1.5})) : [],
+    // A level low view gives both vertical arrows the same perspective scale.
+    camera: {position: [2.5, .5 + rise, 4], target: [.25, .5 + rise, 0]},
+    graph: mode === 'ramp' ? {position: [2.1, 1.4, -.4], size: [1.5, .84, 1], xLabel: 'Time in seconds', yLabel: 'Lift in kg', maxX: 4, maxY: f.maximumN / GRAVITY,
+      points: Array.from({length: 41}, (_, i) => [i / 10, Math.min(1, i / 40) * f.weightN / GRAVITY])} : null};
 }
 
 // Models are local runtime assets. Only their display pose changes here.
-export function mountLift({group, THREE, models, doc, canvas}) {
+export function mountLift({group, THREE, models, doc, canvas, camera}) {
   const own = new THREE.Group(); group.add(own);
+  const roomSigns = group.parent.getObjectByName('Lab 2 signs and Brian');
+  const signsWereVisible = roomSigns?.visible;
+  if (roomSigns) roomSigns.visible = false;
   let disposed = false, heli = null, rotor = null, ghostHeli = null;
   const blades = [];
   const car = createUnlockedVehicle({key: 'dusthawk_rally'}); car.scale.setScalar(.33); own.add(car);
   const cargo = new THREE.Group(); own.add(cargo);
   const weightSource = models.get('weights-and-cans');
   const cans = weightSource?.clone(true); if (cans) { cans.scale.setScalar(.65); cans.position.set(-1.75, 0, 1.3); own.add(cans); }
-  const labels = [];
-  function label(text, position, width = 1.7) {
-    const image = doc.createElement('canvas'); image.width = 640; image.height = 100;
-    const ctx = image.getContext('2d'); ctx.fillStyle = '#252c29'; ctx.fillRect(0, 0, 640, 100);
-    ctx.font = 'bold 42px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#f5f0dc'; ctx.fillText(text, 320, 65, 620);
-    const map = new THREE.CanvasTexture(image); map.colorSpace = THREE.SRGBColorSpace;
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map, depthTest: false, toneMapped: false}));
-    sprite.position.set(...position); sprite.scale.set(width, width / 6.4, 1); own.add(sprite); labels.push(sprite); return sprite;
-  }
-  const fuelLabel = label(`Can → ${PAD.canKg} kg fuel`, [-1.6, .8, 1.5]);
-  const carLabel = label(`Dusthawk · ${PAD.carKg} kg`, [1.7, .75, -.1]);
-  const crateLabel = label(`Crate · ${PAD.crateKg} kg`, [1.6, .4, 1.25]);
-  const leverLabel = label('Left-hand lever · drag / ↑ ↓', [.4, .8, 1.6], 2.2);
-  const totalLabel = label('', [0, .25, 2.1], 2.8); let totalText = '';
+  // Two anchored captions and one tidy gauge replace all overlapping sprites.
+  const overlay = doc.createElement('div'); overlay.className = 'lab-lift-overlay';
+  const gauge = doc.createElement('div'); gauge.className = 'lab-lift-gauge';
+  gauge.innerHTML = '<small>Load total</small><strong></strong><small class="lab-lift-fuel"></small>';
+  const total = gauge.querySelector('strong'), fuel = gauge.querySelector('.lab-lift-fuel');
+  const setText = (el, text) => { if (el.textContent !== text) el.textContent = text; };
+  overlay.append(gauge); canvas.parentElement.append(overlay);
+  const captions = ['lift', 'weight'].map(kind => {
+    const el = doc.createElement('div'); el.className = `lab-lift-force ${kind}`; el.dataset.liftLabel = kind; overlay.append(el); return el;
+  });
+  const inset = createCollectiveInset({THREE, doc, overlay, rotorBlades, pitchBlades});
+  const wash = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.65, 1.4, 48, 1, true),
+    new THREE.MeshBasicMaterial({color: '#81dac8', transparent: true, opacity: .1, depthWrite: false, side: THREE.DoubleSide}));
+  own.add(wash);
   let loadedCrates = 0;
   const cable = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({color: '#c6c8be'})); own.add(cable);
   const loader = new GLTFLoader();
   loader.loadAsync('/assets/heli/rescue/crate-food.glb').then(gltf => {
     if (disposed) { release(gltf.scene); return; }
+    const footOffset = -new THREE.Box3().setFromObject(gltf.scene).min.y * .45;
     for (let i = 0; i <= PAD.maxCrates; i++) {
       const crate = gltf.scene.clone(true); crate.scale.setScalar(.45);
-      crate.position.set(i === PAD.maxCrates ? 1.5 : .9 + (i % 2) * .5, i === PAD.maxCrates ? .12 : .12 + Math.floor(i / 2) * .5, i === PAD.maxCrates ? 1.3 : -.1);
+      crate.position.set(...(i === PAD.maxCrates ? WAITING_CRATE : [.9 + (i % 2) * .5, .12 + Math.floor(i / 2) * .5, -.1]));
+      crate.position.y += footOffset;
       crate.visible = i === PAD.maxCrates || i < loadedCrates; cargo.add(crate);
     }
   }).catch(() => { canvas.dataset.labLiftCrates = 'failed'; });
@@ -98,6 +108,7 @@ export function mountLift({group, THREE, models, doc, canvas}) {
     heli = gltf.scene; heli.scale.setScalar(.48); own.add(heli);
     rotor = heli.getObjectByName('main_rotor');
     blades.push(...rotorBlades(rotor));
+    inset.setRotor(rotor);
     ghostHeli = heli.clone(true); ghostHeli.scale.setScalar(.35); own.add(ghostHeli);
     ghostHeli.traverse(n => {
       if (n.material) {
@@ -106,11 +117,15 @@ export function mountLift({group, THREE, models, doc, canvas}) {
       }
     });
     canvas.dataset.labLiftModel = 'ready';
-  }).catch(() => { canvas.dataset.labLiftModel = 'failed'; });
+  }).catch(error => { canvas.dataset.labLiftModel = 'failed'; console.error('Lift model could not load:', error); });
   function release(root) { root.traverse(n => { n.geometry?.dispose(); for (const m of [].concat(n.material ?? [])) { m.map?.dispose(); m.dispose(); } }); }
   return {
     draw(d, clock) {
       if (!d.load) return;
+      // Read layout before any writes, then update only values that changed.
+      const panel = canvas.parentElement.querySelector('.lab-teaching');
+      const hostBox = canvas.getBoundingClientRect(), panelBox = panel?.getBoundingClientRect();
+      const bottom = panelBox ? panelBox.top - hostBox.top - 48 : canvas.clientHeight - 80;
       const l = d.load;
       if (heli) heli.position.y = d.baseY;
       if (rotor) {
@@ -133,14 +148,33 @@ export function mountLift({group, THREE, models, doc, canvas}) {
       }
       cable.visible = Boolean(l.car);
       const p = cable.geometry.attributes.position; p.setXYZ(0, 0, d.baseY + .35, 0); p.setXYZ(1, car.position.x, .5 + d.rise, -.45); p.needsUpdate = true; cable.geometry.computeBoundingSphere();
-      const txt = `${Math.round(padForces(l).massKg)} kg total · ${l.fuel} kg in tank · ${l.crates} crates`;
-      if (txt !== totalText) { totalText = txt; const ctx = totalLabel.material.map.image.getContext('2d'); ctx.fillStyle = '#252c29'; ctx.fillRect(0, 0, 640, 100); ctx.fillStyle = '#f5f0dc'; ctx.fillText(txt, 320, 65, 620); totalLabel.material.map.needsUpdate = true; }
-      leverLabel.visible = d.mode === 'collective' || clock.stage === 3;
-      fuelLabel.visible = carLabel.visible = crateLabel.visible = clock.stage === 3 || Boolean(l.car);
-      canvas.dataset.labLiftLoad = JSON.stringify(l);
+      setText(total, `${Math.round(padForces(l).massKg).toLocaleString('en')} kg`);
+      setText(fuel, `Tank ${Math.round(l.fuel)} kg`);
+      wash.visible = d.streams.length > 0 && l.collective > 0 && l.fuel > 0;
+      wash.position.set(0, d.baseY + .65, 0); wash.material.opacity = .04 + l.collective * .17;
+      inset.draw(d.mode === 'collective', l.collective);
+      group.updateMatrixWorld(true); camera.updateMatrixWorld(true);
+      captions.forEach((el, i) => {
+        const f = d.forces.find(f => f.kind === (i ? 'weight' : 'lift'));
+        const hidden = !f || clock.stage === 0 || clock.stage === 3;
+        if (el.hidden !== hidden) el.hidden = hidden;
+        if (el.hidden) return;
+        setText(el, `${f.kind} ${Math.round(f.displayValue).toLocaleString('en')} kg`);
+        const point = group.localToWorld(new THREE.Vector3(...f.origin)).project(camera);
+        const x = (point.x + 1) * canvas.clientWidth / 2 + (i ? 110 : -250);
+        const y = (1 - point.y) * canvas.clientHeight / 2 + (i ? 35 : -65);
+        const left = `${Math.round(Math.max(280, Math.min(canvas.clientWidth - 230, x)))}px`;
+        const top = `${Math.round(Math.max(85, Math.min(bottom, y)))}px`;
+        if (el.style.left !== left) el.style.left = left;
+        if (el.style.top !== top) el.style.top = top;
+      });
+      const loadText = JSON.stringify(l);
+      if (canvas.dataset.labLiftLoad !== loadText) canvas.dataset.labLiftLoad = loadText;
     },
     dispose() {
       disposed = true; cans?.removeFromParent(); // cloned Lab geometry belongs to the room
+      if (roomSigns) roomSigns.visible = signsWereVisible;
+      inset.dispose(); overlay.remove();
       release(own); own.removeFromParent();
       delete canvas.dataset.labLiftModel; delete canvas.dataset.labLiftLoad;
     },

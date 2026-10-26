@@ -22,11 +22,14 @@ Claude's art verdict is not claimed. No frame timing: this feature is dev.
 
 The Dusthawk alone can lift under the real flight rules. The worked example
 therefore shows it lifting, then adds three visible crates for the failed
-lift. Claude should confirm that truthful adjustment to the written lesson.
+lift. Claude confirmed this example in the round-1 verdict relayed by Kyle
+on 26 October. The same verdict accepts the structure, flight numbers, kg
+hints and Brian's generator-table registration. It requests round 2's kg
+comparisons, closer view, decluttering, collective inset and revised Brian.
 
 Raw captures of every step, all five words, Brian, both checks and the
 challenge card: `.evidence/2026-10-26/LAB-LIFT-2/`. The flight screenshot
 catches the key card during the scene's initial load; it proves the card,
 not a new review of the helicopter world.
 
-Rebuild the sheet: `python tools/lab-lift-sheet.py`.
+Rebuild the sheet: `python tools/lab-lift-sheet.py --round 1`.

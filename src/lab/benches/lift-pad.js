@@ -1,7 +1,7 @@
 // The teaching pad reads the real flight rules. It owns no flight or save state.
 import {KESTREL, GRAVITY, createHeliState, heliMass, availableThrust} from '../../heli/heli-flight.js';
 import {carMassKg, CRATE} from '../../heli/heli-cable.js';
-export {KESTREL};
+export {KESTREL, GRAVITY};
 
 export const PAD = Object.freeze({canKg: KESTREL.tankKg / 4, crateKg: CRATE.massKg,
   carKg: carMassKg('dusthawk_rally'), hoverHeight: .6, maxCrates: 4});
