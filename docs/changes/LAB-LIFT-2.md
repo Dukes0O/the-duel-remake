@@ -86,6 +86,38 @@ under AGENTS 18; this lane does not merge.
   API. The existing import guard is unchanged. No flight rule or displayed
   number changed, and no broader import exception was added.
 
+## Final checks and handoff
+
+- Game source: `091203c4`. All 50 suites in the final lane plan are covered
+  by passing results, jobs 4. The original run passed 9 suites; its missing
+  Blender entry was fixed and passed 89 placement checks. The next run
+  passed 14 suites; its import-boundary fault was fixed and passed all 180
+  helicopter-mode checks. The five Lift tests passed after that mechanical
+  move. The final 24 uncovered suites passed, zero failed or unrun, in
+  420.50 seconds. No passing suite was repeated merely to fill a new gate.
+- Replay fingerprints: 225 unchanged checks across 25 cases, 23 events and
+  three FPS values. World composition: all 47 exact scene checks passed.
+  Helicopter flight fingerprint remains
+  `idle|panorama-ridge|116.216667|30.149797|30.764262|39.825237|0.031176|-0.000383|…`.
+- `npm run build` passed in 823 ms, with System32 first on PATH. Its existing
+  shared dynamic-import and large-chunk warnings remain.
+- Final code review approved the lesson, interaction fixes, generator entry
+  and mechanical bench-boundary move. The move changes no animation or
+  interaction from the 21-capture green browser run. The later hint wording
+  is covered by pure behavior checks; no browser pass was repeated for it.
+- Board: 187 checks passed. Repository placement and whitespace passed.
+  Session status was regenerated. Cockpit sync: zero tasks changed, no
+  missing task mapping reported.
+- `docs/lab-lesson-authoring.md` now documents the range controls, dynamic
+  kilogram hints, graph placement and custom ghost contract for the next
+  fifteen lessons. Only this documentation, the verdict and status snapshot
+  changed after the checked game source.
+
+Open for Claude: round-1 art verdict, confirmation of the Dusthawk-plus-crates
+example, and the written generator-list review requested on the card.
+Then Kyle and Gratian try the lesson before LAB-LESSONS-2. `lab-2` remains
+dev. This lane is committed only: no merge, push, release or frame timing.
+
 ## Removed
 
 Brian's reused Rook reference is replaced by his own model. The old bench
@@ -93,3 +125,5 @@ remains available with Lab 2 off until LAB-LESSONS-2 replaces it at go-live.
 The failed browser's own Chrome processes were closed and its verified
 temporary profile recycled using Windows PowerShell. No other process or
 player data was touched. Final step captures remain for the requested review.
+Recycled this run's `.qa-dist` and `dist` after the gates. Moving the pad
+module removed its old lesson-folder copy; there is one calculation module.
