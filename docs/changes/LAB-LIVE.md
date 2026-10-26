@@ -100,3 +100,7 @@ recording these verdicts. No raw evidence retained.
 ## Removed
 
 Removed the two obsolete preview opt-ins. No replaced assets or code paths.
+
+## Claude review (25 October 2026)
+
+Approved: the two switch states move from dev to on with every other state and count unchanged; the frame recipe gains an opt-in eight-Speirling path verified on every measured frame. Eight Speirlings: High 18.4 ms, Performance 18.3 ms (limit 18.5).
