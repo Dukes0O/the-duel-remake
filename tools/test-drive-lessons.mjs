@@ -218,6 +218,8 @@ test('instructor controls retain settled pace and use the tyre yaw helper with b
   const surface={speedLimit:300,traction:1};
   const casual=instructorControls(state,surface,plan),pro=instructorControls(state,surface,{...plan,difficulty:'pro'});
   assert.equal(casual.targetMph,92);assert.equal(pro.targetMph,97);
+  assert.equal(instructorControls(state,surface,{...plan,difficulty:'pro',profile:{pace:.95,at:()=>100}}).targetMph,95,
+    'lesson 1 uses its trial pace while other lessons retain 97%');
   assert.equal(casual.steer,.123);assert.equal(casual.throttle,0);assert.ok(casual.brake>0);
   assert.equal(calls[0].options.tyreSlip,true);assert.equal(calls[0].options.brake,casual.brake);
   assert.equal(casual.boost,false);
@@ -287,7 +289,7 @@ for (const courseId of ['panorama-ridge','tremblant-woods']) {
       const {corner,instructor}=baseline;
       assert.ok(instructor.timeSec>0);
       assert.equal(instructor.finishS,instructor.cones[2].s+60);
-      assert.equal(instructor.redBoardS,Math.min(instructor.cones[0].s+25,corner.turnInS));
+      assert.equal(instructor.redBoardS,courseId==='panorama-ridge'?corner.turnInS:Math.min(instructor.cones[0].s+25,corner.turnInS));
       assert.equal(instructor.poses[0].s,corner.startS);
       assert.equal(instructor.poses.at(-1).s,corner.finishS);
       assert.equal(instructor.poses.at(-1).t,instructor.timeSec);
@@ -310,7 +312,7 @@ async function nativeStudentAttempt(baseline, lesson, mode, fps) {
   duel.startCampaign({seed,car,upgrades:{...upgrades},difficulty,driverId:'club',
     mode:'timetrial',opponentCount:0,startStage:COURSE.findIndex(row=>row.id===courseId)});
   const state=duel.state,course=duel.course,spec=duel.car;
-  const pace=difficulty==='casual'?.92:.97;
+  const pace=difficulty==='casual'?.92:.95;
   const lessonPlan=await lessonPlanFor(duel,DRIVE_LESSON_CORNERS.find(row=>row.courseId===courseId),pace);
   const {line}=lessonPlan,profile=lessonPlan.profile;
   const start=instructor.poses[0];
@@ -327,7 +329,7 @@ async function nativeStudentAttempt(baseline, lesson, mode, fps) {
   // instructorControls multiplies its profile by pace. Divide once to ask
   // for the actual 100% line speed, not 100% of the slower instructor.
   const speedScale=mode==='fast'?1:mode==='slow'?pace*.8:pace;
-  const plan={course,car:spec,line,profile:{at:s=>profile.at(s)*speedScale/pace},
+  const plan={course,car:spec,line,profile:{pace,at:s=>profile.at(s)*speedScale/pace},
     drive:DRIVE,steerForYaw,difficulty,turnInS:corner.turnInS,turnOutS:corner.turnOutS,brakeS:profile.brakeS};
   const cornerSpeed=Math.min(...instructor.poses.filter(p=>p.s>=corner.turnInS&&p.s<=corner.turnOutS).map(p=>p.mph));
   assert.ok(Number.isFinite(cornerSpeed)&&cornerSpeed>0,'actual instructor corner speed exists');

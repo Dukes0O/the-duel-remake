@@ -158,12 +158,12 @@ async function driveNativeHostAttempt(app, mode) {
   ]);
   const duel = app.duel, state = duel.state, run = duel.drivingLesson;
   const {corner, instructor, difficulty, courseId} = run.plan, course = duel.course, car = duel.car;
-  const pace = difficulty === 'casual' ? .92 : .97;
+  const pace = difficulty === 'casual' ? .92 : .95;
   // The student drives the instructor's own line and speed plan.
   const lessonPlan = await lessonPlanFor(duel, DRIVE_LESSON_CORNERS.find(row => row.courseId === courseId), pace);
   const {line, profile} = lessonPlan;
   const scale = mode === 'fast' ? 1 : mode === 'slow' ? pace * .8 : pace;
-  const plan = {course, car, line, profile: {at: s => profile.at(s) * scale / pace}, drive: DRIVE,
+  const plan = {course, car, line, profile: {pace,at: s => profile.at(s) * scale / pace}, drive: DRIVE,
     steerForYaw, difficulty, turnInS: corner.turnInS, turnOutS: corner.turnOutS, brakeS: profile.brakeS};
   const cornerSpeed = Math.min(...instructor.poses.filter(pose => pose.s >= corner.turnInS && pose.s <= corner.turnOutS).map(pose => pose.mph));
   assert.equal(Number.isFinite(cornerSpeed) && cornerSpeed > 0, true);
