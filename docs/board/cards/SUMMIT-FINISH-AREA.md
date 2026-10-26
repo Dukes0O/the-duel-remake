@@ -49,3 +49,24 @@ helipad, lit windows and run-off are not visible. Round 2:
   from the helipad, and one wide shot; High and Performance; dusk and night.
 The Glacier Hairpin drive result is the known QA-SUMMIT-GLACIER-EDGE, not this
 lane's. The scene signature changes only after the look is accepted.
+
+## Claude's verdict, round 2 (26 October 2026)
+
+Much better and close: the red timber hut and the domed observatory with warm
+windows frame a timber "SUMMIT" gantry, and the fenced run-in reads well at
+dusk and night. Round 3 (the last, SPEC 0.11) fixes only these:
+1. **At-line views are blank** (the camera sits inside or under something).
+   Fix the capture so the line shot shows the gantry overhead and the car
+   park ahead.
+2. **Crowd:** a dozen bundled-up figures along the last 200 m of fence,
+   standing close enough to the road to read from the car at 100 m and 30 m;
+   a few with raised arms. Reuse the existing crowd figures.
+3. **Car park:** the run-off is a flat grey slab. Give it packed-snow ground
+   matching the terrain, low snow banks along its edges, two parked cars and
+   a lamp post, so a car at speed can stop and it looks like a place.
+4. **"SUMMIT" lettering** on the gantry about twice as large.
+5. **Helipad:** keep the working pad where it is (moving it would change the
+   helicopter's landing rules). Draw a clear H circle and a windsock on it,
+   and a short marker-post path from the hut toward it.
+Then the round-3 sheet (same views) and stop. Claude picks and sends Kyle the
+result.
