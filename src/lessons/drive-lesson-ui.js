@@ -14,7 +14,7 @@ const seconds = value => Number.isFinite(value) && value >= 0 ? value.toFixed(2)
 export const DRIVE_LESSON_VIEW = Object.freeze({
   corner: Object.freeze({n: 1, title: 'The sharp corner', intro: 'drive.radio.corner.intro', pass: 'drive.radio.corner.pass',
     stages: Object.freeze({late: 'Try 1: brake late', right: 'Try 2: do it right', challenge: 'Challenge: three in a row'}),
-    rules: Object.freeze(['Brake at cone 1', 'Touch the inside cone', 'Accelerate out wide', 'Keep screech below 0.30 s']),
+    rules: Object.freeze(['Brake at cone 1 while straight (15 m before to 5 m after)', 'Pass within 2.5 m of inside cone 2', 'Hold the accelerator before cone 3; pass it on the outside half', 'Keep screech below 0.30 s']),
     hints: Object.freeze({late: 'Keep your foot down and brake at the red board.',
       challenge: 'Beat the instructor through the corner three times in a row.'})}),
   line: Object.freeze({n: 2, title: 'The racing line', intro: 'drive.radio.line.intro', pass: 'drive.radio.line.pass',
@@ -245,9 +245,28 @@ export function driveLessonResultMarkup(props = {}) {
     : result.passed ? 'Attempt complete' : 'Try again';
   const best = Number.isFinite(lesson.bestMargin) && lesson.bestMargin > 0
     ? `<p>Best: ${seconds(lesson.bestMargin)} faster</p>` : '';
+  // The running checklist is hidden on the result screen. Keep the reason and
+  // next action here so a missed radio line never leaves a child guessing.
+  let advice = '';
+  if (lesson.id === 'corner' && !result.passed && lesson.stage !== 'late') {
+    const ends = {
+      wall: 'You hit the wall. Brake earlier and steer gently to stay on the road.',
+      offroad: 'You left the road for too long. Slow down before turning and stay between the edges.',
+      stop: 'You stopped. Release the brake after slowing down, then hold the accelerator to finish.',
+    };
+    const fixes = [
+      'You missed the braking point. Start braking at cone 1 while straight: up to 15 m before or 5 m after it.',
+      'You missed inside cone 2. Aim closer: pass within 2.5 m of it.',
+      'You missed the wide exit or accelerated too late. Hold the accelerator before cone 3 and pass it on the outside half of the road.',
+      'The tyres screeched for too long. Finish braking before turning, then steer gently; keep screech below 0.30 s.',
+    ];
+    advice = ends[result.endReason] ?? (lesson.stage === 'challenge'
+      ? 'You did not beat the instructor. Brake before turning, then accelerate out wide. Finish faster than the instructor to build a streak of three.'
+      : fixes[result.rules?.findIndex(met => met === false)] ?? 'Follow the three cones and try again.');
+  }
   return `<section class="drive-lesson-result" role="region" aria-label="Attempt result" aria-live="polite">
     <h2>${title}</h2><p>${timing}</p><p>Instructor ${seconds(result.instructorSeconds > 0 ? result.instructorSeconds : instructorTime(lesson))}</p>
-    ${comparison}<p>Tyres screeched ${seconds(result.screechSeconds)}</p>${extraNumbers(lesson, result)}${best}
+    ${comparison}<p>Tyres screeched ${seconds(result.screechSeconds)}</p>${advice ? `<p class="drive-lesson-advice">${advice}</p>` : ''}${extraNumbers(lesson, result)}${best}
     ${nextButton(lesson)}${passed(lesson)&&props.lessonSaveFailed?'<button type="button" data-drive-action="retry-save">Retry save</button>':''}<button type="button" data-drive-action="leave">Leave lesson</button></section>`;
 }
 

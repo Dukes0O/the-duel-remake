@@ -22,6 +22,23 @@ function freeze(value) {
   if (value && typeof value === 'object') {Object.freeze(value); Object.values(value).forEach(freeze);}
   return value;
 }
+
+test('lesson 1 retry card keeps the failed rule and next action when the live checklist is hidden', () => {
+  const messages = [/braking point.*Start braking at cone 1/s, /missed inside cone 2.*within 2.5 m/s,
+    /wide exit.*Hold the accelerator before cone 3/s, /screeched for too long.*Finish braking before turning/s];
+  messages.forEach((message, index) => {
+    const props = run();
+    props.lesson.lastAttempt.rules = messages.map((_, i) => i !== index);
+    assert.match(driveLessonResultMarkup(props), message);
+  });
+  for (const [endReason, message] of [['wall', /hit the wall.*Brake earlier/s],
+    ['offroad', /left the road.*Slow down/s], ['stop', /stopped.*Release the brake/s]]) {
+    const props = run(); Object.assign(props.lesson.lastAttempt, {finished: false, endReason});
+    assert.match(driveLessonResultMarkup(props), message);
+  }
+  const props = run(); props.lesson.stage = 'challenge';
+  assert.match(driveLessonResultMarkup(props), /did not beat the instructor.*Finish faster/s);
+});
 function dom() {
   const handlers = new Map();
   const root = {contains: node => node?.inside === true,
