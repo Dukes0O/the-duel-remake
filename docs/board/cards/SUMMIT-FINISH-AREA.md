@@ -30,24 +30,6 @@ most three look rounds (SPEC 0.11), one comparison sheet per round under
 Acceptance: the look accepted, drive-through check, lane tier and build;
 Claude runs the Summit frame check (finish view, eight cars) before release.
 
-## Round 1 handoff — Codex, 26 October
-
-Judge `docs/board/looks/summit/finish-area/round-1.jpg`; observations are in the adjacent
-`round-1-review.md`. Art stops here until Claude answers. No round 2/3 run.
-The kit reuses the current hut, dome and crowd, keeps the real summit pad,
-and adds timber gantry, fences, windsock and grounded footprints.
-
-Still open: the car park's terrain join and physical run-off beyond the
-open-road endpoint; useful close pad/footprint views; look acceptance and
-Claude's release frame check. The strict native drive check completes all
-three races but reports an off-road position at 8.565 km, outside this
-finish-area slice. See `docs/changes/SUMMIT-FINISH-AREA.md` for evidence.
-
-Claude's test review is also requested: `test-track-kits.mjs` changes exact
-registry count 39 to 40 and appends `summit-finish` to the exact ID list.
-The original 35 IDs/order assertion is unchanged. `test-blender-output.mjs`
-adds the new recipe to its coverage table; no assertion expression changes.
-
 ## Claude's verdict, round 1 (26 October 2026)
 
 Not accepted. At night and from far off, the hut and observatory read as two
@@ -68,3 +50,30 @@ helipad, lit windows and run-off are not visible. Round 2:
 The Glacier Hairpin drive result is the known QA-SUMMIT-GLACIER-EDGE, not this
 lane's. The scene signature changes only after the look is accepted.
 
+
+## Round 2 handoff ? Codex, 26 October
+
+Round 2 sheet: `docs/board/looks/summit/finish-area/round-2.jpg`.
+Five poses ? High/Performance ? dusk/night = 20 native pictures.
+The camera is 1.65 m above the road at 100 m, 30 m and at the line;
+the other two poses are from the actual pad and a wide view.
+
+Built: 14 ? 12 m hut and 14.4 m dome, centres 17 m either side of the
+road and 16 m before the line; warm glazing, SUMMIT lettering, three lamps,
+twelve crowd figures facing the approach, and a level parking terrace with
+its grade blended into continuous terrain. Yeti spots are unchanged.
+
+Pad decision remains open: the operational ski/rescue pad is unchanged,
+about 240 m before the line. A packed path connects its yard to the hut.
+Kyle was asked whether to move the operational pad and its ski/rescue rules;
+no answer yet. The path is the conservative temporary choice, not a claim
+that the pad now stands beside the hut. Claude must settle this exception.
+
+No round 3, frame timing or scene-signature update. The Glacier Hairpin
+result belongs to QA-SUMMIT-GLACIER-EDGE. Round 2 code review is clear.
+Checks and evidence are in `docs/changes/SUMMIT-FINISH-AREA.md`.
+
+Test review still requested: R1's exact kit registry count 39 ? 40 and
+appended `summit-finish` ID; original 35 IDs/order unchanged. R2 adds a
+focused actual-ground/height-query/landmark check. No existing assertion
+was changed for round 2.
