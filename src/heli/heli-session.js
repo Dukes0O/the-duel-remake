@@ -11,7 +11,7 @@ import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruc
 import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle, recoveryJob, recoveryJobOf, recoveryTitle, finishRecovery,
   wreckFor} from './heli-jobs.js';
 import {isCourseUnlocked} from '../course-access.js';
-import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson} from './heli-lessons.js';
+import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson, carryGuidance} from './heli-lessons.js';
 import {CRATE} from './heli-cable.js';
 import {BUCKET, RETARDANT_LITRES, createBucket, stepBucket, setBucketWater, bucketHit, bucketWords, bucketHolds, aimPoint, aimLocked, aimRingRadius, bucketReading} from './heli-bucket.js';
 import {heliUpgrades, heliUpgradesOf, ownedLabUpgrades, chooseLabLine, CHALLENGE_IDS, CHALLENGE_RULES, challengeSpots, createChallenge, stepChallenge,
@@ -755,6 +755,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
 
   const carLoads = () => loads.filter(car => !car.bucket && !car.rescue && !car.supply);
   const primaryLoad = () => carLoads().find(car => car.hooked) ?? carLoads().find(car => car.own) ?? carLoads()[0] ?? null;
+  const carryGuidanceNow = () => {
+    const crate = loads.find(car => car.crate);
+    return crate ? carryGuidance(lesson, crate, world.ground.height(crate.x, crate.z)) : null;
+  };
   const loadView = car => Object.freeze({id: car.id, x: car.x, y: car.y, z: car.z, heading: car.heading,
     hooked: car.hooked, onGround: car.onGround, own: !!car.own, job: car.job ?? null});
 
@@ -810,7 +814,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       emit({type: 'lessonPassed', lesson: id});
       fire?.lessonPassed();
     } else if (result.result === 'retry') {
-      emit({type: 'lessonRetry', lesson: lesson.id});
+      emit({type: 'lessonRetry', lesson: lesson.id, ...(result.reason ? {reason: result.reason} : {})});
       if (lesson.id === 'carry') {
         loads = loads.filter(car => !car.crate);
         loads.push(crateLoad());
@@ -1606,6 +1610,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const held = heldLoad();
       if (held) {
         const result = release(held, world.ground);
+        if (lesson?.id === 'carry' && held.crate)
+          result.event.crateRelease = Object.freeze({x: held.x, z: held.z, onGround: held.onGround});
         if (held.job) result.event.job = held.job;
         if (held.supply) noteCrateRelease(held, result.event);
         emit(result.event);
@@ -1949,7 +1955,16 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (challenge) endChallenge('stopped');
       lesson = createLesson(id, {spot: {x: site.zone.x, z: site.zone.z}, target: site.carryTarget});
       lessonEvents = [];
-      if (id === 'carry') loads.push(crateLoad());
+      if (id === 'carry') {
+        loads.push(crateLoad());
+        // Paint follows the terrain. Keep drawing samples out of courseSite's
+        // rule data and build them only when this lesson needs its circle.
+        const target = site.carryTarget;
+        const surface = Object.freeze([target.radius - .35, target.radius].flatMap(radius =>
+          Array.from({length: 65}, (_, i) => world.ground.height(target.x + Math.cos(i * Math.PI / 32) * radius,
+            target.z - Math.sin(i * Math.PI / 32) * radius) - target.y)));
+        lesson.target = Object.freeze({...target, surface});
+      }
       aim(null);
       emit({type: 'lessonStarted', lesson: id});
       return {ok: true};
@@ -2200,7 +2215,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         ...(skinOn ? {skins: skinsView()} : {}),
         ...(wildOn ? {survey: surveyView()} : {}),
         job: jobInHand(),
-        lesson: lesson ? Object.freeze({id: lesson.id, held: lesson.held, spot: lesson.spot, target: lesson.target}) : null,
+        lesson: lesson ? Object.freeze({id: lesson.id, held: lesson.held, spot: lesson.spot, target: lesson.target,
+          guidance: carryGuidanceNow()}) : null,
         ...(challenge ? {challenge: Object.freeze({id: challenge.id, elapsed: challenge.elapsed, briefing: challengeBriefing(challenge), props: challengeProps(challenge)})} : {}),
         crate: site?.crate ?? null,
         readout: heli ? heliReadout(heli, {loadKg: loads.find(car => car.hooked)?.massKg ?? 0}) : null,

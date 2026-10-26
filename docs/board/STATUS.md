@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-26T03:34:46.234Z
+Observed at: 2026-10-26T04:07:26.145Z
 
-Observation commit: 8744600eacd13ba10981fc5b200c022a7d571c0f
+Observation commit: a28ce1b63f8fcf1f3b53da670c826fd6593835b6
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 8744600eacd13ba10981fc5b200c022a7d571c0f
+Integration HEAD: a28ce1b63f8fcf1f3b53da670c826fd6593835b6
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,9 +29,11 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/lessons-ice-gate | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lessons-ice-gate |
+| codex/drive-lesson1-prep | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lesson1-prep |
+| codex/earn-finish-prep | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-prep |
+| codex/heli-carry-clear | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-carry |
 | codex/perf-high-night | 10 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
-| codex/ski-pickup | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ski-pickup |
+| codex/ski-audio | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ski-audio |
 | codex/wild-art-src | 10 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
 ## Unmerged branches for idle review
@@ -40,7 +42,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| codex/drive-lesson1-prep | unknown | 2026-10-25T20:55:25-07:00 | 0 | last commit 2026-10-25T20:55:25-07:00 | docs/board/STATUS.md, docs/board/board.yaml, docs/board/run-log.md, docs/changes/SAVE-RECORDS-IDB.md, src/app.js |
+| codex/earn-finish-prep | unknown | 2026-10-25T20:55:25-07:00 | 0 | last commit 2026-10-25T20:55:25-07:00 | docs/board/STATUS.md, docs/board/board.yaml, docs/board/run-log.md, docs/changes/SAVE-RECORDS-IDB.md, src/app.js |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 10 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/ski-audio | unknown | 2026-10-25T20:55:25-07:00 | 0 | last commit 2026-10-25T20:55:25-07:00 | docs/board/STATUS.md, docs/board/board.yaml, docs/board/run-log.md, docs/changes/SAVE-RECORDS-IDB.md, src/app.js |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 10 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
 ## Size targets
@@ -49,15 +54,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | unavailable | unavailable | 250,000,000 B |
+| Build `dist/` | 342,072,049 B | unavailable | 250,000,000 B |
 | Wasteland models | 114,830,428 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 23,720,193 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 130,503 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 135,038 B | +4,535 B | 5,000,000 B |
 | All `public/` | 335,681,495 B | +0 B | unavailable |
-| Git objects | 752,160,768 B | +0 B | unavailable |
+| Git objects | 753,030,144 B | +869,376 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -66,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 010e350c209661dad42ae929502e34203411e0a4
 - Local main: missing
-- Local integration/wasteland: 8744600eacd13ba10981fc5b200c022a7d571c0f
+- Local integration/wasteland: 4dedb99b6f8acacc0101a5926215d87d29b67d9c
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -74,9 +79,11 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 010e350c209661dad42ae929502e34203411e0a4.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 8744600eacd13ba10981fc5b200c022a7d571c0f.
+- Remote origin/integration/wasteland: matches local; cached commit 4dedb99b6f8acacc0101a5926215d87d29b67d9c.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
+Issue: codex/drive-lesson1-prep: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lesson1-prep' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lesson1-prep/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/lesson1-prep
+Issue: codex/earn-finish-prep: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-prep' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-prep/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/earn-prep
 Issue: codex/perf-high-night: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night
-Issue: codex/ski-pickup: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ski-pickup' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ski-pickup/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/ski-pickup
+Issue: codex/ski-audio: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ski-audio' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ski-audio/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/ski-audio
 Issue: codex/wild-art-src: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src

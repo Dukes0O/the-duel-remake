@@ -4,6 +4,7 @@
 // The model loads when the renderer starts; until it arrives (a moment,
 // it is small and local) the helicopter is simply not drawn.
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {LESSON_RULES} from './heli-lessons.js';
 import {heliCameraPose} from './heli-camera.js';
 import {createVehicleAssets} from '../vehicle-assets.js';
 import {createFireView} from './heli-fire-view.js';
@@ -86,7 +87,12 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     bar.position.x = x;
     padMark.add(bar);
   }
-  const hoverRing = ring(THREE, 4, 0x9fd4ff), targetRing = ring(THREE, 10, 0xffcf3f);
+  const hoverRing = ring(THREE, 4, 0x9fd4ff), targetRing = ring(THREE, LESSON_RULES.carry.radius, 0xffcf3f);
+  targetRing.name = 'Carry target';
+  const targetCentre = new THREE.Mesh(new THREE.CircleGeometry(.45, 16), targetRing.material);
+  targetCentre.rotation.x = -Math.PI / 2;
+  group.add(targetCentre);
+  let targetSurface = null;
   // The hook guide: a ring on the ground under the load the hook is near,
   // white while H would not take it and green when it would (the session's
   // hookGuide decides; this only draws it).
@@ -190,7 +196,21 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       hoverRing.visible = view.lesson?.id === 'hover' || view.lesson?.id === 'landing';
       targetRing.visible = view.lesson?.id === 'carry' && !!view.lesson.target;
       if (view.zone) hoverRing.position.set(view.zone.x, view.zone.y + .12, view.zone.z);
-      if (targetRing.visible) targetRing.position.set(view.lesson.target.x, view.lesson.target.y + .1, view.lesson.target.z);
+      targetCentre.visible = targetRing.visible;
+      if (targetRing.visible) {
+        const target = view.lesson.target;
+        targetRing.position.set(target.x, target.y + .15, target.z);
+        targetCentre.position.copy(targetRing.position);
+        targetRing.material.color.setHex(view.lesson.guidance?.ready ? GUIDE_READY : 0xffcf3f);
+        if (targetSurface !== target.surface) {
+          targetSurface = target.surface;
+          const vertices = targetRing.geometry.attributes.position;
+          // Before the X rotation, local Z becomes positive world Y.
+          for (let i = 0; i < vertices.count; i++) vertices.setZ(i, targetSurface?.[i] ?? 0);
+          vertices.needsUpdate = true;
+          targetRing.geometry.computeBoundingSphere();
+        }
+      }
       const guide = view.hookGuide;
       guideRing.visible = !!guide;
       if (guide) {
