@@ -29,6 +29,14 @@ function fixture(entries={}){
   return {physical:memoryStorage({[budget.ORIGIN_POINTER_KEY]:JSON.stringify({version:1,id:PRIMARY})}),
     store:memoryIdb([{id:PRIMARY,version:1,revision:0,entries}])};
 }
+// Construct pre-change journals explicitly. New record writes go straight to
+// IndexedDB, but every legacy recovery invariant must continue to hold.
+function legacyWrite(context,key,value){
+  const raw=context.physical.getItem(budget.ORIGIN_JOURNAL_KEY);
+  const journal=raw?JSON.parse(raw):{version:1,baseRevision:0,operations:[]};
+  journal.operations.push({key,oldLength:-1,oldHash:2166136261,prefix:0,suffix:0,insert:value,remove:false});
+  context.physical.setItem(budget.ORIGIN_JOURNAL_KEY,JSON.stringify(journal));
+}
 function cloneFixture(context){return {physical:memoryStorage(context.physical.dump()),store:memoryIdb(context.store.dump())};}
 function syntheticPlayers(){return JSON.stringify({version:2,activePlayerId:'kyle',players:[
   {id:'kyle',name:'Kyle',profile:createProfile()},
@@ -83,8 +91,8 @@ async function test(name,run){
 try{
   await test('accepted maximum ghost journal reloads without losing exact bytes',async()=>{
     const context=fixture({[PLAYERS_KEY]:syntheticPlayers(),'the-duel-archive-fixture':'unchanged'});
+    legacyWrite(context,GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
     const {storage}=await budget.prepareCareerBudget(context);
-    storage.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
     const size=budget.originStorageBytes(context.physical);
     assert.ok(size<budget.ORIGIN_BUDGET_BYTES);assert.ok(size>2_500_000);
     const restarted=cloneFixture(context),raw=restarted.physical.getItem(budget.ORIGIN_JOURNAL_KEY);
@@ -97,9 +105,9 @@ try{
   });
   await test('ghost and telemetry pending together allow player, settings and settlement writes',async()=>{
     const context=fixture({[PLAYERS_KEY]:syntheticPlayers()});
+    legacyWrite(context,GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+    legacyWrite(context,TELEMETRY_KEY,JSON.stringify({version:1,padding:'t'.repeat(490_000)}));
     const {storage}=await budget.prepareCareerBudget(context);
-    storage.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
-    storage.setItem(TELEMETRY_KEY,JSON.stringify({version:1,padding:'t'.repeat(490_000)}));
     storage.setItem(PLAYERS_KEY,syntheticPlayers().replace('"credits":0','"credits":25'));
     storage.setItem('duel_route_variant','route_b');
     storage.setItem('the-duel-settlement-fixture',JSON.stringify({run:'native-result-fixture',paid:true}));
@@ -113,9 +121,10 @@ try{
   });
   await test('Unicode and escaped record journals measure physical bytes and recover exactly',async()=>{
     for(const payload of ['é'.repeat(240_000),'🏁'.repeat(120_000),'\\"\n'.repeat(70_000)]){
-      const context=fixture();const {storage}=await budget.prepareCareerBudget(context);
-      storage.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
-      storage.setItem(TELEMETRY_KEY,payload);
+      const context=fixture();
+      legacyWrite(context,GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+      legacyWrite(context,TELEMETRY_KEY,payload);
+      const {storage}=await budget.prepareCareerBudget(context);
       const measured=Object.entries(context.physical.dump()).reduce((sum,[key,value])=>sum+2*(key.length+value.length),0);
       assert.equal(budget.originStorageBytes(context.physical),measured);assert.ok(measured<budget.ORIGIN_BUDGET_BYTES);
       const recovered=await budget.prepareCareerBudget(cloneFixture(context));
@@ -123,8 +132,8 @@ try{
     }
   });
   await test('failed flush retains record plus subsequent ordinary writes through reload',async()=>{
-    const context=fixture();const {storage}=await budget.prepareCareerBudget(context);
-    storage.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+    const context=fixture();legacyWrite(context,GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+    const {storage}=await budget.prepareCareerBudget(context);
     context.store.setSaveHook(()=>{throw new Error('Synthetic durable failure');});
     await assert.rejects(storage.flush(),/Synthetic durable failure/);
     storage.setItem('duel_route_variant','route_c');
@@ -133,23 +142,25 @@ try{
     assert.equal(recovered.storage.getItem('duel_route_variant'),'route_c');await recovered.flush();
   });
   await test('writes accepted during delayed flush stay in the remaining journal',async()=>{
-    const context=fixture();const {storage}=await budget.prepareCareerBudget(context);
-    storage.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+    const context=fixture();legacyWrite(context,GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+    const {storage}=await budget.prepareCareerBudget(context);
     const delay=deferred(),entered=deferred();
     context.store.setSaveHook(async()=>{entered.resolve();await delay.promise;});
     const flushing=storage.flush();await entered.promise;
+    let recording;
     try{
-      storage.setItem(TELEMETRY_KEY,'t'.repeat(490_000));
+      recording=storage.setItem(TELEMETRY_KEY,'t'.repeat(490_000));
       storage.setItem('duel_route_variant','route_b');
     }finally{context.store.setSaveHook(null);delay.resolve();await flushing;}
+    await recording;
     const recovered=await budget.prepareCareerBudget(cloneFixture(context));
     assert.equal(recovered.storage.getItem(GHOST_KEY),storage.getItem(GHOST_KEY));
     assert.equal(recovered.storage.getItem(TELEMETRY_KEY),storage.getItem(TELEMETRY_KEY));
     assert.equal(recovered.storage.getItem('duel_route_variant'),'route_b');
   });
   await test('already consumed journal recovers once after failed cleanup',async()=>{
-    const context=fixture();const {storage}=await budget.prepareCareerBudget(context);
-    storage.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+    const context=fixture();legacyWrite(context,GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+    const {storage}=await budget.prepareCareerBudget(context);
     const pending=context.physical.getItem(budget.ORIGIN_JOURNAL_KEY);await storage.flush();
     context.physical.setItem(budget.ORIGIN_JOURNAL_KEY,pending);
     const recovered=await budget.prepareCareerBudget(cloneFixture(context));
@@ -158,8 +169,8 @@ try{
     assert.equal(recovered.storage.snapshotRevision,1);
   });
   await test('corrupt recovery rejects without deleting or rewriting bytes',async()=>{
-    const context=fixture();const {storage}=await budget.prepareCareerBudget(context);
-    storage.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+    const context=fixture();legacyWrite(context,GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+    const {storage}=await budget.prepareCareerBudget(context);
     const valid=JSON.parse(context.physical.getItem(budget.ORIGIN_JOURNAL_KEY));
     const cases=['{',JSON.stringify({...valid,version:2}),JSON.stringify({...valid,baseRevision:77}),
       JSON.stringify({...valid,operations:valid.operations.map(op=>({...op,oldHash:17}))}),
@@ -171,19 +182,24 @@ try{
     const missing=cloneFixture(context);missing.store.rows.delete(PRIMARY);const before=missing.physical.dump();
     await assert.rejects(budget.prepareCareerBudget(missing));assert.deepEqual(missing.physical.dump(),before);
   });
-  await test('full physical cap and ordinary reservation reject before mutation',async()=>{
+  await test('full physical cap rejects ordinary changes before mutation without a record reserve',async()=>{
     const context=fixture();const {storage}=await budget.prepareCareerBudget(context);
-    storage.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
-    storage.setItem(TELEMETRY_KEY,'t'.repeat(490_000));
-    let before=context.physical.dump();
-    assert.throws(()=>storage.setItem(TELEMETRY_KEY,'"'.repeat(490_000)),/budget is full/);
-    assert.deepEqual(context.physical.dump(),before);assert.equal(storage.getItem(TELEMETRY_KEY),'t'.repeat(490_000));
-    assert.throws(()=>storage.setItem('duel_oversized_ordinary','q'.repeat(210_000)),/budget is full/);
+    await storage.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+    await storage.setItem(TELEMETRY_KEY,'t'.repeat(490_000));
+    await storage.setItem(TELEMETRY_KEY,'"'.repeat(490_000));
+    assert.equal(storage.getItem(TELEMETRY_KEY),'"'.repeat(490_000));
+    assert.ok(budget.originStorageBytes(context.physical)<2_000);
+    storage.setItem('duel_oversized_ordinary','q'.repeat(210_000));
+    assert.equal(storage.getItem('duel_oversized_ordinary').length,210_000);
+    await storage.flush();
+    const before=context.physical.dump();
+    assert.throws(()=>storage.setItem('duel_full_ordinary','q'.repeat(2_000_000)),/budget is full/);
     assert.deepEqual(context.physical.dump(),before);
-    const excess=cloneFixture(context);excess.physical.setItem('unrelated','x'.repeat(210_000));before=excess.physical.dump();
-    await assert.rejects(budget.prepareCareerBudget(excess),/Unrelated origin data/);assert.deepEqual(excess.physical.dump(),before);
-    const tooLarge=cloneFixture(context);tooLarge.physical.setItem('unrelated','q'.repeat(500_000));before=tooLarge.physical.dump();
-    await assert.rejects(budget.prepareCareerBudget(tooLarge),/budget/);assert.deepEqual(tooLarge.physical.dump(),before);
+    assert.equal(storage.getItem('duel_full_ordinary'),null);
+    const excess=cloneFixture(context);excess.physical.setItem('unrelated','x'.repeat(2_000_000));
+    const original=excess.physical.dump();
+    await assert.rejects(budget.prepareCareerBudget(excess),/Space used by unrelated/);
+    assert.deepEqual(excess.physical.dump(),original);
   });
   await test('one writer acquires promptly while its lifetime request stays pending',async()=>{
     assert.equal(typeof budget.acquireCareerWriter,'function');
@@ -192,7 +208,7 @@ try{
     writer.assertActive();assert.equal(locks.held.size,1);
     await assert.rejects(budget.acquireCareerWriter({locks,name,eventTarget:lifecycle()}),error=>error.code==='CAREER_WRITER_BUSY');
     const context=fixture();const {storage}=await installed(context,writer);
-    storage.setItem(TELEMETRY_KEY,'Kyle lap');await storage.flush();
+    await storage.setItem(TELEMETRY_KEY,'Kyle lap');await storage.flush();
     await assert.rejects(installed(context,writer),/already|claimed/i);
     assert.equal(events.fire('pagehide'),false);
     assert.throws(()=>storage.setItem(TELEMETRY_KEY,'stale overwrite'),/writer|reload|active/i);
@@ -201,7 +217,7 @@ try{
     locks.close(name);await Promise.resolve();await Promise.resolve();
     const fresh=await budget.acquireCareerWriter({locks,name,eventTarget:lifecycle()});
     const next=await installed(context,fresh);assert.equal(next.storage.getItem(TELEMETRY_KEY),'Kyle lap');
-    next.storage.setItem(TELEMETRY_KEY,'Kyle lap + son lap');await next.flush();
+    await next.storage.setItem(TELEMETRY_KEY,'Kyle lap + son lap');await next.flush();
     assert.equal((await context.store.load(PRIMARY)).entries[TELEMETRY_KEY],'Kyle lap + son lap');
     locks.close(name);
   });
@@ -231,8 +247,8 @@ try{
   await test('flush does not clean the journal after ownership is suspended during verification',async()=>{
     const locks=lockManager(),events=lifecycle(),name='flush-await';
     const writer=await budget.acquireCareerWriter({locks,name,eventTarget:events});
-    const context=fixture(),{storage}=await installed(context,writer);
-    storage.setItem(TELEMETRY_KEY,'accepted lap');const before=context.physical.dump();
+    const context=fixture();legacyWrite(context,TELEMETRY_KEY,'accepted lap');
+    const {storage}=await installed(context,writer);const before=context.physical.dump();
     const gate=deferred(),entered=deferred();
     context.store.setLoadHook(async()=>{entered.resolve();await gate.promise;});
     const flushing=storage.flush();await entered.promise;
@@ -278,7 +294,7 @@ try{
     locks.close(name);
   });
   for(const variant of ['valid','malformed','future']){
-    await test(`guarded ${variant} telemetry survives pending journal, export, import and fresh reload exactly`,async()=>{
+    await test(`guarded ${variant} telemetry survives direct commit, export, import and fresh reload exactly`,async()=>{
       const lap=recordedTelemetry(),locks=lockManager(),name='companion-roundtrip-'+variant;
       const events=lifecycle(),writer=await budget.acquireCareerWriter({locks,name,eventTarget:events});
       const sourceEntries={[PLAYERS_KEY]:syntheticPlayers(),
@@ -286,18 +302,18 @@ try{
         'the-duel-preserved-fixture':'untouched é and 🏁'};
       const source=fixture(sourceEntries),first=await installed(source,writer);
       if(variant==='valid'){
-        const saved=new LapTelemetryStore(first.storage).record(lap);
+        const saved=await new LapTelemetryStore(first.storage).record(lap);
         assert.equal(saved.saved,true);assert.equal(saved.status,'saved');
       }else{
         // Spaces and trailing newline make normalization detectable byte for byte.
         const raw=variant==='malformed'?' { "version": 1, "laps": [ broken 🏁 \n':
           JSON.stringify({version:9001,laps:[lap],unknown:{text:'keep é and 🏁'}},null,2)+'\n';
-        first.storage.setItem(TELEMETRY_KEY,raw);
+        await first.storage.setItem(TELEMETRY_KEY,raw);
       }
       const expectedRaw=first.storage.getItem(TELEMETRY_KEY);
       const pending=source.physical.getItem(budget.ORIGIN_JOURNAL_KEY);
-      assert.ok(pending,'the first owner has an unflushed accepted companion journal');
-      assert.equal(source.store.rows.get(PRIMARY).entries[TELEMETRY_KEY],undefined);
+      assert.equal(pending,null,'record payload must never enter the localStorage journal');
+      assert.equal(source.store.rows.get(PRIMARY).entries[TELEMETRY_KEY],expectedRaw);
       events.fire('pagehide');locks.close(name);await Promise.resolve();await Promise.resolve();
       const recoveredContext=cloneFixture(source);
       const recoveredWriter=await budget.acquireCareerWriter({locks,name,eventTarget:lifecycle()});

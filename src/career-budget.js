@@ -8,7 +8,6 @@ export const ORIGIN_POINTER_KEY='__the_duel_origin_pointer_v1';
 export const ORIGIN_JOURNAL_KEY='__the_duel_origin_journal_v1';
 const PRIMARY_ID='origin-primary-v1';
 const GHOST_KEY='the-duel-ghosts-v1',BOARD_KEY='the-duel-leaderboard-v1';
-const RECORD_WRITE_RESERVE=3_600_000;
 const TELEMETRY_KEY='the-duel-lap-telemetry-v1';
 const isRecordKey=key=>key===GHOST_KEY||key===TELEMETRY_KEY;
 export const CAREER_WRITER_LOCK='the-duel-career-writer-v1';
@@ -66,13 +65,16 @@ function projectedBytes(storage,key,value){
   const prior=storage.getItem(key);
   return originStorageBytes(storage)-2*(prior===null?0:key.length+prior.length)+2*(key.length+value.length);
 }
-function journalBytes(raw){return raw===null?0:2*(ORIGIN_JOURNAL_KEY.length+raw.length);}
-function ordinaryJournalBytes(journal){
-  const ordinary={...journal,operations:journal.operations.filter(operation=>!isRecordKey(operation.key))};
-  return journalBytes(JSON.stringify(ordinary));
-}
-function ordinaryPhysicalBytes(physical,journal){
-  return originStorageBytes(physical)-journalBytes(physical.getItem(ORIGIN_JOURNAL_KEY))+ordinaryJournalBytes(journal);
+function spaceError(physical,key,value,cause){
+  const rows=[];
+  for(let index=0;index<physical.length;index++){
+    const name=physical.key(index);
+    if(name!==key)rows.push([name,2*(name.length+(physical.getItem(name)?.length??0))]);
+  }
+  rows.push([key,2*(key.length+value.length)]);
+  rows.sort((a,b)=>b[1]-a[1]);
+  return new Error('The 4 MB origin storage budget is full; this change was not saved. Space used by '+
+    rows.slice(0,4).map(([name,bytes])=>name+' ('+bytes+' bytes)').join(', ')+'.', {cause});
 }
 function validateSnapshot(record){
   if(record?.id!==PRIMARY_ID||record.version!==1||!Number.isSafeInteger(record.revision)||record.revision<0||
@@ -175,7 +177,7 @@ function mergeOldArchives(entries,record){
 }
 function createFacade(physical,store,snapshot,journal,onFailure,assertWriter){
   let base=snapshot,log=journal??{version:1,baseRevision:snapshot.revision,operations:[]};
-  let entries=replay(snapshot,log),inflight=null,lastError=null;
+  let entries=replay(snapshot,log),inflight=null,lastError=null,recordQueue=Promise.resolve(),importing=false;
   const report=error=>{lastError=error;onFailure?.(error);};
   const visibleKeys=()=>{
     const keys=new Set(Object.keys(entries));
@@ -214,19 +216,22 @@ function createFacade(physical,store,snapshot,journal,onFailure,assertWriter){
     do{await flush();}
     while(base.revision-log.baseRevision<log.operations.length);
   }
-  function write(key,value,remove=false){
+  function assertWritable(){
     assertWriter();
+    if(importing){
+      const error=new Error('Career import is in progress; this change was not saved. Try again when it finishes.');
+      report(error);throw error;
+    }
+  }
+  function write(key,value,remove=false){
+    assertWritable();
     key=String(key);value=remove?null:String(value);
     if(!isGameKey(key)){
       try{
         if(value===null){physical.removeItem(key);return;}
-        const fullBytes=projectedBytes(physical,key,value);
-        const ordinaryBytes=fullBytes-journalBytes(physical.getItem(ORIGIN_JOURNAL_KEY))+ordinaryJournalBytes(log);
-        if(fullBytes>=ORIGIN_BUDGET_BYTES||ordinaryBytes>=ORIGIN_BUDGET_BYTES-RECORD_WRITE_RESERVE){
-          throw new Error('The 4 MB origin storage budget must reserve space for a future ghost.');
-        }
+        if(projectedBytes(physical,key,value)>=ORIGIN_BUDGET_BYTES)throw spaceError(physical,key,value);
         physical.setItem(key,value);return;
-      }catch(error){report(error);throw error;}
+      }catch(error){const failure=spaceError(physical,key,value??'',error);report(failure);throw failure;}
     }
     const oldValue=entries[key]??null;
     if(oldValue===value)return;
@@ -234,26 +239,54 @@ function createFacade(physical,store,snapshot,journal,onFailure,assertWriter){
     const next={version:1,baseRevision:log.baseRevision,operations:[...log.operations,operation]};
     const serialized=JSON.stringify(next);
     const fullBytes=projectedBytes(physical,ORIGIN_JOURNAL_KEY,serialized);
-    const ordinaryBytes=ordinaryPhysicalBytes(physical,next);
-    if(fullBytes>=ORIGIN_BUDGET_BYTES||
-      (!isRecordKey(key)&&ordinaryBytes>=ORIGIN_BUDGET_BYTES-RECORD_WRITE_RESERVE)){
-      const error=new Error('The 4 MB origin storage budget is full; this change was not saved.');report(error);throw error;
+    if(fullBytes>=ORIGIN_BUDGET_BYTES){
+      const error=spaceError(physical,ORIGIN_JOURNAL_KEY,serialized);report(error);throw error;
     }
     try{physical.setItem(ORIGIN_JOURNAL_KEY,serialized);}
-    catch(error){report(error);throw error;}
+    catch(error){const failure=spaceError(physical,ORIGIN_JOURNAL_KEY,serialized,error);report(failure);throw failure;}
     log=next;
     if(value===null)delete entries[key];else entries[key]=value;
     setTimeout(()=>{void flush().catch(report);},0);
+  }
+  function writeRecord(key,value){
+    assertWritable();
+    // A record never enters localStorage. Ordinary writes may continue while
+    // this transaction runs: their patches concern other keys and stay logged.
+    const operation=recordQueue.then(async()=>{
+      assertWriter();
+      await drain();
+      assertWriter();
+      if((entries[key]??null)===value)return;
+      const next={...base,entries:{...base.entries}};
+      if(value===null)delete next.entries[key];else next.entries[key]=value;
+      inflight=(async()=>{
+        await store.save(next);
+        assertWriter();
+        const saved=validateSnapshot(await store.load(PRIMARY_ID));
+        assertWriter();
+        if(!same(saved,next))throw new Error('The IndexedDB recording could not be verified.');
+        base=next;
+        if(value===null)delete entries[key];else entries[key]=value;
+      })().finally(()=>{
+        inflight=null;
+        if(base.revision-log.baseRevision<log.operations.length)setTimeout(()=>{void flush().catch(report);},0);
+      });
+      await inflight;
+    });
+    recordQueue=operation.catch(()=>{});
+    return operation.catch(error=>{report(new Error('Recording could not be saved in IndexedDB; existing recordings are retained. '+error.message));throw error;});
   }
   const facade={
     get length(){return visibleKeys().length;},
     key:index=>visibleKeys()[index]??null,
     getItem:key=>{key=String(key);return isGameKey(key)?entries[key]??null:physical.getItem(key);},
-    setItem:(key,value)=>write(key,value),
-    removeItem:key=>write(key,null,true),
+    setItem:(key,value)=>isRecordKey(String(key))?writeRecord(String(key),String(value)):write(key,value),
+    removeItem:key=>isRecordKey(String(key))?writeRecord(String(key),null):write(key,null,true),
     clear(){throw new Error('Use career import to replace this save safely.');},
-    flush:drain,
+    async flush(){await recordQueue;await drain();},
     assertWriter,
+    beginImport(){assertWritable();importing=true;},
+    endImport(){importing=false;},
     get lastError(){return lastError;},
     get physical(){return physical;},
     get snapshotRevision(){return base.revision;},
@@ -332,13 +365,8 @@ export async function prepareCareerBudget({physical,store,backup,onFailure,insta
     }
     physical.removeItem(key);
   }
-  const fullBytes=originStorageBytes(physical);
-  // Only a journal already validated against this snapshot is recovery data.
-  // It remains byte-exact here, even when it is larger than the ordinary reserve.
-  const unrelatedBytes=fullBytes-(journal?journalBytes(physical.getItem(ORIGIN_JOURNAL_KEY)):0);
-  if(fullBytes>=ORIGIN_BUDGET_BYTES)throw new Error('The 4 MB origin storage budget is full; recovery data is retained.');
-  if(unrelatedBytes>=ORIGIN_BUDGET_BYTES-RECORD_WRITE_RESERVE){
-    throw new Error('Unrelated origin data leaves no room for a future ghost within the 4 MB localStorage budget.');
+  if(originStorageBytes(physical)>=ORIGIN_BUDGET_BYTES){
+    throw spaceError(physical,ORIGIN_JOURNAL_KEY,physical.getItem(ORIGIN_JOURNAL_KEY)??'');
   }
   const storage=createFacade(physical,store,snapshot,journal,onFailure,assertWriter);
   if(installGlobal)Object.defineProperty(globalThis,'localStorage',{configurable:true,value:storage});
@@ -375,6 +403,8 @@ export async function importBudgetCareer(text,{storage,store}={}){
   const assertWriter=()=>storage.assertWriter();
   assertWriter();
   const archive=parseCareerExport(text),entries=importedEntries(archive),physical=storage.physical;
+  storage.beginImport();
+  try{
   await storage.flush();
   assertWriter();
   const prior=validateSnapshot(await store.load(PRIMARY_ID));
@@ -416,4 +446,5 @@ export async function importBudgetCareer(text,{storage,store}={}){
     throw new Error('Import failed; the previous career was restored. '+error.message,{cause:error});
   }
   return {backupId:recovery.id,playerCount:entries['the-duel-players-v2']?JSON.parse(entries['the-duel-players-v2']).players.length:1};
+  }finally{storage.endImport();}
 }
