@@ -70,3 +70,15 @@ dusk and night. Round 3 (the last, SPEC 0.11) fixes only these:
    and a short marker-post path from the hut toward it.
 Then the round-3 sheet (same views) and stop. Claude picks and sends Kyle the
 result.
+
+## Claude's verdict, round 3 (26 October 2026): accepted
+
+Round 3 is the pick (the cap): big SUMMIT lettering, gantry lamp, lit hut and
+observatory, a car park with cars and a lamp past the line, the helipad with
+its H and windsock. The crowd is thinner than asked; accepted. Signature
+review: update exactly two expectations to the measured values, nothing
+else: Summit's scene signature in `tools/fixtures/world-signatures/` (from
+fa6b9ba2... to b9d81ca4..., geometries 112 to 192) and Summit's far-ground
+hash in `tools/fixtures/ground-rows-hashes.json` (69a91699... to
+3f03c09d...), both the reviewed finish area and car-park ground. The jump to
+192 geometries is checked in Claude's Summit frame check before release.
