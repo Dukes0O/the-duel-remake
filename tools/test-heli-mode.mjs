@@ -366,7 +366,7 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
   // renderer and page hooks name only drawing files. Tools, tests and browser
   // scenarios are not the game and may read any helicopter file. Any text
   // naming a helicopter file counts, whatever form the import takes.
-  const drawingFile = /^heli\/heli-(?:scene|camera|ui|fire-view|rescue-view)\.(?:js|css)$/;
+  const drawingFile = /^heli\/heli-(?:scene|camera|ui|fire-view|rescue-view|rank-paint)\.(?:js|css)$/;
   const hooks = {
     'src/app.js': () => true,                      // the game's hooks into the helicopter
     'src/progression.js': name => name === 'heli/heli-save.js', // the save normalizer
@@ -393,7 +393,7 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
   }
   assert.deepEqual(offenders, [], 'no unapproved src/heli imports'); checks++;
   // Every helicopter file except the drawing, page and sound ones is game rules.
-  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js', 'heli-fire-view.js', 'heli-rescue-view.js',
+  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js', 'heli-fire-view.js', 'heli-rescue-view.js', 'heli-rank-paint.js',
     // MAP-VIEW: the pilot's map screen and its world drawing are drawing files, not rules.
     'pilot-map-view.js', 'pilot-map-world.js']);
   const sim = readdirSync(join(root, 'src/heli')).filter(name => name.endsWith('.js') && !drawing.has(name));

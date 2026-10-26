@@ -40,7 +40,8 @@ export function bearingKm(from, to) {
 export function mapModel({view, profile = null, jobs = [], movingMap = false} = {}) {
   const destinations = new Set(view?.destinations ?? []);
   const secrets = view?.secrets ?? null;
-  const tableSeen = destinations.has(TABLE_ID) || secrets?.table === true;
+  const clues = view?.logbook?.books ?? [];
+  const tableSeen = clues.some(page => page.place === TABLE_ID) || destinations.has(TABLE_ID) || secrets?.table === true;
   const here = view?.courseId ? placeOfDestination(view.courseId) : null;
   const fuelKg = view?.heli?.fuelKg ?? 0;
   const fallen = new Set(view?.fallen ?? []);
@@ -72,13 +73,14 @@ export function mapModel({view, profile = null, jobs = [], movingMap = false} = 
     const legKg = !isHere && here ? legFuelKgMap(here.id, place.id) : null;
     const pad = fuelPadAt(place.id);
     return {
-      id: place.id, destination: id, name: place.air && secrets?.table !== true ? '?' : place.name, region: place.region,
+      id: place.id, destination: id, name: place.air && secrets?.table !== true && !clues.some(page => page.place === place.id) ? '?' : place.name, region: place.region,
       x: place.drawAt.x, z: place.drawAt.z, air: place.air === true,
       state: burnt ? 'burnt' : owned ? 'owned' : 'grey',
       isHere, isDestination: destinations.has(id), noLanding: LEFT_OFF.includes(place.id),
       chosen: view?.destination === id, legKg, reachable: legKg === null || legKg <= fuelKg,
       pad: pad ? {price: pad.pricePerKg, name: pad.name} : null,
       cars: carsBy.get(place.id) ?? [], jobs: jobsBy.get(place.id) ?? 0,
+      clues: clues.filter(page => page.place === place.id).map(page => `Gus ${page.year}: ${page.clue}`),
     };
   });
   const found = (secrets?.found ?? []).map(id => SECRET_SIGNS.find(sign => sign.id === id)).filter(Boolean)
@@ -108,6 +110,7 @@ export function placeNote(model, place) {
   const parts = [place.name];
   if (place.state === 'grey') parts.push('not owned: you can land, not race');
   if (place.state === 'burnt') parts.push('burnt');
+  if (place.clues?.length) parts.push(...place.clues);
   if (place.noLanding) parts.push('no landing zone');
   if (place.pad) parts.push(`fuel ${place.pad.price} credits a kg`);
   if (place.legKg !== null) parts.push(`${place.legKg} kg${place.reachable ? '' : ' (beyond your tank)'}`);
@@ -236,7 +239,7 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
     ctx.strokeStyle = 'rgba(43,33,24,.55)'; ctx.lineWidth = .8; ctx.stroke();
     ctx.font = label.font;
     ctx.fillStyle = place.state === 'grey' ? GREY : INK;
-    ctx.fillText(place.name, label.x, label.y + 4);
+    ctx.fillText(`${place.clues?.length ? '* ' : ''}${place.name}`, label.x, label.y + 4);
     if (place.air) {
       ctx.beginPath(); ctx.ellipse(px, py, 9, 7, 0, 0, Math.PI * 2); ctx.strokeStyle = INK; ctx.stroke();
       return;

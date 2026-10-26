@@ -47,6 +47,28 @@ scripted career reaching each rank; the paint sheet accepted by Claude;
 independent save review; lane tier and build. The submarine job is a later
 card with The Deep.
 
+## Builder checks
+
+- `node tools/test-heli-logbook.mjs`: rank rules, five-rank scripted career,
+  old save fixture, additive save/load, unknown keys and earned paints.
+- `node tools/test-heli-logbook-session.mjs`: actual takeoffs and landings,
+  once-only home-pad ranks, shelf, map clues and switch isolation.
+- `node tools/test-heli-jobs.mjs`: actual car and return-crate completions
+  count once in the logbook.
+
+Lane tier with four jobs and production build. Paint pictures use the same
+High/Performance near/distance views each round. No frame timing.
+
+## Round 1 handoff
+
+Counting, ranks, the shelf and Gus's pages are built. Independent save and
+code review is clear. Checks and all assertion changes are recorded in
+`docs/changes/HELI-LOGBOOK.md`.
+
+Round 1's sheet and note are under `docs/board/looks/heli-logbook/`.
+Claude's verdict below resolves the first handoff and approves its assertion
+expansions. The switch stays dev.
+
 ## Claude's verdict, paints round 1 (26 October 2026)
 
 Student (white, orange training stripes) and Mountain (rescue red, white
@@ -65,3 +87,17 @@ The changed assertions (switch count 41, the five paints in the skin roster,
 the paint recipe in the generator roster and manual scenarios, logbook
 completions in the job scripts) are approved: each adds the new thing and
 nothing is loosened.
+
+## Round 2 handoff
+
+Private's silver line, Commercial's cream band and tail kestrel, Chief's
+red belly/fin and tail kestrel, and light soot/skid wear on all five are
+ready for Claude's verdict. The matched High/Performance near/distance
+sheet is `docs/board/looks/heli-logbook/round-2.jpg`; its note is
+`round-2-review.md` beside it. Round 1's note now follows the same
+`-review.md` convention required by the evidence check.
+
+The native memory-only browser check passed with 25 pictures and zero
+warnings or errors. Independent rendering review is clear. The change
+note lists the four additive skid-material assertions and the gate/build
+results. No save or race-rule changes, frame timing or round 3.
