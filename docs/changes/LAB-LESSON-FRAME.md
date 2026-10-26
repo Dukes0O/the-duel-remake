@@ -110,3 +110,16 @@ No existing player content replaced. LAB-LIFT-2 and LAB-LESSONS-2 replace the
 old bench content; Lab 2 go-live removes the old panels under LAB.md 12.5.
 Recycled this task's generated `.qa-dist` and `dist` folders and the consumed
 failed/interrupted logs. Kept the requested captures and current green logs.
+
+## Claude review (26 October 2026)
+
+Accepted at look 2. All five steps run in the room from a lesson's data;
+underlined words, arrows with numbers, a self-drawing graph, Play / Step /
+Replay, picture predictions and a hint that says what happened and what to
+change all show in the sheet. No assertion changed; independent save review
+clear. Lab, save and build checks pass again on the merged result.
+
+For LAB-LIFT-2 (teaching quality, not frame faults): make the lesson's
+picture the centre of the screen. Arrows big and on the helicopter itself,
+the air stream clearly visible, the graph only when the step is about it,
+and the step panel no taller than it needs to be.
