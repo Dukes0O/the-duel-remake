@@ -61,3 +61,13 @@ Pay: a Grand Prix win equals a Duel win on the same course and difficulty,
 lower places pay less, and a completed Grand Prix has no loss charge, which
 fairly rewards racing a full field. The false "ghost save failed" message is
 GHOST-SAVE-MESSAGE (live fix).
+
+## Follow-up fix (Claude, 26 October 2026)
+
+`tools/test-yeti.mjs` failed on integration after the switch-on: its two
+"Grand Prix career off" App fixtures (`app-yeti`, `legacy-gp`) took their
+switches from the catalogue default, which is now on, so the off path paid
+2,160 credits instead of the expected unchanged wallet. Both fixtures now set
+`grand-prix-career: false` explicitly, as `test-grand-prix-cups` does. Every
+assertion is unchanged; the off path stays tested exactly. The career-on
+path is already covered by the fixtures at lines 194 and 213.

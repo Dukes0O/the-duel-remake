@@ -251,11 +251,11 @@ try{
   const gp=game();gp.state.mode='grandprix';gp.state.playerId='player-1';gp.state.yeti.seen=true;
   gp.state.results={...payload(),stageTimeSec:420};gp.state.completedLaps=1;
   let saves=0;const app=Object.create(App.prototype);Object.assign(app,{duel:gp,profile:owned,player:{id:'player-1'},
-    _runPlayerId:'player-1',runId:'app-yeti',_stageStartCrashes:0,_switches:()=>flags(),_refreshPlayer(){},_saveProfile(){saves++;return true;}});
+    _runPlayerId:'player-1',runId:'app-yeti',_stageStartCrashes:0,_switches:()=>createFeatureFlags({storage:null,overrides:{yeti:true,'summit-run':true,'grand-prix':true,'grand-prix-career':false}}),_refreshPlayer(){},_saveProfile(){saves++;return true;}});
   App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'real App persists GP career-off sighting');equal(app.profile.yeti.sightings,1);equal(app.profile.credits,owned.credits);equal(app.profile.history,owned.history);equal(app.profile.personalBests,owned.personalBests);
   App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'duplicate App result cannot write/count again');
   const legacyGp=Object.create(App.prototype);Object.assign(legacyGp,{duel:gp,profile:owned,player:{id:'player-1'},
-    _runPlayerId:'player-1',runId:'legacy-gp',_switches:()=>flags(false),_refreshPlayer(){throw Error('legacy GP early return must not refresh');}});
+    _runPlayerId:'player-1',runId:'legacy-gp',_switches:()=>createFeatureFlags({storage:null,overrides:{yeti:false,'summit-run':true,'grand-prix':true,'grand-prix-career':false}}),_refreshPlayer(){throw Error('legacy GP early return must not refresh');}});
   App.prototype._settleResult.call(legacyGp,gp.state.results,gp.state);check(legacyGp.profile===owned,'legacy GP with no pending input keeps identical profile');
 
   app.player={id:'player-2'};app.runId='foreign';App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'foreign named player cannot persist');
