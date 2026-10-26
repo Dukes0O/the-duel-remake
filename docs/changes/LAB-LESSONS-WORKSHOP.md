@@ -113,6 +113,101 @@ board sync set its status; the static fallback rebuilt. Its unrelated existing
 mail/calendar feeds report that both Google profiles need re-consent.
 No frame timing, merge, push or release.
 
-Open for Claude: the round-1 look verdict, the two rule/prose differences above,
-and written review of the exact sheet-path classification. This lane is ready
-for that review, not a claim of art approval.
+Round-1 review was resolved by Claude's verdict below; only round-2 pictures
+await a verdict now.
+
+## Round 2 — Claude's verdict and design
+
+Claude approved the logic, words, predictions, hints and numbers, both rule/prose
+differences and the exact sheet-path registration. Nothing was loosened. Claude
+corrects LAB.md 12.6. Pictures were returned for round 2: named real objects,
+close low three-quarter cameras, readings beside objects, thick force arrows
+on the experiment, clear challenge cards and captures of loaded worlds.
+
+Merged current integration `f4b8356e` first, merge `6cc099b4`. Its only conflict
+was the generated STATUS snapshot; integration's version was kept for the merge.
+No game-code conflict. The final lane snapshot is regenerated after checking.
+
+The approved lesson packets and rule calculations are unchanged. One Blender
+recipe builds paint and zinc cans, a salt sack, water jug, sealed empty jar,
+named material bars, a cast weight, handwheels and a supply tray. Invisible
+hit skins replace the visible cubes. Numbers project from the object, rather
+than staying in a top strip; jar names and material names are model geometry.
+The four-jar comparison keeps three numeric captions and prints Dry's zero on
+its shelf tag. The key-idea card moves to the left, clear of challenge panels.
+
+Independent review found and confirmed fixes for cached prop variants that did
+not switch, the ruler's fixed hit skin, the floor-pan skin above its face and
+Dry showing water. The 13 focused tests pass, including the original ten and
+new real-GLB geometry/label/anchor, control-pose, map-bound and private-jar checks. A first browser pass
+showed the grounded car target too low after the close camera move; the camera
+now aims lower and the skin sits on the car rather than its floor contact.
+No existing assertion or tolerance was removed or changed. Browser diagnostics are
+expanded; the same success assertions stay, plus actual selected-model checks,
+card/panel intersection checks and world-ready waits before challenge captures.
+
+The first lane run found the new Blender recipe missing from the existing
+output-placement registry. Added its runtime GLB path and the standard
+`--paths-only` planning command, which exits before importing Blender or writing
+files. The registry's existing assertions and tolerances are unchanged; its
+normal coverage now includes this recipe. Independent review confirmed the fix.
+
+Picture inspection also corrected the G-force car's height to the cradle's
+roller tops, attached its cast weight to the real leaning cord and supported
+the handwheels on pedestals. The comparison's weights hang at the bars' free
+ends, follow their deformation and stay above the floor. Short arrow shafts
+scale in width as well as length. The map pads use named H markings rather
+than blank coloured squares. Jar nameplates sit in front of and below the shelf
+edge; glass keeps its clear material when nails rust.
+The marked map reserves an edge margin on its shared scale so the Snow pad's
+whole H circle and name fit; grid, ruler, toy and destination stay aligned.
+
+Capture-only retakes use `WORKSHOP_QA_WATCH_ONLY=1` after the normal all-four
+flow. They run the real words and worked steps, then leave instead of repeating
+already-passed trials. The normal scenario and its assertions are unchanged.
+Retakes are picture evidence, not another full behavior pass. G-force uses the
+real Pause control after the speed changes, with the car on the near side.
+The new tag test checks rendered indices rather than unused positions shared
+by glTF material primitives; this corrects its initial false failure without
+changing any pre-existing assertion or tolerance.
+
+### Round-2 Removed
+
+Removed the visible yellow, blue, white and green cube controls, blank map pad
+squares, old jar dot-tags, top reading strip and fixed ruler hit target. The
+Blender library and marked map replace them in the
+same change. No superseded prop GLB or .blend is retained. Round-1 raw captures
+are recycled after Claude's verdict; its one sheet and verdict remain. Round-2
+captures stay until judged. Existing bench models and game rules are retained.
+
+### Round-2 results
+
+The normal all-four browser flow passed on private port 39768 (68 captures,
+zero warnings/errors). Picture retakes on port 55414 passed (36 captures,
+zero warnings/errors); they were capture-only, not another behavior pass.
+The final normal flow then passed on port 32487: 69 captures, zero warnings
+and zero errors, including the real protection reward, loaded lap world,
+loaded helicopter world and reminder/panel non-overlap. Its pictures replace
+the strips too, so every final image shows this source. No game code changed
+after that run. Independent code review is clear.
+
+The sheet is 2800 × 2415 pixels and 450,256 bytes, below 500 KB, with four
+large Watch captures and four small flow strips. The sole runtime prop GLB
+is 2,612,008 bytes; its Blender recipe is kept, with no .blend or superseded
+binary. The sheet was written before the lane gate and build. These checks
+run in the shared heavy-job slots. The initial lane run passed ten suites,
+then stopped at the missing Blender registry entry (fixed above). Its targeted
+continuation passed 31 more before the sandbox blocked ffmpeg in the evidence
+tool test. That test and seven unrun suites continued with process permission;
+passing suites were retained rather than repeated. The final eight passed
+(316.92 s), completing all 49 lane suites: 10 + 31 + 8, none left unrun.
+The workshop suite passed all 13 tests; replay fingerprints passed all 225
+checks across 25 cases. No fingerprint was re-recorded and no assertion was
+loosened. `npm run build` passed (567 modules, 980 ms), with the existing
+dynamic-import and large-chunk advisories. System32 was first on PATH, workers
+were capped at four, and each heavy run checked the inbox and shared capacity.
+Cockpit sync reported no changes; this card is mapped to `pers-the-duel/T-060`.
+The final status snapshot and whitespace check are included in this commit.
+Generated build folders and temporary gate logs were recycled after checking.
+No frame timing, outward
+merge, push or release. Claude judges the round-2 sheet.

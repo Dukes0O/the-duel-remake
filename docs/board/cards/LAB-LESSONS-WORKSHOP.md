@@ -27,13 +27,31 @@ with jobs 4 and production build after the round-1 sheet. No frame timing.
 
 Design choices, the two existing rule/prose differences, changed assertions,
 review findings and results are in `docs/changes/LAB-LESSONS-WORKSHOP.md`.
-Claude's round-1 look verdict remains required; this branch does not merge or push.
+Claude's round-2 look verdict remains required; this branch does not merge out or push.
 
 ## For Claude
 
-Judge `docs/board/looks/lab-2/lab-lessons-workshop-1.jpg` and the two rule/prose
-differences in the change note. Also review the one-line `roundSheet`
-registration in `tools/test-repo-hygiene.mjs`: only this card's required JPG
-name for rounds 1–3 is added. All raw-capture checks and size budgets remain.
-The new sheet-path check passes; no existing test assertion is removed or changed.
-Written review of this classification addition remains open before integration.
+Judge `docs/board/looks/lab-2/lab-lessons-workshop-2.jpg` against the five
+picture corrections below. Round-1 logic, rule/prose differences and sheet-path
+registration are approved. No existing assertion or tolerance changes in round 2.
+
+## Claude answers — round 1, 26 October
+
+Approved via Kyle's handoff: lesson logic, words, predictions, hints and numbers;
+both rule/prose differences (truth wins); the exact sheet-path registration.
+No assertion was loosened. Claude corrects LAB.md 12.6. Pictures need round 2:
+real named objects, close low three-quarter views, readings beside their objects
+(three floating labels at most), thick arrows on the object, unobstructed challenge
+cards and loaded worlds. Round 2 is the second of three, not a new first round.
+
+## Round-2 design and checks, before code
+
+Keep the approved packets and rule calculations. Replace visible control cubes
+with one Blender-built library of named workshop props; invisible hit skins keep
+the existing controls. Use object-anchored readings and stamp the materials and
+jar identities onto the models. Show the four jars together in Watch; three
+numeric captions compare fresh, salt and zinc while dry air has its stamped name.
+Keep the challenge's world camera and use a clear viewport area for its reminder.
+Checks: existing workshop truth/model checks plus object/anchor checks; the real
+memory-only flow with full-world challenge readiness and non-overlap checks;
+round-2 sheet, lane tier (jobs 4), build and independent review. No frame timing.

@@ -17,17 +17,21 @@ const direction = degrees => [Math.sin(degrees * Math.PI / 180), -Math.cos(degre
 export function headingsDrawing(input, time, mode = 'leg') {
   const result = headingsBench.run(input), load = result.settings;
   const truth = result.truth, unit = direction(load.headingDeg), target = direction(truth.headingDeg);
-  const scale = .7 / Math.max(truth.distanceUnits, load.rulerUnits, 1), progress = Math.min(1, time / 3);
+  // Reserve map-edge space for a whole H circle and its printed destination.
+  // The grid, ruler, flight and destination all retain this single scale.
+  const scale = .55 / Math.max(truth.distanceUnits, load.rulerUnits, 1), progress = Math.min(1, time / 3);
   const x = unit[0] * load.rulerUnits * scale * progress, z = unit[1] * load.rulerUnits * scale * progress;
   return {input: load, actual: headingOutcome(load), reading: {heading: load.headingDeg, metres: load.rulerUnits * MAP_UNIT_METRES},
     truth, x, z, scale, mode,
-    objects: [box('heading-crank', [-1.1, 1.22, .55], [.15, .45, .15], '#edc557', 'headingDeg', [0, 0, -load.headingDeg * Math.PI / 180]),
-      box('ruler-handle', [.9, 1.12, .55], [.4, .1, .2], '#edc557', 'rulerUnits'),
-      box('home-pad', [0, 1.11, 0], [.12, .02, .12], '#619dff'),
-      box('smoke-pad', [target[0] * truth.distanceUnits * scale, 1.12, target[1] * truth.distanceUnits * scale], [.15, .02, .15], '#56d683')],
+    objects: [{...box('heading-crank', [-.85, 1.18, .5], [.4, .2, .4], '#edc557', 'headingDeg'), opacity: 0},
+      {...box('ruler-handle', [unit[0] * load.rulerUnits * scale / 2, 1.15, unit[1] * load.rulerUnits * scale / 2],
+        [load.rulerUnits * scale, .12, .2], '#edc557', 'rulerUnits', [0, Math.PI / 2 - load.headingDeg * Math.PI / 180, 0]), opacity: 0},
+    ],
     captions: [`${Math.round(load.headingDeg)}°\n${Math.round(load.rulerUnits * MAP_UNIT_METRES)} m`, `1 square = ${MAP_UNIT_METRES} m`],
+    props: [{id: 'compass-control', model: 'heading-wheel', position: [-.85, 1.14, .5], scale: .6}],
+    captionAnchors: [[-.85, 1.2, .5], [.4, 1.12, -.3]], captionOffsets: [[-190, 5], [25, -70]],
     streams: [{medium: 'air', origin: [target[0] * truth.distanceUnits * scale, 1.14, target[1] * truth.distanceUnits * scale], direction: [0, 1, 0], speed: .35, radius: .05, length: .5}],
-    camera: camera([.15, 3.4, 2.5], [0, 1.05, 0]),
+    camera: camera([1.65, 2.25, 2.65], [0, .95, 0]),
   };
 }
 export function mountHeadings(options) {
@@ -55,6 +59,14 @@ export function mountHeadings(options) {
     for (let i = 0; i <= Math.floor(d.input.rulerUnits); i++) {
       const x = 512 + dx * i * squareX, y = 320 + dy * i * squareY;
       ctx.strokeStyle = '#ece4bd'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - dy * 10, y + dx * 10); ctx.lineTo(x + dy * 10, y - dx * 10); ctx.stroke();
+    }
+    const [tx, tz] = direction(d.truth.headingDeg);
+    for (const [x, y, name, colour] of [[512, 320, 'HOME', '#315e77'],
+      [512 + tx * d.truth.distanceUnits * squareX, 320 + tz * d.truth.distanceUnits * squareY, 'SMOKE', '#2f6341']]) {
+      ctx.fillStyle = '#e8dfb2'; ctx.strokeStyle = colour; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.arc(x, y, 25, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = colour; ctx.font = 'bold 30px sans-serif'; ctx.fillText('H', x, y + 10);
+      ctx.font = 'bold 22px sans-serif'; ctx.fillText(name, x, y + 51);
     }
     texture.needsUpdate = true;
     if (toy) { toy.position.set(d.x, 1.17, d.z); toy.rotation.y = Math.PI - d.input.headingDeg * Math.PI / 180; const rotor = toy.getObjectByName('main_rotor'); if (rotor) rotor.rotation.y = clock.time * 20; }

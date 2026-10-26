@@ -18,25 +18,43 @@ export const strengthSamples = {
   'check-thin': {material: 'aluminium', thicknessMm: 20},
 };
 const colours = {'steel': '#7b8a92', aluminium: '#ccd8df', 'carbon fibre': '#303c42'};
+const BAR_BASE_Y = 1, BAR_GAP = .34;
 export function strengthDrawing(input, time, mode = 'hook') {
   const load = strengthInput(input), physical = strengthResult(load), arm = physical.arm;
   const hanging = input.hanging !== false, actual = hanging ? physical.actual : 'holds';
   const progress = Math.min(1, time / 3), shown = mode === 'bars' ? 2100 * progress : ARM.loadKg * progress;
   const bars = Object.keys(MATERIALS).map(m => loadBar(m, shown));
   const drop = Math.min(.65, arm.tipDropMm / 1000 * 12) * progress;
-  const objects = [box('load-target', [.7, .65, .1], [1.3, .5, .6], '#d77b40', 'part'), box('material', [-1.65, 1.1, .8], [.35, .35, .35], colours[load.material], 'materialDial'),
-    box('thickness', [1.65, 1.1, .8], [.12, .65, .12], '#edc557', 'thicknessMm', [0, 0, -load.thicknessMm / 120])];
-  objects[0].opacity = 0;
+  const objects = [box('load-target', [.7, .65, .1], [1.3, .5, .6], '#d77b40', 'part'), box('material', [-1.55, 1.1, .55], [.65, .2, .2], colours[load.material], 'materialDial'),
+    box('thickness', [1.65, 1.1, .55], [.4, .2, .4], '#edc557', 'thicknessMm')];
+  objects.forEach(o => { o.opacity = 0; });
+  const props = [
+    {id: 'sample', model: `${load.material === 'carbon fibre' ? 'carbon' : load.material}-bar`, position: [-1.55, 1.05, .55]},
+    {id: 'thickness-wheel', model: 'thickness-wheel', position: [1.65, 1.05, .55]},
+    {id: 'thickness-stand', model: 'control-stand', position: [1.65, 0, .55], scale: 1.05},
+  ];
+  for (const [i, material] of Object.keys(MATERIALS).entries()) if (mode === 'bars' || material === load.material) {
+    const prefix = material === 'carbon fibre' ? 'carbon' : material;
+    const sag = mode === 'bars' ? Math.min(.6, bars[i].tipDropMm / 1000 * 4) / 4 : hanging ? drop / 4 : 0;
+    props.push({id: `${prefix}-stamp`, model: `${prefix}-bar-stamp`, position: [0, (mode === 'bars' ? BAR_BASE_Y + .1 + i * BAR_GAP : 1.53) - sag, .3], scale: .8});
+    if (mode === 'bars') {
+      const tipDrop = Math.min(.6, bars[i].tipDropMm / 1000 * 4) * 1.95 ** 2 / 4 + (bars[i].state === 'snapped' && time > 1 ? .4 : 0);
+      props.push({id: `${prefix}-load`, model: 'mass-weight', position: [.95, BAR_BASE_Y + i * BAR_GAP - tipDrop - .23, .1], scale: .45});
+    }
+  }
   if (mode !== 'bars') objects.push(box('hook-line', [.7, 1.1 - drop / 2, .1], [.025, .8 + drop, .025], '#e4dcc1'));
   const force = hanging ? ARM.loadKg * progress : 0;
-  if (!hanging) { objects.find(o => o.id === 'load-target').position[1] = .05; const cable = objects.find(o => o.id === 'hook-line'); if (cable) cable.opacity = 0; }
+  if (!hanging) { objects.find(o => o.id === 'load-target').position[1] = .3; const cable = objects.find(o => o.id === 'hook-line'); if (cable) cable.opacity = 0; }
   return thickArrows({input: load, actual, arm, bars, mode, drop: hanging ? drop : 0, hanging,
-    objects, hideLabels: true, metresPerNewton: .00045,
-    forces: mode === 'bars' ? [] : [arrow('weight', force, [.8, 1.35, .5], [0, -1, 0]), arrow('push', actual === 'holds' ? force : force * .4, [.8, 1.4, .5], [0, 1, 0])],
-    captions: mode === 'bars' ? bars.map(b => `${MATERIALS[b.material].name}: 1 kg\n${Math.round(shown)} kg load`) :
+    objects, props, hideLabels: true, metresPerNewton: mode === 'bars' ? .00012 : .00055,
+    forces: mode === 'bars' ? bars.map((b, i) => arrow('weight', shown, [.95, BAR_BASE_Y - .1 + i * BAR_GAP - Math.min(.6, b.tipDropMm / 1000 * 4) * 1.95 ** 2 / 4 - (b.state === 'snapped' && time > 1 ? .4 : 0), .35], [0, -1, 0])) :
+      [arrow('weight', force, [.8, 1.35, .5], [0, -1, 0]), arrow('push', actual === 'holds' ? force : force * .4, [.8, 1.4, .5], [0, 1, 0])],
+    captions: mode === 'bars' ? bars.map(b => `${MATERIALS[b.material].name} · 1 kg\n${Math.round(shown)} kg load`) :
       [`${MATERIALS[load.material].name}\n${load.thicknessMm} mm · ${arm.massKg.toFixed(1)} kg arm`, `${ARM.loadKg} kg test load\n${actual}`],
+    captionAnchors: mode === 'bars' ? bars.map((b, i) => [-.85, BAR_BASE_Y + .1 + i * BAR_GAP, .3]) : [[-.7, 1.55, .1], [.7, .65, .1]],
+    captionOffsets: mode === 'bars' ? [[-220, -10], [-220, -15], [-220, -20]] : [[-190, -60], [55, 0]],
     reading: arm.massKg,
-    camera: camera([2.8, 2.3, 5.3], [.1, 1.05, 0]),
+    camera: camera([2.7, 1.9, 3.8], [.1, .55, 0]),
   });
 }
 export function mountStrength(options) {
@@ -61,8 +79,8 @@ export function mountStrength(options) {
       const thickness = result?.thicknessMm ?? d.input.thicknessMm;
       part.scale.y = thickness * .004 / nativeThickness;
       part.scale.z = (d.mode === 'bars' ? .04 : ARM.widthM) * 4 / (material === 'steel' ? .07 : material === 'aluminium' ? .1 : .09);
-      part.position.z = d.mode === 'bars' ? (Object.keys(MATERIALS).indexOf(material) - 1) * .48 : .1;
-      part.position.y = d.mode === 'bars' ? .66 : 1.5;
+      part.position.z = .1;
+      part.position.y = d.mode === 'bars' ? BAR_BASE_Y + Object.keys(MATERIALS).indexOf(material) * BAR_GAP : 1.5;
       const deformation = result ? Math.min(.6, result.tipDropMm / 1000 * 4) : d.drop;
       part.traverse(n => {
         if (!n.geometry) return;

@@ -1,8 +1,10 @@
 # Workshop lessons: round 1
 
-Claude's verdict pending. Sheet: `lab-lessons-workshop-1.jpg` (one sheet for
+Claude's round-1 verdict: teaching and rule differences approved; pictures
+returned for round 2 (named real objects, closer views, object-side readings,
+thick arrows and clear challenge reminders). Sheet: `lab-lessons-workshop-1.jpg` (one sheet for
 the whole corner). The recipe is `tools/lab-workshop-sheet.py`; raw captures
-are under `.evidence/2026-10-26/LAB-LESSONS-WORKSHOP/round-1/` until review.
+were under `.evidence/2026-10-26/LAB-LESSONS-WORKSHOP/round-1/`; recycled after review.
 Final sheet: 491,239 bytes. Strength passed on the final lesson source; the
 remaining three passed in a continuation (50 captures, no warnings or errors).
 

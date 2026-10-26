@@ -165,6 +165,16 @@ test('every heading prediction reads the real bearing and distance tolerances', 
   assert.equal(headings.hooks.animations['lake-east']({time: 3}).input.headingDeg, 90);
 });
 
+test('named map pads fit on the printed map, including the near-north Snow journey', () => {
+  for (const animation of Object.values(headings.hooks.animations)) {
+    const d = animation({time: 3, input: {}}), radians = d.truth.headingDeg * Math.PI / 180;
+    const x = 512 + Math.sin(radians) * d.truth.distanceUnits * d.scale * 1024 / 2.16;
+    const y = 320 - Math.cos(radians) * d.truth.distanceUnits * d.scale * 640 / 1.35;
+    assert.ok(x - 40 >= 0 && x + 40 <= 1024, 'the whole pad name fits horizontally');
+    assert.ok(y - 25 >= 0 && y + 51 <= 640, 'the H and name fit vertically');
+  }
+});
+
 test('the real rig visibly thickens the selected arm and preserves the room-owned model', async () => {
   const bytes = await readFile(new URL('../public/assets/models/lab/bending-rig.glb', import.meta.url));
   const {scene: model} = await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
@@ -184,5 +194,76 @@ test('the real rig visibly thickens the selected arm and preserves the room-owne
   const sizes = ['bar-steel', 'bar-aluminium', 'bar-carbon'].map(name => new THREE.Box3().setFromObject(clone.getObjectByName(name)).getSize(new THREE.Vector3()).y);
   assert.ok(sizes[0] < sizes[1] && sizes[1] < sizes[2], 'actual equal-weight cross-sections increase steel, aluminium, carbon');
   assert.doesNotThrow(() => mounted.draw({}, {stage: 4, index: 2, time: 0}), 'the final challenge card has no drawing payload');
+  mounted.dispose(); assert.equal(model.visible, true); assert.equal(group.children.length, 0);
+});
+
+test('round two uses real named props, anchored readings and hit skins on the ruler and floor pan', async () => {
+  const bytes = await readFile(new URL('../public/assets/models/lab/workshop-lesson-props.glb', import.meta.url));
+  const {scene} = await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+  for (const name of ['paint-tin', 'zinc-can', 'salt-bag', 'water-jug', 'dry-air-jar', 'steel-bar', 'aluminium-bar', 'carbon-bar', 'mass-weight']) {
+    const prop = scene.getObjectByName(name);
+    assert.ok(prop, name);
+    assert.ok(prop.children.some(n => n.name.startsWith('Stamped')), `${name} has its name on the model`);
+    assert.ok(new THREE.Box3().setFromObject(prop).getSize(new THREE.Vector3()).length() > .1);
+  }
+  for (const packet of packets) for (const animation of Object.values(packet.hooks.animations)) {
+    const d = animation({time: 3, input: {}});
+    assert.ok(d.captions.length <= 3);
+    assert.equal(d.captionAnchors.length, d.captions.length);
+    assert.ok(d.objects.filter(o => o.control).every(o => o.opacity === 0), 'no visible cube controls');
+  }
+  for (const headingDeg of [0, 90, 180, 270, 329]) {
+    const d = headings.hooks.animations.try({time: 0, input: {headingDeg, rulerUnits: 4}});
+    const skin = d.objects.find(o => o.control === 'rulerUnits');
+    const actual = d.input.rulerUnits * d.scale;
+    assert.ok(Math.abs(Math.hypot(skin.position[0], skin.position[2]) - actual / 2) < 1e-9);
+    assert.equal(skin.size[0], actual);
+    assert.equal(skin.rotation[1], Math.PI / 2 - d.input.headingDeg * Math.PI / 180);
+  }
+  const d = rust.hooks.animations.try({time: 0, input: {jarDial: 0}});
+  assert.equal(d.props.find(p => p.id === 'water').model, 'dry-air-jar');
+  const pan = scene.getObjectByName('underbody-panel').clone(true), placement = d.props.find(p => p.id === 'part');
+  pan.position.set(...placement.position); pan.updateMatrixWorld(true);
+  const body = new THREE.Box3().setFromObject(pan), skin = d.objects.find(o => o.control === 'partDial');
+  const hit = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(...skin.position), new THREE.Vector3(...skin.size));
+  assert.ok(hit.containsBox(body), 'the floor-pan face can be clicked, not just empty air above it');
+  for (const time of [0, 3]) {
+    const bars = strength.hooks.animations.bars({time});
+    const weights = bars.props.filter(p => p.model === 'mass-weight');
+    assert.equal(weights.length, 3); assert.equal(bars.forces.length, 3);
+    assert.equal(new Set(bars.objects.map(o => o.id)).size, bars.objects.length, 'each load has its own solid arrow shaft');
+    bars.forces.forEach((f, i) => {
+      assert.equal(f.origin[0], .95, 'load is at the free end of the cantilever');
+      assert.ok(f.newtons * bars.metresPerNewton < .3, 'load arrows do not span adjacent undeformed bars');
+      assert.ok(Math.abs(f.origin[1] - weights[i].position[1] - .13) < 1e-9);
+    });
+  }
+});
+
+test('enlarged jars replace old blank tags only in the lesson clone', async () => {
+  const bytes = await readFile(new URL('../public/assets/models/lab/nail-jars.glb', import.meta.url));
+  const {scene: model} = await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+  const scene = new THREE.Scene(), group = new THREE.Group(); scene.add(model, group);
+  const node = () => ({style: {}, dataset: {}, append() {}, remove() {}});
+  const canvas = {dataset: {}, parentElement: node()};
+  const mounted = rust.hooks.mount({group, THREE, models: new Map([['nail-jars', model]]), doc: {createElement: node}, canvas});
+  mounted.draw(rust.hooks.animations.jars({time: 3}), {stage: 0, time: 3});
+  const clone = group.children.find(n => n.getObjectByName('jar-dry'));
+  for (const jar of JARS) {
+    let sourceHasTag = false;
+    model.getObjectByName(`jar-${jar.id}`).traverse(n => {
+      if (n.geometry) { n.geometry.computeBoundingBox(); sourceHasTag ||= n.geometry.boundingBox.max.z > .2; }
+    });
+    assert.ok(sourceHasTag, 'original shelf still owns its original tag');
+    clone.getObjectByName(`jar-${jar.id}`).traverse(n => {
+      if (n.geometry) {
+        // glTF material primitives share a position buffer; its unused vertices
+        // are not part of this mesh. Check only triangles actually drawn.
+        const p = n.geometry.attributes.position;
+        const used = n.geometry.index?.array ?? Array.from({length: p.count}, (_, k) => k);
+        assert.ok([...used].every(k => p.getZ(k) < .2), 'private jar draws no blank forward slab');
+      }
+    });
+  }
   mounted.dispose(); assert.equal(model.visible, true); assert.equal(group.children.length, 0);
 });

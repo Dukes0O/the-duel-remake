@@ -15,7 +15,10 @@ export async function run(c) {
     a._saveProfile(); document.querySelectorAll('body > details').forEach(e => e.open = false); })()`);
   const canvas = `document.querySelector('.lab-canvas')`, text = `document.querySelector('.lab-teaching')?.textContent`;
   const click = action => c.evaluate(`document.querySelector('[data-teach="${action}"]').click()`);
-  async function ready() { await c.waitFor(`!!document.querySelector('[data-teach="next"]') && !document.querySelector('[data-teach="next"]').disabled`, 'step ready', 45_000); }
+  async function ready() {
+    try { await c.waitFor(`!!document.querySelector('[data-teach="next"]') && !document.querySelector('[data-teach="next"]').disabled`, 'step ready', 45_000); }
+    catch (error) { await c.screenshot('step-failure'); throw Error(`${error.message}: ${await c.evaluate(`${text} + ' / ' + ${canvas}.dataset.workshopDrawing`)}`); }
+  }
   async function target(id) {
     await c.waitFor(`JSON.parse(${canvas}.dataset.labLessonControls ?? '[]').some(p => p.id === '${id}')`, `control ${id}`);
     return c.evaluate(`(() => { const el = ${canvas}, b = el.getBoundingClientRect(), p = JSON.parse(el.dataset.labLessonControls).find(p => p.id === '${id}'); return {x: b.left + p.x, y: b.top + p.y}; })()`);
@@ -62,14 +65,38 @@ export async function run(c) {
     await c.command('Input.dispatchKeyEvent', {type: 'keyUp', code: 'KeyE', key: 'e', windowsVirtualKeyCode: 69});
     // A single-lesson machine opens directly; multi-lesson machines show a choice.
     if (await c.evaluate(`!!document.querySelector('[data-lab-lesson="start:${id}"]')`)) await c.evaluate(`document.querySelector('[data-lab-lesson="start:${id}"]').click()`);
-    await c.waitFor(`${canvas}.dataset.workshopDrawing && !document.querySelector('.lab-teaching').hidden`, `${id} lesson`);
+    await c.waitFor(`${canvas}.dataset.workshopDrawing && ${canvas}.dataset.workshopProps === 'ready' && !document.querySelector('.lab-teaching').hidden`, `${id} lesson and named props`, 60_000);
     if (await c.evaluate(`!!document.querySelector('.lab-bench')`)) throw Error('Old panel remains during teaching.');
     if (await c.evaluate(`!document.querySelector('.lab-key-idea').hidden`)) throw Error('A previous challenge card leaked into this lesson.');
   }
   // A bounded continuation may name only the unfinished lessons; the normal
   // scenario always runs all four. Earlier green lessons keep their evidence.
   const selected = process.env.WORKSHOP_QA_LESSONS?.split(',');
+  // Capture-only retakes for picture changes after the normal full flow passed.
+  // The normal scenario below always retains every interaction assertion.
+  const watchOnly = process.env.WORKSHOP_QA_WATCH_ONLY === '1';
   if (selected?.some(id => !['strength', 'rust', 'gforce', 'headings'].includes(id))) throw Error('Unknown workshop lesson filter.');
+  async function challengeCapture(id) {
+    await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 2, y: 2});
+    await new Promise(r => setTimeout(r, 600));
+    const overlap = await c.evaluate(`(() => {
+      const card = document.querySelector('.lab-key-idea'); if (!card || card.hidden) return 'missing reminder';
+      const a = card.getBoundingClientRect();
+      for (const el of document.querySelectorAll('button,select,.lab-side,.lab-teaching,.heli-lessons,.heli-route,.heli-instruments,.heli-status,.heli-challenge,.race-heading,.race-clock,.race-position,.route-hud,.speedometer,.race-health,.rear-view-frame')) {
+        const b = el.getBoundingClientRect();
+        if (getComputedStyle(el).visibility === 'hidden' || !b.width || !b.height) continue;
+        if (a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top) {
+          // The menu remains mounted underneath the full-screen Lab. A rect
+          // alone does not make that covered menu control part of this view.
+          const hit = document.elementFromPoint((Math.max(a.left,b.left)+Math.min(a.right,b.right))/2, (Math.max(a.top,b.top)+Math.min(a.bottom,b.bottom))/2);
+          if (!el.matches('button,select') || hit && (hit === el || el.contains(hit))) return el.className || el.outerHTML.slice(0,100);
+        }
+      }
+      return '';
+    })()`);
+    if (overlap) { await c.screenshot(`${id}-overlap`); throw Error(`Key idea covers ${overlap}`); }
+    await c.screenshot(`${id}-challenge`);
+  }
   for (const packet of [strength, rust, gforce, headings].filter(p => !selected || selected.includes(p.definition.id))) {
     const d = packet.definition, id = d.id;
     await open(id);
@@ -80,8 +107,15 @@ export async function run(c) {
       await c.screenshot(`${id}-word-${row.animation}`); await click('next');
     }
     for (let i = 0; i < d.worked.length; i++) {
+      if (id === 'gforce' && i === 1) {
+        // Pause through the real lesson control when the faster car is on
+        // the near side of its arm, rather than photographing behind the pylon.
+        await c.waitFor(`JSON.parse(${canvas}.dataset.workshopDrawing).input.speedMph === 80`, 'double-speed Watch moment');
+        await click('pause'); await c.screenshot('gforce-watch-focus'); await click('pause');
+      }
       await ready(); await c.screenshot(`${id}-watch-${i}`); await click('next');
     }
+    if (watchOnly) { await c.evaluate(`window.__qaApp.returnToMenu()`); continue; }
     await c.waitFor(`!!document.querySelector('[data-teach="answer:${d.tries[0].prediction.correct}"]')`, 'prediction');
     await c.screenshot(`${id}-prediction`);
     if (await c.evaluate(`[...document.querySelectorAll('[data-workshop] > div')].some(el => !el.hidden)`)) throw Error('Floating captions on prediction.');
@@ -96,9 +130,11 @@ export async function run(c) {
       if (id === 'strength') {
         await touch('part'); await touch('materialDial'); await drag('thicknessMm', 30, 50, 5, 120);
         await c.waitFor(`JSON.parse(${canvas}.dataset.workshopDrawing).input.material === 'carbon fibre' && Math.abs(JSON.parse(${canvas}.dataset.workshopDrawing).input.thicknessMm - 50) < .01`, 'real material dial and thickness handle');
+        await c.waitFor(`JSON.parse(${canvas}.dataset.workshopPropModels).includes('carbon-bar')`, 'selected real carbon sample');
       } else if (id === 'rust') {
         await touch('coatDial'); await touch('coatDial');
         await c.waitFor(`JSON.parse(${canvas}.dataset.workshopDrawing).input.protection === 'zinc'`, 'real zinc dial');
+        await c.waitFor(`JSON.parse(${canvas}.dataset.workshopPropModels).includes('zinc-can')`, 'selected real zinc spray can');
       } else if (id === 'gforce') {
         const turns = [2, 3, 0][index];
         for (let j = 0; j < turns; j++) await touch('speedMph');
@@ -128,19 +164,23 @@ export async function run(c) {
       await c.waitFor(`${text}.includes('Challenge') && !!document.querySelector('[data-teach="answer:holds"]')`, 'inline challenge');
       await click('answer:holds'); await touch('part'); await touch('materialDial'); await drag('thicknessMm', 30, 50, 5, 120);
       await click('run'); await c.waitFor(`!!document.querySelector('[data-teach="finish"]')`, 'bench goal');
-      await c.screenshot(`${id}-challenge`); await click('finish');
+      await challengeCapture(id); await click('finish');
       await c.waitFor(`window.__qaApp.profile.lab.done.strength === true`, 'existing strength challenge awarded');
     } else if (id === 'rust') {
       try { await c.waitFor(`!!document.querySelector('[data-lab-protect="underbody"]') && !document.querySelector('.lab-key-idea').hidden`, 'real protection challenge'); }
       catch (error) { await c.screenshot('rust-handoff-failure'); throw Error(`${error.message} ${await c.evaluate(`JSON.stringify({panel: document.querySelector('.lab-teaching')?.textContent, card: document.querySelector('.lab-key-idea')?.outerHTML, side: document.querySelector('.lab-side')?.textContent})`)}`); }
-      await c.screenshot(`${id}-challenge`);
+      await challengeCapture(id);
       await c.evaluate(`(() => { for (const [part, value] of Object.entries({underbody:'zinc', exhaust:'bare', armour:'zinc'})) { const el = document.querySelector('[data-lab-protect="'+part+'"]'); el.value = value; el.dispatchEvent(new Event('change', {bubbles:true})); } document.querySelector('[data-lab="protect-check"]').click(); })()`);
       await c.waitFor(`window.__qaApp.profile.lab.done.rust === true`, 'real rust challenge awarded');
     } else if (id === 'gforce') {
-      await c.waitFor(`!window.__qaApp.labOpen && !!window.__qaApp.labLap.waiting`, 'real G-force lap handoff'); await c.screenshot(`${id}-challenge`);
+      await c.waitFor(`!window.__qaApp.labOpen && !!window.__qaApp.labLap.waiting`, 'real G-force lap handoff');
+      await c.evaluate(`(() => { const a = window.__qaApp; if (!a.startCampaign({startStage:0, seed:1989, fieldSeed:12, fieldSize:1, mode:'duel', car:'falcone_f42', difficulty:'casual', cpuDifficulty:'medium'})) throw Error('G-force race did not start'); a.setCamera('chase'); })()`);
+      await c.waitFor(`window.__qaApp.visualReady && document.querySelector('#renderer-loading')?.hidden && window.__qaApp.duel.state.status !== 'menu'`, 'loaded lap world', 120_000);
+      await challengeCapture(id);
     } else {
       await c.waitFor(`window.__qaApp.heliSession?.view().challenge?.id === 'headings' && !document.querySelector('.lab-key-idea').hidden`, 'real navigation challenge', 60_000);
-      await c.screenshot(`${id}-challenge`);
+      await c.waitFor(`window.__qaApp.visualReady && document.querySelector('#renderer-loading')?.hidden`, 'loaded navigation world', 120_000);
+      await challengeCapture(id);
     }
     await c.evaluate(`window.__qaApp.returnToMenu()`);
   }
