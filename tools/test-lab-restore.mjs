@@ -217,6 +217,7 @@ test('the tank, wreck, car and bubbles follow the sequence and are all released 
   assert.ok(loaded.includes('/assets/models/sirena/wreck-hull.glb') && !loaded.includes('/assets/models/sirena/wreck.glb'), 'the tank holds the hull alone, never the sand mound');
   scene.renderOnce(1000);
   const toward = scene.camera();
+  assert.deepEqual(toward.position, toward.goal, 'the retained tank view is applied immediately without a glide');
   assert.ok(Math.abs(toward.goal[2] - RESTORE_STAGE.camera.position[2]) < 1e-9, 'the camera comes to the tank');
   scene.restore(stageAt(30)); scene.renderOnce(1100);
   scene.restore(stageAt(58)); scene.renderOnce(1200);

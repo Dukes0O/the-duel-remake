@@ -40,8 +40,13 @@ namespace['COLOURS'].update({
     'hair_grey': ((0.12, 0.105, 0.09), 0.95),
     'glasses_frame': ((0.07, 0.075, 0.065), 0.38),
     'glasses_lens': ((0.88, 0.95, 0.97), 0.08),
-    'eye': ((0.045, 0.035, 0.025), 0.5),
-    'eye_white': ((0.60, 0.56, 0.48), 0.4),
+    'eye': ((0.11, 0.075, 0.04), 0.4),
+    'pupil': ((0.012, 0.009, 0.006), 0.35),
+    'eye_glint': ((0.65, 0.62, 0.55), 0.2),
+    'eye_white': ((0.48, 0.43, 0.35), 0.75),
+    'lid': ((0.51, 0.32, 0.25), 0.9),
+    'lid_shadow': ((0.38, 0.24, 0.19), 1.0),
+    'lip': ((0.34, 0.19, 0.15), 0.95),
     'beard': ((0.16, 0.12, 0.095), 0.95),
     'canvas': ((0.22, 0.15, 0.085), 1.0),
     'canvas_seam': ((0.34, 0.25, 0.15), 1.0),
@@ -138,35 +143,70 @@ def outfit(parts, rig, spec):
         add_sphere(lenses, (0.032, 0.0017, 0.020), centre, (38, 0, 0), u=12, v=6)
         add_box(frames, (0.004, hr.y * 1.35, 0.004), (sign * (hr.x + 0.007), hc.y, gz - 0.008), (-12, 0, 0))
     add_box(frames, (0.023, 0.014, 0.009), (hc.x, gy, gz))
-    # Small natural eyes and eyebrows, with no oversized cartoon features.
-    eyes = parts.new('eyes', 'eye', 'Head', smooth=True)
-    whites = parts.new('eye-whites', 'eye_white', 'Head', smooth=True)
-    brows = parts.new('eyebrows', 'hair_grey', 'Head')
+    # Fit the eye into the socket, not as a white bead above it. The iris
+    # occupies most of the opening and disappears under the upper lid.
+    eyes = parts.new('dark-irises', 'eye', 'Head', smooth=True)
+    pupils = parts.new('pupils', 'pupil', 'Head', smooth=True)
+    glints = parts.new('small-eye-catchlights', 'eye_glint', 'Head', smooth=True)
+    whites = parts.new('warm-eye-corners', 'eye_white', 'Head', smooth=True)
+    lids = parts.new('upper-and-smiling-lower-lids', 'lid', 'Head', smooth=True)
+    shadows = parts.new('soft-upper-lid-crease', 'lid_shadow', 'Head', smooth=True)
+    brows = parts.new('relaxed-eyebrows', 'hair_grey', 'Head', smooth=True)
     for sign in [-1, 1]:
-        p, n = rig.cast((sign * 0.033, -1, hc.z + 0.015), (0, 1, 0))
-        if p is not None:
-            add_sphere(whites, (0.009, 0.0014, 0.0025), p + n * 0.0016, u=10, v=6)
-            add_sphere(eyes, (0.0025, 0.0012, 0.0023), p + n * 0.0028, u=8, v=4)
-            add_box(brows, (0.027, 0.006, 0.005), p + n * 0.004 + Vector((0, 0, 0.018)), (0, sign * -6, 0))
-    # Short salt-and-pepper beard follows the cheeks and chin, not a toy mask.
-    beard = parts.new('short-beard', 'beard', 'Head', smooth=True)
-    for face in me.polygons:
-        points = [me.vertices[i] for i in face.vertices]
-        if not all(rig.vertex_region[v.index] == 'head' for v in points):
+        p, n = rig.cast((sign * 0.033, -1, hc.z - 0.009), (0, 1, 0))
+        if p is None:
             continue
-        c = face.center
-        on_jaw = hc.z - hr.z * 0.94 < c.z < hc.z - hr.z * 0.28
-        mouth_clear = abs(c.x) > 0.028 or c.z < hc.z - hr.z * 0.66
-        if on_jaw and mouth_clear and c.y < hc.y - 0.025:
-            beard.faces.new([beard.verts.new(v.co + v.normal * 0.0016) for v in points])
-    bmesh.ops.remove_doubles(beard, verts=list(beard.verts), dist=0.0001)
+        def opening(mesh, width, offset):
+            top, bottom = [], []
+            for i in range(17):
+                x = width * (-1 + i / 8)
+                height = .0052 * math.sqrt(max(0, 1-(x/.0125)**2))
+                if width < .012:
+                    height = min(height, math.sqrt(max(0, width*width-x*x)))
+                top.append(mesh.verts.new(p + Vector((x, offset, height))))
+                bottom.append(mesh.verts.new(p + Vector((x, offset, -height*.7))))
+            for i in range(16):
+                mesh.faces.new([bottom[i], bottom[i+1], top[i+1], top[i]])
+        opening(whites, .0125, -.002)
+        opening(eyes, .009, -.0026)
+        add_sphere(pupils, (.0026, .0003, .003), p + Vector((0, -.0031, 0)), u=12, v=6)
+        add_sphere(glints, (.00065, .0002, .00065), p + Vector((-.0012, -.0035, .0015)), u=8, v=4)
+        for upper in [True, False]:
+            path = []
+            for i in range(17):
+                t = -1 + i / 8
+                height = (0.0052 if upper else -0.00364) * math.sqrt(max(0, 1 - t*t))
+                point = p + Vector((t * 0.0125, -0.004, height))
+                path.append((point, Vector((0, -1, 0))))
+            add_ribbon(lids, path, 0.0015 if upper else 0.0014, side_axis=Vector((0, 0, 1)))
+            if upper:
+                add_ribbon(shadows, [(v + Vector((0, 0.0008, 0.002)), n) for v, n in path],
+                           0.0008, side_axis=Vector((0, 0, 1)))
+        brow = []
+        for i in range(9):
+            t = -1 + i / 4
+            point, normal = rig.cast((p.x + t * 0.014, -1, p.z + 0.019 + 0.003 * (1-t*t)), (0, 1, 0))
+            if point is not None:
+                brow.append((point + normal * 0.003, normal))
+        add_ribbon(brows, brow, 0.003, side_axis=Vector((0, 0, 1)))
+    # A small closed smile follows the existing mouth, with lifted corners.
+    mouth = parts.new('gentle-closed-smile', 'lip', 'Head', smooth=True)
+    path = []
+    for i in range(25):
+        t = -1 + i / 12
+        p, n = rig.cast((t * 0.024, -1, hc.z - hr.z * 0.53 + 0.004 * t*t), (0, 1, 0))
+        if p is not None:
+            path.append((p + n * 0.0015, n))
+    add_ribbon(mouth, path, 0.0016, side_axis=Vector((0, 0, 1)))
+    # Stubble is painted into the skin below, with a continuous feathered
+    # boundary. No separate coarse triangles create a saw-tooth beard edge.
 
 spec = dict(body='Male', inflate={'torso': 0.018, 'arms': 0.012, 'legs': 0.014, 'feet': 0.014},
             groups=[
                 dict(name='skin', mat='skin_c', regions=['head', 'forearms', 'hands'], tris=2900),
-                dict(name='work-shirt', mat='shirt', regions=['torso', 'arms'], tris=1400),
-                dict(name='trousers', mat='denim', regions=['legs'], tris=900),
-                dict(name='work-boots', mat='leather', regions=['feet'], tris=450)])
+                dict(name='work-shirt', mat='shirt', regions=['torso', 'arms'], tris=1000),
+                dict(name='trousers', mat='denim', regions=['legs'], tris=650),
+                dict(name='work-boots', mat='leather', regions=['feet'], tris=350)])
 pose = dict(lean=(0, 0, 0), head=(0, 0, -3),
             arm_l=dict(hand=(0.31, -0.16, 1.13), pole=(0.8, 0.3, -0.2), curl=0.15,
                        shoulder=-0.1, hand_dir=(0.6, -0.3, 0.1)),
@@ -176,7 +216,40 @@ person = build_person(spec, pose, outfit)
 transform_person(person, 0.99, 0)
 clear_scene()
 model = merge_pieces('Brian-workshop-teacher', person.pieces)
+# Vertex colour is exported with the GLB: softly shaded skin and feathered
+# stubble work in both renderers, without a procedural shader or extra texture.
+skin = namespace['mat']('skin_c')
+skin.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .82
+base = (0.62, 0.42, 0.33)
+iris_mesh = [me for me, key, _ in person.pieces if key == 'eye'][0]
+eye_z = sum(v.co.z for v in iris_mesh.vertices) / len(iris_mesh.vertices)
+eye_x = sum(v.co.x for v in iris_mesh.vertices) / len(iris_mesh.vertices)
+front = min(v.co.y for me, key, _ in person.pieces if key == 'skin_c' for v in me.vertices if v.co.z > eye_z - .13)
+def smoothstep(a, b, x):
+    t = max(0, min(1, (x-a)/(b-a)))
+    return t*t*(3-2*t)
+colours = model.data.color_attributes.new(name='Brian-skin', type='FLOAT_COLOR', domain='POINT')
+skin_indices = {i for face in model.data.polygons if model.data.materials[face.material_index] == skin for i in face.vertices}
+for v in model.data.vertices:
+    if v.index not in skin_indices:
+        colours.data[v.index].color = (1, 1, 1, 1)
+        continue
+    x, y, z = v.co
+    beard = smoothstep(.035, .075, eye_z-z) * (1-smoothstep(.12, .155, eye_z-z))
+    beard *= 1-smoothstep(front+.075, front+.15, y)
+    # Leave the lip's immediate surround lighter, and soften every boundary.
+    mouth_clear = math.exp(-((x-eye_x)/.027)**4 - ((z-(eye_z-.063))/.012)**4)
+    beard *= 1-.75*mouth_clear
+    cheek = math.exp(-((abs(x-eye_x)-.042)/.028)**2 - ((z-(eye_z-.035))/.032)**2)
+    shade = 1 - .06*cheek
+    stubble = (.09, .065, .05)
+    amount = .72*beard if z > eye_z-.17 else 0
+    colours.data[v.index].color = tuple(base[c]*shade*(1-amount) + stubble[c]*amount for c in range(3)) + (1,)
+attribute = skin.node_tree.nodes.new('ShaderNodeVertexColor')
+attribute.layer_name = 'Brian-skin'
+skin.node_tree.links.new(attribute.outputs['Color'], skin.node_tree.nodes['Principled BSDF'].inputs['Base Color'])
 model['source'] = 'CC0 Quaternius Universal Base Characters; original Brian clothing and pose'
+assert triangles() <= 8000, 'Brian exceeds the close-up character budget'
 destination.parent.mkdir(parents=True, exist_ok=True)
 bpy.ops.object.select_all(action='DESELECT')
 model.select_set(True)
@@ -187,13 +260,28 @@ print(f'Brian: {triangles()} triangles; {destination.stat().st_size} bytes')
 if args.render:
     folder = (root / args.render).resolve()
     folder.mkdir(parents=True, exist_ok=True)
-    namespace['render_glb']('brian', folder)
-    # A close view makes the face, clear glasses and apron construction reviewable.
+    namespace['reset']()
+    bpy.ops.import_scene.gltf(filepath=str(destination))
     scene = bpy.context.scene
-    scene.render.resolution_x = scene.render.resolution_y = 800
-    scene.camera.data.lens = 58
-    target = Vector((0, 0, 1.45))
-    scene.camera.location = (-0.55, -1.1, 1.72)
-    scene.camera.rotation_euler = (target - scene.camera.location).to_track_quat('-Z', 'Y').to_euler()
-    scene.render.filepath = str(folder / 'brian-portrait.png')
-    bpy.ops.render.render(write_still=True)
+    scene.render.engine = 'CYCLES'
+    scene.cycles.samples = 32
+    scene.cycles.use_denoising = True
+    scene.render.threads_mode = 'FIXED'; scene.render.threads = 4
+    scene.render.resolution_x = scene.render.resolution_y = 900
+    scene.render.resolution_percentage = 100
+    world = bpy.data.worlds.new('review-world'); scene.world = world; world.use_nodes = True
+    world.node_tree.nodes['Background'].inputs['Color'].default_value = (.25, .25, .25, 1)
+    scene.view_settings.view_transform = 'AgX'
+    for name, location, energy, size in [('key', (-2, -3, 4), 180, 3), ('fill', (2, -1, 2), 60, 2)]:
+        light = bpy.data.lights.new(name, 'AREA'); light.energy = energy; light.shape = 'DISK'; light.size = size
+        ob = bpy.data.objects.new(name, light); scene.collection.objects.link(ob); ob.location = location
+        ob.rotation_euler = (Vector((0, 0, 1.5)) - ob.location).to_track_quat('-Z', 'Y').to_euler()
+    data = bpy.data.cameras.new('review'); camera = bpy.data.objects.new('review', data)
+    scene.collection.objects.link(camera); scene.camera = camera
+    data.lens = 50
+    for name, location, target in [('brian-close', (0, -.85, 1.66), (0, 0, 1.62)),
+                                   ('brian-2m', (0, -2, 1.6), (0, 0, 1.6))]:
+        camera.location = location
+        camera.rotation_euler = (Vector(target) - camera.location).to_track_quat('-Z', 'Y').to_euler()
+        scene.render.filepath = str(folder / (name + '.png'))
+        bpy.ops.render.render(write_still=True)
