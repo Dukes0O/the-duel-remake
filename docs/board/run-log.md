@@ -1382,3 +1382,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 PREVIEW-HELI-LESSONS dropped: Kyle tests new work in the live game instead of the preview.
 - 2026-10-26 DRIVE-LESSON-ANY-COURSE merged (dev): lessons need no course ownership; lesson suites, replays and build pass.
 - 2026-10-26 RESCUE-FINISH margins merged (dev): every careful rescue ends with >=60 kg; heli suites, replays and build pass. Frame check over the avalanche before switch-on.
+- 2026-10-26 LAB-BRIAN-FIX merged (Codex): Brian answers E, his face round 3, click/keyboard/map navigation, lab-2 ON (glide camera removed); Lab, save, switch and art suites and build pass. Goes out in the next release.

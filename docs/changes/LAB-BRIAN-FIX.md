@@ -256,3 +256,16 @@ All four parts are complete on this lane. No open game defect remains from
 this card. Brian's approved face and the two other lanes' lesson files were
 left unchanged. Review captures, QA bundles and build output are recycled
 after committing their verdict; no extra sheet or backup binary is kept.
+
+## Claude review (26 October 2026)
+
+Approved. Part 1: the cause (a 1.3 m range that did not reach Brian from his
+approach, with the nearer machine winning) is fixed with a 2.5 m range and
+facing-based choice. Part 2: art round 3, the last; the stare is gone, the
+eyes now read sleepy rather than warm, and Kyle decides whether a fourth
+round is worth it. Part 3: every changed assertion follows switching
+`lab-2` on and removing the glide camera; nothing is loosened. Part 4:
+click to go, passable clutter, wall sliding, Tab/Enter and the map, proved
+by the click and keyboard browser flows (no pictures taken; Kyle sees it in
+the game). On the merged result, the switch, Lab, save, Blender-output and
+hygiene suites and the build pass.
