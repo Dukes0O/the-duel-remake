@@ -16,6 +16,8 @@ import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, isA
   RECOVERY, wreckFor, recoveryJob, recoveryTitle, recoveryJobOf, finishRecovery} from '../src/heli/heli-jobs.js';
 import {createHeliSession} from '../src/heli/heli-session.js';
 import {dispatchBoardMarkup, handleBoardAction, createDispatchBoard, atHomePad} from '../src/heli/heli-board.js';
+import {returnLoadJob, returnLoadTitle, finishReturnLoad} from '../src/heli/heli-jobs.js';
+import {arrivalMarkup} from '../src/heli/heli-ui.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -570,6 +572,65 @@ function flyOwnCar({owned}) {
   assert.equal(finishRecovery({credits: 5, heli: createHeli()}, {enabled: true}).ok, false, 'no wreck, no job'); checks++;
   // It sits beside the day's three jobs; they do not move.
   same(dayJobs(22).map(j => j.id), ['d22-1', 'd22-2', 'd22-3'], 'the board\'s three jobs do not move');
+}
+
+// Return boards are repeatable, affordable to fly, and independent of car jobs.
+{
+  const options = {summitRun: true, pilotMap: true, table: true};
+  for (let day = 0; day < 30; day++) for (const from of Object.keys(destinationsFor({...options, table: false})))
+    same(returnLoadJob(day, from, options), returnLoadJob(day, from, {...options, table: false}), 'Table discovery cannot change an advertised job');
+  for (let day = 0; day < 30; day++) for (const from of Object.keys(destinationsFor(options))) {
+    const job = returnLoadJob(day, from, options);
+    if (from === HOME_COURSE) { same(job, null, 'home keeps its dispatch board'); continue; }
+    ok(job, `a return load at ${from}`);
+    same(job, returnLoadJob(day, from, options), 'same day and place, same crate');
+    ok(job.massKg >= 300 && job.massKg <= 600, 'crate within settled weight');
+    const fuel = legFuelKg(from, job.to, options);
+    ok(fuel <= 400 && job.pay > Math.ceil(fuel * 1.5), 'pay exceeds its leg fuel at the home pump');
+    same(jobPay(job, 'real'), Math.round(job.pay * 1.25), 'Real adds 25 percent');
+  }
+  const profile = profileWith({heli: {playDay: {last: DAY1, count: 4}}});
+  const job = returnLoadJob(4, 'tremblant-snow');
+  const paid = finishReturnLoad(profile, {...job, pay: 1e9});
+  same(paid.paid, job.pay, 'pay comes from the seeded job, never caller numbers');
+  same(finishReturnLoad(paid.profile, job).ok, false, 'cannot pay twice');
+  same(finishReturnLoad(profile, {...job, id: 'stale'}).ok, false, 'reject stale jobs');
+  const tomorrow = notePlayDay(paid.profile, DAY2, {enabled: true}).profile;
+  ok(finishReturnLoad(tomorrow, returnLoadJob(5, job.from)).ok, 'the next play day opens a new load');
+  ok(returnLoadTitle(job).includes('Tremblant Snow'), 'both ends named');
+}
+
+// Actual fixed-step flight: hook at Snow, cruise home, set down and pay once.
+for (const day of [1, 2]) {
+  const session = createHeliSession({profile: profileWith({owned: OWNED, heli: {fuelKg: 400,
+    playDay: {last: DAY1, count: day}}}), enabled: true, loadCourse, today: DAY1});
+  session.start('tremblant-snow');
+  const board = session.view().returnLoad;
+  same(board.to, day === 1 ? HOME_COURSE : 'panorama-ridge', 'exercise home and onward routes');
+  ok(board && !board.done, 'away arrival has a board');
+  ok(arrivalMarkup(session.view(), [], session.profile).includes(board.sender), 'arrival names the sender');
+  ok(arrivalMarkup(session.view(), [], session.profile).includes('credits'), 'arrival shows pay');
+  const crate = () => session.view().loads.find(load => load.returnJob);
+  run(session, 60, v => pilot(v, {x: crate().x, z: crate().z, y: crate().y + 15.2}, {speed: 4}),
+    v => Math.hypot(v.heli.x - crate().x, v.heli.z - crate().z) < 1 && Math.abs(v.heli.y - crate().y - 15.2) < .6 &&
+      Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < .5);
+  same(session.pressHook()?.type, 'hooked', 'hook the return crate');
+  same(session.destination, board.to, 'hook sets the destination');
+  const log = [];
+  carryAcross(session, log);
+  const before = session.profile.credits;
+  same(setDownAndRelease(session, log)?.type, 'released', 'set the crate down cleanly');
+  same(session.profile.credits, before + board.payNow, 'scripted return flight paid');
+  same(heliOf(session.profile).returnLoads[board.from], board.day, 'completion saved');
+  ok(!session.view().loads.some(load => load.returnJob?.id === board.id), 'finished crate removed');
+  if (day === 2) {
+    const onward = session.view().returnLoad;
+    ok(!onward.done && session.view().loads.some(load => load.returnJob?.id === onward.id), 'onward pad immediately supplies its own advertised crate');
+  }
+  session.start(board.from);
+  ok(session.view().returnLoad.done, 'revisit shows completion');
+  ok(arrivalMarkup(session.view(), [], session.profile).includes('Nothing more today. The board fills again tomorrow.'), 'done board wording');
+  ok(!session.view().loads.some(load => load.returnJob), 'no second crate today');
 }
 
 console.log(`test-heli-jobs: ${checks} checks passed`);

@@ -265,8 +265,12 @@ export function arrivalMarkup(view, jobs = [], profile = null) {
   const words = arrival.carId ? `Your ${CARS[arrival.carId]?.name ?? arrival.carId} is parked here.` :
     localJobs.length ? `Jobs here: ${localJobs.map(job => job.title).join('; ')}` : 'Nothing waiting here today';
   const canRace = COURSE.some(course => course.id === arrival.courseId) && (!profile || isCourseUnlocked(profile, arrival.courseId));
+  const crate = view.returnLoad;
+  const board = !crate ? '' : crate.done ? 'Nothing more today. The board fills again tomorrow.' :
+    `${crate.title} · ${crate.massKg} kg · ${crate.payNow} credits. ${crate.sender} Hook the crate beside the pad to take it.`;
   return `<div class="heli-lessons heli-arrival" role="group" aria-label="Landed at ${escape(place?.name ?? arrival.courseId)}">
     <span>LANDED AT ${escape((place?.name ?? arrival.courseId).toUpperCase())}</span><p>${escape(words)}</p>
+    ${board ? `<p>${escape(board)}</p>` : ''}
     <button type="button" data-heli-arrival="race" ${canRace ? '' : 'disabled'}>Race here</button>
     <button type="button" data-heli-arrival="shutdown">Shut down</button>${!canRace ? `<p>${COURSE.some(course => course.id === arrival.courseId) ? 'Unlock this course in the main menu to race here.' : 'There is no race course here.'}</p>` : ''}</div>`;
 }

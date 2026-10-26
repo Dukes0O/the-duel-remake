@@ -40,7 +40,7 @@ export function createHeli() {
 }
 
 // Every field this game knows, so only a newer game's fields are copied as they are.
-const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey', 'ski', 'map']);
+const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey', 'ski', 'map', 'returnLoads']);
 
 export function normalizeHeli(value) {
   if (!isObject(value) || value.version !== HELI_SAVE_VERSION) return createHeli();
@@ -60,6 +60,12 @@ export function normalizeHeli(value) {
   }
   heli.refuels = count(value.refuels);
   heli.flights = count(value.flights);
+  if (isObject(value.returnLoads)) {
+    heli.returnLoads = {};
+    for (const [place, day] of Object.entries(value.returnLoads))
+      if (validPlace(place) && place !== 'tremblant-woods' && Number.isSafeInteger(day) && day >= 0 && day <= MAX_COUNT)
+        heli.returnLoads[place] = day;
+  }
   normalizeFireFields(value, heli);
   normalizeSkinFields(value, heli);
   if (Object.hasOwn(value, 'ski')) { const ski = normalizeSki(value.ski); if (ski) heli.ski = ski; }

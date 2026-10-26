@@ -9,7 +9,7 @@ import {CABLE, createLoad, liftCheck, carMassKg, canHook, hookRefusal, hook, rel
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
   DIRT_KINDS, placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave} from './heli-save.js';
 import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle, recoveryJob, recoveryJobOf, recoveryTitle, finishRecovery,
-  wreckFor} from './heli-jobs.js';
+  wreckFor, returnLoadJob, returnLoadTitle, finishReturnLoad} from './heli-jobs.js';
 import {isCourseUnlocked} from '../course-access.js';
 import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson, carryGuidance} from './heli-lessons.js';
 import {CRATE} from './heli-cable.js';
@@ -437,6 +437,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     offer = null;
     layCrates();
     if (lesson) endLesson();
+    layReturnCrate();
     // Leaving the course ends a Lab challenge, except Air and altitude, which is the flight to Summit Run with its crate.
     if (challenge && !(challenge.id === 'altitude' && kept?.labLoad)) endChallenge('left');
     if (autopilot.engaged) setAutopilotTarget(autopilot, destination === courseId ? zoneTarget() : null);
@@ -760,6 +761,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     return crate ? carryGuidance(lesson, crate, world.ground.height(crate.x, crate.z)) : null;
   };
   const loadView = car => Object.freeze({id: car.id, x: car.x, y: car.y, z: car.z, heading: car.heading,
+    ...(car.returnJob ? {returnJob: car.returnJob} : {}),
     hooked: car.hooked, onGround: car.onGround, own: !!car.own, job: car.job ?? null});
 
   // A clean release of the job in hand's car inside the drop-off course's
@@ -795,6 +797,16 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     crate.own = false; crate.job = null; crate.crate = true;
     return crate;
   };
+  // One lesson-crate model at a time. An onward delivery makes room for
+  // this pad's crate immediately, without requiring another visit.
+  function layReturnCrate() {
+    const job = returnLoadJob(playDay(), site.courseId, dflag);
+    if (!job || heliOf(save).returnLoads?.[job.from] === job.day || loads.some(load => load.crate) || !site.crate) return;
+    const crate = crateLoad();
+    crate.massKg = job.massKg;
+    crate.returnJob = job;
+    loads.push(crate);
+  }
   // The crate goes with the lesson, even off the cable.
   function endLesson() {
     loads = loads.filter(car => !car.crate);
@@ -1621,6 +1633,15 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           emit({type: 'delivered', carId, courseId: site.courseId, dropped: result.event.type === 'releasedHigh'});
           offer = isCourseUnlocked(save, site.courseId) && !courseClosed(save, site.courseId, undefined, fireFlag) ? {courseId: site.courseId, carId} : null;
         } else if (held.job && inZone) deliverJob(held, result.event);
+        else if (held.returnJob && inZone && site.courseId === held.returnJob.to && result.event.type === 'released') {
+          const paid = commit(finishReturnLoad(save, held.returnJob, mode, dflag));
+          if (paid.ok) {
+            emit({type: 'jobDone', job: held.returnJob, pay: paid.paid});
+            emit({type: 'radio', line: 'heli.radio.job.done'});
+            loads = loads.filter(load => load !== held);
+            layReturnCrate();
+          }
+        }
         return result.event;
       }
       // The car nearest the hook; H elsewhere stays quiet. The worn gear sets the
@@ -1658,6 +1679,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       else if (labEnabled === true) delete hooked.lineLength;
       if (hooked.job) result.event.job = hooked.job;
       emit(result.event);
+      if (hooked.returnJob) aim(hooked.returnJob.to);
       if (hooked.own) offer = null;
       const job = hooked.job ? jobInHand() : null;
       if (job?.id === hooked.job) aim(job.to);
@@ -2215,6 +2237,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         ...(skinOn ? {skins: skinsView()} : {}),
         ...(wildOn ? {survey: surveyView()} : {}),
         job: jobInHand(),
+        ...(site?.courseId !== HOME_COURSE ? {returnLoad: returnBoardView()} : {}),
         lesson: lesson ? Object.freeze({id: lesson.id, held: lesson.held, spot: lesson.spot, target: lesson.target,
           guidance: carryGuidanceNow()}) : null,
         ...(challenge ? {challenge: Object.freeze({id: challenge.id, elapsed: challenge.elapsed, briefing: challengeBriefing(challenge), props: challengeProps(challenge)})} : {}),
@@ -2241,6 +2264,12 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         loads.slice(1).map(car => `|${car.id}|${spot(car)}`).join('') + (skiRun ? `|ski|${skiRunFingerprint(skiRun)}` : '');
     },
   };
+  function returnBoardView() {
+    const job = returnLoadJob(playDay(), site?.courseId, dflag);
+    if (!job) return null;
+    return Object.freeze({...job, title: returnLoadTitle(job), payNow: jobPay(job, mode),
+      done: heliOf(save).returnLoads?.[job.from] === job.day});
+  }
   // The ski part of the view (only with heli-skiing on): the flight in hand, the group aboard, the pad under the helicopter
   // and the run being skied.
   // The run's picture without the verdict on the wax: the pick is shown, never whether it was right (the Lab's challenge).

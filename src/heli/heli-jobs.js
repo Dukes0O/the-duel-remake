@@ -12,7 +12,7 @@ import {MEDAL_CARS} from '../medals.js';
 // functions after both have loaded, so the pair is safe in either order.
 import {PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, mapDistanceKm, placeOfCourse, placeById} from './pilot-map-data.js';
 
-import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS} from './heli-save.js';
+import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS, HELI_MONEY} from './heli-save.js';
 import {surveyJob, surveyName, reportSurvey, isSurveyRun, SURVEY_NOT_A_RUN} from './heli-survey.js';
 
 export const HOME_COURSE = 'tremblant-woods';
@@ -197,6 +197,49 @@ export function jobPay(job, mode = 'assisted') {
 // "Fly the Falcone F42 to Tremblant Snow".
 export function jobTitle(job) {
   return `Fly the ${CARS[job.carId]?.name ?? job.carId} to ${nameOf(job.to)}`;
+}
+
+const RETURN_SENDERS = Object.freeze({
+  'tremblant-snow': 'The lodge sends empty gas bottles.',
+  'panorama-ridge': 'The ranger post sends sample boxes.',
+  'summit-run': 'The hut sends laundry.',
+  'pacific-canyon': "Ana's field station sends sample crates for the lab in town.",
+});
+
+// No ownership or wallet enters the seed: the same place has the same load
+// all play day. Long, unprofitable legs never go on this small board.
+export function returnLoadJob(day, from, options = {}) {
+  const places = destinationsFor(options);
+  if (from === HOME_COURSE || !Object.hasOwn(places, from)) return null;
+  const number = Number.isSafeInteger(day) && day >= 0 ? day : 0;
+  let seed = (0x43524154 ^ number) >>> 0;
+  for (const letter of from) seed = (Math.imul(seed, 31) ^ letter.charCodeAt(0)) >>> 0;
+  const rng = makeRng(seed);
+  const price = HELI_MONEY.creditsPerKg;
+  // Discovering the hidden Table in flight must not redraw an advertised
+  // job. It offers outbound crates once known, but is never a drop-off.
+  const routes = Object.keys(places).filter(to => to !== from && to !== 'the-table').map(to => {
+    const original = JOB_ROUTES.find(route => legKey(route.from, route.to) === legKey(from, to));
+    const pay = Math.round(0.6 * (original?.pay ?? mapJobPay(mapDistanceKm(placeKey(from), placeKey(to)))));
+    return {to, pay, fuel: legFuelKg(from, to, options)};
+  }).filter(route => route.fuel !== null && route.fuel <= HELI_MONEY.tankKg && route.pay > Math.ceil(route.fuel * price));
+  if (!routes.length) return null;
+  const route = routes[rng.int(0, routes.length - 1)];
+  return Object.freeze({id: `return-${number}-${from}`, kind: 'returnLoad', day: number, from, to: route.to,
+    pay: route.pay, massKg: rng.int(300, 600), sender: RETURN_SENDERS[from] ?? `The ${nameOf(from)} pad sends supplies.`});
+}
+
+export const returnLoadTitle = job => `Crate from ${nameOf(job.from)} to ${nameOf(job.to)}`;
+
+export function finishReturnLoad(profile, job, mode = 'assisted', options = {}) {
+  const heli = heliOf(profile);
+  const expected = returnLoadJob(heli.playDay.count, job?.from, options);
+  if (!expected || expected.id !== job?.id || heli.returnLoads?.[expected.from] === expected.day)
+    return {ok: false, profile};
+  const wallet = Number.isFinite(profile?.credits) ? Math.max(0, Math.floor(profile.credits)) : 0;
+  const total = Math.min(1_000_000_000, wallet + jobPay(expected, mode));
+  return {ok: true, paid: total - wallet, profile: {...profile, credits: total,
+    heli: {...heli, returnLoads: {...heli.returnLoads, [expected.from]: expected.day}}}};
 }
 
 // ---- the car recovery job (docs/HELI_RESCUE.md section 5.3) --------------
