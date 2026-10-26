@@ -1,5 +1,6 @@
 import { createPolylineIndex } from './polyline-index.js';
 import { freestyleSurfaceHeightAt } from './freestyle-course.js';
+import { summitFinishGround } from './summit-finish-ground.js';
 
 // Read the exact far-terrain grid and triangle diagonal without allocating a
 // render mesh. Null means that quad is omitted beneath the near-road ribbon.
@@ -18,7 +19,7 @@ const roadCaps = new WeakMap();
 // Scatter the unchanged road samples onto neighbouring grid corners once.
 export function farTerrainCornerHeight(course,x,z,s,off,grid) {
   let height=(course.farGroundY?course.farGroundY(x,z,s,off):course.groundAt(s,off).y)-.15;
-  if(!course.def.scenery?.continuousGround)return height;
+  if(!course.def.scenery?.continuousGround)return summitFinishGround(course,x,z,height);
   let caps=roadCaps.get(course.samples);
   if(!caps){
     caps=new Map();const radius=grid*Math.SQRT2+8;
@@ -39,7 +40,7 @@ export function farTerrainCornerHeight(course,x,z,s,off,grid) {
     }
     roadCaps.set(course.samples,caps);
   }
-  return Math.min(height,caps.get(Math.round(x/grid)*FAR_KEY+Math.round(z/grid))??Infinity);
+  return summitFinishGround(course,x,z,Math.min(height,caps.get(Math.round(x/grid)*FAR_KEY+Math.round(z/grid))??Infinity));
 }
 export function farTerrainHeightSampler(course) {
   if(surfaceCache.has(course.samples))return surfaceCache.get(course.samples);

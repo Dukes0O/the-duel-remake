@@ -1,4 +1,4 @@
-"""Round 1 Summit finish furniture. Reuses the existing hut/dome separately.
+"""Round 2 Summit finish furniture. Reuses the existing hut/dome separately.
 
 blender -b --python tools/blender/summit-finish.py -- --root .
 Local metres: X left of road, Y backwards, Z up. glTF converts once.
@@ -40,6 +40,10 @@ black = material('Charcoal chequers', (.035, .043, .048))
 red = material('Faded orange windsock', (.52, .19, .075))
 snow = material('Snow caps', (.72, .79, .83))
 track = material('Compressed footprint snow', (.30, .39, .44))
+warm = material('Warm lit window glass', (1, .57, .23), .32)
+shader=warm.node_tree.nodes.get('Principled BSDF')
+shader.inputs['Emission Color'].default_value=(1,.48,.16,1)
+shader.inputs['Emission Strength'].default_value=2.5
 
 def block(name, size, point, mat, bevel=0):
     bpy.ops.mesh.primitive_cube_add(size=1, location=point)
@@ -71,8 +75,21 @@ block('Timber lintel', (20.2, .7, .55), (0, 0, 6.95), wood, .05)
 block('Snow on lintel', (20.3, .72, .12), (0, 0, 7.25), snow, .04)
 for row in range(2):
     for col in range(24):
-        block('Chequered fabric', (.72, .055, .55),
-              ((col-11.5)*.72, -.39, 5.7+row*.55), ivory if (row+col)%2 else black)
+        block('Chequered fabric', (.72, .055, .4),
+              ((col-11.5)*.72, .39, 5.35+row*.4), ivory if (row+col)%2 else black)
+block('Summit name board', (10.4,.16,1.0), (0,.37,6.5), wood, .035)
+bpy.ops.object.text_add(location=(0,.47,6.5), rotation=(math.pi/2,0,math.pi))
+letter=bpy.context.object
+letter.name='SUMMIT painted lettering'
+letter.data.body='SUMMIT'
+letter.data.align_x='CENTER'
+letter.data.align_y='CENTER'
+letter.data.size=1.15
+letter.data.extrude=.008
+letter.data.materials.append(ivory)
+bpy.ops.object.convert(target='MESH')
+block('Gantry lamp housing', (.85,.6,.2), (0,.65,7.05), iron, .025)
+block('Gantry lamp lens', (.68,.46,.055), (0,.65,6.93), warm)
 
 # Last 200 m: narrow snow fence, with an open margin beside the road.
 for side in [-1, 1]:
@@ -82,6 +99,28 @@ for side in [-1, 1]:
         if i < 48:
             for height in [.5, 1.05]:
                 block('Snow fence rail', (.10, 4.02, .14), (side*11, along+2, height), wood)
+
+for side,back in [(1,60),(-1,150)]:
+    beam('Snow fence lamp post',(side*11,back,0),(side*11,back,3.4),.13,iron)
+    block('Snow fence lamp hood',(.7,.7,.16),(side*11,back,3.48),iron,.025)
+    block('Snow fence lamp lens',(.5,.5,.12),(side*11,back,3.35),warm)
+
+def window(name, size, point, anchor):
+    frame=block(name+' timber frame',tuple(v+.14 if v>.1 else v+.025 for v in size),point,wood,.015)
+    pane=block(name+' amber pane',size,point,warm)
+    axis=0 if size[0]<.2 else 1
+    direction=(-1 if point[0]>0 else 1) if axis==0 else 1
+    frame.location[axis]-=direction*.10
+    for obj in [frame,pane]: obj['groundAnchor']=anchor
+
+# Roadside and approach-facing glazing on the reused buildings. Each window
+# uses the building's own ground anchor, not an unrelated flat finish height.
+for back in [12,16,20]:
+    window('Hut roadside window',(.10,1.65,2.1),(10.95,back,2.65),[16,17])
+for x in [14,20]:
+    window('Hut approach window',(1.65,.10,2.1),(x,23.08,2.65),[16,17])
+window('Observatory road window',(.10,3.4,1.65),(-9.73,16,2.0),[16,-17])
+window('Observatory approach window',(3.4,.10,1.65),(-17,23.27,2.0),[16,-17])
 
 # The real summit pad, in the final-straight frame (SUMMIT_PADS.summit).
 pad_x, pad_y, pad_z = 80.02651454272215, 239.9632616834, 5.76
@@ -105,7 +144,7 @@ for i in range(6):
 # A single trail behind the observatory; its twelve paired prints are large.
 for i in range(12):
     for side in [-1, 1]:
-        x, y = -35+side*.48, 43+i*1.7+(side+1)*.36
+        x, y = -28+side*.48, 8+i*1.5+(side+1)*.36
         block('Yeti heel impression', (.48, .88, .025), (x,y,.13), track, .12)
         for toe in range(4):
             block('Yeti toe impression', (.095, .15, .025), (x+(toe-1.5)*.115,y-.51,.13), track, .04)
@@ -113,8 +152,8 @@ for i in range(12):
 # Fit snow marks and fence feet to the existing rendered snow, rather than
 # lifting the whole assembly onto a flat plane. No hillside edits are made.
 grounded = [obj for obj in bpy.context.scene.objects
-            if obj.name.startswith(('Yeti ', 'Snow fence '))]
-queries = [[obj.location.y, obj.location.x] for obj in grounded]
+            if obj.name.startswith(('Yeti ', 'Snow fence ')) or 'groundAnchor' in obj]
+queries = [list(obj['groundAnchor']) if 'groundAnchor' in obj else [obj.location.y, obj.location.x] for obj in grounded]
 sample = """
 import {readFileSync} from 'node:fs';
 import {Course} from './src/course.js';
@@ -142,7 +181,7 @@ for obj in bpy.context.scene.objects:
     obj.location.y -= 4
 
 # Join by material, keeping the finish kit small in the browser.
-for mat in [wood, iron, ivory, black, red, snow, track]:
+for mat in [wood, iron, ivory, black, red, snow, track, warm]:
     bpy.ops.object.select_all(action='DESELECT')
     objects=[obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.data.materials[0]==mat]
     for obj in objects: obj.select_set(True)

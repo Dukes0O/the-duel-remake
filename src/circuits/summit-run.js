@@ -130,6 +130,7 @@ const TOWN_LIGHTS=Object.freeze([
 ].map(([s,lateral])=>Object.freeze([Math.round(s),Math.round(lateral)])));
 export const SUMMIT_RUN=defineScriptedCourse({
   ...base,sections,
+  finishArea:true,
   snowmen:Object.freeze([27,29,31,33,35,36,42,43,45,47,49,50].map((index,i)=>
     Object.freeze({s:at(index)+35,lateral:geometry.pieces[index].kind==='turn'
       ? -geometry.pieces[index].dir*17 : i%2?-17:17}))),
@@ -154,8 +155,8 @@ export const SUMMIT_RUN=defineScriptedCourse({
   kitLook:{
     gallery:{wash:{colour:0xd8d5ca,strength:2.2,height:8,floor:.7}},
     'snow-rock':{smoothNormals:true},
-    'summit-hut':{glow:3.2},
-    observatory:{slit:{nodes:['observatory-cover','observatory-cover.001'],halfWidth:1.4,minY:3.38,minZ:.65,normalX:.9,colour:0xffdfaa,strength:3.8}},
+    'summit-hut':{glow:3.2,wash:{colour:0xffd4a0,strength:.65,height:8,floor:.3}},
+    observatory:{wash:{colour:0xffe0bc,strength:.5,height:10,floor:.25},slit:{nodes:['observatory-cover','observatory-cover.001'],halfWidth:1.4,minY:3.38,minZ:.65,normalX:.9,colour:0xffdfaa,strength:3.8}},
   },
   basins:[LEDGE_VALLEY],
   groundLights:TOWN_LIGHTS.map(([s,lateral],i)=>({s,lateral,colour:i%3?0xffdba3:0xffa258,size:7,strength:1.5})),
@@ -168,8 +169,8 @@ export const SUMMIT_RUN=defineScriptedCourse({
   kitPlacements:[
     ...Array.from({length:35},(_,index)=>({id:'gallery',s:10176+index*18,lateral:0,heading:0,scale:[1.2,1.1,3],
       ...(index===0?{nodeTranslations:galleryEntranceTranslations}:{})})),
-    {id:'summit-hut',s:finish-240,lateral:54,heading:-Math.PI/2,scale:1.6},
-    {id:'observatory',s:finish-60,lateral:-25,heading:Math.PI/2,scale:1},
+    {id:'summit-hut',s:finish-16,lateral:17,heading:-Math.PI/2,scale:2},
+    {id:'observatory',s:finish-16,lateral:-17,heading:Math.PI/2,scale:1.2},
     {id:'summit-finish',s:finish-4,lateral:0,heading:0,scale:1},
   ],
 });

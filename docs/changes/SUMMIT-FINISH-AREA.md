@@ -1,7 +1,32 @@
 # SUMMIT-FINISH-AREA
 
-Status: round 1 ready for Claude; further art stopped. Kind: art.
+Status: round 2 in progress, following Claude's rejection of round 1. Kind: art.
 Flag: existing `summit-run`.
+
+## Round 2 design, before code
+
+Merged current integration as `961b95da`, including Summit's continuous
+ground. No code conflict; kept this lane's STATUS as Kyle instructed.
+Separate finish sheets now live in `looks/summit/finish-area/` because the
+ground-gap card already uses `looks/summit/round-1.jpg`.
+
+Follow Claude's round 1 verdict: hut 14 × 12 m, dome 14.4 m across, centres
+17 m either side of the road and 16 m before the line. Add warm glazing,
+SUMMIT lettering, gantry light and two fence lights. Turn twelve reused crowd
+figures toward approaching cars. Grade only the finish terrace into the
+continuous backing; the far-grid renderer and height reader share the grade.
+No road/physics/Yeti placement or ski/rescue rule changes.
+
+Pad question sent to Kyle: moving the hut to the line separates it from the
+operational ski pad. Pending an answer, preserve the working pad and link its
+yard with a packed path. This is an explicit exception still needing Claude's
+decision, not a claim that the operational pad moved beside the hut.
+
+Checks: focused `test-summit-finish-area` for actual level ground, native
+height-query agreement, unchanged surrounding mountain and landmark sizes;
+real High/LOD kit clearance; requested lane tier and build. Pictures: car
+100 m/30 m before line, at line, helipad and wide; High/Performance, dusk/night.
+Stop after the round 2 sheet. No frame timing or signature regeneration.
 
 ## Design before code
 
