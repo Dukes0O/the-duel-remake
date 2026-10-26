@@ -800,6 +800,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // One lesson-crate model at a time. An onward delivery makes room for
   // this pad's crate immediately, without requiring another visit.
   function layReturnCrate() {
+    if (!site || live?.kind === 'supply') return;
     const job = returnLoadJob(playDay(), site.courseId, dflag);
     if (!job || heliOf(save).returnLoads?.[job.from] === job.day || loads.some(load => load.crate) || !site.crate) return;
     const crate = crateLoad();
@@ -1081,6 +1082,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const r = rescueOf(missionsOf(save), rflag);
     if (!r || live) return;
     live = {...r, crates: [...r.crates]};
+    // The supply run owns the hook. Stow this pad's idle return crate so
+    // it cannot intercept H and redirect the mission; carried cargo stays.
+    if (live.kind === 'supply') loads = loads.filter(load =>
+      !(load.returnJob?.from === site.courseId && !load.hooked));
     rsite = pickSites(live);
     rdirty = false; rbank = 0; rend = null; tickSecond = null; duskSaid = false;
     renewLine();
@@ -1099,6 +1104,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const line = lineLoad();
     if (line) { line.done = true; line.holding = false; line.hold = 0; setLineWho(line, 'rescuer'); }
     loads = loads.filter(car => !car.supply);
+    layReturnCrate();
   }
 
   // A crash fails the rescue only with people aboard or on the line (section 3.4). Before the pickup it

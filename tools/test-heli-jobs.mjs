@@ -18,6 +18,8 @@ import {createHeliSession} from '../src/heli/heli-session.js';
 import {dispatchBoardMarkup, handleBoardAction, createDispatchBoard, atHomePad} from '../src/heli/heli-board.js';
 import {returnLoadJob, returnLoadTitle, finishReturnLoad, returnLoadPay, mapJobPay} from '../src/heli/heli-jobs.js';
 import {fuelPadAt, placeOfCourse, mapDistanceKm} from '../src/heli/pilot-map-data.js';
+import {armMissions} from '../src/heli/heli-missions.js';
+import {setMissions} from '../src/heli/heli-save.js';
 import {arrivalMarkup} from '../src/heli/heli-ui.js';
 
 let checks = 0;
@@ -652,6 +654,39 @@ for (const day of [1, 2]) {
   ok(session.view().returnLoad.done, 'revisit shows completion');
   ok(arrivalMarkup(session.view(), [], session.profile).includes('Nothing more today. The board fills again tomorrow.'), 'done board wording');
   ok(!session.view().loads.some(load => load.returnJob), 'no second crate today');
+}
+
+// Supply missions keep idle local return cargo off the hook until the run
+// clears, without taking cargo the pilot has already picked up.
+for (const held of [false, true]) {
+  const base = profileWith({owned: [...OWNED, 'summit-run'], heli: {fuelKg: 400, refuels: 3,
+    playDay: {last: DAY1, count: 30}}});
+  const armed = armMissions(createMissions(), {date: DAY1, playerName: 'Return QA'});
+  const profile = setMissions(base, {...armed, count: armed.need,
+    call: {kind: 'supply', id: `supply-${armed.draws}`, courseId: 'summit-run', day: 30, answered: false}}, {enabled: true}).profile;
+  const session = createHeliSession({profile, enabled: true, loadCourse, loadFireCourse: loadCourse, today: DAY1,
+    fireEnabled: true, rescueEnabled: true, summitRunEnabled: true, playerName: 'Return QA'});
+  session.start('summit-run');
+  const crate = () => session.view().loads.find(load => load.returnJob);
+  ok(crate(), 'return crate waits before answering the supply call');
+  const job = crate().returnJob;
+  if (held) {
+    run(session, 60, v => pilot(v, {x: crate().x, z: crate().z, y: crate().y + 15.2}, {speed: 4}),
+      v => Math.hypot(v.heli.x - crate().x, v.heli.z - crate().z) < 1 && Math.abs(v.heli.y - crate().y - 15.2) < .6 &&
+        Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < .5);
+    same(session.pressHook()?.type, 'hooked', 'pick up return cargo before answering');
+  }
+  const wallet = session.profile.credits;
+  ok(session.pressRadio(), 'answer the supply call');
+  same(session.view().rescue.active.kind, 'supply', 'supply mission started');
+  same(!!crate(), held, 'only idle local return cargo is stowed');
+  if (held) ok(crate().hooked && crate().returnJob.id === job.id, 'held return cargo survives unchanged');
+  same(session.view().rescue.crates.length, 3, 'all three supply crates remain available');
+  same(session.profile.credits, wallet, 'stowing cargo never changes credits');
+  same(heliOf(session.profile).returnLoads, undefined, 'stowing never completes the return job');
+  session.leave();
+  ok(crate()?.returnJob.id === job.id, 'eligible return cargo remains available when the supply mission clears');
+  same(heliOf(session.profile).returnLoads, undefined, 'clearing the mission never completes the return job');
 }
 
 console.log(`test-heli-jobs: ${checks} checks passed`);

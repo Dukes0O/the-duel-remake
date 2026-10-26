@@ -24,6 +24,14 @@ No frame timing.
 
 ## Changed assertions
 
+- Claude's second answer (26 October) approves exactly three further pin
+  updates: `OTHER_ARRIVALS_PIN` in `test-heli-summit-arrival.mjs`,
+  1120341889 -> 624439558; `SUMMIT_ONLY_PIN` in
+  `test-heli-summit-rescues.mjs`, 274976626 -> 1829644530;
+  `AUTOPILOT_PIN` in `test-heli-summit-tune.mjs`,
+  4100670798 -> 1475763491. No other line in those files changed. Only
+  the intended passive crate changes the fingerprints; no behavior
+  assertion or tolerance is loosened. Claude's card note is the review.
 - `tools/test-heli-autopilot-rescue.mjs`: OFF_PIN 3531442031 → 2230200939.
   The whole-view snapshot now includes the away-pad crate and board.
   Claude explicitly reviewed this exact change on the card (26 October).
@@ -36,72 +44,57 @@ No frame timing.
 
 ## Review and results
 
-- Targeted: heli-jobs 5,897 checks (includes actual Snow-to-home and
-  Snow-to-Panorama hooked flights, payment, the onward pad's next crate,
-  every leg's revised pay, 30-day route/weight/fuel checks and Table-discovery stability);
-  heli-save 44 groups; heli-view 270 checks. All pass.
-- Independent save review APPROVED after correcting the missing onward
-  crate and the changing Table-discovery payment. Review verified 23 old
-  fixtures plus one forged fixture (1,029 checks), corrupt input handling,
-  combat/fines/quit/reload wallet safety and existing migration backups.
-  Storage budget passed at 3.61/4 MB; flags add at most 1,154 UTF-16 bytes
-  per player across today's valid places. No real saves accessed.
-- Earlier lane attempt stopped at the old snapshot pin: 21 passed,
-  1 failed, 57 not run (199.14 s). Claude has now approved its exact update.
-- Independent review of the revised pay and pin APPROVED. Verified the
-  endpoint prices, ceiling to 10, unchanged original three pays, Pacific
-  premium examples, Real bonus, duplicate protection and Table stability.
-  Save approval is unchanged.
-- Fresh full lane attempt, jobs 4: sandbox blocked the existing
-  temporary-copy test's PowerShell child (19 passed, 1 failed, 61 not run,
-  63.76 s). Reran with the required tool access and no assertion changes.
-- Full lane with tool access, jobs 4: 39 passed, 1 failed, 41 not run
-  (197.17 s). The approved autopilot pin passes. The next old snapshot,
-  `test-heli-summit-arrival`, expects 1120341889, actual 624439558.
-  Ran the skipped 41 suites once with `--keep-going`: 39 passed, 2 failed,
-  0 not run (391.43 s). Failures are only `test-heli-summit-rescues` and
-  `test-heli-summit-tune` snapshot pins listed below. Across all 81 selected
-  suites: 78 passed, 3 failed, none unattempted. Passing suites were not
-  repeated after those snapshot failures. Original race replay and world
-  signatures pass. This is not a green lane.
-- Final production build PASS (1.12 s): PowerShell with System32 first on
-  PATH, `npm.cmd run build`, using the approved shared dependency cache.
-- Native headless browser PASS, memory-only storage, private port 50261:
-  Snow board names both ends, 476 kg, 180 credits and the lodge sender;
-  the actual lesson crate is beside the pad. One picture inspected:
+- Full lane PASS: 82 passed, 0 failed, 0 not run in 576.94 s.
+  `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`.
+  PowerShell, System32 first on PATH. All four reviewed helicopter pins,
+  original race replay guards and world signatures pass.
+- Production build PASS: `npm.cmd run build`, 1.13 s, after the green lane.
+  Used the approved shared dependency cache; PowerShell blocks npm.ps1.
+- Jobs: 5,917 checks; save: 44 groups; view: 270 checks, all passing in
+  the lane. Jobs cover seeded routes, every leg's premium-fuel margin,
+  rounding, Real pay, Table discovery stability, actual home/onward flights,
+  payment once, receiving-pad cargo and supply-mission coexistence.
+- Independent save review APPROVED: 23 historical fixtures plus one forged
+  fixture, 1,029 migration checks; corrupt inputs; combat/fines/quit/reload
+  wallet safety; existing migration backups. Budget passed at 3.61/4 MB.
+  Completion flags add at most 1,154 UTF-16 bytes per player across today's
+  valid places. No real saves accessed. Revised pay independently approved.
+- The fresh lane exposed a real supply-hook conflict after the old pins
+  were corrected: 44 passed, 1 failed, 37 not run (195.71 s). An idle local
+  return crate could intercept H and redirect active supply work while its
+  board was hidden. Kept the supply assertion unchanged. The spawn hook
+  now stows only unhooked local return cargo during supply work, restores
+  it when the mission clears and guards startup before a site exists.
+  Held/foreign cargo, all supply crates, credits and done flags stay intact.
+  Independent code/save review APPROVED; the final full lane above verifies
+  the correction. No extra assertion in the three restricted files changed.
+- Native headless browser picture already PASS, memory-only storage,
+  private port 50261, zero errors/warnings. Snow's board shows both ends,
+  476 kg, 180 credits and the lodge sender; the actual crate is beside the
+  pad. The inspected picture remains valid: Snow's pay and normal arrival
+  display are unchanged. Picture retained for handoff at
   `.evidence/2026-10-26/HELI-RETURN-LOADS/tremblant-snow-return-board.png`.
-  Text is readable without covering the helicopter or crate. No browser
-  errors or warnings. No frame timing. Picture retained for handoff.
-- Heavy admission counted before every gate/build/browser launch; each
-  started below three, with no current hold. One-minute counts were two
-  and three. A build attempt at count three did not start; it ran at two.
-- Session-end status generated and Cockpit sync completed (0 task changes).
-  Two unrelated cards lack task links: GHOST-SAVE-MESSAGE and
-  SUMMIT-FINISH-AREA; left to the Director.
+  No frame timing.
+- Merged integration first (736b90d3). Only STATUS.md conflicted; kept this
+  lane's copy as requested. No code file conflicted.
+- Heavy-job admission checked before each gate/build; admitted below three
+  with no hold. Corrected gate's one-minute count was three; build started
+  at one. Session-end status and Cockpit sync completed (0 task changes).
 
 ## Decisions
 
-Both previous questions are resolved by Claude's written answers on the
-card, under rule 18. Kyle's approval is not required. Ordinary race replay
-and world-signature pins are untouched. The return-load save shape has not
-changed since the approved save review.
-
-Three additional old flight snapshots need Claude's written review:
-`test-heli-summit-arrival` 1120341889 → 624439558,
-`test-heli-summit-rescues` 274976626 → 1829644530,
-`test-heli-summit-tune` 4100670798 → 1475763491.
-All three files are untouched. The independent reviewer proved that
-omitting only the new entry crate spawn in memory restores every old hash
-exactly. Helicopter states, flying area, events, credits and fuel match;
-the tune probe also matches all 164 flight samples. These are solely new
-passive-crate fingerprints, with no flight-physics regression. The exact
-scope extension and technical review are recorded for Claude in
-`docs/board/questions/HELI-RETURN-LOADS.md`. A green lane is not claimed
-while those unchanged assertions fail.
+All questions are resolved by Claude's written answers on the card under
+rule 18. His second answer is the review of the three additional pin-only
+updates. Independent probes restored each old hash by omitting only the
+new passive crate; flight states, fuel, credits, events and 164 sampled
+flight records stayed exact. No save shape changed after its approval.
+The resolved question file is removed. No design or review items remain open.
 
 ## Removed
 
-Nothing replaced. Recycled this run's generated production build, QA bundle,
+Recycled the resolved `docs/board/questions/HELI-RETURN-LOADS.md` after its
+facts and Claude's answer were recorded in the card and this note.
+Recycled this run's generated production build, QA bundle,
 scratch capture scripts and browser report. Kept the requested picture for
 handoff; integration can recycle it after accepting the visual verdict.
 
