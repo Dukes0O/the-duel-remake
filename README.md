@@ -2,6 +2,26 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Story release 2: the Lab and the Sirena, 25 October 2026 (night)
+
+### What players get now
+
+- **The Lab is open.** Brian's workshop (THE LAB tab in the garage, or the
+  door on the helipad board): sixteen lessons, each a bench you can run and a
+  true explanation, with a challenge that opens an upgrade. Every challenge is
+  passable with steady, simple play.
+- **Tuning.** Tyre pressure, wing, brake balance, springs and fuel, each a
+  trade; a tuned Time Trial lap 1% faster than your stock lap pays 400 once
+  per course.
+- **The secret.** Pass all five wind-tunnel lessons and look closely at the
+  tunnel dial. The McMurtry Speirling, built for 15,000.
+- **The Sirena, all the way.** Raise her from the Kelp Coast; in the Lab, Get
+  her running (1,000) and she joins your garage as found, crusted with
+  barnacles, shells and seaweed; race her like that, or buy the Restored 1966
+  finish (1,500) and keep both. The Coast Cup runs in either finish.
+- **Achievements** on a shelf in the garage: Raised from the Deep, She runs
+  again, Wreck racer, the two Coast Cups and Restored.
+
 ## Racecraft and The Deep's explorer, 25 October 2026 (evening)
 
 ### What players get now

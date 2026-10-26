@@ -1360,3 +1360,13 @@ graphics card idle: deep-frames (kelp forest, High and Performance) and the
 eight-car grand-prix recipe both pass their 18.5 ms limits. Racecraft batch
 (360 races): Panorama 8+-crash races 12 to 5, mean crashes down on all three
 courses, Pacific race time up to 3.10% (accepted).
+
+## Release, 25 October 2026 night: Story release 2 (Claude, Release Manager)
+
+`lab` and `lab-tuning` switched on (LAB-LIVE, LAB-LIVE-FIX). Full tier on
+release commit `4a53aa1f`: 515 passed, 0 failed, 0 not run (1,465 s). The
+first full tier on 499a742c failed four suites the switch-on exposed; fixed
+forward in LAB-LIVE-FIX and reviewed. Frame check, eight Speirlings, run
+alone with the graphics card idle: High 18.4 ms, Performance 18.3 ms (limit
+18.5); only a sound recipe and tests changed since. Scripted player pass: all
+16 Lab lessons pass with simple play (LAB-CHALLENGE-EASE).
