@@ -189,7 +189,7 @@ try {
     return app;
   };
   const ON = {helicopter: true, 'driving-lessons': true, 'tyre-slip': true};
-  // The home pad is at Tremblant Woods, which a new player buys like the menu's board says.
+  // Ownership fixtures still exercise racing access separately from the instructor board.
   const ownedApp = (overrides, courses = ['tremblant-woods']) => {
     const app = makeApp(overrides);
     app.profile = {...app.profile, credits: 1_000_000}; app._saveProfile();
@@ -201,8 +201,9 @@ try {
   {
     const fresh = makeApp(ON);
     ok(fresh.visitHeli(), 'a new player flies from the pad');
-    same(fresh.heliDrivingBoard().rows.map(row => row.open), [false], 'before Tremblant Woods is bought the row is closed, as in the menu');
-    same(fresh.heliDrivingBoard().notes, [driveLessonBoardModel({...fresh.driveLessonProps(), courseId: HOME_COURSE, carId: fresh.menuCar}).reason], 'with the menu\'s own words');
+    same(fresh.heliDrivingBoard().rows.map(row => row.open), [true], 'lesson 1 is open on the unowned home course, as in the menu');
+    const reason = driveLessonBoardModel({...fresh.driveLessonProps(), courseId: HOME_COURSE, carId: fresh.menuCar}).reason;
+    same(fresh.heliDrivingBoard().notes, reason ? [reason] : [], 'with the menu\'s own words');
     fresh.returnToMenu();
     const app = ownedApp(ON);
     ok(app.visitHeli(), 'the visit starts with both switches on');

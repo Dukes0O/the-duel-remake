@@ -63,3 +63,7 @@
 .drive-lesson-panel .drive-lesson-rules { margin: 6px 0; padding-left: 20px; }
 .drive-lesson-panel .drive-lesson-rules li { margin: 2px 0; }
 .drive-lesson-panel button { margin: 4px 0 0; }
+
+.drive-lesson-board button:disabled, .drive-lesson-panel button:disabled, .drive-lesson-result button:disabled {
+  cursor: default; opacity: .45; background: #ffffff16;
+}

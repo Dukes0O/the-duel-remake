@@ -17,3 +17,25 @@ course reward). Also: any choice that cannot be taken must not look clickable
 (no pointing hand, a dimmed style and its reason). Switch `driving-lessons`
 stays dev. Tests for an unowned player choosing either corner and finishing
 lesson 1; lane tier and build; a picture of the panel for a new player.
+
+## Implementation and checks
+
+Use the lesson tables and available course catalog for choices, with no course
+ownership check in the board, selection handler or lesson start/revalidation.
+Keep car access, player identity, lesson order, engine switch and other launch
+guards. Race access and lesson rewards stay unchanged. Closed lesson rows keep
+their dimmed style and reason; unavailable buttons use a default cursor.
+
+Checks: native unowned players start either corner and complete lesson 1;
+board/selection tests cover unowned courses and unchanged lesson order; the
+existing memory-only browser lesson scenario captures the new-player board.
+Then lane tier with jobs 4 and production build. No frame timing.
+
+## Handoff
+
+Independent code review: clear, including the corrected helipad notes check.
+The full changed-assertion inventory is in
+`docs/changes/DRIVE-LESSON-ANY-COURSE.md`. Claude: review those ownership
+expectations under AGENTS 18 before merge; driving, reward, record and replay
+assertions are retained. Native unowned completion and the new-player browser
+picture pass. Final gate/build results are recorded in the change note.
