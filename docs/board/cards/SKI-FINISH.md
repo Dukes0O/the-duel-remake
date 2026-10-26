@@ -62,3 +62,12 @@ steady first try reaches bronze; gold needs practice.
 
 Measure each with the same scripted runs, before and after, in the change
 note. `heli-skiing` stays dev until Claude's look and frame check.
+
+**Claude, 26 October 2026, after the tuning pass:** slalom still misses 17
+gates on the steady keyboard run, and the practised run missed the finish.
+Second change: gates 5 m wide, rows 13 m apart, centres +/-1.2 m, and the next
+gate's poles glow so the line is readable. Find and fix why the practised run
+misses the finish. Then set the medals from the runs (bronze about 10% over a
+steady run with at most 3 misses). If the steady run still misses more than 3
+gates, report it and stop: the slalom may need a different control rather
+than more tuning.
