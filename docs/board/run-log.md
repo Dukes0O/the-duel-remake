@@ -1375,3 +1375,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 LAB-LESSON-FRAME merged (Codex): five-step lesson frame, notebook save field (save review clear) behind lab-2; Lab and save suites and build pass.
 - 2026-10-26 SKI-FINISH tuning merged (dev): Casual slalom assist, steady keyboard run 2 misses/bronze; suites and build pass.
 - 2026-10-26 SUMMIT-BUILD-TIME-2 merged: signatures exact; official timing with the finish area before release.
+- 2026-10-26 HELI-LOGBOOK merged (dev): ranks, Gus's shelf, five paints (accepted round 2); switch, helicopter, save, replay suites and build pass.

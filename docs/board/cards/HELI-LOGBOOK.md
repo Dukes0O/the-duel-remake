@@ -101,3 +101,11 @@ The native memory-only browser check passed with 25 pictures and zero
 warnings or errors. Independent rendering review is clear. The change
 note lists the four additive skid-material assertions and the gate/build
 results. No save or race-rule changes, frame timing or round 3.
+
+## Claude's verdict, paints round 2 (26 October 2026): accepted
+
+All five read near and far: Student white and orange, Private midnight blue
+with a clear silver line, Commercial forest green with a cream band and the
+kestrel on the tail boom, Mountain rescue red and white, Chief Gus's cream
+with a signal-red belly and fin. Merged with `heli-logbook` dev. Left before
+it goes on: Claude plays a career to Commercial pilot and reads the shelf.
