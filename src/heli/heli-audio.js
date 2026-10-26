@@ -4,6 +4,7 @@
 // changes the flight or the cable; it only listens. HELI_CUES holds the same
 // fields as the sound bank, so one line in sound-bank.js can map it
 // (HELI-HOOKS), the way fight-voices.js keeps its lines.
+import {SKI_CUES, skiEventCue, skiBeds} from '../ski/ski-lines.js';
 import {HELI_RADIO_LINES} from './heli-radio-lines.js';
 import {RADIO_FILTER, softClipCurve, createRadioChain} from '../lessons/radio-voice.js';
 
@@ -193,6 +194,8 @@ const readoutSignature = readout => ['altitudeM', 'fuelKg', 'headingDeg', 'weigh
   'airspeedKts', 'climbMs', 'pitchDeg', 'rollDeg', 'engine'].map(key => readout[key]).join('|');
 
 export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, autoRadio = true}) {
+  cues = {...SKI_CUES, ...cues};
+  const skiEnabled = () => audio.flags?.enabled('heli-skiing') === true;
   const isEnabled = enabled || (() => { try { return !!audio.flags?.enabled('helicopter'); } catch { return false; } });
   const buffers = new Map(), pending = new Map(), failed = new Set(), active = new Map(), loops = new Map();
   const lastLine = new Map(), seen = new WeakSet();
@@ -254,7 +257,7 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     follow();
     // A flight loads its own sounds; the fire sounds wait until a fire needs them (preloadFire).
     const wanted = ids || Object.keys(cues).filter(id => cues[id].file && !id.startsWith('heli.radio.') && !FIRE_CUE_IDS.includes(id) &&
-      !WILDLIFE_CUE_IDS.includes(id));
+      !WILDLIFE_CUE_IDS.includes(id) && !id.startsWith('ski.'));
     return Promise.allSettled(wanted.filter(id => cues[id]?.file && !failed.has(id)).map(id => {
       if (buffers.has(id)) return Promise.resolve(buffers.get(id));
       if (!pending.has(id)) pending.set(id, fetchBuffer(id).finally(() => pending.delete(id)));
@@ -363,7 +366,8 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
   // Any one-shot cue by id. Returns the voice, or null when it cannot play now.
   function play(id, options = {}) {
     const def = cues[id];
-    if (disposed || !def || id.startsWith('heli.radio.') || !audible()) return null;
+    if (disposed || !def || id.startsWith('heli.radio.') || !audible() ||
+      id.startsWith('ski.') && !skiEnabled()) return null;
     follow();
     if (def.loop || def.bus === 'voice') return null;
     if (def.layers) return startLayers(id, options.scale ?? 1, options.rate ?? 1);
@@ -453,11 +457,14 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
   }
 
   // Call every frame with heliReadout(state) and the load on the cable.
-  function update(readout, {loadKg = 0} = {}) {
+  function update(readout, {loadKg = 0, ski = null, deepSnow = 0} = {}) {
     if (disposed) return;
     if (!isEnabled() || !audio.context) { stopAll(); return; }
     follow();
-    if (preloaded !== context) { preloaded = context; void load(); }
+    if (preloaded !== context) {
+      preloaded = context; void load();
+      if (skiEnabled()) void load(Object.keys(SKI_CUES));
+    }
     advance();
     if (current && current.until <= now()) finishLine(current);
     if (!audible()) { stopLoops(); return; }
@@ -477,6 +484,15 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
       else if (crashHold.signature !== signature) crashHold = null;
     }
     if (crashHold) { stopLoops(); return; }
+    const run = skiEnabled() ? ski?.run : null;
+    for (const [id, voice] of Object.entries(skiBeds(run, deepSnow))) {
+      steer(bed(id, voice.gain > 0, voice), voice, cues[id]);
+    }
+    // The parked helicopter's frozen readout must not drone over the ski run.
+    if (run) {
+      for (const id of ['heli.rotor', 'heli.wind']) bed(id, false, {});
+      return;
+    }
     const rotor = rotorVoice(readout, {loadKg}), wind = windVoice(readout);
     steer(bed('heli.rotor', rotor.gain > 0, rotor), rotor, cues['heli.rotor']);
     steer(bed('heli.wind', rotor.gain > 0 && wind.gain > .001, wind), wind, cues['heli.wind']);
@@ -510,6 +526,12 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     if (Array.isArray(ev)) { for (const item of ev) event(item, state); return; }
     if (!ev || typeof ev !== 'object' || disposed || seen.has(ev)) return;
     seen.add(ev);
+    const skiCue = skiEventCue(ev);
+    if (skiCue) { play(skiCue); return; }
+    if (ev.type === 'skiPickup') {
+      for (const id of ['ski.carve', 'ski.skid', 'ski.wind', 'ski.powder']) bed(id, false, {});
+      return;
+    }
     if (ev.type === 'entered') { crashHold = null; return; }
     const sounds = HELI_EVENT_CUES[ev.type];
     if (!sounds || !isEnabled()) return;
