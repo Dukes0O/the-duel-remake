@@ -235,7 +235,7 @@ export class App {
           const candidate=session?.key===lap.key&&session.timeSec<lap.timeSec?session:lap;
           const saved=storeGhost(current,candidate);this.ghosts=saved.store;
           if(saved.saved){
-            this.grandPrixGhostSaveStatus='session';this.grandPrixGhostCandidate=candidate;
+            this.grandPrixGhostSaveStatus='pending';this.grandPrixGhostCandidate=candidate;
             this._saveGhostStore(saved=>{
               this.grandPrixGhostSaveStatus=saved?'saved':'session';
               this.grandPrixGhostCandidate=saved?null:candidate;
@@ -892,9 +892,9 @@ export class App {
     const result=saveGhosts(this.ghosts);
     const complete=saved=>{
       if(this._ghostSaveAttempt!==attempt)return;
-      this.ghostSaved=saved;onSaved?.(saved);
+      this.ghostSaved=saved;this.ghostSaveStatus=saved?'saved':'failed';onSaved?.(saved);
     };
-    this.ghostSaved=false;
+    this.ghostSaved=false;this.ghostSaveStatus='pending';
     if(result?.then)result.then(complete);else complete(result);
   }
   _finishGhost(payload,state,awarded,result){
