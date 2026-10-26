@@ -52,3 +52,7 @@ No frames measured; live game and real saves untouched.
 ## Removed
 
 Nothing.
+
+## Claude review (26 October 2026)
+
+Approved and merged: the picture at Tremblant Snow shows the panel, the parked car and both buttons. No assertion changed. Live with the next release.

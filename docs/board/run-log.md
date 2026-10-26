@@ -1358,3 +1358,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 Full tier on 591d9245: 516/516 (1,475 s). Release: HELI-CARRY-CLEAR and SAVE-RECORDS-IDB go live.
 - 2026-10-26 DRIVE-LESSON-FINISH tuning merged (Codex): Pro 95%, Cutting late try runs wide; Beaver Hairpin still fails keyboard tries at 55 mph, left open.
 - 2026-10-26 Beaver keyboard fix merged (Codex): lesson 1 Beaver starts past the kink; keyboard tries pass; suites and build pass.
+- 2026-10-26 HELI-LANDED merged (live, next release); MAP-FINISH and SKI-FINISH evidence merged (dev). Heli, map, ski suites, replays and build pass on integration.
