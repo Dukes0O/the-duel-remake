@@ -39,8 +39,8 @@ for (const id of ['tremblant-woods', 'panorama-ridge']) {
     ok(clearCircle(course, ground, spot.clearing.x, spot.clearing.z, SEARCH.clearingRadius), 'a clear, level circle of 12 m radius');
   }
   const picked = pickHiker(spots, 12345);
-  ok(Math.hypot(picked.lastSeen.x - picked.hiker.x, picked.lastSeen.z - picked.hiker.z) <= SEARCH.hikerFromPoint, 'within 250 m of where last seen');
-  eq(picked.lastSeen.radius, 300, 'the search circle is 300 m across the point');
+  ok(Math.hypot(picked.lastSeen.x - picked.hiker.x, picked.lastSeen.z - picked.hiker.z) <= SEARCH.hikerFromPoint, 'within 120 m of where last seen');
+  eq(picked.lastSeen.radius, 180, 'the search circle has a 180 m radius');
   eq(pickHiker(spots, 12345), picked, 'the same seed, the same hiker');
   ok(hikerSpots(course, ground, site) === spots, 'worked out once per course');
   ok(JSON.stringify(pickHiker(spots, 777)) !== JSON.stringify(picked), 'another seed, another hiker');
@@ -99,6 +99,8 @@ for (const [id, least, band] of [['tremblant-snow', 3, [10, 40]], ['summit-run',
   const spots = hoistSpots(course, ground);
   ok(spots.length >= 5, `Panorama Ridge offers at least 5 hoist spots (${spots.length})`);
   for (const spot of spots) {
+    const start = course.at(40);
+    ok(Math.hypot(spot.x - start.x, spot.z - start.z) <= 550, 'the hoist site is within 550 m of the start');
     const roadNear = course.nearest(spot.x, spot.z), gap = Math.abs(roadNear.lateral) - course.roadHalfWidthAt(course.phase(roadNear.s));
     ok(SEARCH.hoistSections.includes(course.sectionAt(course.phase(roadNear.s))?.name), 'beside Mountain Climb or The Ridge');
     ok(course.at(course.phase(roadNear.s)).y - spot.y >= SEARCH.hoistBelowRoad, '10 m or more below the nearest road');

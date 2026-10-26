@@ -457,8 +457,8 @@ check('a call taken by another crew: no pay, no charge, a quiet spell as if it h
   assert.equal(same.missions.call.kind, 'hiker');
 });
 
-check('the clocks: 15, 12, 12 and 25 minutes, in one table', () => {
-  assert.deepEqual({...RESCUE_CLOCKS}, {hiker: 900, avalanche: 720, hoist: 720, supply: 1500});
+check('the clocks: 15, 12, 15 and 31 minutes, in one table', () => {
+  assert.deepEqual({...RESCUE_CLOCKS}, {hiker: 900, avalanche: 720, hoist: 900, supply: 1860});
   assert.deepEqual([...CASUALTY_KINDS], ['hiker', 'avalanche', 'hoist']);
   assert.equal(DUSK_SECONDS, 180);
   assert.equal(rescueLimit('hiker'), 900);
