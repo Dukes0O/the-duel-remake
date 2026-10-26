@@ -119,7 +119,7 @@ Recipe in PowerShell (the flag exists only in this child Node process):
 
 ```powershell
 node --input-type=module -e "process.env.DUEL_LESSON_FINISH='1'; const {main}=await import('./tools/browser-harness.mjs'); process.exitCode=await main(['scenario','drive-lesson-run','--output-dir','.evidence/2026-10-26/DRIVE-LESSON-FINISH']);"
-python tools/drive-lesson-finish-sheet.py .evidence/2026-10-26/DRIVE-LESSON-FINISH
+# Current comparison-sheet command is under Beaver keyboard fix below.
 ```
 
 The final captures preceded the recipe's move behind the existing scenario's
@@ -252,12 +252,144 @@ Trial validation:
 - After review, recycled only this trial's four evidence directories and its
   generated QA/production bundles. Earlier evidence was left alone.
 
+## Beaver keyboard fix, 26 October
+
+Decision before code: Kyle relayed Claude's setup decision: first remove the
+curved approach by starting on The Spur after Beaver Kink and recomputing the
+brake cone; only then try a wider inside-cone gap, then another Woods hairpin
+if needed. Keep the same scripted DOM keyboard controls, four pass rules,
+92/95% pace and dev switches. First trial: start 70 m before the hairpin,
+10 m after the kink, at the existing 75 mph. Checks: the existing keyboard
+recipe on both settings and corners, native lesson tests, lane tier (jobs 4),
+build and independent review. No frame checks or voice recording.
+
+The 70 m trial reaches the hairpin cleanly on both settings. Pro passes all
+four rules. Casual misses the unchanged brake window by 0.020 m (first press
+5.020 m after cone 1); its other three rules pass. Trial 75 m next: five more
+metres of straight before braking, still five metres past the kink. No driver
+or pass-window change.
+
+**Picked: start 75 m before Beaver Hairpin, on The Spur, at 75 mph.** This
+is 4.96 m past Beaver Kink. Cone 1 is recomputed by the existing speed plan;
+cones 2 and 3, the hairpin, physics, keyboard adapter and pass rules stay exact.
+There are now 40 m (Casual) / 41 m (Pro) of entirely straight road from gate
+to brake cone. The old 276–277 m approach included an 80-degree kink. This
+shortens the whole exercise while giving an uninterrupted straight approach.
+No wider cone gap or alternative hairpin was needed. The switch stays dev.
+
+Same seed 1989, stock F42, Club driver, no upgrades, fresh memory-only player
+per setting; same 120 Hz DOM keyboard driver and speed targets as the earlier
+trials. The following is measured automated driving, not a child playtest.
+
+| Corner / setting | Instructor before → after | Right try before → after | Late try before → after | Challenge margin before → after |
+| --- | --- | --- | --- | --- |
+| The Cutting / Casual | 10.35 → 10.35 s | Pass, +0.11 → +0.11 s | Wall at 207.49 → 207.49 m; 9.47 m wide | 0.51 → 0.51 s, three wins |
+| The Cutting / Pro | 10.14 → 10.14 s | Pass, +0.08 → +0.08 s | Wall at 207.37 → 207.37 m; 9.40 m wide | 0.27 → 0.27 s, three wins |
+| Beaver / Casual | 16.87 → 10.42 s | Wall at 216.63 m before cone 1 → pass, four rules, +0.06 s | Same approach wall → off-road at 182.46 m, 11.99 m wide | Not reached → 0.49 s, three wins |
+| Beaver / Pro | 16.50 → 10.17 s | Wall at 216.91 m before cone 1 → pass, four rules, +0.09 s | Same approach wall → off-road at 176.92 m, 15.45 m wide | Not reached → 0.23 s, three wins |
+
+Distances in result rows are progress from each setup's own gate; the gates
+differ, so these are not directly comparable crash locations. Wide means
+maximum outward difference from the instructor trace inside the hairpin.
+An unfinished late try has no finish-time comparison. Beaver's right tries
+have zero screech; its late tries measure 0.225 s (Casual) / 0.125 s (Pro).
+They demonstrate running wide, not the older 0.50 s sustained-screech goal.
+The Cutting's screech stays zero. Challenge margins are one deterministic
+pattern repeated three times, not three independent human trials.
+
+| Beaver setup | Gate s | Cone 1 s | First keyboard brake relative to cone 1, Casual / Pro |
+| --- | --- | --- | --- |
+| Before | 1498.173 | 1775.173 / 1774.173 | None: approach wall |
+| 70 m trial | 1738.988 | 1774.988 / 1775.988 | +5.020 m (fail) / +4.675 m (pass) |
+| Chosen 75 m | 1733.988 | 1773.988 / 1774.988 | +4.905 m / +4.582 m (both pass) |
+
+### Why the keyboard hit the wall before the cone
+
+The earlier note's rolling-speed diagnosis was incomplete: the driver
+accelerates before the kink, then cannot brake because it waits for cone 1.
+In the fresh 75 mph baseline it reaches the kink's constant-radius section
+at 103.14 mph Casual / 103.81 mph Pro. At s=1675.86 / 1676.65 m the road's
+curvature is 0.025 per metre (40 m radius). Following that centreline needs
+1.153 / 1.160 radians of turn per second; the sampled yaw is only
+0.407 / 0.403. The keyboard speed ceiling is 0.763 / 0.761 of its ordinary
+yaw authority. Full held-key authority there is 0.407 / 0.403 rad/s, while
+the unbraked tyre limit is 0.534 / 0.530 rad/s. The keyboard ceiling makes
+the shortfall worse, but even smooth full-grip steering cannot take that
+curve at that speed. The instructor slows before it; the script cannot
+copy that light braking under the unchanged first-brake rule. Lowering
+only the initial rolling speed does not remove the later acceleration.
+
+By s=1701.55 / 1702.39 m the car is 6.09 / 6.32 m across to the outside
+and heading error is -0.552 / -0.561 rad (about 32 degrees). The attempt
+ends at s=1714.80 / 1715.09 m, still 60.37 / 59.09 m before cone 1.
+Late and right attempts have identical baseline crash progress and no brake
+press. The approach telemetry is retained from the late run; the right run
+was split for its cone photograph, so its initial telemetry is omitted in
+these captures. The recipe now joins the two telemetry segments without
+changing any keys or steps.
+
+This is not a camera-driven failure: the controller reads course curvature,
+instructor poses and simulation state, never camera position or pixels.
+The App is stopped and stepped at 120 Hz; drawing is requested only at
+capture boundaries. Camera or child visibility issues are not assessed by
+these state-based measurements.
+
+Changed assertions: the exact corner-row test now expects Beaver Hairpin /
+75 m instead of Beaver Kink / 150 m. This pins the authorized setup, with
+the same 75 mph. Added native assertions require at least 35 m before the
+brake cone and zero curvature at every metre of that approach. No existing
+rule, screech threshold, tolerance, fingerprint or signature is loosened.
+Claude's written review of the changed setup expectation remains required
+before integration, as in the earlier tuning trial.
+
+Evidence: baseline, rejected 70 m and chosen 75 m browser batches use private
+ports 35987, 26567 and 39049. Each completed with memory-only storage and
+zero console warnings/errors. The final batch captured 24 pictures. The
+comparison sheet is `docs/board/looks/driving-lessons/look-1.jpg`
+(272,398 bytes). Reproduce with the existing opt-in browser command and
+`beaver-before`, `beaver-straight`, `beaver-after` output folders under this
+card's evidence directory, on the corresponding setup. Sheet recipe:
+`python tools/drive-lesson-finish-sheet.py .evidence/2026-10-26/DRIVE-LESSON-FINISH docs/board/looks/driving-lessons/look-1.jpg`.
+
+Independent review: clear. Reviewer checked setup isolation, unchanged rules,
+new approach assertions, every table value, yaw-limit calculations and the
+comparison sheet. The obsolete sheet command was corrected. The first lane
+run passed 29 suites, failed only the
+sheet's filename placement and left four suites unrun (298.79 s). Renamed
+the sheet to the required `look-1.jpg`; the hygiene assertion is unchanged.
+Only that check and the four unrun suites are continued; passing checks are
+not repeated. Cockpit sync completed with zero tasks changed. Session STATUS
+generated without a live-root argument.
+
+Continuation: the corrected hygiene check and four unrun suites all passed
+(5/5, zero failed or unrun, 308.47 s). Combined lane selection: 34/34 covered
+by passing results. This includes all 37 native lesson-1 checks, their
+unchanged 0.50 s smooth-steering screech checks, native App acceptance and
+lessons 2 to 4. Replay fingerprints: 225 passed; combat fingerprints: 12;
+world composition: 47. No pins or signatures were re-recorded. Commands ran
+in PowerShell with System32 first on PATH and at most four jobs, after
+FACTORY section 8 admission. One-minute counts above three had a newer
+foreign browser job; this lane started no extra job and touched no foreign
+process. No frame timing, voice recording, live-folder access, merge or push.
+
+`npm run build`: passed, 541 modules, 1.10 s. Existing mixed static/dynamic
+game import and large-chunk warnings remain. Build admitted at two running
+heavy jobs and finished before a one-minute recheck was due. Both switches
+remain dev. Recycled this run's QA and production bundles after use.
+
+After the review, recycled this run's `beaver-before`, `beaver-straight` and
+`beaver-after` raw captures and reports. The reviewed sheet, recipe and
+measurements above remain. Earlier evidence was not touched.
+
 ## Removed
 
 Replaced vague lesson 1 rule labels and unexplained result retries. No assets,
 pass rules, saves or runtime dependencies removed.
 Tuning replaces The Cutting's old late-board setup and lesson 1's 97% Pro
 mark. Rejected rolling-speed trials are removed; no duplicate setup retained.
+Beaver's old pre-kink lesson-1 gate is replaced, not retained as a switch or
+fallback. The rejected 70 m setup is not kept in code. The comparison-sheet
+recipe now makes the current Beaver before/after sheet.
 
 ## Claude review of the tuning trial (26 October 2026)
 
