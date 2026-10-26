@@ -1,7 +1,7 @@
 // Fire triangle (docs/LAB.md 4.1): a steel fire pit with three switches (heat, fuel, air) and three ways to put
 // it out. The practice fire uses the game's own spread rules (heli-fire.js spreadStep on a grid of 20 m cells):
 // a cleared strip is a column of cells with no forest in it, which a fire cannot cross without wind.
-import {FIRE, cellId, spreadStep} from '../../heli/heli-fire.js';
+import {FIRE, RETARDANT, cellId, spreadStep} from '../../heli/heli-fire.js';
 import {choice, makeBench} from './bench-core.js';
 
 const ON_OFF = ['on', 'off'];
@@ -15,7 +15,7 @@ export const TAKES_AWAY = Object.freeze({water: 'heat', sand: 'air', 'cleared st
 
 // A strip of forest 9 cells long and 5 wide, lit at one end; optionally one column cleared.
 const COLUMNS = 9, ROWS = 5, CLEARED_COLUMN = 4;
-export function practiceFire({cleared = false, steps = 14} = {}) {
+export function practiceFire({cleared = false, treated = false, details = false, steps = 14} = {}) {
   const cells = new Map();
   for (let i = 0; i < COLUMNS; i++) {
     if (cleared && i === CLEARED_COLUMN) continue;
@@ -23,9 +23,11 @@ export function practiceFire({cleared = false, steps = 14} = {}) {
   }
   const grid = {cells};
   let fire = {seed: 1989, steps: 0, burning: [[cellId(0, 2), FIRE.startPercent]], burnt: [], damp: []};
+  if (treated) fire.retardant = [...cells.values()].filter(c => c.i === CLEARED_COLUMN).map(c => [cellId(c.i, c.j), RETARDANT.litresPerCell]);
   for (let step = 0; step < steps; step++) fire = spreadStep(fire, grid, null);
   const reached = fire.burning.some(([cell]) => Math.floor(cell / 1024) - 512 > CLEARED_COLUMN);
-  return {burningCells: fire.burning.length, forestCells: cells.size, reachedFarSide: reached};
+  return {burningCells: fire.burning.length, forestCells: cells.size, reachedFarSide: reached,
+    ...(details ? {cells: [...cells.values()], burning: fire.burning, burnt: fire.burnt} : {})};
 }
 
 export const fireBench = makeBench({
