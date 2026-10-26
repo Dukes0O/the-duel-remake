@@ -13,7 +13,16 @@ export async function run(c) {
   await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < 3.6`);
   await walk('KeyA', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] < -7.8`);
   await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the Lift')`, 'machine');
-  await c.screenshot('brian-in-room');
+  await walk('KeyA', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] < -8.8`);
+  const yaw = await c.evaluate(`(() => { const p = JSON.parse(${canvas}.dataset.labWalkPosition), b = JSON.parse(${canvas}.dataset.labBrianPosition); return Math.atan2(p[0] - b[0], p[2] - b[1]); })()`);
+  async function look(delta, drop) {
+    await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: 720, y: 450, button: 'left', clickCount: 1});
+    await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 720 - delta / .003, y: 450 + drop, button: 'left', buttons: 1});
+    await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: 720 - delta / .003, y: 450 + drop, button: 'left', clickCount: 1});
+    await new Promise(r => setTimeout(r, 200));
+  }
+  await look(yaw, 70); await c.screenshot('brian-in-room'); await look(-yaw, -70);
+  await walk('KeyD', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] > -7.8`);
   await key('KeyE', 'keyDown'); await key('KeyE', 'keyUp');
   const text = `document.querySelector('.lab-teaching')?.textContent`;
   const click = action => c.evaluate(`document.querySelector('[data-teach="${action}"]').click()`);
@@ -34,12 +43,16 @@ export async function run(c) {
   }
   await c.waitFor(`${text}?.includes('Will she lift off')`, 'prediction'); await c.screenshot('prediction');
   async function target(id) {
+    await c.waitFor(`JSON.parse(${canvas}.dataset.labLessonControls ?? '[]').some(p => p.id === '${id}')`, 'visible machine control');
     return c.evaluate(`(() => { const el = ${canvas}, b = el.getBoundingClientRect(), p = JSON.parse(el.dataset.labLessonControls).find(p => p.id === '${id}'); return {x: b.left + p.x, y: b.top + p.y}; })()`);
   }
   async function touch(id) {
     const p = await target(id);
+    const before = await c.evaluate(`JSON.parse(${canvas}.dataset.labLiftLoad)['${id}']`);
     await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', button: 'left', clickCount: 1, ...p});
     await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', button: 'left', clickCount: 1, ...p});
+    try { await c.waitFor(`JSON.parse(${canvas}.dataset.labLiftLoad)['${id}'] !== ${before}`, `3D ${id} changed`, 5000); }
+    catch (error) { await c.screenshot('load-inputs'); throw Error(error.message + ': ' + await c.evaluate(`${canvas}.dataset.labLiftLoad + ' / ' + ${text}`)); }
   }
   // Drag the actual lever, then lower it with a held key.
   await click('answer:hover');
@@ -49,11 +62,11 @@ export async function run(c) {
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', button: 'left', clickCount: 1, x: p.x, y: p.y - 120});
   await c.waitFor(`JSON.parse(${canvas}.dataset.labLiftLoad).collective > .55`, 'dragged lever');
   await key('ArrowDown', 'keyDown');
-  await c.waitFor(`JSON.parse(${canvas}.dataset.labLiftLoad).collective < .43`, 'held Down');
+  await c.waitFor(`JSON.parse(${canvas}.dataset.labLiftLoad).collective < .35`, 'held Down');
   await key('ArrowDown', 'keyUp');
   // First fail deliberately, exercising the kilogram hint.
   await click('run'); await c.waitFor(`!!document.querySelector('[data-teach="retry"]')`, 'hint'); await c.screenshot('hint');
-  if (!(await c.evaluate(`/\d+ kg/.test(${text})`))) throw Error('Hint has no kilogram change.');
+  if (!(await c.evaluate(`/[0-9]+ kg/.test(${text})`))) throw Error('Hint has no kilogram change.');
   await click('retry');
   // The model carries the force numbers; use them to hold the actual key
   // until the arrows match, without reaching into a teaching session.
@@ -65,20 +78,26 @@ export async function run(c) {
     // Runtime values supplied by the same pure module during QA; no hand-kept
     // copy of helicopter numbers in the browser scenario.
     const {padForces, PAD} = await import('../../src/lab/lessons/lift-pad.js');
-    const target = padForces(l, PAD.hoverHeight).hoverCollective;
-    await key('ArrowUp', 'keyDown');
-    await c.waitFor(`JSON.parse(${canvas}.dataset.labLiftLoad).collective >= ${target - .002}`, 'matching arrows');
-    await key('ArrowUp', 'keyUp');
+    const desired = padForces(l, PAD.hoverHeight).hoverCollective;
+    const p = await target('collective');
+    await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', button: 'left', clickCount: 1, ...p});
+    await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', button: 'left', buttons: 1, x: p.x, y: p.y - desired * 180});
+    await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', button: 'left', clickCount: 1, x: p.x, y: p.y - desired * 180});
+    await c.waitFor(`Math.abs(JSON.parse(${canvas}.dataset.labLiftLoad).collective - ${desired}) < .0001`, 'matching arrows');
   }
   await balance(); await click('answer:hover'); await click('run');
   await c.waitFor(`${text}?.includes('held a hover')`, 'guided hover'); await c.screenshot('guided'); await click('next');
   await balance(); await click('answer:hover'); await click('run');
   await c.waitFor(`${text}?.includes('held a hover')`, 'prompted hover'); await c.screenshot('prompted'); await click('next');
   // Load using real objects. Button access is also covered by the two hover tries.
+  await click('answer:down');
+  await touch('fuel'); await touch('fuel');
+  await c.waitFor(`JSON.parse(${canvas}.dataset.labLiftLoad).fuel === 100`, 'fuel can transfer');
+  await touch('fuel'); await touch('fuel'); await touch('fuel');
   await touch('car'); await touch('crates'); await touch('crates'); await touch('crates');
   await c.waitFor(`JSON.parse(${canvas}.dataset.labLiftLoad).car === 1 && JSON.parse(${canvas}.dataset.labLiftLoad).crates === 3`, 'real load objects');
   await key('ArrowUp', 'keyDown'); await c.waitFor(`JSON.parse(${canvas}.dataset.labLiftLoad).collective === 1`, 'full collective'); await key('ArrowUp', 'keyUp');
-  await click('answer:down'); await click('run'); await c.waitFor(`${text}?.includes('lighten it')`, 'alone overload'); await c.screenshot('alone'); await click('next');
+  await click('run'); await c.waitFor(`${text}?.includes('lighten it')`, 'alone overload'); await c.screenshot('alone'); await click('next');
   for (let i = 0; i < 2; i++) {
     await c.waitFor(`${text}?.includes('Which one can hover')`, 'check'); await c.screenshot(`check-${i}`);
     await click(i === 0 ? 'answer:a' : 'answer:c'); await c.screenshot(`check-answer-${i}`); await click('next');

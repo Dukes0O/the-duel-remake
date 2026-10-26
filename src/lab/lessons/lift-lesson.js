@@ -105,6 +105,24 @@ export const hooks = {animations, pictures, mount: mountLift,
       hint.what = `Lift is ${excess} kg more than weight, so she climbs. Lower the collective.`;
       hint.plainer = `Hold ↓ to remove about ${excess} kg of lift.`;
     }
+    if (failure === 'prediction') {
+      const motion = actual === 'hover' ? 'hovered' : actual === 'up' ? 'climbed' : 'stayed down';
+      const picture = actual === 'hover' ? 'Hovers' : actual === 'up' ? 'Lifts off' : 'Stays down';
+      hint.what = `This ${Math.round(f.massKg)} kg load ${motion}. Keep the same load and choose ${picture}.`;
+      hint.plainer = `Keep all ${Math.round(f.massKg)} kg aboard and pick ${picture}.`;
+    }
+    if (failure === 'goal') {
+      if (load.collective < .999) {
+        hint.what = `You have not tested this ${Math.round(f.massKg)} kg load at full collective. Hold ↑ to test its limit.`;
+        hint.plainer = `Keep the same ${Math.round(f.massKg)} kg aboard and hold ↑ until the lever stops.`;
+      } else {
+        const addKg = Math.max(1, Math.ceil(f.maximumN / (f.weightN / f.massKg) - f.massKg + 1));
+        const crates = Math.max(0, Math.ceil((addKg - (load.car ? 0 : PAD.carKg)) / PAD.crateKg));
+        const action = [!load.car ? 'hook the Dusthawk' : '', crates ? `add ${crates} crates` : ''].filter(Boolean).join(' and ');
+        hint.what = `This ${Math.round(f.massKg)} kg load can still climb. Add at least ${addKg} kg: ${action}.`;
+        hint.plainer = `Add at least ${addKg} kg: ${action}.`;
+      }
+    }
     return {passed: passed && load.fuel > 0, actual, failure, hint};
   },
 };

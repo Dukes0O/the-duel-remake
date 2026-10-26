@@ -27,6 +27,13 @@ test('every offered pad load reads the helicopter rules, including ground effect
       assert.ok(Math.abs(s.vy - expected) < 1e-10);
       const hs = createHeliState({fuelKg: fuel, y: PAD.hoverHeight});
       assert.equal(padForces(input, PAD.hoverHeight).maximumN, hs.engine ? availableThrust(hs, PAD.hoverHeight) : 0);
+      const h = padForces(input, PAD.hoverHeight);
+      if (h.hoverCollective <= 1) {
+        assert.equal(padOutcome({...input, collective: h.hoverCollective}), 'hover');
+        hs.mode = 'real'; hs.collective = h.hoverCollective;
+        stepHeli(hs, {}, {external: {y: -cargo * GRAVITY}}, HELI_STEP);
+        assert.ok(Math.abs(hs.vy) < 1e-10, 'each liftable load can really balance in the low hover');
+      }
       checked++;
     }
   }
@@ -71,6 +78,13 @@ test('hints name the physical failure and kilograms, and the hover pictures matc
   const overloaded = hooks.evaluate({tryIndex: 0, input: {car: 1, crates: 3, collective: 1}, prediction: 'hover'});
   const cratesToRemove = Number(overloaded.hint.what.match(/Remove (\d+) crates/)[1]);
   assert.ok(padForces({car: 1, crates: 3 - cratesToRemove, collective: 1}, PAD.hoverHeight).shortKg === 0);
+  const goal = hooks.evaluate({tryIndex: 2, input: {collective: 1}, prediction: 'up'});
+  assert.equal(goal.failure, 'goal'); assert.match(goal.hint.what, /[0-9]+ kg/);
+  assert.match(goal.hint.what, /hook the Dusthawk and add 2 crates/);
+  const lowPower = hooks.evaluate({tryIndex: 2, input: {car: 1, crates: 3, collective: .1}, prediction: 'down'});
+  assert.match(lowPower.hint.what, /not tested.*kg.*full collective/);
+  const wrongPicture = hooks.evaluate({tryIndex: 0, input: {collective: padForces({fuel: KESTREL.tankKg}, PAD.hoverHeight).hoverCollective}, prediction: 'up'});
+  assert.equal(wrongPicture.failure, 'prediction'); assert.match(wrongPicture.hint.what, /1630 kg load hovered/);
 });
 
 test('every primitive in the real rotor pitches both blades together and restores its original mesh', async () => {
@@ -89,4 +103,14 @@ test('every primitive in the real rotor pitches both blades together and restore
   pitchBlades(blades, 0);
   for (const {mesh, original} of blades) assert.deepEqual(mesh.geometry.attributes.position.array, original);
   assert.equal(trialInput({}, 0).crates, 0); assert.equal(trialInput({}, 1).crates, 1);
+});
+
+test('pulling the collective raises its handle, speeds the air and grows lift together', () => {
+  const low = hooks.animations.collective({time: 0});
+  const high = hooks.animations.collective({time: 3});
+  const handle = d => d.objects.find(o => o.id === 'collective-handle');
+  assert.ok(handle(high).position[1] > handle(low).position[1]);
+  assert.ok(high.streams[0].speed > low.streams[0].speed);
+  assert.ok(high.forces.find(f => f.kind === 'lift').newtons > low.forces.find(f => f.kind === 'lift').newtons);
+  assert.equal(high.graph, null);
 });

@@ -147,7 +147,7 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
       close(); entry = found; session = createLessonSession(entry); wordVoice = ''; lastTime = performance.now(); paint(); return true;
     },
     active: () => Boolean(session || hover || notebook),
-    control(id, value) { if (!session || hover || notebook) return; session.control(id, value); paint(); },
+    control(id, value) { if (!session || hover || notebook) return; if (value === undefined) onCue?.('lab.clunk'); session.control(id, value); paint(); },
     decorate,
     tick(visible) {
       notebookButton.hidden = !visible || !on();

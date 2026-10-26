@@ -70,7 +70,7 @@ export function createLessonPictures({scene, camera, canvas, doc, models, modelO
     mounted?.draw?.(drawing, args);
     shapes(drawing.objects, objects);
     root.updateMatrixWorld(true); camera.updateMatrixWorld(true);
-    canvas.dataset.labLessonControls = JSON.stringify([...objects.values()].filter(o => o.userData.teachControl).map(o => {
+    canvas.dataset.labLessonControls = JSON.stringify([...objects.values()].filter(o => view.controls?.some(c => c.id === o.userData.teachControl)).map(o => {
       const point = o.getWorldPosition(new THREE.Vector3()).project(camera);
       return {id: o.userData.teachControl, x: (point.x + 1) * canvas.clientWidth / 2, y: (1 - point.y) * canvas.clientHeight / 2};
     }));
@@ -110,6 +110,8 @@ export function createLessonPictures({scene, camera, canvas, doc, models, modelO
     });
     graph.visible = view.stage !== 0 && Boolean(drawing.graph);
     if (drawing.graph) {
+      graph.scale.set(...(drawing.graph.size ?? [2.8, 1.575, 1]));
+      graph.position.set(...(drawing.graph.position ?? [2.9, 2.5, 0]));
       const g = drawing.graph, ctx = graphCanvas.getContext('2d');
       ctx.fillStyle = '#252c29'; ctx.fillRect(0, 0, 640, 360);
       ctx.strokeStyle = '#c5cdbc'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(70, 55); ctx.lineTo(70, 290); ctx.lineTo(610, 290); ctx.stroke();

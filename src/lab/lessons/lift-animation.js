@@ -37,17 +37,17 @@ export function liftDrawing(input, time, mode = 'try', support = null) {
   const baseY = .12 + rise;
   const showLift = !['rotor', 'weight', 'wonder'].includes(mode), showWeight = !['rotor', 'lift', 'collective', 'wonder'].includes(mode);
   const showAir = !['weight', 'rotor'].includes(mode);
-  const scale = .000065;
+  const scale = .000034;
   const forceN = mode === 'hover' || outcome === 'hover' && rise > 0 ? h.weightN : f.liftN;
   const forces = [];
-  if (showLift) forces.push({kind: 'lift', newtons: forceN, origin: [-.65, 1.3 + rise, .85], direction: [0, 1, 0], labelPosition: [-1.35, 3.5, 1]});
-  if (showWeight) forces.push({kind: 'weight', newtons: f.weightN, origin: [.65, 3.4 + rise, .85], direction: [0, -1, 0], labelPosition: [1.1, 3.9, 1]});
-  const angle = load.collective * 1.05;
-  const objects = [{id: 'collective-shaft', position: [.45, baseY + .8, .7], size: [.045, .55, .045], rotation: [-angle, 0, 0], colour: '#8f9791'},
-    {id: 'collective-handle', shape: 'sphere', control: 'collective', position: [.45, baseY + .8 + Math.cos(angle) * .275, .7 - Math.sin(angle) * .275], size: [.16, .16, .16], colour: '#edc557'}];
+  if (showLift) forces.push({kind: 'lift', newtons: forceN, origin: [-.5, 1.4 + rise, .85], direction: [0, 1, 0], labelPosition: [-1.35, 2.8, 1]});
+  if (showWeight) forces.push({kind: 'weight', newtons: f.weightN, origin: [.5, 1.65 + rise, .85], direction: [0, -1, 0], labelPosition: [1.35, 2.8, 1]});
+  const angle = (1 - load.collective) * 1.05;
+  const objects = [{id: 'collective-shaft', position: [.45, baseY + .3 + Math.cos(angle) * .24, .52 - Math.sin(angle) * .24], size: [.045, .48, .045], rotation: [-angle, 0, 0], colour: '#8f9791'},
+    {id: 'collective-handle', shape: 'sphere', control: 'collective', position: [.45, baseY + .3 + Math.cos(angle) * .48, .52 - Math.sin(angle) * .48], size: [.16, .16, .16], colour: '#edc557'}];
   objects.push({id: 'fuel-target', control: 'fuel', position: [-1.65, .5, 1.5], size: [1, .9, .8], opacity: 0},
     {id: 'car-target', control: 'car', position: [load.car ? 1.15 : 2.6, .5, -.45], size: [.8, .8, 1.6], opacity: 0},
-    {id: 'crate-target', control: 'crates', position: [1.5, .5, .8], size: [1, .9, .8], opacity: 0});
+    {id: 'crate-target', control: 'crates', position: [1.5, .4, 1.3], size: [.7, .7, .7], opacity: 0});
   // Solid coloured shafts stay legible against the steel hangar.
   forces.forEach((a, i) => objects.push({id: `force-shaft-${i}`, position: [a.origin[0], a.origin[1] + a.direction[1] * a.newtons * scale / 2, a.origin[2]], size: [.075, Math.max(.001, a.newtons * scale - .12), .075], colour: a.kind === 'lift' ? '#56d683' : '#f06464'}));
   if (support === 'guided') objects.push({id: 'guide', position: [.45, 1.65, .7], size: [.05, .35, .05], colour: '#edc557'});
@@ -56,7 +56,7 @@ export function liftDrawing(input, time, mode = 'try', support = null) {
   return {load, baseY, rise, mode, forces, objects, metresPerNewton: scale,
     streams: showAir ? [-.85, 0, .85].map(x => ({medium: 'air', origin: [x, baseY + 1.4, 0], direction: [0, -1, 0], speed: load.fuel ? load.collective * 8 : 0, radius: .45, length: 1.5})) : [],
     camera: {position: [3.7, 3.1, 5.5], target: [0, .65, 0]},
-    graph: mode === 'ramp' ? {xLabel: 'Time in seconds', yLabel: 'Lift in newtons', maxX: 4, maxY: f.maximumN,
+    graph: mode === 'ramp' ? {position: [2.3, 2.6, -.4], size: [2, 1.125, 1], xLabel: 'Time in seconds', yLabel: 'Lift in newtons', maxX: 4, maxY: f.maximumN,
       points: Array.from({length: 41}, (_, i) => [i / 10, Math.min(1, i / 40) * f.weightN])} : null};
 }
 
@@ -118,7 +118,7 @@ export function mountLift({group, THREE, models, doc, canvas}) {
         rotor.rotation.y = l.fuel ? clock.time * (d.mode === 'collective' ? 1.1 : 3) : 0;
         pitchBlades(blades, l.collective);
       }
-      car.position.set(1.4, .13 + (l.car ? d.rise : 0), -.45);
+      car.position.set(1.4, .13 + (l.car && d.mode !== 'wonder' ? d.rise : 0), -.45);
       car.rotation.y = -.6;
       // Unloaded objects wait beside the pad instead of disappearing.
       car.position.x = l.car ? 1.15 : 2.6;
