@@ -191,7 +191,7 @@ tasks:
     lane: "AUDIO"
     size: "S"
     status: "backlog"
-    waiting_on: "kyle: voice credits for the ski radio lines (sound effects merged 26 October)"
+    waiting_on: kyle
     needs: []
     locks: [sound-bank]
     flag: "heli-skiing"
