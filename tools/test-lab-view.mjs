@@ -16,7 +16,7 @@ import {labOf} from '../src/lab/lab-save.js';
 import {createProfile} from '../src/progression.js';
 import {lightestArm} from '../src/lab/benches/strength.js';
 import {boardMarkup, benchMarkup, shopMarkup, headerMarkup, gforceStripMarkup, optionLabel} from '../src/lab/lab-markup.js';
-import {createLabScene, createSceneKeeper, labSceneStats, benchPoses, MODEL_OF_LESSON} from '../src/lab/lab-scene.js';
+import {createLabScene, createSceneKeeper, labSceneStats, MODEL_OF_LESSON} from '../src/lab/lab-scene.js';
 import {dispatchBoardMarkup, handleBoardAction} from '../src/heli/heli-board.js';
 import {lessonsMarkup, challengeMarkup, challengeGoal, noticeText} from '../src/heli/heli-ui.js';
 import {App} from '../src/app.js';
@@ -407,14 +407,19 @@ test('a scene closed while its models are still loading frees them when they arr
   assert.equal(labSceneStats().live, 0);
 });
 
-test('every bench has a camera pose, and the first pose looks at the bench from the hall side', () => {
-  for (const [lesson, model] of Object.entries(MODEL_OF_LESSON)) {
-    const poses = benchPoses({x: -6, z: -7}, [4, 2, 2]);
-    assert.ok(poses.length >= 7, `${lesson}: ${model} has spare views`);
+test('opening every ordinary bench keeps the entry camera instead of gliding', async () => {
+  const win = fakeWindow(), host = fakeHost(win);
+  const renderer = {setPixelRatio() {}, setSize() {}, render() {}, dispose() {}, forceContextLoss() {}};
+  const scene = createLabScene({host, manifest: {models: [], layout: {}}, createRenderer: () => renderer, load: async () => new Group()});
+  await scene.ready;
+  const position = scene.camera().position;
+  assert.equal(position[1], 1.6);
+  for (const id of Object.keys(MODEL_OF_LESSON)) {
+    scene.show(id); scene.renderOnce(16);
+    assert.deepEqual(scene.camera().position, position, id + ': no old bench glide');
+    assert.deepEqual(scene.camera().goal, position);
   }
-  const [pose] = benchPoses({x: 10, z: 2}, [8, 3, 7]);
-  assert.ok(Math.hypot(pose.position[0] - 10, pose.position[2] - 2) > 8, 'far enough back to see the bench');
-  assert.ok(pose.position[0] < 10 + 1, 'on the middle-of-the-hall side');
+  scene.dispose();
 });
 
 // ---- faults found in review ----

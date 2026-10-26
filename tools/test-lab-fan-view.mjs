@@ -1,7 +1,10 @@
+import {readFileSync} from 'node:fs';
+import {Group, PerspectiveCamera} from 'three';
+import {WALK, WALK_LAYOUT, machineApproaches, brianPosition} from '../src/lab/lab-walk.js';
 // The view's audio must load on demand and never outlive the Lab room.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createFanSound, fanView, fanEntry, fanMarkup, fanLoad} from '../src/lab/fan-view.js';
+import {createFanSound, createFanRoom, fanView, fanEntry, fanMarkup, fanLoad} from '../src/lab/fan-view.js';
 import {TUNNEL_LESSONS} from '../src/lab/lab-lessons.js';
 
 test('secret page has no trace until all five lessons, including forged REVERSE', () => {
@@ -68,4 +71,41 @@ test('opening muted then unmuting starts the fan; muting stops and unmuting resu
   app.audio.muted = true; sound.bench(100); assert.equal(sources[0].stops, 1);
   app.audio.muted = false; sound.bench(100); await Promise.resolve();
   assert.equal(sources.length, 2); sound.stop();
+});
+
+test('walking fan demonstration stays on the relocated scaled tunnel with its camera inside the hall', async () => {
+  for (const walking of [false, true]) {
+    const scene = new Group(), car = new Group(); car.name = 'test-fan-car';
+    const manifest = {layout: {'wind-tunnel': {x: 8.6, z: -6.3}}};
+    const room = createFanRoom({scene, manifest, walking, part: () => null, alive: () => true,
+      load: async () => new Group(), loadCar: async () => () => car, release() {},
+      host: {}, camera: new PerspectiveCamera()});
+    room.update({open: true, reverse: true, page: true, setting: 100});
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(room.frame(0).car, 'ready');
+    const [x, z] = walking ? WALK_LAYOUT['wind-tunnel'] : [8.6, -6.3], scale = walking ? WALK.scale : 1;
+    assert.deepEqual(car.scale.toArray(), [scale, scale, scale]);
+    assert.equal(car.position.x, x - .5 * scale); assert.equal(car.position.z, z);
+    assert.equal(car.position.y, (.38 - .045) * scale);
+    const pose = room.pose();
+    assert.equal(pose.target[0], car.position.x); assert.equal(pose.target[2], car.position.z);
+    if (walking) {
+      assert.ok(Math.abs(pose.position[0]) < 15 && Math.abs(pose.position[2]) < 9, 'camera remains within the hall');
+      assert.ok(Math.hypot(pose.target[0] - x, pose.target[2] - z) < 1, 'view targets the real tunnel');
+      const hall = JSON.parse(readFileSync(new URL('../public/assets/models/lab/manifest.json', import.meta.url)));
+      const bounds = hall.models.filter(m => WALK_LAYOUT[m.id]).map(m => {
+        const [x, z] = WALK_LAYOUT[m.id], b = m.footprint;
+        return {id: m.id, minX: x + b.minX*WALK.scale, maxX: x + b.maxX*WALK.scale,
+          minZ: z + b.minZ*WALK.scale, maxZ: z + b.maxZ*WALK.scale};
+      });
+      const bound = bounds.find(b => b.id === 'wind-tunnel');
+      const [sx, sz] = machineApproaches(bound, bounds, hall.hall)[0];
+      const brian = brianPosition({x: sx, z: sz, bound}, bounds, hall.hall);
+      const dx = pose.target[0]-pose.position[0], dz = pose.target[2]-pose.position[2];
+      const t = Math.max(0, Math.min(1, ((brian[0]-pose.position[0])*dx + (brian[1]-pose.position[2])*dz)/(dx*dx+dz*dz)));
+      const clearance = Math.hypot(brian[0]-pose.position[0]-t*dx, brian[1]-pose.position[2]-t*dz);
+      assert.ok(clearance > .75, 'Brian cannot obscure the retained fan-car view');
+    }
+    room.dispose();
+  }
 });

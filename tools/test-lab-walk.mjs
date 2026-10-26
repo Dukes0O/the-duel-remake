@@ -45,9 +45,10 @@ test('all sixteen prompts follow actual open, locked and passed lesson rules', (
     }
   }
 });
-test('lab-2 is opt-in private development only', () => {
-  assert.equal(createFeatureFlags({storage: null, qa: false, search: '?flags=lab-2'}).enabled('lab-2'), false);
-  assert.equal(createFeatureFlags({storage: null, qa: true}).enabled('lab-2'), false);
+test('lab-2 is on in production and QA without a preview opt-in', () => {
+  assert.equal(createFeatureFlags({storage: null, qa: false}).enabled('lab-2'), true);
+  assert.equal(createFeatureFlags({storage: null, qa: false, search: '?flags=lab-2'}).enabled('lab-2'), true);
+  assert.equal(createFeatureFlags({storage: null, qa: true}).enabled('lab-2'), true);
   assert.equal(createFeatureFlags({storage: null, qa: true, search: '?flags=lab-2'}).enabled('lab-2'), true);
 });
 test('the shared wind tunnel reports its lock reason, open choice or all-passed tick', () => {

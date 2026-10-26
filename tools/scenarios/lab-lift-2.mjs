@@ -1,7 +1,7 @@
 // The real lesson, real 3D inputs, isolated memory-only career.
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
-  await c.navigate('/tools/menu-check.html?flags=lab-2');
+  await c.navigate('/tools/menu-check.html');
   await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
   await c.evaluate(`(() => { const a = window.__qaApp; a.audio.setMuted?.(true); a.addPlayer('Lift QA');
     a.profile = {...a.profile, heli: {...a.profile.heli, version: 1, fuelKg: 400, lessons: {liftoff: true, hover: true, landing: true, carry: true}}}; a._saveProfile();
@@ -12,18 +12,11 @@ export async function run(c) {
   async function walk(code, expression) { await key(code, 'keyDown'); try { await c.waitFor(expression, code, 15_000); } finally { await key(code, 'keyUp'); } await new Promise(r => setTimeout(r, 550)); }
   await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < 3.6`);
   await walk('KeyA', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] < -7.8`);
-  await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the Lift')`, 'machine');
-  await walk('KeyA', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] < -8.8`);
-  const yaw = await c.evaluate(`(() => { const p = JSON.parse(${canvas}.dataset.labWalkPosition), b = JSON.parse(${canvas}.dataset.labBrianPosition); return Math.atan2(p[0] - b[0], p[2] - b[1]); })()`);
-  async function look(delta, drop) {
-    await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: 720, y: 450, button: 'left', clickCount: 1});
-    await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 720 - delta / .003, y: 450 + drop, button: 'left', buttons: 1});
-    await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: 720 - delta / .003, y: 450 + drop, button: 'left', clickCount: 1});
-    await new Promise(r => setTimeout(r, 200));
-  }
-  await look(yaw, 70); await c.screenshot('brian-in-room'); await look(-yaw, -70);
-  await walk('KeyD', `${canvas}.dataset.labWalkTarget === 'machine'`);
-  await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the Lift')`, 'Lift rather than Brian');
+  const yaw = await c.evaluate(`(() => { const p = JSON.parse(${canvas}.dataset.labWalkPosition); return Math.atan2(p[0] + 8.008125, p[2] - 2.84); })()`);
+  await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: 720, y: 450, button: 'left', clickCount: 1});
+  await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 720 - yaw / .003, y: 450, button: 'left', buttons: 1});
+  await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: 720 - yaw / .003, y: 450, button: 'left', clickCount: 1});
+  await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the Lift')`, 'face the Lift machine');
   await key('KeyE', 'keyDown'); await key('KeyE', 'keyUp');
   const text = `document.querySelector('.lab-teaching')?.textContent`;
   const click = action => c.evaluate(`document.querySelector('[data-teach="${action}"]').click()`);
