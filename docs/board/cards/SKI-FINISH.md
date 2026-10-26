@@ -36,3 +36,29 @@ Checks: the existing ski physics, runs, heli and view suites; a private,
 memory-only keyboard browser recipe for all five runs, drop/group flights,
 thin-air text and snowy pickup; then the lane tier (jobs 4) and build.
 Pictures cover slalom, aerials, powder/yeti and pickup. No frame timing.
+
+## Claude answers (26 October 2026): tuning for an 11-year-old on the keyboard
+
+From Codex's evidence pass (`docs/changes/SKI-FINISH.md`). The aim: a
+steady first try reaches bronze; gold needs practice.
+
+1. **Slalom is too tight** (37 misses steady, 18 practised; no medal).
+   Gate width 2 m to 3.5 m, rows 8.2 m apart to 11 m, centres +/-1.1 m to
+   +/-1.5 m. Then set bronze/silver/gold from the steady and practised runs
+   as for the other timed runs (bronze about 10% over a steady clean run,
+   gold just under the practised run). Target: steady keyboard run misses at
+   most 3 gates.
+2. **Giant slalom:** bronze margin +18% to +25% (65.69 s), as Codex
+   suggested; silver and gold unchanged.
+3. **Moguls:** find why the weave wanders to the boundary during jumps and
+   fix the cause if it is steering or a too-narrow lane (widen the lane 50%
+   first). Then medal points 30 / 50 / 70 (from 50 / 65 / 80), so a clean
+   straight run with both jumps landed is near bronze and good turns earn
+   more.
+4. **Aerials:** add "Hold down to tuck on the inrun" to the drop's tips and
+   the on-screen line at the start of the inrun.
+5. **Thin air:** the `ski.radio.thin-air` event fires but no text shows.
+   Show the line on screen (radio lines are on-screen text; voice is held).
+
+Measure each with the same scripted runs, before and after, in the change
+note. `heli-skiing` stays dev until Claude's look and frame check.

@@ -43,6 +43,10 @@ export async function run(context) {
   if(status!=='stage_result')throw Error('Native GP did not finish: '+status);
   await context.waitFor(`window.__qaApp.grandPrixGhostSaveStatus==='saved' && window.__qaApp.ghostSaved===true`,
     'actual asynchronous Grand Prix ghost save', 30_000);
+  // The scripted race stops the animation loop; deliver the next normal UI tick.
+  await context.evaluate(`window.__qaApp.onFrame?.(window.__qaApp.duel.state,0)`);
+  await context.waitFor(`document.querySelector('.grand-prix-results .ghost-saved')?.textContent==='BEST GHOST SAVED'`,
+    'visible saved ghost status after asynchronous write', 30_000);
   const report=await context.evaluate(`(() => {
     const app=window.__qaApp,s=app.duel.state,r=s.results;
     if(s.completedLaps!==3||s.lapsTotal!==3||!r.completed)throw Error('Actual three-lap finish required');

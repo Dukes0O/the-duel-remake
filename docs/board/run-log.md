@@ -1361,3 +1361,6 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 HELI-LANDED merged (live, next release); MAP-FINISH and SKI-FINISH evidence merged (dev). Heli, map, ski suites, replays and build pass on integration.
 - 2026-10-26 GP-CAREER-LIVE merged (Codex): Grand Prix pay, records and cups on; independent save review clear; suites and build pass. GHOST-SAVE-MESSAGE opened (live fix).
 - 2026-10-26 RESCUE-FINISH pass merged (Codex): truck-first guidance, reset reasons; all six rescues complete; margins to widen before switch-on.
+- 2026-10-26 SUMMIT-TUNNEL-WALL merged (live, next release): gallery sides solid; circuits, Summit, replay and world suites and build pass. SUMMIT-FINISH-AREA started.
+- 2026-10-26 GHOST-SAVE-MESSAGE merged (live, next release): suites and build pass.
+- 2026-10-26 LAB-WALK merged (Codex): walkable Lab behind lab-2 (dev); switch test conflict with GP-CAREER-LIVE resolved keeping both; lab-walk and feature-flags suites and build pass.
