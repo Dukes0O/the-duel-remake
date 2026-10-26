@@ -18,6 +18,10 @@ export async function run(c) {
   const click = action => c.evaluate(`document.querySelector('[data-teach="${action}"]').click()`);
   const waitNext = () => c.waitFor(`document.querySelector('[data-teach="next"]') && !document.querySelector('[data-teach="next"]').disabled`, 'step ready');
   await c.waitFor(`${text}?.includes('Can a fan move')`, 'wonder'); await c.screenshot('wonder');
+  await c.evaluate(`document.querySelector('.lab-notebook-button').focus()`);
+  await c.command('Input.dispatchKeyEvent', {type: 'keyDown', code: 'Tab', key: 'Tab', windowsVirtualKeyCode: 9});
+  await c.command('Input.dispatchKeyEvent', {type: 'keyUp', code: 'Tab', key: 'Tab', windowsVirtualKeyCode: 9});
+  if (!(await c.evaluate(`document.querySelector('.lab-panel').contains(document.activeElement)`))) throw Error('Tab escaped the lesson to controls behind it.');
   await click('next'); await c.waitFor(`${text}?.includes('New words')`, 'words');
   await c.evaluate(`document.querySelector('.lab-teaching [data-word="push"]').dispatchEvent(new PointerEvent('pointerover', {bubbles: true}))`);
   await c.waitFor(`${text}?.includes('A push is a force')`, 'underlined meaning'); await c.screenshot('words');

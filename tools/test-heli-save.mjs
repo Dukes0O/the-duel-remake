@@ -720,4 +720,22 @@ check('keys from a newer game are still kept, and a known H3 field that fails it
   assert.deepEqual(heli.dirt, {dust: 100, mud: 0, soot: 0, salt: 0});
 });
 
+check('return loads normalize, round trip and keep old saves and unknown keys', () => {
+  const fixture = JSON.parse(readFileSync(new URL('./fixtures/saves/10-heli.json', import.meta.url), 'utf8'));
+  const old = loadPlayers(memoryStorage(fixture.storage));
+  assert.equal(old.players[0].profile.heli.returnLoads, undefined);
+  assert.equal(old.players[0].profile.credits, 700);
+  const source = deepFreeze({...old.players[0].profile.heli, future: {kept: true},
+    returnLoads: {'tremblant-snow': 3, 'panorama-ridge': 2, 'tremblant-woods': 3, nowhere: 3, 'summit-run': -1}});
+  const heli = normalizeHeli(source);
+  assert.deepEqual(heli.returnLoads, {'tremblant-snow': 3, 'panorama-ridge': 2});
+  assert.deepEqual(heli.future, {kept: true});
+  assert.deepEqual(normalizeHeli(JSON.parse(JSON.stringify(heli))), heli);
+  assert.equal(normalizeHeli({...heli, returnLoads: []}).returnLoads, undefined);
+  const storage = memoryStorage();
+  saveProfile({...old.players[0].profile, heli}, storage);
+  assert.deepEqual(loadProfile(storage).heli.returnLoads, heli.returnLoads);
+  assert.equal(source.returnLoads['summit-run'], -1, 'normalization never mutates source');
+});
+
 console.log(`Heli save: ${checks} groups passed using memory storage.`);

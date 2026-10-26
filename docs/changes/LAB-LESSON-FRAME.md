@@ -21,7 +21,7 @@ hangar's steel (#252c29), chalk (#f5f0dc), brass (#edc557), and existing
 sans-serif type at 23px. Force colours have fixed meanings. Picture choices
 sit above the strip; pointing at an underlined word replaces the current
 caption with its meaning. This preserves the two-sentence reading budget.
-Watch controls operate a lesson clock, not wall time. Drawing hooks receive
+Watch controls operate a lesson clock, not wall time. The drawing layer receives
 that clock, current input, and the previous run, and return drawing data.
 
 Three tries remove guidance in order. Failure counts persist across retries;
@@ -47,7 +47,7 @@ Existing interface cues are reused; no new voice recording or voice spend.
   old-save shape preservation, successful ghosts, every challenge kind,
   Show me during inline challenges, and ski session cleanup.
 - Memory-only browser scenario passes after the read-helper fix on private
-  port 15482: eleven
+  port 47528 on reviewed source b16176cd: eleven
   screenshots, zero warnings/errors. Covers E, every teaching stage,
   help, notebook after reopening, the key card in a real flight challenge,
   and the old Lab with lab-2 off. No frame timing or live saves used.
@@ -59,7 +59,12 @@ Existing interface cues are reused; no new voice recording or voice spend.
   a ball and fan, not the future Lift lesson.
 - `docs/board/looks/lab-2/look-2.jpg`: five required views, under 500 KB.
   Raw captures: `.evidence/2026-10-26/LAB-LESSON-FRAME/`.
-- Lane tier and production build: pending final run.
+- Lane tier on merged source 6bc0faf7: 42 passed, zero failed, zero not run,
+  jobs 4, 415.71 seconds. Replay fingerprints: 225 checks across 25 cases;
+  world composition: 47 exact scene checks, unchanged.
+- `npm run build` passed on b16176cd in 1.14 seconds, with System32 first on
+  PATH. Vite reports its existing large-chunk and shared dynamic-import warnings.
+  Board check: 191 passed. Repository placement and diff whitespace pass.
 - The first lane run on 8e7575ff caught the original `createLab()` shape
   assertion. Kept that assertion and constructor unchanged; `labNotebookOf`
   now supplies the empty read default, and only learning adds the save field.
@@ -68,6 +73,22 @@ Existing interface cues are reused; no new voice recording or voice spend.
 - Challenge key ideas and inline instructions each use one sentence. Hints,
   word meanings and Show me temporarily replace the key card, preserving the
   reading budget. Pure checks cover the return to the unfinished challenge.
+- Resumed after the release hold and merged integration 416b8d6e. The only
+  conflict was STATUS.md; kept the release snapshot. The independent reviewer
+  confirmed that the merged helicopter save changes preserve the notebook.
+  Current merged acceptance batch: 49 cases passed, including all 1,029
+  historical save checks. The earlier e13 lane run was interrupted for the
+  release window and is not counted as a passing gate.
+- Fixed keyboard focus wrapping to skip hidden bench controls during lessons.
+  The browser scenario sends a real Tab from the visible Notebook button and
+  checks that focus remains inside the Lab. Independent delta review approved.
+  This is the only game-code change after the green merged lane run; its real
+  browser check passed on b16176cd. Reused the passing lane checks under the
+  check-once rule rather than repeat unchanged race and world suites.
+- Save/code review approved the complete frame, the notebook compatibility
+  fix, the integration merge and the keyboard delta. No open card blockers.
+- Final evidence sheet: 298,863 bytes. Final changes after the checked source
+  are only this note, STATUS, the look verdict and its regenerated sheet.
 
 ## Handoff
 
@@ -75,8 +96,8 @@ Existing interface cues are reused; no new voice recording or voice spend.
 LAB-LIFT-2 supplies the first real lesson's content and animation; it is not
 implemented by this card. Machine actions reuse `lab.clunk`; teaching
 navigation uses `lab.tick`. Existing recorded Brian cues can be named by data.
-Session-end Cockpit sync ran against integration's board. It flagged unrelated
-QA-SUMMIT-GLACIER-EDGE as missing a task mapping for the Director to supply.
+Session-end Cockpit sync ran against integration's current board: no changes
+needed and no missing task mappings reported.
 
 ## Changed assertions
 
@@ -87,3 +108,5 @@ No existing assertions changed. The new notebook test now reads through
 
 No existing player content replaced. LAB-LIFT-2 and LAB-LESSONS-2 replace the
 old bench content; Lab 2 go-live removes the old panels under LAB.md 12.5.
+Recycled this task's generated `.qa-dist` and `dist` folders and the consumed
+failed/interrupted logs. Kept the requested captures and current green logs.

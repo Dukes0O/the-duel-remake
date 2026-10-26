@@ -119,7 +119,7 @@ function summitOnFingerprint() {
   return hash(parts.join('\n'));
 }
 // Taken from the code as it stood before this card (rescue on, Summit Run off; then Summit Run on, rescue off).
-const OFF_PIN = 1293191622, SUMMIT_ONLY_PIN = 274976626;
+const OFF_PIN = 1293191622, SUMMIT_ONLY_PIN = 1829644530;
 for (const extra of [{}, {summitRunEnabled: false}, {summitRunEnabled: 'yes'}])
   assert.equal(offFingerprint(extra), OFF_PIN, `with Summit Run off every rescue and flying area is as it was (${JSON.stringify(extra)})`), checks++;
 assert.equal(summitOnFingerprint(), SUMMIT_ONLY_PIN, 'with Summit Run on and rescues off, Summit Run flies exactly as it did'); checks++;

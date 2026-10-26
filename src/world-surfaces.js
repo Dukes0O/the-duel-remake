@@ -5,7 +5,7 @@ import { terrainStyleAt } from './terrain-style.js';
 import { createPolylineIndex } from './polyline-index.js';
 import { ribbonGroundAt } from './ribbon-ground.js';
 import { seedGroundRow } from './rendered-ground.js';
-import { seedFarTerrain } from './far-terrain-surface.js';
+import { seedFarTerrain, farTerrainCornerHeight } from './far-terrain-surface.js';
 import { freestyleTerrainGeometry, freestyleFarGeometry } from './freestyle-scene.js';
 
 // Pure sampled surfaces and shared source textures. Course owns all route and
@@ -148,6 +148,32 @@ export function terrainGeometry(course) {
     });
     seedGroundRow(course,s,offsets,rowPoints);
   }
+  if(course.def.scenery?.continuousGround){
+    // Close the exposed sides of an upper road's ribbon onto the continuous
+    // backing. From a lower switchback its single-sided top is invisible.
+    // Bury the whole lower edge, including between grid diagonals. Sampling
+    // only its endpoints can leave air where the backing drops between them.
+    const floor=Math.min(...course.samples.map(p=>p.y))-256;
+    for(const side of [-1,1])for(let s=terrainStep;s<course.length;s+=terrainStep){
+      const points=[ribbonGroundAt(course,s-terrainStep,side*64),ribbonGroundAt(course,s,side*64)];
+      // An outer edge can fold across a lower hairpin. Never drop a wall
+      // through that road (or the Gallery's parallel open branch).
+      let crossesRoad=false;
+      for(let t=0;t<=1;t+=.125){
+        const x=points[0].x+(points[1].x-points[0].x)*t,z=points[0].z+(points[1].z-points[0].z)*t;
+        const near=course.nearest(x,z);
+        if(near.distance<course.roadHalfWidthAt(near.s)+8||course.surfaceAt(near.s,near.lateral).road){crossesRoad=true;break;}
+      }
+      if(crossesRoad)continue;
+      const start=v.length/3,style=terrainStyleAt(course,s);
+      for(const p of points)for(const y of [p.y,floor]){
+        v.push(p.x,y,p.z);uv.push(p.x/22,p.z/22);weights.push(...style.weights);colors.push(style.color.r,style.color.g,style.color.b);
+      }
+      const indices=groups[TERRAIN_THEMES.indexOf(course.themeAt(s))];
+      if(side<0)indices.push(start,start+1,start+2,start+2,start+1,start+3);
+      else indices.push(start+2,start+1,start,start+3,start+1,start+2);
+    }
+  }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); fitMuddyHollowGround(g,course,0); fitDeepRampGround(g,course); computeNormalsFast(g); return g;
 }
@@ -172,11 +198,11 @@ export function farTerrainGeometry(course) {
     const a=route[index-1],b=route[index],dx=b.x-a.x,dz=b.z-a.z,px=x-a.x-t*dx,pz=z-a.z-t*dz;
     const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
     const wave=Math.sin(roadS*.012+off*.017)*Math.cos(roadS*.004-off*.031);
-    const cornerY=(course.farGroundY?course.farGroundY(x,z,roadS,off):naturalCourse.groundAt(roadS,off).y)-.15;heights[j*columns+i]=cornerY;v.push(x,cornerY,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
+    const cornerY=farTerrainCornerHeight(naturalCourse,x,z,roadS,off,grid);heights[j*columns+i]=cornerY;v.push(x,cornerY,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
     const style=terrainStyleAt(course,roadS);weights.push(style.weights[0],style.weights[1],style.weights[2]);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));const trap=gravelWeights(course,roadS,off);fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);woodland(course,col,roadS,off);gravelTrap(course,col,trap);colors.push(col.r,col.g,col.b);
     if(i&&j){const a=j*columns+i,k0=a-columns-1,k1=a-1,k2=a-columns;
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
-      if(distances[k0]>gap&&distances[k1]>gap&&distances[k2]>gap&&distances[a]>gap)groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(k0,k1,k2,k2,k1,a);
+      if(course.def.scenery?.continuousGround||distances[k0]>gap&&distances[k1]>gap&&distances[k2]>gap&&distances[a]>gap)groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(k0,k1,k2,k2,k1,a);
     }
   }
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);fitDeepRampGround(g,course);computeNormalsFast(g);seedFarTerrain(course,grid,Math.round(minX/grid),Math.round(minZ/grid),columns,rows,heights,distances);return g;

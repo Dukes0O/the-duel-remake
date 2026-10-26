@@ -1364,3 +1364,7 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 SUMMIT-TUNNEL-WALL merged (live, next release): gallery sides solid; circuits, Summit, replay and world suites and build pass. SUMMIT-FINISH-AREA started.
 - 2026-10-26 GHOST-SAVE-MESSAGE merged (live, next release): suites and build pass.
 - 2026-10-26 LAB-WALK merged (Codex): walkable Lab behind lab-2 (dev); switch test conflict with GP-CAREER-LIVE resolved keeping both; lab-walk and feature-flags suites and build pass.
+- 2026-10-26 SUMMIT-GROUND-GAPS merged (live, next release) after a one-line conflict with SUMMIT-TUNNEL-WALL (both kept); test-yeti fixed for GP-CAREER-LIVE; Summit suites and build pass. Summit frame check due before release.
+- 2026-10-26 HELI-RETURN-LOADS merged (live, next release): pay rule revised, four pins reviewed, supply-hook clash fixed; helicopter, save and replay suites and build pass. HELI-LOGBOOK started.
+- 2026-10-26 Release full tier on de0555b0: 518 passed, 2 failed (test-terrain, test-map-destinations expected the old Summit ground; reviewed and updated, only Summit changed). Summit frames p95 16.8/16.8 ms, world build 1051/1013 ms (warning, SUMMIT-BUILD-TIME-2).
+- 2026-10-26 Release (afternoon): six live fixes on 301e61c0+notes; hold lifted.

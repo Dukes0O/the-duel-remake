@@ -468,7 +468,8 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     if (!shown) return;
     // The menu behind the Lab is not reachable by Tab: focus wraps inside the panel.
     if (event.code === 'Tab') {
-      const items = [...section.querySelectorAll('button:not(:disabled),select,input')];
+      const items = [...section.querySelectorAll('button:not(:disabled),select,input')]
+        .filter(el => el.getClientRects().length > 0);
       const first = items[0], last = items.at(-1);
       if (!first) return;
       if (!section.contains(doc.activeElement)) { event.preventDefault(); first.focus(); }
