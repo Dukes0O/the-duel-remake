@@ -23,7 +23,7 @@ import {raiseFind} from './deep/deep-sirena.js';
 import {recordLogged,recordPearl,phoneLineFor} from './deep/deep-log.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
-import {skiKeys, SKI_CAMERA_VIEWS} from './ski/ski-view.js'; // SKI-VIEW: the ski keys and cameras
+import {skiKeys, SKI_CAMERA_VIEWS, skiDeepSnow} from './ski/ski-view.js'; // SKI-VIEW: the ski keys and cameras
 import {createLabLap} from './lab/lab-lap.js'; // LAB-VIEW
 import {passLesson as labPassLesson} from './lab/lab-save.js'; // LAB-VIEW
 import * as wildlifeRules from './wildlife.js';
@@ -395,7 +395,7 @@ export class App {
     };
     if (this.heliSession) {
       const view = this.heliSession.view();
-      if (view.readout) this.heliAudio.update(view.readout);
+      if (view.readout) this.heliAudio.update(view.readout, {ski: view.ski, deepSnow: skiDeepSnow(view.ski?.run)});
       if (this._fireOn()) this.heliAudio.fireBeds(fireSounds(view));
     }
     const deepEnvironment=this.duel.deepEnvironment();

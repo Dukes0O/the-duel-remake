@@ -8297,6 +8297,469 @@
       "sha256": "269f418ca6670b6788ae4f05e56e9e5c1b14ca1712531115a12ec26d5e1c548f",
       "bytes": 91576,
       "generated": "2026-10-25"
+    },
+    {
+      "source": "synthesis",
+      "key": "ski.carve",
+      "cue": "ski.carve",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "tools/audio/build-ski.mjs",
+        "seed": 5100,
+        "layers": [
+          {
+            "kind": "noise",
+            "frequency": 4200,
+            "duration": 4.3,
+            "volume": 0.8,
+            "type": "highpass",
+            "delay": 0
+          },
+          {
+            "kind": "noise",
+            "frequency": 1700,
+            "duration": 4.3,
+            "volume": 0.4,
+            "type": "bandpass",
+            "delay": 0
+          }
+        ],
+        "loop": true,
+        "sampleRate": 48000,
+        "peak": 0.45
+      },
+      "runtime": {
+        "file": "ski/carve.ogg",
+        "bytes": 41319,
+        "sha256": "c5caca9896b8dec033c2a2fca5fd54aae7a48d7e2c9dc3ff960de1a54cefdd67"
+      },
+      "file": "tools/audio/build-ski.mjs"
+    },
+    {
+      "source": "synthesis",
+      "key": "ski.skid",
+      "cue": "ski.skid",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "tools/audio/build-ski.mjs",
+        "seed": 5101,
+        "layers": [
+          {
+            "kind": "noise",
+            "frequency": 2400,
+            "duration": 4.3,
+            "volume": 1,
+            "type": "bandpass",
+            "delay": 0
+          },
+          {
+            "kind": "noise",
+            "frequency": 550,
+            "duration": 4.3,
+            "volume": 0.6,
+            "type": "bandpass",
+            "delay": 0
+          }
+        ],
+        "loop": true,
+        "sampleRate": 48000,
+        "peak": 0.45
+      },
+      "runtime": {
+        "file": "ski/skid.ogg",
+        "bytes": 39191,
+        "sha256": "5c0c318216be6670a5c19b3462566b82ed4566662a55e469051393096abd0b66"
+      },
+      "file": "tools/audio/build-ski.mjs"
+    },
+    {
+      "source": "synthesis",
+      "key": "ski.wind",
+      "cue": "ski.wind",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "tools/audio/build-ski.mjs",
+        "seed": 5102,
+        "layers": [
+          {
+            "kind": "noise",
+            "frequency": 480,
+            "duration": 4.3,
+            "volume": 1,
+            "type": "lowpass",
+            "delay": 0
+          },
+          {
+            "kind": "noise",
+            "frequency": 1300,
+            "duration": 4.3,
+            "volume": 0.3,
+            "type": "bandpass",
+            "delay": 0
+          }
+        ],
+        "loop": true,
+        "sampleRate": 48000,
+        "peak": 0.45
+      },
+      "runtime": {
+        "file": "ski/wind.ogg",
+        "bytes": 39931,
+        "sha256": "58f4c216b0967ca2d3c42c9b5cad2856bc639ce9729c4dff3b2f256727671274"
+      },
+      "file": "tools/audio/build-ski.mjs"
+    },
+    {
+      "source": "synthesis",
+      "key": "ski.gate",
+      "cue": "ski.gate",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "tools/audio/build-ski.mjs",
+        "seed": 5103,
+        "layers": [
+          {
+            "kind": "noise",
+            "frequency": 2500,
+            "duration": 0.08,
+            "volume": 0.65,
+            "type": "bandpass",
+            "delay": 0
+          },
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 340,
+            "endFrequency": 170,
+            "duration": 0.13,
+            "volume": 0.5,
+            "delay": 0
+          },
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 180,
+            "endFrequency": 90,
+            "duration": 0.22,
+            "volume": 0.18,
+            "delay": 0.06
+          }
+        ],
+        "loop": false,
+        "sampleRate": 48000,
+        "peak": 0.45
+      },
+      "runtime": {
+        "file": "ski/gate.ogg",
+        "bytes": 5269,
+        "sha256": "5b4073cc9da334d538efb3b50cd9110e4ebeef64a3cd4ff7f60ed46f44f9515e"
+      },
+      "file": "tools/audio/build-ski.mjs"
+    },
+    {
+      "source": "synthesis",
+      "key": "ski.pop",
+      "cue": "ski.pop",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "tools/audio/build-ski.mjs",
+        "seed": 5104,
+        "layers": [
+          {
+            "kind": "noise",
+            "frequency": 1600,
+            "duration": 0.2,
+            "volume": 0.55,
+            "type": "bandpass",
+            "delay": 0
+          },
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 130,
+            "endFrequency": 65,
+            "duration": 0.16,
+            "volume": 0.4,
+            "delay": 0
+          }
+        ],
+        "loop": false,
+        "sampleRate": 48000,
+        "peak": 0.45
+      },
+      "runtime": {
+        "file": "ski/pop.ogg",
+        "bytes": 5752,
+        "sha256": "13137cbe16c58f671e4f28d44f62a97a6a8b5000e0e494234cc9920063ba7104"
+      },
+      "file": "tools/audio/build-ski.mjs"
+    },
+    {
+      "source": "synthesis",
+      "key": "ski.land",
+      "cue": "ski.land",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "tools/audio/build-ski.mjs",
+        "seed": 5105,
+        "layers": [
+          {
+            "kind": "noise",
+            "frequency": 650,
+            "duration": 0.3,
+            "volume": 0.6,
+            "type": "lowpass",
+            "delay": 0
+          },
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 95,
+            "endFrequency": 47.5,
+            "duration": 0.24,
+            "volume": 0.55,
+            "delay": 0
+          }
+        ],
+        "loop": false,
+        "sampleRate": 48000,
+        "peak": 0.45
+      },
+      "runtime": {
+        "file": "ski/land-soft.ogg",
+        "bytes": 5942,
+        "sha256": "08d691f9eb9ebdfeaf28d54d8d97bf5150d9c1f34d4735de5953763f4df42fe1"
+      },
+      "file": "tools/audio/build-ski.mjs"
+    },
+    {
+      "source": "synthesis",
+      "key": "ski.land.hard",
+      "cue": "ski.land.hard",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "tools/audio/build-ski.mjs",
+        "seed": 5106,
+        "layers": [
+          {
+            "kind": "noise",
+            "frequency": 900,
+            "duration": 0.48,
+            "volume": 0.9,
+            "type": "lowpass",
+            "delay": 0
+          },
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 72,
+            "endFrequency": 36,
+            "duration": 0.4,
+            "volume": 0.8,
+            "delay": 0
+          },
+          {
+            "kind": "noise",
+            "frequency": 3400,
+            "duration": 0.18,
+            "volume": 0.3,
+            "type": "bandpass",
+            "delay": 0
+          }
+        ],
+        "loop": false,
+        "sampleRate": 48000,
+        "peak": 0.45
+      },
+      "runtime": {
+        "file": "ski/land-hard.ogg",
+        "bytes": 7386,
+        "sha256": "36073a94cef1e670a0aa040d920b54c14610c9895f948f98f1e55ee160d27bc1"
+      },
+      "file": "tools/audio/build-ski.mjs"
+    },
+    {
+      "source": "synthesis",
+      "key": "ski.tumble",
+      "cue": "ski.tumble",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "tools/audio/build-ski.mjs",
+        "seed": 5107,
+        "layers": [
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 90,
+            "endFrequency": 45,
+            "duration": 0.25,
+            "volume": 0.7,
+            "delay": 0
+          },
+          {
+            "kind": "noise",
+            "frequency": 1000,
+            "duration": 0.65,
+            "volume": 0.7,
+            "type": "bandpass",
+            "delay": 0
+          },
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 120,
+            "endFrequency": 60,
+            "duration": 0.2,
+            "volume": 0.45,
+            "delay": 0.23
+          },
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 70,
+            "endFrequency": 35,
+            "duration": 0.32,
+            "volume": 0.5,
+            "delay": 0.5
+          },
+          {
+            "kind": "noise",
+            "frequency": 2000,
+            "duration": 0.45,
+            "volume": 0.35,
+            "type": "bandpass",
+            "delay": 0.4
+          }
+        ],
+        "loop": false,
+        "sampleRate": 48000,
+        "peak": 0.45
+      },
+      "runtime": {
+        "file": "ski/tumble.ogg",
+        "bytes": 11469,
+        "sha256": "f3ceded30173592a0fd76113e6a75a274858c754234775c01c600de78d3bcebd"
+      },
+      "file": "tools/audio/build-ski.mjs"
+    },
+    {
+      "source": "synthesis",
+      "key": "ski.powder",
+      "cue": "ski.powder",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "tools/audio/build-ski.mjs",
+        "seed": 5108,
+        "layers": [
+          {
+            "kind": "noise",
+            "frequency": 1100,
+            "duration": 4.3,
+            "volume": 0.9,
+            "type": "lowpass",
+            "delay": 0
+          },
+          {
+            "kind": "noise",
+            "frequency": 2300,
+            "duration": 4.3,
+            "volume": 0.35,
+            "type": "bandpass",
+            "delay": 0
+          }
+        ],
+        "loop": true,
+        "sampleRate": 48000,
+        "peak": 0.45
+      },
+      "runtime": {
+        "file": "ski/powder.ogg",
+        "bytes": 40214,
+        "sha256": "a4c46af041713d6c793b638eaaaf455180689ef42ae6d45f038f8ace5e711367"
+      },
+      "file": "tools/audio/build-ski.mjs"
+    },
+    {
+      "source": "synthesis",
+      "key": "ski.step-out",
+      "cue": "ski.step-out",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "tools/audio/build-ski.mjs",
+        "seed": 5109,
+        "layers": [
+          {
+            "kind": "noise",
+            "frequency": 800,
+            "duration": 0.22,
+            "volume": 0.6,
+            "type": "lowpass",
+            "delay": 0
+          },
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 110,
+            "endFrequency": 55,
+            "duration": 0.15,
+            "volume": 0.4,
+            "delay": 0
+          },
+          {
+            "kind": "noise",
+            "frequency": 850,
+            "duration": 0.24,
+            "volume": 0.6,
+            "type": "lowpass",
+            "delay": 0.3
+          },
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 120,
+            "endFrequency": 60,
+            "duration": 0.15,
+            "volume": 0.4,
+            "delay": 0.3
+          },
+          {
+            "kind": "noise",
+            "frequency": 3600,
+            "duration": 0.045,
+            "volume": 0.6,
+            "type": "bandpass",
+            "delay": 0.57
+          },
+          {
+            "kind": "tone",
+            "type": "sine",
+            "frequency": 750,
+            "endFrequency": 375,
+            "duration": 0.065,
+            "volume": 0.25,
+            "delay": 0.59
+          }
+        ],
+        "loop": false,
+        "sampleRate": 48000,
+        "peak": 0.45
+      },
+      "runtime": {
+        "file": "ski/step-out.ogg",
+        "bytes": 8327,
+        "sha256": "4474c7ca5585c87eb0d4772b04f09b83afa2025d2a4bca4b835eca02858eb326"
+      },
+      "file": "tools/audio/build-ski.mjs"
     }
   ]
 }
