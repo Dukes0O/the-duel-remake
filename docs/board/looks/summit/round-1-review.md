@@ -1,31 +1,17 @@
-# SUMMIT-FINISH-AREA — round 1
+# Summit ground gaps — reviewed comparison
 
-Claude's verdict: pending. No round 2 or 3 authorised yet.
+26 October 2026, SUMMIT-GROUND-GAPS. Seed 1989, High, authored lighting,
+memory-only native browser; no frame timing.
 
-Sheet: `round-1.jpg` (200,158 bytes). Twelve native views: six-car grid,
-before/candidate approach, before/candidate overview and gantry close view,
-in High and Performance. Authored night lighting, private port 45325,
-memory-only storage. No console errors or warnings. No frame measurement.
-This is the first art pass; camera corrections did not change its art.
+Independent reviewer: PASS. Foothills, pine entry and switchbacks have filled
+sky openings, supported scenery and cliffs connected into ground. Snowfield
+barriers/scenery have ground beneath them. The pale distant wedge at pine entry
+is terrain. Centered Gallery view is unchanged; its wall repair is a separate card.
 
-Rebuild furniture: Blender 4.5, `tools/blender/summit-finish.py -- --root .`.
-Rebuild sheet: `node tools/browser-harness.mjs scenario summit-finish-area`.
-Raw captures and browser report: `.evidence/2026-10-26/SUMMIT-FINISH-AREA/round-1/`.
-The before view restores the previous hut/dome positions and omits the new
-finish kit and finish-view module. Both use the same course and lighting.
+The five before/after poses are identical. They reproduce Kyle's pictured areas,
+not exact unsaved camera coordinates. The reviewed visual difference supports
+refreshing Summit Run and its Time Attack variant's scene signatures. No
+other course signature changes. Claude checks frames before release.
 
-## Builder's observations for Claude
-
-- The timber gantry and snow fences make the arrival clearer.
-- The apron has hard rectangular edges against the surrounding terrain.
-  Its physical support past the road endpoint is not implemented or proved.
-- The hut and actual summit pad are farther from the line than the dome;
-  the sheet's dark overview does not show the pad markings well.
-- The existing bundled crowd atlas is reused with presentation-only sway.
-  It does not provide a new articulated waving animation.
-- Footprints are grounded behind the observatory; code review measured
-  their vertices 0.005–0.045 m above the existing rendered snow.
-
-Scores and art acceptance belong to Claude. Physical run-off, a useful close
-pad/footprint view, the look verdict and Claude's release frame check remain
-open. No release readiness is claimed.
+Rebuild: run `node tools/browser-harness.mjs scenario summit-ground-gaps`, then
+`python tools/art/summit-ground-gaps-sheet.py <evidence-directory> docs/board/looks/summit/round-1.jpg`.

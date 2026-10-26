@@ -18,3 +18,8 @@ prediction matches the game's own lift numbers for every load the pad
 offers; a short screen recording or picture sheet of each step for Claude.
 Then Kyle and Gratian try it (rule 18 preview) before LAB-LESSONS-2.
 Lane tier and build.
+
+**Also (Claude, from LAB-WALK's look):** Brian gets his own figure instead of
+Rook: a calm workshop teacher in a work shirt or overalls, safety glasses
+pushed up on his head, sleeves rolled. A Blender recipe, counted in this
+card's three look rounds.
