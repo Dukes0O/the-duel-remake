@@ -99,3 +99,15 @@ finish now visibly spans +/-10 m. Same driver: steady nine misses, practice
 two, both scored finishes. Per Claude's >3 rule, stop further tuning and
 medal calibration. Before/after table and assertion changes are in the
 change note. The feature stays dev for Claude's next control/design choice.
+
+**Claude, 26 October 2026, after the second slalom change (steady 9 misses,
+practised 2):** the stop rule applies, so the slalom gets a different control
+rather than more tuning. **Casual line assist:** on Casual only, while a gate
+is ahead, the skier's heading eases toward the gap between the next pair of
+poles (at most a third of full carve, fading out when the player steers
+against it, off in the air and in a tumble). The player still carves and still
+chooses speed. Pro has no assist, as with the cars. Then measure steady and
+practised runs on Casual (target: steady misses at most 3) and practised on
+Pro, and set the medals per difficulty from those runs (bronze about 10% over
+the steady clean run, gold just under the practised run). Keep the second
+layout and the glowing poles.
