@@ -215,14 +215,13 @@ export function attachRenderer(host, app) {
           group.position.set(marker.x,ground({...marker,lateral:marker.lateral}),marker.z);driveLessonView.add(group);
         });
       }
-      // Lesson 4: a plain road sign on the outside of the road (where the boards stand) before the ice, small and faint, on the stretch where the braking stops.
+      // Lesson 4: an opaque sign on the inside verge, clear of the course's outside braking boards.
       const ice=run.lesson.id==='snow'?run.plan.instructor.ice?.[0]:null;
       if(ice){
-        const at=ice.s0-30,side=-(Math.sign(dir)||1),lateral=side*(next.roadHalfWidthAt(at)+1.6),here=next.groundAt(at,lateral),ahead=next.groundAt(at+2,lateral); // the board's face looks back down the road, at the driver
+        const at=ice.s0-30,side=Math.sign(dir)||1,lateral=side*(next.roadHalfWidthAt(at)+2.8),here=next.groundAt(at,lateral),ahead=next.groundAt(at+2,lateral); // the board's face looks back down the road, at the driver
         const sign=addSign(driveLessonView,{top:'WATCH FOR',bottom:'ICE',bg:'#25433d',x:here.x,y:ground({...here,s:at,lateral}),z:here.z,
           heading:Math.atan2(here.x-ahead.x,here.z-ahead.z),posts:[-1.8,1.8].map(localX=>({halfX:.065,halfZ:.08,localX,y:ground({...here,s:at,lateral})-.05,height:4.3}))});
         sign.name='Lesson ice sign';sign.userData.iceSign=true;sign.scale.setScalar(.7);
-        sign.traverse(node=>{if(node.material&&node.material.map){node.material.transparent=true;node.material.opacity=.82;}});
       }
       sceneRevision++;
     }

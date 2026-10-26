@@ -257,7 +257,7 @@ export async function run(context) {
     throw Error('Lesson 4 should draw three cones, the dry board and the ice sign, with a faster winter instructor: ' + JSON.stringify(report.snow));
   report.captures.push(await context.screenshot('lesson-4-start'));
   // Look captures (see lookAt): the ice sign with the snow cone, then the dry board past the ice. The attempt is then thrown away.
-  report.captures.push(await lookAt(context, report.snow.marks.ice - 44, 'lesson-4-look-sign-and-cone'));
+  report.captures.push(await lookAt(context, report.snow.marks.ice - 70, 'lesson-4-look-sign-and-cone'));
   report.snow.sign = await context.evaluate(`(()=>{const g=window.__render.scene.getObjectByName('Driving lesson cones and red board');
     const sign=g.children.find(n=>n.userData.iceSign),cam=window.__render.camera,v=sign.position.clone();sign.getWorldPosition(v);
     const car=window.__qaApp.duel.course.groundAt(window.__qaApp.duel.state.s,window.__qaApp.duel.state.lateral);
