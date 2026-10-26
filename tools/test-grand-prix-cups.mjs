@@ -130,7 +130,7 @@ test('native App cup admission and saved continuation do not bypass car transpor
   try{
     for(const id of CUPS[0].events)if(!COURSE.some(row=>row.id===id))COURSE.push(ALL_CIRCUITS.find(row=>row.id===id));
     await withReferenceApp(async app=>{
-      app.duel.featureFlags=createFeatureFlags({storage:null,qa:false});
+      app.duel.featureFlags=createFeatureFlags({storage:null,qa:false,overrides:{'grand-prix-career':false}});
       assert.equal(app.startCup('mountain').ok,false,'off in production');
       app.duel.featureFlags=createFeatureFlags({storage:null,qa:true,search:'?flags=grand-prix-career,summit-run'});
       assert.equal(app.startCup('mountain').ok,false,'unowned courses remain locked');
