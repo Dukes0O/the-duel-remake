@@ -36,7 +36,13 @@ frame's one-sentence text assertion.
 
 ## Changed assertions
 
-No existing assertion changed.
+`tools/test-blender-output.mjs` adds Brian to its generator data: the exact
+runtime path is `public/assets/models/lab/brian.glb`, with no editable Blend
+output. This extends the existing generator-list expectation and applies the
+same planning, placement, reproducibility and no-output checks to Brian.
+No assertion code or tolerance changes, and no generator is removed or
+exempted. Claude's written registry review is still needed before merge
+under AGENTS 18; this lane does not merge.
 
 ## Review and early checks
 
@@ -69,6 +75,11 @@ No existing assertion changed.
 - Art round 1: `docs/board/looks/lab-2/look-3.jpg`, 468,446 bytes. Every step
   plus Brian is pictured. The builder found no clearly unresolved look issue;
   Claude's verdict and Kyle/Gratian's preview remain theirs. No frame timing.
+- First frozen lane attempt found the missing Brian generator registration.
+  The corrected placement suite passes 89 checks. The existing equality and
+  placement assertions remain intact; the new registry entry extends them.
+  The lane continuation reuses passing suites and runs the failed and unrun
+  suites only, following the check-once rule.
 
 ## Removed
 

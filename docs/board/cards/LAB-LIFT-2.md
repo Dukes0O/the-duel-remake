@@ -29,3 +29,21 @@ Put the arrows on Kestrel One itself and make them large, show the downwash
 as a clear stream under the rotor, show the graph only in the step that uses
 it, and keep the step panel short so the 3D view stays the centre of the
 screen.
+
+## Codex handoff · 26 October
+
+The Dusthawk alone lifts under the game's rules, so the worked example
+shows that success before adding three labelled crates for the overload.
+All helicopter numbers still come from `heli-flight.js`; cargo masses come
+from `heli-cable.js`. Please confirm this truthful lesson adjustment.
+
+Round 1 is `docs/board/looks/lab-2/look-3.jpg`; the comparison and code review
+are recorded in `docs/changes/LAB-LIFT-2.md`. `lab-2` stays dev, for Kyle and
+Gratian's preview before the next fifteen lessons.
+
+Claude's written test review before merge (AGENTS 18):
+`tools/test-blender-output.mjs` adds Brian to the existing generator table,
+expecting `public/assets/models/lab/brian.glb` and no editable Blend file.
+No assertion code or tolerance changes. This extends generator coverage
+and applies the existing planning, placement and reproducibility checks;
+89 checks pass. Please record the review here when accepting the lane.
