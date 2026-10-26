@@ -2,7 +2,7 @@
 // parcel model (heli-bucket.js aimPoint, which also draws the aim ring); the stone is the same fall
 // with no air, which is what a heavy compact thing does over these heights.
 import {GRAVITY, HELI_STEP} from '../../heli/heli-flight.js';
-import {BUCKET, DROP_AIM_RINGS, aimPoint} from '../../heli/heli-bucket.js';
+import {BUCKET, DROP_AIM_RINGS, aimPoint, createBucket, stepBucket} from '../../heli/heli-bucket.js';
 import {control, makeBench} from './bench-core.js';
 
 // The buoy-style target of the bench: 24 m ahead, hit within the largest ring.
@@ -21,6 +21,19 @@ export function waterDrop(heightM, speedMs) {
 export function stoneDrop(heightM, speedMs) {
   const seconds = Math.sqrt(2 * heightM / GRAVITY);
   return {distanceM: speedMs * seconds, seconds, fallM: heightM};
+}
+// Teaching follows an actual water parcel, with the very same integration as
+// the aim ring and challenge. Cache this short trace in the animation, not per frame.
+export function waterTrace(heightM, speedMs) {
+  const bucket = createBucket();
+  bucket.parcels = [{x: 0, y: heightM, z: 0, vx: 0, vy: 0, vz: speedMs, litres: BUCKET.parcelLitres, from: heightM}];
+  const rows = [{seconds: 0, distanceM: 0, heightM}];
+  for (let t = HELI_STEP; t < 40; t += HELI_STEP) {
+    const {patches} = stepBucket(bucket, {}, HELI_STEP), p = bucket.parcels[0];
+    rows.push({seconds: t, distanceM: p?.z ?? patches[0].z, heightM: Math.max(0, p?.y ?? 0)});
+    if (!p) break;
+  }
+  return rows;
 }
 // How far a thing has fallen after this many seconds: a stone (no air) and a water parcel.
 export const stoneFallAfter = seconds => GRAVITY * seconds * seconds / 2;
