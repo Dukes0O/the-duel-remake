@@ -147,6 +147,45 @@ test('native App lesson: real menu entry, attempts, once-only reward and owner i
   }
 });
 
+test('lesson admission needs only driving-lessons and sliding rules stay inside its private race', async () => {
+  const [{withReferenceApp}, {createFeatureFlags}, {COURSE}] = await Promise.all([
+    import('./build-reference-laps.mjs'), import('../src/feature-flags.js'), import('../src/config.js'),
+  ]);
+  for (const difficulty of ['casual', 'pro']) await withReferenceApp(async app => {
+    app.duel.featureFlags = createFeatureFlags({storage: null, qa: false,
+      overrides: {'driving-lessons': true, 'tyre-slip': false}});
+    const duel = app.duel;
+    const ordinary = () => {
+      duel.startCampaign({car: 'falcone_f42', difficulty: 'pro', opponentCount: 0, seed: 1989});
+      duel.setInput({throttle: 1, steer: .5}); duel.step(1 / 120);
+      assert.equal(duel.drivingLesson, undefined);
+      assert.equal(duel._tyreSlipRaceEnabled, false);
+      assert.equal(Object.hasOwn(duel.state, 'tyreSlipRules'), false);
+      assert.equal(Object.hasOwn(duel.state, 'tyreSlip'), false);
+      app.returnToMenu();
+    };
+    ordinary();
+    assert.equal(app.drivingLessonsAvailable(), true, 'tyre-slip off does not hide lessons');
+    assert.equal(app.openDrivingLessons(), true);
+    assert.equal(await app.startLesson({courseId: 'tremblant-woods', car: 'falcone_f42', difficulty}), true);
+    assert.equal(duel.featureFlags.enabled('tyre-slip'), false);
+    assert.equal(duel._tyreSlipRaceEnabled, true, `${difficulty}: the lesson latches its own sliding rules`);
+    assert.equal(duel.state.tyreSlipRules, true);
+    duel.setInput({throttle: 1, steer: .5}); duel.step(1 / 120);
+    assert.equal(Number.isFinite(duel.state.tyreSlip), true, 'the lesson actually steps the sliding model');
+    const plan = structuredClone(duel.drivingLesson.plan), playerId = app.player.id;
+    app.leaveLesson();
+    ordinary();
+    duel.featureFlags = createFeatureFlags({storage: null, qa: false,
+      overrides: {'driving-lessons': false, 'tyre-slip': true}});
+    assert.equal(app.drivingLessonsAvailable(), false, 'tyre-slip alone cannot admit a lesson');
+    assert.equal(app.openDrivingLessons(), false);
+    assert.throws(() => duel.startCampaign({startStage: COURSE.findIndex(row => row.id === plan.courseId),
+      car: plan.car, difficulty: plan.difficulty, driverId: plan.driverId, upgrades: plan.upgrades,
+      seed: plan.seed, playerId, lesson: plan}), /Driving lesson setup does not belong/);
+  });
+});
+
 // Native inputs only: no pose placement, replacement instructor, fake result,
 // reward callback or lesson-progress assignment. App receives Duel events.
 async function driveNativeHostAttempt(app, mode) {

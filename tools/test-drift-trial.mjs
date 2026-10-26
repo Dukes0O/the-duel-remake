@@ -4,13 +4,12 @@ import { Duel } from '../src/game.js';
 import { Course } from '../src/course.js';
 import { COURSE, LIVES } from '../src/config.js';
 import {isValidFinish} from '../src/progression.js';
-import {createFeatureFlags} from '../src/feature-flags.js';
 
 let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; };
 const index = COURSE.findIndex(event => event.id === 'neon-drift-trial');
 function trial(cpuDifficulty = 'hard') {
-  const d = new Duel({ seed: 1989, featureFlags: {'tyre-slip': false} }); d.startCampaign({ startStage: index, cpuDifficulty, car: 'banshee_muscle', mode: 'timetrial' }); return d;
+  const d = new Duel({ seed: 1989 }); d.startCampaign({ startStage: index, cpuDifficulty, car: 'banshee_muscle', mode: 'timetrial' }); return d;
 }
 for (const [level, target, limit] of [['easy', 3500, 150], ['medium', 5000, 125], ['hard', 6000, 110]]) {
   const d = trial(level), s = d.state;
@@ -78,13 +77,11 @@ for (const invulnerable of [0, 2]) {
   check(s.drift.chainScore === 0 && s.drift.visitedTo === 700 && s.drift.lastEvent.reason === 'reset', 'safe recovery reports and clears a chain without rewinding its visited interval');
 }
 
-// Preserve the historical tyre-off contract; the Pro sliding fixture below stays on.
 const replays = [];
 for (const cpuDifficulty of ['easy', 'medium', 'hard']) for (const difficulty of ['casual', 'pro']) {
   const outcomes = [];
   for (const fps of [30, 144]) {
     const app = new App(); app.autopilot = true;
-    app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {'tyre-slip': false}});
     app.duel.startCampaign({ startStage: index, car: 'banshee_muscle', cpuDifficulty, difficulty, seed: 1989 }); app._scriptedCrashDone = true;
     let frames = 0;
     while (!['stage_result', 'gameover'].includes(app.duel.state.status) && frames++ < fps * 200) app.advance(1 / fps);
@@ -99,9 +96,7 @@ for (const cpuDifficulty of ['easy', 'medium', 'hard']) for (const difficulty of
 }
 const recoveryReplays = [];
 for (const level of ['easy', 'medium', 'hard']) {
-  const app = new App(); app.autopilot = true;
-  app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {'tyre-slip': false}});
-  app.duel.startCampaign({ startStage: index, car: 'banshee_muscle', cpuDifficulty: level, seed: 1989 }); app._scriptedCrashDone = true;
+  const app = new App(); app.autopilot = true; app.duel.startCampaign({ startStage: index, car: 'banshee_muscle', cpuDifficulty: level, seed: 1989 }); app._scriptedCrashDone = true;
   let hit = false, frames = 0;
   while (!['stage_result', 'gameover'].includes(app.duel.state.status) && frames++ < 120 * 180) {
     const s = app.duel.state;
@@ -120,6 +115,7 @@ console.log(`Neon Drift Trial: ${checks} checks passed.`);
 
 // Claude's 15 October recovery decision changes only the new Pro fixture.
 // Every released/off assertion above remains unchanged.
+const {createFeatureFlags}=await import('../src/feature-flags.js');
 for(const [level,target,limit] of [['easy',3500,150],['medium',5000,125],['hard',6000,110]]){
   const app=new App();app.autopilot=true;
   app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'tyre-slip':true}});

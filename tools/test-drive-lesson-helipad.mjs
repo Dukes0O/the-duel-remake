@@ -188,7 +188,7 @@ try {
     app.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides, qa: true}), () => app.duel.state);
     return app;
   };
-  const ON = {helicopter: true, 'driving-lessons': true, 'tyre-slip': true};
+  const ON = {helicopter: true, 'driving-lessons': true, 'tyre-slip': false};
   // Ownership fixtures still exercise racing access separately from the instructor board.
   const ownedApp = (overrides, courses = ['tremblant-woods']) => {
     const app = makeApp(overrides);
@@ -206,7 +206,7 @@ try {
     same(fresh.heliDrivingBoard().notes, reason ? [reason] : [], 'with the menu\'s own words');
     fresh.returnToMenu();
     const app = ownedApp(ON);
-    ok(app.visitHeli(), 'the visit starts with both switches on');
+    ok(app.visitHeli(), 'the visit starts with lessons on and tyre-slip off');
     const board = app.heliDrivingBoard();
     ok(board, 'the pad has a Driving board');
     const menu = driveLessonBoardModel({...app.driveLessonProps(), courseId: HOME_COURSE, carId: app.menuCar});
@@ -298,7 +298,6 @@ try {
   // Off: nothing at the pad changes.
   for (const overrides of [
     {helicopter: true, 'driving-lessons': false, 'tyre-slip': false},
-    {helicopter: true, 'driving-lessons': true, 'tyre-slip': false},
     {helicopter: true, 'driving-lessons': false, 'tyre-slip': true},
   ]) {
     const app = ownedApp(overrides);
