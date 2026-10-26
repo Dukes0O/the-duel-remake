@@ -609,7 +609,7 @@ export function finishInstructorTrace(poses, finishS, faults = []) {
 // constructing or advancing a simulator.
 export function instructorControls(state, surface, plan) {
   const {car, course, line, profile, drive, steerForYaw} = plan;
-  const pace = plan.difficulty === 'casual' ? .92 : .97;
+  const pace = profile.pace ?? (plan.difficulty === 'casual' ? .92 : .97);
   const speed = Math.max(0, state.speedMph) * drive.mphToWorld;
   const targetLat = line.offsetAt(state.s + Math.max(12, speed * .45));
   const headingTarget = Math.atan((targetLat - state.lateral) * 2.5 / Math.max(15, speed));
@@ -663,6 +663,9 @@ export async function lessonPlanFor(duel, row, pace) {
     tractionAt: (s, lateral) => duel._drivingSurface(s, lateral).traction,
     speedLimitAt: (s, lateral) => duel._drivingSurface(s, lateral).speedLimit});
   const placement = placeCones(course, {...points, brakeS: profile.brakeS});
+  // The Cutting's old board left over 50 m to brake before turning, rewarding
+  // the late entry. Only the demonstration moves; the three right-try cones stay.
+  if (row.courseId === 'panorama-ridge') placement.redBoardS = points.turnInS;
   return {startS, turn, points, line, profile, placement};
 }
 
@@ -850,7 +853,7 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
   // The gearbox lesson is manual whatever the player's setting, and the limiter cannot blow the engine in a lesson.
   // Confined to this scratch race, like the sliding-tyre rules below.
   if (isGears) Object.defineProperty(duel, 'diff', {get: () => ({...DIFFICULTY[difficulty], autoShift: false, engineBlow: false})});
-  const pace = difficulty === 'casual' ? .92 : .97;
+  const pace = difficulty === 'casual' ? .92 : lessonId === 'corner' ? .95 : .97;
   const planned = isGears ? await gearsPlanFor(duel, row, pace) : isSnow ? await snowPlanFor(duel, row, pace, {fixed: _fixed}) : isLine ? await linePlanFor(duel, row, pace) : await lessonPlanFor(duel, row, pace);
   // The winter instructor drives the summer instructor's gate, rolling speed and cones on winter tyres.
   const winter = isSnow && tyre === 'summer' ? await buildInstructorRun({courseId, car, upgrades, difficulty, driverId, seed, fps, maxSeconds, lessonId, tyre: 'winter',

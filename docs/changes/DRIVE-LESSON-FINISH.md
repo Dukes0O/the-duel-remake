@@ -164,7 +164,97 @@ other session's jobs or the live server were touched.
   this lane did not edit that card or its tracking.
 - No replay pins, world signatures or existing test assertions changed.
 
+## Tuning trial, 26 October
+
+Decision before code: follow Claude's 26 October answers. Measure Beaver at
+60 mph, then 55 if needed, and lesson 1 Pro at 95%. Keep all pass rules and
+the right-try cone placement rules. Diagnose the faster Cutting late try and
+change only its late setup. Other lessons retain 92/97%. Checks: existing
+keyboard recipe, native lesson checks in the four-job lane tier, production
+build and one independent review. Private ports and memory-only storage;
+`driving-lessons` and `tyre-slip` remain dev.
+
+The fresh baseline reproduces the earlier results exactly: seed 1989, stock
+F42, Club driver, zero upgrades, 120 Hz DOM keyboard input and a fresh
+temporary player per setting. The driver controls are unchanged. Its Pro
+challenge scale now divides by .95 instead of .97 to preserve its original
+99%-of-line-speed target while the instructor slows.
+
+| Corner / setting | Instructor before / after | Late before / after | Screech before / after | Right before / after | Challenge margin before / after |
+| --- | --- | --- | --- | --- | --- |
+| The Cutting / Casual | 92%, 10.35 s / unchanged | Finish 1.94 s faster, 3.80 m wide / wall at 207.49 m, 9.47 m wide | 0.21 / 0.00 s | Pass, +0.11 s / unchanged | 0.51 / 0.51 s; three wins |
+| The Cutting / Pro | 97%, 10.03 s / 95%, 10.14 s | Wall at 237.9 m, 6.43 m wide / wall at 207.37 m, 9.40 m wide | 0.27 / 0.00 s | Pass, +0.07 s / pass, +0.08 s | 0.11 / 0.27 s; three wins |
+| Beaver Hairpin / Casual | 92%, 16.87 s / unchanged | Wall before cone 1 at 216.63 m / unchanged | 0.00 / 0.00 s | Fail before cone 1 / unchanged | Not reached |
+| Beaver Hairpin / Pro | 97%, 16.28 s / 95%, 16.50 s | Wall before cone 1 at 216.98 m / 216.91 m | 0.00 / 0.00 s | Fail before cone 1 / same failure | Not reached |
+
+Wall distances are progress from the start gate. Crashes have no finish-time
+comparison. Positive right-try times mean slower than the instructor, which
+the unchanged right-try rules allow.
+
+| Beaver rolling trial | Casual instructor / right result | Pro instructor (95%) / right result |
+| --- | --- | --- |
+| 60 mph | 17.25 s / wall at 225.18 m, no brake press | 16.88 s / wall at 224.72 m, no brake press |
+| 55 mph | 17.40 s / wall at 226.96 m, no brake press | 17.04 s / wall at 226.99 m, no brake press |
+
+Both late tries share those approach failures at each trial speed, with no
+screech or arrival at the hairpin. Reject both rolling-speed changes and
+retain 75 mph: neither fixes the approach. The keyboard driver cannot brake
+before cone 1, whereas the instructor can apply light braking for the kink.
+Lowering the initial speed alone does not settle that approach.
+
+The Cutting's old red board leaves 53 m to brake before turn-in (52 m on
+Pro), even though the lesson starts at 100 mph. Moving just that board to
+turn-in removes that spare braking road. The late try now runs wide and
+hits the wall on both settings; it does not produce a sustained screech.
+The instructor's trace/time and the three cones do not depend on the board.
+Pro's pace change can recalculate its cones, but no cone placement rule or
+right-try window was edited. No physics or scoring change is included.
+
+**A child's right try is not proved to pass on both corners.** The script
+passes The Cutting on both settings but fails Beaver at 75, 60 and 55 mph.
+These are repeatable keyboard trials, not a child playtest. Claude needs to
+settle a separate approach change, such as a gate after the kink or guidance
+that permits slowing for the kink. This bounded trial does not change that
+gate, driver or rule.
+
+Changed assertions: the native instructor board-position assertion now pins
+The Cutting's board exactly at turn-in; Beaver retains its existing +25 m,
+capped position. This changes a setup expectation, not a tolerance. A new
+exact 95 mph control assertion proves the .95 profile is used; existing
+92/97 fallback assertions remain. Native test drivers plan lesson 1 at 95%
+and retain that pace through their profile wrappers. All four right-try
+rules, 0.50 s native screech checks, clean instructor checks, strict time
+comparisons, streak checks and replay/world pins are unchanged. Claude's
+written review of the changed setup assertion is required before integration
+(AGENTS rule 18); Kyle requested a lane commit only.
+
+Trial validation:
+
+- Four headless browser batches (baseline, 60 mph, 55 mph, final) completed
+  on private ports 37629, 19561, 32839 and 41680, with memory-only storage,
+  zero browser errors and zero warnings. Browser completion is not a claim
+  that Beaver passed. Recipe: the existing opt-in command above, with an
+  output-directory suffix of `-tune-before`, `-tune-60`, `-tune-55` or
+  `-tune-after` on the corresponding setup.
+- Independent code and final table review: clear. Native tests use continuous
+  steering; their unchanged 0.50 s screech checks pass. The binary keyboard
+  trials above do not establish that same screech or Beaver accessibility.
+- PowerShell, System32 first on PATH:
+  `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 30 suites passed,
+  zero failed, zero not run, 151.17 s. Includes all 37 native lesson checks,
+  native App acceptance, lessons 2 to 4 and helicopter isolation.
+- Replay fingerprints: 225 checks passed; combat fingerprints: 12 checks;
+  world composition: 47 checks. No pins or signatures changed.
+- `npm run build`: passed, 541 modules, 890 ms. Existing large-chunk and
+  mixed static/dynamic import warnings remain.
+- Session-end STATUS generated without live-root access; Cockpit sync:
+  zero tasks changed. No merge or push. The live checkout was not touched.
+- After review, recycled only this trial's four evidence directories and its
+  generated QA/production bundles. Earlier evidence was left alone.
+
 ## Removed
 
 Replaced vague lesson 1 rule labels and unexplained result retries. No assets,
 pass rules, saves or runtime dependencies removed.
+Tuning replaces The Cutting's old late-board setup and lesson 1's 97% Pro
+mark. Rejected rolling-speed trials are removed; no duplicate setup retained.

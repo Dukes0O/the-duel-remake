@@ -86,7 +86,7 @@ export async function run(context) {
     const row = {courseId,difficulty,...start,late,right,challenge:[]};
     if (right.attempt?.passed) for (let i=0;i<3;i++) {
       await context.evaluate('window.__qaApp.nextLessonAttempt()');
-      row.challenge.push(await context.evaluate(`window.lessonEvidenceDrive('sloppy',${1/(difficulty==='casual'?.92:.97)*.99})`));
+      row.challenge.push(await context.evaluate(`window.lessonEvidenceDrive('sloppy',${1/(difficulty==='casual'?.92:.95)*.99})`));
     }
     if(row.challenge.length)await context.screenshot(id+'-challenge-result');
     report.rows.push(row);
