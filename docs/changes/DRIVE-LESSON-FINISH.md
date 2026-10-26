@@ -258,3 +258,15 @@ Replaced vague lesson 1 rule labels and unexplained result retries. No assets,
 pass rules, saves or runtime dependencies removed.
 Tuning replaces The Cutting's old late-board setup and lesson 1's 97% Pro
 mark. Rejected rolling-speed trials are removed; no duplicate setup retained.
+
+## Claude review of the tuning trial (26 October 2026)
+
+Approved: the changed assertions follow the two tuning decisions on the card
+(Pro at 95% for lesson 1 only; The Cutting's late-try board at turn-in). The
+0.50 s screech checks are unchanged; nothing is loosened.
+
+Open: Beaver Hairpin. Smooth-steering checks pass it, on/off keyboard
+steering does not, even at 55 mph. A child plays on the keyboard, so this is
+the real question. Next step: Kyle or Gratian try lesson 1 at Beaver once
+with the switch on in a preview, or a design change to the hairpin approach
+(a wider cone gap or a longer straight before the brake cone).
