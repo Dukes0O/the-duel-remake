@@ -211,3 +211,14 @@ The final status snapshot and whitespace check are included in this commit.
 Generated build folders and temporary gate logs were recycled after checking.
 No frame timing, outward
 merge, push or release. Claude judges the round-2 sheet.
+
+## Claude review (26 October 2026)
+
+Round 1 sent back (small experiments, unnamed coloured cubes, numbers in a
+strip). Round 2 accepted: close views, named bars and props, results under
+each jar, a large push arrow on the car (2.61 g at 80 mph on a 50 m circle,
+checked), and the map table with its scale and heading. Both spec
+differences approved (equal-weight aluminium outlasts steel; the sheltered
+exhaust stays bare). The sheet-path registration is approved; no assertion
+changed. Follow-up: an unexplained plain green rectangle floats on the
+hangar wall in three views; name it or remove it in the next Lab card.

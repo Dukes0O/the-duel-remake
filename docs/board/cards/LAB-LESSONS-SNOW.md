@@ -16,3 +16,7 @@ look rounds for the corner, one sheet per round at
 `docs/board/looks/lab-2/lab-lessons-snow-<round>.jpg`, judged by Claude. The old
 bench panel for each rebuilt lesson is removed in the same change. Switch
 `lab-2`. Lane tier and build; the Lab browser flow through each lesson.
+
+**Also (Claude, from the Workshop look):** an unexplained plain green
+rectangle floats on the hangar wall in several Lab views. Find what draws it
+and either make it a real named object or remove it.
