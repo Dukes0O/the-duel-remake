@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createWalker, stepWalker, canStand, machinePrompts, WALK} from '../src/lab/lab-walk.js';
 import {lessonRows} from '../src/lab/lab-lessons.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
-import {machineApproaches, brianPosition, WALK_LAYOUT, stationPrompt} from '../src/lab/lab-walk.js';
+import {machineApproaches, brianPosition, WALK_LAYOUT, stationPrompt, walkTarget} from '../src/lab/lab-walk.js';
 import {readFileSync} from 'node:fs';
 
 const hall = {halfWidth: 15, halfDepth: 9};
@@ -75,5 +75,39 @@ test('every real machine has a clear approach and a standing place for Brian, in
     const brian = brianPosition(station, bounds, manifest.hall);
     assert.ok(brian, `${bound.id}: Brian stands outside machines and walls`);
     assert.ok(canStand(...brian, bounds, manifest.hall));
+  }
+});
+
+test('walk from the door to Brian beside three real machines; facing wins over distance', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../public/assets/models/lab/manifest.json', import.meta.url)));
+  const bounds = manifest.models.filter(m => WALK_LAYOUT[m.id]).map(m => {
+    const [x, z] = WALK_LAYOUT[m.id], b = m.footprint;
+    return {id: m.id, minX: x + b.minX * WALK.scale, maxX: x + b.maxX * WALK.scale,
+      minZ: z + b.minZ * WALK.scale, maxZ: z + b.maxZ * WALK.scale};
+  });
+  for (const [model, id] of [['weighing-pad', 'lift'], ['turning-arm', 'gforce'], ['bending-rig', 'strength']]) {
+    const bound = bounds.find(b => b.id === model), at = machineApproaches(bound, bounds, manifest.hall)[0];
+    const station = {x: at[0], z: at[1], ids: [id], bound};
+    const brian = brianPosition(station, bounds, manifest.hall);
+    assert.ok(Math.hypot(brian[0] - station.x, brian[1] - station.z) > 1.3, 'Brian leaves the machine approach clear');
+    const w = createWalker();
+    // Walk along the clear centre aisle, then along the machine's approach.
+    for (const [x, z] of [[0, station.z], at]) {
+      for (let i = 0; i < 1500 && Math.hypot(w.x - x, w.z - z) > .12; i++) {
+        w.yaw = Math.atan2(w.x - x, w.z - z);
+        stepWalker(w, {forward: 1}, 1 / 60, bounds, manifest.hall);
+      }
+      assert.ok(Math.hypot(w.x - x, w.z - z) < .12, model + ': reachable from the door');
+    }
+    w.yaw = Math.atan2(w.x - brian[0], w.z - brian[1]);
+    assert.deepEqual(walkTarget(w, [station], brian, id), {kind: 'brian', id}, model + ': E reaches Brian even though the machine is nearer');
+    // Step away slightly so both targets have a defined direction.
+    const view = {...w, z: w.z + .6, yaw: 0};
+    view.yaw = Math.atan2(view.x - station.x, view.z - station.z);
+    assert.equal(walkTarget(view, [station], brian, id).kind, 'machine');
+    view.yaw = Math.atan2(view.x - brian[0], view.z - brian[1]);
+    assert.equal(walkTarget(view, [station], brian, id).kind, 'brian');
+    assert.equal(walkTarget({...w, x: brian[0], z: brian[1] + 2.49, yaw: 0}, [], brian, id).kind, 'brian');
+    assert.equal(walkTarget({...w, x: brian[0], z: brian[1] + 2.51, yaw: 0}, [], brian, id), null);
   }
 });

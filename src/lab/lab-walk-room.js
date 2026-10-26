@@ -1,6 +1,6 @@
 // Drawing and input for Lab 2. The screen supplies lesson rows and opens panels.
 import * as THREE from 'three';
-import {WALK, CORNERS, createWalker, stepWalker, machinePrompts, machineApproaches, brianPosition, stationPrompt} from './lab-walk.js';
+import {WALK, CORNERS, createWalker, stepWalker, machinePrompts, machineApproaches, brianPosition, stationPrompt, walkTarget} from './lab-walk.js';
 
 const escape = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 export function doorBoardMarkup(rows) {
@@ -46,7 +46,7 @@ export function createWalkRoom({scene, camera, host, canvas, manifest, models, m
     }
   }
   const board = label('Lesson board · E', 2.5, .65); board.position.set(1.8, 1.75, 8.4); board.rotation.y = Math.PI;
-  const brianName = label('Brian · E to ask', 1.8, .45);
+  const brianName = label('Brian', 1.8, .45);
   brianName.visible = false;
   function moveBrian() {
     const station = stations.find(s => s.ids.includes(last));
@@ -140,18 +140,10 @@ export function createWalkRoom({scene, camera, host, canvas, manifest, models, m
       camera.position.set(state.x, WALK.eye, state.z);
       camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ');
       canvas.dataset.labWalkPosition = JSON.stringify([state.x, WALK.eye, state.z]);
-      nearest = null;
-      let distance = Infinity;
-      const consider = (x, z, target, range) => {
-        const d = Math.hypot(state.x - x, state.z - z);
-        if (d < range && d < distance) { distance = d; nearest = target; }
-      };
-      consider(1.8, 7.7, {kind: 'board'}, 2.4);
-      for (const s of stations) consider(s.x, s.z, {kind: 'machine', ids: s.ids}, 1.8);
+      nearest = walkTarget(state, stations, brian ? [brian.position.x, brian.position.z] : null, last);
       if (brian) {
         brian.rotation.y = Math.atan2(state.x - brian.position.x, state.z - brian.position.z);
         brianName.rotation.y = brian.rotation.y;
-        consider(brian.position.x, brian.position.z, {kind: 'brian', id: last}, 1.3);
       }
       for (const {station, plate} of labels) {
         plate.visible = nearest?.kind === 'machine' && nearest.ids === station.ids;

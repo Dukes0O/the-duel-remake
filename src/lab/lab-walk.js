@@ -27,6 +27,22 @@ export function brianPosition(station, bounds, hall) {
   return [[x + 1.7, z], [x - 1.7, z], [x, z + 1.5], [x, z - 1.5], ...machineApproaches(bound, bounds, hall)]
     .find(([px, pz]) => Math.hypot(px - x, pz - z) > 1.3 && canStand(px, pz, bounds, hall));
 }
+// The floor prompt and E share this choice. Looking at Brian must beat a
+// nearer machine; distance only breaks ties in facing direction.
+export function walkTarget(state, stations, brian, last) {
+  const candidates = [{x: 1.8, z: 7.7, range: 2.4, target: {kind: 'board'}},
+    ...stations.map(s => ({...s, range: 1.8, target: {kind: 'machine', ids: s.ids}}))];
+  if (brian) candidates.push({x: brian[0], z: brian[1], range: 2.5, target: {kind: 'brian', id: last}});
+  let best = null;
+  for (const c of candidates) {
+    const dx = c.x - state.x, dz = c.z - state.z, distance = Math.hypot(dx, dz);
+    if (distance >= c.range) continue;
+    const facing = distance > .05 ? (-Math.sin(state.yaw) * dx - Math.cos(state.yaw) * dz) / distance : -1;
+    if (!best || facing > best.facing + 1e-6 || Math.abs(facing - best.facing) <= 1e-6 && distance < best.distance)
+      best = {target: c.target, facing, distance};
+  }
+  return best?.target ?? null;
+}
 export function stepWalker(state, input, seconds, bounds, hall) {
   // Small substeps prevent crossing thin objects after a delayed frame.
   let left = Math.max(0, Math.min(.1, seconds));
