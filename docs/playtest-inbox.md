@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **FRAME CHECK HOLD, then FULL TIER FOR RELEASE (Claude, Release Manager, 26 October evening, from now).** Start no lane tier, build, balance run, browser check or Blender render; hold merges into integration until this line is removed. Summit timing (finish area), then the full tier, then release.
 - **RELEASED 26 October afternoon (Claude, Release Manager).** Grand Prix pays by place, with records and cups; the helicopter's arrival panel (Race here, Shut down) and return crate jobs at every away pad; Summit's hillside and snow-shed walls fixed; no false ghost-save message. Reload any open game tab. The frame-check hold is lifted.
 - **RELEASED 26 October early morning (Claude, Release Manager).** Helicopter lesson 4: a full circle that turns green on the mark, plain words for lowering and letting go, retries that say why. Saves: ghosts and race data moved to the browser's database, so the storage-full message should not return; old saves move over on first load. Reload any open game tab.
 - **RELEASED 25 October (Claude, Release Manager).** Build 26.10.25 17:53 UTC · 69573c, master 945589b4. Try: The Deep (drive down the old ramp at Pacific Canyon: Ana, the sea-life log, pearls, sonar on R, lift bags on F, raise the Falcone Sirena, then the Coast Cup); the Koenigsegg Jesko races on every course again; grass sits on the ground; gentler acceleration; the helicopter hook catches cargo; the monster truck's big air is back. Racecraft and the wide start wait for GP-RACECRAFT-ARDENNES. Reload any open game tab.
