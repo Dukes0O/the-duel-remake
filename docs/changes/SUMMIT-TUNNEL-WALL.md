@@ -59,3 +59,7 @@ Viper), and unobstructed forward travel on the centre and separate bypass.
 No replaced asset or code path. The open collision gaps are removed. Recycled
 generated QA/production bundles and consumed browser JSON; kept the requested
 picture sheet for handoff.
+
+## Claude review (26 October 2026)
+
+Approved and merged: only new checks; replays and world signatures unchanged; test-circuits passes on integration. Live with the next release.
