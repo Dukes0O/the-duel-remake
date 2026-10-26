@@ -23,3 +23,12 @@
 .lab-key-idea b { color: #edc557; }
 .lab-key-idea p { margin: 8px 0 0; }
 @media(max-height: 700px) { .lab-teaching { bottom: 8px; padding: 12px 18px; } .lab-picture-answers canvas { height: 95px; } }
+.lab-has-lesson .lab-teaching { padding: 10px 16px; font-size: 21px; bottom: 12px; }
+.lab-has-lesson .lab-teaching h3, .lab-has-lesson .lab-teaching h4, .lab-has-lesson .lab-teaching p { margin-bottom: 6px; }
+.lab-has-lesson .lab-teaching h3 { font-size: 23px; }
+.lab-has-lesson .lab-teaching button { font-size: 17px; padding: 6px 12px; }
+.lab-picture-answers { position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; margin: 0; }
+.lab-picture-answers button { background: #252c29f5; }
+.lab-picture-answers canvas { width: 208px; height: 100px; }
+.lab-machine-controls { gap: 6px; margin-bottom: 6px; }
+.lab-machine-controls button { flex: 1; }

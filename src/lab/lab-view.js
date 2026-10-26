@@ -493,7 +493,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
 
   // ---- the room ----
   const keeper = createSceneKeeper({stage, loadManifest, sceneFactory,
-    sceneOptions: () => walking() ? {walking: true, onUse: useWalk, onLessonControl: id => teaching.control(id)} : {},
+    sceneOptions: () => walking() ? {walking: true, onUse: useWalk, onLessonControl: (id, value) => teaching.control(id, value)} : {},
     onRoom: room => { room.show(ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null); room.restore(ui.restore ? restoreView() : null);
       room.walk?.({rows: walkRows(), paused: walkPaused(), last: ui.lastMachine});
       if (walking()) room.canvas.focus({preventScroll: true});
