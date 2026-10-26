@@ -20,7 +20,7 @@ function reachRight(lesson){begin(lesson);stepDriveLesson(lesson,view(200),{},.4
 
 test('the two settled corner rows retain their named gates and rolling starts',()=>{
   assert.deepEqual(DRIVE_LESSON_CORNERS.map(row=>[row.courseId,row.cornerName,row.gateBefore,row.gateOffsetM,row.rollingMph]),[
-    ['panorama-ridge','The Cutting','The Cutting',180,100],['tremblant-woods','Beaver Hairpin','Beaver Kink',150,75]]);
+    ['panorama-ridge','The Cutting','The Cutting',180,100],['tremblant-woods','Beaver Hairpin','Beaver Hairpin',75,75]]);
   assert.ok(Object.isFrozen(DRIVE_LESSON_CORNERS)&&DRIVE_LESSON_CORNERS.every(Object.isFrozen));
 });
 test('creation is isolated and neither car views nor plans are mutated',()=>{
@@ -314,6 +314,11 @@ async function nativeStudentAttempt(baseline, lesson, mode, fps) {
   const state=duel.state,course=duel.course,spec=duel.car;
   const pace=difficulty==='casual'?.92:.95;
   const lessonPlan=await lessonPlanFor(duel,DRIVE_LESSON_CORNERS.find(row=>row.courseId===courseId),pace);
+  if(courseId==='tremblant-woods'){
+    const brakeS=instructor.cones[0].s;
+    assert.ok(brakeS-corner.startS>=35,'Beaver leaves straight road before the brake cone');
+    for(let s=corner.startS;s<=brakeS;s++) assert.equal(course.at(s).curvature,0,'no kink to brake for before cone 1');
+  }
   const {line}=lessonPlan,profile=lessonPlan.profile;
   const start=instructor.poses[0];
   state.tyreSlipRules=true;state.tyreSlip=0;

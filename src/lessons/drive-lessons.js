@@ -2,7 +2,8 @@ import {passed, retry, tickCoach, coachDue, coachSaid} from './lesson-core.js';
 
 export const DRIVE_LESSON_CORNERS = Object.freeze([
   Object.freeze({courseId: 'panorama-ridge', cornerName: 'The Cutting', gateBefore: 'The Cutting', gateOffsetM: 180, rollingMph: 100}),
-  Object.freeze({courseId: 'tremblant-woods', cornerName: 'Beaver Hairpin', gateBefore: 'Beaver Kink', gateOffsetM: 150, rollingMph: 75}),
+  // Start on The Spur, past the kink: no approach bend needs braking before cone 1.
+  Object.freeze({courseId: 'tremblant-woods', cornerName: 'Beaver Hairpin', gateBefore: 'Beaver Hairpin', gateOffsetM: 75, rollingMph: 75}),
 ]);
 
 const line = suffix => 'drive.radio.corner.' + suffix;

@@ -105,7 +105,7 @@ lists them and you pick:
 | Course | Corner | Start gate | Rolling start |
 | --- | --- | --- | --- |
 | Panorama Ridge | The Cutting | 180 m before turn-in, leaving Griffin Bend | 100 mph |
-| Tremblant Woods | Beaver Hairpin | 150 m before Beaver Kink, on Beaver Run | 75 mph |
+| Tremblant Woods | Beaver Hairpin | 75 m before turn-in, on The Spur after Beaver Kink | 75 mph |
 
 Panorama Ridge is first in the list (the longer, faster approach makes the
 lesson clearest). If you own neither, lesson 1 shows "Opens later: buy
@@ -151,10 +151,10 @@ repeatable:
 - **The red board** (try 1 only): **25 m after cone 1**, the same late
   braking point TYRE-SLIP's own test uses, but never past the turn-in
   point. On The Cutting it stands 25 m late, before turn-in. On Beaver
-  Hairpin the instructor brakes only about 10 m before turn-in (it leaves
-  Beaver Kink already slow), so the board stands at turn-in itself: braking
-  there means braking as you turn, which is exactly what makes the tyres
-  slide.
+  Hairpin the board stays 25 m after cone 1, capped at turn-in. The 26 October
+  keyboard fix starts after Beaver Kink; the brake cone is recomputed for
+  that straight approach. See `docs/changes/DRIVE-LESSON-FINISH.md` for the
+  measured keyboard tries.
 
 Cones are drawn only; they never touch race physics. A cone "counts" when
 the car's centre passes within 2.5 m of it; driving right over it (within

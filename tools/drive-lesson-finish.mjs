@@ -19,6 +19,7 @@ function installDriver() {
     };
     const cornerMph = Math.min(...poses.filter(p=>p.s>=run.plan.corner.turnInS&&p.s<=run.plan.corner.turnOutS).map(p=>p.mph));
     let brakeDone = false, maxWide = 0, screech = 0, n = 0;
+    const approach = [];
     for (; n < ticks && run.lesson.phase === 'driving' && state.s < stopS; n++) {
       const speed = state.speedMph * .44704, look = Math.max(12, speed*.45);
       const target = sample(state.s + look), here = course.at(state.s), ahead = course.at(state.s+speed*.18);
@@ -40,13 +41,18 @@ function installDriver() {
       key('ArrowDown',brake); key('ArrowUp',gas);
       key('KeyE',state.revs>.95&&state.gear<app.duel.car.gears.length-1);
       key('KeyQ',state.revs<.48&&state.gear>0);
+      if (state.s < cone.s && n % 24 === 0) approach.push({s:state.s,mph:state.speedMph,
+        lateral:state.lateral,headingError:state.headingError,yaw:state.yawVelocity,
+        desiredYaw:yaw,curvature:here.curvature,steer:state.input.steer});
       app._simulate(1/120);
       if (state.tyreSlip>1) screech+=1/120;
       if (state.s>=run.plan.corner.turnInS&&state.s<=run.plan.corner.turnOutS)
         maxWide=Math.max(maxWide,-run.plan.corner.dir*(state.lateral-sample(state.s).lateral));
     }
     release(); app._driveLessonUi.update(); app.onFrame?.(state);
-    return {mode,scale,ticks:n,phase:run.lesson.phase,maxWideM:maxWide,measuredScreech:screech,
+    return {mode,scale,ticks:n,phase:run.lesson.phase,maxWideM:maxWide,measuredScreech:screech,approach,
+      end:{s:state.s,mph:state.speedMph,lateral:state.lateral,headingError:state.headingError,yaw:state.yawVelocity,
+        steer:state.input.steer,curvature:course.at(state.s).curvature},
       attempt:structuredClone(run.lesson.lastAttempt),text:document.querySelector('.drive-lesson-result')?.textContent,
       panel:document.querySelector('.drive-lesson-panel')?.textContent};
   };
@@ -73,15 +79,16 @@ export async function run(context) {
     if (!ok) throw Error(await context.evaluate('window.__qaApp.driveLessonMessage'));
     await context.waitFor('window.__qaApp.visualReady','lesson world',90000);
     await context.evaluate('window.__qaApp.stop();window.__qaApp.onFrame?.(window.__qaApp.duel.state)');
-    const start = await context.evaluate(`(()=>{const r=window.__qaApp.duel.drivingLesson;return{seed:r.plan.seed,upgrades:r.plan.upgrades,instructor:r.plan.instructor.timeSec,rolling:r.plan.instructor.poses[0].mph,cones:r.plan.instructor.cones,redBoardS:r.plan.instructor.redBoardS}})()`);
+    const start = await context.evaluate(`(()=>{const r=window.__qaApp.duel.drivingLesson;return{seed:r.plan.seed,upgrades:r.plan.upgrades,instructor:r.plan.instructor.timeSec,rolling:r.plan.instructor.poses[0].mph,corner:r.plan.corner,cones:r.plan.instructor.cones,redBoardS:r.plan.instructor.redBoardS,pieces:window.__qaApp.duel.course.script.pieces.filter(p=>p.s1>=r.plan.corner.startS&&p.s0<=r.plan.corner.turnInS)}})()`);
     await context.screenshot(id+'-instructions-cones');
     const late = await context.evaluate(`window.lessonEvidenceDrive('late')`);
     await context.screenshot(id+'-late-result');
     await context.evaluate('window.__qaApp.nextLessonAttempt()');
     await context.screenshot(id+'-right-instructions');
-    await context.evaluate(`window.lessonEvidenceDrive('right',1,14400,window.__qaApp.duel.drivingLesson.plan.instructor.cones[0].s-16)`);
+    const approach = await context.evaluate(`window.lessonEvidenceDrive('right',1,14400,window.__qaApp.duel.drivingLesson.plan.instructor.cones[0].s-16)`);
     await context.screenshot(id+'-before-brake-cone');
     const right = await context.evaluate(`window.lessonEvidenceDrive('right')`);
+    right.approach.unshift(...approach.approach);
     await context.screenshot(id+'-right-result');
     const row = {courseId,difficulty,...start,late,right,challenge:[]};
     if (right.attempt?.passed) for (let i=0;i<3;i++) {
