@@ -49,3 +49,24 @@ their machines until LAB-LESSONS-2 rebuilds them. Remove the old glide-camera
 path in the same change (replace means remove), or name what still needs it.
 Update the switch tests (each changed assertion explained), run the Lab,
 save and hygiene suites and the full Lab browser flow with the switch on.
+
+## 4. Easy to get around (Kyle, 26 October 2026)
+
+Kyle: "it's actually hard to navigate in there. can't click on the sign or
+anything, can't walk over objects." Getting around must never be the hard
+part. Claude's design:
+- **Click to go.** Pointing at a machine, a corner sign, Brian or the door
+  board highlights it with its name; a click walks the player there
+  smoothly (round anything in the way) and opens it. Clicking a corner sign
+  walks to that corner. Dragging still looks around; a click is a click.
+- **Small things never block.** Fuel cans, crates, weights, boxes, cables
+  and anything under knee height are walked through. Only walls, the big
+  machines and Brian block, and the player slides along them instead of
+  stopping dead.
+- **Keyboard too.** Tab moves to the next machine (highlighted, named), Enter
+  goes there and opens it; Shift+Tab goes back.
+- **A Lab map** in a corner of the screen: the four corners and every machine
+  as dots, ticked when passed; click a dot to go there.
+Checks: a test that a click on each machine, sign, Brian and the board walks
+there and opens it; a test that small objects never block and a wall slide
+keeps moving; the browser flow done by clicks alone and by Tab/Enter alone.

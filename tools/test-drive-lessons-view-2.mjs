@@ -51,16 +51,16 @@ test('the board lists four lessons and says why each later one is shut', () => {
   assert.deepEqual(all.rows.map(row => [row.open, row.done]), [[true, true], [true, true], [true, true], [true, true]]);
 });
 
-test('a later lesson needs an owned course, a car and a setting, and a start names its own course', () => {
+test('a later lesson needs a car and a setting, and a start names its own course', () => {
   const access = open('line', 'gears', 'snow'), progress = done('line', 'gears');
   const props = {...base(), progress, lessonAccess: access, ownedCourseIds: ['panorama-ridge']};
   const model = driveLessonBoardModel(props);
-  assert.match(model.byId.line.reason, /^Opens later: buy Tremblant Woods or Harbour Lights\.$/);
-  assert.match(model.byId.snow.reason, /^Opens later: buy Tremblant Snow\.$/);
+  assert.equal(model.byId.line.start.courseId, 'tremblant-woods');
+  assert.equal(model.byId.snow.start.courseId, 'tremblant-snow');
   assert.deepEqual(model.byId.gears.start, {lessonId: 'gears', courseId: 'panorama-ridge', carId: 'falcone', difficulty: 'pro'});
   const woods = driveLessonBoardModel({...props, ownedCourseIds: ['tremblant-woods', 'harbour-lights'], courseIds: {line: 'harbour-lights'}});
   assert.equal(woods.byId.line.start.courseId, 'harbour-lights', 'the chosen course');
-  assert.equal(woods.byId.gears.start.courseId, 'tremblant-woods');
+  assert.equal(woods.byId.gears.start.courseId, 'panorama-ridge', 'catalog order, regardless of ownership');
   assert.equal(driveLessonBoardModel({...props, ownedCarIds: []}).byId.gears.start, null);
   assert.equal(driveLessonBoardModel({...props, difficulty: 'hard'}).byId.gears.start, null);
   assert.equal(driveLessonBoardModel({...props, progress: {version: 2, done: {corner: true}}}).byId.gears.start, null);

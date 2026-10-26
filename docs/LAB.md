@@ -515,3 +515,249 @@ for).
    tunnel, Snow), Claude writing each lesson's words, pictures and
    predictions on its card before Codex builds it.
 6. `lab-2` goes live and the old panels are removed.
+
+### 12.6 The other fifteen lessons (Kyle and Gratian, 26 October 2026: "it works, build the other fifteen")
+
+Each lesson below follows Lift and weight's pattern (12.2 to 12.4): the same
+five steps, kilograms and metres a child knows, the picture in the centre of
+the screen, at most two sentences at once, and a hint that says what
+happened and what to change. Every number comes from the game's own rules
+(the function the challenge uses), never copied by hand; where the game is
+simpler than the world, Brian says so once. Challenges and rewards stay as
+in section 4. "Try" is what the player handles on the machine itself.
+
+#### Flying corner
+
+**Projectile motion** (drop tower)
+- Wonder: a water parcel dropped from a moving helicopter misses the buoy
+  and splashes far past it. "Why did it land over there?"
+- Words: *Gravity* (the pull that makes things fall faster every second),
+  *Forward speed* (how fast the parcel was already moving sideways when let
+  go), *Arc* (the curved path it falls along).
+- Watch: two parcels let go at the same moment, one dropped straight, one
+  thrown forward. They hit the sand at the same time (slow motion, a clock
+  on each); the thrown one lands ahead. Distance marks at 1, 2 and 3 seconds
+  show 5, 20 and 45 m of fall.
+- Try: raise the drop arm on the tower (height) and set the trolley speed
+  with its crank; predict the landing spot by placing a flag on the sand,
+  then drop. A ghost of the last arc stays.
+- Check: three pictures of a helicopter flying toward a buoy, "Where should
+  she let go?" (before it, over it, after it).
+- Hint: "It landed 14 m past the buoy. Let go earlier, or fly slower."
+- Card: "Let go before the target. It keeps your forward speed."
+
+**Fire triangle** (fire pit)
+- Wonder: a fire roars; Brian slams the lid and it dies at once. "Why did
+  that work with no water?"
+- Words: *Heat*, *Fuel* (anything that can burn), *Oxygen* (the part of air
+  a fire needs), *Fire triangle* (all three or no fire), *Retardant* (a coat
+  that makes plants char instead of burn).
+- Watch: the triangle drawn over the pit; Brian takes away one side at a
+  time (gas off, wood out, lid on) and the flames die each way.
+- Try: put the fire out three ways with real tools (bucket of water, sand,
+  rake a cleared strip); predict which side of the triangle each tool takes
+  away, then use it. Then the retardant: spray it ahead of a creeping line
+  of flame and watch the flame stop at it.
+- Check: pictures of a bucket drop, a lid and a firebreak, "Which side of the
+  triangle does each take away?"
+- Hint: "The water landed behind the flames. Put retardant in front of the
+  fire, where it is going."
+- Card: "Take away heat, fuel or air. Retardant goes in front."
+
+**Pendulums** (pendulum frame)
+- Wonder: a car on the cable swings wider and wider as the helicopter stops.
+  "Why does it keep swinging?"
+- Words: *Pendulum* (a weight swinging on a string), *Swing time* (one full
+  swing out and back), *Length* (from the hook to the weight).
+- Watch: three weights on 5, 15 and 25 m strings let go together; stopwatches
+  run; the short one swings fastest (about 4.5 s, 7.8 s, 10 s). Then a
+  heavier weight on the 15 m string: same time.
+- Try: hang a light or heavy weight on any of the three strings and pull it
+  back; predict "faster, slower or the same" before letting go.
+- Check: "Which swings slowest?" (three pictures: short, long, heavy-short).
+- Hint: "The car was still swinging 3 m when you let go. Hover still and
+  count one full swing before you set it down."
+- Card: "Length sets the swing time. Hover still and let it settle."
+
+**Air and altitude** (rotor stand)
+- Wonder: Kestrel One hovers easily at the home pad, then at Summit Run
+  struggles to lift the same load. "Same helicopter. What changed?"
+- Words: *Altitude* (how high above the sea), *Thin air* (less air in each
+  breath higher up), *Air density* (how much air is packed in one space).
+- Watch: the rotor stand at sea level, Panorama Ridge (860 m) and Summit Run
+  (2,860 m); a jar of air beside it shows fewer dots higher up; the green
+  lift arrow shrinks with them.
+- Try: move the stand between the three heights and load it; predict
+  "lifts, hovers, stays down" at each. Brian notes once that the game
+  rounds the real figure down a little (71% at the summit).
+- Check: "Where can she lift this load?" (three pictures of the same load
+  at three heights).
+- Hint: "At Summit she can lift 2,400 kg, not 3,380. Carry less fuel up
+  high."
+- Card: "Thin air, less lift. Go light up high."
+
+#### Workshop corner
+
+**Strength against weight** (bending rig)
+- Wonder: a steel hook arm holds a car, but it is so heavy the helicopter
+  can barely lift it with a car on. "Can it be lighter and still strong?"
+- Words: *Strength* (how much load before it bends or breaks), *Stiff*
+  (bends very little), *Brittle* (snaps instead of bending), *Aluminium*,
+  *Steel*, *Carbon fibre*.
+- Watch: three bars of the same weight loaded until they give: steel bends,
+  aluminium bends sooner, carbon fibre stays straight, then snaps. Weights
+  shown on a scale beside each.
+- Try: pick a material and thickness for a hook arm, hang the Banshee on it;
+  predict "holds, bends, snaps".
+- Check: "Which is lightest and still holds 2,000 kg?"
+- Hint: "It held, but it weighs 60 kg. Try a lighter material, a bit
+  thicker."
+- Card: "Pick by what the part must do: strong, light or tough."
+
+**Rust** (nail jars)
+- Wonder: the Sirena comes up from the sea crusted orange. "What did the sea
+  do to her?"
+- Words: *Rust* (iron turning to flaky orange when water and air reach it),
+  *Salt water*, *Paint* (a skin that keeps water and air out), *Zinc coat*
+  (a metal that rusts first to save the steel).
+- Watch: a week in the jars in ten seconds: dry air stays shiny, fresh water
+  spots, salt water rusts fast, the zinc-coated nail in salt water stays
+  clean while its zinc wears away.
+- Try: pick a protection for a part and drop it in a jar; predict how rusty
+  it will be after a week.
+- Check: three parts (underbody, exhaust, armour plate), "Which protection
+  for each?"
+- Hint: "Paint flakes off a hot exhaust. A zinc coat or a heat-proof finish
+  lasts."
+- Card: "Keep water and air out, or let zinc rust first."
+
+**G-force** (turning arm)
+- Wonder: in a fast corner the driver leans hard against the door. "What is
+  pushing him?"
+- Words: *G-force* (the push you feel in a turn), *1 g* (a push as strong as
+  your own weight), *Radius* (how tight the turn is).
+- Watch: the car on the turning arm speeds up; the weight on a string leans
+  further; the g meter climbs. Doubling the speed makes four times the push
+  (the arrow grows four times).
+- Try: turn the speed crank and slide the car in or out on the arm; predict
+  "more push, less push or the same".
+- Check: "Which corner pushes hardest?" (fast and tight, slow and tight,
+  fast and wide).
+- Hint: "You reached 1.6 g. Carry more speed through a tighter corner."
+- Card: "Twice the speed, four times the push."
+
+**Headings and maps** (map table)
+- Wonder: smoke rises from the woods, but the helicopter's arrow is gone.
+  "How do you find it?"
+- Words: *Heading* (the compass direction you point), *North, East, South,
+  West* as 0, 90, 180, 270, *Scale* (how far one map square is on the
+  ground).
+- Watch: a compass rose on the map table; a toy helicopter turns to 90 and
+  points east; a ruler measures four squares and the scale turns it into
+  metres.
+- Try: lay the ruler between two pads, read the heading on the compass and
+  count the distance; predict where the toy will land, then fly it on the
+  table.
+- Check: "Which heading points to the lake?" (three arrows).
+- Hint: "You flew 270, which is west. The smoke is east: turn to 90."
+- Card: "Point the heading, count the distance."
+
+#### Wind tunnel
+
+**Grip** (tyre on the rolling road)
+- Wonder: one car takes a corner clean; another slides wide with a long
+  screech. "Same corner. Why did one slide?"
+- Words: *Grip* (how hard the tyre can push on the road), *Slip* (a tyre
+  sliding a little sideways), *Limit* (the most grip before it slides).
+- Watch: the tyre slides a little more each run; a graph draws grip against
+  slide: it climbs to a peak (4.3 degrees in the game) and then falls. A
+  short squeal plays at the peak, a long screech past it.
+- Try: turn the slide dial; predict "more grip, the most grip, less grip";
+  then set tyre pressure and see the peak move.
+- Check: "Which tyre has the most grip?" (three pictures of the graph point).
+- Hint: "You slid 9 degrees and lost grip. Ease off until the squeal."
+- Card: "A short squeal is the limit. A screech is lost time."
+
+**Downforce** (wing in the smoke)
+- Wonder: at full speed a racing car's back end stays planted. "What is
+  holding it down?"
+- Words: *Wing*, *Downforce* (air pushing the car down), *Drag* (air pushing
+  back, slowing the car).
+- Watch: smoke streams flow over the wing; the scale under it reads the
+  push; the fan goes from 50 to 100 mph and the push becomes four times as
+  big; an orange drag arrow grows too.
+- Try: tilt the wing and turn the fan dial; predict "more push, more drag,
+  both".
+- Check: "Which wing for a fast, twisty course? Which for a long straight?"
+- Hint: "Your top speed dropped 6 mph. Flatten the wing for the straight
+  courses."
+- Card: "More wing, more grip in fast corners, less top speed."
+
+**Braking** (rolling road)
+- Wonder: a car stops easily from 50 mph but slides past the line from 100.
+  "Why so much further?"
+- Words: *Stopping distance*, *Weight shift* (braking tips the car's weight
+  onto the front tyres), *Brake balance* (how much the front and back brakes
+  do).
+- Watch: two stops side by side, 50 and 100 mph; the 100 mph car needs four
+  times the road. Arrows on each tyre show the weight moving forward as it
+  brakes.
+- Try: move the brake balance lever and choose a speed; predict where the car
+  stops and whether the back slides.
+- Check: "Which car stops shortest without sliding?"
+- Hint: "Too much rear brake: the back slid. Move the balance forward."
+- Card: "Twice the speed, four times the stopping distance."
+
+**Suspension** (shaker rig)
+- Wonder: on a bumpy road one car bounces off the ground; another rides it
+  smoothly. "What is different?"
+- Words: *Spring*, *Soft*, *Stiff*, *Body roll* (the car leaning in a turn).
+- Watch: soft springs over bumps: the body moves gently and the tyre light
+  stays on; stiff springs: the body shakes and the light flickers off. Then
+  a corner: soft leans more, stiff stays flat.
+- Try: pick soft or stiff and a road; predict "smooth, shaky", "leans, flat".
+- Check: "Which springs for Tremblant Snow's bumpy road?"
+- Hint: "The tyres left the road on the bumps. Try softer springs."
+- Card: "Soft for bumps, stiff for smooth fast roads."
+
+**Fuel** (jerry can on a scale)
+- Wonder: the same car is quicker off the line with a half tank. "Why?"
+- Words: *Fuel load*, *Litre*, *Kilogram* (petrol weighs about three
+  quarters of a kilo a litre).
+- Watch: the jerry can fills on the scale: 70 litres reads about 52 kg;
+  the car runs 0 to 60 mph full and half full, the lighter one ahead. An
+  electric car's battery weighs the same full or empty.
+- Try: fill the tank with the can, choose the laps; predict "enough fuel,
+  run out, carry too much".
+- Check: "How much fuel for three laps?"
+- Hint: "You finished with 20 litres spare: that is 15 kg you carried for
+  nothing. Fill a little less."
+- Card: "Carry the fuel you need, no more."
+
+#### Snow corner
+
+**Launch angles** (launcher ramp)
+- Wonder: a skier flies off a kicker and lands short of the table. "What
+  angle goes furthest?"
+- Words: *Launch angle*, *Speed*, *Distance*.
+- Watch: the launcher fires at 15, 30, 45, 60 and 75 degrees at the same
+  speed; arcs stay drawn; 45 goes furthest on flat ground with no air. Then
+  with air and a lower landing, the best angle drops below 45.
+- Try: set the angle on the ramp and the speed; predict where it lands by
+  placing a flag.
+- Check: "Which launch reaches the flag?"
+- Hint: "Too steep: it went high and short. Lower the angle."
+- Card: "About 45 goes furthest. Lower if you land below."
+
+**Ski wax** (snow trays)
+- Wonder: two skiers on the same slope; one glides past the other. "Same
+  skis. Why?"
+- Words: *Wax*, *Glide*, *Snow crystals* (cold snow has hard, sharp
+  crystals; warm snow is wet).
+- Watch: close-up of cold, sharp crystals scratching a soft wax; warm wet
+  snow sucking at a hard base; the right wax for each glides further.
+- Try: pick a wax for each of three snow trays and slide the ski; predict
+  "fastest, middle, slowest".
+- Check: "Which wax for minus 15 C powder?"
+- Hint: "Soft wax on cold snow drags. Pick a hard wax for the cold."
+- Card: "Hard wax for cold, soft wax for warm."

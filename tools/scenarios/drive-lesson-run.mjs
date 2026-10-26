@@ -28,11 +28,11 @@ export async function run(context){
     memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value}))()`);
   if(!report.storage.qaTab||!report.storage.memoryOnly)throw Error('Private memory-only storage required');
   // Use the existing, visible temporary-career QA fixture, then the real
-  // course purchase and player verbs. Do not inject course/lesson progress.
+  // player verbs. Do not buy or inject course/lesson progress.
   await context.evaluate(`(()=>{
     const button=[...document.querySelectorAll('details button')].find(node=>node.textContent==='Create funded temporary player');
     if(!button||button.disabled)throw Error('Funded temporary career fixture missing');button.click();
-    const a=window.__qaApp;if(!a.purchaseCourse('panorama-ridge').ok)throw Error('Actual course purchase failed');
+    const a=window.__qaApp;
     a.setRaceSettings({eventId:'panorama-ridge',car:'falcone_f42',difficulty:'casual'});
     a.audio.setMuted(true);
     for(const panel of document.querySelectorAll('details')){
@@ -40,9 +40,9 @@ export async function run(context){
       if(text.includes('TEMPORARY SAVES')||text.startsWith('Performance samples'))panel.hidden=true;
     }
   })()`);
-  report.fixtures.push('Existing funded temporary career button; actual Panorama purchase');
+  report.fixtures.push('Existing funded temporary career button; no course purchase');
   await click(context,'#driving-instructor');
-  await context.waitFor(`!!document.querySelector('.drive-lesson-board [data-drive-action="start:corner"]')`,'owned corner board');
+  await context.waitFor(`!!document.querySelector('.drive-lesson-board [data-drive-action="start:corner"]')`,'unowned corner board');
   report.owner=await context.evaluate(`(()=>{
     const a=window.__qaApp,ownerId=a.player.id;
     if(!a.addPlayer('Driving lesson second player').ok)throw Error('Second temporary player unavailable');
@@ -51,7 +51,22 @@ export async function run(context){
       a.driveLessonProps().ownedCourseIds.includes('panorama-ridge'))throw Error('Second player inherited another course');
     if(a.startLesson.constructor.name!=='AsyncFunction')throw Error('Real instructor factory host missing');
     return{ownerId,otherId};})()`);
-  await context.waitFor(`!document.querySelector('.drive-lesson-board [data-drive-action="start:corner"]')`,'current player ownership guard');
+  await context.waitFor(`!!document.querySelector('.drive-lesson-board [data-drive-action="start:corner"]')`,'new player can start without buying a course');
+  const board = await context.evaluate(`(()=>{
+    const panel=document.querySelector('.drive-lesson-board');
+    const choices=[...panel.querySelectorAll('input[name="drive-lesson-course"]')];
+    return {text:panel.textContent,enabled:choices.filter(n=>!n.disabled).map(n=>n.dataset.driveCourse),
+      locked:[...panel.querySelectorAll('.lesson-board-locked')].map(n=>({text:n.textContent,cursor:getComputedStyle(n).cursor,color:getComputedStyle(n).color}))};})()`);
+  if(board.enabled.join(',')!=='panorama-ridge,tremblant-woods'||/not owned|buy /i.test(board.text)
+      ||board.locked.length!==3||board.locked.some(n=>n.cursor==='pointer'||!/Opens later/.test(n.text)))
+    throw Error('New-player board choices or locked lesson reasons are wrong: '+JSON.stringify(board));
+  report.newPlayerBoard=board;
+  report.captures.push(await context.screenshot('driving-lesson-new-player-board'));
+  for(const courseId of ['tremblant-woods','panorama-ridge']) {
+    await click(context,`.drive-lesson-board [data-drive-course="${courseId}"]`);
+    const selected=await context.evaluate(`window.__qaApp.driveLessonCourse`);
+    if(selected!==courseId)throw Error('Unowned corner choice did not respond: '+courseId);
+  }
   await context.evaluate(`if(!window.__qaApp.selectPlayer(${JSON.stringify(report.owner.ownerId)}))throw Error('Could not return to lesson owner')`);
   await context.waitFor(`!!document.querySelector('.drive-lesson-board [data-drive-action="start:corner"]')`,'original owner board');
   report.captures.push(await context.screenshot('driving-lesson-board'));

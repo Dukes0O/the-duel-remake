@@ -66,29 +66,26 @@ test('native App lesson: real menu entry, attempts, once-only reward and owner i
       import('./build-reference-laps.mjs'), import('../src/progression.js'),
       import('../src/lessons/drive-lesson-save.js'),
     ]);
-    await withReferenceApp(async app => {
+    for (const lessonCourse of ['panorama-ridge', 'tremblant-woods']) await withReferenceApp(async app => {
       assert.equal(app.drivingLessonsAvailable(), true, 'real QA feature catalog enables both named switches');
-      // Same existing funded temporary career fixture as tools/menu-check.js.
       assert.equal(app.addPlayer('Native lesson owner').ok, true);
-      app.profile = {...app.profile, credits: 50000};
-      assert.equal(app._saveProfile(), true);
-      assert.equal(app.purchaseCourse('panorama-ridge').ok, true);
+      assert.equal(app.driveLessonProps().ownedCourseIds.includes(lessonCourse), false);
       const owner = app.player.id;
       assert.equal(app.addPlayer('Native lesson second player').ok, true);
       const other = app.player.id, otherBefore = structuredClone(app.profile);
-      assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), false,
+      assert.equal(await app.startLesson({courseId: lessonCourse, car: 'falcone_f42', difficulty: 'casual'}), false,
         'an unopened board cannot start a lesson');
       assert.equal(app.openDrivingLessons(), true);
-      assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), false,
-        'another player cannot use the owner course');
+      assert.equal(await app.startLesson({courseId: 'pacific-canyon', car: 'falcone_f42', difficulty: 'casual'}), false,
+        'a course without a lesson cannot start');
       assert.equal(app.selectPlayer(owner), true);
-      app.setRaceSettings({eventId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'});
+      app.setRaceSettings({eventId: lessonCourse, car: 'falcone_f42', difficulty: 'casual'});
       const before = structuredClone(app.profile), leaderboard = structuredClone(app.leaderboard), ghosts = structuredClone(app.ghosts);
       const ordinaryStorage = () => Object.fromEntries(Array.from({length: localStorage.length}, (_, index) => localStorage.key(index))
         .filter(key => key !== PLAYERS_KEY).sort().map(key => [key, localStorage.getItem(key)]));
       const storageBefore = ordinaryStorage();
       assert.equal(app.openDrivingLessons(), true);
-      assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), true,
+      assert.equal(await app.startLesson({courseId: lessonCourse, car: 'falcone_f42', difficulty: 'casual'}), true,
         app.driveLessonMessage || 'the real instructor must complete its native clean run');
       const duel = app.duel, state = duel.state, run = duel.drivingLesson;
       assert.equal(run.ownerId, owner); assert.equal(state.playerId, owner); assert.equal(app._runPlayerId, owner);
@@ -190,19 +187,19 @@ async function driveNativeHostAttempt(app, mode) {
   return structuredClone(run.lesson.lastAttempt);
 }
 
-test('board uses supplied course order, owned corner, actual car and setting without mutation', () => {
+test('board uses supplied course order, chosen corner, actual car and setting without mutation', () => {
   const props = freeze(base()), model = driveLessonBoardModel(props);
   assert.deepEqual(model.start, {lessonId: 'corner', courseId: 'panorama-ridge', carId: 'falcone', difficulty: 'pro'});
-  assert.deepEqual(model.courses.map(row => [row.id, row.owned]), [['panorama-ridge', true], ['tremblant-woods', false]]);
+  assert.deepEqual(model.courses.map(row => row.id), ['panorama-ridge', 'tremblant-woods']);
   assert.equal(model.rows[0].open, true); assert.equal(model.rows[0].group, 'Driving');
   assert.equal(model.rows[0].done, false); assert.equal(props.courseId, undefined);
-  const woods = {...base(), ownedCourseIds: ['tremblant-woods']};
+  const woods = {...base(), ownedCourseIds: [], courseId: 'tremblant-woods'};
   assert.equal(driveLessonBoardModel(woods).start.courseId, 'tremblant-woods');
 });
 
-test('no owned course, wrong car, missing player, unknown difficulty or newer save cannot start', () => {
+test('missing course, wrong car, missing player, unknown difficulty or newer save cannot start', () => {
   const unavailable = [
-    {...base(), ownedCourseIds: []}, {...base(), ownedCarIds: []}, {...base(), playerId: ''},
+    {...base(), corners: []}, {...base(), ownedCarIds: []}, {...base(), playerId: ''},
     {...base(), carId: 'missing'}, {...base(), difficulty: 'hard'},
     {...base(), progress: {version: 2, done: {corner: true}}},
   ];
@@ -210,7 +207,22 @@ test('no owned course, wrong car, missing player, unknown difficulty or newer sa
     assert.equal(driveLessonBoardModel(props).start, null);
     assert.doesNotMatch(driveLessonBoardMarkup(props), /data-drive-action="start:corner"/);
   }
-  assert.match(driveLessonBoardMarkup(unavailable[0]), /buy Panorama Ridge or Tremblant Woods/);
+  assert.match(driveLessonBoardMarkup(unavailable[0]), /No lesson course is available/);
+});
+
+
+test('a new player can choose either lesson 1 corner without buying a course', () => {
+  for (const courseId of ['panorama-ridge', 'tremblant-woods']) {
+    const props = {...base(), ownedCourseIds: [], courseId};
+    assert.equal(driveLessonBoardModel(props).start.courseId, courseId);
+    const markup = driveLessonBoardMarkup(props);
+    assert.doesNotMatch(markup, /not owned|buy |disabled/);
+    const d = dom(), selections = [];
+    const clean = bindDriveLessonUi(d.root, () => props, {onSelectCourse: value => selections.push(value)});
+    d.emit('change', d.node({driveCourse: courseId}, 'INPUT'));
+    assert.deepEqual(selections, [{courseId}]);
+    clean();
+  }
 });
 
 test('completed lesson stays a retake with the supplied best margin and no reward promise', () => {
@@ -275,15 +287,15 @@ test('invalid or non-finite observations never render NaN or a fake zero instruc
   assert.equal(driveLessonResultMarkup({...props, runPlayerId: 'someone-else'}), '');
 });
 
-test('bindings use fresh ownership and course props, reject forged actions and cleanly detach', () => {
+test('bindings use fresh player and course props, reject forged actions and cleanly detach', () => {
   const d = dom(), starts = [], selections = []; let props = base();
   const clean = bindDriveLessonUi(d.root, () => props, {onStart: value => starts.push(value), onSelectCourse: value => selections.push(value)});
   d.emit('click', d.node({driveAction: 'start:corner'})); assert.equal(starts.length, 1);
-  props = {...props, ownedCourseIds: []};
+  props = {...props, playerId: ''};
   d.emit('click', d.node({driveAction: 'start:corner'})); assert.equal(starts.length, 1);
   props = {...base(), ownedCourseIds: ['tremblant-woods'], courseId: 'tremblant-woods'};
   d.emit('click', d.node({driveAction: 'start:corner'})); assert.equal(starts[1].courseId, 'tremblant-woods');
-  d.emit('change', d.node({driveCourse: 'panorama-ridge'}, 'INPUT')); assert.equal(selections.length, 0);
+  d.emit('change', d.node({driveCourse: 'unknown'}, 'INPUT')); assert.equal(selections.length, 0);
   d.emit('change', d.node({driveCourse: 'tremblant-woods'}, 'INPUT')); assert.deepEqual(selections, [{courseId: 'tremblant-woods'}]);
   d.emit('click', d.node({driveAction: 'start:other'}));
   d.emit('click', d.node({driveAction: 'start:corner'}, 'BUTTON', {inside: false}));
