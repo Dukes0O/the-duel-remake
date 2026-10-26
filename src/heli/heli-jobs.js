@@ -10,7 +10,7 @@ import {liftCheck} from './heli-cable.js';
 import {MEDAL_CARS} from '../medals.js';
 // pilot-map-data.js imports legFuelKg from this file too; each only calls the other's
 // functions after both have loaded, so the pair is safe in either order.
-import {PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, mapDistanceKm, placeOfCourse, placeById} from './pilot-map-data.js';
+import {PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, mapDistanceKm, placeOfCourse, placeById, fuelPadAt} from './pilot-map-data.js';
 
 import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS, HELI_MONEY} from './heli-save.js';
 import {surveyJob, surveyName, reportSurvey, isSurveyRun, SURVEY_NOT_A_RUN} from './heli-survey.js';
@@ -206,8 +206,20 @@ const RETURN_SENDERS = Object.freeze({
   'pacific-canyon': "Ana's field station sends sample crates for the lab in town.",
 });
 
+// Claude, 26 October: cover premium fuel at either end with a 25% margin,
+// or pay 60% of the same leg's car job, whichever is greater, rounded up to 10.
+export function returnLoadPay(from, to, options = {}) {
+  const fuel = legFuelKg(from, to, options);
+  if (fuel === null || fuel > HELI_MONEY.tankKg) return null;
+  const original = JOB_ROUTES.find(route => legKey(route.from, route.to) === legKey(from, to));
+  const carPay = original?.pay ?? mapJobPay(mapDistanceKm(placeKey(from), placeKey(to)));
+  const price = Math.max(HELI_MONEY.creditsPerKg, fuelPadAt(placeKey(from))?.pricePerKg ?? 0,
+    fuelPadAt(placeKey(to))?.pricePerKg ?? 0);
+  return Math.ceil(Math.max(0.6 * carPay, 1.25 * fuel * price) / 10) * 10;
+}
+
 // No ownership or wallet enters the seed: the same place has the same load
-// all play day. Long, unprofitable legs never go on this small board.
+// all play day. Legs beyond a full tank never go on this small board.
 export function returnLoadJob(day, from, options = {}) {
   const places = destinationsFor(options);
   if (from === HOME_COURSE || !Object.hasOwn(places, from)) return null;
@@ -215,14 +227,11 @@ export function returnLoadJob(day, from, options = {}) {
   let seed = (0x43524154 ^ number) >>> 0;
   for (const letter of from) seed = (Math.imul(seed, 31) ^ letter.charCodeAt(0)) >>> 0;
   const rng = makeRng(seed);
-  const price = HELI_MONEY.creditsPerKg;
   // Discovering the hidden Table in flight must not redraw an advertised
   // job. It offers outbound crates once known, but is never a drop-off.
   const routes = Object.keys(places).filter(to => to !== from && to !== 'the-table').map(to => {
-    const original = JOB_ROUTES.find(route => legKey(route.from, route.to) === legKey(from, to));
-    const pay = Math.round(0.6 * (original?.pay ?? mapJobPay(mapDistanceKm(placeKey(from), placeKey(to)))));
-    return {to, pay, fuel: legFuelKg(from, to, options)};
-  }).filter(route => route.fuel !== null && route.fuel <= HELI_MONEY.tankKg && route.pay > Math.ceil(route.fuel * price));
+    return {to, pay: returnLoadPay(from, to, options)};
+  }).filter(route => route.pay !== null);
   if (!routes.length) return null;
   const route = routes[rng.int(0, routes.length - 1)];
   return Object.freeze({id: `return-${number}-${from}`, kind: 'returnLoad', day: number, from, to: route.to,

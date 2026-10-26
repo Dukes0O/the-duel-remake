@@ -16,7 +16,8 @@ import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, isA
   RECOVERY, wreckFor, recoveryJob, recoveryTitle, recoveryJobOf, finishRecovery} from '../src/heli/heli-jobs.js';
 import {createHeliSession} from '../src/heli/heli-session.js';
 import {dispatchBoardMarkup, handleBoardAction, createDispatchBoard, atHomePad} from '../src/heli/heli-board.js';
-import {returnLoadJob, returnLoadTitle, finishReturnLoad} from '../src/heli/heli-jobs.js';
+import {returnLoadJob, returnLoadTitle, finishReturnLoad, returnLoadPay, mapJobPay} from '../src/heli/heli-jobs.js';
+import {fuelPadAt, placeOfCourse, mapDistanceKm} from '../src/heli/pilot-map-data.js';
 import {arrivalMarkup} from '../src/heli/heli-ui.js';
 
 let checks = 0;
@@ -577,6 +578,25 @@ function flyOwnCar({owned}) {
 // Return boards are repeatable, affordable to fly, and independent of car jobs.
 {
   const options = {summitRun: true, pilotMap: true, table: true};
+  const placeKey = id => placeOfCourse(id)?.id ?? id;
+  const fuelPrice = (from, to) => Math.max(1.5, fuelPadAt(placeKey(from))?.pricePerKg ?? 0,
+    fuelPadAt(placeKey(to))?.pricePerKg ?? 0);
+  for (const from of Object.keys(destinationsFor(options))) for (const to of Object.keys(destinationsFor(options))) {
+    const fuel = legFuelKg(from, to, options);
+    if (fuel === null || fuel > 400) {
+      same(returnLoadPay(from, to, options), null, 'same pad and legs beyond a full tank are not offered');
+      continue;
+    }
+    const original = JOB_ROUTES.find(route => [route.from, route.to].sort().join('|') === [from, to].sort().join('|'));
+    const carPay = original?.pay ?? mapJobPay(mapDistanceKm(placeKey(from), placeKey(to)));
+    const floor = Math.max(carPay * .6, fuel * fuelPrice(from, to) * 1.25);
+    const pay = returnLoadPay(from, to, options);
+    same(pay, Math.ceil(floor / 10) * 10, `settled pay for ${from} to ${to}`);
+    ok(pay >= floor && pay < floor + 10 && pay % 10 === 0, 'round up to the next 10 without excess');
+    ok(pay > fuel * fuelPrice(from, to), 'every leg covers the dearest endpoint pump');
+    same(returnLoadPay(to, from, options), pay, 'same pay in either direction');
+  }
+  same(returnLoadPay('pacific-canyon', 'red-mesa', options), 340, 'Claude\'s premium-pump example');
   for (let day = 0; day < 30; day++) for (const from of Object.keys(destinationsFor({...options, table: false})))
     same(returnLoadJob(day, from, options), returnLoadJob(day, from, {...options, table: false}), 'Table discovery cannot change an advertised job');
   for (let day = 0; day < 30; day++) for (const from of Object.keys(destinationsFor(options))) {
@@ -586,7 +606,8 @@ function flyOwnCar({owned}) {
     same(job, returnLoadJob(day, from, options), 'same day and place, same crate');
     ok(job.massKg >= 300 && job.massKg <= 600, 'crate within settled weight');
     const fuel = legFuelKg(from, job.to, options);
-    ok(fuel <= 400 && job.pay > Math.ceil(fuel * 1.5), 'pay exceeds its leg fuel at the home pump');
+    ok(fuel <= 400 && job.pay > fuel * fuelPrice(from, job.to), 'pay exceeds fuel at the dearest endpoint pump');
+    same(job.pay, returnLoadPay(from, job.to, options), 'the seeded job uses the revised leg pay');
     same(jobPay(job, 'real'), Math.round(job.pay * 1.25), 'Real adds 25 percent');
   }
   const profile = profileWith({heli: {playDay: {last: DAY1, count: 4}}});
