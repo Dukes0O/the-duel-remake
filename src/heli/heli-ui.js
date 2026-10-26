@@ -15,7 +15,10 @@ import {createPilotMapUi, MAP_KEY} from './pilot-map-view.js';
 import {placeOfCourse, placeById} from './pilot-map-data.js';
 import {createSkiHud, skiBoardMarkup, skiMenuMarkup} from '../ski/ski-view.js'; // SKI-VIEW: the run HUD, the ski box and the run menu
 import {CHALLENGE_RULES} from '../lab/lab-challenges.js'; // LAB-VIEW: the numbers the challenge line quotes
-import {CARS} from '../config.js';
+import {CARS, COURSE} from '../config.js';
+import {isCourseUnlocked} from '../course-access.js';
+import {CABLE} from './heli-cable.js';
+import {atAnyPad} from './heli-board.js';
 
 export const LESSON_TEXT = Object.freeze({
   liftoff: Object.freeze({name: '1 Lift-off', goal: 'Rise to 3 m and hold her there for 5 seconds.'}),
@@ -243,6 +246,31 @@ export function instrumentsMarkup(view, {cameraIndex = 0} = {}) {
   </div>${fireLineMarkup(view)}${rescueLineMarkup(view)}`;
 }
 
+// HELI-LANDED: read-only arrival eligibility, shared by the panel and its actions.
+export function landedArrival(view, profile = null) {
+  if (!atAnyPad(view) || Math.hypot(view.heli.vx ?? 0, view.heli.vy ?? 0, view.heli.vz ?? 0) > CABLE.setDownSpeed ||
+      view.lesson || view.challenge || view.job || view.rescue?.active || view.fire?.cells > 0 ||
+      view.ski?.flight || view.ski?.run || view.survey?.taken) return null;
+  const car = view.loads?.find(load => load.own && load.onGround && !load.hooked);
+  const unavailable = new Set(view.loads?.filter(load => load.hooked || !load.onGround).map(load => load.id));
+  return {courseId: view.courseId, carId: car?.id ?? Object.entries(profile?.heli?.carsAt ?? {}).find(([id, courseId]) => courseId === view.courseId && !unavailable.has(id))?.[0] ?? null};
+}
+
+export function arrivalMarkup(view, jobs = [], profile = null) {
+  const arrival = landedArrival(view, profile);
+  if (!arrival) return '';
+  const place = HELI_DESTINATIONS_WITH_SUMMIT[arrival.courseId] ??
+    COURSE.find(course => course.id === arrival.courseId) ?? placeOfCourse(arrival.courseId) ?? placeById(arrival.courseId);
+  const localJobs = jobs.filter(job => !job.own && !job.done && !job.taken && (job.from ?? job.courseId) === arrival.courseId);
+  const words = arrival.carId ? `Your ${CARS[arrival.carId]?.name ?? arrival.carId} is parked here.` :
+    localJobs.length ? `Jobs here: ${localJobs.map(job => job.title).join('; ')}` : 'Nothing waiting here today';
+  const canRace = COURSE.some(course => course.id === arrival.courseId) && (!profile || isCourseUnlocked(profile, arrival.courseId));
+  return `<div class="heli-lessons heli-arrival" role="group" aria-label="Landed at ${escape(place?.name ?? arrival.courseId)}">
+    <span>LANDED AT ${escape((place?.name ?? arrival.courseId).toUpperCase())}</span><p>${escape(words)}</p>
+    <button type="button" data-heli-arrival="race" ${canRace ? '' : 'disabled'}>Race here</button>
+    <button type="button" data-heli-arrival="shutdown">Shut down</button>${!canRace ? `<p>${COURSE.some(course => course.id === arrival.courseId) ? 'Unlock this course in the main menu to race here.' : 'There is no race course here.'}</p>` : ''}</div>`;
+}
+
 // Where to fly, the pump at home, and the cruise prompt.
 export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   if (!view?.heli) return '';
@@ -319,12 +347,14 @@ export function createHeliUi({host, app}) {
   section.className = 'heli-panel';
   section.hidden = true;
   section.setAttribute('aria-label', 'Kestrel One');
-  section.innerHTML = '<div class="heli-top"></div><div class="heli-side"><div class="heli-ski-host"></div><div class="heli-controls"></div><div class="heli-lessons-host"></div><div class="heli-board-host" hidden></div></div><div class="heli-notices" aria-live="polite"></div><div class="heli-radio" aria-live="polite" hidden></div>';
+  section.innerHTML = '<div class="heli-top"></div><div class="heli-side"><div class="heli-arrival-host"></div><div class="heli-ski-host"></div><div class="heli-controls"></div><div class="heli-lessons-host"></div><div class="heli-board-host" hidden></div></div><div class="heli-notices" aria-live="polite"></div><div class="heli-radio" aria-live="polite" hidden></div>';
   host.append(section);
   const top = section.querySelector('.heli-top'), controls = section.querySelector('.heli-controls');
   const notices = section.querySelector('.heli-notices'), radio = section.querySelector('.heli-radio');
   let seenLog = null, shown = [], radioLine = null, lastTop = '', lastControls = '', lastNotices = '', disposed = false;
   const lessonsHost = section.querySelector('.heli-lessons-host');
+  const arrivalHost = section.querySelector('.heli-arrival-host');
+  let lastArrival = '';
   const boardHost = section.querySelector('.heli-board-host');
   const board = createDispatchBoard({root: boardHost, app});
   let pilotMap = null; // MAP-VIEW: made the first time the view carries the pilot's map (never with the switch off)
@@ -354,6 +384,8 @@ export function createHeliUi({host, app}) {
     if (app.heliSession === session) app._heliEvents?.(session.takeEvents());
   };
   const click = event => {
+    const arrivalButton = event.target.closest('[data-heli-arrival]');
+    if (arrivalButton) { app.heliLanded?.(arrivalButton.dataset.heliArrival); return; }
     const skiButton = event.target.closest('[data-ski-board],[data-ski-run],[data-ski-wax],[data-ski-challenge]');
     if (skiButton) {
       const result = skiAction(skiButton);
@@ -411,6 +443,7 @@ export function createHeliUi({host, app}) {
       if (dusk > 0) { section.dataset.dusk = 'on'; section.style.setProperty('--heli-dusk', dusk.toFixed(3)); }
       else if (section.dataset.dusk) { delete section.dataset.dusk; section.style.removeProperty('--heli-dusk'); }
       // SKI-VIEW: on skis the instruments, routes, lessons and board give way to the run HUD.
+      if (arrivalHost) lastArrival = set(arrivalHost, arrivalMarkup(view, app.heliSession?.boardJobs?.() ?? [], app.profile), lastArrival);
       const skiing = view.phase === 'skiing';
       (skiing ? hud() : skiHud)?.update(view, now);
       top.hidden = skiing; controls.hidden = skiing; lessonsHost.hidden = skiing;

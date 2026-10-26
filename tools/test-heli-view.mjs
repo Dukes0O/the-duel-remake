@@ -1,10 +1,15 @@
+import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {raceFeatureFlags} from '../src/wasteland-access.js';
+import {COURSE} from '../src/config.js';
+import {createResultsScreen} from '../src/screen-results.js';
 // HELI-VIEW: Kestrel One's instruments agree with the simulation, the
 // notices and radio subtitles, the route buttons and the pump, and the four
 // camera views (docs/HELICOPTER.md sections 8 and 11).
 import assert from 'node:assert/strict';
 import {createHeliState, heliReadout, stepHeli} from '../src/heli/heli-flight.js';
 import {flatGround} from '../src/heli/heli-ground.js';
-import {instrumentReadings, instrumentsMarkup, controlsMarkup, noticeText, pumpLabel, lessonsMarkup, holdShare} from '../src/heli/heli-ui.js';
+import {instrumentReadings, instrumentsMarkup, controlsMarkup, noticeText, pumpLabel, lessonsMarkup, holdShare, landedArrival, arrivalMarkup} from '../src/heli/heli-ui.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 import {buyFuel} from '../src/heli/heli-save.js';
 import {heliCameraPose, HELI_CAMERA_VIEWS, PILOT_EYE, heliToWorld} from '../src/heli/heli-camera.js';
@@ -16,6 +21,69 @@ import {readFileSync} from 'node:fs';
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
 const eq = (actual, expected, label) => { assert.equal(actual, expected, label); checks++; };
+
+// HELI-LANDED: no automatic exit; a settled arrival offers deliberate menu actions.
+{
+  const landed = {phase: 'flying', courseId: 'tremblant-snow', zone: {x: 0, z: 0, radius: 12},
+    heli: {x: 0, z: 0, vx: 0, vy: 0, vz: 0, onGround: true}, loads: []};
+  ok(arrivalMarkup(landed).includes('LANDED AT TREMBLANT SNOW'), 'landed place named');
+  ok(arrivalMarkup(landed).includes('Nothing waiting here today'), 'quiet arrival explained');
+  for (const patch of [{heli: {...landed.heli, onGround: false}}, {heli: {...landed.heli, vx: 2}},
+    {heli: {...landed.heli, x: 13}}, {phase: 'cruise'}, {lesson: {}}, {challenge: {}}, {job: {}},
+    {rescue: {active: {}}}, {fire: {cells: 1}}, {ski: {flight: {}}}, {ski: {run: {}}}, {survey: {taken: true}}])
+    eq(arrivalMarkup({...landed, ...patch}), '', 'flying, outside the zone or busy: no arrival');
+  ok(arrivalMarkup({...landed, rescue: {call: {}}}).includes('Shut down'), 'unanswered call does not force a job');
+  ok(arrivalMarkup(landed, [{from: 'tremblant-snow', title: 'Snow delivery'},
+    {from: 'panorama-ridge', title: 'Other delivery'}]).includes('Jobs here: Snow delivery'), 'existing local dispatch used');
+  const own = {...landed, loads: [{id: 'falcone_f42', own: true, onGround: true, hooked: false}]};
+  eq(landedArrival(own).carId, 'falcone_f42', 'own parked car chosen');
+  eq(landedArrival({...own, loads: [{...own.loads[0], hooked: true}]}).carId, null, 'hooked car is not parked');
+  eq(landedArrival({...own, loads: [{...own.loads[0], hooked: true}]}, {heli: {carsAt: {falcone_f42: 'tremblant-snow'}}}).carId, null, 'saved position cannot resurrect a hooked car');
+  ok(arrivalMarkup(own).includes('parked here'), 'parked car described');
+  // The actual menu exit and session fuel storage, using memory only.
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const memory = new Map(), storage = {getItem: key => memory.get(key) ?? null,
+    setItem: (key, value) => memory.set(key, String(value)), removeItem: key => memory.delete(key)};
+  Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: storage});
+  try {
+    for (const action of ['race', 'shutdown']) {
+      const app = new App();
+      app.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides: {helicopter: true}, qa: true}), () => app.duel.state);
+      app.profile.credits = 1000000; app._saveProfile();
+      app.purchaseCourse('tremblant-snow');
+      app.profile = {...app.profile, heli: {...app.profile.heli, version: 1, fuelKg: 123.4, carsAt: {falcone_f42: 'tremblant-snow'}}};
+      app._saveProfile();
+      app.menuCar = 'viper_proto';
+      ok(app.visitHeli(), 'real visit opens');
+      app.heliSession.start('tremblant-snow');
+      eq(landedArrival(app.heliView(), app.profile).carId, 'falcone_f42', 'saved parked car found even when another car was selected');
+      const beforeCourse = app.menuStage;
+      ok(app.heliLanded(action), 'landed action accepted');
+      eq(app.duel.state.status, 'menu', 'opens menu without starting race');
+      eq(app.heliSession, null, 'flight ended');
+      eq(app.profile.heli.fuelKg, 123.4, 'remaining fuel kept');
+      if (action === 'race') {
+        eq(COURSE[app.menuStage].id, 'tremblant-snow', 'arrival course selected');
+        eq(app.menuCar, 'falcone_f42', 'parked car selected');
+      } else eq(app.menuStage, beforeCourse, 'shut down leaves menu choice alone');
+    }
+    const locked = new App();
+    locked.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides: {helicopter: true}, qa: true}), () => locked.duel.state);
+    locked.profile.courses = {version: 1, unlocked: []}; locked._saveProfile();
+    locked.visitHeli(); locked.heliSession.start('tremblant-snow');
+    ok(arrivalMarkup(locked.heliView(), [], locked.profile).includes('Unlock this course'), 'locked destination explains Race here is unavailable');
+    ok(!locked.heliLanded('race') && locked.heliSession, 'locked course never exits into a different course');
+    locked.returnToMenu();
+    const app = new App();
+    app.duel.state.status = 'heli'; app.duel.state.paused = true;
+    const screen = createResultsScreen({app, profile: () => app.profile, credits: String, escapeHTML: String, time: String, arrow: ''});
+    const html = screen(app.duel.state);
+    ok(html.includes('W / S: Collective') && html.includes('P: Autopilot'), 'pause uses helicopter help');
+    ok(!html.includes('ARROWS TO DRIVE') && !html.includes('SPACE TO BOOST'), 'no car footer during flight');
+  } finally {
+    if (previous) Object.defineProperty(globalThis, 'localStorage', previous); else delete globalThis.localStorage;
+  }
+}
 
 // The instruments read the simulation's own numbers.
 {
