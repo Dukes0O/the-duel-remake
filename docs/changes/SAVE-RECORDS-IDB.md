@@ -78,3 +78,7 @@ corrected save suites, tool retries and the 34-suite resume (34 passed,
 zero failed or unrun). The final test-runner suite took 223 s. The recovery
 assertion changes and import guard were checked before the final build.
 Generated lane `dist` was recycled; `.qa-dist` is empty. Status refreshed.
+
+## Claude review (26 October 2026)
+
+Approved: cases that used to be refused by the 3.6 MB reserve now succeed by design; the ghost footprint check is far stricter (under 2 KB); legacy journals, backups and telemetry are proven to survive. Independent save review clear.
