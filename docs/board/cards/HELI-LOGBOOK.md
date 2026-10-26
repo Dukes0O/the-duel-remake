@@ -87,3 +87,17 @@ The changed assertions (switch count 41, the five paints in the skin roster,
 the paint recipe in the generator roster and manual scenarios, logbook
 completions in the job scripts) are approved: each adds the new thing and
 nothing is loosened.
+
+## Round 2 handoff
+
+Private's silver line, Commercial's cream band and tail kestrel, Chief's
+red belly/fin and tail kestrel, and light soot/skid wear on all five are
+ready for Claude's verdict. The matched High/Performance near/distance
+sheet is `docs/board/looks/heli-logbook/round-2.jpg`; its note is
+`round-2-review.md` beside it. Round 1's note now follows the same
+`-review.md` convention required by the evidence check.
+
+The native memory-only browser check passed with 25 pictures and zero
+warnings or errors. Independent rendering review is clear. The change
+note lists the four additive skid-material assertions and the gate/build
+results. No save or race-rule changes, frame timing or round 3.

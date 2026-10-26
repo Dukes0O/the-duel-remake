@@ -1,6 +1,6 @@
 # HELI-LOGBOOK
 
-Status: paint round 2 in progress. Switch: `heli-logbook` (dev).
+Status: paint round 2 ready for Claude's verdict. Switch: `heli-logbook` (dev).
 
 ## Paint round 2 (26 October 2026)
 
@@ -30,6 +30,36 @@ skid clone, unchanged shared mast material, original skid restoration on
 paint change, and original restoration before disposal. Every existing
 assertion is retained; none is relaxed. Claude approved the round 1 changes
 on the card.
+
+First round 2 lane gate on `232797b4`: 83 passed, one failed, 19 not run
+in 389.16 s. The current evidence check requires `round-N-review.md`
+beside each tracked sheet. Renamed both paint notes to that convention;
+no test changed.
+
+Corrected lane gate: **103/103 passed**, zero failed or not run, in
+853.75 s. Production build passed in 1,341 ms (Vite 836 ms). Tested game
+code and assets are `232797b4`; subsequent changes are the sheet, review
+notes, card and status. Both gates used PowerShell with System32 first on
+PATH. Before each heavy run, the absolute integration inbox had no active
+hold and the count was below three; the lane's minute check counted two.
+Replay fingerprints and world signatures passed unchanged. Build retains
+the existing chunk-size and mixed-import warnings.
+
+The native browser check passed on private port 25388 with memory-only
+storage: 25 pictures, zero warnings or errors. The same High/Performance
+near/distance views are in [round 2](../board/looks/heli-logbook/round-2.jpg)
+(494,163 bytes), with findings in `round-2-review.md` beside it. Independent
+rendering review is clear. No frame timing or round 3 ran. Claude's round 2
+art verdict remains open. Cockpit sync updated one task from integration's
+authoritative board.
+
+Round 2 removed: replaced all five runtime texture maps at their existing
+paths and removed the door-kestrel motif. The maps total 5,001,151 bytes,
+86,447 fewer than round 1. Recycled own raw captures, temporary originals
+and QA bundle after composing the sheet. Both compact round sheets remain;
+current gate/build logs remain for handoff. The matching review notes were
+renamed rather than duplicated. No save keys or race rules changed in this
+round; the original independent save review remains clear.
 
 ## Design before code
 
