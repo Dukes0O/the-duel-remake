@@ -1368,3 +1368,6 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 HELI-RETURN-LOADS merged (live, next release): pay rule revised, four pins reviewed, supply-hook clash fixed; helicopter, save and replay suites and build pass. HELI-LOGBOOK started.
 - 2026-10-26 Release full tier on de0555b0: 518 passed, 2 failed (test-terrain, test-map-destinations expected the old Summit ground; reviewed and updated, only Summit changed). Summit frames p95 16.8/16.8 ms, world build 1051/1013 ms (warning, SUMMIT-BUILD-TIME-2).
 - 2026-10-26 Release (afternoon): six live fixes on 301e61c0+notes; hold lifted.
+- 2026-10-26 LAB-LESSON-FRAME merged (Codex): five-step lesson frame, notebook save field (save review clear) behind lab-2; Lab and save suites and build pass.
+- 2026-10-26 SKI-FINISH tuning merged (dev): Casual slalom assist, steady keyboard run 2 misses/bronze; suites and build pass.
+- 2026-10-26 SUMMIT-BUILD-TIME-2 merged: signatures exact; official timing with the finish area before release.
