@@ -166,7 +166,7 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
       }
       const idea = !hover && !notebook && !feedback ? session?.view().keyIdea : null;
       if (idea) card.innerHTML = `<b>Key idea</b><p>${escape(idea)}</p>`;
-      const active = challengeActive?.active?.() === true;
+      const active = !session && !hover && !notebook && challengeActive?.active?.() === true;
       card.hidden = !on() || !(idea || active);
       if (challengeActive?.done?.() === true) challengeActive = null;
     },
