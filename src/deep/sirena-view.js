@@ -96,6 +96,7 @@ export function createSirenaScene({scene, zone, deep, rampHeading = 0, load = de
   const glint = createGlint();
   if (glint) { glint.visible = false; group.add(glint); }
   const sources = new Map(), pieces = new Map(), rising = [], bags = [];
+  const pearlGlints = new Map();
   let disposed = false, bagSource = null, wanted = new Set();
 
   function source(id) {
@@ -140,6 +141,21 @@ export function createSirenaScene({scene, zone, deep, rampHeading = 0, load = de
     update({duel, seconds = 0, dt = 0}) {
       if (disposed) return;
       const view = deepStoryView(duel);
+      // Pearls need a visible clue before they earn a chart pin. Reuse the
+      // badge's brief sunlight glint; this view never collects or reveals one.
+      for (const pearl of duel.deepStory?.log?.pearls ?? []) {
+        if (!pearlGlints.has(pearl.pearl)) {
+          const marker = createGlint();
+          if (marker) { marker.name = `Pearl glint: ${pearl.pearl}`; marker.scale.setScalar(.65); group.add(marker); }
+          pearlGlints.set(pearl.pearl, marker);
+        }
+        const marker = pearlGlints.get(pearl.pearl);
+        if (!marker) continue;
+        marker.visible = !duel.deepStory.log.found.has(pearl.pearl);
+        marker.position.set(pearl.x, deep.shape.floorHeight(pearl.x, pearl.z) + .25, pearl.z);
+        const beat = (seconds % 2.6) / 2.6;
+        marker.material.opacity = beat < .18 ? Math.sin(beat / .18 * Math.PI) : 0;
+      }
       wanted = new Set(view?.finds.map(find => find.id) ?? []);
       for (const find of view?.finds ?? []) {
         const entry = piece(find);
@@ -193,7 +209,7 @@ export function createSirenaScene({scene, zone, deep, rampHeading = 0, load = de
         for (const m of [].concat(o.material || [])) { m.map?.dispose?.(); m.dispose(); }
       });
       scene.remove(group);
-      pieces.clear(); rising.length = 0; bags.length = 0;
+      pieces.clear(); pearlGlints.clear(); rising.length = 0; bags.length = 0;
     },
   };
 }
@@ -205,7 +221,7 @@ const captionSeconds = text => 1.5 + text.split(/\s+/).length * .38;   // when n
 
 export function createAnaPhone({audio = null, now = () => performance.now() / 1000} = {}) {
   const queue = [], buffers = new Map();
-  let current = null, nextAt = 0, chain = null, chainContext = null, disposed = false;
+  let current = null, nextAt = 0, chain = null, chainContext = null, disposed = false, blockedAt = null;
   const audible = () => !!audio?.context && audio.context.state === 'running' && !audio.muted && !audio.paused &&
     audio.flags?.enabled?.('the-deep') === true;
   async function buffer(id) {
@@ -221,16 +237,19 @@ export function createAnaPhone({audio = null, now = () => performance.now() / 10
   function play(line) {
     if (!audible()) return;
     void buffer(line.id).then(data => {
-      if (disposed || current !== line || !data || !audible()) return;
+      if (disposed || current !== line || line.source || blockedAt !== null || !data || !audible()) return;
       const ctx = audio.context;
       if (chainContext !== ctx) { chain?.dispose(); chain = createDeepPhoneChain(ctx, audio.mixer?.output?.(line.id) ?? audio.master ?? ctx.destination); chainContext = ctx; }
       const source = ctx.createBufferSource(), gain = ctx.createGain();
       source.buffer = data; gain.gain.value = SOUND_BANK[line.id].volume;
       source.connect(gain); gain.connect(chain.input);
-      chain.keyOn(); source.start();
-      audio.mixer?.duck?.('voice', data.duration + .6);
-      line.until = now() + data.duration + .1;
+      const offset = line.offset || 0;
+      chain.keyOn(); source.start(0, offset);
+      audio.mixer?.duck?.('voice', data.duration - offset + .6);
+      line.until = now() + data.duration - offset + .1;
+      line.startedAt = ctx.currentTime;
       line.source = source;
+      line.gain = gain;
       source.onended = () => { source.disconnect(); gain.disconnect(); if (current === line) { chain.keyOff(); current = null; nextAt = now() + PHONE_GAP; } };
     });
   }
@@ -244,6 +263,27 @@ export function createAnaPhone({audio = null, now = () => performance.now() / 10
     update({blocked = false} = {}) {
       if (disposed) return null;
       const t = now();
+      if (blocked) {
+        if (blockedAt === null) {
+          blockedAt = t;
+          if (current?.source) {
+            current.offset = (current.offset || 0) + Math.max(0, audio.context.currentTime - current.startedAt);
+            current.source.onended = null;
+            current.source.stop(); current.source.disconnect(); current.source = null;
+            current.gain?.disconnect();
+            chain?.keyOff();
+          }
+        }
+        return null;
+      }
+      if (blockedAt !== null) {
+        if (current) {
+          current.until += t - blockedAt;
+          // Resume at the saved audio position; captions also keep their remaining time.
+          play(current);
+        }
+        blockedAt = null;
+      }
       // A line ends at its caption time, or a second after its sound should have ended (a context that closed mid-line).
       if (current && t >= current.until + (current.source ? 1 : 0)) { if (current.source) chain?.keyOff(); current = null; nextAt = t + PHONE_GAP; }
       if (!current && !blocked && queue.length && t >= nextAt) {

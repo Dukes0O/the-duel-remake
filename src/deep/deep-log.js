@@ -23,7 +23,7 @@ export const DEEP_CREATURES = Object.freeze(Object.fromEntries([
   ['reef-fish', 'Reef fish', 'Bright colours help reef fish find their own kind among hundreds of others.'],
   ['turtle', 'Green turtle', 'Green turtles are named for the green fat under their shell, which comes from the seagrass they eat. They do live off Southern California.'],
   ['ray', 'Bat ray', 'Bat rays dig clams out of the sand by flapping their wings over it.'],
-  ['manta', 'Manta', 'The biggest mantas are 7 m across, wider than a car is long, yet they eat only tiny plankton.'],
+  ['manta', 'Manta', 'The biggest mantas are 7 m across, wider than a car is long, yet they feed mostly on plankton.'],
   ['sea-lion', 'California sea lion', 'Sea lions can turn their back flippers forward and walk on land. Seals cannot.'],
   ['otter', 'Sea otter', 'Otters eat sea urchins. Without otters, urchins eat the kelp and the forest disappears.'],
   ['crab', 'Kelp crab', "A crab's legs bend outward, so sideways is its fastest way to move."],

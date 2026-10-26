@@ -285,3 +285,76 @@ test('the garage: the Sirena under a sheet while waiting, restored, then the pla
   enabled = false;
   assert.ok(!render().includes('FALCONE SIRENA'), 'the switch off hides it');
 });
+
+test('a title pauses a caption already in progress and preserves its remaining time', async () => {
+  const {createAnaPhone} = await import('../src/deep/sirena-view.js');
+  let clock = 0;
+  const phone = createAnaPhone({now: () => clock});
+  phone.say('deep.ana.hello');
+  assert.equal(phone.update().id, 'deep.ana.hello');
+  clock = 1;
+  assert.equal(phone.update({blocked: true}), null);
+  clock = 101;
+  assert.equal(phone.update({blocked: true}), null);
+  assert.equal(phone.update().id, 'deep.ana.hello', 'the title consumes no caption time');
+  clock = 102;
+  assert.equal(phone.update().id, 'deep.ana.hello');
+  phone.dispose();
+});
+
+test('title interruption resumes audio once, including a buffer decoded during or after the title', async () => {
+  const {createAnaPhone} = await import('../src/deep/sirena-view.js');
+  const originalFetch = globalThis.fetch;
+  const flush = () => new Promise(resolve => setImmediate(resolve));
+  for (const decodeWhileBlocked of [true, false]) {
+    let resolveFetch, clock = 0;
+    const voices = [], decoded = {duration: 20};
+    const param = () => ({value: 0, cancelScheduledValues() {}, setValueAtTime() {}, linearRampToValueAtTime() {}});
+    const node = () => ({gain:param(),frequency:param(),Q:param(),delayTime:param(),
+      connect() {}, disconnect() {}, start(...args) {if(this.buffer===decoded)voices.push({source:this,args});},
+      stop() {this.stopped=true;}});
+    const context = {state:'running', currentTime:0, sampleRate:100,
+      createGain:node,createDelay:node,createOscillator:node,createBiquadFilter:node,createWaveShaper:node,createBufferSource:node,
+      createBuffer:(_,length)=>({getChannelData:()=>new Float32Array(length)}),decodeAudioData:async()=>decoded};
+    const phone = createAnaPhone({now:()=>clock,audio:{context,flags:{enabled:()=>true}}});
+    globalThis.fetch = () => new Promise(resolve => {resolveFetch=resolve;});
+    try {
+      phone.say('deep.ana.hello');phone.update();
+      clock=1;phone.update({blocked:true});
+      if(!decodeWhileBlocked){clock=4;phone.update();}
+      resolveFetch({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)});await flush();
+      if(decodeWhileBlocked){assert.equal(voices.length,0);clock=4;phone.update();await flush();}
+      assert.equal(voices.length,1,'one voice starts after delayed decode');
+      context.currentTime=2;clock=6;assert.equal(phone.update({blocked:true}),null);
+      assert.equal(voices[0].source.stopped,true,'active voice stops for title');
+      clock=9;phone.update();await flush();
+      assert.equal(voices.length,2,'one resumed voice');
+      assert.equal(voices[1].args[1],2,'resume at two seconds, without repeating the line');
+    } finally {phone.dispose();globalThis.fetch=originalFetch;}
+  }
+});
+
+test('an uncollected pearl has a floor glint that disappears only after the rules collect it', async () => {
+  const THREE = await import('three');
+  const {createSirenaScene} = await import('../src/deep/sirena-view.js');
+  const savedDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  Object.defineProperty(globalThis, 'document', {configurable:true,value:{createElement:()=>({getContext:()=>({
+    createRadialGradient:()=>({addColorStop(){}}),fillRect(){}})})}});
+  let scene;
+  try {
+    const log = {pearls:[{pearl:'kelp-1',x:10,z:20}],found:new Set()};
+    const duel = {deepStory:{log,sirena:{finds:[],raised:[],sonar:false}}};
+    scene = createSirenaScene({scene:new THREE.Scene(),zone:{places:[]},
+      deep:{shape:{floorHeight:()=>-8},look:{applyTo(){}}},load:async()=>({scene:new THREE.Group()})});
+    scene.update({duel,seconds:.1});
+    const marker=scene.group.getObjectByName('Pearl glint: kelp-1');
+    assert.equal(marker.visible,true);assert.ok(marker.material.opacity>0);
+    assert.deepEqual(marker.position.toArray(),[10,-7.75,20]);
+    assert.equal(log.found.size,0,'drawing never collects a pearl');
+    log.found.add('kelp-1');scene.update({duel,seconds:.1});
+    assert.equal(marker.visible,false);
+  } finally {
+    scene?.dispose();
+    if(savedDocument)Object.defineProperty(globalThis,'document',savedDocument);else delete globalThis.document;
+  }
+});

@@ -143,7 +143,7 @@ log (section 6.4) carries the one true fact in the last column.
 | Reef fish (`reef-fish`, small groups) | Wreck Reef | Hover near the coral, dart into cover | Bright colours help reef fish find their own kind among hundreds of others. |
 | Green turtle (`turtle`, 4 to 6) | Ramp Shallows, Coral Garden | Glide slowly with flipper strokes, surface for air | Green turtles are named for the green fat under their shell, which comes from the seagrass they eat. They do live off Southern California. |
 | Bat ray (`ray`) | Ramp Shallows | Rests on the sand and lifts off | Bat rays dig clams out of the sand by flapping their wings over it. |
-| Manta (`manta`) | Manta Point | Glides in wide loops | The biggest mantas are 7 m across, wider than a car is long, yet they eat only tiny plankton. |
+| Manta (`manta`) | Manta Point | Glides in wide loops | The biggest mantas are 7 m across, wider than a car is long, yet they feed mostly on plankton. |
 | California sea lion (`sea-lion`) | The Kelp Forest | Fast twisting passes | Sea lions can turn their back flippers forward and walk on land. Seals cannot. |
 | Sea otter (`otter`) | The Kelp Forest, at the surface | Floats on its back, wrapped in kelp | Otters eat sea urchins. Without otters, urchins eat the kelp and the forest disappears. |
 | Kelp crab (`crab`) | Sand, rocks, the harbour wall | Scuttles sideways out of the way | A crab's legs bend outward, so sideways is its fastest way to move. |

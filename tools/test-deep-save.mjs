@@ -123,6 +123,14 @@ check('Partial/damaged Deep fields normalize safely; progress stays optional and
   assert.deepEqual(normalizeProfile(profile).deep, profile.deep);
   assert.deepEqual(normalizeDeep({future: {preserve: true}}), {future: {preserve: true}});
 });
+check('Legacy Deep saves without places default to no visits and retain all progress', () => {
+  const legacy = {...createProfile(), deep: {kit: true, found: ['kelp-coast'], logged: ['turtle'], sonar: true}};
+  const loaded = normalizeProfile(legacy);
+  assert.deepEqual(loaded.deep, legacy.deep);
+  assert.deepEqual(deepDiscoverySnapshot(loaded, 'qa', true).places, []);
+  const visited = rememberDeep(loaded, 'places', 'ramp-shallows', {enabled: true});
+  assert.deepEqual(normalizeProfile(visited).deep, {...legacy.deep, places: ['ramp-shallows']});
+});
 check('Garage markup and existing upgrade dispatcher expose a working kit button only after the hint', () => {
   let profile = {...createProfile(), credits: 150}; let enabled = true, message = '';
   const app = {player: {name: 'QA'}, getDeepDiscovery: () => deepDiscoverySnapshot(profile, 'qa', enabled),
