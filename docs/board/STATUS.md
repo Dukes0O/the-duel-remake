@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-25T23:46:33.566Z
+Observed at: 2026-10-26T00:07:13.235Z
 
-Observation commit: 23521c3e06967a5b0bb71c1e18d306744f6d262a
+Observation commit: 9d3c224c975f235b77b96627e1c09e42aa439ee1
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 23521c3e06967a5b0bb71c1e18d306744f6d262a
+Integration HEAD: 9d3c224c975f235b77b96627e1c09e42aa439ee1
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,9 +29,9 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/lab-challenge-ease | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-ease |
-| codex/perf-high-night | 10 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
-| codex/wild-art-src | 10 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
+| codex/lab-live | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-live |
+| codex/perf-high-night | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
+| codex/wild-art-src | 10 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
 ## Unmerged branches for idle review
 
@@ -54,9 +54,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 23,720,193 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 574,904 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 353,331 B | +0 B | 5,000,000 B |
 | All `public/` | 335,681,495 B | +0 B | unavailable |
-| Git objects | 751,475,712 B | +0 B | unavailable |
+| Git objects | 751,737,856 B | +0 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -65,7 +65,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: b83f4cdab027a229f48dba94e4293dc6f43dc6e8
 - Local main: missing
-- Local integration/wasteland: 23521c3e06967a5b0bb71c1e18d306744f6d262a
+- Local integration/wasteland: 9d3c224c975f235b77b96627e1c09e42aa439ee1
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -73,8 +73,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit b83f4cdab027a229f48dba94e4293dc6f43dc6e8.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 23521c3e06967a5b0bb71c1e18d306744f6d262a.
+- Remote origin/integration/wasteland: matches local; cached commit 9d3c224c975f235b77b96627e1c09e42aa439ee1.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
-Issue: codex/perf-high-night: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night
-Issue: codex/wild-art-src: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src

@@ -91,6 +91,10 @@ export function prepareNightPlayer(app, quality, courseId = 'harbour-lights') {
     throw Error('Memory-only native course purchase failed.');
 }
 async function measureNight(context, quality, courseId = 'harbour-lights', carId = 'falcone_f42') {
+  const labFan = carId === 'mcmurtry_speirling';
+  if (labFan && process.env.LAB_FAN_FRAMES_ONLY !== '1')
+    throw Error('Speirling frames require the explicit LAB_FAN_FRAMES_ONLY opt-in.');
+  const sameCarGrid = labFan || (courseId === 'panorama-ridge' && carId === 'mclaren_f1');
   const ardennes = courseId === 'ardennes-forest';
   const earnedF1 = courseId === 'panorama-ridge' && carId === 'mclaren_f1';
   const assertContext = earnedF1 ? assertEarnCar2FrameContext : ardennes ? assertArdennesFrameContext : assertNightFrameContext;
@@ -121,7 +125,17 @@ async function measureNight(context, quality, courseId = 'harbour-lights', carId
     if (${earnedF1}) {
       if (!app._switches().enabled('earned-cars')) throw Error('F1 frames require the earned-cars switch.');
       (${prepareEarnCar2FramePlayer.toString()})(app, ${JSON.stringify(quality)}, ${JSON.stringify(Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, true])))});
-    } else (${prepareNightPlayer.toString()})(app, ${JSON.stringify(quality)}, requestedCourse);
+    } else {
+      (${prepareNightPlayer.toString()})(app, ${JSON.stringify(quality)}, requestedCourse);
+      if (${labFan}) {
+        if (app._switches().state('lab') !== 'on' || app._switches().state('lab-tuning') !== 'on')
+          throw Error('Speirling frames require both released Lab switches.');
+        app.profile = {...app.profile,
+          unlockedCars: [...new Set([...app.profile.unlockedCars, requestedCar])],
+          heli: {...app.profile.heli, version: 1, carsAt: {...app.profile.heli?.carsAt, [requestedCar]: requestedCourse}}};
+        if (!app._saveProfile()) throw Error('Memory-only Speirling player setup failed.');
+      }
+    }
     app.setLightingMood('clear');
     const previousBuild = view.dataset.worldBuilds, started = performance.now();
     if (!app.startCampaign({startStage: stage, seed: 1989, fieldSeed: 12, fieldSize: 7,
@@ -133,7 +147,7 @@ async function measureNight(context, quality, courseId = 'harbour-lights', carId
       !course.def.lightPath?.keyframes?.length || course.def.lightPath.keyframes.some(key => key.look !== 'night'))) ||
       (requestedCourse === 'ardennes-forest' && course.script.pieceAt(state.s).name !== 'Pit Straight') ||
       state.mode !== 'grandprix' || state.opponents.length + 1 !== 8 || state.traffic.length ||
-      (${earnedF1} && (state.car !== requestedCar || state.opponents.some(actor => actor.car !== requestedCar))) ||
+      (${sameCarGrid} && (state.car !== requestedCar || state.opponents.some(actor => actor.car !== requestedCar))) ||
       state.qualifying || app.autopilot || app.inspectionCamera || state.paused)
       throw Error('Native grid, night lighting or normal gameplay context is wrong.');
     let constructionMs;
@@ -158,7 +172,7 @@ async function measureNight(context, quality, courseId = 'harbour-lights', carId
         if (document.hidden || document.visibilityState !== 'visible' || !app.running || !app.visualReady ||
           state !== app.duel.state || course !== app.duel.course || state.status !== 'countdown' || state.paused ||
           state.opponents.length + 1 !== 8 || app.autopilot || app.inspectionCamera ||
-          (${earnedF1} && (state.car !== requestedCar || state.opponents.some(actor => actor.car !== requestedCar))) ||
+          (${sameCarGrid} && (state.car !== requestedCar || state.opponents.some(actor => actor.car !== requestedCar))) ||
           view.dataset.rearView !== 'ready' || view.dataset.vehicleAsset !== 'ready' ||
           view.dataset.trackKitAsset !== 'ready' || (app.ambientOcclusionEnabled !== false ? 'high' : 'performance') !== ${JSON.stringify(quality)})
           return reject(Error('Visible native eight-car countdown or quality changed during timing.'));
@@ -173,7 +187,7 @@ async function measureNight(context, quality, courseId = 'harbour-lights', carId
     const worldBuildText = view.dataset.worldBuildMs, worldBuildMs = Number(worldBuildText);
     if (typeof worldBuildText !== 'string' || !worldBuildText.trim() || !Number.isFinite(worldBuildMs))
       throw Error('Missing or malformed actual world-build measurement.');
-    return {${earnedF1 ? "sourceCar: state.car, roster: [state.car, ...state.opponents.map(actor => actor.car)]," : ''}
+    return {${sameCarGrid ? "sourceCar: state.car, roster: [state.car, ...state.opponents.map(actor => actor.car)]," : ''}
       course: course.def.id, cars: state.opponents.length + 1, night: course.def.timeOfDay === 'night', gridPiece: course.script?.pieceAt(state.s)?.name ?? null, intervals,
       constructionMs, worldBuildMs, worldReadyMs: Number(view.dataset.worldReadyMs),
       appRunning: app.running, countdownBefore: before, countdownAfter: state.field.start.elapsed,
@@ -267,6 +281,11 @@ export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {
     width: 1280, height: 720, deviceScaleFactor: 1, mobile: false,
   });
+  // LAB-FAN: opt in to the existing busiest night-grid recipe, with eight fan cars.
+  // DUEL_NIGHT_FRAMES and DUEL_NIGHT_IDLE_AWAKE retain its headed/idle guards.
+  if (process.env.LAB_FAN_FRAMES_ONLY === '1')
+    return runNightFrames(context, {measure: (ctx, quality) =>
+      measureNight(ctx, quality, 'harbour-lights', 'mcmurtry_speirling')});
   const earnedF1 = earnCar2FrameSelection();
   if (earnedF1) {
     const reports = [], warnings = [];

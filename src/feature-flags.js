@@ -40,9 +40,9 @@ export const FEATURE_STATES = Object.freeze({
   // H5 Heli-skiing (docs/HELI_SKIING.md): the ski rules, runs and drops. Off in the game; works only with the helicopter on and Summit Run owned.
   'heli-skiing': 'dev',
   // The Lab (docs/LAB.md): lessons, upgrades and their save field. Off in the game.
-  lab: 'dev',
+  lab: 'on',
   // Lab tuning (docs/LAB.md 5): the Tune page and its physics, a separate switch so the race feel is judged alone.
-  'lab-tuning': 'dev',
+  'lab-tuning': 'on',
   // The pilot's map (docs/PILOT_MAP.md): the place table, regions, fuel pads and the new cruise legs. Off in the game; works only with the helicopter on.
   'pilot-map': 'dev',
 });
