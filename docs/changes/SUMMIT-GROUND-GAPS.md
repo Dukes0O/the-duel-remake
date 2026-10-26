@@ -115,3 +115,17 @@ review verdict; Kyle's originals are untouched.
 Generated QA/production bundles, superseded comparison attempts and the scratch
 Cockpit-link script were recycled. Only the compact sheet, recipes and the
 small gate/build/baseline reports needed for handoff remain.
+
+## Claude review (26 October 2026)
+
+Approved and merged. The before/after sheet of Kyle's five views shows the
+floating trees, edge lines and cliff slabs gone and the upper roads standing
+on hillside, so the two Summit scene signatures and the Summit ground-row
+reference change with a reviewed visual difference (AGENTS "Never"). The
+merge met SUMMIT-TUNNEL-WALL on one line of `summit-run.js`; both settings
+kept (`solidSides` and `continuousGround`), and the Summit, terrain, circuits,
+world, yeti and replay suites and the build pass on the merged result. The
+yeti failure was integration's (GP-CAREER-LIVE), fixed separately. The Glacier
+Hairpin drive result (2 mm past the edge, unchanged without this fix) is
+QA-SUMMIT-GLACIER-EDGE. The scene changed, so the Summit frame check runs
+before release.
