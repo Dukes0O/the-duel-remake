@@ -375,3 +375,143 @@ Heli-skiing's two lessons (Launch angles, Ski wax) are built with H5's cards
   a new mechanic.
 - The tuned-lap bonus pays once per course, not per car, so it rewards
   learning to tune rather than repeating laps.
+
+## 12. Lab 2: a place that teaches (Kyle, 26 October 2026)
+
+Kyle tried the first lesson: "it had me adjust some sliders and didn't
+define what 'collective' was. I didn't understand it at all. This lab must
+become significantly more interactive and explanatory. Little sliders are
+not teaching materials." He asked for a Lab you can walk around in, machines
+you visit, more explanation on hand, and animations that show each idea,
+built on real teaching practice: scaffolding, relevant visuals and
+animation.
+
+Lab 2 keeps everything in sections 3 to 7 (the lessons, their true
+explanations, challenges, rewards, tuning, the Spéirling and the Sirena) and
+changes how a lesson is taught. It is built behind a new switch, `lab-2`
+(dev). When it goes live, the old bench panels and sliders are removed in
+the same change (replace means remove).
+
+### 12.1 Walk the Lab
+
+- **First person, eye height 1.6 m, in the hangar that is already built**
+  (`lab-scene.js`). Up and down arrows (or W and S) walk, left and right turn,
+  A and D step sideways; hold the mouse button and drag to look around. The
+  walls and machines block you. Esc leaves the Lab.
+- **Four corners, named on hanging signs:** Flying (the weighing pad, drop
+  tower, fire pit, pendulum frame, rotor stand), Workshop (bending rig, nail
+  jars, turning arm, map table), Wind tunnel, Snow (launcher, snow trays).
+- **Visit a machine** by walking up to it. Its name lights on the floor in
+  front of it with "E: use the Lift bench". A machine whose lesson is not
+  open yet shows a small card: "Opens when you pass helicopter lesson 3."
+  A passed machine shows a green tick.
+- **Brian is in the room**, standing by the machine you used last. Walk up
+  and press E to ask him: "What should I try next?" or "Tell me about this
+  machine."
+- **The door board** by the entrance lists every lesson, open or not, done or
+  not, with what it opens, so a player can plan.
+
+### 12.2 Every lesson has the same five steps
+
+This is the scaffold. Each step leans on the one before, and help is
+removed step by step until the player does it alone in the game.
+
+1. **Wonder.** A short moment in 3D that raises the question, before any
+   words. Lift: Kestrel One on the pad strains, skids lifting and settling,
+   with the Dusthawk on the hook. Brian: "She can't get it off the ground.
+   Why not? Let's find out."
+2. **New words, with pictures.** Every word the lesson needs, shown on the
+   machine before it is used, one at a time, each with its own short
+   animation and a one-sentence meaning a child can say back. The words go
+   into the player's **Lab notebook** (saved), and every later mention of the
+   word, in the Lab, the helicopter or a lesson, is underlined: point at it
+   to see the meaning and its animation again. No lesson uses a word it has
+   not shown.
+3. **Watch it work.** Brian runs the machine once while the player watches:
+   an animation in slow motion, with the forces drawn as arrows whose length
+   is to scale, air or water drawn as moving particles, and big gauges with
+   units and a comparison a child knows ("about the weight of a car").
+   Pause, step and replay buttons. Brian says one thing per step.
+4. **Predict, then try.** The player changes one thing at a time, using the
+   machine itself (pull the lever, put a crate on the pad, turn the dial),
+   never a bare slider. Before each run the player picks what will happen
+   from two or three pictures. Then the run, then the result beside the
+   prediction, and Brian explains any gap in one or two sentences. The first
+   try is guided with arrows and prompts. The second has prompts only. The
+   third is alone.
+5. **Check, then the challenge.** Two or three quick questions answered with
+   pictures, not words ("Which one hovers?"). A wrong answer shows the right
+   one with its animation, no penalty. Then the challenge in the game, as in
+   sections 4 and 5, with the lesson's key idea on a small card in the
+   corner of the screen during the challenge.
+
+**Help when stuck (never "Not quite").** Every failed try says what happened
+and what to change ("She lifted, but sank back: the load is 300 kg more than
+the rotor can lift. Take some fuel out or leave a crate behind"). After two
+failed tries the hint gets plainer; after three, "Show me" plays the
+worked answer, and the player then does it themselves.
+
+**Reading level.** Short sentences, everyday words, at most two sentences on
+screen at once. Every line shows as text; Brian's recorded voice plays where
+a line already exists. New voice lines wait for Kyle (voice credits).
+
+### 12.3 The pictures that teach
+
+- **Arrows for forces,** one colour each through the whole Lab and the game:
+  lift or push up green, weight down red, drag orange, grip blue. Length to
+  scale, with the number on the arrow.
+- **Particles for air and water,** speed shown by streak length.
+- **Slow motion and a ghost of the last try,** so two runs can be compared
+  side by side.
+- **Graphs that draw themselves** as a run happens, axes labelled in words.
+- **The real thing next to the model:** each machine has a small panel of
+  where this happens in the world (a real helicopter's collective lever, a
+  real wind tunnel), drawn as game art.
+
+### 12.4 The first lesson rebuilt: Lift and weight
+
+Built first, end to end, as the pattern for the other fifteen. Kyle and
+Gratian try it before the rest are built (rule 18: a preview Kyle asked
+for).
+
+- **Wonder:** as above, Kestrel One straining with the Dusthawk.
+- **New words:**
+  - *Rotor:* the big wings on top that spin. Each blade is a long thin wing.
+  - *Lift:* the push up that the spinning rotor makes by throwing air down.
+  - *Weight:* how hard gravity pulls the helicopter and everything in it
+    down.
+  - *Collective:* the lever by the pilot's left hand. Pull it up and every
+    blade tilts more steeply at the same time ("collectively"), so each one
+    throws more air down and the lift grows. (Animation: the lever moves,
+    the blades twist, the air particles below speed up and the green arrow
+    grows.)
+  - *Hover:* staying still in the air. It happens when lift is exactly as
+    big as weight.
+- **Watch it work:** Brian raises the collective slowly on the empty
+  helicopter. The green lift arrow grows until it matches the red weight
+  arrow, the skids lift and she hovers. Then he adds the Dusthawk: the red
+  arrow jumps, and at full collective the green arrow is still shorter.
+- **Predict, then try:** the player loads the pad with real things (fuel
+  cans, crates, the Dusthawk), each showing its weight, and pulls the
+  collective lever on the helicopter model. Predictions: "Will she lift off,
+  hover, or stay on the ground?" The numbers come from the game's own
+  helicopter: empty 1,150 kg, pilot 80 kg, a full tank 400 kg, and the most
+  the rotor can push is about 3,380 kg at sea level, with up to 15% extra
+  close to the ground.
+- **Check:** three pictures of loaded helicopters, "Which one can hover?"
+- **Challenge:** unchanged (section 4.1), with the card "Lift must match
+  weight. Lighten the load if she won't climb."
+
+### 12.5 Order of work
+
+1. LAB-WALK: walking, the four corners, machine visits, Brian in the room,
+   the door board (`lab-2`, dev).
+2. LAB-LESSON-FRAME: the five steps, the notebook (save), arrows, particles,
+   prediction cards, hint ladder, "Show me".
+3. LAB-LIFT-2: Lift and weight on the new frame, with its animations.
+4. Kyle and Gratian try it. Their verdict changes the frame before anything
+   more is built.
+5. The other fifteen lessons, in batches by corner (Flying, Workshop, Wind
+   tunnel, Snow), Claude writing each lesson's words, pictures and
+   predictions on its card before Codex builds it.
+6. `lab-2` goes live and the old panels are removed.
