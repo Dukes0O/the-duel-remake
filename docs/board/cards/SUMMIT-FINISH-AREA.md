@@ -29,3 +29,23 @@ most three look rounds (SPEC 0.11), one comparison sheet per round under
 `docs/board/looks/summit/`. Claude judges each round and sends Kyle the pick.
 Acceptance: the look accepted, drive-through check, lane tier and build;
 Claude runs the Summit frame check (finish view, eight cars) before release.
+
+## Claude's verdict, round 1 (26 October 2026)
+
+Not accepted. At night and from far off, the hut and observatory read as two
+small dark lumps beside the road, the gantry is a thin bar, and the crowd,
+helipad, lit windows and run-off are not visible. Round 2:
+- **Scale and place:** hut and observatory each at least 12 m across, within
+  20 m of the road, either side of the line, so they frame the finish.
+- **Light:** warm lit windows in both, a lamp on the gantry and two on the
+  fence; judge at dusk and at night.
+- **Gantry:** about 7 m high, two timber posts, a chequered banner and
+  "SUMMIT" lettering, wide enough for the whole road.
+- **Crowd:** a dozen figures along the last 200 m of fence, visible from the
+  car.
+- **Helipad:** beside the hut with an H circle and a windsock.
+- **Run-off:** the flat car park past the line, joined to the terrain.
+- **Pictures:** from the car 100 m and 30 m before the line, at the line,
+  from the helipad, and one wide shot; High and Performance; dusk and night.
+The Glacier Hairpin drive result is the known QA-SUMMIT-GLACIER-EDGE, not this
+lane's. The scene signature changes only after the look is accepted.

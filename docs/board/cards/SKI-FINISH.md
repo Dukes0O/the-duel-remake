@@ -80,3 +80,12 @@ requested steady/practised clean pair does not exist. Guide pace stays 92%.
 GS bronze, moguls width/medals, aerials tuck text and thin-air text are wired;
 independent code/numbers review and written assertion review remain for
 Claude, followed by final look and frame check. The switch stays dev.
+
+**Claude, 26 October 2026, after the tuning pass:** slalom still misses 17
+gates on the steady keyboard run, and the practised run missed the finish.
+Second change: gates 5 m wide, rows 13 m apart, centres +/-1.2 m, and the next
+gate's poles glow so the line is readable. Find and fix why the practised run
+misses the finish. Then set the medals from the runs (bronze about 10% over a
+steady run with at most 3 misses). If the steady run still misses more than 3
+gates, report it and stop: the slalom may need a different control rather
+than more tuning.

@@ -187,9 +187,9 @@
   }
  },
  "summit-run": {
-  "near": "88df680efcc50d412eced116e6224cbbd6b1d4dd0ea41769ff248c24b76542fb",
-  "far": "621f020ae695e3cfcef3768e65ccddfa8859728190ea04015bf4ffbf986649b7",
-  "scenery": "70d7b189c77d3369167a813d0f6740c0e69d1e90d88c92cd99afa4f4ea836540",
+  "near": "845626385552bc485e8bc20d8c602a88011bc9b1e7ce7845c0d0af8f2dafbeb8",
+  "far": "69a916991e5cde171487997d4a4226cd56859388bf56a40c0065e3e5d6268f9f",
+  "scenery": "1a05c479e1d732d29dde77608e859bfe57d819bd3d20c464242790e6eb7778f5",
   "cells": 392,
   "roadAvoid": {
    "placed": 12690,
@@ -209,9 +209,9 @@
   }
  },
  "summit-time-attack": {
-  "near": "88df680efcc50d412eced116e6224cbbd6b1d4dd0ea41769ff248c24b76542fb",
-  "far": "621f020ae695e3cfcef3768e65ccddfa8859728190ea04015bf4ffbf986649b7",
-  "scenery": "70d7b189c77d3369167a813d0f6740c0e69d1e90d88c92cd99afa4f4ea836540",
+  "near": "845626385552bc485e8bc20d8c602a88011bc9b1e7ce7845c0d0af8f2dafbeb8",
+  "far": "69a916991e5cde171487997d4a4226cd56859388bf56a40c0065e3e5d6268f9f",
+  "scenery": "1a05c479e1d732d29dde77608e859bfe57d819bd3d20c464242790e6eb7778f5",
   "cells": 392,
   "roadAvoid": {
    "placed": 12690,
