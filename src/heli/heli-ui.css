@@ -91,3 +91,6 @@
 .heli-board-lab-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 0}
 .heli-board-chosen{border-color:#ffcf3f!important;color:#ffcf3f!important}
 .heli-board-lab-note{display:block;margin-top:6px;color:#f3bd77}
+
+.heli-fuel-target{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
+.heli-fuel-target select{color:#f3eddf;background:#25302b;border:1px solid #ffffff40;border-radius:4px;padding:5px}
