@@ -93,3 +93,7 @@ assertion review is still required before merge (this lane does not merge).
 Nothing replaced. Generated `dist/`, `.qa-dist/` and `.evidence/` from this run
 were sent to the Recycle Bin after checks. Only the runtime Ogg files remain.
 No voice takes were recorded.
+
+## Claude review (26 October 2026)
+
+Approved and merged: the ten sound effects. The test change only leaves the new ski cues out of the old sound list fingerprint; the pinned fingerprint is unchanged. Claude hears them at SKI-FINISH. The voice half stays open on the card until Kyle agrees to spend voice credits.

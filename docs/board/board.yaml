@@ -190,8 +190,8 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "S"
-    status: "building"
-    claimed_by: codex-cli-2026-10-26
+    status: "backlog"
+    waiting_on: "kyle: voice credits for the ski radio lines (sound effects merged 26 October)"
     needs: []
     locks: [sound-bank]
     flag: "heli-skiing"

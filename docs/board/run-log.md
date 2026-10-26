@@ -1353,3 +1353,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 SKI-PICKUP merged (Codex): heli-skiing pickup pad on snow; ski suites, ski-view, build; assertions reviewed.
 - 2026-10-26 SAVE-RECORDS-IDB merged (Codex): ghosts and telemetry in IndexedDB, no reserve, space errors name the key, legacy saves migrate; independent save review clear; save suites pass on integration.
 - 2026-10-26 HELI-CARRY-CLEAR merged (Codex, Kyle's lesson 4 report): full circle, green on the mark, set-down words, retries say why; heli suites, replays and build pass on integration.
+- 2026-10-26 SKI-AUDIO sound effects merged (Codex): ten synthesised ski cues, peaks under -6.5 dBTP; audio suites, replays and build pass on integration; voice lines wait for Kyle.
