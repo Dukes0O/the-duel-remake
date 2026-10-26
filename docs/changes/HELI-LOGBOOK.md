@@ -1,6 +1,35 @@
 # HELI-LOGBOOK
 
-Status: code complete; paint round 1 awaiting Claude. Switch: `heli-logbook` (dev).
+Status: paint round 2 in progress. Switch: `heli-logbook` (dev).
+
+## Paint round 2 (26 October 2026)
+
+Claude's round 1 verdict and assertion approvals are on the card. Integration
+was merged at `efadcd50`; only STATUS and the card conflicted. Kept this
+lane's STATUS and both card sections. There were no code conflicts.
+
+Round 2 follows that verdict: a hand-width bright silver cabin/boom line on
+Private; a clear cream cabin band and large tail-boom kestrel on Commercial;
+a broad red belly, red fin and tail-boom kestrel on Chief. Keep Student and
+Mountain colours and bands. Add light exhaust soot and skid scuffs to all
+five. The current airframe, ranks, saves and mission rules stay unchanged.
+
+Checks: paint helper behavior/restoration, existing Blender output planning,
+and the same native High/Performance near/distance browser pictures as round
+1; then lane tier with four jobs and production build. Read the integration
+inbox before every heavy run; wait for frame/release holds. No frame timing.
+Stop at the round 2 sheet for Claude; do not start round 3.
+
+Round 2 independent rendering review: clear. Skid materials are cloned only
+for rank paints; shared mast metal remains untouched. Switching to stock or
+mission paint restores original materials, and scene disposal releases the
+clones. No race or save state changes were added.
+
+Round 2 assertions: four new checks in `test-heli-rank-paint.mjs` require the
+skid clone, unchanged shared mast material, original skid restoration on
+paint change, and original restoration before disposal. Every existing
+assertion is retained; none is relaxed. Claude approved the round 1 changes
+on the card.
 
 ## Design before code
 

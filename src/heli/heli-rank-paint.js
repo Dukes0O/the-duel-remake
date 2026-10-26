@@ -7,7 +7,32 @@ const FINISH = { 'rank-student': [.43, .3], 'rank-private': [.24, .65], 'rank-co
 
 export function createRankPaint({THREE, loadTexture = url => new THREE.TextureLoader().loadAsync(url)}) {
   const cache = new Map(), original = new Map(), geometries = new Set();
+  const skidMaterials = new Map();
   let model = null, wanted = null, drawn = null, disposed = false;
+  function scuffSkids(object, active) {
+    if (object.name !== 'skids' && object.parent?.name !== 'skids') return;
+    if (active && !skidMaterials.has(object)) {
+      const base = object.material, materials = Array.isArray(base) ? base : [base];
+      const worn = materials.map(material => {
+        const copy = material.clone();
+        copy.onBeforeCompile = shader => {
+          shader.vertexShader = 'varying vec3 vRankSkidPosition;\n' + shader.vertexShader;
+          shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvRankSkidPosition = position;');
+          shader.fragmentShader = 'varying vec3 vRankSkidPosition;\n' + shader.fragmentShader;
+          shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+            float skidContact = 1.0 - smoothstep(0.10, 0.20, vRankSkidPosition.y);
+            float skidScratch = smoothstep(0.60, 0.93, sin(vRankSkidPosition.z * 51.0 + vRankSkidPosition.x * 18.0))
+              * smoothstep(0.35, 0.8, sin(vRankSkidPosition.y * 470.0));
+            diffuseColor.rgb *= 1.0 - skidContact * (0.24 + 0.30 * skidScratch);`);
+        };
+        copy.customProgramCacheKey = () => 'heli-logbook-skid-scuffs-v1';
+        return copy;
+      });
+      skidMaterials.set(object, {base, worn: Array.isArray(base) ? worn : worn[0]});
+    }
+    const saved = skidMaterials.get(object);
+    if (saved) object.material = active ? saved.worn : saved.base;
+  }
   function textureFor(id) {
     if (!cache.has(id)) cache.set(id, loadTexture(`/assets/heli/skins/${id}.png`).then(texture => {
       if (disposed) { texture.dispose(); return null; }
@@ -21,6 +46,7 @@ export function createRankPaint({THREE, loadTexture = url => new THREE.TextureLo
     if (!model || disposed || wanted !== id) return;
     model.traverse(object => {
       if (!object.isMesh) return;
+      scuffSkids(object, !!id);
       const materials = Array.isArray(object.material) ? object.material : [object.material];
       if (!materials.some(material => PAINT_MATERIALS.has(material.name))) return;
       if (id && !geometries.has(object)) {
@@ -58,6 +84,11 @@ export function createRankPaint({THREE, loadTexture = url => new THREE.TextureLo
     },
     dispose() {
       disposed = true;
+      for (const [object, saved] of skidMaterials) {
+        object.material = saved.base;
+        for (const material of Array.isArray(saved.worn) ? saved.worn : [saved.worn]) material.dispose();
+      }
+      skidMaterials.clear();
       for (const promise of cache.values()) void promise.then(texture => texture?.dispose());
       original.clear(); geometries.clear(); model = null;
     },

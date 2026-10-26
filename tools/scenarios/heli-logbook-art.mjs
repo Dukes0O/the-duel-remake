@@ -1,4 +1,4 @@
-// HELI-LOGBOOK ROUND 1 only. Production renderer, memory-only QA page.
+// HELI-LOGBOOK paint round photography. Production renderer, memory-only QA page.
 // No frame timing; the two qualities are photographed at the same pad/view.
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const paints = ['stock', 'rank-student', 'rank-private', 'rank-commercial', 'rank-mountain', 'rank-chief'];
