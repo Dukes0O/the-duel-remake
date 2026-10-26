@@ -99,6 +99,7 @@ export class LapTelemetryStore {
       message:loaded.message??'Complete a clean lap on this route to compare your driving.'};
   }
   record(record){
+    if(this.pending)return this.pending.then(()=>this.record(record));
     if(!validLap(record))return {saved:false,changed:false,status:'unavailable',message:'This lap could not be verified.'};
     const loaded=readStore(this.storage),persisted=loaded.store?.laps.find(row=>row.key===record.key);
     const session=this.session.get(record.key);
@@ -117,10 +118,21 @@ export class LapTelemetryStore {
     if(next.laps.length>MAX_TELEMETRY_RECORDS||byteLength(serialized)>MAX_TELEMETRY_BYTES){
       return hold('Lap storage is full. Existing laps have been kept.');
     }
-    try{this.storage.setItem(TELEMETRY_KEY,serialized);}
-    catch{return hold('This lap could not be saved. Existing laps have been kept.');}
-    this.session.delete(candidate.key);
-    return {saved:true,changed:true,status:'saved',message:''};
+    const complete=()=>{
+      this.session.delete(candidate.key);
+      return {saved:true,changed:true,status:'saved',message:''};
+    };
+    try{
+      const saved=this.storage.setItem(TELEMETRY_KEY,serialized);
+      if(saved?.then){
+        this.session.set(candidate.key,candidate);
+        const pending=saved.then(complete,()=>hold('This lap could not be saved. Existing laps have been kept.'))
+          .finally(()=>{if(this.pending===pending)this.pending=null;});
+        this.pending=pending;
+        return pending;
+      }
+      return complete();
+    }catch{return hold('This lap could not be saved. Existing laps have been kept.');}
   }
 }
 

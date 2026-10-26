@@ -234,9 +234,11 @@ export class App {
           const candidate=session?.key===lap.key&&session.timeSec<lap.timeSec?session:lap;
           const saved=storeGhost(current,candidate);this.ghosts=saved.store;
           if(saved.saved){
-            this.ghostSaved=saveGhosts(this.ghosts);
-            this.grandPrixGhostSaveStatus=this.ghostSaved?'saved':'session';
-            this.grandPrixGhostCandidate=this.ghostSaved?null:candidate;
+            this.grandPrixGhostSaveStatus='session';this.grandPrixGhostCandidate=candidate;
+            this._saveGhostStore(saved=>{
+              this.grandPrixGhostSaveStatus=saved?'saved':'session';
+              this.grandPrixGhostCandidate=saved?null:candidate;
+            });
           }else if(saved.reason==='capacity'){
             this.grandPrixGhostCandidate=candidate;
             this.grandPrixGhostSaveStatus='capacity';
@@ -872,7 +874,7 @@ export class App {
     const choice=this.getGhostChoice(context);
     if(this._switches().enabled('grand-prix')===true)this.ghostEnabled=choice!=='off';
     this.ghostRecord=choice==='team'?this.getTeamGhostRecord(context):this.getGhostRecord(context);
-    if(this.ghostRecord&&!this.ghostRecord.teamReference){this.ghostRecord.lastUsedAt=Date.now();this.ghostSaved=saveGhosts(this.ghosts);}
+    if(this.ghostRecord&&!this.ghostRecord.teamReference){this.ghostRecord.lastUsedAt=Date.now();this._saveGhostStore();}
     this.ghostRecorder=new GhostRecorder(context);this._updateGhost(state);
   }
   _updateGhost(state){
@@ -884,12 +886,22 @@ export class App {
     this.ghostStatus=this.ghostRecord?(this.ghostEnabled?'playing':'off'):'recording';
     if(this.ghostRecord&&this.ghostEnabled){this.ghostPose=(this.ghostRecord.teamReference?sampleTeamGhost:sampleGhost)(this.ghostRecord,state.stageTimeSec+(state.racePenaltySec||0),this._ghostPoseBuffer);if(!this.ghostPose)this.ghostStatus='finished';}
   }
+  _saveGhostStore(onSaved){
+    const attempt=(this._ghostSaveAttempt??0)+1;this._ghostSaveAttempt=attempt;
+    const result=saveGhosts(this.ghosts);
+    const complete=saved=>{
+      if(this._ghostSaveAttempt!==attempt)return;
+      this.ghostSaved=saved;onSaved?.(saved);
+    };
+    this.ghostSaved=false;
+    if(result?.then)result.then(complete);else complete(result);
+  }
   _finishGhost(payload,state,awarded,result){
     // The wallet's comparable car best is authoritative, including valid losses.
     const record=this.ghostRecorder?.finish(payload,state,this.player);
     if(awarded.awarded&&record&&Number.isFinite(awarded.best)&&record.timeSec<=awarded.best+.005){
       const current=this.ghostSaved===false?this.ghosts:mergeGhostStores(this.ghosts,loadGhosts()),saved=storeGhost(current,record);this.ghosts=saved.store;
-      if(saved.saved){this.ghostSaved=saveGhosts(this.ghosts);result.ghostRecorded=true;}
+      if(saved.saved){this._saveGhostStore();result.ghostRecorded=true;}
     }
     this.ghostRecorder=null;this.ghostPose=null;this.ghostStatus='none';
   }

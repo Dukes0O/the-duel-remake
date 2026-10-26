@@ -5,7 +5,8 @@ import {CARS,COURSE} from '../src/config.js';
 import {DRIVERS} from '../src/drivers.js';
 import {WEAPON_IDS} from '../src/weapon-upgrades.js';
 import {GHOST_KEY,MAX_GHOST_BYTES} from '../src/ghost.js';
-import {loadGhosts} from '../src/ghost.js';
+import {loadGhosts,saveGhosts,MAX_GHOSTS} from '../src/ghost.js';
+import {LapTelemetryStore,TELEMETRY_KEY,telemetryKey} from '../src/lap-telemetry.js';
 import {loadLeaderboard} from '../src/leaderboard.js';
 import {prepareCareerArchives} from '../src/career-archives.js';
 import {ARCHIVE_POINTER_KEY} from '../src/career-archives.js';
@@ -94,16 +95,16 @@ await importBudgetCareer(unknownExport,{storage:unknownImported,store:unknownTar
 assert.equal((await prepareCareerBudget({physical:unknownTarget,store:unknownTargetDb})).storage.getItem('duel_retired_bonus_42'),'legacy-value');
 assert.equal(unknownImported.getItem('the-duel-future.loadout:v8'),'punctuated-key-value');
 
-// The active ghost is written synchronously to the journal. The physical
-// origin remains below the hard limit even at the game's 1.25M-character cap.
-virtual.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
+// Records commit directly to IndexedDB and never enter the physical journal.
+await virtual.setItem(GHOST_KEY,'x'.repeat(MAX_GHOST_BYTES));
 const ghostWriteBytes=originStorageBytes(physical);
-assert.ok(ghostWriteBytes<ORIGIN_BUDGET_BYTES,`future ghost write uses ${ghostWriteBytes} bytes`);
+assert.ok(ghostWriteBytes<2_000,`ghost payload stays out of localStorage: ${ghostWriteBytes} bytes`);
+assert.equal((await idb.load('origin-primary-v1')).entries[GHOST_KEY].length,MAX_GHOST_BYTES);
 assert.equal(virtual.getItem(GHOST_KEY).length,MAX_GHOST_BYTES);
 assert.equal(physical.getItem(GHOST_KEY),null);
 await virtual.flush();
 assert.ok(originStorageBytes(physical)<ORIGIN_BUDGET_BYTES);
-virtual.removeItem(GHOST_KEY);await virtual.flush();
+await virtual.removeItem(GHOST_KEY);await virtual.flush();
 virtual.setItem('duel_null_semantics',null);
 assert.equal(virtual.getItem('duel_null_semantics'),'null');
 virtual.removeItem('duel_null_semantics');
@@ -145,17 +146,19 @@ assert.ok([...idb.rows.values()].some(row=>row.reason==='before-import'&&row.ent
 
 // An unrelated origin key is counted. At the boundary, reject before the
 // virtual career changes and leave a visible failure signal for the UI.
-physical.setItem('unrelated-origin-fill','q'.repeat(1_999_000));
+physical.setItem('unrelated-origin-fill','q'.repeat(2_000_000));
 const priorValue=restarted.getItem(PLAYERS_KEY);
 assert.throws(()=>restarted.setItem(PLAYERS_KEY,priorValue.replace('Imported Driver','Would Not Save')),
-  /budget is full/);
+  /Space used by unrelated-origin-fill/);
 assert.equal(restarted.getItem(PLAYERS_KEY),priorValue);
 assert.ok(failures.some(message=>message.includes('budget is full')));
 physical.removeItem('unrelated-origin-fill');
-assert.throws(()=>restarted.setItem('unrelated-large','r'.repeat(800_000)),/reserve space for a future ghost/);
-assert.equal(physical.getItem('unrelated-large'),null);
-assert.throws(()=>restarted.setItem('duel_single_huge_write','g'.repeat(800_000)),/budget is full/);
-assert.equal(restarted.getItem('duel_single_huge_write'),null);
+restarted.setItem('unrelated-large','r'.repeat(800_000));
+assert.equal(physical.getItem('unrelated-large').length,800_000);
+restarted.setItem('duel_single_huge_write','g'.repeat(800_000));
+assert.equal(restarted.getItem('duel_single_huge_write').length,800_000);
+await restarted.flush();
+physical.removeItem('unrelated-large');
 
 // A historical save with old-layout rows crosses both migrations and is
 // still a complete, validated version-2 export after the primary move.
@@ -210,5 +213,95 @@ const missing=memoryStorage();
 missing.setItem(ORIGIN_POINTER_KEY,JSON.stringify({version:1,id:'origin-primary-v1'}));
 await assert.rejects(prepareCareerBudget({physical:missing,store:memoryIdb()}),/snapshot is missing/);
 assert.ok(missing.getItem(ORIGIN_POINTER_KEY));
+
+// Import holds the facade exclusively, including while its backup is pending.
+{
+  const local=memoryStorage(),db=memoryIdb();
+  const view=(await prepareCareerBudget({physical:local,store:db})).storage;
+  let release,started;
+  const blocked=new Promise(resolve=>{release=resolve;}),entered=new Promise(resolve=>{started=resolve;});
+  const save=db.save;
+  db.save=async row=>{if(row.reason==='before-import'){started();await blocked;}return save(row);};
+  const importing=importBudgetCareer(importText,{storage:view,store:db});
+  await entered;
+  assert.throws(()=>view.setItem(GHOST_KEY,'late-record'),/import is in progress/);
+  assert.throws(()=>view.setItem('duel_late_profile','late'),/import is in progress/);
+  release();await importing;
+  assert.equal(loadPlayers(view).players[0].name,'Imported Driver');
+  assert.equal(view.getItem(GHOST_KEY),null);
+  view.setItem('duel_after_import','works');await view.flush();
+  assert.equal((await prepareCareerBudget({physical:local,store:db})).storage.getItem('duel_after_import'),'works');
+}
+
+// Both legacy local keys and the pre-change primary+journal layout must move
+// byte-for-byte. Failure before verification leaves the original keys intact.
+for(const name of ['pre-change','full-ghosts']){
+  const saved=JSON.parse(await readFile(new URL('./fixtures/save-records-idb/'+name+'.json',import.meta.url),'utf8'));
+  const local=memoryStorage(),db=memoryIdb();
+  for(const [key,value] of Object.entries(saved.storage))local.setItem(key,JSON.stringify(value));
+  local.setItem('duel-kyle-before-max-fixture','b'.repeat(200_000));
+  const original=captureCareer(local);
+  db.failNext('origin-primary-v1');
+  await assert.rejects(prepareCareerBudget({physical:local,store:db,
+    backup:()=>backupCareer(local,db,'fixture-migration')}),/Synthetic/);
+  assert.deepEqual(captureCareer(local),original);
+  const view=(await prepareCareerBudget({physical:local,store:db,
+    backup:()=>backupCareer(local,db,'fixture-migration')})).storage;
+  assert.deepEqual(captureCareer(view),original);
+  assert.equal(local.getItem(GHOST_KEY),null);
+  assert.equal(local.getItem(TELEMETRY_KEY),null);
+  assert.equal(local.getItem('duel-kyle-before-max-fixture').length,200_000);
+  assert.equal(loadGhosts(view).records.length,name==='full-ghosts'?MAX_GHOSTS:1);
+  assert.equal(new LapTelemetryStore(view).best(saved.storage[TELEMETRY_KEY].laps[0]).status,'saved');
+  assert.deepEqual(captureCareer((await prepareCareerBudget({physical:local,store:db})).storage),original);
+  if(name!=='full-ghosts')continue;
+
+  // Recreate a pre-change journal containing complete record values. Its
+  // base snapshot lacks those keys, just as before their first recording.
+  const legacyLocal=memoryStorage(),legacyDb=memoryIdb(),baseEntries={...original};
+  delete baseEntries[GHOST_KEY];delete baseEntries[TELEMETRY_KEY];
+  await legacyDb.save({id:'origin-primary-v1',version:1,revision:0,entries:baseEntries});
+  legacyLocal.setItem(ORIGIN_POINTER_KEY,JSON.stringify({version:1,id:'origin-primary-v1'}));
+  legacyLocal.setItem(ORIGIN_JOURNAL_KEY,JSON.stringify({version:1,baseRevision:0,
+    operations:[GHOST_KEY,TELEMETRY_KEY].map(key=>({key,oldLength:-1,oldHash:2166136261,
+      prefix:0,suffix:0,insert:original[key],remove:false}))}));
+  const oldJournal=legacyLocal.getItem(ORIGIN_JOURNAL_KEY);
+  const recovered=(await prepareCareerBudget({physical:legacyLocal,store:legacyDb})).storage;
+  assert.deepEqual(captureCareer(recovered),original);
+  assert.equal(legacyLocal.getItem(ORIGIN_JOURNAL_KEY),oldJournal);
+  await recovered.flush();
+  assert.ok(originStorageBytes(legacyLocal)<2_000);
+  assert.deepEqual(captureCareer((await prepareCareerBudget({physical:legacyLocal,store:legacyDb})).storage),original);
+
+  const priorGhost=recovered.getItem(GHOST_KEY),nextGhost=JSON.parse(priorGhost);
+  nextGhost.records[0].lastUsedAt+=1;
+  legacyDb.failNext();
+  assert.equal(await saveGhosts(nextGhost,recovered),false);
+  assert.equal(recovered.getItem(GHOST_KEY),priorGhost);
+  assert.equal((await prepareCareerBudget({physical:legacyLocal,store:legacyDb})).storage.getItem(GHOST_KEY),priorGhost);
+
+  // Hold the actual IDB commit while an ordinary journal edit arrives.
+  const save=legacyDb.save;let release,started;
+  const blocked=new Promise(resolve=>{release=resolve;}),entered=new Promise(resolve=>{started=resolve;});
+  legacyDb.save=async record=>{started();await blocked;return save(record);};
+  const saving=saveGhosts(nextGhost,recovered);
+  await entered;
+  recovered.setItem('duel_concurrent_profile','kept-during-record-write');
+  assert.equal(recovered.getItem(GHOST_KEY),priorGhost,'pending records are not called saved');
+  release();assert.equal(await saving,true);legacyDb.save=save;
+  await recovered.flush();
+  const again=(await prepareCareerBudget({physical:legacyLocal,store:legacyDb})).storage;
+  assert.equal(again.getItem('duel_concurrent_profile'),'kept-during-record-write');
+  assert.deepEqual(loadGhosts(again),loadGhosts(recovered));
+
+  const laps=new LapTelemetryStore(again),lap=saved.storage[TELEMETRY_KEY].laps[0];
+  const other={...lap,playerId:'second-telemetry-player'};other.key=telemetryKey(other);
+  const third={...lap,playerId:'third-telemetry-player'};third.key=telemetryKey(third);
+  const pending=laps.record(other),queued=laps.record(third);
+  assert.equal((await pending).saved,true);assert.equal((await queued).saved,true);
+  assert.equal(new LapTelemetryStore(again).best(other).status,'saved');
+  assert.equal(new LapTelemetryStore(again).best(third).status,'saved');
+  assert.ok(originStorageBytes(legacyLocal)<2_000);
+}
 
 console.log(`Career origin budget: 64 full players ${rawBytes} raw UTF-16 bytes -> ${migratedBytes} physical bytes; maximum ghost journal ${ghostWriteBytes} / ${ORIGIN_BUDGET_BYTES}. Restart, archive export/import, import rollback, and unrelated-key boundary passed.`);
