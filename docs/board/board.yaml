@@ -201,7 +201,8 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: codex-cli-2026-10-26
     needs: []
     locks: [sound-bank]
     flag: "heli-skiing"
