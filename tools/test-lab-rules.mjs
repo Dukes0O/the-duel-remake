@@ -15,7 +15,7 @@ import {createLab, normalizeLab, labOf, passLesson, setRing, setCable, setTune, 
 import {heliUpgrades} from '../src/lab/lab-heli.js';
 
 // docs/LAB.md sections 3, 4, 9 and 10. Switches are passed as plain objects: the real switch catalogue only
-// has to say `lab` and `lab-tuning` are dev.
+// has to say `lab` and `lab-tuning` are released.
 const flagsOf = (...names) => ({enabled: name => names.includes(name)});
 const ON = flagsOf('lab');
 const WITH_HELI = flagsOf('lab', 'helicopter');
@@ -33,12 +33,12 @@ const withLessons = (profile, ...ids) => ids.reduce((p, id) => {
 const driven = (profile = rich()) => ({...profile, drivingLessons: {version: 1, done: {corner: true}, best: {corner: .4}, rewarded: {corner: true}}});
 const flier = (profile = rich()) => ({...profile, heli: HELI_DONE});
 
-test('the two switches exist, in development, and are off in production', () => {
-  assert.equal(FEATURE_STATES.lab, 'dev');
-  assert.equal(FEATURE_STATES['lab-tuning'], 'dev');
+test('the two switches are released and enabled in production', () => {
+  assert.equal(FEATURE_STATES.lab, 'on');
+  assert.equal(FEATURE_STATES['lab-tuning'], 'on');
   const production = createFeatureFlags({storage: null, qa: false});
-  assert.equal(production.enabled('lab'), false);
-  assert.equal(production.enabled('lab-tuning'), false);
+  assert.equal(production.enabled('lab'), true);
+  assert.equal(production.enabled('lab-tuning'), true);
 });
 
 test('there are sixteen lessons in four groups, in the design order', () => {
