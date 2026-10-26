@@ -89,3 +89,13 @@ misses the finish. Then set the medals from the runs (bronze about 10% over a
 steady run with at most 3 misses). If the steady run still misses more than 3
 gates, report it and stop: the slalom may need a different control rather
 than more tuning.
+
+
+## Codex second pass: Claude's stop condition
+
+Second layout: 33 gates, 5 m wide, 13 m rows, centres +/-1.2 m; next poles
+glow. The former practice crossing was x8.74, outside the +/-6 m finish;
+finish now visibly spans +/-10 m. Same driver: steady nine misses, practice
+two, both scored finishes. Per Claude's >3 rule, stop further tuning and
+medal calibration. Before/after table and assertion changes are in the
+change note. The feature stays dev for Claude's next control/design choice.

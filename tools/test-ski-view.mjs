@@ -141,6 +141,17 @@ test('drawing a run never changes it: the same controls give the same run with a
   view.pose(sessionView(solo)); await new Promise(done => setTimeout(done, 0));
   const frame = sessionView(solo); view.render({view: frame, pose: view.pose(frame)});
   assert.equal(view.scene.getObjectByName("The guide's ghost").visible, true, 'the ghost on a timed run');
+  const cue = view.scene.getObjectByName('Next gate poles');
+  assert.ok(cue.visible && cue.children.length === 2, 'only the next pair glows');
+  cue.traverse(node => { if (node.isMesh) assert.ok(node.material.emissiveIntensity > 1, 'the poles emit light'); });
+  const beforeCue = skiRunFingerprint(solo), next = {...frame, ski: {...frame.ski, run: {...frame.ski.run, nextGate: 1}}};
+  view.render({view: next, pose: view.pose(next)});
+  const gate = skiZone('slalom').gates[1];
+  assert.equal(cue.children[0].position.x, gate.left.x);
+  assert.equal(cue.children[1].position.z, gate.right.z);
+  view.render({view: {...next, ski: {...next.ski, run: {...next.ski.run, finished: true}}}, pose: view.pose(next)});
+  assert.equal(cue.visible, false, 'the cue clears at the finish');
+  assert.equal(skiRunFingerprint(solo), beforeCue, 'the gate cue cannot change the run');
   assert.equal(view.pose({phase: 'flying', ski: {run: null}}), null, 'no run: nothing drawn');
   assert.equal(view.scene, null, 'and the zone is freed');
   view.dispose();

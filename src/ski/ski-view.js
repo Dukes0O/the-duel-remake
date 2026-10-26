@@ -546,6 +546,21 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
     if (!visit || visit.dressed || models.size < MODEL_IDS.length) return;
     const {zone, base, scene} = visit;
     scene.add(courseGroup(zone, base, models));
+    if (zone.id === 'slalom') {
+      const nextGate = new THREE.Group();
+      nextGate.name = 'Next gate poles';
+      for (let i = 0; i < 2; i++) {
+        const pole = models.get('pole-red').clone(true);
+        pole.scale.set(1.08, 1, 1.08);
+        pole.traverse(node => {
+          if (node.isMesh) node.material = new THREE.MeshStandardMaterial({color: 0xffe6a0,
+            emissive: 0xffb42a, emissiveIntensity: 2, roughness: 0.35});
+        });
+        nextGate.add(pole);
+      }
+      scene.add(nextGate);
+      visit.nextGate = nextGate;
+    }
     const poses = new Map(MODEL_IDS.filter(id => id.startsWith('skier-')).map(id => [id, figure(models.get(id))]));
     const skier = new THREE.Group();
     skier.name = 'Skier';
@@ -619,6 +634,13 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
       const run = view.ski.run, {zone, base, scene, camera, sun} = visit;
       dress(); placeYeti();
       const s = run.skier;
+      if (visit.nextGate) {
+        const gate = !run.finished && zone.gates[run.nextGate];
+        visit.nextGate.visible = !!gate;
+        if (gate) [gate.left, gate.right].forEach((end, i) => {
+          visit.nextGate.children[i].position.set(end.x, zone.ground(end.x, end.z) - base, end.z);
+        });
+      }
       if (visit.figures) {
         const {skier, poses, ghost, guide, guests, group} = visit.figures, id = skierPose(s);
         for (const [name, object] of poses) object.visible = name === id;

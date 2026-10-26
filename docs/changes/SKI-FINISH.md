@@ -294,3 +294,54 @@ shared moguls medal thresholds from the zone's active rules. Raw captures,
 reports, gate logs and generated QA/production builds from this session were
 recycled after their measured findings and the compact sheet were recorded.
 No player save, runtime asset, unrelated file or lane was removed.
+
+## Second slalom pass (Claude, 26 October 2026)
+
+Merged integration first; only conflict was this card's document text, resolved
+by retaining both the measurements and Claude's new answer. No code conflict.
+STATUS stayed ours. Design before code: 33 gates fit z30..446 at 13 m spacing
+inside the same 450 m run. Openings 5 m, centres +/-1.2 m. Glow belongs only
+to the next pair of poles and changes no simulation state. Retain the same
+150/50 ms keyboard driver and guide pace 92%.
+
+The practised baseline crosses z450 at x8.74 m with 8 misses, outside the
+12 m finish's +/-6 m posts, then reaches pickup without a result. The clock
+never finishes because the physical finish opening was missed. Widen only
+slalom's finish to 20 m (+/-10 m), visible in the arch, so that recovery line
+counts. Keep course length, physics, gate penalties and other runs unchanged.
+Measure first; if steady still misses >3, stop further tuning per Claude.
+Otherwise use bronze 10% over measured steady penalised time, gold just under
+practice, silver between them. Add run-specific time limits; guide remains
+the ghost's pace. Checks: same keyboard browser recipe, existing ski suites,
+lane tier jobs4 and build. No frames; feature remains dev.
+
+Pure-session comparison (same stock skis, no wax, same discrete keyboard
+mapping and 150/50 ms driver; no route/controller changes):
+
+| Attempt | First layout | Second layout | Misses before -> after | Finish crossing x before -> after |
+| --- | --- | --- | --- | --- |
+| Steady 150 ms | 110.51 s (25.51 raw), no medal | 69.46 s (24.46 raw), no medal | 17 -> 9 | 1.72 -> -0.69 m |
+| Practised 50 ms | No result; 22.86 s clock at z450 | 30.59 s (20.59 raw), no medal | 8 at z450 -> 2 | 8.74 -> -0.73 m |
+
+Steady still misses nine, so Claude's explicit >3 stop condition applies.
+Do not set more permissive medals from that failed acceptance. The slalom
+keeps its guide-derived limits pending a control/design decision; these move
+naturally when the guide follows the new gate line. Both attempts now have
+valid scored finishes. The new practised line is already inside the former
+opening; widening the finish specifically protects the demonstrated old
+recovery line, rather than claiming that width caused the new line's success.
+Glow helps a person see the next gate; this unchanged proxy reads the route,
+so it does not react to the glow. No claim of a child's play-test is made.
+
+Changed assertions in this pass: slalom gate count 38 -> 33; exact row spacing
+11 -> 13 m; exact width/centre 3.5 m/+/-1.5 -> 5 m/+/-1.2. These are Claude's
+new layout, with unchanged 450 m length/drop and retained clean-guide checks.
+Add finish regression at x8.74 (accepted), x10.1 (outside), retaining all
+missed-gate penalties. Add view checks for two emissive next poles, movement
+to the next gate, clearing at finish and an unchanged simulation fingerprint.
+No other old assertion, tolerance, penalty, replay or signature is changed.
+The browser recipe only adds slalom result pictures; its driver is unchanged.
+
+Removed: replaced the first layout and 12 m slalom finish with the second
+layout and visible 20 m finish. No old physics, asset or test path is retained
+as a workaround. Final captures/checks are recorded below.

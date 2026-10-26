@@ -86,7 +86,7 @@ export async function run(context) {
         if (!practice && id==='slalom' && batch===8) await context.screenshot('slalom-gate');
         if (id==='aerials' && state.run && state.run.skier.height>3 && !row.jump) {await sleep(150);row.jump=await context.screenshot('aerials-jump-'+attempt);}
         if (id==='powder' && state.run && (detail?Math.hypot(state.run.skier.x+92,state.run.skier.z-600)<28:state.run.skier.z>530) && !row.bowl) {await sleep(150);row.bowl=await context.screenshot('powder-yeti');}
-        if (id === 'moguls' && state.run?.result && !row.finishPicture) row.finishPicture = await context.screenshot('moguls-finish-'+attempt);
+        if (['slalom', 'moguls'].includes(id) && state.run?.result && !row.finishPicture) row.finishPicture = await context.screenshot(id+'-finish-'+attempt);
         if (state.run?.result&&!state.run.skier.tumbling || state.phase!=='skiing' || batch===299) {Object.assign(row,state);break;}
       }
       report.runs.push(row);await save();

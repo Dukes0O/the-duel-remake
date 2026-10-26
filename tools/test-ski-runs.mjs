@@ -112,9 +112,9 @@ near(skiZone('powder').ground(0, POWDER_SHAPE.length), SKI_RUN_PICKUP_ALTITUDE, 
 }
 
 // ---- Slalom and giant slalom ---------------------------------------------------------
-for (const [id, gates, length, drop, spacing] of [['slalom', 38, 450, 180, [11, 11]], ['gs', 40, 1100, 350, [25, 27]]]) {
+for (const [id, gates, length, drop, spacing] of [['slalom', 33, 450, 180, [13, 13]], ['gs', 40, 1100, 350, [25, 27]]]) {
   const zone = skiZone(id), guide = zoneGuide(id);
-  if (id === 'slalom') ok(zone.gates.every(g => Math.abs(g.centre) === 1.5 && Math.abs(g.right.x - g.left.x) === 3.5), 'slalom: 3.5 m openings at alternating 1.5 m centres');
+  if (id === 'slalom') ok(zone.gates.every(g => Math.abs(g.centre) === 1.2 && Math.abs(g.right.x - g.left.x) === 5), 'slalom: 5 m openings at alternating 1.2 m centres');
   same(zone.gates.length, gates, `${id}: ${gates} gates`);
   near(zone.finish.left.z, length, 0.5, `${id}: ${length} m long`);
   near(zone.ground(0, 0) - zone.ground(0, length), drop, 0.5, `${id}: ${drop} m of drop`);
@@ -148,6 +148,14 @@ for (const [id, gates, length, drop, spacing] of [['slalom', 38, 450, 180, [11, 
     last = {x: skier.x, z: skier.z};
   }
   same([straight.finished, straight.missed], [true, id === 'slalom' ? 0 : gates], `${id}: straight line through the authored openings`);
+}
+// The former practised recovery crossed at x8.74, outside the old finish.
+for (const [x, finished] of [[8.74, true], [10.1, false]]) {
+  const zone = skiZone('slalom'), run = createTimedRun({start: zone.start, finish: zone.finish, gates: zone.gates});
+  stepTimedRun(run, {x: 0, z: 11}, {x: 0, z: 13}, SKI_STEP);
+  stepTimedRun(run, {x, z: 449}, {x, z: 451}, SKI_STEP);
+  same(run.finished, finished, `slalom: finish crossing at x${x}`);
+  if (finished) same(run.missed, zone.gates.length, 'the wider finish preserves every missed-gate penalty');
 }
 ok(zoneGuide('slalom').time < zoneGuide('gs').time && zoneGuide('slalom').time > 10, 'the slalom is quicker than the giant slalom');
 

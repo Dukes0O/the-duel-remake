@@ -14,7 +14,7 @@
 // The zone's `ground`, `gates`, `line`, `stashes` and the rest are in the zone
 // frame; add world.x and world.z to place them in the world.
 //
-// How long and how far: slalom 450 m long, 180 m drop, 38 gates; giant
+// How long and how far: slalom 450 m long, 180 m drop, 33 gates; giant
 // slalom 1,100 m, 350 m, 40 gates; moguls 250 m at 28 degrees; aerials one
 // kicker (a 64 degree face, taking off at about 50 degrees) onto a 37 degree hill; powder the north bowl from
 // the summit, down to the pickup altitude. "Long" is measured along z (horizontally).
@@ -73,14 +73,14 @@ function finish(zone) {
   return freezeDeep(zone);
 }
 
-// ---- Slalom: 450 m, 180 m drop, 38 gates of red and blue poles ----------------
+// ---- Slalom: 450 m, 180 m drop, 33 gates of red and blue poles ----------------
 function slalom() {
   const top = SKI_ALTITUDES.devils;
   const fall = slope([{z: 0, angle: 14}, {z: 30, angle: 14}, {z: 60, angle: 25}, {z: 420, angle: 25}, {z: 450, angle: 18}],
     450, 180, [{z: 480, angle: 6}, {z: 520, angle: 6}], 520);
   const gates = [];
-  for (let i = 0; i < 38; i++) gates.push(gateAt(30 + i * 11, i % 2 ? 1.5 : -1.5, 3.5, i % 2 ? 'blue' : 'red'));
-  const start = gateAt(12, 0, 12, 'start'), end = gateAt(450, 0, 12, 'finish');
+  for (let i = 0; i < 33; i++) gates.push(gateAt(30 + i * 13, i % 2 ? 1.2 : -1.2, 5, i % 2 ? 'blue' : 'red'));
+  const start = gateAt(12, 0, 12, 'start'), end = gateAt(450, 0, 20, 'finish');
   return finish({
     id: 'slalom', kind: 'slalom', name: 'Slalom', pad: 'devils',
     ground: (x, z) => top - fall(z),
