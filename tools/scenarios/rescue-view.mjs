@@ -21,7 +21,7 @@ import {armMissions} from '../../src/heli/heli-missions.js';
 import {createMissions} from '../../src/heli/heli-save.js';
 import {hikerSpots, pickHiker} from '../../src/heli/heli-search.js';
 
-const entry = '/tools/menu-check.html?flags=helicopter,forest-fire,rescue,tremblant-woods,tremblant-snow,panorama-ridge';
+const entry = '/tools/menu-check.html?flags=helicopter,forest-fire,rescue,tremblant-woods,tremblant-snow,panorama-ridge,summit-run';
 const SHEET_ROUND = Number(process.env.RESCUE_VIEW_SHEET || 0);
 const FINISH = process.env.RESCUE_VIEW_FINISH === '1';
 // The round 3 sheet shows only the views RESCUE-FINISH changed.
@@ -68,7 +68,7 @@ async function menu(context, heli) {
     window.__pilot = null;
     // QA only: a page-side pilot that steers with the same controls a player has, and can face a point.
     session.step = (controls, dt) => {
-      const t = window.__pilot, v = session.view();
+      const v = session.view(), t = typeof window.__pilot === 'function' ? window.__pilot(v) : window.__pilot;
       if (!t || !v.heli) return step(controls, dt);
       const h = v.heli, fx = Math.sin(h.heading), fz = Math.cos(h.heading);
       const dx = t.x - h.x, dz = t.z - h.z, d = Math.hypot(dx, dz), want = Math.min(t.speed || 6, d * 0.4);
@@ -421,3 +421,7 @@ export async function run(context) {
   }
   if (failures.length) throw Error(failures.join(' | '));
 }
+
+// Shared flight controls for the RESCUE-FINISH evidence recipe.
+export {menu, callHeli, answer, fitLine, cruiseTo, flyTo, look, setDown, lowerOver,
+  carryToZone, shoot, view, pilotTo, sim, groundAt};

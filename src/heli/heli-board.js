@@ -67,7 +67,7 @@ function rescueRadio(rescue) {
     const a = rescue.active, place = esc(a.courseName ?? 'the mountain');
     const crates = a.kind === 'supply' ? ` &middot; crates ${a.cratesDown}/3` : '';
     return `<div class="heli-board-radio heli-board-rescue-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">` +
-      `${RESCUE_WORDS[a.kind]} ${place}${crates} &middot; ${clockWords(a.left)} left</span></div>`;
+      `${RESCUE_WORDS[a.kind]} ${place}${crates}${a.refuelFirst ? ' &middot; Refuel at the truck first' : ''} &middot; ${clockWords(a.left)} left</span></div>`;
   }
   if (!rescue.call) return '';
   const c = rescue.call;

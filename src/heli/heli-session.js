@@ -3,7 +3,7 @@
 // app gives it a course loader, the player's car, today's date and a way to
 // save the profile; HELI-HOOKS plugs it into the game loop. Same inputs and
 // the same profile give the same flight.
-import {HELI_STEP, KESTREL, createHeliState, stepHeli, heliReadout, refuelHeli, heliFingerprint} from './heli-flight.js';
+import {HELI_STEP, KESTREL, GRAVITY, heliMass, availableThrust, createHeliState, stepHeli, heliReadout, refuelHeli, heliFingerprint} from './heli-flight.js';
 import {AUTOPILOT, createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, wantsControl} from './heli-autopilot.js';
 import {CABLE, createLoad, liftCheck, carMassKg, canHook, hookRefusal, hook, release, stepCable, createWinch, reelWinch, lineLengthOf} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
@@ -1276,7 +1276,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     let active = null;
     if (live) {
       const r = live, here = !!rsite && site?.courseId === r.courseId, gear = gearNow(), left = clockLeft(r, gear);
-      let target = null, sites = null;
+      let target = null, sites = null, refuelFirst = false;
       if (rsite && heli) {
         if (r.kind === 'hiker' && here) {
           target = rsite.spotted ? bearingTo(rsite.clearing.x, rsite.clearing.z) : {...bearingTo(rsite.lastSeen.x, rsite.lastSeen.z), radius: SEARCH.areaRadius};
@@ -1298,6 +1298,30 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           else if (site?.courseId === HOME_COURSE) sites = Object.freeze({spots: rsite.spots});
         }
       }
+      // Summit has a planned fuel stop beside the slide. Below it, budget the
+      // climb to the slide and that truck; above it, budget pickup and handover.
+      // Use the flight model's thin-air thrust and full departure fuel/load to
+      // estimate burn, with a minute for approaches and the hold. Guidance only:
+      // the autopilot never routes through a truck.
+      let refuelStop = null;
+      if (here && r.kind === 'avalanche' && r.courseId === SUMMIT_COURSE && r.stage !== 'carry') {
+        const slide = rsite.slide, zone = site.zone, pickup = summitStands()[1]?.circle;
+        const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+        const below = pickup && distance(heli, zone) < distance(heli, pickup);
+        const end = below ? pickup : zone;
+        const top = Math.max(heli.y, world.ground.height(slide.x, slide.z) + 80);
+        const planned = {...heli, y: top, fuelKg: 330, vx: 0, vz: 20};
+        const collective = Math.min(1, (heliMass(planned) + 170) * GRAVITY / availableThrust(planned, 80));
+        const burn = KESTREL.burnIdle + KESTREL.burnPerCollective * collective;
+        const seconds = (distance(heli, slide) + distance(slide, end)) / 20
+          + Math.max(0, top - heli.y) / AUTOPILOT.maxClimb + 60;
+        refuelFirst = heli.fuelKg < seconds * burn;
+        refuelStop = below ? 'start' : 'pickup';
+        if (refuelFirst) {
+          const truckCircle = below ? zone : pickup;
+          if (truckCircle) target = bearingTo(truckCircle.x, truckCircle.z);
+        }
+      }
       const signal = r.kind === 'avalanche' && here && rsite.signal ? Object.freeze({heard: rsite.signal.heard, bar: rsite.signal.bar,
         interval: rsite.signal.interval, pitch: rsite.signal.pitch}) : null;
       // Carrying people: the way to a handover circle (the pad here, or the rescue course's own).
@@ -1306,6 +1330,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       active = Object.freeze({kind: r.kind, id: r.id, courseId: r.courseId, courseName: placesNow()[r.courseId]?.name ?? null,
         stage: r.stage, condition: r.condition, conditionName: CONDITIONS[r.condition], here,
         clockSeconds: r.clockSeconds, limit: rescueLimit(r.kind, gear, r.courseId), left, orange: left <= 60, dusk: duskOf(r),
+        ...(r.kind === 'avalanche' && r.courseId === SUMMIT_COURSE ? {refuelFirst, refuelStop} : {}),
         crates: Object.freeze([...r.crates]), cratesDown: r.crates.filter(c => c === 2).length, target, signal, sites});
     }
     return Object.freeze({

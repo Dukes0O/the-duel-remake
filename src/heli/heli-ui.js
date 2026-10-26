@@ -115,6 +115,9 @@ export function noticeText(event) {
     case 'rescueTaken': return 'Another crew took the call';
     case 'rescueLineFitted': return 'Rescue line fitted';
     case 'rescueLineRemoved': return 'Rescue line off';
+    case 'holdReset': return {lifted: 'Hold restarted: the rescuer lifted off. Lower gently onto the ground.',
+      dragged: 'Hold restarted: moving too fast. Stop over the casualty and hold steady.',
+      away: 'Hold restarted: too far away. Set the rescuer within 3 m of the casualty.'}[event.reason] ?? 'Hold restarted: set the rescuer down beside the casualty and stop.';
     case 'hikerSpotted': return 'Flare sighted';
     case 'hikerAboard': return 'Hiker aboard';
     case 'crateDown': return `Crate down: ${event.pay} credits`;
@@ -208,9 +211,20 @@ export function rescueLineMarkup(view) {
   const a = rescue.active;
   if (a) {
     const where = a.target && a.here
-      ? `RESCUE ${String(Math.round(a.target.bearing) % 360).padStart(3, '0')}° ${(a.target.distance / 1000).toFixed(1)} km`
+      ? `${a.refuelFirst ? 'FUEL TRUCK' : 'RESCUE'} ${String(Math.round(a.target.bearing) % 360).padStart(3, '0')}° ${(a.target.distance / 1000).toFixed(1)} km`
       : `RESCUE AT ${escape((a.courseName ?? '').toUpperCase())}`;
     parts.push(`<span class="heli-rescue-line${a.orange ? ' late' : ''}">${where} · ${clockText(a.left)}</span>`);
+    if (a.refuelFirst) parts.push('<span class="heli-rescue-refuel">Refuel at the truck first</span>');
+    else if (a.refuelStop === 'start') parts.push('<span class="heli-rescue-refuel">Refuel again at the pickup truck near the slide before the return flight.</span>');
+    const instruction = a.refuelFirst ? null
+      : a.stage === 'carry' && a.kind !== 'supply' ? 'Carry to the landing circle. Set down at 1 m/s or slower for the paramedics.'
+      : (a.kind === 'avalanche' || a.kind === 'hoist') && !rescue.line ? 'Fit the rescue line at the home pad before flying to the casualty.'
+      : !a.here ? `Fly to ${escape(a.courseName ?? 'the rescue course')}.`
+      : a.kind === 'hiker' ? (a.sites?.hiker ? 'Land in the marked clearing. Wait for the hiker to walk over and board.' : 'Search the circle below 120 m. Fly parallel passes about 120 m apart; watch for an orange flare.')
+      : a.kind === 'avalanche' ? 'Follow the faster beacon beeps. Fly down until the rescuer rests within 3 m of the beacon; stop and hold for 12 seconds.'
+      : a.kind === 'hoist' ? 'Fly down until the rescuer rests within 3 m of the driver; stop and hold for 8 seconds.'
+      : a.kind === 'supply' ? `${a.courseId === 'summit-run' ? 'Thin air: target 230 kg for food/medicine, 190 kg for fuel drums. ' : ''}H hooks a crate. Lower it onto the marked yard, then press H to let go. Deliver all three.` : null;
+    if (instruction) parts.push(`<span class="heli-rescue-instruction">${instruction}</span>`);
     if (a.kind === 'supply') parts.push(`<span class="heli-rescue-crates">CRATES ${a.cratesDown}/${a.crates.length}</span>`);
     if (a.kind === 'avalanche' && a.here && a.stage !== 'carry') {
       const signal = a.signal;
@@ -290,12 +304,17 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   }).join('');
   // The label changes as fuel burns; it sits in its own span so the panel
   // can update it without rebuilding the buttons under the mouse.
-  const label = pumpLabel(view.heli.fuelKg, {credits, refuels});
-  const pump = onPad ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
+  const atTruck = view.heli.onGround && view.rescue?.active?.sites?.atTruck === true;
+  const label = pumpLabel(view.heli.fuelKg, {credits, refuels: atTruck ? Math.max(1, refuels) : refuels});
+  const pump = onPad || atTruck ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
+  const truckTarget = atTruck ? `<label class="heli-fuel-target">Tank target
+    <select data-heli-fuel-target aria-label="Fuel tank target">
+      ${[190, 230, 330, 360, 400].map(kg => `<option value="${kg}"${kg === 330 ? ' selected' : ''}>${kg} kg</option>`).join('')}
+    </select></label><button type="button" data-heli-fuel="target">REFUEL TO TARGET</button>` : '';
   const destination = view.destination ? HELI_DESTINATIONS_WITH_SUMMIT[view.destination]?.name : null;
   // MAP-VIEW: with the pilot's map on, the route panel also opens it (the view carries `secrets` only then).
   const mapButton = view.secrets !== undefined ? `<button type="button" class="heli-map-open" data-heli-map="open">PILOT'S MAP <kbd>${MAP_KEY}</kbd></button>` : '';
-  return `<div class="heli-route" role="group" aria-label="Fly to"><span>FLY TO</span>${buttons}${mapButton}${pump}</div>
+  return `<div class="heli-route" role="group" aria-label="Fly to"><span>FLY TO</span>${buttons}${mapButton}${pump}${truckTarget}</div>
     ${view.cruiseOffered ? `<div class="heli-prompt" role="status">Clear of the area. Press <kbd>ENTER</kbd> to cruise to ${escape(destination)}.</div>` : ''}${challengeMarkup(view)}`;
 }
 
@@ -409,7 +428,14 @@ export function createHeliUi({host, app}) {
     if (stopChallenge) { app.heliSession?.stopChallenge?.(); app._heliEvents?.(app.heliSession?.takeEvents?.() ?? []); return; }
     const pump = event.target.closest('[data-heli-fuel]');
     if (pump) {
-      const result = app.heliBuyFuel?.();
+      const target = pump.dataset.heliFuel === 'target' ? Number(controls.querySelector('[data-heli-fuel-target]')?.value) : null;
+      const fuel = app.heliView?.()?.heli?.fuelKg ?? 0;
+      if (target !== null && target - fuel < 0.1) {
+        shown.push({text: `The tank already has ${fmt(fuel)} kg. Choose a higher target.`, until: performance.now() / 1000 + NOTICE_SECONDS});
+        pump.blur(); return;
+      }
+      const kg = target === null ? Infinity : target - fuel;
+      const result = app.heliBuyFuel?.(kg);
       if (result && !result.ok && result.reason) shown.push({text: result.reason, until: performance.now() / 1000 + NOTICE_SECONDS});
       pump.blur();
     }

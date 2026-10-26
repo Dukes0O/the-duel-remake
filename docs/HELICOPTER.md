@@ -558,7 +558,7 @@ card is cut. Nothing in it is built yet.
 
 ## 14. Kestrel One's logbook (story draft for Kyle and Gratian, 26 October 2026)
 
-**Status: a draft to react to. Change anything.**
+**Status: decided by Kyle, 26 October 2026 (section 14.1). The draft below is kept for the story; 14.1 wins where they differ.**
 
 ### The idea in one breath
 
@@ -623,3 +623,35 @@ reward for becoming Chief pilot.)
 4. Is the submarine the right ending, or should Chief pilot unlock something
    else (a bigger helicopter, a new place)?
 5. Anything Gus should have seen that we have not thought of?
+
+### 14.1 Kyle decided (26 October 2026)
+
+Kyle: "Gus is fine. If 5 ranks is appropriate, then 5 ranks it is. Should
+reflect something real. I think the helicopter. It could be a different
+skin? Submarine is the right ending."
+
+**The five ranks are real helicopter pilot steps** (Transport Canada's, since
+the home pad is in Quebec), and each one repaints Kestrel One:
+
+| Rank | Real thing it stands for | How you earn it in the game | Gus's logbook | Kestrel One's paint |
+| --- | --- | --- | --- | --- |
+| Student pilot | Student Pilot Permit, Helicopter | Pass lessons 1 to 4 | (your own logbook) | Flight-school white with orange training stripes |
+| Private pilot | Private Pilot Licence, Helicopter (45 hours of flying, real) | 10 flights of any kind | 1, 1964: the Table | Your own: gloss midnight blue with a silver cheat line |
+| Commercial pilot | Commercial Pilot Licence, Helicopter (100 hours, real; needed to be paid to fly) | One job of each kind: a car, a crate, a fire | 2, 1966: the storm and the *Marguerite* | The lodge's air service: forest green and cream, a kestrel on the door |
+| Mountain pilot | Mountain flying training and a long-line (external load) rating, both real | A rescue and a ski drop | 3, 1972: the footprints at Summit | Mountain rescue: high-visibility red and white with reflective bands |
+| Chief pilot | The pilot an air service names to run its flying (a real post every Canadian air operator must fill) | 50 flights and every place visited | 4, 1981: where the *Marguerite* lies | Gus's own 1964 colours, restored: cream and signal red, a hand-painted kestrel |
+
+- In real life a pilot needs the commercial licence before being paid. In the
+  game Roger's jobs count as supervised training flights until then; Brian
+  says so once, at the Private pilot step.
+- **The paint is the rank.** A new rank repaints Kestrel One at the pad and
+  Roger says so. Every paint earned stays in the helicopter's paint list,
+  so a player can fly any rank's colours, like car paints. These join the
+  `heli-skins` paint list; the mission skins (five missions of a kind) stay
+  as they are.
+- **Four Gus logbooks** (not five): the Student pilot gets their own. Each
+  opens as a page in the pad hut and marks its place on the pilot's map.
+- **Ending: the submarine.** At Chief pilot Ana calls; carrying the field
+  station's submarine out past the drop-off is the last job of this story,
+  and the dive is a later piece of The Deep.
+- Radio lines are on-screen text for now (voice is on hold, 26 October).
