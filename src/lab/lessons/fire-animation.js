@@ -14,9 +14,9 @@ export function fireDrawing(input, time, mode = 'try') {
   const objects = [target('water-bucket', [-1.04, .23, -.4875], [.32, .46, .32], 'water'), target('sand-bucket', [-.715, .23, -.65], [.32, .46, .32], 'sand'),
     target('rake', [-1.24, .5, -.78], [.25, 1, .3], 'rake'), target('spray-handle', [.94, .5, .13], [.4, .8, .4], 'spray')];
   const sides = [
-    ['heat', [0, 2, .1], [1.3, .09, .09], 0, '#f06464'],
-    ['fuel', [-.32, 2.55, .1], [.09, 1.3, .09], -.52, '#edc557'],
-    ['air', [.32, 2.55, .1], [.09, 1.3, .09], .52, '#71c9ff'],
+    ['heat', [0, 1.6, .1], [1.3, .09, .09], 0, '#f06464'],
+    ['fuel', [-.32, 2.15, .1], [.09, 1.3, .09], -.52, '#edc557'],
+    ['air', [.32, 2.15, .1], [.09, 1.3, .09], .52, '#71c9ff'],
   ];
   for (const [name, pos, size, angle, colour] of sides) {
     if (name !== removed) objects.push({...object(`triangle-${name}`, pos, size, colour), rotation: [0, 0, angle], inFront: true});
@@ -40,9 +40,12 @@ export function fireDrawing(input, time, mode = 'try') {
     objects.push(object(`forest-${id}`, [-2 + c.i * .45, .18, 1.5 + c.j * .28], [.38, lit ? .5 : .12, .22], lit ? '#ef762a' : treated ? '#dc7277' : '#608355'));
   }
   return {input: p, reading: r, removed, mode, used, burning, time, objects,
-    camera: {position: [-2.2, 3.2, 5], target: [0, .8, 0]}, hideLabels: true,
+    platePosition: [0, .2, .35],
+    camera: spread ? {position: [-1.8, 2, 4.8], target: [0, 1.1, 1]} : {position: [-1.5, 1.4, 4.7], target: [0, .95, 0]}, hideLabels: true,
+    labelPositions: mode === 'retardant' ? [[-.9, 1, 2], [1.4, 1.5, 2.5]] :
+      mode === 'fuel' ? [[-.7, 2.15, .15]] : mode === 'oxygen' ? [[.9, 2.15, .15]] : [[0, 1.4, .15], [-.7, 2.15, .15], [.9, 2.15, .15]],
     labelColours: mode === 'fuel' ? ['#edc557'] : mode === 'oxygen' ? ['#71c9ff'] : ['#f06464', '#edc557', '#71c9ff'],
-    labels: mode === 'retardant' ? ['Retardant coats plants ahead', 'The creeping flame stops at the pink strip'] : mode === 'heat' ? ['Heat · enough to start burning'] : mode === 'fuel' ? ['Fuel · wood can burn'] : mode === 'oxygen' ? ['Oxygen · air reaches the fire'] : ['Heat · red', 'Fuel · yellow', 'Oxygen in air · blue'],
+    labels: mode === 'retardant' ? ['Coated plants', 'Flame stops at pink strip'] : mode === 'heat' ? ['Heat'] : mode === 'fuel' ? ['Fuel · wood'] : mode === 'oxygen' ? ['Oxygen · air'] : ['Heat', 'Fuel', 'Oxygen in air'],
     streams: used && p.putOut === 'water' ? [{medium: 'water', origin: [-.8, 1.6, 0], direction: [.5, -1, 0], speed: 3, length: 1.4}] :
       mode === 'retardant' ? [{medium: 'water', origin: [0, 1.3, 2], direction: [0, -1, 0], speed: 2, length: 1}] : mode === 'oxygen' ? [{medium: 'air', origin: [-1.3, .7, 0], direction: [1, 0, 0], speed: 1.2, length: 1.3}] : []};
 }

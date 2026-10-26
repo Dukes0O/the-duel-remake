@@ -13,8 +13,9 @@ import {GRAVITY, createHeliState, heliReadout} from '../src/heli/heli-flight.js'
 import {projectileDrawing, FLAG_TOLERANCE_M} from '../src/lab/lessons/projectile-animation.js';
 import {altitudeReading, altitudeDrawing} from '../src/lab/lessons/altitude-animation.js';
 import {fireDrawing} from '../src/lab/lessons/fire-animation.js';
+import {pendulumDrawing} from '../src/lab/lessons/pendulum-animation.js';
 import {mountMachine} from '../src/lab/lessons/flying-display.js';
-import {Group} from 'three';
+import {Group, PerspectiveCamera, Vector3} from 'three';
 import {mkdirSync, mkdtempSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {inspectRepository} from './test-repo-hygiene.mjs';
@@ -45,6 +46,42 @@ test('the prescribed flying sheet names allow only three JPG rounds and reject r
 
 const packets = [projectile, fire, pendulum, altitude];
 const finish = s => { for (let n = 0; n < 500; n++) s.tick(.1); };
+test('the scale models keep real lengths and anchor at most three labels beside readable moving parts', () => {
+  const drop = projectileDrawing({heightM: 30}, 0, 'pair');
+  assert.equal(drop.objects.find(o => o.id === 'parcel').position[1] - .3, 30 / 10);
+  const end = projectileDrawing({}, 4);
+  assert.ok(end.objects.find(o => o.id === 'parcel').size[0] >= .4);
+  assert.ok(end.objects.filter(o => o.id.startsWith('arc-')).every(o => o.size[0] >= .1));
+  const swings = pendulumDrawing({}, 0, 'all');
+  [5, 15, 25].forEach((length, i) => {
+    const cord = swings.objects.find(o => o.id === `string-${i}`);
+    const bob = swings.objects.find(o => o.id === `weight-${i}`);
+    assert.equal(cord.size[1], length / 10);
+    assert.equal(bob.colour, swings.labelColours[i]);
+    assert.ok(bob.size[0] >= .3);
+    assert.ok(Math.hypot(...bob.position.map((x, j) => x - swings.labelPositions[i][j])) <= .6);
+  });
+  const air = altitudeDrawing({}, 0), dots = air.objects.filter(o => o.id.startsWith('air-') && o.shape === 'sphere');
+  assert.equal(dots.length, Math.round(36 * air.reading.gameShare));
+  assert.ok(dots.every(o => o.size[0] >= .12));
+  for (const d of [drop, swings, air, fireDrawing({}, 0)]) {
+    assert.ok(d.labels.length <= 3);
+    assert.equal(d.labels.length, d.labelPositions.length);
+  }
+  for (const packet of packets) {
+    const d = packet.hooks.animations.undefined();
+    assert.ok(d.camera && d.objects.length > 0, `${packet.definition.id} keeps its experiment on the final key card`);
+  }
+  for (const heightM of [10, 30, 60]) {
+    const d = projectileDrawing({heightM}, 0), view = new PerspectiveCamera(50, 1440 / 900, .1, 100);
+    view.position.set(...d.camera.position); view.lookAt(...d.camera.target); view.updateMatrixWorld(true);
+    const arm = d.objects.find(o => o.id === 'arm-control').position;
+    for (const position of [arm, d.objects.find(o => o.id === 'parcel').position, d.labelPositions[1]]) {
+      const point = new Vector3(...position).project(view);
+      assert.ok(Math.abs(point.x) < .95 && Math.abs(point.y) < .95, `Visible release and height caption at ${heightM} m`);
+    }
+  }
+});
 test('all four packets scaffold real lessons through checks and keep rewards outside the teaching session', () => {
   for (const p of packets) {
     validateLesson(p.definition, p.hooks);
@@ -87,7 +124,7 @@ test('every offered drop height and speed agrees with the challenge aim ring and
     assert.equal(last.distanceM, r.water.distanceM); assert.equal(last.seconds, r.water.seconds); assert.equal(last.heightM, 0);
     const d = projectileDrawing({heightM: height, speedMs: speed}, 4);
     assert.equal(d.objects.find(o => o.id === 'parcel').position[1], .3);
-    assert.equal(d.objects.find(o => o.id === 'parcel').position[0], -1.3 + last.distanceM * .065);
+    assert.equal(d.objects.find(o => o.id === 'parcel').position[0], -1.3 + last.distanceM * .1);
   }
   for (const t of [1, 2, 3]) assert.equal(stoneFallAfter(t), GRAVITY * t * t / 2);
   assert.equal(stoneDrop(30, 0).seconds, stoneDrop(30, 30).seconds);

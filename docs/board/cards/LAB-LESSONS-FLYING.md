@@ -16,3 +16,11 @@ look rounds for the corner, one sheet per round at
 `docs/board/looks/lab-2/lab-lessons-flying-<round>.jpg`, judged by Claude. The old
 bench panel for each rebuilt lesson is removed in the same change. Switch
 `lab-2`. Lane tier and build; the Lab browser flow through each lesson.
+
+## Round 2 assertion for Claude's review
+
+The exact drawing endpoint assertion uses `.1` instead of `.065` to match the
+requested one-tenth scale. It still requires exact equality with the game's
+parcel landing; no trajectory, timing, prediction or tolerance is loosened.
+The prediction browser assertion hides the three captions, while allowing
+the new scale plate to remain. Independent code review approved both changes.

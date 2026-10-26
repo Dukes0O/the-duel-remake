@@ -2,6 +2,69 @@
 
 Branch: `codex/lab-lessons-flying`. Switch: `lab-2`, dev.
 
+## Round 2 design (Claude's round-1 verdict)
+
+Claude approved the teaching logic, numbers and assertions. Round 2 changes
+the pictures: low close cameras, bright parcels with persistent thick trails,
+large colour-matched weights, countable air dots and at most three captions
+anchored beside their objects. The drop and string lengths use one tenth
+of the real dimensions; clocks and all printed values keep the real units.
+Each machine has a scale plate. Brian explains the scale once per visit.
+The shared challenge card moves to bottom left above the instruments; browser
+captures wait for the renderer's world readiness and check button clearance.
+The sheet has four large Watch captures with small supporting strips.
+Current integration is merged first (generated STATUS conflict only).
+Checks: focused drawing/unchanged teaching tests, memory-only browser flow,
+lane tier with jobs 4, build and independent review. No frame timing.
+
+Round-2 assertion change: the exact parcel endpoint drawing multiplier changes
+from `.065` to `.1`, because Claude requires a one-tenth model. This keeps an
+exact equality and does not change or loosen the physics, aim or timing checks.
+The new ninth test verifies one-tenth lengths, visible arm/parcel/height labels
+at 10/30/60 m, readable balls/air dots, matched bob colours and three anchors.
+The browser's prediction check now checks the three captions individually,
+because the model's scale plate must remain visible. Challenge capture adds
+world readiness and button-overlap checks. No game rules or save code changed.
+
+Independent review found and confirmed fixes for a clipped drop control,
+concurrent introduction/Wonder prose, and repeated DOM style writes. The
+introduction now replaces Wonder prose briefly and restores it before Continue;
+it is marked shown only after an actual Wonder display. Nine focused tests pass.
+
+## Round 2 verification
+
+The complete memory-only browser flow passed on private port 18402: 65 captures,
+zero warnings and zero errors. It checks exactly one scale introduction,
+caption-free prediction cards, all machine inputs, final experiment key cards,
+fully presented challenge worlds and no card/button overlap. The later Fire
+plate and Pendulum label/cable-camera adjustments passed their targeted refresh
+on private port 26665: 34 captures, zero warnings and zero errors. The full-flow
+receipt is preserved separately from the refresh receipt. Each browser visit
+checks one introduction. All 65 current full-size views remain for Claude.
+The final sheet is 493,490 bytes, with four large Watch views and small strips.
+Claude's round-2 look verdict remains pending.
+
+The first capture exposed picture cards over the low flag handle; choosing the
+prediction first fixes the real input sequence. The Fire camera was lowered
+and widened so the pit and bucket remain above the panel. Code review approved
+the final drawing fixes. A queued capture was stopped when it and the gate
+claimed the same slot; only this lane's later job was stopped.
+
+A browser build then emptied `.qa-dist` while `test-medals` was using a fixture
+there. The missing-file failure is a scratch collision, not a changed assertion.
+The capture refresh uses the harness's existing isolated QA-bundle API.
+The required lane command with jobs 4 finished with 26 passed, one scratch
+failure and eight not run. The nine-suite continuation passed all nine in
+137.08 s: only medals and those eight suites ran. All 35 selected suites are
+covered and green; no passing suite was repeated. `npm run build` passed in
+926 ms after the full tier in `codex/go-live-evening` finished. It reports the
+existing mixed-import and large-chunk advisories. Commands used PowerShell
+with System32 first on PATH. No frame timing was run.
+The medals retry passed. Replay fingerprints remain 225 checks across 25 cases,
+23 events, nine categories, three FPS values and three runs. World composition
+passed all 47 immutable-feature and complete-scene checks across twenty events;
+no signature was regenerated. Runtime assets are unchanged.
+
 ## Design settled before code
 
 Four discovered lesson packets replace the four Lab 2 bench panels. The
@@ -84,7 +147,7 @@ lid question replays the actual lid. Final review approved these fixes.
 The QA recipe enables the existing Rescue and Summit switches because the
 unchanged altitude challenge requires Summit as a helicopter destination.
 
-## Verification
+## Round 1 verification
 
 The memory-only browser scenario passed all four complete lesson flows on
 private port 34006: 61 captures, zero warnings and zero errors. It uses real
@@ -110,6 +173,14 @@ Cockpit task `pers-the-duel:T-061` now names this board card; the protected
 board sync sets its status. The session status snapshot is included.
 
 ## Removed
+
+Round 2 removes the distant camera helper and the floating corner-list layout.
+Readable teaching cords/bobs replace the tiny bob drawing path; the shared
+runtime machine assets stay available to the original benches with Lab 2 off.
+Reviewed round-1 raw captures and the stopped QA profile were recycled.
+Round-2 QA scratch, gate/build logs and generated production output were
+recycled after their results were recorded. The final 65 full-size captures
+and both passing browser receipts remain only for Claude's pending look review.
 
 The old Lab 2 panel route for these four lessons is replaced by automatic
 packet discovery. The old panels remain only with Lab 2 off until go-live.

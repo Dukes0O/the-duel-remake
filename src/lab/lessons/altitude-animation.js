@@ -1,6 +1,6 @@
 import {altitudeBench, SITES} from '../benches/altitude.js';
 import {GRAVITY} from '../benches/lift-pad.js';
-import {camera, object, ball, target, mountMachine, picture, line, dot, caption} from './flying-display.js';
+import {object, ball, target, mountMachine, picture, line, dot, caption} from './flying-display.js';
 import {withHelicopter} from './flying-helicopter.js';
 
 export const siteIds = Object.keys(SITES);
@@ -20,9 +20,12 @@ export function altitudeDrawing(input, time, mode = 'try') {
   for (const f of forces) objects.push({...object(`shaft-${f.kind}`, [0, f.origin[1] + f.direction[1] * f.newtons * scale / 2, 0], [.13, Math.max(.001, f.newtons * scale - .12), .13], f.kind === 'lift' ? '#56d683' : '#f06464'), inFront: true});
   // A transparent jar is a teaching outline; its particles count the same
   // air share used by the flight rules, rather than implying empty space.
-  objects.push({...object('air-jar', [-2.2, 1.7, 0], [.9, 1.5, .9], '#71c9ff'), opacity: .14});
-  for (let i = 0; i < Math.round(36 * r.gameShare); i++) objects.push(ball(`air-${i}`, [-2.2 + Math.sin(i * 13 + time) * .32, 1.1 + (i * .173 + time * .1) % 1.2, Math.cos(i * 7) * .32], .065, '#c4eddf'));
-  return {input: p, reading: r, rise, time, mode, objects, forces, metresPerNewton: scale, camera: camera(2), hideLabels: true,
+  objects.push({...object('air-jar', [-1.8, 1.5, 0], [.9, 1.5, .9], '#71c9ff'), opacity: .12});
+  for (let i = 0; i < Math.round(36 * r.gameShare); i++) objects.push(ball(`air-${i}`, [-2.1 + i % 4 * .2, 1 + Math.floor(i / 12) * .45 + Math.sin(time + i) * .025, -.25 + Math.floor(i / 4) % 3 * .25], .13, '#c4eddf'));
+  return {input: p, reading: r, rise, time, mode, objects, forces, metresPerNewton: scale,
+    camera: {position: [1.8, 1.3, 4.1], target: [-.6, 1.1, 0]}, hideLabels: true,
+    platePosition: [0, .65 + rise, .65],
+    labelPositions: [[-1.8, 2.5, 0], [.6, origin[1] + r.liftKg * .0003, 0], [.6, origin[1] - p.loadKg * .0003, 0]],
     labels: [`${SITES[r.site].name} · ${r.altitudeM.toLocaleString('en')} m`, `Can lift ${Math.round(r.liftKg).toLocaleString('en')} kg`, `Load ${p.loadKg.toLocaleString('en')} kg`],
     streams: [{medium: 'air', origin: [0, 1.8 + rise, 0], direction: [0, -1, 0], speed: 3 * r.gameShare, length: 1.5, radius: .8}]};
 }

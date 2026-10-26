@@ -39,6 +39,7 @@ export const definition = {
 const animations = {};
 for (const mode of ['wonder', 'heat', 'fuel', 'oxygen', 'fire-triangle', 'retardant', 'gas', 'wood', 'lid']) animations[mode] = ({time}) => fireDrawing({}, time, mode === 'fire-triangle' ? 'triangle' : mode);
 animations.try = ({time, input}) => fireDrawing(trialFire(input), time);
+animations.undefined = () => fireDrawing({}, .5, 'triangle');
 const pictures = {};
 for (const q of [...definition.tries.map(t => t.prediction), ...definition.checks]) for (const a of q.answers) a.animation = `answer-${a.id}`;
 for (const [id] of sides) { pictures[id] = trianglePicture(id); animations[`answer-${id}`] = ({time}) => id === 'air' ? fireDrawing({}, time, 'lid') : fireDrawing({putOut: id === 'heat' ? 'water' : 'cleared strip'}, time); }

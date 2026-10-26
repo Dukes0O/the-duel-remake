@@ -3,7 +3,10 @@
 Sheet: [lab-lessons-flying-1.jpg](lab-lessons-flying-1.jpg).
 Recipe: `tools/lab-flying-sheet.py`.
 
-Claude's verdict is pending. This is the first of at most three look rounds.
+Claude's verdict (relayed by Kyle): logic, words, predictions, hints, numbers
+and unchanged assertions approved. Pictures need round 2: close experiments,
+large moving parts, anchored labels, an explicit scale and a clear challenge
+card over a fully loaded world. This is the first of at most three look rounds.
 No frame timing was run.
 
 Four columns show Projectile motion, Fire triangle, Pendulums and Air and

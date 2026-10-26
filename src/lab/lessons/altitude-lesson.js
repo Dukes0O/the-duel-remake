@@ -29,6 +29,7 @@ const animations = {wonder: ({time}) => altitudeDrawing({siteIndex: time < 2 ? 0
   'thin-air': ({time}) => altitudeDrawing({siteIndex: 2}, time), 'air-density': ({time}) => altitudeDrawing({siteIndex: Math.min(2, Math.floor(time))}, time),
   try: ({time, input, index}) => altitudeDrawing(altitudeInput(input, index), time)};
 const pictures = {};
+animations.undefined = () => altitudeDrawing({siteIndex: 2}, 2, 'summit');
 for (const [id, siteIndex] of [['sea', 0], ['ridge', 1], ['summit', 2]]) {
   pictures[id] = altitudePicture(siteIndex, 3200); animations[id] = ({time}) => altitudeDrawing({siteIndex, loadKg: 3200}, time);
 }

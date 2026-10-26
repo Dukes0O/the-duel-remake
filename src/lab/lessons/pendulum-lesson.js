@@ -29,6 +29,7 @@ export const definition = {
 const animations = {};
 for (const mode of ['wonder', 'pendulum', 'swing-time', 'length', 'all', 'heavy', 'cable']) animations[mode] = ({time}) => pendulumDrawing({weightKg: mode === 'heavy' ? 200 : 20}, time, mode === 'length' ? 'all' : mode);
 animations.try = ({time, input}) => pendulumDrawing(trialPendulum(input), time);
+animations.undefined = () => pendulumDrawing({}, 2, 'all');
 const pictures = {};
 for (const [id, lengthM, weightKg] of [['short', 5, 20], ['long', 25, 20], ['heavy-short', 5, 200], ['heavy-medium', 15, 200], ['faster', 5, 20], ['slower', 25, 20], ['same', 15, 20]]) {
   pictures[id] = swingPicture(lengthM, weightKg); animations[id] = ({time}) => pendulumDrawing({lengthM, weightKg}, time);

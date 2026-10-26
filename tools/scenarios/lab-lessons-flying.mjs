@@ -37,6 +37,7 @@ export async function run(c) {
     await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', button: 'left', clickCount: 1, ...point});
     await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 1100, y: 125});
   }
+  let scaleIntroductions = 0;
   for (const p of [projectile, fire, pendulum, altitude]) {
     if (onlyLessons.length && !onlyLessons.includes(p.definition.id)) continue;
     const id = p.definition.id;
@@ -49,16 +50,21 @@ export async function run(c) {
     await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the ${p.definition.id === 'projectile' ? 'Projectile' : id === 'fire' ? 'Fire' : id === 'pendulum' ? 'Pendulum' : 'Air'}')`, `${id} machine`);
     await key('KeyE', 'keyDown'); await key('KeyE', 'keyUp');
     await c.waitFor(`${text}?.includes('Wonder')`, `${id} wonder`);
-    await new Promise(r => setTimeout(r, 3000)); await c.screenshot(`${id}-wonder`); await click('next');
+    await new Promise(r => setTimeout(r, 3000));
+    if (await c.evaluate(`${text}?.includes('This is a model, one tenth the size.')`)) scaleIntroductions++;
+    await c.screenshot(`${id}-wonder`); await click('next');
     for (const w of p.definition.words) {
       await c.waitFor(`document.querySelector('.lab-teaching h4')?.textContent === ${JSON.stringify(w.word)}`, w.word);
       await new Promise(r => setTimeout(r, 1200)); await c.screenshot(`${id}-word-${w.animation}`); await click('next');
     }
     for (let n = 0; n < p.definition.worked.length; n++) {
-      await ready(); await c.screenshot(`${id}-watch-${n}`); await click('next');
+      // Show the actual experiment in motion, then still require the full
+      // worked example to finish before proceeding.
+      await new Promise(r => setTimeout(r, id === 'fire' ? 600 : id === 'pendulum' ? 2500 : id === 'projectile' ? 3600 : 1200));
+      await c.screenshot(`${id}-watch-${n}`); await ready(); await click('next');
     }
     await c.screenshot(`${id}-prediction`);
-    if (!(await c.evaluate(`document.querySelector('.lab-lift-overlay')?.hidden === true`))) throw Error('Prediction captions are visible.');
+    if (!(await c.evaluate(`[...document.querySelectorAll('.lab-lift-overlay .lab-lift-force')].every(el => el.hidden)`))) throw Error('Prediction captions are visible.');
     for (let i = 0; i < 3; i++) {
       if (id === 'projectile') {
         // Turn the actual flag on the sand once. The initial 24 m flag is
@@ -70,6 +76,7 @@ export async function run(c) {
         }
         if (i === 1) await click('control:speedMs');
         if (i === 2) await click('control:heightM');
+        await click('answer:hit'); // Fold the prediction cards before touching the low flag handle.
         await c.waitFor(`JSON.parse(${canvas}.dataset.labFlyingDrawing).input.${i === 1 ? 'speedMs' : 'heightM'} === ${i === 1 ? 11 : i === 2 ? 35 : 30}`, 'rendered drop setting');
         await c.waitFor(`JSON.parse(${canvas}.dataset.labLessonControls ?? '[]').some(p => p.id === 'flagM')`, 'rendered flag handle');
         const state = await c.evaluate(`JSON.parse(${canvas}.dataset.labFlyingDrawing)`);
@@ -79,7 +86,6 @@ export async function run(c) {
         await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', button: 'left', buttons: 1, x: flag.x, y: flag.y - delta});
         await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', button: 'left', clickCount: 1, x: flag.x, y: flag.y - delta});
         await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 1100, y: 125});
-        await click('answer:hit');
       } else if (id === 'fire') {
         await click(`answer:${['heat', 'air', 'fuel'][i]}`);
         if (i === 0) await touch('water'); else await click(`control:${['water', 'sand', 'rake'][i]}`);
@@ -105,9 +111,20 @@ export async function run(c) {
       await click('next');
     }
     if (!(await c.evaluate(`!window.__qaApp.profile.lab.done['${id}'] && ${JSON.stringify(p.definition.words.map(w => w.id))}.every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
+    await c.screenshot(`${id}-key-idea`);
     await click('challenge');
     await c.waitFor(`window.__qaApp.heliSession?.view().challenge?.id === '${id}' && !document.querySelector('.lab-key-idea').hidden`, 'existing flying challenge', 60_000);
+    await c.waitFor(`window.__qaApp.visualReady && document.querySelector('#renderer-loading')?.hidden && document.querySelector('#view3d canvas')?.style.visibility !== 'hidden'`, 'presented challenge world', 120_000);
+    await new Promise(r => setTimeout(r, 1200));
+    if (!(await c.evaluate(`(() => {
+      const card = document.querySelector('.lab-key-idea').getBoundingClientRect();
+      return [...document.querySelectorAll('button,input,select,a[href]')].every(el => {
+        const r = el.getBoundingClientRect();
+        return !r.width || !r.height || r.right <= card.left || r.left >= card.right || r.bottom <= card.top || r.top >= card.bottom;
+      });
+    })()`))) throw Error('The key-idea card overlaps an interactive control.');
     await c.screenshot(`${id}-challenge`);
     await c.evaluate(`window.__qaApp.returnToMenu()`);
   }
+  if (scaleIntroductions !== 1) throw Error('Brian must explain the model scale exactly once.');
 }

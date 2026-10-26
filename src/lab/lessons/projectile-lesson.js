@@ -31,6 +31,7 @@ export const definition = {
 };
 const animations = Object.fromEntries(['wonder', 'gravity', 'forward-speed', 'arc', 'pair', 'water'].map(mode => [mode, ({time}) => projectileDrawing({heightM: mode === 'gravity' ? 60 : 30, speedMs: mode === 'wonder' ? 20 : 10, flagM: mode === 'wonder' ? wonderLanding / 2 : TARGET.distanceM}, time, mode)]));
 animations.try = ({time, input}) => projectileDrawing(input, time);
+animations.undefined = () => projectileDrawing({}, 2, 'pair'); // Keep the experiment on its final key card.
 const pictures = {short: landingPicture(landing - 10, landing), hit: landingPicture(landing, landing), past: landingPicture(landing + 10, landing)};
 for (const [id] of release) { pictures[id] = dropPicture(id); animations[id] = ({time}) => projectileDrawing({flagM: id === 'before' ? landing : id === 'over' ? 0 : -10}, time); }
 for (const [id, flagM] of [['short', landing + 10], ['hit', landing], ['past', landing - 10]]) animations[id] = ({time}) => projectileDrawing({flagM}, time);
