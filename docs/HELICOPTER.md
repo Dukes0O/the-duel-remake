@@ -492,3 +492,134 @@ a packet here when its turn comes; Kyle's storyboard holds the decisions.
 H2 Fire's packet is `docs/HELI_FIRE.md`; H3 Wildlife and skins' is `docs/HELI_WILDLIFE.md`; H4 Rescue's is
 `docs/HELI_RESCUE.md`; H5 Heli-skiing's is `docs/HELI_SKIING.md`; the pilot's map is
 `docs/PILOT_MAP.md`; the Lab is `docs/LAB.md`.
+
+## 13. Every landing has a reason (Kyle and Claude, 26 October 2026)
+
+Kyle flew to Tremblant Snow with no job and found nothing to do there. The
+H1 loop assumed every flight was a job taken at home. Three pieces close the
+gap (Kyle: "go with all three").
+
+### 13.1 The arrival panel (HELI-LANDED)
+
+Landed and settled at a place, with nothing under way, the side panel says
+where you are, what is here, and offers **Race here** and **Shut down**.
+Every later piece below adds its line to this panel, so the panel is the one
+place a player looks on arrival.
+
+### 13.2 Return loads (HELI-RETURN-LOADS)
+
+Every landing zone away from home gets a small board by the pad: one crate
+job leaving from that place each play day, so no flight ends empty.
+
+- **What:** a crate, never a car (crates need no owner and use the lesson 4
+  crate and its hook rules). Weight 300 to 600 kg, seeded from the play day
+  and the place.
+- **Where to:** home, or one place onward on the map, whichever the seed
+  picks. The job names both ends.
+- **Pay:** 60% of the car job on the same leg (Tremblant Snow to home 180,
+  Panorama Ridge to Tremblant Snow 270, Panorama Ridge to home 360; new
+  places from the pilot's map at 60% of their legs). Real mode adds 25%, as
+  car jobs do.
+- **Each place's crate says who sent it**, one line, so places feel lived
+  in: the lodge at Tremblant Snow sends empty gas bottles home; the ranger
+  post at Panorama Ridge sends sample boxes; the hut on Summit Run sends
+  laundry; Ana's field station at Pacific Canyon sends sample crates for the
+  lab in town.
+- **One a day per place.** When it is done the board says "Nothing more
+  today. The board fills again tomorrow."
+- **Fuel:** unchanged. The pump stays at home; the fuel truck serves the
+  other pads (section 6). A return load always pays more than its leg's fuel.
+- Save: one done-flag per place per play day in `heli`, added with
+  `normalizeHeli` keeping unknown keys (section 6's save rule).
+
+### 13.3 Each place's own work, switched on as it finishes
+
+The work below is built and waits on its finishing pass (rule 18: Claude
+decides go-live). Each one, when switched on, adds its line to the arrival
+panel at its place.
+
+| Place | Its own work | Switch | Waits on |
+| --- | --- | --- | --- |
+| Tremblant Woods (home) | Pump, job board, lessons, the Lab | on | |
+| Tremblant Snow | Ski drops and the lodge's group job | `heli-skiing` | SKI-FINISH, frame check |
+| Summit Run | Avalanche rescues; lodge supply runs | `rescue` | RESCUE-FINISH, frame check over the avalanche |
+| Pacific Canyon, the Table | The pilot's map, secret signs, the Table | `pilot-map` | MAP-FINISH |
+| Panorama Ridge | Counting animals from the air | `wildlife` | WILD-ART-SRC, WILD-VIEW, WILD-FINISH |
+| Anywhere | Forest fires, by radio | on | |
+
+Order of switching on: rescue and heli-skiing first (their passes are
+running), then the map, then wildlife when its art is done. Frame checks run
+on an evening with the screens on.
+
+### 13.4 The thread: Kestrel One's logbook
+
+Section 14 is the story draft, for Kyle and Gratian to react to before any
+card is cut. Nothing in it is built yet.
+
+## 14. Kestrel One's logbook (story draft for Kyle and Gratian, 26 October 2026)
+
+**Status: a draft to react to. Change anything.**
+
+### The idea in one breath
+
+Kestrel One is not the first helicopter with that name. The call sign has
+been handed from pilot to pilot at the Tremblant Woods pad since 1964, and
+every pilot kept a logbook. The old ones sit on a shelf in the pad hut. Each
+time you move up a rank, Roger gives you one of the old logbooks, and its
+pages point you at something real out in the world. The last one leads to
+the edge of the drop-off off Pacific Canyon, and to the submarine.
+
+### The people
+
+- **Brian**, the instructor (and the Lab). Calm. Teaches.
+- **Roger**, at the lodge, runs the job board and the radio. Has known
+  every Kestrel One pilot since he was a boy.
+- **Gus Lindqvist**, the first Kestrel One pilot (1964 to 1981). Only in his
+  logbooks. Funny, careful, curious. He flew a little Bell 47 with a bubble
+  canopy.
+- **Ana Reyes** (from The Deep), whose grandmother Rosa was going to drive
+  the Sirena.
+
+### The ranks
+
+| Rank | How you earn it | Roger gives you | Gus's page points at |
+| --- | --- | --- | --- |
+| Student pilot | Pass lessons 1 to 4 | Your own logbook | (none yet) |
+| Line pilot | 5 jobs of any kind | Gus's logbook 1, 1964 | The flat-topped mesa he saw from the coast route: the Table |
+| Valley pilot | One job of each kind: a car, a crate, a fire | Gus's logbook 2, 1966 | The night of the storm: he flew spare parts down the coast for the Falcone team, and saw the *Marguerite*'s lights go out of sight near the cove |
+| Mountain pilot | A rescue and a ski drop | Gus's logbook 3, 1972 | Big footprints above the tree line at Summit, and a sketch (the yeti) |
+| Chief pilot | 50 flights and every place visited | Gus's last logbook, 1981 | Where the *Marguerite* went down, past the drop-off, too deep to drive |
+
+Each rank also changes one small thing you can see: your rank on the
+dispatch board, a stripe on your flight suit, and Roger calling you by your
+rank on the radio.
+
+### The ending
+
+At Chief pilot, Ana calls. With Gus's last page she knows where the
+*Marguerite* lies, deeper than any car can go. The field station has a small
+submarine but no way to get it out past the drop-off. Kestrel One can carry
+it on the cable, the way you carry a car. You fly it out, lower it into the
+water on the mark, and dive the wreck where the Sirena's crate came from.
+(That last dive is a later piece of The Deep. The logbook makes it the
+reward for becoming Chief pilot.)
+
+### True things it can teach
+
+- A helicopter's logbook is real: every flight is written down, with the
+  time in the air. Pilots count their hours.
+- The Bell 47 was a real helicopter from the 1940s to the 1970s; it is the
+  one in the TV show M\*A\*S\*H.
+- Ships' last positions are written in their logbooks too, which is how
+  people find wrecks.
+
+### Questions for Kyle and Gratian
+
+1. Do you like Gus? Would you rather the first pilot was someone else (a
+   woman pilot, Rosa's brother, Roger's dad)?
+2. Five ranks: too many, too few?
+3. Should the rank show on the helicopter too (a stripe on the tail), or only
+   on the board and the suit?
+4. Is the submarine the right ending, or should Chief pilot unlock something
+   else (a bigger helicopter, a new place)?
+5. Anything Gus should have seen that we have not thought of?
