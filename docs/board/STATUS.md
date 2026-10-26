@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-26T00:36:41.736Z
+Observed at: 2026-10-26T00:43:34.332Z
 
-Observation commit: 499a742ceca2c5c6e910debff43b5945c1101417
+Observation commit: 910cb117b48386fb370e48c6aa4afe43b2fbea4d
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 499a742ceca2c5c6e910debff43b5945c1101417
+Integration HEAD: 910cb117b48386fb370e48c6aa4afe43b2fbea4d
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -56,7 +56,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 23,720,193 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 73,558 B | +0 B | 5,000,000 B |
 | All `public/` | 335,681,495 B | +0 B | unavailable |
-| Git objects | 751,826,944 B | +0 B | unavailable |
+| Git objects | 751,901,696 B | +74,752 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
