@@ -85,3 +85,7 @@ Recycled the generated production build after recording its result. No scratch
 files, captures or regenerated old fixtures remain.
 Recycled 43 generated manifest-await test files after their suite completed.
 Recycled the five generated Vesper test output folders after the lane completed.
+
+## Claude review (25 October 2026)
+
+Approved: the Jesko brake claims narrow to petrol cars (the fan car keeps every other comparison); roster pins add the Speirling with every earlier value unchanged; the tuning switch-off case sets the switch off itself; the Speirling gets its own voice.
