@@ -508,3 +508,13 @@ and the later frame/release decision. No merge out of this lane or push.
 Raw successful/failed browser packets, gate/build logs and generated QA and
 production output from this session were recycled once these findings and
 the compact sheet were recorded. No player data or unrelated work removed.
+
+## Claude review (26 October 2026)
+
+Approved and merged (heli-skiing stays dev). The only changed assertion is
+the slalom's medal rule, replaced by the measured per-difficulty targets the
+card asked for; the giant slalom rule, layout clean-pass checks and medal unit
+checks are kept. Casual steady keyboard run: 2 misses, bronze; practised:
+0 misses, silver. Pro bronze from practice +10% is accepted (no steady Pro
+target exists by design). Left before switch-on: Claude's look and the frame
+check with the screens on.
