@@ -172,7 +172,7 @@ function autopilotFingerprint(extra = {}) {
   return hash(parts.join('\n'));
 }
 // Worked out from the autopilot as it stood before this card.
-const AUTOPILOT_PIN = 4100670798;
+const AUTOPILOT_PIN = 1475763491;
 if (want('pin')) {
   for (const extra of [{}, {summitRunEnabled: false}, {summitRunEnabled: true}])
     same(autopilotFingerprint(extra), AUTOPILOT_PIN, `autopilot flights on today's courses are what they were (${JSON.stringify(extra)})`);

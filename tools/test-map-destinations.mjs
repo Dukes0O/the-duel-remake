@@ -148,7 +148,8 @@ const placeIds = PLACES.filter(place => !place.air).map(place => place.courses[0
     for (let k = 0; k < course.samples.length; k += 37) list.push(ground.height(course.samples[k].x + 3, course.samples[k].z - 2));
     out[id] = list;
   }
-  same(fnv(JSON.stringify(out)), 4158709750, 'the ground of the six authored circuits: 10,614 heights, taken before the ground fix, unchanged');
+  // SUMMIT-GROUND-GAPS (26 October 2026): only Summit changed, 3 of its heights by at most 0.17 m under the filled hillside; the other five are identical.
+  same(fnv(JSON.stringify(out)), 2149277213, 'the ground of the six authored circuits: 10,614 heights, unchanged since the Summit ground fix');
 }
 
 // ---- Legs and refusals ------------------------------------------------------------------------------------

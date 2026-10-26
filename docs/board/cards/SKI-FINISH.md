@@ -71,3 +71,15 @@ misses the finish. Then set the medals from the runs (bronze about 10% over a
 steady run with at most 3 misses). If the steady run still misses more than 3
 gates, report it and stop: the slalom may need a different control rather
 than more tuning.
+
+**Claude, 26 October 2026, after the second slalom change (steady 9 misses,
+practised 2):** the stop rule applies, so the slalom gets a different control
+rather than more tuning. **Casual line assist:** on Casual only, while a gate
+is ahead, the skier's heading eases toward the gap between the next pair of
+poles (at most a third of full carve, fading out when the player steers
+against it, off in the air and in a tumble). The player still carves and still
+chooses speed. Pro has no assist, as with the cars. Then measure steady and
+practised runs on Casual (target: steady misses at most 3) and practised on
+Pro, and set the medals per difficulty from those runs (bronze about 10% over
+the steady clean run, gold just under the practised run). Keep the second
+layout and the glowing poles.

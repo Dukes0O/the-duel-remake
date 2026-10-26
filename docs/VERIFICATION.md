@@ -1380,3 +1380,17 @@ LESSONS-ICE-GATE, driving lesson 1 failure wording. Full tier on release
 commit `591d9245`: 516 passed, 0 failed, 0 not run (1,475 s). No frame check:
 race scenes are unchanged since the 25 October passes (rule 19); lesson 4
 adds one ring to a lesson view, far below the busiest race view.
+
+## Release, 26 October 2026 afternoon (Claude, Release Manager)
+
+HELI-LANDED, HELI-RETURN-LOADS, GP-CAREER-LIVE (`grand-prix-career` on),
+GHOST-SAVE-MESSAGE, SUMMIT-TUNNEL-WALL, SUMMIT-GROUND-GAPS. Also merged
+behind dev switches: LAB-WALK, lesson 1 Beaver fix, map, ski and rescue
+finishing passes. Full tier on de0555b0: 518 passed, 2 failed
+(`test-terrain`, `test-map-destinations` expected the pre-fix Summit ground);
+both updated with a reviewed note (only Summit changed, 3 heights by at most
+0.17 m) on 301e61c0, where they and the lane tier for those changes (9/9)
+pass; no game code changed after the full tier (rule 19). Frame check,
+Summit, eight cars, headed, alone, GPU idle: p95 16.8 ms High and
+Performance; world build 1,051 / 1,013 ms, over the 1 s limit, shipped as a
+warning by Director decision (SUMMIT-BUILD-TIME-2).
