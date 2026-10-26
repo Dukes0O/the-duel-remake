@@ -310,3 +310,52 @@ No image regeneration is needed before the explicit metric blockout. Preserve
 painted steel, exposed metal, leather and cloth contrast after texture reduction.
 Runtime resemblance, animation, HUD clearance and frame cost remain unmeasured;
 these references do not count as completed Blender fidelity rounds.
+
+## public/assets/heli/skins/rank-student.png
+
+Date: 2026-10-26
+Tool: Blender 4.5.13 LTS, NumPy; original deterministic recipe `tools/blender/heli-logbook-paints.py`, seed 1964. No image generator or external art.
+Use: Runtime colour map on the existing Kestrel One Blender model's `paint_white`, `paint_navy`, and `paint_red` surfaces. `src/heli/heli-rank-paint.js` projects the side livery by glTF metres: u=(z+6.8)/9.5, v=y/3. Glass, rotors, metal and cockpit retain their existing materials. This is a texture, never a prerendered vehicle picture.
+Contract: 1024 x 1024 opaque RGB PNG, at most 1,500,000 bytes. Round 1 candidate; Claude's review pending. Original output was generated outside the repository in `%TEMP%/duel-heli-logbook-originals-2026-10-26/` and recycled after the round 1 observations were recorded; only the runtime copy is checked in. The deterministic recipe regenerates it.
+Prompt (full procedural art brief):
+> Create an original, practical light-helicopter livery for the existing Kestrel One airframe, using its exact Blender-recipe proportions. Flight-school warm white with high-visibility orange lower panels, a slim waist stripe and three diagonal orange training bands wrapping the tail. Restrained seeded paint grain, fine vertical rain streaks, panel-seam dirt, small rubbed aluminium flecks; maintained working aircraft rather than a toy. Keep glass, mechanical metal, skids, dark rotor and safety tips as they are. Paint changes no geometry. No brands, logos, readable text, franchise likeness, costumes, symbols, gore or external source art. Paint in metres so both doors and the boom agree. Generate one opaque 1024-square PNG colour map. Near and distance views of High and Performance in the native game renderer are the round 1 review; no art acceptance is claimed.
+
+## public/assets/heli/skins/rank-private.png
+
+Date: 2026-10-26
+Tool: Blender 4.5.13 LTS, NumPy; original deterministic recipe `tools/blender/heli-logbook-paints.py`, seed 1964. No image generator or external art.
+Use: Runtime colour map on the existing Kestrel One Blender model's `paint_white`, `paint_navy`, and `paint_red` surfaces. `src/heli/heli-rank-paint.js` projects the side livery by glTF metres: u=(z+6.8)/9.5, v=y/3. Glass, rotors, metal and cockpit retain their existing materials. This is a texture, never a prerendered vehicle picture.
+Contract: 1024 x 1024 opaque RGB PNG, at most 1,500,000 bytes. Round 1 candidate; Claude's review pending. Original output was generated outside the repository in `%TEMP%/duel-heli-logbook-originals-2026-10-26/` and recycled after the round 1 observations were recorded; only the runtime copy is checked in. The deterministic recipe regenerates it.
+Prompt (full procedural art brief):
+> Create an original, practical light-helicopter livery for the existing Kestrel One airframe, using its exact Blender-recipe proportions. Gloss midnight-blue private-owner paint, silver waist cheat line, subtle clear coat and fine restrained surface wear. Restrained seeded paint grain, fine vertical rain streaks, panel-seam dirt, small rubbed aluminium flecks; maintained working aircraft rather than a toy. Keep glass, mechanical metal, skids, dark rotor and safety tips as they are. Paint changes no geometry. No brands, logos, readable text, franchise likeness, costumes, symbols, gore or external source art. Paint in metres so both doors and the boom agree. Generate one opaque 1024-square PNG colour map. Near and distance views of High and Performance in the native game renderer are the round 1 review; no art acceptance is claimed.
+
+## public/assets/heli/skins/rank-commercial.png
+
+Date: 2026-10-26
+Tool: Blender 4.5.13 LTS, NumPy; original deterministic recipe `tools/blender/heli-logbook-paints.py`, seed 1964. No image generator or external art.
+Use: Runtime colour map on the existing Kestrel One Blender model's `paint_white`, `paint_navy`, and `paint_red` surfaces. `src/heli/heli-rank-paint.js` projects the side livery by glTF metres: u=(z+6.8)/9.5, v=y/3. Glass, rotors, metal and cockpit retain their existing materials. This is a texture, never a prerendered vehicle picture.
+Contract: 1024 x 1024 opaque RGB PNG, at most 1,500,000 bytes. Round 1 candidate; Claude's review pending. Original output was generated outside the repository in `%TEMP%/duel-heli-logbook-originals-2026-10-26/` and recycled after the round 1 observations were recorded; only the runtime copy is checked in. The deterministic recipe regenerates it.
+Prompt (full procedural art brief):
+> Create an original, practical light-helicopter livery for the existing Kestrel One airframe, using its exact Blender-recipe proportions. The lodge air service: forest-green upper fuselage and tail, cream lower panels and cheat line. An original small cream kestrel silhouette on each door, perched with folded wing, hooked beak, long tail and two feet; no letters. Restrained seeded paint grain, fine vertical rain streaks, panel-seam dirt, small rubbed aluminium flecks; maintained working aircraft rather than a toy. Keep glass, mechanical metal, skids, dark rotor and safety tips as they are. Paint changes no geometry. No brands, logos, readable text, franchise likeness, costumes, symbols, gore or external source art. Paint in metres so both doors and the boom agree. Generate one opaque 1024-square PNG colour map. Near and distance views of High and Performance in the native game renderer are the round 1 review; no art acceptance is claimed.
+
+## public/assets/heli/skins/rank-mountain.png
+
+Date: 2026-10-26
+Tool: Blender 4.5.13 LTS, NumPy; original deterministic recipe `tools/blender/heli-logbook-paints.py`, seed 1964. No image generator or external art.
+Use: Runtime colour map on the existing Kestrel One Blender model's `paint_white`, `paint_navy`, and `paint_red` surfaces. `src/heli/heli-rank-paint.js` projects the side livery by glTF metres: u=(z+6.8)/9.5, v=y/3. Glass, rotors, metal and cockpit retain their existing materials. This is a texture, never a prerendered vehicle picture.
+Contract: 1024 x 1024 opaque RGB PNG, at most 1,500,000 bytes. Round 1 candidate; Claude's review pending. Original output was generated outside the repository in `%TEMP%/duel-heli-logbook-originals-2026-10-26/` and recycled after the round 1 observations were recorded; only the runtime copy is checked in. The deterministic recipe regenerates it.
+Prompt (full procedural art brief):
+> Create an original, practical light-helicopter livery for the existing Kestrel One airframe, using its exact Blender-recipe proportions. Mountain rescue: high-visibility signal-red upper surfaces and white lower panels; pale silver-white reflective waist and tail bands. No cross, lettering or service emblem. Restrained seeded paint grain, fine vertical rain streaks, panel-seam dirt, small rubbed aluminium flecks; maintained working aircraft rather than a toy. Keep glass, mechanical metal, skids, dark rotor and safety tips as they are. Paint changes no geometry. No brands, logos, readable text, franchise likeness, costumes, symbols, gore or external source art. Paint in metres so both doors and the boom agree. Generate one opaque 1024-square PNG colour map. Near and distance views of High and Performance in the native game renderer are the round 1 review; no art acceptance is claimed.
+
+## public/assets/heli/skins/rank-chief.png
+
+Date: 2026-10-26
+Tool: Blender 4.5.13 LTS, NumPy; original deterministic recipe `tools/blender/heli-logbook-paints.py`, seed 1964. No image generator or external art.
+Use: Runtime colour map on the existing Kestrel One Blender model's `paint_white`, `paint_navy`, and `paint_red` surfaces. `src/heli/heli-rank-paint.js` projects the side livery by glTF metres: u=(z+6.8)/9.5, v=y/3. Glass, rotors, metal and cockpit retain their existing materials. This is a texture, never a prerendered vehicle picture.
+Contract: 1024 x 1024 opaque RGB PNG, at most 1,500,000 bytes. Round 1 candidate; Claude's review pending. Original output was generated outside the repository in `%TEMP%/duel-heli-logbook-originals-2026-10-26/` and recycled after the round 1 observations were recorded; only the runtime copy is checked in. The deterministic recipe regenerates it.
+Prompt (full procedural art brief):
+> Create an original, practical light-helicopter livery for the existing Kestrel One airframe, using its exact Blender-recipe proportions. Gus's restored 1964 colours: warm aged cream upper panels, signal-red lower panels and cheat line; an original hand-painted red-brown kestrel on each door with deliberately imperfect brush edges. Maintained restored finish, no text. Restrained seeded paint grain, fine vertical rain streaks, panel-seam dirt, small rubbed aluminium flecks; maintained working aircraft rather than a toy. Keep glass, mechanical metal, skids, dark rotor and safety tips as they are. Paint changes no geometry. No brands, logos, readable text, franchise likeness, costumes, symbols, gore or external source art. Paint in metres so both doors and the boom agree. Generate one opaque 1024-square PNG colour map. Near and distance views of High and Performance in the native game renderer are the round 1 review; no art acceptance is claimed.
+
+## HELI-LOGBOOK rank paint credits
+
+`rank-student.png`, `rank-private.png`, `rank-commercial.png`, `rank-mountain.png`, and `rank-chief.png`: original procedural paint textures for The Duel, 26 October 2026. Blender 4.5.13 LTS and NumPy, recipe `tools/blender/heli-logbook-paints.py`. No external source art or licensed marks. Original kestrel silhouettes are polygon coordinates in the recipe; the airframe is Claude's original Kestrel One. Round 1 candidates; Claude's paint review is pending. Credits are recorded here because the game does not load a separate credits document from the texture folder.

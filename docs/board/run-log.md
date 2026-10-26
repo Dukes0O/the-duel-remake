@@ -1,5 +1,7 @@
 # Wasteland run log
 
+26 October, HELI-LOGBOOK lane janitor: recycled 694,946,198 bytes of own QA/build output plus consumed art captures/originals; kept the 493,500-byte round 1 sheet and handoff logs. Five runtime maps add 5,087,598 bytes and are proven dynamic loads; existing audit candidates retained. No merge back or push.
+
 25 October, DEEP-EXPLORER round 2: merged incoming 6a35e8f6 only; moving-creature logging/ring and smooth wider chart built, lane 220 covered, build and three Deep scenarios pass, independent review clear. Frames skipped for foreign full tier. Recycled own generated output and raw captures; sheets and check receipts kept. No merge back or push.
 
 25 October, DEEP-EXPLORER janitor: recycled about 465 MB of own build, test fixtures and raw captures; kept the 225 KB chart sheet and handoff check proof. Audit found no unused new modules; runtime assets unchanged, existing uncertain candidates retained.

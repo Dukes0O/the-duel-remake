@@ -58,3 +58,15 @@ card with The Deep.
 
 Lane tier with four jobs and production build. Round 1 paint pictures only;
 Claude's verdict is pending before any further art round. No frame timing.
+
+## Round 1 handoff
+
+Counting, ranks, the shelf and Gus's pages are built. Independent save and
+code review is clear. Checks and all assertion changes are recorded in
+`docs/changes/HELI-LOGBOOK.md`.
+
+Claude: review `docs/board/looks/heli-logbook/round-1.jpg` and its round note
+before rounds 2 or 3. The door kestrels are obscured by the canopy boundary;
+wear and reflective bands need a verdict. The switch stays dev. Please also
+record the required written review of the assertion expansions listed in
+the change note before merge; no limits or tolerances were loosened.

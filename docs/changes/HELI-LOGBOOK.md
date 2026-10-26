@@ -76,6 +76,20 @@ launcher's requested flags. Added `heli-logbook` to `start-preview.bat`;
 the unchanged Preview suite then passed all 23 checks. No test assertion
 changed for this fix. No failed or partial gate is reported as green.
 
+Final code `cd396f5b`: `node tools/run-tests.mjs --tier lane --changed --jobs 4`
+passed **103/103**, zero failed or not run, in 1,086.44 s. `npm run build`
+passed in 2,480 ms (Vite 1.98 s). Both ran from PowerShell with System32
+first on PATH, with admission counts below three. The minute check found
+one heavy job. No frame timing ran.
+
+Replay fingerprints stayed pinned: 225 checks, 25 cases, three frame rates
+and three runs. Combat replay guards and the 47 complete-scene/world checks
+passed. No fingerprint or signature was re-recorded. Board checks: 191 pass.
+Cockpit sync: zero changes and no untracked cards reported.
+
+The final handoff commit adds the sheet, its composition recipe, provenance,
+card handoff and status only; the tested game code remains `cd396f5b`.
+
 ## Pictures
 
 [Round 1](../board/looks/heli-logbook/round-1.jpg) is 493,500 bytes. The
@@ -86,6 +100,9 @@ shelf shows all four Gus pages. No frame timing ran.
 Stop after round 1. The door kestrels are obscured by the canopy boundary;
 wear and reflective-band readability need Claude's verdict. These paints
 are candidates, not accepted art. See the round note for the full findings.
+The five current runtime maps total 5,087,598 bytes; the sheet adds 493,500.
+This growth provides five distinct paints on the existing airframe, without
+duplicate models or retained source binaries.
 
 ## Removed
 
@@ -93,3 +110,7 @@ No old game behavior or runtime art replaced; existing mission skins remain.
 Created raw pictures, diagnostic Blender renders, temporary originals and an
 unused runtime-folder credits file were recycled after review. Recipes,
 provenance and one compressed round sheet remain.
+The consumed lane QA/build folders were also recycled (694,946,198 bytes).
+Gate/build logs remain as unconsumed integration handoff evidence. The audit's
+five new texture candidates are confirmed dynamic loads in the paint helper
+and the native browser pictures; no existing candidate was removed.
