@@ -1385,3 +1385,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 LAB-BRIAN-FIX merged (Codex): Brian answers E, his face round 3, click/keyboard/map navigation, lab-2 ON (glide camera removed); Lab, save, switch and art suites and build pass. Goes out in the next release.
 - 2026-10-26 LAB-LESSONS-WORKSHOP merged (Codex, look round 2): four Workshop lessons rebuilt (lab-2 on); workshop and Lab suites and build pass.
 - 2026-10-26 LAB-LESSONS-FLYING merged (Codex, look round 2): four Flying lessons as one-tenth scale models (lab-2 on); conflicts with Workshop in lesson-ui.css and test-repo-hygiene resolved keeping both; suites and build pass.
+- 2026-10-26 GO-LIVE-EVENING merged: driving-lessons, heli-logbook, heli-skiing, rescue on; tyre-slip dev; HELI-VIEW-FRAMES opened. Release full tier next.

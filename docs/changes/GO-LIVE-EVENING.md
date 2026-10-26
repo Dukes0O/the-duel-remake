@@ -65,3 +65,7 @@ that only supported it. No runtime assets replaced. Recycled generated scratch,
 build and raw test evidence, including the prior full run's generated art proofs,
 after recording verdicts. No pictures or frame timing
 required. No real player saves accessed. Cockpit task T-062 maps this card.
+
+## Claude review (26 October 2026)
+
+Approved and merged: the four switch states, the explicit off-path fixtures, and lessons admitting on their own switch with tyre slip kept dev. No frame check for the ski and rescue views (no recipe yet; HELI-VIEW-FRAMES); races unaffected.
