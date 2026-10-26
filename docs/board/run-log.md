@@ -1377,3 +1377,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 SUMMIT-BUILD-TIME-2 merged: signatures exact; official timing with the finish area before release.
 - 2026-10-26 HELI-LOGBOOK merged (dev): ranks, Gus's shelf, five paints (accepted round 2); switch, helicopter, save, replay suites and build pass.
 - 2026-10-26 SUMMIT-FINISH-AREA merged (look accepted round 3); map ground pin reviewed (only Summit's car park); Summit, world, terrain, circuits, replay suites and build pass. Summit timing due before release.
+- 2026-10-26 LAB-LIFT-2 merged (Codex, art round 2 accepted): Lift and weight on the five-step frame in kg, collective cutaway, Brian's own figure (lab-2, dev); Lab and art suites and build pass. Waiting for Kyle and Gratian's preview.

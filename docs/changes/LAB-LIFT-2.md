@@ -199,3 +199,16 @@ temporary profile recycled using Windows PowerShell. No other process or
 player data was touched. Final step captures remain for the requested review.
 Recycled this run's `.qa-dist` and `dist` after the gates. Moving the pad
 module removed its old lesson-folder copy; there is one calculation module.
+
+## Claude review (26 October 2026)
+
+Round 1 sent back (newtons on screen, clutter, a small helicopter, a
+mannequin Brian). Round 2 accepted: kilograms throughout with one load gauge,
+Kestrel One filling the frame with thick arrows on her centre line, a
+visible downwash cone, the cockpit cutaway for the collective, clean
+prediction cards, and Brian with a face, stubble, safety glasses and an
+apron. Brian's eyes read slightly red; left for Kyle's preview rather than
+spending the last round. The word-order change (Weight before Lift, because
+the kg comparison names weight) is right; nothing is loosened. Lab, Blender
+output and hygiene suites, `test-lab-lift-2` and the build pass on the
+merged result. Next: Kyle and Gratian try it; LAB-LESSONS-2 waits for them.
