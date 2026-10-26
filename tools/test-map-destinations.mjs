@@ -149,7 +149,8 @@ const placeIds = PLACES.filter(place => !place.air).map(place => place.courses[0
     out[id] = list;
   }
   // SUMMIT-GROUND-GAPS (26 October 2026): only Summit changed, 3 of its heights by at most 0.17 m under the filled hillside; the other five are identical.
-  same(fnv(JSON.stringify(out)), 2149277213, 'the ground of the six authored circuits: 10,614 heights, unchanged since the Summit ground fix');
+  // SUMMIT-FINISH-AREA (26 October 2026): only Summit changed, 2 heights (at most 13.2 m) where the flat car park is cut into the slope.
+  same(fnv(JSON.stringify(out)), 3139209002, 'the ground of the six authored circuits: 10,614 heights, unchanged since the Summit finish area');
 }
 
 // ---- Legs and refusals ------------------------------------------------------------------------------------

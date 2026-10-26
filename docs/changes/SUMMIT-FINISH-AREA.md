@@ -239,3 +239,12 @@ old smaller lettering and flat model pad markings. Those old paths are
 removed in the same change. Consumed round 2 raw evidence and generated
 build output are recycled. Accepted round 3 raw evidence is now recycled too;
 keep the compact sheets, recipes and current fixture-check logs for handoff.
+
+## Claude review on integration (26 October 2026)
+
+Merged. `test-map-destinations` (not in the lane's selection) expected the
+pre-finish Summit ground. Measured before and after on the same code: the
+other five circuits are identical; Summit has 2 sampled heights changed, the
+larger by 13.2 m, where the flat car park is cut into the slope. The pin moves
+to 3139209002 with that note; the helicopter landing checks in the same
+suite pass. Nothing is loosened. Summit timing before release.
