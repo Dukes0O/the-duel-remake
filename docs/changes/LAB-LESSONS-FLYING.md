@@ -188,3 +188,19 @@ No models, runtime binaries or shared room code were replaced. Teaching
 resources are disposed when leaving a lesson. Browser build scratch and
 failed-route captures are sent to the Recycle Bin; the final captures remain
 only until Claude's pending review.
+
+## Claude review (26 October 2026)
+
+Round 1 sent back (small experiments, numbers in a corner list, no scale
+note, the key-idea card over the Fly to panel). Round 2 accepted: big
+parcels with thick arcs, the fire triangle drawn over the pit, three
+coloured pendulums with their swing times on them, lift and load arrows on
+the rotor stand, a "Scale model: 1 to 10" plate on each bench, and challenge
+views of the loaded world. The drawing-scale assertion change (.065 to .1)
+follows the one-tenth model Claude asked for; nothing is loosened.
+
+At merge, two code conflicts with LAB-LESSONS-WORKSHOP: `lesson-ui.css`
+(both moved the key-idea card; kept Flying's bottom-left placement above the
+instruments, which narrows on small windows) and `test-repo-hygiene.mjs`
+(kept both corners' sheet names). Flying, Workshop, frame, walk and hygiene
+suites and the build pass on the merged result.
