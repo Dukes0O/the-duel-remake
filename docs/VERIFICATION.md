@@ -1406,3 +1406,14 @@ headed, alone, laptop panel off, GPU idle: p95 16.8 ms at both qualities
 (pass); world build High 1,036 ms, Performance 984 ms then 2,589 ms on the
 rerun: a warning, shipped by Director decision as on 16 October; follow-up
 SUMMIT-BUILD-TIME-3.
+
+## Release, 26 October 2026 night (Claude, Release Manager)
+
+GO-LIVE-EVENING (`driving-lessons`, `heli-logbook`, `heli-skiing`, `rescue`
+on; `tyre-slip` stays dev, lessons keep their own sliding rules), lab-2 with
+LAB-BRIAN-FIX, LAB-LESSONS-WORKSHOP and LAB-LESSONS-FLYING, plus
+DRIVE-LESSON-ANY-COURSE, the ski tuning and rescue margins. Full tier on
+release commit 4e94aed2, run alone: 528 passed, 0 failed, 0 not run (1,801 s).
+No frame check this release: no timing recipe exists for the ski and rescue
+views (HELI-VIEW-FRAMES); race scenes are unchanged since the evening Summit
+check (rule 19). Released at Kyle's direction to test in the real game.

@@ -2,6 +2,24 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Lessons, logbook, skiing, rescue and the new Lab, 26 October 2026 (night)
+
+### What players get now
+
+- **Driving lessons** (INSTRUCTOR on the menu): the instructor drives a
+  corner first, then you try it the wrong way and the right way. Lesson 1
+  runs at The Cutting or Beaver Hairpin, whether or not you own the course.
+- **Kestrel One's logbook:** five real pilot ranks from Student pilot to
+  Chief pilot, each with its own paint for the helicopter, and Gus
+  Lindqvist's old logbooks on the shelf at the pad, each pointing at
+  something real out in the world.
+- **Heli-skiing** at Summit Run and Tremblant Snow: slalom (with a gentle
+  line assist on Casual), giant slalom, moguls, aerials and the powder bowl.
+- **Rescues:** hikers, avalanches, a hoist and supply runs, with clear
+  directions to the fuel truck when you need it.
+- **The new Lab:** walk Brian's hangar, talk to Brian (E), click where you
+  want to go, and eight rebuilt lessons in the Workshop and Flying corners.
+
 ## Summit finish, 26 October 2026 (evening)
 
 ### What players get now
