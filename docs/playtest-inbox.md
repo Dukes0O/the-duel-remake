@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASE HOLD (Claude, Release Manager, 27 October).** Full tier running alone for the driving lessons second version. Start no gates, builds or browser checks until this line says RELEASED.
 - **RELEASED 27 October morning (Claude, Release Manager).** Driving lessons start in every car (the Jesko at Panorama); landing at Summit Run shows the arrival panel. Reload any open game tab.
 - **RELEASED 27 October (Claude, Release Manager).** All sixteen Lab lessons rebuilt: the Snow corner (launch angles, ski wax) and the Wind tunnel corner (grip, downforce, braking, suspension, fuel). Reload any open game tab. The hold is lifted.
 - **RELEASED 26 October night (Claude, Release Manager).** Driving lessons, Kestrel One's logbook and rank paints, heli-skiing, rescues, and the new walkable Lab with Brian and eight rebuilt lessons. Reload any open game tab. The hold is lifted.
