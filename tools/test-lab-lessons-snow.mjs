@@ -50,6 +50,12 @@ test('every wax prediction and check uses real glide and daily challenge rules',
     assert.equal(waxRunResult({day, pick: today.wax, time: 0}).pass, false);
   }
   assert.equal(waxBench.run({snow: 'powder', wax: 'soft'}).glideS, waxBench.run({snow: 'powder', wax: 'medium'}).glideS);
+  for (const [mode, snow, wrong, right] of [['cold','powder','soft','hard'], ['wet','wet','hard','soft']]) {
+    const first = waxDrawing({snow,wax:wrong}, 1, mode), later = waxDrawing({snow,wax:wrong}, 3, mode);
+    assert.equal(first.reading, waxBench.run({snow,wax:wrong}).glideS);
+    assert.equal(later.reading, waxBench.run({snow,wax:right}).glideS);
+    assert.ok(later.reading < first.reading, 'worked change shows the real improvement');
+  }
 });
 
 const finish = s => { for (let i = 0; i < 220; i++) s.tick(.1); };

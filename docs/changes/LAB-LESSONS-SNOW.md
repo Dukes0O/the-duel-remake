@@ -58,10 +58,24 @@ found a hangar wall in front of the teaching view; both cameras now stand
 on the aisle side. The selector is a named handle with keyboard access.
 Review confirms resource ownership and late-load disposal; no open code fault.
 
-The new runtime props are 1,248,836 bytes; their Blender recipe is kept.
+The new runtime props are 1,335,804 bytes; their Blender recipe is kept.
 The original benches and hangar binary are reused. The lone room hook names
 the existing first-aid cabinet; a scoped CSS line keeps the inline launch
 reminder above prediction buttons without moving any other lesson's card.
+
+Native Launch flow passes through its real rewarded target on `10af3f96`.
+Wax's initial flow passes teaching, but its ski-offer wait timed out because
+the QA URL omitted Rescue, which App requires for Summit ski drops. The
+continuation enables that existing prerequisite and checks Wax only; it
+keeps Launch's green evidence. No game rule or wait limit was changed.
+
+Wax pictures also exposed caption collisions and a far-side handle. The
+three captions now sit separately beside their own trays; the named selector
+and blocks sit on the aisle edge. Browser capture checks caption rectangles
+for overlap and uses real pointer clicks on the selector. Cold and wet
+cutaways change the actual coating halfway through Watch, with the bench's
+own improved time; model instances are keyed by both id and model so those
+cutaway replacements appear. The affected pure tests pass.
 
 ## Removed
 

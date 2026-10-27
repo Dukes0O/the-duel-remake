@@ -162,6 +162,10 @@ prop('scratched-base')
 box('Soft ski base', (0, 0, 0), (1.3, .48, .1), ink)
 for i in range(5):
     rod('Scratch through soft base', (-.5, -.17+i*.08, -.052), (.5, -.14+i*.08, -.052), .009, cream)
+prop('hard-base')
+box('Hard protected ski base', (0, 0, 0), (1.3, .48, .1), ink)
+box('Hard wax protective layer', (0, 0, -.057), (1.3, .48, .014), blue, .004)
+text('HARD WAX BASE', (0, -.25, .005), .08, cream)
 prop('grooved-base')
 for i in range(5):
     box('Base ridge leaves a water channel', (0, -.2+i*.1, 0), (1.3, .07, .1), ink)

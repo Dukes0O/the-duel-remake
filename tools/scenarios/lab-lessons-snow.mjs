@@ -5,7 +5,7 @@ import {SKI_PADS} from '../../src/ski/ski-session.js';
 
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
-  await c.navigate('/tools/menu-check.html?flags=lab-2,heli-skiing,summit-run');
+  await c.navigate('/tools/menu-check.html?flags=lab-2,helicopter,forest-fire,rescue,heli-skiing,summit-run');
   await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
   await c.evaluate(`(() => { const a=window.__qaApp; a.audio.setMuted(true); a.addPlayer('Snow QA');
     a.profile={...a.profile, courses:{version:1,unlocked:['tremblant-woods','summit-run']},
@@ -24,7 +24,11 @@ export async function run(c) {
   }
   async function capture(name) {
     await c.command('Input.dispatchMouseEvent', {type:'mouseMoved',x:2,y:2});
-    await new Promise(r=>setTimeout(r,350)); await c.screenshot(name);
+    await new Promise(r=>setTimeout(r,350));
+    const overlap=await c.evaluate(`(() => {const labels=[...document.querySelectorAll('[data-snow-lesson] > div')].filter(e=>!e.hidden).map(e=>e.getBoundingClientRect());
+      return labels.some((a,i)=>labels.slice(i+1).some(b=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top));})()`);
+    if(overlap) throw Error('Object captions overlap.');
+    await c.screenshot(name);
   }
   async function clearCard() {
     const collision = await c.evaluate(`(() => {const a=document.querySelector('.lab-key-idea');if(!a||a.hidden)return 'missing key idea';const x=a.getBoundingClientRect();
@@ -34,7 +38,9 @@ export async function run(c) {
       } return '';})()`);
     if (collision) throw Error(`Key idea covers ${collision}`);
   }
-  for (const packet of [launch, wax]) {
+  // Continue only unfinished Wax after Launch passed; normal runs check both.
+  const waxOnly = process.env.SNOW_QA_WAX_ONLY === '1';
+  for (const packet of [launch, wax].filter(p => !waxOnly || p.definition.id === 'wax')) {
     const d=packet.definition,id=d.id;
     await c.evaluate(`window.__qaApp.openLab()`);
     await c.waitFor(`${canvas}?.dataset.labWalkReady==='true'`, 'walking Lab', 60_000);
@@ -54,7 +60,12 @@ export async function run(c) {
     for (let i=0;i<3;i++) {
       await click(`answer:${id==='launch'?'flag':'fast'}`);
       if(id==='launch') await drag('speedMs',20,17,5,24);
-      else for(let n=0;n<i;n++) await click('control:waxDial');
+      else for(let n=0;n<i;n++) {
+        await c.waitFor(`JSON.parse(${canvas}.dataset.labLessonControls??'[]').some(p=>p.id==='waxDial')`, 'wax selector');
+        const p=await c.evaluate(`(() => {const b=${canvas}.getBoundingClientRect(),p=JSON.parse(${canvas}.dataset.labLessonControls).find(p=>p.id==='waxDial');return {x:b.left+p.x,y:b.top+p.y};})()`);
+        await c.command('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...p});
+        await c.command('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...p});
+      }
       await click('run'); await ready(); await capture(`${id}-try-${i}`); await click('next');
     }
     for(const [i,q] of d.checks.entries()) { await click(`answer:${q.answers.find(a=>a.id!==q.correct).id}`); await capture(`${id}-check-${i}`); await click('next'); }

@@ -8,6 +8,8 @@ export const waxSamples = {
   'hard-wet': {snow: 'wet', wax: 'hard'}, 'soft-wet': {snow: 'wet', wax: 'soft'},
 };
 export function waxDrawing(input, time, mode = 'single') {
+  if (mode === 'cold' && time >= 2) input = {...input, wax: 'hard'};
+  if (mode === 'wet' && time >= 2) input = {...input, wax: 'soft'};
   const result = waxBench.run(input), load = result.settings, keys = Object.keys(SNOWS);
   const rows = keys.map((snow, i) => {
     const wax = mode === 'compare' ? SNOWS[snow].wax : load.wax;
@@ -17,19 +19,19 @@ export function waxDrawing(input, time, mode = 'single') {
     return {snow, wax, x: i - 1, z: -.2 + progress * .35, ...r};
   });
   const selected = keys.indexOf(load.snow);
-  const objects = [{...box('wax-selector', [0, .9, 1.05], [.65, .4, .45], '#edc557', 'waxDial'), opacity: 0}];
+  const objects = [{...box('wax-selector', [0, .9, -.8], [.65, .4, .45], '#edc557', 'waxDial'), opacity: 0}];
   return {input: load, actual: result.right ? 'fast' : 'slow', reading: result.glideS, rows, selected, mode, objects, hideLabels: true,
     camera: camera([-2.3, 1.85, -3.6], [0, .95, 0]),
-    captions: rows.map(r => `${SNOWS[r.snow].name} · ${SNOWS[r.snow].celsius} °C\n${r.wax} wax · ${r.glideS.toFixed(2)} seconds`),
-    captionAnchors: rows.map(r => [r.x, .88, .08]), captionOffsets: [[-205, -70], [-65, -130], [25, -65]],
+    captions: rows.map(r => `${SNOWS[r.snow].name} · ${SNOWS[r.snow].celsius} °C\n${r.wax} wax · ${r.glideS.toFixed(2)} s`),
+    captionAnchors: rows.map(r => [r.x, .88, .08]), captionOffsets: [[20, -5], [-105, -135], [-255, -35]],
   };
 }
 export function mountWax(options) {
   return mountSnow(options, 'snow-trays', (machine, d, clock, prop) => {
     const skis = machine.getObjectByName('skis'); if (skis) skis.visible = false;
-    for (const [i, wax] of ['hard', 'medium', 'soft'].entries()) prop({id: `block-${wax}`, model: `wax-${wax}`, position: [-1.05 + i * 1.05, .91 + (wax === d.input.wax ? .07 : 0), .7], scale: .8});
-    prop({id: 'selector', model: 'wax-selector', position: [0, .75, 1.05], scale: .8});
-    prop({id: 'selector-hand', model: 'selector-hand', position: [0, .94, 1.05], rotation: [0, ['hard', 'medium', 'soft'].indexOf(d.input.wax) * Math.PI * .6 - .6, 0], scale: .8});
+    for (const [i, wax] of ['hard', 'medium', 'soft'].entries()) prop({id: `block-${wax}`, model: `wax-${wax}`, position: [-1.05 + i * 1.05, .91 + (wax === d.input.wax ? .07 : 0), -.34], scale: .8});
+    prop({id: 'selector', model: 'wax-selector', position: [0, .75, -.8], scale: .8});
+    prop({id: 'selector-hand', model: 'selector-hand', position: [0, .94, -.8], rotation: [0, ['hard', 'medium', 'soft'].indexOf(d.input.wax) * Math.PI * .6 - .6, 0], scale: .8});
     for (const [i, r] of d.rows.entries()) {
       prop({id: `ski-${i}`, model: 'test-skis', position: [r.x, .94, r.z], scale: .34, rotation: [0, Math.PI / 2, 0]});
       if (clock.previous && i === d.selected) {
@@ -39,7 +41,8 @@ export function mountWax(options) {
     }
     if (['cold', 'wet', 'wax'].includes(d.mode)) {
       prop({id: 'cutaway', model: d.mode === 'wet' ? 'wet-cutaway' : 'cold-cutaway', position: [-.25, 1.35, .1], scale: .85});
-      prop({id: 'base', model: d.mode === 'wet' ? 'grooved-base' : 'scratched-base', position: [-.25 + Math.min(.3, clock.time * .1), 1.6, .1], scale: .85});
+      const model = d.mode === 'wet' ? clock.time < 2 ? 'hard-base' : 'grooved-base' : clock.time < 2 ? 'scratched-base' : 'hard-base';
+      prop({id: 'base', model, position: [-.25 + Math.min(.3, clock.time * .1), 1.6, .1], rotation: [.7, 0, 0], scale: .85});
     }
     if (d.mode === 'wonder') {
       for (const [i, wax] of ['hard', 'soft'].entries()) {

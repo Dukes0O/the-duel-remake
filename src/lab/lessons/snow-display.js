@@ -24,11 +24,12 @@ export function mountSnow(options, modelId, animate) {
     library = gltf.scene; canvas.dataset.snowProps = 'ready';
   }).catch(() => { if (!disposed) canvas.dataset.snowProps = 'failed'; });
   function prop(row) {
-    let root = props.get(row.id);
+    const key = `${row.id}:${row.model}`;
+    let root = props.get(key);
     if (!root && library) {
       const template = library.getObjectByName(row.model);
       if (!template) throw Error(`Missing snow lesson model: ${row.model}`);
-      root = template.clone(true); group.add(root); props.set(row.id, root); own.push(root);
+      root = template.clone(true); group.add(root); props.set(key, root); own.push(root);
       if (row.ghost) root.traverse(n => { if (n.material) { n.material = n.material.clone(); n.material.transparent = true; n.material.opacity = .28; n.material.depthWrite = false; resources.add(n.material); } });
     }
     if (root) { root.visible = true; root.position.set(...row.position); root.rotation.set(...(row.rotation ?? [0, 0, 0])); root.scale.setScalar(row.scale ?? 1); }
