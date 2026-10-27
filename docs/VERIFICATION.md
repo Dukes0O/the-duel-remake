@@ -1433,3 +1433,13 @@ play. Rule 19: the last full-tier pass is 3dd322a4 (530/530); since then only
 Lane tier for each change: 34/34 and 42/42; on the merged commit the lesson,
 helicopter view and mode suites pass and the build passes. The every-car
 instructor suite passes 196/196. No frame check: no scene changed.
+
+## Release, 27 October 2026 afternoon (Claude, Release Manager)
+
+LESSONS-V2-RULES and LESSONS-V2-VIEW (driving lessons, second version;
+`driving-lessons` stays on). Full tier on release commit 9d521bb0, run alone:
+532 passed, 0 failed, 0 not run (1,823 s). Every-car instructor suite
+196/196. No frame check: lesson drawing is new but lessons are not races and
+race scenes are unchanged since the 26 October Summit check (rule 19).
+Brian's new lines follow in LESSONS-V2-LINES.
+

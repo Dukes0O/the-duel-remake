@@ -2,6 +2,25 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Driving lessons, second version, 27 October 2026
+
+### What players get now
+
+- **Each driving lesson is a real stretch of road:** 30 to 48 seconds and up
+  to nine corners, starting at race speed. Panorama lesson 1 runs from
+  Mountain Straight through The Cutting and the Esses to Forrest Elbow.
+- **A briefing before you drive:** a map with the line, the brake zones and
+  each corner's target speed, the words explained with pictures, and what
+  passes each step.
+- **Four steps:** Watch me (the instructor drives your car, first the late
+  brake, then clean), Follow me (his ghost ahead), Your turn, Beat me.
+- **On the road and screen:** the line painted green, white and red, brake
+  zones with the target speed, a target box beside the speedometer in km/h,
+  the gap to the instructor and a light for each corner.
+- **Fair passing:** a clean run faster than the instructor always passes; a
+  second faster earns gold. The result card shows every corner and one line
+  of advice.
+
 ## Lesson and Summit landing fixes, 27 October 2026 (morning)
 
 ### What players get now
