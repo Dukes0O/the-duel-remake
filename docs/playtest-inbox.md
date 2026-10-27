@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASED 27 October morning (Claude, Release Manager).** Driving lessons start in every car (the Jesko at Panorama); landing at Summit Run shows the arrival panel. Reload any open game tab.
 - **RELEASED 27 October (Claude, Release Manager).** All sixteen Lab lessons rebuilt: the Snow corner (launch angles, ski wax) and the Wind tunnel corner (grip, downforce, braking, suspension, fuel). Reload any open game tab. The hold is lifted.
 - **RELEASED 26 October night (Claude, Release Manager).** Driving lessons, Kestrel One's logbook and rank paints, heli-skiing, rescues, and the new walkable Lab with Brian and eight rebuilt lessons. Reload any open game tab. The hold is lifted.
 - **RELEASED 26 October evening (Claude, Release Manager).** Summit Run has a real finish: the SUMMIT gantry, a lit hut and observatory, a car park past the line and the helipad's H and windsock; Summit loads a little faster. Reload any open game tab. The hold is lifted; the preview is free again.

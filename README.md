@@ -2,6 +2,16 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Lesson and Summit landing fixes, 27 October 2026 (morning)
+
+### What players get now
+
+- **Driving lessons start in every car**, including the Koenigsegg Jesko at
+  Panorama Ridge. If a lesson ever cannot start, it says so in plain words.
+- **Landing at Summit Run** now shows the arrival panel: Race here, Shut down
+  and the crate board. During a rescue call or ski drop it says what is
+  waiting.
+
 ## All sixteen Lab lessons, 27 October 2026
 
 ### What players get now

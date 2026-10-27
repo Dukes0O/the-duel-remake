@@ -1423,3 +1423,13 @@ check (rule 19). Released at Kyle's direction to test in the real game.
 LAB-LESSONS-SNOW and LAB-LESSONS-TUNNEL (lab-2 on). Full tier on release
 commit 3dd322a4, run alone: 530 passed, 0 failed, 0 not run (2,477 s). No
 frame check: race scenes unchanged since the 26 October Summit check (rule 19).
+
+## Release, 27 October 2026 morning (Claude, Release Manager)
+
+LESSON-INSTRUCTOR-ANY-CAR and HELI-SUMMIT-LANDED, both live fixes from Kyle's
+play. Rule 19: the last full-tier pass is 3dd322a4 (530/530); since then only
+`src/lessons/drive-lessons.js`, `src/heli/heli-ui.js`, two lines of
+`src/app.js`, their tests and docs changed (no core, save shape or physics).
+Lane tier for each change: 34/34 and 42/42; on the merged commit the lesson,
+helicopter view and mode suites pass and the build passes. The every-car
+instructor suite passes 196/196. No frame check: no scene changed.
