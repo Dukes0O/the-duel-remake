@@ -482,7 +482,7 @@ export class App {
     const token={};this._driveLessonPreparing=token;this.driveLessonMessage=`Instructor is driving the ${{corner:'corner',line:'esses',gears:'stretch',snow:'snow corner'}[lessonId]}…`;this._driveLessonUi?.update();
     let baseline;
     try{baseline=await buildInstructorRun({courseId,car,upgrades,difficulty,driverId,seed:1989,lessonId});}
-    catch(error){if(this._driveLessonPreparing===token){this._driveLessonPreparing=null;this.driveLessonMessage='The instructor could not complete a clean run. '+error.message;this._driveLessonUi?.update();}return false;}
+    catch(error){if(this._driveLessonPreparing===token){this._driveLessonPreparing=null;console.warn('Driving lesson instructor failed', {courseId, car, lessonId, difficulty}, error);this.driveLessonMessage=`The instructor can't drive this lesson in the ${CARS[car].name} yet. Try another car.`;this._driveLessonUi?.update();}return false;}
     this._refreshPlayer();
     if(this._driveLessonPreparing!==token||!this.drivingLessonsAvailable()||!this.driveLessonBoardOpen||
       this.duel.state.status!=='menu'||this.player?.id!==ownerId||
