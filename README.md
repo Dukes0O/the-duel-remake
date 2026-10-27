@@ -2,6 +2,15 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Brian's new lesson lines, 27 October 2026 (evening)
+
+### What players get now
+
+- **Brian speaks the second-version lessons:** an intro for each lesson, a
+  line at the start of each step, advice for each kind of miss (braked late
+  or early, too fast, tyres slid, off the road) and a pass line. His words
+  match the text on screen.
+
 ## Driving lessons, second version, 27 October 2026
 
 ### What players get now

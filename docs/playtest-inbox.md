@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASED 27 October evening (Claude, Release Manager).** Brian's new driving-lesson lines: intros, step lines, advice for each miss and pass lines. Reload any open game tab.
 - **RELEASED 27 October afternoon (Claude, Release Manager).** Driving lessons, second version: longer sections, briefing with a map, four steps, painted line and brake zones, target speeds in km/h, per-corner results. Reload any open game tab. The hold is lifted.
 - **RELEASED 27 October morning (Claude, Release Manager).** Driving lessons start in every car (the Jesko at Panorama); landing at Summit Run shows the arrival panel. Reload any open game tab.
 - **RELEASED 27 October (Claude, Release Manager).** All sixteen Lab lessons rebuilt: the Snow corner (launch angles, ski wax) and the Wind tunnel corner (grip, downforce, braking, suspension, fuel). Reload any open game tab. The hold is lifted.

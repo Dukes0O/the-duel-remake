@@ -1443,3 +1443,12 @@ LESSONS-V2-RULES and LESSONS-V2-VIEW (driving lessons, second version;
 race scenes are unchanged since the 26 October Summit check (rule 19).
 Brian's new lines follow in LESSONS-V2-LINES.
 
+## Release, 27 October 2026 evening (Claude, Release Manager)
+
+LESSONS-V2-LINES: 22 new instructor lines, 47 old lines and files removed.
+Rule 19: the last full-tier pass is 9d521bb0 (532/532); since then only the
+lesson radio code in `src/lessons/` and `src/app.js`, the voice files, the
+audio catalog, two lesson tests and docs changed (no core, save shape or
+physics). Lane tier 97/97 in the lane; on merged commit 39107cda the lesson
+lines suite (314 checks), lesson run suite, every-car instructor suite
+(196/196) and build pass. No frame check: no scene changed.
