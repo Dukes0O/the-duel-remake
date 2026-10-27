@@ -125,3 +125,23 @@ three-in-a-row and snow winter-run voice paths. Every remaining driving
 recording is reachable and loaded by its runtime map. Cone and shift-light
 sounds stay. Build output is recycled after verification; no scratch output
 is committed.
+
+## Claude's review (27 October 2026)
+
+Lines: 22, checked against DRIVING_LESSONS 14.11. None names a time,
+speed, distance or price; each matches its on-screen text; Brian's voice
+and radio settings are unchanged. Shared step and miss lines are right:
+the words are the same in every lesson. Credits: 1,883 characters, well
+inside the month; no money question for Kyle.
+
+Changed assertions, approved under AGENTS rule 18:
+- `test-drive-lesson-lines`: the old v1 counts (15, 47, 51) describe lines
+  section 14 removed. The replacement is still exact equality (script, map,
+  catalog, files on disk), plus new checks that every line the lessons can
+  pick exists and none is left over. Nothing loosened.
+- `test-drive-lesson-run`: the pass id renamed to the v2 id; the save and
+  once-only reward checks are untouched, and subtitle checks were added.
+
+Code: the miss line comes from the same checks as the result card and
+changes no rule or race input; the radio restart fix (a stopped line can
+no longer cut the next one) is right. Verdict: merge.
