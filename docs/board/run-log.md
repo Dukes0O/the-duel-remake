@@ -1394,3 +1394,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-27 Release: Lab Snow and Wind tunnel corners; full tier 530/530 on 3dd322a4.
 - 2026-10-27 LESSON-INSTRUCTOR-ANY-CAR merged (Codex, Claude review): instructor works in all 14 cars on every lesson row, Casual and Pro; plain message if not; lane tier 34/34 and build pass in lane.
 - 2026-10-27 HELI-SUMMIT-LANDED merged (Codex, Claude review): Summit pads were outside the arrival area; panel now shows there, with waiting text during a rescue or ski drop; lane tier 42/42 and build pass in lane.
+- 2026-10-27 LESSONS-V2-RULES and LESSONS-V2-VIEW merged together (Codex, Claude review): lessons are 30 to 48 s sections with a briefing, four steps, painted line, brake zones, target box in km/h, gap, corner lights and per-corner results; lane tier 52/52 and build pass in lane.
