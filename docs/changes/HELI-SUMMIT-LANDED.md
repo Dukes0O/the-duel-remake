@@ -70,3 +70,14 @@ Replaced the start-circle-only arrival gate and the silent rescue/ski-flight
 exclusions. No obsolete alternate UI retained. Recycled this task's scratch
 driver, flight script, temporary browser profile and generated build output;
 kept only the requested panel picture in integration's evidence folder.
+
+## Claude's review (27 October 2026, AGENTS 18)
+
+Reviewed the diff, the changed assertions and the picture. Cause confirmed:
+Summit's marked pads lie outside `view.zone`, so `atAnyPad` was false and the
+panel never drew. The two changed expectations (an empty panel during a rescue
+call or ski flight) are replaced by stricter ones: the panel now shows what is
+waiting, Shut down works and Race here stays disabled, at all five
+destinations. That is what the card asked for (Kyle: "can't get out of the
+chopper"). Nothing is loosened; every other hidden-panel case stays. Approved;
+merge.
