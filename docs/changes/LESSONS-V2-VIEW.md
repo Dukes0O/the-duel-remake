@@ -140,3 +140,14 @@ Generated output and duplicate local captures recycled. Nothing merged/pushed.
 Follow-up Removed: removed imperial screen formatting, the corner-specific
 all-clean advice, crossed map leader lines and the mirror-covering panel
 placement. Internal mph rules and thresholds remain unchanged.
+
+## Claude's review (27 October 2026, AGENTS 18)
+
+Looked at all twelve pictures after the follow-up. Speeds show km/h and the
+target box matches the speedometer; the mirror is clear; clean-run advice no
+longer names a corner; the briefing map numbers sit on their corners. The
+only changed assertion is a display string (mph to km/h, matching 14.5's
+correction); one setup step dismisses the new briefing. Nothing is loosened.
+Approved; merges together with LESSONS-V2-RULES. Brian's new lines
+(LESSONS-V2-LINES) follow separately; until then the existing lines and
+on-screen text carry the lesson.
