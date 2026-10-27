@@ -766,6 +766,10 @@ card names the step that comes next.
 
 ### 14.5 What you see while driving
 
+Every speed on screen is in km/h, like the speedometer (Claude, 27 October:
+the mph figures in this section are the rules' own units; the screen converts
+them). 
+
 All of it is drawing and screen text; none of it touches race state.
 
 - **The line:** a ribbon on the road along the instructor's path, green
