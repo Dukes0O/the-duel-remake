@@ -415,6 +415,7 @@ export class App {
   }
 
   _simulate(seconds) {
+    if(this.duel.drivingLesson&&this.driveLessonBriefing)return;
     if(typeof document!=='undefined'){
       const host=document.querySelector('#stage');
       if(host&&!this._driveLessonUi)this._driveLessonUi=mountDriveLessonUi(this,host);
@@ -454,7 +455,7 @@ export class App {
       ownedCourseIds:COURSE.filter(course=>isCourseUnlocked(this.profile,course)).map(course=>course.id),
       ownedCarIds:this.profile.unlockedCars,playerId:this.player?.id,progress:this.profile.drivingLessons,
       courseId:this.driveLessonCourse,carId:choices.car,difficulty:choices.difficulty,
-      runPlayerId:run?.ownerId,lesson:run?.ownerId===this.player?.id?run.lesson:null,lessonSaveFailed:run?.rewarded===true&&run.saved===false};
+      briefing:this.driveLessonBriefing===true,runPlayerId:run?.ownerId,lesson:run?.ownerId===this.player?.id?run.lesson:null,lessonSaveFailed:run?.rewarded===true&&run.saved===false};
   }
   // DRIVE-LESSONS-VIEW-2: the instructor board's props: the above plus lessons 2 to 4 (their rows, which course each is set to, and
   // whether each is open). The helipad's rows are lesson 1 alone and keep using driveLessonProps (a later card brings lessons 2 to 4 to the pad).
@@ -497,18 +498,24 @@ export class App {
     this._runPlayerId=ownerId;this.runId=null;this._cupRace=null;
     this.ghostRecorder=this.ghostRecord=this.ghostPose=this.grandPrixLapRecorder=this.lapTelemetryRecorder=null;
     this.ghostStatus='none';this.autopilot=false;this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
-    const plan={...baseline,driverId,ownerId};
+    const plan={...baseline,driverId,ownerId,retake:this.profile.drivingLessons?.done?.[lessonId]===true};
     this.audio.unlock();this.audio.setPaused(false);
     this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')});this._racePaintCar=car;
     this._sayDriveLesson(this.profile.drivingLessons?.done?.[lessonId]?'drive.radio.retake':DRIVE_LESSON_VIEW[lessonId].intro);
     this.duel.startCampaign({seed:1989,mode:'timetrial',car,difficulty,driverId,playerId:ownerId,
       startStage:stageIndex,upgrades,opponentCount:0,lesson:plan});
+    this.driveLessonBriefing=true;
     this._driveLessonUi?.update();return true;
   }
   nextLessonAttempt(){
     const run=this.duel.drivingLesson;
     if(!run||!this.drivingLessonsAvailable()||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||
-      this.duel.state.playerId!==run.ownerId||run.lesson.done||run.lesson.phase==='driving')return false;
+      this.duel.state.playerId!==run.ownerId||run.lesson.done)return false;
+    if(this.driveLessonBriefing){this.driveLessonBriefing=false;this.driveLessonHelp=false;this._driveLessonUi?.update();return true;}
+    if(run.lesson.phase==='driving'){
+      if(run.lesson.stage!=='watch')return false;
+      run.lesson.phase='result';run.lesson.lastAttempt={passed:false,finished:false};
+    }
     this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;this.audio.setPaused(false);
     const started=this.duel.resetDriveLessonAttempt();this._driveLessonUi?.update();return started;
   }
@@ -518,6 +525,7 @@ export class App {
     this._driveLessonUi?.update();return true;
   }
   _clearDriveLesson(){
+    this.driveLessonBriefing=false;this.driveLessonHelp=false;
     this._driveLessonPreparing=null;this.driveLessonBoardOpen=false;this.driveLessonMessage='';
     this.driveLessonRadioText='';this._driveLessonRadioEpoch=(this._driveLessonRadioEpoch||0)+1;
     this._driveLessonVoice?.stop();this._driveLessonVoice=null;this._driveLessonRadioChain?.dispose();this._driveLessonRadioChain=null;
@@ -579,10 +587,9 @@ export class App {
   playDriveLessonCue(id){if(this.audio.context&&!this.audio.muted)this.audio._playCue?.(id);}
   getDriveLessonGhost(){
     const run=this.duel.drivingLesson;
-    const winter=run?.lesson.id==='snow'&&run.lesson.stage==='winter'; // the winter-tyre run drives against the winter instructor
-    if(!run||run.ownerId!==this.player?.id||this.duel.state.playerId!==run.ownerId||
-      run.lesson.stage!=='challenge'&&!winter||run.lesson.phase!=='driving')return null;
-    return driveLessonGhostPose((winter?run.plan.instructor.winter:run.plan.instructor).poses,run.lesson.attempt.elapsedSeconds,this.duel.state.car,this.duel.course);
+    if(!run||run.ownerId!==this.player?.id||run.ownerId!==this.duel.state.playerId||run.lesson.phase!=='driving'||!run.lesson.attempt||!['follow','beat'].includes(run.lesson.stage))return null;
+    const lead=run.lesson.stage==='follow'?1:0;
+    return driveLessonGhostPose(run.plan.instructor.poses,run.lesson.attempt.elapsedSeconds+lead,this.duel.state.car,this.duel.course);
   }
 
   startCampaign(options = {}) {
@@ -2428,6 +2435,8 @@ export class App {
         if(document.pointerLockElement){document.exitPointerLock();e.preventDefault();return;}
         if(performance.now()-this._footPointerReleasedAt<250){e.preventDefault();return;}
       }
+      if(e.code==='Escape'&&this.duel.drivingLesson){this.leaveLesson();e.preventDefault();return;}
+      if(e.defaultPrevented)return;
       if(e.code==='Enter'&&this.duel.drivingLesson&&!e.repeat&&!(e.target instanceof Element&&e.target.closest('button'))){
         if(this.nextLessonAttempt())e.preventDefault();return;
       }
