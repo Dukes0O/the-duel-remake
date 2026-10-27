@@ -2,6 +2,14 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## All sixteen Lab lessons, 27 October 2026
+
+### What players get now
+
+- **The Lab's Snow and Wind tunnel corners:** launch angles and ski wax, then
+  grip, downforce, braking, suspension and fuel. Every one of Brian's sixteen
+  lessons is now rebuilt in the walkable Lab.
+
 ## Lessons, logbook, skiing, rescue and the new Lab, 26 October 2026 (night)
 
 ### What players get now

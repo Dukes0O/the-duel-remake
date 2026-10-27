@@ -1417,3 +1417,9 @@ release commit 4e94aed2, run alone: 528 passed, 0 failed, 0 not run (1,801 s).
 No frame check this release: no timing recipe exists for the ski and rescue
 views (HELI-VIEW-FRAMES); race scenes are unchanged since the evening Summit
 check (rule 19). Released at Kyle's direction to test in the real game.
+
+## Release, 27 October 2026 (Claude, Release Manager)
+
+LAB-LESSONS-SNOW and LAB-LESSONS-TUNNEL (lab-2 on). Full tier on release
+commit 3dd322a4, run alone: 530 passed, 0 failed, 0 not run (2,477 s). No
+frame check: race scenes unchanged since the 26 October Summit check (rule 19).
