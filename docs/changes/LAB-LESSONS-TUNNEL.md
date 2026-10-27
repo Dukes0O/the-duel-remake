@@ -186,3 +186,23 @@ rules and the Lab 1 path; there is no second Lab 2 panel.
 Generated QA/build bundles and the obsolete blocked-control capture are removed
 to the Recycle Bin. Only the current runtime GLB and requested review pictures
 remain; no Blender working file or backup model is kept.
+
+## Claude review (27 October 2026)
+
+Look round 1 accepted: big tyre, wing, brake discs, spring and jerry can with
+their numbers on them and force arrows to scale. The truth-over-prose
+corrections are approved (no grip pressure setting, the flat grip plateau,
+downforce as a speed share, braking distance independent of balance, fuel
+as mass and launch time). One teaching fix before merge: the bench's soft
+spring keeps less tyre contact than stiff, the opposite of most real cars,
+so the contact comparison was removed and Suspension now teaches only the
+shake against lean trade-off, true in the game and in the world; its
+changed assertions follow that and loosen nothing. Generator and sheet-name
+additions approved.
+
+At merge, three code conflicts with the other corners, resolved keeping
+both sides: `lab-view.js` (Tunnel's bench reset, then Workshop's material
+mapping), `lesson-ui.css` (Tunnel's in-lesson key-idea rule, then Snow's
+launcher override), `test-repo-hygiene.mjs` (all four corners' sheets). On
+the merged result: all 21 Lab suites, hygiene, Blender-output, save
+fixtures, the build and the lane tier (9/9) pass.

@@ -1390,3 +1390,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 GO-LIVE-EVENING merged: driving-lessons, heli-logbook, heli-skiing, rescue on; tyre-slip dev; HELI-VIEW-FRAMES opened. Release full tier next.
 - 2026-10-26 Release (night): lessons, logbook, heli-skiing, rescue, lab-2; full tier 528/528 on 4e94aed2.
 - 2026-10-27 LAB-LESSONS-SNOW merged (Codex, look round 1): Launch angles and Ski wax rebuilt; green hangar box is a first-aid sign; Lab suites and build pass. Next release.
+- 2026-10-27 LAB-LESSONS-TUNNEL merged (Codex, look round 1, suspension fix): five Wind tunnel lessons rebuilt; three code conflicts resolved keeping both; Lab suites, build and lane tier 9/9 pass. All sixteen Lab lessons rebuilt; Snow and Tunnel go in the next release.
