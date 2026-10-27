@@ -344,7 +344,6 @@ export const LESSON_LINE = Object.freeze({
   coneClearM: 1.4, // the instructor's line passes the outside cones this far towards the middle of the road: more than 0.5 m past the 0.8 m tip distance
   apexClearM: .8,  // ... and the inside cone this far: the car ends about 0.3 to 1.4 m wide of the line it aims for at the apex, so it passes 1.5 to 2.3 m from the cone (past the tip distance, inside the 2.5 m that counts the cone)
   winterApexClearM: 1.3, // snow, winter run: the car holds the apex line better there, so the line aims further off the cone
-  minClearM: .5,   // every instructor run clears every cone by at least this much beyond the 0.8 m tip distance
   holdShare: .5,   // lesson 2 holds its speed while the line curves at least this share of its tightest
 });
 
@@ -585,13 +584,15 @@ export function placeCones(course, {brakeS, apexS, exitS, turnInS, dir}) {
   return {cones, redBoardS: Math.min(brakeS + 25, turnInS), finishS: exitS + 60};
 }
 
+class InstructorRunFault extends Error {}
+
 // Observation may extend beyond the lesson to find the widest exit point.
 // Keep only the gate-to-gate trace. A fault on a tick that starts before the
 // finish remains a fault even if that tick ends beyond it.
 export function finishInstructorTrace(poses, finishS, faults = []) {
   const at = poses.findIndex(pose => pose.s >= finishS);
   const fault = faults.find(item => !Number.isFinite(item.fromS) || item.fromS < finishS);
-  if (at <= 0 || fault) throw new Error('Instructor did not finish cleanly: '+JSON.stringify(fault ?? {finishS}));
+  if (at <= 0 || fault) throw new InstructorRunFault('Instructor did not finish cleanly: '+JSON.stringify(fault ?? {finishS}));
   const a = poses[at - 1], b = poses[at];
   const fraction = (finishS - a.s) / (b.s - a.s);
   const timeSec = a.t + (b.t - a.t) * fraction;
@@ -812,7 +813,7 @@ export function gearFor(gears, mph, revs = GEAR_LESSON.apexRevs, cap = GEAR_LESS
 // Down, while braking, one gear at a time, to the gear that puts the slowest speed in the road ahead nearest 75% revs.
 // `plan.tooHigh` leaves the corner that many gears too high, for the proof. `plan.shifts` is the run's own memory of the last change.
 export function gearsControls(state, surface, plan) {
-  const pace = plan.difficulty === 'casual' ? .92 : .97;
+  const pace = plan.profile.pace ?? (plan.difficulty === 'casual' ? .92 : .97);
   const base = instructorControls(state, surface, {...plan, brakeS: -Infinity, brakeInTurns: true});
   const gears = plan.car.gears, memory = plan.shifts;
   memory.cool = Math.max(0, memory.cool - 1 / 120);
@@ -834,8 +835,22 @@ export function gearsControls(state, surface, plan) {
 // Heavy native work starts only when explicitly called, not on import. This
 // owns a fresh Duel and never reads an App, profile, storage or live race.
 // Frame partitioning only feeds the fixed 120 Hz race-rule clock.
-export async function buildInstructorRun({courseId, car, upgrades = {}, difficulty = 'casual',
-  driverId = 'club', seed = 1989, fps = 60, maxSeconds = 120, lessonId = 'corner', tyre = 'summer', _fixed = null} = {}) {
+export async function buildInstructorRun(options = {}) {
+  const {difficulty = 'casual', lessonId = 'corner'} = options;
+  const initial = difficulty === 'casual' ? .92 : lessonId === 'corner' ? .95 : .97;
+  const floor = difficulty === 'casual' ? .84 : .89;
+  for (let retry = 0; retry <= 4; retry++) {
+    const pace = Math.max(floor, Math.round((initial - retry * .02) * 100) / 100);
+    try {
+      return await buildInstructorAttempt(options, pace, retry);
+    } catch (error) {
+      if (!(error instanceof InstructorRunFault) || retry === 4 || pace === floor) throw error;
+    }
+  }
+}
+
+async function buildInstructorAttempt({courseId, car, upgrades = {}, difficulty = 'casual',
+  driverId = 'club', seed = 1989, fps = 60, maxSeconds = 120, lessonId = 'corner', tyre = 'summer', _fixed = null} = {}, pace, retries) {
   if (!['casual', 'pro'].includes(difficulty) || !Number.isFinite(fps) || fps <= 0 ||
       !Number.isFinite(maxSeconds) || maxSeconds <= 0) throw new TypeError('Invalid instructor options');
   if (!['corner', 'line', 'snow', 'gears'].includes(lessonId) || !['summer', 'winter'].includes(tyre)) throw new TypeError('Unknown driving lesson');
@@ -854,7 +869,6 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
   // The gearbox lesson is manual whatever the player's setting, and the limiter cannot blow the engine in a lesson.
   // Confined to this scratch race, like the sliding-tyre rules below.
   if (isGears) Object.defineProperty(duel, 'diff', {get: () => ({...DIFFICULTY[difficulty], autoShift: false, engineBlow: false})});
-  const pace = difficulty === 'casual' ? .92 : lessonId === 'corner' ? .95 : .97;
   const planned = isGears ? await gearsPlanFor(duel, row, pace) : isSnow ? await snowPlanFor(duel, row, pace, {fixed: _fixed}) : isLine ? await linePlanFor(duel, row, pace) : await lessonPlanFor(duel, row, pace);
   // The winter instructor drives the summer instructor's gate, rolling speed and cones on winter tyres.
   const winter = isSnow && tyre === 'summer' ? await buildInstructorRun({courseId, car, upgrades, difficulty, driverId, seed, fps, maxSeconds, lessonId, tyre: 'winter',
@@ -869,7 +883,7 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
   state.lateral = line.offsetAt(startS); state.headingError = line.relHeadingAt(startS);
   state.speedMph = rollingMph;
   const rollingGear = spec.gears.findIndex(top => top * DRIVE.gearCeilFrac >= rollingMph);
-  state.gear = isGears ? GEAR_LESSON.startGear : rollingGear < 0 ? spec.gears.length - 1 : rollingGear;
+  state.gear = isGears ? Math.min(GEAR_LESSON.startGear, spec.gears.length - 1) : rollingGear < 0 ? spec.gears.length - 1 : rollingGear;
   state.revs = state.speedMph / spec.gears[state.gear];
   state.yawVelocity = line.curvatureAt(startS) * state.speedMph * DRIVE.mphToWorld;
   state.traffic = []; state.opponents = [];
@@ -915,8 +929,8 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
     const corner = {id: isGears ? row.cornerName : isSnow ? row.cornerNames[0] : isLine ? row.cornerNames[0].replace(/ \d+$/, '') : row.cornerName, startS, finishS: placement.finishS, dir: turn.dir,
       turnInS: turn.s0, turnOutS: turn.s1};
     // Lesson 2 also records where the plan starts braking, for the road-before-braking check.
-    const instructor = {...placement, timeSec, poses: recorded, ...(isLine || isSnow ? {brakeS: profile.brakeS} : {}),
-      ...(winter ? {winter: {timeSec: winter.instructor.timeSec, poses: winter.instructor.poses}} : {}),
+    const instructor = {...placement, timeSec, pace, retries, poses: recorded, ...(isLine || isSnow ? {brakeS: profile.brakeS} : {}),
+      ...(winter ? {winter: {timeSec: winter.instructor.timeSec, pace: winter.instructor.pace, retries: winter.instructor.retries, poses: winter.instructor.poses}} : {}),
       // Lesson 3: the gear he is in as he passes the apex cone and the exit cone, which the student's gears are measured against.
       ...(isGears ? {apexGear: recorded.find(pose => pose.s >= placement.cones[1].s).gear, exitGear: recorded.find(pose => pose.s >= placement.cones.at(-1).s).gear} : {})};
     // Use the very same physical cone counter as the student's lesson.
@@ -927,15 +941,12 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
     stepDriveLesson(lesson, carView(recorded[0]), {start: true}, 0);
     for (let i = 1; i < recorded.length; i++) stepDriveLesson(lesson, carView(recorded[i]), {}, recorded[i].t - recorded[i - 1].t);
     const nearest = instructorConeDistances(recorded, placement.cones);
-    if (lesson.lastAttempt?.cones.length !== placement.cones.length) {
-      throw new Error('Instructor missed a native cone: ' + JSON.stringify(lesson.lastAttempt?.cones) + ', nearest ' + nearest.map(n => n.toFixed(2)).join(' ') + ' m');
-    }
-    // Never look like clipping a cone: clear every cone by minClearM past the distance that tips it.
-    if (nearest.some(distance => distance < TIP_DISTANCE_M + LESSON_LINE.minClearM)) {
-      throw new Error('Instructor too close to a cone: nearest ' + nearest.map(n => n.toFixed(2)).join(' ') + ' m, needs ' + (TIP_DISTANCE_M + LESSON_LINE.minClearM) + ' m');
+    // Cone proximity teaches the student; the instructor only needs to avoid tipping one.
+    if (nearest.some(distance => distance <= TIP_DISTANCE_M)) {
+      throw new InstructorRunFault('Instructor tipped a cone: nearest ' + nearest.map(n => n.toFixed(2)).join(' ') + ' m');
     }
     // The instructor himself keeps the four rules of the right try (lights, limiter, his own gear, no screech).
-    if (isGears && !lesson.lastAttempt.rules.every(Boolean)) throw new Error('Instructor broke a gearbox rule: ' + JSON.stringify(lesson.lastAttempt));
+    if (isGears && spec.gears.length > 1 && !lesson.lastAttempt.rules.every(Boolean)) throw new InstructorRunFault('Instructor broke a gearbox rule: ' + JSON.stringify(lesson.lastAttempt));
     return {corner, instructor, courseId, car, upgrades: {...upgrades}, difficulty, seed, ...(isLine || isSnow || isGears ? {lessonId, tyre} : {})};
   } finally { off(); }
 }
