@@ -97,8 +97,15 @@ export async function run(c) {
       const snow = await c.evaluate(`window.__qaApp.heliSession.skiOffers().snow.id`);
       const pick = {powder:'hard',cold:'medium',wet:'soft'}[snow];
       await c.evaluate(`document.querySelector('[data-ski-wax="${pick}"]').click()`);
+      await c.waitFor(`document.querySelector('[data-ski-challenge="wax"]')?.disabled === false`, 'wax pick applied to challenge button');
       await c.evaluate(`document.querySelector('[data-ski-challenge="wax"]').click()`);
-      await c.waitFor(`window.__qaApp.heliSession.phase==='skiing' && !!document.querySelector('.ski-loading') && window.__qaApp.visualReady`, 'loaded ski challenge',120_000);
+      try {
+        await c.waitFor(`window.__qaApp.heliSession.phase==='skiing'`, 'stepped into wax challenge',20_000);
+        await c.waitFor(`document.querySelector('#view3d')?.dataset.skiModels==='ready' && window.__qaApp.visualReady && document.querySelector('#renderer-loading')?.hidden`, 'loaded ski challenge',120_000);
+      } catch(error) {
+        await c.screenshot('wax-challenge-failure');
+        throw Error(`${error.message}: ${await c.evaluate(`JSON.stringify({phase:window.__qaApp.heliSession?.phase,paused:window.__qaApp.duel.state.paused,models:document.querySelector('#view3d')?.dataset.skiModels,view:window.__qaApp.heliSession?.view().ski,text:document.querySelector('.heli-panel')?.textContent})`)}`);
+      }
       await new Promise(r=>setTimeout(r,6000)); await clearCard(); await capture('wax-challenge');
       if(await c.evaluate(`window.__qaApp.profile.lab?.done?.wax===true`)) throw Error('Unfinished run granted wax reward.');
     }
