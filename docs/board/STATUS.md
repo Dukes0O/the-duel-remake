@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-27T15:41:24.597Z
+Observed at: 2026-10-27T16:10:34.398Z
 
-Observation commit: ee78970823b44457b66e318d3765ac57ba18d5ec
+Observation commit: 5ac7e2e36410762304fda9c0ca16af1529e85176
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: ee78970823b44457b66e318d3765ac57ba18d5ec
+Integration HEAD: 5ac7e2e36410762304fda9c0ca16af1529e85176
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -30,7 +30,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-finish | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish |
-| codex/lessons-v2-rules | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lessons-v2-rules |
+| codex/lessons-v2-rules | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lessons-v2-rules |
+| codex/lessons-v2-view | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lessons-v2-view |
 | codex/perf-high-night | 12 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/wild-art-src | 12 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
@@ -58,7 +59,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 32,341,826 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 335,942 B | +0 B | 5,000,000 B |
 | All `public/` | 350,059,394 B | +0 B | unavailable |
-| Git objects | 816,813,056 B | +0 B | unavailable |
+| Git objects | 817,329,152 B | +322,560 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -67,7 +68,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 7812464e27c0df9ba7697d8c787d6e7781c850eb
 - Local main: missing
-- Local integration/wasteland: 7812464e27c0df9ba7697d8c787d6e7781c850eb
+- Local integration/wasteland: d92f9492007ef6d01c744c17bb5a574c97facc00
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -75,6 +76,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 7812464e27c0df9ba7697d8c787d6e7781c850eb.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 7812464e27c0df9ba7697d8c787d6e7781c850eb.
+- Remote origin/integration/wasteland: behind local; cached commit 7812464e27c0df9ba7697d8c787d6e7781c850eb.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.

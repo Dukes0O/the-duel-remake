@@ -66,6 +66,7 @@ export function driveLessonBoardModel(props = {}) {
   // visible separately if the current car/course/player cannot start it.
   const cornerRow = {group: 'Driving', id: 'corner', name: '1 The sharp corner', open: !!start, done: !!start && completed};
   const model = {courses, selected, car, start, reason, completed, bestMargin, gold: driveLessonGold(bestMargin), rows: [cornerRow]};
+  if (model.gold) cornerRow.name += ' \u2605 Gold';
   if (!props.lessonRows) return model;
   // With all four lessons listed, every finished lesson shows its best margin in its own row, lesson 1 too.
   if (completed && bestMargin != null) cornerRow.name += ` (best ${seconds(bestMargin)} faster)`;
@@ -95,6 +96,7 @@ export function driveLessonBoardModel(props = {}) {
     // A finished lesson shows its best margin in its own row ("Best: ..." for lesson 1 sits under the list).
     const row = {group: 'Driving', id, name: info.n + ' ' + info.title + (done && bestMargin != null ? ` (best ${seconds(bestMargin)} faster)` : ''),
       open: !!go, done: !!go && done, note: why};
+    if (driveLessonGold(bestMargin)) row.name += ' ★ Gold';
     byId[id] = {id, courses: lessonCourses, selected: choice, start: go, reason: why, completed: done, bestMargin, gold: driveLessonGold(bestMargin), row};
     model.rows.push(row);
   }
@@ -145,23 +147,91 @@ function nextButton(lesson) {
   const next = lesson.phase === 'ready' ? index : index < 2 || lesson.lastAttempt?.passed ? Math.min(3, index + 1) : index;
   return `<button type="button" data-drive-action="next">Start ${escape(DRIVE_LESSON_STEPS[next].title)}</button><small>Enter starts the next run.</small>`;
 }
-// Temporary compatibility with the live panel. VIEW supplies the road guides and briefing.
+// All helpers below only read the native plan and observations.
+export function driveLessonTarget(lesson, s, mph) {
+  const corner = rows(lesson?.instructor?.corners).find(c => s <= c.turnOutS);
+  if (!corner) return null;
+  const inCorner = s >= corner.turnInS;
+  const tone = inCorner && Math.abs(mph - corner.targetMph) <= 3 ? 'green'
+    : inCorner && mph > corner.targetMph + 5 ? 'red' : '';
+  const distance = Math.max(0, Math.round((corner.brakeS ?? corner.turnInS) - s));
+  const cue = corner.kind === 'brake' && s < corner.brakeS ? `Brake in ${distance} m`
+    : corner.kind === 'lift' && !inCorner ? `Lift in ${distance} m` : `Corner ${Math.round(corner.targetMph)} mph`;
+  return {corner, cue, tone};
+}
+export function driveLessonMapMarkup(instructor) {
+  const plan = rows(instructor?.plan);
+  if (!plan.length) return '';
+  const xs = plan.map(p => p.x), zs = plan.map(p => p.z);
+  const minX = Math.min(...xs), minZ = Math.min(...zs);
+  const scale = Math.min(280 / Math.max(1, Math.max(...xs) - minX), 210 / Math.max(1, Math.max(...zs) - minZ));
+  const point = p => `${(30 + (p.x - minX) * scale).toFixed(1)},${(25 + (p.z - minZ) * scale).toFixed(1)}`;
+  const colors = {brake: '#ff6b65', coast: '#f4f1df', accelerate: '#6de4a0'};
+  let paths = '';
+  // Group adjacent samples into paths so the map follows the actual road without thousands of DOM nodes.
+  let start = 0;
+  for (let i = 1; i < plan.length; i++) {
+    if (plan[i].action !== plan[start].action || i === plan.length - 1) {
+      paths += `<polyline points="${plan.slice(start, i + 1).map(point).join(' ')}" fill="none" stroke="${colors[plan[start].action]}" stroke-width="4"/>`;
+      start = i;
+    }
+  }
+  const sample = s => plan[Math.min(plan.length - 1, Math.max(0, Math.round(s - plan[0].s)))];
+  const labels = rows(instructor.corners).map((c, i) => {
+    const [x, y] = point(sample(c.turnInS)).split(',').map(Number);
+    const [zx, zy] = point(sample(c.brakeS ?? c.turnInS)).split(',').map(Number);
+    const zone = c.kind === 'flat' ? '' : `<rect x="${zx-5}" y="${zy-5}" width="10" height="10" fill="${c.kind === 'brake' ? '#ff6b65' : '#f7d560'}"/>`;
+    const labelY=22+i*24;
+    return `${zone}<path d="M${x},${y} L330,${labelY-4}" stroke="#91aaa2" stroke-width=".6" opacity=".5"/><text x="338" y="${labelY}" fill="#fff5dd" font-size="13">${i+1}. ${Math.round(c.targetMph)} mph</text>`;
+  }).join('');
+  return `<svg class="drive-lesson-section-map" viewBox="0 0 520 265" role="img" aria-label="Section map: green accelerate, white coast, red brake. Numbered corner speeds."><polyline points="${plan.filter((_, i) => i % 3 === 0 || i === plan.length-1).map(point).join(' ')}" fill="none" stroke="#53616b" stroke-width="13" stroke-linejoin="round"/>${paths}${labels}<text x="30" y="255" fill="#d9e5df" font-size="12">Start to numbered corners to finish</text></svg>`;
+}
+const lessonIdeas = {
+  corner: 'Brake while the car is straight. Release the brake as you turn, so the tyres have grip left to steer. Fast bends may need only a lift of the accelerator.',
+  line: 'Use the whole road to make each curve gentler. Start wide, touch the inside, then let the car run wide on the exit. Look ahead to the next bend.',
+  gears: 'Keep the engine pulling strongly. E changes up and Q changes down. Change up at the shift lights, and change down while braking to leave the corner in a useful gear.',
+  snow: 'Snow gives the tyres less grip. Brake earlier and steer gently. On ice, leave the brakes alone; do your slowing before it.',
+};
+const wordPicture = (kind, title, text) => {
+  const road = '<path d="M8 50 Q8 8 50 8 H86" fill="none" stroke="#65737b" stroke-width="18"/><path d="M10 50 Q10 10 50 10 H86" fill="none" stroke="#6de4a0" stroke-width="3"/>';
+  const picture = kind === 'revs'
+    ? '<path d="M10 47 A35 35 0 0 1 80 47" fill="none" stroke="#65737b" stroke-width="8"/><path d="M45 47 L66 21" stroke="#6de4a0" stroke-width="4"/><circle cx="45" cy="47" r="5" fill="#edb65f"/>'
+    : kind === 'grip'
+      ? '<rect x="25" y="4" width="34" height="40" rx="8" fill="#65737b"/><path d="M30 13 H54 M30 23 H54 M30 33 H54 M8 49 H78" stroke="#d5e5df" stroke-width="3"/><path d="M30 46 H54" stroke="#6de4a0" stroke-width="5"/>'
+      : kind === 'lift'
+        ? '<rect x="32" y="19" width="24" height="31" rx="4" fill="#65737b"/><path d="M44 32 V3 M35 12 L44 3 L53 12" fill="none" stroke="#edb65f" stroke-width="4"/>'
+        : road + (kind === 'brake' ? '<path d="M1 34 H20 M1 43 H20" stroke="#ff6b65" stroke-width="5"/>' : kind === 'apex' ? '<circle cx="29" cy="27" r="5" fill="#f6af58"/>' : '<path d="M12 49 Q9 13 83 10" fill="none" stroke="#fff5dd" stroke-width="2"/>');
+  return `<div class="drive-lesson-word"><svg viewBox="0 0 90 55" aria-hidden="true">${picture}</svg><p><strong>${title}</strong><br>${text}</p></div>`;
+};
+export function driveLessonBriefingMarkup(props = {}, reopened = false) {
+  const lesson = currentLesson(props);
+  if (!lesson) return '';
+  const info = DRIVE_LESSON_VIEW[lesson.id];
+  return `<section class="drive-lesson-briefing" aria-label="Lesson briefing"><header><small>BRIAN'S DRIVING SCHOOL / LESSON ${info.n}</small><h2>${escape(info.title)}</h2><p>${lessonIdeas[lesson.id]}</p></header><div class="drive-lesson-brief-grid"><div>${driveLessonMapMarkup(lesson.instructor)}<p class="drive-lesson-map-key"><span>Green: accelerate</span> / White: coast / <b>Red: brake</b> / Yellow: lift</p><ol class="drive-lesson-map-corners">${lesson.instructor.corners.map(c => `<li>${escape(c.name)} / ${Math.round(c.targetMph)} mph</li>`).join('')}</ol></div><div>${wordPicture('brake', 'Brake zone', 'The box where you brake, while the car is straight.')}${wordPicture('apex', 'Apex', 'The inside of the corner. Aim for the cone.')}${wordPicture('line', 'Racing line', 'The widest, gentlest curve through the corners.')}${lesson.id === 'gears' ? wordPicture('revs', 'Revs', 'How fast the engine spins. The lights show when to change up.') : lesson.id === 'snow' ? wordPicture('grip', 'Grip', 'How well the tyres hold the road. Ice leaves much less grip.') : wordPicture('lift', 'Lift and coast', 'Ease off the accelerator. Coast means use neither pedal.')}</div></div><ol class="drive-lesson-brief-steps">${DRIVE_LESSON_STEPS.map(step => `<li><strong>${step.title}</strong><br>${escape(step.whatCounts)}</li>`).join('')}</ol><p class="drive-lesson-clean-rule">Clean means no wall hit, no more than 1 s off the road, and less than 0.3 s of tyre screech. Each corner checks braking, speed within 5 mph and quiet tyres.</p><p class="drive-lesson-intro">Brian: ${escape(props.radioText || lessonIdeas[lesson.id])}</p>${reopened ? '<button type="button" data-drive-action="close-help">Back to lesson</button>' : `<button type="button" data-drive-action="next">Start ${escape(driveLessonStep(lesson).title)}</button><small>Enter starts the run.</small>`}<button type="button" data-drive-action="leave">Leave lesson</button></section>`;
+}
+const stepStrip = lesson => `<ol class="drive-lesson-step-strip">${DRIVE_LESSON_STEPS.map((st, i) => `<li ${st.id === lesson.stage ? 'aria-current="step"' : ''}>${i+1} ${st.title}</li>`).join('')}</ol>`;
 export function driveLessonPanelMarkup(props = {}) {
   const lesson = currentLesson(props);
   if (!lesson) return '';
-  const step = driveLessonStep(lesson);
-  return `<section class="drive-lesson-panel" aria-label="Driving lesson"><h2>${escape(step.title)}</h2>
-    <p>${escape(step.whatCounts)}</p><p>Instructor ${seconds(lesson.instructor.timeSec)}</p>
-    <button type="button" data-drive-action="leave">Leave lesson</button></section>`;
+  const step = driveLessonStep(lesson), s = props.distanceS ?? lesson.corner?.startS ?? 0;
+  const target = driveLessonTarget(lesson, s, props.speedMph ?? 0);
+  const corner = target?.corner;
+  const gap = lesson.attempt?.gapSeconds;
+  const caption = props.watchClip === 'late' ? 'Watch the late brake: less grip to turn, so the car slides wide.'
+    : corner ? `${corner.name} / ${corner.kind === 'brake' && s < corner.brakeS ? target.cue : corner.kind === 'brake' ? `Braking now: ${Math.round(lesson.instructor.plan?.find(p => p.s >= (corner.brakeS ?? s))?.targetMph ?? corner.targetMph)} down to ${Math.round(corner.targetMph)} mph` : corner.kind === 'lift' ? 'Lift the accelerator. Keep the brakes free.' : 'Carry your speed. No braking needed.'}` : 'Clean run complete.';
+  return `<section class="drive-lesson-panel" aria-label="Driving lesson">${stepStrip(lesson)}<p class="drive-lesson-counts">${escape(step.whatCounts)}</p><div class="drive-lesson-panel-actions"><button type="button" data-drive-action="help">How this lesson works</button><button type="button" data-drive-action="leave">Leave lesson / Esc</button>${lesson.stage === 'watch' ? '<button type="button" data-drive-action="skip">Skip / Enter</button>' : ''}</div>${lesson.stage === 'watch' ? `<p class="drive-lesson-watch-caption">${escape(caption)}</p>` : ''}</section>
+    ${lesson.phase === 'driving' && target && lesson.stage !== 'watch' ? `<aside class="drive-lesson-target ${target.tone}" aria-label="Corner target"><small>NEXT CORNER</small><strong>${escape(corner.name)}</strong><b>${target.cue}</b><span>Your speed ${Math.round(props.speedMph ?? 0)} mph</span><span>Target ${Math.round(corner.targetMph)} mph</span></aside>` : ''}
+    ${lesson.phase === 'driving' && Number.isFinite(gap) && lesson.stage !== 'watch' ? `<aside class="drive-lesson-live-gap ${gap > 0 ? 'red' : 'green'}">${gap > 0 ? '+' : ''}${gap.toFixed(2)} s<small>${gap > 0 ? 'behind' : 'ahead of'} instructor</small></aside>` : ''}
+    <ol class="drive-lesson-corner-lights" aria-label="Corner checks">${rows(lesson.instructor.corners).map((c, i) => {const r = lesson.attempt?.corners[i]?.result, finished = s >= c.exitS; return `<li class="${finished ? r?.light ?? '' : ''}" title="${escape(c.name)}: ${finished ? r?.light ?? 'waiting' : 'not finished'}"><i></i>${i+1}</li>`;}).join('')}</ol>`;
 }
 export function driveLessonResultMarkup(props = {}) {
   const lesson = currentLesson(props);
   if (!lesson || lesson.phase !== 'result' || !lesson.lastAttempt) return '';
   const result = lesson.lastAttempt;
   return `<section class="drive-lesson-result" aria-label="Attempt result" aria-live="polite">
-    <h2>${passed(lesson) ? 'Lesson passed' : result.passed ? 'Run passed' : lesson.failed ? 'Try again' : 'Practice complete'}</h2>
+    ${stepStrip(lesson)}<h2>${passed(lesson) ? 'Lesson passed' : result.passed ? 'Run passed' : lesson.failed ? 'Try again' : 'Practice complete'}</h2>
     <p>${result.finished ? 'You ' + seconds(result.elapsedSeconds) : 'Did not finish'}. Instructor ${seconds(lesson.instructor.timeSec)}</p>
-    <p>${escape(result.advice)}</p>${rows(result.corners).map(c => `<p>${escape(c.name)}: ${c.passed ? 'Met' : 'Missed'}; ${c.minMph == null ? 'No speed' : c.minMph.toFixed(0) + ' / ' + c.targetMph.toFixed(0) + ' mph'}</p>`).join('')}
+    <div class="drive-lesson-results-scroll"><table><thead><tr><th>Corner</th><th>Braking</th><th>Speed / target</th><th>Tyres</th></tr></thead><tbody>${rows(result.corners).map(c => `<tr><th>${escape(c.name)}</th><td>${c.checks?.brake == null ? '—' : c.checks.brake ? '✓' : '✗'} ${c.kind === 'flat' ? 'No brake needed' : c.kind === 'lift' ? 'Lift only' : c.brakeDeltaM == null ? 'No brake press' : Math.abs(c.brakeDeltaM).toFixed(0) + ' m ' + (c.brakeDeltaM > 0 ? 'late' : 'early')}</td><td>${c.checks?.speed ? '✓' : '✗'} ${c.minMph == null ? 'Not reached' : c.minMph.toFixed(0) + ' / ' + c.targetMph.toFixed(0) + ' mph'}</td><td>${c.checks?.quiet ? '✓ Quiet' : '✗ Slid'} / ${(c.screechSeconds ?? 0).toFixed(1)} s</td></tr>`).join('')}</tbody></table></div><p class="drive-lesson-advice">${escape(result.advice)}</p>
     ${driveLessonGold(lesson.bestMargin) ? '<p>Gold</p>' : ''}${nextButton(lesson)}
     ${passed(lesson) && props.lessonSaveFailed ? '<button type="button" data-drive-action="retry-save">Retry save</button>' : ''}
     <button type="button" data-drive-action="leave">Leave lesson</button></section>`;
@@ -173,7 +243,7 @@ export function bindDriveLessonUi(root, readProps, callbacks = {}) {
   if (!root?.addEventListener || typeof readProps !== 'function') throw new TypeError('Lesson root and current props reader required');
   const inside = node => !!node && root.contains(node);
   const next = props => {
-    if (!canNext(currentLesson(props))) return false;
+    if (!props.briefing && !canNext(currentLesson(props))) return false;
     callbacks.onNext?.(); return true;
   };
   const click = event => {
@@ -183,6 +253,9 @@ export function bindDriveLessonUi(root, readProps, callbacks = {}) {
     const props = readProps();
     if (action === 'leave') callbacks.onLeave?.();
     else if (action === 'next') next(props);
+    else if (action === 'help' && currentLesson(props)) callbacks.onHelp?.();
+    else if (action === 'close-help') callbacks.onCloseHelp?.();
+    else if (action === 'skip' && props.lesson?.stage === 'watch') callbacks.onNext?.();
     else if (action === 'retry-save' && props.lessonSaveFailed === true && passed(currentLesson(props) ?? {})) callbacks.onRetrySave?.();
     else if (action.startsWith('start:')) {
       const model = driveLessonBoardModel(props), start = (model.byId?.[action.slice(6)] ?? (action === 'start:corner' ? model : null))?.start;
@@ -228,6 +301,7 @@ export function mountDriveLessonUi(app,host){
   let previous='';
   const clean=bindDriveLessonUi(root,()=>boardProps(),{
     onStart:request=>void app.startLesson({...request,car:request.carId}),
+    onHelp:()=>{app.driveLessonHelp=true;app.driveLessonBriefing=true;update();},onCloseHelp:()=>{app.nextLessonAttempt();update();},
     onNext:()=>app.nextLessonAttempt(),onLeave:()=>app.leaveLesson(),onRetrySave:()=>app.retryLessonSave(),
     onSelectCourse:({courseId,lessonId='corner'})=>{
       const model=driveLessonBoardModel(boardProps());
@@ -272,11 +346,17 @@ export function mountDriveLessonUi(app,host){
 
     root.hidden=!available||!run&&!app.driveLessonBoardOpen;
     root.classList.toggle('drive-lesson-host-running',run);
-    if(root.hidden)return;
-    const markup=run?driveLessonPanelMarkup(props)+driveLessonResultMarkup(props):driveLessonBoardMarkup(props);
+    const speed=host.ownerDocument.getElementById?.('speed-value');
+    if(root.hidden){speed?.classList.remove('drive-lesson-speed-green','drive-lesson-speed-red');return;}
+    const briefing=run&&(props.lesson.phase==='ready'||props.briefing);
+    const viewProps={...props,distanceS:app.duel.state.s,speedMph:app.duel.state.speedMph,watchClip:app.duel.drivingLesson?.watchClip,radioText:app.driveLessonRadioText};
+    const markup=briefing?driveLessonBriefingMarkup(viewProps,app.driveLessonHelp===true):run?driveLessonPanelMarkup(viewProps)+driveLessonResultMarkup(props):driveLessonBoardMarkup(props);
+    root.classList.toggle('drive-lesson-host-briefing',!!briefing);
+    const target=run&&!briefing?driveLessonTarget(props.lesson,app.duel.state.s,app.duel.state.speedMph):null;
+    if(speed){speed.classList.toggle('drive-lesson-speed-green',target?.tone==='green');speed.classList.toggle('drive-lesson-speed-red',target?.tone==='red');}
     const message=app.driveLessonMessage;
     const status=message?`<p class="drive-lesson-message" role="status">${escape(message)}</p>`:'';
-    const radio=run&&app.driveLessonRadioText?`<p class="drive-lesson-radio" aria-live="polite">${escape(app.driveLessonRadioText)}</p>`:'';
+    const radio=run&&props.lesson.stage!=='watch'&&app.driveLessonRadioText?`<p class="drive-lesson-radio" aria-live="polite">${escape(app.driveLessonRadioText)}</p>`:'';
     const content=markup+status+radio;
     if(content!==previous){
       const action=root.contains(host.ownerDocument.activeElement)?host.ownerDocument.activeElement?.dataset?.driveAction:null;
@@ -285,7 +365,7 @@ export function mountDriveLessonUi(app,host){
     }
     root.classList.toggle('drive-lesson-host-result',run&&props.lesson.phase==='result');
   }
-  return {update,dispose(){clean();syncGauge(false);host.removeEventListener('click',open);root.remove();}};
+  return {update,dispose(){clean();syncGauge(false);host.ownerDocument.getElementById?.('speed-value')?.classList.remove('drive-lesson-speed-green','drive-lesson-speed-red');host.removeEventListener('click',open);root.remove();}};
 }
 
 

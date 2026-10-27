@@ -22,6 +22,7 @@ test('native App: Watch replay, skip, steps, one winning run, once-only reward a
       assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), true);
       const run = app.duel.drivingLesson, state = app.duel.state;
       assert.equal(run.lesson.stage, 'watch'); assert.equal(app.selectPlayer(other), false);
+      assert.equal(app.nextLessonAttempt(), true, 'Start Watch me dismisses the briefing');
       // Replay real inputs, not injected positions: fixed tick poses equal the recorded native run.
       for (let tick = 0; tick < 240; tick++) {
         app.duel.step(1 / 120);
