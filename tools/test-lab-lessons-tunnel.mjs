@@ -148,11 +148,36 @@ for (const {spec, definition, hooks} of packets) {
     assert.equal(spec.bench.goalMet(history), true, 'the original bench must accept the actual attempts');
   });
 }
+test('suspension teaches the shake and lean trade-off without teaching tyre contact', () => {
+  const {definition, hooks, spec} = suspension;
+  assert.doesNotMatch(JSON.stringify(definition), /contact|tyre light/i);
+  for (const spring of ['soft', 'stiff']) for (const road of ['smooth', 'bumpy']) {
+    const d = hooks.animations.try({input: {[spring]: spring, [road]: road}, time: 1});
+    assert.ok(d.labels.every(l => !/contact|%/i.test(l.text)));
+    assert.ok(d.objects.every(o => o.id !== 'contact-light'));
+  }
+  const written = [];
+  const ctx = new Proxy({}, {get: (_, key) => key === 'fillText' ? text => written.push(text) : () => {}});
+  Object.values(hooks.pictures).forEach(picture => picture(ctx, 450, 120));
+  assert.ok(written.some(text => text === 'Less shake on bumps'));
+  assert.ok(written.some(text => text === 'More shake on bumps'));
+  assert.ok(written.every(text => !/contact|%/i.test(text)));
+  const time = Math.PI / 18;
+  const d = hooks.animations['watch-1']({index: 1, time});
+  assert.equal(d.cars.length, 2);
+  assert.ok(d.cars[0].position[0] < d.cars[1].position[0], 'both setups are side by side');
+  const soft = spec.bench.run({spring: 'soft', road: 'bumpy'}), stiff = spec.bench.run({spring: 'stiff', road: 'bumpy'});
+  assert.ok(d.cars[0].position[1] < d.cars[1].position[1], 'soft passes less bump movement to the body');
+  assert.ok(Math.abs(d.cars[0].rotation[2]) > Math.abs(d.cars[1].rotation[2]), 'stiff keeps the body flatter');
+  assert.ok(Math.abs((d.cars[0].position[1] - .55) / (d.cars[1].position[1] - .55) - soft.bodyShake / stiff.bodyShake) < 1e-12);
+  assert.ok(Math.abs(d.cars[0].rotation[2] / d.cars[1].rotation[2] - soft.leanDeg / stiff.leanDeg) < 1e-12);
+});
+
 test('the lesson comparisons tell the truth where the design prose differs', () => {
   const b = TUNNEL_BENCHES;
   assert.equal(b.grip.run({slideDeg: 0}).grip, b.grip.run({slideDeg: 4}).grip, 'available grip is a plateau, not a rising curve');
-  assert.ok(b.suspension.run({spring: 'soft'}).contactShare < b.suspension.run({spring: 'stiff'}).contactShare, 'this rig does not give soft springs better contact');
   assert.ok(b.suspension.run({spring: 'soft'}).bodyShake < b.suspension.run({spring: 'stiff'}).bodyShake, 'soft springs reduce the shake passed to the body');
+  assert.ok(b.suspension.run({spring: 'stiff'}).leanDeg < b.suspension.run({spring: 'soft'}).leanDeg, 'stiff springs keep the body flatter in a bend');
   assert.equal(b.braking.run({frontShare: 50}).stopMetres, b.braking.run({frontShare: 70}).stopMetres);
   assert.equal(b.fuel.controls.some(c => c.id === 'laps'), false);
   assert.equal(b.grip.controls.some(c => c.id === 'pressure'), false);

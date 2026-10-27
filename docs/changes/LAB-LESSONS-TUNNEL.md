@@ -2,6 +2,14 @@
 
 ## Design settled before code
 
+Suspension follow-up (Claude's round-one verdict, relayed by Kyle): remove
+contact as a teaching point because this rig's contact result contradicts the
+usual real-world benefit of softer springs on bumps. The replacement Watch
+step puts soft and stiff cars side by side: the soft car shakes less but leans
+more, and the stiff car shakes more but stays flatter. Both motions read bench
+results. Remove the contact sign, light and picture number. Keep the original
+bench rules and challenge unchanged. This decision precedes the follow-up code.
+
 Five packets own their teaching and animations. The existing frame owns steps,
 notebook words and challenges; the existing tunnel benches alone supply numbers
 and decide whether a challenge passes. The Lab 2 switch selects the new lessons.
@@ -12,8 +20,8 @@ use the existing Lab type. No data strip or corner list is added.
 
 Truth takes priority over section 12.6: Grip has no pressure setting; its
 plateau ends at the angle returned by bestSlideDegrees, with casual/pro choices.
-Suspension's soft spring reduces body shake and increases lean, but does not
-improve contact in this rig. Fuel measures mass and launch time, with no lap
+Suspension teaches less body shake with soft springs and less lean with stiff
+springs; this rig's contact result is excluded. Fuel measures mass and launch time, with no lap
 consumption or electric-car model. Do not invent a fuel-per-lap challenge.
 Downforce's loss is a speed share, not a fixed six mph. Braking's distance is
 independent of balance; balance separately predicts rear sliding.
@@ -44,17 +52,31 @@ The Blender generator registry adds the tunnel parts recipe, with the same
 existing recipe-only placement checks and no exemptions. One new draft test
 incorrectly assumed suspension contact differed by less than one percent; it
 failed on the actual 87.87% soft / 93.115% stiff result. Replaced that invented
-tolerance with the two physical comparisons the lesson teaches: soft has less
-contact than stiff here, and less body shake. No pre-existing assertion or
-tolerance changed. Claude's written assertion review is still needed at handoff.
+tolerance with comparisons of the bench results. Claude approved that draft
+replacement, the generator-list addition and the exact sheet-name allowance
+in the round-one verdict relayed by Kyle. No existing tolerance was loosened.
 
 Final document placement found the card-prescribed sheet name absent from the
 older placement rule. One added line admits only
 `docs/board/looks/lab-2/lab-lessons-tunnel-[1-3].jpg`; raw captures, other
 extensions, nested paths and rounds outside the three-round cap still fail.
 This implements the card's required home without changing size limits. The
-existing hygiene-rule suite passes unchanged. Claude's written review of this
-new exact-path allowance is also required before integration.
+existing hygiene-rule suite passes unchanged. Claude approved the allowance.
+
+Suspension follow-up assertions (Kyle's request):
+
+- Removed the assertion that soft `contactShare` is below stiff. It checked a
+  real bench output but could reinforce the wrong real-world teaching point.
+- Kept the assertion that soft passes less `bodyShake` into the car. Added the
+  matching assertion that stiff has less `leanDeg` in a bend.
+- Added checks that the lesson wording, every answer/check picture, trial
+  labels and objects contain no contact comparison, percentage or light.
+- Added checks that the replacement Watch step shows two setups side by side,
+  with less soft-body shake and less stiff-body lean. Their motion ratios must
+  match the bench's `bodyShake` and `leanDeg`; no invented physical numbers.
+
+No prediction, check or hint used contact to decide an answer, so their existing
+bench-verdict and full challenge-history assertions remain unchanged.
 
 ## Code review
 
@@ -103,11 +125,36 @@ number or world signature was re-recorded.
 
 The round-one sheet is `docs/board/looks/lab-2/lab-lessons-tunnel-1.jpg`,
 471,284 bytes, with five large Watch pictures and four small views per lesson.
-Full-size captures remain under `.evidence/2026-10-26/LAB-LESSONS-TUNNEL/round-1/`
-for Claude. Claude's look verdict and written registry assertion review remain
-open; neither is claimed by the builder.
+Round-one raw captures were removed after acceptance. Claude accepted round one
+at the Lift and weight bar and approved
+the truth-over-prose corrections, generator list and sheet-name additions.
+The requested Suspension teaching correction is recorded above.
 
 ## Final gates
+
+### Suspension follow-up
+
+The 18 direct lesson tests pass after the correction. The Suspension-only
+memory-only browser flow passes on private port 49164: 11 captures, zero
+warnings and zero errors, including the loaded challenge and its real goal.
+The corrected Watch view shows both cars and their trade-off labels clearly.
+Captures are under `.evidence/2026-10-26/LAB-LESSONS-TUNNEL/suspension-follow-up/`.
+
+Independent review found constant bench solves in the new animation loop;
+both results are now computed once and reused. Picture review found stale
+text after canvas sign resize; one corner-mount line releases the old GPU
+texture before its existing redraw/upload. Both fixes were confirmed by the
+reviewer, with no remaining findings. No other lesson's teaching changed.
+
+Follow-up gates: `node tools/run-tests.mjs --tier lane --changed --jobs 4`
+passes 51/51 suites, zero failed or not-run, 505.50 seconds; `npm run build`
+passes, 570 modules, 830 ms, with the existing mixed-import/large-chunk warnings.
+Board checks pass 191/191 and repository placement passes. Replay fingerprints
+remain unchanged (225 checks). PowerShell used System32 first on PATH; inbox
+and job-count checks admitted each heavy run, with no more than two together.
+No frame timing, integration merge, push or live-folder work ran.
+
+### Original five-lesson build
 
 On game/source commit `364eb257`: `node tools/run-tests.mjs --tier lane
 --changed --jobs 4` passes 51/51 suites, zero failures or not-run, 528.54 seconds.
@@ -126,6 +173,12 @@ art, not retained modelling output. Independent review approved the game code
 and the final QA helper change without remaining faults.
 
 ## Removed
+
+Suspension follow-up removes the tyre-contact worked step, percentage in
+answer/check pictures, world contact sign and flashing contact light. Its
+replacement teaches the shake/lean trade-off. No bench simulation changed.
+Accepted round-one raw evidence is removed to the Recycle Bin; the accepted
+compressed sheet remains. Follow-up captures stay for the merge handoff.
 
 The new packets replace each old bench panel in Lab 2 through the frame's
 existing automatic packet discovery. The original benches remain the challenge

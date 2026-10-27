@@ -9,7 +9,7 @@ export const spec = {
   wonder: 'One car shakes much more over these bumps. What is different?',
   wordInputs: [at('soft'), at('soft'), at('stiff'), at('soft', 'smooth')],
   worked: [['Bumps', 'Soft springs pass less shaking into the car; stiff springs pass more.', at('soft')],
-    ['The tyre light', `Soft keeps contact ${Math.round(soft.contactShare * 100)} percent of the time; stiff keeps contact ${Math.round(stiff.contactShare * 100)} percent here.`, at('stiff')],
+    ['The trade-off', 'Soft springs pass less shaking over bumps but lean more in a bend; stiff springs shake more but keep the car flatter.', at('stiff')],
     ['The bend', `Soft springs lean ${soft.leanDeg.toFixed(1)} degrees here; stiff ones lean ${stiff.leanDeg.toFixed(1)} degrees.`, at('stiff', 'smooth')]],
   controls: [{id: 'soft', setting: 'spring', label: 'Fit soft coil spring', value: 'soft'}, {id: 'stiff', setting: 'spring', label: 'Fit stiff coil spring', value: 'stiff'},
     {id: 'bumpy', setting: 'road', label: 'Roll the bumpy road under the wheel', value: 'bumpy'}, {id: 'smooth', setting: 'road', label: 'Roll the smooth road under the wheel', value: 'smooth'}],
@@ -29,7 +29,7 @@ export const spec = {
   resultHint: r => `These ${r.settings.spring} springs lean ${r.leanDeg.toFixed(1)} degrees in the bend. Change the spring or the road for Brian's comparison.`,
   replay: 'Compare the soft and stiff springs on bumps, then in a bend.',
   challenge: 'Try the other spring on the smooth road to finish all four comparisons.',
-  card: 'Soft for bumps; stiff leans less on smooth fast roads.',
-  picture: partPicture('spring', r => [`${r.settings.spring} spring`, `${r.leanDeg.toFixed(1)} degrees lean`, `${Math.round(r.contactShare * 100)}% contact`]),
+  card: 'Soft springs pass less shaking; stiff springs keep the car flatter in bends.',
+  picture: partPicture('spring', r => [`${r.settings.spring} spring`, `${r.leanDeg.toFixed(1)} degrees lean`, r.settings.road === 'smooth' ? 'Smooth road' : r.bodyShake < stiff.bodyShake ? 'Less shake on bumps' : 'More shake on bumps']),
 };
 export const {definition, hooks} = tunnelPacket(spec, suspensionDrawing, mountSuspension);

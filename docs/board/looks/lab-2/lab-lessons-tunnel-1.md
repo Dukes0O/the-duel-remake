@@ -11,7 +11,11 @@ controls. Browser checks exercise actual part clicks and all five real goals
 with memory-only storage. No frame timing.
 
 The lesson numbers follow the actual benches; prose differences are listed in
-`docs/changes/LAB-LESSONS-TUNNEL.md`. Full-size captures remain in
-`.evidence/2026-10-26/LAB-LESSONS-TUNNEL/round-1/` for Claude's review.
+`docs/changes/LAB-LESSONS-TUNNEL.md`. Round-one raw captures were removed after
+acceptance. Correction captures are in
+`.evidence/2026-10-26/LAB-LESSONS-TUNNEL/suspension-follow-up/`.
 
-Claude's look verdict: pending. This is the first of at most three rounds.
+Claude's look verdict: accepted, relayed by Kyle. The pictures meet the Lift
+and weight bar. Truth-over-prose corrections and the generator/sheet-name
+additions are approved. Before merge, Suspension removes its contact comparison
+and teaches the shake/lean trade-off, as recorded in the change note.

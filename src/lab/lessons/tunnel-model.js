@@ -99,6 +99,7 @@ export function tunnelMount(id) {
           if (row.text !== l.text) {
             l.text = row.text;
             const ctx = l.surface.getContext('2d'); ctx.font = 'bold 44px sans-serif';
+            l.texture.dispose(); // Resized canvas signs need fresh GPU storage before upload.
             l.surface.width = Math.ceil(ctx.measureText(row.text).width + 48);
             ctx.fillStyle = '#172327ed'; ctx.fillRect(0, 0, l.surface.width, 96);
             ctx.fillStyle = row.colour ?? '#f5f0dc'; ctx.font = 'bold 44px sans-serif'; ctx.textAlign = 'center';
