@@ -1393,3 +1393,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-27 LAB-LESSONS-TUNNEL merged (Codex, look round 1, suspension fix): five Wind tunnel lessons rebuilt; three code conflicts resolved keeping both; Lab suites, build and lane tier 9/9 pass. All sixteen Lab lessons rebuilt; Snow and Tunnel go in the next release.
 - 2026-10-27 Release: Lab Snow and Wind tunnel corners; full tier 530/530 on 3dd322a4.
 - 2026-10-27 LESSON-INSTRUCTOR-ANY-CAR merged (Codex, Claude review): instructor works in all 14 cars on every lesson row, Casual and Pro; plain message if not; lane tier 34/34 and build pass in lane.
+- 2026-10-27 HELI-SUMMIT-LANDED merged (Codex, Claude review): Summit pads were outside the arrival area; panel now shows there, with waiting text during a rescue or ski drop; lane tier 42/42 and build pass in lane.
