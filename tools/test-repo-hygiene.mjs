@@ -68,6 +68,7 @@ export function inspectRepository(root = PROJECT_ROOT, files = projectFiles(root
       /^docs\/board\/looks\/[^/]+\/(?:round|look)-\d+\.jpg$/.test(name) ||
       /^docs\/board\/looks\/lab-2\/lab-lessons-flying-[1-3]\.jpg$/.test(name) ||
       /^docs\/board\/looks\/lab-2\/lab-lessons-snow-[1-3]\.jpg$/.test(name) ||
+      /^docs\/board\/looks\/lab-2\/lab-lessons-tunnel-[1-3]\.jpg$/.test(name) ||
       /^docs\/board\/looks\/earned-cars\/car-[1-3]-round-[1-3]\.jpg$/.test(name) || /^docs\/board\/looks\/lab-2\/lab-lessons-workshop-[1-3]\.jpg$/.test(name));
     // SPEC 0.9: audio takes that cannot be regenerated live in audio-src/.
     const keptAudio = name.startsWith('audio-src/') && AUDIO_SOURCES.has(extension);

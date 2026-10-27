@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const generators = [
+  {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
   { script: 'tools/blender/deep-art-fit.py', args: [],
