@@ -83,8 +83,48 @@ drawing when no canvas context is available. A new test covers missing and
 null contexts; the existing restoration assertions stay unchanged. Resume
 only failed and unrun suites, preserving unrelated green results.
 
+## Final checks and handoff
+
+- Frozen game source and final browser recipe: `d8222357` (wall-label fix
+  `31b6c372`). Required lane command ran with System32 first on PATH, jobs 4:
+  33 passed, one failed, 22 unrun in 231.27 s. After the real canvas fix, the
+  failed/unrun suites plus the changed Snow suite all pass: 24/24, zero failed
+  or unrun, 219.80 s. All 56 unique lane suites are covered; passing unrelated
+  suites were not repeated. Seven Snow tests pass, including the new missing-
+  canvas regression. Existing restoration checks pass unchanged.
+- Replay fingerprints: 225 unchanged checks across 25 cases and three frame
+  rates. World composition: all 47 exact checks pass. No simulation rule,
+  seed, saved shape or reward rule changed.
+- `npm run build` passes, 777 ms, System32 first on PATH. Only the existing
+  shared dynamic-import and large-chunk warnings remain.
+- Native Launch flow passes all words, worked steps, prediction/hint,
+  three real dragged speed-dial trials, checks and the actual rewarded bench
+  target. Wax's final continuation passes its whole teaching flow, real
+  selector clicks, caption separation, checks and the existing slalom start.
+  It waits for the wax-selected button to become enabled, then for skiing,
+  loaded ski models, visual readiness and the hidden renderer loading panel.
+  A transient instruction card is not a reliable model-loading witness.
+  No wait limit or game condition was relaxed. Private port 11890; isolated
+  memory-only saves; zero warnings/errors. The real challenge is pictured
+  while running, with its reminder clear of every button and panel.
+- Independent code review confirms all final fixes and resource disposal;
+  no open code finding. No frame timing, outward merge, push or live game edit.
+- Round-one sheet: `docs/board/looks/lab-2/lab-lessons-snow-1.jpg`, 430,080
+  bytes, one large Watch per lesson plus a small full-flow strip. All 30
+  full-size final captures remain under this card's `round-1` evidence folder
+  for Claude. Claude's art verdict and the expectation-expansion review above
+  are pending. Later changes are documentation, sheet and status only.
+- Cockpit: created T-064 with `Board cards LAB-LESSONS-SNOW.` in its notes;
+  the protected board sync set its status. The local fallback was rebuilt.
+  Integration's unrelated HELI-VIEW-FRAMES mapping remains for its owner.
+
 ## Removed
 
 The new packets replace both old bench panels in Lab 2 through the existing
 lesson discovery hook. Legacy Lab keeps its existing bench implementation.
 No old runtime model is replaced or archived.
+Recycled 838,992,081 bytes of this lane's generated QA/build output and its
+interrupted first Chrome profile. That profile was identified by its exact
+Snow-only QA URL before removal. Final captures and handoff gate proof stay
+for review. The read-only audit found no unused new module; its 141 existing
+runtime candidates are advisory and were left for the Director, not deleted.

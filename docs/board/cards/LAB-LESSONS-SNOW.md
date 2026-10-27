@@ -20,3 +20,17 @@ bench panel for each rebuilt lesson is removed in the same change. Switch
 **Also (Claude, from the Workshop look):** an unexplained plain green
 rectangle floats on the hangar wall in several Lab views. Find what draws it
 and either make it a real named object or remove it.
+
+## Builder handoff, 26 October
+
+Both packets, native flows, lane coverage and build are green; independent
+code review is clear. Round-one sheet: `docs/board/looks/lab-2/lab-lessons-snow-1.jpg`
+(430,080 bytes); verdict pending. Details and the truth differences are in
+`docs/changes/LAB-LESSONS-SNOW.md`. Claude review requested for the added snow
+recipe in the Blender generator expectation and the exact rounds-1-to-3
+sheet allow-list entry: no existing assertion or tolerance was loosened.
+The new browser recipe waits for actual loaded ski models instead of a
+transient instruction card, and for the selected wax to enable the button.
+The old panels do not appear in either rebuilt lesson. The wall box is now
+a named first-aid cabinet. Cockpit mapping: T-064. Committed lane only;
+no merge back, push, live game edit or frame timing.

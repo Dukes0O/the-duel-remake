@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-26T23:41:02.442Z
+Observed at: 2026-10-27T00:13:56.802Z
 
-Observation commit: 6cc099b40c75e8eb877573f77288695882bdf9dc
+Observation commit: d8222357528a24811654f1ff05b041cdc76d6ff2
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6cc099b40c75e8eb877573f77288695882bdf9dc
+Integration HEAD: d8222357528a24811654f1ff05b041cdc76d6ff2
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -30,10 +30,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-finish | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish |
-| codex/go-live-evening | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/go-live |
-| codex/lab-lessons-flying | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-flying |
+| codex/lab-lessons-snow | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-snow |
 | codex/lab-lessons-tunnel | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-tunnel |
-| codex/lab-lessons-workshop | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-workshop |
 | codex/perf-high-night | 11 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/wild-art-src | 11 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
@@ -44,9 +42,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-finish | unknown | 2026-10-26T07:49:02-07:00 | 0 | last commit 2026-10-26T07:49:02-07:00 | docs/THE_DEEP.md, docs/board/STATUS.md, docs/board/looks/deep-finish/round-1.jpg, docs/board/looks/deep-finish/round-1.md, docs/changes/DEEP-PLACES.md |
-| codex/go-live-evening | unknown | 2026-10-26T16:09:35-07:00 | 0 | last commit 2026-10-26T16:09:35-07:00 | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/GO-LIVE-EVENING.md, docs/board/looks/lab-2/look-5.jpg, docs/board/looks/lab-2/look-5.md |
-| codex/lab-lessons-flying | unknown | 2026-10-26T15:43:38-07:00 | 0 | last commit 2026-10-26T15:43:38-07:00 | docs/board/looks/lab-2/lab-lessons-flying-1-review.md, docs/board/looks/lab-2/lab-lessons-flying-1.jpg, docs/changes/LAB-LESSONS-FLYING.md, src/lab/benches/altitude.js, src/lab/benches/fire.js |
-| codex/lab-lessons-tunnel | unknown | 2026-10-26T16:03:06-07:00 | 0 | last commit 2026-10-26T16:03:06-07:00 | docs/board/board.yaml, docs/board/cards/GO-LIVE-EVENING.md, docs/board/looks/lab-2/look-5.jpg, docs/board/looks/lab-2/look-5.md, docs/board/run-log.md |
+| codex/lab-lessons-tunnel | unknown | 2026-10-26T16:59:25-07:00 | 0 | last commit 2026-10-26T16:59:25-07:00 | docs/board/STATUS.md, docs/changes/LAB-LESSONS-TUNNEL.md, public/assets/models/lab/tunnel-parts.glb, src/lab/lab-view.js, src/lab/lesson-frame.js |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 11 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-15T00:56:24-07:00 | 11 | last commit 2026-10-15T00:56:24-07:00 | docs/changes/WILD-ART-SRC.md, tools/art/wildlife-north-woods.json, tools/blender/wildlife-north-woods.py, tools/test-blender-output.mjs |
 
@@ -61,10 +57,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 30,327,512 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 1,333,943 B | +0 B | 5,000,000 B |
-| All `public/` | 346,760,826 B | +0 B | unavailable |
-| Git objects | 809,933,824 B | +0 B | unavailable |
+| Review `looks/` | 31,869,390 B | +1,541,878 B | 20,000,000 B |
+| Added bytes in last merge | 1,162,837 B | -171,106 B | 5,000,000 B |
+| All `public/` | 348,202,810 B | +1,441,984 B | unavailable |
+| Git objects | 813,804,544 B | +3,870,720 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -73,7 +69,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 12b5629f27c44e428d85a9618f7044e832d259e1
 - Local main: missing
-- Local integration/wasteland: e3d1ba32dfac65ce245f5043056c8650880f1337
+- Local integration/wasteland: 4e94aed298e79fc9aa816f15d5039b90a099d3d5
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -81,12 +77,10 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 12b5629f27c44e428d85a9618f7044e832d259e1.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit e3d1ba32dfac65ce245f5043056c8650880f1337.
+- Remote origin/integration/wasteland: matches local; cached commit 4e94aed298e79fc9aa816f15d5039b90a099d3d5.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
 Issue: codex/deep-finish: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish
-Issue: codex/go-live-evening: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/go-live' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/go-live/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/go-live
-Issue: codex/lab-lessons-flying: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-flying' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-flying/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-flying
 Issue: codex/lab-lessons-tunnel: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-tunnel' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-tunnel/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-tunnel
 Issue: codex/perf-high-night: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night
 Issue: codex/wild-art-src: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src
