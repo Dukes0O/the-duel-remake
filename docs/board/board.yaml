@@ -6,7 +6,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "driving-lessons"
@@ -17,8 +17,8 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "L"
-    status: "ready"
-    needs: [LESSONS-V2-RULES]
+    status: "building"
+    needs: []
     locks: [busy-game-files]
     flag: "driving-lessons"
     details: "docs/board/cards/LESSONS-V2-VIEW.md"
