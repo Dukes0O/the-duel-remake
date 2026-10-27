@@ -100,6 +100,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
           root.position.set(x, 0, z); root.rotation.y = 0; root.scale.setScalar(WALK.scale);
         }
         scene.add(root);
+        if (id === 'hangar') import('./lessons/snow-display.js').then(({nameFirstAid}) => { if (!disposed) nameFirstAid(root, doc, THREE); });
         models.set(id, root);
         const named = new Map();
         root.traverse(node => { if (node.name) named.set(node.name, node); });
