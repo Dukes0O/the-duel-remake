@@ -1389,3 +1389,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 LAB-LESSONS-FLYING merged (Codex, look round 2): four Flying lessons as one-tenth scale models (lab-2 on); conflicts with Workshop in lesson-ui.css and test-repo-hygiene resolved keeping both; suites and build pass.
 - 2026-10-26 GO-LIVE-EVENING merged: driving-lessons, heli-logbook, heli-skiing, rescue on; tyre-slip dev; HELI-VIEW-FRAMES opened. Release full tier next.
 - 2026-10-26 Release (night): lessons, logbook, heli-skiing, rescue, lab-2; full tier 528/528 on 4e94aed2.
+- 2026-10-27 LAB-LESSONS-SNOW merged (Codex, look round 1): Launch angles and Ski wax rebuilt; green hangar box is a first-aid sign; Lab suites and build pass. Next release.

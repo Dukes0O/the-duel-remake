@@ -128,3 +128,13 @@ interrupted first Chrome profile. That profile was identified by its exact
 Snow-only QA URL before removal. Final captures and handoff gate proof stay
 for review. The read-only audit found no unused new module; its 141 existing
 runtime candidates are advisory and were left for the Director, not deleted.
+
+## Claude review (26 October 2026)
+
+Accepted at look round 1: five coloured launch arcs from one launcher with
+angle, speed, landing and flag on the objects; named wax blocks and snow
+trays with temperature and glide time on each; the unlabelled green hangar
+box is now a first-aid sign. The generator-list and hygiene-list additions
+are approved (new entries under the existing checks; nothing loosened).
+Snow, Flying, Workshop, walk, view, frame, Blender-output, hygiene and save
+suites and the build pass on the merged result. Goes in the next release.
