@@ -1769,7 +1769,7 @@ export class App {
   heliLanded(action) {
     const arrival = landedArrival(this.heliView(), this.profile);
     if (!arrival || !['race', 'shutdown'].includes(action)) return false;
-    if (action === 'race' && (!COURSE.some(course => course.id === arrival.courseId) || !isCourseUnlocked(this.profile, arrival.courseId))) return false;
+    if (action === 'race' && (arrival.waiting || !COURSE.some(course => course.id === arrival.courseId) || !isCourseUnlocked(this.profile, arrival.courseId))) return false;
     this.returnToMenu();
     if (action === 'race') this.setRaceSettings({eventId: arrival.courseId,
       ...(arrival.carId && isCarUnlocked(this.profile, arrival.carId) ? {car: arrival.carId} : {})});

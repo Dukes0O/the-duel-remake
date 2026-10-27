@@ -20,6 +20,7 @@ import {CARS, COURSE} from '../config.js';
 import {isCourseUnlocked} from '../course-access.js';
 import {CABLE} from './heli-cable.js';
 import {atAnyPad} from './heli-board.js';
+import {SUMMIT_PADS} from '../ski/runs/summit-zones.js';
 
 export const LESSON_TEXT = Object.freeze({
   liftoff: Object.freeze({name: '1 Lift-off', goal: 'Rise to 3 m and hold her there for 5 seconds.'}),
@@ -264,12 +265,16 @@ export function instrumentsMarkup(view, {cameraIndex = 0} = {}) {
 
 // HELI-LANDED: read-only arrival eligibility, shared by the panel and its actions.
 export function landedArrival(view, profile = null) {
-  if (!atAnyPad(view) || Math.hypot(view.heli.vx ?? 0, view.heli.vy ?? 0, view.heli.vz ?? 0) > CABLE.setDownSpeed ||
-      view.lesson || view.challenge || view.job || view.rescue?.active || view.fire?.cells > 0 ||
-      view.ski?.flight || view.ski?.run || view.survey?.taken) return null;
+  const summitPad = view?.phase === 'flying' && view.courseId === 'summit-run' && view.heli?.onGround &&
+    Object.values(SUMMIT_PADS).some(pad => Math.hypot(view.heli.x - pad.x, view.heli.z - pad.z) <= CABLE.landingRadius);
+  if (!(atAnyPad(view) || summitPad) || Math.hypot(view.heli.vx ?? 0, view.heli.vy ?? 0, view.heli.vz ?? 0) > CABLE.setDownSpeed ||
+      view.lesson || view.challenge || view.job || view.fire?.cells > 0 || view.ski?.run || view.survey?.taken) return null;
+  const rescue = view.rescue?.active ?? view.rescue?.call;
+  const waiting = rescue ? `${RESCUE_WORDS[rescue.kind] ?? 'Rescue call'} waiting. Finish the rescue or shut down to leave the flight.` :
+    view.ski?.flight || view.ski?.group ? `${view.ski.group || view.ski.flight?.kind === 'group' ? 'Ski group' : 'Ski drop'} waiting. Use the ski panel to continue or shut down to leave the flight.` : null;
   const car = view.loads?.find(load => load.own && load.onGround && !load.hooked);
   const unavailable = new Set(view.loads?.filter(load => load.hooked || !load.onGround).map(load => load.id));
-  return {courseId: view.courseId, carId: car?.id ?? Object.entries(profile?.heli?.carsAt ?? {}).find(([id, courseId]) => courseId === view.courseId && !unavailable.has(id))?.[0] ?? null};
+  return {courseId: view.courseId, waiting, carId: car?.id ?? Object.entries(profile?.heli?.carsAt ?? {}).find(([id, courseId]) => courseId === view.courseId && !unavailable.has(id))?.[0] ?? null};
 }
 
 export function arrivalMarkup(view, jobs = [], profile = null) {
@@ -278,9 +283,11 @@ export function arrivalMarkup(view, jobs = [], profile = null) {
   const place = HELI_DESTINATIONS_WITH_SUMMIT[arrival.courseId] ??
     COURSE.find(course => course.id === arrival.courseId) ?? placeOfCourse(arrival.courseId) ?? placeById(arrival.courseId);
   const localJobs = jobs.filter(job => !job.own && !job.done && !job.taken && (job.from ?? job.courseId) === arrival.courseId);
-  const words = arrival.carId ? `Your ${CARS[arrival.carId]?.name ?? arrival.carId} is parked here.` :
-    localJobs.length ? `Jobs here: ${localJobs.map(job => job.title).join('; ')}` : 'Nothing waiting here today';
-  const canRace = COURSE.some(course => course.id === arrival.courseId) && (!profile || isCourseUnlocked(profile, arrival.courseId));
+  const words = arrival.waiting ?? (arrival.carId ? `Your ${CARS[arrival.carId]?.name ?? arrival.carId} is parked here.` :
+    localJobs.length ? `Jobs here: ${localJobs.map(job => job.title).join('; ')}` : 'Nothing waiting here today');
+  const raceCourse = COURSE.some(course => course.id === arrival.courseId);
+  const unlocked = !profile || isCourseUnlocked(profile, arrival.courseId);
+  const canRace = raceCourse && unlocked && !arrival.waiting;
   const crate = view.returnLoad;
   const board = !crate ? '' : crate.done ? 'Nothing more today. The board fills again tomorrow.' :
     `${crate.title} · ${crate.massKg} kg · ${crate.payNow} credits. ${crate.sender} Hook the crate beside the pad to take it.`;
@@ -288,7 +295,7 @@ export function arrivalMarkup(view, jobs = [], profile = null) {
     <span>LANDED AT ${escape((place?.name ?? arrival.courseId).toUpperCase())}</span><p>${escape(words)}</p>
     ${board ? `<p>${escape(board)}</p>` : ''}
     <button type="button" data-heli-arrival="race" ${canRace ? '' : 'disabled'}>Race here</button>
-    <button type="button" data-heli-arrival="shutdown">Shut down</button>${!canRace ? `<p>${COURSE.some(course => course.id === arrival.courseId) ? 'Unlock this course in the main menu to race here.' : 'There is no race course here.'}</p>` : ''}</div>`;
+    <button type="button" data-heli-arrival="shutdown">Shut down</button>${!raceCourse ? '<p>There is no race course here.</p>' : !unlocked ? '<p>Unlock this course in the main menu to race here.</p>' : ''}</div>`;
 }
 
 // Where to fly, the pump at home, and the cruise prompt.
