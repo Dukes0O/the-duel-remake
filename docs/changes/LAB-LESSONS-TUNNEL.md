@@ -48,6 +48,14 @@ tolerance with the two physical comparisons the lesson teaches: soft has less
 contact than stiff here, and less body shake. No pre-existing assertion or
 tolerance changed. Claude's written assertion review is still needed at handoff.
 
+Final document placement found the card-prescribed sheet name absent from the
+older placement rule. One added line admits only
+`docs/board/looks/lab-2/lab-lessons-tunnel-[1-3].jpg`; raw captures, other
+extensions, nested paths and rounds outside the three-round cap still fail.
+This implements the card's required home without changing size limits. The
+existing hygiene-rule suite passes unchanged. Claude's written review of this
+new exact-path allowance is also required before integration.
+
 ## Code review
 
 Independent review found and confirmed fixes for reversing a machine choice,
@@ -80,8 +88,48 @@ refresh merge because Kyle explicitly requested no merge or push. No merge or
 push ran; integration refresh belongs to the handoff. Cockpit task T-063 now
 names this card and receives its status through cockpit-sync.py.
 
+The full browser flow completed Grip, Downforce, Braking and Suspension. Fuel
+then exposed a QA helper reading the previous try's rendered litres immediately
+after input reset. A two-frame render wait fixes that stale read; exact setting
+assertions stay intact. Independent review approved it. The Fuel-only follow-up
+passed on private port 16104 with 11 captures, zero warnings and zero errors.
+Each of the five flows exercised a real 3D control, wrong-answer help, all
+teaching steps, a loaded challenge, non-overlapping key card and actual bench
+completion. Real player storage was never opened. No frame timing ran.
+
+All 17 direct lesson tests pass. Replay fingerprints pass unchanged: 225 checks,
+25 cases, 23 events, nine categories, three frame rates and three runs. No pinned
+number or world signature was re-recorded.
+
+The round-one sheet is `docs/board/looks/lab-2/lab-lessons-tunnel-1.jpg`,
+471,284 bytes, with five large Watch pictures and four small views per lesson.
+Full-size captures remain under `.evidence/2026-10-26/LAB-LESSONS-TUNNEL/round-1/`
+for Claude. Claude's look verdict and written registry assertion review remain
+open; neither is claimed by the builder.
+
+## Final gates
+
+On game/source commit `364eb257`: `node tools/run-tests.mjs --tier lane
+--changed --jobs 4` passes 51/51 suites, zero failures or not-run, 528.54 seconds.
+Later tool edits are the reviewed browser scenario render wait and optional
+lesson filter, proved by the Fuel follow-up, and the exact sheet-path rule,
+proved by placement and 150 unchanged hygiene-rule checks. Board checks pass
+191/191. `npm run build` passes with the scenario edit, 570 modules, 836 ms;
+the later placement rule is not bundled. Existing large-chunk and mixed-import
+warnings remain. Both commands ran from PowerShell with System32 first on PATH.
+The release full-tier hold was honoured before either run; at most two heavy
+jobs ran together. No full tier or frame test is claimed for this lane.
+
+The runtime parts GLB is 1,856,584 bytes; its recipe rebuilds the named tyre,
+wing, disc, spring, can, scale, stands and marked dials. This is required runtime
+art, not retained modelling output. Independent review approved the game code
+and the final QA helper change without remaining faults.
+
 ## Removed
 
 The new packets replace each old bench panel in Lab 2 through the frame's
 existing automatic packet discovery. The original benches remain the challenge
 rules and the Lab 1 path; there is no second Lab 2 panel.
+Generated QA/build bundles and the obsolete blocked-control capture are removed
+to the Recycle Bin. Only the current runtime GLB and requested review pictures
+remain; no Blender working file or backup model is kept.

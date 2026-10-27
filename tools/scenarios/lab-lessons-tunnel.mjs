@@ -1,5 +1,5 @@
 // Real UI, loaded models, isolated memory-only careers via browser-harness.
-const ids = ['grip', 'downforce', 'braking', 'suspension', 'fuel'];
+const ids = (process.env.LAB_TUNNEL_QA_LESSONS ?? 'grip,downforce,braking,suspension,fuel').split(',');
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
   await c.navigate('/tools/menu-check.html');
@@ -19,6 +19,9 @@ export async function run(c) {
     await c.waitFor(`!!document.querySelector('[data-lab-lesson="start:grip"]')`, 'tunnel choices');
   }
   async function setControls(spec, wanted) {
+    // A newly entered try resets input immediately; its displayed result follows
+    // on the next render. Read the current machine, not the previous try's label.
+    await c.evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))`);
     for (const [setting, value] of Object.entries(wanted)) {
       const control = spec.controls.find(x => (x.setting ?? x.id) === setting && (Number.isFinite(x.min) || x.value === value));
       if (!control) throw Error(`Missing ${setting}`);
