@@ -440,10 +440,8 @@ export class Duel {
     this._resetStageDriving();
     s.tyreSlipRules=true;s.tyreSlip=0;s.status='racing';s.countdown=0;
     s.lives=LIVES.start;s.majorCrashes=0;s.penaltySec=0;s.catastrophic=false;
-    // DRIVE-LESSONS-VIEW-2: lesson 4's last run (the one after the third win) is on winter tyres, from the winter instructor's pose.
-    const lesson=run.lesson,winter=lesson.id==='snow'&&lesson.phase==='result'&&lesson.stage==='challenge'&&lesson.streak===3&&!!run.plan.instructor.winter;
-    if(lesson.id==='snow'){if(winter)s.tyre='winter';else delete s.tyre;}
-    const first=(winter?run.plan.instructor.winter:run.plan.instructor).poses[0],spec=this.car;
+    const lesson=run.lesson;
+    const first=run.plan.instructor.poses[0],spec=this.car;
     s.s=run.plan.corner.startS;s.lateral=first.lateral;
     s.headingError=first.heading-this.course.at(s.s).heading;s.speedMph=first.mph;
     const gear=spec.gears.findIndex(top=>top*DRIVE.gearCeilFrac>=s.speedMph);
@@ -470,6 +468,11 @@ export class Duel {
     // Use the same native driving, jump and swept contacts. Race progression,
     // traffic, police, combat, timing awards and lap completion are excluded.
     s.stageTimeSec+=dt;s.lapTimeSec=s.stageTimeSec;
+    if(run.lesson.stage==='watch'){
+      const index=Math.round(run.lesson.attempt.elapsedSeconds*120);
+      const input=run.plan.instructor.inputs[index];
+      if(input)this.setInput(input);
+    }
     this._drive(dt);
     if(s.status==='racing'&&s.impactTimer<=0){this._jump(s,dt);this._collisions();}
     const response=stepDriveLesson(run.lesson,this._driveLessonCarView(),{

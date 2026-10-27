@@ -497,7 +497,7 @@ export class App {
     this._runPlayerId=ownerId;this.runId=null;this._cupRace=null;
     this.ghostRecorder=this.ghostRecord=this.ghostPose=this.grandPrixLapRecorder=this.lapTelemetryRecorder=null;
     this.ghostStatus='none';this.autopilot=false;this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
-    const plan={...baseline,driverId,ownerId};
+    const plan={...baseline,driverId,ownerId,retake:this.profile.drivingLessons?.done?.[lessonId]===true};
     this.audio.unlock();this.audio.setPaused(false);
     this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')});this._racePaintCar=car;
     this._sayDriveLesson(this.profile.drivingLessons?.done?.[lessonId]?'drive.radio.retake':DRIVE_LESSON_VIEW[lessonId].intro);
@@ -508,7 +508,11 @@ export class App {
   nextLessonAttempt(){
     const run=this.duel.drivingLesson;
     if(!run||!this.drivingLessonsAvailable()||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||
-      this.duel.state.playerId!==run.ownerId||run.lesson.done||run.lesson.phase==='driving')return false;
+      this.duel.state.playerId!==run.ownerId||run.lesson.done)return false;
+    if(run.lesson.phase==='driving'){
+      if(run.lesson.stage!=='watch')return false;
+      run.lesson.phase='result';run.lesson.lastAttempt={passed:false,finished:false};
+    }
     this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;this.audio.setPaused(false);
     const started=this.duel.resetDriveLessonAttempt();this._driveLessonUi?.update();return started;
   }
@@ -579,10 +583,9 @@ export class App {
   playDriveLessonCue(id){if(this.audio.context&&!this.audio.muted)this.audio._playCue?.(id);}
   getDriveLessonGhost(){
     const run=this.duel.drivingLesson;
-    const winter=run?.lesson.id==='snow'&&run.lesson.stage==='winter'; // the winter-tyre run drives against the winter instructor
-    if(!run||run.ownerId!==this.player?.id||this.duel.state.playerId!==run.ownerId||
-      run.lesson.stage!=='challenge'&&!winter||run.lesson.phase!=='driving')return null;
-    return driveLessonGhostPose((winter?run.plan.instructor.winter:run.plan.instructor).poses,run.lesson.attempt.elapsedSeconds,this.duel.state.car,this.duel.course);
+    if(!run||run.ownerId!==this.player?.id||run.ownerId!==this.duel.state.playerId||run.lesson.phase!=='driving'||!run.lesson.attempt||!['follow','beat'].includes(run.lesson.stage))return null;
+    const lead=run.lesson.stage==='follow'?1:0;
+    return driveLessonGhostPose(run.plan.instructor.poses,run.lesson.attempt.elapsedSeconds+lead,this.duel.state.car,this.duel.course);
   }
 
   startCampaign(options = {}) {

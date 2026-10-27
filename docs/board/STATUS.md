@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-27T14:55:14.585Z
+Observed at: 2026-10-27T15:41:24.597Z
 
-Observation commit: 01700483e4a861fd3172e1470bbfa1c95fe8d344
+Observation commit: ee78970823b44457b66e318d3765ac57ba18d5ec
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 01700483e4a861fd3172e1470bbfa1c95fe8d344
+Integration HEAD: ee78970823b44457b66e318d3765ac57ba18d5ec
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,11 +29,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/deep-finish | 1 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish |
-| codex/heli-summit-landed | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-summit-landed |
-| codex/lesson-instructor-any-car | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lesson-instructor-any-car |
-| codex/perf-high-night | 12 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
-| codex/wild-art-src | 12 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
+| codex/deep-finish | 1 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish |
+| codex/lessons-v2-rules | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lessons-v2-rules |
+| codex/perf-high-night | 12 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
+| codex/wild-art-src | 12 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
 ## Unmerged branches for idle review
 
@@ -51,35 +50,31 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 356,668,881 B | unavailable | 250,000,000 B |
+| Build `dist/` | unavailable | unavailable | 250,000,000 B |
 | Wasteland models | 114,830,428 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 32,341,826 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 4,337,658 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 335,942 B | +0 B | 5,000,000 B |
 | All `public/` | 350,059,394 B | +0 B | unavailable |
-| Git objects | 816,036,864 B | +0 B | unavailable |
+| Git objects | 816,813,056 B | +0 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: a5a83c56a59f51fca8b70bedb66e8358a2f180d2
+- Local master: 7812464e27c0df9ba7697d8c787d6e7781c850eb
 - Local main: missing
-- Local integration/wasteland: 01700483e4a861fd3172e1470bbfa1c95fe8d344
+- Local integration/wasteland: 7812464e27c0df9ba7697d8c787d6e7781c850eb
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit a5a83c56a59f51fca8b70bedb66e8358a2f180d2.
+- Remote origin/master: matches local; cached commit 7812464e27c0df9ba7697d8c787d6e7781c850eb.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 01700483e4a861fd3172e1470bbfa1c95fe8d344.
+- Remote origin/integration/wasteland: matches local; cached commit 7812464e27c0df9ba7697d8c787d6e7781c850eb.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
-Issue: codex/deep-finish: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-finish
-Issue: codex/heli-summit-landed: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-summit-landed' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-summit-landed/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/heli-summit-landed
-Issue: codex/perf-high-night: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night
-Issue: codex/wild-art-src: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src
