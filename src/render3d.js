@@ -1,3 +1,4 @@
+import {speedKph} from './speed-format.js';
 import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
@@ -242,7 +243,7 @@ export function attachRenderer(host, app) {
         }
         if(c.kind==='brake'){
           const canvas=document.createElement('canvas');canvas.width=256;canvas.height=128;
-          const ctx=canvas.getContext('2d');ctx.fillStyle='#fff3d9';ctx.font='bold 95px sans-serif';ctx.textAlign='center';ctx.fillText(String(Math.round(c.targetMph)),128,100);
+          const ctx=canvas.getContext('2d');ctx.fillStyle='#fff3d9';ctx.font='bold 95px sans-serif';ctx.textAlign='center';ctx.fillText(String(speedKph(c.targetMph)),128,100);
           const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
           const at=zone.s1+4,lateral=next.roadHalfWidthAt(at)-2;
           // Conform the lettering to slope and camber, just like the box. A flat

@@ -1,16 +1,35 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {driveLessonTarget,driveLessonMapMarkup,driveLessonBriefingMarkup,driveLessonPanelMarkup,driveLessonResultMarkup} from '../src/lessons/drive-lesson-ui.js';
+import {driveLessonTarget,driveLessonMapMarkup,driveLessonBriefingMarkup,driveLessonPanelMarkup,driveLessonResultMarkup,driveLessonDisplayAdvice} from '../src/lessons/drive-lesson-ui.js';
 const corner={name:'Test bend',kind:'brake',approachS:0,brakeS:100,turnInS:120,turnOutS:160,exitS:180,targetMph:56};
 test('target counts down and colours only the corner speed at the specified thresholds',()=>{
   const lesson={instructor:{corners:[corner]}};
   assert.equal(driveLessonTarget(lesson,0,120).cue,'Brake in 100 m');
-  assert.equal(driveLessonTarget(lesson,100,120).cue,'Corner 56 mph');
+  assert.equal(driveLessonTarget(lesson,100,120).cue,'Corner 90 km/h');
   assert.equal(driveLessonTarget(lesson,119,56).tone,'');
   for(const speed of [53,56,59])assert.equal(driveLessonTarget(lesson,140,speed).tone,'green');
   assert.equal(driveLessonTarget(lesson,140,61).tone,'');
   assert.equal(driveLessonTarget(lesson,140,61.01).tone,'red');
   assert.equal(driveLessonTarget(lesson,161,80),null);
+});
+test('all screen speeds use speedometer rounding and advice names only missed corners',()=>{
+  const c={...corner,targetMph:56.4,passed:true,minMph:56.7,checks:{brake:true,speed:true,quiet:true},missed:0,screechSeconds:0,brakeDeltaM:0};
+  const lesson={id:'corner',stage:'your-turn',phase:'driving',corner:{startS:0},instructor:{timeSec:10,corners:[c],plan:[{s:0,x:0,z:0,targetMph:100,action:'accelerate'},{s:100,x:0,z:100,targetMph:56.4,action:'brake'}]},lastAttempt:{finished:true,elapsedSeconds:10,corners:[c]}};
+  const props={playerId:'test',runPlayerId:'test',lesson,distanceS:140,speedMph:209.5};
+  const before=JSON.stringify(lesson);
+  const panel=driveLessonPanelMarkup(props),briefing=driveLessonBriefingMarkup(props);
+  assert.match(panel,/Your speed 337 km\/h/);assert.match(panel,/Target 91 km\/h/);
+  assert.doesNotMatch(panel+briefing,/\bmph\b/);
+  assert.match(briefing,/speed within 8 km\/h/);
+  const clean=driveLessonDisplayAdvice([c]);
+  assert.equal(clean,'Clean on every corner. Same again, a little quicker.');
+  assert.doesNotMatch(clean,/Test bend/);
+  const missed={...c,passed:false,checks:{...c.checks,speed:false},missed:1};
+  assert.match(driveLessonDisplayAdvice([missed]),/^Test bend: aim for 91 km\/h/);
+  const result=driveLessonResultMarkup({...props,lesson:{...lesson,phase:'result'}});
+  assert.match(result,/91 \/ 91 km\/h/);assert.match(result,/Clean on every corner/);
+  assert.doesNotMatch(result,/\bmph\b/);
+  assert.equal(JSON.stringify(lesson),before,'formatting never writes observations');
 });
 test('Watch replays the late clip then the clean inputs; views and briefing leave race state unchanged',async()=>{
   const previous=new Map(['__DUEL_QA__','location'].map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]));

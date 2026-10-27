@@ -51,6 +51,16 @@ export async function run(c) {
   assert.equal(await c.evaluate('window.__qaApp.duel.drivingLesson.lesson.stage'),'follow');
   await c.evaluate('window.viewDrive(20000,window.__qaApp.duel.drivingLesson.plan.instructor.corners[0].brakeS-30)');
   assert.ok(await c.evaluate('!!window.__qaApp.getDriveLessonGhost()'));
+  await evaluate(c,()=>{
+    const box=selector=>{const n=document.querySelector(selector);if(!n)throw Error('Missing '+selector);return n.getBoundingClientRect();};
+    const panel=box('.drive-lesson-panel'),mirror=box('.rear-view-frame');
+    const overlaps=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+    if(overlaps(panel,mirror)||overlaps(panel,box('.race-heading'))||overlaps(panel,box('.race-clock')))throw Error('Lesson panel covers race HUD');
+    const target=document.querySelector('.drive-lesson-target').textContent;
+    const speed=Number(document.getElementById('speed-value').textContent);
+    if(!target.includes('Your speed '+speed+' km/h'))throw Error('Lesson speed differs from speedometer');
+    if(/\bmph\b/.test(document.querySelector('.drive-lesson-host').textContent))throw Error('Imperial speed on lesson screen');
+  });
   await picture('panorama-jesko-follow-line-ghost-zone-target');
   await c.evaluate('window.viewDrive(20000,window.__qaApp.duel.drivingLesson.plan.instructor.corners[0].brakeS-4)');
   await picture('panorama-jesko-road-target-number');
@@ -60,6 +70,7 @@ export async function run(c) {
   await picture('panorama-jesko-your-turn');
   const result=await c.evaluate('window.viewDrive()');
   assert.equal(result.result.passed,true,'native clean student meets corner checks');
+  assert.match(await c.evaluate('document.querySelector(".drive-lesson-advice").textContent'),/^Clean on every corner/);
   await picture('panorama-jesko-result-corner-table');
   await c.evaluate('window.__qaApp.nextLessonAttempt();window.viewDrive(20000,window.__qaApp.duel.drivingLesson.plan.instructor.corners[0].brakeS-30)');
   assert.equal(await c.evaluate('window.__qaApp.duel.drivingLesson.lesson.stage'),'beat');

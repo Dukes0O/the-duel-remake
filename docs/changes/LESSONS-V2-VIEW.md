@@ -15,7 +15,7 @@ No new save field, dependency, network request or feature switch.
 Four-step strip with its exact what-counts line; late/clean Watch with race
 camera, corner captions and Enter skip; green/white/red line; brake and lift
 boxes; upright, surface-conforming road speeds; target beside the speedometer
-with current mph and speed colours; live distance gap; corner lights; per-corner
+with current km/h and speed colours; live distance gap; corner lights; per-corner
 result table and advice; briefing with real section map, illustrated words,
 steps, clean-run definition and Brian's intro; reopen-help button; board gold.
 The existing driving-lessons switch controls it all. No frame timing.
@@ -97,3 +97,46 @@ that follow slope/camber. Recycled generated builds and local duplicate
 captures; kept the recipe, tests, verdict and requested review pictures.
 Session-end status is included. Cockpit sync completed: zero task changes;
 it reported unrelated HELI-SUMMIT-LANDED without a task; no hand edit made.
+
+## Claude picture review follow-up
+
+Requested before merge: use the speedometer's shared speedKph/formatSpeed at
+all lesson display boundaries, including road paint, captions, tolerance and
+structured advice. Keep mph in simulation and scoring. Put the step panel
+below the mirror using its 30vw / 3.2 height, leaving course name and time
+clear. All-passed corner observations get a whole-run advice sentence.
+Remove crossed map leaders; put short numbered markers at the corners and
+keep a matching speed key. Full adjacent speed labels overlap Harbour esses.
+No rule, threshold, save or race-state change.
+
+Planned checks: display conversion/advice tests, native browser bounds and
+speedometer equality, lane tier jobs 4, then build. Replace prior pictures.
+The one existing target-text assertion changes from Corner 56 mph to Corner
+90 km/h to match the shared conversion; no threshold assertion changes.
+
+Follow-up review: approved, no remaining defect. New display test passes
+3/3, including exact speedometer rounding, no mph in screen markup, clean
+advice without a corner name, and missed-speed advice from unrounded data.
+The browser checks panel bounds against mirror/course/time and compares
+"Your speed" with the actual speedometer. Final picture run: 1/1 scenario,
+12 pictures, zero warnings/errors, memory-only, private port 7899, laptop
+1366 x 768. Visually checked Panorama and Harbour briefings, Follow me and
+result. Replaced all 12 prior pictures and report in the same evidence folder.
+
+The direct browser rebuild first hit EBUSY while the gate used a scratch
+course fixture. No source change: the existing run-browser-scenarios runner
+then passed with its separate build leaf. No new test machinery added.
+
+Follow-up final gate: `node tools/run-tests.mjs --tier lane --changed --jobs 4`
+(JSON output only for the receipt) **52/52 PASS**, zero failed or unrun,
+**311.35 s**, including all affected suites and RULES. Every-car instructor:
+196/196; replay fingerprints unchanged. Then `npm run build`: **PASS**,
+Vite **865 ms**, existing chunk/dynamic-import notices only. No source change
+after these passes. Admission counts 0/1 and minute recount 2; no competing
+job stopped. System32 first on PATH, installed FFmpeg supplied as before.
+Cockpit sync: zero task changes; the same unrelated unmapped card remains.
+Generated output and duplicate local captures recycled. Nothing merged/pushed.
+
+Follow-up Removed: removed imperial screen formatting, the corner-specific
+all-clean advice, crossed map leader lines and the mirror-covering panel
+placement. Internal mph rules and thresholds remain unchanged.

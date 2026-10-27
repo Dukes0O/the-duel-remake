@@ -15,14 +15,14 @@
 .drive-lesson-course input { accent-color:#edb65f; }
 .drive-lesson-notice { color:#edc489; }
 .drive-lesson-host-running { inset:0; padding:0; max-width:none; display:block; background:none; pointer-events:none; overflow:visible; }
-.drive-lesson-panel { position:absolute; top:80px; left:50%; transform:translateX(-50%); width:min(770px,calc(100% - 40px)); padding:10px 18px; background:#122128ed; border:1px solid #b6b1a540; border-radius:6px; pointer-events:auto; }
+.drive-lesson-panel { position:absolute; top:calc(104px + 9.375vw); left:50%; transform:translateX(-50%); width:min(770px,calc(100% - 40px)); padding:10px 18px; background:#122128ed; border:1px solid #b6b1a540; border-radius:6px; pointer-events:auto; }
 .drive-lesson-step-strip { display:flex; justify-content:space-between; list-style:none; gap:12px; margin:0; padding:0; color:#9badad; font-size:16px; font-weight:650; }
 .drive-lesson-step-strip li { padding:5px 8px; border-bottom:3px solid transparent; }
 .drive-lesson-step-strip [aria-current] { color:#f6d292; border-color:#edb65f; }
 .drive-lesson-counts { text-align:center; font-size:14px; }
 .drive-lesson-panel-actions { display:flex; justify-content:center; gap:6px; }
 .drive-lesson-panel-actions button { font-size:11px; min-height:25px; margin-top:0; padding:3px 9px; }
-.drive-lesson-watch-caption { position:fixed; top:165px; left:50%; transform:translateX(-50%); width:640px; max-width:80vw; padding:12px 20px; border-left:3px solid #edb65f; background:#14262eef; text-align:center; font-size:18px; box-sizing:border-box; }
+.drive-lesson-watch-caption { position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); width:640px; max-width:80vw; padding:12px 20px; border-left:3px solid #edb65f; background:#14262eef; text-align:center; font-size:18px; box-sizing:border-box; }
 .drive-lesson-target { position:fixed; bottom:104px; right:322px; display:grid; gap:4px; width:198px; padding:12px 16px; background:#10252bf0; border-left:4px solid #edc489; border-radius:4px; }
 .drive-lesson-target small { font-size:10px; letter-spacing:1.5px; color:#b4c2be; }
 .drive-lesson-target b { font-size:22px; font-variant-numeric:tabular-nums; }
