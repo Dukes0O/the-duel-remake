@@ -501,17 +501,19 @@ export class App {
     const plan={...baseline,driverId,ownerId,retake:this.profile.drivingLessons?.done?.[lessonId]===true};
     this.audio.unlock();this.audio.setPaused(false);
     this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')});this._racePaintCar=car;
-    this._sayDriveLesson(this.profile.drivingLessons?.done?.[lessonId]?'drive.radio.retake':DRIVE_LESSON_VIEW[lessonId].intro);
+    this.driveLessonBriefing=true;
     this.duel.startCampaign({seed:1989,mode:'timetrial',car,difficulty,driverId,playerId:ownerId,
       startStage:stageIndex,upgrades,opponentCount:0,lesson:plan});
-    this.driveLessonBriefing=true;
+    this._sayDriveLesson(DRIVE_LESSON_VIEW[lessonId].intro);
     this._driveLessonUi?.update();return true;
   }
   nextLessonAttempt(){
     const run=this.duel.drivingLesson;
     if(!run||!this.drivingLessonsAvailable()||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||
       this.duel.state.playerId!==run.ownerId||run.lesson.done)return false;
-    if(this.driveLessonBriefing){this.driveLessonBriefing=false;this.driveLessonHelp=false;this._driveLessonUi?.update();return true;}
+    if(this.driveLessonBriefing){this.driveLessonBriefing=false;this.driveLessonHelp=false;
+      if(run.lesson.phase==='driving')this._sayDriveLesson(run.lesson.stage==='watch'&&run.watchClip==='late'?'drive.radio.v2.corner.watch-late':'drive.radio.v2.shared.'+run.lesson.stage);
+      this._driveLessonUi?.update();return true;}
     if(run.lesson.phase==='driving'){
       if(run.lesson.stage!=='watch')return false;
       run.lesson.phase='result';run.lesson.lastAttempt={passed:false,finished:false};
@@ -538,7 +540,8 @@ export class App {
     if(!run||state!==this.duel.state||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||state.playerId!==run.ownerId)return;
     const response=event.driveLessonAnswer;
     if(!response)return;
-    if(response.radio&&response.result!=='passed')this._sayDriveLesson(response.radio);
+    if(response.radio&&response.result!=='passed'&&!this.driveLessonBriefing)
+      this._sayDriveLesson(event.driveLessonReset&&run.lesson.stage==='watch'&&run.watchClip==='late'?'drive.radio.v2.corner.watch-late':response.radio);
     if(this.audio.context&&!this.audio.muted)for(const cone of response.cones||[])this.audio._playCue?.(cone.cue);
     const completion=response.result==='passed'?driveLessonCompletion(run,state,this.player.id):null;
     if(completion&&!run.rewarded){
@@ -549,7 +552,7 @@ export class App {
         this.profile=result.profile;run.saved=this._saveProfile();run.rewarded=true;run.reward=result.reward;
         this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
           'Lesson passed for this session. Progress and reward could not be saved. Keep the game open and retry saving; your last saved progress is unchanged.';
-        if(run.saved)for(const id of [response.radio,...(response.queued||[])])if(id)this._sayDriveLesson(id); // the snow lesson's pass line follows the winter explanation
+        if(run.saved&&response.radio)this._sayDriveLesson(response.radio);
       }
       else this.driveLessonMessage=result.reason;
       if(this.audio.context&&!this.audio.muted)this.audio._playCue?.('interface.win');
@@ -563,14 +566,17 @@ export class App {
     run.saved=this._saveProfile();
     this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
       'Still unable to save. Progress and reward are available only in this session. Keep the game open and retry saving.';
-    if(run.saved)for(const id of run.lesson.id==='snow'?['drive.radio.snow.winter.result','drive.radio.snow.pass']:['drive.radio.'+run.lesson.id+'.pass'])this._sayDriveLesson(id);
+    if(run.saved)this._sayDriveLesson('drive.radio.v2.'+run.lesson.id+'.pass');
     this._driveLessonUi?.update();return run.saved;
   }
   _sayDriveLesson(id){
     if(!DRIVE_RADIO_LINES[id])return;
+    this._driveLessonVoice?.stop();this._driveLessonVoice=null;
+    this._driveLessonRadioChain?.keyOff();
+    this._driveLessonRadioEpoch=(this._driveLessonRadioEpoch||0)+1;
     this.driveLessonRadioText=DRIVE_RADIO_LINES[id].text;
-    const epoch=this._driveLessonRadioEpoch||0;
-    this._driveLessonRadioQueue=(this._driveLessonRadioQueue||Promise.resolve()).then(async()=>{
+    const epoch=this._driveLessonRadioEpoch;
+    this._driveLessonRadioQueue=Promise.resolve().then(async()=>{
       await this.audio._loadCueBuffers?.();
       if(epoch!==(this._driveLessonRadioEpoch||0)||!this.duel.drivingLesson||!this.audio.context||this.audio.muted||this.audio.paused)return;
       this.audio._syncMixer?.();
@@ -578,7 +584,7 @@ export class App {
       const chain=this._driveLessonRadioChain??=createRadioChain(this.audio.context,target);
       chain.keyOn();
       await new Promise(resolve=>{
-        this._driveLessonVoice=this.audio._playCue(id,{destination:chain.input,onEnd:()=>{chain.keyOff();resolve();}});
+        this._driveLessonVoice=this.audio._playCue(id,{destination:chain.input,onEnd:()=>{if(epoch===this._driveLessonRadioEpoch)chain.keyOff();resolve();}});
         if(!this._driveLessonVoice){chain.keyOff();resolve();}
       });
     }).catch(()=>{});

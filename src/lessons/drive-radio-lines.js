@@ -1,61 +1,37 @@
-// The driving instructor's radio lines (docs/DRIVING_LESSONS.md section 6):
+// The driving instructor's radio lines (docs/DRIVING_LESSONS.md section 14.11):
 // Brian, recorded with the same voice and settings as the helicopter's lines
 // and played through the shared radio chain (src/lessons/radio-voice.js).
-// Lines never name times or prices; the card shows the numbers.
+// Lines never name times, speeds, distances or prices; the card shows the numbers.
 import {HELI_RADIO_VOICE} from './radio-voice.js';
 
 // The instructor's voice for driving lessons: the same Brian.
 export const DRIVE_RADIO_VOICE = HELI_RADIO_VOICE;
 
+// Steps and advice are shared across all four lessons when the words match.
+export const driveRadioId = (lesson, step) => `drive.radio.v2.${lesson}.${step}`;
 export const DRIVE_RADIO_LINES = Object.freeze(Object.fromEntries(Object.entries({
-  'drive.radio.corner.intro': {file: 'drive-radio-corner-intro.mp3', text: 'Welcome to the track. Today is the most important corner skill there is: braking. Forget the course boards today and watch my cones.'},
-  'drive.radio.corner.late.start': {file: 'drive-radio-corner-late-start.mp3', text: 'Let us see what happens when you leave it late. Keep your foot down and brake at the red board.'},
-  'drive.radio.corner.late.early': {file: 'drive-radio-corner-late-early.mp3', text: 'You braked early. Good instinct, but this time I wanted you to feel it. That one still counts.'},
-  'drive.radio.corner.right.start': {file: 'drive-radio-corner-right-start.mp3', text: 'Now the right way. Brake hard at the first cone while the car is straight, turn in, touch the inside cone, and accelerate out wide past the third.'},
-  'drive.radio.corner.coach.brake': {file: 'drive-radio-corner-coach-brake.mp3', text: 'Brake at the first cone. Not before, not after.'},
-  'drive.radio.corner.coach.inside': {file: 'drive-radio-corner-coach-inside.mp3', text: 'Get closer to the inside cone. Use the whole road.'},
-  'drive.radio.corner.coach.exit': {file: 'drive-radio-corner-coach-exit.mp3', text: 'Back on the gas sooner, and let the car run out wide.'},
-  'drive.radio.corner.coach.screech': {file: 'drive-radio-corner-coach-screech.mp3', text: 'I heard the tyres. Brake a little earlier and keep it smooth.'},
-  'drive.radio.corner.right.pass': {file: 'drive-radio-corner-right-pass.mp3', text: 'That is it. Quiet tyres, clean line, and quicker too.'},
-  'drive.radio.corner.challenge.start': {file: 'drive-radio-corner-challenge-start.mp3', text: 'Good. Now beat my time through the corner. Three in a row.'},
-  'drive.radio.corner.challenge.one': {file: 'drive-radio-corner-challenge-one.mp3', text: 'That is one. Again.'},
-  'drive.radio.corner.challenge.two': {file: 'drive-radio-corner-challenge-two.mp3', text: 'Two. One more.'},
-  'drive.radio.corner.challenge.reset': {file: 'drive-radio-corner-challenge-reset.mp3', text: 'Not that time. Back to zero. You know how.'},
-  'drive.radio.corner.pass': {file: 'drive-radio-corner-pass.mp3', text: 'Three in a row. You have earned better brakes, and the next lesson is open.'},
-  'drive.radio.retake': {file: 'drive-radio-retake.mp3', text: 'Back for more? Good. Practice is how the fast drivers got fast.'},
-  // Lessons 2 to 4 and the true late-try lines (docs/DRIVING_LESSONS.md 12.7).
-  'drive.radio.line.intro': {file: 'drive-radio-line-intro.mp3', text: 'Lesson two: the racing line. Through linked corners, the fastest way is not the shortest.'},
-  'drive.radio.line.middle.start': {file: 'drive-radio-line-middle-start.mp3', text: 'First, stay in the middle of the road. Follow the markers.'},
-  'drive.radio.line.middle.result': {file: 'drive-radio-line-middle-result.mp3', text: 'Felt tight, didn\'t it? The middle of the road makes every bend sharper, so you have to go slower.'},
-  'drive.radio.line.right.start': {file: 'drive-radio-line-right-start.mp3', text: 'Now use the whole road. Start wide, touch each inside cone, and let the car run out wide between them.'},
-  'drive.radio.line.coach.apex': {file: 'drive-radio-line-coach-apex.mp3', text: 'Closer to the inside cone. Use every bit of road.'},
-  'drive.radio.line.coach.early': {file: 'drive-radio-line-coach-early.mp3', text: 'You turned in too early and ran out of road. Wait a moment longer, then turn.'},
-  'drive.radio.line.right.pass': {file: 'drive-radio-line-right-pass.mp3', text: 'Feel how straight that was? A wider line is a gentler curve, and a gentler curve is a faster one.'},
-  'drive.radio.line.challenge.start': {file: 'drive-radio-line-challenge-start.mp3', text: 'Now beat my time through the esses. Three in a row.'},
-  'drive.radio.line.pass': {file: 'drive-radio-line-pass.mp3', text: 'Three in a row. Better handling for your car, and the next lesson is open.'},
-  'drive.radio.gears.intro': {file: 'drive-radio-gears-intro.mp3', text: 'Lesson three: the gearbox. Today you change gear yourself. E is up, Q is down.'},
-  'drive.radio.gears.early.start': {file: 'drive-radio-gears-early-start.mp3', text: 'First, change up as soon as the needle passes the green mark.'},
-  'drive.radio.gears.early.result': {file: 'drive-radio-gears-early-result.mp3', text: 'Sluggish, wasn\'t it? An engine is weak at low revs. Changing up early drops it below where it pulls.'},
-  'drive.radio.gears.right.start': {file: 'drive-radio-gears-right-start.mp3', text: 'Now hold each gear until the lights come on, then change up. Change down while you brake, so you leave the corner in my gear.'},
-  'drive.radio.gears.coach.limiter': {file: 'drive-radio-gears-coach-limiter.mp3', text: 'That was the limiter. Change up when the lights come on, not after.'},
-  'drive.radio.gears.coach.down': {file: 'drive-radio-gears-coach-down.mp3', text: 'Too high a gear coming out. Change down while you brake.'},
-  'drive.radio.gears.right.pass': {file: 'drive-radio-gears-right-pass.mp3', text: 'Hear it pull out of the corner? That\'s the right gear.'},
-  'drive.radio.gears.challenge.start': {file: 'drive-radio-gears-challenge-start.mp3', text: 'Now beat my time, changing gear yourself. Three in a row.'},
-  'drive.radio.gears.pass': {file: 'drive-radio-gears-pass.mp3', text: 'Three in a row. More power for your car, and the next lesson is open.'},
-  'drive.radio.snow.intro': {file: 'drive-radio-snow-intro.mp3', text: 'Lesson four: snow. On summer tyres you have about half the grip you have on a dry road.'},
-  'drive.radio.snow.late.start': {file: 'drive-radio-snow-late-start.mp3', text: 'First, brake where you would on a dry road. The red board shows it.'},
-  'drive.radio.snow.late.result': {file: 'drive-radio-snow-late-result.mp3', text: 'Half the grip means about twice the road to stop. That\'s why you ran out of corner.'},
-  'drive.radio.snow.right.start': {file: 'drive-radio-snow-right-start.mp3', text: 'Now brake at the snow cone, gently. Do your braking before the ice, never on it. Then turn in smooth.'},
-  'drive.radio.snow.coach.brake': {file: 'drive-radio-snow-coach-brake.mp3', text: 'Earlier. On snow, start braking at the cone.'},
-  'drive.radio.snow.coach.ice': {file: 'drive-radio-snow-coach-ice.mp3', text: 'You braked on the ice. Brake before it, roll across it, then turn.'},
-  'drive.radio.snow.coach.turn': {file: 'drive-radio-snow-coach-turn.mp3', text: 'Turn in more gently. Sudden steering on snow slides the front.'},
-  'drive.radio.snow.right.pass': {file: 'drive-radio-snow-right-pass.mp3', text: 'Smooth and early. That\'s how you drive on snow.'},
-  'drive.radio.snow.challenge.start': {file: 'drive-radio-snow-challenge-start.mp3', text: 'Now beat my time, three in a row, on summer tyres.'},
-  'drive.radio.snow.winter.start': {file: 'drive-radio-snow-winter-start.mp3', text: 'Same corner, now on winter tyres. Feel the difference.'},
-  'drive.radio.snow.winter.result': {file: 'drive-radio-snow-winter-result.mp3', text: 'Winter tyres use softer rubber that stays grippy in the cold, and deep cuts that bite into the snow.'},
-  'drive.radio.snow.pass': {file: 'drive-radio-snow-pass.mp3', text: 'That\'s every driving lesson I have for now. Better tyres for your car. Well driven.'},
-  'drive.radio.corner.late.slid': {file: 'drive-radio-corner-late-slid.mp3', text: 'Hear that screech? Your tyres slid past their best grip, so the car could not steer or stop as well. You got away with it here. On snow you won\'t.'},
-  'drive.radio.corner.late.off': {file: 'drive-radio-corner-late-off.mp3', text: 'That\'s where a slide takes you. Brake at the first cone, and keep it clean.'},
+  "drive.radio.v2.corner.intro": {"file": "drive-radio-v2-corner-intro.mp3", "text": "Welcome to the track. Brake while the car is straight, then release the brake as you turn."},
+  "drive.radio.v2.line.intro": {"file": "drive-radio-v2-line-intro.mp3", "text": "Today we use the whole road. Start wide, touch the inside of each bend, then let the car run wide as you leave."},
+  "drive.radio.v2.gears.intro": {"file": "drive-radio-v2-gears-intro.mp3", "text": "Today you change gear yourself. Change up at the lights and change down while you brake."},
+  "drive.radio.v2.snow.intro": {"file": "drive-radio-v2-snow-intro.mp3", "text": "Snow gives your tyres less grip. Brake early and steer gently, and do your slowing before the ice."},
+  "drive.radio.v2.shared.watch": {"file": "drive-radio-v2-shared-watch.mp3", "text": "Watch my line and where I brake. This run is just to show you how."},
+  "drive.radio.v2.corner.watch-late": {"file": "drive-radio-v2-corner-watch-late.mp3", "text": "Watch what happens when I brake late. The tyres slide and the car runs wide."},
+  "drive.radio.v2.shared.follow": {"file": "drive-radio-v2-shared-follow.mp3", "text": "Follow my car and use the guides. This is practice, so nothing is scored."},
+  "drive.radio.v2.shared.your-turn": {"file": "drive-radio-v2-shared-your-turn.mp3", "text": "Your turn, with the guides on. Keep it clean, and hit every brake zone or beat my time."},
+  "drive.radio.v2.shared.beat": {"file": "drive-radio-v2-shared-beat.mp3", "text": "Now beat me with a clean run. The painted line is gone, but the brake zones and targets stay."},
+  "drive.radio.v2.shared.late": {"file": "drive-radio-v2-shared-late.mp3", "text": "You braked late and left too little room to slow. Brake in the zone while the car is straight."},
+  "drive.radio.v2.shared.early": {"file": "drive-radio-v2-shared-early.mp3", "text": "You braked early. Wait for the brake zone so you keep your speed along the straight."},
+  "drive.radio.v2.shared.fast": {"file": "drive-radio-v2-shared-fast.mp3", "text": "You carried too much speed into the corner. Slow while straight so the tyres have grip left to turn."},
+  "drive.radio.v2.shared.slid": {"file": "drive-radio-v2-shared-slid.mp3", "text": "I heard the tyres slide. Sliding tyres grip less, so slow before turning and keep it smooth."},
+  "drive.radio.v2.shared.off": {"file": "drive-radio-v2-shared-off.mp3", "text": "You ran out of road. Slow before turning and keep the car on the road."},
+  "drive.radio.v2.shared.slow": {"file": "drive-radio-v2-shared-slow.mp3", "text": "You slowed too much in the corner. Use the target on screen to keep the car moving smoothly."},
+  "drive.radio.v2.shared.lift": {"file": "drive-radio-v2-shared-lift.mp3", "text": "This bend needs a lift of the accelerator. Leave the brakes alone and let the car settle."},
+  "drive.radio.v2.shared.pace": {"file": "drive-radio-v2-shared-pace.mp3", "text": "That run still needs to be quicker. Keep it clean and use the whole road."},
+  "drive.radio.v2.shared.clean": {"file": "drive-radio-v2-shared-clean.mp3", "text": "Clean on every corner. Same again, a little quicker."},
+  "drive.radio.v2.corner.pass": {"file": "drive-radio-v2-corner-pass.mp3", "text": "Well driven. You kept it clean and beat me, and you have earned your braking reward."},
+  "drive.radio.v2.line.pass": {"file": "drive-radio-v2-line-pass.mp3", "text": "Well driven. You used the road and beat me, and you have earned your handling reward."},
+  "drive.radio.v2.gears.pass": {"file": "drive-radio-v2-gears-pass.mp3", "text": "Well driven. You kept the engine pulling and beat me, and you have earned your engine reward."},
+  "drive.radio.v2.snow.pass": {"file": "drive-radio-v2-snow-pass.mp3", "text": "Smooth and clean on snow, and quicker than me. Well driven, you have earned your tyre reward."},
 }).map(([id, line]) => [id, Object.freeze(line)])));
 
 // The sound-bank records (the same fields as src/sound-bank.js), behind the

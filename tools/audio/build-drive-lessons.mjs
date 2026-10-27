@@ -3,16 +3,43 @@
 // library cache (tools/audio/freesound.mjs).
 //   node tools/audio/build-drive-lessons.mjs            the cone and the voices
 //   node tools/audio/build-drive-lessons.mjs --voices   copy the kept voice takes only
+//   node tools/audio/build-drive-lessons.mjs --record   check credits, record missing takes, then copy
 import {readFileSync, writeFileSync, mkdirSync, copyFileSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
+import {setTimeout as pause} from 'node:timers/promises';
 import {ffmpeg} from './codec.mjs';
 import {measureLoudness} from './measurements.mjs';
 import {loadCatalog, libraryRoot, sha256} from './sourcing.mjs';
-import {DRIVE_RADIO_LINES} from '../../src/lessons/drive-radio-lines.js';
+import {DRIVE_RADIO_LINES, DRIVE_RADIO_VOICE} from '../../src/lessons/drive-radio-lines.js';
+import {credits, say} from './elevenlabs.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const RATE = 48000;
+
+export async function recordDriveVoices() {
+  const catalog = loadCatalog();
+  const missing = Object.entries(DRIVE_RADIO_LINES).filter(([id, line]) => {
+    const kept = catalog.sounds.find(row => row.cue === id);
+    if (kept && (kept.text !== line.text || sha256(readFileSync(join(ROOT, kept.file))) !== kept.sha256))
+      throw Error(`Existing take differs: ${id}. Review it before spending more credits.`);
+    return !kept;
+  });
+  const characters = missing.reduce((sum, [, line]) => sum + line.text.length, 0);
+  const before = await credits();
+  console.log(JSON.stringify({lines: missing.length, characters, before}));
+  if (characters > before.left) throw Error(`STOP: ${characters} characters need ${characters - before.left} more credits. Ask Kyle.`);
+  for (const [id, line] of missing) {
+    // Each take includes accounting requests; leave room under the API rate limit.
+    await pause(10000);
+    const take = await say({voice: DRIVE_RADIO_VOICE.voiceId, line: id, text: line.text,
+      keep: true, settings: {stability: .4, similarity: .8, style: .35}});
+    console.log(JSON.stringify({id, creditsUsed: take.entry.creditsUsed, creditsLeft: take.creditsLeft,
+      estimated: take.entry.creditsEstimated, warning: take.accountingWarning}));
+    if (take.accountingWarning) throw Error(take.accountingWarning);
+  }
+  return {characters, before, after: await credits()};
+}
 
 // A cone tipped over: a hard plastic hit, darkened to a soft knock.
 export const CONE_RECIPE = Object.freeze({id: 'lesson.cone', source: '525100', start: 0, duration: .46,
@@ -65,7 +92,8 @@ export function copyDriveVoices({root = ROOT} = {}) {
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   const out = {};
-  if (!process.argv.includes('--voices')) out.cone = buildCone();
+  if (process.argv.includes('--record')) out.recording = await recordDriveVoices();
+  else if (!process.argv.includes('--voices')) out.cone = buildCone();
   out.voices = copyDriveVoices();
   console.log(JSON.stringify(out, null, 2));
 }

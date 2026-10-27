@@ -1,3 +1,4 @@
+import {DRIVE_RADIO_LINES} from '../src/lessons/drive-radio-lines.js';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,8 +22,10 @@ test('native App: Watch replay, skip, steps, one winning run, once-only reward a
       assert.equal(app.openDrivingLessons(), true);
       assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), true);
       const run = app.duel.drivingLesson, state = app.duel.state;
+      assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.corner.intro'].text);
       assert.equal(run.lesson.stage, 'watch'); assert.equal(app.selectPlayer(other), false);
       assert.equal(app.nextLessonAttempt(), true, 'Start Watch me dismisses the briefing');
+      assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.corner.watch-late'].text);
       // Replay real inputs, not injected positions: fixed tick poses equal the recorded native run.
       for (let tick = 0; tick < 240; tick++) {
         app.duel.step(1 / 120);
@@ -31,6 +34,7 @@ test('native App: Watch replay, skip, steps, one winning run, once-only reward a
         assert.ok(Math.abs(state.lateral - expected.lateral) < 1e-7);
       }
       assert.equal(app.nextLessonAttempt(), true); assert.equal(run.lesson.stage, 'follow');
+      assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.shared.follow'].text);
       assert.ok(app.getDriveLessonGhost());
       const drive = async mode => {
         const proof = mode === 'baseline' ? run.plan : await buildLessonDemonstration({lessonId: 'corner',
@@ -44,10 +48,13 @@ test('native App: Watch replay, skip, steps, one winning run, once-only reward a
       };
       assert.equal((await drive('baseline')).passed, false); assert.deepEqual(app.profile, before);
       assert.equal(app.nextLessonAttempt(), true); assert.equal(run.lesson.stage, 'your-turn');
+      assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.shared.your-turn'].text);
       assert.equal(app.getDriveLessonGhost(), null);
       assert.equal((await drive('fast')).passed, true); assert.equal(run.lesson.done, false); assert.deepEqual(app.profile, before);
       assert.equal(app.nextLessonAttempt(), true); assert.equal(run.lesson.stage, 'beat');
+      assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.shared.beat'].text);
       assert.equal((await drive('fast')).passed, true); assert.equal(run.lesson.done, true);
+      assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.corner.pass'].text);
       assert.equal(run.saved, true); assert.equal(run.rewarded, true);
       const expected = finishDriveLesson(before, 'corner', run.lesson.bestMargin, state.car);
       assert.deepEqual(app.profile, expected.profile);
@@ -59,7 +66,11 @@ test('native App: Watch replay, skip, steps, one winning run, once-only reward a
       app.selectPlayer(other); assert.deepEqual(app.profile, otherBefore);
       app.selectPlayer(owner); app.openDrivingLessons();
       assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), true);
-      assert.equal(app.duel.drivingLesson.lesson.stage, 'your-turn'); app.leaveLesson();
+      assert.equal(app.duel.drivingLesson.lesson.stage, 'your-turn');
+      assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.corner.intro'].text);
+      app.nextLessonAttempt();
+      assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.shared.your-turn'].text);
+      app.leaveLesson();
     });
   } finally { for (const [k, d] of saved) { if (d) Object.defineProperty(globalThis, k, d); else delete globalThis[k]; } }
 });
@@ -387,7 +398,7 @@ test('failed lesson save keeps one session reward, preserves durable progress an
   const radio=[],host={duel:{state,drivingLesson:run},player:{id:'kyle'},_runPlayerId:'kyle',profile,
     audio:{context:null},_refreshPlayer(){},_sayDriveLesson:id=>radio.push(id),
     _saveProfile(){writes++;this.profileSaved=canSave;if(canSave)durable=JSON.stringify(this.profile);return canSave;}};
-  const response={driveLessonAnswer:{result:'passed',radio:'drive.radio.corner.pass',cones:[]}};
+  const response={driveLessonAnswer:{result:'passed',radio:'drive.radio.v2.corner.pass',cones:[]}};
   event.call(host,state,response);
   assert.equal(host.profile.upgrades[state.car].brakes,2);assert.equal(run.rewarded,true);assert.equal(run.saved,false);
   assert.equal(JSON.parse(durable).upgrades[state.car].brakes,1,'failed storage retains the last durable career');
@@ -397,7 +408,7 @@ test('failed lesson save keeps one session reward, preserves durable progress an
   const reloaded=JSON.parse(durable);
   assert.equal(reloaded.upgrades[state.car].brakes,2);assert.equal(reloaded.drivingLessons.rewarded.corner,true);
   assert.equal(finishDriveLesson(reloaded,'corner',.5,state.car).profile.upgrades[state.car].brakes,2,'retake after successful reload cannot pay again');
-  assert.deepEqual(radio,['drive.radio.corner.pass']);assert.equal(retry.call(host),false);
+  assert.deepEqual(radio,['drive.radio.v2.corner.pass']);assert.equal(retry.call(host),false);
 });
 
 

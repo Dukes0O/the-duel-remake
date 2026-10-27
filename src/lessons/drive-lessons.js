@@ -1,3 +1,5 @@
+import {driveRadioId} from './drive-radio-lines.js';
+
 const sectionRow = (courseId, cornerNames, startPiece, startOffsetM, finishPiece, finishOffsetM = 0, finishEdge = 's1') =>
   Object.freeze({courseId, cornerName: cornerNames.join(', '), cornerNames: Object.freeze(cornerNames),
     startPiece, startOffsetM, finishPiece, finishOffsetM, finishEdge});
@@ -79,7 +81,7 @@ function startAttempt(lesson, view) {
     wallHit: false, timerStarted: view.s === lesson.corner.startS, previous: {...view, world: {...view.world}},
     cones: [], tipped: [], firstBrakeS: null,
     corners: lesson.instructor.corners.map(c => ({name: c.name, firstBrakeS: null, brakeMax: 0, minMph: Infinity, screechSeconds: 0, wallHit: false}))};
-  return answer();
+  return answer(driveRadioId('shared', lesson.stage));
 }
 function cornerResult(c, row) {
   const brakeDeltaM = row.firstBrakeS === null || c.brakeS === null ? null : row.firstBrakeS - c.brakeS;
@@ -105,6 +107,22 @@ export function driveLessonAdvice(rows) {
   if (!worst.checks.speed) return name + `aim for ${worst.targetMph.toFixed(0)} mph through the corner to balance speed and grip.`;
   return name + 'you kept the speed and tyres under control; use the same line again.';
 }
+// Choose feedback from the same observed checks as the result card, without
+// changing a rule or a race input. Off-road/wall and slides come first.
+export function driveLessonResultRadio(lesson, rows, {reason, success, clean, faster}) {
+  if (success && lesson.stage === 'beat') return driveRadioId(lesson.id, 'pass');
+  if (reason === 'wall' || reason === 'offroad') return driveRadioId('shared', 'off');
+  if (!clean && lesson.attempt.screechSeconds >= .3) return driveRadioId('shared', 'slid');
+  const worst = [...rows].sort((a, b) => Number(b.wallHit) - Number(a.wallHit) ||
+    Number(!b.checks.quiet) - Number(!a.checks.quiet) || b.missed - a.missed || b.screechSeconds - a.screechSeconds)[0];
+  let miss = 'clean';
+  if (worst?.wallHit) miss = 'off';
+  else if (worst && !worst.checks.quiet) miss = 'slid';
+  else if (worst?.checks.brake === false) miss = worst.kind === 'lift' ? 'lift' : worst.brakeDeltaM < 0 ? 'early' : 'late';
+  else if (worst && !worst.checks.speed) miss = worst.minMph > worst.targetMph ? 'fast' : 'slow';
+  else if (reason !== 'finish' || (!faster && lesson.stage === 'beat')) miss = 'pace';
+  return driveRadioId('shared', miss);
+}
 function finishAttempt(lesson, reason, cones) {
   const a = lesson.attempt, finished = reason === 'finish';
   const rows = a.corners.map((row, i) => cornerResult(lesson.instructor.corners[i], row));
@@ -118,12 +136,14 @@ function finishAttempt(lesson, reason, cones) {
     corners: rows, advice: driveLessonAdvice(rows), clean, finished, passed: success, endReason: reason,
     progressM: Math.max(0, Math.min(a.previous.s, lesson.corner.finishS) - lesson.corner.startS),
     instructorSeconds: lesson.instructor.timeSec, timeLostSeconds: finished ? rounded(a.elapsedSeconds - lesson.instructor.timeSec) : null};
+  const radio = driveLessonResultRadio(lesson, rows, {reason, success, clean, faster});
+  lesson.lastAttempt.radio = radio;
   lesson.phase = 'result';
   if (success && faster) lesson.bestMargin = Math.max(lesson.bestMargin, rounded(margin));
   lesson.gold = driveLessonGold(lesson.bestMargin);
-  if (success && lesson.stage === 'beat') { lesson.done = true; return {result: 'passed', radio: `drive.radio.${lesson.id}.pass`, cones}; }
+  if (success && lesson.stage === 'beat') { lesson.done = true; return {result: 'passed', radio, cones}; }
   lesson.failed = scored && !success;
-  return {result: lesson.failed ? 'retry' : 'running', radio: null, cones};
+  return {result: lesson.failed ? 'retry' : 'running', radio, cones};
 }
 // Only lesson state changes here. Observations never write the race or storage.
 export function stepDriveLesson(lesson, view, events = {}, dt = 0) {
