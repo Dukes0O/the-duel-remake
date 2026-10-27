@@ -183,3 +183,23 @@ passing uses actual section observations rather than invented outcomes.
 
 Session-end Cockpit sync: completed, zero task changes. It reported the
 unrelated card HELI-SUMMIT-LANDED without a mapped task; no hand edit made.
+
+## Claude's review (27 October 2026, AGENTS 18)
+
+Reviewed the change note, the section changes and the assertion inventory.
+The removed tests cover behaviour that section 14 removes (single-corner
+rows, forced bad tries, the streak, the automatic winter pass); their
+replacements check the new rules more directly (per corner, exact ties,
+brake-window edges, the clean faster override). The every-car suite is
+unchanged and passes 196/196; replay fingerprints are unchanged. Nothing is
+loosened. Section changes accepted: the proposed rows were too short, and the
+builder extended by whole corners as 14.3 allows.
+
+One note for LESSONS-V2-FINISH: the two Woods rows (braking and racing line)
+now drive the same road from Lodge Straight to Timber Straight. That is
+acceptable (same road, different lesson and judging), but if it feels
+repetitive in play, shorten one of them back to its own corners.
+
+Approved. Not merged on its own: LESSONS-V2-VIEW builds on this branch and
+both merge together, so the live lessons never run the new rules on the old
+screen.
