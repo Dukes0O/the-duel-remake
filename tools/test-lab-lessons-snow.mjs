@@ -7,7 +7,8 @@ import {launchBench, rangeOf, TARGET} from '../src/lab/benches/launch.js';
 import {SNOWS, WAXES, waxBench, waxRunResult, snowOfDay} from '../src/lab/benches/wax.js';
 import {launchTrace, launchSamples, launchDrawing} from '../src/lab/lessons/launch-animation.js';
 import {waxSamples, waxDrawing} from '../src/lab/lessons/wax-animation.js';
-import {PerspectiveCamera, Vector3} from 'three';
+import {PerspectiveCamera, Vector3, Group} from 'three';
+import {nameFirstAid} from '../src/lab/lessons/snow-display.js';
 
 test('every launch prediction and path ends at the actual challenge distance', () => {
   for (let angleDeg = 15; angleDeg <= 75; angleDeg += 5) for (const speedMs of [5, 17, 20, 40]) for (const air of ['no air', 'air']) for (const landing of ['level', '10 m lower']) {
@@ -59,6 +60,12 @@ test('every wax prediction and check uses real glide and daily challenge rules',
 });
 
 const finish = s => { for (let i = 0; i < 220; i++) s.tick(.1); };
+test('the wall label does not require a 2D canvas in a graphics-free room', () => {
+  const root = new Group();
+  nameFirstAid(root, {createElement: () => ({})}, {});
+  nameFirstAid(root, {createElement: () => ({getContext: () => null})}, {});
+  assert.equal(root.children.length, 0);
+});
 for (const packet of [launch, wax]) test(`${packet.definition.id}: full teaching flow, useful failure, pictures and challenge`, () => {
   const {definition: d, hooks} = packet; validateLesson(d, hooks);
   const s = createLessonSession(packet); s.next();

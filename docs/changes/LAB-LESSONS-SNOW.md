@@ -77,6 +77,12 @@ cutaways change the actual coating halfway through Watch, with the bench's
 own improved time; model instances are keyed by both id and model so those
 cutaway replacements appear. The affected pure tests pass.
 
+The first lane gate found a real drawing fault in graphics-free restoration
+tests: the first-aid label assumed a 2D canvas existed. It now returns without
+drawing when no canvas context is available. A new test covers missing and
+null contexts; the existing restoration assertions stay unchanged. Resume
+only failed and unrun suites, preserving unrelated green results.
+
 ## Removed
 
 The new packets replace both old bench panels in Lab 2 through the existing
