@@ -351,28 +351,6 @@ tasks:
     flag: "wildlife"
     details: "docs/board/cards/WILD-ART-SRC.md"
 
-  - id: DRIVE-LESSON-FINISH
-    title: "Claude's finishing pass: driving lesson 1"
-    owner: "claude"
-    lane: "DESIGN"
-    size: "S"
-    status: "ready"
-    needs: [DRIVE-LESSON-HOOKS]
-    locks: []
-    flag: "driving-lessons"
-    details: "docs/board/cards/DRIVE-LESSON-FINISH.md"
-
-  - id: DRIVE-LESSONS-FINISH-2
-    title: "Claude's finishing pass: driving lessons 2 to 4"
-    owner: "claude"
-    lane: "DESIGN"
-    size: "S"
-    status: "backlog"
-    needs: [DRIVE-LESSONS-VIEW-2, DRIVE-LESSON-HELIPAD, DRIVE-LESSON-FINISH]
-    locks: []
-    flag: "driving-lessons"
-    details: "docs/board/cards/DRIVE-LESSONS-FINISH-2.md"
-
   - id: QA-SUMMIT-WARMUP-EXCEPTION
     title: "Summit candidate records two compile warmup exceptions"
     owner: "codex"

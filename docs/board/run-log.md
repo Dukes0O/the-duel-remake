@@ -1397,3 +1397,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-27 LESSONS-V2-RULES and LESSONS-V2-VIEW merged together (Codex, Claude review): lessons are 30 to 48 s sections with a briefing, four steps, painted line, brake zones, target box in km/h, gap, corner lights and per-corner results; lane tier 52/52 and build pass in lane.
 - 2026-10-27 Release: driving lessons second version; full tier 532/532 on 9d521bb0.
 - 27 Oct: merged LESSONS-V2-LINES (Brian's 22 second-version lesson lines, 1,883 characters; lane 97/97, build pass; 47 old lines removed).
+- 27 Oct: dropped DRIVE-LESSON-FINISH and DRIVE-LESSONS-FINISH-2; the second-version lessons (DRIVING_LESSONS 14) replaced what they checked, and LESSONS-V2-FINISH covers them.
