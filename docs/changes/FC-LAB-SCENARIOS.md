@@ -1,6 +1,6 @@
 ---
 task: FC-LAB-SCENARIOS
-status: eight of nine scenarios, lane tier and build green; lab-tune-view needs one rerun
+status: lane tier, build and all nine scenarios green on 8b6fb937
 flag: lab-2
 player_facing: yes
 ---
@@ -85,6 +85,9 @@ No tolerance, timeout or game rule was changed.
   - lab-tune-view: not green yet. The first rerun failed at the Downforce lesson's first try (see below). After two more
     fixes the lesson itself ran through to its end and the pass was saved, but the next check failed, and I changed it (see
     below) without being able to run the scenario again, because C: fell to 0.3 GB free (limit 0.8 GB). It needs one rerun.
+- Final run on 8b6fb937 (after the Tune page fix), 28 October: lane tier 31 passed, 0 failed; build passed; all nine Lab
+  scenarios passed (lab-tune-view, lab-view, lab-walk, lab-navigation, lab-polish with --jobs 1; lab-lessons-tunnel,
+  lab-lessons-workshop, lab-lessons-snow, lab-lesson-frame with --jobs 2).
 - The run folder was deleted after the runs.
 
 ## lab-tune-view: what the reruns showed
