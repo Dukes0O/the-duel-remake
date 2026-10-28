@@ -18,7 +18,7 @@ import {flatGround} from '../src/heli/heli-ground.js';
 import {supplyPickup} from '../src/heli/heli-search.js';
 import {SUPPLY_CRATES} from '../src/heli/heli-rescue.js';
 import {heliOf, carAt} from '../src/heli/heli-save.js';
-import {HOME_COURSE, HELI_DESTINATIONS, legFuelKg, bearing} from '../src/heli/heli-jobs.js';
+import {HOME_COURSE, HELI_DESTINATIONS, legFuelKg, bearing, airOnlyNote} from '../src/heli/heli-jobs.js';
 import {createHeliSession, courseSite, insideArea, HELI_SESSION} from '../src/heli/heli-session.js';
 
 const DEG = Math.PI / 180;
@@ -60,8 +60,10 @@ function pilot(view, target, {speed = 6} = {}) {
 // the pump after the free tank, the dispatch board and carrying cars on
 // them; tools/test-heli-lessons.mjs covers a new pilot).
 const TRAINED = Object.freeze({liftoff: true, hover: true, landing: true, carry: true});
-function freshProfile() {
-  return normalizeProfile({...createProfile(), credits: 3000, heli: {version: 1, lessons: TRAINED, fuelKg: 0, lessons: TRAINED}});
+function freshProfile(carId = null) {
+  const profile = createProfile();
+  return normalizeProfile({...profile, credits: 3000, ...(carId ? {unlockedCars: [...profile.unlockedCars, carId]} : {}),
+    heli: {version: 1, lessons: TRAINED, fuelKg: 0, lessons: TRAINED}});
 }
 
 function run(session, seconds, controls = () => ({}), until = null) {
@@ -295,14 +297,14 @@ for (const id of Object.keys(HELI_DESTINATIONS)) {
 
 // The headless flight: hook the car at the home pad, fly to Panorama Ridge
 // on the autopilot, cruise, approach, set the car down in the zone.
-function flightToPanorama() {
+function flightToPanorama(carId = 'falcone_f42', {gentle = true} = {}) {
   const persisted = [];
-  const session = createHeliSession({profile: freshProfile(), enabled: true, loadCourse, carId: 'falcone_f42',
+  const session = createHeliSession({profile: freshProfile(carId === 'falcone_f42' ? null : carId), enabled: true, loadCourse, carId,
     today: '2026-10-14', persist: p => persisted.push(p.credits)});
   const log = [...session.start()];
   session.buyFuel();
   const car = () => session.view().load;
-  ok(car() && car().id === 'falcone_f42' && car().onGround, 'the car waits beside the pad');
+  ok(car() && car().id === carId && car().onGround, 'the car waits beside the pad');
   // Lift off, fly over the car with the hook at the car's roof, hook it.
   log.push(...run(session, 40, v => pilot(v, {x: car().x, z: car().z, y: car().y + 15.2}, {speed: 4}),
     v => Math.hypot(v.heli.x - v.load.x, v.heli.z - v.load.z) < 1 && Math.abs(v.heli.y - v.load.y - 15.2) < 0.6 &&
@@ -331,24 +333,38 @@ function flightToPanorama() {
   log.push(...run(session, 60, view => pilot(view, {x: view.zone.x, z: view.zone.z, y: view.zone.y + 0.7 + 14.6}, {speed: 1}),
     view => view.load.onGround));
   log.push(...run(session, 1, view => pilot(view, {x: view.heli.x, z: view.heli.z, y: view.heli.y})));
-  ok(log.some(e => e.type === 'setDown'), 'a gentle set-down in the zone');
+  if (gentle) ok(log.some(e => e.type === 'setDown'), 'a gentle set-down in the zone');
   const released = session.pressHook();
   assert.equal(released?.type, 'released', 'released cleanly'); checks++;
   const delivered = session.takeEvents().find(e => e.type === 'delivered');
   ok(delivered?.courseId === 'panorama-ridge', 'the car is delivered to Panorama Ridge');
-  assert.equal(carAt(session.profile, 'falcone_f42'), 'panorama-ridge', 'the save remembers where the car is'); checks++;
+  assert.equal(carAt(session.profile, carId), 'panorama-ridge', 'the save remembers where the car is'); checks++;
   ok(!log.some(e => e.type === 'charged'), 'a clean flight costs no repairs');
   ok(!log.some(e => e.type === 'crash'), 'no crash');
   assert.equal(session.profile.credits, 3000, 'credits untouched (the first tank was free)'); checks++;
   const kept = session.leave();
   ok(heliOf(kept).fuelKg < 400 - 120 && heliOf(kept).fuelKg > 100, `fuel left is kept (${heliOf(kept).fuelKg} kg)`);
   ok(persisted.length > 0, 'the profile was saved along the way');
-  return {fingerprint: session.fingerprint(), seconds: log.length};
+  return {fingerprint: session.fingerprint(), seconds: log.length, profile: session.profile};
 }
 const first = flightToPanorama();
 const second = flightToPanorama();
 assert.equal(second.fingerprint, first.fingerprint, 'the same flight every run'); checks++;
 console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...`);
+
+// EARN-FINISH: every earned car (docs/EARNED_CARS.md section 4.2) waits at Tremblant Woods, is
+// carried by the same flight, and races only where it was set down. The Bolide (1,450 kg) can
+// touch down a little over the gentle line with this scripted pilot; it is still delivered clean.
+for (const [carId, options] of [['ferrari_enzo', {}], ['mclaren_f1', {}], ['bugatti_bolide', {gentle: false}]]) {
+  const before = freshProfile(carId);
+  const at = (profile, courseId) => airOnlyNote({enabled: true, profile, carId, courseId}) === null;
+  ok(at(before, 'tremblant-woods'), `${carId}: waits at Tremblant Woods`);
+  ok(!at(before, 'pacific-canyon') && !at(before, 'tremblant-snow') && !at(before, 'panorama-ridge'), `${carId}: refused everywhere else`);
+  ok(airOnlyNote({enabled: false, profile: before, carId, courseId: 'pacific-canyon'}) === null, `${carId}: no note with the switch off`);
+  const flown = flightToPanorama(carId, options);
+  ok(at(flown.profile, 'panorama-ridge'), `${carId}: races at Panorama Ridge once set down there`);
+  ok(!at(flown.profile, 'tremblant-woods') && !at(flown.profile, 'pacific-canyon'), `${carId}: no longer at Tremblant Woods or anywhere else`);
+}
 
 // Import guard: src/heli is reached only through its named hooks, and its
 // simulation files draw nothing.

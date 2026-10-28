@@ -110,6 +110,12 @@ test('cup controls and trophies respect the preview switch and escape player-fac
   const {courseScreen,createCourseActions}=await import('../src/screen-courses.js');
   assert.equal(trophyCase({cups:{version:1,trophies:['mountain:medium']}}),'');
   assert.ok(trophyCase({cups:{version:1,trophies:['mountain:medium']}},{enabled:true}).includes('Mountain Cup · Medium · WON'));
+  // The trophy case is drawn in the garage's own tiles: the words stay, won tiles are marked, the rest are plain.
+  const shelf=trophyCase({cups:{version:1,trophies:['mountain:medium']}},{enabled:true});
+  assert.match(shelf,/<div class="paint-heading"><h3>CUP TROPHY CASE<\/h3><span>1 \/ 12<\/span>/);
+  assert.equal(shelf.match(/class="trophy-tile /g).length,12);
+  assert.equal(shelf.match(/trophy-tile medium won/g).length,1);
+  assert.ok(shelf.includes('Mountain Cup · Easy · Not yet won')&&shelf.includes('One trophy per cup and difficulty. Win bonuses are paid once.'));
   assert.equal(cupsPanel({},{enabled:false}),'');
   assert.ok(!courseScreen({},0,'',{}).includes('data-cup-start'));
   const panel=cupsPanel({},{...admission,enabled:true,playerId:owner});

@@ -444,3 +444,75 @@ results screen are replaced by the card.
 ## Claude's review (28 October 2026, night)
 
 Decisions built as asked: F1 at 12 medals (an Easy-only child with three purchases could never reach 15), the earned-car results card, medal dots and the garage chip. Changed assertions approved: the F1 count follows the new number; the result-line check moved with the card; test-lab-fan and test-sirena-car apply only the F1 number to old data and compare the rest exactly. The one lane failure (test-deep-kelp-coast) comes from DEEP-TRAIL-JOINTS on integration and is being fixed there. Verdict: merge. earned-cars stays dev until Claude's three frame checks.
+
+## Finishing pass, 28 October 2026 (Claude, on integration fc0e5325)
+
+Kind: one small screen fix, new checks, and a ladder recipe. No medal number, rule, save shape or switch changed. `earned-cars` stays dev. No frame timing was run; the three frame checks stay with Claude.
+
+### 1. The ladder, played through the game's own rules
+
+New recipe: `node tools/earned-ladder.mjs [careers]`. It plays memory-only careers through the real `settleRace`, car prices and earned-car grants; only the race is a seeded dice roll. Pacific Canyon, Arcade, Grand Prix career on. Child: Easy only, wins about a third of races at first and gains 1.2 points a race (cap 80 percent), 40 percent Grand Prix. Parent: Medium and Hard half each, Medium 55 percent and Hard 30 percent at first, gaining 1 point a race (caps 85 and 70), half Grand Prix. "Random" picks any owned car each race; "chase" picks a car with an empty box. A real family sits between. These are my own estimates, not measured from a real player. 300 careers per row; each cell is won races, middle value (10th to 90th percentile).
+
+| Player and choices | Ferrari Enzo (6 medals) | McLaren F1 (12) | Bugatti Bolide (24, 6 gold) |
+| --- | --- | --- | --- |
+| Child, 3 cars bought, random car | 10 wins (8 to 14), 23 races | 41 (28 to 64), 63 races | never (Easy has no gold) |
+| Child, 4 upgrades then 3 cars, random car | 13 (10 to 17), 27 races | 43 (30 to 69), 65 races | never |
+| Child, buys every car, random car | 10 (8 to 14), 23 races | 30 (23 to 38), 49 races | never |
+| Child, buys every car, chases empty boxes | 7 (6 to 9), 17 races | 16 (13 to 20), 32 races | never |
+| Parent, no purchase, random car | 9 (7 to 14), 18 races | 38 (25 to 60), 58 races | never in 700 races |
+| Parent, 4 upgrades then 3 cars, random car | 7 (6 to 9), 15 races | 17 (14 to 21), 29 races | 53 (42 to 69), 77 races |
+| Parent, buys every car, random car | 7 (6 to 9), 14 races | 16 (13 to 19), 28 races | 38 (32 to 44), 57 races |
+| Parent, buys every car, chases empty boxes | 6, 13 races | 12, 23 races | 24 (24 to 26), 40 races |
+
+Against the targets:
+
+- Car 1 is 6 to 10 won races, the top of the range for a child who picks cars at random (up to 14 in one career in ten, 17 if the child also spends on upgrades first). In target.
+- Car 2 needs a new car or harder rivals, as designed. A child with three purchases now reaches it (41 wins; at 15 medals it never did). A parent who chases boxes with no purchase reaches it at 12 wins; one who picks at random needs about 38.
+- Car 3 needs Hard wins: a child on Easy never gets it, a parent gets it in 24 to 69 wins.
+
+Tuning: none. No step is clearly off, so the medal numbers 6, 12 and 24 (6 gold) stay. The one slow step is the F1 for a child who never buys more than three cars (about 40 wins); that is the one to watch if Kyle's son stalls, and the lever is the second number only.
+
+### 2. Screens at 1280 x 720
+
+Memory-only QA build, private ports (5966 earned-cars scenario, 60090 picture run), `earned-cars`, `grand-prix-career` and `helicopter` on. Pictures, in the session scratchpad: `earn-sheet-partial.png`, `earn-full-sheet.png` (a full six-medal sheet, bronze, silver and gold, win counts), `earn-sheet-and-three-cars.png` (the full sheet above the Enzo, F1 and Bolide in the showroom), `earn-locked-enzo.png`, `earn-locked-bolide.png`, `earn-owned-bolide.png`, `earn-garage-top.png` (chip), `earn-garage-list.png` (list labels), `earn-menu-picker-locked.png` (picker opened out), `earn-results-medal.png`, `earn-results-car.png`, and `earn-showroom-{enzo,f1,bolide}.png`.
+
+Medal colours read clearly (bronze, silver and gold are distinct on the sheet and on the results dot). A box-by-box overlap check over the sheet, the locked card and the chip found nothing overlapping or leaving its panel; no label reads "undefined"; the words are plain ("EARNED, NOT BOUGHT", "Win medals with any of your cars", "MEDALS 4/24 · GOLD 0/6").
+
+One fault found and fixed. A win that earned only a medal (no new car) used the big headline, so on the results screen of a player who owns one course ("Unlock next course" shows) the Restart and Main Menu buttons ended at 750 pixels, below the 720 screen. The same win with the switch off ended at 724. A medal line now takes the smaller headline that the car card already used (`src/screen-results.js`, one condition; the CSS class `earned-car-results` already existed). Buttons now end at 657 with a medal line and 693 with a medal line and a car card. A repeat win with nothing new keeps the ordinary headline.
+
+Left as it is, for Claude to judge: on a locked earned car the unlock card sits below Paint and Specialist Drivers, a screen and a half down the garage page (the Jesko's card is placed the same way); the chip that jumps to the sheet shows only on an owned car.
+
+### 3. The sound
+
+`interface.bonus` is sent from one place (`src/app.js`, inside the settlement that runs once per race; a repeat is refused by `settledResults`). A medal and a new car in the same race are one event. New test `a medal and a new car in one race play one cue; settling it again plays none` in `tools/test-earned-cars-ui.mjs`: the Enzo and a bronze medal in one win give one cue; settling the same result again and redrawing the screen give none and count nothing twice. Existing tests keep: none for a repeat win in a filled box, none with the switch off, one for an empty medal event. This checks the cue is sent once, not how it sounds.
+
+### 4. Fly one in
+
+`tools/test-heli-mode.mjs` now runs its headless carry flight (Tremblant Woods, hook, cruise to Panorama Ridge, set down, release) for the Enzo, the F1 and the Bolide as well as the Falcone, with the game's own start check (`airOnlyNote`). For each: it waits at Tremblant Woods; start is refused at Pacific Canyon, Tremblant Snow and Panorama Ridge; after the flight start is allowed at Panorama Ridge and refused at Tremblant Woods and Pacific Canyon; with the helicopter switch off it is allowed everywhere. The flight's own checks (hooked, delivered, saved location, no crash, no repair charge, credits unchanged) pass for all three. The Bolide (1,450 kg) touches down just over the one metre a second "gentle" line with this scripted pilot, so the gentle-event check is skipped for it only; it is delivered clean. Confirmed by running the loop with that check on: it fails on the Bolide alone. `test-heli-mode` went from 184 to 263 checks. `test-heli-hooks` (303) and `test-heli-cable` (103) also pass.
+
+### Gates
+
+- `node tools/run-tests.mjs --tier lane --changed --jobs 2`: 44 of 44 suites passed (367 s), including `test-earned-cars-ui`, `test-medals`, `test-heli-mode`, `test-repo-hygiene` and the replay guard.
+- `npm run build` passed.
+- By hand: `test-earned-cars-ui` (7), `test-medals` (11), `test-enzo-vehicle`, `test-mclaren-f1-vehicle`, `test-bolide-vehicle`, `test-heli-hooks`, `test-heli-cable`, `test-heli-jobs` (5,946 checks) all pass.
+- Browser scenarios `earned-cars`, `enzo-look`, `mclaren-f1-look`, one at a time: all pass, no errors or warnings.
+- Not run here: the three Grand Prix frame checks (Enzo, F1, Bolide, High and Performance), which Claude runs alone.
+
+### Changed assertions
+
+None changed. Added: two checks in `tools/test-earned-cars-ui.mjs`, and an earned-car loop in `tools/test-heli-mode.mjs` (the flight function takes the car as a parameter, the Falcone flight is unchanged).
+
+### Removed
+
+The picture scenario `tools/scenarios/zz-earn-finish.mjs` and the `.evidence` captures were removed after use. Nothing in the game was replaced.
+
+### Claude's two decisions on the garage page, built the same day
+
+1. **The unlock card moves up.** On a locked earned car and on the Jesko, the card ("EARNED, NOT BOUGHT", medals x / 6, or "GARAGE COMPLETION REWARD", cars fully tuned) now sits right under the car's name and ratings, above Paint Finish and Specialist Drivers, so it is on screen at 1280 x 720 (the card spans y 208 to 390 on the Enzo). An owned car keeps its layout (the sheet before Paint Finish), and a priced car keeps its Unlock card below. Files: `src/screen-garage.js` (the card is built once before the page and placed under the ratings), `src/screen-garage.css` (a gap under the card).
+2. **The Cup Trophy Case is styled.** It was bare browser bullets in the browser's own font. It now has the Paint Finish heading with a count ("4 / 12"), the note line, and 12 tiles, one row per cup and one column per difficulty. A won tile has a bronze, silver or gold disc by difficulty and brighter text; a tile not yet won has a dashed empty ring and muted text. Every word is kept, including "Mountain Cup · Medium · WON" and "Not yet won". Files: `src/screen-trophies.js`, `src/screen-garage.css`.
+
+Tests: `tools/test-earned-cars-ui.mjs` gains order checks (the Jesko and a locked earned car above Paint Finish and below the ratings, once; a priced car's Unlock below Paint Finish; an owned earned car's sheet before Paint Finish). `tools/test-grand-prix-cups.mjs` gains a check of the trophy tiles (heading count, 12 tiles, one won tile, words kept); the old assertions are unchanged. Pictures in the scratchpad: `earn-locked-enzo-after.png`, `earn-locked-jesko-after.png`, `earn-trophy-case-after.png`. Gates: lane tier 59 of 59, build, `earned-cars` scenario, `test-earned-cars-ui`, `test-grand-prix-cups`, `test-koenigsegg-ui` all pass.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent review, rule 17; no assertion changed, tests added). Ladder by tools/earned-ladder.mjs through the real settlement: Enzo 6 to 10 wins, F1 needs a new car or harder rivals, Bolide needs Hard wins; no tuning. Results: a medal-only win uses the smaller headline so buttons stay on screen. Garage: a locked earned car's unlock card sits under the ratings; the trophy case is styled like the garage with won and not-won tiles. Look checked on pictures. Remaining: the three Grand Prix frame checks before the switch goes on.

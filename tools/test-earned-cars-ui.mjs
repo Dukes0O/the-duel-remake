@@ -15,6 +15,7 @@ import {shownCars, shownCarIds, medalResultLines, medalSheetPanel} from '../src/
 import {AIR_ONLY_CARS, JOB_CARS} from '../src/heli/heli-jobs.js';
 import {screenMarkup} from '../src/screen-menu.js';
 import {createGarageScreen} from '../src/screen-garage.js';
+import {createResultsScreen} from '../src/screen-results.js';
 import {ownTestCourses} from './career-fixture.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -74,6 +75,44 @@ test('switch on: an Easy Rival Duel win fills the box, shows the line and plays 
     assert.match(panel, /WIN ON MEDIUM/);
     assert.match(panel, /OPENS WITH THE GRAND PRIX CAREER/);
     assert.match(medalSheetPanel(app.profile, 'falcone_f42', {grandPrixCareer: true}), /GRAND PRIX<\/th><td class="medal empty">/);
+  });
+});
+
+// EARN-FINISH: a medal and a new car in the same race are one results screen, so one cue; the
+// results screen keeps its buttons on screen at 1280 x 720 for a medal line as well as a car card.
+test('a medal and a new car in one race play one cue; settling it again plays none', () => {
+  withApp({'earned-cars': true}, (app, cues) => {
+    // Five medals; an Easy Duel win with the Falcone fills the sixth box and earns the Ferrari Enzo.
+    app.profile = {...app.profile, medals: {version: 1, cars: {falcone_f42: {duel: [0, 1, 1], grandprix: [1, 1, 1]}}}};
+    app._saveProfile();
+    const render = createResultsScreen({app, profile: () => app.profile, metric: (label, value) => `<dt>${label}</dt><dd>${value}</dd>`,
+      time: String, credits: String, action: label => `<button>${label}</button>`, escapeHTML: String, arrow: ''});
+    const result = winDuel(app, 'easy');
+    assert.deepEqual(result.earnedCars, ['ferrari_enzo']);
+    assert.equal(result.medal.level, 'easy');
+    assert.equal(cues.length, 1, 'one cue for the medal and the car together');
+    assert.match(render(app.duel.state), /earned-car-results/);
+    app._settleResult(result, app.duel.state);
+    app.onFrame?.(app.duel.state);
+    render(app.duel.state);
+    assert.equal(cues.length, 1, 'settling and drawing the same race again plays nothing');
+    assert.deepEqual(app.profile.medals.cars.falcone_f42.duel, [1, 1, 1], 'and counts nothing twice');
+  });
+});
+
+test('a medal line alone gives the results screen the smaller headline; an ordinary win does not', () => {
+  withApp({'earned-cars': true}, (app) => {
+    const render = createResultsScreen({app, profile: () => app.profile, metric: (label, value) => `<dt>${label}</dt><dd>${value}</dd>`,
+      time: String, credits: String, action: label => `<button>${label}</button>`, escapeHTML: String, arrow: ''});
+    winDuel(app, 'easy');
+    const first = render(app.duel.state);
+    assert.match(first, /NEW MEDAL/);
+    assert.match(first, /class="result-panel earned-car-results"/, 'a new medal takes the smaller headline so the buttons stay on screen');
+    assert.equal(first.includes('NEW CAR EARNED'), false);
+    winDuel(app, 'easy');
+    const repeat = render(app.duel.state);
+    assert.equal(repeat.includes('NEW MEDAL'), false);
+    assert.equal(repeat.includes('earned-car-results'), false, 'a repeat win keeps the ordinary headline');
   });
 });
 
@@ -224,6 +263,18 @@ assert.ok(html.includes('MEDAL REWARD · Arrives fully tuned.'), 'the owned meda
 assert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 12'));
 garageCar = 'koenigsegg_jesko'; html = garage();
 assert.ok(html.includes('GARAGE COMPLETION REWARD') || html.includes('MAX OTHER CARS'), 'the Jesko keeps its own page');
+// Claude, 28 October 2026: how a locked earned car or the Jesko is earned sits right under the ratings,
+// above Paint Finish; a priced car keeps its Unlock card below, and an owned car keeps its sheet where it was.
+assert.ok(html.includes('PAINT FINISH') && html.indexOf('GARAGE COMPLETION REWARD') < html.indexOf('PAINT FINISH'), 'the Jesko card is above Paint Finish');
+assert.ok(html.indexOf('car-capabilities') < html.indexOf('GARAGE COMPLETION REWARD'), 'and below the ratings');
+garageCar = 'medal_test_a'; saved = createProfile(); html = garage();
+assert.ok(html.indexOf('capability-note') < html.indexOf('EARNED, NOT BOUGHT') && html.indexOf('EARNED, NOT BOUGHT') < html.indexOf('PAINT FINISH'),
+  'a locked earned car shows how to earn it between the ratings and Paint Finish');
+assert.equal(html.split('EARNED, NOT BOUGHT').length, 2, 'once');
+garageCar = 'falcone_heritage'; html = garage();
+assert.ok(html.indexOf('PAINT FINISH') < html.indexOf('data-action="unlock-car"'), 'a priced car keeps its Unlock card below Paint Finish');
+saved = win.profile; garageCar = 'medal_test_a'; html = garage();
+assert.ok(html.indexOf('MEDAL SHEET') < html.indexOf('PAINT FINISH') && html.includes('EARNED, NOT BOUGHT') === false, 'an owned earned car keeps its layout');
 // The menu: a hidden car is never the menu car or the rival's car.
 flags['earned-cars'] = false;
 const choices = {car: 'medal_test_a', rival: {car: 'medal_test_b', upgradeLevel: 0}};
