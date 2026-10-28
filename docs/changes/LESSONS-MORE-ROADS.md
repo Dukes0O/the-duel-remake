@@ -197,3 +197,7 @@ the start of each lesson are shown to work.
 
 Nothing replaced. The temporary picture recipe (a one-off scenario file) and
 its output in the lane were deleted after use.
+
+## Claude's review (27 October 2026, night)
+
+Rows meet 14.2, 14.3 and 14.12 in all 14 cars. Deviations accepted: no Eau Rouge row (the Wall Crest launch would need a crest-speed rule; Kyle likes the big air, so no rule is added for a lesson) and no snow hairpin (the Falcone cannot turn inside Summit's snow hairpins on snow, which stays the price of the course). Lesson-only turn names live in the lesson table, course data untouched. No assertion changed; test-drive-lesson-4 now loops over every snow row. Verdict: merge.
