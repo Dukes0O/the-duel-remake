@@ -318,24 +318,28 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
     '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip"></b><span></span></div>' +
     '<div class="sirena-log" hidden></div><p class="sirena-caption" aria-live="polite" hidden><small>ANA · FIELD STATION</small><span></span></p>' +
     '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>' +
-    '<aside class="deep-map" hidden><header><b>KELP COAST</b><button type="button" class="deep-map-toggle">Hide map</button></header>' +
+    '<aside class="deep-map" hidden><header><b>KELP COAST</b><span><button type="button" class="deep-map-orient">Whole coast, north up</button> <button type="button" class="deep-map-toggle">Hide map</button></span></header>' +
     '<canvas width="400" height="250" role="img" aria-label="Sea chart: explored seabed, saved finds, discovered places, ramp and your heading"></canvas>' +
     '<button type="button" class="deep-map-home">Return bearing</button><span class="deep-map-bearing" hidden><i>↑</i><b></b></span>' +
     // DEEP-EXPLORER: Surface stays visible even when the map is closed.
     '<button type="button" class="deep-surface">Surface · U</button>' +
     '<section class="deep-objectives"><h3>Ana’s list <span class="deep-chart-percent"></span></h3><ol></ol>' +
     '<p class="deep-chart-key">◆ Sea life · ● Pearl · ★ Badge · ⚑ Salvage<br>Sand · Kelp · Rock · Blue depths</p></section></aside>' +
-    '<p class="deep-objective-tick" aria-live="polite" hidden></p>';
+    '<p class="deep-objective-tick" aria-live="polite" hidden></p>' +
+    // DEEP-SHALLOWS-FIX: shown while the car presses against the edge of the sea floor.
+    '<p class="deep-edge-notice" aria-live="polite" hidden>This is the edge of the sea floor. Turn back toward the trail.</p>';
   host.append(root);
   const sonar = root.querySelector('.sirena-sonar'), blip = root.querySelector('.sirena-blip'), distance = sonar.querySelector('span');
   const log = root.querySelector('.sirena-log'), caption = root.querySelector('.sirena-caption'), title = root.querySelector('.sirena-title');
   const map = root.querySelector('.deep-map'), canvas = map.querySelector('canvas'), ctx = canvas.getContext('2d');
   const toggle = map.querySelector('.deep-map-toggle'), home = map.querySelector('.deep-map-home');
+  const orient = map.querySelector('.deep-map-orient'); // DEEP-SHALLOWS-FIX
   const bearing = map.querySelector('.deep-map-bearing');
   // DEEP-EXPLORER: checklist and completion notices are presentation only.
   const objectives = map.querySelector('.deep-objectives'), list = objectives.querySelector('ol');
   const logging = root.querySelector('.deep-logging'); // DEEP-EXPLORER
   const survey = objectives.querySelector('.deep-chart-percent'), tick = root.querySelector('.deep-objective-tick');
+  const edgeNotice = root.querySelector('.deep-edge-notice');
   const surface = map.querySelector('.deep-surface'), surfaceNow = () => app.duel.deepSurface();
   surface.addEventListener('click', surfaceNow);
   let previousObjectives = null, listMarkup = '', tickUntil = 0;
@@ -343,7 +347,10 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
   let mapVisit = null, geometry = null, showMap = true, requested = false, mapDrawAt = -Infinity;
   const toggleMap = () => { showMap = !showMap; canvas.hidden = objectives.hidden = !showMap; toggle.textContent = showMap ? 'Hide map' : 'Show map'; };
   const requestHome = () => { requested = true; };
-  toggle.addEventListener('click', toggleMap); home.addEventListener('click', requestHome);
+  // DEEP-SHALLOWS-FIX: the chart turns with the car; this button shows the whole coast, north up.
+  let headingUp = true;
+  const toggleOrient = () => { headingUp = !headingUp; orient.textContent = headingUp ? 'Whole coast, north up' : 'Turn with the car'; mapDrawAt = -Infinity; };
+  toggle.addEventListener('click', toggleMap); home.addEventListener('click', requestHome); orient.addEventListener('click', toggleOrient);
   let sonarUntil = 0, logUntil = 0, titleUntil = 0, disposed = false, surfaced = false;
   const stop = app?.duel?.onChange?.((state, event) => {
     if (disposed) return;
@@ -404,7 +411,7 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
         if (t >= mapDrawAt) {
           mapDrawAt = t + .1;
           const data = deepMapData(geometry, d.deepRuntime.zone, deepWorldPose(d), {
-            places: discovery.places, elapsedSec: journey.elapsedSec, requested,
+            places: discovery.places, elapsedSec: journey.elapsedSec, requested, headingUp,
             save: discovery, charted: d.deepStory?.charted ?? discovery.charted?.[d.deepRuntime.zone.id] }); // DEEP-EXPLORER
           if (showMap) drawDeepMap(ctx, data);
           // DEEP-EXPLORER: saved goals, with live survey progress before its next save.
@@ -420,6 +427,7 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
           bearing.querySelector('b').textContent = `Ramp · ${Math.round(data.home.distance)} m`;
         }
       }
+      edgeNotice.hidden = !(active && d.state.deepJourney?.edgeSec > 0); // DEEP-SHALLOWS-FIX
       if (t > sonarUntil) sonar.hidden = true;
       if (t > logUntil) log.hidden = true;
       if (t >= titleUntil || app.getDeepDiscovery()?.enabled !== true) title.hidden = true;
@@ -433,6 +441,6 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
       caption.hidden = !line || !title.hidden;
       if (line) caption.querySelector('span').textContent = line.text;
     },
-    dispose() { if (disposed) return; disposed = true; stop?.(); phone.dispose(); toggle.removeEventListener('click', toggleMap); home.removeEventListener('click', requestHome); surface.removeEventListener('click', surfaceNow); root.remove(); },
+    dispose() { if (disposed) return; disposed = true; stop?.(); phone.dispose(); toggle.removeEventListener('click', toggleMap); orient.removeEventListener('click', toggleOrient); home.removeEventListener('click', requestHome); surface.removeEventListener('click', surfaceNow); root.remove(); },
   };
 }

@@ -6,8 +6,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  DAYLIGHT_FADE, SIGHT_FADE, causticStrengthAt, daylightAt, depthTable, exposureAt, lightShaftStrengthAt,
-  sightRange, sunlightAt, waterColourAt,
+  DAYLIGHT_FADE, FAR_FADE_END, SHALLOW_CLARITY, SIGHT_FADE, causticStrengthAt, clarityAt, colourKeptAt, daylightAt, depthTable, exposureAt, lightShaftStrengthAt,
+  sightFadeAt, sightRange, sunlightAt, waterColourAt,
 } from '../src/deep/depth-colour.js';
 import {
   FISH_HARD_CAP, VERTICAL_WEIGHT, cappedFishCount, partOffset, schoolCentre, schoolShape,
@@ -61,6 +61,19 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   check(range[0] < range[1] && range[1] < range[2], 'red is lost at the shortest sight distance');
   check(range[2] > 80 && range[2] < 140, 'blue is lost around the 90 to 140 m the plan calls for');
   check(SIGHT_FADE.every(v => v > 0) && DAYLIGHT_FADE.every(v => v > 0), 'every colour fades');
+  // DEEP-SHALLOWS-FIX: the shallows are clear. A car 9 m ahead and a landmark 70 m away stay readable
+  // in every colour; the dark deep keeps the original haze exactly.
+  for (let d = 0; d <= 40; d += 0.5) check(clarityAt(d) >= SHALLOW_CLARITY - 1e-12 && clarityAt(d) <= 1 + 1e-12 && clarityAt(d + .5) >= clarityAt(d) - 1e-12, `water only gets murkier with depth (${d} m)`);
+  check(clarityAt(2) === SHALLOW_CLARITY && clarityAt(6) === SHALLOW_CLARITY, 'the shallowest water is the clearest');
+  check(clarityAt(24) === 1 && clarityAt(30) === 1 && sightFadeAt(30).every((v, i) => v === SIGHT_FADE[i]), 'the deep water keeps the original haze');
+  check(clarityAt(15) > .5 && clarityAt(15) < .8, 'the kelp forest is clearer than the deep but not crystal');
+  check(colourKeptAt(9, 3).every(v => v > .75), 'the car, 9 m ahead in the shallows, keeps over 75% of its own colour in every colour');
+  check(colourKeptAt(70, 3)[0] > .1 && colourKeptAt(70, 3)[1] > .25 && colourKeptAt(70, 3)[2] > .4, 'a landmark 70 m away in the shallows still shows');
+  check(colourKeptAt(40, 10).every(v => v > .2), 'mid water shows things 40 m away');
+  check(colourKeptAt(9, 3)[1] > 1.4 * Math.exp(-SIGHT_FADE[1] * 9), 'the car is much clearer than it was');
+  check(colourKeptAt(FAR_FADE_END, 3).every(v => v === 0) && colourKeptAt(0, 3).every(v => v === 1), 'everything melts into the water by the far limit; nothing is lost at the lens');
+  let seen = [1, 1, 1];
+  for (let d = 0; d <= 160; d += 5) { const kept = colourKeptAt(d, 3); check(kept.every((v, i) => v <= seen[i] + 1e-12 && v >= 0), `colour is only lost with distance (${d} m)`); seen = kept; }
   // Bad input never leaks NaN.
   check(daylightAt(NaN).every(v => v === 1) && daylightAt(-5).every(v => v === 1), 'bad or negative depth reads as the surface');
   check(depthTable().length === 5 && depthTable().every(row => row.water.every(Number.isFinite)), 'the depth table is complete');
@@ -288,10 +301,14 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     // DEEP-PLAYTEST-1: read-only map test and the released dive-kit results notice.
     'tools/test-deep-map.mjs|../src/deep/deep-map.js',
     'tools/test-deep-map.mjs|../src/deep/zones/kelp-coast.js',
+    // DEEP-SHALLOWS-FIX: the chart is checked against the real chase camera and a real dive.
+    'tools/test-deep-map.mjs|../src/deep/deep-journey.js',
+    'tools/test-deep-map.mjs|../src/deep/deep-ui.js',
+    'tools/test-deep-map.mjs|../src/deep/zone-floor.js',
     'src/screen-results.js|./deep/deep-hints.js',
   ]);
   // DEEP-EXPLORER: exact imports for this card's headless acceptance suite.
-  for (const name of ['zones/kelp-coast','deep-journey','deep-chart','deep-discovery','deep-objectives','deep-map','deep-rocks','deep-sirena','deep-log','sirena-view','sea-life-rules','deep-story'])
+  for (const name of ['zones/kelp-coast','deep-journey','deep-chart','deep-discovery','deep-objectives','deep-map','deep-rocks','deep-sirena','deep-log','sirena-view','sea-life-rules','deep-story','zone-floor'])
     approvedImports.add(`tools/test-deep-explorer.mjs|../src/deep/${name}.js`);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))

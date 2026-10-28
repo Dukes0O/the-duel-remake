@@ -9,7 +9,7 @@
 // Standard lit materials get this through patchWaterMaterial(); the ceiling,
 // light shafts, fish and specks write their own shaders with WATER_GLSL.
 import * as THREE from 'three';
-import { DAYLIGHT_FADE, SIGHT_FADE, SURFACE_WATER } from './depth-colour.js';
+import { DAYLIGHT_FADE, FAR_FADE_END, FAR_FADE_START, SIGHT_FADE, SURFACE_WATER } from './depth-colour.js';
 
 // One set of values shared by every material, updated once per frame.
 export function createWaterUniforms() {
@@ -72,7 +72,9 @@ vec3 uwWaterAt(float y) { return uUwWater * uwLight(y); }
 // Haze: an object lit to 'lit' at height y, seen from the camera dist metres away.
 vec3 uwHaze(vec3 lit, float dist, float y) {
   float camY = uUwCam[3].y;
-  vec3 keep = exp(-uUwExt * dist);
+  // Shallow water is clear (uUwExt is the haze rate for the eye's depth), but past a
+  // set distance everything melts into the water, so no far edge of the ground shows.
+  vec3 keep = exp(-uUwExt * dist) * (1.0 - smoothstep(${FAR_FADE_START.toFixed(1)}, ${FAR_FADE_END.toFixed(1)}, dist));
   // The haze is the water along the ray, up to about 45 m of it: the same
   // colour the open-water background shows in that direction, so far things
   // melt into it with no visible edge.

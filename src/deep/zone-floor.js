@@ -11,9 +11,12 @@ import { makeRng } from '../rng.js';
 import { KELP_TOP } from './sea-floor-shape.js';
 
 export const ZONE_SPAN = 90;         // metres each side of the trail that have ground
+export const ZONE_EDGE = 86;         // the car is held this far from the trail at the most
 // Hard caps for a whole zone (a loop of 3 to 4 km). Only nearby chunks are drawn.
 export const ZONE_CAPS = Object.freeze({ kelpStems: 2400, seagrassTufts: 9000, rocks: 420, pebbles: 4200 });
-export const FLOOR_CEILING = -0.8;   // banks never break the surface
+// DEEP-SHALLOWS-FIX: banks stay at least 2.6 m under the surface. At 0.8 m the chase camera (3.65 m above the car)
+// rose out of the water in the shallows and the whole screen turned into the flat surface seen from above.
+export const FLOOR_CEILING = -2.6;   // banks never come closer to the surface than this
 export const BANK_SHARE = 0.55;      // banks rise at most this share of the depth
 const CELL = 25;                     // lookup grid for the nearest stretch of trail
 

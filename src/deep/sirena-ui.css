@@ -42,3 +42,7 @@
 .deep-logging{position:absolute;right:4%;top:43%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:#102a35e8;border:1px solid #abbead88;border-radius:4px;font:14px Georgia,serif;color:#f0e1b3}
 .deep-logging>i{display:block;width:34px;height:34px;border-radius:50%;position:relative}
 .deep-logging>i:after{content:'';position:absolute;inset:4px;border-radius:50%;background:#102a35}
+
+/* DEEP-SHALLOWS-FIX: plain words when the car meets the edge of the sea floor. */
+.deep-edge-notice{position:absolute;top:12%;left:50%;transform:translateX(-50%);margin:0;padding:9px 18px;background:#102c30e8;border:1px solid #e5be78;color:#fff0c7;font:16px Georgia,serif;text-align:center}
+.deep-map header>span{display:flex;gap:6px}

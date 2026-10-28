@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { deepWorldPose, surfaceLocalPoint } from './deep-journey.js';
+import { SEA_LEVEL } from '../coastal-water.js';
+// DEEP-SHALLOWS-FIX: the chase camera never rises out of the water, however shallow the sea floor.
+export const CAMERA_UNDER_SURFACE = 0.8;
 
 export function surfaceLocalCamera(camera) {
   const copy=camera.clone();copy.position.y=surfaceLocalPoint(copy.position).y;copy.updateMatrixWorld(true);return copy;
@@ -10,7 +13,7 @@ export function deepPresentation(duel) {
   const tall=duel.state.car==='titan_monster',back=tall?12:8.7,height=tall?5.8:3.65;
   return {car,phase:journey.phase,choiceReady:journey.phase==='choice'&&!duel.state.paused,
     hudOpacity:journey.committed?0:.4,
-    camera:{position:{x:car.x-Math.sin(car.heading)*back,y:car.y+height,z:car.z-Math.cos(car.heading)*back},
+    camera:{position:{x:car.x-Math.sin(car.heading)*back,y:Math.min(car.y+height,SEA_LEVEL-CAMERA_UNDER_SURFACE),z:car.z-Math.cos(car.heading)*back},
       target:{x:car.x+Math.sin(car.heading)*26,y:car.y+1.05,z:car.z+Math.cos(car.heading)*26}}};
 }
 // Views own translated copies and resources. They never write the Duel packet.

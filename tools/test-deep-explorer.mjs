@@ -7,6 +7,7 @@ import {createFeatureFlags} from '../src/feature-flags.js';
 import {ROUTE_VARIANTS} from '../src/route-variants.js';
 import {kelpCoastProvider} from '../src/deep/zones/kelp-coast.js';
 import {rampAt} from '../src/deep/deep-journey.js';
+import {ZONE_SPAN} from '../src/deep/zone-floor.js';
 import {chartCells, revealChart, chartHas, chartPercent, CHART_HEX, chartFrame} from '../src/deep/deep-chart.js';
 import {normalizeDeep, rememberChart} from '../src/deep/deep-discovery.js';
 import {deepObjectives} from '../src/deep/deep-objectives.js';
@@ -409,5 +410,66 @@ test('every Kelp Coast creature logs at its spot and moving pose on every route;
     const log=createLog(zone,{}, {enabled:true}), pearl=log.pearls[0];
     stepLog(log,{...pearl,x:pearl.x+3.1,speed:0},2);assert.equal(log.found.size,0,'pearls retain 3m');
     stepLog(log,{...pearl,speed:16/1.609344},2);assert.equal(log.found.size,0,'pearls retain 15km/h');
+  }
+});
+
+// DEEP-SHALLOWS-FIX (Kyle, 28 October 2026: "a whole ton of instances where you get reset into
+// a different part of the map"). Driving off the trail used to run the car out of the sea floor's
+// ground, where the race's boundary rule put it back on the road line hundreds of metres away.
+// Now the car is only ever held at the nearest point inside the ground, facing the way it faced,
+// with a plain notice on screen.
+const jumpWorld=(d,from)=>{const now=d.course.worldAt(d.state.s,d.state.lateral);return Math.hypot(now.x-from.x,now.z-from.z);};
+function driveAround(d,input,seconds) {
+  const runtime=d.deepRuntime, events=[]; let worst=0, worstAt=null, edgeNotice=false, maxOut=0;
+  d.onChange((_state,event)=>{for(const k of ['boundaryReset','terrainRescue','recovered','rollover','checkpointReset','crash'])if(event[k])events.push(k);});
+  for(let i=0;i<seconds*120;i++) {
+    const t=i*DT, before=d.course.worldAt(d.state.s,d.state.lateral), speed=Math.abs(d.state.speedMph);
+    d.setInput(input(t,d)); d.step(DT);
+    assert.equal(d.state.status,'exploring','the dive goes on');
+    const extra=jumpWorld(d,before)-Math.max(speed,Math.abs(d.state.speedMph))*.44704*DT;
+    if(extra>worst){worst=extra;worstAt={t:+t.toFixed(2),s:d.state.s,lateral:d.state.lateral};}
+    const at=runtime.floor.sample(...(p=>[p.x,p.z])(d.course.worldAt(d.state.s,d.state.lateral)));
+    assert.ok(at&&Number.isFinite(d.state.s)&&Number.isFinite(d.state.lateral),`on the ground at ${t.toFixed(2)} s`);
+    maxOut=Math.max(maxOut,at.distance);
+    if(d.state.deepJourney.edgeSec>0)edgeNotice=true;
+  }
+  return {events,worst,worstAt,edgeNotice,maxOut};
+}
+test('driving off the trail, out to the edge of the sea floor and back never puts the car anywhere it did not drive', () => {
+  const plans={
+    'straight on, full throttle':(t)=>({throttle:1,brake:0,steer:0}),
+    'hard right after 10 s':(t)=>({throttle:1,brake:0,steer:t<10?0:1}),
+    'hard left after 10 s':(t)=>({throttle:1,brake:0,steer:t<10?0:-1}),
+    'weaving':(t)=>({throttle:1,brake:0,steer:Math.sin(t*.7)}),
+    'drive out, then reverse':(t)=>t<30?{throttle:1,brake:0,steer:0}:{throttle:0,brake:1,steer:Math.sin(t)*.5},
+  };
+  for(const {seed} of ROUTE_VARIANTS) for(const [name,input] of Object.entries(plans)) {
+    const d=race(seed); dive(d);
+    const result=driveAround(d,input,name.startsWith('weaving')?80:75);
+    const label=`${seed} ${name}`;
+    assert.deepEqual(result.events,[],`${label}: no reset, rescue or recovery`);
+    assert.equal(d.state.boundaryResets,0,`${label}: the boundary rule never fires underwater`);
+    assert.ok(result.worst<.75,`${label}: the car jumped ${result.worst.toFixed(2)} m beyond its own travel at ${JSON.stringify(result.worstAt)}`);
+    assert.ok(result.maxOut<=ZONE_SPAN,`${label}: held inside the ground`);
+  }
+});
+
+test('the edge of the sea floor holds the car where it is, slides it along, and says so', () => {
+  for(const {seed} of ROUTE_VARIANTS) {
+    const d=race(seed); dive(d); const runtime=d.deepRuntime, start=runtime.floor.frameAt(300);
+    // Out in open water 80 m to the left of the trail, heading further out.
+    const out=runtime.floor.pointAt(300,80);
+    park(d,out,Math.atan2(out.x-start.x,out.z-start.z));
+    d.state.speedMph=40; d.state.deepJourney.edgeSec=0;
+    const result=driveAround(d,()=>({throttle:1,brake:0,steer:0}),6);
+    assert.deepEqual(result.events,[]); assert.ok(result.worst<.75,`jump ${result.worst}`);
+    // Looking at the car from the view or the camera never writes the run's edge flag.
+    runtime.edgeHit=false; d.course.nearest(out.x*3-start.x*2,out.z*3-start.z*2,d.state.s); assert.equal(runtime.edgeHit,false,'a look from outside the drive step writes nothing');
+    assert.ok(result.edgeNotice,'a notice shows while the car presses against the edge');
+    assert.ok(result.maxOut<=ZONE_SPAN&&result.maxOut>ZONE_SPAN-10,`${seed}: held near the edge, ${result.maxOut.toFixed(1)} m out`);
+    assert.ok(d.state.speedMph<20,'the car slows against the edge');
+    // Turning back works at once: steer round and drive away.
+    const back=driveAround(d,(t)=>({throttle:1,brake:0,steer:t<2.5?1:0}),12);
+    assert.deepEqual(back.events,[]); assert.ok(back.worst<.75);
   }
 });
