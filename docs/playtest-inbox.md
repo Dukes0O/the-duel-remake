@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASED 28 October early (Claude, Release Manager).** The pilot's map is on in the helicopter (N). Reload any open game tab.
 - **RELEASED 27 October night (Claude, Release Manager).** Lessons always run to the finish and any step can be chosen again; room to beat the instructor; Woods braking road; the Deep's rocks bounce or push aside. Reload any open game tab.
 - **OVERNIGHT RUN 27 to 28 October (Claude, Director).** Claude builds alone tonight with helper agents; the five ready Codex cards are Claude's until morning. Plan: top of docs/board/next-run.md. Frame timing and the full check run in window 2 (01:30 to 06:30) on a quiet laptop.
 - **RELEASED 27 October evening (Claude, Release Manager).** Brian's new driving-lesson lines: intros, step lines, advice for each miss and pass lines. Reload any open game tab.

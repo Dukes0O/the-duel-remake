@@ -2,6 +2,14 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## The pilot's map, 28 October 2026
+
+### What players get now
+
+- **The pilot's map in the helicopter (N):** every course on one chart, click
+  a place to fly there, fuel you need for each leg, fuel pads, secret signs to
+  find from the air, and the Table on the way to Pacific Canyon.
+
 ## Lessons you can finish, and the Deep's rocks, 27 October 2026 (night)
 
 ### What players get now

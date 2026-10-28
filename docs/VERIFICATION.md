@@ -1465,3 +1465,12 @@ shape, physics or race rule changed. Lane tiers: lessons 39/39 (every-car
 instructor suite 196/196), rocks 157/157 with replay fingerprints and world
 signatures unchanged; builds pass. The nightly full check covers the whole
 tier tonight. No frame check: no race scene changed.
+
+## Release, 28 October 2026 (Claude, Release Manager)
+
+MAP-FINISH: the `pilot-map` switch goes on (the map's build items merged 26
+October; Claude judged the look sheet). Rule 19: since the last full-tier pass
+(9d521bb0) the only new change is the switch and its three switch-state
+assertions; lane tier 37/37 and build pass; map suites 499, 300 and 529
+checks. The nightly full check covers the whole tier. No frame check: no race
+scene changed.
