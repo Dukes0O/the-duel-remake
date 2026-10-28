@@ -46,7 +46,7 @@ test('Watch replays the late clip then the clean inputs; views and briefing leav
       assert.equal(run.watchClip,'late');assert.equal(app.driveLessonBriefing,true);
       const frozen=JSON.stringify(s);app._simulate(1);assert.equal(JSON.stringify(s),frozen,'briefing holds at gate');
       const props=app.driveLessonProps();
-      assert.match(driveLessonBriefingMarkup(props),/Start Watch me/);
+      assert.match(driveLessonBriefingMarkup(props),/<strong>1 Watch me<\/strong>/);
       assert.doesNotMatch(driveLessonPanelMarkup({...props,distanceS:run.plan.corner.startS,watchClip:'clean'}),/Braking now/);
       assert.match(driveLessonPanelMarkup({...props,distanceS:run.plan.instructor.corners[0].brakeS,watchClip:'clean'}),/Braking now/);
       assert.match(driveLessonMapMarkup(run.plan.instructor),/polyline/);
@@ -60,11 +60,11 @@ test('Watch replays the late clip then the clean inputs; views and briefing leav
       assert.equal(run.lesson.phase,'result');assert.equal(run.lesson.lastAttempt.finished,true);
       assert.equal(run.lesson.lastAttempt.clean,true);assert.equal(run.lesson.lastAttempt.passed,false);
       assert.ok(Math.abs(run.lesson.lastAttempt.elapsedSeconds-run.plan.instructor.timeSec)<.009);
-      const markup=driveLessonResultMarkup(app.driveLessonProps());assert.match(markup,/<table>/);assert.match(markup,/Start Follow me/);
+      const markup=driveLessonResultMarkup(app.driveLessonProps());assert.match(markup,/<table>/);assert.match(markup,/<strong>2 Follow me<\/strong>/);
       app.nextLessonAttempt();assert.equal(run.lesson.stage,'follow');
       assert.ok(app.getDriveLessonGhost());app.leaveLesson();
       app.openDrivingLessons();await app.startLesson({courseId:'panorama-ridge',car:'falcone_f42',difficulty:'casual'});
-      app.nextLessonAttempt();app.nextLessonAttempt();assert.equal(app.duel.drivingLesson.lesson.stage,'follow','Enter skips the whole Watch step');
+      app.nextLessonAttempt();assert.equal(app.nextLessonAttempt(),false,'Enter during Watch me does nothing, there is no Skip');assert.equal(app.duel.drivingLesson.lesson.stage,'watch');
     });
   }finally{for(const [k,v]of previous){if(v)Object.defineProperty(globalThis,k,v);else delete globalThis[k];}}
 });

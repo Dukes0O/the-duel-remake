@@ -73,15 +73,23 @@ export function createDriveLesson(id, {corner, instructor, retake = false} = {})
     previous = c.turnOutS;
   }
   return {id, corner: {...corner}, instructor, stage: retake ? 'your-turn' : 'watch', phase: 'ready',
-    done: false, failed: false, bestMargin: 0, gold: false, attempt: null, lastAttempt: null};
+    done: false, failed: false, bestMargin: 0, gold: false, attempt: null, lastAttempt: null,
+    runs: {}, retake: retake === true};
 }
 export const driveLessonStep = lesson => DRIVE_LESSON_STEPS.find(step => step.id === lesson.stage);
-// Any step can be chosen again, back or forward (Kyle, 27 October): a run in progress is
-// dropped unscored and the next run starts in the chosen step. Passing still needs Beat me.
+// Any step can be chosen again, back or forward (Kyle, 27 October), and after a pass too (Kyle, 28 October):
+// a run in progress is dropped unscored and the next run starts in the chosen step. Passing still needs Beat me.
 export function chooseDriveLessonStep(lesson, id) {
-  if (!lesson || lesson.done || !DRIVE_LESSON_STEPS.some(step => step.id === id)) return false;
+  if (!lesson || !DRIVE_LESSON_STEPS.some(step => step.id === id)) return false;
   lesson.stage = id; lesson.phase = 'ready'; lesson.failed = false; lesson.attempt = null;
   return true;
+}
+// The run the opening screen highlights and Enter starts: the first one not done this visit, else Your turn.
+// A retake counts Watch me and Follow me as done, since the first visit did them.
+export function suggestedDriveLessonRun(lesson) {
+  const runs = lesson?.runs ?? {};
+  const open = DRIVE_LESSON_STEPS.find(step => runs[step.id]?.done !== true && !(lesson?.retake === true && step.rule === 'none'));
+  return open?.id ?? 'your-turn';
 }
 function startAttempt(lesson, view) {
   if (view.s > lesson.corner.startS) throw new TypeError('Attempt must start before or at its gate');
@@ -155,6 +163,12 @@ function finishAttempt(lesson, reason, cones) {
   lesson.phase = 'result';
   if (success && faster) lesson.bestMargin = Math.max(lesson.bestMargin, rounded(margin));
   lesson.gold = driveLessonGold(lesson.bestMargin);
+  // What this visit has done, for the marks on the run buttons: a finished practice run, or a passed scored run with its best margin.
+  if (scored ? success : finished) {
+    lesson.runs ??= {};
+    const before = lesson.runs[lesson.stage]?.margin ?? 0;
+    lesson.runs[lesson.stage] = {done: true, margin: success && faster ? Math.max(before, rounded(margin)) : before};
+  }
   if (success && lesson.stage === 'beat') { lesson.done = true; return {result: 'passed', radio, cones}; }
   lesson.failed = scored && !success;
   return {result: lesson.failed ? 'retry' : 'running', radio, cones};
@@ -164,7 +178,7 @@ export function stepDriveLesson(lesson, view, events = {}, dt = 0) {
   for (const key of ['s', 'lateral', 'speedMph', 'brake', 'throttle', 'tyreSlip']) finite(view[key], key);
   finite(view.world?.x, 'world x'); finite(view.world?.z, 'world z'); finite(dt, 'step time');
   if (dt < 0) throw new TypeError('Negative step time');
-  if (view.paused || view.status !== 'racing' || lesson.done) return answer();
+  if (view.paused || view.status !== 'racing') return answer();
   if (events.start && lesson.phase !== 'driving') return startAttempt(lesson, view);
   if (lesson.phase !== 'driving') return answer();
   const a = lesson.attempt, from = a.previous, advance = view.s - from.s;

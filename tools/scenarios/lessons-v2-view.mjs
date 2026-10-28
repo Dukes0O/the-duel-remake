@@ -1,6 +1,10 @@
 // Manual laptop evidence for section 14. Native inputs and physics, memory-only careers.
 import assert from 'node:assert/strict';
 const evaluate = (c, fn) => c.evaluate(`(${fn.toString()})()`);
+const tap = async (c, code, key, vk) => {
+  await c.command('Input.dispatchKeyEvent',{type:'keyDown',key,code,windowsVirtualKeyCode:vk});
+  await c.command('Input.dispatchKeyEvent',{type:'keyUp',key,code,windowsVirtualKeyCode:vk});
+};
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride',{width:1366,height:768,deviceScaleFactor:1,mobile:false});
   await c.navigate('/tools/menu-check.html?flags=driving-lessons,tyre-slip,engine-curve');
@@ -32,22 +36,25 @@ export async function run(c) {
   }
   await start('panorama-ridge','corner','koenigsegg_jesko');
   await c.waitFor(`!!document.querySelector('.drive-lesson-briefing')`,'briefing');
-  const layout=await evaluate(c,()=>{const n=document.querySelector('.drive-lesson-briefing'),b=n.getBoundingClientRect();return {width:b.width,height:b.height,scroll:n.scrollHeight,client:n.clientHeight,button:!!n.querySelector('[data-drive-action="next"]')};});
+  const layout=await evaluate(c,()=>{const n=document.querySelector('.drive-lesson-briefing'),b=n.getBoundingClientRect();return {width:b.width,height:b.height,scroll:n.scrollHeight,client:n.clientHeight,button:n.querySelectorAll('.drive-lesson-runs button').length===4};});
   assert.ok(layout.button);assert.ok(layout.height<=690);
   await picture('panorama-jesko-briefing');
   await c.evaluate(`document.querySelector('.drive-lesson-host').focus()`);
-  await c.command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
-  await c.command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
-  assert.equal(await c.evaluate('window.__qaApp.duel.drivingLesson.lesson.stage'),'watch','Enter starts once without bubbling into skip');
+  await tap(c,'Enter','Enter',13);
+  assert.equal(await c.evaluate('window.__qaApp.duel.drivingLesson.lesson.stage'),'watch','Enter starts the highlighted run, Watch me, once');
   await c.evaluate('window.viewDrive(600)');
   assert.equal(await c.evaluate('window.__qaApp.duel.drivingLesson.watchClip'),'late');
   await picture('panorama-jesko-watch-late-caption');
   await c.evaluate(`(()=>{const r=window.__qaApp.duel.drivingLesson;while(r.watchClip==='late')window.viewDrive(120);window.viewDrive(1, r.plan.instructor.corners[0].brakeS);})()`);
   await c.evaluate('window.viewDrive(20000,window.__qaApp.duel.drivingLesson.plan.instructor.corners[0].brakeS)');
   await picture('panorama-jesko-watch-clean-caption');
-  // Enter uses the production window binding and skips the demonstration.
-  await c.command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
-  await c.command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  // Enter does nothing during the demonstration (no Skip); at the end the production window binding starts the highlighted run, Follow me.
+  await tap(c,'Enter','Enter',13);
+  assert.equal(await c.evaluate('window.__qaApp.duel.drivingLesson.lesson.stage'),'watch');
+  assert.equal(await c.evaluate('window.__qaApp.duel.drivingLesson.lesson.phase'),'driving');
+  await c.evaluate('window.viewDrive()');
+  assert.equal(await c.evaluate('window.__qaApp.duel.drivingLesson.lesson.phase'),'result');
+  await tap(c,'Enter','Enter',13);
   assert.equal(await c.evaluate('window.__qaApp.duel.drivingLesson.lesson.stage'),'follow');
   await c.evaluate('window.viewDrive(20000,window.__qaApp.duel.drivingLesson.plan.instructor.corners[0].brakeS-30)');
   assert.ok(await c.evaluate('!!window.__qaApp.getDriveLessonGhost()'));
@@ -79,16 +86,15 @@ export async function run(c) {
   assert.match(await c.evaluate('document.querySelector(".drive-lesson-board").textContent'),/Gold/);
   await picture('board-gold');
   await start('harbour-lights','line','falcone_f42');
-  await c.evaluate('window.__qaApp.nextLessonAttempt();window.__qaApp.nextLessonAttempt();window.viewDrive(20000,window.__qaApp.duel.drivingLesson.plan.instructor.corners[0].turnInS-25)');
+  await c.evaluate("window.__qaApp.nextLessonAttempt();window.__qaApp.chooseLessonStep('follow');window.viewDrive(20000,window.__qaApp.duel.drivingLesson.plan.instructor.corners[0].turnInS-25)");
   await picture('harbour-lesson-2-follow');
-  // Check help freezes the current run and resumes without skipping it.
-  await evaluate(c,()=>document.querySelector('[data-drive-action="help"]').click());
+  // Esc leaves the run for the opening screen (car back at the start, nothing scored); the key 2 starts Follow me again.
+  await tap(c,'Escape','Escape',27);
   assert.equal(await c.evaluate('window.__qaApp.driveLessonBriefing'),true);
-  await picture('harbour-lesson-2-how-it-works');
-  await c.evaluate(`document.querySelector('.drive-lesson-host').focus()`);
-  await c.command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
-  await c.command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
-  assert.equal(await c.evaluate('!!document.querySelector(".drive-lesson-briefing")'),false,'Enter closes help');
+  assert.equal(await c.evaluate('!!document.querySelector(".drive-lesson-briefing")'),true,'Esc shows the opening screen');
+  await picture('harbour-lesson-2-opening-screen');
+  await tap(c,'Digit2','2',50);
+  assert.equal(await c.evaluate('!!document.querySelector(".drive-lesson-briefing")'),false,'the key 2 starts a run');
   assert.equal(await c.evaluate('window.__qaApp.duel.drivingLesson.lesson.stage'),'follow');
   await c.evaluate('window.viewDrive(20000,window.__qaApp.duel.drivingLesson.plan.instructor.corners[0].turnInS+10)');
   assert.equal(await c.evaluate('document.getElementById("speed-value").classList.contains("drive-lesson-speed-green")'),true);

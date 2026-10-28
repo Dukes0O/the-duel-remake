@@ -1,5 +1,5 @@
 import {landedArrival} from './heli/heli-ui.js';
-import {DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,DRIVE_GEAR_ROWS,DRIVE_SNOW_ROWS,buildInstructorRun,chooseDriveLessonStep} from './lessons/drive-lessons.js';
+import {DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,DRIVE_GEAR_ROWS,DRIVE_SNOW_ROWS,buildInstructorRun,chooseDriveLessonStep,suggestedDriveLessonRun,DRIVE_LESSON_STEPS} from './lessons/drive-lessons.js';
 import {finishDriveLesson,driveLessonAccess} from './lessons/drive-lesson-save.js';
 import {DRIVE_RADIO_LINES} from './lessons/drive-radio-lines.js';
 import {createRadioChain} from './lessons/radio-voice.js';
@@ -507,28 +507,42 @@ export class App {
     this._sayDriveLesson(DRIVE_LESSON_VIEW[lessonId].intro);
     this._driveLessonUi?.update();return true;
   }
+  // Enter, R and the highlighted button: start the suggested run. A run in progress is left with Esc, not skipped.
   nextLessonAttempt(){
     const run=this.duel.drivingLesson;
     if(!run||!this.drivingLessonsAvailable()||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||
-      this.duel.state.playerId!==run.ownerId||run.lesson.done)return false;
-    if(this.driveLessonBriefing){this.driveLessonBriefing=false;this.driveLessonHelp=false;
-      if(run.lesson.phase==='driving')this._sayDriveLesson(run.lesson.stage==='watch'&&run.watchClip==='late'?'drive.radio.v2.corner.watch-late':'drive.radio.v2.shared.'+run.lesson.stage);
-      this._driveLessonUi?.update();return true;}
-    if(run.lesson.phase==='driving'){
-      if(run.lesson.stage!=='watch')return false;
-      run.lesson.phase='result';run.lesson.lastAttempt={passed:false,finished:false};
-    }
-    this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;this.audio.setPaused(false);
-    const started=this.duel.resetDriveLessonAttempt();this._driveLessonUi?.update();return started;
+      this.duel.state.playerId!==run.ownerId)return false;
+    if(!this.driveLessonBriefing&&run.lesson.phase==='driving')return false;
+    return this.chooseLessonStep(suggestedDriveLessonRun(run.lesson));
   }
+  // Start any of the four runs from the opening screen or after a run (Kyle, 28 October): the run in hand is dropped unscored.
   chooseLessonStep(id){
     const run=this.duel.drivingLesson;
     if(!run||!this.drivingLessonsAvailable()||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||
       this.duel.state.playerId!==run.ownerId||!chooseDriveLessonStep(run.lesson,id))return false;
-    this.driveLessonBriefing=false;this.driveLessonHelp=false;
+    this.driveLessonBriefing=false;
+    if(run.saved!==false)this.driveLessonMessage=''; // the last pass's "saved" note does not follow the next run
     if(id==='watch')run.watchClip=null; // watching again shows the late brake first
     this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;this.audio.setPaused(false);
     const started=this.duel.resetDriveLessonAttempt();this._driveLessonUi?.update();return started;
+  }
+  // Esc during a run goes back to the opening screen with the car at the start line; Esc on that screen or after a run leaves the lesson.
+  lessonEscape(){
+    const run=this.duel.drivingLesson;
+    if(!run||this.driveLessonBriefing||run.lesson.phase!=='driving')return this.leaveLesson();
+    if(this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||this.duel.state.playerId!==run.ownerId||
+      !chooseDriveLessonStep(run.lesson,run.lesson.stage))return this.leaveLesson();
+    this.driveLessonBriefing=true;
+    this.driveLessonRadioText='';this._driveLessonRadioEpoch=(this._driveLessonRadioEpoch||0)+1;
+    this._driveLessonVoice?.stop();this._driveLessonVoice=null;this._driveLessonRadioChain?.keyOff();
+    this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
+    this.duel.resetDriveLessonAttempt();this._driveLessonUi?.update();return true;
+  }
+  // The keys 1 to 4 on the opening screen and after a run start that run.
+  lessonRunKey(code){
+    const run=this.duel.drivingLesson,pick=/^(?:Digit|Numpad)([1-4])$/.exec(code);
+    if(!run||!pick||!(this.driveLessonBriefing||run.lesson.phase==='result'))return false;
+    return this.chooseLessonStep(DRIVE_LESSON_STEPS[pick[1]-1].id);
   }
   leaveLesson(){
     if(this.duel.drivingLesson){this._clearDriveLesson();this.returnToMenu();}
@@ -536,7 +550,7 @@ export class App {
     this._driveLessonUi?.update();return true;
   }
   _clearDriveLesson(){
-    this.driveLessonBriefing=false;this.driveLessonHelp=false;
+    this.driveLessonBriefing=false;
     this._driveLessonPreparing=null;this.driveLessonBoardOpen=false;this.driveLessonMessage='';
     this.driveLessonRadioText='';this._driveLessonRadioEpoch=(this._driveLessonRadioEpoch||0)+1;
     this._driveLessonVoice?.stop();this._driveLessonVoice=null;this._driveLessonRadioChain?.dispose();this._driveLessonRadioChain=null;
@@ -553,12 +567,12 @@ export class App {
       this._sayDriveLesson(event.driveLessonReset&&run.lesson.stage==='watch'&&run.watchClip==='late'?'drive.radio.v2.corner.watch-late':response.radio);
     if(this.audio.context&&!this.audio.muted)for(const cone of response.cones||[])this.audio._playCue?.(cone.cue);
     const completion=response.result==='passed'?driveLessonCompletion(run,state,this.player.id):null;
-    if(completion&&!run.rewarded){
+    if(completion&&(!run.rewarded||completion.marginSeconds>(run.rewardMargin??Infinity))){
       this._refreshPlayer();
       if(!driveLessonCompletion(run,state,this.player.id))return;
       const result=finishDriveLesson(this.profile,completion.id,completion.marginSeconds,completion.carId,{engineCurve:completion.id==='gears'}); // a gearbox lesson can only have run on the engine curve
       if(result.ok){
-        this.profile=result.profile;run.saved=this._saveProfile();run.rewarded=true;run.reward=result.reward;
+        this.profile=result.profile;run.saved=this._saveProfile();run.rewarded=true;run.reward=result.reward??run.reward;run.rewardMargin=completion.marginSeconds;
         this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
           'Lesson passed for this session. Progress and reward could not be saved. Keep the game open and retry saving; your last saved progress is unchanged.';
         if(run.saved&&response.radio)this._sayDriveLesson(response.radio);
@@ -2450,8 +2464,9 @@ export class App {
         if(document.pointerLockElement){document.exitPointerLock();e.preventDefault();return;}
         if(performance.now()-this._footPointerReleasedAt<250){e.preventDefault();return;}
       }
-      if(e.code==='Escape'&&this.duel.drivingLesson){this.leaveLesson();e.preventDefault();return;}
+      if(e.code==='Escape'&&this.duel.drivingLesson){this.lessonEscape();e.preventDefault();return;}
       if(e.defaultPrevented)return;
+      if(e.code!=='Enter'&&this.duel.drivingLesson&&!e.repeat&&this.lessonRunKey(e.code)){e.preventDefault();return;}
       if(e.code==='Enter'&&this.duel.drivingLesson&&!e.repeat&&!(e.target instanceof Element&&e.target.closest('button'))){
         if(this.nextLessonAttempt())e.preventDefault();return;
       }

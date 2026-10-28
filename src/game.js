@@ -436,7 +436,7 @@ export class Duel {
 
   resetDriveLessonAttempt(){
     const run=this.drivingLesson,s=this.state;
-    if(!run||run.ownerId!==s.playerId||run.lesson.done||run.lesson.phase==='driving')return false;
+    if(!run||run.ownerId!==s.playerId||run.lesson.phase==='driving')return false;
     this._resetStageDriving();
     s.tyreSlipRules=true;s.tyreSlip=0;s.status='racing';s.countdown=0;
     s.lives=LIVES.start;s.majorCrashes=0;s.penaltySec=0;s.catastrophic=false;

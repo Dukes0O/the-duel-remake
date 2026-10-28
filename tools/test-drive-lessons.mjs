@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDriveLesson, stepDriveLesson, DRIVE_LESSON_STEPS, driveLessonGap,
-  driveLessonGold, finishInstructorTrace, chooseDriveLessonStep} from '../src/lessons/drive-lessons.js';
+  driveLessonGold, finishInstructorTrace, chooseDriveLessonStep, suggestedDriveLessonRun} from '../src/lessons/drive-lessons.js';
 const corner = {startS: 0, finishS: 400, dir: 1};
 const targets = [
   {name: 'Brake bend', kind: 'brake', approachS: 0, brakeS: 80, turnInS: 100, turnOutS: 150, exitS: 170, targetMph: 60},
@@ -80,13 +80,30 @@ test('mistakes never end a run: a wall, a long trip off the road or a stop drive
   stepDriveLesson(wreck, view(100), {wrecked: true}, 2);
   assert.equal(wreck.phase, 'result'); assert.equal(wreck.lastAttempt.finished, false);
 });
-test('any step can be chosen again, back or forward, until the lesson is passed', () => {
+test('any step can be chosen again, back or forward, even after the lesson is passed (Kyle, 28 October)', () => {
   const l = lesson('beat'); stepDriveLesson(l, view(0), {start: true});
   assert.equal(chooseDriveLessonStep(l, 'follow'), true);
   assert.equal(l.stage, 'follow'); assert.equal(l.phase, 'ready'); assert.equal(l.attempt, null);
   stepDriveLesson(l, view(0), {start: true}); assert.equal(l.stage, 'follow', 'a chosen step is not skipped');
   assert.equal(chooseDriveLessonStep(l, 'nope'), false);
-  l.done = true; assert.equal(chooseDriveLessonStep(l, 'watch'), false);
+  l.done = true; assert.equal(chooseDriveLessonStep(l, 'watch'), true, 'a passed lesson can be run again');
+  stepDriveLesson(l, view(0), {start: true}); assert.equal(l.stage, 'watch'); assert.equal(l.phase, 'driving');
+});
+test('each finished run is marked for the opening screen; the suggested run is the first not done, else Your turn', () => {
+  const l = createDriveLesson('corner', {corner, instructor});
+  assert.deepEqual(l.runs, {}); assert.equal(suggestedDriveLessonRun(l), 'watch');
+  run(l, {seconds: 8}); assert.deepEqual(l.runs, {watch: {done: true, margin: 0}}); assert.equal(suggestedDriveLessonRun(l), 'follow');
+  const dropped = createDriveLesson('corner', {corner, instructor}); stepDriveLesson(dropped, view(0), {start: true});
+  assert.deepEqual(dropped.runs, {}, 'a run left before the finish is not marked');
+  run(l, {seconds: 8}); assert.equal(suggestedDriveLessonRun(l), 'your-turn');
+  run(l, {seconds: 8.5}); assert.deepEqual(l.runs['your-turn'], {done: true, margin: 1.5}); assert.equal(suggestedDriveLessonRun(l), 'beat');
+  run(l, {seconds: 9}); assert.deepEqual(l.runs.beat, {done: true, margin: 1}); assert.equal(l.done, true);
+  assert.equal(suggestedDriveLessonRun(l), 'your-turn', 'everything done: Your turn');
+  chooseDriveLessonStep(l, 'beat'); run(l, {seconds: 9.5});
+  assert.equal(l.runs.beat.margin, 1, 'the best margin is kept'); assert.equal(l.lastAttempt.passed, true);
+  const failed = createDriveLesson('corner', {corner, instructor}); failed.stage = 'your-turn';
+  run(failed, {seconds: 11, brakeS: 40}); assert.equal(failed.runs['your-turn'], undefined, 'a failed scored run is not marked');
+  assert.equal(suggestedDriveLessonRun(createDriveLesson('corner', {corner, instructor, retake: true})), 'your-turn');
 });
 test('gap uses equal distance; gold is derived; finish faults use the tick start', () => {
   assert.equal(driveLessonGap(instructor, 100, 4), 1); assert.equal(driveLessonGap(instructor, 300, 7), -1);
