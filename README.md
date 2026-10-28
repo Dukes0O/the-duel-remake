@@ -2,6 +2,20 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## The Deep's shallows, edge and map, 28 October 2026
+
+### What players get now
+
+- **Clear shallows:** near the ramp the water is clear and bright, with the
+  sea floor, plants and rocks in view. The camera always stays under water.
+- **No more jumps across the map:** at the edge of the sea floor the car
+  slides along it and a notice says to turn back toward the trail. It is
+  never moved anywhere else.
+- **The map turns with the car:** turning right turns the arrow right.
+  "Whole coast, north up" shows the whole loop.
+- **The Lab:** in the wind tunnel the answer pictures no longer cover the fan
+  dial.
+
 ## Race where you land, and helicopter jobs that pay, 28 October 2026
 
 ### What players get now

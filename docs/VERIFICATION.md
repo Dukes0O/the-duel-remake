@@ -1536,3 +1536,13 @@ fixed (crate clean mark, cruise counted as one minute per leg, exact map pay
 pins). Full tier 536/536 on 49b773d4, the release commit. Lane tier 107/107,
 build and the heli-continue scenario pass. rescue-finish is an unreliable
 check that also fails on the base commit (QA-RESCUE-FINISH-FLAKY).
+
+## Release, 28 October 2026 night (Claude, Release Manager)
+
+DEEP-SHALLOWS-FIX, LAB-TRY-PICTURES-DIAL, LAB-BENCH-PANELS-REMOVE,
+QA-RESCUE-FINISH-FLAKY, QA-INSTRUCTOR-ANY-CAR-SLOW. No save change. Rule 19:
+full tier 536/536 on 49b773d4; since then only Deep and Lab files, test
+tools and scenarios changed, no shared core, save shape or physics. Lane
+tiers pass (160, 29, 20, 511); all 17 Deep suites and the build pass on the
+release commit; Deep and Lab scenarios pass; independent reviews done. Deep
+frame check not run (laptop in use); it runs in the nightly full check.

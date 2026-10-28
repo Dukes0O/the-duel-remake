@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASED 28 October night (Claude, Release Manager).** The Deep: clear shallows, no jumps at the sea floor edge, map turns with the car. Lab tunnel pictures clear the dial. Reload any open game tab.
 - **RELEASED 28 October evening (Claude, Release Manager).** Race where you land the helicopter; helicopter jobs pay about race rates and say so. Reload any open game tab.
 - **RELEASED 28 October afternoon (Claude, Release Manager).** Spikey Ferns and Dukes00 come back on the next start; lessons have four run buttons; a lesson crash ends. Reload any open game tab.
 - **RELEASED 28 October morning (Claude, Release Manager).** Four more lesson roads, lesson clicks while driving, Ardennes fir groves, faster Summit loading, Lab layout fixes. The 28 October full-check pause is over. Reload any open game tab.
