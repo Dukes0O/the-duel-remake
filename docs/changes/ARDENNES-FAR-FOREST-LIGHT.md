@@ -193,3 +193,7 @@ pm run build passes (output deleted). No frame timing taken here; the frame-chec
 
 Round 2 accepted at the look. The Ardennes row of 	ools/fixtures/world-signatures/ardennes-forest.json now holds the round-2 capture (hash 5d475bd4...2b42, nodes 1,329, meshes 1,270, instances 40,544, geometries 250, materials 156, textures 84), checked again after merging integration 57a8ac6f. Lane tier --changed --jobs 4 --keep-going: 167 passed, 1 failed (	est-drive-lesson-helipad.mjs, the same fault as on integration, fixed on lane claude/night-helipad-test), 0 not run; 	est-world-composition.mjs passes (47 checks). 
 pm run build passes.
+
+## Claude's review (27 October 2026, night)
+
+Round 2 accepted on the before-round1-round2 sheet; signature granted for the Ardennes row only. Release waits for the frame check at Pit Straight, both qualities; if High misses, lower groves.chance and recount.
