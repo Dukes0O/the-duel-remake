@@ -23,10 +23,16 @@ import {settleWarlordResult} from '../src/arena/warlord-settlement.js';
 import {TERRITORIES} from '../src/wasteland-career.js';
 import {WARLORDS, WARLORD_LADDER} from '../src/warlords.js';
 
-export const KYLE = {id: 'player-dukes00', name: 'Dukes00', credits: 15000};
-export const GRATIAN = {id: 'player-spikey-ferns', name: 'Spikey Ferns', credits: 23000};
-// The one warlord Gratian has not beaten yet.
-export const NOT_BEATEN = ['tollkeeper'];
+// Kyle (Dukes00) and Gratian (Spikey Ferns) have the same garage; they differ in credits, the Deep
+// and the Wasteland. `beaten` lists the warlords with a settled win, in the game's own order
+// (WARLORD_LADDER). `held` lists the territories held at 100, which a warlord fight needs.
+export const KYLE = {id: 'player-dukes00', name: 'Dukes00', credits: 15000, deep: {kit: true},
+  beaten: WARLORD_LADDER.slice(0, 3), held: WARLORD_LADDER.slice(0, 3)};
+// Not beaten: the Tollkeeper, and the Baron, whose fight opens only after the Tollkeeper falls
+// (warlordUnlockSatisfied). Both territories are held so the Tollkeeper fight is open.
+export const GRATIAN = {id: 'player-spikey-ferns', name: 'Spikey Ferns', credits: 23000,
+  deep: {kit: true, found: ['kelp-coast'], logged: ['turtle']},
+  beaten: WARLORD_LADDER.filter(id => !['tollkeeper', 'blackiron'].includes(id)), held: Object.keys(TERRITORIES)};
 // The car that won the warlord fights; the warlord kits are installed on it.
 const WINNING_CAR = 'falcone_f42';
 // Warlord pay depends on the CPU level of the fight; the lowest level gives the smallest scrap.
@@ -48,11 +54,6 @@ export const earnedWithAllMaxed = () => Object.keys(CARS).filter(car => CARS[car
 export const ordinaryPaints = () => Object.values(PAINT_PRESETS).filter(paint => !paint.reward && !paint.car).map(paint => paint.id);
 export const purchasableDrivers = () => Object.values(DRIVERS).filter(driver => !driver.unlockCar).map(driver => driver.id);
 
-function dukesProfile() {
-  return normalizeProfile({...createProfile(), credits: KYLE.credits,
-    courses: {version: 1, unlocked: unlockableCourseIds()}});
-}
-
 // A real warlord win, settled by the game's own rule (src/arena/warlord-settlement.js).
 function arenaWon(id) {
   const warlord = WARLORDS[id], size = warlord.team?.length ?? 1;
@@ -62,31 +63,30 @@ function arenaWon(id) {
     participants: [{id: 'player', kind: 'player', team: 'a', wrecks: 3, wrecked: 0},
       ...cpus.map(cpu => ({id: cpu, kind: 'cpu', team: 'b', wrecks: 0, wrecked: 3}))]};
 }
-function beatWarlords(profile, playerId) {
+function beatWarlords(profile, player) {
   let current = profile;
-  for (const id of WARLORD_LADDER.filter(warlord => !NOT_BEATEN.includes(warlord))) {
-    const settled = settleWarlordResult(current, {runId: 'career-rebuild-' + id, ownerPlayerId: playerId,
-      activePlayerId: playerId, arena: arenaWon(id), car: WINNING_CAR, cpuDifficulty: FIGHT_LEVEL, warlordCardsEnabled: true});
+  for (const id of player.beaten) {
+    const settled = settleWarlordResult(current, {runId: 'career-rebuild-' + id, ownerPlayerId: player.id,
+      activePlayerId: player.id, arena: arenaWon(id), car: WINNING_CAR, cpuDifficulty: FIGHT_LEVEL, warlordCardsEnabled: true});
     if (!settled.awarded) throw new Error('The game refused the ' + id + ' win.');
     current = settled.profile;
   }
   return current;
 }
 
-function gratianProfile() {
+function playerProfile(player) {
   const cars = baseRosterCars();
   const drivers = {version: 1, unlocked: purchasableDrivers(), selected: 'club'};
   // Every owned car, the Jesko included, owns every paint a player can buy.
   const cosmetics = Object.fromEntries([...cars, ...earnedWithAllMaxed()].map(car => [car, {owned: ordinaryPaints(), selected: 'factory'}]));
   const wasteland = {...createProfile().wasteland, discoveredGate: true, pacificFinishes: 10,
-    // A warlord fight opens when the territory is held at 100.
-    territories: Object.fromEntries(Object.keys(TERRITORIES).map(id => [id, {hold: 100, claimed: false}]))};
+    territories: Object.fromEntries(Object.keys(TERRITORIES).map(id => [id, {hold: player.held.includes(id) ? 100 : 0, claimed: false}]))};
   // The maxed roster earns the Jesko by the game's rule; normalizing grants it with its driver.
-  return normalizeProfile({...createProfile(), credits: GRATIAN.credits, unlockedCars: cars,
+  return beatWarlords(normalizeProfile({...createProfile(), credits: player.credits, unlockedCars: cars,
     upgrades: Object.fromEntries(cars.map(car => [car, {...MAXED}])), cosmetics, drivers,
     courses: {version: 1, unlocked: unlockableCourseIds()}, wasteland,
-    // One dive kit, one coast found, the turtle logged (the Deep's hints and log code).
-    deep: {kit: true, found: ['kelp-coast'], logged: ['turtle']}});
+    // The dive kit and what was logged (the Deep's hints and log code).
+    deep: player.deep}), player);
 }
 function finish(profile) {
   const settled = normalizeProfile(profile);
@@ -95,8 +95,8 @@ function finish(profile) {
 
 export function buildCareer() {
   const players = [
-    {id: KYLE.id, name: playerName(KYLE.name), profile: finish(dukesProfile())},
-    {id: GRATIAN.id, name: playerName(GRATIAN.name), profile: finish(beatWarlords(gratianProfile(), GRATIAN.id))},
+    {id: KYLE.id, name: playerName(KYLE.name), profile: finish(playerProfile(KYLE))},
+    {id: GRATIAN.id, name: playerName(GRATIAN.name), profile: finish(playerProfile(GRATIAN))},
   ];
   return {version: 2, activePlayerId: GRATIAN.id, players};
 }

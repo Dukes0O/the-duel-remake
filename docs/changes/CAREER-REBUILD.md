@@ -70,39 +70,48 @@ Ids and sources come from the code, not from guesses.
 - Wasteland: `discoveredGate: true`, `pacificFinishes: 10`. Every territory `hold: 100`.
   Beaten by running the game's own `settleWarlordResult` once per warlord in ladder order, so
   the state is what real wins leave: `sal`, `dustmonger`, `mirage`, `gunn`, `kettle`,
-  `vultures`, `blackiron` (`defeated: true`, `wins: 1`, territory `claimed: true`). Rewards
-  that came with them: crew `tusk`; weapons `smoke`, `decoy`, `rockets`; kits `side-saws`,
-  `turret-look` and `chrome-crown` (on `falcone_f42`, the car that won) and `warlord` on
-  `titan_monster`; the warlord story cards; the title "Warlord of the Wastes"; 6,400 scrap.
-- `tollkeeper`: `defeated: false`, `wins: 0`, `claimed: false`, `hold: 100` so the fight is
-  open.
+  `vultures` (`defeated: true`, `wins: 1`, territory `claimed: true`). What the six wins
+  leave: crew `tusk`; weapons `smoke`, `decoy`, `rockets`; kits `side-saws` and `turret-look`
+  (on `falcone_f42`, the car that won; `turret-look` equipped) and `warlord` on
+  `titan_monster` (equipped); six warlord story cards (those six ids); 5,100 scrap. No title.
+- `tollkeeper` and `blackiron`: `defeated: false`, `wins: 0`, `claimed: false`, no win settled,
+  `hold: 100` on both territories. Nothing only their wins give is in the save: no
+  `chrome-crown`, no title "Warlord of the Wastes", no card, and 1,300 less scrap (Blackiron's
+  first-win pay). Claude's decision, 28 October: Blackiron's fight opens only after the
+  Tollkeeper (`warlordUnlockSatisfied`), so Gratian cannot have beaten him.
 
-**Dukes00** (Kyle, id `player-dukes00`), 15,000 credits: the cars a new career starts with
-(`falcone_f42`, `stuttgart_959s`, upgrades at level 0), the same course list as above, club
-driver. No lessons (the save has no `drivingLessons` field, so he redoes them), no paints, no
-Deep, no Wasteland.
+**Dukes00** (Kyle, id `player-dukes00`), 15,000 credits. Kyle's correction, 28 October: the
+same garage as Spikey Ferns (the eight cars and the Jesko maxed, all eight drivers, the same
+21 courses, the same paints), with these differences:
+- Deep: `{kit: true}` only, so the dive kit and nothing logged.
+- Wasteland: gate found, same as above. Only the first three warlords of the game's ladder
+  (`WARLORD_LADDER` in `src/warlords.js`, the order that sets warlord pay) are beaten, each
+  settled with `settleWarlordResult`: `sal`, `dustmonger`, `mirage`. Those three leave weapons
+  `smoke` and `decoy`, kit `side-saws` on `falcone_f42` (equipped), the three story cards and
+  2,100 scrap; crew stays `rook`. Territories of those three are held at 100 and claimed; the
+  other five have hold 0 and are not beaten.
+- No lessons (the save has no `drivingLessons` field, so he redoes them). Nothing else.
 
 Both players have their race settings filled in by `normalizeRaceSettings`, so the game does
 not treat them as an old save needing a migration.
 
 ## Things Kyle should know
 
-- Blackiron is marked beaten as asked, but in the game his fight opens only after every other
-  warlord including the Tollkeeper is beaten (`warlordUnlockSatisfied`). The save is valid;
-  the Baron's fight will show as available once the Tollkeeper falls.
-- "Starting cars" for Dukes00 was read as the two cars a new career starts with. For Spikey
-  Ferns it is the eight-car roster, since the Jesko needs all of them maxed. One line in the
-  recipe (`cars` in `dukesProfile`) changes this.
-- Scrap (6,400) comes from the game's pay rule for a first win at the easiest CPU level.
+- Blackiron is not beaten, against the first reading of the brief: his fight opens only after
+  every other warlord including the Tollkeeper is beaten (`warlordUnlockSatisfied`).
+- Dukes00 has the full roster too (Kyle's correction replaced my first reading of "starting
+  cars" as the two free ones).
+- Scrap (5,100 for Spikey Ferns, 2,100 for Dukes00) comes from the game's pay rule for first
+  wins at the easiest CPU level.
 - The export is version 1: that is what the game writes when a career has no archived
   records. Version 2 needs an IndexedDB archive that does not exist here.
 
 ## Tests
 
-- `tools/test-career-rebuild.mjs` (13): the file goes through `importCareer` into a memory
+- `tools/test-career-rebuild.mjs` (18): the file goes through `importCareer` into a memory
   store, loads through `loadPlayers`, and both players are checked field by field as above
   (names, credits, cars, upgrade levels, no earned-cars car, drivers, courses, paints, dive
-  kit, turtle in the sea-life log, Wasteland open, every warlord but the Tollkeeper); the
+  kit, turtle in the sea-life log, Wasteland open, every warlord but the Tollkeeper and Blackiron, with no Blackiron reward); the
   shipped data equals what the recipe builds; the restore happens once, never after the
   marker, never when either name exists, keeps existing players and their credits, and a failed
   copy changes nothing; the storage request asks once and ignores refusals and errors.

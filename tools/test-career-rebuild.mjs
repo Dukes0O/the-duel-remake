@@ -14,7 +14,8 @@ import {getPaintState} from '../src/paint-presets.js';
 import {PLAYERS_KEY, createProfile, getUpgradeLevels, isCarUnlocked, loadPlayers, UPGRADE_TYPES} from '../src/progression.js';
 import {TERRITORIES} from '../src/wasteland-career.js';
 import {wastelandUnlocked} from '../src/wasteland-access.js';
-import {GRATIAN, KYLE, NOT_BEATEN, buildCareerFile} from './career-rebuild.mjs';
+import {WARLORD_LADDER} from '../src/warlords.js';
+import {GRATIAN, KYLE, buildCareerFile} from './career-rebuild.mjs';
 
 function memoryStorage(initial = {}) {
   const values = new Map(Object.entries(initial));
@@ -55,66 +56,92 @@ test('both players exist in order, with exact names and credits; Spikey Ferns is
   assert.equal(GRATIAN.credits, 23000);
 });
 
-test('Spikey Ferns: every roster car and the Jesko at maximum, no earned-cars car', () => {
-  const profile = byName('Spikey Ferns');
-  const roster = Object.keys(CARS).filter(car => !CARS[car].unlockRequirement);
-  assert.equal(roster.length, 8);
-  for (const car of [...roster, 'koenigsegg_jesko']) {
-    assert.ok(isCarUnlocked(profile, car), car + ' unlocked');
-    for (const type of Object.keys(UPGRADE_TYPES)) assert.equal(getUpgradeLevels(profile, car)[type], 3, car + ' ' + type);
-  }
-  assert.deepEqual(profile.unlockedCars.filter(car => CARS[car].unlockRequirement), ['koenigsegg_jesko']);
-  for (const car of ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling']) assert.ok(!profile.unlockedCars.includes(car), car + ' not unlocked');
-  assert.equal(Object.hasOwn(profile, 'medals'), false);
+// Dukes00 and Spikey Ferns have the same garage: every roster car and the Jesko maxed, all drivers,
+// all released courses, the same paints, the dive kit and the open Wasteland.
+for (const name of ['Dukes00', 'Spikey Ferns']) {
+  test(name + ': every roster car and the Jesko at maximum, no earned-cars car', () => {
+    const profile = byName(name);
+    const roster = Object.keys(CARS).filter(car => !CARS[car].unlockRequirement);
+    assert.equal(roster.length, 8);
+    for (const car of [...roster, 'koenigsegg_jesko']) {
+      assert.ok(isCarUnlocked(profile, car), car + ' unlocked');
+      for (const type of Object.keys(UPGRADE_TYPES)) assert.equal(getUpgradeLevels(profile, car)[type], 3, car + ' ' + type);
+    }
+    assert.deepEqual(profile.unlockedCars.filter(car => CARS[car].unlockRequirement), ['koenigsegg_jesko']);
+    for (const car of ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling']) assert.ok(!profile.unlockedCars.includes(car), car + ' not unlocked');
+    assert.equal(Object.hasOwn(profile, 'medals'), false);
+  });
+
+  test(name + ': all drivers, all released courses, paints, the dive kit and the open Wasteland', () => {
+    const profile = byName(name);
+    for (const id of Object.keys(DRIVERS)) assert.ok(isDriverUnlocked(profile, id), id);
+    const released = COURSE.filter(course => !course.practice &&
+      (!CIRCUIT_MANIFESTS.some(item => item.id === course.id) || FEATURE_STATES[CIRCUIT_MANIFESTS.find(item => item.id === course.id).flag] === 'on'));
+    assert.ok(released.length >= 21);
+    for (const course of released) assert.ok(isCourseUnlocked(profile, course), course.id);
+    for (const car of profile.unlockedCars) {
+      assert.deepEqual(getPaintState(profile, car).owned, ['factory', 'copper_metallic', 'glacier_satin'], car + ' paints');
+    }
+    assert.equal(profile.deep.kit, true);
+    assert.ok(wastelandUnlocked(profile));
+    assert.equal(profile.drivingLessons, undefined);
+    assert.deepEqual(profile.history, []);
+  });
+}
+
+test('Spikey Ferns: the turtle is logged, nothing else in the Deep', () => {
+  assert.deepEqual(byName('Spikey Ferns').deep, {kit: true, found: ['kelp-coast'], logged: ['turtle']});
 });
 
-test('Spikey Ferns: all drivers, all released courses, paints and the dive kit with the turtle logged', () => {
-  const profile = byName('Spikey Ferns');
-  for (const id of Object.keys(DRIVERS)) assert.ok(isDriverUnlocked(profile, id), id);
-  const released = COURSE.filter(course => !course.practice &&
-    (!CIRCUIT_MANIFESTS.some(item => item.id === course.id) || FEATURE_STATES[CIRCUIT_MANIFESTS.find(item => item.id === course.id).flag] === 'on'));
-  assert.ok(released.length >= 21);
-  for (const course of released) assert.ok(isCourseUnlocked(profile, course), course.id);
-  for (const car of profile.unlockedCars) {
-    assert.deepEqual(getPaintState(profile, car).owned, ['factory', 'copper_metallic', 'glacier_satin'], car + ' paints');
-  }
-  assert.equal(profile.deep.kit, true);
-  assert.deepEqual(profile.deep, {kit: true, found: ['kelp-coast'], logged: ['turtle']});
+test('Dukes00: the dive kit and nothing logged', () => {
+  assert.deepEqual(byName('Dukes00').deep, {kit: true});
 });
 
-test('Spikey Ferns: the Wasteland is open and every warlord except the Tollkeeper is beaten', () => {
-  const {wasteland} = byName('Spikey Ferns');
-  assert.ok(wastelandUnlocked(byName('Spikey Ferns')));
-  assert.deepEqual(NOT_BEATEN, ['tollkeeper']);
+function warlordState(name, beatenIds) {
+  const {wasteland} = byName(name);
   for (const id of Object.keys(TERRITORIES)) {
-    const beaten = !NOT_BEATEN.includes(id);
-    assert.equal(wasteland.warlords[id].defeated, beaten, id + ' defeated');
-    assert.equal(wasteland.territories[id].claimed, beaten, id + ' claimed');
-    assert.equal(wasteland.territories[id].hold, 100, id + ' hold');
-    assert.equal(wasteland.warlords[id].wins, beaten ? 1 : 0, id + ' wins');
+    const beaten = beatenIds.includes(id);
+    assert.equal(wasteland.warlords[id].defeated, beaten, name + ' ' + id + ' defeated');
+    assert.equal(wasteland.territories[id].claimed, beaten, name + ' ' + id + ' claimed');
+    assert.equal(wasteland.warlords[id].wins, beaten ? 1 : 0, name + ' ' + id + ' wins');
   }
+  assert.equal(wasteland.settledResults.length, beatenIds.length);
+  assert.deepEqual(wasteland.cards.map(card => card.id), beatenIds);
+  assert.equal(wasteland.title, undefined);
+  return wasteland;
+}
+
+test('Spikey Ferns: every warlord except the Tollkeeper and Baron Blackiron is beaten, with no Blackiron reward', () => {
+  const wasteland = warlordState('Spikey Ferns', ['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures']);
+  assert.deepEqual(GRATIAN.beaten, ['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures']);
+  for (const id of Object.keys(TERRITORIES)) assert.equal(wasteland.territories[id].hold, 100, id + ' hold');
   // The rewards the wins leave behind, from src/warlords.js.
   assert.ok(wasteland.crew.unlocked.includes('tusk'));
   for (const weapon of ['smoke', 'decoy', 'rockets']) assert.ok(wasteland.weapons.unlocked.includes(weapon), weapon);
   assert.ok(wasteland.kits.titan_monster.owned.includes('warlord'));
-  assert.equal(wasteland.title, 'Warlord of the Wastes');
-  assert.ok(wasteland.cards.some(card => card.id === 'sal'));
-  assert.ok(!wasteland.cards.some(card => card.id === 'tollkeeper'));
+  assert.deepEqual(wasteland.kits.falcone_f42.owned, ['side-saws', 'turret-look']);
+  assert.equal(wasteland.kits.falcone_f42.roofLook, undefined);
+  assert.equal(wasteland.scrap, 600 + 700 + 800 + 900 + 1000 + 1100);
 });
 
-test('Dukes00: the starting cars, every course, nothing else', () => {
+test('Dukes00: only the first three warlords of the game\'s ladder are beaten', () => {
+  const first = WARLORD_LADDER.slice(0, 3);
+  assert.deepEqual(first, ['sal', 'dustmonger', 'mirage']);
+  assert.deepEqual(KYLE.beaten, first);
+  const wasteland = warlordState('Dukes00', first);
+  for (const id of Object.keys(TERRITORIES)) assert.equal(wasteland.territories[id].hold, first.includes(id) ? 100 : 0, id + ' hold');
+  assert.deepEqual(wasteland.weapons.unlocked, ['ufo', 'bomb', 'crossbow', 'star', 'smoke', 'decoy']);
+  assert.deepEqual(wasteland.kits, {falcone_f42: {owned: ['side-saws'], equipped: 'side-saws'}});
+  assert.deepEqual(wasteland.crew.unlocked, ['rook']);
+  assert.equal(wasteland.scrap, 600 + 700 + 800);
+});
+
+test('Dukes00: no lessons and nothing the brief did not name', () => {
   const profile = byName('Dukes00');
-  assert.deepEqual(profile.unlockedCars, createProfile().unlockedCars);
-  for (const car of profile.unlockedCars) for (const type of Object.keys(UPGRADE_TYPES)) assert.equal(getUpgradeLevels(profile, car)[type], 0);
-  for (const course of COURSE.filter(course => !course.practice && !CIRCUIT_MANIFESTS.some(item => item.id === course.id && FEATURE_STATES[item.flag] !== 'on'))) {
-    assert.ok(isCourseUnlocked(profile, course), course.id);
-  }
-  assert.deepEqual(profile.drivers.unlocked, ['club']);
-  assert.deepEqual(profile.cosmetics, {});
-  assert.equal(wastelandUnlocked(profile), false);
-  assert.equal(profile.deep, undefined);
+  assert.equal(profile.credits, 15000);
   assert.equal(profile.drivingLessons, undefined);
-  assert.deepEqual(profile.history, []);
+  assert.equal(profile.heli, undefined);
+  assert.equal(profile.lab, undefined);
 });
 
 test('the data shipped in the game is exactly what the recipe builds', () => {
