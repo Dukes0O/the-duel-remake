@@ -151,3 +151,7 @@ test route only because the game forbids it (explained above).
 - The laptop's C: drive hit 0 bytes free during this work (old evidence folders
   of about 4.7 GB in several lanes, build folders, leftover browser profile
   folders in the Temp folder). The janitor should clear them.
+
+## Claude's review (28 October 2026, night)
+
+Approved (rule 18 written review of changed assertions). No game code changed. qualifying now waits for the asynchronous save that SAVE-RECORDS-IDB introduced; same check, longer wait for a real asynchronous write. rescue-view picks a side of the hiker where the rotor clears the trees; same views and checks. lap-telemetry buys track intel level 3 through the game's own buyIntel before checking the readout. track-kits leaves ardennes-beech out of free placement because it is placed by the forest itself. p4-audio: Grand Prix pay is live, so the clone's reward must be 0 and the native reward a non-negative whole number; the fields left out of the replay comparison are narrowed to the 14 the real settlement writes, each tied to an app.js line, so every other field is still compared. Nothing is loosened. The occasional p4-audio capture gap is card QA-P4-AUDIO-FRAME-GAP. Rerun 28 October: all five pass.
