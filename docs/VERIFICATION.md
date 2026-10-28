@@ -1474,3 +1474,11 @@ October; Claude judged the look sheet). Rule 19: since the last full-tier pass
 assertions; lane tier 37/37 and build pass; map suites 499, 300 and 529
 checks. The nightly full check covers the whole tier. No frame check: no race
 scene changed.
+
+## Release, 28 October 2026 early (Claude, Release Manager)
+
+DEEP-TRAIL-JOINTS: the Deep's frame turns smoothly at trail joints and its
+nearest point is the exact inverse. Rule 19: since 9d521bb0 the only new game
+change is in `src/deep/`; lane tier 156/156 with replay and world-signature
+guards passing; build passes. The nightly full check covers the whole tier.
+No frame check: no race scene changed.

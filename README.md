@@ -2,6 +2,14 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## No more jumps in the Deep, 28 October 2026
+
+### What players get now
+
+- **Driving across the open sea floor is smooth:** the car no longer jumps
+  sideways (up to 62 m at the sharpest bend) when you drive far from the
+  trail. With the rock fix, nothing underwater moves the car except driving.
+
 ## The pilot's map, 28 October 2026
 
 ### What players get now
