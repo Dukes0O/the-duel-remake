@@ -6,13 +6,13 @@ export async function run(context) {
   await context.waitFor("document.querySelector('#stage.in-menu') && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value", 'isolated career menu');
   await context.waitFor("document.querySelector('#career-restored')?.textContent==='Spikey Ferns and Dukes00 are back.'", 'restore notice');
   const names = await context.evaluate(NAMES);
-  if (JSON.stringify(names) !== JSON.stringify(['Dukes00', 'Spikey Ferns', 'Player 1'])) throw Error('Player list was ' + JSON.stringify(names));
+  if (JSON.stringify(names) !== JSON.stringify(['Dukes00', 'Spikey Ferns'])) throw Error('Player list was ' + JSON.stringify(names));
   const active = await context.evaluate("document.querySelector('#player-select').selectedOptions[0].textContent");
   if (active !== 'Spikey Ferns') throw Error('Active player was ' + active);
   await context.evaluate("document.querySelector('#career-restored').remove()");
   // For the picture only: hide the QA panels and open the player list so the names show.
   await context.evaluate("for(const panel of document.querySelectorAll('details'))panel.style.display='none'");
-  await context.evaluate("document.querySelector('#player-select').size=3");
+  await context.evaluate("document.querySelector('#player-select').size=2");
   await context.screenshot('career-restore-players');
   await context.evaluate("document.querySelector('#player-select').size=1");
   await context.evaluate("document.querySelector('[data-action=garage]').click()");

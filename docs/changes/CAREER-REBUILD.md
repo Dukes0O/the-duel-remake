@@ -14,14 +14,19 @@ careers were gone. This card puts them back once, with no new button.
   also writes the JSON file.
 - `src/career-restore-2026-10-28.js`: that export, shipped in the build (9 KB).
 - `src/career-restore.js`: `restoreLostCareers`. At start-up, after the career storage is
-  ready, it runs once when neither "Spikey Ferns" nor "Dukes00" exists (any letter case) and
-  the marker `duel_career_restore_2026_10_28` is not set. It saves a verified copy of the
-  current career (`backupCareer`, reason `before-career-restore`), adds the two players in
-  front of whoever is already there (for example an empty "Player 1"), makes Spikey Ferns the
-  active player, sets the marker and shows "Spikey Ferns and Dukes00 are back." (click to
-  dismiss, gone after 12 seconds). If a name already exists the marker is set and nothing is
-  added. If the copy or the save fails, nothing changes, the game starts normally and the
-  restore tries again next time.
+  ready, it runs while the marker `duel_career_restore_2026_10_28` is not set. It adds
+  whichever of "Spikey Ferns" and "Dukes00" is missing; a name that already exists (any letter
+  case) is left exactly as it is. Before adding it saves a verified copy of the current career
+  (`backupCareer`, reason `before-career-restore`). Players already here stay beside the
+  restored ones, with the same active player unless Spikey Ferns was added (then he is active).
+  A fresh career (no `the-duel-players-v2` and no old single profile) gets exactly the two
+  players: the default "Player 1" the game invents is dropped. The marker is set once both
+  names are present, added or already here. The notice says what happened: "Spikey Ferns and
+  Dukes00 are back." or, for one, "Spikey Ferns is back. Dukes00 was already here, so it was
+  left as it is." (click to dismiss, gone after 12 seconds). If the copy or the save fails,
+  nothing changes, the game starts normally, a red notice (same look as the career save error)
+  says "Spikey Ferns and Dukes00 could not be restored yet. The game will try again next time
+  it starts. Your current players are unchanged." and the restore tries again at the next start.
 - `src/main.js`: the start-up hook, the notice, and the storage request (below). In test
   builds the hook runs only when the address has `restore-career`, so every other browser
   scenario keeps its own players.
@@ -108,16 +113,17 @@ not treat them as an old save needing a migration.
 
 ## Tests
 
-- `tools/test-career-rebuild.mjs` (18): the file goes through `importCareer` into a memory
+- `tools/test-career-rebuild.mjs` (21): the file goes through `importCareer` into a memory
   store, loads through `loadPlayers`, and both players are checked field by field as above
   (names, credits, cars, upgrade levels, no earned-cars car, drivers, courses, paints, dive
   kit, turtle in the sea-life log, Wasteland open, every warlord but the Tollkeeper and Blackiron, with no Blackiron reward); the
   shipped data equals what the recipe builds; the restore happens once, never after the
-  marker, never when either name exists, keeps existing players and their credits, and a failed
-  copy changes nothing; the storage request asks once and ignores refusals and errors.
+  marker, skips only a name that already exists and adds the other, adds nothing when both
+  exist, keeps existing players and their credits, gives a fresh career exactly the two
+  players, and a failed copy changes nothing and shows the failure notice; the storage request asks once and ignores refusals and errors.
 - `tools/scenarios/career-restore.mjs` (browser, memory-only saves, private port): shows the
-  notice, the existing player dropdown with Dukes00, Spikey Ferns, Player 1 (Spikey Ferns
-  selected), Spikey Ferns' garage (23,000 CR, every car MAXED, the sea-life log 1 of 7), then a
+  notice, the existing player dropdown with Dukes00 and Spikey Ferns (Spikey Ferns
+  selected, no default Player 1), Spikey Ferns' garage (23,000 CR, every car MAXED, the sea-life log 1 of 7), then a
   real reload that does not restore again.
 - Gates (lane `career-rebuild`, commit after `3ed23f4f`): lane tier `--changed --jobs 4` 40 of 40
   passed; `npm run build` passed; by hand: test-career-archives, test-career-backup,

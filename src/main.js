@@ -2,7 +2,7 @@ import {App} from './app.js';
 import {kelpCoastProvider} from './deep/zones/kelp-coast.js';
 import {mountScreenRouter} from './screen-router.js';
 import {backupBeforeMigration, backupCareer, captureCareer, createCompleteCareerExport, createIndexedDbBackupStore, requestPersistentStorage, retireSharedBest} from './career-backup.js';
-import {restoreLostCareers, showRestoreNotice} from './career-restore.js';
+import {restoreLostCareers, restoreNoticeText, showRestoreFailure, showRestoreNotice} from './career-restore.js';
 import {acquireCareerWriter, CAREER_WRITER_LOCK, prepareCareerBudget, createBudgetCareerExport, ORIGIN_POINTER_KEY} from './career-budget.js';
 
 const root = document.querySelector('#app');
@@ -13,7 +13,7 @@ const qaBackupStore=qaBuild?globalThis.__duelQaBackupStore:null;
 const backupStore=qaBackupStore??createIndexedDbBackupStore();
 // Ask the browser to keep the game's storage when the disk fills up. Start-up never waits for the answer.
 void requestPersistentStorage();
-let budgetStorage=null,careersRestored=false;
+let budgetStorage=null,restoreNotice=null;
 async function downloadCareer(){
   if(!budgetStorage){
     const physical=globalThis.localStorage;
@@ -55,8 +55,8 @@ await (async()=>{
   // One-time restore of the two lost careers (CAREER-RESTORE-REMOVE deletes this block).
   // Test builds run it only when the address asks for it, so other checks keep their own players.
   if(!qaBuild&&!import.meta.env?.DEV||new URLSearchParams(location.search).has('restore-career')){
-    try{careersRestored=(await restoreLostCareers({storage:budgetStorage.storage,backupStore})).restored;}
-    catch(error){if(error.code?.startsWith('CAREER_WRITER_'))throw error;console.warn('Career restore skipped: '+error.message);}
+    try{const result=await restoreLostCareers({storage:budgetStorage.storage,backupStore});if(result.restored)restoreNotice=restoreNoticeText(result);}
+    catch(error){if(error.code?.startsWith('CAREER_WRITER_'))throw error;console.warn('Career restore skipped: '+error.message);showRestoreFailure();}
     writer.assertActive();
   }
 })().catch(error=>{
@@ -82,4 +82,4 @@ await (async()=>{
 export const app = new App({deepProviders:[kelpCoastProvider]});
 const screens = mountScreenRouter(app, downloadCareer, {budgetStorage, backupStore});
 export const refreshRaceSetup = screens.refreshRaceSetup;
-if(careersRestored)showRestoreNotice();
+if(restoreNotice)showRestoreNotice(restoreNotice);
