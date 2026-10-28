@@ -59,8 +59,9 @@ export async function run(context) {
   await tunnel.walkToTunnel();
   await tunnel.play('downforce');
   await context.waitFor(`window.__qaApp.profile.lab?.done?.downforce === true`, 'Downforce passes and is saved', 10_000);
-  // The old bench said "Its setting is open on the Tune page" after the pass. Finishing the lesson goes back to the board,
-  // which clears that message (a gap in the game, listed in the change note); the Tune page checks below prove the setting opened.
+  // Finishing the lesson goes back to the board, which keeps the pass message pointing at the Tune page.
+  await context.waitFor(`[...document.querySelectorAll('.lab-message')].some(el => el.textContent.includes('Tune page'))`,
+    'the pass points at the Tune page', 10_000);
   await context.screenshot('lab-downforce-passed');
   await context.evaluate(`document.querySelector('[data-lab="close"]').click()`);
   await context.waitFor(`window.__qaApp.labOpen === false`, 'back to the menu', 10_000);

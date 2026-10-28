@@ -94,12 +94,11 @@ No tolerance, timeout or game rule was changed.
    is clear. The scenario now uses 1440 x 900. A possible game fault is left open (see Open): at 1280 x 800 the answer pictures
    cover the dial.
 2. `tunnelDriver` now takes a picture and names what is on top at the click point when a 3D part does not respond. Same check.
-3. After the Downforce lesson is finished, the old check "the message says the setting is open on the Tune page" fails
-   because finishing a lesson goes back to the board (`backToBoard` in `src/lab/lab-view.js` clears the message). A player who
-   passes Downforce in the walking Lab is no longer told it opened the wing. Changed assertion: the message check is removed
-   from the scenario, and what remains proves the pass is saved and the Tune page checks that follow (wing step, stock and
-   tuned laps, bonus) prove the wing opened. This is weaker than before; Claude to decide whether the game should keep the
-   message after Finish (a small change in `lab-view.js`) and then the check comes back.
+3. After the Downforce lesson is finished, the old check "the message says the setting is open on the Tune page" failed
+   because finishing a lesson went back to the board (`backToBoard` in `src/lab/lab-view.js` cleared the message), so a
+   player who passed Downforce in the walking Lab was no longer told it opened the wing. Claude's decision: a game fault.
+   Fixed in `lab-view.js`: a lesson's own Finish keeps its pass message (opening a bench still clears it). The check is
+   back in the scenario, as a wait for the Tune page message on the board; nothing is removed.
 
 ## Removed
 
@@ -113,5 +112,4 @@ No tolerance, timeout or game rule was changed.
   and the secret fan. The LAB-BRIAN-FIX note said fifteen bench panels would stay for LAB-LESSONS-2; that work is done.
   Removing them is a separate card.
 - At 1280 x 800 the answer pictures in a lesson's Try step cover the fan dial of the wind tunnel, so the 3D dial cannot be
-  clicked there (the on-screen dial button still works). Not changed here; it is a layout question for the lesson frame.
-- After Finish, a tuning lesson no longer says its setting is open on the Tune page (see lab-tune-view above).
+  clicked there (the on-screen dial button still works). Not changed here; card LAB-TRY-PICTURES-DIAL.

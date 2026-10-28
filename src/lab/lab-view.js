@@ -213,10 +213,11 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     render();
     if (walking()) side.querySelector('button')?.focus({preventScroll: true});
   }
-  function backToBoard() {
+  // A lesson's own Finish keeps its pass message ("open on the Tune page"); opening a bench clears it.
+  function backToBoard({keepMessage = false} = {}) {
     teaching.close();
     if (ui.restore) endRestore();
-    ui = {...ui, bench: null, passedBench: false, message: '', protect: null, walkPanel: null};
+    ui = {...ui, bench: null, passedBench: false, message: keepMessage ? ui.message : '', protect: null, walkPanel: null};
     voice.stop(); caption = null; paintCaption();
     render();
     if (walking()) keeper.scene?.canvas.focus({preventScroll: true});
@@ -271,7 +272,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   }
   // New lessons enter the same existing challenge path only after their checks.
   const teaching = createLessonUi({section, stage, host, app, room: () => keeper.scene,
-    onBack: backToBoard, onPause: render, onCue: bing, sayVoice: id => { if (id) voice.say(id); },
+    onBack: () => backToBoard({keepMessage: true}), onPause: render, onCue: bing, sayVoice: id => { if (id) voice.say(id); },
     onChallenge: (id, lesson) => {
       let bench = openBench(id);
       if (!bench) return false;
