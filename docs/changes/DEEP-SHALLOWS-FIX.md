@@ -37,8 +37,23 @@ The chart's maths is a true top-down picture (checked against the real chase cam
 
 ## Pictures
 
-In the scratchpad folder (the session's own, not the repository): `deep-shallows-before.png`, `deep-shallows-after.png` (just past the ramp bottom), `deep-mid-after.png` (kelp forest, 15 m), `deep-edge-before.png` (Kyle's flat picture, reproduced), `deep-edge-after.png` (the edge with its notice), `deep-map-after.png` (the chart turning with the car).
+In the session's scratchpad (not in the repository), same spot and same window size for each pair:
 
+- `deep-shallows-before.png` / `deep-shallows-after.png`: just past the ramp bottom. The far water went from a dark haze to a seabed with rocks, grass and ripples out to the horizon, and the chart now turns with the car.
+- `deep-mid-before.png` / `deep-mid-after.png`: the kelp forest, 15 m. A little clearer, still green and murky as designed.
+- `deep-edge-before-flat.png`: Kyle's flat teal picture reproduced (camera out of the water on the bank, old floor and camera).
+- `deep-edge-before-reset.png`: the same drive on the old code: the car was put back 1,200 m away in the Kelp Forest.
+- `deep-edge-after.png`: the same drive now: the car held at the edge with the notice, the chart turned with it.
+
+The recipe that took them (a throwaway browser scenario) was not kept, to avoid new test machinery.
+
+## Checks
+
+- Every `tools/test-deep-*.mjs` by hand: 17 files, all pass.
+- Lane tier, `node tools/run-tests.mjs --tier lane --changed --jobs 2`: 164 passed, 0 failed, 0 not run.
+- `npm run build`: passed.
+- Deep browser scenarios, `--jobs 1`: deep-achievements, deep-art, deep-explorer, deep-life, deep-log-pictures, deep-look, deep-ramp-2, deep-sirena, finish-deep all pass, no browser errors or warnings.
+- Not run: `deep-frames` (a frame check needs a quiet laptop; a full test run was going). The only drawing change is one extra smoothstep per lit pixel in the haze sum and one uniform update per frame, so it should be at the noise floor; the release frame check will confirm.
 ## Tests
 
 New tests in existing files (no new test machinery):
