@@ -485,3 +485,92 @@ the full check including frames; then live with the next batch.
 - Burnable forest: yes, for the reasons given. Tanuki: night only.
 - Sound bed: follow the existing pattern for how a course names its ambience (as Ardennes and Summit do); add ambience.kogane through the sound catalog recipe at C5.
 - Price 2,200 and a field of 6: yes.
+
+## C1 reference and reuse
+
+Prepared 28 October 2026 for KOGANE-PASS-C1. Claude judges this handoff.
+No locks. Owned files: this packet (Kyle's explicit extension), the C1 card and
+its change note. Checks: source and file-path audit; six-picture coverage and
+JPG size; board and repository hygiene, lane tier with jobs 2, production build.
+No browser or frame check applies. No game event or sound is added at C1.
+
+### Reference set and real-place notes
+
+Folder: `C:/Users/kyleb/dev/art-library/kogane-pass/reference/`.
+`01.png` through `06.png` are the individual pictures.
+`environment-board.png` has six generated pictures in reading order:
+volcanic slope and hairpins; lake and torii; cedar and maple; road-edge hardware;
+tea house and vending; sodium-lit lower road.
+`ref-kogane-pass.jpg` is the labelled contact sheet, at most 500 KB.
+`prompts.json` records the exact built-in imagegen prompt and provenance.
+The lake torii and road are original combinations. Akagi's actual lakeside
+shrine is on a half-island; these sources do not prove a torii stands in
+Haruna's lake. Generated pictures are visual guides, not documentary photos.
+
+| Source or authored description | Note for the builder |
+| --- | --- |
+| [Gunma Tourism, Lake Haruna](https://www.visit-gunma.jp/en/spots/lake-haruna/) | A caldera lake below a volcanic summit. Use rounded wooded rim masses, a lakeside start and a visible descent, not high alpine peaks. |
+| [Gunma Tourism, Akagi Shrine](https://www.visit-gunma.jp/en/spots/akagi-jinja-shrine/) | Vermilion shrine against water and forest is a real local colour reference. The approved torii in shallows is fictional composition. |
+| [Maebashi City, autumn](https://www.city.maebashi.gunma.jp/gyosei/8/1/13419.html) | Lake Onuma has autumn maple and other deciduous foliage. Mix red and gold groves among evergreen slopes. |
+| [Gunma Tourism, Akagi autumn leaves](https://www.visit-gunma.jp/en/spots/autumn-leaves-at-mt-akagi/) | Regional autumn setting reference; the approved dusk-to-night run is an art choice, not a claim of typical weather. |
+| Packet 10, cedar plantation description; generated panel 3 | Tall straight dark trunks with narrow evergreen crowns. Test the scaled existing fir before requesting a cedar recipe. |
+| Packet 11, aerial road description; generated panel 1 | Hairpins stack down a wooded slope. Keep the approved original spiral road, never trace a real touge or a fictional racing map. |
+| Packet 11, road-edge description; generated panel 4 | Uphill rough stone retaining wall; downhill concrete barrier and white steel rail with orange reflectors. Road markings and signs remain unbranded. |
+| Packet 11, curve mirror and chevron description; generated panel 4 | Round convex mirror on an orange pole; simple repeated turn arrows. Readable shapes at speed, no copied real signs. |
+| Packet 11, tea house description; generated panel 5 | Low tiled roof, timber structure, noren curtain and warm lanterns. Summit hut supplies the glow recipe, not the Japanese silhouette. |
+| Packet 11, vending description; generated panel 5 | Glowing product-window rectangles under a little roof; generic colours, no drink brands or lettering. |
+| Packet 8.2 and 11, lower-road light; generated panel 6 | Warm sodium pools on damp asphalt with cool dark forest between. Dusk near the summit, night below about 2.6 km is the approved fiction. |
+
+### Verified reuse inventory
+
+The Workspace Catalog verified the external art-library folder and reported no
+stale generation. K means `public/assets/models/circuits/kits/`; each named
+existing K model has a `-lod.glb` partner. T means `public/assets/textures/`.
+"Fits" means a proposed reuse for Claude, not a completed look check.
+
+| Need | Existing paths or recipe | Decision |
+| --- | --- | --- |
+| Autumn maples | K `autumn-tree.glb`, `autumn-tree-copper.glb`, `autumn-tree-golden.glb`; `src/circuits/tremblant-woods.js` autumn groves and groundLeaves | fits after change: red/gold palette and groups |
+| Cedar forest | `src/circuits/ardennes-forest.js` scenery.forest and farForest | fits after change: taller/slimmer fir, darker trunks and crowns; cedar only if the C4 picture fails |
+| Barrier | K `concrete-wall.glb` | fits after change: restrained weathering, original collision stays |
+| White rail | K `armco.glb` | fits after change: white finish, orange reflectors; armco-white is a proposed finish, not an existing mesh |
+| Brake boards | K `braking-board-150.glb`, `braking-board-100.glb`, `braking-board-50.glb` | fits: named-corner approach rows |
+| Start and marshal | K `start-gantry.glb`, `marshal-post.glb` | fits: short grid with no paddock |
+| Lanterns | K `lantern-string.glb`; `src/circuits/harbour-lights.js` kitLook and glows | fits after change: warm tea-house lights; tall lantern-tower is unnecessary |
+| Tea-house starting parts | K `summit-hut.glb`, `shopfront-a.glb`, `shopfront-b.glb`; `src/circuits/summit-run.js` glow approach | fits after change as parts and material recipe only; low roof, timber and noren must be new |
+| Lake and shore | `src/circuits/tremblant-woods.js` LAKE/basins; K `wooden-dock.glb` | fits after change: original lake bowl and shallows, small dock optional, not a torii substitute |
+| Bridge and stream | K `stone-stream-bridge.glb`; Ardennes basins and effects.stream | fits after change at Bridge Corner |
+| Wet road and mist | `src/circuits/harbour-lights.js` wet road; Ardennes dampRoad and effects.valleyMist | fits after change: place mist below stack, preserve road visibility |
+| Distant town and lamps | Summit basins and groundLights; Harbour streetLight/sodium pattern | fits after change: lower valley positions and warm light, not Harbour's neon skyline |
+| Road and retaining material | T `race-asphalt.png`, `sidewalk-concrete.png`, `tunnel-concrete.png`, `granite-cliff.png`, `alpine-granite.png` | fits after change: dark volcanic tones and mottled stone, no new texture required before review |
+| Bark, foliage and soil | T `pine-bark.png`, `pine-bough.png`, `ground-color.jpg`, `ground-normal.jpg`, `ground-roughness.jpg`, `meadow-grass.png`, `rally-gravel.png` | fits after change: darker soil and red/gold groundLeaves; gravel only at verges |
+| Burnt look | `public/assets/burnt/tremblant-woods/burnt-props.glb`, `ground-black.jpg`, `ground-fireweed.jpg`, `ground-shoots.jpg` alongside | fits: shared reference, no duplicate set |
+| Current sound fallback | `public/assets/audio/ambience-forest.flac`, `ambience.forest` | fits as C5's approved fallback; it is not the requested Japanese evening bed |
+| Existing sound layers | `public/assets/audio/p4/ambient-forest-morning.ogg`, `ambient-mountain-wind.ogg` in the same folder | fits only after C5 source/listening checks; neither proves higurashi, night crickets or frogs |
+| External nature parts | `C:/Users/kyleb/dev/art-library/quaternius-ultimate-nature-pack/fbx/`: `CommonTree_Autumn_3.fbx`, `WoodLog.fbx`, `Rock_1.fbx`, `Rock_2.fbx`, `Rock_3.fbx`, `Rock_5.fbx`, `Rock_Moss_1.fbx`, `Rock_Moss_2.fbx` | fits after change as source parts if current runtime kits fail; License.txt is CC0 |
+| External barrier donor | `C:/Users/kyleb/dev/art-library/p4-kenney-racing/unpacked/Models/GLTF format/barrierWall.glb` | fits but redundant with concrete-wall; reuse runtime kit first |
+
+### What must be new
+
+No ready torii, Japanese tea house, vending row, stone lantern, curve mirror
+or matching retaining wall was found in the checked local kits or source packs.
+The library's ski, city, industrial, vehicle, character and Deep material does
+not replace these distinctive forms.
+
+| New item | High/LOD triangle cap | Reuse to keep |
+| --- | --- | --- |
+| torii and torii-small | 1,800/600 for torii; use a scaled shared recipe for small | existing wood material approach; original crossbeam silhouette |
+| tea-house | 4,500/1,400 | hut/shopfront parts and warm glows; new roof and noren |
+| vending-row | 1,500/500 | existing emissive material approach, no brand art |
+| stone-lantern | 700/250 | grey stone material |
+| stone-retaining-wall piece | 600/200 | existing rock/stone inputs |
+| curve-mirror | 400/150 | simple convex face, orange pole |
+| chevron-board | 200/100 | generic original arrows |
+| cedar, conditional only | 1,500/500 | no new model unless scaled fir fails C4 |
+
+C5 owns the new `ambience.kogane` loop: higurashi to night crickets,
+stream and a little frog layer, gain .14, within 1 dB of the forest reference.
+Its recipe belongs in `tools/audio/catalog.json`. No matching complete loop
+exists in the checked runtime audio. `landmark.shrine-bell` remains optional,
+not a new sound system. Four new Japan animal models belong to WILD-ART-SRC,
+not this reference card. C4 judges new scenery in at most three rounds.
