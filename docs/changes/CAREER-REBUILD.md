@@ -140,3 +140,7 @@ not treat them as an old save needing a migration.
   the start-up block and notice in `src/main.js`, and `tools/scenarios/career-restore.mjs` are
   removed by the later card **CAREER-RESTORE-REMOVE** once Kyle confirms both players are
   back. `tools/career-rebuild.mjs` and the storage request stay.
+
+## Claude's review (28 October 2026, night)
+
+Approved. Kyle asked for the rebuild and described both careers (28 October). Independent review (separate agent, read-only) found no path that loses or overwrites an existing career: the restore writes through the installed career storage after a verified backup, keeps existing players, is guarded by the writer lock, and is run-once by a marker. Its three findings are fixed: one existing name no longer cancels the other, a failed restore shows a visible notice and retries next start, and a fresh career gets no invented Player 1. Profile data comes from the game's own save code and warlord settlement; Blackiron and the Tollkeeper are not beaten for Spikey Ferns; Dukes00 has the first three warlords. No existing assertion changed. CAREER-RESTORE-REMOVE removes the restore module and hook once Kyle confirms.
