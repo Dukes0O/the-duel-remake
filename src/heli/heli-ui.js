@@ -7,6 +7,7 @@ import {HELI_DESTINATIONS, HELI_DESTINATIONS_WITH_SUMMIT, HOME_COURSE, legFuelKg
 import {HELI_CAMERA_VIEWS} from './heli-camera.js';
 import {HELI_RADIO_LINES, SKI_RADIO_TEXT} from './heli-radio-lines.js';
 import {HELI_MONEY} from './heli-save.js';
+import {payWords, resultWords} from './heli-pay.js';
 import {LESSON_RULES} from './heli-lessons.js';
 import {createDispatchBoard, atHomePad} from './heli-board.js';
 import {lessonBoardMarkup} from '../lessons/lesson-board.js';
@@ -92,7 +93,7 @@ export function noticeText(event) {
     case 'hooked': return 'Hooked on';
     // The pilot's map secrets (MAP-SECRETS): a sign found from the air, Roger's call about the Table, the logbook.
     case 'secretFound': case 'tableSpotted': return event.text;
-    case 'tableFound': return `${event.text} (${event.pay} credits)`;
+    case 'tableFound': return `${event.text} ${resultWords('Paid', event.pay, {balance: event.balance})}`;
     case 'hookRefused': return hookHintText(event);
     case 'entered': return event.arrived ? `${course(event.courseId)}: the landing zone is ahead` : course(event.courseId);
     case 'autopilotOff': return event.reason === 'pilot' ? 'Autopilot off: you have control' : null;
@@ -101,14 +102,15 @@ export function noticeText(event) {
     case 'lessonRetry': return event.reason ?? 'Not quite: have another go';
     case 'openingSkipped': return 'Lessons 1 and 2 marked done';
     case 'jobTaken': return 'Job taken';
-    case 'jobDone': return `Job done: ${event.pay} credits`;
+    case 'surveyDone': return resultWords('Count reported', event.paid, {balance: event.balance});
+    case 'jobDone': return resultWords('Job done', event.pay, {bonus: event.bonus, balance: event.balance});
     // H2 Fire.
     case 'fireCall': return `Fire reported at ${course(event.courseId)}`;
     case 'fireAnswered': return 'Fire call answered';
     case 'bucketFitted': return 'Bucket fitted: hold H to pour';
     case 'bucketRemoved': return 'Bucket off';
     case 'bucketDamaged': return ['', 'Bucket dented: it leaks', 'Bucket torn: it leaks fast', 'Bucket ruined'][event.damage] ?? null;
-    case 'fireOut': return `Fire out: ${event.paid.toLocaleString('en-US')} credits${event.firstBadge ? ' and the firefighter badge' : ''}`;
+    case 'fireOut': return resultWords('Fire out', event.paid, {balance: event.balance, extra: event.firstBadge ? 'and the firefighter badge' : ''});
     case 'fireLost': return `The woods are lost: ${course(event.courseId)} is closed`;
     // H4 Rescue.
     case 'rescueCall': return `${RESCUE_WORDS[event.kind] ?? 'Rescue'} reported at ${course(event.courseId)}`;
@@ -122,15 +124,15 @@ export function noticeText(event) {
       away: 'Hold restarted: too far away. Set the rescuer within 3 m of the casualty.'}[event.reason] ?? 'Hold restarted: set the rescuer down beside the casualty and stop.';
     case 'hikerSpotted': return 'Flare sighted';
     case 'hikerAboard': return 'Hiker aboard';
-    case 'crateDown': return `Crate down: ${event.pay} credits`;
-    case 'rescueDone': return `Rescue done: ${event.paid.toLocaleString('en-US')} credits${event.firstBadge ? ' and the rescue badge' : ''}`;
+    case 'crateDown': return resultWords('Crate down', event.pay, {balance: event.balance});
+    case 'rescueDone': return resultWords('Rescue done', event.paid, {balance: event.balance, extra: event.firstBadge ? 'and the rescue badge' : ''});
     case 'rescueFailed': return `Rescue failed, ${FAIL_WORDS[event.reason] ?? 'it is over'}${event.charged ? `: ${event.charged} credits` : ''}`;
     // SKI-VIEW: heli-skiing.
     case 'skiDropTaken': return 'Ski drop taken: fly to a drop pad at Summit Run';
     case 'skiGroupTaken': return `The group is aboard: ${event.pay.toLocaleString('en-US')} credits when they are home`;
-    case 'skiGroupDone': return `Group home: ${event.pay.toLocaleString('en-US')} credits`;
+    case 'skiGroupDone': return resultWords('Group home', event.pay, {bonus: event.bonus, balance: event.balance});
     case 'skiFlightDropped': return 'Ski flight handed back';
-    case 'skiStashPaid': return event.found ? `Untouched powder: ${event.paid} credits` : null;
+    case 'skiStashPaid': return event.found ? resultWords('Untouched powder', event.paid, {balance: event.balance}) : null;
     case 'waxChallengePassed': return 'Lab: the wax run is passed';
     case 'waxChallengeFailed': return `Lab wax run: ${event.reason}`;
     // LAB-VIEW: the Lab's challenges (docs/LAB.md 4.1).
@@ -246,7 +248,8 @@ export function rescueLineMarkup(view) {
 // How dark the light is (0 to 1): the hiker's last 3 minutes, drawing only.
 export const duskShare = view => Math.max(0, Math.min(1, view?.rescue?.active?.dusk ?? 0));
 
-export function instrumentsMarkup(view, {cameraIndex = 0} = {}) {
+// credits: the player's credits, shown in the status row (HELI-PAY-CONTINUE); left out, the row is as it was.
+export function instrumentsMarkup(view, {cameraIndex = 0, credits = null} = {}) {
   const r = instrumentReadings(view?.readout);
   if (!r) return '';
   return `<div class="heli-instruments" role="group" aria-label="Kestrel One instruments">
@@ -259,7 +262,7 @@ export function instrumentsMarkup(view, {cameraIndex = 0} = {}) {
   <div class="heli-status">
     <span>${view.autopilot ? 'AUTOPILOT ON' : 'AUTOPILOT OFF'} <kbd>P</kbd></span>
     <span>VIEW ${HELI_CAMERA_VIEWS[((cameraIndex % 4) + 4) % 4].toUpperCase()} <kbd>C</kbd></span>
-    <span>${view.bucket ? 'POUR (hold)' : 'HOOK'} <kbd>H</kbd></span>${view.secrets !== undefined ? `<span>MAP <kbd>${MAP_KEY}</kbd></span>` : ''}
+    <span>${view.bucket ? 'POUR (hold)' : 'HOOK'} <kbd>H</kbd></span>${view.secrets !== undefined ? `<span>MAP <kbd>${MAP_KEY}</kbd></span>` : ''}${Number.isFinite(credits) ? `<span class="heli-credits">CREDITS <b>${Math.floor(credits).toLocaleString('en-US')}</b></span>` : ''}
   </div>${fireLineMarkup(view)}${rescueLineMarkup(view)}`;
 }
 
@@ -290,7 +293,7 @@ export function arrivalMarkup(view, jobs = [], profile = null) {
   const canRace = raceCourse && unlocked && !arrival.waiting;
   const crate = view.returnLoad;
   const board = !crate ? '' : crate.done ? 'Nothing more today. The board fills again tomorrow.' :
-    `${crate.title} · ${crate.massKg} kg · ${crate.payNow} credits. ${crate.sender} Hook the crate beside the pad to take it.`;
+    `${crate.title} · ${crate.massKg} kg · ${payWords(crate.payNow, {bonus: crate.cleanBonus ?? 0})}. ${crate.sender} Hook the crate beside the pad to take it.`;
   return `<div class="heli-lessons heli-arrival" role="group" aria-label="Landed at ${escape(place?.name ?? arrival.courseId)}">
     <span>LANDED AT ${escape((place?.name ?? arrival.courseId).toUpperCase())}</span><p>${escape(words)}</p>
     ${board ? `<p>${escape(board)}</p>` : ''}
@@ -374,7 +377,8 @@ export function holdShare(view) {
   return seconds ? Math.min(1, Math.max(0, view.lesson.held / seconds)) : 0;
 }
 
-export function createHeliUi({host, app}) {
+// onMenu: called after the helicopter visit ends in the menu, so the menu's own copy of the race choices is read again.
+export function createHeliUi({host, app, onMenu = null}) {
   const doc = host.ownerDocument, section = doc.createElement('section');
   section.className = 'heli-panel';
   section.hidden = true;
@@ -422,7 +426,7 @@ export function createHeliUi({host, app}) {
     if (paint) { app.heliSession?.wearLogbookPaint(paint.dataset.logbookPaint); return; }
 
     const arrivalButton = event.target.closest('[data-heli-arrival]');
-    if (arrivalButton) { app.heliLanded?.(arrivalButton.dataset.heliArrival); return; }
+    if (arrivalButton) { if (app.heliLanded?.(arrivalButton.dataset.heliArrival) && app.duel?.state?.status === 'menu') onMenu?.(); return; }
     const skiButton = event.target.closest('[data-ski-board],[data-ski-run],[data-ski-wax],[data-ski-challenge]');
     if (skiButton) {
       const result = skiAction(skiButton);
@@ -502,7 +506,7 @@ export function createHeliUi({host, app}) {
         : !view.lesson && atHomePad(view) ? skiBoardMarkup(app.heliSession?.skiBoard?.() ?? null, view.ski?.flight ?? null) : '';
       if (skiBox) hud(); // its stylesheet styles the box too
       if (skiHost) lastSki = set(skiHost, skiBox, lastSki);
-      lastTop = set(top, instrumentsMarkup(view, {cameraIndex: app.heliCamera || 0}), lastTop);
+      lastTop = set(top, instrumentsMarkup(view, {cameraIndex: app.heliCamera || 0, credits: app.profile?.credits}), lastTop);
       const controlsHtml = controlsMarkup(view, {credits: app.profile?.credits ?? 0, refuels: tank?.refuels ?? 0});
       if (controlsHtml.replace(PUMP_LABEL, '') === lastControls.replace(PUMP_LABEL, '')) {
         // Same span, new words: a press on the label is never lost.

@@ -238,8 +238,13 @@ damped pendulum (no new library; it borrows the tether ideas in
 
 - **Board.** At the helipad. Three jobs each play day, chosen with the
   seeded generator from the day number: "Fly the <car> to <course>", paying
-  300 (Tremblant Snow), 450 (Panorama Ridge from Tremblant Snow) or 600
-  credits (Panorama Ridge from home), plus 25% in Real mode. A play day is a
+  2,100 credits for a car waiting at the home pad (Tremblant Snow or Panorama Ridge) or
+  2,800 credits for one waiting at another pad (Panorama Ridge from Tremblant Snow), plus a quarter for a clean delivery (no
+  hard landing, crash, dropped load or cargo knock while the job is in hand),
+  plus 25% in Real mode. Every helicopter job pays about 350 credits a minute
+  of work, the rate a Medium race win earns; a cruise leg plays as a short fade, so it counts
+  one minute whatever its length (HELI-PAY-CONTINUE, 28 October 2026;
+  docs/changes/HELI-PAY-CONTINUE.md has the table). A play day is a
   calendar day on which the game is opened (stored in the save).
 - **Your own car.** Always on the board: "Fly my car", no pay.
 - **Cruise leg.** Leaving the flying area (a box around each course,
@@ -302,8 +307,8 @@ damped pendulum (no new library; it borrows the tether ideas in
   customer cars are the cars Kestrel One can lift, leaving out the special
   cars that travel only by air. The same play day always gives the same jobs
   (the seeded generator, seeded from the day number); the ids look like
-  `d3-2`. Pay is 300, 450 and 600 credits; Real pays a quarter more
-  (375, 563 and 750, rounded to a whole credit).
+  `d3-2`. Pay is 2,100, 2,800 and 2,100 credits (was 300, 450 and 600); Real
+  pays a quarter more (2,625, 3,500 and 2,625).
 - **Taking a job.** At the home pad, on the ground, like the pump. One job at
   a time; "Drop job" hands it back and it can be taken again. A job finished
   today is not offered again that day. A job left in hand from an earlier
@@ -516,10 +521,11 @@ job leaving from that place each play day, so no flight ends empty.
   and the place.
 - **Where to:** home, or one place onward on the map, whichever the seed
   picks. The job names both ends.
-- **Pay:** 60% of the car job on the same leg (Tremblant Snow to home 180,
-  Panorama Ridge to Tremblant Snow 270, Panorama Ridge to home 360; new
-  places from the pilot's map at 60% of their legs). Real mode adds 25%, as
-  car jobs do.
+- **Pay:** the minutes the crate takes at the race rate, about 350 credits a
+  minute, 2,100 on every leg (a crate is 6 minutes: leave, hook, carry out, one
+  cruise leg, arrive, set down), never less than premium fuel at either end with a 25% margin.
+  Real mode adds 25%, as car jobs do. HELI-PAY-CONTINUE replaced the old 60%
+  of the car job.
 - **Each place's crate says who sent it**, one line, so places feel lived
   in: the lodge at Tremblant Snow sends empty gas bottles home; the ranger
   post at Panorama Ridge sends sample boxes; the hut on Summit Run sends

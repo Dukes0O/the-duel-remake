@@ -156,7 +156,9 @@ function scenarioHashes(extra = {}) {
 // session: a car job, the three rescues with the line fitted, a supply hook and
 // a fire day, each with the events, save, view, board and fingerprint hashed.
 // RESCUE-FINISH re-records hiker clue, hoist site/clock and supply clock only.
-const BEFORE = {carJob: 2639427997, hiker: 75325398, avalanche: 382890534, hoist: 3958087009, supply: 1425980116, fire: 1685599464};
+// HELI-PAY-CONTINUE re-recorded carJob (was 2639427997) and fire (was 1685599464): they hash the job and fire pays and the
+// board's pay words. The hiker, avalanche, hoist and supply hashes did not move.
+const BEFORE = {carJob: 3266723423, hiker: 75325398, avalanche: 382890534, hoist: 3958087009, supply: 1425980116, fire: 3551929874};
 {
   same(scenarioHashes(), BEFORE, 'with no skin or wildlife switch the session is exactly what it was');
   same(scenarioHashes({skinsEnabled: false, wildlifeEnabled: false}), BEFORE, 'and with both switches off');
@@ -633,7 +635,7 @@ const hikerSession = (worn, extra = {}) => {
 }
 console.log('PASS the searchlight');
 
-// ---- The medevac coat: a hoist rescue pays 200 more; the heat camera shows the people ----
+// ---- The medevac coat: a hoist rescue pays 500 more (HELI-PAY-CONTINUE, was 200); the heat camera shows the people ----
 const speedOf = view => Math.hypot(view.heli.vx, view.heli.vz);
 function legHeight(world, from, to, margin) {
   let top = -Infinity;
@@ -683,13 +685,13 @@ function travel(session, world, goal, finalY, {speed = 18, margin = 25, land = f
   const stock = flyHoist('stock'), medevac = flyHoist('medevac');
   ok(stock.done && medevac.done, 'both hoist rescues are handed over');
   same([stock.done.condition, medevac.done.condition], [1, 1], 'the cruise leg makes the driver cold in both: hurt');
-  same([stock.done.paid, medevac.done.paid], [720, 920], 'hurt pays 720; the stretcher adds 200 once, whole: 920');
-  same(medevac.session.profile.credits - stock.session.profile.credits, 200, 'and the save agrees to the credit');
+  same([stock.done.paid, medevac.done.paid], [1800, 2300], 'hurt pays 1,800; the stretcher adds 500 once, whole: 2,300');
+  same(medevac.session.profile.credits - stock.session.profile.credits, 500, 'and the save agrees to the credit');
   // The same rescue on search and rescue paint gets no hoist bonus.
   const sar = flyHoist('rescue');
-  same(sar.done.paid, 720, 'another coat adds nothing');
+  same(sar.done.paid, 1800, 'another coat adds nothing');
 }
-console.log('PASS the stretcher pays 200 more on a hoist rescue');
+console.log('PASS the stretcher pays 500 more on a hoist rescue');
 
 // The heat camera lists the warm hiker within 150 m; nothing without the coat.
 {
@@ -744,10 +746,10 @@ function flyPoints(session, points, {agl = 110, speed = 26, each = null} = {}) {
   const session = countSession();
   const rows = session.boardJobs();
   const row = rows.at(-1);
-  same([row.id, row.survey, row.title, row.payNow, row.taken, row.done], [countJob.id, true, 'Count the moose at Tremblant Woods', 600, false, false], 'the count is the last line on the board');
+  same([row.id, row.survey, row.title, row.payNow, row.taken, row.done], [countJob.id, true, 'Count the moose at Tremblant Woods', 3500, false, false], 'the count is the last line on the board');
   same(rows.slice(0, 4).map(job => job.id), ['own', ...dayJobs(COUNT_DAY).map(job => job.id)], 'the car jobs above it are untouched');
   const markup = dispatchBoardMarkup(session.view(), {jobs: rows, mode: 'real', skins: session.paintShop()});
-  ok(markup.includes('Count the moose at Tremblant Woods') && markup.includes('up to 600 credits') && !markup.includes('Pick up at undefined'), 'its board row');
+  ok(markup.includes('Count the moose at Tremblant Woods') && markup.includes('Pays up to 3,500 credits') && !markup.includes('Pick up at undefined'), 'its board row');
   ok(!/up to 600 credits \(\+25%/.test(markup), 'the count pays the same in Real');
   // Switch off: no line, no job, R does nothing, no view.
   const off = createHeliSession(sessionOptions(skinProfile({day: COUNT_DAY}), {skinsEnabled: true, wildlife}));
@@ -800,7 +802,8 @@ console.log('PASS the count is on the board');
   const before = full.session.profile.credits;
   ok(full.session.pressRadio(), 'R reports to Sarah');
   const events = full.session.takeEvents(), done = events.find(event => event.type === 'surveyDone');
-  ok(done && done.truth >= 6 && done.truth <= 14 && done.paid >= 400 && done.paid <= 700, `reported ${done.estimate} against ${done.truth}: ${done.band}, ${done.paid} credits`);
+  ok(done && done.truth >= 6 && done.truth <= 14 && done.paid >= 2350 && done.paid <= 4100, // HELI-PAY-CONTINUE: was 400 to 700
+     `reported ${done.estimate} against ${done.truth}: ${done.band}, ${done.paid} credits`);
   same([full.session.profile.credits - before, lines(events)], [done.paid, [`heli.radio.survey.${done.band}`]], 'paid once, and Sarah answers');
   const saved = heliOf(full.session.profile);
   same([saved.missions.wildlifeCounts, saved.survey, full.session.view().survey, full.session.boardJobs().length], [1, {day: COUNT_DAY, done: true}, null, 4], 'one count added, the day marked done, off the board');

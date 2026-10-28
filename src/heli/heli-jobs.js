@@ -10,10 +10,11 @@ import {liftCheck} from './heli-cable.js';
 import {MEDAL_CARS} from '../medals.js';
 // pilot-map-data.js imports legFuelKg from this file too; each only calls the other's
 // functions after both have loaded, so the pair is safe in either order.
-import {PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, mapDistanceKm, placeOfCourse, placeById, fuelPadAt} from './pilot-map-data.js';
+import {PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, placeOfCourse, placeById, fuelPadAt} from './pilot-map-data.js';
 
 import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS, HELI_MONEY} from './heli-save.js';
 import {surveyJob, surveyName, reportSurvey, isSurveyRun, SURVEY_NOT_A_RUN} from './heli-survey.js';
+import {HELI_PAYS, payForMinutes, cleanBonusFor, deliveryMinutes} from './heli-pay.js';
 
 export const HOME_COURSE = 'tremblant-woods';
 
@@ -133,11 +134,20 @@ export function isDestination(courseId, options = {}) {
 
 // ---- the dispatch board ------------------------------------------------
 // Three routes, each paying a fixed number of credits (Real pays a quarter
-// more). The board offers one job on each route every play day.
+// more). The board offers one job on each route every play day. Pay is the minutes
+// the delivery takes at the race rate (heli-pay.js): leave, fly to the pick-up when it is
+// not the home pad, hook, carry out, cruise, arrive and set the car down. A cruise leg counts one minute
+// whatever its length, because it plays as a short fade. `fuel(a, b)` is the fuel of a leg (null: no such leg).
+function carJobPayFrom(fuel, from, to) {
+  const leg = fuel(from, to);
+  if (leg === null || leg === undefined) return null;
+  return payForMinutes(deliveryMinutes(from !== HOME_COURSE));
+}
+const tableFuel = (a, b) => LEG_FUEL[legKey(a, b)] ?? null;
 export const JOB_ROUTES = Object.freeze([
-  Object.freeze({from: 'tremblant-woods', to: 'tremblant-snow', pay: 300}),
-  Object.freeze({from: 'tremblant-snow', to: 'panorama-ridge', pay: 450}),
-  Object.freeze({from: 'tremblant-woods', to: 'panorama-ridge', pay: 600}),
+  Object.freeze({from: 'tremblant-woods', to: 'tremblant-snow', pay: carJobPayFrom(tableFuel, 'tremblant-woods', 'tremblant-snow')}),
+  Object.freeze({from: 'tremblant-snow', to: 'panorama-ridge', pay: carJobPayFrom(tableFuel, 'tremblant-snow', 'panorama-ridge')}),
+  Object.freeze({from: 'tremblant-woods', to: 'panorama-ridge', pay: carJobPayFrom(tableFuel, 'tremblant-woods', 'panorama-ridge')}),
 ]);
 export const REAL_PAY_BONUS = 1.25;
 export const JOBS_PER_DAY = 3;
@@ -172,10 +182,9 @@ export function dayJobs(day, {pilotMap = false, owned = []} = {}) {
 // With the map on, a job may name any destination the player owns. The routes are
 // the three original ones (their pays stay) followed by every other ordered pair of
 // owned destinations whose legs each fit a full tank; pay by straight-line map
-// distance: 300 under 5 km, 450 from 5 to under 12, 600 from 12 to under 20, 800 beyond.
-export const MAP_JOB_PAY = Object.freeze([Object.freeze({under: 5, pay: 300}), Object.freeze({under: 12, pay: 450}),
-  Object.freeze({under: 20, pay: 600}), Object.freeze({under: Infinity, pay: 800})]);
-export const mapJobPay = km => MAP_JOB_PAY.find(row => km < row.under).pay;
+// legs: the same minutes-at-the-race-rate pay as the three routes, from the map's leg fuel.
+const mapFuel = (a, b) => legFuelKgMap(placeKey(a), placeKey(b));
+export const mapJobPay = (from, to) => carJobPayFrom(mapFuel, from, to);
 function mapRoutes(owned) {
   const routes = [...JOB_ROUTES];
   const seen = new Set(routes.map(route => `${route.from}>${route.to}`));
@@ -185,13 +194,19 @@ function mapRoutes(owned) {
     // Both legs (to the pick-up, then to the drop-off) must be flyable on one full tank.
     if (legFuelKgMap(placeKey(from), placeKey(to)) > 400) continue;
     seen.add(`${from}>${to}`);
-    routes.push(Object.freeze({from, to, pay: mapJobPay(mapDistanceKm(placeKey(from), placeKey(to)))}));
+    routes.push(Object.freeze({from, to, pay: mapJobPay(from, to)}));
   }
   return routes;
 }
 
 export function jobPay(job, mode = 'assisted') {
   return mode === 'real' ? Math.round(job.pay * REAL_PAY_BONUS) : job.pay;
+}
+
+// A clean delivery (no hard landing, crash, dropped load or cargo knock while the job was in hand) adds a
+// quarter of the job's pay (Real pays its quarter more on that too).
+export function jobCleanBonus(job, mode = 'assisted') {
+  return jobPay({pay: cleanBonusFor(job.pay)}, mode);
 }
 
 // "Fly the Falcone F42 to Tremblant Snow".
@@ -206,16 +221,14 @@ const RETURN_SENDERS = Object.freeze({
   'pacific-canyon': "Ana's field station sends sample crates for the lab in town.",
 });
 
-// Claude, 26 October: cover premium fuel at either end with a 25% margin,
-// or pay 60% of the same leg's car job, whichever is greater, rounded up to 10.
+// HELI-PAY-CONTINUE: the minutes the crate takes at the race rate (heli-pay.js), never less than
+// premium fuel at either end with a 25% margin, rounded up to 10.
 export function returnLoadPay(from, to, options = {}) {
   const fuel = legFuelKg(from, to, options);
   if (fuel === null || fuel > HELI_MONEY.tankKg) return null;
-  const original = JOB_ROUTES.find(route => legKey(route.from, route.to) === legKey(from, to));
-  const carPay = original?.pay ?? mapJobPay(mapDistanceKm(placeKey(from), placeKey(to)));
   const price = Math.max(HELI_MONEY.creditsPerKg, fuelPadAt(placeKey(from))?.pricePerKg ?? 0,
     fuelPadAt(placeKey(to))?.pricePerKg ?? 0);
-  return Math.ceil(Math.max(0.6 * carPay, 1.25 * fuel * price) / 10) * 10;
+  return Math.ceil(Math.max(payForMinutes(deliveryMinutes()), 1.25 * fuel * price) / 10) * 10;
 }
 
 // No ownership or wallet enters the seed: the same place has the same load
@@ -240,25 +253,25 @@ export function returnLoadJob(day, from, options = {}) {
 
 export const returnLoadTitle = job => `Crate from ${nameOf(job.from)} to ${nameOf(job.to)}`;
 
-export function finishReturnLoad(profile, job, mode = 'assisted', options = {}) {
+export function finishReturnLoad(profile, job, mode = 'assisted', options = {}, clean = false) {
   const heli = heliOf(profile);
   const expected = returnLoadJob(heli.playDay.count, job?.from, options);
   if (!expected || expected.id !== job?.id || heli.returnLoads?.[expected.from] === expected.day)
     return {ok: false, profile};
   const wallet = Number.isFinite(profile?.credits) ? Math.max(0, Math.floor(profile.credits)) : 0;
-  const total = Math.min(1_000_000_000, wallet + jobPay(expected, mode));
+  const total = Math.min(1_000_000_000, wallet + jobPay(expected, mode) + (clean ? jobCleanBonus(expected, mode) : 0));
   return {ok: true, paid: total - wallet, profile: {...profile, credits: total,
     heli: {...heli, returnLoads: {...heli.returnLoads, [expected.from]: expected.day}}}};
 }
 
 // ---- the car recovery job (docs/HELI_RESCUE.md section 5.3) --------------
 // After a hoist rescue the driver's car lies on the slope. The next play day
-// the board offers "Recover the <car> from Panorama Ridge" for 500 credits:
+// the board offers "Recover the <car> from Panorama Ridge" for 2,300 credits:
 // hook it and set it down in the landing zone. It stays 3 play days (the save
 // removes the wreck then, heli-save.js). It is an everyday job that sits on
 // the board beside the day's three, so dayJobs and its fingerprints are
 // untouched, and it pays as a dispatch job does (Real pays a quarter more).
-export const RECOVERY = Object.freeze({pay: 500, days: WRECK_DAYS});
+export const RECOVERY = Object.freeze({pay: HELI_PAYS.recovery, days: WRECK_DAYS});
 const WRECK_SEED = 0x57524b43;
 
 // The car left on the slope: a seeded pick from the customer cars Kestrel
@@ -293,12 +306,12 @@ export function recoveryJobOf(profile, {enabled} = {}) {
 // The car is set down in the landing zone: pay the job (capped like every
 // credit change) and take the wreck out of the save. The job must be on the
 // board today, so it can never pay twice.
-export function finishRecovery(profile, {enabled, mode = 'assisted'} = {}) {
+export function finishRecovery(profile, {enabled, mode = 'assisted', clean = false} = {}) {
   if (enabled !== true) return {ok: false, reason: 'Rescues are not available yet.', profile};
   const job = recoveryJobOf(profile, {enabled});
   if (!job) return {ok: false, reason: 'There is no car to recover.', profile};
   const wallet = Number.isFinite(profile?.credits) ? Math.max(0, Math.floor(profile.credits)) : 0;
-  const total = Math.min(1_000_000_000, wallet + jobPay(job, mode));
+  const total = Math.min(1_000_000_000, wallet + jobPay(job, mode) + (clean ? jobCleanBonus(job, mode) : 0));
   const stored = setMissions({...profile, credits: total}, {...missionsOf(profile), wreck: null}, {enabled: true});
   return {ok: true, profile: stored.profile, paid: total - wallet, job};
 }

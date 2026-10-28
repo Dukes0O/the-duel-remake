@@ -301,10 +301,10 @@ function flySupply() {
 {
   const {session, log} = flySupply();
   const downs = log.filter(event => event.type === 'crateDown');
-  same(downs.map(event => [event.id, event.pay]), [['food', 300], ['medicine', 300], ['fuel', 300]], 'supply: each crate set down in the yard pays 300');
+  same(downs.map(event => [event.id, event.pay]), [['food', 1250], ['medicine', 1250], ['fuel', 1250]], 'supply: each crate set down in the yard pays 1,250 (HELI-PAY-CONTINUE: was 300)');
   const done = log.find(event => event.type === 'rescueDone');
   ok(done, 'supply: the last crate finishes the run');
-  same([done.kind, done.paid, done.look, done.firstBadge], ['supply', 1000, null, false], 'supply: 1,000 credits in all, no person and no badge');
+  same([done.kind, done.paid, done.look, done.firstBadge], ['supply', 4150, null, false], 'supply: 4,150 credits in all (was 1,000), no person and no badge');
   ok(lines(log).filter(line => line === 'heli.radio.supply.crate').length === 2 && lines(log).includes('heli.radio.supply.done'), 'supply: Roger thanks them for the first two, then for everything');
   const m = missionsOf(session.profile);
   same([m.supplies, m.rescued, m.rescue, m.call, m.last], [1, undefined, null, null, 'supply'], 'supply: the save counts one supply run and no person');

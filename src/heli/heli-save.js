@@ -3,6 +3,7 @@
 // profile comes out; nothing is changed in place. Dates are passed in.
 import {CARS, COURSE} from '../config.js';
 import {CLOSURE, buybackPrice, playDayOf} from '../course-closures.js';
+import {HELI_PAYS} from './heli-pay.js';
 
 export const HELI_SAVE_VERSION = 1;
 export const HELI_MONEY = Object.freeze({tankKg: 400, creditsPerKg: 1.5, hardLanding: 150, crash: 800,
@@ -256,7 +257,7 @@ export function finishJob(profile, jobId, pay, {enabled} = {}) {
 // save stays exactly as it was. Every helper takes {enabled}, the
 // forest-fire switch (effective only with the helicopter switch on).
 
-export const FIRE_MONEY = Object.freeze({firePay: 1500, bucketRepair: Object.freeze([0, 100, 250, 600])});
+export const FIRE_MONEY = Object.freeze({firePay: HELI_PAYS.fire, bucketRepair: Object.freeze([0, 100, 250, 600])});
 export const MISSION_KINDS = Object.freeze(['fire']);
 export const BADGES = Object.freeze(['firefighter']);
 // H4 Rescue (docs/HELI_RESCUE.md section 10). These are what a save may hold;
@@ -454,7 +455,7 @@ const SKI_TIMED = Object.freeze(['slalom', 'gs']);
 const SKI_JUDGED = Object.freeze(['moguls', 'aerials']);
 export const SKI_STASHES = Object.freeze(['north-shelf', 'ridge-pocket', 'lower-meadow']);
 // What the medals pay in all, by medal (none, bronze, silver, gold): 150, then 150 more, then 200 more. A stash pays 100, once.
-export const SKI_MONEY = Object.freeze({medalTotal: Object.freeze([0, 150, 300, 500]), stash: 100});
+export const SKI_MONEY = Object.freeze({medalTotal: HELI_PAYS.skiMedals, stash: HELI_PAYS.stash});
 const SKI_SAVE_VERSION = 1;
 const MAX_SKI_NAMES = 64;
 const NOT_SKIING = 'Heli-skiing is not available yet.';
@@ -587,7 +588,7 @@ export function recordRun(profile, run, result, {enabled} = {}) {
   return {ok: true, profile: paidProfile(profile, heli, next, owed), paid: owed, improved: improved && kept > 0, raised: newMedal > oldMedal, medal: newMedal};
 }
 
-// A powder stash found: 100 credits, once for each of the three.
+// A powder stash found: SKI_MONEY.stash credits, once for each of the three.
 export function findStash(profile, id, {enabled} = {}) {
   if (enabled !== true) return skiOff(profile);
   const blocked = skiBlocked(profile);

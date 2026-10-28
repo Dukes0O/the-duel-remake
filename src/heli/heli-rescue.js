@@ -7,6 +7,7 @@
 // to use. Run stepRescue before stepCable each step.
 import {HELI_STEP, KESTREL, horizontalSpeed} from './heli-flight.js';
 import {CABLE, createLoad, hookPoint, hook} from './heli-cable.js';
+import {HELI_PAYS} from './heli-pay.js';
 
 export const RESCUE = Object.freeze({
   id: 'rescue',
@@ -92,10 +93,10 @@ export const SUPPLY_CRATES = Object.freeze({
   ]),
 });
 export const SUPPLY_PAY = Object.freeze({
-  perCrate: 300,
+  perCrate: HELI_PAYS.supply.perCrate,
   // Released from higher than 1 m (H1's drop rule) counts, but pays this much less.
-  highCut: 150, dropFrom: CABLE.dropFrom,
-  allCratesBonus: 100,
+  highCut: HELI_PAYS.supply.highCut, dropFrom: CABLE.dropFrom,
+  allCratesBonus: HELI_PAYS.supply.allCrates,
   // The hut yard: a clear circle of this radius near the summit hut (a
   // "10 m circle", radius as in H1's 12 m landing circle).
   yardRadius: 10,
@@ -297,7 +298,7 @@ export function crateResult(crate, yard) {
   return {released, dropMetres: released && drop > SUPPLY_PAY.dropFrom ? drop : 0};
 }
 
-// 300 credits a crate set down in the yard, 150 less when it was released
+// A crate set down in the yard pays SUPPLY_PAY.perCrate, less SUPPLY_PAY.highCut when it was released
 // from higher than 1 m. Nothing for a crate that is not down.
 export function cratePay({released, dropMetres = 0}) {
   if (!released) return 0;
@@ -305,7 +306,7 @@ export function cratePay({released, dropMetres = 0}) {
 }
 
 // The whole run: each crate's pay, plus 100 when all are down before the
-// clock ends (1,000 for three clean ones). crates: [{released, dropMetres}].
+// clock ends (4,150 for three clean ones). crates: [{released, dropMetres}].
 export function supplyPay(crates, {inTime = true, count = 3} = {}) {
   const down = crates.filter(crate => crate.released).length;
   const crateTotal = crates.reduce((sum, crate) => sum + cratePay(crate), 0);

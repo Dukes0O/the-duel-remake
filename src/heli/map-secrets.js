@@ -5,6 +5,7 @@
 import {createHeliGround} from './heli-ground.js';
 import {MAP_SAVE_VERSION, mapRecordOf, mapBlocked, writeMapRecord} from './heli-save.js';
 import {placeById} from './pilot-map-data.js';
+import {HELI_PAYS} from './heli-pay.js';
 
 // ---- The five secret courses (section 5.1) --------------------------------------
 // Each is a variant of a course, found by spotting a sign on that course that
@@ -110,7 +111,7 @@ export function noteSeen(profile, id) {
 export const TABLE_ID = 'the-table';
 // A leg whose straight line (between the places' table positions) passes within this far of the Table brings the call.
 export const TABLE_PASS_KM = 4;
-export const TABLE_PAY = 500;
+export const TABLE_PAY = HELI_PAYS.table;
 // Roger's call on arrival. No recording yet (it needs the voice service): the screen shows the words, and the radio
 // plays the line once it is in HELI_RADIO_LINES.
 export const TABLE_CALL = Object.freeze({line: 'heli.radio.table.spotted', voice: 'roger',

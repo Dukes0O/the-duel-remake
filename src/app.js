@@ -1801,15 +1801,29 @@ export class App {
     const hookGuide = view && session.hookGuide?.();
     return hookGuide ? Object.freeze({...view, hookGuide}) : view;
   }
-  // HELI-LANDED: both exits use the ordinary menu path so the fuel is kept.
+  // HELI-LANDED: both exits keep the fuel. Shut down opens the race setup for the course the helicopter is
+  // standing on (returnToMenu picks it); Race here starts the race on that course (HELI-PAY-CONTINUE).
   heliLanded(action) {
     const arrival = landedArrival(this.heliView(), this.profile);
     if (!arrival || !['race', 'shutdown'].includes(action)) return false;
-    if (action === 'race' && (arrival.waiting || !COURSE.some(course => course.id === arrival.courseId) || !isCourseUnlocked(this.profile, arrival.courseId))) return false;
-    this.returnToMenu();
-    if (action === 'race') this.setRaceSettings({eventId: arrival.courseId,
-      ...(arrival.carId && isCarUnlocked(this.profile, arrival.carId) ? {car: arrival.carId} : {})});
+    if (action === 'race') {
+      if (arrival.waiting || !COURSE.some(course => course.id === arrival.courseId) || !isCourseUnlocked(this.profile, arrival.courseId)) return false;
+      // A refusal (an air-only car elsewhere, a closed course) falls through to the race setup, which says why.
+      if (this.raceHere({courseId: arrival.courseId, carId: arrival.carId})) return true;
+    }
+    if (this.heliSession) this.returnToMenu();
     return true;
+  }
+  // Where the helicopter stands when a visit ends: the race setup should open on that course with the car
+  // parked there, so a flight to another course continues there instead of showing the last circuit raced.
+  // Nothing is chosen at the home pad (the visit began there) or off a race course.
+  _heliLandingChoice() {
+    const view = this.heliView();
+    if (!view || view.phase !== 'flying' || !view.heli?.onGround || view.courseId === HOME_COURSE) return null;
+    const stage = COURSE.find(course => course.id === view.courseId);
+    if (!stage || !isCourseUnlocked(this.profile, stage.id)) return null;
+    const carId = landedArrival(view, this.profile)?.carId;
+    return {eventId: stage.id, ...(carId && isCarUnlocked(this.profile, carId) ? {car: carId} : {})};
   }
   heliBuyFuel(kg = Infinity) {
     const result = this.heliSession?.buyFuel(kg) ?? {ok: false};
@@ -2155,6 +2169,7 @@ export class App {
     this._resetKeyboardInput();
     const st = this.duel.state;
     this.duel.clearDeep();this.deepAudio.stop();
+    const heliLanding = this._heliLandingChoice();
     this._leaveHeli();
     if (st.heliVisit) st.heliVisit = null;
     st.paused = false; st.status = 'menu'; st.boosting = false;
@@ -2169,6 +2184,7 @@ export class App {
     this.checkpointNotice=null;
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
     this.audio.setPaused(false);
+    if (heliLanding) this.setRaceSettings(heliLanding);
     this.duel.emit({ menu: true });
   }
   get footCameraMode() {

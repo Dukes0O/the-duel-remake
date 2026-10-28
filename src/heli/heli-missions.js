@@ -14,6 +14,7 @@ import {heliHash, MISSION_KINDS, RESCUE_KINDS, RESCUE_STAGES, createMissions, mi
 import {CONDITIONS, waitHurt, rescuePay} from './heli-rescue.js';
 import {searchLimit} from './heli-search.js';
 import {wreckFor} from './heli-jobs.js';
+import {HELI_PAYS} from './heli-pay.js';
 
 export const MISSION_RULES = Object.freeze({
   need: Object.freeze([3, 6]),
@@ -238,7 +239,7 @@ export const CALL_WAIT = Object.freeze({days: 1, flights: 2});
 // (heli-rescue.js: 100, 60 and 25 per cent); the supply run pays by crate.
 export const RESCUE_TALLY = Object.freeze({hiker: 'searches', avalanche: 'searches', hoist: 'hoists', supply: 'supplies'});
 export const RESCUE_MONEY = Object.freeze({
-  basePay: Object.freeze({hiker: 1000, avalanche: 1200, hoist: 1200}),
+  basePay: Object.freeze({hiker: HELI_PAYS.rescue.hiker, avalanche: HELI_PAYS.rescue.avalanche, hoist: HELI_PAYS.rescue.hoist}),
   failureCharge: 400,
   supplyFailureCharge: 200,
   tallyGain: 1,

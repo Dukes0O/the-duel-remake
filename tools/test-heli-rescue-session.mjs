@@ -150,7 +150,8 @@ function fireFingerprint(extra = {}) {
   return hash(parts.join('\n'));
 }
 // Taken from the fire session as it stood before RESCUE-HOOKS (the engine of RESCUE-ENGINE merged).
-const FIRE_SESSION_FINGERPRINT = 1400586788;
+// HELI-PAY-CONTINUE re-recorded this (was 1400586788): it hashes the board's pay words.
+const FIRE_SESSION_FINGERPRINT = 2478802993;
 {
   same(fireFingerprint(), FIRE_SESSION_FINGERPRINT, 'with no rescue switch the fire session is as it was');
   same(fireFingerprint({rescueEnabled: false}), FIRE_SESSION_FINGERPRINT, 'and with the switch off');
@@ -402,12 +403,12 @@ function flyHiker({wait = 0, waitSteps = 0, name = 'Rescue QA', stepLog = null, 
   const {session, log, aboardClock} = flyHiker();
   const done = log.find(event => event.type === 'rescueDone');
   ok(done, 'the hiker is handed to the paramedics at the pad');
-  same([done.kind, done.paid, done.condition, done.look, done.firstBadge, done.rescued], ['hiker', 1000, 0, 'walk', true, 1], 'unhurt: 1,000 credits, they walk, the badge');
+  same([done.kind, done.paid, done.condition, done.look, done.firstBadge, done.rescued], ['hiker', 2650, 0, 'walk', true, 1], 'unhurt: 2,650 credits (HELI-PAY-CONTINUE, was 1,000), they walk, the badge');
   ok(lines(log).includes('heli.radio.hiker.spotted') && lines(log).includes('heli.radio.rescue.done') && log.some(e => e.type === 'cue' && e.id === 'heli.flare')
     && log.some(e => e.type === 'cue' && e.id === 'heli.badge'), 'Sarah, the flare, Roger and the badge chime');
   ok(aboardClock < 600, `picked up with time to spare (clock ${aboardClock.toFixed(0)} s)`);
   const m = profileOf(session);
-  same([session.profile.credits, m.searches, m.rescued, m.badges, m.rescue, m.call, m.last, m.count], [3000, 1, 1, ['rescue'], null, null, 'hiker', 0],
+  same([session.profile.credits, m.searches, m.rescued, m.badges, m.rescue, m.call, m.last, m.count], [4650, 1, 1, ['rescue'], null, null, 'hiker', 0],
     'the save: paid, one search, one person, the badge, nothing in hand');
   ok(m.quiet.untilDay === heliOf(session.profile).playDay.count + 2 && m.quiet.engineSeconds > 1100, 'and the quiet spell begins');
   same(session.view().rescue.active, null, 'the panel has no rescue left');
@@ -416,16 +417,16 @@ function flyHiker({wait = 0, waitSteps = 0, name = 'Rescue QA', stepLog = null, 
   same([JSON.stringify(again.log), JSON.stringify(heliOf(again.session.profile))], [JSON.stringify(log), JSON.stringify(heliOf(session.profile))],
     'the same save flies the same rescue');
   session.leave();
-  same(session.profile.credits, 3000, 'leaving afterwards costs nothing');
+  same(session.profile.credits, 4650, 'leaving afterwards costs nothing');
 }
 {
   // Waiting aboard past two thirds of 15 minutes: they get cold, are hurt, and pay 60%.
   const {session, log} = flyHiker({wait: 330, name: 'Rescue QA'});
   const done = log.find(event => event.type === 'rescueDone');
   ok(done && lines(log).includes('heli.radio.rescue.cold'), 'the clock passes two thirds: Roger says they are getting cold');
-  same([done.paid, done.condition, done.look], [600, 1, 'limp'], 'hurt: 600 credits and they limp');
+  same([done.paid, done.condition, done.look], [1590, 1, 'limp'], 'hurt: 1,590 credits (60% of 2,650) and they limp');
   ok(lines(log).includes('heli.radio.rescue.hurt'), 'Roger says they are hurt but will be all right');
-  same(session.profile.credits, 2600, 'the save agrees');
+  same(session.profile.credits, 3590, 'the save agrees');
 }
 console.log('PASS a lost hiker is found, picked up and handed over');
 
@@ -459,7 +460,7 @@ function flyLine(kind, courseId, world, zone, {manual = null} = {}) {
   const {session, log, atTarget} = flyLine('avalanche', 'tremblant-snow', snow, snowSite.zone);
   const done = log.find(event => event.type === 'rescueDone');
   ok(done, 'the skier is handed to the paramedics at the ski patrol landing zone');
-  same([done.condition, done.paid, done.look], [0, 1200, 'walk'], 'avalanche: carried gently and in time, unhurt: 1,200 credits');
+  same([done.condition, done.paid, done.look], [0, 3000, 'walk'], 'avalanche: carried gently and in time, unhurt: 3,000 credits (was 1,200)');
   ok(!has(log, 'rescueFast'), 'the autopilot holds the line speed, so Roger never says slow down');
   const beeps = log.filter(event => event.type === 'cue' && event.id === 'heli.beacon.beep');
   ok(beeps.length > 5 && beeps.every(beep => beep.pitch >= 900 && beep.pitch <= 1400), `the beacon beeps (${beeps.length}) between 900 and 1,400 Hz`);
@@ -477,7 +478,7 @@ console.log('PASS an avalanche beacon search is flown');
   ok(done, 'the driver is handed to the paramedics at Panorama Ridge');
   // The cruise leg from the Woods takes a third of the 12 minutes, so the driver is cold before the pad: hurt, 60%.
   ok(lines(log).includes('heli.radio.rescue.cold') && lines(log).includes('heli.radio.rescue.hurt'), 'hoist: Roger says they are getting cold, then that they are hurt');
-  same([done.condition, done.paid, done.look], [1, Math.round(1200 * SHARE[1]), 'limp'], 'hoist: hurt, so 720 credits');
+  same([done.condition, done.paid, done.look], [1, Math.round(3000 * SHARE[1]), 'limp'], 'hoist: hurt, so 1,800 credits (60% of 3,000; was 720)');
   ok(log.filter(e => e.type === 'holdStarted')[0].seconds === 8, 'strapping the driver in takes 8 seconds');
   const m = profileOf(session);
   same([m.hoists, m.rescued, m.badges, m.rescue, m.searches], [1, 1, ['rescue'], null, undefined], 'the save: one hoist rescue, one person, the badge');
@@ -541,16 +542,16 @@ function flySupply({crates = 3, name = 'Rescue QA'} = {}) {
   const {session, log} = flySupply();
   finishReport(session, log);
   const downs = log.filter(event => event.type === 'crateDown');
-  same(downs.map(event => [event.id, event.pay]), [['food', 300], ['medicine', 300], ['fuel', 300]], 'supply: each crate set down in the yard pays 300');
+  same(downs.map(event => [event.id, event.pay]), [['food', 1250], ['medicine', 1250], ['fuel', 1250]], 'supply: each crate set down in the yard pays 1,250 (was 300)');
   const done = log.find(event => event.type === 'rescueDone');
   ok(done, 'supply: the last crate finishes the run');
-  same([done.kind, done.paid, done.look, done.firstBadge], ['supply', 1000, null, false], 'supply: 1,000 credits in all, 100 more for all three, no person and no badge');
+  same([done.kind, done.paid, done.look, done.firstBadge], ['supply', 4150, null, false], 'supply: 4,150 credits in all, 400 more for all three (was 1,000 and 100), no person and no badge');
   ok(lines(log).filter(line => line === 'heli.radio.supply.crate').length === 2 && lines(log).includes('heli.radio.supply.done'), 'supply: Roger thanks them for the first two, then for everything');
   const m = profileOf(session);
   same([m.supplies, m.rescued, m.badges, m.rescue, m.call, m.last], [1, undefined, [], null, null, 'supply'], 'supply: the save counts one supply run and no person');
   const spent = log.filter(event => event.type === 'charged').reduce((sum, event) => sum + event.charged, 0)
     + log.filter(event => event.type === 'fuelBought').reduce((sum, event) => sum + event.cost, 0);
-  same(session.profile.credits, 2000 + 1000 - spent, `supply: the pay less the fuel and any repairs (${spent}) is in the save`);
+  same(session.profile.credits, 2000 + 4150 - spent, `supply: the pay less the fuel and any repairs (${spent}) is in the save`);
   ok(session.view().rescue.crates.length === 0, 'supply: the crates are gone from the view');
 }
 {
@@ -560,8 +561,8 @@ function flySupply({crates = 3, name = 'Rescue QA'} = {}) {
   const credits = session.profile.credits;
   session.leave();
   const events = session.takeEvents(), left = events.find(event => event.type === 'rescueFailed');
-  same([left.reason, left.cratePaid, left.charged], ['left', 300, 200], 'supply: leaving fails the run: the crate pays 300, the snowcat costs 200');
-  same(session.profile.credits, credits + 300 - 200, 'supply: and the save agrees');
+  same([left.reason, left.cratePaid, left.charged], ['left', 1250, 200], 'supply: leaving fails the run: the crate pays 1,250, the snowcat costs 200');
+  same(session.profile.credits, credits + 1250 - 200, 'supply: and the save agrees');
   same(lines(events), ['heli.radio.supply.late'], 'supply: the lodge sent a snowcat');
   same([profileOf(session).rescue, profileOf(session).supplies, profileOf(session).last], [null, undefined, 'supply'], 'supply: no rescue in hand, no tally to drop below zero');
 }
@@ -765,9 +766,9 @@ for (const line of seen) ok(HELI_RADIO_LINES[line], `${line} is a recorded line`
   const session = newSession(profile);
   session.start();
   const recovery = session.boardJobs().find(job => job.recovery);
-  ok(recovery && recovery.pay === 500 && recovery.title.startsWith('Recover the ') && recovery.title.endsWith('from Panorama Ridge'), 'the recovery job is on the board for 500 credits');
+  ok(recovery && recovery.pay === 2300 && recovery.title.startsWith('Recover the ') && recovery.title.endsWith('from Panorama Ridge'), 'the recovery job is on the board for 2,300 credits');
   const markup = dispatchBoardMarkup(session.view(), {jobs: session.boardJobs(), fire: {repairCost: 0}});
-  ok(markup.includes(recovery.title) && markup.includes('500 credits') && markup.includes('Hook the car on the slope') && markup.includes('Pick up at Panorama Ridge'), 'and the board shows it with the others');
+  ok(markup.includes(recovery.title) && markup.includes('Pays 2,300 credits, +600 for a clean delivery') && markup.includes('Hook the car on the slope') && markup.includes('Pick up at Panorama Ridge'), 'and the board shows it with the others');
   ok(markup.includes('take:w6'), 'with a Take button (RESCUE-AUTOPILOT; it had none before)');
   const off = newSession(profile, {rescue: false});
   off.start();

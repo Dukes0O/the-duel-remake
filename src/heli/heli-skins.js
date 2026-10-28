@@ -5,6 +5,7 @@
 // second call on the old profile can never charge twice. Every helper takes
 // {enabled}, the heli-skins switch (effective only with the helicopter on).
 import {heliOf, missionsOf, SKIN_KINDS, DIRT_KINDS, DIRT_MAX, RANK_SKIN_KINDS} from './heli-save.js';
+import {HELI_PAYS} from './heli-pay.js';
 
 // ---- the tables: every number is written once, here ----------------------
 
@@ -58,7 +59,7 @@ export const GEAR = Object.freeze({
   'water-gauge': Object.freeze({skin: 'fire', effect: Object.freeze({litreGauge: true})}),
   'drop-sight': Object.freeze({skin: 'fire', effect: Object.freeze({dropSight: true})}),
   winch: Object.freeze({skin: 'medevac', effect: Object.freeze({lineMin: 5, lineMax: 40, reelSpeed: 1.5})}),
-  stretcher: Object.freeze({skin: 'medevac', effect: Object.freeze({bumpHurtAbove: 8, bumpTwoStepsAbove: 14, hoistPayBonus: 200})}),
+  stretcher: Object.freeze({skin: 'medevac', effect: Object.freeze({bumpHurtAbove: 8, bumpTwoStepsAbove: 14, hoistPayBonus: HELI_PAYS.stretcher})}),
   searchlight: Object.freeze({skin: 'rescue', effect: Object.freeze({searchNightMinutes: 8})}),
   'heat-camera': Object.freeze({skin: 'rescue', effect: Object.freeze({heatRange: 150, heatBuriedRange: 30, heatAnimals: true})}),
   'quiet-tips': Object.freeze({skin: 'wildlife', effect: Object.freeze({scareDistance: 50})}),

@@ -117,18 +117,19 @@ zone; climbing in at the pickup switches back.
 - **The group job:** some play days the dispatch board offers "Heli-ski
   group at Summit Run": fly the guide and four guests from the home pad to a
   drop pad you choose, ski your run with them (the guide and guests ski down
-  as figures beside the run), and fly them home. Pays 1,200 credits; Real mode
+  as figures beside the run), and fly them home. Pays 3,150 credits, and a
+  quarter more for a clean delivery (no hard landing or dropped load); Real mode
   pays a quarter more, as for other jobs. The weights of 3 apply.
 
 ## 7. Rewards
 
 | Goal | Pays (once per player) |
 | --- | --- |
-| Each run's bronze, silver, gold | 150, then 150 more for silver, then 200 more for gold (500 in all per run) |
-| Each powder stash found | 100 |
-| The group job | 1,200 each time (a job, like the dispatch jobs) |
+| Each run's bronze, silver, gold | 700, then 700 more for silver, then 900 more for gold (2,300 in all per run) |
+| Each powder stash found | 700 |
+| The group job | 3,150 each time, +800 for a clean delivery (a job, like the dispatch jobs) |
 
-Five runs give at most 2,500 credits in medals. The Lab's two snow lessons
+Four runs give at most 9,200 credits in medals. (HELI-PAY-CONTINUE: all helicopter pay now follows the race rate; see docs/changes/HELI-PAY-CONTINUE.md.) The Lab's two snow lessons
 (Launch angles, Ski wax; `docs/LAB.md` 4.3) open the aerials tips and a wax
 kit; the altitude tune (`docs/LAB.md` 4.1) adds thrust at every height
 (257 kg to spare at the summit pad with a full group).
@@ -185,4 +186,4 @@ its own zones after Kyle has skied Summit.
   reach of a full group; section 3).
 - A missed gate costs 5 s instead of hiking back up, so a child's run is
   never lost to one mistake.
-- Medals pay up to 500 credits a run, below a Hard race win per medal step.
+- Medals pay up to 2,300 credits a run, about six and a half minutes of racing at the race rate.

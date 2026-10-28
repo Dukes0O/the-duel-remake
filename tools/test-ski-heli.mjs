@@ -190,7 +190,7 @@ test('with the switch off, or on and nothing taken, the helicopter behaves exact
   assert.deepEqual(closed.boardJobs().map(job => job.id), sessionOf(profileOf()).boardJobs().map(job => job.id));
 });
 
-test('the board: a free drop every day and the group job one play day in three, for 1,200 (Real 1,500), only with Summit Run and the landing lesson', () => {
+test('the board: a free drop every day and the group job one play day in three, for 3,150 (Real 3,938), only with Summit Run and the landing lesson', () => {
   const days = Array.from({length: 60}, (_, index) => index + 1);
   const groupDays = days.filter(count => { const s = sessionOf(profileOf({count})); s.start(); return !!s.skiBoard().group; });
   assert.ok(groupDays.length >= 10 && groupDays.length <= 30, `${groupDays.length} of 60 days (about one in three)`);
@@ -199,10 +199,11 @@ test('the board: a free drop every day and the group job one play day in three, 
   s.start();
   const board = s.skiBoard();
   assert.equal(board.drop.title, 'Heli-ski drop at Summit Run'); assert.equal(board.drop.pay, 0);
-  assert.equal(board.group.pay, 1200); assert.equal(board.group.payNow, 1200); assert.equal(board.group.guests, 4); assert.equal(board.group.kg, 475);
+  // HELI-PAY-CONTINUE: the group job pays 3,150 (was 1,200) and 800 more for a clean delivery.
+  assert.equal(board.group.pay, 3150); assert.equal(board.group.payNow, 3150); assert.equal(board.group.cleanBonus, 800); assert.equal(board.group.guests, 4); assert.equal(board.group.kg, 475);
   const real = sessionOf(profileOf({count: day}), {mode: 'real'});
   real.start();
-  assert.equal(real.skiBoard().group.payNow, 1500, 'Real pays a quarter more');
+  assert.equal(real.skiBoard().group.payNow, 3938, 'Real pays a quarter more');
   // Not without the landing lesson, nor without Summit Run owned.
   const untrained = sessionOf(profileOf({count: day, extra: {heli: {version: 1, fuelKg: 400, lessons: {...TRAINED, landing: false}, refuels: 3, playDay: {last: DAY, count: day}}}}));
   untrained.start();
@@ -253,7 +254,7 @@ test('a drop to the pickup pad: the ceiling rises only with a ski flight in hand
   v = s.view();
   assert.equal(v.phase, 'flying'); assert.equal(v.heli.onGround, true); assert.equal(v.heli.fuelKg, fuel, 'no fuel was burnt on the hop');
   assert.ok(Math.hypot(v.heli.x - pad.x, v.heli.z - pad.z) < 1, 'on the ground at the pickup'); assert.equal(v.ski.run, null);
-  const medalPay = [0, 150, 300, 500][result.medal];
+  const medalPay = [0, 700, 1400, 2300][result.medal];
   assert.equal(s.profile.credits, credits + medalPay); assert.deepEqual(skiOf(s.profile).best, {aerials: result.points});
   assert.equal(skiOf(s.profile).medal.aerials ?? 0, result.medal || 0);
   // Skiing it again pays only the difference up to a higher medal, and the best is kept.
@@ -261,7 +262,7 @@ test('a drop to the pickup pad: the ceiling rises only with a ski flight in hand
   assert.equal(s.skiStepOut('aerials').ok, true);
   const again = skiOut(s, 'aerials');
   assert.ok(has(again, 'skiPickup'));
-  const second = again.find(e => e.type === 'skiResult'), pay = [0, 150, 300, 500];
+  const second = again.find(e => e.type === 'skiResult'), pay = [0, 700, 1400, 2300];
   assert.equal(s.profile.credits, wallet + pay[Math.max(result.medal, second.medal)] - pay[result.medal], 'only a higher medal pays the difference');
   assert.equal(skiOf(s.profile).best.aerials, Math.max(result.points, second.points));
   // Leaving a run: the helicopter comes for the pilot, no charge.
@@ -310,7 +311,7 @@ test('the Lab\'s wax challenge: the right wax for the day\'s snow and a slalom i
   assert.ok(result.time > 0 && result.medal >= 1, JSON.stringify(result));
   assert.ok(has(passed, 'waxChallengePassed'), JSON.stringify(passed.find(e => e.type === 'waxChallengeFailed')));
   assert.equal(labOf(good.profile).done.wax, true, 'the Lab lesson is passed');
-  assert.equal(good.profile.credits, before + [0, 150, 300, 500][result.medal]);
+  assert.equal(good.profile.credits, before + [0, 700, 1400, 2300][result.medal]);
   assert.equal(skiOf(good.profile).best.slalom, Math.round(result.time * 100) / 100);
   assert.equal(buyUpgrade(good.profile, 'wax-kit', {flags: SKIING}).ok, true, 'and the Wax kit can be bought');
   // With the right wax the run is faster than with the wrong one, on the same line.
@@ -379,10 +380,12 @@ test('the group job: aboard at the home pad with 475 kg, skied from the pickup p
   const wallet = s.profile.credits, homeFlight = flyHome(s), home = homeFlight.home;
   assert.ok(homeFlight.dry.some(e => e.type === 'charged' && e.kind === 'fuelTruck') && wallet > 0, 'the truck filled the tank, for pay');
   assert.ok(has(home, 'skiGroupDone'), 'paid at the home pad');
-  const pay = home.find(e => e.type === 'skiGroupDone').pay;
-  assert.equal(pay, 1200);
+  const done = home.find(e => e.type === 'skiGroupDone'), pay = done.pay;
+  // HELI-PAY-CONTINUE: 3,150, and 800 more when no repair was charged since the group boarded.
+  assert.equal(pay, 3150 + (done.clean ? 800 : 0)); assert.equal(done.bonus, done.clean ? 800 : 0);
+  assert.equal(done.balance, s.profile.credits, 'the result says what the pilot has now');
   const charged = homeFlight.events.filter(e => e.type === 'charged').reduce((sum, e) => sum + e.charged, 0);
-  assert.equal(s.profile.credits, wallet + 1200 - charged, 'the pay is in, less the truck and any repair');
+  assert.equal(s.profile.credits, wallet + pay - charged, 'the pay is in, less the truck and any repair');
   assert.ok(heliOf(s.profile).jobs.done.includes(`ski${day}`)); assert.equal(heliOf(s.profile).jobs.taken, null);
   assert.equal(s.view().ski.group, false); assert.equal(empty(), KESTREL.emptyKg, 'the weight is off again'); assert.equal(s.view().ski.flight, null);
   assert.equal(s.skiBoard().group.done, true); assert.equal(s.takeSkiGroup().ok, false, 'once a day');
@@ -525,7 +528,7 @@ test('the thin-air line plays once, only when the collective is at its top and t
   again.leave();
 });
 
-test('powder: the stashes pay 100 each, once, and the run has no result', { timeout: 600000 }, () => {
+test('powder: the stashes pay 700 each, once, and the run has no result', { timeout: 600000 }, () => {
   const s = sessionOf(profileOf());
   s.start(); s.takeSkiDrop(); toSummit(s);
   assert.equal(has(flyToPad(s, SKI_PADS.summit), 'crashed'), false);
@@ -536,13 +539,13 @@ test('powder: the stashes pay 100 each, once, and the run has no result', { time
   assert.equal(has(events, 'skiResult'), false, 'powder is not timed or judged');
   const stashes = events.filter(e => e.type === 'skiStashPaid' && e.found);
   assert.ok(stashes.length >= 1, 'at least one stash found');
-  assert.equal(s.profile.credits, credits + 100 * skiOf(s.profile).stashes.length);
+  assert.equal(s.profile.credits, credits + 700 * skiOf(s.profile).stashes.length);
   assert.ok(has(events, 'skiPickup'));
   // Skiing it again finds nothing new to pay for.
   const found = skiOf(s.profile).stashes.length, money = s.profile.credits;
   s.leaveSkiRun();
   assert.equal(s.view().phase, 'flying');
-  assert.ok(found >= 1 && money === credits + 100 * found);
+  assert.ok(found >= 1 && money === credits + 700 * found);
   s.leave();
 });
 

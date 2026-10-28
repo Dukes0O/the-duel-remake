@@ -162,7 +162,8 @@ const flown = flyMission();
   // lasts one real bucket trip (FIRE-FINISH), so this holds in play too.
   ok(trips <= 8, `answered at once, out within 8 drops (${trips})`);
   ok(trips >= 2 && trips <= 14, `in a sensible number of drops: ${trips}`);
-  same([out.paid, out.firstBadge], [1500, true], '1,500 credits and the badge the first time');
+  same([out.paid, out.firstBadge], [6300, true], '6,300 credits and the badge the first time (HELI-PAY-CONTINUE: was 1,500)');
+  ok(Number.isFinite(out.balance), 'the result says what the player has now');
   const heli = heliOf(session.profile);
   same([heli.fire, heli.missions.firesOut, heli.missions.badges, heli.missions.call], [null, 1, ['firefighter'], null], 'the save: no fire, one out, the badge');
   ok(heli.scars?.length === 1 && heli.scars[0].courseId === 'tremblant-woods', 'the burnt cells stay as a scar');

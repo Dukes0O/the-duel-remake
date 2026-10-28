@@ -9,7 +9,7 @@ import {AUTOPILOT, createAutopilot, toggleAutopilot, setAutopilotTarget, autopil
 import {CABLE, createLoad, liftCheck, carMassKg, canHook, hookRefusal, hook, release, stepCable, createWinch, reelWinch, lineLengthOf} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
   DIRT_KINDS, placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave} from './heli-save.js';
-import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle, recoveryJob, recoveryJobOf, recoveryTitle, finishRecovery,
+import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobCleanBonus, jobTitle, recoveryJob, recoveryJobOf, recoveryTitle, finishRecovery,
   wreckFor, returnLoadJob, returnLoadTitle, finishReturnLoad} from './heli-jobs.js';
 import {isCourseUnlocked} from '../course-access.js';
 import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson, carryGuidance} from './heli-lessons.js';
@@ -40,6 +40,7 @@ import {SECRET_SIGNS, SPOT, TABLE_ID, TABLE_CALL, TABLE_FOUND_TEXT, createSpotte
   createTableWorld, mapOf} from './map-secrets.js';
 import {sampleCourse, detectCorners, nameFeatures, namedPieces} from '../track-analysis.js';
 import {courseClosed} from '../course-closures.js';
+import {HELI_PAYS} from './heli-pay.js';
 
 export const HELI_SESSION = Object.freeze({
   zoneRadius: CABLE.landingRadius,
@@ -59,9 +60,11 @@ export const HELI_SESSION = Object.freeze({
   bucketBeside: 6,
 });
 // Heli-skiing (docs/HELI_SKIING.md sections 3 and 6): the group of a guide and four guests weighs 475 kg aboard; the job pays
-// 1,200 (Real a quarter more) and is offered on one play day in three; a drop pad is the 12 m circle the Summit world has;
+// 3,150 (Real a quarter more) and is offered on one play day in three; a drop pad is the 12 m circle the Summit world has;
 // above this height the thin-air line plays when the collective is at its top and the helicopter still sinks.
-export const HELI_SKIING = Object.freeze({groupKg: 475, guests: 4, groupPay: 1200, groupOneDayIn: 3, padRadius: 12, thinAirMetres: 3500,
+const EARN_EVENTS = Object.freeze(['jobDone', 'fireOut', 'rescueDone', 'crateDown', 'skiGroupDone', 'skiRecorded', 'skiStashPaid', 'tableFound', 'surveyDone']);
+const DAMAGE_KINDS = Object.freeze(['hardLanding', 'crash', 'drop', 'cargoLight', 'cargoHeavy', 'cargoWreck']);
+export const HELI_SKIING = Object.freeze({groupKg: 475, guests: 4, groupPay: HELI_PAYS.skiGroup, groupOneDayIn: 3, padRadius: 12, thinAirMetres: 3500,
   seed: 0x534b4947, dropId: 'ski-drop'});
 // How far above the highest obstacle the autopilot stops over a rescue's
 // search area, debris area or cliff spot (docs/HELI_RESCUE.md section 7).
@@ -313,6 +316,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       : event.type === 'rescueDone' ? (event.kind === 'supply' ? 'crate' : 'rescue')
       : ['skiDropDone', 'skiGroupDone'].includes(event.type) ? 'ski' : null;
     if (logbookOn && job) commit({ok: true, profile: recordLogbook(save, {job, enabled: true})});
+    // HELI-PAY-CONTINUE: every event that pays says what the player has now (the panel's result line).
+    if (EARN_EVENTS.includes(event.type)) event.balance = save.credits;
     pending.push(event);
     if (lesson) lessonEvents.push(event);
     if (challenge) challengeEvents.push(event);
@@ -401,7 +406,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     ring = point ? Object.freeze({x: point.x, y: point.y, z: point.z, radius: aimRingRadius(labNow()?.ringIndex ?? 0), locked}) : null;
   }
   const lessonsDone = () => heliOf(save).lessons;
+  // HELI-PAY-CONTINUE: a delivery is clean when no repair of these kinds was charged since it began.
+  let damageCount = 0, jobMark = 0;
   const charge = (kind, amount) => {
+    if (DAMAGE_KINDS.includes(kind)) damageCount++;
     const result = commit(chargeRepair(save, amount, flag));
     emit({type: 'charged', kind, amount, charged: result.charged ?? 0, forgiven: result.forgiven ?? 0});
   };
@@ -813,20 +821,21 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // The recovery job pays through RESCUE-ENGINE's finishRecovery, which also
     // clears the wreck, so it can never pay twice.
     if (job.kind === 'recovery') {
-      const paid = commit(finishRecovery(save, {enabled: true, mode}));
+      const clean = damageCount === jobMark;
+      const paid = commit(finishRecovery(save, {enabled: true, mode, clean}));
       if (!paid.ok) return;
       commit(dropJobSave(save, flag));
       jobCar = null;
       car.job = null;
-      emit({type: 'jobDone', job, pay: paid.paid, recovery: true});
+      emit({type: 'jobDone', job, pay: paid.paid, bonus: clean ? jobCleanBonus(job, mode) : 0, clean, recovery: true});
       emit({type: 'radio', line: 'heli.radio.job.done'});
       return;
     }
-    const pay = jobPay(job, mode);
+    const clean = damageCount === jobMark, bonus = clean ? jobCleanBonus(job, mode) : 0, pay = jobPay(job, mode) + bonus;
     if (!commit(finishJob(save, job.id, pay, flag)).ok) return;
     jobCar = null;
     car.job = null;
-    emit({type: 'jobDone', job, pay});
+    emit({type: 'jobDone', job, pay, bonus, clean});
     emit({type: 'radio', line: 'heli.radio.job.done'});
   }
 
@@ -987,9 +996,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   }
   // The group, flown home and set down on the home pad after the run: pays once through the job save.
   function deliverSkiGroup() {
-    const pay = jobPay({pay: HELI_SKIING.groupPay}, mode), id = skiFlight.id;
+    const group = {pay: HELI_SKIING.groupPay}, clean = damageCount === (skiFlight.mark ?? damageCount), bonus = clean ? jobCleanBonus(group, mode) : 0;
+    const pay = jobPay(group, mode) + bonus, id = skiFlight.id;
     if (!commit(finishJob(save, id, pay, flag)).ok) return;
-    emit({type: 'skiGroupDone', pay});
+    emit({type: 'skiGroupDone', pay, bonus, clean});
     skiSay('group.done');
     endSkiFlight();
     aim(null);
@@ -1707,9 +1717,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           offer = isCourseUnlocked(save, site.courseId) && !courseClosed(save, site.courseId, undefined, fireFlag) ? {courseId: site.courseId, carId} : null;
         } else if (held.job && inZone) deliverJob(held, result.event);
         else if (held.returnJob && inZone && site.courseId === held.returnJob.to && result.event.type === 'released') {
-          const paid = commit(finishReturnLoad(save, held.returnJob, mode, dflag));
+          const clean = damageCount === (held.damageMark ?? damageCount);
+          const paid = commit(finishReturnLoad(save, held.returnJob, mode, dflag, clean));
           if (paid.ok) {
-            emit({type: 'jobDone', job: held.returnJob, pay: paid.paid});
+            emit({type: 'jobDone', job: held.returnJob, pay: paid.paid, bonus: clean ? jobCleanBonus(held.returnJob, mode) : 0, clean});
             emit({type: 'radio', line: 'heli.radio.job.done'});
             loads = loads.filter(load => load !== held);
             layReturnCrate();
@@ -1752,7 +1763,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       else if (labEnabled === true) delete hooked.lineLength;
       if (hooked.job) result.event.job = hooked.job;
       emit(result.event);
-      if (hooked.returnJob) aim(hooked.returnJob.to);
+      // The crate is taken at its first hook; a later hook after a drop does not start the count again.
+      if (hooked.returnJob) { hooked.damageMark ??= damageCount; aim(hooked.returnJob.to); }
       if (hooked.own) offer = null;
       const job = hooked.job ? jobInHand() : null;
       if (job?.id === hooked.job) aim(job.to);
@@ -1837,10 +1849,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const taken = sameDay ? jobs.taken : null, done = sameDay ? jobs.done : [];
       return Object.freeze([
         Object.freeze({id: 'own', own: true, carId, title: 'Fly my car', pay: 0}),
-        ...dayJobs(day, jobOptions()).map(job => Object.freeze({...job, title: jobTitle(job), payNow: jobPay(job, mode),
+        ...dayJobs(day, jobOptions()).map(job => Object.freeze({...job, title: jobTitle(job), payNow: jobPay(job, mode), cleanBonus: jobCleanBonus(job, mode),
           taken: job.id === taken, done: done.includes(job.id)})),
         // After a hoist rescue the driver's car waits on the slope (section 5.3): shown with the day's jobs.
-        ...(recovery ? [Object.freeze({...recovery, recovery: true, title: recoveryTitle(recovery), payNow: jobPay(recovery, mode),
+        ...(recovery ? [Object.freeze({...recovery, recovery: true, title: recoveryTitle(recovery), payNow: jobPay(recovery, mode), cleanBonus: jobCleanBonus(recovery, mode),
           taken: recovery.id === taken, done: false})] : []),
         // The wildlife count, on its own line below the car jobs (section 4).
         ...(count ? [Object.freeze({...count, survey: true, title: surveyTitle(count), payNow: count.pay, taken: surveyTaken?.id === count.id, done: false})] : []),
@@ -1865,6 +1877,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       dropSurvey('other');
       syncJobCar();
       if (!result.already) {
+        jobMark = damageCount;
         const waiting = waitingJobCar(site.courseId);
         if (waiting) loads.push(waiting);
         emit({type: 'jobTaken', job});
@@ -1923,7 +1936,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     skiBoard() {
       if (!skiOn || !isCourseUnlocked(save, SUMMIT_COURSE) || !lessonsDone().landing) return null;
       const day = playDay(), jobs = heliOf(save).jobs, sameDay = jobs.day === day, id = skiGroupId(day);
-      const group = skiGroupDay(day) ? Object.freeze({id, title: 'Heli-ski group at Summit Run', pay: HELI_SKIING.groupPay, payNow: jobPay({pay: HELI_SKIING.groupPay}, mode),
+      const group = skiGroupDay(day) ? Object.freeze({id, title: 'Heli-ski group at Summit Run', pay: HELI_SKIING.groupPay, payNow: jobPay({pay: HELI_SKIING.groupPay}, mode), cleanBonus: jobCleanBonus({pay: HELI_SKIING.groupPay}, mode),
         guests: HELI_SKIING.guests, kg: HELI_SKIING.groupKg, taken: sameDay && jobs.taken === id, done: sameDay && jobs.done.includes(id)}) : null;
       return Object.freeze({drop: Object.freeze({id: HELI_SKIING.dropId, title: 'Heli-ski drop at Summit Run', pay: 0, taken: skiFlight?.kind === 'drop'}), group});
     },
@@ -1956,7 +1969,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       dropSurvey('other');
       const taken = commit(takeJobSave(save, board.group.id, playDay(), flag));
       if (!taken.ok) return taken;
-      skiFlight = {kind: 'group', id: board.group.id, skied: false};
+      skiFlight = {kind: 'group', id: board.group.id, skied: false, mark: damageCount};
       groupAboard = true;
       refreshUpgrades();
       aim(SUMMIT_COURSE);
@@ -2347,7 +2360,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function returnBoardView() {
     const job = returnLoadJob(playDay(), site?.courseId, dflag);
     if (!job) return null;
-    return Object.freeze({...job, title: returnLoadTitle(job), payNow: jobPay(job, mode),
+    return Object.freeze({...job, title: returnLoadTitle(job), payNow: jobPay(job, mode), cleanBonus: jobCleanBonus(job, mode),
       done: heliOf(save).returnLoads?.[job.from] === job.day});
   }
   // The ski part of the view (only with heli-skiing on): the flight in hand, the group aboard, the pad under the helicopter

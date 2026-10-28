@@ -159,7 +159,9 @@ export const runScenarios = gear => Object.fromEntries(Object.entries(SCENARIOS)
 // Taken on f0bd1edb, before any gear existed: `node tools/test-heli-skin-gear.mjs --print`
 // on that commit gave these numbers. RESCUE-FINISH re-records search only
 // for the closer hiker clue; gear-off equality still compares every result.
-const BEFORE = {cable: 1196926726, bucket: 2443027711, rescue: 3394331381, search: 4001410629, survey: 1445790162, camera: 2660321039};
+// HELI-PAY-CONTINUE re-records rescue and survey: their scenarios print the credits paid, which moved
+// (rescue 1,000 to 2,650 and more, count 600 to 3,500). No flight or search result changed.
+const BEFORE = {cable: 1196926726, bucket: 2443027711, rescue: 869779211, search: 4001410629, survey: 3083230588, camera: 2660321039};
 if (process.argv.includes('--print')) { console.log(JSON.stringify(runScenarios(undefined))); process.exit(0); }
 
 const KINDS = ['stock', 'fire', 'medevac', 'rescue', 'wildlife', 'supply', 'tv'];
@@ -287,7 +289,7 @@ const stockGear = gearFor('stock');
   }
 }
 
-// ---- 4. stretcher (medevac): bump limits and 200 more for a hoist ----------
+// ---- 4. stretcher (medevac): bump limits and 500 more for a hoist ----------
 {
   const bump = (speed, gear, who = 'pair') => {
     const line = createRescueLine({ground: flat}); setLineWho(line, who);
@@ -306,13 +308,13 @@ const stockGear = gearFor('stock');
     eq(bump(8.5, gear), [2, 'badly'], 'above 8 m/s: two steps');
   }
   eq(bump(20, medGear, 'rescuer'), [0, 'unhurt'], 'the rescuer alone is never hurt');
-  // The pay: 200 more for a hoist, once, whole.
-  eq(hoistBonus(medGear, 'hoist'), 200, 'the stretcher adds 200 to a hoist rescue');
+  // The pay: 500 more for a hoist, once, whole.
+  eq(hoistBonus(medGear, 'hoist'), 500, 'the stretcher adds 500 to a hoist rescue (HELI-PAY-CONTINUE: was 200)');
   for (const kind of ['hiker', 'avalanche', 'supply', 'fire']) eq(hoistBonus(medGear, kind), 0, `${kind}: no bonus`);
   for (const gear of [undefined, stockGear, gearFor('medevac', false), fireGear]) eq(hoistBonus(gear, 'hoist'), 0, 'harness: no bonus');
-  eq(['unhurt', 'hurt', 'badly'].map(c => rescuePay(1200, c, 200)), [1400, 920, 500], 'the 200 is on top of the condition pay');
+  eq(['unhurt', 'hurt', 'badly'].map(c => rescuePay(1200, c, 500)), [1700, 1220, 800], 'the 500 is on top of the condition pay');
   eq(['unhurt', 'hurt', 'badly'].map(c => rescuePay(1200, c)), [1200, 720, 300], 'no bonus: the old pay');
-  eq(rescuePay(0, 'unhurt', 200), 0, 'a rescue that pays nothing gets no bonus');
+  eq(rescuePay(0, 'unhurt', 500), 0, 'a rescue that pays nothing gets no bonus');
   eq(rescuePay(1200, 'unhurt', -5), 1200, 'a bonus below nothing is ignored');
   eq(rescuePay(1200, 'unhurt', NaN), 1200, 'and so is one that is not a number');
 
@@ -324,14 +326,14 @@ const stockGear = gearFor('stock');
   missions = beginRescue({...missions, call: {kind: 'hoist', id: 'hoist-1', courseId: 'panorama-ridge', day: 10, answered: true}}, {rescue: true});
   const profile = {credits: 100, heli: normalizeHeli({...createHeli(), playDay: {last: '2026-11-10', count: 12}, missions})};
   const record = missionsOf(profile).rescue;
-  eq(peoplePay(record), 1200, 'the mission engine still prices a hoist at 1,200');
+  eq(peoplePay(record), 3000, 'the mission engine prices a hoist at 3,000 (HELI-PAY-CONTINUE: was 1,200)');
   const pay = rescuePay(RESCUE_MONEY.basePay.hoist, 'unhurt', hoistBonus(medGear, 'hoist'));
   const paid = finishRescue(profile, {pay, enabled: true});
-  eq([paid.ok, paid.paid, paid.profile.credits], [true, 1400, 1500], 'the hoist pays 1,400 with the stretcher');
+  eq([paid.ok, paid.paid, paid.profile.credits], [true, 3500, 3600], 'the hoist pays 3,500 with the stretcher');
   const again = finishRescue(paid.profile, {pay, enabled: true});
-  eq([again.ok, again.profile.credits], [false, 1500], 'paid once: a second finish pays nothing');
+  eq([again.ok, again.profile.credits], [false, 3600], 'paid once: a second finish pays nothing');
   const plain = finishRescue(profile, {pay: rescuePay(RESCUE_MONEY.basePay.hoist, 'unhurt', hoistBonus(stockGear, 'hoist')), enabled: true});
-  eq(plain.paid, 1200, 'stock paint: 1,200');
+  eq(plain.paid, 3000, 'stock paint: 3,000');
 }
 
 // ---- 5. searchlight (search and rescue) -------------------------------------
@@ -535,7 +537,7 @@ const stockGear = gearFor('stock');
     const yardCircle = {x: first.x, z: first.z, radius: 10};
     const results = [crateResult(first, yardCircle), crateResult(second, yardCircle)];
     eq(results.map(r => r.released), [true, true], 'both are down in the yard');
-    eq(supplyPay(results, {inTime: true, count: 3}).crates, 150 * 2, 'each crate pays by its own release: 300 less 150 each');
+    eq(supplyPay(results, {inTime: true, count: 3}).crates, 600 * 2, 'each crate pays by its own release: 1,250 less 650 each (HELI-PAY-CONTINUE: was 300 less 150)');
   }
 }
 
