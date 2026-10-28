@@ -115,7 +115,7 @@ test('every placed rock is solid, yet a touch bounces or pushes: never a stop, a
       const mine={...rock}, mock={state:{s:end.z,lateral:end.x,headingError:0,speedMph:60,health:100,status:'exploring'},
         deepRuntime:{...runtime,rocks:[mine],rockEpisode:null},
         course:{worldAt:(s,lateral)=>({x:lateral,z:s}),at:()=>({heading:0}),
-          nearest:()=>{throw new Error('a rock never snaps the car to the course');}}};
+          nearest:(x,z)=>({s:z,lateral:x})}};
       driveIntoDeepRocks(mock,start,DT);
       assert.equal(mock.state.health,100); assert.notEqual(mock.state.status,'wrecked');
       assert.ok(mock.state.speedMph>=29.999&&mock.state.speedMph<=60,`${seed}: the car keeps rolling`);
@@ -179,6 +179,47 @@ test('nothing the player looks for rides on a rock, and a rock lying on a goal n
     const lying={x:goals[0].x+.5,z:goals[0].z,size:2.5,y:0}, clear={x:goals[0].x+80,z:goals[0].z,size:2.5,y:0};
     const made=deepRocks(zone,{rockPlacements:()=>[lying,clear]});
     assert.deepEqual(made.map(r=>r.pushable),[false,true]);
+  }
+});
+
+// DEEP-TRAIL-JOINTS: the car's place in the world is continuous across every joint of the trail.
+test('driving far beside a bending trail never moves the car in the world beyond its own travel', () => {
+  const seed=ROUTE_VARIANTS[0].seed, d=race(seed); dive(d);
+  const runtime=d.deepRuntime, trail=runtime.zone.trail, n=trail.length, starts=[];
+  runtime.rocks=[];
+  let at=0;
+  for(let i=0;i<n;i++){starts.push(at);at+=Math.hypot(trail[(i+1)%n].x-trail[i].x,trail[(i+1)%n].z-trail[i].z);}
+  const turn=i=>{const a=trail[(i+n-1)%n],b=trail[i],c=trail[(i+1)%n];
+    return Math.atan2(Math.sin(Math.atan2(c.x-b.x,c.z-b.z)-Math.atan2(b.x-a.x,b.z-a.z)),Math.cos(Math.atan2(c.x-b.x,c.z-b.z)-Math.atan2(b.x-a.x,b.z-a.z)));};
+  const joints=[...Array(n).keys()].filter(i=>Math.abs(turn(i))>.1).sort((x,y)=>Math.abs(turn(y))-Math.abs(turn(x)));
+  assert.ok(joints.length>=20,'the trail has many real bends');
+  let worstOld=0, crossed=0;
+  for(const joint of [joints[0],joints[1],joints[2],joints[10]]) for(const lateral of [-35,35]) {
+    const s0=starts[joint]-10, centre=d.course.at(s0);
+    // The old frame (a plain segment direction) jumps by about lateral x turn at this joint.
+    const a=runtime.floor.pointAt(starts[joint]-1e-6,lateral), b=runtime.floor.pointAt(starts[joint]+1e-6,lateral);
+    worstOld=Math.max(worstOld,Math.hypot(a.x-b.x,a.z-b.z));
+    Object.assign(d.state,{s:s0,prevS:s0,lateral,prevLateral:lateral,headingError:0,speedMph:30,airHeight:0,
+      airborne:false,_jumpY:null,yawVelocity:0,pushVelocity:0,impactTimer:0});
+    d.setInput({throttle:0,brake:0,steer:0});
+    let before=d.course.worldAt(d.state.s,d.state.lateral), sBefore=d.state.s;
+    for(let i=0;i<180;i++) {
+      const speed=d.state.speedMph; d.step(DT);
+      const now=d.course.worldAt(d.state.s,d.state.lateral);
+      assert.ok(Math.hypot(now.x-before.x,now.z-before.z)<=Math.abs(speed)*.44704*DT+.005,
+        `joint ${joint}, lateral ${lateral}: world step at frame ${i}`);
+      for(const start of starts) if((sBefore-start)*(d.state.s-start)<0&&Math.abs(d.state.s-start)<20) crossed++;
+      before=now; sBefore=d.state.s;
+    }
+    assert.equal(d.state.status,'exploring'); assert.ok(d.state.speedMph>20,'and the car drives on');
+  }
+  assert.ok(worstOld>20,`the old frame would have jumped ${worstOld.toFixed(1)} m at these bends`);
+  assert.ok(crossed>=8,'the drives really cross joints');
+  // The frame is exact both ways: the place of any world point gives that point back.
+  for(let k=0;k<400;k++) {
+    const p=d.course.worldAt(starts[joints[k%8]]+((k*37)%40)-20,((k*53)%140)-70), near=d.course.nearest(p.x,p.z);
+    const back=d.course.worldAt(near.s,near.lateral);
+    assert.ok(Math.hypot(back.x-p.x,back.z-p.z)<1e-6,'nearest undoes worldAt around the bends');
   }
 });
 
