@@ -29,7 +29,7 @@ export function rememberChart(profile, zone, bits, {enabled = false} = {}) {
   return {...profile, deep: {...deep, charted: {...deep.charted, [zone]: merged}}};
 }
 export function deepDiscoverySnapshot(profile, playerId, enabled) {
-  return Object.freeze({...normalizeDeep(profile?.deep), playerId, enabled: enabled === true});
+  return Object.freeze({places: [], ...normalizeDeep(profile?.deep), playerId, enabled: enabled === true});
 }
 // Called only after the ordinary settlement accepted a complete race once.
 export function countDeepFinish(profile, {enabled = false, eventId, mode} = {}) {

@@ -18,7 +18,7 @@ export function deepObjectives(save, percent = 0, restored = false) {
     row('life', `Log the sea life: ${life} of 7`, life === 7,
       'Drive slowly and close to each creature for one second.', 'Sea-life log complete'),
     row('pearls', `Find the pearls: ${pearls} of 3`, pearls === 3,
-      'Look for abalone on the reef rocks. Drive close and slowly.', 'All pearls found'),
+      'Look for glints near the reef rocks. Drive close and slowly.', 'All pearls found'),
     row('chart', `Chart the Kelp Coast: ${percent}%`, percent === 100,
       'Explore the dark areas. Your chart reaches 25 m around your path.', 'Kelp Coast charted'),
     row('cup', 'Race the Coast Cup', deep.coastCup === true,
