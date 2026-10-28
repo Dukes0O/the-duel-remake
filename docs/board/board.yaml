@@ -14,7 +14,7 @@ tasks:
 
   - id: HELI-VIEW-FRAMES
     title: "Frame-check recipes for the ski runs and the avalanche hover"
-    owner: "codex"
+    owner: "claude"
     lane: "QA"
     size: "S"
     status: "ready"
@@ -25,7 +25,7 @@ tasks:
 
   - id: SUMMIT-BUILD-TIME-3
     title: "Summit world build under 1 s every time (finish area added; one 2.6 s spike)"
-    owner: "codex"
+    owner: "claude"
     lane: "PERF"
     size: "S"
     status: "ready"
@@ -36,7 +36,7 @@ tasks:
 
   - id: QA-AUDIO-CRASH-PEAK-AGAIN
     title: "test-audio-crash-peak failed once under the full tier; rerun passed"
-    owner: "codex"
+    owner: "claude"
     lane: "QA"
     size: "S"
     status: "ready"
@@ -47,7 +47,7 @@ tasks:
 
   - id: QA-SUMMIT-GLACIER-EDGE
     title: "Summit drive check: driver 2 mm past the edge at Glacier Hairpin"
-    owner: "codex"
+    owner: "claude"
     lane: "QA"
     size: "S"
     status: "ready"
@@ -58,7 +58,7 @@ tasks:
 
   - id: QA-DEEP-LIFE-TIMING
     title: "Keep the sea-life CPU timing check out of competing lane work"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOL"
     size: "S"
     status: "ready"
