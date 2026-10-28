@@ -34,6 +34,11 @@ body:has(.in-race:not(.heli-active)) .lab-key-idea { top: 190px; bottom: auto; }
 .lab-picture-answers { position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; margin: 0; }
 .lab-picture-answers button { background: #252c29f5; }
 .lab-picture-answers canvas { width: 208px; height: 100px; }
+/* Keep predictions above the tunnel's low dials and road controls. */
+.lab-has-lesson:has([data-lab-tunnel-model]) .lab-picture-answers {
+  position: fixed; top: 110px; bottom: auto; left: 320px; right: auto;
+  width: min(740px, calc(100vw - 344px));
+}
 .lab-machine-controls { gap: 6px; margin-bottom: 6px; }
 .lab-machine-controls button { flex: 1; }
 .lab-lift-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 4; font: 600 21px/1.25 sans-serif; color: #f5f0dc; }
