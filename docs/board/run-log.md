@@ -1428,3 +1428,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged HELI-PAY-CONTINUE (lane tier 107/107, build, heli/ski/map suites, heli-continue scenario pass on acd9b42f; independent review no blockers, findings fixed; rescue-finish fails on base 3ed23f4f too (QA-RESCUE-FINISH-FLAKY)).
 - 28 Oct night: merged QA-RESCUE-FINISH-FLAKY (Codex; lane tier 20/20, build, three rescue-finish passes in a row on 80be9a35).
 - 28 Oct night: merged LAB-BENCH-PANELS-REMOVE (Codex; lane tier 29, all Lab suites, six Lab scenarios, audits and build pass on ba6b9077; also LAB-TRY-PICTURES-DIAL).
+- 28 Oct night: merged QA-INSTRUCTOR-ANY-CAR-SLOW (Codex; lane tier 511/511 and build on the lane (run by Claude), runner and harness tests pass).
