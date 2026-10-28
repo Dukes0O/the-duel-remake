@@ -277,10 +277,6 @@ export function attachRenderer(host, app) {
       if(child.userData.lessonLine){child.visible=['follow','your-turn'].includes(run.lesson.stage);continue;}
       if(child.userData.redBoard)child.visible=run.watchClip==='late';
       else if(child.userData.iceSign)continue;
-      else if(child.userData.markerIndex!==undefined){
-        child.visible=run.lesson.stage==='late'; // the middle markers belong to the first try only
-        child.rotation.z=app.driveLessonMarkers?.tipped.has(child.userData.markerIndex)?Math.PI*.5:0;
-      }
       else if(child.userData.coneId!==undefined)child.rotation.z=run.lesson.attempt?.tipped.includes(child.userData.coneId)?Math.PI*.5:0;
     }
   }

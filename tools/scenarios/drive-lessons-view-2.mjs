@@ -7,7 +7,8 @@ import {join} from 'node:path';
 // inputs sent through the normal input path. The one fixture is the saved progress of the lessons before the one being
 // taken (lesson 2 cannot open otherwise), written into the temporary career. No result is invented, no car is placed
 // and no frame is timed.
-async function click(context, selector) {
+// hold: milliseconds between the button going down and coming up. A person's click is about 100.
+async function click(context, selector, hold = 0) {
   // A screen that has only just been asked for may not have its size yet.
   await context.waitFor(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});const b=n&&n.getBoundingClientRect();return !!b&&b.width>0&&b.height>0;})()`, 'visible ' + selector, 8000);
   const point = await context.evaluate(`(()=>{
@@ -17,7 +18,10 @@ async function click(context, selector) {
     const box=node.getBoundingClientRect(),top=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
     if(!box.width||!box.height||!node.contains(top))throw Error('Lesson control is covered by '+(top?.tagName||'nothing')+'.'+(top?.className||'')+' '+JSON.stringify({x:box.x,y:box.y,w:box.width,h:box.height}));
     return{x:box.x+box.width/2,y:box.y+box.height/2};})()`);
-  for (const type of ['mousePressed', 'mouseReleased']) await context.command('Input.dispatchMouseEvent', {type, button: 'left', clickCount: 1, ...point});
+  for (const type of ['mousePressed', 'mouseReleased']) {
+    await context.command('Input.dispatchMouseEvent', {type, button: 'left', clickCount: 1, ...point});
+    if (type === 'mousePressed' && hold) await context.evaluate(`new Promise(done=>setTimeout(done,${hold}))`);
+  }
 }
 const key = (context, type, code, letter, windowsVirtualKeyCode) =>
   context.command('Input.dispatchKeyEvent', {type, key: letter, code, windowsVirtualKeyCode});
@@ -59,10 +63,19 @@ async function takeLesson(context, report, lessonId, courseId) {
   await click(context, '.drive-lesson-briefing [data-drive-action="next"]');
   await context.waitFor(`!!document.querySelector('.drive-lesson-panel')&&!document.querySelector('.drive-lesson-briefing')&&
     window.__qaApp.duel.drivingLesson.lesson.stage==='watch'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`, `${lessonId} Watch me`);
-  // Frozen first: the panel is rebuilt on every frame while the car moves, so a click that takes a human's 100 ms never lands (reported in QA-LESSON-SCENARIOS).
+  // Clicks that take 100 ms, with the car moving: the buttons must still be there when the button comes up.
+  await click(context, '.drive-lesson-panel [data-drive-action="skip"]', 100);
+  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`, `${lessonId} Follow me after a 100 ms click on Skip`);
+  await context.evaluate(`new Promise(done=>setTimeout(done,1200))`);
+  const before = await context.evaluate(`window.__qaApp.duel.drivingLesson.lesson.attempt.elapsedSeconds`);
+  await click(context, '.drive-lesson-panel [data-drive-action="step:follow"]', 100);
+  await context.evaluate(`new Promise(done=>setTimeout(done,150))`);
+  const after = await context.evaluate(`window.__qaApp.duel.drivingLesson.lesson.attempt.elapsedSeconds`);
+  if (!(before >= .3 && after < before)) throw Error(`${lessonId}: a 100 ms click on the Follow me step button did not restart the run: ${before} then ${after}`);
+  report[lessonId].clicks = {skip: 'Follow me started', follow: `run restarted (${before.toFixed(2)} s then ${after.toFixed(2)} s)`};
+  // That run set off with nobody driving; start a clean one, with the game stopped so the click is steady.
   await context.evaluate(`window.__qaApp.stop()`);
-  await click(context, '.drive-lesson-panel [data-drive-action="skip"]');
-  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`, `${lessonId} Follow me`);
+  await click(context, '.drive-lesson-panel [data-drive-action="step:follow"]');
 }
 const sceneStateExpression = `(()=>{
   const group=window.__render.scene.getObjectByName('Driving lesson cones and red board');
@@ -135,8 +148,7 @@ const fixtureDone = (context, ids) => context.evaluate(`(()=>{const a=window.__q
 export async function run(context) {
   const report = {scope: 'Lessons 2 to 4 in the real game: board rows, each lesson\'s briefing, scene and Follow me guides, lesson 2 on Tremblant Woods, lesson 3 rev counter and manual box, lesson 4 ice sign and snow cone, and one native result card each.',
     fixtures: [], captures: []};
-  // 1366 x 768, the laptop size lessons-v2-view uses. At 1280 x 720 the lesson panel covers 27 px of the minimap (reported in QA-LESSON-SCENARIOS).
-  await context.command('Emulation.setDeviceMetricsOverride', {width: 1366, height: 768, deviceScaleFactor: 1, mobile: false});
+  await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   await context.navigate('/tools/menu-check.html?flags=driving-lessons,tyre-slip,engine-curve');
   await context.waitFor(`!!window.__qaApp?.visualReady&&!!window.__render?.scene&&
     !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&

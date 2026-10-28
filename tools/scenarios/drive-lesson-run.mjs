@@ -6,7 +6,8 @@ import {join} from 'node:path';
 // key just crawls on), so the one driven run is stepped on the game's own fixed clock with the instructor's recorded
 // inputs sent through the normal input path. No placement, invented result, state mutation, alternate physics,
 // audio capture or frame measurement.
-async function click(context,selector){
+// hold: milliseconds between the button going down and coming up. A person's click is about 100.
+async function click(context,selector,hold=0){
   const point=await context.evaluate(`(()=>{
     const node=document.querySelector(${JSON.stringify(selector)});
     if(!node||node.disabled||node.hidden)throw Error('Lesson control unavailable: '+${JSON.stringify(selector)});
@@ -14,14 +15,15 @@ async function click(context,selector){
     const box=node.getBoundingClientRect(),top=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
     if(!box.width||!box.height||!node.contains(top))throw Error('Lesson control is covered');
     return{x:box.x+box.width/2,y:box.y+box.height/2};})()`);
-  for(const type of ['mousePressed','mouseReleased'])await context.command('Input.dispatchMouseEvent',{
-    type,button:'left',clickCount:1,...point});
+  for(const type of ['mousePressed','mouseReleased']){
+    await context.command('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,...point});
+    if(type==='mousePressed'&&hold)await context.evaluate(`new Promise(done=>setTimeout(done,${hold}))`);
+  }
 }
 export async function run(context){
   const report={scope:'Actual memory-only Instructor board, native plan, briefing, drawn cones, line and zones, Watch me, Follow me, native result card and step buttons. The Beat me win and the reward are the native tests and the keyboard finishing pass.',
-    fixtures:[],captures:[]};
-  // 1366 x 768, the laptop size lessons-v2-view uses. At 1280 x 720 the lesson panel covers 27 px of the minimap (reported in QA-LESSON-SCENARIOS).
-  await context.command('Emulation.setDeviceMetricsOverride',{width:1366,height:768,deviceScaleFactor:1,mobile:false});
+    fixtures:[],captures:[],clicks:{}};
+  await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await context.navigate('/tools/menu-check.html?flags=driving-lessons,tyre-slip');
   await context.waitFor(`!!window.__qaApp?.visualReady&&!!window.__render?.scene&&
     !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&
@@ -129,18 +131,29 @@ export async function run(context){
     if(!shown('#speed-value')||!shown('#gear-value')||!shown('.route-hud'))throw Error('Lesson lost speed, gear or the minimap');
     const box=selector=>{const node=document.querySelector(selector);if(!node)return null;const b=node.getBoundingClientRect();return{x:b.x,y:b.y,w:b.width,h:b.height};};
     const overlap=(a,b)=>!!a&&!!b&&!(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y);
-    const caption=box('.drive-lesson-radio'),map=box('.route-hud'),panel=box('.drive-lesson-panel');
+    const caption=box('.drive-lesson-radio'),map=box('.route-hud'),panel=box('.drive-lesson-panel'),words=box('.drive-lesson-watch-caption');
     if(!panel||!map)throw Error('Lesson panel or minimap missing');
     if(overlap(panel,map))throw Error('The lesson panel covers the minimap');
+    if(overlap(words,map))throw Error('The Watch me caption covers the minimap');
     if(overlap(caption,map))throw Error('The instructor caption covers the minimap');
     if(overlap(caption,panel))throw Error('The instructor caption covers the lesson panel');
-    return{caption,map,panel,chromeHidden:true};})()`);
+    return{caption,map,panel,words,chromeHidden:true};})()`);
   report.captures.push(await context.screenshot('driving-lesson-watch'));
   // Skip goes to Follow me: ghost, painted line, target box and gap appear once the car is moving.
-  // Frozen first: the panel is rebuilt on every frame while the car moves, so a click that takes a human's 100 ms never lands (reported in QA-LESSON-SCENARIOS).
+  // A click that takes 100 ms, with the car moving: the buttons must still be there when it comes up.
+  await click(context,'.drive-lesson-panel [data-drive-action="skip"]',100);
+  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`,'Follow me starts after a 100 ms click on Skip');
+  report.clicks.skip='100 ms click while the car moved: Follow me started';
+  await context.evaluate(`new Promise(done=>setTimeout(done,1200))`);
+  const before=await context.evaluate(`window.__qaApp.duel.drivingLesson.lesson.attempt.elapsedSeconds`);
+  await click(context,'.drive-lesson-panel [data-drive-action="step:follow"]',100);
+  await context.evaluate(`new Promise(done=>setTimeout(done,150))`);
+  const after=await context.evaluate(`window.__qaApp.duel.drivingLesson.lesson.attempt.elapsedSeconds`);
+  if(!(before>=.3&&after<before))throw Error('A 100 ms click on the Follow me step button did not restart the run: '+before+' then '+after);
+  report.clicks.follow='100 ms click on the step button while the car moved: run restarted ('+before.toFixed(2)+' s then '+after.toFixed(2)+' s)';
+  // That run set off with nobody driving; start a clean one, with the game stopped so the click is steady.
   await context.evaluate(`window.__qaApp.stop()`);
-  await click(context,'.drive-lesson-panel [data-drive-action="skip"]');
-  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`,'Follow me starts');
+  await click(context,'.drive-lesson-panel [data-drive-action="step:follow"]');
   await context.evaluate(`window.lessonDrive({ticks:600})`);
   report.follow=await context.evaluate(`(()=>{
     const a=window.__qaApp,group=window.__render.scene.getObjectByName('Driving lesson cones and red board');

@@ -228,7 +228,7 @@ export function driveLessonPanelMarkup(props = {}) {
   const gap = lesson.attempt?.gapSeconds;
   const caption = props.watchClip === 'late' ? 'Watch the late brake: less grip to turn, so the car slides wide.'
     : corner ? `${corner.name} / ${corner.kind === 'brake' && s < corner.brakeS ? target.cue : corner.kind === 'brake' ? `Braking now: ${speedKph(lesson.instructor.plan?.find(p => p.s >= (corner.brakeS ?? s))?.targetMph ?? corner.targetMph)} down to ${formatSpeed(corner.targetMph)}` : corner.kind === 'lift' ? 'Lift the accelerator. Keep the brakes free.' : 'Carry your speed. No braking needed.'}` : 'Clean run complete.';
-  return `<section class="drive-lesson-panel" aria-label="Driving lesson">${stepStrip(lesson)}<p class="drive-lesson-counts">${escape(step.whatCounts)}</p><div class="drive-lesson-panel-actions"><button type="button" data-drive-action="help">How this lesson works</button><button type="button" data-drive-action="leave">Leave lesson / Esc</button>${lesson.stage === 'watch' ? '<button type="button" data-drive-action="skip">Skip / Enter</button>' : ''}</div>${lesson.stage === 'watch' ? `<p class="drive-lesson-watch-caption">${escape(caption)}</p>` : ''}</section>
+  return `<section class="drive-lesson-panel" aria-label="Driving lesson">${stepStrip(lesson)}<div class="drive-lesson-panel-row"><p class="drive-lesson-counts">${escape(step.whatCounts)}</p><div class="drive-lesson-panel-actions"><button type="button" data-drive-action="help">How this lesson works</button><button type="button" data-drive-action="leave">Leave lesson / Esc</button>${lesson.stage === 'watch' ? '<button type="button" data-drive-action="skip">Skip / Enter</button>' : ''}</div></div>${lesson.stage === 'watch' ? `<p class="drive-lesson-watch-caption">${escape(caption)}</p>` : ''}</section>
     ${lesson.phase === 'driving' && target && lesson.stage !== 'watch' ? `<aside class="drive-lesson-target ${target.tone}" aria-label="Corner target"><small>NEXT CORNER</small><strong>${escape(corner.name)}</strong><b>${target.cue}</b><span>Your speed ${formatSpeed(props.speedMph ?? 0)}</span><span>Target ${formatSpeed(corner.targetMph)}</span></aside>` : ''}
     ${lesson.phase === 'driving' && Number.isFinite(gap) && lesson.stage !== 'watch' ? `<aside class="drive-lesson-live-gap ${gap > 0 ? 'red' : 'green'}">${gap > 0 ? '+' : ''}${gap.toFixed(2)} s<small>${gap > 0 ? 'behind' : 'ahead of'} instructor</small></aside>` : ''}
     <ol class="drive-lesson-corner-lights" aria-label="Corner checks">${rows(lesson.instructor.corners).map((c, i) => {const r = lesson.attempt?.corners[i]?.result, finished = s >= c.exitS; return `<li class="${finished ? r?.light ?? '' : ''}" title="${escape(c.name)}: ${finished ? r?.light ?? 'waiting' : 'not finished'}"><i></i>${i+1}</li>`;}).join('')}</ol>`;
@@ -317,12 +317,26 @@ export function markersKnocked(markers, from, to, knocked) {
   return found;
 }
 
+// The running screen is updated in place: a button that is under the mouse must still be the same element when the
+// button comes up, or the browser sends no click. Rebuilding the overlay every frame broke every click while the car moved.
+function patchNode(from, to) {
+  if (from.nodeType !== to.nodeType || from.nodeName !== to.nodeName) { from.replaceWith(to.cloneNode(true)); return; }
+  if (from.nodeType !== 1) { if (from.data !== to.data) from.data = to.data; return; }
+  for (const attr of [...from.attributes]) if (!to.hasAttribute(attr.name)) from.removeAttribute(attr.name);
+  for (const attr of to.attributes) if (from.getAttribute(attr.name) !== attr.value) from.setAttribute(attr.name, attr.value);
+  patchChildren(from, to);
+}
+function patchChildren(from, to) {
+  const old = [...from.childNodes], next = [...to.childNodes];
+  next.forEach((node, index) => index < old.length ? patchNode(old[index], node) : from.append(node.cloneNode(true)));
+  for (let index = old.length - 1; index >= next.length; index--) old[index].remove();
+}
 // This owns only its DOM surface. Race and save actions remain App verbs.
 export function mountDriveLessonUi(app,host){
   const boardProps=()=>app.driveLessonBoardProps?.()??app.driveLessonProps(); // an app without lessons 2 to 4 shows lesson 1 alone
   const root=host.ownerDocument.createElement('div');
   root.className='drive-lesson-host';root.tabIndex=-1;root.hidden=true;host.append(root);
-  let previous='';
+  let previous='',previousMode='';
   const clean=bindDriveLessonUi(root,()=>boardProps(),{
     onStart:request=>void app.startLesson({...request,car:request.carId}),
     onHelp:()=>{app.driveLessonHelp=true;app.driveLessonBriefing=true;update();},onCloseHelp:()=>{app.nextLessonAttempt();update();},
@@ -384,11 +398,19 @@ export function mountDriveLessonUi(app,host){
     const status=message?`<p class="drive-lesson-message" role="status">${escape(message)}</p>`:'';
     const radio=run&&app.driveLessonRadioText?`<p class="drive-lesson-radio" aria-live="polite">${escape(app.driveLessonRadioText)}</p>`:'';
     const content=markup+status+radio;
+    // Only the running screen changes every frame; it is patched in place. Every other screen is rebuilt when it changes.
+    const mode=briefing?'briefing':run?(props.lesson.phase==='result'?'result':'running'):'board';
     if(content!==previous){
-      const action=root.contains(host.ownerDocument.activeElement)?host.ownerDocument.activeElement?.dataset?.driveAction:null;
-      root.innerHTML=content;previous=content;
-      if(action)root.querySelector(`[data-drive-action="${action}"]`)?.focus({preventScroll:true});
+      if(mode==='running'&&previousMode==='running'){
+        const next=host.ownerDocument.createElement('div');next.innerHTML=content;patchChildren(root,next);
+      }else{
+        const action=root.contains(host.ownerDocument.activeElement)?host.ownerDocument.activeElement?.dataset?.driveAction:null;
+        root.innerHTML=content;
+        if(action)root.querySelector(`[data-drive-action="${action}"]`)?.focus({preventScroll:true});
+      }
+      previous=content;
     }
+    previousMode=mode;
     root.classList.toggle('drive-lesson-host-result',run&&props.lesson.phase==='result');
   }
   return {update,dispose(){clean();syncGauge(false);host.ownerDocument.getElementById?.('speed-value')?.classList.remove('drive-lesson-speed-green','drive-lesson-speed-red');host.removeEventListener('click',open);root.remove();}};
