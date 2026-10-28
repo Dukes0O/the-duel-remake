@@ -477,7 +477,9 @@ export function selectPlan(suites,{tier=null,filters=[],changed=false,affected=[
     ?Array.from({length:CAMPAIGN_SHARDS},(_,index)=>({
       suite,label:suite+' ['+(index+1)+'/'+CAMPAIGN_SHARDS+']',args:['--shard='+(index+1)+'/'+CAMPAIGN_SHARDS]
     }))
-    :[{suite,label:suite,args:suite==='tools/test-titan-climb.mjs'&&replayScheduled?['--replays-in-plan']:[]}]);
+    :[{suite,label:suite,args:suite==='tools/test-lesson-instructor-any-car.mjs'&&(tier==='lane'||changed)
+      ?['--sample']
+      :suite==='tools/test-titan-climb.mjs'&&replayScheduled?['--replays-in-plan']:[]}]);
 }
 
 const captureSuite=(task,{cwd,execPath,env,spawnChild,now})=>new Promise(resolveResult=>{

@@ -127,6 +127,17 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(new Set(lane.map(task=>task.suite)).size,actual.length-heavy.length,
     'fully affected lane loses exactly the listed full-tier-only suites');
 }
+// Instructor sampling uses the existing per-suite arguments, only in lane plans.
+{
+  const suite='tools/test-lesson-instructor-any-car.mjs';
+  const task=args=>({suite,label:suite,args});
+  for(const options of [{tier:'lane',affected:[suite]},{changed:true,affected:[suite]}])
+    same(selectPlan([suite],options),[task(['--sample'])],
+      'lane and changed-only plans sample instructor cars');
+  for(const options of [{},{tier:'full'},{tier:'merge'},{filters:['lesson-instructor-any-car']}])
+    same(selectPlan([suite],options),[task([])],
+      'full, merge, default and focused plans retain every instructor car');
+}
 // Titan delegates only a duplicate child that this final plan really owns.
 {
   const titan='tools/test-titan-climb.mjs',replay='tools/test-replays.mjs',other='tools/test-speed-format.mjs';

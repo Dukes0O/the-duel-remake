@@ -4,11 +4,18 @@ import {CARS} from '../src/config.js';
 import {buildInstructorRun, DRIVE_LESSON_CORNERS, DRIVE_LINE_ROWS, DRIVE_GEAR_ROWS,
   DRIVE_SNOW_ROWS, instructorConeDistances, TIP_DISTANCE_M, INSTRUCTOR_PACE, MAX_INSTRUCTOR_TRIES} from '../src/lessons/drive-lessons.js';
 
+// Lane gates alternate the starter and the fastest road car across lesson roads.
+// Every lesson and road keeps both difficulties. Full and direct runs keep all cars.
+const sample = process.argv.includes('--sample');
+const cars = Object.keys(CARS);
+const sampleCars = ['falcone_f42', 'koenigsegg_jesko'];
+
 // Every native build owns a fresh in-memory Duel, never a player profile or save.
 for (const [lessonId, rows] of Object.entries({corner: DRIVE_LESSON_CORNERS,
   line: DRIVE_LINE_ROWS, gears: DRIVE_GEAR_ROWS, snow: DRIVE_SNOW_ROWS})) {
-  for (const {courseId} of rows) for (const car of Object.keys(CARS)) {
-    for (const difficulty of ['casual', 'pro']) {
+  for (const [rowIndex, {courseId}] of rows.entries()) {
+    const selectedCars = sample ? [sampleCars[rowIndex % sampleCars.length]] : cars;
+    for (const car of selectedCars) for (const difficulty of ['casual', 'pro']) {
       test(`${lessonId} ${courseId} ${car} ${difficulty}: clean and repeatable`, async t => {
         const options = {lessonId, courseId, car, difficulty};
         const first = await buildInstructorRun(options);
