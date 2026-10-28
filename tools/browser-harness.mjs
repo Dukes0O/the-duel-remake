@@ -476,6 +476,9 @@ export async function main(args = process.argv.slice(2)) {
     launchMetadata = browserLaunchMetadata(chromeArgs);
     const debugPort = await waitForChromePort(profile, chrome.child, chrome.output);
     cdp = await connectDevTools(debugPort);
+    // This disposable browser owns only this scenario. Keep exports beside its
+    // report and screenshots, including exports triggered after a page reload.
+    await cdp.send('Browser.setDownloadBehavior', {behavior: 'allow', downloadPath: outputDir});
     const page = await openPage(cdp, issues, warnings);
     const navigation = createPageNavigation(cdp,page,baseURL);
     const context = {
