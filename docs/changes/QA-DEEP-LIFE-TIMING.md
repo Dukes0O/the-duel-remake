@@ -57,10 +57,9 @@ limit, and all 23 checks passed in every run.
 
 ## Checks
 
-- Lane tier --changed --jobs 4 --keep-going: the change to un-tests.mjs selects all 507 suites. 506 passed on the first run, run from Git Bash while 24 busy loops competed. 	est-drive-through failed there (the known Git Bash tar problem) and passed on its own from PowerShell, so 507 of 507 pass.
-- 	est-deep-life.mjs alone from PowerShell: 23 of 23, 1.927 ms of processor time a frame.
-- 
-pm run build: built; build output deleted.
+- Lane tier `--changed --jobs 4 --keep-going`: the change to `run-tests.mjs` selects all 507 suites. 506 passed on the first run, run from Git Bash while 24 busy loops competed. `test-drive-through` failed there (the known Git Bash tar problem) and passed on its own from PowerShell, so 507 of 507 pass.
+- `test-deep-life.mjs` alone from PowerShell: 23 of 23, 1.927 ms of processor time a frame.
+- `npm run build`: built; build output deleted.
 
 ## Removed
 
