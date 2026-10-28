@@ -38,7 +38,7 @@ const stepperSource = `window.lessonDrive=({stopS=Infinity,ticks=90000}={})=>{
   a._driveLessonUi?.update();a.onFrame?.(a.duel.state);
   return{ticks:n,stage:r.lesson.stage,phase:r.lesson.phase,s:a.duel.state.s};};`;
 
-// Board, then the lesson's start button, then its briefing; the briefing's button opens Watch me and Skip opens Follow me.
+// Board, then the lesson's start button, then its opening screen; its Watch me run button opens Watch me, Esc comes back, and Follow me starts from its run button.
 async function takeLesson(context, report, lessonId, courseId) {
   await click(context, '#driving-instructor');
   await context.waitFor(`!!document.querySelector('.drive-lesson-board [data-drive-action="start:${lessonId}"]')`, `${lessonId} start button`);
@@ -56,26 +56,31 @@ async function takeLesson(context, report, lessonId, courseId) {
     if(r.lesson.id!==${JSON.stringify(lessonId)}||r.plan.courseId!==${JSON.stringify(courseId)}||r.lesson.stage!=='watch'||window.__qaApp.driveLessonBriefing!==true)
       throw Error('Lesson did not open on its briefing on the chosen course');
     if(r.state.opponents.length||r.state.traffic.length||r.state.tyreSlipRules!==true)throw Error('Lesson isolation missing');
-    const steps=brief.querySelectorAll('.drive-lesson-brief-steps li').length,corners=brief.querySelectorAll('.drive-lesson-map-corners li').length;
-    if(steps!==4||!brief.querySelector('svg.drive-lesson-section-map')||corners!==r.plan.instructor.corners.length||!/Start Watch me/.test(brief.querySelector('[data-drive-action="next"]')?.textContent||''))
-      throw Error('Briefing card is missing its map, corner list, four steps or start button');
+    const steps=brief.querySelectorAll('.drive-lesson-runs button').length,corners=brief.querySelectorAll('.drive-lesson-map-corners li').length;
+    if(steps!==4||!brief.querySelector('svg.drive-lesson-section-map')||corners!==r.plan.instructor.corners.length||
+      brief.querySelector('.drive-lesson-suggested')!==brief.querySelector('[data-drive-action="step:watch"]')||brief.querySelector('[data-drive-action="next"],[data-drive-action="help"]'))
+      throw Error('Opening screen is missing its map, corner list or four run buttons with Watch me highlighted');
     return{corners,instructorSeconds:r.plan.instructor.timeSec,text:brief.textContent.replace(/\\s+/g,' ').trim()};})()`)};
-  await click(context, '.drive-lesson-briefing [data-drive-action="next"]');
+  await click(context, '.drive-lesson-briefing [data-drive-action="step:watch"]');
   await context.waitFor(`!!document.querySelector('.drive-lesson-panel')&&!document.querySelector('.drive-lesson-briefing')&&
     window.__qaApp.duel.drivingLesson.lesson.stage==='watch'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`, `${lessonId} Watch me`);
-  // Clicks that take 100 ms, with the car moving: the buttons must still be there when the button comes up.
-  await click(context, '.drive-lesson-panel [data-drive-action="skip"]', 100);
-  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`, `${lessonId} Follow me after a 100 ms click on Skip`);
-  await context.evaluate(`new Promise(done=>setTimeout(done,1200))`);
+  if (await context.evaluate(`!!document.querySelector('.drive-lesson-panel [data-drive-action], .drive-lesson-step-strip')`))
+    throw Error(`${lessonId}: the run screen should show no step strip or buttons`);
+  // Esc goes back to the opening screen; a click that takes 100 ms on a run button starts Follow me.
+  await press(context, 'Escape', 'Escape', 27); await release(context, 'Escape', 'Escape', 27);
+  await context.waitFor(`!!document.querySelector('.drive-lesson-briefing')&&!document.querySelector('.drive-lesson-panel')`, `${lessonId} Esc returns to the opening screen`);
+  await click(context, '.drive-lesson-briefing [data-drive-action="step:follow"]', 100);
+  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`, `${lessonId} Follow me after a 100 ms click on its run button`);
+  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.attempt?.elapsedSeconds>=.3`,'Follow me has run for 0.3 s',20000);
   const before = await context.evaluate(`window.__qaApp.duel.drivingLesson.lesson.attempt.elapsedSeconds`);
-  await click(context, '.drive-lesson-panel [data-drive-action="step:follow"]', 100);
-  await context.evaluate(`new Promise(done=>setTimeout(done,150))`);
+  await press(context, 'Escape', 'Escape', 27); await release(context, 'Escape', 'Escape', 27);
+  await context.waitFor(`!!document.querySelector('.drive-lesson-briefing')`, `${lessonId} Esc during Follow me`);
   const after = await context.evaluate(`window.__qaApp.duel.drivingLesson.lesson.attempt.elapsedSeconds`);
-  if (!(before >= .3 && after < before)) throw Error(`${lessonId}: a 100 ms click on the Follow me step button did not restart the run: ${before} then ${after}`);
-  report[lessonId].clicks = {skip: 'Follow me started', follow: `run restarted (${before.toFixed(2)} s then ${after.toFixed(2)} s)`};
+  if (!(before >= .3 && after < before)) throw Error(`${lessonId}: Esc during Follow me did not drop the run: ${before} then ${after}`);
+  report[lessonId].clicks = {escape: 'Esc returns to the opening screen', follow: `Follow me started from its run button; Esc dropped it (${before.toFixed(2)} s then ${after.toFixed(2)} s)`};
   // That run set off with nobody driving; start a clean one, with the game stopped so the click is steady.
   await context.evaluate(`window.__qaApp.stop()`);
-  await click(context, '.drive-lesson-panel [data-drive-action="step:follow"]');
+  await click(context, '.drive-lesson-briefing [data-drive-action="step:follow"]');
 }
 const sceneStateExpression = `(()=>{
   const group=window.__render.scene.getObjectByName('Driving lesson cones and red board');
@@ -117,18 +122,23 @@ async function finishRun(context, report, label) {
     const rows=card.querySelectorAll('tbody tr').length;
     if(rows!==run.plan.instructor.corners.length)throw Error('Result table should have one row per corner: '+rows);
     const buttons=[...card.querySelectorAll('[data-drive-action]')].map(node=>node.dataset.driveAction);
-    for(const need of ['next','step:watch','step:follow','leave'])if(!buttons.includes(need))throw Error('Result card lacks '+need+': '+buttons.join(','));
+    for(const need of ['step:watch','step:follow','step:your-turn','step:beat','leave'])if(!buttons.includes(need))throw Error('Result card lacks '+need+': '+buttons.join(','));
+    if(buttons.some(id=>['next','help','skip'].includes(id)))throw Error('Result card still has an old Start, help or skip button: '+buttons.join(','));
     if(!card.querySelector('.drive-lesson-advice')?.textContent)throw Error('Result card lacks its advice sentence');
     return{rows,buttons,text:card.textContent.replace(/\\s+/g,' '),elapsed:lesson.lastAttempt.elapsedSeconds};})()`);
   if (await context.evaluate(`JSON.stringify(window.__qaApp.profile)`) !== report.before) throw Error(label + ' changed the career');
   return result;
 }
-// Leave through whichever Leave lesson button is showing (the panel's, or the result card's once a run has ended).
+// Leave through whichever Leave lesson button is showing (the result card's once a run has ended, or the opening screen's after Esc).
 async function leaveLesson(context) {
   let last;
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
-      const selector = await context.evaluate(`['.drive-lesson-result','.drive-lesson-panel'].map(base=>base+' [data-drive-action="leave"]')
+      if (await context.evaluate(`!document.querySelector('.drive-lesson-result')&&!document.querySelector('.drive-lesson-briefing')`)) {
+        await press(context, 'Escape', 'Escape', 27); await release(context, 'Escape', 'Escape', 27);
+        await context.waitFor(`!!document.querySelector('.drive-lesson-briefing')`, 'opening screen after Esc', 4000);
+      }
+      const selector = await context.evaluate(`['.drive-lesson-result','.drive-lesson-briefing'].map(base=>base+' [data-drive-action="leave"]')
         .find(item=>{const n=document.querySelector(item);const b=n&&n.getBoundingClientRect();return b&&b.width>0&&b.height>0;})||null`);
       if (!selector) throw Error('No Leave lesson button is showing');
       await click(context, selector);
@@ -232,8 +242,9 @@ export async function run(context) {
     await release(context, 'KeyW', 'w', 87);
   }
   await context.evaluate(`window.__qaApp.stop()`);
-  // Start Follow me again from its step button (a run in progress is dropped unscored), then a whole run.
-  await click(context, '.drive-lesson-panel [data-drive-action="step:follow"]');
+  // Esc to the opening screen (the run in progress is dropped unscored), start Follow me again from its run button, then a whole run.
+  await press(context, 'Escape', 'Escape', 27); await release(context, 'Escape', 'Escape', 27);
+  await click(context, '.drive-lesson-briefing [data-drive-action="step:follow"]');
   await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'&&window.__qaApp.duel.state.s<window.__qaApp.duel.drivingLesson.plan.instructor.corners[0].brakeS`, 'Follow me starts again');
   report.gears.follow = await checkFollowGuides(context, 'lesson 3');
   report.gears.panelClear = await checkPanelClear(context, 'lesson 3');

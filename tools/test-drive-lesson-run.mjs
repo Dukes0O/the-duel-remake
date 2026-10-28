@@ -2,10 +2,10 @@ import {DRIVE_RADIO_LINES} from '../src/lessons/drive-radio-lines.js';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildInstructorRun, buildLessonDemonstration} from '../src/lessons/drive-lessons.js';
-import {driveLessonCompletion, driveLessonPanelMarkup, driveLessonResultMarkup, driveLessonBoardModel, driveLessonBoardMarkup, bindDriveLessonUi, mountDriveLessonUi, settleDriveLessonPreparation, driveLessonGhostPose} from '../src/lessons/drive-lesson-ui.js';
+import {buildInstructorRun, buildLessonDemonstration, suggestedDriveLessonRun} from '../src/lessons/drive-lessons.js';
+import {driveLessonBriefingMarkup, driveLessonCompletion, driveLessonPanelMarkup, driveLessonResultMarkup, driveLessonBoardModel, driveLessonBoardMarkup, bindDriveLessonUi, mountDriveLessonUi, settleDriveLessonPreparation, driveLessonGhostPose} from '../src/lessons/drive-lesson-ui.js';
 // The real App fixture installs memory storage. No browser/player disk storage is used.
-test('native App: Watch replay, skip, steps, one winning run, once-only reward and owner isolation', async () => {
+test('native App: Watch replay, any run from the menu, one winning run, once-only reward and owner isolation', async () => {
   const saved = new Map(['__DUEL_QA__', 'location'].map(k => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
   Object.defineProperty(globalThis, '__DUEL_QA__', {configurable: true, value: true});
   Object.defineProperty(globalThis, 'location', {configurable: true, value: {search: '?flags=driving-lessons,tyre-slip'}});
@@ -24,7 +24,9 @@ test('native App: Watch replay, skip, steps, one winning run, once-only reward a
       const run = app.duel.drivingLesson, state = app.duel.state;
       assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.corner.intro'].text);
       assert.equal(run.lesson.stage, 'watch'); assert.equal(app.selectPlayer(other), false);
-      assert.equal(app.nextLessonAttempt(), true, 'Start Watch me dismisses the briefing');
+      assert.equal(app.driveLessonBriefing, true); assert.equal(suggestedDriveLessonRun(run.lesson), 'watch');
+      assert.equal(app.nextLessonAttempt(), true, 'Enter on the opening screen starts the highlighted run, Watch me');
+      assert.equal(app.driveLessonBriefing, false);
       assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.corner.watch-late'].text);
       // Replay real inputs, not injected positions: fixed tick poses equal the recorded native run.
       for (let tick = 0; tick < 240; tick++) {
@@ -33,6 +35,11 @@ test('native App: Watch replay, skip, steps, one winning run, once-only reward a
         assert.ok(Math.abs(state.s - expected.s) < 1e-7, `watch tick ${tick}`);
         assert.ok(Math.abs(state.lateral - expected.lateral) < 1e-7);
       }
+      // Watch me has no Skip any more: it runs to the finish, then the result screen offers the four runs.
+      assert.equal(app.nextLessonAttempt(), false, 'Enter during a run does nothing');
+      for (let tick = 0; tick < 120 * 120 && run.lesson.phase === 'driving'; tick++) app.duel.step(1 / 120);
+      assert.equal(run.lesson.phase, 'result'); assert.equal(run.lesson.runs.watch.done, true);
+      assert.equal(suggestedDriveLessonRun(run.lesson), 'follow');
       assert.equal(app.nextLessonAttempt(), true); assert.equal(run.lesson.stage, 'follow');
       assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.shared.follow'].text);
       assert.ok(app.getDriveLessonGhost());
@@ -64,8 +71,20 @@ test('native App: Watch replay, skip, steps, one winning run, once-only reward a
       const paid = structuredClone(app.profile);
       for (let tick = 0; tick < 120; tick++) app.duel.step(1 / 120);
       assert.deepEqual(app.profile, paid); assert.deepEqual(app.leaderboard, leaderboard); assert.deepEqual(app.ghosts, ghosts);
-      assert.equal(app.nextLessonAttempt(), false);
-      app.leaveLesson(); assert.equal(app.getDriveLessonGhost(), null);
+      // After a pass any run can still be picked (Kyle, 28 October); nothing is paid twice and the profile stays as saved.
+      assert.equal(run.lesson.runs.beat.done, true); assert.equal(suggestedDriveLessonRun(run.lesson), 'your-turn');
+      assert.equal(app.lessonRunKey('Digit1'), true); assert.equal(run.lesson.stage, 'watch'); assert.equal(run.lesson.phase, 'driving');
+      assert.equal(app.lessonRunKey('Digit2'), false, 'the number keys do nothing while a run is going');
+      assert.equal(app.lessonEscape(), true); assert.equal(app.driveLessonBriefing, true, 'Esc in a run returns to the opening screen');
+      assert.equal(app.duel.drivingLesson, run); assert.equal(run.lesson.phase, 'driving');
+      assert.equal(state.s, run.plan.corner.startS, 'the car is back at the start line under the menu');
+      assert.equal(app.lessonRunKey('Digit4'), true); assert.equal(run.lesson.stage, 'beat'); assert.equal(app.driveLessonBriefing, false);
+      assert.equal((await drive('fast')).passed, true); assert.deepEqual(app.profile, paid, 'a second pass pays nothing more');
+      assert.equal(app.lessonEscape(), true); assert.equal(app.duel.drivingLesson, undefined, 'Esc after a run leaves the lesson');
+      app.openDrivingLessons();
+      assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), true);
+      assert.equal(app.lessonEscape(), true); assert.equal(app.duel.drivingLesson, undefined, 'Esc on the opening screen leaves the lesson');
+      assert.equal(app.getDriveLessonGhost(), null);
       app.selectPlayer(other); assert.deepEqual(app.profile, otherBefore);
       app.selectPlayer(owner); app.openDrivingLessons();
       assert.equal(await app.startLesson({courseId: 'panorama-ridge', car: 'falcone_f42', difficulty: 'casual'}), true);
@@ -88,8 +107,32 @@ test('completion requires the current owner, state, car, driver, difficulty and 
       {lastAttempt: {passed: true, finished: false}}].map(change => ({lesson: {...lesson, ...change}}))])
     assert.equal(driveLessonCompletion({...run, ...changed}, state, 'kyle'), null);
   const props = {playerId: 'kyle', runPlayerId: 'kyle', lesson: {...lesson, instructor: {timeSec: 40}}};
-  assert.match(driveLessonPanelMarkup(props), /One clean run faster/);
+  assert.doesNotMatch(driveLessonPanelMarkup(props), /How this lesson works|Skip|step-strip|Leave lesson|data-drive-action/, 'nothing to press while driving');
+  assert.match(driveLessonPanelMarkup(props), /Esc: back to the lesson menu/);
+  assert.match(driveLessonResultMarkup(props), /One clean run faster/, 'the run buttons carry the one-line descriptions');
+  for (const id of ['watch', 'follow', 'your-turn', 'beat']) assert.match(driveLessonResultMarkup(props), new RegExp(`data-drive-action="step:${id}"`));
   assert.match(driveLessonResultMarkup(props), /Lesson passed/);
+});
+test('the opening screen and the result screen both offer the four runs with marks, the highlighted one and no old controls', () => {
+  const props = run(); props.briefing = true;
+  Object.assign(props.lesson, {stage: 'watch', phase: 'driving', instructor: {timeSec: 7.31, corners: [{name: 'The Cutting', targetMph: 55}]},
+    runs: {watch: {done: true, margin: 0}, 'your-turn': {done: true, margin: 1.25}}});
+  for (const markup of [driveLessonBriefingMarkup(props), driveLessonResultMarkup({...props, lesson: {...props.lesson, phase: 'result'}})]) {
+    for (const [i, title] of ['Watch me', 'Follow me', 'Your turn', 'Beat me'].entries())
+      assert.match(markup, new RegExp(`data-drive-action="step:[a-z-]+"[^>]*aria-keyshortcuts="${i + 1}"[^>]*><strong>${i + 1} ${title}</strong>`));
+    assert.match(markup, /Done<\/em>/); assert.match(markup, /Passed, best 1\.25 s faster, Gold<\/em>/);
+    assert.equal((markup.match(/drive-lesson-suggested/g) ?? []).length, 1, 'one highlighted run');
+    assert.match(markup, /data-drive-action="step:follow"[^>]*drive-lesson-suggested/, 'the first run not done is highlighted');
+    assert.match(markup, /data-drive-action="leave"/);
+    assert.doesNotMatch(markup, /How this lesson works|Skip|step-strip|brief-steps|data-drive-action="(next|help|skip|close-help)"/);
+  }
+  const all = {...props.lesson, runs: Object.fromEntries(['watch', 'follow', 'your-turn', 'beat'].map(id => [id, {done: true, margin: 0}]))};
+  assert.equal(suggestedDriveLessonRun(all), 'your-turn', 'every run done: suggest Your turn');
+  assert.equal(suggestedDriveLessonRun({retake: true, runs: {}}), 'your-turn', 'a retake skips the practice runs');
+  assert.equal(suggestedDriveLessonRun({retake: true, runs: {'your-turn': {done: true}}}), 'beat');
+  // After Follow me, move forward to Your turn even if Watch me was skipped; wrap round only when nothing is left ahead.
+  assert.equal(suggestedDriveLessonRun({stage: 'follow', runs: {follow: {done: true}}}), 'your-turn');
+  assert.equal(suggestedDriveLessonRun({stage: 'beat', runs: {beat: {done: true}}}), 'watch');
 });
 test('native input runs repeat across frame partitions', async () => {
   const options = {lessonId: 'corner', courseId: 'panorama-ridge', car: 'koenigsegg_jesko', difficulty: 'pro'};
@@ -289,16 +332,17 @@ test('bindings use fresh player and course props, reject forged actions and clea
 });
 
 
-test('next and Enter only request eligible attempts, leave delegates without mutating lesson', () => {
+test('Enter only requests the highlighted run on the opening and result screens, leave delegates without mutating lesson', () => {
   const d = dom(), calls = []; let props = run(); const before = structuredClone(props);
   const clean = bindDriveLessonUi(d.root, () => props, {onNext: () => calls.push('next'), onLeave: () => calls.push('leave')});
-  d.emit('click', d.node({driveAction: 'next'}));
+  d.emit('click', d.node({driveAction: 'next'})); assert.deepEqual(calls, [], 'there is no Start button any more');
   const key = d.emit('keydown', d.node({}, 'DIV'), {key: 'Enter', repeat: false});
-  assert.equal(key.prevented, true); assert.deepEqual(calls, ['next', 'next']);
-  d.emit('keydown', d.node({}, 'INPUT'), {key: 'Enter'}); assert.equal(calls.length, 2);
+  assert.equal(key.prevented, true); assert.deepEqual(calls, ['next']);
+  d.emit('keydown', d.node({}, 'INPUT'), {key: 'Enter'}); assert.equal(calls.length, 1);
   assert.deepEqual(props, before);
-  props.lesson.phase = 'driving'; d.emit('click', d.node({driveAction: 'next'})); assert.equal(calls.length, 2);
-  props = {...run(), runPlayerId: 'son'}; d.emit('click', d.node({driveAction: 'next'})); assert.equal(calls.length, 2);
+  props.lesson.phase = 'driving'; d.emit('keydown', d.node({}, 'DIV'), {key: 'Enter'}); assert.equal(calls.length, 1, 'Enter does nothing during a run');
+  props.briefing = true; d.emit('keydown', d.node({}, 'DIV'), {key: 'Enter'}); assert.equal(calls.length, 2, 'Enter starts the highlighted run on the opening screen');
+  props = {...run(), runPlayerId: 'son'}; d.emit('keydown', d.node({}, 'DIV'), {key: 'Enter'}); assert.equal(calls.length, 2);
   d.emit('click', d.node({driveAction: 'leave'})); assert.equal(calls.at(-1), 'leave'); clean();
 });
 

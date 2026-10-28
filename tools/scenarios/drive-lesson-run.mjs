@@ -1,12 +1,16 @@
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
-// Ordinary private UI acceptance of lesson 1 as it plays now (DRIVING_LESSONS 14): the board, the briefing,
-// Watch me, Follow me, the result card and the step buttons. Clicks are real. A run no longer ends early (a held
+// Ordinary private UI acceptance of lesson 1 as it plays now (DRIVING_LESSONS 14): the board, the opening screen with its
+// four run buttons (LESSON-RUN-PICKER, 28 October), Watch me, Follow me, Esc back to the opening screen, the result card and the keys 1 to 4. Clicks are real. A run no longer ends early (a held
 // key just crawls on), so the one driven run is stepped on the game's own fixed clock with the instructor's recorded
 // inputs sent through the normal input path. No placement, invented result, state mutation, alternate physics,
 // audio capture or frame measurement.
 // hold: milliseconds between the button going down and coming up. A person's click is about 100.
+const press=async(context,code,letter,vk)=>{
+  await context.command('Input.dispatchKeyEvent',{type:'keyDown',key:letter,code,windowsVirtualKeyCode:vk});
+  await context.command('Input.dispatchKeyEvent',{type:'keyUp',key:letter,code,windowsVirtualKeyCode:vk});
+};
 async function click(context,selector,hold=0){
   const point=await context.evaluate(`(()=>{
     const node=document.querySelector(${JSON.stringify(selector)});
@@ -105,21 +109,24 @@ export async function run(context){
     if(!group.children.some(node=>node.userData.lessonLine))throw Error('The painted line is not drawn');
     if(!group.children.some(node=>node.name==='Lesson brake and lift boxes'))throw Error('The brake zones are not painted');
     const brief=document.querySelector('.drive-lesson-briefing');
-    const steps=[...brief.querySelectorAll('.drive-lesson-brief-steps li')].map(node=>node.textContent.replace(/\\s+/g,' ').trim());
+    const steps=[...brief.querySelectorAll('.drive-lesson-runs button')].map(node=>node.textContent.replace(/\\s+/g,' ').trim());
     if(steps.length!==4||!brief.querySelector('svg.drive-lesson-section-map')||brief.querySelectorAll('.drive-lesson-map-corners li').length!==r.plan.instructor.corners.length||
-      !/Start Watch me/.test(brief.querySelector('[data-drive-action="next"]')?.textContent||''))
-      throw Error('Briefing card is missing its map, corner list, four steps or start button');
+      !/^1 Watch me/.test(steps[0])||!/^4 Beat me/.test(steps[3])||brief.querySelector('.drive-lesson-suggested')!==brief.querySelector('[data-drive-action="step:watch"]'))
+      throw Error('Opening screen is missing its map, corner list or four run buttons with Watch me highlighted: '+JSON.stringify(steps));
+    if(brief.querySelector('.drive-lesson-brief-steps')||brief.querySelector('[data-drive-action="next"],[data-drive-action="help"]'))
+      throw Error('Opening screen still has the old step list or Start button');
     return{ownerId:r.ownerId,courseId:r.plan.courseId,car:s.car,difficulty:s.difficulty,corners:r.plan.instructor.corners.length,
       instructorSeconds:r.plan.instructor.timeSec,cones:cones.length,steps,briefing:brief.textContent.replace(/\\s+/g,' ').trim()};})()`);
   report.captures.push(await context.screenshot('driving-lesson-briefing'));
-  // Watch me: lesson 1 first shows the late brake, with its red board. The panel and the four-step strip appear.
-  await click(context,'.drive-lesson-briefing [data-drive-action="next"]');
+  // Watch me: lesson 1 first shows the late brake, with its red board. Only the coaching line and a quiet Esc hint show; no step strip.
+  await click(context,'.drive-lesson-briefing [data-drive-action="step:watch"]');
   await context.waitFor(`!!document.querySelector('.drive-lesson-panel')&&!document.querySelector('.drive-lesson-briefing')&&
     window.__qaApp.duel.drivingLesson.lesson.stage==='watch'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`,'Watch me panel');
   report.watch=await context.evaluate(`(()=>{
     const r=window.__qaApp.duel.drivingLesson,group=window.__render.scene.getObjectByName('Driving lesson cones and red board');
-    const strip=[...document.querySelectorAll('.drive-lesson-panel .drive-lesson-step-strip li')].map(node=>({text:node.textContent.trim(),current:node.getAttribute('aria-current')==='step'}));
-    if(strip.length!==4||strip.filter(item=>item.current).length!==1||!strip[0].current)throw Error('Step strip should show four steps with Watch me lit: '+JSON.stringify(strip));
+    const strip=[...document.querySelectorAll('.drive-lesson-panel .drive-lesson-step-strip li, .drive-lesson-panel [data-drive-action]')].map(node=>node.textContent.trim());
+    if(strip.length||/How this lesson works|Skip|Leave lesson/.test(document.querySelector('.drive-lesson-host').textContent))throw Error('The run screen should show no step strip, help or skip buttons: '+JSON.stringify(strip));
+    if(document.querySelector('.drive-lesson-esc-hint')?.textContent!=='Esc: back to the lesson menu')throw Error('The quiet Esc hint is missing');
     if(r.watchClip!=='late'||!group.children.some(node=>node.userData.redBoard&&node.visible))throw Error('Lesson 1 should open with the late brake clip and its red board');
     return{strip,clip:r.watchClip,caption:document.querySelector('.drive-lesson-watch-caption')?.textContent||''};})()`);
   // DRIVE-LESSON-HUD: no Time Trial banner, lap count or style points, and the lesson panel, the minimap and
@@ -139,21 +146,25 @@ export async function run(context){
     if(overlap(caption,panel))throw Error('The instructor caption covers the lesson panel');
     return{caption,map,panel,words,chromeHidden:true};})()`);
   report.captures.push(await context.screenshot('driving-lesson-watch'));
-  // Skip goes to Follow me: ghost, painted line, target box and gap appear once the car is moving.
-  // A click that takes 100 ms, with the car moving: the buttons must still be there when it comes up.
-  await click(context,'.drive-lesson-panel [data-drive-action="skip"]',100);
-  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`,'Follow me starts after a 100 ms click on Skip');
-  report.clicks.skip='100 ms click while the car moved: Follow me started';
-  await context.evaluate(`new Promise(done=>setTimeout(done,1200))`);
+  // Esc during a run goes back to the opening screen, the car back at the start line and nothing scored.
+  await press(context,'Escape','Escape',27);
+  await context.waitFor(`!!document.querySelector('.drive-lesson-briefing')&&!document.querySelector('.drive-lesson-panel')&&
+    !!window.__qaApp.duel.drivingLesson&&window.__qaApp.duel.state.s===window.__qaApp.duel.drivingLesson.plan.corner.startS`,'Esc returns to the opening screen');
+  report.clicks.escape='Esc in Watch me: opening screen, car at the start line';
+  // A click that takes 100 ms on a run button of the opening screen starts that run (Follow me: ghost, painted line, target box and gap once the car moves).
+  await click(context,'.drive-lesson-briefing [data-drive-action="step:follow"]',100);
+  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'&&!document.querySelector('.drive-lesson-briefing')`,'Follow me starts after a 100 ms click on its run button');
+  report.clicks.follow='100 ms click on the Follow me run button: Follow me started';
+  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.attempt?.elapsedSeconds>=.3`,'Follow me has run for 0.3 s',20000);
   const before=await context.evaluate(`window.__qaApp.duel.drivingLesson.lesson.attempt.elapsedSeconds`);
-  await click(context,'.drive-lesson-panel [data-drive-action="step:follow"]',100);
-  await context.evaluate(`new Promise(done=>setTimeout(done,150))`);
+  await press(context,'Escape','Escape',27);
+  await context.waitFor(`!!document.querySelector('.drive-lesson-briefing')`,'Esc during Follow me');
   const after=await context.evaluate(`window.__qaApp.duel.drivingLesson.lesson.attempt.elapsedSeconds`);
-  if(!(before>=.3&&after<before))throw Error('A 100 ms click on the Follow me step button did not restart the run: '+before+' then '+after);
-  report.clicks.follow='100 ms click on the step button while the car moved: run restarted ('+before.toFixed(2)+' s then '+after.toFixed(2)+' s)';
+  if(!(before>=.3&&after<before))throw Error('Esc during Follow me did not drop the run unscored: '+before+' then '+after);
+  report.clicks.restart='Esc after '+before.toFixed(2)+' s in Follow me: run dropped ('+after.toFixed(2)+' s)';
   // That run set off with nobody driving; start a clean one, with the game stopped so the click is steady.
   await context.evaluate(`window.__qaApp.stop()`);
-  await click(context,'.drive-lesson-panel [data-drive-action="step:follow"]');
+  await click(context,'.drive-lesson-briefing [data-drive-action="step:follow"]');
   await context.evaluate(`window.lessonDrive({ticks:600})`);
   report.follow=await context.evaluate(`(()=>{
     const a=window.__qaApp,group=window.__render.scene.getObjectByName('Driving lesson cones and red board');
@@ -178,22 +189,36 @@ export async function run(context){
     const rows=card.querySelectorAll('tbody tr').length;
     if(rows!==run.plan.instructor.corners.length)throw Error('Result table should have one row per corner: '+rows);
     const buttons=[...card.querySelectorAll('[data-drive-action]')].map(node=>node.dataset.driveAction);
-    for(const need of ['next','step:watch','step:follow','step:your-turn','step:beat','leave'])if(!buttons.includes(need))throw Error('Result card lacks '+need+': '+buttons.join(','));
-    if(!/Start Your turn/.test(card.querySelector('[data-drive-action="next"]').textContent))throw Error('Result card should offer Your turn next');
+    for(const need of ['step:watch','step:follow','step:your-turn','step:beat','leave'])if(!buttons.includes(need))throw Error('Result card lacks '+need+': '+buttons.join(','));
+    if(buttons.some(id=>['next','help','skip'].includes(id)))throw Error('Result card still has an old Start, help or skip button: '+buttons.join(','));
+    // Follow me finished, so it carries a mark, and the highlight moves forward to Your turn (Watch me, dropped with Esc,
+    // stays open but is behind the run just played).
+    if(card.querySelector('.drive-lesson-suggested')!==card.querySelector('[data-drive-action="step:your-turn"]'))throw Error('Result card should highlight Your turn, the next run after Follow me');
+    if(!/Done/.test(card.querySelector('[data-drive-action="step:follow"]').textContent)||/Done|Passed/.test(card.querySelector('[data-drive-action="step:watch"]').textContent))throw Error('Result card marks are wrong');
     if(!card.querySelector('.drive-lesson-advice')?.textContent)throw Error('Result card lacks its advice sentence');
     return{attempt:lesson.lastAttempt,rows,buttons,text:card.textContent.replace(/\\s+/g,' '),profileUnchanged:true,lessonComplete:false};})()`);
   report.captures.push(await context.screenshot('driving-lesson-native-result'));
-  await click(context,'.drive-lesson-result [data-drive-action="next"]');
+  // The key 3 starts Your turn straight from the result card.
+  await press(context,'Digit3','3',51);
   await context.waitFor(`window.__qaApp.duel.drivingLesson?.lesson.stage==='your-turn'&&
-    window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`,'next real run starts Your turn');
-  // Any step, back or forward (Kyle, 27 October): the strip drops the run unscored and starts the chosen step.
+    window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`,'the key 3 starts Your turn');
+  // Any run, back or forward (Kyle, 27 and 28 October): Esc to the opening screen, then a button drops the run unscored and starts the chosen one.
   for(const [id,stage] of [['step:watch','watch'],['step:beat','beat'],['step:follow','follow']]){
-    await click(context,`.drive-lesson-panel [data-drive-action="${id}"]`);
+    await press(context,'Escape','Escape',27);
+    await context.waitFor(`!!document.querySelector('.drive-lesson-briefing')`,'opening screen before '+id);
+    await click(context,`.drive-lesson-briefing [data-drive-action="${id}"]`);
     await context.waitFor(`window.__qaApp.duel.drivingLesson?.lesson.stage===${JSON.stringify(stage)}&&
-      window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`,'step button '+id);
+      window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`,'run button '+id);
   }
-  if(await context.evaluate(`JSON.stringify(window.__qaApp.profile)`)!==report.before)throw Error('Choosing steps changed saved progress');
-  await click(context,'.drive-lesson-panel [data-drive-action="leave"]');
+  // Enter on the opening screen starts the highlighted run: Your turn, the next one not done after Follow me.
+  await press(context,'Escape','Escape',27);
+  await context.waitFor(`!!document.querySelector('.drive-lesson-briefing [data-drive-action="step:your-turn"].drive-lesson-suggested')`,'opening screen before Enter, Your turn highlighted');
+  await press(context,'Enter','Enter',13);
+  await context.waitFor(`window.__qaApp.duel.drivingLesson?.lesson.stage==='your-turn'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'&&!document.querySelector('.drive-lesson-briefing')`,'Enter starts the highlighted run');
+  if(await context.evaluate(`JSON.stringify(window.__qaApp.profile)`)!==report.before)throw Error('Choosing runs changed saved progress');
+  await press(context,'Escape','Escape',27);
+  await context.waitFor(`!!document.querySelector('.drive-lesson-briefing')`,'opening screen before Leave lesson');
+  await click(context,'.drive-lesson-briefing [data-drive-action="leave"]');
   await context.waitFor(`!window.__qaApp.duel.drivingLesson&&window.__qaApp.duel.state.status==='menu'`,'leave returns to menu');
   await context.evaluate(`window.__qaApp.start()`);
   if(context.issues.length||context.warnings.length)throw Error('Lesson browser emitted console issues/warnings');

@@ -811,10 +811,11 @@ matters, for example: "The Cutting: you braked 22 m late, so you reached the
 corner 9 mph too fast and the tyres slid for 0.6 s. A sliding tyre grips less,
 so the car ran wide." Brian says the short version over the radio.
 
-### 14.7 The briefing card
+### 14.7 The opening screen
 
-Shown before Watch me, and again from a "How this lesson works" button on the
-lesson panel:
+Shown when a lesson opens, and again after Esc during a run (Kyle, 28 October).
+The run buttons also sit on every result card, so the next run is one click or
+key away:
 
 - the lesson's idea in two or three plain sentences, each new word explained
   beside a small picture (brake zone: where to brake, while the car is
@@ -822,8 +823,17 @@ lesson panel:
   curve through the corners; and each lesson's own words);
 - a map of the section drawn from the course's own shape, with the line
   coloured as on the road, the brake zones, and each corner's target speed;
-- the four steps and what passes each;
+- four run buttons, "1 Watch me" to "4 Beat me", each with its one-line
+  rule. Any run can be started at any time. A mark shows what this visit has
+  done ("Done", or "Passed" with the best margin and Gold). The first run not
+  done is highlighted (else Your turn; a retake starts at Your turn). The keys
+  1 to 4 start a run and Enter starts the highlighted one;
 - Brian's intro over the radio, its text on the card.
+
+During a run nothing but the coaching line shows, with a quiet "Esc: back to
+the lesson menu" in the corner. Esc during a run drops it unscored and returns
+here with the car at the start line; Esc here or on a result card leaves the
+lesson. There is no Skip and no step strip.
 
 ### 14.8 The instructor in any car
 
@@ -854,7 +864,7 @@ Rewards as before (3.7 and 13).
 | --- | --- | --- | --- |
 | LESSON-INSTRUCTOR-ANY-CAR | codex | none | 14.8 on today's lessons: cones from the plan, the slower retry, the every-car test, the plain message. Ships alone, first. |
 | LESSONS-V2-RULES | codex | none | 14.3, 14.4 and 14.6 in `src/lessons/drive-lessons.js`: sections, steps, per-corner checks, pass rules, Watch me inputs and the late clip, tests that prove each lesson's claim on its new sections |
-| LESSONS-V2-VIEW | codex | `busy-game-files` | 14.4 to 14.7 on screen: step strip, line, brake zones, target box, gap, corner lights, result table, briefing card and map, Watch me camera |
+| LESSONS-V2-VIEW | codex | `busy-game-files` | 14.4 to 14.7 on screen: run buttons, line, brake zones, target box, gap, corner lights, result table, briefing card and map, Watch me camera |
 | LESSONS-V2-LINES | codex | `sound-bank` | Brian's new lines (14.11) |
 | LESSONS-V2-FINISH | Claude | none | Drive every lesson on the keyboard in the Falcone and the Jesko, Casual and Pro; pictures to Kyle |
 
