@@ -449,6 +449,9 @@ export async function main(args = process.argv.slice(2)) {
     lapNote: review.lap.flying ? `Lap time is the second (flying) lap of a scripted test driver on Medium; the first lap, from the grid, took ${formatLap(review.lap.lapTimes[0])}.` : 'Lap time is the first lap from the grid.',
     lapTime: review.lap.time, topMph: review.lap.topMph, topAtS: review.lap.topAtS, length: review.course.lengthM,
     defaultEventId: CIRCUIT_MANIFESTS.find(row => row.id === review.course.id)?.unlock?.defaultEventId ?? null,
+    // A secret found from the air is entered through the pilot's map record, as the headless lap does.
+    fixtureHeli: CIRCUIT_MANIFESTS.find(row => row.id === review.course.id)?.unlock?.kind === 'spotted-from-air'
+      ? { ...heliOf({}), map: { version: 1, seen: [], found: [review.course.id], table: false } } : null,
     courseId: review.course.id, courseIndex: lap.stageIndex, winterTyre: lap.winterTyre === true, mphToWorld: lap.mphToWorld, gridS: lap.gridS, hasField: lap.opponents > 0,
     startHeading: lap.course.at(0).heading,
     points: review._profile.rows.map(row => [row.x, row.z, laneOf(review._lap, row.s, lap.course.length)?.mph ?? 0]),
