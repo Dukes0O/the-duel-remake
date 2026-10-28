@@ -3,10 +3,12 @@ completed: [SUMMIT-BUILD-TIME-3, DEEP-TRAIL-JOINTS, MAP-FINISH, DEEP-ROCKS-PUSH,
 tasks:
   - id: SUMMIT-TERRAIN-PRELOAD
     title: "Summit: do the course terrain math while the kits load, so the world build is under 1 s"
-    owner: "codex"
+    owner: "claude"
     lane: "PERF"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: claude-night-summit-preload-2026-10-28
+    branch: claude/night-summit-preload
     needs: []
     locks: []
     flag: "summit-run"
