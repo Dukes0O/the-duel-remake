@@ -147,3 +147,7 @@ None. No test, fixture, tolerance or pin changed; one test added.
 Nothing. The straight-through builders are the same code, run to the end, so
 there is no old path to remove. The temporary timing switch, the browser
 scenario, the Node timer and all browser output were removed before this commit.
+
+## Claude's review (27 October 2026, night)
+
+Design follows the card; exactness proven by whole-world hashes on 13 courses and a byte-for-byte suite with a deliberate-break check; load not slower. Touches src/render3d.js (shared core), so the release waits for the nightly full tier and Claude's frame check. The menu backdrop blanking briefly while ground prepares matches the existing kit-loading behaviour. No assertion changed. Verdict: merge.
