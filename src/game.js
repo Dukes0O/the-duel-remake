@@ -465,9 +465,26 @@ export class Duel {
       brake:s.input.brake,throttle:s.input.throttle,tyreSlip:s.tyreSlip||0,
       offRoad:s.offRoad===true,status:'racing',paused:s.paused,gear:s.gear,revs:s.revs}; // gear and revs: the gearbox lesson reads them (DRIVE-LESSONS-VIEW-2)
   }
+  // A crash in a lesson plays out exactly as in a race (LESSON-CRASH-STUCK): the skid and spin run down, the
+  // car is put back at the crash site, and the flash, shake, guard and callout timers run out. Without this
+  // step the impact timer never ran down, so the screen shook for good and the crash sounds never let go.
+  // Returns true while the car is still in its crash and has no driver control.
+  _stepLessonCrash(dt){
+    const s=this.state;
+    s.crashFlash=Math.max(0,s.crashFlash-dt);
+    s.invulnerableSec=Math.max(0,s.invulnerableSec-dt);
+    s.damageCooldown=Math.max(0,s.damageCooldown-dt);
+    s.calloutTimer=Math.max(0,s.calloutTimer-dt);
+    if(!(s.impactTimer>0)||s.onFoot)return false;
+    this._impact(dt);this._collisions();
+    return true;
+  }
   _stepDriveLesson(dt){
     const run=this.drivingLesson,s=this.state;
-    if(run.ownerId!==s.playerId||run.lesson.phase!=='driving')return;
+    if(run.ownerId!==s.playerId)return;
+    // A run that ends in the middle of a crash lets the crash finish behind the result.
+    if(run.lesson.phase==='result'){this._stepLessonCrash(dt);return;}
+    if(run.lesson.phase!=='driving')return;
     // Use the same native driving, jump and swept contacts. Race progression,
     // traffic, police, combat, timing awards and lap completion are excluded.
     s.stageTimeSec+=dt;s.lapTimeSec=s.stageTimeSec;
@@ -476,8 +493,10 @@ export class Duel {
       const input=clip.inputs[run.watchTicks++];
       if(input)this.setInput(input);
     }
-    this._drive(dt);
-    if(s.status==='racing'&&s.impactTimer<=0){this._jump(s,dt);this._collisions();}
+    if(!this._stepLessonCrash(dt)){
+      this._drive(dt);
+      if(s.status==='racing'&&s.impactTimer<=0){this._jump(s,dt);this._collisions();}
+    }
     if(run.lesson.stage==='watch'&&run.watchClip==='late'){
       // Unscored demonstration; reset through the native gate before the clean replay.
       if(run.watchTicks>=run.plan.instructor.lateClip.inputs.length){
