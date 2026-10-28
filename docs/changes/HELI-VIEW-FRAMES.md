@@ -72,3 +72,7 @@ and the same with `RESCUE_FRAMES_ONLY='1'` in place of `SKI_FRAMES_ONLY`
 ## Removed
 
 Nothing replaced. The throwaway dry-run scenario and its evidence were deleted.
+
+## Claude's review (27 October 2026, night)
+
+Opt-in recipes only, modelled on SUMMIT_FRAMES_ONLY with the same guards and rule 8 limits; existing hooks, no game code, no assertion changed. Verdict: merge. Claude runs the timing on the quiet laptop. The Summit packet validator note (harbour-lights only) is checked when Claude next runs it.
