@@ -11,6 +11,8 @@ export const PROJECT_ROOT = resolve(fileURLToPath(new URL('../', import.meta.url
 const VITE_CLI = join(PROJECT_ROOT, 'node_modules', 'vite', 'bin', 'vite.js');
 const PRIVATE_PORT_MIN = 5191;
 const TIMEOUT_MS = 45_000;
+const CLOSE_WAIT_MS = 3_000;
+const TREE_WAIT_MS = 3_000;
 const delay = ms => new Promise(done => setTimeout(done, ms));
 
 export function parseArguments(args) {
@@ -410,6 +412,31 @@ export function createPageNavigation(cdp, page, baseURL) {
   };
 }
 
+// Under load Chrome can take minutes to stop, and its helper programs can keep
+// this process's output pipes open after the report is saved. Ask Chrome to
+// close, wait a few seconds at most, then end the browser this harness started
+// (its own child and that child's helpers, never any other browser) and let go
+// of the pipes so the process can exit.
+export async function stopBrowser(cdp, chrome, closeWaitMs = CLOSE_WAIT_MS) {
+  let timer;
+  try {
+    if (cdp) await Promise.race([cdp.send('Browser.close'), new Promise(done => { timer = setTimeout(done, closeWaitMs); })]);
+  } catch {}
+  clearTimeout(timer);
+  try { cdp?.close(); } catch {}
+  if (!chrome) return;
+  const { child } = chrome;
+  if (child.exitCode === null && child.pid) {
+    if (process.platform === 'win32') {
+      const tree = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
+      await new Promise(done => { tree.once('error', done); tree.once('exit', done); setTimeout(done, TREE_WAIT_MS).unref(); });
+    }
+    if (child.exitCode === null) child.kill();
+  }
+  child.stdout?.destroy();
+  child.stderr?.destroy();
+}
+
 async function cleanupProfile(profile) {
   const tempRoot = await realpath(tmpdir());
   const target = await realpath(profile);
@@ -483,9 +510,7 @@ export async function main(args = process.argv.slice(2)) {
     await writeFile(join(outputDir, 'report.json'), JSON.stringify(report, null, 2) + '\n');
     for (const path of screenshots) console.log(`Screenshot: ${path}`);
     console.log(`Report: ${join(outputDir, 'report.json')}`);
-    try { if (cdp) await cdp.send('Browser.close'); } catch {}
-    cdp?.close();
-    if (chrome && chrome.child.exitCode === null) chrome.child.kill();
+    await stopBrowser(cdp, chrome);
     if (preview && preview.child.exitCode === null) preview.child.kill();
     await delay(300);
     try { await cleanupProfile(profile); } catch (error) { console.error(`Browser profile cleanup: ${error.message}`); }
