@@ -161,3 +161,7 @@ helicopter/pilot-map visit did not have rescue on and did not offer Summit.
 | 19 |145|155|255|330|130|190|385|450!|340|400|480!|355|390|75|105|110|110|110|-|135|320|
 | 20 |215|230|320|395|250|315|480!|540!|380|470!|515!|365|355|125|195|135|135|135|135|-|315|
 | 21 |205|215|175|200|305|375|340|370|140|265|235|70|100|375|415!|405!|405!|405!|320|315|-|
+
+## Claude's review (27 October 2026, night)
+
+See MAP-FINISH-LIVE.md: switch-state assertions follow the go-live; verdict merge and release.
