@@ -1,15 +1,11 @@
 // The Lab screen's page parts as plain markup (docs/LAB.md sections 2 to 4). Pure strings in, strings out: lab-view.js puts
-// them on the page and handles the buttons (`data-lab` actions, `data-lab-lesson`, `data-lab-control`, `data-lab-buy`).
-import {CARS} from '../config.js';
+// them on the page and handles the buttons (`data-lab` actions, `data-lab-lesson`, `data-lab-buy`).
 import {lessonBoardMarkup} from '../lessons/lesson-board.js';
 import {LAB_GROUPS} from './lab-lessons.js';
 import {RUST_PARTS, PROTECTIONS} from './lab-workshop.js';
 
 const escape = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const credits = value => Math.floor(Number.isFinite(value) ? value : 0).toLocaleString('en-US');
-
-// A choice's words: a car by its name, a place with its hyphens turned to spaces.
-export const optionLabel = option => CARS[option]?.name ?? String(option).replace(/-/g, ' ');
 
 export function headerMarkup({credits: wallet, tab}) {
   const tabs = [['lessons', 'Lessons'], ['shop', 'Shop']].map(([id, name]) =>
@@ -28,19 +24,8 @@ export function boardMarkup({rows, message = ''}) {
     `${message ? `<p class="lab-message" role="status">${escape(message)}</p>` : ''}</section>`;
 }
 
-const rangeText = (row, value) => `${value}${row.unit ? ` ${escape(row.unit)}` : ''}`;
-function controlMarkup(row, value) {
-  if (row.options) {
-    return `<label class="lab-control"><span>${escape(row.label)}</span><select data-lab-control="${escape(row.id)}">${
-      row.options.map(option => `<option value="${escape(option)}"${option === value ? ' selected' : ''}>${escape(optionLabel(option))}</option>`).join('')}</select></label>`;
-  }
-  return `<label class="lab-control"><span>${escape(row.label)}</span><input type="range" data-lab-control="${escape(row.id)}" min="${row.min}" max="${row.max}" step="${row.step}" value="${value}">` +
-    `<output>${rangeText(row, value)}</output></label>`;
-}
-
 // The checks under the rust bench's challenge: one choice for each part, and what the last check found.
-function protectMarkup(protect) {
-  if (!protect) return '';
+export function protectionMarkup({protect, message = '', restore = ''}) {
   const rows = RUST_PARTS.map(part => {
     const last = protect.result?.rows.find(row => row.part === part.id);
     return `<li data-part="${part.id}"><div><b>${escape(part.name)}</b><small>${escape(part.lives)}</small></div>` +
@@ -48,29 +33,17 @@ function protectMarkup(protect) {
         PROTECTIONS.map(item => `<option value="${item.id}"${protect.picks[part.id] === item.id ? ' selected' : ''}>${escape(item.name)}</option>`).join('')}</select>` +
       `${last ? `<em class="${last.ok ? 'good' : 'bad'}">${last.ok ? 'Right' : 'Not that'}: ${Math.round(last.rust * 100)}% rusted after a week (bare: ${Math.round(last.bareRust * 100)}%)</em>` : ''}</li>`;
   }).join('');
-  return `<div class="lab-protect"><p>Choose the least protection that keeps each part clean for the week.</p><ul>${rows}</ul>` +
-    `<button type="button" data-lab="protect-check">Check my choices</button></div>`;
+  return `<section class="lab-bench" data-lesson="rust" aria-label="Rust protection challenge"><button type="button" class="lab-back" data-lab="back">All lessons</button>` +
+    `<h3>RUST PROTECTION</h3><div class="lab-protect"><p>Choose the least protection that keeps each part clean for the week.</p><ul>${rows}</ul>` +
+    `<button type="button" data-lab="protect-check">Check my choices</button></div>${restore}` +
+    `${message ? `<p class="lab-message" role="status">${escape(message)}</p>` : ''}</section>`;
 }
 
-export function benchMarkup({lessonId, name, controls, settings, readout, challenge, protect = null, hasRun, explained, message = '', restore = '', replay = false}) {
+export function benchMarkup({lessonId, name, message = '', restore = ''}) {
   // LAB-RESTORE-PASSED: a passed lesson opens straight to what it unlocked, with the lesson one press away.
-  if (replay) return `<section class="lab-bench lab-bench-passed" data-lesson="${escape(lessonId)}" aria-label="${escape(name)} bench"><button type="button" class="lab-back" data-lab="back">← All lessons</button>` +
+  return `<section class="lab-bench lab-bench-passed" data-lesson="${escape(lessonId)}" aria-label="${escape(name)} bench"><button type="button" class="lab-back" data-lab="back">← All lessons</button>` +
     `<h3>${escape(name.toUpperCase())} <span class="lab-passed">✓ Passed</span></h3><p class="lab-hint">You passed this lesson. What it opened is here; the lesson stays open to replay.</p>` +
     `<button type="button" data-lab="replay">Replay the lesson</button>${restore}${message ? `<p class="lab-message" role="status">${escape(message)}</p>` : ''}</section>`;
-  const dials = controls.map(row => controlMarkup(row, settings[row.id])).join('');
-  const readoutHtml = readout.length
-    ? `<dl class="lab-readout" aria-label="Result">${readout.map(item => `<div class="${item.tone ?? ''}"><dt>${escape(item.label)}</dt><dd>${escape(item.value)}</dd></div>`).join('')}</dl>`
-    : '<p class="lab-hint">Set the dials and press Run.</p>';
-  const ready = challenge.state === 'ready';
-  const button = challenge.state === 'locked' ? '' :
-    `<button type="button" class="lab-challenge-button" data-lab="challenge"${ready ? '' : ' disabled'}>${escape(challenge.label)}</button>`;
-  const brian = hasRun ? `<button type="button" data-lab="again">${explained ? 'Brian again' : 'Hear Brian'}</button>` : '';
-  const passed = challenge.passed ? '<span class="lab-passed">✓ Passed</span>' : '';
-  return `<section class="lab-bench" data-lesson="${escape(lessonId)}" aria-label="${escape(name)} bench"><button type="button" class="lab-back" data-lab="back">← All lessons</button>` +
-    `<h3>${escape(name.toUpperCase())} ${passed}</h3><div class="lab-controls">${dials}</div>` +
-    `<div class="lab-actions"><button type="button" class="lab-run" data-lab="run">Run</button>${brian}</div>${readoutHtml}` +
-    `<div class="lab-challenge lab-challenge-${challenge.state}">${challenge.note ? `<p>${escape(challenge.note)}</p>` : ''}${button}${ready ? protectMarkup(protect) : ''}</div>${restore}` +
-    `${message ? `<p class="lab-message" role="status">${escape(message)}</p>` : ''}</section>`;
 }
 
 export function shopMarkup({rows, choices, wallet, message = ''}) {
