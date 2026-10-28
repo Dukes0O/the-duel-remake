@@ -70,3 +70,7 @@ None. Add acceptance checks without changing existing assertions.
 Nothing replaced. Temporary stamp copies and the generated production build
 were recycled. No `.evidence` folder was created. Cockpit was not changed:
 this job permits work only in this lane. STATUS was regenerated in the lane.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent review by Codex's reviewer and Claude's check). Tool only: stamps C1 to C7 or V1 to V7 with needs following the FACTORY graphs, refuses duplicates and bad ids, has a dry run. Dry run for kogane-pass checked by Claude. No assertion changed; board tests added.
