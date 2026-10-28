@@ -306,7 +306,7 @@ export function cratePay({released, dropMetres = 0}) {
 }
 
 // The whole run: each crate's pay, plus 100 when all are down before the
-// clock ends (4,850 for three clean ones). crates: [{released, dropMetres}].
+// clock ends (4,150 for three clean ones). crates: [{released, dropMetres}].
 export function supplyPay(crates, {inTime = true, count = 3} = {}) {
   const down = crates.filter(crate => crate.released).length;
   const crateTotal = crates.reduce((sum, crate) => sum + cratePay(crate), 0);

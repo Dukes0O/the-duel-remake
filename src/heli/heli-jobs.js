@@ -136,12 +136,12 @@ export function isDestination(courseId, options = {}) {
 // Three routes, each paying a fixed number of credits (Real pays a quarter
 // more). The board offers one job on each route every play day. Pay is the minutes
 // the delivery takes at the race rate (heli-pay.js): leave, fly to the pick-up when it is
-// not the home pad, hook, carry out, cruise, arrive and set the car down.
-// `fuel(a, b)` is the fuel of a leg; the pick-up leg is counted from the home pad.
+// not the home pad, hook, carry out, cruise, arrive and set the car down. A cruise leg counts one minute
+// whatever its length, because it plays as a short fade. `fuel(a, b)` is the fuel of a leg (null: no such leg).
 function carJobPayFrom(fuel, from, to) {
   const leg = fuel(from, to);
   if (leg === null || leg === undefined) return null;
-  return payForMinutes(deliveryMinutes(leg, from === HOME_COURSE ? null : fuel(HOME_COURSE, from)));
+  return payForMinutes(deliveryMinutes(from !== HOME_COURSE));
 }
 const tableFuel = (a, b) => LEG_FUEL[legKey(a, b)] ?? null;
 export const JOB_ROUTES = Object.freeze([
@@ -228,7 +228,7 @@ export function returnLoadPay(from, to, options = {}) {
   if (fuel === null || fuel > HELI_MONEY.tankKg) return null;
   const price = Math.max(HELI_MONEY.creditsPerKg, fuelPadAt(placeKey(from))?.pricePerKg ?? 0,
     fuelPadAt(placeKey(to))?.pricePerKg ?? 0);
-  return Math.ceil(Math.max(payForMinutes(deliveryMinutes(fuel)), 1.25 * fuel * price) / 10) * 10;
+  return Math.ceil(Math.max(payForMinutes(deliveryMinutes()), 1.25 * fuel * price) / 10) * 10;
 }
 
 // No ownership or wallet enters the seed: the same place has the same load
@@ -266,7 +266,7 @@ export function finishReturnLoad(profile, job, mode = 'assisted', options = {}, 
 
 // ---- the car recovery job (docs/HELI_RESCUE.md section 5.3) --------------
 // After a hoist rescue the driver's car lies on the slope. The next play day
-// the board offers "Recover the <car> from Panorama Ridge" for 3,100 credits:
+// the board offers "Recover the <car> from Panorama Ridge" for 2,300 credits:
 // hook it and set it down in the landing zone. It stays 3 play days (the save
 // removes the wreck then, heli-save.js). It is an everyday job that sits on
 // the board beside the day's three, so dayJobs and its fingerprints are

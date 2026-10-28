@@ -134,7 +134,7 @@ function newSession(profile, {rescue = true, summit = false, mode = 'assisted'} 
 // ---- Switch off: every flight is what it was before this card -----------------
 // The pin was taken from the session as it stood before RESCUE-AUTOPILOT.
 // HELI-PAY-CONTINUE re-recorded this (was 2230200939): the hashed board and view carry the job pays and the clean bonus, which moved.
-const OFF_PIN = 2836329241;
+const OFF_PIN = 2449056266;
 for (const extra of [{}, {rescueEnabled: false}, {rescueEnabled: 'yes'}, {summitRunEnabled: false}, {summitRunEnabled: 'yes', rescueEnabled: 1}])
   assert.equal(offFingerprint(extra), OFF_PIN, `the switch-off flights are unchanged (${JSON.stringify(extra)})`), checks++;
 same(offFacts, {lake: true, cruise: true, arrived: true, jobTaken: true}, 'and those flights really flew: the lake, the cruise leg, the approach, a job');
@@ -243,7 +243,7 @@ function flyHiker() {
   session.pressAutopilot();
   log.push(...travel(session, home, homeSite.zone, homeSite.zone.y + 20, {land: true}));
   const done = log.find(e => e.type === 'rescueDone');
-  ok(done && done.kind === 'hiker' && done.paid === 3500, "landing in the circle is the pilot's, and pays 3,500 (HELI-PAY-CONTINUE, was 1,000)");
+  ok(done && done.kind === 'hiker' && done.paid === 2650, "landing in the circle is the pilot's, and pays 2,650 (HELI-PAY-CONTINUE, was 1,000)");
   return {log, hash: hash(JSON.stringify(log))};
 }
 {
@@ -397,7 +397,7 @@ function wreckProfile({day = 6, count = 7, credits = 2000} = {}) {
   const session = newSession(profile);
   session.start();
   const job = session.boardJobs().find(item => item.recovery);
-  ok(job && job.taken === false && job.pay === 3100, 'the recovery job is on the board for 3,100 (HELI-PAY-CONTINUE, was 500)');
+  ok(job && job.taken === false && job.pay === 2300, 'the recovery job is on the board for 2,300 (HELI-PAY-CONTINUE, was 500)');
   const markup = () => dispatchBoardMarkup(session.view(), {jobs: session.boardJobs(), fire: {repairCost: 0}});
   ok(markup().includes(`data-heli-board="take:${job.id}"`) && !markup().includes('data-heli-board="drop"'), 'with a Take job button');
   // The board's button takes it, like any job.
@@ -485,13 +485,13 @@ function deliverRecovery(mode, pay) {
   session.pressHook();
   ok(session.profile.credits === after && !session.takeEvents().some(e => e.type === 'jobDone'), 'recovery: moving the car again pays nothing');
 }
-// HELI-PAY-CONTINUE: 3,100 (was 500), and a clean set-down adds 800.
-deliverRecovery('assisted', 3900);
+// HELI-PAY-CONTINUE: 2,300 (was 500), and a clean set-down adds 600.
+deliverRecovery('assisted', 2900);
 {
   // Real pays a quarter more (the flight itself is the same; hooking by hand in Real is not scripted here).
   const real = newSession(wreckProfile(), {mode: 'real'});
   real.start();
-  same(real.boardJobs().find(item => item.recovery).payNow, 3875, 'Real: the board offers 3,875');
+  same(real.boardJobs().find(item => item.recovery).payNow, 2875, 'Real: the board offers 2,875');
 }
 console.log('PASS the car recovery job is taken, flown and paid once');
 

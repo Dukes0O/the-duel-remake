@@ -60,7 +60,7 @@ export const HELI_SESSION = Object.freeze({
   bucketBeside: 6,
 });
 // Heli-skiing (docs/HELI_SKIING.md sections 3 and 6): the group of a guide and four guests weighs 475 kg aboard; the job pays
-// 5,600 (Real a quarter more) and is offered on one play day in three; a drop pad is the 12 m circle the Summit world has;
+// 3,150 (Real a quarter more) and is offered on one play day in three; a drop pad is the 12 m circle the Summit world has;
 // above this height the thin-air line plays when the collective is at its top and the helicopter still sinks.
 const EARN_EVENTS = Object.freeze(['jobDone', 'fireOut', 'rescueDone', 'crateDown', 'skiGroupDone', 'skiRecorded', 'skiStashPaid', 'tableFound', 'surveyDone']);
 const DAMAGE_KINDS = Object.freeze(['hardLanding', 'crash', 'drop', 'cargoLight', 'cargoHeavy', 'cargoWreck']);
@@ -1763,7 +1763,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       else if (labEnabled === true) delete hooked.lineLength;
       if (hooked.job) result.event.job = hooked.job;
       emit(result.event);
-      if (hooked.returnJob) { hooked.damageMark = damageCount; aim(hooked.returnJob.to); }
+      // The crate is taken at its first hook; a later hook after a drop does not start the count again.
+      if (hooked.returnJob) { hooked.damageMark ??= damageCount; aim(hooked.returnJob.to); }
       if (hooked.own) offer = null;
       const job = hooked.job ? jobInHand() : null;
       if (job?.id === hooked.job) aim(job.to);

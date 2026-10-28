@@ -73,7 +73,8 @@ ok(FEATURE_STATES['pilot-map'] === 'on', 'the pilot map is released (28 October 
 // Taken from the helicopter files of the commit before this card (loaded and hashed by hand).
 {
   // HELI-PAY-CONTINUE: only `jobs` moved (471279539 before), because the three routes' pay did; the legs, bearings, titles and tables are the old hashes.
-  const BEFORE = {jobs: 3599930983, legs: 3081688097, bearings: 3418701639, titles: 516794368, tables: 4158423665};
+  // With each job's pay mapped back to 300, 450 or 600 by its route the same 100 days hash to the old 471279539.
+  const BEFORE = {jobs: 89313597, legs: 3081688097, bearings: 3418701639, titles: 516794368, tables: 4158423665};
   const ids = ['tremblant-woods', 'tremblant-snow', 'panorama-ridge', 'summit-run', 'ardennes-forest', 'nope'];
   const jobs = []; for (let day = 0; day < 100; day++) jobs.push(dayJobs(day));
   const legs = []; for (const a of ids) for (const b of ids) legs.push([legFuelKg(a, b), legFuelKg(a, b, {summitRun: true})]);
@@ -318,9 +319,17 @@ const placeIds = PLACES.filter(place => !place.air).map(place => place.courses[0
 
 // ---- Jobs between owned destinations --------------------------------------------------------------------------------------
 {
-  // HELI-PAY-CONTINUE: a job pays the minutes it takes at the race rate (was 300 to 800 by distance band), so a farther leg pays more.
-  same(['tremblant-snow', 'panorama-ridge'].map(to => mapJobPay('tremblant-woods', to)), [2000, 2900], 'the original legs keep their pay');
-  ok(mapJobPay('tremblant-woods', 'pacific-canyon') > 2000, 'a leg farther than Tremblant Snow pays more');
+  // HELI-PAY-CONTINUE: a job pays the minutes it takes at the race rate (was 300 to 800 by distance band). A cruise leg plays as a
+  // short fade, so it counts one minute whatever its length: a pick-up at the home pad is 6 minutes (2,100), one at another pad 8 (2,800).
+  same([['tremblant-woods', 'tremblant-snow'], ['tremblant-woods', 'panorama-ridge'], ['tremblant-snow', 'panorama-ridge'], ['panorama-ridge', 'tremblant-woods'],
+    ['tremblant-woods', 'pacific-canyon'], ['pacific-canyon', 'tremblant-woods'], ['summit-run', 'tremblant-woods']].map(([from, to]) => mapJobPay(from, to)),
+  [2100, 2100, 2800, 2800, 2100, 2800, 2800], 'job pay: 2,100 from the home pad, 2,800 from another pad');
+  {
+    // The whole table, every ordered pair of places a job can name, pinned (the four old bands are gone).
+    const names = Object.keys(destinationsFor({summitRun: true, pilotMap: true})), table = [];
+    for (const a of names) for (const b of names) if (a !== b && legFuelKgMap(placeOfCourse(a).id, placeOfCourse(b).id) <= 400) table.push([a, b, mapJobPay(a, b)]);
+    same([table.length, table.filter(row => row[2] === 2100).length, table.filter(row => row[2] === 2800).length, fnv(JSON.stringify(table))], [244, 18, 226, 3737230975], 'the full map pay table');
+  }
   const dests = destinationsFor({summitRun: true, pilotMap: true});
   const classic = new Set(JOB_ROUTES.map(r => `${r.from}>${r.to}`));
   const everyone = Object.keys(dests);

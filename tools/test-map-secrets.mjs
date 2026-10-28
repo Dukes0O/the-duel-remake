@@ -204,10 +204,10 @@ const sessionAt = (courseId, {profile = profileWith(), secrets = ALL_SECRETS, pi
   };
   for (const [a, b] of passing) ok(distance(a, b) <= TABLE_PASS_KM, `${a} to ${b}: ${distance(a, b).toFixed(1)} km from the Table`);
 
-  // The first landing: 500 credits, once, and the map's last corner is filled in.
+  // The first landing: 1,750 credits (was 500), once, and the map's last corner is filled in.
   const profile = createProfile();
   const claim = claimTable(profile);
-  same([claim.ok, claim.already, claim.paid, claim.profile.credits - profile.credits], [true, false, TABLE_PAY, TABLE_PAY], 'the logbook pays 500 credits');
+  same([claim.ok, claim.already, claim.paid, claim.profile.credits - profile.credits], [true, false, TABLE_PAY, TABLE_PAY], 'the logbook pays 1,750 credits');
   ok(mapOf(claim.profile).table && hasSeen(claim.profile, TABLE_ID), 'and the Table is on the map');
   const second = claimTable(claim.profile);
   same([second.already, second.paid, second.profile === claim.profile], [true, 0, true], 'a second landing pays nothing and changes nothing');
@@ -381,9 +381,9 @@ const cruiseLeg = (session, to) => {
   ok(landed.some(e => e.type === 'touchdown' && e.result !== 'crash') && !landed.some(e => e.type === 'crash'), 'it lands on top without a crash');
   const logbook = landed.filter(e => e.type === 'tableFound');
   same(logbook.length, 1, 'the first landing in the circle finds the logbook');
-  same([logbook[0].pay, session.profile.credits - credits], [TABLE_PAY, TABLE_PAY], 'and pays 500 credits');
+  same([logbook[0].pay, session.profile.credits - credits], [TABLE_PAY, TABLE_PAY], 'and pays 1,750 credits');
   ok(/lookout/.test(logbook[0].text) && /logbook/.test(logbook[0].text), `with its words: ${logbook[0].text}`);
-  ok(noticeText(logbook[0]).includes('500'), 'the flight panel says the pay');
+  ok(noticeText(logbook[0]).includes('1,750'), 'the flight panel says the pay (HELI-PAY-CONTINUE: 1,750, was 500)');
   same(HELI_EVENT_CUES.tableFound(logbook[0]), [['heli.found']], 'and the find has its sound');
   ok(mapOf(session.profile).table, 'the map is filled in');
   // Up and down again: no second payment.

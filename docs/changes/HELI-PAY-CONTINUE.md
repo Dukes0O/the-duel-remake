@@ -82,54 +82,65 @@ clean at the start of a new visit (the count starts at zero).
 
 Typical minutes come from each job's own parts; they are estimates, not timed
 by a person, and they live in one place, `src/heli/heli-pay.js`. A delivery is
-leave the pad 1, hook 1, carry out 1, cruise (leg fuel / 0.6 kg a second),
-arrive 1, set down 1. From another pad it first cruises there and lands (about
-2 minutes plus the cruise). Cruise legs: Woods to Snow 25 kg (0.7 min), to
-Ridge 120 kg (3.3 min), Snow to Ridge 110 kg (3.1 min), Summit 150 to 160 kg
-(4.2 to 4.4 min).
+leave the pad 1, hook 1, carry out 1, one cruise leg 1, arrive 1, set down 1,
+so 6 minutes from the home pad. From another pad it first takes a cruise leg
+there and lands (one more leg and one more arrival), so 8 minutes.
+
+**Cruise counted at 1 minute per leg because it plays as a short fade** (about
+1.5 seconds on screen), whatever the fuel the leg burns. The first version paid
+a cruise by its fuel time (0.7 to 4.4 minutes), which paid minutes the player
+never flies. Claude's decision on review: each cruise leg is 1 minute (the
+take-off, the start of the cruise and the approach to land) and the rest of the
+job keeps 350 credits a minute. This makes every pick-up at the home pad pay the
+same and every pick-up at another pad pay the same, whatever the distance. The
+same rule changed the other jobs that included a cruise: the recovery job (6.5
+minutes: leave 1, cruise leg 1, arrive 1, find and hook 1.5, carry 1, set down
+1), the supply run (12), the ski group (9: out 3.5, run 2, home 3.5), a gold ski
+medal (6.5), the Table (5) and the three rescues, whose clocks run through the
+cruise leg's fuel time (about 3.5 minutes of clock to the site): each rescue is
+its clock time less 2.5 minutes for that one leg (hiker 7.5, avalanche and hoist
+8.5). The wildlife count (10: leave 1, cruise leg 1, arrive 1, search 5, cruise
+leg back 1, land 1) and the fire (18, five bucket trips) did not move.
 
 ### Pay table
 
 | Job | Before | After (base, clean bonus) | Minutes used |
 | --- | --- | --- | --- |
-| Car job Woods to Snow | 300 | 2,000 + 500 | 5.7 |
-| Car job Snow to Ridge (fly to Snow first) | 450 | 3,400 + 850 | 9.8 |
-| Car job Woods to Ridge | 600 | 2,900 + 750 | 8.3 |
-| Car jobs from the pilot's map | 300 to 800 by distance | same rule from the leg fuel (for example 4,550 to 7,700) | by leg |
-| Return crate Snow to Woods | 180 | 2,000 + 500 | 5.7 |
-| Return crate Ridge to Snow | 270 | 2,800 + 700 | 8.0 |
-| Return crate Ridge to Woods | 360 | 2,900 + 750 | 8.3 |
-| Car recovery (Panorama Ridge) | 500 | 3,100 + 800 | 8.8 |
+| Car job, car waiting at the home pad (Woods to Snow, Woods to Ridge) | 300, 600 | 2,100 + 550 | 6 |
+| Car job, car waiting at another pad (Snow to Ridge) | 450 | 2,800 + 700 | 8 |
+| Car jobs from the pilot's map | 300 to 800 by distance | 2,100 + 550 from the home pad, 2,800 + 700 from any other (all 244 pairs pinned) | 6 or 8 |
+| Return crate, any leg | 180, 270, 360 | 2,100 + 550 | 6 |
+| Car recovery (Panorama Ridge) | 500 | 2,300 + 600 | 6.5 |
 | Wildlife count: good, close, off | 600, 400, 200 | 3,500, 2,350, 1,150 | 10 |
 | Wildlife count: rare animal | +100 | +600 | |
 | Fire put out | 1,500 | 6,300 | 18 |
-| Rescue: lost hiker | 1,000 | 3,500 | 10 |
-| Rescue: avalanche | 1,200 | 3,850 | 11 |
-| Rescue: hoist | 1,200 | 3,850 | 11 |
+| Rescue: lost hiker | 1,000 | 2,650 | 7.5 |
+| Rescue: avalanche | 1,200 | 3,000 | 8.5 |
+| Rescue: hoist | 1,200 | 3,000 | 8.5 |
 | Rescue shares (unhurt, hurt, badly hurt) | 100, 60, 25 per cent | unchanged | |
-| Medevac stretcher bonus on a hoist | +200 | +650 | |
-| Supply run, each crate | 300 | 1,450 | 14 for three |
-| Supply run, crate released from over 1 m | 150 less | 750 less | |
-| Supply run, all three in time | +100 (1,000 in all) | +500 (4,850 in all) | |
-| Heli-ski group job | 1,200 | 5,600 + 1,400 | 16 |
-| Ski medals per run: bronze, silver, gold (total) | 150, 300, 500 | 1,050, 2,100, 3,500 | 10 |
+| Medevac stretcher bonus on a hoist | +200 | +500 | |
+| Supply run, each crate | 300 | 1,250 | 12 for three |
+| Supply run, crate released from over 1 m | 150 less | 650 less | |
+| Supply run, all three in time | +100 (1,000 in all) | +400 (4,150 in all) | |
+| Heli-ski group job | 1,200 | 3,150 + 800 | 9 |
+| Ski medals per run: bronze, silver, gold (total) | 150, 300, 500 | 700, 1,400, 2,300 | 6.5 |
 | Powder stash, each of three | 100 | 700 | 2 |
-| The Table, found once | 500 | 3,500 | 10 |
+| The Table, found once | 500 | 1,750 | 5 |
 | Lessons, Lab challenges | no pay | no pay | |
 
 Real mode still pays a quarter more on the car jobs, recovery, return crates
-and the ski group, and on their clean bonus.
+and the ski group, and on their clean bonus (a 2,100 job pays 2,625 and 688).
 
 ### Making earning clear
 
-1. Before a job starts: the dispatch board row says "Pays 2,000 credits, +500
+1. Before a job starts: the dispatch board row says "Pays 2,100 credits, +550
    for a clean delivery" (the count says "Pays up to 3,500 credits"); the
    arrival panel's crate says the same; a waiting rescue call says "Pays up to
-   3,850 credits; a hurt casualty pays less" (or "for three crates"); a fire
+   3,000 credits; a hurt casualty pays less" (or "for three crates"); a fire
    call says "Pays 6,300 credits when it is out"; the ski board row for the
    group says it too.
-2. When a job ends: the notice reads, for example, "Job done: 2,500 credits
-   (2,000 and 500 for a clean delivery). You now have 14,300." The same
+2. When a job ends: the notice reads, for example, "Job done: 2,650 credits
+   (2,100 and 550 for a clean delivery). You now have 14,300." The same
    balance goes on the rescue, crate, fire, count, ski group, powder and Table
    notices, and the ski result card. Every paying event carries `balance`,
    set in the session's `emit`.
@@ -147,22 +158,26 @@ widened and no flight, physics or race result changed.
   course" and "shut down selects the arrival course and parked car". This is
   the fix itself.
 - `test-heli-jobs.mjs`: three route pays, return crate rule (was 60% of the
-  car job, now the minutes rule), recovery 500 to 3,100, the clean bonus on a
+  car job, now the minutes rule), recovery 500 to 2,300, the clean bonus on a
   clean car job, a crate and a recovery, and no bonus after a dropped load,
-  and the board and arrival wording. Pin 3257734403 became 2810692613: with the
-  new pays mapped back to 300, 450 and 600 the same list hashes to the old
-  value, so only pay moved.
+  and the board and arrival wording. The return crate check is exact (2,100 and
+  550). New check: a crate dropped hard and hooked again earns no bonus (the
+  crate is marked at its first hook; it failed with the old re-mark on every
+  hook). Pin 3257734403 became 1330338215: with each route's pay mapped back to
+  300, 450 or 600 the same list hashes to the old value, so only pay moved.
 - `test-map-destinations.mjs`: the distance bands (300 to 800) are replaced by
-  the minutes rule; the `jobs` pin moved (471279539 to 3599930983) and the
-  legs, bearings, titles and tables pins did not.
+  the minutes rule, and the new pay table is pinned exactly: sample pairs, the
+  count of pairs at 2,100 (18) and at 2,800 (226) and a hash of all 244. The `jobs`
+  pin moved (471279539 to 89313597; mapped back by route it is the old value) and
+  the legs, bearings, titles and tables pins did not.
 - `test-heli-survey.mjs`, `test-heli-skin-session.mjs`: count pays and the
-  board pin 3895189678 to 3645581706 (pays only).
+  board pin 3895189678 to 2469111954 (pays only).
 - `test-heli-skin-gear.mjs`: rescue and survey scenario hashes (they print
-  the credits paid), the stretcher 200 to 650, hoist 3,850.
+  the credits paid), the stretcher 200 to 500, hoist 3,000.
 - `test-heli-skin-session.mjs`, `test-heli-rescue-session.mjs`,
   `test-heli-autopilot-rescue.mjs`: pins for the car job, fire, fire session
   and switch-off flights (they hash pay words); hiker, avalanche, hoist and
-  supply hashes did not move. Pays 1,000 to 3,500 and so on.
+  supply hashes did not move. Pays 1,000 to 2,650 and so on.
 - `test-heli-rescue.mjs`, `test-heli-summit-rescues.mjs`,
   `test-heli-summit-tune.mjs`, `test-heli-missions.mjs`, `test-heli-save.mjs`,
   `test-heli-fire-session.mjs`, `test-heli-ski-save.mjs`, `test-ski-heli.mjs`,
@@ -170,7 +185,7 @@ widened and no flight, physics or race result changed.
 - `test-heli-ski-save.mjs` also reads `docs/HELI_SKIING.md`; that file and the
   pay lines in `HELICOPTER.md`, `HELI_RESCUE.md`, `HELI_FIRE.md` and
   `HELI_WILDLIFE.md` were updated to match.
-- New `tools/test-heli-pay.mjs` (34 checks): every pay equals its minutes at
+- New `tools/test-heli-pay.mjs` (36 checks): every pay equals its minutes at
   the rate within 50 credits, the race-rate reference, the bonus and the
   words.
 

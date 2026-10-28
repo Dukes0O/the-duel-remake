@@ -336,12 +336,12 @@ const SCRIPTED = {};
 if (want('scripted')) {
   const supply = flySupply({fromHome: true});
   ok(supply.done && !supply.failed, 'supply: flown by script from the home pad, paid, no failure');
-  same([supply.done.paid, missionsOf(supply.session.profile).supplies, supply.log.some(e => e.type === 'charged' && e.kind === 'fuelTruck')], [4850, 1, false],
-    'supply: 4,850 credits (was 1,000), one supply run, nobody stranded');
+  same([supply.done.paid, missionsOf(supply.session.profile).supplies, supply.log.some(e => e.type === 'charged' && e.kind === 'fuelTruck')], [4150, 1, false],
+    'supply: 4,150 credits (was 1,000), one supply run, nobody stranded');
   const avalanche = flyAvalanche();
   ok(avalanche.done && !avalanche.failed, 'avalanche: flown by script from the home pad, paid, no failure');
   same([avalanche.done.paid, avalanche.done.condition, missionsOf(avalanche.session.profile).rescued, avalanche.log.some(e => e.type === 'charged' && e.kind === 'fuelTruck'),
-    has(avalanche.log, 'crash')], [3850, 0, 1, false, false], 'avalanche: 3,850 credits (HELI-PAY-CONTINUE, was 1,200), unhurt, one person, nobody stranded, no crash');
+    has(avalanche.log, 'crash')], [3000, 0, 1, false, false], 'avalanche: 3,000 credits (HELI-PAY-CONTINUE, was 1,200), unhurt, one person, nobody stranded, no crash');
   if (process.env.RESCUE_FINISH_REPORT) for (const [kind, run] of [['supply', supply], ['avalanche', avalanche]])
     console.log('RESCUE-FINISH', JSON.stringify({course: 'summit-run', kind, completed: !!run.done, seconds: run.done?.clockSeconds,
       fuelKg: run.session.view().heli.fuelKg, fingerprint: run.session.fingerprint(), resets: run.log.filter(e => e.type === 'holdReset')}));

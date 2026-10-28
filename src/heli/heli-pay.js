@@ -11,39 +11,40 @@ export const HELI_PAY = Object.freeze({
   creditsPerMinute: 350,
   cleanShare: 0.25,
   step: 50,
-  // The cruise leg burns this many kilograms of fuel a second (the same number as FIRE.cruiseKgPerSecond).
-  cruiseKgPerSecond: 0.6,
 });
 
-// Minutes for the parts every delivery shares.
-export const HELI_STEPS = Object.freeze({leavePad: 1, hook: 1, carryOut: 1, arrive: 1, setDown: 1});
+// Minutes for the parts every delivery shares. A cruise leg plays as a short fade (about 1.5 seconds), so it
+// is not paid as flying time: each leg counts 1 minute (the take-off, the start of the cruise and the
+// approach to land), however far it is.
+export const HELI_STEPS = Object.freeze({leavePad: 1, hook: 1, carryOut: 1, cruiseLeg: 1, arrive: 1, setDown: 1});
 
 // Typical minutes for the jobs that are not a simple delivery.
 export const HELI_MINUTES = Object.freeze({
-  recovery: 8.8,   // leave 1, cruise to the slope 3.3, arrive 1, find and hook 1.5, carry 1, set down 1
-  survey: 10,      // leave 1, cruise about 2, arrive 1, search 5, fly back about 2, land 1 (a count at home skips the cruises)
+  recovery: 6.5,   // leave 1, cruise leg 1, arrive 1, find and hook 1.5, carry 1, set down 1
+  survey: 10,      // leave 1, cruise leg 1, arrive 1, search 5, cruise leg back 1, land 1 (a count at home skips the cruises)
   fire: 18,        // answered at once: 5 drops, 15 to 25 minutes of flying (docs/HELI_FIRE.md section 4)
-  hiker: 10,       // 15 minute clock, finished in about 10
-  avalanche: 11,   // 12 minute clock, a beacon search and a held dig
-  hoist: 11,       // 12 minute clock, a hold over the driver and a lift
-  supply: 14,      // leave 1, cruise 3.5, arrive 1, three crates of about 3 minutes each
-  skiGroup: 16,    // to Summit Run 7, the run 2, home 7
-  skiGold: 10,     // the trip out and the run, paid once for each new medal
+  // The rescue clocks run through a cruise leg's fuel time (about 3.5 minutes of clock to the site), but
+  // the cruise plays as a fade, so each rescue is its clock time less 2.5 minutes for that one leg.
+  hiker: 7.5,      // 15 minute clock, finished in about 10 of clock
+  avalanche: 8.5,  // 12 minute clock, about 11 of clock: a beacon search and a held dig
+  hoist: 8.5,      // 12 minute clock, about 11 of clock: a hold over the driver and a lift
+  supply: 12,      // leave 1, cruise leg 1, arrive 1, three crates of about 3 minutes each
+  skiGroup: 9,     // out 3.5 (leave, cruise leg, arrive, drop), the run 2, home 3.5
+  skiGold: 6.5,    // out 3.5, the run 2, back at the pad 1; paid once for each new medal
   stash: 2,        // a hidden powder stash, found once
-  table: 10,       // the trip to the Table, paid once
+  table: 5,        // leave 1, cruise leg 1, arrive 1, find and land 2; paid once
 });
 
 export const roundPay = value => Math.max(HELI_PAY.step, Math.round(value / HELI_PAY.step) * HELI_PAY.step);
 export const payForMinutes = minutes => roundPay(HELI_PAY.creditsPerMinute * minutes);
 export const cleanBonusFor = pay => roundPay(pay * HELI_PAY.cleanShare);
-export const cruiseMinutes = fuelKg => fuelKg > 0 ? fuelKg / HELI_PAY.cruiseKgPerSecond / 60 : 0;
 
-// A delivery from the home pad: leave, hook, carry out, cruise, arrive, set down.
-// From another pad the helicopter first cruises there (`positionKg`, the fuel of that leg) and lands.
-export function deliveryMinutes(cruiseKg, positionKg = null) {
+// A delivery from the home pad: leave, hook, carry out, one cruise leg, arrive, set down.
+// From another pad (`pickupAway`) the helicopter first cruises there and lands: one more leg and arrival.
+export function deliveryMinutes(pickupAway = false) {
   const steps = HELI_STEPS;
-  const own = steps.hook + steps.carryOut + cruiseMinutes(cruiseKg) + steps.arrive + steps.setDown;
-  return positionKg === null ? steps.leavePad + own : steps.leavePad + cruiseMinutes(positionKg) + steps.arrive + own;
+  const own = steps.hook + steps.carryOut + steps.cruiseLeg + steps.arrive + steps.setDown;
+  return pickupAway ? steps.leavePad + steps.cruiseLeg + steps.arrive + own : steps.leavePad + own;
 }
 
 const TOP = payForMinutes(HELI_MINUTES.survey);

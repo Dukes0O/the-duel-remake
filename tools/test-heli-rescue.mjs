@@ -460,25 +460,25 @@ const target = {x: 40, z: -10};
   ok(hooked.ok, 'a supply crate hooks like any load');
   release(crate, flat);
 
-  // HELI-PAY-CONTINUE: a crate pays 1,450 (was 300), 750 less from height (was 150), 500 for all three (was 100).
-  eq(cratePay({released: true, dropMetres: 0}), 1450, 'a clean crate pays 1,450');
-  eq(cratePay({released: true, dropMetres: 1}), 1450, 'released from exactly 1 m is clean');
-  eq(cratePay({released: true, dropMetres: 1.5}), 700, 'released from higher than 1 m pays 750 less');
-  eq(cratePay({released: true, dropMetres: 12}), 700, 'however high');
+  // HELI-PAY-CONTINUE: a crate pays 1,250 (was 300), 650 less from height (was 150), 400 for all three (was 100).
+  eq(cratePay({released: true, dropMetres: 0}), 1250, 'a clean crate pays 1,250');
+  eq(cratePay({released: true, dropMetres: 1}), 1250, 'released from exactly 1 m is clean');
+  eq(cratePay({released: true, dropMetres: 1.5}), 600, 'released from higher than 1 m pays 650 less');
+  eq(cratePay({released: true, dropMetres: 12}), 600, 'however high');
   eq(cratePay({released: false, dropMetres: 0}), 0, 'a crate not down pays nothing');
-  eq(cratePay({released: true}), 1450, 'no drop given is clean');
+  eq(cratePay({released: true}), 1250, 'no drop given is clean');
   const clean = {released: true, dropMetres: 0}, rough = {released: true, dropMetres: 6}, missing = {released: false, dropMetres: 0};
-  eq(supplyPay([clean, clean, clean]).total, 4850, 'three clean crates in time pay 4,850');
-  eq(supplyPay([clean, clean, clean]).bonus, 500, 'with the 500 bonus');
-  eq(supplyPay([clean, clean, clean], {inTime: false}).total, 4350, 'no bonus after the clock');
-  eq(supplyPay([clean, clean, rough]).total, 4100, 'one rough crate: 1,450 + 1,450 + 700 + 500');
-  eq(supplyPay([clean, clean, missing]).total, 2900, 'two down: 2,900, no bonus');
+  eq(supplyPay([clean, clean, clean]).total, 4150, 'three clean crates in time pay 4,150');
+  eq(supplyPay([clean, clean, clean]).bonus, 400, 'with the 400 bonus');
+  eq(supplyPay([clean, clean, clean], {inTime: false}).total, 3750, 'no bonus after the clock');
+  eq(supplyPay([clean, clean, rough]).total, 3500, 'one rough crate: 1,250 + 1,250 + 600 + 400');
+  eq(supplyPay([clean, clean, missing]).total, 2500, 'two down: 2,500, no bonus');
   eq(supplyPay([clean, clean, missing]).down, 2, 'counted');
   eq(supplyPay([]).total, 0, 'none down pays 0');
-  eq(supplyPay([rough, rough, rough]).total, 2600, 'three rough crates: 2,100 and the bonus');
-  eq(SUPPLY_PAY.perCrate, 1450, 'the pay table: 1,450 a crate');
-  eq(SUPPLY_PAY.highCut, 750, '750 less when dropped');
-  eq(SUPPLY_PAY.allCratesBonus, 500, '500 for all three');
+  eq(supplyPay([rough, rough, rough]).total, 2200, 'three rough crates: 1,800 and the bonus');
+  eq(SUPPLY_PAY.perCrate, 1250, 'the pay table: 1,250 a crate');
+  eq(SUPPLY_PAY.highCut, 650, '650 less when dropped');
+  eq(SUPPLY_PAY.allCratesBonus, 400, '400 for all three');
   eq(SUPPLY_PAY.dropFrom, CABLE.dropFrom, 'by H1\'s drop rule');
 
   // From a real release: set down in the yard, and dropped from height.
@@ -494,16 +494,16 @@ const target = {x: 40, z: -10};
   };
   const gentle = place(0.5);
   ok(crateResult(gentle.c, yard).released, 'a crate eased down in the yard is delivered');
-  eq(cratePay(crateResult(gentle.c, yard)), 1450, 'and pays 1,450');
+  eq(cratePay(crateResult(gentle.c, yard)), 1250, 'and pays 1,250');
   const dropped = place(6);
   ok(crateResult(dropped.c, yard).released, 'a crate dropped in the yard is delivered');
   near(crateResult(dropped.c, yard).dropMetres, 6, 1e-6, 'from 6 m');
-  eq(cratePay(crateResult(dropped.c, yard)), 700, 'for 700');
+  eq(cratePay(crateResult(dropped.c, yard)), 600, 'for 600');
   ok(types(dropped.events).includes('drop'), 'H1 reports the drop');
   // Dropped, hooked again on the ground and let go there: the clean release counts.
   dropped.c.hooked = true;
   noteCrateRelease(dropped.c, release(dropped.c, flat).event);
-  eq(cratePay(crateResult(dropped.c, yard)), 1450, 'a crate dropped, picked up again and let go on the ground pays 1,450');
+  eq(cratePay(crateResult(dropped.c, yard)), 1250, 'a crate dropped, picked up again and let go on the ground pays 1,250');
   eq(noteCrateRelease(createSupplyCrate({id: 'food', ground: flat}), {type: 'cargoHit'}), 0, 'other events change nothing');
   const away = place(0.5); away.c.x = 40;
   eq(crateResult(away.c, yard).released, false, 'a crate outside the yard is not delivered');
