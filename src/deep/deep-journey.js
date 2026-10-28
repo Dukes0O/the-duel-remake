@@ -4,7 +4,7 @@ import { buildDeepRamp, rampGrade, rampOpening, rampClearsScenery } from './deep
 import { defineZone } from './deep-zone.js';
 import { createZoneFloor, ZONE_SPAN } from './zone-floor.js';
 // DEEP-EXPLORER
-import {deepRocks, stopAtDeepRock} from './deep-rocks.js';
+import {deepRocks, driveIntoDeepRocks} from './deep-rocks.js';
 import {flushDeepChart} from './deep-story.js';
 
 const NEUTRAL = Object.freeze({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false, interact: false });
@@ -155,7 +155,7 @@ export function initializeDeepJourney(duel) {
   const resolved = duel.course.deepZone;
   if (!resolved) { duel.deepRuntime = null; return; }
   duel.deepRuntime = { ...resolved, ramp: duel.course.deepRamp, raceCourse: duel.course, zoneCourse: null };
-  duel.deepRuntime.rocks = deepRocks(resolved.zone, resolved.floor); // DEEP-EXPLORER
+  duel.deepRuntime.rocks = []; // DEEP-ROCKS-PUSH: the run's own rocks are laid out when the dive starts
 }
 function changePhase(duel, phase) {
   const journey = duel.state.deepJourney;
@@ -237,6 +237,7 @@ export function stepDeepJourney(duel, dt) {
     placeRamp(duel, journey.diveFrom + (runtime.ramp.length - journey.diveFrom) * amount);
     if (journey.diveElapsed < 2) return true;
     runtime.zoneCourse = zoneCourse(runtime); duel.course = runtime.zoneCourse;
+    runtime.rocks = deepRocks(runtime.zone, runtime.floor); runtime.rockEpisode = null; // DEEP-ROCKS-PUSH: fresh from the zone seed every dive
     Object.assign(duel.state, { s: 0, prevS: 0, lateral: 0, prevLateral: 0,
       headingError: 0, groundHeight: SEA_LEVEL - 8 });
     changePhase(duel, 'underwater');
@@ -260,7 +261,7 @@ export function stepDeepJourney(duel, dt) {
   }
   const explorerStart = journey.phase === 'underwater' ? duel.course.worldAt(duel.state.s, duel.state.lateral) : null; // DEEP-EXPLORER
   if (!stepRampDriving(duel, dt)) duel._drive(dt); // DEEP-RAMP-2
-  if (explorerStart) stopAtDeepRock(duel, explorerStart); // DEEP-EXPLORER
+  if (explorerStart) driveIntoDeepRocks(duel, explorerStart, dt); // DEEP-ROCKS-PUSH
   duel.state.groundHeight=duel._supportAt(duel.state.s,duel.state.lateral).y;
   duel._jump(duel.state, dt, journey.elapsedSec);
   const point = duel.course.worldAt(duel.state.s, duel.state.lateral);
