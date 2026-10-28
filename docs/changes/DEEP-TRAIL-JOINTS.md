@@ -80,3 +80,7 @@ The lane tier picks suites that import a changed file or name its path within tw
 ### Results
 
 All 17 `tools/test-deep-*.mjs` pass by hand, including kelp-coast (9/9) and explorer. Lane tier (`--tier lane --changed --jobs 4`): 26 passed, 0 failed, 0 not run. `npm run build`: passed (output deleted). Browser scenarios (`tools/scenarios/deep-*.mjs`) were not run here.
+
+## Claude's review of the fix (28 October 2026, night)
+
+Cause confirmed by bisect and in the browser: the smoothed start joint turned the car 70 degrees toward the ramp at s = 0. The start joint's turn now lies before s = 0, nearest keeps the car's own branch, turn length 2 m. No assertion changed; all 17 Deep suites by hand, lane 26/26, build pass. Verdict: merge and release at once (live fault). Lesson for the lane tier: Deep changes run every tools/test-deep-*.mjs by hand.
