@@ -263,6 +263,18 @@ assert.ok(html.includes('MEDAL REWARD · Arrives fully tuned.'), 'the owned meda
 assert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 12'));
 garageCar = 'koenigsegg_jesko'; html = garage();
 assert.ok(html.includes('GARAGE COMPLETION REWARD') || html.includes('MAX OTHER CARS'), 'the Jesko keeps its own page');
+// Claude, 28 October 2026: how a locked earned car or the Jesko is earned sits right under the ratings,
+// above Paint Finish; a priced car keeps its Unlock card below, and an owned car keeps its sheet where it was.
+assert.ok(html.includes('PAINT FINISH') && html.indexOf('GARAGE COMPLETION REWARD') < html.indexOf('PAINT FINISH'), 'the Jesko card is above Paint Finish');
+assert.ok(html.indexOf('car-capabilities') < html.indexOf('GARAGE COMPLETION REWARD'), 'and below the ratings');
+garageCar = 'medal_test_a'; saved = createProfile(); html = garage();
+assert.ok(html.indexOf('capability-note') < html.indexOf('EARNED, NOT BOUGHT') && html.indexOf('EARNED, NOT BOUGHT') < html.indexOf('PAINT FINISH'),
+  'a locked earned car shows how to earn it between the ratings and Paint Finish');
+assert.equal(html.split('EARNED, NOT BOUGHT').length, 2, 'once');
+garageCar = 'falcone_heritage'; html = garage();
+assert.ok(html.indexOf('PAINT FINISH') < html.indexOf('data-action="unlock-car"'), 'a priced car keeps its Unlock card below Paint Finish');
+saved = win.profile; garageCar = 'medal_test_a'; html = garage();
+assert.ok(html.indexOf('MEDAL SHEET') < html.indexOf('PAINT FINISH') && html.includes('EARNED, NOT BOUGHT') === false, 'an owned earned car keeps its layout');
 // The menu: a hidden car is never the menu car or the rival's car.
 flags['earned-cars'] = false;
 const choices = {car: 'medal_test_a', rival: {car: 'medal_test_b', upgradeLevel: 0}};

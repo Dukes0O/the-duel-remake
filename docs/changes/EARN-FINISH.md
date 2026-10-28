@@ -505,3 +505,10 @@ None changed. Added: two checks in `tools/test-earned-cars-ui.mjs`, and an earne
 ### Removed
 
 The picture scenario `tools/scenarios/zz-earn-finish.mjs` and the `.evidence` captures were removed after use. Nothing in the game was replaced.
+
+### Claude's two decisions on the garage page, built the same day
+
+1. **The unlock card moves up.** On a locked earned car and on the Jesko, the card ("EARNED, NOT BOUGHT", medals x / 6, or "GARAGE COMPLETION REWARD", cars fully tuned) now sits right under the car's name and ratings, above Paint Finish and Specialist Drivers, so it is on screen at 1280 x 720 (the card spans y 208 to 390 on the Enzo). An owned car keeps its layout (the sheet before Paint Finish), and a priced car keeps its Unlock card below. Files: `src/screen-garage.js` (the card is built once before the page and placed under the ratings), `src/screen-garage.css` (a gap under the card).
+2. **The Cup Trophy Case is styled.** It was bare browser bullets in the browser's own font. It now has the Paint Finish heading with a count ("4 / 12"), the note line, and 12 tiles, one row per cup and one column per difficulty. A won tile has a bronze, silver or gold disc by difficulty and brighter text; a tile not yet won has a dashed empty ring and muted text. Every word is kept, including "Mountain Cup · Medium · WON" and "Not yet won". Files: `src/screen-trophies.js`, `src/screen-garage.css`.
+
+Tests: `tools/test-earned-cars-ui.mjs` gains order checks (the Jesko and a locked earned car above Paint Finish and below the ratings, once; a priced car's Unlock below Paint Finish; an owned earned car's sheet before Paint Finish). `tools/test-grand-prix-cups.mjs` gains a check of the trophy tiles (heading count, 12 tiles, one won tile, words kept); the old assertions are unchanged. Pictures in the scratchpad: `earn-locked-enzo-after.png`, `earn-locked-jesko-after.png`, `earn-trophy-case-after.png`. Gates: lane tier 59 of 59, build, `earned-cars` scenario, `test-earned-cars-ui`, `test-grand-prix-cups`, `test-koenigsegg-ui` all pass.

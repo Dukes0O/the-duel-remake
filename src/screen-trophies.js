@@ -7,10 +7,10 @@ export function trophyCase(profile,{enabled=false}={}){
   if(!enabled)return '';
   const state=normalizeCups(profile?.cups);
   const rows=state.version===1?state.trophies:[];
-  return '<section class="paint-panel" aria-label="Cup trophy case"><h3>CUP TROPHY CASE</h3><p>One trophy per cup and difficulty. Win bonuses are paid once.</p><ul>'+CUPS.flatMap(cup=>['easy','medium','hard'].map(cpu=>{
-    const earned=rows.includes(cup.id+':'+cpu);
-    return '<li><span aria-hidden="true">'+(earned?'🏆':'○')+'</span> '+cup.name+' · '+difficulty(cpu)+' · '+(earned?'WON':'Not yet won')+'</li>';
-  })).join('')+'</ul></section>';
+  // Claude, 28 October 2026: tiles in the garage's own style (same heading as Paint Finish); one row per cup, Easy to Hard.
+  const all=CUPS.flatMap(cup=>['easy','medium','hard'].map(cpu=>({cup,cpu,earned:rows.includes(cup.id+':'+cpu)})));
+  return '<section class="paint-panel trophy-case" aria-label="Cup trophy case"><div class="paint-heading"><h3>CUP TROPHY CASE</h3><span>'+all.filter(row=>row.earned).length+' / '+all.length+'</span></div><p class="trophy-note">One trophy per cup and difficulty. Win bonuses are paid once.</p><ul class="trophy-tiles">'+all.map(({cup,cpu,earned})=>
+    '<li class="trophy-tile '+cpu+(earned?' won':'')+'"><i aria-hidden="true"></i><span>'+cup.name+' · '+difficulty(cpu)+' · '+(earned?'WON':'Not yet won')+'</span></li>').join('')+'</ul></section>';
 }
 export function cupsPanel(profile,{enabled=false,courses=[],owns=()=>false,playerId}={}){
   if(!enabled)return '';
