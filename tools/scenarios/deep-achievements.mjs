@@ -33,11 +33,16 @@ export async function run(context) {
   if (await context.evaluate(`getComputedStyle(document.querySelector('.achievement-tiles')).gridTemplateColumns.split(' ').length`) !== 2)
     throw Error('Narrow garage must use two columns.');
   await context.screenshot('shelf-two-columns');
-  // Reopen on the live switches; Lab-only names must disappear.
+  // Reopen on the live switches, with no flags in the address. The Lab went live on
+  // 25 October 2026 (LAB-LIVE), so the live shelf shows all six, the same as the Lab leg
+  // above. The shelf with the Lab off (Raised alone) is held by tools/test-deep-achievements.mjs.
   await context.navigate('/tools/menu-check.html');
   await context.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'live flags ready', 90000);
   await context.evaluate(`document.querySelector('#garage-open').click()`);
-  await context.waitFor(`document.querySelectorAll('[data-achievement]').length === 1`, 'live shelf has only Raised', 20000);
+  await context.waitFor(`document.querySelectorAll('[data-achievement]').length === 6`, 'live shelf has all six achievements', 20000);
+  const live = await context.evaluate(`[...document.querySelectorAll('[data-achievement]')].map(node => node.dataset.achievement)`);
+  if (live.join(',') !== 'raised-from-the-deep,she-runs-again,wreck-racer,coast-cup-as-found,restored,coast-cup-restored')
+    throw Error('Live shelf must list the six achievements in order, got ' + live.join(','));
   await context.evaluate(`document.querySelector('[aria-label="Achievements"]').scrollIntoView({block:'center'})`);
   await context.screenshot('shelf-live-flags');
 }

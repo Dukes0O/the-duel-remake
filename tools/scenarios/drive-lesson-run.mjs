@@ -61,12 +61,12 @@ export async function run(context){
     const choices=[...panel.querySelectorAll('input[name="drive-lesson-course"]')];
     return {text:panel.textContent,enabled:choices.filter(n=>!n.disabled).map(n=>n.dataset.driveCourse),
       locked:[...panel.querySelectorAll('.lesson-board-locked')].map(n=>({text:n.textContent,cursor:getComputedStyle(n).cursor,color:getComputedStyle(n).color}))};})()`);
-  if(board.enabled.join(',')!=='panorama-ridge,tremblant-woods'||/not owned|buy /i.test(board.text)
+  if(board.enabled.join(',')!=='panorama-ridge,tremblant-woods,ardennes-forest'||/not owned|buy /i.test(board.text)
       ||board.locked.length!==3||board.locked.some(n=>n.cursor==='pointer'||!/Opens later/.test(n.text)))
     throw Error('New-player board choices or locked lesson reasons are wrong: '+JSON.stringify(board));
   report.newPlayerBoard=board;
   report.captures.push(await context.screenshot('driving-lesson-new-player-board'));
-  for(const courseId of ['tremblant-woods','panorama-ridge']) {
+  for(const courseId of ['ardennes-forest','tremblant-woods','panorama-ridge']) {
     await click(context,`.drive-lesson-board [data-drive-course="${courseId}"]`);
     const selected=await context.evaluate(`window.__qaApp.driveLessonCourse`);
     if(selected!==courseId)throw Error('Unowned corner choice did not respond: '+courseId);
