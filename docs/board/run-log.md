@@ -1417,3 +1417,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged LESSON-PANEL-CLICKS (buttons patched in place, 6/6 clicks while moving; panel clears the minimap); lane 39/40, the one failure is the helipad map canvas on integration.
 - 27 Oct night: merged LESSONS-MORE-ROADS (Ardennes braking and racing line, Summit gearbox and snow; every-car 308/308; lane 32/33 (helipad failure is on integration)).
 - 28 Oct night: merged QA-HELIPAD-MAP-CANVAS (helipad lesson test broke when pilot-map went on); lane 38/38.
+- 27 Oct night: merged ARDENNES-FAR-FOREST-LIGHT (4,076 far firs in groves, no shadows; Ardennes signature granted (5d475bd4); lane 167/168 (helipad, since fixed); frame check before release).
