@@ -1,10 +1,12 @@
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
-// DRIVE-LESSONS-VIEW-2: lessons 2 to 4 in the real game, private port, memory-only storage. Ordinary UI and real key
-// events only. The one fixture is the saved progress of the lessons before the one being taken (lesson 2 cannot open
-// otherwise), written into the temporary career. No result is invented and no frame is timed. The "look" captures at
-// the end of each lesson are marked as such below: they exist only to feed the picture sheet.
+// Lessons 2 to 4 in the real game as they play now (DRIVING_LESSONS 14), private port, memory-only storage: the board
+// rows, each lesson's briefing, scene, rev counter or ice sign, and one native Follow me result card. Clicks and keys are
+// real. A run no longer ends early, so a whole run is stepped on the game's own fixed clock with the instructor's recorded
+// inputs sent through the normal input path. The one fixture is the saved progress of the lessons before the one being
+// taken (lesson 2 cannot open otherwise), written into the temporary career. No result is invented, no car is placed
+// and no frame is timed.
 async function click(context, selector) {
   // A screen that has only just been asked for may not have its size yet.
   await context.waitFor(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});const b=n&&n.getBoundingClientRect();return !!b&&b.width>0&&b.height>0;})()`, 'visible ' + selector, 8000);
@@ -22,53 +24,55 @@ const key = (context, type, code, letter, windowsVirtualKeyCode) =>
 const press = (context, code, letter, vk) => key(context, 'keyDown', code, letter, vk);
 const release = (context, code, letter, vk) => key(context, 'keyUp', code, letter, vk);
 
-async function takeLesson(context, report, lessonId, courseName) {
+// The stepper: the game's own fixed clock, with the instructor's recorded inputs as the student's in the steps where the student drives.
+const stepperSource = `window.lessonDrive=({stopS=Infinity,ticks=90000}={})=>{
+  const a=window.__qaApp,r=a.duel.drivingLesson;a.stop();let n=0;
+  for(;n<ticks&&r.lesson.phase==='driving'&&a.duel.state.s<stopS;n++){
+    if(r.lesson.stage!=='watch')a.duel.setInput(r.plan.instructor.inputs[Math.round(r.lesson.attempt.elapsedSeconds*120)]??{});
+    a.duel.step(1/120);
+  }
+  a._driveLessonUi?.update();a.onFrame?.(a.duel.state);
+  return{ticks:n,stage:r.lesson.stage,phase:r.lesson.phase,s:a.duel.state.s};};`;
+
+// Board, then the lesson's start button, then its briefing; the briefing's button opens Watch me and Skip opens Follow me.
+async function takeLesson(context, report, lessonId, courseId) {
   await click(context, '#driving-instructor');
   await context.waitFor(`!!document.querySelector('.drive-lesson-board [data-drive-action="start:${lessonId}"]')`, `${lessonId} start button`);
+  if (await context.evaluate(`!!document.querySelector('.drive-lesson-board [data-drive-lesson="${lessonId}"][data-drive-course="${courseId}"]')`))
+    await click(context, `.drive-lesson-board [data-drive-lesson="${lessonId}"][data-drive-course="${courseId}"]`);
   await click(context, `.drive-lesson-board [data-drive-action="start:${lessonId}"]`);
-  await context.waitFor(`!!window.__qaApp.duel.drivingLesson||window.__qaApp.driveLessonMessage?.includes('could not complete a clean run')`,
+  await context.waitFor(`!!window.__qaApp.duel.drivingLesson||window.__qaApp.driveLessonMessage?.includes("can't drive this lesson")`,
     `${lessonId} native instructor plan or explicit failure`, 120000);
   const failed = await context.evaluate(`!window.__qaApp.duel.drivingLesson?window.__qaApp.driveLessonMessage:null`);
   if (failed) throw Error(failed);
+  await context.waitFor(`window.__qaApp.visualReady&&!!document.querySelector('.drive-lesson-briefing')&&
+    !!window.__render.scene.getObjectByName('Driving lesson cones and red board')?.visible`, `${lessonId} briefing and scene`, 90000);
+  report[lessonId] = {...report[lessonId], briefing: await context.evaluate(`(()=>{
+    const r=window.__qaApp.duel.drivingLesson,brief=document.querySelector('.drive-lesson-briefing');
+    if(r.lesson.id!==${JSON.stringify(lessonId)}||r.plan.courseId!==${JSON.stringify(courseId)}||r.lesson.stage!=='watch'||window.__qaApp.driveLessonBriefing!==true)
+      throw Error('Lesson did not open on its briefing on the chosen course');
+    if(r.state.opponents.length||r.state.traffic.length||r.state.tyreSlipRules!==true)throw Error('Lesson isolation missing');
+    const steps=brief.querySelectorAll('.drive-lesson-brief-steps li').length,corners=brief.querySelectorAll('.drive-lesson-map-corners li').length;
+    if(steps!==4||!brief.querySelector('svg.drive-lesson-section-map')||corners!==r.plan.instructor.corners.length||!/Start Watch me/.test(brief.querySelector('[data-drive-action="next"]')?.textContent||''))
+      throw Error('Briefing card is missing its map, corner list, four steps or start button');
+    return{corners,instructorSeconds:r.plan.instructor.timeSec,text:brief.textContent.replace(/\\s+/g,' ').trim()};})()`)};
+  await click(context, '.drive-lesson-briefing [data-drive-action="next"]');
+  await context.waitFor(`!!document.querySelector('.drive-lesson-panel')&&!document.querySelector('.drive-lesson-briefing')&&
+    window.__qaApp.duel.drivingLesson.lesson.stage==='watch'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`, `${lessonId} Watch me`);
+  // Frozen first: the panel is rebuilt on every frame while the car moves, so a click that takes a human's 100 ms never lands (reported in QA-LESSON-SCENARIOS).
   await context.evaluate(`window.__qaApp.stop()`);
-  await context.waitFor(`window.__qaApp.visualReady&&!!document.querySelector('.drive-lesson-panel')&&
-    window.__render.scene.getObjectByName('Driving lesson cones and red board')?.visible`, `${lessonId} panel and scene`, 90000);
-  report[lessonId] = {...report[lessonId], course: courseName};
+  await click(context, '.drive-lesson-panel [data-drive-action="skip"]');
+  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`, `${lessonId} Follow me`);
 }
 const sceneStateExpression = `(()=>{
   const group=window.__render.scene.getObjectByName('Driving lesson cones and red board');
   const kids=group.children;
-  return{cones:kids.filter(n=>n.userData.coneId).length,
-    markers:kids.filter(n=>n.userData.markerIndex!==undefined).length,
-    markersShown:kids.filter(n=>n.userData.markerIndex!==undefined&&n.visible).length,
-    redBoard:kids.filter(n=>n.userData.redBoard&&n.visible).length,
+  return{cones:kids.filter(n=>n.userData.coneId!==undefined).length,
+    line:kids.filter(n=>n.userData.lessonLine&&n.visible).length,
+    boxes:kids.filter(n=>n.name==='Lesson brake and lift boxes').length,
+    redBoard:kids.filter(n=>n.userData.redBoard).length,
     iceSign:kids.filter(n=>n.userData.iceSign).length};})()`;
 
-async function holdUntilResult(context, code, letter, vk, label) {
-  await press(context, code, letter, vk);
-  await context.evaluate(`window.__qaApp.start()`);
-  try {
-    await context.waitFor(`window.__qaApp.duel.drivingLesson?.lesson.phase==='result'`, label, 90000);
-  } finally {
-    await release(context, code, letter, vk);
-  }
-  await context.evaluate(`window.__qaApp.stop()`);
-  await context.waitFor(`!!document.querySelector('.drive-lesson-result')`, 'result card');
-}
-
-// LOOK CAPTURE ONLY: the picture sheet needs the boards and the sign close up, so after a lesson's own checks the car is
-// set down on the instructor's own recorded pose near them (the camera follows) and the attempt is thrown away by
-// leaving the lesson. Nothing here is a lesson result or is checked as one.
-async function lookAt(context, s, name) {
-  await context.evaluate(`(()=>{const a=window.__qaApp,r=a.duel.drivingLesson,st=a.duel.state;
-    const pose=r.plan.instructor.poses.reduce((best,p)=>Math.abs(p.s-${s})<Math.abs(best.s-${s})?p:best);
-    st.s=pose.s;st.lateral=pose.lateral;st.headingError=0;
-    st.speedMph=Math.min(pose.mph,6);st.yawVelocity=0;})()`);
-  await context.evaluate(`window.__qaApp.start()`);
-  await context.evaluate(`new Promise(done=>setTimeout(done,2600))`); // slow, so the chase camera settles behind the car without driving past the boards
-  await context.evaluate(`window.__qaApp.stop()`);
-  return context.screenshot(name);
-}
 // The lesson panel must not sit on the minimap or the instructor's caption.
 async function checkPanelClear(context, label) {
   const overlap = await context.evaluate(`(()=>{
@@ -76,17 +80,37 @@ async function checkPanelClear(context, label) {
     const hit=(a,b)=>!!a&&!!b&&!(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y);
     const panel=box('.drive-lesson-panel');
     return{panel,map:hit(panel,box('.route-hud')),caption:hit(panel,box('.drive-lesson-radio'))};})()`);
+  if (!overlap.panel) throw Error(label + ': the lesson panel is not showing');
   if (overlap.map || overlap.caption) throw Error(label + ': the lesson panel covers the minimap or the instructor caption: ' + JSON.stringify(overlap));
   return overlap;
 }
-// Next attempt, then give the renderer a few frames to draw the new stage before the loop is frozen for the checks.
-async function nextAndFreeze(context, stage) {
-  await click(context, '.drive-lesson-result [data-drive-action="next"]');
-  await context.waitFor(`window.__qaApp.duel.drivingLesson?.lesson.stage==='${stage}'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`, `${stage} stage`);
-  await context.evaluate(`new Promise(done=>setTimeout(done,450))`);
-  await context.evaluate(`window.__qaApp.stop()`);
+// Follow me: the ghost, the painted line, the target box and the live gap are all there once the car has moved a few seconds.
+async function checkFollowGuides(context, label) {
+  await context.evaluate(`window.lessonDrive({ticks:600})`);
+  return context.evaluate(`(()=>{
+    if(!window.__qaApp.getDriveLessonGhost())throw Error(${JSON.stringify(label)}+': Follow me should show the instructor as a ghost');
+    if(!document.querySelector('.drive-lesson-target')||!document.querySelector('.drive-lesson-live-gap')||!document.querySelector('.drive-lesson-corner-lights li'))
+      throw Error(${JSON.stringify(label)}+': Follow me should show the target box, the live gap and the corner lights');
+    return{target:document.querySelector('.drive-lesson-target').textContent.replace(/\\s+/g,' '),gap:document.querySelector('.drive-lesson-live-gap').textContent.replace(/\\s+/g,' ')};})()`);
 }
-// Leave through whichever Leave lesson button is showing (the panel's, or the result card's once an attempt has ended).
+// A whole run to the finish line, then the native result card: one row per corner, the advice sentence, the next-step buttons.
+async function finishRun(context, report, label) {
+  const drive = await context.evaluate(`window.lessonDrive({})`);
+  if (drive.phase !== 'result') throw Error(label + ': the run should end at the finish line: ' + JSON.stringify(drive));
+  await context.waitFor(`!!document.querySelector('.drive-lesson-result')`, label + ' result card');
+  const result = await context.evaluate(`(()=>{
+    const run=window.__qaApp.duel.drivingLesson,lesson=run.lesson,card=document.querySelector('.drive-lesson-result');
+    if(!lesson.lastAttempt||lesson.done||!lesson.lastAttempt.finished||lesson.lastAttempt.elapsedSeconds<=0)throw Error('The run did not produce an honest finished result');
+    const rows=card.querySelectorAll('tbody tr').length;
+    if(rows!==run.plan.instructor.corners.length)throw Error('Result table should have one row per corner: '+rows);
+    const buttons=[...card.querySelectorAll('[data-drive-action]')].map(node=>node.dataset.driveAction);
+    for(const need of ['next','step:watch','step:follow','leave'])if(!buttons.includes(need))throw Error('Result card lacks '+need+': '+buttons.join(','));
+    if(!card.querySelector('.drive-lesson-advice')?.textContent)throw Error('Result card lacks its advice sentence');
+    return{rows,buttons,text:card.textContent.replace(/\\s+/g,' '),elapsed:lesson.lastAttempt.elapsedSeconds};})()`);
+  if (await context.evaluate(`JSON.stringify(window.__qaApp.profile)`) !== report.before) throw Error(label + ' changed the career');
+  return result;
+}
+// Leave through whichever Leave lesson button is showing (the panel's, or the result card's once a run has ended).
 async function leaveLesson(context) {
   let last;
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -109,9 +133,10 @@ const fixtureDone = (context, ids) => context.evaluate(`(()=>{const a=window.__q
   if(!a._saveProfile())throw Error('Temporary career did not save');})()`);
 
 export async function run(context) {
-  const report = {scope: 'Lessons 2 to 4 in the real game: board rows, lesson 2 middle and right tries on Tremblant Woods, lesson 3 rev counter and manual box, lesson 4 boards and ice sign.',
+  const report = {scope: 'Lessons 2 to 4 in the real game: board rows, each lesson\'s briefing, scene and Follow me guides, lesson 2 on Tremblant Woods, lesson 3 rev counter and manual box, lesson 4 ice sign and snow cone, and one native result card each.',
     fixtures: [], captures: []};
-  await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
+  // 1366 x 768, the laptop size lessons-v2-view uses. At 1280 x 720 the lesson panel covers 27 px of the minimap (reported in QA-LESSON-SCENARIOS).
+  await context.command('Emulation.setDeviceMetricsOverride', {width: 1366, height: 768, deviceScaleFactor: 1, mobile: false});
   await context.navigate('/tools/menu-check.html?flags=driving-lessons,tyre-slip,engine-curve');
   await context.waitFor(`!!window.__qaApp?.visualReady&&!!window.__render?.scene&&
     !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&
@@ -119,6 +144,7 @@ export async function run(context) {
   report.storage = await context.evaluate(`(()=>({qaTab:window.name.startsWith('__duel_qa_tab_v2:'),
     memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value}))()`);
   if (!report.storage.qaTab || !report.storage.memoryOnly) throw Error('Private memory-only storage required');
+  await context.evaluate(stepperSource);
   await context.evaluate(`(()=>{
     const button=[...document.querySelectorAll('details button')].find(node=>node.textContent==='Create funded temporary player');
     if(!button||button.disabled)throw Error('Funded temporary career fixture missing');button.click();
@@ -153,43 +179,16 @@ export async function run(context) {
   report.captures.push(await context.screenshot('lessons-board-lesson-2-open'));
   await click(context, '.drive-lesson-board [data-drive-action="leave"]');
 
-  // ---- Lesson 2: the middle try and the right try on Tremblant Woods --------------------------------------------
-  await takeLesson(context, report, 'line', 'Tremblant Woods');
-  report.line.start = await context.evaluate(`(()=>{
-    const a=window.__qaApp,r=a.duel.drivingLesson,s=a.duel.state;
-    if(r.lesson.id!=='line'||r.lesson.stage!=='late'||r.plan.courseId!=='tremblant-woods')throw Error('Lesson 2 did not start on Tremblant Woods');
-    if(s.opponents.length||s.traffic.length||s.tyreSlipRules!==true)throw Error('Lesson isolation missing');
-    return{scene:${sceneStateExpression},panel:document.querySelector('.drive-lesson-panel').textContent,instructor:r.plan.instructor.timeSec};})()`);
-  if (report.line.start.scene.cones !== 3 || report.line.start.scene.markersShown < 20 || report.line.start.scene.redBoard !== 0)
-    throw Error('Lesson 2 should draw the apex and exit cones and the middle markers, no red board: ' + JSON.stringify(report.line.start.scene));
-  if (!/Try 1: stay on the markers/.test(report.line.start.panel)) throw Error('Lesson 2 panel: ' + report.line.start.panel);
-  report.captures.push(await context.screenshot('lesson-2-middle-markers'));
-  await holdUntilResult(context, 'KeyW', 'w', 87, 'lesson 2 middle try result');
-  report.line.middle = await context.evaluate(`(()=>{
-    const lesson=window.__qaApp.duel.drivingLesson.lesson;
-    if(lesson.stage!=='late'||!lesson.lastAttempt||lesson.lastAttempt.elapsedSeconds<=0)throw Error('The middle try did not produce an honest result');
-    if(JSON.stringify(window.__qaApp.profile)!==${JSON.stringify(report.before)})throw Error('An unfinished lesson changed the career');
-    return{attempt:lesson.lastAttempt,text:document.querySelector('.drive-lesson-result').textContent.replace(/\\s+/g,' ')};})()`);
-  if (!/Cones touched \d+ of 3/.test(report.line.middle.text) || !/Middle-of-the-road try complete/.test(report.line.middle.text))
-    throw Error('Lesson 2 middle result card: ' + report.line.middle.text);
-  report.captures.push(await context.screenshot('lesson-2-middle-result'));
-  await nextAndFreeze(context, 'right');
-  report.line.right = await context.evaluate(`(()=>({scene:${sceneStateExpression},rules:document.querySelectorAll('.drive-lesson-rules li').length,
-    panel:document.querySelector('.drive-lesson-panel').textContent.replace(/\\s+/g,' ')}))()`);
-  if (report.line.right.scene.markersShown !== 0 || report.line.right.scene.cones !== 3 || report.line.right.rules !== 3)
-    throw Error('Lesson 2 right stage should hide the markers and list three rules: ' + JSON.stringify(report.line.right));
-  report.captures.push(await context.screenshot('lesson-2-right-cones'));
-  await holdUntilResult(context, 'KeyW', 'w', 87, 'lesson 2 right try result');
-  report.line.rightResult = await context.evaluate(`(()=>({text:document.querySelector('.drive-lesson-result').textContent.replace(/\\s+/g,' '),
-    rules:window.__qaApp.duel.drivingLesson.lesson.lastAttempt.rules}))()`);
-  if (!/Instructor \d/.test(report.line.rightResult.text) || report.line.rightResult.rules.length !== 3) throw Error('Lesson 2 right result card: ' + JSON.stringify(report.line.rightResult));
-  report.captures.push(await context.screenshot('lesson-2-right-result'));
-  await click(context, '.drive-lesson-result [data-drive-action="next"]');
-  await context.waitFor(`window.__qaApp.duel.drivingLesson?.lesson.phase==='driving'`, 'lesson 2 next try');
-  await context.evaluate(`window.__qaApp.stop()`);
+  // ---- Lesson 2: the racing line on Tremblant Woods ---------------------------------------------------------------
+  await takeLesson(context, report, 'line', 'tremblant-woods');
+  report.line.scene = await context.evaluate(sceneStateExpression);
+  if (!report.line.scene.cones || report.line.scene.redBoard !== 0 || report.line.scene.boxes !== 1)
+    throw Error('Lesson 2 should draw its cones and brake boxes, and no red board: ' + JSON.stringify(report.line.scene));
+  report.line.follow = await checkFollowGuides(context, 'lesson 2');
   report.line.panelClear = await checkPanelClear(context, 'lesson 2');
-  const firstCone = await context.evaluate(`window.__qaApp.duel.drivingLesson.plan.instructor.cones[0].s`);
-  report.captures.push(await lookAt(context, firstCone - 38, 'lesson-2-look-cones'));
+  report.captures.push(await context.screenshot('lesson-2-follow'));
+  report.line.result = await finishRun(context, report, 'lesson 2 Follow me');
+  report.captures.push(await context.screenshot('lesson-2-result'));
   await leaveLesson(context);
   await context.waitFor(`!window.__qaApp.duel.drivingLesson&&window.__qaApp.duel.state.status==='menu'`, 'leave lesson 2');
   await context.evaluate(`window.__qaApp.start()`);
@@ -198,40 +197,37 @@ export async function run(context) {
   report.fixtures.push('Lesson 2 marked done in the same temporary career (lesson 3 cannot open otherwise)');
   await fixtureDone(context, ['corner', 'line']);
   report.before = await context.evaluate(`JSON.stringify(window.__qaApp.profile)`);
-  await takeLesson(context, report, 'gears', 'Tremblant Woods');
+  await takeLesson(context, report, 'gears', 'tremblant-woods');
+  if (!/Revs/.test(report.gears.briefing.text)) throw Error('Lesson 3 briefing should explain revs: ' + report.gears.briefing.text);
   report.gears = {...report.gears, ...await context.evaluate(`(()=>{
     const a=window.__qaApp,s=a.duel.state;
     const mark=document.querySelector('.rpm-track .drive-lesson-green-mark'),lights=document.querySelectorAll('.drive-lesson-lights i');
     if(!mark||lights.length!==3)throw Error('The green mark and three shift lights are not on the rev counter');
     if(a.duel.diff.autoShift!==false||a.duel.diff.engineBlow!==false||s.engineCurve!==true||s.gear!==1)throw Error('Lesson 3 should be manual, undamaged, on the engine curve, in 2nd');
-    return{mark:mark.style.left,lights:lights.length,panel:document.querySelector('.drive-lesson-panel').textContent.replace(/\\s+/g,' '),gear:document.querySelector('#gear-value').textContent};})()`)};
+    return{mark:mark.style.left,lights:lights.length,gear:document.querySelector('#gear-value').textContent};})()`)};
   if (report.gears.mark !== '50%') throw Error('The green mark is not at half revs: ' + report.gears.mark);
+  report.gears.scene = await context.evaluate(sceneStateExpression);
+  if (!report.gears.scene.cones || report.gears.scene.redBoard !== 0) throw Error('Lesson 3 should draw its cones and no red board: ' + JSON.stringify(report.gears.scene));
+  // Real keys on the real loop: hold W in 2nd until the three shift lights are lit, then E changes up (Casual lets it in this lesson).
   await press(context, 'KeyW', 'w', 87);
   await context.evaluate(`window.__qaApp.start()`);
-  await context.waitFor(`document.querySelectorAll('.drive-lesson-lights i.is-lit').length===3`, 'all three shift lights lit', 30000);
-  await context.evaluate(`window.__qaApp.stop()`);
-  report.captures.push(await context.screenshot('lesson-3-shift-lights-lit'));
-  await context.evaluate(`window.__qaApp.start()`);
-  await press(context, 'KeyE', 'e', 69); await release(context, 'KeyE', 'e', 69);
-  await context.waitFor(`document.querySelector('#gear-value').textContent==='3'`, 'E changes up on Casual in this lesson', 10000);
   try {
-    await context.waitFor(`window.__qaApp.duel.drivingLesson?.lesson.phase==='result'`, 'lesson 3 early-shift try result', 90000);
+    await context.waitFor(`document.querySelectorAll('.drive-lesson-lights i.is-lit').length===3`, 'all three shift lights lit', 30000);
+    report.captures.push(await context.screenshot('lesson-3-shift-lights-lit'));
+    await press(context, 'KeyE', 'e', 69); await release(context, 'KeyE', 'e', 69);
+    await context.waitFor(`document.querySelector('#gear-value').textContent==='3'`, 'E changes up on Casual in this lesson', 10000);
   } finally {
     await release(context, 'KeyW', 'w', 87);
   }
   await context.evaluate(`window.__qaApp.stop()`);
-  await context.waitFor(`!!document.querySelector('.drive-lesson-result')`, 'lesson 3 result card');
-  report.gears.result = await context.evaluate(`(()=>({text:document.querySelector('.drive-lesson-result').textContent.replace(/\\s+/g,' '),
-    upshifts:window.__qaApp.duel.drivingLesson.lesson.lastAttempt.upshifts}))()`);
-  if (!/(Changed up at \d+%|You did not change up)/.test(report.gears.result.text) || !/On the limiter/.test(report.gears.result.text))
-    throw Error('Lesson 3 result card: ' + report.gears.result.text);
-  report.captures.push(await context.screenshot('lesson-3-early-result'));
-  if (await context.evaluate(`JSON.stringify(window.__qaApp.profile)`) !== report.before) throw Error('Lesson 3 changed the career');
-  await nextAndFreeze(context, 'right');
+  // Start Follow me again from its step button (a run in progress is dropped unscored), then a whole run.
+  await click(context, '.drive-lesson-panel [data-drive-action="step:follow"]');
+  await context.waitFor(`window.__qaApp.duel.drivingLesson.lesson.stage==='follow'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'&&window.__qaApp.duel.state.s<window.__qaApp.duel.drivingLesson.plan.instructor.corners[0].brakeS`, 'Follow me starts again');
+  report.gears.follow = await checkFollowGuides(context, 'lesson 3');
   report.gears.panelClear = await checkPanelClear(context, 'lesson 3');
-  report.gears.rules = await context.evaluate(`document.querySelectorAll('.drive-lesson-rules li').length`);
-  if (report.gears.rules !== 4) throw Error('Lesson 3 should list four rules');
-  report.captures.push(await context.screenshot('lesson-3-right-panel'));
+  report.captures.push(await context.screenshot('lesson-3-follow'));
+  report.gears.result = await finishRun(context, report, 'lesson 3 Follow me');
+  report.captures.push(await context.screenshot('lesson-3-result'));
   await leaveLesson(context);
   await context.waitFor(`!window.__qaApp.duel.drivingLesson&&window.__qaApp.duel.state.status==='menu'`, 'leave lesson 3');
   report.boxRestored = await context.evaluate(`window.__qaApp.duel.diff.autoShift===true&&document.querySelectorAll('.drive-lesson-lights').length===0`);
@@ -246,44 +242,32 @@ export async function run(context) {
   await context.waitFor(`!!document.querySelector('.drive-lesson-board [data-drive-action="start:snow"]')`, 'lesson 4 open');
   report.captures.push(await context.screenshot('lessons-board-all-open'));
   await click(context, '.drive-lesson-board [data-drive-action="leave"]');
-  await takeLesson(context, report, 'snow', 'Tremblant Snow');
+  await takeLesson(context, report, 'snow', 'tremblant-snow');
+  if (!/Grip/.test(report.snow.briefing.text)) throw Error('Lesson 4 briefing should explain grip: ' + report.snow.briefing.text);
   report.snow = {...report.snow, ...await context.evaluate(`(()=>{
     const a=window.__qaApp,r=a.duel.drivingLesson,s=a.duel.state;
     if(r.lesson.id!=='snow'||r.plan.courseId!=='tremblant-snow'||s.tyre!==undefined)throw Error('Lesson 4 should start on summer tyres at Tremblant Snow');
-    return{scene:${sceneStateExpression},panel:document.querySelector('.drive-lesson-panel').textContent.replace(/\\s+/g,' '),
-      marks:{ice:r.plan.instructor.ice[0].s0,snowCone:r.plan.instructor.cones[0].s,board:r.plan.instructor.redBoardS},
+    const group=window.__render.scene.getObjectByName('Driving lesson cones and red board');
+    const first=group.children.find(n=>n.userData.coneId===1);
+    return{scene:${sceneStateExpression},snowConeColour:first.children[1].material.color.getHex(),
+      marks:{ice:r.plan.instructor.ice[0].s0,board:r.plan.instructor.redBoardS},
       winter:r.plan.instructor.winter.timeSec,summer:r.plan.instructor.timeSec};})()`)};
-  if (report.snow.scene.cones !== 3 || report.snow.scene.redBoard !== 1 || report.snow.scene.iceSign !== 1 || report.snow.winter >= report.snow.summer)
-    throw Error('Lesson 4 should draw three cones, the dry board and the ice sign, with a faster winter instructor: ' + JSON.stringify(report.snow));
-  report.captures.push(await context.screenshot('lesson-4-start'));
-  // Look captures (see lookAt): the ice sign with the snow cone, then the dry board past the ice. The attempt is then thrown away.
-  report.captures.push(await lookAt(context, report.snow.marks.ice - 70, 'lesson-4-look-sign-and-cone'));
+  if (report.snow.scene.cones < 1 || report.snow.scene.redBoard !== 1 || report.snow.scene.iceSign !== 1 || report.snow.snowConeColour !== 0x8fd0f0 || report.snow.winter >= report.snow.summer)
+    throw Error('Lesson 4 should draw its cones (the first one pale blue), the dry board and the ice sign, with a faster winter instructor: ' + JSON.stringify(report.snow));
+  report.snow.follow = await checkFollowGuides(context, 'lesson 4');
+  report.snow.panelClear = await checkPanelClear(context, 'lesson 4');
+  // Drive on, as the student would, to 50 m before the ice: the sign is on the verge 30 m before it, so it is ahead and on screen.
+  await context.evaluate(`window.lessonDrive({stopS:${report.snow.marks.ice - 50}})`);
   report.snow.sign = await context.evaluate(`(()=>{const g=window.__render.scene.getObjectByName('Driving lesson cones and red board');
     const sign=g.children.find(n=>n.userData.iceSign),cam=window.__render.camera,v=sign.position.clone();sign.getWorldPosition(v);
-    const car=window.__qaApp.duel.course.groundAt(window.__qaApp.duel.state.s,window.__qaApp.duel.state.lateral);
-    const p=v.clone().project(cam);return{pos:[v.x,v.y,v.z].map(n=>+n.toFixed(1)),car:[car.x,car.y,car.z].map(n=>+n.toFixed(1)),ndc:[p.x,p.y,p.z].map(n=>+n.toFixed(2)),
-      rotationY:+sign.rotation.y.toFixed(2),scale:sign.scale.x,children:sign.children.length};})()`);
-  report.captures.push(await lookAt(context, report.snow.marks.board - 28, 'lesson-4-look-dry-board'));
+    const p=v.clone().project(cam);
+    if(!(p.z<1)||Math.abs(p.x)>1||Math.abs(p.y)>1)throw Error('The ice sign is not on screen 50 m before the ice: '+JSON.stringify([p.x,p.y,p.z]));
+    return{ndc:[p.x,p.y,p.z].map(n=>+n.toFixed(2)),children:sign.children.length};})()`);
+  report.captures.push(await context.screenshot('lesson-4-ice-sign'));
+  report.snow.result = await finishRun(context, report, 'lesson 4 Follow me');
+  report.captures.push(await context.screenshot('lesson-4-result'));
   await leaveLesson(context);
-  await context.waitFor(`!window.__qaApp.duel.drivingLesson&&window.__qaApp.duel.state.status==='menu'`, 'leave lesson 4 look');
-  await context.evaluate(`window.__qaApp.start()`);
-  // The honest first try: hold W; it ends on the road, a wall or the finish.
-  await takeLesson(context, report, 'snow', 'Tremblant Snow');
-  await holdUntilResult(context, 'KeyW', 'w', 87, 'lesson 4 dry-board try result');
-  report.snow.result = await context.evaluate(`(()=>({text:document.querySelector('.drive-lesson-result').textContent.replace(/\\s+/g,' '),
-    attempt:window.__qaApp.duel.drivingLesson.lesson.lastAttempt}))()`);
-  if (!/(You braked \d+ m (before|after) the snow cone|You braked at the snow cone|You did not brake)/.test(report.snow.result.text) || !/Dry-board try complete/.test(report.snow.result.text))
-    throw Error('Lesson 4 result card: ' + report.snow.result.text);
-  report.captures.push(await context.screenshot('lesson-4-late-result'));
-  if (await context.evaluate(`JSON.stringify(window.__qaApp.profile)`) !== report.before) throw Error('Lesson 4 changed the career');
-  await nextAndFreeze(context, 'right');
-  report.snow.panelClear = await checkPanelClear(context, 'lesson 4');
-  report.snow.rightScene = await context.evaluate(sceneStateExpression);
-  if (report.snow.rightScene.redBoard !== 0 || report.snow.rightScene.iceSign !== 1)
-    throw Error('Lesson 4 right stage should hide the dry board and keep the ice sign: ' + JSON.stringify(report.snow.rightScene));
-  report.captures.push(await context.screenshot('lesson-4-right-panel'));
-  await leaveLesson(context);
-  await context.waitFor(`!window.__qaApp.duel.drivingLesson&&window.__qaApp.duel.state.status==='menu'`, 'leave lesson 4');
+  await context.waitFor(`!window.__qaApp.duel.drivingLesson&&window.__qaApp.duel.state.status==='menu'&&window.__qaApp.duel.state.tyre===undefined`, 'leave lesson 4');
   await context.evaluate(`window.__qaApp.start()`);
   if (context.issues.length || context.warnings.length) throw Error('Lessons browser emitted console issues/warnings');
   await writeFile(join(context.outputDir, 'drive-lessons-view-2.json'), JSON.stringify(report, null, 2) + '\n', {flag: 'wx'});

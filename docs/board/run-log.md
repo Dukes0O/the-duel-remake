@@ -1412,3 +1412,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged the DEEP-TRAIL-JOINTS fix forward (dive start heading); all Deep suites pass on the merged commit.
 - 27 Oct night: merged LAB-RESTORE-PASSED (Rust Restore and the tunnel REVERSE fan without replaying the lesson; lane 29/29, build pass, lab-restore recipe pass).
 - 27 Oct night: merged SUMMIT-TERRAIN-PRELOAD (Summit timed build 1150 to 289 ms fast, 1899 to 495 ms slow, drawing exact on 13 courses; lane 109/109, build pass; full tier and frame check before release (render3d)).
+- 27 Oct night: merged QA-HARNESS-CLOSE-CAP (stopBrowser caps Browser.close at 3 s, ends its own child tree, closes pipes; crash-peak private copy removed; lane 22/22, build pass).
+- 28 Oct night: merged QA-LESSON-SCENARIOS (both lesson scenarios on the v2 flow; old finish tool removed); lane 20/20.
