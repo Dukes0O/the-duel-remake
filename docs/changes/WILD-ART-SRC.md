@@ -1,171 +1,116 @@
-# WILD-ART-SRC: North woods round 1
+# WILD-ART-SRC: North woods round 2 of 3
 
-28 October 2026. One candidate round for Claude to judge. This note replaces
-superseded source-access holds and inspection logs retained in Git history.
-No course placement, live installation, merge or push is part of this lane.
+28 October 2026. Partial round 2 preparation; no group sheet submitted. No merge, push,
+course placement or live installation. Round 1 source details remain in Git.
 
-## Design and source choice
+## Design and changes
 
-The user directed donor-first work, replacing the stopped run's original-only
-plan. Direct Poly Pizza model-page GLB links worked without an account or key.
-No Google Drive quota link was retried. OpenGameArt/Kenney searches and Poly
-Pizza's moose results supplied no usable moose donor in the allowed libraries;
-the existing original moose recipe was retained and matched to the reference.
-The downloaded Poly beaver is reused, rather than the stopped original recipe.
+Claude's full round 1 verdict and the round 2 design, written before code,
+are in docs/board/looks/wildlife/north-woods-round-2.md.
 
-| Candidate | Donor and licence | Changes | Triangles |
-| --- | --- | --- | ---: |
-| White-tailed deer | [Deer](https://poly.pizza/m/T6Cs7tmMHJ), Quaternius, CC0 1.0 | Smaller ears/eyes, narrower lower legs, whitetail antlers, white flag/throat, natural coat and metric fit | 4,352 |
-| Moose | Original Blender recipe | Palmate antlers, high shoulders, long muzzle, dewlap, dark coat, weighted rig | 2,346 |
-| Black bear | [Black bear](https://poly.pizza/m/56ym_pyVnel), Poly by Google, CC BY 3.0 | Metric fit, muted coat, weighted rig and new Idle/Walk | 3,000 |
-| Beaver | [Beaver](https://poly.pizza/m/fwtA7VLrXPr), Poly by Google, CC BY 3.0 | Approved 1.10 m fit, minimum-paw pivot, natural coat, weighted rig and new Idle/Walk | 2,600 |
-| Eastern wolf | [Wolf](https://poly.pizza/m/P1gU3Qkr9r), Quaternius, CC0 1.0 | Smaller ears/eyes, longer-legged fit, grey-brown saddle, natural coat | 4,100 |
+- Bear: retain accepted shape, add stronger fine coat variation and full
+  material roughness with reduced specular response.
+- Deer: darker grey-brown coat, smaller throat patch, white belly and inner
+  legs, raised tail with white underside, darker antler bases. Paint the
+  refined donor mesh so markings follow anatomy rather than coarse faces.
+- Moose: rebuild the barrel and tall shoulder hump, heavier upper legs,
+  lighter grey-brown lower legs, drooping muzzle, throat bell and two
+  skull-rooted antler beams with broad separate palms and short rim points.
+- Beaver: dark chestnut coat and grey-black paddle with crossed scale marks;
+  broaden tail and lift back slightly. Keep 1.10 m donor fit along its length.
+- Wolf: darker grizzled grey-brown coat with dark saddle, tawny ears/legs,
+  pale chest/belly only, broader neck/chest and longer-legged proportions.
 
-Deer and wolf retain the original bone hierarchies and all 26/24 named source
-clips, including Idle and Walk. A parent handles orientation and metric units.
-All donor bodies are welded before subdivision, then reduced within the triangle
-budget, before the original armature modifier. The static bear and beaver gain
-17-bone weighted rigs. The original moose has the same Idle/Walk rig recipe.
-All five have one embedded 1024-square unlit colour map, baked from natural
-coat colours and fine directional noise, and rough non-metallic materials.
-No generated reference picture is a runtime texture. Blender uses +X forward
-and Z up; glTF uses Y up. Beaver retains the approved tail below the minimum
-paw datum by about 15 mm. Ground contact in a course remains untested.
+The donors remain Quaternius CC0 deer/wolf and Poly by Google CC BY 3.0
+bear/beaver. Moose remains original. Source URLs, hashes and credits are
+unchanged in tools/blender/wildlife/sources.json, tools/art/catalog.json
+and public/assets/audio/credits.html. Originals and existing photographic
+references stay in the external wild-north-woods cache, read-only this round.
+No new dependency, download, reference generation or runtime request.
 
-The CC-BY credits and adaptation disclosure are on the game's existing asset
-credits page, public/assets/audio/credits.html. Provenance, original checksums
-and changes are in tools/art/catalog.json and the recipe's sources.json.
-Originals stay outside Git in C:/Users/kyleb/dev/art-library/wild-north-woods:
+All donor skeletons and source clips are retained. Each export has one
+embedded 1K coat map, skin weights and Idle/Walk; the hard limit remains
+5,000 triangles. --round selects review output and sheet paths; the default
+round 1 planner contract stays compatible with its existing assertions.
 
-- quaternius-deer-original.glb: fabf360b22eaccccd056ee99d698a9562d15aa245821f96e4fbad6db3751604e
-- quaternius-wolf-original.glb: 16ac96339d06f7def9af20d5d9b27622d61e53580dab43970c9edb1bffbe8f84
-- poly-black-bear-original.glb: 04b739edaf4758849952757737ab97a7350370bdfbc662a96d7b6d4b75bc43d8
-- poly-beaver-original.glb: 37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1
+## Catalog failures: cause proved, pins unchanged
 
-Recipes validate source hashes before import. --cache can name another source
-cache. --paths-only needs neither Blender nor external originals. No Blend
-file or downloaded donor is committed. Runtime candidates total about 6 MB.
+Both tests hash all catalog rows outside their own card, so four legitimate
+wildlife provenance additions from round 1 change both pins. This is not
+caused by files in public/assets/wildlife or by a merge mistake. Filtering
+ONLY those four records from the actual 59-row catalog reproduces both
+expected hashes exactly; the other 55 rows have not changed.
 
-## References and round evidence
+| Check | Existing expected SHA256 | Actual SHA256 with four wildlife records |
+| --- | --- | --- |
+| P4 non-P4 rows | c75abff9d24ae7becbf8411c0222ff9b1a6aa30b003ec951672e56a63af05808 | 2a15f3a5ad39955562b945c4bcf711d19d9503a5c06197cac07d63acc149961f |
+| Tanker non-Factory rows | 6df6a61ed4f40b06c9dd7f4d4dd0e4e0286625af03d35ca5eebdb0e5574f8bea | fed1efb5f62cea25e613462bb4380987b23622395cf080c9e2b0b1d7baf9a116 |
 
-The built-in imagegen tool made five photographic side/front/three-quarter
-species triptychs on plain backgrounds in natural colours. They are saved in
-C:/Users/kyleb/dev/art-library/wild-north-woods/reference/<id>.png. The prompt
-recipe and species requirements are in tools/blender/wildlife/references.json.
-All five pictures were inspected for proportions and coat colours.
-
-The sheet recipe imports actual exported GLBs, with neutral forest lighting,
-side and three-quarter cameras at 14 m and a 55 mm lens. It also inspects six
-phases of both exported Idle/Walk clips and renders two poses of each clip.
-The JPG is docs/board/looks/wildlife/north-woods-round-1.jpg, 338,346 bytes.
-Its scratchpad copy is byte-exact, SHA256
-bb4701b59f249aef9b7017c3eb18751da41ed9a30e4fa92f3d80adb80b996709.
-This is a Blender candidate round, not an in-game look or a frame measurement.
-Claude's score and natural-look verdict are pending. Stop after this round.
-
-Visual inspection found no exploded limbs or missing antlers in the final
-exports; Idle and Walk visibly differ. The final moose hoof bridge closes the
-observed gap. Remaining reference differences for Claude: moose shoulders and
-antlers are angular; bear muzzle and paws are simple; beaver is small at 14 m;
-coats have much less visible fur than the photographs; the donor wolf tail
-rests higher than the reference. These are review gaps, not an art pass.
-
-Rebuild each animal with Blender background mode, -t 2, the species entry in
-tools/blender/wildlife/<id>.py, then -- --root <lane>. Add --review to import
-and render its export. Compose the sheet with Python, sheet.py --root <lane>
---references C:/Users/kyleb/dev/art-library/wild-north-woods/reference.
+The added IDs are wild-north-woods-white-tailed-deer,
+wild-north-woods-eastern-wolf, wild-north-woods-black-bear and
+wild-north-woods-beaver. They hold each donor's licence, original hash,
+source link and adaptation disclosure. Removing these records or hiding them
+in another file just to recover the pins would discard required provenance.
+Claude's written review is needed for deliberate catalog-pin changes. This
+lane does not move either pin. No catalog row changes in round 2.
 
 ## Validation
 
-- Required lane command, node tools/run-tests.mjs --tier lane --changed --jobs 2:
-  57 passed, 1 failed, 27 not run in 366.37 s. The failure is
-  tools/test-p4-kits.mjs:35. It hashes every non-P4 catalog row; the four
-  required wildlife additions change its hash. Direct comparison proves all
-  55 pre-existing catalog records are structurally identical to HEAD.
-  Expected hash: c75abff9d24ae7becbf8411c0222ff9b1a6aa30b003ec951672e56a63af05808.
-  Actual hash with the four added records:
-  2a15f3a5ad39955562b945c4bcf711d19d9503a5c06197cac07d63acc149961f.
-  This assertion is left unchanged. Claude must review any deliberate pin
-  update under AGENTS rule 18 and grant the P4 test file if it is needed.
-  The lane is not green and must not merge on this evidence alone.
-  The continuation also found tools/test-tanker-valve-source.mjs catalog pin
-  failure: expected 6df6a61ed4f40b06c9dd7f4d4dd0e4e0286625af03d35ca5eebdb0e5574f8bea,
-  actual fed1efb5f62cea25e613462bb4380987b23622395cf080c9e2b0b1d7baf9a116.
-  It also hashes the unrelated catalog rows. Its assertion is unchanged.
-- Final focused Blender-output check after image-driven recipe fixes:
-  141 checks passed. Board: 155 checks passed. Repository placement: passed.
-- Production build passed, 599 modules in 1.36 s, using npm.cmd run build --
-  --configLoader runner --outDir .qa-dist/wildlife-build. The linked dependency
-  tree lacks .bin/vite.cmd. A temporary lane-local launcher invoked its
-  already installed Vite package through the unchanged npm script. The first
-  launcher used one too many parent traversals; its corrected path passed.
-  Vite's runner loader avoids temporary writes into shared node_modules.
-  Existing mixed-import and large-chunk warnings remain.
-- All five actual GLBs were imported and rendered. Both Idle and Walk were
-  evaluated at six phases per species and visually inspected at two phases.
-  Bounds stay finite. The lowest sampled vertical positions are -14 mm for
-  the approved beaver tail and -8 mm for wolf walk. No course
-  grounding or frame-rate verdict is inferred.
-- Final independent source review confirmed the external cache, source pins,
-  receipt fix, weighted hoof bridge, modifier order, coat bake and output plans.
-- Continuation runs only the unrun selected suites, with --jobs 2 and
-  --keep-going. It passed 17 suites and found the tanker catalog pin failure
-  before stopping for shared capacity. At three concurrent outer test jobs,
-  this session was newest and stopped its exact verified runner and two
-  children. No completed passing suite was repeated for capacity.
-  The replay guard passed 225 checks across 25 cases and three FPS values.
-  World composition passed 47 checks across twenty events. Replay fixtures and
-  world signatures were not edited or regenerated.
-  After a slot opened, the final ten unfinished suites passed, zero failures
-  and zero not run, in 330.18 s. Across the initial run and both continuations:
-  84 selected suites passed and the two catalog-pin suites failed; no suite
-  remains unrun. One additional browser-harness unit suite entered selection
-  after STATUS changed, giving 86 selected suites overall. No browser scenario
-  or native frame measurement was started.
+PARTIAL, NOT GREEN. The shared two-job limit prevented completion. A
+15-minute queued batch obtained one brief slot and completed only the moose.
+The slot closed before the other four animals could start. Combined with
+the preceding process checks and manual waits, this reached the job's
+30-minute tool-problem limit. The batch exited 2 without launching another
+animal. Stopped as the user required; no extra heavy job was started.
 
-No browser scenario, full tier or frame timing is required for this source
-art card. No real player save was read or written. Game code is unchanged.
-STATUS was refreshed in this lane without checking live or integration working
-files. Cockpit sync is deferred to the Director under this lane-only job.
+- Python syntax parsing: PASS for all wildlife recipes.
+- Pure round 2 output plan: PASS with a root named wildlife-round-1. It
+  preserves that root and plans only its round 2 evidence subfolder.
+- Moose build and exported-GLB review: PASS, Blender CPU with two threads.
+  Actual output: 3,170 triangles, 891,992 bytes, one embedded 1024-square
+  coat map, 17 bones, Idle and Walk. Both clips were sampled at six phases;
+  all bounds finite. Lowest sampled Z: Idle -2.39 mm, Walk +2.09 mm.
+  Side, three-quarter, idle and walk pictures were inspected. No exploded
+  limbs or detached antler palms were seen. This is not an art pass.
+- Other four models: NOT REBUILT. Their source edits are committed, but
+  their runtime candidates remain from round 1. This mixed set is not a
+  finished round 2 and must not merge on this evidence.
+- Required node tools/run-tests.mjs --tier lane --changed --jobs 2:
+  NOT RUN. No shared heavy-job slot was available before the stop limit.
+- npm run build: NOT RUN, for the same reason.
+- Existing test-blender-output, board and repository-hygiene suites:
+  NOT RUN this round. No previous passing result is claimed for these edits.
+- Round 2 sheet and requested scratchpad copy: NOT PRODUCED. Round 1's
+  sheet remains because its replacement has not been produced and committed.
+- No browser scenario, frame timing, real-save access, merge or push.
+
+To resume, rebuild/review only the four unfinished species with Blender
+background mode, -t 2, tools/blender/wildlife/<id>.py -- --root <lane>;
+review adds --review --round 2. The moose recipe is complete, but its
+pictures were recycled after recording this result and will need rendering
+again for the eventual sheet. Compose with sheet.py --root <lane>
+--references C:/Users/kyleb/dev/art-library/wild-north-woods/reference
+--round 2, then run the required gates and build under the shared-job cap.
+Both catalog-pin failures still need Claude's written review as described
+above. No pin was moved. No group art round is claimed complete.
+
+Independent source review found a round-path substitution bug: replacing
+text in a full path could change a root folder named wildlife-round-1.
+Fixed by constructing only the evidence subfolder from --round. Reviewer
+confirmed the fix with that exact root and marked source CLEAR. Art verdict
+belongs to Claude. No frame timing or game browser is needed for this card.
 
 ## Changed assertions
 
-No existing assertion, tolerance, fingerprint or budget was weakened.
-Ten additive cases in the existing Blender-output suite cover all five pure
-build/review output plans and actual GLB budgets, embedded PNG size, skin attributes,
-Idle/Walk joint animation and retention of every deer/wolf clip. During this
-uncommitted implementation, the new texture assertion was updated from no
-textures to exactly one embedded PNG of at most 1024 square, matching the
-natural-coat bake. Existing tests were unchanged.
-
-The placement check adds only the exact user-required north-woods-round-1.jpg
-path to its allowed compressed sheets. Other raw evidence paths still fail.
-Independent review confirmed the external-source and texture-receipt fixes,
-modifier order, coat bake and neutral vertex-colour export. Claude judges art.
-
-## Tool findings
-
-The first network request was sandbox-blocked. The approved public request
-with a normal browser user agent succeeded. Donor downloading then completed
-without a login. The initial deer view exposed a wrapper/antler transform
-fault. A later textured view exposed disconnected imported vertices before
-subdivision. Both were fixed before the final sheet; no visual pass is claimed
-for those failed internal renders. Work stayed inside the 30-minute limit
-for each problem.
-
-Automatic approval rejected a broad render-process stop because it could
-match another session. A read-only process and parent-command check identified
-this lane's exact render PID; the verified single-PID stop was then approved.
-No other session's job was stopped.
+No existing assertion, tolerance, replay fixture or world signature changed.
+Repository hygiene adds only the user-required exact round 2 JPG path to its
+allowed compressed sheets. It still rejects other raw evidence paths.
+The existing default round 1 output plans remain unchanged.
 
 ## Removed
 
-Removed the stopped original bear/beaver construction paths in favour of the
-licensed donor adaptations, and removed superseded donor colour layers after
-baking so glTF does not tint the coat twice. Donor scratch copies were recycled
-after verified external caching. Replaced the stopped run's deer candidate.
-Superseded source-access prose in this note is retained only in Git history.
-This session's scratch renders, atlases, logs and build output are recycled
-after final results are recorded. No .evidence folder was created or traversed;
-the pre-existing junction into integration was left untouched. Licensed
-originals, reference deliverables and the requested sheet copies are retained.
+The failed moose construction and its unused deer branch are replaced by the
+new moose anatomy recipe. Round 1's sheet is retained until a replacement sheet is committed. Own
+round 2 render output, logs and the unused temporary build launcher are
+recycled after recording the partial result. No licensed originals or
+pre-existing evidence folders are removed.

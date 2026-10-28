@@ -18,12 +18,14 @@ def cli(species):
     parser.add_argument('--paths-only', action='store_true')
     parser.add_argument('--cache', type=Path, default=Path('C:/Users/kyleb/dev/art-library/wild-north-woods'))
     parser.add_argument('--review', action='store_true', help='Render exported GLB, without rebuilding it')
+    parser.add_argument('--round', type=int, choices=(1, 2, 3), default=1)
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
     root = args.root.resolve()
+    evidence = root / ('.qa-dist/wildlife-round-' + str(args.round))
     plan = {'blend': [], 'glb': [] if args.review else [str(root / 'public/assets/wildlife' / (species + '.glb'))],
-            'evidence': [str(root / '.qa-dist/wildlife-round-1' / (species + '-' + view + '.png'))
+            'evidence': [str(evidence / (species + '-' + view + '.png'))
                          for view in ('side', 'three-quarter', 'idle-25', 'idle-75', 'walk-25', 'walk-75')] if args.review else [],
-            'json': [str(root / '.qa-dist/wildlife-round-1' / (species + '-inspection.json'))] if args.review else []}
+            'json': [str(evidence / (species + '-inspection.json'))] if args.review else []}
     if args.paths_only:
         print(json.dumps(plan))
         return
@@ -32,7 +34,7 @@ def cli(species):
     from mathutils import Vector, Quaternion
     globals().update(Vector=Vector, Quaternion=Quaternion)
     if args.review:
-        review(species, root)
+        review(species, root, args.round)
     elif species != 'moose':
         import adapt
         adapt.build(species, Path(plan['glb'][0]), sys.modules[__name__], args.cache)
@@ -52,7 +54,7 @@ def material():
     return mat
 
 
-def finish_coat(mesh):
+def finish_coat(mesh, rough_fur=False):
     """Bake unlit coat colour and fine directional fur into one embedded 1K map."""
     bpy.ops.object.select_all(action='DESELECT')
     mesh.select_set(True)
@@ -71,14 +73,15 @@ def finish_coat(mesh):
     coord = nodes.new('ShaderNodeTexCoord')
     stretch = nodes.new('ShaderNodeVectorMath')
     stretch.operation = 'MULTIPLY'
-    stretch.inputs[1].default_value = (30, 210, 210)
+    stretch.inputs[1].default_value = (22, 125, 125) if rough_fur else (30, 210, 210)
     links.new(coord.outputs['Generated'], stretch.inputs[0])
     noise = nodes.new('ShaderNodeTexNoise')
     noise.inputs['Scale'].default_value = 1
     noise.inputs['Detail'].default_value = 2
     links.new(stretch.outputs['Vector'], noise.inputs['Vector'])
     ramp = nodes.new('ShaderNodeValToRGB')
-    ramp.color_ramp.elements[0].color = (.48, .48, .48, 1)
+    low = .25 if rough_fur else .48
+    ramp.color_ramp.elements[0].color = (low, low, low, 1)
     ramp.color_ramp.elements[1].color = (1, 1, 1, 1)
     links.new(noise.outputs['Fac'], ramp.inputs[0])
     mix = nodes.new('ShaderNodeMixRGB')
@@ -233,86 +236,74 @@ class Animal:
                           (length * .35, width * .29, .024), foot, paw, 3, 8)
 
 
-def ungulate(a, moose):
-    coat = (.16, .105, .068) if moose else (.29, .185, .105)
-    dark = (.055, .041, .029)
-    pale = (.52, .46, .35) if moose else (.71, .68, .57)
-    a.belly = .97 if moose else .72
-    # Rear to front: rump, barrel, withers and narrow brisket.
-    profiles = [(-1.06, 1.40, .12, .25), (-.87, 1.46, .32, .46),
-                (-.50, 1.43, .36, .43), (-.05, 1.47, .36, .46),
-                (.39, 1.57, .35, .55), (.64, 1.59, .27, .52), (.79, 1.52, .14, .34)] if moose else [
-                (-.82, 1.03, .09, .17), (-.65, 1.08, .22, .30),
-                (-.32, 1.08, .255, .29), (.05, 1.10, .25, .31),
-                (.36, 1.13, .22, .33), (.52, 1.14, .13, .24)]
-    a.loft([((x, 0, z), w, h) for x, z, w, h in profiles], coat, 'spine', 16, 'body')
-    neckbase = (.55, 0, 1.62) if moose else (.36, 0, 1.20)
-    skull = (1.02, 0, 2.10) if moose else (.74, 0, 1.60)
-    a.bone('neck', neckbase, skull, 'spine')
-    a.bone('head', skull, (skull[0] + .37, 0, skull[2] - .1), 'neck')
-    a.loft([(neckbase, .25 if moose else .18, .32 if moose else .23),
-            ((.72, 0, 1.88) if moose else (.52, 0, 1.43), .19 if moose else .12, .29 if moose else .20),
-            (skull, .17 if moose else .105, .22 if moose else .14)], coat, 'neck', 14)
-    if moose:
-        a.loft([((.94, 0, 2.15), .12, .16), ((1.13, 0, 2.08), .17, .22),
-                ((1.34, 0, 1.93), .17, .20), ((1.52, 0, 1.86), .18, .17),
-                ((1.61, 0, 1.86), .12, .12)], coat, 'head', 14)
-        a.oval((1.57, 0, 1.88), (.095, .155, .11), dark, 'head')
-        # Hanging bell, separated from the long muzzle.
-        a.loft([((.94, 0, 1.89), .10, .11), ((.94, 0, 1.68), .075, .10),
-                ((.90, 0, 1.53), .025, .035)], dark, 'head', 10)
-    else:
-        a.loft([((.68, 0, 1.63), .09, .12), ((.83, 0, 1.59), .11, .135),
-                ((1.00, 0, 1.49), .068, .077), ((1.11, 0, 1.46), .054, .054)], coat, 'head', 14)
-        a.oval((1.105, 0, 1.47), (.035, .057, .031), dark, 'head')
-        a.loft([((.67, 0, 1.39), .070, .070), ((.53, 0, 1.23), .10, .10)], pale, 'neck', 10)
-        a.oval((1.005, 0, 1.443), (.09, .058, .027), pale, 'head', 4)
+def moose_anatomy(a):
+    """Adult bull proportions from the round reference, with rooted antler palms."""
+    coat, muzzle = (.035, .024, .016), (.047, .033, .022)
+    dark, lower = (.012, .010, .008), (.23, .19, .14)
+    a.belly = 1.10
+    profiles = [(-1.15, 1.49, .055, .14), (-1.06, 1.52, .22, .34),
+                (-.88, 1.55, .34, .43), (-.60, 1.54, .38, .44),
+                (-.27, 1.56, .40, .47), (.02, 1.64, .40, .55),
+                (.25, 1.74, .39, .65), (.43, 1.77, .35, .67),
+                (.59, 1.73, .30, .61), (.73, 1.62, .22, .47),
+                (.82, 1.54, .12, .30)]
+    a.loft([((x, 0, z), w, h) for x, z, w, h in profiles], coat, 'spine', 20, 'body')
+    a.bone('neck', (.57, 0, 1.73), (.99, 0, 2.08), 'spine')
+    a.bone('head', (.99, 0, 2.08), (1.56, 0, 1.83), 'neck')
+    a.loft([((.58, 0, 1.78), .30, .40), ((.77, 0, 1.94), .26, .34),
+            ((.96, 0, 2.08), .20, .27)], coat, 'neck', 18)
+    # Deep upper lip and a long, downturned Roman nose, below the skull.
+    a.loft([((.93, 0, 2.16), .14, .18), ((1.08, 0, 2.12), .185, .23),
+            ((1.25, 0, 2.00), .18, .235), ((1.43, 0, 1.83), .17, .22),
+            ((1.57, 0, 1.75), .16, .19), ((1.64, 0, 1.77), .13, .14)], muzzle, 'head', 18)
+    a.oval((1.59, 0, 1.70), (.10, .14, .10), muzzle, 'head', 6, 14)
+    # Bell is visibly separated from the muzzle, hanging behind the jaw.
+    a.loft([((.94, 0, 1.94), .115, .13), ((.99, 0, 1.70), .105, .14),
+            ((.94, 0, 1.48), .07, .10), ((.90, 0, 1.38), .015, .025)], dark, 'head', 12)
     for side in (-1, 1):
-        sy = side
-        eye = (1.17, sy * .155, 2.13) if moose else (.855, sy * .101, 1.63)
-        a.oval(eye, (.017 if moose else .012, .008, .012), (.012, .010, .007), 'head', 4, 8)
-        base = (.96, sy * .13, 2.22) if moose else (.70, sy * .08, 1.71)
-        tip = (.84, sy * .43, 2.51) if moose else (.65, sy * .23, 1.94)
-        a.ear(base, tip, .23 if moose else .14, coat, (.23, .18, .14))
-        if moose:
-            # Broad thin palm with uneven outer edge and individual tines.
-            a.tube([(.96, sy * .11, 2.26), (.85, sy * .35, 2.41), (.75, sy * .58, 2.48)], [.055, .045, .035], (.38, .31, .21), 'head')
-            outline = [(.53, .47, 2.47), (.92, .43, 2.45), (1.08, .62, 2.55),
-                       (1.04, .81, 2.64), (.87, .94, 2.69), (.62, 1.02, 2.70),
-                       (.38, .92, 2.64), (.34, .66, 2.53)]
-            top = [(x, sy * y, z) for x, y, z in outline]
-            bottom = [(x, sy * y, z - .045) for x, y, z in outline]
-            faces = [(i, (i + 1) % 8, 8 + (i + 1) % 8, 8 + i) for i in range(8)]
-            faces += [tuple(range(8)), tuple(reversed(range(8, 16)))]
-            a.surface(top + bottom, faces, (.40, .33, .23), 'head')
-            for i in range(2, 7):
-                p = Vector(top[i])
-                end = p + Vector((.04, sy * .13, .18 + .025 * (i % 2)))
-                a.tube([p, p.lerp(end, .6), end], [.032, .021, .003], (.50, .43, .30), 'head', 6)
-        else:
-            beam = [(.71, sy * .065, 1.74), (.64, sy * .16, 1.94),
-                    (.72, sy * .28, 2.06), (.91, sy * .31, 2.10), (1.03, sy * .29, 2.14)]
-            a.tube(beam, [.025, .024, .021, .013, .002], (.43, .35, .24), 'head', 7)
-            for p, end in [(beam[1], (.58, sy * .15, 2.12)), (beam[2], (.70, sy * .28, 2.28)), (beam[3], (.92, sy * .34, 2.29))]:
-                a.tube([p, end], [.017, .002], (.50, .42, .29), 'head', 6)
-    for hind, x, z in [(True, -.78 if moose else -.58, 1.47 if moose else 1.11),
-                        (False, .49 if moose else .34, 1.53 if moose else 1.15)]:
+        a.oval((1.13, side * .178, 2.14), (.015, .009, .013), (.006, .005, .003), 'head', 4, 8)
+        a.oval((1.62, side * .126, 1.82), (.038, .009, .021), dark, 'head', 4, 8)
+        a.ear((.96, side * .15, 2.23), (.79, side * .46, 2.49), .26, coat, (.10, .075, .05))
+        # Each beam starts inside its own skull side and merges into its palm.
+        beam = [(1.02, side * .13, 2.23), (.97, side * .29, 2.27),
+                (.85, side * .45, 2.29), (.72, side * .58, 2.34)]
+        a.tube(beam, [.066, .060, .053, .045], (.16, .115, .065), 'head', 10)
+        outline = [(.86, .43, 2.29), (1.04, .62, 2.32), (1.03, .84, 2.44),
+                   (.88, 1.00, 2.57), (.64, 1.08, 2.68), (.39, 1.01, 2.70),
+                   (.22, .84, 2.62), (.33, .63, 2.43), (.57, .50, 2.32)]
+        top = [(x, side * y, z) for x, y, z in outline]
+        bottom = [(x, side * y, z - .045) for x, y, z in outline]
+        count = len(top)
+        # Triangle fans avoid a single large plate's ambiguous triangulation.
+        centre = tuple(sum(p[i] for p in top) / count for i in range(3))
+        vertices = top + bottom + [centre, (centre[0], centre[1], centre[2] - .045)]
+        faces = []
+        for i in range(count):
+            j = (i + 1) % count
+            faces.extend([(2 * count, i, j), (2 * count + 1, count + j, count + i),
+                          (i, count + i, count + j, j)])
+        if side < 0:
+            faces = [tuple(reversed(face)) for face in faces]
+        a.surface(vertices, faces, (.27, .21, .135), 'head')
+        for i in range(1, 8):
+            start = Vector(top[i])
+            end = start + Vector((.02 if i < 4 else -.04, side * .085, .12 + .025 * (i % 3)))
+            a.tube([start, start.lerp(end, .65), end], [.033, .021, .003], (.32, .26, .17), 'head', 7)
+    for hind, x, z in [(True, -.84, 1.57), (False, .49, 1.70)]:
         for side in (-1, 1):
-            y = side * (.245 if moose else .175)
+            y = side * .26
             hip = (x, y, z)
-            knee = (x + (.23 if hind else -.10), y, z * .52)
-            ankle = (x - (.06 if hind else 0), y, .13)
-            toe = (ankle[0] + .035, y, .045)
-            a.leg(('rear' if hind else 'front') + ('.L' if side > 0 else '.R'), hip, knee, ankle, toe,
-                  (.17 if hind else .115, .065, .042) if moose else (.12 if hind else .075, .042, .025),
-                  coat, dark, hind, True)
-    tailbase = (-1.00, 0, 1.51) if moose else (-.76, 0, 1.11)
-    tailtip = (-1.14, 0, 1.32) if moose else (-.97, 0, 1.38)
-    a.bone('tail', tailbase, tailtip, 'spine')
-    a.loft([(tailbase, .06, .06), (tailtip, .075 if not moose else .045, .02)], coat, 'tail', 10)
-    if not moose:
-        a.loft([((-.79, 0, 1.13), .054, .025), ((-.93, 0, 1.34), .065, .018),
-                ((-.97, 0, 1.38), .045, .008)], (.79, .77, .69), 'tail', 10)
+            knee = (x + (.23 if hind else -.09), y, .85)
+            ankle = (x - (.06 if hind else 0), y, .14)
+            toe = (ankle[0] + .04, y, .045)
+            start = len(a.verts)
+            a.leg(('rear' if hind else 'front') + ('.L' if side > 0 else '.R'),
+                  hip, knee, ankle, toe, (.215 if hind else .16, .080, .048), coat, dark, hind, True)
+            for i in range(start, len(a.verts)):
+                if .13 < a.verts[i][2] < .88:
+                    a.colours[i] = a.paint(a.verts[i], lower, 'detail')
+    a.bone('tail', (-1.08, 0, 1.63), (-1.22, 0, 1.43), 'spine')
+    a.loft([((-1.08, 0, 1.63), .055, .06), ((-1.22, 0, 1.43), .04, .025)], coat, 'tail', 10)
 
 
 def rig(a, mesh):
@@ -422,7 +413,7 @@ def build(species, output):
     a.bone('root', (0, 0, 0), (0, 0, .2))
     a.bone('spine', (-.3, 0, .5), (.35, 0, .5), 'root')
     assert species == 'moose'
-    ungulate(a, True)
+    moose_anatomy(a)
     data = bpy.data.meshes.new(species + ' anatomy')
     data.from_pydata(a.verts, [], a.faces)
     data.update()
@@ -458,7 +449,8 @@ def aim(obj, target):
     obj.rotation_euler = (Vector(target) - obj.location).to_track_quat('-Z', 'Y').to_euler()
 
 
-def review(species, root):
+def review(species, root, round_number=1):
+    evidence = root / ('.qa-dist/wildlife-round-' + str(round_number))
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
     bpy.ops.import_scene.gltf(filepath=str(root / 'public/assets/wildlife' / (species + '.glb')))
@@ -500,7 +492,7 @@ def review(species, root):
         camera.data.lens = 55
         aim(camera, (0, 0, centre_z))
         scene.camera = camera
-        output = root / '.qa-dist/wildlife-round-1' / (species + '-' + view + '.png')
+        output = evidence / (species + '-' + view + '.png')
         output.parent.mkdir(parents=True, exist_ok=True)
         scene.render.image_settings.file_format = 'PNG'
         scene.render.filepath = str(output)
@@ -537,8 +529,8 @@ def review(species, root):
         scene.cycles.samples = 8
         for factor in (.25, .75):
             scene.frame_set(int(lo + (hi - lo) * factor))
-            scene.render.filepath = str(root / '.qa-dist/wildlife-round-1' /
+            scene.render.filepath = str(evidence /
                 (species + '-' + action.name.lower() + '-' + str(int(factor * 100)) + '.png'))
             bpy.ops.render.render(write_still=True)
-    manifest = root / '.qa-dist/wildlife-round-1' / (species + '-inspection.json')
+    manifest = evidence / (species + '-inspection.json')
     manifest.write_text(json.dumps(metrics, indent=2) + '\n', encoding='utf-8')

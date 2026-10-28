@@ -31,6 +31,7 @@ def animated_donor(species, mesh, rig, output, c):
     bpy, Vector = c.bpy, c.Vector
     deer = species == 'white-tailed-deer'
     scale = .48 if deer else .38
+    refine(mesh, c, 4100)
     # The donor's forward is Blender -Y. A parent changes units and orientation
     # without rewriting the authored bones, inverse binds or animation curves.
     attr = mesh.data.color_attributes.get('Coat') or mesh.data.color_attributes.new(name='Coat', type='FLOAT_COLOR', domain='POINT')
@@ -61,22 +62,37 @@ def animated_donor(species, mesh, rig, output, c):
             centre = rig.matrix_world @ rig.data.bones[name].head_local
             p.x = centre.x + (p.x - centre.x) * (.83 if deer else .90)
             v.co = inv @ p
+        if deer and name.startswith('Tail'):
+            attachment = rig.matrix_world @ rig.data.bones['Tail1'].head_local
+            p.z += max(0, p.y - attachment.y) * .38
+            v.co = inv @ p
+        if not deer and (name.startswith('Neck') or name.startswith('Torso')):
+            # A wolf's chest and ruff are heavier than a fox's. The original
+            # joint pivots and animation curves remain in their authored frame.
+            p.x *= 1.23 if name.startswith('Neck') else 1.12
+            v.co = inv @ p
         if deer:
-            base = (.24, .155, .087)
+            base = (.078, .061, .044)
             if name.startswith('Tail'):
-                # A visibly white flag, with a brown dorsal stripe.
-                base = (.76, .73, .64) if p.z < 2.75 else (.21, .13, .073)
-            elif name.startswith('Neck') and p.y < -1.5 and p.z < 3.5:
-                base = (.65, .62, .52)
+                base = (.72, .69, .61) if p.z < attachment.z + .05 else (.070, .052, .034)
+            elif name.startswith('Neck') and -2.03 < p.y < -1.77 and 2.90 < p.z < 3.30 and abs(p.x) < .24:
+                base = (.62, .59, .51)
+            elif name in ('Body', 'Back') or name.startswith('Torso'):
+                if p.z < 1.80:
+                    base = (.56, .53, .46)
+            elif 'Leg' in name and abs(p.x) < .23:
+                base = (.47, .44, .37)
             elif 'hoof' in matname:
                 base = (.035, .028, .021)
         else:
-            saddle = max(0, min(1, (p.z - 1.3) * 1.4)) if 'Torso' in name or name in ('Body', 'Back') else .15
-            base = tuple(v * (1 - .55 * saddle) for v in (.30, .275, .225))
-            if 'Leg' in name or name.startswith('Neck') and p.z < 1.9:
-                base = (.39, .34, .26)
+            saddle = max(0, min(1, (p.z - 1.30) * 1.8)) if 'Torso' in name or name in ('Body', 'Back') else .15
+            base = tuple(v * (1 - .66 * saddle) for v in (.115, .098, .075))
+            if 'Leg' in name or name.startswith('Ear'):
+                base = (.17, .115, .061)
+            if (name.startswith('Neck') and p.z < 1.75) or (name in ('Body', 'Back') or name.startswith('Torso')) and p.z < 1.13:
+                base = (.38, .35, .28)
             if name.startswith('Tail'):
-                base = (.20, .185, .15)
+                base = (.085, .075, .056)
         if 'eye' in matname:
             base = (.010, .008, .005)
             centre = eye_centres.get(1 if p.x > 0 else -1)
@@ -93,7 +109,6 @@ def animated_donor(species, mesh, rig, output, c):
         face.use_smooth = True
     mesh.data.materials.clear()
     mesh.data.materials.append(c.material())
-    refine(mesh, c, 4100)
     if deer:
         antlers(mesh, rig, c)
     root = bpy.data.objects.new(species + ' metre frame', None)
@@ -102,8 +117,8 @@ def animated_donor(species, mesh, rig, output, c):
     for obj in tops:
         obj.parent = root
     root.rotation_euler.z = math.pi / 2
-    root.scale = (scale, scale, scale * (1 if deer else 1.07))
-    root.location.z = .01310753 * scale if deer else .01020265 * scale * 1.07
+    root.scale = (scale, scale, scale * (1 if deer else 1.18))
+    root.location.z = .01310753 * scale if deer else .01020265 * scale * 1.18
     bpy.context.view_layer.update()
     export(mesh, rig, output, c, root)
 
@@ -142,7 +157,8 @@ def antlers(mesh, rig, c):
     for side in (-1, 1):
         beam = [(side * .12, -1.80, 4.02), (side * .30, -1.63, 4.30),
                 (side * .53, -1.74, 4.51), (side * .62, -2.02, 4.58), (side * .55, -2.32, 4.63)]
-        a.tube(beam, [.050, .044, .037, .024, .002], (.40, .32, .21), 'Head', 7)
+        a.tube(beam[:2], [.050, .044], (.105, .073, .038), 'Head', 7)
+        a.tube(beam[1:], [.044, .037, .024, .002], (.27, .21, .13), 'Head', 7)
         for base, tip in [(beam[1], (side * .26, -1.53, 4.65)),
                           (beam[2], (side * .56, -1.75, 4.94)),
                           (beam[3], (side * .70, -2.05, 4.96))]:
@@ -174,6 +190,12 @@ def static_donor(species, mesh, output, c):
     floor = min(p.z for p in points) if bear else -18.33993911743164
     for v, p in zip(mesh.data.vertices, points):
         v.co = (-p.y * scale, p.x * scale, (p.z - floor) * scale)
+        if not bear:
+            x, y, z = v.co
+            if x < -.16:
+                v.co.y *= 1.65
+            elif -.10 < x < .30 and z > .15:
+                v.co.z += .025 * max(0, 1 - abs(x - .08) / .22)
     mesh.matrix_world.identity()
     a = c.Animal(species)
     a.bone('root', (0, 0, 0), (0, 0, .1))
@@ -210,8 +232,17 @@ def static_donor(species, mesh, output, c):
         # Darken the donor palette into the natural coat range before baking.
         base = tuple(q / 12.92 if q <= .04045 else ((q + .055) / 1.055) ** 2.4
                      for q in pixels[pixel:pixel + 3])
-        if not bear and x < -.16:
-            base = (.032, .023, .016)
+        donor_dark = max(base) < .015
+        if not bear:
+            base = (.052, .023, .010) if z > .10 else (.027, .016, .009)
+            if x < -.16:
+                # Crossed grooves on the paddle read as scales in the bake.
+                ridge = abs(math.sin((x + y) * 210) * math.sin((x - y) * 210))
+                base = tuple(q * (.65 + .55 * ridge) for q in (.014, .016, .015))
+            if x > .43:
+                base = (.022, .015, .009)
+            if donor_dark and x > .34 and z > .20:
+                base = (.006, .005, .003)
         # Retain the donor's anatomical palette masks, replace flat swatches
         # with restrained natural coat variation and mud on the lower limbs.
         grain = .12 * math.sin(x * 193 + y * 61 + z * 43) + .05 * math.sin(z * 251 - x * 47)
@@ -244,7 +275,11 @@ def static_donor(species, mesh, output, c):
 
 def export(mesh, rig, output, c, root=None):
     bpy = c.bpy
-    c.finish_coat(mesh)
+    c.finish_coat(mesh, rough_fur=output.stem == 'black-bear')
+    if output.stem == 'black-bear':
+        shader = mesh.data.materials[0].node_tree.nodes.get('Principled BSDF')
+        shader.inputs['Roughness'].default_value = 1
+        shader.inputs['Specular IOR Level'].default_value = .18
     mesh.data.calc_loop_triangles()
     triangles = len(mesh.data.loop_triangles)
     assert triangles <= 5000, triangles
