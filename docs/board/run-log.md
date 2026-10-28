@@ -1430,3 +1430,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged LAB-BENCH-PANELS-REMOVE (Codex; lane tier 29, all Lab suites, six Lab scenarios, audits and build pass on ba6b9077; also LAB-TRY-PICTURES-DIAL).
 - 28 Oct night: merged QA-INSTRUCTOR-ANY-CAR-SLOW (Codex; lane tier 511/511 and build on the lane (run by Claude), runner and harness tests pass).
 - 28 Oct night: merged DEEP-SHALLOWS-FIX (lane tier 160/160, build, all 17 Deep suites, 9 Deep scenarios pass on 8264a141; independent review no blockers, findings fixed).
+- 28 Oct night: released four batches today (careers restored, lesson run picker, lesson crash fix, helicopter landing and pay, Deep shallows/edge/map, Lab fixes). Janitor: lanes follow-crash, lesson-runs, career-rebuild, heli-continue, deep-shallows, codex-lab, codex-qa-slow, codex-rescue-flaky and their branches removed; C: free 42.2 GB.

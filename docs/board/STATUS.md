@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-28T15:16:36.263Z
+Observed at: 2026-10-28T22:08:47.926Z
 
-Observation commit: 20a1c9bd2229a5b966603e8508f0ea8bc1f53857
+Observation commit: c16caedfb776e3645223bcb848939b4c4a1f0f35
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 20a1c9bd2229a5b966603e8508f0ea8bc1f53857
+Integration HEAD: c16caedfb776e3645223bcb848939b4c4a1f0f35
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-27T16:55:41.082Z; tested commit: 9d521bb0c80322083d94e4729918beb32721bf20.
+Last recorded full run: 2026-10-28T21:25:43.258Z; tested commit: 49b773d437a3fa744f1c985f21ae82e6ce81f468.
 
 ## Feature switches
 
@@ -47,31 +47,31 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 356,669,342 B | +0 B | 250,000,000 B |
+| Build `dist/` | 355,169,331 B | -1,500,011 B | 250,000,000 B |
 | Wasteland models | 114,830,428 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 32,874,545 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 198,869 B | -452,563 B | 5,000,000 B |
+| Added bytes in last merge | 316,582 B | +117,713 B | 5,000,000 B |
 | All `public/` | 348,530,686 B | +0 B | unavailable |
-| Git objects | 800,973,824 B | +1,144,832 B | unavailable |
+| Git objects | 793,348,096 B | -7,625,728 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 20a1c9bd2229a5b966603e8508f0ea8bc1f53857
+- Local master: c16caedfb776e3645223bcb848939b4c4a1f0f35
 - Local main: missing
-- Local integration/wasteland: 20a1c9bd2229a5b966603e8508f0ea8bc1f53857
+- Local integration/wasteland: c16caedfb776e3645223bcb848939b4c4a1f0f35
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit 20a1c9bd2229a5b966603e8508f0ea8bc1f53857.
+- Remote origin/master: matches local; cached commit c16caedfb776e3645223bcb848939b4c4a1f0f35.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 20a1c9bd2229a5b966603e8508f0ea8bc1f53857.
+- Remote origin/integration/wasteland: matches local; cached commit c16caedfb776e3645223bcb848939b4c4a1f0f35.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
