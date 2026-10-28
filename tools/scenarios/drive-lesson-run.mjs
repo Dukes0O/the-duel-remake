@@ -191,8 +191,9 @@ export async function run(context){
     const buttons=[...card.querySelectorAll('[data-drive-action]')].map(node=>node.dataset.driveAction);
     for(const need of ['step:watch','step:follow','step:your-turn','step:beat','leave'])if(!buttons.includes(need))throw Error('Result card lacks '+need+': '+buttons.join(','));
     if(buttons.some(id=>['next','help','skip'].includes(id)))throw Error('Result card still has an old Start, help or skip button: '+buttons.join(','));
-    // Watch me was dropped with Esc, so it is not done: it is the highlighted run. Follow me finished, so it carries a mark.
-    if(card.querySelector('.drive-lesson-suggested')!==card.querySelector('[data-drive-action="step:watch"]'))throw Error('Result card should highlight Watch me, the first run not done');
+    // Follow me finished, so it carries a mark, and the highlight moves forward to Your turn (Watch me, dropped with Esc,
+    // stays open but is behind the run just played).
+    if(card.querySelector('.drive-lesson-suggested')!==card.querySelector('[data-drive-action="step:your-turn"]'))throw Error('Result card should highlight Your turn, the next run after Follow me');
     if(!/Done/.test(card.querySelector('[data-drive-action="step:follow"]').textContent)||/Done|Passed/.test(card.querySelector('[data-drive-action="step:watch"]').textContent))throw Error('Result card marks are wrong');
     if(!card.querySelector('.drive-lesson-advice')?.textContent)throw Error('Result card lacks its advice sentence');
     return{attempt:lesson.lastAttempt,rows,buttons,text:card.textContent.replace(/\\s+/g,' '),profileUnchanged:true,lessonComplete:false};})()`);
@@ -209,11 +210,11 @@ export async function run(context){
     await context.waitFor(`window.__qaApp.duel.drivingLesson?.lesson.stage===${JSON.stringify(stage)}&&
       window.__qaApp.duel.drivingLesson.lesson.phase==='driving'`,'run button '+id);
   }
-  // Enter on the opening screen starts the highlighted run (Watch me, still not done).
+  // Enter on the opening screen starts the highlighted run: Your turn, the next one not done after Follow me.
   await press(context,'Escape','Escape',27);
-  await context.waitFor(`!!document.querySelector('.drive-lesson-briefing')`,'opening screen before Enter');
+  await context.waitFor(`!!document.querySelector('.drive-lesson-briefing [data-drive-action="step:your-turn"].drive-lesson-suggested')`,'opening screen before Enter, Your turn highlighted');
   await press(context,'Enter','Enter',13);
-  await context.waitFor(`window.__qaApp.duel.drivingLesson?.lesson.stage==='watch'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'&&!document.querySelector('.drive-lesson-briefing')`,'Enter starts the highlighted run');
+  await context.waitFor(`window.__qaApp.duel.drivingLesson?.lesson.stage==='your-turn'&&window.__qaApp.duel.drivingLesson.lesson.phase==='driving'&&!document.querySelector('.drive-lesson-briefing')`,'Enter starts the highlighted run');
   if(await context.evaluate(`JSON.stringify(window.__qaApp.profile)`)!==report.before)throw Error('Choosing runs changed saved progress');
   await press(context,'Escape','Escape',27);
   await context.waitFor(`!!document.querySelector('.drive-lesson-briefing')`,'opening screen before Leave lesson');

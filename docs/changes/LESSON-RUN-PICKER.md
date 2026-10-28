@@ -125,3 +125,7 @@ screen and result markup in `test-drive-lesson-run.mjs`).
   left the car at 0.2999 s on a busy laptop; the wait is now "until the run has
   lasted 0.3 s" (same check, no looser) in that scenario and in `drive-lesson-run`.
 - No frame check: the change adds no scene work.
+
+## Claude's change (28 October 2026)
+
+The highlighted run now moves forward from the run just played: after Follow me it is Your turn, even when Watch me was skipped; it wraps to the first run left only when nothing is open ahead. `suggestedDriveLessonRun` in `src/lessons/drive-lessons.js`. Changed assertions in `tools/scenarios/drive-lesson-run.mjs`: the result card after Follow me highlights Your turn (was Watch me), and Enter on the opening screen then starts Your turn (was Watch me); same strength, new design. Two new cases in `tools/test-drive-lesson-run.mjs`. drive-lesson-run and lessons-v2-view pass; test-drive-lesson-run 21/21.

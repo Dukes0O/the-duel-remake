@@ -130,6 +130,9 @@ test('the opening screen and the result screen both offer the four runs with mar
   assert.equal(suggestedDriveLessonRun(all), 'your-turn', 'every run done: suggest Your turn');
   assert.equal(suggestedDriveLessonRun({retake: true, runs: {}}), 'your-turn', 'a retake skips the practice runs');
   assert.equal(suggestedDriveLessonRun({retake: true, runs: {'your-turn': {done: true}}}), 'beat');
+  // After Follow me, move forward to Your turn even if Watch me was skipped; wrap round only when nothing is left ahead.
+  assert.equal(suggestedDriveLessonRun({stage: 'follow', runs: {follow: {done: true}}}), 'your-turn');
+  assert.equal(suggestedDriveLessonRun({stage: 'beat', runs: {beat: {done: true}}}), 'watch');
 });
 test('native input runs repeat across frame partitions', async () => {
   const options = {lessonId: 'corner', courseId: 'panorama-ridge', car: 'koenigsegg_jesko', difficulty: 'pro'};

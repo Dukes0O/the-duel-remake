@@ -84,11 +84,14 @@ export function chooseDriveLessonStep(lesson, id) {
   lesson.stage = id; lesson.phase = 'ready'; lesson.failed = false; lesson.attempt = null;
   return true;
 }
-// The run the opening screen highlights and Enter starts: the first one not done this visit, else Your turn.
+// The run the opening screen highlights and Enter starts: the next one not done this visit, counting forward from
+// the run just played (Follow me leads to Your turn), then the first one left, else Your turn.
 // A retake counts Watch me and Follow me as done, since the first visit did them.
 export function suggestedDriveLessonRun(lesson) {
   const runs = lesson?.runs ?? {};
-  const open = DRIVE_LESSON_STEPS.find(step => runs[step.id]?.done !== true && !(lesson?.retake === true && step.rule === 'none'));
+  const isOpen = step => runs[step.id]?.done !== true && !(lesson?.retake === true && step.rule === 'none');
+  const from = Math.max(0, DRIVE_LESSON_STEPS.findIndex(step => step.id === lesson?.stage));
+  const open = DRIVE_LESSON_STEPS.slice(from).find(isOpen) ?? DRIVE_LESSON_STEPS.find(isOpen);
   return open?.id ?? 'your-turn';
 }
 function startAttempt(lesson, view) {
