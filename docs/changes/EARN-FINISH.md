@@ -441,3 +441,6 @@ The temporary scenario file `tools/scenarios/zz-earn-finish-v2.mjs`, the
 clean-copy folder used to test the starting commit, and the build output were
 removed. Nothing in the game was replaced; the two old car lines on the
 results screen are replaced by the card.
+## Claude's review (28 October 2026, night)
+
+Decisions built as asked: F1 at 12 medals (an Easy-only child with three purchases could never reach 15), the earned-car results card, medal dots and the garage chip. Changed assertions approved: the F1 count follows the new number; the result-line check moved with the card; test-lab-fan and test-sirena-car apply only the F1 number to old data and compare the rest exactly. The one lane failure (test-deep-kelp-coast) comes from DEEP-TRAIL-JOINTS on integration and is being fixed there. Verdict: merge. earned-cars stays dev until Claude's three frame checks.
