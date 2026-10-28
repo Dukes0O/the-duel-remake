@@ -1,0 +1,13 @@
+{
+  "tool": "built-in imagegen",
+  "use": "reference only, never runtime",
+  "directory": "C:/Users/kyleb/dev/art-library/wild-north-woods/reference",
+  "promptRecipe": "Photographic animal anatomy reference triptych. Same real animal standing naturally in strict side profile, front and three-quarter views. Full body including feet, ears, tail and antlers in frame. Plain warm grey background and soft neutral daylight. Accurate wildlife proportions and natural colours. No cartoon, outlines, text or accessories. Reference only for Blender modelling.",
+  "subjects": {
+    "white-tailed-deer": "Adult male white-tailed deer; natural muted brown-grey autumn coat; white underside of flag tail and throat; slender legs; small dark eyes; branching antlers.",
+    "moose": "Adult bull moose, Alces alces; broad palmate antlers; dark brown shaggy coat; pale lower legs; high shoulder hump; long overhanging muzzle; large ears; hanging dewlap; short tail.",
+    "black-bear": "Adult American black bear; black to dark brown coarse fur; brown muzzle; rounded upright ears; small dark eyes; powerful broad paws; rounded rump and shoulders without grizzly hump.",
+    "beaver": "Adult North American beaver, Castor canadensis; compact low brown fur body; small rounded ears and eyes; blunt muzzle; short forelegs; large hind feet; long flat dark leathery scaled paddle tail.",
+    "eastern-wolf": "Adult eastern wolf, Canis lycaon; slender long-legged build; narrow muzzle; upright ears; medium bushy tail held down; grizzled grey and muted rusty brown coat; darker saddle; pale lower face and belly; small natural amber eyes."
+  }
+}

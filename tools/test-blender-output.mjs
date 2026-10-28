@@ -6,6 +6,11 @@ import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+const wildlifeIds = ['white-tailed-deer', 'moose', 'black-bear', 'beaver', 'eastern-wolf'];
+const wildlifeGenerators = wildlifeIds.map(id => ({
+  script: `tools/blender/wildlife/${id}.py`, args: [],
+  glb: [`public/assets/wildlife/${id}.glb`],
+}));
 const generators = [
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
@@ -318,6 +323,62 @@ for (const generator of nativeGenerators) check(`${generator.script} retains its
 
 const fixtureRoots = [mkdtempSync(join(tmpdir(), 'duel-blender-paths-a-')), mkdtempSync(join(tmpdir(), 'duel-blender-paths-b-'))];
 try {
+  for (const generator of wildlifeGenerators) {
+    check(generator.script + ' plans only its runtime candidate without Blender or writes', () => {
+      for (const fixtureRoot of fixtureRoots) {
+        const plan = pathPlan(generator, fixtureRoot);
+        assert.deepEqual(plan.blend, []);
+        assert.deepEqual(relativePaths(fixtureRoot, plan.glb, '.glb'), generator.glb);
+        assert.deepEqual(plan.evidence, []);
+        assert.deepEqual(plan.json, []);
+        const review = pathPlan({...generator, args: ['--review']}, fixtureRoot);
+        assert.deepEqual(review.glb, []);
+        assert.deepEqual(review.blend, []);
+        const id = generator.glb[0].split('/').pop().replace('.glb', '');
+        assert.deepEqual(review.evidence, ['side', 'three-quarter', 'idle-25', 'idle-75', 'walk-25', 'walk-75']
+          .map(view => join(fixtureRoot, '.qa-dist/wildlife-round-1', `${id}-${view}.png`)));
+        assert.deepEqual(review.json, [join(fixtureRoot, '.qa-dist/wildlife-round-1', `${id}-inspection.json`)]);
+        assert.deepEqual(readdirSync(fixtureRoot), []);
+      }
+    });
+    check(generator.script + ' exports a bounded coloured skinned animal with idle and gait', () => {
+      const bytes = readFileSync(join(root, generator.glb[0]));
+      assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+      assert.equal(bytes.readUInt32LE(4), 2);
+      assert.equal(bytes.readUInt32LE(8), bytes.length);
+      const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+      const primitives = gltf.meshes.flatMap(mesh => mesh.primitives);
+      const triangles = primitives.reduce((sum, p) => sum + gltf.accessors[p.indices].count / 3, 0);
+      assert.ok(triangles > 100 && triangles <= 5000, `${triangles} triangles`);
+      assert.ok(gltf.skins?.length > 0);
+      assert.equal(gltf.images?.length, 1, 'one embedded natural coat map');
+      const binStart = 28 + bytes.readUInt32LE(12);
+      const imageView = gltf.bufferViews[gltf.images[0].bufferView];
+      const imageStart = binStart + (imageView.byteOffset || 0);
+      assert.equal(gltf.images[0].mimeType, 'image/png');
+      assert.ok(bytes.readUInt32BE(imageStart + 16) <= 1024);
+      assert.ok(bytes.readUInt32BE(imageStart + 20) <= 1024);
+      for (const p of primitives) {
+        for (const attribute of ['COLOR_0', 'JOINTS_0', 'WEIGHTS_0']) {
+          assert.ok(Number.isInteger(p.attributes[attribute]), `missing ${attribute}`);
+        }
+      }
+      for (const name of ['Idle', 'Walk']) {
+        const clip = gltf.animations.find(a => a.name === name);
+        assert.ok(clip, `missing ${name}`);
+        assert.ok(clip.channels.some(channel => gltf.skins.some(skin => skin.joints.includes(channel.target.node))),
+          `${name} must animate actual skin joints`);
+        assert.ok(clip.samplers.some(s => gltf.accessors[s.input].count > 2));
+      }
+      if (generator.script.includes('white-tailed-deer') || generator.script.includes('eastern-wolf')) {
+        const sources = JSON.parse(readFileSync(join(root, 'tools/blender/wildlife/sources.json'), 'utf8'));
+        const source = sources[generator.script.includes('white-tailed-deer') ? 'white-tailed-deer' : 'eastern-wolf'];
+        for (const name of source.clips) {
+          assert.ok(gltf.animations.some(a => a.name === name), `lost donor clip ${name}`);
+        }
+      }
+    });
+  }
   for (const generator of generators) {
     let plans;
     check(`${generator.script} supports a Blender-free output plan`, () => {

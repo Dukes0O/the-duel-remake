@@ -1,7 +1,7 @@
 {
   "version": 1,
   "group": "north-woods",
-  "status": "blocked-approved-donors-unavailable-2026-10-28",
+  "status": "round-1-candidates-awaiting-claude",
   "retrievedAtUtc": "2026-10-15T02:19:19.6940597Z",
   "cacheRoot": "C:/Users/kyleb/dev/art-library/wild-north-woods",
   "runtimeInstalled": false,
@@ -40,6 +40,44 @@
         "bytes": 2040,
         "sha256": "6fc6eddc845eaa586f2dfeffb3e7220e41e09059573ce9121fdf8e4cefd268bd",
         "result": "Google Drive - Quota exceeded HTML; no model bytes"
+      },
+      "round1": {
+        "source": "https://poly.pizza/m/T6Cs7tmMHJ",
+        "recipe": "tools/blender/wildlife/white-tailed-deer.py",
+        "candidate": "public/assets/wildlife/white-tailed-deer.glb",
+        "triangles": 4352,
+        "textureEdge": 1024,
+        "skins": 1,
+        "clips": [
+          "AnimalArmature|Walk",
+          "AnimalArmature|Jump_toIdle",
+          "AnimalArmature|Idle_HitReact_Right",
+          "AnimalArmature|Idle_HitReact_Left",
+          "AnimalArmature|Idle_Headlow",
+          "AnimalArmature|Idle_2",
+          "AnimalArmature|Idle",
+          "AnimalArmature|Gallop_Jump",
+          "AnimalArmature|Gallop",
+          "AnimalArmature|Eating",
+          "AnimalArmature|Death",
+          "AnimalArmature|Attack_Kick",
+          "AnimalArmature|Attack_Headbutt",
+          "Idle",
+          "Idle_2",
+          "Idle_Headlow",
+          "Walk",
+          "Jump_toIdle",
+          "Idle_HitReact_Right",
+          "Idle_HitReact_Left",
+          "Gallop_Jump",
+          "Gallop",
+          "Eating",
+          "Death",
+          "Attack_Kick",
+          "Attack_Headbutt"
+        ],
+        "sha256": "a1c8d66e58ab814b0cd24ce4c2586584791df1ac3c73e17fb5f81353b49efc46",
+        "artAccepted": false
       }
     },
     {
@@ -68,6 +106,42 @@
         "bytes": 2040,
         "sha256": "94b1b30ef9f42b17a5005edeeeef0ccea509267fe91eb24128170f16d7c6cbc9",
         "result": "Google Drive - Quota exceeded HTML; no model bytes"
+      },
+      "round1": {
+        "source": "https://poly.pizza/m/P1gU3Qkr9r",
+        "recipe": "tools/blender/wildlife/eastern-wolf.py",
+        "candidate": "public/assets/wildlife/eastern-wolf.glb",
+        "triangles": 4100,
+        "textureEdge": 1024,
+        "skins": 1,
+        "clips": [
+          "AnimalArmature|Walk",
+          "AnimalArmature|Jump_ToIdle",
+          "AnimalArmature|Idle_HitReact_Right",
+          "AnimalArmature|Idle_HitReact_Left",
+          "AnimalArmature|Idle_2_HeadLow",
+          "AnimalArmature|Idle_2",
+          "AnimalArmature|Idle",
+          "AnimalArmature|Gallop_Jump",
+          "AnimalArmature|Gallop",
+          "AnimalArmature|Eating",
+          "AnimalArmature|Death",
+          "AnimalArmature|Attack",
+          "Idle",
+          "Idle_2",
+          "Idle_2_HeadLow",
+          "Walk",
+          "Jump_ToIdle",
+          "Idle_HitReact_Right",
+          "Idle_HitReact_Left",
+          "Gallop_Jump",
+          "Gallop",
+          "Eating",
+          "Death",
+          "Attack"
+        ],
+        "sha256": "d34fe2017bfcf65e20453257639ec1453b08bc95c18fc0718f9798b5f417bf0e",
+        "artAccepted": false
       }
     },
     {
@@ -97,7 +171,21 @@
       "actualRig": null,
       "actualClips": null,
       "actualTextures": null,
-      "artAccepted": false
+      "artAccepted": false,
+      "round1": {
+        "source": "original Blender recipe",
+        "recipe": "tools/blender/wildlife/moose.py",
+        "candidate": "public/assets/wildlife/moose.glb",
+        "triangles": 2346,
+        "textureEdge": 1024,
+        "skins": 1,
+        "clips": [
+          "Idle",
+          "Walk"
+        ],
+        "sha256": "2051396acde45f24a099467b0f407bccbdcdf92b2d7fa7bd5a1d6e4daed95aec",
+        "artAccepted": false
+      }
     },
     {
       "id": "black-bear",
@@ -139,7 +227,21 @@
       "actualRig": null,
       "actualClips": null,
       "actualTextures": null,
-      "artAccepted": false
+      "artAccepted": false,
+      "round1": {
+        "source": "https://poly.pizza/m/56ym_pyVnel",
+        "recipe": "tools/blender/wildlife/black-bear.py",
+        "candidate": "public/assets/wildlife/black-bear.glb",
+        "triangles": 3000,
+        "textureEdge": 1024,
+        "skins": 1,
+        "clips": [
+          "Idle",
+          "Walk"
+        ],
+        "sha256": "a629df999a7b80a63e23b95a6a37cad7d4cf3401e2d7f02aee163e89bf58773e",
+        "artAccepted": false
+      }
     },
     {
       "id": "beaver",
@@ -490,6 +592,20 @@
         "artAccepted": false,
         "gamePlacementVerified": false,
         "reverifiedDate": "2026-10-28"
+      },
+      "round1": {
+        "source": "https://poly.pizza/m/fwtA7VLrXPr",
+        "recipe": "tools/blender/wildlife/beaver.py",
+        "candidate": "public/assets/wildlife/beaver.glb",
+        "triangles": 2600,
+        "textureEdge": 1024,
+        "skins": 1,
+        "clips": [
+          "Idle",
+          "Walk"
+        ],
+        "sha256": "7b0bb896055c5d8c98285718d7c8491436285dec6e12867b5c96b16009e356f3",
+        "artAccepted": false
       }
     }
   ],
@@ -575,5 +691,7 @@
     "roundsSubmitted": 0,
     "sheetCreated": false,
     "runtimeInstalled": false
-  }
+  },
+  "formalRoundsUsed": 1,
+  "round1Sheet": "docs/board/looks/wildlife/north-woods-round-1.jpg"
 }

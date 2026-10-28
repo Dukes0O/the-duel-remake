@@ -65,6 +65,7 @@ export function inspectRepository(root = PROJECT_ROOT, files = projectFiles(root
     if (name.startsWith('public/assets/audio/') && (/(?:-source|tire-squeal)\.(?:wav|mp3|ogg|flac)$/.test(name)))
       failures.push(`${name}: raw audio source belongs outside public; keep its recipe`);
     const roundSheet = extension === '.jpg' && (
+      name === 'docs/board/looks/wildlife/north-woods-round-1.jpg' ||
       /^docs\/board\/looks\/[^/]+\/(?:round|look)-\d+\.jpg$/.test(name) ||
       /^docs\/board\/looks\/lab-2\/lab-lessons-flying-[1-3]\.jpg$/.test(name) ||
       /^docs\/board\/looks\/lab-2\/lab-lessons-snow-[1-3]\.jpg$/.test(name) ||
