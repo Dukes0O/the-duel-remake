@@ -42,3 +42,7 @@ Nothing replaced; the old "click the hidden board button" step in `lab-restore.m
 
 **Gates.** Lane tier, `--changed --jobs 4`: 29 passed, 0 failed, 0 not run. `npm run build` passed (usual large-chunk and import warnings); output deleted. Also ran the unchanged `lab-fan-view` browser recipe on a private port: passed, no errors or warnings.
 
+
+## Claude's review (27 October 2026, night)
+
+Matches the decision: a passed bench with something to use opens straight to it, the lesson stays replayable, no save change; also frees the secret fan's REVERSE, which was unreachable in the walking Lab. No assertion changed. Verdict: merge and release.
