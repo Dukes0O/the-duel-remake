@@ -1399,3 +1399,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 27 Oct: merged LESSONS-V2-LINES (Brian's 22 second-version lesson lines, 1,883 characters; lane 97/97, build pass; 47 old lines removed).
 - 27 Oct: dropped DRIVE-LESSON-FINISH and DRIVE-LESSONS-FINISH-2; the second-version lessons (DRIVING_LESSONS 14) replaced what they checked, and LESSONS-V2-FINISH covers them.
 - 27 Oct night: merged HELI-VIEW-FRAMES (opt-in SKI_FRAMES_ONLY and RESCUE_FRAMES_ONLY recipes, no game code; lane 23/23, build pass).
+- 27 Oct night: merged QA-AUDIO-CRASH-PEAK-AGAIN (capture waits follow the audio clock, private harness shutdown capped; no limit changed; lane 20/20, build pass).
