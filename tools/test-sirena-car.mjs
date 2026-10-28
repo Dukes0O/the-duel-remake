@@ -56,7 +56,10 @@ test('the Sirena is the Viper Prototype, 8% slower and 10% weaker on the brakes,
 test('no other car changes: numbers and prices are the roster of the commit before', async () => {
   const old = await import('data:text/javascript;base64,' + Buffer.from(before).toString('base64'));
   assert.deepEqual(OTHER_CARS, Object.keys(old.CARS), 'same cars in the same order, the Sirena last');
-  for (const id of OTHER_CARS) assert.deepEqual(CARS[id], old.CARS[id], `${id} is unchanged`);
+  // The one change since: the McLaren F1 is earned at 12 medals, not 15 (Claude, 28 October 2026, EARN-FINISH).
+  const earlier = structuredClone(old.CARS);
+  earlier.mclaren_f1.unlockRequirement.medals = 12;
+  for (const id of OTHER_CARS) assert.deepEqual(CARS[id], earlier[id], `${id} is unchanged`);
   assert.equal(Object.keys(CARS).filter(id => id !== 'mcmurtry_speirling').at(-1), SIRENA_CAR);
   assert.deepEqual(Object.keys(CAR_PRICES), Object.keys(CAR_PRICES).filter(id => id !== SIRENA_CAR && id !== 'mcmurtry_speirling'));
   assert.deepEqual(old.DEFAULT_CAR, 'falcone_f42');

@@ -319,25 +319,24 @@ console.log('scratch medal cars passed');
   }
 });
 
-// The production F1 grant crosses the real 15-medal threshold in a real result.
-test('the real F1 is earned on the fifteenth medal, factory tuned and free', () => {
-  const fourteen = normalizeProfile({...createProfile(), medals: {version: 1, cars: {
+// The production F1 grant crosses the real 12-medal threshold in a real result (Claude, 28 October 2026: lowered from 15).
+test('the real F1 is earned on the twelfth medal, factory tuned and free', () => {
+  const eleven = normalizeProfile({...createProfile(), medals: {version: 1, cars: {
     falcone_f42: {duel: [1, 1, 1], grandprix: [1, 1, 1]},
-    stuttgart_959s: {duel: [1, 1, 1], grandprix: [1, 1, 1]},
-    falcone_heritage: {duel: [1, 1, 0], grandprix: [0, 0, 0]},
+    stuttgart_959s: {duel: [1, 1, 1], grandprix: [1, 1, 0]},
   }}});
-  assert.deepEqual(medals.medalTotals(fourteen), {medals: 14, gold: 4});
-  assert.equal(fourteen.unlockedCars.includes('mclaren_f1'), false);
-  const early = unlockCar(fourteen, 'mclaren_f1');
+  assert.deepEqual(medals.medalTotals(eleven), {medals: 11, gold: 3});
+  assert.equal(eleven.unlockedCars.includes('mclaren_f1'), false);
+  const early = unlockCar(eleven, 'mclaren_f1');
   assert.equal(early.ok, false); assert.equal(early.cost, 0);
-  assert.equal(early.reason, '15 medals needed, you have 14.');
-  const won = settleRace(fourteen, finish({runId: 'f1-fifteenth', car: 'falcone_heritage', cpuDifficulty: 'hard'}));
-  assert.deepEqual(medals.medalTotals(won.profile), {medals: 15, gold: 5});
+  assert.equal(early.reason, '12 medals needed, you have 11.');
+  const won = settleRace(eleven, finish({runId: 'f1-twelfth', car: 'falcone_heritage', cpuDifficulty: 'hard'}));
+  assert.deepEqual(medals.medalTotals(won.profile), {medals: 12, gold: 4});
   assert.deepEqual(won.earnedCars, ['mclaren_f1']);
   assert.ok(won.profile.unlockedCars.includes('mclaren_f1'));
   assert.equal(Object.keys(won.profile.upgrades.mclaren_f1).length, 7);
   assert.ok(Object.values(won.profile.upgrades.mclaren_f1).every(level => level === 3));
-  assert.equal(won.profile.credits, fourteen.credits + won.reward, 'the grant charges no credits');
+  assert.equal(won.profile.credits, eleven.credits + won.reward, 'the grant charges no credits');
   assert.equal(unlockCar(won.profile, 'mclaren_f1').reason, 'This car is already in your garage.');
   const kept = normalizeProfile({...won.profile, medals: {version: 1, cars: {}}});
   assert.ok(kept.unlockedCars.includes('mclaren_f1'), 'empty sheets never take an earned F1 back');

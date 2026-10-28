@@ -179,7 +179,7 @@ damped pendulum (no new library; it borrows the tether ideas in
   | Dusthawk Rally | 1,280 kg | Yes |
   | Aurora GTR | 1,350 kg | Yes |
   | Ferrari Enzo (earned, 6 medals) | 1,365 kg | Yes |
-  | McLaren F1 (earned, 15 medals) | 1,140 kg | Yes |
+  | McLaren F1 (earned, 12 medals) | 1,140 kg | Yes |
   | Koenigsegg Jesko Absolut | 1,390 kg | Yes |
   | Stuttgart 959-S | 1,450 kg | Yes |
   | Bugatti Bolide (earned, 24 medals with 6 gold) | 1,450 kg | Yes, 50 kg under the limit |

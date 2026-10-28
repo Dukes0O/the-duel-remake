@@ -130,7 +130,10 @@ assert.equal(usableTune(forged, FAN_CAR).wing, 0);
 const oldSource = execFileSync('git', ['show', 'd5ba2d27:src/config.js'], {encoding: 'utf8'})
   .replace(/(from\s+['"])(\.[^'"]+)(['"])/g, (_, a, path, b) => a + new URL(path, new URL('../src/config.js', import.meta.url)).href + b);
 const before = await import('data:text/javascript;base64,' + Buffer.from(oldSource).toString('base64'));
-assert.deepEqual(Object.fromEntries(Object.entries(CARS).filter(([id]) => id !== FAN_CAR)), before.CARS,
+// The one change since: the McLaren F1 is earned at 12 medals, not 15 (Claude, 28 October 2026, EARN-FINISH).
+const earlierCars = structuredClone(before.CARS);
+earlierCars.mclaren_f1.unlockRequirement.medals = 12;
+assert.deepEqual(Object.fromEntries(Object.entries(CARS).filter(([id]) => id !== FAN_CAR)), earlierCars,
   'every earlier car has the exact same data and order');
 
 function launch(id, curve = false) {
