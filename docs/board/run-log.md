@@ -1435,3 +1435,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged EARN-FINISH (lane tier 59/59, build, earned and cup suites, heli-mode 263, earned-cars scenario pass on 6f596bb2; earned-cars stays dev until its frame checks).
 - 28 Oct night: merged LINE-PACKETS (docs only; lane tier 11/11, build pass on 9f3101f8).
 - 28 Oct night: merged LINE-REFS (Codex; docs only; lane 13/13, build pass; Claude accepted the three reference sheets).
+- 28 Oct night: merged KOGANE-PASS-C2 (Codex; lane 49/49, build, course test, test-circuits, drive-through and scenario pass on 662f9ea9).
