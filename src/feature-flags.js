@@ -46,8 +46,8 @@ export const FEATURE_STATES = Object.freeze({
   'lab-2': 'on',
   // Lab tuning (docs/LAB.md 5): the Tune page and its physics, a separate switch so the race feel is judged alone.
   'lab-tuning': 'on',
-  // The pilot's map (docs/PILOT_MAP.md): the place table, regions, fuel pads and the new cruise legs. Off in the game; works only with the helicopter on.
-  'pilot-map': 'dev',
+  // The pilot's map (docs/PILOT_MAP.md): the place table, regions, fuel pads and the new cruise legs. Released 28 October 2026; works only with the helicopter on.
+  'pilot-map': 'on',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
