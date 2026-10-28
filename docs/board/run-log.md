@@ -1427,3 +1427,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged CAREER-REBUILD (lane tier 40/40, build, test-career-rebuild 21/21, career-restore, career-backup, career-archive scenarios pass on d9cac081; independent review no blockers, three findings fixed).
 - 28 Oct night: merged HELI-PAY-CONTINUE (lane tier 107/107, build, heli/ski/map suites, heli-continue scenario pass on acd9b42f; independent review no blockers, findings fixed; rescue-finish fails on base 3ed23f4f too (QA-RESCUE-FINISH-FLAKY)).
 - 28 Oct night: merged QA-RESCUE-FINISH-FLAKY (Codex; lane tier 20/20, build, three rescue-finish passes in a row on 80be9a35).
+- 28 Oct night: merged LAB-BENCH-PANELS-REMOVE (Codex; lane tier 29, all Lab suites, six Lab scenarios, audits and build pass on ba6b9077; also LAB-TRY-PICTURES-DIAL).
