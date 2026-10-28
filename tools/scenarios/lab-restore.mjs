@@ -5,6 +5,36 @@
 const entry = '/tools/menu-check.html?flags=helicopter,lab,the-deep';
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+// The walking Lab (lab-2): the player walks to the Rust machine and presses E. This is the same walk the workshop lesson
+// scenario uses; the keys are real key events, nothing is moved by script.
+async function walkToRust(context) {
+  const canvas = `document.querySelector('.lab-canvas')`, position = axis => context.evaluate(`JSON.parse(${canvas}.dataset.labWalkPosition)[${axis}]`);
+  const key = (code, type) => context.command('Input.dispatchKeyEvent', {type, code, key: code.slice(3).toLowerCase()});
+  async function walk(code, expression) {
+    await key(code, 'keyDown');
+    try { await context.waitFor(expression, code, 15_000); } finally { await key(code, 'keyUp'); }
+    await pause(500);
+  }
+  await context.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'the walking Lab is ready', 60_000);
+  await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < -4.3`);
+  // Stop in the narrow aisle between the bending rig and the turning arm, in short steps.
+  for (let n = 0; n < 50; n++) {
+    const at = await position(2);
+    if (Math.abs(at + 5.05) < .08) break;
+    const code = at > -5.05 ? 'KeyW' : 'KeyS';
+    await key(code, 'keyDown'); await pause(100); await key(code, 'keyUp'); await pause(250);
+  }
+  if (Math.abs(await position(2) + 5.05) >= .08) throw Error('Could not line up with the workshop aisle.');
+  await walk('KeyD', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] > 6.9`);
+  await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < -5.5`);
+  await context.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the')`, 'the machine prompt');
+  await context.command('Input.dispatchKeyEvent', {type: 'keyDown', code: 'KeyE', key: 'e', windowsVirtualKeyCode: 69});
+  await context.command('Input.dispatchKeyEvent', {type: 'keyUp', code: 'KeyE', key: 'e', windowsVirtualKeyCode: 69});
+  // A single-lesson machine opens at once; a machine with a choice shows its button.
+  await pause(400);
+  if (await context.evaluate(`!!document.querySelector('[data-lab-lesson="start:rust"]')`)) await context.evaluate(`document.querySelector('[data-lab-lesson="start:rust"]').click()`);
+}
+
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   await context.navigate(entry);
@@ -19,8 +49,11 @@ export async function run(context) {
   await context.screenshot('restore-garage-before');
   await context.evaluate(`document.querySelector('.lab-tab').click()`);
   await context.waitFor(`!!document.querySelector('.lab-canvas')`, 'the Lab opens with its room', 30_000);
-  await context.evaluate(`document.querySelector('[data-lab-lesson="start:rust"]').click()`);
+  await walkToRust(context);
+  // LAB-RESTORE-PASSED: Rust is passed, so the bench opens straight to Restore, with no lesson to sit through first.
   await context.waitFor(`!!document.querySelector('[data-lab="restore"]:not(:disabled)')`, 'the Restore button on the Rust bench', 10_000);
+  if (await context.evaluate(`!!document.querySelector('.lab-teaching') && !document.querySelector('.lab-teaching').hidden`)) throw Error('A passed Rust lesson must not be required again.');
+  if (!(await context.evaluate(`!!document.querySelector('[data-lab="replay"]')`))) throw Error('The passed bench should offer to replay the lesson.');
   const label = await context.evaluate(`document.querySelector('[data-lab="restore"]').textContent`);
   if (!label.includes('1,000')) throw Error(`The button should name the price: ${label}`);
   await context.screenshot('restore-offer');
@@ -92,8 +125,8 @@ export async function run(context) {
 
   // The replay is free and can be skipped; nothing more is charged.
   await context.evaluate(`document.querySelector('[data-action="garage-close"]').click(); window.__qaApp.openLab()`);
-  await context.waitFor(`window.__qaApp.labOpen && !document.querySelector('.lab-panel').hidden && !!document.querySelector('.lab-canvas') && !!document.querySelector('[data-lab-lesson="start:rust"]')`, 'the reopened Lab board is visible', 20_000);
-  await context.evaluate(`document.querySelector('[data-lab-lesson="start:rust"]').click()`);
+  await context.waitFor(`window.__qaApp.labOpen && !document.querySelector('.lab-panel').hidden && !!document.querySelector('.lab-canvas')`, 'the reopened Lab is visible', 20_000);
+  await walkToRust(context);
   await context.waitFor(`!!document.querySelector('[data-lab="restore-again"]') && !document.querySelector('[data-lab="restore"]')`, 'only the replay is offered now', 10_000);
   await context.evaluate(`document.querySelector('[data-lab="restore-again"]').click()`);
   await context.waitFor(`!!document.querySelector('[data-lab="restore-skip"]')`, 'the replay can be skipped', 10_000);
@@ -101,5 +134,11 @@ export async function run(context) {
   await context.waitFor(`!!document.querySelector('[data-lab="restore-close"]')`, 'Skip jumps to the end', 10_000);
   const credits = await context.evaluate(`window.__qaApp.profile.credits`);
   if (credits !== 3500) throw Error(`Nothing more should be charged, credits are ${credits}`);
+  // The lesson itself stays open: from the finished replay the bench offers it, and it opens as the five-step lesson.
+  await context.evaluate(`document.querySelector('[data-lab="restore-close"]').click()`);
+  await context.waitFor(`!!document.querySelector('[data-lab="replay"]')`, 'the passed bench offers the lesson again', 10_000);
+  await context.evaluate(`document.querySelector('[data-lab="replay"]').click()`);
+  await context.waitFor(`!!document.querySelector('.lab-teaching') && !document.querySelector('.lab-teaching').hidden && !document.querySelector('[data-lab="restore"]')`, 'the Rust lesson replays', 20_000);
+  await context.screenshot('restore-lesson-replay');
   console.log(`Lab restore: mechanical 1,000 + body 1,500, both finishes kept, the sequence took ${took.toFixed(0)} s, salt ${salt.join('% > ')}%`);
 }

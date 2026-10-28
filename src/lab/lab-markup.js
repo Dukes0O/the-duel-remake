@@ -52,7 +52,11 @@ function protectMarkup(protect) {
     `<button type="button" data-lab="protect-check">Check my choices</button></div>`;
 }
 
-export function benchMarkup({lessonId, name, controls, settings, readout, challenge, protect = null, hasRun, explained, message = '', restore = ''}) {
+export function benchMarkup({lessonId, name, controls, settings, readout, challenge, protect = null, hasRun, explained, message = '', restore = '', replay = false}) {
+  // LAB-RESTORE-PASSED: a passed lesson opens straight to what it unlocked, with the lesson one press away.
+  if (replay) return `<section class="lab-bench lab-bench-passed" data-lesson="${escape(lessonId)}" aria-label="${escape(name)} bench"><button type="button" class="lab-back" data-lab="back">← All lessons</button>` +
+    `<h3>${escape(name.toUpperCase())} <span class="lab-passed">✓ Passed</span></h3><p class="lab-hint">You passed this lesson. What it opened is here; the lesson stays open to replay.</p>` +
+    `<button type="button" data-lab="replay">Replay the lesson</button>${restore}${message ? `<p class="lab-message" role="status">${escape(message)}</p>` : ''}</section>`;
   const dials = controls.map(row => controlMarkup(row, settings[row.id])).join('');
   const readoutHtml = readout.length
     ? `<dl class="lab-readout" aria-label="Result">${readout.map(item => `<div class="${item.tone ?? ''}"><dt>${escape(item.label)}</dt><dd>${escape(item.value)}</dd></div>`).join('')}</dl>`
