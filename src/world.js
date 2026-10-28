@@ -54,7 +54,7 @@ export function roadBranchMaterial(course,cut,base,winter=false){
   return material;
 }
 
-export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) {
+export function buildEnvironment(course, {saltFlats,trackKits,snow=false,preload} = {}) {
   if(course.def.pit)return createPitEnvironment(course);
   if(course.def.id==='salt-flats'){
     const group=new THREE.Group();
@@ -77,8 +77,10 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   const yellow = new THREE.MeshStandardMaterial({ color: 0xd8a943, roughness: .85 });
   const white = new THREE.MeshStandardMaterial({ color: 0xf4f2ec, roughness: .8 });
   const metal = new THREE.MeshStandardMaterial({ color: 0xa6aaa5, metalness: .55, roughness: .57 });
-  const terrain = new THREE.Mesh(terrainFor(terrainGeometry(course)), groundMat); terrain.receiveShadow = true; group.add(terrain);
-  const farTerrain = new THREE.Mesh(terrainFor(farTerrainGeometry(course)), groundMat); farTerrain.receiveShadow = true; group.add(farTerrain);
+  // The ground depends on the course alone, so a preload (terrain-preload.js) may already have worked it out.
+  const preloaded=preload?.take(course,winter)??null;
+  const terrain = new THREE.Mesh(preloaded?preloaded.terrain:terrainFor(terrainGeometry(course)), groundMat); terrain.receiveShadow = true; group.add(terrain);
+  const farTerrain = new THREE.Mesh(preloaded?preloaded.farTerrain:terrainFor(farTerrainGeometry(course)), groundMat); farTerrain.receiveShadow = true; group.add(farTerrain);
   const trailMat=new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),bumpMap:surfaceTexture('gravel'),bumpScale:.035,color:course.def.arena?0xb39372:0xbeb4a3,roughness:1});
   const road = new THREE.Mesh(strip(course, s=>-course.roadHalfWidthAt(s), s=>course.roadHalfWidthAt(s), .035), course.def.arena||course.def.offroad?trailMat:roadMat); road.receiveShadow = true; group.add(road);
   const shoulder = createPavedShoulderMaterial({gravel:surfaceTexture('gravel'),alpine,course});

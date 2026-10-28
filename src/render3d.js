@@ -26,6 +26,7 @@ import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.j
 import { CARS, DRIVE } from './config.js';
 import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage, combatVehicleWear } from './vehicles.js';
 import { buildEnvironment, worldAtExtended, disposeTree } from './world.js';
+import { createTerrainPreload } from './terrain-preload.js';
 import { addSign } from './world-props.js'; // DRIVE-LESSONS-VIEW-2: the ice sign is the road's own sign board
 import { createDrivingEffects } from './effects.js';
 import { createExplosion } from './explosion.js';
@@ -351,6 +352,32 @@ export function attachRenderer(host, app) {
   const hasAvalanche=next=>(next.def.id==='summit-run'||isSummitAttack(next.def)) && (app._switches?.()??app.duel.featureFlags).enabled('summit-run');
   const kitWorldKey=next=>environmentKey(next)+(hasSnowmen(next)?':snowmen':'')+(hasAvalanche(next)?':avalanche':'');
   const winterEnabled=next=>snowWorldEnabled(next,app._switches?.()??app.duel.featureFlags);
+  // The ground depends on the course alone: work it out a little at a time while the cars and kits load (a task
+  // that runs between frames, so the page keeps drawing and answering), and let the world build take the result.
+  const preloadChannel=new MessageChannel(),preloadTerrain=createTerrainPreload({schedule:run=>{preloadChannel.port1.onmessage=run;preloadChannel.port2.postMessage(0);}});
+  // True when drawing `next` needs a new world (the same test the frame makes before it calls build).
+  function needsBuild(next) {
+    const key = kitWorldKey(next);
+    if (course === next && worldKey === key) return false;
+    return !(world && worldKey === key && !winterEnabled(next));
+  }
+  // Only a course with kits waits for something before its build; for the rest there is no time to use, so the
+  // build works the ground out itself, as it always did.
+  const waitsForKits = next => !!next.def.kitPlacements?.length || winterEnabled(next) || hasSnowmen(next);
+  function wantTerrain(next) {
+    if (waitsForKits(next) && needsBuild(next)) preloadTerrain.request(next, winterEnabled(next));
+    else if (preloadTerrain.active) preloadTerrain.dispose();
+  }
+  // Called once everything else the build needs is loaded: false while the ground is still being worked out.
+  function terrainReady(next) {
+    if (!waitsForKits(next) || !needsBuild(next)) return true;
+    preloadTerrain.request(next, winterEnabled(next));
+    preloadTerrain.advance(10);
+    if (preloadTerrain.done) return true;
+    renderer.domElement.style.visibility = 'hidden'; rearView.hide();
+    if (!readinessClaimed) {app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
+    app.holdVisualReadiness?.(readinessOwner);return false;
+  }
   function prepareKitWorld(next, {retry=false}={}) {
     if (!next.def.kitPlacements?.length && !winterEnabled(next) && !hasSnowmen(next)) {
       preparedTrackKits?.dispose();preparedTrackKits=null;preparedTrackKitKey=null;
@@ -499,7 +526,7 @@ export function attachRenderer(host, app) {
     host.dataset.worldBuilds=String(++worldBuildCount);
     sceneRevision++;
     lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});
-    world = buildEnvironment(course,{trackKits:preparedTrackKits,snow:winterEnabled(course)});
+    world = buildEnvironment(course,{trackKits:preparedTrackKits,snow:winterEnabled(course),preload:preloadTerrain});
     preparedTrackKits = null; preparedTrackKitKey = null; scene.add(world);
     if(hasSnowmen(course)){snowmenView=createSnowmenView(trackKitsOf(world));world.add(snowmenView.group);}
     if(hasAvalanche(course)){avalancheView=createSummitAvalancheView(course);world.add(avalancheView.group);}
@@ -620,6 +647,7 @@ export function attachRenderer(host, app) {
     const moving = (st.status === 'racing'||st.status==='exploring') && !st.paused&&!st.deepJourney?.controlsLocked;
     updateCoach(next,st);updateDriveLesson(next,st);
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
+    wantTerrain(next);
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     const selectedFinish=app.getPaintPreset?.(carKey,{menu})?.id;
     const modelFinish=carKey==='falcone_sirena'&&app._switches?.().enabled('lab')===true&&selectedFinish==='sea-wreck'?'sea-wreck':null;
@@ -639,6 +667,7 @@ export function attachRenderer(host, app) {
     if(convoy&&!prepareTanker()){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!convoy&&rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!menu)for(const opponent of opponents.slice(1))if(opponent.car!==carKey&&!prepareVehicle(opponent.car)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    if(!terrainReady(next)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if (course !== next || worldKey!==kitWorldKey(next)) {
       if(world&&worldKey===kitWorldKey(next)&&!winterEnabled(next)){course=next;lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});}
       else build(next);
@@ -1183,7 +1212,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();mapWorld.dispose();skiView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();mapWorld.dispose();skiView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;preloadTerrain.dispose();preloadChannel.port1.close();stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
