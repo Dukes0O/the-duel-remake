@@ -179,7 +179,29 @@ rule 18).
 
 ## Checks
 
-See the end of this note for the results of the final run.
+Run from PowerShell with System32 first on the path, on the lane `claude/heli-continue`.
+
+- Every `tools/test-heli*.mjs` and `tools/test-ski*.mjs` by hand, plus
+  `test-map-destinations`, `test-map-secrets`, `test-lab-heli` and
+  `test-drive-lesson-helipad`: 40 files, all exit 0 on the final tree (there
+  are no `tools/test-rescue*.mjs` files; the rescue suites are
+  `test-heli-rescue*.mjs`, `test-heli-summit-rescues` and
+  `test-heli-autopilot-rescue`).
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 106
+  passed, 1 failed, 0 not run in 790 s. The one failure was
+  `test-heli-summit-tune` (an avalanche pay of 1,200 in its own expectation);
+  fixed and rerun alone, 134 checks pass. Replay fingerprints and world
+  signatures in the lane tier pass unchanged. The laptop was busy with other
+  lanes' runs during this one.
+- `npm run build`: passed (971 ms, the usual chunk-size and import warnings).
+- Browser scenarios with `--jobs 2` (`HELI_FINISH_FRAMES=0`, so no frame
+  timing): `heli-continue` (new), `heli-finish`, `heli-first-flight`,
+  `ski-finish` passed. `rescue-finish` failed once under the load of the lane
+  run (the scripted pilot never left the pad: "Did not reach along road") and
+  passed run alone (8 pictures). The new scenario also failed, as it should,
+  with the menu refresh switched off (the control above).
+- Pictures kept for Claude, outside the repository: the job board with pay
+  words and the CREDITS figure, and the Summit Run race setup after Shut down.
 
 ## Removed
 
