@@ -58,3 +58,7 @@ handlers, automatic legacy-bench pass path, explained state and unused styles.
 Pure bench controls, runs and goal rules remain, including BENCH_SCRIPT and
 the player test for all sixteen lessons. Fan sliders/readouts and Rust
 protection and restoration styles remain in use.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent code review and rule 18 written review). LAB-TRY-PICTURES-DIAL: in the wind tunnel only, the answer pictures sit above the machine at the top of the screen, so the fan dial is clickable at 1280 x 800 (look checked). LAB-BENCH-PANELS-REMOVE: the dial, Run and readout bench markup is removed; Restore, Replay and the Rust protection page stay. The removed test asserted the removed bench markup; its replacement checks every lesson's passed page and the Rust protection page, and that no old controls remain. Nothing still reachable lost coverage.
