@@ -1406,3 +1406,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 27 Oct night: merged MAP-FINISH (pilot-map switch on after Claude's look; lane 37/37, build pass).
 - 27 Oct night: merged DEEP-TRAIL-JOINTS (smooth sideways frame at joints, exact nearest; 62 m jump at the sharpest bend gone; lane 156/156, build pass).
 - 27 Oct night: merged QA-DEEP-LIFE-TIMING (process CPU time instead of wall clock, run-alone hook extended; 4 ms limit unchanged; lane 507/507, build pass).
+- 27 Oct night: merged SUMMIT-BUILD-TIME-3 (investigation only; terrain math 76% of the build, slow cores 1.45 to 1.6x; follow-up SUMMIT-TERRAIN-PRELOAD).
