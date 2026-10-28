@@ -91,3 +91,7 @@ ignored `.qa-dist/` folder and are deleted.
 - `npm run build`: passed (existing chunk-size and dynamic-import warnings
   only). Output deleted.
 - `node tools/test-circuits.mjs` was not run: no road geometry changed.
+
+## Claude's review (27 October 2026, night)
+
+Cause right: the test driver used dry lines on snow, and the check drove summer tyres, which cannot hold the three 15 to 16 m snow hairpins at any line. Test tools only; road, edge, physics and assertions unchanged; fingerprints and signatures unchanged. Design call: summer tyres running wide on snow hairpins is intended (the cost of the wrong tyres); no road or grip change. Verdict: merge.
