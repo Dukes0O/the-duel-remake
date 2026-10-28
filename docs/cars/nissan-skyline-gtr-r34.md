@@ -453,3 +453,86 @@ note and the final comparison sheet stay.
 - The all-wheel-drive rule for this car only, holding the surfaces lock at V4: yes.
 - Donor: the Stuttgart 959-S code builder; judge the shape against the six photos at V2, never a description.
 - Over Kestrel One's hook limit, so never a customer car: fine.
+
+## V1 photos and donor
+
+Prepared 28 October 2026 for NISSAN-SKYLINE-GTR-R34-V1.
+No locks. Owned files: this packet (Kyle's explicit extension), the V1 card and
+its change note. Checks: six-view and contact-sheet audit; read the donor and
+shared helper contracts; board and repository hygiene, lane tier with jobs 2,
+production build. No browser, frame or live-save check applies to references.
+
+### Generated reference pictures
+
+Folder: `C:/Users/kyleb/dev/art-library/nissan-skyline-gtr-r34/reference/`.
+All six requested views were made with the built-in imagegen tool in metallic
+Bayside Blue. `prompts.json` contains the exact prompts, original output paths
+and crop provenance. `ref-nissan-skyline-gtr-r34.jpg` is the labelled contact
+sheet, at most 500 KB. These synthetic pictures are modelling guides, not
+factory photographs or dimension drawings. They are never copied into the game.
+
+| File | Source and use |
+| --- | --- |
+| `front.png` | Built-in imagegen: straight front. Headlamp rectangles, width, grille, intake and squared shoulders. |
+| `rear.png` | Built-in imagegen: straight rear. Four round lamps, upright glass, boot and separate wing. |
+| `left-side.png` | Built-in imagegen: left profile. Long bonnet, two-door cabin, beltline, rear arch and wheel placement. |
+| `right-side.png` | Built-in imagegen: right profile. Opposite side, fuel door and door/glass proportions. |
+| `three-quarter.png` | Built-in imagegen: front-left at bonnet height. Front volume, fender flare, cabin and wing in depth. |
+| `interior.png` | Built-in imagegen interior request returned a four-panel study; use its bottom-right interior panel, cropped without altering it. Right-hand-drive cockpit, dark seats, three-spoke wheel, analog cluster and centre display. |
+| `rear-three-quarter.png` | Extra view from the same study's top-right panel, cropped without altering it. Covers the packet's rear-right wing and bumper reference in addition to Kyle's six required views. |
+
+Real-car cross-check: [Nissan Heritage, BNR34 V-spec II](https://www.nissan-global.com/EN/HERITAGE_COLLECTION/280_skyline_gt-r_v-spec_ii.html)
+supplies a manufacturer picture and dimensions (4,600 by 1,780 by 1,360 mm,
+wheelbase 2,665 mm). This source's particular variant differs from the game's
+approved 1.96 by 4.60 by 1.38 m envelope; the packet controls game dimensions.
+[Nissan Heritage, R34 GT-R](https://www.nissan-global.com/EN/HERITAGE_COLLECTION/skyline_gt-r_2000.html)
+is a second maker reference. No maker image was downloaded or shipped.
+
+Visual inspection: both sides, front, rear, three-quarter and cockpit are
+readable and blue throughout. The generated views are not geometrically
+identical: wheel details vary; the reference shows gold calipers and one large
+exhaust outlet; the bonnet vent is absent in the front study. The packet asks
+for red calipers, five double-spoke wheels, twin tips and a small bonnet vent.
+V2/V3 must follow those written art decisions and compare the actual model,
+rather than copy these synthetic detail errors. Badges visible in the
+references are not a request to model logos. The reference cockpit is RHD;
+the packet deliberately keeps the game driver in the left seat.
+Claude's shape verdict remains pending. No model resemblance score is claimed.
+
+### Donor confirmed from the implementation
+
+Read `src/classic-vehicles.js`, especially `createClassicVehicle()`,
+`shell()`, `stuttgart()`, `ribbonWindow()` and `fittedDetails()`, plus
+`originalVehicleParts` in `src/unlock-vehicles.js`.
+The settled donor is **Stuttgart 959-S**, selected by
+`createClassicVehicle({key: 'stuttgart_959s'})`.
+
+The actual builder opens the painted shell under the cockpit, adds a closed
+coupe roof and glazing, calls `cockpit(vehicle,b,m,[.372,.090,-.24],.92)`,
+uses five broad spokes, and provides paint, wheel pivots, brake lights,
+boost flames and damage metadata. Paint already uses metalness .46 and
+roughness .27, matching Bayside Blue's approved finish values.
+The donor envelope is 2.30 by 4.80 by 1.48 m with .41 m wheel radius,
+so it must be resized to the packet's Skyline envelope and roughly .34 m
+wheels, not retained at donor scale.
+
+Keep the shared helpers `materials`, `batch`, `body`, `panel`,
+`cylinder`, `cockpit`, `wheels`, `exhaust`, `rearPlate` and
+`fitSurfacePatch` from `src/unlock-vehicles.js`. Keep the open cockpit tub,
+material/paint handling, batched geometry and fitted surface details.
+Replace the 959's rounded shell stations, hemisphere roof, curved glazing,
+integrated low rear hoop, light strip and opposed exhaust placement with the
+Skyline's squared shoulders, flatter roof, upright cabin, rectangular lamps,
+four round rear lamps and separate boot wing.
+
+Use `src/mclaren-f1-vehicle.js` and
+`tools/test-mclaren-f1-vehicle.mjs` as the newer contract template for
+steering, lights, damage, exact reset and driver clearance, as the packet
+requires. `public/assets/models/classics/stuttgart_959s.glb` is an export,
+not the editable source; `tools/export-classic-vehicles.mjs` produces it.
+`tools/art/car-review-export.mjs` and `tools/blender/car-review.py`
+provide review pictures, not a body-building recipe.
+
+Budget confirmed for the future model: at most 60,000 triangles and 56 draws.
+This reference stage adds no mesh and makes no measured model-budget claim.
+The 959-S remains unchanged; V2 creates the separate Skyline builder.
