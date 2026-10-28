@@ -416,10 +416,14 @@ test('a frame of sea life is cheap, and the whole scene stays within its limits'
   const spot = life.plan['silver-school'][0], car = readOnlyCar(spot.x + 2, -spot.depth + 1.5, spot.z), camera = new THREE.PerspectiveCamera();
   camera.position.set(spot.x, -spot.depth + 3, spot.z - 8);
   for (let t = 0; t < 2; t += DT) life.update({ car, camera, seconds: t });   // warm up
-  const started = process.hrtime.bigint(), frames = 600;
+  // Processor time, not the clock on the wall: when other test suites share the
+  // laptop this process waits for its turn, and the wall clock counts that
+  // waiting as work. The 4 ms limit is unchanged.
+  const started = process.cpuUsage(), wallStarted = process.hrtime.bigint(), frames = 600;
   for (let i = 0; i < frames; i++) life.update({ car, camera, seconds: 2 + i * DT });
-  const ms = Number(process.hrtime.bigint() - started) / 1e6 / frames;
-  console.log(`# sea life update: ${ms.toFixed(3)} ms a frame in Node (${JSON.stringify(life.counts())})`);
+  const used = process.cpuUsage(started), wallMs = Number(process.hrtime.bigint() - wallStarted) / 1e6 / frames;
+  const ms = (used.user + used.system) / 1e3 / frames;
+  console.log(`# sea life update: ${ms.toFixed(3)} ms of processor time a frame in Node, ${wallMs.toFixed(3)} ms on the wall clock (${JSON.stringify(life.counts())})`);
   assert.ok(ms < 4, `${ms.toFixed(2)} ms a frame`);
   // A hard ceiling on what a scene can draw, however many spots a zone has.
   const total = Object.entries(SEA_LIFE_CAPS).reduce((n, [, cap]) => n + cap, 0);
