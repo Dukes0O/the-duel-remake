@@ -1414,3 +1414,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 27 Oct night: merged SUMMIT-TERRAIN-PRELOAD (Summit timed build 1150 to 289 ms fast, 1899 to 495 ms slow, drawing exact on 13 courses; lane 109/109, build pass; full tier and frame check before release (render3d)).
 - 27 Oct night: merged QA-HARNESS-CLOSE-CAP (stopBrowser caps Browser.close at 3 s, ends its own child tree, closes pipes; crash-peak private copy removed; lane 22/22, build pass).
 - 28 Oct night: merged QA-LESSON-SCENARIOS (both lesson scenarios on the v2 flow; old finish tool removed); lane 20/20.
+- 28 Oct night: merged LESSON-PANEL-CLICKS (buttons patched in place, 6/6 clicks while moving; panel clears the minimap); lane 39/40, the one failure is the helipad map canvas on integration.
