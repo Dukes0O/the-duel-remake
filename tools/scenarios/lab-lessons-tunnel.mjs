@@ -66,7 +66,12 @@ export function tunnelDriver(c) {
         const drag = spec.controls.find(x => x.id === target.id)?.drag;
         if (drag) await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: target.x, y: target.y - 50, button: 'left', buttons: 1});
         await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: target.x, y: target.y - (drag ? 50 : 0), button: 'left', clickCount: 1});
-        await c.waitFor(`${canvas}.dataset.labTunnelResult !== ${JSON.stringify(before)}`, '3D part acted on');
+        try { await c.waitFor(`${canvas}.dataset.labTunnelResult !== ${JSON.stringify(before)}`, '3D part acted on'); }
+        catch (error) {
+          await c.screenshot('blocked-part');
+          const top = await c.evaluate(`(() => { const e = document.elementFromPoint(${target.x}, ${target.y}); return e ? e.tagName + '.' + e.className : 'nothing'; })()`);
+          throw Error(error.message + ` (${target.id} at ${Math.round(target.x)},${Math.round(target.y)}; on top there: ${top})`);
+        }
       }
       await setControls(spec, spec.examples[i]);
       await click(`answer:${spec.classify(spec.bench.run(spec.examples[i]))}`); await click('run');
