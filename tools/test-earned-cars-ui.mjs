@@ -156,7 +156,7 @@ test('medal cars: hidden while off; labels, locked pages, rewards and air-only w
 import assert from 'node:assert/strict';
 import {CARS, COURSE} from './src/config.js';
 import {createProfile, normalizeProfile, settleRace} from './src/progression.js';
-import {shownCars, shownCarIds, medalResultLines} from './src/earned-cars-ui.js';
+import {shownCars, shownCarIds, medalResultLines, earnedCarCards, medalChip} from './src/earned-cars-ui.js';
 import {screenMarkup, createMenuScreen} from './src/screen-menu.js';
 import {createGarageScreen} from './src/screen-garage.js';
 import {AIR_ONLY_CARS, JOB_CARS} from './src/heli/heli-jobs.js';
@@ -184,6 +184,7 @@ const garage = createGarageScreen({app, profile: () => saved, credits: value => 
 let html = garage();
 assert.equal(html.includes('data-garage-car="medal_test_a"'), false, 'the garage list hides medal cars while off');
 assert.equal(html.includes('MEDAL SHEET'), false, 'no medal panel while off');
+assert.equal(html.includes('medal-chip'), false, 'no medal chip while off');
 flags['earned-cars'] = true;
 html = garage();
 assert.ok(html.includes('MEDALS 0/6'));
@@ -204,15 +205,23 @@ const pacific = COURSE.findIndex(course => course.id === 'pacific-canyon');
 const win = settleRace(saved, {runId: 'ui-grant', stageIndex: pacific, car: 'stuttgart_959s', mode: 'duel', difficulty: 'casual',
   cpuDifficulty: 'easy', seed: 1989, laps: 2, completed: true, won: true, timeSec: 180, lapTimes: [90, 90], earnedCarsEnabled: true});
 assert.deepEqual(win.earnedCars, ['ferrari_enzo', 'medal_test_a']);
-assert.deepEqual(medalResultLines(win, {helicopter: true}), ['NEW MEDAL · BRONZE · STUTTGART 959-S · DUEL · EASY · +150 CR',
-  'NEW CAR EARNED · FERRARI ENZO · IN YOUR GARAGE', 'KESTREL ONE WILL BRING IT TO TREMBLANT WOODS',
-  'NEW CAR EARNED · MEDAL TEST A · IN YOUR GARAGE', 'KESTREL ONE WILL BRING IT TO TREMBLANT WOODS']);
-assert.deepEqual(medalResultLines(win).length, 3, 'no helicopter lines with the helicopter off');
+// Claude, 28 October 2026: a newly earned car has its own card (name, then a short line), not two small lines.
+// The medal line stays a single line (its colour dot is drawn by the results screen).
+assert.deepEqual(medalResultLines(win), ['NEW MEDAL · BRONZE · STUTTGART 959-S · DUEL · EASY · +150 CR']);
+assert.deepEqual(earnedCarCards(win, {helicopter: true}), [
+  {id: 'ferrari_enzo', name: 'FERRARI ENZO', text: 'Earned with 6 medals. Kestrel One will bring it to Tremblant Woods.'},
+  {id: 'medal_test_a', name: 'MEDAL TEST A', text: 'Earned with 6 medals. Kestrel One will bring it to Tremblant Woods.'}]);
+assert.deepEqual(earnedCarCards(win).map(card => card.text), ['Earned with 6 medals. In your garage now.', 'Earned with 6 medals. In your garage now.']);
+assert.equal(earnedCarCards({earnedCars: ['bugatti_bolide']})[0].text, 'Earned with 24 medals, 6 of them gold. In your garage now.');
+assert.deepEqual(earnedCarCards({}), []);
 saved = win.profile; garageCar = 'medal_test_a'; html = garage();
+assert.ok(html.includes('data-action="medal-sheet"') && html.includes('MEDALS 6/12 · NEXT CAR AT 12'), 'the garage has the medal chip near the build name');
+assert.ok(medalChip(saved).includes('MEDALS 6/12'));
+assert.equal(medalChip(createProfile()).includes('MEDALS 0/6 · NEXT CAR AT 6'), true);
 assert.ok(html.includes('MEDAL REWARD · Arrives fully tuned.'), 'the owned medal car has its own reward note');
 // The next car is the first unowned medal car in config order: the real F1
-// (15 medals) comes before the Bolide (24 with 6 gold) and the scratch cars here.
-assert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 15'));
+// (12 medals) comes before the Bolide (24 with 6 gold) and the scratch cars here.
+assert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 12'));
 garageCar = 'koenigsegg_jesko'; html = garage();
 assert.ok(html.includes('GARAGE COMPLETION REWARD') || html.includes('MAX OTHER CARS'), 'the Jesko keeps its own page');
 // The menu: a hidden car is never the menu car or the rival's car.

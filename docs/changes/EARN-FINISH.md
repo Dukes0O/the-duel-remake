@@ -346,3 +346,98 @@ Bolide is described as easy to carry.
 
 Nothing replaced. The temporary scenario file `tools/scenarios/zz-earn-finish-night.mjs`
 was removed before the commit.
+## Claude's decisions built, 28 October 2026
+
+Three decisions from Claude after the night pass, built in the same lane.
+`earned-cars` stays at dev; Claude switches it on after the frame checks.
+
+### What changed
+
+1. **The McLaren F1 is earned at 12 medals, not 15** (`src/config.js`, the one
+   number). Reason: at 15 an Easy-only child with three purchases never got
+   it; at 12 that child gets it in about 39 wins, and a parent can earn it
+   with no purchase (the two starters' full sheets make exactly 12). Docs
+   updated: `docs/EARNED_CARS.md` (ladder table, section 4.1 prose, the
+   garage example line, section 5.2 and 5.1), `docs/HELICOPTER.md` (the F1
+   row), `docs/board/cards/EARN-CAR-2.md` (title, numbers and the config
+   line). Historic notes in older change files still say 15; they record what
+   was true then.
+2. **Results screen** (`src/earned-cars-ui.js`, `src/screen-results.js`,
+   `src/screen-results.css`). A newly earned car gets its own card: "NEW CAR
+   EARNED", the car's name at 25 pixels italic bold (the same as the race time
+   numbers), and a line under it: "Earned with 6 medals. Kestrel One will bring
+   it to Tremblant Woods." with the helicopter on, "Earned with 6 medals. In
+   your garage now." with it off (the Bolide reads "24 medals, 6 of them
+   gold"). The new-medal line gets a small bronze, silver or gold dot before
+   the text. To keep the Unlock button on screen at 1280 by 720, a results
+   screen that shows a car card takes the same smaller headline the Grand
+   Prix results use and a slightly tighter metrics block. The sound cue is
+   unchanged: one `interface.bonus` per results screen.
+3. **Garage chip** (`src/earned-cars-ui.js`, `src/screen-garage.js`,
+   `src/screen-garage.css`, `src/screen-router.js`). A small chip under the
+   build name: "MEDALS 5/6 · NEXT CAR AT 6" ("NEXT CAR AT 24 WITH 6 GOLD" for
+   the last car, "EVERY EARNED CAR WON" once all three are owned). Clicking it
+   scrolls to the medal sheet. It shows only with the switch on and on an
+   owned car. Drawing only; the router line only scrolls.
+
+### Changed assertions, with reasons
+
+- `tools/test-medals.mjs`, "the real F1 is earned on the twelfth medal": the
+  eleven-medal fixture, the failure text ("12 medals needed, you have 11."),
+  the totals (11 medals and 3 gold before, 12 and 4 after) and the test name.
+  Reason: the F1 now needs 12. Same checks as before (not earned early,
+  earned on the threshold, free, fully tuned, kept when the sheet empties).
+- `tools/test-earned-cars-ui.mjs`: "NEXT CAR AT 15" is now "NEXT CAR AT 12"
+  (the next car in the garage is the F1). The old check that listed the car
+  lines inside `medalResultLines` (five lines with the helicopter on, three
+  with it off) is replaced: `medalResultLines` now returns only the medal
+  line, and a new `earnedCarCards` is checked for the Enzo, the Bolide's gold
+  wording and both helicopter settings. Reason: the car lines moved into the
+  card. New checks added: the chip's wording, that it is present with the
+  switch on and absent with it off.
+- `tools/test-lab-fan.mjs` and `tools/test-sirena-car.mjs`: both compare every
+  earlier car with an old commit's config. They now apply the one known
+  difference (the F1's medals 12 instead of 15) to the old data before the
+  exact comparison; every other value, the order and the car list are still
+  compared exactly. Reason: these guards prove a new car changed nothing
+  else, and the F1 number is an intended change.
+
+### Pictures (git-ignored, memory-only, 1280 by 720)
+
+In `C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake\.evidence\2026-10-28\EARN-FINISH\`:
+
+- `6-results-lines-v2.png`: a Hard Duel win in the Stuttgart: the gold dot line
+  and the Ferrari Enzo card with the Kestrel One line. The whole screen fits:
+  the Unlock button spans y 601 to 663 and Restart and Main Menu end at about
+  y 717, with no scrolling. The scripted check found no overlap between the
+  headline, text, bonus lines, card and buttons.
+- `1-sheet-panel-v2.png`: the garage top with the chip under "Falcone F42".
+- `2-garage-after-chip-v2.png`: after clicking the chip, the medal sheet is in
+  view (checked by script).
+
+For comparison, before this change the same results screen was already 848
+pixels tall, so the Unlock button sat below the fold; it is now 749 tall with
+the card. The old pictures (without `-v2`) are from before and can be deleted.
+
+### Gates
+
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 80
+  of 81 suites passed on the final tree. The one failure,
+  `tools/test-deep-kelp-coast.mjs` ("route_a: reached 0 of 3082 m", the
+  Kelp Coast journey drive), is not from this change: it fails the same way,
+  twice, on a clean copy of the starting commit 3f3d0420. It was not touched
+  here and needs its own card.
+- The first run also failed `tools/test-lab-fan.mjs` and
+  `tools/test-sirena-car.mjs`, because they pin the F1's old number. Fixed as
+  listed above, both pass.
+- `npm run build` passed (output deleted afterwards).
+- The browser scenario `earned-cars` (garage sheet and results medal line)
+  still passes, and the medal and earned-car suites pass (`test-medals` 11,
+  `test-earned-cars-ui` 5).
+
+### Removed
+
+The temporary scenario file `tools/scenarios/zz-earn-finish-v2.mjs`, the
+clean-copy folder used to test the starting commit, and the build output were
+removed. Nothing in the game was replaced; the two old car lines on the
+results screen are replaced by the card.

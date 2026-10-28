@@ -309,6 +309,7 @@ root.addEventListener('click',e => {
     case 'armory-close':if(app.isYardHomeActive())yardPanel='home';else armoryOpen=false;lastScreen=null;break;
     case 'garage': openGarage(); return;
     case 'garage-close': closeGarage(); return;
+    case 'medal-sheet': root.querySelector('.garage-panel .medal-panel')?.scrollIntoView({block:'center',behavior:'smooth'}); return;
     case 'lab-open': if(app.duel.state.status!=='menu'||app.labAvailable?.()!==true)return;garageOpen=false;lastScreen=null;app.openLab();renderState(app.duel.state);return; // LAB-VIEW
     case 'unlock-car': { const result = app.unlockCar(garageCar); if(result.ok) {choices.car = garageCar;updateMenuScene();}refreshGarage(result.ok ? `${CARS[garageCar].name} is yours. Ready for every course.` : result.reason); return; }
     case 'arena':choices.startStage=COURSE.findIndex(scene=>scene.arena);choices.car='titan_monster';updateMenuScene();closeGarage();return;
