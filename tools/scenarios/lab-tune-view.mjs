@@ -1,7 +1,9 @@
-// Private browser check for the Tune page and the tuned-lap line (LAB-TUNE-VIEW, docs/LAB.md section 5): pass the Downforce
-// lesson on its bench, open the car's Tune page in the garage, set the wing, drive a stock Time Trial lap and a tuned one,
+// Private browser check for the Tune page and the tuned-lap line (LAB-TUNE-VIEW, docs/LAB.md section 5): take and pass the
+// Downforce lesson, open the car's Tune page in the garage, set the wing, drive a stock Time Trial lap and a tuned one,
 // and read the result line. Saves are memory-only. Run:
 //   node tools/browser-harness.mjs scenario lab-tune-view
+import {tunnelDriver} from './lab-lessons-tunnel.mjs';
+
 const entry = '/tools/menu-check.html?flags=helicopter,lab,lab-tuning';
 const COURSE_ID = 'tremblant-woods';
 
@@ -49,20 +51,15 @@ export async function run(context) {
   await context.evaluate(`document.querySelector('.tune-panel').scrollIntoView({block: 'center'})`);
   await context.screenshot('tune-shut');
 
-  // The Downforce lesson: two runs with a wing at 50 and at 100 mph pass it on the bench.
+  // The Downforce lesson: the real five-step lesson at the wind tunnel machine in the walking Lab, then its challenge.
+  // The lesson alone awards nothing (the driver checks it); the pass is saved only when the bench goal is met.
   await context.evaluate(`document.querySelector('.lab-tab').click()`);
-  await context.waitFor(`window.__qaApp.labOpen === true && !!document.querySelector('[data-lab-lesson="start:downforce"]')`, 'the Lab board', 30_000);
-  await context.evaluate(`document.querySelector('[data-lab-lesson="start:downforce"]').click()`);
-  await context.waitFor(`!!document.querySelector('.lab-bench[data-lesson="downforce"]')`, 'the Downforce bench', 10_000);
-  const label = await context.evaluate(`document.querySelector('.lab-challenge-button')?.textContent`);
-  if (label !== 'Finish the experiment') throw Error(`The challenge should wait for the experiment: ${label}`);
-  for (const speed of [50, 100]) {
-    await context.evaluate(`(() => { const set = (id, value) => { const el = document.querySelector('[data-lab-control="' + id + '"]'); el.value = value; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); };
-      set('wing', 'big'); set('speedMph', ${speed}); document.querySelector('[data-lab="run"]').click(); })()`);
-    await context.waitFor(`document.querySelector('.lab-readout')?.textContent.length > 0`, 'the downforce readout', 10_000);
-  }
-  await context.waitFor(`window.__qaApp.profile.lab?.done?.downforce === true`, 'Downforce passes on the bench and is saved', 10_000);
-  const said = await context.evaluate(`document.querySelector('.lab-message')?.textContent ?? ''`);
+  await context.waitFor(`window.__qaApp.labOpen === true && !document.querySelector('.lab-panel').hidden`, 'the Lab opens', 30_000);
+  const tunnel = tunnelDriver(context);
+  await tunnel.walkToTunnel();
+  await tunnel.play('downforce');
+  await context.waitFor(`window.__qaApp.profile.lab?.done?.downforce === true`, 'Downforce passes and is saved', 10_000);
+  const said = await context.evaluate(`[...document.querySelectorAll('.lab-message')].map(el => el.textContent).join(' ')`);
   if (!said.includes('Tune page')) throw Error(`The pass should point at the Tune page: ${said}`);
   await context.screenshot('lab-downforce-passed');
   await context.evaluate(`document.querySelector('[data-lab="close"]').click()`);

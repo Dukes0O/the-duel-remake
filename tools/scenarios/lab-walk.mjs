@@ -1,5 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {WALK, WALK_LAYOUT, machineApproaches} from '../../src/lab/lab-walk.js';
+import {definition as gforceLesson} from '../../src/lab/lessons/gforce-lesson.js';
+import {definition as strengthLesson} from '../../src/lab/lessons/strength-lesson.js';
 // LAB-WALK: real keyboard navigation in the existing private memory-only harness.
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
@@ -102,8 +104,11 @@ export async function run(context) {
     await lookAt(at[0], at[1]);
     await context.waitFor(`${canvas}.dataset.labWalkTarget === 'machine'`, model + ' facing machine');
     await tap('KeyE');
-    await context.waitFor(`!!document.querySelector('.lab-bench[data-lesson="${id}"]')`, model + ' bench');
-    await context.evaluate(`document.querySelector('[data-lab="back"]').click()`);
+    // Both machines teach on the five-step lesson frame: this machine's own lesson opens, and no old bench panel does.
+    const wonder = {gforce: gforceLesson, strength: strengthLesson}[id].wonder.text;
+    await context.waitFor(`!document.querySelector('.lab-teaching')?.hidden && document.querySelector('.lab-teaching').textContent.includes(${JSON.stringify(wonder)})`, model + ' lesson');
+    if (await context.evaluate(`!!document.querySelector('.lab-bench')`)) throw Error(model + ': the old bench panel opened beside the lesson.');
+    await context.evaluate(`document.querySelector('[data-teach="back"]').click()`);
     await lookAtBrian();
     await context.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent === 'E: ask Brian'`, model + ' Brian prompt');
     await tap('KeyE');

@@ -1,18 +1,15 @@
 // Real UI, loaded models, isolated memory-only careers via browser-harness.
 const ids = (process.env.LAB_TUNNEL_QA_LESSONS ?? 'grip,downforce,braking,suspension,fuel').split(',');
-export async function run(c) {
-  await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
-  await c.navigate('/tools/menu-check.html');
-  await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
-  await c.evaluate(`(() => { const a = window.__qaApp; a.audio.setMuted?.(true); a.addPlayer('Tunnel QA');
-    a.profile = {...a.profile, drivingLessons: {version: 1, done: {corner: true}}}; a._saveProfile();
-    document.querySelectorAll('body > details').forEach(e => e.open = false); a.openLab(); })()`);
+// The lesson driver is shared: LAB-TUNE-VIEW takes the Downforce lesson through it to open the wing on the Tune page.
+export function tunnelDriver(c) {
   const canvas = `document.querySelector('.lab-canvas')`, panel = `document.querySelector('.lab-teaching')`;
   const click = action => c.evaluate(`document.querySelector('[data-teach="${action}"]').click()`);
   const next = () => c.waitFor(`!!document.querySelector('[data-teach="next"]') && !document.querySelector('[data-teach="next"]').disabled`, 'step ready', 40_000);
-  await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'room', 60_000);
-  await c.evaluate(`document.querySelector('[data-go="wind-tunnel"]').click()`);
-  await c.waitFor(`${canvas}.dataset.labWalkArrived === 'wind-tunnel'`, 'walk to tunnel', 30_000);
+  async function walkToTunnel() {
+    await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'room', 60_000);
+    await c.evaluate(`document.querySelector('[data-go="wind-tunnel"]').click()`);
+    await c.waitFor(`${canvas}.dataset.labWalkArrived === 'wind-tunnel'`, 'walk to tunnel', 30_000);
+  }
   async function useTunnel() {
     await c.command('Input.dispatchKeyEvent', {type: 'keyDown', code: 'KeyE', key: 'e'});
     await c.command('Input.dispatchKeyEvent', {type: 'keyUp', code: 'KeyE', key: 'e'});
@@ -43,7 +40,7 @@ export async function run(c) {
       catch (error) { await c.screenshot('blocked-machine'); throw Error(error.message + ': ' + await c.evaluate(`${canvas}.dataset.labTunnelResult + ' / ' + ${panel}.textContent`)); }
     }
   }
-  for (const id of ids) {
+  async function play(id) {
     const {definition, spec} = await import(`../../src/lab/lessons/${id}-lesson.js`);
     await useTunnel();
     await c.evaluate(`document.querySelector('[data-lab-lesson="start:${id}"]').click()`);
@@ -92,5 +89,18 @@ export async function run(c) {
     await c.screenshot(`${id}-challenge-result`); await click('finish');
     await c.waitFor(`window.__qaApp.profile.lab?.done?.${id} === true`, `${id} real goal and reward`);
   }
+  return {walkToTunnel, play};
+}
+
+export async function run(c) {
+  await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
+  await c.navigate('/tools/menu-check.html');
+  await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
+  await c.evaluate(`(() => { const a = window.__qaApp; a.audio.setMuted?.(true); a.addPlayer('Tunnel QA');
+    a.profile = {...a.profile, drivingLessons: {version: 1, done: {corner: true}}}; a._saveProfile();
+    document.querySelectorAll('body > details').forEach(e => e.open = false); a.openLab(); })()`);
+  const driver = tunnelDriver(c);
+  await driver.walkToTunnel();
+  for (const id of ids) await driver.play(id);
   await c.evaluate(`window.__qaApp.closeLab()`);
 }

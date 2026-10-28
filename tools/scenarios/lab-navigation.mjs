@@ -42,6 +42,11 @@ export async function run(context) {
       if (x < r.x+265 && y < r.y+255) continue; // map covers this part of the canvas
       await mouse('mouseMoved',x,y);
       if (await context.evaluate(`${canvas}.dataset.labWalkSelected === ${JSON.stringify(key)}`)) {
+        // Right after a lesson closes the room is still settling for a moment. Click only a spot that still names the
+        // object once it has settled, so the click goes where the player would see the highlight.
+        await new Promise(r => setTimeout(r, 400));
+        await mouse('mouseMoved',x,y);
+        if (!await context.evaluate(`${canvas}.dataset.labWalkSelected === ${JSON.stringify(key)}`)) continue;
         if (!await context.evaluate(`document.querySelector('.lab-walk-hover').textContent.length > 8`)) throw Error('Missing hover name');
         await click(x,y); return;
       }

@@ -27,7 +27,7 @@ export async function run(c) {
     await new Promise(r=>setTimeout(r,350));
     const overlap=await c.evaluate(`(() => {const labels=[...document.querySelectorAll('[data-snow-lesson] > div')].filter(e=>!e.hidden).map(e=>e.getBoundingClientRect());
       return labels.some((a,i)=>labels.slice(i+1).some(b=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top));})()`);
-    if(overlap) throw Error('Object captions overlap.');
+    if(overlap) { await c.screenshot(`${name}-overlap`); throw Error(`Object captions overlap at ${name}.`); }
     await c.screenshot(name);
   }
   async function clearCard() {
