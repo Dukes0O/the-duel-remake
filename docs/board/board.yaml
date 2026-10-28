@@ -313,3 +313,33 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-REVIEW-RUNUP-START.md"
+
+  - id: LAB-TRY-PICTURES-DIAL
+    title: "Lab Try pictures cover the wind tunnel fan dial at 1280 x 800"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/LAB-TRY-PICTURES-DIAL.md"
+
+  - id: LAB-BENCH-PANELS-REMOVE
+    title: "Remove the Lab bench panels the lessons replaced"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/LAB-BENCH-PANELS-REMOVE.md"
+
+  - id: QA-P4-AUDIO-FRAME-GAP
+    title: "p4-audio capture sometimes repeats a slice of sound"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-P4-AUDIO-FRAME-GAP.md"
