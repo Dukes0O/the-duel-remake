@@ -202,19 +202,25 @@ Run from PowerShell with System32 first on the path, on the lane `claude/heli-co
   are no `tools/test-rescue*.mjs` files; the rescue suites are
   `test-heli-rescue*.mjs`, `test-heli-summit-rescues` and
   `test-heli-autopilot-rescue`).
-- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 106
-  passed, 1 failed, 0 not run in 790 s. The one failure was
-  `test-heli-summit-tune` (an avalanche pay of 1,200 in its own expectation);
-  fixed and rerun alone, 134 checks pass. Replay fingerprints and world
-  signatures in the lane tier pass unchanged. The laptop was busy with other
-  lanes' runs during this one.
-- `npm run build`: passed (971 ms, the usual chunk-size and import warnings).
-- Browser scenarios with `--jobs 2` (`HELI_FINISH_FRAMES=0`, so no frame
-  timing): `heli-continue` (new), `heli-finish`, `heli-first-flight`,
-  `ski-finish` passed. `rescue-finish` failed once under the load of the lane
-  run (the scripted pilot never left the pad: "Did not reach along road") and
-  passed run alone (8 pictures). The new scenario also failed, as it should,
-  with the menu refresh switched off (the control above).
+- After the review fixes (cruise at 1 minute a leg, the crate bonus marked at
+  its first hook, the map pay table pinned): every helicopter, ski, map and
+  lane-door test above passes by hand again, then
+  `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 107
+  passed, 0 failed, 0 not run in 559 s. Replay fingerprints and world
+  signatures pass unchanged. (The first run of the lane tier, before the review,
+  had one failure, `test-heli-summit-tune`, an old avalanche pay in its own
+  expectation; fixed.) `test-map-secrets` also needed its Table pay updated.
+- `npm run build`: passed (the usual chunk-size and import warnings).
+- Browser scenarios (frame timing off): `heli-continue` (new), `heli-finish`,
+  `heli-first-flight` and `ski-finish` passed on the first version of the work;
+  `heli-continue` passed again after the review fixes. `rescue-finish` passed
+  once, alone, early on, then failed three times (twice with nothing else
+  running) with the helicopter back at the start pad after a scripted flight.
+  The same scenario on the untouched base commit `3ed23f4f` (a temporary
+  checkout, removed) fails too, at a different step ("Truck UI did not buy the
+  selected fuel target"), so it is an unreliable check, not this change. It
+  needs its own card (AGENTS rule 3). The new scenario also failed, as it
+  should, with the menu refresh switched off (the control above).
 - Pictures kept for Claude, outside the repository: the job board with pay
   words and the CREDITS figure, and the Summit Run race setup after Shut down.
 
