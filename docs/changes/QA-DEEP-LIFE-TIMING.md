@@ -64,3 +64,7 @@ limit, and all 23 checks passed in every run.
 ## Removed
 
 Nothing removed. The old wall-clock timing lines were replaced in place.
+
+## Claude's review (27 October 2026, night)
+
+Cause right (wall clock counted time spent waiting under parallel load). Processor time measures the same work and is not looser (it also counts helper threads); the existing run-alone hook gains this 3 s suite. Changed assertion approved: the measure, not the limit; ms < 4 unchanged, all 23 behaviour checks kept. Verdict: merge.
