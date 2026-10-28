@@ -9,8 +9,9 @@ import {Group, Mesh, BoxGeometry, MeshStandardMaterial, BufferAttribute} from 't
 import {RESTORE_PRICE, RESTORE_SECONDS, RESTORE_STAGES, SALT_LEFT, SOAK_WEEKS, restoreOffer, restoreSirena, stageAt} from '../src/lab/restore.js';
 import {createProfile, normalizeProfile, isCarUnlocked, getUpgradeLevels} from '../src/progression.js';
 import {sirenaState, SIRENA_CAR, settleCoastCup} from '../src/deep/sirena-car.js';
-import {labOf} from '../src/lab/lab-save.js';
-import {benchMarkup, restoreOfferMarkup, restoreRunMarkup} from '../src/lab/lab-markup.js';
+import {labOf, passLesson} from '../src/lab/lab-save.js';
+import {benchMarkup, protectionMarkup, restoreOfferMarkup, restoreRunMarkup} from '../src/lab/lab-markup.js';
+import {checkProtections} from '../src/lab/lab-workshop.js';
 import {createLabScene, labSceneStats, RESTORE_STAGE} from '../src/lab/lab-scene.js';
 import {App} from '../src/app.js';
 
@@ -335,12 +336,25 @@ test('mechanical and body shows are disjoint and mechanical work leaves the body
 });
 
 // LAB-RESTORE-PASSED: a passed Rust lesson opens straight to Restore, with the lesson one press away.
+test('the first Rust pass offers Restore without leaving its protection results', () => {
+  const profile = withDeep({...createProfile(), credits: 2500});
+  const picks = {underbody: 'zinc', exhaust: 'bare', armour: 'zinc'};
+  const result = checkProtections(picks);
+  assert.equal(result.passed, true);
+  const before = protectionMarkup({protect: {picks, result: null}, restore: restoreOfferMarkup(restoreOffer(profile, BOTH))});
+  assert.ok(!before.includes('data-lab="restore"'));
+  const passed = passLesson(profile, 'rust', {flags: BOTH});
+  assert.equal(passed.ok, true);
+  const after = protectionMarkup({protect: {picks, result}, restore: restoreOfferMarkup(restoreOffer(passed.profile, BOTH))});
+  assert.ok(after.includes('data-lab="restore"') && after.includes('1,000 CR'));
+  assert.ok(after.includes('Right:') && after.includes('data-lab="protect-check"'));
+});
+
 test('the passed bench shows Restore and a Replay button, and no dials or Run', () => {
   const offer = restoreOfferMarkup(restoreOffer(waiting(2500), BOTH));
-  const html = benchMarkup({lessonId: 'rust', name: 'Rust', controls: [], settings: {}, readout: [], challenge: {state: 'ready', label: 'Try the challenge', note: '', passed: true},
-    hasRun: false, explained: false, restore: offer, replay: true});
+  const html = benchMarkup({lessonId: 'rust', name: 'Rust', restore: offer});
   assert.ok(html.includes('data-lab="restore"') && html.includes('data-lab="replay"') && html.includes('Passed'));
   assert.ok(!html.includes('data-lab="run"') && !html.includes('lab-challenge-button'));
-  assert.ok(benchMarkup({lessonId: 'rust', name: 'Rust', controls: [], settings: {}, readout: [], challenge: {state: 'waiting', label: 'x', note: ''}, hasRun: false, explained: false}).includes('data-lab="run"'),
-    'the ordinary bench is unchanged');
+  assert.doesNotMatch(html, /data-lab-control|lab-readout|data-lab="again"/,
+    'the passed page has no legacy experiment controls');
 });

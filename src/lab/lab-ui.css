@@ -35,24 +35,14 @@
 .lab-bench h3{margin:12px 0 14px;font-size:20px;letter-spacing:1px}
 .lab-passed{margin-left:8px;font-size:12px;color:#9ee0a8;letter-spacing:1px}
 .lab-back{margin-bottom:4px}
-.lab-controls{display:flex;flex-direction:column;gap:12px}
 .lab-control{display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:10px;font-size:14px}
 .lab-control>span{color:var(--muted,#b6b1a5)}
 .lab-control input[type=range]{width:100%;accent-color:#ff7246}
 .lab-control output{min-width:70px;text-align:right;font-variant-numeric:tabular-nums}
-.lab-control select{grid-column:2 / span 2}
-.lab-actions{display:flex;gap:10px;margin:18px 0}
-.lab-run{background:#ff5429!important;border-color:#ff5429!important;color:#111816!important;font-weight:850!important;letter-spacing:1.5px}
 .lab-readout{margin:0;display:flex;flex-direction:column}
 .lab-readout div{display:flex;justify-content:space-between;gap:16px;padding:6px 0;border-top:1px solid #ffffff14;font-size:14px}
 .lab-readout dt{color:var(--muted,#b6b1a5)}
 .lab-readout dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
-.lab-readout .good dd{color:#9ee0a8}
-.lab-readout .bad dd{color:#ff9a75}
-.lab-challenge{margin-top:20px;padding:14px;border:1px solid #ffffff1f;border-radius:6px;background:#ffffff08}
-.lab-challenge p{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--muted,#b6b1a5)}
-.lab-challenge-ready{border-color:#ffcf3f66}
-.lab-challenge-button{width:100%}
 .lab-protect ul{list-style:none;margin:10px 0;padding:0;display:flex;flex-direction:column;gap:10px}
 .lab-protect li{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;font-size:14px}
 .lab-protect small{display:block;color:var(--muted,#b6b1a5);font-size:12px}

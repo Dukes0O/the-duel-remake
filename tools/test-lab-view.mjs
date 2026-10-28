@@ -15,7 +15,7 @@ import {LAB_UPGRADES} from '../src/lab/lab-shop.js';
 import {labOf} from '../src/lab/lab-save.js';
 import {createProfile} from '../src/progression.js';
 import {lightestArm} from '../src/lab/benches/strength.js';
-import {boardMarkup, benchMarkup, shopMarkup, headerMarkup, gforceStripMarkup, optionLabel} from '../src/lab/lab-markup.js';
+import {boardMarkup, benchMarkup, protectionMarkup, shopMarkup, headerMarkup, gforceStripMarkup} from '../src/lab/lab-markup.js';
 import {createLabScene, createSceneKeeper, labSceneStats, MODEL_OF_LESSON} from '../src/lab/lab-scene.js';
 import {dispatchBoardMarkup, handleBoardAction} from '../src/heli/heli-board.js';
 import {lessonsMarkup, challengeMarkup, challengeGoal, noticeText} from '../src/heli/heli-ui.js';
@@ -257,16 +257,30 @@ test('the shop markup shows price, Buy, owned marks and the ring and cable choic
   assert.ok(!html.includes('data-lab-ring="2"'), 'a ring not yet earned is not offered');
 });
 
-test('the bench markup carries dials, Run, the readout and the challenge note, escaped', () => {
-  const state = runBench(openBench('launch'));
-  const html = benchMarkup({lessonId: 'launch', name: 'Launch <angles>', controls: state.bench.controls, settings: state.settings,
-    readout: readoutRows('launch', state.result), challenge: {state: 'waiting', label: 'Finish the experiment', note: 'Meet "the goal"', kind: 'bench'}, hasRun: true, explained: false});
-  assert.ok(html.includes('data-lab-control="angleDeg"') && html.includes('data-lab="run"') && html.includes('Hear Brian'));
-  assert.ok(html.includes('Launch &lt;angles&gt;') && html.includes('&quot;the goal&quot;'));
-  assert.ok(html.includes('class="lab-challenge-button" data-lab="challenge" disabled'), 'the button waits for the goal');
+test('passed-lesson pages keep replay and escaped messages without the replaced bench interface', () => {
+  for (const lesson of LAB_LESSONS) {
+    const html = benchMarkup({lessonId: lesson.id, name: 'Lesson <name>', message: 'Meet "the goal"'});
+    assert.ok(html.includes('data-lab="replay"') && html.includes('Passed'));
+    assert.ok(html.includes('Lesson &lt;name&gt;') && html.includes('&quot;the goal&quot;'));
+    assert.doesNotMatch(html, /data-lab-control|data-lab="run"|data-lab="again"|lab-readout|lab-challenge-button/);
+  }
   assert.ok(headerMarkup({credits: 1234567, tab: 'shop'}).includes('1,234,567'));
-  assert.equal(optionLabel('falcone_f42'), 'Falcone F42');
-  assert.equal(optionLabel('panorama-ridge'), 'panorama ridge');
+});
+
+test('Rust protection keeps all part choices, feedback and a way back to lessons', () => {
+  const picks = {underbody: 'zinc', exhaust: 'bare', armour: 'zinc'};
+  for (const result of [null, checkProtections(picks), checkProtections({...picks, underbody: 'bare'})]) {
+    const html = protectionMarkup({protect: {picks, result}, message: 'Use "zinc" <here>'});
+    for (const part of RUST_PARTS) {
+      assert.ok(html.includes(`data-lab-protect="${part.id}"`));
+      assert.ok(html.includes(`value="${picks[part.id]}" selected`));
+    }
+    assert.ok(html.includes('data-lab="protect-check"') && html.includes('data-lab="back"'));
+    assert.ok(html.includes('Use &quot;zinc&quot; &lt;here&gt;'));
+    assert.doesNotMatch(html, /data-lab-control|data-lab="run"|lab-challenge-button/);
+    if (result) assert.equal((html.match(/<em class=/g) ?? []).length, RUST_PARTS.length);
+    if (result && !result.passed) assert.ok(html.includes('Not that:'));
+  }
 });
 
 test('the hook arm goal is a real arm and the strip words match its state', () => {

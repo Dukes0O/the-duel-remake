@@ -58,6 +58,16 @@ export function tunnelDriver(c) {
     await click('run'); await c.waitFor(`!!document.querySelector('[data-teach="retry"]')`, 'wrong prediction');
     await c.screenshot(`${id}-hint`); await click('retry');
     for (let i = 0; i < 3; i++) {
+      await c.waitFor(`JSON.parse(${canvas}.dataset.labLessonControls ?? '[]').length > 0`, 'redrawn machine click targets');
+      const covered = await c.evaluate(`(() => {
+        const canvas = ${canvas}, b = canvas.getBoundingClientRect();
+        const pictures = document.querySelector('.lab-picture-answers');
+        if (!pictures || !pictures.getClientRects().length) throw Error('Prediction pictures must stay visible.');
+        return JSON.parse(canvas.dataset.labLessonControls).filter(p =>
+          document.elementFromPoint(b.left + p.x, b.top + p.y) !== canvas).map(p => p.id);
+      })()`);
+      if (covered.length) { await c.screenshot('blocked-controls'); throw Error(`${id} Try ${i + 1}: covered machine controls: ${covered.join(', ')}`); }
+      if (i === 0) await c.screenshot(`${id}-try`);
       if (i === 0) {
         await c.waitFor(`JSON.parse(${canvas}.dataset.labLessonControls ?? '[]').length > 0`, 'redrawn machine click targets');
         const target = await c.evaluate(`(() => { const b=${canvas}.getBoundingClientRect(), p=JSON.parse(${canvas}.dataset.labLessonControls)[0]; return {id:p.id,x:b.left+p.x,y:b.top+p.y}; })()`);
@@ -98,7 +108,9 @@ export function tunnelDriver(c) {
 }
 
 export async function run(c) {
-  await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
+  const width = Number(process.env.LAB_TUNNEL_QA_WIDTH ?? 1440);
+  if (![1280, 1440].includes(width)) throw Error('Tunnel QA width must be 1280 or 1440.');
+  await c.command('Emulation.setDeviceMetricsOverride', {width, height: width === 1280 ? 800 : 900, deviceScaleFactor: 1, mobile: false});
   await c.navigate('/tools/menu-check.html');
   await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
   await c.evaluate(`(() => { const a = window.__qaApp; a.audio.setMuted?.(true); a.addPlayer('Tunnel QA');

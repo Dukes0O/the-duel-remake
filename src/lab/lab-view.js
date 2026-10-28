@@ -1,10 +1,10 @@
-// The Lab screen (docs/LAB.md sections 2 to 4): a lesson board, a bench for each lesson with its dials, Run button and
-// readout, Brian's lines with a caption strip, the workshop challenges, the shop, and the G-force lap's strip in races.
+// The Lab screen: lessons at their machines, passed-lesson pages, Rust protection,
+// Brian's captions, the shop, and the G-force lap's strip in races.
 // Drawing and buttons only. The rules are src/lab/lab-model.js, lab-save.js and lab-shop.js; every change to the player's
 // save goes through app.labCommit, and nothing here touches a race or a flight except the one call that starts a flight.
-import {boardRows, openBench, setControl, runBench, goalMet, readoutRows, challengeState, passIn, buyIn, ringIn, cableIn,
+import {boardRows, openBench, setControl, runBench, goalMet, challengeState, passIn, buyIn, ringIn, cableIn,
   shopRows, choiceRows, lessonName, lineId, lineText, CHALLENGE_KIND, challengeKindOf} from './lab-model.js';
-import {headerMarkup, boardMarkup, benchMarkup, shopMarkup, captionMarkup, gforceStripMarkup, restoreOfferMarkup, restoreRunMarkup, restoreSaltText, restoreWeeksText} from './lab-markup.js';
+import {headerMarkup, boardMarkup, benchMarkup, protectionMarkup, shopMarkup, captionMarkup, gforceStripMarkup, restoreOfferMarkup, restoreRunMarkup, restoreSaltText, restoreWeeksText} from './lab-markup.js';
 import {restoreOffer, restoreSirena, restoreStageAt, RUNNING_SECONDS, BODY_SECONDS} from './restore.js';
 import {getPaintState} from '../paint-presets.js';
 import {checkProtections} from './lab-workshop.js';
@@ -81,7 +81,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   let shown = false, disposed = false;
   let ui = freshState(), caption = null, lastTop = '', lastSide = '', lastCaption = '', lastStrip = '';
 
-  function freshState() { return {tab: 'lessons', bench: null, message: '', protect: null, explained: false, restore: null, walkPanel: null, lastMachine: 'lift',
+  function freshState() { return {tab: 'lessons', bench: null, message: '', protect: null, restore: null, walkPanel: null, lastMachine: 'lift',
     fanPage: false, fanSetting: 0, fanStarted: null, fanLine: -1, passedBench: false}; }
   const flags = () => app._switches();
   const profile = () => app.profile ?? {};
@@ -155,12 +155,12 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     if (ui.tab === 'shop') {
       return shopMarkup({rows: shopRows(profile(), flags()), choices: choiceRows(profile()), wallet: profile().credits, message: ui.message});
     }
-    if (ui.bench) {
+    if (ui.protect) return protectionMarkup({protect: ui.protect, message: ui.message,
+      restore: restoreOfferMarkup(restoreOffer(profile(), flags()))});
+    if (ui.bench && ui.passedBench) {
       const bench = ui.bench;
-      return benchMarkup({lessonId: bench.lessonId, name: lessonName(bench.lessonId), controls: bench.bench.controls, settings: bench.settings,
-        readout: bench.result ? readoutRows(bench.lessonId, bench.result) : [], challenge: challengeFor(),
-        protect: ui.protect, hasRun: bench.result !== null, explained: ui.explained, message: ui.message,
-        restore: bench.lessonId === 'rust' ? restoreOfferMarkup(restoreOffer(profile(), flags())) : '', replay: ui.passedBench === true});
+      return benchMarkup({lessonId: bench.lessonId, name: lessonName(bench.lessonId), message: ui.message,
+        restore: bench.lessonId === 'rust' ? restoreOfferMarkup(restoreOffer(profile(), flags())) : ''});
     }
     return boardMarkup({rows: boardRows(profile(), flags()), message: ui.message});
   }
@@ -188,7 +188,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   const focusKey = () => {
     const el = doc.activeElement;
     if (!el || !side.contains(el)) return null;
-    for (const attr of ['data-lab', 'data-lab-lesson', 'data-lab-buy', 'data-lab-control', 'data-lab-protect', 'data-lab-ring', 'data-lab-cable'])
+    for (const attr of ['data-lab', 'data-lab-lesson', 'data-lab-buy', 'data-lab-protect', 'data-lab-ring', 'data-lab-cable'])
       if (el.hasAttribute(attr)) return `[${attr}="${el.getAttribute(attr)}"]`;
     return null;
   };
@@ -202,13 +202,14 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   function openLesson(id, {replay = false} = {}) {
     if (walking() && !walkRows().find(r => r.id === id)?.open) return;
     const passedBench = walking() && !replay && benchAction(id);
-    if (walking() && !passedBench && teaching.open(id)) {
+    if (!passedBench) {
+      if (!teaching.open(id)) return;
       ui = {...ui, bench: null, passedBench: false, walkPanel: null, tab: 'lessons', lastMachine: id};
       voice.stop(); caption = null; paintCaption(); render(); return;
     }
     const bench = openBench(id);
     if (!bench) return;
-    ui = {...ui, tab: 'lessons', bench, lessonReady: false, message: '', protect: null, explained: false, fanPage: false, walkPanel: null, lastMachine: id, passedBench: Boolean(passedBench)};
+    ui = {...ui, tab: 'lessons', bench, lessonReady: false, message: '', protect: null, fanPage: false, walkPanel: null, lastMachine: id, passedBench: true};
     say(id, 'intro');
     render();
     if (walking()) side.querySelector('button')?.focus({preventScroll: true});
@@ -221,22 +222,6 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     voice.stop(); caption = null; paintCaption();
     render();
     if (walking()) keeper.scene?.canvas.focus({preventScroll: true});
-  }
-  function run() {
-    if (!ui.bench) return;
-    ui.bench = runBench(ui.bench);
-    ui.message = '';
-    const cue = ui.bench.result.cue ?? ui.bench.bench.cues[0];
-    if (cue) bing(cue);
-    if (!ui.explained) { ui.explained = true; say(ui.bench.lessonId, 'explain'); }
-    maybePass();
-    render();
-  }
-  // A bench challenge passes the moment its goal is met (launch and strength); the others wait for their button.
-  function maybePass() {
-    const id = ui.bench.lessonId;
-    if (challengeKindOf(id, flags()) !== 'bench' || !goalMet(ui.bench) || labOf(profile()).done[id] === true) return;
-    commitPass(id);
   }
   function commitPass(id) {
     const result = app.labCommit((p, f) => passIn(p, id, f));
@@ -433,10 +418,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       }
       case 'close': app.closeLab(); break;
       case 'back': backToBoard(); break;
-      case 'run': run(); break;
-      case 'again': if (ui.bench) { ui.explained = true; say(ui.bench.lessonId, 'explain'); render(); } break;
       case 'replay': if (ui.bench) openLesson(ui.bench.lessonId, {replay: true}); break;
-      case 'challenge': takeChallenge(); break;
       case 'protect-check': checkProtect(); break;
       case 'restore': startRestore(); break;
       case 'restore-again': watchAgain(); break;
@@ -445,7 +427,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       default: break;
     }
   }
-  // Dials: the number beside a slider follows it as it moves; the setting is kept when it is let go.
+  // The secret fan's local demonstration never changes a car tune.
   function onInput(event) {
     const el = event.target;
     // LAB-FAN-VIEW: a local demonstration, never saved as a car tune.
@@ -457,11 +439,6 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       keeper.scene?.fan?.({...fanView(profile(), flags()), page: true, setting: ui.fanSetting, elapsed: null});
       return;
     }
-    if (!ui.bench || el.dataset.labControl === undefined) return;
-    ui.bench = setControl(ui.bench, el.dataset.labControl, el.value);
-    const out = el.parentElement?.querySelector('output');
-    const row = ui.bench.bench.controls.find(item => item.id === el.dataset.labControl);
-    if (out && row) out.textContent = `${el.value}${row.unit ? ` ${row.unit}` : ''}`;
   }
   function onChange(event) {
     const el = event.target;
@@ -469,8 +446,6 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       ui.protect = {...ui.protect, picks: {...ui.protect.picks, [el.dataset.labProtect]: el.value}, result: null};
       lastSide = ''; render(); return;
     }
-    if (!ui.bench || el.dataset.labControl === undefined) return;
-    ui.bench = setControl(ui.bench, el.dataset.labControl, el.value);
   }
   function onKey(event) {
     if (!shown) return;
