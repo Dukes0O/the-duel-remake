@@ -173,3 +173,7 @@ folders were all removed or recycled before this commit.
   the lane tier (`--changed`) has nothing to select and the build output is
   unchanged. I did not run them.
 - Summit world signatures and replay fingerprints: unchanged, nothing touched.
+
+## Claude's review (27 October 2026, night)
+
+Decision: no pinning of the official run (players do not get to choose their core, so the number must include slow cores). The build stays a reported warning for now: frames pass and a 1 to 2.5 s world build happens once, at the race start, where a player sees a loading screen. The real fix is option 2, doing the course-only terrain math while the kits load; it moves work and needs its own design, so it is a new card, SUMMIT-TERRAIN-PRELOAD, for Codex. Verdict: merge the note.
