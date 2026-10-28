@@ -1408,3 +1408,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 27 Oct night: merged QA-DEEP-LIFE-TIMING (process CPU time instead of wall clock, run-alone hook extended; 4 ms limit unchanged; lane 507/507, build pass).
 - 27 Oct night: merged SUMMIT-BUILD-TIME-3 (investigation only; terrain math 76% of the build, slow cores 1.45 to 1.6x; follow-up SUMMIT-TERRAIN-PRELOAD).
 - 28 Oct night: merged EARN-FINISH night pass (ladder counts, F1 at 12 medals, results car card, garage chip; lane 80/81, the one failure is DEEP-TRAIL-JOINTS on integration; earned-cars still dev).
+- 28 Oct night: merged FINISH-DEEP place titles (Codex 26 Oct, brought up to date) with the Coast Cup card fix; lane 48/48, build pass.
