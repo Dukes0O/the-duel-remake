@@ -7,6 +7,8 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "building"
+    claimed_by: claude-night-deep-rocks-2026-10-27
+    branch: claude/night-deep-rocks
     needs: []
     locks: []
     flag: "the-deep"
