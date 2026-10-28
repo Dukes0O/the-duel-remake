@@ -282,8 +282,9 @@ export const ARDENNES_FOREST = Object.freeze({
     // Finishing pass F5 (ARDENNES-FAR-FOREST): a far band from 60 to 220 m of larger firs in groves with clearings
     // between, thinning toward the back, so the hills beyond the first band are wooded (+24% trees). Its own seed
     // and names; never beeches.
-    farForest: Object.freeze({from: 60, to: 220, spacing: 9, rows: 5, thin: .5,
-      scale: Object.freeze([1.4, 2.6]), jitter: .8, clumps: Object.freeze({cut: .5, size: .3})}),
+    farForest: Object.freeze({from: 60, to: 220, thin: .5, scale: Object.freeze([1.4, 2.6]), jitter: .8,
+      groves: Object.freeze({every: 20, chance: .34, radius: Object.freeze([20, 42]), spacing: 5, crowd: 1.5, size: .3,
+        lone: 5, minGrove: 6, rise: 6})}),
     // Current Tremblant grove renderer, in summer greens rather than autumn orange.
     autumn: Object.freeze({share: .35, colours: Object.freeze([
       Object.freeze([.22, .46, .16]), Object.freeze([.28, .52, .18]), Object.freeze([.19, .40, .14]),

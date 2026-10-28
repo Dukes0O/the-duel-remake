@@ -223,12 +223,12 @@ test('the forest and safety kit leave the original run-off and native pit road o
 const FAR_BAND = ARDENNES_FOREST.scenery.farForest;
 const ARDENNES_NO_FAR = Object.freeze({...ARDENNES_FOREST, scenery: Object.freeze({...ARDENNES_FOREST.scenery, farForest: undefined})});
 
-test('Ardennes ships the accepted far band (60 to 220 m, 2,182 trees) beyond its 9,131 first-band trees', () => {
-  assert.deepEqual(FAR_BAND, {from: 60, to: 220, spacing: 9, rows: 5, thin: .5,
-    scale: [1.4, 2.6], jitter: .8, clumps: {cut: .5, size: .3}}, 'the band is the accepted one');
+test('Ardennes ships the accepted far band (60 to 220 m, groves, 4,076 trees) beyond its 9,131 first-band trees', () => {
+  assert.deepEqual(FAR_BAND, {from: 60, to: 220, thin: .5, scale: [1.4, 2.6], jitter: .8,
+    groves: {every: 20, chance: .34, radius: [20, 42], spacing: 5, crowd: 1.5, size: .3, lone: 5, minGrove: 6, rise: 6}}, 'the band is the accepted one');
   const course = new Course(ARDENNES_FOREST, 1989);
-  assert.equal(course.features.trees.filter(tree => tree.farForest).length, 2182);
-  assert.equal(course.features.trees.length, 9131 + 2182);
+  assert.equal(course.features.trees.filter(tree => tree.farForest).length, 4076);
+  assert.equal(course.features.trees.length, 9131 + 4076);
 });
 
 test('without the far band Ardennes has the first band only: 9,131 trees', () => {
@@ -248,7 +248,7 @@ test('the far forest band leaves the first band and the beeches exactly as they 
   assert.deepEqual(beechTreePlacements(withFar), beechTreePlacements(without), 'the accepted beech set is unchanged');
   assert.equal(beechTreePlacements(withFar).length, 191);
   assert.deepEqual(withFar.features.trees.slice(0, first.length), first, 'the far band is planted after every earlier tree');
-  assert.ok(far.length > 1500 && far.length <= .25 * first.length, `far band adds at most a quarter (${far.length})`);
+  assert.ok(far.length > 3000 && far.length <= .5 * first.length, `far band adds at most a half (${far.length})`);
   assert.ok(far.every((tree, i) => tree.id === `far-forest-${i}`));
   assert.deepEqual(new Course(ARDENNES_FOREST, 1989).features.trees, withFar.features.trees, 'same seed, same far band');
 });
@@ -273,6 +273,22 @@ test('far forest trees keep every keep-clear rule and stand on the drawn ground'
     assert.ok(course.features.obstacles.includes(tree), 'a solid scenery tree like the first band');
   }
   assert.ok(corners.length > 10);
+});
+
+test('far firs stand in groves: never alone, only on rising ground, with bare ground between groves', () => {
+  const course = new Course(ARDENNES_FOREST, 1989), far = course.features.trees.filter(tree => tree.farForest);
+  const rise = FAR_BAND.groves.rise;
+  for (const tree of far) {
+    const near = far.filter(other => other !== tree && Math.hypot(other.x - tree.x, other.z - tree.z) < 14).length;
+    assert.ok(near >= 2, `a far fir has at least two others within 14 m (${tree.id}: ${near})`);
+    const nearest = course.nearest(tree.x, tree.z);
+    assert.ok(tree.y - course.groundAt(nearest.s, 0).y >= rise - 1e-6, `a far fir stands at least ${rise} m above the road beside it (${tree.id})`);
+  }
+  // Groves are separate: most 20 m squares of the band's reach hold no far fir at all.
+  const squares = new Set(far.map(tree => `\${Math.floor(tree.x / 20)}:\${Math.floor(tree.z / 20)}`));
+  const xs = far.map(tree => tree.x), zs = far.map(tree => tree.z);
+  const area = Math.ceil((Math.max(...xs) - Math.min(...xs)) / 20) * Math.ceil((Math.max(...zs) - Math.min(...zs)) / 20);
+  assert.ok(squares.size < .35 * area, `far firs fill only ${squares.size} of ${area} squares`);
 });
 
 test('far firs are drawn by light meshes and leave the first band meshes exactly as they were', () => {

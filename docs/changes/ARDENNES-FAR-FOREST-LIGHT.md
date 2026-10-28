@@ -135,3 +135,56 @@ Nothing; the band's earlier removal on Ardennes is undone.
   run. The one failure is `tools/test-world-composition.mjs`, on the Ardennes
   row only, waiting for Claude to grant the new signature. `npm run build`
   passes (output deleted). Replay fingerprints unchanged.
+
+## Round 2, 28 October 2026: groves instead of scattered trees
+
+Claude's look at round 1 (same day): better than bald hills, first band unchanged, but
+the far firs read as single trees, and one stood alone on the skyline at La Fontaine.
+
+- `src/track-script-course.js`: a far band can now carry `groves`. Grove centres are
+  picked every 20 m along each side of the road at 60 to 220 m, kept at a chance
+  (thinner toward the back); each grove is a ragged disc of 20 to 42 m radius filled
+  on a 5 m jittered grid, thinner and smaller toward the edge, trees allowed to
+  overlap crowns (crowd 1.5). Rules added, all in the band's own seeded stream:
+  - only ground that rises at least 6 m above the road beside it (flat ground
+    behind the first band is hidden by it, so no trees are spent there);
+  - a grove with fewer than 6 trees is dropped;
+  - a tree that would stand against the sky as seen from the road beside it (no
+    ground behind it climbs to its top) is dropped unless five others stand within
+    14 m, so only groves reach a ridge line, never one tree;
+  - after that cut nobody may have fewer than two others within 14 m.
+  The first band's lattice code is untouched (the groves branch runs only when a
+  band has `groves`), so every other course and the first band are exactly as before.
+- `src/circuits/ardennes-forest.js`: `farForest` is now `{from 60, to 220, thin .5,
+  scale 1.4 to 2.6, jitter .8, groves: {every 20, chance .34, radius 20 to 42,
+  spacing 5, crowd 1.5, size .3, lone 5, minGrove 6, rise 6}}` (the old
+  `spacing`, `rows` and `clumps` fields are gone, as nothing reads them).
+- Count: 4,076 far firs (round 1: 2,182, so 1.87 times), total 13,207 trees. They
+  draw as before: one instanced call per 400 m cell, light crown (196 triangles),
+  no shadow. I chose just under double because the hills now carry trees only on
+  slopes the road can see, so each tree is worth more; the frame check decides
+  whether it stays. Trees far from every camera cost nothing (cells are culled).
+  If High misses 18.5 ms, lower `chance` (about 3,100 trees at .25).
+  The chance steps are not smooth (the draw order shifts), so recount after any change.
+- Test changes (Claude's rule 18 review): `tools/test-circuit-ardennes.mjs`: the
+  band's values and far count are now the new ones exactly (4,076 far, 9,131 + 4,076
+  all); "the far band adds at most a quarter" became "at most a half" (round 1
+  was 24%, now 45%), with a floor of 3,000 instead of 1,500. New test: every far
+  fir has two others within 14 m, stands at least 6 m above its road, and far firs
+  fill under 35% of the 20 m squares they span (bare ground between groves). The
+  keep-clear, drawn-ground, first-band-unchanged, no-shadow and 40-meshes checks are
+  unchanged. 49 tests pass in that file.
+- Pictures: the integration folder's `.evidence/2026-10-28/ARDENNES-FAR-FOREST-LIGHT/`
+  `before-round1-round2-sheet.jpg` (columns: integration, round 1, round 2; rows Pit
+  Straight, La Fontaine, Les Combes, Stavelot) and `round2/` (16 native High views).
+  Honest read: Pit Straight, Les Combes and Stavelot show groves on the hill slopes,
+  and the lone skyline fir at La Fontaine is gone; the hill behind La Fontaine itself
+  is still bare from that camera (no slope there passes the rule), and Stavelot's
+  grove sits on the ridge edge as a small clump.
+- World signature, Ardennes only (still NOT recaptured): hash
+  5d475bd46a75b486d57e0033fb17652cfb073484adb0540aa32445a6978d2b42, nodes 1,329,
+  meshes 1,270, instances 40,544, geometries 250, materials 156, textures 84
+  (integration: 2e8e6311374a6586df712a7d5a30ad168d9c1644765595a47d689d64bebbf173,
+  1,303 / 1,244 / 36,468 / 249). The other 22 rows are identical.
+- Gates: lane tier --changed --jobs 4 --keep-going (166 suites selected, since the groves code sits in a file many suites import): 166 passed, 2 failed, 0 not run, 848 s. Failure 1 is 	ools/test-world-composition.mjs, the Ardennes row, waiting for Claude. Failure 2 is 	ools/test-drive-lesson-helipad.mjs (pilot-map-view.js reads a null canvas); it fails the same way on integration (57a8ac6f), so it is not from this lane. 
+pm run build passes (output deleted). No frame timing taken here; the frame-check command is unchanged from the first section.

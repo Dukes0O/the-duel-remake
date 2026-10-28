@@ -239,6 +239,73 @@ function scatterScenery(course) {
       !Number.isFinite(range.from)||!Number.isFinite(range.to)||range.from<0||range.to>course.length||range.to<=range.from)))
       throw new TrackScriptError('Forest ranges must lie on their authored course.');
     let serial = 0;
+    if (band.groves) { plantGroves(); return; }
+    // Groves (`groves: {every, chance, radius: [least, most], spacing, crowd, size, lone, minGrove, skyline}`): clumps of firs
+    // with bare ground between, the way spruce stands cover the Ardennes hills. A grove's centre is picked every `every` m
+    // along each side of the road (kept with `chance`, less often toward the back), at `from` to `to` m out; its trees
+    // stand on a jittered grid of `spacing` m inside `radius`, thinner and smaller toward a ragged edge. Trees may crowd
+    // each other to `crowd` crown widths. A grove with fewer than `minGrove` trees is dropped, and a tree that would stand
+    // against the sky as seen from the road beside it (no ground behind it rises above its top) is dropped too unless
+    // `lone` other trees stand within 14 m, so only groves, never single trees, reach the ridge lines.
+    function plantGroves() {
+      const { every, chance, radius: [rLeast, rMost], spacing: grid, crowd = 1.6, size = .3, lone = 5, minGrove = 6, rise = 0 } = band.groves;
+      const sky = band.groves.skyline ?? {}, seeAhead = sky.reach ?? 1100;
+      const eyeHeight = sky.eye ?? 6, topHeight = sky.top ?? 6.5;
+      const clearOf = (n, scale) => cleared(n.s, n.lateral, 2.5 * scale) || zones.length && ownClear(n.s, n.lateral, 2.5 * scale);
+      // True when ground behind the tree, as seen from the nearest road, never rises to the tree's top: it would show against sky.
+      const againstSky = (tree, n) => {
+        const road = course.worldAt(n.s, 0), eye = course.groundAt(n.s, 0).y + eyeHeight, dx = tree.x - road.x, dz = tree.z - road.z;
+        const reach = Math.hypot(dx, dz);
+        if (reach < 1) return false;
+        const ux = dx / reach, uz = dz / reach, top = (tree.y + topHeight * tree.scale - eye) / reach;
+        let best = -Infinity, step = 14;
+        for (let d = reach + step; d < reach + seeAhead; d += step, step = Math.min(70, step * 1.25)) {
+          const y = renderedGroundHeight(course, { x: road.x + ux * d, z: road.z + uz * d, s: n.s, off: n.lateral }, { requireSurface: true });
+          if (Number.isFinite(y)) best = Math.max(best, (y - eye) / d);
+        }
+        return top > best;
+      };
+      for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += every) {
+        const s = base + random.float() * every, depth = from + (to - from) * random.float();
+        if (random.float() > chance || random.float() < thin * (depth - from) / Math.max(1, to - from)) continue;
+        const centre = course.worldAt(s, side * (course.roadHalfWidthAt(s) + depth)), radius = random.range(rLeast, rMost);
+        const found = [];
+        for (let u = -radius; u <= radius; u += grid) for (let v = -radius; v <= radius; v += grid) {
+          const x = centre.x + u + (random.float() - .5) * grid * jitter, z = centre.z + v + (random.float() - .5) * grid * jitter;
+          const reach = Math.hypot(x - centre.x, z - centre.z) / radius, keep = random.float(), grown = random.range(.9, 1.7), angle = random.range(0, TAU);
+          if (reach > 1 || keep > 1 - .8 * reach * reach) continue;
+          let scale = scaleRange ? scaleRange[0] + (grown - .9) / .8 * (scaleRange[1] - scaleRange[0]) : grown;
+          scale *= 1 + size * (.6 - reach);
+          const n = course.nearest(x, z), edge = n.distance - course.roadHalfWidthAt(n.s);
+          if (edge < from + .5 || edge > to - .5 || clearOf(n, scale)) continue;
+          const piece = script.pieceAt(n.s);
+          if (piece.kind === 'turn' && Math.sign(n.lateral) === piece.dir && n.distance < course.roadHalfWidthAt(n.s) + 30) continue;
+          const p = course.worldAt(n.s, n.lateral);
+          // Flat ground behind the first band is hidden by it; only slopes that climb above the road are worth a tree.
+          if (rise > 0 && renderedGroundHeight(course, { x: p.x, z: p.z, s: n.s, off: n.lateral }) - course.groundAt(n.s, 0).y < rise) continue;
+          if (crowded(p.x, p.z, crowd * scale)) continue;
+          claim(p.x, p.z);
+          found.push({ s: n.s, off: n.lateral, scale, angle, n });
+        }
+        if (found.length < minGrove) continue;
+        const trees = found.map(row => { const t = add(`${prefix}-${serial}`, 'tree', row.s, row.off, .23 * row.scale, .23 * row.scale, row.angle, { scale: row.scale }); t.y = renderedGroundHeight(course, t); t.farForest = true; return t; });
+        found.forEach((row, i) => {
+          const tree = trees[i];
+          if (!againstSky(tree, row.n)) return;
+          if (trees.filter(other => other !== tree && Math.hypot(other.x - tree.x, other.z - tree.z) < 14).length >= lone) return;
+          tree.dropped = true;
+        });
+        // What the skyline cut leaves must still be a grove: nobody stands with fewer than two others within 14 m.
+        for (let again = true; again;) {
+          again = false;
+          for (const tree of trees) if (!tree.dropped && trees.filter(other => other !== tree && !other.dropped && Math.hypot(other.x - tree.x, other.z - tree.z) < 14).length < 2) { tree.dropped = true; again = true; }
+        }
+        for (const tree of trees) {
+          if (tree.dropped) { f.obstacles.splice(f.obstacles.lastIndexOf(tree), 1); continue; }
+          tree.id = `${prefix}-${serial++}`; f.trees.push(tree);
+        }
+      }
+    }
     for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += spacing) for (let row = 0; row < rows; row++) {
       const s = base + (random.float() - .5) * spacing * jitter, depth = from + (to - from) * (row + random.float()) / rows;
       if(authoredRanges){
