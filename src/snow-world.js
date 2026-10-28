@@ -122,10 +122,18 @@ export function snowWorldPlacements(course){
 }
 // A genuine attribute on every drawn terrain vertex supplies winter coverage.
 export function applySnowTerrain(geometry,course){
+  const steps=applySnowTerrainSlices(geometry,course);
+  let step;
+  while(!(step=steps.next()).done);
+  return step.value;
+}
+// The same work in slices (it pauses every 1,024 vertices), so a preload can spread it over several frames.
+export function* applySnowTerrainSlices(geometry,course){
   const position=geometry.attributes.position,weights=new Float32Array(position.count);
   weights.fill(course.def.snowWorld?1:0);
   if(course.def.snowWorld?.mixed)for(let index=0;index<position.count;index++){
     weights[index]=winterWeight(course,course.nearestS(position.getX(index),position.getZ(index)));
+    if(index%1024===1023)yield;
   }
   geometry.setAttribute('winterWeight',new THREE.BufferAttribute(weights,1));return geometry;
 }

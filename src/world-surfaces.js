@@ -117,7 +117,20 @@ function gravelTrap(course, colour, weights) {
   }
 }
 
+// Run a slice generator to its end and return its result: the geometry builders below are written as generators that
+// pause after each row so a preload can spread them over several frames; called here they run straight through.
+export function drain(steps) {
+  let step;
+  while (!(step = steps.next()).done);
+  return step.value;
+}
+
 export function terrainGeometry(course) {
+  return drain(terrainGeometrySlices(course));
+}
+
+// The ribbon of near ground. Yields after each row of vertices (and each edge step of the continuous backing).
+export function* terrainGeometrySlices(course) {
   if(course.def.practice)return freestyleTerrainGeometry(course);
   // DEEP-RAMP-2: fit from the untouched source surface, not pre-graded vertices.
   const naturalCourse = naturalRampTerrain(course);
@@ -147,6 +160,7 @@ export function terrainGeometry(course) {
       if (row && j) { const a = row * offsets.length + j; indices.push(a - offsets.length - 1, a - 1, a - offsets.length, a - offsets.length, a - 1, a); }
     });
     seedGroundRow(course,s,offsets,rowPoints);
+    yield;
   }
   if(course.def.scenery?.continuousGround){
     // Close the exposed sides of an upper road's ribbon onto the continuous
@@ -159,6 +173,7 @@ export function terrainGeometry(course) {
       for(let s=terrainStep;s<course.length;s+=terrainStep){
         const next=ribbonGroundAt(course,s,side*64),points=[previous,next];
         previous=next;
+        yield;
         // An outer edge can fold across a lower hairpin. Never drop a wall
         // through that road (or the Gallery's parallel open branch).
         let crossesRoad=false;
@@ -178,11 +193,17 @@ export function terrainGeometry(course) {
       }
     }
   }
+  yield;
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); fitMuddyHollowGround(g,course,0); fitDeepRampGround(g,course); computeNormalsFast(g); return g;
 }
 
 export function farTerrainGeometry(course) {
+  return drain(farTerrainGeometrySlices(course));
+}
+
+// The far hills' grid. Yields after each grid row.
+export function* farTerrainGeometrySlices(course) {
   if(course.def.practice)return freestyleFarGeometry(course);
   const naturalCourse = naturalRampTerrain(course); // DEEP-RAMP-2
   const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion||course.def.terrainHalfWidth===64?16:32;
@@ -222,7 +243,9 @@ export function farTerrainGeometry(course) {
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
       if(course.def.scenery?.continuousGround||distances[k0]>gap&&distances[k1]>gap&&distances[k2]>gap&&distances[a]>gap)groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(k0,k1,k2,k2,k1,a);
     }
+    if(i===columns-1)yield;
   }
+  yield;
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.BufferAttribute(v,3));
   g.setAttribute('uv',new THREE.BufferAttribute(uv,2));
