@@ -1,5 +1,5 @@
 import {landedArrival} from './heli/heli-ui.js';
-import {DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,DRIVE_GEAR_ROWS,DRIVE_SNOW_ROWS,buildInstructorRun} from './lessons/drive-lessons.js';
+import {DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,DRIVE_GEAR_ROWS,DRIVE_SNOW_ROWS,buildInstructorRun,chooseDriveLessonStep} from './lessons/drive-lessons.js';
 import {finishDriveLesson,driveLessonAccess} from './lessons/drive-lesson-save.js';
 import {DRIVE_RADIO_LINES} from './lessons/drive-radio-lines.js';
 import {createRadioChain} from './lessons/radio-voice.js';
@@ -518,6 +518,15 @@ export class App {
       if(run.lesson.stage!=='watch')return false;
       run.lesson.phase='result';run.lesson.lastAttempt={passed:false,finished:false};
     }
+    this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;this.audio.setPaused(false);
+    const started=this.duel.resetDriveLessonAttempt();this._driveLessonUi?.update();return started;
+  }
+  chooseLessonStep(id){
+    const run=this.duel.drivingLesson;
+    if(!run||!this.drivingLessonsAvailable()||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||
+      this.duel.state.playerId!==run.ownerId||!chooseDriveLessonStep(run.lesson,id))return false;
+    this.driveLessonBriefing=false;this.driveLessonHelp=false;
+    if(id==='watch')run.watchClip=null; // watching again shows the late brake first
     this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;this.audio.setPaused(false);
     const started=this.duel.resetDriveLessonAttempt();this._driveLessonUi?.update();return started;
   }

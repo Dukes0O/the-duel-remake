@@ -19,6 +19,8 @@
 .drive-lesson-step-strip { display:flex; justify-content:space-between; list-style:none; gap:12px; margin:0; padding:0; color:#9badad; font-size:16px; font-weight:650; }
 .drive-lesson-step-strip li { padding:5px 8px; border-bottom:3px solid transparent; }
 .drive-lesson-step-strip [aria-current] { color:#f6d292; border-color:#edb65f; }
+.drive-lesson-host .drive-lesson-step-strip button { min-height:0; margin:0; padding:0; border:0; background:none; color:inherit; font:inherit; }
+.drive-lesson-host .drive-lesson-step-strip button:hover { background:none; text-decoration:underline; }
 .drive-lesson-counts { text-align:center; font-size:14px; }
 .drive-lesson-panel-actions { display:flex; justify-content:center; gap:6px; }
 .drive-lesson-panel-actions button { font-size:11px; min-height:25px; margin-top:0; padding:3px 9px; }

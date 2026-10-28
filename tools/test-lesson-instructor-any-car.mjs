@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARS} from '../src/config.js';
 import {buildInstructorRun, DRIVE_LESSON_CORNERS, DRIVE_LINE_ROWS, DRIVE_GEAR_ROWS,
-  DRIVE_SNOW_ROWS, instructorConeDistances, TIP_DISTANCE_M} from '../src/lessons/drive-lessons.js';
+  DRIVE_SNOW_ROWS, instructorConeDistances, TIP_DISTANCE_M, INSTRUCTOR_PACE, MAX_INSTRUCTOR_TRIES} from '../src/lessons/drive-lessons.js';
 
 // Every native build owns a fresh in-memory Duel, never a player profile or save.
 for (const [lessonId, rows] of Object.entries({corner: DRIVE_LESSON_CORNERS,
@@ -18,8 +18,13 @@ for (const [lessonId, rows] of Object.entries({corner: DRIVE_LESSON_CORNERS,
         assert.equal(instructor.poses.at(-1).s, corner.finishS);
         assert.ok(instructor.poses.every(p => p.tyreSlip <= 1));
         assert.ok(instructorConeDistances(instructor.poses, instructor.cones).every(d => d > TIP_DISTANCE_M));
-        assert.ok(instructor.retries <= 4);
-        assert.ok(instructor.pace >= (difficulty === 'casual' ? .84 : .89));
+        assert.ok(instructor.retries < MAX_INSTRUCTOR_TRIES);
+        const {floor, margin} = INSTRUCTOR_PACE[difficulty];
+        assert.ok(instructor.pace >= floor);
+        // Room to beat him: at least the margin slower than a clean full-pace run, unless he is at the floor.
+        if (instructor.fullPaceSec !== null && instructor.pace > floor)
+          assert.ok(instructor.timeSec >= instructor.fullPaceSec * (1 + margin), `${instructor.timeSec} s against full pace ${instructor.fullPaceSec} s`);
+        t.diagnostic(`pace ${instructor.pace}, ${instructor.timeSec.toFixed(2)} s, room ${instructor.fullPaceSec === null ? 'none' : (instructor.timeSec - instructor.fullPaceSec).toFixed(2) + ' s'}`);
         if (instructor.retries) t.diagnostic(`slower retry: ${instructor.retries}, pace ${instructor.pace}`);
         if (instructor.winter) {
           assert.ok(instructor.winter.poses.every(p => p.tyreSlip <= 1));

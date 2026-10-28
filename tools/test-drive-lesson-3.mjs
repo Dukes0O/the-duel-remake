@@ -11,7 +11,7 @@ for (const [lessonId, rows] of Object.entries({corner: DRIVE_LESSON_CORNERS, lin
     test(`100% driver ${lessonId} ${courseId} ${difficulty}: clean faster run beats the instructor`, async t => {
       const options = {lessonId, courseId, car: 'falcone_f42', difficulty};
       const baseline = await buildInstructorRun(options);
-      const fast = await buildLessonDemonstration(options, 'fast');
+      const fast = await buildLessonDemonstration({...options, pace: baseline.instructor.pace}, 'fast');
       assert.equal(fast.instructor.clean, true);
       assert.ok(fast.instructor.timeSec < baseline.instructor.timeSec);
       const lesson = createDriveLesson(lessonId, baseline);

@@ -29,7 +29,7 @@ for (const [lessonId, rows] of Object.entries({corner: DRIVE_LESSON_CORNERS, lin
         t.diagnostic(`late clip ${clip.screechSeconds.toFixed(3)} s screech; offroad ${clip.faults.some(f => f.offRoad)}`);
       }
       if (lessonId === 'line') {
-        const middle = (await buildLessonDemonstration(options, 'middle')).instructor;
+        const middle = (await buildLessonDemonstration({...options, pace: i.pace}, 'middle')).instructor;
         assert.equal(middle.clean, true);
         assert.ok(middle.timeSec >= i.timeSec + .3, `middle margin ${middle.timeSec - i.timeSec}`);
         t.diagnostic(`middle slower ${(middle.timeSec - i.timeSec).toFixed(6)} s`);

@@ -2,6 +2,7 @@ import {DRIVE_RADIO_LINES, driveRadioId} from './drive-radio-lines.js';
 import {speedKph, formatSpeed} from '../speed-format.js';
 import {lessonBoardMarkup} from './lesson-board.js';
 import {GEAR_LESSON, TIP_DISTANCE_M, DRIVE_LESSON_STEPS, driveLessonStep, driveLessonGold} from './drive-lessons.js';
+const STEP_IDS = new Set(DRIVE_LESSON_STEPS.map(step => step.id));
 
 // Presentation only. The host supplies actual catalog/car choices and the
 // current lesson observation; callbacks request actions without performing them.
@@ -212,7 +213,12 @@ export function driveLessonBriefingMarkup(props = {}, reopened = false) {
   const info = DRIVE_LESSON_VIEW[lesson.id];
   return `<section class="drive-lesson-briefing" aria-label="Lesson briefing"><header><small>BRIAN'S DRIVING SCHOOL / LESSON ${info.n}</small><h2>${escape(info.title)}</h2><p>${lessonIdeas[lesson.id]}</p></header><div class="drive-lesson-brief-grid"><div>${driveLessonMapMarkup(lesson.instructor)}<p class="drive-lesson-map-key"><span>Green: accelerate</span> / White: coast / <b>Red: brake</b> / Yellow: lift</p><ol class="drive-lesson-map-corners">${lesson.instructor.corners.map(c => `<li>${escape(c.name)} / ${formatSpeed(c.targetMph)}</li>`).join('')}</ol></div><div>${wordPicture('brake', 'Brake zone', 'The box where you brake, while the car is straight.')}${wordPicture('apex', 'Apex', 'The inside of the corner. Aim for the cone.')}${wordPicture('line', 'Racing line', 'The widest, gentlest curve through the corners.')}${lesson.id === 'gears' ? wordPicture('revs', 'Revs', 'How fast the engine spins. The lights show when to change up.') : lesson.id === 'snow' ? wordPicture('grip', 'Grip', 'How well the tyres hold the road. Ice leaves much less grip.') : wordPicture('lift', 'Lift and coast', 'Ease off the accelerator. Coast means use neither pedal.')}</div></div><ol class="drive-lesson-brief-steps">${DRIVE_LESSON_STEPS.map(step => `<li><strong>${step.title}</strong><br>${escape(step.whatCounts)}</li>`).join('')}</ol><p class="drive-lesson-clean-rule">Clean means no wall hit, no more than 1 s off the road, and less than 0.3 s of tyre screech. Each corner checks braking, speed within ${formatSpeed(5)} and quiet tyres.</p><p class="drive-lesson-intro">Brian: ${escape(DRIVE_RADIO_LINES[info.intro].text)}</p>${reopened ? '<button type="button" data-drive-action="close-help">Back to lesson</button>' : `<button type="button" data-drive-action="next">Start ${escape(driveLessonStep(lesson).title)}</button><small>Enter starts the run.</small>`}<button type="button" data-drive-action="leave">Leave lesson</button></section>`;
 }
-const stepStrip = lesson => `<ol class="drive-lesson-step-strip">${DRIVE_LESSON_STEPS.map((st, i) => `<li ${st.id === lesson.stage ? 'aria-current="step"' : ''}>${i+1} ${st.title}</li>`).join('')}</ol>`;
+// Each step is a button: go back to the ghost, watch again or skip ahead at any time.
+const stepStrip = lesson => `<ol class="drive-lesson-step-strip">${DRIVE_LESSON_STEPS.map((st, i) => `<li ${st.id === lesson.stage ? 'aria-current="step"' : ''}>${lesson.done ? `${i+1} ${st.title}` : `<button type="button" data-drive-action="step:${st.id}" title="${st.id === lesson.stage ? 'Start this step again' : 'Go to ' + st.title}">${i+1} ${st.title}</button>`}</li>`).join('')}</ol>`;
+function againButtons(lesson) {
+  if (!lesson || lesson.done) return '';
+  return `${lesson.stage !== 'watch' ? '<button type="button" data-drive-action="step:watch">Watch me again</button>' : ''}<button type="button" data-drive-action="step:follow">${lesson.stage === 'follow' ? 'Follow me again' : 'Back to Follow me (ghost)'}</button>${['your-turn', 'beat'].includes(lesson.stage) ? `<button type="button" data-drive-action="step:${lesson.stage}">Same step again</button>` : ''}`;
+}
 export function driveLessonPanelMarkup(props = {}) {
   const lesson = currentLesson(props);
   if (!lesson) return '';
@@ -249,7 +255,7 @@ export function driveLessonResultMarkup(props = {}) {
     ${stepStrip(lesson)}<h2>${passed(lesson) ? 'Lesson passed' : result.passed ? 'Run passed' : lesson.failed ? 'Try again' : 'Practice complete'}</h2>
     <p>${result.finished ? 'You ' + seconds(result.elapsedSeconds) : 'Did not finish'}. Instructor ${seconds(lesson.instructor.timeSec)}</p>
     <div class="drive-lesson-results-scroll"><table><thead><tr><th>Corner</th><th>Braking</th><th>Speed / target</th><th>Tyres</th></tr></thead><tbody>${rows(result.corners).map(c => `<tr><th>${escape(c.name)}</th><td>${c.checks?.brake == null ? '—' : c.checks.brake ? '✓' : '✗'} ${c.kind === 'flat' ? 'No brake needed' : c.kind === 'lift' ? 'Lift only' : c.brakeDeltaM == null ? 'No brake press' : Math.abs(c.brakeDeltaM).toFixed(0) + ' m ' + (c.brakeDeltaM > 0 ? 'late' : 'early')}</td><td>${c.checks?.speed ? '✓' : '✗'} ${c.minMph == null ? 'Not reached' : speedKph(c.minMph) + ' / ' + formatSpeed(c.targetMph)}</td><td>${c.checks?.quiet ? '✓ Quiet' : '✗ Slid'} / ${(c.screechSeconds ?? 0).toFixed(1)} s</td></tr>`).join('')}</tbody></table></div><p class="drive-lesson-advice">${escape(driveLessonDisplayAdvice(result.corners))}</p>
-    ${driveLessonGold(lesson.bestMargin) ? '<p>Gold</p>' : ''}${nextButton(lesson)}
+    ${driveLessonGold(lesson.bestMargin) ? '<p>Gold</p>' : ''}${nextButton(lesson)}${againButtons(lesson)}
     ${passed(lesson) && props.lessonSaveFailed ? '<button type="button" data-drive-action="retry-save">Retry save</button>' : ''}
     <button type="button" data-drive-action="leave">Leave lesson</button></section>`;
 }
@@ -273,6 +279,7 @@ export function bindDriveLessonUi(root, readProps, callbacks = {}) {
     else if (action === 'help' && currentLesson(props)) callbacks.onHelp?.();
     else if (action === 'close-help') callbacks.onCloseHelp?.();
     else if (action === 'skip' && props.lesson?.stage === 'watch') callbacks.onNext?.();
+    else if (action.startsWith('step:') && STEP_IDS.has(action.slice(5)) && currentLesson(props) && !currentLesson(props).done) callbacks.onStep?.(action.slice(5));
     else if (action === 'retry-save' && props.lessonSaveFailed === true && passed(currentLesson(props) ?? {})) callbacks.onRetrySave?.();
     else if (action.startsWith('start:')) {
       const model = driveLessonBoardModel(props), start = (model.byId?.[action.slice(6)] ?? (action === 'start:corner' ? model : null))?.start;
@@ -320,6 +327,8 @@ export function mountDriveLessonUi(app,host){
     onStart:request=>void app.startLesson({...request,car:request.carId}),
     onHelp:()=>{app.driveLessonHelp=true;app.driveLessonBriefing=true;update();},onCloseHelp:()=>{app.nextLessonAttempt();update();},
     onNext:()=>app.nextLessonAttempt(),onLeave:()=>app.leaveLesson(),onRetrySave:()=>app.retryLessonSave(),
+    // Drop focus from the clicked step so Space and the arrow keys drive the car, not the button.
+    onStep:id=>{host.ownerDocument.activeElement?.blur?.();app.chooseLessonStep(id);update();},
     onSelectCourse:({courseId,lessonId='corner'})=>{
       const model=driveLessonBoardModel(boardProps());
       const selected=(model.byId?.[lessonId]??model).selected?.id;
