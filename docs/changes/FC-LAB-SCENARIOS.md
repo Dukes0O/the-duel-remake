@@ -116,3 +116,7 @@ No tolerance, timeout or game rule was changed.
   Removing them is a separate card.
 - At 1280 x 800 the answer pictures in a lesson's Try step cover the fan dial of the wind tunnel, so the 3D dial cannot be
   clicked there (the on-screen dial button still works). Not changed here; card LAB-TRY-PICTURES-DIAL.
+
+## Claude's review (28 October 2026, night)
+
+Approved (rule 18 written review of changed assertions). Game fixes checked: the Key idea card keeps its natural height and rides under the course name in a Lab lap only; Snow captions step clear of earlier ones; a lesson's own Finish keeps its pass message so a tuning pass still names the Tune page (opening a bench still clears it). lab-walk, lab-view and lab-tune-view now play the real lessons and also prove the old bench is absent: stronger. lab-tune-view keeps its Tune page message check and moves to 1440 x 900 like every other Lab lesson scenario; the 1280 x 800 overlap is card LAB-TRY-PICTURES-DIAL. lab-polish is weaker as one scenario: it opens all sixteen lessons by map instead of turning each bench dial. Accepted, because the dial settings are still run on the rules by test-lab-player.mjs and every lesson's machine controls are driven in the browser by the three lab-lessons scenarios; the dead bench panels go in LAB-BENCH-PANELS-REMOVE. lab-lesson-frame drops a switch-off tail that nothing can reach now. lab-navigation only adds a wait. No tolerance, timeout or game rule changed.
