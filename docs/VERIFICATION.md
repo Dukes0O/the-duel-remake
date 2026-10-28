@@ -1482,3 +1482,16 @@ nearest point is the exact inverse. Rule 19: since 9d521bb0 the only new game
 change is in `src/deep/`; lane tier 156/156 with replay and world-signature
 guards passing; build passes. The nightly full check covers the whole tier.
 No frame check: no race scene changed.
+
+## Release, 28 October 2026 night (Claude, Release Manager)
+
+Fix forward for DEEP-TRAIL-JOINTS (live since 05:37: the dive ended on the
+first throttle; found by test-deep-kelp-coast, which the joints lane tier did
+not select). Also FINISH-DEEP place titles with the Coast Cup card fix and the
+EARN-FINISH night pass (behind `earned-cars`, still dev). Rule 19: game
+changes since 9d521bb0 are in `src/deep/`, `src/lessons/`, lesson lines of
+`src/app.js` and `src/game.js`, the earned-car view and one config number
+behind a dev switch; no save shape, physics or race rule. On the merged
+commit every `tools/test-deep-*.mjs` passes by hand; lane tiers: joints fix
+26/26, Deep titles 48/48, earned cars 80/81 (the one failure was this fault).
+The nightly full check covers the whole tier.

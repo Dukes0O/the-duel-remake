@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASED 28 October night (Claude, Release Manager).** The Deep dives again (fix forward), Kelp Coast place titles. Reload any open game tab.
 - **RELEASED 28 October early (Claude, Release Manager).** The Deep: no sideways jumps away from the trail. Reload any open game tab.
 - **RELEASED 28 October early (Claude, Release Manager).** The pilot's map is on in the helicopter (N). Reload any open game tab.
 - **RELEASED 27 October night (Claude, Release Manager).** Lessons always run to the finish and any step can be chosen again; room to beat the instructor; Woods braking road; the Deep's rocks bounce or push aside. Reload any open game tab.

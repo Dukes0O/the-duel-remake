@@ -2,6 +2,18 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## The Deep works again, and Kelp Coast titles, 28 October 2026
+
+### What players get now
+
+- **Diving works again:** the 05:37 build turned the car toward the ramp at
+  the start of a dive, so the first throttle ended it. The car now starts
+  facing along the trail, and still never jumps away from the trail.
+- **Kelp Coast place titles** the first time you reach each place, and the
+  Coast Cup card no longer covers the results text.
+- Earned cars (still switched off): the F1 comes at 12 medals, a won car gets
+  its own card on the results screen, and the garage shows your medal count.
+
 ## No more jumps in the Deep, 28 October 2026
 
 ### What players get now
