@@ -1403,3 +1403,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 27 Oct night: merged QA-SUMMIT-GLACIER-EDGE (test tools only, driver line scaled to traction, snow courses on winter tyres; lane 37/37, build pass, fingerprints unchanged).
 - 27 Oct night: merged DEEP-ROCKS-PUSH (small rocks bounce keeping 70%+ speed, large rocks slide aside, no snap to the course; lane 157/157, build pass).
 - 27 Oct night: merged LESSONS-V2-FINISH part 1 (Claude; Kyle's play: runs go to the finish, any step again; room to beat the instructor 7%/4%; Woods braking on its own road; lane 39/39, build pass).
+- 27 Oct night: merged MAP-FINISH (pilot-map switch on after Claude's look; lane 37/37, build pass).
