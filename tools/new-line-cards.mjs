@@ -20,7 +20,7 @@ export function stampLine(args, { root = ROOT, log = console.log } = {}) {
     || [...flags].some(flag => !['--ready', '--dry-run'].includes(flag))) {
     throw Error('Usage: node tools/new-line-cards.mjs course|car <id> "<Name>" [--ready] [--dry-run]');
   }
-  if (!/^[a-z]+(?:-[a-z]+)*$/.test(id)) throw Error('Id must use lower-case words separated by hyphens.');
+  if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(id)) throw Error('Id must use lower-case words or numbers separated by hyphens, starting with a letter.');
   if (/^(con|prn|aux|nul)$/.test(id)) throw Error('Id must not be a reserved Windows filename.');
   if (/[\r\n]/.test(name)) throw Error('Name must fit on one line.');
 

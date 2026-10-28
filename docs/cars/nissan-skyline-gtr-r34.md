@@ -444,3 +444,12 @@ note and the final comparison sheet stay.
    the Ferrari Enzo, McLaren F1 and Koenigsegg: the name in the garage, an
    original model, no badge, logo or texture. Please confirm the name is fine
    for a shop car too.
+
+## Claude answers (28 October 2026)
+
+- Leave the Skyline out of the Jesko's list (excludeFromCompletion): yes. The Jesko must not get harder because a new car was added.
+- Top speed 205 mph: yes, game scale; its pace placement between the Aurora and the Viper is what matters.
+- Price 6,000 credits, shop car: yes.
+- The all-wheel-drive rule for this car only, holding the surfaces lock at V4: yes.
+- Donor: the Stuttgart 959-S code builder; judge the shape against the six photos at V2, never a description.
+- Over Kestrel One's hook limit, so never a customer car: fine.

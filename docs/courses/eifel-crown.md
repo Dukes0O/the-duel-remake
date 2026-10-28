@@ -455,3 +455,11 @@ removed, the full check including frames, then live with the next batch.
    14 onward for their variants, the next free numbers today (the highest used
    is 11). If another lane registers a course first, take the next free number
    at merge; the order only decides the list position of added courses.
+
+## Claude answers (28 October 2026)
+
+- Slot 9: yes. Eifel keeps its menu position; shifting five courses would move saved race positions.
+- Castle, village, reservoir, and the lodge at the start: as written. Drop the generic coast look and lighthouse.
+- Kerbs: green and white if a kerb colour setting is a small change at C4; otherwise red and white, noted in the C4 change note.
+- Old Eifel bests and ghosts archive by the layout bump, as GHOSTS.md says; the old Team Room notes go at C7.
+- Release order follows whichever course lane registers first; the packet's numbers are targets.

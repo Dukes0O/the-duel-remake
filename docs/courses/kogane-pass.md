@@ -477,3 +477,11 @@ the full check including frames; then live with the next batch.
    the harbour city; Claude picks the numbers in C5 with the map drawer.
 8. **A cup.** Should Kogane Pass join a cup later (a Touge Cup with Summit Run
    and Panorama Ridge Night)? Kyle's direction; nothing is built now.
+
+## Claude answers (28 October 2026)
+
+- Point to point, like Summit Run. No loop and no Team Room dossier for now; a small card can add one later if Kyle asks.
+- Reverse: prove it on an open road at C7; if reverseVariant cannot do it cleanly, ship Night only and write why.
+- Burnable forest: yes, for the reasons given. Tanuki: night only.
+- Sound bed: follow the existing pattern for how a course names its ambience (as Ardennes and Summit do); add ambience.kogane through the sound catalog recipe at C5.
+- Price 2,200 and a field of 6: yes.

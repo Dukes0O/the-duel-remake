@@ -343,3 +343,213 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-RESCUE-FINISH-FLAKY.md"
+
+  - id: EIFEL-CROWN-C1
+    title: "Eifel Crown: C1 reference and reuse"
+    owner: "codex"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/EIFEL-CROWN-C1.md"
+
+  - id: EIFEL-CROWN-C2
+    title: "Eifel Crown: C2 rough road"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/EIFEL-CROWN-C2.md"
+
+  - id: EIFEL-CROWN-C3
+    title: "Eifel Crown: C3 pace"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "backlog"
+    needs: [EIFEL-CROWN-C2]
+    locks: []
+    details: "docs/board/cards/EIFEL-CROWN-C3.md"
+
+  - id: EIFEL-CROWN-C4
+    title: "Eifel Crown: C4 scenery"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "backlog"
+    needs: [EIFEL-CROWN-C1]
+    locks: []
+    details: "docs/board/cards/EIFEL-CROWN-C4.md"
+
+  - id: EIFEL-CROWN-C5
+    title: "Eifel Crown: C5 landmark, water, sound"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "backlog"
+    needs: [EIFEL-CROWN-C2, EIFEL-CROWN-C4]
+    locks: []
+    details: "docs/board/cards/EIFEL-CROWN-C5.md"
+
+  - id: EIFEL-CROWN-C6
+    title: "Eifel Crown: C6 finishing pass"
+    owner: "claude"
+    lane: "FINISH"
+    size: "M"
+    status: "backlog"
+    needs: [EIFEL-CROWN-C3, EIFEL-CROWN-C5]
+    locks: []
+    details: "docs/board/cards/EIFEL-CROWN-C6.md"
+
+  - id: EIFEL-CROWN-C7
+    title: "Eifel Crown: C7 release"
+    owner: "claude"
+    lane: "OPS"
+    size: "S"
+    status: "backlog"
+    needs: [EIFEL-CROWN-C6]
+    locks: [release]
+    details: "docs/board/cards/EIFEL-CROWN-C7.md"
+
+  - id: KOGANE-PASS-C1
+    title: "Kogane Pass: C1 reference and reuse"
+    owner: "codex"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/KOGANE-PASS-C1.md"
+
+  - id: KOGANE-PASS-C2
+    title: "Kogane Pass: C2 rough road"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/KOGANE-PASS-C2.md"
+
+  - id: KOGANE-PASS-C3
+    title: "Kogane Pass: C3 pace"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "backlog"
+    needs: [KOGANE-PASS-C2]
+    locks: []
+    details: "docs/board/cards/KOGANE-PASS-C3.md"
+
+  - id: KOGANE-PASS-C4
+    title: "Kogane Pass: C4 scenery"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "backlog"
+    needs: [KOGANE-PASS-C1]
+    locks: []
+    details: "docs/board/cards/KOGANE-PASS-C4.md"
+
+  - id: KOGANE-PASS-C5
+    title: "Kogane Pass: C5 landmark, water, sound"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "backlog"
+    needs: [KOGANE-PASS-C2, KOGANE-PASS-C4]
+    locks: []
+    details: "docs/board/cards/KOGANE-PASS-C5.md"
+
+  - id: KOGANE-PASS-C6
+    title: "Kogane Pass: C6 finishing pass"
+    owner: "claude"
+    lane: "FINISH"
+    size: "M"
+    status: "backlog"
+    needs: [KOGANE-PASS-C3, KOGANE-PASS-C5]
+    locks: []
+    details: "docs/board/cards/KOGANE-PASS-C6.md"
+
+  - id: KOGANE-PASS-C7
+    title: "Kogane Pass: C7 release"
+    owner: "claude"
+    lane: "OPS"
+    size: "S"
+    status: "backlog"
+    needs: [KOGANE-PASS-C6]
+    locks: [release]
+    details: "docs/board/cards/KOGANE-PASS-C7.md"
+
+  - id: NISSAN-SKYLINE-GTR-R34-V1
+    title: "Nissan Skyline GT-R R34: V1 photos and donor"
+    owner: "codex"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V1.md"
+
+  - id: NISSAN-SKYLINE-GTR-R34-V2
+    title: "Nissan Skyline GT-R R34: V2 shape"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "backlog"
+    needs: [NISSAN-SKYLINE-GTR-R34-V1]
+    locks: []
+    details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V2.md"
+
+  - id: NISSAN-SKYLINE-GTR-R34-V3
+    title: "Nissan Skyline GT-R R34: V3 detail"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "backlog"
+    needs: [NISSAN-SKYLINE-GTR-R34-V2]
+    locks: []
+    details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V3.md"
+
+  - id: NISSAN-SKYLINE-GTR-R34-V4
+    title: "Nissan Skyline GT-R R34: V4 handling"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V4.md"
+
+  - id: NISSAN-SKYLINE-GTR-R34-V5
+    title: "Nissan Skyline GT-R R34: V5 sound"
+    owner: "codex"
+    lane: "AUDIO"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V5.md"
+
+  - id: NISSAN-SKYLINE-GTR-R34-V6
+    title: "Nissan Skyline GT-R R34: V6 earn or buy"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [NISSAN-SKYLINE-GTR-R34-V3, NISSAN-SKYLINE-GTR-R34-V4, NISSAN-SKYLINE-GTR-R34-V5]
+    locks: []
+    details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V6.md"
+
+  - id: NISSAN-SKYLINE-GTR-R34-V7
+    title: "Nissan Skyline GT-R R34: V7 release"
+    owner: "claude"
+    lane: "OPS"
+    size: "S"
+    status: "backlog"
+    needs: [NISSAN-SKYLINE-GTR-R34-V6]
+    locks: [release]
+    details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V7.md"

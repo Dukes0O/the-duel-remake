@@ -182,7 +182,9 @@ if (!process.env.DUEL_STAMP_FIXTURE && process.platform === 'win32') {
     stampLine(['course', 'test-coast', 'Test "Coast": #1', '--dry-run'], { root: fixture, log: text => preview.push(text) });
     assert.deepEqual(snapshot(), before, 'dry run writes no file or directory');
     check(preview.join('\n').includes('TEST-COAST-C7'), 'dry run lists planned cards');
-    for (const id of ['Upper', '../escape', 'bad_id', '-bad', 'bad-', 'bad--id', '']) {
+    // A model number is a word: nissan-skyline-gtr-r34 stamps, but an id cannot start with a digit.
+    stampLine(['car', 'test-car-r34', 'Test R34', '--dry-run'], { root: fixture, log: () => {} });
+    for (const id of ['Upper', '../escape', 'bad_id', '-bad', 'bad-', 'bad--id', '', '9lives']) {
       assert.throws(() => stampLine(['course', id, 'Invalid'], quiet), /Id must/);
       assert.deepEqual(snapshot(), before, 'invalid id changes no files');
       checks++;
