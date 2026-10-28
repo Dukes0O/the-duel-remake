@@ -66,3 +66,7 @@ None in game tests. The two scenarios gained the click checks above.
 - The marker branch in `src/render3d.js`. `markersKnocked` in
   `drive-lesson-ui.js` is still exported and tested; it can go with the next
   lesson card that touches `test-drive-lessons-view-2`.
+
+## Claude's review (28 October 2026, night)
+
+In-place patching keeps buttons alive from press to release (6 of 6 real clicks while moving, was 1 of 6); the panel clears the minimap at 1280x720; the scenarios now check a real click. No assertion changed. The helipad failure is on integration and is being fixed in QA-HELIPAD-MAP-CANVAS. Verdict: merge.
