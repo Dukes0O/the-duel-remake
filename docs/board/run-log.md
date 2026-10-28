@@ -1433,3 +1433,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: released four batches today (careers restored, lesson run picker, lesson crash fix, helicopter landing and pay, Deep shallows/edge/map, Lab fixes). Janitor: lanes follow-crash, lesson-runs, career-rebuild, heli-continue, deep-shallows, codex-lab, codex-qa-slow, codex-rescue-flaky and their branches removed; C: free 42.2 GB.
 - 28 Oct night: merged LINE-STAMP (Codex; lane 20/20, board tests 196, build pass on fc5ea223).
 - 28 Oct night: merged EARN-FINISH (lane tier 59/59, build, earned and cup suites, heli-mode 263, earned-cars scenario pass on 6f596bb2; earned-cars stays dev until its frame checks).
+- 28 Oct night: merged LINE-PACKETS (docs only; lane tier 11/11, build pass on 9f3101f8).
