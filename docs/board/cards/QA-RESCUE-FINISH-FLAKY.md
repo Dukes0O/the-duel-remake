@@ -1,0 +1,3 @@
+# QA-RESCUE-FINISH-FLAKY
+
+The `rescue-finish` browser scenario fails often with no game change: on 28 October 2026 it failed alone on the HELI-PAY-CONTINUE lane ("Did not reach along road", helicopter back at the start pad) and on the untouched base 3ed23f4f at a different step ("Truck UI did not buy the selected fuel target"); it passed once. Rule 3: an unreliable check, never holds merges. Done when the cause is named within rule 4's 30 minutes and the scenario passes three runs in a row without loosening a check, or a game card is opened if it is a real fault.

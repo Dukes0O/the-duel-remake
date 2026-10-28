@@ -363,3 +363,13 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-INSTRUCTOR-ANY-CAR-SLOW.md"
+
+  - id: QA-RESCUE-FINISH-FLAKY
+    title: "rescue-finish browser scenario fails without game changes"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-RESCUE-FINISH-FLAKY.md"
