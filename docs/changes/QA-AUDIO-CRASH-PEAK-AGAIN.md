@@ -94,3 +94,7 @@ None.
 Nothing is replaced. The three wall-clock timers in the scenario were swapped
 for the audio-clock wait, and the helper's unbounded browser stop was swapped
 for the bounded one, in the same change.
+
+## Claude's review (27 October 2026, night)
+
+Cause found and reproduced under load (captures timed by wall clock ran short; browser shutdown had no cap). Waits now follow the audio clock with a safety cap; no retries, no limit or tolerance changed. Verdict: merge. The shared harness shutdown cap is a separate small card (QA-HARNESS-CLOSE-CAP).
