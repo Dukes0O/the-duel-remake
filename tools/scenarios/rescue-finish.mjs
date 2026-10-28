@@ -4,13 +4,23 @@
 import {Course} from '../../src/course.js';
 import {ALL_CIRCUITS} from '../../src/circuits/index.js';
 import {groundFromCourse} from '../../src/heli/heli-ground.js';
-import {menu, callHeli, answer, fitLine, cruiseTo, flyTo, look, setDown, lowerOver,
+import {menu as rescueMenu, callHeli, answer, fitLine, cruiseTo, flyTo, look, setDown, lowerOver,
   shoot, view, pilotTo, sim, groundAt} from './rescue-view.mjs';
 
 const app = 'window.__qaApp';
 const world = new Course(ALL_CIRCUITS.find(d => d.id === 'summit-run'), 1989);
 const ground = groundFromCourse(world);
 const dist = (a,b) => Math.hypot(a.x-b.x,a.z-b.z);
+async function menu(context, heli) {
+  await rescueMenu(context, heli);
+  await context.evaluate(`(() => {
+    const session = ${app}.heliSession, step = session.step.bind(session);
+    // __go supplies a fixed dt. App's normal frame loop supplies none.
+    // Draw and update the UI between commands without also flying the route,
+    // burning fuel or bouncing off a touchdown while a screenshot is taken.
+    session.step = (controls, dt) => dt === undefined ? [] : step(controls, dt);
+  })()`);
+}
 async function land(context, p) {
   await flyTo(context, {x:p.x,z:p.z,y:p.y+12,speed:3,sink:3}, 'above truck', {within:3,tall:2});
   await pilotTo(context, {x:p.x,z:p.z,y:p.y-2,speed:1,sink:1.1});
