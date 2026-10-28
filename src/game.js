@@ -486,7 +486,7 @@ export class Duel {
       return;
     }
     const response=stepDriveLesson(run.lesson,this._driveLessonCarView(),{
-      wallHit:run.wallHit,crashed:s.status!=='racing'||s.impactTimer>0,
+      wallHit:run.wallHit,crashed:s.status!=='racing'||s.impactTimer>0,wrecked:s.status==='gameover',
     },dt);
     if(run.lesson.phase==='result'){
       s.status='racing';this.setInput({throttle:0,brake:0,steer:0,boost:false});

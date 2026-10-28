@@ -8,7 +8,7 @@ const PANORAMA = ['Griffin Bend', 'The Cutting', 'Reid Rise', 'Summit Park', 'Sk
 const BEAVER = ['Ridge Corner', 'Beaver Kink', 'Beaver Hairpin'];
 export const DRIVE_LESSON_CORNERS = Object.freeze([
   sectionRow('panorama-ridge', PANORAMA, 'Griffin Bend', -700, 'Forrest Elbow', 60),
-  sectionRow('tremblant-woods', ['Pine Drop', 'Lakeside Plunge', 'Fir Esses 1', 'Fir Esses 2', ...BEAVER], 'Lodge Straight', 100, 'Timber Straight', 150, 's0'),
+  sectionRow('tremblant-woods', ['Beaver Kink', 'Beaver Hairpin', 'Devil\'s Chicane 1', 'Devil\'s Chicane 2', 'Lodge Bend', 'Final Turn'], 'Beaver Run', 100, 'Final Turn', 60),
 ]);
 
 export const DRIVE_LESSON_STEPS = Object.freeze([
@@ -70,6 +70,13 @@ export function createDriveLesson(id, {corner, instructor, retake = false} = {})
     done: false, failed: false, bestMargin: 0, gold: false, attempt: null, lastAttempt: null};
 }
 export const driveLessonStep = lesson => DRIVE_LESSON_STEPS.find(step => step.id === lesson.stage);
+// Any step can be chosen again, back or forward (Kyle, 27 October): a run in progress is
+// dropped unscored and the next run starts in the chosen step. Passing still needs Beat me.
+export function chooseDriveLessonStep(lesson, id) {
+  if (!lesson || lesson.done || !DRIVE_LESSON_STEPS.some(step => step.id === id)) return false;
+  lesson.stage = id; lesson.phase = 'ready'; lesson.failed = false; lesson.attempt = null;
+  return true;
+}
 function startAttempt(lesson, view) {
   if (view.s > lesson.corner.startS) throw new TypeError('Attempt must start before or at its gate');
   if (lesson.phase === 'result') {
@@ -111,7 +118,8 @@ export function driveLessonAdvice(rows) {
 // changing a rule or a race input. Off-road/wall and slides come first.
 export function driveLessonResultRadio(lesson, rows, {reason, success, clean, faster}) {
   if (success && lesson.stage === 'beat') return driveRadioId(lesson.id, 'pass');
-  if (reason === 'wall' || reason === 'offroad') return driveRadioId('shared', 'off');
+  // A run always goes on to the finish; walls and long trips off the road only mark it not clean.
+  if (reason === 'wall' || reason === 'offroad' || reason === 'wreck' || lesson.attempt?.wallHit || lesson.attempt?.maxOffRoadSeconds > 1) return driveRadioId('shared', 'off');
   if (!clean && lesson.attempt.screechSeconds >= .3) return driveRadioId('shared', 'slid');
   const worst = [...rows].sort((a, b) => Number(b.wallHit) - Number(a.wallHit) ||
     Number(!b.checks.quiet) - Number(!a.checks.quiet) || b.missed - a.missed || b.screechSeconds - a.screechSeconds)[0];
@@ -189,7 +197,8 @@ export function stepDriveLesson(lesson, view, events = {}, dt = 0) {
   a.previous = {...view, world: {...view.world}};
   a.gapSeconds = driveLessonGap(lesson.instructor, view.s, a.elapsedSeconds);
   a.corners.forEach((row, i) => { row.result = cornerResult(lesson.instructor.corners[i], row); });
-  const reason = a.wallHit ? 'wall' : a.maxOffRoadSeconds > 1 ? 'offroad' : view.speedMph <= 0 ? 'stop' : view.s >= lesson.corner.finishS ? 'finish' : null;
+  // Mistakes never end a run (Kyle, 27 October): it ends at the finish, or when the car is wrecked and cannot go on.
+  const reason = view.s >= lesson.corner.finishS ? 'finish' : events.wrecked ? 'wreck' : null;
   return reason ? finishAttempt(lesson, reason, cones) : answer(null, cones);
 }
 
@@ -526,24 +535,44 @@ export function sectionControls(state, surface, plan, {gears = false, late = fal
 // Heavy native work starts only when explicitly called, not on import. This
 // owns a fresh Duel and never reads an App, profile, storage or live race.
 // Frame partitioning only feeds the fixed 120 Hz race-rule clock.
+// The instructor leaves room to beat him (docs/DRIVING_LESSONS.md 14.8): his
+// time is at least `margin` slower than a clean full-pace run of his own line
+// in your car, so a fast car is no harder to beat than a slow one.
+export const INSTRUCTOR_PACE = {casual: {initial: .92, floor: .78, margin: .07}, pro: {initial: .95, floor: .85, margin: .04}};
+export const MAX_INSTRUCTOR_TRIES = 6;
 export async function buildInstructorRun(options = {}) {
   const {difficulty = 'casual', lessonId = 'corner'} = options;
-  const initial = difficulty === 'casual' ? .92 : lessonId === 'corner' ? .95 : .97;
-  const floor = difficulty === 'casual' ? .84 : .89;
-  for (let retry = 0; retry <= 4; retry++) {
-    const pace = Math.max(floor, Math.round((initial - retry * .02) * 100) / 100);
+  const {initial, floor, margin} = INSTRUCTOR_PACE[difficulty];
+  // A full-pace run that slides or leaves the road gives no reference; the
+  // pace then follows the faults alone. The winter comparison keeps the summer gate.
+  const full = options._fixed ? null : await buildInstructorAttempt({...options, _mode: 'fast'}, initial, 0);
+  const fullSec = full && full.instructor.poses.at(-1).s >= full.corner.finishS - .5 ? full.instructor.timeSec : null;
+  const needed = fullSec === null ? 0 : fullSec * (1 + margin);
+  // The winter comparison starts at the summer run's pace, so the tyres are the only difference.
+  let pace = options._pace ?? initial, result = null, fault = null;
+  for (let tries = 0; tries < MAX_INSTRUCTOR_TRIES; tries++) {
     try {
-      const result = await buildInstructorAttempt(options, pace, retry);
-      if (lessonId === 'corner') {
-        const clip = await buildInstructorAttempt({...options, _mode: 'late'}, pace, retry);
-        result.instructor.lateClip = {poses: clip.instructor.poses, inputs: clip.instructor.inputs,
-          timeSec: clip.instructor.timeSec, screechSeconds: clip.instructor.screechSeconds, faults: clip.instructor.faults};
-      }
-      return result;
+      result = await buildInstructorAttempt(options, pace, tries);
     } catch (error) {
-      if (!(error instanceof InstructorRunFault) || retry === 4 || pace === floor) throw error;
+      if (!(error instanceof InstructorRunFault)) throw error;
+      fault = error;
+      if (pace === floor) break;
+      pace = Math.max(floor, Math.round((pace - .02) * 100) / 100);
+      continue;
     }
+    if (result.instructor.timeSec >= needed || pace === floor) break;
+    // About 0.7% more time for each 1% of pace; step a little further to land past the line.
+    const short = (needed - result.instructor.timeSec) / result.instructor.timeSec;
+    pace = Math.max(floor, Math.round((pace - Math.max(.01, short * 1.6)) * 100) / 100);
   }
+  if (!result) throw fault;
+  result.instructor.fullPaceSec = fullSec;
+  if (lessonId === 'corner') {
+    const clip = await buildInstructorAttempt({...options, _mode: 'late'}, result.instructor.pace, result.instructor.retries);
+    result.instructor.lateClip = {poses: clip.instructor.poses, inputs: clip.instructor.inputs,
+      timeSec: clip.instructor.timeSec, screechSeconds: clip.instructor.screechSeconds, faults: clip.instructor.faults};
+  }
+  return result;
 }
 
 async function buildInstructorAttempt({courseId, car, upgrades = {}, difficulty = 'casual',
@@ -567,10 +596,10 @@ async function buildInstructorAttempt({courseId, car, upgrades = {}, difficulty 
   // Confined to this scratch race, like the sliding-tyre rules below.
   if (isGears) Object.defineProperty(duel, 'diff', {get: () => ({...DIFFICULTY[difficulty], autoShift: false, engineBlow: false})});
   const reference = _mode === 'fast' || _mode === 'middle' || _mode === 'dry' ? await sectionPlanFor(duel, row, pace, {rollingMph: isGears ? 30 : null}) : null;
-  const planned = await sectionPlanFor(duel, row, _mode === 'fast' || _mode === 'middle' ? 1 : pace, {middle: _mode === 'middle', dry: _mode === 'dry', rollingMph: isGears ? 30 : reference?.rollingMph ?? null, steadyEntry: !isGears});
+  const planned = await sectionPlanFor(duel, row, _mode === 'fast' ? 1 : pace, {middle: _mode === 'middle', dry: _mode === 'dry', rollingMph: isGears ? 30 : reference?.rollingMph ?? null, steadyEntry: !isGears});
   // The winter instructor drives the summer instructor's gate, rolling speed and cones on winter tyres.
   const winter = isSnow && tyre === 'summer' && _mode === 'instructor' ? await buildInstructorRun({courseId, car, upgrades, difficulty, driverId, seed, fps, maxSeconds, lessonId, tyre: 'winter',
-    _fixed: {startS: planned.startS, rollingMph: planned.rollingMph, placement: planned.placement}}) : null;
+    _fixed: {startS: planned.startS, rollingMph: planned.rollingMph, placement: planned.placement}, _pace: pace}) : null;
   const {startS, turn, line, profile, placement} = planned, rollingMph = planned.rollingMph ?? row.rollingMph;
   const plan = {course, car: spec, line, profile, drive: DRIVE, steerForYaw,
     difficulty, turnInS: turn.s0, turnOutS: turn.s1, brakeS: -Infinity, brakeInTurns: true, ...(isGears ? {shifts: {cool: 0}} : {})};
@@ -654,5 +683,7 @@ async function buildInstructorAttempt({courseId, car, upgrades = {}, difficulty 
 // Native teaching proofs and Watch clips use the same controller and physics.
 export async function buildLessonDemonstration(options, mode) {
   if (!['late', 'middle', 'dry', 'fast'].includes(mode)) throw new TypeError('Unknown demonstration');
-  return buildInstructorAttempt({...options, _mode: mode}, options.difficulty === 'pro' ? .97 : .92, 0);
+  // Pass the instructor's own pace so a proof starts as his lesson does; the middle-of-the-road
+  // proof then differs from his run only in its line.
+  return buildInstructorAttempt({...options, _mode: mode}, options.pace ?? (options.difficulty === 'pro' ? .97 : .92), 0);
 }

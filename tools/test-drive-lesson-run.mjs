@@ -38,7 +38,7 @@ test('native App: Watch replay, skip, steps, one winning run, once-only reward a
       assert.ok(app.getDriveLessonGhost());
       const drive = async mode => {
         const proof = mode === 'baseline' ? run.plan : await buildLessonDemonstration({lessonId: 'corner',
-          courseId: run.plan.courseId, car: state.car, difficulty: state.difficulty}, mode);
+          courseId: run.plan.courseId, car: state.car, difficulty: state.difficulty, pace: run.plan.instructor.pace}, mode);
         for (const input of proof.instructor.inputs) {
           if (run.lesson.phase !== 'driving') break;
           app.duel.setInput(input); app.duel.step(1 / 120);
@@ -47,6 +47,9 @@ test('native App: Watch replay, skip, steps, one winning run, once-only reward a
         return run.lesson.lastAttempt;
       };
       assert.equal((await drive('baseline')).passed, false); assert.deepEqual(app.profile, before);
+      // Back to the ghost after a run (Kyle, 27 October): Follow me again, then on as before.
+      assert.equal(app.chooseLessonStep('follow'), true); assert.equal(run.lesson.stage, 'follow'); assert.equal(run.lesson.phase, 'driving');
+      assert.ok(app.getDriveLessonGhost()); assert.equal((await drive('baseline')).passed, false);
       assert.equal(app.nextLessonAttempt(), true); assert.equal(run.lesson.stage, 'your-turn');
       assert.equal(app.driveLessonRadioText, DRIVE_RADIO_LINES['drive.radio.v2.shared.your-turn'].text);
       assert.equal(app.getDriveLessonGhost(), null);

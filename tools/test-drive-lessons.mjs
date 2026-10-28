@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDriveLesson, stepDriveLesson, DRIVE_LESSON_STEPS, driveLessonGap,
-  driveLessonGold, finishInstructorTrace} from '../src/lessons/drive-lessons.js';
+  driveLessonGold, finishInstructorTrace, chooseDriveLessonStep} from '../src/lessons/drive-lessons.js';
 const corner = {startS: 0, finishS: 400, dir: 1};
 const targets = [
   {name: 'Brake bend', kind: 'brake', approachS: 0, brakeS: 80, turnInS: 100, turnOutS: 150, exitS: 170, targetMph: 60},
@@ -67,6 +67,26 @@ test('pauses freeze time, short off-road visits reset, one second is allowed, fi
   stepDriveLesson(l, view(200), {}, 1); stepDriveLesson(l, view(300, {offRoad: true}), {}, 1);
   stepDriveLesson(l, view(500), {}, 2); assert.equal(l.lastAttempt.elapsedSeconds, 4); assert.equal(l.lastAttempt.clean, true);
   assert.throws(() => stepDriveLesson(lesson(), view(0), {}, -1), /Negative/);
+});
+test('mistakes never end a run: a wall, a long trip off the road or a stop drive on to the finish (Kyle, 27 October)', () => {
+  const l = lesson(); stepDriveLesson(l, view(0), {start: true});
+  stepDriveLesson(l, view(100), {wallHit: true}, 2); assert.equal(l.phase, 'driving');
+  stepDriveLesson(l, view(150, {offRoad: true}), {}, 3); assert.equal(l.phase, 'driving');
+  stepDriveLesson(l, view(150, {speedMph: 0}), {}, 1); assert.equal(l.phase, 'driving');
+  stepDriveLesson(l, view(400), {}, 4);
+  assert.equal(l.phase, 'result'); assert.equal(l.lastAttempt.finished, true);
+  assert.equal(l.lastAttempt.clean, false); assert.equal(l.lastAttempt.passed, false);
+  const wreck = lesson(); stepDriveLesson(wreck, view(0), {start: true});
+  stepDriveLesson(wreck, view(100), {wrecked: true}, 2);
+  assert.equal(wreck.phase, 'result'); assert.equal(wreck.lastAttempt.finished, false);
+});
+test('any step can be chosen again, back or forward, until the lesson is passed', () => {
+  const l = lesson('beat'); stepDriveLesson(l, view(0), {start: true});
+  assert.equal(chooseDriveLessonStep(l, 'follow'), true);
+  assert.equal(l.stage, 'follow'); assert.equal(l.phase, 'ready'); assert.equal(l.attempt, null);
+  stepDriveLesson(l, view(0), {start: true}); assert.equal(l.stage, 'follow', 'a chosen step is not skipped');
+  assert.equal(chooseDriveLessonStep(l, 'nope'), false);
+  l.done = true; assert.equal(chooseDriveLessonStep(l, 'watch'), false);
 });
 test('gap uses equal distance; gold is derived; finish faults use the tick start', () => {
   assert.equal(driveLessonGap(instructor, 100, 4), 1); assert.equal(driveLessonGap(instructor, 300, 7), -1);

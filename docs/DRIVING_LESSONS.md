@@ -718,7 +718,7 @@ whole section properly.
 | Lesson | Course | From | To | Corners |
 | --- | --- | --- | --- | --- |
 | 1 Braking | Panorama Ridge | 350 m before Griffin Bend, on Mountain Straight | 60 m past Forrest Elbow | Griffin Bend, The Cutting, Reid Rise, Summit Park, Skyline, The Esses 1 to 3, Forrest Elbow |
-| 1 Braking | Tremblant Woods | start of Ridge Run | 150 m into Timber Straight | Ridge Corner, Beaver Kink, Beaver Hairpin |
+| 1 Braking | Tremblant Woods | 100 m into Beaver Run | 60 m past Final Turn | Beaver Kink, Beaver Hairpin, Devil's Chicane 1 and 2, Lodge Bend, Final Turn (14.12) |
 | 2 Racing line | Tremblant Woods | 250 m into Lodge Straight | end of Ridge Run | Pine Drop, Lakeside Plunge, Fir Esses 1 and 2 |
 | 2 Racing line | Harbour Lights | 150 m before Casino Corner | end of Hillside | Casino Corner, Temple Hill, Bell Tower Bend, Old Town Esses 1 to 4 |
 | 3 Gearbox | Panorama Ridge | Hell Gate exit, 30 mph in 2nd | 60 m past Summit Park | Griffin Bend, The Cutting, Reid Rise, Summit Park |
@@ -830,9 +830,9 @@ lesson panel:
   outside.
 - The simulated run still gives his time, the ghost and the Watch me inputs,
   and must be clean (no wall, never off the road, no screech). If it is not,
-  the pace drops by 2% and it runs again, at most four times (down to 84% on
-  Casual, 89% on Pro). It no longer has to pass within a set distance of each
-  cone.
+  the pace drops by 2% and it runs again. It no longer has to pass within a set
+  distance of each cone. His pace also leaves room to beat him (14.12); in
+  all, at most six runs, down to 78% on Casual and 85% on Pro.
 - Test: on every row of every lesson, in every car in the game, on Casual and
   Pro, the instructor completes cleanly and the same run comes out every time.
 - If a lesson still cannot start: "The instructor can't drive this lesson in
@@ -867,3 +867,29 @@ screen shows the numbers. One intro per lesson, one start line per step, one
 line per kind of miss (late, early, too fast, slid, off the road), one pass
 line per lesson. The old lines that no longer play are removed with their
 files. Voice lines ship without Kyle listening first.
+
+### 14.12 Room to beat him (Claude, 27 October 2026, night)
+
+The finishing pass measured the instructor against a clean run of his own
+line at full pace, in all 14 cars. At his old fixed pace (92% Casual, 95%
+Pro) that run beat him by only 0.5 to 2 s on Casual and by 0.0 to 1 s on
+Pro; in the Jesko at Harbour on Pro the gap was 0.01 s. A gold mark (a
+second faster) could not be earned there, and "Beat me" needed a perfect
+run. Fast cars were the worst, because they spend more of the lesson at
+full throttle, where his pace makes no difference.
+
+- **The rule:** his time is at least 7% slower than the full-pace clean run
+  on Casual and 4% on Pro, in your car. His pace starts at 92% (Casual) or
+  95% (Pro) and drops until that holds, never below 78% or 85%. About 3 s of
+  room on a 40 s Casual lesson, 1.6 s on Pro: beating him takes a tidy run,
+  gold takes practice.
+- His slower pace also sets the target speeds and brake points, so the
+  targets are safe speeds, not the car's limit.
+- **Woods braking moved:** its old section was the same seven corners as
+  the Woods racing-line lesson. It now starts on Beaver Run, takes Beaver
+  Kink and Beaver Hairpin (the two it shares), then Timber Straight, the
+  longest straight in the game, into a hard stop for Devil's Chicane, then
+  Lodge Bend and the Final Turn. Starting at Timber Straight was too short
+  in the Jesko (under 30 s at 286 mph).
+- Test: the every-car suite also checks the room on every row, car and
+  setting.
