@@ -1419,3 +1419,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged QA-HELIPAD-MAP-CANVAS (helipad lesson test broke when pilot-map went on); lane 38/38.
 - 27 Oct night: merged ARDENNES-FAR-FOREST-LIGHT (4,076 far firs in groves, no shadows; Ardennes signature granted (5d475bd4); lane 167/168 (helipad, since fixed); frame check before release).
 - 28 Oct night: merged FC-LESSON-HELI-DEEP (drive-lesson-run, heli-first-flight, deep-achievements pass; lane tier and build green).
+- 28 Oct night: merged FC-RACE-SCENARIOS (lane tier 23/23, build, qualifying, rescue-view, lap-telemetry, track-kits and p4-audio pass on 00c32763).
