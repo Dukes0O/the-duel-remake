@@ -1,0 +1,3 @@
+# QA-INSTRUCTOR-ANY-CAR-SLOW
+
+`tools/test-lesson-instructor-any-car.mjs` builds the instructor for every car, lesson, course and difficulty and took over an hour on 28 October 2026, so a lane tier that touches lesson files cannot finish in time. Done when the suite runs in a few minutes in the lane tier (for example a fixed sample of cars per lesson there, the full set only in the full tier) with the same checks per case. No assertion loosened.

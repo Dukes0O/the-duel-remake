@@ -1,0 +1,3 @@
+# CAREER-RESTORE-REMOVE
+
+The one-time restore of Spikey Ferns and Dukes00 (CAREER-REBUILD, released 28 October 2026) ships their careers inside the game. Once Kyle confirms both players are back and right, remove `src/career-restore-2026-10-28.js`, `src/career-restore.js`, the start-up block and notices in `src/main.js`, the `career-restore` scenario and the restore tests. Keep `tools/career-rebuild.mjs` (the recipe) only if a test still uses it, and keep the persistent storage request. Waits on Kyle's word that the careers are right (rule 18: saves).

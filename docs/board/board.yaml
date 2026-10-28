@@ -343,3 +343,23 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-P4-AUDIO-FRAME-GAP.md"
+
+  - id: CAREER-RESTORE-REMOVE
+    title: "Remove the one-time career restore once Kyle confirms"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/CAREER-RESTORE-REMOVE.md"
+
+  - id: QA-INSTRUCTOR-ANY-CAR-SLOW
+    title: "Instructor any-car suite too slow for a lane tier"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-INSTRUCTOR-ANY-CAR-SLOW.md"
