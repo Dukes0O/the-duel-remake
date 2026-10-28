@@ -2,6 +2,23 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Spikey Ferns and Dukes00 are back, and lessons you can pick, 28 October 2026
+
+### What players get now
+
+- **Spikey Ferns and Dukes00 are back.** Chrome cleared the game's saved
+  careers when the laptop's disk filled up overnight. Both careers are
+  rebuilt from Kyle's description and come back by themselves the first
+  time the game starts; the game shows a short notice once. The game now
+  asks Chrome to keep its saves permanently.
+- **Lessons: pick any run.** The opening screen has four buttons, 1 Watch me,
+  2 Follow me, 3 Your turn and 4 Beat me (or press 1 to 4). After every run
+  the same four buttons come back. The step strip and "How this lesson
+  works" no longer cover the road during a run; Esc goes back to the lesson
+  menu.
+- **A crash in a lesson ends.** The screen no longer keeps shaking and the
+  sound comes back after a crash in Follow me, Your turn or Beat me.
+
 ## More lesson roads, Ardennes groves and a faster Summit, 28 October 2026
 
 ### What players get now

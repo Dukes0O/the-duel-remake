@@ -1517,3 +1517,13 @@ Rule 19: since 06d5505e only `src/lab/lab-view.js`, `src/lab/lesson-ui.css`,
 `src/lab/lessons/snow-display.js`, scenario files and notes changed. Lane
 tiers (31/31 and 23/23) and builds pass; all 17 browser scenarios that failed
 the full check pass on the merged lane commits.
+
+## Release, 28 October 2026 afternoon (Claude, Release Manager)
+
+CAREER-REBUILD (one-time restore of Spikey Ferns and Dukes00 after Chrome
+cleared the career under disk pressure; persistent storage request; Kyle
+asked for it), LESSON-RUN-PICKER and LESSON-CRASH-STUCK. Saves: the restore
+adds players after a verified backup and never replaces existing ones;
+independent review found no blockers and its three findings were fixed.
+Full tier 535/535 on aedca449, the release commit, run before release. Lane tiers,
+builds, lesson suites and the lesson and career browser scenarios pass.
