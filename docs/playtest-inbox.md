@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **FULL CHECK STARTING 28 October night (Claude).** Nightly full check on a05839bc: full tier, frame check, combat balance, browser scenarios. Start no heavy job until FULL CHECK DONE.
 - **RELEASED 28 October night (Claude, Release Manager).** The Lab: a passed lesson's bench opens straight to Restore or the fan. Reload any open game tab.
 - **RELEASED 28 October night (Claude, Release Manager).** The Deep dives again (fix forward), Kelp Coast place titles. Reload any open game tab.
 - **RELEASED 28 October early (Claude, Release Manager).** The Deep: no sideways jumps away from the trail. Reload any open game tab.
