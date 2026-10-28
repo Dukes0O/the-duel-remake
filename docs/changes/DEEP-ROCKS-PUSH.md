@@ -68,3 +68,7 @@ No race code was touched. The Deep is not a race, so replay fingerprints and wor
 - `stopAtDeepRock` (stop dead and snap to the nearest trail point).
 - The two stop-dead assertions listed above.
 - The early rock layout in `initializeDeepJourney` (now built when the dive starts).
+
+## Claude's review (27 October 2026, night)
+
+Matches the card: no snap (course.nearest never called, test enforces it), small bounce keeps 70% or more, large rocks slide and settle, no damage or race event, rebuilt each dive, goals safe (none within 2 m of a rock, and a safety net keeps such rocks fixed). Changed assertions approved: the two removed speed-zero assertions pinned the stop-dead behaviour Kyle asked to remove; the new tests check the new rule. Verdict: merge. Follow-up: DEEP-TRAIL-JOINTS (a car far beside the trail jumps at the 8 m segment joints; may be part of the resets Kyle saw).
