@@ -205,3 +205,16 @@ test assertion changed):
   may need the same attention. The 46-second animation was not re-watched here.
 
 **Gates.** See the closing lines below.
+
+**Gates** (lane folder, after the merge and the fixes below). Lane tier,
+`--changed --jobs 4`: 48 passed, 0 failed, 0 not run, including `test-deep-life`
+(steady this time), `test-deep-explorer` and the replay guard (225 checks, 25
+cases, fingerprints unchanged; no world signature regenerated). `npm run build`
+passed (same size and import warnings as before); the output was deleted.
+Two failures on the way, both fixed without touching a test: `test-deep-explorer`
+(the first version of the card fix used a style call the graphics-free test
+stand-in does not have; now it sets the class name) and `test-review-evidence`
+(integration now requires `round-1-review.md` beside each review sheet; the
+note was renamed). Changed assertions: none. The browser recipe
+`finish-deep` (Casual only) passed on a private port, memory-only saves, no
+errors or warnings. Not run: Pro, frame timing, any art or sound judgement.
