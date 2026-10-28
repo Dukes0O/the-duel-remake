@@ -67,7 +67,7 @@ const sessionAt = (courseId, {pilotMap = true, profile = profileWith(), summitRu
   return session;
 };
 
-ok(FEATURE_STATES['pilot-map'] === 'dev', 'the pilot-map switch is a dev switch');
+ok(FEATURE_STATES['pilot-map'] === 'on', 'the pilot map is released (28 October 2026)');
 
 // ---- Switch off: every table and answer as it was ------------------------------------------
 // Taken from the helicopter files of the commit before this card (loaded and hashed by hand).
