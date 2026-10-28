@@ -1,16 +1,19 @@
 import {App} from './app.js';
 import {kelpCoastProvider} from './deep/zones/kelp-coast.js';
 import {mountScreenRouter} from './screen-router.js';
-import {backupBeforeMigration, backupCareer, captureCareer, createCompleteCareerExport, createIndexedDbBackupStore, retireSharedBest} from './career-backup.js';
+import {backupBeforeMigration, backupCareer, captureCareer, createCompleteCareerExport, createIndexedDbBackupStore, requestPersistentStorage, retireSharedBest} from './career-backup.js';
+import {restoreLostCareers, restoreNoticeText, showRestoreFailure, showRestoreNotice} from './career-restore.js';
 import {acquireCareerWriter, CAREER_WRITER_LOCK, prepareCareerBudget, createBudgetCareerExport, ORIGIN_POINTER_KEY} from './career-budget.js';
 
 const root = document.querySelector('#app');
 // A QA entry may inject a tab-scoped store before this module loads. Production
 // builds cannot select it and always use the durable IndexedDB implementation.
-const qaBackupStore=typeof __DUEL_QA__!=='undefined'&&__DUEL_QA__===true?
-  globalThis.__duelQaBackupStore:null;
+const qaBuild=typeof __DUEL_QA__!=='undefined'&&__DUEL_QA__===true;
+const qaBackupStore=qaBuild?globalThis.__duelQaBackupStore:null;
 const backupStore=qaBackupStore??createIndexedDbBackupStore();
-let budgetStorage=null;
+// Ask the browser to keep the game's storage when the disk fills up. Start-up never waits for the answer.
+void requestPersistentStorage();
+let budgetStorage=null,restoreNotice=null;
 async function downloadCareer(){
   if(!budgetStorage){
     const physical=globalThis.localStorage;
@@ -49,6 +52,13 @@ await (async()=>{
   writer.assertActive();
   await retireSharedBest(budgetStorage.storage,backupStore);
   writer.assertActive();
+  // One-time restore of the two lost careers (CAREER-RESTORE-REMOVE deletes this block).
+  // Test builds run it only when the address asks for it, so other checks keep their own players.
+  if(!qaBuild&&!import.meta.env?.DEV||new URLSearchParams(location.search).has('restore-career')){
+    try{const result=await restoreLostCareers({storage:budgetStorage.storage,backupStore});if(result.restored)restoreNotice=restoreNoticeText(result);}
+    catch(error){if(error.code?.startsWith('CAREER_WRITER_'))throw error;console.warn('Career restore skipped: '+error.message);showRestoreFailure();}
+    writer.assertActive();
+  }
 })().catch(error=>{
   if(error.code?.startsWith('CAREER_WRITER_')){
     root.innerHTML='<section class="backup-blocked" role="alert"><p class="eyebrow">CAREER STORAGE</p><h1 id="writer-title"></h1><p id="writer-error"></p></section>';
@@ -72,3 +82,4 @@ await (async()=>{
 export const app = new App({deepProviders:[kelpCoastProvider]});
 const screens = mountScreenRouter(app, downloadCareer, {budgetStorage, backupStore});
 export const refreshRaceSetup = screens.refreshRaceSetup;
+if(restoreNotice)showRestoreNotice(restoreNotice);
