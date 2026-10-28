@@ -154,13 +154,17 @@ async function install(recorder) {
       demand(JSON.stringify(state.hiddenRoadDiscovery) === JSON.stringify(app.getHiddenRoadDiscovery()) &&
         JSON.stringify(control.state.hiddenRoadDiscovery) === JSON.stringify(app.getHiddenRoadDiscovery.call(controlApp)),
         'Native discovery presentation differs');
-      // Only the payout the real settlement writes into a result may differ from the unpaid clone; every other
-      // result field, and every other state field, must still match exactly.
-      const PAY_FIELDS = new Set(['lapChoiceEnabled', 'raceDistance', 'creditReward', 'creditCharge', 'policeFineCharge',
-        'creditBreakdown', 'creditPositionReward', 'creditBalance', 'personalBest', 'personalBestStatus', 'previousBest',
-        'best', 'winStreak', 'milestoneAwards', 'medal', 'earnedCars', 'notorietyEarned', 'notorietyRank', 'scrapEarned',
-        'scrapBalance', 'tunedLap', 'coastCup', 'cupSummary', 'cupBonus', 'cupStandings', 'cupTrophy', 'driftScoreBest',
-        'driftScoreImproved', 'ghostRecorded', 'yetiSightings']);
+      // Only what the real _settleResult writes into a result on this run may differ from the unpaid clone; every
+      // other result field, and every other state field, must still match exactly. The clone's _settleResult stops at
+      // the player-identity check (it has no run owner), so it writes none of these. Fields the real call cannot write
+      // on this run are NOT listed: drift scores, cup, tuned lap, Coast Cup, Yeti, medals and earned cars (earned-cars
+      // is off), notoriety and scrap (Wasteland only), and ghostRecorded (only Time Trial records a ghost).
+      const PAY_FIELDS = new Set([
+        'lapChoiceEnabled', 'raceDistance', // lap-choice block, after the identity check, completed races only
+        'creditPositionReward', // Grand Prix position pay, inside the awarded.awarded block
+        'creditReward', 'creditCharge', 'policeFineCharge', 'creditBreakdown', // the Object.assign of the settlement
+        'personalBest', 'personalBestStatus', 'previousBest', 'best', 'winStreak', 'milestoneAwards', // same Object.assign
+        'creditBalance']); // final line of _settleResult
       const withoutPay = results => Object.fromEntries(Object.entries(results ?? {}).filter(([key]) => !PAY_FIELDS.has(key)));
       const same = key => key === 'results' ? JSON.stringify(withoutPay(state.results)) === JSON.stringify(withoutPay(control.state.results))
         : JSON.stringify(state[key]) === JSON.stringify(control.state[key]);

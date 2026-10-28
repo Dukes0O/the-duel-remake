@@ -88,13 +88,37 @@ All edits are in `tools/scenarios/`.
   every field. New: native reward is a non-negative whole number, balance
   equals the player's profile, a nonzero reward must carry a breakdown with a
   base above 0; clone reward still 0; native and clone state still identical in
-  every field, except that inside `results` the fields the real payout
-  settlement writes (a named list in the file: credit reward, charge,
-  breakdown, balance, best-lap and win-streak records, medals and similar) are
-  left out, because the no-save clone may not be paid. Every other result field
-  still has to match exactly, and the existing "clone profile unchanged" check
-  still stops the clone from being paid. The run report now records the credit
-  reward.
+  every field, except that inside `results` the 14 fields below are left out,
+  because only the real settlement writes them. The no-save clone calls the
+  same `_settleResult` but has no run owner, so it stops at the player check
+  (`src/app.js` line 1134, `_runPlayerId !== player.id`) before writing any
+  result field. Every other result field still has to match exactly, and the
+  existing "clone profile unchanged" check still stops the clone from being
+  paid. The run report now records the credit reward.
+
+  Fields kept out of the comparison, and the line in `_settleResult` that writes
+  each one (all after line 1134, so the clone never writes them):
+
+  | Field | Written at (`src/app.js`) |
+  |---|---|
+  | `lapChoiceEnabled`, `raceDistance` | 1150-1154, lap-choice block (switch on, Pacific Canyon supports it, race completed) |
+  | `creditPositionReward` | 1171, Grand Prix only, inside `if(awarded.awarded)` (1167) |
+  | `creditReward`, `creditCharge`, `policeFineCharge`, `creditBreakdown`, `personalBest`, `personalBestStatus`, `previousBest`, `best`, `winStreak`, `milestoneAwards` | 1176, one `Object.assign` inside `if(awarded.awarded)`; values come from `settleRace` in `src/progression.js` |
+  | `creditBalance` | 1195, last line of `_settleResult` |
+
+  Fields dropped from the earlier, wider list because the real call cannot
+  write them on this run (Falcone F42, Grand Prix, Pacific Canyon, switches as
+  `?flags=grand-prix` leaves them): `driftScoreBest`, `driftScoreImproved`
+  (1175, drift courses only); `cupSummary`, `cupBonus`, `cupStandings`,
+  `cupTrophy` (`_recordCupResult`, needs a cup race); `tunedLap`
+  (`_settleTunedLap`, Time Trial only); `coastCup` (1178, Sirena only);
+  `yetiSightings` (1161, Summit Run only); `medal`, `earnedCars` (1181; the
+  `earned-cars` switch is off, so `settleRace` returns neither);
+  `notorietyEarned`, `notorietyRank`, `scrapEarned`, `scrapBalance`
+  (1184-1191; `combatNotoriety` and the separate career need Wasteland mode);
+  `ghostRecorded` (`_finishGhost`, 927; only Time Trial creates a ghost
+  recorder). If one of these ever shows up on this run, the comparison now
+  fails and names it, which is the intended signal.
 
 ## Tests run
 
@@ -108,6 +132,10 @@ All edits are in `tools/scenarios/`.
   `test-circuits`, the heli suites and world signatures were not needed.
 - The laptop's disk filled to zero free bytes during the final combined rerun
   of the five, so that rerun is reported separately, not claimed here.
+- The narrowed `p4-audio` field list (14 fields, from reading `_settleResult`)
+  was changed after those runs and has not been run in the browser: the disk
+  was full. The file passes a syntax check only. Run `p4-audio` alone once the
+  disk is cleared.
 
 ## Removed
 
