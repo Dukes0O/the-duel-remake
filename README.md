@@ -2,6 +2,20 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Race where you land, and helicopter jobs that pay, 28 October 2026
+
+### What players get now
+
+- **Race where you land:** land the helicopter at another course and shut
+  down, and the race setup opens on that course with your car. Race here
+  starts the race straight away.
+- **Helicopter jobs pay for the time they take:** about what winning races
+  pays per minute. A car delivery or return crate pays 2,100 to 2,800
+  credits, plus a quarter more for a clean delivery (no hard landing, crash
+  or drop). Each job says what it pays before you take it, the result says
+  what you earned and your new total, and the flight screen shows your
+  credits.
+
 ## Spikey Ferns and Dukes00 are back, and lessons you can pick, 28 October 2026
 
 ### What players get now

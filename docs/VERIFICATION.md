@@ -1527,3 +1527,12 @@ adds players after a verified backup and never replaces existing ones;
 independent review found no blockers and its three findings were fixed.
 Full tier 535/535 on aedca449, the release commit, run before release. Lane tiers,
 builds, lesson suites and the lesson and career browser scenarios pass.
+
+## Release, 28 October 2026 evening (Claude, Release Manager)
+
+HELI-PAY-CONTINUE (Kyle asked for both parts). No save shape change; pay
+numbers in src/heli/heli-pay.js. Independent review: no blockers, findings
+fixed (crate clean mark, cruise counted as one minute per leg, exact map pay
+pins). Full tier 536/536 on 49b773d4, the release commit. Lane tier 107/107,
+build and the heli-continue scenario pass. rescue-finish is an unreliable
+check that also fails on the base commit (QA-RESCUE-FINISH-FLAKY).

@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASED 28 October evening (Claude, Release Manager).** Race where you land the helicopter; helicopter jobs pay about race rates and say so. Reload any open game tab.
 - **RELEASED 28 October afternoon (Claude, Release Manager).** Spikey Ferns and Dukes00 come back on the next start; lessons have four run buttons; a lesson crash ends. Reload any open game tab.
 - **RELEASED 28 October morning (Claude, Release Manager).** Four more lesson roads, lesson clicks while driving, Ardennes fir groves, faster Summit loading, Lab layout fixes. The 28 October full-check pause is over. Reload any open game tab.
 - **FULL CHECK DONE 28 October night (Claude): failed, disk full, release paused.** On 06d5505e: full tier 533/533; frame checks pass on rerun (Harbour 18.2, Ardennes 18.5, Summit 18.1, ski 18.2, rescue 18.3 ms at High); combat balance passes. 17 browser scenarios failed twice: 15 were checks left behind by shipped work since 24 October, 3 were real Lab layout faults (Key idea card stretched over answers, Snow captions overlapping, a passed tuning lesson no longer saying the Tune page). Fixes: FC-LESSON-HELI-DEEP merged; FC-LAB-SCENARIOS (claude/night-fc-lab) and FC-RACE-SCENARIOS (claude/night-fc-race) are committed in their lanes and wait for browser reruns. The C: drive is full: the Recycle Bin holds about 58 GB. Kyle: please empty the Recycle Bin; then Claude reruns, merges and releases. Heavy jobs may run again once there is space.
