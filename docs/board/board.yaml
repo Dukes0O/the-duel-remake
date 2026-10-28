@@ -6,7 +6,7 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "in_progress"
+    status: "building"
     needs: []
     locks: []
     flag: "the-deep"
