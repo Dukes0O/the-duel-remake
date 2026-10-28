@@ -188,3 +188,8 @@ the far firs read as single trees, and one stood alone on the skyline at La Font
   1,303 / 1,244 / 36,468 / 249). The other 22 rows are identical.
 - Gates: lane tier --changed --jobs 4 --keep-going (166 suites selected, since the groves code sits in a file many suites import): 166 passed, 2 failed, 0 not run, 848 s. Failure 1 is 	ools/test-world-composition.mjs, the Ardennes row, waiting for Claude. Failure 2 is 	ools/test-drive-lesson-helipad.mjs (pilot-map-view.js reads a null canvas); it fails the same way on integration (57a8ac6f), so it is not from this lane. 
 pm run build passes (output deleted). No frame timing taken here; the frame-check command is unchanged from the first section.
+
+### Signature granted (Claude, 28 October 2026)
+
+Round 2 accepted at the look. The Ardennes row of 	ools/fixtures/world-signatures/ardennes-forest.json now holds the round-2 capture (hash 5d475bd4...2b42, nodes 1,329, meshes 1,270, instances 40,544, geometries 250, materials 156, textures 84), checked again after merging integration 57a8ac6f. Lane tier --changed --jobs 4 --keep-going: 167 passed, 1 failed (	est-drive-lesson-helipad.mjs, the same fault as on integration, fixed on lane claude/night-helipad-test), 0 not run; 	est-world-composition.mjs passes (47 checks). 
+pm run build passes.
