@@ -11,7 +11,7 @@ import {chartCells, revealChart, chartHas, chartPercent, CHART_HEX, chartFrame} 
 import {normalizeDeep, rememberChart} from '../src/deep/deep-discovery.js';
 import {deepObjectives} from '../src/deep/deep-objectives.js';
 import {deepMapGeometry, deepMapData} from '../src/deep/deep-map.js';
-import {rockContact, stopAtDeepRock} from '../src/deep/deep-rocks.js';
+import {rockContact, driveIntoDeepRocks, deepRocks, deepGoalPoints, pushKeeps, SMALL_ROCK, BOUNCE_KEEPS, CRAWL_MPH} from '../src/deep/deep-rocks.js';
 import {SIRENA_FINDS} from '../src/deep/deep-sirena.js';
 import {createSeaLifeState, stepSeaLifeState} from '../src/deep/sea-life-rules.js';
 import {stepDeepStory} from '../src/deep/deep-story.js';
@@ -62,35 +62,123 @@ test('Surface works from every place on all three routes; inactive and paused ca
   assert.ok(JSON.stringify(controlsHelp({state:{mode:'duel',deepJourney:{phase:'underwater'}}})).includes('Surface'));
 });
 
-test('every placed rock is solid: forward, reverse, tunnelling and overlap; contacts cannot damage the car', () => {
+// DEEP-ROCKS-PUSH: a rock never stops the car, snaps it to the course or hurts it.
+const RACE_HARM = ['crash','scrape','roadsideImpact','boundaryReset','recovered','rollover','sceneryBroken','gameover'];
+// The trail is a chain of 8 m segments. A car beside it slips up to lateral x bend when it crosses a joint,
+// whatever it drives at, so the rock tests use a nearly straight stretch and allow for that.
+const BEND=.02;
+function straightRock(d, pick) {
+  const runtime=d.deepRuntime;
+  return runtime.rocks.find(r=>{
+    const at=runtime.floor.sample(r.x,r.z), p=d.course.worldAt(at.along,at.lateral);
+    if(!(at.along>50&&Math.hypot(p.x-r.x,p.z-r.z)<.01&&pick(r)))return false;
+    const h=d.course.at(at.along-14).heading;
+    for(let m=-14;m<=16;m++)if(Math.abs(d.course.at(at.along+m).heading-h)>BEND)return false;
+    return true;
+  });
+}
+const bigRock=d=>straightRock(d,r=>r.pushable&&r.size>2)??straightRock(d,r=>r.pushable&&r.size>1.2);
+// Drives 2 seconds straight at a rock from 12 m away on a straight stretch of trail.
+function driveAtRock(d, rock) {
+  const runtime=d.deepRuntime, at=runtime.floor.sample(rock.x,rock.z), start=at.along-12, events=[];
+  Object.assign(d.state,{s:start,prevS:start,lateral:at.lateral,prevLateral:at.lateral,
+    headingError:0,speedMph:40,airHeight:0,airborne:false,_jumpY:null});
+  d.setInput({throttle:0,brake:0,steer:0});
+  d.onChange((s,e)=>events.push(...Object.keys(e)));
+  const damage=JSON.stringify(d.state.damageZones), health=d.state.health, home={x:rock.x,z:rock.z};
+  let before=d.course.worldAt(d.state.s,d.state.lateral), worstStep=0, lowestKept=1, lowest=Infinity, touched=false;
+  for(let i=0;i<240;i++) {
+    const speed=d.state.speedMph; d.step(DT);
+    const now=d.course.worldAt(d.state.s,d.state.lateral);
+    worstStep=Math.max(worstStep,Math.hypot(now.x-before.x,now.z-before.z)-Math.abs(speed)*.44704*DT);
+    if(rock.x!==home.x||rock.z!==home.z||d.state.speedMph<speed*.9)touched=true;
+    if(touched){lowestKept=Math.min(lowestKept,d.state.speedMph/speed);lowest=Math.min(lowest,d.state.speedMph);}
+    before=now;
+  }
+  assert.equal(JSON.stringify(d.state.damageZones),damage); assert.equal(d.state.health,health);
+  assert.deepEqual(events.filter(k=>RACE_HARM.includes(k)),[],'no race contact events');
+  return {worstStep,allowed:.3+Math.abs(at.lateral)*BEND,lowestKept,lowest,touched,travelled:d.state.s-start,moved:Math.hypot(rock.x-home.x,rock.z-home.z)};
+}
+
+test('every placed rock is solid, yet a touch bounces or pushes: never a stop, a snap or damage', () => {
   for(const {seed} of ROUTE_VARIANTS) {
     const d=race(seed); dive(d); const runtime=d.deepRuntime;
     assert.equal(runtime.rocks.length,420);
+    const small=runtime.rocks.filter(r=>r.size<SMALL_ROCK).length;
+    assert.ok(small>180&&small<240,'the size line splits about the smaller half');
     for(const rock of runtime.rocks) {
       const a={x:rock.x,z:rock.z-12}, b={x:rock.x,z:rock.z+12};
       assert.ok(rockContact([rock],a,b)); assert.ok(rockContact([rock],b,a,Math.PI));
       assert.ok(rockContact([rock],rock,rock));
-      const mock={state:{s:b.x,lateral:b.z,headingError:0,speedMph:60,health:100,status:'exploring'},
-        deepRuntime:runtime,course:{worldAt:(s,lateral)=>({x:s,z:lateral}),at:()=>({heading:0}),
-          nearest:(x,z)=>({s:x,lateral:z})}};
-      stopAtDeepRock(mock,a);
-      assert.equal(mock.state.speedMph,0); assert.equal(mock.state.health,100);
-      assert.notEqual(mock.state.status,'wrecked');
+      // One drive step of 0.25 m, heading +z at 60 mph, that ends 0.15 m inside the rock.
+      const z=a.z+12*rockContact([rock],a,rock).t, start={x:rock.x,z:z-.1}, end={x:rock.x,z:z+.15};
+      const mine={...rock}, mock={state:{s:end.z,lateral:end.x,headingError:0,speedMph:60,health:100,status:'exploring'},
+        deepRuntime:{...runtime,rocks:[mine],rockEpisode:null},
+        course:{worldAt:(s,lateral)=>({x:lateral,z:s}),at:()=>({heading:0}),
+          nearest:()=>{throw new Error('a rock never snaps the car to the course');}}};
+      driveIntoDeepRocks(mock,start,DT);
+      assert.equal(mock.state.health,100); assert.notEqual(mock.state.status,'wrecked');
+      assert.ok(mock.state.speedMph>=29.999&&mock.state.speedMph<=60,`${seed}: the car keeps rolling`);
+      const jump=Math.hypot(mock.state.lateral-end.x,mock.state.s-end.z), slid=Math.hypot(mine.x-rock.x,mine.z-rock.z);
+      if(mine.pushable) {
+        assert.equal(jump,0,'a pushed rock moves, not the car');
+        assert.ok(slid>0&&slid<.5,'the rock slides by the overlap and a little');
+        assert.ok(Math.abs(mock.state.speedMph-Math.max(CRAWL_MPH,pushKeeps(rock.size)*60))<1e-9);
+        assert.ok(Math.abs(mine.y-(runtime.floor.floorHeight(mine.x,mine.z)+rock.size*.12))<1e-9,'rests on the floor');
+      } else {
+        assert.equal(slid,0,'a bounce rock stays put');
+        assert.ok(jump>0&&jump<.5,'pushed out by the contact distance only');
+        assert.ok(mock.state.speedMph>=60*BOUNCE_KEEPS-1e-9,'keeps at least 70% of its speed');
+      }
     }
     assert.equal(rockContact([],runtime.zone.trail[10],runtime.zone.trail[11]),null,'kelp has no solids');
-    // One native drive per route proves the journey actually calls the sweep.
-    const rock=runtime.rocks.find(r=>{
-      const at=runtime.floor.sample(r.x,r.z), p=d.course.worldAt(at.along,at.lateral);
-      return at.along>50 && Math.hypot(p.x-r.x,p.z-r.z)<.01;
-    });
-    const at=runtime.floor.sample(rock.x,rock.z), start=at.along-12;
-    Object.assign(d.state,{s:start,prevS:start,lateral:at.lateral,prevLateral:at.lateral,
-      headingError:0,speedMph:60,airHeight:0,airborne:false,_jumpY:null});
-    const damage=JSON.stringify(d.state.damageZones);
-    d.setInput({throttle:0,brake:0,steer:0});
-    for(let i=0;i<120;i++)d.step(DT);
-    assert.ok(d.state.s<at.along,'native drive stops before rock centre');
-    assert.equal(d.state.speedMph,0);assert.equal(JSON.stringify(d.state.damageZones),damage);
+  }
+});
+
+test('driving at a small rock glances off and at a large rock pushes it; the car never stops or jumps', () => {
+  for(const {seed} of ROUTE_VARIANTS) {
+    const d=race(seed); dive(d);
+    const little=straightRock(d,r=>!r.pushable&&r.size<SMALL_ROCK), big=bigRock(d);
+    assert.ok(little&&big,`${seed}: straight test rocks exist`);
+    const bounced=driveAtRock(d,little);
+    assert.ok(bounced.touched&&bounced.moved===0,'the small rock stays where it was');
+    assert.ok(bounced.lowestKept>=.69,'a glance keeps about 70% or more of the speed');
+    assert.ok(bounced.lowest>20&&bounced.travelled>20,'and the car drives on');
+    assert.ok(bounced.worstStep<bounced.allowed,'never jumps more than the contact distance');
+    const d2=race(seed); dive(d2);
+    const pushed=driveAtRock(d2,d2.deepRuntime.rocks[d.deepRuntime.rocks.indexOf(big)]);
+    assert.ok(pushed.moved>1,'the large rock slid ahead of the car');
+    assert.ok(pushed.lowest>=CRAWL_MPH&&pushed.lowestKept>=.4,'pushing costs speed but never a stop');
+    assert.ok(pushed.travelled>20&&pushed.worstStep<pushed.allowed,'the car keeps moving, with no jump');
+  }
+});
+
+test('rock places are run state: rebuilt from the seed each dive, repeatable from inputs, never saved', () => {
+  const seed=ROUTE_VARIANTS[0].seed, play=()=>{
+    const d=race(seed); dive(d); const result=driveAtRock(d,bigRock(d));
+    return {d,result,rocks:JSON.stringify(d.deepRuntime.rocks),car:[d.state.s,d.state.lateral,d.state.speedMph,d.state.headingError]};
+  };
+  const one=play(), two=play();
+  assert.ok(one.result.moved>1);
+  assert.equal(one.rocks,two.rocks,'same inputs give the same rock places'); assert.deepEqual(one.car,two.car);
+  // A new dive starts from the zone seed again, whatever the last one did.
+  const {zone,floor}=one.d.deepRuntime, fresh=JSON.stringify(deepRocks(zone,floor));
+  assert.notEqual(one.rocks,fresh);
+  const again=race(seed); dive(again);
+  assert.equal(JSON.stringify(again.deepRuntime.rocks),fresh,'a fresh dive has the seed layout');
+  assert.ok(!JSON.stringify(one.d.state).includes('"rocks"'),'rock places are not in the race state, so not in any save');
+});
+
+test('nothing the player looks for rides on a rock, and a rock lying on a goal never moves', () => {
+  for(const {seed} of ROUTE_VARIANTS) {
+    const d=race(seed), {zone,floor}=d.course.deepZone, rocks=deepRocks(zone,floor), goals=deepGoalPoints(zone);
+    assert.equal(goals.length,16,'7 sea life spots, 3 pearls, 6 Sirena finds');
+    for(const goal of goals) assert.ok(rocks.every(r=>Math.hypot(goal.x-r.x,goal.z-r.z)>=r.size+2),
+      'goals are laid out from the trail, in open water away from every rock');
+    // Were a big rock to lie on a goal, it would be the bounce kind, so it cannot slide over it.
+    const lying={x:goals[0].x+.5,z:goals[0].z,size:2.5,y:0}, clear={x:goals[0].x+80,z:goals[0].z,size:2.5,y:0};
+    const made=deepRocks(zone,{rockPlacements:()=>[lying,clear]});
+    assert.deepEqual(made.map(r=>r.pushable),[false,true]);
   }
 });
 
