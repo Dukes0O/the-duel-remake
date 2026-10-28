@@ -27,7 +27,8 @@ export const shiftLightCue = index => index === 0 ? 'lesson.shift-light' : `less
 const ordinal = gear => Number.isInteger(gear) && gear >= 0 ? ['1st', '2nd', '3rd'][gear] ?? `${gear + 1}th` : 'none';
 const percent = value => Math.round(value * 100) + '%';
 // The streets and stretches a lesson row is named after, from the row tables the host passes.
-const GEAR_STRETCH = Object.freeze({'panorama-ridge': 'Mountain Straight into The Cutting', 'tremblant-woods': 'Beaver Run into Beaver Hairpin'});
+const GEAR_STRETCH = Object.freeze({'panorama-ridge': 'Mountain Straight into The Cutting', 'tremblant-woods': 'Beaver Run into Beaver Hairpin',
+  'summit-run': 'Pine Switchbacks into Picnic Hairpin'});
 function rowLabel(lessonId, row) {
   if (lessonId === 'line') return [...new Set(rows(row.cornerNames).map(name => name.replace(/ \d+$/, '')))].join(' and ');
   if (lessonId === 'gears') return GEAR_STRETCH[row.courseId] ?? row.cornerName;

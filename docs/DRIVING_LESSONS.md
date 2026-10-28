@@ -719,11 +719,15 @@ whole section properly.
 | --- | --- | --- | --- | --- |
 | 1 Braking | Panorama Ridge | 350 m before Griffin Bend, on Mountain Straight | 60 m past Forrest Elbow | Griffin Bend, The Cutting, Reid Rise, Summit Park, Skyline, The Esses 1 to 3, Forrest Elbow |
 | 1 Braking | Tremblant Woods | 100 m into Beaver Run | 60 m past Final Turn | Beaver Kink, Beaver Hairpin, Devil's Chicane 1 and 2, Lodge Bend, Final Turn (14.12) |
+| 1 Braking | Ardennes Forest | start of Kestrel Straight | 60 m past Fagnes Exit | Les Combes, Combes Exit, Malmedy, Riverside, Woodland Left, Fagnes, Fagnes Exit (14.13) |
 | 2 Racing line | Tremblant Woods | 250 m into Lodge Straight | end of Ridge Run | Pine Drop, Lakeside Plunge, Fir Esses 1 and 2 |
 | 2 Racing line | Harbour Lights | 150 m before Casino Corner | end of Hillside | Casino Corner, Temple Hill, Bell Tower Bend, Old Town Esses 1 to 4 |
+| 2 Racing line | Ardennes Forest | 200 m into Woodland Left | 130 m past Whitewood | Long Left, Fagnes, Fagnes Exit, Campus, Stavelot, Woodcutter, Whitewood (14.13) |
 | 3 Gearbox | Panorama Ridge | Hell Gate exit, 30 mph in 2nd | 60 m past Summit Park | Griffin Bend, The Cutting, Reid Rise, Summit Park |
 | 3 Gearbox | Tremblant Woods | Ridge Corner exit, 30 mph in 2nd | 150 m into Timber Straight | Beaver Kink, Beaver Hairpin |
+| 3 Gearbox | Summit Run | start of Pine Switchbacks, 30 mph in 2nd | 60 m past Engineer Bend | Picnic Hairpin, Picnic Bend, Engineer's Hairpin, Engineer Bend (14.13) |
 | 4 Snow | Tremblant Snow | start of Ridge Run | 150 m into Timber Straight | Ridge Corner, Beaver Kink, the ice on The Spur, Beaver Hairpin |
+| 4 Snow | Summit Run | 250 m into Whiteout Crest | 250 m into Devil's Staircase | Whiteout Bend, Gallery Bend 1, Gallery Bend 2, the ice after Whiteout Bend (14.13) |
 
 - The rolling start is the instructor's own speed at that point (lessons 1, 2
   and 4), so the car arrives at race speed.
@@ -893,3 +897,47 @@ full throttle, where his pace makes no difference.
   in the Jesko (under 30 s at 286 mph).
 - Test: the every-car suite also checks the room on every row, car and
   setting.
+
+### 14.13 More roads for the same four lessons (Claude, 28 October 2026, night)
+
+Card LESSONS-MORE-ROADS. Each lesson now has a second place to practise on a
+course the game already has; the board offers the choice as it does for the
+Woods and Harbour rows. The rows use the same rules as the first ones (14.2,
+14.3, 14.12). Times are the instructor's own, measured in the Falcone F42
+(F) and the Koenigsegg Jesko (J), Casual then Pro.
+
+| Lesson | Course | Corners | F Casual | F Pro | J Casual | J Pro |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 Braking | Ardennes Forest | 7 | 64.4 s | 62.0 s | 49.6 s | 48.1 s |
+| 2 Racing line | Ardennes Forest | 7 | 54.3 s | 52.9 s | 45.3 s | 43.9 s |
+| 3 Gearbox | Summit Run | 4 | 45.2 s | 43.9 s | 35.6 s | 34.5 s |
+| 4 Snow | Summit Run | 3 | 49.7 s | 48.3 s | 40.8 s | 39.5 s |
+
+- **Braking at Ardennes** starts at the top of Kestrel Straight (1 km long,
+  282 mph in the Jesko) and brakes for Les Combes, the hardest stop on the
+  course, then the Combes chicane, Malmedy, the Riverside hairpin, Woodland
+  Left and the Fagnes chicane. It shares no corner with Woods or Panorama.
+- **Racing line at Ardennes** is the long flowing stretch from Long Left to
+  Whitewood. Its two fast sweepers (Woodcutter, Whitewood) are driven near
+  flat out; the slow ones teach the whole-road line. Eau Rouge was tried
+  first and set aside: Wall Crest throws the Jesko 5 m into the air at 167
+  mph, so the instructor runs off the road, and the line follower has no
+  rule for a jump. A later card can add a speed rule for crests.
+- **Gearbox at Summit Run** is a slow hairpin (Picnic Hairpin), a climb and a
+  bend, then the next hairpin (Engineer's Hairpin) and its bend: the slow
+  corner then the long climb that card asked for. Starts at 30 mph in 2nd as
+  the other gearbox rows do.
+- **Snow at Summit Run** is three long bends on the snow after the Glacier
+  Hairpin, with a 20 m ice patch on the straight between the first two. The
+  winter run is 2 to 4 s faster than the summer run. The hairpins themselves
+  (Glacier Hairpin, Devil's Elbow, Last Breath) are too tight for the lesson:
+  they are 15 to 16 m radius on a 12 m road, and on snow the Falcone's
+  smallest turn, at the instructor's safety margin, is about 23 m, so it leaves
+  the road however the line is drawn.
+- **Names:** the track script leaves some of Summit Run's bends without a
+  name. The lesson file gives them lesson names by the metre where each bend
+  begins (`LESSON_TURN_NAMES`: Picnic Bend, Engineer Bend, Whiteout Bend,
+  Gallery Bend 1 and 2). The course itself is unchanged.
+- No per-course tuning was needed: Ardennes Forest and Summit Run use the
+  default clearances and margins.
+

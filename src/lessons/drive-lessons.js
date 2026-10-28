@@ -6,9 +6,15 @@ const sectionRow = (courseId, cornerNames, startPiece, startOffsetM, finishPiece
 const PANORAMA = ['Griffin Bend', 'The Cutting', 'Reid Rise', 'Summit Park', 'Skyline',
   'The Esses 1', 'The Esses 2', 'The Esses 3', 'Forrest Elbow'];
 const BEAVER = ['Ridge Corner', 'Beaver Kink', 'Beaver Hairpin'];
+// Turns the track script leaves without a name get one for the lessons, found by the metre where the turn begins.
+export const LESSON_TURN_NAMES = Object.freeze({
+  'summit-run': Object.freeze({'Picnic Bend': 4462, 'Engineer Bend': 5380, 'Glacier Exit': 8754,
+    'Whiteout Bend': 9439, 'Gallery Bend 1': 10570, 'Gallery Bend 2': 11170}),
+});
 export const DRIVE_LESSON_CORNERS = Object.freeze([
   sectionRow('panorama-ridge', PANORAMA, 'Griffin Bend', -700, 'Forrest Elbow', 60),
   sectionRow('tremblant-woods', ['Beaver Kink', 'Beaver Hairpin', 'Devil\'s Chicane 1', 'Devil\'s Chicane 2', 'Lodge Bend', 'Final Turn'], 'Beaver Run', 100, 'Final Turn', 60),
+  sectionRow('ardennes-forest', ['Les Combes', 'Combes Exit', 'Malmedy', 'Riverside', 'Woodland Left', 'Fagnes', 'Fagnes Exit'], 'Kestrel Straight', 0, 'Fagnes Exit', 60),
 ]);
 
 export const DRIVE_LESSON_STEPS = Object.freeze([
@@ -243,6 +249,7 @@ export const DRIVE_LINE_ROWS = Object.freeze([
     'Lodge Straight', 100, 'Timber Straight', 150, 's0'),
   sectionRow('harbour-lights', ['Lantern Kink', 'Casino Corner', 'Temple Hill', 'Bell Tower Bend', 'Old Town Esses 1',
     'Old Town Esses 2', 'Old Town Esses 3', 'Old Town Esses 4', 'Precinct Bend'], 'Seafront Straight', 100, 'Hairpin Approach'),
+  sectionRow('ardennes-forest', ['Long Left', 'Fagnes', 'Fagnes Exit', 'Campus', 'Stavelot', 'Woodcutter', 'Whitewood'], 'Woodland Left', 200, 'Whitewood', 130),
 ]);
 export function buildWaypointLine(course, waypoints, {startS, endS, points, ease: easing = 'cosine'}) {
   if (!Array.isArray(waypoints) || waypoints.length < 2) throw new TypeError('A line needs at least two waypoints');
@@ -372,6 +379,7 @@ export function instructorControls(state, surface, plan) {
 
 export const DRIVE_SNOW_ROWS = Object.freeze([
   sectionRow('tremblant-snow', ['Fir Esses 1', 'Fir Esses 2', ...BEAVER], 'Lakeshore', 0, 'Timber Straight', 150, 's0'),
+  sectionRow('summit-run', ['Whiteout Bend', 'Gallery Bend 1', 'Gallery Bend 2'], 'Whiteout Crest', 250, "Devil's Staircase", 250, 's0'),
 ]);
 
 // Stretches of the road where the surface under the middle of the road is ice.
@@ -390,6 +398,7 @@ export function iceZonesOf(duel, fromS, toS) {
 export const DRIVE_GEAR_ROWS = Object.freeze([
   sectionRow('panorama-ridge', PANORAMA.slice(0, 4), 'Mountain Straight', 0, 'Summit Park', 60),
   sectionRow('tremblant-woods', ['Fir Esses 1', 'Fir Esses 2', ...BEAVER], 'Lakeshore', 0, 'Timber Straight', 150, 's0'),
+  sectionRow('summit-run', ['Picnic Hairpin', 'Picnic Bend', "Engineer's Hairpin", 'Engineer Bend'], 'Pine Switchbacks', 0, 'Engineer Bend', 60),
 ]);
 
 export function gearFor(gears, mph, revs = GEAR_LESSON.apexRevs, cap = GEAR_LESSON.downCapRevs) {
@@ -430,7 +439,13 @@ export async function sectionPlanFor(duel, row, pace, {middle = false, dry = fal
     import('../config.js'), import('../race-lines.js'),
   ]);
   const course = duel.course, pieces = course.script.pieces;
-  const piece = name => { const found = pieces.find(p => p.name === name); if (!found) throw new Error('Missing section piece: ' + name); return found; };
+  const piece = name => {
+    const begins = LESSON_TURN_NAMES[row.courseId]?.[name];
+    const found = pieces.find(p => p.name === name) ??
+      (begins === undefined ? null : (turn => turn && {...turn, name})(pieces.find(p => p.kind === 'turn' && Math.round(p.s0) === begins)));
+    if (!found) throw new Error('Missing section piece: ' + name);
+    return found;
+  };
   const startS = piece(row.startPiece).s0 + row.startOffsetM;
   const finishS = piece(row.finishPiece)[row.finishEdge] + row.finishOffsetM;
   const turns = row.cornerNames.map(piece);
