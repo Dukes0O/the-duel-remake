@@ -39,3 +39,6 @@ recorded below.
 ## Removed
 
 Nothing replaced; the old "click the hidden board button" step in `lab-restore.mjs` is gone.
+
+**Gates.** Lane tier, `--changed --jobs 4`: 29 passed, 0 failed, 0 not run. `npm run build` passed (usual large-chunk and import warnings); output deleted. Also ran the unchanged `lab-fan-view` browser recipe on a private port: passed, no errors or warnings.
+
