@@ -238,3 +238,7 @@ Run from PowerShell with System32 first on the path, on the lane `claude/heli-co
   shorter, change `HELI_MINUTES` in `heli-pay.js` and nothing else.
 - Map jobs from the pilot's map show the raw course id ("Pick up at
   pacific-canyon") on the board; that was already so and is not touched here.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent review by a separate agent, plus Claude's written review of changed assertions, rule 18). Landing: returnToMenu only acts with a helicopter session on the ground at an unlocked away course; other modes unaffected. Pay: race pay, repairs, fuel and charges unchanged; bonus paid once; crate clean mark now set at first hook. Claude's pay decision: about 350 credits per real minute, cruise counted as 1 minute per leg because it plays as a short fade. Changed assertions change only pay numbers and words; the reviewer recomputed two pins and mapped pays back to the old hashes; the map pay table is pinned exactly again; the map-secrets check is stricter than before. Nothing loosened.
