@@ -103,3 +103,7 @@ is kept and is why the viewport changed).
   tool's output.
 - The old try 1 / try 2, markers, "three rules" and hold-W checks in both
   scenarios.
+
+## Claude's review (28 October 2026, night)
+
+Both scenarios now check the second-version lessons; the old one-corner finishing tool is removed (replaced). Driving by the instructor's recorded inputs on the fixed clock matches lessons-v2-view. The freeze before panel clicks is temporary: LESSON-PANEL-CLICKS fixes the game and then removes it. Verdict: merge.
