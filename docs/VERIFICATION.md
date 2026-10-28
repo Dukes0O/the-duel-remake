@@ -1452,3 +1452,16 @@ audio catalog, two lesson tests and docs changed (no core, save shape or
 physics). Lane tier 97/97 in the lane; on merged commit 39107cda the lesson
 lines suite (314 checks), lesson run suite, every-car instructor suite
 (196/196) and build pass. No frame check: no scene changed.
+
+## Release, 27 October 2026 night (Claude, Release Manager)
+
+LESSONS-V2-FINISH part 1 (Kyle's play: full runs, any step again; room to beat
+the instructor; Woods braking road) and DEEP-ROCKS-PUSH, with the test-only
+merges HELI-VIEW-FRAMES, QA-AUDIO-CRASH-PEAK-AGAIN and QA-SUMMIT-GLACIER-EDGE.
+Rule 19: the last full-tier pass is 9d521bb0 (532/532). Since then the game
+changes are lesson code (`src/lessons/`, the lesson lines of `src/app.js` and
+one lesson line of `src/game.js`) and the Deep's rocks (`src/deep/`); no save
+shape, physics or race rule changed. Lane tiers: lessons 39/39 (every-car
+instructor suite 196/196), rocks 157/157 with replay fingerprints and world
+signatures unchanged; builds pass. The nightly full check covers the whole
+tier tonight. No frame check: no race scene changed.

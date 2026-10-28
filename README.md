@@ -2,6 +2,22 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Lessons you can finish, and the Deep's rocks, 27 October 2026 (night)
+
+### What players get now
+
+- **A lesson run always goes to the finish line.** Walls, trips off the road
+  and stops make a run not clean, but you keep driving; the result card judges
+  the whole run.
+- **Go back to any step.** The four steps are buttons, during a run and on the
+  result card: watch again, follow the ghost again, or repeat a step.
+- **Room to beat the instructor in every car.** His time is always at least
+  7% (Casual) or 4% (Pro) slower than a perfect run of his line in your car.
+- **Woods braking has its own road:** Beaver Run, Beaver Hairpin, the long
+  Timber Straight into Devil's Chicane, Lodge Bend and the Final Turn.
+- **The Deep's sea-floor rocks:** small ones bounce you off, large ones get
+  pushed aside; no rock stops the car dead or moves it somewhere else.
+
 ## Brian's new lesson lines, 27 October 2026 (evening)
 
 ### What players get now
