@@ -1416,3 +1416,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged QA-LESSON-SCENARIOS (both lesson scenarios on the v2 flow; old finish tool removed); lane 20/20.
 - 28 Oct night: merged LESSON-PANEL-CLICKS (buttons patched in place, 6/6 clicks while moving; panel clears the minimap); lane 39/40, the one failure is the helipad map canvas on integration.
 - 27 Oct night: merged LESSONS-MORE-ROADS (Ardennes braking and racing line, Summit gearbox and snow; every-car 308/308; lane 32/33 (helipad failure is on integration)).
+- 28 Oct night: merged QA-HELIPAD-MAP-CANVAS (helipad lesson test broke when pilot-map went on); lane 38/38.
