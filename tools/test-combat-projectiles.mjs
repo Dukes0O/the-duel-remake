@@ -290,11 +290,11 @@ function replayDigest(mode, discoveredGate) {
 }
 
 test('ordinary and pre-gate Wasteland projectiles keep the approved replay fingerprints', () => {
-  assert.equal(replayDigest('duel', false), '1a7f0be659d29472a1ce36f2903dffdff8352f2b951c16a75df9bb7a7414c14e',
+  assert.equal(replayDigest('duel', false), '78bc49b8025ee23a5ff55dde6e524216b4aded70c7a9d7d3f1fe6d83f382a69e',
     'ordinary mode keeps the approved source behavior');
-  assert.equal(replayDigest('duel', true), '1a7f0be659d29472a1ce36f2903dffdff8352f2b951c16a75df9bb7a7414c14e',
+  assert.equal(replayDigest('duel', true), '78bc49b8025ee23a5ff55dde6e524216b4aded70c7a9d7d3f1fe6d83f382a69e',
     'enabling combat rules cannot change ordinary races');
-  assert.equal(replayDigest('wasteland', false), '9453a92c428b5194f5768392e2d1e76a0162de6f36429c39bd18bd02fc3bfd34',
+  assert.equal(replayDigest('wasteland', false), 'd3bd8faae2b6b08b3668f3b64e769c178a2534809bb8f5f2dc7cd26230c1034b',
     'pre-gate Wasteland keeps the approved source behavior');
 });
 

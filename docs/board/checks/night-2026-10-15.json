@@ -1,0 +1,201 @@
+{
+  "schema": 1,
+  "date": "2026-10-15",
+  "source": "1c0cb3d0b5d134f579bf39cf744d6cd99dc0bb5f",
+  "started": "2026-10-15T11:00:00.186Z",
+  "status": "failed",
+  "context": {
+    "operatorDeclaredIdleAwake": true,
+    "operatorDeclaredNoOtherGpuWorkload": true,
+    "displayPowerMeasured": false,
+    "processIsolationObserved": true
+  },
+  "stages": [
+    {
+      "id": "full",
+      "args": [
+        "tools/run-tests.mjs",
+        "--tier",
+        "full",
+        "--jobs",
+        "4",
+        "--keep-going",
+        "--json"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-15/FAC-03/night-QwGun4/full.log",
+      "started": "2026-10-15T11:00:02.730Z",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "passed": 444,
+        "failed": 0,
+        "unrun": 0,
+        "total": 444
+      },
+      "failureNames": [],
+      "generatedReport": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-15/FAC-03/night-QwGun4/full-tier.json",
+      "finished": "2026-10-15T11:25:34.860Z"
+    },
+    {
+      "id": "frames",
+      "args": [
+        "tools/browser-harness.mjs",
+        "scenario",
+        "frame-pacing",
+        "--headed",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-KlSmDy/source/.evidence/2026-10-15/FAC-03/night-QwGun4/frames"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-15/FAC-03/night-QwGun4/frames.log",
+      "started": "2026-10-15T11:25:34.860Z",
+      "passed": true,
+      "exitCode": 0,
+      "warnings": [
+        "Performance: full first-race load 6094.5 ms exceeds 5000 ms (warning only)."
+      ],
+      "reports": [
+        {
+          "quality": "High",
+          "p95": 18.200000000000728,
+          "worldBuildMs": 517,
+          "constructionMs": 4758
+        },
+        {
+          "quality": "Performance",
+          "p95": 18.399999999999636,
+          "worldBuildMs": 553,
+          "constructionMs": 6094.5
+        }
+      ],
+      "finished": "2026-10-15T11:26:06.684Z"
+    },
+    {
+      "id": "combat",
+      "args": [
+        "tools/combat-balance.mjs",
+        "--check"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-15/FAC-03/night-QwGun4/combat.log",
+      "started": "2026-10-15T11:26:06.684Z",
+      "passed": true,
+      "exitCode": 0,
+      "finished": "2026-10-15T11:35:19.803Z"
+    },
+    {
+      "id": "browser",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--all",
+        "--jobs",
+        "4",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-KlSmDy/source/.evidence/2026-10-15/FAC-03/night-QwGun4/browser"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-15/FAC-03/night-QwGun4/browser.log",
+      "started": "2026-10-15T11:35:19.803Z",
+      "passed": false,
+      "exitCode": 1,
+      "counts": {
+        "passed": 119,
+        "failed": 10,
+        "total": 129
+      },
+      "failureNames": [
+        "browser: arena-steering",
+        "browser: arsenal-core-audio",
+        "browser: arsenal-wave1-audio",
+        "browser: audio-crash-peak",
+        "browser: deep-art",
+        "browser: p4-audio",
+        "browser: tremblant-snow",
+        "browser: tremblant-views",
+        "browser: yard-home",
+        "browser: yeti"
+      ],
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "finished": "2026-10-15T13:15:18.019Z"
+    }
+  ],
+  "failures": [
+    {
+      "name": "browser: arena-steering",
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: arsenal-core-audio",
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: arsenal-wave1-audio",
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: audio-crash-peak",
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: deep-art",
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: p4-audio",
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: tremblant-snow",
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: tremblant-views",
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: yard-home",
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: yeti",
+      "error": "Browser evaluation failed: Uncaught Error: Production arena entry failed\n    at <anonymous>:2:48\n    at <anonymous>:5:87\nBrowser evaluation failed: Uncaught (in promise) Error: Actual visual readiness timed out. Error: Actual visual readiness timed out.\n    at waitUntil (<anonymous>:27:48)\n    at async capture (<anonymous>:32:16)\nRuntime.evaluate timed out.\nScenario path must stay in QA tools.\nep-art\\octopus.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\wreck-hull-detail.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\giant-clam.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\anchor.jpg\nScreenshot: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\sunken-boat.jpg\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\deep-art\\report.json\n\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722} Error: Missing or duplicated native sample frames: mix {\"segment\":5,\"startFrame\":4994176,\"endFrame\":5960448,\"expected\":5383296,\"actual\":5383168,\"chunkFrame\":5383168,\"previousFrames\":[5379200,5381248,5383168,5385344],\"callbacks\":[5383168,5383424,5383552,5383680,5383808,5383936,5384064,5384192,5384320,5384448,5384576,5384704,5384832,5384960,5385088,5385216],\"witnessFirst\":0.17064939439296722}\n    at demand (<anonymous>:219:54)\n    at close (<anonymous>:275:9)\nFrame limit missed: High 8 cars on the grid p95 35.7 ms\nFrame limit missed: High 8 cars on the grid p95 34.7 ms, 7 slow frames; High 8 cars on Timber Straight p95 35.9 ms, 37 slow frames\nBrowser evaluation failed: Uncaught Error: Production car visit failed\n    at <anonymous>:5:72\n    at <anonymous>:7:7\nBrowser smoke passed on private port 15050. 0 screenshots, 1 warnings, 0 errors.\nReport: C:\\Users\\kyleb\\.codex\\worktrees\\wasteland-integration\\full-check-KlSmDy\\source\\.evidence\\2026-10-15\\FAC-03\\night-QwGun4\\browser\\yeti\\report.json",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    }
+  ],
+  "compaction": {
+    "status": "disabled",
+    "reason": "Separate Kyle authorization required; no history rewrite this run."
+  },
+  "push": {
+    "status": "disabled",
+    "reason": "--no-push; no push authorized this run."
+  },
+  "lastGreen": null,
+  "lastGreenNight": null,
+  "evidence": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-15/FAC-03/night-QwGun4",
+  "finished": "2026-10-15T13:15:19.919Z",
+  "publication": {
+    "status": "prepared",
+    "paths": [
+      "docs/board/checks/night-2026-10-15.json",
+      "docs/board/checks/night-2026-10-15.md",
+      "docs/board/STATUS.md"
+    ]
+  }
+}

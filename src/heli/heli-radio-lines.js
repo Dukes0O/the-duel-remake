@@ -3,13 +3,15 @@
 // voices: Brian the instructor, Sarah for the park rangers and Roger for fire
 // dispatch, all with the same settings. Lines name no prices and no course, so
 // repair costs can change and new burnable courses need no new lines.
+import {HELI_RADIO_VOICE} from '../lessons/radio-voice.js';
+
 export const HELI_VOICES = Object.freeze({
-  brian: Object.freeze({name: 'Brian', voiceId: 'nPczCjzI2devNBz1zQrb'}),
+  brian: HELI_RADIO_VOICE,
   sarah: Object.freeze({name: 'Sarah', voiceId: 'EXAVITQu4vr4xnSDxMaL'}),
   roger: Object.freeze({name: 'Roger', voiceId: 'CwhRBWXzGAHq8TQ4Fs17'}),
 });
-// The instructor's voice, for the H1 lines.
-export const HELI_RADIO_VOICE = HELI_VOICES.brian;
+// The instructor's voice, for the H1 lines (shared with driving lessons).
+export {HELI_RADIO_VOICE};
 
 const H1_LINES = {
   'heli.radio.welcome': {file: 'heli-radio-welcome.mp3', text: 'Kestrel One, this is Tremblant base. Welcome aboard. I will be on the radio the whole way, so take your time.'},
@@ -82,11 +84,16 @@ const RESCUE_LINES = {
   'heli.radio.rescue.steady': {voice: 'roger', file: 'heli-radio-rescue-steady.mp3', text: 'Hold her steady. The rescuer needs you still.'},
   'heli.radio.rescue.clipped': {voice: 'roger', file: 'heli-radio-rescue-clipped.mp3', text: 'They are clipped on. Lift gently.'},
   'heli.radio.rescue.fast': {voice: 'roger', file: 'heli-radio-rescue-fast.mp3', text: 'Slow down! People on the line.'},
-  'heli.radio.rescue.bump': {voice: 'roger', file: 'heli-radio-rescue-bump.mp3', text: 'Easy! Watch the people on the line.'},
+  'heli.radio.rescue.bump': {voice: 'roger', file: 'heli-radio-rescue-bump.mp3', text: 'Easy! You are hurting them.'},
   'heli.radio.rescue.done': {voice: 'roger', file: 'heli-radio-rescue-done.mp3', text: 'Safe and sound. Great work, Kestrel One.'},
-  'heli.radio.rescue.late': {voice: 'roger', file: 'heli-radio-rescue-late.mp3', text: 'The ground team made it. Thanks for trying, Kestrel One.'},
+  'heli.radio.rescue.late': {voice: 'roger', file: 'heli-radio-rescue-late.mp3', text: 'The ground team got there first. They are badly hurt and on their way to hospital.'},
+  // People can get hurt (docs/HELI_RESCUE.md section 4.1): the handover by condition, and the cold.
+  'heli.radio.rescue.hurt': {voice: 'roger', file: 'heli-radio-rescue-hurt.mp3', text: 'They are hurt, but they will be all right. The paramedics have them.'},
+  'heli.radio.rescue.badly': {voice: 'roger', file: 'heli-radio-rescue-badly.mp3', text: 'They are badly hurt. The paramedics are taking them to hospital.'},
+  'heli.radio.rescue.cold': {voice: 'roger', file: 'heli-radio-rescue-cold.mp3', text: 'They are getting cold, Kestrel One. Hurry.'},
   'heli.radio.supply.crate': {voice: 'roger', file: 'heli-radio-supply-crate.mp3', text: 'Crate is down. Thank you.'},
   'heli.radio.supply.done': {voice: 'roger', file: 'heli-radio-supply-done.mp3', text: 'That is everything. The whole lodge thanks you, Kestrel One.'},
+  'heli.radio.supply.late': {voice: 'roger', file: 'heli-radio-supply-late.mp3', text: 'The lodge sent a snowcat in the end. They are still short of supplies.'},
   'heli.radio.season.summer': {voice: 'roger', file: 'heli-radio-season-summer.mp3', text: 'Wildfire season is here. Keep an eye out for smoke.'},
   'heli.radio.season.winter': {voice: 'roger', file: 'heli-radio-season-winter.mp3', text: 'Winter is here. Watch the ski hill for avalanches.'},
   'heli.radio.hiker.spotted': {voice: 'sarah', file: 'heli-radio-hiker-spotted.mp3', text: 'That is them! There is a clearing close by. Land there and they will walk over.'},
@@ -95,5 +102,24 @@ const RESCUE_LINES = {
   'heli.radio.line.setdown': {voice: 'brian', file: 'heli-radio-line-setdown.mp3', text: 'Lower the rescuer gently, right beside them, and hold her there.'},
 };
 
-export const HELI_RADIO_LINES = Object.freeze(Object.fromEntries(Object.entries({...H1_LINES, ...FIRE_LINES, ...RESCUE_LINES})
+// H3 Wildlife and skins (docs/HELI_WILDLIFE.md section 8): Sarah for the
+// wildlife survey, Brian for the paint and the wash.
+const WILD_LINES = {
+  'heli.radio.survey.taken': {voice: 'sarah', file: 'heli-radio-survey-taken.mp3', text: 'Thanks, Kestrel One. Fly straight lines across the square, and stay high enough not to scare them.'},
+  'heli.radio.survey.scared': {voice: 'sarah', file: 'heli-radio-survey-scared.mp3', text: 'Too low! You are scaring them off.'},
+  'heli.radio.survey.good': {voice: 'sarah', file: 'heli-radio-survey-good.mp3', text: 'Spot on. That matches our ground count. Thank you.'},
+  'heli.radio.survey.close': {voice: 'sarah', file: 'heli-radio-survey-close.mp3', text: 'Close enough to be useful. Thanks.'},
+  'heli.radio.survey.off': {voice: 'sarah', file: 'heli-radio-survey-off.mp3', text: 'That is a long way from our numbers. Try more lines next time.'},
+  'heli.radio.survey.rare': {voice: 'sarah', file: 'heli-radio-survey-rare.mp3', text: 'Did you see that? That one is rare. Lucky you.'},
+  'heli.radio.skin.earned': {voice: 'brian', file: 'heli-radio-skin-earned.mp3', text: 'Five missions of the same kind. There is a new coat of paint waiting for you at the pad.'},
+  'heli.radio.wash.hint': {voice: 'brian', file: 'heli-radio-wash-hint.mp3', text: 'She is filthy, Kestrel One. A wash at the pad will fix that.'},
+  'heli.radio.wash.done': {voice: 'brian', file: 'heli-radio-wash-done.mp3', text: 'Shiny as new.'},
+};
+
+export const HELI_RADIO_LINES = Object.freeze(Object.fromEntries(Object.entries({...H1_LINES, ...FIRE_LINES, ...RESCUE_LINES, ...WILD_LINES})
   .map(([id, line]) => [id, Object.freeze({voice: 'brian', ...line})])));
+
+// Ski radio stays on-screen text until its voice pass is approved.
+export const SKI_RADIO_TEXT = Object.freeze({
+  'ski.radio.thin-air': 'There is less air up here for the rotor to push. Lighten up: burn fuel or leave some behind.',
+});

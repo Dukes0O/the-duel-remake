@@ -1,6 +1,12 @@
+import {normalizeAchievements, recordRaceAchievements} from './achievements.js';
+import {normalizeIntel,recordIntelFinish} from './intel-levels.js';
+import {CUPS, normalizeCups, cupStandings, cupBonus} from './grand-prix-cups.js';
+import {normalizeDrivingLessons} from './lessons/drive-lesson-save.js';
 import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
+import {settleCoastCup} from './deep/sirena-car.js';
 import {normalizeHeli} from './heli/heli-save.js';
+import {normalizeLab} from './lab/lab-save.js';
 import {normalizeYeti,countYetiFinish,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay,
   normalizeGrandPrixPodiums, recordGrandPrixPodium} from './grand-prix-career.js';
@@ -16,7 +22,7 @@ import {
   normalizeDriverId,
   driverModifierSignature
 } from './drivers.js';
-import { normalizeCourseAccess } from './course-access.js';
+import { normalizeCourseAccess,isCourseUnlocked } from './course-access.js';
 import { rivalSignature } from './rival-settings.js';
 import { COMBAT_TUNING } from './wasteland-tuning.js';
 import { normalizeWasteland } from './wasteland-progress.js';
@@ -164,8 +170,13 @@ export function normalizeProfile(value) {
   // Medal sheets are optional: normalized only when saved, never added to an older save.
   if (Object.hasOwn(value, 'medals')) profile.medals = normalizeMedals(value.medals);
   profile = grantCompletionCars(profile);
+  if (Object.hasOwn(value, 'achievements')) profile.achievements = normalizeAchievements(value.achievements);
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
   if (Object.hasOwn(value, 'heli')) profile.heli = normalizeHeli(value.heli);
+  if (Object.hasOwn(value, 'drivingLessons')) profile.drivingLessons = normalizeDrivingLessons(value.drivingLessons);
+  if (Object.hasOwn(value, 'lab')) profile.lab = normalizeLab(value.lab);
+  if (Object.hasOwn(value, 'intel')) profile.intel = normalizeIntel(value.intel);
+  if (Object.hasOwn(value, 'cups')) profile.cups = normalizeCups(value.cups);
   if (Object.hasOwn(value, 'grandPrixPodiums'))
     profile.grandPrixPodiums = normalizeGrandPrixPodiums(value.grandPrixPodiums);
   profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
@@ -405,6 +416,9 @@ export function bestKey(
     result.mode || 'duel',
     result.difficulty || 'casual',
     result.cpuDifficulty || 'easy',
+    ...(COURSE[result.stageIndex]?.kind==='drift'&&result.tyreSlipRules===true?['tyre-slip:1']:[]),
+    // Races run with engines that pull like real ones are their own comparison (ENGINE-CURVE).
+    ...(result.engineCurve===true?['engine-curve:1']:[]),
     ...(signature ? [`driver:${signature}`] : []),
     ...(rival ? [`rival:${rival}`] : []),
     ...(weaponSignature(result) ? [`weapons:${weaponSignature(result)}`] : [])
@@ -429,6 +443,7 @@ function isCompletedRace(result) {
 export function isValidFinish(result) {
   if (!isCompletedRace(result)) return false;
   const stage = COURSE[result.stageIndex];
+  if(result.tyreSlipRules===true&&(stage.kind!=='drift'||result.difficulty!=='pro'))return false;
   if (!stage.stuntTrial && !['drift', 'checkpoint'].includes(stage.kind)) return true;
   const cpu = Object.hasOwn(CPU_REWARDS, result.cpuDifficulty) ? result.cpuDifficulty : 'easy';
   if (stage.stuntTrial) {
@@ -575,7 +590,15 @@ export function settleRace(profile, result = {}) {
       result.abandoned !== true && (!isValidFinish(result) || !validGrandPrixPosition(result)))){
     if(valid&&isYetiGrandPrixInput(profile.activeRace)&&profile.activeRace.key===key&&COURSE[result.stageIndex]?.id==='summit-run')
       profile={...profile,activeRace:null};
-    return {profile, reward: 0, awarded: false, personalBest: false, breakdown: {},...yetiAward};
+    const achievements = recordRaceAchievements(profile, result, {
+      valid: valid && !COURSE[result.stageIndex].practice && result.practice !== true &&
+        result.qualifying !== true && result.abandoned !== true && isValidFinish(result) &&
+        validGrandPrixPosition(result) && !profile.settledResults.includes(key) &&
+        !profile.wasteland?.settledResults?.includes(key),
+      eventId: valid ? stageEventId(result.stageIndex) : null, at: Date.now()
+    });
+    return {profile: achievements, reward: 0, awarded: false, personalBest: false, breakdown: {},
+      ...yetiAward, ...(achievements !== profile ? {achievementsAwarded: true} : {})};
   }
   if (!valid || COURSE[result.stageIndex]?.practice ||
     profile.settledResults.includes(key) ||
@@ -617,7 +640,10 @@ export function settleRace(profile, result = {}) {
           reward: 0, charge: 0, policeFineCharge: 0, breakdown, milestones: [], at: Date.now()
         }].slice(-60)
       };
-    return {profile: updated, reward: 0, charge: 0, policeFineCharge: 0, ...yetiAward,
+    const achievements = recordRaceAchievements(updated, result, {
+      valid: finished, eventId: stageEventId(result.stageIndex), at: updated.history.at(-1).at
+    });
+    return {profile: achievements, reward: 0, charge: 0, policeFineCharge: 0, ...yetiAward,
       awarded: true, personalBest, personalBestStatus, previousBest: previous ?? null,
       best: finished ? updated.personalBests[comparison] ?? null : null,
       breakdown, winStreak: updated.winStreak, milestones: []};
@@ -836,6 +862,18 @@ export function settleRace(profile, result = {}) {
       }
     ].slice(-60)
   };
+  if (result.intelEnabled === true && recordEligible && result.qualifying !== true) {
+    updated=recordIntelFinish(updated,stageEventId(result.stageIndex),result,
+      {owned:isCourseUnlocked(updated,result.stageIndex),validated:true});
+  }
+  // The Coast Cup (SIRENA-CAR): a counted finish on Pacific Canyon in the restored Falcone Sirena pays once.
+  const coastCup = settleCoastCup(updated, {enabled: result.deepEnabled === true,
+    valid: recordEligible && result.qualifying !== true && result.practice !== true,
+    eventId: stageEventId(result.stageIndex), car: result.car, mode: result.mode});
+  updated = recordRaceAchievements(coastCup.profile, result, {
+    valid: recordEligible && result.qualifying !== true && result.practice !== true,
+    eventId: stageEventId(result.stageIndex), at: updated.history.at(-1).at
+  });
   const owned = updated.unlockedCars;
   if (medalWin && medalWin.profile !== profile)
     updated = grantCompletionCars({ ...updated, medals: medalWin.profile.medals });
@@ -845,6 +883,7 @@ export function settleRace(profile, result = {}) {
     // The medal reports what was paid: nothing in the separate Wasteland career.
     ...(medalsOn ? { medal: newMedal && { ...newMedal, bonus: breakdown.medal }, earnedCars } : {}),
     ...yetiAward,
+    ...(coastCup.paid ? {coastCup: {paid: coastCup.paid, events: coastCup.events}} : {}),
     reward,
     ...(separateCareer ? {scrapEarned: career.scrapEarned} : {}),
     charge,
@@ -960,4 +999,26 @@ export function upgradedCar(car, levels = {}) {
     boostCapacity: (car.boostCapacity ?? 1) * (1 + tank * 0.25),
     roughnessScale: 1 / (1 + suspension * 0.18)
   };
+}
+
+// Cup pay follows the final native race's own settlement, never replaces it.
+export function settleCup(profile,{seriesId,ownerId,activePlayerId}={}){
+  const cups=normalizeCups(profile?.cups),active=cups.active;
+  const no=()=>({profile,settled:false,reward:0});
+  const definition=CUPS.find(cup=>cup.id===active?.cupId);
+  if(cups.version!==1||!definition||active.id!==seriesId||active.ownerId!==ownerId||
+    ownerId!==activePlayerId||cups.settled.includes(seriesId)||active.results.length!==definition.events.length||
+    !Object.hasOwn(CARS,active.car)||!Number.isSafeInteger(profile.credits)||profile.credits<0||profile.credits>1_000_000_000)
+    return no();
+  // The permanent ledger survives display-history eviction and moved menu positions.
+  // App stores this exact key only after the current native race is awarded.
+  if(!active.results.every(result=>profile.settledResults.includes(result.settlementKey)))return no();
+  const standings=cupStandings(active.results),won=standings[0]?.you===true;
+  const key=active.cupId+':'+active.cpuDifficulty,first=won&&!cups.trophies.includes(key);
+  const reward=first?Math.min(cupBonus(active.cupId,active.cpuDifficulty),1_000_000_000-profile.credits):0;
+  const updated={...profile,credits:profile.credits+reward,cups:{...cups,active:null,
+    trophies:first?[...cups.trophies,key]:cups.trophies,settled:[...cups.settled,seriesId].slice(-200)},
+    history:[...profile.history,{key:'cup:'+seriesId,eventId:active.cupId,car:active.car,
+      won,completed:true,reward,charge:0,cpuDifficulty:active.cpuDifficulty,at:Date.now()}].slice(-60)};
+  return {profile:updated,settled:true,reward,won,standings,trophy:first?key:null};
 }

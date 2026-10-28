@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {HELI_RADIO_LINES, HELI_RADIO_VOICE, HELI_VOICES} from '../src/heli/heli-radio-lines.js';
 import {
   HELI_CUES, HELI_LIBRARY_CUES, HELI_TONE_CUES, HELI_RADIO_CUES, HELI_EVENT_CUES, HELI_EVENT_LINES, RADIO_FILTER,
-  createHeliAudio, createRadioChain, rotorVoice, softClipCurve, windVoice,
+  createHeliAudio, createRadioChain, rotorVoice, softClipCurve, windVoice, WILDLIFE_CUE_IDS,
 } from '../src/heli/heli-audio.js';
 import {HELI_RECIPES, heliRuntimeName} from './audio/build-heli.mjs';
 import {measureLoudness} from './audio/measurements.mjs';
@@ -17,7 +17,7 @@ const catalog = JSON.parse(read('tools/audio/catalog.json'));
 
 // ---- The cue table ---------------------------------------------------------
 const lineIds = Object.keys(HELI_RADIO_LINES);
-assert.equal(lineIds.length, 70, 'twenty-seven H1 lines, nineteen H2 Fire lines and twenty-four H4 Rescue lines');
+assert.equal(lineIds.length, 83, 'twenty-seven H1 lines, nineteen H2 Fire lines, twenty-eight H4 Rescue lines and nine H3 Wildlife lines');
 assert.equal(HELI_RADIO_VOICE.name, 'Brian');
 // Three stock voices with the same settings (docs/HELI_FIRE.md section 10).
 assert.deepEqual(Object.fromEntries(Object.entries(HELI_VOICES).map(([key, voice]) => [key, [voice.name, voice.voiceId]])), {
@@ -50,28 +50,38 @@ for (const [id, [voice, text]] of Object.entries(FIRE_LINES))
 const RESCUE_VOICES = {avalanche: 'roger', hoist: 'roger', supply: 'roger', rescue: 'roger', beacon: 'roger', season: 'roger',
   hiker: 'sarah', line: 'brian'};
 const rescueIds = lineIds.filter(id => /^heli\.radio\.(avalanche|hoist|supply|hiker|rescue|beacon|season|line)\./.test(id));
-assert.equal(rescueIds.length, 24, 'twenty-four rescue lines');
+assert.equal(rescueIds.length, 28, 'twenty-eight rescue lines (four added by RESCUE-HURT)');
 for (const id of rescueIds) assert.equal(HELI_RADIO_LINES[id].voice, RESCUE_VOICES[id.split('.')[2]], id + ' voice');
 assert.equal(HELI_RADIO_LINES['heli.radio.rescue.done'].text, 'Safe and sound. Great work, Kestrel One.');
 // Every rescue line's voice and words exactly as the packet's table has them.
 {
   const table = new Map([...readFileSync(new URL('../docs/HELI_RESCUE.md', import.meta.url), 'utf8')
     .matchAll(/^\| `(heli\.radio\.[a-z.]+)` \| (\w+) \| (.+?) \|$/gm)].map(m => [m[1], {voice: m[2].toLowerCase(), text: m[3]}]));
-  assert.deepEqual([...table.keys()].sort(), [...rescueIds].sort(), 'the packet lists the same 24 lines');
+  assert.deepEqual([...table.keys()].sort(), [...rescueIds].sort(), 'the packet lists the same 28 lines');
   for (const id of rescueIds) assert.deepEqual({voice: HELI_RADIO_LINES[id].voice, text: HELI_RADIO_LINES[id].text}, table.get(id), id + ' as written');
 }
+// H3 Wildlife (docs/HELI_WILDLIFE.md section 8): every line in its voice, as written.
+const wildIds = lineIds.filter(id => /^heli\.radio\.(survey|skin|wash)\./.test(id));
+assert.equal(wildIds.length, 9, 'nine wildlife and skin lines');
+{
+  const table = new Map([...readFileSync(new URL('../docs/HELI_WILDLIFE.md', import.meta.url), 'utf8')
+    .matchAll(/^\| `(heli\.radio\.[a-z.]+)` \| (\w+) \| (.+?) \|$/gm)].map(m => [m[1], {voice: m[2].toLowerCase(), text: m[3]}]));
+  assert.deepEqual([...table.keys()].sort(), [...wildIds].sort(), 'the packet lists the same 9 lines');
+  for (const id of wildIds) assert.deepEqual({voice: HELI_RADIO_LINES[id].voice, text: HELI_RADIO_LINES[id].text}, table.get(id), id + ' as written');
+}
 assert.equal(HELI_RADIO_LINES['heli.radio.hiker.spotted'].text, 'That is them! There is a clearing close by. Land there and they will walk over.');
-for (const id of lineIds) if (!Object.hasOwn(FIRE_LINES, id) && !rescueIds.includes(id)) assert.equal(HELI_RADIO_LINES[id].voice, 'brian', id + ' stays the instructor');
+for (const id of lineIds) if (!Object.hasOwn(FIRE_LINES, id) && !rescueIds.includes(id) && !wildIds.includes(id)) assert.equal(HELI_RADIO_LINES[id].voice, 'brian', id + ' stays the instructor');
 // Every take plays within the H1 lines' loudness: measured level plus its gain.
 {
   const played = id => {
     const m = measureLoudness(read('public/assets/audio/voices/' + HELI_RADIO_LINES[id].file));
     return m.available ? m.integratedLufs + 20 * Math.log10(HELI_RADIO_LINES[id].gain || 1) : null;
   };
-  const h1 = lineIds.filter(id => !Object.hasOwn(FIRE_LINES, id)).map(played).filter(v => v !== null);
+  const checked = [...Object.keys(FIRE_LINES), ...wildIds];
+  const h1 = lineIds.filter(id => !checked.includes(id)).map(played).filter(v => v !== null);
   if (h1.length) {
     const low = Math.min(...h1) - 1.5, high = Math.max(...h1) + 1.5;
-    for (const id of Object.keys(FIRE_LINES)) {
+    for (const id of checked) {
       const level = played(id);
       assert(level === null || level >= low && level <= high, id + ' plays at ' + level?.toFixed(1) + ' LUFS, outside ' + low.toFixed(1) + ' to ' + high.toFixed(1));
     }
@@ -104,10 +114,15 @@ assert.deepEqual(Object.keys(HELI_LIBRARY_CUES).sort(), [
   'heli.cable.creak', 'heli.engine.start', 'heli.engine.stop', 'heli.hook.release',
   'heli.rotor', 'heli.setdown.thud', 'heli.wind',
   'heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.bucket.dent', 'heli.fire.hiss',
-  'heli.flare', 'heli.snow.dig', 'heli.rescue.clip'].sort());
+  'heli.flare', 'heli.snow.dig', 'heli.rescue.clip',
+  'heli.survey.click', 'heli.wash', 'heli.winch', ...['moose', 'wolf', 'bear', 'kookaburra', 'cockatoo', 'sheep', 'marmot', 'raven'].map(s => 'heli.animal.' + s)].sort());
+assert.deepEqual([...WILDLIFE_CUE_IDS].sort(), Object.keys(HELI_LIBRARY_CUES).filter(id =>
+  ['heli.survey.click', 'heli.wash', 'heli.winch'].includes(id) || id.startsWith('heli.animal.')).sort(), 'the eleven wildlife recordings load together');
+assert.equal(WILDLIFE_CUE_IDS.length, 11);
 assert.deepEqual(Object.keys(HELI_TONE_CUES).sort(), [
   'heli.fuel.low', 'heli.radio.click', 'heli.radio.hiss', 'heli.rotor.low',
-  'heli.fire.alert', 'heli.aim.lock', 'heli.badge', 'heli.beacon.beep', 'heli.clock.tick'].sort());
+  'heli.fire.alert', 'heli.aim.lock', 'heli.badge', 'heli.beacon.beep', 'heli.clock.tick', 'heli.buoy-hit', 'heli.retardant', 'heli.found',
+  'map.open', 'map.close', 'map.pin'].sort());
 assert.equal(HELI_CUES['heli.fire.crackle'].volume, .5, 'the crackle sits under the rotor');
 // The alert stays no louder than the low-fuel chime: the click cue it was first
 // matched to is never played (the radio chain makes its own click).
@@ -123,8 +138,10 @@ const buses = {
   'heli.cable.creak': 'vehicle', 'heli.hook.release': 'vehicle', 'heli.setdown.thud': 'vehicle',
   'heli.fuel.low': 'interface', 'heli.rotor.low': 'interface', 'heli.radio.click': 'interface',
   'heli.fire.crackle': 'ambience', 'heli.fire.hiss': 'ambience', 'heli.bucket.scoop': 'vehicle', 'heli.bucket.pour': 'vehicle',
-  'heli.bucket.dent': 'vehicle', 'heli.fire.alert': 'interface', 'heli.aim.lock': 'interface', 'heli.badge': 'interface',
+  'heli.bucket.dent': 'vehicle', 'heli.fire.alert': 'interface', 'heli.aim.lock': 'interface', 'heli.badge': 'interface', 'heli.found': 'interface', 'map.open': 'interface', 'map.close': 'interface', 'map.pin': 'interface',
   'heli.flare': 'ambience', 'heli.snow.dig': 'vehicle', 'heli.rescue.clip': 'vehicle', 'heli.beacon.beep': 'interface', 'heli.clock.tick': 'interface',
+  'heli.survey.click': 'interface', 'heli.wash': 'vehicle', 'heli.winch': 'vehicle',
+  ...Object.fromEntries(['moose', 'wolf', 'bear', 'kookaburra', 'cockatoo', 'sheep', 'marmot', 'raven'].map(s => ['heli.animal.' + s, 'ambience'])),
 };
 // The beeps sit above the rotor (they are the instrument you fly by), the ticks under it.
 assert(HELI_CUES['heli.beacon.beep'].volume > HELI_CUES['heli.clock.tick'].volume, 'beeps above ticks');
@@ -132,7 +149,7 @@ let libraryBytes = 0;
 for (const [id, bus] of Object.entries(buses)) {
   assert.equal(HELI_CUES[id].bus, bus, id + ' bus');
   assert.equal(HELI_CUES[id].loop === true, ['heli.rotor', 'heli.wind', 'heli.radio.hiss',
-    'heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.snow.dig'].includes(id), id + ' loop');
+    'heli.fire.crackle', 'heli.bucket.scoop', 'heli.bucket.pour', 'heli.snow.dig', 'heli.winch'].includes(id), id + ' loop');
 }
 for (const [id, def] of Object.entries(HELI_LIBRARY_CUES)) {
   const spec = HELI_RECIPES.find(item => item.id === id);
@@ -159,8 +176,9 @@ for (const [id, def] of Object.entries(HELI_LIBRARY_CUES)) {
     assert(credits.includes(row.page), id + ' credit is on the credits page');
   }
 }
-// H4 Rescue's three recordings (about 64 KB) raised the cap from 400 to 480 KB.
-assert(libraryBytes < 480 * 1024, 'helicopter library sounds stay small: ' + libraryBytes);
+// H4 Rescue's three recordings (about 64 KB) raised the cap from 400 to 480 KB;
+// H3 Wildlife's eleven (about 233 KB, loaded only with wildlife) to 720 KB.
+assert(libraryBytes < 720 * 1024, 'helicopter library sounds stay small: ' + libraryBytes);
 for (const def of Object.values(HELI_TONE_CUES)) assert(def.layers.length > 0 && !def.file, 'made from tones or noise');
 for (const [id, def] of Object.entries(HELI_CUES)) {
   assert.equal(def.flag, 'helicopter', id + ' flag');
@@ -521,6 +539,37 @@ const voices = context => context.sources.filter(source => source.buffer?.decode
   assert.deepEqual(pitch(.9), [900], 'at the edge of range: 900 Hz');
   context.currentTime += 1;
   assert.deepEqual(pitch(undefined), [1000], 'no rate plays the cue as made');
+  heli.dispose();
+}
+
+// A flight loads its own sounds; the wildlife recordings only when asked.
+{
+  const {heli, requested} = setup();
+  await heli.load();
+  const wildFiles = WILDLIFE_CUE_IDS.map(id => '/assets/audio/' + HELI_CUES[id].file);
+  assert(!requested.some(url => wildFiles.includes(url)), 'an ordinary flight never fetches the wildlife sounds');
+  await heli.preloadWildlife();
+  assert.deepEqual(wildFiles.filter(url => requested.includes(url)).sort(), [...wildFiles].sort(), 'preloadWildlife fetches all eleven');
+  heli.dispose();
+}
+
+// The mission loops: the winch and the snow dig hold while their level is up.
+{
+  const {context, heli} = setup();
+  const readout = {rotorPct: 100, engine: true, weightKg: 1630, airspeedKts: 0};
+  heli.update(readout);
+  await heli.preloadWildlife();
+  await heli.load(['heli.snow.dig']);
+  await flush();
+  const before = voices(context).filter(s => s.loop).length;
+  heli.missionBeds({winch: 1, dig: .6});
+  assert.equal(voices(context).filter(s => s.loop).length, before + 2, 'the winch and the dig loop start');
+  heli.missionBeds({winch: 1, dig: .6});
+  assert.equal(voices(context).filter(s => s.loop).length, before + 2, 'and hold, never doubled');
+  heli.missionBeds({});
+  await flush();
+  heli.missionBeds({});
+  assert(voices(context).filter(s => s.loop).length <= before, 'a level of 0 lets them go');
   heli.dispose();
 }
 

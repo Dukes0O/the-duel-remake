@@ -105,7 +105,8 @@ async function install(recorder) {
           if (event.stageResult) {
             demand(event.stageResult.grandPrix === true, 'Replay settlement needs a native Grand Prix result');
             app._settleResult.call(controlApp, event.stageResult, state);
-            demand(event.stageResult.creditReward === 0 && event.stageResult.creditBalance === profile.credits,
+            // The clone may never save, so it cannot be paid: its result keeps the unpaid default.
+            demand(event.stageResult.creditReward === 0,
               'Native replay settlement changed its Grand Prix presentation contract');
           }
         } finally { for (const [key, value] of Object.entries(writes)) storage[key] = value; }
@@ -143,19 +144,36 @@ async function install(recorder) {
       demand(state.status === 'stage_result' && state.results?.grandPrix && state.results.completed &&
         state.completedLaps === 3, 'No genuine completed three-lap Grand Prix');
       demand(report.controlAdapter.saveCalls === 0 && report.controlAdapter.events > 0, 'Replay adapter save boundary failed');
-      demand(state.results.creditReward === 0 && state.results.creditBalance === app.profile.credits &&
-        control.state.results.creditReward === 0 && control.state.results.creditBalance === controlApp.profile.credits,
+      // Grand Prix pay is live (GP-CAREER-LIVE): the native result carries the real payout and the player's new balance.
+      // The no-save clone is never paid, so its result keeps the unpaid default.
+      demand(Number.isSafeInteger(state.results.creditReward) && state.results.creditReward >= 0 &&
+        state.results.creditBalance === app.profile.credits &&
+        (state.results.creditReward === 0 || state.results.creditBreakdown?.base > 0) &&
+        control.state.results.creditReward === 0,
         'Native Grand Prix reward/balance presentation differs');
       demand(JSON.stringify(state.hiddenRoadDiscovery) === JSON.stringify(app.getHiddenRoadDiscovery()) &&
         JSON.stringify(control.state.hiddenRoadDiscovery) === JSON.stringify(app.getHiddenRoadDiscovery.call(controlApp)),
         'Native discovery presentation differs');
-      report.replayDifference = [...new Set([...Object.keys(state), ...Object.keys(control.state)])]
-        .filter(key => JSON.stringify(state[key]) !== JSON.stringify(control.state[key]));
+      // Only what the real _settleResult writes into a result on this run may differ from the unpaid clone; every
+      // other result field, and every other state field, must still match exactly. The clone's _settleResult stops at
+      // the player-identity check (it has no run owner), so it writes none of these. Fields the real call cannot write
+      // on this run are NOT listed: drift scores, cup, tuned lap, Coast Cup, Yeti, medals and earned cars (earned-cars
+      // is off), notoriety and scrap (Wasteland only), and ghostRecorded (only Time Trial records a ghost).
+      const PAY_FIELDS = new Set([
+        'lapChoiceEnabled', 'raceDistance', // lap-choice block, after the identity check, completed races only
+        'creditPositionReward', // Grand Prix position pay, inside the awarded.awarded block
+        'creditReward', 'creditCharge', 'policeFineCharge', 'creditBreakdown', // the Object.assign of the settlement
+        'personalBest', 'personalBestStatus', 'previousBest', 'best', 'winStreak', 'milestoneAwards', // same Object.assign
+        'creditBalance']); // final line of _settleResult
+      const withoutPay = results => Object.fromEntries(Object.entries(results ?? {}).filter(([key]) => !PAY_FIELDS.has(key)));
+      const same = key => key === 'results' ? JSON.stringify(withoutPay(state.results)) === JSON.stringify(withoutPay(control.state.results))
+        : JSON.stringify(state[key]) === JSON.stringify(control.state[key]);
+      report.replayDifference = [...new Set([...Object.keys(state), ...Object.keys(control.state)])].filter(key => !same(key));
       report.raceFingerprint = await digest(JSON.stringify(state));
       report.replayFingerprint = await digest(JSON.stringify(control.state));
       demand(report.replayDifference.length === 0, 'Native input replay differs with audio: ' + report.replayDifference.join(', '));
       report.result = {position: state.results.position, time: state.results.stageTimeSec,
-        laps: state.completedLaps, fieldSize: state.results.fieldSize};
+        laps: state.completedLaps, fieldSize: state.results.fieldSize, creditReward: state.results.creditReward};
       const native = kind => report.native.filter(row => row.phase === 'race' && row.kind === kind).length;
       const played = id => report.cues.filter(row => row.phase === 'race' && row.id === id && row.started).length;
       demand(native('light') === 5 && played(ids[0]) === 5, 'Five native light ticks required');
@@ -207,7 +225,7 @@ async function nativeRecorder(audio, helpers) {
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   const demand = (yes, message) => { if (!yes) throw Error(message); };
   const segments = [];
-  let active = null;
+  let active = null, clockFailure = null;
   async function settle(test, label) {
     const end = performance.now() + 5000;
     while (!test()) { if (performance.now() > end) throw Error(label); await wait(16); }
@@ -261,6 +279,18 @@ async function nativeRecorder(audio, helpers) {
       for (const chunk of chunks) {
         demand(chunk.pcm.length === 4096 && chunk.witness.length === 2048, 'Short native block: ' + name);
         const from = Math.max(row.startFrame, chunk.frame), to = Math.min(endFrame, chunk.frame + 2048);
+        if (from !== covered && !clockFailure) {
+          const header={segment:row.index,track:name,sampleRate:rate,startFrame:row.startFrame,endFrame,
+            expected:covered,actual:from,chunkFrame:chunk.frame,scope:'four raw neighboring chunks per stem; not a whole segment'};
+          try {
+            clockFailure={...header,tracks:Object.fromEntries(Object.entries(row.tracks).map(([stem,input])=>{
+              const center=input.chunks.reduce((best,item,index)=>Math.abs(item.frame-chunk.frame)<Math.abs(input.chunks[best].frame-chunk.frame)?index:best,0);
+              return [stem,input.chunks.slice(Math.max(0,center-2),center+2).map(item=>({
+                frame:item.frame,callbacks:item.callbacks,pcmFrames:item.pcm.length/2,witnessFrames:item.witness.length,
+                pcmBase64:encode(item.pcm),witnessBase64:encode(item.witness)}))];
+            }))};
+          } catch(error) {clockFailure={...header,retentionError:error.message};}
+        }
         demand(from === covered, 'Missing or duplicated native sample frames: ' + name + ' ' + JSON.stringify({
           segment: row.index, startFrame: row.startFrame, endFrame, expected: covered, actual: from,
           chunkFrame: chunk.frame, previousFrames: chunks.slice(Math.max(0, chunks.indexOf(chunk) - 2), chunks.indexOf(chunk) + 2).map(item => item.frame),
@@ -283,11 +313,13 @@ async function nativeRecorder(audio, helpers) {
       for (const sample of pcm) demand(Number.isFinite(sample), 'Nonfinite recorded sample: ' + name);
       output[name] = {pcmBase64: encode(pcm), identity, callbacks, disconnectedSilentInputCallbacks: emptyInput,
         startFrame: row.startFrame, endFrame, frames: pcm.length / 2};
-      track.chunks.length = 0;
     }
+    // Keep earlier stems available if a later stem fails validation.
+    for (const track of Object.values(row.tracks)) track.chunks.length = 0;
     return {index: row.index, sampleRate: rate, startFrame: row.startFrame, endFrame, tracks: output};
   }
   return {
+    failurePacket() { return clockFailure; },
     async begin() { active = await segment(); return {sampleRate: rate, startFrame: active.startFrame}; },
     age() { return active ? ctx.currentTime - active.startFrame / rate : 0; },
     async rotate() {
@@ -480,6 +512,27 @@ export async function run(context) {
       q.report.functionalVerdict={nativeEvents:true,replay:true,lifecycle:true,genuineThreeLapFinish:true,listeningApproved:false};
     })()`);
   } finally {
+    // Retain the actual disputed samples before recorder cleanup. The original
+    // thrown continuity assertion still decides this run's failure.
+    try {
+      const failure=await context.evaluate('window.__p4Capture.failurePacket()');
+      if(failure) {
+        const tracks={};
+        for(const [stem,chunks] of Object.entries(failure.tracks??{})) {
+          tracks[stem]=[];
+          for(const [index,chunk] of chunks.entries()) {
+            const {pcmBase64,witnessBase64,...header}=chunk;
+            const pcmFile='clock-'+stem+'-'+index+'-pcm.f32',witnessFile='clock-'+stem+'-'+index+'-witness.f32';
+            const pcm=Buffer.from(pcmBase64,'base64'),witness=Buffer.from(witnessBase64,'base64');
+            await writeFile(join(context.outputDir,pcmFile),pcm);
+            await writeFile(join(context.outputDir,witnessFile),witness);
+            tracks[stem].push({...header,pcmFile,witnessFile,pcmBytes:pcm.length,witnessBytes:witness.length});
+          }
+        }
+        await writeFile(join(context.outputDir,'clock-failure.json'),JSON.stringify({...failure,tracks},null,2)+'\n');
+        recording.clockDispute={file:'clock-failure.json',scope:failure.scope,retentionError:failure.retentionError??null};
+      }
+    } catch(error) {recording.clockRetentionError=error.message;}
     await context.evaluate('window.__qaApp.stop(); window.__p4Capture.stop()');
     const report = await context.evaluate('window.__p4Audio.result()');
     await writeFile(join(context.outputDir, 'p4-audio.json'), JSON.stringify(report, null, 2) + '\n');

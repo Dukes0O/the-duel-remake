@@ -202,13 +202,14 @@ function addEscapeRoads(group, course) {
   }
 }
 
-function addPit(group, course) {
+function addPit(group, course, roadMaterial) {
   const lane = course.pitLane;
   if (!lane) return;
   const pit = new THREE.Group();
   pit.name = 'pit-facility';
   group.add(pit);
-  const asphalt = new THREE.MeshStandardMaterial({color: 0x41454a, roughness: .95});
+  // Opt-in damp courses share the real textured road; other pits keep their legacy material.
+  const asphalt = roadMaterial ?? new THREE.MeshStandardMaterial({color: 0x41454a, roughness: .95});
   const road = new THREE.Mesh(strip(course, s => lane.offsetAt(s) - 4.5,
     s => lane.offsetAt(s) + 4.5, .045, lane.entry, lane.exit), asphalt);
   road.name = 'pit-lane-road';
@@ -271,7 +272,7 @@ function addPit(group, course) {
   group.userData.updatePitCrew({tyre: 'summer'});
 }
 
-export function addTrackScriptScene(group, course, {snow = false} = {}) {
+export function addTrackScriptScene(group, course, {snow = false, roadMaterial} = {}) {
   for (const run of surfaceRuns(course)) {
     const look = OVERLAY[run.kind];
     if (!look) continue;
@@ -295,7 +296,7 @@ export function addTrackScriptScene(group, course, {snow = false} = {}) {
   addEscapeRoads(group, course);
   addKerbs(group, course);
   addBoards(group, course);
-  addPit(group, course);
+  addPit(group, course, roadMaterial);
   addCircuitEffects(group, course);
 }
 

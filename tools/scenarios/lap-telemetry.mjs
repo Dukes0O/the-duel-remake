@@ -33,6 +33,9 @@ async function setup(context,quality){
     app.profile.credits=50000;app._saveProfile();
     const purchased=app.purchaseCourse(${JSON.stringify(EVENT)});
     if(!purchased.ok)throw Error('Could not buy the native test circuit: '+purchased.reason);
+    // Telemetry is track intel level 3 (P4-INTEL-LEVELS): buy it at the menu, as a player would, so the Team Room shows it.
+    const intel=app.buyIntel(${JSON.stringify(EVENT)},3);
+    if(!intel.ok)throw Error('Could not buy track intel level 3: '+JSON.stringify(intel));
     app.setRouteVariant(${JSON.stringify(ROUTE)});
     app.audio.setMuted(true);app.setGraphicsQuality(${JSON.stringify(quality)});
     window.__telemetryEvents=[];

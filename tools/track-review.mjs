@@ -15,9 +15,11 @@
 // course on disposable memory saves. Part two replays those numbers in the
 // private browser harness (tools/scenarios/track-review.mjs) for the pictures.
 // Nothing here changes game code or touches real saves.
+import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { heliOf } from '../src/heli/heli-save.js';
 
 export const PROJECT_ROOT = resolve(fileURLToPath(new URL('../', import.meta.url)));
 export const FRAME_COUNT = 16;
@@ -162,7 +164,11 @@ export async function runHeadlessLaps(options) {
     for (const circuit of ALL_CIRCUITS) if (options.flags.includes(circuit.flag) && !COURSE.some(entry => entry.id === circuit.id)) COURSE.push(circuit);
     const stageIndex = COURSE.findIndex(entry => entry.id === options.courseId);
     if (stageIndex < 0) throw Error(`No course called ${options.courseId}. Known: ${COURSE.map(c => c.id).join(', ')}`);
-    app.profile = { ...app.profile, courses: { version: 1, unlocked: COURSE.map(c => c.id) } };
+    const unlock = CIRCUIT_MANIFESTS.find(row => row.id === options.courseId)?.unlock;
+    app.profile = { ...app.profile, courses: { version: 1, unlocked: COURSE.map(c => c.id) },
+      ...(unlock?.kind === 'default-gp-podium' ? {grandPrixPodiums:
+        [...new Set([...(app.profile.grandPrixPodiums ?? []), unlock.defaultEventId])]} : {}),
+      ...(unlock?.kind === 'spotted-from-air' ? { heli: { ...heliOf(app.profile), map: { version: 1, seen: [], found: [options.courseId], table: false } } } : {}) };
     app._saveProfile();
     // A course with snow or ice is reviewed on winter tyres, as a player would set up.
     const { courseHasWinterSurfaces } = await import('../src/race-surfaces.js');
@@ -442,6 +448,7 @@ export async function main(args = process.argv.slice(2)) {
     subtitle: `${review.course.lengthM} m, ${review.course.laps} laps, ${review.course.car}, seed ${review.course.seed}, ${options.quality} quality`,
     lapNote: review.lap.flying ? `Lap time is the second (flying) lap of a scripted test driver on Medium; the first lap, from the grid, took ${formatLap(review.lap.lapTimes[0])}.` : 'Lap time is the first lap from the grid.',
     lapTime: review.lap.time, topMph: review.lap.topMph, topAtS: review.lap.topAtS, length: review.course.lengthM,
+    defaultEventId: CIRCUIT_MANIFESTS.find(row => row.id === review.course.id)?.unlock?.defaultEventId ?? null,
     courseId: review.course.id, courseIndex: lap.stageIndex, winterTyre: lap.winterTyre === true, mphToWorld: lap.mphToWorld, gridS: lap.gridS, hasField: lap.opponents > 0,
     startHeading: lap.course.at(0).heading,
     points: review._profile.rows.map(row => [row.x, row.z, laneOf(review._lap, row.s, lap.course.length)?.mph ?? 0]),

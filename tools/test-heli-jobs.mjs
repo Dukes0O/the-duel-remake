@@ -9,11 +9,19 @@ import {CARS} from '../src/config.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {liftCheck} from '../src/heli/heli-cable.js';
-import {heliOf, carAt} from '../src/heli/heli-save.js';
+import {heliOf, carAt, heliHash, notePlayDay, missionsOf, normalizeHeli, createHeli, createMissions, WRECK_DAYS} from '../src/heli/heli-save.js';
 import {HELI_RADIO_LINES} from '../src/heli/heli-radio-lines.js';
-import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, dayJobs, jobPay, jobTitle} from '../src/heli/heli-jobs.js';
+import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, isAirOnlyCar, airOnlyNote, dayJobs, jobPay, jobTitle,
+  SUMMIT_RUN, HELI_DESTINATIONS_WITH_SUMMIT, destinationsFor, legFuelKg, bearing, isDestination,
+  RECOVERY, wreckFor, recoveryJob, recoveryTitle, recoveryJobOf, finishRecovery} from '../src/heli/heli-jobs.js';
 import {createHeliSession} from '../src/heli/heli-session.js';
 import {dispatchBoardMarkup, handleBoardAction, createDispatchBoard, atHomePad} from '../src/heli/heli-board.js';
+import {returnLoadJob, returnLoadTitle, finishReturnLoad, returnLoadPay} from '../src/heli/heli-jobs.js';
+import {payForMinutes, deliveryMinutes} from '../src/heli/heli-pay.js';
+import {fuelPadAt, placeOfCourse, mapDistanceKm} from '../src/heli/pilot-map-data.js';
+import {armMissions} from '../src/heli/heli-missions.js';
+import {setMissions} from '../src/heli/heli-save.js';
+import {arrivalMarkup} from '../src/heli/heli-ui.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -78,7 +86,7 @@ function profileWith({credits = 3000, owned = [], heli = null} = {}) {
 const DAY1 = '2026-10-14', DAY2 = '2026-10-15';
 
 function newSession({profile = profileWith(), carId = 'falcone_f42', mode = 'assisted', today = DAY1, saves = null} = {}) {
-  const session = createHeliSession({profile, enabled: true, loadCourse, carId, mode, today, persist: p => saves?.push(p)});
+  const session = createHeliSession({profile, enabled: true, logbookEnabled: true, loadCourse, carId, mode, today, persist: p => saves?.push(p)});
   session.start();
   session.buyFuel();
   session.takeEvents();
@@ -87,11 +95,14 @@ function newSession({profile = profileWith(), carId = 'falcone_f42', mode = 'ass
 
 // ---- the day's jobs --------------------------------------------------------
 {
-  same(JOB_ROUTES.map(r => [r.from, r.to, r.pay]), [['tremblant-woods', 'tremblant-snow', 300], ['tremblant-snow', 'panorama-ridge', 450],
-    ['tremblant-woods', 'panorama-ridge', 600]], 'the three routes and their pay');
+  // HELI-PAY-CONTINUE: pay is the minutes a delivery takes at the race rate (was 300, 450 and 600); tools/test-heli-pay.mjs has the working.
+  same(JOB_ROUTES.map(r => [r.from, r.to, r.pay]), [['tremblant-woods', 'tremblant-snow', 2100], ['tremblant-snow', 'panorama-ridge', 2800],
+    ['tremblant-woods', 'panorama-ridge', 2100]], 'the three routes and their pay');
   ok(JOB_CARS.length >= 3 && JOB_CARS.every(id => liftCheck(id).ok), 'customers ask only for cars the helicopter can lift');
   ok(!JOB_CARS.some(id => AIR_ONLY_CARS.includes(id)), 'a customer\'s car is never a special car');
   ok(!JOB_CARS.includes('koenigsegg_jesko') && !JOB_CARS.includes('banshee_muscle') && !JOB_CARS.includes('titan_monster'), 'not the Jesko, Banshee or Titan');
+  ok(!isAirOnlyCar('koenigsegg_jesko'), 'the Jesko is no longer air-only');
+  same(airOnlyNote({enabled: true, profile: {heli: {version: 1, carsAt: {koenigsegg_jesko: 'panorama-ridge'}}}, carId: 'koenigsegg_jesko', courseId: 'tremblant-snow'}), null, 'old saved Jesko positions do not close START');
   same(dayJobs(7), dayJobs(7), 'same day, same jobs');
   const seen = new Set();
   for (let day = 0; day < 60; day++) {
@@ -285,6 +296,8 @@ function flyJob({mode = 'assisted', high = false} = {}) {
   assert.equal(released?.type, 'released'); checks++;
   const done = log.find(e => e.type === 'jobDone');
   ok(done && done.job.id === job.id, 'the job is done');
+  same(heliOf(session.profile).logbook.jobs.car, 1, 'logbook counts a delivered car once');
+  same(heliOf(session.profile).logbook.jobs.crate, 0, 'car jobs are not crate jobs');
   ok(log.some(e => e.type === 'radio' && e.line === 'heli.radio.job.done'), 'with the radio line');
   ok(!log.some(e => e.type === 'delivered'), 'the player\'s own car is not involved');
   ok(!log.some(e => e.type === 'charged'), 'a clean set-down costs no repairs');
@@ -293,8 +306,11 @@ function flyJob({mode = 'assisted', high = false} = {}) {
 
 {
   const {session, job, done, creditsBefore} = flyJob();
-  assert.equal(done.pay, 300); checks++;
-  assert.equal(session.profile.credits, creditsBefore + 300, 'credits rise by 300'); checks++;
+  // A clean set-down (no repair charged while the job was in hand) adds a quarter: 2,100 and 550.
+  assert.equal(done.pay, 2650); checks++;
+  assert.equal(done.bonus, 550); checks++;
+  assert.equal(done.balance, creditsBefore + 2650, 'the result says what the player has now'); checks++;
+  assert.equal(session.profile.credits, creditsBefore + 2650, 'credits rise by 2,650'); checks++;
   same(heliOf(session.profile).jobs, {day: 1, taken: null, done: [job.id]}, 'the save marks it done and clears the job in hand');
   ok(session.boardJobs().find(j => j.id === job.id).done, 'the board shows it done');
   ok(session.view().loads.some(l => l.id === job.carId && !l.job && !l.own), 'the customer\'s car stays where it was set down');
@@ -319,15 +335,17 @@ function flyJob({mode = 'assisted', high = false} = {}) {
 
 {
   const {session, done, creditsBefore} = flyJob({mode: 'real'});
-  assert.equal(done.pay, 375); checks++;
-  assert.equal(session.profile.credits, creditsBefore + 375, 'Real: credits rise by 375'); checks++;
+  assert.equal(done.pay, 3313); checks++;
+  assert.equal(session.profile.credits, creditsBefore + 3313, 'Real: credits rise by 3,313 (2,625 and 688)'); checks++;
 }
 
 {
   // A drop from height charges the repair and leaves the job in hand; hooking
   // the car again and setting it down properly finishes it.
+  // The dropped load makes the delivery unclean: the plain pay, no bonus.
   const {session, job, done} = flyJob({high: true});
-  assert.equal(done.pay, 300); checks++;
+  assert.equal(done.pay, 2100); checks++;
+  assert.equal(done.bonus, 0); checks++;
   same(heliOf(session.profile).jobs, {day: 1, taken: null, done: [job.id]}, 'finished after the second, gentle set-down');
 }
 
@@ -402,12 +420,12 @@ function flyOwnCar({owned}) {
   ok(/Fly my car/.test(markup) && markup.includes('data-heli-board="take:own"'), 'Fly my car is listed with a button');
   for (const job of session.boardJobs().slice(1)) {
     ok(markup.includes(jobTitle(job)) && markup.includes(`data-heli-board="take:${job.id}"`), `${job.id} is listed: ${jobTitle(job)}`);
-    ok(markup.includes(`${jobPay(job, 'real')} credits`), `${job.id} shows ${jobPay(job, 'real')} credits in Real`);
+    ok(markup.includes(`Pays ${jobPay(job, 'real').toLocaleString('en-US')} credits, +`), `${job.id} shows ${jobPay(job, 'real')} credits in Real`);
   }
-  ok(markup.includes('+25% in Real'), 'Real shows the bonus');
+  ok(markup.includes('Real pays 25% more'), 'Real shows the bonus');
   ok(!markup.includes('Race here'), 'no Race here without an offer');
   const assisted = dispatchBoardMarkup(view, {jobs: newSession().boardJobs(), mode: 'assisted'});
-  ok(!assisted.includes('+25% in Real') && assisted.includes('300 credits'), 'Assisted shows the plain pay');
+  ok(!assisted.includes('Real pays 25% more') && assisted.includes('Pays 2,100 credits, +550 for a clean delivery'), 'Assisted shows the plain pay and the clean bonus');
   ok([...markup.matchAll(/class="([^"]*)"/g)].every(m => m[1].split(" ").every(name => name.startsWith("heli-board"))), "every class name starts with heli-board");
   // Only on the home pad's ground.
   const flying = {...view, heli: {...view.heli, onGround: false}};
@@ -469,6 +487,256 @@ function flyOwnCar({owned}) {
   const before = JSON.stringify({...session.profile, heli: undefined, credits: undefined});
   dispatchBoardMarkup(session.view(), {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode});
   assert.equal(JSON.stringify({...session.profile, heli: undefined, credits: undefined}), before); checks++;
+}
+
+// ---- H4 Rescue: Summit Run as a destination (docs/HELI_RESCUE.md section 5.5) ----
+{
+  // What the tables gave before Summit Run joined: the 60 boards, the legs
+  // and the answers about Summit Run with its switch off, from the code as it
+  // stood at RESCUE-SAVE's merge.
+  const before = [];
+  for (let day = 0; day < 60; day++) before.push(dayJobs(day));
+  before.push([legFuelKg('tremblant-woods', 'tremblant-snow'), legFuelKg('panorama-ridge', 'tremblant-woods'),
+    legFuelKg('tremblant-snow', 'panorama-ridge'), legFuelKg('tremblant-woods', 'summit-run'), legFuelKg('summit-run', 'panorama-ridge')]);
+  before.push(HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, isDestination('summit-run'), bearing('tremblant-woods', 'summit-run'),
+    bearing('tremblant-woods', 'panorama-ridge'));
+  // HELI-PAY-CONTINUE: the pin moved only because the three routes' pay did. With the new pays mapped back to 300, 450 and 600 the
+  // same list hashes to the old 3257734403: the boards, cars, legs and destinations are unchanged.
+  assert.equal(heliHash(JSON.stringify(before)), 1330338215, 'with the switch off the boards, legs and destinations are unchanged'); checks++;
+  same(Object.keys(HELI_DESTINATIONS), ['tremblant-woods', 'tremblant-snow', 'panorama-ridge'], 'H1\'s three destinations, in order');
+  ok(destinationsFor() === HELI_DESTINATIONS && destinationsFor({summitRun: false}) === HELI_DESTINATIONS && destinationsFor({}) === HELI_DESTINATIONS, 'switch off: the H1 table');
+  ok(!isDestination('summit-run') && !isDestination('summit-run', {summitRun: false}), 'switch off: not a destination');
+  same([legFuelKg('tremblant-woods', 'summit-run'), legFuelKg('summit-run', 'panorama-ridge'), legFuelKg('summit-run', 'summit-run')], [null, null, null], 'switch off: no legs');
+  same(bearing('tremblant-woods', 'summit-run'), null, 'switch off: no bearing');
+
+  // Switch on.
+  same(Object.keys(HELI_DESTINATIONS_WITH_SUMMIT), ['tremblant-woods', 'tremblant-snow', 'panorama-ridge', 'summit-run'], 'four destinations');
+  ok(destinationsFor({summitRun: true}) === HELI_DESTINATIONS_WITH_SUMMIT && Object.isFrozen(HELI_DESTINATIONS_WITH_SUMMIT) && Object.isFrozen(SUMMIT_RUN), 'switch on: the four-place table, frozen');
+  same({id: SUMMIT_RUN.id, name: SUMMIT_RUN.name, baseAltitude: SUMMIT_RUN.baseAltitude, home: SUMMIT_RUN.home},
+    {id: 'summit-run', name: 'Summit Run', baseAltitude: 2860, home: false}, 'the real start of the Pikes Peak road');
+  ok(isDestination('summit-run', {summitRun: true}) && isDestination('panorama-ridge', {summitRun: true}) && !isDestination('titan-arena', {summitRun: true}), 'switch on: Summit Run is a destination');
+  const on = {summitRun: true};
+  same([legFuelKg('tremblant-woods', 'summit-run', on), legFuelKg('summit-run', 'tremblant-woods', on)], [160, 160], 'Woods and Summit Run, both ways');
+  same([legFuelKg('tremblant-snow', 'summit-run', on), legFuelKg('summit-run', 'tremblant-snow', on)], [150, 150], 'Tremblant Snow and Summit Run, both ways');
+  same([legFuelKg('panorama-ridge', 'summit-run', on), legFuelKg('summit-run', 'panorama-ridge', on)], [90, 90], 'Panorama Ridge and Summit Run, both ways');
+  same([legFuelKg('tremblant-woods', 'tremblant-snow', on), legFuelKg('panorama-ridge', 'tremblant-woods', on), legFuelKg('tremblant-snow', 'panorama-ridge', on)], [25, 120, 110], 'H1\'s legs are the same');
+  ok([160, 150, 90].every(kg => kg < 400), 'every leg can be flown on one tank');
+  const toSummit = bearing('panorama-ridge', 'summit-run', on);
+  ok(toSummit.x < 0 && toSummit.z > 0, 'north-west of Panorama Ridge on the small map (north is +z)');
+  near(Math.hypot(toSummit.x, toSummit.z), 1, 1e-9, 'a unit vector');
+  const back = bearing('summit-run', 'panorama-ridge', on);
+  near(back.x, -toSummit.x, 1e-9, 'the way back faces the other way'); near(back.z, -toSummit.z, 1e-9, 'the way back faces the other way');
+  same(bearing('tremblant-woods', 'panorama-ridge', on), bearing('tremblant-woods', 'panorama-ridge'), 'H1 bearings unchanged');
+  ok(bearing('tremblant-woods', 'summit-run') === null && bearing('summit-run', 'summit-run', on) === null, 'no bearing to itself');
+
+  // The board's everyday jobs stay on H1's three routes, either way.
+  ok([...JOB_ROUTES].every(r => r.from !== 'summit-run' && r.to !== 'summit-run'), 'no everyday route to Summit Run');
+  ok(Array.from({length: 60}, (_, day) => dayJobs(day)).flat().every(j => j.from !== 'summit-run' && j.to !== 'summit-run'), 'no board job goes to Summit Run');
+}
+
+// ---- H4 Rescue: the car recovery job (docs/HELI_RESCUE.md section 5.3) ----
+{
+  same({...RECOVERY}, {pay: 2300, days: 3}, 'it pays 2,300 (was 500) and stays 3 play days');
+  assert.equal(RECOVERY.days, WRECK_DAYS); checks++;
+  const wreck = wreckFor({seed: 12345, courseId: 'panorama-ridge', x: -120.5, z: 880, day: 20});
+  same({...wreck, carId: undefined}, {courseId: 'panorama-ridge', carId: undefined, x: -120.5, z: 880, day: 20}, 'the wreck is where the rescue left it');
+  ok(JOB_CARS.includes(wreck.carId) && !AIR_ONLY_CARS.includes(wreck.carId) && liftCheck(wreck.carId).ok, 'a customer car Kestrel One can lift');
+  same(wreckFor({seed: 12345, courseId: 'panorama-ridge', x: -120.5, z: 880, day: 20}), wreck, 'same seed, same car');
+  const cars = new Set(Array.from({length: 60}, (_, k) => wreckFor({seed: k * 104729, courseId: 'panorama-ridge', x: 0, z: 0, day: 1}).carId));
+  ok(cars.size >= 4 && [...cars].every(id => JOB_CARS.includes(id)), `different seeds leave different cars (${cars.size})`);
+
+  // On the board from the day after the rescue, for 3 play days.
+  same([19, 20].map(day => recoveryJob(wreck, day)), [null, null], 'not on the day of the rescue or before');
+  same([21, 22, 23].map(day => recoveryJob(wreck, day) !== null), [true, true, true], 'the next three play days');
+  same([24, 25, 99].map(day => recoveryJob(wreck, day)), [null, null, null], 'then it leaves');
+  same(recoveryJob(null, 21), null, 'no wreck, no job');
+  same(recoveryJob(wreck, NaN), null, 'a damaged day gives no job');
+  const job = recoveryJob(wreck, 21);
+  same({...job}, {id: `w20-${wreck.carId}`, kind: 'recovery', carId: wreck.carId, from: 'panorama-ridge', to: 'panorama-ridge', pay: 2300, x: -120.5, z: 880}, 'the job');
+  ok(Object.isFrozen(job) && /^[a-z0-9:_-]+$/.test(job.id), 'frozen, with a save-safe id');
+  assert.equal(recoveryTitle(job), `Recover the ${CARS[wreck.carId].name} from Panorama Ridge`); checks++;
+  same([jobPay(job, 'assisted'), jobPay(job, 'real')], [2300, 2875], 'paid as a dispatch job: Real pays a quarter more');
+
+  // Through the save: appears the next play day, pays once, leaves after 3 play days.
+  const day = n => `2026-11-${String(n).padStart(2, '0')}`;
+  const base = count => ({credits: 100, heli: normalizeHeli({...createHeli(), playDay: {last: day(count), count}, missions: {...createMissions(), wreck}})});
+  const rescued = base(20);
+  same(recoveryJobOf(rescued, {enabled: true}), null, 'not on the day of the rescue');
+  same(recoveryJobOf(base(22)), null, 'switch off: no job');
+  let profile = rescued;
+  const seen = [];
+  for (let count = 21; count <= 25; count++) {
+    profile = notePlayDay(profile, day(count), {enabled: true}).profile;
+    assert.equal(heliOf(profile).playDay.count, count); checks++;
+    seen.push(recoveryJobOf(profile, {enabled: true}) !== null);
+  }
+  same(seen, [true, true, true, false, false], 'the job is there on play days 21 to 23 and gone on 24');
+  same(missionsOf(profile).wreck, null, 'the save removed the wreck when it was more than 3 days old');
+  assert.equal(finishRecovery(base(22), {enabled: false}).ok, false, 'switch off: no recovery'); checks++;
+  assert.equal(finishRecovery(base(22), {enabled: false}).profile.credits, 100, 'switch off: no pay'); checks++;
+
+  const paid = finishRecovery(base(22), {enabled: true});
+  ok(paid.ok && paid.paid === 2300 && paid.profile.credits === 2400 && paid.job.id === job.id, 'it pays 2,300');
+  const cleanPaid = finishRecovery(base(22), {enabled: true, clean: true});
+  ok(cleanPaid.paid === 2300 + 600, 'a clean recovery adds a quarter (575 rounded to 600)');
+  same(missionsOf(paid.profile).wreck, null, 'the wreck leaves the save');
+  assert.equal(finishRecovery(paid.profile, {enabled: true}).ok, false, 'never twice'); checks++;
+  assert.equal(finishRecovery(base(22), {enabled: true, mode: 'real'}).paid, 2875); checks++;
+  assert.equal(finishRecovery(base(20), {enabled: true}).ok, false, 'not on the day of the rescue'); checks++;
+  assert.equal(finishRecovery(base(24), {enabled: true}).ok, false, 'not after it has left the board'); checks++;
+  assert.equal(finishRecovery({credits: 999_999_900, heli: base(22).heli}, {enabled: true}).profile.credits, 1_000_000_000, 'capped like every credit change'); checks++;
+  assert.equal(finishRecovery({credits: 5, heli: createHeli()}, {enabled: true}).ok, false, 'no wreck, no job'); checks++;
+  // It sits beside the day's three jobs; they do not move.
+  same(dayJobs(22).map(j => j.id), ['d22-1', 'd22-2', 'd22-3'], 'the board\'s three jobs do not move');
+}
+
+// Return boards are repeatable, affordable to fly, and independent of car jobs.
+{
+  const options = {summitRun: true, pilotMap: true, table: true};
+  const placeKey = id => placeOfCourse(id)?.id ?? id;
+  const fuelPrice = (from, to) => Math.max(1.5, fuelPadAt(placeKey(from))?.pricePerKg ?? 0,
+    fuelPadAt(placeKey(to))?.pricePerKg ?? 0);
+  for (const from of Object.keys(destinationsFor(options))) for (const to of Object.keys(destinationsFor(options))) {
+    const fuel = legFuelKg(from, to, options);
+    if (fuel === null || fuel > 400) {
+      same(returnLoadPay(from, to, options), null, 'same pad and legs beyond a full tank are not offered');
+      continue;
+    }
+    // HELI-PAY-CONTINUE: the minutes of a delivery at the race rate (was 60% of the car job), or the fuel floor.
+    const floor = Math.max(payForMinutes(deliveryMinutes()), fuel * fuelPrice(from, to) * 1.25);
+    const pay = returnLoadPay(from, to, options);
+    same(pay, Math.ceil(floor / 10) * 10, `settled pay for ${from} to ${to}`);
+    ok(pay >= floor && pay < floor + 10 && pay % 10 === 0, 'round up to the next 10 without excess');
+    ok(pay > fuel * fuelPrice(from, to), 'every leg covers the dearest endpoint pump');
+    same(returnLoadPay(to, from, options), pay, 'same pay in either direction');
+  }
+  same(returnLoadPay('pacific-canyon', 'red-mesa', options), 2100, 'a crate is 6 minutes at the race rate whatever the leg (was 340); the fuel floor still applies below it');
+  for (let day = 0; day < 30; day++) for (const from of Object.keys(destinationsFor({...options, table: false})))
+    same(returnLoadJob(day, from, options), returnLoadJob(day, from, {...options, table: false}), 'Table discovery cannot change an advertised job');
+  for (let day = 0; day < 30; day++) for (const from of Object.keys(destinationsFor(options))) {
+    const job = returnLoadJob(day, from, options);
+    if (from === HOME_COURSE) { same(job, null, 'home keeps its dispatch board'); continue; }
+    ok(job, `a return load at ${from}`);
+    same(job, returnLoadJob(day, from, options), 'same day and place, same crate');
+    ok(job.massKg >= 300 && job.massKg <= 600, 'crate within settled weight');
+    const fuel = legFuelKg(from, job.to, options);
+    ok(fuel <= 400 && job.pay > fuel * fuelPrice(from, job.to), 'pay exceeds fuel at the dearest endpoint pump');
+    same(job.pay, returnLoadPay(from, job.to, options), 'the seeded job uses the revised leg pay');
+    same(jobPay(job, 'real'), Math.round(job.pay * 1.25), 'Real adds 25 percent');
+  }
+  const profile = profileWith({heli: {playDay: {last: DAY1, count: 4}}});
+  const job = returnLoadJob(4, 'tremblant-snow');
+  const paid = finishReturnLoad(profile, {...job, pay: 1e9});
+  same(paid.paid, job.pay, 'pay comes from the seeded job, never caller numbers');
+  same(finishReturnLoad(paid.profile, job).ok, false, 'cannot pay twice');
+  same(finishReturnLoad(profile, {...job, id: 'stale'}).ok, false, 'reject stale jobs');
+  const tomorrow = notePlayDay(paid.profile, DAY2, {enabled: true}).profile;
+  ok(finishReturnLoad(tomorrow, returnLoadJob(5, job.from)).ok, 'the next play day opens a new load');
+  ok(returnLoadTitle(job).includes('Tremblant Snow'), 'both ends named');
+}
+
+// Actual fixed-step flight: hook at Snow, cruise home, set down and pay once.
+for (const day of [1, 2]) {
+  const session = createHeliSession({profile: profileWith({owned: OWNED, heli: {fuelKg: 400,
+    playDay: {last: DAY1, count: day}}}), enabled: true, logbookEnabled: true, loadCourse, today: DAY1});
+  session.start('tremblant-snow');
+  const board = session.view().returnLoad;
+  same(board.to, day === 1 ? HOME_COURSE : 'panorama-ridge', 'exercise home and onward routes');
+  ok(board && !board.done, 'away arrival has a board');
+  ok(arrivalMarkup(session.view(), [], session.profile).includes(board.sender), 'arrival names the sender');
+  ok(arrivalMarkup(session.view(), [], session.profile).includes('credits'), 'arrival shows pay');
+  const crate = () => session.view().loads.find(load => load.returnJob);
+  run(session, 60, v => pilot(v, {x: crate().x, z: crate().z, y: crate().y + 15.2}, {speed: 4}),
+    v => Math.hypot(v.heli.x - crate().x, v.heli.z - crate().z) < 1 && Math.abs(v.heli.y - crate().y - 15.2) < .6 &&
+      Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < .5);
+  same(session.pressHook()?.type, 'hooked', 'hook the return crate');
+  same(session.destination, board.to, 'hook sets the destination');
+  const log = [];
+  carryAcross(session, log);
+  const before = session.profile.credits;
+  same(setDownAndRelease(session, log)?.type, 'released', 'set the crate down cleanly');
+  // HELI-PAY-CONTINUE: a clean crate (no repair charged since it was hooked) also earns the quarter bonus.
+  same(session.profile.credits, before + board.payNow + board.cleanBonus, 'scripted return flight paid, with the clean bonus');
+  same([board.payNow, board.cleanBonus], [2100, 550], 'a return crate pays the race rate for its 6 minutes, and a quarter for a clean one');
+  same(heliOf(session.profile).logbook.jobs.crate, 1, 'logbook counts a completed return crate once');
+  same(heliOf(session.profile).logbook.jobs.car, 0, 'return loads are not car jobs');
+  same(heliOf(session.profile).returnLoads[board.from], board.day, 'completion saved');
+  ok(!session.view().loads.some(load => load.returnJob?.id === board.id), 'finished crate removed');
+  if (day === 2) {
+    const onward = session.view().returnLoad;
+    ok(!onward.done && session.view().loads.some(load => load.returnJob?.id === onward.id), 'onward pad immediately supplies its own advertised crate');
+  }
+  session.start(board.from);
+  ok(session.view().returnLoad.done, 'revisit shows completion');
+  ok(arrivalMarkup(session.view(), [], session.profile).includes('Nothing more today. The board fills again tomorrow.'), 'done board wording');
+  ok(!session.view().loads.some(load => load.returnJob), 'no second crate today');
+}
+
+// HELI-PAY-CONTINUE: a return crate dropped hard and hooked again earns no clean bonus: the crate is taken at its
+// first hook, so any repair charged after that cancels the bonus for the whole delivery.
+{
+  const session = createHeliSession({profile: profileWith({owned: OWNED, heli: {fuelKg: 400,
+    playDay: {last: DAY1, count: 1}}}), enabled: true, logbookEnabled: true, loadCourse, today: DAY1});
+  session.start('tremblant-snow');
+  const board = session.view().returnLoad;
+  const crate = () => session.view().loads.find(load => load.returnJob);
+  const over = () => run(session, 60, v => pilot(v, {x: crate().x, z: crate().z, y: crate().y + 15.2}, {speed: 4}),
+    v => Math.hypot(v.heli.x - crate().x, v.heli.z - crate().z) < 1 && Math.abs(v.heli.y - crate().y - 15.2) < .6 &&
+      Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < .5);
+  over();
+  same(session.pressHook()?.type, 'hooked', 'hook the return crate');
+  const log = [];
+  carryAcross(session, log);
+  same(setDownAndRelease(session, log, {height: 6})?.type, 'releasedHigh', 'let go 6 m up');
+  log.push(...run(session, 10, () => ({}), (v, seen) => seen.some(e => e.type === 'drop')));
+  ok(log.some(e => e.type === 'charged' && e.kind === 'drop'), 'the drop is charged');
+  ok(!log.some(e => e.type === 'jobDone'), 'a dropped crate does not finish the job');
+  session.takeEvents();
+  run(session, 2, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: v.heli.y}));
+  over();
+  same(session.pressHook()?.type, 'hooked', 'hook it again');
+  const credits = session.profile.credits, again = [];
+  run(session, 40, v => pilot(v, {x: v.zone.x, z: v.zone.z, y: v.zone.y + 22}, {speed: 2}),
+    v => Math.hypot(v.heli.x - v.zone.x, v.heli.z - v.zone.z) < 1 && Math.abs(v.heli.y - v.zone.y - 22) < 0.5 && Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < 0.3);
+  session.takeEvents();
+  same(setDownAndRelease(session, again)?.type, 'released', 'set it down gently');
+  const done = again.find(e => e.type === 'jobDone');
+  ok(done, 'the job is done');
+  same([done.pay, done.bonus, done.clean], [board.payNow, 0, false], 'the plain pay and no clean bonus');
+  same(session.profile.credits, credits + board.payNow, 'credits rise by the plain pay only');
+}
+
+// Supply missions keep idle local return cargo off the hook until the run
+// clears, without taking cargo the pilot has already picked up.
+for (const held of [false, true]) {
+  const base = profileWith({owned: [...OWNED, 'summit-run'], heli: {fuelKg: 400, refuels: 3,
+    playDay: {last: DAY1, count: 30}}});
+  const armed = armMissions(createMissions(), {date: DAY1, playerName: 'Return QA'});
+  const profile = setMissions(base, {...armed, count: armed.need,
+    call: {kind: 'supply', id: `supply-${armed.draws}`, courseId: 'summit-run', day: 30, answered: false}}, {enabled: true}).profile;
+  const session = createHeliSession({profile, enabled: true, loadCourse, loadFireCourse: loadCourse, today: DAY1,
+    fireEnabled: true, rescueEnabled: true, summitRunEnabled: true, playerName: 'Return QA'});
+  session.start('summit-run');
+  const crate = () => session.view().loads.find(load => load.returnJob);
+  ok(crate(), 'return crate waits before answering the supply call');
+  const job = crate().returnJob;
+  if (held) {
+    run(session, 60, v => pilot(v, {x: crate().x, z: crate().z, y: crate().y + 15.2}, {speed: 4}),
+      v => Math.hypot(v.heli.x - crate().x, v.heli.z - crate().z) < 1 && Math.abs(v.heli.y - crate().y - 15.2) < .6 &&
+        Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < .5);
+    same(session.pressHook()?.type, 'hooked', 'pick up return cargo before answering');
+  }
+  const wallet = session.profile.credits;
+  ok(session.pressRadio(), 'answer the supply call');
+  same(session.view().rescue.active.kind, 'supply', 'supply mission started');
+  same(!!crate(), held, 'only idle local return cargo is stowed');
+  if (held) ok(crate().hooked && crate().returnJob.id === job.id, 'held return cargo survives unchanged');
+  same(session.view().rescue.crates.length, 3, 'all three supply crates remain available');
+  same(session.profile.credits, wallet, 'stowing cargo never changes credits');
+  same(heliOf(session.profile).returnLoads, undefined, 'stowing never completes the return job');
+  session.leave();
+  ok(crate()?.returnJob.id === job.id, 'eligible return cargo remains available when the supply mission clears');
+  same(heliOf(session.profile).returnLoads, undefined, 'clearing the mission never completes the return job');
 }
 
 console.log(`test-heli-jobs: ${checks} checks passed`);

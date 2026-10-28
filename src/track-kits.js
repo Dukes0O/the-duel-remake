@@ -1,4 +1,5 @@
 import {isSummitAttack} from './summit-attack.js';
+import {beechTreePlacements} from './vegetation.js';
 import * as THREE from 'three';
 import {renderedGroundHeight} from './rendered-ground.js';
 import {escapeFrame} from './escape-roads.js';
@@ -14,6 +15,7 @@ export const TRACK_KIT_IDS = Object.freeze([
   'harbour-boat','ski-lodge','chairlift-tower','chairlift-cable','chairlift-chair',
   'wooden-dock','autumn-tree','autumn-tree-golden','autumn-tree-copper','snow-pine',
   'snow-ground','snow-rock','plough-bank','gallery','summit-hut','observatory','snowman','yeti',
+  'stone-stream-bridge','forest-footbridge','forest-timing-tower','ardennes-beech','summit-finish',
 ]);
 const approved = new Set(TRACK_KIT_IDS);
 const owners = new WeakMap();
@@ -27,6 +29,9 @@ const fail = message => {throw new Error('Track kit '+message);};
 
 export function normalizeKitPlacements(course, entries) {
   if (!Array.isArray(entries)) fail('placements must be an array.');
+  const beeches=entries.some(entry=>entry?.id==='ardennes-beech')
+    ?new Map(beechTreePlacements(course).map(row=>[row.scenery.id,row])):null;
+  const boundBeeches=new Set();
   return Object.freeze(entries.map(entry => {
     if (!entry || !approved.has(entry.id) || !finite(entry.s) || entry.s < 0 ||
         entry.s > course.length || !finite(entry.lateral) || !finite(entry.heading ?? 0) ||
@@ -60,6 +65,13 @@ export function normalizeKitPlacements(course, entries) {
     const scenery = entry.scenery;
     if (scenery && (scenery.kind !== 'tree' || typeof scenery.id !== 'string' || !scenery.id))
       fail('scenery binding must name an existing tree.');
+    if(entry.id==='ardennes-beech'){
+      const expected=beeches?.get(scenery?.id);
+      if(!expected||boundBeeches.has(scenery.id)||entry.s!==expected.s||entry.lateral!==expected.lateral||
+          (entry.heading??0)!==expected.heading||(entry.lift??0)!==0||scale.some(value=>value!==expected.scale))
+        fail('Ardennes beech must bind once to its exact selected existing tree.');
+      boundBeeches.add(scenery.id);
+    }
     const patch = entry.physicalPatch;
     if (patch && (entry.id !== 'plough-bank' || patch.kind !== 'deep-snow' ||
         !course.features?.surfacePatches?.includes(patch) ||
@@ -154,7 +166,9 @@ function placementMatrix(course, row, bounds) {
   const height=kitBaseHeight(course,row,bounds);
   if (!finite(height)) fail('placement has no rendered terrain beneath its anchor.');
   return new THREE.Matrix4().compose(
-    new THREE.Vector3(ground.x,height-bounds.min.y*row.scale[1],ground.z),
+    // Finish furniture has sampled terrain heights below its road-level origin.
+    // Preserve that authored origin instead of lifting its lowest snow mark.
+    new THREE.Vector3(ground.x,height-(row.id==='summit-finish'?0:bounds.min.y*row.scale[1]),ground.z),
     new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),ground.heading+row.heading),
     new THREE.Vector3(...row.scale));
 }
@@ -294,10 +308,26 @@ function mergeModelByMaterial(model,disposeGeometry=geometry=>geometry.dispose()
 function applyKitLook(look,model,own) {
   if (!look || !model?.scene?.isObject3D) return;
   const glow = finite(look.glow) && look.glow >= 0;
-  if (!glow && !look.wash && !look.smoothNormals && !look.slit) return;
-  const washed = new Set();
+  if (!glow && !look.wash && !look.smoothNormals && !look.slit && look.leafColour === undefined) return;
+  if (look.leafColour !== undefined && (!Number.isSafeInteger(look.leafColour) || look.leafColour < 0 || look.leafColour > 0xffffff))
+    fail('leaf colour must be an authored RGB colour.');
+  const washed = new Set(), leaves = new Map();
   model.scene.traverse(node => {
     if (!node.isMesh) return;
+    if (look.leafColour !== undefined) {
+      const materials = [].concat(node.material || []).map(source => {
+        if (!/-leaves-|-leaf-cluster-/.test(source.name)) return source;
+        if (!leaves.has(source)) {
+          const material = source.clone();
+          material.color.setHex(look.leafColour);
+          material.onBeforeCompile = source.onBeforeCompile;
+          material.customProgramCacheKey = source.customProgramCacheKey.bind(source);
+          leaves.set(source, material); own(material);
+        }
+        return leaves.get(source);
+      });
+      node.material = Array.isArray(node.material) ? materials : materials[0];
+    }
     if(look.smoothNormals){
       const geometry=node.geometry.clone();
       geometry.computeVertexNormals();
@@ -420,7 +450,7 @@ export function createTrackKits(course, options) {
   const normalizeStarted = performance.now();
   try {
     if (typeof validateClearance !== 'boolean') fail('clearance option must be boolean.');
-    rows = normalizeKitPlacements(course,[...placements,...extraPlacements]);
+    rows = normalizeKitPlacements(course,[...placements,...extraPlacements,...(options?.placements===undefined?beechTreePlacements(course):[])]);
     if (!Array.isArray(requiredIds) || !requiredIds.every(id => approved.has(id))) fail('required id is unknown.');
   } catch (caught) {failed = true;status = 'error';error = caught;}
   const stats = {high:0,low:0,visibleChunks:0,

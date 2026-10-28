@@ -1,7 +1,16 @@
+import './lessons/drive-lesson-ui.css';
 import {createDeepUi} from './deep/deep-ui.js';
+import {shownCars} from './earned-cars-ui.js';
 import './deep/deep-ui.css';
+// DEEP-SIRENA-VIEW: the dive's sonar ring, Ana's caption, the log card and the Coast Cup card.
+import {createSirenaHud} from './deep/sirena-view.js';
+import './deep/sirena-ui.css';
 import {createHeliUi} from './heli/heli-ui.js';
 import './heli/heli-ui.css';
+import {createLabUi} from './lab/lab-view.js'; // LAB-VIEW
+import './lab/lab-ui.css';
+import './lab/tune-ui.css'; // LAB-TUNE-VIEW
+import './lessons/lesson-board.css';
 import {createWarlordCardArt} from './warlord-card-art.js';
 import './screen-card-wall.css';
 import {hiddenRoadHints,hiddenRoadMapKey} from './hidden-road-hints.js';
@@ -9,7 +18,7 @@ import {createRendererReadiness} from './screen-readiness.js';
 import {screenMarkup, createMenuScreen, updateBuildNotice} from './screen-menu.js';
 import {createPlayerScreen} from './screen-players.js';
 import {createLeaderboardScreen} from './screen-leaderboard.js';
-import {createGarageScreen, handleDriverAction, handleGarageUpgrade} from './screen-garage.js';
+import {createGarageScreen, handleDriverAction, handleGarageUpgrade, handleTuneAction} from './screen-garage.js';
 import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
 import {arenaYardPanel} from './screen-arena.js';
@@ -22,7 +31,7 @@ import {referenceLap} from './reference-laps.js';
 import {Course} from './course.js';
 import './screen-team-room.css';
 import {createResultsScreen, screenAction} from './screen-results.js';
-import {createHudScreen, presentJumpHeight} from './screen-hud.js';
+import {createHudScreen, presentJumpHeight, nitroHudLabel} from './screen-hud.js';
 import {createCombatHud, combatHudEnabled} from './combat-hud.js';
 import {createHiddenRoadUi} from './hidden-road-ui.js';
 import './hidden-road-ui.css';
@@ -71,11 +80,13 @@ const profile = () => app.profile || createProfile();
 const credits = value => Math.floor(value || 0).toLocaleString();
 const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
-root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML});
+root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML, earnedCars: app._switches?.().enabled('earned-cars') === true});
 const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
 const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
-const heliUi=createHeliUi({host:root.querySelector('#stage'),app});
+const sirenaHud=createSirenaHud({host:root.querySelector('#stage'),app}); // DEEP-SIRENA-VIEW
+const heliUi=createHeliUi({host:root.querySelector('#stage'),app,onMenu:()=>refreshRaceSetup()});
+const labUi=createLabUi({host:root.querySelector('#stage'),app}); // LAB-VIEW: the Lab screen
 // Presentation-only QA switch, absent from normal production builds.
 const hiddenRoadUiQa=typeof __DUEL_QA__!=='undefined'&&__DUEL_QA__?{skipUpdate:false}:null;
 if(hiddenRoadUiQa)window.__hiddenRoadUiQa=hiddenRoadUiQa;
@@ -95,7 +106,7 @@ const combatHelp=document.createElement('p');combatHelp.className='combat-help';
 const legacyCombatHelp='MAD MAX DUEL: 1 / D-pad ↑ short UFO jump (charges at first checkpoint each lap) · 2 / → eight-way bombs · 3 / ↓ crossbow · 4 / ← invincible star (5s). Glowing road power-ups instantly recharge a weapon. The rival fights back. Wrecks recover; finish first.';
 const upgradedCombatHelp='MAD MAX DUEL: 1 / D-pad ↑ short UFO jump (once per lap) · 2 / → eight-way bombs · 3 / ↓ crossbow · 4 / ← invincible star (5s). Colored weapon crates recharge a used weapon; green crosses repair 25 armor. The rivals fight back. Wrecks recover; finish first.';
 combatHelp.textContent=legacyCombatHelp;root.querySelector('.race-setup').append(combatHelp);
-root.querySelector('#cpu-target-label').parentElement.insertAdjacentHTML('afterend',`<details id="rival-customization" class="rival-customization"><summary>CUSTOMIZE YOUR RIVAL</summary><div class="setup-line"><label class="field-label" for="rival-car">CAR</label><select id="rival-car"><option value="match">Match my car (default)</option>${Object.entries(CARS).map(([key,car])=>`<option value="${key}">${car.name}</option>`).join('')}</select></div><div class="setup-line"><label class="field-label" for="rival-driver">DRIVER</label><select id="rival-driver">${Object.values(DRIVERS).map(driver=>`<option value="${driver.id}">${driver.name}</option>`).join('')}</select></div><div class="setup-line"><label class="field-label" for="rival-upgrades">UPGRADES</label><select id="rival-upgrades">${['Stock','Level 1','Level 2','Max / Level 3'].map((label,i)=>`<option value="${i}">${label}</option>`).join('')}</select></div><p id="rival-skill-note" class="event-brief"></p><p class="event-brief">CPU difficulty still controls driving skill. Rival choices do not unlock cars or drivers for you. Custom rival bests are tracked separately.</p></details>`);
+root.querySelector('#cpu-target-label').parentElement.insertAdjacentHTML('afterend',`<details id="rival-customization" class="rival-customization"><summary>CUSTOMIZE YOUR RIVAL</summary><div class="setup-line"><label class="field-label" for="rival-car">CAR</label><select id="rival-car"><option value="match">Match my car (default)</option>${shownCars(app._switches?.().enabled('earned-cars')===true).map(([key,car])=>`<option value="${key}">${car.name}</option>`).join('')}</select></div><div class="setup-line"><label class="field-label" for="rival-driver">DRIVER</label><select id="rival-driver">${Object.values(DRIVERS).map(driver=>`<option value="${driver.id}">${driver.name}</option>`).join('')}</select></div><div class="setup-line"><label class="field-label" for="rival-upgrades">UPGRADES</label><select id="rival-upgrades">${['Stock','Level 1','Level 2','Max / Level 3'].map((label,i)=>`<option value="${i}">${label}</option>`).join('')}</select></div><p id="rival-skill-note" class="event-brief"></p><p class="event-brief">CPU difficulty still controls driving skill. Rival choices do not unlock cars or drivers for you. Custom rival bests are tracked separately.</p></details>`);
 root.querySelector('.boost-readout .field-label').id='nitro-label';
 const ui = Object.fromEntries([...root.querySelectorAll('[id]')].map(el => [el.id, el]));
 const buildUpdates=createBuildUpdateChecker({
@@ -106,7 +117,7 @@ const buildUpdates=createBuildUpdateChecker({
 const routeMap=new RouteMap(ui['route-map'],{getDiscovery:()=>app.getHiddenRoadDiscovery?.()});
 let menuDiscoveryKey=null;
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
-if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();deepUi.dispose();heliUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
+if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();deepUi.dispose();sirenaHud.dispose();heliUi.dispose();labUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
@@ -138,13 +149,14 @@ const courseScreen = (playerProfile, selectedStage, message) => courseScreenMark
     grandPrixCareerEnabled: app._switches().enabled('grand-prix-career'),
     grandPrixAvailable: course => app.grandPrixAvailable(course), selectedMode: choices.mode,
     leaderboard: app.leaderboard, playerId: app.player.id,
-    lapChoiceFor: app._switches().enabled('lap-choice') ? (course,mode)=>app.getLapChoice(COURSE.indexOf(course),mode) : undefined});
+    lapChoiceFor: app._switches().enabled('lap-choice') ? (course,mode)=>app.getLapChoice(COURSE.indexOf(course),mode) : undefined,
+    forestFire: app.forestFireEnabled?.() === true});
 let teamRoomPlayerId = null;
 const teamRoom = createTeamRoom({host: root,
   getDossier(eventId) {
     if (!app._switches().enabled('grand-prix') || !['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) return null;
     const definition = COURSE.find(course => course.id === eventId);
-    if (!definition || definition.closed === false || courseUnlockRequirement(definition) || !isCourseUnlocked(profile(), definition)) return null;
+    if (!definition || definition.closed === false || courseUnlockRequirement(definition)?.kind === 'owned-course' || !isCourseUnlocked(profile(), definition)) return null;
     const selectedRoute = app.duel.state.status === 'menu' ? app.menuRouteId
       : getRouteVariantForSeed(app.duel.state.seed)?.id ?? app.menuRouteId;
     const route = supportsRouteVariants(definition) ? selectedRoute : 'fixed';
@@ -152,6 +164,7 @@ const teamRoom = createTeamRoom({host: root,
     const course = new Course(definition, reference?.seed ?? 1989);
     teamRoomPlayerId = app.player.id;
     return {...buildTrackDossier(course, {route, reference}), course,
+      intelLevel: app.getIntelLevel(eventId), canBuyIntel: app.duel.state.status === 'menu',
       telemetry: app.getLapTelemetry?.({eventId, route, courseFingerprint: reference.courseFingerprint})};
   },
   async capture(dossier, flag, {signal}) {
@@ -161,6 +174,8 @@ const teamRoom = createTeamRoom({host: root,
     return readiness.handle.captureTrackSnapshot({course: dossier.course, flag});
   },
   clearCapture: () => readiness.handle?.clearTrackSnapshot(),
+  buyIntel: (eventId,level) => app.player.id === teamRoomPlayerId ? app.buyIntel(eventId,level) :
+    {ok:false,reason:'Reopen the Team Room for the current player.'},
 });
 const courseActions = createCourseActions({app, choices,
   careerEnabled: () => app._switches().enabled('grand-prix-career'),
@@ -169,7 +184,10 @@ const courseActions = createCourseActions({app, choices,
 function refreshRaceSetup(){
   delete choices.rival;Object.assign(choices,app.getRaceChoices());garageCar=choices.car;updatePlayers();updateMenuScene();lastScreen=null;renderState(app.duel.state);
 }
-ui['ghost-toggle'].addEventListener('change',event=>app.setGhostEnabled(event.target.checked));
+ui['ghost-toggle'].addEventListener('change',event=>{
+  if(app._switches().enabled('grand-prix'))app.cycleGhostChoice(choices);else app.setGhostEnabled(event.target.checked);
+  if(app.duel.state.status==='menu')updateMenuCar();
+});
 for(const id of ['rival-car','rival-driver','rival-upgrades'])ui[id].addEventListener('change',()=>{
   choices.rival={car:ui['rival-car'].value,driverId:ui['rival-driver'].value,upgradeLevel:Number(ui['rival-upgrades'].value)};
   updateMenuScene();
@@ -224,6 +242,7 @@ root.addEventListener('click',e => {
   if(button.dataset.paint){const result=app.purchasePaint(garageCar,button.dataset.paint);refreshGarage(result.ok?`${PAINT_PRESETS[button.dataset.paint].name} applied to ${CARS[garageCar].name}.${result.purchased?` Purchased for ${credits(result.cost)} credits.`:''}`:result.reason);return;}
   if(handleDriverAction(button,{app,refreshGarage,root,garageCar,credits}))return;
   if(handleGarageUpgrade(button,{app,garageCar,refreshGarage,profile,credits}))return;
+  if(handleTuneAction(button,{app,garageCar,refreshGarage,root}))return; // LAB-TUNE-VIEW
   if (button.dataset.car && !isCarUnlocked(profile(), button.dataset.car)) { openGarage(button.dataset.car); return; }
   if(button.dataset.laps){const laps=Number(button.dataset.laps);app.setLapChoice(laps);updateMenuScene();root.querySelector(`[data-laps="${laps}"]`)?.focus({preventScroll:true});return;}
   for (const key of ['car','difficulty','mode','cpuDifficulty','tyre']) if (button.dataset[key]) { choices[key] = button.dataset[key];updateMenuScene();return; }
@@ -290,6 +309,8 @@ root.addEventListener('click',e => {
     case 'armory-close':if(app.isYardHomeActive())yardPanel='home';else armoryOpen=false;lastScreen=null;break;
     case 'garage': openGarage(); return;
     case 'garage-close': closeGarage(); return;
+    case 'medal-sheet': root.querySelector('.garage-panel .medal-panel')?.scrollIntoView({block:'center',behavior:'smooth'}); return;
+    case 'lab-open': if(app.duel.state.status!=='menu'||app.labAvailable?.()!==true)return;garageOpen=false;lastScreen=null;app.openLab();renderState(app.duel.state);return; // LAB-VIEW
     case 'unlock-car': { const result = app.unlockCar(garageCar); if(result.ok) {choices.car = garageCar;updateMenuScene();}refreshGarage(result.ok ? `${CARS[garageCar].name} is yours. Ready for every course.` : result.reason); return; }
     case 'arena':choices.startStage=COURSE.findIndex(scene=>scene.arena);choices.car='titan_monster';updateMenuScene();closeGarage();return;
     case 'garage-select': choices.car = garageCar;updateMenuScene();closeGarage(); return;
@@ -370,7 +391,7 @@ function renderState(s) {
     if(weaponStatus.textContent!==status)weaponStatus.textContent=status;
   }
   root.querySelector('#stage').classList.toggle('combat-mode',choices.mode==='wasteland'||s.mode==='wasteland'&&s.status!=='menu');
-  text('nitro-label',s.practice?'NITRO ∞':'NITRO');
+  text('nitro-label',s.practice?'NITRO ∞':nitroHudLabel(s));
   syncRendererReadiness(s);
   ui.overlay.dataset.credits = String(profile().credits);ui.overlay.dataset.ghostStatus=app.ghostStatus;ui.overlay.dataset.ghostRecords=String(app.ghosts.records.length);ui.overlay.dataset.routeVariant=getRouteVariantForSeed(s.status==='menu'?app.getMenuSeed():s.seed)?.id||'custom';
   ui.overlay.dataset.playerId=app.player.id;ui.overlay.dataset.playerName=app.player.name;ui.overlay.dataset.cpuDifficulty=s.cpuDifficulty||choices.cpuDifficulty;ui.overlay.dataset.lap=String(s.currentLap||s.lap||1);
@@ -383,7 +404,7 @@ function renderState(s) {
   if (!(arenaMode === 'ambush-alley' && arenaVenue === 'pit' &&
     app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(arenaVenue)) arenaVenue = 'scrapdome';
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
-  const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${arenaOpponents}:${arenaMode}:${arenaVenue}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
+  const screen=`${app.ghostSaveStatus}:${app.ghostSaved}:${app.grandPrixGhostSaveStatus}:${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${arenaOpponents}:${arenaMode}:${arenaVenue}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
   if (screen!==lastScreen) {
     const focused=document.activeElement;
     const focusKey=focused?.dataset?.action?['action',focused.dataset.action]:
@@ -428,8 +449,9 @@ function renderState(s) {
   combatHud.update(s);
   const journeyView=hiddenRoadUiQa?.skipUpdate?lastHiddenRoadView:hiddenRoadUi.update(s,app.duel.course,yardActive);
   lastHiddenRoadView=journeyView;
-  const deepView=deepUi.update(app.duel);
+  const deepView=deepUi.update(app.duel);sirenaHud.update(); // DEEP-SIRENA-VIEW
   ui.stage.classList.toggle('heli-active',!!heliUi.update());
+  ui.stage.classList.toggle('lab-active',!!labUi.update()); // LAB-VIEW
   ui.stage.classList.toggle('deep-active',!!deepView);
   ui.stage.style.setProperty('--deep-hud-opacity',String(deepView?.hudOpacity??1));
   ui.stage.classList.toggle('hidden-road-active',!!journeyView?.active);

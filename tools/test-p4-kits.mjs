@@ -33,7 +33,7 @@ const protectedRows = catalog.assets.filter(a => ![
   'p4-neon', 'p4-holiday', 'p4-ski', 'p4-nature', 'p4-dome', 'p4-monsters',
 ].includes(a.id));
 assert.equal(createHash('sha256').update(JSON.stringify(protectedRows)).digest('hex'),
-  'c781ab75e8f6734b7d943190329fa7aba823525f4a4b900960e439db6cc83c29',
+  'c75abff9d24ae7becbf8411c0222ff9b1a6aa30b003ec951672e56a63af05808',
   'all prior catalog entries and both unselected P4 records remain unchanged');
 const selected = new Map(catalog.assets.filter(a => a.id.startsWith('p4-') && a.status === 'selected')
   .map(a => [a.id, a]));

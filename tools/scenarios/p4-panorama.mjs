@@ -20,7 +20,10 @@ export async function nativeBundle() {
           ';import {ownTestCourses} from ' + source('tools/career-fixture.mjs') +
           ';import {sampleCourseLightPath} from ' + source('src/light-path.js') +
           ';import {renderedGroundHeight} from ' + source('src/rendered-ground.js') +
-          ';globalThis.__panQa={useRacingLine,ownTestCourses,sampleCourseLightPath,renderedGroundHeight};';
+          ';import {sweepObstacle} from ' + source('src/collision.js') +
+          ';import {sceneryIdentity} from ' + source('src/destructibles.js') +
+          ';import {offroadCapability} from ' + source('src/offroad-physics.js') +
+          ';globalThis.__panQa={useRacingLine,ownTestCourses,sampleCourseLightPath,renderedGroundHeight,sweepObstacle,sceneryIdentity,offroadCapability};';
       },
     }],
     build: {write: false, emptyOutDir: false, minify: false,

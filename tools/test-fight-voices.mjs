@@ -8,12 +8,16 @@ import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
 import {Duel} from '../src/game.js';
 import {COURSE} from '../src/config.js';
 import {fireWeapon} from '../src/combat-weapons.js';
+// DRIVE-LESSON-LINES: the driving instructor's cues joined the bank behind their switch; exactly that list is left out.
+import {DRIVE_LESSON_CUES} from '../src/lessons/drive-radio-lines.js';
+const DRIVE_BANK_CUES = new Set(Object.keys(DRIVE_LESSON_CUES));
 
 // AUD-18: approved takes stay exact. Native event routing and a pure caption
 // getter share presentation history without adding fields to the race state.
 const hash = value => createHash('sha256').update(value).digest('hex');
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
-const records = catalog.sounds.filter(row => row.source === 'elevenlabs' && !row.cue.startsWith('heli.'));
+// DEEP-RADIO: Ana's phone lines (deep.ana.*) are the Deep's, behind the-deep, and are left out too.
+const records = catalog.sounds.filter(row => row.source === 'elevenlabs' && !row.cue.startsWith('heli.') && !row.cue.startsWith('deep.ana.') && !row.cue.startsWith('lab.brian.') && !DRIVE_BANK_CUES.has(row.cue));
 const KEPT = records.filter(row => row.key !== 'gatekeeper.welcome');
 let checks = 0;
 const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual, expected, message); };
@@ -164,10 +168,12 @@ test('off, undiscovered, ordinary, countdown and paused events remain silent', a
   }
 });
 
-test('voice event presentation preserves the existing ordinary race replay fingerprints', () => {
+// The exact ordinary race fingerprints are checked once, in test-warlord-format.
+// Here the switch must make no difference to the same race and say nothing.
+test('voice event presentation leaves ordinary races exactly as with the switch off', () => {
   const controls = JSON.parse(readFileSync(new URL('./replays/warlord-format-ordinary.json', import.meta.url), 'utf8'));
-  for (const spec of controls.cases) {
-    const duel = new Duel({seed: spec.seed, featureFlags: {'fight-voices': true}}), f = fixture();
+  const race = (spec, on) => {
+    const duel = new Duel({seed: spec.seed, featureFlags: {'fight-voices': on}}), f = fixture();
     duel.onChange((s, event) => f.emit(event, s));
     duel.startCampaign({seed: spec.seed, mode: spec.mode, car: 'falcone_f42',
       startStage: COURSE.findIndex(c => c.id === spec.course), difficulty: 'casual', cpuDifficulty: 'medium'});
@@ -180,8 +186,13 @@ test('voice event presentation preserves the existing ordinary race replay finge
         laps: duel.state.completedLaps, score: duel.state.score,
         rivals: duel.state.opponents.map(actor => [actor.s, actor.lateral, actor.speedMph]), result: duel.state.results});
     }
-    equal(hash(JSON.stringify(samples)), spec.fingerprint, `${spec.mode}/${spec.course}: the committed ordinary fingerprint stays exact`);
-    equal(voiceCalls(f), [], 'ordinary replay emits no kept fight speech');
+    return {trace: hash(JSON.stringify(samples)), voices: voiceCalls(f), moved: samples.at(-1).s > samples[0].s};
+  };
+  for (const spec of controls.cases) {
+    const on = race(spec, true), off = race(spec, false);
+    equal(on.trace, off.trace, `${spec.mode}/${spec.course}: the switch leaves the ordinary race exact`);
+    equal(on.moved, true, `${spec.mode}/${spec.course}: the ordinary race really runs`);
+    equal(on.voices, [], 'ordinary replay emits no kept fight speech');
   }
 });
 

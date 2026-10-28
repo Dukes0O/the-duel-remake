@@ -1,7 +1,7 @@
 // Scenery a circuit draws for itself, from the `effects`, `hills` and `basins`
 // blocks of its definition (docs/CIRCUITS.md section 5.3): a lake with mist
 // drifting over it, wooded hills with ski runs cut into them and a ring of
-// rounded hills far behind. Presentation only. Nothing here reads or writes race
+// rounded hills far behind. Presentation only. Native progress can fade the mist; nothing writes race
 // state, and nothing is placed on the road: the circuit's own test checks the
 // footprints against the road.
 //
@@ -44,9 +44,12 @@
 //     (`sink` metres into it, so a building has no gap under its walls).
 import * as THREE from 'three';
 import { registerSceneSystem } from './scene-systems.js';
+import { renderedGroundHeight } from './rendered-ground.js';
+import { ROAD_SHOULDER_WIDTH } from './config.js';
 import { trackKitsOf } from './track-kits.js';
 import { hillHeight, hillLocal, hillReach, runWeight, shoreFactor } from './circuit-hills.js';
 import { addStandCrowds } from './stand-crowd.js';
+import { addSummitFinish } from './summit-finish-view.js';
 import { addSkiers, addBirches, addChimneySmoke } from './circuit-winter.js';
 
 const TAU = Math.PI * 2;
@@ -61,7 +64,8 @@ export function lakeGeometry(course, lake) {
   const deep = new THREE.Color(lake.colour ?? 0x0d3640), shallow = new THREE.Color(lake.shallow ?? 0x2d6b66), mix = new THREE.Color();
   for (let ring = 0; ring <= rings; ring++) for (let a = 0; a < around; a++) {
     const reach = ring / rings * 1.05, angle = a / around * TAU;
-    const point = course.worldAt(lake.s + Math.cos(angle) * reach * shoreFactor(angle) * lake.along, lake.lateral + Math.sin(angle) * reach * shoreFactor(angle) * lake.across);
+    const outline = shoreFactor(angle, lake.orientation);
+    const point = course.worldAt(lake.s + Math.cos(angle) * reach * outline * lake.along, lake.lateral + Math.sin(angle) * reach * outline * lake.across);
     positions.push(point.x, level, point.z);
     // Deep blue-green in the middle, paler over the shallows, with long streaks of wind on it.
     const streak = .5 + .5 * Math.sin(angle * 7 + reach * 9) * Math.sin(reach * 5 + angle * 2);
@@ -130,6 +134,161 @@ function addMist(group, course, lake, level, options) {
   };
   place(0);
   registerSceneSystem(group, { animate: place, dispose() { texture.dispose(); material.dispose(); } });
+}
+
+// Ardennes's authored dry-land banks use the same soft texture as lake mist.
+// Ground anchors are measured once. Native lap progress only changes opacity;
+// the scene graph owns and disposes every material and the shared texture.
+function addValleyMist(group, course, entries) {
+  if (!Array.isArray(entries) || !entries.length || entries.length > 8)
+    throw Error('Valley mist needs one to eight authored banks.');
+  const banks = [];
+  for (const bank of entries) {
+    if (![bank.s, bank.lateral, bank.along, bank.across, bank.count, bank.height, bank.opacity, bank.fadeEnd].every(Number.isFinite) ||
+        bank.s < 0 || bank.s > course.length || Math.abs(bank.lateral) > 256 || bank.along <= 0 || bank.along > 160 || bank.across <= 0 || bank.across > 100 ||
+        !Number.isSafeInteger(bank.count) || bank.count < 1 || bank.count > 32 || bank.height < 0 || bank.height > 40 ||
+        bank.opacity < 0 || bank.opacity > .5 || bank.fadeEnd <= 0 || bank.fadeEnd > 1 ||
+        !Number.isSafeInteger(bank.colour) || bank.colour < 0 || bank.colour > 0xffffff)
+      throw Error('Valley mist has invalid authored bounds.');
+  }
+  const texture = mistTexture();
+  for (const bank of entries) {
+    const material = new THREE.SpriteMaterial({map: texture, color: bank.colour,
+      transparent: true, opacity: bank.opacity, depthWrite: false});
+    for (let i = 0; i < bank.count; i++) {
+      const angle = i * 2.399 + .6, reach = .2 + .7 * ((i * .618) % 1);
+      const s = course.phase(bank.s + Math.cos(angle) * reach * bank.along);
+      const lateral = bank.lateral + Math.sin(angle) * reach * bank.across;
+      const point = course.groundAt(s, lateral);
+      const height = renderedGroundHeight(course, {...point, s, off: lateral}, {requireSurface: true});
+      if (!Number.isFinite(height)) throw Error('Valley mist has no actual rendered ground.');
+      const sprite = new THREE.Sprite(material);
+      sprite.name = 'Ardennes valley mist';
+      sprite.position.set(point.x, height + bank.height, point.z);
+      sprite.scale.set(34 + i % 4 * 7, 7 + i % 3 * 2, 1);
+      sprite.userData.valleyAnchor = Object.freeze({s, lateral, height: bank.height});
+      group.add(sprite);
+    }
+    banks.push({material, opacity: bank.opacity, fadeEnd: bank.fadeEnd});
+  }
+  let previous = -1;
+  registerSceneSystem(group, {sync(state) {
+    const progress = state?.status === 'menu' || (state?.s ?? 0) < 0 ? 0 : Math.max(0, Math.min(1,
+      (state?.completedLaps ?? 0) + course.phase(state?.s ?? 0) / course.length));
+    if (progress === previous) return;
+    previous = progress;
+    for (const bank of banks) bank.material.opacity = bank.opacity * (1 - smooth(progress / bank.fadeEnd));
+  }});
+}
+
+// The Red Water stream. The water is the circuit's existing water (src/circuit-water.js) lying in the dug
+// channel of the two `basins` named by `spec.basins`; this adds what makes the channel read as a stream: a
+// darker, glossier wet bank `spec.bank` metres wide along each shore, a few rocks at the waterline and tufts
+// of reed. All of it stands on the actual drawn ground and stays clear of the road and its shoulders. Drawing
+// only: no water of its own, no grip, no reset rule, and nothing from the course's random stream.
+const STREAM_STATIONS = 96;
+function addStream(group, course, spec) {
+  if (![spec.s, spec.width, spec.reach, spec.bank ?? 1].every(Number.isFinite) || spec.s < 0 || spec.s > course.length ||
+      spec.width <= 0 || spec.width > 12 || spec.reach <= 20 || spec.reach > 128 || (spec.bank ?? 1) <= 0 || (spec.bank ?? 1) > 3 ||
+      !Number.isSafeInteger(spec.colour) || spec.colour < 0 || spec.colour > 0xffffff ||
+      !Array.isArray(spec.basins) || !spec.basins.length)
+    throw Error('Stream needs bounded authored dimensions.');
+  const basins = spec.basins.map(id => (course.def.basins ?? []).find(basin => basin.id === id));
+  if (basins.some(basin => !basin)) throw Error('Stream names a basin the course does not have.');
+  const bank = spec.bank ?? 1, roadEdge = ROAD_SHOULDER_WIDTH + .5;
+  // A point on the actual drawn ground, or null where it would lie on the road or its shoulder.
+  const onGround = (s, lateral) => {
+    const point = course.worldAt(s, lateral), nearest = course.nearest(point.x, point.z, spec.s);
+    if (nearest.distance <= course.roadHalfWidthAt(nearest.s) + roadEdge) return null;
+    const height = renderedGroundHeight(course, {...point, s: nearest.s, off: nearest.lateral}, {requireSurface: true});
+    if (!Number.isFinite(height)) throw Error('Stream has no actual rendered ground.');
+    return [point.x, height, point.z];
+  };
+  // The shore of a basin as the water draws it (`lakeGeometry`), with the way out of the water.
+  const shore = basin => Array.from({length: STREAM_STATIONS}, (_, k) => {
+    const angle = k / STREAM_STATIONS * TAU, factor = shoreFactor(angle);
+    const out = [Math.cos(angle) / basin.along, Math.sin(angle) / basin.across], length = Math.hypot(...out);
+    return {s: basin.s + Math.cos(angle) * factor * basin.along, lateral: basin.lateral + Math.sin(angle) * factor * basin.across,
+      ds: out[0] / length, dl: out[1] / length};
+  });
+  // The same simple hash everywhere: no random generator is drawn from.
+  const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const positions = [], colours = [], indices = [], rocks = [], reeds = [], tint = new THREE.Color(spec.colour);
+  basins.forEach((basin, index) => {
+    const ring = shore(basin), level = lakeLevel(course, basin);
+    const edge = ring.map(point => [onGround(point.s, point.lateral), onGround(point.s + point.ds * bank, point.lateral + point.dl * bank)]);
+    // Only where the ground really is dug down to the water: toward the road the channel fades out into undug field.
+    const wet = edge.map(([at]) => !!at && Math.abs(at[1] - level) <= .2);
+    for (let k = 0; k < ring.length; k++) {
+      const a = edge[k], b = edge[(k + 1) % ring.length];
+      if (!wet[k] || !wet[(k + 1) % ring.length] || !a[0] || !a[1] || !b[0] || !b[1]) continue;
+      const first = positions.length / 3;
+      // Wet at the waterline, fading to dry ground at the outer edge so it reads as a damp bank, not an edging.
+      for (const [point, alpha] of [[a[0], .9], [a[1], 0], [b[0], .9], [b[1], 0]]) {
+        positions.push(point[0], point[1] + .04, point[2]); colours.push(tint.r, tint.g, tint.b, alpha);
+      }
+      indices.push(first, first + 2, first + 1, first + 1, first + 2, first + 3);
+      const seed = index * 1000 + k;
+      // A rock now and then, half in the water and half on the bank; a clump of reed more often.
+      if (hash(seed) < .13) rocks.push({s: ring[k].s - ring[k].ds * .25, lateral: ring[k].lateral - ring[k].dl * .25, seed});
+      if (hash(seed + .5) < .42) reeds.push({s: ring[k].s + ring[k].ds * (.2 + .9 * hash(seed + .7)),
+        lateral: ring[k].lateral + ring[k].dl * (.2 + .9 * hash(seed + .7)), seed});
+    }
+  });
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colours, 4));
+  geometry.setIndex(indices); geometry.computeVertexNormals();
+  // Wet earth: darker than the dry bank and glossy, so it shines where the water has just been.
+  const material = new THREE.MeshStandardMaterial({name: 'Red-brown stream', vertexColors: true, transparent: true, depthWrite: false,
+    roughness: .4, metalness: 0, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2});
+  const mesh = new THREE.Mesh(geometry, material); mesh.name = 'Ardennes red-brown stream';
+  mesh.receiveShadow = true; group.add(mesh);
+  const ground = rows => rows.map(row => ({...row, at: onGround(row.s, row.lateral)})).filter(row => row.at);
+  addStreamStones(group, ground(rocks), hash);
+  addStreamReeds(group, ground(reeds), hash);
+}
+
+// The same rock and granite picture as the course's boulders, small and rounded by the water.
+function addStreamStones(group, rows, hash) {
+  if (!rows.length) return;
+  const map = new THREE.TextureLoader().load('/assets/textures/alpine-granite.png');
+  map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(2, 2); map.anisotropy = 8;
+  const material = new THREE.MeshStandardMaterial({color: 0x8c8a84, map, bumpMap: map, bumpScale: .24, roughness: .8});
+  const stones = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 1), material, rows.length);
+  stones.name = 'Ardennes stream rocks'; stones.castShadow = true; stones.receiveShadow = true;
+  const object = new THREE.Object3D();
+  rows.forEach((row, i) => {
+    object.position.set(row.at[0], row.at[1] + .05, row.at[2]);
+    object.scale.set(.3 + .35 * hash(row.seed + 1), .16 + .14 * hash(row.seed + 2), .3 + .35 * hash(row.seed + 3));
+    object.rotation.set(0, hash(row.seed + 4) * TAU, 0); object.updateMatrix(); stones.setMatrixAt(i, object.matrix);
+  });
+  group.add(stones);
+}
+
+// Clumps of bent blades, dark at the root and pale green at the tip, the same blades the meadow tufts use.
+function addStreamReeds(group, rows, hash) {
+  if (!rows.length) return;
+  const v = [], c = [];
+  for (let i = 0; i < 11; i++) {
+    const a = i * 2.4, x = Math.sin(a), z = Math.cos(a), h = .4 + (i % 4) * .16;
+    for (const [px, py, pz] of [[-z * .035, 0, x * .035], [z * .035, 0, -x * .035], [x * .12 + z * .02, h * .6, z * .12 - x * .02],
+        [-z * .035, 0, x * .035], [x * .12 + z * .02, h * .6, z * .12 - x * .02], [x * .3, h, z * .3]]) {
+      v.push(px, py, pz); c.push(.16 + py * .22, .26 + py * .3, .1 + py * .08);
+    }
+  }
+  const blades = new THREE.BufferGeometry();
+  blades.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); blades.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+  blades.computeVertexNormals();
+  const reeds = new THREE.InstancedMesh(blades, new THREE.MeshStandardMaterial({vertexColors: true, roughness: 1, side: THREE.DoubleSide}), rows.length);
+  reeds.name = 'Ardennes stream reeds'; reeds.receiveShadow = true;
+  const object = new THREE.Object3D();
+  rows.forEach((row, i) => {
+    object.position.set(row.at[0], row.at[1] - .02, row.at[2]);
+    object.scale.setScalar(.6 + .6 * hash(row.seed + 5)); object.rotation.set(0, hash(row.seed + 6) * TAU, 0);
+    object.updateMatrix(); reeds.setMatrixAt(i, object.matrix);
+  });
+  group.add(reeds);
 }
 
 // A tile of tree crowns seen from far off, in grey, made in code (no image to load):
@@ -423,6 +582,8 @@ export function birchSpots(course, config) {
 
 export function addCircuitEffects(group, course) {
   const effects = course.def.effects ?? {};
+  if (effects.valleyMist) addValleyMist(group, course, effects.valleyMist);
+  if (effects.stream) addStream(group, course, effects.stream);
   if (effects.lake) {
     const mesh = lakeMesh(course, effects.lake);
     group.add(mesh);
@@ -436,4 +597,5 @@ export function addCircuitEffects(group, course) {
   if (effects.skiers) addSkiers(group, skierSpots(course, effects.skiers));
   if (effects.birches) addBirches(group, birchSpots(course, effects.birches));
   addStandCrowds(group, course);
+  addSummitFinish(group, course);
 }

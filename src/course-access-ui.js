@@ -59,7 +59,8 @@ function courseCard(profile, course, selected, {teamRoomEnabled, grandPrix, lapC
   const requirement = courseUnlockRequirement(course);
   const price = COURSE_PRICES[course.id];
   const description = grandPrix ? grandPrixCourseDescription(course,lapChoiceFor?.(course,'grandprix')) : classicDescription(course,lapChoiceFor?.(course,'duel'));
-  const teamRoom = teamRoomEnabled && course.closed !== false && !requirement
+  // A variant unlocked by a podium or found from the air still gets its Team Room entry (disabled until owned).
+  const teamRoom = teamRoomEnabled && course.closed !== false && (!requirement || requirement.kind !== 'owned-course')
     ? `<button type="button" data-team-room="${escape(course.id)}" aria-label="${owned ? 'Study' : 'Unlock to study'} ${escape(course.name)} in the Team Room" ${owned ? '' : 'disabled'}>TEAM ROOM ↗</button>` : '';
   const mode = grandPrix ? ' data-course-mode="grandprix"' : '';
   const burnt = forestFire === true ? burntCard(profile, course, owned) : null;

@@ -309,25 +309,48 @@ export function createRocks(uniforms, { count = 90, seed = 1989, detail = 3, pla
     uniforms, { key: 'rock', rock: true });
   const group = new THREE.Group();
   group.name = 'Rocks';
+  const matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), s = new THREE.Vector3(), p = new THREE.Vector3();
+  const slots = [];          // where each rock lives: its mesh and its place in that mesh
+  const drawn = list.map(r => ({ x: r.x, y: r.y, z: r.z }));
+  const place = (r, slot) => {
+    e.set(r.tilt, r.yaw, -r.tilt * 0.7, 'YXZ');
+    q.setFromEuler(e);
+    s.set(r.size, r.size * r.squash, r.size * 0.9);
+    p.set(r.x, r.y, r.z);
+    slot.mesh.setMatrixAt(slot.index, matrix.compose(p, q, s));
+  };
   const meshes = geometries.map((geometry, variant) => {
     const members = list.filter(r => r.variant === variant);
     const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, members.length));
     mesh.count = members.length;
-    const matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), s = new THREE.Vector3(), p = new THREE.Vector3();
-    members.forEach((r, i) => {
-      e.set(r.tilt, r.yaw, -r.tilt * 0.7, 'YXZ');
-      q.setFromEuler(e);
-      s.set(r.size, r.size * r.squash, r.size * 0.9);
-      p.set(r.x, r.y, r.z);
-      mesh.setMatrixAt(i, matrix.compose(p, q, s));
-    });
+    let index = 0;
+    list.forEach((r, i) => { if (r.variant === variant) { slots[i] = { mesh, index }; place(r, slots[i]); index++; } });
     mesh.instanceMatrix.needsUpdate = true;
     mesh.castShadow = true; mesh.receiveShadow = true;
     mesh.frustumCulled = false;
     group.add(mesh);
     return mesh;
   });
-  return { group, count: list.length, dispose() { geometries.forEach(g => g.dispose()); material.dispose(); group.traverse(o => { if (o.isInstancedMesh) o.dispose(); }); } };
+  return {
+    group, count: list.length,
+    // The run's rocks, in the same order: redraw only the ones the car has moved.
+    // Returns how many instances changed.
+    follow(current) {
+      if (!Array.isArray(current) || current.length !== list.length) return 0;
+      let moved = 0;
+      const changed = new Set();
+      current.forEach((r, i) => {
+        const was = drawn[i];
+        if (r.x === was.x && r.y === was.y && r.z === was.z) return;
+        was.x = r.x; was.y = r.y; was.z = r.z;
+        place({ ...list[i], x: r.x, y: r.y, z: r.z }, slots[i]);
+        changed.add(slots[i].mesh); moved++;
+      });
+      for (const mesh of changed) mesh.instanceMatrix.needsUpdate = true;
+      return moved;
+    },
+    dispose() { geometries.forEach(g => g.dispose()); material.dispose(); group.traverse(o => { if (o.isInstancedMesh) o.dispose(); }); },
+  };
 }
 
 // Pebbles and cobbles: many small rough stones from the same three shapes, one

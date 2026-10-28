@@ -9,7 +9,7 @@ import { detachRetiredVehicleVisuals } from '../src/render3d.js';
 import { models } from './audit-vehicle-grounding.mjs';
 
 const expectedKeys = Object.keys(CARS).sort();
-assert.deepEqual([...VEHICLE_SOCKET_KEYS].sort(), expectedKeys, 'all nine cars have a socket adjustment');
+assert.deepEqual([...VEHICLE_SOCKET_KEYS].sort(), expectedKeys, 'all ten cars have a socket adjustment');
 let checks = 1;
 
 function vehicleFor(key) {

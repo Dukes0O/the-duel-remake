@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { CARS } from '../src/config.js';
 import { createVehicle, updateVehicleDamage } from '../src/vehicles.js';
 import { createVehicleAssets } from '../src/vehicle-assets.js';
+import {loadSpeirlingVehicle} from '../src/speirling-vehicle.js';
 import { loadHeroVehicle } from '../src/hero-vehicle.js';
 import { applyVehiclePaint } from '../src/vehicle-paint.js';
 import { PAINT_PRESETS } from '../src/paint-presets.js';
@@ -59,11 +60,15 @@ async function importedFactory() {
 }
 
 const hero = await importedFactory();
-const assets=createVehicleAssets({loadHero:()=>hero});
+const fanBytes = await readFile(new URL('../public/assets/models/unlocks/mcmurtry_speirling.glb', import.meta.url));
+const fanAsset = await new GLTFLoader().parseAsync(fanBytes.buffer.slice(fanBytes.byteOffset, fanBytes.byteOffset + fanBytes.byteLength), '');
+const fanFactory = await loadSpeirlingVehicle({loadAsset: async () => fanAsset});
+const assets=createVehicleAssets({loadHero:()=>hero, loadSpeirling:()=>fanFactory});
 await Promise.all(Object.keys(CARS).map(key=>assets.load(key)));
 const fixtures = [];
 for (const key of Object.keys(CARS)) fixtures.push([key, () => assets.create(key)]);
-equal(fixtures.length,9,'Paint fixtures cover every current runtime car, including the Jesko reward');
+// The car roster count is pinned once, in test-vehicle-assets.
+ok(fixtures.length>=12,'Paint fixtures cover every current runtime car, including the reward cars');
 
 for (const [label, make] of fixtures) {
   const vehicle = make(), other = make(), data = vehicle.userData, paint = data.paint;

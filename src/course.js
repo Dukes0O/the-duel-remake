@@ -57,17 +57,28 @@ export class Course {
     this.sections=sections.map((section,i)=>{const end=i===sections.length-1?this.length:start+section.share*this.length;
       const result={...section,start,end};start=end;return result;});
     this.features={checkpoints:[],lapGates:[],rushGates:[],radarTraps:[],scenery:[],rocks:[],obstacles:[],mountains:[],stations:[],trees:[],buildings:[],barriers:[],turns:[],flocks:[],poles:[],landmarks:[],shortcuts:[],passingLanes:[],tunnels:[],ramps:[],crushables:[],signs:[],chevrons:[]};
-    if(def.relief)installReliefScale(this);
-    if(def.basins)installBasins(this);
-    if(def.hills?.some(hill=>hill.pads?.length))installHillPads(this);
-    if(def.farGround)installFarGround(this);
+    // A reverse borrows its parent's physical terrain through an independent Course.
+    // No parent instance, cached descriptor or released generation path is mutated.
+    const donor=def.terrainDonor;
+    if(donor){
+      if(donor.definition.terrainDonor)throw Error('Terrain donors cannot form a chain.');
+      this._terrainDonor=new Course(donor.definition,seed);
+      this._terrainAnchor=this._terrainDonor.worldAt(donor.offset);
+      if(this._terrainDonor.farGroundY)this.farGroundY=(x,z,s,off)=>this._terrainDonor.farGroundY(
+        this._terrainAnchor.x-x,this._terrainAnchor.z-z,donor.offset-s,-off);
+    }else{
+      if(def.relief)installReliefScale(this);
+      if(def.basins)installBasins(this);
+      if(def.hills?.some(hill=>hill.pads?.length))installHillPads(this);
+      if(def.farGround)installFarGround(this);
+    }
     this._build();
     if(hiddenRoad && def.id === 'pacific-canyon') installHiddenRoad(this);
     if(muddyHollow && def.id === 'high-country') installMuddyHollow(this);
     installSceneryBounds(this);
     if(deep)installDeepCourse(this,deep);
   }
-  phase(s){return this.closed?((s%this.length)+this.length)%this.length:clamp(s,0,this.length);}
+  phase(s){if(this.closed)return((s%this.length)+this.length)%this.length;const length=this.length;return s<=0?0:s>=length?length:s;}
   sectionAt(s){const p=this.phase(s);return this.sections.find(v=>p>=v.start&&p<v.end)||this.sections.at(-1);}
   themeAt(s){return this.sectionAt(s).theme;}
   _height(s){
@@ -189,17 +200,26 @@ export class Course {
     if(this.def.saltFlats){const at=this.worldAt(s);return saltFlatsRampHeight(this.features.ramps,at.x,at.z);}
     const p=this.phase(s),r=this.features.ramps.find(r=>p>=r.start&&p<=r.end);if(!r)return 0;
     const t=(p-r.start)/(r.end-r.start);return r.height*Math.sin(Math.PI*t)**2;}
+  // Whole turns round the course for the six wave frequencies .003, .007, .012, .004, .13 and .038 (a to f).
+  _wholeTurns(){const turns=frequency=>Math.max(1,Math.round(this.length*frequency/TAU));
+    return{a:turns(.003),b:turns(.007),c:turns(.012),d:turns(.004),e:turns(.13),f:turns(.038)};}
   _relief(s,off){
     if(this.def.pit)return pitRampHeight(this,s,off);
     if(this.def.practice){const p=this.worldAt(s,off);return freestyleSurfaceHeightAt(this,p.x,p.z);}
     if(this.def.saltFlats){const p=this.worldAt(s,off);return saltFlatsRampHeight(this.features.ramps,p.x,p.z);}
     if(this.def.arena)return Math.abs(off)<=15?this.jumpAt(s):0;
-    const p=this.phase(s),theme=this.themeAt(p),edge=Math.max(0,Math.abs(off)-this.roadHalfWidthAt(p)-2.5);
-    const wave=frequency=>p/this.length*TAU*Math.max(1,Math.round(this.length*frequency/TAU));
-    const hills=Math.max(0,22+18*Math.sin(wave(.003)+Math.abs(off)*.009)+12*Math.cos(wave(.007)-off*.006))*smooth((Math.abs(off)-82)/145);
-    const baseFor=type=>type==='city'?-.06+Math.min(.8,edge*.015):-.06+Math.sin(wave(.012)+off*.017)*Math.cos(wave(.004)-off*.031)*Math.min(type==='alpine'?14:7,edge*.075)+edge*.012+hills*(type==='alpine'?1.4:type==='coast'?(off<0?.8:0):.65);
-    const sec=this.sectionAt(p),previous=this.sections[(this.sections.indexOf(sec)-1+this.sections.length)%this.sections.length];
-    let h=lerp(baseFor(previous.theme),baseFor(theme),smooth((p-sec.start)/100));
+    // The section is found once (themeAt(p) is sectionAt(p).theme), and the wave terms, which do not depend on the
+    // ground type, are worked out once for both types the blend below asks about.
+    const p=this.phase(s),sec=this.sectionAt(p),theme=sec.theme,edge=Math.max(0,Math.abs(off)-this.roadHalfWidthAt(p)-2.5);
+    // A wave of a given frequency makes a whole number of turns round the course: that count is the same on every call,
+    // so it is worked out once per course, and each call only scales its own place round the course by it.
+    const turns=this._turns??=this._wholeTurns(),around=p/this.length*TAU;
+    const hills=Math.max(0,22+18*Math.sin(around*turns.a+Math.abs(off)*.009)+12*Math.cos(around*turns.b-off*.006))*smooth((Math.abs(off)-82)/145);
+    const ripple=Math.sin(around*turns.c+off*.017)*Math.cos(around*turns.d-off*.031);
+    const baseFor=type=>type==='city'?-.06+Math.min(.8,edge*.015):-.06+ripple*Math.min(type==='alpine'?14:7,edge*.075)+edge*.012+hills*(type==='alpine'?1.4:type==='coast'?(off<0?.8:0):.65);
+    const previous=this.sections[(this.sections.indexOf(sec)-1+this.sections.length)%this.sections.length];
+    // Blending a ground type with itself is that type exactly (a + (a - a) * t).
+    let h=previous.theme===theme?baseFor(theme):lerp(baseFor(previous.theme),baseFor(theme),smooth((p-sec.start)/100));
     const landform=this.def.ridgeLandform;
     if(landform){
       // Only the authored mountain's verge changes. The full road and shoulder
@@ -207,19 +227,21 @@ export class Course {
       const span=range=>smooth((p-range[0])/80)*smooth((range[1]-p)/80);
       const hillside=span(landform.hillside),ridge=span(landform.ridge);
       const floor=landform.valleyFloor-this.worldAt(p).y;
-      const bank=off<0?Math.min(110,edge*landform.hillsideGrade):Math.max(floor,-edge*landform.hillsideGrade);
+      const bank=off*(landform.side??-1)>0?Math.min(110,edge*landform.hillsideGrade):Math.max(floor,-edge*landform.hillsideGrade);
       const drop=Math.max(floor,-Math.min(110,edge*landform.ridgeGrade));
       const target=lerp(bank,drop,ridge);
       h=lerp(h,target,Math.max(hillside,ridge)*smooth(edge/8));
     }
-    if(this.def.offroad)h+=Math.sin(wave(.13))*.12+Math.sin(wave(.038)+off*.07)*.2;
+    if(this.def.offroad)h+=Math.sin(around*turns.e)*.12+Math.sin(around*turns.f+off*.07)*.2;
     if(theme==='coast'&&off>28){const sec=this.sectionAt(s),coastFade=smooth((p-sec.start)/120)*smooth((sec.end-p)/120);
       const headland=Math.exp(-(((p-(sec.start+(sec.end-sec.start)*.58))/50)**2+((off-73)/24)**2));
       h-=Math.min(48,(off-28)*.55)*coastFade*(1-headland*.96);}
     for(const cut of this.features.shortcuts)if(p>=cut.start&&p<=cut.end){const distance=Math.abs(off-this.shortcutOffset(cut,p)),blend=smooth((p-cut.start)/36)*smooth((cut.end-p)/36);h*=1-blend*(1-smooth((distance-cut.halfWidth-3)/6));}
     return h;
   }
-  _baseGroundAt(s,off=0){const p=this.worldAt(s,off);p.y+=this._relief(s,off);
+  _baseGroundAt(s,off=0){const p=this.worldAt(s,off);
+    if(this._terrainDonor){p.y=this._terrainDonor.groundAt(this.def.terrainDonor.offset-s,-off).y;return p;}
+    p.y+=this._relief(s,off);
     if(Math.abs(off)>this.roadHalfWidthAt(s)+1)for(const station of this.features.stations){
       const ds=angleDiff((this.phase(s)-station.s)/this.length*TAU,0)*this.length/TAU,dl=off-station.off,c=Math.cos(station.angle),sn=Math.sin(station.angle),x=c*dl-sn*ds,z=sn*dl+c*ds;
       const weight=(1-smooth((Math.abs(x)-11)/4))*(1-smooth((Math.abs(z)-9.5)/4.5));
@@ -387,11 +409,14 @@ export class Course {
     for(let d=0;d<=span+64;d+=32){const b=Math.floor(this.phase(start+d)/64);for(const o of this.obstacleBuckets.get(b)||[])found.add(o);}return [...found];}
   rocksNear(from,to=from){return this.obstaclesNear(from,to).filter(o=>o.kind==='rock').map(o=>o.source);}
   at(s){if(this.def.pit)return pitFrame(this,s);
+    const frame=this._frame(s);frame.tunnel=!!this.tunnelAt(s);return frame;}
+  // The frame without its tunnel flag, for the many callers (worldAt, the ground, the nearest-point steps) that never read it.
+  _frame(s){
     const p=this.phase(s),idx=Math.min(this.samples.length-2,Math.floor(p/this.step)),a=this.samples[idx],b=this.samples[idx+1],t=(p-a.s)/this.step;
-    return{x:lerp(a.x,b.x,t),z:lerp(a.z,b.z,t),y:this.def.expansion||this.script?this._height(s):lerp(a.y,b.y,t),heading:lerp(a.heading,b.heading,t),curvature:lerp(a.curvature,b.curvature,t),tunnel:!!this.tunnelAt(s)};}
-  worldAt(s,lat=0){const f=this.at(s);return{x:f.x+Math.cos(f.heading)*lat,y:this.script&&lat?f.y+this.script.bankLift(s,lat):f.y,z:f.z-Math.sin(f.heading)*lat,heading:f.heading};}
+    return{x:lerp(a.x,b.x,t),z:lerp(a.z,b.z,t),y:this.def.expansion||this.script?this._height(s):lerp(a.y,b.y,t),heading:lerp(a.heading,b.heading,t),curvature:lerp(a.curvature,b.curvature,t)};}
+  worldAt(s,lat=0){const f=this.def.pit||Object.hasOwn(this,'at')?this.at(s):this._frame(s);return{x:f.x+Math.cos(f.heading)*lat,y:this.script&&lat?f.y+this.script.bankLift(s,lat):f.y,z:f.z-Math.sin(f.heading)*lat,heading:f.heading};}
   nearest(x,z,referenceS){if(this.def.pit)return pitNearest(this,x,z,referenceS);
-    const nearest=this._nearestIndex.query(x,z);let bestS=nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*this.step;
+    const nearest=this._nearestIndex.lookup(x,z);let bestS=nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*this.step;
     if(this.def.saltFlats){
       // Solve the same sampled frame's normal projection, including scenery
       // coordinates inside and outside the driving band. No coordinate oracle.
@@ -406,10 +431,35 @@ export class Course {
       if(Number.isFinite(referenceS))bestS+=Math.round((referenceS-bestS)/this.length)*this.length;
       return {...frame,s:bestS,lateral,distance:Math.hypot(x-frame.x,z-frame.z)};
     }
-    for(let i=0;i<3;i++){const f=this.at(bestS),lat=(x-f.x)*Math.cos(f.heading)-(z-f.z)*Math.sin(f.heading),along=(x-f.x)*Math.sin(f.heading)+(z-f.z)*Math.cos(f.heading);bestS=this.phase(bestS+along/Math.max(.3,1-f.curvature*lat));}
+    bestS=this._refineS(x,z,bestS);
     const frame=this.at(bestS),lateral=(x-frame.x)*Math.cos(frame.heading)-(z-frame.z)*Math.sin(frame.heading);
-    if(Number.isFinite(referenceS))bestS+=Math.round((referenceS-bestS)/this.length)*this.length;
+    if(this.closed&&Number.isFinite(referenceS))bestS+=Math.round((referenceS-bestS)/this.length)*this.length;
     return{...frame,s:bestS,lateral,distance:Math.hypot(x-frame.x,z-frame.z)};}
+  // The three Newton steps of nearest(), from the index's guess. They use only the frame's x, z, heading and
+  // curvature, so this reads those four straight from the samples (the same lerps `at` does) instead of building a
+  // whole frame with its height and tunnel each time. A course whose `at` was replaced keeps the old path.
+  _refineS(x,z,bestS){
+    if(Object.hasOwn(this,'at')){
+      for(let i=0;i<3;i++){const f=this.at(bestS),lat=(x-f.x)*Math.cos(f.heading)-(z-f.z)*Math.sin(f.heading),along=(x-f.x)*Math.sin(f.heading)+(z-f.z)*Math.cos(f.heading);bestS=this.phase(bestS+along/Math.max(.3,1-f.curvature*lat));}
+      return bestS;
+    }
+    const samples=this.samples,last=samples.length-2,step=this.step,closed=this.closed;
+    for(let i=0;i<3;i++){
+      // Each step ends in phase(), and phase of a place already on an open route is itself, so only a first step or a loop needs it again.
+      const p=i===0||closed?this.phase(bestS):bestS,idx=Math.min(last,Math.floor(p/step)),a=samples[idx],b=samples[idx+1],t=(p-a.s)/step;
+      const fx=lerp(a.x,b.x,t),fz=lerp(a.z,b.z,t),heading=lerp(a.heading,b.heading,t),curvature=lerp(a.curvature,b.curvature,t);
+      const cos=Math.cos(heading),sin=Math.sin(heading);
+      const lat=(x-fx)*cos-(z-fz)*sin,along=(x-fx)*sin+(z-fz)*cos;
+      bestS=this.phase(bestS+along/Math.max(.3,1-curvature*lat));
+    }
+    return bestS;
+  }
+  // The place along the route nearest (x, z): `nearest(x, z).s` without building the rest of the frame.
+  nearestS(x,z){
+    if(this.def.pit||this.def.saltFlats)return this.nearest(x,z).s;
+    const nearest=this._nearestIndex.lookup(x,z);
+    return this._refineS(x,z,nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*this.step);
+  }
   // The road surface under a place (src/race-surfaces.js): the stretch the script gives it, then any patch. Verges are asphalt-kind: the old off-road rules govern them.
   gripKindAt(s,lateral=0){
     if(!this.script)return'asphalt';

@@ -11,61 +11,13 @@ import {carEffect} from '../src/arsenal/car-effects.js';
 import {point, fireWeapon} from '../src/combat-weapons.js';
 import {spatialMotion} from '../src/sound-mixer.js';
 import {decodeAudioBytes} from './audio/codec.mjs';
-// HELI-HOOKS: the helicopter's own cues joined the bank behind its switch; exactly that list is left out.
-import {HELI_CUES} from '../src/heli/heli-audio.js';
-const HELI_BANK_CUES = new Set(Object.keys(HELI_CUES));
 
 // ARS-01 audio acceptance. Use genuine launches, swept hits and tether breaks.
 // Only the six new recordings are decoded; no network or player storage is used.
 const CUES = ['weapon.harpoon.fire', 'weapon.harpoon.flight', 'weapon.harpoon.hit',
   'weapon.harpoon.break', 'weapon.caltrops.deploy', 'weapon.caltrops.hit'];
-const WAVE_TWO_CUES = ['weapon.rockets.fire', 'weapon.rockets.flight', 'weapon.rockets.hit',
-  'weapon.flame.start', 'weapon.flame.loop', 'weapon.flame.end', 'weapon.magnet.hum'];
-const CREW_CUES = ['crew.sticky.arm','crew.sticky.throw','crew.sticky.beep','crew.sticky.explode','crew.grapple.launch',
-  'crew.turret.deploy','crew.turret.fire','crew.turret.retire','crew.flamer.start','crew.flamer.stop',
-  'crew.marksman.fire','crew.scrap-cannon.fire'];
-// AUD-18 adds exactly these nine kept cues; every earlier cue, including the
-// gatekeeper, remains covered by the original released-bank hash.
-const FIGHT_VOICE_CUES = ['crew.cinder.callout', 'crew.dune.callout', 'crew.jax.callout',
-  'crew.nell.callout', 'crew.odessa.callout', 'crew.rook.callout',
-  'crew.tusk.callout', 'crew.wren.callout', 'raider.toll'];
-// ARS-03 adds only these nine bank cues; the earlier bank pin stays exact.
-const WAVE_THREE_CUES = ['weapon.mortar.fire', 'weapon.mortar.whistle', 'weapon.mortar.hit',
-  'weapon.tesla.charge', 'weapon.tesla.pulse', 'weapon.decoy.deploy',
-  'weapon.decoy.burst', 'weapon.nitro.start', 'weapon.nitro.loop'];
-// P4-AUDIO adds only these 20 IDs; all earlier hashes stay exact.
-const P4_CUES = [
-  "race.start.light",
-  "race.start.go",
-  "race.position.gain",
-  "race.lap.final",
-  "race.finish.flag",
-  "pit.limiter",
-  "pit.wrench",
-  "pit.go",
-  "surface.gravel",
-  "surface.snow",
-  "surface.ice",
-  "avalanche.rumble",
-  "avalanche.slide",
-  "yeti.roar",
-  "snowman.burst",
-  "crowd.cheer",
-  "wind.summit",
-  "ambient.harbour-night",
-  "ambient.forest-morning",
-  "ambient.mountain-wind"
-];
-// DEEP-AUDIO adds only these eight IDs; the original historical hashes stay exact.
-const DEEP_CUES = ['deep.splash', 'deep.engine-muffle', 'deep.bubbles', 'deep.sand-land',
-  'deep.logged', 'deep.pearl', 'deep.whale', 'deep.cave'];
-const BANK_ADDITIONS = new Set([...DEEP_CUES, ...HELI_BANK_CUES, ...P4_CUES, ...CUES, ...WAVE_TWO_CUES, 'weapon.rockets.lock', 'arena.bounty-mark',
-  ...CREW_CUES, ...FIGHT_VOICE_CUES, ...WAVE_THREE_CUES, 'arena.gunn-barrage', 'arena.toll-gate',
-  'arena.blackiron-barrage', 'warlord.nitroTell', 'warlord.nitroSpent',
-  'vehicle.rival-engine', 'vehicle.traffic-engine']);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
-// Rebuild only retired flag fields in test memory so the original exact pin
-// still checks every cue recipe without accepting any other bank change.
+// Retired switches leave no flag field on the cues they once guarded.
 const OLD_WASTELAND_CUES = new Set([
   'raider.shot', 'weapon.ufo.fire', 'weapon.bomb.fire',
   'weapon.crossbow.fire', 'weapon.star.fire', 'weapon.rpg.fire',
@@ -78,13 +30,6 @@ const OLD_RELEASED_CUES = new Map([
   ...['arena.tell', 'arena.respawn', 'arena.wreck-credit',
     'arena.sal-saw'].map(id => [id, 'scrapdome']),
 ]);
-const oldFlagShape = ([id, cue]) => {
-  const flag = OLD_WASTELAND_CUES.has(id) ? 'wasteland2' : OLD_RELEASED_CUES.get(id);
-  if (!flag) return [id, cue];
-  assert.equal(Object.hasOwn(cue, 'flag'), false, id + ' retains retired flag');
-  const fields = Object.entries(cue);
-  return [id, Object.fromEntries([...fields.slice(0, 8), ['flag', flag], ...fields.slice(8)])];
-};
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
 const failures = [];
 let checks = 0;
@@ -246,21 +191,24 @@ function reaches(node, target, visited = new Set()) {
   visited.add(node);
   return node.connections.some(next => reaches(next, target, visited));
 }
+check('retired switches leave no flag on their cues', () => {
+  for (const id of [...OLD_WASTELAND_CUES, ...OLD_RELEASED_CUES.keys()])
+    assert.equal(Object.hasOwn(bank.SOUND_BANK[id] ?? {}, 'flag'), false, id + ' retains retired flag');
+});
 check('released sound-bank entries and other exports stay exact', () => {
-  assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !BANK_ADDITIONS.has(id)).map(oldFlagShape))),
-    'b63edbe579c7709c32af22b2467fa8706aee2585ed957c20fde8062064f7f2b4',
-    'all released cues, including Oil and Smoke, remain exact');
-  assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => key !== 'SOUND_BANK'))),
-    '8bed9e05cbd48321670c377483bc87c841b01eac228a6237889b8ce5602a2b38',
+  assert.equal(hash(bank.CAR_VOICES.mclaren_f1),
+    '1c9f009e1c81b1a75b9804fd7d004dbcc5a79167693424b232e250b01af43699',
+    'F1 uses its own existing-sample voice while historical exports remain pinned');
+  // The released cues themselves are pinned once, in test-p4-audio, which covers every cue this
+  // snapshot did. This suite keeps the other bank exports and the F1 voice.
+  assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => key !== 'SOUND_BANK').map(([key, value]) =>
+    // The medal cars' engine voices (EARN-CAR-1, 2 and 3) are new entries;
+    // LAB-LIVE-FIX adds the Speirling to this pin, with every earlier voice unchanged.
+    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena'].includes(id))) : value]))),
+    '4f41cdd93762f37b875ab7d52675a32c67cfd2335775b697503a934f48010a6b',
     'existing sound-bank exports remain exact');
 });
-check('released catalog records and metadata stay exact', () => {
-  assert.equal(hash({...catalog, sounds: catalog.sounds.filter(row =>
-    !CUES.includes(row.cue) && !WAVE_TWO_CUES.includes(row.cue) &&
-    !WAVE_THREE_CUES.includes(row.cue) && !P4_CUES.includes(row.cue) && !DEEP_CUES.includes(row.cue) && !String(row.cue).startsWith('heli.') && row.cue !== 'arena.toll-gate' && row.cue !== 'warlord.nitroSpent')}),
-    '48c3d4170b202ed4abf0c2dcaf268d6c1f2b98b162d62301702d94aa3da803d6',
-    'all released source recipes and voice accounting remain exact');
-});
+// The released catalog records are pinned once, in test-p4-audio.
 for (const id of CUES) {
   check(id + ' has a real recorded runtime bank cue', () => {
     const cue = bank.SOUND_BANK[id];

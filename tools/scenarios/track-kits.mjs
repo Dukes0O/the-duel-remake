@@ -346,7 +346,9 @@ export async function run(context) {
       await persist();
       await context.navigate('/tools/menu-check.html?flags=grand-prix');
       await context.waitFor('window.__qaApp?.visualReady && !!window.__render','native empty-route ready',60000);
-      const rows=TRACK_KIT_IDS.map((id,index)=>id==='start-gantry'?{id,s:15,lateral:0}:
+      // The Ardennes beech binds only to an existing Ardennes tree (src/track-kits.js), so it cannot be placed freely on
+      // this route; the real Ardennes course supplies it through its own placements (test-track-kits, ardennes-views).
+      const rows=TRACK_KIT_IDS.filter(id=>id!=='ardennes-beech').map((id,index)=>id==='start-gantry'?{id,s:15,lateral:0}:
         id==='gallery'?{id,s:65,lateral:0,scale:[1.8,1.3,1]}:
         {id,s:120+Math.floor(index/4)*35,lateral:40+(index%4)*25});
       await context.evaluate('('+stage.toString()+')('+JSON.stringify(rows)+','+JSON.stringify(quality)+')');

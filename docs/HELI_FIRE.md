@@ -22,7 +22,7 @@ H1 finishing pass is still changing.
 | Answering | Now, or finish what you are doing; a fire grows while you wait |
 | Dispatch board | Everyday jobs only; emergencies come only by radio |
 | Forest fire | Fit the bucket, scoop from a lake, drop on the fire until it is out |
-| Reward | About 1,500 credits and a firefighter badge |
+| Reward | 6,300 credits (was 1,500) and a firefighter badge |
 | Where | Forest courses with water nearby; snow courses cannot burn; first one picked at random |
 | New courses (Kyle, 14 October) | Every new course gets a lake or other body of water somewhere; a course with enough trees can burn |
 | Growth | Over your next few flights; faster uphill and with the wind |
@@ -42,7 +42,7 @@ later while the fire grows. At the home pad you fit the bucket. You hover low
 and slow over the lake until it fills, fly heavy to the smoke, and hold H to
 pour. A big ring on the ground shows where the water will land. Fire grows
 uphill and downwind between drops, so you hit the hot edge first. When the
-last cell goes out, Roger thanks you, 1,500 credits land and the firefighter
+last cell goes out, Roger thanks you, 6,300 credits land and the firefighter
 badge is yours. Leave it long enough and the woods burn: the course closes
 for 10 play days, you can buy it back early, and when it reopens it is black,
 then green, then pink with fireweed.
@@ -115,6 +115,28 @@ to fourth play day, and a player who mostly races meets almost none.
 A mission ends when the fire is out or the course is lost. Then count goes
 to 0, a new need is drawn and the quiet spell starts.
 
+### 3.6 Seasons: no fires in winter
+
+Kyle, 15 October 2026: seasons decide which emergency comes, and there is
+no forest fire in winter. Card FIRE-SEASONS adds this to the engine before
+H2 releases.
+
+- **The dispatch season** turns every 12 play days, in order, starting with
+  summer on the first play day: summer, autumn, winter, spring. It is worked
+  out from `playDay.count`, so nothing new is saved. The board shows it:
+  "Summer, play day 4 of 12".
+- **Weights.** The engine's pick becomes a seeded weighted pick among the
+  kinds whose condition holds, with the season's weights from
+  `docs/HELI_RESCUE.md` section 3.2. For fire: summer 4, autumn 2, winter 0,
+  spring 1. While fire is the only kind, a weight of 0 means no call: in
+  winter the count stands still.
+- **The first snow.** When winter begins, a fire still burning goes out by
+  itself: no pay, no loss, and the board says "The first snow put out the
+  fire at <course>." A course already closed stays closed; its play days
+  keep counting.
+- Roger's season lines (`heli.radio.season.summer`, `.winter`, recorded with
+  RESCUE-RADIO) play at the first lift-off of those seasons.
+
 ## 4. The forest fire
 
 New file `src/heli/heli-fire.js`, pure and repeatable, no graphics.
@@ -158,8 +180,11 @@ New file `src/heli/heli-fire.js`, pure and repeatable, no graphics.
 
 Each cell has an intensity from 0 to 1. The fire moves in **spread steps**:
 
-- One step for every 90 seconds the engine runs, on any course (simulated
-  time, not the clock). A cruise leg counts its own flying time: its fuel
+- One step for every 200 seconds the engine runs, on any course (simulated
+  time, not the clock). FIRE-FINISH set this from play: a real bucket
+  round trip, refuels included, takes about 200 s, so the section 4.5
+  targets (tuned at one drop a step) hold in the air; at 90 s a fire
+  answered at once took 11 drops and 36 minutes. A cruise leg counts its own flying time: its fuel
   divided by 0.6 kg/s.
 - Three steps at the start of each new play day while the fire burns.
 - Nothing while the game is closed, and nothing during races (racing days
@@ -224,8 +249,9 @@ Tremblant Woods' strip of forest: cells grow before they spread, embers
 carry two cells downwind, the base chance is 0.55 with 180 litres per
 point, and a fire is lost at 45 cells.
 
-In plain time: answer at once and it is about 8 to 12 minutes of flying; a
-fire ignored on a racing-only player's machine is lost on its third to fifth
+In plain time: answer at once and it is about 15 to 25 minutes of flying
+(5 drops in FIRE-FINISH's headless mission, at one spread step per 200 s);
+a fire ignored on a racing-only player's machine is lost on its third to fifth
 play day.
 
 ## 5. The bucket
@@ -316,7 +342,7 @@ bucket.
 
 ## 7. Rewards
 
-- **Fire out:** 1,500 credits, the same in Assisted and Real (a mission is
+- **Fire out:** 6,300 credits (was 1,500), the same in Assisted and Real (a mission is
   not a dispatch job, and a Real bonus would put it above the best race
   wins). Paid at once, capped like every other credit change.
 - **The firefighter badge** with the first fire put out, shown on the
@@ -497,7 +523,8 @@ missions: {seed, draws, need, count, last: 'fire' | null,
   quiet: {untilDay, engineSeconds}, firesOut, badges: ['firefighter']}
 fire: null | {id, courseId, seed, startDay, steps, engineSeconds,
   burning: [[cell, percent]], burnt: [cell], damp: [[cell, steps]]}
-burnt: {courseId: {day, boughtBack}}
+burnt: {courseId: {day, boughtBack, heard?: 'reopen' | 'shoots' | 'fireweed'}}
+  (heard: Sarah's last regrowth news, only forward; a new burn has none)
 scars: [{courseId, day, cells: [cell]}]
 bucket: {damage: 0 | 1 | 2 | 3}
 ```
@@ -610,11 +637,12 @@ flowchart LR
   HF --> BK[C: FIRE-BUCKET]
   HF --> RD[C: FIRE-RADIO]
   SV --> MS[C: FIRE-MISSIONS]
+  MS --> SE[C: FIRE-SEASONS]
   SV --> SP[C: FIRE-SPREAD]
   SV --> CL[C: FIRE-CLOSE]
   MS & SP & BK & RD & CL --> HK[C: FIRE-HOOKS]
   HK & AB & AF & AR --> VW[C: FIRE-VIEW]
-  VW --> FN[C: FIRE-FINISH]
+  VW & SE --> FN[C: FIRE-FINISH]
 ```
 
 The three art cards start now (two Claude, one Codex). When HELI-FINISH merges, FIRE-SAVE,
@@ -645,7 +673,7 @@ passes, FIRE-VIEW may draw plain stand-ins in dev builds only.
   unknown keys survive.
 - `tools/test-heli-fire-session.mjs`: a headless mission flown by script:
   the call on a flight, answer, fit the bucket, scoop at Tremblant's lake,
-  drops until out, 1,500 credits and the badge; and the neglect path to a
+  drops until out, 6,300 credits and the badge; and the neglect path to a
   closed course and its buyback. Same fingerprint every run.
 - Race replays, world signatures and combat balance unchanged; every H1
   test unchanged.

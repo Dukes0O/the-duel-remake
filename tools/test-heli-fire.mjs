@@ -27,7 +27,7 @@ const newFire = seed => startFire({id: 'fire-1', courseId: 'tremblant-woods', gr
 
 check('the tuned numbers are the ones on the card', () => {
   assert.deepEqual([FIRE.cell, FIRE.treesPerCell, FIRE.minForestCells, FIRE.baseChance, FIRE.litresPerPoint, FIRE.lostCells, FIRE.lostShare,
-    FIRE.spot, FIRE.regionCells, FIRE.stepSeconds, FIRE.dayStepCount], [20, 3, 150, 0.55, 180, 45, 0.4, 3, 2, 90, 3]);
+    FIRE.spot, FIRE.regionCells, FIRE.stepSeconds, FIRE.dayStepCount], [20, 3, 150, 0.55, 180, 45, 0.4, 3, 2, 200, 3]);
   assert.deepEqual([...BURNT_LOOKS], ['tremblant-woods']);
   for (const [i, j] of [[0, 0], [-512, -512], [511, 511], [-3, 7]]) assert.deepEqual(cellIJ(cellId(i, j)), [i, j]);
 });
@@ -133,16 +133,16 @@ check('roads and the lake never burn: fire never crosses them and stays in its s
   }
 });
 
-check('the clock: a step per 90 s of engine time, three a new play day, a cruise by its fuel, nothing once lost', () => {
+check('the clock: a step per 200 s of engine time (one real bucket trip), three a new play day, a cruise by its fuel, nothing once lost', () => {
   let fire = newFire(21), steps = 0;
-  for (let n = 0; n < 60 * 179; n++) { const run = runFireEngine(fire, grid, 1 / 60, CALM); fire = run.fire; steps += run.steps; }
-  assert.equal(steps, 1, '179 s a frame at a time is one step');
-  assert(Math.abs(fire.engineSeconds - 89) < 1e-6, 'and keeps the 89 s left over');
+  for (let n = 0; n < 60 * 399; n++) { const run = runFireEngine(fire, grid, 1 / 60, CALM); fire = run.fire; steps += run.steps; }
+  assert.equal(steps, 1, '399 s a frame at a time is one step');
+  assert(Math.abs(fire.engineSeconds - 199) < 1e-6, 'and keeps the 199 s left over');
   const day = fireNewDay(newFire(21), grid, CALM);
   assert.equal(day.steps, 3);
   assert.equal(day.fire.steps, 3);
   assert.equal(cruiseSeconds(120), 200, 'a 120 kg cruise leg is 200 s of flying');
-  assert.equal(runFireEngine(newFire(21), grid, cruiseSeconds(120), CALM).steps, 2);
+  assert.equal(runFireEngine(newFire(21), grid, cruiseSeconds(120), CALM).steps, 1, 'one step for that leg');
   let lost = newFire(5);
   while (!fireLost(lost, grid)) lost = spreadStep(lost, grid, WINDY);
   assert.deepEqual([runFireEngine(lost, grid, 900, WINDY).steps, fireNewDay(lost, grid, WINDY).steps], [0, 0], 'a lost fire grows no more');

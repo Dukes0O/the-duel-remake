@@ -22,6 +22,52 @@ import {purchaseCourse} from '../src/course-access.js';
 let checks=0;
 const equal=(a,b,message)=>{assert.deepEqual(a,b,message);checks++;};
 const check=(value,message)=>{assert.ok(value,message);checks++;};
+// Fur tint owns only material clones. This small flat ribbon fixture does not
+// replace the accepted-model slope, animation, reward or save checks below.
+{
+  const sources=[];
+  const assets=createYetiAssets({loadAsset:async()=>{
+    const geometry=new THREE.BufferGeometry();
+    geometry.setAttribute('position',new THREE.Float32BufferAttribute([-.2,0,0,.2,0,0,0,1,0],3));
+    geometry.setAttribute('skinIndex',new THREE.Uint16BufferAttribute([0,0,0,0,1,0,0,0,0,0,0,0],4));
+    geometry.setAttribute('skinWeight',new THREE.Float32BufferAttribute([1,0,0,0,1,0,0,0,1,0,0,0],4));
+    const map=new THREE.Texture(),fur=new THREE.MeshStandardMaterial({name:'round-two-yeti-matted-ivory',color:0xeeeeee,map,vertexColors:true,roughness:.97});
+    const eyes=new THREE.MeshStandardMaterial({name:'round-two-yeti-small-eyes',color:0x222222});
+    const teeth=new THREE.MeshStandardMaterial({name:'teeth',color:0xffffff});
+    const root=new THREE.Group(),mesh=new THREE.SkinnedMesh(geometry,[fur,eyes,teeth]);
+    const left=new THREE.Bone(),right=new THREE.Bone();left.name='FootL';right.name='FootR';mesh.add(left,right);mesh.bind(new THREE.Skeleton([left,right]));
+    root.add(mesh,new THREE.Mesh(geometry,fur));
+    const asset={scene:root,animations:['chest-beat','idle','lope','roar','walk-off'].map(name=>new THREE.AnimationClip(name,1,[]))};
+    sources.push({asset,geometry,map,fur,eyes,teeth,array:mesh.material});return asset;
+  }});
+  await assets.load();equal(assets.status,'ready');
+  const course={def:{id:'summit-run',terrainHalfWidth:64},length:100,samples:[{x:0,z:0},{x:1,z:0}],features:{shortcuts:[]},
+    groundAt:(s,off)=>({x:10000+s,y:0,z:off,heading:0,s,off}),nearest:(x,z)=>({s:x-10000,lateral:z})};
+  const state={status:'racing',stageTimeSec:1,yeti:{appears:true,site:{s:40,lateral:10},seen:false,seenAt:null}},before=JSON.stringify(state);
+  const tint=new THREE.Color(1.8,1.8,1.8),plain=createYetiView(assets),view=createYetiView(assets,{furTint:tint}),other=createYetiView(assets,{furTint:0xffdddd});
+  const materials=root=>{const rows=[];root.traverse(node=>{if(node.material)rows.push(...[node.material].flat());});return rows;};
+  for(const high of [true,false]){plain.update(state,course,high);view.update(state,course,high);other.update(state,course,high);}
+  const owned=new Set(materials(view.group).filter(m=>m.name==='round-two-yeti-matted-ivory'));
+  equal(owned.size,2,'one owned fur material per High/LOD actor, shared by its meshes');
+  for(const source of sources){
+    const tinted=[...owned].find(m=>m.map===source.map);check(tinted&&tinted!==source.fur,'fur uses an owned material clone');
+    check(materials(view.group).filter(m=>m===tinted).length>=2,'one actor shares its fur clone across meshes');
+    const geometry=[];view.group.traverse(node=>{if(node.geometry)geometry.push(node.geometry);});check(geometry.includes(source.geometry),'geometry remains shared and exact');
+    equal(tinted.color.toArray(),tint.toArray(),'explicit neutral brightness reaches the fur');
+    equal(tinted.roughness,source.fur.roughness);equal(tinted.vertexColors,source.fur.vertexColors);check(tinted.map===source.map);
+    check(materials(plain.group).includes(source.fur),'omitting tint retains the shared original material');
+    check(materials(view.group).includes(source.eyes)&&materials(view.group).includes(source.teeth),'eyes and teeth are untouched');
+    equal(source.array,[source.fur,source.eyes,source.teeth],'shared donor material array remains exact');
+    equal(source.fur.color.getHex(),0xeeeeee,'donor diffuse colour stays exact');
+    check(!materials(other.group).includes(tinted),'two views never share owned materials');
+  }
+  let disposed=0,sourceDisposed=0;for(const m of owned)m.addEventListener('dispose',()=>disposed++);
+  for(const source of sources)for(const m of [source.fur,source.eyes,source.teeth,source.map,source.geometry])m.addEventListener('dispose',()=>sourceDisposed++);
+  view.dispose();view.dispose();equal(disposed,2,'owned fur materials dispose once');equal(sourceDisposed,0,'view never disposes source resources');
+  plain.dispose();other.dispose();equal(sourceDisposed,0,'all view cleanup leaves shared donor alive');
+  equal(JSON.stringify(state),before,'material updates never change race state');assets.dispose();
+}
+
 const length=COURSE.length;
 if(!COURSE.some(def=>def.id==='summit-run'))COURSE.push(SUMMIT_RUN);
 const summit=COURSE.findIndex(def=>def.id==='summit-run');
@@ -31,7 +77,7 @@ const payload=(extra={})=>({runId:'yeti-first',stageIndex:summit,car:'falcone_f4
 const flags=(on=true)=>createFeatureFlags({storage:null,overrides:{yeti:on,'summit-run':true,'grand-prix':true}});
 const game=(on=true,stage=summit,seed=1989,mode='duel')=>{const duel=new Duel({seed,featureFlags:flags(on)});duel.startCampaign({startStage:stage,car:'falcone_f42',mode});duel.state.status='racing';return duel;};
 try{
-  equal(FEATURE_STATES.yeti,'dev');equal(YETI,{eye:1.2,chest:1.8,distance:60,angle:75*Math.PI/180,rayStep:2});
+  equal(FEATURE_STATES.yeti,'on');equal(YETI,{eye:1.2,chest:1.8,distance:60,angle:75*Math.PI/180,rayStep:2});
   let profile=createProfile(),original=JSON.stringify(profile);
   const first=settleRace(profile,payload());equal(first.profile.yeti.sightings,1,'actual GP career-off named sighting counts');check(first.yetiAwarded);
   const {yeti,...legacy}=first.profile;equal(JSON.stringify(legacy),original,'GP career-off keeps all old bank/record/history fields exact');equal(first.reward,0);equal(first.awarded,false);
@@ -205,11 +251,11 @@ try{
   const gp=game();gp.state.mode='grandprix';gp.state.playerId='player-1';gp.state.yeti.seen=true;
   gp.state.results={...payload(),stageTimeSec:420};gp.state.completedLaps=1;
   let saves=0;const app=Object.create(App.prototype);Object.assign(app,{duel:gp,profile:owned,player:{id:'player-1'},
-    _runPlayerId:'player-1',runId:'app-yeti',_stageStartCrashes:0,_switches:()=>flags(),_refreshPlayer(){},_saveProfile(){saves++;return true;}});
+    _runPlayerId:'player-1',runId:'app-yeti',_stageStartCrashes:0,_switches:()=>createFeatureFlags({storage:null,overrides:{yeti:true,'summit-run':true,'grand-prix':true,'grand-prix-career':false}}),_refreshPlayer(){},_saveProfile(){saves++;return true;}});
   App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'real App persists GP career-off sighting');equal(app.profile.yeti.sightings,1);equal(app.profile.credits,owned.credits);equal(app.profile.history,owned.history);equal(app.profile.personalBests,owned.personalBests);
   App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'duplicate App result cannot write/count again');
   const legacyGp=Object.create(App.prototype);Object.assign(legacyGp,{duel:gp,profile:owned,player:{id:'player-1'},
-    _runPlayerId:'player-1',runId:'legacy-gp',_switches:()=>flags(false),_refreshPlayer(){throw Error('legacy GP early return must not refresh');}});
+    _runPlayerId:'player-1',runId:'legacy-gp',_switches:()=>createFeatureFlags({storage:null,overrides:{yeti:false,'summit-run':true,'grand-prix':true,'grand-prix-career':false}}),_refreshPlayer(){throw Error('legacy GP early return must not refresh');}});
   App.prototype._settleResult.call(legacyGp,gp.state.results,gp.state);check(legacyGp.profile===owned,'legacy GP with no pending input keeps identical profile');
 
   app.player={id:'player-2'};app.runId='foreign';App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'foreign named player cannot persist');
@@ -264,6 +310,20 @@ try{
     check([...gaps.values()].some(gap=>Math.abs(gap)<=1e-6),'one actual foot retains terrain contact');
     equal(JSON.stringify(observed),before,'slope seating does not advance the native race');
   }
+  // The same option also reaches both actual accepted GLB qualities.
+  const donorMaterials=new Set();for(const model of loaded)model.scene.traverse(node=>{for(const material of [node.material].flat().filter(Boolean))donorMaterials.add(material);});
+  const donorColours=new Map([...donorMaterials].filter(m=>m.color).map(m=>[m,m.color.toArray()]));
+  const tintedView=createYetiView(assets,{furTint:new THREE.Color(1.8,1.8,1.8)});
+  for(const high of [true,false])tintedView.update(state,course,high);
+  let actualFur=0;tintedView.group.traverse(node=>{
+    for(const material of [node.material].flat().filter(Boolean)){
+      if(material.name==='round-two-yeti-matted-ivory'){
+        actualFur++;check(!donorMaterials.has(material),'accepted High/LOD fur is private');equal(material.color.toArray(),[1.8,1.8,1.8]);
+      }else check(donorMaterials.has(material),'accepted non-fur material remains shared and exact');
+    }
+  });check(actualFur>=4,'accepted High and LOD body/shag fur surfaces use the option');
+  for(const [material,colour] of donorColours)equal(material.color.toArray(),colour,'accepted donor colour remains exact');
+  tintedView.dispose();
   view.dispose();
   const source=await load('/assets/models/wasteland/kits/falcone_f42.glb'),clone=cloneChromeCrown(source.scene,{privateMaterials:true});check(clone);
   let originalGeometry;source.scene.getObjectByName('kit-crown').traverse(node=>{if(node.geometry&&!originalGeometry)originalGeometry=node.geometry;});check(originalGeometry,'actual Crown mesh geometry');const positionBytes=Array.from(originalGeometry.attributes.position.array);

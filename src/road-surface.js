@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { ROAD_SHOULDER_WIDTH } from './config.js';
+import {registerSceneSystem} from './scene-systems.js';
 
 const NOISE = `
   float roadHash(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
@@ -19,13 +20,55 @@ function surfaceVaryings(shader) {
   shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>' + varyings + NOISE);
 }
 
+const dampMaterials = new WeakMap();
+function dampRoadUniforms(spec, length, banks) {
+  if (spec === undefined) return null;
+  if (!spec || !Number.isSafeInteger(spec.colour) || spec.colour < 0 || spec.colour > 0xffffff ||
+      ![spec.dryRoughness, spec.dampRoughness].every(value => Number.isFinite(value) && value >= 0 && value <= 1) ||
+      spec.dampRoughness > spec.dryRoughness || !Number.isFinite(length) || length <= 0 || spec.mist !== true ||
+      !Array.isArray(spec.shadeRanges) || !spec.shadeRanges.length || spec.shadeRanges.length > 8 ||
+      spec.shadeRanges.some(range => !range || ![range.from, range.to].every(Number.isFinite) || range.from < 0 || range.to > length || range.to <= range.from) ||
+      !Array.isArray(banks) || banks.length !== 4 || banks.some(bank => !bank ||
+        ![bank.s, bank.along, bank.opacity].every(Number.isFinite) || bank.s < 0 || bank.s > length || bank.along <= 0 || bank.opacity <= 0 || bank.opacity > .5))
+    throw new Error('Invalid damp road descriptor or actual mist banks.');
+  return {colour: spec.colour, dryRoughness: spec.dryRoughness, bound: false,
+    banks: banks.map(bank => ({s: bank.s, along: bank.along, opacity: bank.opacity})),
+    uniforms: {
+      roadDampLength: {value: length}, roadDampRoughness: {value: spec.dampRoughness},
+      roadShadeRanges: {value: spec.shadeRanges.map(range => new THREE.Vector2(range.from, range.to))},
+      roadMistRanges: {value: banks.map(bank => new THREE.Vector3(Math.max(0, bank.s - bank.along), Math.min(length, bank.s + bank.along), 1))},
+    }};
+}
+
+// Cache the real shared mist materials once, after the existing mist sync is registered.
+// Their opacity is the fade authority, including negative-grid and later-lap behavior.
+export function bindPavedDampRoad(world, course, material) {
+  const damp = dampMaterials.get(material);
+  if (!damp || damp.bound) return;
+  const seen = new Set(), materials = [];
+  world?.traverse(node => {
+    if (node.name !== 'Ardennes valley mist' || !node.userData.valleyAnchor || seen.has(node.material)) return;
+    seen.add(node.material); materials.push(node.material);
+  });
+  if (materials.length !== 4 || materials.some((mist, i) => mist.opacity !== damp.banks[i].opacity))
+    throw new Error('Damp road requires four actual valley mist materials in authored order.');
+  const ranges = damp.uniforms.roadMistRanges.value;
+  const sync = () => {for (let i = 0; i < 4; i++) ranges[i].z = materials[i].opacity / damp.banks[i].opacity;};
+  damp.bound = true; sync();
+  registerSceneSystem(world, {sync, dispose() {dampMaterials.delete(material);}});
+}
 // `wet` is the wet look of a street at night: glossier, a little darker, so lamps and the
 // lights of cars glint on it. Looks only; grip is unchanged.
-export function createPavedRoadMaterial({ asphalt, night = false, wet = false }) {
+export function createPavedRoadMaterial({ asphalt, night = false, wet = false, dampRoad, courseLength, mistBanks }) {
+  const damp = dampRoadUniforms(dampRoad, courseLength, mistBanks);
   const material = new THREE.MeshStandardMaterial({
     name: 'Worn paved asphalt', map: asphalt, bumpMap: asphalt, bumpScale: .028,
     roughness: wet ? .24 : night ? .55 : .9, color: wet ? 0x8d99a4 : night ? 0xa7b2bc : 0xd3d0ca, metalness: wet ? .1 : night ? .025 : 0,
   });
+  if (damp) {
+    material.color.setHex(damp.colour); material.roughness = damp.dryRoughness; material.metalness = 0;
+    dampMaterials.set(material, damp);
+  }
   material.onBeforeCompile = shader => {
     surfaceVaryings(shader);
     // Headlights amplify narrow smooth bands into white stripes at night.
@@ -52,8 +95,39 @@ export function createPavedRoadMaterial({ asphalt, night = false, wet = false })
       #include <roughnessmap_fragment>
       roughnessFactor=clamp(roughnessFactor-roadWheelWear*roadWearPolish-roadRepair*.025+(roadAge-.5)*.055,${wet ? '.16' : '.36'},1.0);
     `);
+    if (damp) {
+      Object.assign(shader.uniforms, damp.uniforms);
+      const shadeCount = damp.uniforms.roadShadeRanges.value.length;
+      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>
+        uniform float roadDampLength;
+        uniform float roadDampRoughness;
+        uniform vec2 roadShadeRanges[${shadeCount}];
+        uniform vec3 roadMistRanges[4];
+        float roadDampRange(float station, vec2 range) {
+          float wrapped=mod(station,roadDampLength);
+          float mask=0.0;
+          for(int image=-1;image<=1;image++)
+            mask=max(mask,smoothstep(range.x-25.0,range.x,wrapped+float(image)*roadDampLength)
+              *(1.0-smoothstep(range.y,range.y+25.0,wrapped+float(image)*roadDampLength)));
+          return mask;
+        }
+      `).replace('roughnessFactor=clamp(', `
+        float roadDampStation=mod(vRoadSurfaceUv.y*10.0,roadDampLength);
+        float roadDampMask=0.0;
+        for(int i=0;i<${shadeCount};i++) {
+          vec2 range=roadShadeRanges[i];
+          roadDampMask=max(roadDampMask,roadDampRange(roadDampStation,range));
+        }
+        for(int i=0;i<4;i++) {
+          vec3 range=roadMistRanges[i];
+          roadDampMask=max(roadDampMask,roadDampRange(roadDampStation,range.xy)*range.z);
+        }
+        roughnessFactor=mix(roughnessFactor,roadDampRoughness,roadDampMask);
+        roughnessFactor=clamp(`);
+    }
   };
-  material.customProgramCacheKey = () => (wet ? 'paved-road-wear-v2-wet' : 'paved-road-wear-v2');
+  material.customProgramCacheKey = damp ? () => `paved-road-wear-v4-damp-${damp.uniforms.roadShadeRanges.value.length}-4-${wet ? 'wet' : 'dry'}` :
+    () => (wet ? 'paved-road-wear-v2-wet' : 'paved-road-wear-v2');
   return material;
 }
 

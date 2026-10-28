@@ -69,6 +69,8 @@ const PANORAMA_ROAD = defineScriptedCourse({
       { id: 'forrest-elbow', kind: 'corner', s: 2940, title: 'Forrest Elbow' },
     ],
     notes: {
+      'conrod': { line: 'Stay in the slipstream down Conrod and pull out as The Chase comes into view.', note: 'The longest run on the lap. Get alongside here, then finish the move into Murray.' },
+      'murray': { line: 'Take the inside on the way in and out-brake them at the 100 board.', note: 'Last chance to pass. If you are ahead, hold the inside.' },
       'hell-gate': { brakeBoard: 100, line: 'Stay right on the way in, clip the inside kerb, let it run out to the left.', note: 'Lap one is a scramble: brake early and stay out of trouble. After that, brake at the 100 board.' },
       'griffin-bend': { line: 'Hold the inside and keep your foot in.', note: 'Fast and uphill. A lift is all it needs.' },
       'the-cutting': { brakeBoard: 100, line: 'Wide on entry, late apex, straight up the hill.', note: 'The slowest corner on the climb. Get the exit right: the next 200 m are steep.' },
@@ -95,18 +97,18 @@ const TOWN_STREETS = Object.freeze([
   Object.freeze({from: 170, to: 470, lateral: 80, bend: 6, wave: 95, phase: 0}),
   Object.freeze({from: 215, to: 505, lateral: 118, bend: 5, wave: 120, phase: 1.4, square: 330}),
 ]);
-function panoramaPlacements(road) {
+export function panoramaPlacements(road, pitSide = -1) {
   const placements = [{id: 'start-gantry', s: 0, lateral: 0, scale: [1.06, 1, 1]}];
   for (let s = 120; s <= 400; s += 35) {
-    placements.push({id: 'pit-garage', s, lateral: -27, heading: Math.PI / 2});
+    placements.push({id: 'pit-garage', s, lateral: pitSide * 27, heading: -pitSide * Math.PI / 2});
   }
   for (let s = 70; s <= 420; s += 55) {
-    placements.push({id: 'grandstand', s, lateral: 25, heading: -Math.PI / 2});
+    placements.push({id: 'grandstand', s, lateral: -pitSide * 25, heading: pitSide * Math.PI / 2});
   }
   const pitStraight = road.pieces.find(piece => piece.name === 'Pit Straight');
   // Match the existing 65 m entry/exit openings of the actual pit divider.
   for (let s = Math.max(0, pitStraight.s0) + 75; s < pitStraight.s1 - 75; s += 4) {
-    placements.push({id: 'pit-wall', s, lateral: -8.4, heading: Math.PI / 2, solid: true});
+    placements.push({id: 'pit-wall', s, lateral: pitSide * 8.4, heading: -pitSide * Math.PI / 2, solid: true});
   }
   // Hell Gate has no script wall, and both Mountain Straight walls begin where it
   // ends. A plain concrete wall on its outside closes the run-off, so a car that

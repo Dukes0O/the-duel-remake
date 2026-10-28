@@ -19,6 +19,7 @@ import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {createRendererReadiness} from '../src/screen-readiness.js';
 import {createTrackKits, normalizeKitPlacements, TRACK_KIT_IDS} from '../src/track-kits.js';
+import {beechTreePlacements} from '../src/vegetation.js';
 
 // Claude check-in7: kit thresholds are total construction and delivered p95.
 assert.equal(kitConstructionAccepted(999.999),true);
@@ -58,7 +59,17 @@ const course = {
   groundAt: (s, lateral) => ({x: lateral, y: s * .02, z: s, heading: 0}),
   nearest: (x, z) => ({s: z, lateral: x}), roadHalfWidthAt: () => 7,
 };
-assert.equal(TRACK_KIT_IDS.length, 35);
+const originalKitIds = TRACK_KIT_IDS.slice(0, 35);
+assert.equal(TRACK_KIT_IDS.length, 40);
+assert.deepEqual(TRACK_KIT_IDS.slice(35), ['stone-stream-bridge', 'forest-footbridge', 'forest-timing-tower', 'ardennes-beech', 'summit-finish']);
+assert.deepEqual(originalKitIds, [
+  'start-gantry','pit-garage','pit-wall','grandstand','armco','concrete-wall',
+  'catch-fence','tyre-wall','braking-board-150','braking-board-100','braking-board-50',
+  'marshal-post','lantern-tower','shopfront-a','shopfront-b','neon-sign','lantern-string',
+  'harbour-boat','ski-lodge','chairlift-tower','chairlift-cable','chairlift-chair',
+  'wooden-dock','autumn-tree','autumn-tree-golden','autumn-tree-copper','snow-pine',
+  'snow-ground','snow-rock','plough-bank','gallery','summit-hut','observatory','snowman','yeti',
+], 'the original 35 IDs and order remain exact');
 for (const bad of [null, {}, [{id:'unknown',s:0,lateral:20}],
   [{id:'armco',s:NaN,lateral:20}], [{id:'armco',s:-1,lateral:20}],
   [{id:'armco',s:100,lateral:20,scale:0}], [{id:'armco',s:100,lateral:20,heading:Infinity}]])
@@ -245,7 +256,7 @@ assert.match(errorNodes.strong.textContent,/track scenery/);assert.match(errorNo
 // decoding is stubbed here; the private native scenario checks actual textures.
 const parser=new GLTFLoader();parser.register(()=>({name:'KIT_HEADLESS_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
 const nativeCourse=new Course(COURSE[0],1989);
-const real=createTrackKits(nativeCourse,{placements:TRACK_KIT_IDS.map((id,index)=>id==='start-gantry'?{id,s:15,lateral:0}:
+const real=createTrackKits(nativeCourse,{placements:originalKitIds.map((id,index)=>id==='start-gantry'?{id,s:15,lateral:0}:
   id==='gallery'?{id,s:65,lateral:0,scale:[1.8,1.3,1]}:
   {id,s:120+Math.floor(index/4)*35,lateral:40+(index%4)*25}),
   loadAsset:async path=>{const bytes=await readFile(new URL('../public'+path,import.meta.url));
@@ -699,7 +710,7 @@ async function validateCircuitKits(definition) {
   }});
   try {
     assert.equal(await owner.ready,true,owner.error?.message);
-    assert.equal(owner.placements.length,definition.kitPlacements.length);
+    assert.equal(owner.placements.length,definition.kitPlacements.length+beechTreePlacements(course).length);
     assert.equal(owner.stats.clearance.runtimeSkipped,0,'build validates every real High/LOD placement');
     assert.equal(owner.stats.clearance.trianglePlacements+owner.stats.clearance.broadPhaseSkipped,
       owner.placements.length*2);

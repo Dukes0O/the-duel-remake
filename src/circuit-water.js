@@ -53,7 +53,7 @@ export function addCircuitWater(group, course) {
   const night = course.def.timeOfDay === 'night' || course.def.lightPath?.keyframes?.[0]?.look === 'night';
   const { material, time } = waterMaterial(night, course.def.water.glitter !== false);
   for (const basin of basins) {
-    const mesh = new THREE.Mesh(lakeGeometry(course, { ...basin, colour: night ? 0x03070c : 0x1d5c6e, shallow: night ? 0x07131c : 0x3a8590 }), material);
+    const mesh = new THREE.Mesh(lakeGeometry(course, { ...basin, colour: basin.colour ?? (night ? 0x03070c : 0x1d5c6e), shallow: basin.shallow ?? (night ? 0x07131c : 0x3a8590) }), material);
     mesh.name = `water-${basin.id}`; mesh.receiveShadow = false; mesh.renderOrder = 1;
     group.add(mesh);
   }

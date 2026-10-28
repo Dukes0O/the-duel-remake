@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {DRIVE, steeringYawAuthority} from '../../src/config.js';
+import {CARS, DRIVE, steeringYawAuthority} from '../../src/config.js';
 
 // Production App entry, Duel input and fixed steps on a disposable memory-only
 // profile. Discovery, car selection and starting poses are labelled fixtures.
@@ -24,6 +24,31 @@ async function capture(context, name) {
   await ready(context, name+' assets');
   await context.evaluate('window.__qaApp.onFrame(window.__qaApp.duel.state,0);window.__render.renderFrame()');
   await context.screenshot(name.replaceAll('_', '-'));
+}
+async function refusedEnzo(context, quality) {
+  const refusal=await context.evaluate(`(() => {const a=window.__qaApp;
+    const before={owner:a.player.id,state:a.duel.state,course:a.duel.course,
+      runId:a.runId,serial:a._arenaSerial,heli:JSON.stringify(a.profile.heli)};
+    a.menuCar='ferrari_enzo';
+    const admitted=a.startArenaEvent({opponents:1});
+    return {quality:${JSON.stringify(quality)},car:a.menuCar,admitted,
+      helicopterOn:a._switches().enabled('helicopter')===true,
+      unlocked:a.profile.unlockedCars.includes('ferrari_enzo'),
+      message:a.courseAccessMessage,yard:a.isYardHomeActive(),
+      sameOwner:a.player.id===before.owner,sameState:a.duel.state===before.state,
+      sameCourse:a.duel.course===before.course,sameRun:a.runId===before.runId,
+      sameSerial:a._arenaSerial===before.serial,unchangedHeli:JSON.stringify(a.profile.heli)===before.heli,
+      memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&
+        window.name.startsWith('__duel_qa_tab_v2:')};})()`);
+  assert.ok(refusal.memoryOnly&&refusal.helicopterOn&&refusal.unlocked,
+    'Production Enzo refusal needs the memory-only unlocked car and helicopter enabled');
+  assert.equal(refusal.car,'ferrari_enzo');
+  assert.equal(refusal.admitted,false,'Untransported Enzo must be refused by production arena admission');
+  assert.equal(refusal.message,`The ${CARS.ferrari_enzo.name} travels only by air. Fly it here from the helipad first.`);
+  assert.ok(refusal.yard&&refusal.sameOwner&&refusal.sameState&&refusal.sameCourse&&
+    refusal.sameRun&&refusal.sameSerial&&refusal.unchangedHeli,
+    'Refused Enzo must stay in the same yard without starting a run or changing its helicopter profile');
+  return refusal;
 }
 async function turningArc(context, quality, car) {
   await context.evaluate(`(() => {const a=window.__qaApp;a.menuCar=${JSON.stringify(car)};
@@ -132,8 +157,8 @@ async function salWindow(context, quality) {
   return {...probe,measuredAuthority:measured,normalAuthority:normal,sparks};
 }
 export async function run(context) {
-  const report={factor:DRIVE.arenaSteeringFactor,frames:[],windows:[],
-    fixtures:'Memory-only discovery, all-car unlock and Sal hold; initial driving/approach poses and one window heading perturbation. Actual App entry, Duel inputs and fixed steps; production chase camera and HUD.',
+  const report={factor:DRIVE.arenaSteeringFactor,frames:[],windows:[],refusals:[],
+    fixtures:'Memory-only discovery, Falcone/Titan/Viper/Enzo unlock and Sal hold; production untransported Enzo refusal; initial driving/approach poses and one window heading perturbation. Actual App entry, Duel inputs and fixed steps; production chase camera and HUD.',
     humanReview:'Kyle Preview steering feel and Claude standard-camera Sal feel remain pending.'};
   for(const quality of ['high','performance']){
     await context.navigate('/tools/menu-check.html?harness=arena-steering-'+quality);
@@ -145,12 +170,13 @@ export async function run(context) {
       a.stop();a.audio.setMuted(true);a.setGraphicsQuality(${JSON.stringify(quality)});
       for(const panel of document.querySelectorAll('details'))
         if(panel.querySelector('summary')?.textContent.startsWith('MENU QA'))panel.open=false;
-      a.profile={...a.profile,unlockedCars:[...new Set([...a.profile.unlockedCars,'titan_monster','koenigsegg_jesko'])],
+      a.profile={...a.profile,unlockedCars:[...new Set([...a.profile.unlockedCars,'titan_monster','viper_proto','ferrari_enzo'])],
         wasteland:{...a.profile.wasteland,discoveredGate:true,
           territories:{...a.profile.wasteland.territories,sal:{hold:100,claimed:false}}}};
       if(!a._saveProfile()||!a.visitWasteland())throw Error('Memory-only discovery fixture failed');})()`);
     await yard(context,quality);
-    for(const car of ['falcone_f42','titan_monster','koenigsegg_jesko'])
+    report.refusals.push(await refusedEnzo(context,quality));
+    for(const car of ['falcone_f42','titan_monster','viper_proto'])
       report.frames.push(await turningArc(context,quality,car));
     report.windows.push(await salWindow(context,quality));
   }

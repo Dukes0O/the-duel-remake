@@ -1,18 +1,21 @@
 import {normalizeDeep} from './deep-discovery.js';
 
 export const DEEP_KIT_COST = 150;
+// Saved ids keep their original names; the tips now come after 3 and 6 Pacific
+// Canyon finishes (Kyle, 25 October 2026, so Gratian reaches the dive sooner).
 export const DEEP_HINT_IDS = Object.freeze(['kelp-coast-5', 'kelp-coast-10']);
+export const DEEP_HINT_FINISHES = Object.freeze([3, 6]);
 const firstTip = 'Fishermen at the cove say the old boat ramp goes further than the beach.';
 const secondTip = 'Look for bubbles at the end of the old boat ramp on Pacific Canyon. A dive kit lets any car explore below.';
 export function deepHints(snapshot) {
   const eligible = snapshot?.enabled === true && typeof snapshot.playerId === 'string' && snapshot.playerId.length > 0;
   const deep = normalizeDeep(snapshot), found = (deep.found?.length || 0) > 0;
   const count = deep.pacificFinishes || 0;
-  const hintIds = eligible && !found ? DEEP_HINT_IDS.filter((id, index) => count >= (index + 1) * 5) : [];
+  const hintIds = eligible && !found ? DEEP_HINT_IDS.filter((id, index) => count >= DEEP_HINT_FINISHES[index]) : [];
   return {
-    garageTip: hintIds.length ? (count >= 10 ? secondTip : firstTip) : null,
+    garageTip: hintIds.length ? (count >= DEEP_HINT_FINISHES[1] ? secondTip : firstTip) : null,
     hintIds,
-    bubbles: eligible && !found && count >= 10,
+    bubbles: eligible && !found && count >= DEEP_HINT_FINISHES[1],
     kitAvailable: eligible && (hintIds.length > 0 || deep.hintsShown?.includes(DEEP_HINT_IDS[0]) === true),
     kitOwned: eligible && deep.kit === true,
     kitCost: DEEP_KIT_COST,

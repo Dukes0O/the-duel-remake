@@ -1,6 +1,10 @@
 // Cue data is the single home for assets, routing and authored sound recipes.
 import {FIGHT_VOICE_LINES} from './fight-voices.js';
 import {HELI_CUES} from './heli/heli-audio.js';
+import {DRIVE_LESSON_CUES} from './lessons/drive-radio-lines.js';
+import {DEEP_PHONE_CUES} from './deep/deep-phone-lines.js';
+import {SKI_CUES} from './ski/ski-lines.js';
+import {LAB_CUES} from './lab/lab-lines.js';
 export const BUS_NAMES = Object.freeze([
   'engine',
   'vehicle',
@@ -41,6 +45,10 @@ export const SOUND_BANK = {
   // The Deep adapter lazy-loads these only during a submerged visit.
   // The helicopter (docs/HELICOPTER.md): radio lines, rotor and cable sounds, behind its switch.
   ...HELI_CUES,
+  ...DRIVE_LESSON_CUES,
+  ...DEEP_PHONE_CUES,
+  ...LAB_CUES,
+  ...SKI_CUES,
   'deep.splash': cue('vehicle', {flag: 'the-deep', file: 'deep/splash.ogg', volume: .9, priority: 60, limit: 1}),
   'deep.engine-muffle': cue('engine', {flag: 'the-deep', file: 'deep/engine-muffle.ogg', volume: .65, priority: 50, limit: 1}),
   'deep.bubbles': cue('ambience', {flag: 'the-deep', file: 'deep/bubbles.ogg', volume: .6, loop: true, priority: 30, limit: 1}),
@@ -49,6 +57,16 @@ export const SOUND_BANK = {
   'deep.pearl': cue('interface', {flag: 'the-deep', file: 'deep/pearl.ogg', volume: .75, priority: 65, limit: 1}),
   'deep.whale': cue('ambience', {flag: 'the-deep', file: 'deep/whale.ogg', volume: .45, priority: 35, limit: 1}),
   'deep.cave': cue('ambience', {flag: 'the-deep', file: 'deep/cave.ogg', volume: .4, loop: true, priority: 30, limit: 1}),
+  // DEEP-GO-LIVE: quiet story sounds, synthesized by the Deep adapter.
+  'deep.sonar': cue('vehicle', {flag: 'the-deep', volume: .22, limit: 1,
+    layers: [tone(960, .4, .6), tone(960, .55, .18, 'sine', .28)]}),
+  'deep.liftbag': cue('vehicle', {flag: 'the-deep', volume: .22, limit: 1,
+    layers: [{...noise(1100, 3, .6), endFrequency: 2600, attack: 2.6}]}),
+  'deep.lift-cancel': cue('vehicle', {flag: 'the-deep', volume: .16, limit: 1,
+    layers: [{...noise(1400, .18, .4), endFrequency: 450, attack: .01}]}),
+  'deep.raised': cue('vehicle', {flag: 'the-deep', volume: .26, limit: 1,
+    layers: [{...noise(320, 1.8, .7, 'lowpass'), endFrequency: 90, attack: .3},
+      tone(72, 1.5, .22, 'sine', 0, 42)]}),
   // P4 assets remain dormant until their owning race events land.
   'race.start.light': cue('interface', {flag: 'grand-prix', file: 'p4/race-start-light.ogg',
     volume: 1, priority: 80, limit: 2}),
@@ -806,6 +824,54 @@ export const CAR_VOICES = {
     accent: 1.08,
     exhaust: 0.17,
     intake: 0.19,
+  },
+  // Earned car 1: a naturally aspirated V12, so a touch higher and brighter
+  // than the muscle car, with a clear intake and a loud exhaust.
+  ferrari_enzo: {
+    pitch: 1.05,
+    brightness: 1.1,
+    gain: 1,
+    accent: 1.04,
+    exhaust: 0.16,
+    intake: 0.15,
+  },
+  // Earned car 2: a smooth road V12 using the existing engine layers.
+  mclaren_f1: {
+    pitch: 1.04,
+    brightness: 1.06,
+    gain: 0.98,
+    accent: 1.02,
+    exhaust: 0.14,
+    intake: 0.17,
+  },
+  // Earned car 3: a big quad-turbo engine, lower and smoother than the
+  // Enzo's V12, with a deep intake rush.
+  bugatti_bolide: {
+    pitch: 0.94,
+    brightness: 1.02,
+    gain: 1.04,
+    accent: 1.02,
+    exhaust: 0.17,
+    intake: 0.2,
+  },
+  // The Sirena: a 1960s race V12, higher and rawer than the modern cars, with a loud open exhaust.
+  falcone_sirena: {
+    pitch: 1.09,
+    brightness: 1.08,
+    gain: 1.0,
+    accent: 1.04,
+    exhaust: 0.2,
+    intake: 0.1,
+  },
+  // Electric fan car: a higher motor whine and strong fan intake, without
+  // petrol exhaust or gear-shift accents, using the same engine layers.
+  mcmurtry_speirling: {
+    pitch: 1.16,
+    brightness: 1.12,
+    gain: 0.94,
+    accent: 0,
+    exhaust: 0,
+    intake: 0.24,
   },
   titan_monster: {
     pitch: 0.83,

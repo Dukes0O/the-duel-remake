@@ -102,8 +102,14 @@ real work or the merge's shared metadata transaction.
 | Release | Before live access | Full green on the exact final release commit and all applicable release evidence |
 
 The targeted lane includes smoke, replay and world-signature guards, plus
-suites that import or read changed paths within two steps. Unmapped game
-files do not trigger a full daytime run; deeper effects belong to the full check.
+suites that import or read changed paths within two steps. The second step
+never passes through a hub (a module that imports 20 or more of the game's
+own files, such as `game.js`, `app.js` or `world.js`), and the shared files
+(`game.js`, `main.js`, `render3d.js`, `app.js`, `config.js`,
+`feature-flags.js`) select only their owner suites and the suites that read
+them as text: the smoke set and replay guards drive them in every lane. Suites
+in `NIGHT_ONLY_SUITES` run only in the full tier. Unmapped game files do not
+trigger a full daytime run; deeper effects belong to the full check.
 A failing lane blocks that lane. A full-check failure puts its fix first while
 other merges continue. A suite failing without changed game code gets one
 same-commit rerun under AGENTS rule 3; a passing rerun becomes a small unreliable
@@ -165,7 +171,7 @@ New features remain dev until their accepted design and applicable checks are
 complete. Claude makes art and sound picks; nothing waits on Kyle except a
 release. Kyle can overrule a pick and must say “go live” before live installation.
 The Release Manager follows OPERATIONS: exact release full, master fast-forward,
-staged build, one dist-previous, hashed assets before index/manifest, and no
+staged build, no retained rollback build, hashed assets before index/manifest, and no
 forced reload of an open race. Push or history changes require their applicable
 authorization; this integrator performs neither.
 

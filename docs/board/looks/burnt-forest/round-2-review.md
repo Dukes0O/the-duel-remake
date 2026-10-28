@@ -1,6 +1,7 @@
 # Burnt forest props, Claude's original models: rounds 1 and 2 (14 October 2026)
 
-Sheet: `round-2.jpg`. Recipe: `tools/blender/burnt-forest.py`.
+Sheet: removed 15 October (the looks folder's 20 MB limit); the props are
+now seen in the game on `../fire-view/round-2.jpg`. Recipe: `tools/blender/burnt-forest.py`.
 2,760 triangles for all seven props, PBR colours, 112 KB.
 
 - Round 1: snags read well; trunks too smooth, grey patches like stickers,

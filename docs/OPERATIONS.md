@@ -26,9 +26,9 @@ The routine after Kyle accepts something in the Preview:
 
 1. **Release it** (see Release): switch the accepted feature on, run the full
    release evidence and copy the build into the live game.
-2. **Clean up the live folder in the same release:** `dist` holds exactly the
-   new build, `dist-previous` holds exactly one rollback build and
-   `dist-next` is deleted.
+2. **Clean up the live folder in the same release:** `dist` holds the new
+   build. Recycle temporary staging after installation. Keep no `dist-previous`
+   or other rollback build (Kyle, 15 October 2026). Fix faults forward.
 3. **The Preview cleans itself:** the next click sees that integration has
    moved on, closes the old Preview and rebuilds `.preview-dist` in place.
 
@@ -125,9 +125,9 @@ The Release Manager is the only role that updates the live folder. It first
 collects change notes into `README.md` and `VERIFICATION.md` and commits them
 on integration. It runs the full check on that final integration commit,
 checks that the live tree is clean, then fast-forwards `master`. It installs locked
-dependencies if needed and builds a release in `dist-next`. Before serving it,
-it copies the current `dist` to `dist-previous` for rollback and checks the
-new build on a private port. It copies the new hashed assets into the live
+dependencies if needed and builds a release in `dist-next`. It checks the
+staged build on a private port. Keep no rollback build; faults receive a
+forward fix in the next release (Kyle, 15 October 2026). It copies the new hashed assets into the live
 `dist` first and replaces `index.html` and `build-version.json` last, so a
 page load never meets a half-copied build. It does not refresh an open game
 tab. It verifies the new build manifest and landing page on `localhost:5174`.
@@ -146,10 +146,11 @@ node node_modules/vite/bin/vite.js build --outDir dist-next
 node node_modules/vite/bin/vite.js preview --outDir dist-next --host localhost --port 5188 --strictPort
 ```
 
-## Rollback and saves
+## Forward fixes and saves
 
-Restore the saved `dist-previous` build by overlaying its files, or disable
-the faulty feature and release a new tested build. Keep the same browser
+Correct faults and release a new tested build. Do not restore a prior release
+or retain a rollback copy. Adding a course is not a reason to revert the game.
+Keep the same browser
 origin and retain hashed assets used by open races. Do not clear, read,
 reset or migrate real player careers during QA. Export and automatic backup
 rules are in `SPEC.md`, section 3.14. Test save migrations against fixtures

@@ -130,11 +130,12 @@ const TOWN_LIGHTS=Object.freeze([
 ].map(([s,lateral])=>Object.freeze([Math.round(s),Math.round(lateral)])));
 export const SUMMIT_RUN=defineScriptedCourse({
   ...base,sections,
+  finishArea:true,
   snowmen:Object.freeze([27,29,31,33,35,36,42,43,45,47,49,50].map((index,i)=>
     Object.freeze({s:at(index)+35,lateral:geometry.pieces[index].kind==='turn'
       ? -geometry.pieces[index].dir*17 : i%2?-17:17}))),
   lightPath:{axis:'distance',keyframes:[{at:0,look:'day'},{at:at(26),look:'golden'},{at:at(29),look:'dusk'},{at:10100,look:'night'}]},
-  snowWorld:{mixed:true,softBanks:true,bankHeaps:true,snowPoles:true,variation:true,variationStrength:.45,variationScale:800,rockTint:0x343936,branchTone:0x293135,drifts:true,nightExposure:1.02,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],
+  snowWorld:{always:true,mixed:true,softBanks:true,bankHeaps:true,snowPoles:true,variation:true,variationStrength:.45,variationScale:800,rockTint:0x343936,branchTone:0x293135,drifts:true,nightExposure:1.02,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],
     // Tone breaks in the snowfields (finishing pass): dark pine clumps and a few frozen ponds on flat ground.
     pineClusters:[[7450,30],[7760,-30],[8050,30],[8350,-30],[8700,-30],[9000,30],[9350,30],[9650,-30],[9950,30],[11100,-30],[11700,30],[12300,-28],[12650,30],[13200,-28]]
       .map(([s,lateral])=>({s,lateral,count:7,radius:10})),
@@ -146,16 +147,16 @@ export const SUMMIT_RUN=defineScriptedCourse({
     {id:'snowfield-ice-3',kind:'ice',shaded:true,s0:at(36)+60,s1:at(36)+80},
   ],
   roadBranches:[{id:'summit-open-road',start:10100,end:10900,side:-1,offset:18,halfWidth:6,surface:'paved',gripKind:'asphalt'}],
-  galleries:[{id:'summit-gallery',cover:false,start:10170,end:10800,width:5,roofWidth:7.8,flatRoof:true,height:galleryRoof.min[1]*1.1,collisions:SUMMIT_GALLERY_BOUNDS}],
-  scenery:{trees:120,rocks:100,mountains:false,
+  galleries:[{id:'summit-gallery',cover:false,start:10170,end:10800,width:5,solidSides:true,roofWidth:7.8,flatRoof:true,height:galleryRoof.min[1]*1.1,clearance:{width:10,height:galleryRoof.min[1]*1.1},collisions:SUMMIT_GALLERY_BOUNDS}],
+  scenery:{trees:120,rocks:100,mountains:false,continuousGround:true,
     forest:{from:13,to:56,spacing:5.2,rows:7,thin:.5,jitter:1.7,scale:[.45,2.1],clumps:{cut:.36,size:1.2},
       ranges:[{from:at(13),to:at(27),fadeOut:at(27)-at(26)+200}]}},
   effects:{birches:{seed:0xb1c4,groves:26,depth:[14,36],ranges:[{from:at(13),to:at(27)}]}},
   kitLook:{
     gallery:{wash:{colour:0xd8d5ca,strength:2.2,height:8,floor:.7}},
     'snow-rock':{smoothNormals:true},
-    'summit-hut':{glow:3.2},
-    observatory:{slit:{nodes:['observatory-cover','observatory-cover.001'],halfWidth:1.4,minY:3.38,minZ:.65,normalX:.9,colour:0xffdfaa,strength:3.8}},
+    'summit-hut':{glow:3.2,wash:{colour:0xffd4a0,strength:.65,height:8,floor:.3}},
+    observatory:{wash:{colour:0xffe0bc,strength:.5,height:10,floor:.25},slit:{nodes:['observatory-cover','observatory-cover.001'],halfWidth:1.4,minY:3.38,minZ:.65,normalX:.9,colour:0xffdfaa,strength:3.8}},
   },
   basins:[LEDGE_VALLEY],
   groundLights:TOWN_LIGHTS.map(([s,lateral],i)=>({s,lateral,colour:i%3?0xffdba3:0xffa258,size:7,strength:1.5})),
@@ -168,13 +169,14 @@ export const SUMMIT_RUN=defineScriptedCourse({
   kitPlacements:[
     ...Array.from({length:35},(_,index)=>({id:'gallery',s:10176+index*18,lateral:0,heading:0,scale:[1.2,1.1,3],
       ...(index===0?{nodeTranslations:galleryEntranceTranslations}:{})})),
-    {id:'summit-hut',s:finish-130,lateral:28,heading:-Math.PI/2,scale:1},
-    {id:'observatory',s:finish-60,lateral:-40,heading:Math.PI/2,scale:1},
+    {id:'summit-hut',s:finish-16,lateral:17,heading:-Math.PI/2,scale:2},
+    {id:'observatory',s:finish-16,lateral:-17,heading:Math.PI/2,scale:1.2},
+    {id:'summit-finish',s:finish-4,lateral:0,heading:0,scale:1},
   ],
 });
 
 // Course-owned registration preserves generation identity and release order.
 export const manifest=Object.freeze({
-  id:'summit-run',flag:'summit-run',state:'dev',price:2600,grandPrix:true,releaseOrder:4,
+  id:'summit-run',flag:'summit-run',state:'on',price:2600,grandPrix:true,releaseOrder:4,
   driver:Object.freeze({car:'falcone_f42',driverId:'club',controller:'racing-line',skill:.95}),
 });

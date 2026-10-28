@@ -28,7 +28,7 @@ skin palettes, grime and gear as Blender recipes (section 12).
 | How many | At racing speed about one sighting every 30 to 60 seconds; a herd counts as one; the rare animal about one race in five |
 | Races | Animals stay off the racing line and never change a race |
 | From the air | You see more from the helicopter, which is what the wildlife count is for |
-| Wildlife count | Count bears, wolves, cougars, deer and moose for the park rangers; about 600 credits; the lesson is sampling and estimating |
+| Wildlife count | Count bears, wolves, cougars, deer and moose for the park rangers; about 3,500 credits (was 600); the lesson is sampling and estimating |
 | Facts | Bears and wolves at Tremblant, cougars at Summit and the western mountains, deer nearly everywhere; no cougars at Tremblant |
 | Skins | Earned after 5 missions of one kind, or bought sooner; a fresh coat of paint plus one piece of matching gear; the first skin is whichever kind reaches 5 first |
 | Dirt | Starts new, gets dirty with use: dust on dry courses, mud, soot after a fire, salt by the sea; a wash costs 100 credits |
@@ -141,9 +141,9 @@ the dispatch board, never the radio.
   or R when no call is waiting) once at least a quarter is covered: the estimate is the count
   divided by the share covered, rounded. Flying parallel lines 120 m apart
   covers it all; covering half and doubling is the sampling lesson.
-- **Pay.** Within 20% of the true number: 600 credits. Within 40%: 400.
-  Further off: 200. Spotting the rare animal of that course during the
-  count: 100 more. The same in Assisted and Real.
+- **Pay.** Within 20% of the true number: 3,500 credits. Within 40%: 2,350.
+  Further off: 1,150. Spotting the rare animal of that course during the
+  count: 600 more (was 600, 400, 200 and 100). The same in Assisted and Real.
 - Leaving the course or taking another job drops the count; it can be
   started again the same play day. Each finished count adds 1 toward the
   wildlife skin.
@@ -195,7 +195,7 @@ place.
 | Water gauge | Fire service | The bucket shows litres on the panel instead of words (H2 6.1) |
 | Drop sight | Fire service | A dot marks the exact centre of the aim ring (H2 6.1) |
 | Winch | Medevac | The rescue line reels from 5 to 40 m at 1.5 m/s (keys: W and S with the hook key H held), so you can hover higher above trees and cliffs (H4 6.1) |
-| Stretcher | Medevac | Bumps cost half; hoist rescues pay 200 more (H4 6.1) |
+| Stretcher | Medevac | A bump hurts only above 8 m/s, two steps only above 14 m/s; hoist rescues pay 200 more (H4 6.1) |
 | Searchlight | Search and rescue | The hiker search runs 8 minutes on into the night (H4 6.1) |
 | Heat camera | Search and rescue | The panel shows warm people within 150 m: the hiker under trees, a buried skier within 30 m (H4 6.1); in a wildlife count, warm animals too |
 | Quieter rotor tips | Wildlife | Animals scare at 50 m instead of 100 m (section 4) |
@@ -293,7 +293,7 @@ survey: {day, done}
 ## 11. Files, switches, locks and hooks
 
 - **Switches:** `wildlife: 'dev'` (animals in races, and the wildlife count
-  when the helicopter is on) and `heliSkins: 'dev'` (skins, gear, dirt, the
+  when the helicopter is on) and `'heli-skins': 'dev'` (skins, gear, dirt, the
   wash), effective only with `helicopter` on. The count in
   `tools/test-feature-flags.mjs` rises by two.
 

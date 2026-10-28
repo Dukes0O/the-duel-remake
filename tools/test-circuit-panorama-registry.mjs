@@ -1,6 +1,7 @@
 import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
 import {COURSE_PRICES, isCourseUnlocked, purchaseCourse} from '../src/course-access.js';
 import {COURSE} from '../src/config.js';
+import {circuitsEnabled} from '../src/circuits/index.js';
 import {supportsCombat} from '../src/combat-weapons.js';
 import {CIRCUIT_MANIFESTS, BASE_COURSE_COUNT} from '../src/circuit-manifests.js';
 import {createProfile} from '../src/progression.js';
@@ -25,7 +26,12 @@ test('panorama-ridge retains its accepted registry identity and access', () => {
   const enabled = CIRCUIT_MANIFESTS.filter(row => row.state === 'on');
   const publicIndex = COURSE.findIndex(row => row.id === id);
   assert.equal(publicIndex, BASE_COURSE_COUNT + enabled.findIndex(row => row.id === id));
-  assert.equal(publicIndex, COURSE.length - 1, 'Panorama Ridge is last on the course list, after Harbour Lights');
+  assert.equal(publicIndex, 19, 'Panorama retains its original public index as later courses join');
+  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), enabled.map(row => row.id), 'the current public catalog follows exact manifest order');
+  const historicalIds = ['tremblant-woods', 'tremblant-snow', 'harbour-lights', id];
+  const historical = circuitsEnabled({enabled: flag => historicalIds.includes(flag)});
+  assert.deepEqual(historical.map(row => row.id), historicalIds, 'the four-course release catalog is unchanged');
+  assert.equal(BASE_COURSE_COUNT + historical.findIndex(row => row.id === id), BASE_COURSE_COUNT + historical.length - 1, 'Panorama was last in its original release catalog');
   assert.equal(COURSE[publicIndex - 1].id, 'harbour-lights');
   const fresh = createProfile();
   assert.equal(isCourseUnlocked(fresh, id), false);

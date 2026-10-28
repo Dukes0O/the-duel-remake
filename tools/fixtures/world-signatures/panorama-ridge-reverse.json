@@ -1,0 +1,11 @@
+{
+  "panorama-ridge-reverse": {
+    "hash": "fd7db65ac60d046ad1850cf3c9887941dc91b1cf44234bcf15026342ade6efe2",
+    "nodes": 382,
+    "meshes": 370,
+    "instances": 21270,
+    "geometries": 82,
+    "materials": 50,
+    "textures": 16
+  }
+}

@@ -15,6 +15,18 @@ export const SURFACE_WATER = Object.freeze([0.030, 0.170, 0.160]);
 // Sunlight just under the surface: warm white.
 export const SUN_COLOUR = Object.freeze([1.0, 0.90, 0.74]);
 
+// DEEP-SHALLOWS-FIX (Kyle, 28 October 2026: the shallows were incredibly hard to steer in).
+// Shallow water is bright and clear: the haze that eats colour with distance is only
+// SHALLOW_CLARITY of its usual strength at the eye's depth of 6 m or less, and grows back
+// to full strength by 24 m, where the dark, murky water of the drop-off is as designed.
+// Past FAR_FADE_START metres everything melts into the water whatever the clarity, so
+// the far edge of the sea floor never shows as a line.
+export const SHALLOW_CLARITY = 0.3;
+export const CLEAR_UNTIL_DEPTH = 6;
+export const CLOUDY_FROM_DEPTH = 24;
+export const FAR_FADE_START = 70;
+export const FAR_FADE_END = 140;
+
 export const MAX_DEPTH = 40;
 export const CAUSTIC_RATE = 0.17;
 export const CAUSTIC_GONE_DEPTH = 28;
@@ -61,6 +73,28 @@ export function causticStrengthAt(depth) {
 export function lightShaftStrengthAt(depth) {
   const d = clampDepth(depth);
   return Math.exp(-RAY_RATE * d) * (1 - smoothstep(24, 40, d));
+}
+
+// How much of the usual haze there is at the eye's depth: SHALLOW_CLARITY in the
+// shallows, rising smoothly to 1 (the original, murky water) in the deep.
+export function clarityAt(depth) {
+  const t = smoothstep(CLEAR_UNTIL_DEPTH, CLOUDY_FROM_DEPTH, clampDepth(depth));
+  return SHALLOW_CLARITY + (1 - SHALLOW_CLARITY) * t;
+}
+
+// The haze rates the shaders use when the eye is at this depth, per colour.
+// Pass out to reuse one array every frame.
+export function sightFadeAt(depth, out = [0, 0, 0]) {
+  const clarity = clarityAt(depth);
+  for (let i = 0; i < 3; i++) out[i] = SIGHT_FADE[i] * clarity;
+  return out;
+}
+
+// Share of an object's own colour still showing at this distance, per colour,
+// when the eye is at this depth. The shader does the same sum.
+export function colourKeptAt(distance, depth) {
+  const far = 1 - smoothstep(FAR_FADE_START, FAR_FADE_END, Math.max(0, distance));
+  return sightFadeAt(depth).map(rate => Math.exp(-rate * Math.max(0, distance)) * far);
 }
 
 // How far you can see (metres) before the water is 95% of what you see, per colour.

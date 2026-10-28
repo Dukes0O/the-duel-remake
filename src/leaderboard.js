@@ -38,6 +38,7 @@ const rowKey = row =>
     row.playerId,
     row.eventKey,
     row.car,
+    ...(isDriftRow(row)&&row.tyreSlipRules===true?['tyre-slip:1']:[]),
     ...(row.mode === 'wasteland' ? ['wasteland', weaponSignature(row)] : []),
     row.driverSignature ?? driverModifierSignature(row.driverId, row.car),
     rivalSignature({ ...row, stageIndex: COURSE.findIndex(stage => stage.id === row.eventId) })
@@ -54,6 +55,7 @@ function better(row, prior, drift) {
 function driftMetadata(result, stage) {
   return {
     discipline: 'drift',
+    ...(result.tyreSlipRules===true?{tyreSlipRules:true}:{}),
     driftScore: Math.round(result.driftScore),
     driftTarget: stage.driftTrial.targets[result.cpuDifficulty || 'easy'],
     driftBestChain: Math.round(result.driftBestChain || 0),
@@ -257,6 +259,7 @@ export function recordFinish(board, result, player) {
       driverId,
       driverSignature,
       mode: result.mode,
+      ...(result.tyreSlipRules===true?{tyreSlipRules:true}:{}),
       weaponLevels: result.weaponLevels,
       rival: result.mode === 'grandprix' ? null : result.rival
     });
@@ -324,7 +327,7 @@ export function recordFinish(board, result, player) {
 }
 export function getLeaderboard(
   board,
-  { eventId = '', event = '', car = '', playerId = '', driverId = DEFAULT_DRIVER, mode = '' } = {}
+  { eventId = '', event = '', car = '', playerId = '', driverId = DEFAULT_DRIVER, mode = '', tyreSlipRules } = {}
 ) {
   return board.entries
     .filter(
@@ -333,6 +336,7 @@ export function getLeaderboard(
         (row.driverSignature ?? '') === driverModifierSignature(driverId, row.car) &&
         (!mode || row.mode === mode) &&
         (!eventId || row.eventId === eventId) &&
+        (!isDriftRow(row)||typeof tyreSlipRules!=='boolean'||(row.tyreSlipRules===true)===tyreSlipRules) &&
         (!event || row.eventKey === event) &&
         (!car || row.car === car) &&
         (!playerId || row.playerId === playerId)

@@ -1,3 +1,4 @@
+import {validReferencePoses} from './reference-laps.js';
 import {CARS,COURSE,DRIVE} from './config.js';
 import {bestKey,isValidFinish,playerName,getUpgradeLevels,stageEventId} from './progression.js';
 import {normalizeDriverId,driverModifierSignature,driverRecordMetadata,isCurrentDriverRecord} from './drivers.js';
@@ -61,7 +62,16 @@ export function setGhostArchive(storage,rows){
 }
 export function clearGhostArchive(storage){archiveViews.delete(storage);}
 export function loadGhosts(storage){try{const target=storage??globalThis.localStorage,raw=target?.getItem(GHOST_KEY),value=raw?JSON.parse(raw):createGhostStore(),archive=archiveViews.get(target);return normalizeGhostStore(archive?{...value,archivedRecords:[...(value.archivedRecords??[]),...archive.rows]}:value);}catch{return createGhostStore();}}
-export function saveGhosts(store,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;const normalized=normalizeGhostStore(store),archive=archiveViews.get(target);if(archive&&JSON.stringify(normalized.archivedRecords)!==JSON.stringify(archive.normalized))return false;target.setItem(GHOST_KEY,JSON.stringify(archive?{...normalized,archivedRecords:[]}:normalized));return true;}catch{return false;}}
+export function saveGhosts(store,storage){
+  try{
+    const target=storage??globalThis.localStorage;
+    if(!target)return false;
+    const normalized=normalizeGhostStore(store),archive=archiveViews.get(target);
+    if(archive&&JSON.stringify(normalized.archivedRecords)!==JSON.stringify(archive.normalized))return false;
+    const saved=target.setItem(GHOST_KEY,JSON.stringify(archive?{...normalized,archivedRecords:[]}:normalized));
+    return saved?.then?saved.then(()=>true,()=>false):true;
+  }catch{return false;}
+}
 export function readGhostEnabled(storage){try{return (storage??globalThis.localStorage)?.getItem(GHOST_ENABLED_KEY)!=='false';}catch{return true;}}
 export function saveGhostEnabled(enabled,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;target.setItem(GHOST_ENABLED_KEY,String(!!enabled));return true;}catch{return false;}}
 export function findGhost(store,playerId,options){const key=ghostKey(playerId,options);return key?store.records.find(record=>currentRecord(record)&&record.key===key)||null:null;}
@@ -122,7 +132,11 @@ export class GhostRecorder {
   }
 }
 export function sampleGhost(record,timeSec,out={}){
-  if(!record||!currentRecord(record)||!Number.isFinite(timeSec)||timeSec<0||timeSec>record.timeSec)return null;
+  if(!record||!currentRecord(record))return null;
+  return sampleGhostRows(record,timeSec,out);
+}
+function sampleGhostRows(record,timeSec,out={}){
+  if(!record||!Number.isFinite(timeSec)||timeSec<0||timeSec>record.timeSec)return null;
   const rows=record.samples,t=timeSec*1000;let lo=0,hi=rows.length-1;
   while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(rows[mid][0]<=t)lo=mid;else hi=mid-1;}
   const a=rows[lo],b=rows[Math.min(rows.length-1,lo+1)],blend=b[6]||b[0]===a[0]?0:Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0]))),mix=index=>a[index]+(b[index]-a[index])*blend;
@@ -199,4 +213,24 @@ export class GrandPrixLapRecorder {
     this.previous = crossing;
     return record;
   }
+}
+
+const teamRecords = new WeakSet();
+export function createTeamGhost(reference, context) {
+  if (!validReferencePoses(reference, context) || !CARS[reference.car] ||
+      !Number.isSafeInteger(context.laps) || context.laps < 1 || context.laps > 6) return null;
+  const record = Object.freeze({teamReference:true,eventId:context.eventId,route:context.route,
+    courseFingerprint:context.courseFingerprint,courseLength:context.length,laps:context.laps,
+    timeSec:reference.lapMs/1000,samples:reference.poseSamples,car:reference.car,
+    playerId:'team-reference',upgrades:Object.freeze({})});
+  teamRecords.add(record);return record;
+}
+export function sampleTeamGhost(record, timeSec, out = {}) {
+  if (!teamRecords.has(record) || !Number.isFinite(timeSec) || timeSec < 0 ||
+      timeSec > record.timeSec * record.laps) return null;
+  const lap = Math.min(record.laps-1, Math.floor(timeSec / record.timeSec));
+  const pose = sampleGhostRows(record, timeSec - lap * record.timeSec, out);
+  if (!pose) return null;
+  pose.s += lap * record.courseLength;pose.timeSec = timeSec;
+  pose.recordTimeSec = record.timeSec * record.laps;return pose;
 }

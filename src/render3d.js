@@ -1,8 +1,15 @@
+import {speedKph} from './speed-format.js';
+import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
+import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
+// MAP-VIEW: signs, corner names and the Table (drawing only).
+import {createMapWorldView} from './heli/pilot-map-world.js';
+import {createSkiView} from './ski/ski-view.js'; // SKI-VIEW: the ski zone, drawn in a scene of its own
+import {createBurntLook} from './burnt-look.js';
 import {createTrackKits,trackKitsOf} from './track-kits.js';
 import {snowmenEnabled,snowmanPlacements} from './snowmen.js';
 import {createSnowmenView} from './snowmen-view.js';
@@ -19,6 +26,8 @@ import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.j
 import { CARS, DRIVE } from './config.js';
 import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage, combatVehicleWear } from './vehicles.js';
 import { buildEnvironment, worldAtExtended, disposeTree } from './world.js';
+import { createTerrainPreload } from './terrain-preload.js';
+import { addSign } from './world-props.js'; // DRIVE-LESSONS-VIEW-2: the ice sign is the road's own sign board
 import { createDrivingEffects } from './effects.js';
 import { createExplosion } from './explosion.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -53,7 +62,10 @@ import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createTankerModel} from './arena/tanker-model.js';
-import {trackSnapshotPose, SNAPSHOT_FOV} from './track-analysis.js';
+import {trackSnapshotPose, SNAPSHOT_FOV, buildTrackDossier} from './track-analysis.js';
+import {referenceLap} from './reference-laps.js';
+import {telemetryRoute} from './lap-telemetry.js';
+import {coachAllowed,coachRaceContext,buildCoachMarkers} from './coach-markers.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -159,6 +171,140 @@ export function attachRenderer(host, app) {
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label', 'The Duel three-dimensional racing scene');
   const scene = new THREE.Scene();
+  const coachView = new THREE.Group();coachView.name = 'Coach braking and apex guides';
+  scene.add(coachView);
+  const driveLessonView=new THREE.Group();driveLessonView.name='Driving lesson cones and red board';scene.add(driveLessonView);
+  let driveLessonPlan=null;
+  function updateDriveLesson(next,state){
+    const run=app.duel.drivingLesson;
+    const visible=!!next&&!!run&&run.ownerId===app.player?.id&&state.playerId===run.ownerId&&run.state===state&&
+      app.drivingLessonsAvailable?.()===true;
+    driveLessonView.visible=visible;
+    if(!visible){
+      if(driveLessonPlan){for(const child of [...driveLessonView.children]){driveLessonView.remove(child);disposeTree(child);}driveLessonPlan=null;sceneRevision++;}
+      return;
+    }
+    if(driveLessonPlan!==run.plan){
+      for(const child of [...driveLessonView.children]){driveLessonView.remove(child);disposeTree(child);}
+      driveLessonPlan=run.plan;
+      const ground=point=>{
+        const actual=next.groundAt(point.s,point.lateral);
+        return Math.max(actual.y,renderedGroundHeight(next,{x:point.x,z:point.z,s:point.s,off:point.lateral},{requireSurface:true})??actual.y)+.025;
+      };
+      for(const cone of run.plan.instructor.cones){
+        const group=new THREE.Group();group.name='Lesson cone '+cone.id;group.userData.coneId=cone.id;
+        const base=new THREE.Mesh(new THREE.BoxGeometry(.8,.08,.8),new THREE.MeshStandardMaterial({color:0x292525,roughness:.9}));base.position.y=.04;
+        // DRIVE-LESSONS-VIEW-2: the snow lesson's first cone is the snow cone, drawn pale blue so it is not mistaken for the red dry board.
+        const body=new THREE.Mesh(new THREE.ConeGeometry(.29,.8,12),new THREE.MeshStandardMaterial({color:run.lesson.id==='snow'&&cone.id===1?0x8fd0f0:0xf68d32,roughness:.8}));body.position.y=.46;
+        const stripe=new THREE.Mesh(new THREE.CylinderGeometry(.13,.18,.13,12),new THREE.MeshStandardMaterial({color:0xfff0d9,roughness:.8}));stripe.position.y=.48;
+        group.add(base,body,stripe);group.position.set(cone.x,ground(cone),cone.z);driveLessonView.add(group);
+      }
+      // The red board is lesson 1's late-braking board and lesson 4's dry board; lessons 2 and 3 have none (DRIVE-LESSONS-VIEW-2).
+      const dir=run.plan.corner.dir,s=run.plan.instructor.redBoardS;
+      if(Number.isFinite(s)&&['corner','snow'].includes(run.lesson.id)){
+      const lateral=-dir*(next.roadHalfWidthAt(s)+1.2),point={...next.groundAt(s,lateral),s,lateral};
+      const board=new THREE.Group();board.name=run.lesson.id==='snow'?'Lesson dry-road red board':'Lesson late-braking red board';board.userData.redBoard=true;
+      const post=new THREE.Mesh(new THREE.BoxGeometry(.1,1.8,.1),new THREE.MeshStandardMaterial({color:0xddddcc}));post.position.y=.9;
+      const face=new THREE.Mesh(new THREE.BoxGeometry(1.4,.65,.1),new THREE.MeshStandardMaterial({color:0xc42c29,roughness:.7}));face.position.y=1.45;
+      board.add(post,face);board.position.set(point.x,ground(point),point.z);board.rotation.y=next.at(s).heading;driveLessonView.add(board);
+      }
+      // Surface paint follows the native plan. It has no collision or simulation hooks.
+      const paint = (name, quads) => {
+        const positions=[],colors=[];
+        for(const [s0,s1,l0,l1,color,shift=0] of quads){
+          const tint=new THREE.Color(color);
+          const points=[[s0,l0],[s1,l0],[s1,l1],[s0,l1]].map(([s,lateral])=>{
+            lateral+=s===s1?shift:0;const p={...next.groundAt(s,lateral),s,lateral};return [p.x,ground(p)+.045,p.z];
+          });
+          for(const i of [0,1,2,0,2,3]){positions.push(...points[i]);colors.push(tint.r,tint.g,tint.b);}
+        }
+        const geometry=new THREE.BufferGeometry();
+        geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+        geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+        const mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));
+        mesh.name=name;mesh.renderOrder=3;driveLessonView.add(mesh);return mesh;
+      };
+      const ribbon=[],zones=[],plan=run.plan.instructor.plan;
+      for(let i=0;i<plan.length-2;i+=2){
+        const p=plan[i],q=plan[i+2],color={accelerate:0x40dd87,coast:0xfff8e5,brake:0xff5146}[p.action];
+        // Each pair uses its own lateral endpoints to follow the planned line.
+        const meshQuad=[p.s,q.s,p.lateral-.34,p.lateral+.34,color,q.lateral-p.lateral];
+        ribbon.push(meshQuad);
+      }
+      paint('Lesson painted line',ribbon).userData.lessonLine=true;
+      for(const c of run.plan.instructor.corners){
+        if(c.kind==='flat')continue;
+        const zone=c.brakeZone??{s0:c.turnInS-15,s1:c.turnInS+5};
+        for(let s=zone.s0;s<zone.s1;s+=2){
+          const end=Math.min(s+2,zone.s1),half=next.roadHalfWidthAt(s)-.2;
+          for(let l=-half;l<half;l+=1){
+            const edge=Math.abs(l)>half-1.5||s<zone.s0+2||end>=zone.s1;
+            if(edge)zones.push([s,end,l,Math.min(half,l+1),c.kind==='lift'?0xf2ce52:Math.floor((s-zone.s0)/2)%2?0xfff5e7:0xf2554c]);
+          }
+        }
+        if(c.kind==='brake'){
+          const canvas=document.createElement('canvas');canvas.width=256;canvas.height=128;
+          const ctx=canvas.getContext('2d');ctx.fillStyle='#fff3d9';ctx.font='bold 95px sans-serif';ctx.textAlign='center';ctx.fillText(String(speedKph(c.targetMph)),128,100);
+          const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+          const at=zone.s1+4,lateral=next.roadHalfWidthAt(at)-2;
+          // Conform the lettering to slope and camber, just like the box. A flat
+          // plane can disappear into the road on a steep Panorama approach.
+          const corners=[[at-2,lateral-1.7],[at+2,lateral-1.7],[at+2,lateral+1.7],[at-2,lateral+1.7]];
+          const positions=corners.flatMap(([s,lateral])=>{
+            const point={...next.groundAt(s,lateral),s,lateral};return [point.x,ground(point)+.1,point.z];
+          });
+          const geometry=new THREE.BufferGeometry();
+          geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+          // Positive lateral is screen-left from behind; the text's top is ahead.
+          geometry.setAttribute('uv',new THREE.Float32BufferAttribute([1,0,1,1,0,1,0,0],2));
+          geometry.setIndex([0,1,2,0,2,3]);
+          const label=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3}));
+          label.renderOrder=4;label.name='Lesson road target '+c.name;driveLessonView.add(label);
+        }
+      }
+      paint('Lesson brake and lift boxes',zones);
+      // Lesson 4: an opaque sign on the inside verge, clear of the course's outside braking boards.
+      const ice=run.lesson.id==='snow'?run.plan.instructor.ice?.[0]:null;
+      if(ice){
+        const at=ice.s0-30,side=Math.sign(dir)||1,lateral=side*(next.roadHalfWidthAt(at)+2.8),here=next.groundAt(at,lateral),ahead=next.groundAt(at+2,lateral); // the board's face looks back down the road, at the driver
+        const sign=addSign(driveLessonView,{top:'WATCH FOR',bottom:'ICE',bg:'#25433d',x:here.x,y:ground({...here,s:at,lateral}),z:here.z,
+          heading:Math.atan2(here.x-ahead.x,here.z-ahead.z),posts:[-1.8,1.8].map(localX=>({halfX:.065,halfZ:.08,localX,y:ground({...here,s:at,lateral})-.05,height:4.3}))});
+        sign.name='Lesson ice sign';sign.userData.iceSign=true;sign.scale.setScalar(.7);
+      }
+      sceneRevision++;
+    }
+    for(const child of driveLessonView.children){
+      if(child.userData.lessonLine){child.visible=['follow','your-turn'].includes(run.lesson.stage);continue;}
+      if(child.userData.redBoard)child.visible=run.watchClip==='late';
+      else if(child.userData.iceSign)continue;
+      else if(child.userData.coneId!==undefined)child.rotation.z=run.lesson.attempt?.tipped.includes(child.userData.coneId)?Math.PI*.5:0;
+    }
+  }
+  let coachCourse = null, coachReference = null;
+  function updateCoach(next, state) {
+    const context = coachRaceContext(app,next,state);
+    coachView.visible = !!next && next.closed !== false && coachAllowed(context);
+    if (!coachView.visible) return;
+    const route = telemetryRoute(next.def.id, state.seed), reference = referenceLap(next.def.id, route);
+    if (coachCourse === next && coachReference === reference) return;
+    for (const child of [...coachView.children]) {coachView.remove(child);disposeTree(child);}
+    coachCourse = next;coachReference = reference;
+    if (!reference) {coachView.visible = false;return;}
+    let dossier;
+    try {dossier = buildTrackDossier(next, {route,reference});}
+    catch {coachView.visible = false;return;} // Never display stale reference geometry.
+    for (const marker of buildCoachMarkers(next, dossier, context)) {
+      const brake = new THREE.Mesh(new THREE.RingGeometry(.7,1.1,16),
+        new THREE.MeshBasicMaterial({color:0xffcc66,transparent:true,opacity:.65,depthWrite:false,side:THREE.DoubleSide}));
+      brake.rotation.x = -Math.PI / 2;brake.position.set(marker.brake.x,marker.brake.y,marker.brake.z);
+      brake.name = 'Coach brake: ' + marker.id;
+      const geometry = new THREE.BufferGeometry().setFromPoints(marker.line.map(point => new THREE.Vector3(point.x,point.y,point.z)));
+      const apex = new THREE.Line(geometry,new THREE.LineBasicMaterial({color:0x99d6dc,transparent:true,opacity:.28,depthWrite:false}));
+      apex.name = 'Coach apex: ' + marker.id;coachView.add(brake,apex);
+    }
+    sceneRevision++;
+  }
+
   const arenaMarkers = new THREE.Group();
   arenaMarkers.name = 'Arena floor markers';
   scene.add(arenaMarkers);
@@ -169,7 +315,7 @@ export function attachRenderer(host, app) {
   const bloom=new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9);
   bloom.name='Bloom';composer.addPass(bloom);composer.addPass(Object.assign(new OutputPass(),{name:'Tone and colour'}));
   const lighting=createSceneLighting({scene,renderer,bloom,host});
-  const deepView=createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,
+  const deepView=createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,createExtras:createSirenaScene,
     createPipeline(privateScene,privateCamera,ambient,high){
       const privateComposer=new EffectComposer(renderer);
       privateComposer.addPass(new RenderPass(privateScene,privateCamera));
@@ -180,12 +326,17 @@ export function attachRenderer(host, app) {
         render:()=>renderMainView(renderer,privateComposer,high),
         dispose(){privateComposer.passes.forEach(pass=>{if(pass!==ambient)pass.dispose?.();});privateComposer.dispose();}};
     }});
-  const stopDeepEvents=app.duel.onChange((_state,event)=>{if(event.menu||event.stageLoaded!=null||event.arenaLoaded!=null||event.deepExited)deepView.reset();});
+  const stopDeepEvents=app.duel.onChange((_state,event)=>{if(event.menu||event.stageLoaded!=null||event.arenaLoaded!=null||event.deepExited)deepView.reset();if(event.deepRaised)deepView.raised(event.deepRaised.find);});
   let deepRevision=deepView.revision;
 
   // The helicopter's group joins the scene before the lighting roots are
   // taken, so a world rebuild never removes it.
   const heliView=createHeliView({THREE,scene});
+  // MAP-VIEW: the pilot's map in the world; its ground heights come from the course last loaded.
+  const mapWorld=createMapWorldView({THREE,scene,groundHeight:(x,z)=>app.heliGroundHeight(x,z),
+    roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});
+  // H2 Fire: a burnt course's look (docs/HELI_FIRE.md 8.4), drawing only.
+  const burntLook=createBurntLook({THREE,scene});
   const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
@@ -197,6 +348,32 @@ export function attachRenderer(host, app) {
   const hasAvalanche=next=>(next.def.id==='summit-run'||isSummitAttack(next.def)) && (app._switches?.()??app.duel.featureFlags).enabled('summit-run');
   const kitWorldKey=next=>environmentKey(next)+(hasSnowmen(next)?':snowmen':'')+(hasAvalanche(next)?':avalanche':'');
   const winterEnabled=next=>snowWorldEnabled(next,app._switches?.()??app.duel.featureFlags);
+  // The ground depends on the course alone: work it out a little at a time while the cars and kits load (a task
+  // that runs between frames, so the page keeps drawing and answering), and let the world build take the result.
+  const preloadChannel=new MessageChannel(),preloadTerrain=createTerrainPreload({schedule:run=>{preloadChannel.port1.onmessage=run;preloadChannel.port2.postMessage(0);}});
+  // True when drawing `next` needs a new world (the same test the frame makes before it calls build).
+  function needsBuild(next) {
+    const key = kitWorldKey(next);
+    if (course === next && worldKey === key) return false;
+    return !(world && worldKey === key && !winterEnabled(next));
+  }
+  // Only a course with kits waits for something before its build; for the rest there is no time to use, so the
+  // build works the ground out itself, as it always did.
+  const waitsForKits = next => !!next.def.kitPlacements?.length || winterEnabled(next) || hasSnowmen(next);
+  function wantTerrain(next) {
+    if (waitsForKits(next) && needsBuild(next)) preloadTerrain.request(next, winterEnabled(next));
+    else if (preloadTerrain.active) preloadTerrain.dispose();
+  }
+  // Called once everything else the build needs is loaded: false while the ground is still being worked out.
+  function terrainReady(next) {
+    if (!waitsForKits(next) || !needsBuild(next)) return true;
+    preloadTerrain.request(next, winterEnabled(next));
+    preloadTerrain.advance(10);
+    if (preloadTerrain.done) return true;
+    renderer.domElement.style.visibility = 'hidden'; rearView.hide();
+    if (!readinessClaimed) {app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
+    app.holdVisualReadiness?.(readinessOwner);return false;
+  }
   function prepareKitWorld(next, {retry=false}={}) {
     if (!next.def.kitPlacements?.length && !winterEnabled(next) && !hasSnowmen(next)) {
       preparedTrackKits?.dispose();preparedTrackKits=null;preparedTrackKitKey=null;
@@ -227,11 +404,11 @@ export function attachRenderer(host, app) {
     app.holdVisualReadiness?.(readinessOwner);return false;
   }
   const vehicleAssets=createVehicleAssets();
-  function prepareVehicle(key,{retry=false}={}) {
+  function prepareVehicle(key,{retry=false,finish}={}) {
     if(disposed)return false;
-    let status=vehicleAssets.status(key);
-    if(status==='idle'||status==='error'&&retry){vehicleAssets.load(key,{retry});status=vehicleAssets.status(key);}
-    host.dataset.vehicleKey=key;host.dataset.vehicleAsset=status;host.dataset.heroAsset=status;
+    let status=vehicleAssets.status(key,{finish});
+    if(status==='idle'||status==='error'&&retry){vehicleAssets.load(key,{retry,finish});status=vehicleAssets.status(key,{finish});}
+    host.dataset.vehicleKey=key;host.dataset.vehicleFinish=finish??'factory';host.dataset.vehicleAsset=status;host.dataset.heroAsset=status;
     host.dataset.vehicleSource=vehicleAssets.source(key)||'unknown';
     if(status!=='ready'){
       // Hide the previous selection; a loading model must not show an old body.
@@ -259,7 +436,10 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
-  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets);scene.add(yetiView.group);
+  // A neutral multiplier on the fur alone (the accepted white factor would darken below 1): at night the yeti reads dark
+  // grey-green against the snow, and 2.6 lifts it to a pale grey-white while the texture and vertex-colour detail stay.
+  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets,{furTint:new THREE.Color(2.6,2.6,2.6)});scene.add(yetiView.group);
+  const skiView=createSkiView({renderer,yetiAssets}); // SKI-VIEW: shares the yeti's loader
   const roadRoof=createRoadRoofOwner(vehicleAttachments,{yetiAssets});
   const combatScene=createCombatScene(vehicleAttachments, {
     loadFlameTexture: path => new THREE.TextureLoader().load(path),
@@ -342,7 +522,7 @@ export function attachRenderer(host, app) {
     host.dataset.worldBuilds=String(++worldBuildCount);
     sceneRevision++;
     lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});
-    world = buildEnvironment(course,{trackKits:preparedTrackKits,snow:winterEnabled(course)});
+    world = buildEnvironment(course,{trackKits:preparedTrackKits,snow:winterEnabled(course),preload:preloadTerrain});
     preparedTrackKits = null; preparedTrackKitKey = null; scene.add(world);
     if(hasSnowmen(course)){snowmenView=createSnowmenView(trackKitsOf(world));world.add(snowmenView.group);}
     if(hasAvalanche(course)){avalancheView=createSummitAvalancheView(course);world.add(avalancheView.group);}
@@ -445,6 +625,7 @@ export function attachRenderer(host, app) {
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
     if(disposed)return;
+    if(app.labOpen===true){frameMetrics.suspend();previousT=now;return;} // LAB-VIEW: the Lab draws its own room, so this view rests
     if (trackSnapshot) {
       if (['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) {drawTrackSnapshot(now);return;}
       clearTrackSnapshot();
@@ -460,9 +641,13 @@ export function attachRenderer(host, app) {
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
     const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.deepRuntime?.raceCourse??app.duel.course;
     const moving = (st.status === 'racing'||st.status==='exploring') && !st.paused&&!st.deepJourney?.controlsLocked;
+    updateCoach(next,st);updateDriveLesson(next,st);
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
+    wantTerrain(next);
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
-    if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    const selectedFinish=app.getPaintPreset?.(carKey,{menu})?.id;
+    const modelFinish=carKey==='falcone_sirena'&&app._switches?.().enabled('lab')===true&&selectedFinish==='sea-wreck'?'sea-wreck':null;
+    if(!prepareVehicle(carKey,{finish:modelFinish})){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!prepareKitWorld(next)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedRoof=app.getRoofLook?.(carKey,{menu})??null;
     const needsYeti=((next.def.id==='summit-run'||isSummitAttack(next.def))&&(app._switches?.()??app.duel.featureFlags).enabled('yeti')&&
@@ -478,6 +663,7 @@ export function attachRenderer(host, app) {
     if(convoy&&!prepareTanker()){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!convoy&&rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!menu)for(const opponent of opponents.slice(1))if(opponent.car!==carKey&&!prepareVehicle(opponent.car)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    if(!terrainReady(next)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if (course !== next || worldKey!==kitWorldKey(next)) {
       if(world&&worldKey===kitWorldKey(next)&&!winterEnabled(next)){course=next;lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});}
       else build(next);
@@ -485,13 +671,13 @@ export function attachRenderer(host, app) {
       ready = false;
     }
     if (menu !== lastMenu) { ready = false; lastMenu = menu; }
-    if (carKey !== loadedCar) {
+    if (carKey !== loadedCar || player?.userData.finish !== (modelFinish ?? undefined)) {
       if(ghost){const style=ghostStyle;retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;}
       if (player) {roadRoof.detachVehicle(player);retireObject(player);}
       if(rival){retireObject(rival);rival=null;}
       for(const entry of extraOpponents)retireObject(entry.mesh, () => entry.droneStyle?.restore());
       extraOpponents.length=0;
-      player = vehicleAssets.create(carKey);
+      player = vehicleAssets.create(carKey,{finish:modelFinish});
       scene.add(player); loadedCar = carKey;sceneRevision++;
       ambientShading.refresh();
     }
@@ -559,7 +745,15 @@ export function attachRenderer(host, app) {
     }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const deepPose=!menu?deepPresentation(app.duel):null;
-    const heliPose=st.status==='heli'&&app.heliSession?heliView.update(app.heliView(),{cameraIndex:app.heliCamera,dt}):(heliView.hide(),null);
+    const heliNow=st.status==='heli'&&app.heliSession?app.heliView():null; // SKI-VIEW: one view a frame, for both
+    const heliPose=heliNow?heliView.update(heliNow,{cameraIndex:app.heliCamera,dt}):(heliView.hide(),null);
+    // MAP-VIEW: the Table is not on the course last loaded, so that course steps aside while the helicopter is there.
+    const mapDraw=heliNow?mapWorld.update(heliNow):(mapWorld.hide(),{hideCourse:false});
+    if(world)world.visible=!mapDraw.hideCourse;
+    // SKI-VIEW: on skis the zone's own camera; the Summit world here is captured once as its backdrop.
+    const skiPose=heliPose?skiView.pose(heliNow,{cameraMode:app.skiCamera,dt}):(skiView.reset(),null);
+    host.dataset.skiModels=skiView.status;
+    burntLook.apply({course,look:app.fireLookFor?.(course.def.id)??null});burntLook.update(dt);heliView.fire.setQuality(app.ambientOcclusionEnabled!==false?'high':'performance');host.dataset.burntLook=burntLook.statusFor(course.def.id);
     const physicalCourse=deepPose?app.duel.course:course;
     const pp = vehicleGroundPoint(physicalCourse,distance,lateral);
     const journeyView=hiddenRoadPresentation(st,course);
@@ -685,6 +879,13 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(deepPose){camTarget.set(deepPose.camera.position.x,deepPose.camera.position.y,deepPose.camera.position.z);lookTarget.set(deepPose.camera.target.x,deepPose.camera.target.y,deepPose.camera.target.z);player.visible=true;firstPersonView=false;}
+    // DEEP-RAMP-2: override only while on the ramp; leave the dive camera intact below it.
+    const rampCamera=!menu?rampChaseCamera(app.duel):null;
+    if(rampCamera){const p=rampCamera,b=p.blend;
+      camTarget.lerp(new THREE.Vector3(p.position.x,p.position.y,p.position.z),b);
+      lookTarget.lerp(new THREE.Vector3(p.target.x,p.target.y,p.target.z),b);
+      camera.fov=THREE.MathUtils.lerp(camera.fov,p.fov,b);player.visible=true;firstPersonView=false;
+    }
     if(heliPose?.camera){camTarget.set(heliPose.camera.position.x,heliPose.camera.position.y,heliPose.camera.position.z);lookTarget.set(heliPose.camera.target.x,heliPose.camera.target.y,heliPose.camera.target.z);camera.fov=heliPose.camera.fov;firstPersonView=false;}
     const yardHomePose=yardPresentation?.homeCamera?.();
     if(yardHomePose){
@@ -695,21 +896,21 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
-    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose) camera.position.copy(camTarget);
+    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose || rampCamera) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
       // Follow longitudinal motion immediately: world-space damping otherwise
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
+    if(!menu&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
-    if(!menu&&!deepPose&&!heliPose)constrainMountainCamera(course,camera.position,distance);
-    if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
+    if(!menu&&!deepPose&&!heliPose&&!rampCamera)constrainMountainCamera(course,camera.position,distance);
+    if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
       camera.position.copy(clearCameraSightline(course,camera.position,
         {x:player.position.x,y:player.position.y+(tall?1.65:1.05),z:player.position.z},distance));
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
-    if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!journeyView.camera&&!spurCamera&&
+    if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
         !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){
       camera.updateMatrixWorld();
       cameraBodyTarget.copy(player.position);cameraBodyTarget.y+=tall?1.65:1.05;
@@ -721,7 +922,8 @@ export function attachRenderer(host, app) {
     }
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
-    const ghostPose=!menu&&app.ghostPose?.car===carKey?app.ghostPose:null;
+    const lessonGhost=app.getDriveLessonGhost?.();
+    const ghostPose=!menu?(lessonGhost??(app.ghostPose?.car===carKey?app.ghostPose:null)):null;
     if(!ghostPose&&ghost){
       const style=ghostStyle;
       retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;
@@ -910,7 +1112,11 @@ export function attachRenderer(host, app) {
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged;
     let submittedCpuMs;
-    if(deepPose&&st.deepJourney.committed&&st.deepJourney.phase!=='ascending'){
+    if(skiPose){
+      const skiRenderStarted=performance.now();
+      skiView.render({view:heliNow,pose:skiPose,mainScene:scene,aspect:camera.aspect,high,seconds:presentationSeconds,dt});
+      rearView.hide();submittedCpuMs=performance.now()-skiRenderStarted;
+    } else if(deepPose&&st.deepJourney.committed&&st.deepJourney.phase!=='ascending'){
       const privateRenderStarted=performance.now();
       deepView.render({duel:app.duel,car:player,camera,seconds:presentationSeconds,high,width:host.clientWidth,height:host.clientHeight});
       if(deepRevision!==deepView.revision){deepRevision=deepView.revision;ambientShading.refresh();sceneRevision++;}
@@ -987,7 +1193,7 @@ export function attachRenderer(host, app) {
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
   return { prepareVehicle, captureTrackSnapshot, clearTrackSnapshot,
-    retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); },
+    retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true,finish:app._switches?.().enabled('lab')===true?app.getPaintPreset?.(host.dataset.vehicleKey)?.id:null}); },
     retryTrackKits() {const next=app.duel.state.status==='menu'?app.getMenuCourse(app.menuStage||0):app.duel.course;return prepareKitWorld(next,{retry:true});},
     projectFootAim() {
       const state=app.duel.state;
@@ -1002,7 +1208,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();mapWorld.dispose();skiView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;preloadTerrain.dispose();preloadChannel.port1.close();stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);

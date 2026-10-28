@@ -5,39 +5,32 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {build} from 'vite';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
-const ids=['silver-school','reef-fish','turtle','ray','manta','sea-lion','crab',
+const ids=['silver-school','reef-fish','turtle','ray','manta','sea-lion','otter','crab',
   'moray','grouper','reef-shark','jellyfish','whale','octopus','wreck-hull','giant-clam','anchor','sunken-boat'];
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 
-async function helpers(){
-  const entry=join(root,'.qa-dist/deep-art.virtual.js').replaceAll('\\','/');
-  const source=id=>JSON.stringify(join(root,id).replaceAll('\\','/'));
-  const result=await build({root,configFile:false,logLevel:'silent',define:{__DUEL_QA__:'true'},
-    plugins:[{name:'deep-art-photography',resolveId(id){if(id.replaceAll('\\','/')===entry)return '\0deep-art';},
-      load(id){if(id!=='\0deep-art')return;return 'import * as THREE from '+source('node_modules/three/build/three.module.js')+
-        ';import {GLTFLoader} from '+source('node_modules/three/examples/jsm/loaders/GLTFLoader.js')+
-        ';import {floorHeight} from '+source('src/deep/sea-floor-shape.js')+
-        ';import {installIsolatedStorage} from '+source('tools/qa-storage.js')+
-        ';installIsolatedStorage();window.__deepArtQa={THREE,GLTFLoader,floorHeight};';}}],
-    build:{write:false,emptyOutDir:false,minify:false,lib:{entry,formats:['es']},rolldownOptions:{output:{codeSplitting:false}}}});
-  const output=(Array.isArray(result)?result[0]:result).output;
-  const chunk=output.find(row=>row.type==='chunk');if(!chunk)throw Error('Photography helper bundle missing');
-  return '(async()=>{'+chunk.code+'})()';
+function helpers(){
+  return `(()=>{
+    const page=window.__deepLook,qa=page?.artQa,d=page?.debug;
+    if(!qa||d.camera.position.constructor!==qa.THREE.Vector3||d.scene.constructor!==qa.THREE.Scene)
+      throw Error('Photography must use the actual look page Three module');
+    qa.installIsolatedStorage();
+    window.__deepArtQa={THREE:qa.THREE,GLTFLoader:qa.GLTFLoader,floorHeight:qa.floorHeight};
+  })()`;
 }
 
 export async function run(context){
   const manifest=JSON.parse(await readFile(join(root,'public/assets/models/deep/manifest.json'),'utf8'));
-  if(JSON.stringify(manifest.models.map(m=>m.id))!==JSON.stringify(ids))throw Error('Exact seventeen-role working-art manifest required');
+  if(JSON.stringify(manifest.models.map(m=>m.id))!==JSON.stringify(ids))throw Error('Exact eighteen-role working-art manifest required');
   const report={photographyOnly:true,actualLookTest:true,quality:'high',frameMeasurement:false,
     runtimeSceneInstall:false,storage:'existing isolated in-memory helper',views:[],sourceFiles:{}};
-  for(const path of ['tools/scenarios/deep-art.mjs','tools/blender/deep-art-fit.py','tools/blender/deep-art-sheet.py','public/assets/models/deep/manifest.json'])
+  for(const path of ['tools/scenarios/deep-art.mjs','tools/deep-look.js','tools/blender/deep-art-fit.py','tools/blender/deep-art-sheet.py','public/assets/models/deep/manifest.json'])
     report.sourceFiles[path]=digest(await readFile(join(root,path)));
   const persist=()=>writeFile(join(context.outputDir,'deep-art-native.json'),JSON.stringify(report,null,2)+'\n');
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
-  await context.navigate('/tools/deep-look.html?quality=high&still=1&clean=1&manual=1');
+  await context.navigate('/tools/deep-look.html?quality=high&still=1&clean=1&manual=1&art-qa=1');
   await context.waitFor('window.__deepLook?.ready===true&&!!window.__deepLook.debug.look','actual look-test handles',90000);
   await context.evaluate(await helpers());
   report.look=await context.evaluate(`(()=>{
@@ -61,6 +54,7 @@ export async function run(context){
         const bytes=await response.arrayBuffer();const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');
         if(hash!==row.sha256)throw Error('Browser asset bytes differ '+row.id);
         const gltf=await new GLTFLoader().parseAsync(bytes,location.origin+'/assets/models/deep/');
+        if(!(gltf.scene instanceof THREE.Group))throw Error('GLB loader must share the actual look page Three module');
         let object=gltf.scene;const mixer=gltf.animations.length?new THREE.AnimationMixer(object):null;
         if(mixer){for(const clip of gltf.animations)mixer.clipAction(clip).play();mixer.setTime(.67);}
         object.updateMatrixWorld(true);const base=new THREE.Box3().setFromObject(object),baseSize=base.getSize(new THREE.Vector3()),baseCentre=base.getCenter(new THREE.Vector3());

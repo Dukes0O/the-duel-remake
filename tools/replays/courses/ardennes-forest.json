@@ -1,0 +1,19 @@
+{
+  "eventId": "ardennes-forest",
+  "cases": [
+    {
+      "id": "ardennes-forest-duel",
+      "eventId": "ardennes-forest",
+      "category": "duel",
+      "mode": "duel",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "ardennes-forest-duel": {
+      "30": "b109ea49d773a7bd57faa7abe397fe9d55a5b319bc411b1a89144bdc8cbab817",
+      "60": "b109ea49d773a7bd57faa7abe397fe9d55a5b319bc411b1a89144bdc8cbab817",
+      "144": "b109ea49d773a7bd57faa7abe397fe9d55a5b319bc411b1a89144bdc8cbab817"
+    }
+  }
+}

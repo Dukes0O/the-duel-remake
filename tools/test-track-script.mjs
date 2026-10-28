@@ -8,7 +8,7 @@ import { sweepObstacle } from '../src/collision.js';
 import { pavedShoulderWidthAt } from '../src/road-surface.js';
 import { TRACK_SCRIPT, TrackScriptError, buildTrackScript, buildRacingLine, defineScriptedCourse } from '../src/track-script.js';
 import { describeCircuit, drawCircuit } from './track-script.mjs';
-import { driveCircuit } from './track-script-drive.mjs';
+import { driveCircuit, passingLateral } from './track-script-drive.mjs';
 
 // P4-TRACK-SCRIPT. The pilot circuit exists only in this file and is never
 // added to COURSE outside a test run.
@@ -359,3 +359,16 @@ test('the picture and the report tool', () => {
 });
 
 const EXISTING_COURSES_HASH = '4464c3ec8a537cdb0420f8f69a2a1a47111e0bd9bc1f5e1333fa3130368dd460';
+
+test('test-driver passing side follows the player rather than flipping at the road centre', () => {
+  // Long Left's rival crossed zero while the player was already to its right.
+  // Choosing by the rival's road side changed the target by 6.8 m under braking.
+  assert.ok(Math.abs(passingLateral(2.25, .01, 7.5) - passingLateral(2.25, -.01, 7.5)) < .021);
+  assert.ok(passingLateral(2.25, .01, 7.5) > .01);
+  assert.ok(passingLateral(2.25, -.01, 7.5) > -.01);
+  assert.ok(Math.abs(passingLateral(-2.25, .01, 7.5) - passingLateral(-2.25, -.01, 7.5)) < .021);
+  assert.ok(passingLateral(-2.25, .01, 7.5) < .01);
+  assert.ok(passingLateral(-2.25, -.01, 7.5) < -.01);
+  assert.equal(passingLateral(6, 5, 7.5), 5.7, 'right road margin stays 1.8 m');
+  assert.equal(passingLateral(-6, -5, 7.5), -5.7, 'left road margin stays 1.8 m');
+});

@@ -2,6 +2,9 @@
 // helicopter, the cockpit, straight down the cable, and side. Drawing
 // only: it reads the session's view and returns a pose.
 export const HELI_CAMERA_VIEWS = Object.freeze(['behind', 'cockpit', 'cable', 'side']);
+// The TV camera skin's nose camera (gear.noseCamera) adds a fifth view.
+export const HELI_CAMERA_VIEWS_WITH_NOSE = Object.freeze([...HELI_CAMERA_VIEWS, 'nose']);
+export const cameraViewsFor = gear => gear?.noseCamera === true ? HELI_CAMERA_VIEWS_WITH_NOSE : HELI_CAMERA_VIEWS;
 // The pilot's eye in Kestrel One's model (its pilot_eye node): the right-hand
 // seat, metres from the origin under the mast (+X is the left side, +Z the nose).
 // A seated pilot's eye: seat 0.95 m up, eye about 0.75 m above it.
@@ -18,12 +21,19 @@ export function heliToWorld(h, {x, y, z}) {
   return {x: x1 * ch + z2 * sh, y: y2, z: -x1 * sh + z2 * ch};
 }
 
-export function heliCameraPose(view, index = 0) {
+export function heliCameraPose(view, index = 0, gear) {
   const h = view?.heli;
   if (!h) return null;
   const fwdX = Math.sin(h.heading), fwdZ = Math.cos(h.heading), rightX = -fwdZ, rightZ = fwdX;
   const load = view.load?.hooked ? view.load : null;
-  const name = HELI_CAMERA_VIEWS[((index % 4) + 4) % 4];
+  const views = cameraViewsFor(gear), count = views.length;
+  const name = views[((index % count) + count) % count];
+  if (name === 'nose') {
+    // A steady camera on the nose: it turns with the heading but not with the
+    // pitch or the roll, and looks along the horizon.
+    const position = {x: h.x + fwdX * 3, y: h.y + 0.4, z: h.z + fwdZ * 3};
+    return {name, fov: 62, position, target: {x: position.x + fwdX * 40, y: position.y, z: position.z + fwdZ * 40}};
+  }
   if (name === 'cockpit') {
     // The eye and its gaze turn with the whole helicopter, so the seat
     // stays inside the cabin in any bank or flare.

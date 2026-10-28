@@ -4,8 +4,8 @@ Design packet D1 for Cockpit task T-040, written 14 October 2026 by Claude
 from Kyle's storyboard ("Helicopter Storyboard Ideas", sections "First
 driving lesson: the sharp corner" and "Lessons stay open"). It settles
 lesson 1, the sharp corner, enough to build, and the shared lesson pieces
-it takes from the helicopter's lessons (H1). Lessons 2 to 4 are outlined in
-section 9 and get their own short packet after lesson 1 is played. The
+it takes from the helicopter's lessons (H1). Lessons 2 to 4 and the helipad
+entry are packet D2, section 12 (24 October 2026). The
 cards are in section 10; Kyle's answer on the reward is in section 11.
 Sections 4 and 5 are written for the builder.
 
@@ -61,12 +61,12 @@ Sections 4 and 5 are written for the builder.
 - Lesson 1, on a sharp hairpin of a course you own: three cones (where to
   brake, the inside of the corner, where to finish on the outside). First
   try: brake late; the tyres screech, the car slides wide, and the
-  instructor shows the time you lost. Second try: brake at the first cone,
+  instructor shows the screech. Second try: brake at the first cone,
   turn in, touch the inside cone, accelerate out wide past the third.
   Challenge: beat the instructor's time through the corner three times in a
   row. That unlocks the next lesson and a brake upgrade.
 - Sliding costs grip like real tyres (TYRE-SLIP), so a long screech means
-  lost time.
+  the tyres are past their grip.
 - One keyboard; players take turns.
 
 ## 2. One instructor, one board, one voice (what is reused from H1)
@@ -105,7 +105,7 @@ lists them and you pick:
 | Course | Corner | Start gate | Rolling start |
 | --- | --- | --- | --- |
 | Panorama Ridge | The Cutting | 180 m before turn-in, leaving Griffin Bend | 100 mph |
-| Tremblant Woods | Beaver Hairpin | 150 m before Beaver Kink, on Beaver Run | 75 mph |
+| Tremblant Woods | Beaver Hairpin | 75 m before turn-in, on The Spur after Beaver Kink | 75 mph |
 
 Panorama Ridge is first in the list (the longer, faster approach makes the
 lesson clearest). If you own neither, lesson 1 shows "Opens later: buy
@@ -151,10 +151,10 @@ repeatable:
 - **The red board** (try 1 only): **25 m after cone 1**, the same late
   braking point TYRE-SLIP's own test uses, but never past the turn-in
   point. On The Cutting it stands 25 m late, before turn-in. On Beaver
-  Hairpin the instructor brakes only about 10 m before turn-in (it leaves
-  Beaver Kink already slow), so the board stands at turn-in itself: braking
-  there means braking as you turn, which is exactly what makes the tyres
-  slide.
+  Hairpin the board stays 25 m after cone 1, capped at turn-in. The 26 October
+  keyboard fix starts after Beaver Kink; the brake cone is recomputed for
+  that straight approach. See `docs/changes/DRIVE-LESSON-FINISH.md` for the
+  measured keyboard tries.
 
 Cones are drawn only; they never touch race physics. A cone "counts" when
 the car's centre passes within 2.5 m of it; driving right over it (within
@@ -217,10 +217,13 @@ without braking runs wide; on the keyboard it does not slide by itself,
 because a held key never steers harder than today (TYRE-SLIP amendment 5),
 so the screech in the late try comes from braking into the turn. The
 lesson's own test (section 10) requires the late try to screech at least
-0.5 s and either lose at least 0.25 s or end against the wall or off the road,
-on both corners; TYRE-SLIP's test 8
-checks a similar late entry. Without TYRE-SLIP the lesson would show a
-screech that costs nothing, which is why lesson 1 waits for it.
+0.5 s on both corners and its radio line to play; TYRE-SLIP's test 8 checks a
+similar late entry. Without TYRE-SLIP there would be no screech at all, which
+is why lesson 1 waits for it. Sliding throws away grip; brake at the board
+and the car turns in clean. Measured (24 October 2026): on these tyres a late
+entry costs screech, not time (the late try finishes 0.4 to 0.6 s *faster*
+than the instructor until it hits the wall), so the lesson never promises a
+time loss; the result card shows the actual numbers.
 
 ## 4. Lesson rules (for the builder: `src/lessons/drive-lessons.js`)
 
@@ -258,7 +261,7 @@ use the App autopilot.
 
 ## 6. Sounds and radio lines
 
-- **Radio** (Brian, through `src/lessons/radio-voice.js`): 16 lines, below.
+- **Radio** (Brian, through `src/lessons/radio-voice.js`): 15 lines, below. Lessons 2 to 4 and the true late-try lines add 32 more (12.7).
   Each kept take is recorded with the same voice and settings as the
   helicopter's lines, kept in `audio-src/voices/`, recorded as one entry in
   `tools/audio/catalog.json` (text, file and hash), and copied to
@@ -274,7 +277,6 @@ use the App autopilot.
 | --- | --- |
 | `drive.radio.corner.intro` | Welcome to the track. Today is the most important corner skill there is: braking. Forget the course boards today and watch my cones. |
 | `drive.radio.corner.late.start` | Let us see what happens when you leave it late. Keep your foot down and brake at the red board. |
-| `drive.radio.corner.late.result` | Hear that screech? That was your tyres sliding, and sliding is slow. Look at the time you lost. |
 | `drive.radio.corner.late.early` | You braked early. Good instinct, but this time I wanted you to feel it. That one still counts. |
 | `drive.radio.corner.right.start` | Now the right way. Brake hard at the first cone while the car is straight, turn in, touch the inside cone, and accelerate out wide past the third. |
 | `drive.radio.corner.coach.brake` | Brake at the first cone. Not before, not after. |
@@ -288,6 +290,12 @@ use the App autopilot.
 | `drive.radio.corner.challenge.reset` | Not that time. Back to zero. You know how. |
 | `drive.radio.corner.pass` | Three in a row. You have earned better brakes, and the next lesson is open. |
 | `drive.radio.retake` | Back for more? Good. Practice is how the fast drivers got fast. |
+
+The late try plays `drive.radio.corner.late.slid` after a screech of at least 0.5 s,
+`drive.radio.corner.late.off` when it ends against a wall or off the road, and
+`drive.radio.corner.late.early` if it braked early (12.7). The old
+`drive.radio.corner.late.result` promised lost time, which the tyres do not
+cost; it is removed.
 
 ## 7. The save (`save-shape`)
 
@@ -309,7 +317,7 @@ credits) when lesson 1 first passes.
 - **New files:** in `src/lessons/`: `lesson-core.js`, `radio-voice.js`,
   `lesson-board.js`, `lesson-board.css`, `drive-lessons.js`,
   `drive-lesson-save.js`, `drive-radio-lines.js`, `drive-lesson-ui.js`,
-  `drive-lesson-ui.css`. Tests: `tools/test-lesson-core.mjs`,
+  `drive-lesson-ui.css`. Tests: `tools/test-heli-lesson-core.mjs`,
   `test-drive-lessons.mjs`, `test-drive-lesson-save.mjs`,
   `test-drive-lesson-run.mjs`, and a browser scenario. Audio: takes in
   `audio-src/voices/`, the build step `tools/audio/build-drive-lessons.mjs`,
@@ -327,16 +335,11 @@ credits) when lesson 1 first passes.
   signatures, course registry, mastering. Race replays and world signatures
   stay identical.
 
-## 9. Lessons 2 to 4 (outline; a short packet each after lesson 1 is played)
+## 9. Lessons 2 to 4
 
-| Lesson | Where | The idea | Passing |
-| --- | --- | --- | --- |
-| 2 The racing line | Harbour Lights' Old Town Esses, or Tremblant Woods' Fir Esses | Outside, inside, outside; one smooth line through linked corners beats the shortest path | Touch each apex cone, then beat the instructor three times in a row |
-| 3 The manual gearbox | Any owned course; a straight and a corner | Shift up near the red line, shift down before the corner; on Pro this is what manual drivers do | No limiter longer than 0.5 s, the right gear at the corner, beat the instructor |
-| 4 Driving on snow | Tremblant Snow, Beaver Hairpin | Snow has less grip: brake earlier and turn in slower; winter tyres help | Pass on summer tyres, then see the gain on winter tyres |
-
-Each opens the next. Their rewards are settled in their packets. The
-Lantern Hairpin, too tight for tyre grip to matter, suits a later lesson on
+Settled in section 12 (packet D2, 24 October 2026): the racing line, the
+gearbox (with ENGINE-CURVE) and snow, plus the helipad entry. The Lantern
+Hairpin, too tight for tyre grip to matter, still suits a later lesson on
 slow corners and patience.
 
 ## 10. Cards and order
@@ -375,9 +378,10 @@ for TYRE-SLIP.
   144 FPS, and it counts all three cones; a scripted late try (brakes at the
   red board and keeps braking until it is down to the instructor's corner
   speed, steering for the line with up to full steering, not held to the
-  tyre's best grip) screeches at least 0.5 s and either finishes at least
-  0.25 s slower than the instructor or ends against the wall or off the
-  road (a late try that does not finish counts as losing time); a scripted right try passes
+  tyre's best grip) screeches at least 0.5 s and its radio line plays
+  (Claude's reviewed change, 24 October 2026: the old "0.25 s slower or ends
+  against the wall" clause is gone, since late braking costs no time on these
+  tyres); a scripted right try passes
   all four rules; a scripted driver at 100% of the line's speed beats the
   instructor; the streak resets on a slow attempt; nothing in a lesson run
   pays, records or damages.
@@ -402,3 +406,548 @@ upgrade system as it is and changes no race balance. The other choice is a
 new fourth brake level that only the lesson opens, then bought with
 credits; it needs save and balance work and makes the player brake harder
 than the computer racers expect.
+
+## 12. Lessons 2 to 4 and the helipad (packet D2, Claude, 24 October 2026)
+
+Written before lesson 1 was played, at Kyle's word of 24 October ("the
+driving lessons too"). Each lesson keeps lesson 1's shape: a wrong try that
+shows the problem, a right try with rules, then beating the instructor three
+times in a row. Everything in section 3.2 (the lesson run) and 3.3 (the
+instructor's own run in your car at 92% or 97%) holds unless a lesson says
+otherwise. Lesson runs use tuning 0 (`docs/LAB.md` 5) and never pay, record
+or damage.
+
+### 12.1 What lesson 1 taught us (and what is true in the game)
+
+- **Braking late costs screech, not time,** on these tyres (DRIVE-LESSON-1,
+  24 October). So a lesson may promise only what the game really does; each
+  lesson below has a test that proves its claim in Node before it ships.
+- **Gears do not matter in today's game.** In `src/sim-driving.js` a gear
+  only caps speed: pull falls off above half revs in any gear, and nothing
+  makes an engine weak at low revs. A car in top gear pulls from 20 mph as
+  hard as in first, and changing up early is never slower. "Shift near the
+  red line" would be untrue. Lesson 3 therefore waits for ENGINE-CURVE
+  (12.5), the same way lesson 1 waited for TYRE-SLIP.
+- **Snow is real in the game:** packed snow grips 0.7 and summer tyres keep
+  75% of that, so summer tyres on snow have about half their dry grip and
+  need about twice the road to stop; winter tyres keep all of the 0.7.
+  Tremblant Snow has an ice patch on the spur before Beaver Hairpin.
+
+### 12.2 Lesson 2, the racing line
+
+| Course | Corners | Start gate | Rolling start |
+| --- | --- | --- | --- |
+| Tremblant Woods | Fir Esses 1 and 2 (55 and 60 m radius) | 150 m before Fir Esses 1 | the instructor's speed there |
+| Harbour Lights | Old Town Esses 1 to 4 (30 to 41 m) | 150 m before Esses 1, on the 192 m straight | the instructor's speed there |
+
+- **The idea (true):** through linked corners the fastest way is not the
+  middle of the road. A line that uses the whole width is a gentler curve,
+  and a gentler curve can be taken faster, because the speed a tyre can hold
+  in a corner grows with the corner's radius.
+- **The instructor's line** runs from the outside edge through an apex cone
+  on the inside of each corner (1.0 m in from the edge) and out to an exit
+  cone on the outside after the last corner (1.5 m in), using the smooth-line
+  steering that lesson 1 built.
+- **Try 1, the middle:** a row of small markers down the middle of the
+  road. "Stay on the markers." It counts however it ends; the card shows
+  your time against the instructor's.
+- **Try 2, the line:** passes when every apex cone is touched, the exit cone
+  is passed on the outside half of the road, and the tyres screech for less
+  than 0.3 s in total.
+- **Challenge:** beat the instructor three in a row.
+- **Passing gives:** lesson 3 opens; one free handling level on that car, or
+  600 credits if it is already at level 3.
+- **Proof before it ships:** in Node, a scripted driver on the middle line at
+  the most speed that line allows is at least 0.3 s slower than the
+  instructor through each row's corners. A row that fails is dropped (the
+  board names the other course); if both fail, stop and report the numbers.
+
+### 12.3 Lesson 3, the gearbox (needs ENGINE-CURVE)
+
+| Course | Stretch | Start | Finish |
+| --- | --- | --- | --- |
+| Panorama Ridge | Mountain Straight into The Cutting | 30 mph in 2nd at the start of the straight | 60 m past the exit cone |
+| Tremblant Woods | Beaver Run into Beaver Hairpin | 30 mph in 2nd, 400 m before the hairpin | 60 m past the exit cone |
+
+- **The run is always manual,** on Casual too (Casual goes back to the
+  automatic box afterwards). E changes up, Q changes down. The rev counter
+  gets a green mark at half revs and three shift lights from 90%.
+- **The idea (true with ENGINE-CURVE):** an engine pulls weakly at low revs
+  and hardest high up, and a lower gear multiplies its pull. Change up as the
+  lights come on near the red line; change down while braking, so you leave
+  the corner in a gear where the engine pulls.
+- **Try 1, change up early:** "Change up as soon as the needle passes the
+  green mark." Counts however it ends.
+- **Try 2, the right way:** passes when every upshift comes at 90% revs or
+  more, the engine sits on the limiter for under 0.5 s in total, the car
+  passes the exit cone in the instructor's gear, and no long screech. The
+  braking and apex cones are lesson 1's, as guides.
+- **Challenge:** beat the instructor three in a row (the instructor shifts
+  at the lights).
+- **Passing gives:** lesson 4 opens; one free engine level, or 600 credits.
+- **Proof before it ships:** in Node, with ENGINE-CURVE on, the early-shift
+  try is at least 0.3 s slower than the instructor on both rows, and a run in
+  too high a gear out of the corner is slower than the instructor's gear.
+- **As built (DRIVE-LESSON-3):** the rules, instructor and tests are in `src/lessons/drive-lessons.js` and
+  `tools/test-drive-lesson-3.mjs`. The run is Lesson 1's line from the new gate. Both stretches have a bend in
+  the middle (Griffin Bend, Beaver Kink). The gear rule is measured at the apex cone (no higher than the
+  instructor) as well as at the exit cone (his gear or the next one up); see `docs/changes/DRIVE-LESSON-3.md`
+  for the proof numbers.
+
+### 12.4 Lesson 4, snow
+
+| Course | Corner | Start gate | Rolling start |
+| --- | --- | --- | --- |
+| Tremblant Snow | Beaver Hairpin (with the ice patch on the spur before it) | 150 m before Beaver Kink | the instructor's speed there on summer tyres |
+
+- **Summer tyres** for tries 1 and 2 and the challenge; the instructor's run
+  is on summer tyres too.
+- **The idea (true):** on snow the tyres have about half the grip they have
+  on a dry road, so you brake about twice as far back, turn in gently and
+  feed the power in. On ice, do the braking before it, never on it.
+- **Try 1, the dry board:** a red board where the instructor would brake on
+  a dry road. "Brake at the dry board." It counts however it ends.
+- **Try 2, the snow way:** the snow cone (the instructor's braking point on
+  snow), the inside cone and the exit cone. Passes when braking starts within
+  15 m before to 5 m after the snow cone, brake pressure stays under 20%
+  while on the ice, the inside cone is touched, and no long screech.
+- **Challenge:** beat the instructor three in a row on summer tyres.
+- **Then one run on winter tyres,** against the instructor's winter time; it
+  passes however fast it is. Brian explains why it felt different.
+- **Passing gives:** one free tyre level, or 600 credits. This is the last
+  driving lesson for now.
+- **Proof before it ships:** in Node, the dry-board try screeches at least
+  0.5 s or leaves the road; the winter instructor is faster than the summer
+  instructor.
+
+### 12.5 ENGINE-CURVE: engines that pull like real ones
+
+A switch `engine-curve` (dev), latched per race and recorded in the race
+setup like `tyre-slip`, so old replays play under their own rules.
+
+- **Shape:** the engine's pull at the wheels is its pull at those revs times
+  the gear's multiplication (a lower gear multiplies more). The engine's pull
+  is weak at low revs (under 55% of its best below 30% revs), strongest
+  around 70 to 80% and a little lower at the red line (about 88% of its best),
+  and the limiter cuts the throttle at 100%. The launch stays inside
+  FIX-LAUNCH's traction limit (the tyres, not the engine, limit a launch).
+- **What must stay the same:** the automatic box changes up at 96% to 100%
+  revs and down so the revs after are at most 90%; with it, every car's
+  0 to 60 mph, 0 to 100 mph and a lap of three circuits stay within 2% of
+  today's (FIX-LAUNCH's figures). Computer cars use the automatic points, so
+  race times stay within 2%. Switch off: byte for byte as today.
+- **What changes:** in the manual box (Pro), changing up early or sitting in
+  too high a gear is now slower, and changing up at the lights is as quick as
+  the automatic.
+- **Proof:** a scripted manual driver shifting at 50% revs is at least 5%
+  slower from 0 to 100 mph; a car held in top gear from 30 to 60 mph takes at
+  least twice as long as the automatic box.
+
+### 12.6 The helipad entry
+
+- **The board:** the instructor's board on the helipad shows the Driving
+  group under the Flying group (the shared `lesson-board.js` already draws
+  groups).
+- **Starting from the pad:** choosing a driving lesson there starts it the
+  same way the main menu's Instructor button does, in the car standing at the
+  pad. A special car that travels only by air can take a lesson only on the
+  course where it was last set down; the row says "Your <car> is at
+  <course>".
+- **Lesson here:** after you set your own car down on an owned course that
+  has a lesson row, the session offers "Lesson here" for the next open
+  lesson on that course, beside "Race here".
+- Driving lessons still never need the helicopter.
+
+### 12.7 Lines (Brian, over the radio)
+
+Ids `drive.radio.<lesson>.<step>`; lesson 1's challenge lines (`one`, `two`,
+`reset`) and `retake` are reused. Lines never name times or prices.
+
+| Id | Line |
+| --- | --- |
+| `line.intro` | Lesson two: the racing line. Through linked corners, the fastest way is not the shortest. |
+| `line.middle.start` | First, stay in the middle of the road. Follow the markers. |
+| `line.middle.result` | Felt tight, didn't it? The middle of the road makes every bend sharper, so you have to go slower. |
+| `line.right.start` | Now use the whole road. Start wide, touch each inside cone, and let the car run out wide between them. |
+| `line.coach.apex` | Closer to the inside cone. Use every bit of road. |
+| `line.coach.early` | You turned in too early and ran out of road. Wait a moment longer, then turn. |
+| `line.right.pass` | Feel how straight that was? A wider line is a gentler curve, and a gentler curve is a faster one. |
+| `line.challenge.start` | Now beat my time through the esses. Three in a row. |
+| `line.pass` | Three in a row. Better handling for your car, and the next lesson is open. |
+| `gears.intro` | Lesson three: the gearbox. Today you change gear yourself. E is up, Q is down. |
+| `gears.early.start` | First, change up as soon as the needle passes the green mark. |
+| `gears.early.result` | Sluggish, wasn't it? An engine is weak at low revs. Changing up early drops it below where it pulls. |
+| `gears.right.start` | Now hold each gear until the lights come on, then change up. Change down while you brake, so you leave the corner in my gear. |
+| `gears.coach.limiter` | That was the limiter. Change up when the lights come on, not after. |
+| `gears.coach.down` | Too high a gear coming out. Change down while you brake. |
+| `gears.right.pass` | Hear it pull out of the corner? That's the right gear. |
+| `gears.challenge.start` | Now beat my time, changing gear yourself. Three in a row. |
+| `gears.pass` | Three in a row. More power for your car, and the next lesson is open. |
+| `snow.intro` | Lesson four: snow. On summer tyres you have about half the grip you have on a dry road. |
+| `snow.late.start` | First, brake where you would on a dry road. The red board shows it. |
+| `snow.late.result` | Half the grip means about twice the road to stop. That's why you ran out of corner. |
+| `snow.right.start` | Now brake at the snow cone, gently. Do your braking before the ice, never on it. Then turn in smooth. |
+| `snow.coach.brake` | Earlier. On snow, start braking at the cone. |
+| `snow.coach.ice` | You braked on the ice. Brake before it, roll across it, then turn. |
+| `snow.coach.turn` | Turn in more gently. Sudden steering on snow slides the front. |
+| `snow.right.pass` | Smooth and early. That's how you drive on snow. |
+| `snow.challenge.start` | Now beat my time, three in a row, on summer tyres. |
+| `snow.winter.start` | Same corner, now on winter tyres. Feel the difference. |
+| `snow.winter.result` | Winter tyres use softer rubber that stays grippy in the cold, and deep cuts that bite into the snow. |
+| `snow.pass` | That's every driving lesson I have for now. Better tyres for your car. Well driven. |
+| `corner.late.slid` | Hear that screech? Your tyres slid past their best grip, so the car could not steer or stop as well. You got away with it here. On snow you won't. |
+| `corner.late.off` | That's where a slide takes you. Brake at the first cone, and keep it clean. |
+
+The last two replace `drive.radio.corner.late.result`, which promised lost
+time (DRIVE-LESSON-LATE-LINE): `late.slid` plays when the late try finishes
+after at least 0.5 s of screech, `late.off` when it ends against a wall or off
+the road, and `late.early` stays for an early brake. `late.result` is removed
+from the catalogue and the voices folder in the same change.
+
+### 12.8 Sounds
+
+- **Shift lights:** `lesson.shift-light`, a short soft tick as each light
+  comes on (three rising pitches). New cue.
+- **Middle markers and cones:** the existing `lesson.cone` when one is hit.
+- Everything else reuses lesson 1's sounds and the race's own engine,
+  limiter and tyre sounds.
+
+### 12.9 Save
+
+`profile.drivingLessons` gains the keys `line`, `gears` and `snow` in its
+`done`, `best` and `rewarded` maps (section 7 planned this). Old saves read
+as not done. The reward functions give handling, engine and tyre levels the
+same way lesson 1 gives brakes.
+
+### 12.10 Cards
+
+```mermaid
+flowchart LR
+  HK[cloud: DRIVE-LESSON-HOOKS] --> L2[cloud: DRIVE-LESSON-2]
+  HK --> L4[cloud: DRIVE-LESSON-4]
+  FL[cloud: FIX-LAUNCH] --> EC[cloud: ENGINE-CURVE]
+  EC & HK --> L3[cloud: DRIVE-LESSON-3]
+  SV[cloud: DRIVE-LESSONS-SAVE-2]
+  LN[X: DRIVE-LESSONS-LINES-2]
+  L2 & L3 & L4 & SV & LN --> V[X: DRIVE-LESSONS-VIEW-2]
+  HK --> HP[cloud: DRIVE-LESSON-HELIPAD]
+  V & HP --> F[C: DRIVE-LESSONS-FINISH-2]
+```
+
+| Card | Owner | Holds | What |
+| --- | --- | --- | --- |
+| DRIVE-LESSON-2 | claude-cloud | none | 12.2: corner rows, the line, markers, cones, rules, proof |
+| ENGINE-CURVE | claude-cloud | `busy-game-files` | 12.5, behind `engine-curve` |
+| DRIVE-LESSON-3 | claude-cloud | none | 12.3: rows, manual run, shift rules, proof |
+| DRIVE-LESSON-4 | claude-cloud | none | 12.4: snow row, dry board, ice rule, winter run, proof |
+| DRIVE-LESSONS-SAVE-2 | claude-cloud | `save-shape` | 12.9 |
+| DRIVE-LESSONS-LINES-2 | codex | `sound-bank` | 12.7 and 12.8: record the lines, remove `late.result`, the shift-light cue |
+| DRIVE-LESSONS-VIEW-2 | codex | `busy-game-files` | Markers, apex cones, the green mark and shift lights, the snow and dry boards, the winter run, the board rows |
+| DRIVE-LESSON-HELIPAD | claude-cloud | none | 12.6 in the helicopter's board and session |
+| DRIVE-LESSONS-FINISH-2 | Claude | none | Drive all three as a player; pictures to Kyle |
+
+DRIVE-LESSONS-LINES-2 takes over DRIVE-LESSON-LATE-LINE (its wording is
+`corner.late.slid` and `corner.late.off` above).
+
+## 13. Picked for Kyle (24 October 2026)
+
+- Lessons 2 to 4 reward like lesson 1: one free handling, engine or tyre
+  level on that car, or 600 credits when it is already at level 3.
+- Lesson 3 waits for ENGINE-CURVE, which makes the manual gearbox matter in
+  every race on Pro (the automatic box stays as quick as today). If Kyle
+  would rather keep gears as they are, lesson 3 is dropped and lesson 4 opens
+  after lesson 2.
+- Lesson 4 is the last driving lesson for now; slow corners and patience
+  (the Lantern Hairpin) can follow if Kyle and Gratian want more.
+
+## 14. Lessons, second version (Claude, 27 October 2026, from Kyle's first play)
+
+This section replaces sections 3.2 to 3.6 and the matching parts of 12.2 to
+12.4 wherever they disagree. Section 3.7 (the rewards), 7 (the save), 12.5
+(ENGINE-CURVE) and 12.6 (the helipad) stay.
+
+### 14.1 What Kyle found (27 October, live build 26.10.27 02:01)
+
+- **Lesson 1 at Panorama would not start** in his Koenigsegg Jesko: "The
+  instructor could not complete a clean run. Instructor missed a native cone",
+  shown as raw program text. Cause: the instructor drives every lesson in the
+  player's own car, the cones are placed from that one run, and the run must
+  then pass within 2.5 m of every cone. The tests drive only the Falcone. A
+  faster, grippier car runs a slightly different line and misses two cones by
+  about 0.2 m, so the lesson refuses to start.
+- **The Beaver Hairpin lesson is too short and teaches too little.** About
+  7 s; the car appears just before the corner at a crawl; nothing explains the
+  lesson before you drive; there is no line to follow and no target speed on
+  screen; the only help is one line of text after a miss.
+- **Faster than the instructor, and still "Try again".** Kyle beat the
+  instructor by 0.81 s on try 2 but braked outside the cone 1 window. Nothing
+  on screen said try 2 is judged on the braking point, not on time.
+- Kyle: "the lessons should be more than just one tiny snippet ... a few
+  curves as the lesson so the race is more realistic and get more practice";
+  "there should be a line we should take at the speed we should take"; "the
+  ideal target metrics on screen, just like our speed is on screen".
+
+### 14.2 What changes
+
+1. **A lesson is a real piece of road:** 30 to 70 s of driving and 3 to 9
+   corners, starting on a straight at race speed with at least 6 s of road
+   before the first braking point.
+2. **Every lesson explains itself before you drive:** a briefing card with a
+   map of the section, the line, the brake zones and the target speeds, the
+   steps, and exactly what passes each one.
+3. **The targets are on screen while you drive:** the line painted on the
+   road, the brake zones painted on the road, a target speed box beside the
+   speedometer, a live gap to the instructor, and one light per corner.
+4. **Four steps, always on screen:** Watch me, Follow me, Your turn, Beat me.
+   Each step says what counts in it.
+5. **Fair rules.** A clean run that beats the instructor always passes "Your
+   turn". "Three in a row" becomes one clean run faster than the instructor
+   over the longer road; a run a second or more faster earns a gold mark.
+6. **The instructor works in every car.** Brake zones and cones come from his
+   planned line, not from where one simulated run happened to pass. Every car,
+   both settings and every row are tested. If a lesson still cannot start, the
+   screen says so in plain words.
+
+The late-braking try from Kyle's storyboard stays, as something you **watch**
+rather than a run you must drive badly on purpose: in Watch me the instructor
+takes the first big corner late once (screech, runs wide), then drives the
+whole section properly.
+
+### 14.3 The sections
+
+| Lesson | Course | From | To | Corners |
+| --- | --- | --- | --- | --- |
+| 1 Braking | Panorama Ridge | 350 m before Griffin Bend, on Mountain Straight | 60 m past Forrest Elbow | Griffin Bend, The Cutting, Reid Rise, Summit Park, Skyline, The Esses 1 to 3, Forrest Elbow |
+| 1 Braking | Tremblant Woods | 100 m into Beaver Run | 60 m past Final Turn | Beaver Kink, Beaver Hairpin, Devil's Chicane 1 and 2, Lodge Bend, Final Turn (14.12) |
+| 1 Braking | Ardennes Forest | start of Kestrel Straight | 60 m past Fagnes Exit | Les Combes, Combes Exit, Malmedy, Riverside, Woodland Left, Fagnes, Fagnes Exit (14.13) |
+| 2 Racing line | Tremblant Woods | 250 m into Lodge Straight | end of Ridge Run | Pine Drop, Lakeside Plunge, Fir Esses 1 and 2 |
+| 2 Racing line | Harbour Lights | 150 m before Casino Corner | end of Hillside | Casino Corner, Temple Hill, Bell Tower Bend, Old Town Esses 1 to 4 |
+| 2 Racing line | Ardennes Forest | 200 m into Woodland Left | 130 m past Whitewood | Long Left, Fagnes, Fagnes Exit, Campus, Stavelot, Woodcutter, Whitewood (14.13) |
+| 3 Gearbox | Panorama Ridge | Hell Gate exit, 30 mph in 2nd | 60 m past Summit Park | Griffin Bend, The Cutting, Reid Rise, Summit Park |
+| 3 Gearbox | Tremblant Woods | Ridge Corner exit, 30 mph in 2nd | 150 m into Timber Straight | Beaver Kink, Beaver Hairpin |
+| 3 Gearbox | Summit Run | start of Pine Switchbacks, 30 mph in 2nd | 60 m past Engineer Bend | Picnic Hairpin, Picnic Bend, Engineer's Hairpin, Engineer Bend (14.13) |
+| 4 Snow | Tremblant Snow | start of Ridge Run | 150 m into Timber Straight | Ridge Corner, Beaver Kink, the ice on The Spur, Beaver Hairpin |
+| 4 Snow | Summit Run | 250 m into Whiteout Crest | 250 m into Devil's Staircase | Whiteout Bend, Gallery Bend 1, Gallery Bend 2, the ice after Whiteout Bend (14.13) |
+
+- The rolling start is the instructor's own speed at that point (lessons 1, 2
+  and 4), so the car arrives at race speed.
+- The builder measures each row in the Falcone and the Jesko. A row shorter
+  than 30 s or longer than 75 s is trimmed or extended by whole corners; the
+  change note records the times.
+- Each corner is one of three kinds, read from the instructor's plan:
+  **brake** (he brakes), **lift** (he only comes off the throttle) or **flat**
+  (neither). Lesson 1's two hairpins are its main corners; the fast sweepers
+  between them teach that not every corner needs the brakes.
+
+### 14.4 The four steps
+
+A strip across the top of the screen shows **1 Watch me · 2 Follow me · 3 Your
+turn · 4 Beat me** with the current step lit. One line under it says what
+counts in this step.
+
+1. **Watch me.** The game drives your car through the section with the
+   instructor's own inputs while the camera follows, as in a race (a race is
+   repeatable from its seed and inputs, so this is his run exactly). Lesson 1
+   first shows the late try: he brakes 25 m late at the first brake corner and
+   the clip stops where the car slides wide or leaves the road. Then he drives
+   the whole section cleanly. Captions mark each corner ("Braking now: 128
+   down to 56 mph"). Enter skips; on a retake the step starts skipped.
+   Counts: nothing.
+2. **Follow me.** You drive. The instructor is a ghost about 1 s ahead and
+   every guide is on (14.5). It ends at the finish with the result card
+   (14.6). Counts: nothing. One run, then the next step; retakes skip it.
+3. **Your turn.** Guides on, no ghost. It passes when the run is **clean** (no
+   wall hit, never off the road for more than 1 s, less than 0.3 s of screech
+   in total) **and** either every corner's checks are met or you beat the
+   instructor's time. The line under the strip says exactly that: "Clean run,
+   and hit every brake zone or beat my time."
+4. **Beat me.** The painted line goes; the brake zones, target box, ghost and
+   live gap stay. One clean run faster than the instructor passes the lesson;
+   a second or more faster earns the gold mark.
+
+Esc keeps Leave lesson. Enter starts the next run from the start; the result
+card names the step that comes next.
+
+### 14.5 What you see while driving
+
+Every speed on screen is in km/h, like the speedometer (Claude, 27 October:
+the mph figures in this section are the rules' own units; the screen converts
+them). 
+
+All of it is drawing and screen text; none of it touches race state.
+
+- **The line:** a ribbon on the road along the instructor's path, green
+  where he accelerates, white where he coasts, red where he brakes. Shown in
+  Follow me and Your turn.
+- **Brake zones:** a red and white box painted across the road from 15 m
+  before to 5 m after his braking point, with the target corner speed painted
+  beside it ("56"). A lift corner gets a yellow box and no number; a flat
+  corner gets nothing. The apex and exit cones stay as now.
+- **Target box** beside the speedometer: the next corner's name, "Brake in
+  140 m" counting down, then "Corner 56 mph". Your speed reading turns green
+  within 3 mph of the target in the corner and red when more than 5 mph over.
+- **Gap:** "+0.42 s" in red when behind the instructor, "-0.31 s" in green
+  when ahead, from his time at the same distance along the road.
+- **Corner lights:** one dot per corner along the bottom: green when that
+  corner was clean, amber when one check missed, red for a wall or a long
+  screech.
+
+### 14.6 How a corner is judged, and the result card
+
+Each corner has up to three checks:
+
+1. **Brake zone:** a brake corner needs the first press of 50% brake or more
+   inside the box; a lift corner needs the brakes left alone; a flat corner
+   has no brake check.
+2. **Corner speed:** the slowest speed through the corner within 5 mph of the
+   target, under or over.
+3. **Quiet tyres:** less than 0.3 s of screech in that corner.
+
+The result card shows your time against the instructor's, then one row per
+corner: its name, where you braked ("8 m late"), corner speed against the
+target ("64 / 56 mph") and the tyres, each with a tick or a cross. Under the
+table, one sentence about the worst corner says what happened and why it
+matters, for example: "The Cutting: you braked 22 m late, so you reached the
+corner 9 mph too fast and the tyres slid for 0.6 s. A sliding tyre grips less,
+so the car ran wide." Brian says the short version over the radio.
+
+### 14.7 The opening screen
+
+Shown when a lesson opens, and again after Esc during a run (Kyle, 28 October).
+The run buttons also sit on every result card, so the next run is one click or
+key away:
+
+- the lesson's idea in two or three plain sentences, each new word explained
+  beside a small picture (brake zone: where to brake, while the car is
+  straight; apex: the inside of the corner; racing line: the widest, gentlest
+  curve through the corners; and each lesson's own words);
+- a map of the section drawn from the course's own shape, with the line
+  coloured as on the road, the brake zones, and each corner's target speed;
+- four run buttons, "1 Watch me" to "4 Beat me", each with its one-line
+  rule. Any run can be started at any time. A mark shows what this visit has
+  done ("Done", or "Passed" with the best margin and Gold). The first run not
+  done is highlighted (else Your turn; a retake starts at Your turn). The keys
+  1 to 4 start a run and Enter starts the highlighted one;
+- Brian's intro over the radio, its text on the card.
+
+During a run nothing but the coaching line shows, with a quiet "Esc: back to
+the lesson menu" in the corner. Esc during a run drops it unscored and returns
+here with the car at the start line; Esc here or on a result card leaves the
+lesson. There is no Skip and no step strip.
+
+### 14.8 The instructor in any car
+
+- His plan (line and speed at every point) is computed as now, in your car
+  with your upgrades and setting. **Brake zones and cones are placed from the
+  plan:** the brake point where the plan starts braking, the apex cone at the
+  plan's closest point to the inside, the exit cone where the plan reaches the
+  outside.
+- The simulated run still gives his time, the ghost and the Watch me inputs,
+  and must be clean (no wall, never off the road, no screech). If it is not,
+  the pace drops by 2% and it runs again. It no longer has to pass within a set
+  distance of each cone. His pace also leaves room to beat him (14.12); in
+  all, at most six runs, down to 78% on Casual and 85% on Pro.
+- Test: on every row of every lesson, in every car in the game, on Casual and
+  Pro, the instructor completes cleanly and the same run comes out every time.
+- If a lesson still cannot start: "The instructor can't drive this lesson in
+  the <car> yet. Try another car." The details go to the console.
+
+### 14.9 Saves and rewards
+
+No new save field. `best` keeps the best margin over the instructor; the board
+shows gold at 1.0 s or more. A lesson passed under the old rules stays passed.
+Rewards as before (3.7 and 13).
+
+### 14.10 Cards
+
+| Card | Owner | Holds | What |
+| --- | --- | --- | --- |
+| LESSON-INSTRUCTOR-ANY-CAR | codex | none | 14.8 on today's lessons: cones from the plan, the slower retry, the every-car test, the plain message. Ships alone, first. |
+| LESSONS-V2-RULES | codex | none | 14.3, 14.4 and 14.6 in `src/lessons/drive-lessons.js`: sections, steps, per-corner checks, pass rules, Watch me inputs and the late clip, tests that prove each lesson's claim on its new sections |
+| LESSONS-V2-VIEW | codex | `busy-game-files` | 14.4 to 14.7 on screen: run buttons, line, brake zones, target box, gap, corner lights, result table, briefing card and map, Watch me camera |
+| LESSONS-V2-LINES | codex | `sound-bank` | Brian's new lines (14.11) |
+| LESSONS-V2-FINISH | Claude | none | Drive every lesson on the keyboard in the Falcone and the Jesko, Casual and Pro; pictures to Kyle |
+
+LESSONS-V2-RULES starts after LESSON-INSTRUCTOR-ANY-CAR merges (same file).
+The `driving-lessons` switch stays on and the new lessons replace the old ones
+in one release, with no second switch. LESSONS-V2-RULES removes the old
+single-corner rows, the try 1 and try 2 stages, the three-in-a-row streak and
+their tests.
+
+### 14.11 Lines (Brian)
+
+Ids `drive.radio.v2.<lesson>.<step>`. Lines never name times or prices; the
+screen shows the numbers. One intro per lesson, one start line per step, one
+line per kind of miss (late, early, too fast, slid, off the road), one pass
+line per lesson. The old lines that no longer play are removed with their
+files. Voice lines ship without Kyle listening first.
+
+### 14.12 Room to beat him (Claude, 27 October 2026, night)
+
+The finishing pass measured the instructor against a clean run of his own
+line at full pace, in all 14 cars. At his old fixed pace (92% Casual, 95%
+Pro) that run beat him by only 0.5 to 2 s on Casual and by 0.0 to 1 s on
+Pro; in the Jesko at Harbour on Pro the gap was 0.01 s. A gold mark (a
+second faster) could not be earned there, and "Beat me" needed a perfect
+run. Fast cars were the worst, because they spend more of the lesson at
+full throttle, where his pace makes no difference.
+
+- **The rule:** his time is at least 7% slower than the full-pace clean run
+  on Casual and 4% on Pro, in your car. His pace starts at 92% (Casual) or
+  95% (Pro) and drops until that holds, never below 78% or 85%. About 3 s of
+  room on a 40 s Casual lesson, 1.6 s on Pro: beating him takes a tidy run,
+  gold takes practice.
+- His slower pace also sets the target speeds and brake points, so the
+  targets are safe speeds, not the car's limit.
+- **Woods braking moved:** its old section was the same seven corners as
+  the Woods racing-line lesson. It now starts on Beaver Run, takes Beaver
+  Kink and Beaver Hairpin (the two it shares), then Timber Straight, the
+  longest straight in the game, into a hard stop for Devil's Chicane, then
+  Lodge Bend and the Final Turn. Starting at Timber Straight was too short
+  in the Jesko (under 30 s at 286 mph).
+- Test: the every-car suite also checks the room on every row, car and
+  setting.
+
+### 14.13 More roads for the same four lessons (Claude, 28 October 2026, night)
+
+Card LESSONS-MORE-ROADS. Each lesson now has a second place to practise on a
+course the game already has; the board offers the choice as it does for the
+Woods and Harbour rows. The rows use the same rules as the first ones (14.2,
+14.3, 14.12). Times are the instructor's own, measured in the Falcone F42
+(F) and the Koenigsegg Jesko (J), Casual then Pro.
+
+| Lesson | Course | Corners | F Casual | F Pro | J Casual | J Pro |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 Braking | Ardennes Forest | 7 | 64.4 s | 62.0 s | 49.6 s | 48.1 s |
+| 2 Racing line | Ardennes Forest | 7 | 54.3 s | 52.9 s | 45.3 s | 43.9 s |
+| 3 Gearbox | Summit Run | 4 | 45.2 s | 43.9 s | 35.6 s | 34.5 s |
+| 4 Snow | Summit Run | 3 | 49.7 s | 48.3 s | 40.8 s | 39.5 s |
+
+- **Braking at Ardennes** starts at the top of Kestrel Straight (1 km long,
+  282 mph in the Jesko) and brakes for Les Combes, the hardest stop on the
+  course, then the Combes chicane, Malmedy, the Riverside hairpin, Woodland
+  Left and the Fagnes chicane. It shares no corner with Woods or Panorama.
+- **Racing line at Ardennes** is the long flowing stretch from Long Left to
+  Whitewood. Its two fast sweepers (Woodcutter, Whitewood) are driven near
+  flat out; the slow ones teach the whole-road line. Eau Rouge was tried
+  first and set aside: Wall Crest throws the Jesko 5 m into the air at 167
+  mph, so the instructor runs off the road, and the line follower has no
+  rule for a jump. A later card can add a speed rule for crests.
+- **Gearbox at Summit Run** is a slow hairpin (Picnic Hairpin), a climb and a
+  bend, then the next hairpin (Engineer's Hairpin) and its bend: the slow
+  corner then the long climb that card asked for. Starts at 30 mph in 2nd as
+  the other gearbox rows do.
+- **Snow at Summit Run** is three long bends on the snow after the Glacier
+  Hairpin, with a 20 m ice patch on the straight between the first two. The
+  winter run is 2 to 4 s faster than the summer run. The hairpins themselves
+  (Glacier Hairpin, Devil's Elbow, Last Breath) are too tight for the lesson:
+  they are 15 to 16 m radius on a 12 m road, and on snow the Falcone's
+  smallest turn, at the instructor's safety margin, is about 23 m, so it leaves
+  the road however the line is drawn.
+- **Names:** the track script leaves some of Summit Run's bends without a
+  name. The lesson file gives them lesson names by the metre where each bend
+  begins (`LESSON_TURN_NAMES`: Picnic Bend, Engineer Bend, Whiteout Bend,
+  Gallery Bend 1 and 2). The course itself is unchanged.
+- No per-course tuning was needed: Ardennes Forest and Summit Run use the
+  default clearances and margins.
+

@@ -1,5 +1,6 @@
 // The rescue line (docs/HELI_RESCUE.md sections 4, 5.4 and 12): the weights on
-// the line, the speed warning, bumps and their pay, the set-down and hold,
+// the line, the speed warning, bumps and the casualty's condition, pay by
+// condition, the set-down and hold,
 // the handover, H doing nothing with people aboard, the supply crates and
 // their pay, a steady line under a moving helicopter, and the same results
 // from the same inputs.
@@ -10,7 +11,8 @@ import {CABLE, createLoad, hook, release, stepCable} from '../src/heli/heli-cabl
 import {createBucket} from '../src/heli/heli-bucket.js';
 import {
   RESCUE, SUPPLY_CRATES, SUPPLY_PAY, createRescueLine, setLineWho, peopleOnLine, hNothing, canFitLine, holdFraction,
-  stepRescue, rescueHit, rescuePay, createSupplyCrate, noteCrateRelease, crateResult, cratePay, supplyPay,
+  stepRescue, rescueHit, rescuePay, CONDITIONS, CONDITION_PAY, COLD_SHARE, FAILED_CONDITION, worsen, waitHurt, cabinHurt,
+  handoverOutcome, createSupplyCrate, noteCrateRelease, crateResult, cratePay, supplyPay,
 } from '../src/heli/heli-rescue.js';
 
 let checks = 0;
@@ -50,7 +52,8 @@ eq(RESCUE.rescuerKg + RESCUE.casualtyKg, RESCUE.pairKg, 'and the sum agrees');
 eq(RESCUE.speedLimit, 20, 'airspeed at most 20 m/s with people on the line');
 eq(RESCUE.warnSpeed, 25, 'Roger warns over 25 m/s');
 eq(RESCUE.bumpSpeed, 4, 'a bump is a hit over 4 m/s');
-eq(RESCUE.bumpCut, 300, 'and costs 300 credits');
+eq(RESCUE.bumpHardSpeed, 8, 'over 8 m/s it hurts two steps');
+ok(!('bumpCut' in RESCUE), 'the flat 300-credit cut a bump is gone (RESCUE-HURT)');
 eq(RESCUE.setDownRadius, 3, 'set down within 3 m of the casualty or beacon');
 eq(RESCUE.setDownSpeed, 1.5, 'with the helicopter under 1.5 m/s');
 eq(RESCUE.holds.hoist, 8, 'the hoist hold is 8 s');
@@ -68,7 +71,7 @@ ok(RESCUE.speedLimit < RESCUE.warnSpeed, 'the limit sits under the warning');
   eq(line.massKg, 90, 'at 90 kg');
   near(line.y, RESCUE.restHeight, 1e-9, 'its clip point rides at its own rest height');
   ok(peopleOnLine(line), 'people are on the line');
-  eq(line.bumps, 0, 'no bumps yet');
+  eq(line.condition, 'unhurt', 'every casualty starts unhurt');
   const hill = createRescueLine({x: 0, z: 0, ground: flatGround(40)});
   near(hill.y, 40 + RESCUE.restHeight, 1e-9, 'on a hill it rests on the hill');
   eq(setLineWho(line, 'pair'), 'pair', 'clipping a casualty on makes it a pair');
@@ -117,45 +120,124 @@ ok(RESCUE.speedLimit < RESCUE.warnSpeed, 'the limit sits under the warning');
   eq(rules(gone, still(0, 0, 0, 30), 1).length, 0, 'a line taken off says nothing');
 }
 
-// Bumps over 4 m/s, and the pay.
+// People can get hurt (section 4.1): the steps, the clock, the cabin and the pay.
+{
+  eq(CONDITIONS.join(), 'unhurt,hurt,badly', 'unhurt, hurt, badly hurt: never killed');
+  eq(worsen('unhurt'), 'hurt', 'one step');
+  eq(worsen('unhurt', 2), 'badly', 'two steps');
+  eq(worsen('hurt', 2), 'badly', 'never past badly hurt');
+  eq(worsen('badly'), 'badly', 'badly hurt stays badly hurt');
+  eq(worsen('unhurt', 0), 'unhurt', 'no steps, no change');
+  eq(FAILED_CONDITION, 'badly', 'a failed rescue brings them out badly hurt');
+  // The clock: two thirds of the time gone, still unhurt.
+  near(COLD_SHARE, 2 / 3, 1e-12, 'two thirds');
+  eq(waitHurt('unhurt', 199, 300).condition, 'unhurt', 'before two thirds they are fine');
+  const cold = waitHurt('unhurt', 200, 300);
+  ok(cold.condition === 'hurt' && cold.cold, 'at two thirds they get cold and hurt, and Roger says so');
+  eq(waitHurt('hurt', 290, 300).cold, false, 'only once: already hurt, no second cold line');
+  eq(waitHurt('hurt', 290, 300).condition, 'hurt', 'and no second step');
+  eq(waitHurt('unhurt', 290, 0).condition, 'unhurt', 'no clock, no cold');
+  // The hiker in the cabin.
+  eq(cabinHurt('unhurt', {type: 'touchdown', result: 'hard'}).condition, 'hurt', 'an H1 hard landing hurts the hiker one step');
+  eq(cabinHurt('unhurt', {type: 'touchdown', result: 'soft'}).changed, false, 'a gentle landing does not');
+  eq(cabinHurt('unhurt', {type: 'crash', cause: 'touchdown'}).condition, 'badly', 'a crash makes them badly hurt');
+  eq(cabinHurt('badly', {type: 'crash'}).changed, false, 'no change when already badly hurt');
+  // The handover: what it looks like and what Roger says.
+  eq(JSON.stringify(handoverOutcome('unhurt')), JSON.stringify({look: 'walk', line: 'heli.radio.rescue.done'}), 'unhurt: they walk');
+  eq(JSON.stringify(handoverOutcome('hurt')), JSON.stringify({look: 'limp', line: 'heli.radio.rescue.hurt'}), 'hurt: they limp beside a paramedic');
+  eq(JSON.stringify(handoverOutcome('badly')), JSON.stringify({look: 'stretcher', line: 'heli.radio.rescue.badly'}), 'badly hurt: a stretcher');
+  // Pay by condition: 100%, 60%, 25%.
+  eq(JSON.stringify(CONDITION_PAY), JSON.stringify({unhurt: 1, hurt: 0.6, badly: 0.25}), 'the pay shares');
+  eq(rescuePay(1200, 'unhurt'), 1200, 'unhurt, full pay');
+  eq(rescuePay(1200, 'hurt'), 720, 'hurt, 60%');
+  eq(rescuePay(1200, 'badly'), 300, 'badly hurt, 25%');
+  eq(rescuePay(1000, 'hurt'), 600, 'the hiker hurt: 600');
+  eq(rescuePay(1250, 'hurt'), 750, 'a Real-mode 1,250 hurt: 750');
+  eq(rescuePay(1001, 'badly'), 250, 'rounded to a whole credit');
+  eq(rescuePay(1200, 'lost'), 300, 'an unknown condition pays as badly hurt');
+  eq(rescuePay(-5, 'unhurt'), 0, 'never below 0');
+  for (const bad of [undefined, null, NaN, Infinity, '1200'])
+    eq(rescuePay(bad, 'unhurt'), 0, `a base of ${String(bad)} pays 0, never a broken number`);
+  eq(rescuePay(1200, 'toString'), 300, 'a condition named like a built-in pays as badly hurt');
+  eq(rescuePay(1200, '__proto__'), 300, 'and so does __proto__');
+  eq(rescuePay(0.5, 'unhurt'), 0, 'never more than the base: half a credit pays 0');
+  eq(rescuePay(1200.9, 'unhurt'), 1200, 'and never more than the whole credits of the base');
+  eq(rescuePay(0, 'unhurt'), 0, 'no pay stays 0');
+}
+
+// Bumps over 4 m/s hurt the casualty: one step, two over 8 m/s.
 {
   const line = createRescueLine({ground: flat});
+  // The rescuer alone is a professional: bumps on the way out hurt nobody.
+  const alone = rescueHit(line, {type: 'cargoHit', id: 'rescue', speed: 9, kind: 'cargoHeavy', with: 'tree'});
+  ok(!alone.bump && line.condition === 'unhurt', 'the rescuer alone is never hurt');
+  setLineWho(line, 'pair');
   eq(rescueHit(line, {type: 'cargoHit', id: 'rescue', speed: 4, kind: 'cargoLight', with: 'ground'}).bump, false, 'exactly 4 m/s is no bump');
   eq(rescueHit(line, {type: 'cargoHit', id: 'rescue', speed: 3, kind: 'cargoLight'}).bump, false, 'slower is no bump');
   eq(rescueHit(line, {type: 'drop', id: 'rescue', speed: 9}).bump, false, 'only cargo hits count');
   eq(rescueHit(line, {type: 'cargoHit', id: 'bucket', speed: 9}).bump, false, 'a hit on another load is not ours');
+  eq(line.condition, 'unhurt', 'none of those hurt anyone');
   const one = rescueHit(line, {type: 'cargoHit', id: 'rescue', speed: 4.5, kind: 'cargoLight', with: 'tree'});
-  ok(one.bump, 'a hit over 4 m/s is a bump');
-  eq(one.cut, 300, 'and cuts 300 credits');
-  eq(one.bumps, 1, 'counted');
+  ok(one.bump && one.steps === 1, 'a hit over 4 m/s is a bump, one step');
+  eq(one.condition, 'hurt', 'the casualty is hurt');
   eq(one.event.type, 'rescueBump', 'with an event for the radio');
-  const heavy = rescueHit(line, {type: 'cargoHit', speed: 12, kind: 'cargoHeavy', with: 'building'});
-  eq(heavy.cut, 300, 'a hard hit costs the same 300');
-  eq(line.bumps, 2, 'two bumps on the line');
-  const wreck = rescueHit(line, {type: 'cargoHit', id: 'rescue', speed: 20, kind: 'cargoWreck'});
-  eq(wreck.cut, 300, 'even a wreck hit is 300');
-  eq(line.bumps, 3, 'three bumps');
-  eq(rescuePay(1200, 0), 1200, 'no bumps, full pay');
-  eq(rescuePay(1200, 2), 600, 'two bumps, 600 less');
-  eq(rescuePay(1200, 4), 0, 'four bumps take it to 0');
-  eq(rescuePay(1200, 9), 0, 'and pay never goes below 0');
-  eq(rescuePay(1000, 3), 100, 'one hiker: 1,000 less three bumps is 100');
-  eq(rescuePay(0, 1), 0, 'no pay stays 0');
-  eq(Object.keys(rescueHit(line, {type: 'cargoHit', id: 'rescue', speed: 9})).sort().join(), 'bump,bumps,cut,event', 'a bump reports a cut; paying it is the session\'s job');
-  const done = createRescueLine({ground: flat}); done.done = true;
-  eq(rescueHit(done, {type: 'cargoHit', id: 'rescue', speed: 9}).bump, false, 'after the handover the pay is settled: no more bumps');
-  eq(rescueHit(createRescueLine({ground: flat}), {type: 'cargoHit', id: 'rescue', speed: 9, with: 'helicopter'}).bump, false,
+  eq(one.event.condition, 'hurt', 'naming the condition');
+  const eight = rescueHit(line, {type: 'cargoHit', id: 'rescue', speed: 8, kind: 'cargoLight', with: 'tree'});
+  eq(eight.steps, 1, 'exactly 8 m/s is one step');
+  eq(line.condition, 'badly', 'hurt and bumped again: badly hurt');
+  const fresh = createRescueLine({ground: flat}); setLineWho(fresh, 'pair');
+  const heavy = rescueHit(fresh, {type: 'cargoHit', speed: 12, kind: 'cargoHeavy', with: 'building'});
+  ok(heavy.steps === 2 && heavy.condition === 'badly', 'a hit over 8 m/s is two steps: unhurt to badly hurt at once');
+  eq(rescueHit(fresh, {type: 'cargoHit', speed: 20, kind: 'cargoWreck'}).condition, 'badly', 'and never past badly hurt');
+  eq(Object.keys(one).sort().join(), 'bump,condition,event,steps', 'a bump reports the condition; paying is the session job');
+  const done = createRescueLine({ground: flat}); setLineWho(done, 'pair'); done.done = true;
+  eq(rescueHit(done, {type: 'cargoHit', id: 'rescue', speed: 9}).bump, false, 'after the handover nothing changes their condition');
+  const swing = createRescueLine({ground: flat}); setLineWho(swing, 'pair');
+  eq(rescueHit(swing, {type: 'cargoHit', id: 'rescue', speed: 9, with: 'helicopter'}).bump, false,
     'the line swinging into the helicopter is not a bump');
-  // A real hit from H1's cable: the rescuer slid into a tree faster than 4 m/s.
+  // A real hit from H1's cable: the pair slid into a tree faster than 4 m/s.
   const tree = flatGround(0, [{x: 12, z: 0, radius: 0.5, base: 0, top: 15, height: 15, kind: 'tree', id: 't1', shape: 'cylinder'}]);
-  const slider = createRescueLine({ground: tree, x: 7, z: 0});
+  const slider = createRescueLine({ground: tree, x: 7, z: 0}); setLineWho(slider, 'pair');
   slider.vx = 9;
   const hits = [];
   for (let i = 0; i < 240; i++) hits.push(...stepCable(slider, {x: 11, y: 15.3, z: 0, vx: 0, vy: 0, vz: 0}, {ground: tree}).events);
   const strike = hits.find(e => e.type === 'cargoHit');
   ok(strike, 'sliding into a tree makes H1 report a cargo hit');
   ok(rescueHit(slider, strike).bump, 'which becomes a bump');
-  eq(slider.bumps, 1, 'counted once');
+  ok(slider.condition !== 'unhurt', 'and hurts them');
+}
+
+// A real touchdown through H1's cable: the rough set-down and the cable's
+// ground bump never both count, and no touchdown over 1 m/s slips through.
+{
+  const touchdown = (vy, vx, options) => {
+    const line = createRescueLine({x: 0, z: 0, ground: flat}); setLineWho(line, 'pair');
+    line.lifted = true; line.onGround = false; line.wasOnGround = false;
+    line.y += 0.02; line.vy = vy; line.vx = vx;
+    const heli = {x: 0, y: line.y + 14, z: 0, vx: 0, vy: 0, vz: 0};
+    const seen = [];
+    for (let i = 0; i < 60; i++) {
+      seen.push(...stepRescue(line, heli, {}).events.map(e => e.type));
+      for (const e of stepCable(line, heli, {ground: flat}).events) { seen.push(e.type); rescueHit(line, e, options); }
+    }
+    return {condition: line.condition, seen};
+  };
+  eq(touchdown(-0.5, 0).condition, 'unhurt', 'set down gently: unhurt');
+  const near4 = touchdown(-3.95, 0);
+  eq(near4.condition, 'hurt', 'straight down at 3.95 m/s: one step, never two');
+  ok(near4.seen.includes('cargoHit') !== near4.seen.includes('roughSetDown'), 'counted once: as the bump or as the rough set-down');
+  eq(touchdown(-2, 6).condition, 'hurt', 'down at 2 m/s while sliding at 6 m/s: one step, not missed');
+  eq(touchdown(-1, 7.9).condition, 'hurt', 'down at 1 m/s while sliding at 7.9 m/s: one step');
+  eq(touchdown(-6, 0).condition, 'hurt', 'straight down at 6 m/s: the cable bump, one step');
+  eq(touchdown(-10, 0).condition, 'badly', 'straight down at 10 m/s: two steps');
+  // On the medevac skin's stretcher a bump starts above 8 m/s and is two
+  // steps only above 14 (section 6.1).
+  eq(touchdown(-6, 0, {stretcher: true}).condition, 'unhurt', 'on the stretcher, 6 m/s is not a bump');
+  eq(touchdown(-10, 0, {stretcher: true}).condition, 'hurt', 'on the stretcher, 10 m/s is one step');
+  eq(touchdown(-16, 0, {stretcher: true}).condition, 'badly', 'on the stretcher, 16 m/s is two steps');
+  const stretcherLine = createRescueLine({ground: flat}); setLineWho(stretcherLine, 'pair');
+  eq(rescueHit(stretcherLine, {type: 'cargoHit', id: 'rescue', speed: 8, with: 'tree'}, {stretcher: true}).bump, false, 'exactly 8 m/s on the stretcher is no bump');
+  eq(rescueHit(stretcherLine, {type: 'cargoHit', id: 'rescue', speed: 14, with: 'tree'}, {stretcher: true}).steps, 1, 'exactly 14 m/s is one step');
 }
 
 // The hold: only with the rescuer at rest within 3 m and the helicopter slow.
@@ -277,12 +359,21 @@ const target = {x: 40, z: -10};
   const unlifted = createRescueLine({x: 105, z: 5, ground: flat}); setLineWho(unlifted, 'pair');
   eq(rules(unlifted, still(105, 5), 2, {zones}).length, 0, 'a pair never lifted is not handed over');
   // Set down hard: the speed it touched the ground at counts.
-  for (const [speed, handed] of [[0.9, true], [2, false], [3.5, false]]) {
+  // Harder than 1 m/s hurts them one step (section 4.1). Speeds set by hand
+  // here; the real cable's touchdowns are checked with the bumps above.
+  for (const [speed, handed, condition] of [[0.9, true, 'unhurt'], [2, false, 'hurt'], [3.5, false, 'hurt'], [6, false, 'hurt']]) {
     const pair = pairAt(105, 5); pair.onGround = false; pair.vy = -speed;
     rules(pair, still(105, 5), 1 / 120, {zones});
     pair.onGround = true; pair.vy = 0;
-    eq(count(rules(pair, still(105, 5), 2, {zones}), 'handover'), handed ? 1 : 0, `set down at ${speed} m/s: ${handed ? 'handed over' : 'no handover'}`);
+    const after = rules(pair, still(105, 5), 2, {zones});
+    eq(count(after, 'handover'), handed ? 1 : 0, `set down at ${speed} m/s: ${handed ? 'handed over' : 'no handover'}`);
+    eq(pair.condition, condition, `set down at ${speed} m/s: ${condition}`);
+    eq(count(after, 'roughSetDown'), condition === 'hurt' ? 1 : 0, `set down at ${speed} m/s: rough set-downs counted`);
   }
+  // The rescuer alone set down hard at the site hurts nobody.
+  const solo = createRescueLine({x: 105, z: 5, ground: flat}); solo.onGround = false; solo.vy = -3;
+  rules(solo, still(105, 5), 1 / 120, {zones}); solo.onGround = true; solo.vy = 0;
+  eq(count(rules(solo, still(105, 5), 1, {zones}), 'roughSetDown'), 0, 'the rescuer alone set down hard is not hurt');
   eq(rules(pairAt(3, -4), still(3, -4), 1, {zones: []}).length, 0, 'no circles, no handover');
   eq(rules(pairAt(3, -4), still(3, -4), 1).length, 0, 'same with none given');
   eq(types(rules(pairAt(3, -4), still(3, -4), 1, {zones: [zones[1]]})).join(), 'handover', 'the home pad\'s circle works');
@@ -369,24 +460,25 @@ const target = {x: 40, z: -10};
   ok(hooked.ok, 'a supply crate hooks like any load');
   release(crate, flat);
 
-  eq(cratePay({released: true, dropMetres: 0}), 300, 'a clean crate pays 300');
-  eq(cratePay({released: true, dropMetres: 1}), 300, 'released from exactly 1 m is clean');
-  eq(cratePay({released: true, dropMetres: 1.5}), 150, 'released from higher than 1 m pays 150 less');
-  eq(cratePay({released: true, dropMetres: 12}), 150, 'however high');
+  // HELI-PAY-CONTINUE: a crate pays 1,250 (was 300), 650 less from height (was 150), 400 for all three (was 100).
+  eq(cratePay({released: true, dropMetres: 0}), 1250, 'a clean crate pays 1,250');
+  eq(cratePay({released: true, dropMetres: 1}), 1250, 'released from exactly 1 m is clean');
+  eq(cratePay({released: true, dropMetres: 1.5}), 600, 'released from higher than 1 m pays 650 less');
+  eq(cratePay({released: true, dropMetres: 12}), 600, 'however high');
   eq(cratePay({released: false, dropMetres: 0}), 0, 'a crate not down pays nothing');
-  eq(cratePay({released: true}), 300, 'no drop given is clean');
+  eq(cratePay({released: true}), 1250, 'no drop given is clean');
   const clean = {released: true, dropMetres: 0}, rough = {released: true, dropMetres: 6}, missing = {released: false, dropMetres: 0};
-  eq(supplyPay([clean, clean, clean]).total, 1000, 'three clean crates in time pay 1,000');
-  eq(supplyPay([clean, clean, clean]).bonus, 100, 'with the 100 bonus');
-  eq(supplyPay([clean, clean, clean], {inTime: false}).total, 900, 'no bonus after the clock');
-  eq(supplyPay([clean, clean, rough]).total, 850, 'one rough crate: 300 + 300 + 150 + 100');
-  eq(supplyPay([clean, clean, missing]).total, 600, 'two down: 600, no bonus');
+  eq(supplyPay([clean, clean, clean]).total, 4150, 'three clean crates in time pay 4,150');
+  eq(supplyPay([clean, clean, clean]).bonus, 400, 'with the 400 bonus');
+  eq(supplyPay([clean, clean, clean], {inTime: false}).total, 3750, 'no bonus after the clock');
+  eq(supplyPay([clean, clean, rough]).total, 3500, 'one rough crate: 1,250 + 1,250 + 600 + 400');
+  eq(supplyPay([clean, clean, missing]).total, 2500, 'two down: 2,500, no bonus');
   eq(supplyPay([clean, clean, missing]).down, 2, 'counted');
   eq(supplyPay([]).total, 0, 'none down pays 0');
-  eq(supplyPay([rough, rough, rough]).total, 550, 'three rough crates: 450 and the bonus');
-  eq(SUPPLY_PAY.perCrate, 300, 'the pay table: 300 a crate');
-  eq(SUPPLY_PAY.highCut, 150, '150 less when dropped');
-  eq(SUPPLY_PAY.allCratesBonus, 100, '100 for all three');
+  eq(supplyPay([rough, rough, rough]).total, 2200, 'three rough crates: 1,800 and the bonus');
+  eq(SUPPLY_PAY.perCrate, 1250, 'the pay table: 1,250 a crate');
+  eq(SUPPLY_PAY.highCut, 650, '650 less when dropped');
+  eq(SUPPLY_PAY.allCratesBonus, 400, '400 for all three');
   eq(SUPPLY_PAY.dropFrom, CABLE.dropFrom, 'by H1\'s drop rule');
 
   // From a real release: set down in the yard, and dropped from height.
@@ -402,16 +494,16 @@ const target = {x: 40, z: -10};
   };
   const gentle = place(0.5);
   ok(crateResult(gentle.c, yard).released, 'a crate eased down in the yard is delivered');
-  eq(cratePay(crateResult(gentle.c, yard)), 300, 'and pays 300');
+  eq(cratePay(crateResult(gentle.c, yard)), 1250, 'and pays 1,250');
   const dropped = place(6);
   ok(crateResult(dropped.c, yard).released, 'a crate dropped in the yard is delivered');
   near(crateResult(dropped.c, yard).dropMetres, 6, 1e-6, 'from 6 m');
-  eq(cratePay(crateResult(dropped.c, yard)), 150, 'for 150');
+  eq(cratePay(crateResult(dropped.c, yard)), 600, 'for 600');
   ok(types(dropped.events).includes('drop'), 'H1 reports the drop');
   // Dropped, hooked again on the ground and let go there: the clean release counts.
   dropped.c.hooked = true;
   noteCrateRelease(dropped.c, release(dropped.c, flat).event);
-  eq(cratePay(crateResult(dropped.c, yard)), 300, 'a crate dropped, picked up again and let go on the ground pays 300');
+  eq(cratePay(crateResult(dropped.c, yard)), 1250, 'a crate dropped, picked up again and let go on the ground pays 1,250');
   eq(noteCrateRelease(createSupplyCrate({id: 'food', ground: flat}), {type: 'cargoHit'}), 0, 'other events change nothing');
   const away = place(0.5); away.c.x = 40;
   eq(crateResult(away.c, yard).released, false, 'a crate outside the yard is not delivered');

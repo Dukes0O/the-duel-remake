@@ -78,8 +78,11 @@ export function installSceneryBounds(course) {
     } else if (obstacle.tunnelWall) {
       // Lining arches spring at 3.6 m and the .9 m wall slab ends at the
       // outer side of that spring. Sample both ends on graded tunnel roads.
+      // Authored galleries instead retain their measured full-height lining.
       const samples = [-4, 0, 4].map(delta => course.at(obstacle.s + delta).y);
-      bounds(obstacle, 0, [Math.min(...samples) - .1, Math.max(...samples) + 3.6]);
+      bounds(obstacle, 0, Number.isFinite(obstacle.minY) && Number.isFinite(obstacle.maxY)
+        ? [obstacle.minY, obstacle.maxY]
+        : [Math.min(...samples) - .1, Math.max(...samples) + 3.6]);
     } else if (obstacle.arenaWall && !Number.isFinite(obstacle.height)) {
       bounds(obstacle, obstacle.y, SCENERY_MODEL_BOUNDS.arenaWall);
     } else if (obstacle.barrier && !Number.isFinite(obstacle.height)) {

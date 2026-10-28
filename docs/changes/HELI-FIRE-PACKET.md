@@ -47,3 +47,8 @@ sprint, H2 Fire, and its board cards. Design only: no game code.
 ## Removed
 
 Nothing: new design only.
+
+## Kyle, 15 October
+
+- No forest fire in winter: section 3.6 and card FIRE-SEASONS, which
+  FIRE-FINISH now waits for.

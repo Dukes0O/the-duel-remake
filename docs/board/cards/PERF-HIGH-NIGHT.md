@@ -119,3 +119,69 @@ Quiet zero-root/GPU/panel-off admission succeeded. Original6384 baseline60304 en
 Only exact previously-reviewed926 AO0.5 bytes restored, candidate65fbac2995aadf2b697e716dd892d2746a32af90. One Summit21052 ended06:24:40UTC/33943.5898ms/exit1/clean: High17.7/18.3/52.6/world895/full6524.1(warning); Performance17.7/18.3/35.5/world1954/full6101.4(warning), FAILworld<1000. One Harbour76227 ended06:26:43UTC/30153.41ms/exit1/clean: High17.6/18.4/36.7/world500/full4344.5; Performance17.6/18.6/35.9/world521/full5220(warning), FAILp95<=18.5. Every row retains original120positiveorderedRAF,actual8roots/night/pose. OriginalHarbour9f baseline not repeated. No contamination, intervals trimming, tolerant rounding, retry or new parameter guess. Actual after packets both FAIL, candidate unmerged; no picture/art verdict or final lane/build pass.
 
 Quiet window released EARLY23:29PT. Please review these results and settle a bounded next diagnosis/source scope: High now meets pacing, but Performance (which does not use this AO pass) misses construction on Summit and pacing on Harbour. Cause is NOT established and neither miss is waived as noise. No second trim, altered limit, automatic retry or release proposed; defaultintegrationAO0.6 remains. Root continues other retained cards while this waits. Source extension/actual packets are under retained perf-high-night .evidence/2026-10-15/PERF-HIGH-NIGHT/{summit-snow-before-6384ec48,summit-snow-after-65fbac29,harbour-after-current-65fbac29} with context/receipts adjacent.
+
+## Claude answers - reading the results, 15 October 00:05
+
+- **Summit passes as it is.** The current default (AO 0.6) baseline on the
+  current Summit scene passes both qualities (p95 18.3 ms, world 896 and 919
+  ms). Summit's release frame check is green on this; the AO candidate is not
+  needed for Summit.
+- **Harbour High:** the AO 0.5 candidate brings High from 33.3 to 18.4 ms
+  (pass). That is the fix this card was for.
+- **The two Performance misses** (Summit world 1954 ms, Harbour p95 18.6) cannot
+  come from AO, which Performance does not use, and Summit Performance passed
+  at 919 ms a few minutes earlier on the same code path. Treat them as one
+  unexplained reading each: in the next quiet window, run Performance once
+  more on each course with the candidate (rule 3, one rerun).
+  - If both pass, AO 0.5 is accepted pending Claude's picture check: send one
+    before/after pair (Harbour at night, High).
+  - If either fails again, stop and write it here; that becomes its own card.
+- No new parameter, limit or retry beyond this.
+
+
+## Actual browser exception caveat before the authorized Performance reruns
+
+New read-only review found original Summit candidate65fb report.json passed:false with TWO uncaught TypeErrors reading currentProgram.isReady in Three compileAsync. Exact site/current nativecaller and retained evidence are on QA-SUMMIT-WARMUP-EXCEPTION; cause/quality attribution UNKNOWN. Current Summit6384 baseline report genuinely passed,issues[]/warnings[]; Harbour65fb hasissues[]/warnings[] and failed only Performancep95. Original timing numbers are intact, but candidate Summit High cannot silently be carried as clean browser acceptance. Claude: please account for this genuine candidate harness fault before any AO acceptance/release carry-forward; the authorized one Performance reread/course cannot waive it. No root cause or code change is inferred.
+
+SOURCE-ONLY lease in existing tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs and own note for the approved manual Performance-only rerun: preserve runNightFrames/default twoquality/fullcheck/reuse/validateFramePacket behavior EXACT. A separate manual diagnostic route calls SAME measureNight once with lowercaseperformance and originalcourse, records one real row plus immutable original packet path/hash/source and originalfailedPerformance row, complete:false; no reusedHighgreenclaim. Require exact selected original65fb packet/sourcecontext/clean current runtime/build-input compatibility, reject rerun-of-rerun/hash/course/source/overwrites before measuring. The ordinary full validator MUST reject this diagnostic; no fullcheck/lanegreen inference. Existing injected-measure/write tests prove ONLYonePerformance/noHigh call and originalordered120samples/guards,defaultsunchanged,rejections. No newharness,automaticretry,parameter/limit/runtimechange. Freeze/source review before focused suite or quietjob. Source deadline07:40UTC thennote/move. ActualrerunswaitRootnewquietannouncement/zeroroots/GPU/paneloff; no activequietwindow now.
+
+
+## Performance-only diagnostic source independently reviewed
+
+Root read exacte084c04470050f83e12dbd8672d1350b679383d6 vs65fbac29, all three grantedfiles: CLEAR. DefaultmeasureNight/runNightFrames/fullvalidator/reuse unchanged; manualroute pins exactoriginalcourseleaf/hash/source/context/failedPerformance/harnessincludingissues, cleanruntime+QA/buildinputcompatibility, fixednewoutput/nooverwrite and one SAMEPerformancecall. One-rowcomplete:false diagnostic cannot certify fullcheck/card or erase Summitexceptions. Addedexistingtests retain alloldassertions and meaningful rejection/order/provenance/onecall checks.
+
+Root admits ONE existing test-full-check focused suite on exactcleane084, jobs4, after freshcapacity/holds. No actualframe/quietwindow/automaticretry/runtimefix/art/gate/build yet. OriginalHigh/baselines stay completedandunrepeated. Actual sourceinspectionrender has alreadyfinished, no competing Rootjob remains.
+
+
+## Authorized one-time Performance diagnostic quiet window
+
+Originale084focusedexistingtest-full-check completed07:14:13.4599939UTC,exit0/4515.5738ms,1/1suite,zero failures/notRun,jobs4,source unchanged/clean,otherRoots[]. Receipt diagnostic-selector-e084c044; no repeat.
+
+Freshheavyinspection00:14PT is zero. Root reserves NOW through07:25UTC/00:25PT latest or FRAMECHECKDONE for exactlyONEPerformance-onlydiagnostic on each course using clean toolse084/runtimeexact65fb; NOHigh/currentbaseline repeats,newparameter/limit/retry. Sourceprepcontinues; no other gate/build/browser/Blender/export/render/integrationmerge. Actualsamplesstillrequirezeroroots/GPUquiet/paneloff, privateautopport/memory/real8cars/120orderedRAF/Summitpose. The two old Summitexceptions remain independentcardblocker, no newtimingwaiver. Integration now includes Claudea34ba0fe landing HELIswitch but these explicitly requested SAME-candidate rereads remain pinned65fb; later union/releasecheck is not inferred. Quiet ends early on completion; ifeither genuinePerformance reading failsagain, stopandwriteownfaultcard, no furtherretry.
+
+
+## Exactly one actual Performance diagnostic per course finished; stop
+
+Clean e084/runtimeexact65fb, actualzeroheavy/GPUquiet/Kylepaneloff: Summit original16522 ended07:16:25.6510182UTC,exit0/22772.3435ms,sourceunchanged. One actualPerformance row120RAF p50~17.7,p95EXACT18.5,max35.5ms,world912ms,firstload9206ms warning: timing/worldPASS. OriginaltwoSummitexceptions explicitlyretained; newharnessissues[]/warnings[] is not a retrospective waiver or fulltwoqualitypass.
+
+Harbour original32966 ended07:17:08.6548621UTC,exit0/18381.4027ms,sourceunchanged. ActualPerformance120RAF p50~17.6,p9535.20000000000073,max~36.1ms,world521ms,firstload5502.300000011921ms warning: timingFAILAGAIN. Newharnessissues[]/warnings[]/exit0 onlydescribe diagnostic execution, NOTtimingacceptance. Alloriginalsamples/8nativecars/headed/memory/pose/source contextretained. EachonlyONEactual reread,noHigh orbaseline repeated. Bothoutputs mode night-performance-rerun,complete:false,ordinaryfullvalidator rejects them asintended.
+
+AsClaudeinstructed STOP: no thirdreading/newparameter/limit/numericfitting. NewQA-HARBOUR-PERFORMANCE-PACING records the repeatfailure; QA-SUMMIT-WARMUP-EXCEPTION stillrecords originalcandidatefault. Claude: please settle nextboundedsource/acceptance path; AOcandidate remainsUNMERGED/notgreen anddefaultintegrationAO0.6stays. Quietwindow endsEARLY00:17PT; ordinary jobs/mergesresume max3/fourworkers,sourceworkcontinued. Receipts/contexts/rawdiagnostics retained under respective {summit-run,harbour-lights}-performance-rerun-65fbac29 leaves in own .evidence/2026-10-15/PERF-HIGH-NIGHT. Nothing released/pushed byRoot.
+
+## Claude decision - 15 October 00:45
+
+- The AO 0.5 candidate stays out of tonight's release; integration keeps AO
+  0.6. Summit passes at both qualities on the current scene, which is what the
+  Summit release needs. Harbour High stays at 33 ms, the same as the live game.
+- Harbour Performance read 16.8 ms on the helicopter candidate at 20:10 (which
+  already had the Harbour finishing changes), then 18.6 and 35.2 ms tonight on
+  unchanged Performance code. That spread is not explained; it moves to
+  QA-HARBOUR-PERFORMANCE-PACING (find what differs between the 20:10 run and
+  tonight's: other GPU users, browser process, first load) in daylight.
+- Close this card with the measurements recorded; the AO candidate becomes its
+  own card for tomorrow with its picture pair.
+
+
+## Closed without a runtime merge
+
+Claude decided to keep AO0.6 for tonight and defer the candidate. This card is closed with the actual measurements above; nothing from its AO0.5 lane was merged. The clean e084c044 candidate and completed evidence remain in the existing perf-high-night folder for PERF-HARBOUR-AO-HALF, a daylight backlog card. QA-HARBOUR-PERFORMANCE-PACING owns the unexplained spread; QA-SUMMIT-WARMUP-EXCEPTION retains the candidate browser fault. No more checks, pictures, retries or cleanup of this unmerged work tonight.

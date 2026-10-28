@@ -28,6 +28,18 @@
 .field-results tr.you td{background:#6d321bd9;color:#fff}
 .field-results tr.you td:first-child{color:#ffd0b3;padding-left:6px}
 .field-note{margin:-12px 0 18px;font-size:10px;color:#aeb6a7}
-.grand-prix-results h2{font-size:clamp(34px,4.6vw,60px);letter-spacing:-2px;margin:14px 0}
+.grand-prix-results h2,.earned-car-results h2{font-size:clamp(34px,4.6vw,60px);letter-spacing:-2px;margin:14px 0}
 .grand-prix-results .result-metrics{margin:18px 0;padding:15px 0}
-.grand-prix-results{padding:30px 0}
+.earned-car-results .result-metrics{margin:14px 0 16px;padding:11px 0}
+.grand-prix-results,.earned-car-results{padding:30px 0}
+/* Earned cars: the new-medal and new-car lines. */
+.result-bonuses.medal-earned{color:#e4bd82;display:flex;align-items:center;gap:9px}
+.medal-dot{flex:none;width:11px;height:11px;border-radius:50%;border:1px solid #0006;box-shadow:inset 0 0 0 2px #ffffff1f,0 1px 2px #0008}
+.medal-dot.bronze{background:radial-gradient(circle at 35% 30%,#f0c49a,#a8703a 55%,#5e3a1c)}
+.medal-dot.silver{background:radial-gradient(circle at 35% 30%,#ffffff,#b8bcc2 55%,#6b7077)}
+.medal-dot.gold{background:radial-gradient(circle at 35% 30%,#fff1b8,#d4a531 55%,#7a5a12)}
+/* A newly earned car: its own card, the name as large as the race time. */
+.earned-car-card{display:flex;flex-direction:column;gap:4px;margin:8px 0 12px;padding:9px 18px 10px;max-width:540px;border:1px solid #e4bd8266;border-left:3px solid #e4bd82;background:#1b241ee0}
+.earned-car-card .field-label{color:#e4bd82;font-size:8px;letter-spacing:1.5px}
+.earned-car-card>b{font-size:25px;font-style:italic;font-weight:700;line-height:1.1;color:#f4efe2}
+.earned-car-card>p{margin:0;font-size:12px;color:#c4c9b9}

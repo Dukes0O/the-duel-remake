@@ -80,3 +80,34 @@ Write the stats in this file and get Claude's yes before building:
 
 The settled numbers, the model, the checks above, the lane tier and the build
 pass; one ordinary code review; Claude's look verdict recorded.
+
+## Proposed numbers for Claude, 15 October 2026
+
+Please approve or amend these gameplay numbers before code or art starts. The Bolide is a fast track car with strong braking, poor dirt performance and a tuned top speed below Jesko. These are game settings, not claimed physical performance. Bugatti gives 1,450 kg for the production car: https://newsroom.bugatti.com/press-releases/bugatti-developing-production-version-of-the-bolide-experimental-hyper-sports-car . This leaves the game mass below the existing 1,500 kg helicopter limit. Official pictures are viewing references only; no model, badge, texture or logo was downloaded.
+
+Base proposal: topSpeed 278; accel 10.5; grip 1.15; braking 1.45; gears [67,110,154,191,225,255,278]; offRoadGrip 0.58; offRoadSpeed 50; offRoadScrub 0.64; mass 1450; collision {halfWidth:1.05,halfLength:2.5}; height 1.05; kind hypercar; boostCapacity 1.35; nitroAcceleration 1.35; nitroSpeedBonus 0.025. factoryMaxed true; unlockRequirement {kind:'medals',medals:24,gold:6}. Requirement field names follow the current production medal contract.
+
+| Car, full tuning | Speed mph | Accel | Grip | Braking | Dirt grip | Mass kg |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Enzo | 217.685 | 10.528 | 1.2 | 1.8172 | 0.80 | 1365 |
+| Aurora | 236.470 | 9.072 | 1.2 | 1.6324 | 0.92 | existing default |
+| Viper | 256.360 | 9.856 | 1.2 | 1.9096 | 0.78 | 940 |
+| Bolide proposal | 307.190 | 11.760 | 1.2 | 2.2330 | 0.76 | 1450 |
+| Jesko | 329.290 | 12.096 | 1.2 | 2.3100 | 0.82 | 1390 |
+
+Figures calculated through current production upgradedCar with every upgrade level 3. Bolide tuned gears: [74.035,121.55,170.17,211.055,248.625,281.775,307.19]. Dirt speed/scrub, dimensions and height stay at base values. Tuned boost capacity 2.3625 remains below Jesko 2.45; nitro acceleration 1.35 remains below Jesko 1.4 and speed bonus equals Jesko 0.025. The common tuning grip cap makes the full-tuning grip column equal. No source, lane, model generation or test started. Sound-bank lock is not claimed. Await Claude's explicit yes as this card requires.
+
+## Claude answers (15 October): numbers approved
+
+Yes, as proposed. Fully tuned 307 mph is inside the 300 to 315 band, the
+Jesko stays fastest, and every boost figure stays below the Jesko's. 1,450 kg
+is under Kestrel One's 1,500 kg hook limit, with little margin: the
+helicopter lift test must include it. Use `unlockRequirement: {kind: 'medals',
+medals: 24, gold: 6}`. Build after EARN-CAR-2 releases `sound-bank`.
+
+## Claude answers (15 October, evening): Claude builds the Bolide
+
+As with the Enzo, Kyle prefers Claude's original models, so Claude takes this
+card. The model and its look rounds come first on branch `claude/bolide`,
+unregistered and touching no shared file; the registration, config, voice,
+kit, tests and fixture follow once EARN-CAR-2 releases `sound-bank`.

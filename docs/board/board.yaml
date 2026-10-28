@@ -1,6 +1,28 @@
 # Open work only. Finished prerequisites remain explicit; details live beside each card.
-completed: [HELI-ART-SRC, SNOW-VARIATION, SUMMIT-PIT-BALANCE, QA-TITAN-REPLAY-TIMEOUT, P4-SUMMIT-ATTACK, QA-REVIEW-BLACK-FRAMES, SUMMIT-GALLERY-COVER, RESCUE-RADIO, RESCUE-SITES, RESCUE-LINE, JANITOR-LOOKS-CONSUMED, FIRE-SPREAD, FIRE-CLOSE, FIRE-MISSIONS, WILD-PLACE, RESCUE-PEOPLE, EARN-MEDALS, FIRE-BUCKET, FIRE-RADIO, P4-AVALANCHE, SKIN-ART-PAINT, FIRE-SAVE, FIX-ROAD-SEAM, QA-HARBOUR-ROAD-CLEARANCE, QA-FRAME-ENVIRONMENT, QA-BROWSER-SWEEP, PANORAMA-TOWN, RESCUE-PROPS, HELI-WILDLIFE-PACKET, HELI-RESCUE-PACKET, FIRE-ART-FX, FIRE-BURNT-LOOK, HELI-FIRE-BUCKET, EARN-CREDITS, HELI-FIRE-PACKET, EARN-PACKET, HELI-LESSONS, HELI-VIEW, HELI-DISPATCH, P4-CAREER, HELI-HOOKS, AUD-15-P1, HELI-RADIO, P4-YETI, HELI-MODE, HELI-CABLE, HELI-SAVE, HELI-FLIGHT, HELI-PACKET, DEEP-ART-SRC, P4-SUMMIT, FIX-LIVE-EDGES-SOURCE, P4-GP-EXISTING, FAC-FULL-CHECK, DEEP-ZONE, P4-SNOWMEN, LAP-CHOICE, DEEP-RAMP-GEOMETRY, FIX-AMBUSH-OPENING, P4-SUMMIT-RUNTIME, FIX-FOOT-MOUSE, FAC-08, FAC-05, FAC-03, FAC-04, FAC-07, FAC-06, GATE-DIAGNOSTICS, SALT-RUNTIME-CHECKS, AUD-CRASH-PEAK, AUD-CAPTURE-CONTINUITY, AUD-CAPTURE-SCHEDULING, ART-KEEP-VALVE-DONOR, HK-RUSTWALL-ATLAS-ISOLATION, UX-ENTRY-HINTS, OPS-LAUNCHER-DIAG, CLEAN-01, CLEAN-02, CLEAN-03, CLEAN-04, CLEAN-05, CLEAN-06, CLEAN-07, CLEAN-08, CLEAN-09, CLEAN-10, FIX-04, TRACK-01, TRACK-02, BAL-01, GFX-00, EGG-01, ART-W, GFX-01, BAL-02, GFX-01-P1, GFX-01-P2, GFX-01-P3, BETA-01, EGG-REL, FOOT-FIX, CRASH-01, GATE-REJOIN, CRASH-03, CRASH-04, CRASH-05, BALANCE-SAMPLE, CRASH-SWITCH-REMOVE, CRASH-PRESENTATION-ON, BALANCE-W2-OFF-RETIRE, ART-SRC-CREW, ART-SRC-HANDS, ART-SRC-RUSTWALL, ART-FIT-CREW-M, ART-SRC-CREW-W, ART-FIT-CREW-W, ART-FIT-HANDS, ART-FIT-RUSTWALL, ART-SRC-TANKER, ART-SRC-TANKER-PARTS, ART-FIT-TANKER, SAVE-DAMAGED-FIELDS, HK-RUSTWALL-BASELINE, DESIGN-ARSENAL, DESIGN-CREW, DESIGN-ARENA-MODES, DESIGN-FUEL-FIGHTER-HITS, DESIGN-WARLORDS-4-8, ARS-CORE, AUD-ARSENAL-W1, ARS-02, ARS-03, CREW-02, CREW-03, CREW-04, ARENA-03, ARENA-04, ARENA-05, ART-SRC-SALTFLATS, ARENA-06, ARENA-PIT, ARENA-07, CONVOY-FRAMES, WAR-03a, WAR-03b, WAR-03c, WAR-03d, WAR-03e, WAR-04, FEATURE-PLAYTEST, P3-POLISH, CRASH-02, TITAN-01, EGG-03, GFX-02, GFX-02-P1, GFX-02-P2, GFX-02-P3, EGG-02, EGG-02-P1, EGG-02-P2, EGG-02-P3, EGG-03-GATE, EGG-04, CAM-01, CAR-01, GFX-03, GFX-04, FND-01, FND-02, FND-03, FND-04, FIX-01, FIX-02, FIX-03, FND-05, FND-06, FND-07, FND-08, FND-09, QA-01, QA-02, QA-03, FND-10, BUG-01, POLISH-01, BUG-12, BUG-09, BUG-02, BUG-03, BUG-04, BUG-05, BUG-06, BUG-07, BUG-14, BUG-13, BUG-08, BUG-10, BUG-11, OLD-01, OLD-02, OLD-03, TST-01, TST-02, FND-11, TOOL-01, TST-03, RFX-01, RFX-02, RFX-03, RFX-05, RFX-06, RFX-07, FOOT-00, RFX-04, CMB-01, CMB-02, CMB-04, CMB-07, CMB-08, BUG-15, AUD-10, AUD-11, AUD-12, AUD-12-R1, AUD-GATEKEEPER, AUD-14, AUD-01, AUD-02, VIS-01, ART-A, CMB-03, SAVE-01, CMB-05, CMB-06, VIS-02, UI-01, PRG-01, PRG-02, PRG-04, FOOT-01, FOOT-02, FOOT-03, PERF-01, FOOT-06, FOOT-04, FOOT-05, FOOT-07, PRG-03, ART-C, FOOT-08, UI-02, RAID-01, RAID-02, JANITOR-P2, FIX-STATUS-CARD, ARENA-01, ARENA-01-UI, ARENA-FEEL, ARENA-02, ARENA-02-PAY, FIX-RUSTWALL-CLEAN, JANITOR-RUSTWALL-NOTE, RALLY-CHECKPOINT, INT-0926-MERGE, PREVIEW-LAUNCHER, PREVIEW-OWN-FOLDER, CRASH-RELEASE, COMBAT-AUDIO-SCENARIO, WAR-SAL-ART, WAR-02a-FORMAT, WAR-02a-SAL, WAR-02a-REWARD, SCRAPDOME-PLAYTEST, SCRAPDOME-RELEASE, TITAN-HANDLING, HK-LAUNCHER-PORT, WAR-SAL-TUNE, WAR-PAY, ARENA-STEER, ARENA-WRECK-RATE, ARENA-JUNK-SHOVE, ARENA-SHOVE, WAR-SAL-RELEASE, DESIGN-WAR-02b, DESIGN-WAR-02c, WAR-01, WAR-02-P1, WAR-02a, WAR-HOOKS, WAR-02b, WAR-02c, AUD-17, AUD-18, ARS-01, FIX-STATUS-SCOPE, JANITOR-AUDIO-NOTES, JANITOR-ROOK-NOTE, FIX-AUDIT-SCOPE, JANITOR-HAND-NOTE, JANITOR-UFO-NOTES, ART-VESPER-PURITY-SCOPE, P4-TRACK-SCRIPT, P4-FIELD, P4-REVIEW-TOOL, P4-ART-SRC, P4-KITS, P4-KIT-LOADER, P4-GRIP, P4-DAYNIGHT, P4-AUDIO, QA-LANE-SCOPE, P4-HARBOUR, P4-TREMBLANT, P4-SNOW, P4-PIT, P4-TREMBLANT-SNOW, P4-INTEL-DOSSIER, P4-INTEL-TELEMETRY, P4-QUALIFYING, POLISH-HEIGHT, POLISH-SEEKERS, POLISH-SMOKE, POLISH-FLAME, POLISH-ARENA, TEST-DRIVER-BRAKING, RELEASE-2026-10-10, QA-STALE-COLLISION, QA-NAVIGATION-CONTEXT, QA-AUDIO-CAPTURE, JANITOR-P4-ART-EVIDENCE, FIX-P4-KERB-NORMALS, P4-KIT-LOAD-TIME, JANITOR-OVERNIGHT-ART, DEEP-LOOK, P4-CAREER-PAY, FAC-01, FAC-02, DEEP-WATER, P4-PANORAMA, DEEP-SAVE, DEEP-SURFACE, QA-STATUS-FACTORY, DEEP-ZONE-FORMAT, P4-CAREER-MENU, QA-LANE-NATIVE-RELIEF, P4-CAREER-PODIUM, FIX-DRIVING-FEEL, FIX-RACE-SCREEN, P4-ARDENNES-ROAD, RELEASE-CONTROLS, P4-FINISH-PANORAMA, P4-FINISH-HARBOUR, P4-FINISH-TREMBLANT, FIX-HAIRPIN-CAMERA]
+completed: [QA-INSTRUCTOR-ANY-CAR-SLOW, LAB-BENCH-PANELS-REMOVE, LAB-TRY-PICTURES-DIAL, ARDENNES-FAR-FOREST-LIGHT, LESSONS-MORE-ROADS, QA-HARNESS-CLOSE-CAP, SUMMIT-TERRAIN-PRELOAD, QA-DEEP-LIFE-TIMING, LAB-RESTORE-PASSED, SUMMIT-BUILD-TIME-3, DEEP-TRAIL-JOINTS, MAP-FINISH, DEEP-ROCKS-PUSH, QA-SUMMIT-GLACIER-EDGE, QA-AUDIO-CRASH-PEAK-AGAIN, HELI-VIEW-FRAMES, LESSONS-V2-LINES, LESSONS-V2-VIEW, LESSONS-V2-RULES, HELI-SUMMIT-LANDED, LESSON-INSTRUCTOR-ANY-CAR, LAB-LESSONS-TUNNEL, LAB-LESSONS-SNOW, GO-LIVE-EVENING, LAB-LESSONS-FLYING, LAB-LESSONS-WORKSHOP, LAB-BRIAN-FIX, DRIVE-LESSON-ANY-COURSE, LAB-LESSONS-2, LAB-LIFT-2, SUMMIT-FINISH-AREA, HELI-LOGBOOK, SUMMIT-BUILD-TIME-2, LAB-LESSON-FRAME, HELI-RETURN-LOADS, SUMMIT-GROUND-GAPS, LAB-WALK, GHOST-SAVE-MESSAGE, SUMMIT-TUNNEL-WALL, GP-CAREER-LIVE, HELI-LANDED, SKI-AUDIO, HELI-CARRY-CLEAR, SAVE-RECORDS-IDB, SKI-PICKUP, LESSONS-ICE-GATE, LAB-FINISH, LAB-CHALLENGE-EASE, LAB-POLISH, SPEIRLING-KIT, LAB-FAN-VIEW, DEEP-ACHIEVEMENTS, LAB-FAN, LAB-RESTORE-2, SIRENA-WRECK-ART, DEEP-EXPLORER, GP-RACECRAFT-ARDENNES, DEEP-RAMP-2, DEEP-PLAYTEST-1, GP-WIDE-START, DEEP-GO-LIVE, DEEP-AUDIO, QA-AUDIO-RACE-LAUNCH, LAB-FAN-ART, DRIVE-LESSONS-VIEW-2, DEEP-ART-FINAL, LAB-TUNE-VIEW, SKI-VIEW, LAB-TUNE, LAB-RESTORE, MAP-VIEW, DRIVE-LESSON-3, LAB-VIEW, DEEP-SIRENA-VIEW, ENGINE-CURVE, PERF-GROUND-ROWS, GP-PASSING-2, FIX-MANIFEST-AWAIT, DEEP-LIFE, DEEP-LOG, SKI-HELI, MAP-SECRETS, QA-YETI-THREE, QA-YARD-HOME-AIR-ONLY, YETI-FUR-TINT, SIRENA-KIT, TYRE-SLIP-DRIFT-RETUNE, FUN-TITAN-LAUNCH, SKI-SAVE, SUMMIT-BUILD-TIME, DEMO-DRIVER-UNSTUCK, SIRENA-CAR, LAB-SNOW, MAP-DESTINATIONS, LAB-RADIO, LAB-HELI-CHALLENGES, FIX-LAUNCH, DEEP-RADIO, DEEP-SIRENA, MAP-DATA, DRIVE-LESSON-HELIPAD, DRIVE-LESSONS-LINES-2, SKI-ART, LAB-HELI, DRIVE-LESSONS-SAVE-2, LAB-BENCHES, QA-TEST-AUDIT, MAP-ART-2, DRIVE-LESSON-4, LAB-RULES, MAP-ART, SKI-RUNS, QA-ARDENNES-FRAME-READINESS, LAB-ART, RESCUE-SUMMIT-ARRIVAL, FIX-GRASS-GROUND, GP-RACECRAFT, SKI-RULES, DRIVE-LESSON-2, DRIVE-LESSON-HUD, SIRENA-ART, FIX-HELI-HOOK, RESCUE-SUMMIT-TUNE, EARN-CAR-1, EARN-CAR-3, DEEP-TRAIL, DRIVE-LESSON-HOOKS, DRIVE-LESSONS-NEXT, EARN-CAR-2, DRIVE-LESSON-1, SUMMIT-HELI-RESCUES, SKIN-HOOKS, RESCUE-VIEW, RESCUE-AUTOPILOT, SKIN-GEAR, RESCUE-HOOKS, WILD-SURVEY, SKIN-RULES, RESCUE-ENGINE, SKIN-SAVE, RESCUE-SAVE, TEAMROOM-VARIANT-NOTES, RELEASE-SUMMIT, P4-FINISH-TEAMROOM, QA-BROWSER-FRAME-ISOLATION, P4-INTEL-LEVELS, QA-AUDIO-CRASH-RELIABILITY, ARDENNES-FAR-FOREST, QA-DEEP-ART-THREE, SUMMIT-SWITCH-ON, ARDENNES-STAVELOT-STONE, JANITOR-LOOKS, FIRE-FINISH, QA-SHARED-HEAVY-ADMISSION, RELEASE-ARDENNES, ARDENNES-SWITCH-ON, P4-FINISH-ARDENNES, P4-CUPS, WILD-RADIO, AUDIO-CATALOG-APPEND, QA-ARENA-STEERING-AIR-ONLY, DRIVE-LESSON-LINES, FIRE-SEASONS, RESCUE-HURT, DRIVE-LESSON-CORE, SKIN-ART-GEAR, P4-ARDENNES, P4-VARIANTS, DRIVE-LESSON-SAVE, QA-STOCK-SNOW, FIRE-VIEW, FIRE-HOOKS, HELI-FINISH, EARN-SCREEN, P4-FINISH-SUMMIT, PERF-HIGH-NIGHT, HELI-ART-SRC, SNOW-VARIATION, SUMMIT-PIT-BALANCE, QA-TITAN-REPLAY-TIMEOUT, P4-SUMMIT-ATTACK, QA-REVIEW-BLACK-FRAMES, SUMMIT-GALLERY-COVER, RESCUE-RADIO, RESCUE-SITES, RESCUE-LINE, JANITOR-LOOKS-CONSUMED, FIRE-SPREAD, FIRE-CLOSE, FIRE-MISSIONS, WILD-PLACE, RESCUE-PEOPLE, EARN-MEDALS, FIRE-BUCKET, FIRE-RADIO, P4-AVALANCHE, SKIN-ART-PAINT, FIRE-SAVE, FIX-ROAD-SEAM, QA-HARBOUR-ROAD-CLEARANCE, QA-FRAME-ENVIRONMENT, QA-BROWSER-SWEEP, PANORAMA-TOWN, RESCUE-PROPS, HELI-WILDLIFE-PACKET, HELI-RESCUE-PACKET, FIRE-ART-FX, FIRE-BURNT-LOOK, HELI-FIRE-BUCKET, EARN-CREDITS, HELI-FIRE-PACKET, EARN-PACKET, HELI-LESSONS, HELI-VIEW, HELI-DISPATCH, P4-CAREER, HELI-HOOKS, AUD-15-P1, HELI-RADIO, P4-YETI, HELI-MODE, HELI-CABLE, HELI-SAVE, HELI-FLIGHT, HELI-PACKET, DEEP-ART-SRC, P4-SUMMIT, FIX-LIVE-EDGES-SOURCE, P4-GP-EXISTING, FAC-FULL-CHECK, DEEP-ZONE, P4-SNOWMEN, LAP-CHOICE, DEEP-RAMP-GEOMETRY, FIX-AMBUSH-OPENING, P4-SUMMIT-RUNTIME, FIX-FOOT-MOUSE, FAC-08, FAC-05, FAC-03, FAC-04, FAC-07, FAC-06, GATE-DIAGNOSTICS, SALT-RUNTIME-CHECKS, AUD-CRASH-PEAK, AUD-CAPTURE-CONTINUITY, AUD-CAPTURE-SCHEDULING, ART-KEEP-VALVE-DONOR, HK-RUSTWALL-ATLAS-ISOLATION, UX-ENTRY-HINTS, OPS-LAUNCHER-DIAG, CLEAN-01, CLEAN-02, CLEAN-03, CLEAN-04, CLEAN-05, CLEAN-06, CLEAN-07, CLEAN-08, CLEAN-09, CLEAN-10, FIX-04, TRACK-01, TRACK-02, BAL-01, GFX-00, EGG-01, ART-W, GFX-01, BAL-02, GFX-01-P1, GFX-01-P2, GFX-01-P3, BETA-01, EGG-REL, FOOT-FIX, CRASH-01, GATE-REJOIN, CRASH-03, CRASH-04, CRASH-05, BALANCE-SAMPLE, CRASH-SWITCH-REMOVE, CRASH-PRESENTATION-ON, BALANCE-W2-OFF-RETIRE, ART-SRC-CREW, ART-SRC-HANDS, ART-SRC-RUSTWALL, ART-FIT-CREW-M, ART-SRC-CREW-W, ART-FIT-CREW-W, ART-FIT-HANDS, ART-FIT-RUSTWALL, ART-SRC-TANKER, ART-SRC-TANKER-PARTS, ART-FIT-TANKER, SAVE-DAMAGED-FIELDS, HK-RUSTWALL-BASELINE, DESIGN-ARSENAL, DESIGN-CREW, DESIGN-ARENA-MODES, DESIGN-FUEL-FIGHTER-HITS, DESIGN-WARLORDS-4-8, ARS-CORE, AUD-ARSENAL-W1, ARS-02, ARS-03, CREW-02, CREW-03, CREW-04, ARENA-03, ARENA-04, ARENA-05, ART-SRC-SALTFLATS, ARENA-06, ARENA-PIT, ARENA-07, CONVOY-FRAMES, WAR-03a, WAR-03b, WAR-03c, WAR-03d, WAR-03e, WAR-04, FEATURE-PLAYTEST, P3-POLISH, CRASH-02, TITAN-01, EGG-03, GFX-02, GFX-02-P1, GFX-02-P2, GFX-02-P3, EGG-02, EGG-02-P1, EGG-02-P2, EGG-02-P3, EGG-03-GATE, EGG-04, CAM-01, CAR-01, GFX-03, GFX-04, FND-01, FND-02, FND-03, FND-04, FIX-01, FIX-02, FIX-03, FND-05, FND-06, FND-07, FND-08, FND-09, QA-01, QA-02, QA-03, FND-10, BUG-01, POLISH-01, BUG-12, BUG-09, BUG-02, BUG-03, BUG-04, BUG-05, BUG-06, BUG-07, BUG-14, BUG-13, BUG-08, BUG-10, BUG-11, OLD-01, OLD-02, OLD-03, TST-01, TST-02, FND-11, TOOL-01, TST-03, RFX-01, RFX-02, RFX-03, RFX-05, RFX-06, RFX-07, FOOT-00, RFX-04, CMB-01, CMB-02, CMB-04, CMB-07, CMB-08, BUG-15, AUD-10, AUD-11, AUD-12, AUD-12-R1, AUD-GATEKEEPER, AUD-14, AUD-01, AUD-02, VIS-01, ART-A, CMB-03, SAVE-01, CMB-05, CMB-06, VIS-02, UI-01, PRG-01, PRG-02, PRG-04, FOOT-01, FOOT-02, FOOT-03, PERF-01, FOOT-06, FOOT-04, FOOT-05, FOOT-07, PRG-03, ART-C, FOOT-08, UI-02, RAID-01, RAID-02, JANITOR-P2, FIX-STATUS-CARD, ARENA-01, ARENA-01-UI, ARENA-FEEL, ARENA-02, ARENA-02-PAY, FIX-RUSTWALL-CLEAN, JANITOR-RUSTWALL-NOTE, RALLY-CHECKPOINT, INT-0926-MERGE, PREVIEW-LAUNCHER, PREVIEW-OWN-FOLDER, CRASH-RELEASE, COMBAT-AUDIO-SCENARIO, WAR-SAL-ART, WAR-02a-FORMAT, WAR-02a-SAL, WAR-02a-REWARD, SCRAPDOME-PLAYTEST, SCRAPDOME-RELEASE, TITAN-HANDLING, HK-LAUNCHER-PORT, WAR-SAL-TUNE, WAR-PAY, ARENA-STEER, ARENA-WRECK-RATE, ARENA-JUNK-SHOVE, ARENA-SHOVE, WAR-SAL-RELEASE, DESIGN-WAR-02b, DESIGN-WAR-02c, WAR-01, WAR-02-P1, WAR-02a, WAR-HOOKS, WAR-02b, WAR-02c, AUD-17, AUD-18, ARS-01, FIX-STATUS-SCOPE, JANITOR-AUDIO-NOTES, JANITOR-ROOK-NOTE, FIX-AUDIT-SCOPE, JANITOR-HAND-NOTE, JANITOR-UFO-NOTES, ART-VESPER-PURITY-SCOPE, P4-TRACK-SCRIPT, P4-FIELD, P4-REVIEW-TOOL, P4-ART-SRC, P4-KITS, P4-KIT-LOADER, P4-GRIP, P4-DAYNIGHT, P4-AUDIO, QA-LANE-SCOPE, P4-HARBOUR, P4-TREMBLANT, P4-SNOW, P4-PIT, P4-TREMBLANT-SNOW, P4-INTEL-DOSSIER, P4-INTEL-TELEMETRY, P4-QUALIFYING, POLISH-HEIGHT, POLISH-SEEKERS, POLISH-SMOKE, POLISH-FLAME, POLISH-ARENA, TEST-DRIVER-BRAKING, RELEASE-2026-10-10, QA-STALE-COLLISION, QA-NAVIGATION-CONTEXT, QA-AUDIO-CAPTURE, JANITOR-P4-ART-EVIDENCE, FIX-P4-KERB-NORMALS, P4-KIT-LOAD-TIME, JANITOR-OVERNIGHT-ART, DEEP-LOOK, P4-CAREER-PAY, FAC-01, FAC-02, DEEP-WATER, P4-PANORAMA, DEEP-SAVE, DEEP-SURFACE, QA-STATUS-FACTORY, DEEP-ZONE-FORMAT, P4-CAREER-MENU, QA-LANE-NATIVE-RELIEF, P4-CAREER-PODIUM, FIX-DRIVING-FEEL, FIX-RACE-SCREEN, P4-ARDENNES-ROAD, RELEASE-CONTROLS, P4-FINISH-PANORAMA, P4-FINISH-HARBOUR, P4-FINISH-TREMBLANT, FIX-HAIRPIN-CAMERA, ARDENNES-DAMP-FADE, ARDENNES-PIT-GRASS, QA-REVIEW-RUNUP-3848, TYRE-SLIP]
 tasks:
+  - id: LESSONS-V2-FINISH
+    title: "Claude drives the second-version lessons; pictures to Kyle"
+    owner: "claude"
+    lane: "FINISH"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    flag: "driving-lessons"
+    details: "docs/board/cards/LESSONS-V2-FINISH.md"
+
+  - id: QA-ARSENAL-AUDIO-READINESS
+    title: "Locate the native Arsenal audio readiness and evaluation timeouts"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "blocked"
+    priority: "low"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-ARSENAL-AUDIO-READINESS.md"
+
   - id: QA-AUDIO-BASELINE-CONTROL
     title: "Legacy native audio repeat control is unreliable"
     owner: "codex"
@@ -120,100 +142,9 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "S"
-    status: "ready"
+    status: "backlog"
     needs: []
     details: "docs/board/cards/QA-AUDIO-CLOCK.md"
-
-  - id: P4-ARDENNES
-    title: "Ardennes Forest: the Spa-style forest circuit"
-    owner: "codex"
-    lane: "COURSE"
-    size: "L"
-    status: "building"
-    waiting_on: "claude"
-    claimed_by: "codex-ardennes-2026-10-13"
-    branch: "codex/p4-ardennes"
-    needs: [P4-ARDENNES-ROAD]
-    flag: "ardennes-forest"
-    details: "docs/board/cards/P4-ARDENNES.md"
-
-  - id: P4-FINISH-ARDENNES
-    title: "Claude's finishing pass: Ardennes Forest"
-    owner: "claude"
-    lane: "DESIGN"
-    size: "M"
-    status: "ready"
-    needs: [P4-ARDENNES]
-    details: "docs/board/cards/P4-ARDENNES.md"
-
-  - id: P4-VARIANTS
-    title: "Reverse, night and dusk variants"
-    owner: "codex"
-    lane: "RACE"
-    size: "M"
-    status: "ready"
-    needs: [P4-PANORAMA, P4-HARBOUR, P4-TREMBLANT, P4-CAREER]
-    locks: [circuit-registry]
-    details: "docs/board/cards/P4-VARIANTS.md"
-
-  - id: P4-CUPS
-    title: "Cups and the trophy case"
-    owner: "codex"
-    lane: "RACE"
-    size: "M"
-    status: "ready"
-    needs: [P4-CAREER, P4-SUMMIT, P4-VARIANTS, P4-TREMBLANT-SNOW, P4-GP-EXISTING]
-    locks: [save-shape, busy-game-files]
-    flag: "grand-prix"
-    details: "docs/board/cards/P4-CUPS.md"
-
-  - id: P4-INTEL-LEVELS
-    title: "Team Room: earning intel levels and the reference ghost"
-    owner: "codex"
-    lane: "RACE"
-    size: "S"
-    status: "ready"
-    needs: [P4-INTEL-TELEMETRY, P4-CAREER]
-    flag: "grand-prix"
-    details: "docs/board/cards/P4-INTEL-LEVELS.md"
-
-  - id: P4-COACH
-    title: "Coach markers for learning a track"
-    owner: "codex"
-    lane: "VIS"
-    size: "S"
-    status: "ready"
-    needs: [P4-INTEL-LEVELS]
-    locks: [busy-game-files, save-shape]
-    flag: "grand-prix"
-    details: "docs/board/cards/P4-COACH.md"
-
-  - id: P4-FINISH-TEAMROOM
-    title: "Claude's finishing pass: the Team Room"
-    owner: "claude"
-    lane: "DESIGN"
-    size: "M"
-    status: "ready"
-    needs: [P4-INTEL-LEVELS]
-    details: "docs/board/cards/P4-FINISH-TEAMROOM.md"
-
-  - id: RELEASE-SUMMIT
-    title: "Summit Run release (Kyle: live overnight only if all green)"
-    owner: "claude"
-    lane: "OPS"
-    size: "S"
-    status: "ready"
-    needs: [P4-FINISH-SUMMIT]
-    details: "docs/board/cards/RELEASE-SUMMIT.md"
-
-  - id: P4-FINISH-SUMMIT
-    title: "Claude's finishing pass: Summit Run"
-    owner: "claude"
-    lane: "DESIGN"
-    size: "M"
-    status: "blocked"
-    needs: [SUMMIT-GALLERY-COVER, SNOW-VARIATION, YETI-FUR-TINT]
-    details: "docs/board/cards/P4-FINISH-SUMMIT.md"
 
   - id: P4-RELEASE
     title: "Phase 4 releases in batches"
@@ -234,178 +165,26 @@ tasks:
     priority: "low"
     details: "docs/board/cards/P4-AZURE-GP-COMPARISON.md"
 
-  - id: DEEP-ART-FINAL
-    title: "The Deep: finished creature art, after the storyboard (Kyle picks)"
-    owner: "claude"
-    lane: "ART"
-    size: "M"
-    status: "backlog"
-    needs: [DEEP-ART-SRC]
-    flag: "the-deep"
-    details: "docs/board/cards/DEEP-ART-SRC.md"
-
-  - id: DEEP-AUDIO
-    title: "The Deep sounds"
-    owner: "codex"
-    lane: "AUDIO"
-    size: "M"
-    status: "blocked"
-    needs: [DEEP-TRAIL]
-    locks: []
-    flag: "the-deep"
-    details: "docs/board/cards/DEEP-AUDIO.md"
-
-  - id: DEEP-TRAIL
-    title: "The Kelp Coast loop"
-    owner: "claude"
-    lane: "DEEP"
-    size: "L"
-    status: "backlog"
-    needs: [DEEP-ZONE]
-    flag: "the-deep"
-    details: "docs/board/cards/DEEP-TRAIL.md"
-
-  - id: DEEP-LIFE
-    title: "Kelp Coast sea life"
-    owner: "codex"
-    lane: "VIS"
-    size: "L"
-    status: "backlog"
-    needs: [DEEP-ART-SRC, DEEP-TRAIL]
-    flag: "the-deep"
-    details: "docs/board/cards/DEEP-LIFE.md"
-
-  - id: DEEP-LOG
-    title: "Sea-life log and pearls"
-    owner: "codex"
-    lane: "UI"
-    size: "M"
-    status: "backlog"
-    needs: [DEEP-SAVE, DEEP-TRAIL]
-    flag: "the-deep"
-    details: "docs/board/cards/DEEP-LOG.md"
-
   - id: FINISH-DEEP
-    title: "Claude's finishing pass: the Kelp Coast"
+    title: "Claude's finishing pass: the Kelp Coast story"
     owner: "claude"
     lane: "DEEP"
     size: "M"
     status: "backlog"
-    needs: [DEEP-ZONE, DEEP-SURFACE, DEEP-WATER, DEEP-TRAIL, DEEP-LIFE, DEEP-LOG, DEEP-AUDIO]
+    needs: [DEEP-LIFE, DEEP-LOG, DEEP-AUDIO, DEEP-SIRENA-VIEW]
     flag: "the-deep"
     details: "docs/board/cards/FINISH-DEEP.md"
 
-  - id: QA-AUDIO-CRASH-RELIABILITY
-    title: "Investigate intermittent native crash-audio capture failure"
-    owner: "codex"
-    lane: "TOOL"
+  - id: SKI-FINISH
+    title: "Claude's finishing pass: heli-skiing"
+    owner: "claude"
+    lane: "DESIGN"
     size: "S"
     status: "backlog"
-    needs: []
-    priority: "low"
-    details: "docs/board/cards/QA-AUDIO-CRASH-RELIABILITY.md"
-
-  - id: FIX-LIVE-EDGES
-    title: "Live course edges: floating walls, road gaps, early collision, snow run-wide"
-    owner: "codex"
-    lane: "SIM"
-    size: "M"
-    status: "blocked"
-    needs: []
+    needs: [SKI-VIEW, LAB-SNOW]
     locks: []
-    priority: "high"
-    details: "docs/board/cards/FIX-LIVE-EDGES.md"
-
-  - id: PERF-HIGH-NIGHT
-    title: "High quality misses frames at night on Harbour (60 Hz screen)"
-    owner: "codex"
-    lane: "RENDER"
-    size: "S"
-    status: "building"
-    waiting_on: "claude"
-    claimed_by: "codex-perf-high-night-2026-10-14"
-    branch: "codex/perf-high-night"
-    needs: []
-    details: "docs/board/cards/PERF-HIGH-NIGHT.md"
-
-  - id: QA-STOCK-SNOW
-    title: "Stock test driver ignores snow grip (Tremblant Snow crawls at Beaver Hairpin)"
-    owner: "codex"
-    lane: "TOOLS"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: [busy-game-files]
-    details: "docs/board/cards/QA-STOCK-SNOW.md"
-
-  - id: YETI-FUR-TINT
-    title: "Yeti fur reads dark grey-green against snow at night"
-    owner: "codex"
-    lane: "ART"
-    size: "S"
-    locks: [busy-game-files]
-    status: "ready"
-    needs: []
-    details: "docs/board/cards/YETI-FUR-TINT.md"
-
-  - id: TYRE-SLIP
-    title: "Sliding costs grip, like real tyres (grip peaks at a small slide; a long screech loses time)"
-    owner: "codex"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: [busy-game-files, save-shape]
-    flag: "tyre-slip"
-    details: "docs/board/cards/TYRE-SLIP.md"
-
-  - id: EARN-SCREEN
-    title: "Medal sheet on the car screen, results lines, earned cars hidden while off"
-    owner: "claude"
-    lane: "UI"
-    size: "M"
-    status: "building"
-    claimed_by: "claude-earn-screen-2026-10-14"
-    branch: "claude/earn-screen"
-    needs: [EARN-MEDALS]
-    locks: [busy-game-files]
-    flag: "earned-cars"
-    details: "docs/board/cards/EARN-SCREEN.md"
-
-  - id: EARN-CAR-1
-    title: "Earned car 1: Ferrari Enzo (6 medals)"
-    owner: "claude"
-    lane: "ART"
-    size: "M"
-    status: "building"
-    claimed_by: "claude-design-2026-10-14"
-    branch: "claude/enzo-model"
-    needs: [EARN-SCREEN]
-    locks: [sound-bank]
-    flag: "earned-cars"
-    details: "docs/board/cards/EARN-CAR-1.md"
-
-  - id: EARN-CAR-2
-    title: "Earned car 2: McLaren F1 (15 medals)"
-    owner: "codex"
-    lane: "ART"
-    size: "M"
-    status: "ready"
-    needs: [EARN-SCREEN]
-    locks: [sound-bank]
-    flag: "earned-cars"
-    details: "docs/board/cards/EARN-CAR-2.md"
-
-  - id: EARN-CAR-3
-    title: "Earned car 3: Bugatti Bolide (24 medals, 6 of them gold)"
-    owner: "codex"
-    lane: "ART"
-    size: "M"
-    status: "ready"
-    needs: [EARN-SCREEN]
-    locks: [sound-bank]
-    flag: "earned-cars"
-    details: "docs/board/cards/EARN-CAR-3.md"
+    flag: "heli-skiing"
+    details: "docs/board/cards/SKI-FINISH.md"
 
   - id: EARN-FINISH
     title: "Claude's finishing pass on earned cars and medal sheets"
@@ -417,108 +196,13 @@ tasks:
     flag: "earned-cars"
     details: "docs/board/cards/EARN-FINISH.md"
 
-
-  - id: HELI-FINISH
-    title: "Claude's finishing pass on the first slice"
-    owner: "claude"
-    lane: "FINISH"
-    size: "S"
-    status: "building"
-    needs: [HELI-LESSONS, HELI-DISPATCH, HELI-ART-SRC]
-    locks: [release]
-    flag: "helicopter"
-    claimed_by: claude-heli-2026-10-14
-    branch: claude/release-heli
-    details: "docs/board/cards/HELI-FINISH.md"
-
-  - id: FIRE-HOOKS
-    title: "Wire H2 into the game: session, board, play days, race start check"
-    owner: "claude"
-    lane: "SIM"
-    size: "S"
-    status: "review"
-    claimed_by: claude-fire-2026-10-14
-    branch: claude/fire-hooks
-    needs: [FIRE-MISSIONS, FIRE-SPREAD, FIRE-BUCKET, FIRE-RADIO, FIRE-CLOSE]
-    locks: [busy-game-files]
-    flag: "forestFire"
-    details: "docs/board/cards/FIRE-HOOKS.md"
-
-  - id: FIRE-VIEW
-    title: "Draw H2: fire, smoke, bucket, water, aim ring, burnt course"
-    owner: "claude"
-    lane: "UI"
-    size: "M"
-    status: "review"
-    claimed_by: claude-fire-2026-10-14
-    branch: claude/fire-view
-    needs: [FIRE-HOOKS, HELI-FIRE-BUCKET, FIRE-ART-FX, FIRE-BURNT-LOOK]
-    locks: []
-    flag: "forestFire"
-    details: "docs/board/cards/FIRE-VIEW.md"
-
-  - id: FIRE-FINISH
-    title: "Claude's finishing pass on H2 Fire"
-    owner: "claude"
-    lane: "FINISH"
-    size: "S"
-    status: "backlog"
-    needs: [FIRE-VIEW]
-    locks: []
-    flag: "forestFire"
-    details: "docs/board/cards/FIRE-FINISH.md"
-
-  - id: RESCUE-SAVE
-    title: "Mission fields for rescues, counts and the rescue badge"
-    owner: "claude"
-    lane: "SAVE"
-    size: "S"
-    status: "backlog"
-    needs: [FIRE-SAVE, FIRE-MISSIONS]
-    locks: [save-shape]
-    flag: "rescue"
-    details: "docs/board/cards/RESCUE-SAVE.md"
-
-  - id: RESCUE-ENGINE
-    title: "Rescue kinds, seasons and clocks in the mission engine"
-    owner: "claude"
-    lane: "SIM"
-    size: "M"
-    status: "backlog"
-    needs: [FIRE-MISSIONS, RESCUE-SAVE]
-    locks: []
-    flag: "rescue"
-    details: "docs/board/cards/RESCUE-ENGINE.md"
-
-  - id: RESCUE-HOOKS
-    title: "Wire the rescues into the session and the board"
-    owner: "claude"
-    lane: "SIM"
-    size: "S"
-    status: "backlog"
-    needs: [FIRE-HOOKS, RESCUE-ENGINE, RESCUE-LINE, RESCUE-SITES, RESCUE-RADIO]
-    locks: []
-    flag: "rescue"
-    details: "docs/board/cards/RESCUE-HOOKS.md"
-
-  - id: RESCUE-VIEW
-    title: "Draw the rescues"
-    owner: "claude"
-    lane: "UI"
-    size: "M"
-    status: "backlog"
-    needs: [RESCUE-HOOKS, FIRE-VIEW, RESCUE-PEOPLE, RESCUE-PROPS]
-    locks: []
-    flag: "rescue"
-    details: "docs/board/cards/RESCUE-VIEW.md"
-
   - id: RESCUE-FINISH
     title: "Claude's finishing pass on H4 Rescue"
     owner: "claude"
     lane: "FINISH"
     size: "S"
     status: "backlog"
-    needs: [RESCUE-VIEW, FIRE-FINISH]
+    needs: [SUMMIT-HELI-RESCUES]
     locks: []
     flag: "rescue"
     details: "docs/board/cards/RESCUE-FINISH.md"
@@ -534,28 +218,6 @@ tasks:
     flag: "wildlife"
     details: "docs/board/cards/WILD-VIEW.md"
 
-  - id: WILD-SURVEY
-    title: "The wildlife count job"
-    owner: "claude"
-    lane: "SIM"
-    size: "M"
-    status: "backlog"
-    needs: [WILD-PLACE, RESCUE-ENGINE]
-    locks: []
-    flag: "wildlife"
-    details: "docs/board/cards/WILD-SURVEY.md"
-
-  - id: WILD-RADIO
-    title: "Wildlife and skin radio lines and cues"
-    owner: "claude"
-    lane: "AUD"
-    size: "S"
-    status: "backlog"
-    needs: [RESCUE-RADIO]
-    locks: []
-    flag: "wildlife"
-    details: "docs/board/cards/WILD-RADIO.md"
-
   - id: WILD-FINISH
     title: "Claude's finishing pass on animals in races"
     owner: "claude"
@@ -567,50 +229,6 @@ tasks:
     flag: "wildlife"
     details: "docs/board/cards/WILD-FINISH.md"
 
-  - id: SKIN-SAVE
-    title: "Skins, dirt and survey save fields"
-    owner: "claude"
-    lane: "SAVE"
-    size: "S"
-    status: "backlog"
-    needs: [RESCUE-SAVE]
-    locks: [save-shape]
-    flag: "heliSkins"
-    details: "docs/board/cards/SKIN-SAVE.md"
-
-  - id: SKIN-RULES
-    title: "Skin rules, gear table, dirt and the wash"
-    owner: "claude"
-    lane: "SIM"
-    size: "M"
-    status: "backlog"
-    needs: [SKIN-SAVE]
-    locks: []
-    flag: "heliSkins"
-    details: "docs/board/cards/SKIN-RULES.md"
-
-  - id: SKIN-GEAR
-    title: "Make each piece of skin gear work"
-    owner: "claude"
-    lane: "SIM"
-    size: "M"
-    status: "backlog"
-    needs: [SKIN-RULES, RESCUE-HOOKS, WILD-SURVEY]
-    locks: []
-    flag: "heliSkins"
-    details: "docs/board/cards/SKIN-GEAR.md"
-
-  - id: SKIN-HOOKS
-    title: "Paint shop, wash and count report wiring"
-    owner: "claude"
-    lane: "SIM"
-    size: "S"
-    status: "backlog"
-    needs: [SKIN-GEAR, WILD-RADIO]
-    locks: []
-    flag: "heliSkins"
-    details: "docs/board/cards/SKIN-HOOKS.md"
-
   - id: SKIN-VIEW
     title: "Draw skins, gear and grime"
     owner: "claude"
@@ -619,7 +237,7 @@ tasks:
     status: "backlog"
     needs: [SKIN-HOOKS, RESCUE-VIEW, WILD-VIEW, SKIN-ART-PAINT, SKIN-ART-GEAR]
     locks: []
-    flag: "heliSkins"
+    flag: "heli-skins"
     details: "docs/board/cards/SKIN-VIEW.md"
 
   - id: SKIN-FINISH
@@ -630,21 +248,8 @@ tasks:
     status: "backlog"
     needs: [SKIN-VIEW, RESCUE-FINISH]
     locks: []
-    flag: "heliSkins"
+    flag: "heli-skins"
     details: "docs/board/cards/SKIN-FINISH.md"
-
-  - id: SKIN-ART-GEAR
-    title: "Skin gear models"
-    owner: "claude"
-    lane: "ART"
-    size: "M"
-    status: "building"
-    claimed_by: "claude-design-2026-10-14"
-    branch: "claude/skin-gear"
-    needs: []
-    locks: []
-    flag: "heliSkins"
-    details: "docs/board/cards/SKIN-ART-GEAR.md"
 
   - id: WILD-ART-SRC
     title: "Source local animals for every course (North woods first)"
@@ -659,80 +264,82 @@ tasks:
     flag: "wildlife"
     details: "docs/board/cards/WILD-ART-SRC.md"
 
-  - id: DRIVE-LESSON-CORE
-    title: "Lessons: move the lesson contract, radio voice and instructor board out of src/heli/ for driving lessons"
-    owner: "claude"
-    lane: "DESIGN"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "driving-lessons"
-    details: "docs/board/cards/DRIVE-LESSON-CORE.md"
-
-  - id: DRIVE-LESSON-SAVE
-    title: "Driving lessons: the save field and the lesson 1 reward"
+  - id: QA-SUMMIT-WARMUP-EXCEPTION
+    title: "Summit candidate records two compile warmup exceptions"
     owner: "codex"
-    lane: "SAVE"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: [save-shape]
-    flag: "driving-lessons"
-    details: "docs/board/cards/DRIVE-LESSON-SAVE.md"
-
-  - id: DRIVE-LESSON-1
-    title: "Driving lesson 1, the sharp corner: lesson rules, cones and the instructor's run"
-    owner: "codex"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: [TYRE-SLIP, DRIVE-LESSON-CORE]
-    locks: []
-    flag: "driving-lessons"
-    details: "docs/board/cards/DRIVE-LESSON-1.md"
-
-  - id: DRIVE-LESSON-LINES
-    title: "Driving lessons: the instructor's radio lines and the cone sound"
-    owner: "claude"
-    lane: "AUDIO"
-    size: "S"
-    status: "ready"
-    needs: [DRIVE-LESSON-CORE]
-    locks: [sound-bank]
-    flag: "driving-lessons"
-    details: "docs/board/cards/DRIVE-LESSON-LINES.md"
-
-  - id: DRIVE-LESSON-HOOKS
-    title: "Driving lessons in the game: Instructor button, lesson run, cones, ghost, panel"
-    owner: "codex"
-    lane: "UI"
-    size: "M"
-    status: "ready"
-    needs: [DRIVE-LESSON-1, DRIVE-LESSON-SAVE, DRIVE-LESSON-LINES]
-    locks: [busy-game-files]
-    flag: "driving-lessons"
-    details: "docs/board/cards/DRIVE-LESSON-HOOKS.md"
-
-  - id: DRIVE-LESSON-FINISH
-    title: "Claude's finishing pass: driving lesson 1"
-    owner: "claude"
-    lane: "DESIGN"
-    size: "S"
-    status: "ready"
-    needs: [DRIVE-LESSON-HOOKS]
-    locks: []
-    flag: "driving-lessons"
-    details: "docs/board/cards/DRIVE-LESSON-FINISH.md"
-
-  - id: DRIVE-LESSONS-NEXT
-    title: "Packet for driving lessons 2 to 4 and the helipad entry"
-    owner: "claude"
-    lane: "DESIGN"
+    lane: "RENDER"
     size: "S"
     status: "backlog"
-    needs: [DRIVE-LESSON-FINISH]
-    locks: []
-    flag: "driving-lessons"
-    details: "docs/board/cards/DRIVE-LESSONS-NEXT.md"
+    needs: []
+    locks: [busy-game-files]
+    details: "docs/board/cards/QA-SUMMIT-WARMUP-EXCEPTION.md"
 
+  - id: QA-HARBOUR-PERFORMANCE-PACING
+    title: "Harbour Performance fails its one authorized quiet reread"
+    owner: "codex"
+    lane: "RENDER"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-HARBOUR-PERFORMANCE-PACING.md"
+
+  - id: PERF-HARBOUR-AO-HALF
+    title: "Daylight follow-up for the retained Harbour AO half-resolution candidate"
+    owner: "codex"
+    lane: "RENDER"
+    size: "S"
+    status: "backlog"
+    branch: "codex/perf-high-night"
+    needs: []
+    locks: []
+    details: "docs/board/cards/PERF-HARBOUR-AO-HALF.md"
+
+  - id: QA-FACTORY-RECYCLE-JUNCTION
+    title: "Factory cleanup prompts on a Windows directory junction"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    needs: []
+    details: "docs/board/cards/QA-FACTORY-RECYCLE-JUNCTION.md"
+
+  - id: QA-REVIEW-RUNUP-START
+    title: "Review run-up misses a requested view near the start line"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-REVIEW-RUNUP-START.md"
+
+  - id: QA-P4-AUDIO-FRAME-GAP
+    title: "p4-audio capture sometimes repeats a slice of sound"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-P4-AUDIO-FRAME-GAP.md"
+
+  - id: CAREER-RESTORE-REMOVE
+    title: "Remove the one-time career restore once Kyle confirms"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/CAREER-RESTORE-REMOVE.md"
+
+  - id: QA-RESCUE-FINISH-FLAKY
+    title: "rescue-finish browser scenario fails without game changes"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "backlog"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-RESCUE-FINISH-FLAKY.md"

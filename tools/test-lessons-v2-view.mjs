@@ -1,0 +1,70 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {driveLessonTarget,driveLessonMapMarkup,driveLessonBriefingMarkup,driveLessonPanelMarkup,driveLessonResultMarkup,driveLessonDisplayAdvice} from '../src/lessons/drive-lesson-ui.js';
+const corner={name:'Test bend',kind:'brake',approachS:0,brakeS:100,turnInS:120,turnOutS:160,exitS:180,targetMph:56};
+test('target counts down and colours only the corner speed at the specified thresholds',()=>{
+  const lesson={instructor:{corners:[corner]}};
+  assert.equal(driveLessonTarget(lesson,0,120).cue,'Brake in 100 m');
+  assert.equal(driveLessonTarget(lesson,100,120).cue,'Corner 90 km/h');
+  assert.equal(driveLessonTarget(lesson,119,56).tone,'');
+  for(const speed of [53,56,59])assert.equal(driveLessonTarget(lesson,140,speed).tone,'green');
+  assert.equal(driveLessonTarget(lesson,140,61).tone,'');
+  assert.equal(driveLessonTarget(lesson,140,61.01).tone,'red');
+  assert.equal(driveLessonTarget(lesson,161,80),null);
+});
+test('all screen speeds use speedometer rounding and advice names only missed corners',()=>{
+  const c={...corner,targetMph:56.4,passed:true,minMph:56.7,checks:{brake:true,speed:true,quiet:true},missed:0,screechSeconds:0,brakeDeltaM:0};
+  const lesson={id:'corner',stage:'your-turn',phase:'driving',corner:{startS:0},instructor:{timeSec:10,corners:[c],plan:[{s:0,x:0,z:0,targetMph:100,action:'accelerate'},{s:100,x:0,z:100,targetMph:56.4,action:'brake'}]},lastAttempt:{finished:true,elapsedSeconds:10,corners:[c]}};
+  const props={playerId:'test',runPlayerId:'test',lesson,distanceS:140,speedMph:209.5};
+  const before=JSON.stringify(lesson);
+  const panel=driveLessonPanelMarkup(props),briefing=driveLessonBriefingMarkup(props);
+  assert.match(panel,/Your speed 337 km\/h/);assert.match(panel,/Target 91 km\/h/);
+  assert.doesNotMatch(panel+briefing,/\bmph\b/);
+  assert.match(briefing,/speed within 8 km\/h/);
+  const clean=driveLessonDisplayAdvice([c]);
+  assert.equal(clean,'Clean on every corner. Same again, a little quicker.');
+  assert.doesNotMatch(clean,/Test bend/);
+  const missed={...c,passed:false,checks:{...c.checks,speed:false},missed:1};
+  assert.match(driveLessonDisplayAdvice([missed]),/^Test bend: aim for 91 km\/h/);
+  const result=driveLessonResultMarkup({...props,lesson:{...lesson,phase:'result'}});
+  assert.match(result,/91 \/ 91 km\/h/);assert.match(result,/Clean on every corner/);
+  assert.doesNotMatch(result,/\bmph\b/);
+  assert.equal(JSON.stringify(lesson),before,'formatting never writes observations');
+});
+test('Watch replays the late clip then the clean inputs; views and briefing leave race state unchanged',async()=>{
+  const previous=new Map(['__DUEL_QA__','location'].map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]));
+  Object.defineProperty(globalThis,'__DUEL_QA__',{configurable:true,value:true});
+  Object.defineProperty(globalThis,'location',{configurable:true,value:{search:'?flags=driving-lessons,tyre-slip,engine-curve'}});
+  try{
+    const {withReferenceApp}=await import('./build-reference-laps.mjs');
+    await withReferenceApp(async app=>{
+      app.addPlayer('View test');app.profile={...app.profile,credits:50000};app._saveProfile();
+      app.setRaceSettings({eventId:'panorama-ridge',car:'falcone_f42',difficulty:'casual'});
+      app.openDrivingLessons();
+      assert.equal(await app.startLesson({courseId:'panorama-ridge',car:'falcone_f42',difficulty:'casual'}),true);
+      const run=app.duel.drivingLesson,s=app.duel.state;
+      assert.equal(run.watchClip,'late');assert.equal(app.driveLessonBriefing,true);
+      const frozen=JSON.stringify(s);app._simulate(1);assert.equal(JSON.stringify(s),frozen,'briefing holds at gate');
+      const props=app.driveLessonProps();
+      assert.match(driveLessonBriefingMarkup(props),/<strong>1 Watch me<\/strong>/);
+      assert.doesNotMatch(driveLessonPanelMarkup({...props,distanceS:run.plan.corner.startS,watchClip:'clean'}),/Braking now/);
+      assert.match(driveLessonPanelMarkup({...props,distanceS:run.plan.instructor.corners[0].brakeS,watchClip:'clean'}),/Braking now/);
+      assert.match(driveLessonMapMarkup(run.plan.instructor),/polyline/);
+      assert.match(driveLessonBriefingMarkup(props),/Clean run, and hit every brake zone or beat my time/);
+      assert.equal(JSON.stringify(s),frozen,'all presentation is read only');
+      app.nextLessonAttempt();assert.equal(app.driveLessonBriefing,false);
+      for(let i=0;i<run.plan.instructor.lateClip.inputs.length;i++)app.duel.step(1/120);
+      assert.equal(run.watchClip,'clean');assert.equal(run.lesson.stage,'watch');assert.equal(run.lesson.phase,'driving');
+      assert.equal(s.s,run.plan.corner.startS);assert.equal(run.lesson.attempt.elapsedSeconds,0);
+      for(let i=0;i<run.plan.instructor.inputs.length+2&&run.lesson.phase==='driving';i++)app.duel.step(1/120);
+      assert.equal(run.lesson.phase,'result');assert.equal(run.lesson.lastAttempt.finished,true);
+      assert.equal(run.lesson.lastAttempt.clean,true);assert.equal(run.lesson.lastAttempt.passed,false);
+      assert.ok(Math.abs(run.lesson.lastAttempt.elapsedSeconds-run.plan.instructor.timeSec)<.009);
+      const markup=driveLessonResultMarkup(app.driveLessonProps());assert.match(markup,/<table>/);assert.match(markup,/<strong>2 Follow me<\/strong>/);
+      app.nextLessonAttempt();assert.equal(run.lesson.stage,'follow');
+      assert.ok(app.getDriveLessonGhost());app.leaveLesson();
+      app.openDrivingLessons();await app.startLesson({courseId:'panorama-ridge',car:'falcone_f42',difficulty:'casual'});
+      app.nextLessonAttempt();assert.equal(app.nextLessonAttempt(),false,'Enter during Watch me does nothing, there is no Skip');assert.equal(app.duel.drivingLesson.lesson.stage,'watch');
+    });
+  }finally{for(const [k,v]of previous){if(v)Object.defineProperty(globalThis,k,v);else delete globalThis[k];}}
+});

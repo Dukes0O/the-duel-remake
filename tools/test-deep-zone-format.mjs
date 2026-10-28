@@ -203,3 +203,39 @@ test('validated data drives the unchanged floor loop, ground and left-positive c
   for (const method of ['kelpPlacements', 'seagrassPlacements', 'rockPlacements', 'pebblePlacements'])
     assert.deepEqual(floor[method](1989, 8), raw[method](1989, 8));
 });
+
+// THE_DEEP 10.1 story additions: the optional `finds` field is checked like pearls.
+const finds = () => [
+  { id: 'sirena-badge', trailIndex: 1, offset: 2 },
+  { id: 'sirena-car', trailIndex: 3, offset: -1.5, below: 3 },
+];
+test('a zone with finds keeps them frozen, defaults below to 0, and one without loads exactly as before', () => {
+  const source = authoredZone();
+  assert.equal(Object.hasOwn(defineZone(source), 'finds'), false, 'no finds field is added to an older zone');
+  source.finds = finds();
+  const before = structuredClone(source), zone = defineZone(source);
+  assert.deepEqual(source, before);
+  assert.deepEqual(Object.keys(zone), ['id', 'circuit', 'switch', 'ramp', 'trail', 'places', 'pearls', 'spots', 'finds']);
+  assert.deepEqual(zone.finds, [{ id: 'sirena-badge', trailIndex: 1, offset: 2, below: 0 },
+    { id: 'sirena-car', trailIndex: 3, offset: -1.5, below: 3 }]);
+  frozen(zone.finds);
+  source.finds = [];
+  assert.deepEqual(defineZone(source).finds, [], 'an empty list is still a list');
+});
+
+test('finds are checked like pearls: unique ids, trail indices in bounds, finite offsets, below from 0 to 10', () => {
+  rejected(data => { data.finds = finds(); data.finds[1].id = 'sirena-badge'; }, 'finds[1].id');
+  rejected(data => { data.finds = finds(); data.finds[0].id = 'Not A Slug'; }, 'finds[0].id');
+  rejected(data => { data.finds = finds(); data.finds[0].trailIndex = 4; }, 'finds[0].trailIndex');
+  rejected(data => { data.finds = finds(); data.finds[0].trailIndex = 1.5; }, 'finds[0].trailIndex');
+  rejected(data => { data.finds = finds(); data.finds[1].offset = Infinity; }, 'finds[1].offset');
+  rejected(data => { data.finds = finds(); delete data.finds[1].offset; }, 'finds[1].offset');
+  rejected(data => { data.finds = finds(); data.finds[1].below = -.1; }, 'finds[1].below');
+  rejected(data => { data.finds = finds(); data.finds[1].below = 10.1; }, 'finds[1].below');
+  rejected(data => { data.finds = finds(); data.finds[1].below = NaN; }, 'finds[1].below');
+  rejected(data => { data.finds = finds(); data.finds[0].depth = 1; }, 'finds[0].depth');
+  rejected(data => { data.finds = 'sirena'; }, 'finds');
+  const edge = authoredZone();
+  edge.finds = [{ id: 'bottom', trailIndex: 0, offset: 0, below: 0 }, { id: 'top', trailIndex: 3, offset: 0, below: 10 }];
+  assert.equal(defineZone(edge).finds.length, 2, 'below 0 and 10 are both allowed');
+});

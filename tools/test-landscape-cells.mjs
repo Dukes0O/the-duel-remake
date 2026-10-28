@@ -1,3 +1,5 @@
+import {ALL_CIRCUITS} from '../src/circuits/index.js';
+import * as pitQueries from '../src/pit-lane.js';
 import {animateScene} from '../src/scene-systems.js';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -16,18 +18,19 @@ const kinds=['foliage','grit','boulders','posts','reflectors','outcrops'];
 // Source-order geometry, transform and colour snapshots, refreshed for the
 // deliberately revised version-4 natural routes. Legal scenery placement can
 // change rock counts with a new curve; batching must still retain every source
-// instance and all of its buffer values exactly.
+// instance and all of its buffer values exactly. Hashes refreshed for FIX-GRASS-GROUND:
+// grass, tufts and grit now stand on the drawn ground and off every road, so heights and a few positions moved.
 const baseline={
-  'pacific-canyon/desert':[[1820,780,94,138,138],'c11746854ec721d7cce6b8003c5a14430bd06ffcb50c71cb1111ff4d8ffb00bd'],
-  'pacific-canyon/coast':[[6720,720,81,128,128],'7dca3188eb53604601614972fe94280ce97f2b14f73c3633b8efb5f8cf69975e'],
-  'high-country/desert':[[910,390,49,84,84],'b662c79323bd9d543f6d8b99d63145ccb13c17df96edb101c32b1827003d6767'],
-  'high-country/alpine':[[6720,720,80,144,144],'7be5512e4c9f0e4fbcc2c5b6c8d7364e50d8e8479030a637df3a86fa3c89306a'],
-  'high-country/coast':[[3640,390,37,84,84],'6deee0b90cd4481348c4b252b31a1a330b57df6dab7e6a6f850d4b8d793e9c2b'],
+  'pacific-canyon/desert':[[1820,780,94,138,138],'770c437039a939e21343325e7faecc2c495dda38f52a874a64dbcb4fc16cffa2'],
+  'pacific-canyon/coast':[[6720,720,81,128,128],'c29595e0249bee30e8c1b9bc4f2b2de2861e7935bf41afe214c192ea7140ac1c'],
+  'high-country/desert':[[910,390,49,84,84],'e0cde697d56ed7372add72a2185fd1fbd9f14aacc45cc81a840413cba18d5d0f'],
+  'high-country/alpine':[[6720,720,80,144,144],'abc10f7772a8dd895fa94bc807fe20c2a9730d636e20d182f91fe11fc3fbd239'],
+  'high-country/coast':[[3640,390,37,84,84],'5af288278a1980f937c45970908975d8f4f883356ee9a506d4bd90898a457c24'],
   'harbor-highlands/city':[[408,510,48,100,100],'f03a4c3f26e9ebcae8b5940ab340be2eb6c7f7d37a3e1cceb13f099528df00a4'],
-  'harbor-highlands/alpine':[[5040,540,66,96,96],'269e645c2fd9b13202dc18acc5a401c3d19b0d24b1f96d6a7eccebf2dd28e15d'],
-  'harbor-highlands/coast':[[4200,450,61,88,88],'388aa5e5a8f5f70bb8e7d2a5c1c7099013e153b7968bfc4f9ff7d251796eaed0'],
-  'ridge-rally/desert':[[1470,630,68,98,98],'756a77f9131796a01054ed60c12aa2c7e9d3dff1d8dffec00b4e874e61ef3ef4'],
-  'ridge-rally/alpine':[[8120,870,103,126,126],'fb82fa44aa60522a86eaa9b7e5e02615e56e75c8b0390d6baefbfff92e945024'],
+  'harbor-highlands/alpine':[[5040,540,66,96,96],'ea4100675c8adf4a2ef3f99c70857397b46edc171aa06432c88fe284dd5df379'],
+  'harbor-highlands/coast':[[4200,450,61,88,88],'0b32cfc7c42861811b3ac39300488e6810f1ab7cb54c7f1ff85c44c62e006e4f'],
+  'ridge-rally/desert':[[1470,630,68,98,98],'2a9fcf5974d36190461dbd7369a5c6f5feb658e506999c6fb2726aa40d8712db'],
+  'ridge-rally/alpine':[[8120,870,103,126,126],'2f502f58aeda0536e59da03bc5e98984a84d42c5b26994d6e8acd4d9a8fe00c3'],
 };
 
 function auditAndReconstruct(meshes){
@@ -124,6 +127,36 @@ try{
       report.push({phase:fraction,color:`${a.triangles}→${b.triangles}`,shadow:`${as.triangles}→${bs.triangles}`,draws:`${a.draws}→${b.draws}`});
     }
     console.log(JSON.stringify({event:def.id,originalBatches:old.length,cellBatches:scene.children.length,samples:report}));
+  }
+
+  // Use actual course queries and original source indices, not a reseeded or relocated control.
+  for(const id of ['ardennes-forest','panorama-ridge','tremblant-snow','summit-run']){
+    const course=new Course(ALL_CIRCUITS.find(row=>row.id===id),1989);
+    const control=Object.create(course);control.pitLane=null;
+    const original=new THREE.Group(),filtered=new THREE.Group();
+    addLandscapeDetail(original,control,true);addLandscapeDetail(filtered,course,true);
+    const snapshot=group=>{
+      const values=new Map();for(const mesh of group.children){const data=mesh.userData.landscapeCell;if(!data)continue;
+        for(let i=0;i<mesh.count;i++)values.set(data.kind+'/'+data.indices[i],{
+          kind:data.kind,matrix:Array.from(mesh.instanceMatrix.array.subarray(i*16,i*16+16)),
+          color:mesh.instanceColor?Array.from(mesh.instanceColor.array.subarray(i*3,i*3+3)):null});}
+      return values;
+    };
+    const before=snapshot(original),after=snapshot(filtered);let expectedRemoved=0;
+    assert.equal(typeof pitQueries.pitRoadAt,'function');
+    for(const [key,row] of before){const n=course.nearest(row.matrix[12],row.matrix[14]);
+      const inPit=row.kind==='foliage'&&!!pitQueries.pitRoadAt(course,n.s,n.lateral);
+      if(inPit){expectedRemoved++;assert.ok(!after.has(key),'no original plant root remains on pit pavement: '+id+'/'+key);}
+      else assert.deepEqual(after.get(key),row,'every non-pit transform and color retains its original source index');
+    }
+    assert.equal(after.size,before.size-expectedRemoved);
+    // FIX-GRASS-GROUND: the five roots that stood on the main-road apron are now moved off the road by the
+    // road-avoidance rule before this pit filter looks, so none is left to remove. The filter still holds:
+    // no plant root of the real scene stands on pit pavement.
+    if(id==='ardennes-forest')assert.equal(expectedRemoved,0,'road avoidance already moved the five apron roots off the pit pavement');
+    for(const [key,row] of after){const n=course.nearest(row.matrix[12],row.matrix[14]);
+      assert.ok(!(row.kind==='foliage'&&pitQueries.pitRoadAt(course,n.s,n.lateral)),'no plant root of the real scene stands on pit pavement: '+id+'/'+key);}
+    console.log(JSON.stringify({pitPlants:id,removed:expectedRemoved,retained:after.size}));
   }
 }finally{THREE.TextureLoader.prototype.load=originalLoad;}
 check(newTotal<oldTotal*.7,'Camera, AO and shadow submissions fall materially without reducing density');check(newShadows<oldShadows*.4,'Distant rocks are removed from local shadow submissions');

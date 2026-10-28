@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
@@ -22,10 +23,14 @@ function glbJson(bytes) {
   return JSON.parse(bytes.subarray(20, 20 + length).toString('utf8'));
 }
 
-test('all nine cars have distinct local fitted kits with UVs and stable tier parts', async () => {
+// The car roster count is pinned once, in test-vehicle-assets; every car is checked here.
+const kitPath = car => join(root, 'public/assets/models/wasteland/kits', `${car}.glb`);
+const kitCars = () => Object.keys(CARS);
+test('every car has a distinct local fitted kit with UVs and stable tier parts', async () => {
   const hashes = new Set();
-  const cars = Object.keys(CARS);
-  assert.equal(cars.length, 9);
+  const cars = kitCars();
+  assert.ok(cars.length >= 13, 'no car is skipped');
+  for (const car of cars) assert.ok(existsSync(kitPath(car)), `${car}: has a built kit`);
   for (const car of cars) {
     const bytes = await readFile(join(root, 'public/assets/models/wasteland/kits', `${car}.glb`));
     hashes.add(createHash('sha256').update(bytes).digest('hex'));
@@ -62,7 +67,7 @@ test('all nine cars have distinct local fitted kits with UVs and stable tier par
 });
 
 test('painted armor shells and breakable plates retain usable UV area after batching', async () => {
-  for (const car of Object.keys(CARS)) {
+  for (const car of kitCars()) {
     const bytes=await readFile(join(root,'public/assets/models/wasteland/kits',`${car}.glb`));
     const gltf=glbJson(bytes);
     const bin=bytes.subarray(28+bytes.readUInt32LE(12));

@@ -585,3 +585,271 @@ table from it before building.
 ## Factory lock correction before build
 
 The accepted independent-review amendment4 above changes drift result and leaderboard readers in progression.js and explicitly takes save-shape. The short board row now includes save-shape alongside busy-game-files, so the scheduler cannot admit this card while EARN-MEDALS owns saved-profile work. This records the already settled scope; no tyre source, design number or saved field changes here. Attack still holds the named core hooks, and the current release hold forbids all new checks and merges.
+
+## Current STEER-055 table before building — 15 October
+
+Recomputed directly from current keyboardSteeringLimit, createKeyboardSteering and steeringYawAuthority, grip1/asphalt, fixed120Hz. The settled amendment that a held key never exceeds today's yaw wins over section5's old bonus/peak table: the new held peak-share ceiling equals the current held share, with raw steering divided by the new steerGain ratio. No keyboard-only peak is reached unbraked at these speeds. Below40mph and all arenas retain the old path.
+
+| mph | Today's held = new maximum peak share | New raw steering cap | First120Hz tap peak share | Full-brake ask at held cap |
+|---|---|---|---|---|
+|40|0.804672|1|0.4475988|1.00584|
+|50|0.9625|0.956911636|0.535390625|1.203125|
+|60|0.925|0.766357804|0.51453125|1.15625|
+|80|0.85|0.68|0.4728125|1.0625|
+|100|0.775|0.62|0.43109375|0.96875|
+|120|0.70|0.56|0.389375|0.875|
+
+These are consequences of the approved55percent start/300ms rise/30percent high-speed reduction, not new tuning. In particular section5's old100mph full-brake1.06 example no longer applies; it is0.96875 under STEER-055. First-tap yaw stays the same by mapping existing averaged input through old authority/new gain, within the approved1e-9 tolerance. Final independent review must check the actual implementation against this table. No lane/source/check started while DRIVE-LESSON-SAVE holds save-shape.
+
+## Daylight build claim — 15 October
+
+Kyle directed continued building. New tyre-slip/codex/tyre-slip starts atb8b6a1e2 while P4-VARIANTS completes its independent final checks. It holds busy-game-files and save-shape, both released by completed Lesson Save; no circuit-registry lock. The accepted independent amendments and current STEER-055 table above control. First tested source slice is the owned config grip/peak/demand/angle/sound/steerForYaw helpers and new test-tyre-slip suite, with legacy DRIVE and steeringYawAuthority text unchanged. This increment has no runtime caller or feature switch installation yet and is not playable/finished acceptance. Then wire the settled per-race dev switch, player/keyboard/reset/audio paths and all named driver copies, complete drift-record save review and full existing card acceptance. No old replay/reference pins or live/preview changes. Arena/CPU off-parity and all final macro checks remain required. Questions stay on this card; no new art or HELI cleanup work.
+
+## Named per-race latch and on-foot reset details
+
+The existing owned game.js hooks include the precise _loadStage/_loadArena flag installation required by the arena exclusion: snapshot the requested switch once in startCampaign, install tyreSlipRules only for a non-arena stage, and explicitly false in native venue _loadArena. Existing stage and listed actor/crash/journey resets clear only the player tyreSlip field; do not add it to CPU actors that never had it. The already named onfoot-transition.js hook includes clearing that player field at actual entry/exit transitions; parked-car _drive remains on the old yaw path while on foot. These settle implementation of existing exclusions, not new rules or tuning. Pure foundation71c41f1f and optional keyboard44aade10 are committed with10focused/443existingkeyboard checks/build passing; runtime and macro acceptance remain pending.
+
+## Named existing audio acceptance cases
+
+Add switch-on cases to existing tools/test-audio.mjs using its present MockContext/makeAudio/state recipe, without changing any old assertion or adding a harness. They check actual recorded tyre-loop gain at reviewed slip values, quiet straight-line braking, and preservation of the separate legacy smoothedSlip used by road/gravel. The new tyreSlipSmoothed variable belongs to the existing src/audio.js constructor plus named squeal block. No sound-bank, PCM recipe, mix threshold or loop gain ceiling changes.
+
+## Bounded drift stop and question —15October afternoon
+
+Retained clean unmerged tyre-slip/codex/tyre-slip912b96ca. Player/keyboard/audio and all named driver copies are wired behind dev;17focused cases and build pass. Early independent reviewer found one actual shared audio local fault, corrected in73bac0f3 and confirmed CLEAR; paired actual surface graph checks pass,503audio checks. Driver-copy argument/dependency/flag review found no other fault, but named the low-speed drift design conflict below. This is not completed feature acceptance or a merge candidate.
+
+Initial actual source050b76fe Hard/Pro30fps five-seed probe, native App/Duel/memory-only/unchanged scoring and deadlines: seeds1989..1993 off all clean two-lap wins6417points/98.61s. On scores240/318/85/104/247, each one lap,2–3crashes and timeout. Median240/6417=0.03740065, below0.6 stop rule. Eight-second probe; other required dimensions, recovery, retune, row versions and final macros/gate are UNRUN. No targets/deadlines or old pins/records changed. Evidence lane.evidence/2026-10-15/TYRE-SLIP/drift-initial.json.
+
+Claude: please settle the drift driver line/speed control while preserving the reviewed grip model/scoring and limits. Implemented amended corner factor1.058 plus requested ask1.12 (signed by actual corner) does not follow this native route cleanly. What controller/target should replace it? Also ask1.12 is unreachable under existing gain above45 until about55.7mph (at50 maximum1.00584); may this range explicitly saturate at current full steer, as now tested46/50/65mph, or should the drift threshold/wording change? Do not increase authority or silently adopt the older superseded corner factor. Source is held, locks released by blocked state, and other cards continue.
+
+## Claude answers - drift driver, 15 October 16:00
+
+- **Controller:** replace the corner-factor target with a slip-hold
+  controller. The drift autopilot follows the .95 line driver's path and
+  speed, and in each corner of the drift route above 56 mph it holds the
+  tyre `ask` at 1.12: more steer when ask is below 1.10, a throttle lift when
+  slip passes 1.20, and it returns to the clean line if its lateral error
+  exceeds 2 m. Below 56 mph it drives the clean line.
+- **Low speed:** yes, saturate at the existing full steer from 45 to 56 mph
+  (test 46, 50, 65 as you have). The drift threshold stays; reword the card to
+  say a held full lock slides from about 56 mph.
+- **Stop rule unchanged:** if the median score ratio is still under 0.6 with
+  this controller on the five seeds, stop and write the numbers; Claude then
+  decides whether the drift trial's targets need retuning for the new tyres
+  (which would be a Kyle-visible change to an event).
+
+
+## Continue the retained lane after the 16:00 answer
+
+Codex resumes clean912b96ca in the existing tyre-slip lane, holding busy-game-files/save-shape. Only the named App drift hook, TYRE_SLIP settings and existing tyre tests/note change first. Neon has no authored course.racingLine; reuse existing production racingLineFor/buildSpeedProfile for its native path/speed at0.95, with the same actual-car grip and surface limits. No CPU line/profile source change. Clean-line recovery above2m lateral error and below56mph; corner ask1.12 (raise steering below1.10, current authority cap exact), throttle lift above1.20 slip. Remove the superseded corner-factor branch. Existing off-state driving and all scoring/deadlines/targets stay exact. First add focused controller cases, then one initial Hard/Pro30fps five-seed on/off probe; if median ratio remains below0.6 stop without adopting new numbers. No new lane, preview/live change or art.
+
+
+## Approved-controller matrix stop, 15 October afternoon
+
+Retained clean8e71136a:19/19 focused tests, build1629.7803ms, independent stock_snow_review CLEAR. New controller clean-line/slip-hold behaviors are source-checked, not finished feature acceptance. Actual full native matrix120rows (30/144fps, all3CPU levels, Casual/Pro, seeds1989..1993, off/on; first10 exact rows reused) completed46.38s additional. Every on run finished two laps with zero crashes/resets. Pro allgroups: median5196/6417=0.80972417,86.54/98.61s. Casual allgroups: median52/6319=0.00822915,94.49/99.38s. FPS results agree, but the Casual score ratio violates0.6. STOP: no target/deadline change, one-crash recovery, row-version wiring, other macros, final gate or merge. Evidence is retained in tyre-slip/.evidence/2026-10-15/TYRE-SLIP/drift-matrix.json. This is simulation frame-rate evidence, not a GPU frame-speed check.
+
+Claude: the approved revised controller removes the crashes, but Casual scores52 at every tested CPU level/seed/FPS while Pro scores5196. Please settle whether the Casual drift target/controller needs a further explicit design change under your16:00 stop instruction. No cause of the score gap or safe new target is inferred, and no scoring/authority limit is altered. Busy/save locks released; retain this clean unmerged lane. Fold this result into its own note with the next genuine source change.
+
+## Claude answers (15 October, evening): Casual must still drift
+
+Casual is the default and the one Kyle's son plays, so a Casual drift trial
+that scores 52 is not acceptable. Casual should be forgiving, never
+slide-proof.
+- **Change, in drift events only (`kind: 'drift'`):** Casual slides as
+  easily as Pro (`slideGrip` 0.82) but keeps its own gentler speed loss
+  (`scrubMphPerSec` 8). Everywhere else Casual's 0.9 stays, so ordinary
+  races keep their extra grip.
+- **First, within rule 4's 30 minutes:** confirm the cause by reading which
+  drift-scoring threshold (slide angle or slip) the Casual run never reaches,
+  and record the measured peak values in the note. If the cause is something
+  else, stop and write it down; do not change scoring.
+- **Acceptance:** the same five-seed matrix. Casual median on/off at least
+  0.6, every run finishes with no crashes or resets, and Pro's results are
+  unchanged. The Neon Drift Trial targets stay as they are. If Casual still
+  falls short, stop with the numbers, and Claude decides on target retuning
+  with Kyle.
+
+## Kyle decided, 15 October 2026: Casual keeps today's tyres
+
+Asked by Claude with the drift numbers (Casual 52 of about 6,300, Pro 5,196
+of 6,417), Kyle chose: **Casual difficulty keeps today's tyre model**; the
+new sliding grip applies on the harder difficulties only, the same way the
+arenas keep their sharp steering. So:
+- the `tyre-slip` rules are off whenever the race's difficulty is Casual
+  (latched at race start like the other race rules), on otherwise;
+- Casual results, records and the drift event stay exactly as today (byte
+  identical with the switch on);
+- the Pro drift result (0.81 of today's score, clean, no crashes) is
+  accepted; no further controller or target change;
+- add the difficulty case to the tests and the change note.
+Then continue to the remaining acceptance (recovery, row versions, final
+gate and one review).
+
+
+## Resume Kyle's explicit Casual decision, after restart
+
+Root resumes existing clean8e71136a lane; no new lane. Freeze the reviewed cup candidate0dd37e84 pending heavy capacity and transfer busy-game-files/save-shape lease here. Intel's new answers are received but its source stays held until this lease returns. Apply only Kyle's explicit Casual-off latch, preserving actual existing Casual state/results/records and the accepted Pro model/controller; then the already approved remaining recovery/version/native acceptance, one independent review and gate/build. No drift retuning or repeated120race matrix, no live feature flip. Heavy checks stay queued behind Ardennes and the shared cap; source and bounded tests may proceed.
+
+
+## Current decision applied; target clarification before numeric edits
+
+Native source796e085c applies Kyle's Casual-off latch after resolving difficulty. New case RED then4focused cases GREEN; full native Casual road/Neon state streams exactly equal switch off. Original off-state fingerprint remains exact. Existing model-on fixtures now explicitly use Pro without changing numeric limits; default Casual balance wrapper asserts requested flag true but active rules false. No target/controller edit or repeated120race matrix.
+
+Claude: the accepted clean Pro score5196 remains below the unchanged Hard target6000, so the old all-level autopilot-win acceptance cannot pass as written. Latest Kyle answer says no further controller or target change; that instruction wins and every target/deadline stays unchanged. Please settle whether clean ProHard non-win is accepted under this decision, or name any explicitly approved replacement acceptance. Do not infer an automatic retune. Recovery/native remainder stays queued for actual capacity; source work on the already approved optional record version can continue.
+
+## Record presentation hook before code
+
+The already approved optional tyreSlipRules:true is emitted only from real Pro drift state/results. Keep every ordinary/Casual key and old ghost/time comparable unchanged; discriminate only new drift best/leaderboard rows. In addition to the named progression/leaderboard/screen-menu hooks, own the existing src/screen-leaderboard.js row label only so retained old and new drift rows identify their tyre rules. No new store/schema version/budget, deleted old row, arbitrary target waiver or estimated result. Get one independent save/code review. No numeric change while the question is pending.
+
+## Claude answers - Hard acceptance, 15 October 17:05
+
+Accepted: a clean Pro/Hard autopilot non-win. The "autopilot wins at every
+level" acceptance was written for the old tyres; with Kyle's decision it now
+applies to Casual only (unchanged tyres, byte-identical). On the harder
+difficulties the acceptance is: the drift autopilot finishes clean (no crash,
+no reset) and scores at least 0.6 of today's score; measured 5,196 of 6,417
+(0.81), so it passes. The 6,000 target stays: a human has to drift better
+than the autopilot to win on Hard, which is what harder means. Record this
+replacement in the change note.
+
+
+## Record-version increment frozen; acceptance answer received
+
+Clean61e7de00 has independent cups_save_review code/save CLEAR. New Pro row separation and native-objective cases RED then GREEN; historical off pin and complete Casual road/Neon state streams remain exact.13historical fixtures/437checks,27progression,backup andstorage3.54/4MB pass. No target/controller/score/ghost change. All23focused cases now PASS in14.45s; recovery/macros/gate/build remain UNRUN. Claude96ba047d explicitly accepts clean ProHard non-win at>=0.6 of old score; accepted5196/6417=.81 passes, target6000 unchanged. The earlier question is resolved; no Claude wait or retune remains. Do not repeat120matrix or claim remaining acceptance complete. Freeze source and release busy/save lease to the already reviewed cup candidate for its native/gate/build once capacity permits; no new lane.
+
+
+## Shared lease returned
+
+Cups is complete and merged. Root returns save-shape and busy-game-files to this retained lane for its remaining acceptance and final gate/build. No repeated matrix or retuning. Ardennes release checks take priority; native batches count as heavy work even when process discovery misses their direct script.
+
+
+## Actual one-crash recovery: outcome decision needed
+
+The existing private native Pro/Banshee/1989 recipe ran once on 61e7de00 in 2620.7076 ms. All three CPU levels completed two laps, with one crash, exact 8-second penalty, no reset or catastrophic state. The real crash occurred at 1925.091535 m while chain score was 41.140153 and banked score 1311.047031. All produced 4828 drift points. Easy won against 3500. Medium completed but missed 5000. Hard completed but missed 6000; it did not time out. Thus all physical recovery checks passed, but the old Medium-win and Hard-timeout outcome clauses failed. No rerun, controller/target/deadline change or weakened assertion.
+
+Claude: does the accepted Pro non-win apply to this one-crash fixture as well, allowing actual completed objective misses while retaining all physical recovery assertions, or is a named controller correction required? Kyle already accepted Casual unchanged and you accepted clean Pro Hard non-win at the existing target; neither silently settles these two different recovery outcome clauses. Actual packet retained at integration .evidence/2026-10-15/TYRE-SLIP/recovery-current.json. Bounded diagnosis is finished; implementation waits for your written decision. Shared save/game leases return to Intel meanwhile.
+
+## Claude answers - one-crash recovery outcomes, 15 October 19:15
+
+Yes, the same rule applies. The recovery fixture's job is physical recovery:
+keep every physical assertion (two laps, exactly one crash, the 8-second
+penalty, no reset, no catastrophic state). Replace its old outcome clauses
+(Medium wins, Hard times out) with: every level completes and scores (all
+4,828 here), and Easy still wins. Medium and Hard missing their targets after
+a crash is correct under the new tyres. Record the replacement in the change
+note.
+
+## Night final acceptance resumes after Summit merge
+
+The missing Pro-only pin was recorded once on b1edcddb; only its new fixture and own note committed1f29566e. No old recording/pin changed. Root briefly reclaims busy-game-files/save-shape only to combine current integration before final gating: the actual merge has two textual conflicts, App imports and feature flags. Retain both racing-line and cup imports, tyre-slip dev plus merged Yeti on and every foreign released flag. Preserve automatically merged cup save/settlement logic. No retune, Casual change or replay re-recording. Freeze and release the core leases immediately after that union; one independent final delta review and the canonical gate execute the still pending new recovery/FPS/arena/CPU assertions. No extra120race matrix.
+
+Union committed clean de0371dd: exactly the two named conflicts resolved by keeping both sets of imports and tyre dev/Yeti on; new cup settlement normalized/preserved. App/flags parse and diff clean. Source frozen again; busy/save leases released immediately. Pending canonical/build and independent final delta confirmation remain, no new acceptance pass yet.
+
+Final independent fixture/merge delta review CLEAR on de0371dd: old recordings/pins exact, cup save/settlement retained, Casual off and Yeti on/tyre dev preserved. Actual final canonical admitted2026-10-16T05:15:40.791Z: wrapper41460,runner29440,exec71090,final-de0371dd/lane-receipt.json pending. One-minute inventory2 roots, no overcap. The pending FPS/recovery/arena/CPU cases are part of this gate; do not duplicate them or claim pass before the actual receipt.
+
+
+## Final gate failure: bounded diagnosis and exact question for Claude
+
+Exact clean de0371dd canonical completed05:42:00.825UTC:383/394/jobs4/exit1,11failed,0notRun,1567231.7507ms; wrapper41460/runner29440 drained. No build/merge. New tyre suite28/28 including30/60/144FPS replay, actual GP seven-opponent/CPU parity and realScrapdome passed; all three new Pro drift recovery cases passed. Never duplicate those manual acceptances or the old120matrix.
+
+Failed suites: stunt-trial (steerForYaw missing import); arena-junk-shove, arena-shove, arena-steering-ceiling, arena-steering, titan-handling and onfoot-hints (old whole-state road fingerprints); feature-flags, course-kit and wasteland-beta (precise dev registry pins omit tyre-slip); preview-launcher (private flags omit tyre-slip). No model retune, old fixture re-recording or assertion change made.
+
+One bounded existing Falcone/Pacific/1989 casual discovered road recipe proves the first state hash difference is ONLY the two declared telemetry keys: raw a163d7bf62a7956300ad9de0011d971183edcfeb53fdfcece254360570c57b7a; omitting tyreSlip/tyreSlipRules gives the EXACT old discovered pin1342654b0b1b80dd025d23e15b84dcad9b2d83e7a55b7d3ae74c0b339e67178e. At all three samples those fields are0/false; distance61.11576789757167. This proves that single recipe, not every failed hash. Section8's assumption that no tests pinned whole state was incorrect.
+
+Claude: approve a narrow re-slice and assertion interpretation before edits. Proposed six existing whole-state recipes assert new metadata is exactly0/false for off/Casual and hash ALL historical fields with those two declared keys omitted, retaining every old expected hash/numeric assertion. Each must prove its exact old pin; no fixture recording. Proposed owned hooks: tools/test-arena-junk-shove.mjs, tools/test-arena-shove.mjs, tools/test-arena-steering-ceiling.mjs, tools/test-arena-steering.mjs, tools/test-titan-handling.mjs, tools/test-onfoot-hints.mjs. Also name existing tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs precise tyre-slip dev inventory rows and start-preview.bat explicit private tyre-slip flag (test-preview-launcher already expects it); course-kit copies the flag test. The already owned stunt-trial driver copy needs its existing config steerForYaw import. Is this exact additive metadata projection approved, or should off-state runtime shape remain byte-identical through a different named fix? No silent serializer change, weaker hash, new harness or widened runtime tuning. Keep locks[] while this decision waits; other building continues.
+
+
+The already owned missing-import repair is committed4f132806 (test-stunt-trial and ownnote only). Actual existing stunt suite now44checks PASS, Casual/Pro30/144FPS; no numeric/controller/runtime assertion change. No other failure rerun or pin projection edit, no final canonical/build/merge. The exact new telemetry-projection/registry/preview question remains waiting; locks stayfree.
+
+## Claude answers - final gate failures, 16 October 00:45
+
+1. **Whole-state pins: keep the off state byte-identical (the second option).**
+   Do not change the six whole-state tests. Attach `tyreSlip` and
+   `tyreSlipRules` to a car's race state only when the new tyre model is
+   active for that car (switch on and Pro or Hard). With the switch off, and
+   for Casual at any time (Kyle: Casual keeps today's tyres), the state has
+   exactly today's fields, so every old pin holds as recorded. Readers (HUD,
+   telemetry, replay) treat a missing field as 0/false. This stays inside the
+   card's owned runtime files; prove it by running the six failed suites
+   unchanged. If a reader outside the owned files needs the fallback, name it
+   before editing.
+2. **Registry and preview rows: approved.** Add the `tyre-slip` dev row to the
+   precise inventories in `tools/test-feature-flags.mjs`,
+   `tools/test-wasteland-beta.mjs` and course-kit's copy, and the private
+   `tyre-slip` flag in `start-preview.bat` (test-preview-launcher already
+   expects it). Claude's review: these add the new switch to lists that must
+   name every switch; nothing is loosened.
+3. The stunt-trial import repair (4f132806) is accepted.
+
+Then one lane tier for the changed files (rule 19), build, merge. No full
+tier for this card; the 04:00 full check covers it.
+
+
+## Approved correction frozen; next canonical admitted
+
+Current clean3e2bf73f81c3f703ac9cce1b154adb4ee829d5a2 omits inactive tyre fields and guards existing owned resets. Six historical hash suites unchanged. New exact-shape regression RED thenPASS235.2278ms; approved exact dev/preview rows updated. Actual current-integration union had App imports/result payload and reference-worker flags/retainPoses conflicts: both behaviors preserved, no pin/reference regenerated. Required independent code/save delta review CLEAR.
+
+One final corrected canonical admitted07:24:01.174UTC: wrapper35212/runner13776/exec54240, lane --changed --jobs4 --keep-going --json, ownlane final-3e2bf73f/lane-receipt.json pending. The unchanged six suites run here, no duplicate manual batch. No gate/build/merge pass yet; freeze source/release core now, GP bounded source attempt may proceed under its fresh answer.
+
+
+## Restart interruption, 16October07:43PT
+
+Announced laptop restart stopped wrapper35212/runner13776 before any buffered JSON or receipt: actual lane.json/lane.log both zero bytes, no running process. Frozen3e2bf73f remains clean/reviewCLEAR. This is incomplete, not a passing gate or assertion failure. Resume the same corrected canonical once; no old passing native matrix/recovery/fixture recording repeated manually.
+
+
+## Resume deferred for actual exclusive release check
+
+Resume admitted14:43:09UTC on same3e2bf73f (wrapper30480/runner13408/exec46346). Fresh inventory/hold immediately showed older Summit release full28640 started14:43:05UTC. Root stopped only its later verified gate and descendants; subsequent inventory shows all Tyre processes drained. No result JSON/receipt completed; cancellation is not a test failure or pass. Actual cancellation receipt retained under16October/TYRE-SLIP/resume-3e2bf73f. Source/review remain frozen; resume only after FULL TIER FOR RELEASE DONE and any frame hold clears. No ordinary job starts during this foreign hold.
+
+
+## Corrected canonical actually resumed16October09:14PT
+
+Exact clean3e2bf73f81c3f703ac9cce1b154adb4ee829d5a2, wrapper38356/
+runner7204/session44438, lane changed/jobs4/keep-going/json. Native
+.evidence/2026-10-16/TYRE-SLIP/canonical-resume-3e2bf73f/ will retain
+lane.json/log and lane-receipt.json; JSON can buffer, absent receipt is not
+a failure. One-minute count3 including two older foreign jobs. No result,
+build or merge yet; source frozen and leasesfree.
+
+
+## Actual corrected gate and final own-test delta
+
+The exact3e2 canonical finished17:13:43UTC:395/396/jobs4/zero notrun/exit1,
+source unchanged. Wrapper38356/runner7204 drained. Actual receipt and full
+outputs remain in canonical-resume-3e2bf73f. Only test-tyre-slip failed:28/29
+passed, one new private-tool assertion still expected false for an inactive
+Casual field. Claude's written821b829f decision requires absent inactive
+fields, not false/undefined keys. No runtime or old hash assertion failed.
+
+Frozen13f09aa4 corrects only that new test and ownnote: require both fields
+absent, fail if the observation callback never ran, retain requested-switch
+and actual Pro-on assertions. Required independent delta review CLEAR.
+No new test pass/build/merge yet. One changed-only canonical plan uses the
+existing runner main/getChanges seam with actual gitdiff3e2..13f, no runner
+edit or filters:17default affected/smoke/replay/world guard suites, jobs4.
+No unchanged396batch repeat. Reserved next turn10:20PT until10:40/admission;
+foreign newer jobs remain untouched. Build follows only actual green.
+
+
+## Complete: reviewed development merge, 16 October 11:02 PT
+
+TYRE-SLIP is complete and merged for development. The corrected3e2 gate remains
+historically FAILED395/396: only this card's new inactive-field expectation was
+wrong. The six old whole-state suites and all other395 suites passed unchanged.
+Strict absent-own-key correction13f09aa4 received independent CLEAR, then its
+actual two-file canonical delta passed17/17/jobs4/zero fail-notRun/exit0 in
+289681.3877ms and its production build passed1733.278ms; source unchanged.
+
+Current-integration union cb1840e5 preserves Rescue/wildlife/skins/TeamRoom,
+all current saves and exact inactive state. Its only two conflicts were the
+approved preview flag list and precise feature inventory: all foreign rows
+plus tyre-slip retained, exact base32 count. Independent code/save union
+review CLEAR. Actual conflict-hook canonical passed19/19/jobs4/zero fail-notRun/
+exit0 in462405.8415ms; one production build passed2140.9512ms on the same exact
+clean source. The final integration merge was conflict-free; no rerun.
+
+Receipts remain in the retained owned lane .evidence/2026-10-16/TYRE-SLIP/
+canonical-resume-3e2bf73f, delta-13f09aa4 and union-cb1840e5. All own jobs drained;
+locks[]; no real saves, live installation, push, replay recording or old120-race
+matrix repeated. Preserve this older lane/evidence: cleanup creation ownership
+is not proved. Casual/off remain byte-identical; the new model is Pro/Hard-only
+behind dev tyre-slip. This is not a live-enable or new full-tier claim.

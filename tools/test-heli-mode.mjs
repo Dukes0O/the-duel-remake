@@ -13,6 +13,10 @@ import {FEATURE_STATES} from '../src/feature-flags.js';
 import {INPUT_CONTEXTS, heliControls, keyboardAction} from '../src/input-contexts.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {canHook} from '../src/heli/heli-cable.js';
+import {createHeliState, stepHeli, HELI_STEP, GRAVITY, KESTREL} from '../src/heli/heli-flight.js';
+import {flatGround} from '../src/heli/heli-ground.js';
+import {supplyPickup} from '../src/heli/heli-search.js';
+import {SUPPLY_CRATES} from '../src/heli/heli-rescue.js';
 import {heliOf, carAt} from '../src/heli/heli-save.js';
 import {HOME_COURSE, HELI_DESTINATIONS, legFuelKg, bearing} from '../src/heli/heli-jobs.js';
 import {createHeliSession, courseSite, insideArea, HELI_SESSION} from '../src/heli/heli-session.js';
@@ -70,7 +74,7 @@ function run(session, seconds, controls = () => ({}), until = null) {
 }
 
 // The switch, the input context and the destinations.
-assert.equal(FEATURE_STATES.helicopter, 'dev', 'the helicopter switch is dev'); checks++;
+assert.equal(FEATURE_STATES.helicopter, 'on', 'the helicopter is released (Kyle, 14 October 2026)'); checks++;
 assert.throws(() => createHeliSession({profile: freshProfile(), loadCourse}), /switch is off/); checks++;
 ok(INPUT_CONTEXTS.heli && keyboardAction('heli', 'KeyH') === 'heli-hook' && keyboardAction('heli', 'KeyP') === 'heli-autopilot',
   'the heli context has H for the hook and P for the autopilot');
@@ -101,6 +105,43 @@ for (const id of Object.keys(HELI_DESTINATIONS)) {
     ok(insideArea(site.area, p.x, start.y + 150, p.z), `${id}: the arrival point from ${other} is inside the area`);
   }
   assert.deepEqual(courseSite(course, ground, id), site, `${id}: the same zone every time`); checks++;
+}
+
+// Summit Run (docs/HELI_RESCUE.md sections 5.5 and 12), a fourth place only with
+// its switch on: its landing zone and flying area, and the thin-air supply run.
+{
+  const {course, ground} = loadCourse('summit-run');
+  const options = {summitRun: true};
+  const site = courseSite(course, ground, 'summit-run', options);
+  const start = course.at(0);
+  ok(Math.hypot(site.zone.x - start.x, site.zone.z - start.z) < 220, 'summit-run: the zone is beside the start');
+  ok(ground.near(site.zone.x, site.zone.z, site.zone.radius).every(o => o.top <= site.zone.y + 0.5), 'summit-run: nothing tall in the zone');
+  ok(Math.hypot(site.parking.x - site.zone.x, site.parking.z - site.zone.z) > site.zone.radius, 'summit-run: the parking spot is off the pad');
+  ok(insideArea(site.area, start.x, start.y + 50, start.z) && !insideArea(site.area, start.x, site.area.ceiling + 1, start.z), 'summit-run: the start is inside the flying area, under its ceiling');
+  for (const other of ['tremblant-woods', 'tremblant-snow', 'panorama-ridge']) {
+    const toward = bearing('summit-run', other, options);
+    ok(insideArea(site.area, site.zone.x + toward.x * 1500, start.y + 150, site.zone.z + toward.z * 1500), `summit-run: the arrival point from ${other} is inside the area`);
+    // And the other courses' areas take in the arrival point from Summit Run.
+    const here = loadCourse(other), there = courseSite(here.course, here.ground, other, options), back = bearing(other, 'summit-run', options);
+    ok(insideArea(there.area, there.zone.x + back.x * 1500, here.course.at(0).y + 150, there.zone.z + back.z * 1500), `${other}: the arrival point from summit-run is inside the area`);
+    // With the switch off the area is what it was.
+    assert.deepEqual(courseSite(here.course, here.ground, other), courseSite(here.course, here.ground, other, {summitRun: false})); checks++;
+  }
+  assert.deepEqual(courseSite(course, ground, 'summit-run', options), site, 'summit-run: the same zone every time'); checks++;
+  // Thin air: the pickup is on the open road about 3,430 m up. The heaviest crate with a full tank does not climb out of it; half a tank does.
+  const startY = course.at(0).y, altitude = y => 2860 + y - startY, pickup = supplyPickup(course, ground);
+  near(altitude(pickup.y), 3430, 20, 'summit-run: the supply pickup is about 3,430 m up');
+  const flat = flatGround(0);
+  const climbIn60 = (metres, fuelKg, cargoKg) => {
+    const h = createHeliState({x: 0, z: 0, heading: 0, fuelKg, mode: 'assisted', altitudeOffset: metres, ground: flat});
+    Object.assign(h, {y: 40, onGround: false, engine: true, rotorPct: 100});
+    for (let n = 0; n < 60 * 120; n++) stepHeli(h, {lift: 1}, {ground: flat, external: {x: 0, y: -cargoKg * GRAVITY, z: 0}}, HELI_STEP);
+    return h.y - 40;
+  };
+  const heaviest = Math.max(...SUPPLY_CRATES.summitRun.map(crate => crate.massKg));
+  ok(climbIn60(altitude(pickup.y), KESTREL.tankKg, heaviest) < 0, `summit-run: a full tank and the ${heaviest} kg crate do not leave the pickup`);
+  ok(climbIn60(altitude(pickup.y), KESTREL.tankKg / 2, heaviest) > 30, 'summit-run: half a tank does');
+  ok(climbIn60(0, KESTREL.tankKg, heaviest) > 30, 'at sea level the same load climbs easily: it is the thin air');
 }
 
 // Fuel at the pump: the first tank is free, then 1.5 credits a kg; only at home.
@@ -320,34 +361,41 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     }
     return out;
   };
-  // Approved importers: the save normalizer and the helicopter's own tests.
-  // HELI-HOOKS adds the app, renderer, menu and sound bank lines. Any text
+  // The rule (QA-TEST-AUDIT, replacing a list of approved file pairs): in the
+  // game, only the named hook files may name a helicopter file, and the
+  // renderer and page hooks name only drawing files. Tools, tests and browser
+  // scenarios are not the game and may read any helicopter file. Any text
   // naming a helicopter file counts, whatever form the import takes.
-  const approved = new Set(['src/progression.js|heli/heli-save.js',
-    // HELI-RADIO's sound build reads the radio line list to copy the takes.
-    'tools/audio/build-heli.mjs|heli/heli-radio-lines.js',
-    // HELI-HOOKS: the game's hooks, and three sound bank pins that leave out
-    // exactly the helicopter's cue list.
-    'src/app.js|heli/heli-session.js', 'src/app.js|heli/heli-ground.js', 'src/app.js|heli/heli-audio.js',
-    'src/app.js|heli/heli-save.js', 'src/app.js|heli/heli-jobs.js',
-    'src/sound-bank.js|heli/heli-audio.js',
-    'src/render3d.js|heli/heli-scene.js', 'src/render3d.js|heli/heli-camera.js',
-    // HELI-VIEW: the instruments panel and its styles in the page.
-    'src/screen-router.js|heli/heli-ui.js', 'src/screen-router.js|heli/heli-ui.css',
-    'tools/test-p4-audio.mjs|heli/heli-audio.js', 'tools/test-arsenal-core-audio.mjs|heli/heli-audio.js',
-    'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js']);
+  const drawingFile = /^heli\/heli-(?:scene|camera|ui|fire-view|rescue-view|rank-paint)\.(?:js|css)$/;
+  const hooks = {
+    'src/app.js': () => true,                      // the game's hooks into the helicopter
+    'src/progression.js': name => name === 'heli/heli-save.js', // the save normalizer
+    'src/sound-bank.js': name => name === 'heli/heli-audio.js', // the helicopter's cue list
+    'src/screen-readiness.js': name => name === 'heli/heli-jobs.js', // why START is closed for an air-only car
+    'src/render3d.js': name => drawingFile.test(name),
+    'src/screen-router.js': name => drawingFile.test(name),
+    // LAB-RULES: the Lab reads the helicopter's own numbers and lessons.
+    'src/lab/lab-heli.js': name => /^heli\/heli-(?:flight|bucket|cable)\.js$/.test(name),
+    'src/lab/lab-lessons.js': name => name === 'heli/heli-save.js',
+    // LAB-HELI-CHALLENGES: the challenges run the fire rules, the thrust tank and the clear-ground search of the helicopter.
+    'src/lab/lab-challenges.js': name => /^heli\/heli-(?:flight|fire|search)\.js$/.test(name),
+  };
+  // LAB-BENCHES: each bench runs the helicopter's own rules (never its drawing files).
+  const labBench = name => !drawingFile.test(name);
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
-  for (const path of walk(join(root, 'src')).concat(walk(join(root, 'tools')), pages)) {
+  for (const path of walk(join(root, 'src')).concat(pages)) {
     const file = relative(root, path).replaceAll('\\', '/');
-    if (file.startsWith('src/heli/') || /^tools\/test-heli-[a-z-]+\.mjs$/.test(file)) continue;
+    if (file.startsWith('src/heli/')) continue;
     const source = readFileSync(path, 'utf8');
     for (const match of source.matchAll(/heli\/heli-[a-z-]+\.(?:js|css)/g))
-      if (!approved.has(`${file}|${match[0]}`)) offenders.push(`${file} -> ${match[0]}`);
+      if (!(hooks[file] ?? (file.startsWith('src/lab/benches/') ? labBench : null))?.(match[0])) offenders.push(`${file} -> ${match[0]}`);
   }
   assert.deepEqual(offenders, [], 'no unapproved src/heli imports'); checks++;
   // Every helicopter file except the drawing, page and sound ones is game rules.
-  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js']);
+  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js', 'heli-fire-view.js', 'heli-rescue-view.js', 'heli-rank-paint.js',
+    // MAP-VIEW: the pilot's map screen and its world drawing are drawing files, not rules.
+    'pilot-map-view.js', 'pilot-map-world.js']);
   const sim = readdirSync(join(root, 'src/heli')).filter(name => name.endsWith('.js') && !drawing.has(name));
   ok(sim.length >= 7, `the rules files are checked (${sim.join(', ')})`);
   for (const name of sim) {
@@ -357,9 +405,17 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     // access rule says which courses the player owns (Race here). FIRE-SAVE:
     // the save prices a buyback from the course closure rules, which import
     // nothing from the helicopter. FIRE-BUCKET: the water query reads the
-    // course's lake outline.
+    // course's lake outline. EARN-SCREEN: the medal cars are air-only; medals.js
+    // is pure rules and imports only config.js. DRIVE-LESSON-CORE: the lesson
+    // contract shared with driving lessons is pure and imports nothing. LAB-HELI: the session reads the Lab's upgrades
+    // through the one file src/lab/lab-heli.js (docs/LAB.md section 10) and nothing else of the Lab. SKI-HELI: the session runs
+    // a ski run through the one pure file src/ski/ski-session.js (it imports nothing from the helicopter).
+    // MAP-DESTINATIONS: the pilot's map data is a helicopter file (it does not start with heli-); the session lists a
+    // course's corner names for scouting with the game's own corner detection (track-analysis.js, pure rules).
+    // MAP-SECRETS: the secret signs, the Table and the map record are pure rules in map-secrets.js.
     ok(imports.every(spec => spec.startsWith('./heli-') || ['../config.js', '../rendered-ground.js', '../rng.js', '../course-access.js',
-      '../course-closures.js', '../circuit-hills.js'].includes(spec)),
+      '../course-closures.js', '../circuit-hills.js', '../medals.js', '../lessons/lesson-core.js', '../lab/lab-heli.js',
+      './pilot-map-data.js', './map-secrets.js', '../track-analysis.js', '../ski/ski-session.js'].includes(spec)),
       `${name} imports only helicopter rules (${imports.join(', ')})`);
     ok(!/\bdocument\b|\bwindow\b|Math\.random|Date\.now|new Date|performance\.now|localStorage|requestAnimationFrame|\bcrypto\b|import\s*\(/.test(source),
       `${name} uses no page, clock, storage or randomness`);

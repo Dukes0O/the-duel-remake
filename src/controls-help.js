@@ -18,14 +18,32 @@ export function controlsHelp(duel) {
       ['HOLD F', 'Get back in your car'],
       ['C', 'Change camera'], ['ESC / P', 'Pause'], ['H', 'Hide this help']]};
   }
+  // MAP-VIEW: Kestrel One's keys, with the pilot's map when it is on (the helicopter view carries `secrets` only then).
+  if (state?.status === 'heli') {
+    const heliRows = [['W / S', 'Collective, up and down'], ['ARROWS', 'Cyclic, tilt and bank'], ['A / D', 'Pedals, turn'],
+      ['H', 'Hook (hold to pour the bucket)'], ['P', 'Autopilot'], ['ENTER', 'Cruise to the destination'], ['R', 'Answer the radio'], ['C', 'Change camera']];
+    if (duel?.featureFlags?.enabled?.('pilot-map') === true) heliRows.push(['N', "The pilot's map: click a place to fly there"]);
+    heliRows.push(['ESC', 'Pause'], ['M', 'Mute']);
+    return {title: 'KESTREL ONE', rows: heliRows};
+  }
   const rows = [['W / UP', 'Throttle'], ['S / DOWN', 'Brake, hold to reverse'],
     ['LEFT / RIGHT', 'Steer'], ['SPACE', 'Boost'], ['Q / E', 'Shift (manual gearbox)']];
   if (state?.mode === 'wasteland' && state.combat) rows.push(['1  2  3  4', 'Weapons']);
+  // DEEP-SIRENA-VIEW / DEEP-EXPLORER: dive controls, including Surface on U.
+  if (state?.deepJourney?.phase === 'underwater') rows.push(['U', 'Surface (return to the ramp)'], ['R', 'Sonar ping'], ['F', 'Lift bag (stop beside a part)']);
   rows.push(['C', 'Change camera']);
   if (duel && canLeaveCar(duel)) rows.push(['HOLD F',
     'Step out or bail out']);
   rows.push(['ESC / P', 'Pause'], ['M', 'Mute'], ['H', 'Hide this help']);
   return {title: 'CONTROLS', rows};
+}
+
+// SKI-VIEW: the ski keys (docs/HELI_SKIING.md section 4), shown by the ski HUD while skiing (H, since the hook means
+// nothing on skis). The third column is the short word on the HUD's key strip (null: help only).
+export function skiControlsHelp() {
+  return [['A D / LEFT RIGHT', 'Turn (in the air: spin)', 'turn'], ['S / DOWN', 'Skid to slow down (in the air: flip back)', 'skid'],
+    ['SHIFT', 'Tuck (no hard turns)', 'tuck'], ['W / UP', 'Skate on the flat (in the air: flip forward)', 'skate'],
+    ['SPACE', 'Pop', 'pop'], ['C', 'Change camera', 'camera'], ['ESC', 'Pause', null], ['M', 'Mute', null], ['H', 'Show or hide this help', 'help']];
 }
 
 export function controlsHelpMarkup(duel) {

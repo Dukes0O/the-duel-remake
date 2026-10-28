@@ -1,0 +1,11 @@
+{
+  "harbour-lights-reverse": {
+    "hash": "db641fd2dedc2b4b35d8b4303c8acb8752e9b68a902126fcc19208839c987443",
+    "nodes": 1145,
+    "meshes": 1128,
+    "instances": 224082,
+    "geometries": 228,
+    "materials": 61,
+    "textures": 18
+  }
+}

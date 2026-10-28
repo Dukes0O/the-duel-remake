@@ -17,7 +17,7 @@ the same files.
 
 | Topic | Decision |
 | --- | --- |
-| Missions (storyboard) | Hoist rescue (about 1,200 credits), avalanche beacon search (about 1,200), lost hiker before dark (about 1,000), avalanche supply run (about 1,000) |
+| Missions (storyboard) | Hoist rescue (3,000 credits), avalanche beacon search (3,000), lost hiker before dark (2,650), supply run (4,150); the storyboard's 1,200 and 1,000 were raised by HELI-PAY-CONTINUE |
 | Emergencies (14 October) | Search and rescue is another emergency beside fires, through the same radio engine |
 | How often (14 October) | The same kind may come twice in a row; what matters is that missions do not take over racing time |
 | Missed calls (storyboard) | Rescues left too long go to another pilot, and you miss the pay |
@@ -38,8 +38,10 @@ beacon's beeps, faster and faster, and lower the rescuer onto the spot to
 dig. Below the ridge you hold a steady hover beside a steep slope while the
 rescuer clips the driver on, then carry them both, gently, to the paramedics.
 Over the forest you fly a search pattern until an orange flare goes up. A
-clock on the panel counts down: run out and the ground team gets there
-first, everyone is fine, and you miss the pay.
+clock on the panel counts down, and the people you carry can get hurt: a
+bump, a hard set-down or a long wait makes them worse and the pay smaller.
+Run out of time or crash and the ground team brings them out badly hurt,
+you pay for the call-out, and your progress toward that skin drops.
 
 ## 3. Joining the mission engine
 
@@ -107,17 +109,27 @@ ground, including cruise legs (their flying time, as in H2).
 | hoist | 12 minutes | The driver is cold and hurt |
 | supply | 25 minutes | The lodge can last that long |
 
-- **Out of time:** "The ground team made it." No pay, no charge. Nobody is
-  ever hurt (question 2).
+- **Getting cold.** When two thirds of the clock has gone, a casualty who
+  is still unhurt becomes hurt (cold and waiting; section 4.1). Roger:
+  "They are getting cold. Hurry."
+- **Out of time is a failure** (section 4.2): the ground team brings the
+  person out badly hurt.
 - **Leaving the helicopter** (back to the menu, a race) with a rescue in
-  hand hands it to another crew the same way. A rescue cannot be paused by
-  walking away from it.
-- A crash with people on the line ends the rescue the same way: everyone is
-  fine, the ground team takes over, the crash repair is H1's.
+  hand is the same failure. A rescue cannot be paused by walking away from
+  it.
+- **A crash** with people aboard or on the line is the same failure, on top
+  of H1's crash repair.
 
 ### 3.5 After a rescue
 
 As in H2: count goes to 0, a new need is drawn, the quiet spell starts.
+
+### 3.6 No fires in winter
+
+Kyle, 15 October: seasons decide, and there is no forest fire in winter.
+The season clock itself goes into the engine with H2 (FIRE-SEASONS,
+`docs/HELI_FIRE.md` section 3.6); RESCUE-ENGINE adds the rescue rows of
+section 3.2's table to it.
 
 ## 4. The rescue line
 
@@ -137,9 +149,8 @@ New file `src/heli/heli-rescue.js`, pure and repeatable.
   set-down rules all apply.
 - **People on the line.** Airspeed at most 20 m/s (about 40 knots) with
   anyone on the line. Over 25 m/s Roger warns. Anyone on the line striking
-  terrain, a tree or a building faster than 4 m/s is a **bump**: Roger says
-  "Easy!", and the rescue pays 300 credits less (never below 0). No person
-  is ever shown hurt.
+  terrain, a tree or a building faster than 4 m/s is a **bump**, and bumps
+  hurt people (section 4.1).
 - **H does nothing** while people are on the line: nobody can be dropped.
 - **Setting the rescuer down at the site.** The rescuer must rest on the
   ground (the cable's load at rest, as in H1) within 3 m of the casualty or
@@ -153,6 +164,53 @@ New file `src/heli/heli-rescue.js`, pure and repeatable.
   m, H1) at 1 m/s or less: two paramedics walk over, the rescue is done and
   paid. The home pad's circle works for every kind; the site course's own
   landing zone works too.
+
+### 4.1 People can get hurt
+
+Kyle, 15 October 2026: people can get hurt, and failure has a cost.
+
+- **Condition.** Every casualty (the hiker, the buried skier, the stranded
+  driver) starts **unhurt** and can become **hurt**, then **badly hurt**.
+  People are hurt, never killed.
+- **What makes it worse** (one step each unless noted):
+  - a bump on the line faster than 4 m/s; faster than 8 m/s, two steps;
+  - setting the pair down anywhere harder than 1 m/s, once lifted: one step
+    (a touchdown the cable counts as a bump, above 4 m/s, is counted once, as
+    the bump);
+  - the hiker in the cabin: an H1 hard landing; a crash makes them badly
+    hurt;
+  - the clock passing two thirds while they are still unhurt (section 3.4).
+  - The rescuer is a professional and is never hurt.
+- **Pay by condition** at the handover: unhurt 100%, hurt 60%, badly hurt
+  25% (section 6). This replaces the flat 300 credits a bump that RESCUE-LINE
+  built; card RESCUE-HURT changes it.
+- **New and changed lines** (Roger, through the radio filter): the new
+  words for `rescue.bump` and `rescue.late`, and the new `rescue.hurt`,
+  `rescue.badly`, `rescue.cold` and `supply.late`. RESCUE-HURT recorded them;
+  they are in section 8's table.
+- **What it looks like.** Unhurt: they walk to the paramedics. Hurt: they
+  limp, a paramedic beside them. Badly hurt: the paramedics carry them on a
+  stretcher. Roger says which, at the handover.
+
+### 4.2 Failure and its cost
+
+A rescue fails when the clock runs out, when the helicopter crashes with
+people aboard or on the line, or when the player leaves the helicopter with
+the rescue in hand. Then:
+
+- the ground team brings the person out **badly hurt**, and Roger says so;
+- **no pay**, and a **400-credit charge** for the ground team's call-out,
+  taken by H1's repair rule (what the player has, the rest forgiven, never
+  below zero);
+- the tally toward that kind's skin **drops by one** (never below zero);
+- after a crash, H1's crash repair as well.
+
+A supply run that runs out of time pays for the crates delivered and costs
+200 credits (the lodge sends a snowcat); its tally drops by one too.
+
+A call that is never answered is not a failure: it goes to another crew and
+costs nothing but the missed pay, so nobody is forced off a race to fly
+(Kyle, 14 October).
 
 ## 5. The four rescues
 
@@ -249,9 +307,9 @@ rescues.
 - **Without Summit Run** (its switch off), the same run goes from the home
   pad to the yard by Tremblant Snow's lodge, with crates of 400, 500 and 900
   kg: snow has shut the road there instead.
-- **Pay.** 300 credits a crate, and 100 more when all three are down before
-  the clock ends (1,000 in all). A crate released from higher than 1 m
-  counts but pays 150 less (H1's drop rule, applied to the pay instead of a
+- **Pay.** 1,250 credits a crate, and 400 more when all three are down before
+  the clock ends (4,150 in all; was 300, 100 and 1,000). A crate released from higher than 1 m
+  counts but pays 650 less (H1's drop rule, applied to the pay instead of a
   repair).
 
 ### 5.5 Summit Run, a new destination
@@ -274,14 +332,15 @@ rescues.
 
 | Rescue | Pay (credits) | Counts toward |
 | --- | --- | --- |
-| Lost hiker | 1,000 | Searches |
-| Avalanche | 1,200 | Searches |
-| Hoist rescue | 1,200 | Hoist rescues |
+| Lost hiker | 1,000 (unhurt), 600 (hurt), 250 (badly hurt) | Searches |
+| Avalanche | 1,200, 720, 300 | Searches |
+| Hoist rescue | 1,200, 720, 300 | Hoist rescues |
 | Supply run | 300 a crate, 1,000 for all three | Supply runs |
 | Car recovery job | 500 | (a dispatch job) |
 
-- The same in Assisted and Real, as for fires. Bumps take 300 each, never
-  below 0.
+- The same in Assisted and Real, as for fires. A failed rescue pays
+  nothing, costs 400 credits and drops that skin's tally by one (section
+  4.2).
 - **The rescue badge** with the first hiker, avalanche or hoist rescue,
   shown beside the firefighter badge with its count: "Rescue. 4 people
   saved."
@@ -299,7 +358,7 @@ each skin to it without changing these rescues.
 | --- | --- | --- | --- |
 | Rescue line and harness | H4, for everyone | A rescuer rides H1's 15 m cable | (the base kit) |
 | Winch | Medevac skin | Reels the line from 5 to 40 m at 1.5 m/s, so you can hover higher above trees and cliffs | The fixed 15 m line: hover closer |
-| Stretcher | Medevac skin | The casualty lies on a stretcher: bumps cost half, hoist rescues pay 200 more | A harness |
+| Stretcher | Medevac skin | The casualty lies on a stretcher: a bump hurts only above 8 m/s, and two steps only above 14 m/s; hoist rescues pay 500 more (was 200) | A harness |
 | Searchlight | Search and rescue skin | The hiker search runs 8 minutes on into the night | The search ends at dark |
 | Heat camera | Search and rescue skin | The panel shows warm people within 150 m: the hiker under trees, a buried skier within 30 m | The flare and the beacon only |
 | Avalanche receiver | H4, for everyone | Hears the beacon (section 5.2) | (the base kit) |
@@ -341,11 +400,15 @@ prices and no courses; the panel names the place.
 | `heli.radio.rescue.steady` | Roger | Hold her steady. The rescuer needs you still. |
 | `heli.radio.rescue.clipped` | Roger | They are clipped on. Lift gently. |
 | `heli.radio.rescue.fast` | Roger | Slow down! People on the line. |
-| `heli.radio.rescue.bump` | Roger | Easy! Watch the people on the line. |
+| `heli.radio.rescue.bump` | Roger | Easy! You are hurting them. |
 | `heli.radio.rescue.done` | Roger | Safe and sound. Great work, Kestrel One. |
-| `heli.radio.rescue.late` | Roger | The ground team made it. Thanks for trying, Kestrel One. |
+| `heli.radio.rescue.late` | Roger | The ground team got there first. They are badly hurt and on their way to hospital. |
+| `heli.radio.rescue.hurt` | Roger | They are hurt, but they will be all right. The paramedics have them. |
+| `heli.radio.rescue.badly` | Roger | They are badly hurt. The paramedics are taking them to hospital. |
+| `heli.radio.rescue.cold` | Roger | They are getting cold, Kestrel One. Hurry. |
 | `heli.radio.supply.crate` | Roger | Crate is down. Thank you. |
 | `heli.radio.supply.done` | Roger | That is everything. The whole lodge thanks you, Kestrel One. |
+| `heli.radio.supply.late` | Roger | The lodge sent a snowcat in the end. They are still short of supplies. |
 | `heli.radio.season.summer` | Roger | Wildfire season is here. Keep an eye out for smoke. |
 | `heli.radio.season.winter` | Roger | Winter is here. Watch the ski hill for avalanches. |
 | `heli.radio.hiker.spotted` | Sarah | That is them! There is a clearing close by. Land there and they will walk over. |
@@ -353,8 +416,9 @@ prices and no courses; the panel names the place.
 | `heli.radio.line.first` | Brian | That is the rescue line. Fly smooth, and keep her under forty knots with people on it. |
 | `heli.radio.line.setdown` | Brian | Lower the rescuer gently, right beside them, and hold her there. |
 
-24 lines, made once each through `tools/audio/elevenlabs.mjs` and fitted to
-the month's voice credits; if credits run short, the season lines wait.
+28 lines, made once each through `tools/audio/elevenlabs.mjs` and fitted to
+the month's voice credits (24 by RESCUE-RADIO; RESCUE-HURT re-recorded two
+and added four).
 Brian's two lines play only on the first fitting and first set-down.
 
 ## 9. Sound cues
@@ -384,12 +448,13 @@ Added to `profile.heli.missions` (H2's field), all optional, version stays
 last: 'fire' | 'hiker' | 'avalanche' | 'hoist' | 'supply' | null
 call: null | {kind, id, courseId, day, answered, flights}
 rescue: null | {kind, id, courseId, seed, clockSeconds, stage,
-  crates: [0 | 1 | 2], bumps}
+  crates: [0 | 1 | 2], condition: 0 | 1 | 2}
 hoists, searches, supplies, rescued
 badges: ['firefighter', 'rescue']
 wreck: null | {courseId, carId, x, z, day}
 ```
 
+- `condition` is 0 unhurt, 1 hurt, 2 badly hurt.
 - `stage` is one of `fly`, `found`, `hold`, `carry`; `crates` holds 0 (at
   the pad), 1 (on the line) or 2 (delivered) for each of the three crates.
 - The season is worked out from `playDay.count`; nothing saved.
@@ -411,7 +476,7 @@ wreck: null | {courseId, carId, x, z, day}
 | --- | --- | --- |
 | `src/heli/heli-save.js` | The new mission fields and helpers | RESCUE-SAVE |
 | `src/heli/heli-search.js` | Site picks, the hiker's flare, the beacon | RESCUE-SITES |
-| `src/heli/heli-rescue.js` | The rescue line, set-down and hold, bumps, handover, crates | RESCUE-LINE |
+| `src/heli/heli-rescue.js` | The rescue line, set-down and hold, bumps, handover, crates | RESCUE-LINE; the casualty's condition and pay by condition, RESCUE-HURT |
 | `src/heli/heli-missions.js`, `src/heli/heli-jobs.js` | New kinds, seasons, waiting calls, clocks; Summit Run as a destination; the car recovery job | RESCUE-ENGINE |
 | `src/heli/heli-radio-lines.js`, `heli-audio.js` | Lines and cues | RESCUE-RADIO |
 | `src/heli/heli-session.js`, `heli-board.js` | Wiring | RESCUE-HOOKS |
@@ -434,7 +499,10 @@ wreck: null | {courseId, carId, x, z, day}
   Ridge offers at least 5 hoist spots and Tremblant Snow at least 3 slides;
   spotting distance and height; beep interval, pitch and signal bar; same
   seed, same sites.
-- `tools/test-heli-rescue.mjs`: weights on the line; speed warnings; bumps
+- `tools/test-heli-rescue.mjs`: condition steps (bumps at 4 and 8 m/s, hard
+  set-downs, the cabin, the cold at two thirds) and pay by condition;
+  failure: badly hurt, no pay, 400 credits taken by the repair rule, the
+  tally down one; weights on the line; speed warnings; bumps
   over 4 m/s and their pay; the hold resets when dragged or lifted; dig and
   strap times; handover only inside a circle at 1 m/s or less; H does
   nothing with people on the line; crates and their pay.
@@ -506,9 +574,10 @@ flowchart LR
   FM[C: FIRE-MISSIONS] --> ST[C: RESCUE-SITES]
   FS[C: FIRE-SAVE] & FM --> SV[C: RESCUE-SAVE]
   FB[C: FIRE-BUCKET] & FM --> LN[C: RESCUE-LINE]
-  FM & SV --> EN[C: RESCUE-ENGINE]
+  FM & SV & SE[C: FIRE-SEASONS] --> EN[C: RESCUE-ENGINE]
   FR[C: FIRE-RADIO] & FM --> RD[C: RESCUE-RADIO]
-  FH[C: FIRE-HOOKS] & EN & LN & ST & RD --> HK[C: RESCUE-HOOKS]
+  LN & RD --> HU[C: RESCUE-HURT]
+  FH[C: FIRE-HOOKS] & EN & LN & ST & RD & HU --> HK[C: RESCUE-HOOKS]
   HK & FV[C: FIRE-VIEW] & PE & PR --> VW[C: RESCUE-VIEW]
   VW & FF[C: FIRE-FINISH] --> FN[C: RESCUE-FINISH]
 ```
@@ -517,12 +586,13 @@ The people and props start now. Every build card needs FIRE-MISSIONS, the
 engine it joins, and the H2 card that last touches its files, so H4 builds
 alongside H2 without two builders in one file. H4 releases after H2.
 
-## 15. Questions for Kyle
+## 15. Kyle's answers (15 October 2026)
 
-1. **Seasons.** Every 12 play days the dispatch season turns: summer is
-   wildfire season (fires most likely), winter brings avalanches and supply
-   runs. It changes only which emergency comes, never how often.
-   Recommendation: yes.
-2. **Nobody gets hurt.** A bump costs pay, a late arrival or a crash means
-   the ground team takes over and everyone is fine. No injuries shown, ever.
-   Recommendation: yes, for a game played with your son.
+1. **Seasons: yes.** Seasons decide which emergency comes, and there is no
+   forest fire in winter (section 3.6; FIRE-SEASONS puts the clock in before
+   H2 releases).
+2. **People can get hurt, and failure has a cost** (sections 4.1 and 4.2):
+   bumps, hard set-downs and waiting make a casualty worse and the pay
+   smaller; a failed rescue brings them out badly hurt, pays nothing, costs
+   400 credits and drops that skin's tally by one. People are hurt, never
+   killed; an unanswered call costs nothing.

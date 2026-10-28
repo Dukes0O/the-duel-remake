@@ -27,57 +27,62 @@
   ],
   "description": "Native sitting-state shoves plus unchanged released solver and full-state road controls. Wall-pinned displacement is tangential; outward confinement stays a separate design question.",
   "solverFingerprint": "fb34f6167f8707be7c4cd3bee0addbde206a32ef9f5cddf3adb0a7c6a6baa9f2",
+  "solverFingerprintWithEnzo": "7521460c9e1cf8158f666fe740e91d729d5f001fb45d568708d63cfd5047ec8f",
+  "solverFingerprintWithF1": "b5b32ff149de5cdebda9dba356f07f218a5d65bfa7d9486b7b860e1b658d7bff",
+  "solverFingerprintWithBolide": "14125b11b1705eb800aaca2a0e782e3a1bf6247d58c4340d87153c4137a486e3",
+  "solverFingerprintWithSirena": "8718807985d0375e7dcff07efe816a417ceead733d46aa118907733e22e50b0b",
+  "solverFingerprintWithSpeirling": "4eadd8188e3ccb9ceb4a94c216e9b24273e18d4921d1960081d56d5249f17d00",
   "roadTicks": 360,
   "roadControls": [
     {
       "car": "falcone_f42",
       "course": "pacific-canyon",
-      "fingerprint": "0b436000b7621fdbcbe4e38f03da2bb30941b97f16048161e7416e298bf73d6d"
+      "fingerprint": "db1e0b05878647683947cbe6c523feb8b1772c9e0a63acfef8b243fe31e17fd8"
     },
     {
       "car": "stuttgart_959s",
       "course": "pacific-canyon",
-      "fingerprint": "dabed00f989fb24ce68dfe4771915ffe300372de89d812ac1c02e4a99f3cc0c4"
+      "fingerprint": "62d840f0852af5d4ba1d6e5ca2da0a29d8c07aee97877a1e15bfb72cbe449b9f"
     },
     {
       "car": "falcone_heritage",
       "course": "pacific-canyon",
-      "fingerprint": "efbb8f2a08d4ed99a0dd5fa340be2d8056f52c475f1dcb66e3bec7fc6352e3b4"
+      "fingerprint": "76efe7fecf9fc4cf66da5e30dedba405d516ec8f8764eea9535bac9e09cf2add"
     },
     {
       "car": "aurora_gt",
       "course": "pacific-canyon",
-      "fingerprint": "40df1b0a8a7ad4b12870bf6e18d788eaa433ba8cf11987fc4c36cdc3ce2fff78"
+      "fingerprint": "e31302f5da60d85dd9e727906d1acf2b2091081e1ca3a2abc6440ce8415393b4"
     },
     {
       "car": "dusthawk_rally",
       "course": "pacific-canyon",
-      "fingerprint": "30502a539201d584d048ad9fad092fe3e378795af63e3240f896455133c03533"
+      "fingerprint": "72f8c0563b8c34cd4348c432c05c424cda26fda154a9a28d4416fac95f06f6eb"
     },
     {
       "car": "banshee_muscle",
       "course": "pacific-canyon",
-      "fingerprint": "6dddffd048e4fce105ac1d68ae5ae028eaa5f772b7e93f3b7b4736b07c97fcc8"
+      "fingerprint": "c0f570e8a368f1b957e2c32b5e5b2985063b8b9c2255158a7217bf791d090eb7"
     },
     {
       "car": "viper_proto",
       "course": "pacific-canyon",
-      "fingerprint": "e06a6bda32d45841adf9cf1204520eb39e5b9a567e0707740c4f309caf7168a2"
+      "fingerprint": "e5940fbb1b1eaa21284869c647cc078e44903db1436a3cc2b779c70e7a4d6df7"
     },
     {
       "car": "titan_monster",
       "course": "pacific-canyon",
-      "fingerprint": "8d9de9253e4afbb0a0292ad6448cebd07438dfb9ab732319184cd8cc9fdab299"
+      "fingerprint": "d792a0f5686ac1efc8148eae7e7b7db3210e0c6861f6458ee77bc7d2c255f127"
     },
     {
       "car": "koenigsegg_jesko",
       "course": "pacific-canyon",
-      "fingerprint": "6c3d6667307f43b945d9d0c4c1c7267fd7dd404589e10780352742be0991cdf1"
+      "fingerprint": "fe342370c0cd5b79b3f01acd6d122eed35df0f7ba6395d0b774ed9742c6b93e7"
     },
     {
       "car": "titan_monster",
       "course": "high-country",
-      "fingerprint": "81fb2cba588e5c8c371184c470fd2d1817da2713e2bc22088bb318cf1293cd6f"
+      "fingerprint": "a40e2019fa986422b0125253bac4c3a9f699f6e813332cbe0ec9d17fba2ee348"
     }
   ]
 }

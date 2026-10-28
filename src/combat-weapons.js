@@ -4,8 +4,8 @@ import {CARS, DRIVE} from './config.js';
 import {makeRng} from './rng.js';
 import {WEAPONS, CPU_COMBAT, COMBAT_TUNING} from './wasteland-tuning.js';
 import {arenaTargetOf, arenaTargetOutOfPlay, combatOwnerId} from './combat-teams.js';
-import {footMoveDirection} from './onfoot.js';
-import {carEffect,carAlongPush,clearCarAlongPush} from './arsenal/car-effects.js';
+import {carEffect,clearCarAlongPush} from './arsenal/car-effects.js';
+import {point, aimPoint, velocity, predictedPoint, burst} from './combat-actors.js';
 import {deployOil} from './arsenal/oil.js';
 import {deploySmoke} from './arsenal/smoke.js';
 import {deployCaltrops} from './arsenal/caltrops.js';
@@ -39,7 +39,7 @@ export function stepCpuWeaponCooldowns(actor, dt) {
     timers[id] = Math.max(0, timers[id] - dt);
 }
 
-export {WEAPONS};
+export {WEAPONS, point, aimPoint, velocity, predictedPoint, burst};
 const T = COMBAT_TUNING;
 
 // A course can opt out with noCombat (the Grand Circuits are pure race tracks, docs/CIRCUITS.md).
@@ -81,52 +81,6 @@ export function createCombat(levels) {
   };
 }
 
-export function point(duel, actor) {
-  const at = duel.course.groundAt(actor.s, actor.lateral);
-  return {...at, y: at.y + T.pointHeight + (actor.airHeight || 0)};
-}
-
-// A carrier's aim follows the fighter; point() remains the physical car hitbox.
-function fuelCarrierFighter(duel, actor) {
-  const state = duel.state;
-  return actor === state && state.arena?.mode === 'fuel-run' && state.onFoot &&
-    state.arena.participants.find(p => p.id === 'player')?.fuelCanisterId
-    ? state.fighter : null;
-}
-
-export function aimPoint(duel, actor) {
-  const fighter = fuelCarrierFighter(duel, actor);
-  return fighter ? {x: fighter.x, y: fighter.y + T.pointHeight, z: fighter.z,
-    heading: fighter.yaw} : point(duel, actor);
-}
-
-export function velocity(actor, at) {
-  const heading = at.heading + (actor.headingError || 0);
-  const speed = (actor.speedMph || 0) * (actor.dir || 1) * DRIVE.mphToWorld;
-  const alongPush = carAlongPush(actor);
-  return {
-    x: Math.sin(heading) * speed + Math.cos(at.heading) * (actor.pushVelocity || 0) + Math.sin(at.heading) * alongPush,
-    z: Math.cos(heading) * speed - Math.sin(at.heading) * (actor.pushVelocity || 0) + Math.cos(at.heading) * alongPush,
-  };
-}
-
-export function predictedPoint(duel, actor, seconds) {
-  const fighter = fuelCarrierFighter(duel, actor);
-  if (fighter) {
-    const move = footMoveDirection(fighter.yaw, duel.state.fighterInput || {});
-    const speed = fighter.knockedDown ? 0 : fighter.speed;
-    return {x: fighter.x + move.x * speed * seconds, y: fighter.y,
-      z: fighter.z + move.z * speed * seconds};
-  }
-  const frame = duel.course.at(actor.s);
-  const speed = (actor.speedMph || 0) * (actor.dir || 1) * DRIVE.mphToWorld;
-  const headingError = actor.headingError || 0;
-  const along = (Math.cos(headingError) * speed + carAlongPush(actor)) /
-    Math.max(T.predictionCurveFloor, 1 - frame.curvature * actor.lateral);
-  const lateral = Math.sin(headingError) * speed + (actor.pushVelocity || 0);
-  return duel.course.groundAt(actor.s + along * seconds, actor.lateral + lateral * seconds);
-}
-
 // Range checks and production share the native lead and launch direction.
 function crossbowAim(duel, actor, target, at, level, straightShot, lead) {
   const goal = straightShot ? {x: at.x + Math.sin(at.heading + (actor.headingError || 0)) * 100,
@@ -146,11 +100,6 @@ function crossbowAim(duel, actor, target, at, level, straightShot, lead) {
   return {goal, speed, dx: dx / length, dz: dz / length, length};
 }
 
-export function burst(combat, at, kind = 'blast') {
-  combat.bursts.push({...at, kind, id: ++combat.serial, age: 0});
-  if (combat.bursts.length > T.burstLimit) combat.bursts.shift();
-}
-
 function relocate(actor, pose) {
   Object.assign(actor, pose);
   actor.prevS = actor.s;
@@ -159,7 +108,7 @@ function relocate(actor, pose) {
   actor.yawVelocity = 0;
   actor.pushVelocity = 0;
   clearCarAlongPush(actor);
-  actor.slipAngle = 0;
+  actor.slipAngle = 0; if(Object.hasOwn(actor,'tyreSlip'))actor.tyreSlip = 0;
   actor.airborne = false;
   actor.airHeight = 0;
   actor._jumpY = null;

@@ -14,7 +14,7 @@ This file holds the settled design, the tests and the acceptance. Design:
     locks: [busy-game-files]
     flag: earned-cars
     owns: [src/earned-cars-ui.js, tools/test-earned-cars-ui.mjs, tools/scenarios/earned-cars.mjs, docs/changes/EARN-SCREEN.md]
-    hooks: [src/app.js, src/screen-garage.js, src/screen-results.js, src/screen-menu.js, src/screen-armory.js, src/screen-router.js, src/screen-leaderboard.js, src/heli/heli-jobs.js, src/screen-garage.css, src/screen-results.css]
+    hooks: [src/app.js, src/screen-garage.js, src/screen-results.js, src/screen-menu.js, src/screen-armory.js, src/screen-router.js, src/screen-leaderboard.js, src/heli/heli-jobs.js, src/audio.js, src/screen-garage.css, src/screen-results.css]
 ```
 
 ## What to build
@@ -67,3 +67,11 @@ This file holds the settled design, the tests and the acceptance. Design:
 - The tests, the lane tier and the build pass; one ordinary code review.
 - Nothing about races, pay, saves or records changes beyond what
   EARN-MEDALS already does.
+
+## Re-sliced while building (Claude, 14 October 2026)
+
+`tools/test-heli-mode.mjs` also gains one approved import for the earned-car
+test (it reads `AIR_ONLY_CARS`). `src/audio.js` joins the hooks for one line: the race's sound events go out
+before settlement, so the new-medal cue needs its own `{medalEarned: true}`
+event, which plays the existing `interface.bonus`. No new sound, and the
+`sound-bank` lock is not needed (no cue is added to the bank).

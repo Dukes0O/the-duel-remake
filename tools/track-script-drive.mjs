@@ -1,10 +1,33 @@
 // Drives an authored circuit headless with the built-in test driver (the demo
 // autopilot in src/app.js) through the real Duel rules, memory-only saves.
 // Used by the track script tests and each circuit's own test.
+import {createFeatureFlags} from '../src/feature-flags.js';
 import { App } from '../src/app.js';
-import { COURSE, DEFAULT_CPU_DIFFICULTY, DRIVE, steeringYawAuthority } from '../src/config.js';
+import { COURSE, DEFAULT_CPU_DIFFICULTY, DRIVE, steerForYaw } from '../src/config.js';
 import { DEFAULT_DRIVER } from '../src/drivers.js';
 import {pitTransitTarget} from '../src/pit-lane.js';
+import {tunedGrip} from '../src/lab/lab-tune.js';
+import {buildRacingLine} from '../src/track-script.js';
+
+// A circuit's racing line is worked out for dry road. On slippery ground the car turns more slowly: its turning
+// rate falls in step with the traction, its grip limit only with the square root. At the dry line's offsets and
+// speeds a tight hairpin on snow is taken too fast and too narrow, and the car runs wide off the road. So on
+// ground with less than full traction the driver takes its line from the same builder with the car's limits
+// scaled to that traction (a bigger circle, a lower speed) and a tenth of the turning rate held in reserve.
+// Traction is rounded to 5% steps and one line is kept for each step.
+const slipperyLines = new WeakMap(), SLIP_RESERVE = .9;
+function lineForTraction(course, traction) {
+  const dry = course.racingLine, step = Math.max(.05, Math.round(traction * 20) / 20);
+  if (!(traction < .98) || !course.script || !dry.dynamics) return dry;
+  let byStep = slipperyLines.get(course);
+  if (!byStep) slipperyLines.set(course, byStep = new Map());
+  if (!byStep.has(step)) {
+    const dyn = dry.dynamics;
+    byStep.set(step, buildRacingLine(course.script, { ...dyn, lateralAccel: dyn.lateralAccel * step, yawRate: dyn.yawRate * step * SLIP_RESERVE,
+      minRadius: dyn.minRadius / step, brake: dyn.brake * step }));
+  }
+  return byStep.get(step);
+}
 
 // The stock demo driver (src/app.js) judges a corner from three points ahead
 // of the car, which is not enough to brake for a hairpin at the end of a long
@@ -13,52 +36,65 @@ import {pitTransitTarget} from '../src/pit-lane.js';
 // scaled to the car's grip (the profile is for the grip .82 reference car) and a skill factor.
 export function useRacingLine(app, skill = .95) {
   app._driveAutopilot = function lineDriver() {
-    const d = this.duel, st = d.state, course = d.course, line = course.racingLine;
+    const d = this.duel, st = d.state, course = d.course;
     if (st.status === 'ticket') { d.ackTicket(); return; }
     if (st.status !== 'racing') return;
     if (st.impactTimer > 0) { d.setInput({ throttle: 0, brake: 0, steer: 0, boost: false }); return; }
     if (!d.diff.autoShift) d.setInput({ shiftUp: st.revs > .95, shiftDown: st.revs < .48 && st.gear > 0 });
     const v = Math.max(0, st.speedMph) * DRIVE.mphToWorld, halfWidth = course.roadHalfWidthAt(st.s);
     const transit = pitTransitTarget(course, st, st.s + Math.max(12, v * .45));
+    const surface = d._drivingSurface(st.s, st.lateral), lookTraction = d._drivingSurface(st.s + Math.max(12, v * .45), 0).traction || 1;
+    // The line is chosen for the ground just ahead; the profile already carries the traction when it was built for it.
+    const line = lineForTraction(course, lookTraction), slippery = line !== course.racingLine;
     let targetLat = transit?.lateral ?? line.offsetAt(st.s + Math.max(12, v * .45));
     for (const other of transit ? [] : st.opponents || []) {
       const ahead = d.relativeS(other.s, st.s) - st.s;
       if (ahead > -10 && ahead < 28 + v * .8 && Math.abs(other.lateral - targetLat) < 2.8) {
-        targetLat = clampTo(other.lateral + (other.lateral > 0 ? -3.4 : 3.4), halfWidth - 1.8);
+        targetLat = passingLateral(st.lateral, other.lateral, halfWidth);
         break;
       }
     }
     const headingTarget = Math.atan((targetLat - st.lateral) * 2.5 / Math.max(15, v));
     const look = course.at(st.s + v * .18);
     const desiredYaw = look.curvature * v + (headingTarget - st.headingError) * 6;
-    const surface = d._drivingSurface(st.s, st.lateral);
-    const authority = Math.max(.05, steeringYawAuthority(st.speedMph, d.car.grip, surface.traction, d.car));
-    const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
-    // The profile is for a car of grip 1; speed in a corner goes with the square root of grip.
+    // The profile is for a car of grip 1; speed in a corner goes with the square root of grip. A tuned car's grip
+    // depends on speed (the wing), so the driver takes the grip it has at the speed the line asks for.
+    const lineMph = line.speedAt(st.s) * skill / DRIVE.mphToWorld, grip = d.car.tune ? tunedGrip(d.car, lineMph, 0) : d.car.grip;
     const target = Math.min(surface.speedLimit, d.car.topSpeed * .97,
-      transit?.speedMph ?? line.speedAt(st.s) * skill * Math.sqrt(d.car.grip / .82 * (surface.traction || 1)) / DRIVE.mphToWorld);
-    d.setInput({ throttle: st.speedMph < target ? 1 : 0, brake: st.speedMph > target + 3 ? Math.min(1, (st.speedMph - target) / 14) : 0, steer, boost: false });
+      transit?.speedMph ?? line.speedAt(st.s) * skill * Math.sqrt(grip / .82 * (slippery ? 1 : surface.traction || 1)) / DRIVE.mphToWorld);
+    const brake = st.speedMph > target + 3 ? Math.min(1, (st.speedMph - target) / 14) : 0;
+    const steer = steerForYaw(desiredYaw, {speedMph:st.speedMph,grip:d.car.tune ? tunedGrip(d.car, st.speedMph, brake) : d.car.grip,traction:surface.traction,car:d.car,brake:brake,tyreSlip:st.tyreSlipRules===true&&!st.airborne&&st.speedMph>=0});
+    d.setInput({ throttle: st.speedMph < target ? 1 : 0, brake, steer, boost: false });
   };
 }
 const clampTo = (value, limit) => Math.max(-limit, Math.min(limit, value));
 
+// Keep passing on the player's existing side when a rival crosses the road
+// centre. The old centre-based choice jumped 6.8 m and reversed full steering.
+export const passingLateral = (playerLateral, rivalLateral, halfWidth) =>
+  clampTo(rivalLateral + (playerLateral >= rivalLateral ? 3.4 : -3.4), halfWidth - 1.8);
+
+
 // `def` may be an event already in COURSE (found by id) or a definition that is
 // added to COURSE for the length of the run only (tests, never the game).
 export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', cpuDifficulty = DEFAULT_CPU_DIFFICULTY,
-  fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, onTick } = {}) {
+  fps = 60, seed = 1989, maxSeconds = 1200, opponentCount = 1, driver = 'line', skill = .95, tyre = null, flags = [], featureFlags = null, onTick, tune = null, mode = 'duel', stopAfterLaps = 0 } = {}) {
+  if(!Array.isArray(flags)||flags.some(flag=>!['tyre-slip','lab-tuning','grand-prix'].includes(flag))) throw Error('Unsupported driver flags.');
   const added = !COURSE.includes(def) && !COURSE.some(item => item.id === def.id);
   if (added) COURSE.push(def);
   try {
     const memory = new Map();
     globalThis.localStorage = { getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)), removeItem: key => memory.delete(key) };
     const app = new App();
+    if(featureFlags) app.duel.featureFlags=featureFlags;
+    else if(flags.length) app.duel.featureFlags=createFeatureFlags({storage:null,qa:false,search:'',overrides:Object.fromEntries(flags.map(flag=>[flag,true]))});
     const stageIndex = COURSE.findIndex(item => item.id === def.id);
     // The Duel is started directly: a new circuit has no shop price yet, and
     // the course access rules have their own suites.
     app._refreshPlayer();
     app.seed = seed; app.cpuDifficulty = cpuDifficulty;
-    app.duel.startCampaign({ mode: 'duel', car, difficulty, cpuDifficulty, driverId: DEFAULT_DRIVER, startStage: stageIndex, seed,
-      opponentCount, playerId: app.player.id, upgrades: {}, ...(tyre ? { tyre } : {}) });
+    app.duel.startCampaign({ mode, car, difficulty, cpuDifficulty, driverId: DEFAULT_DRIVER, startStage: stageIndex, seed,
+      opponentCount, playerId: app.player.id, upgrades: {}, ...(tyre ? { tyre } : {}), ...(tune ? { tune } : {}) });
     app.autopilot = true;
     app._scriptedCrashDone = true; // skip the demo's deliberate shoulder visit
     if (driver === 'line' && app.duel.course.racingLine) useRacingLine(app, skill);
@@ -88,7 +124,7 @@ export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', 
       facts.lapMinMph[lap] = Math.min(facts.lapMinMph[lap] ?? Infinity, s.speedMph);
       onTick?.(s, d);
     };
-    while (!['stage_result', 'gameover', 'complete'].includes(d.state.status) && frames++ < fps * maxSeconds) app.advance(1 / fps, 1 / fps);
+    while (!['stage_result', 'gameover', 'complete'].includes(d.state.status) && frames++ < fps * maxSeconds && !(stopAfterLaps && d.state.completedLaps >= stopAfterLaps)) app.advance(1 / fps, 1 / fps);
     const s = d.state;
     return { ...facts, status: s.status, completed: s.results?.completed === true, won: s.results?.won === true,
       laps: s.completedLaps, lapTimes: [...(s.lapTimes || [])], timeSec: s.results?.timeSec ?? s.stageTimeSec,

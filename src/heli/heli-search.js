@@ -12,7 +12,7 @@ import {airFactor, GRAVITY, KESTREL} from './heli-flight.js';
 export const SEARCH = Object.freeze({
   // Every circle here is given by its radius, as H1's 12 m landing circle is.
   // The lost hiker (5.1).
-  areaRadius: 300, hikerFromPoint: 250, clearingWithin: 120, clearingRadius: 12,
+  areaRadius: 180, hikerFromPoint: 120, clearingWithin: 120, clearingRadius: 12,
   spotSideways: 70, spotHeight: 120, flareSeconds: 60, hikerWalk: 1.2,
   // The avalanche (5.2). Tremblant Snow's ski hill is 36 m high and gentle
   // (its slopes average 10 to 13 degrees), so a slide's mean slope may be 10
@@ -22,7 +22,7 @@ export const SEARCH = Object.freeze({
   slideSections: Object.freeze(['Snowfields', 'Avalanche Gallery']),
   beaconRange: 60, beepAt: Object.freeze([0.15, 1.6]), beepPitch: Object.freeze([900, 1400]),
   // The hoist rescue (5.3).
-  hoistSlope: Object.freeze([25, 40]), hoistBelowRoad: 10, hoistFromEdge: Object.freeze([20, 120]), hoistTreeClear: 12,
+  hoistSlope: Object.freeze([25, 40]), hoistBelowRoad: 10, hoistFromEdge: Object.freeze([20, 120]), hoistTreeClear: 12, hoistFromStart: 550,
   hoistSections: Object.freeze(['Mountain Climb', 'The Ridge']),
   // The supply run (5.4): the yard is a clear circle of 10 m radius near the
   // hut or lodge. On Summit Run the crates wait where the trucks had to stop:
@@ -215,7 +215,10 @@ export function hoistSpots(course, ground, {step = 16} = {}) {
         off += 30; // one spot per stretch of slope
       }
     }
-    return Object.freeze(out);
+    // Keep the two-person return close to the arrival pad. All slope, road
+    // and tree checks above still apply; the seed chooses among nearby sites.
+    const start = course.at(40);
+    return Object.freeze(out.filter(spot => Math.hypot(spot.x - start.x, spot.z - start.z) <= SEARCH.hoistFromStart));
   });
 }
 
@@ -267,3 +270,46 @@ export function crateSpots(course, ground, zone) {
 // The most Kestrel One holds in the air at an altitude (H1: thrust times
 // e to the minus altitude over 8,500 m), in kg of everything flying.
 export const liftAt = altitudeM => KESTREL.maxThrust * airFactor(altitudeM) / GRAVITY;
+
+// ---- gear: the search and rescue skin (docs/HELI_WILDLIFE.md section 5.3) -----
+// gear is the worn gear's numbers (heli-skins.js gearStats). With the base kit,
+// or none, the search ends at dark and the panel shows the flare and the
+// beacon only.
+
+// The hiker search clock limit in seconds: the searchlight (gear.searchNightMinutes)
+// adds its minutes on into the night. Only the hiker search; every other kind,
+// and the base kit, keep the limit they have.
+export function searchLimit(baseSeconds, kind, gear) {
+  const minutes = kind === 'hiker' && Number.isFinite(gear?.searchNightMinutes) ? Math.max(0, gear.searchNightMinutes) : 0;
+  return baseSeconds + minutes * 60;
+}
+
+// Where the hiker search is in the light: baseSeconds is the clock limit with
+// no searchlight (dark falls there). Returns {dark, nightSeconds, lightOn}:
+// whether dark has fallen, how long it has been dark, and whether the
+// searchlight is lighting the night (worn, and dark).
+export function searchNight(clockSeconds, baseSeconds, gear) {
+  const nightSeconds = Math.max(0, clockSeconds - baseSeconds);
+  return {dark: clockSeconds >= baseSeconds, nightSeconds, lightOn: nightSeconds > 0 && searchLimit(baseSeconds, 'hiker', gear) > baseSeconds};
+}
+
+// The heat camera (gear.heatRange): the warm people it shows, nearest first.
+// heli is {x, y, z}; targets are the people of the rescue in hand, each
+// {x, z, y?} or null: hiker (shown within the heat range, trees do not hide
+// them), driver (the same, in a hoist rescue) and skier (the buried beacon,
+// shown only within gear.heatBuriedRange). Distance is measured in a straight
+// line, height included. Returns [{kind, x, z, distance}]; empty when the
+// camera is not worn. It shows; it never finds, counts or pays.
+export function heatContacts(heli, targets, gear) {
+  const range = Number.isFinite(gear?.heatRange) ? gear.heatRange : 0;
+  if (!(range > 0)) return [];
+  const buried = Number.isFinite(gear?.heatBuriedRange) ? gear.heatBuriedRange : 0;
+  const out = [];
+  for (const [kind, limit] of [['hiker', range], ['driver', range], ['skier', buried]]) {
+    const target = targets?.[kind];
+    if (!target || !(limit > 0)) continue;
+    const distance = Math.hypot(heli.x - target.x, (heli.y ?? 0) - (target.y ?? 0), heli.z - target.z);
+    if (distance <= limit) out.push({kind, x: target.x, z: target.z, distance});
+  }
+  return out.sort((a, b) => a.distance - b.distance || (a.kind < b.kind ? -1 : 1));
+}

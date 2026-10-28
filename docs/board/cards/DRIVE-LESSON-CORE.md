@@ -23,7 +23,7 @@ reuse them. The helicopter keeps every name and behaviour it has today:
   and the skip button, and calls it for the list.
 
 Owns: `src/lessons/lesson-core.js`, `radio-voice.js`, `lesson-board.js`,
-`lesson-board.css`, `tools/test-lesson-core.mjs`,
+`lesson-board.css`, `tools/test-heli-lesson-core.mjs`,
 `docs/changes/DRIVE-LESSON-CORE.md`.
 Hooks: `src/heli/heli-lessons.js`, `heli-audio.js`, `heli-radio-lines.js`,
 `heli-ui.js`, `heli-ui.css` (the moved styles), `src/screen-router.js` (one

@@ -105,3 +105,41 @@ Nothing is merged or registered until it passes.
 Kyle, 14 October 2026: "4th round." Round 4 builds the lamp clusters as
 recessed geometry and adds a waist line along the doors, then the sheet goes
 to Kyle again.
+
+## Claude answers (15 October): the Enzo's numbers
+
+Settled from the real car's character: a 660 hp V12 two-seater, sticky and
+quick but older and softer than the Jesko, light enough for Kestrel One.
+
+| Car (fully tuned) | topSpeed | accel | grip | braking | mass | kind |
+| --- | --- | --- | --- | --- | --- | --- |
+| F42 (stock bought) | 201 | 7.6 | 0.82 | 0.90 | | |
+| Banshee muscle | 209 | 9.3 | 0.86 | 0.98 | 1,810 | muscle |
+| Aurora prototype | 232 | 8.8 | 1.13 | 1.24 | 940 | prototype |
+| Jesko | 298 | 10.8 | 1.12 | 1.50 | 1,390 | hypercar |
+| **Enzo** | **197 base (218 tuned)** | **9.4** | **1.08** | **1.18** | **1,365** | **hypercar** |
+
+- `topSpeed: 197` (x 1.105 = 217.7, about 218 mph), `gears: [58, 100, 138, 168, 186, 197]` (six-speed).
+- `accel: 9.4`, `grip: 1.08`, `braking: 1.18` (carbon-ceramic brakes, below the Aurora's 1.24).
+- `offRoadGrip: 0.62`, `offRoadSpeed: 58`, `offRoadScrub: 0.56` (a low supercar, poor off the road).
+- `mass: 1365`, `collision: {halfWidth: 1.02, halfLength: 2.35}`, `height: 1.15`, `kind: 'hypercar'`.
+- `color: 0xb3121a` (deep Rosso), `accent: 0x16181b`.
+- `unlockRequirement: {kind: 'medals', medals: 6}`, `factoryMaxed: true`, no price.
+- Look: round 4 picked (`docs/board/looks/earned-cars/round-4-review.md`; its sheet was replaced by round 5).
+
+## Merged, two checks left (15 October)
+
+The Enzo is merged behind the `earned-cars` switch (lane 381/381, build
+passed, one review CLEAR). `sound-bank` is released for EARN-CAR-2 and 3.
+Still open on this card: the Panorama Ridge Grand Prix frame check in a field
+of Enzos (in the next full check) and Claude's in-game look verdict.
+
+## In-game look verdict, round 5 (Claude, 15 October 2026)
+
+**Pass: gritty, not toy-like.** Checked in the game at Panorama Ridge from the
+chase camera, the side, the front and the rear, plus damage, the showroom
+and the garage (`docs/board/looks/earned-cars/round-5-review.md`; the sheet was removed after the verdict).
+Two small fixes in `src/enzo-vehicle.js`: dark grey twin five-spoke wheels with a
+silver rim in place of flat white ones, and the splitter and diffuser pulled back
+inside the body. Still open: the Panorama Ridge Grand Prix frame check in a
+field of Enzos, left for the nightly full check.

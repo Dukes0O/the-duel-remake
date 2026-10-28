@@ -45,7 +45,8 @@ moves at most a cell or two a step, and stronger embers (3.5, 4) did not
 move it. The test reads Tremblant Woods' real trees, so a lane that moves
 those trees can move these medians; rerun `tools/test-heli-fire.mjs` then.
 
-The clock (section 4.2) is `runFireEngine` (a step per 90 s of engine time,
+The clock (section 4.2) is `runFireEngine` (a step per 200 s of engine time since
+FIRE-FINISH, one real bucket trip; it was 90 s,
 leftover seconds kept unrounded), `fireNewDay` (three steps) and
 `cruiseSeconds` (fuel / 0.6 kg/s); none steps a lost fire. The grid is
 built only from course seed 1989, the helicopter's, so saved cells always

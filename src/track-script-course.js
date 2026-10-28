@@ -6,6 +6,7 @@ import { escapeRoadsFor, escapeFrame } from './escape-roads.js';
 import { checkSurfaceRules, iceBoards, winterBankPatches } from './race-surfaces.js';
 import { hillLocal, hillReach, hillHeight, runWeight, basinReach } from './circuit-hills.js';
 import { makeRng } from './rng.js';
+import { renderedGroundHeight } from './rendered-ground.js';
 import {installPitLane, pitAt} from './pit-lane.js';
 import { KIT_FOOTPRINTS } from './kit-footprints.js';
 
@@ -212,9 +213,14 @@ function scatterScenery(course) {
   // off the road, the runoff and the inside of corners; the circuit's clear
   // zones and kit pieces keep it off the lake, the lift and the paddock. It has
   // its own random stream, so a circuit without one is exactly as it was.
-  const forest = course.def.scenery?.forest;
-  if (forest) {
-    const random = makeRng(0x6f7265 ^ (course.def.stage + 1) * 0x9e37), taken = new Map(), cell = 6;
+  // A far forest (`scenery.farForest`, the same fields plus its own `clear`
+  // stretches) is a second band planted after the first with its own random
+  // stream and names (`far-forest-N`), so the first band's trees, names and
+  // draws are exactly as they were; it only avoids the spots already taken.
+  // Its trees stand on the drawn ground (rendered-ground.js), which beyond
+  // the first band can differ from the course's own ground by metres.
+  const plantBand = (band, random, prefix, {zones = [], drawnGround = false} = {}) => {
+    const taken = new Map(), cell = 6;
     const key = (x, z) => `${Math.floor(x / cell)}:${Math.floor(z / cell)}`;
     const claim = (x, z) => { const k = key(x, z); if (!taken.has(k)) taken.set(k, []); taken.get(k).push([x, z]); };
     for (const o of f.obstacles) claim(o.x, o.z);
@@ -223,12 +229,83 @@ function scatterScenery(course) {
         for (const [ox, oz] of taken.get(key(x + i * cell, z + j * cell)) ?? []) if (Math.hypot(ox - x, oz - z) < radius) return true;
       return false;
     };
-    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35, scale: scaleRange, clumps, jitter = .9 } = forest;
-    const authoredRanges=forest.ranges;
+    const ownClear = (s, off, radius) => {
+      const phase = course.phase(s);
+      return zones.some(zone => phase >= zone.s0 - radius && phase <= zone.s1 + radius && off >= zone.from - radius && off <= zone.to + radius);
+    };
+    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35, scale: scaleRange, clumps, jitter = .9 } = band;
+    const authoredRanges=band.ranges;
     if(authoredRanges&&(!Array.isArray(authoredRanges)||!authoredRanges.length||authoredRanges.some(range=>
       !Number.isFinite(range.from)||!Number.isFinite(range.to)||range.from<0||range.to>course.length||range.to<=range.from)))
       throw new TrackScriptError('Forest ranges must lie on their authored course.');
     let serial = 0;
+    if (band.groves) { plantGroves(); return; }
+    // Groves (`groves: {every, chance, radius: [least, most], spacing, crowd, size, lone, minGrove, skyline}`): clumps of firs
+    // with bare ground between, the way spruce stands cover the Ardennes hills. A grove's centre is picked every `every` m
+    // along each side of the road (kept with `chance`, less often toward the back), at `from` to `to` m out; its trees
+    // stand on a jittered grid of `spacing` m inside `radius`, thinner and smaller toward a ragged edge. Trees may crowd
+    // each other to `crowd` crown widths. A grove with fewer than `minGrove` trees is dropped, and a tree that would stand
+    // against the sky as seen from the road beside it (no ground behind it rises above its top) is dropped too unless
+    // `lone` other trees stand within 14 m, so only groves, never single trees, reach the ridge lines.
+    function plantGroves() {
+      const { every, chance, radius: [rLeast, rMost], spacing: grid, crowd = 1.6, size = .3, lone = 5, minGrove = 6, rise = 0 } = band.groves;
+      const sky = band.groves.skyline ?? {}, seeAhead = sky.reach ?? 1100;
+      const eyeHeight = sky.eye ?? 6, topHeight = sky.top ?? 6.5;
+      const clearOf = (n, scale) => cleared(n.s, n.lateral, 2.5 * scale) || zones.length && ownClear(n.s, n.lateral, 2.5 * scale);
+      // True when ground behind the tree, as seen from the nearest road, never rises to the tree's top: it would show against sky.
+      const againstSky = (tree, n) => {
+        const road = course.worldAt(n.s, 0), eye = course.groundAt(n.s, 0).y + eyeHeight, dx = tree.x - road.x, dz = tree.z - road.z;
+        const reach = Math.hypot(dx, dz);
+        if (reach < 1) return false;
+        const ux = dx / reach, uz = dz / reach, top = (tree.y + topHeight * tree.scale - eye) / reach;
+        let best = -Infinity, step = 14;
+        for (let d = reach + step; d < reach + seeAhead; d += step, step = Math.min(70, step * 1.25)) {
+          const y = renderedGroundHeight(course, { x: road.x + ux * d, z: road.z + uz * d, s: n.s, off: n.lateral }, { requireSurface: true });
+          if (Number.isFinite(y)) best = Math.max(best, (y - eye) / d);
+        }
+        return top > best;
+      };
+      for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += every) {
+        const s = base + random.float() * every, depth = from + (to - from) * random.float();
+        if (random.float() > chance || random.float() < thin * (depth - from) / Math.max(1, to - from)) continue;
+        const centre = course.worldAt(s, side * (course.roadHalfWidthAt(s) + depth)), radius = random.range(rLeast, rMost);
+        const found = [];
+        for (let u = -radius; u <= radius; u += grid) for (let v = -radius; v <= radius; v += grid) {
+          const x = centre.x + u + (random.float() - .5) * grid * jitter, z = centre.z + v + (random.float() - .5) * grid * jitter;
+          const reach = Math.hypot(x - centre.x, z - centre.z) / radius, keep = random.float(), grown = random.range(.9, 1.7), angle = random.range(0, TAU);
+          if (reach > 1 || keep > 1 - .8 * reach * reach) continue;
+          let scale = scaleRange ? scaleRange[0] + (grown - .9) / .8 * (scaleRange[1] - scaleRange[0]) : grown;
+          scale *= 1 + size * (.6 - reach);
+          const n = course.nearest(x, z), edge = n.distance - course.roadHalfWidthAt(n.s);
+          if (edge < from + .5 || edge > to - .5 || clearOf(n, scale)) continue;
+          const piece = script.pieceAt(n.s);
+          if (piece.kind === 'turn' && Math.sign(n.lateral) === piece.dir && n.distance < course.roadHalfWidthAt(n.s) + 30) continue;
+          const p = course.worldAt(n.s, n.lateral);
+          // Flat ground behind the first band is hidden by it; only slopes that climb above the road are worth a tree.
+          if (rise > 0 && renderedGroundHeight(course, { x: p.x, z: p.z, s: n.s, off: n.lateral }) - course.groundAt(n.s, 0).y < rise) continue;
+          if (crowded(p.x, p.z, crowd * scale)) continue;
+          claim(p.x, p.z);
+          found.push({ s: n.s, off: n.lateral, scale, angle, n });
+        }
+        if (found.length < minGrove) continue;
+        const trees = found.map(row => { const t = add(`${prefix}-${serial}`, 'tree', row.s, row.off, .23 * row.scale, .23 * row.scale, row.angle, { scale: row.scale }); t.y = renderedGroundHeight(course, t); t.farForest = true; return t; });
+        found.forEach((row, i) => {
+          const tree = trees[i];
+          if (!againstSky(tree, row.n)) return;
+          if (trees.filter(other => other !== tree && Math.hypot(other.x - tree.x, other.z - tree.z) < 14).length >= lone) return;
+          tree.dropped = true;
+        });
+        // What the skyline cut leaves must still be a grove: nobody stands with fewer than two others within 14 m.
+        for (let again = true; again;) {
+          again = false;
+          for (const tree of trees) if (!tree.dropped && trees.filter(other => other !== tree && !other.dropped && Math.hypot(other.x - tree.x, other.z - tree.z) < 14).length < 2) { tree.dropped = true; again = true; }
+        }
+        for (const tree of trees) {
+          if (tree.dropped) { f.obstacles.splice(f.obstacles.lastIndexOf(tree), 1); continue; }
+          tree.id = `${prefix}-${serial++}`; f.trees.push(tree);
+        }
+      }
+    }
     for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += spacing) for (let row = 0; row < rows; row++) {
       const s = base + (random.float() - .5) * spacing * jitter, depth = from + (to - from) * (row + random.float()) / rows;
       if(authoredRanges){
@@ -248,13 +325,28 @@ function scatterScenery(course) {
         if (grove < clumps.cut) continue;
         scale *= 1 + (clumps.size ?? 0) * (grove - .5);
       }
-      if (!roadClear(s, off, 0, 1) || cleared(s, off, 2.5 * scale)) continue;
+      if (!roadClear(s, off, 0, 1) || cleared(s, off, 2.5 * scale) || zones.length && ownClear(s, off, 2.5 * scale)) continue;
       const p = course.groundAt(s, off);
+      // A far band reaches across to other stretches of the circuit, so it is
+      // also measured from the nearest road: at least `from` beyond its edge,
+      // and outside the clear stretches as seen from that road.
+      if (drawnGround) {
+        const n = course.nearest(p.x, p.z);
+        if (n.distance - course.roadHalfWidthAt(n.s) < from || cleared(n.s, n.lateral, 2.5 * scale) ||
+          zones.length && ownClear(n.s, n.lateral, 2.5 * scale)) continue;
+      }
       if (crowded(p.x, p.z, 3.2 * scale)) continue;
       claim(p.x, p.z);
-      f.trees.push(add(`forest-${serial++}`, 'tree', s, off, .23 * scale, .23 * scale, random.range(0, TAU), { scale }));
+      const tree = add(`${prefix}-${serial++}`, 'tree', s, off, .23 * scale, .23 * scale, random.range(0, TAU), { scale });
+      if (drawnGround) { tree.y = renderedGroundHeight(course, tree); tree.farForest = true; }
+      f.trees.push(tree);
     }
-  }
+  };
+  const forest = course.def.scenery?.forest;
+  if (forest) plantBand(forest, makeRng(0x6f7265 ^ (course.def.stage + 1) * 0x9e37), 'forest');
+  const farForest = course.def.scenery?.farForest;
+  if (farForest) plantBand(farForest, makeRng(0x666172 ^ (course.def.stage + 1) * 0x7f4a7c15), 'far-forest',
+    {zones: farForest.clear ?? [], drawnGround: true});
   // Autumn (`scenery.autumn`): `share` of every planted tree turns one of the
   // `colours` (red, gold and orange multipliers for the pine crowns), picked
   // from the tree's place along the road so the same trees turn on every build.
@@ -263,6 +355,37 @@ function scatterScenery(course) {
     const mix = Math.sin(i * 12.9898 + tree.s * .0371) * 43758.5453, pick = mix - Math.floor(mix);
     if (pick < autumn.share) tree.tint = autumn.colours[Math.floor(pick / autumn.share * autumn.colours.length) % autumn.colours.length];
   });
+}
+
+// Reserve authored branch roads only after every original scenery proposal,
+// random draw, vacancy decision, forest claim and autumn tint has completed.
+// Survivors retain their original objects, order and IDs; nothing is refilled.
+export function clearAuthoredRoadScenery(course) {
+  const authored = course.def.roadBranches;
+  if (!authored?.length) return 0;
+  const f = course.features, ids = new Set(authored.map(branch => branch.id));
+  const branches = f.shortcuts.filter(branch => ids.has(branch.id)), removed = new Set();
+  if (!branches.length) return 0;
+  const kinds = [
+    ['rocks', rock => Math.hypot(rock.scale[0], rock.scale[2]), 4],
+    ['trees', tree => 2.1 * tree.scale, 3],
+    ['buildings', building => Math.hypot(building.halfX, building.halfZ), 3],
+    ['mountains', mountain => Math.hypot(mountain.halfX, mountain.halfZ) * 1.1, 25],
+  ];
+  for (const [kind, radiusOf, margin] of kinds) {
+    const placements = f[kind], kept = [];
+    for (const placement of placements) {
+      const point = course.worldAt(placement.s, placement.off), near = course.nearest(point.x, point.z), radius = radiusOf(placement);
+      // This is the existing legacy shortcut reservation, including the join
+      // reach. Only its placement timing differs, to preserve authored draws.
+      const intrudes = branches.some(branch => near.s >= branch.start - 12 && near.s <= branch.end + 12 &&
+        Math.abs(near.lateral - course.shortcutOffset(branch, near.s)) < radius + branch.halfWidth + margin);
+      if (intrudes) removed.add(placement); else kept.push(placement);
+    }
+    if (kept.length !== placements.length) f[kind] = kept;
+  }
+  if (removed.size) f.obstacles = f.obstacles.filter(obstacle => !removed.has(obstacle) && !removed.has(obstacle.source));
+  return removed.size;
 }
 
 // ---------------------------------------------------------------------------
@@ -355,9 +478,28 @@ export function trackScriptSolids(course) {
   }
   f.obstacles.push(...f.walls);
   scatterScenery(course);
+  clearAuthoredRoadScenery(course);
   // After the planted scenery, so the trees stand exactly where they did.
   f.kitSolids = kitSolids(course);
   f.obstacles.push(...f.kitSolids);
+  // A snow shed can have open model bays but still needs a continuous driving
+  // boundary. Add these after scenery so seeded placement stays unchanged.
+  // Keep them out of f.walls: the approved gallery model owns the drawing.
+  for (const gallery of course.def.galleries ?? []) {
+    if (!gallery.solidSides) continue;
+    for (let start = gallery.start; start < gallery.end; start += 4) {
+      const end = Math.min(gallery.end, start + 4), s = (start + end) / 2;
+      for (const side of [-1, 1]) {
+        const off = side * (gallery.width + .45), p = course.worldAt(s, off);
+        const heights = [start, s, end].map(at => course.worldAt(at, off).y);
+        const low = Math.min(...heights) - .1, high = Math.max(...heights) + gallery.height;
+        f.obstacles.push({id:`lining-${gallery.id}-${start}-${side}`,kind:'building',shape:'box',
+          tunnelWall:true,trackWall:true,s,off,x:p.x,y:low,z:p.z,heading:p.heading,
+          halfX:.45,halfZ:(end-start)/2+.1,height:high-low,minY:low,maxY:high,
+          theme:course.themeAt(s)});
+      }
+    }
+  }
   if (lane && course.def.pitLane.kitDivider === true) {
     if (!(course.def.kitPlacements ?? []).some(piece => piece.id === 'pit-wall' && piece.solid === true))
       throw new TrackScriptError('An authored pit divider requires solid pit-wall kits.');

@@ -2,8 +2,11 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { COURSE } from '../src/config.js';
 import { Course } from '../src/course.js';
-import { addPineTrees, vegetationCells } from '../src/vegetation.js';
+import { beechTreePlacements, addPineTrees, vegetationCells } from '../src/vegetation.js';
 import { terrainGeometry, farTerrainGeometry } from '../src/world-surfaces.js';
+import {createTrackKits} from '../src/track-kits.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {readFile} from 'node:fs/promises';
 
 let checks=0,trees=0,farRoots=0,groundReads=0;
 const check=(value,label)=>{assert.ok(value,label);checks++;};
@@ -38,9 +41,47 @@ try{
   // Ridge-landform courses (Panorama Ridge) root their trees on the drawn mountain, like expansion courses, so they are not legacy; test-circuit-panorama checks their roots.
   for(const def of COURSE.filter(def=>!def.expansion&&!def.ridgeLandform)){
     const course=new Course(def,1989),features=course.features.trees.filter(tree=>tree.theme!=='desert'),group=new THREE.Group();
-    course.groundAt=()=>{throw new Error('Legacy pine construction must not resample or move roots');};addPineTrees(group,features,course);
-    for(const mesh of group.children)for(let i=0;i<mesh.count;i++){mesh.getMatrixAt(i,matrix);const tree=mesh.userData.vegetationCell.entries[i].feature;
-      check(matrix.elements[13]===Math.fround(tree.y-.24),`${def.id}: legacy visual root remains bit-identical`);}
+    const before=JSON.stringify(course.features),selected=beechTreePlacements(course),selectedIds=new Set(selected.map(row=>row.scenery.id));
+    let kits=null;const terrain=[];
+    if(selected.length){
+      // Production gives the pine/bound-beech renderer its prepared original owner.
+      // Keep real GLB geometry; headless image decoding follows test-track-kits.
+      const parser=new GLTFLoader();parser.register(()=>({name:'KIT_HEADLESS_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+      kits=createTrackKits(course,{placements:selected,loadAsset:async assetPath=>{
+        const bytes=await readFile(new URL('../public'+assetPath,import.meta.url));
+        return parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+      }});
+      check(await kits.ready===true,def.id+': real original beech High/LOD owner is ready');
+      check(kits.placements.length===selected.length,def.id+': every selected beech has one prepared placement');
+      terrain.push(new THREE.Mesh(terrainGeometry(course),material),new THREE.Mesh(farTerrainGeometry(course),material));
+    }
+    try{
+      course.groundAt=()=>{throw new Error('Legacy pine construction must not resample or move roots');};addPineTrees(group,features,course,{kits});
+      for(const mesh of group.children)for(let i=0;i<mesh.count;i++){mesh.getMatrixAt(i,matrix);const tree=mesh.userData.vegetationCell.entries[i].feature;
+        check(matrix.elements[13]===Math.fround(tree.y-.24),def.id+': legacy visual root remains bit-identical');}
+      const pines=features.filter(tree=>!selectedIds.has(tree.id));
+      // Far-band firs (Ardennes) have their own one-draw cells of 400 m; the first band keeps exactly two draws per cell.
+      const nearPines=pines.filter(tree=>!tree.farForest),farPines=pines.filter(tree=>tree.farForest);
+      check(group.children.length===vegetationCells(nearPines).length*2+(farPines.length?vegetationCells(farPines,400).length:0),def.id+': every remaining legacy pine cell keeps exactly two draws, and far firs one draw per far cell');
+      const drawn=new Set();
+      for(const mesh of group.children.filter(mesh=>mesh.name.startsWith('Pine trunks ')))for(const row of mesh.userData.vegetationCell.entries){
+        check(!selectedIds.has(row.feature.id)&&!drawn.has(row.feature.id),def.id+': no bound beech or duplicate is drawn as a pine');drawn.add(row.feature.id);
+      }
+      for(const mesh of group.children.filter(mesh=>mesh.name.startsWith('Far pine crowns ')))for(const row of mesh.userData.vegetationCell.entries){
+        check(row.feature.farForest&&!selectedIds.has(row.feature.id)&&!drawn.has(row.feature.id),def.id+': no bound beech or duplicate is drawn as a far fir');drawn.add(row.feature.id);
+      }
+      const byId=new Map(features.map(tree=>[tree.id,tree])),bound=new Set();
+      for(const [index,row] of (kits?.placements||[]).entries()){
+        const tree=byId.get(row.scenery.id),pose=kits.getPlacementPose(index);
+        check(!!tree&&!!pose&&!bound.has(tree.id)&&selectedIds.has(tree.id),def.id+': each original beech is bound exactly once');bound.add(tree.id);
+        check(pose.elements[12]===tree.x&&pose.elements[14]===tree.z,def.id+': beech root keeps exact physical X/Z');
+        ray.set(new THREE.Vector3(tree.x,tree.y+50,tree.z),down);const hit=ray.intersectObjects(terrain,false)[0];
+        check(!!hit,def.id+'/'+tree.id+': an actual drawn terrain triangle supports the original beech');
+        check(Math.abs(hit.point.y-pose.elements[13])<.001,def.id+'/'+tree.id+': original beech root meets the drawn triangle within the existing1mm tolerance');
+      }
+      check(drawn.size+bound.size===features.length&&bound.size===selected.length,def.id+': every original tree is conserved across pines and bound beeches');
+      check(JSON.stringify(course.features)===before,def.id+': owner binding never changes feature heights, colliders, RNG or placement');
+    }finally{kits?.dispose();for(const surface of terrain)surface.geometry.dispose();}
   }
   check(trees>2500&&farRoots>400,'exercise all expansion pine biomes and hundreds of actual far-only roots');
 }finally{THREE.TextureLoader.prototype.load=originalLoad;material.dispose();}

@@ -160,18 +160,19 @@ No author endorsement is implied.
 
 ## The helicopter
 
-The 70 radio lines are generated with [ElevenLabs](https://elevenlabs.io/),
-using its stock voices Brian (the instructor), Sarah (the park rangers) and
+The 83 radio lines are generated with [ElevenLabs](https://elevenlabs.io/),
+using its stock voices Brian (the instructor), Sarah (the park rangers and the
+wildlife survey) and
 Roger (fire and rescue dispatch), under the free-plan non-commercial and attribution
 terms recorded in the catalog. The
 runtime MP3s are exact copies of the kept takes in `audio-src/voices/`; the
 game plays them through the radio filter in `src/heli/heli-audio.js`. Copy them
 with `node tools/audio/build-heli.mjs --voices`. No author endorsement is implied.
 
-Fifteen sounds are selected public HQ previews, all
+Twenty-six sounds are selected public HQ previews, all
 [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). The recipes in
 `tools/audio/build-heli.mjs` cut, filter, fade and loudness-match them; the
-rotor, wind, fire crackle, bucket scoop and pour are crossfaded mono Vorbis loops. The engine stop is the idle of
+rotor, wind, fire crackle, bucket scoop and pour, snow digging and winch are crossfaded mono Vorbis loops. The engine stop is the idle of
 a running helicopter read at a falling speed while it fades. The low-fuel
 chime, low-rotor horn, radio click, radio hiss, fire alert, aim tick and
 badge chime, beacon beep and clock tick are original tones and noise made in `src/heli/heli-audio.js`. Source and runtime hashes are in the
@@ -192,3 +193,14 @@ audio catalog. No author endorsement is implied.
 - [road flare ignite burns.wav](https://freesound.org/people/frankelmedico/sounds/348767/), by **frankelmedico**: the hiker's flare.
 - [Snow removing.mp3](https://freesound.org/people/Gutek/sounds/201888/), by **Gutek**: digging in snow.
 - [Karabiner_Click_04.wav](https://freesound.org/people/Rudmer_Rotteveel/sounds/457454/), by **Rudmer_Rotteveel**: clipping on to the rescue line.
+- [Canon A1 Camera Shutter.wav](https://freesound.org/people/yfjesse/sounds/579876/), by **yfjesse**: an animal counted in the survey.
+- [Hidrolavadora.wav](https://freesound.org/people/valeulloam97/sounds/532823/), by **valeulloam97**: the pressure washer at the pad.
+- [SFX Electric Actuator 2.mp3](https://freesound.org/people/mpuffenbarger/sounds/683807/), by **mpuffenbarger**: the winch motor.
+- [Moose_Elk.mp3](https://freesound.org/people/gleith/sounds/486554/), by **gleith**: moose.
+- [22_Lobo_aullando.wav](https://freesound.org/people/JoseAgudelo/sounds/472402/), by **JoseAgudelo**: wolf howl.
+- [Bear Angry Growl](https://freesound.org/people/celldroid/sounds/763026/), by **celldroid**: bear.
+- [Kingfishers - Laughing Kookaburra; Two Calling](https://freesound.org/people/TheKingOfGeeks360/sounds/826086/), by **TheKingOfGeeks360**: kookaburra.
+- [Parrots - Sulfur-crested Cockatoo](https://freesound.org/people/TheKingOfGeeks360/sounds/844340/), by **TheKingOfGeeks360**: cockatoo.
+- [Sheep - Bleat; Close Perspective](https://freesound.org/people/TheKingOfGeeks360/sounds/803460/), by **TheKingOfGeeks360**: sheep.
+- [Ground Squirrel First Chirp](https://freesound.org/people/burgersmoke/sounds/640992/), by **burgersmoke**: the marmot's whistle (a ground squirrel's alarm chirp; marmots are large ground squirrels).
+- [Raven Croak or Crow Caw](https://freesound.org/people/fudgealtoid/sounds/716962/), by **fudgealtoid**: raven.

@@ -12,7 +12,8 @@ const ok=(value,message)=>{assert.ok(value,message);checks++;};
 const near=(a,b,tolerance,message)=>ok(Math.abs(a-b)<=tolerance,`${message}: ${a} vs ${b}`);
 const material=new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
 const courses=['high-country','ridge-rally','timberline-rush'].map(id=>new Course(COURSE.find(c=>c.id===id),1989));
-ok(models.length===9,'Grounding checks include all nine actual runtime models');
+// The car roster count is pinned once, in test-vehicle-assets.
+ok(models.length>=12,'Grounding checks include every actual runtime model');
 
 for(const model of models){
   const v=model.vehicle,geometryBefore=[];
@@ -28,7 +29,9 @@ for(const model of models){
   const wheelNodes=new Set();for(const wheel of v.userData.wheels)wheel.traverse(n=>wheelNodes.add(n));
   let bodyFloor=Infinity;const vertex=new THREE.Vector3();
   v.traverse(n=>{if(!n.isMesh||wheelNodes.has(n)||n===v.userData.contactShadow||!n.visible)return;const a=n.geometry.attributes.position;for(let i=0;i<a.count;i++){vertex.fromBufferAttribute(a,i).applyMatrix4(n.matrixWorld);bodyFloor=Math.min(bodyFloor,vertex.y);}});
-  ok(bodyFloor-meta.contactY>.05,`${model.key} whole body remains above the tire plane`);
+  // LAB-FAN-ART accepted a low floor skirt (test-speirling-vehicle); all earlier cars keep their 5 cm floor.
+  const minimumClearance = model.key === 'mcmurtry_speirling' ? 0 : .05;
+  ok(bodyFloor-meta.contactY>minimumClearance,`${model.key} whole body remains above the tire plane`);
   // Both road types are truly flat in this fixture, with the production surface
   // lifts and source terrain depression retained. The geometry is a real plane.
   for(const offroad of[false,true]){

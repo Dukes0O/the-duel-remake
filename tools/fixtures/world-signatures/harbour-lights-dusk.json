@@ -1,0 +1,11 @@
+{
+  "harbour-lights-dusk": {
+    "hash": "f2e51703c68cf9063d5b16b7e6b8b9ccc2f7a27391780a6b1ffaf3a4a6985b93",
+    "nodes": 1134,
+    "meshes": 1117,
+    "instances": 223085,
+    "geometries": 228,
+    "materials": 61,
+    "textures": 18
+  }
+}

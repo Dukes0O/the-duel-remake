@@ -3,6 +3,7 @@
 // when to coach and when to try again. The session holds the lesson; the
 // save remembers which are done.
 import {HELI_LESSONS} from './heli-save.js';
+import {COACH_EVERY, lessonOpen as openIn, tickCoach, coachDue, coachSaid, passed, retry as tryAgain} from '../lessons/lesson-core.js';
 
 export const LESSON_RULES = Object.freeze({
   liftoff: Object.freeze({low: 2.5, high: 4.5, holdSeconds: 5}),
@@ -10,7 +11,7 @@ export const LESSON_RULES = Object.freeze({
   // The landing counts only after a real climb of at least 2 m.
   landing: Object.freeze({radius: 3, sink: 1, climbFirst: 2}),
   carry: Object.freeze({crateKg: 500, distance: 200, radius: 10}),
-  coachEvery: 6,
+  coachEvery: COACH_EVERY,
 });
 
 export const LESSON_ORDER = HELI_LESSONS;
@@ -21,13 +22,19 @@ export const LESSON_OPENS = Object.freeze({
 });
 
 export function lessonOpen(lessons, id) {
-  const index = LESSON_ORDER.indexOf(id);
-  if (index < 0) return false;
-  return index === 0 || lessons[LESSON_ORDER[index - 1]] === true;
+  return openIn(LESSON_ORDER, lessons, id);
 }
 
 // Skipping the opening marks lessons 1 and 2 done.
 export const SKIP_MARKS = Object.freeze(['liftoff', 'hover']);
+
+// Read-only guidance uses the same horizontal boundary as the pass check.
+export function carryGuidance(lesson, load, groundY = 0) {
+  if (lesson?.id !== 'carry' || !lesson.target || load?.id !== 'crate' || !load.hooked) return null;
+  const distance = Math.hypot(load.x - lesson.target.x, load.z - lesson.target.z);
+  return Object.freeze({distance, height: load.onGround ? 0 : Math.max(0, load.y - (load.restHeight ?? 0.7) - groundY),
+    ready: distance <= LESSON_RULES.carry.radius && load.onGround === true});
+}
 
 const height = view => view.heli.y - view.heli.groundY;
 const fromPad = (view, spot) => Math.hypot(view.heli.x - spot.x, view.heli.z - spot.z);
@@ -46,12 +53,12 @@ export function stepLesson(lesson, view, events = [], dt = 1 / 120) {
   if (!lesson.started) {
     lesson.started = true;
     out.radio = `heli.radio.${lesson.id}.start`;
-    lesson.coachIn = LESSON_RULES.coachEvery;
+    coachSaid(lesson, LESSON_RULES.coachEvery);
   }
   const crash = events.some(e => e.type === 'crashed');
   const hard = events.some(e => e.type === 'touchdown' && e.result === 'hard');
   if (crash || hard) return retry(lesson, out);
-  lesson.coachIn -= dt;
+  tickCoach(lesson, dt);
   const rules = LESSON_RULES[lesson.id];
   if (!view.heli) return out;
   if (lesson.id === 'liftoff') {
@@ -60,45 +67,46 @@ export function stepLesson(lesson, view, events = [], dt = 1 / 120) {
       if (lesson.held === 0 && !lesson.heldSaid) { out.radio ??= 'heli.radio.liftoff.hold'; lesson.heldSaid = true; }
       lesson.held += dt;
     } else lesson.held = 0;
-    if (lesson.held >= rules.holdSeconds) return pass(lesson, out);
+    if (lesson.held >= rules.holdSeconds) return pass(lesson);
   } else if (lesson.id === 'hover') {
     const h = height(view), inside = fromPad(view, lesson.spot) <= rules.radius;
     if (inside && h >= rules.low && h <= rules.high && !view.heli.onGround) lesson.held += dt;
     else {
-      if (lesson.held > 0 && lesson.coachIn <= 0) { out.radio ??= 'heli.radio.hover.drift'; lesson.coachIn = LESSON_RULES.coachEvery; }
+      if (lesson.held > 0 && coachDue(lesson)) { out.radio ??= 'heli.radio.hover.drift'; coachSaid(lesson, LESSON_RULES.coachEvery); }
       lesson.held = 0;
     }
-    if (lesson.held >= rules.holdSeconds) return pass(lesson, out);
+    if (lesson.held >= rules.holdSeconds) return pass(lesson);
   } else if (lesson.id === 'landing') {
     if (!view.heli.onGround && height(view) >= rules.climbFirst) lesson.sawLift = true;
     const touch = events.find(e => e.type === 'touchdown');
     if (touch && lesson.sawLift) {
-      if (touch.result === 'good' && touch.sink < rules.sink && fromPad(view, lesson.spot) <= rules.radius) return pass(lesson, out);
+      if (touch.result === 'good' && touch.sink < rules.sink && fromPad(view, lesson.spot) <= rules.radius) return pass(lesson);
       return retry(lesson, out);
     }
   } else if (lesson.id === 'carry') {
-    if (view.load?.hooked && lesson.coachIn <= 0 && events.some(e => e.type === 'cargoHit')) {
-      out.radio ??= 'heli.radio.carry.swing'; lesson.coachIn = LESSON_RULES.coachEvery;
+    if (view.load?.hooked && coachDue(lesson) && events.some(e => e.type === 'cargoHit')) {
+      out.radio ??= 'heli.radio.carry.swing'; coachSaid(lesson, LESSON_RULES.coachEvery);
     }
     // Only the crate counts: letting go of any other load is not the lesson.
     const released = events.find(e => (e.type === 'released' || e.type === 'releasedHigh') && e.id === 'crate');
     const dropped = events.find(e => e.type === 'drop' && e.id === 'crate');
-    if (dropped) return retry(lesson, out);
-    if (released?.type === 'released' && view.load && lesson.target &&
-        Math.hypot(view.load.x - lesson.target.x, view.load.z - lesson.target.z) <= rules.radius) return pass(lesson, out);
-    if (released?.type === 'released' && view.load && lesson.target) return retry(lesson, out);
+    const setDown = released?.crateRelease ?? view.load;
+    if (dropped) return retry(lesson, out, 'It dropped: lower it gently first');
+    if (released?.type === 'released' && !setDown?.onGround)
+      return retry(lesson, out, 'Let go only once the crate sits on the ground');
+    if (released?.type === 'released' && setDown && lesson.target &&
+        Math.hypot(setDown.x - lesson.target.x, setDown.z - lesson.target.z) <= rules.radius) return pass(lesson);
+    if (released?.type === 'released' && setDown && lesson.target)
+      return retry(lesson, out, `The crate was ${Math.round(Math.hypot(setDown.x - lesson.target.x, setDown.z - lesson.target.z))} m from the centre: set it down inside the circle`);
   }
   return out;
 }
 
-function pass(lesson, out) {
-  lesson.done = true;
-  return {result: 'passed', radio: `heli.radio.${lesson.id}.pass`};
+function pass(lesson) {
+  return passed(lesson, `heli.radio.${lesson.id}.pass`);
 }
 
-function retry(lesson, out) {
-  lesson.held = 0;
-  lesson.failed = true;
+function retry(lesson, out, reason = null) {
   lesson.sawLift = false;
-  return {result: 'retry', radio: out.radio ?? 'heli.radio.retry'};
+  return {...tryAgain(lesson, out.radio ?? 'heli.radio.retry'), ...(reason ? {reason} : {})};
 }

@@ -3,7 +3,9 @@ import test from 'node:test';
 import * as THREE from 'three';
 import { Course } from '../src/course.js';
 import { Duel } from '../src/game.js';
-import { CARS, COURSE } from '../src/config.js';
+import { createHash } from 'node:crypto';
+import { driveCircuit } from './track-script-drive.mjs';
+import { CARS, COURSE, DRIVE } from '../src/config.js';
 import { App } from '../src/app.js';
 import { normalizeRaceSettings, raceSettingsChoices } from '../src/race-settings.js';
 import { TrackScriptError } from '../src/track-script.js';
@@ -256,4 +258,58 @@ test('warm tarmac keeps summer neutral handling and winter penalties off legacy 
   const overlays=[];group.traverse(node=>{if(node.material?.name==='Warm tarmac road')overlays.push(node);});
   assert.equal(overlays.length,0,'warm tarmac draws as the existing asphalt with no overlay');
   assert.equal(course.gripKindAt(300,0),'warm-tarmac');
+});
+
+// QA-STOCK-SNOW: exercise the real stock planner, without a renderer or saves.
+function stockPlan(kind, traction, speed, bend, speedLimit = 250, pitLane = undefined) {
+  let input;
+  const app = { _scriptedCrashDone: true, duel: {
+    state: {status: 'racing', s: 100, lateral: -1, headingError: .04, speedMph: speed, traffic: []},
+    car: CARS.falcone_f42, diff: {autoShift: true},
+    course: {at: () => ({curvature: bend}), roadHalfWidthAt: () => 7, pitLane},
+    _drivingSurface: () => ({gripKind: kind, traction, speedLimit}),
+    setInput: value => { input = value; },
+  }};
+  App.prototype._driveAutopilot.call(app, DT);
+  return input;
+}
+
+test('stock dry inputs retain the pre-fix planner fingerprint, including winter asphalt and low traction', () => {
+  const rows = [];
+  for (const kind of [undefined, 'asphalt', 'gravel', 'warm-tarmac'])
+    for (const traction of [1, .94, .82, .55, .3])
+      for (const speed of [20, 55, 85, 130, 200])
+        for (const bend of [0, .003, .01, -.03])
+          rows.push(stockPlan(kind, traction, speed, bend));
+  assert.equal(createHash('sha256').update(JSON.stringify(rows)).digest('hex'), 'e34f36062af5913457174832e002aba59c7edf43a759623cf704f224a7da2cca');
+});
+
+test('stock snow and ice planner brakes for actual grip but keeps the straight cap', () => {
+  for (const [kind, traction] of [['snow', .7], ['snow', .525], ['ice', .425], ['ice', .4], ['deep-snow', .55]]) {
+    const target = .85 * Math.sqrt(DRIVE.maxLateralAccel * CARS.falcone_f42.grip * traction / .01) / DRIVE.mphToWorld;
+    const input = stockPlan(kind, traction, target + 10, .01);
+    assert.equal(input.throttle, 0, kind);
+    near(input.brake, .5, 1e-12, kind + ': brake for the lower corner speed');
+    assert.equal(input.steer, stockPlan('asphalt', traction, target + 10, .01).steer, 'steering is untouched');
+    assert.deepEqual(stockPlan(kind, traction, CARS.falcone_f42.topSpeed * .94 - 1, 0),
+      stockPlan('asphalt', traction, CARS.falcone_f42.topSpeed * .94 - 1, 0), 'existing straight cap stays exact');
+  }
+});
+
+test('stock Tremblant Snow completes with every corner above 20 mph and no Beaver stop', () => {
+  const def = COURSE.find(item => item.id === 'tremblant-snow');
+  assert.ok(def);
+  const minima = new Map();
+  const result = driveCircuit(def, {driver: 'stock', tyre: 'winter', opponentCount: 0,
+    onTick(state, duel) {
+      const station = duel.course.phase(state.s);
+      for (const piece of duel.course.script.pieces) {
+        if (piece.kind === 'turn' && station >= piece.arcStart && station <= piece.arcEnd)
+          minima.set(piece.name, Math.min(minima.get(piece.name) ?? Infinity, state.speedMph));
+      }
+    }});
+  assert.equal(result.completed, true, JSON.stringify(result));
+  assert.ok(minima.has('Beaver Hairpin'));
+  for (const [corner, mph] of minima) assert.ok(mph >= 20, corner + ': ' + mph + ' mph');
+  assert.equal(result.maxStuckSeconds, 0);
 });

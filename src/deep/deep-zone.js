@@ -49,7 +49,7 @@ function unique(id, seen, path) {
 }
 
 export function defineZone(data) {
-  record(data, ['id', 'circuit', 'switch', 'ramp', 'trail', 'places', 'pearls', 'spots'], 'zone');
+  record(data, ['id', 'circuit', 'switch', 'ramp', 'trail', 'places', 'pearls', 'spots', 'finds'], 'zone');
   const id = slug(data.id, 'id', 80), circuit = slug(data.circuit, 'circuit');
   if (data.switch !== 'the-deep') invalid('switch', 'must be the-deep');
 
@@ -111,5 +111,19 @@ export function defineZone(data) {
       trailIndex: index(value.trailIndex, trail.length, `${path}.trailIndex`), count: value.count });
   });
 
-  return Object.freeze({ id, circuit, switch: data.switch, ramp, trail, places, pearls, spots });
+  const zone = { id, circuit, switch: data.switch, ramp, trail, places, pearls, spots };
+  // THE_DEEP 10.1 story additions: optional finds, checked like pearls. A zone
+  // without the field loads exactly as it did before.
+  if (Object.hasOwn(data, 'finds')) {
+    const findIds = new Set();
+    zone.finds = list(data.finds, 'finds', (value, path) => {
+      record(value, ['id', 'trailIndex', 'offset', 'below'], path);
+      const below = Object.hasOwn(value, 'below') ? number(value.below, `${path}.below`) : 0;
+      if (below < 0 || below > 10) invalid(`${path}.below`, 'must be between 0 and 10');
+      return Object.freeze({ id: unique(slug(value.id, `${path}.id`, 80), findIds, `${path}.id`),
+        trailIndex: index(value.trailIndex, trail.length, `${path}.trailIndex`),
+        offset: number(value.offset, `${path}.offset`), below });
+    });
+  }
+  return Object.freeze(zone);
 }

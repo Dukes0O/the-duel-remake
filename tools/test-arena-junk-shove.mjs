@@ -308,9 +308,19 @@ for (const fps of [30, 60, 144]) check('production App junk ram repeats at ' + f
   assert.equal(actual.ticks, MEASURE_TICKS, 'actual App accumulator executes the same 120 Hz tick count');
   assert.equal(actual.trace, expected.trace, 'production input and frame adapter preserve seeded full state and junk poses');
 });
-check('released rigid-body solver fingerprint remains unchanged for every playable mass pair', () => {
+// The nine cars of the released game, before the first medal car (the Enzo);
+// then with the Enzo, F1, Bolide and Sirena. The fan has its own full-roster pin.
+const solverPins = [
+  ['', Object.keys(CARS).filter(car => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling'].includes(car)), controls.solverFingerprint],
+  [' with the Enzo', Object.keys(CARS).filter(car => !['mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling'].includes(car)), controls.solverFingerprintWithEnzo],
+  [' with the F1', Object.keys(CARS).filter(car => !['bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling'].includes(car)), controls.solverFingerprintWithF1],
+  [' with the Bolide', Object.keys(CARS).filter(car => !['falcone_sirena', 'mcmurtry_speirling'].includes(car)), controls.solverFingerprintWithBolide],
+  [' with the Sirena', Object.keys(CARS).filter(car => car !== 'mcmurtry_speirling'), controls.solverFingerprintWithSirena],
+  [' with the Speirling', Object.keys(CARS), controls.solverFingerprintWithSpeirling],
+];
+for (const [suffix, cars, pin] of solverPins) check('released rigid-body solver fingerprint remains unchanged for every playable mass pair' + suffix, () => {
   const results = [];
-  for (const attackingCar of Object.keys(CARS)) for (const targetCar of Object.keys(CARS)) {
+  for (const attackingCar of cars) for (const targetCar of cars) {
     const {duel} = arena(attackingCar), target = duel.state.opponents[0]; target.car = targetCar;
     const a = actorBody(duel, duel.state), b = actorBody(duel, target);
     for (const [angle, offset] of [[0, 0], [Math.PI / 2, 0], [0, 1]]) {
@@ -321,7 +331,7 @@ check('released rigid-body solver fingerprint remains unchanged for every playab
       results.push({attackingCar, targetCar, angle, offset, result: solveVehicleImpact(bodyA, bodyB)});
     }
   }
-  assert.equal(hash(results), controls.solverFingerprint, 'existing reviewed global crash-solver pin');
+  assert.equal(hash(results), pin, 'existing reviewed global crash-solver pin');
 });
 for (const spec of controls.roadControls) check('released road replay stays unchanged: ' + spec.car + '/' + spec.course, () => {
   const duel = new Duel({seed: controls.seed});

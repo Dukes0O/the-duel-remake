@@ -180,6 +180,7 @@ const BASE = defineScriptedCourse({
       { id: 'reservoir-sweep', kind: 'corner', s: 3074, title: 'Reservoir Sweep' },
     ],
     notes: {
+      'casino': { line: 'Stay in the slipstream down the Seafront, pull out before the 100 board and take the inside for Casino Corner.', note: 'The best place to pass on the lap. Commit before the board or stay behind.' },
       'lantern-kink': { line: 'Flat out. A touch left, stay off the wall.', note: 'Only scary the first time. Keep your foot down.' },
       'casino-corner': { brakeBoard: 100, line: 'Brake straight, turn late, aim for the inside barrier.', note: 'The best place to pass. If you miss your braking point, take the escape road; do not try to make the turn.' },
       'temple-hill': { line: 'Middle of the road up the hill.', note: 'Walls on both sides from here. Neat beats brave.' },
@@ -199,7 +200,7 @@ const BASE = defineScriptedCourse({
 
 // The street (docs/CIRCUITS.md 5.2), laid out for the kit loader by src/circuit-kit-layout.js.
 const TINTS = [0xe9d3b0, 0xd89a8a, 0x9cc0bb, 0xdcb25a, 0xa9b4d0, 0xc98562];
-const STREET = {
+export const HARBOUR_STREET = {
   walls: { wall: 'concrete-wall', fence: 'catch-fence', tyres: 'tyre-wall', openToWater: true,
     alignEscapeTurns: ['Casino Corner', 'Lantern Hairpin'] },
   paddock: {
@@ -231,7 +232,7 @@ const STREET = {
 // someone reads them (the kit loader, when this circuit's world is built), not when the game starts.
 let placements = null;
 export const HARBOUR_LIGHTS = Object.freeze(Object.defineProperty({ ...BASE }, 'kitPlacements', {
-  enumerable: true, get: () => (placements ??= Object.freeze(buildKitPlacements(BASE, STREET))),
+  enumerable: true, get: () => (placements ??= Object.freeze(buildKitPlacements(BASE, HARBOUR_STREET))),
 }));
 
 // Registration belongs to this course; generation and geometry stay unchanged.

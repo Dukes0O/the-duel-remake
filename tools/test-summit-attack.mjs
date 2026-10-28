@@ -74,12 +74,15 @@ function reachGo(app) {
 }
 
 if(!process.argv.includes('--drive')) {
-  test('Attack is an appended dev-only parent-route solo event with parent-only free access',()=>withCatalog(()=>{
+  test('Attack is an appended released parent-route solo event with parent-only free access',()=>withCatalog(()=>{
     assert.equal(SUMMIT_ATTACK_ID,'summit-time-attack');assert.ok(isSummitAttack(SUMMIT_ATTACK_ID)&&isSummitAttack(SUMMIT_TIME_ATTACK));
     assert.equal(isSummitAttack(SUMMIT_RUN),false);assert.equal(isSummitAttack(null),false);
     const entry=CIRCUIT_ENTRIES.find(row=>row.manifest.id===SUMMIT_ATTACK_ID);
-    assert.equal(entry.definition,SUMMIT_TIME_ATTACK);assert.equal(CIRCUIT_ENTRIES.at(-1),entry);
-    assert.equal(manifest.flag,'summit-run');assert.equal(manifest.state,'dev');assert.equal(manifest.grandPrix,false);
+    assert.equal(entry.definition,SUMMIT_TIME_ATTACK);assert.equal(entry.manifest.releaseOrder,6);
+    const at=CIRCUIT_ENTRIES.indexOf(entry);
+    assert.ok(at>=0);assert.ok(CIRCUIT_ENTRIES.slice(0,at).every(row=>row.manifest.releaseOrder<6));
+    assert.ok(CIRCUIT_ENTRIES.slice(at+1).every(row=>row.manifest.releaseOrder>6),'future appended events retain Attack order');
+    assert.equal(manifest.flag,'summit-run');assert.equal(manifest.state,'on');assert.equal(manifest.grandPrix,false);
     assert.equal(manifest.price,0);assert.equal(SUMMIT_TIME_ATTACK.noCombat,true);assert.equal(SUMMIT_TIME_ATTACK.closed,false);
     assert.deepEqual(SUMMIT_TIME_ATTACK.script,SUMMIT_RUN.script);assert.deepEqual(SUMMIT_TIME_ATTACK.galleries,SUMMIT_RUN.galleries);
     assert.equal(SUMMIT_TIME_ATTACK.stage,SUMMIT_RUN.stage);assert.equal(SUMMIT_TIME_ATTACK.lengthU,SUMMIT_RUN.lengthU);

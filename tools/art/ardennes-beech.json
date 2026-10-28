@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "units": "metres",
+  "up": "Y",
+  "models": [
+    {
+      "id": "ardennes-beech",
+      "original": true,
+      "author": "The Duel project",
+      "recipe": "tools/blender/ardennes-beech.py",
+      "source": "Original procedural trunk, limbs and crossed leaf-card crowns. Leaf photographs from ambientCG LeafSet024 (CC0), composed into spray tiles by tools/art/ardennes-leaf-sprite.py.",
+      "texture": {
+        "id": "LeafSet024",
+        "url": "https://ambientcg.com/a/LeafSet024",
+        "download": "LeafSet024_1K-JPG.zip",
+        "licence": "CC0 1.0 (https://docs.ambientcg.com/license/)",
+        "zipBytes": 4744373,
+        "zipSha256": "5038f0dfb53647b2eed16adb9043f530f82a4fde3321f91ae59df74ba2f7ace1",
+        "usedFiles": {
+          "LeafSet024_1K-JPG_Color.jpg": "f5c6cbf36de217af8ae06cf5d7badd035e04c341594aa618abacc2a9d8dbb8c8",
+          "LeafSet024_1K-JPG_Opacity.jpg": "1b8e15edfc3b28f7f7607097499768cc7110345a3611d9b75d4bf70c54faef0b"
+        },
+        "tiles": {
+          "leaf-spray-256.png": "e19ae8b8fb469d7fd13bae6e5b71c0d7b1479f2e7d8d8a3a7159dfe52a684fcb",
+          "leaf-spray-128.png": "7d6f299830673c9f9d7f10cf6bc37e9fc4103db064d181ce951754e8167c7220"
+        },
+        "alpha": "MASK at 0.5 (cut-out, no blending)"
+      },
+      "scaleVariants": [
+        0.9,
+        1,
+        1.1
+      ],
+      "lobes": 7,
+      "files": [
+        {
+          "path": "ardennes-beech.glb",
+          "bytes": 72324,
+          "sha256": "e2dc45f7211ca7ece4170423416f4859709faecb3c0abe008a3df9466efa680b"
+        },
+        {
+          "path": "ardennes-beech-lod.glb",
+          "bytes": 28724,
+          "sha256": "80206388d98132c2385cfa0178fb263c2ab5b7421faebeb6f20f219a8971a870"
+        }
+      ],
+      "crownSize": [
+        9.254621505737305,
+        4.776876926422119,
+        7.576398611068726
+      ],
+      "visibleTrunk": 2.6999998092651367,
+      "highTriangles": 436,
+      "leafCards": 140,
+      "size": [
+        9.254621505737305,
+        7.476876735687256,
+        7.576398611068726
+      ],
+      "lowCrownSize": [
+        9.434708595275879,
+        5.087936878204346,
+        7.67254638671875
+      ],
+      "lowVisibleTrunk": 2.6999998092651367,
+      "lowTriangles": 224,
+      "lowLeafCards": 84,
+      "lowSize": [
+        9.434708595275879,
+        7.787936687469482,
+        7.67254638671875
+      ],
+      "bytes": 101048
+    }
+  ]
+}

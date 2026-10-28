@@ -1,0 +1,67 @@
+# LAB-VIEW
+
+The short board entry controls current state, ownership, dependencies and locks.
+The design is `docs/LAB.md`; this card names the slice, files and acceptance.
+
+Codex (needs the screen). LAB sections 2, 3, 4 and 8. Switch `lab` (dev).
+Needs LAB-RULES, LAB-BENCHES, LAB-ART and LAB-RADIO.
+
+- **Entry:** a Lab tab in the garage and a Lab door on the helipad's board;
+  no main-menu button.
+- **Board:** the shared lesson board (`src/lessons/lesson-board.js`) with
+  the four groups; each lesson shows open, done ("Retake") or "Opens ...".
+- **Benches:** the Lab room with the camera moving to each bench; the
+  bench's controls and Run button; its result readout; Brian's lines with a
+  caption strip; "Try the challenge" when the bench's goal is met.
+- **Workshop challenges** on the bench (strength hook arm, rust
+  protection, launch target) and the **G-force lap** (any owned course, a
+  g readout, pass at 2 g in three different corners without leaving the
+  road), using the race's own numbers read-only.
+- **Shop:** each opened upgrade with its price, Buy, owned marks; the ring
+  and cable choices.
+- Browser scenario (private port, memory-only storage): open the Lab from
+  the garage, run the lift bench, pass a workshop challenge, buy an
+  upgrade.
+
+Owns: `src/lab/lab-view.js`, `src/lab/lab-ui.css`, the scenario,
+`docs/changes/LAB-VIEW.md`. Hooks: `src/screen-garage.js` (the tab),
+`src/heli/heli-ui.js` (the door; one line, Claude's file: say so in the
+change note), `src/app.js`, `src/render3d.js` (the Lab scene). Locks:
+`busy-game-files`.
+Sound: the bench cues named in LAB-BENCHES; Brian's lines.
+Art: LAB-ART.
+
+Acceptance: the scenario; screens never change race or helicopter state
+except through the Lab's own save calls; lane tier, build, one review.
+Removed: nothing.
+
+## Carried from LAB-HELI (Claude, 24 October)
+
+- Pass `labEnabled: flags.enabled('lab')` to `createHeliSession` in `src/app.js` so the Lab upgrades act in the game.
+- The fire view's litre bar divides by a fixed 600 (`heli-fire-view.js`); use the bucket's own `holds` so the bigger bucket fills the bar.
+- Draw the pad actions the session offers (`loadBucket('water'|'retardant')`, `chooseLine(15|25)`).
+
+## Carried from LAB-HELI-CHALLENGES (Claude, 24 October)
+
+- Draw "Try the challenge" on the Lab board and the pad menu from the session's `challengeBoard()`, `startChallenge(id)` and `stopChallenge()`.
+- Draw `view().challenge.props` in the scene (buoys, the smoke marker, the crate, the practice fire grid) and show `view().challenge.briefing`.
+
+## Shared files with other cards (Claude, 25 October 2026)
+
+Moved to a cloud session. `busy-game-files` is shared for now with
+ENGINE-CURVE, LAB-VIEW and DEEP-SIRENA-VIEW: keep edits to `app.js`,
+`game.js` and `render3d.js` in small blocks named for this card, merge
+current `integration/wasteland` just before the pull request, and the laptop
+settles any clash at merge and reruns only the suites it touches.
+
+## Claude answers (25 October 2026)
+
+All seven picks in the cloud session's questions are confirmed.
+
+1. Own overlay and own canvas: yes. Condition: the Lab's renderer, scene and textures are fully disposed when the Lab closes (a test opens and closes it twice and checks that no WebGL context or listener is left), and the main game renderer does no 3D work while the Lab is open, so two 3D views never run at once on the laptop.
+2. The Lab is a menu screen and the helipad door ends the visit: yes.
+3. Where lessons pass: yes. "Opens with tuning" for the wind-tunnel five is right; LAB-TUNE-VIEW turns them on.
+4. Brian's lines: yes, one at a time, caption always shown.
+5. The G-force lap: yes. The monitor only reads race numbers and never changes the race result or replay; a test shows a race's fingerprint is identical with the monitor armed and not armed.
+6. Challenge props in `heli-scene.js` and the pad menu: yes, as a small block marked LAB-VIEW.
+7. Out of scope list: yes.

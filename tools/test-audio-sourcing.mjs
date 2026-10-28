@@ -1,6 +1,6 @@
 // Audio sourcing tools with fake network responses: no key, request or credit is used.
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -155,6 +155,39 @@ try {
     /needs license/,
   );
   checks++;
+
+  // AUDIO-CATALOG-APPEND: adding never reorders the catalog. New rows go last;
+  // the same source, key and cue replaces its row in place; one source may
+  // serve two cues.
+  {
+    const orderPath = join(temp, 'order.json');
+    const row = (source, key, cue, extra = {}) => ({ source, key, cue, license: 'CC0 1.0', file: `${key}.ogg`, sha256: 'a'.repeat(64), ...extra });
+    const start = { version: 1, sounds: [row('freesound', '9', 'z.last'), row('elevenlabs', 'a.line', 'a.line'), row('freesound', '5', 'm.mid'), row('freesound', '5', 'm.other')] };
+    writeFileSync(orderPath, JSON.stringify(start, null, 2) + '\n');
+    const before = start.sounds.map((sound) => JSON.stringify(sound));
+    addCatalogEntry(row('elevenlabs', 'b.new', 'b.new'), orderPath);
+    let after = JSON.parse(readFileSync(orderPath, 'utf8')).sounds;
+    check(
+      JSON.stringify(after.slice(0, 4).map((sound) => JSON.stringify(sound))) === JSON.stringify(before) && after[4].key === 'b.new' && after.length === 5,
+      'a new entry goes last and every existing row keeps its place byte for byte',
+    );
+    addCatalogEntry(row('freesound', '5', 'm.mid', { file: 'retake.ogg' }), orderPath);
+    after = JSON.parse(readFileSync(orderPath, 'utf8')).sounds;
+    check(
+      after.length === 5 && after[2].file === 'retake.ogg' && JSON.stringify(after[3]) === before[3] && JSON.stringify(after[0]) === before[0],
+      'the same source, key and cue replaces its row in place; the other cue of that source stays',
+    );
+    addCatalogEntry(row('freesound', '9', 'z.second'), orderPath);
+    after = JSON.parse(readFileSync(orderPath, 'utf8')).sounds;
+    check(after.length === 6 && after[0].cue === 'z.last' && after[5].cue === 'z.second', 'a second cue from one source gets its own row, last');
+    // Old Freesound rows have no cue field; a refetch without --cue writes cue: null and must replace them.
+    const { cue: _drop, ...noCue } = row('freesound', '7', 'unused');
+    addCatalogEntry(noCue, orderPath);
+    addCatalogEntry({ ...noCue, cue: null, file: 'refetch.ogg' }, orderPath);
+    after = JSON.parse(readFileSync(orderPath, 'utf8')).sounds;
+    check(after.length === 7 && after[6].file === 'refetch.ogg' && after[6].cue === null, 'a refetch with no cue replaces the old row that had none');
+    check(readFileSync(orderPath, 'utf8').endsWith('}\n') && readFileSync(orderPath, 'utf8').startsWith('{\n  "version": 1'), 'the file keeps its format');
+  }
 
   // ElevenLabs: credits are checked before and after, and a take is not kept by default.
   let used = 100;

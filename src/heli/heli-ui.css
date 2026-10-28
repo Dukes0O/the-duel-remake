@@ -1,3 +1,5 @@
+/* MAP-VIEW: the pilot's map screen's own sheet. */
+@import './pilot-map.css';
 /* Kestrel One's instruments (docs/HELICOPTER.md section 8). While flying the
    race HUD steps aside; the panel sits along the bottom like a cockpit. */
 .heli-active #race-hud,.heli-active .weapon-hud,.heli-active .combat-upgraded-hud,.heli-active .rear-view-frame{display:none}
@@ -17,19 +19,16 @@
 .heli-horizon-ball{position:absolute;left:-50%;right:-50%;top:-50%;bottom:50%;transform-origin:50% 100%;background:#3d6f99;border-bottom:2px solid #f3eddf}
 .heli-horizon-mark{position:absolute;left:18px;right:18px;top:50%;height:3px;margin-top:-1px;background:#ffcf3f;border-radius:2px;box-shadow:0 0 0 1px #0006}
 .heli-status{display:flex;gap:18px;padding:4px 12px;font-size:10px;letter-spacing:2px;font-weight:700;color:#d8d2c2;background:#0f1614cc;border-radius:4px}
+.heli-credits b{color:#f2c14e}
 .heli-panel kbd{display:inline-block;margin-left:4px;padding:0 5px;border:1px solid #ffffff4d;border-radius:3px;font:inherit;color:var(--ink,#f3eddf)}
 .heli-side{position:absolute;top:96px;right:28px;bottom:150px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;overflow:auto;pointer-events:auto}
 .heli-controls{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
 .heli-lessons,section.heli-board{width:300px;padding:10px;background:#0f1614d9;border:1px solid #ffffff1f;border-radius:6px}
 .heli-lessons>span{font-size:9px;letter-spacing:2.5px;font-weight:750;color:var(--muted,#b6b1a5)}
-.heli-lessons ul,.heli-board ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
-.heli-lessons li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
-.heli-lessons li.heli-lesson-locked{color:#ffffff66}
-.heli-lessons li.heli-lesson-done span{color:#9fd49a}
+.heli-board ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
 .heli-lessons p{margin:6px 0;font-size:14px;line-height:1.35}
 .heli-lessons button,.heli-board button{padding:5px 9px;font:600 12px/1.2 inherit;color:var(--ink,#f3eddf);background:#ffffff14;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
 .heli-lessons button:hover,.heli-board button:hover{background:#ffffff26}
-.heli-lessons small{font-size:10px;color:#ffffff66}
 .heli-skip{margin-top:8px;width:100%}
 .heli-lesson-hold{height:6px;margin:4px 0 8px;background:#ffffff1a;border-radius:3px;overflow:hidden}
 .heli-lesson-hold span{display:block;height:100%;background:#ffcf3f}
@@ -57,3 +56,52 @@
   line-height:1.35;background:#0f1614e6;border-left:3px solid #ffcf3f;border-radius:3px}
 .heli-radio b{margin-right:8px;font-size:10px;letter-spacing:2.5px;color:#ffcf3f}
 .heli-radio[hidden]{display:none}
+
+/* H2 Fire: the answer prompt, the fire line and the bucket in words. */
+.heli-fire{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;font:600 12px/1.4 system-ui,sans-serif;letter-spacing:.04em}
+.heli-fire span{padding:3px 8px;border-radius:3px;background:#0f1412cc;color:#e9e3d3}
+.heli-fire .heli-fire-call{background:#5a1d0dcc;color:#ffd9b0;animation:heli-fire-blink 1s steps(2,start) infinite}
+.heli-fire .heli-fire-line{color:#ffcf9a}
+.heli-fire .heli-bucket-words.locked{background:#6b3a0ccc;color:#ffe2b8}
+@keyframes heli-fire-blink{to{opacity:.55}}
+
+/* H4 Rescue: the call, the mission line, the beacon bar, the dig bar and the crates. */
+.heli-rescue{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:6px;font:600 12px/1.4 system-ui,sans-serif;letter-spacing:.04em}
+.heli-rescue>span{display:inline-flex;align-items:center;gap:8px;padding:3px 8px;border-radius:3px;background:#0f1412cc;color:#e9e3d3}
+.heli-rescue .heli-rescue-call{background:#5a1d0dcc;color:#ffd9b0;animation:heli-fire-blink 1s steps(2,start) infinite}
+.heli-rescue .heli-rescue-line{color:#ffcf9a}
+.heli-rescue .heli-rescue-line.late{background:#6b3a0ccc;color:#ff9a4a;font-weight:750}
+.heli-rescue .heli-rescue-crates{color:#e9e3d3}
+.heli-rescue em{font-style:normal;font-size:9px;letter-spacing:2.5px;font-weight:750;color:var(--muted,#b6b1a5)}
+.heli-rescue b{display:inline-block;width:90px;height:7px;background:#ffffff1f;border-radius:3px;overflow:hidden}
+.heli-rescue b i{display:block;height:100%;background:#7fe0a0}
+.heli-rescue .heli-rescue-hold b i{background:#ffcf3f}
+.heli-rescue .heli-rescue-signal.none{color:var(--muted,#b6b1a5)}
+.heli-rescue .heli-rescue-hurt{background:#5a3a0ccc;color:#ffd08a}
+.heli-rescue .heli-rescue-hurt.badly{background:#6a1d0dcc;color:#ffb89a}
+
+/* Dusk over the hiker's last 3 minutes: the world dims and cools behind the instruments. */
+.heli-panel[data-dusk]::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 45%,rgba(24,30,64,.55) 0%,rgba(10,14,36,.85) 100%);opacity:calc(var(--heli-dusk,0) * .85)}
+/* LAB-VIEW: the Lab door on the instructor's board, the Lab challenge's line, and the pad's Lab menu. */
+.heli-lab-door{margin-top:8px;width:100%;border-color:#ffcf3f88!important;color:#ffcf3f!important}
+.heli-challenge{width:300px;padding:10px;background:#0f1614d9;border:1px solid #ffcf3f66;border-radius:6px}
+.heli-challenge>span{font-size:9px;letter-spacing:2.5px;font-weight:750;color:#ffcf3f}
+.heli-challenge p{margin:6px 0;font-size:13px;line-height:1.4}
+.heli-challenge button{padding:5px 9px;font:600 12px/1.2 inherit;color:var(--ink,#f3eddf);background:#ffffff14;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
+.heli-board-lab-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 0}
+.heli-board-chosen{border-color:#ffcf3f!important;color:#ffcf3f!important}
+.heli-board-lab-note{display:block;margin-top:6px;color:#f3bd77}
+
+.heli-fuel-target{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
+.heli-fuel-target select{color:#f3eddf;background:#25302b;border:1px solid #ffffff40;border-radius:4px;padding:5px}
+
+/* The pad hut's logbook shelf. */
+.heli-shelf,.heli-rank{padding:14px 16px;margin-bottom:10px;border:1px solid #bda88155;background:#1c211fee;color:#ede4d1;line-height:1.5}
+.heli-shelf h3,.heli-rank h3{margin:0 0 8px;letter-spacing:2px;font-size:13px}
+.heli-shelf p,.heli-rank p{font-size:13px;margin:8px 0}
+.heli-shelf details{border-top:1px solid #bda88133;padding:9px 0}
+.heli-shelf summary{cursor:pointer;font-size:13px}
+.heli-gus-page p{font-family:Georgia,serif;font-size:15px;line-height:1.7}
+.heli-shelf button,.heli-rank button{display:block;margin-top:8px;padding:7px 10px;background:#364239;color:#f5eddc;border:1px solid #bda88177;cursor:pointer}
+.heli-shelf button:disabled{opacity:.65;cursor:default}

@@ -1,13 +1,26 @@
+import {cupsPanel} from './screen-trophies.js';
+import {isCourseUnlocked} from './course-access.js';
 import {COURSE} from './config.js';
 import {courseAccessPanel} from './course-access-ui.js';
 
 export function courseScreen(profile, selectedStage, message, options) {
-  return courseAccessPanel(profile, selectedStage, message, options);
+  const panel=cupsPanel(profile,{enabled:options?.grandPrixCareerEnabled===true,courses:COURSE,
+    owns:course=>isCourseUnlocked(profile,course),playerId:options?.playerId});
+  return courseAccessPanel(profile, selectedStage, message, options)
+    .replace(/<\/section>$/,panel+'</section>');
 }
 
 export function createCourseActions({app, choices, setMessage, setOpen, updateMenuScene, invalidate, renderState,
   careerEnabled = () => false, grandPrixAvailable = () => false}) {
   function handle(button) {
+    if(button.dataset.cupStart||button.dataset.cupContinue||button.dataset.cupAbandon){
+      if(app.duel.state.status!=='menu'||careerEnabled()!==true)return true;
+      const result=button.dataset.cupStart?app.startCup(button.dataset.cupStart):
+        button.dataset.cupContinue?app.prepareCupRace():app.abandonCup();
+      setMessage(result.reason);
+      if(result.ok)Object.assign(choices,app.getRaceChoices());
+      updateMenuScene();invalidate();renderState();return true;
+    }
     if (button.dataset.courseUnlock) {
       if (app.duel.state.status !== 'menu') return true;
       const result = app.purchaseCourse(button.dataset.courseUnlock);

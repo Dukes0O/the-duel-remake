@@ -17,7 +17,7 @@ export const FIRE = Object.freeze({
   baseChance: 0.55, litresPerPoint: 180,
   startPercent: 75, neighbourPercent: 50, litPercent: 25, growPercent: 25, spreadFrom: 50,
   dampSteps: 2, damp: 0.2, spot: 3, regionCells: 2,
-  stepSeconds: 90, dayStepCount: 3, cruiseKgPerSecond: 0.6,
+  stepSeconds: 200, dayStepCount: 3, cruiseKgPerSecond: 0.6,
   // Saved cells and scars name cells of the grid built from this course
   // seed (the helicopter's), so every caller builds the same grid.
   courseSeed: 1989,
@@ -29,6 +29,10 @@ export const FIRE = Object.freeze({
 // Which courses have a burnt look made (FIRE-BURNT-LOOK; section 14). A course
 // joins by getting its set under public/assets/burnt/<course>/.
 export const BURNT_LOOKS = Object.freeze(['tremblant-woods']);
+
+// The Lab's Retardant tank (docs/LAB.md 4.1): 150 litres treat a cell, and a treated forest cell cannot catch fire
+// for the rest of that fire. Retardant never puts flames out and never lowers a cell that is already burning.
+export const RETARDANT = Object.freeze({litresPerCell: 150});
 
 export const cellId = (i, j) => (i + 512) * 1024 + (j + 512);
 export const cellIJ = id => [Math.floor(id / 1024) - 512, id % 1024 - 512];
@@ -167,9 +171,13 @@ export function spotChance(grid, from, to, wind, damp = false) {
   return carry > 0 ? FIRE.baseChance * carry * slopeFactor((b.y - a.y) / Math.hypot(b.x - a.x, b.z - a.z)) * (damp ? FIRE.damp : 1) : 0;
 }
 
+// The cells retardant has made unable to catch fire (a fire without the Lab's tank has none).
+export const treatedCells = fire => new Set((fire.retardant ?? []).filter(([, litres]) => litres >= RETARDANT.litresPerCell).map(([cell]) => cell));
+
 // One spread step. Returns a new fire record.
 export function spreadStep(fire, grid, wind) {
   const burning = new Map(fire.burning), burnt = new Set(fire.burnt), damp = new Map(fire.damp);
+  const treated = treatedCells(fire);
   const rng = makeRng(heliHash(fire.seed, 'spread', fire.steps));
   const lit = new Set();
   // Every burning cell grows first, so a cell lit last step spreads this step.
@@ -181,7 +189,7 @@ export function spreadStep(fire, grid, wind) {
       const n = cellId(i + di, j + dj);
       if (!grid.cells.has(n)) continue;
       const roll = rng.float();
-      if (burning.has(n) || burnt.has(n) || lit.has(n)) continue;
+      if (burning.has(n) || burnt.has(n) || lit.has(n) || treated.has(n)) continue;
       if (roll < spreadChance(grid, cell, n, wind, damp.has(n))) lit.add(n);
     }
     if (!wind || wind.speed <= 0) continue;
@@ -189,7 +197,7 @@ export function spreadStep(fire, grid, wind) {
       const n = cellId(i + di, j + dj);
       if (!grid.cells.has(n)) continue;
       const roll = rng.float();
-      if (burning.has(n) || burnt.has(n) || lit.has(n)) continue;
+      if (burning.has(n) || burnt.has(n) || lit.has(n) || treated.has(n)) continue;
       // Embers never cross a road or the lake: a cell between must be forest.
       // The one or two cells between, the same on every side.
       const half = d => Math.sign(d) * Math.ceil(Math.abs(d) / 2);
@@ -208,6 +216,13 @@ export function spreadStep(fire, grid, wind) {
 // Water on the fire: patches [{x, z, litres, radius}] from heli-bucket.js.
 // Each patch's water is shared among the cells its disc covers, by area.
 export function applyWater(fire, grid, patches) {
+  // Retardant patches (the Lab's tank) are coated on after the water is dealt with; with none, nothing here changes.
+  const coat = patches.filter(patch => patch.retardant === true);
+  if (coat.length) {
+    const wet = applyWater(fire, grid, patches.filter(patch => patch.retardant !== true));
+    const coated = applyRetardant(wet.fire, grid, coat);
+    return {...wet, fire: coated.fire, cellsTreated: coated.cellsTreated};
+  }
   const litres = new Map();
   for (const patch of patches) {
     if (!(patch.litres > 0) || !(patch.radius > 0)) continue;
@@ -243,6 +258,27 @@ export function applyWater(fire, grid, patches) {
   for (const cell of burnt) damp.delete(cell);
   return {fire: {...fire, burning: [...burning].sort((a, b) => a[0] - b[0]), burnt: [...burnt].sort((a, b) => a - b),
     damp: [...damp].filter(([cell]) => !burning.has(cell)).sort((a, b) => a[0] - b[0])}, litresOnFire: round1(hit), cellsOut: out};
+}
+
+// Retardant on the forest: each patch's litres are shared among the cells its disc covers, by area, and a cell that has
+// had 150 litres is treated. Cells already burning or burnt take none (a burning cell is not lowered). Returns the new
+// fire record (with `retardant` only once some has landed) and how many cells were newly treated.
+export function applyRetardant(fire, grid, patches) {
+  const totals = new Map(fire.retardant ?? []);
+  const lit = new Set([...fire.burning.map(([cell]) => cell), ...fire.burnt]);
+  const before = treatedCells(fire);
+  for (const patch of patches) {
+    if (!(patch.litres > 0) || !(patch.radius > 0)) continue;
+    for (const [cell, part] of waterShare(patch)) {
+      if (!grid.cells.has(cell) || lit.has(cell)) continue;
+      totals.set(cell, round1((totals.get(cell) ?? 0) + patch.litres * part));
+    }
+  }
+  const retardant = [...totals].filter(([cell]) => !lit.has(cell)).sort((a, b) => a[0] - b[0]);
+  const next = {...fire, retardant};
+  if (!retardant.length) delete next.retardant;
+  const cellsTreated = [...treatedCells(next)].filter(cell => !before.has(cell)).length;
+  return {fire: next, cellsTreated};
 }
 
 // How a disc of water splits among cells, by sampling it on a 2 m lattice.
@@ -286,7 +322,7 @@ export function hottestEdge(fire, grid, wind = null) {
 }
 
 // ---- the fire's clock (section 4.2) -----------------------------------------
-// One spread step for every 90 s the engine runs, on any course; three at the
+// One spread step for every 200 s the engine runs, on any course; three at the
 // start of each new play day; nothing while the game is closed or in a race.
 // Steps stop as soon as the fire is lost. The engine seconds below a step are
 // kept in the record without rounding, so a frame at a time adds up.

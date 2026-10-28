@@ -124,7 +124,8 @@ async function qualityPass(context, quality) {
 export async function run(context) {
   if(process.env.GFX_KIT_FRAME_COST==='1')return frameCostRun(context);
   for (const quality of ['high', 'performance']) await qualityPass(context, quality);
-  if (process.env.GFX_KIT_FIT_MATRIX === '1') await fitMatrixPass(context);
+  if (process.env.GFX_KIT_FIT_MATRIX === '1' || process.env.GFX_SPEIRLING_KIT === '1')
+    await fitMatrixPass(context);
 }
 
 async function frameCostRun(context) {
@@ -256,7 +257,8 @@ async function frameCostRun(context) {
 // Opt-in visual fit audit. It changes only a stopped memory-only QA race and
 // keeps the default eight scene/action captures unchanged.
 async function fitMatrixPass(context) {
-  const cars=['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt',
+  const speirling = process.env.GFX_SPEIRLING_KIT === '1';
+  const cars=speirling ? ['mcmurtry_speirling'] : ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt',
     'dusthawk_rally','banshee_muscle','viper_proto','titan_monster',
     'koenigsegg_jesko'];
   await context.navigate('/tools/menu-check.html');
@@ -314,6 +316,7 @@ async function fitMatrixPass(context) {
         // host.dataset.vehicleKey may name the rival because frame() also
         // prepares opponent assets. The mounted player root is authoritative.
         const ready=host?.dataset.vehicleAsset==='ready' &&
+          ${speirling ? "host.dataset.warmupStatus==='ready' &&" : ''}
           car?.userData.vehicleKey===${JSON.stringify(carKey)} &&
           kit?.visible && canvas?.style.visibility!=='hidden' &&
           canvas.width>500 && canvas.height>300 &&
@@ -323,7 +326,7 @@ async function fitMatrixPass(context) {
         window.__kitReadyFrames=ready?(window.__kitReadyFrames||0)+1:0;
         return window.__kitReadyFrames>=3;
       })()`,`${carKey} authored fit in ${quality}`,60_000);
-      const tiers=quality==='high' ? ['scrapper','raider','warlord'] : ['warlord'];
+      const tiers=speirling || quality==='high' ? ['scrapper','raider','warlord'] : ['warlord'];
       for(const tier of tiers) {
         await context.evaluate(`(async () => {
           const app=window.__qaApp,render=window.__render,state=app.duel.state;
@@ -363,14 +366,28 @@ async function fitMatrixPass(context) {
             }
           }
         })()`);
-        await context.screenshot(`armor-kit-fit-${carKey.replaceAll('_','-')}-${tier}-${quality}`);
-        captures++;
+        const views = speirling ? [[2.3, 1.6, 1.7], [3.2, 1.1, 0], [2.3, 1.6, -1.7]] : [null];
+        for (const [view, position] of views.entries()) {
+          if (position) await context.evaluate(`(async () => {
+            const app=window.__qaApp,render=window.__render;
+            const car=render.scene.getObjectByName('armor-kit-0-front').parent.parent;
+            const size=car.userData.size, p=${JSON.stringify(position)};
+            app.inspectionCamera={
+              position:car.localToWorld(car.position.clone().set(p[0]*size.width,p[1],p[2]*size.length)).toArray(),
+              target:car.localToWorld(car.position.clone().set(0,.55,0)).toArray()};
+            await new Promise(resolve=>requestAnimationFrame(resolve));render.renderFrame();
+            await new Promise(resolve=>requestAnimationFrame(resolve));render.renderFrame();
+          })()`);
+          await context.screenshot(`armor-kit-fit-${carKey.replaceAll('_','-')}-${tier}-${quality}${speirling ? '-'+view : ''}`);
+          captures++;
+        }
       }
     }
   }
   const unchanged=await context.evaluate(`(() => {const p=window.__qaApp.profile;
     return JSON.stringify({credits:p.credits,history:p.history,records:p.records,
       scrap:p.wasteland?.scrap})===window.__kitMatrixBaseline;})()`);
-  if(!unchanged || captures!==36) throw Error(`Fit audit changed rewards or captured ${captures}/36 views`);
+  const expectedCaptures = speirling ? 18 : 36;
+  if(!unchanged || captures!==expectedCaptures) throw Error(`Fit audit changed rewards or captured ${captures}/${expectedCaptures} views`);
   console.log(`all-nine kit fit matrix: ${captures} tier/quality captures; no reward or record changes`);
 }

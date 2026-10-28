@@ -333,3 +333,253 @@ Claude: which actual beech source should finalR3 use? Please name an existing ap
 Meanwhile grant these independent exact SOURCE-ONLY fixes in the retained lane: src/circuit-landmarks.js optional town streets descriptor, src/circuits/ardennes-forest.js two4m visual gravel ribbons on existing Stavelot centres28/48 plus1.2sin(along/70),s0-65..s0+130; ground each actual vertex with renderedGroundHeight(requireSurface:true)+0.04m, <=1m longitudinal/0.5m across, no road/grip/collider/state edit. Allocate geometry/material ONLY when opted in; absent descriptors and all Panorama/default node/material/seed behavior exact. Validate finite/clear/nonempty2streets and actual generated vertices/road clearance/nonmutation/disposal in existing test-course-landmarks/test-circuit-ardennes only. Retain current house/church/road/AV tests and assets; no fake street labels.
 
 Existing ardennes-views scenario may prepare clear-second-lap close views of actual village/streets and actual stone-bridge/stream from descriptor-centred read-only cameras, with original race progress/light/mist and all22existingviews/field/incident/stock/readonly guards exact. Preserve actual car-eye underbridge pose. No lighting override, hidden geometry, synthetic car pose, extra export or new harness. Prepare final3-view delivery including future actual beech view; do NOT create/submit R3 JPEG or run another native until beech source is settled and Root reviews the final complete source. Existing compositor may prepare a final numbered layout only, all real pixels/full frames/no overwrite; final judgment should receive the three legible original close PNGs plus brief. One finalR3 only, no fourth. Freeze street/2view source within07:08UTC or note/move; new renderer/silhouette file hooks wait exact answer/lease.
+
+
+## Street source independently clear; focused geometry admission
+
+Independent reviewer /root/frame_setup_review read exact10ef2beb88bd5e32fadfea010940706568616968 against380c3283 and all eight changed files: CLEAR, no real fault. Actual terrain-query Float32 vertex coordinates, upward winding, sampled spacing/road clearance, graph-owned disposal, absent/Panorama defaults and original22 native/race guards preserved. Review performed no imports, tests or native work.
+
+Root now admits ONE focused existing test-course-landmarks and test-circuit-ardennes run on exact clean10ef, jobs4, after fresh actual capacity/holds. This tests the real new street geometry/descriptors and old default/ground contracts; no road-suite rerun because unchanged. No native, final R3 sheet/review, signature capture, lane gate/build or merge yet. Beech art-source question remains waiting_on:claude; no silhouette/default fallback. Freeze source during this run and record original actual result, not an inferred pass.
+
+## Claude answers - beech source, 15 October 00:05
+
+Approved: an original procedural beech for Ardennes only (Blender recipe in
+`tools/blender/`, every other course's trees and defaults untouched). It must
+not repeat the lollipop fault:
+- a tall smooth grey trunk visible for the lower third, a few forked limbs;
+- a crown built from 6 to 9 overlapping irregular lobes of different sizes,
+  wider than tall, never one sphere or a stack of balls;
+- summer green with light and dark variation, darker underneath, a leafy
+  texture rather than flat colour;
+- two or three size variants and random rotation; High and LOD within the
+  course's tree budget; collisions as the existing trees.
+Mix them with the firs in groups, mostly on the Kestrel and Forest Run
+slopes. Claude judges them in the one final round 3 sheet with a close view.
+
+
+## Actual street geometry check passed
+
+The ONE admitted focused run on exact clean10ef2beb completed15October06:59:40.6542343UTC,exit0/13078.4472ms:2/2 existing suites(test-course-landmarks,test-circuit-ardennes),zero failures/notRun,jobs4. Source unchanged/clean,actual competing heavy roots empty. Original receipt/result under retained lane .evidence/2026-10-15/P4-ARDENNES/streets-10ef2beb. No repeat needed. Finalbeech source,complete nativeR3/actual art verdict,first course signature,nearby gate/build remain pending; no art/merge acceptance inferred. Keep existing lane frozen while the art-source question waits.
+
+
+## Approved beech implementation source lease after Claude c20a150c
+
+Claude has now explicitly approved an ORIGINAL procedural beech for Ardennes only; the earlier art-source wait is answered. Existing street source10ef is independently clear and2/2 focusedPASS; preserve it. Grant SOURCE ONLY in this retained lane: new tools/blender/ardennes-beech.py and tools/art/ardennes-beech.json; append ardennes-beech to existing src/track-kits.js loader roster; narrow src/vegetation.js and src/world.js opt-in forwarding; src/circuits/ardennes-forest.js descriptor; additive existing tools/test-track-kits.mjs,test-circuit-ardennes.mjs,test-blender-output.mjs and necessary existing vegetation/world suite; existing ardennes-views scenario/compositor; own note/CREDITS only original authorship text. Other real hooks stop for a precise amendment.
+
+Recipe follows existing Ardennes metre/Y-up GLB pair export, pure --paths-only/selected-output/provenance safeguards, bounded original embedded leafy texture, stable original procedural geometry: lower-third smooth grey visible trunk/forkedlimbs,6–9irregular overlapping crownlobes widerthantall, not spheres/balls; varied summergreens/darkerunderside. One High/LOD pair, three deterministic scale variants, High<=684tri(the existing pine),LOD<=240, no new external source/dependency. Prepare runtime paths only public/assets/track-kits/ardennes-beech{,-lod}.glb following actual existingloaderpath; do not export/install during source preparation or change six current landmarks.
+
+Select only a stable-ID subset of EXISTING course.features.trees in Kestrel/ForestRun groups. Keep every actual simulation tree ID/position/heading/collision/seed/random stream/count exact, no new trees. Existing prepared trackkit owner supports scenery:{kind:tree,id}, High/LOD160m, groundpivot/instance resources/late-load disposal; reuse it. Pine drawing omits ONLY opted-in selected rows and applies exact current tree fall/reset pose to their owned kitbinding. All other courses, absent descriptor, remainingpines/defaultmaterials/ground/fall behavior exact; no core/render3d/sim/terrain/registry changes. Meaningful existing tests cover defaults,selectedidentity/count/ground,fall/reset/disposal and roster/planner; oldassertionsexact. No signature write.
+
+Prepare THIRD actual second-lap closeview Beech Grove/actual-beech-grove centred on an ACTUAL bound Kestrel group/crown with surrounding firs; preserve original22+2views/native stock/field/knownincident/readOnly/light/mist guards. No fabricated scene/car/view or finalR3JPEG/review. Freeze source for ONE independent review before any import/planner/test/export/render/native/gate/build. Source deadline07:45UTC, then note/move. Actual generated count/assetbudget/grounding/artremain measuredlater, not claimed from source. One finalR3 only, no fourth/sharedsnow-tree round.
+
+
+## Exact existing world-suite prepared-owner amendment
+
+Read-only source preflight finds existing test-world-composition buildEnvironment synchronous/default without preparedassets. For ONLY Ardennes, lease tools/test-world-composition.mjs preparedkitowner setup with installed GLTFLoader/currentheadlesstextureplugin following existing test-track-kits precedent, awaitcreateTrackKits thenpassowner. Keep originalsignaturepresenceguard/capturepath/othercoursebranches/21oldfixturebytes exact. No fixturebootstrap/dummyhash/capture/execution now. Existing test-track-kits Ardennes expected count may be authoredkitPlacements plus ACTUALbeechTreePlacements count; everyold/default/explicitplacementsoverridecount exact. No pinefallback/omittedbeech/fakecount accepted. Sourcefreeze/reviewstillrequired before actual assets/tests/native.
+
+
+## Original beech source independently clear; planner admission
+
+Independent reviewer /root/frame_setup_review read exactca47179cedfdbc0d17f39c764c89110daf4abd92 against10ef2beb and all fourteen granted files: CLEAR, no real fault. The review confirms default/other-course behavior, existing tree identities and race data, original fall/reset math, kit ownership/disposal, unchanged signature guards and original native view contracts. Exported budgets, leaf appearance, actual grounding and final art remain unproved.
+
+Root admits one existing test-blender-output focused suite on clean ca471, jobs4, after fresh holds/capacity. It checks the actual pure planner before export. The circuit/kit suites that require actual new assets wait for the single reviewed beech pair export; no missing-file assertion is waived. No native, art round, world-signature capture, lane gate/build or merge begins from this planner admission.
+
+
+## Registration passed; actual beech planner still needs its own check
+
+The original ca471 test-blender-output run passed1/1 at07:26:51.9263515UTC,4186.9996ms,jobs4,source unchanged. Its native-generator registration checks the existing native test home, not this new recipe executable. Root corrects the earlier wording: the actual beech planner has NOT run yet, and no export pass is claimed.
+
+Admit exactly the existing Node test named original beech planner names only its High/LOD pair and does not create files, using Node --test-name-pattern/--test-concurrency=4 in test-circuit-ardennes.mjs. This runs the real existing planner case before assets exist; other cases are explicitly skipped, not called passed. After that case passes, Root may admit one reviewed CPU4 selected beech pair export into only public/assets/models/circuits/kits/ardennes-beech{,-lod}.glb and tools/art/ardennes-beech.json. Existing six landmark bytes/hashes must verify before and after, no rewrite. Actual asset-dependent circuit/track-kit suites and first visual/signature checks still wait. No new harness or assertion change.
+
+
+## Actual original beech pair exported; asset checks admitted
+
+The existing native planner case passed once on ca471 at07:28:20.4318171UTC,700.0158ms. Then the ONE selected CPU4 export completed07:28:49.9193678UTC,exit0,756.1144ms. The six old landmarks stayed byte/hash exact. Actual beech High492tri/68232B/SHA7100974c0824a23e7e8f014ba33b4d7850ba42a727e705ed90d05094e2036221; LOD196tri/56976B/SHA25a310758f9c9e8906d6b68b6485c762f18001295e8b6b96ec6ece88b35a82e9. Pair125208B,actual visible trunk3.2m/height6.25m; no art verdict inferred.
+
+Actual assets/provenance/note are frozen clean3185f91b9f4ff8461fc4c012d1feaf6eee6b6333. Reviewed ca471 code/tests/recipe are unchanged. Root admits ONE focused run of existing test-circuit-ardennes and test-track-kits,jobs4,after fresh holds/capacity. These now read real GLBs and measure actual placement,ground,fall/reset,resource and default contracts; no missing-file waiver. Do not repeat the export or earlier standalone planner. Native final-round pictures,Claude acceptance,first signature and final nearby/build still wait these checks and Root admission.
+
+
+## Actual asset check failure: one new fixture ground assertion
+
+Original job81857 on clean3185 completed07:32:35.5141545UTC,exit1,100006.5922ms,jobs4,source unchanged. test-track-kits passed(99936.0715ms); test-circuit-ardennes passed35/36 cases(13599.0226ms). Only the new bound-beech fixture fails at line943: rootY7.730397496511783 versus expected ground7.730397437346509, about5.9e-8m. Real exported budget/texture/provenance cases pass; no overall green or native/art admission.
+
+Read-only review is checking whether the fixture BoxGeometry height5.9 translated2.95 has a tiny negative Float32 minimum, which the real kit anchor correctly compensates. If confirmed, the smallest proposed fix is an exactly representable synthetic height6/translation3, preserving every strict ground/fall assertion and all production code/assets. No changed tolerance, waived grounding, fake real-asset pass or retry yet. Original evidence stays under beech-assets-3185f91b. Investigate only until08:03UTC, then note and move on.
+
+
+## Exact synthetic fixture repair approved after independent confirmation
+
+Independent source review confirms the fixture fault: Float32 stores -2.95 slightly below its intended value before translation; the kit correctly seats its actual negative minimum. This is not a production grounding fault. Lease ONLY the new test fixture at tools/test-circuit-ardennes.mjs:928: BoxGeometry(.4,6,.4).translate(0,3,0), plus own note explaining the changed fixture. Binary-exact3 gives the intended zero base. Keep line943 strict equality, all fall/reset/default/real-asset assertions, production source and GLBs exact. Freeze for confirmation before rerunning only the affected circuit suite; do not repeat passing track-kits or export. Existing08:03UTC failure cutoff remains.
+
+
+## Fixture repaired; final native packet admitted on current integration union
+
+Root confirmed exactbaa151f0 changed only the independently approved synthetic height6/translation3 and note. Affected test-circuit-ardennes rerun57501 passed1/1 suite/all36cases at07:37:37.7568557UTC,12188.1503ms,jobs4,zero failures/notRun,source unchanged. Original passing track-kits and export were not repeated. The failure investigation is closed within its budget; no assertion or game limit changed.
+
+Normal sync with current integration is conflict-free at688eb0946122f8a6ac9e09bdb6eb6b6418d830fc. Root verified all reviewed Ardennes runtime/scenario bytes unchanged; additive HELI roster/credits both preserved, current release landing included. Lane is clean. No post-merge gate was run.
+
+After fresh holds/capacity, admit ONE existing ardennes-views native packet on exact688e,private autoport/memory-only. Expected28 real views: original22 plus three clear-second-lap close views per quality. Preserve original stock/field/readOnly/light/mist/knownincident guards and actual car-eye approach. Output only .evidence/2026-10-15/P4-ARDENNES/round3-688eb094, receipt native-688eb094. No repeated export, altered driver/scene/lighting, frame timing, signature, gate/build or art verdict yet. Root must inspect the three complete raw High pictures before ONE final R3 Claude submission. If native fails, keep the actual failure and stop for a bounded precise fix; do not silently waive it or submit a broken packet.
+
+
+## Real final-picture faults found before submission
+
+Original native85114 on clean688eb094 passed at07:41:18.6393889UTC,79113.6539ms,28 actual views,private/memory-only,issues[]/warnings[]. Root viewed all three High close pictures. Streets are legible. The bridge is end-on and does not show its arch/water clearly; beech leaves are flat bright colours and foreground firs hide the trunk. No final JPEG or Claude R3 review was created. Native success is not art acceptance.
+
+Independent binary audit proves the leaf fault in BOTH GLBs: materials select default TEXCOORD_0, which is constant(0,1); authored varying coordinates are TEXCOORD_1. Crown layer Original leaves and cone layer UVMap become separate channels on join. High/LOD identity is correct, so neither lighting nor a wrong LOD is blamed. Lease the exact recipe layer name Original leaves to UVMap, matching cones, plus meaningful assertions in the existing actual-GLB test: decode each textured primitive material-selected UV channel and require finite, nonconstant coordinates for both leaf materials in both files. Preserve every old budget, image, geometry, physics and default assertion. No palette, silhouette, lighting or threshold guess.
+
+The bridge camera targets the RIGHT stone row at s783.829647/lateral36/headingPI/2; Kestrel footbridge is s1557.588486. Lease ONLY Stone Bridge Stream close pose: eye at bridge.s-6,off bridge.lateral-18,actualground+5; aim at bridge.s/lateral,actualground+1.5. This gives a broadside view through the real arch. No bridge/stream geometry,world placement,light,vehicle or original view changes.
+
+For Beech Grove only, choose an actual existing selected Kestrel beech at the road-facing edge (minimum absolute lateral, then distance to Kestrel midpoint and stableID), keeping all authored trees. Prepare a closer descriptor-derived roadside eye about12m toward the road from that tree, no along-road offset, aim at its actual bound centre/halfheight. Use actual ground and bound height, retaining the real full-tree/fir context, clear second-lap light/readOnly and High/LOD witnesses. This is one local inspection-camera correction, not a guaranteed visibility claim or a new visibility/culling/raycast framework. Actual new pictures must prove trunk/crown legibility; no hidden firs, fake car, lighting or LOD override.
+
+Own only the existing beech recipe, actual-GLB test, existing scenario/compositor consistency and own note for source. Freeze and independent review before execution. Then Root may admit one existing UV regression case against OLD files (must expose the constant channel), ONE corrected pair export with unchanged triangles/geometry/images/six old landmarks, and affected suite once. No repeat of passing kit/default suites or formal art yet. One corrected existing native packet follows only after explicit Root admission. These are proven source/framing repairs within the final round, not a fourth round. Stop this fault investigation at08:12UTC if unresolved, record why and move on.
+
+
+## Final round 3 rejected; stopped at the art cap, 15 October 01:13 PT
+
+The actual tool-free image-only Claude review on clean bab7a9cb completed at 08:05:09 UTC, 22,835.4825 ms. Verdict: CHANGES REQUIRED. Scores: village/church 4, forest 2, road 4, bridges 3, cohesion 3. The village and road pass their picture requirements. The beech crowns remain faceted, striped plastic-looking blobs; the red-brown stream under the stone arch reads as a matte path, without a waterline or reflection.
+
+This consumes the third and final art round. AGENTS stop rule applies: stop, record why and ask Kyle. Work is held for Kyle; the question has already been sent in this chat. No fourth round, finishing-pass workaround, signature capture, final gate/build or merge is authorized. Keep the existing unmerged lane and final sheet. The corrected mechanical/native checks are evidence, not art acceptance. Final image: p4-ardennes/docs/board/looks/ardennes-art/round-3.jpg, 412330 bytes, SHA-256 e768c45b8ee8f2eebf0eb2174fc6ddfcd41cd22796c07830c7049483dacf6333. Full verdict/receipt remain in that lane's .evidence/2026-10-15/P4-ARDENNES/claude-image-only-round3-bab7a9cb. Lane review note records the verdict; no game asset is installed on integration.
+
+## Kyle decision, 15 October 2026: hold for a new art plan
+
+Kyle answered the pending hold-or-drop question: **Hold for a new art plan.** Retain the existing unmerged `codex/p4-ardennes` lane at `e78733bc`, its source, final comparison sheet, review note and unresolved evidence. This attempt is not dropped and its rejected final round is not accepted.
+
+The Kyle decision wait is answered. The card remains blocked while Claude prepares a new art plan addressing the beech crowns and stream. This decision does not authorize a fourth round, reset the three-round cap, approve a finishing workaround, or start edits, exports, captures, tests, signatures, gate/build or merge. Settle the new approach and its permitted scope before execution. The overnight continuation remains paused; no agent or automation is restarted by this record.
+
+## Claude's new art plan, 15 October 2026 (Kyle: "hold for a new art plan")
+
+Keep everything round 3 got right: the road, the village and church (4/5),
+the firs, the mist, the bridges' shapes, the landmarks and the Long Left
+barriers. Only two things change, each with a different method from the one
+that failed. Two rounds at most for these two items (a fresh, smaller cap
+granted by Kyle's decision); the rest of the course is frozen.
+
+### 1. Trees: real leaves, not solid crowns
+
+Building crowns out of solid shapes failed twice (lollipops, then faceted
+striped blobs). The fix is the method games use for broadleaf trees:
+- **Leaf cards.** Keep round 3's beech trunks and forked limbs (they passed).
+  Replace each solid crown with 40 to 80 small crossed quads, alpha-cut, with
+  a real leaf texture, clustered on the limb ends, so the silhouette is ragged
+  and light shows through. Source: an ambientCG leaf set (CC0, no account;
+  choose one with oval green leaves, e.g. from LeafSet013 to LeafSet030; check
+  the licence on the asset page and record it). No solid lobe mesh anywhere.
+- **Fewer, further back.** The Ardennes around Spa is mostly dark spruce with
+  beech in patches. Use beeches in a few groups set back 25 m or more from the
+  fences (Kestrel Straight's far slope, the Forest Run), with the accepted firs
+  in front. Close to the track: firs only.
+- **Fallback, no third method:** if the leaf-card beech is rejected in its
+  first round, drop beech entirely and the forest is all fir. That matches the
+  real place well enough and the firs already pass.
+
+### 2. The stream: water, not a path
+
+- Use the game's existing water surface (the one Harbour and Tremblant's lake
+  use, with its reflection and glitter), laid in a channel cut 0.6 to 1 m into
+  the ground under the stone arch, running about 40 m either side, red-brown
+  tinted and darker at the edges.
+- Wet banks: a darker, glossier strip of ground 1 m wide along each side, a few
+  rocks at the waterline, reeds or grass tufts from the existing kits.
+- The view: show the bridge from the side, from the downstream bank, so the arch
+  and the water under it are both in frame (round 3 looked at it end-on).
+- No new water system and no change to the road, the bridge model or physics.
+
+### Checks and the sheet
+
+One sheet per round: three close High views (the beech grove from the road,
+the stream and arch from the bank, the stream from the car on the bridge) plus
+the same three at Performance, and one wide Kestrel view to show the firs in
+front and the beeches behind. Frame cost at the busiest view is checked when
+the round is accepted (AGENTS rule 8). Then the usual lane tier, build, one
+review, world signature capture and merge, and Claude's finishing pass
+(P4-FINISH-ARDENNES).
+
+## Art accepted and merged (Claude, 15 October)
+
+Round 4 (Claude's lane, at Kyle's request) is accepted and merged: leaf-card
+beeches from ambientCG LeafSet024 (CC0) set back behind the firs, and a
+red-brown water stream with wet banks under the stone arch. Merge into
+integration from claude/ardennes-art; codex/p4-ardennes is fully contained and
+can be cleared. Ardennes stays dev. Left before Kyle's go-live:
+1. the Long Left player crash in the stock replay (one known exception);
+2. the frame check at the busiest view (the grid at Pit Straight) at both
+   qualities;
+3. Claude's finishing pass, P4-FINISH-ARDENNES;
+4. the switch-on, the same way as Summit's (SUMMIT-SWITCH-ON).
+Owner returns to Codex for 1, 2 and 4.
+
+
+## Kyle follow-up scope, 15 October: driver, frames, switch-on preparation
+
+Kyle keeps Ardennes switched off and authorizes three jobs: fix the remaining Long Left test-driver crash, run the frame-speed check, and prepare switch-on the same way as Summit. Current accepted art merge010c81ad and source15e28ca0 supersede the earlier art hold. Do not alter the accepted art, road, barriers, physics, seeds, published reference or released courses. Claude finishing/release and Kyle go-live remain separate.
+
+Reuse the existing codex/p4-ardennes lane for this same card, fast-forwarding its clean contained head to current integration; no new lane or cleanup bypass. Root owns board/inbox/status. First bounded driver diagnosis: reproduce the original stock959/.95/1989/Medium/fieldSeed1000 full-field setup using existing App/Duel and observer hooks, retaining actual steering/brake/slip and opponent/target facts. Prove the minimal cause before editing. Own test-only tools/track-script-drive.mjs, existing tools/test-track-script.mjs and tools/test-circuit-ardennes.mjs, existing ardennes-views observer/acceptance only when removing the fixed exception, and own change note. No src/app.js/controller/simulation or course geometry edits. Existing no-opponent/default replay fingerprints and original guards remain; a fix requires the original full-field player to finish with zero crashes/resets, not a new exception or changed seed/skill. One independent code review and nearby/jobs4/build before merge. Stop a single investigation after30minutes with concrete facts if unresolved.
+
+Frame preparation may reuse the existing frame-pacing scenario with an Ardennes Pit Straight selector named on this card before implementation: real native eight-car grid, actual accepted course, both qualities,120 delivered intervals, headed/visible/memory-only, p95<=18.5ms and world build<1000ms; first load>5s warning only. No extra art packet. Timing runs only after zero competing jobs, actual GPU quiet and panel-off confirmation, under an announced reservation. Do not claim timing from source or competing/headless runs.
+
+Switch-on preparation is a separate written future slice while state remains dev. Name the exact Ardennes manifest/state pins/world-signature coverage and approved-art signature hook, preserve all other course baselines and save/menu order. No feature flip, release, live write or push is authorized here. Any required additional hook gets a precise card amendment first.
+
+Switch-on preparation is now concrete on `docs/board/cards/ARDENNES-SWITCH-ON.md`: exact manifest/state pins, first actual Ardennes signature and all other baseline preservation, driver/frame/Claude finishing dependencies, no flag flip or new lane.
+
+## Driver result and exact frame selector lease
+
+The original full-field regression now passes with the relative passing-side fix: two focused cases PASS, actual full-field case60324.5981ms, total61438.8355ms. Original959/.95/Medium/1989/1000, all seven CPUs finished, player two laps/zero major or stage crashes/zero resets/no opening pile-up. Independent source review ardennes_driver_review is CLEAR on the initial four-file fix. The native scenario may now tighten acceptance to zero player crashes, removing the specific Long Left allowance; retain receipt consistency/index/restoration checks and explicit CPU incidents. No photo rerun is needed for the accepted art.
+
+Exact frame-owned amendment: tools/scenarios/frame-pacing.mjs only adds an opt-in ARDENNES_FRAMES_ONLY selector reusing the existing headed native App/grid/120-RAF/world-construction measurement. Its default Harbour night path remains exact. Future Ardennes branch requires the actual dev QA flag, real eight-car Pit Straight grid, visible running App, memory-only storage, both qualities, declared idle screen-off and zero competing roots. Add meaningful packet/context negative cases in existing tools/test-circuit-ardennes.mjs; original frame validator/night tests unchanged. No full-check script, shared timing threshold, renderer, scene, art or physics edits. One independent review of final selector/guard changes and nearby/jobs4/build before merge. Kyle confirmed Second screen only/screen off and game idle in this chat. Actual GPU/process quiet and an announcement are still required immediately before timing.
+
+## Bounded frame-readiness failure retention
+
+First actual headed attempt on317cf717/private26212 timed out in Runtime.evaluate before any sample, issues[]/warnings[], reports[]. Cause unknown; no pacing or world-build verdict exists. The existing frame scenario has a60s scene-readiness promise inside the harness60s evaluate call, so the outer error can mask pending readiness. Within the already owned tools/scenarios/frame-pacing.mjs, retain one read-only actual App/course/status/visibility/dataset witness in the existing Ardennes failure catch before the harness closes, then rethrow the original error. No timeout, readiness requirement, renderer, scene, App or threshold changes; no new harness or capture framework. Review, nearby/jobs4 and build precede one changed-source diagnostic admission under a fresh quiet reservation; previous failed packet remains failed. End this setup investigation by11:49PT (30minutes after original failure) if unresolved.
+
+## Bounded handoff, 15 October 11:45 PT
+
+The Long Left fix and strict zero-crash native acceptance are ready in clean retained candidate `codex/p4-ardennes` at619db9ef, not merged. Original959/.95/Medium/1989/1000 full-field replay finishes two player laps with zero major/stage crashes or resets, all seven CPUs finished, no opening pile-up. Final independent review CLEAR, final nearby42/42/jobs4/zero failures-notRun807.60s, build1.25s passed. No src/, physics, accepted art, price, course order or state changed. Do not repeat those checks on unchanged source.
+
+The actual headed private26212/memory-only frame attempt on317cf717 failed Runtime.evaluate timeout, reports[]/issues[]/warnings[]/no saved screenshots. No saved p95 or world-build result exists, and the failing phase/cause is unknown. Failure retention619db9ef is reviewed and gated, but its native diagnostic was NOT run: fire-finish browser root3940/parent45148 remained active at11:45:11PT. There was insufficient remaining time to safely admit a full attempt before the11:49PT investigation stop. No foreign job was stopped; queue reservation released early. Do not invent a readiness snapshot or count unrun timings as pass.
+
+P4-ARDENNES is blocked by the remaining native frame check, tracked on QA-ARDENNES-FRAME-READINESS. Keep the existing unmerged lane, source and required evidence. Next authorized work period starts from the retained current candidate and actual quiet admission, without repeating the passed gate/build/review unless source changes. ARDENNES-SWITCH-ON is written preparation only. Claude finishing and Kyle's later go-live remain prerequisites; Ardennes stays dev. No release, push, live write, new lane or HELI cleanup retry.
+
+
+## Kyle: skip the frame check, 15 October afternoon
+
+Kyle said to skip this timing work because his multiple Codex and Claude Code sessions will remain active, and to record that decision and progress. No further quiet reservation, GPU polling or timing attempt for this work period. The frame check is SKIPPED at Kyle's direction, not a pass; no p95/world/load result exists and the old setup timeout cause remains unknown. Ardennes stays dev. The already green Long Left test-driver fix may proceed on its42/42 nearby/build/independent review evidence; switch-on remains written preparation, with no release/live install or flag flip.
+
+
+Mechanical candidate619db9ef merged as 4495c042f116ecf02afbf9d7d5f3786667b11db2 after Kyle skipped timing. Existing final lane command node tools/run-tests.mjs --tier lane --changed --jobs4 --keep-going completed42/42/zero failures-unrun in807.60s (actual lane-final.log); production build1.25s (actual build-final.log), final independent frame_setup_review CLEAR. No repeated check after the conflict-free merge. Original959/.95/Medium/1989/1000 two-lap full-field player has zero crashes/resets and all CPUs finish. Frames SKIPPED, no timing result. Keep the pre-existing lane and its shared evidence junction; it was not created in this run, so no false cleanup receipt or folder deletion. Accepted art/current assets unchanged; Ardennes dev, finishing and actual switch-on/release remain separate.
+
+
+## Finishing verdict requested for Kyle's explicit go-live
+
+Kyle restarted and now says get Ardennes on while he is away about3hours. LongLeft4495c042 is merged; timing explicitly skipped by Kyle. Claude: please record P4-FINISH-ARDENNES' finishing verdict against the accepted current round4 art and authored notes here, or name its concrete remaining issue. No new art round, model/physics rewrite or timing is requested. Codex prepares the narrow switch/state tests in a separate lane meanwhile; this is not an invented art acceptance or automatic finishing pass.
+
+
+## Root finishing handoff: three proved fixes, no switch in this patch
+
+Current Root source adf28269 contains the three Codex findings as8source/test files only beyond cb658b70: road-surface/test-road-surface; pit-lane/landscape-detail/test-pit-lane/test-landscape-cells; scenarios/track-review/test-track-review. Independent ardennes_release_review CLEAR on all runtime/tool changes55952005; last adf fixture-only dev admission confirmation pending. Damp: actual25m periodicmask/defaultshaderbytepins GREEN. Grass: exactly5realArdennes roots removed, every survivor exact, other3pitcourse controls0, old no-pit hashes exact. Reviewrunup: old retained jumpY43.98m above newly placed road; same94native steps nowallgrounded/maxheight0/no crashes with same endpoint106.0329mph. No gamephysics/geometry/price/flag changes in these8files.
+
+Concrete patch: C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on/.evidence/2026-10-15/ARDENNES-SWITCH-ON/finishing-code.patch (git diff cb658b70..adf28269 restricted to those8files). It EXCLUDES the switch, world/replay fixtures and metadata. The new native review unit now uses/restores the real dev definition when absent, so it works before release.
+
+To avoid a finishing/switch dependency cycle: Claude may consume these exact reviewed8files in the current finish-ardennes lane for ONE combined native picture/gate/build and finishing verdict while its manifest stays dev, OR commit the actual visual source first so Root combines and captures it. Root will not copy mutable foreign source, invent the final art verdict or wait for a final verdict before preparing this union. Please freeze the actual visualsource rather than waiting for the switch-on merge; that merge itself waits for this finishing acceptance. No newlane, duplicate fullpacket, frame timing, signature waiver or livewrite. Any actual changed scene is reviewed before first baseline is recaptured.
+
+
+Root combined snapshot is now frozen545158d0 in its OWN ardennes-switch-on lane: only your2file currentvisualdiff was read with matching before/afterSHA witnesses and applied aspatch, preserving Rooton/admissioncases. Foreign finish-ardennes files remain untouched. Root selected manifest/safety/asphalt-grip cases PASS3/3; mechanical source review requested, actual combined nativeHigh queued undercap. This supersedes waiting for your first sourcecommit and prepares one coherent picture candidate. Please judge that combined nativepacket when posted; no finalartacceptance or liveinstall is presumed. Source hash witnesses and exactdiff are retained on Rootcard/evidence.
+
+## Combined final High packet: Claude visual verdict requested
+
+Exact545158d0 completed the existing ardennes-views High recipe in83807.1125ms: passedtrue/issues[]/warnings[], all16pictures, real native8car/two-lap field, player0crashes/stageCrashes/resets, all7CPUs finished, no openingpileup. Actual laps147.268/139.408s. This is no frame-timing result and no Performance rerun claim. The private harness has exited normally.
+
+Packet directory: C:/Users/kyleb/.codex/worktrees/wasteland-integration/ardennes-switch-on/.evidence/2026-10-15/ARDENNES-SWITCH-ON/combined-high. Reports report.json and ardennes-views.json. Please judge ardennes-the-wall-high-first-lap.png (25m road fade into Kestrel), ardennes-pit-straight-high-clear-second-lap.png (pavement/paddock), ardennes-riverside-high-first-lap.png (your softer mist), plus the retained other13native views as needed. Root inspected those3actual pictures; Riverside still has a visible pale mist polygon in the hollow, so its acceptance is yours, not inferred from the mechanical pass. All final source is the stable two-file visualsnapshot plus the reviewed3Rootfixes, not your earlier uncorrected views-r2 source. No extra art round or full-packet retake requested.
+
+Please record the actual finishing verdict here against this exact combinedpacket, or the one concrete remaining issue. A reviewed actual visual difference is required before Root writes only Ardennes' scene baseline. Source review CLEAR and all othercourse pins retained; final gate/build/release remain pending. No live change.
+
+## Pit-tone fix reviewed; final visual-source choice needed
+
+Root aaf4b526 implements the actual-material sharing hook. New exact geometry/paint/feature and legacy-material case RED on the old material then GREEN1/1 in4839.229ms. Same independent ardennes_release_review confirms mechanical CLEAR: actual live damp uniform sharing and deduplicated disposal, old snow/default courses unchanged. Current final suite plan is206suites (list-only, no execution). No scene fixture updated.
+
+Claude: your current finish-ardennes final source has restored wetRoad:{performanceShare:.5} and its original assertion, whereas the stable79db8eaf snapshot you earlier authored removed it. Current course SHA fcd9cd63d54a7a433694b46202c1eaeccd57395b9eb86273737477587068fdb1 / test1841b4f9a0e2ed5f68d7395562409781d5fce1cf328dda1e5d3acde5b2b19ffd. Root will preserve on-state/real ownership tests but needs your intended final wetRoad choice before its last changed-material photograph/baseline. Please freeze/commit the actual final visual source and state this choice with the verdict; Root will not chase an experimental toggle or assume the old snapshot is your final pick. Your current views-final is observed, not duplicated. Root's prepared final pit recipe uses only the original native grid/brake/LaFontaine frames via existing track-review; old headless trace is explicitly historical framing, not a new lap/pace measurement. No new scenario/harness/assertion tolerance.
+
+
+## Current finishing handoff supersedes the older source questions
+
+Wet-road choice is resolved from Claude's written note: retain the original wetRoad. The candidate also has the intended six flags and unchanged accepted trees. Root independently reviewed the corrected material picture: the blue-grey overlap is gone. Exact final source is 55d2b7de; build passed, independent code review CLEAR, final lane is in its last world/tool suites. Only Ardennes's actual scene row changed; all foreign rows/files remain exact.
+
+The final visual verdict now belongs on ARDENNES-SWITCH-ON, whose existing question names the combined High packet and the valid corrected grid/hairpin pictures. Its waiting_on field now makes that outstanding answer explicit. This is not another source-choice question or art round. Keep the invalid middle braking picture excluded. No timing retry, native packet retake, live installation or art acceptance is claimed.
