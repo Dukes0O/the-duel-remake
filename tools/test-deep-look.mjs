@@ -73,7 +73,8 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   check(colourKeptAt(9, 3)[1] > 1.4 * Math.exp(-SIGHT_FADE[1] * 9), 'the car is much clearer than it was');
   check(colourKeptAt(FAR_FADE_END, 3).every(v => v === 0) && colourKeptAt(0, 3).every(v => v === 1), 'everything melts into the water by the far limit; nothing is lost at the lens');
   let seen = [1, 1, 1];
-  for (let d = 0; d <= 160; d += 5) { const kept = colourKeptAt(d, 3); check(kept.every((v, i) => v <= seen[i] + 1e-12 && v >= 0), `colour is only lost with distance (${d} m)`); seen = kept; }  // Bad input never leaks NaN.
+  for (let d = 0; d <= 160; d += 5) { const kept = colourKeptAt(d, 3); check(kept.every((v, i) => v <= seen[i] + 1e-12 && v >= 0), `colour is only lost with distance (${d} m)`); seen = kept; }
+  // Bad input never leaks NaN.
   check(daylightAt(NaN).every(v => v === 1) && daylightAt(-5).every(v => v === 1), 'bad or negative depth reads as the surface');
   check(depthTable().length === 5 && depthTable().every(row => row.water.every(Number.isFinite)), 'the depth table is complete');
 }

@@ -131,7 +131,8 @@ function holdInsideGround(floor, x, z, reference) {
   if (!(out > 0)) return { x, z, edge: false };
   const keep = Math.min(ZONE_EDGE, at ? at.distance : ZONE_EDGE) / out;
   return { x: trail.x + dx * keep, z: trail.z + dz * keep, edge: true };
-}function zoneCourse(runtime) {
+}
+function zoneCourse(runtime) {
   const floor = runtime.floor, empty = [];
   // DEEP-TRAIL-JOINTS: a frame whose world position has no jump at the trail's joints.
   const frame = createZoneFrame(floor, runtime.zone.trail);
@@ -154,7 +155,8 @@ function holdInsideGround(floor, x, z, reference) {
     // screen can say so.
     nearest(x, z, reference) {
       const held = holdInsideGround(floor, x, z, reference);
-      if (held.edge) runtime.edgeHit = true;
+      // Only the car's own drive step (runtime.driving) counts; a look at the car from the view or camera writes nothing.
+      if (held.edge && runtime.driving) runtime.edgeHit = true;
       const found = frame.nearest(held.x, held.z, reference);
       if (!found) return { s: NaN, lateral: NaN, distance: Infinity };
       return { ...at(found.s), s: found.s, lateral: found.lateral, distance: found.distance };
@@ -247,7 +249,9 @@ function stepSeaEdge(duel, dt) {
   if (runtime.edgeHit) { journey.edgeSec = EDGE_NOTICE_SEC; state.speedMph *= Math.exp(-3 * dt); }
   else if (journey.edgeSec > 0) journey.edgeSec = Math.max(0, journey.edgeSec - dt);
   runtime.edgeHit = false;
-}export function stepDeepJourney(duel, dt) {
+}
+
+export function stepDeepJourney(duel, dt) {
   const journey = duel.state.deepJourney, runtime = duel.deepRuntime;
   if (!journey || duel.state.status !== 'exploring') return false;
   if (!admitted(duel)) { exit(duel); return true; }
@@ -292,8 +296,11 @@ function stepSeaEdge(duel, dt) {
   }
   const explorerStart = journey.phase === 'underwater' ? duel.course.worldAt(duel.state.s, duel.state.lateral) : null; // DEEP-EXPLORER
   runtime.edgeHit = false;
-  if (!stepRampDriving(duel, dt)) duel._drive(dt); // DEEP-RAMP-2
-  if (explorerStart) driveIntoDeepRocks(duel, explorerStart, dt); // DEEP-ROCKS-PUSH
+  runtime.driving = true; // DEEP-SHALLOWS-FIX: only the car's own drive step may touch the edge
+  try {
+    if (!stepRampDriving(duel, dt)) duel._drive(dt); // DEEP-RAMP-2
+    if (explorerStart) driveIntoDeepRocks(duel, explorerStart, dt); // DEEP-ROCKS-PUSH
+  } finally { runtime.driving = false; }
   if (explorerStart) stepSeaEdge(duel, dt); // DEEP-SHALLOWS-FIX
   duel.state.groundHeight=duel._supportAt(duel.state.s,duel.state.lateral).y;
   duel._jump(duel.state, dt, journey.elapsedSec);

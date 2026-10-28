@@ -458,11 +458,13 @@ test('the edge of the sea floor holds the car where it is, slides it along, and 
   for(const {seed} of ROUTE_VARIANTS) {
     const d=race(seed); dive(d); const runtime=d.deepRuntime, start=runtime.floor.frameAt(300);
     // Out in open water 80 m to the left of the trail, heading further out.
-    const out=runtime.floor.pointAt(300,80), heading=Math.atan2(-start.tz,start.tx)+Math.PI/2*0;
+    const out=runtime.floor.pointAt(300,80);
     park(d,out,Math.atan2(out.x-start.x,out.z-start.z));
     d.state.speedMph=40; d.state.deepJourney.edgeSec=0;
     const result=driveAround(d,()=>({throttle:1,brake:0,steer:0}),6);
     assert.deepEqual(result.events,[]); assert.ok(result.worst<.75,`jump ${result.worst}`);
+    // Looking at the car from the view or the camera never writes the run's edge flag.
+    runtime.edgeHit=false; d.course.nearest(out.x*3-start.x*2,out.z*3-start.z*2,d.state.s); assert.equal(runtime.edgeHit,false,'a look from outside the drive step writes nothing');
     assert.ok(result.edgeNotice,'a notice shows while the car presses against the edge');
     assert.ok(result.maxOut<=ZONE_SPAN&&result.maxOut>ZONE_SPAN-10,`${seed}: held near the edge, ${result.maxOut.toFixed(1)} m out`);
     assert.ok(d.state.speedMph<20,'the car slows against the edge');

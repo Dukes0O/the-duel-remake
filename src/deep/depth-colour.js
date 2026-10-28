@@ -83,9 +83,11 @@ export function clarityAt(depth) {
 }
 
 // The haze rates the shaders use when the eye is at this depth, per colour.
-export function sightFadeAt(depth) {
+// Pass out to reuse one array every frame.
+export function sightFadeAt(depth, out = [0, 0, 0]) {
   const clarity = clarityAt(depth);
-  return SIGHT_FADE.map(rate => rate * clarity);
+  for (let i = 0; i < 3; i++) out[i] = SIGHT_FADE[i] * clarity;
+  return out;
 }
 
 // Share of an object's own colour still showing at this distance, per colour,

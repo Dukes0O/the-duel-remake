@@ -109,17 +109,26 @@ test('turning right turns the arrow clockwise and the whole sea anticlockwise un
 
 // DEEP-SHALLOWS-FIX: on the shallow banks the chase camera used to climb out of the water, and the
 // whole screen became the flat surface seen from above (Kyle's picture of the Ramp Shallows).
-test('the dive camera stays under the water everywhere the car can drive, however shallow the bank', () => {
-  const duel = diveIn(), runtime = duel.deepRuntime, floor = runtime.floor;
-  let checked = 0, shallowest = Infinity;
-  for (let s = 0; s < floor.length; s += 9) for (const lateral of [-ZONE_EDGE, -60, -30, 0, 30, 60, ZONE_EDGE]) {
-    const p = runtime.zoneCourse.worldAt(s, lateral), at = floor.sample(p.x, p.z);
-    if (!at || at.distance > ZONE_EDGE) continue;
-    Object.assign(duel.state, { s, prevS: s, lateral, prevLateral: lateral, headingError: 0, airHeight: 0 });
-    const view = deepPresentation(duel), top = Math.max(...[view.camera.position.y]);
-    assert.ok(top <= SEA_LEVEL - CAMERA_UNDER_SURFACE + 1e-9, `s ${s.toFixed(0)}, ${lateral} m across: camera ${(top - SEA_LEVEL).toFixed(2)} m from the surface`);
-    shallowest = Math.min(shallowest, SEA_LEVEL - p.y); checked++;
+test('the dive camera, as the game places it, stays under the water everywhere the car can drive', () => {
+  const duel = diveIn(), runtime = duel.deepRuntime, floor = runtime.floor, limit = SEA_LEVEL - CAMERA_UNDER_SURFACE;
+  let checked = 0, held = 0, shallowest = Infinity;
+  for (const car of ['falcone_f42', 'titan_monster']) {
+    duel.state.car = car;
+    const height = car === 'titan_monster' ? 5.8 : 3.65;   // the chase height the game asks for
+    for (let s = 0; s < floor.length; s += 9) for (const lateral of [-ZONE_EDGE, -60, -30, 0, 30, 60, ZONE_EDGE]) {
+      const p = runtime.zoneCourse.worldAt(s, lateral), at = floor.sample(p.x, p.z);
+      if (!at || at.distance > ZONE_EDGE) continue;
+      Object.assign(duel.state, { s, prevS: s, lateral, prevLateral: lateral, headingError: 0, airHeight: 0 });
+      const pose = deepWorldPose(duel), y = deepPresentation(duel).camera.position.y, wanted = pose.y + height;
+      assert.ok(y <= limit + 1e-9, `s ${s.toFixed(0)}, ${lateral} m across: camera ${(y - SEA_LEVEL).toFixed(2)} m from the surface`);
+      // It is the chase height wherever that is under water, and held under the surface where it would not be.
+      if (wanted > limit) { assert.ok(Math.abs(y - limit) < 1e-9, 'held under the surface'); held++; }
+      else assert.ok(Math.abs(y - wanted) < 1e-9, 'the usual chase height');
+      if (car === 'falcone_f42') assert.ok(y >= pose.y + 1.5, 'and still above the car roof');
+      shallowest = Math.min(shallowest, SEA_LEVEL - p.y); checked++;
+    }
   }
-  assert.ok(checked > 1500, `${checked} places checked`);
+  assert.ok(checked > 3000, `${checked} places checked`);
+  assert.ok(held > 300, `the hold really is needed on the shallow banks (${held} places)`);
   assert.ok(shallowest >= 2.6 - 1e-9, `the sea floor never comes closer than 2.6 m to the surface (${shallowest.toFixed(2)})`);
 });
