@@ -42,23 +42,24 @@ async function loadRuntime(sourceRoot){
     footprints=Object.fromEntries(manifest.pieces.filter(row=>SOLID_IDS.includes(row.id)).map(row=>[row.id,{width:row.size[0],height:row.size[1],depth:row.size[2]}]));
   }
   const kits=existsSync(join(sourceRoot,'src/track-kits.js')) ? await module('src/track-kits.js') : null;
-  return{App,Course,config,registry,surfaces,effects,hills,rendered,collision,driver,footprints,kits};
+  const tyres=existsSync(join(sourceRoot,'src/race-surfaces.js')) ? await module('src/race-surfaces.js') : null;
+  return{App,Course,config,registry,surfaces,effects,hills,rendered,collision,driver,footprints,kits,tyres};
 }
-function startNative(runtime,def,seed,cpuDifficulty){
+function startNative(runtime,def,seed,cpuDifficulty,tyre){
   const {App,config}=runtime,app=new App();
   let startStage=config.COURSE.findIndex(row=>row.id===def.id);
   if(startStage<0)throw Error('Selected circuit switch was not enabled before native imports.');
   app._refreshPlayer();app.seed=seed;app.cpuDifficulty=cpuDifficulty;
   app.duel.startCampaign({mode:'duel',car:PROFILE.car,difficulty:PROFILE.difficulty,cpuDifficulty,
-    driverId:PROFILE.driverId,startStage,seed,opponentCount:PROFILE.opponentCount,playerId:app.player.id,upgrades:{}});
+    driverId:PROFILE.driverId,startStage,seed,opponentCount:PROFILE.opponentCount,playerId:app.player.id,upgrades:{},...(tyre?{tyre}:{})});
   app.autopilot=true;app._scriptedCrashDone=true;
   if(app.duel.course.racingLine)runtime.driver.useRacingLine(app,PROFILE.skill);
   return app;
 }
 function centre(duel){return duel.course.worldAt(duel.state.s,duel.state.lateral);}
-function observeLap(runtime,def,seed,cpuDifficulty,maxSeconds,road){
+function observeLap(runtime,def,seed,cpuDifficulty,maxSeconds,road,tyre){
   globalThis.localStorage=memoryStorage();
-  const app=startNative(runtime,def,seed,cpuDifficulty),duel=app.duel,state=duel.state,issues=[];
+  const app=startNative(runtime,def,seed,cpuDifficulty,tyre),duel=app.duel,state=duel.state,issues=[];
   const found=new Set();let previous=null;
   const entries=new Map(),boxes=duel.course.features.obstacles.filter(row=>row.barrier||row.kitSolid);
   const original=duel.step.bind(duel);
@@ -162,14 +163,17 @@ export async function runDriveThrough({courseId,seed=1989,maxSeconds=1200,source
     const def=definitions.find(row=>row.id===courseId);
     if(!def)throw Error('Unknown course '+courseId);
     const course=new runtime.Course(def,seed),ground=checkGround(course,runtime),road=roadTriangles(course,runtime);
-    const laps=['easy','medium','hard'].map(cpu=>observeLap(runtime,def,seed,cpu,maxSeconds,road));
+    // A course with snow or ice is driven on winter tyres, as a player sets up for it: summer tyres on packed snow
+    // cannot turn a 16 m hairpin inside its 6 m road edge (their tightest circle is about 23 m).
+    const tyre=runtime.tyres?.courseHasWinterSurfaces?.(course)?'winter':null;
+    const laps=['easy','medium','hard'].map(cpu=>observeLap(runtime,def,seed,cpu,maxSeconds,road,tyre));
     const probes=[];
     for(const mph of[70,110])for(const[name,s,side]of barrierCases(course))
       probes.push(contactProbe(runtime,def,seed,name,s,side,mph,runtime.footprints));
     const issues=[...ground.issues,...laps.flatMap(row=>row.issues),...probes.filter(row=>!row.passed).map(row=>({kind:'barrier-passage',...row}))];
     const source={commit:sourceLabel,driverSha256:hash(readFileSync(join(sourceRoot,'tools/track-script-drive.mjs'))),
       courseSha256:hash(readFileSync(join(sourceRoot,'src/course.js'))),definitionSha256:def.kind==='circuit'?hash(readFileSync(join(sourceRoot,'src/circuits',courseId+'.js'))):null};
-    return{schema:1,courseId,profile:{...PROFILE,seed},source,passed:issues.length===0,ground,laps,probes,issues};
+    return{schema:1,courseId,profile:{...PROFILE,seed,...(tyre?{tyre}:{})},source,passed:issues.length===0,ground,laps,probes,issues};
   }finally{
     for(const[name,descriptor]of previous)if(descriptor)Object.defineProperty(globalThis,name,descriptor);else delete globalThis[name];
   }

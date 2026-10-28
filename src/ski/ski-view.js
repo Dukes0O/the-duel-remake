@@ -126,10 +126,10 @@ const RUN_TIPS = Object.freeze({
 // tips on the Aerials run, which the session offers only once they are open).
 export function loadingCardMarkup(run, {snow = null} = {}) {
   if (!run) return '';
-  const tips = run.run === 'aerials' ? aerialsTips() : [RUN_TIPS[run.run]].filter(Boolean);
+  const tips = run.run === 'aerials' ? ['Hold down Shift to tuck on the inrun.', ...aerialsTips()] : [RUN_TIPS[run.run]].filter(Boolean);
   const snowLine = snow ? `<p class="ski-snow">Today's snow: ${escape(snow.name)}, ${Math.round(snow.celsius)} °C${run.pick ? ` · wax ${escape(run.pick)}` : ''}</p>` : '';
   return `<section class="ski-card ski-loading" aria-label="${escape(run.name)}"><small>HELI-SKIING · ${escape(run.name.toUpperCase())}</small>
-    ${snowLine}${targetsMarkup(run.limits)}<ul class="ski-tips">${tips.map(tip => `<li>${escape(tip)}</li>`).join('')}</ul>
+    ${run.run === 'slalom' ? `<p>${run.difficulty === 'casual' ? 'Casual: line assist on' : 'Pro: no line assist'}</p>` : ''}${snowLine}${targetsMarkup(run.limits)}<ul class="ski-tips">${tips.map(tip => `<li>${escape(tip)}</li>`).join('')}</ul>
     <p class="ski-go">${run.kind === 'free' ? 'Any way down to the green circle' : 'The clock starts at the start line'}</p></section>`;
 }
 
@@ -161,7 +161,7 @@ export function runLineMarkup(run) {
   }
   if (run.kind === 'judged') {
     const parts = run.run === 'moguls' ? 'TURNS 60 · AIR 20 · SPEED 20' : 'AIR 20 · FORM 50 · LANDING 30';
-    return `<span class="ski-clock">${clockText(run.clock)}</span><span>JUDGED · ${parts}</span>`;
+    return `<span class="ski-clock">${clockText(run.clock)}</span><span>JUDGED · ${parts}</span>${run.run === 'aerials' && run.skier.z < 40 ? '<span>Hold down Shift to tuck on the inrun</span>' : ''}`;
   }
   return `<span>STASHES ${run.stashes.length}/${skiZone(run.run).stashes.length}</span>`;
 }
@@ -546,6 +546,21 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
     if (!visit || visit.dressed || models.size < MODEL_IDS.length) return;
     const {zone, base, scene} = visit;
     scene.add(courseGroup(zone, base, models));
+    if (zone.id === 'slalom') {
+      const nextGate = new THREE.Group();
+      nextGate.name = 'Next gate poles';
+      for (let i = 0; i < 2; i++) {
+        const pole = models.get('pole-red').clone(true);
+        pole.scale.set(1.08, 1, 1.08);
+        pole.traverse(node => {
+          if (node.isMesh) node.material = new THREE.MeshStandardMaterial({color: 0xffe6a0,
+            emissive: 0xffb42a, emissiveIntensity: 2, roughness: 0.35});
+        });
+        nextGate.add(pole);
+      }
+      scene.add(nextGate);
+      visit.nextGate = nextGate;
+    }
     const poses = new Map(MODEL_IDS.filter(id => id.startsWith('skier-')).map(id => [id, figure(models.get(id))]));
     const skier = new THREE.Group();
     skier.name = 'Skier';
@@ -619,6 +634,13 @@ export function createSkiView({renderer = null, yetiAssets = null, loadModel = d
       const run = view.ski.run, {zone, base, scene, camera, sun} = visit;
       dress(); placeYeti();
       const s = run.skier;
+      if (visit.nextGate) {
+        const gate = !run.finished && zone.gates[run.nextGate];
+        visit.nextGate.visible = !!gate;
+        if (gate) [gate.left, gate.right].forEach((end, i) => {
+          visit.nextGate.children[i].position.set(end.x, zone.ground(end.x, end.z) - base, end.z);
+        });
+      }
       if (visit.figures) {
         const {skier, poses, ghost, guide, guests, group} = visit.figures, id = skierPose(s);
         for (const [name, object] of poses) object.visible = name === id;

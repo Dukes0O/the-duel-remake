@@ -32,7 +32,7 @@ export function createLab() {
   return {version: LAB_SAVE_VERSION, done: {}, owned: {}, ring: 0, ringBest: 0, cable: 15, tune: {}, stockLaps: {},
     tunedBonus: [], secret: {}};
 }
-const KNOWN_KEYS = new Set(Object.keys(createLab()));
+const KNOWN_KEYS = new Set([...Object.keys(createLab()), 'notebook']);
 
 // Every key is optional. A newer game's version is returned exactly as it was (and never written over);
 // newer keys inside this version are kept as copies, so going back one release loses nothing.
@@ -42,6 +42,8 @@ export function normalizeLab(value) {
   const lab = createLab();
   lab.done = trueMap(value.done);
   lab.owned = trueMap(value.owned);
+  // The optional field appears in storage only after the player learns a word.
+  if (Object.hasOwn(value, 'notebook')) lab.notebook = normalizeNotebook(value.notebook);
   lab.ringBest = whole(value.ringBest, 0, 3, 0);
   lab.ring = Math.min(lab.ringBest, whole(value.ring, 0, 3, 0));
   lab.cable = value.cable === 25 ? 25 : 15;
@@ -73,6 +75,11 @@ export function labOf(profile) {
   return profile && Object.hasOwn(profile, 'lab') ? normalizeLab(profile.lab) : createLab();
 }
 
+const normalizeNotebook = value => [...new Set((Array.isArray(value) ? value : [])
+  .filter(id => typeof id === 'string' && ID_PATTERN.test(id) && id !== '__proto__'))];
+// A read default, not a save migration: even createLab keeps its old exact shape.
+export const labNotebookOf = profile => normalizeNotebook(labOf(profile).notebook);
+
 const failure = (profile, reason) => ({ok: false, reason, profile});
 // {lab} when the Lab (and, for tuning, `lab-tuning`) is on and this game can use the saved field, else {refusal} to hand back.
 export function labReady(profile, flags, {tuning = false} = {}) {
@@ -85,6 +92,17 @@ export function labReady(profile, flags, {tuning = false} = {}) {
   return {lab};
 }
 export const withLab = (profile, lab, extra = {}) => ({...profile, ...extra, lab});
+
+// Only a displayed word may be added by the teaching frame. Old saves need no migration write.
+export function learnLabWord(profile, id, {flags} = {}) {
+  const {lab, refusal} = labReady(profile, flags);
+  if (refusal) return refusal;
+  if (flags.enabled('lab-2') !== true) return failure(profile, 'Lab 2 is not available yet.');
+  if (typeof id !== 'string' || !ID_PATTERN.test(id) || id === '__proto__') return failure(profile, 'That word is not known.');
+  const notebook = normalizeNotebook(lab.notebook);
+  if (notebook.includes(id)) return {ok: true, reason: '', profile};
+  return {ok: true, reason: '', profile: withLab(profile, {...lab, notebook: [...notebook, id]})};
+}
 
 // Marks a lesson passed (retaking one is fine), grants its free rewards, and for Projectile motion
 // moves the drop ring down one when the pass was made with the best ring held (ring: the index used).

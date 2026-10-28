@@ -1,4 +1,5 @@
-import {DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,DRIVE_GEAR_ROWS,DRIVE_SNOW_ROWS,buildInstructorRun} from './lessons/drive-lessons.js';
+import {landedArrival} from './heli/heli-ui.js';
+import {DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,DRIVE_GEAR_ROWS,DRIVE_SNOW_ROWS,buildInstructorRun,chooseDriveLessonStep} from './lessons/drive-lessons.js';
 import {finishDriveLesson,driveLessonAccess} from './lessons/drive-lesson-save.js';
 import {DRIVE_RADIO_LINES} from './lessons/drive-radio-lines.js';
 import {createRadioChain} from './lessons/radio-voice.js';
@@ -234,7 +235,7 @@ export class App {
           const candidate=session?.key===lap.key&&session.timeSec<lap.timeSec?session:lap;
           const saved=storeGhost(current,candidate);this.ghosts=saved.store;
           if(saved.saved){
-            this.grandPrixGhostSaveStatus='session';this.grandPrixGhostCandidate=candidate;
+            this.grandPrixGhostSaveStatus='pending';this.grandPrixGhostCandidate=candidate;
             this._saveGhostStore(saved=>{
               this.grandPrixGhostSaveStatus=saved?'saved':'session';
               this.grandPrixGhostCandidate=saved?null:candidate;
@@ -414,6 +415,7 @@ export class App {
   }
 
   _simulate(seconds) {
+    if(this.duel.drivingLesson&&this.driveLessonBriefing)return;
     if(typeof document!=='undefined'){
       const host=document.querySelector('#stage');
       if(host&&!this._driveLessonUi)this._driveLessonUi=mountDriveLessonUi(this,host);
@@ -445,7 +447,7 @@ export class App {
   }
 
   drivingLessonsAvailable(){
-    return this._switches().enabled('driving-lessons')===true&&this._switches().enabled('tyre-slip')===true;
+    return this._switches().enabled('driving-lessons')===true;
   }
   driveLessonProps(){
     const run=this.duel.drivingLesson,choices=this.getRaceChoices();
@@ -453,7 +455,7 @@ export class App {
       ownedCourseIds:COURSE.filter(course=>isCourseUnlocked(this.profile,course)).map(course=>course.id),
       ownedCarIds:this.profile.unlockedCars,playerId:this.player?.id,progress:this.profile.drivingLessons,
       courseId:this.driveLessonCourse,carId:choices.car,difficulty:choices.difficulty,
-      runPlayerId:run?.ownerId,lesson:run?.ownerId===this.player?.id?run.lesson:null,lessonSaveFailed:run?.rewarded===true&&run.saved===false};
+      briefing:this.driveLessonBriefing===true,runPlayerId:run?.ownerId,lesson:run?.ownerId===this.player?.id?run.lesson:null,lessonSaveFailed:run?.rewarded===true&&run.saved===false};
   }
   // DRIVE-LESSONS-VIEW-2: the instructor board's props: the above plus lessons 2 to 4 (their rows, which course each is set to, and
   // whether each is open). The helipad's rows are lesson 1 alone and keep using driveLessonProps (a later card brings lessons 2 to 4 to the pad).
@@ -471,7 +473,7 @@ export class App {
     const stageIndex=COURSE.findIndex(row=>row.id===courseId);
     if(this._driveLessonPreparing||!this.drivingLessonsAvailable()||this.duel.state.status!=='menu'||!this.driveLessonBoardOpen||
       !Object.hasOwn(DRIVE_LESSON_TABLES,lessonId)||!DRIVE_LESSON_TABLES[lessonId].some(row=>row.courseId===courseId)||!this.player?.id||
-      !isCourseUnlocked(this.profile,courseId)||!isCarUnlocked(this.profile,car)||!['casual','pro'].includes(difficulty))return false;
+      !isCarUnlocked(this.profile,car)||!['casual','pro'].includes(difficulty))return false;
     if(this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex]))return false;
     const ownerId=this.player.id,driverId=getEquippedDriverId(this.profile),upgrades=getUpgradeLevels(this.profile,car);
     if(this.profile.drivingLessons!=null&&this.profile.drivingLessons.version!==1)return false;
@@ -481,10 +483,10 @@ export class App {
     const token={};this._driveLessonPreparing=token;this.driveLessonMessage=`Instructor is driving the ${{corner:'corner',line:'esses',gears:'stretch',snow:'snow corner'}[lessonId]}…`;this._driveLessonUi?.update();
     let baseline;
     try{baseline=await buildInstructorRun({courseId,car,upgrades,difficulty,driverId,seed:1989,lessonId});}
-    catch(error){if(this._driveLessonPreparing===token){this._driveLessonPreparing=null;this.driveLessonMessage='The instructor could not complete a clean run. '+error.message;this._driveLessonUi?.update();}return false;}
+    catch(error){if(this._driveLessonPreparing===token){this._driveLessonPreparing=null;console.warn('Driving lesson instructor failed', {courseId, car, lessonId, difficulty}, error);this.driveLessonMessage=`The instructor can't drive this lesson in the ${CARS[car].name} yet. Try another car.`;this._driveLessonUi?.update();}return false;}
     this._refreshPlayer();
     if(this._driveLessonPreparing!==token||!this.drivingLessonsAvailable()||!this.driveLessonBoardOpen||
-      this.duel.state.status!=='menu'||this.player?.id!==ownerId||!isCourseUnlocked(this.profile,courseId)||
+      this.duel.state.status!=='menu'||this.player?.id!==ownerId||
       !isCarUnlocked(this.profile,car)||getEquippedDriverId(this.profile)!==driverId||
       JSON.stringify(getUpgradeLevels(this.profile,car))!==JSON.stringify(upgrades)||
       this._airOnlyRefused(car,courseId)||this._fireClosedRefused(COURSE[stageIndex])||
@@ -496,18 +498,35 @@ export class App {
     this._runPlayerId=ownerId;this.runId=null;this._cupRace=null;
     this.ghostRecorder=this.ghostRecord=this.ghostPose=this.grandPrixLapRecorder=this.lapTelemetryRecorder=null;
     this.ghostStatus='none';this.autopilot=false;this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;
-    const plan={...baseline,driverId,ownerId};
+    const plan={...baseline,driverId,ownerId,retake:this.profile.drivingLessons?.done?.[lessonId]===true};
     this.audio.unlock();this.audio.setPaused(false);
     this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')});this._racePaintCar=car;
-    this._sayDriveLesson(this.profile.drivingLessons?.done?.[lessonId]?'drive.radio.retake':DRIVE_LESSON_VIEW[lessonId].intro);
+    this.driveLessonBriefing=true;
     this.duel.startCampaign({seed:1989,mode:'timetrial',car,difficulty,driverId,playerId:ownerId,
       startStage:stageIndex,upgrades,opponentCount:0,lesson:plan});
+    this._sayDriveLesson(DRIVE_LESSON_VIEW[lessonId].intro);
     this._driveLessonUi?.update();return true;
   }
   nextLessonAttempt(){
     const run=this.duel.drivingLesson;
     if(!run||!this.drivingLessonsAvailable()||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||
-      this.duel.state.playerId!==run.ownerId||run.lesson.done||run.lesson.phase==='driving')return false;
+      this.duel.state.playerId!==run.ownerId||run.lesson.done)return false;
+    if(this.driveLessonBriefing){this.driveLessonBriefing=false;this.driveLessonHelp=false;
+      if(run.lesson.phase==='driving')this._sayDriveLesson(run.lesson.stage==='watch'&&run.watchClip==='late'?'drive.radio.v2.corner.watch-late':'drive.radio.v2.shared.'+run.lesson.stage);
+      this._driveLessonUi?.update();return true;}
+    if(run.lesson.phase==='driving'){
+      if(run.lesson.stage!=='watch')return false;
+      run.lesson.phase='result';run.lesson.lastAttempt={passed:false,finished:false};
+    }
+    this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;this.audio.setPaused(false);
+    const started=this.duel.resetDriveLessonAttempt();this._driveLessonUi?.update();return started;
+  }
+  chooseLessonStep(id){
+    const run=this.duel.drivingLesson;
+    if(!run||!this.drivingLessonsAvailable()||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||
+      this.duel.state.playerId!==run.ownerId||!chooseDriveLessonStep(run.lesson,id))return false;
+    this.driveLessonBriefing=false;this.driveLessonHelp=false;
+    if(id==='watch')run.watchClip=null; // watching again shows the late brake first
     this.keys={};this._resetKeyboardInput();this._stepAccumulator=0;this.audio.setPaused(false);
     const started=this.duel.resetDriveLessonAttempt();this._driveLessonUi?.update();return started;
   }
@@ -517,6 +536,7 @@ export class App {
     this._driveLessonUi?.update();return true;
   }
   _clearDriveLesson(){
+    this.driveLessonBriefing=false;this.driveLessonHelp=false;
     this._driveLessonPreparing=null;this.driveLessonBoardOpen=false;this.driveLessonMessage='';
     this.driveLessonRadioText='';this._driveLessonRadioEpoch=(this._driveLessonRadioEpoch||0)+1;
     this._driveLessonVoice?.stop();this._driveLessonVoice=null;this._driveLessonRadioChain?.dispose();this._driveLessonRadioChain=null;
@@ -529,7 +549,8 @@ export class App {
     if(!run||state!==this.duel.state||this.player?.id!==run.ownerId||this._runPlayerId!==run.ownerId||state.playerId!==run.ownerId)return;
     const response=event.driveLessonAnswer;
     if(!response)return;
-    if(response.radio&&response.result!=='passed')this._sayDriveLesson(response.radio);
+    if(response.radio&&response.result!=='passed'&&!this.driveLessonBriefing)
+      this._sayDriveLesson(event.driveLessonReset&&run.lesson.stage==='watch'&&run.watchClip==='late'?'drive.radio.v2.corner.watch-late':response.radio);
     if(this.audio.context&&!this.audio.muted)for(const cone of response.cones||[])this.audio._playCue?.(cone.cue);
     const completion=response.result==='passed'?driveLessonCompletion(run,state,this.player.id):null;
     if(completion&&!run.rewarded){
@@ -540,7 +561,7 @@ export class App {
         this.profile=result.profile;run.saved=this._saveProfile();run.rewarded=true;run.reward=result.reward;
         this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
           'Lesson passed for this session. Progress and reward could not be saved. Keep the game open and retry saving; your last saved progress is unchanged.';
-        if(run.saved)for(const id of [response.radio,...(response.queued||[])])if(id)this._sayDriveLesson(id); // the snow lesson's pass line follows the winter explanation
+        if(run.saved&&response.radio)this._sayDriveLesson(response.radio);
       }
       else this.driveLessonMessage=result.reason;
       if(this.audio.context&&!this.audio.muted)this.audio._playCue?.('interface.win');
@@ -554,14 +575,17 @@ export class App {
     run.saved=this._saveProfile();
     this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
       'Still unable to save. Progress and reward are available only in this session. Keep the game open and retry saving.';
-    if(run.saved)for(const id of run.lesson.id==='snow'?['drive.radio.snow.winter.result','drive.radio.snow.pass']:['drive.radio.'+run.lesson.id+'.pass'])this._sayDriveLesson(id);
+    if(run.saved)this._sayDriveLesson('drive.radio.v2.'+run.lesson.id+'.pass');
     this._driveLessonUi?.update();return run.saved;
   }
   _sayDriveLesson(id){
     if(!DRIVE_RADIO_LINES[id])return;
+    this._driveLessonVoice?.stop();this._driveLessonVoice=null;
+    this._driveLessonRadioChain?.keyOff();
+    this._driveLessonRadioEpoch=(this._driveLessonRadioEpoch||0)+1;
     this.driveLessonRadioText=DRIVE_RADIO_LINES[id].text;
-    const epoch=this._driveLessonRadioEpoch||0;
-    this._driveLessonRadioQueue=(this._driveLessonRadioQueue||Promise.resolve()).then(async()=>{
+    const epoch=this._driveLessonRadioEpoch;
+    this._driveLessonRadioQueue=Promise.resolve().then(async()=>{
       await this.audio._loadCueBuffers?.();
       if(epoch!==(this._driveLessonRadioEpoch||0)||!this.duel.drivingLesson||!this.audio.context||this.audio.muted||this.audio.paused)return;
       this.audio._syncMixer?.();
@@ -569,7 +593,7 @@ export class App {
       const chain=this._driveLessonRadioChain??=createRadioChain(this.audio.context,target);
       chain.keyOn();
       await new Promise(resolve=>{
-        this._driveLessonVoice=this.audio._playCue(id,{destination:chain.input,onEnd:()=>{chain.keyOff();resolve();}});
+        this._driveLessonVoice=this.audio._playCue(id,{destination:chain.input,onEnd:()=>{if(epoch===this._driveLessonRadioEpoch)chain.keyOff();resolve();}});
         if(!this._driveLessonVoice){chain.keyOff();resolve();}
       });
     }).catch(()=>{});
@@ -578,10 +602,9 @@ export class App {
   playDriveLessonCue(id){if(this.audio.context&&!this.audio.muted)this.audio._playCue?.(id);}
   getDriveLessonGhost(){
     const run=this.duel.drivingLesson;
-    const winter=run?.lesson.id==='snow'&&run.lesson.stage==='winter'; // the winter-tyre run drives against the winter instructor
-    if(!run||run.ownerId!==this.player?.id||this.duel.state.playerId!==run.ownerId||
-      run.lesson.stage!=='challenge'&&!winter||run.lesson.phase!=='driving')return null;
-    return driveLessonGhostPose((winter?run.plan.instructor.winter:run.plan.instructor).poses,run.lesson.attempt.elapsedSeconds,this.duel.state.car,this.duel.course);
+    if(!run||run.ownerId!==this.player?.id||run.ownerId!==this.duel.state.playerId||run.lesson.phase!=='driving'||!run.lesson.attempt||!['follow','beat'].includes(run.lesson.stage))return null;
+    const lead=run.lesson.stage==='follow'?1:0;
+    return driveLessonGhostPose(run.plan.instructor.poses,run.lesson.attempt.elapsedSeconds+lead,this.duel.state.car,this.duel.course);
   }
 
   startCampaign(options = {}) {
@@ -891,9 +914,9 @@ export class App {
     const result=saveGhosts(this.ghosts);
     const complete=saved=>{
       if(this._ghostSaveAttempt!==attempt)return;
-      this.ghostSaved=saved;onSaved?.(saved);
+      this.ghostSaved=saved;this.ghostSaveStatus=saved?'saved':'failed';onSaved?.(saved);
     };
-    this.ghostSaved=false;
+    this.ghostSaved=false;this.ghostSaveStatus='pending';
     if(result?.then)result.then(complete);else complete(result);
   }
   _finishGhost(payload,state,awarded,result){
@@ -1723,12 +1746,13 @@ export class App {
     this._heliCreditsAtStart = this.profile.credits;
     const fireOn = this._fireOn();
     if (fireOn) this.heliAudio.preloadFire?.();
-    this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode,
+    this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode, difficulty: this._raceSettings.difficulty,
       fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true,
       drivingLessonAt: this.drivingLessonsAvailable() ? (courseId, carId) => this._heliLessonAt(courseId, carId) : null,
       // MAP-VIEW: the pilot's map switch and the secret courses whose own switches are on.
       pilotMapEnabled: this._switches().enabled('pilot-map') === true, secretCourses: this._secretCoursesOn(),
       labEnabled: this._switches().enabled('lab') === true, // LAB-VIEW
+      logbookEnabled: this._switches().enabled('heli-logbook') === true,
       skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
       // SKI-VIEW: heli-skiing needs Summit Run (the session checks that too).
       heliSkiingEnabled: this._switches().enabled('heli-skiing') === true,
@@ -1762,6 +1786,16 @@ export class App {
     // The hook's ground ring is drawn from the view; it joins it here (drawing only).
     const hookGuide = view && session.hookGuide?.();
     return hookGuide ? Object.freeze({...view, hookGuide}) : view;
+  }
+  // HELI-LANDED: both exits use the ordinary menu path so the fuel is kept.
+  heliLanded(action) {
+    const arrival = landedArrival(this.heliView(), this.profile);
+    if (!arrival || !['race', 'shutdown'].includes(action)) return false;
+    if (action === 'race' && (arrival.waiting || !COURSE.some(course => course.id === arrival.courseId) || !isCourseUnlocked(this.profile, arrival.courseId))) return false;
+    this.returnToMenu();
+    if (action === 'race') this.setRaceSettings({eventId: arrival.courseId,
+      ...(arrival.carId && isCarUnlocked(this.profile, arrival.carId) ? {car: arrival.carId} : {})});
+    return true;
   }
   heliBuyFuel(kg = Infinity) {
     const result = this.heliSession?.buyFuel(kg) ?? {ok: false};
@@ -2416,6 +2450,8 @@ export class App {
         if(document.pointerLockElement){document.exitPointerLock();e.preventDefault();return;}
         if(performance.now()-this._footPointerReleasedAt<250){e.preventDefault();return;}
       }
+      if(e.code==='Escape'&&this.duel.drivingLesson){this.leaveLesson();e.preventDefault();return;}
+      if(e.defaultPrevented)return;
       if(e.code==='Enter'&&this.duel.drivingLesson&&!e.repeat&&!(e.target instanceof Element&&e.target.closest('button'))){
         if(this.nextLessonAttempt())e.preventDefault();return;
       }

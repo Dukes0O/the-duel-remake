@@ -40,7 +40,8 @@ export function bearingKm(from, to) {
 export function mapModel({view, profile = null, jobs = [], movingMap = false} = {}) {
   const destinations = new Set(view?.destinations ?? []);
   const secrets = view?.secrets ?? null;
-  const tableSeen = destinations.has(TABLE_ID) || secrets?.table === true;
+  const clues = view?.logbook?.books ?? [];
+  const tableSeen = clues.some(page => page.place === TABLE_ID) || destinations.has(TABLE_ID) || secrets?.table === true;
   const here = view?.courseId ? placeOfDestination(view.courseId) : null;
   const fuelKg = view?.heli?.fuelKg ?? 0;
   const fallen = new Set(view?.fallen ?? []);
@@ -72,13 +73,14 @@ export function mapModel({view, profile = null, jobs = [], movingMap = false} = 
     const legKg = !isHere && here ? legFuelKgMap(here.id, place.id) : null;
     const pad = fuelPadAt(place.id);
     return {
-      id: place.id, destination: id, name: place.air && secrets?.table !== true ? '?' : place.name, region: place.region,
+      id: place.id, destination: id, name: place.air && secrets?.table !== true && !clues.some(page => page.place === place.id) ? '?' : place.name, region: place.region,
       x: place.drawAt.x, z: place.drawAt.z, air: place.air === true,
       state: burnt ? 'burnt' : owned ? 'owned' : 'grey',
       isHere, isDestination: destinations.has(id), noLanding: LEFT_OFF.includes(place.id),
       chosen: view?.destination === id, legKg, reachable: legKg === null || legKg <= fuelKg,
       pad: pad ? {price: pad.pricePerKg, name: pad.name} : null,
       cars: carsBy.get(place.id) ?? [], jobs: jobsBy.get(place.id) ?? 0,
+      clues: clues.filter(page => page.place === place.id).map(page => `Gus ${page.year}: ${page.clue}`),
     };
   });
   const found = (secrets?.found ?? []).map(id => SECRET_SIGNS.find(sign => sign.id === id)).filter(Boolean)
@@ -108,6 +110,7 @@ export function placeNote(model, place) {
   const parts = [place.name];
   if (place.state === 'grey') parts.push('not owned: you can land, not race');
   if (place.state === 'burnt') parts.push('burnt');
+  if (place.clues?.length) parts.push(...place.clues);
   if (place.noLanding) parts.push('no landing zone');
   if (place.pad) parts.push(`fuel ${place.pad.price} credits a kg`);
   if (place.legKg !== null) parts.push(`${place.legKg} kg${place.reachable ? '' : ' (beyond your tank)'}`);
@@ -137,6 +140,30 @@ function path(ctx, project, points, closed = true) {
   ctx.beginPath();
   points.forEach(([x, z], i) => { const [px, py] = project(x, z); if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); });
   if (closed) ctx.closePath();
+}
+
+// Canvas-pixel boxes, including padding. Keep the measured font identical to
+// the one used to draw, so the layout also works when all courses are owned.
+export function chartLabels(ctx, model, width, height) {
+  const {k, project} = chartFrame(width, height), boxes = [];
+  for (const place of [...model.places].sort((a, b) => b.z - a.z || a.id.localeCompare(b.id))) {
+    const [px, py] = project(place.x, place.z);
+    const font = `${place.state === 'owned' || place.air ? 'bold ' : ''}${place.name === '?' ? 22 : 11}px Georgia, serif`;
+    ctx.font = font;
+    const w = ctx.measureText(place.name).width + 8, h = place.name === '?' ? 28 : 17;
+    const x = Math.max(w / 2 + 4, Math.min(width - w / 2 - 4, px));
+    const preferred = py + k * .9 + 12;
+    // Search above and below the preferred row, nearest first. The entire
+    // chart is available; unlike the old six attempts, a clash never wins.
+    for (let step = 0; step < Math.ceil(height / h) * 2; step++) {
+      const y = preferred + (step % 2 ? -1 : 1) * Math.ceil(step / 2) * h;
+      if (y - h / 2 < 4 || y + h / 2 > height - 4) continue;
+      if (boxes.some(b => Math.abs(b.x - x) < (b.w + w) / 2 && Math.abs(b.y - y) < (b.h + h) / 2)) continue;
+      boxes.push({id: place.id, x, y, w, h, px, py, font});
+      break;
+    }
+  }
+  return boxes;
 }
 
 export function drawChart(ctx, model, {width, height, hover = null} = {}) {
@@ -203,22 +230,20 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
   // Places: names, pump signs, special cars, found secrets, the "?". Names are placed north to south, and one that would
   // run into a name already written moves down a line (or up) until it is clear.
   ctx.textAlign = 'center';
-  const written = [];
-  const clear = (x, y, w) => !written.some(box => Math.abs(box.x - x) < (box.w + w) / 2 && Math.abs(box.y - y) < 11);
+  const labels = new Map(chartLabels(ctx, model, width, height).map(box => [box.id, box]));
   [...model.places].sort((a, b) => b.z - a.z).forEach(place => {
     const [px, py] = project(place.x, place.z);
+    const label = labels.get(place.id);
+    if (!label) return;
+    ctx.beginPath(); ctx.moveTo(px, py + 3); ctx.lineTo(label.x, label.y - label.h / 2);
+    ctx.strokeStyle = 'rgba(43,33,24,.55)'; ctx.lineWidth = .8; ctx.stroke();
+    ctx.font = label.font;
+    ctx.fillStyle = place.state === 'grey' ? GREY : INK;
+    ctx.fillText(`${place.clues?.length ? '* ' : ''}${place.name}`, label.x, label.y + 4);
     if (place.air) {
-      ctx.fillStyle = INK; ctx.font = `bold ${place.name === '?' ? 22 : 12}px Georgia, serif`; ctx.fillText(place.name, px, py + 6);
-      if (place.name !== '?') { ctx.beginPath(); ctx.ellipse(px, py - 2, 9, 7, 0, 0, Math.PI * 2); ctx.strokeStyle = INK; ctx.lineWidth = 1.6; ctx.stroke(); }
+      ctx.beginPath(); ctx.ellipse(px, py, 9, 7, 0, 0, Math.PI * 2); ctx.strokeStyle = INK; ctx.stroke();
       return;
     }
-    ctx.font = `${place.state === 'owned' ? 'bold ' : ''}11px Georgia, serif`;
-    ctx.fillStyle = place.state === 'grey' ? GREY : INK;
-    const width = ctx.measureText(place.name).width;
-    let y = py + k * 0.9 + 12;
-    for (let tries = 0; tries < 6 && !clear(px, y, width); tries++) y += 11;
-    written.push({x: px, y, w: width});
-    ctx.fillText(place.name, px, y);
     if (place.pad) {
       ctx.fillStyle = INK; ctx.fillRect(px + 10, py - 20, 7, 11); ctx.fillRect(px + 17, py - 17, 4, 2);
       ctx.font = 'bold 10px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillText(place.pad.price.toFixed(1), px + 22, py - 11); ctx.textAlign = 'center';

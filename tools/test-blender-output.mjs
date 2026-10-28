@@ -7,6 +7,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const generators = [
+  {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
+  {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
+    glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
   { script: 'tools/blender/deep-art-fit.py', args: [],
     evidence: '.evidence/2026-10-12/DEEP-ART-SRC/round-2-native',
     glb: ['silver-school','reef-fish','turtle','ray','manta','sea-lion','otter','crab',
@@ -29,6 +32,9 @@ const generators = [
   { script: 'tools/blender/speirling-tries.py', args: [], recipeOnly: true, glb: ['public/assets/models/unlocks/mcmurtry_speirling.glb'] },
   { script: 'tools/blender/sirena-wreck.py', args: [], recipeOnly: true, glb: ['public/assets/models/sirena/sea-wreck.glb'] },
   { script: 'tools/blender/kestrel-one.py', args: [], glb: ['public/assets/heli/kestrel-one.glb'] },
+  { script: 'tools/blender/lab-brian.py', args: [], recipeOnly: true, glb: ['public/assets/models/lab/brian.glb'] },
+  { script: 'tools/blender/lab-workshop-props.py', args: [], recipeOnly: true, glb: ['public/assets/models/lab/workshop-lesson-props.glb'] },
+  { script: 'tools/blender/lab-snow-props.py', args: [], recipeOnly: true, glb: ['public/assets/models/lab/snow-lesson-props.glb'] },
   { script: 'tools/blender/heli-accessories.py', args: [], recipeOnly: true,
     glb: ['cargo-hook', 'helipad', 'fuel-pump'].map(name => `public/assets/heli/${name}.glb`) },
   { script: 'tools/blender/skin-gear.py', args: [], glb: ['public/assets/heli/gear/drop-sight.glb', 'public/assets/heli/gear/heat-camera.glb', 'public/assets/heli/gear/zoom-camera.glb', 'public/assets/heli/gear/nose-camera.glb', 'public/assets/heli/gear/cargo-net.glb', 'public/assets/heli/gear/main-rotor-quiet.glb'] },
@@ -48,6 +54,9 @@ const privateGenerators = [
 ];
 // Vesper's original native suite covers its donor-validating private CLI.
 const nativeGenerators = [
+  {script: 'tools/blender/heli-logbook-paints.py', test: 'tools/test-heli-rank-paint.mjs',
+    png: ['rank-student', 'rank-private', 'rank-commercial', 'rank-mountain', 'rank-chief']
+      .map(id => `public/assets/heli/skins/${id}.png`)},
   {script: 'tools/blender/vesper-blackiron.py', test: 'tools/test-vesper-art.mjs'},
   {script: 'tools/blender/salt-flats.py', test: 'tools/test-salt-flats-output.mjs'},
   {script: 'tools/blender/ardennes-landmarks.py', test: 'tools/test-circuit-ardennes.mjs'},
@@ -274,6 +283,17 @@ check('all Blender asset generators are covered', () => {
 
 for (const generator of nativeGenerators) check(`${generator.script} retains its native CLI suite`, () => {
   assert.ok(existsSync(join(root, generator.test)), 'missing native CLI suite');
+  if (generator.png) {
+    const call = spawnSync('python', ['-I', '-B', '-S', join(root, generator.script), '--root', root, '--paths-only'],
+      {cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000});
+    assert.equal(call.error, undefined);
+    assert.equal(call.status, 0, 'PNG planning must run with standard-library-only Python: ' + call.stderr);
+    const plan = JSON.parse(call.stdout);
+    assert.deepEqual(plan.blend, [], 'paint variants author no editable model');
+    assert.deepEqual(plan.glb, [], 'paint variants do not replace the airframe');
+    assert.deepEqual(relativePaths(root, plan.png, '.png'), [...generator.png].sort(), 'exact runtime paint output homes');
+    assert.deepEqual(plan.evidence, [], 'planning without --render creates no review output');
+  }
 });
 
 const fixtureRoots = [mkdtempSync(join(tmpdir(), 'duel-blender-paths-a-')), mkdtempSync(join(tmpdir(), 'duel-blender-paths-b-'))];

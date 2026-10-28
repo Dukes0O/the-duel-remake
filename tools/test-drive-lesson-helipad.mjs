@@ -188,8 +188,8 @@ try {
     app.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides, qa: true}), () => app.duel.state);
     return app;
   };
-  const ON = {helicopter: true, 'driving-lessons': true, 'tyre-slip': true};
-  // The home pad is at Tremblant Woods, which a new player buys like the menu's board says.
+  const ON = {helicopter: true, 'driving-lessons': true, 'tyre-slip': false};
+  // Ownership fixtures still exercise racing access separately from the instructor board.
   const ownedApp = (overrides, courses = ['tremblant-woods']) => {
     const app = makeApp(overrides);
     app.profile = {...app.profile, credits: 1_000_000}; app._saveProfile();
@@ -201,11 +201,12 @@ try {
   {
     const fresh = makeApp(ON);
     ok(fresh.visitHeli(), 'a new player flies from the pad');
-    same(fresh.heliDrivingBoard().rows.map(row => row.open), [false], 'before Tremblant Woods is bought the row is closed, as in the menu');
-    same(fresh.heliDrivingBoard().notes, [driveLessonBoardModel({...fresh.driveLessonProps(), courseId: HOME_COURSE, carId: fresh.menuCar}).reason], 'with the menu\'s own words');
+    same(fresh.heliDrivingBoard().rows.map(row => row.open), [true], 'lesson 1 is open on the unowned home course, as in the menu');
+    const reason = driveLessonBoardModel({...fresh.driveLessonProps(), courseId: HOME_COURSE, carId: fresh.menuCar}).reason;
+    same(fresh.heliDrivingBoard().notes, reason ? [reason] : [], 'with the menu\'s own words');
     fresh.returnToMenu();
     const app = ownedApp(ON);
-    ok(app.visitHeli(), 'the visit starts with both switches on');
+    ok(app.visitHeli(), 'the visit starts with lessons on and tyre-slip off');
     const board = app.heliDrivingBoard();
     ok(board, 'the pad has a Driving board');
     const menu = driveLessonBoardModel({...app.driveLessonProps(), courseId: HOME_COURSE, carId: app.menuCar});
@@ -255,7 +256,8 @@ try {
       querySelector(selector) { return this.kids[selector] ?? null; },
       addEventListener(type, fn) { this.handlers[type] = fn; }, removeEventListener() {}, append() {}, remove() {}, setAttribute() {}};
     const section = node('section');
-    for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio'])
+    for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio',
+      '.heli-shelf-host', '.heli-arrival-host', '.heli-ski-host'])
       section.kids[selector] = node(selector);
     const ui = createHeliUi({host: {ownerDocument: {createElement: () => section}, append() {}}, app});
     ui.update();
@@ -294,7 +296,10 @@ try {
     owned.returnToMenu();
   }
   // Off: nothing at the pad changes.
-  for (const overrides of [{helicopter: true}, {helicopter: true, 'driving-lessons': true}, {helicopter: true, 'tyre-slip': true}]) {
+  for (const overrides of [
+    {helicopter: true, 'driving-lessons': false, 'tyre-slip': false},
+    {helicopter: true, 'driving-lessons': false, 'tyre-slip': true},
+  ]) {
     const app = ownedApp(overrides);
     ok(app.visitHeli(), 'the visit works without driving lessons');
     eq(app.heliDrivingBoard(), null, `${JSON.stringify(overrides)}: no Driving board`);

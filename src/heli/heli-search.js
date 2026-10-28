@@ -12,7 +12,7 @@ import {airFactor, GRAVITY, KESTREL} from './heli-flight.js';
 export const SEARCH = Object.freeze({
   // Every circle here is given by its radius, as H1's 12 m landing circle is.
   // The lost hiker (5.1).
-  areaRadius: 300, hikerFromPoint: 250, clearingWithin: 120, clearingRadius: 12,
+  areaRadius: 180, hikerFromPoint: 120, clearingWithin: 120, clearingRadius: 12,
   spotSideways: 70, spotHeight: 120, flareSeconds: 60, hikerWalk: 1.2,
   // The avalanche (5.2). Tremblant Snow's ski hill is 36 m high and gentle
   // (its slopes average 10 to 13 degrees), so a slide's mean slope may be 10
@@ -22,7 +22,7 @@ export const SEARCH = Object.freeze({
   slideSections: Object.freeze(['Snowfields', 'Avalanche Gallery']),
   beaconRange: 60, beepAt: Object.freeze([0.15, 1.6]), beepPitch: Object.freeze([900, 1400]),
   // The hoist rescue (5.3).
-  hoistSlope: Object.freeze([25, 40]), hoistBelowRoad: 10, hoistFromEdge: Object.freeze([20, 120]), hoistTreeClear: 12,
+  hoistSlope: Object.freeze([25, 40]), hoistBelowRoad: 10, hoistFromEdge: Object.freeze([20, 120]), hoistTreeClear: 12, hoistFromStart: 550,
   hoistSections: Object.freeze(['Mountain Climb', 'The Ridge']),
   // The supply run (5.4): the yard is a clear circle of 10 m radius near the
   // hut or lodge. On Summit Run the crates wait where the trucks had to stop:
@@ -215,7 +215,10 @@ export function hoistSpots(course, ground, {step = 16} = {}) {
         off += 30; // one spot per stretch of slope
       }
     }
-    return Object.freeze(out);
+    // Keep the two-person return close to the arrival pad. All slope, road
+    // and tree checks above still apply; the seed chooses among nearby sites.
+    const start = course.at(40);
+    return Object.freeze(out.filter(spot => Math.hypot(spot.x - start.x, spot.z - start.z) <= SEARCH.hoistFromStart));
   });
 }
 

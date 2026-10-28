@@ -1,3 +1,4 @@
+import {speedKph} from './speed-format.js';
 import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
@@ -206,15 +207,61 @@ export function attachRenderer(host, app) {
       const face=new THREE.Mesh(new THREE.BoxGeometry(1.4,.65,.1),new THREE.MeshStandardMaterial({color:0xc42c29,roughness:.7}));face.position.y=1.45;
       board.add(post,face);board.position.set(point.x,ground(point),point.z);board.rotation.y=next.at(s).heading;driveLessonView.add(board);
       }
-      // DRIVE-LESSONS-VIEW-2, lesson 2: small markers down the middle of the road for the first try; the car knocks them over.
-      if(run.lesson.id==='line'){
-        const geometry=new THREE.ConeGeometry(.17,.42,10),paint=new THREE.MeshStandardMaterial({color:0xf2e6a0,roughness:.8});
-        (run.plan.instructor.markers||[]).forEach((marker,index)=>{
-          const group=new THREE.Group();group.name='Lesson marker '+index;group.userData.markerIndex=index;
-          const body=new THREE.Mesh(geometry,paint);body.position.y=.21;group.add(body);
-          group.position.set(marker.x,ground({...marker,lateral:marker.lateral}),marker.z);driveLessonView.add(group);
-        });
+      // Surface paint follows the native plan. It has no collision or simulation hooks.
+      const paint = (name, quads) => {
+        const positions=[],colors=[];
+        for(const [s0,s1,l0,l1,color,shift=0] of quads){
+          const tint=new THREE.Color(color);
+          const points=[[s0,l0],[s1,l0],[s1,l1],[s0,l1]].map(([s,lateral])=>{
+            lateral+=s===s1?shift:0;const p={...next.groundAt(s,lateral),s,lateral};return [p.x,ground(p)+.045,p.z];
+          });
+          for(const i of [0,1,2,0,2,3]){positions.push(...points[i]);colors.push(tint.r,tint.g,tint.b);}
+        }
+        const geometry=new THREE.BufferGeometry();
+        geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+        geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+        const mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));
+        mesh.name=name;mesh.renderOrder=3;driveLessonView.add(mesh);return mesh;
+      };
+      const ribbon=[],zones=[],plan=run.plan.instructor.plan;
+      for(let i=0;i<plan.length-2;i+=2){
+        const p=plan[i],q=plan[i+2],color={accelerate:0x40dd87,coast:0xfff8e5,brake:0xff5146}[p.action];
+        // Each pair uses its own lateral endpoints to follow the planned line.
+        const meshQuad=[p.s,q.s,p.lateral-.34,p.lateral+.34,color,q.lateral-p.lateral];
+        ribbon.push(meshQuad);
       }
+      paint('Lesson painted line',ribbon).userData.lessonLine=true;
+      for(const c of run.plan.instructor.corners){
+        if(c.kind==='flat')continue;
+        const zone=c.brakeZone??{s0:c.turnInS-15,s1:c.turnInS+5};
+        for(let s=zone.s0;s<zone.s1;s+=2){
+          const end=Math.min(s+2,zone.s1),half=next.roadHalfWidthAt(s)-.2;
+          for(let l=-half;l<half;l+=1){
+            const edge=Math.abs(l)>half-1.5||s<zone.s0+2||end>=zone.s1;
+            if(edge)zones.push([s,end,l,Math.min(half,l+1),c.kind==='lift'?0xf2ce52:Math.floor((s-zone.s0)/2)%2?0xfff5e7:0xf2554c]);
+          }
+        }
+        if(c.kind==='brake'){
+          const canvas=document.createElement('canvas');canvas.width=256;canvas.height=128;
+          const ctx=canvas.getContext('2d');ctx.fillStyle='#fff3d9';ctx.font='bold 95px sans-serif';ctx.textAlign='center';ctx.fillText(String(speedKph(c.targetMph)),128,100);
+          const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+          const at=zone.s1+4,lateral=next.roadHalfWidthAt(at)-2;
+          // Conform the lettering to slope and camber, just like the box. A flat
+          // plane can disappear into the road on a steep Panorama approach.
+          const corners=[[at-2,lateral-1.7],[at+2,lateral-1.7],[at+2,lateral+1.7],[at-2,lateral+1.7]];
+          const positions=corners.flatMap(([s,lateral])=>{
+            const point={...next.groundAt(s,lateral),s,lateral};return [point.x,ground(point)+.1,point.z];
+          });
+          const geometry=new THREE.BufferGeometry();
+          geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+          // Positive lateral is screen-left from behind; the text's top is ahead.
+          geometry.setAttribute('uv',new THREE.Float32BufferAttribute([1,0,1,1,0,1,0,0],2));
+          geometry.setIndex([0,1,2,0,2,3]);
+          const label=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3}));
+          label.renderOrder=4;label.name='Lesson road target '+c.name;driveLessonView.add(label);
+        }
+      }
+      paint('Lesson brake and lift boxes',zones);
       // Lesson 4: an opaque sign on the inside verge, clear of the course's outside braking boards.
       const ice=run.lesson.id==='snow'?run.plan.instructor.ice?.[0]:null;
       if(ice){
@@ -226,13 +273,14 @@ export function attachRenderer(host, app) {
       sceneRevision++;
     }
     for(const child of driveLessonView.children){
-      if(child.userData.redBoard)child.visible=run.lesson.stage==='late';
+      if(child.userData.lessonLine){child.visible=['follow','your-turn'].includes(run.lesson.stage);continue;}
+      if(child.userData.redBoard)child.visible=run.watchClip==='late';
       else if(child.userData.iceSign)continue;
       else if(child.userData.markerIndex!==undefined){
         child.visible=run.lesson.stage==='late'; // the middle markers belong to the first try only
         child.rotation.z=app.driveLessonMarkers?.tipped.has(child.userData.markerIndex)?Math.PI*.5:0;
       }
-      else child.rotation.z=run.lesson.attempt?.tipped.includes(child.userData.coneId)?Math.PI*.5:0;
+      else if(child.userData.coneId!==undefined)child.rotation.z=run.lesson.attempt?.tipped.includes(child.userData.coneId)?Math.PI*.5:0;
     }
   }
   let coachCourse = null, coachReference = null;

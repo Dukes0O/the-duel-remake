@@ -4,7 +4,7 @@
 // effect on and off with its skin, dirt by event, the grime cap and the
 // wash. Pure: no storage, no clock, no random.
 import assert from 'node:assert/strict';
-import {createHeli, createMissions, SKIN_KINDS, DIRT_KINDS, DIRT_MAX, heliOf, normalizeHeli} from '../src/heli/heli-save.js';
+import {createHeli, createMissions, SKIN_KINDS, RANK_SKIN_KINDS, DIRT_KINDS, DIRT_MAX, heliOf, normalizeHeli} from '../src/heli/heli-save.js';
 import {
   EARN_AT, SKIN_PRICE, WASH, SKINS, GEAR, BASE_GEAR, DIRT_RULES, skinsOf, tallyOf, skinPrice, skinRows, earnSkins, buySkin,
   wearSkin, skinOffer, gearWorn, gearStats, grimeOf, createFlightDirt, addFlightTime, addLanding, addDip, addDrop,
@@ -37,7 +37,7 @@ check('the tables hold the packet numbers', () => {
   assert.equal(EARN_AT, 5);
   assert.deepEqual({...SKIN_PRICE}, {base: 2500, perMission: 400, floor: 900, tv: 2500});
   assert.deepEqual({...WASH}, {cost: 100, hintAbove: 80});
-  assert.deepEqual(Object.keys(SKINS), ['stock', ...SKIN_KINDS]);
+  assert.deepEqual(Object.keys(SKINS), [...RANK_SKIN_KINDS, 'stock', ...SKIN_KINDS]);
   assert.deepEqual(SKINS.fire.look, ['red', 'yellow', 'white']);
   assert.deepEqual(SKINS.medevac.look, ['white', 'white', 'red']);
   assert.deepEqual(SKINS.rescue.look, ['rescue yellow', 'red', 'black']);

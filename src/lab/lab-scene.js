@@ -1,11 +1,14 @@
 // The Lab's room (docs/LAB.md sections 2 and 8): the hangar and its benches from public/assets/models/lab/, drawn on a
-// canvas of its own, with the camera gliding to the bench in use. Drawing only: it takes a lesson and the last result and
+// canvas of its own, with a walking camera and dedicated sequence views. Drawing only: it takes a lesson and the last result and
 // moves parts; it knows nothing of the game, the save or the race. Everything it makes is released by dispose().
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createSirenaVehicle} from '../sirena-vehicle.js';
 // LAB-FAN-VIEW: drawing-only extension, with the room owning its resources.
 import {createFanRoom} from './fan-view.js';
+import {WALK, WALK_LAYOUT} from './lab-walk.js';
+import {createWalkRoom} from './lab-walk-room.js';
+import {createLessonPictures} from './lesson-pictures.js';
 
 // Which bench model a lesson uses (the five wind-tunnel lessons share the tunnel).
 export const MODEL_OF_LESSON = Object.freeze({
@@ -13,15 +16,6 @@ export const MODEL_OF_LESSON = Object.freeze({
   strength: 'bending-rig', rust: 'nail-jars', gforce: 'turning-arm', headings: 'map-table', launch: 'launcher-ramp', wax: 'snow-trays',
   grip: 'wind-tunnel', downforce: 'wind-tunnel', braking: 'wind-tunnel', suspension: 'wind-tunnel', fuel: 'wind-tunnel',
 });
-// Player views, below the roof chords and inside the hall's columns. The
-// tunnel's working side is viewed across its length, not down the fan barrel.
-const BENCH_VIEWS = {
-  'weighing-pad': {position:[-3.2,2.2,8.7],target:[-3.75,1.7,6.25]},
-  'drop-tower': {position:[-4.7,3.6,2.5],target:[-11.4,3,-1.2]},
-  'pendulum-frame': {position:[-3.4,3.3,4.9],target:[-5.4,2.9,-3.4]},
-  'wind-tunnel': {position:[6,3.7,1.7],target:[8.6,1.5,-6.3]},
-  'launcher-ramp': {position:[.4,3,-2.3],target:[1.7,1.4,-7]},
-};
 const BENCH_MODELS = Object.freeze([...new Set(Object.values(MODEL_OF_LESSON)), 'weights-and-cans']);
 
 // Counts, for the test that opens and closes the Lab twice: every scene made is released.
@@ -29,7 +23,10 @@ const stats = {created: 0, disposed: 0, listeners: 0};
 export const labSceneStats = () => ({...stats, live: stats.created - stats.disposed});
 
 const defaultRenderer = canvas => new THREE.WebGLRenderer({canvas, antialias: true, alpha: false, powerPreference: 'default'});
-const defaultLoad = path => new GLTFLoader().loadAsync(path).then(gltf => gltf.scene);
+const defaultLoad = path => new GLTFLoader().loadAsync(path).then(gltf => {
+  gltf.scene.animations = gltf.animations;
+  return gltf.scene;
+});
 
 function release(root) {
   const resources = new Set();
@@ -43,26 +40,13 @@ function release(root) {
   for (const resource of resources) resource.dispose?.();
 }
 
-// The camera poses to try for a bench, best first: from the middle of the hall side, a little round to one side and above,
-// looking at its middle, then further round and further back. The scene takes the first with a clear view.
-export function benchPoses(layout, size) {
-  const {x, z} = layout, length = Math.hypot(x, z) || 1;
-  const ux = -x / length, uz = -z / length, base = Math.max(3.2, Math.max(size[0], size[2]) * 1.05, size[1] * 1.5);
-  const target = [x, size[1] * 0.5, z], poses = [];
-  for (const scale of [1, 1.35]) for (const turn of [0.35, -0.35, 0.8, -0.8, 1.3, -1.3, 0]) {
-    const dx = ux * Math.cos(turn) - uz * Math.sin(turn), dz = ux * Math.sin(turn) + uz * Math.cos(turn);
-    poses.push({position: [x + dx * base * scale, target[1] + base * scale * 0.35, z + dz * base * scale], target});
-  }
-  return poses;
-}
-export const benchPose = (layout, size) => benchPoses(layout, size)[0];
 // LAB-RESTORE: the freshwater tank for the Sirena stands on the open floor by the hangar door; the camera comes to it.
 export const RESTORE_STAGE = Object.freeze({x: 0, z: 9.4, yaw: Math.PI / 2, tank: Object.freeze([6.2, 1.7, 2.9]),
   camera: Object.freeze({position: [3.2, 3.1, 4.6], target: [0, 0.7, 9.4]})});
 const PRIMER = 0x8d9296, RED = 0x9c1217, FLOOR = .2;
-export const OVERVIEW = Object.freeze({position: [0, 5.2, 13.5], target: [0, 1.6, -1]});
+const ENTRY = Object.freeze({position: [0, WALK.eye, 7.8], target: [0, WALK.eye, 0]});
 
-export function createLabScene({host, manifest, createRenderer = defaultRenderer, load = defaultLoad, createCar = createSirenaVehicle, quality = 'high'}) {
+export function createLabScene({host, manifest, createRenderer = defaultRenderer, load = defaultLoad, createCar = createSirenaVehicle, quality = 'high', walking = false, onUse = () => {}, onLessonControl = () => {}}) {
   const doc = host.ownerDocument, win = doc.defaultView;
   const canvas = doc.createElement('canvas');
   canvas.className = 'lab-canvas';
@@ -88,10 +72,9 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
   const parts = new Map();           // part name -> node, per bench model id
   const models = new Map();          // model id -> root
   let disposed = false, focus = null, lesson = null, result = null, clock = 0, raf = 0;
-  const pose = {position: new THREE.Vector3(...OVERVIEW.position), target: new THREE.Vector3(...OVERVIEW.target)};
-  const goal = {position: new THREE.Vector3(...OVERVIEW.position), target: new THREE.Vector3(...OVERVIEW.target)};
-  camera.position.copy(pose.position);
-  camera.lookAt(pose.target);
+  const goal = {position: new THREE.Vector3(...ENTRY.position), target: new THREE.Vector3(...ENTRY.target)};
+  camera.position.copy(goal.position);
+  camera.lookAt(goal.target);
 
   stats.created++;
   const resize = () => {
@@ -104,7 +87,6 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
   stats.listeners++;
   resize();
 
-  const sizeOf = id => manifest.models.find(model => model.id === id)?.dimensionsMetres ?? [3, 2, 3];
   const ready = (async () => {
     const ids = ['hangar', ...BENCH_MODELS];
     await Promise.all(ids.map(async id => {
@@ -113,7 +95,12 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
         if (disposed) { release(root); return; }
         const at = manifest.layout[id];
         if (at) { root.position.set(at.x, 0, at.z); root.rotation.y = at.yaw || 0; }
+        if (walking && WALK_LAYOUT[id]) {
+          const [x, z] = WALK_LAYOUT[id];
+          root.position.set(x, 0, z); root.rotation.y = 0; root.scale.setScalar(WALK.scale);
+        }
         scene.add(root);
+        if (id === 'hangar') import('./lessons/snow-display.js').then(({nameFirstAid}) => { if (!disposed) nameFirstAid(root, doc, THREE); });
         models.set(id, root);
         const named = new Map();
         root.traverse(node => { if (node.name) named.set(node.name, node); });
@@ -124,6 +111,10 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
       } catch { /* a model that will not load leaves its bench bare; the screen still works */ }
     }));
   })();
+  const walkRoom = walking ? createWalkRoom({scene, camera, host, canvas, manifest, models,
+    modelOf: MODEL_OF_LESSON, ready, load, release, onUse}) : null;
+  const teachingPictures = walking ? createLessonPictures({scene, camera, canvas, doc, models, modelOf: MODEL_OF_LESSON, onControl: onLessonControl}) : null;
+  let teaching = null;
 
   // ---- the Sirena's restoration (LAB-RESTORE): tank, wreck, car and bubbles, all driven by one stage object ----
   const restore = {group: new THREE.Group(), built: false, wreck: null, hull: null, car: null, livery: [], paint: null, bubbles: [], water: null, state: null, shown: -1, wreckKind: null, loadTicket: 0};
@@ -241,38 +232,12 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
   }
   const part = (model, name) => parts.get(model)?.get(name) ?? null;
   // LAB-FAN-VIEW
-  const fanRoom = createFanRoom({scene, part, load, release, alive: () => !disposed, manifest, host, camera});
+  const fanRoom = createFanRoom({scene, part, load, release, alive: () => !disposed, manifest, host, camera, walking});
 
-  // The first pose whose line to the bench is not blocked by a pillar, a wall or another bench.
-  const caster = new THREE.Raycaster(), from = new THREE.Vector3(), to = new THREE.Vector3();
-  function clearPose(id, poses) {
-    const others = [...models].filter(([key]) => key !== id).map(([, root]) => root);
-    for (const pose of poses) {
-      from.set(...pose.position); to.set(...pose.target);
-      const distance = from.distanceTo(to);
-      // Sample a band around the sightline too: a pillar beside the centre
-      // ray can still dominate the foreground. Nothing in the room is hidden.
-      const side = to.clone().sub(from).cross(camera.up).normalize();
-      const clear = [-1.2, 0, 1.2].every(offset => {
-        const end = to.clone().addScaledVector(side, offset);
-        caster.set(from, end.sub(from).normalize());
-        caster.far = distance - 1.5;
-        return !caster.intersectObjects(others, true).length;
-      });
-      if (clear) return pose;
-    }
-    return poses[0];
-  }
-  function aim(next) {
-    if (restore.state) { goal.position.set(...RESTORE_STAGE.camera.position); goal.target.set(...RESTORE_STAGE.camera.target); return; }
-    const fanPose = fanRoom.pose(); // LAB-FAN-VIEW
-    if (fanPose) { goal.position.set(...fanPose.position); goal.target.set(...fanPose.target); return; }
-    const id = next ? MODEL_OF_LESSON[next] : null;
-    const at = id ? manifest.layout[id] : null;
-    if (!at) { goal.position.set(...OVERVIEW.position); goal.target.set(...OVERVIEW.target); return; }
-    // The lift instruments stand at the door edge of a broad, flat pad.
-    const poses = BENCH_VIEWS[id] ? [BENCH_VIEWS[id], ...benchPoses(at, sizeOf(id))] : benchPoses(at, sizeOf(id));
-    const view = clearPose(id, poses);
+  // Only the restoration tank and secret fan sequence need a fixed shot.
+  // Ordinary bench panels keep the player's walking position; no glide path.
+  function aim() {
+    const view = restore.state ? RESTORE_STAGE.camera : fanRoom.pose() ?? ENTRY;
     goal.position.set(...view.position); goal.target.set(...view.target);
   }
 
@@ -306,20 +271,25 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
     if (needle && lesson === 'altitude' && result) needle.rotation.z = -Math.PI / 2 * Math.min(1, result.liftShare ?? 1);
   }
 
+  function drawCamera(dt) {
+    if (walkRoom) walkRoom.frame(dt);
+    if (!walkRoom || restore.state || fanRoom.pose()) {
+      camera.position.copy(goal.position);
+      camera.lookAt(goal.target);
+    }
+  }
+
   function frame(now) {
     if (disposed) return;
     const dt = Math.min(0.1, clock ? (now - clock) / 1000 : 0.016);
     clock = now;
-    const blend = 1 - Math.exp(-3.2 * dt);
-    pose.position.lerp(goal.position, blend);
-    pose.target.lerp(goal.target, blend);
-    camera.position.copy(pose.position);
-    camera.lookAt(pose.target);
+    drawCamera(dt);
     animate(now / 1000);
     const fanAssets = fanRoom.frame(now / 1000); // LAB-FAN-VIEW
     if (canvas.dataset.fanCar !== fanAssets.car) canvas.dataset.fanCar = fanAssets.car;
     if (canvas.dataset.fanBlueprint !== fanAssets.blueprint) canvas.dataset.fanBlueprint = fanAssets.blueprint;
     drawRestore(now / 1000);
+    if (teachingPictures) teachingPictures.draw(teaching?.view, teaching?.entry);
     renderer.render(scene, camera);
     raf = win ? win.requestAnimationFrame(frame) : 0;
   }
@@ -328,27 +298,31 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
   return {
     ready,
     canvas,
-    // lessonId: the bench to move to (null: the overview); last: that bench's last result (or null).
-    show(lessonId, last = null) { lesson = lessonId; result = last; if (focus !== lessonId) { focus = lessonId; aim(lessonId); } },
+    lesson(view, entry) { teaching = view ? {view, entry} : null; },
+    walk(view) { walkRoom?.update(view); },
+    // The active bench and its last result; ordinary benches never move the walker.
+    show(lessonId, last = null) { lesson = lessonId; result = last; if (focus !== lessonId) { focus = lessonId; aim(); } },
     setResult(last) { result = last; },
     // LAB-FAN-VIEW: no profile or game state enters the renderer.
-    fan(view) { const before = fanRoom.pose(); fanRoom.update(view); if (JSON.stringify(before) !== JSON.stringify(fanRoom.pose())) aim(focus); },
+    fan(view) { const before = fanRoom.pose(); fanRoom.update(view); if (JSON.stringify(before) !== JSON.stringify(fanRoom.pose())) aim(); },
     // LAB-RESTORE: the sequence's stage object (from restore.js stageAt), or null to take the tank away.
     restore(state) {
       const was = restore.state !== null;
       restore.state = state ?? null;
       if (state) { buildRestore(); loadRestoreWreck(state.kind); }
-      if ((state !== null) !== was) aim(focus);
+      if ((state !== null) !== was) aim();
     },
     // For tests: the camera's goal and where it is.
     camera: () => ({position: camera.position.toArray(), goal: goal.position.toArray()}),
-    renderOnce(now = 0) { clock = clock || now; animate(now / 1000); drawRestore(now / 1000); renderer.render(scene, camera); },
+    renderOnce(now = 0) { clock = clock || now; drawCamera(0); animate(now / 1000); drawRestore(now / 1000); renderer.render(scene, camera); },
     dispose() {
       if (disposed) return;
       disposed = true;
       stats.disposed++; stats.listeners--;
       if (raf && win) win.cancelAnimationFrame(raf);
       win?.removeEventListener('resize', resize);
+      walkRoom?.dispose();
+      teachingPictures?.dispose();
       fanRoom.dispose(); // LAB-FAN-VIEW
       release(scene);
       scene.clear();
@@ -363,7 +337,7 @@ export function createLabScene({host, manifest, createRenderer = defaultRenderer
 
 // The room's life inside the screen: start it when the Lab opens, stop it when the Lab closes. A start that finishes after a stop
 // (or after a newer start) is dropped, and a room that cannot be made leaves the screen plain. Everything started is stopped.
-export function createSceneKeeper({stage, loadManifest, sceneFactory = createLabScene, onPlain = () => {}, onRoom = () => {}}) {
+export function createSceneKeeper({stage, loadManifest, sceneFactory = createLabScene, sceneOptions = () => ({}), onPlain = () => {}, onRoom = () => {}}) {
   let ticket = 0, scene = null;
   return {
     get scene() { return scene; },
@@ -372,7 +346,7 @@ export function createSceneKeeper({stage, loadManifest, sceneFactory = createLab
       try {
         const manifest = await loadManifest();
         if (mine !== ticket) return;
-        const made = sceneFactory({host: stage, manifest, quality: 'high'});
+        const made = sceneFactory({host: stage, manifest, quality: 'high', ...sceneOptions()});
         if (mine !== ticket) { made.dispose(); return; }
         scene = made;
         onRoom(made, wanted);

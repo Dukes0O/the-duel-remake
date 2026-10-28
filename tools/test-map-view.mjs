@@ -16,7 +16,7 @@ import {PLACES, FUEL_PADS, PILOT_MAP, placeById} from '../src/heli/pilot-map-dat
 import {HELI_CUES} from '../src/heli/heli-audio.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {SECRET_SIGNS, TABLE, TABLE_ID} from '../src/heli/map-secrets.js';
-import {mapModel, hitPlace, placeNote, bearingKm, chartFrame, drawChart, destinationOf, MAP_KEY, LOGBOOK_CARD} from '../src/heli/pilot-map-view.js';
+import {mapModel, hitPlace, placeNote, bearingKm, chartFrame, chartLabels, drawChart, destinationOf, MAP_KEY, LOGBOOK_CARD} from '../src/heli/pilot-map-view.js';
 import {createMapWorldView, SIGN_MODELS, MESA_FIT} from '../src/heli/pilot-map-world.js';
 
 let checks = 0;
@@ -43,9 +43,9 @@ function recordingContext() {
 }
 
 try {
-  const makeApp = ({helicopter = true, pilotMap = true} = {}) => {
+  const makeApp = ({helicopter = true, pilotMap = true, rescue = true} = {}) => {
     const app = new App();
-    app.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides: {helicopter, 'pilot-map': pilotMap}, qa: true}), () => app.duel.state);
+    app.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides: {helicopter, 'pilot-map': pilotMap, rescue}, qa: true}), () => app.duel.state);
     return app;
   };
   const own = (app, courses, credits = 5000) => {
@@ -66,9 +66,9 @@ try {
   ok(new Set(heliKeys).size === heliKeys.length && !held.includes('KeyN'), 'N is free in the helicopter (no other action or held key uses it)');
   for (const id of ['map.open', 'map.close', 'map.pin']) ok(SOUND_BANK[id] === HELI_CUES[id] && HELI_CUES[id].flag === 'helicopter', `${id} is in the sound bank behind the helicopter switch`);
 
-  // ---- switch off: nothing of the map exists -------------------------------------------------------------
+  // ---- map and Summit rescue off: nothing of the map exists -------------------------------------------------------------
   {
-    const app = makeApp({pilotMap: false});
+    const app = makeApp({pilotMap: false, rescue: false});
     app.profile.credits = 2000; app._saveProfile();
     ok(app.visitHeli() && !app.heliMapAvailable(), 'off: the helicopter flies and the map is not available');
     const view = app.heliView();
@@ -82,7 +82,8 @@ try {
     const appended = [], node = () => ({innerHTML: '', hidden: false, dataset: {}, textContent: '', style: {setProperty() {}, removeProperty() {}}, kids: {},
       querySelector(selector) { return this.kids[selector] ?? null; }, addEventListener() {}, removeEventListener() {}, append() {}, remove() {}, setAttribute() {}});
     const section = node();
-    for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio']) section.kids[selector] = node();
+    for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio',
+      '.heli-shelf-host', '.heli-arrival-host', '.heli-ski-host']) section.kids[selector] = node();
     const ui = createHeliUi({host: {ownerDocument: {createElement: () => section}, append: child => appended.push(child)}, app});
     ui.update();
     equal(appended.length, 1, 'off: the page gains only the helicopter panel');
@@ -183,6 +184,16 @@ try {
     ok(ctx.calls.length > 800, `the chart paints the land, sea, contours, outlines and names (${ctx.calls.length} calls)`);
     for (const word of ['Tremblant Woods', 'Panorama Ridge', '1.5', '1.8', '2.0', '2.2', '5 km', 'N', '2500 m']) ok(ctx.texts.includes(word), `the chart writes ${word}`);
     ok(ctx.calls.includes('arc') && ctx.calls.includes('setLineDash'), 'it draws the tank ring and the dashed lines');
+    for (const state of ['owned', 'grey']) {
+      const chart = {...model, places: model.places.map(p => ({...p, state}))};
+      const boxes = chartLabels(recordingContext(), chart, 900, 900);
+      equal(boxes.length, chart.places.length, 'every place gets a label');
+      for (let i = 0; i < boxes.length; i++) for (const b of boxes.slice(i + 1)) {
+        const a = boxes[i];
+        ok(Math.abs(a.x - b.x) >= (a.w + b.w) / 2 || Math.abs(a.y - b.y) >= (a.h + b.h) / 2,
+          `${a.id} and ${b.id} labels do not overlap at the default view`);
+      }
+    }
     const unseen = recordingContext();
     drawChart(unseen, model, {width: 900, height: 900});
     ok(!unseen.texts.includes('?') && !unseen.texts.includes('The Table'), 'the Table is not drawn until it is seen');
@@ -239,9 +250,12 @@ try {
   // ---- the world: signs, scouting and the Table -----------------------------------------------------------------
   {
     const scene = new THREE.Scene(), loaded = [];
-    const stub = file => { loaded.push(file); const g = new THREE.Group(); g.name = file; if (file === 'table-lookout') { const spot = new THREE.Object3D(); spot.name = 'logbook_spot'; g.add(spot); } return Promise.resolve(g); };
+    const stub = file => { loaded.push(file); const g = new THREE.Group(); g.name = file;
+      if (file === 'sign-fire-pits') for (const kind of ['flame', 'smoke']) for (let i = 0; i < 8; i++) {
+        const anchor = new THREE.Object3D(); anchor.name = `${kind}_${i}`; anchor.position.set(i * 2, 1, 3); g.add(anchor);
+      } if (file === 'table-lookout') { const spot = new THREE.Object3D(); spot.name = 'logbook_spot'; g.add(spot); } return Promise.resolve(g); };
     const heading = (x, z) => 0.5;
-    const world = createMapWorldView({THREE, scene, load: stub, groundHeight: (x, z) => 100 + x / 100, roadHeading: heading, createCanvas: () => null});
+    const world = createMapWorldView({THREE, scene, load: stub, loadFireTexture: async () => new THREE.Texture(), groundHeight: (x, z) => 100 + x / 100, roadHeading: heading, createCanvas: () => null});
     const settle = () => new Promise(resolve => setTimeout(resolve, 5));
     const base = {heli: {x: 0, y: 0, z: 0}, courseId: 'panorama-ridge', secrets: {signs: [], found: [], table: false}, scout: null};
     equal(world.update(null).hideCourse, false, 'no flight, nothing to hide');
@@ -260,7 +274,20 @@ try {
     equal(Object.keys(SIGN_MODELS).length, SECRET_SIGNS.length, 'every secret has a model');
     world.update({...base, secrets: {...base.secrets, signs: [{id: night.id, x: night.x, z: night.z}]}});
     deepEqualSet(world.signIds, [night.id], 'a found sign is taken off the ground');
+    world.update({...base, secrets: {...base.secrets, signs: [{id: night.id, x: night.x, z: night.z}]}}, 1);
+    const pits = world.group.children.find(c => c.name === `Sign ${night.id}`).children[0];
+    const layers = pits.children.filter(c => c.isPoints);
+    equal(layers.length, 2, 'fire view sprites draw flames and smoke');
+    const flame = layers.find(c => c.material.blending === THREE.AdditiveBlending);
+    const smoke = layers.find(c => c !== flame);
+    equal(flame.geometry.drawRange.count, 8, 'all eight flame empties are lit');
+    equal(smoke.geometry.drawRange.count, 16, 'two rising puffs at every smoke empty');
+    const before = [...smoke.geometry.attributes.position.array];
+    world.update({...base, secrets: {...base.secrets, signs: [{id: night.id, x: night.x, z: night.z}]}}, 2);
+    ok(before.some((v, i) => v !== smoke.geometry.attributes.position.array[i]), 'smoke moves with visual time');
+    ok(Math.abs(flame.geometry.attributes.position.getX(3) - 6) < 1e-5, 'flame follows its named anchor');
     world.update(base);
+    ok(layers.every(c => c.parent === null), 'found sign releases its effect layers');
     equal(world.signIds.length, 0, 'and with none left, none are drawn');
     // Scouting: the corner names over an owned course, once, shown only while flying over it.
     const scout = {courseId: 'panorama-ridge', corners: [{number: 1, name: 'The Hairpin', label: '1', x: 50, z: 60}, {number: 2, name: null, label: '2', x: -40, z: 220}]};

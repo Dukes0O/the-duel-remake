@@ -1,9 +1,10 @@
-// DRIVE-LESSON-LINES and DRIVE-LESSONS-LINES-2: the driving instructor's radio lines
-// (docs/DRIVING_LESSONS.md section 6 and 12.7), the cone sound and the shift-light ticks.
+// LESSONS-V2-LINES: v2 script, complete radio choices, kept takes and runtime files.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync, existsSync} from 'node:fs';
+import {readFileSync, existsSync, readdirSync} from 'node:fs';
 import {DRIVE_RADIO_LINES, DRIVE_RADIO_VOICE, DRIVE_LESSON_CUES} from '../src/lessons/drive-radio-lines.js';
+import {createDriveLesson, stepDriveLesson, DRIVE_LESSON_STEPS, driveLessonResultRadio} from '../src/lessons/drive-lessons.js';
+import {DRIVE_LESSON_VIEW, driveLessonBriefingMarkup} from '../src/lessons/drive-lesson-ui.js';
 import {HELI_RADIO_VOICE, createRadioChain} from '../src/lessons/radio-voice.js';
 import {SOUND_BANK, BUS_NAMES} from '../src/sound-bank.js';
 import {EngineAudio} from '../src/audio.js';
@@ -16,17 +17,63 @@ const read = path => readFileSync(new URL(path, root));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const catalog = JSON.parse(read('tools/audio/catalog.json'));
 
-// Every line in the design has a take, with the design's exact words.
-const design = String(read('docs/DRIVING_LESSONS.md'));
-const table = Object.fromEntries([...design.matchAll(/^\| `(drive\.radio\.[a-z.]+)` \| (.+?) \|$/gm)].map(m => [m[1], m[2]]));
-same(Object.keys(table).length, 15, 'section 6 lists fifteen lines');
-// 12.7 lists the ids without the "drive.radio." prefix: thirty more for lessons 2 to 4, two for the true late try.
-const more = design.slice(design.indexOf('### 12.7'), design.indexOf('### 12.8'));
-for (const m of more.matchAll(/^\| `([a-z.]+)` \| (.+?) \|$/gm)) table['drive.radio.' + m[1]] = m[2];
-same(Object.keys(table).length, 47, 'the design lists forty-seven lines');
-ok(!('drive.radio.corner.late.result' in DRIVE_RADIO_LINES) && !catalog.sounds.some(row => row.cue === 'drive.radio.corner.late.result'), 'the untrue time-lost line is gone');
-same(Object.fromEntries(Object.entries(DRIVE_RADIO_LINES).map(([id, line]) => [id, line.text])), table, 'the lines match the design word for word');
-ok(Object.values(DRIVE_RADIO_LINES).every(line => !/\d|credit|second/i.test(line.text)), 'no line names a time or a price');
+// The card's line list is the exact recording/subtitle contract (14.11).
+const design = String(read('docs/changes/LESSONS-V2-LINES.md'));
+const table = Object.fromEntries([...design.matchAll(/^\| `(drive\.radio\.v2\.[a-z.-]+)` \| (.+?) \|$/gm)].map(m => [m[1], m[2]]));
+same(Object.keys(table).length, 22, 'the v2 script has twenty-two distinct recordings');
+same(Object.fromEntries(Object.entries(DRIVE_RADIO_LINES).map(([id, line]) => [id, line.text])), table, 'the lines match the approved script word for word');
+ok(Object.values(DRIVE_RADIO_LINES).every(line => !/\d|credit|second|mph|km\/h|metre|meter|price|dollar/i.test(line.text)), 'no recording names times, speeds, prices or distances');
+const catalogIds = catalog.sounds.filter(row => row.cue?.startsWith('drive.radio.')).map(row => row.cue).sort();
+same(catalogIds, Object.keys(table).sort(), 'no missing or leftover driving voice catalog records');
+for (const folder of ['audio-src/voices/', 'public/assets/audio/voices/']) {
+  same(readdirSync(new URL(folder, root)).filter(file => file.startsWith('drive-radio-')).sort(),
+    Object.values(DRIVE_RADIO_LINES).map(line => line.file).sort(), folder + ': no missing or leftover files');
+}
+
+// Exercise every step and result choice. This set must equal the bank, so a
+// recorded line that the lessons cannot choose fails as well as a missing one.
+const picked = new Set(['drive.radio.v2.corner.watch-late']);
+const target = {name: 'Bend', kind: 'brake', approachS: 0, brakeS: 20, turnInS: 40, turnOutS: 60, exitS: 80, targetMph: 50};
+const view = {s: 0, lateral: 0, world: {x: 0, z: 0}, speedMph: 50, brake: 0, throttle: 0, tyreSlip: 0, status: 'racing'};
+for (const id of ['corner', 'line', 'gears', 'snow']) {
+  const lesson = createDriveLesson(id, {corner: {startS: 0, finishS: 100, dir: 1},
+    instructor: {timeSec: 10, corners: [target], cones: [], poses: [{s: 0, t: 0}, {s: 100, t: 10}]}});
+  picked.add(DRIVE_LESSON_VIEW[id].intro);
+  const briefing = driveLessonBriefingMarkup({lesson, playerId: 'test', runPlayerId: 'test'});
+  ok(briefing.includes(DRIVE_RADIO_LINES[DRIVE_LESSON_VIEW[id].intro].text), id + ': briefing shows exact intro');
+  for (const stage of DRIVE_LESSON_STEPS) {
+    lesson.stage = stage.id; lesson.phase = 'ready';
+    const result = stepDriveLesson(lesson, view, {start: true}); picked.add(result.radio);
+    same(result.radio, 'drive.radio.v2.shared.' + stage.id, id + ': step start');
+  }
+  const row = {name: 'Bend', kind: 'brake', checks: {brake: true, speed: true, quiet: true},
+    brakeDeltaM: 0, minMph: 50, targetMph: 50, screechSeconds: 0, wallHit: false, missed: 0};
+  const choose = (expected, extra = {}, state = {}) => {
+    const result = driveLessonResultRadio(lesson, [{...row, ...extra}],
+      {reason: 'finish', success: false, clean: true, faster: true, ...state});
+    same(result, 'drive.radio.v2.' + expected, id + ': ' + expected); picked.add(result);
+  };
+  choose(id + '.pass', {}, {success: true});
+  choose('shared.off', {}, {reason: 'offroad', clean: false});
+  choose('shared.off', {}, {reason: 'wall', clean: false});
+  lesson.attempt.screechSeconds = .4;
+  choose('shared.slid', {}, {clean: false}); lesson.attempt.screechSeconds = 0;
+  choose('shared.slid', {checks: {...row.checks, quiet: false}});
+  choose('shared.late', {checks: {...row.checks, brake: false}, brakeDeltaM: 20});
+  choose('shared.late', {checks: {...row.checks, brake: false}, brakeDeltaM: null});
+  lesson.stage = 'your-turn';
+  choose('shared.late', {checks: {...row.checks, brake: false}, brakeDeltaM: 20}, {success: true});
+  lesson.stage = 'beat';
+  choose('shared.early', {checks: {...row.checks, brake: false}, brakeDeltaM: -20});
+  choose('shared.lift', {checks: {...row.checks, brake: false}, kind: 'lift'});
+  choose('shared.fast', {checks: {...row.checks, speed: false}, minMph: 60});
+  choose('shared.slow', {checks: {...row.checks, speed: false}, minMph: 40});
+  choose('shared.pace', {}, {faster: false});
+  choose('shared.pace', {}, {reason: 'stop'});
+  choose('shared.clean');
+  same(DRIVE_LESSON_VIEW[id].pass, 'drive.radio.v2.' + id + '.pass', id + ': save retry pass id');
+}
+same([...picked].sort(), Object.keys(DRIVE_RADIO_LINES).sort(), 'every selectable recording exists, and every recording is used');
 ok(DRIVE_RADIO_VOICE === HELI_RADIO_VOICE, 'the driving instructor is the same Brian');
 
 // One kept take per line: catalog record, hash, runtime copy, same voice and settings as the helicopter.
@@ -44,8 +91,8 @@ for (const [id, line] of Object.entries(DRIVE_RADIO_LINES)) {
   ok(existsSync(new URL(runtime, root)) && sha(read(runtime)) === record.sha256, `${id}: the runtime file is the kept take, unchanged`);
   creditsUsed += record.creditsUsed; runtimeBytes += take.length;
 }
-ok(creditsUsed > 0 && creditsUsed <= 6000, `voice credits within the two cards' budget (${creditsUsed})`);
-ok(runtimeBytes < 4.0e6, `the forty-seven lines stay small (${runtimeBytes} bytes)`);
+ok(creditsUsed > 0 && creditsUsed <= 6000, `voice credits within the existing 6000-credit test budget (${creditsUsed})`);
+ok(runtimeBytes < 4.0e6, `the v2 lines stay small (${runtimeBytes} bytes)`);
 
 // The cone: one CC0 library recipe, credited, built by the card's script.
 {
@@ -58,8 +105,8 @@ ok(runtimeBytes < 4.0e6, `the forty-seven lines stay small (${runtimeBytes} byte
   ok(cone.runtime.truePeakDbtp <= -1, 'the cone keeps its peak under -1 dB');
 }
 
-// The bank: fifty-one cues behind the driving-lessons switch, the lines on the voice bus like the helicopter's radio.
-same(Object.keys(DRIVE_LESSON_CUES).length, 51, 'forty-seven lines, the cone and three shift-light ticks');
+// The bank: twenty-six cues behind the driving-lessons switch, the lines on the voice bus like the helicopter's radio.
+same(Object.keys(DRIVE_LESSON_CUES).length, 26, 'twenty-two lines, the cone and three shift-light ticks');
 for (const [id, cue] of Object.entries(DRIVE_LESSON_CUES)) {
   ok(SOUND_BANK[id] === cue, `${id}: in the sound bank`);
   ok(cue.flag === 'driving-lessons' && BUS_NAMES.includes(cue.bus), `${id}: behind its switch on a real bus`);

@@ -96,6 +96,22 @@ const shape = createZoneFloor(zone);
   const uniforms = createWaterUniforms();
   eq(createSeagrass(uniforms, { placements: grass }).count, grass.length, 'seagrass builder takes zone placements');
   eq(createRocks(uniforms, { placements: rocks, detail: 1 }).count, rocks.length, 'rock builder takes zone placements');
+  // DEEP-ROCKS-PUSH: the drawn rocks follow the run's rocks; only the instances that moved are redrawn.
+  {
+    const drawn = createRocks(uniforms, { placements: rocks, detail: 1 }), run = rocks.map(r => ({ ...r }));
+    const slot = i => { const mesh = drawn.group.children[run[i].variant]; return { mesh, index: run.slice(0, i).filter(r => r.variant === run[i].variant).length }; };
+    const at = i => { const m = new THREE.Matrix4(), { mesh, index } = slot(i); mesh.getMatrixAt(index, m); return [m.elements[12], m.elements[13], m.elements[14]]; };
+    eq(drawn.follow(run), 0, 'rocks where they started: nothing redrawn');
+    run[3].x += 1.5; run[3].z -= 0.5; run[3].y += 0.25;
+    run[7].x -= 2;
+    drawn.group.children.forEach(mesh => { mesh.instanceMatrix.needsUpdate = false; });
+    eq(drawn.follow(run), 2, 'only the two moved rocks are redrawn');
+    ok(at(3).every((v, k) => Math.abs(v - [run[3].x, run[3].y, run[3].z][k]) < 1e-5), 'a moved rock is drawn at its new place');
+    ok(at(5).every((v, k) => Math.abs(v - [run[5].x, run[5].y, run[5].z][k]) < 1e-5), 'the others stay');
+    eq(drawn.group.children.filter(mesh => mesh.instanceMatrix.needsUpdate).length <= 2, true, 'untouched meshes are not re-uploaded');
+    eq(drawn.follow(run), 0, 'a second look finds nothing new');
+    eq(drawn.follow(run.slice(1)), 0, 'a different layout is ignored');
+  }
   eq(createPebbles(uniforms, { placements: shape.pebblePlacements(seed, 500) }).count, shape.pebblePlacements(seed, 500).length, 'pebble builder takes zone placements');
 }
 

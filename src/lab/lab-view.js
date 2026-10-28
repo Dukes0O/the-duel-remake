@@ -14,6 +14,11 @@ import {createSceneKeeper, createLabScene} from './lab-scene.js';
 // LAB-FAN-VIEW: secret pages; all saved transitions still go through labCommit.
 import {fanView, fanEntry, fanMarkup, fanLoad, tunnelLesson, createFanSound} from './fan-view.js';
 import {markReverse, buildFan} from './lab-fan.js';
+import {doorBoardMarkup} from './lab-walk-room.js';
+import {LAB_UPGRADES} from './lab-shop.js';
+import {TUNE_SETTING_OF} from './lab-lessons.js';
+import './lab-walk.css';
+import {createLessonUi} from './lesson-ui.js';
 
 const CAPTION_MIN_SECONDS = 4;
 const defaultManifest = () => fetch('/assets/models/lab/manifest.json').then(response => {
@@ -76,11 +81,42 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   let shown = false, disposed = false;
   let ui = freshState(), caption = null, lastTop = '', lastSide = '', lastCaption = '', lastStrip = '';
 
-  function freshState() { return {tab: 'lessons', bench: null, message: '', protect: null, explained: false, restore: null,
+  function freshState() { return {tab: 'lessons', bench: null, message: '', protect: null, explained: false, restore: null, walkPanel: null, lastMachine: 'lift',
     fanPage: false, fanSetting: 0, fanStarted: null, fanLine: -1}; }
   const flags = () => app._switches();
   const profile = () => app.profile ?? {};
   const now = () => (win?.performance ?? performance).now() / 1000;
+  const walking = () => flags().enabled('lab-2') === true;
+  const walkRows = () => boardRows(profile(), flags()).map(row => ({...row,
+    reward: (row.id === 'rust' ? 'Restore the Sirena, ' : '') + (LAB_UPGRADES.filter(u => u.lesson === row.id).map(u => u.name).join(', ') ||
+      (TUNE_SETTING_OF[row.id] ? `${TUNE_SETTING_OF[row.id]} tuning` : 'the next discovery')),
+  }));
+  const escapeWalk = text => String(text).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  function useWalk(target) {
+    if (target.kind === 'machine' && target.ids.length === 1) {
+      const row = walkRows().find(r => r.id === target.ids[0]);
+      if (row?.open) { openLesson(row.id); return; }
+    }
+    ui.walkPanel = target;
+    render();
+    side.querySelector('button')?.focus({preventScroll: true});
+  }
+  const walkPaused = () => Boolean(teaching.active() || ui.bench || ui.walkPanel || ui.restore || ui.fanPage || ui.tab !== 'lessons');
+  const walkBack = '<button type="button" data-lab="walk-back">Back to walking</button>';
+  function walkPanelMarkup() {
+    const panel = ui.walkPanel, rows = walkRows();
+    if (panel.kind === 'board') return walkBack + doorBoardMarkup(rows);
+    if (panel.kind === 'brian') {
+      const lesson = rows.find(r => r.id === panel.id), next = rows.find(r => r.open && !r.done);
+      const answer = panel.answer === 'next' ? (next ? `Try ${next.name}. It opens ${next.reward}.` : 'You have passed every open lesson. Check the door board for what opens next.') :
+        panel.answer === 'machine' ? lineText(panel.id, 'intro') : '';
+      return `${walkBack}<section class="lab-brian"><h3>Ask Brian</h3><p>Beside ${escapeWalk(lesson?.name ?? 'the Lift bench')}.</p>` +
+        '<button type="button" data-lab="brian-next">What should I try next?</button><button type="button" data-lab="brian-machine">Tell me about this machine.</button>' +
+        `${answer ? `<p role="status">${escapeWalk(answer)}</p>` : ''}</section>`;
+    }
+    return `${walkBack}<section class="lab-machine-choice"><h3>${panel.ids.length > 1 ? 'Wind tunnel' : 'This machine'}</h3>${rows.filter(r => panel.ids.includes(r.id)).map(r =>
+      `<p>${escapeWalk(r.name)}${r.done ? ' ✓' : ''}</p>${r.open ? `<button type="button" data-lab-lesson="start:${r.id}">Use the ${escapeWalk(r.name)} bench</button>` : `<p>${escapeWalk(r.note)}</p>`}`).join('')}</section>`;
+  }
 
   // ---- Brian ----
   function say(lessonId, step) {
@@ -104,7 +140,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   // ---- what the side panel shows ----
   const challengeFor = () => {
     const bench = ui.bench;
-    return challengeState(bench.lessonId, {profile: profile(), flags: flags(), met: goalMet(bench), helicopterOn: flags().enabled('helicopter') === true && app.heliAvailable?.() === true});
+    return challengeState(bench.lessonId, {profile: profile(), flags: flags(), met: ui.lessonReady === true || goalMet(bench), helicopterOn: flags().enabled('helicopter') === true && app.heliAvailable?.() === true});
   };
   // LAB-RESTORE: the sequence in hand, as the stage object the room and the panel are drawn from.
   const restoreView = () => {
@@ -112,6 +148,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     return {...restoreStageAt(seconds, run.kind), first: run.first, skippable: !run.first, unsaved: app.profileSaved === false};
   };
   function sideMarkup() {
+    if (walking() && ui.walkPanel) return walkPanelMarkup();
     if (ui.restore) return restoreRunMarkup(restoreView());
     // LAB-FAN-VIEW
     if (ui.fanPage) return fanMarkup(fanView(profile(), flags()), ui.fanSetting, ui.message);
@@ -128,6 +165,8 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     return boardMarkup({rows: boardRows(profile(), flags()), message: ui.message});
   }
   function render() {
+    section.classList.toggle('lab-walking', walking());
+    section.classList.toggle('lab-walk-panel', walking() && walkPaused());
     fanSound.bench(ui.fanPage ? ui.fanSetting : null); // LAB-FAN-VIEW
     const topHtml = headerMarkup({credits: profile().credits, tab: ui.tab});
     if (topHtml !== lastTop) { top.innerHTML = topHtml; lastTop = topHtml; }
@@ -139,10 +178,12 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       restoreFocus(key);
     }
     keeper.scene?.show(ui.tab === 'lessons' && ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null);
+    keeper.scene?.walk?.({rows: walkRows(), paused: walkPaused(), last: ui.lastMachine});
     keeper.scene?.restore(ui.restore ? restoreView() : null);
     // LAB-FAN-VIEW: only drawing state enters the room.
     keeper.scene?.fan?.({...fanView(profile(), flags()), page: ui.fanPage, setting: ui.fanSetting, tunnel: tunnelLesson(ui.bench?.lessonId),
       elapsed: ui.fanStarted === null ? null : now() - ui.fanStarted});
+    teaching.decorate();
   }
   const focusKey = () => {
     const el = doc.activeElement;
@@ -155,17 +196,25 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
 
   // ---- the experiments ----
   function openLesson(id) {
+    if (walking() && !walkRows().find(r => r.id === id)?.open) return;
+    if (walking() && teaching.open(id)) {
+      ui = {...ui, bench: null, walkPanel: null, tab: 'lessons', lastMachine: id};
+      voice.stop(); caption = null; paintCaption(); render(); return;
+    }
     const bench = openBench(id);
     if (!bench) return;
-    ui = {...ui, tab: 'lessons', bench, message: '', protect: null, explained: false, fanPage: false};
+    ui = {...ui, tab: 'lessons', bench, lessonReady: false, message: '', protect: null, explained: false, fanPage: false, walkPanel: null, lastMachine: id};
     say(id, 'intro');
     render();
+    if (walking()) side.querySelector('button')?.focus({preventScroll: true});
   }
   function backToBoard() {
+    teaching.close();
     if (ui.restore) endRestore();
-    ui = {...ui, bench: null, message: '', protect: null};
+    ui = {...ui, bench: null, message: '', protect: null, walkPanel: null};
     voice.stop(); caption = null; paintCaption();
     render();
+    if (walking()) keeper.scene?.canvas.focus({preventScroll: true});
   }
   function run() {
     if (!ui.bench) return;
@@ -215,6 +264,50 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       render();
     }
   }
+  // New lessons enter the same existing challenge path only after their checks.
+  const teaching = createLessonUi({section, stage, host, app, room: () => keeper.scene,
+    onBack: backToBoard, onPause: render, onCue: bing, sayVoice: id => { if (id) voice.say(id); },
+    onChallenge: (id, lesson) => {
+      let bench = openBench(id);
+      if (!bench) return false;
+      // Completion of a teaching sequence is not a passed lesson or a reward.
+      ui.bench = bench;
+      ui.lessonReady = true;
+      const state = challengeFor();
+      if (state.state !== 'ready') { ui.bench = null; ui.lessonReady = false; return {reason: state.note}; }
+      if (state.kind === 'bench') {
+        ui.bench = null; ui.lessonReady = false;
+        if (!lesson.challenging) return 'inline';
+        // Bind lesson machine controls to the existing bench rules. No teaching
+        // evaluator can grant a reward without that bench's real goal passing.
+        for (const attempt of lesson.attempts) {
+          for (const c of bench.bench.controls) bench = setControl(bench, c.id, c.value);
+          for (const c of attempt.controls) if (Object.hasOwn(attempt.input, c.id)) bench = setControl(bench, c.setting ?? c.id, c.values?.[Math.round(attempt.input[c.id])] ?? attempt.input[c.id]);
+          bench = runBench(bench);
+        }
+        if (!goalMet(bench)) return {ok: false, reason: 'The machine has not reached its goal. Try another run.'};
+        return commitPass(id);
+      }
+      if (state.kind === 'ski') {
+        app.closeLab();
+        if (!app.visitHeli()) { app.openLab(); return {reason: 'The helicopter could not start.'}; }
+        let seenRun = false;
+        const session = app.heliSession;
+        const view = () => session?.view?.();
+        return {active: () => { const ski = view()?.ski?.run; if (ski?.run === 'slalom') seenRun = true; return ski?.run === 'slalom' && !ski.finished; },
+          done: () => app.heliSession !== session || view()?.phase === 'idle' || seenRun && !view()?.ski?.run || labOf(profile()).done[id] === true};
+      }
+      takeChallenge();
+      if (state.kind === 'fly') {
+        const session = app.heliSession;
+        let seen = false;
+        const active = () => { const running = session?.view?.()?.challenge?.id === id; if (running) seen = true; return running; };
+        return {active, done: () => app.heliSession !== session || seen && !active() || Boolean(session?.view?.()?.challenge && !active())};
+      }
+      if (state.kind === 'lap') { const active = () => Boolean(app.labLap?.waiting || app.labLap?.view?.()); return {active, done: () => !active()}; }
+      if (state.kind === 'protect') { const active = () => app.labOpen && Boolean(ui.protect) && !ui.protect.result?.passed; return {active, done: () => !active()}; }
+      return false;
+    }});
   // ---- the Sirena's restoration (LAB-RESTORE) ----
   // The 1,000 and the car go in one saved step at the start, so closing the Lab mid-sequence loses neither.
   function startRestore() {
@@ -317,6 +410,9 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       ui.message = result.ok ? '' : result.reason; render(); return;
     }
     switch (d.lab) {
+      case 'walk-back': ui.walkPanel = null; render(); keeper.scene?.canvas.focus({preventScroll: true}); break;
+      case 'brian-next': ui.walkPanel.answer = 'next'; render(); break;
+      case 'brian-machine': ui.walkPanel.answer = 'machine'; say(ui.lastMachine, 'intro'); render(); break;
       // LAB-FAN-VIEW
       case 'fan-reverse': reverseFan(); break;
       case 'fan-blueprint':
@@ -373,7 +469,8 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     if (!shown) return;
     // The menu behind the Lab is not reachable by Tab: focus wraps inside the panel.
     if (event.code === 'Tab') {
-      const items = [...section.querySelectorAll('button:not(:disabled),select,input')];
+      const items = [...section.querySelectorAll('button:not(:disabled),select,input')]
+        .filter(el => el.getClientRects().length > 0);
       const first = items[0], last = items.at(-1);
       if (!first) return;
       if (!section.contains(doc.activeElement)) { event.preventDefault(); first.focus(); }
@@ -383,6 +480,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     }
     if (event.code !== 'Escape') return;
     event.preventDefault();
+    if (walking()) { app.closeLab(); return; }
     if (ui.restore) { endRestore(); return; } // nothing is lost: the car was made the player's when the sequence began
     if (ui.fanPage) { ui.fanPage = false; render(); return; } // LAB-FAN-VIEW
     if (ui.bench) backToBoard(); else app.closeLab();
@@ -396,7 +494,10 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
 
   // ---- the room ----
   const keeper = createSceneKeeper({stage, loadManifest, sceneFactory,
+    sceneOptions: () => walking() ? {walking: true, onUse: useWalk, onLessonControl: (id, value) => teaching.control(id, value)} : {},
     onRoom: room => { room.show(ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null); room.restore(ui.restore ? restoreView() : null);
+      room.walk?.({rows: walkRows(), paused: walkPaused(), last: ui.lastMachine});
+      if (walking()) room.canvas.focus({preventScroll: true});
       room.fan?.({...fanView(profile(), flags()), page: ui.fanPage, setting: ui.fanSetting, tunnel: tunnelLesson(ui.bench?.lessonId), elapsed: ui.fanStarted === null ? null : now() - ui.fanStarted}); },
     // No 3D room (no graphics, or the models did not load): the board and benches still work.
     onPlain: () => stage.classList.add('lab-stage-plain')});
@@ -419,6 +520,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     section.querySelector('.lab-close')?.focus({preventScroll: true});
   }
   function onClose() {
+    teaching.close();
     fanSound.stop(); // LAB-FAN-VIEW: late loads and loops cannot outlive the room.
     doc.removeEventListener('keydown', onKey);
     voice.stop();
@@ -455,6 +557,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
         tickFan(); // LAB-FAN-VIEW
       }
       updateStrip();
+      teaching.tick(open);
       return open ? {open: true} : null;
     },
     // For tests.
@@ -468,6 +571,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       section.removeEventListener('change', onChange);
       section.remove();
       strip.remove();
+      teaching.dispose();
     },
   };
 }

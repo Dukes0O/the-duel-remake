@@ -1,377 +1,210 @@
-import {passed, retry, tickCoach, coachDue, coachSaid} from './lesson-core.js';
+import {driveRadioId} from './drive-radio-lines.js';
 
+const sectionRow = (courseId, cornerNames, startPiece, startOffsetM, finishPiece, finishOffsetM = 0, finishEdge = 's1') =>
+  Object.freeze({courseId, cornerName: cornerNames.join(', '), cornerNames: Object.freeze(cornerNames),
+    startPiece, startOffsetM, finishPiece, finishOffsetM, finishEdge});
+const PANORAMA = ['Griffin Bend', 'The Cutting', 'Reid Rise', 'Summit Park', 'Skyline',
+  'The Esses 1', 'The Esses 2', 'The Esses 3', 'Forrest Elbow'];
+const BEAVER = ['Ridge Corner', 'Beaver Kink', 'Beaver Hairpin'];
 export const DRIVE_LESSON_CORNERS = Object.freeze([
-  Object.freeze({courseId: 'panorama-ridge', cornerName: 'The Cutting', gateBefore: 'The Cutting', gateOffsetM: 180, rollingMph: 100}),
-  Object.freeze({courseId: 'tremblant-woods', cornerName: 'Beaver Hairpin', gateBefore: 'Beaver Kink', gateOffsetM: 150, rollingMph: 75}),
+  sectionRow('panorama-ridge', PANORAMA, 'Griffin Bend', -700, 'Forrest Elbow', 60),
+  sectionRow('tremblant-woods', ['Beaver Kink', 'Beaver Hairpin', 'Devil\'s Chicane 1', 'Devil\'s Chicane 2', 'Lodge Bend', 'Final Turn'], 'Beaver Run', 100, 'Final Turn', 60),
 ]);
 
-const line = suffix => 'drive.radio.corner.' + suffix;
-// Lesson 2 (the racing line) has its own lines; its challenge counting, screech
-// and exit coaching reuse lesson 1's (docs/DRIVING_LESSONS.md 12.7).
-const LINE_LESSON_IDS = new Set(['middle.start', 'middle.result', 'right.start', 'coach.apex', 'coach.early',
-  'right.pass', 'challenge.start', 'pass']);
-// Lesson 4 (snow) has its own lines too; the inside-cone coaching and the challenge counts are lesson 1's.
-const SNOW_LESSON_IDS = new Set(['late.start', 'late.result', 'right.start', 'coach.brake', 'coach.ice', 'coach.turn',
-  'right.pass', 'challenge.start', 'winter.start', 'winter.result', 'pass']);
-// Lesson 3 (the gearbox) has its own lines; the screech coaching and the challenge counts are lesson 1's.
-const GEARS_LESSON_IDS = new Set(['early.start', 'early.result', 'right.start', 'coach.limiter', 'coach.down', 'right.pass',
-  'challenge.start', 'pass']);
-const radioFor = (lesson, suffix) => (lesson.id === 'line' && LINE_LESSON_IDS.has(suffix) ? 'drive.radio.line.'
-  : lesson.id === 'snow' && SNOW_LESSON_IDS.has(suffix) ? 'drive.radio.snow.'
-  : lesson.id === 'gears' && GEARS_LESSON_IDS.has(suffix) ? 'drive.radio.gears.' : 'drive.radio.corner.') + suffix;
-// Lesson 3 (docs/DRIVING_LESSONS.md 12.3).
-export const GEAR_LESSON = Object.freeze({
-  greenMarkRevs: .5,      // try 1: change up as soon as the needle passes this
-  lightsRevs: .9,         // the shift lights; a change up below this is early
-  limiterRevs: 1,         // at or above this with the throttle down, the engine is on the limiter
-  sluggishSeconds: .3,    // try 1 is called sluggish only when it finished this much slower than the instructor
-  instructorUpRevs: .96,  // the instructor changes up here
-  apexRevs: .75,          // ... and down, while braking, to the gear that puts him nearest this at the corner's slowest point
-  downCapRevs: .92,       // ... never into a gear that would then pass this
-  shiftEverySec: .25,     // ... and no quicker than this between changes
-  lookAheadM: 150,        // the slowest speed in this much road ahead is the one he picks his gear for
-  startMph: 30, startGear: 1, // the run starts at 30 mph in 2nd
-  accelShare: 4,          // the plan's speed does not hold the car back on the straight: the engine's pull is the limit
-});
+export const DRIVE_LESSON_STEPS = Object.freeze([
+  Object.freeze({id: 'watch', title: 'Watch me', rule: 'none', whatCounts: 'Watch the instructor. Nothing is scored.', line: false, ghost: false}),
+  Object.freeze({id: 'follow', title: 'Follow me', rule: 'none', whatCounts: 'Practise with every guide. Nothing is scored.', line: true, ghost: true, ghostLeadSeconds: 1}),
+  Object.freeze({id: 'your-turn', title: 'Your turn', rule: 'clean-and-checks-or-faster', whatCounts: 'Clean run, and hit every brake zone or beat my time.', line: true, ghost: false}),
+  Object.freeze({id: 'beat', title: 'Beat me', rule: 'clean-and-faster', whatCounts: 'One clean run faster than the instructor. A second faster earns gold.', line: false, ghost: true}),
+]);
+export const GEAR_LESSON = Object.freeze({greenMarkRevs: .5, lightsRevs: .9, limiterRevs: 1,
+  instructorUpRevs: .96, apexRevs: .75, downCapRevs: .92, shiftEverySec: .25,
+  lookAheadM: 150, startMph: 30, startGear: 1, accelShare: 4});
 const rounded = value => Math.round(value * 1e12) / 1e12;
 const clamp = value => Math.max(0, Math.min(1, value));
 const answer = (radio = null, cones = []) => ({result: 'running', radio, cones});
-
-function finite(value, name) {
-  if (!Number.isFinite(value)) throw new TypeError('Invalid ' + name);
+function finite(value, name) { if (!Number.isFinite(value)) throw new TypeError('Invalid ' + name); }
+export const TIP_DISTANCE_M = .8;
+function coneDistance(from, to, cone) {
+  const dx = to.world.x - from.world.x, dz = to.world.z - from.world.z;
+  const length2 = dx * dx + dz * dz;
+  const u = length2 ? clamp(((cone.x - from.world.x) * dx + (cone.z - from.world.z) * dz) / length2) : 0;
+  return Math.hypot(from.world.x + dx * u - cone.x, from.world.z + dz * u - cone.z);
 }
-
-// These plans come from the instructor run. Distances must be unwrapped along
-// the course, so start < cone 1 < cone 2 < cone 3 < finish, even across a lap.
-// This module only scores the plans; it does not generate an instructor run.
-export function createDriveLesson(id, {corner, instructor} = {}) {
-  if (!['corner', 'line', 'snow', 'gears'].includes(id) || !corner || !instructor) throw new TypeError('Invalid driving lesson');
-  for (const key of ['startS', 'finishS', 'dir']) finite(corner[key], key);
-  if (corner.finishS <= corner.startS || Math.abs(corner.dir) !== 1) throw new TypeError('Invalid corner gates');
-  finite(instructor.timeSec, 'instructor time');
-  // Lesson 1 has a red board and exactly three cones; lesson 2 has an apex cone for
-  // each corner and an exit cone, and no board.
-  if (id !== 'line' && id !== 'gears') finite(instructor.redBoardS, 'red board');
-  // Lesson 3 has three guide cones and no board, and the gear the instructor is in as he passes the exit cone.
-  if (id === 'gears' && !(Number.isInteger(instructor.apexGear) && instructor.apexGear >= 0 && Number.isInteger(instructor.exitGear) && instructor.exitGear >= 0))
-    throw new TypeError('Invalid instructor gears');
-  if (id === 'snow') {
-    // The snow lesson's ice stretches and, once the winter instructor has run, his time.
-    if (!Array.isArray(instructor.ice) || instructor.ice.some(zone => !Number.isFinite(zone?.s0) || !(zone.s1 >= zone.s0)))
-      throw new TypeError('Invalid ice stretches');
-    if (instructor.winter !== undefined && !(instructor.winter?.timeSec > 0)) throw new TypeError('Invalid winter instructor');
-  }
-  if (instructor.timeSec <= 0 || !Array.isArray(instructor.cones) ||
-      (id === 'line' ? instructor.cones.length < 2 : instructor.cones.length !== 3)) throw new TypeError('Invalid instructor plan');
-  let previousS = corner.startS;
-  const cones = instructor.cones.map((cone, index) => {
-    for (const key of ['s', 'lateral', 'x', 'z']) finite(cone[key], 'cone ' + key);
-    if (cone.id !== index + 1 || cone.s <= previousS || cone.s >= corner.finishS) throw new TypeError('Invalid cone order');
-    previousS = cone.s;
-    return {...cone};
+export function instructorConeDistances(poses, cones) {
+  return cones.map(cone => {
+    let nearest = Infinity;
+    for (let i = 1; i < poses.length; i++) nearest = Math.min(nearest,
+      coneDistance({world: poses[i - 1]}, {world: poses[i]}, cone));
+    return nearest;
   });
-  return {
-    id, corner: {...corner}, instructor: {...instructor, cones},
-    stage: 'late', phase: 'ready', done: false, failed: false, held: 0,
-    streak: 0, bestMargin: 0, coachIn: 0, attempt: null, lastAttempt: null,
-  };
 }
-
-function checkView(view, dt, lesson) {
-  for (const key of ['s', 'lateral', 'speedMph', 'brake', 'throttle', 'tyreSlip']) finite(view[key], key);
-  if (lesson?.id === 'gears') {
-    finite(view.revs, 'revs');
-    if (!Number.isInteger(view.gear) || view.gear < 0) throw new TypeError('Invalid gear');
+// Positive means behind. Distance, not ghost time, is the comparison axis.
+export function instructorTimeAtDistance(poses, s) {
+  finite(s, 'distance');
+  if (!Array.isArray(poses) || !poses.length) throw new TypeError('Missing instructor trace');
+  if (s <= poses[0].s) return poses[0].t;
+  if (s >= poses.at(-1).s) return poses.at(-1).t;
+  let lo = 0, hi = poses.length - 1;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (poses[mid].s < s) lo = mid; else hi = mid; }
+  const a = poses[lo], b = poses[hi];
+  return a.t + (b.t - a.t) * (s - a.s) / (b.s - a.s);
+}
+export const driveLessonGap = (instructor, s, elapsedSeconds) => elapsedSeconds - instructorTimeAtDistance(instructor.poses, s);
+export const driveLessonGold = margin => Number.isFinite(margin) && margin >= 1;
+export function createDriveLesson(id, {corner, instructor, retake = false} = {}) {
+  if (!['corner', 'line', 'gears', 'snow'].includes(id) || !corner || !instructor) throw new TypeError('Invalid driving lesson');
+  for (const key of ['startS', 'finishS', 'dir']) finite(corner[key], key);
+  if (!(corner.finishS > corner.startS) || Math.abs(corner.dir) !== 1 || !(instructor.timeSec > 0) ||
+      !Array.isArray(instructor.corners) || !instructor.corners.length) throw new TypeError('Invalid lesson section');
+  let previous = corner.startS;
+  for (const c of instructor.corners) {
+    for (const key of ['approachS', 'turnInS', 'turnOutS', 'exitS', 'targetMph']) finite(c[key], key);
+    if (!['brake', 'lift', 'flat'].includes(c.kind) || c.approachS < previous ||
+      !(c.approachS <= c.turnInS && c.turnInS < c.turnOutS && c.turnOutS <= c.exitS && c.exitS < corner.finishS) || c.targetMph <= 0)
+      throw new TypeError('Invalid corner checks');
+    if (c.kind === 'brake') finite(c.brakeS, 'brake point');
+    previous = c.turnOutS;
   }
-  finite(view.world?.x, 'world x');
-  finite(view.world?.z, 'world z');
-  finite(dt, 'step time');
-  if (dt < 0) throw new TypeError('Negative step time');
+  return {id, corner: {...corner}, instructor, stage: retake ? 'your-turn' : 'watch', phase: 'ready',
+    done: false, failed: false, bestMargin: 0, gold: false, attempt: null, lastAttempt: null};
 }
-
-function copyView(view) {
-  return {...view, world: {...view.world}};
+export const driveLessonStep = lesson => DRIVE_LESSON_STEPS.find(step => step.id === lesson.stage);
+// Any step can be chosen again, back or forward (Kyle, 27 October): a run in progress is
+// dropped unscored and the next run starts in the chosen step. Passing still needs Beat me.
+export function chooseDriveLessonStep(lesson, id) {
+  if (!lesson || lesson.done || !DRIVE_LESSON_STEPS.some(step => step.id === id)) return false;
+  lesson.stage = id; lesson.phase = 'ready'; lesson.failed = false; lesson.attempt = null;
+  return true;
 }
-
 function startAttempt(lesson, view) {
   if (view.s > lesson.corner.startS) throw new TypeError('Attempt must start before or at its gate');
   if (lesson.phase === 'result') {
-    if (lesson.stage === 'late') lesson.stage = 'right';
-    else if (lesson.stage === 'right' && lesson.lastAttempt.passed) lesson.stage = 'challenge';
-    // Snow: three wins on summer tyres, then one run on winter tyres.
-    else if (lesson.id === 'snow' && lesson.stage === 'challenge' && lesson.streak === 3 && lesson.instructor.winter) lesson.stage = 'winter';
+    const i = DRIVE_LESSON_STEPS.findIndex(step => step.id === lesson.stage);
+    if (i < 2 || lesson.lastAttempt?.passed) lesson.stage = DRIVE_LESSON_STEPS[Math.min(3, i + 1)].id;
   }
-  lesson.phase = 'driving';
-  lesson.failed = false;
-  lesson.attempt = {
-    elapsedSeconds: 0, screechSeconds: 0, offRoadSeconds: 0,
-    timerStarted: view.s === lesson.corner.startS,
-    firstBrakeS: view.brake >= .5 ? view.s : null,
-    cones: [], tipped: [], ...(lesson.id === 'snow' ? {iceBrakeMax: 0} : {}),
-    ...(lesson.id === 'gears' ? {upshifts: 0, earlyUpshifts: 0, upshiftRevs: [], limiterSeconds: 0, apexGear: null, exitGear: null} : {}),
-    throttleBeforeExit: view.throttle >= .8 && view.s < lesson.instructor.cones.at(-1).s,
-    exitWide: false, previous: copyView(view),
-  };
-  // The first try of lessons 2 and 3 has its own name in the lines.
-  const first = lesson.id === 'line' ? 'middle' : lesson.id === 'gears' ? 'early' : 'late';
-  return answer(radioFor(lesson, (lesson.stage === 'late' ? first : lesson.stage) + '.start'));
+  lesson.phase = 'driving'; lesson.failed = false;
+  lesson.attempt = {elapsedSeconds: 0, screechSeconds: 0, offRoadSeconds: 0, maxOffRoadSeconds: 0,
+    wallHit: false, timerStarted: view.s === lesson.corner.startS, previous: {...view, world: {...view.world}},
+    cones: [], tipped: [], firstBrakeS: null,
+    corners: lesson.instructor.corners.map(c => ({name: c.name, firstBrakeS: null, brakeMax: 0, minMph: Infinity, screechSeconds: 0, wallHit: false}))};
+  return answer(driveRadioId('shared', lesson.stage));
 }
-
-function interpolate(from, to, fraction) {
-  return {
-    s: from.s + (to.s - from.s) * fraction,
-    lateral: from.lateral + (to.lateral - from.lateral) * fraction,
-    world: {
-      x: from.world.x + (to.world.x - from.world.x) * fraction,
-      z: from.world.z + (to.world.z - from.world.z) * fraction,
-    },
-  };
+function cornerResult(c, row) {
+  const brakeDeltaM = row.firstBrakeS === null || c.brakeS === null ? null : row.firstBrakeS - c.brakeS;
+  const brake = c.kind === 'flat' ? null : c.kind === 'lift' ? row.brakeMax === 0 :
+    brakeDeltaM !== null && brakeDeltaM >= -15 && brakeDeltaM <= 5;
+  const speed = Number.isFinite(row.minMph) && Math.abs(row.minMph - c.targetMph) <= 5;
+  const quiet = row.screechSeconds < .3;
+  const checks = {brake, speed, quiet};
+  const missed = Object.values(checks).filter(value => value === false).length;
+  const {result: previousResult, ...observation} = row;
+  return {...observation, minMph: Number.isFinite(row.minMph) ? row.minMph : null,
+    targetMph: c.targetMph, kind: c.kind, brakeDeltaM, checks, passed: missed === 0 && !row.wallHit,
+    light: row.wallHit || !quiet ? 'red' : missed ? 'amber' : 'green', missed};
 }
-
-function coneDistance(from, to, cone) {
-  const dx = to.world.x - from.world.x;
-  const dz = to.world.z - from.world.z;
-  const length2 = dx * dx + dz * dz;
-  const fraction = length2 ? clamp(((cone.x - from.world.x) * dx + (cone.z - from.world.z) * dz) / length2) : 0;
-  return Math.hypot(from.world.x + dx * fraction - cone.x, from.world.z + dz * fraction - cone.z);
+export function driveLessonAdvice(rows) {
+  const worst = [...rows].sort((a, b) => Number(b.wallHit) - Number(a.wallHit) || Number(!b.checks.quiet) - Number(!a.checks.quiet) || b.missed - a.missed || b.screechSeconds - a.screechSeconds)[0];
+  if (!worst) return '';
+  const name = worst.name + ': ';
+  if (worst.wallHit) return name + 'you hit the wall; slow before turning so the car stays on the road.';
+  const brake = worst.brakeDeltaM === null ? 'you missed the brake zone' : `you braked ${Math.abs(worst.brakeDeltaM).toFixed(0)} m ${worst.brakeDeltaM > 0 ? 'late' : 'early'}`;
+  if (!worst.checks.quiet) return name + (worst.kind === 'brake' ? brake : 'you turned with too little grip') + ` and the tyres slid for ${worst.screechSeconds.toFixed(1)} s; sliding tyres grip less, so the car can run wide.`;
+  if (worst.checks.brake === false) return name + (worst.kind === 'lift' ? 'leave the brake alone and lift the accelerator to keep the car settled.' : brake + '; slow while straight to leave grip for turning.');
+  if (!worst.checks.speed) return name + `aim for ${worst.targetMph.toFixed(0)} mph through the corner to balance speed and grip.`;
+  return name + 'you kept the speed and tyres under control; use the same line again.';
 }
-
-// A cone tips when the car's centre line passes this close (observeCones below).
-export const TIP_DISTANCE_M = .8;
-
-// The closest the instructor's path comes to each cone, in metres.
-export function instructorConeDistances(poses, cones) {
-  return cones.map(cone => Math.min(...poses.slice(1).map((pose, i) =>
-    coneDistance({world: {x: poses[i].x, z: poses[i].z}}, {world: {x: pose.x, z: pose.z}}, cone))));
+// Choose feedback from the same observed checks as the result card, without
+// changing a rule or a race input. Off-road/wall and slides come first.
+export function driveLessonResultRadio(lesson, rows, {reason, success, clean, faster}) {
+  if (success && lesson.stage === 'beat') return driveRadioId(lesson.id, 'pass');
+  // A run always goes on to the finish; walls and long trips off the road only mark it not clean.
+  if (reason === 'wall' || reason === 'offroad' || reason === 'wreck' || lesson.attempt?.wallHit || lesson.attempt?.maxOffRoadSeconds > 1) return driveRadioId('shared', 'off');
+  if (!clean && lesson.attempt.screechSeconds >= .3) return driveRadioId('shared', 'slid');
+  const worst = [...rows].sort((a, b) => Number(b.wallHit) - Number(a.wallHit) ||
+    Number(!b.checks.quiet) - Number(!a.checks.quiet) || b.missed - a.missed || b.screechSeconds - a.screechSeconds)[0];
+  let miss = 'clean';
+  if (worst?.wallHit) miss = 'off';
+  else if (worst && !worst.checks.quiet) miss = 'slid';
+  else if (worst?.checks.brake === false) miss = worst.kind === 'lift' ? 'lift' : worst.brakeDeltaM < 0 ? 'early' : 'late';
+  else if (worst && !worst.checks.speed) miss = worst.minMph > worst.targetMph ? 'fast' : 'slow';
+  else if (reason !== 'finish' || (!faster && lesson.stage === 'beat')) miss = 'pace';
+  return driveRadioId('shared', miss);
 }
-
-function observeCones(lesson, from, to) {
-  const attempt = lesson.attempt;
-  const events = [];
-  for (const cone of lesson.instructor.cones) {
-    const distance = coneDistance(from, to, cone);
-    if (distance <= 2.5 && !attempt.cones.some(row => row.id === cone.id)) {
-      attempt.cones.push({id: cone.id});
-    }
-    if (distance <= TIP_DISTANCE_M && !attempt.tipped.includes(cone.id)) {
-      attempt.tipped.push(cone.id);
-      events.push({id: cone.id, tipped: true, cue: 'lesson.cone'});
-    }
-  }
-  return events;
-}
-
 function finishAttempt(lesson, reason, cones) {
-  const attempt = lesson.attempt, kind = lesson.id;
-  const firstCone = lesson.instructor.cones[0];
-  const touched = id => attempt.cones.some(row => row.id === id);
-  // Lesson 1: brake at cone 1, touch the inside cone, power out wide, no long screech.
-  // Lesson 2: touch every apex cone, pass the exit cone on the outside half, no long screech.
-  const gearsRules = kind === 'gears' ? [
-    // Change up (at least once) on the lights (90% revs or more), keep off the limiter, leave the corner in no higher a gear than the instructor
-    // (his gear or lower at the apex cone; at the exit cone his gear, or the next one up if the car has changed up since), no long screech.
-    attempt.upshifts > 0 && attempt.earlyUpshifts === 0,
-    attempt.limiterSeconds < .5,
-    attempt.apexGear !== null && attempt.apexGear <= lesson.instructor.apexGear && attempt.exitGear !== null && attempt.exitGear <= lesson.instructor.exitGear + 1,
-    attempt.screechSeconds < .3,
-  ] : null;
-  const rules = gearsRules ? gearsRules : kind === 'snow' ? [
-    // Brake at the snow cone, never hard on the ice, touch the inside cone, no long screech.
-    attempt.firstBrakeS !== null && attempt.firstBrakeS >= firstCone.s - 15 && attempt.firstBrakeS <= firstCone.s + 5,
-    attempt.iceBrakeMax < .2,
-    touched(2),
-    attempt.screechSeconds < .3,
-  ] : kind === 'line' ? [
-    lesson.instructor.cones.slice(0, -1).every(cone => touched(cone.id)),
-    attempt.exitWide,
-    attempt.screechSeconds < .3,
-  ] : [
-    attempt.firstBrakeS !== null && attempt.firstBrakeS >= firstCone.s - 15 && attempt.firstBrakeS <= firstCone.s + 5,
-    touched(2),
-    attempt.throttleBeforeExit && attempt.exitWide,
-    attempt.screechSeconds < .3,
-  ];
-  const finished = reason === 'finish';
-  // The winter run is measured against the winter instructor and passes however it ends.
-  const winter = kind === 'snow' && lesson.stage === 'winter' && !!lesson.instructor.winter;
-  const target = winter ? lesson.instructor.winter.timeSec : lesson.instructor.timeSec;
-  lesson.lastAttempt = {
-    elapsedSeconds: rounded(attempt.elapsedSeconds), screechSeconds: rounded(attempt.screechSeconds),
-    firstBrakeS: attempt.firstBrakeS, cones: attempt.cones.map(row => ({...row})), rules,
-    endReason: reason, finished,
-    passed: winter || finished && (lesson.stage === 'challenge'
-      ? attempt.elapsedSeconds < lesson.instructor.timeSec : rules.every(Boolean)),
-    // An unfinished attempt reports progress instead of inventing a finish time.
-    progressM: Math.max(0, Math.min(lesson.corner.finishS, attempt.previous.s) - lesson.corner.startS),
-    timeLostSeconds: finished ? rounded(attempt.elapsedSeconds - target) : null,
-    ...(kind === 'snow' ? {instructorSeconds: target, iceBrakeMax: rounded(attempt.iceBrakeMax)} : {}),
-    ...(kind === 'gears' ? {upshifts: attempt.upshifts, upshiftRevs: [...attempt.upshiftRevs], limiterSeconds: rounded(attempt.limiterSeconds),
-      apexGear: attempt.apexGear, exitGear: attempt.exitGear, instructorApexGear: lesson.instructor.apexGear,
-      instructorExitGear: lesson.instructor.exitGear, instructorSeconds: target} : {}),
-  };
+  const a = lesson.attempt, finished = reason === 'finish';
+  const rows = a.corners.map((row, i) => cornerResult(lesson.instructor.corners[i], row));
+  const clean = !a.wallHit && a.maxOffRoadSeconds <= 1 && a.screechSeconds < .3;
+  const margin = Math.round(lesson.instructor.timeSec * 1e6) / 1e6 - Math.round(a.elapsedSeconds * 1e6) / 1e6;
+  const faster = finished && margin > 0;
+  const scored = lesson.stage === 'your-turn' || lesson.stage === 'beat';
+  const success = scored && finished && clean && (lesson.stage === 'beat' ? faster : faster || rows.every(row => row.passed));
+  lesson.lastAttempt = {elapsedSeconds: a.elapsedSeconds, screechSeconds: a.screechSeconds,
+    firstBrakeS: a.firstBrakeS, cones: [...a.cones], rules: rows.flatMap(row => Object.values(row.checks).filter(v => v !== null)),
+    corners: rows, advice: driveLessonAdvice(rows), clean, finished, passed: success, endReason: reason,
+    progressM: Math.max(0, Math.min(a.previous.s, lesson.corner.finishS) - lesson.corner.startS),
+    instructorSeconds: lesson.instructor.timeSec, timeLostSeconds: finished ? rounded(a.elapsedSeconds - lesson.instructor.timeSec) : null};
+  const radio = driveLessonResultRadio(lesson, rows, {reason, success, clean, faster});
+  lesson.lastAttempt.radio = radio;
   lesson.phase = 'result';
-  if (winter) {
-    // Passing the winter run finishes the lesson; the last line follows the explanation.
-    return {...passed(lesson, radioFor(lesson, 'winter.result')), queued: [radioFor(lesson, 'pass')], cones};
-  }
-  if (lesson.stage === 'late') {
-    // Snow's first try (braking at the dry board) only says its piece if the tyres really did slide or leave the road.
-    if (kind === 'snow') {
-      const slid = attempt.screechSeconds >= .5 || reason === 'wall' || reason === 'offroad';
-      return answer(slid ? radioFor(lesson, 'late.result') : null, cones);
-    }
-    // Lesson 3's first try (change up at the green mark) says "sluggish" only if it really was: finished and clearly slower.
-    if (kind === 'gears') return answer(finished && attempt.elapsedSeconds >= lesson.instructor.timeSec + GEAR_LESSON.sluggishSeconds ? radioFor(lesson, 'early.result') : null, cones);
-    // Lesson 2's first try (the middle of the road) always gets its line; the card shows the numbers.
-    if (kind === 'line') return answer(radioFor(lesson, 'middle.result'), cones);
-    const early = attempt.firstBrakeS !== null && attempt.firstBrakeS < lesson.instructor.redBoardS;
-    // On these tyres a late entry costs screech, not time, so there is no "time you lost" line. A late try
-    // that ends at a wall or off the road says where a slide takes you (late.off); one that finishes after at
-    // least half a second of screech says what the screech was (late.slid); with neither there is nothing to say.
-    const screeched = attempt.screechSeconds >= .5, ranOut = reason === 'wall' || reason === 'offroad';
-    return answer(early ? line('late.early') : ranOut ? line('late.off') : screeched ? line('late.slid') : null, cones);
-  }
-  if (lesson.stage === 'right') {
-    if (lesson.lastAttempt.passed) return answer(radioFor(lesson, 'right.pass'), cones);
-    const failedRule = rules.findIndex(value => !value);
-    const ranOut = reason === 'wall' || reason === 'offroad';
-    if (kind === 'gears') {
-      // Early upshifts (or none) get the lesson's own instruction again. The gear rule fails for a gear too high, or for a try that ended before
-      // the cones (nothing true to say then), so "too high" is only said when the car reached both cones.
-      const gearsLine = [radioFor(lesson, 'right.start'), radioFor(lesson, 'coach.limiter'),
-        attempt.apexGear !== null && attempt.exitGear !== null ? radioFor(lesson, 'coach.down') : null, line('coach.screech')][failedRule];
-      const radio = gearsLine && coachDue(lesson) ? gearsLine : null;
-      if (radio) coachSaid(lesson);
-      return {...retry(lesson, radio), cones};
-    }
-    const coach = (kind === 'line' ? [ranOut ? 'early' : 'apex', 'exit', 'screech']
-      : kind === 'snow' ? ['brake', 'ice', 'inside', 'turn']
-      : ['brake', 'inside', 'exit', 'screech'])[failedRule];
-    // A physical failure can occur after every driving rule passed. Do not
-    // blame a successful brake input, and keep the shared coaching cadence.
-    const radio = coach && coachDue(lesson) ? radioFor(lesson, 'coach.' + coach) : null;
-    if (radio) coachSaid(lesson);
-    return {...retry(lesson, radio), cones};
-  }
-  if (!finished || attempt.elapsedSeconds >= lesson.instructor.timeSec) {
-    lesson.streak = 0;
-    return {...retry(lesson, line('challenge.reset')), cones};
-  }
-  lesson.streak++;
-  lesson.bestMargin = Math.max(lesson.bestMargin, rounded(lesson.instructor.timeSec - attempt.elapsedSeconds));
-  // Snow carries on to its winter run; the lesson passes there.
-  if (lesson.streak === 3 && kind === 'snow' && lesson.instructor.winter) return answer(null, cones);
-  if (lesson.streak === 3) return {...passed(lesson, radioFor(lesson, 'pass')), cones};
-  return answer(line(lesson.streak === 1 ? 'challenge.one' : 'challenge.two'), cones);
+  if (success && faster) lesson.bestMargin = Math.max(lesson.bestMargin, rounded(margin));
+  lesson.gold = driveLessonGold(lesson.bestMargin);
+  if (success && lesson.stage === 'beat') { lesson.done = true; return {result: 'passed', radio, cones}; }
+  lesson.failed = scored && !success;
+  return {result: lesson.failed ? 'retry' : 'running', radio, cones};
 }
-
-// Only lesson state is mutable. Views and events are observations supplied by
-// the host. No simulation, input injection, reward, profile or storage writes.
+// Only lesson state changes here. Observations never write the race or storage.
 export function stepDriveLesson(lesson, view, events = {}, dt = 0) {
-  checkView(view, dt, lesson);
+  for (const key of ['s', 'lateral', 'speedMph', 'brake', 'throttle', 'tyreSlip']) finite(view[key], key);
+  finite(view.world?.x, 'world x'); finite(view.world?.z, 'world z'); finite(dt, 'step time');
+  if (dt < 0) throw new TypeError('Negative step time');
   if (view.paused || view.status !== 'racing' || lesson.done) return answer();
   if (events.start && lesson.phase !== 'driving') return startAttempt(lesson, view);
   if (lesson.phase !== 'driving') return answer();
-  const attempt = lesson.attempt;
-  const previous = attempt.previous;
-  const advance = view.s - previous.s;
-  if (dt === 0 && (advance !== 0 || view.world.x !== previous.world.x || view.world.z !== previous.world.z)) {
-    throw new TypeError('Movement needs positive elapsed time');
-  }
-  tickCoach(lesson, dt);
-  const crossesStart = advance > 0 && previous.s <= lesson.corner.startS && view.s >= lesson.corner.startS;
-  const fromFraction = !attempt.timerStarted && crossesStart
-    ? clamp((lesson.corner.startS - previous.s) / advance) : 0;
-  const toFraction = advance > 0 ? clamp((lesson.corner.finishS - previous.s) / advance) : 1;
-  const inside = attempt.timerStarted || crossesStart;
-  // Once the start gate is crossed, reversing behind it cannot erase time.
-  if (crossesStart) attempt.timerStarted = true;
-  const activeTime = inside ? dt * Math.max(0, toFraction - fromFraction) : 0;
-  attempt.elapsedSeconds = rounded(attempt.elapsedSeconds + activeTime);
-  if (view.tyreSlip > 1) attempt.screechSeconds = rounded(attempt.screechSeconds + activeTime);
-  attempt.offRoadSeconds = view.offRoad ? rounded(attempt.offRoadSeconds + activeTime) : 0;
-  if (attempt.firstBrakeS === null && view.brake >= .5 && inside) attempt.firstBrakeS = view.s;
-  // Snow: how hard the brake is pressed while the car is on the ice.
-  if (inside && lesson.id === 'snow' && lesson.instructor.ice.some(zone => view.s >= zone.s0 && view.s <= zone.s1))
-    attempt.iceBrakeMax = Math.max(attempt.iceBrakeMax, view.brake);
-  const exitS = lesson.instructor.cones.at(-1).s;
-  if (inside && view.throttle >= .8 && view.s < exitS) attempt.throttleBeforeExit = true;
-  if (inside && lesson.id === 'gears') {
-    // A change up is a higher gear than the step before. The revs it came at are the revs on the dial the step before (what the
-    // player saw as the key went down): the car's revs are worked out again in the new gear by the end of the step the change happens in.
-    if (view.gear > previous.gear) {
-      attempt.upshifts++; attempt.upshiftRevs.push(rounded(previous.revs));
-      if (previous.revs < GEAR_LESSON.lightsRevs) attempt.earlyUpshifts++;
+  const a = lesson.attempt, from = a.previous, advance = view.s - from.s;
+  if (dt === 0 && (advance || view.world.x !== from.world.x || view.world.z !== from.world.z)) throw new TypeError('Movement needs positive elapsed time');
+  const overlap = (lo, hi) => advance > 0 ? Math.max(0, clamp((hi - from.s) / advance) - clamp((lo - from.s) / advance)) : Number(view.s >= lo && view.s <= hi);
+  const wasStarted = a.timerStarted;
+  const crossesStart = from.s <= lesson.corner.startS && view.s >= lesson.corner.startS;
+  if (crossesStart) a.timerStarted = true;
+  const active = wasStarted ? dt * (advance > 0 ? clamp((lesson.corner.finishS - from.s) / advance) : 1)
+    : crossesStart ? dt * overlap(lesson.corner.startS, lesson.corner.finishS) : 0;
+  a.elapsedSeconds = rounded(a.elapsedSeconds + active);
+  if (view.tyreSlip > 1) a.screechSeconds = rounded(a.screechSeconds + active);
+  a.offRoadSeconds = view.offRoad ? rounded(a.offRoadSeconds + active) : 0;
+  a.maxOffRoadSeconds = Math.max(a.maxOffRoadSeconds, a.offRoadSeconds);
+  a.wallHit ||= !!(events.wallHit || events.crashed);
+  if (a.firstBrakeS === null && view.brake >= .5) a.firstBrakeS = from.s;
+  lesson.instructor.corners.forEach((c, i) => {
+    const row = a.corners[i], approach = dt * overlap(c.approachS, c.turnOutS);
+    if (approach > 0) {
+      row.brakeMax = Math.max(row.brakeMax, view.brake);
+      if (row.firstBrakeS === null && from.brake < .5 && view.brake >= .5) row.firstBrakeS = from.s;
     }
-    if (view.throttle > 0 && view.revs >= GEAR_LESSON.limiterRevs) attempt.limiterSeconds = rounded(attempt.limiterSeconds + activeTime);
+    const turnTime = dt * overlap(c.turnInS, c.turnOutS);
+    if (turnTime > 0) {
+      row.minMph = Math.min(row.minMph, view.speedMph);
+      if (view.tyreSlip > 1) row.screechSeconds = rounded(row.screechSeconds + turnTime);
+    }
+    if (dt * overlap(c.approachS, c.exitS) > 0 && (events.wallHit || events.crashed)) row.wallHit = true;
+  });
+  const cones = [];
+  for (const cone of lesson.instructor.cones) {
+    const distance = coneDistance(from, view, cone);
+    if (distance <= 2.5 && !a.cones.some(row => row.id === cone.id)) a.cones.push({id: cone.id});
+    if (distance <= TIP_DISTANCE_M && !a.tipped.includes(cone.id)) { a.tipped.push(cone.id); cones.push({id: cone.id, tipped: true, cue: 'lesson.cone'}); }
   }
-  const apexS = lesson.instructor.cones[1].s;
-  if (inside && lesson.id === 'gears' && advance > 0 && previous.s < apexS && view.s >= apexS) attempt.apexGear = view.gear;
-  if (advance > 0 && previous.s <= exitS && view.s >= exitS) {
-    const atExit = interpolate(previous, view, (exitS - previous.s) / advance);
-    attempt.exitWide = lesson.corner.dir * atExit.lateral <= 0;
-    if (lesson.id === 'gears' && previous.s < exitS) attempt.exitGear = view.gear;
-  }
-  const cones = inside ? observeCones(lesson, interpolate(previous, view, fromFraction), interpolate(previous, view, toFraction)) : [];
-  attempt.previous = copyView(view);
-  let reason = null;
-  if (events.wallHit || events.crashed) reason = 'wall';
-  else if (attempt.offRoadSeconds > 1) reason = 'offroad';
-  else if (view.speedMph <= 0) reason = 'stop';
-  else if (view.s >= lesson.corner.finishS) reason = 'finish';
+  a.previous = {...view, world: {...view.world}};
+  a.gapSeconds = driveLessonGap(lesson.instructor, view.s, a.elapsedSeconds);
+  a.corners.forEach((row, i) => { row.result = cornerResult(lesson.instructor.corners[i], row); });
+  // Mistakes never end a run (Kyle, 27 October): it ends at the finish, or when the car is wrecked and cannot go on.
+  const reason = view.s >= lesson.corner.finishS ? 'finish' : events.wrecked ? 'wreck' : null;
   return reason ? finishAttempt(lesson, reason, cones) : answer(null, cones);
 }
 
-// The lesson corner from the course's own corner analysis (the track
-// script's turn piece): turn-in at its start, the apex at its apex share, the
-// exit after the turn by the same distance as the apex sits before its end.
-// Cones sit a fixed distance in from the road edge; the braking point is
-// where the instructor's tyre speed plan starts braking for the corner.
-export const LESSON_LINE = Object.freeze({
-  outsideM: 1.5, insideM: 1.0, step: 1,
-  accelShare: .75, // the plan counts on this share of the helper's acceleration, which the car does not quite reach at speed
-  yawMargin: .96,  // the plan asks for this share of the tyre's yaw, so feedback never tips it past grip
-  mainBrake: .8,   // share of full braking the plan uses in the corner's braking zone
-  lightBrake: .45, // a lift for an earlier bend stays under the 50% brake rule
-  roadSeconds: 3,  // lesson 2: seconds of road between the gate and the first braking point, at the gate speed
-  gateStepM: 5,    // ... and how far back the gate moves at a time to find them
-  gateClearM: 15,  // ... never closer than this to the end of the previous bend
-  entryLeadM: 0,   // lesson 2: the outside-edge waypoint this far before the first turn-in (0 = none)
-  lineYawMargin: .85, // lesson 2's esses leave the steering less spare grip, so its plan keeps more of it back
-  iceClearM: 6,        // snow: the instructor has finished braking this far before the ice
-  snowLockMargin: 1.2, // snow: the hairpin is limited by steering lock, not grip, so the plan may ask up to 120% of lock: below 30 mph the demand and the lock both grow with speed, so the line is just past lock at any speed
-  coneClearM: 1.4, // the instructor's line passes the outside cones this far towards the middle of the road: more than 0.5 m past the 0.8 m tip distance
-  apexClearM: .8,  // ... and the inside cone this far: the car ends about 0.3 to 1.4 m wide of the line it aims for at the apex, so it passes 1.5 to 2.3 m from the cone (past the tip distance, inside the 2.5 m that counts the cone)
-  winterApexClearM: 1.3, // snow, winter run: the car holds the apex line better there, so the line aims further off the cone
-  minClearM: .5,   // every instructor run clears every cone by at least this much beyond the 0.8 m tip distance
-  holdShare: .5,   // lesson 2 holds its speed while the line curves at least this share of its tightest
-});
+export const LESSON_LINE = Object.freeze({step: 1, accelShare: .75, yawMargin: .96,
+  mainBrake: .8, lightBrake: .45, holdShare: .5});
 
-export function cornerPoints({turnInS, turnOutS, dir, apexShare}) {
-  for (const value of [turnInS, turnOutS, dir, apexShare]) finite(value, 'corner geometry');
-  if (!(turnInS < turnOutS) || Math.abs(dir) !== 1 || !(apexShare > 0 && apexShare < 1)) throw new TypeError('Invalid corner geometry');
-  const apexS = turnInS + (turnOutS - turnInS) * apexShare;
-  return {turnInS, apexS, exitS: turnOutS + (turnOutS - apexS), dir};
-}
-
-// A smooth line through the corner points: on the outside up to turn-in,
-// across to the inside at the apex and back out to the outside at the exit.
-export function buildLessonLine(course, points, {startS, endS, clearM = 0, apexClearM = 0}) {
-  const {turnInS, apexS, exitS, dir} = points;
-  if (!(startS < turnInS && exitS < endS)) throw new TypeError('Lesson line needs the whole corner');
-  const outside = s => -dir * (course.roadHalfWidthAt(s) - LESSON_LINE.outsideM - clearM);
-  const inside = s => dir * (course.roadHalfWidthAt(s) - LESSON_LINE.insideM - apexClearM);
-  const smooth = u => (1 - Math.cos(Math.PI * Math.max(0, Math.min(1, u)))) / 2;
-  const lateralAt = s => {
-    if (s <= turnInS || s >= exitS) return outside(s);
-    const u = s < apexS ? smooth((s - turnInS) / (apexS - turnInS)) : 1 - smooth((s - apexS) / (exitS - apexS));
-    return outside(s) + (inside(s) - outside(s)) * u;
-  };
-  return lineFromLateral(course, lateralAt, startS, endS, points);
-}
-
-// Samples a lateral-offset function into the tables the controller and the
-// speed plan read: offset, heading error and curvature every metre.
 export function lineFromLateral(course, lateralAt, startS, endS, points) {
   const step = LESSON_LINE.step, count = Math.ceil((endS - startS) / step) + 1;
   const offset = new Float64Array(count), px = new Float64Array(count), pz = new Float64Array(count);
@@ -406,34 +239,11 @@ export function lineFromLateral(course, lateralAt, startS, endS, points) {
 // gate is 150 m before the first corner; the rolling speed is the speed the
 // course's own racing-line profile has there, scaled by the instructor's pace.
 export const DRIVE_LINE_ROWS = Object.freeze([
-  Object.freeze({courseId: 'tremblant-woods', cornerNames: Object.freeze(['Fir Esses 1', 'Fir Esses 2']), gateOffsetM: 150, entryLeadM: 40}),
-  Object.freeze({courseId: 'harbour-lights', cornerNames: Object.freeze(['Old Town Esses 1', 'Old Town Esses 2',
-    'Old Town Esses 3', 'Old Town Esses 4']), gateOffsetM: 150, entryLeadM: 20}),
+  sectionRow('tremblant-woods', ['Pine Drop', 'Lakeside Plunge', 'Fir Esses 1', 'Fir Esses 2', ...BEAVER],
+    'Lodge Straight', 100, 'Timber Straight', 150, 's0'),
+  sectionRow('harbour-lights', ['Lantern Kink', 'Casino Corner', 'Temple Hill', 'Bell Tower Bend', 'Old Town Esses 1',
+    'Old Town Esses 2', 'Old Town Esses 3', 'Old Town Esses 4', 'Precinct Bend'], 'Seafront Straight', 100, 'Hairpin Approach'),
 ]);
-const MARKER_SPACING = 10;   // metres between the markers down the middle of the road
-
-// The corners, their apex points and the exit point of one row, from the course's own pieces.
-export function linePointsFor(course, row, apexShare) {
-  const pieces = course.script?.pieces ?? [];
-  const corners = row.cornerNames.map(name => {
-    const piece = pieces.find(item => item.kind === 'turn' && item.name === name);
-    if (!piece) throw new Error('Authored lesson corner missing: ' + name);
-    return piece;
-  });
-  for (let i = 1; i < corners.length; i++)
-    if (!(corners[i].s0 >= corners[i - 1].s1 - 1e-6)) throw new Error('Lesson corners must follow each other');
-  for (const corner of corners) finite(corner.dir, 'corner direction');
-  const apexes = corners.map(corner => ({s: corner.s0 + (corner.s1 - corner.s0) * apexShare, dir: corner.dir, name: corner.name}));
-  const last = corners.at(-1), lastApex = apexes.at(-1);
-  // The gate is measured back from the first corner, or from a named piece before it (the snow lesson's Beaver Kink).
-  const gate = row.gateBefore ? pieces.find(item => item.name === row.gateBefore) : corners[0];
-  if (!gate) throw new Error('Authored lesson gate missing: ' + row.gateBefore);
-  return {corners, apexes, startS: gate.s0 - row.gateOffsetM, turnInS: corners[0].s0, turnOutS: last.s1,
-    exitS: last.s1 + (last.s1 - lastApex.s), dir: last.dir, apexS: lastApex.s};
-}
-
-// A smooth line through waypoints {s, lateral}: level before the first and after
-// the last, with a cosine ease between neighbours.
 export function buildWaypointLine(course, waypoints, {startS, endS, points, ease: easing = 'cosine'}) {
   if (!Array.isArray(waypoints) || waypoints.length < 2) throw new TypeError('A line needs at least two waypoints');
   for (let i = 0; i < waypoints.length; i++) {
@@ -456,51 +266,6 @@ export function buildWaypointLine(course, waypoints, {startS, endS, points, ease
   return lineFromLateral(course, lateralAt, startS, endS, points);
 }
 
-// Apex cones 1.0 m in from the inside edge, then the exit cone 1.5 m in from the
-// outside edge; the first, middle and last waypoints of the instructor's line.
-export function lineWaypoints(course, points, entryLeadM = 0, clearM = 0, apexClearM = 0, entryClearM = 0) {
-  const half = s => {
-    const value = course.roadHalfWidthAt(s);
-    if (!Number.isFinite(value) || value <= LESSON_LINE.outsideM + 1) throw new Error('Lesson cone needs a valid road edge');
-    return value;
-  };
-  const first = points.apexes[0];
-  // Lesson 2's only outside cone is the exit cone, so only the exit waypoint keeps clear of it and the entry stays at
-  // the edge; the snow lesson's braking cone is on the entry, which keeps clear by entryClearM.
-  const out = (s, clear = 0) => half(s) - LESSON_LINE.outsideM - clear, inn = s => half(s) - LESSON_LINE.insideM - apexClearM;
-  const rows = [{s: points.startS, lateral: -first.dir * out(points.startS, entryClearM), cone: false}];
-  // Stay on the outside until just before the first turn-in, then sweep across to the apex.
-  if (entryLeadM > 0) rows.push({s: Math.max(points.startS + 1, points.turnInS - entryLeadM),
-    lateral: -first.dir * out(points.turnInS, entryClearM), cone: false});
-  points.apexes.forEach(apex => rows.push({s: apex.s, lateral: apex.dir * inn(apex.s), cone: 'apex'}));
-  rows.push({s: points.exitS, lateral: -points.dir * out(points.exitS, clearM), cone: 'exit'});
-  return rows;
-}
-
-// The cones of lesson 2 and the middle markers. Like lesson 1's, never moved to
-// rescue a run: the 2 m check applies to neighbouring cones' lateral positions.
-export function placeLineCones(course, points) {
-  const rows = lineWaypoints(course, points).filter(row => row.cone);
-  for (let i = 1; i < rows.length; i++)
-    if (!(Math.abs(rows[i].lateral - rows[i - 1].lateral) >= 2)) throw new Error('Lesson cones need at least 2m between neighbours');
-  const cones = rows.map((row, index) => {
-    const {x, y, z} = course.groundAt(row.s, row.lateral);
-    return {id: index + 1, s: row.s, lateral: row.lateral, x, y, z};
-  });
-  const markers = [];
-  for (let s = points.startS + MARKER_SPACING; s <= points.exitS + 1e-6; s += MARKER_SPACING) {
-    const {x, y, z} = course.groundAt(s, 0);
-    markers.push({s, lateral: 0, x, y, z});
-  }
-  return {cones, markers, finishS: points.exitS + 60};
-}
-
-// The instructor's speed plan from the tyre helper: in every bend the line's
-// yaw stays within the tyre's peak (no screech) at the given pace, with the
-// corner speed held from turn-in to the exit cone (no braking, no pull-away
-// while the line is still swinging), straight-line braking before the
-// corner and the car's real acceleration from the rolling start. `at` is
-// divided by the pace because instructorControls applies the pace itself.
 export function buildLessonPlan(line, {car, pace, rollingMph, tractionAt, speedLimitAt,
   brakeZoneS, drive, accelAt, tyreSlipSteering, holdMode = 'exit', yawMargin = LESSON_LINE.yawMargin, noBrakeZones = [], brakeByTraction = false, cruiseMph = Infinity, lockMargin = yawMargin, accelShare = LESSON_LINE.accelShare}) {
   const {count, step, startS, curvature, points} = line;
@@ -519,20 +284,6 @@ export function buildLessonPlan(line, {car, pace, rollingMph, tractionAt, speedL
   };
   const index = s => Math.round((s - startS) / step);
   for (let i = 0; i < count; i++) mph[i] = Math.min(cornerMph(startS + i * step), cruiseMph) * pace;
-  const turnIn = index(points.turnInS), apex = index(points.apexS), exit = index(points.exitS);
-  // Lesson 1 holds one speed from turn-in to the exit cone. Lesson 2 ('curved')
-  // holds it only while the line is still curving, so a driver whose line
-  // straightens out earlier is not held back by a line that is still swinging.
-  let held = Infinity, holdEnd = exit;
-  if (holdMode === 'curved') {
-    let peak = 0;
-    for (let i = turnIn; i <= exit; i++) peak = Math.max(peak, Math.abs(curvature[i]));
-    holdEnd = turnIn;
-    for (let i = turnIn; i <= exit; i++) if (Math.abs(curvature[i]) >= peak * LESSON_LINE.holdShare) holdEnd = i;
-    holdEnd = Math.max(holdEnd, apex);
-  }
-  for (let i = turnIn; i <= apex; i++) held = Math.min(held, mph[i]);
-  for (let i = turnIn; i <= holdEnd; i++) mph[i] = Math.min(mph[i], held);
   // A stretch where the car must not brake or pull away (the ice patch on the snow lesson's spur):
   // the plan holds one speed across it, so all the slowing happens before it.
   const frozen = i => noBrakeZones.some(zone => startS + i * step >= zone.s0 && startS + i * step <= zone.s1);
@@ -551,38 +302,16 @@ export function buildLessonPlan(line, {car, pace, rollingMph, tractionAt, speedL
   }
   // The corner's braking point: where the plan starts falling toward turn-in (or toward the start of a
   // no-braking zone, when the speed has to be settled before it).
-  let brake = Math.min(turnIn, ...noBrakeZones.map(zone => Math.floor((zone.s0 - startS) / step)));
+  let brake = Math.min(index(points.turnInS), ...noBrakeZones.map(zone => Math.floor((zone.s0 - startS) / step)));
   while (brake > 0 && mph[brake - 1] > mph[brake] + 1e-9) brake--;
   const at = s => {
     const p = Math.max(0, Math.min(count - 1, (s - startS) / step)), i = Math.min(count - 2, Math.floor(p));
     return (mph[i] + (mph[i + 1] - mph[i]) * (p - i)) / pace;
   };
-  return Object.freeze({mph, pace, brakeS: startS + brake * step, cornerMph: held, at});
+  return Object.freeze({mph, pace, brakeS: startS + brake * step, at});
 }
 
-// Cones from the corner points, never from a trace: braking point and exit
-// 1.5 m in from the outside edge, apex 1.0 m in from the inside edge.
-export function placeCones(course, {brakeS, apexS, exitS, turnInS, dir}) {
-  for (const value of [brakeS, apexS, exitS, turnInS, dir]) finite(value, 'corner points');
-  if (!(brakeS <= turnInS && turnInS < apexS && apexS < exitS) || Math.abs(dir) !== 1) throw new TypeError('Invalid corner points');
-  const edge = s => {
-    const half = course.roadHalfWidthAt(s);
-    if (!Number.isFinite(half) || half <= LESSON_LINE.outsideM) throw new Error('Lesson cone needs a valid road edge');
-    return half;
-  };
-  const rows = [[brakeS, -dir * (edge(brakeS) - LESSON_LINE.outsideM)],
-    [apexS, dir * (edge(apexS) - LESSON_LINE.insideM)], [exitS, -dir * (edge(exitS) - LESSON_LINE.outsideM)]];
-  const inward = dir * (rows[1][1] - rows[0][1]), outward = dir * (rows[1][1] - rows[2][1]);
-  // A sanity check on the corner, not a tuning knob.
-  if (!(inward >= 2 && outward >= 2)) {
-    throw new Error('Lesson cones need at least 2m inward and outward movement: ' + JSON.stringify({dir, inward, outward, rows}));
-  }
-  const cones = rows.map(([s, lateral], index) => {
-    const {x, y, z} = course.groundAt(s, lateral);
-    return {id: index + 1, s, lateral, x, y, z};
-  });
-  return {cones, redBoardS: Math.min(brakeS + 25, turnInS), finishS: exitS + 60};
-}
+class InstructorRunFault extends Error {}
 
 // Observation may extend beyond the lesson to find the widest exit point.
 // Keep only the gate-to-gate trace. A fault on a tick that starts before the
@@ -590,7 +319,7 @@ export function placeCones(course, {brakeS, apexS, exitS, turnInS, dir}) {
 export function finishInstructorTrace(poses, finishS, faults = []) {
   const at = poses.findIndex(pose => pose.s >= finishS);
   const fault = faults.find(item => !Number.isFinite(item.fromS) || item.fromS < finishS);
-  if (at <= 0 || fault) throw new Error('Instructor did not finish cleanly: '+JSON.stringify(fault ?? {finishS}));
+  if (at <= 0 || fault) throw new InstructorRunFault('Instructor did not finish cleanly: '+JSON.stringify(fault ?? {finishS}));
   const a = poses[at - 1], b = poses[at];
   const fraction = (finishS - a.s) / (b.s - a.s);
   const timeSec = a.t + (b.t - a.t) * fraction;
@@ -628,7 +357,7 @@ export function instructorControls(state, surface, plan) {
   const cap = state.s < (plan.brakeS ?? -Infinity) ? LESSON_LINE.lightBrake : 1;
   const brake = (!turning || plan.brakeInTurns === true || state.s < (plan.brakeS ?? -Infinity)) && (state.speedMph > targetMph + 1 || (planned > 0 && state.speedMph > targetMph - .5))
     ? Math.min(cap, Math.max(0, planned + (state.speedMph - targetMph) / 4)) : 0;
-  const steerTarget = steerForYaw(desiredYaw, {speedMph: state.speedMph, grip: car.grip,
+  const steerTarget = .98 * steerForYaw(desiredYaw, {speedMph: state.speedMph, grip: car.grip,
     traction: surface.traction, car, course, brake, tyreSlip: true});
   // Native steering is smoothed before tyre demand is measured. On the first
   // braking tick its retained unbraked input can exceed the new grip limit.
@@ -641,89 +370,8 @@ export function instructorControls(state, surface, plan) {
     shiftDown: state.revs < .48 && state.gear > 0, boost: false};
 }
 
-// The lesson's line and speed plan for one course, car and pace. The student
-// checks use the very same plan as the instructor.
-export async function lessonPlanFor(duel, row, pace) {
-  const [{DRIVE, tyreSlipSteering}, {accelAt}, {TRACK_SCRIPT}] = await Promise.all([
-    import('../config.js'), import('../race-lines.js'), import('../track-script.js'),
-  ]);
-  const course = duel.course, pieces = course.script?.pieces;
-  const turn = pieces?.find(piece => piece.name === row.cornerName);
-  const gate = pieces?.find(piece => piece.name === row.gateBefore);
-  if (!turn || !gate) throw new Error('Authored lesson corner missing');
-  const startS = gate.s0 - row.gateOffsetM;
-  const points = cornerPoints({turnInS: turn.s0, turnOutS: turn.s1, dir: turn.dir, apexShare: TRACK_SCRIPT.apexShare});
-  const endS = points.exitS + 60 + 40;
-  if (!(startS >= 0 && endS < course.length)) throw new Error('Lesson gates need an unwrapped corner');
-  const line = buildLessonLine(course, points, {startS, endS, clearM: LESSON_LINE.coneClearM, apexClearM: LESSON_LINE.apexClearM});
-  // Firm braking belongs to the straight after the previous bend.
-  const before = pieces.filter(piece => piece.kind === 'turn' && piece !== turn && piece.s1 <= turn.s0).at(-1);
-  const profile = buildLessonPlan(line, {car: duel.car, pace, rollingMph: row.rollingMph, drive: DRIVE,
-    accelAt, tyreSlipSteering, brakeZoneS: Math.max(startS, before?.s1 ?? startS),
-    tractionAt: (s, lateral) => duel._drivingSurface(s, lateral).traction,
-    speedLimitAt: (s, lateral) => duel._drivingSurface(s, lateral).speedLimit});
-  const placement = placeCones(course, {...points, brakeS: profile.brakeS});
-  // The Cutting's old board left over 50 m to brake before turning, rewarding
-  // the late entry. Only the demonstration moves; the three right-try cones stay.
-  if (row.courseId === 'panorama-ridge') placement.redBoardS = points.turnInS;
-  return {startS, turn, points, line, profile, placement};
-}
-
-// Lesson 2's line and speed plan for one course, car and pace. With `middle` the
-// line is the middle of the road instead of the racing line, for the proof that
-// the racing line is faster (tools/test-drive-lesson-2.mjs).
-export async function linePlanFor(duel, row, pace, {middle = false, rollingMph = null, ease = 'parabolic',
-  entryLeadM = row.entryLeadM ?? LESSON_LINE.entryLeadM, startS: fixedStartS = null,
-  yawMargin = LESSON_LINE.lineYawMargin, lockMargin = yawMargin, noBrakeZones = [], brakeByTraction = false, cruiseMph = Infinity, apexClearM = LESSON_LINE.apexClearM, entryClearM = 0} = {}) {
-  const [{DRIVE, tyreSlipSteering}, {accelAt, racingLineFor, buildSpeedProfile}, {TRACK_SCRIPT}] = await Promise.all([
-    import('../config.js'), import('../race-lines.js'), import('../track-script.js'),
-  ]);
-  const course = duel.course, pieces = course.script?.pieces ?? [];
-  const found = linePointsFor(course, row, TRACK_SCRIPT.apexShare);
-  const endS = found.exitS + 60 + 40;
-  if (!(found.startS >= 0 && endS < course.length)) throw new Error('Lesson gates need an unwrapped corner');
-  // Firm braking belongs to the straight after the previous bend.
-  const before = pieces.filter(piece => piece.kind === 'turn' && !found.corners.includes(piece) && piece.s1 <= found.turnInS).at(-1);
-  // The gate keeps clear of the bend before it (before the named gate piece, when the row has one).
-  const gatePiece = row.gateBefore ? pieces.find(piece => piece.name === row.gateBefore) : null;
-  const beforeGate = gatePiece
-    ? pieces.filter(piece => piece.kind === 'turn' && piece.s1 <= gatePiece.s0).at(-1) : before;
-  const racing = racingLineFor(course), racingProfile = buildSpeedProfile(racing, duel.car);
-  const attempt = gateS => {
-    const points = {...found, startS: gateS};
-    const waypoints = middle ? [{s: gateS, lateral: 0}, {s: endS, lateral: 0}] : lineWaypoints(course, points, entryLeadM, LESSON_LINE.coneClearM, apexClearM, entryClearM);
-    const line = buildWaypointLine(course, waypoints, {startS: gateS, endS, points, ease});
-    // The rolling start is the speed the course's own racing line allows at the gate, at the instructor's pace.
-    const natural = rollingMph ?? Math.floor(racingProfile.at(gateS) * pace);
-    const profile = buildLessonPlan(line, {car: duel.car, pace, rollingMph: natural, drive: DRIVE,
-      accelAt, tyreSlipSteering, brakeZoneS: Math.max(gateS, before?.s1 ?? gateS), holdMode: 'curved', yawMargin, lockMargin, noBrakeZones, brakeByTraction, cruiseMph,
-      tractionAt: (s, lateral) => duel._drivingSurface(s, lateral).traction,
-      speedLimitAt: (s, lateral) => duel._drivingSurface(s, lateral).speedLimit});
-    const startMph = Math.min(natural, Math.floor(profile.at(gateS) * pace));
-    const placement = placeLineCones(course, points);
-    const turn = {s0: points.turnInS, s1: points.turnOutS, dir: points.dir};
-    return {startS: gateS, turn, points, line, profile, placement, rollingMph: startMph};
-  };
-  if (fixedStartS !== null) return attempt(fixedStartS);
-  // The player must not have to brake the moment the lesson starts: at the speed the
-  // instructor has at the gate there must be at least LESSON_LINE.roadSeconds of road
-  // before the first braking point. If the gate is closer than that, move it back along the road.
-  const earliest = Math.max(0, (beforeGate?.s1 ?? 0) + LESSON_LINE.gateClearM);
-  for (let gateS = found.startS; gateS >= earliest; gateS -= LESSON_LINE.gateStepM) {
-    const plan = attempt(gateS);
-    if (plan.profile.brakeS - plan.startS >= LESSON_LINE.roadSeconds * plan.rollingMph * DRIVE.mphToWorld) return plan;
-  }
-  throw new Error('No start gate gives ' + LESSON_LINE.roadSeconds + ' s of road before the first braking point');
-}
-
-// ---- lesson 4: snow (docs/DRIVING_LESSONS.md 12.4) --------------------------------------
-
-// Tremblant Snow's Beaver Hairpin, reached from Beaver Kink along The Spur, which has an ice patch.
-// The gate is 150 m before the Kink; the player rolls in at a snow speed (the summer instructor's
-// speed there), and the gate moves back if there are not 3 s of road before the first braking point.
 export const DRIVE_SNOW_ROWS = Object.freeze([
-  Object.freeze({courseId: 'tremblant-snow', cornerNames: Object.freeze(['Beaver Hairpin']), gateBefore: 'Beaver Kink',
-    gateOffsetM: 150, entryLeadM: 20, rollingMph: 45, cruiseMph: 40, dryCruiseMph: 60}),
+  sectionRow('tremblant-snow', ['Fir Esses 1', 'Fir Esses 2', ...BEAVER], 'Lakeshore', 0, 'Timber Straight', 150, 's0'),
 ]);
 
 // Stretches of the road where the surface under the middle of the road is ice.
@@ -739,65 +387,11 @@ export function iceZonesOf(duel, fromS, toS) {
   return zones;
 }
 
-// The snow lesson's plan on the tyres the Duel was started with. Braking and pulling away stop before
-// the ice, the hairpin's speed is lock-limited (see snowLockMargin), and the dry board is where the same
-// instructor would start braking if the surface were asphalt. `fixed` repeats the summer gate, rolling
-// speed and cones for the winter instructor.
-export async function snowPlanFor(duel, row, pace, {fixed = null} = {}) {
-  const probe = linePointsFor(duel.course, row, .55);
-  const ice = iceZonesOf(duel, probe.startS, probe.exitS + 100);
-  const dry = {course: duel.course, car: duel.car, _drivingSurface: (s, lateral) =>
-    ({...duel._drivingSurface(s, lateral), traction: 1, gripKind: 'asphalt'})};
-  // The speed is settled before the ice and held to the turn-in: the first ice stretch to the hairpin is a no-braking zone.
-  const hold = ice.length ? [{s0: ice[0].s0 - LESSON_LINE.iceClearM, s1: probe.turnInS}] : [];
-  const options = {yawMargin: LESSON_LINE.lineYawMargin, lockMargin: LESSON_LINE.snowLockMargin, noBrakeZones: hold,
-    entryClearM: LESSON_LINE.coneClearM,
-    apexClearM: duel.state?.tyre === 'winter' ? LESSON_LINE.winterApexClearM : LESSON_LINE.apexClearM, brakeByTraction: true, cruiseMph: row.cruiseMph, rollingMph: fixed?.rollingMph ?? row.rollingMph,
-    ...(fixed ? {startS: fixed.startS} : {})};
-  const made = await linePlanFor(duel, row, pace, options);
-  // Where the same instructor would start braking on dry asphalt; used only to place the board.
-  const dryPlan = await linePlanFor(dry, row, pace, {...options, lockMargin: LESSON_LINE.lineYawMargin, noBrakeZones: [], brakeByTraction: false, cruiseMph: row.dryCruiseMph ?? row.cruiseMph,
-    startS: made.startS, rollingMph: made.rollingMph});
-  const {points} = made;
-  const cones = fixed?.placement ?? placeCones(duel.course, {brakeS: made.profile.brakeS, apexS: points.apexes[0].s,
-    exitS: points.exitS, turnInS: points.turnInS, dir: points.dir});
-  const placement = fixed?.placement ?? {...cones, redBoardS: Math.min(Math.max(dryPlan.profile.brakeS, cones.cones[0].s), points.turnInS), ice};
-  return {...made, placement, dryBrakeS: dryPlan.profile.brakeS, ice};
-}
-
-// ---- lesson 3: the gearbox (docs/DRIVING_LESSONS.md 12.3) -----------------------------------------
-
-// Lesson 1's corners, approached from further back: Panorama Ridge from the start of the Mountain Straight, Tremblant
-// Woods 400 m before the hairpin. The run starts at 30 mph in 2nd and finishes at lesson 1's exit cone plus 60 m.
 export const DRIVE_GEAR_ROWS = Object.freeze([
-  Object.freeze({courseId: 'panorama-ridge', cornerName: 'The Cutting', gateBefore: 'Mountain Straight', gateOffsetM: 0, rollingMph: GEAR_LESSON.startMph}),
-  Object.freeze({courseId: 'tremblant-woods', cornerName: 'Beaver Hairpin', gateBefore: 'Beaver Hairpin', gateOffsetM: 400, rollingMph: GEAR_LESSON.startMph}),
+  sectionRow('panorama-ridge', PANORAMA.slice(0, 4), 'Mountain Straight', 0, 'Summit Park', 60),
+  sectionRow('tremblant-woods', ['Fir Esses 1', 'Fir Esses 2', ...BEAVER], 'Lakeshore', 0, 'Timber Straight', 150, 's0'),
 ]);
 
-// Lesson 3's line and speed plan: lesson 1's line and corner, from the lesson's own gate, with the speed plan letting the
-// car pull as hard as its engine will on the way in (it is the gearbox being taught), and braking firmly for every bend.
-export async function gearsPlanFor(duel, row, pace) {
-  const [{DRIVE, tyreSlipSteering}, {accelAt}, {TRACK_SCRIPT}] = await Promise.all([
-    import('../config.js'), import('../race-lines.js'), import('../track-script.js'),
-  ]);
-  const course = duel.course, pieces = course.script?.pieces;
-  const turn = pieces?.find(piece => piece.name === row.cornerName);
-  const gate = pieces?.find(piece => piece.name === row.gateBefore);
-  if (!turn || !gate) throw new Error('Authored lesson corner missing');
-  const startS = gate.s0 - row.gateOffsetM;
-  const points = cornerPoints({turnInS: turn.s0, turnOutS: turn.s1, dir: turn.dir, apexShare: TRACK_SCRIPT.apexShare});
-  const endS = points.exitS + 60 + 40;
-  if (!(startS >= 0 && endS < course.length)) throw new Error('Lesson gates need an unwrapped corner');
-  const line = buildLessonLine(course, points, {startS, endS, clearM: LESSON_LINE.coneClearM, apexClearM: LESSON_LINE.apexClearM});
-  const profile = buildLessonPlan(line, {car: duel.car, pace, rollingMph: row.rollingMph, drive: DRIVE,
-    accelAt, tyreSlipSteering, brakeZoneS: startS, accelShare: GEAR_LESSON.accelShare,
-    tractionAt: (s, lateral) => duel._drivingSurface(s, lateral).traction,
-    speedLimitAt: (s, lateral) => duel._drivingSurface(s, lateral).speedLimit});
-  const placement = placeCones(course, {...points, brakeS: profile.brakeS});
-  return {startS, turn, points, line, profile, placement};
-}
-
-// The gear that puts `mph` nearest `revs` of the redline without passing `cap` (the top gear if none fits).
 export function gearFor(gears, mph, revs = GEAR_LESSON.apexRevs, cap = GEAR_LESSON.downCapRevs) {
   let best = gears.length - 1, bestGap = Infinity;
   gears.forEach((top, gear) => {
@@ -811,7 +405,7 @@ export function gearFor(gears, mph, revs = GEAR_LESSON.apexRevs, cap = GEAR_LESS
 // Down, while braking, one gear at a time, to the gear that puts the slowest speed in the road ahead nearest 75% revs.
 // `plan.tooHigh` leaves the corner that many gears too high, for the proof. `plan.shifts` is the run's own memory of the last change.
 export function gearsControls(state, surface, plan) {
-  const pace = plan.difficulty === 'casual' ? .92 : .97;
+  const pace = plan.profile.pace ?? (plan.difficulty === 'casual' ? .92 : .97);
   const base = instructorControls(state, surface, {...plan, brakeS: -Infinity, brakeInTurns: true});
   const gears = plan.car.gears, memory = plan.shifts;
   memory.cool = Math.max(0, memory.cool - 1 / 120);
@@ -830,18 +424,166 @@ export function gearsControls(state, surface, plan) {
   return {...base, shiftUp, shiftDown};
 }
 
+// V2 section plan. All geometry comes from the course, never from a driven trace.
+export async function sectionPlanFor(duel, row, pace, {middle = false, dry = false, rollingMph = null, steadyEntry = rollingMph === null} = {}) {
+  const [{DRIVE, tyreSlipSteering}, {accelAt}] = await Promise.all([
+    import('../config.js'), import('../race-lines.js'),
+  ]);
+  const course = duel.course, pieces = course.script.pieces;
+  const piece = name => { const found = pieces.find(p => p.name === name); if (!found) throw new Error('Missing section piece: ' + name); return found; };
+  const startS = piece(row.startPiece).s0 + row.startOffsetM;
+  const finishS = piece(row.finishPiece)[row.finishEdge] + row.finishOffsetM;
+  const turns = row.cornerNames.map(piece);
+  const points = {turnInS: turns[0].s0, apexS: turns[0].s0 + (turns[0].s1 - turns[0].s0) * .55,
+    exitS: turns.at(-1).s1, dir: turns[0].dir};
+  const outsideClear = course.def.id === 'tremblant-snow' ? 4.5 : row.courseId === 'harbour-lights' ? 2 : 2.9;
+  const apexClear = row.courseId === 'harbour-lights' ? 1.5 : 2.5;
+  const waypoints = [{s: startS, lateral: -turns[0].dir * (course.roadHalfWidthAt(startS) - outsideClear)}];
+  for (let i = 0; i < turns.length; i++) {
+    const turn = turns[i], previous = turns[i - 1], next = turns[i + 1];
+    const outside = s => -turn.dir * (course.roadHalfWidthAt(s) - outsideClear);
+    const entry = turn.s0 - 40;
+    if (entry > waypoints.at(-1).s + 60 && (!previous || entry > previous.s1 + 30)) waypoints.push({s: entry, lateral: outside(entry)});
+    const apexS = turn.s0 + (turn.s1 - turn.s0) * .55;
+    waypoints.push({s: apexS, lateral: turn.dir * (course.roadHalfWidthAt(apexS) - apexClear)});
+    const exit = turn.s1 + (turn.s1 - apexS);
+    if (!next || exit + 80 < next.s0) waypoints.push({s: exit, lateral: outside(exit)});
+  }
+  waypoints.push({s: finishS + 40, lateral: waypoints.at(-1).lateral});
+  const line = middle ? lineFromLateral(course, () => 0, startS, finishS + 40, points)
+    : buildWaypointLine(course, waypoints, {startS, endS: finishS + 40, points, ease: 'parabolic'});
+  const surface = (s, lat) => dry ? {traction: 1, speedLimit: Infinity} : duel._drivingSurface(s, lat);
+  let profile = buildLessonPlan(line, {car: duel.car, pace, rollingMph: rollingMph ?? duel.car.topSpeed,
+    tractionAt: (s, lat) => surface(s, lat).traction, speedLimitAt: (s, lat) => surface(s, lat).speedLimit,
+    brakeByTraction: true, brakeZoneS: startS, drive: DRIVE, accelAt, tyreSlipSteering,
+    holdMode: 'section', yawMargin: course.def.id === 'tremblant-snow' ? .85 : row.courseId === 'harbour-lights' ? .94 : .9, lockMargin: course.def.id === 'tremblant-snow' ? 1.2 : row.courseId === 'harbour-lights' ? .94 : .9});
+  if (steadyEntry) {
+    const entryMph = Math.min(rollingMph ?? profile.at(startS) * pace, (turns[0].s0 - startS) / (8 * DRIVE.mphToWorld));
+    const entryEndS = startS + entryMph * DRIVE.mphToWorld * 6;
+    const mph = Float64Array.from(profile.mph);
+    for (let i = 0; i < mph.length; i++) {
+      const s = startS + i;
+      if (s <= entryEndS) mph[i] = Math.min(mph[i], entryMph);
+      if (i) mph[i] = Math.min(mph[i], Math.sqrt((mph[i - 1] * DRIVE.mphToWorld) ** 2 +
+        2 * LESSON_LINE.accelShare * accelAt(duel.car, mph[i - 1]) * DRIVE.mphToWorld) / DRIVE.mphToWorld);
+    }
+    const at = s => { const x = Math.max(0, Math.min(mph.length - 1, s - startS)), i = Math.min(mph.length - 2, Math.floor(x));
+      return (mph[i] + (mph[i + 1] - mph[i]) * (x - i)) / pace; };
+    profile = {...profile, mph, at};
+  }
+  return {startS, finishS, turn: turns[0], turns, points, line, profile,
+    rollingMph: rollingMph ?? Math.floor(profile.at(startS) * pace), placement: {finishS, cones: []}};
+}
+
+function sectionCorners(course, made, car, drive) {
+  let approachS = made.startS;
+  return made.turns.map((turn, index) => {
+    const next = made.turns[index + 1];
+    const exitS = Math.min(turn.s1 + 30, next?.s0 ?? made.finishS - 1, made.finishS - 1);
+    let apexS = turn.s0, exitConeS = turn.s1, targetMph = Infinity, brakeS = null, lifted = false;
+    for (let s = turn.s0; s <= turn.s1; s++) {
+      targetMph = Math.min(targetMph, made.profile.at(s) * made.profile.pace);
+      if (turn.dir * made.line.offsetAt(s) > turn.dir * made.line.offsetAt(apexS)) apexS = s;
+    }
+    for (let s = turn.s1; s <= exitS; s++)
+      if (turn.dir * made.line.offsetAt(s) < turn.dir * made.line.offsetAt(exitConeS)) exitConeS = s;
+    for (let s = approachS; s < turn.s0 + (turn.s1 - turn.s0) * .55; s++) {
+      const v = made.profile.at(s) * made.profile.pace * drive.mphToWorld;
+      const ahead = made.profile.at(s + 2) * made.profile.pace * drive.mphToWorld;
+      const brake = Math.max(0, (v * v - ahead * ahead) / 4) / (drive.brakeAccel * car.braking * drive.mphToWorld);
+      if (brake > .01 && brakeS === null) brakeS = s;
+      lifted ||= made.profile.at(s + 1) <= made.profile.at(s) + .001;
+    }
+    const cone = (s, dir) => {
+      const lateral = dir * (course.roadHalfWidthAt(s) - .3);
+      return {s, lateral, ...course.groundAt(s, lateral)};
+    };
+    if (brakeS !== null && index) brakeS = Math.max(brakeS, approachS + 3);
+    const row = {name: turn.name, kind: brakeS !== null ? 'brake' : lifted ? 'lift' : 'flat',
+      approachS, turnInS: turn.s0, turnOutS: turn.s1, exitS, brakeS, targetMph,
+      brakeZone: brakeS === null ? null : {s0: brakeS - 15, s1: brakeS + 5},
+      apexCone: cone(apexS, turn.dir), exitCone: cone(exitConeS, -turn.dir)};
+    approachS = turn.s1;
+    return row;
+  });
+}
+
+// The public brake point is also the instructor's planned first firm pedal input.
+// Firm input begins at the public point; linked corners get a short release between presses.
+export function sectionControls(state, surface, plan, {gears = false, late = false, tyreSlipSteering} = {}) {
+  const corner = plan.corners.find(c => state.s >= c.approachS && state.s < c.turnOutS);
+  const firstBrake = plan.corners.find(c => c.kind === 'brake');
+  const brakeS = corner?.brakeS === null ? null : corner?.brakeS + (late && corner === firstBrake ? 25 : 0);
+  const braking = corner?.kind === 'brake' && state.s >= brakeS;
+  const pace = plan.profile.pace;
+  const profile = late && corner === firstBrake && state.s <= corner.turnOutS ?
+    {...plan.profile, at: s => plan.profile.at(s - 25)} : plan.profile;
+  const steerForYaw = late ? (yaw, options) => {
+    const {steerGain} = tyreSlipSteering(options);
+    return Math.max(-1, Math.min(1, -yaw / Math.max(.05, steerGain)));
+  } : plan.steerForYaw;
+  const active = {...plan, profile, steerForYaw};
+  const controls = gears ? gearsControls(state, surface, active) : instructorControls(state, surface, active);
+  if (corner && corner !== plan.corners[0] && state.s < corner.approachS + 2) controls.brake = 0;
+  else if (braking && state.s < brakeS + 2) controls.brake = Math.max(.5, controls.brake);
+  if (corner?.kind === 'lift' || corner?.kind === 'flat') controls.brake = 0;
+  if (late && firstBrake && state.s < firstBrake.brakeS + 25) controls.brake = 0;
+  if (controls.brake > 0) controls.throttle = 0;
+  return controls;
+}
+
 // Heavy native work starts only when explicitly called, not on import. This
 // owns a fresh Duel and never reads an App, profile, storage or live race.
 // Frame partitioning only feeds the fixed 120 Hz race-rule clock.
-export async function buildInstructorRun({courseId, car, upgrades = {}, difficulty = 'casual',
-  driverId = 'club', seed = 1989, fps = 60, maxSeconds = 120, lessonId = 'corner', tyre = 'summer', _fixed = null} = {}) {
+// The instructor leaves room to beat him (docs/DRIVING_LESSONS.md 14.8): his
+// time is at least `margin` slower than a clean full-pace run of his own line
+// in your car, so a fast car is no harder to beat than a slow one.
+export const INSTRUCTOR_PACE = {casual: {initial: .92, floor: .78, margin: .07}, pro: {initial: .95, floor: .85, margin: .04}};
+export const MAX_INSTRUCTOR_TRIES = 6;
+export async function buildInstructorRun(options = {}) {
+  const {difficulty = 'casual', lessonId = 'corner'} = options;
+  const {initial, floor, margin} = INSTRUCTOR_PACE[difficulty];
+  // A full-pace run that slides or leaves the road gives no reference; the
+  // pace then follows the faults alone. The winter comparison keeps the summer gate.
+  const full = options._fixed ? null : await buildInstructorAttempt({...options, _mode: 'fast'}, initial, 0);
+  const fullSec = full && full.instructor.poses.at(-1).s >= full.corner.finishS - .5 ? full.instructor.timeSec : null;
+  const needed = fullSec === null ? 0 : fullSec * (1 + margin);
+  // The winter comparison starts at the summer run's pace, so the tyres are the only difference.
+  let pace = options._pace ?? initial, result = null, fault = null;
+  for (let tries = 0; tries < MAX_INSTRUCTOR_TRIES; tries++) {
+    try {
+      result = await buildInstructorAttempt(options, pace, tries);
+    } catch (error) {
+      if (!(error instanceof InstructorRunFault)) throw error;
+      fault = error;
+      if (pace === floor) break;
+      pace = Math.max(floor, Math.round((pace - .02) * 100) / 100);
+      continue;
+    }
+    if (result.instructor.timeSec >= needed || pace === floor) break;
+    // About 0.7% more time for each 1% of pace; step a little further to land past the line.
+    const short = (needed - result.instructor.timeSec) / result.instructor.timeSec;
+    pace = Math.max(floor, Math.round((pace - Math.max(.01, short * 1.6)) * 100) / 100);
+  }
+  if (!result) throw fault;
+  result.instructor.fullPaceSec = fullSec;
+  if (lessonId === 'corner') {
+    const clip = await buildInstructorAttempt({...options, _mode: 'late'}, result.instructor.pace, result.instructor.retries);
+    result.instructor.lateClip = {poses: clip.instructor.poses, inputs: clip.instructor.inputs,
+      timeSec: clip.instructor.timeSec, screechSeconds: clip.instructor.screechSeconds, faults: clip.instructor.faults};
+  }
+  return result;
+}
+
+async function buildInstructorAttempt({courseId, car, upgrades = {}, difficulty = 'casual',
+  driverId = 'club', seed = 1989, fps = 60, maxSeconds = 120, lessonId = 'corner', tyre = 'summer', _fixed = null, _mode = 'instructor'} = {}, pace, retries) {
   if (!['casual', 'pro'].includes(difficulty) || !Number.isFinite(fps) || fps <= 0 ||
       !Number.isFinite(maxSeconds) || maxSeconds <= 0) throw new TypeError('Invalid instructor options');
   if (!['corner', 'line', 'snow', 'gears'].includes(lessonId) || !['summer', 'winter'].includes(tyre)) throw new TypeError('Unknown driving lesson');
   const isLine = lessonId === 'line', isSnow = lessonId === 'snow', isGears = lessonId === 'gears';
   const row = (isGears ? DRIVE_GEAR_ROWS : isSnow ? DRIVE_SNOW_ROWS : isLine ? DRIVE_LINE_ROWS : DRIVE_LESSON_CORNERS).find(item => item.courseId === courseId);
   if (!row) throw new TypeError('Course has no driving lesson');
-  const [{Duel}, {COURSE, CARS, DRIVE, DIFFICULTY, steerForYaw}] = await Promise.all([
+  const [{Duel}, {COURSE, CARS, DRIVE, DIFFICULTY, steerForYaw, tyreSlipSteering}] = await Promise.all([
     import('../game.js'), import('../config.js'),
   ]);
   if (!Object.hasOwn(CARS, car)) throw new TypeError('Instructor needs the player car');
@@ -853,14 +595,14 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
   // The gearbox lesson is manual whatever the player's setting, and the limiter cannot blow the engine in a lesson.
   // Confined to this scratch race, like the sliding-tyre rules below.
   if (isGears) Object.defineProperty(duel, 'diff', {get: () => ({...DIFFICULTY[difficulty], autoShift: false, engineBlow: false})});
-  const pace = difficulty === 'casual' ? .92 : lessonId === 'corner' ? .95 : .97;
-  const planned = isGears ? await gearsPlanFor(duel, row, pace) : isSnow ? await snowPlanFor(duel, row, pace, {fixed: _fixed}) : isLine ? await linePlanFor(duel, row, pace) : await lessonPlanFor(duel, row, pace);
+  const reference = _mode === 'fast' || _mode === 'middle' || _mode === 'dry' ? await sectionPlanFor(duel, row, pace, {rollingMph: isGears ? 30 : null}) : null;
+  const planned = await sectionPlanFor(duel, row, _mode === 'fast' ? 1 : pace, {middle: _mode === 'middle', dry: _mode === 'dry', rollingMph: isGears ? 30 : reference?.rollingMph ?? null, steadyEntry: !isGears});
   // The winter instructor drives the summer instructor's gate, rolling speed and cones on winter tyres.
-  const winter = isSnow && tyre === 'summer' ? await buildInstructorRun({courseId, car, upgrades, difficulty, driverId, seed, fps, maxSeconds, lessonId, tyre: 'winter',
-    _fixed: {startS: planned.startS, rollingMph: planned.rollingMph, placement: planned.placement}}) : null;
+  const winter = isSnow && tyre === 'summer' && _mode === 'instructor' ? await buildInstructorRun({courseId, car, upgrades, difficulty, driverId, seed, fps, maxSeconds, lessonId, tyre: 'winter',
+    _fixed: {startS: planned.startS, rollingMph: planned.rollingMph, placement: planned.placement}, _pace: pace}) : null;
   const {startS, turn, line, profile, placement} = planned, rollingMph = planned.rollingMph ?? row.rollingMph;
   const plan = {course, car: spec, line, profile, drive: DRIVE, steerForYaw,
-    difficulty, turnInS: turn.s0, turnOutS: turn.s1, brakeS: profile.brakeS, ...(isGears ? {shifts: {cool: 0}} : {})};
+    difficulty, turnInS: turn.s0, turnOutS: turn.s1, brakeS: -Infinity, brakeInTurns: true, ...(isGears ? {shifts: {cool: 0}} : {})};
   // Lesson rules explicitly use the new tyres even in a Casual lesson. This
   // is confined to this fresh scratch race; ordinary Casual remains exact.
   state.tyreSlipRules = true; state.tyreSlip = 0;
@@ -868,12 +610,20 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
   state.lateral = line.offsetAt(startS); state.headingError = line.relHeadingAt(startS);
   state.speedMph = rollingMph;
   const rollingGear = spec.gears.findIndex(top => top * DRIVE.gearCeilFrac >= rollingMph);
-  state.gear = isGears ? GEAR_LESSON.startGear : rollingGear < 0 ? spec.gears.length - 1 : rollingGear;
+  state.gear = isGears ? Math.min(GEAR_LESSON.startGear, spec.gears.length - 1) : rollingGear < 0 ? spec.gears.length - 1 : rollingGear;
   state.revs = state.speedMph / spec.gears[state.gear];
   state.yawVelocity = line.curvatureAt(startS) * state.speedMph * DRIVE.mphToWorld;
   state.traffic = []; state.opponents = [];
   state.nextLapGate = duel._lapGates.filter(s => s <= startS).length;
-  const poses = [], faults = [];
+  const corners = sectionCorners(course, planned, spec, DRIVE);
+  plan.corners = corners;
+  placement.cones = corners.flatMap(c => [c.apexCone, c.exitCone]).sort((a, b) => a.s - b.s).map((c, i) => ({...c, id: i + 1}));
+  placement.redBoardS = (corners.find(c => c.kind === 'brake')?.brakeS ?? profile.brakeS) + 25;
+  if (isSnow) {
+    const dry = await sectionPlanFor(duel,row,pace,{dry:true,rollingMph,steadyEntry:true});
+    placement.redBoardS = sectionCorners(course,dry,spec,DRIVE).find(c=>c.kind==='brake')?.brakeS ?? dry.profile.brakeS;
+  }
+  const poses = [], inputs = [], faults = [];
   let tickStartS = startS;
   const capture = (t, brake = 0) => {
     const world = course.groundAt(state.s, state.lateral);
@@ -890,18 +640,21 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
   let ticks = 0, frames = 0;
   poses.push(capture(0));
   try {
-    const needsTick = () => state.s < placement.finishS;
+    let screechSeconds = 0;
+    const needsTick = () => state.s < placement.finishS && !(_mode !== 'instructor' && (state.offRoad || state.impactTimer > 0 || state.status !== 'racing' || screechSeconds >= .5));
     while (needsTick() && ticks < maxSeconds * 120) {
       const frameTicks = Math.floor(++frames * 120 / fps + 1e-9);
       while (ticks < frameTicks && ticks < maxSeconds * 120 && needsTick()) {
         const surface = duel._drivingSurface(state.s, state.lateral);
-        const controls = isGears ? gearsControls(state, surface, plan) : instructorControls(state, surface, plan);
+        const controls = sectionControls(state, surface, plan, {gears: isGears, late: _mode === 'late', tyreSlipSteering});
+        inputs.push({t: ticks / 120, s: state.s, throttle: controls.throttle, brake: controls.brake, steer: controls.steer, shiftUp: controls.shiftUp, shiftDown: controls.shiftDown, boost: false});
         // Inputs start at the current native pose, not one tick later.
         poses.at(-1).brake = controls.brake;
         poses.at(-1).throttle = controls.throttle;
         tickStartS = state.s;
         duel.setInput(controls);duel.step(1 / 120);ticks++;
         poses.push(capture(ticks / 120, controls.brake));
+        if (state.tyreSlip > 1) screechSeconds += 1 / 120;
         if (state.offRoad || state.tyreSlip > 1 || state.status !== 'racing' || state.impactTimer > 0) {
           faults.push({fromS: tickStartS, s: state.s, reason: 'offroad/slide/status',
             t: ticks / 120, lateral: state.lateral, mph: state.speedMph,
@@ -910,31 +663,27 @@ export async function buildInstructorRun({courseId, car, upgrades = {}, difficul
         }
       }
     }
-    const {timeSec, poses: recorded} = finishInstructorTrace(poses, placement.finishS, faults);
+    const {timeSec, poses: recorded} = _mode === 'instructor' || state.s >= placement.finishS ? finishInstructorTrace(poses, placement.finishS, _mode === 'instructor' ? faults : []) : {timeSec: ticks / 120, poses};
     const corner = {id: isGears ? row.cornerName : isSnow ? row.cornerNames[0] : isLine ? row.cornerNames[0].replace(/ \d+$/, '') : row.cornerName, startS, finishS: placement.finishS, dir: turn.dir,
       turnInS: turn.s0, turnOutS: turn.s1};
     // Lesson 2 also records where the plan starts braking, for the road-before-braking check.
-    const instructor = {...placement, timeSec, poses: recorded, ...(isLine || isSnow ? {brakeS: profile.brakeS} : {}),
-      ...(winter ? {winter: {timeSec: winter.instructor.timeSec, poses: winter.instructor.poses}} : {}),
-      // Lesson 3: the gear he is in as he passes the apex cone and the exit cone, which the student's gears are measured against.
-      ...(isGears ? {apexGear: recorded.find(pose => pose.s >= placement.cones[1].s).gear, exitGear: recorded.find(pose => pose.s >= placement.cones.at(-1).s).gear} : {})};
-    // Use the very same physical cone counter as the student's lesson.
-    const lesson = createDriveLesson(lessonId, {corner, instructor});
-    const carView = pose => ({s: pose.s, lateral: pose.lateral, world: {x: pose.x, z: pose.z},
-      speedMph: pose.mph, brake: pose.brake, throttle: pose.throttle, tyreSlip: pose.tyreSlip, status: 'racing',
-      ...(isGears ? {gear: pose.gear, revs: pose.revs} : {})});
-    stepDriveLesson(lesson, carView(recorded[0]), {start: true}, 0);
-    for (let i = 1; i < recorded.length; i++) stepDriveLesson(lesson, carView(recorded[i]), {}, recorded[i].t - recorded[i - 1].t);
-    const nearest = instructorConeDistances(recorded, placement.cones);
-    if (lesson.lastAttempt?.cones.length !== placement.cones.length) {
-      throw new Error('Instructor missed a native cone: ' + JSON.stringify(lesson.lastAttempt?.cones) + ', nearest ' + nearest.map(n => n.toFixed(2)).join(' ') + ' m');
+    const trajectory = [];
+    for(let s=startS;s<=planned.finishS;s++){
+      const lateral=line.offsetAt(s),targetMph=profile.at(s)*profile.pace;
+      const difference=profile.at(s+1)-profile.at(s);
+      trajectory.push({s,lateral,...course.groundAt(s,lateral),targetMph,action:difference<-.001?'brake':difference>.001?'accelerate':'coast'});
     }
-    // Never look like clipping a cone: clear every cone by minClearM past the distance that tips it.
-    if (nearest.some(distance => distance < TIP_DISTANCE_M + LESSON_LINE.minClearM)) {
-      throw new Error('Instructor too close to a cone: nearest ' + nearest.map(n => n.toFixed(2)).join(' ') + ' m, needs ' + (TIP_DISTANCE_M + LESSON_LINE.minClearM) + ' m');
-    }
-    // The instructor himself keeps the four rules of the right try (lights, limiter, his own gear, no screech).
-    if (isGears && !lesson.lastAttempt.rules.every(Boolean)) throw new Error('Instructor broke a gearbox rule: ' + JSON.stringify(lesson.lastAttempt));
-    return {corner, instructor, courseId, car, upgrades: {...upgrades}, difficulty, seed, ...(isLine || isSnow || isGears ? {lessonId, tyre} : {})};
+    const instructor = {...placement, corners, inputs, plan:trajectory, ice: isSnow ? iceZonesOf(duel, startS, planned.finishS) : [], timeSec, pace, retries, poses: recorded, clean: faults.length === 0, faults, screechSeconds, ...(isLine || isSnow ? {brakeS: profile.brakeS} : {}),
+      ...(winter ? {winter: {timeSec: winter.instructor.timeSec, pace: winter.instructor.pace, retries: winter.instructor.retries, poses: winter.instructor.poses, inputs: winter.instructor.inputs}} : {})};
+    if (_mode === 'instructor' && instructorConeDistances(recorded, placement.cones).some(d => d <= TIP_DISTANCE_M)) throw new InstructorRunFault('Instructor tipped a cone');
+    return {corner, instructor, courseId, car, upgrades: {...upgrades}, difficulty, seed, lessonId, tyre};
   } finally { off(); }
+}
+
+// Native teaching proofs and Watch clips use the same controller and physics.
+export async function buildLessonDemonstration(options, mode) {
+  if (!['late', 'middle', 'dry', 'fast'].includes(mode)) throw new TypeError('Unknown demonstration');
+  // Pass the instructor's own pace so a proof starts as his lesson does; the middle-of-the-road
+  // proof then differs from his run only in its line.
+  return buildInstructorAttempt({...options, _mode: mode}, options.pace ?? (options.difficulty === 'pro' ? .97 : .92), 0);
 }

@@ -4,6 +4,7 @@ import {labOf} from './lab-save.js';
 import {TUNNEL_LESSONS} from './lab-lessons.js';
 import * as THREE from 'three';
 import {loadSpeirlingVehicle} from '../speirling-vehicle.js';
+import {WALK, WALK_LAYOUT} from './lab-walk.js';
 import {LAB_SOUND_CUES} from './lab-cues.js';
 
 // Lab file cues are deliberately excluded from the game's startup audio batch.
@@ -88,12 +89,14 @@ export function fanMarkup(view, setting, message = '') {
 }
 
 // Drawing-only extension to the room. The room owns and releases these nodes.
-export function createFanRoom({scene, part, load, release, alive, manifest, host, camera}) {
+export function createFanRoom({scene, part, load, release, alive, manifest, host, camera, walking = false, loadCar = loadSpeirlingVehicle}) {
   const root = new THREE.Group();
   root.name = 'lab-project-fan';
   root.visible = false;
   scene.add(root);
-  const at = manifest.layout['wind-tunnel'] ?? {x: 8.6, z: -6.3};
+  const at = walking ? {x: WALK_LAYOUT['wind-tunnel'][0], z: WALK_LAYOUT['wind-tunnel'][1]}
+    : manifest.layout['wind-tunnel'] ?? {x: 8.6, z: -6.3};
+  const scale = walking ? WALK.scale : 1;
   let view = {open: false}, car = null, sheet = null, loading = false, angle = 0, lastSeconds = null;
   const status = {car: 'idle', blueprint: 'idle'};
   let toggle = null;
@@ -103,11 +106,12 @@ export function createFanRoom({scene, part, load, release, alive, manifest, host
     loading = true;
     status.car = status.blueprint = 'loading';
     await Promise.all([
-      loadSpeirlingVehicle().then(make => {
+      loadCar().then(make => {
         const made = make({});
         if (!alive()) { release(made); return; }
         car = made; car.rotation.y = Math.PI / 2;
-        car.position.set(at.x - .5, .38, at.z);
+        car.scale.setScalar(scale);
+        car.position.set(at.x - .5 * scale, .38 * scale, at.z);
         root.add(car); status.car = 'ready';
       }).catch(() => { status.car = 'failed'; }),
       load('/assets/models/speirling/project-fan.glb').then(made => {
@@ -122,7 +126,7 @@ export function createFanRoom({scene, part, load, release, alive, manifest, host
     pose() {
       if (!view.page) return null;
       return view.owned || view.setting > 0
-        ? {position: [at.x + 3.8, 2.5, at.z + 5.5], target: [at.x - .5, .9, at.z]}
+        ? {position: [at.x + (walking ? -3.8 : 3.8) * scale, 2.5 * scale, at.z + (walking ? -5.5 : 5.5) * scale], target: [at.x - .5 * scale, .9 * scale, at.z]}
         : {position: [12.3, 2.5, -1.1], target: [14.85, 2.36, -1.1]};
     },
     frame(seconds) {
@@ -161,7 +165,7 @@ export function createFanRoom({scene, part, load, release, alive, manifest, host
       }
       if (car) {
         const push = view.page ? view.setting / 100 : reversed ? Math.min(1, elapsed === null ? 1 : (elapsed - 1.5) / 1.5) : 0;
-        car.position.y = .38 - .045 * push;
+        car.position.y = (.38 - .045 * push) * scale;
         for (const rotor of car.userData.fans ?? []) rotor.rotation.z += dt * 35 * push;
       }
       const belt = part('wind-tunnel', 'belt');

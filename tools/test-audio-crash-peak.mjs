@@ -72,6 +72,14 @@ before(async()=>{
       "return transition('Page.navigate', {url:baseURL+(path.endsWith('/recorder-probe.html') ? '/.qa-dist/"+
       scratchDir.replaceAll('\\','/').split('/.qa-dist/')[1]+
       "/recorder-probe.html' : path)});"],
+    // Under load Chrome can be very slow to stop, which held this suite past its
+    // setup limit long after the capture was saved. Wait three seconds at most
+    // for Browser.close, then end the whole browser tree, whose helper programs
+    // would otherwise hold the harness's output pipes open, and let go of them.
+    ["try { if (cdp) await cdp.send('Browser.close'); } catch {}",
+      "try { if (cdp) await Promise.race([cdp.send('Browser.close'), delay(3000)]); } catch {}"],
+    ["if (chrome && chrome.child.exitCode === null) chrome.child.kill();",
+      "if (chrome) { if (chrome.child.exitCode === null) { spawn('taskkill', ['/pid', String(chrome.child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' }); chrome.child.kill(); } chrome.child.stdout.destroy(); chrome.child.stderr.destroy(); }"],
   ];
   for(const [from,to]of substitutions){if(!harness.includes(from))throw Error('Private harness recipe anchor changed: '+from);harness=harness.replaceAll(from,to);}
   await writeFile(join(scratchDir,'harness.mjs'),harness);

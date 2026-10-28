@@ -1380,3 +1380,105 @@ LESSONS-ICE-GATE, driving lesson 1 failure wording. Full tier on release
 commit `591d9245`: 516 passed, 0 failed, 0 not run (1,475 s). No frame check:
 race scenes are unchanged since the 25 October passes (rule 19); lesson 4
 adds one ring to a lesson view, far below the busiest race view.
+
+## Release, 26 October 2026 afternoon (Claude, Release Manager)
+
+HELI-LANDED, HELI-RETURN-LOADS, GP-CAREER-LIVE (`grand-prix-career` on),
+GHOST-SAVE-MESSAGE, SUMMIT-TUNNEL-WALL, SUMMIT-GROUND-GAPS. Also merged
+behind dev switches: LAB-WALK, lesson 1 Beaver fix, map, ski and rescue
+finishing passes. Full tier on de0555b0: 518 passed, 2 failed
+(`test-terrain`, `test-map-destinations` expected the pre-fix Summit ground);
+both updated with a reviewed note (only Summit changed, 3 heights by at most
+0.17 m) on 301e61c0, where they and the lane tier for those changes (9/9)
+pass; no game code changed after the full tier (rule 19). Frame check,
+Summit, eight cars, headed, alone, GPU idle: p95 16.8 ms High and
+Performance; world build 1,051 / 1,013 ms, over the 1 s limit, shipped as a
+warning by Director decision (SUMMIT-BUILD-TIME-2).
+
+## Release, 26 October 2026 evening: Summit finish (Claude, Release Manager)
+
+SUMMIT-FINISH-AREA (look accepted at round 3) and SUMMIT-BUILD-TIME-2. Also
+merged behind dev switches: HELI-LOGBOOK, ski tuning, LAB-LESSON-FRAME,
+LAB-LIFT-2. Full tier on f514c859: 525 passed, 1 failed
+(`test-audio-crash-peak`, no audio change; its one rerun on the same commit
+passed, rule 3; QA-AUDIO-CRASH-PEAK-AGAIN). Frame check, Summit, eight cars,
+headed, alone, laptop panel off, GPU idle: p95 16.8 ms at both qualities
+(pass); world build High 1,036 ms, Performance 984 ms then 2,589 ms on the
+rerun: a warning, shipped by Director decision as on 16 October; follow-up
+SUMMIT-BUILD-TIME-3.
+
+## Release, 26 October 2026 night (Claude, Release Manager)
+
+GO-LIVE-EVENING (`driving-lessons`, `heli-logbook`, `heli-skiing`, `rescue`
+on; `tyre-slip` stays dev, lessons keep their own sliding rules), lab-2 with
+LAB-BRIAN-FIX, LAB-LESSONS-WORKSHOP and LAB-LESSONS-FLYING, plus
+DRIVE-LESSON-ANY-COURSE, the ski tuning and rescue margins. Full tier on
+release commit 4e94aed2, run alone: 528 passed, 0 failed, 0 not run (1,801 s).
+No frame check this release: no timing recipe exists for the ski and rescue
+views (HELI-VIEW-FRAMES); race scenes are unchanged since the evening Summit
+check (rule 19). Released at Kyle's direction to test in the real game.
+
+## Release, 27 October 2026 (Claude, Release Manager)
+
+LAB-LESSONS-SNOW and LAB-LESSONS-TUNNEL (lab-2 on). Full tier on release
+commit 3dd322a4, run alone: 530 passed, 0 failed, 0 not run (2,477 s). No
+frame check: race scenes unchanged since the 26 October Summit check (rule 19).
+
+## Release, 27 October 2026 morning (Claude, Release Manager)
+
+LESSON-INSTRUCTOR-ANY-CAR and HELI-SUMMIT-LANDED, both live fixes from Kyle's
+play. Rule 19: the last full-tier pass is 3dd322a4 (530/530); since then only
+`src/lessons/drive-lessons.js`, `src/heli/heli-ui.js`, two lines of
+`src/app.js`, their tests and docs changed (no core, save shape or physics).
+Lane tier for each change: 34/34 and 42/42; on the merged commit the lesson,
+helicopter view and mode suites pass and the build passes. The every-car
+instructor suite passes 196/196. No frame check: no scene changed.
+
+## Release, 27 October 2026 afternoon (Claude, Release Manager)
+
+LESSONS-V2-RULES and LESSONS-V2-VIEW (driving lessons, second version;
+`driving-lessons` stays on). Full tier on release commit 9d521bb0, run alone:
+532 passed, 0 failed, 0 not run (1,823 s). Every-car instructor suite
+196/196. No frame check: lesson drawing is new but lessons are not races and
+race scenes are unchanged since the 26 October Summit check (rule 19).
+Brian's new lines follow in LESSONS-V2-LINES.
+
+## Release, 27 October 2026 evening (Claude, Release Manager)
+
+LESSONS-V2-LINES: 22 new instructor lines, 47 old lines and files removed.
+Rule 19: the last full-tier pass is 9d521bb0 (532/532); since then only the
+lesson radio code in `src/lessons/` and `src/app.js`, the voice files, the
+audio catalog, two lesson tests and docs changed (no core, save shape or
+physics). Lane tier 97/97 in the lane; on merged commit 39107cda the lesson
+lines suite (314 checks), lesson run suite, every-car instructor suite
+(196/196) and build pass. No frame check: no scene changed.
+
+## Release, 27 October 2026 night (Claude, Release Manager)
+
+LESSONS-V2-FINISH part 1 (Kyle's play: full runs, any step again; room to beat
+the instructor; Woods braking road) and DEEP-ROCKS-PUSH, with the test-only
+merges HELI-VIEW-FRAMES, QA-AUDIO-CRASH-PEAK-AGAIN and QA-SUMMIT-GLACIER-EDGE.
+Rule 19: the last full-tier pass is 9d521bb0 (532/532). Since then the game
+changes are lesson code (`src/lessons/`, the lesson lines of `src/app.js` and
+one lesson line of `src/game.js`) and the Deep's rocks (`src/deep/`); no save
+shape, physics or race rule changed. Lane tiers: lessons 39/39 (every-car
+instructor suite 196/196), rocks 157/157 with replay fingerprints and world
+signatures unchanged; builds pass. The nightly full check covers the whole
+tier tonight. No frame check: no race scene changed.
+
+## Release, 28 October 2026 (Claude, Release Manager)
+
+MAP-FINISH: the `pilot-map` switch goes on (the map's build items merged 26
+October; Claude judged the look sheet). Rule 19: since the last full-tier pass
+(9d521bb0) the only new change is the switch and its three switch-state
+assertions; lane tier 37/37 and build pass; map suites 499, 300 and 529
+checks. The nightly full check covers the whole tier. No frame check: no race
+scene changed.
+
+## Release, 28 October 2026 early (Claude, Release Manager)
+
+DEEP-TRAIL-JOINTS: the Deep's frame turns smoothly at trail joints and its
+nearest point is the exact inverse. Rule 19: since 9d521bb0 the only new game
+change is in `src/deep/`; lane tier 156/156 with replay and world-signature
+guards passing; build passes. The nightly full check covers the whole tier.
+No frame check: no race scene changed.

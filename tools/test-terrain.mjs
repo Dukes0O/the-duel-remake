@@ -41,7 +41,7 @@ function farGroundSampler(course) {
   };
   const material=new THREE.MeshBasicMaterial({side:THREE.DoubleSide}),ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);let near;
   const sample=point=>{const far=height(point);if(far!==null){farRimSamples++;return far;}omittedQueries++;near??=new THREE.Mesh(buildNear(course,false),material);ray.set(new THREE.Vector3(point.x,2000,point.z),down);const hit=ray.intersectObject(near,false)[0];if(hit)nearRimSamples++;return hit?.point.y??null;};
-  const nearest=course.at(0);check(course.def.practice?Number.isFinite(height(nearest)):height(nearest)===null,'practice ground is continuous; other road centres omit the far quad');
+  const nearest=course.at(0);check(course.def.practice||course.def.scenery?.continuousGround?Number.isFinite(height(nearest)):height(nearest)===null,'practice and continuous-ground courses (Summit, SUMMIT-GROUND-GAPS) are continuous; other road centres omit the far quad');
   sample.dispose=()=>{geometry.dispose();near?.geometry.dispose();material.dispose();};return sample;
 }
 

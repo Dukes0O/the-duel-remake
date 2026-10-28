@@ -1,5 +1,36 @@
 # Run, 14 October afternoon to 15 October 2026
 
+## Tonight, 27 to 28 October (Claude, 20:40; wins over every older section)
+
+Kyle, 27 October evening: a bigger overnight run by Claude alone (Codex may
+not be available), across two Claude windows: 20:40 to 01:30 and 01:30 to
+06:30. A scheduled restart wakes this Director session at 01:35. Claude takes
+the five ready Codex cards for tonight and builds with up to three helper
+agents, each in its own lane under `wasteland-integration/`.
+
+Window 1:
+1. Helpers: QA-SUMMIT-GLACIER-EDGE, SUMMIT-BUILD-TIME-3 (source only; Claude
+   times it), QA-AUDIO-CRASH-PEAK-AGAIN, HELI-VIEW-FRAMES (recipes only),
+   QA-DEEP-LIFE-TIMING, then the `deep-finish` lane (FINISH-DEEP place
+   titles) to merge.
+2. Claude: LESSONS-V2-FINISH, every lesson in the Falcone and the Jesko,
+   Casual and Pro, on a QA port with memory-only saves; faults go to helpers.
+   Drop DRIVE-LESSON-FINISH and DRIVE-LESSONS-FINISH-2 (replaced by section 14).
+
+Window 2:
+3. Finishing passes: SKI-FINISH (pickup pad off the desert), MAP-FINISH (fire
+   pit flames, signs, leg fuel), RESCUE-FINISH (rescuer pose, driver car,
+   remove debris.glb, avalanche hover frames).
+4. Quiet laptop (Kyle sets Win+P "Second screen only"): the full check
+   (`node tools/full-check.mjs --idle-awake --no-push`), ARDENNES-FAR-FOREST-LIGHT
+   at Pit Straight, the ski and rescue frame recipes, Summit build time.
+5. Release everything green in one batch before 06:30 (rule 18); morning
+   note to Kyle with pictures. Then the janitor and STATUS.
+
+Heavy jobs: at most three at once, `--jobs 4`; nothing else while frames are
+timed. Out unless time is left: WILD-VIEW, EARN-FINISH, FINISH-DEEP play-through.
+
+
 Kyle's order, AGENTS.md rules 1 to 18 and `docs/FACTORY.md` govern this run.
 Work in integration and isolated lanes. Nothing goes live without Kyle's word.
 No push except Claude's release and compaction pushes, no port 5174, no real

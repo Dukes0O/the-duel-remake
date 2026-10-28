@@ -119,7 +119,8 @@ function summitOnFingerprint() {
   return hash(parts.join('\n'));
 }
 // Taken from the code as it stood before this card (rescue on, Summit Run off; then Summit Run on, rescue off).
-const OFF_PIN = 1293191622, SUMMIT_ONLY_PIN = 274976626;
+// RESCUE-FINISH re-records rescue-on base clues/sites/clocks; rescue-off stays pinned.
+const OFF_PIN = 2318537187, SUMMIT_ONLY_PIN = 1829644530;
 for (const extra of [{}, {summitRunEnabled: false}, {summitRunEnabled: 'yes'}])
   assert.equal(offFingerprint(extra), OFF_PIN, `with Summit Run off every rescue and flying area is as it was (${JSON.stringify(extra)})`), checks++;
 assert.equal(summitOnFingerprint(), SUMMIT_ONLY_PIN, 'with Summit Run on and rescues off, Summit Run flies exactly as it did'); checks++;
@@ -374,7 +375,7 @@ console.log('PASS the hoist site names the car the recovery job offers');
 
 // ---- A rescue in hand: the autopilot never leaves it for the recovery job's car -----------------------------
 {
-  const pick = pickHoist(hoistSpots(ridge.course, ridge.ground), 0x2468ace, ridge.ground);
+  const pick = pickHoist(hoistSpots(ridge.course, ridge.ground), 4, ridge.ground);
   const base = callProfile('hoist', 'panorama-ridge', {count: 7});
   const wreck = {courseId: 'panorama-ridge', carId: 'falcone_f42', x: Math.round(pick.car.x * 10) / 10, z: Math.round(pick.car.z * 10) / 10, day: 6};
   const profile = setMissions(base, {...missionsOf(base), wreck}, on).profile;
@@ -389,6 +390,7 @@ console.log('PASS the hoist site names the car the recovery job offers');
   ok(session.acceptCruise(), 'guard: the cruise leg');
   log.push(...run(session, 3, () => ({})));
   const r = missionsOf(session.profile).rescue, driver = pickHoist(hoistSpots(ridge.course, ridge.ground), r.seed, ridge.ground).driver;
+  ok(dist(driver, wreck) > 20, 'guard: the recovery car is a distinct target from the driver');
   ok(session.courseId === 'panorama-ridge' && session.view().loads.some(load => load.job === job.id), 'guard: across, and the car waits on the slope');
   log.push(...run(session, 400, () => ({}), (v, got) => has(got, 'autopilotArrived')));
   ok(has(log, 'autopilotArrived') && dist(session.view().heli, driver) < 6, 'guard: the autopilot brings the helicopter over the driver (the rescue first)');

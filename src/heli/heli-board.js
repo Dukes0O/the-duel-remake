@@ -62,12 +62,15 @@ const COMPASS_WORDS = Object.freeze({N: 'north', NE: 'north-east', E: 'east', SE
 // place; Roger's words do not.
 const RESCUE_WORDS = Object.freeze({hiker: 'Lost hiker at', avalanche: 'Avalanche at', hoist: 'Driver stranded at', supply: 'Supply run to'});
 const clockWords = seconds => { const whole = Math.max(0, Math.ceil(seconds)); return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`; };
-function rescueRadio(rescue) {
+function rescueRadio(rescue, heli) {
   if (rescue.active) {
     const a = rescue.active, place = esc(a.courseName ?? 'the mountain');
     const crates = a.kind === 'supply' ? ` &middot; crates ${a.cratesDown}/3` : '';
+    const fuel = a.refuelFirst ? `Refuel at the truck first. Fill to at least ${a.refuelStop === 'pickup' ? 400 : 330} kg at the truck.`
+      : a.refuelStop === 'pickup' && a.sites?.atTruck && heli?.fuelKg < 399.9 ? 'Fill to 400 kg at the pickup truck before the return flight.'
+      : a.kind === 'supply' && a.courseId === 'summit-run' ? 'Take at least 230 kg before each supply crate leg.' : '';
     return `<div class="heli-board-radio heli-board-rescue-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">` +
-      `${RESCUE_WORDS[a.kind]} ${place}${crates} &middot; ${clockWords(a.left)} left</span></div>`;
+      `${RESCUE_WORDS[a.kind]} ${place}${crates}${fuel ? ` &middot; ${fuel}` : ''} &middot; ${clockWords(a.left)} left</span></div>`;
   }
   if (!rescue.call) return '';
   const c = rescue.call;
@@ -76,8 +79,8 @@ function rescueRadio(rescue) {
     `<button type="button" class="heli-board-button" data-heli-board="radio-answer">Answer</button>` +
     `<button type="button" class="heli-board-button" data-heli-board="radio-later">Later</button></div>`;
 }
-function radioBox(fire, rescue = null) {
-  const rescueBox = rescue ? rescueRadio(rescue) : '';
+function radioBox(fire, rescue = null, heli = null) {
+  const rescueBox = rescue ? rescueRadio(rescue, heli) : '';
   if (rescueBox) return rescueBox;
   if (!fire?.call) return '';
   const course = esc(fire.courseName ?? 'the forest');
@@ -178,7 +181,7 @@ export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assi
   if (fire) {
     const season = seasonBox(view?.season);
     if (season) parts.push(season);
-    const radio = radioBox(view?.fire, view?.rescue ?? null);
+    const radio = radioBox(view?.fire, view?.rescue ?? null, view?.heli);
     if (radio) parts.push(radio);
     const bucket = bucketBox(view, fire, skins);
     if (bucket) parts.push(bucket);

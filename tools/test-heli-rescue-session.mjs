@@ -360,7 +360,7 @@ function crashFromHeight(session) {
   return note(run(session, 120, v => pilot(v, {x: tree.x, z: tree.z, y: tree.top - 2}, {speed: 8}), (v, got) => has(got, 'crashed')));
 }
 // A lost hiker: spotted by the flare, picked up in the clearing, handed over at the pad.
-function flyHiker({wait = 0, waitSteps = 0, name = 'Rescue QA', stepLog = null, mode = 'assisted', crashAboard = false} = {}) {
+function flyHiker({wait = 0, waitSteps = 0, name = 'Rescue QA', stepLog = null, mode = 'assisted', crashAboard = false, searchPattern = false} = {}) {
   const {session, log} = begin('hiker', 'tremblant-woods', {name, mode});
   if (stepLog) {
     const original = session.step;
@@ -369,8 +369,21 @@ function flyHiker({wait = 0, waitSteps = 0, name = 'Rescue QA', stepLog = null, 
   const r = profileOf(session).rescue, pick = pickHiker(hikerSpots(home.course, home.ground, homeSite), r.seed);
   const gy = (x, z) => home.ground.height(x, z);
   const searching = session.view().rescue.active;
-  ok(searching.target.radius === 300 && searching.sites.hiker === null && searching.stage === 'fly', 'the search area is a 300 m circle, the hiker not found yet');
+  ok(searching.target.radius === 180 && searching.sites.hiker === null && searching.stage === 'fly', 'the search area is a 180 m circle, the hiker not found yet');
+  if (searchPattern) {
+    // Evidence flight: search only from the last-seen circle, without the hidden hiker position.
+    const centre = searching.sites.lastSeen;
+    search: for (let row = 0; row < 3; row++) {
+      const z = centre.z - 120 + row * 120;
+      for (let column = 0; column <= 6; column++) {
+        const x = centre.x + (row % 2 ? 180 - column * 60 : -180 + column * 60);
+        log.push(...note(travel(session, home, {x, z}, gy(x, z) + 60, {speed: 18})));
+        if (session.view().rescue.active?.sites.hiker) break search;
+      }
+    }
+  } else {
   log.push(...note(travel(session, home, pick.hiker, gy(pick.hiker.x, pick.hiker.z) + 60)));
+  }
   const found = session.view().rescue.active;
   ok(has(log, 'hikerSpotted') && found.stage === 'found' && found.sites.hiker, 'passing over them lights the flare: found');
   log.push(...note(travel(session, home, pick.clearing, gy(pick.clearing.x, pick.clearing.z) + 30, {land: true})));
@@ -398,6 +411,7 @@ function flyHiker({wait = 0, waitSteps = 0, name = 'Rescue QA', stepLog = null, 
     'the save: paid, one search, one person, the badge, nothing in hand');
   ok(m.quiet.untilDay === heliOf(session.profile).playDay.count + 2 && m.quiet.engineSeconds > 1100, 'and the quiet spell begins');
   same(session.view().rescue.active, null, 'the panel has no rescue left');
+  finishReport(session, log);
   const again = flyHiker();
   same([JSON.stringify(again.log), JSON.stringify(heliOf(again.session.profile))], [JSON.stringify(log), JSON.stringify(heliOf(session.profile))],
     'the same save flies the same rescue');
@@ -438,6 +452,7 @@ function flyLine(kind, courseId, world, zone, {manual = null} = {}) {
   ok(lines(log).includes('heli.radio.line.setdown') && lines(log).includes('heli.radio.rescue.clipped') && log.some(e => e.type === 'cue' && e.id === 'heli.rescue.clip'),
     `${kind}: Brian, Roger and the clip`);
   log.push(...carryPair(session, world, zone));
+  finishReport(session, log);
   return {session, log, atTarget, r};
 }
 {
@@ -524,6 +539,7 @@ function flySupply({crates = 3, name = 'Rescue QA'} = {}) {
 }
 {
   const {session, log} = flySupply();
+  finishReport(session, log);
   const downs = log.filter(event => event.type === 'crateDown');
   same(downs.map(event => [event.id, event.pay]), [['food', 300], ['medicine', 300], ['fuel', 300]], 'supply: each crate set down in the yard pays 300');
   const done = log.find(event => event.type === 'rescueDone');
@@ -790,5 +806,20 @@ console.log('PASS the line, H, the board and every line spoken');
   }
 }
 console.log('PASS the app passes the rescue switch and the beep pitch');
+
+
+function finishReport(session, log) {
+  const done = log.find(e => e.type === 'rescueDone');
+  ok(done && RESCUE_CLOCKS[done.kind] >= done.clockSeconds * 1.25, `${done?.kind}: cautious flight has at least 25% extra time`);
+  ok(session.view().heli.fuelKg >= 60, `${done.kind}: cautious full-tank flight ends with at least 60 kg`);
+  if (!process.env.RESCUE_FINISH_REPORT) return;
+  console.log('RESCUE-FINISH', JSON.stringify({kind: done?.kind, completed: !!done, seconds: done?.clockSeconds, fuelKg: session.view().heli.fuelKg, fingerprint: session.fingerprint(), resets: log.filter(e => e.type === 'holdReset')}));
+}
+
+{
+  const {session, log} = flyHiker({searchPattern: true});
+  if (process.env.RESCUE_FINISH_REPORT) console.log('PLAYER-SEARCH-PATTERN');
+  finishReport(session, log);
+}
 
 console.log(`test-heli-rescue-session: ${checks} checks passed`);

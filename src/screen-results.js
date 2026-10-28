@@ -1,3 +1,4 @@
+import {controlsHelp} from './controls-help.js';
 import {cupResultPanel} from './screen-trophies.js';
 import {isSummitAttack} from './summit-attack.js';
 import {raceDistanceLabel} from './lap-choice.js';
@@ -160,15 +161,16 @@ function modalScreen(s) {
   let grandPrixGhostNotice = '';
   if (r.grandPrix && app._switches?.().enabled('grand-prix-career')===true) {
     const messages = {
-      saved: 'GRAND PRIX BEST LAP SAVED',
-      capacity: 'GRAND PRIX BEST LAP · THIS SESSION ONLY · GHOST STORAGE FULL; EXISTING RECORDINGS KEPT',
-      session: 'GRAND PRIX BEST LAP · THIS SESSION ONLY · SAVE FAILED',
+      pending: 'SAVING BEST GHOST…',
+      saved: 'BEST GHOST SAVED',
+      capacity: 'BEST GHOST · THIS SESSION ONLY · GHOST STORAGE FULL; EXISTING RECORDINGS KEPT. YOUR RACE RESULT IS SAFE.',
+      session: 'BEST GHOST SAVE FAILED · THIS SESSION ONLY. YOUR RACE RESULT IS SAFE.',
     };
     const message = messages[app.grandPrixGhostSaveStatus];
     if (message) grandPrixGhostNotice =
       `<p class="result-bonuses ghost-saved" role="status">${message}</p>`;
   }
-  return `<section class="result-panel${r.grandPrix?' grand-prix-results':''}" role="dialog" aria-modal="true" aria-labelledby="result-title"><p class="eyebrow"><i></i>${eyebrow}</p><h2 id="result-title">${title}</h2><p class="result-description">${description}</p><div class="result-metrics${combatMetrics?' combat-result-summary':''}">${metrics}</div>${combatMetrics}${arenaExtra}${wantedPosterScreen(s,escapeHTML,{warlordCardsEnabled:app._switches?.().enabled('warlord-cards')===true,paint:app._racePaint})}${r.creditCharge?`<p class="result-bonuses">LOSS CHARGE −${credits(r.creditCharge)} CR</p>`:''}${r.policeFineCharge?`<p class="result-bonuses">POLICE FINE FROM RACE EARNINGS −${credits(r.policeFineCharge)} CR</p>`:''}${bonus?`<p class="result-bonuses">${bonus}</p>`:''}${repairs}${tunedLapHtml}${r.milestoneAwards?.length?`<p class="result-bonuses milestone-earned" role="status">${r.milestoneAwards.map(award=>`${escapeHTML(award.name).toUpperCase()} +${credits(award.reward)} CR`).join(" · ")}</p>`:''}${medalResultLines(r,{helicopter:app._switches?.().enabled('helicopter')===true}).map(line=>`<p class="result-bonuses medal-earned" role="status">${escapeHTML(line)}</p>`).join('')}${deepGarageNotice(app)}${grandPrixGhostNotice}${r.ghostRecorded?`<p class="result-bonuses ghost-saved">BEST GHOST SAVED${app.ghostSaved===false?' · THIS SESSION ONLY':''}</p>`:''}<div class="result-actions">${actions}</div>${s.paused?'<p class="pause-help">ARROWS TO DRIVE · SPACE TO BOOST · C TO CHANGE CAMERA · H FOR ALL CONTROLS<br>Restarting or leaving forfeits unbanked race earnings. Saved credits are safe.</p>':''}</section>`;
+  return `<section class="result-panel${r.grandPrix?' grand-prix-results':''}" role="dialog" aria-modal="true" aria-labelledby="result-title"><p class="eyebrow"><i></i>${eyebrow}</p><h2 id="result-title">${title}</h2><p class="result-description">${description}</p><div class="result-metrics${combatMetrics?' combat-result-summary':''}">${metrics}</div>${combatMetrics}${arenaExtra}${wantedPosterScreen(s,escapeHTML,{warlordCardsEnabled:app._switches?.().enabled('warlord-cards')===true,paint:app._racePaint})}${r.creditCharge?`<p class="result-bonuses">LOSS CHARGE −${credits(r.creditCharge)} CR</p>`:''}${r.policeFineCharge?`<p class="result-bonuses">POLICE FINE FROM RACE EARNINGS −${credits(r.policeFineCharge)} CR</p>`:''}${bonus?`<p class="result-bonuses">${bonus}</p>`:''}${repairs}${tunedLapHtml}${r.milestoneAwards?.length?`<p class="result-bonuses milestone-earned" role="status">${r.milestoneAwards.map(award=>`${escapeHTML(award.name).toUpperCase()} +${credits(award.reward)} CR`).join(" · ")}</p>`:''}${medalResultLines(r,{helicopter:app._switches?.().enabled('helicopter')===true}).map(line=>`<p class="result-bonuses medal-earned" role="status">${escapeHTML(line)}</p>`).join('')}${deepGarageNotice(app)}${grandPrixGhostNotice}${r.ghostRecorded?`<p class="result-bonuses ghost-saved" role="status">${app.ghostSaveStatus==='pending'?'SAVING BEST GHOST…':app.ghostSaved===false?'BEST GHOST SAVE FAILED · THIS SESSION ONLY. YOUR RACE RESULT IS SAFE.':'BEST GHOST SAVED'}</p>`:''}<div class="result-actions">${actions}</div>${s.paused && s.status === 'heli' ? `<p class="pause-help">${controlsHelp(app.duel).rows.map(([key, words]) => `${escapeHTML(key)}: ${escapeHTML(words)}`).join(' \u00b7 ')}</p>` : s.paused?'<p class="pause-help">ARROWS TO DRIVE · SPACE TO BOOST · C TO CHANGE CAMERA · H FOR ALL CONTROLS<br>Restarting or leaving forfeits unbanked race earnings. Saved credits are safe.</p>':''}</section>`;
 }
   return modalScreen;
 }

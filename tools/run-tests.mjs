@@ -512,8 +512,8 @@ export async function runSuitesConcurrent(tasks,{cwd=PROJECT_ROOT,execPath=proce
     const pump=()=>{
       while(active<jobs&&next<tasks.length&&!stopped&&!exclusiveActive){
         const task=tasks[next];
-        // Native audio timing must be measured without other suites competing.
-        const exclusive=task.suite==='tools/test-audio-crash-peak.mjs';
+        // Native audio timing and the sea-life frame cost must be measured without other suites competing.
+        const exclusive=task.suite==='tools/test-audio-crash-peak.mjs'||task.suite==='tools/test-deep-life.mjs';
         if(exclusive&&active>0)break;
         const index=next++;active++;exclusiveActive=exclusive;onStart(task,index,tasks.length);
         captureSuite(task,{cwd,execPath,env,spawnChild,now}).then(result=>{

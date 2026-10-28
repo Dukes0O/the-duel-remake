@@ -9,6 +9,8 @@
 //     told to hide the course it last loaded, since the Table is not on it.
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {TABLE, TABLE_ID, createTableWorld} from './map-secrets.js';
+import {spriteLayer, FIRE_FX_URL} from './heli-fire-view.js';
+import fireAtlas from '../../public/assets/heli/fire-fx.json' with {type: 'json'};
 
 export const MAP_MODEL_DIR = '/assets/models/pilot-map/';
 // The model each secret sign uses; `turn`: it faces against the lap (the sign says "the wrong way round").
@@ -31,7 +33,8 @@ function defaultCanvas() {
   return typeof document !== 'undefined' ? document.createElement('canvas') : null;
 }
 
-export function createMapWorldView({THREE, scene, load = loadModel, groundHeight = () => 0, roadHeading = () => 0, createCanvas = defaultCanvas}) {
+export function createMapWorldView({THREE, scene, load = loadModel, groundHeight = () => 0, roadHeading = () => 0, createCanvas = defaultCanvas,
+  loadFireTexture = () => new THREE.TextureLoader().loadAsync(FIRE_FX_URL)}) {
   const group = new THREE.Group();
   group.name = 'Pilot map world';
   group.visible = false;
@@ -43,6 +46,53 @@ export function createMapWorldView({THREE, scene, load = loadModel, groundHeight
     return models.get(file);
   };
   let disposed = false;
+  let fire = null;
+  function lightPits(model) {
+    const glow = spriteLayer(THREE, 8, THREE.AdditiveBlending);
+    const smoke = spriteLayer(THREE, 16, THREE.NormalBlending);
+    const anchors = [];
+    model.traverse(node => {
+      const match = /^(flame|smoke)_(\d)$/.exec(node.name);
+      if (match) anchors.push({node, kind: match[1], index: Number(match[2])});
+    });
+    model.add(smoke.points, glow.points);
+    const rects = Object.fromEntries(['flame', 'smoke'].map(kind => [kind, fireAtlas.frames[kind].map(f =>
+      [f.x / fireAtlas.size, f.y / fireAtlas.size, f.w / fireAtlas.size, f.h / fireAtlas.size])]));
+    const fx = {model, glow, smoke, anchors, rects, texture: null};
+    loadFireTexture().then(texture => {
+      if (disposed || fire !== fx) { texture.dispose(); return; }
+      texture.colorSpace = THREE.SRGBColorSpace;
+      fx.texture = texture;
+      glow.material.uniforms.atlas.value = smoke.material.uniforms.atlas.value = texture;
+    }).catch(error => console.warn(`Map fire art did not load: ${String(error?.message || error)}`));
+    fire = fx;
+  }
+  function removeFire() {
+    if (!fire) return;
+    for (const layer of [fire.glow, fire.smoke]) { layer.points.removeFromParent(); layer.points.geometry.dispose(); layer.material.dispose(); }
+    fire.texture?.dispose(); fire = null;
+  }
+  const anchorPosition = new THREE.Vector3();
+  function animatePits(time) {
+    if (!fire) return;
+    const {model, glow, smoke, anchors, rects, texture} = fire;
+    glow.reset(); smoke.reset();
+    if (texture) for (const {node, kind, index} of anchors) {
+      // Empties may be nested/transformed: convert through world coordinates
+      // back into the model's frame, where the two sprite layers live.
+      model.worldToLocal(node.getWorldPosition(anchorPosition));
+      const {x, y, z} = anchorPosition;
+      if (kind === 'flame') {
+        const frame = rects.flame[Math.floor(time * 9 + index) % rects.flame.length];
+        glow.add(x, y + .8, z, 2.8 + .35 * Math.sin(time * 11 + index), frame, .95, 1, .9, .7);
+      } else for (let puff = 0; puff < 2; puff++) {
+        const age = (time + index * .63 + puff * 2.5) % 5;
+        smoke.add(x + age * .45, y + age * 2, z + age * .2, 2 + age * 1.5,
+          rects.smoke[index % rects.smoke.length], .5 * (1 - age / 5), .65, .63, .6);
+      }
+    }
+    glow.finish(); smoke.finish();
+  }
 
   // ---- the five signs ----
   const signs = new Map();            // id -> {group, x, z}
@@ -56,7 +106,12 @@ export function createMapWorldView({THREE, scene, load = loadModel, groundHeight
     holder.rotation.y = spec.turn ? roadHeading(sign.x, sign.z) + Math.PI : 0;
     group.add(holder);
     signs.set(sign.id, holder);
-    modelOf(spec.file).then(model => { if (model && !disposed && signs.get(sign.id) === holder) holder.add(model.clone(true)); });
+    modelOf(spec.file).then(model => {
+      if (model && !disposed && signs.get(sign.id) === holder) {
+        const copy = model.clone(true); holder.add(copy);
+        if (spec.file === 'sign-fire-pits') lightPits(copy);
+      }
+    });
   }
 
   // ---- scouting: the corner names of a course you own, hovering over their corners ----
@@ -133,14 +188,18 @@ export function createMapWorldView({THREE, scene, load = loadModel, groundHeight
   return {
     group,
     // Returns {hideCourse}: true on the Table, where the course the renderer last loaded is not part of the place.
-    update(view) {
+    update(view, time = performance.now() / 1000) {
       const onTable = view?.courseId === TABLE_ID;
       if (!view?.heli) { group.visible = false; return {hideCourse: false}; }
       group.visible = true;
       // Signs still to be found on this course (a found one is taken off the view).
       wanted.clear();
       for (const sign of view.secrets?.signs ?? []) { wanted.add(sign.id); placeSign(sign); }
-      for (const [id, holder] of signs) if (!wanted.has(id)) { group.remove(holder); signs.delete(id); }
+      for (const [id, holder] of signs) if (!wanted.has(id)) {
+        if (SIGN_MODELS[id]?.file === 'sign-fire-pits') removeFire();
+        group.remove(holder); signs.delete(id);
+      }
+      animatePits(time);
       // The corner names over a course you own, for this flight.
       const scout = view.scout ?? null;
       if (scoutShown && scoutShown !== scout?.courseId) scouts.get(scoutShown).visible = false;
@@ -154,6 +213,7 @@ export function createMapWorldView({THREE, scene, load = loadModel, groundHeight
     get tableBuilt() { return table !== null; },
     dispose() {
       disposed = true;
+      removeFire();
       scene.remove(group);
       group.traverse(object => { object.geometry?.dispose?.(); object.material?.map?.dispose?.(); object.material?.dispose?.(); });
     },

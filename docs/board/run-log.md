@@ -1,5 +1,11 @@
 # Wasteland run log
 
+26 October, LAB-LESSONS-SNOW lane janitor: recycled 838,992,081 bytes of own QA/build output and verified interrupted Chrome profile (generated output now zero); kept the 430,080-byte sheet and 30 final captures for Claude. New named runtime props add 1,335,804 bytes; no unused new module found, existing advisory audit candidates retained. Lane coverage and build green; no merge back or push.
+
+26 October, HELI-LOGBOOK round 2 janitor: recycled own 347,344,294-byte build and 427,229 bytes of consumed round 1 logs; art helper recycled its raw captures/originals/QA bundle. Kept both compact sheets (round 2: 494,163 bytes) and current handoff logs. Five runtime maps total 5,001,151 bytes, down 86,447. Lane 103/103 and build pass; stopped for Claude's round 2 verdict. No merge back or push.
+
+26 October, HELI-LOGBOOK lane janitor: recycled 694,946,198 bytes of own QA/build output plus consumed art captures/originals; kept the 493,500-byte round 1 sheet and handoff logs. Five runtime maps add 5,087,598 bytes and are proven dynamic loads; existing audit candidates retained. No merge back or push.
+
 25 October, DEEP-EXPLORER round 2: merged incoming 6a35e8f6 only; moving-creature logging/ring and smooth wider chart built, lane 220 covered, build and three Deep scenarios pass, independent review clear. Frames skipped for foreign full tier. Recycled own generated output and raw captures; sheets and check receipts kept. No merge back or push.
 
 25 October, DEEP-EXPLORER janitor: recycled about 465 MB of own build, test fixtures and raw captures; kept the 225 KB chart sheet and handoff check proof. Audit found no unused new modules; runtime assets unchanged, existing uncertain candidates retained.
@@ -1357,3 +1363,46 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2026-10-26 Lesson 1 and earned-car finishing evidence merged (Codex): lesson 1 failures now say why and what to change; earned cars at 6 / 15 to 21 / 24 wins, on target; suites and build pass on integration.
 - 2026-10-26 Full tier on 591d9245: 516/516 (1,475 s). Release: HELI-CARRY-CLEAR and SAVE-RECORDS-IDB go live.
 - 2026-10-26 DRIVE-LESSON-FINISH tuning merged (Codex): Pro 95%, Cutting late try runs wide; Beaver Hairpin still fails keyboard tries at 55 mph, left open.
+- 2026-10-26 Beaver keyboard fix merged (Codex): lesson 1 Beaver starts past the kink; keyboard tries pass; suites and build pass.
+- 2026-10-26 HELI-LANDED merged (live, next release); MAP-FINISH and SKI-FINISH evidence merged (dev). Heli, map, ski suites, replays and build pass on integration.
+- 2026-10-26 GP-CAREER-LIVE merged (Codex): Grand Prix pay, records and cups on; independent save review clear; suites and build pass. GHOST-SAVE-MESSAGE opened (live fix).
+- 2026-10-26 RESCUE-FINISH pass merged (Codex): truck-first guidance, reset reasons; all six rescues complete; margins to widen before switch-on.
+- 2026-10-26 SUMMIT-TUNNEL-WALL merged (live, next release): gallery sides solid; circuits, Summit, replay and world suites and build pass. SUMMIT-FINISH-AREA started.
+- 2026-10-26 GHOST-SAVE-MESSAGE merged (live, next release): suites and build pass.
+- 2026-10-26 LAB-WALK merged (Codex): walkable Lab behind lab-2 (dev); switch test conflict with GP-CAREER-LIVE resolved keeping both; lab-walk and feature-flags suites and build pass.
+- 2026-10-26 SUMMIT-GROUND-GAPS merged (live, next release) after a one-line conflict with SUMMIT-TUNNEL-WALL (both kept); test-yeti fixed for GP-CAREER-LIVE; Summit suites and build pass. Summit frame check due before release.
+- 2026-10-26 HELI-RETURN-LOADS merged (live, next release): pay rule revised, four pins reviewed, supply-hook clash fixed; helicopter, save and replay suites and build pass. HELI-LOGBOOK started.
+- 2026-10-26 Release full tier on de0555b0: 518 passed, 2 failed (test-terrain, test-map-destinations expected the old Summit ground; reviewed and updated, only Summit changed). Summit frames p95 16.8/16.8 ms, world build 1051/1013 ms (warning, SUMMIT-BUILD-TIME-2).
+- 2026-10-26 Release (afternoon): six live fixes on 301e61c0+notes; hold lifted.
+- 2026-10-26 LAB-LESSON-FRAME merged (Codex): five-step lesson frame, notebook save field (save review clear) behind lab-2; Lab and save suites and build pass.
+- 2026-10-26 SKI-FINISH tuning merged (dev): Casual slalom assist, steady keyboard run 2 misses/bronze; suites and build pass.
+- 2026-10-26 SUMMIT-BUILD-TIME-2 merged: signatures exact; official timing with the finish area before release.
+- 2026-10-26 HELI-LOGBOOK merged (dev): ranks, Gus's shelf, five paints (accepted round 2); switch, helicopter, save, replay suites and build pass.
+- 2026-10-26 SUMMIT-FINISH-AREA merged (look accepted round 3); map ground pin reviewed (only Summit's car park); Summit, world, terrain, circuits, replay suites and build pass. Summit timing due before release.
+- 2026-10-26 LAB-LIFT-2 merged (Codex, art round 2 accepted): Lift and weight on the five-step frame in kg, collective cutaway, Brian's own figure (lab-2, dev); Lab and art suites and build pass. Waiting for Kyle and Gratian's preview.
+- 2026-10-26 Release (evening): Summit finish; full tier 525/526 on f514c859 + crash-peak rerun pass (rule 3); Summit frames 16.8/16.8 ms, build warning (SUMMIT-BUILD-TIME-3).
+- 2026-10-26 PREVIEW-HELI-LESSONS dropped: Kyle tests new work in the live game instead of the preview.
+- 2026-10-26 DRIVE-LESSON-ANY-COURSE merged (dev): lessons need no course ownership; lesson suites, replays and build pass.
+- 2026-10-26 RESCUE-FINISH margins merged (dev): every careful rescue ends with >=60 kg; heli suites, replays and build pass. Frame check over the avalanche before switch-on.
+- 2026-10-26 LAB-BRIAN-FIX merged (Codex): Brian answers E, his face round 3, click/keyboard/map navigation, lab-2 ON (glide camera removed); Lab, save, switch and art suites and build pass. Goes out in the next release.
+- 2026-10-26 LAB-LESSONS-WORKSHOP merged (Codex, look round 2): four Workshop lessons rebuilt (lab-2 on); workshop and Lab suites and build pass.
+- 2026-10-26 LAB-LESSONS-FLYING merged (Codex, look round 2): four Flying lessons as one-tenth scale models (lab-2 on); conflicts with Workshop in lesson-ui.css and test-repo-hygiene resolved keeping both; suites and build pass.
+- 2026-10-26 GO-LIVE-EVENING merged: driving-lessons, heli-logbook, heli-skiing, rescue on; tyre-slip dev; HELI-VIEW-FRAMES opened. Release full tier next.
+- 2026-10-26 Release (night): lessons, logbook, heli-skiing, rescue, lab-2; full tier 528/528 on 4e94aed2.
+- 2026-10-27 LAB-LESSONS-SNOW merged (Codex, look round 1): Launch angles and Ski wax rebuilt; green hangar box is a first-aid sign; Lab suites and build pass. Next release.
+- 2026-10-27 LAB-LESSONS-TUNNEL merged (Codex, look round 1, suspension fix): five Wind tunnel lessons rebuilt; three code conflicts resolved keeping both; Lab suites, build and lane tier 9/9 pass. All sixteen Lab lessons rebuilt; Snow and Tunnel go in the next release.
+- 2026-10-27 Release: Lab Snow and Wind tunnel corners; full tier 530/530 on 3dd322a4.
+- 2026-10-27 LESSON-INSTRUCTOR-ANY-CAR merged (Codex, Claude review): instructor works in all 14 cars on every lesson row, Casual and Pro; plain message if not; lane tier 34/34 and build pass in lane.
+- 2026-10-27 HELI-SUMMIT-LANDED merged (Codex, Claude review): Summit pads were outside the arrival area; panel now shows there, with waiting text during a rescue or ski drop; lane tier 42/42 and build pass in lane.
+- 2026-10-27 LESSONS-V2-RULES and LESSONS-V2-VIEW merged together (Codex, Claude review): lessons are 30 to 48 s sections with a briefing, four steps, painted line, brake zones, target box in km/h, gap, corner lights and per-corner results; lane tier 52/52 and build pass in lane.
+- 2026-10-27 Release: driving lessons second version; full tier 532/532 on 9d521bb0.
+- 27 Oct: merged LESSONS-V2-LINES (Brian's 22 second-version lesson lines, 1,883 characters; lane 97/97, build pass; 47 old lines removed).
+- 27 Oct: dropped DRIVE-LESSON-FINISH and DRIVE-LESSONS-FINISH-2; the second-version lessons (DRIVING_LESSONS 14) replaced what they checked, and LESSONS-V2-FINISH covers them.
+- 27 Oct night: merged HELI-VIEW-FRAMES (opt-in SKI_FRAMES_ONLY and RESCUE_FRAMES_ONLY recipes, no game code; lane 23/23, build pass).
+- 27 Oct night: merged QA-AUDIO-CRASH-PEAK-AGAIN (capture waits follow the audio clock, private harness shutdown capped; no limit changed; lane 20/20, build pass).
+- 27 Oct night: merged QA-SUMMIT-GLACIER-EDGE (test tools only, driver line scaled to traction, snow courses on winter tyres; lane 37/37, build pass, fingerprints unchanged).
+- 27 Oct night: merged DEEP-ROCKS-PUSH (small rocks bounce keeping 70%+ speed, large rocks slide aside, no snap to the course; lane 157/157, build pass).
+- 27 Oct night: merged LESSONS-V2-FINISH part 1 (Claude; Kyle's play: runs go to the finish, any step again; room to beat the instructor 7%/4%; Woods braking on its own road; lane 39/39, build pass).
+- 27 Oct night: merged MAP-FINISH (pilot-map switch on after Claude's look; lane 37/37, build pass).
+- 27 Oct night: merged DEEP-TRAIL-JOINTS (smooth sideways frame at joints, exact nearest; 62 m jump at the sharpest bend gone; lane 156/156, build pass).
+- 27 Oct night: merged QA-DEEP-LIFE-TIMING (process CPU time instead of wall clock, run-alone hook extended; 4 ms limit unchanged; lane 507/507, build pass).

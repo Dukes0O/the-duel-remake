@@ -11,26 +11,30 @@ import {control, choice, makeBench} from './bench-core.js';
 
 export const TARGET = Object.freeze({rangeM: 30, withinM: 2});
 const LOWER_M = 10;
+export const launchDragAcceleration = speedMs => 0.5 * airDensity(0) * SKI.standingArea / SKI.massKg * speedMs * speedMs;
 const controls = [
   control('angleDeg', 'Angle', 'degrees', 15, 75, 1, 45), control('speedMs', 'Speed', 'm/s', 5, 40, 1, 20),
   choice('air', 'Air', ['no air', 'air'], 'no air'), choice('landing', 'Landing', ['level', '10 m lower'], 'level'),
 ];
 
-export function rangeOf(angleDeg, speedMs, {air = false, lower = false} = {}) {
+export function rangeOf(angleDeg, speedMs, {air = false, lower = false, points} = {}) {
   const a = angleDeg * Math.PI / 180, drop = lower ? LOWER_M : 0, up = speedMs * Math.sin(a), along = speedMs * Math.cos(a);
   if (!air) {
     const seconds = (up + Math.sqrt(up * up + 2 * GRAVITY * drop)) / GRAVITY;
+    if (points) for (let i = 0; i <= 100; i++) { const t = seconds * i / 100; points.push([along * t, up * t - GRAVITY * t * t / 2, t]); }
     return {rangeM: along * seconds, seconds};
   }
   // Fixed-step flight under gravity and the skier's air drag, until the height reaches the landing.
   const k = 0.5 * airDensity(0) * SKI.standingArea / SKI.massKg;
   let x = 0, y = drop, vx = along, vy = up, t = 0;
+  points?.push([0, 0, 0]);
   while (t < 60) {
     const speed = Math.hypot(vx, vy), lastX = x, lastY = y;
     vx -= k * speed * vx * SKI_STEP; vy -= (GRAVITY + k * speed * vy) * SKI_STEP;
     x += vx * SKI_STEP; y += vy * SKI_STEP; t += SKI_STEP;
     // The step that crosses the landing height: place the landing on that step by interpolation.
-    if (y <= 0 && vy < 0) { const share = lastY / (lastY - y); return {rangeM: lastX + (x - lastX) * share, seconds: t - SKI_STEP * (1 - share)}; }
+    if (y <= 0 && vy < 0) { const share = lastY / (lastY - y), rangeM = lastX + (x - lastX) * share, seconds = t - SKI_STEP * (1 - share); points?.push([rangeM, -drop, seconds]); return {rangeM, seconds}; }
+    points?.push([x, y - drop, t]);
   }
   return {rangeM: x, seconds: t};
 }

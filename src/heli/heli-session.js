@@ -1,15 +1,16 @@
+import {recordLogbook, awardLogbook, logbookView, RANKS} from './heli-logbook.js';
 // The helicopter mode controller (docs/HELICOPTER.md sections 2, 6 and 9),
 // like deep-journey.js for The Deep. Pure game rules with no graphics: the
 // app gives it a course loader, the player's car, today's date and a way to
 // save the profile; HELI-HOOKS plugs it into the game loop. Same inputs and
 // the same profile give the same flight.
-import {HELI_STEP, KESTREL, createHeliState, stepHeli, heliReadout, refuelHeli, heliFingerprint} from './heli-flight.js';
+import {HELI_STEP, KESTREL, GRAVITY, heliMass, availableThrust, createHeliState, stepHeli, heliReadout, refuelHeli, heliFingerprint} from './heli-flight.js';
 import {AUTOPILOT, createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, wantsControl} from './heli-autopilot.js';
 import {CABLE, createLoad, liftCheck, carMassKg, canHook, hookRefusal, hook, release, stepCable, createWinch, reelWinch, lineLengthOf} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
   DIRT_KINDS, placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave} from './heli-save.js';
 import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobTitle, recoveryJob, recoveryJobOf, recoveryTitle, finishRecovery,
-  wreckFor} from './heli-jobs.js';
+  wreckFor, returnLoadJob, returnLoadTitle, finishReturnLoad} from './heli-jobs.js';
 import {isCourseUnlocked} from '../course-access.js';
 import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson, carryGuidance} from './heli-lessons.js';
 import {CRATE} from './heli-cable.js';
@@ -194,20 +195,24 @@ export function insideArea(area, x, y, z, ground = null) {
 // this car", {id, name} or null; left out (the driving-lessons switch off),
 // "Lesson here" is never offered.
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
-  mode = 'assisted', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
+  mode = 'assisted', difficulty = 'pro', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
   summitRunEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false,
-  drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false} = {}) {
+  drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false, logbookEnabled = false} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
   if (typeof loadCourse !== 'function') throw new Error('createHeliSession needs loadCourse(courseId)');
   const flag = {enabled: true};
   const summitOn = summitRunEnabled === true;
   // Heli-skiing needs Summit Run (its pads and runs are there). With it off nothing below runs and every result is what it was.
   const skiOn = heliSkiingEnabled === true && summitOn;
+  const skiDifficulty = difficulty === 'casual' ? 'casual' : 'pro';
   // The pilot's map (docs/PILOT_MAP.md): every place a destination, the map's legs, dearer fuel pads, jobs between
   // owned destinations and scouting. With it off, left out, every answer is what it was.
   const pilotOn = pilotMapEnabled === true;
   // The Table joins the destinations once the pilot has seen it (a getter, since the save changes).
   const dflag = pilotOn ? {summitRun: summitOn, pilotMap: true, get table() { return tableKnown(); }} : {summitRun: summitOn};
+  const logbookOn = logbookEnabled === true;
+  let logbookAirborne = false, rankCheckedSave = null;
+  const rankNotices = [];
   const skinOn = skinsEnabled === true, sflag = {enabled: skinOn};
   const wildOn = wildlifeEnabled === true, wildFlag = {enabled: wildOn, summitRun: summitOn};
   const placesNow = () => destinationsFor(dflag);
@@ -300,7 +305,38 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     }
     return result;
   };
-  const emit = event => { pending.push(event); if (lesson) lessonEvents.push(event); if (challenge) challengeEvents.push(event); return event; };
+  const emit = event => {
+    // Only successful completion events come through these paths; failures and
+    // repeated delivery attempts produce none of them.
+    const job = event.type === 'jobDone' ? (['crate', 'returnLoad'].includes(event.job?.kind) ? 'crate' : 'car')
+      : event.type === 'fireOut' ? 'fire'
+      : event.type === 'rescueDone' ? (event.kind === 'supply' ? 'crate' : 'rescue')
+      : ['skiDropDone', 'skiGroupDone'].includes(event.type) ? 'ski' : null;
+    if (logbookOn && job) commit({ok: true, profile: recordLogbook(save, {job, enabled: true})});
+    pending.push(event);
+    if (lesson) lessonEvents.push(event);
+    if (challenge) challengeEvents.push(event);
+    return event;
+  };
+  function paintChanged(kind, freshCoat) {
+    winch.length = CABLE.length;
+    for (const car of loads) delete car.lineLength;
+    skinNote = null;
+    emit({type: 'skinWorn', kind, freshCoat, fadeSeconds: HELI_SESSION.fadeSeconds});
+  }
+  function ranksAtHome() {
+    // Repainting changes mission gear. Keep it fitted until a rescue ends,
+    // including supply runs that return home for another crate.
+    if (!logbookOn || live || rankCheckedSave === save || !onHome()) return;
+    const previous = skinsOf(save).worn;
+    const result = awardLogbook(save, {enabled: true});
+    if (result.profile !== save) commit({ok: true, profile: result.profile});
+    if (skinOn && result.ranks.length && skinsOf(save).worn !== previous)
+      paintChanged(skinsOf(save).worn, result.freshCoat);
+    rankCheckedSave = save;
+    rankNotices.push(...result.ranks);
+    for (const rank of result.ranks) emit({type: 'pilotRank', rank: rank.id});
+  }
   // H2 Fire (docs/HELI_FIRE.md): only with the forest-fire switch on. Each
   // course's fire grid is built once from its own course model at the
   // helicopter's seed (loadFireCourse), never from the course being flown,
@@ -437,6 +473,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     offer = null;
     layCrates();
     if (lesson) endLesson();
+    layReturnCrate();
     // Leaving the course ends a Lab challenge, except Air and altitude, which is the flight to Summit Run with its crate.
     if (challenge && !(challenge.id === 'altitude' && kept?.labLoad)) endChallenge('left');
     if (autopilot.engaged) setAutopilotTarget(autopilot, destination === courseId ? zoneTarget() : null);
@@ -716,8 +753,12 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function handle(events) {
     for (const event of events) {
       emit(event);
-      if (event.type === 'liftoff') { fire?.liftoff({lesson: !!lesson}); rescueLifted(); }
+      if (event.type === 'liftoff') { if (logbookOn) logbookAirborne = true; fire?.liftoff({lesson: !!lesson}); rescueLifted(); }
       if (event.type === 'touchdown') {
+        if (logbookOn && logbookAirborne && event.result !== 'crash' && site?.zone &&
+          Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) <= site.zone.radius)
+          commit({ok: true, profile: recordLogbook(save, {flight: site.courseId, enabled: true})});
+        logbookAirborne = false;
         tableLanded(event);
         fire?.landed();
         rescueTouched(event);
@@ -727,7 +768,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           charge('hardLanding', HELI_MONEY.hardLanding);
           emit({type: 'radio', line: 'heli.radio.landing.hard'});
         }
-      } else if (event.type === 'crash') crashed(event.cause);
+      } else if (event.type === 'crash') { logbookAirborne = false; crashed(event.cause); }
       else if (event.type === 'lowFuel') emit({type: 'radio', line: 'heli.radio.fuel.low'});
       else if (event.type === 'engineOut') { storeFuel(); emit({type: 'radio', line: 'heli.radio.fuel.out'}); }
       else if (event.type === 'drop') {
@@ -760,6 +801,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     return crate ? carryGuidance(lesson, crate, world.ground.height(crate.x, crate.z)) : null;
   };
   const loadView = car => Object.freeze({id: car.id, x: car.x, y: car.y, z: car.z, heading: car.heading,
+    ...(car.returnJob ? {returnJob: car.returnJob} : {}),
     hooked: car.hooked, onGround: car.onGround, own: !!car.own, job: car.job ?? null});
 
   // A clean release of the job in hand's car inside the drop-off course's
@@ -795,6 +837,17 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     crate.own = false; crate.job = null; crate.crate = true;
     return crate;
   };
+  // One lesson-crate model at a time. An onward delivery makes room for
+  // this pad's crate immediately, without requiring another visit.
+  function layReturnCrate() {
+    if (!site || live?.kind === 'supply') return;
+    const job = returnLoadJob(playDay(), site.courseId, dflag);
+    if (!job || heliOf(save).returnLoads?.[job.from] === job.day || loads.some(load => load.crate) || !site.crate) return;
+    const crate = crateLoad();
+    crate.massKg = job.massKg;
+    crate.returnJob = job;
+    loads.push(crate);
+  }
   // The crate goes with the lesson, even off the cable.
   function endLesson() {
     loads = loads.filter(car => !car.crate);
@@ -944,7 +997,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // Stepping out on a drop pad: the helicopter stays where it is, untouched (no fuel is burnt), and the ski zone takes over.
   function startSkiRun(runId, setting, meta) {
     autopilot.engaged = false;
-    skiRun = createSkiRun({runId, wax: setting, group: skiFlight.kind === 'group'});
+    skiRun = createSkiRun({runId, wax: setting, group: skiFlight.kind === 'group', difficulty: skiDifficulty});
     skiMeta = meta;
     if (groupAboard) { groupAboard = false; refreshUpgrades(); }
     phase = 'skiing';
@@ -1069,6 +1122,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const r = rescueOf(missionsOf(save), rflag);
     if (!r || live) return;
     live = {...r, crates: [...r.crates]};
+    // The supply run owns the hook. Stow this pad's idle return crate so
+    // it cannot intercept H and redirect the mission; carried cargo stays.
+    if (live.kind === 'supply') loads = loads.filter(load =>
+      !(load.returnJob?.from === site.courseId && !load.hooked));
     rsite = pickSites(live);
     rdirty = false; rbank = 0; rend = null; tickSecond = null; duskSaid = false;
     renewLine();
@@ -1087,6 +1144,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const line = lineLoad();
     if (line) { line.done = true; line.holding = false; line.hold = 0; setLineWho(line, 'rescuer'); }
     loads = loads.filter(car => !car.supply);
+    layReturnCrate();
   }
 
   // A crash fails the rescue only with people aboard or on the line (section 3.4). Before the pickup it
@@ -1264,7 +1322,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     let active = null;
     if (live) {
       const r = live, here = !!rsite && site?.courseId === r.courseId, gear = gearNow(), left = clockLeft(r, gear);
-      let target = null, sites = null;
+      let target = null, sites = null, refuelFirst = false;
       if (rsite && heli) {
         if (r.kind === 'hiker' && here) {
           target = rsite.spotted ? bearingTo(rsite.clearing.x, rsite.clearing.z) : {...bearingTo(rsite.lastSeen.x, rsite.lastSeen.z), radius: SEARCH.areaRadius};
@@ -1286,6 +1344,30 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           else if (site?.courseId === HOME_COURSE) sites = Object.freeze({spots: rsite.spots});
         }
       }
+      // Summit has a planned fuel stop beside the slide. Below it, budget the
+      // climb to the slide and that truck; above it, budget pickup and handover.
+      // Use the flight model's thin-air thrust and full departure fuel/load to
+      // estimate burn, with a minute for approaches and the hold. Guidance only:
+      // the autopilot never routes through a truck.
+      let refuelStop = null;
+      if (here && r.kind === 'avalanche' && r.courseId === SUMMIT_COURSE && r.stage !== 'carry') {
+        const slide = rsite.slide, zone = site.zone, pickup = summitStands()[1]?.circle;
+        const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+        const below = pickup && distance(heli, zone) < distance(heli, pickup);
+        const end = below ? pickup : zone;
+        const top = Math.max(heli.y, world.ground.height(slide.x, slide.z) + 80);
+        const planned = {...heli, y: top, fuelKg: 330, vx: 0, vz: 20};
+        const collective = Math.min(1, (heliMass(planned) + 170) * GRAVITY / availableThrust(planned, 80));
+        const burn = KESTREL.burnIdle + KESTREL.burnPerCollective * collective;
+        const seconds = (distance(heli, slide) + distance(slide, end)) / 20
+          + Math.max(0, top - heli.y) / AUTOPILOT.maxClimb + 60;
+        refuelFirst = heli.fuelKg < seconds * burn;
+        refuelStop = below ? 'start' : 'pickup';
+        if (refuelFirst) {
+          const truckCircle = below ? zone : pickup;
+          if (truckCircle) target = bearingTo(truckCircle.x, truckCircle.z);
+        }
+      }
       const signal = r.kind === 'avalanche' && here && rsite.signal ? Object.freeze({heard: rsite.signal.heard, bar: rsite.signal.bar,
         interval: rsite.signal.interval, pitch: rsite.signal.pitch}) : null;
       // Carrying people: the way to a handover circle (the pad here, or the rescue course's own).
@@ -1294,6 +1376,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       active = Object.freeze({kind: r.kind, id: r.id, courseId: r.courseId, courseName: placesNow()[r.courseId]?.name ?? null,
         stage: r.stage, condition: r.condition, conditionName: CONDITIONS[r.condition], here,
         clockSeconds: r.clockSeconds, limit: rescueLimit(r.kind, gear, r.courseId), left, orange: left <= 60, dusk: duskOf(r),
+        ...(r.kind === 'avalanche' && r.courseId === SUMMIT_COURSE ? {refuelFirst, refuelStop} : {}),
         crates: Object.freeze([...r.crates]), cratesDown: r.crates.filter(c => c === 2).length, target, signal, sites});
     }
     return Object.freeze({
@@ -1443,6 +1526,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
 
   const api = {
     start(courseId = HOME_COURSE) {
+      logbookAirborne = false; rankNotices.length = 0; rankCheckedSave = null;
       hookHeld = false; hookReeled = false;
       skiRun = null; skiMeta = null; thinAirSaid = false; lastSkiPad = null;
       const noted = today ? commit(notePlayDay(save, today, flag)) : null;
@@ -1561,6 +1645,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       fire?.step({dt, engine: heli.engine === true, aboveGround: heli.y - world.ground.height(heli.x, heli.z), lesson: !!lesson});
       if (lesson) stepLessonNow(dt);
       if (challenge) stepChallengeNow(dt);
+      ranksAtHome();
       if (strandedOnGround()) {
         storeFuel();
         const truck = commit(fuelTruck(save, flag));
@@ -1621,6 +1706,15 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           emit({type: 'delivered', carId, courseId: site.courseId, dropped: result.event.type === 'releasedHigh'});
           offer = isCourseUnlocked(save, site.courseId) && !courseClosed(save, site.courseId, undefined, fireFlag) ? {courseId: site.courseId, carId} : null;
         } else if (held.job && inZone) deliverJob(held, result.event);
+        else if (held.returnJob && inZone && site.courseId === held.returnJob.to && result.event.type === 'released') {
+          const paid = commit(finishReturnLoad(save, held.returnJob, mode, dflag));
+          if (paid.ok) {
+            emit({type: 'jobDone', job: held.returnJob, pay: paid.paid});
+            emit({type: 'radio', line: 'heli.radio.job.done'});
+            loads = loads.filter(load => load !== held);
+            layReturnCrate();
+          }
+        }
         return result.event;
       }
       // The car nearest the hook; H elsewhere stays quiet. The worn gear sets the
@@ -1658,6 +1752,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       else if (labEnabled === true) delete hooked.lineLength;
       if (hooked.job) result.event.job = hooked.job;
       emit(result.event);
+      if (hooked.returnJob) aim(hooked.returnJob.to);
       if (hooked.own) offer = null;
       const job = hooked.job ? jobInHand() : null;
       if (job?.id === hooked.job) aim(job.to);
@@ -1888,8 +1983,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const day = playDay(), ski = skiOf(save), snow = snowOfDay(day), kit = waxKitOwned(save, skiFlags);
       const challenge = labEnabled === true && labChallengeOpen(save, 'wax').open ? Object.freeze({id: 'wax', run: 'slalom'}) : null;
       const runs = SKI_RUN_IDS.filter(id => skiRunPad(id) === pad && (id !== 'aerials' || aerialsOpen(save, skiFlags)) && !(skiFlight.kind === 'group' && id === 'powder'))
-        .map(id => Object.freeze({id, name: skiRunName(id), best: ski.best[id] ?? null, medal: ski.medal[id] ?? 0, limits: skiRunLimits(id)}));
-      return Object.freeze({pad, runs: Object.freeze(runs), snow: Object.freeze({id: snow.snow, name: snow.name, celsius: snow.celsius}),
+        .map(id => Object.freeze({id, name: skiRunName(id), best: ski.best[id] ?? null, medal: ski.medal[id] ?? 0, limits: skiRunLimits(id, skiDifficulty)}));
+      return Object.freeze({pad, difficulty: skiDifficulty, runs: Object.freeze(runs), snow: Object.freeze({id: snow.snow, name: snow.name, celsius: snow.celsius}),
         kit, waxes: kit || challenge ? WAXES : null, challenge, group: skiFlight.kind === 'group'});
     },
     // Step out and ski. wax: hard, medium or soft with the Wax kit; challenge 'wax' (the slalom only) is the Lab's wax run,
@@ -1920,7 +2015,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // Start the run again from the drop (the helicopter fetches the pilot: no fuel, no charge).
     restartSkiRun() {
       if (phase !== 'skiing' || !skiRun) return {ok: false, reason: 'There is no run to restart.'};
-      skiRun = createSkiRun({runId: skiRun.runId, wax: skiRun.wax, group: skiRun.group});
+      skiRun = createSkiRun({runId: skiRun.runId, wax: skiRun.wax, group: skiRun.group, difficulty: skiRun.difficulty});
       emit({type: 'skiRestart', run: skiRun.runId});
       return {ok: true};
     },
@@ -2111,7 +2206,11 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         price: null, buy: false, canAfford: false});
       const rows = skinRows(save).map(row => Object.freeze({...row, buy: !row.owned && !(row.need !== null && row.tally >= row.need),
         canAfford: wallet >= row.price}));
-      return Object.freeze({rows: Object.freeze([stock, ...rows]), worn, grime, dirt: dirtLevels(), note: skinNote, offers: fitOffers(),
+      const owned = skinsOf(save).owned;
+      const rankRows = logbookOn ? RANKS.filter(rank => owned.includes(rank.skin)).map(rank => Object.freeze({
+        kind: rank.skin, name: rank.name, owned: true, worn: worn === rank.skin, fresh: false, buy: false, need: null, price: null,
+      })) : [];
+      return Object.freeze({rows: Object.freeze([stock, ...rows, ...rankRows]), worn, grime, dirt: dirtLevels(), note: skinNote, offers: fitOffers(),
         wash: Object.freeze({cost: WASH.cost, grime, can: grime > 0 && wallet >= WASH.cost, hint: grime > WASH.hintAbove})});
     },
     // Buy a coat sooner: the whole price once, or nothing (heli-skins.js buySkin).
@@ -2135,13 +2234,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const result = wearSkin(save, kind, sflag);
       if (!result.ok) return result;
       commit(result);
-      if (!result.already) {
-        // A new coat brings its own gear: the winch starts again at the plain line.
-        winch.length = CABLE.length;
-        for (const car of loads) delete car.lineLength;
-        skinNote = null;
-        emit({type: 'skinWorn', kind, freshCoat: result.freshCoat, fadeSeconds: HELI_SESSION.fadeSeconds});
-      }
+      if (!result.already) paintChanged(kind, result.freshCoat);
       return result;
     },
     // The wash: 100 credits at the home pad, on the ground; all four dirts back to 0.
@@ -2175,6 +2268,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     get lesson() { return lesson ? {id: lesson.id, held: lesson.held, target: lesson.target, spot: lesson.spot} : null; },
     // Leave the mode: the fuel left in the tank is kept.
     leave() {
+      logbookAirborne = false;
       // Leaving with a rescue in hand is a failure (section 3.4).
       failRescueNow('left');
       endChallenge(null);
@@ -2186,6 +2280,13 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       phase = 'idle';
       return save;
     },
+    wearLogbookPaint(kind) {
+      if (!logbookOn || !atPad() || live || !RANKS.some(rank => rank.skin === kind))
+        return {ok: false, reason: 'Choose your rank paint at the home pad after finishing the rescue.'};
+      if (skinOn) return api.wearPaint(kind);
+      return commit(wearSkin(save, kind, {enabled: true}));
+    },
+    dismissRank() { rankNotices.shift(); },
     takeEvents() { return pending.splice(0); },
     get profile() { return save; },
     get phase() { return phase; },
@@ -2213,8 +2314,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         fire: fireInfo,
         season: fire?.season() ?? null,
         ...(skinOn ? {skins: skinsView()} : {}),
+        ...(logbookOn ? {logbook: Object.freeze({...logbookView(save), paint: skinsOf(save).worn, notice: rankNotices[0] ?? null})} : {}),
         ...(wildOn ? {survey: surveyView()} : {}),
         job: jobInHand(),
+        ...(site?.courseId !== HOME_COURSE ? {returnLoad: returnBoardView()} : {}),
         lesson: lesson ? Object.freeze({id: lesson.id, held: lesson.held, spot: lesson.spot, target: lesson.target,
           guidance: carryGuidanceNow()}) : null,
         ...(challenge ? {challenge: Object.freeze({id: challenge.id, elapsed: challenge.elapsed, briefing: challengeBriefing(challenge), props: challengeProps(challenge)})} : {}),
@@ -2241,6 +2344,12 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         loads.slice(1).map(car => `|${car.id}|${spot(car)}`).join('') + (skiRun ? `|ski|${skiRunFingerprint(skiRun)}` : '');
     },
   };
+  function returnBoardView() {
+    const job = returnLoadJob(playDay(), site?.courseId, dflag);
+    if (!job) return null;
+    return Object.freeze({...job, title: returnLoadTitle(job), payNow: jobPay(job, mode),
+      done: heliOf(save).returnLoads?.[job.from] === job.day});
+  }
   // The ski part of the view (only with heli-skiing on): the flight in hand, the group aboard, the pad under the helicopter
   // and the run being skied.
   // The run's picture without the verdict on the wax: the pick is shown, never whether it was right (the Lab's challenge).

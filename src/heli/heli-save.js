@@ -26,6 +26,14 @@ const validCourse = value => typeof value === 'string' && COURSE.some(stage => s
 // A car can stand on a course or on the Table, the pilot's air-only mesa, which is no registry course (MAP-SECRETS).
 // Calls, rescues, jobs and scars still name courses only.
 const validPlace = value => validCourse(value) || value === 'the-table';
+const copyPlainFields = value => {
+  const copy = {};
+  for (const [key, field] of Object.entries(value)) {
+    if (key === '__proto__' || field === undefined) continue;
+    try { copy[key] = structuredClone(field); } catch { /* not save data */ }
+  }
+  return copy;
+};
 const validCar = value => typeof value === 'string' && Object.hasOwn(CARS, value);
 const tenthsOf = kg => Math.max(0, Math.min(TANK_TENTHS, Math.round(Number(kg) * 10)));
 // 1.5 credits per kilogram is 0.15 credits per tenth, rounded up to a whole credit.
@@ -40,7 +48,7 @@ export function createHeli() {
 }
 
 // Every field this game knows, so only a newer game's fields are copied as they are.
-const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey', 'ski', 'map']);
+const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey', 'ski', 'map', 'returnLoads', 'logbook']);
 
 export function normalizeHeli(value) {
   if (!isObject(value) || value.version !== HELI_SAVE_VERSION) return createHeli();
@@ -60,6 +68,19 @@ export function normalizeHeli(value) {
   }
   heli.refuels = count(value.refuels);
   heli.flights = count(value.flights);
+  if (isObject(value.returnLoads)) {
+    heli.returnLoads = {};
+    for (const [place, day] of Object.entries(value.returnLoads))
+      if (validPlace(place) && place !== 'tremblant-woods' && Number.isSafeInteger(day) && day >= 0 && day <= MAX_COUNT)
+        heli.returnLoads[place] = day;
+  }
+  if (isObject(value.logbook)) {
+    const book = value.logbook, jobs = isObject(book.jobs) ? book.jobs : {};
+    heli.logbook = {...copyPlainFields(book), flights: count(book.flights),
+      jobs: {...copyPlainFields(jobs), ...Object.fromEntries(['car', 'crate', 'fire', 'rescue', 'ski'].map(k => [k, count(jobs[k])]))},
+      visited: [...new Set((Array.isArray(book.visited) ? book.visited : []).filter(id => validPlace(id) || id === 'titan-stadium'))],
+      awarded: Math.min(5, count(book.awarded))};
+  }
   normalizeFireFields(value, heli);
   normalizeSkinFields(value, heli);
   if (Object.hasOwn(value, 'ski')) { const ski = normalizeSki(value.ski); if (ski) heli.ski = ski; }
@@ -404,7 +425,8 @@ function normalizeFireFields(value, heli) {
 // The H3 fields of a stored helicopter, each only when it is there and an
 // object (section 10). Unknown skins are dropped; a worn skin that is not
 // owned reads as stock; a fresh skin is owned and not the one worn.
-const skinList = list => [...new Set((Array.isArray(list) ? list : []).filter(kind => SKIN_KINDS.includes(kind)))];
+export const RANK_SKIN_KINDS = Object.freeze(['rank-student', 'rank-private', 'rank-commercial', 'rank-mountain', 'rank-chief']);
+const skinList = list => [...new Set((Array.isArray(list) ? list : []).filter(kind => SKIN_KINDS.includes(kind) || RANK_SKIN_KINDS.includes(kind)))];
 function normalizeSkins(value) {
   const owned = skinList(value.owned);
   const worn = owned.includes(value.worn) ? value.worn : 'stock';

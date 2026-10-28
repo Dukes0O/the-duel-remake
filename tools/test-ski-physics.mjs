@@ -39,8 +39,8 @@ const settled = (world, controls, angle = 20) => {
   return skier;
 };
 
-// The switch exists and is off.
-ok(FEATURE_STATES['heli-skiing'] === 'dev', 'the heli-skiing switch is a dev switch');
+// The ski rules are released; off-path coverage remains explicit in session tests.
+ok(FEATURE_STATES['heli-skiing'] === 'on', 'the heli-skiing switch is released');
 
 // ---- Air ---------------------------------------------------------------------
 near(airDensity(0), 1.225, 1e-9, 'sea-level air');

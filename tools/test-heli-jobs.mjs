@@ -16,6 +16,11 @@ import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, isA
   RECOVERY, wreckFor, recoveryJob, recoveryTitle, recoveryJobOf, finishRecovery} from '../src/heli/heli-jobs.js';
 import {createHeliSession} from '../src/heli/heli-session.js';
 import {dispatchBoardMarkup, handleBoardAction, createDispatchBoard, atHomePad} from '../src/heli/heli-board.js';
+import {returnLoadJob, returnLoadTitle, finishReturnLoad, returnLoadPay, mapJobPay} from '../src/heli/heli-jobs.js';
+import {fuelPadAt, placeOfCourse, mapDistanceKm} from '../src/heli/pilot-map-data.js';
+import {armMissions} from '../src/heli/heli-missions.js';
+import {setMissions} from '../src/heli/heli-save.js';
+import {arrivalMarkup} from '../src/heli/heli-ui.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -80,7 +85,7 @@ function profileWith({credits = 3000, owned = [], heli = null} = {}) {
 const DAY1 = '2026-10-14', DAY2 = '2026-10-15';
 
 function newSession({profile = profileWith(), carId = 'falcone_f42', mode = 'assisted', today = DAY1, saves = null} = {}) {
-  const session = createHeliSession({profile, enabled: true, loadCourse, carId, mode, today, persist: p => saves?.push(p)});
+  const session = createHeliSession({profile, enabled: true, logbookEnabled: true, loadCourse, carId, mode, today, persist: p => saves?.push(p)});
   session.start();
   session.buyFuel();
   session.takeEvents();
@@ -289,6 +294,8 @@ function flyJob({mode = 'assisted', high = false} = {}) {
   assert.equal(released?.type, 'released'); checks++;
   const done = log.find(e => e.type === 'jobDone');
   ok(done && done.job.id === job.id, 'the job is done');
+  same(heliOf(session.profile).logbook.jobs.car, 1, 'logbook counts a delivered car once');
+  same(heliOf(session.profile).logbook.jobs.crate, 0, 'car jobs are not crate jobs');
   ok(log.some(e => e.type === 'radio' && e.line === 'heli.radio.job.done'), 'with the radio line');
   ok(!log.some(e => e.type === 'delivered'), 'the player\'s own car is not involved');
   ok(!log.some(e => e.type === 'charged'), 'a clean set-down costs no repairs');
@@ -570,6 +577,120 @@ function flyOwnCar({owned}) {
   assert.equal(finishRecovery({credits: 5, heli: createHeli()}, {enabled: true}).ok, false, 'no wreck, no job'); checks++;
   // It sits beside the day's three jobs; they do not move.
   same(dayJobs(22).map(j => j.id), ['d22-1', 'd22-2', 'd22-3'], 'the board\'s three jobs do not move');
+}
+
+// Return boards are repeatable, affordable to fly, and independent of car jobs.
+{
+  const options = {summitRun: true, pilotMap: true, table: true};
+  const placeKey = id => placeOfCourse(id)?.id ?? id;
+  const fuelPrice = (from, to) => Math.max(1.5, fuelPadAt(placeKey(from))?.pricePerKg ?? 0,
+    fuelPadAt(placeKey(to))?.pricePerKg ?? 0);
+  for (const from of Object.keys(destinationsFor(options))) for (const to of Object.keys(destinationsFor(options))) {
+    const fuel = legFuelKg(from, to, options);
+    if (fuel === null || fuel > 400) {
+      same(returnLoadPay(from, to, options), null, 'same pad and legs beyond a full tank are not offered');
+      continue;
+    }
+    const original = JOB_ROUTES.find(route => [route.from, route.to].sort().join('|') === [from, to].sort().join('|'));
+    const carPay = original?.pay ?? mapJobPay(mapDistanceKm(placeKey(from), placeKey(to)));
+    const floor = Math.max(carPay * .6, fuel * fuelPrice(from, to) * 1.25);
+    const pay = returnLoadPay(from, to, options);
+    same(pay, Math.ceil(floor / 10) * 10, `settled pay for ${from} to ${to}`);
+    ok(pay >= floor && pay < floor + 10 && pay % 10 === 0, 'round up to the next 10 without excess');
+    ok(pay > fuel * fuelPrice(from, to), 'every leg covers the dearest endpoint pump');
+    same(returnLoadPay(to, from, options), pay, 'same pay in either direction');
+  }
+  same(returnLoadPay('pacific-canyon', 'red-mesa', options), 340, 'Claude\'s premium-pump example');
+  for (let day = 0; day < 30; day++) for (const from of Object.keys(destinationsFor({...options, table: false})))
+    same(returnLoadJob(day, from, options), returnLoadJob(day, from, {...options, table: false}), 'Table discovery cannot change an advertised job');
+  for (let day = 0; day < 30; day++) for (const from of Object.keys(destinationsFor(options))) {
+    const job = returnLoadJob(day, from, options);
+    if (from === HOME_COURSE) { same(job, null, 'home keeps its dispatch board'); continue; }
+    ok(job, `a return load at ${from}`);
+    same(job, returnLoadJob(day, from, options), 'same day and place, same crate');
+    ok(job.massKg >= 300 && job.massKg <= 600, 'crate within settled weight');
+    const fuel = legFuelKg(from, job.to, options);
+    ok(fuel <= 400 && job.pay > fuel * fuelPrice(from, job.to), 'pay exceeds fuel at the dearest endpoint pump');
+    same(job.pay, returnLoadPay(from, job.to, options), 'the seeded job uses the revised leg pay');
+    same(jobPay(job, 'real'), Math.round(job.pay * 1.25), 'Real adds 25 percent');
+  }
+  const profile = profileWith({heli: {playDay: {last: DAY1, count: 4}}});
+  const job = returnLoadJob(4, 'tremblant-snow');
+  const paid = finishReturnLoad(profile, {...job, pay: 1e9});
+  same(paid.paid, job.pay, 'pay comes from the seeded job, never caller numbers');
+  same(finishReturnLoad(paid.profile, job).ok, false, 'cannot pay twice');
+  same(finishReturnLoad(profile, {...job, id: 'stale'}).ok, false, 'reject stale jobs');
+  const tomorrow = notePlayDay(paid.profile, DAY2, {enabled: true}).profile;
+  ok(finishReturnLoad(tomorrow, returnLoadJob(5, job.from)).ok, 'the next play day opens a new load');
+  ok(returnLoadTitle(job).includes('Tremblant Snow'), 'both ends named');
+}
+
+// Actual fixed-step flight: hook at Snow, cruise home, set down and pay once.
+for (const day of [1, 2]) {
+  const session = createHeliSession({profile: profileWith({owned: OWNED, heli: {fuelKg: 400,
+    playDay: {last: DAY1, count: day}}}), enabled: true, logbookEnabled: true, loadCourse, today: DAY1});
+  session.start('tremblant-snow');
+  const board = session.view().returnLoad;
+  same(board.to, day === 1 ? HOME_COURSE : 'panorama-ridge', 'exercise home and onward routes');
+  ok(board && !board.done, 'away arrival has a board');
+  ok(arrivalMarkup(session.view(), [], session.profile).includes(board.sender), 'arrival names the sender');
+  ok(arrivalMarkup(session.view(), [], session.profile).includes('credits'), 'arrival shows pay');
+  const crate = () => session.view().loads.find(load => load.returnJob);
+  run(session, 60, v => pilot(v, {x: crate().x, z: crate().z, y: crate().y + 15.2}, {speed: 4}),
+    v => Math.hypot(v.heli.x - crate().x, v.heli.z - crate().z) < 1 && Math.abs(v.heli.y - crate().y - 15.2) < .6 &&
+      Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < .5);
+  same(session.pressHook()?.type, 'hooked', 'hook the return crate');
+  same(session.destination, board.to, 'hook sets the destination');
+  const log = [];
+  carryAcross(session, log);
+  const before = session.profile.credits;
+  same(setDownAndRelease(session, log)?.type, 'released', 'set the crate down cleanly');
+  same(session.profile.credits, before + board.payNow, 'scripted return flight paid');
+  same(heliOf(session.profile).logbook.jobs.crate, 1, 'logbook counts a completed return crate once');
+  same(heliOf(session.profile).logbook.jobs.car, 0, 'return loads are not car jobs');
+  same(heliOf(session.profile).returnLoads[board.from], board.day, 'completion saved');
+  ok(!session.view().loads.some(load => load.returnJob?.id === board.id), 'finished crate removed');
+  if (day === 2) {
+    const onward = session.view().returnLoad;
+    ok(!onward.done && session.view().loads.some(load => load.returnJob?.id === onward.id), 'onward pad immediately supplies its own advertised crate');
+  }
+  session.start(board.from);
+  ok(session.view().returnLoad.done, 'revisit shows completion');
+  ok(arrivalMarkup(session.view(), [], session.profile).includes('Nothing more today. The board fills again tomorrow.'), 'done board wording');
+  ok(!session.view().loads.some(load => load.returnJob), 'no second crate today');
+}
+
+// Supply missions keep idle local return cargo off the hook until the run
+// clears, without taking cargo the pilot has already picked up.
+for (const held of [false, true]) {
+  const base = profileWith({owned: [...OWNED, 'summit-run'], heli: {fuelKg: 400, refuels: 3,
+    playDay: {last: DAY1, count: 30}}});
+  const armed = armMissions(createMissions(), {date: DAY1, playerName: 'Return QA'});
+  const profile = setMissions(base, {...armed, count: armed.need,
+    call: {kind: 'supply', id: `supply-${armed.draws}`, courseId: 'summit-run', day: 30, answered: false}}, {enabled: true}).profile;
+  const session = createHeliSession({profile, enabled: true, loadCourse, loadFireCourse: loadCourse, today: DAY1,
+    fireEnabled: true, rescueEnabled: true, summitRunEnabled: true, playerName: 'Return QA'});
+  session.start('summit-run');
+  const crate = () => session.view().loads.find(load => load.returnJob);
+  ok(crate(), 'return crate waits before answering the supply call');
+  const job = crate().returnJob;
+  if (held) {
+    run(session, 60, v => pilot(v, {x: crate().x, z: crate().z, y: crate().y + 15.2}, {speed: 4}),
+      v => Math.hypot(v.heli.x - crate().x, v.heli.z - crate().z) < 1 && Math.abs(v.heli.y - crate().y - 15.2) < .6 &&
+        Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < .5);
+    same(session.pressHook()?.type, 'hooked', 'pick up return cargo before answering');
+  }
+  const wallet = session.profile.credits;
+  ok(session.pressRadio(), 'answer the supply call');
+  same(session.view().rescue.active.kind, 'supply', 'supply mission started');
+  same(!!crate(), held, 'only idle local return cargo is stowed');
+  if (held) ok(crate().hooked && crate().returnJob.id === job.id, 'held return cargo survives unchanged');
+  same(session.view().rescue.crates.length, 3, 'all three supply crates remain available');
+  same(session.profile.credits, wallet, 'stowing cargo never changes credits');
+  same(heliOf(session.profile).returnLoads, undefined, 'stowing never completes the return job');
+  session.leave();
+  ok(crate()?.returnJob.id === job.id, 'eligible return cargo remains available when the supply mission clears');
+  same(heliOf(session.profile).returnLoads, undefined, 'clearing the mission never completes the return job');
 }
 
 console.log(`test-heli-jobs: ${checks} checks passed`);

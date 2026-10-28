@@ -53,7 +53,7 @@ const gap = (a, b) => {
 const distanceToPolygon = (polygon, point) => Math.min(...segments(polygon, true).map(([a, b]) => pointSegment(point, a, b)));
 
 // ---- The switch --------------------------------------------------------------------------
-ok(FEATURE_STATES['pilot-map'] === 'dev', 'the pilot-map switch is a dev switch');
+ok(FEATURE_STATES['pilot-map'] === 'on', 'the pilot map is released (28 October 2026)');
 
 // ---- Every course on the map once ----------------------------------------------------------
 same(new Set(PLACE_IDS).size, PLACE_IDS.length, 'place ids are unique');

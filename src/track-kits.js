@@ -15,7 +15,7 @@ export const TRACK_KIT_IDS = Object.freeze([
   'harbour-boat','ski-lodge','chairlift-tower','chairlift-cable','chairlift-chair',
   'wooden-dock','autumn-tree','autumn-tree-golden','autumn-tree-copper','snow-pine',
   'snow-ground','snow-rock','plough-bank','gallery','summit-hut','observatory','snowman','yeti',
-  'stone-stream-bridge','forest-footbridge','forest-timing-tower','ardennes-beech',
+  'stone-stream-bridge','forest-footbridge','forest-timing-tower','ardennes-beech','summit-finish',
 ]);
 const approved = new Set(TRACK_KIT_IDS);
 const owners = new WeakMap();
@@ -166,7 +166,9 @@ function placementMatrix(course, row, bounds) {
   const height=kitBaseHeight(course,row,bounds);
   if (!finite(height)) fail('placement has no rendered terrain beneath its anchor.');
   return new THREE.Matrix4().compose(
-    new THREE.Vector3(ground.x,height-bounds.min.y*row.scale[1],ground.z),
+    // Finish furniture has sampled terrain heights below its road-level origin.
+    // Preserve that authored origin instead of lifting its lowest snow mark.
+    new THREE.Vector3(ground.x,height-(row.id==='summit-finish'?0:bounds.min.y*row.scale[1]),ground.z),
     new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),ground.heading+row.heading),
     new THREE.Vector3(...row.scale));
 }

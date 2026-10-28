@@ -67,7 +67,7 @@ const sessionAt = (courseId, {pilotMap = true, profile = profileWith(), summitRu
   return session;
 };
 
-ok(FEATURE_STATES['pilot-map'] === 'dev', 'the pilot-map switch is a dev switch');
+ok(FEATURE_STATES['pilot-map'] === 'on', 'the pilot map is released (28 October 2026)');
 
 // ---- Switch off: every table and answer as it was ------------------------------------------
 // Taken from the helicopter files of the commit before this card (loaded and hashed by hand).
@@ -148,7 +148,9 @@ const placeIds = PLACES.filter(place => !place.air).map(place => place.courses[0
     for (let k = 0; k < course.samples.length; k += 37) list.push(ground.height(course.samples[k].x + 3, course.samples[k].z - 2));
     out[id] = list;
   }
-  same(fnv(JSON.stringify(out)), 4158709750, 'the ground of the six authored circuits: 10,614 heights, taken before the ground fix, unchanged');
+  // SUMMIT-GROUND-GAPS (26 October 2026): only Summit changed, 3 of its heights by at most 0.17 m under the filled hillside; the other five are identical.
+  // SUMMIT-FINISH-AREA (26 October 2026): only Summit changed, 2 heights (at most 13.2 m) where the flat car park is cut into the slope.
+  same(fnv(JSON.stringify(out)), 3139209002, 'the ground of the six authored circuits: 10,614 heights, unchanged since the Summit finish area');
 }
 
 // ---- Legs and refusals ------------------------------------------------------------------------------------

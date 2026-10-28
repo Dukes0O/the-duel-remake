@@ -129,7 +129,9 @@ test('default discovery retires consumed art but retains current Salt and explic
   assert.ok(manual.includes('yeti-fur-tint'),'fur comparison remains discoverable for explicit use');
   assert.ok(!ordinary.includes('deep-art-final-sheet'),'Deep final-art photography is not all-browser work');
   assert.ok(manual.includes('deep-art-final-sheet'),'Deep final-art photography remains discoverable for explicit use');
-  assert.deepEqual(ordinary,manual.filter(name=>!['rustwall-frame','yeti-fur-tint','deep-art-final-sheet'].includes(name)),'no other current scenario is hidden');
+  assert.ok(!ordinary.includes('heli-logbook-art'),'rank paint photography is manual-only');
+  assert.ok(manual.includes('heli-logbook-art'),'rank paint photography remains explicitly discoverable');
+  assert.deepEqual(ordinary,manual.filter(name=>!['rustwall-frame','yeti-fur-tint','deep-art-final-sheet','heli-logbook-art'].includes(name)),'no other current scenario is hidden');
 });
 
 test('all omits manual frame while explicit selection preserves its original quiet execution',async()=>{
