@@ -1502,3 +1502,18 @@ LAB-RESTORE-PASSED (walking Lab bench flow; no save change). Rule 19: since
 the last release only `src/lab/lab-view.js`, `src/lab/lab-markup.js`, the
 lab-restore recipe and one test changed; lane tier 29/29, build and the
 lab-restore and lab-fan-view browser recipes pass.
+
+## Release, 28 October 2026 morning (Claude, Release Manager)
+
+LESSON-PANEL-CLICKS, LESSONS-MORE-ROADS, SUMMIT-TERRAIN-PRELOAD,
+ARDENNES-FAR-FOREST-LIGHT, QA-HELIPAD-MAP-CANVAS, QA-LESSON-SCENARIOS,
+QA-HARNESS-CLOSE-CAP, the EARN-FINISH changes (earned-cars still off for
+players), FC-LESSON-HELI-DEEP, FC-RACE-SCENARIOS and FC-LAB-SCENARIOS. No save
+change. Full check on 06d5505e: full tier 533/533, combat balance passes;
+frame check passes on rerun, each view alone (High p95: Harbour 18.2,
+Ardennes 18.5, Summit 18.1, ski 18.2, rescue 18.3 ms; Performance at most
+18.3 ms; Summit world build 241 ms, full first-race load 7.9 s, a warning).
+Rule 19: since 06d5505e only `src/lab/lab-view.js`, `src/lab/lesson-ui.css`,
+`src/lab/lessons/snow-display.js`, scenario files and notes changed. Lane
+tiers (31/31 and 23/23) and builds pass; all 17 browser scenarios that failed
+the full check pass on the merged lane commits.

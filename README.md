@@ -2,6 +2,21 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## More lesson roads, Ardennes groves and a faster Summit, 28 October 2026
+
+### What players get now
+
+- **Four more lesson roads** at Ardennes and Summit Run.
+- **Lesson buttons take clicks while driving,** and the lesson panel no
+  longer covers the minimap.
+- **The Ardennes far forest** comes back as groves of firs.
+- **Summit Run loads faster:** the course's ground is worked out in small
+  pieces while the rest loads.
+- **The Lab reads better:** the Key idea card no longer covers the answer
+  pictures, Snow lesson captions no longer sit on top of each other, and
+  passing a tuning lesson says again that its setting is open on the Tune
+  page.
+
 ## The Lab's benches after a passed lesson, 28 October 2026
 
 ### What players get now
