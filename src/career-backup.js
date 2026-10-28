@@ -228,6 +228,15 @@ export function parseCareerExport(text) {
   }
   return archive;
 }
+// Asks the browser once to keep this site's storage instead of clearing it when space runs low.
+// The answer is only a request: a refusal, a missing feature or an error changes nothing.
+export async function requestPersistentStorage(manager = globalThis.navigator?.storage) {
+  try {
+    if (typeof manager?.persist !== 'function') return false;
+    if (typeof manager.persisted === 'function' && await manager.persisted()) return true;
+    return (await manager.persist()) === true;
+  } catch { return false; }
+}
 function requestResult(request) {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
