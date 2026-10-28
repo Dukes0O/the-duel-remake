@@ -44,3 +44,6 @@ line 308. It passed earlier on 27 October, before the pilot's map switch went on
 ## Removed
 
 Nothing.
+## Claude's review (28 October 2026, night)
+
+Two causes, both fixed at the cause: the map view no longer draws or listens without a canvas, and the test's stand-in page makes a new element per call as a real page does. No assertion changed; 36 heli and map suites pass. Verdict: merge.
