@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { after } from 'node:test';
+import { spawn } from 'node:child_process';
 import { relative, resolve } from 'node:path';
 import { assertPrivatePort, consoleIssue, parseArguments } from './browser-harness.mjs';
 import * as browserHarness from './browser-harness.mjs';
@@ -272,4 +273,25 @@ test('launch metadata follows the actual Chrome argv, not tab visibility', () =>
     {headed: false, launchMode: 'headless'});
   assert.deepEqual(metadata(browserHarness.chromeLaunchArguments('private', {headed: true})),
     {headed: true, launchMode: 'headed'});
+});
+
+test('a browser that will not close is ended with its helpers, and its pipes are released', async () => {
+  // Stand-in for Chrome: it starts a helper that shares its output pipes and then ignores every request.
+  const helperCode = "setInterval(()=>{},1000)";
+  const browserCode = "const {spawn}=require('node:child_process');const h=spawn(process.execPath,['-e',process.argv[1]],{stdio:'inherit'});console.log('helper '+h.pid);setInterval(()=>{},1000)";
+  const child = spawn(process.execPath, ['-e', browserCode, helperCode], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const helperPid = await new Promise(done => child.stdout.once('data', chunk => done(Number(/helper (\d+)/.exec(chunk.toString())?.[1]))));
+  assert.ok(helperPid > 0, 'stand-in browser reported its helper');
+  const alive = pid => { try { process.kill(pid, 0); return true; } catch { return false; } };
+  const stuckConnection = { send: () => new Promise(() => {}), close() {} };
+  const started = Date.now();
+  await browserHarness.stopBrowser(stuckConnection, { child }, 300);
+  assert.ok(Date.now() - started < 8000, 'a stuck Browser.close does not hold the harness');
+  assert.ok(child.stdout.destroyed && child.stderr.destroyed, 'the browser output pipes were released');
+  await new Promise(done => child.exitCode === null ? child.once('exit', done) : done());
+  if (process.platform === 'win32') {
+    for (let wait = 0; wait < 20 && alive(helperPid); wait++) await new Promise(done => setTimeout(done, 100));
+    assert.equal(alive(helperPid), false, 'the browser helper program was ended with the browser');
+  }
+  if (alive(helperPid)) process.kill(helperPid);
 });
