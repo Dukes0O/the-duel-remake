@@ -1405,3 +1405,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 27 Oct night: merged LESSONS-V2-FINISH part 1 (Claude; Kyle's play: runs go to the finish, any step again; room to beat the instructor 7%/4%; Woods braking on its own road; lane 39/39, build pass).
 - 27 Oct night: merged MAP-FINISH (pilot-map switch on after Claude's look; lane 37/37, build pass).
 - 27 Oct night: merged DEEP-TRAIL-JOINTS (smooth sideways frame at joints, exact nearest; 62 m jump at the sharpest bend gone; lane 156/156, build pass).
+- 27 Oct night: merged QA-DEEP-LIFE-TIMING (process CPU time instead of wall clock, run-alone hook extended; 4 ms limit unchanged; lane 507/507, build pass).
