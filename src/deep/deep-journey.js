@@ -2,7 +2,7 @@
 import { SEA_LEVEL } from '../coastal-water.js';
 import { buildDeepRamp, rampGrade, rampOpening, rampClearsScenery } from './deep-ramp.js';
 import { defineZone } from './deep-zone.js';
-import { createZoneFloor, ZONE_SPAN } from './zone-floor.js';
+import { createZoneFloor, ZONE_SPAN, ZONE_EDGE } from './zone-floor.js';
 import { createZoneFrame } from './zone-frame.js'; // DEEP-TRAIL-JOINTS
 // DEEP-EXPLORER
 import {deepRocks, driveIntoDeepRocks} from './deep-rocks.js';
@@ -117,7 +117,21 @@ export function deepProtected(duel) {
   }
   return !!rampNear(runtime.ramp, point);
 }
-function zoneCourse(runtime) {
+// The nearest point to (x, z) that has sea floor under it, kept ZONE_EDGE metres
+// from the trail at the farthest. A point already inside is returned as it is.
+// With no ground near the point at all, it is drawn back towards the car's last
+// place along the trail (the car never moves more than a fraction of a metre in a
+// step, so this only matters to a caller that asks about a faraway point).
+function holdInsideGround(floor, x, z, reference) {
+  const at = floor.sample(x, z);
+  if (at && at.distance <= ZONE_EDGE) return { x, z, edge: false };
+  const trail = at ? floor.frameAt(at.along) : Number.isFinite(reference) ? floor.frameAt(reference) : null;
+  if (!trail) return { x, z, edge: false };
+  const dx = x - trail.x, dz = z - trail.z, out = Math.hypot(dx, dz);
+  if (!(out > 0)) return { x, z, edge: false };
+  const keep = Math.min(ZONE_EDGE, at ? at.distance : ZONE_EDGE) / out;
+  return { x: trail.x + dx * keep, z: trail.z + dz * keep, edge: true };
+}function zoneCourse(runtime) {
   const floor = runtime.floor, empty = [];
   // DEEP-TRAIL-JOINTS: a frame whose world position has no jump at the trail's joints.
   const frame = createZoneFrame(floor, runtime.zone.trail);
@@ -134,8 +148,14 @@ function zoneCourse(runtime) {
   return { def: Object.freeze({ id: runtime.zone.id, kind: 'deep', theme: 'coast', airborne: true, closed: true }),
     length: floor.length, raceLength: floor.length, seed: runtime.raceCourse.seed, closed: true,
     features: { obstacles: empty, mountains: empty, shortcuts: empty, ramps: empty }, phase, at, worldAt, groundAt: worldAt,
+    // DEEP-SHALLOWS-FIX: the ground ends 90 m from the trail. A car driven past
+    // that is held at the nearest point inside it (never sent anywhere else) and
+    // the run notes that it pressed against the edge, so the car can slow and the
+    // screen can say so.
     nearest(x, z, reference) {
-      const found = frame.nearest(x, z, reference);
+      const held = holdInsideGround(floor, x, z, reference);
+      if (held.edge) runtime.edgeHit = true;
+      const found = frame.nearest(held.x, held.z, reference);
       if (!found) return { s: NaN, lateral: NaN, distance: Infinity };
       return { ...at(found.s), s: found.s, lateral: found.lateral, distance: found.distance };
     },
@@ -218,7 +238,16 @@ export function surfaceDeep(duel) {
   exit(duel);
   return true;
 }
-export function stepDeepJourney(duel, dt) {
+// DEEP-SHALLOWS-FIX: a car pressed against the edge of the ground slows, and the
+// screen says so for a few seconds after it last touched (the dive's HUD reads
+// journey.edgeSec). Nothing here moves the car.
+export const EDGE_NOTICE_SEC = 3;
+function stepSeaEdge(duel, dt) {
+  const journey = duel.state.deepJourney, runtime = duel.deepRuntime, state = duel.state;
+  if (runtime.edgeHit) { journey.edgeSec = EDGE_NOTICE_SEC; state.speedMph *= Math.exp(-3 * dt); }
+  else if (journey.edgeSec > 0) journey.edgeSec = Math.max(0, journey.edgeSec - dt);
+  runtime.edgeHit = false;
+}export function stepDeepJourney(duel, dt) {
   const journey = duel.state.deepJourney, runtime = duel.deepRuntime;
   if (!journey || duel.state.status !== 'exploring') return false;
   if (!admitted(duel)) { exit(duel); return true; }
@@ -239,6 +268,7 @@ export function stepDeepJourney(duel, dt) {
     if (journey.diveElapsed < 2) return true;
     runtime.zoneCourse = zoneCourse(runtime); duel.course = runtime.zoneCourse;
     runtime.rocks = deepRocks(runtime.zone, runtime.floor); runtime.rockEpisode = null; // DEEP-ROCKS-PUSH: fresh from the zone seed every dive
+    journey.edgeSec = 0;
     Object.assign(duel.state, { s: 0, prevS: 0, lateral: 0, prevLateral: 0,
       headingError: 0, groundHeight: SEA_LEVEL - 8 });
     changePhase(duel, 'underwater');
@@ -261,8 +291,10 @@ export function stepDeepJourney(duel, dt) {
     if(top&&top.progress<=1){exit(duel);return true;}
   }
   const explorerStart = journey.phase === 'underwater' ? duel.course.worldAt(duel.state.s, duel.state.lateral) : null; // DEEP-EXPLORER
+  runtime.edgeHit = false;
   if (!stepRampDriving(duel, dt)) duel._drive(dt); // DEEP-RAMP-2
   if (explorerStart) driveIntoDeepRocks(duel, explorerStart, dt); // DEEP-ROCKS-PUSH
+  if (explorerStart) stepSeaEdge(duel, dt); // DEEP-SHALLOWS-FIX
   duel.state.groundHeight=duel._supportAt(duel.state.s,duel.state.lateral).y;
   duel._jump(duel.state, dt, journey.elapsedSec);
   const point = duel.course.worldAt(duel.state.s, duel.state.lateral);

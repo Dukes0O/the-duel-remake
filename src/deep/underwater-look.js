@@ -7,7 +7,7 @@
 // update(camera, seconds) every frame, and passes materials through patch().
 // Nothing here touches race state.
 import * as THREE from 'three';
-import { causticStrengthAt, exposureAt, lightShaftStrengthAt } from './depth-colour.js';
+import { causticStrengthAt, exposureAt, lightShaftStrengthAt, sightFadeAt } from './depth-colour.js';
 import { lookQuality } from './look-quality.js';
 import { createLightShafts } from './light-shafts.js';
 import { createMarineSnow } from './marine-snow.js';
@@ -111,6 +111,7 @@ export function createUnderwaterLook({ renderer, scene, quality = 'high', sunDir
       uniforms.uUwCam.value.copy(camera.matrixWorld);
       const depth = Math.max(0, -camera.position.y);
       uniforms.uUwExposure.value = exposureAt(depth);
+      uniforms.uUwExt.value.set(...sightFadeAt(depth)); // DEEP-SHALLOWS-FIX: clear water in the shallows
       uniforms.uUwCaustic.value = 1;
       surface.update(camera);
       shafts.setStrength(depth < 44 ? 1 : 0);
