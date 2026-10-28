@@ -60,21 +60,15 @@ export function rockContact(rocks, start, end, heading = 0) {
 }
 
 // Move the car by a world distance, in the course frame the Deep drives in
-// (state.s along the trail, state.lateral across it). It is the inverse of
-// course.worldAt for a small step, so there is no snap to the nearest trail
-// point. The car keeps the direction it faces in the world.
+// (state.s along the trail, state.lateral across it). The Deep's course gives the
+// exact frame place of any world point (DEEP-TRAIL-JOINTS), so the car lands on
+// the pushed-out point and nowhere else. The car keeps facing the same way in
+// the world.
 function shiftCar(duel, dx, dz) {
   const state = duel.state, course = duel.course, heading = course.at(state.s).heading + state.headingError;
-  const from = course.worldAt(state.s, state.lateral), want = {x: from.x + dx, z: from.z + dz};
-  let s = state.s, lateral = state.lateral;
-  for (let i = 0; i < 4; i++) {
-    const at = course.worldAt(s, lateral), rx = want.x - at.x, rz = want.z - at.z;
-    if (Math.hypot(rx, rz) < 1e-4) break;
-    const h = course.at(s).heading, tx = Math.sin(h), tz = Math.cos(h);
-    s += rx * tx + rz * tz; lateral += rx * tz - rz * tx;
-  }
-  state.s = s; state.lateral = lateral;
-  state.headingError = wrap(heading - course.at(s).heading);
+  const from = course.worldAt(state.s, state.lateral), to = course.nearest(from.x + dx, from.z + dz, state.s);
+  state.s = to.s; state.lateral = to.lateral;
+  state.headingError = wrap(heading - course.at(to.s).heading);
 }
 
 // Put a pushed rock back on the sea floor at its new place, at the same height
