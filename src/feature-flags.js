@@ -30,6 +30,7 @@ export const FEATURE_STATES = Object.freeze({
   'forest-fire': 'on',
   // Earned cars and medal sheets (docs/EARNED_CARS.md). Off in the game.
   'earned-cars': 'dev',
+  'nissan-skyline': 'dev',
   // H4 Rescue (docs/HELI_RESCUE.md): rescues in the mission engine. Released 26 October 2026; works only with the helicopter on.
   rescue: 'on',
   // H3 Wildlife (docs/HELI_WILDLIFE.md): animals beside the road, and the wildlife count when the helicopter is on. Off in the game.

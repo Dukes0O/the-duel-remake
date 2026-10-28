@@ -1,3 +1,5 @@
+import { createSkylineVehicle } from './skyline-vehicle.js';
+import { featureFlags } from './feature-flags.js';
 import {loadSirenaWreck} from './sirena-wreck-vehicle.js';
 import { CARS } from './config.js';
 import { createClassicVehicle, CLASSIC_VEHICLE_DIMENSIONS } from './classic-vehicles.js';
@@ -14,7 +16,7 @@ import { loadSpeirlingVehicle } from './speirling-vehicle.js';
 // Nine original models are ready synchronously. Heritage and Aurora share the
 // licensed GLB, with the former F42 sport trim and the separate GT package.
 // A pending or failed import never substitutes an earlier coupe silhouette.
-export function createVehicleAssets({ loadHero = loadHeroVehicle, loadSpeirling = loadSpeirlingVehicle, loadWreck = loadSirenaWreck } = {}) {
+export function createVehicleAssets({ loadHero = loadHeroVehicle, loadSpeirling = loadSpeirlingVehicle, loadWreck = loadSirenaWreck, flags = featureFlags } = {}) {
   let hero, pending, failed = false;
   let speirling, fanPending, fanFailed = false;
   let wreck, wreckPending, wreckFailed = false;
@@ -22,7 +24,7 @@ export function createVehicleAssets({ loadHero = loadHeroVehicle, loadSpeirling 
   const earnedFactories = { ferrari_enzo: createEnzoVehicle, mclaren_f1: createMclarenF1Vehicle, bugatti_bolide: createBolideVehicle, falcone_sirena: createSirenaVehicle };
   const earnedDimensions = { ...ENZO_VEHICLE_DIMENSIONS, ...MCLAREN_F1_VEHICLE_DIMENSIONS, ...BOLIDE_VEHICLE_DIMENSIONS, ...SIRENA_VEHICLE_DIMENSIONS };
   const licensedKinds = { falcone_heritage: 'sport', aurora_gt: 'gt' };
-  const source = key => key === 'mcmurtry_speirling' ? 'speirling' : Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(KOENIGSEGG_VEHICLE_DIMENSIONS,key) ? 'ultimate' : Object.hasOwn(earnedDimensions,key) ? 'earned' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
+  const source = key => key === 'nissan_skyline_gtr_r34' ? (flags.enabled('nissan-skyline') ? 'skyline' : null) : key === 'mcmurtry_speirling' ? 'speirling' : Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(KOENIGSEGG_VEHICLE_DIMENSIONS,key) ? 'ultimate' : Object.hasOwn(earnedDimensions,key) ? 'earned' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
   function status(key, options) {
     if (isWreck(key, options)) return wreck ? 'ready' : wreckFailed ? 'error' : wreckPending ? 'loading' : 'idle';
     if (source(key) === 'speirling') return speirling ? 'ready' : fanFailed ? 'error' : fanPending ? 'loading' : 'idle';
@@ -65,8 +67,8 @@ export function createVehicleAssets({ loadHero = loadHeroVehicle, loadSpeirling 
   }
   function create(key, options = {}) {
     if (status(key, options) !== 'ready') return null;
-    const appearance = { color: CARS[key].color, accent: CARS[key].accent, ...options, key };
-    const vehicle = isWreck(key, options) ? wreck(appearance) : source(key) === 'speirling' ? speirling(appearance) : source(key) === 'classic' ? createClassicVehicle(appearance) : source(key) === 'unlock' ? createUnlockedVehicle(appearance) : source(key) === 'ultimate' ? createKoenigseggVehicle(appearance) : source(key) === 'earned' ? earnedFactories[key](appearance) : hero({ ...appearance, kind: licensedKinds[key] });
+    const appearance = { color: CARS[key]?.color, accent: CARS[key]?.accent, ...options, key };
+    const vehicle = source(key) === 'skyline' ? createSkylineVehicle(appearance) : isWreck(key, options) ? wreck(appearance) : source(key) === 'speirling' ? speirling(appearance) : source(key) === 'classic' ? createClassicVehicle(appearance) : source(key) === 'unlock' ? createUnlockedVehicle(appearance) : source(key) === 'ultimate' ? createKoenigseggVehicle(appearance) : source(key) === 'earned' ? earnedFactories[key](appearance) : hero({ ...appearance, kind: licensedKinds[key] });
     vehicle.userData.vehicleKey = key;
     vehicle.userData.vehicleSource = source(key);
     return vehicle;
