@@ -17,6 +17,7 @@ import {Course} from '../../src/course.js';
 import {ALL_CIRCUITS} from '../../src/circuits/index.js';
 import {groundFromCourse} from '../../src/heli/heli-ground.js';
 import {courseSite} from '../../src/heli/heli-session.js';
+import {KESTREL} from '../../src/heli/heli-flight.js';
 import {armMissions} from '../../src/heli/heli-missions.js';
 import {createMissions} from '../../src/heli/heli-save.js';
 import {hikerSpots, pickHiker} from '../../src/heli/heli-search.js';
@@ -113,18 +114,31 @@ async function flyTo(context, target, label, {within = 4, seconds = 240, tall = 
 }
 // Hover back from a point, up in the air, looking at it. The helicopter stands on the side toward the middle of the
 // flying area, so the edge of the area never pushes it off the line of sight.
-async function look(context, p, {back = 40, up = 30, speed = 22, within = 5, side = 0} = {}) {
+// With a `ground` (the course's own, from groundFromCourse) the view is also kept clear of trees: the first side of
+// the point, turning round it from the middle of the area, where the rotor misses every tree is used, and the
+// helicopter crosses at height and comes straight down into it. The same trees stop a player's rotor.
+async function look(context, p, {back = 40, up = 30, speed = 22, within = 5, side = 0, ground = null} = {}) {
   const area = await view(context, 'v.area');
   let dx = (area.minX + area.maxX) / 2 - p.x, dz = (area.minZ + area.maxZ) / 2 - p.z;
   const d = Math.hypot(dx, dz) || 1;
   dx /= d; dz /= d;
   const y = (await groundAt(context, p.x, p.z)) + up;
-  const goal = {x: p.x + dx * back - dz * side, z: p.z + dz * back + dx * side, y, speed, face: {x: p.x, z: p.z}};
+  let goal = {x: p.x + dx * back - dz * side, z: p.z + dz * back + dx * side, y, speed, face: {x: p.x, z: p.z}};
+  if (ground) {
+    const clear = g => !ground.rotorStrike(g.x, g.y + KESTREL.mastHeight, g.z, KESTREL.rotorDiameter / 2, {skidsY: g.y});
+    const turns = [0, 1, -1, 2, -2, 3, -3, 4].map(k => k * Math.PI / 4);
+    const found = turns.map(a => ({x: p.x + (dx * Math.cos(a) - dz * Math.sin(a)) * back, z: p.z + (dz * Math.cos(a) + dx * Math.sin(a)) * back}))
+      .map(g => ({...goal, ...g}))
+      .find(g => clear(g) && g.x > area.minX + 15 && g.x < area.maxX - 15 && g.z > area.minZ + 15 && g.z < area.maxZ - 15);
+    if (!found) throw Error(`No side of ${Math.round(p.x)}, ${Math.round(p.z)} is clear of trees for a view ${up} m up`);
+    goal = found;
+  }
   // Straight up first (never down); across at that height when it is far; then down to the view.
   const at = await view(context, '({x: v.heli.x, z: v.heli.z, y: v.heli.y, zone: v.zone.y})');
   const far = Math.hypot(at.x - goal.x, at.z - goal.z) > 250, cruise = Math.max(y, at.y);
   await flyTo(context, {x: at.x, z: at.z, y: cruise, speed: 1, sink: 4}, 'a climb', {within: 8, tall: 5});
   if (far) await flyTo(context, {x: goal.x, z: goal.z, y: cruise, speed: 30}, 'the way across', {within: 20, tall: 8});
+  if (ground) await flyTo(context, {x: goal.x, z: goal.z, y: cruise, speed, face: goal.face}, 'the top of the view', {within: Math.max(within, 6), tall: 8});
   await flyTo(context, goal, `a view of ${Math.round(p.x)}, ${Math.round(p.z)}`, {within});
 }
 // Take the picture, and a closer look at a world point beside it.
@@ -214,7 +228,7 @@ async function hiker(context) {
   await shoot(context, 'hiker-flare', 'The flare: orange smoke climbs from the hiker, who walks to the clearing');
   // Close in: the cockpit view, 26 m off and 4 m up (so the hiker clears the panel).
   const near0 = await view(context, 'v.rescue.active.sites.hiker');
-  await look(context, near0, {back: 26, up: 4, speed: 10, within: 3});
+  await look(context, near0, {back: 26, up: 4, speed: 10, within: 3, ground});
   await context.evaluate(`${app}.heliCamera = 1`);
   const near = await view(context, 'v.rescue.active.sites.hiker');
   await shoot(context, 'hiker-close', 'The hiker close up, flare in hand', {x: near.x, y: (await groundAt(context, near.x, near.z)) + 1, z: near.z}, 600);

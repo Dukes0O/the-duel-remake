@@ -51,13 +51,22 @@ export async function run(context) {
     if(s.status!=='countdown' || s.stageTimeSec!==0 || s.completedLaps!==0 || s.opponents.length!==7 || s.lapsTotal!==3)
       throw Error('Earned grid did not start a fresh Grand Prix.');
     if(app.profile.credits!==window.__qualifyingCredits)throw Error('Qualifying changed credits.');
+    window.__qualifyingBestMs=Math.round(Math.min(...s.qualifying.lapTimes)*1000);
+    return {lapTimes:[...s.qualifying.lapTimes],gridSlot:s.field.playerSlot,practiceLaps:s.qualifying.practiceLaps,steps};
+  })()`);
+  // Laps are written to the verified IndexedDB save one after another, so the
+  // second lap lands a moment after the last timed line. Wait for the real save.
+  await context.waitFor(`window.__qaApp.getLapTelemetry({eventId:'pacific-canyon',route:'route_a'}).lap?.lapMs===window.__qualifyingBestMs &&
+    window.__qaApp.getLapTelemetry({eventId:'pacific-canyon',route:'route_a'}).status==='saved'`,
+    'verified qualifying telemetry save',15000);
+  await context.evaluate(`(() => {
+    const app=window.__qaApp;
     const saved=JSON.parse(localStorage.getItem('the-duel-lap-telemetry-v1')||'{"laps":[]}');
     const lap=app.getLapTelemetry({eventId:'pacific-canyon',route:'route_a'});
     if(saved.laps.length!==1 || lap.status!=='saved' || lap.lap.playerId!==app.player.id ||
-      lap.lap.lapMs!==Math.round(Math.min(...s.qualifying.lapTimes)*1000))
+      lap.lap.lapMs!==window.__qualifyingBestMs)
       throw Error('The best clean qualifying telemetry lap was not saved.');
     window.__qualifyingPriorTelemetry=saved.laps[0];
-    return {lapTimes:s.qualifying.lapTimes,gridSlot:s.field.playerSlot,practiceLaps:s.qualifying.practiceLaps,steps};
   })()`);
   await context.waitFor(`window.__qaApp.visualReady && window.__qaApp.duel.state.field?.size===8`, 'actual full-field race renderer',30000);
   await context.screenshot('qualifying-earned-grid');
@@ -123,13 +132,20 @@ async function pitExitAcceptance(context) {
       s.lapsTotal!==3 || !app.grandPrixLapRecorder || app.profile.credits!==${pose.credits})
       throw Error('Authored pit completion did not initialize the real GP without qualifying pay.');
     if(!s.qualifying.lapTimes.every(t=>Number.isFinite(t)&&t>0))throw Error('Native pit lap clocks are invalid.');
+    window.__qualifyingBestMs=Math.round(Math.min(...s.qualifying.lapTimes)*1000);
+    return {steps,lapTimes:[...s.qualifying.lapTimes],grid:s.field.playerSlot};
+  })()`);
+  await context.waitFor(`window.__qaApp.getLapTelemetry({eventId:'pacific-canyon',route:'route_a'}).lap?.lapMs===window.__qualifyingBestMs &&
+    window.__qaApp.getLapTelemetry({eventId:'pacific-canyon',route:'route_a'}).status==='saved'`,
+    'verified authored pit telemetry save',15000);
+  await context.evaluate(`(() => {
+    const app=window.__qaApp;
     const saved=JSON.parse(localStorage.getItem('the-duel-lap-telemetry-v1')||'{"laps":[]}');
     const lap=app.getLapTelemetry({eventId:'pacific-canyon',route:'route_a'}),prior=window.__qualifyingPriorTelemetry;
     if(saved.laps.length!==2 || lap.status!=='saved' || lap.lap.playerId!==app.player.id ||
-      lap.lap.lapMs!==Math.round(Math.min(...s.qualifying.lapTimes)*1000) ||
+      lap.lap.lapMs!==window.__qualifyingBestMs ||
       JSON.stringify(saved.laps.find(row=>row.key===prior.key))!==JSON.stringify(prior))
       throw Error('Authored pit qualifying lost its best lap or the prior layout record.');
-    return {steps,lapTimes:s.qualifying.lapTimes,grid:s.field.playerSlot};
   })()`);
   await context.waitFor(`window.__qaApp.visualReady && window.__qaApp.duel.state.field?.size===8`, 'authored pit earned GP grid',30000);
   await context.screenshot('qualifying-authored-pit-grid');

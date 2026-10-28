@@ -105,7 +105,8 @@ async function install(recorder) {
           if (event.stageResult) {
             demand(event.stageResult.grandPrix === true, 'Replay settlement needs a native Grand Prix result');
             app._settleResult.call(controlApp, event.stageResult, state);
-            demand(event.stageResult.creditReward === 0 && event.stageResult.creditBalance === profile.credits,
+            // The clone may never save, so it cannot be paid: its result keeps the unpaid default.
+            demand(event.stageResult.creditReward === 0,
               'Native replay settlement changed its Grand Prix presentation contract');
           }
         } finally { for (const [key, value] of Object.entries(writes)) storage[key] = value; }
@@ -143,19 +144,36 @@ async function install(recorder) {
       demand(state.status === 'stage_result' && state.results?.grandPrix && state.results.completed &&
         state.completedLaps === 3, 'No genuine completed three-lap Grand Prix');
       demand(report.controlAdapter.saveCalls === 0 && report.controlAdapter.events > 0, 'Replay adapter save boundary failed');
-      demand(state.results.creditReward === 0 && state.results.creditBalance === app.profile.credits &&
-        control.state.results.creditReward === 0 && control.state.results.creditBalance === controlApp.profile.credits,
+      // Grand Prix pay is live (GP-CAREER-LIVE): the native result carries the real payout and the player's new balance.
+      // The no-save clone is never paid, so its result keeps the unpaid default.
+      demand(Number.isSafeInteger(state.results.creditReward) && state.results.creditReward >= 0 &&
+        state.results.creditBalance === app.profile.credits &&
+        (state.results.creditReward === 0 || state.results.creditBreakdown?.base > 0) &&
+        control.state.results.creditReward === 0,
         'Native Grand Prix reward/balance presentation differs');
       demand(JSON.stringify(state.hiddenRoadDiscovery) === JSON.stringify(app.getHiddenRoadDiscovery()) &&
         JSON.stringify(control.state.hiddenRoadDiscovery) === JSON.stringify(app.getHiddenRoadDiscovery.call(controlApp)),
         'Native discovery presentation differs');
-      report.replayDifference = [...new Set([...Object.keys(state), ...Object.keys(control.state)])]
-        .filter(key => JSON.stringify(state[key]) !== JSON.stringify(control.state[key]));
+      // Only what the real _settleResult writes into a result on this run may differ from the unpaid clone; every
+      // other result field, and every other state field, must still match exactly. The clone's _settleResult stops at
+      // the player-identity check (it has no run owner), so it writes none of these. Fields the real call cannot write
+      // on this run are NOT listed: drift scores, cup, tuned lap, Coast Cup, Yeti, medals and earned cars (earned-cars
+      // is off), notoriety and scrap (Wasteland only), and ghostRecorded (only Time Trial records a ghost).
+      const PAY_FIELDS = new Set([
+        'lapChoiceEnabled', 'raceDistance', // lap-choice block, after the identity check, completed races only
+        'creditPositionReward', // Grand Prix position pay, inside the awarded.awarded block
+        'creditReward', 'creditCharge', 'policeFineCharge', 'creditBreakdown', // the Object.assign of the settlement
+        'personalBest', 'personalBestStatus', 'previousBest', 'best', 'winStreak', 'milestoneAwards', // same Object.assign
+        'creditBalance']); // final line of _settleResult
+      const withoutPay = results => Object.fromEntries(Object.entries(results ?? {}).filter(([key]) => !PAY_FIELDS.has(key)));
+      const same = key => key === 'results' ? JSON.stringify(withoutPay(state.results)) === JSON.stringify(withoutPay(control.state.results))
+        : JSON.stringify(state[key]) === JSON.stringify(control.state[key]);
+      report.replayDifference = [...new Set([...Object.keys(state), ...Object.keys(control.state)])].filter(key => !same(key));
       report.raceFingerprint = await digest(JSON.stringify(state));
       report.replayFingerprint = await digest(JSON.stringify(control.state));
       demand(report.replayDifference.length === 0, 'Native input replay differs with audio: ' + report.replayDifference.join(', '));
       report.result = {position: state.results.position, time: state.results.stageTimeSec,
-        laps: state.completedLaps, fieldSize: state.results.fieldSize};
+        laps: state.completedLaps, fieldSize: state.results.fieldSize, creditReward: state.results.creditReward};
       const native = kind => report.native.filter(row => row.phase === 'race' && row.kind === kind).length;
       const played = id => report.cues.filter(row => row.phase === 'race' && row.id === id && row.started).length;
       demand(native('light') === 5 && played(ids[0]) === 5, 'Five native light ticks required');
