@@ -304,8 +304,9 @@ export function createPilotMapUi({host, app}) {
     <ul class="pilot-map-legend"><li><i class="owned"></i> owned</li><li><i class="grey"></i> not owned</li><li><i class="burnt"></i> burnt</li>
       <li><i class="pump"></i> fuel, credits a kg</li><li><i class="reach"></i> your tank's reach</li><li><i class="job"></i> today's jobs</li></ul>`;
   host.append(section);
-  const canvas = section.querySelector('canvas'), info = section.querySelector('.pilot-map-info');
-  const ctx = canvas.getContext?.('2d') ?? null;
+  // A page without graphics (the graphics-free tests' stand-in panel) has no canvas: the map then keeps its words and never draws.
+  const canvas = section.querySelector('canvas'), info = section.querySelector('.pilot-map-info') ?? {textContent: ''};
+  const ctx = canvas?.getContext?.('2d') ?? null;
   const card = doc.createElement('aside');
   card.className = 'pilot-map-logbook'; card.hidden = true;
   card.innerHTML = `<b>${escape(LOGBOOK_CARD.title)}</b><p>“${escape(LOGBOOK_CARD.text)}”</p>`;
@@ -337,7 +338,7 @@ export function createPilotMapUi({host, app}) {
     lastKey = null;
   };
   section.addEventListener('click', onClick);
-  canvas.addEventListener('pointermove', onMove);
+  canvas?.addEventListener('pointermove', onMove);
   return {
     // Called every frame from the helicopter panel; draws only when something on the chart changed.
     update(view) {
@@ -360,7 +361,7 @@ export function createPilotMapUi({host, app}) {
       if (disposed) return;
       disposed = true;
       section.removeEventListener('click', onClick);
-      canvas.removeEventListener('pointermove', onMove);
+      canvas?.removeEventListener('pointermove', onMove);
       section.remove(); card.remove();
     },
   };
