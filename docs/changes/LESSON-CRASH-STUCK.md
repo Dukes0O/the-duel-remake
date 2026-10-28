@@ -123,3 +123,7 @@ replay fingerprints are untouched (the lane tier guard passed as run).
 
 Nothing. The new step adds a few lines to `src/game.js` and replaces the early
 return; no old code path is left behind.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent code review, rule 17). _stepLessonCrash runs down crashFlash, invulnerableSec, damageCooldown and calloutTimer and, while impactTimer is above zero, runs _impact and _collisions with no driving, the same order the race step uses at game.js 714-736 (minus traffic, rivals and police, which lessons do not have). The result phase lets a crash finish behind the card. No physics or race code changed; the replay fingerprint guard passes. No assertion changed; six new tests, five of which failed on the old code. The Up+Left report is not a code fault: two keys are read separately and steer; at lesson 1's 174 mph start, keyboard steering is reduced by design, so a turn is gentle.
