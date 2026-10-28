@@ -7,6 +7,27 @@ import { COURSE, DEFAULT_CPU_DIFFICULTY, DRIVE, steerForYaw } from '../src/confi
 import { DEFAULT_DRIVER } from '../src/drivers.js';
 import {pitTransitTarget} from '../src/pit-lane.js';
 import {tunedGrip} from '../src/lab/lab-tune.js';
+import {buildRacingLine} from '../src/track-script.js';
+
+// A circuit's racing line is worked out for dry road. On slippery ground the car turns more slowly: its turning
+// rate falls in step with the traction, its grip limit only with the square root. At the dry line's offsets and
+// speeds a tight hairpin on snow is taken too fast and too narrow, and the car runs wide off the road. So on
+// ground with less than full traction the driver takes its line from the same builder with the car's limits
+// scaled to that traction (a bigger circle, a lower speed) and a tenth of the turning rate held in reserve.
+// Traction is rounded to 5% steps and one line is kept for each step.
+const slipperyLines = new WeakMap(), SLIP_RESERVE = .9;
+function lineForTraction(course, traction) {
+  const dry = course.racingLine, step = Math.max(.05, Math.round(traction * 20) / 20);
+  if (!(traction < .98) || !course.script || !dry.dynamics) return dry;
+  let byStep = slipperyLines.get(course);
+  if (!byStep) slipperyLines.set(course, byStep = new Map());
+  if (!byStep.has(step)) {
+    const dyn = dry.dynamics;
+    byStep.set(step, buildRacingLine(course.script, { ...dyn, lateralAccel: dyn.lateralAccel * step, yawRate: dyn.yawRate * step * SLIP_RESERVE,
+      minRadius: dyn.minRadius / step, brake: dyn.brake * step }));
+  }
+  return byStep.get(step);
+}
 
 // The stock demo driver (src/app.js) judges a corner from three points ahead
 // of the car, which is not enough to brake for a hairpin at the end of a long
@@ -15,13 +36,16 @@ import {tunedGrip} from '../src/lab/lab-tune.js';
 // scaled to the car's grip (the profile is for the grip .82 reference car) and a skill factor.
 export function useRacingLine(app, skill = .95) {
   app._driveAutopilot = function lineDriver() {
-    const d = this.duel, st = d.state, course = d.course, line = course.racingLine;
+    const d = this.duel, st = d.state, course = d.course;
     if (st.status === 'ticket') { d.ackTicket(); return; }
     if (st.status !== 'racing') return;
     if (st.impactTimer > 0) { d.setInput({ throttle: 0, brake: 0, steer: 0, boost: false }); return; }
     if (!d.diff.autoShift) d.setInput({ shiftUp: st.revs > .95, shiftDown: st.revs < .48 && st.gear > 0 });
     const v = Math.max(0, st.speedMph) * DRIVE.mphToWorld, halfWidth = course.roadHalfWidthAt(st.s);
     const transit = pitTransitTarget(course, st, st.s + Math.max(12, v * .45));
+    const surface = d._drivingSurface(st.s, st.lateral), lookTraction = d._drivingSurface(st.s + Math.max(12, v * .45), 0).traction || 1;
+    // The line is chosen for the ground just ahead; the profile already carries the traction when it was built for it.
+    const line = lineForTraction(course, lookTraction), slippery = line !== course.racingLine;
     let targetLat = transit?.lateral ?? line.offsetAt(st.s + Math.max(12, v * .45));
     for (const other of transit ? [] : st.opponents || []) {
       const ahead = d.relativeS(other.s, st.s) - st.s;
@@ -33,12 +57,11 @@ export function useRacingLine(app, skill = .95) {
     const headingTarget = Math.atan((targetLat - st.lateral) * 2.5 / Math.max(15, v));
     const look = course.at(st.s + v * .18);
     const desiredYaw = look.curvature * v + (headingTarget - st.headingError) * 6;
-    const surface = d._drivingSurface(st.s, st.lateral);
     // The profile is for a car of grip 1; speed in a corner goes with the square root of grip. A tuned car's grip
     // depends on speed (the wing), so the driver takes the grip it has at the speed the line asks for.
     const lineMph = line.speedAt(st.s) * skill / DRIVE.mphToWorld, grip = d.car.tune ? tunedGrip(d.car, lineMph, 0) : d.car.grip;
     const target = Math.min(surface.speedLimit, d.car.topSpeed * .97,
-      transit?.speedMph ?? line.speedAt(st.s) * skill * Math.sqrt(grip / .82 * (surface.traction || 1)) / DRIVE.mphToWorld);
+      transit?.speedMph ?? line.speedAt(st.s) * skill * Math.sqrt(grip / .82 * (slippery ? 1 : surface.traction || 1)) / DRIVE.mphToWorld);
     const brake = st.speedMph > target + 3 ? Math.min(1, (st.speedMph - target) / 14) : 0;
     const steer = steerForYaw(desiredYaw, {speedMph:st.speedMph,grip:d.car.tune ? tunedGrip(d.car, st.speedMph, brake) : d.car.grip,traction:surface.traction,car:d.car,brake:brake,tyreSlip:st.tyreSlipRules===true&&!st.airborne&&st.speedMph>=0});
     d.setInput({ throttle: st.speedMph < target ? 1 : 0, brake, steer, boost: false });
