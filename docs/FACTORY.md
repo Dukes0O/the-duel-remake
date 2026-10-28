@@ -2,7 +2,7 @@
 
 Kyle, 12 October 2026: the workflow review showed the work runs in a line, one
 thing after another. This plan turns it into a factory: three production
-lines (feature, course, world), each drawn as a graph of steps with arrows
+lines (feature, course, car, world), each drawn as a graph of steps with arrows
 for "must finish first". Steps without an arrow between them run at the same
 time. Shared files are named as locks, so collisions are planned instead of
 found at merge. The review page is
@@ -56,32 +56,80 @@ never build at the same time; the board shows the second as waiting.
 
 After FAC-04, a new course holds only `release`, and only at release time.
 
-## 3. The three production lines
+## 3. The production lines
 
 Arrows mean "must finish first". Steps on the same row run at the same time.
+Kyle, 28 October 2026: courses and cars are built on staged lines (below),
+not in one large job each, so stages run in parallel, reuse comes first and
+every stage has its own check.
 Who: **K** Kyle, **C** Claude, **X** Codex, **T** test machine.
 
-### Course line (template for one course; up to three run at once)
+### Course line (staged; Kyle, 28 October 2026; up to three courses at once)
+
+Each course moves through numbered stages. A stage is one card on the board,
+named `<COURSE>-C1` to `<COURSE>-C7`, made in one go by
+`node tools/new-line-cards.mjs course <id> "<Name>"`. A stage starts only when
+the stages it needs have passed their gate; stages on the same row run at once.
 
 ```mermaid
 flowchart LR
-  P[C: course packet] --> S[X: art sourcing] & R[C: track script]
-  S --> K[X: kit rounds, max 3; C judges]
-  R --> B[X: circuits/id.js + its test + scenario]
-  B --> F[X: field pace + reference lap file]
-  B & K --> D[T: drive-through check]
-  F & D & K --> FP[C: finishing pass]
-  FP --> M[X: merge, dev switch]
-  M --> N[T: full check: frames, balance]
-  N --> REL[X: release batch, lock release]
+  P[C: C0 packet] --> REF[X: C1 reference and reuse list]
+  P --> ROAD[X: C2 rough road, plain shapes]
+  REF --> KIT[X: C4 scenery rounds, max 3; C judges]
+  ROAD --> PACE[X: C3 pace and reference lap]
+  ROAD & KIT --> LAND[X: C5 landmark, water, sound]
+  PACE & LAND --> FIN[C: C6 finishing pass]
+  FIN --> REL[X then C: C7 dev switch, full check, release]
 ```
 
-- The packet settles: road layout, look target, price, field pace target,
-  sound cues, whether combat is allowed, Grand Prix membership, release order.
-- The course and its art are built in parallel; the course uses existing kits
-  until its own kits pass the round cap.
+| Stage | Done when (the gate) | Who judges |
+|---|---|---|
+| C0 packet | The checklist in section 6 is answered in `docs/courses/<id>.md` | Claude |
+| C1 reference and reuse | Photos or descriptions of the real place (landforms, trees, buildings, road edges, light) and a reuse list: which existing kits, models, textures and sounds fit, from `public/assets/`, `C:/Users/kyleb/dev/art-library/` and other courses. New art only where nothing fits | Claude |
+| C2 rough road | `src/circuits/<id>.js` drives end to end with existing kits; drive-through check clean; `test-circuits.mjs` passes; a lap feels right on the keyboard (Claude drives it) | Claude |
+| C3 pace | Field pace and the reference lap file; computer drivers finish without crashes on every difficulty | Tests |
+| C4 scenery | Reused kits placed first; new models as Blender recipes, at most three rounds, one comparison sheet per round under `docs/board/looks/<id>/` | Claude, on pictures |
+| C5 landmark, water, sound | The signature landmark, the lake or water body (fire bucket), burnable forest decision, ambient sound cues | Claude |
+| C6 finishing pass | Claude drives every sector on Casual and Pro; pictures to Kyle | Claude |
+| C7 release | Switch on behind `dev`, full check including frames, then live with the next batch | Release Manager |
+
+- Real places, original roads: a course may take its setting, landforms,
+  plants and buildings from a famous racing region; its layout is our own.
+- Reverse, dusk and night versions come almost free from a finished course
+  (`src/circuit-variants.js`); add them at C7 unless the packet says no.
 - Switch-on rehearsal: the course's own test runs with its switch on in the
   lane, so counts and signatures move with the course.
+
+### Car line (staged; Kyle, 28 October 2026; up to two cars at once)
+
+Stage cards `<CAR>-V1` to `<CAR>-V7`, made by
+`node tools/new-line-cards.mjs car <id> "<Name>"`.
+
+```mermaid
+flowchart LR
+  P[C: V0 packet] --> REF[X: V1 photo set and donor]
+  P --> NUM[X: V4 handling numbers]
+  P --> SND[X: V5 engine sound]
+  REF --> SHAPE[X: V2 shape, max 3 rounds; C judges on photos]
+  SHAPE --> PAINT[X: V3 detail, lights, paint, damage]
+  NUM & SND & PAINT --> EARN[X: V6 price or earn rule, garage and shop]
+  EARN --> REL[C: V7 drive it, frames, release]
+```
+
+| Stage | Done when (the gate) | Who judges |
+|---|---|---|
+| V0 packet | `docs/cars/<id>.md`: what the car is, class, top speed and acceleration targets against the current cars, price or earn rule, sound character | Claude |
+| V1 photos and donor | At least six reference photos (front, rear, sides, three-quarter, interior glimpse) noted by source; the closest existing model or recipe to start from | Claude |
+| V2 shape | Blender recipe; side, front, top and three-quarter compared against the photos on one sheet; at most three rounds | Claude, against photos |
+| V3 detail | Lights, wheels, mirrors, paint options, damage and dirt; triangle and texture budgets met | Claude |
+| V4 handling | Car numbers in config; lap times against two current cars on two courses inside the packet targets; replay fingerprints of other cars unchanged | Tests |
+| V5 sound | Engine and shift sounds from the sound catalog recipe; loudness matched | Claude, by listening tool numbers |
+| V6 earn or buy | Shop or earned-car rule, garage card, upgrades | Tests |
+| V7 release | Claude drives it on three courses; frame check with a field of it; live with the next batch | Release Manager |
+
+- Every real car is judged against photos, never a description.
+- Reuse first: an existing body, wheel set, interior or sound is the start
+  point when it is close.
 
 ### Feature line
 
