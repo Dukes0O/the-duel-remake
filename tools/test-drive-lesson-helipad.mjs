@@ -259,7 +259,10 @@ try {
     for (const selector of ['.heli-top', '.heli-controls', '.heli-lessons-host', '.heli-board-host', '.heli-notices', '.heli-radio',
       '.heli-shelf-host', '.heli-arrival-host', '.heli-ski-host'])
       section.kids[selector] = node(selector);
-    const ui = createHeliUi({host: {ownerDocument: {createElement: () => section}, append() {}}, app});
+    // Each createElement call gives its own element, as a page does: the first is the helicopter panel, and the pilot's map
+    // (on with its switch) makes its own section and card, which must not take over the panel's click handler.
+    let made = 0;
+    const ui = createHeliUi({host: {ownerDocument: {createElement: () => made++ === 0 ? section : node('pilot-map-' + made)}, append() {}}, app});
     ui.update();
     const lessons = section.kids['.heli-lessons-host'].innerHTML;
     ok(lessons.includes('<li class="lesson-board-group">Helicopter</li>') && lessons.includes('<li class="lesson-board-group">Driving</li>') &&
