@@ -78,3 +78,7 @@ Removed the extra browser-frame flight stepping from this scenario only.
 Recycled this task's raw browser evidence, scratch QA directory and production
 build output after recording the results. No replacement game path, asset,
 dependency or retained backup was added.
+
+## Claude's review (28 October 2026, night)
+
+Approved (rule 18 written review). Test-only change: while the scenario drives the helicopter with fixed steps, the page's own frame loop no longer also steps the flight, so screenshots and scripted steps no longer race each other. No check, tolerance or game code changed. Three passes in a row.
