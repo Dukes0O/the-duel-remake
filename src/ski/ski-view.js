@@ -141,7 +141,7 @@ export function resultCardMarkup(result, recorded = null, {waiting = true} = {})
   const rows = result.kind === 'time'
     ? `<p class="ski-big">${clockText(result.time)}</p><p>${result.missed ? `${result.missed} gate${result.missed > 1 ? 's' : ''} missed (+${result.missed * 5} s) · skied ${clockText(result.raw)}` : 'Every gate clean'}</p>`
     : `<p class="ski-big">${(Math.round(result.points * 10) / 10).toFixed(1)} pts</p>${scoreCardMarkup(result)}`;
-  const paid = recorded ? `<p class="ski-paid">${recorded.paid ? `${recorded.paid.toLocaleString('en-US')} credits` : 'No new pay'}${recorded.improved ? ' · new best' : ''}</p>` : '';
+  const paid = recorded ? `<p class="ski-paid">${recorded.paid ? `${recorded.paid.toLocaleString('en-US')} credits` : 'No new pay'}${recorded.improved ? ' · new best' : ''}${recorded.paid && Number.isFinite(recorded.balance) ? ` · you now have ${recorded.balance.toLocaleString('en-US')}` : ''}</p>` : '';
   return `<section class="ski-card ski-result ski-medal-${result.medal}" aria-label="Result"><small>RESULT</small>${rows}
     <p class="ski-medal">${medalName(result.medal).toUpperCase()}</p>${paid}${waiting ? '<p class="ski-next">Stop in the green circle at the bottom for the helicopter.</p>' : ''}</section>`;
 }
@@ -174,7 +174,7 @@ export function skiBoardMarkup(board, flight = null) {
     ? '<button type="button" class="heli-board-button" data-ski-board="hand-back">Hand it back</button>'
     : `<button type="button" class="heli-board-button" data-ski-board="${action}"${flight ? ' disabled' : ''}>Take it</button>`}</li>`;
   const rows = [row(board.drop.title, 'Your own run: fly to a drop pad and step out', 'drop', board.drop.taken)];
-  if (board.group && !board.group.done) rows.push(row(board.group.title, `${board.group.guests} guests and the guide · ${board.group.payNow.toLocaleString('en-US')} credits`, 'group', board.group.taken));
+  if (board.group && !board.group.done) rows.push(row(board.group.title, `${board.group.guests} guests and the guide · Pays ${board.group.payNow.toLocaleString('en-US')} credits${board.group.cleanBonus > 0 ? `, +${board.group.cleanBonus.toLocaleString('en-US')} for a clean delivery` : ''}`, 'group', board.group.taken));
   return `<section class="heli-board ski-board" aria-label="Heli-skiing"><span>HELI-SKIING</span><ul>${rows.join('')}</ul></section>`;
 }
 // The run menu on a drop pad (skiOffers): the day's snow, the wax pick with the Wax kit, the runs with their best and

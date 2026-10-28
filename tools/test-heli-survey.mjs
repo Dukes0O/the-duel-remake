@@ -46,7 +46,9 @@ function noClocks(fn) {
 // Every existing job-board answer (the day's jobs, the legs, the destinations
 // and the recovery job), hashed. The value was taken from heli-jobs.js as it
 // stood at RESCUE-ENGINE's merge, before the count was added.
-const BOARD_FINGERPRINT = 3895189678;
+// HELI-PAY-CONTINUE: re-recorded (was 3895189678). The board's cars, routes, titles and days are the same; the pays in it moved
+// (the three routes 300, 450, 600 to 2,000, 3,400, 2,900 and the recovery job 500 to 3,100).
+const BOARD_FINGERPRINT = 3645581706;
 function boardFingerprint() {
   const out = [];
   for (let d = 0; d < 60; d++) {
@@ -81,8 +83,8 @@ equal(SURVEY.scareHeight, 60, 'scared below 60 m'); equal(SURVEY.scareReach, 100
 equal(SURVEY.scareSeconds, 120, 'scared for 2 minutes'); equal(SURVEY.coverReach, 60, 'coverage reaches 60 m');
 same([...SURVEY.minShare], [1, 4], 'a report needs a quarter'); same([...SURVEY.animals], [6, 14], '6 to 14 animals');
 same([...SURVEY.herds], [2, 6], '2 to 6 herds'); equal(SURVEY_CELLS, 1600, '40 by 40 cells');
-same(SURVEY_PAY.bands.map(b => [b.band, b.withinPercent, b.pay]), [['good', 20, 600], ['close', 40, 400]], 'within 20% pays 600, within 40% pays 400');
-same([SURVEY_PAY.off.band, SURVEY_PAY.off.pay, SURVEY_PAY.rareBonus], ['off', 200, 100], 'further off pays 200; the rare animal adds 100');
+same(SURVEY_PAY.bands.map(b => [b.band, b.withinPercent, b.pay]), [['good', 20, 3500], ['close', 40, 2350]], 'within 20% pays 3,500, within 40% pays 2,350 (HELI-PAY-CONTINUE: was 600 and 400)');
+same([SURVEY_PAY.off.band, SURVEY_PAY.off.pay, SURVEY_PAY.rareBonus], ['off', 1150, 600], 'further off pays 1,150; the rare animal adds 600 (was 200 and 100)');
 ok(Object.isFrozen(SURVEY) && Object.isFrozen(SURVEY_PAY) && Object.isFrozen(SURVEY_TARGETS), 'the tables are frozen');
 equal(RARE_CHANCE, 1 / 5, 'the rare animal is the races\' one in five');
 for (const [courseId, rows] of Object.entries(SURVEY_TARGETS)) {
@@ -110,7 +112,7 @@ noClocks(() => {
   same(surveyJob(17, {summitRun: true}), surveyJob(17, {summitRun: true}), '...also with Summit Run');
   ok(Object.isFrozen(surveyJob(3)), 'a job is frozen');
   equal(surveyJob(17).id, 's17', 'the job id is s<day>'); equal(surveyJob(17).kind, 'survey', 'its kind is survey');
-  equal(surveyJob(17).pay, 600, 'the board shows the top band, 600');
+  equal(surveyJob(17).pay, 3500, 'the board shows the top band, 3,500');
   equal(surveyJob(-5).id, 's0', 'a bad day reads as day 0'); equal(surveyJob(NaN).id, 's0', 'NaN reads as day 0'); equal(surveyJob(2.5).id, 's0', 'a fraction reads as day 0');
   const seenSpecies = new Map(), seenCourses = new Map();
   let cougars = 0, sheep = 0;
@@ -460,8 +462,8 @@ function runWith({count, cellsCovered = SURVEY_CELLS, truth = 10, rare = false})
   equal(report(runWith({count: 3, cellsCovered: 400})).ok, true, 'a quarter: a report');
   // Pay bands (truth 10: 20% is 2, 40% is 4).
   const pay = (estimate, truth = 10, rare = false) => report(runWith({count: estimate, truth, rare}));
-  for (const [estimate, band, money] of [[10, 'good', 600], [8, 'good', 600], [12, 'good', 600], [7, 'close', 400], [13, 'close', 400],
-    [6, 'close', 400], [14, 'close', 400], [5, 'off', 200], [15, 'off', 200], [0, 'off', 200], [40, 'off', 200]]) {
+  for (const [estimate, band, money] of [[10, 'good', 3500], [8, 'good', 3500], [12, 'good', 3500], [7, 'close', 2350], [13, 'close', 2350],
+    [6, 'close', 2350], [14, 'close', 2350], [5, 'off', 1150], [15, 'off', 1150], [0, 'off', 1150], [40, 'off', 1150]]) {
     const r = pay(estimate);
     same([r.band, r.basePay, r.pay, r.line], [band, money, money, SURVEY_LINES[band]], `truth 10, estimate ${estimate}: ${band} pays ${money}`);
   }
@@ -471,9 +473,9 @@ function runWith({count, cellsCovered = SURVEY_CELLS, truth = 10, rare = false})
   }
   equal(pay(12, 6).band, 'off', 'truth 6, estimate 12: double is off');
   equal(pay(10, 14).band, 'close', 'truth 14, estimate 10: 28.6% off is close');
-  // The rare bonus: 100 more.
-  same([pay(10, 10, true).pay, pay(10, 10, true).rareBonus, pay(10, 10, true).rare], [700, 100, true], 'good + rare is 700');
-  equal(pay(7, 10, true).pay, 500, 'close + rare is 500'); equal(pay(0, 10, true).pay, 300, 'off + rare is 300');
+  // The rare bonus: 600 more (was 100).
+  same([pay(10, 10, true).pay, pay(10, 10, true).rareBonus, pay(10, 10, true).rare], [4100, 600, true], 'good + rare is 4,100');
+  equal(pay(7, 10, true).pay, 2950, 'close + rare is 2,950'); equal(pay(0, 10, true).pay, 1750, 'off + rare is 1,750');
   equal(pay(10).rareBonus, 0, 'no rare animal, no bonus');
   equal(pay(10).truth, 10, 'the report names the true number');
   // A report changes nothing.
@@ -505,7 +507,7 @@ noClocks(() => {
     equal(report.estimate, plan.truth, 'the estimate is the true number'); equal(report.band, 'good', 'good'); perfect++;
     const hasRare = plan.animals.some(a => a.role === 'rare');
     equal(report.rare, hasRare, 'the rare bonus goes with a rare animal in the square');
-    equal(report.pay, 600 + (hasRare ? 100 : 0), 'the pay');
+    equal(report.pay, 3500 + (hasRare ? 600 : 0), 'the pay');
     if (hasRare) rareSeen++;
   }
   ok(perfect === 120 && rareSeen > 5, `${rareSeen} of 120 squares held a rare animal`);
@@ -523,7 +525,7 @@ noClocks(() => {
   const plan = planSurvey(surveyJob(4), {site: SQUARE_AT_ORIGIN}), low = createSurveyRun(plan);
   const events = flyLines(low, 120, {agl: 30});
   ok(events.some(e => e.type === 'scare'), 'low flying scares animals'); equal(low.count, 0, 'and nothing is counted');
-  equal(reportSurvey(low).band, 'off', 'a spoiled count pays the least'); equal(reportSurvey(low).pay, 200, '200 credits');
+  equal(reportSurvey(low).band, 'off', 'a spoiled count pays the least'); equal(reportSurvey(low).pay, 1150, '1,150 credits');
   // The same flight at another frame rate gives the same answer.
   const slow = createSurveyRun(plan), fast = createSurveyRun(plan);
   flyLines(slow, 120, {hz: 4}); flyLines(fast, 120, {hz: 120});

@@ -17,7 +17,7 @@ the same files.
 
 | Topic | Decision |
 | --- | --- |
-| Missions (storyboard) | Hoist rescue (about 1,200 credits), avalanche beacon search (about 1,200), lost hiker before dark (about 1,000), avalanche supply run (about 1,000) |
+| Missions (storyboard) | Hoist rescue (3,850 credits), avalanche beacon search (3,850), lost hiker before dark (3,500), supply run (4,850); the storyboard's 1,200 and 1,000 were raised by HELI-PAY-CONTINUE |
 | Emergencies (14 October) | Search and rescue is another emergency beside fires, through the same radio engine |
 | How often (14 October) | The same kind may come twice in a row; what matters is that missions do not take over racing time |
 | Missed calls (storyboard) | Rescues left too long go to another pilot, and you miss the pay |
@@ -307,9 +307,9 @@ rescues.
 - **Without Summit Run** (its switch off), the same run goes from the home
   pad to the yard by Tremblant Snow's lodge, with crates of 400, 500 and 900
   kg: snow has shut the road there instead.
-- **Pay.** 300 credits a crate, and 100 more when all three are down before
-  the clock ends (1,000 in all). A crate released from higher than 1 m
-  counts but pays 150 less (H1's drop rule, applied to the pay instead of a
+- **Pay.** 1,450 credits a crate, and 500 more when all three are down before
+  the clock ends (4,850 in all; was 300, 100 and 1,000). A crate released from higher than 1 m
+  counts but pays 750 less (H1's drop rule, applied to the pay instead of a
   repair).
 
 ### 5.5 Summit Run, a new destination
@@ -358,7 +358,7 @@ each skin to it without changing these rescues.
 | --- | --- | --- | --- |
 | Rescue line and harness | H4, for everyone | A rescuer rides H1's 15 m cable | (the base kit) |
 | Winch | Medevac skin | Reels the line from 5 to 40 m at 1.5 m/s, so you can hover higher above trees and cliffs | The fixed 15 m line: hover closer |
-| Stretcher | Medevac skin | The casualty lies on a stretcher: a bump hurts only above 8 m/s, and two steps only above 14 m/s; hoist rescues pay 200 more | A harness |
+| Stretcher | Medevac skin | The casualty lies on a stretcher: a bump hurts only above 8 m/s, and two steps only above 14 m/s; hoist rescues pay 650 more (was 200) | A harness |
 | Searchlight | Search and rescue skin | The hiker search runs 8 minutes on into the night | The search ends at dark |
 | Heat camera | Search and rescue skin | The panel shows warm people within 150 m: the hiker under trees, a buried skier within 30 m | The flare and the beacon only |
 | Avalanche receiver | H4, for everyone | Hears the beacon (section 5.2) | (the base kit) |

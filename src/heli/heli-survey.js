@@ -12,6 +12,7 @@
 // off the board has no count and nothing is paid.
 import {makeRng} from '../rng.js';
 import {heliHash} from './heli-save.js';
+import {HELI_PAYS} from './heli-pay.js';
 
 // Every number of section 4, once. Metres and seconds.
 export const SURVEY = Object.freeze({
@@ -38,11 +39,11 @@ export const SURVEY = Object.freeze({
 // same in Assisted and Real.
 export const SURVEY_PAY = Object.freeze({
   bands: Object.freeze([
-    Object.freeze({band: 'good', withinPercent: 20, pay: 600}),
-    Object.freeze({band: 'close', withinPercent: 40, pay: 400}),
+    Object.freeze({band: 'good', withinPercent: 20, pay: HELI_PAYS.survey.good}),
+    Object.freeze({band: 'close', withinPercent: 40, pay: HELI_PAYS.survey.close}),
   ]),
-  off: Object.freeze({band: 'off', pay: 200}),
-  rareBonus: 100,
+  off: Object.freeze({band: 'off', pay: HELI_PAYS.survey.off}),
+  rareBonus: HELI_PAYS.survey.rare,
 });
 
 // What can be asked for, by course (section 4). Every course has equal

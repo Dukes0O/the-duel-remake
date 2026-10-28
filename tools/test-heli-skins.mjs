@@ -286,7 +286,7 @@ check('the stock paint has no gear and gives the base kit exactly', () => {
 // What each skin's gear must set, from section 5.3.
 const GEAR_EXPECTED = {
   fire: {litreGauge: true, dropSight: true},
-  medevac: {lineMin: 5, lineMax: 40, reelSpeed: 1.5, bumpHurtAbove: 8, bumpTwoStepsAbove: 14, hoistPayBonus: 200},
+  medevac: {lineMin: 5, lineMax: 40, reelSpeed: 1.5, bumpHurtAbove: 8, bumpTwoStepsAbove: 14, hoistPayBonus: 650},
   rescue: {searchNightMinutes: 8, heatRange: 150, heatBuriedRange: 30, heatAnimals: true},
   wildlife: {scareDistance: 50, countReach: 100},
   supply: {crates: 2, hookReach: 6.7},
@@ -318,7 +318,7 @@ check('the gear numbers match the packet one by one', () => {
   assert.equal(worn('medevac').reelSpeed, 1.5);
   assert.equal(worn('medevac').bumpHurtAbove, 8);
   assert.equal(worn('medevac').bumpTwoStepsAbove, 14);
-  assert.equal(worn('medevac').hoistPayBonus, 200);
+  assert.equal(worn('medevac').hoistPayBonus, 650); // HELI-PAY-CONTINUE: a sixth of a hoist rescue (was 200)
   assert.equal(worn('rescue').searchNightMinutes, 8);
   assert.equal(worn('rescue').heatRange, 150);
   assert.equal(worn('rescue').heatBuriedRange, 30);

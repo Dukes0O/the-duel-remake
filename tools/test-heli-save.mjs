@@ -313,7 +313,7 @@ check('H2 fields are optional: a new or H1 helicopter gains none', () => {
   assert.deepEqual([...MISSION_KINDS], ['fire']);
   assert.deepEqual([...BADGES], ['firefighter']);
   assert.deepEqual([...BUCKET_DAMAGE], ['whole', 'dented', 'torn', 'ruined']);
-  assert.deepEqual([FIRE_MONEY.firePay, ...FIRE_MONEY.bucketRepair], [1500, 0, 100, 250, 600]);
+  assert.deepEqual([FIRE_MONEY.firePay, ...FIRE_MONEY.bucketRepair], [6300, 0, 100, 250, 600]); // HELI-PAY-CONTINUE: the fire pays 6,300 (was 1,500); repairs are unchanged
 });
 
 check('the H2 fields normalize: counts, cells, courses, kinds and badges', () => {
@@ -399,9 +399,9 @@ const fireDay = (credits, extra = {}) => withHeli({playDay: {last: '2026-10-20',
   fire: {id: 'fire-4', courseId: 'tremblant-woods', seed: 3, startDay: 8, steps: 6, engineSeconds: 400, burning: [], burnt: [7, 8], damp: []},
   ...extra}, credits);
 
-check('a fire put out pays 1,500 once, leaves a scar and counts toward the badge, in one step', () => {
+check('a fire put out pays 6,300 once, leaves a scar and counts toward the badge, in one step', () => {
   const out = putOutFire(fireDay(100), 'fire-4', on);
-  assert.deepEqual([out.ok, out.paid, out.firstBadge, out.firesOut, out.profile.credits], [true, 1500, true, 1, 1600]);
+  assert.deepEqual([out.ok, out.paid, out.firstBadge, out.firesOut, out.profile.credits], [true, 6300, true, 1, 6400]);
   const heli = heliOf(out.profile);
   assert.equal(heli.fire, null);
   assert.deepEqual(heli.scars, [{courseId: 'tremblant-woods', day: 9, cells: [7, 8]}]);
@@ -413,8 +413,8 @@ check('a fire put out pays 1,500 once, leaves a scar and counts toward the badge
   const second = putOutFire(fireDay(100, {missions: {...createMissions(), firesOut: 2, badges: ['firefighter']}}), 'fire-4', on);
   assert.deepEqual([second.firstBadge, second.firesOut, heliOf(second.profile).missions.badges], [false, 3, ['firefighter']]);
   const rich = putOutFire(fireDay(999_999_000), 'fire-4', on);
-  assert.deepEqual([rich.profile.credits, rich.paid], [1_000_000_000, 1000]);
-  assert.equal(putOutFire(deepFreeze({...fireDay(0), credits: NaN}), 'fire-4', on).profile.credits, 1500);
+  assert.deepEqual([rich.profile.credits, rich.paid], [1_000_000_000, 1000]); // capped: only 1,000 fits under the limit
+  assert.equal(putOutFire(deepFreeze({...fireDay(0), credits: NaN}), 'fire-4', on).profile.credits, 6300);
 });
 
 check('a fire lost burns its course today and leaves the save, with no pay and no charge', () => {

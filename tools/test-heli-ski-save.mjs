@@ -23,18 +23,18 @@ function memoryStorage(initial = {}) {
     setItem: (key, value) => values.set(String(key), String(value)), removeItem: key => values.delete(String(key)), clear: () => values.clear()};
 }
 
-test('the rules match the design and the ski zones: five runs, 150 + 150 + 200 for medals, 100 a stash, the zone\'s three stashes', () => {
+test('the rules match the design and the ski zones: five runs, 1,050 + 1,050 + 1,400 for medals, 700 a stash, the zone\'s three stashes', () => {
   assert.deepEqual([...SKI_RUNS], SKI_RUN_IDS);
-  assert.deepEqual([...SKI_MONEY.medalTotal], [0, 150, 300, 500]);
-  assert.equal(SKI_MONEY.stash, 100);
+  assert.deepEqual([...SKI_MONEY.medalTotal], [0, 1050, 2100, 3500]); // HELI-PAY-CONTINUE: was 0, 150, 300, 500
+  assert.equal(SKI_MONEY.stash, 700);
   assert.deepEqual([...SKI_STASHES].sort(), skiZone('powder').stashes.map(stash => stash.id).sort(), 'the stash names are the powder zone\'s own');
   // Four runs give a medal and one is free: the save agrees with the scoring.
   assert.deepEqual(SKI_RUNS.filter(run => RUN_KINDS[run] !== 'free'), ['slalom', 'gs', 'moguls', 'aerials']);
-  assert.equal(SKI_RUNS.filter(run => RUN_KINDS[run] !== 'free').length * SKI_MONEY.medalTotal[3], 2000);
+  assert.equal(SKI_RUNS.filter(run => RUN_KINDS[run] !== 'free').length * SKI_MONEY.medalTotal[3], 14000);
   assert.equal(RUN_KINDS.powder, 'free');
   const sheet = readFileSync(fileURLToPath(new URL('../docs/HELI_SKIING.md', import.meta.url)), 'utf8');
-  assert.ok(/150, then 150 more for silver, then 200 more for gold \(500 in all per run\)/.test(sheet), 'the design says the same pay');
-  assert.ok(sheet.includes('| Each powder stash found | 100 |'));
+  assert.ok(/1,050, then 1,050 more for silver, then 1,400 more for gold \(3,500 in all per run\)/.test(sheet), 'the design says the same pay');
+  assert.ok(sheet.includes('| Each powder stash found | 700 |'));
 });
 
 test('old saves read as nothing skied, and reading never adds a ski record', () => {
@@ -57,30 +57,30 @@ test('old saves read as nothing skied, and reading never adds a ski record', () 
   assert.equal(Object.hasOwn(heliOf(rich()), 'ski'), false);
 });
 
-test('a medal pays once, and only the difference up to it: 150, 150 more, 200 more', () => {
+test('a medal pays once, and only the difference up to it: 1,050, 1,050 more, 1,400 more', () => {
   let profile = deepFreeze(rich(1000));
   const bronze = recordRun(profile, 'slalom', {time: 28.5, medal: 1}, ON);
-  assert.equal(bronze.ok, true); assert.equal(bronze.paid, 150); assert.equal(bronze.profile.credits, 1150); assert.equal(bronze.raised, true);
+  assert.equal(bronze.ok, true); assert.equal(bronze.paid, 1050); assert.equal(bronze.profile.credits, 2050); assert.equal(bronze.raised, true);
   const again = recordRun(bronze.profile, 'slalom', {time: 28.4, medal: 1}, ON);
-  assert.equal(again.paid, 0, 'bronze again pays nothing'); assert.equal(again.profile.credits, 1150); assert.equal(again.improved, true, 'but the better time is kept');
+  assert.equal(again.paid, 0, 'bronze again pays nothing'); assert.equal(again.profile.credits, 2050); assert.equal(again.improved, true, 'but the better time is kept');
   const silver = recordRun(again.profile, 'slalom', {time: 26, medal: 2}, ON);
-  assert.equal(silver.paid, 150); assert.equal(silver.profile.credits, 1300);
+  assert.equal(silver.paid, 1050); assert.equal(silver.profile.credits, 3100);
   const gold = recordRun(silver.profile, 'slalom', {time: 24, medal: 3}, ON);
-  assert.equal(gold.paid, 200); assert.equal(gold.profile.credits, 1500);
+  assert.equal(gold.paid, 1400); assert.equal(gold.profile.credits, 4500);
   const worse = recordRun(gold.profile, 'slalom', {time: 30, medal: 1}, ON);
   assert.equal(worse.paid, 0); assert.equal(worse.raised, false); assert.equal(worse.improved, false);
-  assert.equal(worse.profile.credits, 1500); assert.deepEqual(skiOf(worse.profile), {...emptySki(), best: {slalom: 24}, medal: {slalom: 3}, paid: {slalom: 3}});
+  assert.equal(worse.profile.credits, 4500); assert.deepEqual(skiOf(worse.profile), {...emptySki(), best: {slalom: 24}, medal: {slalom: 3}, paid: {slalom: 3}});
   assert.equal(recordRun(worse.profile, 'slalom', {time: 23, medal: 3}, ON).paid, 0, 'gold again pays nothing');
-  // Straight to gold pays all 500 at once, once.
+  // Straight to gold pays all 3,500 at once, once.
   const direct = recordRun(deepFreeze(rich(0)), 'gs', {time: 70, medal: 3}, ON);
-  assert.equal(direct.paid, 500); assert.equal(direct.profile.credits, 500);
+  assert.equal(direct.paid, 3500); assert.equal(direct.profile.credits, 3500);
   assert.equal(recordRun(direct.profile, 'gs', {time: 69, medal: 3}, ON).paid, 0);
-  // Each run pays on its own; the four runs together pay 2,000.
+  // Each run pays on its own; the four runs together pay 14,000.
   let total = rich(0);
   for (const [run, result] of [['slalom', {time: 24, medal: 3}], ['gs', {time: 70, medal: 3}], ['moguls', {points: 85, medal: 3}], ['aerials', {points: 82, medal: 3}]]) {
-    const out = recordRun(total, run, result, ON); assert.equal(out.paid, 500, run); total = out.profile;
+    const out = recordRun(total, run, result, ON); assert.equal(out.paid, 3500, run); total = out.profile;
   }
-  assert.equal(total.credits, 2000);
+  assert.equal(total.credits, 14000);
   // No medal: the finish is kept as the best and nothing is paid.
   const none = recordRun(rich(7), 'slalom', {time: 40, medal: 0}, ON);
   assert.equal(none.paid, 0); assert.equal(none.profile.credits, 7); assert.deepEqual(skiOf(none.profile).best, {slalom: 40}); assert.deepEqual(skiOf(none.profile).medal, {});
@@ -98,15 +98,15 @@ test('the best is the lowest time on a timed run and the highest score on a judg
   assert.equal(zero.ok, true); assert.deepEqual(skiOf(zero.profile).best, {}, 'a zero score is not stored as a best');
 });
 
-test('a stash pays 100 once, for each of the three, and nothing else is a stash', () => {
+test('a stash pays 700 once, for each of the three, and nothing else is a stash', () => {
   let profile = deepFreeze(rich(50));
   const first = findStash(profile, 'north-shelf', ON);
-  assert.equal(first.found, true); assert.equal(first.paid, 100); assert.equal(first.profile.credits, 150);
+  assert.equal(first.found, true); assert.equal(first.paid, 700); assert.equal(first.profile.credits, 750);
   const second = findStash(first.profile, 'north-shelf', ON);
   assert.equal(second.found, false); assert.equal(second.paid, 0); assert.equal(second.profile, first.profile);
   profile = first.profile;
   for (const id of ['ridge-pocket', 'lower-meadow']) profile = findStash(profile, id, ON).profile;
-  assert.equal(profile.credits, 350); assert.deepEqual(skiOf(profile).stashes, ['north-shelf', 'ridge-pocket', 'lower-meadow']);
+  assert.equal(profile.credits, 2150); assert.deepEqual(skiOf(profile).stashes, ['north-shelf', 'ridge-pocket', 'lower-meadow']);
   for (const junk of ['stash-4', '', '__proto__', 'constructor', undefined, null, 7, {}, ['north-shelf'], 'tremblant-bowl']) {
     const out = findStash(profile, junk, ON);
     assert.equal(out.ok, false, String(junk)); assert.equal(out.profile, profile);
@@ -125,17 +125,17 @@ test('with the switch off nothing is recorded and nothing is paid', () => {
 test('the medals the ski rules give are the ones that pay: guide times and judged points', () => {
   const guide = zoneGuide('slalom').time, limits = medalTimes(guide);
   let profile = rich(0);
-  for (const [time, medal, paid] of [[limits.bronze, 1, 150], [limits.silver, 2, 150], [limits.gold, 3, 200]]) {
+  for (const [time, medal, paid] of [[limits.bronze, 1, 1050], [limits.silver, 2, 1050], [limits.gold, 3, 1400]]) {
     assert.equal(timedMedal(time, guide), medal);
     const out = recordRun(profile, 'slalom', {time, medal: timedMedal(time, guide)}, ON);
     assert.equal(out.paid, paid, `medal ${medal}`); profile = out.profile;
   }
-  assert.equal(profile.credits, 500);
+  assert.equal(profile.credits, 3500);
   assert.deepEqual([50, 65, 80].map(points => judgedMedal(points)), [1, 2, 3]);
   assert.deepEqual(medalLimits('aerials'), {kind: 'points', ...SCORE.judgedMedals});
   let judged = rich(0);
   for (const points of [50, 65, 80]) judged = recordRun(judged, 'aerials', {points, medal: judgedMedal(points)}, ON).profile;
-  assert.equal(judged.credits, 500);
+  assert.equal(judged.credits, 3500);
 });
 
 test('a result that is not a result is refused, and powder has none', () => {
@@ -156,12 +156,12 @@ test('a result that is not a result is refused, and powder has none', () => {
 
 test('credits stop at the save\'s cap, and a bad wallet reads as nothing', () => {
   const near = recordRun(rich(999_999_900), 'gs', {time: 70, medal: 3}, ON);
-  assert.equal(near.profile.credits, 1_000_000_000); assert.equal(near.paid, 500, 'the medal is still marked paid');
+  assert.equal(near.profile.credits, 1_000_000_000); assert.equal(near.paid, 3500, 'the medal is still marked paid');
   assert.equal(skiOf(near.profile).paid.gs, 3);
   const junk = recordRun({credits: 'lots'}, 'gs', {time: 70, medal: 1}, ON);
-  assert.equal(junk.profile.credits, 150);
+  assert.equal(junk.profile.credits, 1050);
   const stash = findStash({credits: -5}, 'north-shelf', ON);
-  assert.equal(stash.profile.credits, 100);
+  assert.equal(stash.profile.credits, 700);
 });
 
 test('whatever is stored, the ski record reads lawfully, the same twice, and keeps what a later game wrote', () => {
@@ -217,7 +217,7 @@ test('the record survives the profile\'s own save and load, and recording never 
   profile = findStash(profile, 'ridge-pocket', ON).profile;
   const {ski, ...rest} = profile.heli;
   assert.deepEqual(rest, flown.heli, 'every other helicopter field is as it was');
-  assert.equal(profile.credits, 300 + 300 + 100);
+  assert.equal(profile.credits, 300 + 2100 + 700);
   const storage = memoryStorage();
   assert.ok(saveProfile(profile, storage));
   const loaded = loadProfile(storage);
@@ -243,14 +243,14 @@ test('a flood of a later game\'s names never displaces ours, so nothing pays twi
   let profile = deepFreeze({...rich(0), heli: {...createHeli(), ski: full}});
   for (let round = 0; round < 3; round++) {
     const gold = recordRun(profile, 'slalom', {time: 20, medal: 3}, ON), stash = findStash(gold.profile, 'north-shelf', ON);
-    assert.equal(gold.paid, round === 0 ? 500 : 0, `round ${round}: gold pays once`);
-    assert.equal(stash.paid, round === 0 ? 100 : 0, `round ${round}: the stash pays once`);
+    assert.equal(gold.paid, round === 0 ? 3500 : 0, `round ${round}: gold pays once`);
+    assert.equal(stash.paid, round === 0 ? 700 : 0, `round ${round}: the stash pays once`);
     profile = deepFreeze(JSON.parse(JSON.stringify(stash.profile)));
   }
   const ski = skiOf(profile);
   assert.equal(ski.paid.slalom, 3); assert.equal(ski.medal.slalom, 3); assert.ok(ski.stashes.includes('north-shelf')); assert.equal(ski.best.slalom, 20);
   assert.equal(Object.keys(ski.paid).filter(name => name !== 'slalom').length, 64, 'only the later game\'s names are capped');
-  assert.equal(profile.credits, 600);
+  assert.equal(profile.credits, 4200);
 });
 
 test('a later version written as text or a fraction is still a later version, and a record that cannot be copied is not dropped', () => {

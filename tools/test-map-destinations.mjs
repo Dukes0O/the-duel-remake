@@ -11,7 +11,7 @@ import {createProfile, normalizeProfile} from '../src/progression.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {heliOf, buyFuel, HELI_MONEY} from '../src/heli/heli-save.js';
 import {
-  HELI_DESTINATIONS, HELI_DESTINATIONS_WITH_SUMMIT, HOME_COURSE, JOB_ROUTES, JOBS_PER_DAY, MAP_JOB_PAY,
+  HELI_DESTINATIONS, HELI_DESTINATIONS_WITH_SUMMIT, HOME_COURSE, JOB_ROUTES, JOBS_PER_DAY,
   destinationsFor, isDestination, legFuelKg, bearing, dayJobs, jobTitle, mapJobPay,
 } from '../src/heli/heli-jobs.js';
 import {createHeliSession, courseSite, SEA_LEVEL, HELI_SESSION} from '../src/heli/heli-session.js';
@@ -72,7 +72,8 @@ ok(FEATURE_STATES['pilot-map'] === 'on', 'the pilot map is released (28 October 
 // ---- Switch off: every table and answer as it was ------------------------------------------
 // Taken from the helicopter files of the commit before this card (loaded and hashed by hand).
 {
-  const BEFORE = {jobs: 471279539, legs: 3081688097, bearings: 3418701639, titles: 516794368, tables: 4158423665};
+  // HELI-PAY-CONTINUE: only `jobs` moved (471279539 before), because the three routes' pay did; the legs, bearings, titles and tables are the old hashes.
+  const BEFORE = {jobs: 3599930983, legs: 3081688097, bearings: 3418701639, titles: 516794368, tables: 4158423665};
   const ids = ['tremblant-woods', 'tremblant-snow', 'panorama-ridge', 'summit-run', 'ardennes-forest', 'nope'];
   const jobs = []; for (let day = 0; day < 100; day++) jobs.push(dayJobs(day));
   const legs = []; for (const a of ids) for (const b of ids) legs.push([legFuelKg(a, b), legFuelKg(a, b, {summitRun: true})]);
@@ -317,8 +318,9 @@ const placeIds = PLACES.filter(place => !place.air).map(place => place.courses[0
 
 // ---- Jobs between owned destinations --------------------------------------------------------------------------------------
 {
-  same([4.99, 5, 11.99, 12, 19.99, 20, 250].map(mapJobPay), [300, 450, 450, 600, 600, 800, 800], 'job pay by distance: 300 under 5 km, 450 from 5, 600 from 12, 800 from 20');
-  same(MAP_JOB_PAY.map(row => row.pay), [300, 450, 600, 800], 'the four pays');
+  // HELI-PAY-CONTINUE: a job pays the minutes it takes at the race rate (was 300 to 800 by distance band), so a farther leg pays more.
+  same(['tremblant-snow', 'panorama-ridge'].map(to => mapJobPay('tremblant-woods', to)), [2000, 2900], 'the original legs keep their pay');
+  ok(mapJobPay('tremblant-woods', 'pacific-canyon') > 2000, 'a leg farther than Tremblant Snow pays more');
   const dests = destinationsFor({summitRun: true, pilotMap: true});
   const classic = new Set(JOB_ROUTES.map(r => `${r.from}>${r.to}`));
   const everyone = Object.keys(dests);
@@ -339,7 +341,7 @@ const placeIds = PLACES.filter(place => !place.air).map(place => place.courses[0
     same(dayJobs(day, {pilotMap: true, owned: everyone}), jobs, `day ${day}: the same every time`);
     jobs.forEach((job, i) => {
       if (job.id !== `d${day}-${i + 1}` || !dests[job.from] || !dests[job.to] || job.from === job.to) assert.fail(`day ${day} job ${i}`);
-      const expectPay = classic.has(`${job.from}>${job.to}`) ? JOB_ROUTES.find(r => r.from === job.from && r.to === job.to).pay : mapJobPay(mapDistanceKm(placeOfCourse(job.from).id, placeOfCourse(job.to).id));
+      const expectPay = classic.has(`${job.from}>${job.to}`) ? JOB_ROUTES.find(r => r.from === job.from && r.to === job.to).pay : mapJobPay(job.from, job.to);
       if (job.pay !== expectPay) assert.fail(`pay ${job.from}>${job.to}: ${job.pay} is not ${expectPay}`);
       if (legFuelKgMap(placeOfCourse(job.from).id, placeOfCourse(job.to).id) > 400) assert.fail(`${job.from}>${job.to} is beyond a tank`);
       if (!classic.has(`${job.from}>${job.to}`)) beyond++;

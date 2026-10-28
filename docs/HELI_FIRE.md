@@ -22,7 +22,7 @@ H1 finishing pass is still changing.
 | Answering | Now, or finish what you are doing; a fire grows while you wait |
 | Dispatch board | Everyday jobs only; emergencies come only by radio |
 | Forest fire | Fit the bucket, scoop from a lake, drop on the fire until it is out |
-| Reward | About 1,500 credits and a firefighter badge |
+| Reward | 6,300 credits (was 1,500) and a firefighter badge |
 | Where | Forest courses with water nearby; snow courses cannot burn; first one picked at random |
 | New courses (Kyle, 14 October) | Every new course gets a lake or other body of water somewhere; a course with enough trees can burn |
 | Growth | Over your next few flights; faster uphill and with the wind |
@@ -42,7 +42,7 @@ later while the fire grows. At the home pad you fit the bucket. You hover low
 and slow over the lake until it fills, fly heavy to the smoke, and hold H to
 pour. A big ring on the ground shows where the water will land. Fire grows
 uphill and downwind between drops, so you hit the hot edge first. When the
-last cell goes out, Roger thanks you, 1,500 credits land and the firefighter
+last cell goes out, Roger thanks you, 6,300 credits land and the firefighter
 badge is yours. Leave it long enough and the woods burn: the course closes
 for 10 play days, you can buy it back early, and when it reopens it is black,
 then green, then pink with fireweed.
@@ -342,7 +342,7 @@ bucket.
 
 ## 7. Rewards
 
-- **Fire out:** 1,500 credits, the same in Assisted and Real (a mission is
+- **Fire out:** 6,300 credits (was 1,500), the same in Assisted and Real (a mission is
   not a dispatch job, and a Real bonus would put it above the best race
   wins). Paid at once, capped like every other credit change.
 - **The firefighter badge** with the first fire put out, shown on the
@@ -673,7 +673,7 @@ passes, FIRE-VIEW may draw plain stand-ins in dev builds only.
   unknown keys survive.
 - `tools/test-heli-fire-session.mjs`: a headless mission flown by script:
   the call on a flight, answer, fit the bucket, scoop at Tremblant's lake,
-  drops until out, 1,500 credits and the badge; and the neglect path to a
+  drops until out, 6,300 credits and the badge; and the neglect path to a
   closed course and its buyback. Same fingerprint every run.
 - Race replays, world signatures and combat balance unchanged; every H1
   test unchanged.

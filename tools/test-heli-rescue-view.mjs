@@ -452,7 +452,9 @@ function stretcherOr(look) { return look === 'stretcher' ? 'stretcher' : 'parame
   eq([duskShare(mission({dusk: 0})), duskShare(mission({dusk: .4})), duskShare(mission({dusk: 3}))], [0, .4, 1], 'dusk from 0 to 1');
   // Notices.
   eq(noticeText({type: 'rescueCall', kind: 'hiker', courseId: 'tremblant-woods'}), 'Lost hiker reported at Tremblant Woods', 'call notice');
-  eq(noticeText({type: 'rescueDone', paid: 1200, firstBadge: true}), 'Rescue done: 1,200 credits and the rescue badge', 'done notice');
+    eq(noticeText({type: 'rescueDone', paid: 1200, firstBadge: true}), 'Rescue done: 1,200 credits and the rescue badge', 'done notice');
+  // HELI-PAY-CONTINUE: with the balance the result line also says what the player has now.
+  eq(noticeText({type: 'rescueDone', paid: 3500, firstBadge: false, balance: 9000}), 'Rescue done: 3,500 credits. You now have 9,000.', 'done notice with the balance');
   eq(noticeText({type: 'rescueFailed', reason: 'time', charged: 400}), 'Rescue failed, out of time: 400 credits', 'failed notice');
   eq(noticeText({type: 'crateDown', pay: 300}), 'Crate down: 300 credits', 'crate notice');
   eq(noticeText({type: 'hikerSpotted'}), 'Flare sighted', 'flare notice');

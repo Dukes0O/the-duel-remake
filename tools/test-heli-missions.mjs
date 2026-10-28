@@ -543,7 +543,7 @@ const cash = (credits, {kind = 'hiker', playDay = 12, counts = {}, condition = 0
 
 check('the failure cost is one table: 400 credits, 200 for a supply run, the tally down one', () => {
   assert.deepEqual({...RESCUE_MONEY, basePay: {...RESCUE_MONEY.basePay}},
-    {basePay: {hiker: 1000, avalanche: 1200, hoist: 1200}, failureCharge: 400, supplyFailureCharge: 200, tallyGain: 1, tallyDrop: 1});
+    {basePay: {hiker: 3500, avalanche: 3850, hoist: 3850}, failureCharge: 400, supplyFailureCharge: 200, tallyGain: 1, tallyDrop: 1});
   assert.deepEqual({...RESCUE_TALLY}, {hiker: 'searches', avalanche: 'searches', hoist: 'hoists', supply: 'supplies'});
   assert.deepEqual([...FAIL_REASONS], ['time', 'crash', 'left']);
 });
@@ -611,9 +611,10 @@ check('a failure that cannot happen changes nothing', () => {
 });
 
 check('a rescue done: the pay, the tally up one, the people counted, the rescue badge once, the mission over', () => {
-  assert.deepEqual([0, 1, 2].map(c => peoplePay({kind: 'hiker', condition: c})), [1000, 600, 250]);
-  assert.deepEqual([0, 1, 2].map(c => peoplePay({kind: 'avalanche', condition: c})), [1200, 720, 300]);
-  assert.deepEqual([0, 1, 2].map(c => peoplePay({kind: 'hoist', condition: c})), [1200, 720, 300]);
+  // HELI-PAY-CONTINUE: the bases are 3,500 (hiker) and 3,850 (avalanche, hoist), was 1,000 and 1,200; the shares are the same.
+  assert.deepEqual([0, 1, 2].map(c => peoplePay({kind: 'hiker', condition: c})), [3500, 2100, 875]);
+  assert.deepEqual([0, 1, 2].map(c => peoplePay({kind: 'avalanche', condition: c})), [3850, 2310, 963]);
+  assert.deepEqual([0, 1, 2].map(c => peoplePay({kind: 'hoist', condition: c})), [3850, 2310, 963]);
   assert.equal(peoplePay({kind: 'supply', condition: 0}), 0, 'a supply run is paid by crate');
   const first = finishRescue(cash(100, {kind: 'avalanche', condition: 1, playDay: 8}), {pay: 720, enabled: true});
   assert.deepEqual([first.ok, first.paid, first.profile.credits, first.firstBadge, first.rescued], [true, 720, 820, true, 1]);

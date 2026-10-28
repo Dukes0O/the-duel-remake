@@ -75,15 +75,35 @@ const eq = (actual, expected, label) => { assert.equal(actual, expected, label);
       ok(app.visitHeli(), 'real visit opens');
       app.heliSession.start(courseId);
       eq(landedArrival(app.heliView(), app.profile).carId, 'falcone_f42', 'saved parked car found even when another car was selected');
-      const beforeCourse = app.menuStage;
       ok(app.heliLanded(action), 'landed action accepted');
-      eq(app.duel.state.status, 'menu', 'opens menu without starting race');
       eq(app.heliSession, null, 'flight ended');
       eq(app.profile.heli.fuelKg, 123.4, 'remaining fuel kept');
       if (action === 'race') {
-        eq(COURSE[app.menuStage].id, courseId, 'arrival course selected');
-        eq(app.menuCar, 'falcone_f42', 'parked car selected');
-      } else eq(app.menuStage, beforeCourse, 'shut down leaves menu choice alone');
+        // HELI-PAY-CONTINUE: Race here starts the race on the course landed at, with the parked car.
+        ok(app.duel.state.status !== 'menu', 'Race here starts the race');
+        eq(COURSE[app.duel.state.stageIndex].id, courseId, 'the race is on the arrival course');
+        eq(app.duel.state.car, 'falcone_f42', 'parked car races');
+      } else {
+        // HELI-PAY-CONTINUE: Shut down opens the race setup on the course landed at, never the last circuit raced.
+        eq(app.duel.state.status, 'menu', 'shut down opens the menu');
+        eq(COURSE[app.menuStage].id, courseId, 'shut down selects the arrival course');
+        eq(app.menuCar, 'falcone_f42', 'shut down selects the parked car');
+        eq(app.profile.raceSettings.eventId, courseId, 'the arrival course is saved as the setup choice');
+        eq(COURSE[app.getRaceChoices().startStage].id, courseId, 'the menu reads the arrival course');
+      }
+    }
+    // HELI-PAY-CONTINUE: the pause menu's Main menu (Esc) from a landing follows the same rule, and a visit that
+    // never left the home pad leaves the menu choice alone.
+    for (const [courseId, expected] of [['summit-run', 'summit-run'], ['tremblant-woods', null]]) {
+      const app = new App();
+      app.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage, overrides: {helicopter: true, 'summit-run': true}, qa: true}), () => app.duel.state);
+      app.profile.credits = 1000000; app._saveProfile(); app.purchaseCourse('summit-run');
+      app.purchaseCourse('tremblant-snow'); app.setRaceSettings({eventId: 'tremblant-snow'});
+      ok(app.visitHeli(), 'visit opens for the Esc path');
+      app.heliSession.start(courseId);
+      ok(app.requestNavigation('menu'), 'Main menu accepted');
+      eq(app.duel.state.status, 'menu', 'back at the menu');
+      eq(COURSE[app.menuStage].id, expected ?? 'tremblant-snow', expected ? 'Main menu from Summit opens Summit setup' : 'home pad leaves the last circuit chosen');
     }
     const busy = new App();
     busy.duel.featureFlags = raceFeatureFlags(createFeatureFlags({storage,

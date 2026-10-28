@@ -4,6 +4,7 @@
 // session and asks it to take or drop a job, so it never changes race state.
 import {HELI_DESTINATIONS, HOME_COURSE, jobTitle} from './heli-jobs.js';
 import {CARS} from '../config.js';
+import {HELI_PAYS, payWords} from './heli-pay.js';
 
 const esc = text => String(text).replace(/[&<>"']/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[ch]);
 
@@ -24,7 +25,7 @@ export function atAnyPad(view) {
 function jobRow(job, mode, {survey = null, skins = null} = {}) {
   const own = job.own === true, count = job.survey === true;
   const state = job.done ? 'done' : job.taken ? 'taken' : 'open';
-  const pay = own ? 'No pay' : count ? `up to ${job.payNow ?? job.pay} credits` : `${job.payNow ?? job.pay} credits${mode === 'real' ? ' (+25% in Real)' : ''}`;
+  const pay = own ? 'No pay' : count ? payWords(job.payNow ?? job.pay, {upTo: true}) : `${payWords(job.payNow ?? job.pay, {bonus: job.cleanBonus ?? 0})}${mode === 'real' ? ' (Real pays 25% more)' : ''}`;
   const pickUp = !own && !count && job.from !== HOME_COURSE ? `Pick up at ${HELI_DESTINATIONS[job.from]?.name ?? job.from}` : '';
   const title = own ? `Fly my car${job.carId && CARS[job.carId] ? ` (${CARS[job.carId].name})` : ''}` : job.recovery || count ? job.title : jobTitle(job);
   let button = '';
@@ -74,8 +75,10 @@ function rescueRadio(rescue, heli) {
   }
   if (!rescue.call) return '';
   const c = rescue.call;
+  // HELI-PAY-CONTINUE: what the call pays, before it is answered. A hurt casualty pays less.
+  const offered = c.kind === 'supply' ? HELI_PAYS.supply.perCrate * 3 + HELI_PAYS.supply.allCrates : HELI_PAYS.rescue[c.kind];
   return `<div class="heli-board-radio heli-board-rescue-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">` +
-    `${RESCUE_WORDS[c.kind]} ${esc(c.courseName ?? 'the mountain')}.</span>` +
+    `${RESCUE_WORDS[c.kind]} ${esc(c.courseName ?? 'the mountain')}. ${offered ? esc(payWords(offered, {upTo: true})) + (c.kind === 'supply' ? ' for three crates.' : '; a hurt casualty pays less.') : ''}</span>` +
     `<button type="button" class="heli-board-button" data-heli-board="radio-answer">Answer</button>` +
     `<button type="button" class="heli-board-button" data-heli-board="radio-later">Later</button></div>`;
 }
@@ -85,7 +88,7 @@ function radioBox(fire, rescue = null, heli = null) {
   if (!fire?.call) return '';
   const course = esc(fire.courseName ?? 'the forest');
   if (!fire.call.answered)
-    return `<div class="heli-board-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">Fire reported at ${course}.</span>` +
+    return `<div class="heli-board-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">Fire reported at ${course}. ${esc(payWords(HELI_PAYS.fire))} when it is out.</span>` +
       `<button type="button" class="heli-board-button" data-heli-board="radio-answer">Answer</button></div>`;
   const wind = fire.wind.speed < 1 ? 'wind light' : `wind ${COMPASS_WORDS[fire.wind.name] ?? fire.wind.name} ${Math.round(fire.wind.speed)} m/s`;
   return `<div class="heli-board-radio"><h3 class="heli-board-title">Radio</h3><span class="heli-board-text">Fire at ${course}: ${fire.shareOut}% out, ${esc(wind)}</span></div>`;
