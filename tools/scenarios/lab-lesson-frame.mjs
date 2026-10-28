@@ -10,10 +10,18 @@ export async function run(c) {
   await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'room', 60_000);
   const key = (code, type) => c.command('Input.dispatchKeyEvent', {type, code, key: code === 'KeyE' ? 'e' : code.slice(3).toLowerCase(), windowsVirtualKeyCode: code === 'KeyE' ? 69 : undefined});
   async function walk(code, expression) { await key(code, 'keyDown'); try { await c.waitFor(expression, code, 15_000); } finally { await key(code, 'keyUp'); } await new Promise(r => setTimeout(r, 550)); }
-  await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < 3.6`);
-  await walk('KeyA', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] < -7.8`);
-  await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the Lift')`, 'machine');
-  await key('KeyE', 'keyDown'); await key('KeyE', 'keyUp');
+  // Stop before Brian's solid body, take the clear aisle to the pad, look at the Lift machine as a player does, then press E.
+  async function useLift() {
+    await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < 4.4`);
+    await walk('KeyA', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] < -7.8`);
+    const yaw = await c.evaluate(`(() => { const p = JSON.parse(${canvas}.dataset.labWalkPosition); return Math.atan2(p[0] + 8.008125, p[2] - 2.84); })()`);
+    await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: 720, y: 450, button: 'left', clickCount: 1});
+    await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 720 - yaw / .003, y: 450, button: 'left', buttons: 1});
+    await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: 720 - yaw / .003, y: 450, button: 'left', clickCount: 1});
+    await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the Lift')`, 'machine');
+    await key('KeyE', 'keyDown'); await key('KeyE', 'keyUp');
+  }
+  await useLift();
   const text = `document.querySelector('.lab-teaching')?.textContent`;
   const click = action => c.evaluate(`document.querySelector('[data-teach="${action}"]').click()`);
   const waitNext = () => c.waitFor(`document.querySelector('[data-teach="next"]') && !document.querySelector('[data-teach="next"]').disabled`, 'step ready');
@@ -55,10 +63,16 @@ export async function run(c) {
   await c.waitFor(`${text}?.includes('My Lab notebook') && !!document.querySelector('[data-word="push"]')`, 'notebook after reopen');
   await c.screenshot('notebook');
   await c.evaluate(`window.__qaApp.closeLab()`);
-  await c.navigate('/tools/menu-check.html?lab-lesson-example=1');
-  await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'off menu', 90_000);
-  await c.evaluate(`window.__qaApp.audio.setMuted?.(true); window.__qaApp.openLab()`);
-  await c.waitFor(`!!document.querySelector('.lab-board') && !!${canvas}`, 'old Lab');
-  if (await c.evaluate(`!document.querySelector('.lab-teaching').hidden || !document.querySelector('.lab-notebook-button').hidden || !!document.querySelector('.lab-walk-overlay')`)) throw Error('Switch-off changed old Lab.');
+  // The walking Lab is released (lab-2 is on for everyone), so there is no switched-off Lab left to compare. The test lesson
+  // is registered only by its QA page option: without it the same machine teaches its real lesson, not the example.
+  await c.navigate('/tools/menu-check.html');
+  await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'plain menu', 90_000);
+  await c.evaluate(`(() => { const a = window.__qaApp; a.audio.setMuted?.(true); a.addPlayer('Teaching QA');
+    a.profile = {...a.profile, heli: {...a.profile.heli, version: 1, fuelKg: 400, lessons: {liftoff: true, hover: true, landing: true, carry: true}}}; a._saveProfile();
+    document.querySelectorAll('body > details').forEach(e => e.open = false); a.openLab(); })()`);
+  await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'plain room', 60_000);
+  await useLift();
+  await c.waitFor(`!document.querySelector('.lab-teaching').hidden && ${text}?.includes('1 / 5')`, 'real Lift lesson opens');
+  if (await c.evaluate(`${text}.includes('Can a fan move') || !!document.querySelector('.lab-bench')`)) throw Error('The test lesson reached the released Lab.');
   await c.evaluate(`window.__qaApp.closeLab()`);
 }

@@ -1,5 +1,10 @@
-// LAB-POLISH: rounded dial inputs, readouts and every lesson's real bench view.
+// LAB-POLISH: every lesson's real view in the walking Lab. The sixteen lessons teach on the five-step lesson frame at their
+// machines (the old bench panel with dials is no longer reachable for them), so each one is walked to by the map, opened, checked
+// to be its own lesson with no old bench beside it, and photographed. BENCH_SCRIPT stays the list of dial settings that
+// tools/test-lab-player.mjs runs on the rules; the lessons' own scenarios drive the machine controls in the browser.
 // The harness supplies a private origin and memory-only saves.
+import {MODEL_OF_LESSON} from '../../src/lab/lab-scene.js';
+
 export const BENCH_SCRIPT = {
   lift: [{collective: 1}, {cargoKg: 3000}],
   projectile: [{speedMs: 0}, {speedMs: 20}],
@@ -28,30 +33,29 @@ export async function run(context) {
       heli:{...app.profile.heli,version:1,lessons:{liftoff:true,hover:true,landing:true,carry:true}}};
     app._saveProfile(); app.openLab();
     const style=document.createElement('style'); style.textContent='body > details {display:none!important}'; document.head.append(style); })()`);
-  await context.waitFor(`!!document.querySelector('.lab-canvas')`, 'Lab ready');
-  for (const [id, runs] of Object.entries(BENCH_SCRIPT)) {
-    const start = Date.now();
-    await context.evaluate(`document.querySelector('[data-lab-lesson="start:${id}"]').click()`);
-    await context.waitFor(`!!document.querySelector('.lab-bench[data-lesson="${id}"]')`, `${id} opens`);
-    let firstReadout = null;
-    for (const settings of runs) {
-      await context.evaluate(`(() => { for (const [id,value] of Object.entries(${JSON.stringify(settings)})) {
-        const el=document.querySelector('[data-lab-control="'+id+'"]');
-        if(!el) throw Error('Missing control '+id);
-        el.value=value;
-        if(String(el.value)!==String(value)) throw Error('Unavailable dial value '+id+': '+value);
-        el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));
-      } document.querySelector('[data-lab="run"]').click(); })()`);
-      await context.waitFor(`document.querySelector('.lab-readout')?.textContent.trim().length>0`, `${id} effect`);
-      firstReadout ??= Date.now() - start;
+  const canvas = `document.querySelector('.lab-canvas')`;
+  await context.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'Lab ready', 60_000);
+  for (const id of Object.keys(BENCH_SCRIPT)) {
+    const start = Date.now(), machine = MODEL_OF_LESSON[id];
+    const {definition} = await import(`../../src/lab/lessons/${id}-lesson.js`);
+    await context.evaluate(`document.querySelector('[data-go="${machine}"]').click()`);
+    await context.waitFor(`${canvas}.dataset.labWalkArrived === ${JSON.stringify(machine)}`, `${id} machine reached`, 60_000);
+    // The wind tunnel holds five lessons: it asks which one. Every other machine opens its lesson at once.
+    if (machine === 'wind-tunnel') {
+      await context.waitFor(`!!document.querySelector('[data-lab-lesson="start:${id}"]')`, `${id} choice`);
+      await context.evaluate(`document.querySelector('[data-lab-lesson="start:${id}"]').click()`);
     }
-    // Let the normal camera glide finish. The screenshot includes the player's controls and readout.
+    await context.waitFor(`!document.querySelector('.lab-teaching')?.hidden && document.querySelector('.lab-teaching').textContent.includes(${JSON.stringify(definition.wonder.text)})`, `${id} opens`, 60_000);
+    if (await context.evaluate(`!!document.querySelector('.lab-bench')`)) throw Error(id + ': an old bench panel opened beside the lesson.');
+    const opened = Date.now() - start;
+    // Let the machine stage and the camera settle. The screenshot includes the lesson panel and the machine.
     await new Promise(resolve => setTimeout(resolve, 2500));
     await context.screenshot(`bench-${id}`);
-    const text = await context.evaluate(`document.querySelector('.lab-challenge').textContent.trim()`);
-    if (text.includes('Finish the experiment')) throw Error(id+': experiment did not finish');
-    console.log(JSON.stringify({lesson:id, experimentComplete:!text.includes('Finish the experiment'), issue:null, firstReadoutMs:firstReadout, experimentMs:Date.now()-start, challenge:text}));
-    await context.evaluate(`document.querySelector('[data-lab="back"]').click()`);
+    const text = await context.evaluate(`document.querySelector('.lab-teaching').textContent.trim()`);
+    if (!text.includes('1 / 5') || !(await context.evaluate(`!!document.querySelector('[data-teach="next"]')`))) throw Error(id + ': the lesson did not start at its first step.');
+    console.log(JSON.stringify({lesson: id, machine, issue: null, openMs: opened, wonder: definition.wonder.text}));
+    await context.evaluate(`document.querySelector('[data-teach="back"]').click()`);
+    await context.waitFor(`document.querySelector('.lab-teaching')?.hidden !== false && !document.querySelector('.lab-bench')`, `${id} closes`, 20_000);
   }
-  await context.evaluate(`document.querySelector('[data-lab="close"]').click()`);
+  await context.evaluate(`window.__qaApp.closeLab()`);
 }

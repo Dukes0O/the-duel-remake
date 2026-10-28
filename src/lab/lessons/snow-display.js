@@ -66,6 +66,18 @@ export function mountSnow(options, modelId, animate) {
         el.style.left = `${Math.round((p.x + 1) * canvas.clientWidth / 2 + dx)}px`;
         el.style.top = `${Math.round((1 - p.y) * canvas.clientHeight / 2 + dy)}px`;
       });
+      // Captions never sit on top of each other: a label that would touch an earlier one steps clear, up or down.
+      const GAP = 6, placed = [];
+      for (const el of labels) {
+        if (el.hidden) continue;
+        const box = {left: parseFloat(el.style.left), top: parseFloat(el.style.top), width: el.offsetWidth || 0, height: el.offsetHeight || 0};
+        for (let pass = 0; pass < 3; pass++) {
+          const hit = placed.find(o => box.left < o.left + o.width + GAP && box.left + box.width + GAP > o.left && box.top < o.top + o.height + GAP && box.top + box.height + GAP > o.top);
+          if (!hit) break;
+          box.top = box.top + box.height / 2 < hit.top + hit.height / 2 ? hit.top - box.height - GAP : hit.top + hit.height + GAP;
+        }
+        el.style.top = `${Math.round(box.top)}px`; placed.push(box);
+      }
       canvas.dataset.snowDrawing = JSON.stringify({model: modelId, input: d.input, actual: d.actual, reading: d.reading, trails: d.trails?.length ?? 0});
     },
     dispose() {
