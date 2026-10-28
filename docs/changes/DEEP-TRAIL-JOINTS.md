@@ -50,3 +50,7 @@ No race code, surface course or scenery layout was touched. The lane tier guards
 - The old segment-only `worldAt`, `at` heading and `nearest` of the Deep's course.
 - The step-by-step frame walk in `shiftCar`.
 - The throwing `nearest` in the rock test's stand-in course.
+
+## Claude's review (27 October 2026, night)
+
+Cause right and measured (a 62 m one-frame jump 35 m out at the 125 degree bend). The frame turns smoothly over 4 m at each joint and nearest is the exact inverse of worldAt; scenery placement untouched; races untouched, guards passed. Changed assertion approved: the rock test's throwing nearest becomes an exact identity, because the push-out now uses nearest by design and nearest can only return the pushed point; the jump, speed and no-damage bounds stay. Verdict: merge and release.
