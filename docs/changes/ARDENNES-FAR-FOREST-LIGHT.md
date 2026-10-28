@@ -101,3 +101,37 @@ Not run here. Claude runs it with the laptop screen off.
 ## Removed
 
 Nothing; the band's earlier removal on Ardennes is undone.
+
+## Finish run, 28 October 2026 (overnight helper for Claude)
+
+- Merged `integration/wasteland` (4aa2c71c) into this branch with no conflicts
+  (merge commit 6a1ea02d). The new terrain preload (`src/terrain-preload.js`,
+  `render3d.js`, `world.js`, `world-surfaces.js`) does not touch the far band:
+  the far firs sit on the drawn ground height as before, and the native Ardennes
+  views below show the band in place with the preload in the build.
+- Pictures for Claude's look (High, same cameras, car, seed 1989 and field seed
+  as `tools/scenarios/ardennes-views.mjs`), before = integration 4aa2c71c, after =
+  this lane, in the integration folder's
+  `.evidence/2026-10-28/ARDENNES-FAR-FOREST-LIGHT/`: `before/`, `after/`,
+  and `before-after-sheet.jpg` (rows: Pit Straight, La Fontaine, Les Combes,
+  Stavelot; left before, right after). Both runs finished the full two-lap
+  field with 0 browser errors. No frame timing was taken.
+- World signature, Ardennes only, NOT recaptured (captured with
+  `node tools/test-world-composition.mjs --capture`; 22 other rows identical to
+  their fixtures): hash 2e8e6311...bbf173 to 13d1c78c...5204 (full values in
+  the evidence folder, `world-signature-compare.txt`), nodes 1,303 to 1,333,
+  meshes 1,244 to 1,274, instances 36,468 to 38,650, geometries 249 to 250,
+  materials 156 and textures 84 unchanged. The earlier figure c0b5bca3 in this
+  note was from before the merge; the integration changes since moved the
+  baseline by 3 instances, so use these numbers.
+- One more changed assertion, for Claude's rule 18 review: in
+  `tools/test-expansion-vegetation-grounding.mjs` the Ardennes check "every
+  remaining legacy pine cell keeps exactly two draws" counted far firs as two
+  draws each. It now counts first-band cells at two draws and far firs at one
+  draw per 400 m far cell (the same rule as in `test-circuit-ardennes.mjs`), and
+  a new check confirms no beech or duplicate is drawn as a far fir. Nothing is
+  loosened: the first-band count is unchanged and the far count is exact.
+- Gates: lane tier `--changed --jobs 4 --keep-going`: 68 passed, 1 failed, 0 not
+  run. The one failure is `tools/test-world-composition.mjs`, on the Ardennes
+  row only, waiting for Claude to grant the new signature. `npm run build`
+  passes (output deleted). Replay fingerprints unchanged.
