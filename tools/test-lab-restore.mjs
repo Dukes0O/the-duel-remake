@@ -10,7 +10,7 @@ import {RESTORE_PRICE, RESTORE_SECONDS, RESTORE_STAGES, SALT_LEFT, SOAK_WEEKS, r
 import {createProfile, normalizeProfile, isCarUnlocked, getUpgradeLevels} from '../src/progression.js';
 import {sirenaState, SIRENA_CAR, settleCoastCup} from '../src/deep/sirena-car.js';
 import {labOf} from '../src/lab/lab-save.js';
-import {restoreOfferMarkup, restoreRunMarkup} from '../src/lab/lab-markup.js';
+import {benchMarkup, restoreOfferMarkup, restoreRunMarkup} from '../src/lab/lab-markup.js';
 import {createLabScene, labSceneStats, RESTORE_STAGE} from '../src/lab/lab-scene.js';
 import {App} from '../src/app.js';
 
@@ -332,4 +332,15 @@ test('mechanical and body shows are disjoint and mechanical work leaves the body
   assert.equal(restoreStageAt(BODY_SECONDS,'body').done,true);
   assert.ok(!restoreRunMarkup(restoreStageAt(12)).includes('>Paint</li>'));
   assert.ok(!restoreRunMarkup(restoreStageAt(0,'body')).includes('>Soak</li>'));
+});
+
+// LAB-RESTORE-PASSED: a passed Rust lesson opens straight to Restore, with the lesson one press away.
+test('the passed bench shows Restore and a Replay button, and no dials or Run', () => {
+  const offer = restoreOfferMarkup(restoreOffer(waiting(2500), BOTH));
+  const html = benchMarkup({lessonId: 'rust', name: 'Rust', controls: [], settings: {}, readout: [], challenge: {state: 'ready', label: 'Try the challenge', note: '', passed: true},
+    hasRun: false, explained: false, restore: offer, replay: true});
+  assert.ok(html.includes('data-lab="restore"') && html.includes('data-lab="replay"') && html.includes('Passed'));
+  assert.ok(!html.includes('data-lab="run"') && !html.includes('lab-challenge-button'));
+  assert.ok(benchMarkup({lessonId: 'rust', name: 'Rust', controls: [], settings: {}, readout: [], challenge: {state: 'waiting', label: 'x', note: ''}, hasRun: false, explained: false}).includes('data-lab="run"'),
+    'the ordinary bench is unchanged');
 });

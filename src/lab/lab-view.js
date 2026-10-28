@@ -82,7 +82,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   let ui = freshState(), caption = null, lastTop = '', lastSide = '', lastCaption = '', lastStrip = '';
 
   function freshState() { return {tab: 'lessons', bench: null, message: '', protect: null, explained: false, restore: null, walkPanel: null, lastMachine: 'lift',
-    fanPage: false, fanSetting: 0, fanStarted: null, fanLine: -1}; }
+    fanPage: false, fanSetting: 0, fanStarted: null, fanLine: -1, passedBench: false}; }
   const flags = () => app._switches();
   const profile = () => app.profile ?? {};
   const now = () => (win?.performance ?? performance).now() / 1000;
@@ -160,7 +160,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       return benchMarkup({lessonId: bench.lessonId, name: lessonName(bench.lessonId), controls: bench.bench.controls, settings: bench.settings,
         readout: bench.result ? readoutRows(bench.lessonId, bench.result) : [], challenge: challengeFor(),
         protect: ui.protect, hasRun: bench.result !== null, explained: ui.explained, message: ui.message,
-        restore: bench.lessonId === 'rust' ? restoreOfferMarkup(restoreOffer(profile(), flags())) : ''});
+        restore: bench.lessonId === 'rust' ? restoreOfferMarkup(restoreOffer(profile(), flags())) : '', replay: ui.passedBench === true});
     }
     return boardMarkup({rows: boardRows(profile(), flags()), message: ui.message});
   }
@@ -195,15 +195,20 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   const restoreFocus = key => { if (key) side.querySelector(key)?.focus({preventScroll: true}); };
 
   // ---- the experiments ----
-  function openLesson(id) {
+  // LAB-RESTORE-PASSED: a passed lesson never has to be taken twice to use what it opened on its bench: the Rust bench's
+  // Restore (or the free replay), and the wind tunnel's secret fan button once that secret is open.
+  const benchAction = id => labOf(profile()).done[id] === true && (
+    id === 'rust' ? ['offered', 'again'].includes(restoreOffer(profile(), flags()).state) : tunnelLesson(id) && fanView(profile(), flags()).open);
+  function openLesson(id, {replay = false} = {}) {
     if (walking() && !walkRows().find(r => r.id === id)?.open) return;
-    if (walking() && teaching.open(id)) {
-      ui = {...ui, bench: null, walkPanel: null, tab: 'lessons', lastMachine: id};
+    const passedBench = walking() && !replay && benchAction(id);
+    if (walking() && !passedBench && teaching.open(id)) {
+      ui = {...ui, bench: null, passedBench: false, walkPanel: null, tab: 'lessons', lastMachine: id};
       voice.stop(); caption = null; paintCaption(); render(); return;
     }
     const bench = openBench(id);
     if (!bench) return;
-    ui = {...ui, tab: 'lessons', bench, lessonReady: false, message: '', protect: null, explained: false, fanPage: false, walkPanel: null, lastMachine: id};
+    ui = {...ui, tab: 'lessons', bench, lessonReady: false, message: '', protect: null, explained: false, fanPage: false, walkPanel: null, lastMachine: id, passedBench: Boolean(passedBench)};
     say(id, 'intro');
     render();
     if (walking()) side.querySelector('button')?.focus({preventScroll: true});
@@ -211,7 +216,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
   function backToBoard() {
     teaching.close();
     if (ui.restore) endRestore();
-    ui = {...ui, bench: null, message: '', protect: null, walkPanel: null};
+    ui = {...ui, bench: null, passedBench: false, message: '', protect: null, walkPanel: null};
     voice.stop(); caption = null; paintCaption();
     render();
     if (walking()) keeper.scene?.canvas.focus({preventScroll: true});
@@ -271,7 +276,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       let bench = openBench(id);
       if (!bench) return false;
       // Completion of a teaching sequence is not a passed lesson or a reward.
-      ui.bench = bench;
+      ui.bench = bench; ui.passedBench = false;
       ui.lessonReady = true;
       const state = challengeFor();
       if (state.state !== 'ready') { ui.bench = null; ui.lessonReady = false; return {reason: state.note}; }
@@ -429,6 +434,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
       case 'back': backToBoard(); break;
       case 'run': run(); break;
       case 'again': if (ui.bench) { ui.explained = true; say(ui.bench.lessonId, 'explain'); render(); } break;
+      case 'replay': if (ui.bench) openLesson(ui.bench.lessonId, {replay: true}); break;
       case 'challenge': takeChallenge(); break;
       case 'protect-check': checkProtect(); break;
       case 'restore': startRestore(); break;
