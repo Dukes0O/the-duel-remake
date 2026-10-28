@@ -30,8 +30,9 @@ export async function run(context) {
   const fuel = await context.evaluate(`window.__qaApp.heliBuyFuel().cost`);
   if (fuel !== 0) throw Error(`The first tank should be free, it cost ${fuel}`);
   await context.screenshot('heli-pad');
-  // A new pilot: the instructor's board, then lesson 1 from its button.
-  const instructor = await context.evaluate(`(() => { const panel = document.querySelector('.heli-lessons');
+  // A new pilot: the instructor's board, then lesson 1 from its button. The landed
+  // panel (HELI-LANDED) carries the same class, so the board is found by its label.
+  const instructor = await context.evaluate(`(() => { const panel = document.querySelector('.heli-lessons[aria-label="Instructor"]');
     return !!panel && panel.textContent.includes('INSTRUCTOR') && !!document.querySelector('[data-heli-lesson="skip"]'); })()`);
   if (!instructor) throw Error('The instructor board with the skip button should show for a new pilot on the pad.');
   await context.evaluate(`document.querySelector('[data-heli-lesson="start:liftoff"]').click()`);
