@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-28T10:30:17.523Z
+Observed at: 2026-10-28T15:16:36.263Z
 
-Observation commit: 06d5505e111e79edf3e32a72421cfda27a924018
+Observation commit: 20a1c9bd2229a5b966603e8508f0ea8bc1f53857
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 06d5505e111e79edf3e32a72421cfda27a924018
+Integration HEAD: 20a1c9bd2229a5b966603e8508f0ea8bc1f53857
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -52,26 +52,26 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 32,874,545 B | +532,719 B | 20,000,000 B |
-| Added bytes in last merge | 651,432 B | -1,732,777 B | 5,000,000 B |
+| Review `looks/` | 32,874,545 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 198,869 B | -452,563 B | 5,000,000 B |
 | All `public/` | 348,530,686 B | +0 B | unavailable |
-| Git objects | 799,828,992 B | +6,159,360 B | unavailable |
+| Git objects | 800,973,824 B | +1,144,832 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 9c8146266cf27acb0acc23f426a082456faa7e5b
+- Local master: 20a1c9bd2229a5b966603e8508f0ea8bc1f53857
 - Local main: missing
-- Local integration/wasteland: 06d5505e111e79edf3e32a72421cfda27a924018
+- Local integration/wasteland: 20a1c9bd2229a5b966603e8508f0ea8bc1f53857
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit 9c8146266cf27acb0acc23f426a082456faa7e5b.
+- Remote origin/master: matches local; cached commit 20a1c9bd2229a5b966603e8508f0ea8bc1f53857.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 06d5505e111e79edf3e32a72421cfda27a924018.
+- Remote origin/integration/wasteland: matches local; cached commit 20a1c9bd2229a5b966603e8508f0ea8bc1f53857.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.

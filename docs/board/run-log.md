@@ -1421,3 +1421,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged FC-LESSON-HELI-DEEP (drive-lesson-run, heli-first-flight, deep-achievements pass; lane tier and build green).
 - 28 Oct night: merged FC-RACE-SCENARIOS (lane tier 23/23, build, qualifying, rescue-view, lap-telemetry, track-kits and p4-audio pass on 00c32763).
 - 28 Oct night: merged FC-LAB-SCENARIOS (lane tier 31/31, build and all nine Lab scenarios pass on 8b6fb937).
+- 28 Oct morning: released the full-check batch (build 26.10.28 15:15 UTC 646adf; full tier 533/533 on 06d5505e counts under rule 19). Janitor: lanes night-fc-race and night-fc-lab and their branches removed; five 28 October evidence folders recycled (about 1.9 GB); AUD-CRASH-PEAK and rustwall evidence left, owner unknown; three cards added (LAB-TRY-PICTURES-DIAL, LAB-BENCH-PANELS-REMOVE, QA-P4-AUDIO-FRAME-GAP); C: free 60.1 GB.
