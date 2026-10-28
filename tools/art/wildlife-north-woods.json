@@ -1,7 +1,7 @@
 {
   "version": 1,
   "group": "north-woods",
-  "status": "beaver-private-generation-structurally-verified-unfitted",
+  "status": "blocked-approved-donors-unavailable-2026-10-28",
   "retrievedAtUtc": "2026-10-15T02:19:19.6940597Z",
   "cacheRoot": "C:/Users/kyleb/dev/art-library/wild-north-woods",
   "runtimeInstalled": false,
@@ -34,7 +34,13 @@
         "natural fur colour and shading"
       ],
       "speciesVerified": false,
-      "artAccepted": false
+      "artAccepted": false,
+      "lastPublicRetry": {
+        "date": "2026-10-28",
+        "bytes": 2040,
+        "sha256": "6fc6eddc845eaa586f2dfeffb3e7220e41e09059573ce9121fdf8e4cefd268bd",
+        "result": "Google Drive - Quota exceeded HTML; no model bytes"
+      }
     },
     {
       "id": "eastern-wolf",
@@ -56,7 +62,13 @@
         "natural fur colour and shading"
       ],
       "speciesVerified": false,
-      "artAccepted": false
+      "artAccepted": false,
+      "lastPublicRetry": {
+        "date": "2026-10-28",
+        "bytes": 2040,
+        "sha256": "94b1b30ef9f42b17a5005edeeeef0ccea509267fe91eb24128170f16d7c6cbc9",
+        "result": "Google Drive - Quota exceeded HTML; no model bytes"
+      }
     },
     {
       "id": "moose",
@@ -423,7 +435,7 @@
         }
       },
       "privateFitPlan": {
-        "status": "source-only-unrun",
+        "status": "completed-2026-10-15-reverified-2026-10-28",
         "option": "--fit-only",
         "exclusiveWith": [
           "--view-only",
@@ -462,11 +474,27 @@
         "artAccepted": false,
         "gamePlacementVerified": false,
         "groupRound1": "waits for the other four approved donors"
+      },
+      "privateFitResult": {
+        "path": ".qa-dist/wild-beaver-fit-625b8398/beaver-source-fitted.glb",
+        "bytes": 152000,
+        "sha256": "9b2d4a0989ceb3b5f905b7df58e921bb2e951a248ac4d49279fab31a7a1d5d7b",
+        "completeBinBytes": 149844,
+        "completeBinSha256": "784a0306ee1adde4e38906adceceb522f3ed00f01334f34ba94a0d464ca096cc",
+        "lengthMetres": 1.1,
+        "minimumPawMetres": 0,
+        "frontPawOffsetMetres": 0.0017737123887267003,
+        "tailMinimumMetres": -0.014901871793094795,
+        "actualClips": [],
+        "runtimeInstalled": false,
+        "artAccepted": false,
+        "gamePlacementVerified": false,
+        "reverifiedDate": "2026-10-28"
       }
     }
   ],
   "downloadPolicySource": "https://sketchfab.com/developers/download-api/downloading-models",
-  "blockedNextStep": "Beaver private generation and structural verification are complete, not art acceptance. Await Root fit/axes/grounding/view scope before further execution. Quaternius deer/wolf retry once only after2026-10-15T22:00:00-07:00, no mirrors. Moose/bear wait for Kyle to supply official originals; no new account.",
+  "blockedNextStep": "Supply the approved Quaternius Deer/Wolf originals through their publisher, and Kyle-downloaded Nioma moose and UC Davis black bear archives. The one authorised 28 October public retry still returned quota HTML for both Quaternius models. No account, mirror or substitute is authorised. Beaver remains a private static candidate; idle and locomotion are missing. Group round 1 has not started.",
   "cacheReceipts": [
     {
       "file": "CC-BY-3.0-legalcode.html",
@@ -537,5 +565,15 @@
   "preparedModels": [
     "beaver"
   ],
-  "recipe": "tools/blender/wildlife-north-woods.py"
+  "recipe": "tools/blender/wildlife-north-woods.py",
+  "sourceRecheck": {
+    "date": "2026-10-28",
+    "catalogFresh": true,
+    "cacheInspected": "C:/Users/kyleb/dev/art-library/wild-north-woods",
+    "mooseArchivePresent": false,
+    "bearArchivePresent": false,
+    "roundsSubmitted": 0,
+    "sheetCreated": false,
+    "runtimeInstalled": false
+  }
 }

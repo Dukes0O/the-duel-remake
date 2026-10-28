@@ -1,3 +1,10 @@
+# WILD-ART-SRC: current handoff, 28 October 2026
+
+Status: blocked on four approved originals. No formal art round submitted.
+The current source manifest records the completed private beaver fit and fresh
+failed donor retries. No game code, runtime model or credit entry was added.
+Earlier source preparation and test history follows below.
+
 # WILD-ART-SRC — North woods source access
 
 Claude approves Quaternius deer/wolf species adaptations, Nioma's moose and UC Davis's black bear; Poly's beaver is conditional on budget. No model is accepted by that donor choice. Preserve real rigs and clips where present; no toy recolour may be labelled a finished local species.
@@ -101,3 +108,81 @@ At actual source Z extent 111.62809753417969, uniform scale is 0.009854149844873
 The optional --fit-only is exclusive with view/source-view. Its pure paths-only contract emits only a private fitted GLB and measured manifest. Additive existing-suite cases on both unchanged empty fixtures cover exact paths, incompatible modes, invalid animal/public/traversal/sibling/linked escape, using the same audit. Default generation, six-view planning and all old assertions remain intact. No new fit output, import, test, planner, render, native check, art round, gate or build has run on this source. Root review/GO is required. Feet/grass in the game and natural-look acceptance remain unproved.
 
 Changed assertions: additive fit planner/refusal cases only; no old assertion, donor pin or threshold changed. Removed: nothing; original, candidate and complete source-view evidence remain. No geometry, texture, pose, tail, tilt, runtime model, CREDITS or other donor changes.
+
+
+## 28 October lane update and source stop
+
+Merged integration/wasteland at fc0e5325 into this lane as cd5c9d37. The only
+conflict was the native recipe list in tools/test-blender-output.mjs. Kept all
+integration entries plus this card's existing wildlife registration. Existing
+assertions were not edited. No integration or live working files were edited.
+Git wrote only this lane's shared worktree metadata outside the lane.
+
+Workspace Catalog was fresh (28 October generation); its bounded wild-north
+query found no match. Targeted inspection of the named art-library folder found
+only the existing beaver original, source pages, licences and receipts. No moose
+or bear archive was supplied in that folder or the art-library root. Claude's
+14 October decision still requires Kyle's official archives for those donors.
+
+The one approved public Quaternius retry was made on 28 October. Both responses
+were 2,040-byte HTML pages titled Google Drive - Quota exceeded, not models.
+Deer response SHA256: 6fc6eddc845eaa586f2dfeffb3e7220e41e09059573ce9121fdf8e4cefd268bd.
+Wolf response SHA256: 94b1b30ef9f42b17a5005edeeeef0ccea509267fe91eb24128170f16d7c6cbc9.
+No mirror, account, key, viewer extraction or substitute was used. Each source
+check stopped within 30 minutes. The public publisher page still labels the
+Quaternius pack CC0 and animated; this does not prove inaccessible model bytes.
+
+Read-only reinspection of the existing private fitted beaver confirms 152,000
+bytes and SHA256 9b2d4a0989ceb3b5f905b7df58e921bb2e951a248ac4d49279fab31a7a1d5d7b.
+Its 149,844-byte BIN matches the original candidate fit receipt exactly. The
+approved root scale and translation remain exact. The prior measured fit is
+1.10 m long, lowest paw at zero, front paw offset 1.774 mm and tail 14.902 mm
+below the paw datum. No fit or render was repeated. This model has zero skins
+and clips, so it does not meet this request's idle and walk/run requirement.
+No appearance, animation or game-grounding pass is claimed.
+
+The requested five-animal comparison sheet and scratchpad copy were not made.
+Four animals cannot be rendered from missing originals. No partial or invented
+sheet, placeholder model or runtime install is presented as the finished group.
+No art round was consumed. To resume, supply accessible approved Deer/Wolf
+originals and Kyle's Nioma moose/UC Davis bear archives. Beaver animation also
+remains to be resolved within the donor and no-pose-edit decisions.
+
+Changed assertions this session: none. The merge retains both sides' additive
+recipe registrations and all current integration assertions.
+
+Removed this session: the two newly downloaded quota HTML responses and this
+session's generated build output are recycled after their result is recorded.
+No .evidence folder was created. The pre-existing .evidence junction and all
+licensed originals, fitted candidates and prior evidence remain untouched.
+
+
+## Validation on 28 October
+
+- Initial post-merge lane command: node tools/run-tests.mjs --tier lane --changed
+  --jobs 2. Result: 17 suites passed, 1 failed, 4 not run. The audio evidence
+  suite could not access installed FFmpeg under the sandbox (spawnSync ffmpeg
+  ENOENT). Its one rerun with executable access passed, 401 checks, no failures.
+  This was an environment access failure; no test or assertion was changed.
+- Plain npm run build failed because Vite's default config loader tried to write
+  a temporary file through the shared node_modules junction. npm's PowerShell
+  wrapper also dropped a separately passed configLoader option. The supported
+  direct Vite CLI with --configLoader runner passed (599 modules, 1.28 s).
+  npm.cmd run build -- --configLoader runner then passed too (599 modules,
+  1.70 s). This uses the same production config and keeps outputs in this lane.
+  Existing large-chunk and mixed-import warnings remain.
+- Card-specific checks: existing Blender planner suite passed 131 checks; fitted
+  beaver byte/container checks passed. No browser, frame timing, art render or
+  save access occurred. The source gate cannot pass without actual donor files
+  and the required animations. No acceptance is inferred from structural tests.
+
+- Final complete lane rerun with installed-executable access: node
+  tools/run-tests.mjs --tier lane --changed --jobs 2 passed all 25 suites,
+  zero failures and zero not run, in 253.68 s. Includes 131 Blender planner
+  checks, 225 replay checks, 12 combat replay checks and 47 world-composition
+  checks. This is lane evidence only; no full tier or release check was run.
+- Original beaver rehash remains 41,468 bytes with the approved SHA256
+  37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1.
+- This session's quota-response folder and both generated build outputs were
+  sent to the Recycle Bin. No new evidence folder remains. Status was refreshed
+  in this lane without inspecting the live checkout.
