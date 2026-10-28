@@ -67,3 +67,7 @@ does it.
 
 The long hang itself was not reproduced here, so the cap is proved by the
 stand-in test, not by a live hang.
+
+## Claude's review (27 October 2026, night)
+
+Caps only its own child's tree, never another browser; the crash-peak recipe now shares it; costs about 0.3 s per run. No assertion changed. Verdict: merge.
