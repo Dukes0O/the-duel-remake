@@ -218,3 +218,7 @@ stand-in does not have; now it sets the class name) and `test-review-evidence`
 note was renamed). Changed assertions: none. The browser recipe
 `finish-deep` (Casual only) passed on a private port, memory-only saves, no
 errors or warnings. Not run: Pro, frame timing, any art or sound judgement.
+
+## Claude's review (28 October 2026, night)
+
+Codex's place titles and story evidence from 26 October, brought up to date, plus the Coast Cup card moved clear of the results text (drawing only). No assertion changed; lane 48/48, build pass. Verdict: merge. Follow-ups: the recipe's turn-to-face workaround goes when the DEEP-TRAIL-JOINTS start-heading fix lands; LAB-RESTORE-PASSED (a player who passed Rust reaches Restore without replaying the lesson) is a new card.
