@@ -43,3 +43,7 @@ retain the complete matrix and the same checks for every case.
 
 Removed exhaustive car enumeration from daytime lane dispatch only. No source,
 asset, full-tier case or per-case assertion was removed.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent code review, rule 18). Lane and --changed runs pass --sample to test-lesson-instructor-any-car: every lesson road and both difficulties still run, with the starter and the fastest road car alternating; full and direct runs keep all 308 cases. No check per case changed. The browser harness sets the disposable browser's download folder to the scenario's output folder, so test exports no longer land in Kyle's Downloads.
