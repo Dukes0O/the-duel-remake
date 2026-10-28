@@ -2,7 +2,7 @@ import {HARBOUR_LIGHTS, HARBOUR_STREET, manifest as parentManifest} from './harb
 import {reverseVariant} from '../circuit-variants.js';
 import {buildKitPlacements} from '../circuit-kit-layout.js';
 export const {definition, manifest} = reverseVariant(HARBOUR_LIGHTS, parentManifest, {
-  id: 'harbour-lights-reverse', name: 'Harbour Lights Reverse', releaseOrder: 10,
+  id: 'harbour-lights-reverse', name: 'Harbour Lights Reverse', releaseOrder: 10, state: 'on',
   placements: (d, {spans}) => buildKitPlacements(d, {...HARBOUR_STREET,
     paddock: {...HARBOUR_STREET.paddock, garages: {...HARBOUR_STREET.paddock.garages, side: -HARBOUR_STREET.paddock.garages.side,
       from: -HARBOUR_STREET.paddock.garages.to, to: -HARBOUR_STREET.paddock.garages.from},
