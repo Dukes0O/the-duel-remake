@@ -86,3 +86,7 @@ Nothing was replaced. The old behaviour (the race boundary rule running underwat
 
 - Surfacing by reversing within 6 m of the ramp end (`deep-journey.js`, underwater branch) is by design (driving back up the ramp) and was left alone. A player who reverses at the very start of a dive leaves the dive.
 - Kyle's own pictures could not tell which bank he was on. The reproduction shows the same flat teal on the bank beside the shallows. If a flat picture appears anywhere else, send the map panel with it.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent code review, rule 17; rule 18: only the approved-import list in test-deep-look grew). Causes found and fixed at the source: the race boundary reset ran beyond 90 m from the trail and sent the car to the trail line (300 to 1,200 m jumps); now the sea floor edge holds the car with a notice. Banks rose to 0.8 m under the surface so the chase camera left the water (Kyle's flat teal screen); floor ceiling -2.6 m and the dive camera held 0.8 m under the surface. Haze eased in the shallows, deep unchanged. The chart now turns with the car (north-up on a button). The renderer no longer writes the edge flag. Look checked on before and after pictures. Deep frame check not run (Kyle using the laptop); the nightly full check covers it.
