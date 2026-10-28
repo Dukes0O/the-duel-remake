@@ -32,6 +32,7 @@ choose which one to read; they do not override the spec or current board.
 | Architecture and assets | [Architecture](ARCHITECTURE.md), [asset pipeline](ASSET_PIPELINE.md), [graphics](GRAPHICS_ITERATION.md), [performance](PERFORMANCE_PASS.md) |
 | Courses and driving | [Course expansion](COURSE_EXPANSION.md), [course access](COURSE_ACCESS.md), [route landforms](ROUTE_LANDFORMS.md), [shortcut pace](SHORTCUT_PACE_AUDIT.md), [physics](PHYSICS_EXPANSION.md), [freestyle](FREESTYLE_EXPANSION.md), [stunt trial](STUNT_TRIAL.md) |
 | Arena and warlords | [Scrapdome](SCRAPDOME.md): play design, architecture and the handoff cards |
+| Course and car packets | Staged line packets (`docs/FACTORY.md` section 3): [Eifel Crown](courses/eifel-crown.md) (the full treatment), [Kogane Pass](courses/kogane-pass.md) (new mountain pass), [Nissan Skyline GT-R R34](cars/nissan-skyline-gtr-r34.md) (new shop car) |
 | Phase 4 racing | [Grand Circuits](CIRCUITS.md): new tracks, full-field Grand Prix racing, snow, pit stops and the Summit Run, settled for build |
 | Hidden underwater world | [The Deep](THE_DEEP.md): kelp, reefs, sea life, and the story of the lost Falcone Sirena (raise it, restore it, race the Coast Cup) |
 | The helicopter | [H1 First flight](HELICOPTER.md), [H2 Fire](HELI_FIRE.md), [H3 Wildlife and skins](HELI_WILDLIFE.md) and [H4 Rescue](HELI_RESCUE.md): Kestrel One, carrying cars, forest fires, animals, skins, then search and rescue, built by Claude |
