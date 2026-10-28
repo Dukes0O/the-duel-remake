@@ -60,10 +60,15 @@ try{
       for(const mesh of group.children)for(let i=0;i<mesh.count;i++){mesh.getMatrixAt(i,matrix);const tree=mesh.userData.vegetationCell.entries[i].feature;
         check(matrix.elements[13]===Math.fround(tree.y-.24),def.id+': legacy visual root remains bit-identical');}
       const pines=features.filter(tree=>!selectedIds.has(tree.id));
-      check(group.children.length===vegetationCells(pines).length*2,def.id+': every remaining legacy pine cell keeps exactly two draws');
+      // Far-band firs (Ardennes) have their own one-draw cells of 400 m; the first band keeps exactly two draws per cell.
+      const nearPines=pines.filter(tree=>!tree.farForest),farPines=pines.filter(tree=>tree.farForest);
+      check(group.children.length===vegetationCells(nearPines).length*2+(farPines.length?vegetationCells(farPines,400).length:0),def.id+': every remaining legacy pine cell keeps exactly two draws, and far firs one draw per far cell');
       const drawn=new Set();
       for(const mesh of group.children.filter(mesh=>mesh.name.startsWith('Pine trunks ')))for(const row of mesh.userData.vegetationCell.entries){
         check(!selectedIds.has(row.feature.id)&&!drawn.has(row.feature.id),def.id+': no bound beech or duplicate is drawn as a pine');drawn.add(row.feature.id);
+      }
+      for(const mesh of group.children.filter(mesh=>mesh.name.startsWith('Far pine crowns ')))for(const row of mesh.userData.vegetationCell.entries){
+        check(row.feature.farForest&&!selectedIds.has(row.feature.id)&&!drawn.has(row.feature.id),def.id+': no bound beech or duplicate is drawn as a far fir');drawn.add(row.feature.id);
       }
       const byId=new Map(features.map(tree=>[tree.id,tree])),bound=new Set();
       for(const [index,row] of (kits?.placements||[]).entries()){
