@@ -1495,3 +1495,10 @@ behind a dev switch; no save shape, physics or race rule. On the merged
 commit every `tools/test-deep-*.mjs` passes by hand; lane tiers: joints fix
 26/26, Deep titles 48/48, earned cars 80/81 (the one failure was this fault).
 The nightly full check covers the whole tier.
+
+## Release, 28 October 2026 night, later (Claude, Release Manager)
+
+LAB-RESTORE-PASSED (walking Lab bench flow; no save change). Rule 19: since
+the last release only `src/lab/lab-view.js`, `src/lab/lab-markup.js`, the
+lab-restore recipe and one test changed; lane tier 29/29, build and the
+lab-restore and lab-fan-view browser recipes pass.

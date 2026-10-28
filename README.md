@@ -2,6 +2,14 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## The Lab's benches after a passed lesson, 28 October 2026
+
+### What players get now
+
+- **A passed lesson's bench opens straight to its action:** the Rust bench
+  goes straight to Restore the Sirena, and the wind tunnel's secret fan
+  REVERSE is reachable again. "Replay the lesson" is one button away.
+
 ## The Deep works again, and Kelp Coast titles, 28 October 2026
 
 ### What players get now
