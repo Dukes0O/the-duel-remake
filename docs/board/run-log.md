@@ -1426,3 +1426,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged LESSON-RUN-PICKER (lane tier 42/43 (instructor-any-car stopped, covered by the full tier, unchanged code), build, lesson suites and drive-lesson-run, drive-lessons-view-2, lessons-v2-view pass; reviewed by Claude).
 - 28 Oct night: merged CAREER-REBUILD (lane tier 40/40, build, test-career-rebuild 21/21, career-restore, career-backup, career-archive scenarios pass on d9cac081; independent review no blockers, three findings fixed).
 - 28 Oct night: merged HELI-PAY-CONTINUE (lane tier 107/107, build, heli/ski/map suites, heli-continue scenario pass on acd9b42f; independent review no blockers, findings fixed; rescue-finish fails on base 3ed23f4f too (QA-RESCUE-FINISH-FLAKY)).
+- 28 Oct night: merged QA-RESCUE-FINISH-FLAKY (Codex; lane tier 20/20, build, three rescue-finish passes in a row on 80be9a35).
