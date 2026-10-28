@@ -8,7 +8,7 @@ The Deep stores the car's place as two numbers: distance along the trail (`s`) a
 
 ## Fix
 
-- New `src/deep/zone-frame.js`. The sideways direction now turns smoothly over 4 m either side of every joint (a smooth blend between the two segment directions), so the world point of any `(s, lateral)` is continuous. The trail line itself is not changed.
+- New `src/deep/zone-frame.js`. The sideways direction now turns smoothly over 2 m either side of every joint (a smooth blend between the two segment directions), so the world point of any `(s, lateral)` is continuous. The trail line itself is not changed.
 - `nearest` is now the exact opposite of `worldAt`. It finds the `s` where the world point lies straight across from the trail point, and keeps the answer nearest the car's last `s`, so the car follows one branch around the inside of a sharp bend.
 - `src/deep/deep-journey.js`: the Deep's course (`zoneCourse`) uses this frame for `worldAt`, `groundAt`, `at` (heading) and `nearest`.
 - `src/deep/deep-rocks.js`: `shiftCar` (the rock push-out from DEEP-ROCKS-PUSH) now asks the course for the frame place of the pushed-out point instead of walking the old frame step by step. The old walk assumed the old frame and would have drifted in a turning one. The car still moves only by the push-out distance and keeps facing the same way in the world.
@@ -42,7 +42,7 @@ No race code, surface course or scenery layout was touched. The lane tier guards
 ## Open
 
 - Inside a sharp bend, a point farther from the trail than the bend's radius can be reached by two values of `s`. The car follows the one nearest its last `s`, so its world position stays continuous, but its `s` can change quickly there. Only the world position is used for the picture, the ground and the goals.
-- The turn length (4 m each side, `RAMP`) is one number in `zone-frame.js`.
+- The turn length (2 m each side, `RAMP`) is one number in `zone-frame.js`.
 - Other Deep zones (Wreck Reef, Night Harbour) will use the same frame when they are installed.
 
 ## Removed
@@ -54,3 +54,29 @@ No race code, surface course or scenery layout was touched. The lane tier guards
 ## Claude's review (27 October 2026, night)
 
 Cause right and measured (a 62 m one-frame jump 35 m out at the 125 degree bend). The frame turns smoothly over 4 m at each joint and nearest is the exact inverse of worldAt; scenery placement untouched; races untouched, guards passed. Changed assertion approved: the rock test's throwing nearest becomes an exact identity, because the push-out now uses nearest by design and nearest can only return the pushed point; the jump, speed and no-damage bounds stay. Verdict: merge and release.
+
+## 27 October 2026, late: fix forward for the dive start
+
+`tools/test-deep-kelp-coast.mjs` test 9 ("the journey dives into kelp-coast, drives the whole loop ...") failed with "reached 0 of 3082 m" after the first release of this card.
+
+### Cause
+
+The Kelp Coast trail starts with a sharp bend (125 degrees) at its first point, where the ramp ends. The dive puts the car at `s = 0` facing along the first leg, with no heading error. The smooth frame rounded that start joint half on each side, so at `s = 0` the frame pointed about 70 degrees away from the first leg. The first throttle then drove the car partly back toward the ramp, and the "driving back up the ramp" check ended the dive at once. A second fault showed up while fixing this: right at the bend, the search for the car's place found no answer on the branch the car was on and jumped to a branch about 2.8 m away (same world point, wrong `s`).
+
+### Fix
+
+- The turn at the start joint now lies wholly before `s = 0`: at `s = 0` the frame points exactly along the first leg, as it did before. Every other joint, including the end of the loop meeting the start, is still smooth, so the no-jump guarantee and its test are unchanged.
+- `nearest` first slides from the car's last `s` to the nearest answer, so the car stays on the branch it is on, and only searches the whole stretch (finer, 0.25 m steps over 10 m each side) when that fails. The first search could step over two answers lying very close together.
+- The turn length is now 2 m each side (was 4 m). With 4 m, the test's lane-following car came 3.7 cm outside the trail width at the start bend, because a longer turn skews the sideways direction away from the true perpendicular. 1, 2 and 3 m all pass. No assertion changed.
+
+### Test
+
+New in `tools/test-deep-explorer.mjs`: a dive starts with the frame along the first leg at `s = 0` (on all three routes), and driving on with full throttle for 3 seconds stays a dive and goes along the trail. The earlier no-jump test is unchanged and still passes.
+
+### Why the lane tier missed it
+
+The lane tier picks suites that import a changed file or name its path within two steps. `test-deep-kelp-coast.mjs` reaches `deep-journey.js` only through `src/game.js` (a hub: the tier does not follow a hub's own imports), so it was not selected. The Deep suites I ran by hand did not include it. Now every `tools/test-deep-*.mjs` runs by hand for any Deep change, as the coordinator asked.
+
+### Results
+
+All 17 `tools/test-deep-*.mjs` pass by hand, including kelp-coast (9/9) and explorer. Lane tier (`--tier lane --changed --jobs 4`): 26 passed, 0 failed, 0 not run. `npm run build`: passed (output deleted). Browser scenarios (`tools/scenarios/deep-*.mjs`) were not run here.

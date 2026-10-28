@@ -182,6 +182,19 @@ test('nothing the player looks for rides on a rock, and a rock lying on a goal n
   }
 });
 
+// DEEP-TRAIL-JOINTS: the smooth frame must not turn the car at the start of the dive. The trail starts
+// with a sharp bend; the car is put at s = 0 facing along the first leg, and driving on must stay a dive.
+test('a dive starts facing along the first trail leg and the first throttle does not climb the ramp', () => {
+  for(const {seed} of ROUTE_VARIANTS) {
+    const d=race(seed); dive(d); const trail=d.deepRuntime.zone.trail;
+    const leg=Math.atan2(trail[1].x-trail[0].x,trail[1].z-trail[0].z);
+    assert.ok(Math.abs(Math.atan2(Math.sin(d.course.at(0).heading-leg),Math.cos(d.course.at(0).heading-leg)))<1e-6,'the frame points along the first leg at s = 0');
+    d.setInput({throttle:1,brake:0,steer:0});
+    for(let i=0;i<360;i++)d.step(DT);
+    assert.equal(d.state.deepJourney.phase,'underwater'); assert.ok(d.state.s>5&&Math.abs(d.state.lateral)<1,'drives on along the trail');
+  }
+});
+
 // DEEP-TRAIL-JOINTS: the car's place in the world is continuous across every joint of the trail.
 test('driving far beside a bending trail never moves the car in the world beyond its own travel', () => {
   const seed=ROUTE_VARIANTS[0].seed, d=race(seed); dive(d);
