@@ -54,3 +54,7 @@ Only three scenario files under `tools/scenarios/`:
 ## Removed
 
 Nothing. The scratch debug scenario and the `.evidence/` output were deleted.
+
+## Claude's review (28 October 2026, night)
+
+Approved under rule 18. All three are scenario changes; no game code changed. drive-lesson-run: the exact lesson 1 list now includes Ardennes Forest, which LESSONS-MORE-ROADS added on purpose (DRIVING_LESSONS 14.13); the check stays exact and also clicks the new row. heli-first-flight: the selector now names the Instructor panel, because the HELI-LANDED panel shares its class; the INSTRUCTOR text and skip button checks are unchanged. deep-achievements: the live shelf now must show all six achievements in exact order, since the Lab went live on 25 October; the Lab-off shelf stays covered by test-deep-achievements.mjs. Each check is as strict as before or stricter.
