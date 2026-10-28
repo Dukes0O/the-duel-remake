@@ -110,7 +110,14 @@ not treat them as an old save needing a migration.
   notice, the existing player dropdown with Dukes00, Spikey Ferns, Player 1 (Spikey Ferns
   selected), Spikey Ferns' garage (23,000 CR, every car MAXED, the sea-life log 1 of 7), then a
   real reload that does not restore again.
-- Gates: see the run below.
+- Gates (lane `career-rebuild`, commit after `3ed23f4f`): lane tier `--changed --jobs 4` 40 of 40
+  passed; `npm run build` passed; by hand: test-career-archives, test-career-backup,
+  test-career-budget, test-career-budget-recovery, test-save-fixtures, test-progression,
+  test-progression-integration, test-old-best all passed; browser scenarios career-backup,
+  career-archive, career-tab-isolation, career-writer-lock, career-origin-missing,
+  career-archive-missing, career-backup-failure and career-restore all passed. No assertion in
+  an existing test was changed. The Deep import guard (`test-deep-look`) caught a path
+  mention in the new files at first; the wording was changed, not the guard.
 
 ## Removed
 
