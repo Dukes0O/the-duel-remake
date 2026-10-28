@@ -129,3 +129,5 @@ screen and result markup in `test-drive-lesson-run.mjs`).
 ## Claude's change (28 October 2026)
 
 The highlighted run now moves forward from the run just played: after Follow me it is Your turn, even when Watch me was skipped; it wraps to the first run left only when nothing is open ahead. `suggestedDriveLessonRun` in `src/lessons/drive-lessons.js`. Changed assertions in `tools/scenarios/drive-lesson-run.mjs`: the result card after Follow me highlights Your turn (was Watch me), and Enter on the opening screen then starts Your turn (was Watch me); same strength, new design. Two new cases in `tools/test-drive-lesson-run.mjs`. drive-lesson-run and lessons-v2-view pass; test-drive-lesson-run 21/21.
+
+Lane tier note (Claude): `tools/test-lesson-instructor-any-car.mjs` was stopped after more than an hour (rule 4). It tests only `buildInstructorRun`, which this card does not change (the diff touches `createDriveLesson`, `finishAttempt`, `stepDriveLesson` and `suggestedDriveLessonRun`), so its pass in the 28 October full tier on 06d5505e still covers it. Its run time is card QA-INSTRUCTOR-ANY-CAR-SLOW.
