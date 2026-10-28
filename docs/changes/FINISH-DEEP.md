@@ -93,7 +93,7 @@ or completed in this story run.
 
 ## Checks and postcard
 
-Postcard: `docs/board/looks/deep-finish/round-1.jpg` (207,107 bytes), made from
+Postcard: `docs/board/looks/deep-finish/round-1.jpg` (207,107 bytes; note `round-1-review.md`), made from
 the actual Casual keyboard run: kelp, turtle, four-bag rise and Coast Cup.
 It is evidence, not a new art round. Raw captures are in
 `.evidence/2026-10-26/FINISH-DEEP/`.
@@ -168,3 +168,40 @@ Removed the false “only tiny plankton” claim and the checklist's invisible
 abalone search cue. Build/QA output is recycled after checks. Raw pictures are
 temporary review evidence; keep
 only the compressed postcard and this verdict after Claude consumes them.
+
+## 28 October 2026: brought up to date, Coast Cup card moved
+
+**Merge.** `integration/wasteland` merged into this branch (no rebase). The
+only conflict was the generated `docs/board/STATUS.md`; integration's copy was
+taken. The Deep changes from integration (rocks that push, joint-smoothed trail
+frame, tests) merged with no conflict and none of this lane's code needed to
+give way.
+
+**Overlap fix.** On the race results screen the Coast Cup card was centred and
+sat on top of the results paragraph. It now carries its own `sirena-title-cup`
+style and sits in the free right half of the screen (right 5%, top 34%).
+Drawing only: the card text, timing and the place-title card are unchanged, and
+the place titles drop the new style again. Checked at 1280x720 on the real
+Casual keyboard race: the card clears the heading, paragraph, time boxes and
+buttons. Picture (git-ignored):
+`C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake\.evidence\2026-10-28\FINISH-DEEP\results-coast-cup-fixed.png`.
+`round-1.jpg` still shows the old overlap; it was not regenerated.
+
+**Recipe changes** (`tools/scenarios/finish-deep.mjs`, no game rule changed, no
+test assertion changed):
+
+- The dive now starts with the car turned to face the first trail leg. Since
+  DEEP-TRAIL-JOINTS, the rounded joint at the very start of the loop leaves the
+  car about 70 degrees off the trail and pointing partly back up the ramp, and
+  the first few metres of driving trigger the "driving back up the ramp" exit
+  (the dive ends in the first second). This is a game fault for Claude to
+  decide on; the recipe works around it as a declared fixture.
+- The restoration is bought with the Lab's own rule (`restoreSirena`, 1,000
+  credits, car joins the garage) instead of clicking through the Lab. The Lab is
+  now a walking room, and the Rust bench with its Restore button opens only
+  after the five-step Rust lesson, even for a player who already passed Rust.
+  Claude: decide whether a player who has passed Rust should reach the Restore
+  button without replaying the lesson. `lab-restore.mjs` clicks the old path and
+  may need the same attention. The 46-second animation was not re-watched here.
+
+**Gates.** See the closing lines below.

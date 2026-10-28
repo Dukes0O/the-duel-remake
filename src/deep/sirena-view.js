@@ -362,12 +362,15 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
     if (event.deepPlace?.title && app.getDeepDiscovery()?.enabled === true) {
       title.querySelector('p').textContent = 'KELP COAST';
       title.querySelector('h2').textContent = event.deepPlace.place.name;
+      title.className = 'sirena-title';
       title.hidden = false; titleUntil = t + 3;
       caption.hidden = true;
     }
     if (event.deepCoastCup) {
       title.querySelector('p').textContent = 'COAST CUP';
       title.querySelector('h2').textContent = '1966 to 2026: finished';
+      // The results screen fills the left half: the card sits in the free right side, clear of its text.
+      title.className = 'sirena-title sirena-title-cup';
       title.hidden = false; titleUntil = t + 5; phone.say('deep.ana.cup');
     }
     // Driving back up the ramp ends the dive and returns to the menu: Ana finishes what she

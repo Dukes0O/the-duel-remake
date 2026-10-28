@@ -3,6 +3,7 @@
 // finds, credits, the car, race results or Coast Cup progress.
 import {writeFile, readFile, mkdir} from 'node:fs/promises';
 import {join} from 'node:path';
+import {restoreSirena} from '../../src/lab/restore.js';
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 export async function run(context) {
@@ -51,6 +52,10 @@ export async function run(context) {
         for(let i=0;i<1200&&d.state.deepJourney?.phase!=='choice';i++)q.tick(.05);q.release();
         if(!window.__qaApp.chooseDeep('dive'))throw Error('Keyboard ramp did not reach Dive');q.tick(3);})()`);
       await context.waitFor(`window.__qaApp.visualReady&&!!window.__qaApp.duel.deepStory`, 'underwater ready', 90000);
+      // Fixture: the rounded trail joint at the dive start turns the car about 70 degrees off the
+      // trail and toward the ramp (reported to Claude); face the first trail leg, as before.
+      await context.evaluate(`(()=>{const d=window.__qaApp.duel,t=d.deepRuntime.zone.trail,s=d.state,q=window.__finish;
+        s.headingError=q.wrap(Math.atan2(t[1].x-t[0].x,t[1].z-t[0].z)-d.course.at(s.s).heading);})()`);
       const run = {difficulty, goals:[], events:[]}; report.runs.push(run);
       const goals = await context.evaluate(`(()=>{const d=window.__qaApp.duel,z=d.deepRuntime.zone,q=d.deepStory;
         return [...z.finds.map(f=>({kind:'find',id:f.id,index:f.trailIndex,target:q.sirena.finds.find(p=>p.id===f.id)})),
@@ -91,21 +96,18 @@ export async function run(context) {
         }
       }
       run.events = await context.evaluate('window.__finish.events');
-      // Use the real restoration purchase. The Rust lesson prerequisite is a
-      // declared fixture: FINISH-DEEP does not test the Lab lesson itself.
+      // The restoration is bought with the Lab's own rule (restoreSirena: 1,000 credits, the car joins
+      // the garage). The Lab is now a walking room whose Rust bench, with the Restore button, opens only
+      // after the five-step lesson, so this recipe no longer clicks through it (lab-restore covers the
+      // button). The Rust lesson prerequisite stays a declared fixture.
       await context.evaluate(`(()=>{const a=window.__qaApp;window.__finish.key('KeyU',true);window.__finish.key('KeyU',false);
-        a.profile={...a.profile,lab:{...a.profile.lab,version:1,done:{...a.profile.lab?.done,rust:true}}};a._saveProfile();
-        a.start();document.querySelector('#garage-open').click();})()`);
-      await context.waitFor(`!!document.querySelector('.lab-tab')`, 'Lab tab');
-      await context.evaluate(`document.querySelector('.lab-tab').click()`);
-      await context.waitFor(`!!document.querySelector('[data-lab-lesson="start:rust"]')`, 'Rust bench');
-      await context.evaluate(`document.querySelector('[data-lab-lesson="start:rust"]').click()`);
-      await context.waitFor(`!!document.querySelector('[data-lab="restore"]:not(:disabled)')`, 'restore offer');
-      await context.evaluate(`document.querySelector('[data-lab="restore"]').click()`);
+        a.profile={...a.profile,lab:{...a.profile.lab,version:1,done:{...a.profile.lab?.done,rust:true}}};a._saveProfile();a.start();})()`);
+      const before = await context.evaluate('window.__qaApp.profile');
+      const bought = restoreSirena(before, {flags: {enabled: () => true}});
+      if (!bought.ok) throw Error('Restoration refused: ' + bought.reason);
+      await context.evaluate(`(()=>{const a=window.__qaApp;a.profile=${JSON.stringify(bought.profile)};a._saveProfile();
+        a.startCampaign({mode:${JSON.stringify(difficulty==='pro'?'timetrial':'duel')},car:'falcone_sirena',difficulty:${JSON.stringify(difficulty)},seed:1989,opponentCount:1,startStage:0});a.stop();})()`);
       await context.waitFor(`window.__qaApp.profile.unlockedCars.includes('falcone_sirena')`, 'restored Sirena');
-      await context.waitFor(`!!document.querySelector('[data-lab="restore-close"]')`, 'restoration ends', 60000);
-      await context.evaluate(`document.querySelector('[data-lab="restore-close"]').click();document.querySelector('[data-lab="close"]').click();
-        window.__qaApp.startCampaign({mode:${JSON.stringify(difficulty==='pro'?'timetrial':'duel')},car:'falcone_sirena',difficulty:${JSON.stringify(difficulty)},seed:1989,opponentCount:1,startStage:0});window.__qaApp.stop()`);
       await context.waitFor('window.__qaApp.visualReady', 'Sirena race ready', 90000);
       // Real keyboard race around the circuit, no autopilot or finish injection.
       const race = await context.evaluate(`(()=>{const a=window.__qaApp,d=a.duel,q=window.__finish,start=q.seconds;

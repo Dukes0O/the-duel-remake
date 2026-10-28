@@ -14,6 +14,7 @@
 .sirena-caption{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);width:min(44rem,calc(100% - 2rem));margin:0;padding:.7rem 1rem;background:#061820d9;border-left:3px solid #8fd9cf;border-radius:.25rem;font-size:15px;line-height:1.45}
 .sirena-caption small{display:block;font-size:9px;letter-spacing:1.6px;color:#8fd9cf;margin-bottom:.2rem}
 .sirena-title{position:absolute;left:50%;top:30%;transform:translateX(-50%);text-align:center;padding:1.4rem 2.6rem;background:#050d10e6;border-top:2px solid #c9a14a;border-bottom:2px solid #c9a14a}
+.sirena-title.sirena-title-cup{left:auto;right:5%;top:34%;transform:none}
 .sirena-title p{margin:0;font-size:11px;letter-spacing:4px;color:#e6c27a}
 .sirena-title h2{margin:.4rem 0 0;font-size:30px;font-style:italic;letter-spacing:-.5px}
 .deep-map{position:absolute;left:35px;bottom:139px;width:40vh;box-sizing:border-box;padding:10px;background:#071e25df;border:1px solid #87ada25c;border-radius:3px;pointer-events:auto}
